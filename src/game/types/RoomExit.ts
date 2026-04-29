@@ -1,0 +1,8 @@
+type RoomExit = {
+  x:number,
+  y:number,
+  room1Id:string,
+  room2Id:string
+}
+
+export default RoomExit;
