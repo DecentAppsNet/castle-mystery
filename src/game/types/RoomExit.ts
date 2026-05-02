@@ -5,4 +5,8 @@ type RoomExit = {
   room2Id:string
 }
 
+export function duplicateRoomExit(from:RoomExit):RoomExit {
+  return {...from};
+}
+
 export default RoomExit;

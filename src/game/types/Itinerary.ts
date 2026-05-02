@@ -1,9 +1,10 @@
 
-import ItineraryEvent from "./ItineraryEvent";
+import ItineraryEvent, { duplicateItineraryEvent } from "./itineraryEvents/ItineraryEvent";
 
-type Itinerary = {
-  scrubEvents: ItineraryEvent[],
-  events: ItineraryEvent[]
+type Itinerary = ItineraryEvent[];
+
+export function duplicateItinerary(from:Itinerary):Itinerary {
+  return from.map(duplicateItineraryEvent);
 }
 
 export default Itinerary;
