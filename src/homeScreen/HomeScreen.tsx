@@ -6,18 +6,21 @@ import TopBar from '@/components/topBar/TopBar';
 import Level from "@/game/types/Level";
 import LevelView from "@/components/levelView/LevelView";
 import TimeSlider from "@/components/timeSlider/TimeSlider";
-import { changeTime } from "@/game/playerEventUtil";
 import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
-import { updatePlayPause } from "./interactions/gameplay";
+import { updatePlayPause, updateTime } from "./interactions/gameplay";
 
 function HomeScreen() {
   const [level, setLevel] = useState<Level | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [minutes, setMinutes] = useState<number>(0);
   
   useEffect(() => {
     if (level) return;
     init().then((initResults) => {
-      if (initResults) setLevel(initResults.level);
+      if (initResults) {
+        setMinutes(initResults.minutes);
+        setLevel(initResults.level);
+      }
     });
   }, []);
 
@@ -28,7 +31,7 @@ function HomeScreen() {
       <TopBar />
       <div className={styles.content}>
         <LevelView level={level} />
-        <TimeSlider minutes={0} step={1} onChange={(minutes) => {changeTime(minutes * 60 * 1000)}} />
+        <TimeSlider minutes={minutes} step={1} onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)} />
         <PlayPauseButton isPlaying={isPlaying} onChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)} />
       </div>
     </div>

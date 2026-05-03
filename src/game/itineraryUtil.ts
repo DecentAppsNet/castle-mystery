@@ -7,9 +7,11 @@ import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Coord from "./types/Coord";
 import Character from "./types/Character";
-import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
+import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
+import { rand, randIntInRange } from "@/common/randUtil";
 import { findRoomAtCoords, findRoomNearestToCoords } from "./roomUtil";
+import RoomExit from "./types/RoomExit";
 
 const WALK_MSECS_PER_PIXEL = 10; // Takes 1 second to walk a hundred pixels.
 const SCRUB_COORD_COUNT = MINUTES_IN_DAY;
@@ -21,26 +23,28 @@ enum Activity {
 }
 
 function _getRandomActivity():Activity {
-  const r = Math.random();
-  if (r < .4) return Activity.WAIT;
+  const r = rand();
+  if (r < .3) return Activity.WAIT;
   if (r < .9) return Activity.MOVE_IN_ROOM;
   return Activity.EXIT_ROOM;
 }
 
-const MAX_WAIT_TIME = 10 * MSECS_IN_MINUTE;
+const MAX_WAIT_TIME = 2 * MSECS_IN_SECOND;
 function _getRandomWaitTime():number {
-  return Math.floor(Math.random() * MAX_WAIT_TIME);
+  let v = randIntInRange(0, MAX_WAIT_TIME);
+  assert(v < MAX_WAIT_TIME);
+  return v;
 }
 
 function _getRandomCoordsInRoom(room:Room):[x:number, y:number] {
-  const x = room.rect.x + Math.floor(Math.random() * room.rect.width);
-  const y = room.rect.y + Math.floor(Math.random() * room.rect.height);
+  const x = room.rect.x + randIntInRange(0, room.rect.width);
+  const y = room.rect.y + randIntInRange(0, room.rect.height);
   return [x, y];
 }
 
 function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):number {
   const distance = Math.sqrt((toX - fromX)**2 + (toY - fromY)**2);
-  return distance * WALK_MSECS_PER_PIXEL;
+  return Math.floor(distance * WALK_MSECS_PER_PIXEL);
 }
 
 function _findRoomAtCoords(rooms:Room[], x:number, y:number):Room {
@@ -66,18 +70,29 @@ function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTim
   }
 }
 
-const EXIT_CLEARANCE_PIXELS = 10;
+const EXIT_CLEARANCE_PIXELS = 3;
+function _calcExitClearanceOffsets(room:Room, exit:RoomExit):[dx:number, dy:number] {
+  let dx = 0, dy = 0;
+  if (exit.x === room.rect.x) {
+    dx = -EXIT_CLEARANCE_PIXELS;
+  } else if (exit.x === room.rect.x + room.rect.width) {
+    dx = EXIT_CLEARANCE_PIXELS;
+  } else if (exit.y === room.rect.y) {
+    dy = -EXIT_CLEARANCE_PIXELS;
+  } else {
+    assert(exit.y === room.rect.y + room.rect.height);
+    dy = EXIT_CLEARANCE_PIXELS;
+  }
+  return [dx, dy];
+}
+
 function _createExitRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
   const room = _findRoomAtCoords(rooms, x, y);
   if (!room.exits.length) return _createInRoomRandomWalkEvent(rooms, x, y, startTime);
-  const toExit = room.exits[Math.floor(Math.random() * room.exits.length)];
+  const toExit = room.exits[randIntInRange(0, room.exits.length)];
   assertNonNullable(toExit);
 
-  // Find the angle of travel from x, y to the exit. Set dx and dy to go past the exit by EXIT_CLEARANCE_PIXELS
-  // following hte same angle of travel.
-  const angle = Math.atan2(toExit.y - y, toExit.x - x);
-  const dx = Math.cos(angle) * EXIT_CLEARANCE_PIXELS;
-  const dy = Math.sin(angle) * EXIT_CLEARANCE_PIXELS;
+  const [dx, dy] = _calcExitClearanceOffsets(room, toExit);
   const toX = Math.round(toExit.x + dx);
   const toY = Math.round(toExit.y + dy);
   const duration = _calcWalkDuration(x, y, toX, toY);
@@ -101,11 +116,27 @@ function _findLastEventNoPrecedingTime(events:ItineraryEvent[], time:number, fro
 }
 
 function _interpolateCoords(fromPosition:Coord, toPosition:Coord, interpolateAmount:number):Coord {
+  assert(interpolateAmount >= 0);
+  assert(interpolateAmount <= 2);
   const vector = {x:toPosition.x - fromPosition.x, y:toPosition.y - fromPosition.y};
   return {
     x:Math.floor(fromPosition.x + (interpolateAmount * vector.x)),
     y:Math.floor(fromPosition.y + (interpolateAmount * vector.y))
   }
+}
+
+export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, eventNo:number):[position:Coord, nextEventNo:number] {
+  eventNo = _findLastEventNoPrecedingTime(itinerary, time, eventNo);
+  const precedingEvent:WalkEvent = itinerary[eventNo] as WalkEvent;
+  assert(precedingEvent.type === ItineraryEventType.WALK); // Will need to change code below if more event types added.
+  const elapsedFactor = clamp((time - precedingEvent.startTime) / precedingEvent.duration, 0, 1);
+  const position = _interpolateCoords(precedingEvent.fromPosition, precedingEvent.toPosition, elapsedFactor);
+  return [position, eventNo];
+}
+
+function _timeToScrubI(time:number):number {
+  time = clamp(time, 0, MSECS_IN_DAY);
+  return Math.floor(SCRUB_COORD_COUNT * (time / MSECS_IN_DAY));
 }
 
 export function generateScrubCoords(events:ItineraryEvent[]):Coord[] {
@@ -116,24 +147,21 @@ export function generateScrubCoords(events:ItineraryEvent[]):Coord[] {
   const duration = MSECS_IN_DAY;
   const stepDuration = duration / stepCount;
   let eventNo = 0;
+  let position:Coord;
 
   for(let stepNo = 0; stepNo < stepCount; ++stepNo) {
-    // Find first event that starts after the scrub time.
     const scrubTime = stepNo * stepDuration;
-    eventNo = _findLastEventNoPrecedingTime(events, scrubTime, eventNo);
-    const precedingEvent:WalkEvent = events[eventNo] as WalkEvent;
-    assert(precedingEvent.type === ItineraryEventType.WALK); // Will need to change code below if more event types added.
-    const elapsedFactor = (scrubTime - precedingEvent.startTime) / duration;
-    const position = _interpolateCoords(precedingEvent.fromPosition, precedingEvent.toPosition, elapsedFactor);
+    [position, eventNo] = _findItineraryPosition(events, scrubTime, eventNo);
     coords.push(position);
   }
 
   return coords;
 }
 
-function _timeToScrubI(time:number):number {
-  time = clamp(time, 0, MSECS_IN_DAY);
-  return Math.floor(SCRUB_COORD_COUNT * (time / MSECS_IN_DAY));
+export function findCharacterPosition(character:Character, time:number):Coord {
+  let position:Coord;
+  [position] = _findItineraryPosition(character.itinerary, time, 0);
+  return position;
 }
 
 export function findCharacterScrubCoords(character:Character, time:number):Coord {

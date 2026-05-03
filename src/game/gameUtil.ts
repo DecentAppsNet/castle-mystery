@@ -4,12 +4,13 @@ import GameState from "./types/GameState";
 import Room, { duplicateRoom } from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
-import { findCharacterScrubCoords, generateScrubCoords } from "./itineraryUtil";
+import { findCharacterPosition, findCharacterScrubCoords, generateScrubCoords } from "./itineraryUtil";
 import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtCoords } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
 import Level from "./types/Level";
+import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
 
 const ROOM_FONT_HEIGHT_RATIO = 0.02; // Font height as a ratio of the canvas height.
 const ROOM_LINE_WIDTH = 0.005;
@@ -70,15 +71,13 @@ function _drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean,
   const scaledWidth = scaledBottomRight[0] - scaledTopLeft[0];
   const scaledHeight = scaledBottomRight[1] - scaledTopLeft[1];
   context.lineWidth = scalingFactors.roomLineWidth;
-  if (isActive) {
-    context.fillStyle = "#ddd";
-    context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
-  }
+  context.fillStyle = isActive ? "#fff" : "#aaa";
+  context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.strokeStyle = "#333";
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillStyle = "#aaa";
+  context.fillStyle = "#999";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;
   context.fillText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
   context.fillStyle = "#000";
@@ -132,16 +131,42 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
     character.x = coords.x;
     character.y = coords.y;
   }
+  gameState.time = time;
   gameState.isPlaying = false;
+}
+
+function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent) {
+  gameState.isPlaying = event.isPlaying;
+  if (event.isPlaying) {
+    gameState.realToGameTimeOffset = gameState.time - Date.now();
+  } else {
+    gameState.realToGameTimeOffset = 0; // To find errors if code incorrectly assumes the value to be set.
+  }
+}
+
+function _updateCharacterPosition(character:Character, time:number) {
+  const position = findCharacterPosition(character, time);
+  character.x = position.x;
+  character.y = position.y;
+}
+
+function _updateCharacterPositions(characters:Character[], time:number) {
+  characters.forEach(c => _updateCharacterPosition(c, time));
 }
 
 function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
   events.forEach(event => {
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent); break;
+      case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent); break;
       default: botch();
     }
   });
+  if (gameState.isPlaying) {
+    gameState.time = Date.now() + gameState.realToGameTimeOffset;
+    console.log('time = ' + gameState.time);
+    _updateCharacterPositions(gameState.characters, gameState.time);
+  }
   _setActiveRoomDiscovered(gameState);
 }
 
@@ -153,7 +178,8 @@ function _findCharacterI(characters:Character[], characterId:string):number {
 }
 
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D) {
-  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  context.fillStyle = "#000";
+  context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   if (!gameState) return;
 
   const events:PlayerEvent[] = popPlayerEvents();
