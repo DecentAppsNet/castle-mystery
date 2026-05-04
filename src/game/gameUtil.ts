@@ -11,63 +11,75 @@ import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
 import Level from "./types/Level";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
+import { msecsToMinutes } from "@/homeScreen/interactions/gameplay";
+import ScalingFactors from "./types/ScalingFactors";
+import { gameToCanvasCoords, calcScalingFactors, ZERO_SCALING_FACTORS } from "./drawUtil";
+import Rect from "./types/Rect";
+import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 
-const ROOM_FONT_HEIGHT_RATIO = 0.02; // Font height as a ratio of the canvas height.
-const ROOM_LINE_WIDTH = 0.005;
-
-type ScalingFactors = {
-  scaleX:number,
-  translateX:number,
-  scaleY:number
-  translateY:number,
-  roomFontHeight:number,
-  roomLineWidth:number
-}
-
-function _scaleCoords(x:number, y:number, scalingFactors:ScalingFactors):[x:number, y:number] {
-  return [x * scalingFactors.scaleX + scalingFactors.translateX, y * scalingFactors.scaleY + scalingFactors.translateY];
-}
-
-// Calculate scaling factors that will translate a rect of sourceWidth and sourceHeight dimensions so that
-// it will fit centered insides of a rect of destWidth and destHeight, while maintaining the orginal aspect
-// ratio of the source rect.
-function _calcScalingFactors(sourceWidth:number, sourceHeight:number, destWidth:number, destHeight:number):ScalingFactors {
-  if (sourceWidth <= 0 || sourceHeight <= 0 || destWidth <= 0 || destHeight <= 0) {
-    // Will make a visible problem but maybe not crash anything. Potentially useful for edge cases.
-    return {scaleX:0, translateX:0, scaleY:0, translateY:0, roomFontHeight:0, roomLineWidth:0}; 
-  }
-  const sourceAspectRatio = sourceWidth / sourceHeight;
-  const destAspectRatio = destWidth / destHeight;
-  let scaleX, translateX, scaleY, translateY;
-  if (sourceAspectRatio > destAspectRatio) { // The source rect is wider than the destination rect. Scale based on width.
-    scaleX = scaleY = destWidth / sourceWidth;
-    translateX = 0;
-    translateY = (destHeight - sourceHeight * scaleY) / 2;
-  } else { // The source rect is taller than the destination rect. Scale based on height.
-    scaleX = scaleY = destHeight / sourceHeight;
-    translateX = (destWidth - sourceWidth * scaleX) / 2;
-    translateY = 0;
-  }
-  const roomFontHeight = Math.round(destHeight * ROOM_FONT_HEIGHT_RATIO);
-  const roomLineWidth = Math.max(1, destHeight * ROOM_LINE_WIDTH);
-  return {scaleX, translateX, scaleY, translateY, roomFontHeight, roomLineWidth};
-}
+const PULSE_CADENCE_MS = 1000; // milliseconds for one grow+shrink cycle
+const PULSE_SCALE_PEAK = 1.2; // peak scale multiplier for pulse
+const CHARACTER_SWAY_INTERVAL = 1500; // ms for full left-right-left cycle
+const CHARACTER_SWAY_AMOUNT = 1; // pixels to sway left/right from center    
 
 function _drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const { roomLineWidth } = scalingFactors;
-  const [exitX, exitY] = _scaleCoords(exit.x, exit.y, scalingFactors);
+  const [exitX, exitY] = gameToCanvasCoords(exit.x, exit.y, scalingFactors);
   const left = exitX - roomLineWidth;
   const top = exitY - roomLineWidth;
   const width = roomLineWidth * 3;
   const height = roomLineWidth * 3;
+  context.fillStyle = "#000";
+  context.lineWidth = roomLineWidth;
   context.fillRect(left, top, width, height);
 }
 
-function _drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, 
-      scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+// Draw a stick figure inside the rect of the character.
+function _drawCharacter(character:Character, isActive:boolean, scalingFactors:ScalingFactors, 
+      context:CanvasRenderingContext2D, time:number) {
+  const { roomLineWidth } = scalingFactors;
+  const [centerX, bottomY] = gameToCanvasCoords(character.x, character.y, scalingFactors);
+  const characterWidth = roomLineWidth * 5;
+  const characterHeight = roomLineWidth * 10;
+  const centerY = Math.round(bottomY - characterHeight / 2);
+  const headRadius = Math.min(characterWidth, characterHeight) / 4;
+  context.lineWidth = scalingFactors.roomLineWidth;
+  context.strokeStyle = "#000";
+
+  if (isActive) {
+    const baseRadius = Math.hypot(characterWidth / 2, characterHeight / 2) / 2 + roomLineWidth;
+    const phase = (time % PULSE_CADENCE_MS) / PULSE_CADENCE_MS; // 0..1
+    const t = phase <= 0.5 ? phase * 2 : 2 * (1 - phase); // triangular wave 0..1..0
+    const scale = 1 + (PULSE_SCALE_PEAK - 1) * t;
+    const radius = baseRadius * scale;
+    context.fillStyle = "#ffe60040";
+    context.beginPath();
+    context.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    context.fill();
+  }
+  const swayPhase = (time % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL; // 0..1
+  const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT; // easing via sine
+  const backboneX = centerX + sway;
+  context.beginPath();
+  context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, 2 * Math.PI); // Head
+  context.moveTo(backboneX, centerY - characterHeight / 4 + headRadius); // Move to neck
+  context.lineTo(backboneX, centerY + characterHeight / 4); // Body
+  context.moveTo(backboneX, centerY); // Move to middle of body
+  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 8); // Left arm
+  context.moveTo(backboneX, centerY); // Move back to middle of body
+  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 8); // Right arm
+  context.moveTo(backboneX, centerY + characterHeight / 4); // Move to bottom of body
+  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 2); // Left leg
+  context.moveTo(backboneX, centerY + characterHeight / 4); // Move back to bottom of body
+  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 2); // Right leg
+  context.stroke();
+}
+
+function _drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacterId:string,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
   if (!room.isDiscovered) return;
-  const scaledTopLeft = _scaleCoords(room.rect.x, room.rect.y, scalingFactors);
-  const scaledBottomRight = _scaleCoords(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
+  const scaledTopLeft = gameToCanvasCoords(room.rect.x, room.rect.y, scalingFactors);
+  const scaledBottomRight = gameToCanvasCoords(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   const scaledWidth = scaledBottomRight[0] - scaledTopLeft[0];
   const scaledHeight = scaledBottomRight[1] - scaledTopLeft[1];
   context.lineWidth = scalingFactors.roomLineWidth;
@@ -82,31 +94,9 @@ function _drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean,
   context.fillText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
   context.fillStyle = "#000";
   room.exits.forEach(exit => _drawRoomExit(exit, scalingFactors, context));
-  if (isActive) charactersInRoom.forEach(character => _drawCharacter(character, scalingFactors, context));
-}
-
-// Draw a stick figure inside the rect of the character.
-function _drawCharacter(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const { roomLineWidth } = scalingFactors;
-  const [centerX, bottomY] = _scaleCoords(character.x, character.y, scalingFactors);
-  const characterWidth = roomLineWidth * 5;
-  const characterHeight = roomLineWidth * 10;
-  const centerY = Math.round(bottomY - characterHeight / 2);
-  const headRadius = Math.min(characterWidth, characterHeight) / 4;
-  context.lineWidth = scalingFactors.roomLineWidth;
-  context.beginPath();
-  context.arc(centerX, centerY - characterHeight / 4, headRadius, 0, 2 * Math.PI); // Head
-  context.moveTo(centerX, centerY - characterHeight / 4 + headRadius); // Move to neck
-  context.lineTo(centerX, centerY + characterHeight / 4); // Body
-  context.moveTo(centerX, centerY); // Move to middle of body
-  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 8); // Left arm
-  context.moveTo(centerX, centerY); // Move back to middle of body
-  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 8); // Right arm
-  context.moveTo(centerX, centerY + characterHeight / 4); // Move to bottom of body
-  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 2); // Left leg
-  context.moveTo(centerX, centerY + characterHeight / 4); // Move back to bottom of body
-  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 2); // Right leg
-  context.stroke();
+  if (isActive) charactersInRoom.forEach(character => {
+    _drawCharacter(character, character.id === activeCharacterId, scalingFactors, context, time)
+  });
 }
 
 export function findCharacter(gameState:GameState, characterId:string):Character {
@@ -144,6 +134,47 @@ function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent)
   }
 }
 
+function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFactors):Rect {
+  const roomLineWidth = scalingFactors.roomLineWidth;
+  const characterWidthPixels = roomLineWidth * 5;
+  const characterHeightPixels = roomLineWidth * 10;
+  // character.x/character.y represent the bottom-center point in game coords
+  const halfWidthGame = (characterWidthPixels / 2) / scalingFactors.scaleX;
+  const heightGame = characterHeightPixels / scalingFactors.scaleY;
+  const left = character.x - halfWidthGame;
+  const top = character.y - heightGame; // top is bottom minus full height
+  return { x: left, y: top, width: halfWidthGame * 2, height: heightGame };
+}
+
+function _findCharacterAtCoords(gameState:GameState, x:number, y:number):Character|null {
+  if (gameState.characters.length === 0) return null;
+
+  // Find nearest character by Euclidean distance in game coords
+  let nearest:Character = gameState.characters[0];
+  let nearestDist = Math.hypot(nearest.x - x, nearest.y - y);
+  for (let i = 1; i < gameState.characters.length; ++i) {
+    const c = gameState.characters[i];
+    const d = Math.hypot(c.x - x, c.y - y);
+    if (d < nearestDist) {
+      nearest = c;
+      nearestDist = d;
+    }
+  }
+
+  // Check whether the point is inside that character's bounding rect
+  const rect = _getCharacterBoundingRect(nearest, gameState.scalingFactors);
+  if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) return nearest;
+  return null;
+}
+
+function _updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent) {
+  const character = _findCharacterAtCoords(gameState, event.x, event.y);
+  if (character) {
+    const characterI = gameState.characters.indexOf(character);
+    gameState.activeCharacterI = characterI;
+  }
+}
+
 function _updateCharacterPosition(character:Character, time:number) {
   const position = findCharacterPosition(character, time);
   character.x = position.x;
@@ -159,12 +190,12 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent); break;
       case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent); break;
+      case PlayerEventType.MOUSEDOWN: _updateGameStateForMouseDown(gameState, event as MouseDownEvent); break;
       default: botch();
     }
   });
   if (gameState.isPlaying) {
     gameState.time = Date.now() + gameState.realToGameTimeOffset;
-    console.log('time = ' + gameState.time);
     _updateCharacterPositions(gameState.characters, gameState.time);
   }
   _setActiveRoomDiscovered(gameState);
@@ -177,21 +208,42 @@ function _findCharacterI(characters:Character[], characterId:string):number {
   return -1;
 }
 
-export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D) {
+function _updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRenderingContext2D):ScalingFactors {
+  const destW = context.canvas.width;
+  const destH = context.canvas.height;
+  let scalingFactors = gameState.scalingFactors;
+  assertNonNullable(scalingFactors);
+  if (scalingFactors.destWidth !== destW || scalingFactors.destHeight !== destH) {
+    const roomsBoundingRect = calcRoomsBoundingRect(gameState.rooms);
+    scalingFactors = calcScalingFactors(roomsBoundingRect.width, roomsBoundingRect.height, destW, destH);
+    gameState.scalingFactors = scalingFactors;
+  }
+  return scalingFactors;
+}
+
+function _drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
+  const activeCharacterId = gameState.characters[gameState.activeCharacterI]?.id;
+  for(let roomI = 0; roomI < gameState.rooms.length; ++roomI) {
+    const room = gameState.rooms[roomI];
+    const charactersInRoom = findCharactersInRoom(room, gameState.characters);
+    const isActive = charactersInRoom.some(character => character.id === activeCharacterId);
+    _drawRoom(room, charactersInRoom, isActive, activeCharacterId, gameState.scalingFactors, context, gameState.time);
+  }
+}
+
+export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D, onMinutesChanged:(minutes:number) => void) {
   context.fillStyle = "#000";
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   if (!gameState) return;
 
   const events:PlayerEvent[] = popPlayerEvents();
+  const beforeMinutes = msecsToMinutes(gameState.time);
   _updateGameState(gameState, events);
-  const roomsBoundingRect = calcRoomsBoundingRect(gameState.rooms);
-  const scalingFactors = _calcScalingFactors(roomsBoundingRect.width, roomsBoundingRect.height, context.canvas.width, context.canvas.height);
-  for(let roomI = 0; roomI < gameState.rooms.length; ++roomI) {
-    const room = gameState.rooms[roomI];
-    const charactersInRoom = findCharactersInRoom(room, gameState.characters);
-    const isActive = charactersInRoom.includes(gameState.characters[gameState.activeCharacterI]);
-    _drawRoom(room, charactersInRoom, isActive, scalingFactors, context);
-  }
+  const afterMinutes = msecsToMinutes(gameState.time);
+  if (afterMinutes !== beforeMinutes) onMinutesChanged(afterMinutes);
+
+  _updateScalingFactorsAsNeeded(gameState, context);
+  _drawGameState(gameState, context);
 }
 
 export function createGameStateFromLevel(level:Level):GameState {
@@ -201,7 +253,8 @@ export function createGameStateFromLevel(level:Level):GameState {
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isPlaying:false,
     time:0,
-    realToGameTimeOffset:0
+    realToGameTimeOffset:0,
+    scalingFactors:ZERO_SCALING_FACTORS
   }
   gameState.characters.forEach(character => character.scrubCoords = generateScrubCoords(character.itinerary));
   _setActiveRoomDiscovered(gameState);

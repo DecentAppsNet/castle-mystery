@@ -36,14 +36,17 @@ function _getRandomWaitTime():number {
   return v;
 }
 
+const LEFT_RIGHT_MARGIN = 5;
+const TOP_MARGIN = 10;
+const BOTTOM_MARGIN = 5;
 function _getRandomCoordsInRoom(room:Room):[x:number, y:number] {
-  const x = room.rect.x + randIntInRange(0, room.rect.width);
-  const y = room.rect.y + randIntInRange(0, room.rect.height);
+  const x = room.rect.x + LEFT_RIGHT_MARGIN + randIntInRange(0, room.rect.width - LEFT_RIGHT_MARGIN * 2);
+  const y = room.rect.y + TOP_MARGIN + randIntInRange(0, room.rect.height - TOP_MARGIN - BOTTOM_MARGIN);
   return [x, y];
 }
 
 function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):number {
-  const distance = Math.sqrt((toX - fromX)**2 + (toY - fromY)**2);
+  const distance = Math.hypot(toX - fromX, toY - fromY);
   return Math.floor(distance * WALK_MSECS_PER_PIXEL);
 }
 

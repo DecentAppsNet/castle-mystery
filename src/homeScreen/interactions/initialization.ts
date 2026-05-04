@@ -1,17 +1,19 @@
 import { MSECS_IN_MINUTE } from "@/common/timeUtil";
+import { createGameStateFromLevel } from "@/game/gameUtil";
 import { createExampleLevel } from "@/game/levelUtil";
-import Level from "@/game/types/Level";
+import GameState from "@/game/types/GameState";
 
 export type InitResults = {
-  level:Level,
+  gameState:GameState,
   minutes:number
 }
 
 export async function init():Promise<InitResults|null> {
   const level = createExampleLevel();
-  const minutes = Math.floor(level.startTime / MSECS_IN_MINUTE);
+  const gameState = createGameStateFromLevel(level);
+  const minutes = Math.floor(gameState.time / MSECS_IN_MINUTE);
   return {
-    level,
+    gameState,
     minutes
   }
 }

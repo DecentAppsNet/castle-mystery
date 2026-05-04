@@ -2,36 +2,36 @@ import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
+import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 
 let thePlayerEvents:PlayerEvent[] = [];
 
+function _replaceOrAddEventOfType(events:PlayerEvent[], newEvent:PlayerEvent) {
+  const eventIndex = events.findIndex(e => e.type === newEvent.type);
+  if (eventIndex === -1) {
+    events.push(newEvent);
+  } else {
+    events[eventIndex] = newEvent;
+  }
+}
+
 export function changeTime(time:number) {
   const event:ChangeTimeEvent = {type:PlayerEventType.CHANGE_TIME, time};
-  thePlayerEvents.push(event);
+  _replaceOrAddEventOfType(thePlayerEvents, event);
 }
 
 export function playPause(isPlaying:boolean) {
   const event:PlayPauseEvent = {type:PlayerEventType.PLAY_PAUSE, isPlaying};
-  thePlayerEvents.push(event);
+  _replaceOrAddEventOfType(thePlayerEvents, event);
 }
 
-function _filterRedundantPlayerEvents(events:PlayerEvent[]):PlayerEvent[] {
-  if (events.length < 2) return events;
-  
-  let lastChangeTimeEventI = -1;
-  for(let i = events.length - 1; i >= 0; --i) {
-    if (events[i].type === PlayerEventType.CHANGE_TIME) {
-      lastChangeTimeEventI = i;
-      break;
-    }
-  }
-
-  if (lastChangeTimeEventI === -1) return events;
-  return events.filter((e, i) => e.type !== PlayerEventType.CHANGE_TIME || i === lastChangeTimeEventI);
+export function mouseDown(x:number, y:number) {
+  const event:MouseDownEvent = {type:PlayerEventType.MOUSEDOWN, x, y};
+  _replaceOrAddEventOfType(thePlayerEvents, event);
 }
 
 export function popPlayerEvents():PlayerEvent[] {
-  const events = _filterRedundantPlayerEvents(thePlayerEvents);
+  const events = thePlayerEvents;
   thePlayerEvents = [];
   return events;
 }

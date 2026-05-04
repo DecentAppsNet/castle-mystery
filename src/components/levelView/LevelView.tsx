@@ -1,26 +1,36 @@
 import { useEffect, useRef } from 'react';
 
-import Level from "@/game/types/Level"
 import Canvas from '../canvas/Canvas';
-import { createGameStateFromLevel, updateAndDraw } from '@/game/gameUtil';
+import { mouseDown } from '@/game/playerEventUtil';
+import { canvasToGameCoords } from '@/game/drawUtil';
+import { updateAndDraw } from '@/game/gameUtil';
 import styles from './LevelView.module.css';
 import GameState from '@/game/types/GameState';
 
 type Props = {
-  level:Level
+  gameState:GameState, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
+  onMinutesChanged:(minutes:number) => void
 }
 
-function LevelView({level}:Props) {
+function LevelView({gameState, onMinutesChanged}:Props) {
   const gameStateRef = useRef<GameState>(null);
   
-  useEffect(() => {
-    gameStateRef.current = createGameStateFromLevel(level);
-  }, [level]);
+  useEffect(() => { 
+    gameStateRef.current = gameState;
+  }, [gameState]);
 
   return <div className={styles.container}>
     <Canvas 
       isAnimated={true} 
-      onDraw={(context) => updateAndDraw(gameStateRef.current, context)} 
+      onDraw={(context) => updateAndDraw(gameStateRef.current, context, onMinutesChanged)} 
+      onMouseDown={(e) => {
+        if (!gameStateRef.current) return;
+        const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
+        const x = Math.round(e.clientX - rect.left);
+        const y = Math.round(e.clientY - rect.top);
+        const [gameX, gameY] = canvasToGameCoords(x, y, gameStateRef.current.scalingFactors);
+        mouseDown(gameX, gameY);
+      }}
     />
   </div>;
 }
