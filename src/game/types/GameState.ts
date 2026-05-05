@@ -7,7 +7,7 @@ type GameState = {
   rooms:Room[],
   activeCharacterI:number,
   isPlaying:boolean,
-  realToGameTimeOffset:number,
+  realTimeToGameTimeOffset:number,
   time:number,
   scalingFactors: ScalingFactors,
   lastMinutesChangedCallRealTime:number,

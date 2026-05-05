@@ -21,7 +21,7 @@ const PULSE_CADENCE_MS = 1000; // milliseconds for one grow+shrink cycle
 const PULSE_SCALE_PEAK = 1.2; // peak scale multiplier for pulse
 const CHARACTER_SWAY_INTERVAL = 1500; // ms for full left-right-left cycle
 const CHARACTER_SWAY_AMOUNT = 1; // pixels to sway left/right from center    
-const UPDATE_MINUTES_INTERVAL = 200;
+const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
 
 function _drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const { roomLineWidth } = scalingFactors;
@@ -129,9 +129,9 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
 function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent) {
   gameState.isPlaying = event.isPlaying;
   if (event.isPlaying) {
-    gameState.realToGameTimeOffset = gameState.time - Date.now();
+    gameState.realTimeToGameTimeOffset = gameState.time - Date.now();
   } else {
-    gameState.realToGameTimeOffset = 0; // To find errors if code incorrectly assumes the value to be set.
+    gameState.realTimeToGameTimeOffset = 0; // To find errors if code incorrectly assumes the value to be set.
   }
 }
 
@@ -196,7 +196,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
     }
   });
   if (gameState.isPlaying) {
-    gameState.time = Date.now() + gameState.realToGameTimeOffset;
+    gameState.time = Date.now() + gameState.realTimeToGameTimeOffset;
     _updateCharacterPositions(gameState.characters, gameState.time);
   }
   _setActiveRoomDiscovered(gameState);
@@ -236,7 +236,7 @@ function _callOnMinutesChangedAsNeeded(gameState:GameState, onMinutesChanged:(mi
   const nextMinutes = msecsToMinutes(gameState.time);
   const now = Date.now();
   const isSameMinutesValue = nextMinutes === gameState.lastMinutesChangedValue;
-  const isThrottleIntervalElapsed = now - gameState.lastMinutesChangedCallRealTime >= UPDATE_MINUTES_INTERVAL;
+  const isThrottleIntervalElapsed = now - gameState.lastMinutesChangedCallRealTime >= UPDATE_MINUTES_REAL_TIME_INTERVAL;
   if (isSameMinutesValue || !isThrottleIntervalElapsed) return;
   gameState.lastMinutesChangedCallRealTime = now;
   gameState.lastMinutesChangedValue = nextMinutes;
@@ -263,7 +263,7 @@ export function createGameStateFromLevel(level:Level):GameState {
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isPlaying:false,
     time:0,
-    realToGameTimeOffset:0,
+    realTimeToGameTimeOffset:0,
     scalingFactors:ZERO_SCALING_FACTORS,
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN
