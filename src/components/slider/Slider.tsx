@@ -61,10 +61,20 @@ function Slider({onChange, onUpdate, value}:Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLSpanElement>(null);
   const valueRef = useRef<number>(value);
+  const isDraggingRef = useRef<boolean>(isDragging);
+  const layoutMeasurementsRef = useRef<LayoutMeasurements>(layoutMeasurements);
 
   useEffect(() => {
     valueRef.current = value;
   }, [value]);
+
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
+
+  useEffect(() => {
+    layoutMeasurementsRef.current = layoutMeasurements;
+  }, [layoutMeasurements]);
 
   useEffect(() => { // Handle mount.
     const container:HTMLDivElement|null = containerRef?.current;
@@ -73,13 +83,20 @@ function Slider({onChange, onUpdate, value}:Props) {
     _updateLayoutMeasurementsAndThumbPos(container, thumb, value, setLayoutMeasurements, setThumbPos);
     
     const _onResize = () => _updateLayoutMeasurementsAndThumbPos(container, thumb, valueRef.current, setLayoutMeasurements, setThumbPos);
+    const _onMouseMove = (event:MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const dragX = event.clientX - layoutMeasurementsRef.current.clientToContainerOffsetX;
+      setThumbPos(_calcThumbPosFromDragX(dragX, layoutMeasurementsRef.current));
+    };
     const _onMouseUp = () => setIsDragging(false);
     
     window.addEventListener('resize', _onResize, false);
+    window.addEventListener('mousemove', _onMouseMove, false);
     window.addEventListener('mouseup', _onMouseUp, false);
     
     return () => {
       window.removeEventListener('resize', _onResize, false);
+      window.removeEventListener('mousemove', _onMouseMove, false);
       window.removeEventListener('mouseup', _onMouseUp, false);
     }
   }, []);
@@ -105,10 +122,6 @@ function Slider({onChange, onUpdate, value}:Props) {
     <div 
       className={styles.container} 
       ref={containerRef}
-      onMouseMoveCapture={(event) => {
-        const dragX = event.nativeEvent.clientX - layoutMeasurements.clientToContainerOffsetX; 
-        if (isDragging) { setThumbPos(_calcThumbPosFromDragX(dragX, layoutMeasurements)); }
-      }}
     >
       <div className={styles.groove} />
       <span 

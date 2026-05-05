@@ -145,7 +145,10 @@ export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, 
 
 function _timeToScrubPositionI(time:number):number {
   time = clamp(time, 0, MSECS_IN_DAY);
-  return Math.floor(SCRUB_POSITION_COUNT * (time / MSECS_IN_DAY));
+  return Math.min(
+    SCRUB_POSITION_COUNT - 1,
+    Math.floor(SCRUB_POSITION_COUNT * (time / MSECS_IN_DAY))
+  );
 }
 
 export function generateScrubPositions(events:ItineraryEvent[]):Position[] {
