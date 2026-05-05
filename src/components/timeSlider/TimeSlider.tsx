@@ -98,6 +98,7 @@ function TimeSlider(props:Props) {
 
   useEffect(() => {
     if (sliderWidth <= 0) return;
+    console.log('!!1');
     const positionedLabels = _createPositionedLabels(labels, fromMinutes, toMinutes, sliderWidth);
     setTimeLabelPositions(calcTimeLabelPositions(positionedLabels, sliderWidth));
   }, [labels, sliderWidth, fromMinutes, toMinutes]);
