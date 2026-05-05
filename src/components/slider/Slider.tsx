@@ -117,16 +117,24 @@ function Slider({onChange, onUpdate, value}:Props) {
     if (isSendingOnChange) onChange(nextValue);
     if (isDragging !== wasDragging) setWasDragging(isDragging);
   }, [thumbPos, isDragging, wasDragging, layoutMeasurements]);
+
+  function _onContainerMouseDown(event:React.MouseEvent<HTMLDivElement>) {
+    if (event.target === thumbRef.current) return;
+    const dragX = event.clientX - layoutMeasurements.clientToContainerOffsetX;
+    setThumbPos(_calcThumbPosFromDragX(dragX, layoutMeasurements));
+    setIsDragging(true);
+  }
   
   return (
     <div 
       className={styles.container} 
       ref={containerRef}
+      onMouseDown={_onContainerMouseDown}
     >
       <div className={styles.groove} />
       <span 
         className={styles.thumb}
-        onMouseDown={() => { setIsDragging(true); }}
+        onMouseDown={() => setIsDragging(true)}
         style={{left: `${thumbPos}px`}} 
         ref={thumbRef}
       />

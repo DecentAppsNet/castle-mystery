@@ -38,7 +38,6 @@ function HomeScreen() {
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
           minutes={minutes}
-          step={.1}
           labels={gameState.labels}
           onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
         />

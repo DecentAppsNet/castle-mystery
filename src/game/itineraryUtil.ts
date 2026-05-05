@@ -7,14 +7,14 @@ import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Position from "./types/Position";
 import Character from "./types/Character";
-import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_SECOND } from "@/common/timeUtil";
+import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
 import { rand, randIntInRange } from "@/common/randUtil";
 import { findRoomAtPosition, findRoomNearestToPosition } from "./roomUtil";
 import RoomExit from "./types/RoomExit";
+import ItineraryIndex from "./types/ItineraryIndex";
 
 const WALK_MSECS_PER_PIXEL = 30;
-const SCRUB_POSITION_COUNT = MINUTES_IN_DAY;
 
 enum Activity {
   WAIT = 'wait',
@@ -114,14 +114,21 @@ function _createExitRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startT
   return _createWalkEvent(startTime, x, y, toX, toY);
 }
 
-function _findLastEventNoPrecedingTime(events:ItineraryEvent[], time:number, fromEventNo:number):number {
-  assert(events.length > 0);
-  assert(events[0].startTime === 0);
-  assert(time >= 0);
-  let eventNo = fromEventNo;
-  while(eventNo < events.length && events[eventNo].startTime <= time) { ++eventNo; }
-  assert(eventNo > 0); // Because the first event is 0 and the time is >= 0, eventNo should have advanced.
-  return --eventNo;
+function _findEventNoForTime(itineraryIndex:ItineraryIndex, time:number):number {
+  const { eventStartTimes } = itineraryIndex;
+  assert(eventStartTimes.length > 0);
+  let low = 0;
+  let high = eventStartTimes.length - 1;
+  const clampedTime = Math.max(0, time);
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    if (eventStartTimes[mid] <= clampedTime) {
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return Math.max(0, high);
 }
 
 function _interpolatePosition(fromPosition:Position, toPosition:Position, interpolateAmount:number):Position {
@@ -134,51 +141,24 @@ function _interpolatePosition(fromPosition:Position, toPosition:Position, interp
   }
 }
 
-export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, eventNo:number):[position:Position, nextEventNo:number] {
-  eventNo = _findLastEventNoPrecedingTime(itinerary, time, eventNo);
+export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, itineraryIndex:ItineraryIndex):Position {
+  const eventNo = _findEventNoForTime(itineraryIndex, time);
   const precedingEvent:WalkEvent = itinerary[eventNo] as WalkEvent;
   assert(precedingEvent.type === ItineraryEventType.WALK); // Will need to change code below if more event types added.
   const elapsedFactor = clamp((time - precedingEvent.startTime) / precedingEvent.duration, 0, 1);
-  const position = _interpolatePosition(precedingEvent.fromPosition, precedingEvent.toPosition, elapsedFactor);
-  return [position, eventNo];
+  return _interpolatePosition(precedingEvent.fromPosition, precedingEvent.toPosition, elapsedFactor);
 }
 
-function _timeToScrubPositionI(time:number):number {
-  time = clamp(time, 0, MSECS_IN_DAY);
-  return Math.min(
-    SCRUB_POSITION_COUNT - 1,
-    Math.floor(SCRUB_POSITION_COUNT * (time / MSECS_IN_DAY))
-  );
-}
-
-export function generateScrubPositions(events:ItineraryEvent[]):Position[] {
+export function createItineraryIndex(events:ItineraryEvent[]):ItineraryIndex {
   assert(events.length > 0);
   assert(events[0].startTime === 0);
-  const positions:Position[] = [];
-  const stepCount = SCRUB_POSITION_COUNT;
-  const duration = MSECS_IN_DAY;
-  const stepDuration = duration / stepCount;
-  let eventNo = 0;
-  let position:Position;
-
-  for(let stepNo = 0; stepNo < stepCount; ++stepNo) {
-    const scrubTime = stepNo * stepDuration;
-    [position, eventNo] = _findItineraryPosition(events, scrubTime, eventNo);
-    positions.push(position);
-  }
-
-  return positions;
+  return {
+    eventStartTimes:events.map(event => event.startTime)
+  };
 }
 
 export function findCharacterPosition(character:Character, time:number):Position {
-  let position:Position;
-  [position] = _findItineraryPosition(character.itinerary, time, 0);
-  return position;
-}
-
-export function findCharacterScrubPosition(character:Character, time:number):Position {
-  const scrubPositionI = _timeToScrubPositionI(time);
-  return character.scrubPositions[scrubPositionI];
+  return _findItineraryPosition(character.itinerary, time, character.itineraryIndex);
 }
 
 export function generateRandomItinerary(level:Level, characterX:number, characterY:number, duration:number):Itinerary {

@@ -4,7 +4,7 @@ import GameState from "./types/GameState";
 import Room, { duplicateRoom } from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
-import { findCharacterPosition, findCharacterScrubPosition, generateScrubPositions } from "./itineraryUtil";
+import { findCharacterPosition } from "./itineraryUtil";
 import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
@@ -118,7 +118,7 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
   const { time } = event;
   for(let i = 0; i < gameState.characters.length; ++i) {
     const character = gameState.characters[i];
-    const position = findCharacterScrubPosition(character, time);
+    const position = findCharacterPosition(character, time);
     character.x = position.x;
     character.y = position.y;
   }
@@ -270,7 +270,6 @@ export function createGameStateFromLevel(level:Level):GameState {
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN
   }
-  gameState.characters.forEach(character => character.scrubPositions = generateScrubPositions(character.itinerary));
   _setActiveRoomDiscovered(gameState);
   return gameState;
 }

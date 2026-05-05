@@ -4,7 +4,7 @@ import Room from "./types/Room";
 import Rect from "./types/Rect";
 import Character from './types/Character';
 import { findRoom } from "./roomUtil";
-import { generateRandomItinerary } from "./itineraryUtil";
+import { createItineraryIndex, generateRandomItinerary } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 
@@ -80,7 +80,7 @@ function _addCharacterToRoom(level:Level, roomId:string, characterId:string, dur
   const x = Math.floor(room.rect.x + room.rect.width / 2);
   const y = Math.floor(room.rect.y + room.rect.height / 2);
   const itinerary = generateRandomItinerary(level, x, y, duration);
-  const character:Character = { id: characterId, x, y, itinerary, scrubPositions:[] };
+  const character:Character = { id: characterId, x, y, itinerary, itineraryIndex:createItineraryIndex(itinerary) };
   level.characters.push(character);
 }
 
