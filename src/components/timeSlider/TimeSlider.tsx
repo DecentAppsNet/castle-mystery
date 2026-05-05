@@ -3,7 +3,7 @@ import styles from "./TimeSlider.module.css";
 import Slider from "../slider/Slider";
 import { useEffect, useRef, useState } from "react";
 import { calcTimeLabelPositions } from "./labelUtil";
-import TimeLabel from "./types/TimeLabel";
+import TimeLabel from "@/game/types/TimeLabel";
 import TimeLabelPositions from "./types/TimeLabelPositions";
 
 type Props = {

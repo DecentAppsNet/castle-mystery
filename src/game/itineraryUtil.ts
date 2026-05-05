@@ -178,12 +178,12 @@ export function findCharacterScrubPosition(character:Character, time:number):Pos
   return character.scrubPositions[scrubPositionI];
 }
 
-export function generateRandomItinerary(level:Level, characterX:number, characterY:number):Itinerary {
+export function generateRandomItinerary(level:Level, characterX:number, characterY:number, duration:number):Itinerary {
   const itinerary:Itinerary = [];
   let time = 0; // Start of day.
   let x = characterX;
   let y = characterY;
-  while(time < MSECS_IN_DAY) {
+  while(time < duration) {
     const activity = time === 0 ? Activity.MOVE_IN_ROOM : _getRandomActivity();
     switch(activity) {
       case Activity.MOVE_IN_ROOM:

@@ -8,15 +8,6 @@ import TimeSlider from "@/components/timeSlider/TimeSlider";
 import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
 import { updatePlayPause, updateTime } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
-import TimeLabel from "@/components/timeSlider/types/TimeLabel";
-
-const TIME_SLIDER_LABELS:TimeLabel[] = [
-  {minutes:0, label:"midnight"},
-  {minutes:360, label:"6am"},
-  {minutes:720, label:"noon"},
-  {minutes:1080, label:"6pm"},
-  {minutes:1440, label:"midnight"}
-];
 
 function HomeScreen() {
   const [gameState, setGameState] = useState<GameState|null>(null);
@@ -35,17 +26,20 @@ function HomeScreen() {
 
   if (!gameState) return null;
 
+  const fromMinutes = gameState.labels[0]?.minutes ?? 0;
+  const toMinutes = gameState.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
+
   return (
     <div className={styles.container}>
       <TopBar />
       <div className={styles.content}>
         <LevelView gameState={gameState} onMinutesChanged={setMinutes} />
         <TimeSlider
-          fromMinutes={0}
-          toMinutes={1440}
+          fromMinutes={fromMinutes}
+          toMinutes={toMinutes}
           minutes={minutes}
           step={.1}
-          labels={TIME_SLIDER_LABELS}
+          labels={gameState.labels}
           onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
         />
         <PlayPauseButton isPlaying={isPlaying} onChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)} />

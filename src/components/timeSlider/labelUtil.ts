@@ -1,4 +1,4 @@
-import TimeLabel from "./types/TimeLabel";
+import TimeLabel from "@/game/types/TimeLabel";
 import TimeLabelPositions from "./types/TimeLabelPositions";
 
 const NUDGE_ALLOWANCE = 12;

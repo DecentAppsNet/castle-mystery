@@ -5,6 +5,8 @@ import Rect from "./types/Rect";
 import Character from './types/Character';
 import { findRoom } from "./roomUtil";
 import { generateRandomItinerary } from "./itineraryUtil";
+import TimeLabel from "./types/TimeLabel";
+import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 
 function _findSharedWallSectionBetweenRooms(room1:Room, room2:Room):Rect|null {
   // Helper to compute 1D intersection of two ranges. Returns [start,end] or null.
@@ -52,17 +54,37 @@ function _addExitBetweenRooms(level:Level, room1Id:string, room2Id:string) {
   room2.exits.push(exit);
 }
 
-function _addCharacterToRoom(level:Level, roomId:string, characterId:string) {
+function _formatMinutesAsTimeLabel(minutes:number):string {
+  const wholeMinutes = Math.round(minutes);
+  const hours24 = Math.floor(wholeMinutes / 60);
+  const mins = wholeMinutes % 60;
+  if (hours24 === 0 && mins === 0) return "midnight";
+  if (hours24 === 12 && mins === 0) return "noon";
+  const suffix = hours24 < 12 || hours24 === 24 ? "am" : "pm";
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+  if (mins === 0) return `${hours12}${suffix}`;
+  return `${hours12}:${mins.toString().padStart(2, '0')}${suffix}`;
+}
+
+function _createTimeLabels(duration:number):TimeLabel[] {
+  const durationMinutes = duration / MSECS_IN_MINUTE;
+  return [0, .25, .5, .75, 1].map(ratio => {
+    const minutes = durationMinutes * ratio;
+    return { minutes, label:_formatMinutesAsTimeLabel(minutes) };
+  });
+}
+
+function _addCharacterToRoom(level:Level, roomId:string, characterId:string, duration:number) {
   const room = findRoom(level.rooms, roomId);
   assertNonNullable(room);
   const x = Math.floor(room.rect.x + room.rect.width / 2);
   const y = Math.floor(room.rect.y + room.rect.height / 2);
-  const itinerary = generateRandomItinerary(level, x, y);
+  const itinerary = generateRandomItinerary(level, x, y, duration);
   const character:Character = { id: characterId, x, y, itinerary, scrubPositions:[] };
   level.characters.push(character);
 }
 
-export function createExampleLevel():Level {
+export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
   const level:Level = {
     rooms: [
       {
@@ -96,12 +118,13 @@ export function createExampleLevel():Level {
     ],
     characters: [],
     activeCharacterId: 'king',
-    startTime: 0
+    startTime: 0,
+    labels: _createTimeLabels(duration)
   }
   _addExitBetweenRooms(level, 'livingRoom', 'bedroom');
   _addExitBetweenRooms(level, 'bedroom', 'bathroom');
   _addExitBetweenRooms(level, 'livingRoom', 'kitchen');
-  _addCharacterToRoom(level, 'bedroom', 'king');
-  _addCharacterToRoom(level, 'livingRoom', 'queen');
+  _addCharacterToRoom(level, 'bedroom', 'king', duration);
+  _addCharacterToRoom(level, 'livingRoom', 'queen', duration);
   return level;
 }

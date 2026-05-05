@@ -1,4 +1,4 @@
-import TimeLabel from "./TimeLabel";
+import TimeLabel from "@/game/types/TimeLabel";
 
 type TimeLabelPositions = {
   containerWidth:number, // The container width that was used for calculating positions.

@@ -264,6 +264,7 @@ export function createGameStateFromLevel(level:Level):GameState {
     isPlaying:false,
     time:0,
     realTimeToGameTimeOffset:0,
+    labels:level.labels.map(label => ({...label})),
     scalingFactors:ZERO_SCALING_FACTORS,
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN
