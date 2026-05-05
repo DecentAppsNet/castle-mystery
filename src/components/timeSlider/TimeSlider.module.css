@@ -33,28 +33,3 @@
     pointer-events: none;
     z-index: 1;
 }
-
-.firstMidnight {
-    composes: timeLabel;
-    left: 0;
-}
-
-.sixAm {
-    composes: timeLabel;
-    left: 24.5%;
-}
-
-.noon {
-    composes: timeLabel;
-    left: 48%;
-}
-
-.sixPm {
-    composes: timeLabel;
-    left: 72%;
-}
-
-.secondMidnight {
-    composes: timeLabel;
-    right: 0;
-}

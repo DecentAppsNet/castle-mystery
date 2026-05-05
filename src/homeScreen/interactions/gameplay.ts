@@ -2,7 +2,7 @@ import { MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { changeTime, playPause } from "@/game/playerEventUtil";
 
 export function msecsToMinutes(msecs:number):number {
-  return Math.floor(msecs / MSECS_IN_MINUTE);
+  return msecs / MSECS_IN_MINUTE;
 }
 
 export function minutesToMsecs(minutes:number):number {

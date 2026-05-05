@@ -13,7 +13,7 @@ import { rand, randIntInRange } from "@/common/randUtil";
 import { findRoomAtCoords, findRoomNearestToCoords } from "./roomUtil";
 import RoomExit from "./types/RoomExit";
 
-const WALK_MSECS_PER_PIXEL = 10; // Takes 1 second to walk a hundred pixels.
+const WALK_MSECS_PER_PIXEL = 30;
 const SCRUB_COORD_COUNT = MINUTES_IN_DAY;
 
 enum Activity {
