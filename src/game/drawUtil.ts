@@ -14,11 +14,11 @@ export const ZERO_SCALING_FACTORS:ScalingFactors = {
   destHeight:0
 }
 
-export function gameToCanvasCoords(x:number, y:number, scalingFactors:ScalingFactors):[x:number, y:number] {
+export function gameToCanvasPosition(x:number, y:number, scalingFactors:ScalingFactors):[x:number, y:number] {
   return [x * scalingFactors.scaleX + scalingFactors.translateX, y * scalingFactors.scaleY + scalingFactors.translateY];
 }
 
-export function canvasToGameCoords(x:number, y:number, scalingFactors:ScalingFactors):[x:number, y:number] {
+export function canvasToGamePosition(x:number, y:number, scalingFactors:ScalingFactors):[x:number, y:number] {
   if (!scalingFactors || scalingFactors.scaleX === 0 || scalingFactors.scaleY === 0) return [x, y];
   return [(x - scalingFactors.translateX) / scalingFactors.scaleX, (y - scalingFactors.translateY) / scalingFactors.scaleY];
 }

@@ -4,10 +4,11 @@ import styles from './HomeScreen.module.css';
 import { init } from "./interactions/initialization";
 import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/components/levelView/LevelView";
-import TimeSlider, { TimeLabel } from "@/components/timeSlider/TimeSlider";
+import TimeSlider from "@/components/timeSlider/TimeSlider";
 import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
 import { updatePlayPause, updateTime } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
+import TimeLabel from "@/components/timeSlider/types/TimeLabel";
 
 const TIME_SLIDER_LABELS:TimeLabel[] = [
   {minutes:0, label:"midnight"},

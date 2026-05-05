@@ -35,7 +35,7 @@ function _findSharedWallSectionBetweenRooms(room1:Room, room2:Room):Rect|null {
   }
 }
 
-function _findExitCoordsFromSharedWallSection(sharedWallSection:Rect):[x:number, y:number] {
+function _findExitPositionFromSharedWallSection(sharedWallSection:Rect):[x:number, y:number] {
   return sharedWallSection.height === 0
     ? [Math.round(sharedWallSection.x + sharedWallSection.width / 2), sharedWallSection.y]
     : [sharedWallSection.x, Math.round(sharedWallSection.y + sharedWallSection.height / 2)];
@@ -46,7 +46,7 @@ function _addExitBetweenRooms(level:Level, room1Id:string, room2Id:string) {
   const room2 = findRoom(level.rooms, room2Id);
   const sharedWallSection = _findSharedWallSectionBetweenRooms(room1, room2);
   assertNonNullable(sharedWallSection, 'rooms must be adjacent');
-  const [x,y] = _findExitCoordsFromSharedWallSection(sharedWallSection);
+  const [x,y] = _findExitPositionFromSharedWallSection(sharedWallSection);
   const exit = { room1Id, room2Id, x, y }
   room1.exits.push(exit);
   room2.exits.push(exit);
@@ -58,7 +58,7 @@ function _addCharacterToRoom(level:Level, roomId:string, characterId:string) {
   const x = Math.floor(room.rect.x + room.rect.width / 2);
   const y = Math.floor(room.rect.y + room.rect.height / 2);
   const itinerary = generateRandomItinerary(level, x, y);
-  const character:Character = { id: characterId, x, y, itinerary, scrubCoords:[] };
+  const character:Character = { id: characterId, x, y, itinerary, scrubPositions:[] };
   level.characters.push(character);
 }
 

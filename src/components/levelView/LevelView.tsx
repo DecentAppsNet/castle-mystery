@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import Canvas from '../canvas/Canvas';
 import { mouseDown } from '@/game/playerEventUtil';
-import { canvasToGameCoords } from '@/game/drawUtil';
+import { canvasToGamePosition } from '@/game/drawUtil';
 import { updateAndDraw } from '@/game/gameUtil';
 import styles from './LevelView.module.css';
 import GameState from '@/game/types/GameState';
@@ -28,7 +28,7 @@ function LevelView({gameState, onMinutesChanged}:Props) {
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
         const x = Math.round(e.clientX - rect.left);
         const y = Math.round(e.clientY - rect.top);
-        const [gameX, gameY] = canvasToGameCoords(x, y, gameStateRef.current.scalingFactors);
+        const [gameX, gameY] = canvasToGamePosition(x, y, gameStateRef.current.scalingFactors);
         mouseDown(gameX, gameY);
       }}
     />

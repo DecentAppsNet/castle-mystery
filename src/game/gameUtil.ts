@@ -4,8 +4,8 @@ import GameState from "./types/GameState";
 import Room, { duplicateRoom } from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
-import { findCharacterPosition, findCharacterScrubCoords, generateScrubCoords } from "./itineraryUtil";
-import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtCoords } from "./roomUtil";
+import { findCharacterPosition, findCharacterScrubPosition, generateScrubPositions } from "./itineraryUtil";
+import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
@@ -13,7 +13,7 @@ import Level from "./types/Level";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
 import { msecsToMinutes } from "@/homeScreen/interactions/gameplay";
 import ScalingFactors from "./types/ScalingFactors";
-import { gameToCanvasCoords, calcScalingFactors, ZERO_SCALING_FACTORS } from "./drawUtil";
+import { gameToCanvasPosition, calcScalingFactors, ZERO_SCALING_FACTORS } from "./drawUtil";
 import Rect from "./types/Rect";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 
@@ -25,7 +25,7 @@ const UPDATE_MINUTES_INTERVAL = 200;
 
 function _drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const { roomLineWidth } = scalingFactors;
-  const [exitX, exitY] = gameToCanvasCoords(exit.x, exit.y, scalingFactors);
+  const [exitX, exitY] = gameToCanvasPosition(exit.x, exit.y, scalingFactors);
   const left = exitX - roomLineWidth;
   const top = exitY - roomLineWidth;
   const width = roomLineWidth * 3;
@@ -39,7 +39,7 @@ function _drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:Can
 function _drawCharacter(character:Character, isActive:boolean, scalingFactors:ScalingFactors, 
       context:CanvasRenderingContext2D, time:number) {
   const { roomLineWidth } = scalingFactors;
-  const [centerX, bottomY] = gameToCanvasCoords(character.x, character.y, scalingFactors);
+  const [centerX, bottomY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
   const characterWidth = roomLineWidth * 5;
   const characterHeight = roomLineWidth * 10;
   const centerY = Math.round(bottomY - characterHeight / 2);
@@ -79,8 +79,8 @@ function _drawCharacter(character:Character, isActive:boolean, scalingFactors:Sc
 function _drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacterId:string,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
   if (!room.isDiscovered) return;
-  const scaledTopLeft = gameToCanvasCoords(room.rect.x, room.rect.y, scalingFactors);
-  const scaledBottomRight = gameToCanvasCoords(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
+  const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
+  const scaledBottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   const scaledWidth = scaledBottomRight[0] - scaledTopLeft[0];
   const scaledHeight = scaledBottomRight[1] - scaledTopLeft[1];
   context.lineWidth = scalingFactors.roomLineWidth;
@@ -109,7 +109,7 @@ export function findCharacter(gameState:GameState, characterId:string):Character
 function _setActiveRoomDiscovered(gameState:GameState) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI];
   if (activeCharacter) {
-    const activeRoom = findRoomAtCoords(gameState.rooms, activeCharacter.x, activeCharacter.y);
+    const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
     if (activeRoom) activeRoom.isDiscovered = true;
   }
 }
@@ -118,9 +118,9 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
   const { time } = event;
   for(let i = 0; i < gameState.characters.length; ++i) {
     const character = gameState.characters[i];
-    const coords = findCharacterScrubCoords(character, time);
-    character.x = coords.x;
-    character.y = coords.y;
+    const position = findCharacterScrubPosition(character, time);
+    character.x = position.x;
+    character.y = position.y;
   }
   gameState.time = time;
   gameState.isPlaying = false;
@@ -139,7 +139,7 @@ function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFa
   const roomLineWidth = scalingFactors.roomLineWidth;
   const characterWidthPixels = roomLineWidth * 5;
   const characterHeightPixels = roomLineWidth * 10;
-  // character.x/character.y represent the bottom-center point in game coords
+  // character.x/character.y represent the bottom-center point in game position space
   const halfWidthGame = (characterWidthPixels / 2) / scalingFactors.scaleX;
   const heightGame = characterHeightPixels / scalingFactors.scaleY;
   const left = character.x - halfWidthGame;
@@ -147,10 +147,10 @@ function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFa
   return { x: left, y: top, width: halfWidthGame * 2, height: heightGame };
 }
 
-function _findCharacterAtCoords(gameState:GameState, x:number, y:number):Character|null {
+function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Character|null {
   if (gameState.characters.length === 0) return null;
 
-  // Find nearest character by Euclidean distance in game coords
+  // Find nearest character by Euclidean distance in game position
   let nearest:Character = gameState.characters[0];
   let nearestDist = Math.hypot(nearest.x - x, nearest.y - y);
   for (let i = 1; i < gameState.characters.length; ++i) {
@@ -169,7 +169,7 @@ function _findCharacterAtCoords(gameState:GameState, x:number, y:number):Charact
 }
 
 function _updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent) {
-  const character = _findCharacterAtCoords(gameState, event.x, event.y);
+  const character = _findCharacterAtPosition(gameState, event.x, event.y);
   if (character) {
     const characterI = gameState.characters.indexOf(character);
     gameState.activeCharacterI = characterI;
@@ -268,7 +268,7 @@ export function createGameStateFromLevel(level:Level):GameState {
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN
   }
-  gameState.characters.forEach(character => character.scrubCoords = generateScrubCoords(character.itinerary));
+  gameState.characters.forEach(character => character.scrubPositions = generateScrubPositions(character.itinerary));
   _setActiveRoomDiscovered(gameState);
   return gameState;
 }

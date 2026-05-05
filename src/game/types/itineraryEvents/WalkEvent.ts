@@ -1,9 +1,9 @@
 import ItineraryEventBase from "./ItineraryEventBase";
-import Coord from "../Coord";
+import Position from "../Position";
 
 type WalkEvent = ItineraryEventBase & {
-  fromPosition: Coord,
-  toPosition: Coord,
+  fromPosition: Position,
+  toPosition: Position,
   duration: number
 }
 

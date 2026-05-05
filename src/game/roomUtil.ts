@@ -4,7 +4,7 @@ import Rect from "./types/Rect";
 import Room from "./types/Room";
 import Character from "./types/Character";
 
-function _areCoordsInRect(x:number, y:number, rect:Rect):boolean {
+function _isPositionInRect(x:number, y:number, rect:Rect):boolean {
   return x >= rect.x && x < rect.x + rect.width && y >= rect.y && y < rect.y + rect.height;
 }
 
@@ -14,11 +14,11 @@ export function findRoom(rooms:Room[], roomId:string):Room {
   return room;
 }
 
-export function findRoomAtCoords(rooms:Room[], x:number, y:number):Room | null {
-  return rooms.find((r) => _areCoordsInRect(x, y, r.rect)) || null;
+export function findRoomAtPosition(rooms:Room[], x:number, y:number):Room | null {
+  return rooms.find((r) => _isPositionInRect(x, y, r.rect)) || null;
 }
 
-export function findRoomNearestToCoords(rooms:Room[], x:number, y:number):Room {
+export function findRoomNearestToPosition(rooms:Room[], x:number, y:number):Room {
   assert(rooms.length > 0, 'there should be at least one room in the level');
   let nearestRoom:Room|null = null;
   let nearestDistanceSquared = Infinity;
@@ -36,7 +36,7 @@ export function findRoomNearestToCoords(rooms:Room[], x:number, y:number):Room {
 }
 
 export function findCharactersInRoom(room:Room, characters:Character[]):Character[] {
-  return characters.filter(character => _areCoordsInRect(character.x, character.y, room.rect));
+  return characters.filter(character => _isPositionInRect(character.x, character.y, room.rect));
 }
 
 export function calcRoomsBoundingRect(rooms:Room[]):Rect {

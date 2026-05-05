@@ -1,4 +1,4 @@
-import Coord, { duplicateCoord } from "./Coord";
+import Position, { duplicatePosition } from "./Position";
 import Itinerary, { duplicateItinerary } from "./Itinerary";
 
 type Character = {
@@ -6,14 +6,14 @@ type Character = {
   x:number,
   y:number,
   itinerary:Itinerary,
-  scrubCoords:Coord[]
+  scrubPositions:Position[]
 }
 
 export function duplicateCharacter(from:Character):Character {
   return {
     id:from.id, x:from.x, y:from.y, 
     itinerary:duplicateItinerary(from.itinerary),
-    scrubCoords:from.scrubCoords.map(duplicateCoord)
+    scrubPositions:from.scrubPositions.map(duplicatePosition)
   };
 }
 
