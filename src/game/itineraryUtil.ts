@@ -50,6 +50,18 @@ function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):n
   return Math.floor(distance * WALK_MSECS_PER_PIXEL);
 }
 
+function _createWalkEvent(startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEvent {
+  const duration = _calcWalkDuration(fromX, fromY, toX, toY);
+  assert(duration > 0);
+  return {
+    type:ItineraryEventType.WALK,
+    startTime,
+    fromPosition:{x:fromX, y:fromY},
+    toPosition:{x:toX, y:toY},
+    duration
+  };
+}
+
 function _findRoomAtCoords(rooms:Room[], x:number, y:number):Room {
   let room = findRoomAtCoords(rooms, x, y);
   if (!room) {
@@ -62,15 +74,11 @@ function _findRoomAtCoords(rooms:Room[], x:number, y:number):Room {
 
 function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
   const room = _findRoomAtCoords(rooms, x, y);
-  const [toX, toY] = _getRandomCoordsInRoom(room);
-  const duration = _calcWalkDuration(x, y, toX, toY);
-  return {
-    type:ItineraryEventType.WALK,
-    startTime,
-    fromPosition:{x, y},
-    toPosition:{x:toX, y:toY},
-    duration
-  }
+  let toX:number, toY:number;
+  do {
+    [toX, toY] = _getRandomCoordsInRoom(room);
+  } while (toX === x && toY === y);
+  return _createWalkEvent(startTime, x, y, toX, toY);
 }
 
 const EXIT_CLEARANCE_PIXELS = 3;
@@ -92,20 +100,18 @@ function _calcExitClearanceOffsets(room:Room, exit:RoomExit):[dx:number, dy:numb
 function _createExitRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
   const room = _findRoomAtCoords(rooms, x, y);
   if (!room.exits.length) return _createInRoomRandomWalkEvent(rooms, x, y, startTime);
-  const toExit = room.exits[randIntInRange(0, room.exits.length)];
+  const candidateExits = room.exits.filter(exit => {
+    const [dx, dy] = _calcExitClearanceOffsets(room, exit);
+    return Math.round(exit.x + dx) !== x || Math.round(exit.y + dy) !== y;
+  });
+  if (!candidateExits.length) return _createInRoomRandomWalkEvent(rooms, x, y, startTime);
+  const toExit = candidateExits[randIntInRange(0, candidateExits.length)];
   assertNonNullable(toExit);
 
   const [dx, dy] = _calcExitClearanceOffsets(room, toExit);
   const toX = Math.round(toExit.x + dx);
   const toY = Math.round(toExit.y + dy);
-  const duration = _calcWalkDuration(x, y, toX, toY);
-  return {
-    type:ItineraryEventType.WALK,
-    startTime,
-    fromPosition:{x, y},
-    toPosition:{x:toX, y:toY},
-    duration
-  };
+  return _createWalkEvent(startTime, x, y, toX, toY);
 }
 
 function _findLastEventNoPrecedingTime(events:ItineraryEvent[], time:number, fromEventNo:number):number {

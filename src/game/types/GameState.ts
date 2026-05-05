@@ -9,7 +9,9 @@ type GameState = {
   isPlaying:boolean,
   realToGameTimeOffset:number,
   time:number,
-  scalingFactors: ScalingFactors
+  scalingFactors: ScalingFactors,
+  lastMinutesChangedCallRealTime:number,
+  lastMinutesChangedValue:number
 }
 
 export default GameState;
