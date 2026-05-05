@@ -7,6 +7,7 @@ type Level = {
   characters:Character[],
   activeCharacterId:string,
   startTime:number,
+  duration:number,
   labels:TimeLabel[]
 }
 

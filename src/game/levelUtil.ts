@@ -119,6 +119,7 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
     characters: [],
     activeCharacterId: 'king',
     startTime: 0,
+    duration,
     labels: _createTimeLabels(duration)
   }
   _addExitBetweenRooms(level, 'livingRoom', 'bedroom');

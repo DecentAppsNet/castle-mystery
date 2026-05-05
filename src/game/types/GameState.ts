@@ -10,6 +10,7 @@ type GameState = {
   isPlaying:boolean,
   realTimeToGameTimeOffset:number,
   time:number,
+  duration:number,
   labels:TimeLabel[],
   scalingFactors: ScalingFactors,
   lastMinutesChangedCallRealTime:number,

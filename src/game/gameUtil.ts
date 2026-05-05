@@ -263,6 +263,7 @@ export function createGameStateFromLevel(level:Level):GameState {
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isPlaying:false,
     time:0,
+    duration:level.duration,
     realTimeToGameTimeOffset:0,
     labels:level.labels.map(label => ({...label})),
     scalingFactors:ZERO_SCALING_FACTORS,
