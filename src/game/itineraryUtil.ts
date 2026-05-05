@@ -97,21 +97,44 @@ function _calcExitClearanceOffsets(room:Room, exit:RoomExit):[dx:number, dy:numb
   return [dx, dy];
 }
 
-function _createExitRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
+function _calcExitApproachPosition(room:Room, exit:RoomExit):Position {
+  const [dx, dy] = _calcExitClearanceOffsets(room, exit);
+  return {
+    x: Math.round(exit.x - dx),
+    y: Math.round(exit.y - dy)
+  };
+}
+
+function _calcExitDestinationPosition(room:Room, exit:RoomExit):Position {
+  const [dx, dy] = _calcExitClearanceOffsets(room, exit);
+  return {
+    x: Math.round(exit.x + dx),
+    y: Math.round(exit.y + dy)
+  };
+}
+
+function _createExitRoomRandomWalkEvents(rooms:Room[], x:number, y:number, startTime:number):WalkEvent[] {
   const room = _findRoomAtPosition(rooms, x, y);
-  if (!room.exits.length) return _createInRoomRandomWalkEvent(rooms, x, y, startTime);
+  if (!room.exits.length) return [_createInRoomRandomWalkEvent(rooms, x, y, startTime)];
   const candidateExits = room.exits.filter(exit => {
-    const [dx, dy] = _calcExitClearanceOffsets(room, exit);
-    return Math.round(exit.x + dx) !== x || Math.round(exit.y + dy) !== y;
+    const approachPosition = _calcExitApproachPosition(room, exit);
+    return approachPosition.x !== x || approachPosition.y !== y;
   });
-  if (!candidateExits.length) return _createInRoomRandomWalkEvent(rooms, x, y, startTime);
+  if (!candidateExits.length) return [_createInRoomRandomWalkEvent(rooms, x, y, startTime)];
   const toExit = candidateExits[randIntInRange(0, candidateExits.length)];
   assertNonNullable(toExit);
 
-  const [dx, dy] = _calcExitClearanceOffsets(room, toExit);
-  const toX = Math.round(toExit.x + dx);
-  const toY = Math.round(toExit.y + dy);
-  return _createWalkEvent(startTime, x, y, toX, toY);
+  const approachPosition = _calcExitApproachPosition(room, toExit);
+  const destinationPosition = _calcExitDestinationPosition(room, toExit);
+  const approachEvent = _createWalkEvent(startTime, x, y, approachPosition.x, approachPosition.y);
+  const destinationEvent = _createWalkEvent(
+    startTime + approachEvent.duration,
+    approachPosition.x,
+    approachPosition.y,
+    destinationPosition.x,
+    destinationPosition.y
+  );
+  return [approachEvent, destinationEvent];
 }
 
 function _findEventNoForTime(itineraryIndex:ItineraryIndex, time:number):number {
@@ -181,11 +204,12 @@ export function generateRandomItinerary(level:Level, characterX:number, characte
 
       case Activity.EXIT_ROOM:
         {
-          const event = _createExitRoomRandomWalkEvent(level.rooms, x, y, time);
-          itinerary.push(event);
-          time += event.duration;
-          x = event.toPosition.x;
-          y = event.toPosition.y;
+          const events = _createExitRoomRandomWalkEvents(level.rooms, x, y, time);
+          itinerary.push(...events);
+          const lastEvent = events[events.length - 1];
+          time = lastEvent.startTime + lastEvent.duration;
+          x = lastEvent.toPosition.x;
+          y = lastEvent.toPosition.y;
         }
       break;
 
