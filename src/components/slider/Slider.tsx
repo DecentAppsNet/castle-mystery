@@ -60,6 +60,11 @@ function Slider({onChange, onUpdate, value}:Props) {
   
   const containerRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLSpanElement>(null);
+  const valueRef = useRef<number>(value);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   useEffect(() => { // Handle mount.
     const container:HTMLDivElement|null = containerRef?.current;
@@ -67,7 +72,7 @@ function Slider({onChange, onUpdate, value}:Props) {
     if (!container || !thumb) return;
     _updateLayoutMeasurementsAndThumbPos(container, thumb, value, setLayoutMeasurements, setThumbPos);
     
-    const _onResize = () => _updateLayoutMeasurementsAndThumbPos(container, thumb, value, setLayoutMeasurements, setThumbPos);
+    const _onResize = () => _updateLayoutMeasurementsAndThumbPos(container, thumb, valueRef.current, setLayoutMeasurements, setThumbPos);
     const _onMouseUp = () => setIsDragging(false);
     
     window.addEventListener('resize', _onResize, false);
@@ -77,7 +82,15 @@ function Slider({onChange, onUpdate, value}:Props) {
       window.removeEventListener('resize', _onResize, false);
       window.removeEventListener('mouseup', _onMouseUp, false);
     }
-  }, [setThumbPos, setLayoutMeasurements, value]);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) return;
+    const container:HTMLDivElement|null = containerRef?.current;
+    const thumb:HTMLSpanElement|null = thumbRef?.current;
+    if (!container || !thumb) return;
+    _updateLayoutMeasurementsAndThumbPos(container, thumb, value, setLayoutMeasurements, setThumbPos);
+  }, [value, isDragging]);
   
   useEffect(() => {
     const isSendingOnChange = !isDragging && wasDragging && onChange;
