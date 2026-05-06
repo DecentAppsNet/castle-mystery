@@ -1,6 +1,6 @@
 enum ItineraryEventType {
   WALK = "Walk",
-  SCRUB = "Scrub"
+  SPEECH = "Speech"
 }
 
 export default ItineraryEventType;

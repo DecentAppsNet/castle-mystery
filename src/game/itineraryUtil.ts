@@ -3,9 +3,10 @@ import Itinerary from "./types/Itinerary";
 import Level from "./types/Level";
 import Room from "./types/Room";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
+import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
-import Position from "./types/Position";
+import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
@@ -15,23 +16,62 @@ import RoomExit from "./types/RoomExit";
 import ItineraryIndex from "./types/ItineraryIndex";
 
 const WALK_MSECS_PER_PIXEL = 30;
+const SPEECH_ACTIVITY_PROBABILITY = .03;
+const MIN_SPEECH_TIME = MSECS_IN_SECOND;
+const SPEECH_MSECS_PER_CHARACTER = 90;
 
 type CharacterPose = {
   position:Position,
-  facingAngle:number
+  facingAngle:number,
+  speech:string|null
 }
+
+const MUSING_SPEECHES = [
+  "I'm very busy.",
+  "This is my favorite room.",
+  "Why am I the only one here?",
+  "I should tidy this place.",
+  "Something feels off today.",
+  "I could use a nap.",
+  "I hope no one interrupts me.",
+  "There has to be a clue nearby.",
+  "I keep thinking about dinner.",
+  "I know I left something here."
+];
+
+const CONVERSATION_SPEECHES = [
+  "Hello!",
+  "Why are you here?",
+  "Did you hear that?",
+  "Please keep your voice down.",
+  "You look suspicious.",
+  "Can I ask you something?",
+  "Stay where I can see you.",
+  "This room is off limits.",
+  "I need your attention.",
+  "What are you doing here?"
+];
 
 enum Activity {
   WAIT = 'wait',
   MOVE_IN_ROOM = 'move',
-  EXIT_ROOM = 'exitRoom'
+  EXIT_ROOM = 'exitRoom',
+  SPEECH = 'speech'
 }
 
 function _getRandomActivity():Activity {
   const r = rand();
+  if (r < SPEECH_ACTIVITY_PROBABILITY) return Activity.SPEECH;
   if (r < .3) return Activity.WAIT;
   if (r < .9) return Activity.MOVE_IN_ROOM;
   return Activity.EXIT_ROOM;
+}
+
+function _pickRandom<T>(items:T[]):T {
+  assert(items.length > 0);
+  const item = items[randIntInRange(0, items.length)];
+  assertNonNullable(item);
+  return item;
 }
 
 const MAX_WAIT_TIME = 2 * MSECS_IN_SECOND;
@@ -39,6 +79,10 @@ function _getRandomWaitTime():number {
   let v = randIntInRange(0, MAX_WAIT_TIME);
   assert(v < MAX_WAIT_TIME);
   return v;
+}
+
+function _calcSpeechDuration(speech:string):number {
+  return clamp(speech.length * SPEECH_MSECS_PER_CHARACTER, MIN_SPEECH_TIME, Number.POSITIVE_INFINITY);
 }
 
 const LEFT_RIGHT_MARGIN = 5;
@@ -72,6 +116,16 @@ function _createWalkEvent(startTime:number, fromX:number, fromY:number, toX:numb
   };
 }
 
+function _createSpeechEvent(startTime:number, speech:string, facingAngle:number):SpeechEvent {
+  return {
+    type:ItineraryEventType.SPEECH,
+    startTime,
+    speech,
+    facingAngle,
+    duration:_calcSpeechDuration(speech)
+  };
+}
+
 function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   let room = findRoomAtPosition(rooms, x, y);
   if (!room) {
@@ -89,6 +143,28 @@ function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTim
     [toX, toY] = _getRandomPositionInRoom(room);
   } while (toX === x && toY === y);
   return _createWalkEvent(startTime, x, y, toX, toY);
+}
+
+function _findCharactersInSameRoomAtTime(level:Level, room:Room, time:number):Character[] {
+  return level.characters.filter(character => {
+    const position = findCharacterPosition(character, time);
+    const characterRoom = findRoomAtPosition(level.rooms, position.x, position.y);
+    return characterRoom?.id === room.id;
+  });
+}
+
+function _createRandomSpeechEvent(level:Level, x:number, y:number, startTime:number, currentFacingAngle:number):SpeechEvent {
+  const room = _findRoomAtPosition(level.rooms, x, y);
+  const otherCharacters = _findCharactersInSameRoomAtTime(level, room, startTime);
+  if (!otherCharacters.length) return _createSpeechEvent(startTime, _pickRandom(MUSING_SPEECHES), currentFacingAngle);
+
+  const targetCharacter = _pickRandom(otherCharacters);
+  const targetPosition = findCharacterPosition(targetCharacter, startTime);
+  return _createSpeechEvent(
+    startTime,
+    _pickRandom(CONVERSATION_SPEECHES),
+    _calcFacingAngle(x, y, targetPosition.x, targetPosition.y)
+  );
 }
 
 const EXIT_CLEARANCE_PIXELS = 3;
@@ -164,6 +240,17 @@ function _findEventNoForTime(itineraryIndex:ItineraryIndex, time:number):number 
   return Math.max(0, high);
 }
 
+function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position):Position {
+  switch(event.type) {
+    case ItineraryEventType.WALK:
+      return duplicatePosition((event as WalkEvent).toPosition);
+    case ItineraryEventType.SPEECH:
+      return duplicatePosition(eventStartPosition);
+    default:
+      assert(false, `unsupported itinerary event type ${(event as ItineraryEvent).type}`);
+  }
+}
+
 function _interpolatePosition(fromPosition:Position, toPosition:Position, interpolateAmount:number):Position {
   assert(interpolateAmount >= 0);
   assert(interpolateAmount <= 2);
@@ -180,20 +267,59 @@ export function findCharacterPose(character:Character, time:number):CharacterPos
 
 export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, itineraryIndex:ItineraryIndex):CharacterPose {
   const eventNo = _findEventNoForTime(itineraryIndex, time);
-  const precedingEvent:WalkEvent = itinerary[eventNo] as WalkEvent;
-  assert(precedingEvent.type === ItineraryEventType.WALK); // Will need to change code below if more event types added.
-  const elapsedFactor = clamp((time - precedingEvent.startTime) / precedingEvent.duration, 0, 1);
-  return {
-    position:_interpolatePosition(precedingEvent.fromPosition, precedingEvent.toPosition, elapsedFactor),
-    facingAngle:precedingEvent.facingAngle
-  };
+  const event = itinerary[eventNo];
+  const eventStartPosition = itineraryIndex.eventStartPositions[eventNo];
+  assertNonNullable(event);
+  assertNonNullable(eventStartPosition);
+
+  switch(event.type) {
+    case ItineraryEventType.WALK:
+      {
+        const walkEvent = event as WalkEvent;
+        const elapsedFactor = clamp((time - event.startTime) / event.duration, 0, 1);
+        return {
+          position:_interpolatePosition(walkEvent.fromPosition, walkEvent.toPosition, elapsedFactor),
+          facingAngle:walkEvent.facingAngle,
+          speech:null
+        };
+      }
+
+    case ItineraryEventType.SPEECH:
+      {
+        const speechEvent = event as SpeechEvent;
+      return {
+        position:duplicatePosition(eventStartPosition),
+        facingAngle:speechEvent.facingAngle,
+        speech:time < speechEvent.startTime + speechEvent.duration ? speechEvent.speech : null
+      };
+      }
+
+    default:
+      assert(false, `unsupported itinerary event type ${(event as ItineraryEvent).type}`);
+  }
 }
 
 export function createItineraryIndex(events:ItineraryEvent[]):ItineraryIndex {
   assert(events.length > 0);
   assert(events[0].startTime === 0);
+  const eventStartPositions:Position[] = [];
+  let currentPosition:Position|null = null;
+
+  for (let i = 0; i < events.length; ++i) {
+    const event = events[i];
+    assertNonNullable(event);
+    if (i === 0) {
+      assert(event.type === ItineraryEventType.WALK);
+      currentPosition = duplicatePosition((event as WalkEvent).fromPosition);
+    }
+    assertNonNullable(currentPosition);
+    eventStartPositions.push(duplicatePosition(currentPosition));
+    currentPosition = _getEventEndPosition(event, currentPosition);
+  }
+
   return {
-    eventStartTimes:events.map(event => event.startTime)
+    eventStartTimes:events.map(event => event.startTime),
+    eventStartPositions
   };
 }
 
@@ -206,6 +332,7 @@ export function generateRandomItinerary(level:Level, characterX:number, characte
   let time = 0; // Start of day.
   let x = characterX;
   let y = characterY;
+  let facingAngle = 0;
   while(time < duration) {
     const activity = time === 0 ? Activity.MOVE_IN_ROOM : _getRandomActivity();
     switch(activity) {
@@ -216,6 +343,7 @@ export function generateRandomItinerary(level:Level, characterX:number, characte
           time += event.duration;
           x = event.toPosition.x;
           y = event.toPosition.y;
+          facingAngle = event.facingAngle;
         }
       break;
 
@@ -224,9 +352,20 @@ export function generateRandomItinerary(level:Level, characterX:number, characte
           const events = _createExitRoomRandomWalkEvents(level.rooms, x, y, time);
           itinerary.push(...events);
           const lastEvent = events[events.length - 1];
+          assertNonNullable(lastEvent);
           time = lastEvent.startTime + lastEvent.duration;
           x = lastEvent.toPosition.x;
           y = lastEvent.toPosition.y;
+          facingAngle = lastEvent.facingAngle;
+        }
+      break;
+
+      case Activity.SPEECH:
+        {
+          const event = _createRandomSpeechEvent(level, x, y, time, facingAngle);
+          itinerary.push(event);
+          time += event.duration;
+          facingAngle = event.facingAngle;
         }
       break;
 
