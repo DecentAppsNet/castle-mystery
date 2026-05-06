@@ -14,6 +14,7 @@ import { rand, randIntInRange } from "@/common/randUtil";
 import { findRoomAtPosition, findRoomNearestToPosition } from "./roomUtil";
 import RoomExit from "./types/RoomExit";
 import ItineraryIndex from "./types/ItineraryIndex";
+import { clipMoveToObstructions, isPositionInRoomObstruction } from "./obstructionUtil";
 
 const WALK_MSECS_PER_PIXEL = 30;
 const SPEECH_ACTIVITY_PROBABILITY = .03;
@@ -89,9 +90,19 @@ const LEFT_RIGHT_MARGIN = 5;
 const TOP_MARGIN = 10;
 const BOTTOM_MARGIN = 5;
 function _getRandomPositionInRoom(room:Room):[x:number, y:number] {
-  const x = room.rect.x + LEFT_RIGHT_MARGIN + randIntInRange(0, room.rect.width - LEFT_RIGHT_MARGIN * 2);
-  const y = room.rect.y + TOP_MARGIN + randIntInRange(0, room.rect.height - TOP_MARGIN - BOTTOM_MARGIN);
-  return [x, y];
+  for (let attemptNo = 0; attemptNo < 50; ++attemptNo) {
+    const x = room.rect.x + LEFT_RIGHT_MARGIN + randIntInRange(0, room.rect.width - LEFT_RIGHT_MARGIN * 2);
+    const y = room.rect.y + TOP_MARGIN + randIntInRange(0, room.rect.height - TOP_MARGIN - BOTTOM_MARGIN);
+    if (!isPositionInRoomObstruction(room, x, y)) return [x, y];
+  }
+
+  for (let y = room.rect.y + TOP_MARGIN; y < room.rect.y + room.rect.height - BOTTOM_MARGIN; ++y) {
+    for (let x = room.rect.x + LEFT_RIGHT_MARGIN; x < room.rect.x + room.rect.width - LEFT_RIGHT_MARGIN; ++x) {
+      if (!isPositionInRoomObstruction(room, x, y)) return [x, y];
+    }
+  }
+
+  assert(false, `unable to find unobstructed position in room ${room.id}`);
 }
 
 function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):number {
@@ -103,16 +114,26 @@ function _calcFacingAngle(fromX:number, fromY:number, toX:number, toY:number):nu
   return Math.atan2(toY - fromY, toX - fromX);
 }
 
-function _createWalkEvent(startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEvent {
-  const duration = _calcWalkDuration(fromX, fromY, toX, toY);
-  assert(duration > 0);
+type WalkEventCreationResult = {
+  event:WalkEvent|null,
+  wasClipped:boolean
+}
+
+function _createWalkEvent(room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEventCreationResult {
+  const clippedMove = clipMoveToObstructions(room, { x:fromX, y:fromY }, { x:toX, y:toY });
+  const finalToPosition = clippedMove.position;
+  const duration = _calcWalkDuration(fromX, fromY, finalToPosition.x, finalToPosition.y);
+  if (duration <= 0) return { event:null, wasClipped:clippedMove.wasClipped };
   return {
-    type:ItineraryEventType.WALK,
-    startTime,
-    fromPosition:{x:fromX, y:fromY},
-    toPosition:{x:toX, y:toY},
-    facingAngle:_calcFacingAngle(fromX, fromY, toX, toY),
-    duration
+    event:{
+      type:ItineraryEventType.WALK,
+      startTime,
+      fromPosition:{x:fromX, y:fromY},
+      toPosition:finalToPosition,
+      facingAngle:_calcFacingAngle(fromX, fromY, finalToPosition.x, finalToPosition.y),
+      duration
+    },
+    wasClipped:clippedMove.wasClipped
   };
 }
 
@@ -138,11 +159,16 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
 
 function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
   const room = _findRoomAtPosition(rooms, x, y);
-  let toX:number, toY:number;
-  do {
-    [toX, toY] = _getRandomPositionInRoom(room);
-  } while (toX === x && toY === y);
-  return _createWalkEvent(startTime, x, y, toX, toY);
+  for (let attemptNo = 0; attemptNo < 50; ++attemptNo) {
+    let toX:number, toY:number;
+    do {
+      [toX, toY] = _getRandomPositionInRoom(room);
+    } while (toX === x && toY === y);
+    const result = _createWalkEvent(room, startTime, x, y, toX, toY);
+    if (result.event) return result.event;
+  }
+
+  assert(false, `unable to create unobstructed in-room walk from (${x}, ${y})`);
 }
 
 function _findCharactersInSameRoomAtTime(level:Level, room:Room, time:number):Character[] {
@@ -212,15 +238,22 @@ function _createExitRoomRandomWalkEvents(rooms:Room[], x:number, y:number, start
 
   const approachPosition = _calcExitApproachPosition(room, toExit);
   const destinationPosition = _calcExitDestinationPosition(room, toExit);
-  const approachEvent = _createWalkEvent(startTime, x, y, approachPosition.x, approachPosition.y);
-  const destinationEvent = _createWalkEvent(
-    startTime + approachEvent.duration,
+  const approachResult = _createWalkEvent(room, startTime, x, y, approachPosition.x, approachPosition.y);
+  if (!approachResult.event) return [_createInRoomRandomWalkEvent(rooms, x, y, startTime)];
+  if (approachResult.wasClipped) return [approachResult.event];
+
+  const destinationRoom = _findRoomAtPosition(rooms, destinationPosition.x, destinationPosition.y);
+  assertNonNullable(destinationRoom);
+
+  const destinationResult = _createWalkEvent(
+    destinationRoom,
+    startTime + approachResult.event.duration,
     approachPosition.x,
     approachPosition.y,
     destinationPosition.x,
     destinationPosition.y
   );
-  return [approachEvent, destinationEvent];
+  return destinationResult.event ? [approachResult.event, destinationResult.event] : [approachResult.event];
 }
 
 function _findEventNoForTime(itineraryIndex:ItineraryIndex, time:number):number {

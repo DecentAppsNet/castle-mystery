@@ -7,6 +7,7 @@ import { findRoom } from "./roomUtil";
 import { createItineraryIndex, generateRandomItinerary } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
+import { isPositionInRoomObstruction } from "./obstructionUtil";
 
 function _findSharedWallSectionBetweenRooms(room1:Room, room2:Room):Rect|null {
   // Helper to compute 1D intersection of two ranges. Returns [start,end] or null.
@@ -74,11 +75,31 @@ function _createTimeLabels(duration:number):TimeLabel[] {
   });
 }
 
+function _findCharacterStartPosition(room:Room):[x:number, y:number] {
+  const centerX = Math.floor(room.rect.x + room.rect.width / 2);
+  const centerY = Math.floor(room.rect.y + room.rect.height / 2);
+  let nearestPosition:[x:number, y:number]|null = null;
+  let nearestDistanceSquared = Infinity;
+
+  for (let y = room.rect.y + 1; y < room.rect.y + room.rect.height - 1; ++y) {
+    for (let x = room.rect.x + 1; x < room.rect.x + room.rect.width - 1; ++x) {
+      if (isPositionInRoomObstruction(room, x, y)) continue;
+      const distanceSquared = (centerX - x) ** 2 + (centerY - y) ** 2;
+      if (distanceSquared < nearestDistanceSquared) {
+        nearestPosition = [x, y];
+        nearestDistanceSquared = distanceSquared;
+      }
+    }
+  }
+
+  assertNonNullable(nearestPosition, `no unobstructed character start position available in room ${room.id}`);
+  return nearestPosition;
+}
+
 function _addCharacterToRoom(level:Level, roomId:string, characterId:string, duration:number) {
   const room = findRoom(level.rooms, roomId);
   assertNonNullable(room);
-  const x = Math.floor(room.rect.x + room.rect.width / 2);
-  const y = Math.floor(room.rect.y + room.rect.height / 2);
+  const [x, y] = _findCharacterStartPosition(room);
   const itinerary = generateRandomItinerary(level, x, y, duration);
   const character:Character = { id: characterId, x, y, facingAngle:itinerary[0].facingAngle, itinerary, itineraryIndex:createItineraryIndex(itinerary) };
   level.characters.push(character);
@@ -91,6 +112,10 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         id: "livingRoom",
         title: "Living Room",
         rect: { x: 0, y: 0, width: 50, height: 100 },
+        obstructions: [
+          { rect: { x: 10, y: 18, width: 12, height: 20 } },
+          { rect: { x: 28, y: 58, width: 10, height: 18 } }
+        ],
         exits: [],
         isDiscovered: false
       },
@@ -98,6 +123,9 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         id: "bedroom",
         title: "Bedroom",
         rect: { x: 50, y: 0, width: 50, height: 30 },
+        obstructions: [
+          { rect: { x: 60, y: 8, width: 16, height: 8 } }
+        ],
         exits: [],
         isDiscovered: true
       },
@@ -105,6 +133,9 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         id: "bathroom",
         title: "Bathroom",
         rect: { x: 50, y: 30, width: 50, height: 20 },
+        obstructions: [
+          { rect: { x: 82, y: 34, width: 10, height: 10 } }
+        ],
         exits: [],
         isDiscovered: false
       },
@@ -112,6 +143,10 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         id: "kitchen",
         title: "Kitchen",
         rect: { x: 50, y: 50, width: 50, height: 50 },
+        obstructions: [
+          { rect: { x: 58, y: 60, width: 14, height: 10 } },
+          { rect: { x: 78, y: 74, width: 12, height: 14 } }
+        ],
         exits: [],
         isDiscovered: false
       },

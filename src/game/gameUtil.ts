@@ -3,6 +3,7 @@ import Character, { duplicateCharacter } from "./types/Character";
 import GameState from "./types/GameState";
 import Room, { duplicateRoom } from "./types/Room";
 import RoomExit from "./types/RoomExit";
+import Obstruction from "./types/Obstruction";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import { findCharacterPose } from "./itineraryUtil";
 import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
@@ -35,6 +36,17 @@ function _drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:Can
   context.fillStyle = "#000";
   context.lineWidth = roomLineWidth;
   context.fillRect(left, top, width, height);
+}
+
+function _drawObstruction(obstruction:Obstruction, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const [left, top] = gameToCanvasPosition(obstruction.rect.x, obstruction.rect.y, scalingFactors);
+  const [right, bottom] = gameToCanvasPosition(
+    obstruction.rect.x + obstruction.rect.width,
+    obstruction.rect.y + obstruction.rect.height,
+    scalingFactors
+  );
+  context.fillStyle = "#000";
+  context.fillRect(left, top, right - left, bottom - top);
 }
 
 function _getCharacterVisibilityOrigin(character:Character, scalingFactors:ScalingFactors):Position {
@@ -143,6 +155,7 @@ function _drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, ac
   context.lineWidth = scalingFactors.roomLineWidth;
   context.fillStyle = isActive ? "#fff" : "#aaa";
   context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
+  room.obstructions.forEach(obstruction => _drawObstruction(obstruction, scalingFactors, context));
   context.strokeStyle = "#333";
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   if (isActive && activeCharacter) _drawVisibilityCone(activeCharacter, room, scalingFactors, context);
