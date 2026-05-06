@@ -198,6 +198,11 @@ function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent)
   }
 }
 
+function _pauseGameState(gameState:GameState) {
+  gameState.isPlaying = false;
+  gameState.realTimeToGameTimeOffset = 0;
+}
+
 function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFactors):Rect {
   const roomLineWidth = scalingFactors.roomLineWidth;
   const characterWidthPixels = roomLineWidth * 5;
@@ -266,8 +271,10 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
     }
   });
   if (gameState.isPlaying) {
-    gameState.time = Date.now() + gameState.realTimeToGameTimeOffset;
+    const nextTime = Math.min(gameState.duration, Date.now() + gameState.realTimeToGameTimeOffset);
+    gameState.time = nextTime;
     _updateCharacterPositions(gameState.characters, gameState.time);
+    if (nextTime >= gameState.duration) _pauseGameState(gameState);
   }
   _setActiveRoomDiscovered(gameState);
 }
@@ -313,13 +320,16 @@ function _callOnMinutesChangedAsNeeded(gameState:GameState, onMinutesChanged:(mi
   onMinutesChanged(nextMinutes);
 }
 
-export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D, onMinutesChanged:(minutes:number) => void) {
+export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
+  onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void) {
   context.fillStyle = "#000";
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   if (!gameState) return;
 
+  const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
   _updateGameState(gameState, events);
+  if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   _callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
 
   _updateScalingFactorsAsNeeded(gameState, context);

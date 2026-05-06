@@ -28,12 +28,13 @@ function HomeScreen() {
 
   const fromMinutes = gameState.labels[0]?.minutes ?? 0;
   const toMinutes = gameState.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
+  const isPlayPauseDisabled = minutes >= toMinutes;
 
   return (
     <div className={styles.container}>
       <TopBar />
       <div className={styles.content}>
-        <LevelView gameState={gameState} onMinutesChanged={setMinutes} />
+        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} />
         <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
@@ -41,7 +42,11 @@ function HomeScreen() {
           labels={gameState.labels}
           onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
         />
-        <PlayPauseButton isPlaying={isPlaying} onChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)} />
+        <PlayPauseButton
+          isPlaying={isPlaying}
+          disabled={isPlayPauseDisabled}
+          onChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
+        />
       </div>
     </div>
   );
