@@ -19,12 +19,19 @@ import { gameToCanvasPosition, calcScalingFactors, ZERO_SCALING_FACTORS } from "
 import Rect from "./types/Rect";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import Position from "./types/Position";
-import { calcVisibilityPolygon, isPositionInVisibilityCone } from "./visibilityUtil";
+import { calcVisibilityPolygon, isPositionVisible } from "./visibilityUtil";
 
 const CHARACTER_SWAY_INTERVAL = 1500; // ms for full left-right-left cycle
 const CHARACTER_SWAY_AMOUNT = 1; // pixels to sway left/right from center    
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
 const VISIBILITY_CONE_ANGLE = Math.PI / 2;
+const COLOR_BLACK = "#000";
+const COLOR_DARK_GRAY = "#333";
+const COLOR_ACTIVE_ROOM_FILL = "#fff";
+const COLOR_INACTIVE_ROOM_FILL = "#aaa";
+const COLOR_ROOM_TITLE_TEXT = "#ddd";
+const COLOR_VISIBILITY_FILL = "#ffe60040";
+const COLOR_SPEECH_BUBBLE_FILL = "#fff8cc";
 
 function _drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const { roomLineWidth } = scalingFactors;
@@ -33,7 +40,7 @@ function _drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:Can
   const top = exitY - roomLineWidth;
   const width = roomLineWidth * 3;
   const height = roomLineWidth * 3;
-  context.fillStyle = "#000";
+  context.fillStyle = COLOR_BLACK;
   context.lineWidth = roomLineWidth;
   context.fillRect(left, top, width, height);
 }
@@ -45,8 +52,27 @@ function _drawObstruction(obstruction:Obstruction, scalingFactors:ScalingFactors
     obstruction.rect.y + obstruction.rect.height,
     scalingFactors
   );
-  context.fillStyle = "#000";
-  context.fillRect(left, top, right - left, bottom - top);
+  const width = right - left;
+  const height = bottom - top;
+  const hatchSpacing = Math.max(6, scalingFactors.roomLineWidth * 3);
+  context.save();
+  context.fillStyle = COLOR_INACTIVE_ROOM_FILL;
+  context.fillRect(left, top, width, height);
+  context.beginPath();
+  context.rect(left, top, width, height);
+  context.clip();
+  context.strokeStyle = COLOR_BLACK;
+  context.lineWidth = Math.max(0.5, scalingFactors.roomLineWidth / 2);
+  for (let lineX = left - height; lineX <= right; lineX += hatchSpacing) {
+    context.beginPath();
+    context.moveTo(lineX, bottom);
+    context.lineTo(lineX + height, top);
+    context.stroke();
+  }
+  context.strokeStyle = COLOR_BLACK;
+  context.lineWidth = scalingFactors.roomLineWidth;
+  context.strokeRect(left, top, width, height);
+  context.restore();
 }
 
 function _getCharacterVisibilityOrigin(character:Character, scalingFactors:ScalingFactors):Position {
@@ -60,10 +86,10 @@ function _getCharacterVisibilityOrigin(character:Character, scalingFactors:Scali
 
 function _drawVisibilityCone(activeCharacter:Character, room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const visibilityOrigin = _getCharacterVisibilityOrigin(activeCharacter, scalingFactors);
-  const visibilityPolygon = calcVisibilityPolygon(visibilityOrigin, activeCharacter.facingAngle, room.rect, VISIBILITY_CONE_ANGLE);
+  const visibilityPolygon = calcVisibilityPolygon(visibilityOrigin, activeCharacter.facingAngle, room, VISIBILITY_CONE_ANGLE);
   if (visibilityPolygon.length < 3) return;
 
-  context.fillStyle = "#ffe60040";
+  context.fillStyle = COLOR_VISIBILITY_FILL;
   context.beginPath();
   const [startX, startY] = gameToCanvasPosition(visibilityPolygon[0].x, visibilityPolygon[0].y, scalingFactors);
   context.moveTo(startX, startY);
@@ -76,14 +102,15 @@ function _drawVisibilityCone(activeCharacter:Character, room:Room, scalingFactor
   context.fill();
 }
 
-function _findVisibleCharactersInRoom(charactersInRoom:Character[], activeCharacter:Character, scalingFactors:ScalingFactors):Character[] {
+function _findVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character, scalingFactors:ScalingFactors):Character[] {
   const visibilityOrigin = _getCharacterVisibilityOrigin(activeCharacter, scalingFactors);
   return charactersInRoom.filter(character => {
     if (character.id === activeCharacter.id) return true;
-    return isPositionInVisibilityCone(
+    return isPositionVisible(
       visibilityOrigin,
       { x: character.x, y: character.y },
       activeCharacter.facingAngle,
+      room,
       VISIBILITY_CONE_ANGLE
     );
   });
@@ -105,12 +132,12 @@ function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, roo
   const unclampedTop = anchorTopY - boxHeight - scalingFactors.roomLineWidth * 2;
   const left = Math.round(clamp(unclampedLeft, roomLeft, roomRight - boxWidth));
   const top = Math.round(clamp(unclampedTop, roomTop, roomBottom - boxHeight));
-  context.fillStyle = "#fff8cc";
-  context.strokeStyle = "#333";
+  context.fillStyle = COLOR_SPEECH_BUBBLE_FILL;
+  context.strokeStyle = COLOR_DARK_GRAY;
   context.lineWidth = Math.max(1, scalingFactors.roomLineWidth / 2);
   context.fillRect(left, top, boxWidth, boxHeight);
   context.strokeRect(left, top, boxWidth, boxHeight);
-  context.fillStyle = "#000";
+  context.fillStyle = COLOR_BLACK;
   context.fillText(speech, left + boxWidth / 2, top + boxHeight / 2);
   context.restore();
 }
@@ -125,7 +152,7 @@ function _drawCharacter(character:Character, room:Room, scalingFactors:ScalingFa
   const centerY = Math.round(bottomY - characterHeight / 2);
   const headRadius = Math.min(characterWidth, characterHeight) / 4;
   context.lineWidth = scalingFactors.roomLineWidth;
-  context.strokeStyle = "#000";
+  context.strokeStyle = COLOR_BLACK;
   const swayPhase = (time % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL; // 0..1
   const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT; // easing via sine
   const backboneX = centerX + sway;
@@ -153,21 +180,26 @@ function _drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, ac
   const scaledWidth = scaledBottomRight[0] - scaledTopLeft[0];
   const scaledHeight = scaledBottomRight[1] - scaledTopLeft[1];
   context.lineWidth = scalingFactors.roomLineWidth;
-  context.fillStyle = isActive ? "#fff" : "#aaa";
+  context.fillStyle = isActive ? COLOR_ACTIVE_ROOM_FILL : COLOR_INACTIVE_ROOM_FILL;
   context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   room.obstructions.forEach(obstruction => _drawObstruction(obstruction, scalingFactors, context));
-  context.strokeStyle = "#333";
+  context.strokeStyle = COLOR_DARK_GRAY;
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   if (isActive && activeCharacter) _drawVisibilityCone(activeCharacter, room, scalingFactors, context);
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillStyle = "#999";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;
+  if (isActive) {
+    context.lineWidth = Math.max(1, scalingFactors.roomLineWidth);
+    context.strokeStyle = COLOR_BLACK;
+    context.strokeText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
+  }
+  context.fillStyle = COLOR_ROOM_TITLE_TEXT;
   context.fillText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
-  context.fillStyle = "#000";
+  context.fillStyle = COLOR_BLACK;
   room.exits.forEach(exit => _drawRoomExit(exit, scalingFactors, context));
   if (isActive && activeCharacter) {
-    const visibleCharacters = _findVisibleCharactersInRoom(charactersInRoom, activeCharacter, scalingFactors);
+    const visibleCharacters = _findVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, scalingFactors);
     visibleCharacters.forEach(character => {
       const speech = isPlaying ? findCharacterPose(character, time).speech : null;
       _drawCharacter(character, room, scalingFactors, context, time, speech);
@@ -233,7 +265,7 @@ function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Chara
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   const candidateCharacters = activeCharacter && activeRoom
-    ? _findVisibleCharactersInRoom(findCharactersInRoom(activeRoom, gameState.characters), activeCharacter, gameState.scalingFactors)
+    ? _findVisibleCharactersInRoom(activeRoom, findCharactersInRoom(activeRoom, gameState.characters), activeCharacter, gameState.scalingFactors)
     : gameState.characters;
   if (candidateCharacters.length === 0) return null;
 

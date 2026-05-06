@@ -1,10 +1,20 @@
+import Obstruction from "./types/Obstruction";
 import Position from "./types/Position";
 import Rect from "./types/Rect";
+import Room from "./types/Room";
 
 const EPSILON = 0.000001;
+const ANGLE_EPSILON = 0.0001;
 
-type RectBoundary = 'left' | 'right' | 'top' | 'bottom';
-const RECT_BOUNDARIES:RectBoundary[] = ['left', 'right', 'top', 'bottom'];
+type Segment = {
+  start:Position,
+  end:Position
+}
+
+type RayHit = {
+  point:Position,
+  distance:number
+}
 
 function _normalizeAngle(angle:number):number {
   while (angle <= -Math.PI) angle += Math.PI * 2;
@@ -12,83 +22,141 @@ function _normalizeAngle(angle:number):number {
   return angle;
 }
 
-function _clipPolygonAgainstBoundary(points:Position[], rect:Rect, boundary:RectBoundary):Position[] {
-  if (!points.length) return [];
-  const result:Position[] = [];
-
-  function _isInside(point:Position):boolean {
-    switch(boundary) {
-      case 'left': return point.x >= rect.x - EPSILON;
-      case 'right': return point.x <= rect.x + rect.width + EPSILON;
-      case 'top': return point.y >= rect.y - EPSILON;
-      default: return point.y <= rect.y + rect.height + EPSILON;
-    }
-  }
-
-  function _calcIntersection(start:Position, end:Position):Position {
-    switch(boundary) {
-      case 'left':
-      case 'right': {
-        const boundaryX = boundary === 'left' ? rect.x : rect.x + rect.width;
-        const dx = end.x - start.x;
-        const ratio = Math.abs(dx) < EPSILON ? 0 : (boundaryX - start.x) / dx;
-        return { x: boundaryX, y: start.y + ratio * (end.y - start.y) };
-      }
-
-      case 'top':
-      default: {
-        const boundaryY = boundary === 'top' ? rect.y : rect.y + rect.height;
-        const dy = end.y - start.y;
-        const ratio = Math.abs(dy) < EPSILON ? 0 : (boundaryY - start.y) / dy;
-        return { x: start.x + ratio * (end.x - start.x), y: boundaryY };
-      }
-    }
-  }
-
-  for (let i = 0; i < points.length; ++i) {
-    const current = points[i];
-    const previous = points[(i + points.length - 1) % points.length];
-    const currentInside = _isInside(current);
-    const previousInside = _isInside(previous);
-
-    if (currentInside) {
-      if (!previousInside) result.push(_calcIntersection(previous, current));
-      result.push(current);
-    } else if (previousInside) {
-      result.push(_calcIntersection(previous, current));
-    }
-  }
-
-  return result;
+function _crossProduct(a:Position, b:Position):number {
+  return a.x * b.y - a.y * b.x;
 }
 
-export function calcVisibilityPolygon(origin:Position, facingAngle:number, roomRect:Rect, coneAngle:number):Position[] {
-  const farDistance = Math.hypot(roomRect.width, roomRect.height) * 2;
-  const leftAngle = facingAngle - coneAngle / 2;
-  const rightAngle = facingAngle + coneAngle / 2;
-  const triangle:Position[] = [
-    origin,
-    {
-      x: origin.x + Math.cos(leftAngle) * farDistance,
-      y: origin.y + Math.sin(leftAngle) * farDistance
-    },
-    {
-      x: origin.x + Math.cos(rightAngle) * farDistance,
-      y: origin.y + Math.sin(rightAngle) * farDistance
-    }
+function _isPositionInRect(position:Position, rect:Rect):boolean {
+  return position.x >= rect.x - EPSILON
+    && position.x <= rect.x + rect.width + EPSILON
+    && position.y >= rect.y - EPSILON
+    && position.y <= rect.y + rect.height + EPSILON;
+}
+
+function _isPositionInObstruction(position:Position, obstruction:Obstruction):boolean {
+  return _isPositionInRect(position, obstruction.rect);
+}
+
+function _isOriginInsideRoomObstruction(origin:Position, room:Room):boolean {
+  return room.obstructions.some(obstruction => _isPositionInObstruction(origin, obstruction));
+}
+
+function _isAngleInsideCone(angle:number, facingAngle:number, coneAngle:number):boolean {
+  const angleDelta = _normalizeAngle(angle - facingAngle);
+  return Math.abs(angleDelta) <= coneAngle / 2 + ANGLE_EPSILON;
+}
+
+function _createRectSegments(rect:Rect):Segment[] {
+  const left = rect.x;
+  const right = rect.x + rect.width;
+  const top = rect.y;
+  const bottom = rect.y + rect.height;
+  return [
+    { start:{x:left, y:top}, end:{x:right, y:top} },
+    { start:{x:right, y:top}, end:{x:right, y:bottom} },
+    { start:{x:right, y:bottom}, end:{x:left, y:bottom} },
+    { start:{x:left, y:bottom}, end:{x:left, y:top} }
+  ];
+}
+
+function _createRectCorners(rect:Rect):Position[] {
+  return [
+    {x:rect.x, y:rect.y},
+    {x:rect.x + rect.width, y:rect.y},
+    {x:rect.x + rect.width, y:rect.y + rect.height},
+    {x:rect.x, y:rect.y + rect.height}
+  ];
+}
+
+function _createVisibilitySegments(room:Room):Segment[] {
+  return [
+    ..._createRectSegments(room.rect),
+    ...room.obstructions.flatMap(obstruction => _createRectSegments(obstruction.rect))
+  ];
+}
+
+function _createCandidateAngles(origin:Position, facingAngle:number, room:Room, coneAngle:number):number[] {
+  const angles = [facingAngle - coneAngle / 2, facingAngle + coneAngle / 2];
+  const points = [
+    ..._createRectCorners(room.rect),
+    ...room.obstructions.flatMap(obstruction => _createRectCorners(obstruction.rect))
   ];
 
-  return RECT_BOUNDARIES.reduce(
-    (points, boundary) => _clipPolygonAgainstBoundary(points, roomRect, boundary),
-    triangle
-  );
+  points.forEach(point => {
+    const angle = Math.atan2(point.y - origin.y, point.x - origin.x);
+    if (!_isAngleInsideCone(angle, facingAngle, coneAngle)) return;
+    angles.push(angle - ANGLE_EPSILON, angle, angle + ANGLE_EPSILON);
+  });
+
+  return angles.filter(angle => _isAngleInsideCone(angle, facingAngle, coneAngle));
 }
 
-export function isPositionInVisibilityCone(origin:Position, position:Position, facingAngle:number, coneAngle:number):boolean {
+function _castRayToSegment(origin:Position, angle:number, segment:Segment):RayHit|null {
+  const rayVector = { x:Math.cos(angle), y:Math.sin(angle) };
+  const segmentVector = { x:segment.end.x - segment.start.x, y:segment.end.y - segment.start.y };
+  const denominator = _crossProduct(rayVector, segmentVector);
+  if (Math.abs(denominator) < EPSILON) return null;
+
+  const originToSegment = { x:segment.start.x - origin.x, y:segment.start.y - origin.y };
+  const rayT = _crossProduct(originToSegment, segmentVector) / denominator;
+  const segmentT = _crossProduct(originToSegment, rayVector) / denominator;
+  if (rayT < 0 || segmentT < -EPSILON || segmentT > 1 + EPSILON) return null;
+
+  return {
+    point:{ x:origin.x + rayVector.x * rayT, y:origin.y + rayVector.y * rayT },
+    distance:rayT
+  };
+}
+
+function _castVisibilityRay(origin:Position, angle:number, room:Room):Position {
+  const segments = _createVisibilitySegments(room);
+  let nearestHit:RayHit|null = null;
+
+  for (const segment of segments) {
+    const hit = _castRayToSegment(origin, angle, segment);
+    if (!hit) continue;
+    if (!nearestHit || hit.distance < nearestHit.distance) nearestHit = hit;
+  }
+
+  if (nearestHit) return nearestHit.point;
+  return origin;
+}
+
+function _dedupePolygonPoints(points:Position[]):Position[] {
+  const deduped:Position[] = [];
+  points.forEach(point => {
+    const previous = deduped[deduped.length - 1];
+    if (previous && Math.hypot(previous.x - point.x, previous.y - point.y) < EPSILON) return;
+    deduped.push(point);
+  });
+  if (deduped.length > 1) {
+    const first = deduped[0];
+    const last = deduped[deduped.length - 1];
+    if (Math.hypot(first.x - last.x, first.y - last.y) < EPSILON) deduped.pop();
+  }
+  return deduped;
+}
+
+export function calcVisibilityPolygon(origin:Position, facingAngle:number, room:Room, coneAngle:number):Position[] {
+  if (_isOriginInsideRoomObstruction(origin, room)) return [];
+  const candidateAngles = _createCandidateAngles(origin, facingAngle, room, coneAngle)
+    .sort((a, b) => _normalizeAngle(a - facingAngle) - _normalizeAngle(b - facingAngle));
+  const boundaryPoints = candidateAngles.map(angle => _castVisibilityRay(origin, angle, room));
+  return _dedupePolygonPoints([origin, ...boundaryPoints]);
+}
+
+export function isPositionVisible(origin:Position, position:Position, facingAngle:number, room:Room, coneAngle:number):boolean {
+  if (_isOriginInsideRoomObstruction(origin, room)) return false;
+  if (!_isPositionInRect(position, room.rect)) return false;
+  if (room.obstructions.some(obstruction => _isPositionInObstruction(position, obstruction))) return false;
   const dx = position.x - origin.x;
   const dy = position.y - origin.y;
   if (Math.abs(dx) < EPSILON && Math.abs(dy) < EPSILON) return true;
-  const targetAngle = Math.atan2(dy, dx);
-  const angleDelta = _normalizeAngle(targetAngle - facingAngle);
-  return Math.abs(angleDelta) <= coneAngle / 2 + EPSILON;
+
+  const angle = Math.atan2(dy, dx);
+  if (!_isAngleInsideCone(angle, facingAngle, coneAngle)) return false;
+  const hitPosition = _castVisibilityRay(origin, angle, room);
+  const targetDistance = Math.hypot(dx, dy);
+  const hitDistance = Math.hypot(hitPosition.x - origin.x, hitPosition.y - origin.y);
+  return hitDistance + EPSILON >= targetDistance;
 }
