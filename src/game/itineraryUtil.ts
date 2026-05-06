@@ -16,6 +16,11 @@ import ItineraryIndex from "./types/ItineraryIndex";
 
 const WALK_MSECS_PER_PIXEL = 30;
 
+type CharacterPose = {
+  position:Position,
+  facingAngle:number
+}
+
 enum Activity {
   WAIT = 'wait',
   MOVE_IN_ROOM = 'move',
@@ -50,6 +55,10 @@ function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):n
   return Math.floor(distance * WALK_MSECS_PER_PIXEL);
 }
 
+function _calcFacingAngle(fromX:number, fromY:number, toX:number, toY:number):number {
+  return Math.atan2(toY - fromY, toX - fromX);
+}
+
 function _createWalkEvent(startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEvent {
   const duration = _calcWalkDuration(fromX, fromY, toX, toY);
   assert(duration > 0);
@@ -58,6 +67,7 @@ function _createWalkEvent(startTime:number, fromX:number, fromY:number, toX:numb
     startTime,
     fromPosition:{x:fromX, y:fromY},
     toPosition:{x:toX, y:toY},
+    facingAngle:_calcFacingAngle(fromX, fromY, toX, toY),
     duration
   };
 }
@@ -164,12 +174,19 @@ function _interpolatePosition(fromPosition:Position, toPosition:Position, interp
   }
 }
 
-export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, itineraryIndex:ItineraryIndex):Position {
+export function findCharacterPose(character:Character, time:number):CharacterPose {
+  return _findItineraryPosition(character.itinerary, time, character.itineraryIndex);
+}
+
+export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, itineraryIndex:ItineraryIndex):CharacterPose {
   const eventNo = _findEventNoForTime(itineraryIndex, time);
   const precedingEvent:WalkEvent = itinerary[eventNo] as WalkEvent;
   assert(precedingEvent.type === ItineraryEventType.WALK); // Will need to change code below if more event types added.
   const elapsedFactor = clamp((time - precedingEvent.startTime) / precedingEvent.duration, 0, 1);
-  return _interpolatePosition(precedingEvent.fromPosition, precedingEvent.toPosition, elapsedFactor);
+  return {
+    position:_interpolatePosition(precedingEvent.fromPosition, precedingEvent.toPosition, elapsedFactor),
+    facingAngle:precedingEvent.facingAngle
+  };
 }
 
 export function createItineraryIndex(events:ItineraryEvent[]):ItineraryIndex {
@@ -181,7 +198,7 @@ export function createItineraryIndex(events:ItineraryEvent[]):ItineraryIndex {
 }
 
 export function findCharacterPosition(character:Character, time:number):Position {
-  return _findItineraryPosition(character.itinerary, time, character.itineraryIndex);
+  return findCharacterPose(character, time).position;
 }
 
 export function generateRandomItinerary(level:Level, characterX:number, characterY:number, duration:number):Itinerary {

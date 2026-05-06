@@ -4,7 +4,7 @@ import GameState from "./types/GameState";
 import Room, { duplicateRoom } from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
-import { findCharacterPosition } from "./itineraryUtil";
+import { findCharacterPose } from "./itineraryUtil";
 import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
@@ -61,10 +61,16 @@ function _drawCharacter(character:Character, isActive:boolean, scalingFactors:Sc
   const swayPhase = (time % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL; // 0..1
   const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT; // easing via sine
   const backboneX = centerX + sway;
+  const facingLineLength = roomLineWidth * 4;
+  const facingLineStartY = centerY - characterHeight / 8;
+  const facingLineEndX = backboneX + Math.cos(character.facingAngle) * facingLineLength;
+  const facingLineEndY = facingLineStartY + Math.sin(character.facingAngle) * facingLineLength;
   context.beginPath();
   context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, 2 * Math.PI); // Head
   context.moveTo(backboneX, centerY - characterHeight / 4 + headRadius); // Move to neck
   context.lineTo(backboneX, centerY + characterHeight / 4); // Body
+  context.moveTo(backboneX, facingLineStartY); // Facing direction marker
+  context.lineTo(facingLineEndX, facingLineEndY);
   context.moveTo(backboneX, centerY); // Move to middle of body
   context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 8); // Left arm
   context.moveTo(backboneX, centerY); // Move back to middle of body
@@ -118,9 +124,10 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
   const { time } = event;
   for(let i = 0; i < gameState.characters.length; ++i) {
     const character = gameState.characters[i];
-    const position = findCharacterPosition(character, time);
-    character.x = position.x;
-    character.y = position.y;
+    const pose = findCharacterPose(character, time);
+    character.x = pose.position.x;
+    character.y = pose.position.y;
+    character.facingAngle = pose.facingAngle;
   }
   gameState.time = time;
   gameState.isPlaying = false;
@@ -177,9 +184,10 @@ function _updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent)
 }
 
 function _updateCharacterPosition(character:Character, time:number) {
-  const position = findCharacterPosition(character, time);
-  character.x = position.x;
-  character.y = position.y;
+  const pose = findCharacterPose(character, time);
+  character.x = pose.position.x;
+  character.y = pose.position.y;
+  character.facingAngle = pose.facingAngle;
 }
 
 function _updateCharacterPositions(characters:Character[], time:number) {

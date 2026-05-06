@@ -80,7 +80,7 @@ function _addCharacterToRoom(level:Level, roomId:string, characterId:string, dur
   const x = Math.floor(room.rect.x + room.rect.width / 2);
   const y = Math.floor(room.rect.y + room.rect.height / 2);
   const itinerary = generateRandomItinerary(level, x, y, duration);
-  const character:Character = { id: characterId, x, y, itinerary, itineraryIndex:createItineraryIndex(itinerary) };
+  const character:Character = { id: characterId, x, y, facingAngle:itinerary[0].facingAngle, itinerary, itineraryIndex:createItineraryIndex(itinerary) };
   level.characters.push(character);
 }
 
