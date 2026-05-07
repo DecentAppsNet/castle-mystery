@@ -3,6 +3,7 @@ import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
+import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
 
 let thePlayerEvents:PlayerEvent[] = [];
 
@@ -27,6 +28,11 @@ export function playPause(isPlaying:boolean) {
 
 export function mouseDown(x:number, y:number) {
   const event:MouseDownEvent = {type:PlayerEventType.MOUSEDOWN, x, y};
+  _replaceOrAddEventOfType(thePlayerEvents, event);
+}
+
+export function mouseMove(x:number, y:number) {
+  const event:MouseMoveEvent = {type:PlayerEventType.MOUSEMOVE, x, y};
   _replaceOrAddEventOfType(thePlayerEvents, event);
 }
 

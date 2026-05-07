@@ -19,6 +19,7 @@ import ScalingFactors from "./types/ScalingFactors";
 import { gameToCanvasPosition, calcScalingFactors, ZERO_SCALING_FACTORS } from "./drawUtil";
 import Rect from "./types/Rect";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
+import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
 import Position from "./types/Position";
 import { calcVisibilityPolygon, isPositionVisible } from "./visibilityUtil";
 
@@ -134,13 +135,17 @@ function _discoverVisibleItemsInRoom(room:Room, activeCharacter:Character, scali
 
 function _drawItem(item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [x, y] = gameToCanvasPosition(item.position.x, item.position.y, scalingFactors);
-  const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.75));
+  const glyphFontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.75));
+  const labelFontSize = Math.max(7, Math.round(scalingFactors.roomFontHeight * 0.55));
+  const labelOffsetY = glyphFontSize * 0.7;
   context.save();
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = `${fontSize}px Jellee`;
   context.fillStyle = COLOR_ITEM_TEXT;
+  context.font = `${glyphFontSize}px Jellee`;
   context.fillText(item.displayChar, x, y);
+  context.font = `${labelFontSize}px Jellee`;
+  context.fillText(item.title, x, y + labelOffsetY);
   context.restore();
 }
 
@@ -327,6 +332,10 @@ function _updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent)
   }
 }
 
+function _updateGameStateForMouseMove(_gameState:GameState, event:MouseMoveEvent) {
+  console.log(event.x, event.y);
+}
+
 function _updateCharacterPosition(character:Character, time:number) {
   const pose = findCharacterPose(character, time);
   character.x = pose.position.x;
@@ -344,6 +353,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent); break;
       case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent); break;
       case PlayerEventType.MOUSEDOWN: _updateGameStateForMouseDown(gameState, event as MouseDownEvent); break;
+      case PlayerEventType.MOUSEMOVE: _updateGameStateForMouseMove(gameState, event as MouseMoveEvent); break;
       default: botch();
     }
   });
