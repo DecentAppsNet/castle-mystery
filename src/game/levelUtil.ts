@@ -8,7 +8,7 @@ import { findRoom } from "./roomUtil";
 import { createItineraryIndex, generateRandomItinerary } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
-import { isPositionInRoomObstruction } from "./obstructionUtil";
+import { isPositionInRoomObstruction, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
 
 function _findSharedWallSectionBetweenRooms(room1:Room, room2:Room):Rect|null {
   // Helper to compute 1D intersection of two ranges. Returns [start,end] or null.
@@ -95,7 +95,7 @@ function _findCharacterStartPosition(room:Room):[x:number, y:number] {
 
   for (let y = room.rect.y + 1; y < room.rect.y + room.rect.height - 1; ++y) {
     for (let x = room.rect.x + 1; x < room.rect.x + room.rect.width - 1; ++x) {
-      if (isPositionInRoomObstruction(room, x, y)) continue;
+      if (isPositionWithinRoomObstructionMargin(room, x, y)) continue;
       const distanceSquared = (centerX - x) ** 2 + (centerY - y) ** 2;
       if (distanceSquared < nearestDistanceSquared) {
         nearestPosition = [x, y];

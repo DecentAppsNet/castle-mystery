@@ -14,7 +14,7 @@ import { rand, randIntInRange } from "@/common/randUtil";
 import { findRoomAtPosition, findRoomNearestToPosition } from "./roomUtil";
 import RoomExit from "./types/RoomExit";
 import ItineraryIndex from "./types/ItineraryIndex";
-import { clipMoveToObstructions, isPositionInRoomObstruction } from "./obstructionUtil";
+import { clipMoveToObstructions, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
 
 const WALK_MSECS_PER_PIXEL = 30;
 const SPEECH_ACTIVITY_PROBABILITY = .03;
@@ -93,12 +93,12 @@ function _getRandomPositionInRoom(room:Room):[x:number, y:number] {
   for (let attemptNo = 0; attemptNo < 50; ++attemptNo) {
     const x = room.rect.x + LEFT_RIGHT_MARGIN + randIntInRange(0, room.rect.width - LEFT_RIGHT_MARGIN * 2);
     const y = room.rect.y + TOP_MARGIN + randIntInRange(0, room.rect.height - TOP_MARGIN - BOTTOM_MARGIN);
-    if (!isPositionInRoomObstruction(room, x, y)) return [x, y];
+    if (!isPositionWithinRoomObstructionMargin(room, x, y)) return [x, y];
   }
 
   for (let y = room.rect.y + TOP_MARGIN; y < room.rect.y + room.rect.height - BOTTOM_MARGIN; ++y) {
     for (let x = room.rect.x + LEFT_RIGHT_MARGIN; x < room.rect.x + room.rect.width - LEFT_RIGHT_MARGIN; ++x) {
-      if (!isPositionInRoomObstruction(room, x, y)) return [x, y];
+      if (!isPositionWithinRoomObstructionMargin(room, x, y)) return [x, y];
     }
   }
 

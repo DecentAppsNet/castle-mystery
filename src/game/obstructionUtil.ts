@@ -3,6 +3,8 @@ import Position, { duplicatePosition } from "./types/Position";
 import Rect from "./types/Rect";
 import Room from "./types/Room";
 
+export const CHARACTER_OBSTRUCTION_MARGIN = 4;
+
 const OBSTRUCTION_BACKOFF_DISTANCE = 1;
 const EPSILON = 0.000001;
 
@@ -13,6 +15,15 @@ type MoveClipResult = {
 
 function _isPositionInRect(x:number, y:number, rect:Rect):boolean {
   return x >= rect.x && x < rect.x + rect.width && y >= rect.y && y < rect.y + rect.height;
+}
+
+function _expandRect(rect:Rect, margin:number):Rect {
+  return {
+    x: rect.x - margin,
+    y: rect.y - margin,
+    width: rect.width + margin * 2,
+    height: rect.height + margin * 2
+  };
 }
 
 function _calcSegmentRectEntryT(from:Position, to:Position, rect:Rect):number|null {
@@ -50,15 +61,6 @@ function _calcSegmentRectEntryT(from:Position, to:Position, rect:Rect):number|nu
   return entryT;
 }
 
-function _doesSegmentEnterObstruction(from:Position, to:Position, obstruction:Obstruction, entryT:number):boolean {
-  const sampleT = Math.min(1, entryT + 0.001);
-  const samplePosition = {
-    x:from.x + (to.x - from.x) * sampleT,
-    y:from.y + (to.y - from.y) * sampleT
-  };
-  return isPositionInObstruction(samplePosition.x, samplePosition.y, obstruction);
-}
-
 export function isPositionInObstruction(x:number, y:number, obstruction:Obstruction):boolean {
   return _isPositionInRect(x, y, obstruction.rect);
 }
@@ -67,15 +69,24 @@ export function isPositionInRoomObstruction(room:Room, x:number, y:number):boole
   return room.obstructions.some(obstruction => isPositionInObstruction(x, y, obstruction));
 }
 
+export function isPositionWithinRoomObstructionMargin(room:Room, x:number, y:number, margin:number = CHARACTER_OBSTRUCTION_MARGIN):boolean {
+  return room.obstructions.some(obstruction => _isPositionInRect(x, y, _expandRect(obstruction.rect, margin)));
+}
+
 export function clipMoveToObstructions(room:Room, from:Position, to:Position):MoveClipResult {
   const distance = Math.hypot(to.x - from.x, to.y - from.y);
   if (distance < EPSILON) return { position:duplicatePosition(to), wasClipped:false };
 
   let nearestEntryT:number|null = null;
   for (const obstruction of room.obstructions) {
-    const entryT = _calcSegmentRectEntryT(from, to, obstruction.rect);
+    const expandedRect = _expandRect(obstruction.rect, CHARACTER_OBSTRUCTION_MARGIN);
+    const entryT = _calcSegmentRectEntryT(from, to, expandedRect);
     if (entryT === null) continue;
-    if (!_doesSegmentEnterObstruction(from, to, obstruction, entryT)) continue;
+    if (!_isPositionInRect(
+      from.x + (to.x - from.x) * Math.min(1, entryT + 0.001),
+      from.y + (to.y - from.y) * Math.min(1, entryT + 0.001),
+      expandedRect
+    )) continue;
     if (nearestEntryT === null || entryT < nearestEntryT) nearestEntryT = entryT;
   }
 
@@ -90,7 +101,7 @@ export function clipMoveToObstructions(room:Room, from:Position, to:Position):Mo
       x:Math.round(from.x + (to.x - from.x) * nextT),
       y:Math.round(from.y + (to.y - from.y) * nextT)
     };
-    if (!isPositionInRoomObstruction(room, candidate.x, candidate.y)) {
+    if (!isPositionWithinRoomObstructionMargin(room, candidate.x, candidate.y)) {
       return { position:candidate, wasClipped:true };
     }
     if (nextT === 0) break;
