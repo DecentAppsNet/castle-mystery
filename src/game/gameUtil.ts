@@ -1,6 +1,7 @@
 import { assertNonNullable, botch } from "decent-portal";
 import Character, { duplicateCharacter } from "./types/Character";
 import GameState from "./types/GameState";
+import Item from "./types/Item";
 import Room, { duplicateRoom } from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import Obstruction from "./types/Obstruction";
@@ -32,6 +33,7 @@ const COLOR_INACTIVE_ROOM_FILL = "#aaa";
 const COLOR_ROOM_TITLE_TEXT = "#ddd";
 const COLOR_VISIBILITY_FILL = "#ffe60040";
 const COLOR_SPEECH_BUBBLE_FILL = "#fff8cc";
+const COLOR_ITEM_TEXT = "#111";
 
 function _drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const { roomLineWidth } = scalingFactors;
@@ -116,6 +118,32 @@ function _findVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], a
   });
 }
 
+function _discoverVisibleItemsInRoom(room:Room, activeCharacter:Character, scalingFactors:ScalingFactors) {
+  const visibilityOrigin = _getCharacterVisibilityOrigin(activeCharacter, scalingFactors);
+  room.items.forEach(item => {
+    if (item.isDiscovered) return;
+    item.isDiscovered = isPositionVisible(
+      visibilityOrigin,
+      item.position,
+      activeCharacter.facingAngle,
+      room,
+      VISIBILITY_CONE_ANGLE
+    );
+  });
+}
+
+function _drawItem(item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const [x, y] = gameToCanvasPosition(item.position.x, item.position.y, scalingFactors);
+  const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.75));
+  context.save();
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.font = `${fontSize}px Jellee`;
+  context.fillStyle = COLOR_ITEM_TEXT;
+  context.fillText(item.displayChar, x, y);
+  context.restore();
+}
+
 function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, room:Room,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
@@ -185,7 +213,11 @@ function _drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, ac
   room.obstructions.forEach(obstruction => _drawObstruction(obstruction, scalingFactors, context));
   context.strokeStyle = COLOR_DARK_GRAY;
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
-  if (isActive && activeCharacter) _drawVisibilityCone(activeCharacter, room, scalingFactors, context);
+  if (isActive && activeCharacter) {
+    _discoverVisibleItemsInRoom(room, activeCharacter, scalingFactors);
+    _drawVisibilityCone(activeCharacter, room, scalingFactors, context);
+    room.items.filter(item => item.isDiscovered).forEach(item => _drawItem(item, scalingFactors, context));
+  }
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;

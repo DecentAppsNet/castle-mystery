@@ -1,5 +1,6 @@
 import { assertNonNullable } from "decent-portal";
 import Level from "./types/Level";
+import Item from "./types/Item";
 import Room from "./types/Room";
 import Rect from "./types/Rect";
 import Character from './types/Character';
@@ -75,6 +76,17 @@ function _createTimeLabels(duration:number):TimeLabel[] {
   });
 }
 
+function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovered'>) {
+  const room = findRoom(level.rooms, roomId);
+  assertNonNullable(room);
+  const { x, y } = item.position;
+  const isInsideRoom = x >= room.rect.x && x <= room.rect.x + room.rect.width
+    && y >= room.rect.y && y <= room.rect.y + room.rect.height;
+  if (!isInsideRoom) throw new Error(`item ${item.id} is outside room ${roomId}`);
+  if (isPositionInRoomObstruction(room, x, y)) throw new Error(`item ${item.id} is inside an obstruction in room ${roomId}`);
+  room.items.push({ ...item, isDiscovered:false });
+}
+
 function _findCharacterStartPosition(room:Room):[x:number, y:number] {
   const centerX = Math.floor(room.rect.x + room.rect.width / 2);
   const centerY = Math.floor(room.rect.y + room.rect.height / 2);
@@ -112,6 +124,7 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         id: "livingRoom",
         title: "Living Room",
         rect: { x: 0, y: 0, width: 50, height: 100 },
+        items: [],
         obstructions: [
           { rect: { x: 10, y: 18, width: 4, height: 50 } },
           { rect: { x: 28, y: 58, width: 10, height: 18 } }
@@ -123,6 +136,7 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         id: "bedroom",
         title: "Bedroom",
         rect: { x: 50, y: 0, width: 50, height: 30 },
+        items: [],
         obstructions: [
           { rect: { x: 80, y: 5, width: 16, height: 4 } }
         ],
@@ -133,6 +147,7 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         id: "bathroom",
         title: "Bathroom",
         rect: { x: 50, y: 30, width: 50, height: 20 },
+        items: [],
         obstructions: [
           { rect: { x: 82, y: 34, width: 10, height: 10 } }
         ],
@@ -143,6 +158,7 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         id: "kitchen",
         title: "Kitchen",
         rect: { x: 50, y: 50, width: 50, height: 50 },
+        items: [],
         obstructions: [
           { rect: { x: 58, y: 60, width: 14, height: 10 } },
           { rect: { x: 78, y: 74, width: 12, height: 14 } }
@@ -160,6 +176,46 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
   _addExitBetweenRooms(level, 'livingRoom', 'bedroom');
   _addExitBetweenRooms(level, 'bedroom', 'bathroom');
   _addExitBetweenRooms(level, 'livingRoom', 'kitchen');
+  _addItemToRoom(level, 'livingRoom', {
+    id:'living-room-lamp', title:'Floor Lamp', displayChar:'⌁', position:{x:6, y:12},
+    description:'A slim standing lamp with a pleated shade.'
+  });
+  _addItemToRoom(level, 'livingRoom', {
+    id:'living-room-book', title:'Novel', displayChar:'⌸', position:{x:21, y:82},
+    description:'A dog-eared mystery novel left open face down.'
+  });
+  _addItemToRoom(level, 'livingRoom', {
+    id:'living-room-vase', title:'Vase', displayChar:'◔', position:{x:41, y:18},
+    description:'A ceramic vase with a narrow neck and no flowers.'
+  });
+  _addItemToRoom(level, 'bedroom', {
+    id:'bedroom-clock', title:'Alarm Clock', displayChar:'◷', position:{x:60, y:22},
+    description:'A small alarm clock with glowing hands.'
+  });
+  _addItemToRoom(level, 'bedroom', {
+    id:'bedroom-slippers', title:'Slippers', displayChar:'⋈', position:{x:91, y:23},
+    description:'A pair of worn slippers lined up by the wall.'
+  });
+  _addItemToRoom(level, 'bedroom', {
+    id:'bedroom-mirror', title:'Hand Mirror', displayChar:'⊙', position:{x:72, y:17},
+    description:'A hand mirror with a silvered rim.'
+  });
+  _addItemToRoom(level, 'bathroom', {
+    id:'bathroom-brush', title:'Hairbrush', displayChar:'≣', position:{x:58, y:43},
+    description:'A wooden hairbrush with several strands caught in it.'
+  });
+  _addItemToRoom(level, 'bathroom', {
+    id:'bathroom-towel', title:'Towel', displayChar:'▤', position:{x:72, y:46},
+    description:'A folded towel draped over the edge of a stand.'
+  });
+  _addItemToRoom(level, 'kitchen', {
+    id:'kitchen-kettle', title:'Kettle', displayChar:'◒', position:{x:91, y:60},
+    description:'A stout kettle with a soot-darkened base.'
+  });
+  _addItemToRoom(level, 'kitchen', {
+    id:'kitchen-plate', title:'Plate', displayChar:'◌', position:{x:54, y:91},
+    description:'A plain ceramic plate with a chipped rim.'
+  });
   _addCharacterToRoom(level, 'bedroom', 'king', duration);
   _addCharacterToRoom(level, 'livingRoom', 'queen', duration);
   return level;
