@@ -3,6 +3,7 @@ import Itinerary from "./types/Itinerary";
 import Level from "./types/Level";
 import Room from "./types/Room";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
+import RoomEntryEvent from "./types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
@@ -181,6 +182,10 @@ function _createGiveItemEvent(startTime:number, itemId:string, recipientCharacte
   return { type:ItineraryEventType.GIVE_ITEM, startTime, itemId, recipientCharacterId };
 }
 
+function _createRoomEntryEvent(startTime:number, roomId:string):RoomEntryEvent {
+  return { type:ItineraryEventType.ROOM_ENTRY, startTime, roomId };
+}
+
 function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   let room = findRoomAtPosition(rooms, x, y);
   if (!room) {
@@ -334,7 +339,7 @@ function _calcExitDestinationPosition(room:Room, exit:RoomExit):Position {
   };
 }
 
-function _createExitRoomRandomWalkEvents(rooms:Room[], x:number, y:number, startTime:number):WalkEvent[] {
+function _createExitRoomRandomWalkEvents(rooms:Room[], x:number, y:number, startTime:number):ItineraryEvent[] {
   const room = _findRoomAtPosition(rooms, x, y);
   if (!room.exits.length) return [_createInRoomRandomWalkEvent(rooms, x, y, startTime)];
   const candidateExits = room.exits.filter(exit => {
@@ -362,7 +367,13 @@ function _createExitRoomRandomWalkEvents(rooms:Room[], x:number, y:number, start
     destinationPosition.x,
     destinationPosition.y
   );
-  return destinationResult.event ? [approachResult.event, destinationResult.event] : [approachResult.event];
+  return destinationResult.event
+    ? [
+      approachResult.event,
+      destinationResult.event,
+      _createRoomEntryEvent(destinationResult.event.startTime + destinationResult.event.duration, destinationRoom.id)
+    ]
+    : [approachResult.event];
 }
 
 function _findEventNoForTime(itineraryIndex:ItineraryIndex, time:number):number {
@@ -385,6 +396,7 @@ function _findEventNoForTime(itineraryIndex:ItineraryIndex, time:number):number 
 function _getEventDuration(event:ItineraryEvent):number {
   switch(event.type) {
     case ItineraryEventType.WALK: return (event as WalkEvent).duration;
+    case ItineraryEventType.ROOM_ENTRY: return 0;
     case ItineraryEventType.SPEECH: return (event as SpeechEvent).duration;
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
@@ -399,6 +411,7 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
   switch(event.type) {
     case ItineraryEventType.WALK:
       return duplicatePosition((event as WalkEvent).toPosition);
+    case ItineraryEventType.ROOM_ENTRY:
     case ItineraryEventType.SPEECH:
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
@@ -465,6 +478,8 @@ export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, 
       };
       }
 
+
+    case ItineraryEventType.ROOM_ENTRY:
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
     case ItineraryEventType.GIVE_ITEM:
@@ -483,15 +498,13 @@ export function createItineraryIndex(events:ItineraryEvent[]):ItineraryIndex {
   assert(events.length > 0);
   assert(events[0].startTime === 0);
   const eventStartPositions:Position[] = [];
-  let currentPosition:Position|null = null;
+  const firstWalkEvent = events.find(event => event.type === ItineraryEventType.WALK) as WalkEvent|undefined;
+  assertNonNullable(firstWalkEvent);
+  let currentPosition:Position|null = duplicatePosition(firstWalkEvent.fromPosition);
 
   for (let i = 0; i < events.length; ++i) {
     const event = events[i];
     assertNonNullable(event);
-    if (i === 0) {
-      assert(event.type === ItineraryEventType.WALK);
-      currentPosition = duplicatePosition((event as WalkEvent).fromPosition);
-    }
     assertNonNullable(currentPosition);
     eventStartPositions.push(duplicatePosition(currentPosition));
     currentPosition = _getEventEndPosition(event, currentPosition);
@@ -499,8 +512,33 @@ export function createItineraryIndex(events:ItineraryEvent[]):ItineraryIndex {
 
   return {
     eventStartTimes:events.map(event => event.startTime),
-    eventStartPositions
+    eventStartPositions,
+    roomEntryStartTimes:events
+      .filter(event => event.type === ItineraryEventType.ROOM_ENTRY)
+      .map(event => event.startTime)
   };
+}
+
+function _findNextValue(values:ReadonlyArray<number>, time:number):number|null {
+  for (const value of values) {
+    if (value > time) return value;
+  }
+  return null;
+}
+
+function _findPreviousValue(values:ReadonlyArray<number>, time:number):number|null {
+  for (let i = values.length - 1; i >= 0; --i) {
+    if (values[i] < time) return values[i];
+  }
+  return null;
+}
+
+export function findNextRoomEntryTime(character:Character, time:number):number|null {
+  return _findNextValue(character.itineraryIndex.roomEntryStartTimes, time);
+}
+
+export function findPreviousRoomEntryTime(character:Character, time:number):number|null {
+  return _findPreviousValue(character.itineraryIndex.roomEntryStartTimes, time);
 }
 
 export function findCharacterPosition(character:Character, time:number):Position {
@@ -534,7 +572,9 @@ function _findLastFacingAngleAfterEvents(events:ItineraryEvent[], fallbackFacing
 }
 
 export function generateRandomItinerary(level:Level, character:Character, duration:number):Itinerary {
-  const itinerary:Itinerary = [];
+  const startingRoom = findRoomAtPosition(level.rooms, character.x, character.y);
+  assertNonNullable(startingRoom);
+  const itinerary:Itinerary = [_createRoomEntryEvent(0, startingRoom.id)];
   const roomItemsByRoomId = new Map(level.rooms.map(room => [room.id, room.items.map(duplicateItem)]));
   const carriedItems = character.items.map(duplicateItem);
   let time = 0; // Start of day.
@@ -559,12 +599,11 @@ export function generateRandomItinerary(level:Level, character:Character, durati
         {
           const events = _createExitRoomRandomWalkEvents(level.rooms, x, y, time);
           itinerary.push(...events);
-          const lastEvent = events[events.length - 1];
-          assertNonNullable(lastEvent);
-          time = lastEvent.startTime + lastEvent.duration;
-          x = lastEvent.toPosition.x;
-          y = lastEvent.toPosition.y;
-          facingAngle = lastEvent.facingAngle;
+          const endPosition = _calcEndPositionAfterEvents(events, { x, y });
+          x = endPosition.x;
+          y = endPosition.y;
+          facingAngle = _findLastFacingAngleAfterEvents(events, facingAngle);
+          time = _calcNextTimeAfterEvents(events);
         }
       break;
 

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { MSECS_IN_SECOND } from "@/common/timeUtil";
 
 import styles from './HomeScreen.module.css';
 import { init } from "./interactions/initialization";
@@ -9,9 +8,17 @@ import TimeSlider from "@/components/timeSlider/TimeSlider";
 import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
 import { updatePlayPause, updateTime, updateTimeMsecs } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
+import { findNextRoomEntryTime, findPreviousRoomEntryTime } from "@/game/itineraryUtil";
 
-const ARROW_STEP_MSECS = MSECS_IN_SECOND * .2;
-const ARROW_STEP_MSECS_WITH_MODIFIER = MSECS_IN_SECOND * 10;
+const ARROW_STEP_MSECS = 200;
+
+function _findShiftArrowTargetTime(gameState:GameState, direction:number):number|null {
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  if (!activeCharacter) return null;
+  return direction > 0
+    ? findNextRoomEntryTime(activeCharacter, gameState.time)
+    : findPreviousRoomEntryTime(activeCharacter, gameState.time);
+}
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -51,9 +58,13 @@ function HomeScreen() {
 
       if (event.code !== "ArrowLeft" && event.code !== "ArrowRight") return;
       event.preventDefault();
-      const stepMsecs = event.ctrlKey || event.shiftKey ? ARROW_STEP_MSECS_WITH_MODIFIER : ARROW_STEP_MSECS;
       const direction = event.code === "ArrowRight" ? 1 : -1;
-      updateTimeMsecs(gameState.time + direction * stepMsecs, gameState.duration, setIsPlaying);
+      if (event.shiftKey) {
+        const targetTime = _findShiftArrowTargetTime(gameState, direction);
+        if (targetTime !== null) updateTimeMsecs(targetTime, gameState.duration, setIsPlaying);
+        return;
+      }
+      updateTimeMsecs(gameState.time + direction * ARROW_STEP_MSECS, gameState.duration, setIsPlaying);
     };
 
     window.addEventListener("keydown", onKeyDown);
