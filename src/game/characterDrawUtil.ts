@@ -6,10 +6,38 @@ import Character from "./types/Character";
 import Position from "./types/Position";
 import Room from "./types/Room";
 import ScalingFactors from "./types/ScalingFactors";
-import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_SPEECH_BUBBLE_FILL, COLOR_VISIBILITY_FILL, VISIBILITY_CONE_ANGLE } from "./drawConstants";
+import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_POPOVER_FILL, COLOR_SPEECH_BUBBLE_FILL, COLOR_VISIBILITY_FILL, VISIBILITY_CONE_ANGLE } from "./drawConstants";
 
 const CHARACTER_SWAY_INTERVAL = 1500;
 const CHARACTER_SWAY_AMOUNT = 1;
+
+function _wrapText(context:CanvasRenderingContext2D, text:string, maxWidth:number):string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [""];
+  const lines:string[] = [];
+  let currentLine = words[0];
+  for (let i = 1; i < words.length; ++i) {
+    const nextLine = `${currentLine} ${words[i]}`;
+    if (context.measureText(nextLine).width <= maxWidth) currentLine = nextLine;
+    else {
+      lines.push(currentLine);
+      currentLine = words[i];
+    }
+  }
+  lines.push(currentLine);
+  return lines;
+}
+
+function _getCharacterDisplayName(character:Character):string {
+  return character.id.charAt(0).toUpperCase() + character.id.slice(1);
+}
+
+function _getCharacterCarryText(character:Character):string {
+  const itemCount = character.items.length;
+  if (itemCount === 0) return "Carrying nothing.";
+  if (itemCount === 1) return "Carrying 1 item.";
+  return `Carrying ${itemCount} items.`;
+}
 
 export function getCharacterVisibilityOrigin(character:Character, scalingFactors:ScalingFactors):Position {
   const characterHeightPixels = scalingFactors.roomLineWidth * 10;
@@ -114,4 +142,52 @@ export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Characte
     const speech = isPlaying ? findCharacterPose(character, time).speech : null;
     drawCharacter(character, room, scalingFactors, context, time, speech);
   });
+}
+
+export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const [anchorX, anchorY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
+  const canvasLeft = 0;
+  const canvasTop = 0;
+  const canvasRight = context.canvas.width;
+  const canvasBottom = context.canvas.height;
+  const title = _getCharacterDisplayName(character);
+  const carryText = _getCharacterCarryText(character);
+  const titleFontSize = Math.max(20, Math.round(scalingFactors.roomFontHeight * 1.4));
+  const bodyFontSize = Math.max(16, Math.round(scalingFactors.roomFontHeight * 1.0));
+  const padding = Math.max(6, scalingFactors.roomLineWidth * 2);
+  const lineGap = Math.max(3, scalingFactors.roomLineWidth);
+  const maxTextWidth = Math.min(280, Math.max(140, canvasRight * 0.3));
+  context.save();
+  context.textAlign = "left";
+  context.textBaseline = "top";
+  context.font = `${bodyFontSize}px Jellee`;
+  const descriptionLines = _wrapText(context, character.description, maxTextWidth);
+  const carryLines = _wrapText(context, carryText, maxTextWidth);
+  const bodyLines = [...descriptionLines, "", ...carryLines];
+  const bodyWidth = bodyLines.reduce((maxWidth, line) => Math.max(maxWidth, context.measureText(line).width), 0);
+  context.font = `${titleFontSize}px Jellee`;
+  const titleWidth = context.measureText(title).width;
+  const boxWidth = Math.max(titleWidth, bodyWidth) + padding * 2;
+  const titleHeight = titleFontSize;
+  const bodyHeight = bodyLines.length * bodyFontSize + Math.max(0, bodyLines.length - 1) * lineGap;
+  const boxHeight = padding * 2 + titleHeight + lineGap + bodyHeight;
+  const desiredLeft = anchorX + scalingFactors.roomLineWidth * 2;
+  const desiredTop = anchorY - boxHeight - scalingFactors.roomLineWidth * 2;
+  const left = clamp(desiredLeft, canvasLeft, canvasRight - boxWidth);
+  const top = clamp(desiredTop, canvasTop, canvasBottom - boxHeight);
+  context.fillStyle = COLOR_POPOVER_FILL;
+  context.strokeStyle = COLOR_BLACK;
+  context.lineWidth = Math.max(1, scalingFactors.roomLineWidth);
+  context.fillRect(left, top, boxWidth, boxHeight);
+  context.strokeRect(left, top, boxWidth, boxHeight);
+  context.fillStyle = COLOR_BLACK;
+  context.font = `${titleFontSize}px Jellee`;
+  context.fillText(title, left + padding, top + padding);
+  context.font = `${bodyFontSize}px Jellee`;
+  let lineTop = top + padding + titleHeight + lineGap;
+  bodyLines.forEach(line => {
+    if (line) context.fillText(line, left + padding, lineTop);
+    lineTop += bodyFontSize + lineGap;
+  });
+  context.restore();
 }

@@ -108,12 +108,27 @@ function _findCharacterStartPosition(room:Room):[x:number, y:number] {
   return nearestPosition;
 }
 
-function _addCharacterToRoom(level:Level, roomId:string, characterId:string, duration:number) {
+function _addItemsToCharacter(level:Level, characterId:string, items:Item[]) {
+  const character = level.characters.find(c => c.id === characterId);
+  assertNonNullable(character, `character ${characterId} not found`);
+  character.items.push(...items.map(item => ({ ...item, position:{ ...item.position } })));
+}
+
+function _addCharacterToRoom(level:Level, roomId:string, characterId:string, description:string, duration:number) {
   const room = findRoom(level.rooms, roomId);
   assertNonNullable(room);
   const [x, y] = _findCharacterStartPosition(room);
   const itinerary = generateRandomItinerary(level, x, y, duration);
-  const character:Character = { id: characterId, x, y, facingAngle:itinerary[0].facingAngle, itinerary, itineraryIndex:createItineraryIndex(itinerary) };
+  const character:Character = {
+    id: characterId,
+    description,
+    items: [],
+    x,
+    y,
+    facingAngle:itinerary[0].facingAngle,
+    itinerary,
+    itineraryIndex:createItineraryIndex(itinerary)
+  };
   level.characters.push(character);
 }
 
@@ -216,7 +231,18 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
     id:'kitchen-plate', title:'Plate', displayChar:'◌', position:{x:54, y:91},
     description:'A plain ceramic plate with a chipped rim.'
   });
-  _addCharacterToRoom(level, 'bedroom', 'king', duration);
-  _addCharacterToRoom(level, 'livingRoom', 'queen', duration);
+  _addCharacterToRoom(level, 'bedroom', 'king', 'A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.', duration);
+  _addCharacterToRoom(level, 'livingRoom', 'queen', 'A poised noblewoman whose careful posture hides a restless tension.', duration);
+  _addItemsToCharacter(level, 'king', [{
+    id:'king-pocket-watch', title:'Pocket Watch', displayChar:'◷', position:{x:0, y:0},
+    description:'A silver pocket watch engraved with a fading crest.', isDiscovered:true
+  }]);
+  _addItemsToCharacter(level, 'queen', [{
+    id:'queen-master-key', title:'Master Key', displayChar:'⌘', position:{x:0, y:0},
+    description:'A long iron key on a dark velvet ribbon.', isDiscovered:true
+  }, {
+    id:'queen-folded-note', title:'Folded Note', displayChar:'⌷', position:{x:0, y:0},
+    description:'A tightly folded note with a broken wax seal.', isDiscovered:true
+  }]);
   return level;
 }

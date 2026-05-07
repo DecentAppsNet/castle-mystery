@@ -16,9 +16,10 @@ import { calcScalingFactors, ZERO_SCALING_FACTORS } from "./drawUtil";
 import Rect from "./types/Rect";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
-import { findVisibleCharactersInRoom } from "./characterDrawUtil";
+import { drawCharacterPopover, findVisibleCharactersInRoom } from "./characterDrawUtil";
 import { drawRoom } from "./roomDrawUtil";
 import { COLOR_BLACK } from "./drawConstants";
+import { discoverVisibleItemsInRoom, drawItemPopover, findDiscoveredItemAtPosition } from "./itemDrawUtil";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
 
@@ -110,8 +111,18 @@ function _updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent)
   }
 }
 
-function _updateGameStateForMouseMove(_gameState:GameState, event:MouseMoveEvent) {
-  console.log(event.x, event.y);
+function _updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent) {
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  if (!activeCharacter || !activeRoom) {
+    gameState.hoveredItemId = null;
+    gameState.hoveredCharacterId = null;
+    return;
+  }
+  discoverVisibleItemsInRoom(activeRoom, activeCharacter, gameState.scalingFactors);
+  const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors);
+  gameState.hoveredItemId = hoveredItem?.id ?? null;
+  gameState.hoveredCharacterId = hoveredItem ? null : _findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
 }
 
 function _updateCharacterPosition(character:Character, time:number) {
@@ -166,11 +177,21 @@ function _updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRender
 
 function _drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   for(let roomI = 0; roomI < gameState.rooms.length; ++roomI) {
     const room = gameState.rooms[roomI];
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
     drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.scalingFactors, context, gameState.time, gameState.isPlaying);
+  }
+  if (activeRoom && gameState.hoveredItemId) {
+    const hoveredItem = activeRoom.items.find(item => item.id === gameState.hoveredItemId && item.isDiscovered) || null;
+    if (hoveredItem) drawItemPopover(hoveredItem, gameState.scalingFactors, context);
+    return;
+  }
+  if (gameState.hoveredCharacterId) {
+    const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
+    if (hoveredCharacter) drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context);
   }
 }
 
@@ -205,6 +226,8 @@ export function createGameStateFromLevel(level:Level):GameState {
   const gameState:GameState = {
     characters:level.characters.map(duplicateCharacter),
     rooms:level.rooms.map(duplicateRoom),
+    hoveredItemId:null,
+    hoveredCharacterId:null,
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isPlaying:false,
     time:0,
