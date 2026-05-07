@@ -9,3 +9,4 @@ export const COLOR_VISIBILITY_FILL = "#ffe60040";
 export const COLOR_SPEECH_BUBBLE_FILL = "#fff8cc";
 export const COLOR_ITEM_TEXT = "#111";
 export const COLOR_POPOVER_FILL = "#fff";
+export const COLOR_ITEM_DISCOVERY_EFFECT = "#ff9f1c";

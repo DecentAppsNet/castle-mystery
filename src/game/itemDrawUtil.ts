@@ -8,9 +8,17 @@ import Character from "./types/Character";
 import Item from "./types/Item";
 import Room from "./types/Room";
 import ScalingFactors from "./types/ScalingFactors";
+import Effect from "./effects/types/Effect";
+import EffectType from "./effects/types/EffectType";
 
 const ITEM_GLYPH_FONT_RATIO = 0.75;
 const ITEM_LABEL_FONT_RATIO = 0.55;
+
+export type ItemDrawMetrics = {
+  glyphFontSize:number,
+  labelFontSize:number,
+  labelOffsetY:number
+}
 
 function _getItemGlyphFontSize(scalingFactors:ScalingFactors):number {
   return Math.max(10, Math.round(scalingFactors.roomFontHeight * ITEM_GLYPH_FONT_RATIO));
@@ -22,6 +30,14 @@ function _getItemLabelFontSize(scalingFactors:ScalingFactors):number {
 
 function _getItemLabelOffsetY(scalingFactors:ScalingFactors):number {
   return _getItemGlyphFontSize(scalingFactors) * 0.7;
+}
+
+export function calcItemDrawMetrics(scalingFactors:ScalingFactors):ItemDrawMetrics {
+  return {
+    glyphFontSize:_getItemGlyphFontSize(scalingFactors),
+    labelFontSize:_getItemLabelFontSize(scalingFactors),
+    labelOffsetY:_getItemLabelOffsetY(scalingFactors)
+  };
 }
 
 function _getApproxTextWidth(text:string, fontSize:number):number {
@@ -63,36 +79,47 @@ function _wrapText(context:CanvasRenderingContext2D, text:string, maxWidth:numbe
 
 export function discoverVisibleItemsInRoom(room:Room, activeCharacter:Character, scalingFactors:ScalingFactors) {
   const visibilityOrigin = getCharacterVisibilityOrigin(activeCharacter, scalingFactors);
+  const newlyDiscoveredItems:Item[] = [];
   room.items.forEach(item => {
     if (item.isDiscovered) return;
-    item.isDiscovered = isPositionVisible(
+    const isDiscovered = isPositionVisible(
       visibilityOrigin,
       item.position,
       activeCharacter.facingAngle,
       room,
       VISIBILITY_CONE_ANGLE
     );
+    item.isDiscovered = isDiscovered;
+    if (isDiscovered) newlyDiscoveredItems.push(item);
   });
+  return newlyDiscoveredItems;
 }
 
 export function drawItem(item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [x, y] = gameToCanvasPosition(item.position.x, item.position.y, scalingFactors);
-  const glyphFontSize = _getItemGlyphFontSize(scalingFactors);
-  const labelFontSize = _getItemLabelFontSize(scalingFactors);
-  const labelOffsetY = _getItemLabelOffsetY(scalingFactors);
+  drawItemAtCanvasPosition(item, x, y, calcItemDrawMetrics(scalingFactors), context);
+}
+
+export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
   context.save();
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = COLOR_ITEM_TEXT;
-  context.font = `${glyphFontSize}px Jellee`;
+  context.font = `${metrics.glyphFontSize}px Jellee`;
   context.fillText(item.displayChar, x, y);
-  context.font = `${labelFontSize}px Jellee`;
-  context.fillText(item.title, x, y + labelOffsetY);
+  context.font = `${metrics.labelFontSize}px Jellee`;
+  context.fillText(item.title, x, y + metrics.labelOffsetY);
   context.restore();
 }
 
-export function drawDiscoveredItemsInRoom(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  room.items.filter(item => item.isDiscovered).forEach(item => drawItem(item, scalingFactors, context));
+function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
+  return effects.some(effect => effect.type === EffectType.DROP_ITEM && "item" in effect && effect.item.id === item.id);
+}
+
+export function drawDiscoveredItemsInRoom(room:Room, effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  room.items
+    .filter(item => item.isDiscovered && !_isItemSuppressedByEffect(item, effects))
+    .forEach(item => drawItem(item, scalingFactors, context));
 }
 
 export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scalingFactors:ScalingFactors):Item|null {

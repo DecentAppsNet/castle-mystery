@@ -4,7 +4,7 @@ import EffectType from "./EffectType";
 import type Effect from "./Effect";
 
 export type ProcessLevelEffectCallback = (effect:Effect, context:CanvasRenderingContext2D) => boolean;
-export type ProcessRoomEffectCallback = (room:Room, effect:Effect, context:CanvasRenderingContext2D) => boolean;
+export type ProcessRoomEffectCallback = (room:Room, effect:Effect, context:CanvasRenderingContext2D, isActive:boolean) => boolean;
 export type ProcessCharacterEffectCallback = (character:Character, effect:Effect, context:CanvasRenderingContext2D) => boolean;
 
 type EffectBase = {

@@ -21,6 +21,9 @@ import { drawRoom } from "./roomDrawUtil";
 import { COLOR_BLACK } from "./drawConstants";
 import { discoverVisibleItemsInRoom, drawItemPopover, findDiscoveredItemAtPosition } from "./itemDrawUtil";
 import { processLevelEffects } from "./effects/effectUtil";
+import { createItemDiscoveryEffect } from "./effects/itemDiscoveryUtil";
+import { createDropItemEffect } from "./effects/dropItemUtil";
+import { createGiveItemEffect } from "./effects/giveItemUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
@@ -38,6 +41,11 @@ type AppliedInventoryEvent = {
   event:TakeItemEvent|DropItemEvent|GiveItemEvent
 }
 
+type PendingRoomEffect = {
+  roomId:string,
+  create:() => void
+}
+
 export function findCharacter(gameState:GameState, characterId:string):Character {
   const character = gameState.characters.find((c) => c.id === characterId);
   assertNonNullable(character, `character with id ${characterId} not found`);
@@ -50,6 +58,14 @@ function _setActiveRoomDiscovered(gameState:GameState) {
     const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
     if (activeRoom) activeRoom.isDiscovered = true;
   }
+}
+
+function _discoverVisibleItemsInActiveRoom(gameState:GameState) {
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  if (!activeCharacter || !activeRoom) return;
+  discoverVisibleItemsInRoom(activeRoom, activeCharacter, gameState.scalingFactors)
+    .forEach(item => gameState.activeEffects.push(createItemDiscoveryEffect(item, activeRoom, Date.now(), gameState.scalingFactors)));
 }
 
 function _getDiscoveredRoomIds(gameState:GameState):Set<string> {
@@ -116,6 +132,7 @@ function _removeItemById(items:Item[], itemId:string):Item|null {
 function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime?:number) {
   const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
   const discoveredItemIds = _getDiscoveredItemIds(gameState);
+  const pendingRoomEffects:PendingRoomEffect[] = [];
   gameState.characters = gameState.initialCharacters.map(duplicateCharacter);
   gameState.rooms = gameState.initialRooms.map(duplicateRoom);
 
@@ -130,7 +147,10 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousT
           const item = _removeItemById(room.items, takeEvent.itemId);
           if (!item) break;
           if (previousTime !== undefined && takeEvent.startTime > previousTime && takeEvent.startTime <= time) {
-            gameState.activeEffects.push(createTakeItemEffect(item, room, Date.now(), gameState.scalingFactors));
+            pendingRoomEffects.push({
+              roomId:room.id,
+              create:() => gameState.activeEffects.push(createTakeItemEffect(item, room, Date.now(), gameState.scalingFactors))
+            });
           }
           actor.items.push(item);
         }
@@ -143,7 +163,15 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousT
           const dropRoom = findRoomAtPosition(gameState.rooms, dropEvent.position.x, dropEvent.position.y);
           if (!actorRoom || !dropRoom || actorRoom.id !== dropRoom.id) break;
           const item = _removeItemById(actor.items, dropEvent.itemId);
-          if (item) dropRoom.items.push({ ...item, position:duplicatePosition(dropEvent.position) });
+          if (!item) break;
+          const droppedItem = { ...item, position:duplicatePosition(dropEvent.position) };
+          if (previousTime !== undefined && dropEvent.startTime > previousTime && dropEvent.startTime <= time) {
+            pendingRoomEffects.push({
+              roomId:dropRoom.id,
+              create:() => gameState.activeEffects.push(createDropItemEffect(droppedItem, dropRoom, Date.now(), gameState.scalingFactors))
+            });
+          }
+          dropRoom.items.push(droppedItem);
         }
       break;
 
@@ -153,7 +181,15 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousT
           const recipient = gameState.characters.find(character => character.id === giveEvent.recipientCharacterId) || null;
           if (!recipient) break;
           const item = _removeItemById(actor.items, giveEvent.itemId);
-          if (item) recipient.items.push(item);
+          if (!item) break;
+          const actorRoom = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
+          if (previousTime !== undefined && giveEvent.startTime > previousTime && giveEvent.startTime <= time && actorRoom) {
+            pendingRoomEffects.push({
+              roomId:actorRoom.id,
+              create:() => gameState.activeEffects.push(createGiveItemEffect(item, actorRoom, actor, recipient, Date.now(), gameState.scalingFactors))
+            });
+          }
+          recipient.items.push(item);
         }
       break;
     }
@@ -165,6 +201,13 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousT
     character.y = pose.position.y;
     character.facingAngle = pose.facingAngle;
   });
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  if (activeRoom) {
+    pendingRoomEffects
+      .filter(effect => effect.roomId === activeRoom.id)
+      .forEach(effect => effect.create());
+  }
   _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds);
   gameState.time = time;
 }
@@ -244,7 +287,7 @@ function _updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent)
     gameState.hoveredCharacterId = null;
     return;
   }
-  discoverVisibleItemsInRoom(activeRoom, activeCharacter, gameState.scalingFactors);
+  _discoverVisibleItemsInActiveRoom(gameState);
   const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors);
   gameState.hoveredItemId = hoveredItem?.id ?? null;
   gameState.hoveredCharacterId = hoveredItem ? null : _findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
@@ -267,6 +310,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
     if (nextTime >= gameState.duration) _pauseGameState(gameState);
   }
   _setActiveRoomDiscovered(gameState);
+  _discoverVisibleItemsInActiveRoom(gameState);
 }
 
 function _findCharacterI(characters:Character[], characterId:string):number {

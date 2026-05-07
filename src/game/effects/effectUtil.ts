@@ -10,11 +10,11 @@ export function processLevelEffects(effects:Effect[], context:CanvasRenderingCon
   }
 }
 
-export function processRoomEffects(room:Room, effects:Effect[], context:CanvasRenderingContext2D) {
+export function processRoomEffects(room:Room, effects:Effect[], context:CanvasRenderingContext2D, isActive:boolean) {
   for (let i = effects.length - 1; i >= 0; --i) {
     const effect = effects[i];
     if (!effect.onProcessRoomEffect || !effect.room || effect.room.id !== room.id) continue;
-    if (!effect.onProcessRoomEffect(room, effect, context)) effects.splice(i, 1);
+    if (!effect.onProcessRoomEffect(room, effect, context, isActive)) effects.splice(i, 1);
   }
 }
 

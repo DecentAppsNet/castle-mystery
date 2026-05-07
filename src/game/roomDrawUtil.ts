@@ -2,7 +2,7 @@ import { drawVisibleCharactersInRoom, drawVisibilityCone } from "./characterDraw
 import { processRoomEffects } from "./effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
-import { discoverVisibleItemsInRoom, drawDiscoveredItemsInRoom } from "./itemDrawUtil";
+import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
 import Character from "./types/Character";
 import Obstruction from "./types/Obstruction";
 import Room from "./types/Room";
@@ -66,9 +66,8 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.strokeStyle = COLOR_DARK_GRAY;
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   if (isActive && activeCharacter) {
-    discoverVisibleItemsInRoom(room, activeCharacter, scalingFactors);
     drawVisibilityCone(activeCharacter, room, scalingFactors, context);
-    drawDiscoveredItemsInRoom(room, scalingFactors, context);
+    drawDiscoveredItemsInRoom(room, effects, scalingFactors, context);
   }
   context.textAlign = "center";
   context.textBaseline = "middle";
@@ -85,5 +84,5 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   if (isActive && activeCharacter) {
     drawVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, effects, scalingFactors, context, time, isPlaying);
   }
-  processRoomEffects(room, effects, context);
+  processRoomEffects(room, effects, context, isActive);
 }

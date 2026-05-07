@@ -1,0 +1,15 @@
+import Item from "../../types/Item";
+import EffectBase from "./EffectBase";
+
+type DropItemEffect = EffectBase & {
+  item:Item,
+  startCanvasX:number,
+  startCanvasY:number,
+  endCanvasX:number,
+  endCanvasY:number,
+  glyphFontSize:number,
+  labelFontSize:number,
+  labelOffsetY:number
+}
+
+export default DropItemEffect;
