@@ -6,6 +6,8 @@ import ScalingFactors from "./ScalingFactors";
 type GameState = {
   characters:Character[],
   rooms:Room[],
+  initialCharacters:Character[],
+  initialRooms:Room[],
   hoveredItemId:string|null,
   hoveredCharacterId:string|null,
   activeCharacterI:number,

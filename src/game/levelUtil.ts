@@ -9,6 +9,7 @@ import { createItineraryIndex, generateRandomItinerary } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { isPositionInRoomObstruction, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
+import WalkEvent from "./types/itineraryEvents/WalkEvent";
 
 function _findSharedWallSectionBetweenRooms(room1:Room, room2:Room):Rect|null {
   // Helper to compute 1D intersection of two ranges. Returns [start,end] or null.
@@ -114,22 +115,30 @@ function _addItemsToCharacter(level:Level, characterId:string, items:Item[]) {
   character.items.push(...items.map(item => ({ ...item, position:{ ...item.position } })));
 }
 
-function _addCharacterToRoom(level:Level, roomId:string, characterId:string, description:string, duration:number) {
+function _addCharacterToRoom(level:Level, roomId:string, characterId:string, description:string) {
   const room = findRoom(level.rooms, roomId);
   assertNonNullable(room);
   const [x, y] = _findCharacterStartPosition(room);
-  const itinerary = generateRandomItinerary(level, x, y, duration);
   const character:Character = {
     id: characterId,
     description,
     items: [],
     x,
     y,
-    facingAngle:itinerary[0].facingAngle,
-    itinerary,
-    itineraryIndex:createItineraryIndex(itinerary)
+    facingAngle:0,
+    itinerary:[],
+    itineraryIndex:{ eventStartTimes:[], eventStartPositions:[] }
   };
   level.characters.push(character);
+}
+
+function _generateCharacterItinerary(level:Level, characterId:string, duration:number) {
+  const character = level.characters.find(c => c.id === characterId);
+  assertNonNullable(character, `character ${characterId} not found`);
+  const itinerary = generateRandomItinerary(level, character, duration);
+  character.itinerary = itinerary;
+  character.itineraryIndex = createItineraryIndex(itinerary);
+  character.facingAngle = itinerary[0] ? (itinerary[0] as WalkEvent).facingAngle : 0;
 }
 
 export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
@@ -231,8 +240,8 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
     id:'kitchen-plate', title:'Plate', displayChar:'◌', position:{x:54, y:91},
     description:'A plain ceramic plate with a chipped rim.'
   });
-  _addCharacterToRoom(level, 'bedroom', 'king', 'A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.', duration);
-  _addCharacterToRoom(level, 'livingRoom', 'queen', 'A poised noblewoman whose careful posture hides a restless tension.', duration);
+  _addCharacterToRoom(level, 'bedroom', 'king', 'A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.');
+  _addCharacterToRoom(level, 'livingRoom', 'queen', 'A poised noblewoman whose careful posture hides a restless tension.');
   _addItemsToCharacter(level, 'king', [{
     id:'king-pocket-watch', title:'Pocket Watch', displayChar:'◷', position:{x:0, y:0},
     description:'A silver pocket watch engraved with a fading crest.', isDiscovered:true
@@ -244,5 +253,7 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
     id:'queen-folded-note', title:'Folded Note', displayChar:'⌷', position:{x:0, y:0},
     description:'A tightly folded note with a broken wax seal.', isDiscovered:true
   }]);
+  _generateCharacterItinerary(level, 'king', duration);
+  _generateCharacterItinerary(level, 'queen', duration);
   return level;
 }

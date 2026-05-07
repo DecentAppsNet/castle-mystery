@@ -1,6 +1,9 @@
 enum ItineraryEventType {
   WALK = "Walk",
-  SPEECH = "Speech"
+  SPEECH = "Speech",
+  TAKE_ITEM = "TakeItem",
+  DROP_ITEM = "DropItem",
+  GIVE_ITEM = "GiveItem"
 }
 
 export default ItineraryEventType;

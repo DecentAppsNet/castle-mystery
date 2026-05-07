@@ -20,8 +20,21 @@ import { drawCharacterPopover, findVisibleCharactersInRoom } from "./characterDr
 import { drawRoom } from "./roomDrawUtil";
 import { COLOR_BLACK } from "./drawConstants";
 import { discoverVisibleItemsInRoom, drawItemPopover, findDiscoveredItemAtPosition } from "./itemDrawUtil";
+import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
+import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
+import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
+import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
+import Position, { duplicatePosition } from "./types/Position";
+import Item from "./types/Item";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
+
+type AppliedInventoryEvent = {
+  characterId:string,
+  eventIndex:number,
+  startPosition:Position,
+  event:TakeItemEvent|DropItemEvent|GiveItemEvent
+}
 
 export function findCharacter(gameState:GameState, characterId:string):Character {
   const character = gameState.characters.find((c) => c.id === characterId);
@@ -37,16 +50,121 @@ function _setActiveRoomDiscovered(gameState:GameState) {
   }
 }
 
-function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent) {
-  const { time } = event;
-  for(let i = 0; i < gameState.characters.length; ++i) {
-    const character = gameState.characters[i];
+function _getDiscoveredRoomIds(gameState:GameState):Set<string> {
+  return new Set(gameState.rooms.filter(room => room.isDiscovered).map(room => room.id));
+}
+
+function _getDiscoveredItemIds(gameState:GameState):Set<string> {
+  const discoveredItemIds = new Set<string>();
+  gameState.rooms.forEach(room => room.items.forEach(item => {
+    if (item.isDiscovered) discoveredItemIds.add(item.id);
+  }));
+  gameState.characters.forEach(character => character.items.forEach(item => {
+    if (item.isDiscovered) discoveredItemIds.add(item.id);
+  }));
+  return discoveredItemIds;
+}
+
+function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<string>, discoveredItemIds:Set<string>) {
+  gameState.rooms.forEach(room => {
+    if (discoveredRoomIds.has(room.id)) room.isDiscovered = true;
+    room.items.forEach(item => {
+      if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
+    });
+  });
+  gameState.characters.forEach(character => character.items.forEach(item => {
+    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
+  }));
+}
+
+function _collectAppliedInventoryEvents(gameState:GameState, time:number):AppliedInventoryEvent[] {
+  const appliedEvents:AppliedInventoryEvent[] = [];
+  gameState.characters.forEach(character => {
+    character.itinerary.forEach((event, eventIndex) => {
+      if (event.startTime > time) return;
+      switch(event.type) {
+        case ItineraryEventType.TAKE_ITEM:
+        case ItineraryEventType.DROP_ITEM:
+        case ItineraryEventType.GIVE_ITEM:
+          {
+            const startPosition = character.itineraryIndex.eventStartPositions[eventIndex];
+            assertNonNullable(startPosition);
+            appliedEvents.push({
+              characterId:character.id,
+              eventIndex,
+              startPosition:duplicatePosition(startPosition),
+              event:event as TakeItemEvent|DropItemEvent|GiveItemEvent
+            });
+          }
+        break;
+      }
+    });
+  });
+  appliedEvents.sort((a, b) => a.event.startTime - b.event.startTime || a.characterId.localeCompare(b.characterId) || a.eventIndex - b.eventIndex);
+  return appliedEvents;
+}
+
+function _removeItemById(items:Item[], itemId:string):Item|null {
+  const itemIndex = items.findIndex(item => item.id === itemId);
+  if (itemIndex === -1) return null;
+  const [item] = items.splice(itemIndex, 1);
+  return item ?? null;
+}
+
+function _rebuildDynamicStateForTime(gameState:GameState, time:number) {
+  const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
+  const discoveredItemIds = _getDiscoveredItemIds(gameState);
+  gameState.characters = gameState.initialCharacters.map(duplicateCharacter);
+  gameState.rooms = gameState.initialRooms.map(duplicateRoom);
+
+  _collectAppliedInventoryEvents(gameState, time).forEach(({ characterId, startPosition, event }) => {
+    const actor = findCharacter(gameState, characterId);
+    switch(event.type) {
+      case ItineraryEventType.TAKE_ITEM:
+        {
+          const takeEvent = event as TakeItemEvent;
+          const room = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
+          if (!room) break;
+          const item = _removeItemById(room.items, takeEvent.itemId);
+          if (item) actor.items.push(item);
+        }
+      break;
+
+      case ItineraryEventType.DROP_ITEM:
+        {
+          const dropEvent = event as DropItemEvent;
+          const actorRoom = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
+          const dropRoom = findRoomAtPosition(gameState.rooms, dropEvent.position.x, dropEvent.position.y);
+          if (!actorRoom || !dropRoom || actorRoom.id !== dropRoom.id) break;
+          const item = _removeItemById(actor.items, dropEvent.itemId);
+          if (item) dropRoom.items.push({ ...item, position:duplicatePosition(dropEvent.position) });
+        }
+      break;
+
+      case ItineraryEventType.GIVE_ITEM:
+        {
+          const giveEvent = event as GiveItemEvent;
+          const recipient = gameState.characters.find(character => character.id === giveEvent.recipientCharacterId) || null;
+          if (!recipient) break;
+          const item = _removeItemById(actor.items, giveEvent.itemId);
+          if (item) recipient.items.push(item);
+        }
+      break;
+    }
+  });
+
+  gameState.characters.forEach(character => {
     const pose = findCharacterPose(character, time);
     character.x = pose.position.x;
     character.y = pose.position.y;
     character.facingAngle = pose.facingAngle;
-  }
+  });
+  _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds);
   gameState.time = time;
+}
+
+function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent) {
+  _rebuildDynamicStateForTime(gameState, event.time);
   gameState.isPlaying = false;
 }
 
@@ -125,17 +243,6 @@ function _updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent)
   gameState.hoveredCharacterId = hoveredItem ? null : _findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
 }
 
-function _updateCharacterPosition(character:Character, time:number) {
-  const pose = findCharacterPose(character, time);
-  character.x = pose.position.x;
-  character.y = pose.position.y;
-  character.facingAngle = pose.facingAngle;
-}
-
-function _updateCharacterPositions(characters:Character[], time:number) {
-  characters.forEach(c => _updateCharacterPosition(c, time));
-}
-
 function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
   events.forEach(event => {
     switch(event.type) {
@@ -148,8 +255,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
   });
   if (gameState.isPlaying) {
     const nextTime = Math.min(gameState.duration, Date.now() + gameState.realTimeToGameTimeOffset);
-    gameState.time = nextTime;
-    _updateCharacterPositions(gameState.characters, gameState.time);
+    _rebuildDynamicStateForTime(gameState, nextTime);
     if (nextTime >= gameState.duration) _pauseGameState(gameState);
   }
   _setActiveRoomDiscovered(gameState);
@@ -226,6 +332,8 @@ export function createGameStateFromLevel(level:Level):GameState {
   const gameState:GameState = {
     characters:level.characters.map(duplicateCharacter),
     rooms:level.rooms.map(duplicateRoom),
+    initialCharacters:level.characters.map(duplicateCharacter),
+    initialRooms:level.rooms.map(duplicateRoom),
     hoveredItemId:null,
     hoveredCharacterId:null,
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
