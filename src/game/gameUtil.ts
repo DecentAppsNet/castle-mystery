@@ -22,6 +22,7 @@ import { COLOR_BLACK } from "./drawConstants";
 import { discoverVisibleItemsInRoom, drawItemPopover, findDiscoveredItemAtPosition } from "./itemDrawUtil";
 import { processLevelEffects } from "./effects/effectUtil";
 import { createItemDiscoveryEffect } from "./effects/itemDiscoveryUtil";
+import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { createDropItemEffect } from "./effects/dropItemUtil";
 import { createGiveItemEffect } from "./effects/giveItemUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
@@ -219,17 +220,25 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
 }
 
 function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent) {
+  const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = event.isPlaying;
   if (event.isPlaying) {
     gameState.realTimeToGameTimeOffset = gameState.time - Date.now();
   } else {
     gameState.realTimeToGameTimeOffset = 0; // To find errors if code incorrectly assumes the value to be set.
   }
+  if (wasPlaying !== event.isPlaying) {
+    gameState.activeEffects.push(event.isPlaying
+      ? createPlayEffect(Date.now(), gameState.scalingFactors.roomLineWidth)
+      : createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
+  }
 }
 
 function _pauseGameState(gameState:GameState) {
+  const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = false;
   gameState.realTimeToGameTimeOffset = 0;
+  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
 }
 
 function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFactors):Rect {

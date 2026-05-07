@@ -1,3 +1,4 @@
+import { clamp } from "@/common/numberUtil";
 import { MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { changeTime, playPause } from "@/game/playerEventUtil";
 
@@ -16,5 +17,10 @@ export function updatePlayPause(isPlaying:boolean, setIsPlaying:(isPlaying:boole
 
 export function updateTime(minutes:number, setIsPlaying:(isPlaying:boolean) => void) {
   changeTime(minutesToMsecs(minutes));
+  setIsPlaying(false);
+}
+
+export function updateTimeMsecs(time:number, duration:number, setIsPlaying:(isPlaying:boolean) => void) {
+  changeTime(clamp(time, 0, duration));
   setIsPlaying(false);
 }
