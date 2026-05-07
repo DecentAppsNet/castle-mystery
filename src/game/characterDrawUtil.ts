@@ -108,20 +108,26 @@ export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:numbe
   context.restore();
 }
 
-export function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, speech:string|null) {
+function _getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
   const { roomLineWidth } = scalingFactors;
   const [centerX, bottomY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
   const characterWidth = roomLineWidth * 5;
   const characterHeight = roomLineWidth * 10;
   const centerY = Math.round(bottomY - characterHeight / 2);
+  const swayPhase = (time % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
+  const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
+  const anchorX = centerX + sway;
+  const anchorTopY = centerY - characterHeight / 2;
+  return { anchorX, anchorTopY, centerX, centerY, characterWidth, characterHeight };
+}
+
+export function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFactors,
+  context:CanvasRenderingContext2D, time:number, speech:string|null) {
+  const { anchorX:backboneX, anchorTopY, centerX, centerY, characterWidth, characterHeight } = _getCharacterSpeechAnchor(character, scalingFactors, time);
   const headRadius = Math.min(characterWidth, characterHeight) / 4;
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
-  const swayPhase = (time % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
-  const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
-  const backboneX = centerX + sway;
-  if (speech) drawSpeechBubble(speech, backboneX, centerY - characterHeight / 2, room, scalingFactors, context);
+  if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
   context.beginPath();
   context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, 2 * Math.PI);
   context.moveTo(backboneX, centerY - characterHeight / 4 + headRadius);
@@ -140,6 +146,16 @@ export function drawCharacter(character:Character, room:Room, scalingFactors:Sca
 export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character,
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean) {
   const visibleCharacters = findVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, scalingFactors);
+  const visibleCharacterIds = new Set(visibleCharacters.map(character => character.id));
+  if (isPlaying) {
+    charactersInRoom.forEach(character => {
+      if (visibleCharacterIds.has(character.id)) return;
+      const speech = findCharacterPose(character, time).speech;
+      if (!speech) return;
+      const { anchorX, anchorTopY } = _getCharacterSpeechAnchor(character, scalingFactors, time);
+      drawSpeechBubble(speech, anchorX, anchorTopY, room, scalingFactors, context);
+    });
+  }
   visibleCharacters.forEach(character => {
     const speech = isPlaying ? findCharacterPose(character, time).speech : null;
     drawCharacter(character, room, scalingFactors, context, time, speech);
