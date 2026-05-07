@@ -1,4 +1,5 @@
 import { clamp } from "@/common/numberUtil";
+import { processCharacterEffects } from "./effects/effectUtil";
 import { findCharacterPose } from "./itineraryUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcVisibilityPolygon, isPositionVisible } from "./visibilityUtil";
@@ -6,6 +7,7 @@ import Character from "./types/Character";
 import Position from "./types/Position";
 import Room from "./types/Room";
 import ScalingFactors from "./types/ScalingFactors";
+import Effect from "./effects/types/Effect";
 import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_POPOVER_FILL, COLOR_SPEECH_BUBBLE_FILL, COLOR_VISIBILITY_FILL, VISIBILITY_CONE_ANGLE } from "./drawConstants";
 
 const CHARACTER_SWAY_INTERVAL = 1500;
@@ -136,11 +138,12 @@ export function drawCharacter(character:Character, room:Room, scalingFactors:Sca
 }
 
 export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean) {
+  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean) {
   const visibleCharacters = findVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, scalingFactors);
   visibleCharacters.forEach(character => {
     const speech = isPlaying ? findCharacterPose(character, time).speech : null;
     drawCharacter(character, room, scalingFactors, context, time, speech);
+    processCharacterEffects(character, effects, context);
   });
 }
 

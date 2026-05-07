@@ -20,6 +20,8 @@ import { drawCharacterPopover, findVisibleCharactersInRoom } from "./characterDr
 import { drawRoom } from "./roomDrawUtil";
 import { COLOR_BLACK } from "./drawConstants";
 import { discoverVisibleItemsInRoom, drawItemPopover, findDiscoveredItemAtPosition } from "./itemDrawUtil";
+import { processLevelEffects } from "./effects/effectUtil";
+import { createTakeItemEffect } from "./effects/takeItemUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
@@ -111,7 +113,7 @@ function _removeItemById(items:Item[], itemId:string):Item|null {
   return item ?? null;
 }
 
-function _rebuildDynamicStateForTime(gameState:GameState, time:number) {
+function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime?:number) {
   const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
   const discoveredItemIds = _getDiscoveredItemIds(gameState);
   gameState.characters = gameState.initialCharacters.map(duplicateCharacter);
@@ -126,7 +128,11 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number) {
           const room = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
           if (!room) break;
           const item = _removeItemById(room.items, takeEvent.itemId);
-          if (item) actor.items.push(item);
+          if (!item) break;
+          if (previousTime !== undefined && takeEvent.startTime > previousTime && takeEvent.startTime <= time) {
+            gameState.activeEffects.push(createTakeItemEffect(item, room, Date.now(), gameState.scalingFactors));
+          }
+          actor.items.push(item);
         }
       break;
 
@@ -164,6 +170,7 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number) {
 }
 
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent) {
+  gameState.activeEffects.length = 0;
   _rebuildDynamicStateForTime(gameState, event.time);
   gameState.isPlaying = false;
 }
@@ -254,8 +261,9 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
     }
   });
   if (gameState.isPlaying) {
+    const previousTime = gameState.time;
     const nextTime = Math.min(gameState.duration, Date.now() + gameState.realTimeToGameTimeOffset);
-    _rebuildDynamicStateForTime(gameState, nextTime);
+    _rebuildDynamicStateForTime(gameState, nextTime, previousTime);
     if (nextTime >= gameState.duration) _pauseGameState(gameState);
   }
   _setActiveRoomDiscovered(gameState);
@@ -277,6 +285,7 @@ function _updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRender
     const roomsBoundingRect = calcRoomsBoundingRect(gameState.rooms);
     scalingFactors = calcScalingFactors(roomsBoundingRect.width, roomsBoundingRect.height, destW, destH);
     gameState.scalingFactors = scalingFactors;
+    gameState.activeEffects.length = 0;
   }
   return scalingFactors;
 }
@@ -288,17 +297,19 @@ function _drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
     const room = gameState.rooms[roomI];
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
-    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.scalingFactors, context, gameState.time, gameState.isPlaying);
+    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.isPlaying);
   }
   if (activeRoom && gameState.hoveredItemId) {
     const hoveredItem = activeRoom.items.find(item => item.id === gameState.hoveredItemId && item.isDiscovered) || null;
     if (hoveredItem) drawItemPopover(hoveredItem, gameState.scalingFactors, context);
+    processLevelEffects(gameState.activeEffects, context);
     return;
   }
   if (gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter) drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context);
   }
+  processLevelEffects(gameState.activeEffects, context);
 }
 
 function _callOnMinutesChangedAsNeeded(gameState:GameState, onMinutesChanged:(minutes:number) => void) {
@@ -334,6 +345,7 @@ export function createGameStateFromLevel(level:Level):GameState {
     rooms:level.rooms.map(duplicateRoom),
     initialCharacters:level.characters.map(duplicateCharacter),
     initialRooms:level.rooms.map(duplicateRoom),
+    activeEffects:[],
     hoveredItemId:null,
     hoveredCharacterId:null,
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),

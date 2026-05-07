@@ -1,4 +1,5 @@
 import { drawVisibleCharactersInRoom, drawVisibilityCone } from "./characterDrawUtil";
+import { processRoomEffects } from "./effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { discoverVisibleItemsInRoom, drawDiscoveredItemsInRoom } from "./itemDrawUtil";
@@ -7,6 +8,7 @@ import Obstruction from "./types/Obstruction";
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import ScalingFactors from "./types/ScalingFactors";
+import Effect from "./effects/types/Effect";
 
 export function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const { roomLineWidth } = scalingFactors;
@@ -51,7 +53,7 @@ export function drawObstruction(obstruction:Obstruction, scalingFactors:ScalingF
 }
 
 export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean) {
+  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean) {
   if (!room.isDiscovered) return;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
   const scaledBottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
@@ -81,6 +83,7 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.fillStyle = COLOR_BLACK;
   room.exits.forEach(exit => drawRoomExit(exit, scalingFactors, context));
   if (isActive && activeCharacter) {
-    drawVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, scalingFactors, context, time, isPlaying);
+    drawVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, effects, scalingFactors, context, time, isPlaying);
   }
+  processRoomEffects(room, effects, context);
 }
