@@ -24,7 +24,7 @@ import { calcVisibilityPolygon, isPositionVisible } from "./visibilityUtil";
 const CHARACTER_SWAY_INTERVAL = 1500; // ms for full left-right-left cycle
 const CHARACTER_SWAY_AMOUNT = 1; // pixels to sway left/right from center    
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
-const VISIBILITY_CONE_ANGLE = Math.PI / 2;
+const VISIBILITY_CONE_ANGLE = Math.PI / 1.2;
 const COLOR_BLACK = "#000";
 const COLOR_DARK_GRAY = "#333";
 const COLOR_ACTIVE_ROOM_FILL = "#fff";

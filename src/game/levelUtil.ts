@@ -113,7 +113,7 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         title: "Living Room",
         rect: { x: 0, y: 0, width: 50, height: 100 },
         obstructions: [
-          { rect: { x: 10, y: 18, width: 12, height: 20 } },
+          { rect: { x: 10, y: 18, width: 4, height: 50 } },
           { rect: { x: 28, y: 58, width: 10, height: 18 } }
         ],
         exits: [],
@@ -124,7 +124,7 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
         title: "Bedroom",
         rect: { x: 50, y: 0, width: 50, height: 30 },
         obstructions: [
-          { rect: { x: 60, y: 8, width: 16, height: 8 } }
+          { rect: { x: 80, y: 5, width: 16, height: 4 } }
         ],
         exits: [],
         isDiscovered: true
