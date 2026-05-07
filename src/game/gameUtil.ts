@@ -214,9 +214,12 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousT
 }
 
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent) {
+  const wasPlaying = gameState.isPlaying;
   gameState.activeEffects.length = 0;
   _rebuildDynamicStateForTime(gameState, event.time);
   gameState.isPlaying = false;
+  gameState.realTimeToGameTimeOffset = 0;
+  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
 }
 
 function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent) {
