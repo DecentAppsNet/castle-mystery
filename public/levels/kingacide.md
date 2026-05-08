@@ -1,3 +1,8 @@
+# general
+
+* activeCharacter=King
+* time=0:00
+
 # map
 
 ```
@@ -38,18 +43,20 @@ WFL
 ............
 ..#......#..
 ............
-............
+.....Q......
 ............
 ............
 ............
 ```
+
+* Q=Queen
 
 ## Throne Room
 
 ```
 .......
-..###..
-..#.#..
+.#...#.
+...K...
 .......
 .......
 .......
@@ -61,6 +68,7 @@ WFL
 ```
 
 * exits=Foyer|East Hall
+* K=King
 
 ## East Hall
 
@@ -69,3 +77,44 @@ WFL
 ## Foyer
 
 * exits=West Hall|Throne Room|Library
+
+## Library
+
+```
+.....
+..B..
+.....
+```
+
+* B=Romance Novel
+
+* exits=Foyer|East Hall
+
+# characters
+
+## King
+
+* description=A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.
+* items=Sceptre | Dagger
+
+## Queen
+
+* description=A poised noblewoman whose careful posture hides a restless tension.
+
+# items
+
+## Sceptre
+
+* description=A finely-crafted token of power, grimy, and scratched.
+* displayChar=⚚
+
+## Dagger
+
+* description=An obligatory attempt at self-defense.
+* displayChar=†
+
+## Romance Novel
+
+* title=Book
+* description=A novel about shipwrecked lovers stranded on an island.
+* displayChar=⌸

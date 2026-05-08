@@ -406,7 +406,7 @@ export function createGameStateFromLevel(level:Level):GameState {
     hoveredCharacterId:null,
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isPlaying:false,
-    time:0,
+    time:level.startTime,
     duration:level.duration,
     realTimeToGameTimeOffset:0,
     labels:level.labels.map(label => ({...label})),
@@ -414,6 +414,7 @@ export function createGameStateFromLevel(level:Level):GameState {
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN
   }
+  if (level.startTime > 0) _rebuildDynamicStateForTime(gameState, level.startTime);
   _setActiveRoomDiscovered(gameState);
   return gameState;
 }

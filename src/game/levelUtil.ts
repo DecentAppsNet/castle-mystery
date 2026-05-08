@@ -17,6 +17,17 @@ import { baseUrl } from "@/common/urlUtil";
 
 const MAP_TILE_SIZE = 20;
 
+type CharacterDefinition = {
+  description:string,
+  itemIds:string[]
+};
+
+type ItemDefinition = {
+  title:string,
+  description:string,
+  displayChar:string
+};
+
 function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
   return {
     rooms: [],
@@ -32,6 +43,68 @@ type ObstructionTile = {
   row:number,
   col:number
 };
+
+type CharacterTile = {
+  entryId:string,
+  row:number,
+  col:number
+};
+
+function _parseTimeTextToMsecs(text:string):number {
+  const trimmedText = text.trim();
+  if (!trimmedText) return 0;
+  const parts = trimmedText.split(":").map(part => part.trim());
+  if (parts.length !== 2 && parts.length !== 3) throw new Error(`invalid time format: ${text}`);
+  const numbers = parts.map(part => Number(part));
+  if (numbers.some(value => Number.isNaN(value) || value < 0)) throw new Error(`invalid time value: ${text}`);
+  const [hours, minutes, seconds = 0] = numbers;
+  return ((hours * 60 + minutes) * 60 + seconds) * 1000;
+}
+
+function _applyGeneralSection(level:Level, generalSection:string) {
+  const generalNameValues = parseNameValueLines(generalSection);
+  if (generalNameValues.activeCharacter) level.activeCharacterId = generalNameValues.activeCharacter;
+  if (generalNameValues.time) level.startTime = _parseTimeTextToMsecs(generalNameValues.time);
+}
+
+function _parseCharacterDefinitions(charactersSection:string):Map<string, CharacterDefinition> {
+  const characterDefinitions = new Map<string, CharacterDefinition>();
+  const characterSections = parseSections(charactersSection, 2);
+  Object.entries(characterSections).forEach(([characterId, characterSection]) => {
+    const nameValues = parseNameValueLines(characterSection);
+    characterDefinitions.set(characterId, {
+      description:nameValues.description || "",
+      itemIds:parseOptions(nameValues.items || "")
+    });
+  });
+  return characterDefinitions;
+}
+
+function _parseItemDefinitions(itemsSection:string):Map<string, ItemDefinition> {
+  const itemDefinitions = new Map<string, ItemDefinition>();
+  const itemSections = parseSections(itemsSection, 2);
+  Object.entries(itemSections).forEach(([itemId, itemSection]) => {
+    const nameValues = parseNameValueLines(itemSection);
+    itemDefinitions.set(itemId, {
+      title:nameValues.title || itemId,
+      description:nameValues.description || "",
+      displayChar:nameValues.displayChar || itemId.charAt(0) || "?"
+    });
+  });
+  return itemDefinitions;
+}
+
+function _createItemFromDefinition(itemId:string, itemDefinitions:Map<string, ItemDefinition>, position:{x:number, y:number}, isDiscovered:boolean):Item {
+  const itemDefinition = itemDefinitions.get(itemId);
+  return {
+    id:itemId,
+    title:itemDefinition?.title || itemId,
+    displayChar:itemDefinition?.displayChar || itemId.charAt(0) || "?",
+    position:{ ...position },
+    description:itemDefinition?.description || "",
+    isDiscovered
+  };
+}
 
 function _findObstructionTilesInGrid(gridLines:string[]):ObstructionTile[][] {
   if (!gridLines.length) return [];
@@ -116,6 +189,83 @@ function _createNormalizedObstructionFromTiles(room:Room, obstructionTiles:Obstr
   });
 
   return createObstruction(rects);
+}
+
+function _findCharacterTilesInGrid(gridLines:string[], legend:Record<string, string>):CharacterTile[] {
+  const characterTiles:CharacterTile[] = [];
+  gridLines.forEach((line, row) => {
+    Array.from(line).forEach((tileChar, col) => {
+      if (tileChar === '.' || tileChar === '#') return;
+      const entryId = legend[tileChar];
+      if (!entryId) return;
+      characterTiles.push({ entryId, row, col });
+    });
+  });
+  return characterTiles;
+}
+
+function _calcScaledRoomGridPosition(room:Room, row:number, col:number, gridWidth:number, gridHeight:number):[x:number, y:number] {
+  const tileWidth = room.rect.width / gridWidth;
+  const tileHeight = room.rect.height / gridHeight;
+  return [
+    Math.round(room.rect.x + (col + 0.5) * tileWidth),
+    Math.round(room.rect.y + (row + 0.5) * tileHeight)
+  ];
+}
+
+function _addCharacter(level:Level, characterId:string, description:string, x:number, y:number) {
+  if (level.activeCharacterId === '') level.activeCharacterId = characterId;
+  const character:Character = {
+    id: characterId,
+    description,
+    items: [],
+    x,
+    y,
+    facingAngle:0,
+    itinerary:[],
+    itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
+  };
+  level.characters.push(character);
+}
+
+function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string,
+  characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
+  const roomSections = parseSections(roomsSection, 2);
+
+  Object.entries(roomSections).forEach(([roomId, roomSection]) => {
+    const room = findRoom(level.rooms, roomId);
+    const gridLines = parseFirstFencedCodeBlockLines(roomSection);
+    if (!gridLines.length) return;
+
+    const gridWidth = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
+    const gridHeight = gridLines.length;
+    const roomNameValues = parseNameValueLines(roomSection);
+    const roomLegend = Object.fromEntries(
+      Object.entries(roomNameValues).filter(([name]) => name !== 'exits')
+    );
+
+    _findCharacterTilesInGrid(gridLines, roomLegend).forEach(({ entryId, row, col }) => {
+      const [x, y] = _calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
+      const characterDefinition = characterDefinitions.get(entryId);
+      if (characterDefinition) {
+        _addCharacter(level, entryId, characterDefinition.description, x, y);
+        return;
+      }
+      if (itemDefinitions.has(entryId)) {
+        _addItemToRoom(level, roomId, _createItemFromDefinition(entryId, itemDefinitions, { x, y }, false));
+      }
+    });
+  });
+}
+
+function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
+  level.characters.forEach(character => {
+    const characterDefinition = characterDefinitions.get(character.id);
+    if (!characterDefinition) return;
+    _addItemsToCharacter(level, character.id, characterDefinition.itemIds.map(itemId =>
+      _createItemFromDefinition(itemId, itemDefinitions, { x:0, y:0 }, true)
+    ));
+  });
 }
 
 function _addRoomObstructionsFromRoomsSection(level:Level, roomsSection:string) {
@@ -299,19 +449,8 @@ function _addItemsToCharacter(level:Level, characterId:string, items:Item[]) {
 function _addCharacterToRoom(level:Level, roomId:string, characterId:string, description:string) {
   const room = findRoom(level.rooms, roomId);
   assertNonNullable(room);
-  if (level.activeCharacterId === '') level.activeCharacterId = characterId;
   const [x, y] = _findCharacterStartPosition(room);
-  const character:Character = {
-    id: characterId,
-    description,
-    items: [],
-    x,
-    y,
-    facingAngle:0,
-    itinerary:[],
-    itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
-  };
-  level.characters.push(character);
+  _addCharacter(level, characterId, description, x, y);
 }
 
 function _generateCharacterItinerary(level:Level, characterId:string, duration:number) {
@@ -444,8 +583,13 @@ export function createExampleLevel2(duration:number = MSECS_IN_DAY):Level {
 export function loadLevelFromText(text:string):Level {
   const sections = parseSections(text);
   const level = _createEmptyLevel();
+  _applyGeneralSection(level, sections.general || "");
+  const characterDefinitions = _parseCharacterDefinitions(sections.characters || "");
+  const itemDefinitions = _parseItemDefinitions(sections.items || "");
   _createRoomsFromMapSection(level, sections.map || "", sections.rooms || "");
   _addRoomExitsFromRoomsSection(level, sections.rooms || "");
+  _addCharactersAndRoomItemsFromSections(level, sections.rooms || "", characterDefinitions, itemDefinitions);
+  _addInventoryItemsToCharacters(level, characterDefinitions, itemDefinitions);
   return level;
 }
 
@@ -459,9 +603,6 @@ export async function createExampleLevel(duration:number):Promise<Level> {
   const level = await loadLevelFromUrl(baseUrl('/levels/kingacide.md'));
   level.duration = duration;
   level.labels = _createTimeLabels(duration)
-  _addCharacterToRoom(level, 'Throne Room', 'King', 'A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.');
-  _addCharacterToRoom(level, 'Library', 'Queen', 'A poised noblewoman whose careful posture hides a restless tension.');
-  _generateCharacterItinerary(level, 'King', duration);
-  _generateCharacterItinerary(level, 'Queen', duration);
+  level.characters.forEach(character => _generateCharacterItinerary(level, character.id, duration));
   return level;
 }
