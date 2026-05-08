@@ -1,19 +1,25 @@
 import { assertNonNullable } from "decent-portal";
 import Level from "./types/Level";
-import Item from "./types/Item";
+import Item, { duplicateItem } from "./types/Item";
 import Obstruction from "./types/Obstruction";
 import Room from "./types/Room";
 import Rect from "./types/Rect";
 import Character from './types/Character';
 import { findRoom } from "./roomUtil";
-import { createItineraryIndex, generateRandomItinerary } from "./itineraryUtil";
+import { createItineraryIndex, findCharacterPose, generateRandomItinerary } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { createObstruction, isPositionInRoomObstruction, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
-import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
-import WalkEvent from "./types/itineraryEvents/WalkEvent";
+import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
+import { parseLeadingTimestamp, parseTimestampToMsecs } from "@/common/timestampUtil";
 import { baseUrl } from "@/common/urlUtil";
+import { tryCreateAtActivity } from "./activities/atActivityUtil";
+import { tryCreateSayActivity } from "./activities/sayActivityUtil";
+import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
+import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
+import { tryCreateFaceActivity } from "./activities/faceActivityUtil";
+import { appendEventsToCharacterState, AuthoredActivityContext, createCharacterActivityState, createInitialRoomItemsByRoomId } from "./activities/activityUtil";
 
 const MAP_TILE_SIZE = 20;
 
@@ -26,6 +32,13 @@ type ItemDefinition = {
   title:string,
   description:string,
   displayChar:string
+};
+
+type ParsedItineraryActivity = {
+  time:number,
+  lineNo:number,
+  characterId:string,
+  activityText:string
 };
 
 function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
@@ -51,14 +64,7 @@ type CharacterTile = {
 };
 
 function _parseTimeTextToMsecs(text:string):number {
-  const trimmedText = text.trim();
-  if (!trimmedText) return 0;
-  const parts = trimmedText.split(":").map(part => part.trim());
-  if (parts.length !== 2 && parts.length !== 3) throw new Error(`invalid time format: ${text}`);
-  const numbers = parts.map(part => Number(part));
-  if (numbers.some(value => Number.isNaN(value) || value < 0)) throw new Error(`invalid time value: ${text}`);
-  const [hours, minutes, seconds = 0] = numbers;
-  return ((hours * 60 + minutes) * 60 + seconds) * 1000;
+  return parseTimestampToMsecs(text);
 }
 
 function _applyGeneralSection(level:Level, generalSection:string) {
@@ -458,9 +464,88 @@ function _generateCharacterItinerary(level:Level, characterId:string, duration:n
   assertNonNullable(character, `character ${characterId} not found`);
   const itinerary = generateRandomItinerary(level, character, duration);
   character.itinerary = itinerary;
-  character.itineraryIndex = createItineraryIndex(itinerary);
-  const firstWalkEvent = itinerary.find(event => event.type === ItineraryEventType.WALK) as WalkEvent|undefined;
-  character.facingAngle = firstWalkEvent?.facingAngle ?? 0;
+  character.itineraryIndex = createItineraryIndex(itinerary, { x:character.x, y:character.y });
+  character.facingAngle = findCharacterPose(character, 0).facingAngle;
+}
+
+function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
+  const activityMarkers = [' @', ' says ', ' wanders', ' takes ', ' faces '];
+  let splitIndex = -1;
+
+  activityMarkers.forEach(marker => {
+    const markerIndex = activityLine.indexOf(marker);
+    if (markerIndex <= 0) return;
+    if (splitIndex === -1 || markerIndex < splitIndex) splitIndex = markerIndex;
+  });
+
+  if (splitIndex === -1) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
+  const characterId = activityLine.slice(0, splitIndex).trim();
+  const activityText = activityLine.slice(splitIndex + 1).trim();
+  if (!characterId || !activityText) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
+  return { characterId, activityText };
+}
+
+function _parseItineraryActivities(itinerarySection:string):ParsedItineraryActivity[] {
+  return itinerarySection.split('\n').map((line, lineNo) => ({ line, lineNo }))
+    .flatMap(({ line, lineNo }) => {
+      const timestamp = parseLeadingTimestamp(line);
+      if (!timestamp) return [];
+      const activityLine = timestamp.remainingText.trim();
+      if (!activityLine.length) throw new Error(`missing authored itinerary activity on line ${lineNo + 1}`);
+      const { characterId, activityText } = _parseCharacterActivityLine(activityLine);
+      return [{ time:timestamp.time, lineNo, characterId, activityText }];
+    })
+    .sort((a, b) => a.time - b.time || a.lineNo - b.lineNo);
+}
+
+function _createAuthoredActivityContext(level:Level, character:Character, timestamp:number,
+  roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>):AuthoredActivityContext {
+  const state = characterStatesById.get(character.id);
+  assertNonNullable(state, `missing authored itinerary state for ${character.id}`);
+  return { level, character, state, roomItemsByRoomId, charactersById, characterStatesById, timestamp };
+}
+
+function _createEventsForAuthoredActivity(activityText:string, context:AuthoredActivityContext):ItineraryEvent[] {
+  const activityFactories = [
+    tryCreateAtActivity,
+    tryCreateSayActivity,
+    tryCreateWanderActivity,
+    tryCreateTakeActivity,
+    tryCreateFaceActivity
+  ];
+
+  for (const createActivityEvents of activityFactories) {
+    const events = createActivityEvents(activityText, context);
+    if (events !== null) return events;
+  }
+
+  throw new Error(`unsupported itinerary activity '${activityText}'`);
+}
+
+function _loadAuthoredItineraries(level:Level, itinerarySection:string) {
+  const activities = _parseItineraryActivities(itinerarySection);
+  if (!activities.length) return;
+  const charactersById = new Map(level.characters.map(character => [character.id, character]));
+  const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
+  const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
+
+  activities.forEach(activity => {
+    const character = charactersById.get(activity.characterId);
+    assertNonNullable(character, `unknown character '${activity.characterId}' in authored itinerary`);
+    const context = _createAuthoredActivityContext(level, character, activity.time, roomItemsByRoomId, charactersById, characterStatesById);
+    const events = _createEventsForAuthoredActivity(activity.activityText, context);
+    appendEventsToCharacterState(character, context.state, events);
+    if (!events.length) context.state.time = Math.max(context.state.time, activity.time);
+  });
+
+  level.characters.forEach(character => {
+    const state = characterStatesById.get(character.id);
+    assertNonNullable(state, `missing final authored itinerary state for ${character.id}`);
+    character.itinerary = [...state.events];
+    character.itineraryIndex = createItineraryIndex(character.itinerary, { x:character.x, y:character.y });
+    character.facingAngle = findCharacterPose(character, level.startTime).facingAngle;
+    character.items = state.carriedItems.map(duplicateItem);
+  });
 }
 
 export function createExampleLevel2(duration:number = MSECS_IN_DAY):Level {
@@ -590,6 +675,7 @@ export function loadLevelFromText(text:string):Level {
   _addRoomExitsFromRoomsSection(level, sections.rooms || "");
   _addCharactersAndRoomItemsFromSections(level, sections.rooms || "", characterDefinitions, itemDefinitions);
   _addInventoryItemsToCharacters(level, characterDefinitions, itemDefinitions);
+  _loadAuthoredItineraries(level, sections.itinerary || "");
   return level;
 }
 
@@ -603,6 +689,8 @@ export async function createExampleLevel(duration:number):Promise<Level> {
   const level = await loadLevelFromUrl(baseUrl('/levels/kingacide.md'));
   level.duration = duration;
   level.labels = _createTimeLabels(duration)
-  level.characters.forEach(character => _generateCharacterItinerary(level, character.id, duration));
+  level.characters.forEach(character => {
+    if (!character.itinerary.length) _generateCharacterItinerary(level, character.id, duration);
+  });
   return level;
 }

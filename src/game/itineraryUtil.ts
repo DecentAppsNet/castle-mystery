@@ -5,6 +5,7 @@ import Room from "./types/Room";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
 import RoomEntryEvent from "./types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
+import FacingEvent from "./types/itineraryEvents/FacingEvent";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
@@ -137,7 +138,7 @@ function _calcFacingAngle(fromX:number, fromY:number, toX:number, toY:number):nu
   return Math.atan2(toY - fromY, toX - fromX);
 }
 
-type WalkEventCreationResult = {
+export type WalkEventCreationResult = {
   event:WalkEvent|null,
   wasClipped:boolean
 }
@@ -170,6 +171,14 @@ function _createSpeechEvent(startTime:number, speech:string, facingAngle:number)
   };
 }
 
+function _createFacingEvent(startTime:number, facingAngle:number):FacingEvent {
+  return {
+    type:ItineraryEventType.FACING,
+    startTime,
+    facingAngle
+  };
+}
+
 function _createTakeItemEvent(startTime:number, itemId:string):TakeItemEvent {
   return { type:ItineraryEventType.TAKE_ITEM, startTime, itemId };
 }
@@ -196,6 +205,34 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   return room;
 }
 
+export function calcFacingAngle(fromX:number, fromY:number, toX:number, toY:number):number {
+  return _calcFacingAngle(fromX, fromY, toX, toY);
+}
+
+export function createWalkEvent(room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEventCreationResult {
+  return _createWalkEvent(room, startTime, fromX, fromY, toX, toY);
+}
+
+export function createSpeechEvent(startTime:number, speech:string, facingAngle:number):SpeechEvent {
+  return _createSpeechEvent(startTime, speech, facingAngle);
+}
+
+export function createFacingEvent(startTime:number, facingAngle:number):FacingEvent {
+  return _createFacingEvent(startTime, facingAngle);
+}
+
+export function createTakeItemEvent(startTime:number, itemId:string):TakeItemEvent {
+  return _createTakeItemEvent(startTime, itemId);
+}
+
+export function createRoomEntryEvent(startTime:number, roomId:string):RoomEntryEvent {
+  return _createRoomEntryEvent(startTime, roomId);
+}
+
+export function findRoomAtPositionOrNearest(rooms:Room[], x:number, y:number):Room {
+  return _findRoomAtPosition(rooms, x, y);
+}
+
 function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
   const room = _findRoomAtPosition(rooms, x, y);
   for (let attemptNo = 0; attemptNo < 50; ++attemptNo) {
@@ -208,6 +245,10 @@ function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTim
   }
 
   assert(false, `unable to create unobstructed in-room walk from (${x}, ${y})`);
+}
+
+export function createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
+  return _createInRoomRandomWalkEvent(rooms, x, y, startTime);
 }
 
 function _findCharacterPositionAtTimeOrCurrent(character:Character, time:number):Position {
@@ -398,6 +439,7 @@ function _getEventDuration(event:ItineraryEvent):number {
     case ItineraryEventType.WALK: return (event as WalkEvent).duration;
     case ItineraryEventType.ROOM_ENTRY: return 0;
     case ItineraryEventType.SPEECH: return (event as SpeechEvent).duration;
+    case ItineraryEventType.FACING: return 0;
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
     case ItineraryEventType.GIVE_ITEM:
@@ -407,12 +449,17 @@ function _getEventDuration(event:ItineraryEvent):number {
   }
 }
 
+export function getEventDuration(event:ItineraryEvent):number {
+  return _getEventDuration(event);
+}
+
 function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position):Position {
   switch(event.type) {
     case ItineraryEventType.WALK:
       return duplicatePosition((event as WalkEvent).toPosition);
     case ItineraryEventType.ROOM_ENTRY:
     case ItineraryEventType.SPEECH:
+    case ItineraryEventType.FACING:
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
     case ItineraryEventType.GIVE_ITEM:
@@ -429,6 +476,7 @@ function _findFacingAngleAtEventStart(itinerary:ItineraryEvent[], eventNo:number
     switch(event.type) {
       case ItineraryEventType.WALK: return (event as WalkEvent).facingAngle;
       case ItineraryEventType.SPEECH: return (event as SpeechEvent).facingAngle;
+      case ItineraryEventType.FACING: return (event as FacingEvent).facingAngle;
       default: continue;
     }
   }
@@ -446,6 +494,13 @@ function _interpolatePosition(fromPosition:Position, toPosition:Position, interp
 }
 
 export function findCharacterPose(character:Character, time:number):CharacterPose {
+  if (!character.itinerary.length || !character.itineraryIndex.eventStartTimes.length) {
+    return {
+      position:{ x:character.x, y:character.y },
+      facingAngle:character.facingAngle,
+      speech:null
+    };
+  }
   return _findItineraryPosition(character.itinerary, time, character.itineraryIndex);
 }
 
@@ -478,6 +533,16 @@ export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, 
       };
       }
 
+    case ItineraryEventType.FACING:
+      {
+        const facingEvent = event as FacingEvent;
+        return {
+          position:duplicatePosition(eventStartPosition),
+          facingAngle:facingEvent.facingAngle,
+          speech:null
+        };
+      }
+
 
     case ItineraryEventType.ROOM_ENTRY:
     case ItineraryEventType.TAKE_ITEM:
@@ -494,13 +559,14 @@ export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, 
   }
 }
 
-export function createItineraryIndex(events:ItineraryEvent[]):ItineraryIndex {
-  assert(events.length > 0);
-  assert(events[0].startTime === 0);
+export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:Position):ItineraryIndex {
+  if (!events.length) {
+    return { eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] };
+  }
   const eventStartPositions:Position[] = [];
   const firstWalkEvent = events.find(event => event.type === ItineraryEventType.WALK) as WalkEvent|undefined;
-  assertNonNullable(firstWalkEvent);
-  let currentPosition:Position|null = duplicatePosition(firstWalkEvent.fromPosition);
+  let currentPosition:Position|null = initialPosition ? duplicatePosition(initialPosition) : duplicatePosition(firstWalkEvent?.fromPosition || { x:0, y:0 });
+  if (!initialPosition) assertNonNullable(firstWalkEvent);
 
   for (let i = 0; i < events.length; ++i) {
     const event = events[i];
@@ -566,6 +632,7 @@ function _findLastFacingAngleAfterEvents(events:ItineraryEvent[], fallbackFacing
     switch(event.type) {
       case ItineraryEventType.WALK: return (event as WalkEvent).facingAngle;
       case ItineraryEventType.SPEECH: return (event as SpeechEvent).facingAngle;
+      case ItineraryEventType.FACING: return (event as FacingEvent).facingAngle;
     }
   }
   return fallbackFacingAngle;
