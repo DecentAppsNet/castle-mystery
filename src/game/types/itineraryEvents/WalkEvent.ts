@@ -4,8 +4,7 @@ import Position from "../Position";
 type WalkEvent = ItineraryEventBase & {
   fromPosition: Position,
   toPosition: Position,
-  facingAngle:number,
-  duration: number
+  facingAngle:number
 }
 
 export function duplicateWalkEvent(from:WalkEvent):WalkEvent {

@@ -9,6 +9,7 @@ export function duplicateGiveItemEvent(from:GiveItemEvent):GiveItemEvent {
   return {
     type:from.type,
     startTime:from.startTime,
+    duration:from.duration,
     itemId:from.itemId,
     recipientCharacterId:from.recipientCharacterId
   };

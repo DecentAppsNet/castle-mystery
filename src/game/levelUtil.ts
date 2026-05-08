@@ -6,20 +6,19 @@ import Room from "./types/Room";
 import Rect from "./types/Rect";
 import Character from './types/Character';
 import { findRoom } from "./roomUtil";
-import { createItineraryIndex, findCharacterPose, generateRandomItinerary } from "./itineraryUtil";
+import { createItineraryIndex, findCharacterPose } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
-import { createObstruction, isPositionInRoomObstruction, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
+import { createObstruction, isPositionInRoomObstruction } from "./obstructionUtil";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
 import { parseLeadingTimestamp, parseTimestampToMsecs } from "@/common/timestampUtil";
-import { baseUrl } from "@/common/urlUtil";
 import { tryCreateAtActivity } from "./activities/atActivityUtil";
 import { tryCreateSayActivity } from "./activities/sayActivityUtil";
 import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
 import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
 import { tryCreateFaceActivity } from "./activities/faceActivityUtil";
-import { appendEventsToCharacterState, AuthoredActivityContext, createCharacterActivityState, createInitialRoomItemsByRoomId } from "./activities/activityUtil";
+import { appendEventsToCharacterState, ActivityContext, createCharacterActivityState, createInitialRoomItemsByRoomId } from "./activities/activityUtil";
 
 const MAP_TILE_SIZE = 20;
 
@@ -425,47 +424,10 @@ function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovere
   room.items.push({ ...item, isDiscovered:false });
 }
 
-function _findCharacterStartPosition(room:Room):[x:number, y:number] {
-  const centerX = Math.floor(room.rect.x + room.rect.width / 2);
-  const centerY = Math.floor(room.rect.y + room.rect.height / 2);
-  let nearestPosition:[x:number, y:number]|null = null;
-  let nearestDistanceSquared = Infinity;
-
-  for (let y = room.rect.y + 1; y < room.rect.y + room.rect.height - 1; ++y) {
-    for (let x = room.rect.x + 1; x < room.rect.x + room.rect.width - 1; ++x) {
-      if (isPositionWithinRoomObstructionMargin(room, x, y)) continue;
-      const distanceSquared = (centerX - x) ** 2 + (centerY - y) ** 2;
-      if (distanceSquared < nearestDistanceSquared) {
-        nearestPosition = [x, y];
-        nearestDistanceSquared = distanceSquared;
-      }
-    }
-  }
-
-  assertNonNullable(nearestPosition, `no unobstructed character start position available in room ${room.id}`);
-  return nearestPosition;
-}
-
 function _addItemsToCharacter(level:Level, characterId:string, items:Item[]) {
   const character = level.characters.find(c => c.id === characterId);
   assertNonNullable(character, `character ${characterId} not found`);
   character.items.push(...items.map(item => ({ ...item, position:{ ...item.position } })));
-}
-
-function _addCharacterToRoom(level:Level, roomId:string, characterId:string, description:string) {
-  const room = findRoom(level.rooms, roomId);
-  assertNonNullable(room);
-  const [x, y] = _findCharacterStartPosition(room);
-  _addCharacter(level, characterId, description, x, y);
-}
-
-function _generateCharacterItinerary(level:Level, characterId:string, duration:number) {
-  const character = level.characters.find(c => c.id === characterId);
-  assertNonNullable(character, `character ${characterId} not found`);
-  const itinerary = generateRandomItinerary(level, character, duration);
-  character.itinerary = itinerary;
-  character.itineraryIndex = createItineraryIndex(itinerary, { x:character.x, y:character.y });
-  character.facingAngle = findCharacterPose(character, 0).facingAngle;
 }
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
@@ -491,21 +453,21 @@ function _parseItineraryActivities(itinerarySection:string):ParsedItineraryActiv
       const timestamp = parseLeadingTimestamp(line);
       if (!timestamp) return [];
       const activityLine = timestamp.remainingText.trim();
-      if (!activityLine.length) throw new Error(`missing authored itinerary activity on line ${lineNo + 1}`);
+      if (!activityLine.length) throw new Error(`missing itinerary activity on line ${lineNo + 1}`);
       const { characterId, activityText } = _parseCharacterActivityLine(activityLine);
       return [{ time:timestamp.time, lineNo, characterId, activityText }];
     })
     .sort((a, b) => a.time - b.time || a.lineNo - b.lineNo);
 }
 
-function _createAuthoredActivityContext(level:Level, character:Character, timestamp:number,
-  roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>):AuthoredActivityContext {
+function _createActivityContext(level:Level, character:Character, timestamp:number,
+  roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>):ActivityContext {
   const state = characterStatesById.get(character.id);
-  assertNonNullable(state, `missing authored itinerary state for ${character.id}`);
+  assertNonNullable(state, `missing itinerary state for ${character.id}`);
   return { level, character, state, roomItemsByRoomId, charactersById, characterStatesById, timestamp };
 }
 
-function _createEventsForAuthoredActivity(activityText:string, context:AuthoredActivityContext):ItineraryEvent[] {
+function _createEventsForActivity(activityText:string, context:ActivityContext):ItineraryEvent[] {
   const activityFactories = [
     tryCreateAtActivity,
     tryCreateSayActivity,
@@ -522,147 +484,45 @@ function _createEventsForAuthoredActivity(activityText:string, context:AuthoredA
   throw new Error(`unsupported itinerary activity '${activityText}'`);
 }
 
-function _loadAuthoredItineraries(level:Level, itinerarySection:string) {
+function _calcItineraryDuration(itinerary:ItineraryEvent[]):number {
+  const lastEvent = itinerary[itinerary.length - 1];
+  return lastEvent ? lastEvent.startTime + lastEvent.duration : 0;
+}
+
+function _updateLevelDurationFromItineraries(level:Level) {
+  level.duration = Math.max(0, ...level.characters.map(character => _calcItineraryDuration(character.itinerary)));
+  level.labels = _createTimeLabels(level.duration);
+}
+
+function _loadItineraries(level:Level, itinerarySection:string) {
   const activities = _parseItineraryActivities(itinerarySection);
-  if (!activities.length) return;
+  if (!activities.length) {
+    _updateLevelDurationFromItineraries(level);
+    return;
+  }
   const charactersById = new Map(level.characters.map(character => [character.id, character]));
   const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
   const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
 
   activities.forEach(activity => {
     const character = charactersById.get(activity.characterId);
-    assertNonNullable(character, `unknown character '${activity.characterId}' in authored itinerary`);
-    const context = _createAuthoredActivityContext(level, character, activity.time, roomItemsByRoomId, charactersById, characterStatesById);
-    const events = _createEventsForAuthoredActivity(activity.activityText, context);
+    assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
+    const context = _createActivityContext(level, character, activity.time, roomItemsByRoomId, charactersById, characterStatesById);
+    const events = _createEventsForActivity(activity.activityText, context);
     appendEventsToCharacterState(character, context.state, events);
     if (!events.length) context.state.time = Math.max(context.state.time, activity.time);
   });
 
   level.characters.forEach(character => {
     const state = characterStatesById.get(character.id);
-    assertNonNullable(state, `missing final authored itinerary state for ${character.id}`);
+    assertNonNullable(state, `missing final itinerary state for ${character.id}`);
     character.itinerary = [...state.events];
     character.itineraryIndex = createItineraryIndex(character.itinerary, { x:character.x, y:character.y });
     character.facingAngle = findCharacterPose(character, level.startTime).facingAngle;
     character.items = state.carriedItems.map(duplicateItem);
   });
-}
 
-export function createExampleLevel2(duration:number = MSECS_IN_DAY):Level {
-  const level:Level = {
-    rooms: [
-      {
-        id: "livingRoom",
-        title: "Living Room",
-        rect: { x: 0, y: 0, width: 50, height: 100 },
-        items: [],
-        obstructions: [
-          { rects: [{ x: 10, y: 18, width: 4, height: 50 }] },
-          { rects: [{ x: 28, y: 58, width: 10, height: 18 }] }
-        ],
-        exits: [],
-        isDiscovered: false
-      },
-      {
-        id: "bedroom",
-        title: "Bedroom",
-        rect: { x: 50, y: 0, width: 50, height: 30 },
-        items: [],
-        obstructions: [
-          { rects: [{ x: 80, y: 5, width: 16, height: 4 }] }
-        ],
-        exits: [],
-        isDiscovered: true
-      },
-      {
-        id: "bathroom",
-        title: "Bathroom",
-        rect: { x: 50, y: 30, width: 50, height: 20 },
-        items: [],
-        obstructions: [
-          { rects: [{ x: 82, y: 34, width: 10, height: 10 }] }
-        ],
-        exits: [],
-        isDiscovered: false
-      },
-      {
-        id: "kitchen",
-        title: "Kitchen",
-        rect: { x: 50, y: 50, width: 50, height: 50 },
-        items: [],
-        obstructions: [
-          { rects: [{ x: 58, y: 60, width: 14, height: 10 }] },
-          { rects: [{ x: 78, y: 74, width: 12, height: 14 }] }
-        ],
-        exits: [],
-        isDiscovered: false
-      },
-    ],
-    characters: [],
-    activeCharacterId: 'king',
-    startTime: 0,
-    duration,
-    labels: _createTimeLabels(duration)
-  }
-  _addExitBetweenRooms(level, 'livingRoom', 'bedroom');
-  _addExitBetweenRooms(level, 'bedroom', 'bathroom');
-  _addExitBetweenRooms(level, 'livingRoom', 'kitchen');
-  _addItemToRoom(level, 'livingRoom', {
-    id:'living-room-lamp', title:'Floor Lamp', displayChar:'⌁', position:{x:6, y:12},
-    description:'A slim standing lamp with a pleated shade.'
-  });
-  _addItemToRoom(level, 'livingRoom', {
-    id:'living-room-book', title:'Novel', displayChar:'⌸', position:{x:21, y:82},
-    description:'A dog-eared mystery novel left open face down.'
-  });
-  _addItemToRoom(level, 'livingRoom', {
-    id:'living-room-vase', title:'Vase', displayChar:'◔', position:{x:41, y:18},
-    description:'A ceramic vase with a narrow neck and no flowers.'
-  });
-  _addItemToRoom(level, 'bedroom', {
-    id:'bedroom-clock', title:'Alarm Clock', displayChar:'◷', position:{x:60, y:22},
-    description:'A small alarm clock with glowing hands.'
-  });
-  _addItemToRoom(level, 'bedroom', {
-    id:'bedroom-slippers', title:'Slippers', displayChar:'⋈', position:{x:91, y:23},
-    description:'A pair of worn slippers lined up by the wall.'
-  });
-  _addItemToRoom(level, 'bedroom', {
-    id:'bedroom-mirror', title:'Hand Mirror', displayChar:'⊙', position:{x:72, y:17},
-    description:'A hand mirror with a silvered rim.'
-  });
-  _addItemToRoom(level, 'bathroom', {
-    id:'bathroom-brush', title:'Hairbrush', displayChar:'≣', position:{x:58, y:43},
-    description:'A wooden hairbrush with several strands caught in it.'
-  });
-  _addItemToRoom(level, 'bathroom', {
-    id:'bathroom-towel', title:'Towel', displayChar:'▤', position:{x:72, y:46},
-    description:'A folded towel draped over the edge of a stand.'
-  });
-  _addItemToRoom(level, 'kitchen', {
-    id:'kitchen-kettle', title:'Kettle', displayChar:'◒', position:{x:91, y:60},
-    description:'A stout kettle with a soot-darkened base.'
-  });
-  _addItemToRoom(level, 'kitchen', {
-    id:'kitchen-plate', title:'Plate', displayChar:'◌', position:{x:54, y:91},
-    description:'A plain ceramic plate with a chipped rim.'
-  });
-  _addCharacterToRoom(level, 'bedroom', 'king', 'A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.');
-  _addCharacterToRoom(level, 'livingRoom', 'queen', 'A poised noblewoman whose careful posture hides a restless tension.');
-  _addItemsToCharacter(level, 'king', [{
-    id:'king-pocket-watch', title:'Pocket Watch', displayChar:'◷', position:{x:0, y:0},
-    description:'A silver pocket watch engraved with a fading crest.', isDiscovered:true
-  }]);
-  _addItemsToCharacter(level, 'queen', [{
-    id:'queen-master-key', title:'Master Key', displayChar:'⌘', position:{x:0, y:0},
-    description:'A long iron key on a dark velvet ribbon.', isDiscovered:true
-  }, {
-    id:'queen-folded-note', title:'Folded Note', displayChar:'⌷', position:{x:0, y:0},
-    description:'A tightly folded note with a broken wax seal.', isDiscovered:true
-  }]);
-  _generateCharacterItinerary(level, 'king', duration);
-  _generateCharacterItinerary(level, 'queen', duration);
-  return level;
+  _updateLevelDurationFromItineraries(level);
 }
 
 export function loadLevelFromText(text:string):Level {
@@ -675,7 +535,7 @@ export function loadLevelFromText(text:string):Level {
   _addRoomExitsFromRoomsSection(level, sections.rooms || "");
   _addCharactersAndRoomItemsFromSections(level, sections.rooms || "", characterDefinitions, itemDefinitions);
   _addInventoryItemsToCharacters(level, characterDefinitions, itemDefinitions);
-  _loadAuthoredItineraries(level, sections.itinerary || "");
+  _loadItineraries(level, sections.itinerary || "");
   return level;
 }
 
@@ -683,14 +543,4 @@ export async function loadLevelFromUrl(levelFileUrl:string):Promise<Level> {
   const response = await fetch(levelFileUrl);
   const text = await response.text();
   return loadLevelFromText(text);
-}
-
-export async function createExampleLevel(duration:number):Promise<Level> {
-  const level = await loadLevelFromUrl(baseUrl('/levels/kingacide.md'));
-  level.duration = duration;
-  level.labels = _createTimeLabels(duration)
-  level.characters.forEach(character => {
-    if (!character.itinerary.length) _generateCharacterItinerary(level, character.id, duration);
-  });
-  return level;
 }

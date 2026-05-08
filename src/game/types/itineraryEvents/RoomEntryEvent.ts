@@ -8,6 +8,7 @@ export function duplicateRoomEntryEvent(from:RoomEntryEvent):RoomEntryEvent {
   return {
     type:from.type,
     startTime:from.startTime,
+    duration:from.duration,
     roomId:from.roomId
   };
 }

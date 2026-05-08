@@ -1,37 +1,24 @@
 import { assert, assertNonNullable } from "decent-portal";
-import Itinerary from "./types/Itinerary";
-import Level from "./types/Level";
 import Room from "./types/Room";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
 import RoomEntryEvent from "./types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
 import FacingEvent from "./types/itineraryEvents/FacingEvent";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
-import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
-import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
-import Item, { duplicateItem } from "./types/Item";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
-import { rand, randIntInRange } from "@/common/randUtil";
+import { randIntInRange } from "@/common/randUtil";
 import { findRoomAtPosition, findRoomNearestToPosition } from "./roomUtil";
-import RoomExit from "./types/RoomExit";
 import ItineraryIndex from "./types/ItineraryIndex";
 import { clipMoveToObstructions, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
 
 const WALK_MSECS_PER_PIXEL = 30;
-const SPEECH_ACTIVITY_PROBABILITY = .03;
-const WAIT_ACTIVITY_PROBABILITY = .25;
-const MOVE_IN_ROOM_ACTIVITY_PROBABILITY = .55;
-const EXIT_ROOM_ACTIVITY_PROBABILITY = .10;
-const TRANSFER_ITEM_ACTIVITY_PROBABILITY = .07;
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
 const SPEECH_MSECS_PER_CHARACTER = 90;
-const TRANSFER_ITEM_NEARBY_DISTANCE = 8;
-const MIN_ACTIVITY_TIME = 1;
 
 type CharacterPose = {
   position:Position,
@@ -39,75 +26,8 @@ type CharacterPose = {
   speech:string|null
 }
 
-const MUSING_SPEECHES = [
-  "I'm very busy.",
-  "This is my favorite room.",
-  "Why am I the only one here?",
-  "I should tidy this place.",
-  "Something feels off today.",
-  "I could use a nap.",
-  "I hope no one interrupts me.",
-  "There has to be a clue nearby.",
-  "I keep thinking about dinner.",
-  "I know I left something here."
-];
-
-const CONVERSATION_SPEECHES = [
-  "Hello!",
-  "Why are you here?",
-  "Did you hear that?",
-  "Please keep your voice down.",
-  "You look suspicious.",
-  "Can I ask you something?",
-  "Stay where I can see you.",
-  "This room is off limits.",
-  "I need your attention.",
-  "What are you doing here?"
-];
-
-enum Activity {
-  WAIT = 'wait',
-  MOVE_IN_ROOM = 'move',
-  EXIT_ROOM = 'exitRoom',
-  SPEECH = 'speech',
-  TRANSFER_ITEM = 'transferItem'
-}
-
-function _getRandomActivity():Activity {
-  const r = rand();
-  let cutoff = SPEECH_ACTIVITY_PROBABILITY;
-  if (r < cutoff) return Activity.SPEECH;
-  cutoff += WAIT_ACTIVITY_PROBABILITY;
-  if (r < cutoff) return Activity.WAIT;
-  cutoff += MOVE_IN_ROOM_ACTIVITY_PROBABILITY;
-  if (r < cutoff) return Activity.MOVE_IN_ROOM;
-  cutoff += EXIT_ROOM_ACTIVITY_PROBABILITY;
-  if (r < cutoff) return Activity.EXIT_ROOM;
-  cutoff += TRANSFER_ITEM_ACTIVITY_PROBABILITY;
-  if (r < cutoff) return Activity.TRANSFER_ITEM;
-  return Activity.WAIT;
-}
-
-function _pickRandom<T>(items:T[]):T {
-  assert(items.length > 0);
-  const item = items[randIntInRange(0, items.length)];
-  assertNonNullable(item);
-  return item;
-}
-
-const MAX_WAIT_TIME = 2 * MSECS_IN_SECOND;
-function _getRandomWaitTime():number {
-  let v = randIntInRange(0, MAX_WAIT_TIME);
-  assert(v < MAX_WAIT_TIME);
-  return v;
-}
-
 function _calcSpeechDuration(speech:string):number {
   return clamp(speech.length * SPEECH_MSECS_PER_CHARACTER, MIN_SPEECH_TIME, Number.POSITIVE_INFINITY);
-}
-
-function _calcDistance(fromX:number, fromY:number, toX:number, toY:number):number {
-  return Math.hypot(toX - fromX, toY - fromY);
 }
 
 const LEFT_RIGHT_MARGIN = 5;
@@ -175,24 +95,17 @@ function _createFacingEvent(startTime:number, facingAngle:number):FacingEvent {
   return {
     type:ItineraryEventType.FACING,
     startTime,
+    duration:0,
     facingAngle
   };
 }
 
 function _createTakeItemEvent(startTime:number, itemId:string):TakeItemEvent {
-  return { type:ItineraryEventType.TAKE_ITEM, startTime, itemId };
-}
-
-function _createDropItemEvent(startTime:number, itemId:string, position:Position):DropItemEvent {
-  return { type:ItineraryEventType.DROP_ITEM, startTime, itemId, position:duplicatePosition(position) };
-}
-
-function _createGiveItemEvent(startTime:number, itemId:string, recipientCharacterId:string):GiveItemEvent {
-  return { type:ItineraryEventType.GIVE_ITEM, startTime, itemId, recipientCharacterId };
+  return { type:ItineraryEventType.TAKE_ITEM, startTime, duration:0, itemId };
 }
 
 function _createRoomEntryEvent(startTime:number, roomId:string):RoomEntryEvent {
-  return { type:ItineraryEventType.ROOM_ENTRY, startTime, roomId };
+  return { type:ItineraryEventType.ROOM_ENTRY, startTime, duration:0, roomId };
 }
 
 function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
@@ -249,172 +162,6 @@ function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTim
 
 export function createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
   return _createInRoomRandomWalkEvent(rooms, x, y, startTime);
-}
-
-function _findCharacterPositionAtTimeOrCurrent(character:Character, time:number):Position {
-  if (!character.itinerary.length) return { x:character.x, y:character.y };
-  return findCharacterPosition(character, time);
-}
-
-function _findCharactersInSameRoomAtTime(level:Level, room:Room, time:number, excludedCharacterId?:string):Character[] {
-  return level.characters.filter(character => {
-    if (excludedCharacterId && character.id === excludedCharacterId) return false;
-    const position = _findCharacterPositionAtTimeOrCurrent(character, time);
-    const characterRoom = findRoomAtPosition(level.rooms, position.x, position.y);
-    return characterRoom?.id === room.id;
-  });
-}
-
-function _createRandomSpeechEvent(level:Level, characterId:string, x:number, y:number, startTime:number, currentFacingAngle:number):SpeechEvent {
-  const room = _findRoomAtPosition(level.rooms, x, y);
-  const otherCharacters = _findCharactersInSameRoomAtTime(level, room, startTime, characterId);
-  if (!otherCharacters.length) return _createSpeechEvent(startTime, _pickRandom(MUSING_SPEECHES), currentFacingAngle);
-
-  const targetCharacter = _pickRandom(otherCharacters);
-  const targetPosition = _findCharacterPositionAtTimeOrCurrent(targetCharacter, startTime);
-  return _createSpeechEvent(
-    startTime,
-    _pickRandom(CONVERSATION_SPEECHES),
-    _calcFacingAngle(x, y, targetPosition.x, targetPosition.y)
-  );
-}
-
-function _getOrCreateRoomItemState(roomItemsByRoomId:Map<string, Item[]>, room:Room):Item[] {
-  const existingItems = roomItemsByRoomId.get(room.id);
-  if (existingItems) return existingItems;
-  const nextItems = room.items.map(duplicateItem);
-  roomItemsByRoomId.set(room.id, nextItems);
-  return nextItems;
-}
-
-function _removeItemById(items:Item[], itemId:string):Item|null {
-  const itemIndex = items.findIndex(item => item.id === itemId);
-  if (itemIndex === -1) return null;
-  const [item] = items.splice(itemIndex, 1);
-  return item ?? null;
-}
-
-function _findNearbyCharacters(level:Level, currentCharacter:Character, room:Room, time:number, x:number, y:number):Character[] {
-  return _findCharactersInSameRoomAtTime(level, room, time, currentCharacter.id).filter(character => {
-    const position = _findCharacterPositionAtTimeOrCurrent(character, time);
-    return _calcDistance(x, y, position.x, position.y) <= TRANSFER_ITEM_NEARBY_DISTANCE;
-  });
-}
-
-function _findNearbyItems(items:Item[], x:number, y:number):Item[] {
-  return items.filter(item => _calcDistance(x, y, item.position.x, item.position.y) <= TRANSFER_ITEM_NEARBY_DISTANCE);
-}
-
-function _createTransferItemEvents(level:Level, currentCharacter:Character, roomItemsByRoomId:Map<string, Item[]>, carriedItems:Item[],
-  x:number, y:number, startTime:number):ItineraryEvent[] {
-  const room = _findRoomAtPosition(level.rooms, x, y);
-  const roomItems = _getOrCreateRoomItemState(roomItemsByRoomId, room);
-  const nearbyCharacters = _findNearbyCharacters(level, currentCharacter, room, startTime, x, y);
-  if (nearbyCharacters.length > 0 && carriedItems.length > 0) {
-    const item = _pickRandom(carriedItems);
-    const recipient = _pickRandom(nearbyCharacters);
-    _removeItemById(carriedItems, item.id);
-    return [_createGiveItemEvent(startTime, item.id, recipient.id)];
-  }
-
-  const nearbyItems = _findNearbyItems(roomItems, x, y);
-  if (nearbyItems.length > 0) {
-    const item = _pickRandom(nearbyItems);
-    const takenItem = _removeItemById(roomItems, item.id);
-    if (takenItem) carriedItems.push(takenItem);
-    return [_createTakeItemEvent(startTime, item.id)];
-  }
-
-  if (roomItems.length > 0) {
-    const item = _pickRandom(roomItems);
-    const walkResult = _createWalkEvent(room, startTime, x, y, item.position.x, item.position.y);
-    if (!walkResult.event) return [];
-    const events:ItineraryEvent[] = [walkResult.event];
-    const reachedItem = walkResult.event.toPosition.x === item.position.x && walkResult.event.toPosition.y === item.position.y;
-    if (walkResult.wasClipped || !reachedItem) return events;
-    const takenItem = _removeItemById(roomItems, item.id);
-    if (takenItem) carriedItems.push(takenItem);
-    events.push(_createTakeItemEvent(startTime + walkResult.event.duration, item.id));
-    return events;
-  }
-
-  if (carriedItems.length > 0) {
-    const item = _pickRandom(carriedItems);
-    const droppedItem = _removeItemById(carriedItems, item.id);
-    if (droppedItem) roomItems.push({ ...droppedItem, position:{ x, y } });
-    return [_createDropItemEvent(startTime, item.id, { x, y })];
-  }
-
-  return [];
-}
-
-const EXIT_CLEARANCE_PIXELS = 3;
-function _calcExitClearanceOffsets(room:Room, exit:RoomExit):[dx:number, dy:number] {
-  let dx = 0, dy = 0;
-  if (exit.x === room.rect.x) {
-    dx = -EXIT_CLEARANCE_PIXELS;
-  } else if (exit.x === room.rect.x + room.rect.width) {
-    dx = EXIT_CLEARANCE_PIXELS;
-  } else if (exit.y === room.rect.y) {
-    dy = -EXIT_CLEARANCE_PIXELS;
-  } else {
-    assert(exit.y === room.rect.y + room.rect.height);
-    dy = EXIT_CLEARANCE_PIXELS;
-  }
-  return [dx, dy];
-}
-
-function _calcExitApproachPosition(room:Room, exit:RoomExit):Position {
-  const [dx, dy] = _calcExitClearanceOffsets(room, exit);
-  return {
-    x: Math.round(exit.x - dx),
-    y: Math.round(exit.y - dy)
-  };
-}
-
-function _calcExitDestinationPosition(room:Room, exit:RoomExit):Position {
-  const [dx, dy] = _calcExitClearanceOffsets(room, exit);
-  return {
-    x: Math.round(exit.x + dx),
-    y: Math.round(exit.y + dy)
-  };
-}
-
-function _createExitRoomRandomWalkEvents(rooms:Room[], x:number, y:number, startTime:number):ItineraryEvent[] {
-  const room = _findRoomAtPosition(rooms, x, y);
-  if (!room.exits.length) return [_createInRoomRandomWalkEvent(rooms, x, y, startTime)];
-  const candidateExits = room.exits.filter(exit => {
-    const approachPosition = _calcExitApproachPosition(room, exit);
-    return approachPosition.x !== x || approachPosition.y !== y;
-  });
-  if (!candidateExits.length) return [_createInRoomRandomWalkEvent(rooms, x, y, startTime)];
-  const toExit = candidateExits[randIntInRange(0, candidateExits.length)];
-  assertNonNullable(toExit);
-
-  const approachPosition = _calcExitApproachPosition(room, toExit);
-  const destinationPosition = _calcExitDestinationPosition(room, toExit);
-  const approachResult = _createWalkEvent(room, startTime, x, y, approachPosition.x, approachPosition.y);
-  if (!approachResult.event) return [_createInRoomRandomWalkEvent(rooms, x, y, startTime)];
-  if (approachResult.wasClipped) return [approachResult.event];
-
-  const destinationRoom = _findRoomAtPosition(rooms, destinationPosition.x, destinationPosition.y);
-  assertNonNullable(destinationRoom);
-
-  const destinationResult = _createWalkEvent(
-    destinationRoom,
-    startTime + approachResult.event.duration,
-    approachPosition.x,
-    approachPosition.y,
-    destinationPosition.x,
-    destinationPosition.y
-  );
-  return destinationResult.event
-    ? [
-      approachResult.event,
-      destinationResult.event,
-      _createRoomEntryEvent(destinationResult.event.startTime + destinationResult.event.duration, destinationRoom.id)
-    ]
-    : [approachResult.event];
 }
 
 function _findEventNoForTime(itineraryIndex:ItineraryIndex, time:number):number {
@@ -609,101 +356,4 @@ export function findPreviousRoomEntryTime(character:Character, time:number):numb
 
 export function findCharacterPosition(character:Character, time:number):Position {
   return findCharacterPose(character, time).position;
-}
-
-function _calcNextTimeAfterEvents(events:ItineraryEvent[]):number {
-  const lastEvent = events[events.length - 1];
-  assertNonNullable(lastEvent);
-  const duration = _getEventDuration(lastEvent);
-  return lastEvent.startTime + (duration === 0 ? MIN_ACTIVITY_TIME : duration);
-}
-
-function _calcEndPositionAfterEvents(events:ItineraryEvent[], startPosition:Position):Position {
-  let currentPosition = duplicatePosition(startPosition);
-  for (const event of events) {
-    currentPosition = _getEventEndPosition(event, currentPosition);
-  }
-  return currentPosition;
-}
-
-function _findLastFacingAngleAfterEvents(events:ItineraryEvent[], fallbackFacingAngle:number):number {
-  for (let i = events.length - 1; i >= 0; --i) {
-    const event = events[i];
-    switch(event.type) {
-      case ItineraryEventType.WALK: return (event as WalkEvent).facingAngle;
-      case ItineraryEventType.SPEECH: return (event as SpeechEvent).facingAngle;
-      case ItineraryEventType.FACING: return (event as FacingEvent).facingAngle;
-    }
-  }
-  return fallbackFacingAngle;
-}
-
-export function generateRandomItinerary(level:Level, character:Character, duration:number):Itinerary {
-  const startingRoom = findRoomAtPosition(level.rooms, character.x, character.y);
-  assertNonNullable(startingRoom);
-  const itinerary:Itinerary = [_createRoomEntryEvent(0, startingRoom.id)];
-  const roomItemsByRoomId = new Map(level.rooms.map(room => [room.id, room.items.map(duplicateItem)]));
-  const carriedItems = character.items.map(duplicateItem);
-  let time = 0; // Start of day.
-  let x = character.x;
-  let y = character.y;
-  let facingAngle = character.facingAngle;
-  while(time < duration) {
-    const activity = time === 0 ? Activity.MOVE_IN_ROOM : _getRandomActivity();
-    switch(activity) {
-      case Activity.MOVE_IN_ROOM:
-        {
-          const event = _createInRoomRandomWalkEvent(level.rooms, x, y, time);
-          itinerary.push(event);
-          time += event.duration;
-          x = event.toPosition.x;
-          y = event.toPosition.y;
-          facingAngle = event.facingAngle;
-        }
-      break;
-
-      case Activity.EXIT_ROOM:
-        {
-          const events = _createExitRoomRandomWalkEvents(level.rooms, x, y, time);
-          itinerary.push(...events);
-          const endPosition = _calcEndPositionAfterEvents(events, { x, y });
-          x = endPosition.x;
-          y = endPosition.y;
-          facingAngle = _findLastFacingAngleAfterEvents(events, facingAngle);
-          time = _calcNextTimeAfterEvents(events);
-        }
-      break;
-
-      case Activity.SPEECH:
-        {
-          const event = _createRandomSpeechEvent(level, character.id, x, y, time, facingAngle);
-          itinerary.push(event);
-          time += event.duration;
-          facingAngle = event.facingAngle;
-        }
-      break;
-
-      case Activity.TRANSFER_ITEM:
-        {
-          const events = _createTransferItemEvents(level, character, roomItemsByRoomId, carriedItems, x, y, time);
-          if (!events.length) {
-            time += _getRandomWaitTime();
-            break;
-          }
-          itinerary.push(...events);
-          const endPosition = _calcEndPositionAfterEvents(events, { x, y });
-          x = endPosition.x;
-          y = endPosition.y;
-          facingAngle = _findLastFacingAngleAfterEvents(events, facingAngle);
-          time = _calcNextTimeAfterEvents(events);
-        }
-      break;
-
-      default:
-        assert(activity === Activity.WAIT);
-        time += _getRandomWaitTime();
-      break;
-    }
-  }
-  return itinerary;
 }

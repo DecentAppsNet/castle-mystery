@@ -8,6 +8,7 @@ export function duplicateFacingEvent(from:FacingEvent):FacingEvent {
   return {
     type:from.type,
     startTime:from.startTime,
+    duration:from.duration,
     facingAngle:from.facingAngle
   };
 }

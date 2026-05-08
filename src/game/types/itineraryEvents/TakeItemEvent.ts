@@ -8,6 +8,7 @@ export function duplicateTakeItemEvent(from:TakeItemEvent):TakeItemEvent {
   return {
     type:from.type,
     startTime:from.startTime,
+    duration:from.duration,
     itemId:from.itemId
   };
 }

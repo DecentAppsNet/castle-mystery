@@ -1,13 +1,13 @@
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import {
-  AuthoredActivityContext,
+  ActivityContext,
   createFacingEventForTarget,
   ensureTimestampIsAvailable,
   findTargetPositionAtTime,
   stripTrailingPeriod
 } from "./activityUtil";
 
-export function tryCreateFaceActivity(activityText:string, context:AuthoredActivityContext):ItineraryEvent[]|null {
+export function tryCreateFaceActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('faces ')) return null;
 

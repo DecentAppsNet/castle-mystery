@@ -8,8 +8,6 @@ import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
-import WalkEvent from "../types/itineraryEvents/WalkEvent";
-import SpeechEvent from "../types/itineraryEvents/SpeechEvent";
 import FacingEvent from "../types/itineraryEvents/FacingEvent";
 import { isPositionWithinRoomObstructionMargin } from "../obstructionUtil";
 import { findRoom } from "../roomUtil";
@@ -21,7 +19,6 @@ import {
   createWalkEvent,
   findCharacterPose,
   findRoomAtPositionOrNearest,
-  getEventDuration
 } from "../itineraryUtil";
 
 const LEFT_RIGHT_MARGIN = 5;
@@ -36,7 +33,7 @@ export type CharacterActivityState = {
   carriedItems:Item[]
 };
 
-export type AuthoredActivityContext = {
+export type ActivityContext = {
   level:Level,
   character:Character,
   state:CharacterActivityState,
@@ -67,7 +64,7 @@ function _findDefaultPositionInRoom(room:Room):Position {
     }
   }
 
-  assertNonNullable(nearestPosition, `no unobstructed authored-activity target available in room ${room.id}`);
+  assertNonNullable(nearestPosition, `no unobstructed activity target available in room ${room.id}`);
   return nearestPosition;
 }
 
@@ -172,20 +169,20 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
 }
 
 export function ensureTimestampIsAvailable(state:CharacterActivityState, timestamp:number, activityText:string) {
-  if (timestamp < state.time) throw new Error(`unable to schedule authored activity '${activityText}' at ${timestamp}`);
+  if (timestamp < state.time) throw new Error(`unable to schedule itinerary activity '${activityText}' at ${timestamp}`);
 }
 
 export function scheduleEventsToEndAtTime(events:ItineraryEvent[], timestamp:number, earliestStartTime:number):ItineraryEvent[] {
   if (!events.length) {
-    if (timestamp < earliestStartTime) throw new Error(`activity at ${timestamp} overlaps a previous authored activity`);
+    if (timestamp < earliestStartTime) throw new Error(`activity at ${timestamp} overlaps a previous itinerary activity`);
     return [];
   }
   const lastEvent = events[events.length - 1];
   assertNonNullable(lastEvent);
-  const totalDuration = lastEvent.startTime + getEventDuration(lastEvent);
+  const totalDuration = lastEvent.startTime + lastEvent.duration;
   const scheduledStartTime = timestamp - totalDuration;
   if (scheduledStartTime < earliestStartTime) {
-    throw new Error(`unable to arrive by authored timestamp ${timestamp}`);
+    throw new Error(`unable to arrive by itinerary timestamp ${timestamp}`);
   }
   return _shiftEventTimes(events, scheduledStartTime);
 }
@@ -201,7 +198,7 @@ export function appendEventsToCharacterState(character:Character, state:Characte
       blockingTime = Math.max(blockingTime, event.startTime);
       continue;
     }
-    blockingTime = Math.max(blockingTime, event.startTime + getEventDuration(event));
+    blockingTime = Math.max(blockingTime, event.startTime + event.duration);
   }
   state.time = blockingTime;
   const pose = findStatePoseAtTime(character, state, state.time);
@@ -307,17 +304,3 @@ export function createFacingEventForTarget(timestamp:number, actorPosition:Posit
   return createFacingEvent(timestamp, calcFacingAngle(actorPosition.x, actorPosition.y, targetPosition.x, targetPosition.y));
 }
 
-export function findFacingAngleAfterEvents(events:ItineraryEvent[], fallbackFacingAngle:number):number {
-  for (let i = events.length - 1; i >= 0; --i) {
-    const event = events[i];
-    switch(event.type) {
-      case ItineraryEventType.WALK:
-        return (event as WalkEvent).facingAngle;
-      case ItineraryEventType.SPEECH:
-        return (event as SpeechEvent).facingAngle;
-      case ItineraryEventType.FACING:
-        return (event as FacingEvent).facingAngle;
-    }
-  }
-  return fallbackFacingAngle;
-}

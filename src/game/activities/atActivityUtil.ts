@@ -1,7 +1,7 @@
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import { AuthoredActivityContext, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime } from "./activityUtil";
+import { ActivityContext, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime } from "./activityUtil";
 
-export function tryCreateAtActivity(activityText:string, context:AuthoredActivityContext):ItineraryEvent[]|null {
+export function tryCreateAtActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('@')) return null;
 
