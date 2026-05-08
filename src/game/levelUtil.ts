@@ -5,6 +5,7 @@ import Obstruction from "./types/Obstruction";
 import Room from "./types/Room";
 import Rect from "./types/Rect";
 import Character from './types/Character';
+import Position from "./types/Position";
 import { findRoom } from "./roomUtil";
 import { createItineraryIndex, findCharacterPose } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
@@ -18,7 +19,15 @@ import { tryCreateSayActivity } from "./activities/sayActivityUtil";
 import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
 import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
 import { tryCreateFaceActivity } from "./activities/faceActivityUtil";
-import { appendEventsToCharacterState, ActivityContext, createCharacterActivityState, createInitialRoomItemsByRoomId } from "./activities/activityUtil";
+import {
+  appendEventsToCharacterState,
+  ActivityContext,
+  createCharacterActivityState,
+  createInitialRoomItemsByRoomId,
+  duplicateCharacterActivityState,
+  duplicateRoomItemsByRoomId,
+  findStatePoseAtTime
+} from "./activities/activityUtil";
 
 const MAP_TILE_SIZE = 20;
 
@@ -457,14 +466,46 @@ function _parseItineraryActivities(itinerarySection:string):ParsedItineraryActiv
       const { characterId, activityText } = _parseCharacterActivityLine(activityLine);
       return [{ time:timestamp.time, lineNo, characterId, activityText }];
     })
-    .sort((a, b) => a.time - b.time || a.lineNo - b.lineNo);
+    .sort((a, b) => a.time - b.time || a.characterId.localeCompare(b.characterId) || a.lineNo - b.lineNo);
 }
 
 function _createActivityContext(level:Level, character:Character, timestamp:number,
-  roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>):ActivityContext {
+  roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
+  characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>, poseOverridesByCharacterId:Map<string, Position>):ActivityContext {
   const state = characterStatesById.get(character.id);
   assertNonNullable(state, `missing itinerary state for ${character.id}`);
-  return { level, character, state, roomItemsByRoomId, charactersById, characterStatesById, timestamp };
+  return { level, character, state, roomItemsByRoomId, charactersById, characterStatesById, poseOverridesByCharacterId, timestamp };
+}
+
+function _activityAffectsPoseAtTimestamp(activityText:string):boolean {
+  return activityText.startsWith('@ ') || activityText.startsWith('takes ');
+}
+
+function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItineraryActivity[], roomItemsByRoomId:Map<string, Item[]>,
+  charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>):Map<string, Position> {
+  const poseOverridesByCharacterId = new Map<string, Position>();
+
+  activities.forEach(activity => {
+    if (!_activityAffectsPoseAtTimestamp(activity.activityText)) return;
+    const character = charactersById.get(activity.characterId);
+    assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
+
+    const state = characterStatesById.get(activity.characterId);
+    assertNonNullable(state, `missing itinerary state for ${activity.characterId}`);
+
+    const previewState = duplicateCharacterActivityState(state);
+    const previewCharacterStatesById = new Map(characterStatesById);
+    previewCharacterStatesById.set(activity.characterId, previewState);
+    const previewRoomItemsByRoomId = duplicateRoomItemsByRoomId(roomItemsByRoomId);
+    const previewContext = _createActivityContext(level, character, activity.time, previewRoomItemsByRoomId,
+      charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
+    const events = _createEventsForActivity(activity.activityText, previewContext);
+    appendEventsToCharacterState(character, previewState, events);
+    poseOverridesByCharacterId.set(activity.characterId,
+      findStatePoseAtTime(character, previewState, activity.time).position);
+  });
+
+  return poseOverridesByCharacterId;
 }
 
 function _createEventsForActivity(activityText:string, context:ActivityContext):ItineraryEvent[] {
@@ -504,14 +545,28 @@ function _loadItineraries(level:Level, itinerarySection:string) {
   const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
   const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
 
-  activities.forEach(activity => {
+  const _processActivity = (activity:ParsedItineraryActivity, poseOverridesByCharacterId:Map<string, Position>) => {
     const character = charactersById.get(activity.characterId);
     assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
-    const context = _createActivityContext(level, character, activity.time, roomItemsByRoomId, charactersById, characterStatesById);
+    const context = _createActivityContext(level, character, activity.time, roomItemsByRoomId, charactersById,
+      characterStatesById, poseOverridesByCharacterId);
     const events = _createEventsForActivity(activity.activityText, context);
     appendEventsToCharacterState(character, context.state, events);
     if (!events.length) context.state.time = Math.max(context.state.time, activity.time);
-  });
+  };
+
+  for (let i = 0; i < activities.length;) {
+    const timestamp = activities[i].time;
+    const sameTimeActivities:ParsedItineraryActivity[] = [];
+    while (i < activities.length && activities[i].time === timestamp) {
+      sameTimeActivities.push(activities[i]);
+      ++i;
+    }
+
+    const poseOverridesByCharacterId = _createPoseOverridesForTimestamp(level, sameTimeActivities,
+      roomItemsByRoomId, charactersById, characterStatesById);
+    sameTimeActivities.forEach(activity => _processActivity(activity, poseOverridesByCharacterId));
+  }
 
   level.characters.forEach(character => {
     const state = characterStatesById.get(character.id);

@@ -1,6 +1,7 @@
 import { assertNonNullable } from "decent-portal";
 
 import Character from "../types/Character";
+import { duplicateItineraryEvent } from "../types/itineraryEvents/ItineraryEvent";
 import Item, { duplicateItem } from "../types/Item";
 import Level from "../types/Level";
 import Position, { duplicatePosition } from "../types/Position";
@@ -40,6 +41,7 @@ export type ActivityContext = {
   roomItemsByRoomId:Map<string, Item[]>,
   charactersById:Map<string, Character>,
   characterStatesById:Map<string, CharacterActivityState>,
+  poseOverridesByCharacterId:Map<string, Position>,
   timestamp:number
 };
 
@@ -147,6 +149,20 @@ export function createCharacterActivityState(character:Character):CharacterActiv
 
 export function createInitialRoomItemsByRoomId(level:Level):Map<string, Item[]> {
   return new Map(level.rooms.map(room => [room.id, room.items.map(duplicateItem)]));
+}
+
+export function duplicateCharacterActivityState(state:CharacterActivityState):CharacterActivityState {
+  return {
+    events:state.events.map(duplicateItineraryEvent),
+    time:state.time,
+    position:duplicatePosition(state.position),
+    facingAngle:state.facingAngle,
+    carriedItems:state.carriedItems.map(duplicateItem)
+  };
+}
+
+export function duplicateRoomItemsByRoomId(roomItemsByRoomId:Map<string, Item[]>):Map<string, Item[]> {
+  return new Map(Array.from(roomItemsByRoomId.entries()).map(([roomId, items]) => [roomId, items.map(duplicateItem)]));
 }
 
 export function createCharacterSnapshot(character:Character, state:CharacterActivityState):Character {
@@ -276,11 +292,13 @@ export function findRoomItemById(roomItemsByRoomId:Map<string, Item[]>, level:Le
 }
 
 export function findTargetPositionAtTime(targetId:string, timestamp:number, charactersById:Map<string, Character>,
-  characterStatesById:Map<string, CharacterActivityState>, roomItemsByRoomId:Map<string, Item[]>):Position|null {
+  characterStatesById:Map<string, CharacterActivityState>, roomItemsByRoomId:Map<string, Item[]>, poseOverridesByCharacterId?:Map<string, Position>):Position|null {
   const targetCharacter = charactersById.get(targetId) || null;
   if (targetCharacter) {
+    const poseOverride = poseOverridesByCharacterId?.get(targetId);
+    if (poseOverride) return duplicatePosition(poseOverride);
     const targetState = characterStatesById.get(targetId);
-    assertNonNullable(targetState, `missing authored state for character ${targetId}`);
+    assertNonNullable(targetState, `missing itinerary state for character ${targetId}`);
     return findStatePoseAtTime(targetCharacter, targetState, timestamp).position;
   }
 

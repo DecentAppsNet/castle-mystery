@@ -13,14 +13,15 @@ export function tryCreateFaceActivity(activityText:string, context:ActivityConte
 
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText);
   const targetId = stripTrailingPeriod(trimmedActivityText.slice('faces'.length).trim());
-  if (!targetId.length) throw new Error(`missing target id in authored activity '${activityText}'`);
+  if (!targetId.length) throw new Error(`missing target id in itinerary activity '${activityText}'`);
 
   const targetPosition = findTargetPositionAtTime(
     targetId,
     context.timestamp,
     context.charactersById,
     context.characterStatesById,
-    context.roomItemsByRoomId
+    context.roomItemsByRoomId,
+    context.poseOverridesByCharacterId
   );
   if (!targetPosition) throw new Error(`unable to resolve face target '${targetId}'`);
   return [createFacingEventForTarget(context.timestamp, context.state.position, targetPosition)];
