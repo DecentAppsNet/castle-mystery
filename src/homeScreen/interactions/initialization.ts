@@ -10,7 +10,7 @@ export type InitResults = {
 }
 
 export async function init():Promise<InitResults|null> {
-  const level = createExampleLevel(MSECS_IN_MINUTE * 15);
+  const level = await createExampleLevel(MSECS_IN_MINUTE * 15);
   const gameState = createGameStateFromLevel(level);
   const minutes = msecsToMinutes(gameState.time);
   return {

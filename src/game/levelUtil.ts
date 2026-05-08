@@ -11,6 +11,75 @@ import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { isPositionInRoomObstruction, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
+import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
+import { baseUrl } from "@/common/urlUtil";
+
+const MAP_TILE_SIZE = 20;
+
+function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
+  return {
+    rooms: [],
+    characters: [],
+    activeCharacterId: "",
+    startTime: 0,
+    duration,
+    labels: _createTimeLabels(duration)
+  };
+}
+
+function _createRoomsFromMapSection(level:Level, mapSection:string) {
+  const mapLines = parseFirstFencedCodeBlockLines(mapSection);
+  const legend = parseNameValueLines(mapSection);
+  const roomBoundsById = new Map<string, { minCol:number, maxCol:number, minRow:number, maxRow:number }>();
+
+  mapLines.forEach((line, row) => {
+    Array.from(line).forEach((tileChar, col) => {
+      const roomId = legend[tileChar];
+      if (!roomId) return;
+      const existingBounds = roomBoundsById.get(roomId);
+      if (!existingBounds) {
+        roomBoundsById.set(roomId, { minCol:col, maxCol:col, minRow:row, maxRow:row });
+        return;
+      }
+      existingBounds.minCol = Math.min(existingBounds.minCol, col);
+      existingBounds.maxCol = Math.max(existingBounds.maxCol, col);
+      existingBounds.minRow = Math.min(existingBounds.minRow, row);
+      existingBounds.maxRow = Math.max(existingBounds.maxRow, row);
+    });
+  });
+
+  Array.from(roomBoundsById.entries()).forEach(([roomId, bounds]) => {
+    level.rooms.push({
+      id: roomId,
+      title: roomId,
+      rect: {
+        x: bounds.minCol * MAP_TILE_SIZE,
+        y: bounds.minRow * MAP_TILE_SIZE,
+        width: (bounds.maxCol - bounds.minCol + 1) * MAP_TILE_SIZE,
+        height: (bounds.maxRow - bounds.minRow + 1) * MAP_TILE_SIZE
+      },
+      items: [],
+      obstructions: [],
+      exits: [],
+      isDiscovered: false
+    });
+  });
+}
+
+function _addRoomExitsFromRoomsSection(level:Level, roomsSection:string) {
+  const roomSections = parseSections(roomsSection, 2);
+  const addedExitPairs = new Set<string>();
+
+  Object.entries(roomSections).forEach(([roomId, roomSection]) => {
+    const nameValues = parseNameValueLines(roomSection);
+    parseOptions(nameValues.exits || "").forEach(connectedRoomId => {
+      const exitPairKey = [roomId, connectedRoomId].sort().join("|");
+      if (addedExitPairs.has(exitPairKey)) return;
+      _addExitBetweenRooms(level, roomId, connectedRoomId);
+      addedExitPairs.add(exitPairKey);
+    });
+  });
+}
 
 function _findSharedWallSectionBetweenRooms(room1:Room, room2:Room):Rect|null {
   // Helper to compute 1D intersection of two ranges. Returns [start,end] or null.
@@ -119,6 +188,7 @@ function _addItemsToCharacter(level:Level, characterId:string, items:Item[]) {
 function _addCharacterToRoom(level:Level, roomId:string, characterId:string, description:string) {
   const room = findRoom(level.rooms, roomId);
   assertNonNullable(room);
+  if (level.activeCharacterId === '') level.activeCharacterId = characterId;
   const [x, y] = _findCharacterStartPosition(room);
   const character:Character = {
     id: characterId,
@@ -143,7 +213,7 @@ function _generateCharacterItinerary(level:Level, characterId:string, duration:n
   character.facingAngle = firstWalkEvent?.facingAngle ?? 0;
 }
 
-export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
+export function createExampleLevel2(duration:number = MSECS_IN_DAY):Level {
   const level:Level = {
     rooms: [
       {
@@ -257,5 +327,30 @@ export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
   }]);
   _generateCharacterItinerary(level, 'king', duration);
   _generateCharacterItinerary(level, 'queen', duration);
+  return level;
+}
+
+export function loadLevelFromText(text:string):Level {
+  const sections = parseSections(text);
+  const level = _createEmptyLevel();
+  _createRoomsFromMapSection(level, sections.map || "");
+  _addRoomExitsFromRoomsSection(level, sections.rooms || "");
+  return level;
+}
+
+export async function loadLevelFromUrl(levelFileUrl:string):Promise<Level> {
+  const response = await fetch(levelFileUrl);
+  const text = await response.text();
+  return loadLevelFromText(text);
+}
+
+export async function createExampleLevel(duration:number):Promise<Level> {
+  const level = await loadLevelFromUrl(baseUrl('/levels/kingacide.md'));
+  level.duration = duration;
+  level.labels = _createTimeLabels(duration)
+  _addCharacterToRoom(level, 'Throne Room', 'King', 'A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.');
+  _addCharacterToRoom(level, 'Library', 'Queen', 'A poised noblewoman whose careful posture hides a restless tension.');
+  _generateCharacterItinerary(level, 'King', duration);
+  _generateCharacterItinerary(level, 'Queen', duration);
   return level;
 }
