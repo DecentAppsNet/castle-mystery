@@ -27,7 +27,93 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
   };
 }
 
-function _createRoomsFromMapSection(level:Level, mapSection:string) {
+type ObstructionBounds = {
+  minCol:number,
+  maxCol:number,
+  minRow:number,
+  maxRow:number
+};
+
+function _findObstructionBoundsInGrid(gridLines:string[]):ObstructionBounds[] {
+  if (!gridLines.length) return [];
+  const rowCount = gridLines.length;
+  const visited = new Set<string>();
+  const boundsByGroup:ObstructionBounds[] = [];
+
+  const _isObstructionTile = (row:number, col:number) => {
+    const line = gridLines[row];
+    return !!line && line[col] === '#';
+  };
+
+  for (let row = 0; row < rowCount; ++row) {
+    for (let col = 0; col < gridLines[row].length; ++col) {
+      const key = `${row},${col}`;
+      if (visited.has(key) || !_isObstructionTile(row, col)) continue;
+
+      const pending:[[number, number]]|Array<[number, number]> = [[row, col]];
+      const bounds:ObstructionBounds = { minCol:col, maxCol:col, minRow:row, maxRow:row };
+      visited.add(key);
+      while (pending.length > 0) {
+        const [currentRow, currentCol] = pending.pop()!;
+        bounds.minCol = Math.min(bounds.minCol, currentCol);
+        bounds.maxCol = Math.max(bounds.maxCol, currentCol);
+        bounds.minRow = Math.min(bounds.minRow, currentRow);
+        bounds.maxRow = Math.max(bounds.maxRow, currentRow);
+
+        const neighbors:Array<[number, number]> = [
+          [currentRow - 1, currentCol],
+          [currentRow + 1, currentCol],
+          [currentRow, currentCol - 1],
+          [currentRow, currentCol + 1]
+        ];
+        neighbors.forEach(([neighborRow, neighborCol]) => {
+          if (neighborRow < 0 || neighborRow >= rowCount || neighborCol < 0) return;
+          const neighborKey = `${neighborRow},${neighborCol}`;
+          if (visited.has(neighborKey) || !_isObstructionTile(neighborRow, neighborCol)) return;
+          visited.add(neighborKey);
+          pending.push([neighborRow, neighborCol]);
+        });
+      }
+
+      boundsByGroup.push(bounds);
+    }
+  }
+
+  return boundsByGroup;
+}
+
+function _addRoomObstructionsFromRoomsSection(level:Level, roomsSection:string) {
+  const roomSections = parseSections(roomsSection, 2);
+
+  Object.entries(roomSections).forEach(([roomId, roomSection]) => {
+    const room = findRoom(level.rooms, roomId);
+    const gridLines = parseFirstFencedCodeBlockLines(roomSection);
+    if (!gridLines.length) return;
+
+    const gridWidth = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
+    const gridHeight = gridLines.length;
+    if (gridWidth <= 0 || gridHeight <= 0) return;
+
+    const tileWidth = room.rect.width / gridWidth;
+    const tileHeight = room.rect.height / gridHeight;
+    _findObstructionBoundsInGrid(gridLines).forEach(bounds => {
+      const left = room.rect.x + bounds.minCol * tileWidth;
+      const top = room.rect.y + bounds.minRow * tileHeight;
+      const right = room.rect.x + (bounds.maxCol + 1) * tileWidth;
+      const bottom = room.rect.y + (bounds.maxRow + 1) * tileHeight;
+      room.obstructions.push({
+        rect: {
+          x: left,
+          y: top,
+          width: right - left,
+          height: bottom - top
+        }
+      });
+    });
+  });
+}
+
+function _createRoomsFromMapSection(level:Level, mapSection:string, roomsSection:string = "") {
   const mapLines = parseFirstFencedCodeBlockLines(mapSection);
   const legend = parseNameValueLines(mapSection);
   const roomBoundsById = new Map<string, { minCol:number, maxCol:number, minRow:number, maxRow:number }>();
@@ -64,6 +150,8 @@ function _createRoomsFromMapSection(level:Level, mapSection:string) {
       isDiscovered: false
     });
   });
+
+  _addRoomObstructionsFromRoomsSection(level, roomsSection);
 }
 
 function _addRoomExitsFromRoomsSection(level:Level, roomsSection:string) {
@@ -333,7 +421,7 @@ export function createExampleLevel2(duration:number = MSECS_IN_DAY):Level {
 export function loadLevelFromText(text:string):Level {
   const sections = parseSections(text);
   const level = _createEmptyLevel();
-  _createRoomsFromMapSection(level, sections.map || "");
+  _createRoomsFromMapSection(level, sections.map || "", sections.rooms || "");
   _addRoomExitsFromRoomsSection(level, sections.rooms || "");
   return level;
 }
