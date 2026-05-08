@@ -1,12 +1,12 @@
 import Rect from "./Rect";
 
 type Obstruction = {
-  rect:Rect
+  rects:Rect[]
 }
 
 export function duplicateObstruction(from:Obstruction):Obstruction {
   return {
-    rect:{...from.rect}
+    rects:from.rects.map(rect => ({...rect}))
   };
 }
 

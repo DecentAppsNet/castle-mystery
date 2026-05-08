@@ -2,6 +2,7 @@ import Obstruction from "./types/Obstruction";
 import Position from "./types/Position";
 import Rect from "./types/Rect";
 import Room from "./types/Room";
+import { createObstructionBoundaryCorners, createObstructionBoundarySegments } from "./obstructionUtil";
 
 const EPSILON = 0.000001;
 const ANGLE_EPSILON = 0.0001;
@@ -34,7 +35,7 @@ function _isPositionInRect(position:Position, rect:Rect):boolean {
 }
 
 function _isPositionInObstruction(position:Position, obstruction:Obstruction):boolean {
-  return _isPositionInRect(position, obstruction.rect);
+  return obstruction.rects.some(rect => _isPositionInRect(position, rect));
 }
 
 function _isOriginInsideRoomObstruction(origin:Position, room:Room):boolean {
@@ -71,7 +72,7 @@ function _createRectCorners(rect:Rect):Position[] {
 function _createVisibilitySegments(room:Room):Segment[] {
   return [
     ..._createRectSegments(room.rect),
-    ...room.obstructions.flatMap(obstruction => _createRectSegments(obstruction.rect))
+    ...room.obstructions.flatMap(obstruction => createObstructionBoundarySegments(obstruction))
   ];
 }
 
@@ -79,7 +80,7 @@ function _createCandidateAngles(origin:Position, facingAngle:number, room:Room, 
   const angles = [facingAngle - coneAngle / 2, facingAngle + coneAngle / 2];
   const points = [
     ..._createRectCorners(room.rect),
-    ...room.obstructions.flatMap(obstruction => _createRectCorners(obstruction.rect))
+    ...room.obstructions.flatMap(obstruction => createObstructionBoundaryCorners(obstruction))
   ];
 
   points.forEach(point => {

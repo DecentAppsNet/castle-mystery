@@ -1,6 +1,7 @@
 import { assertNonNullable } from "decent-portal";
 import Level from "./types/Level";
 import Item from "./types/Item";
+import Obstruction from "./types/Obstruction";
 import Room from "./types/Room";
 import Rect from "./types/Rect";
 import Character from './types/Character';
@@ -8,7 +9,7 @@ import { findRoom } from "./roomUtil";
 import { createItineraryIndex, generateRandomItinerary } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
-import { isPositionInRoomObstruction, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
+import { createObstruction, isPositionInRoomObstruction, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
 import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
@@ -27,18 +28,16 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
   };
 }
 
-type ObstructionBounds = {
-  minCol:number,
-  maxCol:number,
-  minRow:number,
-  maxRow:number
+type ObstructionTile = {
+  row:number,
+  col:number
 };
 
-function _findObstructionBoundsInGrid(gridLines:string[]):ObstructionBounds[] {
+function _findObstructionTilesInGrid(gridLines:string[]):ObstructionTile[][] {
   if (!gridLines.length) return [];
   const rowCount = gridLines.length;
   const visited = new Set<string>();
-  const boundsByGroup:ObstructionBounds[] = [];
+  const obstructionGroups:ObstructionTile[][] = [];
 
   const _isObstructionTile = (row:number, col:number) => {
     const line = gridLines[row];
@@ -51,14 +50,11 @@ function _findObstructionBoundsInGrid(gridLines:string[]):ObstructionBounds[] {
       if (visited.has(key) || !_isObstructionTile(row, col)) continue;
 
       const pending:[[number, number]]|Array<[number, number]> = [[row, col]];
-      const bounds:ObstructionBounds = { minCol:col, maxCol:col, minRow:row, maxRow:row };
+      const obstructionTiles:ObstructionTile[] = [];
       visited.add(key);
       while (pending.length > 0) {
         const [currentRow, currentCol] = pending.pop()!;
-        bounds.minCol = Math.min(bounds.minCol, currentCol);
-        bounds.maxCol = Math.max(bounds.maxCol, currentCol);
-        bounds.minRow = Math.min(bounds.minRow, currentRow);
-        bounds.maxRow = Math.max(bounds.maxRow, currentRow);
+        obstructionTiles.push({ row:currentRow, col:currentCol });
 
         const neighbors:Array<[number, number]> = [
           [currentRow - 1, currentCol],
@@ -75,11 +71,51 @@ function _findObstructionBoundsInGrid(gridLines:string[]):ObstructionBounds[] {
         });
       }
 
-      boundsByGroup.push(bounds);
+      obstructionGroups.push(obstructionTiles);
     }
   }
 
-  return boundsByGroup;
+  return obstructionGroups;
+}
+
+function _createNormalizedObstructionFromTiles(room:Room, obstructionTiles:ObstructionTile[], gridWidth:number, gridHeight:number):Obstruction {
+  const tileWidth = room.rect.width / gridWidth;
+  const tileHeight = room.rect.height / gridHeight;
+  const rowRuns = new Map<number, Array<[number, number]>>();
+
+  obstructionTiles.forEach(tile => {
+    const runs = rowRuns.get(tile.row) || [];
+    runs.push([tile.col, tile.col]);
+    rowRuns.set(tile.row, runs);
+  });
+
+  const rects:Rect[] = [];
+  Array.from(rowRuns.entries()).sort((a, b) => a[0] - b[0]).forEach(([row, runs]) => {
+    runs.sort((a, b) => a[0] - b[0]);
+    let [currentStart, currentEnd] = runs[0];
+    for (let i = 1; i < runs.length; ++i) {
+      const [start, end] = runs[i];
+      if (start <= currentEnd + 1) currentEnd = Math.max(currentEnd, end);
+      else {
+        rects.push({
+          x: room.rect.x + currentStart * tileWidth,
+          y: room.rect.y + row * tileHeight,
+          width: (currentEnd - currentStart + 1) * tileWidth,
+          height: tileHeight
+        });
+        currentStart = start;
+        currentEnd = end;
+      }
+    }
+    rects.push({
+      x: room.rect.x + currentStart * tileWidth,
+      y: room.rect.y + row * tileHeight,
+      width: (currentEnd - currentStart + 1) * tileWidth,
+      height: tileHeight
+    });
+  });
+
+  return createObstruction(rects);
 }
 
 function _addRoomObstructionsFromRoomsSection(level:Level, roomsSection:string) {
@@ -94,21 +130,8 @@ function _addRoomObstructionsFromRoomsSection(level:Level, roomsSection:string) 
     const gridHeight = gridLines.length;
     if (gridWidth <= 0 || gridHeight <= 0) return;
 
-    const tileWidth = room.rect.width / gridWidth;
-    const tileHeight = room.rect.height / gridHeight;
-    _findObstructionBoundsInGrid(gridLines).forEach(bounds => {
-      const left = room.rect.x + bounds.minCol * tileWidth;
-      const top = room.rect.y + bounds.minRow * tileHeight;
-      const right = room.rect.x + (bounds.maxCol + 1) * tileWidth;
-      const bottom = room.rect.y + (bounds.maxRow + 1) * tileHeight;
-      room.obstructions.push({
-        rect: {
-          x: left,
-          y: top,
-          width: right - left,
-          height: bottom - top
-        }
-      });
+    _findObstructionTilesInGrid(gridLines).forEach(obstructionTiles => {
+      room.obstructions.push(_createNormalizedObstructionFromTiles(room, obstructionTiles, gridWidth, gridHeight));
     });
   });
 }
@@ -310,8 +333,8 @@ export function createExampleLevel2(duration:number = MSECS_IN_DAY):Level {
         rect: { x: 0, y: 0, width: 50, height: 100 },
         items: [],
         obstructions: [
-          { rect: { x: 10, y: 18, width: 4, height: 50 } },
-          { rect: { x: 28, y: 58, width: 10, height: 18 } }
+          { rects: [{ x: 10, y: 18, width: 4, height: 50 }] },
+          { rects: [{ x: 28, y: 58, width: 10, height: 18 }] }
         ],
         exits: [],
         isDiscovered: false
@@ -322,7 +345,7 @@ export function createExampleLevel2(duration:number = MSECS_IN_DAY):Level {
         rect: { x: 50, y: 0, width: 50, height: 30 },
         items: [],
         obstructions: [
-          { rect: { x: 80, y: 5, width: 16, height: 4 } }
+          { rects: [{ x: 80, y: 5, width: 16, height: 4 }] }
         ],
         exits: [],
         isDiscovered: true
@@ -333,7 +356,7 @@ export function createExampleLevel2(duration:number = MSECS_IN_DAY):Level {
         rect: { x: 50, y: 30, width: 50, height: 20 },
         items: [],
         obstructions: [
-          { rect: { x: 82, y: 34, width: 10, height: 10 } }
+          { rects: [{ x: 82, y: 34, width: 10, height: 10 }] }
         ],
         exits: [],
         isDiscovered: false
@@ -344,8 +367,8 @@ export function createExampleLevel2(duration:number = MSECS_IN_DAY):Level {
         rect: { x: 50, y: 50, width: 50, height: 50 },
         items: [],
         obstructions: [
-          { rect: { x: 58, y: 60, width: 14, height: 10 } },
-          { rect: { x: 78, y: 74, width: 12, height: 14 } }
+          { rects: [{ x: 58, y: 60, width: 14, height: 10 }] },
+          { rects: [{ x: 78, y: 74, width: 12, height: 14 }] }
         ],
         exits: [],
         isDiscovered: false

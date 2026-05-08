@@ -1,4 +1,5 @@
 import { drawVisibleCharactersInRoom, drawVisibilityCone } from "./characterDrawUtil";
+import { createObstructionBoundarySegments } from "./obstructionUtil";
 import { processRoomEffects } from "./effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
@@ -23,32 +24,43 @@ export function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, conte
 }
 
 export function drawObstruction(obstruction:Obstruction, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const [left, top] = gameToCanvasPosition(obstruction.rect.x, obstruction.rect.y, scalingFactors);
-  const [right, bottom] = gameToCanvasPosition(
-    obstruction.rect.x + obstruction.rect.width,
-    obstruction.rect.y + obstruction.rect.height,
-    scalingFactors
-  );
-  const width = right - left;
-  const height = bottom - top;
+  const obstructionRects = obstruction.rects.map(rect => {
+    const [left, top] = gameToCanvasPosition(rect.x, rect.y, scalingFactors);
+    const [right, bottom] = gameToCanvasPosition(rect.x + rect.width, rect.y + rect.height, scalingFactors);
+    return { left, top, width:right - left, height:bottom - top };
+  });
+  const minLeft = obstructionRects.reduce((minValue, rect) => Math.min(minValue, rect.left), Number.POSITIVE_INFINITY);
+  const minTop = obstructionRects.reduce((minValue, rect) => Math.min(minValue, rect.top), Number.POSITIVE_INFINITY);
+  const maxRight = obstructionRects.reduce((maxValue, rect) => Math.max(maxValue, rect.left + rect.width), Number.NEGATIVE_INFINITY);
+  const maxBottom = obstructionRects.reduce((maxValue, rect) => Math.max(maxValue, rect.top + rect.height), Number.NEGATIVE_INFINITY);
+  const maxHeight = obstructionRects.reduce((maxValue, rect) => Math.max(maxValue, rect.height), 0);
   const hatchSpacing = Math.max(6, scalingFactors.roomLineWidth * 3);
   context.save();
   context.fillStyle = COLOR_INACTIVE_ROOM_FILL;
-  context.fillRect(left, top, width, height);
   context.beginPath();
-  context.rect(left, top, width, height);
+  obstructionRects.forEach(rect => context.rect(rect.left, rect.top, rect.width, rect.height));
+  context.fill();
+  context.beginPath();
+  obstructionRects.forEach(rect => context.rect(rect.left, rect.top, rect.width, rect.height));
   context.clip();
   context.strokeStyle = COLOR_BLACK;
   context.lineWidth = Math.max(0.5, scalingFactors.roomLineWidth / 2);
-  for (let lineX = left - height; lineX <= right; lineX += hatchSpacing) {
+  for (let lineX = minLeft - maxHeight; lineX <= maxRight; lineX += hatchSpacing) {
     context.beginPath();
-    context.moveTo(lineX, bottom);
-    context.lineTo(lineX + height, top);
+    context.moveTo(lineX, maxBottom);
+    context.lineTo(lineX + maxHeight, minTop);
     context.stroke();
   }
   context.strokeStyle = COLOR_BLACK;
   context.lineWidth = scalingFactors.roomLineWidth;
-  context.strokeRect(left, top, width, height);
+  createObstructionBoundarySegments(obstruction).forEach(segment => {
+    const [startX, startY] = gameToCanvasPosition(segment.start.x, segment.start.y, scalingFactors);
+    const [endX, endY] = gameToCanvasPosition(segment.end.x, segment.end.y, scalingFactors);
+    context.beginPath();
+    context.moveTo(startX, startY);
+    context.lineTo(endX, endY);
+    context.stroke();
+  });
   context.restore();
 }
 
