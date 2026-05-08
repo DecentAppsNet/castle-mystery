@@ -61,4 +61,5 @@ describe('levelUtil itinerary loading', () => {
 
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 5_000)).toBe(true);
   });
+
 });
