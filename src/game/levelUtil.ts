@@ -9,6 +9,7 @@ import { createItineraryIndex, generateRandomItinerary } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { isPositionInRoomObstruction, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
+import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
 
 function _findSharedWallSectionBetweenRooms(room1:Room, room2:Room):Rect|null {
@@ -127,7 +128,7 @@ function _addCharacterToRoom(level:Level, roomId:string, characterId:string, des
     y,
     facingAngle:0,
     itinerary:[],
-    itineraryIndex:{ eventStartTimes:[], eventStartPositions:[] }
+    itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
   };
   level.characters.push(character);
 }
@@ -138,7 +139,8 @@ function _generateCharacterItinerary(level:Level, characterId:string, duration:n
   const itinerary = generateRandomItinerary(level, character, duration);
   character.itinerary = itinerary;
   character.itineraryIndex = createItineraryIndex(itinerary);
-  character.facingAngle = itinerary[0] ? (itinerary[0] as WalkEvent).facingAngle : 0;
+  const firstWalkEvent = itinerary.find(event => event.type === ItineraryEventType.WALK) as WalkEvent|undefined;
+  character.facingAngle = firstWalkEvent?.facingAngle ?? 0;
 }
 
 export function createExampleLevel(duration:number = MSECS_IN_DAY):Level {
