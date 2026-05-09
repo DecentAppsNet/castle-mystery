@@ -1,8 +1,8 @@
 import Rect from "./Rect";
 
-type Obstruction = {
+type Obstruction = Readonly<{
   rects:Rect[]
-}
+}>
 
 export function duplicateObstruction(from:Obstruction):Obstruction {
   return {

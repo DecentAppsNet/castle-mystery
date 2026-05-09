@@ -1,8 +1,8 @@
 import ItineraryEventBase from "./ItineraryEventBase";
 
-type RoomEntryEvent = ItineraryEventBase & {
+type RoomEntryEvent = Readonly<ItineraryEventBase & {
   roomId:string
-}
+}>
 
 export function duplicateRoomEntryEvent(from:RoomEntryEvent):RoomEntryEvent {
   return {

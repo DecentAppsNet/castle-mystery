@@ -1,7 +1,7 @@
 import PlayerEventType from "./PlayerEventType";
 
-type PlayerEventBase = {
+type PlayerEventBase = Readonly<{
   type: PlayerEventType
-}
+}>
 
 export default PlayerEventBase;

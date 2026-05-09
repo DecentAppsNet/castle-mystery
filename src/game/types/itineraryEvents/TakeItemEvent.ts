@@ -1,8 +1,8 @@
 import ItineraryEventBase from "./ItineraryEventBase";
 
-type TakeItemEvent = ItineraryEventBase & {
+type TakeItemEvent = Readonly<ItineraryEventBase & {
   itemId:string
-}
+}>
 
 export function duplicateTakeItemEvent(from:TakeItemEvent):TakeItemEvent {
   return {

@@ -1,8 +1,8 @@
 import ItineraryEventBase from "./ItineraryEventBase";
 
-type FacingEvent = ItineraryEventBase & {
+type FacingEvent = Readonly<ItineraryEventBase & {
   facingAngle:number
-}
+}>
 
 export function duplicateFacingEvent(from:FacingEvent):FacingEvent {
   return {

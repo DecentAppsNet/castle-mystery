@@ -1,9 +1,9 @@
-import Itinerary, { duplicateItinerary } from "./Itinerary";
-import ItineraryIndex, { duplicateItineraryIndex } from "./ItineraryIndex";
+import Itinerary from "./Itinerary";
+import ItineraryIndex from "./ItineraryIndex";
 import Item, { duplicateItem } from "./Item";
 
 type Character = {
-  id:string,
+  readonly id:string,
   description:string,
   items:Item[],
   x:number,
@@ -21,8 +21,8 @@ export function duplicateCharacter(from:Character):Character {
     x:from.x,
     y:from.y,
     facingAngle:from.facingAngle,
-    itinerary:duplicateItinerary(from.itinerary),
-    itineraryIndex:duplicateItineraryIndex(from.itineraryIndex)
+    itinerary:from.itinerary,
+    itineraryIndex:from.itineraryIndex
   };
 }
 

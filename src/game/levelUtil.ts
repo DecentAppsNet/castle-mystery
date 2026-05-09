@@ -75,10 +75,12 @@ function _parseTimeTextToMsecs(text:string):number {
   return parseTimestampToMsecs(text);
 }
 
-function _applyGeneralSection(level:Level, generalSection:string) {
+function _parseGeneralSection(generalSection:string):{ activeCharacterId:string, startTime:number|null } {
   const generalNameValues = parseNameValueLines(generalSection);
-  if (generalNameValues.activeCharacter) level.activeCharacterId = generalNameValues.activeCharacter;
-  if (generalNameValues.time) level.startTime = _parseTimeTextToMsecs(generalNameValues.time);
+  return {
+    activeCharacterId: generalNameValues.activeCharacter || "",
+    startTime: generalNameValues.time ? _parseTimeTextToMsecs(generalNameValues.time) : null
+  };
 }
 
 function _parseCharacterDefinitions(charactersSection:string):Map<string, CharacterDefinition> {
@@ -228,7 +230,6 @@ function _calcScaledRoomGridPosition(room:Room, row:number, col:number, gridWidt
 }
 
 function _addCharacter(level:Level, characterId:string, description:string, x:number, y:number) {
-  if (level.activeCharacterId === '') level.activeCharacterId = characterId;
   const character:Character = {
     id: characterId,
     description,
@@ -333,6 +334,7 @@ function _createRoomsFromMapSection(level:Level, mapSection:string, roomsSection
       },
       items: [],
       obstructions: [],
+      waypoints: [],
       exits: [],
       isDiscovered: false
     });
@@ -530,16 +532,18 @@ function _calcItineraryDuration(itinerary:ItineraryEvent[]):number {
   return lastEvent ? lastEvent.startTime + lastEvent.duration : 0;
 }
 
-function _updateLevelDurationFromItineraries(level:Level) {
-  level.duration = Math.max(0, ...level.characters.map(character => _calcItineraryDuration(character.itinerary)));
-  level.labels = _createTimeLabels(level.duration);
+function _createLevelDurationAndLabels(characters:Character[]):{ duration:number, labels:TimeLabel[] } {
+  const duration = Math.max(0, ...characters.map(character => _calcItineraryDuration(character.itinerary)));
+  return { duration, labels: _createTimeLabels(duration) };
 }
 
-function _loadItineraries(level:Level, itinerarySection:string) {
+function _loadItineraries(level:Level, itinerarySection:string):{ characters:Character[], duration:number, labels:TimeLabel[] } {
   const activities = _parseItineraryActivities(itinerarySection);
   if (!activities.length) {
-    _updateLevelDurationFromItineraries(level);
-    return;
+    return {
+      characters: level.characters,
+      ..._createLevelDurationAndLabels(level.characters)
+    };
   }
   const charactersById = new Map(level.characters.map(character => [character.id, character]));
   const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
@@ -568,29 +572,45 @@ function _loadItineraries(level:Level, itinerarySection:string) {
     sameTimeActivities.forEach(activity => _processActivity(activity, poseOverridesByCharacterId));
   }
 
-  level.characters.forEach(character => {
+  const characters = level.characters.map(character => {
     const state = characterStatesById.get(character.id);
     assertNonNullable(state, `missing final itinerary state for ${character.id}`);
-    character.itinerary = [...state.events];
-    character.itineraryIndex = createItineraryIndex(character.itinerary, { x:character.x, y:character.y });
-    character.facingAngle = findCharacterPose(character, level.startTime).facingAngle;
-    character.items = state.carriedItems.map(duplicateItem);
+    const itinerary = [...state.events];
+    return {
+      ...character,
+      itinerary,
+      itineraryIndex: createItineraryIndex(itinerary, { x:character.x, y:character.y }),
+      facingAngle: findCharacterPose({ ...character, itinerary }, level.startTime).facingAngle,
+      items: state.carriedItems.map(duplicateItem)
+    };
   });
 
-  _updateLevelDurationFromItineraries(level);
+  return { characters, ..._createLevelDurationAndLabels(characters) };
 }
 
 export function loadLevelFromText(text:string):Level {
   const sections = parseSections(text);
-  const level = _createEmptyLevel();
-  _applyGeneralSection(level, sections.general || "");
+  const generalSection = _parseGeneralSection(sections.general || "");
+  let level = _createEmptyLevel();
+  level = {
+    ...level,
+    activeCharacterId: generalSection.activeCharacterId || level.activeCharacterId,
+    startTime: generalSection.startTime ?? level.startTime
+  };
   const characterDefinitions = _parseCharacterDefinitions(sections.characters || "");
   const itemDefinitions = _parseItemDefinitions(sections.items || "");
   _createRoomsFromMapSection(level, sections.map || "", sections.rooms || "");
   _addRoomExitsFromRoomsSection(level, sections.rooms || "");
   _addCharactersAndRoomItemsFromSections(level, sections.rooms || "", characterDefinitions, itemDefinitions);
   _addInventoryItemsToCharacters(level, characterDefinitions, itemDefinitions);
-  _loadItineraries(level, sections.itinerary || "");
+  const itineraryData = _loadItineraries(level, sections.itinerary || "");
+  level = {
+    ...level,
+    activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
+    characters: itineraryData.characters,
+    duration: itineraryData.duration,
+    labels: itineraryData.labels
+  };
   return level;
 }
 

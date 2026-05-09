@@ -1,11 +1,11 @@
 import ItineraryEventBase from "./ItineraryEventBase";
 import Position from "../Position";
 
-type WalkEvent = ItineraryEventBase & {
+type WalkEvent = Readonly<ItineraryEventBase & {
   fromPosition: Position,
   toPosition: Position,
   facingAngle:number
-}
+}>
 
 export function duplicateWalkEvent(from:WalkEvent):WalkEvent {
   return {

@@ -2,14 +2,16 @@ import Rect from "./Rect"
 import Item, { duplicateItem } from "./Item"
 import Obstruction, { duplicateObstruction } from "./Obstruction"
 import RoomExit, { duplicateRoomExit } from "./RoomExit"
+import Waypoint, { duplicateWaypoint } from "./Waypoint"
 
 type Room = {
-  id:string,
-  title:string,
-  rect:Rect,
+  readonly id:string,
+  readonly title:string,
+  readonly rect:Rect,
   items:Item[],
-  obstructions:Obstruction[],
-  exits:RoomExit[],
+  readonly obstructions:Obstruction[],
+  readonly exits:RoomExit[],
+  readonly waypoints:Waypoint[],
   isDiscovered:boolean
 }
 
@@ -20,6 +22,7 @@ export function duplicateRoom(from:Room):Room {
     rect:from.rect,
     items:from.items.map(duplicateItem),
     obstructions:from.obstructions.map(duplicateObstruction),
+    waypoints:from.waypoints.map(duplicateWaypoint),
     exits:from.exits.map(duplicateRoomExit),
     isDiscovered:from.isDiscovered
   }

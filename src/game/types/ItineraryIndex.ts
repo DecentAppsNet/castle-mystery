@@ -1,10 +1,10 @@
 import Position, { duplicatePosition } from "./Position";
 
-type ItineraryIndex = {
+type ItineraryIndex = Readonly<{
   eventStartTimes:ReadonlyArray<number>,
   eventStartPositions:ReadonlyArray<Position>,
   roomEntryStartTimes:ReadonlyArray<number>
-}
+}>
 
 export function duplicateItineraryIndex(from:ItineraryIndex):ItineraryIndex {
   return {

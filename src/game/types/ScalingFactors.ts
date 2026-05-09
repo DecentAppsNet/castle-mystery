@@ -1,4 +1,4 @@
-type ScalingFactors = {
+type ScalingFactors = Readonly<{
   scaleX: number,
   translateX: number,
   scaleY: number,
@@ -7,6 +7,6 @@ type ScalingFactors = {
   roomLineWidth: number,
   destWidth: number,
   destHeight: number
-}
+}>
 
 export default ScalingFactors;

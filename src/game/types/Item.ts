@@ -1,9 +1,9 @@
 import Position, { duplicatePosition } from "./Position";
 
 type Item = {
-  id:string,
-  title:string,
-  displayChar:string,
+  readonly id:string,
+  readonly title:string,
+  readonly displayChar:string,
   position:Position,
   description:string,
   isDiscovered:boolean

@@ -1,10 +1,10 @@
 import Position, { duplicatePosition } from "../Position";
 import ItineraryEventBase from "./ItineraryEventBase";
 
-type DropItemEvent = ItineraryEventBase & {
+type DropItemEvent = Readonly<ItineraryEventBase & {
   itemId:string,
   position:Position
-}
+}>
 
 export function duplicateDropItemEvent(from:DropItemEvent):DropItemEvent {
   return {
