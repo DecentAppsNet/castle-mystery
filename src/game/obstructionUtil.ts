@@ -18,7 +18,7 @@ type MoveClipResult = {
   wasClipped:boolean
 }
 
-function _isPositionInRect(x:number, y:number, rect:Rect):boolean {
+export function isPositionInRect(x:number, y:number, rect:Rect):boolean {
   return x >= rect.x && x < rect.x + rect.width && y >= rect.y && y < rect.y + rect.height;
 }
 
@@ -59,7 +59,7 @@ function _dedupeSortedNumbers(values:number[]):number[] {
 }
 
 function _isPointInAnyRect(x:number, y:number, rects:Rect[]):boolean {
-  return rects.some(rect => _isPositionInRect(x, y, rect));
+  return rects.some(rect => isPositionInRect(x, y, rect));
 }
 
 function _mergeBoundarySegments(segments:ObstructionBoundarySegment[]):ObstructionBoundarySegment[] {
@@ -221,7 +221,24 @@ function _calcSegmentRectEntryT(from:Position, to:Position, rect:Rect):number|nu
 }
 
 export function isPositionInObstruction(x:number, y:number, obstruction:Obstruction):boolean {
-  return obstruction.rects.some(rect => _isPositionInRect(x, y, rect));
+  return obstruction.rects.some(rect => isPositionInRect(x, y, rect));
+}
+
+export function isPositionInObstructions(x:number, y:number, obstructions:Obstruction[]):boolean {
+  return obstructions.some(obstruction => isPositionInObstruction(x, y, obstruction));
+}
+
+export function isPathBlockedByObstructions(from:Position, to:Position, obstructions:Obstruction[]):boolean {
+  return obstructions.some(obstruction => obstruction.rects.some(rect => {
+    const entryT = _calcSegmentRectEntryT(from, to, rect);
+    if (entryT === null) return false;
+    const sampleT = Math.min(1, Math.max(0, entryT + 0.001));
+    return isPositionInRect(
+      from.x + (to.x - from.x) * sampleT,
+      from.y + (to.y - from.y) * sampleT,
+      rect
+    );
+  }));
 }
 
 export function isPositionInRoomObstruction(room:Room, x:number, y:number):boolean {
@@ -229,7 +246,7 @@ export function isPositionInRoomObstruction(room:Room, x:number, y:number):boole
 }
 
 export function isPositionWithinRoomObstructionMargin(room:Room, x:number, y:number, margin:number = CHARACTER_OBSTRUCTION_MARGIN):boolean {
-  return room.obstructions.some(obstruction => obstruction.rects.some(rect => _isPositionInRect(x, y, _expandRect(rect, margin))));
+  return room.obstructions.some(obstruction => obstruction.rects.some(rect => isPositionInRect(x, y, _expandRect(rect, margin))));
 }
 
 export function clipMoveToObstructions(room:Room, from:Position, to:Position):MoveClipResult {
@@ -242,7 +259,7 @@ export function clipMoveToObstructions(room:Room, from:Position, to:Position):Mo
       const expandedRect = _expandRect(rect, CHARACTER_OBSTRUCTION_MARGIN);
       const entryT = _calcSegmentRectEntryT(from, to, expandedRect);
       if (entryT === null) continue;
-      if (!_isPositionInRect(
+      if (!isPositionInRect(
         from.x + (to.x - from.x) * Math.min(1, entryT + 0.001),
         from.y + (to.y - from.y) * Math.min(1, entryT + 0.001),
         expandedRect
