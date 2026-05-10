@@ -155,4 +155,5 @@ King arrived in the library at 0:00:34.
 
 ## The Missing Book
 
-* solution=[King|Queen] wanted to []
+* solution=[King] [searched] for a [book] in [Throne Room] and [Library], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
+
