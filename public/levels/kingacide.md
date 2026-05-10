@@ -150,3 +150,9 @@ King arrived in the library at 0:00:34.
 0:00:39 Queen says "No."
 
 0:00:41 Queen @ East Hall
+
+# solutions
+
+## The Missing Book
+
+* solution=[King|Queen] wanted to []
