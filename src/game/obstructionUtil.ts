@@ -1,3 +1,4 @@
+import { assert } from "decent-portal";
 import Obstruction from "./types/Obstruction";
 import Position, { duplicatePosition } from "./types/Position";
 import Rect from "./types/Rect";
@@ -216,7 +217,7 @@ function _calcSegmentRectEntryT(from:Position, to:Position, rect:Rect):number|nu
     if (entryT > exitT) return null;
   }
 
-  if (entryT < 0 || entryT > 1) return null;
+  assert(entryT >= 0 && entryT <= 1, 'segment entry time must remain within [0, 1]');
   return entryT;
 }
 
