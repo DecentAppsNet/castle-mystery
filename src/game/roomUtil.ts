@@ -5,15 +5,19 @@ import RoomExit from "./types/RoomExit";
 import Obstruction from "./types/Obstruction";
 import Waypoint from "./types/Waypoint";
 import Position from "./types/Position";
-import { clipMoveToObstructions, isPositionInObstructions, isPositionInRect } from "./obstructionUtil";
+import { CHARACTER_OBSTRUCTION_MARGIN, clipMoveToObstructions, isPositionInObstructions, isPositionInRect } from "./obstructionUtil";
 
 const WAYPOINT_SPACING = 5;
-const EXIT_WAYPOINT_INSET = 3;
+const EXIT_WAYPOINT_INSET = CHARACTER_OBSTRUCTION_MARGIN + 1;
 
 function _calcAxisWaypointPositions(start:number, length:number):number[] {
   const waypointCount = Math.max(1, Math.ceil(length / WAYPOINT_SPACING));
   const step = length / waypointCount;
   return Array.from({ length: waypointCount }, (_, index) => Math.round(start + step * (index + 0.5)));
+}
+
+function _mergeAxisWaypointPositions(basePositions:number[], extraPositions:number[]):number[] {
+  return Array.from(new Set([...basePositions, ...extraPositions])).sort((a, b) => a - b);
 }
 
 function _findAdjacentRoomId(roomId:string, exit:RoomExit):string {
@@ -54,6 +58,41 @@ function _connectAdjacentWaypoints(waypoints:Waypoint[], obstructions:Obstructio
       waypoint.adjacentWaypoints.push(otherWaypoint);
       otherWaypoint.adjacentWaypoints.push(waypoint);
     }
+  });
+}
+
+function _ensureExitWaypointsAreConnected(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[], obstructions:Obstruction[]) {
+  const roomForConnectivity:Room = {
+    id: roomId,
+    title: roomId,
+    rect: roomRect,
+    items: [],
+    obstructions,
+    exits: [],
+    waypoints: [],
+    isDiscovered: false
+  };
+
+  exits.forEach(exit => {
+    const exitWaypoint = findExitWaypoint(roomId, roomRect, exit, waypoints);
+    if (exitWaypoint.adjacentWaypoints.length > 0) return;
+
+    let nearestReachableWaypoint:Waypoint|null = null;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    waypoints.forEach(candidate => {
+      if (candidate === exitWaypoint) return;
+      const clippedMove = clipMoveToObstructions(roomForConnectivity, exitWaypoint.position, candidate.position);
+      if (clippedMove.position.x !== candidate.position.x || clippedMove.position.y !== candidate.position.y) return;
+      const distance = Math.hypot(candidate.position.x - exitWaypoint.position.x, candidate.position.y - exitWaypoint.position.y);
+      if (distance >= nearestDistance) return;
+      nearestReachableWaypoint = candidate;
+      nearestDistance = distance;
+    });
+
+    const connectedWaypoint = nearestReachableWaypoint;
+    if (!connectedWaypoint) return;
+    exitWaypoint.adjacentWaypoints.push(connectedWaypoint);
+    connectedWaypoint.adjacentWaypoints.push(exitWaypoint);
   });
 }
 
@@ -171,8 +210,14 @@ export function findNearestWaypoint(room:Room, x:number, y:number, predicate?:(w
 }
 
 export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[], obstructions:Obstruction[]):Waypoint[] {
-  const xPositions = _calcAxisWaypointPositions(roomRect.x, roomRect.width);
-  const yPositions = _calcAxisWaypointPositions(roomRect.y, roomRect.height);
+  const xPositions = _mergeAxisWaypointPositions(
+    _calcAxisWaypointPositions(roomRect.x, roomRect.width),
+    exits.filter(exit => exit.y === roomRect.y || exit.y === roomRect.y + roomRect.height).map(exit => exit.x)
+  );
+  const yPositions = _mergeAxisWaypointPositions(
+    _calcAxisWaypointPositions(roomRect.y, roomRect.height),
+    exits.filter(exit => exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width).map(exit => exit.y)
+  );
   const waypointsByKey = new Map<string, Waypoint>();
   const _getOrCreateWaypoint = (x:number, y:number) => {
     const key = _createWaypointKey(x, y);
@@ -201,6 +246,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
 
   let waypoints = Array.from(waypointsByKey.values());
   _connectAdjacentWaypoints(waypoints, obstructions);
+  _ensureExitWaypointsAreConnected(roomId, roomRect, exits, waypoints, obstructions);
   waypoints = _pruneIsolatedNonExitWaypoints(roomId, roomRect, exits, waypoints);
   _populateExitDirectionsForRoom(roomId, roomRect, exits, waypoints);
 

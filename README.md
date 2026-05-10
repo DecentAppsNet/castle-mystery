@@ -41,21 +41,6 @@ The content preceding this section might be things you want to keep and revise f
 3. `npm run dev`
 4. Browse to http://localhost:3000/ or whatever URL is shown in the output of the previous command.
 
-## Tests
-
-Run the full test suite with `npm test`.
-
-Project test conventions:
-
-* Unit tests verify the contract of a module and live at `.../moduleFolder/tests/moduleName.test.ts`.
-* Integration tests verify a feature across multiple modules and live under `src/functionalityName/integration-tests`.
-* Avoid mocking unless needed to remove file I/O, network I/O, operating-system behavior, or other non-deterministic or persistent side effects.
-* Use `setSeed()` for tests that rely on random number generation.
-* Keep imports at the top of the file.
-* Only test exported functions.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full testing and contribution guidelines.
-
 ## What You Have Now
 
 The unmodified template installed for Castle Mystery includes these screens:
