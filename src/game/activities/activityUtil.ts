@@ -50,6 +50,10 @@ function _createWaypointKey(waypoint:Waypoint):string {
   return `${waypoint.position.x},${waypoint.position.y}`;
 }
 
+export function createWaypointKey(waypoint:Waypoint):string {
+  return _createWaypointKey(waypoint);
+}
+
 function _findPreferredWaypointInRoom(room:Room, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
   const centerX = Math.floor(room.rect.x + room.rect.width / 2);
   const centerY = Math.floor(room.rect.y + room.rect.height / 2);
@@ -218,6 +222,52 @@ export function findCurrentRoom(level:Level, position:Position):Room {
   return findRoomAtPositionOrNearest(level.rooms, position.x, position.y);
 }
 
+export function findWaypointPath(room:Room, fromWaypoint:Waypoint, toWaypoint:Waypoint):Waypoint[] {
+  if (fromWaypoint === toWaypoint) return [fromWaypoint];
+  const pending:Waypoint[] = [fromWaypoint];
+  const previousByKey = new Map<string, Waypoint|null>([[`${fromWaypoint.position.x},${fromWaypoint.position.y}`, null]]);
+
+  while (pending.length > 0) {
+    const waypoint = pending.shift()!;
+    for (const adjacentWaypoint of waypoint.adjacentWaypoints) {
+      const key = `${adjacentWaypoint.position.x},${adjacentWaypoint.position.y}`;
+      if (previousByKey.has(key)) continue;
+      previousByKey.set(key, waypoint);
+      if (adjacentWaypoint === toWaypoint) {
+        const path = [toWaypoint];
+        let current:Waypoint|null = waypoint;
+        while (current) {
+          path.unshift(current);
+          current = previousByKey.get(`${current.position.x},${current.position.y}`) ?? null;
+        }
+        return path;
+      }
+      pending.push(adjacentWaypoint);
+    }
+  }
+
+  throw new Error(`no waypoint path found in room ${room.id}`);
+}
+
+export function planMovementWithinRoom(room:Room, fromWaypoint:Waypoint, targetWaypoint:Waypoint, startTime:number = 0):ItineraryEvent[] {
+  const waypointPath = findWaypointPath(room, fromWaypoint, targetWaypoint);
+  const events:ItineraryEvent[] = [];
+  let currentWaypoint = fromWaypoint;
+  let currentTime = startTime;
+
+  for (let i = 1; i < waypointPath.length; ++i) {
+    const nextWaypoint = waypointPath[i];
+    const moveResult = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
+      nextWaypoint.position.x, nextWaypoint.position.y);
+    if (!moveResult.event || moveResult.wasClipped) throw new Error(`unable to follow waypoint route in room ${room.id}`);
+    events.push(moveResult.event);
+    currentTime = moveResult.event.startTime + moveResult.event.duration;
+    currentWaypoint = nextWaypoint;
+  }
+
+  return events;
+}
+
 export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoomId:string, occupiedWaypointKeys:Set<string> = new Set()):ItineraryEvent[] {
   const currentRoom = findCurrentRoom(level, fromWaypoint.position);
   if (currentRoom.id === targetRoomId) return [];
@@ -227,33 +277,6 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
   const events:ItineraryEvent[] = [];
   let currentWaypoint = fromWaypoint;
   let currentTime = 0;
-
-  const _findWaypointPath = (room:Room, fromWaypoint:Waypoint, toWaypoint:Waypoint):Waypoint[] => {
-    if (fromWaypoint === toWaypoint) return [fromWaypoint];
-    const pending:Waypoint[] = [fromWaypoint];
-    const previousByKey = new Map<string, Waypoint|null>([[`${fromWaypoint.position.x},${fromWaypoint.position.y}`, null]]);
-
-    while (pending.length > 0) {
-      const waypoint = pending.shift()!;
-      for (const adjacentWaypoint of waypoint.adjacentWaypoints) {
-        const key = `${adjacentWaypoint.position.x},${adjacentWaypoint.position.y}`;
-        if (previousByKey.has(key)) continue;
-        previousByKey.set(key, waypoint);
-        if (adjacentWaypoint === toWaypoint) {
-          const path = [toWaypoint];
-          let current:Waypoint|null = waypoint;
-          while (current) {
-            path.unshift(current);
-            current = previousByKey.get(`${current.position.x},${current.position.y}`) ?? null;
-          }
-          return path;
-        }
-        pending.push(adjacentWaypoint);
-      }
-    }
-
-    throw new Error(`no waypoint path found in room ${room.id}`);
-  };
 
   for (let i = 0; i < roomPath.length - 1; ++i) {
     const room = findRoom(level.rooms, roomPath[i]);
@@ -280,16 +303,8 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
   }
 
   const finalRoom = findRoom(level.rooms, targetRoomId);
-  const finalWaypointPath = _findWaypointPath(finalRoom, currentWaypoint, targetWaypoint);
-  for (let i = 1; i < finalWaypointPath.length; ++i) {
-    const nextWaypoint = finalWaypointPath[i];
-    const moveResult = createWalkEvent(finalRoom, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
-      nextWaypoint.position.x, nextWaypoint.position.y);
-    if (!moveResult.event || moveResult.wasClipped) throw new Error(`unable to follow waypoint route in room ${finalRoom.id}`);
-    events.push(moveResult.event);
-    currentTime = moveResult.event.startTime + moveResult.event.duration;
-    currentWaypoint = nextWaypoint;
-  }
+  const finalEvents = planMovementWithinRoom(finalRoom, currentWaypoint, targetWaypoint, currentTime);
+  events.push(...finalEvents);
 
   return events;
 }
