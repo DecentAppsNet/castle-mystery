@@ -9,7 +9,9 @@ import { clearSeed, setSeed } from '@/common/randUtil';
 import LoadLevelException from '../LoadLevelException';
 import { loadLevelFromText } from '../levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
+import { findRoom } from '../roomUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
+import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?raw';
 
 describe('levelUtil itinerary loading', () => {
   beforeEach(() => {
@@ -35,6 +37,13 @@ describe('levelUtil itinerary loading', () => {
     expect(queen?.items.map(item => item.id)).toContain('Romance Novel');
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 35_000)).toBe(true);
     expect(queen?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 35_000)).toBe(true);
+  });
+
+  it('loads room position markers from room legends and grids', () => {
+    const level = loadLevelFromText(atRoomMarkerText);
+    const library = findRoom(level.rooms, 'Library');
+
+    expect(library.positionMarkersById.SW).toEqual({ x:32, y:28 });
   });
 
   it('resolves face targets independently of same-timestamp itinerary order', () => {
@@ -74,6 +83,19 @@ describe('levelUtil itinerary loading', () => {
       expect((error as LoadLevelException).errorLineNo).toBe(42);
       expect((error as LoadLevelException).message).toContain('invalid-itinerary-activity.md:42');
       expect((error as LoadLevelException).message).toMatch(/parse itinerary activity line/i);
+    }
+  });
+
+  it('wraps unknown room marker references with filename and line number', () => {
+    const invalidMarkerText = atRoomMarkerText.replace('@ Library.SW', '@ Library.NOPE');
+
+    try {
+      loadLevelFromText(invalidMarkerText, 'at-room-marker.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('at-room-marker.md:52');
+      expect((error as LoadLevelException).message).toContain('unknown position marker Library.NOPE');
     }
   });
 

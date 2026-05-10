@@ -61,6 +61,12 @@ function _findPreferredWaypointInRoom(room:Room, occupiedWaypointKeys:Set<string
   return findNearestWaypoint(room, centerX, centerY, waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
 }
 
+function _findTargetWaypointInRoom(room:Room, targetPosition:Position|null, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
+  if (!targetPosition) return _findPreferredWaypointInRoom(room, occupiedWaypointKeys);
+  return findNearestWaypoint(room, targetPosition.x, targetPosition.y,
+    waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
+}
+
 function _findConnectingExit(room:Room, otherRoomId:string):RoomExit {
   const exit = room.exits.find(candidate => candidate.room1Id === otherRoomId || candidate.room2Id === otherRoomId);
   assertNonNullable(exit, `no exit connects ${room.id} to ${otherRoomId}`);
@@ -273,11 +279,15 @@ export function planMovementWithinRoom(room:Room, fromWaypoint:Waypoint, targetW
   return events;
 }
 
-export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoomId:string, occupiedWaypointKeys:Set<string> = new Set()):ItineraryEvent[] {
+export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoomId:string,
+  occupiedWaypointKeys:Set<string> = new Set(), targetPosition:Position|null = null):ItineraryEvent[] {
   const currentRoom = findCurrentRoom(level, fromWaypoint.position);
-  if (currentRoom.id === targetRoomId) return [];
   const targetRoom = findRoom(level.rooms, targetRoomId);
-  const targetWaypoint = _findPreferredWaypointInRoom(targetRoom, occupiedWaypointKeys);
+  const targetWaypoint = _findTargetWaypointInRoom(targetRoom, targetPosition, occupiedWaypointKeys);
+  if (currentRoom.id === targetRoomId) {
+    if (fromWaypoint.position.x === targetWaypoint.position.x && fromWaypoint.position.y === targetWaypoint.position.y) return [];
+    return planMovementWithinRoom(currentRoom, fromWaypoint, targetWaypoint, 0);
+  }
   const roomPath = _findRoomPath(level, currentRoom.id, targetRoom.id);
   const events:ItineraryEvent[] = [];
   let currentWaypoint = fromWaypoint;

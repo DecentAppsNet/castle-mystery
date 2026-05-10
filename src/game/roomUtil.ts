@@ -114,6 +114,7 @@ function _connectAdjacentWaypoints(waypoints:Waypoint[], obstructions:Obstructio
     obstructions,
     exits: [],
     waypoints: [],
+    positionMarkersById: {},
     isDiscovered: false
   };
   waypoints.forEach((waypoint, index) => {
@@ -138,6 +139,7 @@ function _ensureExitWaypointsAreConnected(roomId:string, roomRect:Rect, exits:Ro
     obstructions,
     exits: [],
     waypoints: [],
+    positionMarkersById: {},
     isDiscovered: false
   };
 

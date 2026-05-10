@@ -83,10 +83,11 @@ WFL
 ```
 .....
 .....
-....B
+.X..B
 ```
 
 * B=Romance Novel
+* X=SW
 
 * exits=Foyer|East Hall
 
@@ -131,7 +132,7 @@ WFL
 0:00:22 King wanders
 0:00:26 King wanders
 0:00:30 King says "It must be in the library."
-0:00:34 King @ Library
+0:00:34 King @ Library.SW
 
 0:00:00 Queen @ West Hall
 0:00:01 Queen wanders

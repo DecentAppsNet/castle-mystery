@@ -86,6 +86,12 @@ type CharacterTile = {
   col:number
 };
 
+type MarkerTile = {
+  markerId:string,
+  row:number,
+  col:number
+};
+
 function _parseTimeTextToMsecs(text:string):number {
   return parseTimestampToMsecs(text);
 }
@@ -222,7 +228,7 @@ function _createNormalizedObstructionFromTiles(room:Room, obstructionTiles:Obstr
   return createObstruction(rects);
 }
 
-function _findCharacterTilesInGrid(gridLines:string[], legend:Record<string, string>):CharacterTile[] {
+function _findLegendTilesInGrid(gridLines:string[], legend:Record<string, string>):CharacterTile[] {
   const characterTiles:CharacterTile[] = [];
   gridLines.forEach((line, row) => {
     Array.from(line).forEach((tileChar, col) => {
@@ -233,6 +239,13 @@ function _findCharacterTilesInGrid(gridLines:string[], legend:Record<string, str
     });
   });
   return characterTiles;
+}
+
+function _findMarkerTilesInGrid(gridLines:string[], legend:Record<string, string>,
+  characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>):MarkerTile[] {
+  return _findLegendTilesInGrid(gridLines, legend)
+    .filter(({ entryId }) => !characterDefinitions.has(entryId) && !itemDefinitions.has(entryId))
+    .map(({ entryId, row, col }) => ({ markerId:entryId, row, col }));
 }
 
 function _calcScaledRoomGridPosition(room:Room, row:number, col:number, gridWidth:number, gridHeight:number):[x:number, y:number] {
@@ -281,7 +294,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
       Object.entries(roomNameValues).filter(([name]) => name !== 'exits')
     );
 
-    _findCharacterTilesInGrid(gridLines, roomLegend).forEach(({ entryId, row, col }) => {
+    _findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId, row, col }) => {
       const [x, y] = _calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
       const characterDefinition = characterDefinitions.get(entryId);
       if (characterDefinition) {
@@ -291,6 +304,30 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
       if (itemDefinitions.has(entryId)) {
         _addItemToRoom(level, roomId, _createItemFromDefinition(entryId, itemDefinitions, { x, y }, false));
       }
+    });
+  });
+}
+
+function _addRoomPositionMarkersFromSections(level:Level, roomsSection:string,
+  characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
+  const roomSections = parseSections(roomsSection, 2);
+
+  Object.entries(roomSections).forEach(([roomId, roomSection]) => {
+    const room = findRoom(level.rooms, roomId);
+    const gridLines = parseFirstFencedCodeBlockLines(roomSection);
+    if (!gridLines.length) return;
+
+    const gridWidth = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
+    const gridHeight = gridLines.length;
+    const roomNameValues = parseNameValueLines(roomSection);
+    const roomLegend = Object.fromEntries(
+      Object.entries(roomNameValues).filter(([name]) => name !== 'exits')
+    );
+
+    _findMarkerTilesInGrid(gridLines, roomLegend, characterDefinitions, itemDefinitions).forEach(({ markerId, row, col }) => {
+      if (room.positionMarkersById[markerId]) throw new Error(`duplicate position marker ${roomId}.${markerId}`);
+      const [x, y] = _calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
+      room.positionMarkersById[markerId] = { x, y };
     });
   });
 }
@@ -357,6 +394,7 @@ function _createRoomsFromMapSection(level:Level, mapSection:string, roomsSection
       items: [],
       obstructions: [],
       waypoints: [],
+      positionMarkersById: {},
       exits: [],
       isDiscovered: false
     });
@@ -656,6 +694,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   const characterDefinitions = _parseCharacterDefinitions(sections.characters || "");
   const itemDefinitions = _parseItemDefinitions(sections.items || "");
   _createRoomsFromMapSection(level, sections.map || "", sections.rooms || "");
+  _addRoomPositionMarkersFromSections(level, sections.rooms || "", characterDefinitions, itemDefinitions);
   _addRoomExitsFromRoomsSection(level, sections.rooms || "");
   _generateRoomWaypoints(level);
   _addCharactersAndRoomItemsFromSections(level, sections.rooms || "", characterDefinitions, itemDefinitions);

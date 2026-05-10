@@ -2,10 +2,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { loadLevelFromText } from '../levelUtil';
+import { findCharacterPose } from '../itineraryUtil';
 import { findExitWaypoint, findRoom } from '../roomUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import WalkEvent from '../types/itineraryEvents/WalkEvent';
 import RoomEntryEvent from '../types/itineraryEvents/RoomEntryEvent';
+import atRoomMarkerSameRoomText from './fixtures/at-room-marker-same-room.md?raw';
+import atRoomMarkerText from './fixtures/at-room-marker.md?raw';
 import atLibraryViaFoyerText from './fixtures/at-library-via-foyer.md?raw';
 import wanderThenLibraryLShapeText from './fixtures/wander-then-library-l-shape.md?raw';
 import wanderThenLibraryWithSanctumText from './fixtures/wander-then-library-with-sanctum.md?raw';
@@ -94,5 +97,38 @@ describe('at room integration', () => {
 
   it('routes through paired exit waypoints in the L-shaped west-hall layout from kingacide', () => {
     _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryLShapeText);
+  });
+
+  it('routes @ Room.Marker to the waypoint nearest the authored marker position', () => {
+    const level = loadLevelFromText(atRoomMarkerText);
+    const king = level.characters.find(character => character.id === 'King');
+    const library = findRoom(level.rooms, 'Library');
+    const markerPosition = library.positionMarkersById.SW;
+    const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
+      if (!nearestWaypoint) return waypoint;
+      const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
+      const distanceSquared = (waypoint.position.x - markerPosition.x) ** 2 + (waypoint.position.y - markerPosition.y) ** 2;
+      return distanceSquared < nearestDistanceSquared ? waypoint : nearestWaypoint;
+    }, null as typeof library.waypoints[number] | null);
+
+    expect(king).not.toBeNull();
+    expect(targetWaypoint).not.toBeNull();
+    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+  });
+
+  it('moves within the same room for @ Room.Marker when already in that room', () => {
+    const level = loadLevelFromText(atRoomMarkerSameRoomText);
+    const king = level.characters.find(character => character.id === 'King');
+    const library = findRoom(level.rooms, 'Library');
+    const markerPosition = library.positionMarkersById.SW;
+    const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
+      if (!nearestWaypoint) return waypoint;
+      const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
+      const distanceSquared = (waypoint.position.x - markerPosition.x) ** 2 + (waypoint.position.y - markerPosition.y) ** 2;
+      return distanceSquared < nearestDistanceSquared ? waypoint : nearestWaypoint;
+    }, null as typeof library.waypoints[number] | null);
+
+    expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK)).toBe(true);
+    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 });

@@ -20,6 +20,7 @@ function _createRoom():Room {
     obstructions:[],
     exits:[],
     waypoints:[],
+    positionMarkersById:{},
     isDiscovered:false
   };
 }

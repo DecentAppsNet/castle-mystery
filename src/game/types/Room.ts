@@ -1,6 +1,7 @@
 import Rect from "./Rect"
 import Item, { duplicateItem } from "./Item"
 import Obstruction, { duplicateObstruction } from "./Obstruction"
+import Position, { duplicatePosition } from "./Position"
 import RoomExit, { duplicateRoomExit } from "./RoomExit"
 import Waypoint, { duplicateWaypoint } from "./Waypoint"
 
@@ -12,6 +13,7 @@ type Room = {
   readonly obstructions:Obstruction[],
   readonly exits:RoomExit[],
   readonly waypoints:Waypoint[],
+  readonly positionMarkersById:Record<string, Position>,
   isDiscovered:boolean
 }
 
@@ -23,6 +25,8 @@ export function duplicateRoom(from:Room):Room {
     items:from.items.map(duplicateItem),
     obstructions:from.obstructions.map(duplicateObstruction),
     waypoints:from.waypoints.map(duplicateWaypoint),
+    positionMarkersById:Object.fromEntries(Object.entries(from.positionMarkersById)
+      .map(([markerId, position]) => [markerId, duplicatePosition(position)])),
     exits:from.exits.map(duplicateRoomExit),
     isDiscovered:from.isDiscovered
   }
