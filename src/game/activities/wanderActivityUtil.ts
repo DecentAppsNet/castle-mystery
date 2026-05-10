@@ -18,7 +18,9 @@ export function tryCreateWanderActivity(activityText:string, context:ActivityCon
     result: createWalkEvent(room, context.timestamp, context.state.waypoint.position.x, context.state.waypoint.position.y,
       waypoint.position.x, waypoint.position.y)
   })).filter(candidate => candidate.result.event && !candidate.result.wasClipped);
-  if (!candidateResults.length) return [];
+  if (!candidateResults.length) {
+    throw new Error(`unable to create wander activity for ${context.character.id}: no reachable unclaimed adjacent waypoint`);
+  }
   const selectedCandidate = candidateResults[randIntInRange(0, candidateResults.length)];
   return [selectedCandidate.result.event!];
 }

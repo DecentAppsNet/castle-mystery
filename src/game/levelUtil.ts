@@ -19,6 +19,7 @@ import { tryCreateSayActivity } from "./activities/sayActivityUtil";
 import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
 import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
 import { tryCreateFaceActivity } from "./activities/faceActivityUtil";
+import LoadLevelException from "./LoadLevelException";
 import {
   appendEventsToCharacterState,
   ActivityContext,
@@ -48,6 +49,20 @@ type ParsedItineraryActivity = {
   characterId:string,
   activityText:string
 };
+
+function _throwErrorWithLoadLevelContext(levelFilename:string, errorLineNo:number, error:unknown):never {
+  if (error instanceof LoadLevelException) throw error;
+  if (error instanceof Error) throw new LoadLevelException(levelFilename, errorLineNo, error.message, error);
+  throw new LoadLevelException(levelFilename, errorLineNo, String(error), error);
+}
+
+function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:number, callback:() => T):T {
+  try {
+    return callback();
+  } catch (error) {
+    _throwErrorWithLoadLevelContext(levelFilename, errorLineNo, error);
+  }
+}
 
 function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
   return {
@@ -474,17 +489,35 @@ function _parseCharacterActivityLine(activityLine:string):{ characterId:string, 
   return { characterId, activityText };
 }
 
-function _parseItineraryActivities(itinerarySection:string):ParsedItineraryActivity[] {
-  return itinerarySection.split('\n').map((line, lineNo) => ({ line, lineNo }))
+function _parseItineraryActivities(itinerarySection:string, levelFilename:string, firstLineNo:number):ParsedItineraryActivity[] {
+  return itinerarySection.split('\n').map((line, index) => ({ line, lineNo:firstLineNo + index }))
     .flatMap(({ line, lineNo }) => {
-      const timestamp = parseLeadingTimestamp(line);
-      if (!timestamp) return [];
-      const activityLine = timestamp.remainingText.trim();
-      if (!activityLine.length) throw new Error(`missing itinerary activity on line ${lineNo + 1}`);
-      const { characterId, activityText } = _parseCharacterActivityLine(activityLine);
-      return [{ time:timestamp.time, lineNo, characterId, activityText }];
+      return _runWithItineraryLineContext(levelFilename, lineNo, () => {
+        const timestamp = parseLeadingTimestamp(line);
+        if (!timestamp) return [];
+        const activityLine = timestamp.remainingText.trim();
+        if (!activityLine.length) throw new Error(`missing itinerary activity`);
+        const { characterId, activityText } = _parseCharacterActivityLine(activityLine);
+        return [{ time:timestamp.time, lineNo, characterId, activityText }];
+      });
     })
     .sort((a, b) => a.time - b.time || a.characterId.localeCompare(b.characterId) || a.lineNo - b.lineNo);
+}
+
+function _findSectionFirstContentLineNo(markdownText:string, sectionName:string, indentLevel:number = 1):number|null {
+  const lines = markdownText.split('\n');
+  const headingText = `${'#'.repeat(indentLevel)} ${sectionName}`;
+  const nextHeadingPrefix = '#'.repeat(indentLevel) + ' ';
+  const headingIndex = lines.findIndex(line => line.trim() === headingText);
+  if (headingIndex === -1) return null;
+
+  for (let i = headingIndex + 1; i < lines.length; ++i) {
+    const trimmedLine = lines[i].trim();
+    if (trimmedLine.startsWith(nextHeadingPrefix)) return null;
+    if (trimmedLine.length > 0) return i + 1;
+  }
+
+  return null;
 }
 
 function _createActivityContext(level:Level, character:Character, timestamp:number,
@@ -500,27 +533,30 @@ function _activityAffectsPoseAtTimestamp(activityText:string):boolean {
 }
 
 function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItineraryActivity[], roomItemsByRoomId:Map<string, Item[]>,
-  charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>):Map<string, Position> {
+  charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+  levelFilename:string):Map<string, Position> {
   const poseOverridesByCharacterId = new Map<string, Position>();
 
   activities.forEach(activity => {
-    if (!_activityAffectsPoseAtTimestamp(activity.activityText)) return;
-    const character = charactersById.get(activity.characterId);
-    assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
+    _runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
+      if (!_activityAffectsPoseAtTimestamp(activity.activityText)) return;
+      const character = charactersById.get(activity.characterId);
+      assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
 
-    const state = characterStatesById.get(activity.characterId);
-    assertNonNullable(state, `missing itinerary state for ${activity.characterId}`);
+      const state = characterStatesById.get(activity.characterId);
+      assertNonNullable(state, `missing itinerary state for ${activity.characterId}`);
 
-    const previewState = duplicateCharacterActivityState(state);
-    const previewCharacterStatesById = new Map(characterStatesById);
-    previewCharacterStatesById.set(activity.characterId, previewState);
-    const previewRoomItemsByRoomId = duplicateRoomItemsByRoomId(roomItemsByRoomId);
-    const previewContext = _createActivityContext(level, character, activity.time, previewRoomItemsByRoomId,
-      charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
-    const events = _createEventsForActivity(activity.activityText, previewContext);
-    appendEventsToCharacterState(level, character, previewState, events);
-    poseOverridesByCharacterId.set(activity.characterId,
-      findStatePoseAtTime(character, previewState, activity.time).position);
+      const previewState = duplicateCharacterActivityState(state);
+      const previewCharacterStatesById = new Map(characterStatesById);
+      previewCharacterStatesById.set(activity.characterId, previewState);
+      const previewRoomItemsByRoomId = duplicateRoomItemsByRoomId(roomItemsByRoomId);
+      const previewContext = _createActivityContext(level, character, activity.time, previewRoomItemsByRoomId,
+        charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
+      const events = _createEventsForActivity(activity.activityText, previewContext);
+      appendEventsToCharacterState(level, character, previewState, events);
+      poseOverridesByCharacterId.set(activity.characterId,
+        findStatePoseAtTime(character, previewState, activity.time).position);
+    });
   });
 
   return poseOverridesByCharacterId;
@@ -553,8 +589,8 @@ function _createLevelDurationAndLabels(characters:Character[]):{ duration:number
   return { duration, labels: _createTimeLabels(duration) };
 }
 
-function _loadItineraries(level:Level, itinerarySection:string):{ characters:Character[], duration:number, labels:TimeLabel[] } {
-  const activities = _parseItineraryActivities(itinerarySection);
+function _loadItineraries(level:Level, itinerarySection:string, levelFilename:string, firstLineNo:number):{ characters:Character[], duration:number, labels:TimeLabel[] } {
+  const activities = _parseItineraryActivities(itinerarySection, levelFilename, firstLineNo);
   if (!activities.length) {
     return {
       characters: level.characters,
@@ -566,13 +602,15 @@ function _loadItineraries(level:Level, itinerarySection:string):{ characters:Cha
   const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
 
   const _processActivity = (activity:ParsedItineraryActivity, poseOverridesByCharacterId:Map<string, Position>) => {
-    const character = charactersById.get(activity.characterId);
-    assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
-    const context = _createActivityContext(level, character, activity.time, roomItemsByRoomId, charactersById,
-      characterStatesById, poseOverridesByCharacterId);
-    const events = _createEventsForActivity(activity.activityText, context);
-    appendEventsToCharacterState(level, character, context.state, events);
-    if (!events.length) context.state.time = Math.max(context.state.time, activity.time);
+    _runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
+      const character = charactersById.get(activity.characterId);
+      assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
+      const context = _createActivityContext(level, character, activity.time, roomItemsByRoomId, charactersById,
+        characterStatesById, poseOverridesByCharacterId);
+      const events = _createEventsForActivity(activity.activityText, context);
+      appendEventsToCharacterState(level, character, context.state, events);
+      if (!events.length) context.state.time = Math.max(context.state.time, activity.time);
+    });
   };
 
   for (let i = 0; i < activities.length;) {
@@ -584,7 +622,7 @@ function _loadItineraries(level:Level, itinerarySection:string):{ characters:Cha
     }
 
     const poseOverridesByCharacterId = _createPoseOverridesForTimestamp(level, sameTimeActivities,
-      roomItemsByRoomId, charactersById, characterStatesById);
+      roomItemsByRoomId, charactersById, characterStatesById, levelFilename);
     sameTimeActivities.forEach(activity => _processActivity(activity, poseOverridesByCharacterId));
   }
 
@@ -604,9 +642,11 @@ function _loadItineraries(level:Level, itinerarySection:string):{ characters:Cha
   return { characters, ..._createLevelDurationAndLabels(characters) };
 }
 
-export function loadLevelFromText(text:string):Level {
+export function loadLevelFromText(text:string, levelFilename:string = '<inline>'):Level {
   const sections = parseSections(text);
   const generalSection = _parseGeneralSection(sections.general || "");
+  const itinerarySection = sections.itinerary || "";
+  const itineraryFirstLineNo = _findSectionFirstContentLineNo(text, 'itinerary') || 1;
   let level = _createEmptyLevel();
   level = {
     ...level,
@@ -620,7 +660,7 @@ export function loadLevelFromText(text:string):Level {
   _generateRoomWaypoints(level);
   _addCharactersAndRoomItemsFromSections(level, sections.rooms || "", characterDefinitions, itemDefinitions);
   _addInventoryItemsToCharacters(level, characterDefinitions, itemDefinitions);
-  const itineraryData = _loadItineraries(level, sections.itinerary || "");
+  const itineraryData = _loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo);
   level = {
     ...level,
     activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
@@ -634,5 +674,5 @@ export function loadLevelFromText(text:string):Level {
 export async function loadLevelFromUrl(levelFileUrl:string):Promise<Level> {
   const response = await fetch(levelFileUrl);
   const text = await response.text();
-  return loadLevelFromText(text);
+  return loadLevelFromText(text, levelFileUrl);
 }

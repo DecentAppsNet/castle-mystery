@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import itinerarySortingText from './fixtures/itinerary-sorting.md?raw';
+import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import sameTimeFaceOrderIndependenceText from './fixtures/same-time-face-order-independence.md?raw';
 import sameTimeItemStateUsesCharacterOrderText from './fixtures/same-time-item-state-uses-character-order.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
+import LoadLevelException from '../LoadLevelException';
 import { loadLevelFromText } from '../levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
@@ -60,6 +62,19 @@ describe('levelUtil itinerary loading', () => {
     const king = level.characters.find(character => character.id === 'King');
 
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 5_000)).toBe(true);
+  });
+
+  it('wraps itinerary line errors with filename and line number', () => {
+    try {
+      loadLevelFromText(invalidItineraryActivityText, 'invalid-itinerary-activity.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('invalid-itinerary-activity.md');
+      expect((error as LoadLevelException).errorLineNo).toBe(42);
+      expect((error as LoadLevelException).message).toContain('invalid-itinerary-activity.md:42');
+      expect((error as LoadLevelException).message).toMatch(/parse itinerary activity line/i);
+    }
   });
 
 });

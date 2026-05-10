@@ -124,7 +124,7 @@ WFL
 0:00:00 King @ Throne Room
 0:00:03 King says "It's good to be king."
 0:00:10 King says "Where did I put that book?"
-0:00:11 King wanders
+0:00:11 King says "Perhaps I left it in the library."
 0:00:28 King says "It must be in the library."
 0:00:34 King @ Library
 

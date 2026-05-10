@@ -7,23 +7,30 @@
 
 ```
 A
+A
 ```
 
-* A=Hall
+* A=Throne Room
 
 # rooms
 
-## Hall
+## Throne Room
 
 ```
 .......
-.K.B.Q.
+.#...#.
+...K...
+.......
+.......
+.......
+.......
+.......
+.......
+.......
 .......
 ```
 
-* B=Book
 * K=King
-* Q=Queen
 
 # characters
 
@@ -31,17 +38,6 @@ A
 
 * description=Test king.
 
-## Queen
-
-* description=Test queen.
-
-# items
-
-## Book
-
-* title=Book
-
 # itinerary
 
-0:00:05 Queen takes Book
-0:00:05 King faces Book.
+0:00:01 King wanders

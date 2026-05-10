@@ -57,6 +57,17 @@ function _connectAdjacentWaypoints(waypoints:Waypoint[], obstructions:Obstructio
   });
 }
 
+function _pruneIsolatedNonExitWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[]):Waypoint[] {
+  const exitWaypointKeys = new Set(exits.map(exit => {
+    const position = _findExitWaypointPosition(roomId, roomRect, exit);
+    return _createWaypointKey(position.x, position.y);
+  }));
+  const remainingWaypoints = waypoints.filter(waypoint =>
+    waypoint.adjacentWaypoints.length > 0 || exitWaypointKeys.has(_createWaypointKey(waypoint.position.x, waypoint.position.y)));
+  if (!remainingWaypoints.length) throw new Error(`room ${roomId} has no connected waypoints`);
+  return remainingWaypoints;
+}
+
 export function findRoom(rooms:Room[], roomId:string):Room {
   const room = rooms.find((r) => r.id === roomId);
   if (!room) throw new Error(`room with id ${roomId} not found`);
@@ -188,8 +199,9 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
     _getOrCreateWaypoint(exitWaypointPosition.x, exitWaypointPosition.y);
   });
 
-  const waypoints = Array.from(waypointsByKey.values());
+  let waypoints = Array.from(waypointsByKey.values());
   _connectAdjacentWaypoints(waypoints, obstructions);
+  waypoints = _pruneIsolatedNonExitWaypoints(roomId, roomRect, exits, waypoints);
   _populateExitDirectionsForRoom(roomId, roomRect, exits, waypoints);
 
   exits.forEach(exit => {
