@@ -1,9 +1,24 @@
-import { createInRoomRandomWalkEvent } from "../itineraryUtil";
+import { createWalkEvent, findRoomAtPositionOrNearest } from "../itineraryUtil";
+import { randIntInRange } from "@/common/randUtil";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import { ActivityContext, ensureTimestampIsAvailable, stripTrailingPeriod } from "./activityUtil";
 
 export function tryCreateWanderActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   if (stripTrailingPeriod(activityText) !== 'wanders') return null;
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText);
-  return [createInRoomRandomWalkEvent(context.level.rooms, context.state.position.x, context.state.position.y, context.timestamp)];
+  const room = findRoomAtPositionOrNearest(context.level.rooms,
+    context.state.waypoint.position.x, context.state.waypoint.position.y);
+  const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
+    .filter(([characterId]) => characterId !== context.character.id)
+    .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y}`));
+  const availableWaypoints = context.state.waypoint.adjacentWaypoints
+    .filter(waypoint => !occupiedWaypointKeys.has(`${waypoint.position.x},${waypoint.position.y}`));
+  const candidateResults = availableWaypoints.map(waypoint => ({
+    waypoint,
+    result: createWalkEvent(room, context.timestamp, context.state.waypoint.position.x, context.state.waypoint.position.y,
+      waypoint.position.x, waypoint.position.y)
+  })).filter(candidate => candidate.result.event && !candidate.result.wasClipped);
+  if (!candidateResults.length) return [];
+  const selectedCandidate = candidateResults[randIntInRange(0, candidateResults.length)];
+  return [selectedCandidate.result.event!];
 }

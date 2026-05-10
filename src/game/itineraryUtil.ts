@@ -46,7 +46,7 @@ function _getRandomPositionInRoom(room:Room):[x:number, y:number] {
     }
   }
 
-  assert(false, `unable to find unobstructed position in room ${room.id}`);
+  throw new Error(`unable to find unobstructed position in room ${room.id}`);
 }
 
 function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):number {
@@ -113,7 +113,6 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   if (!room) {
     console.warn(`Position (${x}, ${y}) is not in a room.`);
     room = findRoomNearestToPosition(rooms, x, y); // Don't know what happened, but try to be robust.
-    assertNonNullable(room);
   }
   return room;
 }
@@ -157,7 +156,7 @@ function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTim
     if (result.event) return result.event;
   }
 
-  assert(false, `unable to create unobstructed in-room walk from (${x}, ${y})`);
+  throw new Error(`unable to create unobstructed in-room walk from (${x}, ${y})`);
 }
 
 export function createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {

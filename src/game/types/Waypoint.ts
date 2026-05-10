@@ -1,17 +1,16 @@
 import Position from "./Position"
-import RoomExit from "./RoomExit"
 
 type Waypoint = {
   position:Position,
   adjacentWaypoints:Readonly<Waypoint>[],
-  adjacentExits:Readonly<RoomExit>[]
+  exitDirections:Partial<Record<string, Waypoint>>
 }
 
 export function duplicateWaypoint(from:Waypoint):Waypoint {
   return {
     position:from.position,
     adjacentWaypoints:[...from.adjacentWaypoints],
-    adjacentExits:[...from.adjacentExits]
+    exitDirections:{ ...from.exitDirections }
   }
 }
 

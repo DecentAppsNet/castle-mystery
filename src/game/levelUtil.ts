@@ -6,7 +6,7 @@ import Room from "./types/Room";
 import Rect from "./types/Rect";
 import Character from './types/Character';
 import Position from "./types/Position";
-import { findRoom } from "./roomUtil";
+import { findNearestWaypoint, findRoom, generateWaypoints } from "./roomUtil";
 import { createItineraryIndex, findCharacterPose } from "./itineraryUtil";
 import TimeLabel from "./types/TimeLabel";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
@@ -229,13 +229,20 @@ function _calcScaledRoomGridPosition(room:Room, row:number, col:number, gridWidt
   ];
 }
 
-function _addCharacter(level:Level, characterId:string, description:string, x:number, y:number) {
+function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number, claimedWaypoints:Set<string>) {
+  return findNearestWaypoint(room, targetX, targetY, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y}`));
+}
+
+function _addCharacter(level:Level, room:Room, characterId:string, description:string, x:number, y:number) {
+  const claimedWaypoints = new Set(level.characters.map(character => `${character.waypoint.position.x},${character.waypoint.position.y}`));
+  const waypoint = _findNearestUnclaimedWaypoint(room, x, y, claimedWaypoints);
   const character:Character = {
     id: characterId,
     description,
     items: [],
-    x,
-    y,
+    x:waypoint.position.x,
+    y:waypoint.position.y,
+    waypoint,
     facingAngle:0,
     itinerary:[],
     itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
@@ -263,7 +270,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
       const [x, y] = _calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
       const characterDefinition = characterDefinitions.get(entryId);
       if (characterDefinition) {
-        _addCharacter(level, entryId, characterDefinition.description, x, y);
+        _addCharacter(level, room, entryId, characterDefinition.description, x, y);
         return;
       }
       if (itemDefinitions.has(entryId)) {
@@ -355,6 +362,15 @@ function _addRoomExitsFromRoomsSection(level:Level, roomsSection:string) {
       _addExitBetweenRooms(level, roomId, connectedRoomId);
       addedExitPairs.add(exitPairKey);
     });
+  });
+}
+
+function _generateRoomWaypoints(level:Level) {
+  level.rooms.forEach((room, index) => {
+    level.rooms[index] = {
+      ...room,
+      waypoints: generateWaypoints(room.id, room.rect, room.exits, room.obstructions)
+    };
   });
 }
 
@@ -502,7 +518,7 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
     const previewContext = _createActivityContext(level, character, activity.time, previewRoomItemsByRoomId,
       charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
     const events = _createEventsForActivity(activity.activityText, previewContext);
-    appendEventsToCharacterState(character, previewState, events);
+    appendEventsToCharacterState(level, character, previewState, events);
     poseOverridesByCharacterId.set(activity.characterId,
       findStatePoseAtTime(character, previewState, activity.time).position);
   });
@@ -555,7 +571,7 @@ function _loadItineraries(level:Level, itinerarySection:string):{ characters:Cha
     const context = _createActivityContext(level, character, activity.time, roomItemsByRoomId, charactersById,
       characterStatesById, poseOverridesByCharacterId);
     const events = _createEventsForActivity(activity.activityText, context);
-    appendEventsToCharacterState(character, context.state, events);
+    appendEventsToCharacterState(level, character, context.state, events);
     if (!events.length) context.state.time = Math.max(context.state.time, activity.time);
   };
 
@@ -601,6 +617,7 @@ export function loadLevelFromText(text:string):Level {
   const itemDefinitions = _parseItemDefinitions(sections.items || "");
   _createRoomsFromMapSection(level, sections.map || "", sections.rooms || "");
   _addRoomExitsFromRoomsSection(level, sections.rooms || "");
+  _generateRoomWaypoints(level);
   _addCharactersAndRoomItemsFromSections(level, sections.rooms || "", characterDefinitions, itemDefinitions);
   _addInventoryItemsToCharacters(level, characterDefinitions, itemDefinitions);
   const itineraryData = _loadItineraries(level, sections.itinerary || "");

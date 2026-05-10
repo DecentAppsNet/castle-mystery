@@ -7,11 +7,11 @@ import Level from "../types/Level";
 import Position, { duplicatePosition } from "../types/Position";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
+import Waypoint from "../types/Waypoint";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import FacingEvent from "../types/itineraryEvents/FacingEvent";
-import { isPositionWithinRoomObstructionMargin } from "../obstructionUtil";
-import { findRoom } from "../roomUtil";
+import { findExitWaypoint, findNearestWaypoint, findRoom } from "../roomUtil";
 import {
   calcFacingAngle,
   createFacingEvent,
@@ -22,14 +22,11 @@ import {
   findRoomAtPositionOrNearest,
 } from "../itineraryUtil";
 
-const LEFT_RIGHT_MARGIN = 5;
-const TOP_MARGIN = 10;
-const BOTTOM_MARGIN = 5;
-
 export type CharacterActivityState = {
   events:ItineraryEvent[],
   time:number,
   position:Position,
+  waypoint:Waypoint,
   facingAngle:number,
   carriedItems:Item[]
 };
@@ -49,25 +46,14 @@ function _matchesItemReference(item:Item, reference:string):boolean {
   return item.id === reference || item.title === reference;
 }
 
-function _findDefaultPositionInRoom(room:Room):Position {
+function _createWaypointKey(waypoint:Waypoint):string {
+  return `${waypoint.position.x},${waypoint.position.y}`;
+}
+
+function _findPreferredWaypointInRoom(room:Room, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
   const centerX = Math.floor(room.rect.x + room.rect.width / 2);
   const centerY = Math.floor(room.rect.y + room.rect.height / 2);
-  let nearestPosition:Position|null = null;
-  let nearestDistanceSquared = Infinity;
-
-  for (let y = room.rect.y + TOP_MARGIN; y < room.rect.y + room.rect.height - BOTTOM_MARGIN; ++y) {
-    for (let x = room.rect.x + LEFT_RIGHT_MARGIN; x < room.rect.x + room.rect.width - LEFT_RIGHT_MARGIN; ++x) {
-      if (isPositionWithinRoomObstructionMargin(room, x, y)) continue;
-      const distanceSquared = (centerX - x) ** 2 + (centerY - y) ** 2;
-      if (distanceSquared < nearestDistanceSquared) {
-        nearestPosition = { x, y };
-        nearestDistanceSquared = distanceSquared;
-      }
-    }
-  }
-
-  assertNonNullable(nearestPosition, `no unobstructed activity target available in room ${room.id}`);
-  return nearestPosition;
+  return findNearestWaypoint(room, centerX, centerY, waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
 }
 
 function _calcExitClearanceOffsets(room:Room, exit:RoomExit):[dx:number, dy:number] {
@@ -142,6 +128,7 @@ export function createCharacterActivityState(character:Character):CharacterActiv
     events:[],
     time:0,
     position:{ x:character.x, y:character.y },
+    waypoint:character.waypoint,
     facingAngle:character.facingAngle,
     carriedItems:character.items.map(duplicateItem)
   };
@@ -156,6 +143,7 @@ export function duplicateCharacterActivityState(state:CharacterActivityState):Ch
     events:state.events.map(duplicateItineraryEvent),
     time:state.time,
     position:duplicatePosition(state.position),
+    waypoint:state.waypoint,
     facingAngle:state.facingAngle,
     carriedItems:state.carriedItems.map(duplicateItem)
   };
@@ -168,6 +156,7 @@ export function duplicateRoomItemsByRoomId(roomItemsByRoomId:Map<string, Item[]>
 export function createCharacterSnapshot(character:Character, state:CharacterActivityState):Character {
   return {
     ...character,
+    waypoint:state.waypoint,
     itinerary:[...state.events],
     itineraryIndex:createItineraryIndex(state.events, { x:character.x, y:character.y })
   };
@@ -203,7 +192,7 @@ export function scheduleEventsToEndAtTime(events:ItineraryEvent[], timestamp:num
   return _shiftEventTimes(events, scheduledStartTime);
 }
 
-export function appendEventsToCharacterState(character:Character, state:CharacterActivityState, events:ItineraryEvent[]) {
+export function appendEventsToCharacterState(level:Level, character:Character, state:CharacterActivityState, events:ItineraryEvent[]) {
   if (!events.length) return;
   state.events.push(...events);
   const lastEvent = events[events.length - 1];
@@ -219,6 +208,9 @@ export function appendEventsToCharacterState(character:Character, state:Characte
   state.time = blockingTime;
   const pose = findStatePoseAtTime(character, state, state.time);
   state.position = duplicatePosition(pose.position);
+  const waypoint = level.rooms.flatMap(room => room.waypoints)
+    .find(candidate => candidate.position.x === state.position.x && candidate.position.y === state.position.y);
+  if (waypoint) state.waypoint = waypoint;
   state.facingAngle = pose.facingAngle;
 }
 
@@ -226,11 +218,80 @@ export function findCurrentRoom(level:Level, position:Position):Room {
   return findRoomAtPositionOrNearest(level.rooms, position.x, position.y);
 }
 
-export function planMovementToRoom(level:Level, fromPosition:Position, targetRoomId:string):ItineraryEvent[] {
-  const currentRoom = findCurrentRoom(level, fromPosition);
+export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoomId:string, occupiedWaypointKeys:Set<string> = new Set()):ItineraryEvent[] {
+  const currentRoom = findCurrentRoom(level, fromWaypoint.position);
   if (currentRoom.id === targetRoomId) return [];
   const targetRoom = findRoom(level.rooms, targetRoomId);
-  return planMovementToPosition(level, fromPosition, _findDefaultPositionInRoom(targetRoom));
+  const targetWaypoint = _findPreferredWaypointInRoom(targetRoom, occupiedWaypointKeys);
+  const roomPath = _findRoomPath(level, currentRoom.id, targetRoom.id);
+  const events:ItineraryEvent[] = [];
+  let currentWaypoint = fromWaypoint;
+  let currentTime = 0;
+
+  const _findWaypointPath = (room:Room, fromWaypoint:Waypoint, toWaypoint:Waypoint):Waypoint[] => {
+    if (fromWaypoint === toWaypoint) return [fromWaypoint];
+    const pending:Waypoint[] = [fromWaypoint];
+    const previousByKey = new Map<string, Waypoint|null>([[`${fromWaypoint.position.x},${fromWaypoint.position.y}`, null]]);
+
+    while (pending.length > 0) {
+      const waypoint = pending.shift()!;
+      for (const adjacentWaypoint of waypoint.adjacentWaypoints) {
+        const key = `${adjacentWaypoint.position.x},${adjacentWaypoint.position.y}`;
+        if (previousByKey.has(key)) continue;
+        previousByKey.set(key, waypoint);
+        if (adjacentWaypoint === toWaypoint) {
+          const path = [toWaypoint];
+          let current:Waypoint|null = waypoint;
+          while (current) {
+            path.unshift(current);
+            current = previousByKey.get(`${current.position.x},${current.position.y}`) ?? null;
+          }
+          return path;
+        }
+        pending.push(adjacentWaypoint);
+      }
+    }
+
+    throw new Error(`no waypoint path found in room ${room.id}`);
+  };
+
+  for (let i = 0; i < roomPath.length - 1; ++i) {
+    const room = findRoom(level.rooms, roomPath[i]);
+    const nextRoom = findRoom(level.rooms, roomPath[i + 1]);
+    while (currentWaypoint.exitDirections[nextRoom.id]) {
+      const nextWaypoint = currentWaypoint.exitDirections[nextRoom.id]!;
+      const moveResult = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
+        nextWaypoint.position.x, nextWaypoint.position.y);
+      if (!moveResult.event || moveResult.wasClipped) throw new Error(`unable to reach exit waypoint from ${room.id} toward ${nextRoom.id}`);
+      events.push(moveResult.event);
+      currentTime = moveResult.event.startTime + moveResult.event.duration;
+      currentWaypoint = nextWaypoint;
+    }
+
+    const exit = _findConnectingExit(room, nextRoom.id);
+    const nextRoomExitWaypoint = findExitWaypoint(nextRoom.id, nextRoom.rect, exit, nextRoom.waypoints);
+    const crossRoomResult = createWalkEvent(nextRoom, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
+      nextRoomExitWaypoint.position.x, nextRoomExitWaypoint.position.y);
+    if (!crossRoomResult.event || crossRoomResult.wasClipped) throw new Error(`unable to cross exit from ${room.id} to ${nextRoom.id}`);
+    events.push(crossRoomResult.event);
+    currentTime = crossRoomResult.event.startTime + crossRoomResult.event.duration;
+    currentWaypoint = nextRoomExitWaypoint;
+    events.push(createRoomEntryEvent(currentTime, nextRoom.id));
+  }
+
+  const finalRoom = findRoom(level.rooms, targetRoomId);
+  const finalWaypointPath = _findWaypointPath(finalRoom, currentWaypoint, targetWaypoint);
+  for (let i = 1; i < finalWaypointPath.length; ++i) {
+    const nextWaypoint = finalWaypointPath[i];
+    const moveResult = createWalkEvent(finalRoom, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
+      nextWaypoint.position.x, nextWaypoint.position.y);
+    if (!moveResult.event || moveResult.wasClipped) throw new Error(`unable to follow waypoint route in room ${finalRoom.id}`);
+    events.push(moveResult.event);
+    currentTime = moveResult.event.startTime + moveResult.event.duration;
+    currentWaypoint = nextWaypoint;
+  }
+
+  return events;
 }
 
 export function planMovementToPosition(level:Level, fromPosition:Position, targetPosition:Position):ItineraryEvent[] {
