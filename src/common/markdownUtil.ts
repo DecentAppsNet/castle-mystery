@@ -21,7 +21,7 @@ type Sections = { [sectionName:string]:string };
 export type NameValues = { [name:string]:string };
 
 // E.g., "hello world" -> "helloWorld".
-export function textToCamelCase(text:string):string {
+function textToCamelCase(text:string):string {
   return text
     .split(' ')
     .filter(word => word.trim() !== '')

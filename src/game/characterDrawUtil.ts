@@ -82,7 +82,7 @@ export function findVisibleCharactersInRoom(room:Room, charactersInRoom:Characte
   });
 }
 
-export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, room:Room,
+function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, room:Room,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
@@ -121,7 +121,7 @@ function _getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFa
   return { anchorX, anchorTopY, centerX, centerY, characterWidth, characterHeight };
 }
 
-export function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFactors,
+function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, time:number, speech:string|null) {
   const { anchorX:backboneX, anchorTopY, centerX, centerY, characterWidth, characterHeight } = _getCharacterSpeechAnchor(character, scalingFactors, time);
   const headRadius = Math.min(characterWidth, characterHeight) / 4;

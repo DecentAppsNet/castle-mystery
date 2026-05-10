@@ -116,7 +116,7 @@ function _mergeBoundarySegments(segments:ObstructionBoundarySegment[]):Obstructi
   return mergedSegments;
 }
 
-export function normalizeObstructionRects(rects:Rect[]):Rect[] {
+function normalizeObstructionRects(rects:Rect[]):Rect[] {
   const normalizedRects = rects
     .filter(rect => rect.width > 0 && rect.height > 0)
     .map(rect => ({ ...rect }));
@@ -220,7 +220,7 @@ function _calcSegmentRectEntryT(from:Position, to:Position, rect:Rect):number|nu
   return entryT;
 }
 
-export function isPositionInObstruction(x:number, y:number, obstruction:Obstruction):boolean {
+function isPositionInObstruction(x:number, y:number, obstruction:Obstruction):boolean {
   return obstruction.rects.some(rect => isPositionInRect(x, y, rect));
 }
 
@@ -228,24 +228,11 @@ export function isPositionInObstructions(x:number, y:number, obstructions:Obstru
   return obstructions.some(obstruction => isPositionInObstruction(x, y, obstruction));
 }
 
-export function isPathBlockedByObstructions(from:Position, to:Position, obstructions:Obstruction[]):boolean {
-  return obstructions.some(obstruction => obstruction.rects.some(rect => {
-    const entryT = _calcSegmentRectEntryT(from, to, rect);
-    if (entryT === null) return false;
-    const sampleT = Math.min(1, Math.max(0, entryT + 0.001));
-    return isPositionInRect(
-      from.x + (to.x - from.x) * sampleT,
-      from.y + (to.y - from.y) * sampleT,
-      rect
-    );
-  }));
-}
-
 export function isPositionInRoomObstruction(room:Room, x:number, y:number):boolean {
   return room.obstructions.some(obstruction => isPositionInObstruction(x, y, obstruction));
 }
 
-export function isPositionWithinRoomObstructionMargin(room:Room, x:number, y:number, margin:number = CHARACTER_OBSTRUCTION_MARGIN):boolean {
+function isPositionWithinRoomObstructionMargin(room:Room, x:number, y:number, margin:number = CHARACTER_OBSTRUCTION_MARGIN):boolean {
   return room.obstructions.some(obstruction => obstruction.rects.some(rect => isPositionInRect(x, y, _expandRect(rect, margin))));
 }
 

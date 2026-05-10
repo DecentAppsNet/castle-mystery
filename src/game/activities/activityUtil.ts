@@ -61,30 +61,6 @@ function _findPreferredWaypointInRoom(room:Room, occupiedWaypointKeys:Set<string
   return findNearestWaypoint(room, centerX, centerY, waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
 }
 
-function _calcExitClearanceOffsets(room:Room, exit:RoomExit):[dx:number, dy:number] {
-  let dx = 0, dy = 0;
-  if (exit.x === room.rect.x) {
-    dx = -3;
-  } else if (exit.x === room.rect.x + room.rect.width) {
-    dx = 3;
-  } else if (exit.y === room.rect.y) {
-    dy = -3;
-  } else {
-    dy = 3;
-  }
-  return [dx, dy];
-}
-
-function _calcExitApproachPosition(room:Room, exit:RoomExit):Position {
-  const [dx, dy] = _calcExitClearanceOffsets(room, exit);
-  return { x:Math.round(exit.x - dx), y:Math.round(exit.y - dy) };
-}
-
-function _calcExitDestinationPosition(room:Room, exit:RoomExit):Position {
-  const [dx, dy] = _calcExitClearanceOffsets(room, exit);
-  return { x:Math.round(exit.x + dx), y:Math.round(exit.y + dy) };
-}
-
 function _findConnectingExit(room:Room, otherRoomId:string):RoomExit {
   const exit = room.exits.find(candidate => candidate.room1Id === otherRoomId || candidate.room2Id === otherRoomId);
   assertNonNullable(exit, `no exit connects ${room.id} to ${otherRoomId}`);
@@ -158,7 +134,7 @@ export function duplicateRoomItemsByRoomId(roomItemsByRoomId:Map<string, Item[]>
   return new Map(Array.from(roomItemsByRoomId.entries()).map(([roomId, items]) => [roomId, items.map(duplicateItem)]));
 }
 
-export function createCharacterSnapshot(character:Character, state:CharacterActivityState):Character {
+function createCharacterSnapshot(character:Character, state:CharacterActivityState):Character {
   return {
     ...character,
     waypoint:state.waypoint,
@@ -334,55 +310,6 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
   const finalRoom = findRoom(level.rooms, targetRoomId);
   const finalEvents = planMovementWithinRoom(finalRoom, currentWaypoint, targetWaypoint, currentTime);
   events.push(...finalEvents);
-
-  return events;
-}
-
-export function planMovementToPosition(level:Level, fromPosition:Position, targetPosition:Position):ItineraryEvent[] {
-  const targetRoom = findRoomAtPositionOrNearest(level.rooms, targetPosition.x, targetPosition.y);
-  const initialRoom = findCurrentRoom(level, fromPosition);
-  const roomPath = _findRoomPath(level, initialRoom.id, targetRoom.id);
-  const events:ItineraryEvent[] = [];
-  let currentPosition = duplicatePosition(fromPosition);
-  let currentTime = 0;
-
-  for (let i = 0; i < roomPath.length - 1; ++i) {
-    const room = findRoom(level.rooms, roomPath[i]);
-    const nextRoom = findRoom(level.rooms, roomPath[i + 1]);
-    const exit = _findConnectingExit(room, nextRoom.id);
-    const approachPosition = _calcExitApproachPosition(room, exit);
-    if (approachPosition.x !== currentPosition.x || approachPosition.y !== currentPosition.y) {
-      const approachResult = createWalkEvent(room, currentTime, currentPosition.x, currentPosition.y, approachPosition.x, approachPosition.y);
-      if (!approachResult.event || approachResult.wasClipped
-        || approachResult.event.toPosition.x !== approachPosition.x || approachResult.event.toPosition.y !== approachPosition.y) {
-        throw new Error(`unable to find unobstructed path from ${room.id} to exit for ${nextRoom.id}`);
-      }
-      events.push(approachResult.event);
-      currentTime = approachResult.event.startTime + approachResult.event.duration;
-      currentPosition = duplicatePosition(approachResult.event.toPosition);
-    }
-
-    const destinationPosition = _calcExitDestinationPosition(room, exit);
-    const destinationResult = createWalkEvent(nextRoom, currentTime, currentPosition.x, currentPosition.y, destinationPosition.x, destinationPosition.y);
-    if (!destinationResult.event || destinationResult.wasClipped
-      || destinationResult.event.toPosition.x !== destinationPosition.x || destinationResult.event.toPosition.y !== destinationPosition.y) {
-      throw new Error(`unable to cross exit from ${room.id} to ${nextRoom.id}`);
-    }
-    events.push(destinationResult.event);
-    currentTime = destinationResult.event.startTime + destinationResult.event.duration;
-    currentPosition = duplicatePosition(destinationResult.event.toPosition);
-    events.push(createRoomEntryEvent(currentTime, nextRoom.id));
-  }
-
-  if (currentPosition.x !== targetPosition.x || currentPosition.y !== targetPosition.y) {
-    const finalRoom = findRoomAtPositionOrNearest(level.rooms, currentPosition.x, currentPosition.y);
-    const finalResult = createWalkEvent(finalRoom, currentTime, currentPosition.x, currentPosition.y, targetPosition.x, targetPosition.y);
-    if (!finalResult.event || finalResult.wasClipped
-      || finalResult.event.toPosition.x !== targetPosition.x || finalResult.event.toPosition.y !== targetPosition.y) {
-      throw new Error(`unable to find unobstructed path to (${targetPosition.x}, ${targetPosition.y}) in room ${finalRoom.id}`);
-    }
-    events.push(finalResult.event);
-  }
 
   return events;
 }

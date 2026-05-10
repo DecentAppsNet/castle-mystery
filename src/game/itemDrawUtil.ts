@@ -14,7 +14,7 @@ import EffectType from "./effects/types/EffectType";
 const ITEM_GLYPH_FONT_RATIO = 0.75;
 const ITEM_LABEL_FONT_RATIO = 0.55;
 
-export type ItemDrawMetrics = {
+type ItemDrawMetrics = {
   glyphFontSize:number,
   labelFontSize:number,
   labelOffsetY:number
@@ -95,7 +95,7 @@ export function discoverVisibleItemsInRoom(room:Room, activeCharacter:Character,
   return newlyDiscoveredItems;
 }
 
-export function drawItem(item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function drawItem(item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [x, y] = gameToCanvasPosition(item.position.x, item.position.y, scalingFactors);
   drawItemAtCanvasPosition(item, x, y, calcItemDrawMetrics(scalingFactors), context);
 }

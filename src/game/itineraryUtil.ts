@@ -12,10 +12,9 @@ import Character from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
 import { calcShortestAngleDelta, interpolateAngle } from "@/common/angleUtil";
-import { randIntInRange } from "@/common/randUtil";
 import { findRoomAtPosition, findRoomNearestToPosition } from "./roomUtil";
 import ItineraryIndex from "./types/ItineraryIndex";
-import { clipMoveToObstructions, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
+import { clipMoveToObstructions } from "./obstructionUtil";
 
 const WALK_MSECS_PER_PIXEL = 30;
 export const TURN_RADIANS_PER_SECOND = Math.PI * 2;
@@ -30,25 +29,6 @@ type CharacterPose = {
 
 function _calcSpeechDuration(speech:string):number {
   return clamp(speech.length * SPEECH_MSECS_PER_CHARACTER, MIN_SPEECH_TIME, Number.POSITIVE_INFINITY);
-}
-
-const LEFT_RIGHT_MARGIN = 5;
-const TOP_MARGIN = 10;
-const BOTTOM_MARGIN = 5;
-function _getRandomPositionInRoom(room:Room):[x:number, y:number] {
-  for (let attemptNo = 0; attemptNo < 50; ++attemptNo) {
-    const x = room.rect.x + LEFT_RIGHT_MARGIN + randIntInRange(0, room.rect.width - LEFT_RIGHT_MARGIN * 2);
-    const y = room.rect.y + TOP_MARGIN + randIntInRange(0, room.rect.height - TOP_MARGIN - BOTTOM_MARGIN);
-    if (!isPositionWithinRoomObstructionMargin(room, x, y)) return [x, y];
-  }
-
-  for (let y = room.rect.y + TOP_MARGIN; y < room.rect.y + room.rect.height - BOTTOM_MARGIN; ++y) {
-    for (let x = room.rect.x + LEFT_RIGHT_MARGIN; x < room.rect.x + room.rect.width - LEFT_RIGHT_MARGIN; ++x) {
-      if (!isPositionWithinRoomObstructionMargin(room, x, y)) return [x, y];
-    }
-  }
-
-  throw new Error(`unable to find unobstructed position in room ${room.id}`);
 }
 
 function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):number {
@@ -143,43 +123,6 @@ export function createRoomEntryEvent(startTime:number, roomId:string):RoomEntryE
 
 export function findRoomAtPositionOrNearest(rooms:Room[], x:number, y:number):Room {
   return _findRoomAtPosition(rooms, x, y);
-}
-
-function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
-  const room = _findRoomAtPosition(rooms, x, y);
-  for (let attemptNo = 0; attemptNo < 50; ++attemptNo) {
-    let toX:number, toY:number;
-    do {
-      [toX, toY] = _getRandomPositionInRoom(room);
-    } while (toX === x && toY === y);
-    const result = _createWalkEvent(room, startTime, x, y, toX, toY);
-    if (result.event) return result.event;
-  }
-
-  throw new Error(`unable to create unobstructed in-room walk from (${x}, ${y})`);
-}
-
-export function createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
-  return _createInRoomRandomWalkEvent(rooms, x, y, startTime);
-}
-
-function _getEventDuration(event:ItineraryEvent):number {
-  switch(event.type) {
-    case ItineraryEventType.WALK: return (event as WalkEvent).duration;
-    case ItineraryEventType.ROOM_ENTRY: return 0;
-    case ItineraryEventType.SPEECH: return (event as SpeechEvent).duration;
-    case ItineraryEventType.FACING: return 0;
-    case ItineraryEventType.TAKE_ITEM:
-    case ItineraryEventType.DROP_ITEM:
-    case ItineraryEventType.GIVE_ITEM:
-      return 0;
-    default:
-      assert(false, `unsupported itinerary event type ${(event as ItineraryEvent).type}`);
-  }
-}
-
-export function getEventDuration(event:ItineraryEvent):number {
-  return _getEventDuration(event);
 }
 
 function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position):Position {
@@ -317,8 +260,4 @@ export function findNextRoomEntryTime(character:Character, time:number):number|n
 
 export function findPreviousRoomEntryTime(character:Character, time:number):number|null {
   return _findPreviousValue(character.itineraryIndex.roomEntryStartTimes, time);
-}
-
-export function findCharacterPosition(character:Character, time:number):Position {
-  return findCharacterPose(character, time).position;
 }

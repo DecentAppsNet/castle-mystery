@@ -11,7 +11,7 @@ import RoomExit from "./types/RoomExit";
 import ScalingFactors from "./types/ScalingFactors";
 import Effect from "./effects/types/Effect";
 
-export function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const { roomLineWidth } = scalingFactors;
   const [exitX, exitY] = gameToCanvasPosition(exit.x, exit.y, scalingFactors);
   const left = exitX - roomLineWidth;
@@ -23,7 +23,7 @@ export function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, conte
   context.fillRect(left, top, width, height);
 }
 
-export function drawObstruction(obstruction:Obstruction, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function drawObstruction(obstruction:Obstruction, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const obstructionRects = obstruction.rects.map(rect => {
     const [left, top] = gameToCanvasPosition(rect.x, rect.y, scalingFactors);
     const [right, bottom] = gameToCanvasPosition(rect.x + rect.width, rect.y + rect.height, scalingFactors);

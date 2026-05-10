@@ -8,7 +8,7 @@ import Effect from "./types/Effect";
 import ItemDiscoveryEffect from "./types/ItemDiscoveryEffect";
 import EffectType from "./types/EffectType";
 
-export const ITEM_DISCOVERY_EFFECT_DURATION = 700;
+const ITEM_DISCOVERY_EFFECT_DURATION = 700;
 
 function _drawDiscoveryRing(context:CanvasRenderingContext2D, itemDiscoveryEffect:ItemDiscoveryEffect, radius:number, alpha:number) {
   context.save();
