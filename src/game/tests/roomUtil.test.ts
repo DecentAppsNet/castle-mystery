@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createObstruction, isPositionInObstructions } from '../obstructionUtil';
-import { findCharactersInRoom, findExitWaypoint, findRoom, findRoomAtPosition, findRoomNearestToPosition, generateWaypoints } from '../roomUtil';
+import { calcRoomsBoundingRect, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomNearestToPosition, generateWaypoints } from '../roomUtil';
 import Obstruction from '../types/Obstruction';
 import Character from '../types/Character';
 import Rect from '../types/Rect';
@@ -42,6 +42,10 @@ function _createCharacter(id:string, x:number, y:number):Character {
     itinerary:[],
     itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
   };
+}
+
+function _createWaypoint(x:number, y:number):Waypoint {
+  return { position:{ x, y }, adjacentWaypoints:[], exitDirections:{} };
 }
 
 function _createWaypointKey(waypoint:Waypoint):string {
@@ -110,6 +114,12 @@ describe('roomUtil', () => {
 
       expect(() => findExitWaypoint(ROOM_ID, ROOM_RECT, exit, [])).toThrow(/missing exit waypoint/i);
     });
+
+    it('throws when the exit is not on the room boundary', () => {
+      const invalidExit = _createExit('North', 10, 10);
+
+      expect(() => findExitWaypoint(ROOM_ID, ROOM_RECT, invalidExit, [])).toThrow(/not on the boundary/i);
+    });
   });
 
   describe('findRoomAtPosition()', () => {
@@ -138,6 +148,12 @@ describe('roomUtil', () => {
     it('throws when called with no rooms', () => {
       expect(() => findRoomNearestToPosition([], 0, 0)).toThrow(/at least one room/i);
     });
+
+    it('returns the only room in a non-empty collection', () => {
+      const hall = _createRoom('Hall', { x:50, y:50, width:20, height:20 });
+
+      expect(findRoomNearestToPosition([hall], -100, -100)).toBe(hall);
+    });
   });
 
   describe('findCharactersInRoom()', () => {
@@ -155,6 +171,46 @@ describe('roomUtil', () => {
       const guard = _createCharacter('Guard', 25, 25);
 
       expect(findCharactersInRoom(hall, [guard])).toEqual([]);
+    });
+  });
+
+  describe('calcRoomsBoundingRect()', () => {
+    it('returns a rect that covers all provided rooms', () => {
+      const rooms = [
+        _createRoom('Hall', { x:10, y:20, width:30, height:40 }),
+        _createRoom('Library', { x:-5, y:25, width:10, height:10 }),
+        _createRoom('Kitchen', { x:20, y:-10, width:15, height:15 })
+      ];
+
+      expect(calcRoomsBoundingRect(rooms)).toEqual({ x:-5, y:-10, width:45, height:70 });
+    });
+
+    it('throws when called with no rooms', () => {
+      expect(() => calcRoomsBoundingRect([])).toThrow(/cannot calculate room bounds with no rooms/i);
+    });
+  });
+
+  describe('findNearestWaypoint()', () => {
+    it('returns the nearest waypoint in the room', () => {
+      const waypoints = [_createWaypoint(5, 5), _createWaypoint(15, 15), _createWaypoint(30, 5)];
+      const room = _createRoom('Hall', { x:0, y:0, width:40, height:20 }, [], waypoints);
+
+      expect(findNearestWaypoint(room, 16, 14)).toBe(waypoints[1]);
+    });
+
+    it('returns the nearest waypoint matching the predicate', () => {
+      const waypoints = [_createWaypoint(5, 5), _createWaypoint(15, 15), _createWaypoint(30, 5)];
+      const room = _createRoom('Hall', { x:0, y:0, width:40, height:20 }, [], waypoints);
+
+      expect(findNearestWaypoint(room, 16, 14, waypoint => waypoint.position.y < 10)).toBe(waypoints[0]);
+    });
+
+    it('throws when the room has no waypoint matching the request', () => {
+      const room = _createRoom('Hall', ROOM_RECT, [], []);
+
+      expect(() => findNearestWaypoint(room, 5, 5)).toThrow(/unable to find waypoint in room Hall/i);
+      expect(() => findNearestWaypoint(_createRoom('Hall', ROOM_RECT, [], [_createWaypoint(5, 5)]), 5, 5, () => false))
+        .toThrow(/unable to find waypoint in room Hall/i);
     });
   });
 
@@ -202,6 +258,26 @@ describe('roomUtil', () => {
       });
     });
 
+    it('creates exit routes when the room id is the second side of an exit', () => {
+      const exits:RoomExit[] = [{ room1Id:'North', room2Id:ROOM_ID, x:10, y:0 }];
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, []);
+      const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exits[0], waypoints);
+
+      waypoints
+        .filter(waypoint => waypoint !== exitWaypoint)
+        .forEach(waypoint => _assertExitRouteTerminates(exitWaypoint, waypoint, 'North'));
+    });
+
+    it('reuses an existing waypoint when exit alignment already creates the same position', () => {
+      const exits = [
+        _createExit('North', 5, 0),
+        _createExit('West', 0, 10)
+      ];
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, []);
+
+      expect(waypoints.filter(waypoint => waypoint.position.x === 5 && waypoint.position.y === 10)).toHaveLength(1);
+    });
+
     it('throws when an exit waypoint is not reachable from any other waypoint', () => {
       const exits = [_createExit('West', 0, 10)];
       const obstructions:Obstruction[] = [
@@ -210,6 +286,19 @@ describe('roomUtil', () => {
       ];
 
       expect(() => generateWaypoints(ROOM_ID, ROOM_RECT, exits, obstructions)).toThrow(/has no connected waypoint/i);
+    });
+
+    it('throws when an exit waypoint would be obstructed', () => {
+      const exits = [_createExit('West', 0, 10)];
+      const obstructions:Obstruction[] = [createObstruction([{ x:4, y:9, width:3, height:3 }])];
+
+      expect(() => generateWaypoints(ROOM_ID, ROOM_RECT, exits, obstructions)).toThrow(/is obstructed/i);
+    });
+
+    it('throws when a room has no connected waypoints after obstruction filtering', () => {
+      const obstructions:Obstruction[] = [createObstruction([{ x:0, y:0, width:20, height:20 }])];
+
+      expect(() => generateWaypoints(ROOM_ID, ROOM_RECT, [], obstructions)).toThrow(/has no connected waypoints/i);
     });
   });
 });

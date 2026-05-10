@@ -53,3 +53,11 @@ Guidelines:
 * Don't keep unused functions in the code.
 * Functions should only be exported if used outside the module they are declared in.
 * Private, unexported functions are prefixed with `_`.
+
+## Achieving Code Coverage
+
+* Coverage should be improved with contract-based tests rather than tests written around implementation branches.
+* If uncovered code has no good contract-based path in expected use, treat that as a design smell and consider simplifying or refactoring the code.
+* If uncovered code only guards an expected condition that should always be true in normal use, prefer replacing it with an assertion.
+* Remove code that is not needed for expected use.
+* If useful guard code is impractical to reach with a valuable contract-based test, add an ignore-next coverage comment and follow it with an explanation of why the code is being excluded.
