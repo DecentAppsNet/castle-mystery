@@ -36,6 +36,72 @@ function _findExitWaypointPosition(roomId:string, roomRect:Rect, exit:RoomExit):
   throw new Error(`exit at (${exit.x}, ${exit.y}) is not on the boundary of room ${roomId}`);
 }
 
+export function findExitWaypoint(roomId:string, roomRect:Rect, exit:RoomExit, waypoints:Waypoint[]):Waypoint {
+  const position = _findExitWaypointPosition(roomId, roomRect, exit);
+  const waypoint = waypoints.find(candidate => candidate.position.x === position.x && candidate.position.y === position.y);
+  if (!waypoint) throw new Error(`missing exit waypoint for room ${roomId} at (${position.x}, ${position.y})`);
+  return waypoint;
+}
+
+export function findRoom(rooms:Room[], roomId:string):Room {
+  const room = rooms.find((r) => r.id === roomId);
+  if (!room) throw new Error(`room with id ${roomId} not found`);
+  return room;
+}
+
+export function findRoomAtPosition(rooms:Room[], x:number, y:number):Room | null {
+  return rooms.find((r) => isPositionInRect(x, y, r.rect)) || null;
+}
+
+export function findRoomNearestToPosition(rooms:Room[], x:number, y:number):Room {
+  if (!rooms.length) throw new Error('there should be at least one room in the level');
+  let nearestRoom:Room|null = null;
+  let nearestDistanceSquared = Infinity;
+  for (const room of rooms) {
+    const centerX = room.rect.x + room.rect.width / 2;
+    const centerY = room.rect.y + room.rect.height / 2;
+    const distanceSquared = (centerX - x) ** 2 + (centerY - y) ** 2;
+    if (distanceSquared < nearestDistanceSquared) {
+      nearestRoom = room;
+      nearestDistanceSquared = distanceSquared;
+    }
+  }
+  if (!nearestRoom) throw new Error(`unable to find nearest room for (${x}, ${y})`);
+  return nearestRoom;
+}
+
+export function findCharactersInRoom(room:Room, characters:Character[]):Character[] {
+  return characters.filter(character => isPositionInRect(character.x, character.y, room.rect));
+}
+
+export function calcRoomsBoundingRect(rooms:Room[]):Rect {
+  if (!rooms.length) throw new Error('cannot calculate room bounds with no rooms');
+  let leftX = rooms[0].rect.x, rightX = leftX + rooms[0].rect.width,
+      topY = rooms[0].rect.y, bottomY = topY + rooms[0].rect.height;
+  for (let i = 1; i < rooms.length; i++) {
+    const room = rooms[i];
+    leftX = Math.min(leftX, room.rect.x);
+    rightX = Math.max(rightX, room.rect.x + room.rect.width);
+    topY = Math.min(topY, room.rect.y);
+    bottomY = Math.max(bottomY, room.rect.y + room.rect.height);
+  }
+  return {x:leftX, y:topY, width:rightX - leftX, height:bottomY - topY};
+}
+
+export function findNearestWaypoint(room:Room, x:number, y:number, predicate?:(waypoint:Waypoint) => boolean):Waypoint {
+  let nearestWaypoint:Waypoint|null = null;
+  let nearestDistanceSquared = Infinity;
+  room.waypoints.forEach(waypoint => {
+    if (predicate && !predicate(waypoint)) return;
+    const distanceSquared = (waypoint.position.x - x) ** 2 + (waypoint.position.y - y) ** 2;
+    if (distanceSquared >= nearestDistanceSquared) return;
+    nearestWaypoint = waypoint;
+    nearestDistanceSquared = distanceSquared;
+  });
+  if (!nearestWaypoint) throw new Error(`unable to find waypoint in room ${room.id}`);
+  return nearestWaypoint;
+}
+
 function _connectAdjacentWaypoints(waypoints:Waypoint[], obstructions:Obstruction[]) {
   const maxAdjacentDistance = Math.hypot(WAYPOINT_SPACING, WAYPOINT_SPACING);
   const roomForConnectivity:Room = {
@@ -89,8 +155,8 @@ function _ensureExitWaypointsAreConnected(roomId:string, roomRect:Rect, exits:Ro
       nearestDistance = distance;
     });
 
-    const connectedWaypoint = nearestReachableWaypoint;
-    if (!connectedWaypoint) return;
+    if (nearestReachableWaypoint === null) return;
+    const connectedWaypoint:Waypoint = nearestReachableWaypoint;
     exitWaypoint.adjacentWaypoints.push(connectedWaypoint);
     connectedWaypoint.adjacentWaypoints.push(exitWaypoint);
   });
@@ -107,65 +173,7 @@ function _pruneIsolatedNonExitWaypoints(roomId:string, roomRect:Rect, exits:Room
   return remainingWaypoints;
 }
 
-export function findRoom(rooms:Room[], roomId:string):Room {
-  const room = rooms.find((r) => r.id === roomId);
-  if (!room) throw new Error(`room with id ${roomId} not found`);
-  return room;
-}
 
-export function findRoomAtPosition(rooms:Room[], x:number, y:number):Room | null {
-  return rooms.find((r) => isPositionInRect(x, y, r.rect)) || null;
-}
-
-export function findRoomNearestToPosition(rooms:Room[], x:number, y:number):Room {
-  if (!rooms.length) throw new Error('there should be at least one room in the level');
-  let nearestRoom:Room|null = null;
-  let nearestDistanceSquared = Infinity;
-  for (const room of rooms) {
-    const centerX = room.rect.x + room.rect.width / 2;
-    const centerY = room.rect.y + room.rect.height / 2;
-    const distanceSquared = (centerX - x) ** 2 + (centerY - y) ** 2;
-    if (distanceSquared < nearestDistanceSquared) {
-      nearestRoom = room;
-      nearestDistanceSquared = distanceSquared;
-    }
-  }
-  if (!nearestRoom) throw new Error(`unable to find nearest room for (${x}, ${y})`);
-  return nearestRoom;
-}
-
-export function findCharactersInRoom(room:Room, characters:Character[]):Character[] {
-  return characters.filter(character => isPositionInRect(character.x, character.y, room.rect));
-}
-
-export function calcRoomsBoundingRect(rooms:Room[]):Rect {
-  if (!rooms.length) throw new Error('cannot calculate room bounds with no rooms');
-  let leftX = rooms[0].rect.x, rightX = leftX + rooms[0].rect.width,
-      topY = rooms[0].rect.y, bottomY = topY + rooms[0].rect.height;
-  for (let i = 1; i < rooms.length; i++) {
-    const room = rooms[i];
-    leftX = Math.min(leftX, room.rect.x);
-    rightX = Math.max(rightX, room.rect.x + room.rect.width);
-    topY = Math.min(topY, room.rect.y);
-    bottomY = Math.max(bottomY, room.rect.y + room.rect.height);
-  }
-  return {x:leftX, y:topY, width:rightX - leftX, height:bottomY - topY};
-}
-
-/*
-Algorithm for generating waypoints:
-
-Create a grid of waypoints that is evenly spaced to cover a room rectangle. Each waypoint will have 
-connections to adjacent waypoints and exits. "Adjacent" in this case means the distance to the 
-waypoint or exit is not larger than the hypotenuse of spacing size. (Another way of saying that
-from each waypoint it will be possible to travel to closest orthogonal and diagonal neighbors.)
-
-Remove any waypoint that is inside of an obstruction, removing also any adjacentWaypoints that point to this waypoint.
-
-For every remaining waypoint, test that a path is traversible to all .adjacentWaypoints and .adjacentExits without being blocked by an obstruction.
-
-If any room exits are without a connected waypoint, throw an exception.
-*/
 function _populateExitDirectionsForRoom(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[]) {
   exits.forEach(exit => {
     const adjacentRoomId = _findAdjacentRoomId(roomId, exit);
@@ -186,27 +194,6 @@ function _populateExitDirectionsForRoom(roomId:string, roomRect:Rect, exits:Room
       });
     }
   });
-}
-
-export function findExitWaypoint(roomId:string, roomRect:Rect, exit:RoomExit, waypoints:Waypoint[]):Waypoint {
-  const position = _findExitWaypointPosition(roomId, roomRect, exit);
-  const waypoint = waypoints.find(candidate => candidate.position.x === position.x && candidate.position.y === position.y);
-  if (!waypoint) throw new Error(`missing exit waypoint for room ${roomId} at (${position.x}, ${position.y})`);
-  return waypoint;
-}
-
-export function findNearestWaypoint(room:Room, x:number, y:number, predicate?:(waypoint:Waypoint) => boolean):Waypoint {
-  let nearestWaypoint:Waypoint|null = null;
-  let nearestDistanceSquared = Infinity;
-  room.waypoints.forEach(waypoint => {
-    if (predicate && !predicate(waypoint)) return;
-    const distanceSquared = (waypoint.position.x - x) ** 2 + (waypoint.position.y - y) ** 2;
-    if (distanceSquared >= nearestDistanceSquared) return;
-    nearestWaypoint = waypoint;
-    nearestDistanceSquared = distanceSquared;
-  });
-  if (!nearestWaypoint) throw new Error(`unable to find waypoint in room ${room.id}`);
-  return nearestWaypoint;
 }
 
 export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[], obstructions:Obstruction[]):Waypoint[] {

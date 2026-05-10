@@ -45,3 +45,11 @@ Guidelines:
 * Run the full test suite with `npm test`.
 * Run tests in watch mode with `npm run test:watch`.
 * Run coverage with `npm run test:coverage`.
+
+## Function Organization
+
+* Function definitions should be sequenced in call order so that if function A calls function B, function B appears earlier in the file than function A.
+* If that ordering is impossible because of cyclical calls, the functions should be refactored to remove the cycle. Self-recursive functions are allowed.
+* Don't keep unused functions in the code.
+* Functions should only be exported if used outside the module they are declared in.
+* Private, unexported functions are prefixed with `_`.
