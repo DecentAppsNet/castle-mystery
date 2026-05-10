@@ -9,6 +9,11 @@ import wanderingThroneRoomText from './fixtures/wandering-throne-room.md?raw';
 import wanderingTrappedText from './fixtures/wandering-trapped.md?raw';
 import wanderingUnclaimedText from './fixtures/wandering-unclaimed.md?raw';
 
+function _findWalkEvents(levelText:string, characterId:string) {
+  const character = _findLoadedCharacter(levelText, characterId);
+  return character.itinerary.filter(event => event.type === 'Walk');
+}
+
 function _createPositionSnapshot(levelText:string, time:number, characterId:string) {
   const level = loadLevelFromText(levelText);
   const gameState = createGameStateFromLevel({ ...level, startTime:time });
@@ -33,8 +38,7 @@ describe('wandering integration', () => {
   });
 
   it('character moves from initial waypoint for a wander activity', () => {
-    const hero = _findLoadedCharacter(wanderingSingleText, 'Hero');
-    const wanderEvent = hero.itinerary[0];
+    const [wanderEvent] = _findWalkEvents(wanderingSingleText, 'Hero');
     const initialPosition = _createPositionSnapshot(wanderingSingleText, 0, 'Hero');
     const endPosition = _createPositionSnapshot(wanderingSingleText, wanderEvent.startTime + wanderEvent.duration, 'Hero');
 
@@ -44,8 +48,7 @@ describe('wandering integration', () => {
   it('character can wander in the throne-room layout from kingacide', () => {
     expect(() => loadLevelFromText(wanderingThroneRoomText)).not.toThrow();
 
-    const king = _findLoadedCharacter(wanderingThroneRoomText, 'King');
-    const wanderEvent = king.itinerary[0];
+    const [wanderEvent] = _findWalkEvents(wanderingThroneRoomText, 'King');
     const initialPosition = _createPositionSnapshot(wanderingThroneRoomText, 0, 'King');
     const endPosition = _createPositionSnapshot(wanderingThroneRoomText, wanderEvent.startTime + wanderEvent.duration, 'King');
 
@@ -53,11 +56,10 @@ describe('wandering integration', () => {
   });
 
   it('character moves two times for two wander activities', () => {
-    const hero = _findLoadedCharacter(wanderingDoubleText, 'Hero');
-    expect(hero.itinerary).toHaveLength(2);
+    const walkEvents = _findWalkEvents(wanderingDoubleText, 'Hero');
+    expect(walkEvents).toHaveLength(2);
 
-    const firstEvent = hero.itinerary[0];
-    const secondEvent = hero.itinerary[1];
+    const [firstEvent, secondEvent] = walkEvents;
     const initialPosition = _createPositionSnapshot(wanderingDoubleText, 0, 'Hero');
     const firstEndPosition = _createPositionSnapshot(wanderingDoubleText, firstEvent.startTime + firstEvent.duration, 'Hero');
     const secondEndPosition = _createPositionSnapshot(wanderingDoubleText, secondEvent.startTime + secondEvent.duration, 'Hero');
@@ -67,8 +69,7 @@ describe('wandering integration', () => {
   });
 
   it('character moves to an unclaimed waypoint for a wander activity', () => {
-    const hero = _findLoadedCharacter(wanderingUnclaimedText, 'Hero');
-    const wanderEvent = hero.itinerary[0];
+    const [wanderEvent] = _findWalkEvents(wanderingUnclaimedText, 'Hero');
     const heroInitialPosition = _createPositionSnapshot(wanderingUnclaimedText, 0, 'Hero');
     const guardPositionAtWanderStart = _createPositionSnapshot(wanderingUnclaimedText, wanderEvent.startTime, 'Guard');
     const heroEndPosition = _createPositionSnapshot(wanderingUnclaimedText, wanderEvent.startTime + wanderEvent.duration, 'Hero');

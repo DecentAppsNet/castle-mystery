@@ -1,5 +1,5 @@
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import { ActivityContext, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime } from "./activityUtil";
+import { ActivityContext, addFacingEventsForWalks, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime } from "./activityUtil";
 
 export function tryCreateAtActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   const trimmedActivityText = activityText.trim();
@@ -14,5 +14,6 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
     .filter(([, state]) => findCurrentRoom(context.level, state.waypoint.position).id === targetRoomId)
     .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y}`));
   const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys);
-  return scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, context.state.time);
+  return addFacingEventsForWalks(context.character, context.state,
+    scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, context.state.time));
 }

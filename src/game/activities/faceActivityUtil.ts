@@ -3,6 +3,7 @@ import {
   ActivityContext,
   createFacingEventForTarget,
   ensureTimestampIsAvailable,
+  findStatePoseAtTime,
   findTargetPositionAtTime,
   stripTrailingPeriod
 } from "./activityUtil";
@@ -24,5 +25,6 @@ export function tryCreateFaceActivity(activityText:string, context:ActivityConte
     context.poseOverridesByCharacterId
   );
   if (!targetPosition) throw new Error(`unable to resolve face target '${targetId}'`);
-  return [createFacingEventForTarget(context.timestamp, context.state.position, targetPosition)];
+  const actorPose = findStatePoseAtTime(context.character, context.state, context.timestamp);
+  return [createFacingEventForTarget(context.timestamp, actorPose.facingAngle, actorPose.position, targetPosition)];
 }

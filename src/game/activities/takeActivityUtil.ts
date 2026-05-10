@@ -2,7 +2,7 @@ import { assertNonNullable } from "decent-portal";
 
 import { createTakeItemEvent } from "../itineraryUtil";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import { ActivityContext, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToEndAtTime, stripTrailingPeriod } from "./activityUtil";
+import { ActivityContext, addFacingEventsForWalks, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToEndAtTime, stripTrailingPeriod } from "./activityUtil";
 import { findNearestWaypoint } from "../roomUtil";
 
 const TAKE_ITEM_NEARBY_DISTANCE = 8;
@@ -39,7 +39,8 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
     findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
   })();
-  const movementEvents = scheduleEventsToEndAtTime(unscheduledMovementEvents, context.timestamp, context.state.time);
+  const movementEvents = addFacingEventsForWalks(context.character, context.state,
+    scheduleEventsToEndAtTime(unscheduledMovementEvents, context.timestamp, context.state.time));
   const roomItems = context.roomItemsByRoomId.get(itemLocation.room.id);
   assertNonNullable(roomItems, `missing room items for ${itemLocation.room.id}`);
   const itemIndex = roomItems.findIndex(item => item.id === itemLocation.item.id);

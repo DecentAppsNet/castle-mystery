@@ -17,6 +17,7 @@ import ItineraryIndex from "./types/ItineraryIndex";
 import { clipMoveToObstructions, isPositionWithinRoomObstructionMargin } from "./obstructionUtil";
 
 const WALK_MSECS_PER_PIXEL = 30;
+export const TURN_RADIANS_PER_SECOND = Math.PI * 2;
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
 const SPEECH_MSECS_PER_CHARACTER = 90;
 
@@ -58,6 +59,26 @@ function _calcFacingAngle(fromX:number, fromY:number, toX:number, toY:number):nu
   return Math.atan2(toY - fromY, toX - fromX);
 }
 
+function _normalizeAngle(angle:number):number {
+  while (angle <= -Math.PI) angle += Math.PI * 2;
+  while (angle > Math.PI) angle -= Math.PI * 2;
+  return angle;
+}
+
+function _calcShortestAngleDelta(fromAngle:number, toAngle:number):number {
+  return _normalizeAngle(toAngle - fromAngle);
+}
+
+function _calcFacingDuration(fromFacingAngle:number, toFacingAngle:number):number {
+  const angleDistance = Math.abs(_calcShortestAngleDelta(fromFacingAngle, toFacingAngle));
+  if (angleDistance === 0) return 0;
+  return Math.ceil((angleDistance / TURN_RADIANS_PER_SECOND) * MSECS_IN_SECOND);
+}
+
+function _interpolateAngle(fromAngle:number, toAngle:number, interpolateAmount:number):number {
+  return _normalizeAngle(fromAngle + _calcShortestAngleDelta(fromAngle, toAngle) * interpolateAmount);
+}
+
 export type WalkEventCreationResult = {
   event:WalkEvent|null,
   wasClipped:boolean
@@ -74,7 +95,6 @@ function _createWalkEvent(room:Room, startTime:number, fromX:number, fromY:numbe
       startTime,
       fromPosition:{x:fromX, y:fromY},
       toPosition:finalToPosition,
-      facingAngle:_calcFacingAngle(fromX, fromY, finalToPosition.x, finalToPosition.y),
       duration
     },
     wasClipped:clippedMove.wasClipped
@@ -91,11 +111,12 @@ function _createSpeechEvent(startTime:number, speech:string, facingAngle:number)
   };
 }
 
-function _createFacingEvent(startTime:number, facingAngle:number):FacingEvent {
+function _createFacingEvent(startTime:number, fromFacingAngle:number, facingAngle:number):FacingEvent {
   return {
     type:ItineraryEventType.FACING,
     startTime,
-    duration:0,
+    duration:_calcFacingDuration(fromFacingAngle, facingAngle),
+    fromFacingAngle,
     facingAngle
   };
 }
@@ -129,8 +150,8 @@ export function createSpeechEvent(startTime:number, speech:string, facingAngle:n
   return _createSpeechEvent(startTime, speech, facingAngle);
 }
 
-export function createFacingEvent(startTime:number, facingAngle:number):FacingEvent {
-  return _createFacingEvent(startTime, facingAngle);
+export function createFacingEvent(startTime:number, fromFacingAngle:number, facingAngle:number):FacingEvent {
+  return _createFacingEvent(startTime, fromFacingAngle, facingAngle);
 }
 
 export function createTakeItemEvent(startTime:number, itemId:string):TakeItemEvent {
@@ -161,23 +182,6 @@ function _createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTim
 
 export function createInRoomRandomWalkEvent(rooms:Room[], x:number, y:number, startTime:number):WalkEvent {
   return _createInRoomRandomWalkEvent(rooms, x, y, startTime);
-}
-
-function _findEventNoForTime(itineraryIndex:ItineraryIndex, time:number):number {
-  const { eventStartTimes } = itineraryIndex;
-  assert(eventStartTimes.length > 0);
-  let low = 0;
-  let high = eventStartTimes.length - 1;
-  const clampedTime = Math.max(0, time);
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2);
-    if (eventStartTimes[mid] <= clampedTime) {
-      low = mid + 1;
-    } else {
-      high = mid - 1;
-    }
-  }
-  return Math.max(0, high);
 }
 
 function _getEventDuration(event:ItineraryEvent):number {
@@ -215,20 +219,6 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
   }
 }
 
-function _findFacingAngleAtEventStart(itinerary:ItineraryEvent[], eventNo:number):number {
-  for (let i = eventNo; i >= 0; --i) {
-    const event = itinerary[i];
-    assertNonNullable(event);
-    switch(event.type) {
-      case ItineraryEventType.WALK: return (event as WalkEvent).facingAngle;
-      case ItineraryEventType.SPEECH: return (event as SpeechEvent).facingAngle;
-      case ItineraryEventType.FACING: return (event as FacingEvent).facingAngle;
-      default: continue;
-    }
-  }
-  return 0;
-}
-
 function _interpolatePosition(fromPosition:Position, toPosition:Position, interpolateAmount:number):Position {
   assert(interpolateAmount >= 0);
   assert(interpolateAmount <= 2);
@@ -247,62 +237,59 @@ export function findCharacterPose(character:Character, time:number):CharacterPos
       speech:null
     };
   }
-  return _findItineraryPosition(character.itinerary, time, character.itineraryIndex);
+  return _findItineraryPosition(character, time);
 }
 
-export function _findItineraryPosition(itinerary:ItineraryEvent[], time:number, itineraryIndex:ItineraryIndex):CharacterPose {
-  const eventNo = _findEventNoForTime(itineraryIndex, time);
-  const event = itinerary[eventNo];
-  const eventStartPosition = itineraryIndex.eventStartPositions[eventNo];
-  assertNonNullable(event);
-  assertNonNullable(eventStartPosition);
-
-  switch(event.type) {
-    case ItineraryEventType.WALK:
-      {
-        const walkEvent = event as WalkEvent;
-        const elapsedFactor = clamp((time - walkEvent.startTime) / walkEvent.duration, 0, 1);
-        return {
-          position:_interpolatePosition(walkEvent.fromPosition, walkEvent.toPosition, elapsedFactor),
-          facingAngle:walkEvent.facingAngle,
-          speech:null
-        };
-      }
-
-    case ItineraryEventType.SPEECH:
-      {
-        const speechEvent = event as SpeechEvent;
-      return {
-        position:duplicatePosition(eventStartPosition),
-        facingAngle:speechEvent.facingAngle,
-        speech:time < speechEvent.startTime + speechEvent.duration ? speechEvent.speech : null
-      };
-      }
-
-    case ItineraryEventType.FACING:
-      {
-        const facingEvent = event as FacingEvent;
-        return {
-          position:duplicatePosition(eventStartPosition),
-          facingAngle:facingEvent.facingAngle,
-          speech:null
-        };
-      }
-
-
-    case ItineraryEventType.ROOM_ENTRY:
-    case ItineraryEventType.TAKE_ITEM:
-    case ItineraryEventType.DROP_ITEM:
-    case ItineraryEventType.GIVE_ITEM:
-      return {
-        position:duplicatePosition(eventStartPosition),
-        facingAngle:_findFacingAngleAtEventStart(itinerary, eventNo),
-        speech:null
-      };
-
-    default:
-      assert(false, `unsupported itinerary event type ${(event as ItineraryEvent).type}`);
+function _findPositionAtTime(initialPosition:Position, itinerary:ItineraryEvent[], time:number):Position {
+  let currentPosition = duplicatePosition(initialPosition);
+  for (const event of itinerary) {
+    if (event.type !== ItineraryEventType.WALK) continue;
+    const walkEvent = event as WalkEvent;
+    if (time < walkEvent.startTime) break;
+    const endTime = walkEvent.startTime + walkEvent.duration;
+    if (time < endTime) {
+      const elapsedFactor = clamp((time - walkEvent.startTime) / walkEvent.duration, 0, 1);
+      return _interpolatePosition(walkEvent.fromPosition, walkEvent.toPosition, elapsedFactor);
+    }
+    currentPosition = duplicatePosition(walkEvent.toPosition);
   }
+  return currentPosition;
+}
+
+function _findFacingAngleAtTime(initialFacingAngle:number, itinerary:ItineraryEvent[], time:number):number {
+  let currentFacingAngle = initialFacingAngle;
+  for (const event of itinerary) {
+    if (event.type !== ItineraryEventType.FACING) continue;
+    if (event.startTime > time) break;
+    const facingEvent = event as FacingEvent;
+    const endTime = facingEvent.startTime + facingEvent.duration;
+    if (time < endTime && facingEvent.duration > 0) {
+      const elapsedFactor = clamp((time - facingEvent.startTime) / facingEvent.duration, 0, 1);
+      currentFacingAngle = _interpolateAngle(facingEvent.fromFacingAngle, facingEvent.facingAngle, elapsedFactor);
+      continue;
+    }
+    currentFacingAngle = facingEvent.facingAngle;
+  }
+  return currentFacingAngle;
+}
+
+function _findSpeechAtTime(itinerary:ItineraryEvent[], time:number):string|null {
+  let currentSpeech:string|null = null;
+  for (const event of itinerary) {
+    if (event.startTime > time) break;
+    if (event.type !== ItineraryEventType.SPEECH) continue;
+    const speechEvent = event as SpeechEvent;
+    currentSpeech = time < speechEvent.startTime + speechEvent.duration ? speechEvent.speech : null;
+  }
+  return currentSpeech;
+}
+
+function _findItineraryPosition(character:Character, time:number):CharacterPose {
+  return {
+    position:_findPositionAtTime({ x:character.x, y:character.y }, character.itinerary, time),
+    facingAngle:_findFacingAngleAtTime(character.facingAngle, character.itinerary, time),
+    speech:_findSpeechAtTime(character.itinerary, time)
+  };
 }
 
 export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:Position):ItineraryIndex {
