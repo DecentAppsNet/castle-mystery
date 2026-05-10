@@ -60,4 +60,9 @@ Guidelines:
 * If uncovered code has no good contract-based path in expected use, treat that as a design smell and consider simplifying or refactoring the code.
 * If uncovered code only guards an expected condition that should always be true in normal use, prefer replacing it with an assertion.
 * Remove code that is not needed for expected use.
-* If useful guard code is impractical to reach with a valuable contract-based test, add an ignore-next coverage comment and follow it with an explanation of why the code is being excluded.
+* Some code is low value for inclusion in unit and integration tests. In this project, that generally includes `.tsx` files and modules whose main purpose is drawing or rendering.
+* Low-value files may be excluded from coverage either with an in-source coverage ignore comment or with project-level coverage configuration. Prefer project configuration when excluding a broad category such as all `.tsx` files.
+* For file-level exclusion with Vitest's V8 coverage, place a comment such as `/* v8 ignore file -- @preserve */` at the top of the file.
+* For smaller in-file exclusions with Vitest's V8 coverage, use comments such as `/* v8 ignore next -- @preserve */` or a `/* v8 ignore start -- @preserve */` / `/* v8 ignore stop -- @preserve */` pair.
+* When using an in-source coverage ignore comment, add a short explanation of why the code is being excluded.
+* If logic can be refactored out of a low-value file into a testable module without making the original file harder to understand, do that. The low-value file can then remain excluded from coverage, while the extracted logic should still be covered by tests.

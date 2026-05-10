@@ -22,7 +22,13 @@ export default defineConfig(({mode}) => {
     },
     test: {
       environment: 'node',
-      globals: true
+      globals: true,
+      coverage: {
+        exclude: [
+          '**/*.tsx',
+          '**/interactions/**'
+        ]
+      }
     }
   };
 });
