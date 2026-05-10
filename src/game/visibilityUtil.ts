@@ -1,4 +1,5 @@
 import Obstruction from "./types/Obstruction";
+import { normalizeAngle } from "@/common/angleUtil";
 import Position from "./types/Position";
 import Rect from "./types/Rect";
 import Room from "./types/Room";
@@ -15,12 +16,6 @@ type Segment = {
 type RayHit = {
   point:Position,
   distance:number
-}
-
-function _normalizeAngle(angle:number):number {
-  while (angle <= -Math.PI) angle += Math.PI * 2;
-  while (angle > Math.PI) angle -= Math.PI * 2;
-  return angle;
 }
 
 function _crossProduct(a:Position, b:Position):number {
@@ -43,7 +38,7 @@ function _isOriginInsideRoomObstruction(origin:Position, room:Room):boolean {
 }
 
 function _isAngleInsideCone(angle:number, facingAngle:number, coneAngle:number):boolean {
-  const angleDelta = _normalizeAngle(angle - facingAngle);
+  const angleDelta = normalizeAngle(angle - facingAngle);
   return Math.abs(angleDelta) <= coneAngle / 2 + ANGLE_EPSILON;
 }
 
@@ -141,7 +136,7 @@ function _dedupePolygonPoints(points:Position[]):Position[] {
 export function calcVisibilityPolygon(origin:Position, facingAngle:number, room:Room, coneAngle:number):Position[] {
   if (_isOriginInsideRoomObstruction(origin, room)) return [];
   const candidateAngles = _createCandidateAngles(origin, facingAngle, room, coneAngle)
-    .sort((a, b) => _normalizeAngle(a - facingAngle) - _normalizeAngle(b - facingAngle));
+    .sort((a, b) => normalizeAngle(a - facingAngle) - normalizeAngle(b - facingAngle));
   const boundaryPoints = candidateAngles.map(angle => _castVisibilityRay(origin, angle, room));
   return _dedupePolygonPoints([origin, ...boundaryPoints]);
 }

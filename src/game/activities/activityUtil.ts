@@ -1,4 +1,5 @@
 import { assertNonNullable } from "decent-portal";
+import { calcAngleBetweenPoints } from "@/common/angleUtil";
 
 import Character from "../types/Character";
 import { duplicateItineraryEvent } from "../types/itineraryEvents/ItineraryEvent";
@@ -14,7 +15,6 @@ import FacingEvent from "../types/itineraryEvents/FacingEvent";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { findExitWaypoint, findNearestWaypoint, findRoom } from "../roomUtil";
 import {
-  calcFacingAngle,
   createFacingEvent,
   createItineraryIndex,
   createRoomEntryEvent,
@@ -232,7 +232,7 @@ export function addFacingEventsForWalks(character:Character, state:CharacterActi
         itineraryIndex:createItineraryIndex([...state.events, ...output], { x:character.x, y:character.y })
       };
       const currentFacingAngle = findCharacterPose(scheduledCharacter, walkEvent.startTime).facingAngle;
-      const targetFacingAngle = calcFacingAngle(
+      const targetFacingAngle = calcAngleBetweenPoints(
         walkEvent.fromPosition.x,
         walkEvent.fromPosition.y,
         walkEvent.toPosition.x,
@@ -425,6 +425,6 @@ export function findTargetPositionAtTime(targetId:string, timestamp:number, char
 
 export function createFacingEventForTarget(timestamp:number, currentFacingAngle:number, actorPosition:Position, targetPosition:Position):FacingEvent {
   return createFacingEvent(timestamp, currentFacingAngle,
-    calcFacingAngle(actorPosition.x, actorPosition.y, targetPosition.x, targetPosition.y));
+    calcAngleBetweenPoints(actorPosition.x, actorPosition.y, targetPosition.x, targetPosition.y));
 }
 

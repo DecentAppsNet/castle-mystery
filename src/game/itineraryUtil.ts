@@ -11,6 +11,7 @@ import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
+import { calcShortestAngleDelta, interpolateAngle } from "@/common/angleUtil";
 import { randIntInRange } from "@/common/randUtil";
 import { findRoomAtPosition, findRoomNearestToPosition } from "./roomUtil";
 import ItineraryIndex from "./types/ItineraryIndex";
@@ -55,28 +56,10 @@ function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):n
   return Math.floor(distance * WALK_MSECS_PER_PIXEL);
 }
 
-function _calcFacingAngle(fromX:number, fromY:number, toX:number, toY:number):number {
-  return Math.atan2(toY - fromY, toX - fromX);
-}
-
-function _normalizeAngle(angle:number):number {
-  while (angle <= -Math.PI) angle += Math.PI * 2;
-  while (angle > Math.PI) angle -= Math.PI * 2;
-  return angle;
-}
-
-function _calcShortestAngleDelta(fromAngle:number, toAngle:number):number {
-  return _normalizeAngle(toAngle - fromAngle);
-}
-
 function _calcFacingDuration(fromFacingAngle:number, toFacingAngle:number):number {
-  const angleDistance = Math.abs(_calcShortestAngleDelta(fromFacingAngle, toFacingAngle));
+  const angleDistance = Math.abs(calcShortestAngleDelta(fromFacingAngle, toFacingAngle));
   if (angleDistance === 0) return 0;
   return Math.ceil((angleDistance / TURN_RADIANS_PER_SECOND) * MSECS_IN_SECOND);
-}
-
-function _interpolateAngle(fromAngle:number, toAngle:number, interpolateAmount:number):number {
-  return _normalizeAngle(fromAngle + _calcShortestAngleDelta(fromAngle, toAngle) * interpolateAmount);
 }
 
 export type WalkEventCreationResult = {
@@ -136,10 +119,6 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
     room = findRoomNearestToPosition(rooms, x, y); // Don't know what happened, but try to be robust.
   }
   return room;
-}
-
-export function calcFacingAngle(fromX:number, fromY:number, toX:number, toY:number):number {
-  return _calcFacingAngle(fromX, fromY, toX, toY);
 }
 
 export function createWalkEvent(room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEventCreationResult {
@@ -265,7 +244,7 @@ function _findFacingAngleAtTime(initialFacingAngle:number, itinerary:ItineraryEv
     const endTime = facingEvent.startTime + facingEvent.duration;
     if (time < endTime && facingEvent.duration > 0) {
       const elapsedFactor = clamp((time - facingEvent.startTime) / facingEvent.duration, 0, 1);
-      currentFacingAngle = _interpolateAngle(facingEvent.fromFacingAngle, facingEvent.facingAngle, elapsedFactor);
+      currentFacingAngle = interpolateAngle(facingEvent.fromFacingAngle, facingEvent.facingAngle, elapsedFactor);
       continue;
     }
     currentFacingAngle = facingEvent.facingAngle;
