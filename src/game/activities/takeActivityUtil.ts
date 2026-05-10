@@ -2,7 +2,8 @@ import { assertNonNullable } from "decent-portal";
 
 import { createTakeItemEvent } from "../itineraryUtil";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import { ActivityContext, addFacingEventsForWalks, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToEndAtTime, stripTrailingPeriod } from "./activityUtil";
+import WalkEvent from "../types/itineraryEvents/WalkEvent";
+import { ActivityContext, addFacingEventsForWalks, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 import { findNearestWaypoint } from "../roomUtil";
 
 const TAKE_ITEM_NEARBY_DISTANCE = 8;
@@ -39,8 +40,16 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
     findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
   })();
-  const movementEvents = addFacingEventsForWalks(context.character, context.state,
-    scheduleEventsToEndAtTime(unscheduledMovementEvents, context.timestamp, context.state.time));
+  const scheduledWalkEvents = context.timestampKind === 'absolute'
+    ? scheduleEventsToEndAtTime(unscheduledMovementEvents, context.timestamp, context.state.time)
+    : scheduleEventsToStartAtTime(unscheduledMovementEvents, context.timestamp, context.state.time);
+  const movementEvents = addFacingEventsForWalks(context.character, context.state, scheduledWalkEvents);
+  const takeEventTime = scheduledWalkEvents.length
+    ? (() => {
+      const lastWalkEvent = scheduledWalkEvents[scheduledWalkEvents.length - 1] as WalkEvent;
+      return lastWalkEvent.startTime + lastWalkEvent.duration;
+    })()
+    : context.timestamp;
   const roomItems = context.roomItemsByRoomId.get(itemLocation.room.id);
   assertNonNullable(roomItems, `missing room items for ${itemLocation.room.id}`);
   const itemIndex = roomItems.findIndex(item => item.id === itemLocation.item.id);
@@ -48,5 +57,5 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
   const [item] = roomItems.splice(itemIndex, 1);
   assertNonNullable(item, `expected item ${itemRef} to be removable`);
   context.state.carriedItems.push(item);
-  return [...movementEvents, createTakeItemEvent(context.timestamp, item.id)];
+  return [...movementEvents, createTakeItemEvent(takeEventTime, item.id)];
 }

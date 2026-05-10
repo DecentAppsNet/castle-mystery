@@ -23,6 +23,8 @@ import {
   findRoomAtPositionOrNearest,
 } from "../itineraryUtil";
 
+export type ActivityTimestampKind = 'absolute' | 'after-previous-activity';
+
 export type CharacterActivityState = {
   events:ItineraryEvent[],
   time:number,
@@ -35,12 +37,14 @@ export type CharacterActivityState = {
 export type ActivityContext = {
   level:Level,
   character:Character,
+  activitySourceIndex:number,
   state:CharacterActivityState,
   roomItemsByRoomId:Map<string, Item[]>,
   charactersById:Map<string, Character>,
   characterStatesById:Map<string, CharacterActivityState>,
   poseOverridesByCharacterId:Map<string, Position>,
-  timestamp:number
+  timestamp:number,
+  timestampKind:ActivityTimestampKind
 };
 
 function _matchesItemReference(item:Item, reference:string):boolean {
@@ -175,6 +179,20 @@ export function scheduleEventsToEndAtTime(events:ItineraryEvent[], timestamp:num
   const scheduledStartTime = timestamp - totalDuration;
   if (scheduledStartTime < earliestStartTime) {
     throw new Error(`unable to arrive by itinerary timestamp ${timestamp}`);
+  }
+  return _shiftEventTimes(events, scheduledStartTime);
+}
+
+export function scheduleEventsToStartAtTime(events:ItineraryEvent[], timestamp:number, earliestStartTime:number):ItineraryEvent[] {
+  if (!events.length) {
+    if (timestamp < earliestStartTime) throw new Error(`activity at ${timestamp} overlaps a previous itinerary activity`);
+    return [];
+  }
+  const firstEvent = events[0];
+  assertNonNullable(firstEvent);
+  const scheduledStartTime = timestamp - firstEvent.startTime;
+  if (scheduledStartTime < earliestStartTime) {
+    throw new Error(`unable to start itinerary activity at ${timestamp}`);
   }
   return _shiftEventTimes(events, scheduledStartTime);
 }

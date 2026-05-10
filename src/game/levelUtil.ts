@@ -13,7 +13,7 @@ import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { createObstruction, isPositionInRoomObstruction } from "./obstructionUtil";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
-import { parseLeadingTimestamp, parseTimestampToMsecs } from "@/common/timestampUtil";
+import { LeadingTimestampKind, parseLeadingTimestamp, parseTimestampToMsecs } from "@/common/timestampUtil";
 import { tryCreateAtActivity } from "./activities/atActivityUtil";
 import { tryCreateSayActivity } from "./activities/sayActivityUtil";
 import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
@@ -44,7 +44,11 @@ type ItemDefinition = {
 };
 
 type ParsedItineraryActivity = {
-  time:number,
+  sourceIndex:number,
+  time:number|null,
+  resolvedTime:number,
+  isTimeResolved:boolean,
+  timestampKind:LeadingTimestampKind,
   lineNo:number,
   characterId:string,
   activityText:string
@@ -536,10 +540,44 @@ function _parseItineraryActivities(itinerarySection:string, levelFilename:string
         const activityLine = timestamp.remainingText.trim();
         if (!activityLine.length) throw new Error(`missing itinerary activity`);
         const { characterId, activityText } = _parseCharacterActivityLine(activityLine);
-        return [{ time:timestamp.time, lineNo, characterId, activityText }];
+        return [{
+          sourceIndex:-1,
+          time:timestamp.time,
+          resolvedTime:timestamp.time ?? 0,
+          isTimeResolved:timestamp.kind === 'absolute',
+          timestampKind:timestamp.kind,
+          lineNo,
+          characterId,
+          activityText
+        }];
       });
     })
-    .sort((a, b) => a.time - b.time || a.characterId.localeCompare(b.characterId) || a.lineNo - b.lineNo);
+    .map((activity, sourceIndex) => ({ ...activity, sourceIndex }));
+}
+
+function _resolveItineraryActivityTimes(activities:ParsedItineraryActivity[], completionTimesBySourceIndex?:Map<number, number>):ParsedItineraryActivity[] {
+  const resolvedActivities:ParsedItineraryActivity[] = [];
+
+  activities.forEach((activity, index) => {
+    const isTimeResolved = activity.timestampKind === 'absolute'
+      ? true
+      : index === 0
+        ? true
+        : completionTimesBySourceIndex?.has(index - 1) ?? false;
+    const resolvedTime = activity.timestampKind === 'absolute'
+      ? (activity.time ?? 0)
+      : index === 0
+        ? 0
+        : completionTimesBySourceIndex?.get(index - 1) ?? resolvedActivities[index - 1].resolvedTime;
+    resolvedActivities.push({ ...activity, resolvedTime, isTimeResolved });
+  });
+
+  return resolvedActivities;
+}
+
+function _sortActivitiesByResolvedTime(activities:ParsedItineraryActivity[]):ParsedItineraryActivity[] {
+  return [...activities]
+    .sort((a, b) => a.resolvedTime - b.resolvedTime || a.characterId.localeCompare(b.characterId) || a.lineNo - b.lineNo);
 }
 
 function _findSectionFirstContentLineNo(markdownText:string, sectionName:string, indentLevel:number = 1):number|null {
@@ -558,16 +596,32 @@ function _findSectionFirstContentLineNo(markdownText:string, sectionName:string,
   return null;
 }
 
-function _createActivityContext(level:Level, character:Character, timestamp:number,
-  roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
+function _createActivityContext(level:Level, character:Character, timestamp:number, timestampKind:LeadingTimestampKind,
+  activitySourceIndex:number, roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
   characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>, poseOverridesByCharacterId:Map<string, Position>):ActivityContext {
   const state = characterStatesById.get(character.id);
   assertNonNullable(state, `missing itinerary state for ${character.id}`);
-  return { level, character, state, roomItemsByRoomId, charactersById, characterStatesById, poseOverridesByCharacterId, timestamp };
+  return {
+    level,
+    character,
+    activitySourceIndex,
+    state,
+    roomItemsByRoomId,
+    charactersById,
+    characterStatesById,
+    poseOverridesByCharacterId,
+    timestamp,
+    timestampKind
+  };
 }
 
-function _activityAffectsPoseAtTimestamp(activityText:string):boolean {
-  return activityText.startsWith('@ ') || activityText.startsWith('takes ');
+function _activityAffectsPoseAtTimestamp(activity:ParsedItineraryActivity):boolean {
+  if (activity.timestampKind !== 'absolute') return false;
+  return activity.activityText.startsWith('@ ') || activity.activityText.startsWith('takes ');
+}
+
+function _calcActivityCompletionTime(activity:ParsedItineraryActivity, events:ItineraryEvent[]):number {
+  return events.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), activity.resolvedTime);
 }
 
 function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItineraryActivity[], roomItemsByRoomId:Map<string, Item[]>,
@@ -577,7 +631,7 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
 
   activities.forEach(activity => {
     _runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
-      if (!_activityAffectsPoseAtTimestamp(activity.activityText)) return;
+      if (!_activityAffectsPoseAtTimestamp(activity)) return;
       const character = charactersById.get(activity.characterId);
       assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
 
@@ -588,12 +642,12 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
       const previewCharacterStatesById = new Map(characterStatesById);
       previewCharacterStatesById.set(activity.characterId, previewState);
       const previewRoomItemsByRoomId = duplicateRoomItemsByRoomId(roomItemsByRoomId);
-      const previewContext = _createActivityContext(level, character, activity.time, previewRoomItemsByRoomId,
+      const previewContext = _createActivityContext(level, character, activity.resolvedTime, activity.timestampKind, activity.sourceIndex, previewRoomItemsByRoomId,
         charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
       const events = _createEventsForActivity(activity.activityText, previewContext);
       appendEventsToCharacterState(level, character, previewState, events);
       poseOverridesByCharacterId.set(activity.characterId,
-        findStatePoseAtTime(character, previewState, activity.time).position);
+        findStatePoseAtTime(character, previewState, activity.resolvedTime).position);
     });
   });
 
@@ -617,6 +671,88 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
   throw new Error(`unsupported itinerary activity '${activityText}'`);
 }
 
+function _createReadyToScheduleBySourceIndex(activities:ParsedItineraryActivity[]):Map<number, boolean> {
+  const readyBySourceIndex = new Map<number, boolean>();
+  const charactersWithUnresolvedEarlierActivities = new Set<string>();
+
+  activities.forEach(activity => {
+    const isReady = activity.isTimeResolved && !charactersWithUnresolvedEarlierActivities.has(activity.characterId);
+    readyBySourceIndex.set(activity.sourceIndex, isReady);
+    if (!activity.isTimeResolved) charactersWithUnresolvedEarlierActivities.add(activity.characterId);
+  });
+
+  return readyBySourceIndex;
+}
+
+function _scheduleActivities(level:Level, activities:ParsedItineraryActivity[], levelFilename:string):{
+  characters:Character[],
+  duration:number,
+  labels:TimeLabel[],
+  completionTimesBySourceIndex:Map<number, number>
+} {
+  if (!activities.length) {
+    return {
+      characters: level.characters,
+      ..._createLevelDurationAndLabels(level.characters),
+      completionTimesBySourceIndex:new Map()
+    };
+  }
+
+  const charactersById = new Map(level.characters.map(character => [character.id, character]));
+  const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
+  const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
+  const completionTimesBySourceIndex = new Map<number, number>();
+  const readyToScheduleBySourceIndex = _createReadyToScheduleBySourceIndex(activities);
+
+  const _processActivity = (activity:ParsedItineraryActivity, poseOverridesByCharacterId:Map<string, Position>) => {
+    _runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
+      if (!readyToScheduleBySourceIndex.get(activity.sourceIndex)) return;
+      const character = charactersById.get(activity.characterId);
+      assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
+      const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampKind, activity.sourceIndex, roomItemsByRoomId, charactersById,
+        characterStatesById, poseOverridesByCharacterId);
+      const events = _createEventsForActivity(activity.activityText, context);
+      appendEventsToCharacterState(level, character, context.state, events);
+      if (!events.length) context.state.time = Math.max(context.state.time, activity.resolvedTime);
+      completionTimesBySourceIndex.set(activity.sourceIndex, _calcActivityCompletionTime(activity, events));
+    });
+  };
+
+  const sortedActivities = _sortActivitiesByResolvedTime(activities);
+  for (let i = 0; i < sortedActivities.length;) {
+    const timestamp = sortedActivities[i].resolvedTime;
+    const sameTimeActivities:ParsedItineraryActivity[] = [];
+    while (i < sortedActivities.length && sortedActivities[i].resolvedTime === timestamp) {
+      sameTimeActivities.push(sortedActivities[i]);
+      ++i;
+    }
+
+    const readySameTimeActivities = sameTimeActivities.filter(activity => readyToScheduleBySourceIndex.get(activity.sourceIndex));
+    const poseOverridesByCharacterId = _createPoseOverridesForTimestamp(level, readySameTimeActivities,
+      roomItemsByRoomId, charactersById, characterStatesById, levelFilename);
+    sameTimeActivities.forEach(activity => _processActivity(activity, poseOverridesByCharacterId));
+  }
+
+  const characters = level.characters.map(character => {
+    const state = characterStatesById.get(character.id);
+    assertNonNullable(state, `missing final itinerary state for ${character.id}`);
+    const itinerary = [...state.events];
+    return {
+      ...character,
+      itinerary,
+      itineraryIndex: createItineraryIndex(itinerary, { x:character.x, y:character.y }),
+      facingAngle: findCharacterPose({ ...character, itinerary }, level.startTime).facingAngle,
+      items: state.carriedItems.map(duplicateItem)
+    };
+  });
+
+  return {
+    characters,
+    ..._createLevelDurationAndLabels(characters),
+    completionTimesBySourceIndex
+  };
+}
+
 function _calcItineraryDuration(itinerary:ItineraryEvent[]):number {
   const lastEvent = itinerary[itinerary.length - 1];
   return lastEvent ? lastEvent.startTime + lastEvent.duration : 0;
@@ -635,49 +771,25 @@ function _loadItineraries(level:Level, itinerarySection:string, levelFilename:st
       ..._createLevelDurationAndLabels(level.characters)
     };
   }
-  const charactersById = new Map(level.characters.map(character => [character.id, character]));
-  const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
-  const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
+  let resolvedActivities = _resolveItineraryActivityTimes(activities);
 
-  const _processActivity = (activity:ParsedItineraryActivity, poseOverridesByCharacterId:Map<string, Position>) => {
-    _runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
-      const character = charactersById.get(activity.characterId);
-      assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
-      const context = _createActivityContext(level, character, activity.time, roomItemsByRoomId, charactersById,
-        characterStatesById, poseOverridesByCharacterId);
-      const events = _createEventsForActivity(activity.activityText, context);
-      appendEventsToCharacterState(level, character, context.state, events);
-      if (!events.length) context.state.time = Math.max(context.state.time, activity.time);
-    });
-  };
-
-  for (let i = 0; i < activities.length;) {
-    const timestamp = activities[i].time;
-    const sameTimeActivities:ParsedItineraryActivity[] = [];
-    while (i < activities.length && activities[i].time === timestamp) {
-      sameTimeActivities.push(activities[i]);
-      ++i;
+  for (let attemptNo = 0; attemptNo < Math.max(2, activities.length + 1); ++attemptNo) {
+    const scheduleResult = _scheduleActivities(level, resolvedActivities, levelFilename);
+    const nextResolvedActivities = _resolveItineraryActivityTimes(activities, scheduleResult.completionTimesBySourceIndex);
+    const didStabilize = nextResolvedActivities.every((activity, index) =>
+      activity.resolvedTime === resolvedActivities[index].resolvedTime
+      && activity.isTimeResolved === resolvedActivities[index].isTimeResolved);
+    if (didStabilize) {
+      return {
+        characters:scheduleResult.characters,
+        duration:scheduleResult.duration,
+        labels:scheduleResult.labels
+      };
     }
-
-    const poseOverridesByCharacterId = _createPoseOverridesForTimestamp(level, sameTimeActivities,
-      roomItemsByRoomId, charactersById, characterStatesById, levelFilename);
-    sameTimeActivities.forEach(activity => _processActivity(activity, poseOverridesByCharacterId));
+    resolvedActivities = nextResolvedActivities;
   }
 
-  const characters = level.characters.map(character => {
-    const state = characterStatesById.get(character.id);
-    assertNonNullable(state, `missing final itinerary state for ${character.id}`);
-    const itinerary = [...state.events];
-    return {
-      ...character,
-      itinerary,
-      itineraryIndex: createItineraryIndex(itinerary, { x:character.x, y:character.y }),
-      facingAngle: findCharacterPose({ ...character, itinerary }, level.startTime).facingAngle,
-      items: state.carriedItems.map(duplicateItem)
-    };
-  });
-
-  return { characters, ..._createLevelDurationAndLabels(characters) };
+  throw new Error('unable to resolve relative itinerary timestamps');
 }
 
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>'):Level {

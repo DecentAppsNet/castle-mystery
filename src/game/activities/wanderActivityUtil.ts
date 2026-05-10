@@ -1,7 +1,12 @@
 import { createWalkEvent, findRoomAtPositionOrNearest } from "../itineraryUtil";
-import { randIntInRange } from "@/common/randUtil";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import { ActivityContext, addFacingEventsForWalks, ensureTimestampIsAvailable, stripTrailingPeriod } from "./activityUtil";
+
+function _calcStableActivityHash(activitySourceIndex:number, characterId:string):number {
+  let hash = activitySourceIndex + 1;
+  for (const char of characterId) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return hash >>> 0;
+}
 
 export function tryCreateWanderActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   if (stripTrailingPeriod(activityText) !== 'wanders') return null;
@@ -21,6 +26,6 @@ export function tryCreateWanderActivity(activityText:string, context:ActivityCon
   if (!candidateResults.length) {
     throw new Error(`unable to create wander activity for ${context.character.id}: no reachable unclaimed adjacent waypoint`);
   }
-  const selectedCandidate = candidateResults[randIntInRange(0, candidateResults.length)];
+  const selectedCandidate = candidateResults[_calcStableActivityHash(context.activitySourceIndex, context.character.id) % candidateResults.length];
   return addFacingEventsForWalks(context.character, context.state, [selectedCandidate.result.event!]);
 }

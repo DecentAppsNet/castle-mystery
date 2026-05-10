@@ -21,8 +21,18 @@ describe('timestampUtil', () => {
     it('returns timestamp and remaining text', () => {
       expect(parseLeadingTimestamp('  0:00:35 King faces Queen.')).toEqual({
         timestampText:'0:00:35',
+        kind:'absolute',
         time:35_000,
         remainingText:'King faces Queen.'
+      });
+    });
+
+    it('parses colon timestamps as after-previous-activity markers', () => {
+      expect(parseLeadingTimestamp(' : Hero wanders')).toEqual({
+        timestampText:':',
+        kind:'after-previous-activity',
+        time:null,
+        remainingText:'Hero wanders'
       });
     });
 
@@ -34,6 +44,7 @@ describe('timestampUtil', () => {
   describe('lineBeginsWithTimestamp()', () => {
     it('detects valid leading timestamps', () => {
       expect(lineBeginsWithTimestamp('0:00 Queen takes Book')).toBe(true);
+      expect(lineBeginsWithTimestamp(': Queen takes Book')).toBe(true);
     });
 
     it('rejects lines without valid leading timestamps', () => {

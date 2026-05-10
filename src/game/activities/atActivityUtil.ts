@@ -1,7 +1,7 @@
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import Position from "../types/Position";
 import { findRoom } from "../roomUtil";
-import { ActivityContext, addFacingEventsForWalks, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime } from "./activityUtil";
+import { ActivityContext, addFacingEventsForWalks, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
 
 function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:string, targetPosition:Position|null } {
   const targetText = activityText.trim().slice(1).trim();
@@ -36,6 +36,9 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
     .filter(([, state]) => findCurrentRoom(context.level, state.waypoint.position).id === targetRoomId)
     .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y}`));
   const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, targetPosition);
+  const scheduledEvents = context.timestampKind === 'absolute'
+    ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, context.state.time)
+    : scheduleEventsToStartAtTime(unscheduledEvents, context.timestamp, context.state.time);
   return addFacingEventsForWalks(context.character, context.state,
-    scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, context.state.time));
+    scheduledEvents);
 }

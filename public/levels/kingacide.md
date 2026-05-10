@@ -126,11 +126,11 @@ WFL
 0:00:03 King says "It's good to be king."
 0:00:10 King says "Where did I put that book?"
 0:00:11 King wanders
-0:00:13 King wanders
-0:00:15 King wanders
-0:00:18 King wanders
-0:00:22 King wanders
-0:00:26 King wanders
+: King wanders
+: King wanders
+: King wanders
+: King wanders
+: King wanders
 0:00:30 King says "It must be in the library."
 0:00:34 King @ Library.SW
 

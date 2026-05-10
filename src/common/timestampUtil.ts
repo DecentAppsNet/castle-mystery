@@ -1,8 +1,11 @@
 import { MSECS_IN_SECOND, SECS_IN_MINUTE } from "./timeUtil";
 
+export type LeadingTimestampKind = 'absolute' | 'after-previous-activity';
+
 export type LeadingTimestamp = {
   timestampText:string,
-  time:number,
+  kind:LeadingTimestampKind,
+  time:number|null,
   remainingText:string
 };
 
@@ -38,9 +41,18 @@ export function parseLeadingTimestamp(text:string):LeadingTimestamp|null {
   if (!trimmedLeftText.length) return null;
   const firstWhitespaceIndex = Array.from(trimmedLeftText).findIndex(char => char === ' ' || char === '\t');
   const timestampText = firstWhitespaceIndex === -1 ? trimmedLeftText : trimmedLeftText.slice(0, firstWhitespaceIndex);
+  if (timestampText === ':') {
+    return {
+      timestampText,
+      kind:'after-previous-activity',
+      time:null,
+      remainingText:firstWhitespaceIndex === -1 ? '' : trimmedLeftText.slice(firstWhitespaceIndex).trim()
+    };
+  }
   try {
     return {
       timestampText,
+      kind:'absolute',
       time:parseTimestampToMsecs(timestampText),
       remainingText:firstWhitespaceIndex === -1 ? '' : trimmedLeftText.slice(firstWhitespaceIndex).trim()
     };
