@@ -73,6 +73,7 @@ WFL
 ## East Hall
 
 * exits=Throne Room|Library
+* obscured=true
 
 ## Foyer
 
@@ -149,7 +150,10 @@ King arrived in the library at 0:00:34.
 0:00:37 King says "Have you seen my favorite book?"
 0:00:39 Queen says "No."
 
-0:00:41 Queen @ East Hall
+0:00:44 Queen @ East Hall
+0:00:46 King @ East Hall
+0:00:50 King @ Throne Room
+0:00:50 King says "Where is that damned book?"
 
 # solutions
 

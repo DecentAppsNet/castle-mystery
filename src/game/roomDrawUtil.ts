@@ -72,12 +72,12 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   const scaledWidth = scaledBottomRight[0] - scaledTopLeft[0];
   const scaledHeight = scaledBottomRight[1] - scaledTopLeft[1];
   context.lineWidth = scalingFactors.roomLineWidth;
-  context.fillStyle = isActive ? COLOR_ACTIVE_ROOM_FILL : COLOR_INACTIVE_ROOM_FILL;
+  context.fillStyle = room.isObscured ? COLOR_BLACK : (isActive ? COLOR_ACTIVE_ROOM_FILL : COLOR_INACTIVE_ROOM_FILL);
   context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
-  room.obstructions.forEach(obstruction => drawObstruction(obstruction, scalingFactors, context));
   context.strokeStyle = COLOR_DARK_GRAY;
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
-  if (isActive && activeCharacter) {
+  if (!room.isObscured) room.obstructions.forEach(obstruction => drawObstruction(obstruction, scalingFactors, context));
+  if (!room.isObscured && isActive && activeCharacter) {
     drawVisibilityCone(activeCharacter, room, scalingFactors, context);
     drawDiscoveredItemsInRoom(room, effects, scalingFactors, context);
   }
@@ -91,6 +91,7 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   }
   context.fillStyle = COLOR_ROOM_TITLE_TEXT;
   context.fillText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
+  if (room.isObscured) return;
   context.fillStyle = COLOR_BLACK;
   room.exits.forEach(exit => drawRoomExit(exit, scalingFactors, context));
   if (isActive && activeCharacter) {

@@ -14,6 +14,10 @@ export function processRoomEffects(room:Room, effects:Effect[], context:CanvasRe
   for (let i = effects.length - 1; i >= 0; --i) {
     const effect = effects[i];
     if (!effect.onProcessRoomEffect || !effect.room || effect.room.id !== room.id) continue;
+    if (room.isObscured) {
+      effects.splice(i, 1);
+      continue;
+    }
     if (!effect.onProcessRoomEffect(room, effect, context, isActive)) effects.splice(i, 1);
   }
 }

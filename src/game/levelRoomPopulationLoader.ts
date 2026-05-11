@@ -119,7 +119,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 		const gridHeight = gridLines.length;
 		const roomNameValues = parseNameValueLines(roomSection);
 		const roomLegend = Object.fromEntries(
-			Object.entries(roomNameValues).filter(([name]) => name !== 'exits')
+			Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured')
 		);
 
 		findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId, row, col }) => {

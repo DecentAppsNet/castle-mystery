@@ -78,10 +78,14 @@ describe('levelUtil itinerary loading', () => {
     const level = loadLevelFromText(kingacideItineraryText);
     const queen = level.characters.find(character => character.id === 'Queen');
     const king = level.characters.find(character => character.id === 'King');
+    const eastHall = level.rooms.find(room => room.id === 'East Hall');
+    const foyer = level.rooms.find(room => room.id === 'Foyer');
 
     expect(queen?.items.map(item => item.id)).toContain('Romance Novel');
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 35_000)).toBe(true);
     expect(queen?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 35_000)).toBe(true);
+    expect(eastHall?.isObscured).toBe(true);
+    expect(foyer?.isObscured).toBe(false);
   });
 
   it('loads the public kingacide level without relative timestamp scheduling errors', () => {

@@ -163,6 +163,7 @@ function _addRoomObstructionsFromRoomsSection(level:Level, roomsSection:string) 
 export function createRoomsFromMapSection(level:Level, mapSection:string, roomsSection:string = "") {
   const mapLines = parseFirstFencedCodeBlockLines(mapSection);
   const legend = parseNameValueLines(mapSection);
+  const roomSections = parseSections(roomsSection, 2);
   const roomBoundsById = new Map<string, { minCol:number, maxCol:number, minRow:number, maxRow:number }>();
 
   mapLines.forEach((line, row) => {
@@ -182,6 +183,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, roomsS
   });
 
   Array.from(roomBoundsById.entries()).forEach(([roomId, bounds]) => {
+    const roomNameValues = parseNameValueLines(roomSections[roomId] || "");
     level.rooms.push({
       id: roomId,
       title: roomId,
@@ -191,6 +193,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, roomsS
         width: (bounds.maxCol - bounds.minCol + 1) * MAP_TILE_SIZE,
         height: (bounds.maxRow - bounds.minRow + 1) * MAP_TILE_SIZE
       },
+      isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true',
       items: [],
       obstructions: [],
       waypoints: [],
@@ -215,7 +218,7 @@ export function addRoomPositionMarkersFromSections(level:Level, roomsSection:str
     const gridHeight = gridLines.length;
     const roomNameValues = parseNameValueLines(roomSection);
     const roomLegend = Object.fromEntries(
-      Object.entries(roomNameValues).filter(([name]) => name !== 'exits')
+      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured')
     );
 
     _findMarkerTilesInGrid(gridLines, roomLegend, excludedEntryIds).forEach(({ markerId, row, col }) => {

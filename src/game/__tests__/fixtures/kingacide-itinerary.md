@@ -73,6 +73,7 @@ WFL
 ## East Hall
 
 * exits=Throne Room|Library
+* obscured=true
 
 ## Foyer
 

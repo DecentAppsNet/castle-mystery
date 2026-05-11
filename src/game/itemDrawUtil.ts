@@ -78,6 +78,7 @@ function _wrapText(context:CanvasRenderingContext2D, text:string, maxWidth:numbe
 }
 
 export function discoverVisibleItemsInRoom(room:Room, activeCharacter:Character, scalingFactors:ScalingFactors) {
+  if (room.isObscured) return [];
   const visibilityOrigin = getCharacterVisibilityOrigin(activeCharacter, scalingFactors);
   const newlyDiscoveredItems:Item[] = [];
   room.items.forEach(item => {
@@ -117,12 +118,14 @@ function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
 }
 
 export function drawDiscoveredItemsInRoom(room:Room, effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  if (room.isObscured) return;
   room.items
     .filter(item => item.isDiscovered && !_isItemSuppressedByEffect(item, effects))
     .forEach(item => drawItem(item, scalingFactors, context));
 }
 
 export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scalingFactors:ScalingFactors):Item|null {
+  if (room.isObscured) return null;
   for (let i = room.items.length - 1; i >= 0; --i) {
     const item = room.items[i];
     if (!item.isDiscovered) continue;

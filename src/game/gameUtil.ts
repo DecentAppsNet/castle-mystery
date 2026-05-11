@@ -65,6 +65,7 @@ function _discoverVisibleItemsInActiveRoom(gameState:GameState) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   if (!activeCharacter || !activeRoom) return;
+  if (activeRoom.isObscured) return;
   discoverVisibleItemsInRoom(activeRoom, activeCharacter, gameState.scalingFactors)
     .forEach(item => gameState.activeEffects.push(createItemDiscoveryEffect(item, activeRoom, Date.now(), gameState.scalingFactors)));
 }
@@ -147,7 +148,7 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousT
           if (!room) break;
           const item = _removeItemById(room.items, takeEvent.itemId);
           if (!item) break;
-          if (previousTime !== undefined && takeEvent.startTime > previousTime && takeEvent.startTime <= time) {
+          if (!room.isObscured && previousTime !== undefined && takeEvent.startTime > previousTime && takeEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:room.id,
               create:() => gameState.activeEffects.push(createTakeItemEffect(item, room, Date.now(), gameState.scalingFactors))
@@ -166,7 +167,7 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousT
           const item = _removeItemById(actor.items, dropEvent.itemId);
           if (!item) break;
           const droppedItem = { ...item, position:duplicatePosition(dropEvent.position) };
-          if (previousTime !== undefined && dropEvent.startTime > previousTime && dropEvent.startTime <= time) {
+          if (!dropRoom.isObscured && previousTime !== undefined && dropEvent.startTime > previousTime && dropEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:dropRoom.id,
               create:() => gameState.activeEffects.push(createDropItemEffect(droppedItem, dropRoom, Date.now(), gameState.scalingFactors))
@@ -184,7 +185,7 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousT
           const item = _removeItemById(actor.items, giveEvent.itemId);
           if (!item) break;
           const actorRoom = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
-          if (previousTime !== undefined && giveEvent.startTime > previousTime && giveEvent.startTime <= time && actorRoom) {
+          if (!actorRoom?.isObscured && previousTime !== undefined && giveEvent.startTime > previousTime && giveEvent.startTime <= time && actorRoom) {
             pendingRoomEffects.push({
               roomId:actorRoom.id,
               create:() => gameState.activeEffects.push(createGiveItemEffect(item, actorRoom, actor, recipient, Date.now(), gameState.scalingFactors))
@@ -260,6 +261,7 @@ function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Chara
   if (gameState.characters.length === 0) return null;
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  if (activeRoom?.isObscured) return null;
   const candidateCharacters = activeCharacter && activeRoom
     ? findVisibleCharactersInRoom(activeRoom, findCharactersInRoom(activeRoom, gameState.characters), activeCharacter, gameState.scalingFactors)
     : gameState.characters;
