@@ -15,11 +15,13 @@ import {
   loadRoomPopulation,
   parseRoomPopulationDefinitions
 } from "./levelRoomPopulationLoader";
+import { loadSolutionsFromSection } from "./levelSolutionsLoader";
 
 function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
   return {
     rooms: [],
     characters: [],
+    solutions: [],
     activeCharacterId: "",
     startTime: 0,
     duration,
@@ -83,6 +85,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   let level = _createEmptyLevel();
   level = {
     ...level,
+    solutions:loadSolutionsFromSection(sections.solutions || ""),
     activeCharacterId: generalSection.activeCharacterId || level.activeCharacterId,
     startTime: generalSection.startTime ?? level.startTime
   };

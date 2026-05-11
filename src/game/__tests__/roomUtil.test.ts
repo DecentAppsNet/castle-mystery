@@ -26,7 +26,8 @@ function _createRoom(id:string, rect:Rect, exits:RoomExit[] = [], waypoints:Wayp
     exits,
     waypoints,
     positionMarkersById:{},
-    isDiscovered:false
+    isDiscovered:false,
+    isObscured:false
   };
 }
 

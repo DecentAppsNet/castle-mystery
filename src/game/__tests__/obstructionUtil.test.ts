@@ -25,7 +25,8 @@ function _createRoom(obstructions:Obstruction[] = []):Room {
     exits:[],
     waypoints:[],
     positionMarkersById:{},
-    isDiscovered:false
+    isDiscovered:false,
+    isObscured:false
   };
 }
 

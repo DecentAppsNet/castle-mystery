@@ -1,10 +1,12 @@
 import TimeLabel from "./TimeLabel";
 import Character from "./Character";
 import Room from "./Room"
+import Solution from "../solutions/types/Solution";
 
 type Level = Readonly<{
   rooms:Room[],
   characters:Character[],
+  solutions:Solution[],
   activeCharacterId:string,
   startTime:number,
   duration:number,

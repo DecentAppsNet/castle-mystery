@@ -54,6 +54,15 @@ Guidelines:
 * Functions should only be exported if used outside the module they are declared in.
 * Private, unexported functions are prefixed with `_`.
 
+## Using RegEx
+
+* All RegExs should be encapsulated in a function whose name describes what the RegEx does.
+* Regex function names should be fairly complete self-descriptions, for example `findWhiteSpaceEnclosedNumber()` rather than `findNumber()`.
+* If the function name would become excessively long, or still would not describe the full logic clearly, prefer non-regex code and optionally call smaller regex helper functions inside that logic.
+* All regex functions need unit tests.
+* Prefer general-purpose regex helper functions where possible and put them in `src/common/regExUtil.ts`.
+* When use-case-specific logic is needed, prefer a non-regex function in the feature module that composes shared regex helpers from `src/common/regExUtil.ts`.
+
 ## Achieving Code Coverage
 
 * Coverage should be improved with contract-based tests rather than tests written around implementation branches.

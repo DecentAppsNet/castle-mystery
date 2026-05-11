@@ -32,6 +32,7 @@ import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
 import Position, { duplicatePosition } from "./types/Position";
 import Item from "./types/Item";
+import { duplicateSolution } from "./solutions/types/Solution";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
 
@@ -401,6 +402,7 @@ export function createGameStateFromLevel(level:Level):GameState {
   const gameState:GameState = {
     characters:level.characters.map(duplicateCharacter),
     rooms:level.rooms.map(duplicateRoom),
+    solutions:level.solutions.map(duplicateSolution),
     initialCharacters:level.characters.map(duplicateCharacter),
     initialRooms:level.rooms.map(duplicateRoom),
     activeEffects:[],

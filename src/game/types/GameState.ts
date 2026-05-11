@@ -3,10 +3,12 @@ import Character from "./Character";
 import Room from "./Room";
 import ScalingFactors from "./ScalingFactors";
 import Effect from "../effects/types/Effect";
+import Solution from "../solutions/types/Solution";
 
 type GameState = {
   characters:Character[],
   rooms:Room[],
+  solutions:Solution[],
   readonly initialCharacters:Character[],
   readonly initialRooms:Room[],
   activeEffects:Effect[],

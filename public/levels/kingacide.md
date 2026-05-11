@@ -148,16 +148,21 @@ King arrived in the library at 0:00:34.
 0:00:35 Queen faces King.
 0:00:36 Queen says "Oh. Hi."
 0:00:37 King says "Have you seen my favorite book?"
-0:00:39 Queen says "No."
+0:00:39 Queen says "No. Probably it is in the Throne Room."
+0:00:41 King says "I searched there already."
 
 0:00:44 Queen @ East Hall
 0:00:46 King @ East Hall
 0:00:50 King @ Throne Room
-0:00:50 King says "Where is that damned book?"
+: King says "Where is that damned book?"
 
 # solutions
 
+* characters=King|Queen
+* items=book|sceptre|dagger
+* actions=searched|lied|looked
+
 ## The Missing Book
 
-* solution=[King] [searched] for a [book] in [Throne Room] and [Library], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
+* clozeStatement=[King] [searched|looked] for a [book] in [Throne Room] and [Library], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
 

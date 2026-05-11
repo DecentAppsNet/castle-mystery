@@ -11,11 +11,15 @@ import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import sameTimeFaceOrderIndependenceText from './fixtures/same-time-face-order-independence.md?raw';
 import sameTimeItemStateUsesCharacterOrderText from './fixtures/same-time-item-state-uses-character-order.md?raw';
+import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
+import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
+import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import LoadLevelException from '../LoadLevelException';
 import { loadLevelFromText } from '../levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
+import ClozeBlank from '../solutions/types/ClozeBlank';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?raw';
 
@@ -86,12 +90,46 @@ describe('levelUtil itinerary loading', () => {
     expect(queen?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 35_000)).toBe(true);
     expect(eastHall?.isObscured).toBe(true);
     expect(foyer?.isObscured).toBe(false);
+    expect(level.solutions.length).toBe(0);
   });
 
   it('loads the public kingacide level without relative timestamp scheduling errors', () => {
     const kingacidePublicText = readFileSync(path.resolve(process.cwd(), 'public/levels/kingacide.md'), 'utf8');
+    const level = loadLevelFromText(kingacidePublicText, '/levels/kingacide.md');
 
-    expect(() => loadLevelFromText(kingacidePublicText, '/levels/kingacide.md')).not.toThrow();
+    expect(level.solutions.length).toBe(1);
+    expect(level.solutions[0].title).toBe('The Missing Book');
+    expect(level.solutions[0].parts.length).toBeGreaterThan(0);
+    expect(level.solutions[0].parts[0].type).toBe('blank');
+  });
+
+  it('parses one solution per subsection from the solutions section', () => {
+    const level = loadLevelFromText(solutionsTwoSubsectionsText);
+
+    expect(level.solutions.map(solution => solution.title)).toEqual(['First', 'Second']);
+    expect(level.solutions[0].parts.length).toBeGreaterThan(0);
+    expect(level.solutions[1].parts.length).toBeGreaterThan(0);
+  });
+
+  it('collects available answers from all matching categories for each blank', () => {
+    const level = loadLevelFromText(solutionsCategoryMatchesText);
+    const solution = level.solutions[0];
+    const firstBlank = solution.parts[0] as ClozeBlank;
+    const secondBlank = solution.parts[2] as ClozeBlank;
+
+    expect(firstBlank.availableAnswers).toEqual(['King', 'Queen', 'Prince']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([0]);
+    expect(secondBlank.availableAnswers).toEqual(['searched', 'looked', 'lied']);
+    expect(secondBlank.correctAnswerIndexes).toEqual([0, 1]);
+  });
+
+  it('falls back to blank values when no category contains all correct answers', () => {
+    const level = loadLevelFromText(solutionsFallbackText);
+    const solution = level.solutions[0];
+    const firstBlank = solution.parts[0] as ClozeBlank;
+
+    expect(firstBlank.availableAnswers).toEqual(['Throne Room']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([0]);
   });
 
   it('loads room position markers from room legends and grids', () => {

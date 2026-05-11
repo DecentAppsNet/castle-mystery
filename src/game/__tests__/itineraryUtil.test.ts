@@ -21,7 +21,8 @@ function _createRoom():Room {
     exits:[],
     waypoints:[],
     positionMarkersById:{},
-    isDiscovered:false
+    isDiscovered:false,
+    isObscured:false
   };
 }
 
