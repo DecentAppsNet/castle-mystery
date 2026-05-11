@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { createGameStateFromLevel, findCharacter } from '../gameUtil';
 import { loadLevelFromText } from '../levelUtil';
+import interleavedAfterPreviousActivityText from './fixtures/after-previous-activity-interleaved-characters.md?raw';
 import wanderingDoubleText from './fixtures/wandering-double.md?raw';
 import wanderingSingleText from './fixtures/wandering-single.md?raw';
 import wanderingThroneRoomText from './fixtures/wandering-throne-room.md?raw';
@@ -81,5 +82,21 @@ describe('wandering integration', () => {
 
   it('throws while loading when a room has no connected waypoints', () => {
     expect(() => loadLevelFromText(wanderingTrappedText)).toThrow(/no connected waypoints/i);
+  });
+
+  it('resolves after-previous-activity timestamps from the previous file activity when activities are interleaved', () => {
+    const level = loadLevelFromText(interleavedAfterPreviousActivityText);
+    const king = level.characters.find(character => character.id === 'King');
+    const jester = level.characters.find(character => character.id === 'Jester');
+    const kingOpeningSpeechEvent = king?.itinerary.find(event => event.type === 'Speech');
+    const jesterSpeechEvent = jester?.itinerary.find(event => event.type === 'Speech');
+    const kingSpeechEvent = king?.itinerary.findLast(event => event.type === 'Speech');
+
+    expect(() => loadLevelFromText(interleavedAfterPreviousActivityText)).not.toThrow();
+    expect(kingOpeningSpeechEvent).toBeDefined();
+    expect(jesterSpeechEvent).toBeDefined();
+    expect(kingSpeechEvent).toBeDefined();
+    expect(jesterSpeechEvent!.startTime).toBeGreaterThanOrEqual(kingOpeningSpeechEvent!.startTime + kingOpeningSpeechEvent!.duration);
+    expect(kingSpeechEvent!.startTime).toBeGreaterThanOrEqual(jesterSpeechEvent!.startTime + jesterSpeechEvent!.duration);
   });
 });

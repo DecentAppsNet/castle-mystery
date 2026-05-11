@@ -164,8 +164,14 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
   return findCharacterPose(createCharacterSnapshot(character, state), time);
 }
 
-export function ensureTimestampIsAvailable(state:CharacterActivityState, timestamp:number, activityText:string) {
-  if (timestamp < state.time) throw new Error(`unable to schedule itinerary activity '${activityText}' at ${timestamp}`);
+export function calcActivityStartTime(state:CharacterActivityState, timestamp:number, timestampKind:ActivityTimestampKind):number {
+  return timestampKind === 'absolute' ? timestamp : Math.max(timestamp, state.time);
+}
+
+export function ensureTimestampIsAvailable(state:CharacterActivityState, timestamp:number, activityText:string, timestampKind:ActivityTimestampKind) {
+  if (timestampKind === 'absolute' && timestamp < state.time) {
+    throw new Error(`unable to schedule itinerary activity '${activityText}' at ${timestamp}`);
+  }
 }
 
 export function scheduleEventsToEndAtTime(events:ItineraryEvent[], timestamp:number, earliestStartTime:number):ItineraryEvent[] {

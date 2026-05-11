@@ -7,6 +7,7 @@ import { findExitWaypoint, findRoom } from '../roomUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import WalkEvent from '../types/itineraryEvents/WalkEvent';
 import RoomEntryEvent from '../types/itineraryEvents/RoomEntryEvent';
+import afterPreviousActivityAtRoomText from './fixtures/after-previous-activity-at-room.md?raw';
 import atRoomMarkerSameRoomText from './fixtures/at-room-marker-same-room.md?raw';
 import atRoomMarkerText from './fixtures/at-room-marker.md?raw';
 import atLibraryViaFoyerText from './fixtures/at-library-via-foyer.md?raw';
@@ -130,5 +131,17 @@ describe('at room integration', () => {
 
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK)).toBe(true);
     expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+  });
+
+  it('starts relative @ Room movement only after the previous file activity completes', () => {
+    const level = loadLevelFromText(afterPreviousActivityAtRoomText);
+    const king = level.characters.find(character => character.id === 'King');
+    const jester = level.characters.find(character => character.id === 'Jester');
+    const jesterSpeechEvent = jester?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);
+    const kingFirstWalkEvent = king?.itinerary.find(event => event.type === ItineraryEventType.WALK) as WalkEvent | undefined;
+
+    expect(jesterSpeechEvent).toBeDefined();
+    expect(kingFirstWalkEvent).toBeDefined();
+    expect(kingFirstWalkEvent!.startTime).toBeGreaterThanOrEqual(jesterSpeechEvent!.startTime + jesterSpeechEvent!.duration);
   });
 });

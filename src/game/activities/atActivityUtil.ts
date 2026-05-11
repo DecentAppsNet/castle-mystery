@@ -1,7 +1,7 @@
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import Position from "../types/Position";
 import { findRoom } from "../roomUtil";
-import { ActivityContext, addFacingEventsForWalks, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
+import { ActivityContext, addFacingEventsForWalks, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
 
 function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:string, targetPosition:Position|null } {
   const targetText = activityText.trim().slice(1).trim();
@@ -28,7 +28,8 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('@')) return null;
 
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText);
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
   const { roomId:targetRoomId, targetPosition } = _parseAtTarget(trimmedActivityText, context);
   if (findCurrentRoom(context.level, context.state.position).id === targetRoomId && !targetPosition) return [];
   const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
@@ -38,7 +39,7 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
   const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, targetPosition);
   const scheduledEvents = context.timestampKind === 'absolute'
     ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, context.state.time)
-    : scheduleEventsToStartAtTime(unscheduledEvents, context.timestamp, context.state.time);
+    : scheduleEventsToStartAtTime(unscheduledEvents, activityStartTime, context.state.time);
   return addFacingEventsForWalks(context.character, context.state,
     scheduledEvents);
 }

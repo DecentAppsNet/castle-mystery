@@ -83,13 +83,14 @@ WFL
 ## Library
 
 ```
-.....
+...Y.
 .....
 .X..B
 ```
 
 * B=Romance Novel
 * X=SW
+* Y=NE
 
 * exits=Foyer|East Hall
 
@@ -139,13 +140,14 @@ WFL
 : King wanders
 : King wanders
 : King says "Where did I put that book?"
-0:00:14 King wanders
 : King wanders
 : King wanders
 : King wanders
 : King wanders
 : King wanders
-0:00:15 Jester says "I shall help you search."
+: King wanders
+: Jester says "I shall help you search."
+: King faces Jester
 : Jester wanders
 : Jester wanders
 0:00:28 King says "It must be in the library."
@@ -156,7 +158,7 @@ WFL
 
 0:00:00 Queen @ West Hall
 0:00:01 Queen wanders
-0:00:30 Queen @ Library
+0:00:30 Queen @ Library.NE
 0:00:31 Queen says "Hmm."
 0:00:32 Queen takes Book
 

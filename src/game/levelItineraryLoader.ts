@@ -8,6 +8,7 @@ import { tryCreateFaceActivity } from "./activities/faceActivityUtil";
 import {
   appendEventsToCharacterState,
   ActivityContext,
+  calcActivityStartTime,
   createCharacterActivityState,
   createInitialRoomItemsByRoomId,
   duplicateCharacterActivityState,
@@ -95,16 +96,17 @@ function _resolveItineraryActivityTimes(activities:ParsedItineraryActivity[], co
   const resolvedActivities:ParsedItineraryActivity[] = [];
 
   activities.forEach((activity, index) => {
+    const previousActivitySourceIndex = index - 1;
     const isTimeResolved = activity.timestampKind === 'absolute'
       ? true
-      : index === 0
+      : previousActivitySourceIndex < 0
         ? true
-        : completionTimesBySourceIndex?.has(index - 1) ?? false;
+        : completionTimesBySourceIndex?.has(previousActivitySourceIndex) ?? false;
     const resolvedTime = activity.timestampKind === 'absolute'
       ? (activity.time ?? 0)
-      : index === 0
+      : previousActivitySourceIndex < 0
         ? 0
-        : completionTimesBySourceIndex?.get(index - 1) ?? resolvedActivities[index - 1].resolvedTime;
+        : completionTimesBySourceIndex?.get(previousActivitySourceIndex) ?? resolvedActivities[previousActivitySourceIndex].resolvedTime;
     resolvedActivities.push({ ...activity, resolvedTime, isTimeResolved });
   });
 
@@ -140,8 +142,8 @@ function _activityAffectsPoseAtTimestamp(activity:ParsedItineraryActivity):boole
   return activity.activityText.startsWith('@ ') || activity.activityText.startsWith('takes ');
 }
 
-function _calcActivityCompletionTime(activity:ParsedItineraryActivity, events:ItineraryEvent[]):number {
-  return events.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), activity.resolvedTime);
+function _calcActivityCompletionTime(activityStartTime:number, events:ItineraryEvent[]):number {
+  return events.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), activityStartTime);
 }
 
 function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItineraryActivity[], roomItemsByRoomId:Map<string, Item[]>,
@@ -235,10 +237,11 @@ function _scheduleActivities(level:Level, activities:ParsedItineraryActivity[], 
       assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
       const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampKind, activity.sourceIndex, roomItemsByRoomId, charactersById,
         characterStatesById, poseOverridesByCharacterId);
+      const activityStartTime = calcActivityStartTime(context.state, activity.resolvedTime, activity.timestampKind);
       const events = _createEventsForActivity(activity.activityText, context);
       appendEventsToCharacterState(level, character, context.state, events);
-      if (!events.length) context.state.time = Math.max(context.state.time, activity.resolvedTime);
-      completionTimesBySourceIndex.set(activity.sourceIndex, _calcActivityCompletionTime(activity, events));
+      if (!events.length) context.state.time = Math.max(context.state.time, activityStartTime);
+      completionTimesBySourceIndex.set(activity.sourceIndex, _calcActivityCompletionTime(activityStartTime, events));
     });
   };
 

@@ -1,6 +1,6 @@
 import { createWalkEvent, findRoomAtPositionOrNearest } from "../itineraryUtil";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import { ActivityContext, addFacingEventsForWalks, ensureTimestampIsAvailable, stripTrailingPeriod } from "./activityUtil";
+import { ActivityContext, addFacingEventsForWalks, calcActivityStartTime, ensureTimestampIsAvailable, stripTrailingPeriod } from "./activityUtil";
 
 function _calcStableActivityHash(activitySourceIndex:number, characterId:string):number {
   let hash = activitySourceIndex + 1;
@@ -10,7 +10,8 @@ function _calcStableActivityHash(activitySourceIndex:number, characterId:string)
 
 export function tryCreateWanderActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   if (stripTrailingPeriod(activityText) !== 'wanders') return null;
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText);
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
   const room = findRoomAtPositionOrNearest(context.level.rooms,
     context.state.waypoint.position.x, context.state.waypoint.position.y);
   const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
@@ -27,5 +28,6 @@ export function tryCreateWanderActivity(activityText:string, context:ActivityCon
     throw new Error(`unable to create wander activity for ${context.character.id}: no reachable unclaimed adjacent waypoint`);
   }
   const selectedCandidate = candidateResults[_calcStableActivityHash(context.activitySourceIndex, context.character.id) % candidateResults.length];
-  return addFacingEventsForWalks(context.character, context.state, [selectedCandidate.result.event!]);
+  const shiftedWalkEvent = { ...selectedCandidate.result.event!, startTime:activityStartTime };
+  return addFacingEventsForWalks(context.character, context.state, [shiftedWalkEvent]);
 }

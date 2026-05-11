@@ -3,7 +3,7 @@ import { assertNonNullable } from "decent-portal";
 import { createTakeItemEvent } from "../itineraryUtil";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
-import { ActivityContext, addFacingEventsForWalks, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
+import { ActivityContext, addFacingEventsForWalks, calcActivityStartTime, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 import { findNearestWaypoint } from "../roomUtil";
 
 const TAKE_ITEM_NEARBY_DISTANCE = 8;
@@ -16,7 +16,8 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('takes ')) return null;
 
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText);
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
   const itemRef = stripTrailingPeriod(trimmedActivityText.slice('takes'.length).trim());
   if (!itemRef.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
 
@@ -42,14 +43,14 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
   })();
   const scheduledWalkEvents = context.timestampKind === 'absolute'
     ? scheduleEventsToEndAtTime(unscheduledMovementEvents, context.timestamp, context.state.time)
-    : scheduleEventsToStartAtTime(unscheduledMovementEvents, context.timestamp, context.state.time);
+    : scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime, context.state.time);
   const movementEvents = addFacingEventsForWalks(context.character, context.state, scheduledWalkEvents);
   const takeEventTime = scheduledWalkEvents.length
     ? (() => {
       const lastWalkEvent = scheduledWalkEvents[scheduledWalkEvents.length - 1] as WalkEvent;
       return lastWalkEvent.startTime + lastWalkEvent.duration;
     })()
-    : context.timestamp;
+    : activityStartTime;
   const roomItems = context.roomItemsByRoomId.get(itemLocation.room.id);
   assertNonNullable(roomItems, `missing room items for ${itemLocation.room.id}`);
   const itemIndex = roomItems.findIndex(item => item.id === itemLocation.item.id);

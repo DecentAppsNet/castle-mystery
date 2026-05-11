@@ -1,6 +1,6 @@
 import { createSpeechEvent } from "../itineraryUtil";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import { ActivityContext, ensureTimestampIsAvailable, findStatePoseAtTime } from "./activityUtil";
+import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findStatePoseAtTime } from "./activityUtil";
 
 function _parseSpeechText(activityText:string):string {
   const speechText = activityText.slice('says'.length).trim();
@@ -15,7 +15,8 @@ function _parseSpeechText(activityText:string):string {
 
 export function tryCreateSayActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   if (!activityText.trim().startsWith('says ')) return null;
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText);
-  const pose = findStatePoseAtTime(context.character, context.state, context.timestamp);
-  return [createSpeechEvent(context.timestamp, _parseSpeechText(activityText.trim()), pose.facingAngle)];
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
+  const pose = findStatePoseAtTime(context.character, context.state, activityStartTime);
+  return [createSpeechEvent(activityStartTime, _parseSpeechText(activityText.trim()), pose.facingAngle)];
 }
