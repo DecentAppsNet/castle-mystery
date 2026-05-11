@@ -40,11 +40,14 @@ Guidelines:
 
 * For tests that depend on random number generation, use `setSeed()` so results are repeatable.
 
-### Commands
+### Test Safety
 
-* Run the full test suite with `npm test`.
-* Run tests in watch mode with `npm run test:watch`.
-* Run coverage with `npm run test:coverage`.
+* Do not add filesystem access to tests. Tests should not read or write files directly.
+* Do not add shell commands or subprocess execution to tests.
+* Do not add network calls to tests.
+* AI agents and automated tools must follow the same rule: do not introduce filesystem, shell, subprocess, or network access into tests.
+* If a test needs authored fixture content, import the fixture as text instead of loading it from the filesystem at runtime.
+* If code under test would otherwise perform filesystem, shell, subprocess, or network I/O, mock that boundary rather than performing the real operation.
 
 ## Function Organization
 
