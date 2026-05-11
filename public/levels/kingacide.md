@@ -59,7 +59,7 @@ WFL
 ...K...
 .......
 .......
-.......
+.J.....
 .......
 .......
 .......
@@ -69,6 +69,7 @@ WFL
 
 * exits=Foyer|East Hall
 * K=King
+* J=Jester
 
 ## East Hall
 
@@ -99,6 +100,10 @@ WFL
 * description=A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.
 * items=Sceptre | Dagger
 
+## Jester
+
+* description=A playful fellow, eager to please, smiling, yet always terrified.
+
 ## Queen
 
 * description=A poised noblewoman whose careful posture hides a restless tension.
@@ -124,16 +129,30 @@ WFL
 # itinerary
 
 0:00:00 King @ Throne Room
+0:00:00 King faces Jester
+0:00:00 Jester @ Throne Room
+0:00:00 Jester faces King
 0:00:03 King says "It's good to be king."
-0:00:10 King says "Where did I put that book?"
-0:00:11 King wanders
+: Jester says "Surely it must be a hardship, sire."
+: King says "True. My mind is often filled with problems."
+: Jester says "Sire, you seem to be grappling with some great problem now."
+: King wanders
+: King wanders
+: King says "Where did I put that book?"
+0:00:14 King wanders
 : King wanders
 : King wanders
 : King wanders
 : King wanders
 : King wanders
-0:00:30 King says "It must be in the library."
+0:00:15 Jester says "I shall help you search."
+: Jester wanders
+: Jester wanders
+0:00:28 King says "It must be in the library."
+0:00:29 Jester says "Shall I fetch it?"
+0:00:30 King says "No."
 0:00:34 King @ Library.SW
+0:00:40 Jester @ West Hall
 
 0:00:00 Queen @ West Hall
 0:00:01 Queen wanders
@@ -158,11 +177,12 @@ King arrived in the library at 0:00:34.
 
 # solutions
 
-* characters=King|Queen
+* characters=King|Queen|Jester
 * items=book|sceptre|dagger
 * actions=searched|lied|looked
 
 ## The Missing Book
 
-* clozeStatement=[King] [searched|looked] for a [book] in [Throne Room] and [Library], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
+* clozeStatement=[King] [searched|looked] for a [book] in [Throne Room], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
 
+## 

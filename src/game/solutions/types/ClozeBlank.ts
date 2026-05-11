@@ -1,5 +1,7 @@
 import ClozePartBase from './ClozePartBase';
 
+export const UNSPECIFIED_ANSWER = -1;
+
 type ClozeBlank = ClozePartBase & {
   readonly availableAnswers: string[];
   readonly correctAnswerIndexes: number[];

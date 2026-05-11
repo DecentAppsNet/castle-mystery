@@ -1,7 +1,7 @@
 import { parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 
-import ClozeBlank from "./solutions/types/ClozeBlank";
+import ClozeBlank, { UNSPECIFIED_ANSWER } from "./solutions/types/ClozeBlank";
 import ClozePart from "./solutions/types/ClozePart";
 import ClozePartType from "./solutions/types/ClozePartType";
 import Solution from "./solutions/types/Solution";
@@ -50,7 +50,7 @@ function _createClozeBlankFromTemplateText(blankText:string, categoryOptionsByNa
     type:ClozePartType.blank,
     availableAnswers,
     correctAnswerIndexes,
-    playerAnswerIndex:correctAnswerIndexes[0] ?? 0
+    playerAnswerIndex:UNSPECIFIED_ANSWER
   };
 }
 
@@ -99,7 +99,8 @@ export function loadSolutionsFromSection(solutionsSection:string):Solution[] {
     return {
       id:title,
       title,
-      parts:_parseClozeTemplateToParts(clozeTemplate, categoryOptionsByName)
+      parts:_parseClozeTemplateToParts(clozeTemplate, categoryOptionsByName),
+      isComplete:false
     };
   });
 }

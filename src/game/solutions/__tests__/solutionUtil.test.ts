@@ -1,14 +1,72 @@
 import { describe, expect, it } from 'vitest';
-import { countSolutionMistakes } from '../solutionUtil';
+import { countSolutionMistakes, isSolutionMissingAnswers } from '../solutionUtil';
 import Solution from '../types/Solution.ts';
+import { UNSPECIFIED_ANSWER } from '../types/ClozeBlank';
 import ClozePartType from '../types/ClozePartType';
 
 describe('solutionUtil', () => {
+  describe('isSolutionMissingAnswers()', () => {
+    it('returns false when all blank answers are within bounds', () => {
+      const statement: Solution = {
+        id: 'test-complete',
+        title: 'Test Statement',
+        isComplete: false,
+        parts: [
+          {
+            type: ClozePartType.blank,
+            availableAnswers: ['apple', 'orange'],
+            correctAnswerIndexes: [0],
+            playerAnswerIndex: 1
+          }
+        ]
+      };
+
+      expect(isSolutionMissingAnswers(statement)).toBe(false);
+    });
+
+    it('returns true when a blank answer is unspecified', () => {
+      const statement: Solution = {
+        id: 'test-missing',
+        title: 'Test Statement',
+        isComplete: false,
+        parts: [
+          {
+            type: ClozePartType.blank,
+            availableAnswers: ['apple', 'orange'],
+            correctAnswerIndexes: [0],
+            playerAnswerIndex: UNSPECIFIED_ANSWER
+          }
+        ]
+      };
+
+      expect(isSolutionMissingAnswers(statement)).toBe(true);
+    });
+
+    it('returns false for out-of-range values that are not the unspecified sentinel', () => {
+      const statement: Solution = {
+        id: 'test-out-of-range',
+        title: 'Test Statement',
+        isComplete: false,
+        parts: [
+          {
+            type: ClozePartType.blank,
+            availableAnswers: ['apple', 'orange'],
+            correctAnswerIndexes: [0],
+            playerAnswerIndex: 99
+          }
+        ]
+      };
+
+      expect(isSolutionMissingAnswers(statement)).toBe(false);
+    });
+  });
+
   describe('countSolutionMistakes()', () => {
     it('returns 0 when there are no blank parts', () => {
       const statement: Solution = {
         id: 'test-1',
         title: 'Test Statement',
+        isComplete: false,
         parts: [
           {
             type: ClozePartType.text,
@@ -24,6 +82,7 @@ describe('solutionUtil', () => {
       const statement: Solution = {
         id: 'test-2',
         title: 'Test Statement',
+        isComplete: false,
         parts: [
           {
             type: ClozePartType.blank,
@@ -51,6 +110,7 @@ describe('solutionUtil', () => {
       const statement: Solution = {
         id: 'test-3',
         title: 'Test Statement',
+        isComplete: false,
         parts: [
           {
             type: ClozePartType.blank,
@@ -68,6 +128,7 @@ describe('solutionUtil', () => {
       const statement: Solution = {
         id: 'test-4',
         title: 'Test Statement',
+        isComplete: false,
         parts: [
           {
             type: ClozePartType.blank,
@@ -105,6 +166,7 @@ describe('solutionUtil', () => {
       const statement: Solution = {
         id: 'test-5',
         title: 'Test Statement',
+        isComplete: false,
         parts: [
           {
             type: ClozePartType.blank,
@@ -122,6 +184,7 @@ describe('solutionUtil', () => {
       const statement: Solution = {
         id: 'test-6',
         title: 'Empty Statement',
+        isComplete: false,
         parts: []
       };
 
