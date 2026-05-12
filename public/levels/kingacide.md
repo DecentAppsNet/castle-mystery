@@ -155,7 +155,7 @@ WFL
 0:00:29 Jester says "Shall I fetch it?"
 0:00:30 King says "No."
 0:00:34 King @ Library.SW
-0:00:40 Jester @ West Hall
+0:00:40 Jester @ East Hall
 
 0:00:00 Queen @ West Hall
 0:00:01 Queen wanders
@@ -175,6 +175,15 @@ King arrived in the library at 0:00:34.
 0:00:41 King says "I searched there already."
 
 0:00:44 Queen @ East Hall
+0:00:45 Queen drops Book
+0:00:48 Queen @ Throne Room
+0:00:46 Jester takes Book
+0:00:49 Jester @ Throne Room
+: Jester wanders
+0:00:55 Queen @ Foyer
+0:01:00 Queen @ West Hall
+0:01:03 Queen @ Sanctum
+
 0:00:46 King @ East Hall
 0:00:50 King @ Throne Room
 : King says "Where is that damned book?"
@@ -183,10 +192,13 @@ King arrived in the library at 0:00:34.
 
 * characters=King|Queen|Jester
 * items=book|sceptre|dagger
-* actions=searched|lied|looked
+* actions=searched|lied|looked|left|took
+* places=Library|Throne Room|Inner Sanctum|West Hall|East Hall|Foyer
 
 ## The Missing Book
 
 * clozeStatement=[King] [searched|looked] for a [book] in [Throne Room], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
 
-## 
+## Possession of the Prize
+
+* clozeStatement=[Queen] [left] the [book] in [East Hall]. [Jester] [took] it, returning to [Throne Room].

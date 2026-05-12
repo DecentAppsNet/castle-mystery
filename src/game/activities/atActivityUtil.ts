@@ -12,7 +12,7 @@ function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:s
 
   const separatorIndex = targetText.lastIndexOf('.');
   if (separatorIndex <= 0 || separatorIndex === targetText.length - 1) {
-    return { roomId:targetText, targetPosition:null };
+    throw new Error(`unknown room id '${targetText}' in authored activity '${activityText}'`);
   }
 
   const roomId = targetText.slice(0, separatorIndex).trim();

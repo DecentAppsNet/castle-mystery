@@ -9,6 +9,27 @@ export type LeadingTimestamp = {
   remainingText:string
 };
 
+function _parseLeadingToken(text:string):{ trimmedLeftText:string, firstWhitespaceIndex:number, timestampText:string }|null {
+  const trimmedLeftText = text.trimStart();
+  if (!trimmedLeftText.length) return null;
+  const firstWhitespaceIndex = Array.from(trimmedLeftText).findIndex(char => char === ' ' || char === '\t');
+  const timestampText = firstWhitespaceIndex === -1 ? trimmedLeftText : trimmedLeftText.slice(0, firstWhitespaceIndex);
+  return { trimmedLeftText, firstWhitespaceIndex, timestampText };
+}
+
+function _createLeadingTimestamp(trimmedLeftText:string, firstWhitespaceIndex:number, kind:LeadingTimestampKind, time:number|null, timestampText:string):LeadingTimestamp {
+  return {
+    timestampText,
+    kind,
+    time,
+    remainingText:firstWhitespaceIndex === -1 ? '' : trimmedLeftText.slice(firstWhitespaceIndex).trim()
+  };
+}
+
+function _looksLikeAbsoluteTimestampToken(token:string):boolean {
+  return token.length > 0 && token[0] >= '0' && token[0] <= '9' && token.includes(':');
+}
+
 function _isDigit(char:string):boolean {
   return char >= '0' && char <= '9';
 }
@@ -37,28 +58,28 @@ export function parseTimestampToMsecs(text:string):number {
 }
 
 export function parseLeadingTimestamp(text:string):LeadingTimestamp|null {
-  const trimmedLeftText = text.trimStart();
-  if (!trimmedLeftText.length) return null;
-  const firstWhitespaceIndex = Array.from(trimmedLeftText).findIndex(char => char === ' ' || char === '\t');
-  const timestampText = firstWhitespaceIndex === -1 ? trimmedLeftText : trimmedLeftText.slice(0, firstWhitespaceIndex);
+  const leadingToken = _parseLeadingToken(text);
+  if (!leadingToken) return null;
+  const { trimmedLeftText, firstWhitespaceIndex, timestampText } = leadingToken;
   if (timestampText === ':') {
-    return {
-      timestampText,
-      kind:'after-previous-activity',
-      time:null,
-      remainingText:firstWhitespaceIndex === -1 ? '' : trimmedLeftText.slice(firstWhitespaceIndex).trim()
-    };
+    return _createLeadingTimestamp(trimmedLeftText, firstWhitespaceIndex, 'after-previous-activity', null, timestampText);
   }
   try {
-    return {
-      timestampText,
-      kind:'absolute',
-      time:parseTimestampToMsecs(timestampText),
-      remainingText:firstWhitespaceIndex === -1 ? '' : trimmedLeftText.slice(firstWhitespaceIndex).trim()
-    };
+    return _createLeadingTimestamp(trimmedLeftText, firstWhitespaceIndex, 'absolute', parseTimestampToMsecs(timestampText), timestampText);
   } catch {
     return null;
   }
+}
+
+export function parseLeadingTimestampOrThrowOnInvalid(text:string):LeadingTimestamp|null {
+  const leadingToken = _parseLeadingToken(text);
+  if (!leadingToken) return null;
+  const { trimmedLeftText, firstWhitespaceIndex, timestampText } = leadingToken;
+  if (timestampText === ':') {
+    return _createLeadingTimestamp(trimmedLeftText, firstWhitespaceIndex, 'after-previous-activity', null, timestampText);
+  }
+  if (!_looksLikeAbsoluteTimestampToken(timestampText)) return null;
+  return _createLeadingTimestamp(trimmedLeftText, firstWhitespaceIndex, 'absolute', parseTimestampToMsecs(timestampText), timestampText);
 }
 
 export function lineBeginsWithTimestamp(text:string):boolean {

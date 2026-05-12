@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { lineBeginsWithTimestamp, parseLeadingTimestamp, parseTimestampToMsecs } from '../timestampUtil';
+import { lineBeginsWithTimestamp, parseLeadingTimestamp, parseLeadingTimestampOrThrowOnInvalid, parseTimestampToMsecs } from '../timestampUtil';
 
 describe('timestampUtil', () => {
   describe('parseTimestampToMsecs()', () => {
@@ -38,6 +38,16 @@ describe('timestampUtil', () => {
 
     it('returns null for non-timestamp lines', () => {
       expect(parseLeadingTimestamp('King arrived in the library at 0:00:34.')).toBeNull();
+    });
+  });
+
+  describe('parseLeadingTimestampOrThrowOnInvalid()', () => {
+    it('throws when a leading token looks like a timestamp but is invalid', () => {
+      expect(() => parseLeadingTimestampOrThrowOnInvalid('0:00:60 Queen @ West Hall')).toThrow(/invalid timestamp: 0:00:60/i);
+    });
+
+    it('returns null for non-timestamp prose lines', () => {
+      expect(parseLeadingTimestampOrThrowOnInvalid('King arrived in the library at 0:00:34.')).toBeNull();
     });
   });
 

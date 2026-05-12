@@ -5,6 +5,7 @@ import RoomEntryEvent from "./types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
 import FacingEvent from "./types/itineraryEvents/FacingEvent";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
+import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Position, { duplicatePosition } from "./types/Position";
@@ -47,7 +48,16 @@ export type WalkEventCreationResult = {
   wasClipped:boolean
 }
 
-function _createWalkEvent(room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEventCreationResult {
+function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
+  let room = findRoomAtPosition(rooms, x, y);
+  if (!room) {
+    console.warn(`Position (${x}, ${y}) is not in a room.`);
+    room = findRoomNearestToPosition(rooms, x, y); // Don't know what happened, but try to be robust.
+  }
+  return room;
+}
+
+export function createWalkEvent(room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEventCreationResult {
   const clippedMove = clipMoveToObstructions(room, { x:fromX, y:fromY }, { x:toX, y:toY });
   const finalToPosition = clippedMove.position;
   const duration = _calcWalkDuration(fromX, fromY, finalToPosition.x, finalToPosition.y);
@@ -64,7 +74,7 @@ function _createWalkEvent(room:Room, startTime:number, fromX:number, fromY:numbe
   };
 }
 
-function _createSpeechEvent(startTime:number, speech:string, facingAngle:number):SpeechEvent {
+export function createSpeechEvent(startTime:number, speech:string, facingAngle:number):SpeechEvent {
   return {
     type:ItineraryEventType.SPEECH,
     startTime,
@@ -74,7 +84,7 @@ function _createSpeechEvent(startTime:number, speech:string, facingAngle:number)
   };
 }
 
-function _createFacingEvent(startTime:number, fromFacingAngle:number, facingAngle:number):FacingEvent {
+export function createFacingEvent(startTime:number, fromFacingAngle:number, facingAngle:number):FacingEvent {
   return {
     type:ItineraryEventType.FACING,
     startTime,
@@ -84,41 +94,16 @@ function _createFacingEvent(startTime:number, fromFacingAngle:number, facingAngl
   };
 }
 
-function _createTakeItemEvent(startTime:number, itemId:string):TakeItemEvent {
+export function createTakeItemEvent(startTime:number, itemId:string):TakeItemEvent {
   return { type:ItineraryEventType.TAKE_ITEM, startTime, duration:0, itemId };
 }
 
-function _createRoomEntryEvent(startTime:number, roomId:string):RoomEntryEvent {
-  return { type:ItineraryEventType.ROOM_ENTRY, startTime, duration:0, roomId };
-}
-
-function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
-  let room = findRoomAtPosition(rooms, x, y);
-  if (!room) {
-    console.warn(`Position (${x}, ${y}) is not in a room.`);
-    room = findRoomNearestToPosition(rooms, x, y); // Don't know what happened, but try to be robust.
-  }
-  return room;
-}
-
-export function createWalkEvent(room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEventCreationResult {
-  return _createWalkEvent(room, startTime, fromX, fromY, toX, toY);
-}
-
-export function createSpeechEvent(startTime:number, speech:string, facingAngle:number):SpeechEvent {
-  return _createSpeechEvent(startTime, speech, facingAngle);
-}
-
-export function createFacingEvent(startTime:number, fromFacingAngle:number, facingAngle:number):FacingEvent {
-  return _createFacingEvent(startTime, fromFacingAngle, facingAngle);
-}
-
-export function createTakeItemEvent(startTime:number, itemId:string):TakeItemEvent {
-  return _createTakeItemEvent(startTime, itemId);
+export function createDropItemEvent(startTime:number, itemId:string, position:Position):DropItemEvent {
+  return { type:ItineraryEventType.DROP_ITEM, startTime, duration:0, itemId, position:duplicatePosition(position) };
 }
 
 export function createRoomEntryEvent(startTime:number, roomId:string):RoomEntryEvent {
-  return _createRoomEntryEvent(startTime, roomId);
+  return { type:ItineraryEventType.ROOM_ENTRY, startTime, duration:0, roomId };
 }
 
 export function findRoomAtPositionOrNearest(rooms:Room[], x:number, y:number):Room {

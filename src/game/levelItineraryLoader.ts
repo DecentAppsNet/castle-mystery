@@ -2,8 +2,9 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { LeadingTimestampKind, parseLeadingTimestamp } from "@/common/timestampUtil";
+import { LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/common/timestampUtil";
 import { tryCreateAtActivity } from "./activities/atActivityUtil";
+import { tryCreateDropActivity } from "./activities/dropActivityUtil";
 import { tryCreateFaceActivity } from "./activities/faceActivityUtil";
 import {
   appendEventsToCharacterState,
@@ -105,6 +106,10 @@ function _normalizeParsedActivityText(activityText:string):string {
   }
   if (trimmedActivityText.startsWith('says')) return _normalizeSpeechActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('wanders')) return 'wanders';
+  if (trimmedActivityText.startsWith('drops')) {
+    const itemRef = _normalizeActivityArgument(trimmedActivityText.slice('drops'.length), new Set(['.', '\'', '-']));
+    return itemRef ? `drops ${itemRef}` : 'drops';
+  }
   if (trimmedActivityText.startsWith('takes')) {
     const itemRef = _normalizeActivityArgument(trimmedActivityText.slice('takes'.length), new Set(['.', '\'', '-']));
     return itemRef ? `takes ${itemRef}` : 'takes';
@@ -133,7 +138,7 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '"', '\'', '-']));
-  const activityMarkers = [' @', ' says ', ' wanders', ' takes ', ' faces '];
+  const activityMarkers = [' @', ' says ', ' wanders', ' drops ', ' takes ', ' faces '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
@@ -153,7 +158,7 @@ function _parseItineraryActivities(itinerarySection:string, levelFilename:string
   return itinerarySection.split('\n').map((line, index) => ({ line, lineNo:firstLineNo + index }))
     .flatMap(({ line, lineNo }) => {
       return _runWithItineraryLineContext(levelFilename, lineNo, () => {
-        const timestamp = parseLeadingTimestamp(line);
+        const timestamp = parseLeadingTimestampOrThrowOnInvalid(line);
         if (!timestamp) return [];
         const activityLine = timestamp.remainingText.trim();
         if (!activityLine.length) throw new Error('missing itinerary activity');
@@ -262,6 +267,7 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
     tryCreateAtActivity,
     tryCreateSayActivity,
     tryCreateWanderActivity,
+    tryCreateDropActivity,
     tryCreateTakeActivity,
     tryCreateFaceActivity
   ];

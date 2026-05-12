@@ -1,5 +1,6 @@
 import Level from "./types/Level";
 import TimeLabel from "./types/TimeLabel";
+import { duplicateCharacter } from "./types/Character";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { parseNameValueLines, parseSections } from "@/common/markdownUtil";
 import { parseTimestampToMsecs } from "@/common/timestampUtil";
@@ -20,6 +21,7 @@ import { loadSolutionsFromSection } from "./levelSolutionsLoader";
 function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
   return {
     rooms: [],
+    initialCharacters: [],
     characters: [],
     solutions: [],
     activeCharacterId: "",
@@ -95,9 +97,22 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   addRoomExitsFromRoomsSection(level, sections.rooms || "");
   generateRoomWaypointsForLevel(level);
   loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions);
-  const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo);
   level = {
     ...level,
+    initialCharacters:level.characters.map(duplicateCharacter)
+  };
+  const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo);
+  const initialCharacters = level.initialCharacters.map(initialCharacter => {
+    const scheduledCharacter = itineraryData.characters.find(character => character.id === initialCharacter.id) || null;
+    return scheduledCharacter ? {
+      ...duplicateCharacter(initialCharacter),
+      itinerary:scheduledCharacter.itinerary,
+      itineraryIndex:scheduledCharacter.itineraryIndex
+    } : duplicateCharacter(initialCharacter);
+  });
+  level = {
+    ...level,
+    initialCharacters,
     activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
     characters: itineraryData.characters,
     duration: itineraryData.duration,

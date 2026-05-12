@@ -400,10 +400,10 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 
 export function createGameStateFromLevel(level:Level):GameState {
   const gameState:GameState = {
-    characters:level.characters.map(duplicateCharacter),
+    characters:level.initialCharacters.map(duplicateCharacter),
     rooms:level.rooms.map(duplicateRoom),
     solutions:level.solutions.map(duplicateSolution),
-    initialCharacters:level.characters.map(duplicateCharacter),
+    initialCharacters:level.initialCharacters.map(duplicateCharacter),
     initialRooms:level.rooms.map(duplicateRoom),
     activeEffects:[],
     hoveredItemId:null,
@@ -418,7 +418,7 @@ export function createGameStateFromLevel(level:Level):GameState {
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN
   }
-  if (level.startTime > 0) _rebuildDynamicStateForTime(gameState, level.startTime);
+  _rebuildDynamicStateForTime(gameState, level.startTime);
   _setActiveRoomDiscovered(gameState);
   return gameState;
 }

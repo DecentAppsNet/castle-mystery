@@ -5,6 +5,7 @@ import Solution from "../solutions/types/Solution";
 
 type Level = Readonly<{
   rooms:Room[],
+  initialCharacters:Character[],
   characters:Character[],
   solutions:Solution[],
   activeCharacterId:string,

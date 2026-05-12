@@ -6,7 +6,9 @@ import afterPreviousActivityOverlapText from './fixtures/after-previous-activity
 import afterPreviousActivityBeforeLaterAbsoluteText from './fixtures/after-previous-activity-before-later-absolute.md?raw';
 import afterPreviousActivityRepeatedWandersText from './fixtures/after-previous-activity-repeated-wanders.md?raw';
 import afterPreviousActivityText from './fixtures/after-previous-activity.md?raw';
+import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
+import invalidItineraryTimestampText from './fixtures/invalid-itinerary-timestamp.md?raw';
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
 import sameTimeFaceOrderIndependenceText from './fixtures/same-time-face-order-independence.md?raw';
@@ -22,6 +24,7 @@ import { findRoom } from '../roomUtil';
 import ClozeBlank from '../solutions/types/ClozeBlank';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?raw';
+import dropItemText from '../integration-tests/fixtures/drop-item.md?raw';
 
 describe('levelUtil itinerary loading', () => {
   beforeEach(() => {
@@ -138,6 +141,16 @@ describe('levelUtil itinerary loading', () => {
     expect(library.positionMarkersById.SW).toEqual({ x:32, y:28 });
   });
 
+  it('loads drop activities and removes dropped items from final carried inventory', () => {
+    const level = loadLevelFromText(dropItemText);
+    const hero = level.characters.find(character => character.id === 'Hero');
+    const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, itemId:string, position:{ x:number, y:number } } | undefined;
+
+    expect(dropEvent?.itemId).toBe('Book');
+    expect(hero?.items.map(item => item.id)).not.toContain('Book');
+    expect(findCharacterPose(hero!, dropEvent!.startTime).position).toEqual(dropEvent!.position);
+  });
+
   it('parses itinerary lines with extra punctuation and whitespace outside quotes', () => {
     const level = loadLevelFromText(itineraryExtraPunctuationText);
     const king = level.characters.find(character => character.id === 'King');
@@ -200,6 +213,17 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
+  it('wraps invalid itinerary timestamps with filename and line number', () => {
+    try {
+      loadLevelFromText(invalidItineraryTimestampText, 'invalid-itinerary-timestamp.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-itinerary-timestamp.md:35');
+      expect((error as LoadLevelException).message).toContain('invalid timestamp: 0:00:60');
+    }
+  });
+
   it('wraps unknown room marker references with filename and line number', () => {
     const invalidMarkerText = atRoomMarkerText.replace('@ Library.SW', '@ Library.NOPE');
 
@@ -210,6 +234,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('at-room-marker.md:52');
       expect((error as LoadLevelException).message).toContain('unknown position marker Library.NOPE');
+    }
+  });
+
+  it('wraps unknown @ room destinations with filename and line number', () => {
+    try {
+      loadLevelFromText(invalidAtRoomDestinationText, 'invalid-at-room-destination.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-at-room-destination.md:42');
+      expect((error as LoadLevelException).message).toContain(`unknown room id 'West Hall'`);
     }
   });
 
