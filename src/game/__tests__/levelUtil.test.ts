@@ -25,6 +25,8 @@ import ClozeBlank from '../solutions/types/ClozeBlank';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?raw';
 import dropItemText from '../integration-tests/fixtures/drop-item.md?raw';
+import giveItemNearText from '../integration-tests/fixtures/give-item-near.md?raw';
+import giveItemWalkText from '../integration-tests/fixtures/give-item-walk.md?raw';
 
 describe('levelUtil itinerary loading', () => {
   beforeEach(() => {
@@ -149,6 +151,36 @@ describe('levelUtil itinerary loading', () => {
     expect(dropEvent?.itemId).toBe('Book');
     expect(hero?.items.map(item => item.id)).not.toContain('Book');
     expect(findCharacterPose(hero!, dropEvent!.startTime).position).toEqual(dropEvent!.position);
+  });
+
+  it('loads give activities without movement when the recipient is already nearby', () => {
+    const level = loadLevelFromText(giveItemNearText);
+    const king = level.characters.find(character => character.id === 'King');
+    const queen = level.characters.find(character => character.id === 'Queen');
+    const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { itemId:string, recipientCharacterId:string } | undefined;
+
+    expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK && event.startTime >= 5_000)).toBe(false);
+    expect(giveEvent).toEqual({ type:ItineraryEventType.GIVE_ITEM, startTime:5_000, duration:0, itemId:'Book', recipientCharacterId:'Queen' });
+    expect(king?.items.map(item => item.id)).not.toContain('Book');
+    expect(queen?.items.map(item => item.id)).toContain('Book');
+  });
+
+  it('adds movement before a give activity when the recipient is farther away', () => {
+    const level = loadLevelFromText(giveItemWalkText);
+    const king = level.characters.find(character => character.id === 'King');
+    const queen = level.characters.find(character => character.id === 'Queen');
+    const walkEvents = king?.itinerary.filter(event => event.type === ItineraryEventType.WALK) || [];
+    const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number, itemId:string, recipientCharacterId:string } | undefined;
+    const lastWalkEvent = walkEvents[walkEvents.length - 1] as { startTime:number, duration:number } | undefined;
+
+    expect(walkEvents.length).toBeGreaterThan(0);
+    expect(giveEvent).toBeDefined();
+    expect(lastWalkEvent).toBeDefined();
+    expect(giveEvent!.startTime).toBe(lastWalkEvent!.startTime + lastWalkEvent!.duration);
+    expect(giveEvent!.itemId).toBe('Book');
+    expect(giveEvent!.recipientCharacterId).toBe('Queen');
+    expect(king?.items.map(item => item.id)).not.toContain('Book');
+    expect(queen?.items.map(item => item.id)).toContain('Book');
   });
 
   it('parses itinerary lines with extra punctuation and whitespace outside quotes', () => {

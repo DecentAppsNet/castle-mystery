@@ -6,6 +6,7 @@ import { LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/c
 import { tryCreateAtActivity } from "./activities/atActivityUtil";
 import { tryCreateDropActivity } from "./activities/dropActivityUtil";
 import { tryCreateFaceActivity } from "./activities/faceActivityUtil";
+import { tryCreateGiveActivity } from "./activities/giveActivityUtil.ts";
 import {
   appendEventsToCharacterState,
   ActivityContext,
@@ -97,6 +98,17 @@ function _normalizeSpeechActivityText(activityText:string):string {
   return `says ${speechText}`;
 }
 
+function _normalizeGiveActivityText(activityText:string):string {
+  const giveText = activityText.slice('gives'.length).trim();
+  const separatorIndex = giveText.lastIndexOf(' to ');
+  if (separatorIndex <= 0 || separatorIndex >= giveText.length - ' to '.length) return 'gives';
+
+  const itemRef = _normalizeActivityArgument(giveText.slice(0, separatorIndex), new Set(['.', '\'', '-']));
+  const recipientId = _normalizeActivityArgument(giveText.slice(separatorIndex + ' to '.length), new Set(['.', '\'', '-']));
+  if (!itemRef || !recipientId) return 'gives';
+  return `gives ${itemRef} to ${recipientId}`;
+}
+
 function _normalizeParsedActivityText(activityText:string):string {
   const trimmedActivityText = activityText.trim();
 
@@ -106,6 +118,7 @@ function _normalizeParsedActivityText(activityText:string):string {
   }
   if (trimmedActivityText.startsWith('says')) return _normalizeSpeechActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('wanders')) return 'wanders';
+  if (trimmedActivityText.startsWith('gives')) return _normalizeGiveActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('drops')) {
     const itemRef = _normalizeActivityArgument(trimmedActivityText.slice('drops'.length), new Set(['.', '\'', '-']));
     return itemRef ? `drops ${itemRef}` : 'drops';
@@ -138,7 +151,7 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '"', '\'', '-']));
-  const activityMarkers = [' @', ' says ', ' wanders', ' drops ', ' takes ', ' faces '];
+  const activityMarkers = [' @', ' says ', ' wanders', ' gives ', ' drops ', ' takes ', ' faces '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
@@ -267,6 +280,7 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
     tryCreateAtActivity,
     tryCreateSayActivity,
     tryCreateWanderActivity,
+    tryCreateGiveActivity,
     tryCreateDropActivity,
     tryCreateTakeActivity,
     tryCreateFaceActivity

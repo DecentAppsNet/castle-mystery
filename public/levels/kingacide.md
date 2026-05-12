@@ -151,9 +151,10 @@ WFL
 : King faces Jester
 : Jester wanders
 : Jester wanders
-0:00:28 King says "It must be in the library."
-0:00:29 Jester says "Shall I fetch it?"
-0:00:30 King says "No."
+0:00:25 King says "It must be in the library."
+: Jester says "Shall I fetch it?"
+: King says "No. But hold my sceptre."
+: King gives Sceptre to Jester
 0:00:34 King @ Library.SW
 0:00:40 Jester @ East Hall
 

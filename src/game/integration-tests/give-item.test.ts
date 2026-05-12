@@ -1,0 +1,35 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { clearSeed, setSeed } from '@/common/randUtil';
+import { createGameStateFromLevel, findCharacter } from '../gameUtil';
+import { loadLevelFromText } from '../levelUtil';
+import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
+import giveItemWalkText from './fixtures/give-item-walk.md?raw';
+
+describe('give item integration', () => {
+  beforeEach(() => {
+    setSeed(1);
+  });
+
+  afterEach(() => {
+    clearSeed();
+  });
+
+  it('transfers the item from giver to recipient when the give event is reached', () => {
+    const level = loadLevelFromText(giveItemWalkText);
+    const king = level.characters.find(character => character.id === 'King');
+    const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
+    const beforeGiveState = createGameStateFromLevel({ ...level, startTime:giveEvent!.startTime - 1 });
+    const atGiveState = createGameStateFromLevel({ ...level, startTime:giveEvent!.startTime });
+    const beforeKing = findCharacter(beforeGiveState, 'King');
+    const beforeQueen = findCharacter(beforeGiveState, 'Queen');
+    const atGiveKing = findCharacter(atGiveState, 'King');
+    const atGiveQueen = findCharacter(atGiveState, 'Queen');
+
+    expect(giveEvent).toBeDefined();
+    expect(beforeKing.items.map(item => item.id)).toContain('Book');
+    expect(beforeQueen.items.map(item => item.id)).not.toContain('Book');
+    expect(atGiveKing.items.map(item => item.id)).not.toContain('Book');
+    expect(atGiveQueen.items.map(item => item.id)).toContain('Book');
+  });
+});

@@ -6,6 +6,7 @@ import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
 import FacingEvent from "./types/itineraryEvents/FacingEvent";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
+import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Position, { duplicatePosition } from "./types/Position";
@@ -100,6 +101,10 @@ export function createTakeItemEvent(startTime:number, itemId:string):TakeItemEve
 
 export function createDropItemEvent(startTime:number, itemId:string, position:Position):DropItemEvent {
   return { type:ItineraryEventType.DROP_ITEM, startTime, duration:0, itemId, position:duplicatePosition(position) };
+}
+
+export function createGiveItemEvent(startTime:number, itemId:string, recipientCharacterId:string):GiveItemEvent {
+  return { type:ItineraryEventType.GIVE_ITEM, startTime, duration:0, itemId, recipientCharacterId };
 }
 
 export function createRoomEntryEvent(startTime:number, roomId:string):RoomEntryEvent {
