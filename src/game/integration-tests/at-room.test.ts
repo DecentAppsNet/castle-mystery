@@ -1,6 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { loadLevelFromText } from '../levelUtil';
@@ -145,25 +143,5 @@ describe('at room integration', () => {
     expect(jesterSpeechEvent).toBeDefined();
     expect(kingFirstWalkEvent).toBeDefined();
     expect(kingFirstWalkEvent!.startTime).toBeGreaterThanOrEqual(jesterSpeechEvent!.startTime + jesterSpeechEvent!.duration);
-  });
-
-  it('routes Queen to the waypoint nearest Library.NE in the public kingacide level', () => {
-    const kingacidePublicText = readFileSync(path.resolve(process.cwd(), 'public/levels/kingacide.md'), 'utf8');
-    const level = loadLevelFromText(kingacidePublicText, '/levels/kingacide.md');
-    const queen = level.characters.find(character => character.id === 'Queen');
-    const library = findRoom(level.rooms, 'Library');
-    const markerPosition = library.positionMarkersById.NE;
-    const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
-      if (!nearestWaypoint) return waypoint;
-      const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
-      const distanceSquared = (waypoint.position.x - markerPosition.x) ** 2 + (waypoint.position.y - markerPosition.y) ** 2;
-      return distanceSquared < nearestDistanceSquared ? waypoint : nearestWaypoint;
-    }, null as typeof library.waypoints[number] | null);
-
-    expect(queen).not.toBeNull();
-    expect(markerPosition).toBeDefined();
-    expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(queen!, 29_000).position).not.toEqual(targetWaypoint!.position);
-    expect(findCharacterPose(queen!, 30_000).position).toEqual(targetWaypoint!.position);
   });
 });

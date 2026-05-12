@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 
+import itineraryExtraPunctuationText from './fixtures/itinerary-extra-punctuation.md?raw';
 import itinerarySortingText from './fixtures/itinerary-sorting.md?raw';
 import afterPreviousActivityOverlapText from './fixtures/after-previous-activity-overlap.md?raw';
 import afterPreviousActivityBeforeLaterAbsoluteText from './fixtures/after-previous-activity-before-later-absolute.md?raw';
@@ -9,6 +8,7 @@ import afterPreviousActivityRepeatedWandersText from './fixtures/after-previous-
 import afterPreviousActivityText from './fixtures/after-previous-activity.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
+import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
 import sameTimeFaceOrderIndependenceText from './fixtures/same-time-face-order-independence.md?raw';
 import sameTimeItemStateUsesCharacterOrderText from './fixtures/same-time-item-state-uses-character-order.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
@@ -93,9 +93,8 @@ describe('levelUtil itinerary loading', () => {
     expect(level.solutions.length).toBe(0);
   });
 
-  it('loads the public kingacide level without relative timestamp scheduling errors', () => {
-    const kingacidePublicText = readFileSync(path.resolve(process.cwd(), 'public/levels/kingacide.md'), 'utf8');
-    const level = loadLevelFromText(kingacidePublicText, '/levels/kingacide.md');
+  it('loads a minified kingacide snapshot with solutions and file-relative itinerary activity', () => {
+    const level = loadLevelFromText(kingacideMinifiedSnapshotText, 'kingacide-minified-snapshot.md');
 
     expect(level.solutions.length).toBe(1);
     expect(level.solutions[0].title).toBe('The Missing Book');
@@ -137,6 +136,28 @@ describe('levelUtil itinerary loading', () => {
     const library = findRoom(level.rooms, 'Library');
 
     expect(library.positionMarkersById.SW).toEqual({ x:32, y:28 });
+  });
+
+  it('parses itinerary lines with extra punctuation and whitespace outside quotes', () => {
+    const level = loadLevelFromText(itineraryExtraPunctuationText);
+    const king = level.characters.find(character => character.id === 'King');
+    const queen = level.characters.find(character => character.id === 'Queen');
+    const library = findRoom(level.rooms, 'Library');
+    const markerPosition = library.positionMarkersById.NE;
+    const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
+      if (!nearestWaypoint) return waypoint;
+      const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
+      const distanceSquared = (waypoint.position.x - markerPosition.x) ** 2 + (waypoint.position.y - markerPosition.y) ** 2;
+      return distanceSquared < nearestDistanceSquared ? waypoint : nearestWaypoint;
+    }, null as typeof library.waypoints[number] | null);
+    const speechEvent = king?.itinerary.find(event => event.type === ItineraryEventType.SPEECH && event.startTime === 7_000) as { speech:string } | undefined;
+
+    expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK)).toBe(true);
+    expect(queen?.items.map(item => item.id)).toContain('Book');
+    expect(targetWaypoint).not.toBeNull();
+    expect(findCharacterPose(king!, 6_000).position).toEqual(targetWaypoint!.position);
+    expect(speechEvent?.speech).toBe('Hello, dear.');
+    expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 8_000)).toBe(true);
   });
 
   it('resolves face targets independently of same-timestamp itinerary order', () => {

@@ -83,6 +83,7 @@ WFL
 ## Library
 
 ```
+.....
 ...Y.
 .....
 .X..B
@@ -158,15 +159,16 @@ WFL
 
 0:00:00 Queen @ West Hall
 0:00:01 Queen wanders
-0:00:30 Queen @ Library.NE
+0:00:30 Queen @ Library
 0:00:31 Queen says "Hmm."
 0:00:32 Queen takes Book
+0:00:34 Queen @ Library.NE
 
 King arrived in the library at 0:00:34.
 
-0:00:35 King faces Queen.
+0:00:35 King faces Queen
 0:00:35 King says "Hello, dear."
-0:00:35 Queen faces King.
+0:00:35 Queen faces King
 0:00:36 Queen says "Oh. Hi."
 0:00:37 King says "Have you seen my favorite book?"
 0:00:39 Queen says "No. Probably it is in the Throne Room."

@@ -37,6 +37,86 @@ type ParsedItineraryActivity = {
   activityText:string
 };
 
+const _ASCII_PUNCTUATION = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+
+function _isWhitespace(char:string):boolean {
+  return char === ' ' || char === '\t' || char === '\n' || char === '\r';
+}
+
+function _isAsciiPunctuation(char:string):boolean {
+  return _ASCII_PUNCTUATION.includes(char);
+}
+
+function _normalizeWhitespaceAndPunctuationOutsideQuotes(text:string, preservedPunctuationChars:Set<string>):string {
+  let normalizedText = '';
+  let inQuotes = false;
+  let pendingSpace = false;
+
+  for (const char of text.trim()) {
+    if (char === '"') {
+      if (!inQuotes && pendingSpace && normalizedText) normalizedText += ' ';
+      normalizedText += char;
+      inQuotes = !inQuotes;
+      pendingSpace = false;
+      continue;
+    }
+    if (inQuotes) {
+      normalizedText += char;
+      continue;
+    }
+    if (_isWhitespace(char) || (_isAsciiPunctuation(char) && !preservedPunctuationChars.has(char))) {
+      pendingSpace = normalizedText.length > 0;
+      continue;
+    }
+    if (pendingSpace && normalizedText) normalizedText += ' ';
+    normalizedText += char;
+    pendingSpace = false;
+  }
+
+  return normalizedText.trim();
+}
+
+function _stripBoundaryPunctuation(text:string):string {
+  let startIndex = 0;
+  let endIndex = text.length;
+
+  while (startIndex < endIndex && (_isWhitespace(text[startIndex]) || _isAsciiPunctuation(text[startIndex]))) startIndex += 1;
+  while (endIndex > startIndex && (_isWhitespace(text[endIndex - 1]) || _isAsciiPunctuation(text[endIndex - 1]))) endIndex -= 1;
+
+  return text.slice(startIndex, endIndex).trim();
+}
+
+function _normalizeActivityArgument(text:string, preservedPunctuationChars:Set<string>):string {
+  return _stripBoundaryPunctuation(_normalizeWhitespaceAndPunctuationOutsideQuotes(text, preservedPunctuationChars));
+}
+
+function _normalizeSpeechActivityText(activityText:string):string {
+  const speechText = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityText.slice('says'.length), new Set(['"', '\'', '-']));
+  if (!speechText.length) return 'says';
+  return `says ${speechText}`;
+}
+
+function _normalizeParsedActivityText(activityText:string):string {
+  const trimmedActivityText = activityText.trim();
+
+  if (trimmedActivityText.startsWith('@')) {
+    const targetText = _normalizeActivityArgument(trimmedActivityText.slice(1), new Set(['.', '\'', '-']));
+    return targetText ? `@ ${targetText}` : '@';
+  }
+  if (trimmedActivityText.startsWith('says')) return _normalizeSpeechActivityText(trimmedActivityText);
+  if (trimmedActivityText.startsWith('wanders')) return 'wanders';
+  if (trimmedActivityText.startsWith('takes')) {
+    const itemRef = _normalizeActivityArgument(trimmedActivityText.slice('takes'.length), new Set(['.', '\'', '-']));
+    return itemRef ? `takes ${itemRef}` : 'takes';
+  }
+  if (trimmedActivityText.startsWith('faces')) {
+    const targetId = _normalizeActivityArgument(trimmedActivityText.slice('faces'.length), new Set(['.', '\'', '-']));
+    return targetId ? `faces ${targetId}` : 'faces';
+  }
+
+  return trimmedActivityText;
+}
+
 function _throwErrorWithLoadLevelContext(levelFilename:string, errorLineNo:number, error:unknown):never {
   if (error instanceof LoadLevelException) throw error;
   if (error instanceof Error) throw new LoadLevelException(levelFilename, errorLineNo, error.message, error);
@@ -52,18 +132,19 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 }
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
+  const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '"', '\'', '-']));
   const activityMarkers = [' @', ' says ', ' wanders', ' takes ', ' faces '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
-    const markerIndex = activityLine.indexOf(marker);
+    const markerIndex = normalizedLine.indexOf(marker);
     if (markerIndex <= 0) return;
     if (splitIndex === -1 || markerIndex < splitIndex) splitIndex = markerIndex;
   });
 
   if (splitIndex === -1) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
-  const characterId = activityLine.slice(0, splitIndex).trim();
-  const activityText = activityLine.slice(splitIndex + 1).trim();
+  const characterId = _stripBoundaryPunctuation(normalizedLine.slice(0, splitIndex));
+  const activityText = _normalizeParsedActivityText(normalizedLine.slice(splitIndex + 1));
   if (!characterId || !activityText) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
   return { characterId, activityText };
 }
