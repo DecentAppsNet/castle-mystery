@@ -37,15 +37,15 @@ describe('levelUtil itinerary loading', () => {
     clearSeed();
   });
 
-  it('sorts timestamped activities instead of using file order', () => {
-    const level = loadLevelFromText(itinerarySortingText);
+  it('sorts timestamped activities instead of using file order', async () => {
+    const level = await loadLevelFromText(itinerarySortingText);
 
     const hero = level.characters.find(character => character.id === 'Hero');
     expect(hero?.itinerary.map(event => event.startTime)).toEqual([1_000, 2_000]);
   });
 
-  it('starts the first colon-timestamped activity at time zero', () => {
-    const level = loadLevelFromText(afterPreviousActivityText);
+  it('starts the first colon-timestamped activity at time zero', async () => {
+    const level = await loadLevelFromText(afterPreviousActivityText);
     const hero = level.characters.find(character => character.id === 'Hero');
     const speechEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);
     const priorEvents = hero?.itinerary.filter(event => event.type !== ItineraryEventType.SPEECH) || [];
@@ -56,8 +56,8 @@ describe('levelUtil itinerary loading', () => {
     expect(speechEvent?.startTime).toBe(priorCompletionTime);
   });
 
-  it('chains colon timestamps from the previous activity completion time including overlapping events', () => {
-    const level = loadLevelFromText(afterPreviousActivityOverlapText);
+  it('chains colon timestamps from the previous activity completion time including overlapping events', async () => {
+    const level = await loadLevelFromText(afterPreviousActivityOverlapText);
     const hero = level.characters.find(character => character.id === 'Hero');
     const speechEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);
     const priorEvents = hero?.itinerary.filter(event => event.type !== ItineraryEventType.SPEECH) || [];
@@ -70,8 +70,8 @@ describe('levelUtil itinerary loading', () => {
     expect(priorCompletionTime).toBeGreaterThan(latestWalkEndTime);
   });
 
-  it('loads a file-relative activity before a later same-character absolute activity in file order', () => {
-    const level = loadLevelFromText(afterPreviousActivityBeforeLaterAbsoluteText);
+  it('loads a file-relative activity before a later same-character absolute activity in file order', async () => {
+    const level = await loadLevelFromText(afterPreviousActivityBeforeLaterAbsoluteText);
     const hero = level.characters.find(character => character.id === 'Hero');
     const speechEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);
 
@@ -79,12 +79,12 @@ describe('levelUtil itinerary loading', () => {
     expect(speechEvent?.startTime).toBe(30_000);
   });
 
-  it('loads repeated file-relative wander activities without rescheduling conflicts', () => {
-    expect(() => loadLevelFromText(afterPreviousActivityRepeatedWandersText)).not.toThrow();
+  it('loads repeated file-relative wander activities without rescheduling conflicts', async () => {
+    await expect(loadLevelFromText(afterPreviousActivityRepeatedWandersText)).resolves.toBeDefined();
   });
 
-  it('loads kingacide itinerary activities including title-based takes and facing events', () => {
-    const level = loadLevelFromText(kingacideItineraryText);
+  it('loads kingacide itinerary activities including title-based takes and facing events', async () => {
+    const level = await loadLevelFromText(kingacideItineraryText);
     const queen = level.characters.find(character => character.id === 'Queen');
     const king = level.characters.find(character => character.id === 'King');
     const eastHall = level.rooms.find(room => room.id === 'East Hall');
@@ -98,8 +98,8 @@ describe('levelUtil itinerary loading', () => {
     expect(level.solutions.length).toBe(0);
   });
 
-  it('loads a minified kingacide snapshot with solutions and file-relative itinerary activity', () => {
-    const level = loadLevelFromText(kingacideMinifiedSnapshotText, 'kingacide-minified-snapshot.md');
+  it('loads a minified kingacide snapshot with solutions and file-relative itinerary activity', async () => {
+    const level = await loadLevelFromText(kingacideMinifiedSnapshotText, 'kingacide-minified-snapshot.md');
 
     expect(level.solutions.length).toBe(1);
     expect(level.solutions[0].title).toBe('The Missing Book');
@@ -107,16 +107,16 @@ describe('levelUtil itinerary loading', () => {
     expect(level.solutions[0].parts[0].type).toBe('blank');
   });
 
-  it('parses one solution per subsection from the solutions section', () => {
-    const level = loadLevelFromText(solutionsTwoSubsectionsText);
+  it('parses one solution per subsection from the solutions section', async () => {
+    const level = await loadLevelFromText(solutionsTwoSubsectionsText);
 
     expect(level.solutions.map(solution => solution.title)).toEqual(['First', 'Second']);
     expect(level.solutions[0].parts.length).toBeGreaterThan(0);
     expect(level.solutions[1].parts.length).toBeGreaterThan(0);
   });
 
-  it('collects available answers from all matching categories for each blank', () => {
-    const level = loadLevelFromText(solutionsCategoryMatchesText);
+  it('collects available answers from all matching categories for each blank', async () => {
+    const level = await loadLevelFromText(solutionsCategoryMatchesText);
     const solution = level.solutions[0];
     const firstBlank = solution.parts[0] as ClozeBlank;
     const secondBlank = solution.parts[2] as ClozeBlank;
@@ -127,8 +127,8 @@ describe('levelUtil itinerary loading', () => {
     expect(secondBlank.correctAnswerIndexes).toEqual([0, 1]);
   });
 
-  it('falls back to blank values when no category contains all correct answers', () => {
-    const level = loadLevelFromText(solutionsFallbackText);
+  it('falls back to blank values when no category contains all correct answers', async () => {
+    const level = await loadLevelFromText(solutionsFallbackText);
     const solution = level.solutions[0];
     const firstBlank = solution.parts[0] as ClozeBlank;
 
@@ -136,15 +136,15 @@ describe('levelUtil itinerary loading', () => {
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
   });
 
-  it('loads room position markers from room legends and grids', () => {
-    const level = loadLevelFromText(atRoomMarkerText);
+  it('loads room position markers from room legends and grids', async () => {
+    const level = await loadLevelFromText(atRoomMarkerText);
     const library = findRoom(level.rooms, 'Library');
 
     expect(library.positionMarkersById.SW).toEqual({ x:32, y:28 });
   });
 
-  it('loads drop activities and removes dropped items from final carried inventory', () => {
-    const level = loadLevelFromText(dropItemText);
+  it('loads drop activities and removes dropped items from final carried inventory', async () => {
+    const level = await loadLevelFromText(dropItemText);
     const hero = level.characters.find(character => character.id === 'Hero');
     const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, itemId:string, position:{ x:number, y:number } } | undefined;
 
@@ -153,8 +153,8 @@ describe('levelUtil itinerary loading', () => {
     expect(findCharacterPose(hero!, dropEvent!.startTime).position).toEqual(dropEvent!.position);
   });
 
-  it('loads give activities without movement when the recipient is already nearby', () => {
-    const level = loadLevelFromText(giveItemNearText);
+  it('loads give activities without movement when the recipient is already nearby', async () => {
+    const level = await loadLevelFromText(giveItemNearText);
     const king = level.characters.find(character => character.id === 'King');
     const queen = level.characters.find(character => character.id === 'Queen');
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { itemId:string, recipientCharacterId:string } | undefined;
@@ -165,8 +165,8 @@ describe('levelUtil itinerary loading', () => {
     expect(queen?.items.map(item => item.id)).toContain('Book');
   });
 
-  it('adds movement before a give activity when the recipient is farther away', () => {
-    const level = loadLevelFromText(giveItemWalkText);
+  it('adds movement before a give activity when the recipient is farther away', async () => {
+    const level = await loadLevelFromText(giveItemWalkText);
     const king = level.characters.find(character => character.id === 'King');
     const queen = level.characters.find(character => character.id === 'Queen');
     const walkEvents = king?.itinerary.filter(event => event.type === ItineraryEventType.WALK) || [];
@@ -183,8 +183,8 @@ describe('levelUtil itinerary loading', () => {
     expect(queen?.items.map(item => item.id)).toContain('Book');
   });
 
-  it('parses itinerary lines with extra punctuation and whitespace outside quotes', () => {
-    const level = loadLevelFromText(itineraryExtraPunctuationText);
+  it('parses itinerary lines with extra punctuation and whitespace outside quotes', async () => {
+    const level = await loadLevelFromText(itineraryExtraPunctuationText);
     const king = level.characters.find(character => character.id === 'King');
     const queen = level.characters.find(character => character.id === 'Queen');
     const library = findRoom(level.rooms, 'Library');
@@ -205,8 +205,8 @@ describe('levelUtil itinerary loading', () => {
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 8_000)).toBe(true);
   });
 
-  it('resolves face targets independently of same-timestamp itinerary order', () => {
-    const level = loadLevelFromText(sameTimeFaceOrderIndependenceText);
+  it('resolves face targets independently of same-timestamp itinerary order', async () => {
+    const level = await loadLevelFromText(sameTimeFaceOrderIndependenceText);
     const king = level.characters.find(character => character.id === 'King');
     const queen = level.characters.find(character => character.id === 'Queen');
     const kingFaceEvent = king?.itinerary.find(event => event.type === ItineraryEventType.FACING && event.startTime === 2_000);
@@ -220,21 +220,21 @@ describe('levelUtil itinerary loading', () => {
       .toBeCloseTo(Math.atan2((queenPose?.position.y || 0) - (kingPose?.position.y || 0), (queenPose?.position.x || 0) - (kingPose?.position.x || 0)));
   });
 
-  it('sets level duration from the longest character itinerary', () => {
-    const level = loadLevelFromText(kingacideItineraryText);
+  it('sets level duration from the longest character itinerary', async () => {
+    const level = await loadLevelFromText(kingacideItineraryText);
     expect(level.duration).toEqual(41_000);
   });
 
-  it('uses deterministic character order for same-timestamp mutable state', () => {
-    const level = loadLevelFromText(sameTimeItemStateUsesCharacterOrderText);
+  it('uses deterministic character order for same-timestamp mutable state', async () => {
+    const level = await loadLevelFromText(sameTimeItemStateUsesCharacterOrderText);
     const king = level.characters.find(character => character.id === 'King');
 
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 5_000)).toBe(true);
   });
 
-  it('wraps itinerary line errors with filename and line number', () => {
+  it('wraps itinerary line errors with filename and line number', async () => {
     try {
-      loadLevelFromText(invalidItineraryActivityText, 'invalid-itinerary-activity.md');
+      await loadLevelFromText(invalidItineraryActivityText, 'invalid-itinerary-activity.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
@@ -245,9 +245,9 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('wraps invalid itinerary timestamps with filename and line number', () => {
+  it('wraps invalid itinerary timestamps with filename and line number', async () => {
     try {
-      loadLevelFromText(invalidItineraryTimestampText, 'invalid-itinerary-timestamp.md');
+      await loadLevelFromText(invalidItineraryTimestampText, 'invalid-itinerary-timestamp.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
@@ -256,11 +256,11 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('wraps unknown room marker references with filename and line number', () => {
+  it('wraps unknown room marker references with filename and line number', async () => {
     const invalidMarkerText = atRoomMarkerText.replace('@ Library.SW', '@ Library.NOPE');
 
     try {
-      loadLevelFromText(invalidMarkerText, 'at-room-marker.md');
+      await loadLevelFromText(invalidMarkerText, 'at-room-marker.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
@@ -269,9 +269,9 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('wraps unknown @ room destinations with filename and line number', () => {
+  it('wraps unknown @ room destinations with filename and line number', async () => {
     try {
-      loadLevelFromText(invalidAtRoomDestinationText, 'invalid-at-room-destination.md');
+      await loadLevelFromText(invalidAtRoomDestinationText, 'invalid-at-room-destination.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);

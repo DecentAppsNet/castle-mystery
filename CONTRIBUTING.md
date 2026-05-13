@@ -49,6 +49,13 @@ Guidelines:
 * If a test needs authored fixture content, import the fixture as text instead of loading it from the filesystem at runtime.
 * If code under test would otherwise perform filesystem, shell, subprocess, or network I/O, mock that boundary rather than performing the real operation.
 
+# Fetching at Run-Time
+
+* No fetches to services outside of the host domain are allowed.
+* All calls to fetch() should call a URL that has been normalized with the baseUrl() function.
+* The call to baseUrl() should be made near or on the same line as the call to fetch(). It should not be made outside the function that fetch() is called. (It is done this way so we can clearly see that every call to fetch() has baseUrl() normalization on its parameter.)
+* Any alternative ways of performing network I/O other than calling the fetch() function should not be used.
+
 ## Function Organization
 
 * Function definitions should be sequenced in call order so that if function A calls function B, function B appears earlier in the file than function A.

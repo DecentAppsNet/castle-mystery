@@ -26,8 +26,8 @@ function _findNextEvent<T>(events:readonly unknown[], startIndex:number, predica
   return undefined;
 }
 
-function _expectRoutesThroughPairedExitWaypoints(levelText:string) {
-  const level = loadLevelFromText(levelText);
+async function _expectRoutesThroughPairedExitWaypoints(levelText:string) {
+  const level = await loadLevelFromText(levelText);
   const queen = level.characters.find(character => character.id === 'Queen');
   expect(queen).not.toBeNull();
 
@@ -84,24 +84,24 @@ describe('at room integration', () => {
     clearSeed();
   });
 
-  it('routes through paired exit waypoints when moving between rooms', () => {
-    _expectRoutesThroughPairedExitWaypoints(atLibraryViaFoyerText);
+  it('routes through paired exit waypoints when moving between rooms', async () => {
+    await _expectRoutesThroughPairedExitWaypoints(atLibraryViaFoyerText);
   });
 
-  it('routes through paired exit waypoints after a wander before room navigation', () => {
-    _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryViaFoyerText);
+  it('routes through paired exit waypoints after a wander before room navigation', async () => {
+    await _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryViaFoyerText);
   });
 
-  it('routes through paired exit waypoints after a wander when the starting room has another exit', () => {
-    _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryWithSanctumText);
+  it('routes through paired exit waypoints after a wander when the starting room has another exit', async () => {
+    await _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryWithSanctumText);
   });
 
-  it('routes through paired exit waypoints in the L-shaped west-hall layout from kingacide', () => {
-    _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryLShapeText);
+  it('routes through paired exit waypoints in the L-shaped west-hall layout from kingacide', async () => {
+    await _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryLShapeText);
   });
 
-  it('routes @ Room.Marker to the waypoint nearest the authored marker position', () => {
-    const level = loadLevelFromText(atRoomMarkerText);
+  it('routes @ Room.Marker to the waypoint nearest the authored marker position', async () => {
+    const level = await loadLevelFromText(atRoomMarkerText);
     const king = level.characters.find(character => character.id === 'King');
     const library = findRoom(level.rooms, 'Library');
     const markerPosition = library.positionMarkersById.SW;
@@ -117,8 +117,8 @@ describe('at room integration', () => {
     expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 
-  it('moves within the same room for @ Room.Marker when already in that room', () => {
-    const level = loadLevelFromText(atRoomMarkerSameRoomText);
+  it('moves within the same room for @ Room.Marker when already in that room', async () => {
+    const level = await loadLevelFromText(atRoomMarkerSameRoomText);
     const king = level.characters.find(character => character.id === 'King');
     const library = findRoom(level.rooms, 'Library');
     const markerPosition = library.positionMarkersById.SW;
@@ -133,8 +133,8 @@ describe('at room integration', () => {
     expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 
-  it('starts relative @ Room movement only after the previous file activity completes', () => {
-    const level = loadLevelFromText(afterPreviousActivityAtRoomText);
+  it('starts relative @ Room movement only after the previous file activity completes', async () => {
+    const level = await loadLevelFromText(afterPreviousActivityAtRoomText);
     const king = level.characters.find(character => character.id === 'King');
     const jester = level.characters.find(character => character.id === 'Jester');
     const jesterSpeechEvent = jester?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);

@@ -15,8 +15,8 @@ describe('drop item integration', () => {
     clearSeed();
   });
 
-  it('moves a dropped item from the character inventory to the room at the current waypoint', () => {
-    const level = loadLevelFromText(dropItemText);
+  it('moves a dropped item from the character inventory to the room at the current waypoint', async () => {
+    const level = await loadLevelFromText(dropItemText);
     const beforeDropState = createGameStateFromLevel({ ...level, startTime:4_000 });
     const afterDropState = createGameStateFromLevel({ ...level, startTime:5_000 });
     const beforeHero = findCharacter(beforeDropState, 'Hero');

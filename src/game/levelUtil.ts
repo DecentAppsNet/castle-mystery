@@ -1,6 +1,7 @@
 import Level from "./types/Level";
 import TimeLabel from "./types/TimeLabel";
 import { duplicateCharacter } from "./types/Character";
+import { baseUrl } from "@/common/urlUtil";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { parseNameValueLines, parseSections } from "@/common/markdownUtil";
 import { parseTimestampToMsecs } from "@/common/timestampUtil";
@@ -79,7 +80,7 @@ function _findSectionFirstContentLineNo(markdownText:string, sectionName:string,
   return null;
 }
 
-export function loadLevelFromText(text:string, levelFilename:string = '<inline>'):Level {
+export async function loadLevelFromText(text:string, levelFilename:string = '<inline>'):Promise<Level> {
   const sections = parseSections(text);
   const generalSection = _parseGeneralSection(sections.general || "");
   const itinerarySection = sections.itinerary || "";
@@ -96,7 +97,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   addRoomPositionMarkersFromSections(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions));
   addRoomExitsFromRoomsSection(level, sections.rooms || "");
   generateRoomWaypointsForLevel(level);
-  loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions);
+  await loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions, levelFilename);
   level = {
     ...level,
     initialCharacters:level.characters.map(duplicateCharacter)
@@ -122,7 +123,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
 }
 
 export async function loadLevelFromUrl(levelFileUrl:string):Promise<Level> {
-  const response = await fetch(levelFileUrl);
+  const response = await fetch(baseUrl(levelFileUrl));
   const text = await response.text();
-  return loadLevelFromText(text, levelFileUrl);
+  return await loadLevelFromText(text, levelFileUrl);
 }

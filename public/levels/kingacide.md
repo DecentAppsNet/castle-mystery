@@ -101,14 +101,17 @@ WFL
 
 * description=A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.
 * items=Sceptre | Dagger
+* faceImage=/sprites/kingFace.png
 
 ## Jester
 
 * description=A playful fellow, eager to please, smiling, yet always terrified.
+* faceImage=/sprites/jesterFace.png
 
 ## Queen
 
 * description=A poised noblewoman whose careful posture hides a restless tension.
+* faceImage=/sprites/queenFace.png
 
 # items
 

@@ -3,8 +3,11 @@ import ItineraryIndex from "./ItineraryIndex";
 import Item, { duplicateItem } from "./Item";
 import Waypoint from "./Waypoint";
 
+export type CharacterFaceImage = ImageBitmap | HTMLImageElement;
+
 type Character = {
   readonly id:string,
+  readonly faceImage:CharacterFaceImage|null,
   description:string,
   items:Item[],
   x:number,
@@ -18,6 +21,7 @@ type Character = {
 export function duplicateCharacter(from:Character):Character {
   return {
     id:from.id,
+    faceImage:from.faceImage,
     description:from.description,
     items:from.items.map(duplicateItem),
     x:from.x,

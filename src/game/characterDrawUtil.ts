@@ -129,7 +129,6 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
   context.strokeStyle = COLOR_BLACK;
   if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
   context.beginPath();
-  context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, 2 * Math.PI);
   context.moveTo(backboneX, centerY - characterHeight / 4 + headRadius);
   context.lineTo(backboneX, centerY + characterHeight / 4);
   context.moveTo(backboneX, centerY);
@@ -140,7 +139,30 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
   context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 2);
   context.moveTo(backboneX, centerY + characterHeight / 4);
   context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 2);
+  if (!character.faceImage) {
+    context.moveTo(backboneX + headRadius, centerY - characterHeight / 4);
+    context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
+    context.stroke();
+    return;
+  }
   context.stroke();
+
+  const faceImageWidth = 'naturalWidth' in character.faceImage ? character.faceImage.naturalWidth : character.faceImage.width;
+  const faceImageHeight = 'naturalHeight' in character.faceImage ? character.faceImage.naturalHeight : character.faceImage.height;
+  if (!faceImageWidth || !faceImageHeight) {
+    context.beginPath();
+    context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
+    context.stroke();
+    return;
+  }
+  const maxFaceWidth = headRadius * 2;
+  const maxFaceHeight = headRadius * 2;
+  const faceScale = Math.min(maxFaceWidth / faceImageWidth, maxFaceHeight / faceImageHeight);
+  const drawWidth = faceImageWidth * faceScale;
+  const drawHeight = faceImageHeight * faceScale;
+  const drawX = backboneX - drawWidth / 2;
+  const drawY = centerY - drawHeight;
+  context.drawImage(character.faceImage, drawX, drawY, drawWidth, drawHeight);
 }
 
 export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character,
