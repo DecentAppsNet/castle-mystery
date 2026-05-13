@@ -35,6 +35,8 @@ function _createCharacter(id:string, x:number, y:number):Character {
   const waypoint:Waypoint = { position:{ x, y }, adjacentWaypoints:[], exitDirections:{} };
   return {
     id,
+    title:id,
+    isTitleKnown:true,
     description:id,
     items:[],
     x,

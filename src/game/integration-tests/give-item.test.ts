@@ -15,8 +15,8 @@ describe('give item integration', () => {
     clearSeed();
   });
 
-  it('transfers the item from giver to recipient when the give event is reached', async () => {
-    const level = await loadLevelFromText(giveItemWalkText);
+  it('transfers the item from giver to recipient when the give event is reached', () => {
+    const level = loadLevelFromText(giveItemWalkText);
     const king = level.characters.find(character => character.id === 'King');
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
     const beforeGiveState = createGameState({ ...level, startTime:giveEvent!.startTime - 1 });

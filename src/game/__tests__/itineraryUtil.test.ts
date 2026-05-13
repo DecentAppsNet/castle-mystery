@@ -30,7 +30,9 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
   const waypoint = _createWaypoint(0, 0);
   return {
     id:'Hero',
+    title:'Hero',
     description:'Hero',
+    isTitleKnown:true,
     items:[],
     x:0,
     y:0,
