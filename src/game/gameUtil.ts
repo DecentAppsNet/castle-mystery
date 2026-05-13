@@ -390,13 +390,19 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void) {
   context.fillStyle = COLOR_BLACK;
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
-  if (!gameState) return;
+  if (!gameState) {
+    context.canvas.style.cursor = "default";
+    return;
+  }
 
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
   _updateGameState(gameState, events);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   _callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
+  context.canvas.style.cursor = gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
+    ? "pointer"
+    : "default";
 
   _updateScalingFactorsAsNeeded(gameState, context);
   _drawGameState(gameState, context);
