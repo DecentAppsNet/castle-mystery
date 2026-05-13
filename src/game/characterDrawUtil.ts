@@ -7,8 +7,10 @@ import Room from "./types/Room";
 import ScalingFactors from "./types/ScalingFactors";
 import Effect from "./effects/types/Effect";
 import ImageSet from "./types/ImageSet";
-import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_POPOVER_FILL, COLOR_SPEECH_BUBBLE_FILL } from "./drawConstants";
+import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_POPOVER_FILL, COLOR_SPEECH_BUBBLE_FILL } from "./drawConstants";
 
+const PULSE_CADENCE_MS = 1000;
+const PULSE_SCALE_PEAK = 1.2;
 const CHARACTER_SWAY_INTERVAL = 1500;
 const CHARACTER_SWAY_AMOUNT = 1;
 
@@ -79,11 +81,24 @@ function _getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFa
   return { anchorX, anchorTopY, centerX, centerY, characterWidth, characterHeight };
 }
 
+function _drawActiveCharacterHighlight(centerX:number, centerY:number, characterWidth:number, characterHeight:number,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
+  const baseRadius = Math.hypot(characterWidth / 2, characterHeight / 2) / 2 + scalingFactors.roomLineWidth;
+  const phase = (time % PULSE_CADENCE_MS) / PULSE_CADENCE_MS;
+  const pulse = phase <= 0.5 ? phase * 2 : 2 * (1 - phase);
+  const radius = baseRadius * (1 + (PULSE_SCALE_PEAK - 1) * pulse);
+  context.fillStyle = COLOR_ACTIVE_CHARACTER_HIGHLIGHT;
+  context.beginPath();
+  context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  context.fill();
+}
+
 function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, speech:string|null, imageSet:ImageSet) {
+  context:CanvasRenderingContext2D, time:number, speech:string|null, imageSet:ImageSet, isActive:boolean) {
   const { anchorX:backboneX, anchorTopY, centerX, centerY, characterWidth, characterHeight } = _getCharacterSpeechAnchor(character, scalingFactors, time);
   const headRadius = Math.min(characterWidth, characterHeight) / 4;
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
+  if (isActive) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   context.beginPath();
@@ -128,10 +143,9 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
 
 export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character,
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean, imageSet:ImageSet) {
-  void activeCharacter;
   charactersInRoom.forEach(character => {
     const speech = isPlaying ? findCharacterPose(character, time).speech : null;
-    drawCharacter(character, room, scalingFactors, context, time, speech, imageSet);
+    drawCharacter(character, room, scalingFactors, context, time, speech, imageSet, character.id === activeCharacter.id);
     processCharacterEffects(character, effects, context);
   });
 }
