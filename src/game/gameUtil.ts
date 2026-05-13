@@ -26,6 +26,7 @@ import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUt
 import { createDropItemEffect } from "./effects/dropItemUtil";
 import { createGiveItemEffect } from "./effects/giveItemUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
+import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
@@ -293,6 +294,7 @@ function _updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent)
   if (character) {
     const characterI = gameState.characters.indexOf(character);
     gameState.activeCharacterI = characterI;
+    gameState.activeEffects.push(createCharacterSelectEffect(character, Date.now(), gameState.scalingFactors));
   }
 }
 

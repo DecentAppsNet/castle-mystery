@@ -1,6 +1,7 @@
 enum EffectType {
   PLAY = "Play",
   PAUSE = "Pause",
+  CHARACTER_SELECT = "CharacterSelect",
   ITEM_DISCOVERY = "ItemDiscovery",
   TAKE_ITEM = "TakeItem",
   DROP_ITEM = "DropItem",

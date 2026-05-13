@@ -143,7 +143,8 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
 
 export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character,
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean, imageSet:ImageSet) {
-  charactersInRoom.forEach(character => {
+  const charactersInDrawOrder = [...charactersInRoom].sort((character1, character2) => character1.y - character2.y);
+  charactersInDrawOrder.forEach(character => {
     const speech = isPlaying ? findCharacterPose(character, time).speech : null;
     drawCharacter(character, room, scalingFactors, context, time, speech, imageSet, character.id === activeCharacter.id);
     processCharacterEffects(character, effects, context);
