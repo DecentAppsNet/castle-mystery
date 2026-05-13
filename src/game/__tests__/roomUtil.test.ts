@@ -36,6 +36,7 @@ function _createCharacter(id:string, x:number, y:number):Character {
   return {
     id,
     title:id,
+    randomSalt:0,
     isTitleKnown:true,
     description:id,
     items:[],

@@ -31,6 +31,7 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
   return {
     id:'Hero',
     title:'Hero',
+    randomSalt:0,
     description:'Hero',
     isTitleKnown:true,
     items:[],

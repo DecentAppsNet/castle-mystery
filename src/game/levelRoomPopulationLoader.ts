@@ -3,6 +3,7 @@
 import { assertNonNullable } from "decent-portal";
 
 import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
+import { rand } from "@/common/randUtil";
 import { isPositionInRoomObstruction } from "./obstructionUtil";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
 import { findNearestWaypoint, findRoom } from "./roomUtil";
@@ -103,6 +104,7 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 		id: characterId,
 		title,
 		faceImageUrl,
+		randomSalt:rand(),
 		isTitleKnown,
 		description,
 		items: [],

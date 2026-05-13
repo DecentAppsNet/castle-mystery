@@ -74,7 +74,7 @@ function _getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFa
   const characterWidth = roomLineWidth * 5;
   const characterHeight = roomLineWidth * 10;
   const centerY = Math.round(bottomY - characterHeight / 2);
-  const swayPhase = (time % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
+  const swayPhase = ((time + character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
   const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
   const anchorX = centerX + sway;
   const anchorTopY = centerY - characterHeight / 2;
