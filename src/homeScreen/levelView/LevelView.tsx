@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import Canvas from '../canvas/Canvas';
+import Canvas from '../../components/canvas/Canvas';
 import { mouseDown, mouseMove } from '@/game/playerEventUtil';
 import { canvasToGamePosition } from '@/game/drawUtil';
 import { updateAndDraw } from '@/game/gameUtil';

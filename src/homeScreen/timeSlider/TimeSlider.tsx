@@ -1,6 +1,6 @@
 import styles from "./TimeSlider.module.css";
 
-import Slider from "../slider/Slider";
+import Slider from "../../components/slider/Slider";
 import { useEffect, useRef, useState } from "react";
 import { calcTimeLabelPositions } from "./labelUtil";
 import { createPositionedLabels, formatMinutes, minutesToPercent, percentToMinutes } from "./timeSliderUtil";
