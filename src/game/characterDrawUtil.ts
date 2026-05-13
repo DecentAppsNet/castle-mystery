@@ -157,8 +157,8 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
     context.stroke();
     return;
   }
-  const maxFaceWidth = headRadius * 2;
-  const maxFaceHeight = headRadius * 2;
+  const maxFaceWidth = headRadius * 6;
+  const maxFaceHeight = headRadius * 6;
   const faceScale = Math.min(maxFaceWidth / faceImageWidth, maxFaceHeight / faceImageHeight);
   const drawWidth = faceImageWidth * faceScale;
   const drawHeight = faceImageHeight * faceScale;
