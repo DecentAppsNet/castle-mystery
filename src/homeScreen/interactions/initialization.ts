@@ -1,5 +1,6 @@
 import { msecsToMinutes } from "./gameplay";
-import { createGameStateFromLevel } from "@/game/gameUtil";
+import { createGameState } from "@/game/gameUtil";
+import { createImageSetFromLevel } from "@/game/imageSetUtil";
 import { loadLevelFromUrl } from "@/game/levelUtil";
 import GameState from "@/game/types/GameState";
 import { baseUrl } from "@/common/urlUtil";
@@ -11,7 +12,8 @@ export type InitResults = {
 
 export async function init():Promise<InitResults|null> {
   const level = await loadLevelFromUrl(baseUrl('/levels/kingacide.md'));
-  const gameState = createGameStateFromLevel(level);
+  const imageSet = await createImageSetFromLevel(level);
+  const gameState = createGameState(level, imageSet);
   const minutes = msecsToMinutes(gameState.time);
   return {
     gameState,

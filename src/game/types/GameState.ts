@@ -1,5 +1,6 @@
 import TimeLabel from "./TimeLabel";
 import Character from "./Character";
+import ImageSet from "./ImageSet";
 import Room from "./Room";
 import ScalingFactors from "./ScalingFactors";
 import Effect from "../effects/types/Effect";
@@ -9,6 +10,7 @@ type GameState = {
   characters:Character[],
   rooms:Room[],
   solutions:Solution[],
+  readonly imageSet:ImageSet,
   readonly initialCharacters:Character[],
   readonly initialRooms:Room[],
   activeEffects:Effect[],

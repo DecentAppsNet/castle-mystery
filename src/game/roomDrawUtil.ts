@@ -10,6 +10,7 @@ import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import ScalingFactors from "./types/ScalingFactors";
 import Effect from "./effects/types/Effect";
+import ImageSet from "./types/ImageSet";
 
 function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const { roomLineWidth } = scalingFactors;
@@ -65,7 +66,7 @@ function drawObstruction(obstruction:Obstruction, scalingFactors:ScalingFactors,
 }
 
 export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
-  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean) {
+  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean, imageSet:ImageSet) {
   if (!room.isDiscovered) return;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
   const scaledBottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
@@ -95,7 +96,7 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.fillStyle = COLOR_BLACK;
   room.exits.forEach(exit => drawRoomExit(exit, scalingFactors, context));
   if (isActive && activeCharacter) {
-    drawVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, effects, scalingFactors, context, time, isPlaying);
+    drawVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, effects, scalingFactors, context, time, isPlaying, imageSet);
   }
   processRoomEffects(room, effects, context, isActive);
 }

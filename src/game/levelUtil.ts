@@ -80,7 +80,7 @@ function _findSectionFirstContentLineNo(markdownText:string, sectionName:string,
   return null;
 }
 
-export async function loadLevelFromText(text:string, levelFilename:string = '<inline>'):Promise<Level> {
+export function loadLevelFromText(text:string, levelFilename:string = '<inline>'):Level {
   const sections = parseSections(text);
   const generalSection = _parseGeneralSection(sections.general || "");
   const itinerarySection = sections.itinerary || "";
@@ -97,7 +97,7 @@ export async function loadLevelFromText(text:string, levelFilename:string = '<in
   addRoomPositionMarkersFromSections(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions));
   addRoomExitsFromRoomsSection(level, sections.rooms || "");
   generateRoomWaypointsForLevel(level);
-  await loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions, levelFilename);
+  loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions, levelFilename);
   level = {
     ...level,
     initialCharacters:level.characters.map(duplicateCharacter)
@@ -125,5 +125,5 @@ export async function loadLevelFromText(text:string, levelFilename:string = '<in
 export async function loadLevelFromUrl(levelFileUrl:string):Promise<Level> {
   const response = await fetch(baseUrl(levelFileUrl));
   const text = await response.text();
-  return await loadLevelFromText(text, levelFileUrl);
+  return loadLevelFromText(text, levelFileUrl);
 }

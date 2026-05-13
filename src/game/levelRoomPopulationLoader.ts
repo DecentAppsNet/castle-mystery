@@ -3,11 +3,10 @@
 import { assertNonNullable } from "decent-portal";
 
 import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
-import { baseUrl } from "@/common/urlUtil";
 import { isPositionInRoomObstruction } from "./obstructionUtil";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
 import { findNearestWaypoint, findRoom } from "./roomUtil";
-import Character, { CharacterFaceImage } from "./types/Character";
+import Character from "./types/Character";
 import Item from "./types/Item";
 import Level from "./types/Level";
 import Room from "./types/Room";
@@ -71,40 +70,10 @@ export function createKnownPopulationEntryIds(definitions:RoomPopulationDefiniti
 	]);
 }
 
-export async function loadRoomPopulation(level:Level, roomsSection:string, definitions:RoomPopulationDefinitions, levelFilename:string) {
-	const faceImageByCharacterId = await _loadFaceImagesByCharacterId(definitions.characterDefinitions, levelFilename);
-	_addCharactersAndRoomItemsFromSections(level, roomsSection, definitions.characterDefinitions, faceImageByCharacterId, definitions.itemDefinitions);
+export function loadRoomPopulation(level:Level, roomsSection:string, definitions:RoomPopulationDefinitions, levelFilename:string) {
+	void levelFilename;
+	_addCharactersAndRoomItemsFromSections(level, roomsSection, definitions.characterDefinitions, definitions.itemDefinitions);
 	_addInventoryItemsToCharacters(level, definitions.characterDefinitions, definitions.itemDefinitions);
-}
-
-async function _loadImageFromUrl(imageUrl:string):Promise<CharacterFaceImage> {
-	const response = await fetch(baseUrl(imageUrl));
-	if (!response.ok) throw new Error(`unable to load face image ${imageUrl}`);
-	const imageBlob = await response.blob();
-	if (typeof createImageBitmap === 'function') return await createImageBitmap(imageBlob);
-	if (typeof Image !== 'undefined') {
-		const objectUrl = URL.createObjectURL(imageBlob);
-		try {
-			const image = new Image();
-			await new Promise<void>((resolve, reject) => {
-				image.onload = () => resolve();
-				image.onerror = () => reject(new Error(`unable to decode face image ${imageUrl}`));
-				image.src = objectUrl;
-			});
-			return image;
-		} finally {
-			URL.revokeObjectURL(objectUrl);
-		}
-	}
-	throw new Error(`no image loading API available for ${imageUrl}`);
-}
-
-async function _loadFaceImagesByCharacterId(characterDefinitions:Map<string, CharacterDefinition>, levelFilename:string):Promise<Map<string, CharacterFaceImage|null>> {
-	const entries = await Promise.all(Array.from(characterDefinitions.entries()).map(async ([characterId, definition]) => {
-		if (!definition.faceImageUrl) return [characterId, null] as const;
-		return [characterId, await _loadImageFromUrl(definition.faceImageUrl)] as const;
-	}));
-	return new Map(entries);
 }
 
 function _createItemFromDefinition(itemId:string, itemDefinitions:Map<string, ItemDefinition>, position:{x:number, y:number}, isDiscovered:boolean):Item {
@@ -123,12 +92,12 @@ function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number
 	return findNearestWaypoint(room, targetX, targetY, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y}`));
 }
 
-function _addCharacter(level:Level, room:Room, characterId:string, description:string, faceImage:CharacterFaceImage|null, x:number, y:number) {
+function _addCharacter(level:Level, room:Room, characterId:string, description:string, faceImageUrl:string|null, x:number, y:number) {
 	const claimedWaypoints = new Set(level.characters.map(character => `${character.waypoint.position.x},${character.waypoint.position.y}`));
 	const waypoint = _findNearestUnclaimedWaypoint(room, x, y, claimedWaypoints);
 	const character:Character = {
 		id: characterId,
-		faceImage,
+		faceImageUrl,
 		description,
 		items: [],
 		x:waypoint.position.x,
@@ -142,7 +111,7 @@ function _addCharacter(level:Level, room:Room, characterId:string, description:s
 }
 
 function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string,
-	characterDefinitions:Map<string, CharacterDefinition>, faceImageByCharacterId:Map<string, CharacterFaceImage|null>, itemDefinitions:Map<string, ItemDefinition>) {
+	characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
 	const roomSections = parseSections(roomsSection, 2);
 
 	Object.entries(roomSections).forEach(([roomId, roomSection]) => {
@@ -161,7 +130,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 			const [x, y] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
 			const characterDefinition = characterDefinitions.get(entryId);
 			if (characterDefinition) {
-				_addCharacter(level, room, entryId, characterDefinition.description, faceImageByCharacterId.get(entryId) || null, x, y);
+				_addCharacter(level, room, entryId, characterDefinition.description, characterDefinition.faceImageUrl, x, y);
 				return;
 			}
 			if (itemDefinitions.has(entryId)) {

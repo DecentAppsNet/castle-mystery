@@ -80,7 +80,7 @@ describe('levelUtil itinerary loading', () => {
   });
 
   it('loads repeated file-relative wander activities without rescheduling conflicts', async () => {
-    await expect(loadLevelFromText(afterPreviousActivityRepeatedWandersText)).resolves.toBeDefined();
+    expect(() => loadLevelFromText(afterPreviousActivityRepeatedWandersText)).not.toThrow();
   });
 
   it('loads kingacide itinerary activities including title-based takes and facing events', async () => {

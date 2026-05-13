@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
-import { createGameStateFromLevel, findCharacter } from '../gameUtil';
+import { createGameState, findCharacter } from '../gameUtil';
 import { loadLevelFromText } from '../levelUtil';
 import interleavedAfterPreviousActivityText from './fixtures/after-previous-activity-interleaved-characters.md?raw';
 import wanderingDoubleText from './fixtures/wandering-double.md?raw';
@@ -17,7 +17,7 @@ async function _findWalkEvents(levelText:string, characterId:string) {
 
 async function _createPositionSnapshot(levelText:string, time:number, characterId:string) {
   const level = await loadLevelFromText(levelText);
-  const gameState = createGameStateFromLevel({ ...level, startTime:time });
+  const gameState = createGameState({ ...level, startTime:time });
   const character = findCharacter(gameState, characterId);
   return { x:character.x, y:character.y };
 }
@@ -47,7 +47,7 @@ describe('wandering integration', () => {
   });
 
   it('character can wander in the throne-room layout from kingacide', async () => {
-    await expect(loadLevelFromText(wanderingThroneRoomText)).resolves.toBeDefined();
+    expect(() => loadLevelFromText(wanderingThroneRoomText)).not.toThrow();
 
     const [wanderEvent] = await _findWalkEvents(wanderingThroneRoomText, 'King');
     const initialPosition = await _createPositionSnapshot(wanderingThroneRoomText, 0, 'King');
@@ -81,7 +81,7 @@ describe('wandering integration', () => {
   });
 
   it('throws while loading when a room has no connected waypoints', async () => {
-    await expect(loadLevelFromText(wanderingTrappedText)).rejects.toThrow(/no connected waypoints/i);
+    expect(() => loadLevelFromText(wanderingTrappedText)).toThrow(/no connected waypoints/i);
   });
 
   it('resolves after-previous-activity timestamps from the previous file activity when activities are interleaved', async () => {
@@ -92,7 +92,7 @@ describe('wandering integration', () => {
     const jesterSpeechEvent = jester?.itinerary.find(event => event.type === 'Speech');
     const kingSpeechEvent = king?.itinerary.findLast(event => event.type === 'Speech');
 
-    await expect(loadLevelFromText(interleavedAfterPreviousActivityText)).resolves.toBeDefined();
+    expect(() => loadLevelFromText(interleavedAfterPreviousActivityText)).not.toThrow();
     expect(kingOpeningSpeechEvent).toBeDefined();
     expect(jesterSpeechEvent).toBeDefined();
     expect(kingSpeechEvent).toBeDefined();

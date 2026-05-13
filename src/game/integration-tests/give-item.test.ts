@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
-import { createGameStateFromLevel, findCharacter } from '../gameUtil';
+import { createGameState, findCharacter } from '../gameUtil';
 import { loadLevelFromText } from '../levelUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import giveItemWalkText from './fixtures/give-item-walk.md?raw';
@@ -19,8 +19,8 @@ describe('give item integration', () => {
     const level = await loadLevelFromText(giveItemWalkText);
     const king = level.characters.find(character => character.id === 'King');
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
-    const beforeGiveState = createGameStateFromLevel({ ...level, startTime:giveEvent!.startTime - 1 });
-    const atGiveState = createGameStateFromLevel({ ...level, startTime:giveEvent!.startTime });
+    const beforeGiveState = createGameState({ ...level, startTime:giveEvent!.startTime - 1 });
+    const atGiveState = createGameState({ ...level, startTime:giveEvent!.startTime });
     const beforeKing = findCharacter(beforeGiveState, 'King');
     const beforeQueen = findCharacter(beforeGiveState, 'Queen');
     const atGiveKing = findCharacter(atGiveState, 'King');

@@ -33,6 +33,8 @@ import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
 import Position, { duplicatePosition } from "./types/Position";
 import Item from "./types/Item";
 import { duplicateSolution } from "./solutions/types/Solution";
+import ImageSet from "./types/ImageSet";
+import { createEmptyImageSet } from "./imageSetUtil";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
 
@@ -356,7 +358,7 @@ function _drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
     const room = gameState.rooms[roomI];
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
-    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.isPlaying);
+    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.isPlaying, gameState.imageSet);
   }
   if (activeRoom && gameState.hoveredItemId) {
     const hoveredItem = activeRoom.items.find(item => item.id === gameState.hoveredItemId && item.isDiscovered) || null;
@@ -398,11 +400,12 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   _drawGameState(gameState, context);
 }
 
-export function createGameStateFromLevel(level:Level):GameState {
+export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
   const gameState:GameState = {
     characters:level.initialCharacters.map(duplicateCharacter),
     rooms:level.rooms.map(duplicateRoom),
     solutions:level.solutions.map(duplicateSolution),
+    imageSet,
     initialCharacters:level.initialCharacters.map(duplicateCharacter),
     initialRooms:level.rooms.map(duplicateRoom),
     activeEffects:[],

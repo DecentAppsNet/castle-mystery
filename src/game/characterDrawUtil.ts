@@ -8,6 +8,7 @@ import Position from "./types/Position";
 import Room from "./types/Room";
 import ScalingFactors from "./types/ScalingFactors";
 import Effect from "./effects/types/Effect";
+import ImageSet from "./types/ImageSet";
 import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_POPOVER_FILL, COLOR_SPEECH_BUBBLE_FILL, COLOR_VISIBILITY_FILL, VISIBILITY_CONE_ANGLE } from "./drawConstants";
 
 const CHARACTER_SWAY_INTERVAL = 1500;
@@ -122,9 +123,10 @@ function _getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFa
 }
 
 function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, speech:string|null) {
+  context:CanvasRenderingContext2D, time:number, speech:string|null, imageSet:ImageSet) {
   const { anchorX:backboneX, anchorTopY, centerX, centerY, characterWidth, characterHeight } = _getCharacterSpeechAnchor(character, scalingFactors, time);
   const headRadius = Math.min(characterWidth, characterHeight) / 4;
+  const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
@@ -139,7 +141,7 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
   context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 2);
   context.moveTo(backboneX, centerY + characterHeight / 4);
   context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 2);
-  if (!character.faceImage) {
+  if (!faceImage) {
     context.moveTo(backboneX + headRadius, centerY - characterHeight / 4);
     context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
     context.stroke();
@@ -147,8 +149,8 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
   }
   context.stroke();
 
-  const faceImageWidth = 'naturalWidth' in character.faceImage ? character.faceImage.naturalWidth : character.faceImage.width;
-  const faceImageHeight = 'naturalHeight' in character.faceImage ? character.faceImage.naturalHeight : character.faceImage.height;
+  const faceImageWidth = faceImage.width;
+  const faceImageHeight = faceImage.height;
   if (!faceImageWidth || !faceImageHeight) {
     context.beginPath();
     context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
@@ -162,11 +164,11 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
   const drawHeight = faceImageHeight * faceScale;
   const drawX = backboneX - drawWidth / 2;
   const drawY = centerY - drawHeight;
-  context.drawImage(character.faceImage, drawX, drawY, drawWidth, drawHeight);
+  context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
 }
 
 export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character,
-  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean) {
+  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean, imageSet:ImageSet) {
   const visibleCharacters = findVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, scalingFactors);
   const visibleCharacterIds = new Set(visibleCharacters.map(character => character.id));
   if (isPlaying) {
@@ -180,7 +182,7 @@ export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Characte
   }
   visibleCharacters.forEach(character => {
     const speech = isPlaying ? findCharacterPose(character, time).speech : null;
-    drawCharacter(character, room, scalingFactors, context, time, speech);
+    drawCharacter(character, room, scalingFactors, context, time, speech, imageSet);
     processCharacterEffects(character, effects, context);
   });
 }
