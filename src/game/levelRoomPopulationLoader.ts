@@ -12,9 +12,11 @@ import Level from "./types/Level";
 import Room from "./types/Room";
 
 type CharacterDefinition = {
+	title:string,
 	description:string,
 	itemIds:string[],
-	faceImageUrl:string|null
+	faceImageUrl:string|null,
+	isTitleKnown:boolean
 };
 
 type ItemDefinition = {
@@ -41,9 +43,11 @@ function _parseCharacterDefinitions(charactersSection:string):Map<string, Charac
 	Object.entries(characterSections).forEach(([characterId, characterSection]) => {
 		const nameValues = parseNameValueLines(characterSection);
 		characterDefinitions.set(characterId, {
+			title:nameValues.title || characterId,
 			description:nameValues.description || "",
 			itemIds:parseOptions(nameValues.items || ""),
-			faceImageUrl:nameValues.faceImage?.trim() || null
+			faceImageUrl:nameValues.faceImage?.trim() || null,
+			isTitleKnown:(nameValues.isTitleKnown || '').toLowerCase() === 'true'
 		});
 	});
 	return characterDefinitions;
@@ -92,12 +96,14 @@ function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number
 	return findNearestWaypoint(room, targetX, targetY, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y}`));
 }
 
-function _addCharacter(level:Level, room:Room, characterId:string, description:string, faceImageUrl:string|null, x:number, y:number) {
+function _addCharacter(level:Level, room:Room, characterId:string, title:string, description:string, faceImageUrl:string|null, isTitleKnown:boolean, x:number, y:number) {
 	const claimedWaypoints = new Set(level.characters.map(character => `${character.waypoint.position.x},${character.waypoint.position.y}`));
 	const waypoint = _findNearestUnclaimedWaypoint(room, x, y, claimedWaypoints);
 	const character:Character = {
 		id: characterId,
+		title,
 		faceImageUrl,
+		isTitleKnown,
 		description,
 		items: [],
 		x:waypoint.position.x,
@@ -130,7 +136,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 			const [x, y] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
 			const characterDefinition = characterDefinitions.get(entryId);
 			if (characterDefinition) {
-				_addCharacter(level, room, entryId, characterDefinition.description, characterDefinition.faceImageUrl, x, y);
+				_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description, characterDefinition.faceImageUrl, characterDefinition.isTitleKnown, x, y);
 				return;
 			}
 			if (itemDefinitions.has(entryId)) {

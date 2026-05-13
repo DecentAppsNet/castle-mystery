@@ -1,4 +1,6 @@
 import { baseUrl } from "@/common/urlUtil";
+import ClozeImage from "./solutions/types/ClozeImage";
+import ClozePartType from "./solutions/types/ClozePartType";
 import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
 
@@ -6,13 +8,16 @@ export function createEmptyImageSet():ImageSet {
   return new Map<string, ImageBitmap>();
 }
 
-function _findFaceImageUrls(level:Level):string[] {
-  const faceImageUrls = new Set<string>();
+function _findReferencedImageUrls(level:Level):string[] {
+  const imageUrls = new Set<string>();
   const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
   sourceCharacters.forEach(character => {
-    if (character.faceImageUrl) faceImageUrls.add(character.faceImageUrl);
+    if (character.faceImageUrl) imageUrls.add(character.faceImageUrl);
   });
-  return [...faceImageUrls];
+  level.solutions.forEach(solution => solution.parts.forEach(part => {
+    if (part.type === ClozePartType.image) imageUrls.add((part as ClozeImage).imageUrl);
+  }));
+  return [...imageUrls];
 }
 
 async function _loadImageBitmap(imageUrl:string):Promise<ImageBitmap> {
@@ -24,8 +29,8 @@ async function _loadImageBitmap(imageUrl:string):Promise<ImageBitmap> {
 
 export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
   const imageSet = createEmptyImageSet();
-  const faceImageUrls = _findFaceImageUrls(level);
-  const imageEntries = await Promise.all(faceImageUrls.map(async imageUrl => [imageUrl, await _loadImageBitmap(imageUrl)] as const));
+  const imageUrls = _findReferencedImageUrls(level);
+  const imageEntries = await Promise.all(imageUrls.map(async imageUrl => [imageUrl, await _loadImageBitmap(imageUrl)] as const));
   imageEntries.forEach(([imageUrl, imageBitmap]) => imageSet.set(imageUrl, imageBitmap));
   return imageSet;
 }

@@ -47,6 +47,7 @@ Guidelines:
 * Do not add network calls to tests.
 * AI agents and automated tools must follow the same rule: do not introduce filesystem, shell, subprocess, or network access into tests.
 * If a test needs authored fixture content, import the fixture as text instead of loading it from the filesystem at runtime.
+* Do not use multi-line assignments to a single test value. Put substantial authored test data in fixtures and import it instead.
 * If code under test would otherwise perform filesystem, shell, subprocess, or network I/O, mock that boundary rather than performing the real operation.
 
 # Fetching at Run-Time

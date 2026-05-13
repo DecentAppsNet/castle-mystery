@@ -16,6 +16,7 @@ import sameTimeItemStateUsesCharacterOrderText from './fixtures/same-time-item-s
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
+import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import LoadLevelException from '../LoadLevelException';
 import { loadLevelFromText } from '../levelUtil';
@@ -27,6 +28,7 @@ import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?ra
 import dropItemText from '../integration-tests/fixtures/drop-item.md?raw';
 import giveItemNearText from '../integration-tests/fixtures/give-item-near.md?raw';
 import giveItemWalkText from '../integration-tests/fixtures/give-item-walk.md?raw';
+import solutionsImageSeparatorText from './fixtures/solutions-image-separator.md?raw';
 
 describe('levelUtil itinerary loading', () => {
   beforeEach(() => {
@@ -95,16 +97,15 @@ describe('levelUtil itinerary loading', () => {
     expect(queen?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 35_000)).toBe(true);
     expect(eastHall?.isObscured).toBe(true);
     expect(foyer?.isObscured).toBe(false);
-    expect(level.solutions.length).toBe(0);
+    expect(level.solutions.map(solution => solution.title)).toEqual(['Identities']);
   });
 
   it('loads a minified kingacide snapshot with solutions and file-relative itinerary activity', async () => {
     const level = await loadLevelFromText(kingacideMinifiedSnapshotText, 'kingacide-minified-snapshot.md');
 
-    expect(level.solutions.length).toBe(1);
-    expect(level.solutions[0].title).toBe('The Missing Book');
-    expect(level.solutions[0].parts.length).toBeGreaterThan(0);
-    expect(level.solutions[0].parts[0].type).toBe('blank');
+    expect(level.solutions.map(solution => solution.title)).toEqual(['Identities', 'The Missing Book']);
+    expect(level.solutions[1].parts.length).toBeGreaterThan(0);
+    expect(level.solutions[1].parts[0].type).toBe('blank');
   });
 
   it('parses one solution per subsection from the solutions section', async () => {
@@ -134,6 +135,35 @@ describe('levelUtil itinerary loading', () => {
 
     expect(firstBlank.availableAnswers).toEqual(['Throne Room']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
+  });
+
+  it('parses cloze statement image and separator parts', async () => {
+    const level = await loadLevelFromText(solutionsImageSeparatorText);
+    const solution = level.solutions[0];
+
+    expect(solution.parts.map(part => part.type)).toEqual(['image', 'text', 'blank', 'separator', 'image', 'text', 'blank']);
+    expect((solution.parts[0] as { imageUrl:string }).imageUrl).toBe('/sprites/kingFace.png');
+    expect((solution.parts[4] as { imageUrl:string }).imageUrl).toBe('/sprites/queenFace.png');
+  });
+
+  it('defaults titles from ids and generates identities only for characters with unknown titles', async () => {
+    const level = await loadLevelFromText(titleDefaultsAndGeneratedIdentityText);
+    const hall = findRoom(level.rooms, 'Hall');
+    const king = level.characters.find(character => character.id === 'King');
+    const queen = level.characters.find(character => character.id === 'Queen');
+    const crown = hall.items.find(item => item.id === 'Crown');
+    const identities = level.solutions.find(solution => solution.title === 'Identities') || null;
+    const identityBlank = identities?.parts.find(part => part.type === 'blank') as ClozeBlank | undefined;
+
+    expect(hall.title).toBe('Grand Hall');
+    expect(king?.title).toBe('His Majesty');
+    expect(king?.isTitleKnown).toBe(true);
+    expect(queen?.title).toBe('Queen');
+    expect(queen?.isTitleKnown).toBe(false);
+    expect(crown?.title).toBe('Crown');
+    expect(identities?.title).toBe('Identities');
+    expect(identityBlank?.availableAnswers).toEqual(['His Majesty', 'Queen']);
+    expect(identityBlank?.correctAnswerIndexes).toEqual([1]);
   });
 
   it('loads room position markers from room legends and grids', async () => {

@@ -1,10 +1,50 @@
 import { parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 
+import Character from "./types/Character";
 import ClozeBlank, { UNSPECIFIED_ANSWER } from "./solutions/types/ClozeBlank";
 import ClozePart from "./solutions/types/ClozePart";
 import ClozePartType from "./solutions/types/ClozePartType";
 import Solution from "./solutions/types/Solution";
+
+function _findNextSeparatorStartIndex(text:string, startIndex:number):number {
+  return text.indexOf('---', startIndex);
+}
+
+function _findNextImageEndIndex(text:string, startIndex:number):number {
+  return text.indexOf(')', startIndex + 1);
+}
+
+function _isImageToken(text:string, startIndex:number, endIndex:number):boolean {
+  if (startIndex < 0 || endIndex <= startIndex + 1) return false;
+  const imageUrl = text.slice(startIndex + 1, endIndex).trim();
+  return imageUrl.length > 0 && !/\s/.test(imageUrl);
+}
+
+function _findNextSpecialToken(text:string, startIndex:number):{ type:'blank'|'image'|'separator', startIndex:number, endIndex:number }|null {
+  const nextBlankSegment = findSquareBracketEnclosedTextSegments(text.slice(startIndex))[0] || null;
+  const nextBlank = nextBlankSegment ? {
+    type:'blank' as const,
+    startIndex:startIndex + nextBlankSegment.startIndex,
+    endIndex:startIndex + nextBlankSegment.endIndex
+  } : null;
+  const nextSeparatorStartIndex = _findNextSeparatorStartIndex(text, startIndex);
+  const nextSeparator = nextSeparatorStartIndex >= 0 ? {
+    type:'separator' as const,
+    startIndex:nextSeparatorStartIndex,
+    endIndex:nextSeparatorStartIndex + 3
+  } : null;
+  const nextImageStartIndex = text.indexOf('(', startIndex);
+  const nextImageEndIndex = nextImageStartIndex >= 0 ? _findNextImageEndIndex(text, nextImageStartIndex) : -1;
+  const nextImage = nextImageStartIndex >= 0 && _isImageToken(text, nextImageStartIndex, nextImageEndIndex) ? {
+    type:'image' as const,
+    startIndex:nextImageStartIndex,
+    endIndex:nextImageEndIndex + 1
+  } : null;
+  return [nextBlank, nextImage, nextSeparator]
+    .filter(token => token !== null)
+    .sort((token1, token2) => token1!.startIndex - token2!.startIndex)[0] || null;
+}
 
 function _parseSolutionCategoryText(solutionsSection:string):string {
   const lines = solutionsSection.split('\n');
@@ -13,9 +53,13 @@ function _parseSolutionCategoryText(solutionsSection:string):string {
   return categoryLines.join('\n');
 }
 
-function _createCategoryOptionsByName(solutionsSection:string):Map<string, string[]> {
+export function createSolutionCategoryOptionsByName(solutionsSection:string, defaultCategoryOptionsByName:Map<string, string[]> = new Map()):Map<string, string[]> {
   const categoryNameValues = parseNameValueLines(_parseSolutionCategoryText(solutionsSection));
-  return new Map(Object.entries(categoryNameValues).map(([categoryName, categoryValue]) => [categoryName, parseOptions(categoryValue)]));
+  const categoryOptionsByName = new Map(defaultCategoryOptionsByName);
+  Object.entries(categoryNameValues).forEach(([categoryName, categoryValue]) => {
+    categoryOptionsByName.set(categoryName, parseOptions(categoryValue));
+  });
+  return categoryOptionsByName;
 }
 
 function _createBlankAvailableAnswers(correctAnswers:string[], categoryOptionsByName:Map<string, string[]>):string[] {
@@ -54,42 +98,62 @@ function _createClozeBlankFromTemplateText(blankText:string, categoryOptionsByNa
   };
 }
 
+function _createClozeBlankFromCorrectAnswer(correctAnswer:string, categoryOptionsByName:Map<string, string[]>):ClozeBlank {
+  return _createClozeBlankFromTemplateText(correctAnswer, categoryOptionsByName);
+}
+
 function _parseClozeTemplateToParts(clozeTemplate:string, categoryOptionsByName:Map<string, string[]>):ClozePart[] {
   if (!clozeTemplate.trim()) return [];
 
   const parts:ClozePart[] = [];
-  let previousIndex = 0;
-  const blankSegments = findSquareBracketEnclosedTextSegments(clozeTemplate);
+  let currentIndex = 0;
 
-  blankSegments.forEach(blankSegment => {
-    const textBeforeBlank = clozeTemplate.slice(previousIndex, blankSegment.startIndex);
-    if (textBeforeBlank.length > 0) {
+  while (currentIndex < clozeTemplate.length) {
+    const nextToken = _findNextSpecialToken(clozeTemplate, currentIndex);
+    if (!nextToken) {
+      const trailingText = clozeTemplate.slice(currentIndex);
+      if (trailingText.length > 0) {
+        parts.push({
+          type:ClozePartType.text,
+          text:trailingText
+        });
+      }
+      break;
+    }
+
+    const textBeforeToken = clozeTemplate.slice(currentIndex, nextToken.startIndex);
+    if (textBeforeToken.length > 0) {
       parts.push({
         type:ClozePartType.text,
-        text:textBeforeBlank
+        text:textBeforeToken
       });
     }
 
-    parts.push(_createClozeBlankFromTemplateText(blankSegment.enclosedText, categoryOptionsByName));
-    previousIndex = blankSegment.endIndex;
-  });
+    if (nextToken.type === 'blank') {
+      const blankText = clozeTemplate.slice(nextToken.startIndex + 1, nextToken.endIndex - 1);
+      parts.push(_createClozeBlankFromTemplateText(blankText, categoryOptionsByName));
+    } else if (nextToken.type === 'image') {
+      parts.push({
+        type:ClozePartType.image,
+        imageUrl:clozeTemplate.slice(nextToken.startIndex + 1, nextToken.endIndex - 1).trim()
+      });
+    } else {
+      parts.push({
+        type:ClozePartType.separator
+      });
+    }
 
-  const trailingText = clozeTemplate.slice(previousIndex);
-  if (trailingText.length > 0) {
-    parts.push({
-      type:ClozePartType.text,
-      text:trailingText
-    });
+    currentIndex = nextToken.endIndex;
   }
 
   return parts;
 }
 
-export function loadSolutionsFromSection(solutionsSection:string):Solution[] {
+export function loadSolutionsFromSection(solutionsSection:string, categoryOptionsByName?:Map<string, string[]>):Solution[] {
   const section = solutionsSection || "";
   if (!section.trim()) return [];
 
-  const categoryOptionsByName = _createCategoryOptionsByName(section);
+  const resolvedCategoryOptionsByName = categoryOptionsByName || createSolutionCategoryOptionsByName(section);
   const solutionSubsections = parseSections(section, 2);
 
   return Object.entries(solutionSubsections).map(([title, solutionSubsection]) => {
@@ -99,8 +163,34 @@ export function loadSolutionsFromSection(solutionsSection:string):Solution[] {
     return {
       id:title,
       title,
-      parts:_parseClozeTemplateToParts(clozeTemplate, categoryOptionsByName),
+      parts:_parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName),
       isComplete:false
     };
   });
+}
+
+export function createGeneratedIdentitySolution(characters:Character[], categoryOptionsByName:Map<string, string[]>):Solution|null {
+  const unknownTitleCharacters = characters.filter(character => !character.isTitleKnown);
+  if (!unknownTitleCharacters.length) return null;
+
+  const parts:ClozePart[] = [];
+  unknownTitleCharacters.forEach((character, characterIndex) => {
+    if (characterIndex > 0) {
+      parts.push({ type:ClozePartType.separator });
+    }
+    if (character.faceImageUrl) {
+      parts.push({ type:ClozePartType.image, imageUrl:character.faceImageUrl });
+    } else {
+      parts.push({ type:ClozePartType.text, text:'???' });
+    }
+    parts.push({ type:ClozePartType.text, text:' = ' });
+    parts.push(_createClozeBlankFromCorrectAnswer(character.title, categoryOptionsByName));
+  });
+
+  return {
+    id:'Identities',
+    title:'Identities',
+    parts,
+    isComplete:false
+  };
 }

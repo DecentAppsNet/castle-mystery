@@ -17,7 +17,13 @@ import {
   loadRoomPopulation,
   parseRoomPopulationDefinitions
 } from "./levelRoomPopulationLoader";
-import { loadSolutionsFromSection } from "./levelSolutionsLoader";
+import { createGeneratedIdentitySolution, createSolutionCategoryOptionsByName, loadSolutionsFromSection } from "./levelSolutionsLoader";
+
+function _createDefaultSolutionCategoryOptions(level:Level):Map<string, string[]> {
+  return new Map([
+    ['characters', level.characters.map(character => character.title)]
+  ]);
+}
 
 function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
   return {
@@ -88,7 +94,6 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   let level = _createEmptyLevel();
   level = {
     ...level,
-    solutions:loadSolutionsFromSection(sections.solutions || ""),
     activeCharacterId: generalSection.activeCharacterId || level.activeCharacterId,
     startTime: generalSection.startTime ?? level.startTime
   };
@@ -98,8 +103,14 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   addRoomExitsFromRoomsSection(level, sections.rooms || "");
   generateRoomWaypointsForLevel(level);
   loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions, levelFilename);
+  const solutionCategoryOptionsByName = createSolutionCategoryOptionsByName(sections.solutions || "", _createDefaultSolutionCategoryOptions(level));
+  const authoredSolutions = loadSolutionsFromSection(sections.solutions || "", solutionCategoryOptionsByName);
+  const generatedIdentitySolution = authoredSolutions.some(solution => solution.id === 'Identities')
+    ? null
+    : createGeneratedIdentitySolution(level.characters, solutionCategoryOptionsByName);
   level = {
     ...level,
+    solutions:generatedIdentitySolution ? [generatedIdentitySolution, ...authoredSolutions] : authoredSolutions,
     initialCharacters:level.characters.map(duplicateCharacter)
   };
   const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo);

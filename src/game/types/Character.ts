@@ -5,7 +5,9 @@ import Waypoint from "./Waypoint";
 
 type Character = {
   readonly id:string,
+  readonly title:string,
   readonly faceImageUrl:string|null,
+  isTitleKnown:boolean,
   description:string,
   items:Item[],
   x:number,
@@ -19,7 +21,9 @@ type Character = {
 export function duplicateCharacter(from:Character):Character {
   return {
     id:from.id,
+    title:from.title,
     faceImageUrl:from.faceImageUrl,
+    isTitleKnown:from.isTitleKnown,
     description:from.description,
     items:from.items.map(duplicateItem),
     x:from.x,

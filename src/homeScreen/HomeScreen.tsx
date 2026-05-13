@@ -109,6 +109,7 @@ function HomeScreen() {
         {activeSolution && <ClaimSolutionDialog
           isOpen={modalDialogName === ClaimSolutionDialog.name}
           solution={activeSolution}
+          imageSet={gameState.imageSet}
           onClose={() => setModalDialogName(null)}
           onClaim={() => false}
         />}

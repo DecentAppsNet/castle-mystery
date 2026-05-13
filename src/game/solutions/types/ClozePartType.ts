@@ -1,6 +1,8 @@
 enum ClozePartType {
   blank = 'blank',
-  text = 'text'
+  text = 'text',
+  image = 'image',
+  separator = 'separator'
 }
 
 export default ClozePartType;

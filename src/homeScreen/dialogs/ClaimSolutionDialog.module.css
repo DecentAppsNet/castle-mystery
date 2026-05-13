@@ -4,6 +4,31 @@
   margin: 1vh 0;
 }
 
+.imagePartWrapper {
+  display: inline-block;
+  margin: 0.5vh 0;
+  vertical-align: middle;
+}
+
+.statementImage {
+  display: block;
+  image-rendering: auto;
+}
+
+.missingImage {
+  display: inline-block;
+  padding: 0.75vh 1vh;
+  border: 0.1vh solid #999;
+  background: #f5f5f5;
+  color: #555;
+}
+
+.separator {
+  margin: 1vh 0;
+  border: none;
+  border-top: 0.15vh solid #ccc;
+}
+
 .blankSelect {
   margin: 0 0.25vh;
   padding: 0.25vh 0.5vh;

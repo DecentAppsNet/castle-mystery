@@ -205,4 +205,6 @@ King arrived in the library at 0:00:34.
 
 ## Possession of the Prize
 
-* clozeStatement=[Queen] [left] the [book] in [East Hall]. [Jester] [took] it, returning to [Throne Room].
+* clozeStatement=[Queen] [left] the [book] in [East Hall].---[Jester] [took] it, returning to [Throne Room].
+
+
