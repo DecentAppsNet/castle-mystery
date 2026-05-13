@@ -2,14 +2,12 @@ import { clamp } from "@/common/numberUtil";
 import { processCharacterEffects } from "./effects/effectUtil";
 import { findCharacterPose } from "./itineraryUtil";
 import { gameToCanvasPosition } from "./drawUtil";
-import { calcVisibilityPolygon, isPositionVisible } from "./visibilityUtil";
 import Character from "./types/Character";
-import Position from "./types/Position";
 import Room from "./types/Room";
 import ScalingFactors from "./types/ScalingFactors";
 import Effect from "./effects/types/Effect";
 import ImageSet from "./types/ImageSet";
-import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_POPOVER_FILL, COLOR_SPEECH_BUBBLE_FILL, COLOR_VISIBILITY_FILL, VISIBILITY_CONE_ANGLE } from "./drawConstants";
+import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_POPOVER_FILL, COLOR_SPEECH_BUBBLE_FILL } from "./drawConstants";
 
 const CHARACTER_SWAY_INTERVAL = 1500;
 const CHARACTER_SWAY_AMOUNT = 1;
@@ -40,47 +38,6 @@ function _getCharacterCarryText(character:Character):string {
   if (itemCount === 0) return "Carrying nothing.";
   if (itemCount === 1) return "Carrying 1 item.";
   return `Carrying ${itemCount} items.`;
-}
-
-export function getCharacterVisibilityOrigin(character:Character, scalingFactors:ScalingFactors):Position {
-  const characterHeightPixels = scalingFactors.roomLineWidth * 10;
-  const characterHeightGame = characterHeightPixels / scalingFactors.scaleY;
-  return {
-    x: character.x,
-    y: character.y - characterHeightGame * 0.75
-  };
-}
-
-export function drawVisibilityCone(activeCharacter:Character, room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const visibilityOrigin = getCharacterVisibilityOrigin(activeCharacter, scalingFactors);
-  const visibilityPolygon = calcVisibilityPolygon(visibilityOrigin, activeCharacter.facingAngle, room, VISIBILITY_CONE_ANGLE);
-  if (visibilityPolygon.length < 3) return;
-
-  context.fillStyle = COLOR_VISIBILITY_FILL;
-  context.beginPath();
-  const [startX, startY] = gameToCanvasPosition(visibilityPolygon[0].x, visibilityPolygon[0].y, scalingFactors);
-  context.moveTo(startX, startY);
-  for (let i = 1; i < visibilityPolygon.length; ++i) {
-    const point = visibilityPolygon[i];
-    const [pointX, pointY] = gameToCanvasPosition(point.x, point.y, scalingFactors);
-    context.lineTo(pointX, pointY);
-  }
-  context.closePath();
-  context.fill();
-}
-
-export function findVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character, scalingFactors:ScalingFactors):Character[] {
-  const visibilityOrigin = getCharacterVisibilityOrigin(activeCharacter, scalingFactors);
-  return charactersInRoom.filter(character => {
-    if (character.id === activeCharacter.id) return true;
-    return isPositionVisible(
-      visibilityOrigin,
-      { x: character.x, y: character.y },
-      activeCharacter.facingAngle,
-      room,
-      VISIBILITY_CONE_ANGLE
-    );
-  });
 }
 
 function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, room:Room,
@@ -171,18 +128,8 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
 
 export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character,
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean, imageSet:ImageSet) {
-  const visibleCharacters = findVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, scalingFactors);
-  const visibleCharacterIds = new Set(visibleCharacters.map(character => character.id));
-  if (isPlaying) {
-    charactersInRoom.forEach(character => {
-      if (visibleCharacterIds.has(character.id)) return;
-      const speech = findCharacterPose(character, time).speech;
-      if (!speech) return;
-      const { anchorX, anchorTopY } = _getCharacterSpeechAnchor(character, scalingFactors, time);
-      drawSpeechBubble(speech, anchorX, anchorTopY, room, scalingFactors, context);
-    });
-  }
-  visibleCharacters.forEach(character => {
+  void activeCharacter;
+  charactersInRoom.forEach(character => {
     const speech = isPlaying ? findCharacterPose(character, time).speech : null;
     drawCharacter(character, room, scalingFactors, context, time, speech, imageSet);
     processCharacterEffects(character, effects, context);

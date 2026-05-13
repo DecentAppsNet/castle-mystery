@@ -16,7 +16,7 @@ import { calcScalingFactors, ZERO_SCALING_FACTORS } from "./drawUtil";
 import Rect from "./types/Rect";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
-import { drawCharacterPopover, findVisibleCharactersInRoom } from "./characterDrawUtil";
+import { drawCharacterPopover } from "./characterDrawUtil";
 import { drawRoom } from "./roomDrawUtil";
 import { COLOR_BLACK } from "./drawConstants";
 import { discoverVisibleItemsInRoom, drawItemPopover, findDiscoveredItemAtPosition } from "./itemDrawUtil";
@@ -69,7 +69,7 @@ function _discoverVisibleItemsInActiveRoom(gameState:GameState) {
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   if (!activeCharacter || !activeRoom) return;
   if (activeRoom.isObscured) return;
-  discoverVisibleItemsInRoom(activeRoom, activeCharacter, gameState.scalingFactors)
+  discoverVisibleItemsInRoom(activeRoom)
     .forEach(item => gameState.activeEffects.push(createItemDiscoveryEffect(item, activeRoom, Date.now(), gameState.scalingFactors)));
 }
 
@@ -266,7 +266,7 @@ function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Chara
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   if (activeRoom?.isObscured) return null;
   const candidateCharacters = activeCharacter && activeRoom
-    ? findVisibleCharactersInRoom(activeRoom, findCharactersInRoom(activeRoom, gameState.characters), activeCharacter, gameState.scalingFactors)
+    ? findCharactersInRoom(activeRoom, gameState.characters)
     : gameState.characters;
   if (candidateCharacters.length === 0) return null;
 

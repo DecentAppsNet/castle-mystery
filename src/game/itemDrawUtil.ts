@@ -1,10 +1,7 @@
 import { clamp } from "@/common/numberUtil";
 import Rect from "./types/Rect";
 import { gameToCanvasPosition } from "./drawUtil";
-import { COLOR_BLACK, COLOR_ITEM_TEXT, COLOR_POPOVER_FILL, VISIBILITY_CONE_ANGLE } from "./drawConstants";
-import { getCharacterVisibilityOrigin } from "./characterDrawUtil";
-import { isPositionVisible } from "./visibilityUtil";
-import Character from "./types/Character";
+import { COLOR_BLACK, COLOR_ITEM_TEXT, COLOR_POPOVER_FILL } from "./drawConstants";
 import Item from "./types/Item";
 import Room from "./types/Room";
 import ScalingFactors from "./types/ScalingFactors";
@@ -77,21 +74,13 @@ function _wrapText(context:CanvasRenderingContext2D, text:string, maxWidth:numbe
   return lines;
 }
 
-export function discoverVisibleItemsInRoom(room:Room, activeCharacter:Character, scalingFactors:ScalingFactors) {
+export function discoverVisibleItemsInRoom(room:Room) {
   if (room.isObscured) return [];
-  const visibilityOrigin = getCharacterVisibilityOrigin(activeCharacter, scalingFactors);
   const newlyDiscoveredItems:Item[] = [];
   room.items.forEach(item => {
     if (item.isDiscovered) return;
-    const isDiscovered = isPositionVisible(
-      visibilityOrigin,
-      item.position,
-      activeCharacter.facingAngle,
-      room,
-      VISIBILITY_CONE_ANGLE
-    );
-    item.isDiscovered = isDiscovered;
-    if (isDiscovered) newlyDiscoveredItems.push(item);
+    item.isDiscovered = true;
+    newlyDiscoveredItems.push(item);
   });
   return newlyDiscoveredItems;
 }

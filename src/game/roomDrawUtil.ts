@@ -1,4 +1,4 @@
-import { drawVisibleCharactersInRoom, drawVisibilityCone } from "./characterDrawUtil";
+import { drawVisibleCharactersInRoom } from "./characterDrawUtil";
 import { createObstructionBoundarySegments } from "./obstructionUtil";
 import { processRoomEffects } from "./effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
@@ -79,7 +79,6 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   if (!room.isObscured) room.obstructions.forEach(obstruction => drawObstruction(obstruction, scalingFactors, context));
   if (!room.isObscured && isActive && activeCharacter) {
-    drawVisibilityCone(activeCharacter, room, scalingFactors, context);
     drawDiscoveredItemsInRoom(room, effects, scalingFactors, context);
   }
   context.textAlign = "center";
