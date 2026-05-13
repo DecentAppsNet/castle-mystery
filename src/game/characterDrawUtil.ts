@@ -129,7 +129,6 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
-  if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
   context.beginPath();
   context.moveTo(backboneX, centerY - characterHeight / 4 + headRadius);
   context.lineTo(backboneX, centerY + characterHeight / 4);
@@ -145,6 +144,7 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
     context.moveTo(backboneX + headRadius, centerY - characterHeight / 4);
     context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
     context.stroke();
+    if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
     return;
   }
   context.stroke();
@@ -155,6 +155,7 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
     context.beginPath();
     context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
     context.stroke();
+    if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
     return;
   }
   const maxFaceWidth = headRadius * 6;
@@ -165,6 +166,7 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
   const drawX = backboneX - drawWidth / 2;
   const drawY = centerY - drawHeight;
   context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
+  if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
 }
 
 export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character,
