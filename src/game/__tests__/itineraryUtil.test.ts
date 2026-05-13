@@ -36,6 +36,7 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
     y:0,
     waypoint,
     facingAngle:0,
+    faceImageUrl:null,
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0 })
   };
