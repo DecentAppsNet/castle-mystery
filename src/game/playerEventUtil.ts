@@ -5,6 +5,7 @@ import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
+import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
 import Solution from "./solutions/types/Solution";
 
 let thePlayerEvents:PlayerEvent[] = [];
@@ -30,6 +31,11 @@ export function playPause(isPlaying:boolean) {
 
 export function changeSolutions(solutions:Solution[]) {
   const event:ChangeSolutionsEvent = { type:PlayerEventType.CHANGE_SOLUTIONS, solutions };
+  _replaceOrAddEventOfType(thePlayerEvents, event);
+}
+
+export function nextCharacter() {
+  const event:NextCharacterEvent = { type:PlayerEventType.NEXT_CHARACTER };
   _replaceOrAddEventOfType(thePlayerEvents, event);
 }
 

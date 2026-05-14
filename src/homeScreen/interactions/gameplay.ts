@@ -1,7 +1,7 @@
 import { clamp } from "@/common/numberUtil";
 import { MSECS_IN_MINUTE } from "@/common/timeUtil";
 import Solution from "@/game/solutions/types/Solution";
-import { changeSolutions, changeTime, playPause } from "@/game/playerEventUtil";
+import { changeSolutions, changeTime, nextCharacter, playPause } from "@/game/playerEventUtil";
 
 export function msecsToMinutes(msecs:number):number {
   return msecs / MSECS_IN_MINUTE;
@@ -29,4 +29,8 @@ export function updateTimeMsecs(time:number, duration:number, setIsPlaying:(isPl
 export function updateSolutions(nextSolutions:Solution[], setSolutions:(solutions:Solution[]) => void) {
   setSolutions(nextSolutions); // Update for React UI.
   changeSolutions(nextSolutions); // Update gameState.
+}
+
+export function updateNextCharacter() {
+  nextCharacter();
 }

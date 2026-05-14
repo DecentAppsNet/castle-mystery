@@ -4,6 +4,7 @@ import GameState from "./types/GameState";
 import { duplicateRoom } from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
+import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
 import { findCharacterPose } from "./itineraryUtil";
 import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
@@ -311,6 +312,27 @@ function _updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent)
   }
 }
 
+function _compareCharactersForCycleOrder(character1:Character, character2:Character) {
+  return character1.y - character2.y || character1.x - character2.x;
+}
+
+function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharacterEvent) {
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  if (!activeCharacter) return;
+  const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
+  if (!activeRoom) return;
+  const charactersInRoom = findCharactersInRoom(activeRoom, gameState.characters)
+    .sort(_compareCharactersForCycleOrder);
+  if (charactersInRoom.length <= 1) return;
+
+  const activeCharacterIndex = charactersInRoom.findIndex(character => character.id === activeCharacter.id);
+  if (activeCharacterIndex === -1) return;
+  const nextCharacter = charactersInRoom[(activeCharacterIndex + 1) % charactersInRoom.length];
+  if (nextCharacter.id === activeCharacter.id) return;
+  gameState.activeCharacterI = gameState.characters.indexOf(nextCharacter);
+  gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter, Date.now(), gameState.scalingFactors));
+}
+
 function _updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
@@ -330,6 +352,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent); break;
       case PlayerEventType.CHANGE_SOLUTIONS: _updateGameStateForChangeSolutions(gameState, event as ChangeSolutionsEvent); break;
+      case PlayerEventType.NEXT_CHARACTER: _updateGameStateForNextCharacter(gameState, event as NextCharacterEvent); break;
       case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent); break;
       case PlayerEventType.MOUSEDOWN: _updateGameStateForMouseDown(gameState, event as MouseDownEvent); break;
       case PlayerEventType.MOUSEMOVE: _updateGameStateForMouseMove(gameState, event as MouseMoveEvent); break;

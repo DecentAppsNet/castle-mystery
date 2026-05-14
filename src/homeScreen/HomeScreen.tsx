@@ -6,7 +6,7 @@ import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/homeScreen/levelView/LevelView";
 import TimeSlider from "@/homeScreen/timeSlider/TimeSlider";
 import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
-import { updatePlayPause, updateSolutions, updateTime, updateTimeMsecs } from "./interactions/gameplay";
+import { updateNextCharacter, updatePlayPause, updateSolutions, updateTime, updateTimeMsecs } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
 import { findNextRoomEntryTime, findPreviousRoomEntryTime } from "@/game/itineraryUtil";
 import SolutionsView from "./solutionsView/SolutionsView";
@@ -57,6 +57,12 @@ function HomeScreen() {
         if (isPlayPauseDisabled) return;
         event.preventDefault();
         updatePlayPause(!isPlaying, setIsPlaying);
+        return;
+      }
+
+      if (event.code === "Tab") {
+        event.preventDefault();
+        updateNextCharacter();
         return;
       }
 
