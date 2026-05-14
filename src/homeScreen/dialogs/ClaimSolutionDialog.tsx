@@ -132,8 +132,7 @@ function ClaimSolutionDialog({solution, imageSet, onClaim, onClose, isOpen}:Prop
       <DialogFooter>
         <DialogButton text='Close' onClick={() => onClose(draftSolution)} />
         <DialogButton text='Claim Solution' onClick={() => {
-          const wasClaimed = onClaim(draftSolution);
-          if (wasClaimed) onClose(draftSolution);
+          onClaim(draftSolution);
         }} disabled={isClaimDisabled} isPrimary />
       </DialogFooter>
     </ModalDialog>

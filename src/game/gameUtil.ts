@@ -3,6 +3,7 @@ import Character, { duplicateCharacter } from "./types/Character";
 import GameState from "./types/GameState";
 import { duplicateRoom } from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
+import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
 import { findCharacterPose } from "./itineraryUtil";
 import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
@@ -227,6 +228,18 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
   if (wasPlaying) gameState.activeEffects.push(createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
 }
 
+function _updateGameStateForChangeSolutions(gameState:GameState, event:ChangeSolutionsEvent) {
+  gameState.solutions = event.solutions;
+  const identitiesSolution = event.solutions.find(solution => solution.id === "Identities") || null;
+  if (!identitiesSolution?.isComplete) return;
+  gameState.characters.forEach(character => {
+    character.isTitleKnown = true;
+  });
+  gameState.initialCharacters.forEach(character => {
+    character.isTitleKnown = true;
+  });
+}
+
 function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent) {
   const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = event.isPlaying;
@@ -316,6 +329,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
   events.forEach(event => {
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent); break;
+      case PlayerEventType.CHANGE_SOLUTIONS: _updateGameStateForChangeSolutions(gameState, event as ChangeSolutionsEvent); break;
       case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent); break;
       case PlayerEventType.MOUSEDOWN: _updateGameStateForMouseDown(gameState, event as MouseDownEvent); break;
       case PlayerEventType.MOUSEMOVE: _updateGameStateForMouseMove(gameState, event as MouseMoveEvent); break;

@@ -1,9 +1,11 @@
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
+import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
+import Solution from "./solutions/types/Solution";
 
 let thePlayerEvents:PlayerEvent[] = [];
 
@@ -23,6 +25,11 @@ export function changeTime(time:number) {
 
 export function playPause(isPlaying:boolean) {
   const event:PlayPauseEvent = {type:PlayerEventType.PLAY_PAUSE, isPlaying};
+  _replaceOrAddEventOfType(thePlayerEvents, event);
+}
+
+export function changeSolutions(solutions:Solution[]) {
+  const event:ChangeSolutionsEvent = { type:PlayerEventType.CHANGE_SOLUTIONS, solutions };
   _replaceOrAddEventOfType(thePlayerEvents, event);
 }
 

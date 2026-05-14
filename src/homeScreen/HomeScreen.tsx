@@ -6,12 +6,11 @@ import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/homeScreen/levelView/LevelView";
 import TimeSlider from "@/homeScreen/timeSlider/TimeSlider";
 import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
-import ContentButton from '@/components/contentButton/ContentButton';
-import { updatePlayPause, updateTime, updateTimeMsecs } from "./interactions/gameplay";
+import { updatePlayPause, updateSolutions, updateTime, updateTimeMsecs } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
 import { findNextRoomEntryTime, findPreviousRoomEntryTime } from "@/game/itineraryUtil";
-import ClaimSolutionDialog from './dialogs/ClaimSolutionDialog';
-import Solution from '@/game/solutions/types/Solution';
+import SolutionsView from "./solutionsView/SolutionsView";
+import Solution from "@/game/solutions/types/Solution";
 
 const ARROW_STEP_MSECS = 200;
 
@@ -29,21 +28,14 @@ function _isEditableTarget(target:EventTarget|null):boolean {
   return target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || tagName === "BUTTON";
 }
 
-function _findFirstIncompleteSolution(gameState:GameState|null):Solution|null {
-  if (!gameState) return null;
-  return gameState.solutions.find(solution => !solution.isComplete) || null;
-}
-
 function HomeScreen() {
   const [gameState, setGameState] = useState<GameState|null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
-  const [modalDialogName, setModalDialogName] = useState<string|null>(null);
+  const [solutions, setSolutions] = useState<Solution[]>([]);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
-  const activeSolution = _findFirstIncompleteSolution(gameState);
-  const isClaimSolutionDisabled = !activeSolution;
   
   useEffect(() => {
     if (gameState) return;
@@ -51,6 +43,7 @@ function HomeScreen() {
       if (initResults) {
         setMinutes(initResults.minutes);
         setGameState(initResults.gameState);
+        setSolutions(initResults.gameState.solutions);
       }
     });
   }, []);
@@ -101,18 +94,13 @@ function HomeScreen() {
           disabled={isPlayPauseDisabled}
           onChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
         />
-        <ContentButton
-          text={activeSolution ? `Claim: ${activeSolution.title}` : 'No Solutions Remaining'}
-          onClick={() => setModalDialogName(ClaimSolutionDialog.name)}
-          disabled={isClaimSolutionDisabled}
+      </div>
+      <div className={styles.sidePane}>
+        <SolutionsView 
+          solutions={solutions} 
+          imageSet={gameState.imageSet} 
+          onUpdate={(nextSolutions) => { updateSolutions(nextSolutions, setSolutions)} }
         />
-        {activeSolution && <ClaimSolutionDialog
-          isOpen={modalDialogName === ClaimSolutionDialog.name}
-          solution={activeSolution}
-          imageSet={gameState.imageSet}
-          onClose={() => setModalDialogName(null)}
-          onClaim={() => false}
-        />}
       </div>
     </div>
   );
