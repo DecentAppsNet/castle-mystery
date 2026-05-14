@@ -27,6 +27,7 @@ type Props = {
   isPlayPauseDisabled?:boolean;
   onChange:(minutes: number) => void;
   onPlayPauseChange:(isPlaying:boolean) => void;
+  onScrubbingChange?:(isScrubbing:boolean) => void;
 }
 
 function _msecsToMinutes(msecs:number):number {
@@ -98,7 +99,8 @@ function TimeSlider(props:Props) {
     isPlaying,
     isPlayPauseDisabled,
     onChange,
-    onPlayPauseChange
+    onPlayPauseChange,
+    onScrubbingChange
   } = props;
   const [displayMinutes, setDisplayMinutes] = useState(minutes);
   const [sliderWidth, setSliderWidth] = useState(0);
@@ -142,6 +144,7 @@ function TimeSlider(props:Props) {
         <Slider
           value={percent}
           onUpdate={_onSliderUpdate}
+          onDraggingChange={onScrubbingChange}
         />
       </div>
       <div className={styles.playPauseButton}>

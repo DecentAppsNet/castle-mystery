@@ -371,10 +371,10 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
   _discoverVisibleItemsInActiveRoom(gameState);
 }
 
-function _syncSpeechBubbleEffects(gameState:GameState) {
+function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
   gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.SPEECH_BUBBLE);
 
-  if (!gameState.isPlaying) return;
+  if (!gameState.isPlaying && !isScrubbing) return;
 
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
@@ -449,7 +449,7 @@ function _callOnActiveCharacterChangedAsNeeded(gameState:GameState, onActiveChar
 }
 
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
-  onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void, onActiveCharacterChanged?:(characterId:string) => void) {
+  onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void, onActiveCharacterChanged?:(characterId:string) => void, isScrubbing:boolean = false) {
   context.fillStyle = COLOR_BLACK;
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   if (!gameState) {
@@ -470,7 +470,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     : "default";
 
   _updateScalingFactorsAsNeeded(gameState, context);
-  _syncSpeechBubbleEffects(gameState);
+  _syncSpeechBubbleEffects(gameState, isScrubbing);
   _drawGameState(gameState, context);
 }
 

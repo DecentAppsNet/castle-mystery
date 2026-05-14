@@ -36,6 +36,7 @@ function HomeScreen() {
   const [solutions, setSolutions] = useState<Solution[]>([]);
   const [solutionClaimCooldowns, setSolutionClaimCooldowns] = useState<Record<string, number>>({});
   const [activeCharacterId, setActiveCharacterId] = useState<string>("");
+  const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
@@ -100,7 +101,7 @@ function HomeScreen() {
     <div className={styles.container}>
       <TopBar />
       <div className={styles.content}>
-        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} />
+        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} isScrubbing={isScrubbing} />
         <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
@@ -113,6 +114,7 @@ function HomeScreen() {
           isPlayPauseDisabled={isPlayPauseDisabled}
           onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
           onPlayPauseChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
+          onScrubbingChange={setIsScrubbing}
         />
       </div>
       <div className={styles.sidePane}>

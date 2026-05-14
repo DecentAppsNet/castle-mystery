@@ -7,6 +7,7 @@ type Props = {
   value: number;
   onChange?: (value:number) => void; // For getting final value after dragging.
   onUpdate?: (value:number) => void; // For getting updated values while dragging.
+  onDraggingChange?: (isDragging:boolean) => void;
 }
 
 type LayoutMeasurements = {
@@ -52,7 +53,7 @@ function _updateLayoutMeasurementsAndThumbPos(container:HTMLDivElement, thumb:HT
   setThumbPos(_calcThumbPosFromValue(value, nextLayoutMeasurements));
 }
 
-function Slider({onChange, onUpdate, value}:Props) {
+function Slider({onChange, onUpdate, onDraggingChange, value}:Props) {
   const [thumbPos, setThumbPos] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [wasDragging, setWasDragging] = useState<boolean>(false);
@@ -70,7 +71,8 @@ function Slider({onChange, onUpdate, value}:Props) {
 
   useEffect(() => {
     isDraggingRef.current = isDragging;
-  }, [isDragging]);
+    onDraggingChange?.(isDragging);
+  }, [isDragging, onDraggingChange]);
 
   useEffect(() => {
     layoutMeasurementsRef.current = layoutMeasurements;
