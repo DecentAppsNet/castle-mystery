@@ -320,7 +320,7 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   if (!activeCharacter) return;
   const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
-  if (!activeRoom) return;
+  if (!activeRoom || activeRoom.isObscured) return;
   const charactersInRoom = findCharactersInRoom(activeRoom, gameState.characters)
     .sort(_compareCharactersForCycleOrder);
   if (charactersInRoom.length <= 1) return;
@@ -330,7 +330,7 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   const nextCharacter = charactersInRoom[(activeCharacterIndex + 1) % charactersInRoom.length];
   if (nextCharacter.id === activeCharacter.id) return;
   gameState.activeCharacterI = gameState.characters.indexOf(nextCharacter);
-  if (!activeRoom.isObscured) gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter, Date.now(), gameState.scalingFactors));
+  gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter, Date.now(), gameState.scalingFactors));
 }
 
 function _updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent) {
