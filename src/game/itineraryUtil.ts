@@ -206,7 +206,7 @@ function _findItineraryPosition(character:Character, time:number):CharacterPose 
 
 export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:Position):ItineraryIndex {
   if (!events.length) {
-    return { eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] };
+    return { eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[0] };
   }
   const eventStartPositions:Position[] = [];
   const firstWalkEvent = events.find(event => event.type === ItineraryEventType.WALK) as WalkEvent|undefined;
@@ -221,12 +221,14 @@ export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:P
     currentPosition = _getEventEndPosition(event, currentPosition);
   }
 
+  const roomEntryStartTimes = events
+    .filter(event => event.type === ItineraryEventType.ROOM_ENTRY)
+    .map(event => event.startTime);
+
   return {
     eventStartTimes:events.map(event => event.startTime),
     eventStartPositions,
-    roomEntryStartTimes:events
-      .filter(event => event.type === ItineraryEventType.ROOM_ENTRY)
-      .map(event => event.startTime)
+    roomEntryStartTimes:roomEntryStartTimes[0] === 0 ? roomEntryStartTimes : [0, ...roomEntryStartTimes]
   };
 }
 

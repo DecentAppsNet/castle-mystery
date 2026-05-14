@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { TURN_RADIANS_PER_SECOND, createFacingEvent, createItineraryIndex, createWalkEvent, findCharacterPose } from '../itineraryUtil';
+import { TURN_RADIANS_PER_SECOND, createFacingEvent, createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
 import Character from '../types/Character';
 import Room from '../types/Room';
 import ItineraryEvent from '../types/itineraryEvents/ItineraryEvent';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
+import RoomEntryEvent from '../types/itineraryEvents/RoomEntryEvent';
 import Waypoint from '../types/Waypoint';
 
 function _createWaypoint(x:number, y:number):Waypoint {
@@ -46,6 +47,16 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
 }
 
 describe('itineraryUtil', () => {
+  describe('createItineraryIndex()', () => {
+    it('includes time zero as the initial room-entry time', () => {
+      const roomEntryEvent:RoomEntryEvent = { type:ItineraryEventType.ROOM_ENTRY, startTime:1_000, duration:0, roomId:'Library' };
+      const character = _createCharacter([roomEntryEvent]);
+
+      expect(character.itineraryIndex.roomEntryStartTimes).toEqual([0, 1_000]);
+      expect(findPreviousRoomEntryTime(character, 1_000)).toBe(0);
+    });
+  });
+
   describe('createFacingEvent()', () => {
     it('sets duration from the configured turn speed', () => {
       const facingEvent = createFacingEvent(1_000, 0, Math.PI / 2);
