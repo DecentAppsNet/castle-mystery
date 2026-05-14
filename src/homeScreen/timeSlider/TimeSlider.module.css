@@ -63,10 +63,17 @@
     position: absolute;
     top: .2vh;
     height: 0.7vh;
-    border-color: #474747;
+    border-color: #aeaeae;
     border-width: 0.1vh;
     border-style: solid;
     border-radius: 0.3vh;
+    box-sizing: border-box;
+}
+
+.obscuredMarker {
+    position: absolute;
+    top: .2vh;
+    height: 0.7vh;
     box-sizing: border-box;
 }
 
@@ -75,7 +82,7 @@
     top: 0;
     width: 0.1vh;
     height: 1.9vh;
-    background-color: #474747;
+    background-color: #aeaeae;
     transform: translateX(-0.05vh);
 }
 

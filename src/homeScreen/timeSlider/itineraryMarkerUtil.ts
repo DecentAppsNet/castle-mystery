@@ -1,7 +1,9 @@
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import Itinerary from "@/game/types/Itinerary";
+import Room from "@/game/types/Room";
 import CharacterEncounterEvent from "@/game/types/itineraryEvents/CharacterEncounterEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
+import RoomEntryEvent from "@/game/types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "@/game/types/itineraryEvents/SpeechEvent";
 
 export const SPEECH_CLUSTER_GAP_MSECS = 6 * MSECS_IN_SECOND;
@@ -16,14 +18,68 @@ export type EncounterMarker = {
   encounteredCharacterIds:string[]
 }
 
+export type ObscuredMarkerRange = {
+  startTime:number,
+  endTime:number
+}
+
 export type ItineraryMarkerModel = {
   roomEntryTimes:number[],
   speechRanges:SpeechMarkerRange[],
-  encounterMarkers:EncounterMarker[]
+  encounterMarkers:EncounterMarker[],
+  obscuredRanges:ObscuredMarkerRange[]
+}
+
+function _isTimeInsideRange(time:number, range:ObscuredMarkerRange):boolean {
+  return time >= range.startTime && time < range.endTime;
+}
+
+function _subtractObscuredRangesFromSpeechRange(range:SpeechMarkerRange, obscuredRanges:ObscuredMarkerRange[]):SpeechMarkerRange[] {
+  return obscuredRanges.reduce<SpeechMarkerRange[]>((remainingRanges, obscuredRange) => {
+    return remainingRanges.flatMap(remainingRange => {
+      if (obscuredRange.endTime <= remainingRange.startTime || obscuredRange.startTime >= remainingRange.endTime) {
+        return [remainingRange];
+      }
+
+      const nextRanges:SpeechMarkerRange[] = [];
+      if (obscuredRange.startTime > remainingRange.startTime) {
+        nextRanges.push({ startTime:remainingRange.startTime, endTime:Math.min(obscuredRange.startTime, remainingRange.endTime) });
+      }
+      if (obscuredRange.endTime < remainingRange.endTime) {
+        nextRanges.push({ startTime:Math.max(obscuredRange.endTime, remainingRange.startTime), endTime:remainingRange.endTime });
+      }
+      return nextRanges;
+    });
+  }, [range]).filter(remainingRange => remainingRange.endTime > remainingRange.startTime);
+}
+
+function _createObscuredRanges(itinerary:Itinerary, rooms:Room[], initialRoomId:string|null, durationMsecs:number):ObscuredMarkerRange[] {
+  const roomById = new Map(rooms.map(room => [room.id, room]));
+  const roomEntryEvents = itinerary
+    .filter(event => event.type === ItineraryEventType.ROOM_ENTRY)
+    .map(event => event as RoomEntryEvent)
+    .sort((event1, event2) => event1.startTime - event2.startTime);
+  const obscuredRanges:ObscuredMarkerRange[] = [];
+  let currentRoomId = initialRoomId;
+  let obscuredStartTime = currentRoomId && roomById.get(currentRoomId)?.isObscured ? 0 : null;
+
+  roomEntryEvents.forEach(roomEntryEvent => {
+    if (obscuredStartTime !== null) {
+      obscuredRanges.push({ startTime:obscuredStartTime, endTime:roomEntryEvent.startTime });
+    }
+    currentRoomId = roomEntryEvent.roomId;
+    obscuredStartTime = roomById.get(currentRoomId)?.isObscured ? roomEntryEvent.startTime : null;
+  });
+
+  if (obscuredStartTime !== null && durationMsecs > obscuredStartTime) {
+    obscuredRanges.push({ startTime:obscuredStartTime, endTime:durationMsecs });
+  }
+
+  return obscuredRanges.filter(range => range.endTime > range.startTime);
 }
 
 function _createSpeechRanges(itinerary:Itinerary):SpeechMarkerRange[] {
-  const speechRanges = itinerary
+  return itinerary
     .filter(event => event.type === ItineraryEventType.SPEECH)
     .map(event => {
       const speechEvent = event as SpeechEvent;
@@ -33,10 +89,22 @@ function _createSpeechRanges(itinerary:Itinerary):SpeechMarkerRange[] {
       };
     })
     .sort((range1, range2) => range1.startTime - range2.startTime);
+}
 
-  return speechRanges.reduce<SpeechMarkerRange[]>((mergedRanges, nextRange) => {
+function _hasObscuredRangeBetween(range1:SpeechMarkerRange, range2:SpeechMarkerRange, obscuredRanges:ObscuredMarkerRange[]):boolean {
+  return obscuredRanges.some(obscuredRange => obscuredRange.startTime >= range1.endTime && obscuredRange.endTime <= range2.startTime);
+}
+
+function _mergeSpeechRanges(speechRanges:SpeechMarkerRange[], obscuredRanges:ObscuredMarkerRange[] = []):SpeechMarkerRange[] {
+  const sortedSpeechRanges = [...speechRanges].sort((range1, range2) => range1.startTime - range2.startTime);
+
+  return sortedSpeechRanges.reduce<SpeechMarkerRange[]>((mergedRanges, nextRange) => {
     const previousRange = mergedRanges[mergedRanges.length - 1] || null;
     if (!previousRange) {
+      mergedRanges.push(nextRange);
+      return mergedRanges;
+    }
+    if (_hasObscuredRangeBetween(previousRange, nextRange, obscuredRanges)) {
       mergedRanges.push(nextRange);
       return mergedRanges;
     }
@@ -49,28 +117,36 @@ function _createSpeechRanges(itinerary:Itinerary):SpeechMarkerRange[] {
   }, []);
 }
 
-export function createItineraryMarkerModel(itinerary:Itinerary|null):ItineraryMarkerModel {
+export function createItineraryMarkerModel(itinerary:Itinerary|null, rooms:Room[] = [], initialRoomId:string|null = null, durationMsecs:number = 0):ItineraryMarkerModel {
   if (!itinerary) {
     return {
       roomEntryTimes:[],
       speechRanges:[],
-      encounterMarkers:[]
+      encounterMarkers:[],
+      obscuredRanges:[]
     };
   }
+
+  const obscuredRanges = _createObscuredRanges(itinerary, rooms, initialRoomId, durationMsecs);
+  const visibleSpeechRanges = _mergeSpeechRanges(_createSpeechRanges(itinerary)
+    .flatMap(range => _subtractObscuredRangesFromSpeechRange(range, obscuredRanges)), obscuredRanges);
+  const visibleEncounterMarkers = itinerary
+    .filter(event => event.type === ItineraryEventType.CHARACTER_ENCOUNTER)
+    .map(event => {
+      const encounterEvent = event as CharacterEncounterEvent;
+      return {
+        startTime:encounterEvent.startTime,
+        encounteredCharacterIds:[...encounterEvent.encounteredCharacterIds]
+      };
+    })
+    .filter(marker => !obscuredRanges.some(range => _isTimeInsideRange(marker.startTime, range)));
 
   return {
     roomEntryTimes:itinerary
       .filter(event => event.type === ItineraryEventType.ROOM_ENTRY)
       .map(event => event.startTime),
-    speechRanges:_createSpeechRanges(itinerary),
-    encounterMarkers:itinerary
-      .filter(event => event.type === ItineraryEventType.CHARACTER_ENCOUNTER)
-      .map(event => {
-        const encounterEvent = event as CharacterEncounterEvent;
-        return {
-          startTime:encounterEvent.startTime,
-          encounteredCharacterIds:[...encounterEvent.encounteredCharacterIds]
-        };
-      })
+    speechRanges:visibleSpeechRanges,
+    encounterMarkers:visibleEncounterMarkers,
+    obscuredRanges
   };
 }

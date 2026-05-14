@@ -8,6 +8,7 @@ import { createPositionedLabels, formatMinutes, minutesToPercent, percentToMinut
 import TimeLabel from "@/game/types/TimeLabel";
 import TimeLabelPositions from "./types/TimeLabelPositions";
 import Itinerary from "@/game/types/Itinerary";
+import Room from "@/game/types/Room";
 import { createItineraryMarkerModel } from "./itineraryMarkerUtil";
 import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawConstants";
 
@@ -19,6 +20,8 @@ type Props = {
   minutes: number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
   step?: number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
   itinerary:Itinerary|null;
+  rooms:Room[];
+  initialRoomId:string|null;
   labels:TimeLabel[];
   isPlaying:boolean;
   isPlayPauseDisabled?:boolean;
@@ -39,11 +42,21 @@ function _renderEncounterMarker(left:number, key:string) {
   </span>;
 }
 
-function _renderItineraryMarkers(sliderWidth:number, fromMinutes:number, toMinutes:number, itinerary:Itinerary|null) {
-  const markerModel = createItineraryMarkerModel(itinerary);
+function _renderItineraryMarkers(sliderWidth:number, fromMinutes:number, toMinutes:number, itinerary:Itinerary|null, rooms:Room[], initialRoomId:string|null) {
+  const durationMsecs = toMinutes * 60_000;
+  const markerModel = createItineraryMarkerModel(itinerary, rooms, initialRoomId, durationMsecs);
   const toLeft = (time:number) => minutesToPercent(_msecsToMinutes(time), fromMinutes, toMinutes) / 100 * sliderWidth;
 
   return <div className={styles.markerLayer}>
+    {markerModel.obscuredRanges.map((range, index) => {
+      const left = toLeft(range.startTime);
+      const right = toLeft(range.endTime);
+      return <span
+        key={`obscured-${index}-${range.startTime}`}
+        className={styles.obscuredMarker}
+        style={{ left: `${left}px`, width: `${Math.max(0, right - left)}px`, backgroundColor: COLOR_BLACK }}
+      />;
+    })}
     {markerModel.speechRanges.map((range, index) => {
       const left = toLeft(range.startTime);
       const right = toLeft(range.endTime);
@@ -79,6 +92,8 @@ function TimeSlider(props:Props) {
     minutes,
     step = NO_QUANTIZING,
     itinerary,
+    rooms,
+    initialRoomId,
     labels,
     isPlaying,
     isPlayPauseDisabled,
@@ -90,7 +105,7 @@ function TimeSlider(props:Props) {
   const [timeLabelPositions, setTimeLabelPositions] = useState<TimeLabelPositions|null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const percent = minutesToPercent(minutes, fromMinutes, toMinutes);
-  const itineraryMarkers = useMemo(() => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, itinerary), [sliderWidth, fromMinutes, toMinutes, itinerary]);
+  const itineraryMarkers = useMemo(() => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, itinerary, rooms, initialRoomId), [sliderWidth, fromMinutes, toMinutes, itinerary, rooms, initialRoomId]);
 
   function _onSliderUpdate(nextValue:number) {
     const nextMinutes = percentToMinutes(nextValue, fromMinutes, toMinutes, step);

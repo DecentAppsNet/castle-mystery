@@ -8,6 +8,7 @@ import TimeSlider from "@/homeScreen/timeSlider/TimeSlider";
 import { updateNextCharacter, updatePlayPause, updateSolutions, updateTime, updateTimeMsecs } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
 import { findNextRoomEntryTime, findPreviousRoomEntryTime } from "@/game/itineraryUtil";
+import { findRoomAtPosition } from "@/game/roomUtil";
 import SolutionsView from "./solutionsView/SolutionsView";
 import Solution from "@/game/solutions/types/Solution";
 import Itinerary from "@/game/types/Itinerary";
@@ -38,9 +39,15 @@ function HomeScreen() {
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
+  const activeInitialCharacter = !gameState
+    ? null
+    : gameState.initialCharacters.find(character => character.id === activeCharacterId) || null;
   const activeItinerary:Itinerary|null = !gameState
     ? null
-    : gameState.initialCharacters.find(character => character.id === activeCharacterId)?.itinerary || null;
+    : activeInitialCharacter?.itinerary || null;
+  const activeInitialRoomId = !gameState || !activeInitialCharacter
+    ? null
+    : findRoomAtPosition(gameState.initialRooms, activeInitialCharacter.x, activeInitialCharacter.y)?.id || null;
   
   useEffect(() => {
     if (gameState) return;
@@ -99,6 +106,8 @@ function HomeScreen() {
           toMinutes={toMinutes}
           minutes={minutes}
           itinerary={activeItinerary}
+          rooms={gameState.initialRooms}
+          initialRoomId={activeInitialRoomId}
           labels={gameState.labels}
           isPlaying={isPlaying}
           isPlayPauseDisabled={isPlayPauseDisabled}
