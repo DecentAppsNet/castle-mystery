@@ -20,7 +20,9 @@
     height: 2rem;
     top: 0.45rem;
     width: 1rem;
+    border: 0.1rem solid #000;
     border-radius: 0.3rem;
+    box-sizing: border-box;
     background-color: button;
 }
 
