@@ -64,9 +64,15 @@ function _formatMinutesAsTimeLabel(minutes:number):string {
 
 function _createTimeLabels(duration:number):TimeLabel[] {
   const durationMinutes = duration / MSECS_IN_MINUTE;
-  return [0, .25, .5, .75, 1].map(ratio => {
+  const labels = [0, .25, .5, .75, 1].map(ratio => {
     const minutes = durationMinutes * ratio;
     return { minutes, label:_formatMinutesAsTimeLabel(minutes) };
+  });
+  const endLabel = labels[labels.length - 1]?.label || '';
+  return labels.filter((timeLabel, index) => {
+    if (index === labels.length - 1) return true;
+    if (timeLabel.label === endLabel) return false;
+    return labels.findIndex(candidate => candidate.label === timeLabel.label) === index;
   });
 }
 
