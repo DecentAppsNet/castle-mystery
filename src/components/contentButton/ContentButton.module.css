@@ -5,7 +5,10 @@
 
 .contentButton {
     composes: disableSelect;
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    box-sizing: border-box;
     background-color: button;
     border-style: none;
     background-position: center;
@@ -13,6 +16,7 @@
     cursor: pointer;
     margin-right: .1vh;
     margin-bottom: .1vh;
+    height: 2.2vh;
     padding-left: .2vh;
     padding-right: .2vh;
 }
@@ -28,6 +32,7 @@
 
 .contentButtonText {
     font-size: 1.4vh;
+    line-height: 1;
     letter-spacing: .1vh;
     color: button-text;
 }
