@@ -1,7 +1,40 @@
-.container {
+.solutionButton {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	justify-content: center;
+	box-sizing: border-box;
+	background-color: #c57431;
+	border-style: none;
+	background-position: center;
+	transition: background 0.2s;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	width: 100%;
+	min-height: 2.4rem;
+	padding: 0.45rem 0.7rem;
+	margin: 0;
+	text-align: left;
+}
+
+.solutionButton:hover {
+	background: #e68a40 radial-gradient(circle, transparent 1%, #c57431 1%) center/23000%;
+}
+
+.solutionButton:active {
+	background-color: #e68a40;
+	background-size: 100%;
+	transition: background 0s;
+}
+
+.solutionTitle {
+	font-size: 1.4vh;
+	line-height: 1.15;
+	letter-spacing: 0.1vh;
+	color: #ffffff;
+	white-space: normal;
+	flex: 1;
 }
 
 .completeIcon,
@@ -13,7 +46,7 @@
 	height: 1.25rem;
 	border: 1px solid currentColor;
 	border-radius: 999px;
-	color: #222;
+	color: #ffffff;
 	flex: 0 0 auto;
 }
 

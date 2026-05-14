@@ -18,8 +18,11 @@ function SolutionView({solution, imageSet, onUpdate}:Props) {
   const statusIconClass = solution.isComplete ? styles.completeIcon : styles.incompleteIcon;
 
   return (
-    <div className={styles.container} onClick={() => setModalDialogName(ClaimSolutionDialog.name)}>
-      <span className={statusIconClass} />{solution.title}
+    <>
+      <button type='button' className={styles.solutionButton} onClick={() => setModalDialogName(ClaimSolutionDialog.name)}>
+        <span className={statusIconClass} />
+        <span className={styles.solutionTitle}>{solution.title}</span>
+      </button>
       <ClaimSolutionDialog 
         isOpen={modalDialogName === ClaimSolutionDialog.name} 
         solution={solution}
@@ -27,7 +30,7 @@ function SolutionView({solution, imageSet, onUpdate}:Props) {
         onClaim={(nextSolution) => claimSolution(nextSolution, setModalDialogName, onUpdate)}
         onClose={(nextSolution) => { setModalDialogName(null); onUpdate(nextSolution); }}
       />
-    </div>
+    </>
   );
 }
 

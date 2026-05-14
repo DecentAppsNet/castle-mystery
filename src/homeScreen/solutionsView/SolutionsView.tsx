@@ -18,8 +18,8 @@ function SolutionsView({solutions, imageSet, onUpdate}:Props) {
     }} />
   );
   return <div className={styles.container}>
-    <h1>Solutions</h1>
-    {solutionsContent}
+    <h1 className={styles.title}>Solutions</h1>
+    <div className={styles.solutionList}>{solutionsContent}</div>
   </div>;
 }
 

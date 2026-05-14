@@ -1,3 +1,21 @@
 .container {
-  
+	background: linear-gradient(180deg, #ffe9d7 0%, #d9d4c7 100%);
+	border-top-left-radius: 1.4vh;
+	border-bottom-left-radius: 1.4vh;
+	box-shadow: inset 0 0 0 1px rgb(71 17 0 / 15%);
+	padding: 1rem 0.9rem 1vh 1vh;
+	min-height: 100%;
+}
+
+.title {
+	margin: 0 0 0.8vh;
+	color: #471100;
+	font-size: 1.1vh;
+	letter-spacing: 0.08em;
+}
+
+.solutionList {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6vh;
 }
