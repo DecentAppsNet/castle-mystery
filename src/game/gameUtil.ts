@@ -29,6 +29,7 @@ import { createDropItemEffect } from "./effects/dropItemUtil";
 import { createGiveItemEffect } from "./effects/giveItemUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
+import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
@@ -38,6 +39,7 @@ import Item from "./types/Item";
 import { duplicateSolution } from "./solutions/types/Solution";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
+import EffectType from "./effects/types/EffectType";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
 
@@ -369,6 +371,22 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
   _discoverVisibleItemsInActiveRoom(gameState);
 }
 
+function _syncSpeechBubbleEffects(gameState:GameState) {
+  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.SPEECH_BUBBLE);
+
+  if (!gameState.isPlaying) return;
+
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  if (!activeRoom || activeRoom.isObscured) return;
+
+  findCharactersInRoom(activeRoom, gameState.characters).forEach(character => {
+    const speech = findCharacterPose(character, gameState.time).speech;
+    if (!speech) return;
+    gameState.activeEffects.push(createSpeechBubbleEffect(character, speech, gameState.scalingFactors, gameState.time));
+  });
+}
+
 function _findCharacterI(characters:Character[], characterId:string):number {
   for(let i = 0; i < characters.length; ++i) {
     if (characters[i].id === characterId) return i;
@@ -444,6 +462,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     : "default";
 
   _updateScalingFactorsAsNeeded(gameState, context);
+  _syncSpeechBubbleEffects(gameState);
   _drawGameState(gameState, context);
 }
 

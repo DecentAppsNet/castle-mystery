@@ -98,7 +98,7 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.fillStyle = COLOR_BLACK;
   room.exits.forEach(exit => drawRoomExit(exit, scalingFactors, context));
   if (isActive && activeCharacter) {
-    drawVisibleCharactersInRoom(room, charactersInRoom, activeCharacter, effects, scalingFactors, context, time, isPlaying, imageSet);
+    drawVisibleCharactersInRoom(charactersInRoom, activeCharacter, effects, scalingFactors, context, time, imageSet);
   }
   processRoomEffects(room, effects, context, isActive);
 }

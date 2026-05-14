@@ -1,9 +1,7 @@
 import { clamp } from "@/common/numberUtil";
 import { processCharacterEffects } from "./effects/effectUtil";
-import { findCharacterPose } from "./itineraryUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import Character from "./types/Character";
-import Room from "./types/Room";
 import ScalingFactors from "./types/ScalingFactors";
 import Effect from "./effects/types/Effect";
 import ImageSet from "./types/ImageSet";
@@ -42,13 +40,10 @@ function _getCharacterCarryText(character:Character):string {
   return `Carrying ${itemCount} items.`;
 }
 
-function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, room:Room,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
-  const [roomLeft, roomTop] = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
-  const [roomRight, roomBottom] = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   context.save();
   context.font = `${fontSize}px Jellee`;
   context.textAlign = "center";
@@ -56,8 +51,8 @@ function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, room
   const boxWidth = context.measureText(speech).width + padding * 2;
   const unclampedLeft = anchorX - boxWidth / 2;
   const unclampedTop = anchorTopY - boxHeight - scalingFactors.roomLineWidth * 2;
-  const left = Math.round(clamp(unclampedLeft, roomLeft, roomRight - boxWidth));
-  const top = Math.round(clamp(unclampedTop, roomTop, roomBottom - boxHeight));
+  const left = Math.round(clamp(unclampedLeft, 0, context.canvas.width - boxWidth));
+  const top = Math.round(clamp(unclampedTop, 0, context.canvas.height - boxHeight));
   context.fillStyle = COLOR_SPEECH_BUBBLE_FILL;
   context.strokeStyle = COLOR_DARK_GRAY;
   context.lineWidth = Math.max(1, scalingFactors.roomLineWidth / 2);
@@ -68,7 +63,7 @@ function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, room
   context.restore();
 }
 
-function _getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
+export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
   const { roomLineWidth } = scalingFactors;
   const [centerX, bottomY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
   const characterWidth = roomLineWidth * 5;
@@ -128,9 +123,9 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
   context.restore();
 }
 
-function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, speech:string|null, imageSet:ImageSet, isActive:boolean) {
-  const { anchorX:backboneX, anchorTopY, centerX, centerY, characterWidth, characterHeight } = _getCharacterSpeechAnchor(character, scalingFactors, time);
+function drawCharacter(character:Character, scalingFactors:ScalingFactors,
+  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, isActive:boolean) {
+  const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
   const headRadius = Math.min(characterWidth, characterHeight) / 4;
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
   if (isActive) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
@@ -151,7 +146,6 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
     context.moveTo(backboneX + headRadius, centerY - characterHeight / 4);
     context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
     context.stroke();
-    if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
     return;
   }
   context.stroke();
@@ -162,7 +156,6 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
     context.beginPath();
     context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
     context.stroke();
-    if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
     return;
   }
   const maxFaceWidth = headRadius * 6;
@@ -173,15 +166,13 @@ function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFac
   const drawX = backboneX - drawWidth / 2;
   const drawY = centerY - drawHeight;
   context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
-  if (speech) drawSpeechBubble(speech, backboneX, anchorTopY, room, scalingFactors, context);
 }
 
-export function drawVisibleCharactersInRoom(room:Room, charactersInRoom:Character[], activeCharacter:Character,
-  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, isPlaying:boolean, imageSet:ImageSet) {
+export function drawVisibleCharactersInRoom(charactersInRoom:Character[], activeCharacter:Character,
+  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet) {
   const charactersInDrawOrder = [...charactersInRoom].sort((character1, character2) => character1.y - character2.y);
   charactersInDrawOrder.forEach(character => {
-    const speech = isPlaying ? findCharacterPose(character, time).speech : null;
-    drawCharacter(character, room, scalingFactors, context, time, speech, imageSet, character.id === activeCharacter.id);
+    drawCharacter(character, scalingFactors, context, time, imageSet, character.id === activeCharacter.id);
     processCharacterEffects(character, effects, context);
   });
 }
