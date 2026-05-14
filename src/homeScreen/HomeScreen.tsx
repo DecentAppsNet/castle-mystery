@@ -32,6 +32,7 @@ function HomeScreen() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
   const [solutions, setSolutions] = useState<Solution[]>([]);
+  const [solutionClaimCooldowns, setSolutionClaimCooldowns] = useState<Record<string, number>>({});
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
@@ -102,6 +103,13 @@ function HomeScreen() {
         <SolutionsView 
           solutions={solutions} 
           imageSet={gameState.imageSet} 
+          solutionClaimCooldowns={solutionClaimCooldowns}
+          onIncorrectClaim={(solutionId) => {
+            setSolutionClaimCooldowns(from => ({
+              ...from,
+              [solutionId]: Date.now() + 2 * 60 * 1000
+            }));
+          }}
           onUpdate={(nextSolutions) => { updateSolutions(nextSolutions, setSolutions)} }
         />
       </div>

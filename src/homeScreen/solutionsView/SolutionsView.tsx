@@ -6,12 +6,14 @@ import ImageSet from '@/game/types/ImageSet';
 type Props = {
   solutions:Solution[],
   imageSet:ImageSet,
+  solutionClaimCooldowns:Record<string, number>,
+  onIncorrectClaim:(solutionId:string) => void,
   onUpdate:(solutions:Solution[]) => void
 }
 
-function SolutionsView({solutions, imageSet, onUpdate}:Props) {
+function SolutionsView({solutions, imageSet, solutionClaimCooldowns, onIncorrectClaim, onUpdate}:Props) {
   const solutionsContent = solutions.map((s, i) => 
-    <SolutionView key={s.id} imageSet={imageSet} solution={s} onUpdate={(nextSolution) => {
+    <SolutionView key={s.id} imageSet={imageSet} solution={s} cooldownUntilTime={solutionClaimCooldowns[s.id] ?? null} onIncorrectClaim={() => onIncorrectClaim(s.id)} onUpdate={(nextSolution) => {
       const nextSolutions = [...solutions];
       nextSolutions[i] = nextSolution;
       onUpdate(nextSolutions);

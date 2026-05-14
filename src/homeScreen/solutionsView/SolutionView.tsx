@@ -9,10 +9,12 @@ import { claimSolution } from './interactions/solutions';
 type Props = {
   solution:Solution,
   imageSet:ImageSet,
+  cooldownUntilTime:number|null,
+  onIncorrectClaim:() => void,
   onUpdate:(nextSolution:Solution) => void
 }
 
-function SolutionView({solution, imageSet, onUpdate}:Props) {
+function SolutionView({solution, imageSet, cooldownUntilTime, onIncorrectClaim, onUpdate}:Props) {
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
 
   const statusIconClass = solution.isComplete ? styles.completeIcon : styles.incompleteIcon;
@@ -27,7 +29,12 @@ function SolutionView({solution, imageSet, onUpdate}:Props) {
         isOpen={modalDialogName === ClaimSolutionDialog.name} 
         solution={solution}
         imageSet={imageSet}
-        onClaim={(nextSolution) => claimSolution(nextSolution, setModalDialogName, onUpdate)}
+        cooldownUntilTime={cooldownUntilTime}
+        onClaim={(nextSolution) => {
+          const didClaim = claimSolution(nextSolution, setModalDialogName, onUpdate);
+          if (!didClaim) onIncorrectClaim();
+          return didClaim;
+        }}
         onClose={(nextSolution) => { setModalDialogName(null); onUpdate(nextSolution); }}
       />
     </>

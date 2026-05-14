@@ -15,12 +15,23 @@ import ImageSet from "@/game/types/ImageSet";
 
 import styles from './ClaimSolutionDialog.module.css';
 
+function _formatTimeRemaining(remainingMsecs:number):string {
+  const remainingSeconds = Math.ceil(remainingMsecs / 1000);
+  if (remainingSeconds < 60) {
+    return `${remainingSeconds} ${remainingSeconds === 1 ? 'second' : 'seconds'}`;
+  }
+
+  const remainingMinutes = Math.ceil(remainingSeconds / 60);
+  return `${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'}`;
+}
+
 export type ClaimSolutionCallback = (solution:Solution) => boolean;
 
 type Props = {
   isOpen:boolean,
   solution:Solution,
   imageSet:ImageSet,
+  cooldownUntilTime:number|null,
   onClaim:ClaimSolutionCallback,
   onClose:(solution:Solution) => void
 }
@@ -100,9 +111,13 @@ function _renderClozeStatementContent(solution:Solution, imageSet:ImageSet, onBl
   </div>;
 }
 
-function _renderSolutionStatus(solution:Solution) {
+function _renderSolutionStatus(solution:Solution, cooldownRemainingMsecs:number|null) {
   if (solution.isComplete) {
     return <p className={styles.status}>Your claimed solution is correct.</p>;
+  }
+
+  if (cooldownRemainingMsecs !== null) {
+    return <p className={styles.status}>Your last claim was incorrect. You may guess again in {_formatTimeRemaining(cooldownRemainingMsecs)}.</p>;
   }
 
   if (isSolutionMissingAnswers(solution)) {
@@ -112,18 +127,40 @@ function _renderSolutionStatus(solution:Solution) {
   return <p className={styles.status}>Claim this as the solution only when you are confident.</p>;
 }
 
-function ClaimSolutionDialog({solution, imageSet, onClaim, onClose, isOpen}:Props) {
+function ClaimSolutionDialog({solution, imageSet, cooldownUntilTime, onClaim, onClose, isOpen}:Props) {
   const [draftSolution, setDraftSolution] = useState<Solution>(duplicateSolution(solution));
+  const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
     setDraftSolution(duplicateSolution(solution));
   }, [solution]);
 
-  const isClaimDisabled = draftSolution.isComplete || isSolutionMissingAnswers(draftSolution);
+  useEffect(() => {
+    if (!isOpen) return;
+    setNow(Date.now());
+  }, [cooldownUntilTime, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (cooldownUntilTime === null || cooldownUntilTime <= Date.now()) return;
+
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [cooldownUntilTime, isOpen]);
+
+  const cooldownRemainingMsecs = cooldownUntilTime === null
+    ? null
+    : Math.max(0, cooldownUntilTime - now);
+  const isOnCooldown = cooldownRemainingMsecs !== null && cooldownRemainingMsecs > 0;
+
+  const isClaimDisabled = draftSolution.isComplete || isSolutionMissingAnswers(draftSolution) || isOnCooldown;
   const clozeStatementContent = _renderClozeStatementContent(draftSolution, imageSet, (blankPartIndex, playerAnswerIndex) => {
     setDraftSolution(from => _updateSolutionBlankAnswer(from, blankPartIndex, playerAnswerIndex));
   });
-  const solutionStatusContent = _renderSolutionStatus(draftSolution);
+  const solutionStatusContent = _renderSolutionStatus(draftSolution, isOnCooldown ? cooldownRemainingMsecs : null);
 
   return (
     <ModalDialog onCancel={() => onClose(draftSolution)} title={solution.title} isOpen={isOpen}>
