@@ -1,4 +1,4 @@
-import { drawVisibleCharactersInRoom } from "./characterDrawUtil";
+import { drawObscuredActiveCharacter, drawVisibleCharactersInRoom } from "./characterDrawUtil";
 import { createObstructionBoundarySegments } from "./obstructionUtil";
 import { processRoomEffects } from "./effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
@@ -91,7 +91,10 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   }
   context.fillStyle = COLOR_ROOM_TITLE_TEXT;
   context.fillText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
-  if (room.isObscured) return;
+  if (room.isObscured) {
+    if (isActive && activeCharacter) drawObscuredActiveCharacter(room, scalingFactors, context);
+    return;
+  }
   context.fillStyle = COLOR_BLACK;
   room.exits.forEach(exit => drawRoomExit(exit, scalingFactors, context));
   if (isActive && activeCharacter) {

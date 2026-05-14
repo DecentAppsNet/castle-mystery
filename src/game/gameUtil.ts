@@ -330,7 +330,7 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   const nextCharacter = charactersInRoom[(activeCharacterIndex + 1) % charactersInRoom.length];
   if (nextCharacter.id === activeCharacter.id) return;
   gameState.activeCharacterI = gameState.characters.indexOf(nextCharacter);
-  gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter, Date.now(), gameState.scalingFactors));
+  if (!activeRoom.isObscured) gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter, Date.now(), gameState.scalingFactors));
 }
 
 function _updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent) {
@@ -399,13 +399,13 @@ function _drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
     drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.isPlaying, gameState.imageSet);
   }
-  if (activeRoom && gameState.hoveredItemId) {
+  if (!activeRoom?.isObscured && activeRoom && gameState.hoveredItemId) {
     const hoveredItem = activeRoom.items.find(item => item.id === gameState.hoveredItemId && item.isDiscovered) || null;
     if (hoveredItem) drawItemPopover(hoveredItem, gameState.scalingFactors, context);
     processLevelEffects(gameState.activeEffects, context);
     return;
   }
-  if (gameState.hoveredCharacterId) {
+  if (!activeRoom?.isObscured && gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter) drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context);
   }
@@ -437,7 +437,9 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   _updateGameState(gameState, events);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   _callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
-  context.canvas.style.cursor = gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  context.canvas.style.cursor = !activeRoom?.isObscured && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
     ? "pointer"
     : "default";
 

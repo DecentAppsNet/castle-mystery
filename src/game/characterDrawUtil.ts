@@ -93,6 +93,41 @@ function _drawActiveCharacterHighlight(centerX:number, centerY:number, character
   context.fill();
 }
 
+export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const [roomLeft, roomTop] = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
+  const [roomRight, roomBottom] = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
+  const centerX = roomLeft + (roomRight - roomLeft) / 2;
+  const roomCenterY = roomTop + (roomBottom - roomTop) / 2;
+  const characterWidth = scalingFactors.roomLineWidth * 5;
+  const characterHeight = scalingFactors.roomLineWidth * 10;
+  const headRadius = Math.min(characterWidth, characterHeight) / 4;
+  const minCenterY = roomTop + characterHeight / 2 + scalingFactors.roomLineWidth;
+  const maxCenterY = roomBottom - characterHeight / 2 - scalingFactors.roomLineWidth;
+  const centerY = clamp(roomCenterY + scalingFactors.roomFontHeight * 1.3, minCenterY, maxCenterY);
+  const backboneX = centerX;
+
+  context.save();
+  context.lineWidth = scalingFactors.roomLineWidth;
+  context.strokeStyle = "#fff";
+  context.fillStyle = "#fff";
+  context.beginPath();
+  context.moveTo(backboneX, centerY - characterHeight / 4 + headRadius);
+  context.lineTo(backboneX, centerY + characterHeight / 4);
+  context.moveTo(backboneX, centerY);
+  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 8);
+  context.moveTo(backboneX, centerY);
+  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 8);
+  context.moveTo(backboneX, centerY + characterHeight / 4);
+  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 2);
+  context.moveTo(backboneX, centerY + characterHeight / 4);
+  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 2);
+  context.stroke();
+  context.beginPath();
+  context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+}
+
 function drawCharacter(character:Character, room:Room, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, time:number, speech:string|null, imageSet:ImageSet, isActive:boolean) {
   const { anchorX:backboneX, anchorTopY, centerX, centerY, characterWidth, characterHeight } = _getCharacterSpeechAnchor(character, scalingFactors, time);
