@@ -5,7 +5,6 @@ import { init } from "./interactions/initialization";
 import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/homeScreen/levelView/LevelView";
 import TimeSlider from "@/homeScreen/timeSlider/TimeSlider";
-import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
 import { updateNextCharacter, updatePlayPause, updateSolutions, updateTime, updateTimeMsecs } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
 import { findNextRoomEntryTime, findPreviousRoomEntryTime } from "@/game/itineraryUtil";
@@ -93,12 +92,10 @@ function HomeScreen() {
           toMinutes={toMinutes}
           minutes={minutes}
           labels={gameState.labels}
-          onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
-        />
-        <PlayPauseButton
           isPlaying={isPlaying}
-          disabled={isPlayPauseDisabled}
-          onChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
+          isPlayPauseDisabled={isPlayPauseDisabled}
+          onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
+          onPlayPauseChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
         />
       </div>
       <div className={styles.sidePane}>

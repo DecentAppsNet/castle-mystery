@@ -1,6 +1,7 @@
 import styles from "./TimeSlider.module.css";
 
-import Slider from "../../components/slider/Slider";
+import Slider from "@/components/slider/Slider";
+import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
 import { useEffect, useRef, useState } from "react";
 import { calcTimeLabelPositions } from "./labelUtil";
 import { createPositionedLabels, formatMinutes, minutesToPercent, percentToMinutes } from "./timeSliderUtil";
@@ -15,7 +16,10 @@ type Props = {
   minutes: number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
   step?: number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
   labels:TimeLabel[];
+  isPlaying:boolean;
+  isPlayPauseDisabled?:boolean;
   onChange:(minutes: number) => void;
+  onPlayPauseChange:(isPlaying:boolean) => void;
 }
 
 function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
@@ -31,7 +35,17 @@ function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
 }
 
 function TimeSlider(props:Props) {
-  const { fromMinutes, toMinutes, minutes, step = NO_QUANTIZING, labels, onChange } = props;
+  const {
+    fromMinutes,
+    toMinutes,
+    minutes,
+    step = NO_QUANTIZING,
+    labels,
+    isPlaying,
+    isPlayPauseDisabled,
+    onChange,
+    onPlayPauseChange
+  } = props;
   const [displayMinutes, setDisplayMinutes] = useState(minutes);
   const [sliderWidth, setSliderWidth] = useState(0);
   const [timeLabelPositions, setTimeLabelPositions] = useState<TimeLabelPositions|null>(null);
@@ -72,6 +86,13 @@ function TimeSlider(props:Props) {
         <Slider
           value={percent}
           onUpdate={_onSliderUpdate}
+        />
+      </div>
+      <div className={styles.playPauseButton}>
+        <PlayPauseButton
+          isPlaying={isPlaying}
+          disabled={isPlayPauseDisabled}
+          onChange={onPlayPauseChange}
         />
       </div>
       <div className={styles.timeText}>{formatMinutes(displayMinutes)}</div>
