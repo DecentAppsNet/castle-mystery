@@ -4,14 +4,43 @@
   margin: 1vh 0;
 }
 
+.statementLine {
+  margin: 0.5vh 0;
+}
+
+.statementLineLeadingImageColumn {
+  display: grid;
+  grid-template-columns: 8vh 1fr;
+  column-gap: 1vh;
+  align-items: start;
+  margin: 0.5vh 0;
+}
+
+.statementLineImageColumn {
+  width: 8vh;
+}
+
+.statementLineContentColumn {
+  min-width: 0;
+}
+
 .imagePartWrapper {
   display: inline-block;
   margin: 0.5vh 0;
   vertical-align: middle;
 }
 
+.leadingImagePartWrapper {
+  display: flex;
+  width: 8vh;
+  min-height: 5vh;
+  align-items: flex-start;
+  justify-content: center;
+}
+
 .statementImage {
   display: block;
+  max-width: 100%;
   image-rendering: auto;
 }
 
