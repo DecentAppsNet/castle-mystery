@@ -24,7 +24,8 @@ type GameState = {
   labels:TimeLabel[],
   scalingFactors: ScalingFactors,
   lastMinutesChangedCallRealTime:number,
-  lastMinutesChangedValue:number
+  lastMinutesChangedValue:number,
+  lastActiveCharacterChangedValue:string
 }
 
 export default GameState;

@@ -2,6 +2,7 @@ enum ItineraryEventType {
   WALK = "Walk",
   ROOM_ENTRY = "RoomEntry",
   SPEECH = "Speech",
+  CHARACTER_ENCOUNTER = "CharacterEncounter",
   FACING = "Facing",
   TAKE_ITEM = "TakeItem",
   DROP_ITEM = "DropItem",

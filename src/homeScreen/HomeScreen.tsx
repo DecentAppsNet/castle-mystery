@@ -10,6 +10,7 @@ import GameState from "@/game/types/GameState";
 import { findNextRoomEntryTime, findPreviousRoomEntryTime } from "@/game/itineraryUtil";
 import SolutionsView from "./solutionsView/SolutionsView";
 import Solution from "@/game/solutions/types/Solution";
+import Itinerary from "@/game/types/Itinerary";
 
 const ARROW_STEP_MSECS = 200;
 
@@ -33,9 +34,13 @@ function HomeScreen() {
   const [minutes, setMinutes] = useState<number>(0);
   const [solutions, setSolutions] = useState<Solution[]>([]);
   const [solutionClaimCooldowns, setSolutionClaimCooldowns] = useState<Record<string, number>>({});
+  const [activeCharacterId, setActiveCharacterId] = useState<string>("");
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
+  const activeItinerary:Itinerary|null = !gameState
+    ? null
+    : gameState.initialCharacters.find(character => character.id === activeCharacterId)?.itinerary || null;
   
   useEffect(() => {
     if (gameState) return;
@@ -44,6 +49,7 @@ function HomeScreen() {
         setMinutes(initResults.minutes);
         setGameState(initResults.gameState);
         setSolutions(initResults.gameState.solutions);
+        setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
       }
     });
   }, []);
@@ -87,11 +93,12 @@ function HomeScreen() {
     <div className={styles.container}>
       <TopBar />
       <div className={styles.content}>
-        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} />
+        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} />
         <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
           minutes={minutes}
+          itinerary={activeItinerary}
           labels={gameState.labels}
           isPlaying={isPlaying}
           isPlayPauseDisabled={isPlayPauseDisabled}

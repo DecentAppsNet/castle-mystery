@@ -3,6 +3,7 @@ import Room from "./types/Room";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
 import RoomEntryEvent from "./types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
+import CharacterEncounterEvent from "./types/itineraryEvents/CharacterEncounterEvent";
 import FacingEvent from "./types/itineraryEvents/FacingEvent";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
@@ -85,6 +86,15 @@ export function createSpeechEvent(startTime:number, speech:string, facingAngle:n
   };
 }
 
+export function createCharacterEncounterEvent(startTime:number, encounteredCharacterIds:string[]):CharacterEncounterEvent {
+  return {
+    type:ItineraryEventType.CHARACTER_ENCOUNTER,
+    startTime,
+    duration:0,
+    encounteredCharacterIds:[...encounteredCharacterIds]
+  };
+}
+
 export function createFacingEvent(startTime:number, fromFacingAngle:number, facingAngle:number):FacingEvent {
   return {
     type:ItineraryEventType.FACING,
@@ -121,6 +131,7 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
       return duplicatePosition((event as WalkEvent).toPosition);
     case ItineraryEventType.ROOM_ENTRY:
     case ItineraryEventType.SPEECH:
+    case ItineraryEventType.CHARACTER_ENCOUNTER:
     case ItineraryEventType.FACING:
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:

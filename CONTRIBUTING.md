@@ -65,6 +65,13 @@ Guidelines:
 * Functions should only be exported if used outside the module they are declared in.
 * Private, unexported functions are prefixed with `_`.
 
+## CSS
+
+* `vh` should be used as the default unit for fixed lengths and dimensions, even widths. ("vw" can be used if the measurement truly is meant to be tied to viewport width.) The use of "vh" is less about tying sizes to viewport height, and more about finding a general size for scaling that keeps layout reasonably constant in a non-scrolling web app. Reusing VH for width tends to preserve intended aspect ratios.
+* `rem` should be used for blocks of text of sentence or paragraph length. `vh` should still be used for smaller text such as labels or button captions.
+* `px` should not be used unless there is a strong case that a non-scaling pixel length is appropriate for layout.
+* `!important` should not be used unless there is a strong case to be made for it.
+
 ## Using RegEx
 
 * All RegExs should be encapsulated in a function whose name describes what the RegEx does.

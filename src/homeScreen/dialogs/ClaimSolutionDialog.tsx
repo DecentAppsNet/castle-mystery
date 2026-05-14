@@ -167,7 +167,7 @@ function ClaimSolutionDialog({solution, imageSet, cooldownUntilTime, onClaim, on
       {clozeStatementContent}
       {solutionStatusContent}
       <DialogFooter>
-        <DialogButton text='Close' onClick={() => onClose(draftSolution)} />
+        <DialogButton text='Close' onClick={() => onClose(draftSolution)} />  
         <DialogButton text='Claim Solution' onClick={() => {
           onClaim(draftSolution);
         }} disabled={isClaimDisabled} isPrimary />

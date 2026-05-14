@@ -21,6 +21,7 @@ import { tryCreateSayActivity } from "./activities/sayActivityUtil";
 import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
 import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
 import LoadLevelException from "./LoadLevelException";
+import { addCharacterEncounterEvents } from "./characterEncounterUtil";
 import { createItineraryIndex, findCharacterPose } from "./itineraryUtil";
 import Character from "./types/Character";
 import Item, { duplicateItem } from "./types/Item";
@@ -398,8 +399,9 @@ export function loadItineraries(level:Level, itinerarySection:string, levelFilen
       activity.resolvedTime === resolvedActivities[index].resolvedTime
       && activity.isTimeResolved === resolvedActivities[index].isTimeResolved);
     if (didStabilize) {
+      const charactersWithEncounterEvents = addCharacterEncounterEvents(scheduleResult.characters, level.rooms);
       return {
-        characters:scheduleResult.characters,
+        characters:charactersWithEncounterEvents,
         duration:scheduleResult.duration
       };
     }

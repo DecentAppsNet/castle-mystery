@@ -10,10 +10,11 @@ import GameState from '@/game/types/GameState';
 type Props = {
   gameState:GameState, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
   onMinutesChanged:(minutes:number) => void,
-  onIsPlayingChanged?:(isPlaying:boolean) => void
+  onIsPlayingChanged?:(isPlaying:boolean) => void,
+  onActiveCharacterChanged?:(characterId:string) => void
 }
 
-function LevelView({gameState, onMinutesChanged, onIsPlayingChanged}:Props) {
+function LevelView({gameState, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged}:Props) {
   const gameStateRef = useRef<GameState>(null);
   
   useEffect(() => { 
@@ -23,7 +24,7 @@ function LevelView({gameState, onMinutesChanged, onIsPlayingChanged}:Props) {
   return <div className={styles.container}>
     <Canvas 
       isAnimated={true} 
-      onDraw={(context) => updateAndDraw(gameStateRef.current, context, onMinutesChanged, onIsPlayingChanged)} 
+      onDraw={(context) => updateAndDraw(gameStateRef.current, context, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged)} 
       onMouseDown={(e) => {
         if (!gameStateRef.current) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();

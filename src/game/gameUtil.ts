@@ -441,8 +441,15 @@ function _callOnMinutesChangedAsNeeded(gameState:GameState, onMinutesChanged:(mi
   onMinutesChanged(nextMinutes);
 }
 
+function _callOnActiveCharacterChangedAsNeeded(gameState:GameState, onActiveCharacterChanged:(characterId:string) => void) {
+  const activeCharacterId = gameState.characters[gameState.activeCharacterI]?.id || "";
+  if (activeCharacterId === gameState.lastActiveCharacterChangedValue) return;
+  gameState.lastActiveCharacterChangedValue = activeCharacterId;
+  onActiveCharacterChanged(activeCharacterId);
+}
+
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
-  onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void) {
+  onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void, onActiveCharacterChanged?:(characterId:string) => void) {
   context.fillStyle = COLOR_BLACK;
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   if (!gameState) {
@@ -455,6 +462,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   _updateGameState(gameState, events);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   _callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
+  if (onActiveCharacterChanged) _callOnActiveCharacterChangedAsNeeded(gameState, onActiveCharacterChanged);
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   context.canvas.style.cursor = !activeRoom?.isObscured && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
@@ -485,7 +493,8 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     labels:level.labels.map(label => ({...label})),
     scalingFactors:ZERO_SCALING_FACTORS,
     lastMinutesChangedCallRealTime:0,
-    lastMinutesChangedValue:NaN
+    lastMinutesChangedValue:NaN,
+    lastActiveCharacterChangedValue:""
   }
   _rebuildDynamicStateForTime(gameState, level.startTime);
   _setActiveRoomDiscovered(gameState);

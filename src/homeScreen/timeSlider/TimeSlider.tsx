@@ -2,11 +2,14 @@ import styles from "./TimeSlider.module.css";
 
 import Slider from "@/components/slider/Slider";
 import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { calcTimeLabelPositions } from "./labelUtil";
 import { createPositionedLabels, formatMinutes, minutesToPercent, percentToMinutes } from "./timeSliderUtil";
 import TimeLabel from "@/game/types/TimeLabel";
 import TimeLabelPositions from "./types/TimeLabelPositions";
+import Itinerary from "@/game/types/Itinerary";
+import { createItineraryMarkerModel } from "./itineraryMarkerUtil";
+import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawConstants";
 
 const NO_QUANTIZING = -1;
 
@@ -15,11 +18,46 @@ type Props = {
   toMinutes:number; // Maximum value in minutes for when slider thumb is at rightmost position.
   minutes: number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
   step?: number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
+  itinerary:Itinerary|null;
   labels:TimeLabel[];
   isPlaying:boolean;
   isPlayPauseDisabled?:boolean;
   onChange:(minutes: number) => void;
   onPlayPauseChange:(isPlaying:boolean) => void;
+}
+
+function _msecsToMinutes(msecs:number):number {
+  return msecs / 60_000;
+}
+
+function _renderEncounterMarker(left:number, key:string) {
+  return <span key={key} className={styles.encounterMarker} style={{left: `${left}px`}}>
+    <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true">
+      <circle cx="5" cy="2" r="1.5" fill={COLOR_BLACK} />
+      <path d="M5 3.8 L5 7.2 M2.5 5.2 L7.5 5.2 M5 7.2 L2.8 10.5 M5 7.2 L7.2 10.5" stroke={COLOR_BLACK} strokeWidth="1" fill="none" strokeLinecap="round" />
+    </svg>
+  </span>;
+}
+
+function _renderItineraryMarkers(sliderWidth:number, fromMinutes:number, toMinutes:number, itinerary:Itinerary|null) {
+  const markerModel = createItineraryMarkerModel(itinerary);
+  const toLeft = (time:number) => minutesToPercent(_msecsToMinutes(time), fromMinutes, toMinutes) / 100 * sliderWidth;
+
+  return <div className={styles.markerLayer}>
+    {markerModel.speechRanges.map((range, index) => {
+      const left = toLeft(range.startTime);
+      const right = toLeft(range.endTime);
+      return <span
+        key={`speech-${index}-${range.startTime}`}
+        className={styles.speechMarker}
+        style={{ left: `${left}px`, width: `${Math.max(3, right - left)}px`, backgroundColor: COLOR_SPEECH_BUBBLE_FILL, borderColor: COLOR_BLACK }}
+      />;
+    })}
+    {markerModel.roomEntryTimes.map((time, index) =>
+      <span key={`room-entry-${index}-${time}`} className={styles.roomEntryMarker} style={{left: `${toLeft(time)}px`}} />
+    )}
+    {markerModel.encounterMarkers.map((marker, index) => _renderEncounterMarker(toLeft(marker.startTime), `encounter-${index}-${marker.startTime}`))}
+  </div>;
 }
 
 function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
@@ -40,6 +78,7 @@ function TimeSlider(props:Props) {
     toMinutes,
     minutes,
     step = NO_QUANTIZING,
+    itinerary,
     labels,
     isPlaying,
     isPlayPauseDisabled,
@@ -51,6 +90,7 @@ function TimeSlider(props:Props) {
   const [timeLabelPositions, setTimeLabelPositions] = useState<TimeLabelPositions|null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const percent = minutesToPercent(minutes, fromMinutes, toMinutes);
+  const itineraryMarkers = useMemo(() => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, itinerary), [sliderWidth, fromMinutes, toMinutes, itinerary]);
 
   function _onSliderUpdate(nextValue:number) {
     const nextMinutes = percentToMinutes(nextValue, fromMinutes, toMinutes, step);
@@ -83,6 +123,7 @@ function TimeSlider(props:Props) {
     <div className={styles.container}>
       <div className={styles.slider} ref={sliderRef}>
         {_renderTimeLabels(timeLabelPositions)}
+        {itineraryMarkers}
         <Slider
           value={percent}
           onUpdate={_onSliderUpdate}
