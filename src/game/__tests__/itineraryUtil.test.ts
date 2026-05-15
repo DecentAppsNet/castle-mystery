@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { TURN_RADIANS_PER_SECOND, createFacingEvent, createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
+import { createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
 import Character from '../types/Character';
 import Room from '../types/Room';
 import ItineraryEvent from '../types/itineraryEvents/ItineraryEvent';
@@ -39,7 +39,6 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
     x:0,
     y:0,
     waypoint,
-    facingAngle:0,
     faceImageUrl:null,
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0 })
@@ -57,35 +56,21 @@ describe('itineraryUtil', () => {
     });
   });
 
-  describe('createFacingEvent()', () => {
-    it('sets duration from the configured turn speed', () => {
-      const facingEvent = createFacingEvent(1_000, 0, Math.PI / 2);
-
-      expect(facingEvent.type).toBe(ItineraryEventType.FACING);
-      expect(facingEvent.fromFacingAngle).toBe(0);
-      expect(facingEvent.facingAngle).toBe(Math.PI / 2);
-      expect(facingEvent.duration).toBe(Math.ceil(((Math.PI / 2) / TURN_RADIANS_PER_SECOND) * 1_000));
-    });
-  });
-
   describe('findCharacterPose()', () => {
-    it('interpolates turning and walking independently when they overlap', () => {
+    it('interpolates walking position over time', () => {
       const room = _createRoom();
       const walkResult = createWalkEvent(room, 1_000, 0, 0, 10, 0);
       expect(walkResult.event).not.toBeNull();
 
-      const facingEvent = createFacingEvent(1_000, 0, Math.PI / 2);
-      const character = _createCharacter([facingEvent, walkResult.event!]);
+      const character = _createCharacter([walkResult.event!]);
 
-      const overlappingPose = findCharacterPose(character, 1_125);
-      expect(overlappingPose.position.x).toBeGreaterThan(0);
-      expect(overlappingPose.position.x).toBeLessThan(10);
-      expect(overlappingPose.facingAngle).toBeCloseTo(Math.PI / 4, 1);
+      const midWalkPose = findCharacterPose(character, 1_125);
+      expect(midWalkPose.position.x).toBeGreaterThan(0);
+      expect(midWalkPose.position.x).toBeLessThan(10);
 
-      const postTurnPose = findCharacterPose(character, 1_275);
-      expect(postTurnPose.position.x).toBeGreaterThan(overlappingPose.position.x);
-      expect(postTurnPose.position.x).toBeLessThan(10);
-      expect(postTurnPose.facingAngle).toBeCloseTo(Math.PI / 2);
+      const laterPose = findCharacterPose(character, 1_275);
+      expect(laterPose.position.x).toBeGreaterThan(midWalkPose.position.x);
+      expect(laterPose.position.x).toBeLessThan(10);
     });
   });
 });

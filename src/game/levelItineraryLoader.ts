@@ -5,7 +5,6 @@ import { assertNonNullable } from "decent-portal";
 import { LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/common/timestampUtil";
 import { tryCreateAtActivity } from "./activities/atActivityUtil";
 import { tryCreateDropActivity } from "./activities/dropActivityUtil";
-import { tryCreateFaceActivity } from "./activities/faceActivityUtil";
 import { tryCreateGiveActivity } from "./activities/giveActivityUtil.ts";
 import {
   appendEventsToCharacterState,
@@ -22,7 +21,7 @@ import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
 import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
 import LoadLevelException from "./LoadLevelException";
 import { addCharacterEncounterEvents } from "./characterEncounterUtil";
-import { createItineraryIndex, findCharacterPose } from "./itineraryUtil";
+import { createItineraryIndex } from "./itineraryUtil";
 import Character from "./types/Character";
 import Item, { duplicateItem } from "./types/Item";
 import Level from "./types/Level";
@@ -128,11 +127,6 @@ function _normalizeParsedActivityText(activityText:string):string {
     const itemRef = _normalizeActivityArgument(trimmedActivityText.slice('takes'.length), new Set(['.', '\'', '-']));
     return itemRef ? `takes ${itemRef}` : 'takes';
   }
-  if (trimmedActivityText.startsWith('faces')) {
-    const targetId = _normalizeActivityArgument(trimmedActivityText.slice('faces'.length), new Set(['.', '\'', '-']));
-    return targetId ? `faces ${targetId}` : 'faces';
-  }
-
   return trimmedActivityText;
 }
 
@@ -152,7 +146,7 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '"', '\'', '-']));
-  const activityMarkers = [' @', ' says ', ' wanders', ' gives ', ' drops ', ' takes ', ' faces '];
+  const activityMarkers = [' @', ' says ', ' wanders', ' gives ', ' drops ', ' takes '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
@@ -283,8 +277,7 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
     tryCreateWanderActivity,
     tryCreateGiveActivity,
     tryCreateDropActivity,
-    tryCreateTakeActivity,
-    tryCreateFaceActivity
+    tryCreateTakeActivity
   ];
 
   for (const createActivityEvents of activityFactories) {
@@ -370,7 +363,6 @@ function _scheduleActivities(level:Level, activities:ParsedItineraryActivity[], 
       ...character,
       itinerary,
       itineraryIndex: createItineraryIndex(itinerary, { x:character.x, y:character.y }),
-      facingAngle: findCharacterPose({ ...character, itinerary }, level.startTime).facingAngle,
       items: state.carriedItems.map(duplicateItem)
     };
   });

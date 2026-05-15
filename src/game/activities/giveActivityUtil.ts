@@ -6,7 +6,6 @@ import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { findNearestWaypoint } from "../roomUtil";
 import {
   ActivityContext,
-  addFacingEventsForWalks,
   calcActivityStartTime,
   createWaypointKey,
   ensureTimestampIsAvailable,
@@ -78,7 +77,6 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
   const scheduledWalkEvents = context.timestampKind === 'absolute'
     ? scheduleEventsToEndAtTime(unscheduledMovementEvents, context.timestamp, context.state.time)
     : scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime, context.state.time);
-  const movementEvents = addFacingEventsForWalks(context.character, context.state, scheduledWalkEvents);
   const giveEventTime = scheduledWalkEvents.length
     ? (() => {
       const lastWalkEvent = scheduledWalkEvents[scheduledWalkEvents.length - 1] as WalkEvent;
@@ -92,5 +90,5 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
   assertNonNullable(item, `expected item ${itemRef} to be removable`);
   recipientState.carriedItems.push(item);
 
-  return [...movementEvents, createGiveItemEvent(giveEventTime, item.id, recipientId)];
+  return [...scheduledWalkEvents, createGiveItemEvent(giveEventTime, item.id, recipientId)];
 }

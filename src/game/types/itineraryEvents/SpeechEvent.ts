@@ -1,8 +1,7 @@
 import ItineraryEventBase from "./ItineraryEventBase";
 
 type SpeechEvent = Readonly<ItineraryEventBase & {
-  speech:string,
-  facingAngle:number
+  speech:string
 }>
 
 export function duplicateSpeechEvent(from:SpeechEvent):SpeechEvent {
@@ -10,7 +9,6 @@ export function duplicateSpeechEvent(from:SpeechEvent):SpeechEvent {
     type:from.type,
     startTime:from.startTime,
     speech:from.speech,
-    facingAngle:from.facingAngle,
     duration:from.duration
   };
 }

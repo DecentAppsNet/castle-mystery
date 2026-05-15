@@ -111,7 +111,6 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 		x:waypoint.position.x,
 		y:waypoint.position.y,
 		waypoint,
-		facingAngle:0,
 		itinerary:[],
 		itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
 	};

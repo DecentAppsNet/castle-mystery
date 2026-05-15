@@ -274,7 +274,6 @@ function _rebuildDynamicStateForTime(gameState:GameState, time:number, previousT
     const pose = findCharacterPose(character, time);
     character.x = pose.position.x;
     character.y = pose.position.y;
-    character.facingAngle = pose.facingAngle;
   });
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;

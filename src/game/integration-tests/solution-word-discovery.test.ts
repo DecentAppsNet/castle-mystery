@@ -9,7 +9,7 @@ import ClozePartType from '../solutions/types/ClozePartType';
 
 function _createTestLevel():Level {
   const initialPosition = { x:5, y:5 };
-  const itinerary = [createSpeechEvent(1_000, 'Ted entered room 206.', 0)];
+  const itinerary = [createSpeechEvent(1_000, 'Ted entered room 206.')];
 
   return {
     rooms:[{
@@ -42,7 +42,6 @@ function _createTestLevel():Level {
       x:initialPosition.x,
       y:initialPosition.y,
       waypoint:{ position:initialPosition, adjacentWaypoints:[], exitDirections:{} },
-      facingAngle:0,
       itinerary,
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
     }],
@@ -57,7 +56,6 @@ function _createTestLevel():Level {
       x:initialPosition.x,
       y:initialPosition.y,
       waypoint:{ position:initialPosition, adjacentWaypoints:[], exitDirections:{} },
-      facingAngle:0,
       itinerary,
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
     }],

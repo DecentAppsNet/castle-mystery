@@ -1,7 +1,7 @@
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import Position from "../types/Position";
 import { findRoom } from "../roomUtil";
-import { ActivityContext, addFacingEventsForWalks, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
+import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
 
 function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:string, targetPosition:Position|null } {
   const targetText = activityText.trim().slice(1).trim();
@@ -40,6 +40,5 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
   const scheduledEvents = context.timestampKind === 'absolute'
     ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, context.state.time)
     : scheduleEventsToStartAtTime(unscheduledEvents, activityStartTime, context.state.time);
-  return addFacingEventsForWalks(context.character, context.state,
-    scheduledEvents);
+  return scheduledEvents;
 }

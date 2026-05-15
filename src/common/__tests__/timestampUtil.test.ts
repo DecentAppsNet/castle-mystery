@@ -19,11 +19,11 @@ describe('timestampUtil', () => {
 
   describe('parseLeadingTimestamp()', () => {
     it('returns timestamp and remaining text', () => {
-      expect(parseLeadingTimestamp('  0:00:35 King faces Queen.')).toEqual({
+      expect(parseLeadingTimestamp('  0:00:35 King greets Queen.')).toEqual({
         timestampText:'0:00:35',
         kind:'absolute',
         time:35_000,
-        remainingText:'King faces Queen.'
+        remainingText:'King greets Queen.'
       });
     });
 

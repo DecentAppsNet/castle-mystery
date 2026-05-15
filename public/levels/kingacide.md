@@ -143,9 +143,7 @@ N....
 # itinerary
 
 0:00:00 King @ Throne Room
-0:00:00 King faces Jester
 0:00:00 Jester @ Throne Room
-0:00:00 Jester faces King
 0:00:03 King says "It's good to be king."
 : Jester says "Surely it must be a hardship, Sire."
 : King says "True. My mind is often filled with problems."
@@ -160,7 +158,6 @@ N....
 : King wanders
 : King wanders
 : Jester says "I shall help you search."
-: King faces Jester
 : Jester wanders
 : Jester wanders
 0:00:25 King says "It must be in the library."
@@ -182,9 +179,7 @@ N....
 
 King arrived in the library at 0:00:34.
 
-0:00:35 King faces Queen
 0:00:35 King says "Hello, my beloved."
-0:00:35 Queen faces King
 0:00:36 Queen says "Oh. Hi."
 0:00:37 King says "Have you seen my favorite book?"
 0:00:39 Queen says "No. Probably, you left it in the Throne Room."

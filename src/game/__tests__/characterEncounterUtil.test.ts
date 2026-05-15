@@ -39,7 +39,6 @@ function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = [
     x,
     y,
     waypoint:_createWaypoint(x, y),
-    facingAngle:0,
     faceImageUrl:null,
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x, y })

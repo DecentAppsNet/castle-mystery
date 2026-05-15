@@ -67,14 +67,12 @@ HL
 
 0:00:00 King @ Hall
 0:00:00 Jester @ Hall
-0:00:00 King faces Jester
 : Jester says "Surely it must be nearby."
 : King says "Where did I put that book?"
 0:00:00 Queen @ Library
 0:00:01 Queen wanders
 0:00:05 Queen takes Book
 0:00:06 King @ Library
-0:00:07 King faces Queen
 
 # solutions
 

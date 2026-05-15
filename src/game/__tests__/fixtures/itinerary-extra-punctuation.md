@@ -66,4 +66,3 @@ HL
 0:00:05   Queen   takes   Book.   
   0:00:06   King   @   Library.NE.   
 0:00:07   King   says,   "Hello, dear."   
-0:00:08   King   faces   Queen.   

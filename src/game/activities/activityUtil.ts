@@ -1,5 +1,4 @@
 import { assertNonNullable } from "decent-portal";
-import { calcAngleBetweenPoints } from "@/common/angleUtil";
 
 import Character from "../types/Character";
 import { duplicateItineraryEvent } from "../types/itineraryEvents/ItineraryEvent";
@@ -11,11 +10,8 @@ import RoomExit from "../types/RoomExit";
 import Waypoint from "../types/Waypoint";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
-import FacingEvent from "../types/itineraryEvents/FacingEvent";
-import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { findExitWaypoint, findNearestWaypoint, findRoom } from "../roomUtil";
 import {
-  createFacingEvent,
   createItineraryIndex,
   createRoomEntryEvent,
   createWalkEvent,
@@ -30,7 +26,6 @@ export type CharacterActivityState = {
   time:number,
   position:Position,
   waypoint:Waypoint,
-  facingAngle:number,
   carriedItems:Item[]
 };
 
@@ -120,7 +115,6 @@ export function createCharacterActivityState(character:Character):CharacterActiv
     time:0,
     position:{ x:character.x, y:character.y },
     waypoint:character.waypoint,
-    facingAngle:character.facingAngle,
     carriedItems:character.items.map(duplicateItem)
   };
 }
@@ -135,7 +129,6 @@ export function duplicateCharacterActivityState(state:CharacterActivityState):Ch
     time:state.time,
     position:duplicatePosition(state.position),
     waypoint:state.waypoint,
-    facingAngle:state.facingAngle,
     carriedItems:state.carriedItems.map(duplicateItem)
   };
 }
@@ -157,7 +150,6 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
   if (!state.events.length) {
     return {
       position:{ x:character.x, y:character.y },
-      facingAngle:character.facingAngle,
       speech:null
     };
   }
@@ -222,35 +214,6 @@ export function appendEventsToCharacterState(level:Level, character:Character, s
   const waypoint = level.rooms.flatMap(room => room.waypoints)
     .find(candidate => candidate.position.x === state.position.x && candidate.position.y === state.position.y);
   if (waypoint) state.waypoint = waypoint;
-  state.facingAngle = pose.facingAngle;
-}
-
-export function addFacingEventsForWalks(character:Character, state:CharacterActivityState, events:ItineraryEvent[]):ItineraryEvent[] {
-  if (!events.length) return events;
-  const output:ItineraryEvent[] = [];
-
-  for (const event of events) {
-    if (event.type === ItineraryEventType.WALK) {
-      const walkEvent = event as WalkEvent;
-      const scheduledCharacter:Character = {
-        ...character,
-        itinerary:[...state.events, ...output],
-        itineraryIndex:createItineraryIndex([...state.events, ...output], { x:character.x, y:character.y })
-      };
-      const currentFacingAngle = findCharacterPose(scheduledCharacter, walkEvent.startTime).facingAngle;
-      const targetFacingAngle = calcAngleBetweenPoints(
-        walkEvent.fromPosition.x,
-        walkEvent.fromPosition.y,
-        walkEvent.toPosition.x,
-        walkEvent.toPosition.y
-      );
-      const facingEvent = createFacingEvent(walkEvent.startTime, currentFacingAngle, targetFacingAngle);
-      if (facingEvent.duration > 0 || currentFacingAngle !== targetFacingAngle) output.push(facingEvent);
-    }
-    output.push(event);
-  }
-
-  return output;
 }
 
 export function findCurrentRoom(level:Level, position:Position):Room {
@@ -382,10 +345,5 @@ export function findTargetPositionAtTime(targetId:string, timestamp:number, char
   }
 
   return null;
-}
-
-export function createFacingEventForTarget(timestamp:number, currentFacingAngle:number, actorPosition:Position, targetPosition:Position):FacingEvent {
-  return createFacingEvent(timestamp, currentFacingAngle,
-    calcAngleBetweenPoints(actorPosition.x, actorPosition.y, targetPosition.x, targetPosition.y));
 }
 

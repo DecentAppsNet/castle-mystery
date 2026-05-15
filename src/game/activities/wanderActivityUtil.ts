@@ -1,6 +1,6 @@
 import { createWalkEvent, findRoomAtPositionOrNearest } from "../itineraryUtil";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import { ActivityContext, addFacingEventsForWalks, calcActivityStartTime, ensureTimestampIsAvailable, stripTrailingPeriod } from "./activityUtil";
+import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, stripTrailingPeriod } from "./activityUtil";
 
 function _calcStableActivityHash(activitySourceIndex:number, characterId:string):number {
   let hash = activitySourceIndex + 1;
@@ -29,5 +29,5 @@ export function tryCreateWanderActivity(activityText:string, context:ActivityCon
   }
   const selectedCandidate = candidateResults[_calcStableActivityHash(context.activitySourceIndex, context.character.id) % candidateResults.length];
   const shiftedWalkEvent = { ...selectedCandidate.result.event!, startTime:activityStartTime };
-  return addFacingEventsForWalks(context.character, context.state, [shiftedWalkEvent]);
+  return [shiftedWalkEvent];
 }

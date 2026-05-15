@@ -137,9 +137,7 @@ WFL
 
 King arrived in the library at 0:00:34.
 
-0:00:35 King faces Queen.
 0:00:35 King says "Hello, dear."
-0:00:35 Queen faces King.
 0:00:36 Queen says "Oh. Hi."
 0:00:37 King says "Have you seen my favorite book?"
 0:00:39 Queen says "No."

@@ -11,8 +11,6 @@ import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.
 import invalidItineraryTimestampText from './fixtures/invalid-itinerary-timestamp.md?raw';
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
-import sameTimeFaceOrderIndependenceText from './fixtures/same-time-face-order-independence.md?raw';
-import sameTimeItemStateUsesCharacterOrderText from './fixtures/same-time-item-state-uses-character-order.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
@@ -69,7 +67,7 @@ describe('levelUtil itinerary loading', () => {
       .map(event => event.startTime + event.duration));
 
     expect(speechEvent?.startTime).toBe(priorCompletionTime);
-    expect(priorCompletionTime).toBeGreaterThan(latestWalkEndTime);
+    expect(priorCompletionTime).toBeGreaterThanOrEqual(latestWalkEndTime);
   });
 
   it('loads a file-relative activity before a later same-character absolute activity in file order', () => {
@@ -85,16 +83,13 @@ describe('levelUtil itinerary loading', () => {
     expect(() => loadLevelFromText(afterPreviousActivityRepeatedWandersText)).not.toThrow();
   });
 
-  it('loads kingacide itinerary activities including title-based takes and facing events', () => {
+  it('loads kingacide itinerary activities including title-based takes', () => {
     const level = loadLevelFromText(kingacideItineraryText);
     const queen = level.characters.find(character => character.id === 'Queen');
-    const king = level.characters.find(character => character.id === 'King');
     const eastHall = level.rooms.find(room => room.id === 'East Hall');
     const foyer = level.rooms.find(room => room.id === 'Foyer');
 
     expect(queen?.items.map(item => item.id)).toContain('Romance Novel');
-    expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 35_000)).toBe(true);
-    expect(queen?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 35_000)).toBe(true);
     expect(eastHall?.isObscured).toBe(true);
     expect(foyer?.isObscured).toBe(false);
     expect(level.solutions.map(solution => solution.title)).toEqual(['Identities']);
@@ -233,34 +228,11 @@ describe('levelUtil itinerary loading', () => {
     expect(targetWaypoint).not.toBeNull();
     expect(findCharacterPose(king!, 6_000).position).toEqual(targetWaypoint!.position);
     expect(speechEvent?.speech).toBe('Hello, dear.');
-    expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 8_000)).toBe(true);
-  });
-
-  it('resolves face targets independently of same-timestamp itinerary order', () => {
-    const level = loadLevelFromText(sameTimeFaceOrderIndependenceText);
-    const king = level.characters.find(character => character.id === 'King');
-    const queen = level.characters.find(character => character.id === 'Queen');
-    const kingFaceEvent = king?.itinerary.find(event => event.type === ItineraryEventType.FACING && event.startTime === 2_000);
-    const kingPose = king ? findCharacterPose(king, 2_000) : null;
-    const queenPose = queen ? findCharacterPose(queen, 2_000) : null;
-
-    expect(kingFaceEvent?.type).toEqual(ItineraryEventType.FACING);
-    expect(kingPose).not.toBeNull();
-    expect(queenPose).not.toBeNull();
-    expect((kingFaceEvent as { facingAngle:number } | undefined)?.facingAngle)
-      .toBeCloseTo(Math.atan2((queenPose?.position.y || 0) - (kingPose?.position.y || 0), (queenPose?.position.x || 0) - (kingPose?.position.x || 0)));
   });
 
   it('sets level duration from the longest character itinerary', () => {
     const level = loadLevelFromText(kingacideItineraryText);
     expect(level.duration).toEqual(41_000);
-  });
-
-  it('uses deterministic character order for same-timestamp mutable state', () => {
-    const level = loadLevelFromText(sameTimeItemStateUsesCharacterOrderText);
-    const king = level.characters.find(character => character.id === 'King');
-
-    expect(king?.itinerary.some(event => event.type === ItineraryEventType.FACING && event.startTime === 5_000)).toBe(true);
   });
 
   it('wraps itinerary line errors with filename and line number', () => {

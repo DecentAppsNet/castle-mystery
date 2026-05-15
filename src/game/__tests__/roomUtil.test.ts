@@ -43,7 +43,6 @@ function _createCharacter(id:string, x:number, y:number):Character {
     x,
     y,
     waypoint,
-    facingAngle:0,
     faceImageUrl:null,
     itinerary:[],
     itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }

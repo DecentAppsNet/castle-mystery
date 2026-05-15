@@ -14,7 +14,6 @@ type Character = {
   x:number,
   y:number,
   waypoint:Waypoint,
-  facingAngle:number,
   itinerary:Itinerary,
   itineraryIndex:ItineraryIndex
 }
@@ -31,7 +30,6 @@ export function duplicateCharacter(from:Character):Character {
     x:from.x,
     y:from.y,
     waypoint:from.waypoint,
-    facingAngle:from.facingAngle,
     itinerary:from.itinerary,
     itineraryIndex:from.itineraryIndex
   };
