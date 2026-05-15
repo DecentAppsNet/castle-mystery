@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { baseUrl } from '@/common/urlUtil';
 import styles from './SolutionView.module.css';
@@ -18,12 +18,34 @@ type Props = {
 
 function SolutionView({solution, isRevealing, imageSet, cooldownUntilTime, onIncorrectClaim, onUpdate}:Props) {
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
+  const [isHoldingLockedOverlay, setIsHoldingLockedOverlay] = useState(false);
+  const previousSolutionRef = useRef({ id:solution.id, isLocked:solution.isLocked });
   const lockedImageUrl = baseUrl('/assets/ui/locked.svg');
+
+  useLayoutEffect(() => {
+    const previousSolution = previousSolutionRef.current;
+    if (previousSolution.id !== solution.id) {
+      previousSolutionRef.current = { id:solution.id, isLocked:solution.isLocked };
+      setIsHoldingLockedOverlay(false);
+      return;
+    }
+
+    if (previousSolution.isLocked && !solution.isLocked) setIsHoldingLockedOverlay(true);
+    else if (solution.isLocked) setIsHoldingLockedOverlay(false);
+
+    previousSolutionRef.current = { id:solution.id, isLocked:solution.isLocked };
+  }, [solution.id, solution.isLocked]);
+
+  useEffect(() => {
+    if (!isHoldingLockedOverlay || isRevealing) return;
+    const timeoutId = window.setTimeout(() => setIsHoldingLockedOverlay(false), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [isHoldingLockedOverlay, isRevealing]);
 
   const statusIconClass = solution.isComplete ? styles.completeIcon : styles.incompleteIcon;
   const shouldRenderRevealOverlay = isRevealing;
-  const shouldRenderVisibleButton = !solution.isLocked || shouldRenderRevealOverlay;
-  const shouldRenderLockedOverlay = solution.isLocked || shouldRenderRevealOverlay;
+  const shouldRenderVisibleButton = !solution.isLocked || isHoldingLockedOverlay || shouldRenderRevealOverlay;
+  const shouldRenderLockedOverlay = solution.isLocked || isHoldingLockedOverlay || shouldRenderRevealOverlay;
   const obscuredOverlayClassName = [
     styles.obscuredSolutionOverlay,
     shouldRenderRevealOverlay ? styles.obscuredSolutionRevealOverlay : ''
@@ -41,7 +63,13 @@ function SolutionView({solution, isRevealing, imageSet, cooldownUntilTime, onInc
           <div className={styles.solutionCardPlaceholder} aria-hidden='true' />
         )}
         {shouldRenderLockedOverlay ? (
-          <div className={obscuredOverlayClassName} aria-label={solution.isLocked ? 'Solution locked.' : 'Solution unlocking.'}>
+          <div
+            className={obscuredOverlayClassName}
+            aria-label={solution.isLocked ? 'Solution locked.' : 'Solution unlocking.'}
+            onAnimationEnd={(event) => {
+              if (event.animationName === 'obscuredSolutionReveal') setIsHoldingLockedOverlay(false);
+            }}
+          >
             <img className={styles.lockedSolutionIcon} src={lockedImageUrl} alt="" aria-hidden='true' />
           </div>
         ) : null}
