@@ -5,6 +5,7 @@ import Solution from "@/game/solutions/types/Solution"
 import ClaimSolutionDialog from '../dialogs/ClaimSolutionDialog';
 import ImageSet from '@/game/types/ImageSet';
 import { claimSolution } from './interactions/solutions';
+import { convertNumberToRomanNumeral } from './romanNumeralUtil';
 
 type Props = {
   solution:Solution,
@@ -18,12 +19,13 @@ function SolutionView({solution, imageSet, cooldownUntilTime, onIncorrectClaim, 
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
 
   const statusIconClass = solution.isComplete ? styles.completeIcon : styles.incompleteIcon;
-  const obscuredCountdown = solution.obscuredRemainingWords.length;
+  const obscuredCountdown = solution.obscuredRemainingPhrases.length;
+  const obscuredCountdownDisplay = convertNumberToRomanNumeral(obscuredCountdown);
 
   if (solution.isObscured) {
     return (
-      <div className={styles.obscuredSolutionCard} aria-label={`Solution hidden. ${obscuredCountdown} words remaining.`}>
-        <span className={styles.obscuredSolutionCountdown}>{obscuredCountdown}</span>
+      <div className={styles.obscuredSolutionCard} aria-label={`Solution hidden. ${obscuredCountdown} phrases remaining.`}>
+        <span className={styles.obscuredSolutionCountdown}>{obscuredCountdownDisplay}</span>
       </div>
     );
   }

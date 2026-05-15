@@ -12,7 +12,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isObscured: false,
-        obscuredRemainingWords: [],
+        obscuredRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -32,7 +32,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isObscured: false,
-        obscuredRemainingWords: [],
+        obscuredRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -52,7 +52,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isObscured: false,
-        obscuredRemainingWords: [],
+        obscuredRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -74,7 +74,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isObscured: false,
-        obscuredRemainingWords: [],
+        obscuredRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.text,
@@ -92,7 +92,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isObscured: false,
-        obscuredRemainingWords: [],
+        obscuredRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -122,7 +122,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isObscured: false,
-        obscuredRemainingWords: [],
+        obscuredRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -142,7 +142,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isObscured: false,
-        obscuredRemainingWords: [],
+        obscuredRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -182,7 +182,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isObscured: false,
-        obscuredRemainingWords: [],
+        obscuredRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -202,7 +202,7 @@ describe('solutionUtil', () => {
         title: 'Empty Statement',
         isComplete: false,
         isObscured: false,
-        obscuredRemainingWords: [],
+        obscuredRemainingPhrases: [],
         parts: []
       };
 

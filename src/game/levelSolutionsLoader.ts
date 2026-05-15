@@ -5,35 +5,35 @@ import Character from "./types/Character";
 import ClozeBlank, { UNSPECIFIED_ANSWER } from "./solutions/types/ClozeBlank";
 import ClozePart from "./solutions/types/ClozePart";
 import ClozePartType from "./solutions/types/ClozePartType";
+import { normalizeSolutionPhrase } from "./solutions/solutionDiscoveryUtil";
 import Solution from "./solutions/types/Solution";
 
-function _normalizeSolutionWord(word:string):string {
-  return word.trim().toLowerCase();
-}
-
-function _createObscuredRemainingWords(parts:ClozePart[]):string[] {
-  const obscuredRemainingWords:string[] = [];
+function _createObscuredRemainingPhrases(parts:ClozePart[]):string[] {
+  const obscuredRemainingPhrases:string[] = [];
 
   parts.forEach(part => {
     if (part.type !== ClozePartType.blank) return;
-    part.availableAnswers.forEach(answer => {
-      const normalizedAnswer = _normalizeSolutionWord(answer);
-      if (!normalizedAnswer || obscuredRemainingWords.includes(normalizedAnswer)) return;
-      obscuredRemainingWords.push(normalizedAnswer);
+    const blank = part as ClozeBlank;
+    blank.availableAnswers.forEach(answer => {
+      const normalizedPhrase = normalizeSolutionPhrase(answer);
+      if (!normalizedPhrase || obscuredRemainingPhrases.includes(normalizedPhrase)) return;
+      obscuredRemainingPhrases.push(normalizedPhrase);
     });
   });
 
-  return obscuredRemainingWords;
+  return obscuredRemainingPhrases;
 }
 
 function _createSolution(id:string, title:string, parts:ClozePart[]):Solution {
+  const obscuredRemainingPhrases = _createObscuredRemainingPhrases(parts);
+
   return {
     id,
     title,
     parts,
     isComplete:false,
     isObscured:true,
-    obscuredRemainingWords:_createObscuredRemainingWords(parts)
+    obscuredRemainingPhrases
   };
 }
 

@@ -17,6 +17,7 @@ type GameState = {
   hoveredItemId:string|null,
   hoveredCharacterId:string|null,
   activeCharacterI:number,
+  discoveredSolutionPhrases:Set<string>,
   isPlaying:boolean,
   realTimeToGameTimeOffset:number,
   time:number,
@@ -25,7 +26,8 @@ type GameState = {
   scalingFactors: ScalingFactors,
   lastMinutesChangedCallRealTime:number,
   lastMinutesChangedValue:number,
-  lastActiveCharacterChangedValue:string
+  lastActiveCharacterChangedValue:string,
+  lastSolutionsChangedSignature:string
 }
 
 export default GameState;

@@ -36,10 +36,11 @@ import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
 import Position, { duplicatePosition } from "./types/Position";
 import Item from "./types/Item";
-import { duplicateSolution } from "./solutions/types/Solution";
+import Solution, { duplicateSolution } from "./solutions/types/Solution";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
 import EffectType from "./effects/types/EffectType";
+import { findNormalizedSolutionPhrasesInText, normalizeSolutionPhrase, syncSolutionsWithDiscoveredPhrases } from "./solutions/solutionDiscoveryUtil";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
 
@@ -55,6 +56,65 @@ type PendingRoomEffect = {
   create:() => void
 }
 
+function _createCharacterPopoverTexts(character:Character):string[] {
+  const title = character.isTitleKnown ? character.title : "";
+  const carryText = character.items.length === 0
+    ? "Carrying nothing."
+    : character.items.length === 1
+      ? "Carrying 1 item."
+      : `Carrying ${character.items.length} items.`;
+
+  return [title, character.description, carryText].filter(Boolean);
+}
+
+function _createItemPopoverTexts(item:Item):string[] {
+  return [item.title, item.description].filter(Boolean);
+}
+
+function _createSolutionsChangedSignature(solutions:Solution[]):string {
+  return solutions.map(solution => [
+    solution.id,
+    solution.isComplete ? '1' : '0',
+    solution.isObscured ? '1' : '0',
+    solution.obscuredRemainingPhrases.join(',')
+  ].join(':')).join('|');
+}
+
+function _syncSolutionsWithDiscoveredPhrases(gameState:GameState):boolean {
+  const { solutions, didChange } = syncSolutionsWithDiscoveredPhrases(gameState.solutions, gameState.discoveredSolutionPhrases);
+  if (didChange) gameState.solutions = solutions;
+  return didChange;
+}
+
+function _discoverSolutionPhrases(gameState:GameState, phrases:string[]):boolean {
+  const beforeCount = gameState.discoveredSolutionPhrases.size;
+  phrases.forEach(phrase => {
+    const normalizedPhrase = normalizeSolutionPhrase(phrase);
+    if (!normalizedPhrase) return;
+    gameState.discoveredSolutionPhrases.add(normalizedPhrase);
+  });
+  if (gameState.discoveredSolutionPhrases.size === beforeCount) return false;
+  return _syncSolutionsWithDiscoveredPhrases(gameState);
+}
+
+function _discoverMatchingSolutionPhrasesInTexts(gameState:GameState, texts:string[]):boolean {
+  const candidatePhrases = Array.from(new Set(gameState.solutions.flatMap(solution => solution.obscuredRemainingPhrases)));
+  if (!candidatePhrases.length) return false;
+
+  const discoveredPhrases:string[] = [];
+  texts.forEach(text => {
+    findNormalizedSolutionPhrasesInText(text, candidatePhrases).forEach(phrase => {
+      if (discoveredPhrases.includes(phrase)) return;
+      discoveredPhrases.push(phrase);
+    });
+  });
+  return _discoverSolutionPhrases(gameState, discoveredPhrases);
+}
+
+function _syncDiscoveredRoomTitlePhrases(gameState:GameState):boolean {
+  return _discoverSolutionPhrases(gameState, gameState.rooms.filter(room => room.isDiscovered).map(room => room.title));
+}
+
 export function findCharacter(gameState:GameState, characterId:string):Character {
   const character = gameState.characters.find((c) => c.id === characterId);
   assertNonNullable(character, `character with id ${characterId} not found`);
@@ -67,6 +127,7 @@ function _setActiveRoomDiscovered(gameState:GameState) {
     const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
     if (activeRoom) activeRoom.isDiscovered = true;
   }
+  _syncDiscoveredRoomTitlePhrases(gameState);
 }
 
 function _discoverVisibleItemsInActiveRoom(gameState:GameState) {
@@ -232,8 +293,9 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
 }
 
 function _updateGameStateForChangeSolutions(gameState:GameState, event:ChangeSolutionsEvent) {
-  gameState.solutions = event.solutions;
-  const identitiesSolution = event.solutions.find(solution => solution.id === "Identities") || null;
+  gameState.solutions = syncSolutionsWithDiscoveredPhrases(event.solutions, gameState.discoveredSolutionPhrases).solutions;
+  gameState.lastSolutionsChangedSignature = _createSolutionsChangedSignature(gameState.solutions);
+  const identitiesSolution = gameState.solutions.find(solution => solution.id === "Identities") || null;
   if (!identitiesSolution?.isComplete) return;
   gameState.characters.forEach(character => {
     character.isTitleKnown = true;
@@ -371,6 +433,37 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
   _discoverVisibleItemsInActiveRoom(gameState);
 }
 
+export function syncSolutionPhraseDiscovery(gameState:GameState, isScrubbing:boolean = false):boolean {
+  let didChange = _syncDiscoveredRoomTitlePhrases(gameState);
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  if (!activeCharacter || !activeRoom || activeRoom.isObscured) return didChange;
+
+  const hoveredItem = gameState.hoveredItemId
+    ? activeRoom.items.find(item => item.id === gameState.hoveredItemId && item.isDiscovered) || null
+    : null;
+  if (hoveredItem) {
+    didChange = _discoverMatchingSolutionPhrasesInTexts(gameState, _createItemPopoverTexts(hoveredItem)) || didChange;
+  }
+
+  const hoveredCharacter = !hoveredItem && gameState.hoveredCharacterId
+    ? gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null
+    : null;
+  if (hoveredCharacter) {
+    didChange = _discoverMatchingSolutionPhrasesInTexts(gameState, _createCharacterPopoverTexts(hoveredCharacter)) || didChange;
+  }
+
+  if (!gameState.isPlaying || isScrubbing) return didChange;
+
+  findCharactersInRoom(activeRoom, gameState.characters).forEach(character => {
+    const speech = findCharacterPose(character, gameState.time).speech;
+    if (!speech) return;
+    didChange = _discoverMatchingSolutionPhrasesInTexts(gameState, [speech]) || didChange;
+  });
+
+  return didChange;
+}
+
 function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
   gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.SPEECH_BUBBLE);
 
@@ -415,7 +508,7 @@ function _drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
     const room = gameState.rooms[roomI];
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
-    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.isPlaying, gameState.imageSet);
+    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.imageSet);
   }
   if (!activeRoom?.isObscured && activeRoom && gameState.hoveredItemId) {
     const hoveredItem = activeRoom.items.find(item => item.id === gameState.hoveredItemId && item.isDiscovered) || null;
@@ -448,8 +541,16 @@ function _callOnActiveCharacterChangedAsNeeded(gameState:GameState, onActiveChar
   onActiveCharacterChanged(activeCharacterId);
 }
 
+function _callOnSolutionsChangedAsNeeded(gameState:GameState, onSolutionsChanged:(solutions:Solution[]) => void) {
+  const nextSignature = _createSolutionsChangedSignature(gameState.solutions);
+  if (nextSignature === gameState.lastSolutionsChangedSignature) return;
+  gameState.lastSolutionsChangedSignature = nextSignature;
+  onSolutionsChanged(gameState.solutions.map(duplicateSolution));
+}
+
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
-  onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void, onActiveCharacterChanged?:(characterId:string) => void, isScrubbing:boolean = false) {
+  onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
+  onActiveCharacterChanged?:(characterId:string) => void, onSolutionsChanged?:(solutions:Solution[]) => void, isScrubbing:boolean = false) {
   context.fillStyle = COLOR_BLACK;
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   if (!gameState) {
@@ -471,6 +572,8 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 
   _updateScalingFactorsAsNeeded(gameState, context);
   _syncSpeechBubbleEffects(gameState, isScrubbing);
+  syncSolutionPhraseDiscovery(gameState, isScrubbing);
+  if (onSolutionsChanged) _callOnSolutionsChangedAsNeeded(gameState, onSolutionsChanged);
   _drawGameState(gameState, context);
 }
 
@@ -486,6 +589,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     hoveredItemId:null,
     hoveredCharacterId:null,
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
+    discoveredSolutionPhrases:new Set<string>(),
     isPlaying:false,
     time:level.startTime,
     duration:level.duration,
@@ -494,7 +598,8 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     scalingFactors:ZERO_SCALING_FACTORS,
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN,
-    lastActiveCharacterChangedValue:""
+    lastActiveCharacterChangedValue:"",
+    lastSolutionsChangedSignature:_createSolutionsChangedSignature(level.solutions)
   }
   _rebuildDynamicStateForTime(gameState, level.startTime);
   _setActiveRoomDiscovered(gameState);

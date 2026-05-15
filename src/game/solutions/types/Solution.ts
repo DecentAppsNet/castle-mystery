@@ -6,7 +6,7 @@ type Solution = {
   parts: ClozePart[];
   isComplete:boolean;
   isObscured:boolean;
-  obscuredRemainingWords:string[];
+  obscuredRemainingPhrases:string[];
 };
 
 export function duplicateSolution(from:Solution):Solution {
@@ -16,7 +16,7 @@ export function duplicateSolution(from:Solution):Solution {
     parts:from.parts.map(duplicateClozePart),
     isComplete:from.isComplete,
     isObscured:from.isObscured,
-    obscuredRemainingWords:[...from.obscuredRemainingWords]
+    obscuredRemainingPhrases:[...from.obscuredRemainingPhrases]
   };
 }
 

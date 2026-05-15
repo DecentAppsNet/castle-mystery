@@ -1,6 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
-import { createNonGlobalRegex, escapeRegexCharacters, findSquareBracketEnclosedTextSegments } from '../regExUtil';
+import { createNonGlobalRegex, escapeRegexCharacters, findSquareBracketEnclosedTextSegments, findWordLikeTextSegments } from '../regExUtil';
+
+describe('regExUtil', () => {
+  describe('findWordLikeTextSegments()', () => {
+    it('finds alphanumeric words and apostrophe words with positions', () => {
+      expect(findWordLikeTextSegments(`Ted! It's room 206.`)).toEqual([
+        { startIndex:0, endIndex:3, enclosedText:'Ted' },
+        { startIndex:5, endIndex:9, enclosedText:`It's` },
+        { startIndex:10, endIndex:14, enclosedText:'room' },
+        { startIndex:15, endIndex:18, enclosedText:'206' }
+      ]);
+    });
+
+    it('returns an empty array when there are no word-like segments', () => {
+      expect(findWordLikeTextSegments(` !!! `)).toEqual([]);
+    });
+  });
+});
 
 describe('regExUtil.ts', () => {
   describe('escapeRegexCharacters()', () => {

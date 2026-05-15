@@ -101,7 +101,7 @@ function HomeScreen() {
     <div className={styles.container}>
       <TopBar />
       <div className={styles.content}>
-        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} isScrubbing={isScrubbing} />
+        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onSolutionsChanged={setSolutions} isScrubbing={isScrubbing} />
         <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}

@@ -6,7 +6,6 @@ import DialogFooter from "@/components/modalDialogs/DialogFooter";
 import Solution from "@/game/solutions/types/Solution";
 import ClozeBlank, { UNSPECIFIED_ANSWER } from "@/game/solutions/types/ClozeBlank";
 import ClozeImage from "@/game/solutions/types/ClozeImage";
-import ClozeSeparator from "@/game/solutions/types/ClozeSeparator";
 import ClozeText from "@/game/solutions/types/ClozeText";
 import ClozePartType from "@/game/solutions/types/ClozePartType";
 import { duplicateSolution } from "@/game/solutions/types/Solution";

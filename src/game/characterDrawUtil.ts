@@ -2,6 +2,7 @@ import { clamp } from "@/common/numberUtil";
 import { processCharacterEffects } from "./effects/effectUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import Character from "./types/Character";
+import Room from "./types/Room";
 import ScalingFactors from "./types/ScalingFactors";
 import Effect from "./effects/types/Effect";
 import ImageSet from "./types/ImageSet";
