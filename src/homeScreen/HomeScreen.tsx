@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import styles from './HomeScreen.module.css';
 import { init } from "./interactions/initialization";
@@ -12,6 +12,11 @@ import { findRoomAtPosition } from "@/game/roomUtil";
 import SolutionsView from "./solutionsView/SolutionsView";
 import Solution from "@/game/solutions/types/Solution";
 import Itinerary from "@/game/types/Itinerary";
+import {
+  createSolutionPhraseAnimationQueueItems,
+  SOLUTION_PHRASE_ANIMATION_COUNTDOWN_MSECS,
+  SolutionPhraseAnimationQueueItem
+} from "./solutionsView/solutionPhraseAnimationUtil";
 
 const ARROW_STEP_MSECS = 200;
 
@@ -29,12 +34,24 @@ function _isEditableTarget(target:EventTarget|null):boolean {
   return target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || tagName === "BUTTON";
 }
 
+function _countUniqueRemainingPhrases(solutions:Solution[]):number {
+  return new Set(solutions.flatMap(solution => solution.lockedRemainingPhrases)).size;
+}
+
+function _countDiscoveredPhrases(totalRequiredPhraseCount:number, solutions:Solution[]):number {
+  return Math.max(0, totalRequiredPhraseCount - _countUniqueRemainingPhrases(solutions));
+}
+
 function HomeScreen() {
   const [gameState, setGameState] = useState<GameState|null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
   const [solutions, setSolutions] = useState<Solution[]>([]);
+  const solutionsRef = useRef<Solution[]>([]);
   const [solutionClaimCooldowns, setSolutionClaimCooldowns] = useState<Record<string, number>>({});
+  const [solutionPhraseAnimationQueue, setSolutionPhraseAnimationQueue] = useState<SolutionPhraseAnimationQueueItem[]>([]);
+  const [activeSolutionPhraseAnimation, setActiveSolutionPhraseAnimation] = useState<SolutionPhraseAnimationQueueItem|null>(null);
+  const [displayedDiscoveredPhraseCount, setDisplayedDiscoveredPhraseCount] = useState<number>(0);
   const [activeCharacterId, setActiveCharacterId] = useState<string>("");
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
@@ -57,10 +74,54 @@ function HomeScreen() {
         setMinutes(initResults.minutes);
         setGameState(initResults.gameState);
         setSolutions(initResults.gameState.solutions);
+        solutionsRef.current = initResults.gameState.solutions;
+        setDisplayedDiscoveredPhraseCount(_countDiscoveredPhrases(initResults.gameState.requiredSolutionPhraseCount, initResults.gameState.solutions));
         setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (activeSolutionPhraseAnimation || !solutionPhraseAnimationQueue.length) return;
+    const [nextAnimation, ...remainingQueue] = solutionPhraseAnimationQueue;
+    setActiveSolutionPhraseAnimation(nextAnimation);
+    setSolutionPhraseAnimationQueue(remainingQueue);
+  }, [activeSolutionPhraseAnimation, solutionPhraseAnimationQueue]);
+
+  useEffect(() => {
+    if (!activeSolutionPhraseAnimation) return;
+
+    const countdownTimeout = window.setTimeout(() => {
+      setDisplayedDiscoveredPhraseCount(from => from + 1);
+    }, SOLUTION_PHRASE_ANIMATION_COUNTDOWN_MSECS);
+
+    const completionTimeout = window.setTimeout(() => {
+      setActiveSolutionPhraseAnimation(current => current?.id === activeSolutionPhraseAnimation.id ? null : current);
+    }, activeSolutionPhraseAnimation.durationMsecs);
+
+    return () => {
+      window.clearTimeout(countdownTimeout);
+      window.clearTimeout(completionTimeout);
+    };
+  }, [activeSolutionPhraseAnimation]);
+
+  function _handleSolutionsChanged(nextSolutions:Solution[]) {
+    const previousSolutions = solutionsRef.current;
+    const nextQueueItems = createSolutionPhraseAnimationQueueItems(previousSolutions, nextSolutions);
+
+    solutionsRef.current = nextSolutions;
+    setSolutions(nextSolutions);
+    if (nextQueueItems.length) {
+      setSolutionPhraseAnimationQueue(from => [...from, ...nextQueueItems]);
+    } else if (gameState) {
+      setDisplayedDiscoveredPhraseCount(_countDiscoveredPhrases(gameState.requiredSolutionPhraseCount, nextSolutions));
+    }
+  }
+
+  function _handleManualSolutionsUpdate(nextSolutions:Solution[]) {
+    solutionsRef.current = nextSolutions;
+    setSolutions(nextSolutions);
+  }
 
   useEffect(() => {
     if (!gameState) return;
@@ -101,7 +162,7 @@ function HomeScreen() {
     <div className={styles.container}>
       <TopBar />
       <div className={styles.content}>
-        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onSolutionsChanged={setSolutions} isScrubbing={isScrubbing} />
+        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onSolutionsChanged={_handleSolutionsChanged} isScrubbing={isScrubbing} />
         <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
@@ -120,6 +181,9 @@ function HomeScreen() {
       <div className={styles.sidePane}>
         <SolutionsView 
           solutions={solutions} 
+          discoveredPhraseCount={displayedDiscoveredPhraseCount}
+          totalPhraseCount={gameState.requiredSolutionPhraseCount}
+          activePhraseAnimation={activeSolutionPhraseAnimation}
           imageSet={gameState.imageSet} 
           solutionClaimCooldowns={solutionClaimCooldowns}
           onIncorrectClaim={(solutionId) => {
@@ -128,7 +192,7 @@ function HomeScreen() {
               [solutionId]: Date.now() + 2 * 60 * 1000
             }));
           }}
-          onUpdate={(nextSolutions) => { updateSolutions(nextSolutions, setSolutions)} }
+          onUpdate={(nextSolutions) => { updateSolutions(nextSolutions, _handleManualSolutionsUpdate)} }
         />
       </div>
     </div>

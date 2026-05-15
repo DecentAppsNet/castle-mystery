@@ -11,8 +11,8 @@ describe('solutionUtil', () => {
         id: 'test-complete',
         title: 'Test Statement',
         isComplete: false,
-        isObscured: false,
-        obscuredRemainingPhrases: [],
+        isLocked: false,
+        lockedRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -31,8 +31,8 @@ describe('solutionUtil', () => {
         id: 'test-missing',
         title: 'Test Statement',
         isComplete: false,
-        isObscured: false,
-        obscuredRemainingPhrases: [],
+        isLocked: false,
+        lockedRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -51,8 +51,8 @@ describe('solutionUtil', () => {
         id: 'test-out-of-range',
         title: 'Test Statement',
         isComplete: false,
-        isObscured: false,
-        obscuredRemainingPhrases: [],
+        isLocked: false,
+        lockedRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -73,8 +73,8 @@ describe('solutionUtil', () => {
         id: 'test-1',
         title: 'Test Statement',
         isComplete: false,
-        isObscured: false,
-        obscuredRemainingPhrases: [],
+        isLocked: false,
+        lockedRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.text,
@@ -91,8 +91,8 @@ describe('solutionUtil', () => {
         id: 'test-2',
         title: 'Test Statement',
         isComplete: false,
-        isObscured: false,
-        obscuredRemainingPhrases: [],
+        isLocked: false,
+        lockedRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -121,8 +121,8 @@ describe('solutionUtil', () => {
         id: 'test-3',
         title: 'Test Statement',
         isComplete: false,
-        isObscured: false,
-        obscuredRemainingPhrases: [],
+        isLocked: false,
+        lockedRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -141,8 +141,8 @@ describe('solutionUtil', () => {
         id: 'test-4',
         title: 'Test Statement',
         isComplete: false,
-        isObscured: false,
-        obscuredRemainingPhrases: [],
+        isLocked: false,
+        lockedRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -181,8 +181,8 @@ describe('solutionUtil', () => {
         id: 'test-5',
         title: 'Test Statement',
         isComplete: false,
-        isObscured: false,
-        obscuredRemainingPhrases: [],
+        isLocked: false,
+        lockedRemainingPhrases: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -201,8 +201,8 @@ describe('solutionUtil', () => {
         id: 'test-6',
         title: 'Empty Statement',
         isComplete: false,
-        isObscured: false,
-        obscuredRemainingPhrases: [],
+        isLocked: false,
+        lockedRemainingPhrases: [],
         parts: []
       };
 

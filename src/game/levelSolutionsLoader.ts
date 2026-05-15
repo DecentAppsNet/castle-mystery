@@ -8,32 +8,32 @@ import ClozePartType from "./solutions/types/ClozePartType";
 import { normalizeSolutionPhrase } from "./solutions/solutionDiscoveryUtil";
 import Solution from "./solutions/types/Solution";
 
-function _createObscuredRemainingPhrases(parts:ClozePart[]):string[] {
-  const obscuredRemainingPhrases:string[] = [];
+function _createLockedRemainingPhrases(parts:ClozePart[]):string[] {
+  const lockedRemainingPhrases:string[] = [];
 
   parts.forEach(part => {
     if (part.type !== ClozePartType.blank) return;
     const blank = part as ClozeBlank;
     blank.availableAnswers.forEach(answer => {
       const normalizedPhrase = normalizeSolutionPhrase(answer);
-      if (!normalizedPhrase || obscuredRemainingPhrases.includes(normalizedPhrase)) return;
-      obscuredRemainingPhrases.push(normalizedPhrase);
+      if (!normalizedPhrase || lockedRemainingPhrases.includes(normalizedPhrase)) return;
+      lockedRemainingPhrases.push(normalizedPhrase);
     });
   });
 
-  return obscuredRemainingPhrases;
+  return lockedRemainingPhrases;
 }
 
 function _createSolution(id:string, title:string, parts:ClozePart[]):Solution {
-  const obscuredRemainingPhrases = _createObscuredRemainingPhrases(parts);
+  const lockedRemainingPhrases = _createLockedRemainingPhrases(parts);
 
   return {
     id,
     title,
     parts,
     isComplete:false,
-    isObscured:true,
-    obscuredRemainingPhrases
+    isLocked:true,
+    lockedRemainingPhrases
   };
 }
 

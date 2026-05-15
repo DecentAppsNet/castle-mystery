@@ -5,8 +5,8 @@ type Solution = {
   readonly title: string;
   parts: ClozePart[];
   isComplete:boolean;
-  isObscured:boolean;
-  obscuredRemainingPhrases:string[];
+  isLocked:boolean;
+  lockedRemainingPhrases:string[];
 };
 
 export function duplicateSolution(from:Solution):Solution {
@@ -15,8 +15,8 @@ export function duplicateSolution(from:Solution):Solution {
     title:from.title,
     parts:from.parts.map(duplicateClozePart),
     isComplete:from.isComplete,
-    isObscured:from.isObscured,
-    obscuredRemainingPhrases:[...from.obscuredRemainingPhrases]
+    isLocked:from.isLocked,
+    lockedRemainingPhrases:[...from.lockedRemainingPhrases]
   };
 }
 

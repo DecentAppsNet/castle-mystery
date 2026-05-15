@@ -66,8 +66,8 @@ function _createTestLevel():Level {
       title:'Mystery',
       parts:[{ type:ClozePartType.text, text:'Mystery' }],
       isComplete:false,
-      isObscured:true,
-      obscuredRemainingPhrases:['ted', 'room 206', 'book', 'throne room']
+      isLocked:true,
+      lockedRemainingPhrases:['ted', 'room 206', 'book', 'throne room']
     }],
     activeCharacterId:'Hero',
     startTime:1_000,
@@ -93,13 +93,13 @@ describe('solution phrase discovery integration', () => {
     hall.items.forEach(item => { item.isDiscovered = true; });
     gameState.hoveredCharacterId = 'Hero';
     syncSolutionPhraseDiscovery(gameState);
-    expect(gameState.solutions[0].obscuredRemainingPhrases).toEqual(['book']);
+    expect(gameState.solutions[0].lockedRemainingPhrases).toEqual(['book']);
 
     gameState.hoveredCharacterId = null;
     gameState.hoveredItemId = 'Book';
     syncSolutionPhraseDiscovery(gameState);
-    expect(gameState.solutions[0].obscuredRemainingPhrases).toEqual([]);
-    expect(gameState.solutions[0].isObscured).toBe(false);
+    expect(gameState.solutions[0].lockedRemainingPhrases).toEqual([]);
+    expect(gameState.solutions[0].isLocked).toBe(false);
   });
 
   it('counts playback speech but not scrub-only speech', () => {
@@ -108,17 +108,17 @@ describe('solution phrase discovery integration', () => {
     const playState = createGameState(level);
 
     syncSolutionPhraseDiscovery(scrubState, true);
-    expect(scrubState.solutions[0].obscuredRemainingPhrases).toEqual(['ted', 'room 206', 'book']);
+    expect(scrubState.solutions[0].lockedRemainingPhrases).toEqual(['ted', 'room 206', 'book']);
 
     playState.isPlaying = true;
     syncSolutionPhraseDiscovery(playState, false);
-    expect(playState.solutions[0].obscuredRemainingPhrases).toEqual(['book']);
+    expect(playState.solutions[0].lockedRemainingPhrases).toEqual(['book']);
   });
 
   it('discovers room-title phrases when rooms become discovered', () => {
     const level = _createTestLevel();
     const gameState = createGameState(level);
 
-    expect(gameState.solutions[0].obscuredRemainingPhrases).toEqual(['ted', 'room 206', 'book']);
+    expect(gameState.solutions[0].lockedRemainingPhrases).toEqual(['ted', 'room 206', 'book']);
   });
 });

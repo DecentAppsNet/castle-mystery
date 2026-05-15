@@ -18,6 +18,7 @@ type GameState = {
   hoveredCharacterId:string|null,
   activeCharacterI:number,
   discoveredSolutionPhrases:Set<string>,
+  readonly requiredSolutionPhraseCount:number,
   isPlaying:boolean,
   realTimeToGameTimeOffset:number,
   time:number,

@@ -10,8 +10,8 @@ function createSolution(overrides:Partial<Solution> = {}):Solution {
     title:'Test',
     parts:[{ type:ClozePartType.text, text:'Test' }],
     isComplete:false,
-    isObscured:true,
-    obscuredRemainingPhrases:['ted', 'throne room'],
+    isLocked:true,
+    lockedRemainingPhrases:['ted', 'throne room'],
     ...overrides
   };
 }
@@ -30,12 +30,12 @@ describe('solutionDiscoveryUtil', () => {
     const { solutions, didChange } = syncSolutionsWithDiscoveredPhrases([solution], new Set(['ted', 'throne room']));
 
     expect(didChange).toBe(true);
-    expect(solutions[0].obscuredRemainingPhrases).toEqual([]);
-    expect(solutions[0].isObscured).toBe(false);
+    expect(solutions[0].lockedRemainingPhrases).toEqual([]);
+    expect(solutions[0].isLocked).toBe(false);
   });
 
   it('does not duplicate unchanged solutions', () => {
-    const solution = createSolution({ obscuredRemainingPhrases:['throne room'] });
+    const solution = createSolution({ lockedRemainingPhrases:['throne room'] });
     const { solutions, didChange } = syncSolutionsWithDiscoveredPhrases([solution], new Set(['ted']));
 
     expect(didChange).toBe(false);

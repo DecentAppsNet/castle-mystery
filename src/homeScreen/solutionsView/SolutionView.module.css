@@ -1,21 +1,43 @@
-.obscuredSolutionCard {
-	display: flex;
-	align-items: center;
-	justify-content: center;
+.solutionCardContainer {
+	position: relative;
+	width: 100%;
+}
+
+.solutionCardPlaceholder {
 	box-sizing: border-box;
 	width: 100%;
 	min-height: 2.4rem;
 	padding: 0.45rem 0.7rem;
+}
+
+.obscuredSolutionOverlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: 0.45rem 0.7rem;
 	margin: 0;
 	background-color: #000000;
 	color: #ffffff;
+	overflow: hidden;
+	z-index: 1;
 }
 
-.obscuredSolutionCountdown {
-	font-size: 1.9vh;
-	line-height: 1;
-	font-weight: 700;
-	letter-spacing: 0.08vh;
+
+.lockedSolutionIcon {
+	width: 2.8vh;
+	height: 2.8vh;
+	object-fit: contain;
+	position: relative;
+	z-index: 1;
+}
+
+.obscuredSolutionRevealOverlay {
+	animation:
+		obscuredSolutionConsume 1050ms ease forwards,
+		obscuredSolutionReveal 3000ms linear 1050ms forwards;
 }
 
 .solutionButton {
@@ -80,4 +102,31 @@
 	content: "?";
 	font-size: 0.85rem;
 	line-height: 1;
+}
+
+@keyframes obscuredSolutionConsume {
+	0% {
+		transform: scale(1);
+	}
+	48% {
+		transform: scale(1);
+	}
+	76% {
+		transform: scale(1.08);
+	}
+	95% {
+		transform: scale(1.08);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+@keyframes obscuredSolutionReveal {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
 }

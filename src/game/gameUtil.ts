@@ -75,9 +75,13 @@ function _createSolutionsChangedSignature(solutions:Solution[]):string {
   return solutions.map(solution => [
     solution.id,
     solution.isComplete ? '1' : '0',
-    solution.isObscured ? '1' : '0',
-    solution.obscuredRemainingPhrases.join(',')
+    solution.isLocked ? '1' : '0',
+    solution.lockedRemainingPhrases.join(',')
   ].join(':')).join('|');
+}
+
+function _countRequiredSolutionPhrases(solutions:Solution[]):number {
+  return new Set(solutions.flatMap(solution => solution.lockedRemainingPhrases)).size;
 }
 
 function _syncSolutionsWithDiscoveredPhrases(gameState:GameState):boolean {
@@ -98,7 +102,7 @@ function _discoverSolutionPhrases(gameState:GameState, phrases:string[]):boolean
 }
 
 function _discoverMatchingSolutionPhrasesInTexts(gameState:GameState, texts:string[]):boolean {
-  const candidatePhrases = Array.from(new Set(gameState.solutions.flatMap(solution => solution.obscuredRemainingPhrases)));
+  const candidatePhrases = Array.from(new Set(gameState.solutions.flatMap(solution => solution.lockedRemainingPhrases)));
   if (!candidatePhrases.length) return false;
 
   const discoveredPhrases:string[] = [];
@@ -590,6 +594,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     hoveredCharacterId:null,
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     discoveredSolutionPhrases:new Set<string>(),
+    requiredSolutionPhraseCount:_countRequiredSolutionPhrases(level.solutions),
     isPlaying:false,
     time:level.startTime,
     duration:level.duration,

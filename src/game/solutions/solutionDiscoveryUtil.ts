@@ -36,15 +36,15 @@ export function syncSolutionsWithDiscoveredPhrases(solutions:Solution[], discove
   let didChange = false;
 
   const nextSolutions = solutions.map(solution => {
-    const nextRemainingPhrases = solution.obscuredRemainingPhrases.filter(phrase => !discoveredPhrases.has(phrase));
-    const nextIsObscured = nextRemainingPhrases.length > 0;
-    const isUnchanged = solution.isObscured === nextIsObscured && _haveSamePhrases(solution.obscuredRemainingPhrases, nextRemainingPhrases);
+    const nextRemainingPhrases = solution.lockedRemainingPhrases.filter(phrase => !discoveredPhrases.has(phrase));
+    const nextIsLocked = nextRemainingPhrases.length > 0;
+    const isUnchanged = solution.isLocked === nextIsLocked && _haveSamePhrases(solution.lockedRemainingPhrases, nextRemainingPhrases);
     if (isUnchanged) return solution;
 
     didChange = true;
     const nextSolution = duplicateSolution(solution);
-    nextSolution.isObscured = nextIsObscured;
-    nextSolution.obscuredRemainingPhrases = nextRemainingPhrases;
+    nextSolution.isLocked = nextIsLocked;
+    nextSolution.lockedRemainingPhrases = nextRemainingPhrases;
     return nextSolution;
   });
 

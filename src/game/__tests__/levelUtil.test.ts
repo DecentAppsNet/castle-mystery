@@ -135,7 +135,7 @@ describe('levelUtil itinerary loading', () => {
 
     expect(firstBlank.availableAnswers).toEqual(['Throne Room']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
-    expect(solution.obscuredRemainingPhrases).toEqual(['throne room']);
+    expect(solution.lockedRemainingPhrases).toEqual(['throne room']);
   });
 
   it('parses cloze statement image and separator parts', () => {
