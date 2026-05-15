@@ -37,7 +37,7 @@ WFL
 ............
 ............
 ..#......#..
-............
+.......N..D.
 ............
 ..#......#..
 ............
@@ -51,6 +51,8 @@ WFL
 ```
 
 * Q=Queen
+* D=Dagger
+* N=NearDagger
 
 ## Throne Room
 
@@ -84,7 +86,7 @@ WFL
 ## Library
 
 ```
-.....
+N....
 ...Y.
 .....
 .X..B
@@ -93,6 +95,7 @@ WFL
 * B=Romance Novel
 * X=SW
 * Y=NE
+* N=Table Note
 
 * exits=Foyer|East Hall
 
@@ -101,7 +104,7 @@ WFL
 ## King
 
 * description=A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.
-* items=Sceptre | Dagger
+* items=Sceptre
 * faceImage=/sprites/kingFace.png
 
 ## Jester
@@ -132,6 +135,11 @@ WFL
 * description=A novel about shipwrecked lovers stranded on an island.
 * displayChar=⌸
 
+## Table Note
+
+* title=Note
+* description=The note reads: "I never lied once in my life. Yet when I speak truth, they all call me a liar."
+
 # itinerary
 
 0:00:00 King @ Throne Room
@@ -139,9 +147,9 @@ WFL
 0:00:00 Jester @ Throne Room
 0:00:00 Jester faces King
 0:00:03 King says "It's good to be king."
-: Jester says "Surely it must be a hardship, sire."
+: Jester says "Surely it must be a hardship, Sire."
 : King says "True. My mind is often filled with problems."
-: Jester says "Sire, you seem to be grappling with some great problem now."
+: Jester says "You seem to be grappling with some great problem now."
 : King wanders
 : King wanders
 : King says "Where did I put that book?"
@@ -157,13 +165,16 @@ WFL
 : Jester wanders
 0:00:25 King says "It must be in the library."
 : Jester says "Shall I fetch it?"
-: King says "No. But hold my sceptre."
+: King says "No. But hold this heavy sceptre."
 : King gives Sceptre to Jester
 0:00:34 King @ Library.SW
 0:00:40 Jester @ East Hall
 
 0:00:00 Queen @ West Hall
 0:00:01 Queen wanders
+0:00:05 Queen @ West Hall.NearDagger
+: Queen says "A Queen should not witness such untidiness."
+: Queen wanders
 0:00:30 Queen @ Library
 0:00:31 Queen says "Hmm."
 0:00:32 Queen takes Book
@@ -172,11 +183,11 @@ WFL
 King arrived in the library at 0:00:34.
 
 0:00:35 King faces Queen
-0:00:35 King says "Hello, dear."
+0:00:35 King says "Hello, my beloved."
 0:00:35 Queen faces King
 0:00:36 Queen says "Oh. Hi."
 0:00:37 King says "Have you seen my favorite book?"
-0:00:39 Queen says "No. Probably it is in the Throne Room."
+0:00:39 Queen says "No. Probably, you left it in the Throne Room."
 0:00:41 King says "I searched there already."
 
 0:00:44 Queen @ East Hall
@@ -185,24 +196,38 @@ King arrived in the library at 0:00:34.
 0:00:46 Jester takes Book
 0:00:49 Jester @ Throne Room
 : Jester wanders
-0:00:55 Queen @ Foyer
-0:01:00 Queen @ West Hall
-0:01:03 Queen @ Sanctum
+0:01:00 Queen @ Sanctum
+: Queen says "I think he took it."
 
-0:00:46 King @ East Hall
+0:00:46 King @ Foyer
 0:00:50 King @ Throne Room
 : King says "Where is that damned book?"
+: King says "Jester!"
+: Jester says "Yes, Sire!"
+: King says "I am without my book."
+: Jester says "Sadly, Sire."
+: King says "So you must frolic about with your silly dancing."
+: Jester says "Gladly, Sire."
+: King says "And let us hope that suffices to entertain me."
+: Jester wanders
+: Jester wanders
+: Jester wanders
+: Jester wanders
+: Jester wanders
+: Jester wanders
+: Jester wanders
+: Jester wanders
 
 # solutions
 
 * characters=King|Queen|Jester
 * items=book|sceptre|dagger
-* actions=searched|lied|looked|left|took
+* actions=searched|lied|left|took
 * places=Library|Throne Room|Inner Sanctum|West Hall|East Hall|Foyer
 
 ## The Missing Book
 
-* clozeStatement=[King] [searched|looked] for a [book] in [Throne Room], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
+* clozeStatement=[King] [searched] for a [book] in [Throne Room], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
 
 ## Possession of the Prize
 
