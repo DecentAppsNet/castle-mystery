@@ -28,7 +28,8 @@ type GameState = {
   lastMinutesChangedCallRealTime:number,
   lastMinutesChangedValue:number,
   lastActiveCharacterChangedValue:string,
-  lastSolutionsChangedSignature:string
+  solutionsRevision:number,
+  lastNotifiedSolutionsRevision:number
 }
 
 export default GameState;

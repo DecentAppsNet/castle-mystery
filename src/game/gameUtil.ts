@@ -71,13 +71,19 @@ function _createItemPopoverTexts(item:Item):string[] {
   return [item.title, item.description].filter(Boolean);
 }
 
-function _createSolutionsChangedSignature(solutions:Solution[]):string {
-  return solutions.map(solution => [
-    solution.id,
-    solution.isComplete ? '1' : '0',
-    solution.isLocked ? '1' : '0',
-    solution.lockedRemainingPhrases.join(',')
-  ].join(':')).join('|');
+function _haveSamePhrases(phrases1:ReadonlyArray<string>, phrases2:ReadonlyArray<string>):boolean {
+  return phrases1.length === phrases2.length && phrases1.every((phrase, index) => phrase === phrases2[index]);
+}
+
+function _haveSameSolutions(solution1:Solution, solution2:Solution):boolean {
+  return solution1.id === solution2.id
+    && solution1.isComplete === solution2.isComplete
+    && solution1.isLocked === solution2.isLocked
+    && _haveSamePhrases(solution1.lockedRemainingPhrases, solution2.lockedRemainingPhrases);
+}
+
+function _haveSameSolutionLists(solutions1:ReadonlyArray<Solution>, solutions2:ReadonlyArray<Solution>):boolean {
+  return solutions1.length === solutions2.length && solutions1.every((solution, index) => _haveSameSolutions(solution, solutions2[index]));
 }
 
 function _countRequiredSolutionPhrases(solutions:Solution[]):number {
@@ -86,7 +92,10 @@ function _countRequiredSolutionPhrases(solutions:Solution[]):number {
 
 function _syncSolutionsWithDiscoveredPhrases(gameState:GameState):boolean {
   const { solutions, didChange } = syncSolutionsWithDiscoveredPhrases(gameState.solutions, gameState.discoveredSolutionPhrases);
-  if (didChange) gameState.solutions = solutions;
+  if (didChange) {
+    gameState.solutions = solutions;
+    gameState.solutionsRevision += 1;
+  }
   return didChange;
 }
 
@@ -289,8 +298,11 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
 }
 
 function _updateGameStateForChangeSolutions(gameState:GameState, event:ChangeSolutionsEvent) {
-  gameState.solutions = syncSolutionsWithDiscoveredPhrases(event.solutions, gameState.discoveredSolutionPhrases).solutions;
-  gameState.lastSolutionsChangedSignature = _createSolutionsChangedSignature(gameState.solutions);
+  const nextSolutions = syncSolutionsWithDiscoveredPhrases(event.solutions, gameState.discoveredSolutionPhrases).solutions;
+  if (!_haveSameSolutionLists(gameState.solutions, nextSolutions)) {
+    gameState.solutions = nextSolutions;
+    gameState.solutionsRevision += 1;
+  }
   const identitiesSolution = gameState.solutions.find(solution => solution.id === "Identities") || null;
   if (!identitiesSolution?.isComplete) return;
   gameState.characters.forEach(character => {
@@ -538,9 +550,8 @@ function _callOnActiveCharacterChangedAsNeeded(gameState:GameState, onActiveChar
 }
 
 function _callOnSolutionsChangedAsNeeded(gameState:GameState, onSolutionsChanged:(solutions:Solution[]) => void) {
-  const nextSignature = _createSolutionsChangedSignature(gameState.solutions);
-  if (nextSignature === gameState.lastSolutionsChangedSignature) return;
-  gameState.lastSolutionsChangedSignature = nextSignature;
+  if (gameState.solutionsRevision === gameState.lastNotifiedSolutionsRevision) return;
+  gameState.lastNotifiedSolutionsRevision = gameState.solutionsRevision;
   onSolutionsChanged(gameState.solutions.map(duplicateSolution));
 }
 
@@ -596,7 +607,8 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN,
     lastActiveCharacterChangedValue:"",
-    lastSolutionsChangedSignature:_createSolutionsChangedSignature(level.solutions)
+    solutionsRevision:0,
+    lastNotifiedSolutionsRevision:0
   }
   _rebuildDynamicStateForTime(gameState, level.startTime);
   _setActiveRoomDiscovered(gameState);

@@ -154,13 +154,11 @@ N....
 : King wanders
 : King wanders
 : King wanders
-: King wanders
-: King wanders
-: King wanders
-: Jester says "I shall help you search."
 : Jester wanders
 : Jester wanders
-0:00:25 King says "It must be in the library."
+: Jester says "Shall I dance for you, Sire?"
+: King says "Fool, I want my book!"
+: King says "It must be in the library."
 : Jester says "Shall I fetch it?"
 : King says "No. But hold this heavy sceptre."
 : King gives Sceptre to Jester
@@ -202,7 +200,7 @@ King arrived in the library at 0:00:34.
 : King says "I am without my book."
 : Jester says "Sadly, Sire."
 : King says "So you must frolic about with your silly dancing."
-: Jester says "Gladly, Sire."
+: Jester says "Gladly, Sire!"
 : King says "And let us hope that suffices to entertain me."
 : Jester wanders
 : Jester wanders
