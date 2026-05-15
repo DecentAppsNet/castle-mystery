@@ -40,7 +40,7 @@ import Solution, { duplicateSolution } from "./solutions/types/Solution";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
 import EffectType from "./effects/types/EffectType";
-import { findNormalizedSolutionPhrasesInText, normalizeSolutionPhrase, syncSolutionsWithDiscoveredPhrases } from "./solutions/solutionDiscoveryUtil";
+import { findNormalizedSolutionPhrasesInTexts, normalizeSolutionPhrase, syncSolutionsWithDiscoveredPhrases } from "./solutions/solutionDiscoveryUtil";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
 
@@ -105,14 +105,7 @@ function _discoverMatchingSolutionPhrasesInTexts(gameState:GameState, texts:stri
   const candidatePhrases = Array.from(new Set(gameState.solutions.flatMap(solution => solution.lockedRemainingPhrases)));
   if (!candidatePhrases.length) return false;
 
-  const discoveredPhrases:string[] = [];
-  texts.forEach(text => {
-    findNormalizedSolutionPhrasesInText(text, candidatePhrases).forEach(phrase => {
-      if (discoveredPhrases.includes(phrase)) return;
-      discoveredPhrases.push(phrase);
-    });
-  });
-  return _discoverSolutionPhrases(gameState, discoveredPhrases);
+  return _discoverSolutionPhrases(gameState, findNormalizedSolutionPhrasesInTexts(texts, candidatePhrases));
 }
 
 function _syncDiscoveredRoomTitlePhrases(gameState:GameState):boolean {

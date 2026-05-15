@@ -6,6 +6,7 @@ import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { parseNameValueLines, parseSections } from "@/common/markdownUtil";
 import { parseTimestampToMsecs } from "@/common/timestampUtil";
 import { loadItineraries } from "./levelItineraryLoader";
+import LoadLevelException from "./LoadLevelException";
 import {
   addRoomExitsFromRoomsSection,
   addRoomPositionMarkersFromSections,
@@ -18,6 +19,8 @@ import {
   parseRoomPopulationDefinitions
 } from "./levelRoomPopulationLoader";
 import { createGeneratedIdentitySolution, createSolutionCategoryOptionsByName, loadSolutionsFromSection } from "./levelSolutionsLoader";
+import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
+import { findNormalizedSolutionPhrasesInTexts } from "./solutions/solutionDiscoveryUtil";
 
 function _createDefaultSolutionCategoryOptions(level:Level):Map<string, string[]> {
   return new Map([
@@ -92,11 +95,48 @@ function _findSectionFirstContentLineNo(markdownText:string, sectionName:string,
   return null;
 }
 
-export function loadLevelFromText(text:string, levelFilename:string = '<inline>'):Level {
+type LoadLevelOptions = {
+  validateUnlockPhrases?:boolean
+}
+
+function _createUnlockDiscoveryTexts(level:Level):string[] {
+  const roomTexts = level.rooms.map(room => room.title);
+  const characterTexts = level.initialCharacters.flatMap(character => [
+    character.isTitleKnown ? character.title : '',
+    character.description
+  ].filter(Boolean));
+  const itemTexts = [
+    ...level.rooms.flatMap(room => room.items),
+    ...level.initialCharacters.flatMap(character => character.items)
+  ].flatMap(item => [item.title, item.description].filter(Boolean));
+  const speechTexts = level.characters.flatMap(character => character.itinerary
+    .filter(event => event.type === ItineraryEventType.SPEECH)
+    .map(event => (event as { speech:string }).speech));
+
+  return [...roomTexts, ...characterTexts, ...itemTexts, ...speechTexts];
+}
+
+function _validateUnlockableSolutionPhrases(level:Level, levelFilename:string, errorLineNo:number) {
+  const requiredPhrases = Array.from(new Set(level.solutions.flatMap(solution => solution.lockedRemainingPhrases)));
+  if (!requiredPhrases.length) return;
+
+  const discoveredPhrases = new Set(findNormalizedSolutionPhrasesInTexts(_createUnlockDiscoveryTexts(level), requiredPhrases));
+  const missingPhrases = requiredPhrases.filter(phrase => !discoveredPhrases.has(phrase));
+  if (!missingPhrases.length) return;
+
+  throw new LoadLevelException(
+    levelFilename,
+    errorLineNo,
+    `missing unlockable solution phrases in level content: ${missingPhrases.join(', ')}`
+  );
+}
+
+export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
   const sections = parseSections(text);
   const generalSection = _parseGeneralSection(sections.general || "");
   const itinerarySection = sections.itinerary || "";
   const itineraryFirstLineNo = _findSectionFirstContentLineNo(text, 'itinerary') || 1;
+  const solutionsFirstLineNo = _findSectionFirstContentLineNo(text, 'solutions') || 1;
   let level = _createEmptyLevel();
   level = {
     ...level,
@@ -136,11 +176,12 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     duration: itineraryData.duration,
     labels: _createTimeLabels(itineraryData.duration)
   };
+  if (options.validateUnlockPhrases) _validateUnlockableSolutionPhrases(level, levelFilename, solutionsFirstLineNo);
   return level;
 }
 
 export async function loadLevelFromUrl(levelFileUrl:string):Promise<Level> {
   const response = await fetch(baseUrl(levelFileUrl));
   const text = await response.text();
-  return loadLevelFromText(text, levelFileUrl);
+  return loadLevelFromText(text, levelFileUrl, { validateUnlockPhrases:true });
 }

@@ -218,7 +218,7 @@ King arrived in the library at 0:00:34.
 * characters=King|Queen|Jester
 * items=book|sceptre|dagger
 * actions=searched|lied|left|took
-* places=Library|Throne Room|Inner Sanctum|West Hall|East Hall|Foyer
+* places=Library|Throne Room|Sanctum|West Hall|East Hall|Foyer
 
 ## The Missing Book
 

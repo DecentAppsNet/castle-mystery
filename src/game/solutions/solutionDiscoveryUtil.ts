@@ -28,6 +28,19 @@ export function findNormalizedSolutionPhrasesInText(text:string, candidatePhrase
   return matchingPhrases;
 }
 
+export function findNormalizedSolutionPhrasesInTexts(texts:ReadonlyArray<string>, candidatePhrases:ReadonlyArray<string>):string[] {
+  const matchingPhrases:string[] = [];
+
+  texts.forEach(text => {
+    findNormalizedSolutionPhrasesInText(text, candidatePhrases).forEach(phrase => {
+      if (matchingPhrases.includes(phrase)) return;
+      matchingPhrases.push(phrase);
+    });
+  });
+
+  return matchingPhrases;
+}
+
 function _haveSamePhrases(phrases1:string[], phrases2:string[]):boolean {
   return phrases1.length === phrases2.length && phrases1.every((phrase, index) => phrase === phrases2[index]);
 }

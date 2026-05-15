@@ -283,4 +283,34 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
+  it('throws when a required unlock phrase cannot be discovered from level content', () => {
+    const levelText = `# map
+
+\`\`\`
+A
+\`\`\`
+
+* A=Hall
+
+# rooms
+
+## Hall
+
+# solutions
+
+## Mystery
+
+* clozeStatement=[Ghost]
+`;
+
+    try {
+      loadLevelFromText(levelText, 'missing-solution-phrase.md', { validateUnlockPhrases:true });
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('missing-solution-phrase.md');
+      expect((error as LoadLevelException).message).toContain('missing unlockable solution phrases in level content: ghost');
+    }
+  });
+
 });
