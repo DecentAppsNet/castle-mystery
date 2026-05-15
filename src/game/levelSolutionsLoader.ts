@@ -7,6 +7,36 @@ import ClozePart from "./solutions/types/ClozePart";
 import ClozePartType from "./solutions/types/ClozePartType";
 import Solution from "./solutions/types/Solution";
 
+function _normalizeSolutionWord(word:string):string {
+  return word.trim().toLowerCase();
+}
+
+function _createObscuredRemainingWords(parts:ClozePart[]):string[] {
+  const obscuredRemainingWords:string[] = [];
+
+  parts.forEach(part => {
+    if (part.type !== ClozePartType.blank) return;
+    part.availableAnswers.forEach(answer => {
+      const normalizedAnswer = _normalizeSolutionWord(answer);
+      if (!normalizedAnswer || obscuredRemainingWords.includes(normalizedAnswer)) return;
+      obscuredRemainingWords.push(normalizedAnswer);
+    });
+  });
+
+  return obscuredRemainingWords;
+}
+
+function _createSolution(id:string, title:string, parts:ClozePart[]):Solution {
+  return {
+    id,
+    title,
+    parts,
+    isComplete:false,
+    isObscured:true,
+    obscuredRemainingWords:_createObscuredRemainingWords(parts)
+  };
+}
+
 function _findNextSeparatorStartIndex(text:string, startIndex:number):number {
   return text.indexOf('---', startIndex);
 }
@@ -160,12 +190,11 @@ export function loadSolutionsFromSection(solutionsSection:string, categoryOption
     const nameValues = parseNameValueLines(solutionSubsection);
     const clozeTemplate = nameValues.solution || nameValues.clozeStatement || "";
 
-    return {
-      id:title,
+    return _createSolution(
       title,
-      parts:_parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName),
-      isComplete:false
-    };
+      title,
+      _parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName)
+    );
   });
 }
 
@@ -187,10 +216,5 @@ export function createGeneratedIdentitySolution(characters:Character[], category
     parts.push(_createClozeBlankFromCorrectAnswer(character.title, categoryOptionsByName));
   });
 
-  return {
-    id:'Identities',
-    title:'Identities',
-    parts,
-    isComplete:false
-  };
+  return _createSolution('Identities', 'Identities', parts);
 }

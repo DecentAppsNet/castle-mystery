@@ -1,5 +1,6 @@
 # general
 
+* title=Kingacide
 * activeCharacter=King
 * time=0:00
 

@@ -18,6 +18,15 @@ function SolutionView({solution, imageSet, cooldownUntilTime, onIncorrectClaim, 
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
 
   const statusIconClass = solution.isComplete ? styles.completeIcon : styles.incompleteIcon;
+  const obscuredCountdown = solution.obscuredRemainingWords.length;
+
+  if (solution.isObscured) {
+    return (
+      <div className={styles.obscuredSolutionCard} aria-label={`Solution hidden. ${obscuredCountdown} words remaining.`}>
+        <span className={styles.obscuredSolutionCountdown}>{obscuredCountdown}</span>
+      </div>
+    );
+  }
 
   return (
     <>
