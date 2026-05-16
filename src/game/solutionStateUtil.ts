@@ -22,12 +22,25 @@ function _haveSameSolutionLists(solutions1:ReadonlyArray<Solution>, solutions2:R
   return solutions1.length === solutions2.length && solutions1.every((solution, index) => _haveSameSolutions(solution, solutions2[index]));
 }
 
+export function isLevelComplete(solutions:ReadonlyArray<Solution>):boolean {
+  return solutions.every(solution => !solution.isLocked && solution.isComplete);
+}
+
+export function syncLevelCompleteState(gameState:GameState):boolean {
+  const nextIsLevelComplete = isLevelComplete(gameState.solutions);
+  if (nextIsLevelComplete === gameState.isLevelComplete) return false;
+  gameState.isLevelComplete = nextIsLevelComplete;
+  return true;
+}
+
 export function syncSolutionUnlocks(gameState:GameState):boolean {
   const { solutions, didChange } = syncSolutionsWithUnlocks(gameState.solutions, gameState.viewedItemIds);
-  if (!didChange) return false;
-  gameState.solutions = solutions;
-  gameState.solutionsRevision += 1;
-  return true;
+  if (didChange) {
+    gameState.solutions = solutions;
+    gameState.solutionsRevision += 1;
+  }
+  syncLevelCompleteState(gameState);
+  return didChange;
 }
 
 export function updateGameStateForChangeSolutions(gameState:GameState, event:ChangeSolutionsEvent) {
@@ -44,4 +57,5 @@ export function updateGameStateForChangeSolutions(gameState:GameState, event:Cha
   gameState.initialCharacters.forEach(character => {
     character.isTitleKnown = true;
   });
+  syncLevelCompleteState(gameState);
 }

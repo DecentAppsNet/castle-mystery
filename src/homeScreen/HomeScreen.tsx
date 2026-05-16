@@ -12,6 +12,7 @@ import { findRoomAtPosition } from "@/game/roomUtil";
 import SolutionsView from "./solutionsView/SolutionsView";
 import Solution from "@/game/solutions/types/Solution";
 import Itinerary from "@/game/types/Itinerary";
+import WinLevelDialog from "./dialogs/WinLevelDialog";
 
 const ARROW_STEP_MSECS = 200;
 
@@ -29,14 +30,24 @@ function _isEditableTarget(target:EventTarget|null):boolean {
   return target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || tagName === "BUTTON";
 }
 
+function _isLevelComplete(solutions:ReadonlyArray<Solution>):boolean {
+  return solutions.every(solution => !solution.isLocked && solution.isComplete);
+}
+
+function _shouldOpenWinLevelDialog(previousSolutions:ReadonlyArray<Solution>, nextSolutions:ReadonlyArray<Solution>):boolean {
+  return _isLevelComplete(nextSolutions) && !_isLevelComplete(previousSolutions);
+}
+
 function HomeScreen() {
   const [gameState, setGameState] = useState<GameState|null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
+  const [winSynopsis, setWinSynopsis] = useState<string>("");
   const [solutions, setSolutions] = useState<Solution[]>([]);
   const [solutionClaimCooldowns, setSolutionClaimCooldowns] = useState<Record<string, number>>({});
   const [activeCharacterId, setActiveCharacterId] = useState<string>("");
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
+  const [modalDialogName, setModalDialogName] = useState<string|null>(null);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
@@ -56,18 +67,26 @@ function HomeScreen() {
       if (initResults) {
         setMinutes(initResults.minutes);
         setGameState(initResults.gameState);
+        setWinSynopsis(initResults.gameState.winSynopsis);
         setSolutions(initResults.gameState.solutions);
         setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
+        if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
       }
     });
   }, []);
 
   function _handleSolutionsChanged(nextSolutions:Solution[]) {
-    setSolutions(nextSolutions);
+    setSolutions(previousSolutions => {
+      if (_shouldOpenWinLevelDialog(previousSolutions, nextSolutions)) setModalDialogName(WinLevelDialog.name);
+      return nextSolutions;
+    });
   }
 
   function _handleManualSolutionsUpdate(nextSolutions:Solution[]) {
-    setSolutions(nextSolutions);
+    setSolutions(previousSolutions => {
+      if (_shouldOpenWinLevelDialog(previousSolutions, nextSolutions)) setModalDialogName(WinLevelDialog.name);
+      return nextSolutions;
+    });
   }
 
   useEffect(() => {
@@ -139,6 +158,12 @@ function HomeScreen() {
           onUpdate={(nextSolutions) => { updateSolutions(nextSolutions, _handleManualSolutionsUpdate)} }
         />
       </div>
+      <WinLevelDialog 
+        synopsis={winSynopsis} 
+        isOpen={modalDialogName === WinLevelDialog.name} 
+        onContinue={() => {}}
+        onReturn={() => setModalDialogName(null)} 
+      />
     </div>
   );
 }

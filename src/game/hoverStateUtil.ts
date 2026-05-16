@@ -22,8 +22,34 @@ function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFa
   return { x: left, y: top, width: halfWidthGame * 2, height: heightGame };
 }
 
+function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }) {
+  gameState.viewedItemIds.add(item.id);
+  gameState.viewedItemIds.add(item.title);
+}
+
 export function findCharacterAtPosition(gameState:GameState, x:number, y:number):Character|null {
   if (gameState.characters.length === 0) return null;
+  if (gameState.isLevelComplete) {
+    const hoveredRoom = findRoomAtPosition(gameState.rooms, x, y);
+    if (!hoveredRoom?.isDiscovered) return null;
+    const candidateCharacters = findCharactersInRoom(hoveredRoom, gameState.characters);
+    if (candidateCharacters.length === 0) return null;
+
+    let nearest:Character = candidateCharacters[0];
+    let nearestDist = Math.hypot(nearest.x - x, nearest.y - y);
+    for (let i = 1; i < candidateCharacters.length; ++i) {
+      const character = candidateCharacters[i];
+      const distance = Math.hypot(character.x - x, character.y - y);
+      if (distance < nearestDist) {
+        nearest = character;
+        nearestDist = distance;
+      }
+    }
+
+    const rect = _getCharacterBoundingRect(nearest, gameState.scalingFactors);
+    if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) return nearest;
+    return null;
+  }
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   if (activeRoom?.isObscured) return null;
@@ -56,7 +82,25 @@ export function updateGameStateForMouseDown(gameState:GameState, event:MouseDown
   gameState.activeEffects.push(createCharacterSelectEffect(character, Date.now(), gameState.scalingFactors));
 }
 
-export function updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent, discoverVisibleItemsInActiveRoom:() => void) {
+export function updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent) {
+  if (gameState.isLevelComplete) {
+    const hoveredRoom = findRoomAtPosition(gameState.rooms, event.x, event.y);
+    if (!hoveredRoom?.isDiscovered) {
+      gameState.hoveredItemId = null;
+      gameState.hoveredCharacterId = null;
+      return;
+    }
+    const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, event.x, event.y, gameState.scalingFactors,
+      { includeUndiscovered:true, ignoreRoomObscured:true });
+    if (hoveredItem) {
+      hoveredItem.isDiscovered = true;
+      hoveredItem.isExamined = true;
+    }
+    gameState.hoveredItemId = hoveredItem?.id ?? null;
+    if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
+    gameState.hoveredCharacterId = hoveredItem ? null : findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
+    return;
+  }
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   if (!activeCharacter || !activeRoom) {
@@ -64,9 +108,13 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     gameState.hoveredCharacterId = null;
     return;
   }
-  discoverVisibleItemsInActiveRoom();
-  const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors);
+  const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors,
+    { includeUndiscovered:true });
+  if (hoveredItem) {
+    hoveredItem.isDiscovered = true;
+    hoveredItem.isExamined = true;
+  }
   gameState.hoveredItemId = hoveredItem?.id ?? null;
-  if (hoveredItem) gameState.viewedItemIds.add(hoveredItem.id);
+  if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
   gameState.hoveredCharacterId = hoveredItem ? null : findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
 }

@@ -3,6 +3,7 @@
 * title=Kingacide
 * activeCharacter=King
 * time=0:00
+* winSynopsis=The King and Queen wanted to read the same book. She snatched the book and left it in the East Hall for a moment - just long enough for the jester to grab it. Fearing the King had no use for his courtside antics, the jester manipulated the King into watching him dance. The Jester's livelihood was safe for now.
 
 # map
 
@@ -38,7 +39,7 @@ WFL
 ............
 ..#......#..
 .......N..D.
-............
+...........T
 ..#......#..
 ............
 ............
@@ -53,6 +54,7 @@ WFL
 * Q=Queen
 * D=Dagger
 * N=NearDagger
+* T=Table Note
 
 ## Throne Room
 
@@ -86,7 +88,7 @@ WFL
 ## Library
 
 ```
-N....
+G....
 ...Y.
 .....
 .X..B
@@ -95,7 +97,7 @@ N....
 * B=Book
 * X=SW
 * Y=NE
-* N=Table Note
+* G=Guide
 
 * exits=Foyer|East Hall
 
@@ -131,9 +133,14 @@ N....
 
 ## Book
 
-* title=Book
+* title=Romance Novel
 * description=A novel about shipwrecked lovers stranded on an island.
 * displayChar=⌸
+
+## Guide
+
+* title=Guide
+* description="A Guide to Delighting Royalty" - A reference work cataloging the potential ways a court servant may bring joy and amusement to their masters. The book is well-worn, containing bookmarks and scribbled notes.
 
 ## Table Note
 
@@ -145,10 +152,9 @@ N....
 
 0:00:00 King @ Throne Room
 0:00:00 Jester @ Throne Room
-0:00:03 King says "It's good to be king."
-: Jester says "Surely it must be a hardship, Sire."
-: King says "True. My mind is often filled with problems."
-: Jester says "You seem to be grappling with some great problem now."
+0:00:03 King says "(sigh)"
+0:00:05 King says "Hmm."
+: Jester says "You seem to be grappling with some great problem, Sire."
 : King wanders
 : King wanders
 : King says "Where did I put that book?"
@@ -157,7 +163,8 @@ N....
 : King wanders
 : Jester wanders
 : Jester wanders
-: Jester says "Shall I dance for you, Sire?"
+: Jester says "Perhaps, Sire, instead of reading your book..."
+: Jester says "I shall entertain you with my dancing!"
 : King says "Fool, I want my book!"
 : King says "It must be in the library."
 : Jester says "Shall I fetch it?"
@@ -171,6 +178,8 @@ N....
 0:00:05 Queen @ West Hall.NearDagger
 : Queen says "A Queen should not witness such untidiness."
 : Queen wanders
+0:00:10 Queen says "When one is bored, it is surely boring."
+: Queen says "I shall look upon the tomes for alleviation."
 0:00:30 Queen @ Library
 0:00:31 Queen says "Hmm."
 0:00:32 Queen takes Book
@@ -185,17 +194,17 @@ King arrived in the library at 0:00:34.
 0:00:41 King says "I searched there already."
 
 0:00:44 Queen @ East Hall
-0:00:45 Queen drops Book
-0:00:48 Queen @ Throne Room
-0:00:46 Jester takes Book
+: Queen drops Book
+0:00:45 Queen says "I think you need this more than I."
+0:00:46 Queen @ Throne Room
+0:00:48 Jester takes Book
 0:00:49 Jester @ Throne Room
 : Jester wanders
-0:01:00 Queen @ Sanctum
-: Queen says "I think he took it."
+0:00:52 Queen @ Sanctum
+: Queen says "I imagine he will destroy it. That is not my concern."
 
 0:00:46 King @ Foyer
 0:00:50 King @ Throne Room
-: King says "Where is that damned book?"
 : King says "Jester!"
 : Jester says "Yes, Sire!"
 : King says "I am without my book."
@@ -218,12 +227,12 @@ King arrived in the library at 0:00:34.
 
 ## The Missing Book
 
-* unlockForItem=Table Note
-* clozeStatement=[King] [searched] for a [book] in [Throne Room], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
+* unlockForItem=Book
+* clozeStatement=The [King] [searched] for a [romance novel] in the [Throne Room], but was unsuccessful. The [King] went to the [Library] next, where the [Queen] [lied] to the [King] about the [romance novel].
 
 ## Possession of the Prize
 
 * unlockForSolution=The Missing Book
-* clozeStatement=[Queen] [left] the [book] in [East Hall].---[Jester] [took] it, returning to [Throne Room].
+* clozeStatement=The [Queen] [left] the [romance novel] in the [East Hall] after a small deception.---[Jester] [took] it, returning to [Throne Room].
 
 

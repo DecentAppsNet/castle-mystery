@@ -44,15 +44,28 @@ function _getDiscoveredItemIds(gameState:GameState):Set<string> {
   return discoveredItemIds;
 }
 
-function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<string>, discoveredItemIds:Set<string>) {
+function _getExaminedItemIds(gameState:GameState):Set<string> {
+  const examinedItemIds = new Set<string>();
+  gameState.rooms.forEach(room => room.items.forEach(item => {
+    if (item.isExamined) examinedItemIds.add(item.id);
+  }));
+  gameState.characters.forEach(character => character.items.forEach(item => {
+    if (item.isExamined) examinedItemIds.add(item.id);
+  }));
+  return examinedItemIds;
+}
+
+function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<string>, discoveredItemIds:Set<string>, examinedItemIds:Set<string>) {
   gameState.rooms.forEach(room => {
     if (discoveredRoomIds.has(room.id)) room.isDiscovered = true;
     room.items.forEach(item => {
       if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
+      if (examinedItemIds.has(item.id)) item.isExamined = true;
     });
   });
   gameState.characters.forEach(character => character.items.forEach(item => {
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
+    if (examinedItemIds.has(item.id)) item.isExamined = true;
   }));
 }
 
@@ -99,6 +112,7 @@ function _findCharacter(gameState:GameState, characterId:string):Character {
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime?:number) {
   const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
   const discoveredItemIds = _getDiscoveredItemIds(gameState);
+  const examinedItemIds = _getExaminedItemIds(gameState);
   const pendingRoomEffects:PendingRoomEffect[] = [];
   gameState.characters = gameState.initialCharacters.map(duplicateCharacter);
   gameState.rooms = gameState.initialRooms.map(duplicateRoom);
@@ -174,6 +188,6 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
       .filter(effect => effect.roomId === activeRoom.id)
       .forEach(effect => effect.create());
   }
-  _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds);
+  _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds, examinedItemIds);
   gameState.time = time;
 }

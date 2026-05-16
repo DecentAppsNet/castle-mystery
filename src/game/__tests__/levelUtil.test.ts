@@ -20,6 +20,7 @@ import overrideRoomsText from './fixtures/override-rooms.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
+import winSynopsisText from './fixtures/win-synopsis.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import LoadLevelException from '../levelLoading/LoadLevelException';
 import { loadLevelFromText } from '../levelLoading/levelUtil';
@@ -189,6 +190,11 @@ describe('levelUtil itinerary loading', () => {
     expect(identities).not.toBeNull();
     expect(identities?.isLocked).toBe(false);
     expect(identities?.isComplete).toBe(true);
+  });
+
+  it('loads winSynopsis from the general section and defaults it when omitted', () => {
+    expect(loadLevelFromText(winSynopsisText).winSynopsis).toBe('The mystery is solved.');
+    expect(loadLevelFromText(identitiesAllTitlesKnownText).winSynopsis).toBe('You completed the level.');
   });
 
   it('loads room position markers from room legends and grids', () => {

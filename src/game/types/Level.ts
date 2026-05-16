@@ -8,6 +8,7 @@ type Level = Readonly<{
   initialCharacters:Character[],
   characters:Character[],
   solutions:Solution[],
+  winSynopsis:string,
   activeCharacterId:string,
   startTime:number,
   duration:number,

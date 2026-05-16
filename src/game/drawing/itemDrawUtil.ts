@@ -19,6 +19,11 @@ type ItemDrawMetrics = {
   labelOffsetY:number
 }
 
+type RoomItemVisibilityOptions = {
+  includeUndiscovered?:boolean,
+  ignoreRoomObscured?:boolean
+}
+
 function _getItemGlyphFontSize(scalingFactors:ScalingFactors):number {
   return Math.max(10, Math.round(scalingFactors.roomFontHeight * ITEM_GLYPH_FONT_RATIO));
 }
@@ -99,8 +104,10 @@ export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:
   context.fillStyle = COLOR_ITEM_TEXT;
   context.font = `${metrics.glyphFontSize}px Jellee`;
   context.fillText(item.displayChar, x, y);
-  context.font = `${metrics.labelFontSize}px Jellee`;
-  context.fillText(item.title, x, y + metrics.labelOffsetY);
+  if (item.isExamined) {
+    context.font = `${metrics.labelFontSize}px Jellee`;
+    context.fillText(item.title, x, y + metrics.labelOffsetY);
+  }
   context.restore();
 }
 
@@ -108,18 +115,22 @@ function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
   return effects.some(effect => effect.type === EffectType.DROP_ITEM && "item" in effect && effect.item.id === item.id);
 }
 
-export function drawDiscoveredItemsInRoom(room:Room, effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  if (room.isObscured) return;
+export function drawDiscoveredItemsInRoom(room:Room, effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+  options:RoomItemVisibilityOptions = {}) {
+  const { includeUndiscovered = false, ignoreRoomObscured = false } = options;
+  if (room.isObscured && !ignoreRoomObscured) return;
   room.items
-    .filter(item => item.isDiscovered && !_isItemSuppressedByEffect(item, effects))
+    .filter(item => (includeUndiscovered || item.isDiscovered) && !_isItemSuppressedByEffect(item, effects))
     .forEach(item => drawItem(item, scalingFactors, context));
 }
 
-export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scalingFactors:ScalingFactors):Item|null {
-  if (room.isObscured) return null;
+export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scalingFactors:ScalingFactors,
+  options:RoomItemVisibilityOptions = {}):Item|null {
+  const { includeUndiscovered = false, ignoreRoomObscured = false } = options;
+  if (room.isObscured && !ignoreRoomObscured) return null;
   for (let i = room.items.length - 1; i >= 0; --i) {
     const item = room.items[i];
-    if (!item.isDiscovered) continue;
+    if (!includeUndiscovered && !item.isDiscovered) continue;
     const rect = _getItemHoverRect(item, scalingFactors);
     const isInside = x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
     if (isInside) return item;

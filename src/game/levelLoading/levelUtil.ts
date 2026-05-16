@@ -25,6 +25,8 @@ import ClozeBlank from "../solutions/types/ClozeBlank";
 import ClozePartType from "../solutions/types/ClozePartType";
 import Solution from "../solutions/types/Solution";
 
+const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
+
 function _createDefaultSolutionCategoryOptions(level:Level):Map<string, string[]> {
   return new Map([
     ['rooms', level.rooms.map(room => room.title)],
@@ -42,6 +44,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     initialCharacters: [],
     characters: [],
     solutions: [],
+    winSynopsis: DEFAULT_WIN_SYNOPSIS,
     activeCharacterId: "",
     startTime: 0,
     duration,
@@ -53,11 +56,12 @@ function _parseTimeTextToMsecs(text:string):number {
   return parseTimestampToMsecs(text);
 }
 
-function _parseGeneralSection(generalSection:string):{ activeCharacterId:string, startTime:number|null } {
+function _parseGeneralSection(generalSection:string):{ activeCharacterId:string, startTime:number|null, winSynopsis:string } {
   const generalNameValues = parseNameValueLines(generalSection);
   return {
     activeCharacterId: generalNameValues.activeCharacter || "",
-    startTime: generalNameValues.time ? _parseTimeTextToMsecs(generalNameValues.time) : null
+    startTime: generalNameValues.time ? _parseTimeTextToMsecs(generalNameValues.time) : null,
+    winSynopsis: generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS
   };
 }
 
@@ -152,7 +156,8 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   level = {
     ...level,
     activeCharacterId: generalSection.activeCharacterId || level.activeCharacterId,
-    startTime: generalSection.startTime ?? level.startTime
+    startTime: generalSection.startTime ?? level.startTime,
+    winSynopsis: generalSection.winSynopsis || level.winSynopsis
   };
   const roomPopulationDefinitions = parseRoomPopulationDefinitions(sections.characters || "", sections.items || "");
   createRoomsFromMapSection(level, sections.map || "", sections.rooms || "");

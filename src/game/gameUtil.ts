@@ -18,9 +18,7 @@ import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
 import { COLOR_BLACK } from "./drawing/drawConstants";
-import { discoverVisibleItemsInRoom } from "./drawing/itemDrawUtil";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
-import { createItemDiscoveryEffect } from "./effects/itemDiscoveryUtil";
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
@@ -44,20 +42,12 @@ export function findCharacter(gameState:GameState, characterId:string):Character
 }
 
 function _setActiveRoomDiscovered(gameState:GameState) {
+  if (gameState.isLevelComplete) return;
   const activeCharacter = gameState.characters[gameState.activeCharacterI];
   if (activeCharacter) {
     const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
     if (activeRoom) activeRoom.isDiscovered = true;
   }
-}
-
-function _discoverVisibleItemsInActiveRoom(gameState:GameState) {
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
-  if (!activeCharacter || !activeRoom) return;
-  if (activeRoom.isObscured) return;
-  discoverVisibleItemsInRoom(activeRoom)
-    .forEach(item => gameState.activeEffects.push(createItemDiscoveryEffect(item, activeRoom, Date.now(), gameState.scalingFactors)));
 }
 
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent) {
@@ -99,7 +89,7 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   if (!activeCharacter) return;
   const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
-  if (!activeRoom || activeRoom.isObscured) return;
+  if (!activeRoom || (activeRoom.isObscured && !gameState.isLevelComplete)) return;
   const charactersInRoom = findCharactersInRoom(activeRoom, gameState.characters)
     .sort(_compareCharactersForCycleOrder);
   if (charactersInRoom.length <= 1) return;
@@ -120,7 +110,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
       case PlayerEventType.NEXT_CHARACTER: _updateGameStateForNextCharacter(gameState, event as NextCharacterEvent); break;
       case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent); break;
       case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, event as MouseDownEvent); break;
-      case PlayerEventType.MOUSEMOVE: updateGameStateForMouseMove(gameState, event as MouseMoveEvent, () => _discoverVisibleItemsInActiveRoom(gameState)); break;
+      case PlayerEventType.MOUSEMOVE: updateGameStateForMouseMove(gameState, event as MouseMoveEvent); break;
       default: botch();
     }
   });
@@ -131,7 +121,6 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
     if (nextTime >= gameState.duration) _pauseGameState(gameState);
   }
   _setActiveRoomDiscovered(gameState);
-  _discoverVisibleItemsInActiveRoom(gameState);
 }
 
 function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
@@ -141,7 +130,7 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
 
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
-  if (!activeRoom || activeRoom.isObscured) return;
+  if (!activeRoom || (activeRoom.isObscured && !gameState.isLevelComplete)) return;
 
   findCharactersInRoom(activeRoom, gameState.characters).forEach(character => {
     const speech = findCharacterPose(character, gameState.time).speech;
@@ -175,7 +164,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   if (onActiveCharacterChanged) callOnActiveCharacterChangedAsNeeded(gameState, onActiveCharacterChanged);
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
-  context.canvas.style.cursor = !activeRoom?.isObscured && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
+  context.canvas.style.cursor = (gameState.isLevelComplete || !activeRoom?.isObscured) && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
     ? "pointer"
     : "default";
 
@@ -191,6 +180,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     characters:level.initialCharacters.map(duplicateCharacter),
     rooms:level.rooms.map(duplicateRoom),
     solutions:level.solutions.map(duplicateSolution),
+    winSynopsis:level.winSynopsis,
     imageSet,
     initialCharacters:level.initialCharacters.map(duplicateCharacter),
     initialRooms:level.rooms.map(duplicateRoom),
@@ -199,6 +189,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     hoveredCharacterId:null,
     viewedItemIds:new Set<string>(),
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
+    isLevelComplete:false,
     isPlaying:false,
     time:level.startTime,
     duration:level.duration,

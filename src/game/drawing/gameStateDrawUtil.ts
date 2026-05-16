@@ -11,6 +11,18 @@ import { drawRoom } from "./roomDrawUtil";
 import { calcScalingFactors } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
 
+function _findHoveredItem(gameState:GameState) {
+  if (!gameState.hoveredItemId) return null;
+  const candidateRooms = gameState.isLevelComplete
+    ? gameState.rooms.filter(room => room.isDiscovered)
+    : gameState.rooms;
+  for (const room of candidateRooms) {
+    const hoveredItem = room.items.find(item => item.id === gameState.hoveredItemId && (gameState.isLevelComplete || item.isDiscovered)) || null;
+    if (hoveredItem) return hoveredItem;
+  }
+  return null;
+}
+
 export function updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRenderingContext2D):ScalingFactors {
   const destW = context.canvas.width;
   const destH = context.canvas.height;
@@ -32,15 +44,17 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     const room = gameState.rooms[roomI];
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
-    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.imageSet);
+    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.imageSet,
+      gameState.isLevelComplete);
   }
-  if (!activeRoom?.isObscured && activeRoom && gameState.hoveredItemId) {
-    const hoveredItem = activeRoom.items.find(item => item.id === gameState.hoveredItemId && item.isDiscovered) || null;
+  const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
+  if (canShowHoverPopovers && gameState.hoveredItemId) {
+    const hoveredItem = _findHoveredItem(gameState);
     if (hoveredItem) drawItemPopover(hoveredItem, gameState.scalingFactors, context);
     processLevelEffects(gameState.activeEffects, context);
     return;
   }
-  if (!activeRoom?.isObscured && gameState.hoveredCharacterId) {
+  if (canShowHoverPopovers && gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter) drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context);
   }

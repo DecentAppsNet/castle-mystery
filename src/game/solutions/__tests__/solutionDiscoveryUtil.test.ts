@@ -26,6 +26,14 @@ describe('solutionDiscoveryUtil', () => {
     expect(solutions[0].isLocked).toBe(false);
   });
 
+  it('unlocks a solution when its required item matches a viewed title case-insensitively', () => {
+    const solution = createSolution({ unlockForItemId:'book' });
+    const { solutions, didChange } = syncSolutionsWithUnlocks([solution], new Set(['Book']));
+
+    expect(didChange).toBe(true);
+    expect(solutions[0].isLocked).toBe(false);
+  });
+
   it('unlocks a solution when its prerequisite solution is complete', () => {
     const prerequisite = createSolution({ id:'First', isComplete:true, isLocked:false });
     const lockedSolution = createSolution({ id:'Second', unlockForSolutionId:'First' });

@@ -89,7 +89,8 @@ function _createItemFromDefinition(itemId:string, itemDefinitions:Map<string, It
 		displayChar:itemDefinition?.displayChar || itemId.charAt(0) || "?",
 		position:{ ...position },
 		description:itemDefinition?.description || "",
-		isDiscovered
+		isDiscovered,
+		isExamined:false
 	};
 }
 
@@ -157,7 +158,7 @@ function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<st
 	});
 }
 
-function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovered'>) {
+function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovered'|'isExamined'>) {
 	const room = findRoom(level.rooms, roomId);
 	assertNonNullable(room);
 	const { x, y } = item.position;
@@ -165,7 +166,7 @@ function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovere
 		&& y >= room.rect.y && y <= room.rect.y + room.rect.height;
 	if (!isInsideRoom) throw new Error(`item ${item.id} is outside room ${roomId}`);
 	if (isPositionInRoomObstruction(room, x, y)) throw new Error(`item ${item.id} is inside an obstruction in room ${roomId}`);
-	room.items.push({ ...item, isDiscovered:false });
+	room.items.push({ ...item, isDiscovered:false, isExamined:false });
 }
 
 function _addItemsToCharacter(level:Level, characterId:string, items:Item[]) {
