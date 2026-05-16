@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { findNormalizedSolutionPhrasesInText, normalizeSolutionPhrase, syncSolutionsWithDiscoveredPhrases } from '../solutionDiscoveryUtil';
+import { syncSolutionsWithUnlocks } from '../solutionDiscoveryUtil';
 import Solution from '../types/Solution';
 import ClozePartType from '../types/ClozePartType';
 
@@ -11,32 +11,33 @@ function createSolution(overrides:Partial<Solution> = {}):Solution {
     parts:[{ type:ClozePartType.text, text:'Test' }],
     isComplete:false,
     isLocked:true,
-    lockedRemainingPhrases:['ted', 'throne room'],
+    unlockForItemId:null,
+    unlockForSolutionId:null,
     ...overrides
   };
 }
 
 describe('solutionDiscoveryUtil', () => {
-  it('normalizes phrases to lowercased word sequences', () => {
-    expect(normalizeSolutionPhrase(`  Throne   Room! `)).toBe('throne room');
-  });
-
-  it('finds candidate phrases in normalized text', () => {
-    expect(findNormalizedSolutionPhrasesInText(`Ted! It's the Throne Room.`, ['ted', 'throne room', 'room', 'library'])).toEqual(['ted', 'throne room', 'room']);
-  });
-
-  it('reveals a solution once all required phrases are discovered', () => {
-    const solution = createSolution();
-    const { solutions, didChange } = syncSolutionsWithDiscoveredPhrases([solution], new Set(['ted', 'throne room']));
+  it('unlocks a solution when its required item popover has been viewed', () => {
+    const solution = createSolution({ unlockForItemId:'Book' });
+    const { solutions, didChange } = syncSolutionsWithUnlocks([solution], new Set(['Book']));
 
     expect(didChange).toBe(true);
-    expect(solutions[0].lockedRemainingPhrases).toEqual([]);
     expect(solutions[0].isLocked).toBe(false);
   });
 
+  it('unlocks a solution when its prerequisite solution is complete', () => {
+    const prerequisite = createSolution({ id:'First', isComplete:true, isLocked:false });
+    const lockedSolution = createSolution({ id:'Second', unlockForSolutionId:'First' });
+    const { solutions, didChange } = syncSolutionsWithUnlocks([prerequisite, lockedSolution], new Set());
+
+    expect(didChange).toBe(true);
+    expect(solutions[1].isLocked).toBe(false);
+  });
+
   it('does not duplicate unchanged solutions', () => {
-    const solution = createSolution({ lockedRemainingPhrases:['throne room'] });
-    const { solutions, didChange } = syncSolutionsWithDiscoveredPhrases([solution], new Set(['ted']));
+    const solution = createSolution({ unlockForItemId:'Book' });
+    const { solutions, didChange } = syncSolutionsWithUnlocks([solution], new Set());
 
     expect(didChange).toBe(false);
     expect(solutions[0]).toBe(solution);

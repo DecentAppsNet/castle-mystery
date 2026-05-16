@@ -1,63 +1,19 @@
-import { findWordLikeTextSegments } from '@/common/regExUtil';
-
 import Solution, { duplicateSolution } from './types/Solution';
 
-export function normalizeSolutionPhrase(text:string):string {
-  return findWordLikeTextSegments(text)
-    .map(segment => segment.enclosedText.trim().toLowerCase())
-    .filter(Boolean)
-    .join(' ');
-}
-
-function _doesNormalizedTextContainPhrase(normalizedText:string, normalizedPhrase:string):boolean {
-  return normalizedText === normalizedPhrase
-    || normalizedText.startsWith(`${normalizedPhrase} `)
-    || normalizedText.endsWith(` ${normalizedPhrase}`)
-    || normalizedText.includes(` ${normalizedPhrase} `);
-}
-
-export function findNormalizedSolutionPhrasesInText(text:string, candidatePhrases:ReadonlyArray<string>):string[] {
-  const normalizedText = normalizeSolutionPhrase(text);
-  const matchingPhrases:string[] = [];
-
-  candidatePhrases.forEach(candidatePhrase => {
-    if (!candidatePhrase || !_doesNormalizedTextContainPhrase(normalizedText, candidatePhrase) || matchingPhrases.includes(candidatePhrase)) return;
-    matchingPhrases.push(candidatePhrase);
-  });
-
-  return matchingPhrases;
-}
-
-export function findNormalizedSolutionPhrasesInTexts(texts:ReadonlyArray<string>, candidatePhrases:ReadonlyArray<string>):string[] {
-  const matchingPhrases:string[] = [];
-
-  texts.forEach(text => {
-    findNormalizedSolutionPhrasesInText(text, candidatePhrases).forEach(phrase => {
-      if (matchingPhrases.includes(phrase)) return;
-      matchingPhrases.push(phrase);
-    });
-  });
-
-  return matchingPhrases;
-}
-
-function _haveSamePhrases(phrases1:string[], phrases2:string[]):boolean {
-  return phrases1.length === phrases2.length && phrases1.every((phrase, index) => phrase === phrases2[index]);
-}
-
-export function syncSolutionsWithDiscoveredPhrases(solutions:Solution[], discoveredPhrases:ReadonlySet<string>):{ solutions:Solution[], didChange:boolean } {
+export function syncSolutionsWithUnlocks(solutions:Solution[], viewedItemIds:ReadonlySet<string>):{ solutions:Solution[], didChange:boolean } {
+  const completedSolutionIds = new Set(solutions.filter(solution => solution.isComplete).map(solution => solution.id));
   let didChange = false;
 
   const nextSolutions = solutions.map(solution => {
-    const nextRemainingPhrases = solution.lockedRemainingPhrases.filter(phrase => !discoveredPhrases.has(phrase));
-    const nextIsLocked = nextRemainingPhrases.length > 0;
-    const isUnchanged = solution.isLocked === nextIsLocked && _haveSamePhrases(solution.lockedRemainingPhrases, nextRemainingPhrases);
-    if (isUnchanged) return solution;
+    if (!solution.isLocked) return solution;
+
+    const isUnlockedByItem = solution.unlockForItemId ? viewedItemIds.has(solution.unlockForItemId) : false;
+    const isUnlockedBySolution = solution.unlockForSolutionId ? completedSolutionIds.has(solution.unlockForSolutionId) : false;
+    if (!isUnlockedByItem && !isUnlockedBySolution) return solution;
 
     didChange = true;
     const nextSolution = duplicateSolution(solution);
-    nextSolution.isLocked = nextIsLocked;
-    nextSolution.lockedRemainingPhrases = nextRemainingPhrases;
+    nextSolution.isLocked = false;
     return nextSolution;
   });
 

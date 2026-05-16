@@ -12,7 +12,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        lockedRemainingPhrases: [],
+        unlockForItemId: null,
+        unlockForSolutionId: null,
         parts: [
           {
             type: ClozePartType.blank,
@@ -32,7 +33,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        lockedRemainingPhrases: [],
+        unlockForItemId: null,
+        unlockForSolutionId: null,
         parts: [
           {
             type: ClozePartType.blank,
@@ -52,7 +54,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        lockedRemainingPhrases: [],
+        unlockForItemId: null,
+        unlockForSolutionId: null,
         parts: [
           {
             type: ClozePartType.blank,
@@ -74,7 +77,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        lockedRemainingPhrases: [],
+        unlockForItemId: null,
+        unlockForSolutionId: null,
         parts: [
           {
             type: ClozePartType.text,
@@ -92,7 +96,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        lockedRemainingPhrases: [],
+        unlockForItemId: null,
+        unlockForSolutionId: null,
         parts: [
           {
             type: ClozePartType.blank,
@@ -122,7 +127,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        lockedRemainingPhrases: [],
+        unlockForItemId: null,
+        unlockForSolutionId: null,
         parts: [
           {
             type: ClozePartType.blank,
@@ -142,7 +148,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        lockedRemainingPhrases: [],
+        unlockForItemId: null,
+        unlockForSolutionId: null,
         parts: [
           {
             type: ClozePartType.blank,
@@ -182,7 +189,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        lockedRemainingPhrases: [],
+        unlockForItemId: null,
+        unlockForSolutionId: null,
         parts: [
           {
             type: ClozePartType.blank,
@@ -202,7 +210,8 @@ describe('solutionUtil', () => {
         title: 'Empty Statement',
         isComplete: false,
         isLocked: false,
-        lockedRemainingPhrases: [],
+        unlockForItemId: null,
+        unlockForSolutionId: null,
         parts: []
       };
 

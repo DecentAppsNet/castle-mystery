@@ -11,6 +11,7 @@ import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.
 import invalidItineraryTimestampText from './fixtures/invalid-itinerary-timestamp.md?raw';
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
+import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
@@ -130,7 +131,18 @@ describe('levelUtil itinerary loading', () => {
 
     expect(firstBlank.availableAnswers).toEqual(['Throne Room']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
-    expect(solution.lockedRemainingPhrases).toEqual(['throne room']);
+    expect(solution.isLocked).toBe(false);
+    expect(solution.unlockForItemId).toBe(null);
+    expect(solution.unlockForSolutionId).toBe(null);
+  });
+
+  it('matches solution category phrases case-insensitively', () => {
+    const level = loadLevelFromText(solutionsCaseInsensitiveCategoriesText, 'case-insensitive-categories.md', { validateUnlockPhrases:true });
+    const solution = level.solutions[0];
+    const firstBlank = solution.parts[0] as ClozeBlank;
+
+    expect(firstBlank.availableAnswers).toEqual(['Book']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([0]);
   });
 
   it('parses cloze statement image and separator parts', () => {
@@ -142,14 +154,14 @@ describe('levelUtil itinerary loading', () => {
     expect((solution.parts[4] as { imageUrl:string }).imageUrl).toBe('/sprites/queenFace.png');
   });
 
-  it('defaults titles from ids and generates identities only for characters with unknown titles', () => {
+  it('defaults titles from ids and generates identities for all characters', () => {
     const level = loadLevelFromText(titleDefaultsAndGeneratedIdentityText);
     const hall = findRoom(level.rooms, 'Hall');
     const king = level.characters.find(character => character.id === 'King');
     const queen = level.characters.find(character => character.id === 'Queen');
     const crown = hall.items.find(item => item.id === 'Crown');
     const identities = level.solutions.find(solution => solution.title === 'Identities') || null;
-    const identityBlank = identities?.parts.find(part => part.type === 'blank') as ClozeBlank | undefined;
+    const identityBlanks = (identities?.parts.filter(part => part.type === 'blank') || []) as ClozeBlank[];
 
     expect(hall.title).toBe('Grand Hall');
     expect(king?.title).toBe('His Majesty');
@@ -158,8 +170,47 @@ describe('levelUtil itinerary loading', () => {
     expect(queen?.isTitleKnown).toBe(false);
     expect(crown?.title).toBe('Crown');
     expect(identities?.title).toBe('Identities');
-    expect(identityBlank?.availableAnswers).toEqual(['His Majesty', 'Queen']);
-    expect(identityBlank?.correctAnswerIndexes).toEqual([1]);
+    expect(identities?.isLocked).toBe(false);
+    expect(identityBlanks).toHaveLength(2);
+    expect(identityBlanks[0].availableAnswers).toEqual(['His Majesty', 'Queen']);
+    expect(identityBlanks[0].correctAnswerIndexes).toEqual([0]);
+    expect(identityBlanks[1].availableAnswers).toEqual(['His Majesty', 'Queen']);
+    expect(identityBlanks[1].correctAnswerIndexes).toEqual([1]);
+  });
+
+  it('marks identities complete when all character titles are already known', () => {
+    const levelText = `# map
+
+\`\`\`
+A
+\`\`\`
+
+* A=Hall
+
+# rooms
+
+## Hall
+
+\`\`\`
+H
+\`\`\`
+
+* H=Hero
+
+# characters
+
+## Hero
+
+* title=Hero
+* isTitleKnown=true
+`;
+
+    const level = loadLevelFromText(levelText);
+    const identities = level.solutions.find(solution => solution.id === 'Identities') || null;
+
+    expect(identities).not.toBeNull();
+    expect(identities?.isLocked).toBe(false);
+    expect(identities?.isComplete).toBe(true);
   });
 
   it('loads room position markers from room legends and grids', () => {
@@ -283,7 +334,7 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('throws when a required unlock phrase cannot be discovered from level content', () => {
+  it('throws when a cloze answer phrase is missing from all solution categories', () => {
     const levelText = `# map
 
 \`\`\`
@@ -309,8 +360,58 @@ A
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('missing-solution-phrase.md');
-      expect((error as LoadLevelException).message).toContain('missing unlockable solution phrases in level content: ghost');
+      expect((error as LoadLevelException).message).toContain('missing solution answer phrases from solution categories: Ghost');
     }
+  });
+
+  it('allows authored solution category overrides to replace default room names', () => {
+    const levelText = `# map
+
+\`\`\`
+A
+\`\`\`
+
+* A=Hall
+
+# rooms
+
+## Hall
+
+# solutions
+
+* rooms=Ghost
+
+## Mystery
+
+* clozeStatement=[Ghost]
+`;
+
+    expect(() => loadLevelFromText(levelText, 'override-rooms.md', { validateUnlockPhrases:true })).not.toThrow();
+  });
+
+  it('throws when a solution defines duplicate unlock prerequisites', () => {
+    const levelText = `# map
+
+\`\`\`
+A
+\`\`\`
+
+* A=Hall
+
+# rooms
+
+## Hall
+
+# solutions
+
+## Mystery
+
+* unlockForItem=Book
+* unlockForItem=Dagger
+* clozeStatement=Open the case.
+`;
+
+    expect(() => loadLevelFromText(levelText, 'duplicate-unlock.md')).toThrow(/multiple unlockForItem lines/i);
   });
 
 });

@@ -40,7 +40,7 @@ import Solution, { duplicateSolution } from "./solutions/types/Solution";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
 import EffectType from "./effects/types/EffectType";
-import { findNormalizedSolutionPhrasesInTexts, normalizeSolutionPhrase, syncSolutionsWithDiscoveredPhrases } from "./solutions/solutionDiscoveryUtil";
+import { syncSolutionsWithUnlocks } from "./solutions/solutionDiscoveryUtil";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
 
@@ -56,69 +56,29 @@ type PendingRoomEffect = {
   create:() => void
 }
 
-function _createCharacterPopoverTexts(character:Character):string[] {
-  const title = character.isTitleKnown ? character.title : "";
-  const carryText = character.items.length === 0
-    ? "Carrying nothing."
-    : character.items.length === 1
-      ? "Carrying 1 item."
-      : `Carrying ${character.items.length} items.`;
-
-  return [title, character.description, carryText].filter(Boolean);
-}
-
-function _createItemPopoverTexts(item:Item):string[] {
-  return [item.title, item.description].filter(Boolean);
-}
-
-function _haveSamePhrases(phrases1:ReadonlyArray<string>, phrases2:ReadonlyArray<string>):boolean {
-  return phrases1.length === phrases2.length && phrases1.every((phrase, index) => phrase === phrases2[index]);
+function _haveSameParts(solution1:Solution, solution2:Solution):boolean {
+  return JSON.stringify(solution1.parts) === JSON.stringify(solution2.parts);
 }
 
 function _haveSameSolutions(solution1:Solution, solution2:Solution):boolean {
   return solution1.id === solution2.id
+    && _haveSameParts(solution1, solution2)
     && solution1.isComplete === solution2.isComplete
     && solution1.isLocked === solution2.isLocked
-    && _haveSamePhrases(solution1.lockedRemainingPhrases, solution2.lockedRemainingPhrases);
+    && solution1.unlockForItemId === solution2.unlockForItemId
+    && solution1.unlockForSolutionId === solution2.unlockForSolutionId;
 }
 
 function _haveSameSolutionLists(solutions1:ReadonlyArray<Solution>, solutions2:ReadonlyArray<Solution>):boolean {
   return solutions1.length === solutions2.length && solutions1.every((solution, index) => _haveSameSolutions(solution, solutions2[index]));
 }
 
-function _countRequiredSolutionPhrases(solutions:Solution[]):number {
-  return new Set(solutions.flatMap(solution => solution.lockedRemainingPhrases)).size;
-}
-
-function _syncSolutionsWithDiscoveredPhrases(gameState:GameState):boolean {
-  const { solutions, didChange } = syncSolutionsWithDiscoveredPhrases(gameState.solutions, gameState.discoveredSolutionPhrases);
-  if (didChange) {
-    gameState.solutions = solutions;
-    gameState.solutionsRevision += 1;
-  }
-  return didChange;
-}
-
-function _discoverSolutionPhrases(gameState:GameState, phrases:string[]):boolean {
-  const beforeCount = gameState.discoveredSolutionPhrases.size;
-  phrases.forEach(phrase => {
-    const normalizedPhrase = normalizeSolutionPhrase(phrase);
-    if (!normalizedPhrase) return;
-    gameState.discoveredSolutionPhrases.add(normalizedPhrase);
-  });
-  if (gameState.discoveredSolutionPhrases.size === beforeCount) return false;
-  return _syncSolutionsWithDiscoveredPhrases(gameState);
-}
-
-function _discoverMatchingSolutionPhrasesInTexts(gameState:GameState, texts:string[]):boolean {
-  const candidatePhrases = Array.from(new Set(gameState.solutions.flatMap(solution => solution.lockedRemainingPhrases)));
-  if (!candidatePhrases.length) return false;
-
-  return _discoverSolutionPhrases(gameState, findNormalizedSolutionPhrasesInTexts(texts, candidatePhrases));
-}
-
-function _syncDiscoveredRoomTitlePhrases(gameState:GameState):boolean {
-  return _discoverSolutionPhrases(gameState, gameState.rooms.filter(room => room.isDiscovered).map(room => room.title));
+function _syncSolutionUnlocks(gameState:GameState):boolean {
+  const { solutions, didChange } = syncSolutionsWithUnlocks(gameState.solutions, gameState.viewedItemIds);
+  if (!didChange) return false;
+  gameState.solutions = solutions;
+  gameState.solutionsRevision += 1;
+  return true;
 }
 
 export function findCharacter(gameState:GameState, characterId:string):Character {
@@ -133,7 +93,6 @@ function _setActiveRoomDiscovered(gameState:GameState) {
     const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
     if (activeRoom) activeRoom.isDiscovered = true;
   }
-  _syncDiscoveredRoomTitlePhrases(gameState);
 }
 
 function _discoverVisibleItemsInActiveRoom(gameState:GameState) {
@@ -298,7 +257,7 @@ function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEven
 }
 
 function _updateGameStateForChangeSolutions(gameState:GameState, event:ChangeSolutionsEvent) {
-  const nextSolutions = syncSolutionsWithDiscoveredPhrases(event.solutions, gameState.discoveredSolutionPhrases).solutions;
+  const nextSolutions = event.solutions.map(duplicateSolution);
   if (!_haveSameSolutionLists(gameState.solutions, nextSolutions)) {
     gameState.solutions = nextSolutions;
     gameState.solutionsRevision += 1;
@@ -416,6 +375,7 @@ function _updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent)
   _discoverVisibleItemsInActiveRoom(gameState);
   const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors);
   gameState.hoveredItemId = hoveredItem?.id ?? null;
+  if (hoveredItem) gameState.viewedItemIds.add(hoveredItem.id);
   gameState.hoveredCharacterId = hoveredItem ? null : _findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
 }
 
@@ -439,37 +399,6 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
   }
   _setActiveRoomDiscovered(gameState);
   _discoverVisibleItemsInActiveRoom(gameState);
-}
-
-export function syncSolutionPhraseDiscovery(gameState:GameState, isScrubbing:boolean = false):boolean {
-  let didChange = _syncDiscoveredRoomTitlePhrases(gameState);
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
-  if (!activeCharacter || !activeRoom || activeRoom.isObscured) return didChange;
-
-  const hoveredItem = gameState.hoveredItemId
-    ? activeRoom.items.find(item => item.id === gameState.hoveredItemId && item.isDiscovered) || null
-    : null;
-  if (hoveredItem) {
-    didChange = _discoverMatchingSolutionPhrasesInTexts(gameState, _createItemPopoverTexts(hoveredItem)) || didChange;
-  }
-
-  const hoveredCharacter = !hoveredItem && gameState.hoveredCharacterId
-    ? gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null
-    : null;
-  if (hoveredCharacter) {
-    didChange = _discoverMatchingSolutionPhrasesInTexts(gameState, _createCharacterPopoverTexts(hoveredCharacter)) || didChange;
-  }
-
-  if (!gameState.isPlaying || isScrubbing) return didChange;
-
-  findCharactersInRoom(activeRoom, gameState.characters).forEach(character => {
-    const speech = findCharacterPose(character, gameState.time).speech;
-    if (!speech) return;
-    didChange = _discoverMatchingSolutionPhrasesInTexts(gameState, [speech]) || didChange;
-  });
-
-  return didChange;
 }
 
 function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
@@ -579,7 +508,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 
   _updateScalingFactorsAsNeeded(gameState, context);
   _syncSpeechBubbleEffects(gameState, isScrubbing);
-  syncSolutionPhraseDiscovery(gameState, isScrubbing);
+  _syncSolutionUnlocks(gameState);
   if (onSolutionsChanged) _callOnSolutionsChangedAsNeeded(gameState, onSolutionsChanged);
   _drawGameState(gameState, context);
 }
@@ -595,9 +524,8 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     activeEffects:[],
     hoveredItemId:null,
     hoveredCharacterId:null,
+    viewedItemIds:new Set<string>(),
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
-    discoveredSolutionPhrases:new Set<string>(),
-    requiredSolutionPhraseCount:_countRequiredSolutionPhrases(level.solutions),
     isPlaying:false,
     time:level.startTime,
     duration:level.duration,
@@ -612,5 +540,6 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
   }
   _rebuildDynamicStateForTime(gameState, level.startTime);
   _setActiveRoomDiscovered(gameState);
+  _syncSolutionUnlocks(gameState);
   return gameState;
 }

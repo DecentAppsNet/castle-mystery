@@ -6,7 +6,8 @@ type Solution = {
   parts: ClozePart[];
   isComplete:boolean;
   isLocked:boolean;
-  lockedRemainingPhrases:string[];
+  unlockForItemId:string|null;
+  unlockForSolutionId:string|null;
 };
 
 export function duplicateSolution(from:Solution):Solution {
@@ -16,7 +17,8 @@ export function duplicateSolution(from:Solution):Solution {
     parts:from.parts.map(duplicateClozePart),
     isComplete:from.isComplete,
     isLocked:from.isLocked,
-    lockedRemainingPhrases:[...from.lockedRemainingPhrases]
+    unlockForItemId:from.unlockForItemId,
+    unlockForSolutionId:from.unlockForSolutionId
   };
 }
 

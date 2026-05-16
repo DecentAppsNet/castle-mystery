@@ -5,35 +5,44 @@ import Character from "./types/Character";
 import ClozeBlank, { UNSPECIFIED_ANSWER } from "./solutions/types/ClozeBlank";
 import ClozePart from "./solutions/types/ClozePart";
 import ClozePartType from "./solutions/types/ClozePartType";
-import { normalizeSolutionPhrase } from "./solutions/solutionDiscoveryUtil";
 import Solution from "./solutions/types/Solution";
-
-function _createLockedRemainingPhrases(parts:ClozePart[]):string[] {
-  const lockedRemainingPhrases:string[] = [];
-
-  parts.forEach(part => {
-    if (part.type !== ClozePartType.blank) return;
-    const blank = part as ClozeBlank;
-    blank.availableAnswers.forEach(answer => {
-      const normalizedPhrase = normalizeSolutionPhrase(answer);
-      if (!normalizedPhrase || lockedRemainingPhrases.includes(normalizedPhrase)) return;
-      lockedRemainingPhrases.push(normalizedPhrase);
-    });
-  });
-
-  return lockedRemainingPhrases;
+type SolutionPrerequisite = {
+  unlockForItemId:string|null,
+  unlockForSolutionId:string|null
 }
 
-function _createSolution(id:string, title:string, parts:ClozePart[]):Solution {
-  const lockedRemainingPhrases = _createLockedRemainingPhrases(parts);
-
+function _createSolution(id:string, title:string, parts:ClozePart[], prerequisite:SolutionPrerequisite):Solution {
   return {
     id,
     title,
     parts,
     isComplete:false,
-    isLocked:true,
-    lockedRemainingPhrases
+    isLocked:Boolean(prerequisite.unlockForItemId || prerequisite.unlockForSolutionId),
+    unlockForItemId:prerequisite.unlockForItemId,
+    unlockForSolutionId:prerequisite.unlockForSolutionId
+  };
+}
+
+function _parseBulletedLineValues(markdownText:string, name:string):string[] {
+  return markdownText
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.startsWith(`* ${name}=`))
+    .map(line => line.slice(`* ${name}=`.length).trim())
+    .filter(Boolean);
+}
+
+function _parseSolutionPrerequisite(solutionSubsection:string, solutionId:string):SolutionPrerequisite {
+  const unlockForItemIds = _parseBulletedLineValues(solutionSubsection, 'unlockForItem');
+  const unlockForSolutionIds = _parseBulletedLineValues(solutionSubsection, 'unlockForSolution');
+
+  if (unlockForItemIds.length > 1) throw new Error(`solution '${solutionId}' has multiple unlockForItem lines`);
+  if (unlockForSolutionIds.length > 1) throw new Error(`solution '${solutionId}' has multiple unlockForSolution lines`);
+  if (unlockForItemIds.length && unlockForSolutionIds.length) throw new Error(`solution '${solutionId}' cannot define both unlockForItem and unlockForSolution`);
+
+  return {
+    unlockForItemId:unlockForItemIds[0] || null,
+    unlockForSolutionId:unlockForSolutionIds[0] || null
   };
 }
 
@@ -83,6 +92,10 @@ function _parseSolutionCategoryText(solutionsSection:string):string {
   return categoryLines.join('\n');
 }
 
+function _normalizeCategoryPhrase(phrase:string):string {
+  return phrase.trim().toLowerCase();
+}
+
 export function createSolutionCategoryOptionsByName(solutionsSection:string, defaultCategoryOptionsByName:Map<string, string[]> = new Map()):Map<string, string[]> {
   const categoryNameValues = parseNameValueLines(_parseSolutionCategoryText(solutionsSection));
   const categoryOptionsByName = new Map(defaultCategoryOptionsByName);
@@ -94,9 +107,11 @@ export function createSolutionCategoryOptionsByName(solutionsSection:string, def
 
 function _createBlankAvailableAnswers(correctAnswers:string[], categoryOptionsByName:Map<string, string[]>):string[] {
   const availableAnswers:string[] = [];
+  const normalizedCorrectAnswers = correctAnswers.map(_normalizeCategoryPhrase);
 
   categoryOptionsByName.forEach(categoryOptions => {
-    if (!correctAnswers.every(answer => categoryOptions.includes(answer))) return;
+    const normalizedCategoryOptions = new Set(categoryOptions.map(_normalizeCategoryPhrase));
+    if (!normalizedCorrectAnswers.every(answer => normalizedCategoryOptions.has(answer))) return;
     categoryOptions.forEach(option => {
       if (availableAnswers.includes(option)) return;
       availableAnswers.push(option);
@@ -116,8 +131,9 @@ function _createBlankAvailableAnswers(correctAnswers:string[], categoryOptionsBy
 function _createClozeBlankFromTemplateText(blankText:string, categoryOptionsByName:Map<string, string[]>):ClozeBlank {
   const correctAnswers = parseOptions(blankText);
   const availableAnswers = _createBlankAvailableAnswers(correctAnswers, categoryOptionsByName);
+  const normalizedAvailableAnswers = availableAnswers.map(_normalizeCategoryPhrase);
   const correctAnswerIndexes = correctAnswers
-    .map(correctAnswer => availableAnswers.indexOf(correctAnswer))
+    .map(correctAnswer => normalizedAvailableAnswers.indexOf(_normalizeCategoryPhrase(correctAnswer)))
     .filter((answerIndex, index, allAnswerIndexes) => answerIndex >= 0 && allAnswerIndexes.indexOf(answerIndex) === index);
 
   return {
@@ -189,21 +205,22 @@ export function loadSolutionsFromSection(solutionsSection:string, categoryOption
   return Object.entries(solutionSubsections).map(([title, solutionSubsection]) => {
     const nameValues = parseNameValueLines(solutionSubsection);
     const clozeTemplate = nameValues.solution || nameValues.clozeStatement || "";
+    const prerequisite = _parseSolutionPrerequisite(solutionSubsection, title);
 
     return _createSolution(
       title,
       title,
-      _parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName)
+      _parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName),
+      prerequisite
     );
   });
 }
 
 export function createGeneratedIdentitySolution(characters:Character[], categoryOptionsByName:Map<string, string[]>):Solution|null {
-  const unknownTitleCharacters = characters.filter(character => !character.isTitleKnown);
-  if (!unknownTitleCharacters.length) return null;
+  if (!characters.length) return null;
 
   const parts:ClozePart[] = [];
-  unknownTitleCharacters.forEach((character, characterIndex) => {
+  characters.forEach((character, characterIndex) => {
     if (characterIndex > 0) {
       parts.push({ type:ClozePartType.separator });
     }
@@ -216,5 +233,8 @@ export function createGeneratedIdentitySolution(characters:Character[], category
     parts.push(_createClozeBlankFromCorrectAnswer(character.title, categoryOptionsByName));
   });
 
-  return _createSolution('Identities', 'Identities', parts);
+  return {
+    ..._createSolution('Identities', 'Identities', parts, { unlockForItemId:null, unlockForSolutionId:null }),
+    isComplete:characters.every(character => character.isTitleKnown)
+  };
 }

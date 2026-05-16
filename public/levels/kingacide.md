@@ -92,7 +92,7 @@ N....
 .X..B
 ```
 
-* B=Romance Novel
+* B=Book
 * X=SW
 * Y=NE
 * N=Table Note
@@ -126,10 +126,10 @@ N....
 
 ## Dagger
 
-* description=An obligatory attempt at self-defense.
+* description=A bloody knife, left on the ground.
 * displayChar=†
 
-## Romance Novel
+## Book
 
 * title=Book
 * description=A novel about shipwrecked lovers stranded on an island.
@@ -139,6 +139,7 @@ N....
 
 * title=Note
 * description=The note reads: "I never lied once in my life. Yet when I speak truth, they all call me a liar."
+* displayChar=⌸
 
 # itinerary
 
@@ -213,17 +214,16 @@ King arrived in the library at 0:00:34.
 
 # solutions
 
-* characters=King|Queen|Jester
-* items=book|sceptre|dagger
 * actions=searched|lied|left|took
-* places=Library|Throne Room|Sanctum|West Hall|East Hall|Foyer
 
 ## The Missing Book
 
+* unlockForItem=Table Note
 * clozeStatement=[King] [searched] for a [book] in [Throne Room], but was unsuccessful. [King] went to [Library] next, where [Queen] [lied] to [King] about the [book].
 
 ## Possession of the Prize
 
+* unlockForSolution=The Missing Book
 * clozeStatement=[Queen] [left] the [book] in [East Hall].---[Jester] [took] it, returning to [Throne Room].
 
 

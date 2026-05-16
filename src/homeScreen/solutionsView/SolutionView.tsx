@@ -7,18 +7,21 @@ import ClaimSolutionDialog from '../dialogs/ClaimSolutionDialog';
 import ImageSet from '@/game/types/ImageSet';
 import { claimSolution } from './interactions/solutions';
 
+const SOLUTION_REVEAL_START_MSECS = 0;
+const SOLUTION_REVEAL_TOTAL_MSECS = 4_050;
+
 type Props = {
   solution:Solution,
-  isRevealing:boolean,
   imageSet:ImageSet,
   cooldownUntilTime:number|null,
   onIncorrectClaim:() => void,
   onUpdate:(nextSolution:Solution) => void
 }
 
-function SolutionView({solution, isRevealing, imageSet, cooldownUntilTime, onIncorrectClaim, onUpdate}:Props) {
+function SolutionView({solution, imageSet, cooldownUntilTime, onIncorrectClaim, onUpdate}:Props) {
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
   const [isHoldingLockedOverlay, setIsHoldingLockedOverlay] = useState(false);
+  const [isRevealAnimating, setIsRevealAnimating] = useState(false);
   const previousSolutionRef = useRef({ id:solution.id, isLocked:solution.isLocked });
   const lockedImageUrl = baseUrl('/assets/ui/locked.svg');
 
@@ -27,23 +30,38 @@ function SolutionView({solution, isRevealing, imageSet, cooldownUntilTime, onInc
     if (previousSolution.id !== solution.id) {
       previousSolutionRef.current = { id:solution.id, isLocked:solution.isLocked };
       setIsHoldingLockedOverlay(false);
+      setIsRevealAnimating(false);
       return;
     }
 
-    if (previousSolution.isLocked && !solution.isLocked) setIsHoldingLockedOverlay(true);
-    else if (solution.isLocked) setIsHoldingLockedOverlay(false);
+    if (previousSolution.isLocked && !solution.isLocked) {
+      setIsHoldingLockedOverlay(true);
+      setIsRevealAnimating(false);
+    } else if (solution.isLocked) {
+      setIsHoldingLockedOverlay(false);
+      setIsRevealAnimating(false);
+    }
 
     previousSolutionRef.current = { id:solution.id, isLocked:solution.isLocked };
   }, [solution.id, solution.isLocked]);
 
   useEffect(() => {
-    if (!isHoldingLockedOverlay || isRevealing) return;
-    const timeoutId = window.setTimeout(() => setIsHoldingLockedOverlay(false), 0);
+    if (!isHoldingLockedOverlay || solution.isLocked || isRevealAnimating) return;
+    const timeoutId = window.setTimeout(() => setIsRevealAnimating(true), SOLUTION_REVEAL_START_MSECS);
     return () => window.clearTimeout(timeoutId);
-  }, [isHoldingLockedOverlay, isRevealing]);
+  }, [isHoldingLockedOverlay, isRevealAnimating, solution.isLocked]);
+
+  useEffect(() => {
+    if (!isRevealAnimating) return;
+    const timeoutId = window.setTimeout(() => {
+      setIsHoldingLockedOverlay(false);
+      setIsRevealAnimating(false);
+    }, SOLUTION_REVEAL_TOTAL_MSECS);
+    return () => window.clearTimeout(timeoutId);
+  }, [isRevealAnimating]);
 
   const statusIconClass = solution.isComplete ? styles.completeIcon : styles.incompleteIcon;
-  const shouldRenderRevealOverlay = isRevealing;
+  const shouldRenderRevealOverlay = isRevealAnimating;
   const shouldRenderVisibleButton = !solution.isLocked || isHoldingLockedOverlay || shouldRenderRevealOverlay;
   const shouldRenderLockedOverlay = solution.isLocked || isHoldingLockedOverlay || shouldRenderRevealOverlay;
   const obscuredOverlayClassName = [
@@ -66,9 +84,6 @@ function SolutionView({solution, isRevealing, imageSet, cooldownUntilTime, onInc
           <div
             className={obscuredOverlayClassName}
             aria-label={solution.isLocked ? 'Solution locked.' : 'Solution unlocking.'}
-            onAnimationEnd={(event) => {
-              if (event.animationName === 'obscuredSolutionReveal') setIsHoldingLockedOverlay(false);
-            }}
           >
             <img className={styles.lockedSolutionIcon} src={lockedImageUrl} alt="" aria-hidden='true' />
           </div>
