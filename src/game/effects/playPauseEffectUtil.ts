@@ -1,6 +1,6 @@
 import { clamp } from "@/common/numberUtil";
 import { PAUSE_ICON_TEXT, PLAY_ICON_TEXT } from "@/components/playPauseButton/playPauseText";
-import { COLOR_BLACK, COLOR_POPOVER_FILL } from "../drawConstants";
+import { COLOR_BLACK, COLOR_POPOVER_FILL } from "../drawing/drawConstants";
 import Effect from "./types/Effect";
 import PauseEffect from "./types/PauseEffect";
 import PlayEffect from "./types/PlayEffect";

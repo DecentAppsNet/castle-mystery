@@ -1,3 +1,5 @@
+/* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks. */
+
 import { assertNonNullable, botch } from "decent-portal";
 import Character, { duplicateCharacter } from "./types/Character";
 import GameState from "./types/GameState";
@@ -6,7 +8,7 @@ import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
 import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
 import { findCharacterPose } from "./itineraryUtil";
-import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
+import { findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
@@ -14,15 +16,13 @@ import Level from "./types/Level";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
 import { msecsToMinutes } from "@/homeScreen/interactions/gameplay";
 import ScalingFactors from "./types/ScalingFactors";
-import { calcScalingFactors, ZERO_SCALING_FACTORS } from "./drawUtil";
+import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import Rect from "./types/Rect";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
-import { drawCharacterPopover } from "./characterDrawUtil";
-import { drawRoom } from "./roomDrawUtil";
-import { COLOR_BLACK } from "./drawConstants";
-import { discoverVisibleItemsInRoom, drawItemPopover, findDiscoveredItemAtPosition } from "./itemDrawUtil";
-import { processLevelEffects } from "./effects/effectUtil";
+import { COLOR_BLACK } from "./drawing/drawConstants";
+import { discoverVisibleItemsInRoom, findDiscoveredItemAtPosition } from "./drawing/itemDrawUtil";
+import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
 import { createItemDiscoveryEffect } from "./effects/itemDiscoveryUtil";
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { createDropItemEffect } from "./effects/dropItemUtil";
@@ -424,42 +424,6 @@ function _findCharacterI(characters:Character[], characterId:string):number {
   return -1;
 }
 
-function _updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRenderingContext2D):ScalingFactors {
-  const destW = context.canvas.width;
-  const destH = context.canvas.height;
-  let scalingFactors = gameState.scalingFactors;
-  assertNonNullable(scalingFactors);
-  if (scalingFactors.destWidth !== destW || scalingFactors.destHeight !== destH) {
-    const roomsBoundingRect = calcRoomsBoundingRect(gameState.rooms);
-    scalingFactors = calcScalingFactors(roomsBoundingRect.width, roomsBoundingRect.height, destW, destH);
-    gameState.scalingFactors = scalingFactors;
-    gameState.activeEffects.length = 0;
-  }
-  return scalingFactors;
-}
-
-function _drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
-  for(let roomI = 0; roomI < gameState.rooms.length; ++roomI) {
-    const room = gameState.rooms[roomI];
-    const charactersInRoom = findCharactersInRoom(room, gameState.characters);
-    const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
-    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.imageSet);
-  }
-  if (!activeRoom?.isObscured && activeRoom && gameState.hoveredItemId) {
-    const hoveredItem = activeRoom.items.find(item => item.id === gameState.hoveredItemId && item.isDiscovered) || null;
-    if (hoveredItem) drawItemPopover(hoveredItem, gameState.scalingFactors, context);
-    processLevelEffects(gameState.activeEffects, context);
-    return;
-  }
-  if (!activeRoom?.isObscured && gameState.hoveredCharacterId) {
-    const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
-    if (hoveredCharacter) drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context);
-  }
-  processLevelEffects(gameState.activeEffects, context);
-}
-
 function _callOnMinutesChangedAsNeeded(gameState:GameState, onMinutesChanged:(minutes:number) => void) {
   const nextMinutes = msecsToMinutes(gameState.time);
   const now = Date.now();
@@ -506,11 +470,11 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     ? "pointer"
     : "default";
 
-  _updateScalingFactorsAsNeeded(gameState, context);
+  updateScalingFactorsAsNeeded(gameState, context);
   _syncSpeechBubbleEffects(gameState, isScrubbing);
   _syncSolutionUnlocks(gameState);
   if (onSolutionsChanged) _callOnSolutionsChangedAsNeeded(gameState, onSolutionsChanged);
-  _drawGameState(gameState, context);
+  drawGameState(gameState, context);
 }
 
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {

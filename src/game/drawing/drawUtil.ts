@@ -1,4 +1,6 @@
-import ScalingFactors from "./types/ScalingFactors";
+/* This module groups shared coordinate conversion and scaling helpers for game drawing. */
+
+import ScalingFactors from "../types/ScalingFactors";
 
 const ROOM_FONT_HEIGHT_RATIO = 0.02; // Font height as a ratio of the canvas height.
 const ROOM_LINE_WIDTH = 0.005;

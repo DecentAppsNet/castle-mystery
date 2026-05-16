@@ -1,6 +1,6 @@
 import { clamp } from "@/common/numberUtil";
-import { COLOR_CHARACTER_SELECT_EFFECT } from "../drawConstants";
-import { gameToCanvasPosition } from "../drawUtil";
+import { COLOR_CHARACTER_SELECT_EFFECT } from "../drawing/drawConstants";
+import { gameToCanvasPosition } from "../drawing/drawUtil";
 import Character from "../types/Character";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";

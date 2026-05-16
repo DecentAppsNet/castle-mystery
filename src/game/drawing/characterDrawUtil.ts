@@ -1,11 +1,13 @@
+/* This module groups character-focused drawing helpers, including visible character rendering and character popovers. */
+
 import { clamp } from "@/common/numberUtil";
-import { processCharacterEffects } from "./effects/effectUtil";
+import { processCharacterEffects } from "../effects/effectUtil";
 import { gameToCanvasPosition } from "./drawUtil";
-import Character from "./types/Character";
-import Room from "./types/Room";
-import ScalingFactors from "./types/ScalingFactors";
-import Effect from "./effects/types/Effect";
-import ImageSet from "./types/ImageSet";
+import Character from "../types/Character";
+import Room from "../types/Room";
+import ScalingFactors from "../types/ScalingFactors";
+import Effect from "../effects/types/Effect";
+import ImageSet from "../types/ImageSet";
 import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_POPOVER_FILL, COLOR_SPEECH_BUBBLE_FILL } from "./drawConstants";
 
 const PULSE_CADENCE_MS = 1000;

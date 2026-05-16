@@ -1,3 +1,5 @@
+/* This module groups shared color constants used by game drawing and draw-driven effects. */
+
 export const COLOR_BLACK = "#000";
 export const COLOR_DARK_GRAY = "#333";
 export const COLOR_ACTIVE_ROOM_FILL = "#fff";

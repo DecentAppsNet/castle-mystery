@@ -10,7 +10,7 @@ import TimeLabelPositions from "./types/TimeLabelPositions";
 import Itinerary from "@/game/types/Itinerary";
 import Room from "@/game/types/Room";
 import { createItineraryMarkerModel } from "./itineraryMarkerUtil";
-import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawConstants";
+import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawing/drawConstants";
 
 const NO_QUANTIZING = -1;
 

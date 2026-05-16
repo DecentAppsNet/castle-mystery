@@ -1,6 +1,6 @@
 import { clamp } from "@/common/numberUtil";
-import { COLOR_ITEM_DISCOVERY_EFFECT } from "../drawConstants";
-import { gameToCanvasPosition } from "../drawUtil";
+import { COLOR_ITEM_DISCOVERY_EFFECT } from "../drawing/drawConstants";
+import { gameToCanvasPosition } from "../drawing/drawUtil";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";

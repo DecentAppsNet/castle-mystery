@@ -3,7 +3,7 @@ import EffectType from "./types/EffectType";
 import SpeechBubbleEffect from "./types/SpeechBubbleEffect";
 import Character from "../types/Character";
 import ScalingFactors from "../types/ScalingFactors";
-import { drawSpeechBubble, getCharacterSpeechAnchor } from "../characterDrawUtil";
+import { drawSpeechBubble, getCharacterSpeechAnchor } from "../drawing/characterDrawUtil";
 
 function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):boolean {
   const speechBubbleEffect = effect as SpeechBubbleEffect;

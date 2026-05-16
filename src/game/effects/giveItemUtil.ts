@@ -1,6 +1,6 @@
 import { clamp } from "@/common/numberUtil";
-import { gameToCanvasPosition } from "../drawUtil";
-import { calcItemDrawMetrics, drawItemAtCanvasPosition } from "../itemDrawUtil";
+import { gameToCanvasPosition } from "../drawing/drawUtil";
+import { calcItemDrawMetrics, drawItemAtCanvasPosition } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";
 import Item from "../types/Item";
 import Room from "../types/Room";

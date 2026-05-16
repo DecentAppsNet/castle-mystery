@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import Canvas from '@/components/canvas/Canvas';
 import { mouseDown, mouseMove } from '@/game/playerEventUtil';
-import { canvasToGamePosition } from '@/game/drawUtil';
+import { canvasToGamePosition } from '@/game/drawing/drawUtil';
 import { updateAndDraw } from '@/game/gameUtil';
 import styles from './LevelView.module.css';
 import GameState from '@/game/types/GameState';

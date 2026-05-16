@@ -1,16 +1,18 @@
+/* This module groups room-focused drawing helpers, including room shells, obstructions, exits, and in-room contents. */
+
 import { drawObscuredActiveCharacter, drawVisibleCharactersInRoom } from "./characterDrawUtil";
-import { createObstructionBoundarySegments } from "./obstructionUtil";
-import { processRoomEffects } from "./effects/effectUtil";
+import { createObstructionBoundarySegments } from "../obstructionUtil";
+import { processRoomEffects } from "../effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
-import Character from "./types/Character";
-import Obstruction from "./types/Obstruction";
-import Room from "./types/Room";
-import RoomExit from "./types/RoomExit";
-import ScalingFactors from "./types/ScalingFactors";
-import Effect from "./effects/types/Effect";
-import ImageSet from "./types/ImageSet";
+import Character from "../types/Character";
+import Obstruction from "../types/Obstruction";
+import Room from "../types/Room";
+import RoomExit from "../types/RoomExit";
+import ScalingFactors from "../types/ScalingFactors";
+import Effect from "../effects/types/Effect";
+import ImageSet from "../types/ImageSet";
 
 function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const { roomLineWidth } = scalingFactors;

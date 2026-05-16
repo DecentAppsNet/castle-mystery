@@ -1,12 +1,14 @@
+/* This module groups item-focused drawing helpers, including item labels, hover hit-testing, and item popovers. */
+
 import { clamp } from "@/common/numberUtil";
-import Rect from "./types/Rect";
+import Rect from "../types/Rect";
 import { gameToCanvasPosition } from "./drawUtil";
 import { COLOR_BLACK, COLOR_ITEM_TEXT, COLOR_POPOVER_FILL } from "./drawConstants";
-import Item from "./types/Item";
-import Room from "./types/Room";
-import ScalingFactors from "./types/ScalingFactors";
-import Effect from "./effects/types/Effect";
-import EffectType from "./effects/types/EffectType";
+import Item from "../types/Item";
+import Room from "../types/Room";
+import ScalingFactors from "../types/ScalingFactors";
+import Effect from "../effects/types/Effect";
+import EffectType from "../effects/types/EffectType";
 
 const ITEM_GLYPH_FONT_RATIO = 0.75;
 const ITEM_LABEL_FONT_RATIO = 0.55;
