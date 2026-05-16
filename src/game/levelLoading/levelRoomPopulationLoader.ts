@@ -4,13 +4,13 @@ import { assertNonNullable } from "decent-portal";
 
 import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
-import { isPositionInRoomObstruction } from "./obstructionUtil";
+import { isPositionInRoomObstruction } from "../obstructionUtil";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
-import { findNearestWaypoint, findRoom } from "./roomUtil";
-import Character from "./types/Character";
-import Item from "./types/Item";
-import Level from "./types/Level";
-import Room from "./types/Room";
+import { findNearestWaypoint, findRoom } from "../roomUtil";
+import Character from "../types/Character";
+import Item from "../types/Item";
+import Level from "../types/Level";
+import Room from "../types/Room";
 
 type CharacterDefinition = {
 	title:string,

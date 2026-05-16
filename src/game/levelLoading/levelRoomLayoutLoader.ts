@@ -2,12 +2,12 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { createObstruction } from "./obstructionUtil";
-import { findRoom, generateWaypoints } from "./roomUtil";
-import Level from "./types/Level";
-import Obstruction from "./types/Obstruction";
-import Rect from "./types/Rect";
-import Room from "./types/Room";
+import { createObstruction } from "../obstructionUtil";
+import { findRoom, generateWaypoints } from "../roomUtil";
+import Level from "../types/Level";
+import Obstruction from "../types/Obstruction";
+import Rect from "../types/Rect";
+import Room from "../types/Room";
 import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
 
 const MAP_TILE_SIZE = 20;

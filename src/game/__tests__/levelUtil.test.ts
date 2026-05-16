@@ -13,12 +13,16 @@ import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
 import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
+import duplicateUnlockText from './fixtures/duplicate-unlock.md?raw';
+import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
+import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
+import overrideRoomsText from './fixtures/override-rooms.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
-import LoadLevelException from '../LoadLevelException';
-import { loadLevelFromText } from '../levelUtil';
+import LoadLevelException from '../levelLoading/LoadLevelException';
+import { loadLevelFromText } from '../levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
 import ClozeBlank from '../solutions/types/ClozeBlank';
@@ -179,33 +183,7 @@ describe('levelUtil itinerary loading', () => {
   });
 
   it('marks identities complete when all character titles are already known', () => {
-    const levelText = `# map
-
-\`\`\`
-A
-\`\`\`
-
-* A=Hall
-
-# rooms
-
-## Hall
-
-\`\`\`
-H
-\`\`\`
-
-* H=Hero
-
-# characters
-
-## Hero
-
-* title=Hero
-* isTitleKnown=true
-`;
-
-    const level = loadLevelFromText(levelText);
+    const level = loadLevelFromText(identitiesAllTitlesKnownText);
     const identities = level.solutions.find(solution => solution.id === 'Identities') || null;
 
     expect(identities).not.toBeNull();
@@ -335,27 +313,8 @@ H
   });
 
   it('throws when a cloze answer phrase is missing from all solution categories', () => {
-    const levelText = `# map
-
-\`\`\`
-A
-\`\`\`
-
-* A=Hall
-
-# rooms
-
-## Hall
-
-# solutions
-
-## Mystery
-
-* clozeStatement=[Ghost]
-`;
-
     try {
-      loadLevelFromText(levelText, 'missing-solution-phrase.md', { validateUnlockPhrases:true });
+      loadLevelFromText(missingSolutionPhraseText, 'missing-solution-phrase.md', { validateUnlockPhrases:true });
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
@@ -365,53 +324,11 @@ A
   });
 
   it('allows authored solution category overrides to replace default room names', () => {
-    const levelText = `# map
-
-\`\`\`
-A
-\`\`\`
-
-* A=Hall
-
-# rooms
-
-## Hall
-
-# solutions
-
-* rooms=Ghost
-
-## Mystery
-
-* clozeStatement=[Ghost]
-`;
-
-    expect(() => loadLevelFromText(levelText, 'override-rooms.md', { validateUnlockPhrases:true })).not.toThrow();
+    expect(() => loadLevelFromText(overrideRoomsText, 'override-rooms.md', { validateUnlockPhrases:true })).not.toThrow();
   });
 
   it('throws when a solution defines duplicate unlock prerequisites', () => {
-    const levelText = `# map
-
-\`\`\`
-A
-\`\`\`
-
-* A=Hall
-
-# rooms
-
-## Hall
-
-# solutions
-
-## Mystery
-
-* unlockForItem=Book
-* unlockForItem=Dagger
-* clozeStatement=Open the case.
-`;
-
-    expect(() => loadLevelFromText(levelText, 'duplicate-unlock.md')).toThrow(/multiple unlockForItem lines/i);
+    expect(() => loadLevelFromText(duplicateUnlockText, 'duplicate-unlock.md')).toThrow(/multiple unlockForItem lines/i);
   });
 
 });

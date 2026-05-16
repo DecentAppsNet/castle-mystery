@@ -1,11 +1,14 @@
+/* This module groups solution-section parsing and generated-solution creation during level load. */
+
 import { parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 
-import Character from "./types/Character";
-import ClozeBlank, { UNSPECIFIED_ANSWER } from "./solutions/types/ClozeBlank";
-import ClozePart from "./solutions/types/ClozePart";
-import ClozePartType from "./solutions/types/ClozePartType";
-import Solution from "./solutions/types/Solution";
+import Character from "../types/Character";
+import ClozeBlank, { UNSPECIFIED_ANSWER } from "../solutions/types/ClozeBlank";
+import ClozePart from "../solutions/types/ClozePart";
+import ClozePartType from "../solutions/types/ClozePartType";
+import Solution from "../solutions/types/Solution";
+
 type SolutionPrerequisite = {
   unlockForItemId:string|null,
   unlockForSolutionId:string|null

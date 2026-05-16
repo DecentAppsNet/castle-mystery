@@ -1,6 +1,8 @@
-import Level from "./types/Level";
-import TimeLabel from "./types/TimeLabel";
-import { duplicateCharacter } from "./types/Character";
+/* This module groups top-level level-loading orchestration, composing section-specific loaders into a validated Level model. */
+
+import Level from "../types/Level";
+import TimeLabel from "../types/TimeLabel";
+import { duplicateCharacter } from "../types/Character";
 import { baseUrl } from "@/common/urlUtil";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { parseNameValueLines, parseSections } from "@/common/markdownUtil";
@@ -19,9 +21,9 @@ import {
   parseRoomPopulationDefinitions
 } from "./levelRoomPopulationLoader";
 import { createGeneratedIdentitySolution, createSolutionCategoryOptionsByName, loadSolutionsFromSection } from "./levelSolutionsLoader";
-import ClozeBlank from "./solutions/types/ClozeBlank";
-import ClozePartType from "./solutions/types/ClozePartType";
-import Solution from "./solutions/types/Solution";
+import ClozeBlank from "../solutions/types/ClozeBlank";
+import ClozePartType from "../solutions/types/ClozePartType";
+import Solution from "../solutions/types/Solution";
 
 function _createDefaultSolutionCategoryOptions(level:Level):Map<string, string[]> {
   return new Map([

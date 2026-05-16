@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { createGameState, findCharacter } from '../gameUtil';
-import { loadLevelFromText } from '../levelUtil';
+import { loadLevelFromText } from '../levelLoading/levelUtil';
 import { findRoom } from '../roomUtil';
 import dropItemText from './fixtures/drop-item.md?raw';
 

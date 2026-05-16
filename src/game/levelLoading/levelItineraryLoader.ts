@@ -3,9 +3,9 @@
 import { assertNonNullable } from "decent-portal";
 
 import { LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/common/timestampUtil";
-import { tryCreateAtActivity } from "./activities/atActivityUtil";
-import { tryCreateDropActivity } from "./activities/dropActivityUtil";
-import { tryCreateGiveActivity } from "./activities/giveActivityUtil.ts";
+import { tryCreateAtActivity } from "../activities/atActivityUtil";
+import { tryCreateDropActivity } from "../activities/dropActivityUtil";
+import { tryCreateGiveActivity } from "../activities/giveActivityUtil.ts";
 import {
   appendEventsToCharacterState,
   ActivityContext,
@@ -15,18 +15,18 @@ import {
   duplicateCharacterActivityState,
   duplicateRoomItemsByRoomId,
   findStatePoseAtTime
-} from "./activities/activityUtil";
-import { tryCreateSayActivity } from "./activities/sayActivityUtil";
-import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
-import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
+} from "../activities/activityUtil";
+import { tryCreateSayActivity } from "../activities/sayActivityUtil";
+import { tryCreateTakeActivity } from "../activities/takeActivityUtil";
+import { tryCreateWanderActivity } from "../activities/wanderActivityUtil";
 import LoadLevelException from "./LoadLevelException";
-import { addCharacterEncounterEvents } from "./characterEncounterUtil";
-import { createItineraryIndex } from "./itineraryUtil";
-import Character from "./types/Character";
-import Item, { duplicateItem } from "./types/Item";
-import Level from "./types/Level";
-import Position from "./types/Position";
-import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
+import { addCharacterEncounterEvents } from "../characterEncounterUtil";
+import { createItineraryIndex } from "../itineraryUtil";
+import Character from "../types/Character";
+import Item, { duplicateItem } from "../types/Item";
+import Level from "../types/Level";
+import Position from "../types/Position";
+import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 
 type ParsedItineraryActivity = {
   sourceIndex:number,

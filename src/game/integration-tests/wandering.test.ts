@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { createGameState, findCharacter } from '../gameUtil';
-import { loadLevelFromText } from '../levelUtil';
+import { loadLevelFromText } from '../levelLoading/levelUtil';
 import interleavedAfterPreviousActivityText from './fixtures/after-previous-activity-interleaved-characters.md?raw';
 import wanderingDoubleText from './fixtures/wandering-double.md?raw';
 import wanderingSingleText from './fixtures/wandering-single.md?raw';

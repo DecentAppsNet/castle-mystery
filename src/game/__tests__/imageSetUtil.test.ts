@@ -1,41 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import { createImageSetFromLevel } from '../imageSetUtil';
-import { loadLevelFromText } from '../levelUtil';
-
-const levelWithReferencedImagesText = `# map
-
-\`\`\`
-H
-\`\`\`
-
-* H=Hall
-
-# rooms
-
-## Hall
-
-\`\`\`
-K
-\`\`\`
-
-* K=King
-
-# characters
-
-## King
-
-* description=A king.
-* faceImage=/sprites/kingFace.png
-
-# solutions
-
-* characters=Queen
-
-## Identities
-
-* clozeStatement=(/sprites/queenFace.png) = [Queen]
-`;
+import { loadLevelFromText } from '../levelLoading/levelUtil';
 
 describe('imageSetUtil.ts', () => {
   afterEach(() => {
@@ -50,7 +17,7 @@ describe('imageSetUtil.ts', () => {
     vi.stubGlobal('createImageBitmap', createImageBitmapMock);
     vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
 
-    const level = loadLevelFromText(levelWithReferencedImagesText);
+    const level = loadLevelFromText(imageSetReferencedImagesText);
     const imageSet = await createImageSetFromLevel(level);
 
     expect(fetchMock).toHaveBeenCalledTimes(2);

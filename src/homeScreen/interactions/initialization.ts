@@ -1,7 +1,7 @@
 import { msecsToMinutes } from "./gameplay";
 import { createGameState } from "@/game/gameUtil";
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
-import { loadLevelFromUrl } from "@/game/levelUtil";
+import { loadLevelFromUrl } from "@/game/levelLoading/levelUtil";
 import GameState from "@/game/types/GameState";
 import { baseUrl } from "@/common/urlUtil";
 

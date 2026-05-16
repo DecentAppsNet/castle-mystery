@@ -1,3 +1,5 @@
+/* This module groups level-loading error context so parse and validation failures carry file and line information. */
+
 export default class LoadLevelException extends Error {
   readonly levelFilename:string;
   readonly errorLineNo:number;
