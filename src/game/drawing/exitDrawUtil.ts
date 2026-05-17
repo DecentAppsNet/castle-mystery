@@ -47,5 +47,5 @@ export function getExitHoverRect(exit:RoomExit, scalingFactors:ScalingFactors, i
 
 export function drawExitPopover(exit:RoomExit, room1:Room, room2:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [anchorX, anchorY] = gameToCanvasPosition(exit.x, exit.y, scalingFactors);
-  drawTextPopover({ anchorX, anchorY, bodyTexts:[describeExit(exit, room1.title, room2.title)], scalingFactors, context });
+  drawTextPopover({ anchorX, anchorY, bodyTexts:[describeExit(exit, room1, room2)], scalingFactors, context });
 }
