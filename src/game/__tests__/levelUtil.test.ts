@@ -8,6 +8,9 @@ import afterPreviousActivityRepeatedWandersText from './fixtures/after-previous-
 import afterPreviousActivityText from './fixtures/after-previous-activity.md?raw';
 import absoluteTakeDuringSpeechText from './fixtures/absolute-take-during-speech.md?raw';
 import lockUnlockActivityText from './fixtures/lock-unlock-activity.md?raw';
+import lockNonadjacentRoomText from './fixtures/lock-nonadjacent-room.md?raw';
+import lockNonlockableExitText from './fixtures/lock-nonlockable-exit.md?raw';
+import unlockWrongSideText from './fixtures/unlock-wrong-side.md?raw';
 import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
 import invalidMapLegendTileText from './fixtures/invalid-map-legend-tile.md?raw';
@@ -464,6 +467,45 @@ describe('levelUtil itinerary loading', () => {
 
   it('allows interrupts to overlap another audible character speech', () => {
     expect(() => loadLevelFromText(audibleSpeechInterruptsText, 'audible-speech-interrupts.md')).not.toThrow();
+  });
+
+  it('throws when a lock activity targets a room that is not directly connected', () => {
+    try {
+      loadLevelFromText(lockNonadjacentRoomText, 'lock-nonadjacent-room.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('lock-nonadjacent-room.md');
+      expect((error as LoadLevelException).errorLineNo).toBe(59);
+      expect((error as LoadLevelException).message).toContain('lock-nonadjacent-room.md:59');
+      expect((error as LoadLevelException).message).toContain('room Second Cell is not connected to Cell for itinerary activity');
+    }
+  });
+
+  it('throws when a lock activity targets a non-lockable exit', () => {
+    try {
+      loadLevelFromText(lockNonlockableExitText, 'lock-nonlockable-exit.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('lock-nonlockable-exit.md');
+      expect((error as LoadLevelException).errorLineNo).toBe(48);
+      expect((error as LoadLevelException).message).toContain('lock-nonlockable-exit.md:48');
+      expect((error as LoadLevelException).message).toContain('exit to Second Cell is not lockable for itinerary activity');
+    }
+  });
+
+  it('throws when an unlock activity is authored from the wrong side of a lockable exit', () => {
+    try {
+      loadLevelFromText(unlockWrongSideText, 'unlock-wrong-side.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('unlock-wrong-side.md');
+      expect((error as LoadLevelException).errorLineNo).toBe(48);
+      expect((error as LoadLevelException).message).toContain('unlock-wrong-side.md:48');
+      expect((error as LoadLevelException).message).toContain('exit to Second Cell cannot be locked or unlocked from Cell');
+    }
   });
 
   it('throws when the same character would speak over their own earlier speech', () => {
