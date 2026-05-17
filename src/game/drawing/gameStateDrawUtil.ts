@@ -45,7 +45,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
     drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.imageSet,
-      gameState.isLevelComplete);
+      gameState.characters, gameState.isLevelComplete);
   }
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   if (canShowHoverPopovers && gameState.hoveredItemId) {
