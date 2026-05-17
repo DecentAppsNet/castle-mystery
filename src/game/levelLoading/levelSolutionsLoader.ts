@@ -1,6 +1,6 @@
 /* This module groups solution-section parsing and generated-solution creation during level load. */
 
-import { parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
+import { parseNameValueLineEntries, parseNameValueLines, parseOptions, parseSectionEntries } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 
 import Character from "../types/Character";
@@ -8,17 +8,17 @@ import ClozeBlank, { UNSPECIFIED_ANSWER } from "../solutions/types/ClozeBlank";
 import ClozePart from "../solutions/types/ClozePart";
 import ClozePartType from "../solutions/types/ClozePartType";
 import Solution from "../solutions/types/Solution";
-import { normalizeId, normalizeOptionalId } from "../idUtil";
+import { createNormalizedEntryMap, normalizeId, normalizeOptionalId } from "../idUtil";
 
 type SolutionPrerequisite = {
   unlockForItemId:string|null,
   unlockForSolutionId:string|null
 }
 
-function _createSolution(solutionTitle:string, title:string, parts:ClozePart[], prerequisite:SolutionPrerequisite):Solution {
+function _createSolution(solutionTitle:string, title:string|null, parts:ClozePart[], prerequisite:SolutionPrerequisite):Solution {
   return {
     id:normalizeId(solutionTitle),
-    title,
+    title:title || solutionTitle.trim(),
     parts,
     isComplete:false,
     isLocked:Boolean(prerequisite.unlockForItemId || prerequisite.unlockForSolutionId),
@@ -101,10 +101,11 @@ function _normalizeCategoryPhrase(phrase:string):string {
 }
 
 export function createSolutionCategoryOptionsByName(solutionsSection:string, defaultCategoryOptionsByName:Map<string, string[]> = new Map()):Map<string, string[]> {
-  const categoryNameValues = parseNameValueLines(_parseSolutionCategoryText(solutionsSection));
-  const categoryOptionsByName = new Map(defaultCategoryOptionsByName);
-  Object.entries(categoryNameValues).forEach(([categoryName, categoryValue]) => {
-    categoryOptionsByName.set(categoryName, parseOptions(categoryValue));
+  const authoredCategoryEntriesById = createNormalizedEntryMap(parseNameValueLineEntries(_parseSolutionCategoryText(solutionsSection)));
+  const categoryOptionsByName = new Map<string, string[]>(Array.from(defaultCategoryOptionsByName.entries())
+    .map(([categoryName, categoryOptions]) => [normalizeId(categoryName), [...categoryOptions]]));
+  Array.from(authoredCategoryEntriesById.entries()).forEach(([categoryId, categoryEntry]) => {
+    categoryOptionsByName.set(categoryId, parseOptions(categoryEntry.value));
   });
   return categoryOptionsByName;
 }
@@ -204,16 +205,16 @@ export function loadSolutionsFromSection(solutionsSection:string, categoryOption
   if (!section.trim()) return [];
 
   const resolvedCategoryOptionsByName = categoryOptionsByName || createSolutionCategoryOptionsByName(section);
-  const solutionSubsections = parseSections(section, 2);
+  const solutionSubsectionsById = createNormalizedEntryMap(parseSectionEntries(section, 2));
 
-  return Object.entries(solutionSubsections).map(([title, solutionSubsection]) => {
+  return Array.from(solutionSubsectionsById.values()).map(({ authoredName:title, value:solutionSubsection }) => {
     const nameValues = parseNameValueLines(solutionSubsection);
     const clozeTemplate = nameValues.solution || nameValues.clozeStatement || "";
     const prerequisite = _parseSolutionPrerequisite(solutionSubsection, title);
 
     return _createSolution(
       title,
-      title,
+      nameValues.title || null,
       _parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName),
       prerequisite
     );

@@ -47,7 +47,7 @@ export function parseCharacterDefinitions(charactersSection:string):Map<string, 
 		const characterSection = characterSectionEntry.value;
 		const nameValues = parseNameValueLines(characterSection);
 		characterDefinitions.set(characterId, {
-			title:nameValues.title || authoredCharacterName,
+			title:nameValues.title || authoredCharacterName.trim(),
 			description:nameValues.description || "",
 			itemIds:parseOptions(nameValues.items || "").map(normalizeId),
 			faceImageUrl:nameValues.faceImage?.trim() || null,
@@ -65,7 +65,7 @@ export function parseItemDefinitions(itemsSection:string):Map<string, ItemDefini
 		const itemSection = itemSectionEntry.value;
 		const nameValues = parseNameValueLines(itemSection);
 		itemDefinitions.set(itemId, {
-			title:nameValues.title || authoredItemName,
+			title:nameValues.title || authoredItemName.trim(),
 			description:nameValues.description || "",
 			displayChar:nameValues.displayChar || authoredItemName.charAt(0) || "?"
 		});

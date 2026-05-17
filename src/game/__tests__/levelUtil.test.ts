@@ -22,8 +22,12 @@ import duplicateItemSubsectionsCaseText from './fixtures/duplicate-item-subsecti
 import duplicateItemIdInventoryText from './fixtures/duplicate-item-id-inventory.md?raw';
 import duplicateRoomIdMapLegendText from './fixtures/duplicate-room-id-map-legend.md?raw';
 import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsections-case.md?raw';
+import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-solution-category-group-names.md?raw';
+import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-subsections-case.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
+import lowercaseTitleDefaultsText from './fixtures/lowercase-title-defaults.md?raw';
 import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
+import overrideGeneratedCategoryGroupCaseText from './fixtures/override-generated-category-group-case.md?raw';
 import overrideRoomsText from './fixtures/override-rooms.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
@@ -201,6 +205,19 @@ describe('levelUtil itinerary loading', () => {
     expect(identities?.isComplete).toBe(true);
   });
 
+  it('defaults titles by preserving authored casing from subsection names', () => {
+    const level = loadLevelFromText(lowercaseTitleDefaultsText);
+    const room = findRoom(level.rooms, 'MacDonald Chamber');
+    const character = level.characters.find(candidate => candidate.id === 'lady macbeth') || null;
+    const item = room.items.find(candidate => candidate.id === 'royal decree') || null;
+    const solution = level.solutions.find(candidate => candidate.id === 'the macdonald mystery') || null;
+
+    expect(room.title).toBe('MacDonald Chamber');
+    expect(character?.title).toBe('Lady MacBeth');
+    expect(item?.title).toBe('royal decree');
+    expect(solution?.title).toBe('The MacDonald Mystery');
+  });
+
   it('loads winSynopsis from the general section and defaults it when omitted', () => {
     expect(loadLevelFromText(winSynopsisText).winSynopsis).toBe('The mystery is solved.');
     expect(loadLevelFromText(identitiesAllTitlesKnownText).winSynopsis).toBe('You completed the level.');
@@ -342,6 +359,10 @@ describe('levelUtil itinerary loading', () => {
     expect(() => loadLevelFromText(overrideRoomsText, 'override-rooms.md', { validateUnlockPhrases:true })).not.toThrow();
   });
 
+  it('allows overriding generated category groups and reusing values across different groups', () => {
+    expect(() => loadLevelFromText(overrideGeneratedCategoryGroupCaseText, 'override-generated-category-group-case.md', { validateUnlockPhrases:true })).not.toThrow();
+  });
+
   it('throws when a solution defines duplicate unlock prerequisites', () => {
     try {
       loadLevelFromText(duplicateUnlockText, 'duplicate-unlock.md');
@@ -405,6 +426,28 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('duplicate-item-id-inventory.md:32');
       expect((error as LoadLevelException).message).toContain(`duplicate item id 'book' in character hero inventory`);
+    }
+  });
+
+  it('wraps duplicate normalized solution category group names with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateSolutionCategoryGroupNamesText, 'duplicate-solution-category-group-names.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-solution-category-group-names.md:21');
+      expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'rooms' conflicts with 'Rooms'`);
+    }
+  });
+
+  it('wraps duplicate normalized solution subsection ids with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateSolutionSubsectionsCaseText, 'duplicate-solution-subsections-case.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-solution-subsections-case.md:21');
+      expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'mystery' conflicts with 'Mystery'`);
     }
   });
 

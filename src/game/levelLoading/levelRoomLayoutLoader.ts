@@ -200,7 +200,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, roomsS
     const roomNameValues = parseNameValueLines(roomSectionsById.get(roomId)?.value || "");
     level.rooms.push({
       id: roomId,
-      title: roomNameValues.title || bounds.authoredName,
+      title: roomNameValues.title || bounds.authoredName.trim(),
       rect: {
         x: bounds.minCol * MAP_TILE_SIZE,
         y: bounds.minRow * MAP_TILE_SIZE,

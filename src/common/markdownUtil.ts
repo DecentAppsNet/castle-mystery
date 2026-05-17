@@ -89,6 +89,11 @@ export function parseSections(markdownText:string, indentLevel:number = 1, useCa
   return sections;
 }
 
+export function parseSectionEntries(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Array<readonly [string, string]> {
+  const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
+  return sectionNames.map((sectionName, index) => [sectionName, sectionContents[index]] as const);
+}
+
 // Parse the lines of a markdown text. Remove any extra whitespace or bullet points.
 function _parseLines(markdownText:string):string[] {
   const lines = markdownText.split('\n');
@@ -102,8 +107,8 @@ function _unescapeValue(text:string):string {
   return text.split('\\n').join('\n');
 }
 
-export function parseNameValueLines(markdownText:string, useCamelCase:boolean = false):NameValues {
-  const nameValues:NameValues = {};
+function _parseNameValueEntries(markdownText:string, useCamelCase:boolean = false):Array<readonly [string, string]> {
+  const entries:Array<readonly [string, string]> = [];
   const lines = _parseLines(markdownText);
   for (let i = 0; i < lines.length; ++i) {
     const line = lines[i];
@@ -114,9 +119,21 @@ export function parseNameValueLines(markdownText:string, useCamelCase:boolean = 
     const name = bulletText.slice(0, hyphenPos).trim();
     if (!name.length) continue;
     const value = _unescapeValue(bulletText.slice(hyphenPos + 1).trim());
-    nameValues[useCamelCase ? normalizeMarkdownName(name) : name] = value;
+    entries.push([useCamelCase ? normalizeMarkdownName(name) : name, value] as const);
   }
+  return entries;
+}
+
+export function parseNameValueLines(markdownText:string, useCamelCase:boolean = false):NameValues {
+  const nameValues:NameValues = {};
+  _parseNameValueEntries(markdownText, useCamelCase).forEach(([name, value]) => {
+    nameValues[name] = value;
+  });
   return nameValues;
+}
+
+export function parseNameValueLineEntries(markdownText:string, useCamelCase:boolean = false):Array<readonly [string, string]> {
+  return _parseNameValueEntries(markdownText, useCamelCase);
 }
 
 export function parseOptions(optionText:string):string[] {
