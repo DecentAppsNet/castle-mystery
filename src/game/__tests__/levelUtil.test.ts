@@ -705,6 +705,29 @@ describe('levelUtil itinerary loading', () => {
         expect((error as LoadLevelException).message).toContain('outside the timeline window');
       }
     });
+
+    it('generates time labels in absolute-since-midnight space spanning startTime to endTime', () => {
+      const level = loadLevelFromText(timelineExplicitEndSameDayText);
+      const labelMinutes = level.labels.map(label => label.minutes);
+      const labelTexts = level.labels.map(label => label.label);
+
+      expect(labelMinutes[0]).toBe(10 * 60);
+      expect(labelMinutes[labelMinutes.length - 1]).toBe(18 * 60);
+      expect(labelTexts[0]).toBe('10am');
+      expect(labelTexts[labelTexts.length - 1]).toBe('6pm');
+    });
+
+    it('wraps cross-midnight time labels through the wall-clock 24-hour boundary', () => {
+      const level = loadLevelFromText(timelineCrossMidnightText);
+      const labelMinutes = level.labels.map(label => label.minutes);
+      const labelTexts = level.labels.map(label => label.label);
+
+      expect(labelMinutes[0]).toBe(19 * 60 + 30);
+      expect(labelMinutes[labelMinutes.length - 1]).toBe(31 * 60);
+      expect(labelTexts[0]).toBe('7:30pm');
+      expect(labelTexts[labelTexts.length - 1]).toBe('7am');
+      expect(labelTexts.some(text => text.endsWith('am') && !text.startsWith('7'))).toBe(true);
+    });
   });
 
 });

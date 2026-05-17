@@ -4,7 +4,7 @@ import Level from "../types/Level";
 import TimeLabel from "../types/TimeLabel";
 import { duplicateCharacter } from "../types/Character";
 import { baseUrl } from "@/common/urlUtil";
-import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
+import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { parseTimestampToMsecs } from "@/common/timestampUtil";
 import { loadItineraries } from "./levelItineraryLoader";
@@ -53,7 +53,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     startTime: 0,
     endTime: duration,
     duration,
-    labels: _createTimeLabels(duration)
+    labels: _createTimeLabels(0, duration)
   };
 }
 
@@ -92,20 +92,22 @@ function _parseGeneralSection(generalSection:string):ParsedGeneralSection {
 
 function _formatMinutesAsTimeLabel(minutes:number):string {
   const wholeMinutes = Math.round(minutes);
-  const hours24 = Math.floor(wholeMinutes / 60);
-  const mins = wholeMinutes % 60;
+  const wallClockMinutes = ((wholeMinutes % MINUTES_IN_DAY) + MINUTES_IN_DAY) % MINUTES_IN_DAY;
+  const hours24 = Math.floor(wallClockMinutes / 60);
+  const mins = wallClockMinutes % 60;
   if (hours24 === 0 && mins === 0) return "midnight";
   if (hours24 === 12 && mins === 0) return "noon";
-  const suffix = hours24 < 12 || hours24 === 24 ? "am" : "pm";
+  const suffix = hours24 < 12 ? "am" : "pm";
   const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
   if (mins === 0) return `${hours12}${suffix}`;
   return `${hours12}:${mins.toString().padStart(2, '0')}${suffix}`;
 }
 
-function _createTimeLabels(duration:number):TimeLabel[] {
+function _createTimeLabels(startTime:number, duration:number):TimeLabel[] {
+  const startMinutes = startTime / MSECS_IN_MINUTE;
   const durationMinutes = duration / MSECS_IN_MINUTE;
   const labels = [0, .25, .5, .75, 1].map(ratio => {
-    const minutes = durationMinutes * ratio;
+    const minutes = startMinutes + durationMinutes * ratio;
     return { minutes, label:_formatMinutesAsTimeLabel(minutes) };
   });
   const endLabel = labels[labels.length - 1]?.label || '';
@@ -268,7 +270,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     characters: itineraryData.characters,
     endTime: level.startTime + resolvedDuration,
     duration: resolvedDuration,
-    labels: _createTimeLabels(resolvedDuration)
+    labels: _createTimeLabels(level.startTime, resolvedDuration)
   };
   if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');
   if (options.validateUnlockPhrases) _validateUnlockableSolutionPhrases(level, solutionCategoryOptionsByName, levelFilename, solutionsFirstLineNo);

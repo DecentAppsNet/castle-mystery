@@ -112,10 +112,10 @@ function HomeScreen() {
       const direction = event.code === "ArrowRight" ? 1 : -1;
       if (event.shiftKey) {
         const targetTime = _findShiftArrowTargetTime(gameState, direction);
-        if (targetTime !== null) updateTimeMsecs(targetTime, gameState.duration, setIsPlaying);
+        if (targetTime !== null) updateTimeMsecs(targetTime, gameState.startTime, gameState.duration, setIsPlaying);
         return;
       }
-      updateTimeMsecs(gameState.time + direction * ARROW_STEP_MSECS, gameState.duration, setIsPlaying);
+      updateTimeMsecs(gameState.time + direction * ARROW_STEP_MSECS, gameState.startTime, gameState.duration, setIsPlaying);
     };
 
     window.addEventListener("keydown", onKeyDown);
