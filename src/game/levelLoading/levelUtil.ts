@@ -51,6 +51,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     winSynopsis: DEFAULT_WIN_SYNOPSIS,
     activeCharacterId: "",
     startTime: 0,
+    endTime: duration,
     duration,
     labels: _createTimeLabels(duration)
   };
@@ -60,11 +61,31 @@ function _parseTimeTextToMsecs(text:string):number {
   return parseTimestampToMsecs(text);
 }
 
-function _parseGeneralSection(generalSection:string):{ activeCharacterId:string, startTime:number|null, winSynopsis:string } {
+type ParsedGeneralSection = {
+  activeCharacterId:string,
+  startTime:number|null,
+  endTime:number|null,
+  isCrossMidnight:boolean,
+  winSynopsis:string
+};
+
+function _parseGeneralSection(generalSection:string):ParsedGeneralSection {
   const generalNameValues = parseUniqueNameValueLines(generalSection, 'general', true);
+  if (generalNameValues.time && generalNameValues.startTime) {
+    throw new Error("general section cannot specify both 'time' and 'startTime'; prefer 'startTime'");
+  }
+  const startTimeText = generalNameValues.startTime || generalNameValues.time;
+  const startTime = startTimeText ? _parseTimeTextToMsecs(startTimeText) : null;
+  const rawEndTime = generalNameValues.endTime ? _parseTimeTextToMsecs(generalNameValues.endTime) : null;
+  const isCrossMidnight = rawEndTime !== null && startTime !== null && rawEndTime <= startTime;
+  const endTime = rawEndTime === null
+    ? null
+    : isCrossMidnight ? rawEndTime + MSECS_IN_DAY : rawEndTime;
   return {
     activeCharacterId: normalizeOptionalId(generalNameValues.activeCharacter) || "",
-    startTime: generalNameValues.time ? _parseTimeTextToMsecs(generalNameValues.time) : null,
+    startTime,
+    endTime,
+    isCrossMidnight,
     winSynopsis: generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS
   };
 }
@@ -186,10 +207,12 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   const generalSection = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
     () => _parseGeneralSection(sections.general || ""));
   let level = _createEmptyLevel();
+  const resolvedStartTime = generalSection.startTime ?? level.startTime;
   level = {
     ...level,
     activeCharacterId: generalSection.activeCharacterId || level.activeCharacterId,
-    startTime: generalSection.startTime ?? level.startTime,
+    startTime: resolvedStartTime,
+    endTime: generalSection.endTime ?? (resolvedStartTime + level.duration),
     winSynopsis: generalSection.winSynopsis || level.winSynopsis
   };
   const characterDefinitions = _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
@@ -223,7 +246,10 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     solutions:generatedIdentitySolution ? [generatedIdentitySolution, ...authoredSolutions] : authoredSolutions,
     initialCharacters:level.characters.map(duplicateCharacter)
   };
-  const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo);
+  const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo, {
+    isCrossMidnight: generalSection.isCrossMidnight,
+    explicitEndTime: generalSection.endTime
+  });
   const initialCharacters = level.initialCharacters.map(initialCharacter => {
     const scheduledCharacter = itineraryData.characters.find(character => character.id === initialCharacter.id) || null;
     return scheduledCharacter ? {
@@ -232,13 +258,17 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       itineraryIndex:scheduledCharacter.itineraryIndex
     } : duplicateCharacter(initialCharacter);
   });
+  const resolvedDuration = generalSection.endTime !== null
+    ? generalSection.endTime - level.startTime
+    : itineraryData.duration;
   level = {
     ...level,
     initialCharacters,
     activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
     characters: itineraryData.characters,
-    duration: itineraryData.duration,
-    labels: _createTimeLabels(itineraryData.duration)
+    endTime: level.startTime + resolvedDuration,
+    duration: resolvedDuration,
+    labels: _createTimeLabels(resolvedDuration)
   };
   if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');
   if (options.validateUnlockPhrases) _validateUnlockableSolutionPhrases(level, solutionCategoryOptionsByName, levelFilename, solutionsFirstLineNo);
