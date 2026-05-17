@@ -6,7 +6,7 @@ Accepted (level-author convention; not engine code).
 
 ## Context
 
-Murder on the Orient Express is being authored as a single level file in `public/levels/murder-on-the-orient-express.md`, in sequential work packages (see [docs/murder-on-the-orient-express-work-packages.md](murder-on-the-orient-express-work-packages.md)). WP2 added the 14-character cast plus their signature carried inventory and had to lock in a few conventions that every later WP (especially WP3 examinables and WP4–WP7 itinerary) will rely on:
+Murder on the Orient Express is being authored as a single level file in `public/levels/murder-on-the-orient-express.md`, in sequential work packages (see [docs/murder-on-the-orient-express-work-packages.md](murder-on-the-orient-express-work-packages.md)). WP2 added the 13-character cast plus their signature carried inventory and had to lock in a few conventions that every later WP (especially WP3 examinables and WP4–WP7 itinerary) will rely on:
 
 1. **Where the conductor stands at level start.** Design §2 describes Pierre Michel's "room" as the corridor itself, with Compartment 1 acting as his locker/workspace.
 2. **Character IDs vs public titles.** Several characters have rank/honorific titles ("Princess Dragomiroff", "Colonel Arbuthnot", "Mrs Caroline Hubbard") and a few share a surname ("Count" / "Countess" Andrenyi). Item IDs and inventory references derive from titles via `normalizeId`, so any later mention of a character (in itinerary or in solution cloze blanks) has to match the title chosen here.
@@ -43,20 +43,19 @@ Each character's `## <Heading>` is the short, unambiguous identifier the level l
 | Helena               | Countess Helena Andrenyi       | 6           |
 | Rudolph              | Count Rudolph Andrenyi         | 6           |
 | Mary                 | Mary Debenham                  | 7           |
-| Arbuthnot            | Colonel Arbuthnot              | 8           |
-| Hardman              | Cyrus Hardman                  | 9           |
+| Arbuthnot            | Colonel Arbuthnot              | 9           |
 | Hubbard              | Mrs Caroline Hubbard           | 10          |
 | Greta                | Greta Ohlsson                  | 11          |
 | Schmidt              | Hildegarde Schmidt             | 12          |
 | Princess             | Princess Dragomiroff           | 13          |
 
-Itinerary references and solution cloze blanks must use the **`title`** form (e.g. `Princess Dragomiroff @ Compartment 13`, not `Princess @ ...`), because `parseSpeaker` / waypoint lookups match by character title. The section heading is internal.
+Compartment 8 has no occupant at level start. Itinerary references and solution cloze blanks must use the **`title`** form (e.g. `Princess Dragomiroff @ Compartment 13`, not `Princess @ ...`), because `parseSpeaker` / waypoint lookups match by character title. The section heading is internal.
 
-Note: Cyrus Hardman is included as the 12th conspirator to match the canonical novel's "jury of twelve." WP2's source prompt enumerated only eleven non-Pierre/non-Ratchett characters; if the design owner intends a different 12th conspirator, replace `## Hardman` and Compartment 9's `Y=Hardman` legend entry. WP3 will fill #9 with Hardman's room items.
+Cast-size note: design §3 reads "14 characters — 12 conspirators + victim + conductor", but that heading double-counts Pierre Michel (he is both a conspirator and the conductor). The cast is actually 13: 1 victim + 12 conspirators, with Pierre as the 12th conspirator. WP2 initially added a Cyrus Hardman to reach 14, but that was reverted once §2's compartment assignments, §4-T3's stab order, §5's clue inventory, and §6's clozes were checked — none mention Hardman.
 
-### 3. `isTitleKnown=false` for all 14 characters
+### 3. `isTitleKnown=false` for all 13 characters
 
-Every character starts with `isTitleKnown=false` so the auto-generated `identities` cloze (see [src/game/levelLoading/levelSolutionsLoader.ts](../src/game/levelLoading/levelSolutionsLoader.ts) `createGeneratedIdentitySolution`) presents 14 unknowns. Pierre Michel is included even though his uniform is identifying — symmetric treatment keeps the identity puzzle uniform.
+Every character starts with `isTitleKnown=false` so the auto-generated `identities` cloze (see [src/game/levelLoading/levelSolutionsLoader.ts](../src/game/levelLoading/levelSolutionsLoader.ts) `createGeneratedIdentitySolution`) presents 13 unknowns. Pierre Michel is included even though his uniform is identifying — symmetric treatment keeps the identity puzzle uniform.
 
 Multi-stage identity reveal (iconography → public name → true name) is FU2 follow-up engine work and not in scope for Phase 1.
 
@@ -66,7 +65,7 @@ All `faceImage` URLs follow `/sprites/<slug>Face.png`. The slugs:
 
 ```
 pierre, ratchett, macqueen, masterman, foscarelli,
-helenaAndrenyi, rudolphAndrenyi, debenham, arbuthnot, hardman,
+helenaAndrenyi, rudolphAndrenyi, debenham, arbuthnot,
 hubbard, ohlsson, schmidt, dragomiroff
 ```
 
@@ -93,7 +92,6 @@ Item IDs are level-wide unique (`_assertItemIdIsUnique` in `levelRoomPopulationL
 | Greta Ohlsson            | Greta        |
 | Hildegarde Schmidt       | Schmidt      |
 | Princess Dragomiroff     | Dragomiroff  |
-| Cyrus Hardman            | Hardman      |
 
 WP3 examples: `Ratchett's Passport`, `MacQueen's Passport`, `Helena's Passport`, `Mary's Handkerchief`, `Greta's Bible` (if WP3 wants a richer title than the WP2 "Small Bible"; either is fine — pick one and stick with it across the file).
 
@@ -108,8 +106,8 @@ Each compartment containing a character has a 4×4 grid placing the character at
 - WP3 examinables will follow §5 slug rules when adding passports, tickets, photographs, and luggage.
 - WP4–WP7 itinerary lines must use the **full title** form for each character (`Princess Dragomiroff says "..."`, not `Princess says "..."`).
 - If sprite assets are added (FU5), they must use the exact URL slugs in §4. Adding a sprite for `princessFace.png` won't be picked up — the `faceImage` URL says `dragomiroffFace.png`.
-- The auto-generated `identities` cloze (14 unknowns) is part of the level's win condition. WP8's authored solutions don't need to include character-identity blanks.
-- If the design owner replaces Cyrus Hardman with a different 12th conspirator, every later WP can swap one character without touching the engine — update `## Hardman`, the `Y=Hardman` legend tile in `## Compartment 9`, and any WP4+ itinerary references.
+- The auto-generated `identities` cloze (13 unknowns) is part of the level's win condition. WP8's authored solutions don't need to include character-identity blanks.
+- Compartment 8 is unassigned at level start. WP3 may treat it as ordinary empty space or stage examinable items there if §5 calls for it.
 
 ## Related
 

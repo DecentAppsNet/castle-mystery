@@ -119,6 +119,10 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCRRRRRRRRRR
 
 * exits=Corridor
 
+## Compartment 9
+
+* exits=Corridor
+
 ```
 ....
 .X..
@@ -127,19 +131,6 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCRRRRRRRRRR
 ```
 
 * X=Arbuthnot
-
-## Compartment 9
-
-* exits=Corridor
-
-```
-....
-.Y..
-....
-....
-```
-
-* Y=Hardman
 
 ## Compartment 10
 
@@ -307,13 +298,6 @@ PE........................
 * description=An aged Russian aristocrat in heavy black silks. She walks with a silver-topped cane and tolerates very few foolish questions.
 * items=Walking Cane|Russian Newspaper
 * faceImage=/sprites/dragomiroffFace.png
-* isTitleKnown=false
-
-## Hardman
-
-* title=Cyrus Hardman
-* description=A loud, sandy-haired American who introduces himself as a typewriter-ribbon salesman. The bulge under his jacket suggests another trade entirely.
-* faceImage=/sprites/hardmanFace.png
 * isTitleKnown=false
 
 # items
