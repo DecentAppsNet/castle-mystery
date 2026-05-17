@@ -18,6 +18,33 @@ function _findCellExit(levelLike:{ rooms:{ id:string, exits:{ room1Id:string, ro
   return exit!;
 }
 
+function _expectWalkThenExitStateChange(levelText:string, eventType:ItineraryEventType.LOCK|ItineraryEventType.UNLOCK,
+  beforeStatus:ExitStatus, afterStatus:ExitStatus, minimumWalkStartTime:number = 0) {
+  const level = loadLevelFromText(levelText);
+  const keeper = level.characters.find(character => character.id === 'keeper');
+  const lockChangeEvent = keeper?.itinerary.find(event => event.type === eventType) as { startTime:number } | undefined;
+  const preChangeWalkEvents = keeper?.itinerary.filter(event =>
+    event.type === ItineraryEventType.WALK
+    && event.startTime >= minimumWalkStartTime
+    && event.startTime < (lockChangeEvent?.startTime ?? Number.NEGATIVE_INFINITY)) as WalkEvent[] | undefined;
+  const lastWalkEvent = preChangeWalkEvents?.[preChangeWalkEvents.length - 1];
+  const beforeChangeState = createGameState({ ...level, startTime:lockChangeEvent!.startTime - 1 });
+  const atChangeState = createGameState({ ...level, startTime:lockChangeEvent!.startTime });
+  const cell = findRoom(level.rooms, 'Cell');
+  const cellExit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell');
+  const exitWaypoint = findExitWaypoint(cell.id, cell.rect, cellExit!, cell.waypoints);
+  const beforeChangeKeeper = findCharacter(beforeChangeState, 'Keeper');
+  const atChangeKeeper = findCharacter(atChangeState, 'Keeper');
+
+  expect(lockChangeEvent).toBeDefined();
+  expect(lastWalkEvent).toBeDefined();
+  expect(lastWalkEvent!.startTime + lastWalkEvent!.duration).toBe(lockChangeEvent!.startTime);
+  expect(_findCellExit(beforeChangeState).exitStatus).toBe(beforeStatus);
+  expect(_findCellExit(atChangeState).exitStatus).toBe(afterStatus);
+  expect({ x:beforeChangeKeeper.x, y:beforeChangeKeeper.y }).not.toEqual(exitWaypoint.position);
+  expect({ x:atChangeKeeper.x, y:atChangeKeeper.y }).toEqual(exitWaypoint.position);
+}
+
 describe('lock unlock integration', () => {
   beforeEach(() => {
     setSeed(1);
@@ -52,53 +79,10 @@ describe('lock unlock integration', () => {
   });
 
   it('walks to the exit waypoint before the lock event changes exit state', () => {
-    const level = loadLevelFromText(lockUnlockActivityText);
-    const keeper = level.characters.find(character => character.id === 'keeper');
-    const lockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.LOCK) as { startTime:number } | undefined;
-    const lockWalkEvents = keeper?.itinerary.filter(event =>
-      event.type === ItineraryEventType.WALK && event.startTime < (lockEvent?.startTime ?? Number.NEGATIVE_INFINITY)) as WalkEvent[] | undefined;
-    const lastWalkEvent = lockWalkEvents?.[lockWalkEvents.length - 1];
-    const beforeLockState = createGameState({ ...level, startTime:lockEvent!.startTime - 1 });
-    const atLockState = createGameState({ ...level, startTime:lockEvent!.startTime });
-    const cell = findRoom(level.rooms, 'Cell');
-    const cellExit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell');
-    const exitWaypoint = findExitWaypoint(cell.id, cell.rect, cellExit!, cell.waypoints);
-    const beforeLockKeeper = findCharacter(beforeLockState, 'Keeper');
-    const atLockKeeper = findCharacter(atLockState, 'Keeper');
-
-    expect(lockEvent).toBeDefined();
-    expect(lastWalkEvent).toBeDefined();
-    expect(lastWalkEvent!.startTime + lastWalkEvent!.duration).toBe(lockEvent!.startTime);
-    expect(_findCellExit(beforeLockState).exitStatus).toBe(ExitStatus.unlocked);
-    expect(_findCellExit(atLockState).exitStatus).toBe(ExitStatus.locked);
-    expect(beforeLockKeeper.x).not.toBe(exitWaypoint.position.x);
-    expect(beforeLockKeeper.y).not.toBe(exitWaypoint.position.y);
-    expect({ x:atLockKeeper.x, y:atLockKeeper.y }).toEqual(exitWaypoint.position);
+    _expectWalkThenExitStateChange(lockUnlockActivityText, ItineraryEventType.LOCK, ExitStatus.unlocked, ExitStatus.locked);
   });
 
   it('walks to the exit waypoint before the unlock event changes exit state', () => {
-    const level = loadLevelFromText(unlockAfterMoveText);
-    const keeper = level.characters.find(character => character.id === 'keeper');
-    const unlockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.UNLOCK) as { startTime:number } | undefined;
-    const unlockWalkEvents = keeper?.itinerary.filter(event =>
-      event.type === ItineraryEventType.WALK
-      && event.startTime >= 10_000
-      && event.startTime < (unlockEvent?.startTime ?? Number.NEGATIVE_INFINITY)) as WalkEvent[] | undefined;
-    const lastWalkEvent = unlockWalkEvents?.[unlockWalkEvents.length - 1];
-    const beforeUnlockState = createGameState({ ...level, startTime:unlockEvent!.startTime - 1 });
-    const atUnlockState = createGameState({ ...level, startTime:unlockEvent!.startTime });
-    const cell = findRoom(level.rooms, 'Cell');
-    const cellExit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell');
-    const exitWaypoint = findExitWaypoint(cell.id, cell.rect, cellExit!, cell.waypoints);
-    const beforeUnlockKeeper = findCharacter(beforeUnlockState, 'Keeper');
-    const atUnlockKeeper = findCharacter(atUnlockState, 'Keeper');
-
-    expect(unlockEvent).toBeDefined();
-    expect(lastWalkEvent).toBeDefined();
-    expect(lastWalkEvent!.startTime + lastWalkEvent!.duration).toBe(unlockEvent!.startTime);
-    expect(_findCellExit(beforeUnlockState).exitStatus).toBe(ExitStatus.locked);
-    expect(_findCellExit(atUnlockState).exitStatus).toBe(ExitStatus.unlocked);
-    expect({ x:beforeUnlockKeeper.x, y:beforeUnlockKeeper.y }).not.toEqual(exitWaypoint.position);
-    expect({ x:atUnlockKeeper.x, y:atUnlockKeeper.y }).toEqual(exitWaypoint.position);
+    _expectWalkThenExitStateChange(unlockAfterMoveText, ItineraryEventType.UNLOCK, ExitStatus.locked, ExitStatus.unlocked, 10_000);
   });
 });
