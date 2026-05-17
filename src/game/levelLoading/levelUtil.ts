@@ -36,7 +36,7 @@ function _createDefaultSolutionCategoryOptions(level:Level):Map<string, string[]
     ['rooms', level.rooms.map(room => room.title)],
     ['items', [
       ...level.rooms.flatMap(room => room.items),
-      ...level.initialCharacters.flatMap(character => character.items)
+      ...level.characters.flatMap(character => character.items)
     ].map(item => item.title)],
     ['characters', level.characters.map(character => character.title)]
   ]);

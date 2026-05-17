@@ -16,7 +16,7 @@ import { assertNormalizedId, createNormalizedEntryMap, normalizeId } from "../id
 type CharacterDefinition = {
 	title:string,
 	description:string,
-	itemIds:string[],
+	inventoryItems:Array<{ id:string, title:string }>,
 	faceImageUrl:string|null,
 	isTitleKnown:boolean
 };
@@ -46,10 +46,14 @@ export function parseCharacterDefinitions(charactersSection:string):Map<string, 
 		const authoredCharacterName = characterSectionEntry.authoredName;
 		const characterSection = characterSectionEntry.value;
 		const nameValues = parseUniqueNameValueLines(characterSection, `character ${characterId}`);
+		const inventoryItems = parseOptions(nameValues.items || "").map(itemText => ({
+			id:normalizeId(itemText),
+			title:itemText.trim()
+		}));
 		characterDefinitions.set(characterId, {
 			title:nameValues.title || authoredCharacterName.trim(),
 			description:nameValues.description || "",
-			itemIds:parseOptions(nameValues.items || "").map(normalizeId),
+			inventoryItems,
 			faceImageUrl:nameValues.faceImage?.trim() || null,
 			isTitleKnown:(nameValues.isTitleKnown || '').toLowerCase() === 'true'
 		});
@@ -76,6 +80,7 @@ export function parseItemDefinitions(itemsSection:string):Map<string, ItemDefini
 export function createKnownPopulationEntryIds(definitions:RoomPopulationDefinitions):Set<string> {
 	return new Set([
 		...definitions.characterDefinitions.keys(),
+		...Array.from(definitions.characterDefinitions.values()).flatMap(characterDefinition => characterDefinition.inventoryItems.map(item => item.id)),
 		...definitions.itemDefinitions.keys()
 	]);
 }
@@ -188,9 +193,9 @@ function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<st
 	level.characters.forEach(character => {
 		const characterDefinition = characterDefinitions.get(character.id);
 		if (!characterDefinition) return;
-		_addItemsToCharacter(level, character.id, characterDefinition.itemIds.map(itemId => {
-			_assertItemIdIsUnique(level, itemId, `in character ${character.id} inventory`);
-			return _createItemFromDefinition(itemId, itemDefinitions.get(itemId)?.title || itemId, itemDefinitions, { x:0, y:0 }, true);
+		_addItemsToCharacter(level, character.id, characterDefinition.inventoryItems.map(item => {
+			_assertItemIdIsUnique(level, item.id, `in character ${character.id} inventory`);
+			return _createItemFromDefinition(item.id, item.title, itemDefinitions, { x:0, y:0 }, true);
 		}));
 	});
 }

@@ -31,7 +31,10 @@ import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-soluti
 import duplicateSolutionPropertyText from './fixtures/duplicate-solution-property.md?raw';
 import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-subsections-case.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
+import inventoryItemDefaultCategoryText from './fixtures/inventory-item-default-category.md?raw';
+import inventoryItemTitleCasingText from './fixtures/inventory-item-title-casing.md?raw';
 import lowercaseTitleDefaultsText from './fixtures/lowercase-title-defaults.md?raw';
+import mapLegendRoomTitleDefaultText from './fixtures/map-legend-room-title-default.md?raw';
 import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
 import overrideGeneratedCategoryGroupCaseText from './fixtures/override-generated-category-group-case.md?raw';
 import overrideRoomsText from './fixtures/override-rooms.md?raw';
@@ -160,6 +163,16 @@ describe('levelUtil itinerary loading', () => {
     expect(solution.unlockForSolutionId).toBe(null);
   });
 
+  it('includes character inventory item titles in default solution item categories', () => {
+    const level = loadLevelFromText(inventoryItemDefaultCategoryText);
+    const solution = level.solutions.find(candidate => candidate.id === 'missing item') || null;
+    if (!solution) expect.fail('expected Missing Item solution to exist');
+    const firstBlank = solution.parts[0] as ClozeBlank;
+
+    expect(firstBlank.availableAnswers).toEqual(['Crown', 'Book']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([1]);
+  });
+
   it('matches solution category phrases case-insensitively', () => {
     const level = loadLevelFromText(solutionsCaseInsensitiveCategoriesText, 'case-insensitive-categories.md', { validateUnlockPhrases:true });
     const solution = level.solutions[0];
@@ -222,6 +235,21 @@ describe('levelUtil itinerary loading', () => {
     expect(character?.title).toBe('Lady MacBeth');
     expect(item?.title).toBe('royal decree');
     expect(solution?.title).toBe('The MacDonald Mystery');
+  });
+
+  it('preserves authored casing for inventory item title defaults without item definitions', () => {
+    const level = loadLevelFromText(inventoryItemTitleCasingText);
+    const hero = level.characters.find(candidate => candidate.id === 'hero') || null;
+
+    expect(hero).not.toBeNull();
+    expect(hero?.items.map(item => item.title)).toEqual(['Royal Decree']);
+  });
+
+  it('defaults room titles from map legend text when there is no room subsection metadata', () => {
+    const level = loadLevelFromText(mapLegendRoomTitleDefaultText);
+    const room = findRoom(level.rooms, 'MacDonald Hall');
+
+    expect(room.title).toBe('MacDonald Hall');
   });
 
   it('loads winSynopsis from the general section and defaults it when omitted', () => {
