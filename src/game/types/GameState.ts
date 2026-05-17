@@ -24,6 +24,7 @@ type GameState = {
   isPlaying:boolean,
   realTimeToGameTimeOffset:number,
   time:number,
+  readonly startTime:number,
   readonly duration:number,
   labels:TimeLabel[],
   scalingFactors: ScalingFactors,

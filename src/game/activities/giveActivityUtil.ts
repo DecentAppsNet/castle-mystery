@@ -9,9 +9,9 @@ import {
   calcActivityStartTime,
   createWaypointKey,
   ensureTimestampIsAvailable,
+  findEarliestAbsoluteActivityStartTime,
   findCurrentRoom,
   findTargetPositionAtTime,
-  scheduleEventsToEndAtTime,
   scheduleEventsToStartAtTime,
   planMovementWithinRoom,
   findWaypointPath,
@@ -76,9 +76,8 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
     findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
   })();
-  const scheduledWalkEvents = context.timestampKind === 'absolute'
-    ? scheduleEventsToEndAtTime(unscheduledMovementEvents, context.timestamp, context.state.time)
-    : scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime, context.state.time);
+  const scheduledWalkEvents = scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime,
+    context.timestampKind === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
   const giveEventTime = scheduledWalkEvents.length
     ? (() => {
       const lastWalkEvent = scheduledWalkEvents[scheduledWalkEvents.length - 1] as WalkEvent;

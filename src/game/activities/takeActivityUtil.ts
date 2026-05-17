@@ -3,7 +3,7 @@ import { assertNonNullable } from "decent-portal";
 import { createTakeItemEvent } from "../itineraryUtil";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
-import { ActivityContext, calcActivityStartTime, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
+import { ActivityContext, calcActivityStartTime, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 import { findNearestWaypoint } from "../roomUtil";
 
 const TAKE_ITEM_NEARBY_DISTANCE = 8;
@@ -41,9 +41,8 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
     findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
   })();
-  const scheduledWalkEvents = context.timestampKind === 'absolute'
-    ? scheduleEventsToEndAtTime(unscheduledMovementEvents, context.timestamp, context.state.time)
-    : scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime, context.state.time);
+  const scheduledWalkEvents = scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime,
+    context.timestampKind === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
   const takeEventTime = scheduledWalkEvents.length
     ? (() => {
       const lastWalkEvent = scheduledWalkEvents[scheduledWalkEvents.length - 1] as WalkEvent;

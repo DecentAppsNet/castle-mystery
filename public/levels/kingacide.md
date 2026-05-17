@@ -188,10 +188,10 @@ G....
 King arrived in the library at 0:00:34.
 
 0:00:35 King says "Hello, my beloved."
-0:00:36 Queen says "Oh. Hi."
+0:00:36 Queen interrupts "Oh. Hi."
 0:00:37 King says "Have you seen my favorite book?"
-0:00:39 Queen says "No. Probably, you left it in the Throne Room."
-0:00:41 King says "I searched there already."
+0:00:39 Queen interrupts "No. Probably, you left it in the Throne Room."
+0:00:41 King interrupts "I searched there already."
 
 0:00:44 Queen @ East Hall
 : Queen drops Book
