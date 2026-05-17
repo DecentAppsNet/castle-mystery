@@ -3,6 +3,7 @@
 import { assertNonNullable } from "decent-portal";
 
 import { LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/common/timestampUtil";
+import { MSECS_IN_DAY } from "@/common/timeUtil";
 import { tryCreateAtActivity } from "../activities/atActivityUtil";
 import { tryCreateDropActivity } from "../activities/dropActivityUtil";
 import { tryCreateGiveActivity } from "../activities/giveActivityUtil.ts";
@@ -38,6 +39,16 @@ type ParsedItineraryActivity = {
   lineNo:number,
   characterId:string,
   activityText:string
+};
+
+export type LoadItinerariesOptions = {
+  isCrossMidnight:boolean,
+  explicitEndTime:number|null
+};
+
+const DEFAULT_LOAD_ITINERARIES_OPTIONS:LoadItinerariesOptions = {
+  isCrossMidnight: false,
+  explicitEndTime: null
 };
 
 const _ASCII_PUNCTUATION = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
@@ -163,7 +174,14 @@ function _parseCharacterActivityLine(activityLine:string):{ characterId:string, 
   return { characterId:normalizeId(characterText), activityText };
 }
 
-function _parseItineraryActivities(itinerarySection:string, levelFilename:string, firstLineNo:number):ParsedItineraryActivity[] {
+function _resolveAbsoluteTimestamp(rawMsecs:number|null, options:LoadItinerariesOptions, startTime:number):number|null {
+  if (rawMsecs === null) return null;
+  if (options.isCrossMidnight && rawMsecs < startTime) return rawMsecs + MSECS_IN_DAY;
+  return rawMsecs;
+}
+
+function _parseItineraryActivities(itinerarySection:string, levelFilename:string, firstLineNo:number,
+  options:LoadItinerariesOptions, startTime:number):ParsedItineraryActivity[] {
   return itinerarySection.split('\n').map((line, index) => ({ line, lineNo:firstLineNo + index }))
     .flatMap(({ line, lineNo }) => {
       return _runWithItineraryLineContext(levelFilename, lineNo, () => {
@@ -172,10 +190,13 @@ function _parseItineraryActivities(itinerarySection:string, levelFilename:string
         const activityLine = timestamp.remainingText.trim();
         if (!activityLine.length) throw new Error('missing itinerary activity');
         const { characterId, activityText } = _parseCharacterActivityLine(activityLine);
+        const resolvedTimestamp = timestamp.kind === 'absolute'
+          ? _resolveAbsoluteTimestamp(timestamp.time, options, startTime)
+          : timestamp.time;
         return [{
           sourceIndex:-1,
-          time:timestamp.time,
-          resolvedTime:timestamp.time ?? 0,
+          time:resolvedTimestamp,
+          resolvedTime:resolvedTimestamp ?? 0,
           isTimeResolved:timestamp.kind === 'absolute',
           timestampKind:timestamp.kind,
           lineNo,
@@ -375,8 +396,23 @@ function _scheduleActivities(level:Level, activities:ParsedItineraryActivity[], 
   };
 }
 
-export function loadItineraries(level:Level, itinerarySection:string, levelFilename:string, firstLineNo:number):{ characters:Character[], duration:number } {
-  const activities = _parseItineraryActivities(itinerarySection, levelFilename, firstLineNo);
+function _validateActivitiesWithinWindow(activities:ParsedItineraryActivity[], startTime:number, endTime:number,
+  levelFilename:string) {
+  activities.forEach(activity => {
+    if (activity.timestampKind !== 'absolute' || activity.time === null) return;
+    if (activity.time < startTime || activity.time > endTime) {
+      _throwErrorWithLoadLevelContext(levelFilename, activity.lineNo,
+        new Error(`itinerary timestamp ${activity.time}ms is outside the timeline window [${startTime}ms, ${endTime}ms]`));
+    }
+  });
+}
+
+export function loadItineraries(level:Level, itinerarySection:string, levelFilename:string, firstLineNo:number,
+  options:LoadItinerariesOptions = DEFAULT_LOAD_ITINERARIES_OPTIONS):{ characters:Character[], duration:number } {
+  const activities = _parseItineraryActivities(itinerarySection, levelFilename, firstLineNo, options, level.startTime);
+  if (options.explicitEndTime !== null) {
+    _validateActivitiesWithinWindow(activities, level.startTime, options.explicitEndTime, levelFilename);
+  }
   if (!activities.length) {
     return {
       characters: level.characters,
