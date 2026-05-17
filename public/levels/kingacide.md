@@ -25,7 +25,7 @@ WFL
 
 ## Sanctum
 
-* exits=West Hall
+* exits=West Hall (lockable)
 
 ## West Hall
 
@@ -72,7 +72,7 @@ WFL
 .......
 ```
 
-* exits=Foyer|East Hall
+* exits=Foyer (closed)|East Hall (closed)
 * K=King
 * J=Jester
 
@@ -195,15 +195,15 @@ King arrived in the library at 0:00:34.
 
 0:00:44 Queen @ East Hall
 : Queen drops Book
-0:00:45 Queen says "I think you need this more than I."
-0:00:46 Queen @ Throne Room
+0:00:45 Jester says "Thank you, your highness."
+0:00:47 Queen @ Throne Room
 0:00:48 Jester takes Book
 0:00:49 Jester @ Throne Room
 : Jester wanders
 0:00:52 Queen @ Sanctum
 : Queen says "I imagine he will destroy it. That is not my concern."
 
-0:00:46 King @ Foyer
+0:00:48 King @ Foyer
 0:00:50 King @ Throne Room
 : King says "Jester!"
 : Jester says "Yes, Sire!"

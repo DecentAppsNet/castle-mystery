@@ -6,11 +6,11 @@
 2. Start the dev server with `npm run dev`.
 3. Run tests with `npm test`.
 
-## Tests
+# Testing
 
 This project uses two test categories.
 
-### Unit tests
+## Unit Tests
 
 Unit tests verify the contract of a module. They may mock dependency modules when useful, but should usually exercise real code paths.
 
@@ -25,7 +25,7 @@ Guidelines:
 * Keep each test focused on one behavior.
 * Order tests from simpler and more fundamental behavior to more complex behavior.
 
-### Integration tests
+## Integration Tests
 
 Integration tests verify a collection of behaviors around a feature. They should use multiple modules together and should not focus on the behavior of just one module.
 
@@ -36,11 +36,11 @@ Guidelines:
 * Use `describe()` blocks to group by testing concept, such as `wandering integration`.
 * Arbitrary nested grouping beneath that is fine when it improves readability.
 
-### Determinism
+## Determinism
 
 * For tests that depend on random number generation, use `setSeed()` so results are repeatable.
 
-### Test Safety
+## Test Safety
 
 * Do not add filesystem access to tests. Tests should not read or write files directly.
 * Do not add shell commands or subprocess execution to tests.
@@ -49,6 +49,33 @@ Guidelines:
 * If a test needs authored fixture content, import the fixture as text instead of loading it from the filesystem at runtime.
 * Do not use multi-line assignments to a single test value. Put substantial authored test data in fixtures and import it instead.
 * If code under test would otherwise perform filesystem, shell, subprocess, or network I/O, mock that boundary rather than performing the real operation.
+
+## Code Coverage
+
+* Coverage should be improved with contract-based tests rather than tests written around implementation branches.
+* If uncovered code has no good contract-based path in expected use, treat that as a design smell and consider simplifying or refactoring the code.
+* If uncovered code only guards an expected condition that should always be true in normal use, prefer replacing it with an assertion.
+* Remove code that is not needed for expected use.
+
+### Low-Test-Value Modules
+
+Low-test-value modules are modules matching one or more of these criteria:
+
+* The testable contract is visual in nature, such as UI elements or canvas drawing.
+* The module is primarily glue code that integrates calls to other modules that are more properly testable elsewhere.
+* All files within `interactions` folders are considered low-test-value glue code.
+
+Guidelines:
+
+* Low-test-value modules should be ignored from code coverage.
+* In this project, low-test-value modules commonly include `.tsx` files and modules whose main purpose is drawing or rendering.
+* Low-test-value files may be excluded from coverage either with an in-source coverage ignore comment or with project-level coverage configuration. Prefer project configuration when excluding a broad category such as all `.tsx` files.
+* For file-level exclusion with Vitest's V8 coverage, place a comment such as `/* v8 ignore file -- @preserve */` at the top of the file.
+* For smaller in-file exclusions with Vitest's V8 coverage, use comments such as `/* v8 ignore next -- @preserve */` or a `/* v8 ignore start -- @preserve */` / `/* v8 ignore stop -- @preserve */` pair.
+* When using an in-source coverage ignore comment, add a short explanation of why the code is being excluded.
+* If a module contains a mix of low-test-value code and other code, split it into separate modules when practical so the low-test-value module can be ignored from coverage.
+* If splitting a mixed module is impractical, put the low-test-value code into a designated coverage-ignore section within the module.
+* If logic can be refactored out of a low-test-value file into a testable module without making the original file harder to understand, do that. The low-test-value file can then remain excluded from coverage, while the extracted logic should still be covered by tests.
 
 # Fetching at Run-Time
 
@@ -89,16 +116,3 @@ Guidelines:
 * All regex functions need unit tests.
 * Prefer general-purpose regex helper functions where possible and put them in `src/common/regExUtil.ts`.
 * When use-case-specific logic is needed, prefer a non-regex function in the feature module that composes shared regex helpers from `src/common/regExUtil.ts`.
-
-## Achieving Code Coverage
-
-* Coverage should be improved with contract-based tests rather than tests written around implementation branches.
-* If uncovered code has no good contract-based path in expected use, treat that as a design smell and consider simplifying or refactoring the code.
-* If uncovered code only guards an expected condition that should always be true in normal use, prefer replacing it with an assertion.
-* Remove code that is not needed for expected use.
-* Some code is low value for inclusion in unit and integration tests. In this project, that generally includes `.tsx` files and modules whose main purpose is drawing or rendering.
-* Low-value files may be excluded from coverage either with an in-source coverage ignore comment or with project-level coverage configuration. Prefer project configuration when excluding a broad category such as all `.tsx` files.
-* For file-level exclusion with Vitest's V8 coverage, place a comment such as `/* v8 ignore file -- @preserve */` at the top of the file.
-* For smaller in-file exclusions with Vitest's V8 coverage, use comments such as `/* v8 ignore next -- @preserve */` or a `/* v8 ignore start -- @preserve */` / `/* v8 ignore stop -- @preserve */` pair.
-* When using an in-source coverage ignore comment, add a short explanation of why the code is being excluded.
-* If logic can be refactored out of a low-value file into a testable module without making the original file harder to understand, do that. The low-value file can then remain excluded from coverage, while the extracted logic should still be covered by tests.

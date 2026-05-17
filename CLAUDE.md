@@ -48,6 +48,13 @@ The middle layer (`markdownUtil`) is a generic "Markdown-as-config" convention (
 - `solutionsView/` — cloze-style solution UI; `src/game/solutions/` owns solution data + discovery.
 - `interactions/` — `initialization.ts` boots a level, `gameplay.ts` exposes update callbacks (`updateTime`, `updatePlayPause`, `updateSolutions`, …). The `interactions/` folder is coverage-excluded by design — keep logic worth testing in `src/game/*Util.ts` modules instead.
 
+### Exits and doors
+
+Room exits carry status (`open` / `closed` / `locked`) and are first-class to both rendering and gameplay:
+- [src/game/exitUtil.ts](src/game/exitUtil.ts) holds exit state queries; [src/game/exitImageUtil.ts](src/game/exitImageUtil.ts) names built-in door sprites that are seeded into the `ImageSet` automatically (see [src/game/imageSetUtil.ts](src/game/imageSetUtil.ts) — every level loads `BUILT_IN_EXIT_IMAGE_URLS` whether the level author references them or not).
+- [src/game/drawing/exitDrawUtil.ts](src/game/drawing/exitDrawUtil.ts) renders doors; [src/game/drawing/popoverDrawUtil.ts](src/game/drawing/popoverDrawUtil.ts) renders the hover tooltips that explain door state.
+- Exit state affects **audibility**: speech that happens behind a closed door isn't audible in the adjacent room; an open door lets it through. Authored door modifiers in the rooms section (`* exits=Foyer|lockable closed`) flow into this behaviour at runtime.
+
 ### Project-specific code rules (from CONTRIBUTING.md)
 
 These are enforced in review — follow them in new code:

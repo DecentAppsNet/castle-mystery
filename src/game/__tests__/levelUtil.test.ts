@@ -43,6 +43,7 @@ import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw
 import overrideGeneratedCategoryGroupCaseText from './fixtures/override-generated-category-group-case.md?raw';
 import overrideRoomsText from './fixtures/override-rooms.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
+import shortDurationLabelsText from './fixtures/short-duration-labels.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
 import winSynopsisText from './fixtures/win-synopsis.md?raw';
@@ -390,6 +391,13 @@ describe('levelUtil itinerary loading', () => {
   it('sets level duration from the longest character itinerary', () => {
     const level = loadLevelFromText(kingacideItineraryText);
     expect(level.duration).toEqual(41_000);
+  });
+
+  it('keeps both start and end time labels for short levels', () => {
+    const level = loadLevelFromText(shortDurationLabelsText);
+
+    expect(level.labels).toHaveLength(2);
+    expect(level.labels.map(label => label.minutes)).toEqual([0, level.duration / 60_000]);
   });
 
   it('wraps itinerary line errors with filename and line number', () => {

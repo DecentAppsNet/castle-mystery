@@ -1,14 +1,14 @@
 /* This module groups item-focused drawing helpers, including item labels, hover hit-testing, and item popovers. */
 
-import { clamp } from "@/common/numberUtil";
 import Rect from "../types/Rect";
 import { gameToCanvasPosition } from "./drawUtil";
-import { COLOR_BLACK, COLOR_ITEM_TEXT, COLOR_POPOVER_FILL } from "./drawConstants";
+import { COLOR_ITEM_TEXT } from "./drawConstants";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "../effects/types/Effect";
 import EffectType from "../effects/types/EffectType";
+import { drawTextPopover } from "./popoverDrawUtil";
 
 const ITEM_GLYPH_FONT_RATIO = 0.75;
 const ITEM_LABEL_FONT_RATIO = 0.55;
@@ -61,24 +61,6 @@ function _getItemHoverRect(item:Item, scalingFactors:ScalingFactors):Rect {
     width: hoverWidthPixels / scalingFactors.scaleX,
     height: (bottomPixels - topPixels) / scalingFactors.scaleY
   };
-}
-
-function _wrapText(context:CanvasRenderingContext2D, text:string, maxWidth:number):string[] {
-  const words = text.split(/\s+/).filter(Boolean);
-  if (words.length === 0) return [""];
-  const lines:string[] = [];
-  let currentLine = words[0];
-  for (let i = 1; i < words.length; ++i) {
-    const nextLine = `${currentLine} ${words[i]}`;
-    if (context.measureText(nextLine).width <= maxWidth) {
-      currentLine = nextLine;
-    } else {
-      lines.push(currentLine);
-      currentLine = words[i];
-    }
-  }
-  lines.push(currentLine);
-  return lines;
 }
 
 export function discoverVisibleItemsInRoom(room:Room) {
@@ -140,44 +122,5 @@ export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scal
 
 export function drawItemPopover(item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [anchorX, anchorY] = gameToCanvasPosition(item.position.x, item.position.y, scalingFactors);
-  const canvasLeft = 0;
-  const canvasTop = 0;
-  const canvasRight = context.canvas.width;
-  const canvasBottom = context.canvas.height;
-  const titleFontSize = Math.max(20, Math.round(scalingFactors.roomFontHeight * 1.4));
-  const descriptionFontSize = Math.max(16, Math.round(scalingFactors.roomFontHeight * 1.0));
-  const padding = Math.max(6, scalingFactors.roomLineWidth * 2);
-  const lineGap = Math.max(3, scalingFactors.roomLineWidth);
-  const maxTextWidth = Math.min(280, Math.max(140, canvasRight * 0.3));
-  context.save();
-  context.textAlign = "left";
-  context.textBaseline = "top";
-  context.font = `${descriptionFontSize}px Jellee`;
-  const descriptionLines = _wrapText(context, item.description, maxTextWidth);
-  const descriptionWidth = descriptionLines.reduce((maxWidth, line) => Math.max(maxWidth, context.measureText(line).width), 0);
-  context.font = `${titleFontSize}px Jellee`;
-  const titleWidth = context.measureText(item.title).width;
-  const boxWidth = Math.max(titleWidth, descriptionWidth) + padding * 2;
-  const titleHeight = titleFontSize;
-  const descriptionHeight = descriptionLines.length * descriptionFontSize + Math.max(0, descriptionLines.length - 1) * lineGap;
-  const boxHeight = padding * 2 + titleHeight + lineGap + descriptionHeight;
-  const desiredLeft = anchorX + scalingFactors.roomLineWidth * 2;
-  const desiredTop = anchorY - boxHeight - scalingFactors.roomLineWidth * 2;
-  const left = clamp(desiredLeft, canvasLeft, canvasRight - boxWidth);
-  const top = clamp(desiredTop, canvasTop, canvasBottom - boxHeight);
-  context.fillStyle = COLOR_POPOVER_FILL;
-  context.strokeStyle = COLOR_BLACK;
-  context.lineWidth = Math.max(1, scalingFactors.roomLineWidth);
-  context.fillRect(left, top, boxWidth, boxHeight);
-  context.strokeRect(left, top, boxWidth, boxHeight);
-  context.fillStyle = COLOR_BLACK;
-  context.font = `${titleFontSize}px Jellee`;
-  context.fillText(item.title, left + padding, top + padding);
-  context.font = `${descriptionFontSize}px Jellee`;
-  let lineTop = top + padding + titleHeight + lineGap;
-  descriptionLines.forEach(line => {
-    context.fillText(line, left + padding, lineTop);
-    lineTop += descriptionFontSize + lineGap;
-  });
-  context.restore();
+  drawTextPopover({ anchorX, anchorY, title:item.title, bodyTexts:[item.description], scalingFactors, context });
 }

@@ -3,7 +3,7 @@
 import { assertNonNullable, botch } from "decent-portal";
 import Character, { duplicateCharacter } from "./types/Character";
 import GameState from "./types/GameState";
-import { duplicateRoom } from "./types/Room";
+import Room, { duplicateRoom } from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
 import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
@@ -35,6 +35,7 @@ import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hove
 import { syncSolutionUnlocks, updateGameStateForChangeSolutions } from "./solutionStateUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { normalizeId } from "./idUtil";
+import ExitStatus from "./types/ExitStatus";
 
 export function findCharacter(gameState:GameState, characterRef:string):Character {
   const characterId = normalizeId(characterRef);
@@ -50,6 +51,14 @@ function _setActiveRoomDiscovered(gameState:GameState) {
     const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
     if (activeRoom) activeRoom.isDiscovered = true;
   }
+}
+
+function _isActiveAudibleRoom(room:Room, activeRoom:Room):boolean {
+  if (room.id === activeRoom.id) return true;
+  if (!room.isDiscovered || room.isObscured) return false;
+  return room.exits.some(exit =>
+    exit.exitStatus === ExitStatus.open
+    && (exit.room1Id === activeRoom.id || exit.room2Id === activeRoom.id));
 }
 
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent) {
@@ -134,7 +143,11 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   if (!activeRoom || (activeRoom.isObscured && !gameState.isLevelComplete)) return;
 
-  findCharactersInRoom(activeRoom, gameState.characters).forEach(character => {
+  const audibleRooms = gameState.isLevelComplete
+    ? [activeRoom]
+    : gameState.rooms.filter(room => _isActiveAudibleRoom(room, activeRoom));
+
+  audibleRooms.flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
     const speech = findCharacterPose(character, gameState.time).speech;
     if (!speech) return;
     gameState.activeEffects.push(createSpeechBubbleEffect(character, speech, gameState.scalingFactors, gameState.time));
@@ -190,6 +203,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     activeEffects:[],
     hoveredItemId:null,
     hoveredCharacterId:null,
+    hoveredExitKey:null,
     viewedItemIds:new Set<string>(),
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isLevelComplete:false,

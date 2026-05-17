@@ -1,12 +1,16 @@
-/* This module groups pointer-hit testing and hover-driven state updates for characters and item popovers. */
+/* This module groups pointer-hit testing and hover-driven state updates for characters, items, and exit popovers. */
 
+import { getExitHoverRect } from "./drawing/exitDrawUtil";
 import { findDiscoveredItemAtPosition } from "./drawing/itemDrawUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
+import { createExitKey } from "./exitUtil";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
 import Rect from "./types/Rect";
+import Room from "./types/Room";
+import RoomExit from "./types/RoomExit";
 import ScalingFactors from "./types/ScalingFactors";
 import { findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
 
@@ -25,6 +29,16 @@ function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFa
 function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }) {
   gameState.viewedItemIds.add(item.id);
   gameState.viewedItemIds.add(item.title);
+}
+
+function _findExitAtPosition(room:Room, x:number, y:number, gameState:GameState):RoomExit|null {
+  for (let i = room.exits.length - 1; i >= 0; --i) {
+    const exit = room.exits[i];
+    const rect = getExitHoverRect(exit, gameState.scalingFactors, gameState.imageSet);
+    const isInside = x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
+    if (isInside) return exit;
+  }
+  return null;
 }
 
 export function findCharacterAtPosition(gameState:GameState, x:number, y:number):Character|null {
@@ -88,6 +102,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     if (!hoveredRoom?.isDiscovered) {
       gameState.hoveredItemId = null;
       gameState.hoveredCharacterId = null;
+      gameState.hoveredExitKey = null;
       return;
     }
     const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, event.x, event.y, gameState.scalingFactors,
@@ -99,6 +114,8 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     gameState.hoveredItemId = hoveredItem?.id ?? null;
     if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
     gameState.hoveredCharacterId = hoveredItem ? null : findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
+    const hoveredExit = !hoveredItem && !gameState.hoveredCharacterId ? _findExitAtPosition(hoveredRoom, event.x, event.y, gameState) : null;
+    gameState.hoveredExitKey = hoveredExit ? createExitKey(hoveredExit) : null;
     return;
   }
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
@@ -106,6 +123,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
   if (!activeCharacter || !activeRoom) {
     gameState.hoveredItemId = null;
     gameState.hoveredCharacterId = null;
+    gameState.hoveredExitKey = null;
     return;
   }
   const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors,
@@ -117,4 +135,6 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
   gameState.hoveredItemId = hoveredItem?.id ?? null;
   if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
   gameState.hoveredCharacterId = hoveredItem ? null : findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
+  const hoveredExit = !hoveredItem && !gameState.hoveredCharacterId ? _findExitAtPosition(activeRoom, event.x, event.y, gameState) : null;
+  gameState.hoveredExitKey = hoveredExit ? createExitKey(hoveredExit) : null;
 }

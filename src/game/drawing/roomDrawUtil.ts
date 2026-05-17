@@ -2,9 +2,11 @@
 
 import { drawObscuredActiveCharacter, drawVisibleCharactersInRoom } from "./characterDrawUtil";
 import { createObstructionBoundarySegments } from "../obstructionUtil";
+import { findExitImageUrl, UNKNOWN_DOOR_IMAGE_URL } from "../exitImageUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
+import { getExitCanvasRectForImageUrl } from "./exitDrawUtil";
 import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
 import Character from "../types/Character";
 import Obstruction from "../types/Obstruction";
@@ -13,16 +15,42 @@ import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "../effects/types/Effect";
 import ImageSet from "../types/ImageSet";
+import ExitType from "../types/ExitType";
 
-function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const { roomLineWidth } = scalingFactors;
-  const [exitX, exitY] = gameToCanvasPosition(exit.x, exit.y, scalingFactors);
-  const left = exitX - roomLineWidth;
-  const top = exitY - roomLineWidth;
-  const width = roomLineWidth * 3;
-  const height = roomLineWidth * 3;
+const OPEN_DOOR_NEARNESS = 2;
+
+function _isCharacterNearExit(character:Character, exit:RoomExit):boolean {
+  const dx = character.x - exit.x;
+  const dy = character.y - exit.y;
+  return dx * dx + dy * dy <= OPEN_DOOR_NEARNESS * OPEN_DOOR_NEARNESS;
+}
+
+function _findDisplayedExitType(exit:RoomExit, characters:Character[], isActive:boolean, showFullContents:boolean):ExitType {
+  if (exit.exitType === ExitType.doorway) return exit.exitType;
+  if (!showFullContents && !isActive) return exit.exitType;
+  return characters.some(character => _isCharacterNearExit(character, exit)) ? ExitType.doorway : exit.exitType;
+}
+
+function _isExitAdjacentToActiveRoom(exit:RoomExit, activeRoom:Room|null):boolean {
+  return !!activeRoom && (exit.room1Id === activeRoom.id || exit.room2Id === activeRoom.id);
+}
+
+function _findDisplayedExitImageUrl(exit:RoomExit, characters:Character[], activeRoom:Room|null, showFullContents:boolean):string {
+  if (!showFullContents && !_isExitAdjacentToActiveRoom(exit, activeRoom)) return UNKNOWN_DOOR_IMAGE_URL;
+  return findExitImageUrl(_findDisplayedExitType(exit, characters, true, showFullContents));
+}
+
+function drawRoomExit(exit:RoomExit, characters:Character[], activeRoom:Room|null, showFullContents:boolean,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
+  const displayedExitImageUrl = _findDisplayedExitImageUrl(exit, characters, activeRoom, showFullContents);
+  const exitImage = imageSet.get(displayedExitImageUrl) || null;
+  const { x:left, y:top, width, height } = getExitCanvasRectForImageUrl(exit, displayedExitImageUrl, scalingFactors, imageSet);
+  if (exitImage) {
+    context.drawImage(exitImage, left, top, width, height);
+    return;
+  }
   context.fillStyle = COLOR_BLACK;
-  context.lineWidth = roomLineWidth;
+  context.lineWidth = scalingFactors.roomLineWidth;
   context.fillRect(left, top, width, height);
 }
 
@@ -68,7 +96,8 @@ function drawObstruction(obstruction:Obstruction, scalingFactors:ScalingFactors,
 }
 
 export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
-  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, showFullContents:boolean = false) {
+  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet,
+  allCharacters:Character[] = charactersInRoom, activeRoom:Room|null = null, showFullContents:boolean = false) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
@@ -95,11 +124,12 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.fillStyle = COLOR_ROOM_TITLE_TEXT;
   context.fillText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
   if (isRoomObscured) {
+    room.exits.forEach(exit => drawRoomExit(exit, allCharacters, activeRoom, showFullContents, scalingFactors, context, imageSet));
     if (isActive && activeCharacter) drawObscuredActiveCharacter(room, scalingFactors, context);
     return;
   }
   context.fillStyle = COLOR_BLACK;
-  room.exits.forEach(exit => drawRoomExit(exit, scalingFactors, context));
+  room.exits.forEach(exit => drawRoomExit(exit, allCharacters, activeRoom, showFullContents, scalingFactors, context, imageSet));
   if (showFullContents || (isActive && activeCharacter)) {
     const highlightedCharacter = activeCharacter || charactersInRoom[0] || null;
     if (highlightedCharacter) drawVisibleCharactersInRoom(charactersInRoom, highlightedCharacter, effects, scalingFactors, context, time, imageSet);
