@@ -30,6 +30,17 @@ type MarkerTile = {
   col:number
 };
 
+function _isIgnoredGridTileChar(tileChar:string):boolean {
+  return tileChar === '.' || tileChar === '#' || tileChar === ' ' || tileChar === '\t';
+}
+
+function _findLegendEntryTextOrThrow(tileChar:string, legend:Record<string, string>, row:number, col:number, contextLabel:string):string|null {
+  if (_isIgnoredGridTileChar(tileChar)) return null;
+  const entryText = legend[tileChar];
+  if (entryText) return entryText;
+  throw new Error(`unknown ${contextLabel} legend tile '${tileChar}' at row ${row + 1}, col ${col + 1}`);
+}
+
 function _findObstructionTilesInGrid(gridLines:string[]):ObstructionTile[][] {
   if (!gridLines.length) return [];
   const rowCount = gridLines.length;
@@ -119,8 +130,7 @@ export function findLegendTilesInGrid(gridLines:string[], legend:Record<string, 
   const legendTiles:LegendTile[] = [];
   gridLines.forEach((line, row) => {
     Array.from(line).forEach((tileChar, col) => {
-      if (tileChar === '.' || tileChar === '#') return;
-      const entryId = legend[tileChar];
+      const entryId = _findLegendEntryTextOrThrow(tileChar, legend, row, col, 'room');
       if (!entryId) return;
       legendTiles.push({ entryId, row, col });
     });
@@ -170,7 +180,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, roomsS
 
   mapLines.forEach((line, row) => {
     Array.from(line).forEach((tileChar, col) => {
-      const authoredRoomName = legend[tileChar];
+      const authoredRoomName = _findLegendEntryTextOrThrow(tileChar, legend, row, col, 'map');
       if (!authoredRoomName) return;
       const roomId = normalizeId(authoredRoomName);
       const existingBounds = roomBoundsById.get(roomId);

@@ -8,6 +8,8 @@ import afterPreviousActivityRepeatedWandersText from './fixtures/after-previous-
 import afterPreviousActivityText from './fixtures/after-previous-activity.md?raw';
 import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
+import invalidMapLegendTileText from './fixtures/invalid-map-legend-tile.md?raw';
+import invalidRoomLegendTileText from './fixtures/invalid-room-legend-tile.md?raw';
 import invalidItineraryTimestampText from './fixtures/invalid-itinerary-timestamp.md?raw';
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
@@ -353,6 +355,28 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('wandering-trapped.md:16');
       expect((error as LoadLevelException).message).toContain('no connected waypoints');
+    }
+  });
+
+  it('wraps unknown map legend tiles with filename and line number', () => {
+    try {
+      loadLevelFromText(invalidMapLegendTileText, 'invalid-map-legend-tile.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-map-legend-tile.md:7');
+      expect((error as LoadLevelException).message).toContain(`unknown map legend tile 'B'`);
+    }
+  });
+
+  it('wraps unknown room legend tiles with filename and line number', () => {
+    try {
+      loadLevelFromText(invalidRoomLegendTileText, 'invalid-room-legend-tile.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-room-legend-tile.md:15');
+      expect((error as LoadLevelException).message).toContain(`unknown room legend tile 'X'`);
     }
   });
 
