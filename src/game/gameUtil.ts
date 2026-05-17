@@ -55,7 +55,7 @@ function _setActiveRoomDiscovered(gameState:GameState) {
 
 function _isActiveAudibleRoom(room:Room, activeRoom:Room):boolean {
   if (room.id === activeRoom.id) return true;
-  if (!room.isDiscovered || room.isObscured) return false;
+  if (room.isObscured) return false;
   return room.exits.some(exit =>
     exit.exitStatus === ExitStatus.open
     && (exit.room1Id === activeRoom.id || exit.room2Id === activeRoom.id));

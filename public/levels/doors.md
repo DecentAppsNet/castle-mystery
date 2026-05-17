@@ -86,8 +86,8 @@ PGT.
 : Amos says, "You get to go outside today."
 : Simon says, "That sounds nice."
 : Amos says, "Follow me."
-0:00:10 Amos @ Torture Chamber
-0:00:10 Simon @ Hallway
+0:00:12 Amos @ Torture Chamber
+0:00:12 Simon @ Hallway
 : Amos says, "Oh, Simon! Come along now."
 : Simon says, "I think... I can go back in my cell."
 : Amos says, "No, no. That's not how it works."
