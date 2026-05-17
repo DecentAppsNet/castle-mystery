@@ -1,107 +1,106 @@
 # general
 
 * title=Murder on the Orient Express
-* activeCharacter=Conductor
-* time=0:00
+* time=19:30
 * winSynopsis=Murder on the Orient Express
 
 # map
 
 ```
-CS
---
+112233445566778899aabbccdd..........
+112233445566778899aabbccdd..........
+CCCCCCCCCCCCCCCCCCCCCCCCCCRRRRRRRRRR
+..........................RRRRRRRRRR
 ```
 
-* C=Conductor's Seat
-* S=Samuel Ratchet Room
-* -=Corridor
+* 1=Compartment 1
+* 2=Compartment 2
+* 3=Compartment 3
+* 4=Compartment 4
+* 5=Compartment 5
+* 6=Compartment 6
+* 7=Compartment 7
+* 8=Compartment 8
+* 9=Compartment 9
+* a=Compartment 10
+* b=Compartment 11
+* c=Compartment 12
+* d=Compartment 13
+* C=Corridor
+* R=Restaurant Car
 
 # rooms
 
-## Conductor's Seat
+## Compartment 1
 
 * exits=Corridor
 
-```
-...
-.cC
-...
-```
-
-* c=Conductor's Chair
-* C=Conductor
-
-## Samuel Ratchet Room
+## Compartment 2
 
 * exits=Corridor
 
-```
-......
-.b..cd
-..S...
-```
+## Compartment 3
 
-* b=Bed
-* c=Ratchet's Chair
-* d=Desk
-* S=Samuel Ratchet
+* exits=Corridor
+
+## Compartment 4
+
+* exits=Corridor
+
+## Compartment 5
+
+* exits=Corridor
+
+## Compartment 6
+
+* exits=Corridor
+
+## Compartment 7
+
+* exits=Corridor
+
+## Compartment 8
+
+* exits=Corridor
+
+## Compartment 9
+
+* exits=Corridor
+
+## Compartment 10
+
+* exits=Corridor
+
+## Compartment 11
+
+* exits=Corridor
+
+## Compartment 12
+
+* exits=Corridor
+
+## Compartment 13
+
+* exits=Corridor
 
 ## Corridor
 
-* exits=Conductor's Seat|Samuel Ratchet Room
+* exits=Compartment 1|Compartment 2|Compartment 3|Compartment 4|Compartment 5|Compartment 6|Compartment 7|Compartment 8|Compartment 9|Compartment 10|Compartment 11|Compartment 12|Compartment 13|Restaurant Car
 
 ```
-#.............................#
-#.............................#
-###############################
+E.........................
 ```
+
+* E=End
+
+## Restaurant Car
+
+* exits=Corridor
 
 # characters
 
-## Conductor
-
-* description=A tired ruler in a rumpled nightshirt, watching the house with anxious eyes.
-* faceImage=/sprites/kingFace.png
-
-## Samuel Ratchet
-
-* description=A playful fellow, eager to please, smiling, yet always terrified.
-* faceImage=/sprites/jesterFace.png
-
 # items
-
-## Desk
-
-* description=A sturdy mahogany desk
-* displayChar=⚚
-
-## Conductor's Chair
-
-* description=A fancy chair - it looks very comfortable
-* displayChar=†
-
-## Ratchet's Chair
-
-* description=A fancy chair - it looks very comfortable
-* displayChar=†
-
-## Bed
-
-* title=A sumptuous bed
-* description=The most luxurious of beds
-* displayChar=⌸
-
 
 # itinerary
 
-0:00:00 Conductor @ Conductor's Seat
-0:00:00 Samuel Ratchet @ Samuel Ratchet Room
-0:00:03 Conductor says "(sigh)"
-0:00:05 Conductor says "ANNOUNCEMENT: Unfortunately we have hit a snowdrift - let's all have dinner"
-0:00:40 Conductor @ Corridor
-0:00:40 Samuel Ratchet @ Corridor
-
 # solutions
-
-* actions=searched|lied|left|took
-
