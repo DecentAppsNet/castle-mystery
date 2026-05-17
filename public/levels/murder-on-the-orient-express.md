@@ -266,6 +266,20 @@ PE........................
 
 * exits=Corridor
 
+```
+.1..2..3..4.
+............
+.5.........S
+............
+```
+
+* 1=T1
+* 2=T2
+* 3=T3
+* 4=T4
+* 5=T5
+* S=SVC
+
 # characters
 
 ## Pierre Michel
@@ -690,6 +704,81 @@ PE........................
 * displayChar=❤
 
 # itinerary
+
+<!--
+WP4 — T1 dinner (19:30–21:00) in the Restaurant Car. All 13 characters
+seat themselves by 19:30:00 via back-planned walks (ADR 001 + ADR 007 §7).
+Pierre Michel, Edward Masterman, and Hildegarde Schmidt sit at the SVC
+service tables; passengers fill T1–T5 per design §4-T1.
+
+Privacy degradations to revisit in FU1 (POV-gated witnessing): the 19:45
+Mary/Arbuthnot whisper at T2, the 20:00 Ratchett/MacQueen working
+conversation at T1, and the 20:20 Andrenyi exchange at T3 are presently
+audible to anyone in the room; flagged inline below.
+
+Dosing beats (design §4-T1): MacQueen pours from his Silver Flask into
+Ratchett's coffee at 20:30; Masterman doses the iced water from his
+Glass Vial. Both items stay in their owners' inventories — no item
+transfer events. The drugging is inferred from the flask/vial item
+descriptions when the player examines them later.
+-->
+
+19:30:00 Ratchett @ Restaurant Car.T1
+19:30:00 MacQueen @ Restaurant Car.T1
+19:30:00 Mary @ Restaurant Car.T2
+19:30:00 Arbuthnot @ Restaurant Car.T2
+19:30:00 Helena @ Restaurant Car.T3
+19:30:00 Rudolph @ Restaurant Car.T3
+19:30:00 Hubbard @ Restaurant Car.T4
+19:30:00 Greta @ Restaurant Car.T4
+19:30:00 Foscarelli @ Restaurant Car.T4
+19:30:00 Princess @ Restaurant Car.T5
+19:30:00 Masterman @ Restaurant Car.SVC
+19:30:00 Schmidt @ Restaurant Car.SVC
+19:30:00 Pierre Michel @ Restaurant Car.SVC
+
+19:30:30 Pierre Michel says "Mesdames et messieurs, the dining service is open."
+: Hubbard says "Oh, isn't this just the loveliest carriage? My second night out and already across from a real European countess."
+: Foscarelli says "Eh, signora, we Americans must hold the table down for the Old World!"
+
+<!-- 19:45 — POV-private at T2 (FU1): Mary/Arbuthnot whisper -->
+19:45:00 Mary says "Not now. When it is behind us. When it is done."
+: Arbuthnot says "Quite right. Forgive me. I should not have spoken."
+
+19:50:00 Hubbard says "I was just telling my daughter — you know, before I sailed — she looked me dead in the eye and said, 'Momma, you do not talk to strangers on that train.'"
+: Hubbard says "And I said back, 'Darling, every American knows trains are perfectly safe — it is the people who ride them you have to watch.'"
+: Hubbard says "Mind you, there are some queer characters aboard. The gentleman in compartment two — well, I shall not say what I think."
+: Foscarelli says "Eh, signora, in my country we have a saying — the loudest dog at the table knows the most secrets!"
+: Greta says "Mr Foscarelli, please. Not at table."
+
+<!-- 20:00 — POV-private at T1 (FU1): Ratchett/MacQueen working conversation -->
+20:00:00 Ratchett says "MacQueen. The letters. Tell me again about the letters."
+: MacQueen says "Two so far, sir. Same hand. Same cheap paper. Whoever it is, they mean it."
+: Ratchett says "Bah. Cowards write letters. Brave men come at you in the night."
+: MacQueen says "Even so, sir — I would sleep with the door bolted."
+
+20:10:00 Foscarelli @ Restaurant Car.T5
+: Foscarelli says "Your Highness — forgive the impertinence — is that this week's Russkiye Vedomosti?"
+: Princess says "It is last week's. And the answer to your next question is also no."
+: Foscarelli says "Ah. My apologies, Highness."
+: Foscarelli @ Restaurant Car.T4
+
+20:15:00 Greta says "Forgive me — I — I was remembering a little one I once nursed. It comes over me sometimes."
+: Hubbard says "Oh, you poor dear. Here, take my handkerchief. There now."
+
+<!-- 20:20 — POV-private at T3 (FU1): Andrenyi exchange -->
+20:20:00 Rudolph says "Drink a little of the wine, my love. It will steady you."
+: Helena says "I am steady, Rudolph. I am perfectly steady."
+
+20:30:00 MacQueen says "Coffee, sir? I brought your usual cream."
+: Ratchett says "Pour me another, MacQueen. A generous one."
+: Masterman says "Iced water, sir. As you prefer it."
+: Ratchett says "Set it down. Then leave me."
+
+21:00:00 MacQueen says "Allow me, sir — the carriage chill is coming in."
+: Ratchett says "Leave it. I am not finished with my brandy."
+: MacQueen says "Very good, sir. I shall wait in the corridor."
+: Ratchett says "No. Help me to my compartment. And bring those letters."
 
 <!--
 WP6 punch-list — itinerary-driven item placements deferred from WP3:

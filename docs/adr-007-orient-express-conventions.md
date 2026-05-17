@@ -49,7 +49,9 @@ Each character's `## <Heading>` is the short, unambiguous identifier the level l
 | Schmidt              | Hildegarde Schmidt             | 12          |
 | Princess             | Princess Dragomiroff           | 13          |
 
-Itinerary references and solution cloze blanks must use the **`title`** form (e.g. `Princess Dragomiroff @ Compartment 13`, not `Princess @ ...`), because `parseSpeaker` / waypoint lookups match by character title. The section heading is internal.
+Itinerary references must use the **section-heading (id) form** (e.g. `Princess @ Compartment 13`, *not* `Princess Dragomiroff @ ...`), because [src/game/levelLoading/levelItineraryLoader.ts](../src/game/levelLoading/levelItineraryLoader.ts) `_parseCharacterActivityLine` normalizes the leading text and looks it up against `Character.id` via `charactersById.get(...)`. There is no title-based fallback (verified against the engine in WP4 — an earlier revision of this ADR claimed lookups matched by title, which surfaced as `unknown character 'antonio foscarelli' in itinerary` when WP4 first tried the full-title form). Compartment / room legend tile entries (`V=Ratchett`, `M=MacQueen`, …) use the same id form for the same reason.
+
+Solution cloze blanks reference characters by their **title** (the `[character]` blank is matched against the auto-generated `characters` category list, which is built from `character.title` — see [levelUtil.ts:34-43](../src/game/levelLoading/levelUtil.ts#L34-L43)). So `[Princess Dragomiroff]` in a cloze is correct, but `Princess Dragomiroff says "..."` in an itinerary is not.
 
 Cast-size note: design §3 reads "14 characters — 12 conspirators + victim + conductor", but that heading double-counts Pierre Michel (he is both a conspirator and the conductor, one person, not two). The actual cast is 13: 1 victim + 12 conspirators, with Pierre as the 12th conspirator. Cross-referenced against §2's compartment assignments, §4-T3's stab order, §5's clue inventory, and §6's clozes — none reference a 14th character.
 
@@ -107,10 +109,23 @@ WP3 examples: `Ratchett's Passport`, `MacQueen's Passport`, `Helena's Passport`,
 
 Each compartment containing a character has a 4×4 grid placing the character at row 1, col 1. Tile letters avoid the map-level legend (`C`, `R`, `1`–`9`, `a`–`d`). Letters are reused across compartments because per-room legends are independent. The corridor uses `P` for Pierre Michel and Compartment 13 uses `P` for Princess Dragomiroff — both load correctly because the corridor's and Compartment 13's grid legends are scoped to their own rooms.
 
+### 7. Itinerary timestamp pattern (WP4+)
+
+WP4 implemented the T1 dinner timeline starting at 19:30:00. The choice raised in `docs/murder-on-the-orient-express-work-packages.md` WP4 §1 — keep `time=19:30` vs shift it back vs shift the first `@` later — resolved to **"neither needed"**: keep `time=19:30` in `# general` and use absolute `H:MM:SS` timestamps such as `19:30:00 Samuel Ratchett @ Restaurant Car.T1` for each character's first activity.
+
+The engine's per-character `state.time` starts at 0, and absolute itinerary timestamps are milliseconds since midnight (≈70.2M ms for 19:30:00). A back-planned walk that "begins before" dinner-start in clock terms still has its `startTime` at a large positive millisecond value — well above 0 — so `scheduleEventsToEndAtTime`'s `scheduledStartTime < earliestStartTime` guard does not fire.
+
+WP5+ should follow the same pattern:
+
+- `time=19:30` stays put — it is the displayed clock origin, not the simulation origin.
+- Use absolute `H:MM:SS` for cross-character anchors and beat boundaries (e.g. `21:00:00 Hector MacQueen says "..."`).
+- Use `:` for sequential dialogue inside a single scene, per ADR 004.
+- For same-timestamp arrivals at the same room (13 characters @ Restaurant Car at 19:30:00 worked cleanly in WP4), trust the engine's per-character occupied-waypoint spreading from ADR 003 rather than pre-staggering by seconds.
+
 ## Consequences
 
 - WP3 examinables will follow §5 slug rules when adding passports, tickets, photographs, and luggage.
-- WP4–WP7 itinerary lines must use the **full title** form for each character (`Princess Dragomiroff says "..."`, not `Princess says "..."`).
+- WP4–WP7 itinerary lines must use the **section-heading (id) form** for each character (`Princess says "..."`, not `Princess Dragomiroff says "..."`). Cloze solutions use the title form.
 - New characters added to this level (or characters whose `faceImage` is changed during ongoing work) must reuse one of the three shared sprite URLs in §4 unless the change is part of FU5. Don't reintroduce per-character placeholder URLs pointing at nonexistent files — that's what caused the prior `InvalidStateError` decode crash.
 - When FU5 produces real per-character art, swap the shared sprite URLs for the per-character slugs listed at the bottom of §4.
 - The auto-generated `identities` cloze (13 unknowns) is part of the level's win condition. WP8's authored solutions don't need to include character-identity blanks.
