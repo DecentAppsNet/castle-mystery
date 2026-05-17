@@ -409,6 +409,7 @@ describe('levelUtil itinerary loading', () => {
     expect(() => loadLevelFromText(laterArrivalText, 'doors-arrival-timestamp.md')).not.toThrow();
   });
 
+
   it('wraps itinerary line errors with filename and line number', () => {
     try {
       loadLevelFromText(invalidItineraryActivityText, 'invalid-itinerary-activity.md');

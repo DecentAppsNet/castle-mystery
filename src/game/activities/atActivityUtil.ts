@@ -1,7 +1,7 @@
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import Position from "../types/Position";
 import { findRoom } from "../roomUtil";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
+import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
 import { normalizeId } from "../idUtil";
 
 function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:string, targetPosition:Position|null } {
@@ -42,7 +42,7 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
     .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y}`));
   const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, targetPosition);
   const scheduledEvents = context.timestampKind === 'absolute'
-    ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, context.state.time)
+    ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, findEarliestAbsoluteActivityStartTime(context.state))
     : scheduleEventsToStartAtTime(unscheduledEvents, activityStartTime, context.state.time);
   return scheduledEvents;
 }

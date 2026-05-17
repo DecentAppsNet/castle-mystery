@@ -166,7 +166,7 @@ export function calcActivityStartTime(state:CharacterActivityState, timestamp:nu
 }
 
 export function ensureTimestampIsAvailable(state:CharacterActivityState, timestamp:number, activityText:string, timestampKind:ActivityTimestampKind) {
-  if (timestampKind === 'absolute' && timestamp < state.time) {
+  if (timestampKind === 'absolute' && timestamp < findEarliestAbsoluteActivityStartTime(state)) {
     throw new Error(`unable to schedule itinerary activity '${activityText}' at ${timestamp}`);
   }
 }
@@ -200,6 +200,15 @@ export function scheduleEventsToStartAtTime(events:ItineraryEvent[], timestamp:n
   return _shiftEventTimes(events, scheduledStartTime);
 }
 
+export function findEarliestAbsoluteActivityStartTime(state:CharacterActivityState):number {
+  return state.events.reduce((blockingTime, event) =>
+    event.type === ItineraryEventType.WALK
+      ? Math.max(blockingTime, event.startTime + event.duration)
+      : event.type === ItineraryEventType.SPEECH
+        ? blockingTime
+        : Math.max(blockingTime, event.startTime), 0);
+}
+
 export function appendEventsToCharacterState(level:Level, character:Character, state:CharacterActivityState, events:ItineraryEvent[]) {
   if (!events.length) return;
   state.events.push(...events);
@@ -208,7 +217,7 @@ export function appendEventsToCharacterState(level:Level, character:Character, s
   let blockingTime = state.time;
   for (const event of events) {
     if (event.type !== ItineraryEventType.WALK) {
-      if (event.type !== ItineraryEventType.SPEECH) blockingTime = Math.max(blockingTime, event.startTime);
+      blockingTime = Math.max(blockingTime, event.startTime + (event.type === ItineraryEventType.SPEECH ? event.duration : 0));
       continue;
     }
     blockingTime = Math.max(blockingTime, event.startTime + event.duration);
