@@ -32,6 +32,7 @@ import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?ra
 import dropItemText from '../integration-tests/fixtures/drop-item.md?raw';
 import giveItemNearText from '../integration-tests/fixtures/give-item-near.md?raw';
 import giveItemWalkText from '../integration-tests/fixtures/give-item-walk.md?raw';
+import wanderingTrappedText from '../integration-tests/fixtures/wandering-trapped.md?raw';
 import solutionsImageSeparatorText from './fixtures/solutions-image-separator.md?raw';
 
 describe('levelUtil itinerary loading', () => {
@@ -334,7 +335,25 @@ describe('levelUtil itinerary loading', () => {
   });
 
   it('throws when a solution defines duplicate unlock prerequisites', () => {
-    expect(() => loadLevelFromText(duplicateUnlockText, 'duplicate-unlock.md')).toThrow(/multiple unlockForItem lines/i);
+    try {
+      loadLevelFromText(duplicateUnlockText, 'duplicate-unlock.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:15');
+      expect((error as LoadLevelException).message).toContain('multiple unlockForItem lines');
+    }
+  });
+
+  it('wraps room-layout failures with filename and line number', () => {
+    try {
+      loadLevelFromText(wanderingTrappedText, 'wandering-trapped.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('wandering-trapped.md:16');
+      expect((error as LoadLevelException).message).toContain('no connected waypoints');
+    }
   });
 
 });

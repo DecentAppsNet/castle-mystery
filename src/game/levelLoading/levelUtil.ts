@@ -115,6 +115,20 @@ function _findSectionFirstContentLineNo(markdownText:string, sectionName:string,
   return null;
 }
 
+function _throwErrorWithLoadLevelContext(levelFilename:string, errorLineNo:number, error:unknown):never {
+  if (error instanceof LoadLevelException) throw error;
+  if (error instanceof Error) throw new LoadLevelException(levelFilename, errorLineNo, error.message, error);
+  throw new LoadLevelException(levelFilename, errorLineNo, String(error), error);
+}
+
+function _runWithLoadLevelSectionContext<T>(levelFilename:string, errorLineNo:number, callback:() => T):T {
+  try {
+    return callback();
+  } catch (error) {
+    _throwErrorWithLoadLevelContext(levelFilename, errorLineNo, error);
+  }
+}
+
 type LoadLevelOptions = {
   validateUnlockPhrases?:boolean
 }
@@ -156,10 +170,16 @@ function _validateUnlockableSolutionPhrases(level:Level, categoryOptionsByName:M
 
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
   const sections = parseSections(text, 1, true);
-  const generalSection = _parseGeneralSection(sections.general || "");
+  const generalFirstLineNo = _findSectionFirstContentLineNo(text, 'general') || 1;
+  const mapFirstLineNo = _findSectionFirstContentLineNo(text, 'map') || 1;
+  const roomsFirstLineNo = _findSectionFirstContentLineNo(text, 'rooms') || 1;
+  const charactersFirstLineNo = _findSectionFirstContentLineNo(text, 'characters') || 1;
+  const itemsFirstLineNo = _findSectionFirstContentLineNo(text, 'items') || 1;
   const itinerarySection = sections.itinerary || "";
   const itineraryFirstLineNo = _findSectionFirstContentLineNo(text, 'itinerary') || 1;
   const solutionsFirstLineNo = _findSectionFirstContentLineNo(text, 'solutions') || 1;
+  const generalSection = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+    () => _parseGeneralSection(sections.general || ""));
   let level = _createEmptyLevel();
   level = {
     ...level,
@@ -167,14 +187,22 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     startTime: generalSection.startTime ?? level.startTime,
     winSynopsis: generalSection.winSynopsis || level.winSynopsis
   };
-  const roomPopulationDefinitions = parseRoomPopulationDefinitions(sections.characters || "", sections.items || "");
-  createRoomsFromMapSection(level, sections.map || "", sections.rooms || "");
-  addRoomPositionMarkersFromSections(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions));
-  addRoomExitsFromRoomsSection(level, sections.rooms || "");
-  generateRoomWaypointsForLevel(level);
-  loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions, levelFilename);
-  const solutionCategoryOptionsByName = createSolutionCategoryOptionsByName(sections.solutions || "", _createDefaultSolutionCategoryOptions(level));
-  const authoredSolutions = loadSolutionsFromSection(sections.solutions || "", solutionCategoryOptionsByName);
+  const roomPopulationDefinitions = _runWithLoadLevelSectionContext(levelFilename, Math.min(charactersFirstLineNo, itemsFirstLineNo),
+    () => parseRoomPopulationDefinitions(sections.characters || "", sections.items || ""));
+  _runWithLoadLevelSectionContext(levelFilename, mapFirstLineNo,
+    () => createRoomsFromMapSection(level, sections.map || "", sections.rooms || ""));
+  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+    () => addRoomPositionMarkersFromSections(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions)));
+  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+    () => addRoomExitsFromRoomsSection(level, sections.rooms || ""));
+  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+    () => generateRoomWaypointsForLevel(level));
+  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+    () => loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions, levelFilename));
+  const solutionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
+    () => createSolutionCategoryOptionsByName(sections.solutions || "", _createDefaultSolutionCategoryOptions(level)));
+  const authoredSolutions = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
+    () => loadSolutionsFromSection(sections.solutions || "", solutionCategoryOptionsByName));
   const generatedIdentitySolution = authoredSolutions.some(solution => solution.id === 'identities')
     ? null
     : createGeneratedIdentitySolution(level.characters, solutionCategoryOptionsByName);
