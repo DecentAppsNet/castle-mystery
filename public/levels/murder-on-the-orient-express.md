@@ -1028,4 +1028,89 @@ alibi-plant shriek should likewise be audible only inside #10.
 : Schmidt @ Compartment 12
 : Schmidt drops Spare Brass Button
 
+<!--
+WP7 - T4 discovery scene (the next morning, between a quarter to seven
+and seven). Mrs Hubbard rings her bell and shouts her alibi from inside
+Compartment 10; Pierre Michel walks from Corridor.End to her door,
+hears her demand, then walks the length of the corridor to Compartment
+2, finds the door unlocked, enters and discovers Ratchett's body. He
+raises the alarm from Corridor.End, the cast spills out to their
+compartment-adjacent corridor positions, and Pierre shepherds eleven
+of them into the Restaurant Car. Pierre himself stays back at
+Corridor.Outside2 to guard the door. Times below auto-shift twenty-
+four hours because they fall before startTime=19:00 in this cross-
+midnight level (ADR 007).
+
+Privacy degradations to revisit in FU1 (POV-gated witnessing): the
+Princess's aside to Schmidt in Russian at five-to-seven should be
+audible only at Corridor.Outside13; presently any character in the
+corridor would hear it. Flagged inline below. Hubbard's opening
+monologue and the gather conversation are loud-and-public per design
+- no privacy markers needed there.
+
+Invented dialogue beat (no authored line in design §4-T4): Pierre
+Michel's alarm-call from Corridor.End is invented because the design
+has only a stage direction for the alarm bell. Flagged inline below.
+
+Note for WP8 on the Bloody Dagger's final location: Mrs Hubbard
+carries her Sponge-Bag (with the Bloody Dagger inside) to the
+Restaurant Car at two-to-seven, so the dagger's final room is
+Restaurant Car, not Compartment 10 as the WP plan originally assumed.
+Cloze authoring for "where was the dagger found" should resolve to
+Restaurant Car or Mrs Hubbard's sponge-bag.
+-->
+
+06:45:00 Hubbard says "There was a man! In my compartment! At a quarter past one — I heard the connecting door — I rang and rang and you never came —"
+
+06:46:00 Pierre Michel @ Corridor.Outside10
+06:46:00 Hubbard @ Corridor.Outside10
+: Pierre Michel says "Madame, the connecting door is to compartment 2. To Mr Ratchett."
+: Hubbard says "Well then it was him! Or one of his — go and look, go and look!"
+: Pierre Michel says "Yes, madame."
+
+06:48:00 Pierre Michel @ Corridor.Outside2
+
+06:50:00 Pierre Michel @ Compartment 2
+
+06:51:00 Pierre Michel @ Corridor.Outside2
+: Pierre Michel @ Corridor.End
+<!-- WP7: alarm-bell call; design has no authored dialogue — invented line -->
+: Pierre Michel says "Mesdames et messieurs — an incident! Please, to the corridor!"
+
+06:51:30 MacQueen @ Corridor.Outside3
+06:51:30 Masterman @ Corridor.Outside4
+06:51:30 Foscarelli @ Corridor.Outside5
+06:51:30 Helena @ Corridor.Outside6
+06:51:30 Rudolph @ Corridor.Outside7
+06:51:30 Mary @ Corridor.Outside8
+06:51:30 Arbuthnot @ Corridor.Outside9
+06:51:30 Greta @ Corridor.Outside11
+06:51:30 Schmidt @ Corridor.Outside12
+06:51:30 Princess @ Corridor.Outside13
+
+06:52:00 Pierre Michel @ Corridor.Outside2
+: MacQueen says "What has happened?"
+: Pierre Michel says "A — there has been an incident. Please, everyone, please return to your compartments."
+: Arbuthnot says "Has someone been hurt?"
+: Pierre Michel says "I cannot — please. Until the investigator arrives, I must ask everyone to wait in the Restaurant Car."
+: Hubbard says "Did I tell you? Did I not tell you there was a man?"
+
+<!-- FU1: POV-private at Corridor.Outside13 — Princess to Schmidt, in Russian -->
+06:53:00 Princess says "Tak. Vsyo."
+
+06:55:00 MacQueen @ Restaurant Car
+06:55:00 Masterman @ Restaurant Car
+06:55:00 Foscarelli @ Restaurant Car
+06:55:00 Helena @ Restaurant Car
+06:55:00 Rudolph @ Restaurant Car
+06:55:00 Mary @ Restaurant Car
+06:55:00 Arbuthnot @ Restaurant Car
+06:55:00 Greta @ Restaurant Car
+06:55:00 Schmidt @ Restaurant Car
+06:55:00 Princess @ Restaurant Car
+
+06:58:00 Hubbard @ Restaurant Car
+
+07:00:00 Pierre Michel @ Corridor.Outside2
+
 # solutions
