@@ -3,10 +3,13 @@
 import { assertNonNullable } from "decent-portal";
 
 import { processLevelEffects } from "../effects/effectUtil";
-import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition } from "../roomUtil";
+import { createExitKey } from "../exitUtil";
+import { calcRoomsBoundingRect, findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
+import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
 import { drawCharacterPopover } from "./characterDrawUtil";
+import { drawExitPopover } from "./exitDrawUtil";
 import { drawRoom } from "./roomDrawUtil";
 import { calcScalingFactors } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
@@ -19,6 +22,15 @@ function _findHoveredItem(gameState:GameState) {
   for (const room of candidateRooms) {
     const hoveredItem = room.items.find(item => item.id === gameState.hoveredItemId && (gameState.isLevelComplete || item.isDiscovered)) || null;
     if (hoveredItem) return hoveredItem;
+  }
+  return null;
+}
+
+function _findHoveredExit(gameState:GameState):RoomExit|null {
+  if (!gameState.hoveredExitKey) return null;
+  for (const room of gameState.rooms) {
+    const hoveredExit = room.exits.find(exit => createExitKey(exit) === gameState.hoveredExitKey) || null;
+    if (hoveredExit) return hoveredExit;
   }
   return null;
 }
@@ -45,7 +57,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
     drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.imageSet,
-      gameState.characters, gameState.isLevelComplete);
+      gameState.characters, activeRoom, gameState.isLevelComplete);
   }
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   if (canShowHoverPopovers && gameState.hoveredItemId) {
@@ -57,6 +69,14 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   if (canShowHoverPopovers && gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter) drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context);
+    processLevelEffects(gameState.activeEffects, context);
+    return;
+  }
+  if (canShowHoverPopovers && gameState.hoveredExitKey) {
+    const hoveredExit = _findHoveredExit(gameState);
+    if (hoveredExit) {
+      drawExitPopover(hoveredExit, findRoom(gameState.rooms, hoveredExit.room1Id), findRoom(gameState.rooms, hoveredExit.room2Id), gameState.scalingFactors, context);
+    }
   }
   processLevelEffects(gameState.activeEffects, context);
 }

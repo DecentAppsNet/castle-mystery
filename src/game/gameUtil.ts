@@ -190,6 +190,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     activeEffects:[],
     hoveredItemId:null,
     hoveredCharacterId:null,
+    hoveredExitKey:null,
     viewedItemIds:new Set<string>(),
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isLevelComplete:false,

@@ -17,6 +17,7 @@ type GameState = {
   activeEffects:Effect[],
   hoveredItemId:string|null,
   hoveredCharacterId:string|null,
+  hoveredExitKey:string|null,
   viewedItemIds:Set<string>,
   activeCharacterI:number,
   isLevelComplete:boolean,
