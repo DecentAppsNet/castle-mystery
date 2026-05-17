@@ -9,10 +9,12 @@
 # map
 
 ```
-112233445566778899aabbccdd..........
-112233445566778899aabbccdd..........
-CCCCCCCCCCCCCCCCCCCCCCCCCCRRRRRRRRRR
-..........................RRRRRRRRRR
+1133557799bbdd..........
+1133557799bbdd..........
+CCCCCCCCCCCCCCRRRRRRRRRR
+CCCCCCCCCCCCCCRRRRRRRRRR
+22446688aacc............
+22446688aacc............
 ```
 
 * 1=Compartment 1
@@ -258,26 +260,26 @@ P.t...
 * exits=Compartment 1|Compartment 2|Compartment 3|Compartment 4|Compartment 5|Compartment 6|Compartment 7|Compartment 8|Compartment 9|Compartment 10|Compartment 11|Compartment 12|Compartment 13|Restaurant Car
 
 ```
-PE.......................V
-.a.b.c.d.e.f.g.h.i.j.k.l.m
+PE13579bd.....
+.2468ac......V
 ```
 
 * P=Pierre Michel
 * E=End
 * V=Vestibule
-* a=Outside1
-* b=Outside2
-* c=Outside3
-* d=Outside4
-* e=Outside5
-* f=Outside6
-* g=Outside7
-* h=Outside8
-* i=Outside9
-* j=Outside10
-* k=Outside11
-* l=Outside12
-* m=Outside13
+* 1=Outside1
+* 2=Outside2
+* 3=Outside3
+* 4=Outside4
+* 5=Outside5
+* 6=Outside6
+* 7=Outside7
+* 8=Outside8
+* 9=Outside9
+* a=Outside10
+* b=Outside11
+* c=Outside12
+* d=Outside13
 
 ## Restaurant Car
 
