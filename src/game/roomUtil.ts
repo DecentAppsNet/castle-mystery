@@ -7,6 +7,7 @@ import RoomExit from "./types/RoomExit";
 import Obstruction from "./types/Obstruction";
 import Waypoint from "./types/Waypoint";
 import Position from "./types/Position";
+import ExitStatus from "./types/ExitStatus";
 import { CHARACTER_OBSTRUCTION_MARGIN, clipMoveToObstructions, isPositionInObstructions, isPositionInRect } from "./obstructionUtil";
 import { normalizeId } from "./idUtil";
 
@@ -76,6 +77,14 @@ export function findRoomNearestToPosition(rooms:Room[], x:number, y:number):Room
 
 export function findCharactersInRoom(room:Room, characters:Character[]):Character[] {
   return characters.filter(character => isPositionInRect(character.x, character.y, room.rect));
+}
+
+export function isActiveAudibleRoom(room:Room, activeRoom:Room):boolean {
+  if (room.id === activeRoom.id) return true;
+  if (room.isObscured) return false;
+  return room.exits.some(exit =>
+    exit.exitStatus === ExitStatus.open
+    && (exit.room1Id === activeRoom.id || exit.room2Id === activeRoom.id));
 }
 
 export function calcRoomsBoundingRect(rooms:Room[]):Rect {

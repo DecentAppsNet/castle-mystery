@@ -20,6 +20,8 @@ import duplicateCharacterSubsectionsCaseText from './fixtures/duplicate-characte
 import duplicateCharacterPlacementText from './fixtures/duplicate-character-placement.md?raw';
 import duplicateCharacterPropertyText from './fixtures/duplicate-character-property.md?raw';
 import conflictingExitModifiersText from './fixtures/conflicting-exit-modifiers.md?raw';
+import audibleSpeechInterruptsText from './fixtures/audible-speech-interrupts.md?raw';
+import audibleSpeechOverlapText from './fixtures/audible-speech-overlap.md?raw';
 import duplicateGeneralEntryText from './fixtures/duplicate-general-entry.md?raw';
 import duplicateGeneralSectionText from './fixtures/duplicate-general-section.md?raw';
 import duplicateItemSubsectionsCaseText from './fixtures/duplicate-item-subsections-case.md?raw';
@@ -392,7 +394,7 @@ describe('levelUtil itinerary loading', () => {
 
   it('sets level duration from the longest character itinerary', () => {
     const level = loadLevelFromText(kingacideItineraryText);
-    expect(level.duration).toEqual(41_000);
+    expect(level.duration).toEqual(44_000);
   });
 
   it('keeps both start and end time labels for short levels', () => {
@@ -408,6 +410,24 @@ describe('levelUtil itinerary loading', () => {
       .replace('0:00:12 Simon @ Hallway', '0:00:13 Simon @ Hallway');
 
     expect(() => loadLevelFromText(laterArrivalText, 'doors-arrival-timestamp.md')).not.toThrow();
+  });
+
+  it('throws when says would overlap another audible character speech', () => {
+    try {
+      loadLevelFromText(audibleSpeechOverlapText, 'audible-speech-overlap.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('audible-speech-overlap.md');
+      expect((error as LoadLevelException).errorLineNo).toBe(50);
+      expect((error as LoadLevelException).message).toContain('audible speech overlap');
+      expect((error as LoadLevelException).message).toContain('Bob is already speaking');
+      expect((error as LoadLevelException).message).toContain('Use \'interrupts\' instead of \'says\'');
+    }
+  });
+
+  it('allows interrupts to overlap another audible character speech', () => {
+    expect(() => loadLevelFromText(audibleSpeechInterruptsText, 'audible-speech-interrupts.md')).not.toThrow();
   });
 
   it('throws when the same character would speak over their own earlier speech', () => {

@@ -93,10 +93,10 @@ function _normalizeActivityArgument(text:string, preservedPunctuationChars:Set<s
   return _stripBoundaryPunctuation(_normalizeWhitespaceAndPunctuationOutsideQuotes(text, preservedPunctuationChars));
 }
 
-function _normalizeSpeechActivityText(activityText:string):string {
-  const speechText = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityText.slice('says'.length), new Set(['"', '\'', '-']));
-  if (!speechText.length) return 'says';
-  return `says ${speechText}`;
+function _normalizeSpeechActivityText(activityText:string, speechVerb:'says'|'interrupts'):string {
+  const speechText = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityText.slice(speechVerb.length), new Set(['"', '\'', '-']));
+  if (!speechText.length) return speechVerb;
+  return `${speechVerb} ${speechText}`;
 }
 
 function _normalizeGiveActivityText(activityText:string):string {
@@ -117,7 +117,8 @@ function _normalizeParsedActivityText(activityText:string):string {
     const targetText = _normalizeActivityArgument(trimmedActivityText.slice(1), new Set(['.', '\'', '-']));
     return targetText ? `@ ${targetText}` : '@';
   }
-  if (trimmedActivityText.startsWith('says')) return _normalizeSpeechActivityText(trimmedActivityText);
+  if (trimmedActivityText.startsWith('says')) return _normalizeSpeechActivityText(trimmedActivityText, 'says');
+  if (trimmedActivityText.startsWith('interrupts')) return _normalizeSpeechActivityText(trimmedActivityText, 'interrupts');
   if (trimmedActivityText.startsWith('wanders')) return 'wanders';
   if (trimmedActivityText.startsWith('gives')) return _normalizeGiveActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('drops')) {
@@ -147,7 +148,7 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '"', '\'', '-']));
-  const activityMarkers = [' @', ' says ', ' wanders', ' gives ', ' drops ', ' takes '];
+  const activityMarkers = [' @', ' says ', ' interrupts ', ' wanders', ' gives ', ' drops ', ' takes '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
