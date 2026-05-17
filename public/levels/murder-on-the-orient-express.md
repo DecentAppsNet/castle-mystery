@@ -272,14 +272,14 @@ PE........................
 
 * description=A tall Frenchman in the dark-blue uniform of the Wagons-Lits conductor. Trim moustache, watchful eyes; he knows every passenger by berth number.
 * items=Master Key|Conductor's Logbook
-* faceImage=/sprites/pierreFace.png
+* faceImage=/sprites/jesterFace.png
 * isTitleKnown=false
 
 ## Ratchett
 
 * title=Samuel Ratchett
 * description=An elderly American gentleman, thin-lipped and uneasy. He travels with an outsized chequebook and a markedly smaller list of friends.
-* faceImage=/sprites/ratchettFace.png
+* faceImage=/sprites/kingFace.png
 * isTitleKnown=false
 
 ## MacQueen
@@ -287,7 +287,7 @@ PE........................
 * title=Hector MacQueen
 * description=A tall young American in a worn tweed jacket, secretary to Mr Ratchett, with a silver flask he never lets out of reach.
 * items=Silver Flask
-* faceImage=/sprites/macqueenFace.png
+* faceImage=/sprites/kingFace.png
 * isTitleKnown=false
 
 ## Masterman
@@ -295,28 +295,28 @@ PE........................
 * title=Edward Masterman
 * description=A clipped English valet in pressed black. Eyes lowered, hands always behind his back; a small glass vial sits in his waistcoat pocket.
 * items=Glass Vial
-* faceImage=/sprites/mastermanFace.png
+* faceImage=/sprites/kingFace.png
 * isTitleKnown=false
 
 ## Foscarelli
 
 * title=Antonio Foscarelli
 * description=A boisterous Italian-American car salesman; big laugh, bigger hands, never far from a cigarette.
-* faceImage=/sprites/foscarelliFace.png
+* faceImage=/sprites/kingFace.png
 * isTitleKnown=false
 
 ## Helena
 
 * title=Countess Helena Andrenyi
 * description=A pale, elegant Hungarian countess with sad dark eyes. She rarely speaks above a murmur, even when spoken to.
-* faceImage=/sprites/helenaAndrenyiFace.png
+* faceImage=/sprites/queenFace.png
 * isTitleKnown=false
 
 ## Rudolph
 
 * title=Count Rudolph Andrenyi
 * description=A stern Hungarian diplomat whose courtly manners thaw only when his wife is in danger of being approached.
-* faceImage=/sprites/rudolphAndrenyiFace.png
+* faceImage=/sprites/kingFace.png
 * isTitleKnown=false
 
 ## Mary
@@ -324,7 +324,7 @@ PE........................
 * title=Mary Debenham
 * description=A composed young Englishwoman with the bearing of a governess. She carries a small embroidered reticule everywhere she goes.
 * items=Reticule
-* faceImage=/sprites/debenhamFace.png
+* faceImage=/sprites/queenFace.png
 * isTitleKnown=false
 
 ## Arbuthnot
@@ -332,7 +332,7 @@ PE........................
 * title=Colonel Arbuthnot
 * description=A weathered British officer of the Indian Army; pipe in hand, pipe-cleaners in pocket, opinions on everything from horses to politics.
 * items=Pipe|Pipe Cleaners
-* faceImage=/sprites/arbuthnotFace.png
+* faceImage=/sprites/kingFace.png
 * isTitleKnown=false
 
 ## Hubbard
@@ -340,7 +340,7 @@ PE........................
 * title=Mrs Caroline Hubbard
 * description=A loud, friendly American woman with endless stories about her daughter. Her chintz sponge-bag is never far from her hand.
 * items=Sponge-Bag
-* faceImage=/sprites/hubbardFace.png
+* faceImage=/sprites/queenFace.png
 * isTitleKnown=false
 
 ## Greta
@@ -348,7 +348,7 @@ PE........................
 * title=Greta Ohlsson
 * description=A devout Swedish nurse with a tired smile, a small bible in one pocket and a phial of holy oil in the other.
 * items=Small Bible|Holy Oil Phial
-* faceImage=/sprites/ohlssonFace.png
+* faceImage=/sprites/queenFace.png
 * isTitleKnown=false
 
 ## Schmidt
@@ -356,7 +356,7 @@ PE........................
 * title=Hildegarde Schmidt
 * description=The Princess's German lady's maid: calm, capable, with a sewing kit at the ready for any popped seam.
 * items=Sewing Kit
-* faceImage=/sprites/schmidtFace.png
+* faceImage=/sprites/queenFace.png
 * isTitleKnown=false
 
 ## Princess
@@ -364,7 +364,7 @@ PE........................
 * title=Princess Dragomiroff
 * description=An aged Russian aristocrat in heavy black silks. She walks with a silver-topped cane and tolerates very few foolish questions.
 * items=Walking Cane|Russian Newspaper
-* faceImage=/sprites/dragomiroffFace.png
+* faceImage=/sprites/queenFace.png
 * isTitleKnown=false
 
 # items

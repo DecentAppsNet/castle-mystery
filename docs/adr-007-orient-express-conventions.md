@@ -59,9 +59,17 @@ Every character starts with `isTitleKnown=false` so the auto-generated `identiti
 
 Multi-stage identity reveal (iconography → public name → true name) is FU2 follow-up engine work and not in scope for Phase 1.
 
-### 4. Face-sprite URL slugs
+### 4. Face-sprite mapping uses the three existing template sprites
 
-All `faceImage` URLs follow `/sprites/<slug>Face.png`. The slugs:
+Until per-character art lands (FU5), every character's `faceImage` URL points at one of the three sprites that already exist in `public/sprites/`:
+
+- `/sprites/jesterFace.png` — Pierre Michel (the conductor)
+- `/sprites/kingFace.png` — every male conspirator + Ratchett: MacQueen, Masterman, Foscarelli, Rudolph, Arbuthnot
+- `/sprites/queenFace.png` — every female conspirator: Helena, Mary, Hubbard, Greta, Schmidt, Princess
+
+The three-way split gives just enough visual differentiation for the cast view (the conductor stands apart; men and women are distinguishable) while avoiding the dev-server image-decode crash that earlier per-character placeholder URLs caused (see [ADR 005](adr-005-runtime-image-assets.md) §8 for the resilience fix that now also makes missing sprites non-fatal). The shared URL is the cache key, so `createImageSetFromLevel` makes exactly three fetches.
+
+When FU5 produces real per-character art, the planned per-character URL slugs are:
 
 ```
 pierre, ratchett, macqueen, masterman, foscarelli,
@@ -69,9 +77,7 @@ helenaAndrenyi, rudolphAndrenyi, debenham, arbuthnot,
 hubbard, ohlsson, schmidt, dragomiroff
 ```
 
-Last-name lowercase except where disambiguation is needed (`helenaAndrenyi` / `rudolphAndrenyi`) or where the first name is the more recognisable identifier (`pierre`).
-
-The PNG files do not exist yet — ADR 005 falls back to a circle. Sprite creation is FU5.
+(last-name lowercase except where disambiguation is needed, or where the first name is the more recognisable identifier). FU5 swaps the shared URLs above for these per-character ones.
 
 ### 5. Per-character item slugs for recurring objects (WP3+)
 
@@ -105,7 +111,8 @@ Each compartment containing a character has a 4×4 grid placing the character at
 
 - WP3 examinables will follow §5 slug rules when adding passports, tickets, photographs, and luggage.
 - WP4–WP7 itinerary lines must use the **full title** form for each character (`Princess Dragomiroff says "..."`, not `Princess says "..."`).
-- If sprite assets are added (FU5), they must use the exact URL slugs in §4. Adding a sprite for `princessFace.png` won't be picked up — the `faceImage` URL says `dragomiroffFace.png`.
+- New characters added to this level (or characters whose `faceImage` is changed during ongoing work) must reuse one of the three shared sprite URLs in §4 unless the change is part of FU5. Don't reintroduce per-character placeholder URLs pointing at nonexistent files — that's what caused the prior `InvalidStateError` decode crash.
+- When FU5 produces real per-character art, swap the shared sprite URLs for the per-character slugs listed at the bottom of §4.
 - The auto-generated `identities` cloze (13 unknowns) is part of the level's win condition. WP8's authored solutions don't need to include character-identity blanks.
 
 ## Related
