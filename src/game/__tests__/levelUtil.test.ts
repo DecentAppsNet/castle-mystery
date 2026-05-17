@@ -28,6 +28,7 @@ import duplicateMapLegendEntryText from './fixtures/duplicate-map-legend-entry.m
 import duplicateRoomIdMapLegendText from './fixtures/duplicate-room-id-map-legend.md?raw';
 import duplicateRoomLegendEntryText from './fixtures/duplicate-room-legend-entry.md?raw';
 import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsections-case.md?raw';
+import doorsArrivalTimestampText from './fixtures/doors-arrival-timestamp.md?raw';
 import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-solution-category-group-names.md?raw';
 import duplicateSolutionPropertyText from './fixtures/duplicate-solution-property.md?raw';
 import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-subsections-case.md?raw';
@@ -398,6 +399,14 @@ describe('levelUtil itinerary loading', () => {
 
     expect(level.labels).toHaveLength(2);
     expect(level.labels.map(label => label.minutes)).toEqual([0, level.duration / 60_000]);
+  });
+
+  it('allows later simultaneous arrival timestamps in the doors itinerary', () => {
+    const laterArrivalText = doorsArrivalTimestampText
+      .replace('0:00:12 Amos @ Torture Chamber', '0:00:13 Amos @ Torture Chamber')
+      .replace('0:00:12 Simon @ Hallway', '0:00:13 Simon @ Hallway');
+
+    expect(() => loadLevelFromText(laterArrivalText, 'doors-arrival-timestamp.md')).not.toThrow();
   });
 
   it('wraps itinerary line errors with filename and line number', () => {

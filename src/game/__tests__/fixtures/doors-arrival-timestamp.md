@@ -44,13 +44,6 @@ PGT.
 
 ## Hallway
 
-```
-.........
-.........
-........C
-```
-
-* C=corner
 * exits=First Cell (locked, lockable) | Second Cell (locked, lockable) | Third Cell (locked, lockable) | Guard Room (locked, lockable) | Torture Chamber
 
 ## Guard Room
@@ -88,24 +81,16 @@ PGT.
 0:00:00 Simon @ First Cell
 0:00:00 Amos @ Guard Room
 0:00:03 Amos @ First Cell
-: Amos says, "Simon, my foul-smelling friend."
+: Amos says, "Simon, my long-bearded, foul-smelling friend."
 : Simon says, "Yes?"
 : Amos says, "You get to go outside today."
 : Simon says, "That sounds nice."
 : Amos says, "Follow me."
-0:00:14 Amos @ Torture Chamber
-0:00:14 Simon @ Hallway
+0:00:12 Amos @ Torture Chamber
+0:00:12 Simon @ Hallway
 : Amos says, "Oh, Simon! Come along now."
 : Simon says, "I think... I can go back in my cell."
 : Amos says, "No, no. That's not how it works."
-0:00:16 Simon @ Hallway.corner
 : Simon says, "Really, my cell is just fine."
-0:00:18 Amos @ Hallway
-: Amos says, "If you don't get in the torture chamber..."
-: Amos says, "I will inflict great pain upon you."
-: Simon says, "And if I go in the torture chamber?"
-: Amos says, "Uh..."
-: Simon says, "You will inflict great pain upon me?"
-: Amos says, "Yes!"
 
 # solutions

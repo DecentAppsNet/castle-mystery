@@ -208,7 +208,7 @@ export function appendEventsToCharacterState(level:Level, character:Character, s
   let blockingTime = state.time;
   for (const event of events) {
     if (event.type !== ItineraryEventType.WALK) {
-      blockingTime = Math.max(blockingTime, event.startTime);
+      if (event.type !== ItineraryEventType.SPEECH) blockingTime = Math.max(blockingTime, event.startTime);
       continue;
     }
     blockingTime = Math.max(blockingTime, event.startTime + event.duration);
