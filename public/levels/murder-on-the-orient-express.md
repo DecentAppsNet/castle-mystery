@@ -52,7 +52,7 @@ f...
 * exits=Corridor
 
 ```
-V.y.....
+V.y..d..
 .w...c..
 .l...p..
 .g.n....
@@ -60,6 +60,7 @@ V.y.....
 
 * V=Ratchett
 * y=Ratchett's Body
+* d=Bloody Dagger
 * w=Pocket Watch
 * c=Charred Paper Fragment
 * l=Threatening Letters
@@ -301,7 +302,7 @@ PE.......................V
 ## Pierre Michel
 
 * description=A tall Frenchman in the dark-blue uniform of the Wagons-Lits conductor. Trim moustache, watchful eyes; he knows every passenger by berth number.
-* items=Master Key|Conductor's Logbook
+* items=Master Key|Conductor's Logbook|Brass Uniform Button
 * faceImage=/sprites/jesterFace.png
 * isTitleKnown=false
 
@@ -353,7 +354,7 @@ PE.......................V
 
 * title=Mary Debenham
 * description=A composed young Englishwoman with the bearing of a governess. She carries a small embroidered reticule everywhere she goes.
-* items=Reticule
+* items=Reticule|Daisy Photograph
 * faceImage=/sprites/queenFace.png
 * isTitleKnown=false
 
@@ -385,7 +386,7 @@ PE.......................V
 
 * title=Hildegarde Schmidt
 * description=The Princess's German lady's maid: calm, capable, with a sewing kit at the ready for any popped seam.
-* items=Sewing Kit
+* items=Sewing Kit|Spare Brass Button
 * faceImage=/sprites/queenFace.png
 * isTitleKnown=false
 
@@ -393,7 +394,7 @@ PE.......................V
 
 * title=Princess Dragomiroff
 * description=An aged Russian aristocrat in heavy black silks. She walks with a silver-topped cane and tolerates very few foolish questions.
-* items=Walking Cane|Russian Newspaper
+* items=Walking Cane|Russian Newspaper|Lace Handkerchief
 * faceImage=/sprites/queenFace.png
 * isTitleKnown=false
 
@@ -486,8 +487,33 @@ PE.......................V
 
 ## Pocket Watch
 
-* description=A heavy gold pocket watch on a slack chain, resting near the bedside. The crystal is whole and the second hand still sweeps the dial.
+* description=A heavy gold pocket watch on a slack chain, resting near the bedside. The glass is cracked across the dial and the hands are stopped dead at twenty-five past one.
 * displayChar=⌚
+
+## Bloody Dagger
+
+* description=A long-bladed dagger of indeterminate make, the steel dulled by a thick crust of darkened blood. The grip is plain wood, worn smooth; no monogram, no maker's mark — the kind of knife anyone could have purchased in any provincial market town.
+* displayChar=†
+
+## Lace Handkerchief
+
+* description=A woman's lace-edged handkerchief of fine batiste, monogrammed in red silk with a single Cyrillic letter Н.
+* displayChar=⌘
+
+## Brass Uniform Button
+
+* description=A single brass button of the Compagnie Internationale des Wagons-Lits pattern, the loop of thread on the back showing the rough end where it was cut away from the tunic.
+* displayChar=◉
+
+## Spare Brass Button
+
+* description=A single brass button of the Compagnie Internationale des Wagons-Lits pattern, indistinguishable at a glance from the one outside Compartment 2 — the same casting, the same eagle device, the same dulled sheen.
+* displayChar=◉
+
+## Daisy Photograph
+
+* description=A small creased photograph of a child of about four in a pinafore, on a swing, laughing into the camera. Inked on the back in a careful hand: "Daisy, aged four". The duplicate Miss Debenham kept against the day she might need to leave it somewhere.
+* displayChar=▢
 
 ## Charred Paper Fragment
 
@@ -910,12 +936,94 @@ below.
 23:30:00 Pierre Michel says "Tout est calme. Bonne nuit, mesdames et messieurs."
 
 <!--
-WP6 punch-list — itinerary-driven item placements deferred from WP3:
-* Lace Handkerchief — Princess Dragomiroff drops in Compartment 2 at 01:45 during T3 visit (item to be defined in WP6, Orient Express conventions slug-form e.g. "Princess's Lace Handkerchief").
-* Bloody Dagger — Mrs Hubbard takes from Compartment 2 at 01:55 and conceals in her Sponge-Bag (final location Compartment 10). Item to be defined in WP6 and placed in Compartment 2 at level start so the take/hide chain works, or introduced via an itinerary drop in #2 just prior to Hubbard's visit.
-* Brass Uniform Button — Pierre Michel drops in the corridor outside Compartment 2 at 00:15 during T3.
-* Pipe-Cleaner Real — Colonel Arbuthnot drops in the corridor outside Compartment 2 during T3 at 01:25.
-* Pocket Watch smashed state — Hector MacQueen takes/advances/drops Pocket Watch in Compartment 2 at 00:25 to leave it stopped at 01:15; description rewrite to follow.
+WP6 — T3 murder hour (the next morning, between quarter past midnight
+and two) plus the button-swap cleanup at twenty-five past two. Twelve
+conspirators visit Compartment 2 in turn; each visit is a movement to
+#2, an in-language whisper (where authored), an optional trace
+placement, and a return to the visitor's own compartment. The murder
+itself is implicit — no item models the stab; Bloody Dagger sits in #2
+from t=0 and only Mrs Hubbard takes it, on her way back to #10 at five
+to two. Per ADR 007 the absolute times below auto-shift twenty-four
+hours because they fall before startTime=19:00 in a cross-midnight
+level.
+
+Privacy degradations to revisit in FU1 (POV-gated witnessing): every
+whisper inside Compartment 2 should be POV-private to the visiting
+conspirator; presently any character in #2 at the visit time would
+hear it. Each whisper is flagged inline. Mrs Hubbard's quarter-past-one
+alibi-plant shriek should likewise be audible only inside #10.
 -->
+
+00:15:00 Pierre Michel @ Compartment 2
+<!-- FU1: POV-private at Compartment 2 — Pierre Michel whisper -->
+: Pierre Michel says "Pour ma fille."
+: Pierre Michel @ Corridor.Outside2
+: Pierre Michel drops Brass Uniform Button
+: Pierre Michel @ Corridor.End
+
+00:25:00 MacQueen @ Compartment 2
+: MacQueen takes Pocket Watch
+: MacQueen drops Pocket Watch
+: MacQueen @ Compartment 3
+
+00:35:00 Masterman @ Compartment 2
+<!-- FU1: POV-private at Compartment 2 — Masterman whisper -->
+: Masterman says "For the Colonel."
+: Masterman @ Compartment 4
+
+00:45:00 Foscarelli @ Compartment 2
+<!-- FU1: POV-private at Compartment 2 — Foscarelli whisper -->
+: Foscarelli says "Per la bambina."
+: Foscarelli @ Compartment 5
+
+00:55:00 Greta @ Compartment 2
+<!-- FU1: POV-private at Compartment 2 — Greta whisper -->
+: Greta says "Förlåt mig. Förlåt mig. Förlåt mig."
+: Greta @ Compartment 11
+
+01:05:00 Mary @ Compartment 2
+: Mary drops Daisy Photograph
+: Mary @ Compartment 8
+
+<!-- WP6: 01:15 alibi-plant; design has no authored dialogue at this beat - invented line; FU1 will surface this as audible only inside #10 -->
+01:15:00 Hubbard says "A man! There is a man in here! Help — anyone!"
+
+01:25:00 Arbuthnot @ Compartment 2
+<!-- FU1: POV-private at Compartment 2 — Arbuthnot whisper -->
+: Arbuthnot says "That's for John."
+: Arbuthnot @ Corridor.Outside2
+: Arbuthnot drops Pipe Cleaner Real
+: Arbuthnot @ Compartment 9
+
+01:35:00 Rudolph @ Compartment 6
+: Rudolph takes Scarlet Kimono
+: Rudolph @ Compartment 2
+<!-- FU1: POV-private at Compartment 2 — Rudolph whisper -->
+: Rudolph says "For Helena."
+: Rudolph @ Compartment 6
+: Rudolph drops Scarlet Kimono
+: Rudolph @ Compartment 7
+
+01:45:00 Princess @ Compartment 2
+<!-- FU1: POV-private at Compartment 2 — Princess whisper -->
+: Princess says "Sonia. Sonia. Sonia."
+: Princess drops Lace Handkerchief
+: Princess @ Compartment 13
+
+01:50:00 Schmidt @ Compartment 2
+<!-- FU1: POV-private at Compartment 2 — Schmidt whisper -->
+: Schmidt says "Für die Kleine."
+: Schmidt @ Compartment 12
+
+01:55:00 Hubbard @ Compartment 2
+<!-- FU1: POV-private at Compartment 2 — Hubbard whisper -->
+: Hubbard says "Daisy. My baby. My baby. My baby."
+: Hubbard takes Bloody Dagger
+: Hubbard @ Compartment 10
+
+<!-- WP6: button-swap cleanup; design has no authored dialogue - silent visit -->
+02:25:00 Schmidt @ Compartment 1
+: Schmidt @ Compartment 12
+: Schmidt drops Spare Brass Button
 
 # solutions
