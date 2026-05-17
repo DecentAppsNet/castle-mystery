@@ -212,6 +212,14 @@ Each WP edits `public/levels/murder-on-the-orient-express.md` and may add docs. 
 - Bonus 6d "Planted, accidental, or genuine?" — design says unlock after examining ≥10 clues. Fall back to `unlockForSolution=The Armstrong dossier`. Flag for FU3.
 - The level's win condition is "all unlocked solutions complete" per [HomeScreen.tsx](../src/homeScreen/HomeScreen.tsx#L33-L35). Mandatory + the auto-generated identities cloze must both be solvable for the level to win. The bonuses are locked behind mandatory in the proposal above so the win remains achievable.
 
+**Unlock-chain — load-bearing choice.** Use `unlockForItem=Theatre Programme` on 6b rather than chaining 6b off 6a, because the engine treats locked solutions as not-required for level completion (`_isLevelComplete` in [HomeScreen.tsx](../src/homeScreen/HomeScreen.tsx)). With this chain:
+- A player who solves identities + 6a + 6c — never examining the Theatre Programme — wins. 6b and 6d stay locked, so the win condition ignores them.
+- A player who *also* examines the Theatre Programme unlocks 6b, which (if solved) unlocks 6d, which must then also be solved to win.
+
+That makes 6b/6d genuinely optional via the player's exploration path. A strictly linear chain (6a → 6b → 6c → 6d) would force all four bonuses every time, breaking the design's "skipped bonus shouldn't block win" contract. The Theatre Programme is the most distinctive Armstrong clue in #10 (Linda Arden's stage name), so gating "the Armstrong dossier" cloze behind it reads naturally as discovery-driven rather than artificial.
+
+**Cloze narrative authoring (§10 of conventions ADR).** When phrasing the `clozeStatement=` text, avoid parens with no whitespace inside (`(T2)`, `(X)`) — the cloze parser misreads those as image tokens. Reword (`at T2`, `during T3`) or insert a space. Parens whose contents contain whitespace (`(left to mislead)`) are fine.
+
 **Acceptance.**
 - All four clozes render in the solutions panel.
 - Mandatory unlocks immediately; bonuses lock per the chosen `unlockFor*` chain.

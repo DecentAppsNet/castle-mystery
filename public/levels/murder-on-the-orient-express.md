@@ -1114,3 +1114,30 @@ Restaurant Car or Mrs Hubbard's sponge-bag.
 07:00:00 Pierre Michel @ Corridor.Outside2
 
 # solutions
+
+* numbers=one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|2|13
+* substances=chloral hydrate|laudanum|opium|arsenic|strychnine
+* containers=sponge-bag|hatbox|trunk|reticule|carpet-bag|valise
+* relationships=mother|grandmother|sister|aunt|godmother|cousin|daughter|son|niece|nephew|old friend
+* roles=district attorney|valet|batman|chauffeur|governess|nurse|cook|officer|friend|maid|secretary|butler|footman
+* truenames=Cassetti|Linda Arden|Goldenberg|Susanne|Daisy|Armstrong
+* classifications=planted|accidental|genuine
+
+## What happened on the Orient Express
+
+* clozeStatement=The man travelling as [Samuel Ratchett] in compartment [2] was in truth [Cassetti], the kidnapper of a child named [Daisy] [Armstrong].---On the night the train was halted in the snow, [twelve] of his fellow passengers killed him in a pre-arranged sequence, each striking him [one] time. He had first been rendered unconscious by [chloral hydrate] placed in his coffee in the [Restaurant Car].---The conspiracy was led by the woman travelling as [Mrs Caroline Hubbard], whose true name is [Linda Arden], and who is the murdered child's [grandmother]. She hid the dagger in her own [sponge-bag] after striking the final blow.
+
+## The Armstrong dossier
+
+* unlockForItem=Theatre Programme
+* clozeStatement=Each conspirator had a particular tie to the murdered child's family.---[Hector MacQueen] was the son of the prosecuting [district attorney].---[Edward Masterman] had served the Colonel as his [valet|batman].---[Antonio Foscarelli] had been the family's [chauffeur].---The [Countess Helena Andrenyi] was born [Goldenberg], the murdered child's mother's [sister]. Her husband stabbed in her place to protect her diplomatic standing.---[Mary Debenham] had been the child's [governess].---[Colonel Arbuthnot] had served alongside the Colonel as an [officer|friend] in the same regiment.---[Greta Ohlsson] had been the child's [nurse].---[Hildegarde Schmidt] had been the family's [cook].---[Princess Dragomiroff] had been the mother's [godmother|old friend].---[Pierre Michel], the conductor, was the father of [Susanne], the nursemaid wrongly accused after the kidnapping who took her own life.
+
+## The order of the visits
+
+* unlockForSolution=What happened on the Orient Express
+* clozeStatement=Between 00:15 and 02:00, twelve passengers visited Compartment 2 in turn. The order was:---[Pierre Michel] at 00:15, who unlocked the door.---[Hector MacQueen] at 00:25, who staged the broken watch.---[Edward Masterman] at 00:35.---[Antonio Foscarelli] at 00:45.---[Greta Ohlsson] at 00:55, who left the oil thumbprint.---[Mary Debenham] at 01:05, who placed the photograph of the child.---[Colonel Arbuthnot] at 01:25.---[Count Rudolph Andrenyi] at 01:35, who wore the scarlet kimono.---[Princess Dragomiroff] at 01:45, who left the Cyrillic handkerchief.---[Hildegarde Schmidt] at 01:50.---[Mrs Caroline Hubbard] at 01:55, who hid the dagger and stood the longest over the body.
+
+## Planted, accidental, or genuine
+
+* unlockForSolution=The Armstrong dossier
+* clozeStatement=Classify each clue as planted (left to mislead), accidental (dropped or left by mistake), or genuine (an unavoidable trace of the truth).---The broken pocket watch stopped at 01:15: [planted].---The lace handkerchief monogrammed Н: [planted].---The brass uniform button in the corridor: [accidental].---The pipe-cleaner in the corridor outside #8 at T2: [planted].---The second pipe-cleaner outside #2 at T3: [accidental].---The scarlet kimono in the Countess's wardrobe: [planted].---The charred paper fragment in #2's ashtray naming the Armstrong child: [genuine].---The bloody dagger in Mrs Hubbard's sponge-bag: [planted].---The holy-oil thumbprint on the doorframe: [accidental].---The twelve wounds on the body, of varying depth and handedness: [genuine].

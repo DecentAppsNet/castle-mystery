@@ -170,12 +170,24 @@ Authoring rules for WP6+:
 - The FU1 privacy markers used by WP5 (`<!-- FU1: POV-private at Compartment 2 -->`) deliberately omit timestamps so they cannot trip this gotcha regardless of where they wrap.
 - Activity lines themselves (the things the parser *should* see) follow the normal rules: `HH:MM:SS character @ room` / `: character says "..."`.
 
+### 10. Cloze narrative text must not contain parenthesised tokens with no whitespace inside
+
+`_isImageToken` in [src/game/levelLoading/levelSolutionsLoader.ts:61](../src/game/levelLoading/levelSolutionsLoader.ts#L61) treats any `(...)` segment whose trimmed contents are non-empty and contain no whitespace as an image-token reference, regardless of context. `_findNextSpecialToken` picks the earliest token, so an `(X)` ahead of a `[blank]` is consumed first and rendered as an image with `imageUrl='X'`.
+
+Consequence: cloze `clozeStatement=` text like `... outside #8 (T2): [planted].` parses as `text + image{imageUrl:'T2'} + text + blank{planted}` — the literal "T2" is replaced by a (broken) image placeholder, and the blank still works but the rendered sentence is wrong.
+
+Authoring rules for WP8+:
+- In `clozeStatement=` narrative, prefer prose like `at T2`, `during T3`, or use em-dashes — anything that either drops the parens or inserts whitespace inside them.
+- Parens whose contents contain whitespace are safe (`(left to mislead)`, `(an unavoidable trace of the truth)` all pass through as plain text).
+- The hazard is symmetric to §9: in both cases the parser greedily classifies tokens by surface shape with no awareness of surrounding context.
+
 ## Consequences
 
 - WP3 examinables will follow §5 slug rules when adding passports, tickets, photographs, and luggage.
 - WP4–WP7 itinerary lines must use the **section-heading (id) form** for each character (`Princess says "..."`, not `Princess Dragomiroff says "..."`). Cloze solutions use the title form.
 - WP5+ itinerary lines target the corridor's compartment-adjacent positions via `Corridor.OutsideN` (1≤N≤13) and the narrative anchor `Corridor.Vestibule`, both defined once in the §8 grid expansion. Do not re-expand the corridor grid in WP6/WP7.
 - WP6+ narrative HTML comments inside the `# itinerary` section must keep timestamps off line starts (per §9) — every line in that section is parsed for a leading-timestamp pattern, comments included.
+- WP8+ cloze `clozeStatement=` narrative must avoid `(X)` patterns whose parens enclose whitespace-less content (per §10) — those are parsed as image tokens and render as broken image placeholders.
 - New characters added to this level (or characters whose `faceImage` is changed during ongoing work) must reuse one of the three shared sprite URLs in §4 unless the change is part of FU5. Don't reintroduce per-character placeholder URLs pointing at nonexistent files — that's what caused the prior `InvalidStateError` decode crash.
 - When FU5 produces real per-character art, swap the shared sprite URLs for the per-character slugs listed at the bottom of §4.
 - The auto-generated `identities` cloze (13 unknowns) is part of the level's win condition. WP8's authored solutions don't need to include character-identity blanks.
