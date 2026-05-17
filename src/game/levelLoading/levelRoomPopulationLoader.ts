@@ -2,7 +2,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
+import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
 import { isPositionInRoomObstruction } from "../obstructionUtil";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
@@ -45,7 +45,7 @@ export function parseCharacterDefinitions(charactersSection:string):Map<string, 
 	Array.from(characterSectionsById.entries()).forEach(([characterId, characterSectionEntry]) => {
 		const authoredCharacterName = characterSectionEntry.authoredName;
 		const characterSection = characterSectionEntry.value;
-		const nameValues = parseNameValueLines(characterSection);
+		const nameValues = parseUniqueNameValueLines(characterSection, `character ${characterId}`);
 		characterDefinitions.set(characterId, {
 			title:nameValues.title || authoredCharacterName.trim(),
 			description:nameValues.description || "",
@@ -63,7 +63,7 @@ export function parseItemDefinitions(itemsSection:string):Map<string, ItemDefini
 	Array.from(itemSectionsById.entries()).forEach(([itemId, itemSectionEntry]) => {
 		const authoredItemName = itemSectionEntry.authoredName;
 		const itemSection = itemSectionEntry.value;
-		const nameValues = parseNameValueLines(itemSection);
+		const nameValues = parseUniqueNameValueLines(itemSection, `item ${itemId}`);
 		itemDefinitions.set(itemId, {
 			title:nameValues.title || authoredItemName.trim(),
 			description:nameValues.description || "",
@@ -161,7 +161,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 
 		const gridWidth = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
 		const gridHeight = gridLines.length;
-		const roomNameValues = parseNameValueLines(roomSection);
+		const roomNameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`);
 		const roomLegend = Object.fromEntries(
 			Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured')
 		);

@@ -8,7 +8,7 @@ import Level from "../types/Level";
 import Obstruction from "../types/Obstruction";
 import Rect from "../types/Rect";
 import Room from "../types/Room";
-import { parseFirstFencedCodeBlockLines, parseNameValueLineEntries, parseOptions, parseSections } from "@/common/markdownUtil";
+import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { createNormalizedEntryMap, normalizeId } from "../idUtil";
 
 const MAP_TILE_SIZE = 20;
@@ -35,12 +35,7 @@ function _isIgnoredGridTileChar(tileChar:string):boolean {
 }
 
 function _parseNameValueLinesOrThrowDuplicate(markdownText:string, contextLabel:string):Record<string, string> {
-  const nameValues:Record<string, string> = {};
-  parseNameValueLineEntries(markdownText).forEach(([name, value]) => {
-    if (Object.hasOwn(nameValues, name)) throw new Error(`duplicate ${contextLabel} entry '${name}'`);
-    nameValues[name] = value;
-  });
-  return nameValues;
+  return parseUniqueNameValueLines(markdownText, contextLabel);
 }
 
 function _findLegendEntryTextOrThrow(tileChar:string, legend:Record<string, string>, row:number, col:number, contextLabel:string):string|null {

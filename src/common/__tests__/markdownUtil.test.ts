@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeMarkdownName, parseNameValueLines, parseSections } from '../markdownUtil';
+import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from '../markdownUtil';
 
 describe('markdownUtil', () => {
   describe('normalizeMarkdownName()', () => {
@@ -35,31 +35,56 @@ describe('markdownUtil', () => {
 
       expect(Object.keys(sections)).toEqual(['East Hall']);
     });
+
+    it('throws on duplicate exact headings', () => {
+      expect(() => parseSections([
+        '## Hero',
+        '* description=First',
+        '## Hero',
+        '* description=Second'
+      ].join('\n'), 2)).toThrow(`duplicate section 'Hero'`);
+    });
+
+    it('throws on duplicate normalized headings when requested', () => {
+      expect(() => parseSections([
+        '# General',
+        '* activeCharacter=Hero',
+        '# GENERAL',
+        '* activeCharacter=Guide'
+      ].join('\n'), 1, true)).toThrow(`duplicate section 'general'`);
+    });
   });
 
-  describe('parseNameValueLines()', () => {
+  describe('parseUniqueNameValueLines()', () => {
     it('accepts forgiving whitespace around bullets and equals signs', () => {
-      const nameValues = parseNameValueLines([
+      const nameValues = parseUniqueNameValueLines([
         '  *   title = Library',
         '*description=Quiet\\nRoom'
-      ].join('\n'));
+      ].join('\n'), 'room');
 
       expect(nameValues).toEqual({ title:'Library', description:'Quiet\nRoom' });
     });
 
     it('normalizes property names when requested', () => {
-      const nameValues = parseNameValueLines([
+      const nameValues = parseUniqueNameValueLines([
         '* Active Character = Hero',
         '* WIN SYNOPSIS = Solved.'
-      ].join('\n'), true);
+      ].join('\n'), 'general', true);
 
       expect(nameValues).toEqual({ activeCharacter:'Hero', winSynopsis:'Solved.' });
     });
 
     it('preserves authored legend keys by default', () => {
-      const nameValues = parseNameValueLines('* E = East Hall');
+      const nameValues = parseUniqueNameValueLines('* E = East Hall', 'map legend');
 
       expect(nameValues).toEqual({ E:'East Hall' });
+    });
+
+    it('throws on duplicate entries', () => {
+      expect(() => parseUniqueNameValueLines([
+        '* title=Library',
+        '* title=Study'
+      ].join('\n'), 'room')).toThrow(`duplicate room entry 'title'`);
     });
   });
 });

@@ -5,7 +5,7 @@ import TimeLabel from "../types/TimeLabel";
 import { duplicateCharacter } from "../types/Character";
 import { baseUrl } from "@/common/urlUtil";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
-import { normalizeMarkdownName, parseNameValueLines, parseSections } from "@/common/markdownUtil";
+import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { parseTimestampToMsecs } from "@/common/timestampUtil";
 import { loadItineraries } from "./levelItineraryLoader";
 import LoadLevelException from "./LoadLevelException";
@@ -61,7 +61,7 @@ function _parseTimeTextToMsecs(text:string):number {
 }
 
 function _parseGeneralSection(generalSection:string):{ activeCharacterId:string, startTime:number|null, winSynopsis:string } {
-  const generalNameValues = parseNameValueLines(generalSection, true);
+  const generalNameValues = parseUniqueNameValueLines(generalSection, 'general', true);
   return {
     activeCharacterId: normalizeOptionalId(generalNameValues.activeCharacter) || "",
     startTime: generalNameValues.time ? _parseTimeTextToMsecs(generalNameValues.time) : null,
@@ -172,7 +172,8 @@ function _validateUnlockableSolutionPhrases(level:Level, categoryOptionsByName:M
 }
 
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
-  const sections = parseSections(text, 1, true);
+  const sections = _runWithLoadLevelSectionContext(levelFilename, 1,
+    () => parseSections(text, 1, true));
   const generalFirstLineNo = _findSectionFirstContentLineNo(text, 'general') || 1;
   const mapFirstLineNo = _findSectionFirstContentLineNo(text, 'map') || 1;
   const roomsFirstLineNo = _findSectionFirstContentLineNo(text, 'rooms') || 1;

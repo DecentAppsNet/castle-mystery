@@ -18,6 +18,9 @@ import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.
 import duplicateUnlockText from './fixtures/duplicate-unlock.md?raw';
 import duplicateCharacterSubsectionsCaseText from './fixtures/duplicate-character-subsections-case.md?raw';
 import duplicateCharacterPlacementText from './fixtures/duplicate-character-placement.md?raw';
+import duplicateCharacterPropertyText from './fixtures/duplicate-character-property.md?raw';
+import duplicateGeneralEntryText from './fixtures/duplicate-general-entry.md?raw';
+import duplicateGeneralSectionText from './fixtures/duplicate-general-section.md?raw';
 import duplicateItemSubsectionsCaseText from './fixtures/duplicate-item-subsections-case.md?raw';
 import duplicateItemIdInventoryText from './fixtures/duplicate-item-id-inventory.md?raw';
 import duplicateMapLegendEntryText from './fixtures/duplicate-map-legend-entry.md?raw';
@@ -25,6 +28,7 @@ import duplicateRoomIdMapLegendText from './fixtures/duplicate-room-id-map-legen
 import duplicateRoomLegendEntryText from './fixtures/duplicate-room-legend-entry.md?raw';
 import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsections-case.md?raw';
 import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-solution-category-group-names.md?raw';
+import duplicateSolutionPropertyText from './fixtures/duplicate-solution-property.md?raw';
 import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-subsections-case.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
 import lowercaseTitleDefaultsText from './fixtures/lowercase-title-defaults.md?raw';
@@ -225,6 +229,28 @@ describe('levelUtil itinerary loading', () => {
     expect(loadLevelFromText(identitiesAllTitlesKnownText).winSynopsis).toBe('You completed the level.');
   });
 
+  it('wraps duplicate general entries with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateGeneralEntryText, 'duplicate-general-entry.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-general-entry.md:3');
+      expect((error as LoadLevelException).message).toContain(`duplicate general entry 'activeCharacter'`);
+    }
+  });
+
+  it('wraps duplicate top-level sections with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateGeneralSectionText, 'duplicate-general-section.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-general-section.md:1');
+      expect((error as LoadLevelException).message).toContain(`duplicate section 'general'`);
+    }
+  });
+
   it('loads room position markers from room legends and grids', () => {
     const level = loadLevelFromText(atRoomMarkerText);
     const library = findRoom(level.rooms, 'Library');
@@ -387,6 +413,17 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
+  it('wraps duplicate character property entries with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateCharacterPropertyText, 'duplicate-character-property.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-character-property.md:25');
+      expect((error as LoadLevelException).message).toContain(`duplicate character hero entry 'description'`);
+    }
+  });
+
   it('wraps duplicate normalized item subsection ids with filename and line number', () => {
     try {
       loadLevelFromText(duplicateItemSubsectionsCaseText, 'duplicate-item-subsections-case.md');
@@ -472,6 +509,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('duplicate-solution-subsections-case.md:21');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'mystery' conflicts with 'Mystery'`);
+    }
+  });
+
+  it('wraps duplicate solution property entries with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateSolutionPropertyText, 'duplicate-solution-property.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-solution-property.md:21');
+      expect((error as LoadLevelException).message).toContain(`duplicate solution mystery entry 'solution'`);
     }
   });
 

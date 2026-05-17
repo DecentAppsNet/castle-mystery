@@ -1,6 +1,6 @@
 /* This module groups solution-section parsing and generated-solution creation during level load. */
 
-import { parseNameValueLineEntries, parseNameValueLines, parseOptions, parseSectionEntries } from "@/common/markdownUtil";
+import { parseNameValueLineEntries, parseOptions, parseSectionEntries, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 
 import Character from "../types/Character";
@@ -208,9 +208,9 @@ export function loadSolutionsFromSection(solutionsSection:string, categoryOption
   const solutionSubsectionsById = createNormalizedEntryMap(parseSectionEntries(section, 2));
 
   return Array.from(solutionSubsectionsById.values()).map(({ authoredName:title, value:solutionSubsection }) => {
-    const nameValues = parseNameValueLines(solutionSubsection);
-    const clozeTemplate = nameValues.solution || nameValues.clozeStatement || "";
     const prerequisite = _parseSolutionPrerequisite(solutionSubsection, title);
+    const nameValues = parseUniqueNameValueLines(solutionSubsection, `solution ${normalizeId(title)}`);
+    const clozeTemplate = nameValues.solution || nameValues.clozeStatement || "";
 
     return _createSolution(
       title,

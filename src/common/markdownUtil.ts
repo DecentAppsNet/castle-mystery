@@ -55,9 +55,10 @@ function _findBulletedLineText(line:string):string|null {
 // Parse the heading sections of a markdown text. The header of each section is the section name, and the content of each section is the value for the section.
 function _parseSectionArrays(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):{sectionNames:string[], sectionContents:string[]} {
   const _addSection = (_sectionName:string, _sectionContent:string) => {
+    if (sectionNames.includes(_sectionName)) throw new Error(`duplicate section '${_sectionName}'`);
     sectionNames.push(_sectionName);
     sectionContents.push(_sectionContent.trim());
-  }
+  };
 
   const lines = markdownText.split('\n').filter(line => line.trim().length > 0);
   const sectionNames:string[] = [], sectionContents:string[] = [];
@@ -124,9 +125,10 @@ function _parseNameValueEntries(markdownText:string, useCamelCase:boolean = fals
   return entries;
 }
 
-export function parseNameValueLines(markdownText:string, useCamelCase:boolean = false):NameValues {
+export function parseUniqueNameValueLines(markdownText:string, contextLabel:string, useCamelCase:boolean = false):NameValues {
   const nameValues:NameValues = {};
   _parseNameValueEntries(markdownText, useCamelCase).forEach(([name, value]) => {
+    if (Object.hasOwn(nameValues, name)) throw new Error(`duplicate ${contextLabel} entry '${name}'`);
     nameValues[name] = value;
   });
   return nameValues;
