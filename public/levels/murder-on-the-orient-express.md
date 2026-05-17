@@ -2,7 +2,8 @@
 
 * title=Murder on the Orient Express
 * activeCharacter=Pierre Michel
-* time=19:30
+* startTime=19:30
+* endTime=07:00
 * winSynopsis=Murder on the Orient Express
 
 # map
