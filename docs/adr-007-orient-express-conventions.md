@@ -122,10 +122,60 @@ WP5+ should follow the same pattern:
 - Use `:` for sequential dialogue inside a single scene, per ADR 004.
 - For same-timestamp arrivals at the same room (13 characters @ Restaurant Car at 19:30:00 worked cleanly in WP4), trust the engine's per-character occupied-waypoint spreading from ADR 003 rather than pre-staggering by seconds.
 
+### 8. Corridor position markers (WP5+)
+
+WP5 expanded the corridor's per-room grid from `1×26` to `2×26` and added position markers that every later WP can address by name. The expansion was done once, up front, so WP6 and WP7 can target compartment-adjacent corridor positions without re-editing the grid.
+
+The corridor grid is:
+
+```
+PE.......................V
+.a.b.c.d.e.f.g.h.i.j.k.l.m
+```
+
+Row 0 columns 0–1 preserve the existing `P=Pierre Michel` and `E=End` markers in their original positions (per §1). Row 0 column 25 is `V=Vestibule`, a narrative anchor at the far end of the carriage — there is no Vestibule room and no exit-locking mechanic; Pierre's "lock the vestibule" beat in T2 is modelled as a walk to `Corridor.Vestibule`, a `says` line, and a walk back to `Corridor.End` (no door state changes).
+
+Row 1 places one `OutsideN` marker per compartment, at the grid column directly below that compartment's left edge:
+
+| Marker     | Tile | Compartment overhead |
+| ---------- | ---- | -------------------- |
+| Outside1   | `a`  | Compartment 1        |
+| Outside2   | `b`  | Compartment 2        |
+| Outside3   | `c`  | Compartment 3        |
+| Outside4   | `d`  | Compartment 4        |
+| Outside5   | `e`  | Compartment 5        |
+| Outside6   | `f`  | Compartment 6        |
+| Outside7   | `g`  | Compartment 7        |
+| Outside8   | `h`  | Compartment 8        |
+| Outside9   | `i`  | Compartment 9        |
+| Outside10  | `j`  | Compartment 10       |
+| Outside11  | `k`  | Compartment 11       |
+| Outside12  | `l`  | Compartment 12       |
+| Outside13  | `m`  | Compartment 13       |
+
+These markers are addressed in itinerary as `<character> @ Corridor.OutsideN` (e.g. `Pierre Michel @ Corridor.Outside10` for Mrs Hubbard's first bell at 22:15). Items dropped while a character stands on an OutsideN waypoint end up on the corridor floor at roughly that compartment's door — the placement used by WP5 for the Pipe Cleaner Decoy at Outside8 and planned by WP6 for the Brass Uniform Button (Outside2), the Pipe Cleaner Real (Outside2), and other T3 trace placements.
+
+Per-room legend tile letters `a`–`m` on the corridor are scoped to the corridor's own grid (per §6) and do not conflict with the map-level `a`–`d` tiles used for Compartments 10–13. Pierre's starting waypoint shifts from y≈50 (1-row grid centre) to y≈45 (top half of the 2-row grid); both resolve to `Corridor.End` via ADR-003's nearest-waypoint rule because P and E remain in the same row, ~20 units apart in x.
+
+### 9. HTML comments in the itinerary section must not start a line with `HH:MM`
+
+`_parseItineraryActivities` in [src/game/levelLoading/levelItineraryLoader.ts](../src/game/levelLoading/levelItineraryLoader.ts) runs `parseLeadingTimestampOrThrowOnInvalid` against every line in the `# itinerary` section, **including lines inside `<!-- ... -->` HTML comments**. The parser only looks at the first whitespace-delimited token; it has no notion of comment scope.
+
+Consequence: any comment line whose first non-whitespace token matches `[0-9]+:...` (e.g. `22:30 MacQueen leaves...`, `22:45) and Pierre answers...`, `21:05 Ratchett/MacQueen dictation`) is parsed as an absolute-timestamp activity. If the rest of the line lacks an activity marker (` @ `, ` says `, ` wanders`, ` gives `, ` drops `, ` takes `) — which a narrative sentence almost never has — level loading fails with `unable to parse itinerary activity line '...'` or `invalid timestamp: ...)`.
+
+Lines that begin with `<!--` are safe because `<!--` is the leading token and is not digit-prefixed. The hazard is only line-internal text that wraps a timestamp to a fresh line.
+
+Authoring rules for WP6+:
+- In narrative HTML comments inside `# itinerary`, never let a `HH:MM` or `HH:MM:SS` token sit at the start of a line. Reword (`half-past ten`, `the bell at 22:15`, `the dictation at 21:05`) or rewrap so the timestamp is mid-line.
+- The FU1 privacy markers used by WP5 (`<!-- FU1: POV-private at Compartment 2 -->`) deliberately omit timestamps so they cannot trip this gotcha regardless of where they wrap.
+- Activity lines themselves (the things the parser *should* see) follow the normal rules: `HH:MM:SS character @ room` / `: character says "..."`.
+
 ## Consequences
 
 - WP3 examinables will follow §5 slug rules when adding passports, tickets, photographs, and luggage.
 - WP4–WP7 itinerary lines must use the **section-heading (id) form** for each character (`Princess says "..."`, not `Princess Dragomiroff says "..."`). Cloze solutions use the title form.
+- WP5+ itinerary lines target the corridor's compartment-adjacent positions via `Corridor.OutsideN` (1≤N≤13) and the narrative anchor `Corridor.Vestibule`, both defined once in the §8 grid expansion. Do not re-expand the corridor grid in WP6/WP7.
+- WP6+ narrative HTML comments inside the `# itinerary` section must keep timestamps off line starts (per §9) — every line in that section is parsed for a leading-timestamp pattern, comments included.
 - New characters added to this level (or characters whose `faceImage` is changed during ongoing work) must reuse one of the three shared sprite URLs in §4 unless the change is part of FU5. Don't reintroduce per-character placeholder URLs pointing at nonexistent files — that's what caused the prior `InvalidStateError` decode crash.
 - When FU5 produces real per-character art, swap the shared sprite URLs for the per-character slugs listed at the bottom of §4.
 - The auto-generated `identities` cloze (13 unknowns) is part of the level's win condition. WP8's authored solutions don't need to include character-identity blanks.

@@ -256,11 +256,26 @@ P.t...
 * exits=Compartment 1|Compartment 2|Compartment 3|Compartment 4|Compartment 5|Compartment 6|Compartment 7|Compartment 8|Compartment 9|Compartment 10|Compartment 11|Compartment 12|Compartment 13|Restaurant Car
 
 ```
-PE........................
+PE.......................V
+.a.b.c.d.e.f.g.h.i.j.k.l.m
 ```
 
 * P=Pierre Michel
 * E=End
+* V=Vestibule
+* a=Outside1
+* b=Outside2
+* c=Outside3
+* d=Outside4
+* e=Outside5
+* f=Outside6
+* g=Outside7
+* h=Outside8
+* i=Outside9
+* j=Outside10
+* k=Outside11
+* l=Outside12
+* m=Outside13
 
 ## Restaurant Car
 
@@ -345,7 +360,7 @@ PE........................
 
 * title=Colonel Arbuthnot
 * description=A weathered British officer of the Indian Army; pipe in hand, pipe-cleaners in pocket, opinions on everything from horses to politics.
-* items=Pipe|Pipe Cleaners
+* items=Pipe|Pipe Cleaner Decoy|Pipe Cleaner Real
 * faceImage=/sprites/kingFace.png
 * isTitleKnown=false
 
@@ -413,9 +428,14 @@ PE........................
 * description=Colonel Arbuthnot's briar pipe, bowl scorched dark with use.
 * displayChar=⌇
 
-## Pipe Cleaners
+## Pipe Cleaner Decoy
 
-* description=A small bundle of white pipe-cleaners. Standard cavalry-officer issue, slightly used.
+* description=A single white pipe-cleaner, openly dropped during a corridor smoke break — alibi-consistent. Standard cavalry-officer issue.
+* displayChar=⌁
+
+## Pipe Cleaner Real
+
+* description=A single white pipe-cleaner, identical to the first, found outside the victim's compartment — one too many for a man who smokes one bowl a night.
 * displayChar=⌁
 
 ## Sponge-Bag
@@ -717,7 +737,7 @@ conversation at T1, and the 20:20 Andrenyi exchange at T3 are presently
 audible to anyone in the room; flagged inline below.
 
 Dosing beats (design §4-T1): MacQueen pours from his Silver Flask into
-Ratchett's coffee at 20:30; Masterman doses the iced water from his
+Ratchett's coffee at 20:30; Masterman doses the mineral water from his
 Glass Vial. Both items stay in their owners' inventories — no item
 transfer events. The drugging is inferred from the flask/vial item
 descriptions when the player examines them later.
@@ -737,55 +757,162 @@ descriptions when the player examines them later.
 19:30:00 Schmidt @ Restaurant Car.SVC
 19:30:00 Pierre Michel @ Restaurant Car.SVC
 
-19:30:30 Pierre Michel says "Mesdames et messieurs, the dining service is open."
-: Hubbard says "Oh, isn't this just the loveliest carriage? My second night out and already across from a real European countess."
-: Foscarelli says "Eh, signora, we Americans must hold the table down for the Old World!"
+<!-- FU1: POV-private at T2 — Mary and Arbuthnot's whisper -->
+19:45:00 Mary says "John, please — not yet."
+: Arbuthnot says "It is going to be alright, Mary."
+: Mary says "When it's behind us. Not before."
 
-<!-- 19:45 — POV-private at T2 (FU1): Mary/Arbuthnot whisper -->
-19:45:00 Mary says "Not now. When it is behind us. When it is done."
-: Arbuthnot says "Quite right. Forgive me. I should not have spoken."
+19:50:00 Hubbard says "My daughter — near Smyrna she lives, but you'd call it Smyrna — she said to me before I left, 'Momma, you do not talk to strangers on that train.'"
+: Hubbard says "Of course I told her, 'Honey, I am the friendliest woman on God's green earth, I cannot help talking to people.' Wouldn't you say so, Mr Foscarelli?"
+: Foscarelli says "Madame, you are the soul of the train."
+: Hubbard says "Why, thank you. Now this morning at the station there was a man, and I tell you I did not like the look of him — he had a face like an old coin, all worn down, you know what I mean? I had to go right past him to my compartment. Right past him."
 
-19:50:00 Hubbard says "I was just telling my daughter — you know, before I sailed — she looked me dead in the eye and said, 'Momma, you do not talk to strangers on that train.'"
-: Hubbard says "And I said back, 'Darling, every American knows trains are perfectly safe — it is the people who ride them you have to watch.'"
-: Hubbard says "Mind you, there are some queer characters aboard. The gentleman in compartment two — well, I shall not say what I think."
-: Foscarelli says "Eh, signora, in my country we have a saying — the loudest dog at the table knows the most secrets!"
-: Greta says "Mr Foscarelli, please. Not at table."
-
-<!-- 20:00 — POV-private at T1 (FU1): Ratchett/MacQueen working conversation -->
-20:00:00 Ratchett says "MacQueen. The letters. Tell me again about the letters."
-: MacQueen says "Two so far, sir. Same hand. Same cheap paper. Whoever it is, they mean it."
-: Ratchett says "Bah. Cowards write letters. Brave men come at you in the night."
-: MacQueen says "Even so, sir — I would sleep with the door bolted."
+<!-- FU1: POV-private at T1 — Ratchett and MacQueen on the letters -->
+20:00:00 Ratchett says "Two more this morning."
+: MacQueen says "Same as before, sir?"
+: Ratchett says "Worse. Whoever it is, they know my name. My real name."
+: MacQueen says "We could wire ahead. The Yugoslav police —"
+: Ratchett says "No police. No police, MacQueen. You hear me?"
+: MacQueen says "Yes, Mr Ratchett. The letters have arrived, by the way — three more from the Belgrade post."
+: Ratchett says "Show me after dinner."
 
 20:10:00 Foscarelli @ Restaurant Car.T5
-: Foscarelli says "Your Highness — forgive the impertinence — is that this week's Russkiye Vedomosti?"
-: Princess says "It is last week's. And the answer to your next question is also no."
-: Foscarelli says "Ah. My apologies, Highness."
+: Foscarelli says "Your Highness! Forgive the intrusion. You remind me so much of a lady I used to drive for, in America. A grand lady — like yourself."
+: Princess says "Then you have a poor memory or poor taste. Sit down at your own table."
+: Foscarelli says "Ha! She would have said exactly the same thing. A grand lady — but kind, underneath. I used to drive a much finer family than this one — but that, that is a long story."
 : Foscarelli @ Restaurant Car.T4
 
-20:15:00 Greta says "Forgive me — I — I was remembering a little one I once nursed. It comes over me sometimes."
-: Hubbard says "Oh, you poor dear. Here, take my handkerchief. There now."
+20:15:00 Hubbard says "Why, honey, what's the matter?"
+: Greta says "It is nothing. I am only thinking of a child I once cared for. I do this on long journeys. I am sorry."
+: Hubbard says "Oh, sweetheart. Was it a long time ago?"
+: Greta says "Three years."
+: Hubbard says "And was she a happy child?"
+: Greta says "She was a very happy child."
 
-<!-- 20:20 — POV-private at T3 (FU1): Andrenyi exchange -->
-20:20:00 Rudolph says "Drink a little of the wine, my love. It will steady you."
-: Helena says "I am steady, Rudolph. I am perfectly steady."
+<!-- FU1: POV-private at T3 — Andrenyi exchange -->
+20:20:00 Rudolph says "Helena, my dear, you should eat something."
+: Helena says "I am not hungry."
+: Rudolph says "A little of the bread, at least. For me."
+: Helena says "Tomorrow. I promise. Tomorrow I will eat."
 
 20:30:00 MacQueen says "Coffee, sir? I brought your usual cream."
-: Ratchett says "Pour me another, MacQueen. A generous one."
-: Masterman says "Iced water, sir. As you prefer it."
-: Ratchett says "Set it down. Then leave me."
+: Ratchett says "Pour me another, MacQueen, would you?"
+: Masterman says "Your mineral water, sir."
+: Ratchett says "Masterman, the water."
+: Masterman says "Thank you, sir. Anything else?"
+: Ratchett says "No. Go and eat."
 
-21:00:00 MacQueen says "Allow me, sir — the carriage chill is coming in."
-: Ratchett says "Leave it. I am not finished with my brandy."
-: MacQueen says "Very good, sir. I shall wait in the corridor."
-: Ratchett says "No. Help me to my compartment. And bring those letters."
+21:00:00 MacQueen says "Allow me, sir."
+: Ratchett says "I am tired, MacQueen. Damnably tired."
+: MacQueen says "It has been a long day, sir."
+: Ratchett says "Help me to my compartment. And bring those letters."
+
+<!--
+WP5 — T2 settling for the night (21:05–23:30). Diners return to their
+compartments via back-planned walks from the Restaurant Car (ADR 001).
+Arbuthnot loiters at Corridor.Outside8 until 22:00 before retiring to
+#9; Rudolph stays with Helena in #6 until 22:00 before retiring to #7.
+Mary slips out at 21:40 for a brief corridor exchange during which
+Arbuthnot drops the decoy pipe-cleaner. Hubbard's bell rings at 22:15
+and again at 22:45; Pierre answers each from Corridor.Outside10. At
+half-past ten MacQueen leaves Ratchett to sleep, Pierre locks the
+vestibule (narrative only — no exit-locking mechanic; see ADR-007 §8),
+and Schmidt knocks at #13 to read Tolstoy until 23:15. By 23:30 every
+character is in their own compartment and Pierre is at Corridor.End.
+
+Privacy degradations to revisit in FU1 (POV-gated witnessing): the
+dictation at 21:05 (Ratchett/MacQueen in #2), the Andrenyi exchange in
+#6 at 21:30, and the 22:25 Ratchett/MacQueen lucid moment are
+presently audible to anyone in the same compartment; flagged inline
+below.
+-->
+
+21:05:00 Ratchett @ Compartment 2
+21:05:00 MacQueen @ Compartment 2
+21:05:00 Masterman @ Compartment 4
+21:05:00 Foscarelli @ Compartment 5
+21:05:00 Helena @ Compartment 6
+21:05:00 Rudolph @ Compartment 6
+21:05:00 Mary @ Compartment 8
+21:05:00 Arbuthnot @ Corridor.Outside8
+21:05:00 Hubbard @ Compartment 10
+21:05:00 Greta @ Compartment 11
+21:05:00 Schmidt @ Compartment 12
+21:05:00 Princess @ Compartment 13
+21:05:00 Pierre Michel @ Corridor.End
+
+<!-- FU1: POV-private at Compartment 2 — Ratchett dictates to MacQueen -->
+21:05:30 Ratchett says "Take this down. To Whoever You Are. I have eight men in Belgrade waiting for the train."
+: Ratchett says "If anything happens to me, every one of them has a name. Yours, perhaps. Stop."
+: Ratchett says "The longer you delay, the more I find out. End. Send it from the next stop."
+: MacQueen says "Yes, sir. Sir — about the letters — shouldn't someone sleep in here with you? With me, perhaps?"
+: Ratchett says "I sleep alone. Watch the corridor. That's enough."
+: MacQueen says "Yes, sir."
+
+<!-- FU1: POV-private at Compartment 6 — Rudolph and Helena -->
+21:30:00 Rudolph says "Take this. Sleep deeply. Tomorrow will be a long day."
+: Helena says "I do not need it. I can manage."
+: Rudolph says "Tonight you need it. Please."
+: Helena says "Rudolph — you will keep your promise?"
+: Rudolph says "I have given my word. To your mother and to you. It is not your hand that has to do this."
+: Helena says "Thank you."
+
+21:40:00 Mary @ Corridor.Outside8
+: Arbuthnot says "Are you well?"
+: Mary says "I will be when it is done."
+: Arbuthnot says "Three more hours. That is all."
+: Mary says "I have been waiting three years."
+: Arbuthnot drops Pipe Cleaner Decoy
+: Arbuthnot says "Get some sleep if you can."
+: Mary says "I won't sleep."
+21:45:00 Mary @ Compartment 8
+
+22:00:00 Rudolph @ Compartment 7
+22:00:00 Arbuthnot @ Compartment 9
+
+22:15:00 Pierre Michel @ Corridor.Outside10
+: Pierre Michel says "Mrs Hubbard, you rang?"
+: Hubbard says "There is a terrible draught from somewhere — can you check the window? And the door — does the door lock?"
+: Pierre Michel says "I will check the window, madame. The door locks from inside. Here."
+: Hubbard says "And from outside?"
+: Pierre Michel says "No, madame. Only from the inside. You are perfectly safe."
+: Hubbard says "Well, that is a comfort. Goodnight."
+: Pierre Michel says "Goodnight, madame."
+: Pierre Michel @ Corridor.End
+
+<!-- FU1: POV-private at Compartment 2 — Ratchett's last lucid moment -->
+22:25:00 Ratchett says "MacQueen. The lamp. Lower it."
+: Ratchett says "...watch the corridor..."
+: MacQueen says "Yes, sir. Goodnight, sir."
+
+22:30:00 MacQueen @ Compartment 3
+22:30:00 Schmidt @ Compartment 13
+: Schmidt says "Your Highness. I have brought the Tolstoy."
+: Princess says "Read me the chapter we left."
+: Schmidt says "Yes, Your Highness."
+22:30:00 Pierre Michel @ Corridor.Vestibule
+: Pierre Michel says "There. Locked for the night."
+: Pierre Michel @ Corridor.End
+
+22:45:00 Pierre Michel @ Corridor.Outside10
+: Pierre Michel says "Madame?"
+: Hubbard says "I can still feel the draught. Are you sure the window is closed?"
+: Pierre Michel says "I am sure, madame. I checked it myself."
+: Hubbard says "And there is no one — no one in the corridor?"
+: Pierre Michel says "Only myself, madame."
+: Hubbard says "Goodnight, Monsieur Michel."
+: Pierre Michel says "Goodnight, madame."
+: Pierre Michel @ Corridor.End
+
+23:15:00 Schmidt @ Compartment 12
+
+23:30:00 Pierre Michel says "Tout est calme. Bonne nuit, mesdames et messieurs."
 
 <!--
 WP6 punch-list — itinerary-driven item placements deferred from WP3:
 * Lace Handkerchief — Princess Dragomiroff drops in Compartment 2 at 01:45 during T3 visit (item to be defined in WP6, ADR-007 slug-form e.g. "Princess's Lace Handkerchief").
 * Bloody Dagger — Mrs Hubbard takes from Compartment 2 at 01:55 and conceals in her Sponge-Bag (final location Compartment 10). Item to be defined in WP6 and placed in Compartment 2 at level start so the take/hide chain works, or introduced via an itinerary drop in #2 just prior to Hubbard's visit.
 * Brass Uniform Button — Pierre Michel drops in the corridor outside Compartment 2 at 00:15 during T3.
-* Pipe-Cleaner Decoy — Colonel Arbuthnot drops at Corridor.Outside8 during T2 (~21:40).
 * Pipe-Cleaner Real — Colonel Arbuthnot drops in the corridor outside Compartment 2 during T3 at 01:25.
 * Pocket Watch smashed state — Hector MacQueen takes/advances/drops Pocket Watch in Compartment 2 at 00:25 to leave it stopped at 01:15; description rewrite to follow.
 -->
