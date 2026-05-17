@@ -233,6 +233,6 @@ King arrived in the library at 0:00:34.
 ## Possession of the Prize
 
 * unlockForSolution=The Missing Book
-* clozeStatement=The [Queen] [left] the [romance novel] in the [East Hall] after a small deception.---[Jester] [took] it, returning to [Throne Room].
+* clozeStatement=The [Queen] [left] the [romance novel] in the [East Hall] after a small deception.---The [Jester] [took] it, returning to [Throne Room].
 
 

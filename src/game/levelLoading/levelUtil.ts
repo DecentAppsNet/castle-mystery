@@ -5,7 +5,7 @@ import TimeLabel from "../types/TimeLabel";
 import { duplicateCharacter } from "../types/Character";
 import { baseUrl } from "@/common/urlUtil";
 import { MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
-import { parseNameValueLines, parseSections } from "@/common/markdownUtil";
+import { normalizeMarkdownName, parseNameValueLines, parseSections } from "@/common/markdownUtil";
 import { parseTimestampToMsecs } from "@/common/timestampUtil";
 import { loadItineraries } from "./levelItineraryLoader";
 import LoadLevelException from "./LoadLevelException";
@@ -57,7 +57,7 @@ function _parseTimeTextToMsecs(text:string):number {
 }
 
 function _parseGeneralSection(generalSection:string):{ activeCharacterId:string, startTime:number|null, winSynopsis:string } {
-  const generalNameValues = parseNameValueLines(generalSection);
+  const generalNameValues = parseNameValueLines(generalSection, true);
   return {
     activeCharacterId: generalNameValues.activeCharacter || "",
     startTime: generalNameValues.time ? _parseTimeTextToMsecs(generalNameValues.time) : null,
@@ -93,14 +93,21 @@ function _createTimeLabels(duration:number):TimeLabel[] {
 
 function _findSectionFirstContentLineNo(markdownText:string, sectionName:string, indentLevel:number = 1):number|null {
   const lines = markdownText.split('\n');
-  const headingText = `${'#'.repeat(indentLevel)} ${sectionName}`;
-  const nextHeadingPrefix = '#'.repeat(indentLevel) + ' ';
-  const headingIndex = lines.findIndex(line => line.trim() === headingText);
+  const normalizedSectionName = normalizeMarkdownName(sectionName);
+  const headingIndex = lines.findIndex(line => {
+    const trimmedLeftLine = line.trimStart();
+    const prefix = '#'.repeat(indentLevel);
+    if (!trimmedLeftLine.startsWith(prefix)) return false;
+    if (trimmedLeftLine.length === prefix.length) return false;
+    const nextChar = trimmedLeftLine[prefix.length];
+    if (nextChar !== ' ' && nextChar !== '\t') return false;
+    return normalizeMarkdownName(trimmedLeftLine.slice(prefix.length).trim()) === normalizedSectionName;
+  });
   if (headingIndex === -1) return null;
 
   for (let i = headingIndex + 1; i < lines.length; ++i) {
     const trimmedLine = lines[i].trim();
-    if (trimmedLine.startsWith(nextHeadingPrefix)) return null;
+    if (trimmedLine.startsWith('#'.repeat(indentLevel) + ' ')) return null;
     if (trimmedLine.length > 0) return i + 1;
   }
 
@@ -147,7 +154,7 @@ function _validateUnlockableSolutionPhrases(level:Level, categoryOptionsByName:M
 }
 
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
-  const sections = parseSections(text);
+  const sections = parseSections(text, 1, true);
   const generalSection = _parseGeneralSection(sections.general || "");
   const itinerarySection = sections.itinerary || "";
   const itineraryFirstLineNo = _findSectionFirstContentLineNo(text, 'itinerary') || 1;
