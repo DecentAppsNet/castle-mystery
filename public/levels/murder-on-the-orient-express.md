@@ -94,15 +94,27 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCRRRRRRRRRR
 
 ```
 ....
-.HA.
+.H..
 ....
 ....
 ```
 
 * H=Helena
-* A=Rudolph
 
 ## Compartment 7
+
+* exits=Corridor
+
+```
+....
+.A..
+....
+....
+```
+
+* A=Rudolph
+
+## Compartment 8
 
 * exits=Corridor
 
@@ -114,10 +126,6 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCRRRRRRRRRR
 ```
 
 * D=Mary
-
-## Compartment 8
-
-* exits=Corridor
 
 ## Compartment 9
 

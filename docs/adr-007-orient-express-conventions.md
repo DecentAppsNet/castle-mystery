@@ -41,17 +41,17 @@ Each character's `## <Heading>` is the short, unambiguous identifier the level l
 | Masterman            | Edward Masterman               | 4           |
 | Foscarelli           | Antonio Foscarelli             | 5           |
 | Helena               | Countess Helena Andrenyi       | 6           |
-| Rudolph              | Count Rudolph Andrenyi         | 6           |
-| Mary                 | Mary Debenham                  | 7           |
+| Rudolph              | Count Rudolph Andrenyi         | 7           |
+| Mary                 | Mary Debenham                  | 8           |
 | Arbuthnot            | Colonel Arbuthnot              | 9           |
 | Hubbard              | Mrs Caroline Hubbard           | 10          |
 | Greta                | Greta Ohlsson                  | 11          |
 | Schmidt              | Hildegarde Schmidt             | 12          |
 | Princess             | Princess Dragomiroff           | 13          |
 
-Compartment 8 has no occupant at level start. Itinerary references and solution cloze blanks must use the **`title`** form (e.g. `Princess Dragomiroff @ Compartment 13`, not `Princess @ ...`), because `parseSpeaker` / waypoint lookups match by character title. The section heading is internal.
+Itinerary references and solution cloze blanks must use the **`title`** form (e.g. `Princess Dragomiroff @ Compartment 13`, not `Princess @ ...`), because `parseSpeaker` / waypoint lookups match by character title. The section heading is internal.
 
-Cast-size note: design §3 reads "14 characters — 12 conspirators + victim + conductor", but that heading double-counts Pierre Michel (he is both a conspirator and the conductor). The cast is actually 13: 1 victim + 12 conspirators, with Pierre as the 12th conspirator. WP2 initially added a Cyrus Hardman to reach 14, but that was reverted once §2's compartment assignments, §4-T3's stab order, §5's clue inventory, and §6's clozes were checked — none mention Hardman.
+Cast-size note: design §3 reads "14 characters — 12 conspirators + victim + conductor", but that heading double-counts Pierre Michel (he is both a conspirator and the conductor, one person, not two). The actual cast is 13: 1 victim + 12 conspirators, with Pierre as the 12th conspirator. Cross-referenced against §2's compartment assignments, §4-T3's stab order, §5's clue inventory, and §6's clozes — none reference a 14th character.
 
 ### 3. `isTitleKnown=false` for all 13 characters
 
@@ -99,7 +99,7 @@ WP3 examples: `Ratchett's Passport`, `MacQueen's Passport`, `Helena's Passport`,
 
 ### 6. Per-compartment grid tile letters
 
-Each compartment containing a character has a 4×4 grid placing the character at row 1, col 1 (col 1-2 for the shared Andrenyi compartment). Tile letters avoid the map-level legend (`C`, `R`, `1`–`9`, `a`–`d`). Letters are reused across compartments because per-room legends are independent. The corridor uses `P` for Pierre Michel and Compartment 13 uses `P` for Princess Dragomiroff — both load correctly because the corridor's and Compartment 13's grid legends are scoped to their own rooms.
+Each compartment containing a character has a 4×4 grid placing the character at row 1, col 1. Tile letters avoid the map-level legend (`C`, `R`, `1`–`9`, `a`–`d`). Letters are reused across compartments because per-room legends are independent. The corridor uses `P` for Pierre Michel and Compartment 13 uses `P` for Princess Dragomiroff — both load correctly because the corridor's and Compartment 13's grid legends are scoped to their own rooms.
 
 ## Consequences
 
@@ -107,7 +107,6 @@ Each compartment containing a character has a 4×4 grid placing the character at
 - WP4–WP7 itinerary lines must use the **full title** form for each character (`Princess Dragomiroff says "..."`, not `Princess says "..."`).
 - If sprite assets are added (FU5), they must use the exact URL slugs in §4. Adding a sprite for `princessFace.png` won't be picked up — the `faceImage` URL says `dragomiroffFace.png`.
 - The auto-generated `identities` cloze (13 unknowns) is part of the level's win condition. WP8's authored solutions don't need to include character-identity blanks.
-- Compartment 8 is unassigned at level start. WP3 may treat it as ordinary empty space or stage examinable items there if §5 calls for it.
 
 ## Related
 
