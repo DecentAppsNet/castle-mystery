@@ -41,6 +41,7 @@ import lockableExitTwoSidedText from './fixtures/lockable-exit-two-sided.md?raw'
 import lowercaseTitleDefaultsText from './fixtures/lowercase-title-defaults.md?raw';
 import mapLegendRoomTitleDefaultText from './fixtures/map-legend-room-title-default.md?raw';
 import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
+import overlappingSameCharacterSpeechText from './fixtures/overlapping-same-character-speech.md?raw';
 import overrideGeneratedCategoryGroupCaseText from './fixtures/override-generated-category-group-case.md?raw';
 import overrideRoomsText from './fixtures/override-rooms.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
@@ -407,6 +408,21 @@ describe('levelUtil itinerary loading', () => {
       .replace('0:00:12 Simon @ Hallway', '0:00:13 Simon @ Hallway');
 
     expect(() => loadLevelFromText(laterArrivalText, 'doors-arrival-timestamp.md')).not.toThrow();
+  });
+
+  it('throws when the same character would speak over their own earlier speech', () => {
+    try {
+      loadLevelFromText(overlappingSameCharacterSpeechText, 'overlapping-same-character-speech.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('overlapping-same-character-speech.md');
+      expect((error as LoadLevelException).errorLineNo).toBe(33);
+      expect((error as LoadLevelException).message).toContain('same character speech overlap');
+      expect((error as LoadLevelException).message).toContain('0:00:01');
+      expect((error as LoadLevelException).message).toContain('absolute timestamp');
+      expect((error as LoadLevelException).message).toContain(`use ':' if it should wait for the previous activity`);
+    }
   });
 
 
