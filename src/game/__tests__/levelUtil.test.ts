@@ -19,6 +19,7 @@ import duplicateUnlockText from './fixtures/duplicate-unlock.md?raw';
 import duplicateCharacterSubsectionsCaseText from './fixtures/duplicate-character-subsections-case.md?raw';
 import duplicateCharacterPlacementText from './fixtures/duplicate-character-placement.md?raw';
 import duplicateCharacterPropertyText from './fixtures/duplicate-character-property.md?raw';
+import conflictingExitModifiersText from './fixtures/conflicting-exit-modifiers.md?raw';
 import duplicateGeneralEntryText from './fixtures/duplicate-general-entry.md?raw';
 import duplicateGeneralSectionText from './fixtures/duplicate-general-section.md?raw';
 import duplicateItemSubsectionsCaseText from './fixtures/duplicate-item-subsections-case.md?raw';
@@ -33,6 +34,9 @@ import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
 import inventoryItemDefaultCategoryText from './fixtures/inventory-item-default-category.md?raw';
 import inventoryItemTitleCasingText from './fixtures/inventory-item-title-casing.md?raw';
+import closedDoorExitText from './fixtures/closed-door-exit.md?raw';
+import lockableExitOneSidedText from './fixtures/lockable-exit-one-sided.md?raw';
+import lockableExitTwoSidedText from './fixtures/lockable-exit-two-sided.md?raw';
 import lowercaseTitleDefaultsText from './fixtures/lowercase-title-defaults.md?raw';
 import mapLegendRoomTitleDefaultText from './fixtures/map-legend-room-title-default.md?raw';
 import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
@@ -48,6 +52,8 @@ import { loadLevelFromText } from '../levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
 import ClozeBlank from '../solutions/types/ClozeBlank';
+import ExitStatus from '../types/ExitStatus';
+import ExitType from '../types/ExitType';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?raw';
 import dropItemText from '../integration-tests/fixtures/drop-item.md?raw';
@@ -252,6 +258,29 @@ describe('levelUtil itinerary loading', () => {
     expect(room.title).toBe('MacDonald Hall');
   });
 
+  it('parses equivalent lockable locked exits from one-sided and two-sided authoring', () => {
+    const oneSidedLevel = loadLevelFromText(lockableExitOneSidedText);
+    const twoSidedLevel = loadLevelFromText(lockableExitTwoSidedText);
+    const oneSidedExit = findRoom(oneSidedLevel.rooms, 'Bedroom').exits[0];
+    const twoSidedExit = findRoom(twoSidedLevel.rooms, 'Bedroom').exits[0];
+
+    expect(oneSidedExit.exitType).toBe(ExitType.lockableDoor);
+    expect(oneSidedExit.exitStatus).toBe(ExitStatus.locked);
+    expect(oneSidedExit.isLockableFromRoom1).toBe(true);
+    expect(oneSidedExit.isLockableFromRoom2).toBe(false);
+    expect(twoSidedExit).toEqual(oneSidedExit);
+  });
+
+  it('parses closed non-lockable door exits', () => {
+    const level = loadLevelFromText(closedDoorExitText);
+    const exit = findRoom(level.rooms, 'Bedroom').exits[0];
+
+    expect(exit.exitType).toBe(ExitType.door);
+    expect(exit.exitStatus).toBe(ExitStatus.closed);
+    expect(exit.isLockableFromRoom1).toBe(false);
+    expect(exit.isLockableFromRoom2).toBe(false);
+  });
+
   it('loads winSynopsis from the general section and defaults it when omitted', () => {
     expect(loadLevelFromText(winSynopsisText).winSynopsis).toBe('The mystery is solved.');
     expect(loadLevelFromText(identitiesAllTitlesKnownText).winSynopsis).toBe('You completed the level.');
@@ -276,6 +305,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('duplicate-general-section.md:1');
       expect((error as LoadLevelException).message).toContain(`duplicate section 'general'`);
+    }
+  });
+
+  it('wraps conflicting exit modifiers with filename and line number', () => {
+    try {
+      loadLevelFromText(conflictingExitModifiersText, 'conflicting-exit-modifiers.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('conflicting-exit-modifiers.md:12');
+      expect((error as LoadLevelException).message).toContain('conflicting exit modifiers');
     }
   });
 

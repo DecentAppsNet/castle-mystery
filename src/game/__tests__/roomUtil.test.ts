@@ -6,6 +6,8 @@ import Obstruction from '../types/Obstruction';
 import Character from '../types/Character';
 import Rect from '../types/Rect';
 import Room from '../types/Room';
+import ExitStatus from '../types/ExitStatus';
+import ExitType from '../types/ExitType';
 import RoomExit from '../types/RoomExit';
 import Waypoint from '../types/Waypoint';
 
@@ -13,7 +15,16 @@ const ROOM_ID = 'Room';
 const ROOM_RECT:Rect = { x:0, y:0, width:20, height:20 };
 
 function _createExit(room2Id:string, x:number, y:number):RoomExit {
-  return { room1Id:ROOM_ID, room2Id, x, y };
+  return {
+    room1Id:ROOM_ID,
+    room2Id,
+    x,
+    y,
+    exitType:ExitType.doorway,
+    isLockableFromRoom1:false,
+    isLockableFromRoom2:false,
+    exitStatus:ExitStatus.open
+  };
 }
 
 function _createRoom(id:string, rect:Rect, exits:RoomExit[] = [], waypoints:Waypoint[] = []):Room {
@@ -264,7 +275,16 @@ describe('roomUtil', () => {
     });
 
     it('creates exit routes when the room id is the second side of an exit', () => {
-      const exits:RoomExit[] = [{ room1Id:'North', room2Id:ROOM_ID, x:10, y:0 }];
+      const exits:RoomExit[] = [{
+        room1Id:'North',
+        room2Id:ROOM_ID,
+        x:10,
+        y:0,
+        exitType:ExitType.doorway,
+        isLockableFromRoom1:false,
+        isLockableFromRoom2:false,
+        exitStatus:ExitStatus.open
+      }];
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, []);
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exits[0], waypoints);
 

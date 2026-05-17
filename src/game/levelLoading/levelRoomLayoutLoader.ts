@@ -8,6 +8,9 @@ import Level from "../types/Level";
 import Obstruction from "../types/Obstruction";
 import Rect from "../types/Rect";
 import Room from "../types/Room";
+import ExitStatus from "../types/ExitStatus";
+import ExitType from "../types/ExitType";
+import RoomExit from "../types/RoomExit";
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { createNormalizedEntryMap, normalizeId } from "../idUtil";
 
@@ -29,6 +32,20 @@ type MarkerTile = {
   row:number,
   col:number
 };
+
+type ParsedExitReference = {
+  connectedRoomId:string,
+  modifiers:Set<string>
+};
+
+type PendingExit = {
+  room1Id:string,
+  room2Id:string,
+  room1Modifiers:Set<string>,
+  room2Modifiers:Set<string>
+};
+
+const VALID_EXIT_MODIFIERS = new Set(['lockable', 'unlockable', 'closed', 'open', 'locked', 'unlocked']);
 
 function _isIgnoredGridTileChar(tileChar:string):boolean {
   return tileChar === '.' || tileChar === '#' || tileChar === ' ' || tileChar === '\t';
@@ -294,32 +311,111 @@ function _findExitPositionFromSharedWallSection(sharedWallSection:Rect):[x:numbe
     : [sharedWallSection.x, Math.round(sharedWallSection.y + sharedWallSection.height / 2)];
 }
 
-function _addExitBetweenRooms(level:Level, room1Id:string, room2Id:string) {
+function _parseExitReference(exitText:string):ParsedExitReference {
+  const trimmedExitText = exitText.trim();
+  const openParenIndex = trimmedExitText.indexOf('(');
+  if (openParenIndex === -1) return { connectedRoomId:normalizeId(trimmedExitText), modifiers:new Set() };
+
+  const closeParenIndex = trimmedExitText.lastIndexOf(')');
+  if (closeParenIndex < openParenIndex) throw new Error(`invalid exit modifiers syntax '${trimmedExitText}'`);
+  const trailingText = trimmedExitText.slice(closeParenIndex + 1).trim();
+  if (trailingText.length > 0) throw new Error(`invalid exit modifiers syntax '${trimmedExitText}'`);
+
+  const connectedRoomText = trimmedExitText.slice(0, openParenIndex).trim();
+  const modifiers = new Set(parseOptions(trimmedExitText.slice(openParenIndex + 1, closeParenIndex).split(',').join('|'))
+    .map(modifier => modifier.toLowerCase()));
+
+  Array.from(modifiers).forEach(modifier => {
+    if (!VALID_EXIT_MODIFIERS.has(modifier)) throw new Error(`invalid exit modifier '${modifier}' in '${trimmedExitText}'`);
+  });
+
+  return { connectedRoomId:normalizeId(connectedRoomText), modifiers };
+}
+
+function _hasAnyModifier(modifiers:Set<string>, candidateModifiers:string[]):boolean {
+  return candidateModifiers.some(candidateModifier => modifiers.has(candidateModifier));
+}
+
+function _getCombinedExitModifiers(exit:PendingExit):Set<string> {
+  return new Set([...Array.from(exit.room1Modifiers), ...Array.from(exit.room2Modifiers)]);
+}
+
+function _determineExitType(exit:PendingExit):ExitType {
+  const combinedModifiers = _getCombinedExitModifiers(exit);
+  if (!combinedModifiers.size) return ExitType.doorway;
+  if (_hasAnyModifier(combinedModifiers, ['locked', 'unlocked', 'lockable', 'unlockable'])) return ExitType.lockableDoor;
+  return ExitType.door;
+}
+
+function _determineExitStatus(exit:PendingExit, exitType:ExitType):ExitStatus {
+  const combinedModifiers = _getCombinedExitModifiers(exit);
+  if (exitType === ExitType.doorway) return ExitStatus.open;
+
+  if (combinedModifiers.has('locked')) {
+    if (_hasAnyModifier(combinedModifiers, ['unlocked', 'open'])) throw new Error(`conflicting exit modifiers for ${exit.room1Id}|${exit.room2Id}: locked`);
+    return ExitStatus.locked;
+  }
+  if (_hasAnyModifier(combinedModifiers, ['unlocked', 'lockable', 'unlockable'])) {
+    if (combinedModifiers.has('locked')) throw new Error(`conflicting exit modifiers for ${exit.room1Id}|${exit.room2Id}: unlocked`);
+    return ExitStatus.unlocked;
+  }
+  if (combinedModifiers.has('open')) {
+    if (_hasAnyModifier(combinedModifiers, ['locked', 'closed'])) throw new Error(`conflicting exit modifiers for ${exit.room1Id}|${exit.room2Id}: open`);
+    return ExitStatus.open;
+  }
+  return ExitStatus.closed;
+}
+
+function _createPendingExits(roomsSection:string):PendingExit[] {
+  const pendingExitsByPairKey = new Map<string, PendingExit>();
+  const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
+
+  Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
+    const roomSection = roomSectionEntry.value;
+    const nameValues = _parseNameValueLinesOrThrowDuplicate(roomSection, `room ${roomId}`);
+    parseOptions(nameValues.exits || '').forEach(exitText => {
+      const parsedExit = _parseExitReference(exitText);
+      const [room1Id, room2Id] = [roomId, parsedExit.connectedRoomId].sort();
+      const pairKey = `${room1Id}|${room2Id}`;
+      const pendingExit = pendingExitsByPairKey.get(pairKey) || {
+        room1Id,
+        room2Id,
+        room1Modifiers:new Set<string>(),
+        room2Modifiers:new Set<string>()
+      };
+      const sideModifiers = pendingExit.room1Id === roomId ? pendingExit.room1Modifiers : pendingExit.room2Modifiers;
+      parsedExit.modifiers.forEach(modifier => sideModifiers.add(modifier));
+      pendingExitsByPairKey.set(pairKey, pendingExit);
+    });
+  });
+
+  return Array.from(pendingExitsByPairKey.values());
+}
+
+function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
+  const { room1Id, room2Id } = pendingExit;
   const room1 = findRoom(level.rooms, room1Id);
   const room2 = findRoom(level.rooms, room2Id);
   const sharedWallSection = _findSharedWallSectionBetweenRooms(room1, room2);
   assertNonNullable(sharedWallSection, 'rooms must be adjacent');
   const [x, y] = _findExitPositionFromSharedWallSection(sharedWallSection);
-  const exit = { room1Id, room2Id, x, y };
+  const exitType = _determineExitType(pendingExit);
+  const exit:RoomExit = {
+    room1Id,
+    room2Id,
+    x,
+    y,
+    exitType,
+    isLockableFromRoom1: exitType === ExitType.lockableDoor && _hasAnyModifier(pendingExit.room1Modifiers, ['lockable', 'unlockable']),
+    isLockableFromRoom2: exitType === ExitType.lockableDoor && _hasAnyModifier(pendingExit.room2Modifiers, ['lockable', 'unlockable']),
+    exitStatus: _determineExitStatus(pendingExit, exitType)
+  };
   room1.exits.push(exit);
   room2.exits.push(exit);
 }
 
 export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string) {
-  const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
-  const addedExitPairs = new Set<string>();
-
-  Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
-    const roomSection = roomSectionEntry.value;
-    const nameValues = _parseNameValueLinesOrThrowDuplicate(roomSection, `room ${roomId}`);
-    parseOptions(nameValues.exits || "").forEach(connectedRoomText => {
-      const connectedRoomId = normalizeId(connectedRoomText);
-      const exitPairKey = [roomId, connectedRoomId].sort().join("|");
-      if (addedExitPairs.has(exitPairKey)) return;
-      _addExitBetweenRooms(level, roomId, connectedRoomId);
-      addedExitPairs.add(exitPairKey);
-    });
-  });
+  _createPendingExits(roomsSection).forEach(pendingExit => _addExitBetweenRooms(level, pendingExit));
 }
 
 export function generateRoomWaypointsForLevel(level:Level) {
