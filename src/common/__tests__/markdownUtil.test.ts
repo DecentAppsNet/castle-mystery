@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from '../markdownUtil';
+import {
+  normalizeMarkdownName,
+  parseFirstFencedCodeBlockLines,
+  parseNameValueLineEntries,
+  parseOptions,
+  parseSectionEntries,
+  parseSections,
+  parseUniqueNameValueLines
+} from '../markdownUtil';
 
 describe('markdownUtil', () => {
   describe('normalizeMarkdownName()', () => {
@@ -55,6 +63,33 @@ describe('markdownUtil', () => {
     });
   });
 
+  describe('parseSectionEntries()', () => {
+    it('preserves section order and content without collapsing entries into an object', () => {
+      const entries = parseSectionEntries([
+        '## East Hall',
+        '* title=East Hall',
+        '## West Hall',
+        '* title=West Hall'
+      ].join('\n'), 2);
+
+      expect(entries).toEqual([
+        ['East Hall', '* title=East Hall'],
+        ['West Hall', '* title=West Hall']
+      ]);
+    });
+
+    it('normalizes heading names when requested', () => {
+      const entries = parseSectionEntries([
+        '# General',
+        '* activeCharacter=Hero',
+        '# WIN SYNOPSIS',
+        '* ignored=true'
+      ].join('\n'), 1, true);
+
+      expect(entries.map(([name]) => name)).toEqual(['general', 'winSynopsis']);
+    });
+  });
+
   describe('parseUniqueNameValueLines()', () => {
     it('accepts forgiving whitespace around bullets and equals signs', () => {
       const nameValues = parseUniqueNameValueLines([
@@ -85,6 +120,58 @@ describe('markdownUtil', () => {
         '* title=Library',
         '* title=Study'
       ].join('\n'), 'room')).toThrow(`duplicate room entry 'title'`);
+    });
+  });
+
+  describe('parseNameValueLineEntries()', () => {
+    it('preserves authored key order and duplicate entries', () => {
+      const entries = parseNameValueLineEntries([
+        '* title=Library',
+        '* title=Study',
+        '* description=Quiet'
+      ].join('\n'));
+
+      expect(entries).toEqual([
+        ['title', 'Library'],
+        ['title', 'Study'],
+        ['description', 'Quiet']
+      ]);
+    });
+
+    it('normalizes property names when requested', () => {
+      const entries = parseNameValueLineEntries([
+        '* Active Character = Hero',
+        '* WIN SYNOPSIS = Solved.'
+      ].join('\n'), true);
+
+      expect(entries).toEqual([
+        ['activeCharacter', 'Hero'],
+        ['winSynopsis', 'Solved.']
+      ]);
+    });
+  });
+
+  describe('parseOptions()', () => {
+    it('trims option text and removes empty options', () => {
+      expect(parseOptions(' Book | | Crown |  ')).toEqual(['Book', 'Crown']);
+    });
+  });
+
+  describe('parseFirstFencedCodeBlockLines()', () => {
+    it('returns only the first fenced block and skips blank lines inside it', () => {
+      const lines = parseFirstFencedCodeBlockLines([
+        '* title=Hall',
+        '```',
+        'AB',
+        '',
+        'CD',
+        '```',
+        '```',
+        'EF',
+        '```'
+      ].join('\n'));
+
+      expect(lines).toEqual(['AB', 'CD']);
     });
   });
 });
