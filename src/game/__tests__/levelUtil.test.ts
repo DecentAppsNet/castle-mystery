@@ -16,6 +16,11 @@ import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapsho
 import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
 import duplicateUnlockText from './fixtures/duplicate-unlock.md?raw';
+import duplicateCharacterSubsectionsCaseText from './fixtures/duplicate-character-subsections-case.md?raw';
+import duplicateCharacterPlacementText from './fixtures/duplicate-character-placement.md?raw';
+import duplicateItemSubsectionsCaseText from './fixtures/duplicate-item-subsections-case.md?raw';
+import duplicateItemIdInventoryText from './fixtures/duplicate-item-id-inventory.md?raw';
+import duplicateRoomIdMapLegendText from './fixtures/duplicate-room-id-map-legend.md?raw';
 import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsections-case.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
 import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
@@ -345,6 +350,61 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:15');
       expect((error as LoadLevelException).message).toContain('multiple unlockForItem lines');
+    }
+  });
+
+  it('wraps duplicate normalized character subsection ids with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateCharacterSubsectionsCaseText, 'duplicate-character-subsections-case.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-character-subsections-case.md:25');
+      expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'HERO' conflicts with 'Hero'`);
+    }
+  });
+
+  it('wraps duplicate normalized item subsection ids with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateItemSubsectionsCaseText, 'duplicate-item-subsections-case.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-item-subsections-case.md:23');
+      expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'BOOK' conflicts with 'Book'`);
+    }
+  });
+
+  it('wraps duplicate room ids from map legend reuse with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateRoomIdMapLegendText, 'duplicate-room-id-map-legend.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-room-id-map-legend.md:7');
+      expect((error as LoadLevelException).message).toContain(`duplicate room id 'HALL' conflicts with 'Hall' in map legend`);
+    }
+  });
+
+  it('wraps duplicate character ids from room placement with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateCharacterPlacementText, 'duplicate-character-placement.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-character-placement.md:15');
+      expect((error as LoadLevelException).message).toContain(`duplicate character id 'hero'`);
+    }
+  });
+
+  it('wraps duplicate item ids across placed and inventory items with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateItemIdInventoryText, 'duplicate-item-id-inventory.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-item-id-inventory.md:32');
+      expect((error as LoadLevelException).message).toContain(`duplicate item id 'book' in character hero inventory`);
     }
   });
 

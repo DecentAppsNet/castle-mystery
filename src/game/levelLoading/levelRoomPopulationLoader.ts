@@ -34,17 +34,18 @@ export type RoomPopulationDefinitions = {
 
 export function parseRoomPopulationDefinitions(charactersSection:string, itemsSection:string):RoomPopulationDefinitions {
 	return {
-		characterDefinitions: _parseCharacterDefinitions(charactersSection),
-		itemDefinitions: _parseItemDefinitions(itemsSection)
+		characterDefinitions: parseCharacterDefinitions(charactersSection),
+		itemDefinitions: parseItemDefinitions(itemsSection)
 	};
 }
 
-function _parseCharacterDefinitions(charactersSection:string):Map<string, CharacterDefinition> {
+export function parseCharacterDefinitions(charactersSection:string):Map<string, CharacterDefinition> {
 	const characterDefinitions = new Map<string, CharacterDefinition>();
-	const characterSections = parseSections(charactersSection, 2);
-	Object.entries(characterSections).forEach(([authoredCharacterName, characterSection]) => {
+	const characterSectionsById = createNormalizedEntryMap(Object.entries(parseSections(charactersSection, 2)));
+	Array.from(characterSectionsById.entries()).forEach(([characterId, characterSectionEntry]) => {
+		const authoredCharacterName = characterSectionEntry.authoredName;
+		const characterSection = characterSectionEntry.value;
 		const nameValues = parseNameValueLines(characterSection);
-		const characterId = normalizeId(authoredCharacterName);
 		characterDefinitions.set(characterId, {
 			title:nameValues.title || authoredCharacterName,
 			description:nameValues.description || "",
@@ -56,12 +57,13 @@ function _parseCharacterDefinitions(charactersSection:string):Map<string, Charac
 	return characterDefinitions;
 }
 
-function _parseItemDefinitions(itemsSection:string):Map<string, ItemDefinition> {
+export function parseItemDefinitions(itemsSection:string):Map<string, ItemDefinition> {
 	const itemDefinitions = new Map<string, ItemDefinition>();
-	const itemSections = parseSections(itemsSection, 2);
-	Object.entries(itemSections).forEach(([authoredItemName, itemSection]) => {
+	const itemSectionsById = createNormalizedEntryMap(Object.entries(parseSections(itemsSection, 2)));
+	Array.from(itemSectionsById.entries()).forEach(([itemId, itemSectionEntry]) => {
+		const authoredItemName = itemSectionEntry.authoredName;
+		const itemSection = itemSectionEntry.value;
 		const nameValues = parseNameValueLines(itemSection);
-		const itemId = normalizeId(authoredItemName);
 		itemDefinitions.set(itemId, {
 			title:nameValues.title || authoredItemName,
 			description:nameValues.description || "",
@@ -78,10 +80,35 @@ export function createKnownPopulationEntryIds(definitions:RoomPopulationDefiniti
 	]);
 }
 
-export function loadRoomPopulation(level:Level, roomsSection:string, definitions:RoomPopulationDefinitions, levelFilename:string) {
-	void levelFilename;
+export function loadRoomPopulationFromRoomsSection(level:Level, roomsSection:string, definitions:RoomPopulationDefinitions) {
 	_addCharactersAndRoomItemsFromSections(level, roomsSection, definitions.characterDefinitions, definitions.itemDefinitions);
+}
+
+export function loadCharacterInventoryItems(level:Level, definitions:RoomPopulationDefinitions) {
 	_addInventoryItemsToCharacters(level, definitions.characterDefinitions, definitions.itemDefinitions);
+}
+
+
+function _findExistingItem(level:Level, itemId:string):Item|null {
+	for (const room of level.rooms) {
+		const roomItem = room.items.find(item => item.id === itemId) || null;
+		if (roomItem) return roomItem;
+	}
+	for (const character of level.characters) {
+		const characterItem = character.items.find(item => item.id === itemId) || null;
+		if (characterItem) return characterItem;
+	}
+	return null;
+}
+
+function _assertCharacterIdIsUnique(level:Level, characterId:string, roomId:string, row:number, col:number) {
+	if (level.characters.some(character => character.id === characterId)) {
+		throw new Error(`duplicate character id '${characterId}' at row ${row + 1}, col ${col + 1} in room ${roomId}`);
+	}
+}
+
+function _assertItemIdIsUnique(level:Level, itemId:string, context:string) {
+	if (_findExistingItem(level, itemId)) throw new Error(`duplicate item id '${itemId}' ${context}`);
 }
 
 
@@ -144,10 +171,12 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 			const [x, y] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
 			const characterDefinition = characterDefinitions.get(entryId);
 			if (characterDefinition) {
+				_assertCharacterIdIsUnique(level, entryId, roomId, row, col);
 				_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description, characterDefinition.faceImageUrl, characterDefinition.isTitleKnown, x, y);
 				return;
 			}
 			if (itemDefinitions.has(entryId)) {
+				_assertItemIdIsUnique(level, entryId, `at row ${row + 1}, col ${col + 1} in room ${roomId}`);
 				_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, authoredEntryText, itemDefinitions, { x, y }, false));
 				return;
 			}
@@ -159,9 +188,10 @@ function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<st
 	level.characters.forEach(character => {
 		const characterDefinition = characterDefinitions.get(character.id);
 		if (!characterDefinition) return;
-		_addItemsToCharacter(level, character.id, characterDefinition.itemIds.map(itemId =>
-			_createItemFromDefinition(itemId, itemDefinitions.get(itemId)?.title || itemId, itemDefinitions, { x:0, y:0 }, true)
-		));
+		_addItemsToCharacter(level, character.id, characterDefinition.itemIds.map(itemId => {
+			_assertItemIdIsUnique(level, itemId, `in character ${character.id} inventory`);
+			return _createItemFromDefinition(itemId, itemDefinitions.get(itemId)?.title || itemId, itemDefinitions, { x:0, y:0 }, true);
+		}));
 	});
 }
 

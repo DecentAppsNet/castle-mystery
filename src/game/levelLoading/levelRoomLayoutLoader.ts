@@ -176,7 +176,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, roomsS
   const mapLines = parseFirstFencedCodeBlockLines(mapSection);
   const legend = parseNameValueLines(mapSection);
   const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
-  const roomBoundsById = new Map<string, { authoredName:string, minCol:number, maxCol:number, minRow:number, maxRow:number }>();
+  const roomBoundsById = new Map<string, { authoredName:string, tileChar:string, minCol:number, maxCol:number, minRow:number, maxRow:number }>();
 
   mapLines.forEach((line, row) => {
     Array.from(line).forEach((tileChar, col) => {
@@ -185,9 +185,10 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, roomsS
       const roomId = normalizeId(authoredRoomName);
       const existingBounds = roomBoundsById.get(roomId);
       if (!existingBounds) {
-        roomBoundsById.set(roomId, { authoredName:authoredRoomName, minCol:col, maxCol:col, minRow:row, maxRow:row });
+        roomBoundsById.set(roomId, { authoredName:authoredRoomName, tileChar, minCol:col, maxCol:col, minRow:row, maxRow:row });
         return;
       }
+      if (existingBounds.tileChar !== tileChar) throw new Error(`duplicate room id '${authoredRoomName}' conflicts with '${existingBounds.authoredName}' in map legend`);
       existingBounds.minCol = Math.min(existingBounds.minCol, col);
       existingBounds.maxCol = Math.max(existingBounds.maxCol, col);
       existingBounds.minRow = Math.min(existingBounds.minRow, row);

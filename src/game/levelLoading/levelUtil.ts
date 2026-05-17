@@ -17,8 +17,10 @@ import {
 } from "./levelRoomLayoutLoader";
 import {
   createKnownPopulationEntryIds,
-  loadRoomPopulation,
-  parseRoomPopulationDefinitions
+  loadCharacterInventoryItems,
+  loadRoomPopulationFromRoomsSection,
+  parseCharacterDefinitions,
+  parseItemDefinitions
 } from "./levelRoomPopulationLoader";
 import { createGeneratedIdentitySolution, createSolutionCategoryOptionsByName, loadSolutionsFromSection } from "./levelSolutionsLoader";
 import ClozeBlank from "../solutions/types/ClozeBlank";
@@ -187,8 +189,11 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     startTime: generalSection.startTime ?? level.startTime,
     winSynopsis: generalSection.winSynopsis || level.winSynopsis
   };
-  const roomPopulationDefinitions = _runWithLoadLevelSectionContext(levelFilename, Math.min(charactersFirstLineNo, itemsFirstLineNo),
-    () => parseRoomPopulationDefinitions(sections.characters || "", sections.items || ""));
+  const characterDefinitions = _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
+    () => parseCharacterDefinitions(sections.characters || ""));
+  const itemDefinitions = _runWithLoadLevelSectionContext(levelFilename, itemsFirstLineNo,
+    () => parseItemDefinitions(sections.items || ""));
+  const roomPopulationDefinitions = { characterDefinitions, itemDefinitions };
   _runWithLoadLevelSectionContext(levelFilename, mapFirstLineNo,
     () => createRoomsFromMapSection(level, sections.map || "", sections.rooms || ""));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
@@ -198,7 +203,9 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
     () => generateRoomWaypointsForLevel(level));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-    () => loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions, levelFilename));
+    () => loadRoomPopulationFromRoomsSection(level, sections.rooms || "", roomPopulationDefinitions));
+  _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
+    () => loadCharacterInventoryItems(level, roomPopulationDefinitions));
   const solutionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
     () => createSolutionCategoryOptionsByName(sections.solutions || "", _createDefaultSolutionCategoryOptions(level)));
   const authoredSolutions = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
