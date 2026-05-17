@@ -20,17 +20,23 @@ function _findReferencedImageUrls(level:Level):string[] {
   return [...imageUrls];
 }
 
-async function _loadImageBitmap(imageUrl:string):Promise<ImageBitmap> {
-  if (typeof createImageBitmap !== 'function') throw new Error(`ImageBitmap is not supported for ${imageUrl}`);
-  const response = await fetch(baseUrl(imageUrl));
-  if (!response.ok) throw new Error(`unable to load face image ${imageUrl}`);
-  return await createImageBitmap(await response.blob());
+async function _loadImageBitmap(imageUrl:string):Promise<ImageBitmap|null> {
+  if (typeof createImageBitmap !== 'function') return null;
+  try {
+    const response = await fetch(baseUrl(imageUrl));
+    if (!response.ok) return null;
+    return await createImageBitmap(await response.blob());
+  } catch {
+    return null;
+  }
 }
 
 export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
   const imageSet = createEmptyImageSet();
   const imageUrls = _findReferencedImageUrls(level);
   const imageEntries = await Promise.all(imageUrls.map(async imageUrl => [imageUrl, await _loadImageBitmap(imageUrl)] as const));
-  imageEntries.forEach(([imageUrl, imageBitmap]) => imageSet.set(imageUrl, imageBitmap));
+  imageEntries.forEach(([imageUrl, imageBitmap]) => {
+    if (imageBitmap) imageSet.set(imageUrl, imageBitmap);
+  });
   return imageSet;
 }
