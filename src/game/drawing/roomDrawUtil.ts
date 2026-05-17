@@ -2,6 +2,7 @@
 
 import { drawObscuredActiveCharacter, drawVisibleCharactersInRoom } from "./characterDrawUtil";
 import { createObstructionBoundarySegments } from "../obstructionUtil";
+import { findExitImageUrl } from "../exitImageUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
@@ -14,13 +15,18 @@ import ScalingFactors from "../types/ScalingFactors";
 import Effect from "../effects/types/Effect";
 import ImageSet from "../types/ImageSet";
 
-function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function drawRoomExit(exit:RoomExit, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const { roomLineWidth } = scalingFactors;
   const [exitX, exitY] = gameToCanvasPosition(exit.x, exit.y, scalingFactors);
-  const left = exitX - roomLineWidth;
-  const top = exitY - roomLineWidth;
-  const width = roomLineWidth * 3;
-  const height = roomLineWidth * 3;
+  const width = roomLineWidth * 6;
+  const exitImage = imageSet.get(findExitImageUrl(exit.exitType)) || null;
+  const height = exitImage ? width * (exitImage.height / exitImage.width) : roomLineWidth * 3;
+  const left = exitX - width / 2;
+  const top = exitY - height / 2;
+  if (exitImage) {
+    context.drawImage(exitImage, left, top, width, height);
+    return;
+  }
   context.fillStyle = COLOR_BLACK;
   context.lineWidth = roomLineWidth;
   context.fillRect(left, top, width, height);
@@ -95,11 +101,12 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.fillStyle = COLOR_ROOM_TITLE_TEXT;
   context.fillText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
   if (isRoomObscured) {
+    room.exits.forEach(exit => drawRoomExit(exit, scalingFactors, context, imageSet));
     if (isActive && activeCharacter) drawObscuredActiveCharacter(room, scalingFactors, context);
     return;
   }
   context.fillStyle = COLOR_BLACK;
-  room.exits.forEach(exit => drawRoomExit(exit, scalingFactors, context));
+  room.exits.forEach(exit => drawRoomExit(exit, scalingFactors, context, imageSet));
   if (showFullContents || (isActive && activeCharacter)) {
     const highlightedCharacter = activeCharacter || charactersInRoom[0] || null;
     if (highlightedCharacter) drawVisibleCharactersInRoom(charactersInRoom, highlightedCharacter, effects, scalingFactors, context, time, imageSet);

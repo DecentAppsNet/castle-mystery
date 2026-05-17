@@ -1,4 +1,5 @@
 import { baseUrl } from "@/common/urlUtil";
+import { BUILT_IN_EXIT_IMAGE_URLS } from "./exitImageUtil";
 import ClozeImage from "./solutions/types/ClozeImage";
 import ClozePartType from "./solutions/types/ClozePartType";
 import Level from "./types/Level";
@@ -9,7 +10,7 @@ export function createEmptyImageSet():ImageSet {
 }
 
 function _findReferencedImageUrls(level:Level):string[] {
-  const imageUrls = new Set<string>();
+  const imageUrls = new Set<string>(BUILT_IN_EXIT_IMAGE_URLS);
   const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
   sourceCharacters.forEach(character => {
     if (character.faceImageUrl) imageUrls.add(character.faceImageUrl);
@@ -23,7 +24,7 @@ function _findReferencedImageUrls(level:Level):string[] {
 async function _loadImageBitmap(imageUrl:string):Promise<ImageBitmap> {
   if (typeof createImageBitmap !== 'function') throw new Error(`ImageBitmap is not supported for ${imageUrl}`);
   const response = await fetch(baseUrl(imageUrl));
-  if (!response.ok) throw new Error(`unable to load face image ${imageUrl}`);
+  if (!response.ok) throw new Error(`unable to load image ${imageUrl}`);
   return await createImageBitmap(await response.blob());
 }
 

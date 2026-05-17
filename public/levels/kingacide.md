@@ -25,7 +25,7 @@ WFL
 
 ## Sanctum
 
-* exits=West Hall
+* exits=West Hall (lockable)
 
 ## West Hall
 
@@ -72,7 +72,7 @@ WFL
 .......
 ```
 
-* exits=Foyer|East Hall
+* exits=Foyer (closed)|East Hall (closed)
 * K=King
 * J=Jester
 
