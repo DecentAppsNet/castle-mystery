@@ -149,6 +149,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 			}
 			if (itemDefinitions.has(entryId)) {
 				_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, authoredEntryText, itemDefinitions, { x, y }, false));
+				return;
 			}
 		});
 	});

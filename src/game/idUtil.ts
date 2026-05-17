@@ -17,7 +17,10 @@ export function assertNormalizedId(value:string, label:string):void {
 export function createNormalizedEntryMap<T>(entries:ReadonlyArray<readonly [string, T]>):Map<string, { authoredName:string, value:T }> {
   const normalizedMap = new Map<string, { authoredName:string, value:T }>();
   entries.forEach(([authoredName, value]) => {
-    normalizedMap.set(normalizeId(authoredName), { authoredName, value });
+    const normalizedName = normalizeId(authoredName);
+    const existingEntry = normalizedMap.get(normalizedName) || null;
+    if (existingEntry) throw new Error(`duplicate normalized entry '${authoredName}' conflicts with '${existingEntry.authoredName}'`);
+    normalizedMap.set(normalizedName, { authoredName, value });
   });
   return normalizedMap;
 }

@@ -16,6 +16,7 @@ import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapsho
 import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
 import duplicateUnlockText from './fixtures/duplicate-unlock.md?raw';
+import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsections-case.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
 import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
 import overrideRoomsText from './fixtures/override-rooms.md?raw';
@@ -377,6 +378,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-room-legend-tile.md:15');
       expect((error as LoadLevelException).message).toContain(`unknown room legend tile 'X'`);
+    }
+  });
+
+  it('wraps duplicate normalized room subsection ids with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateRoomSubsectionsCaseText, 'duplicate-room-subsections-case.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-room-subsections-case.md:7');
+      expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'HALL' conflicts with 'Hall'`);
     }
   });
 
