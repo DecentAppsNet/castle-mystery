@@ -11,6 +11,7 @@ import Character from "../types/Character";
 import Item from "../types/Item";
 import Level from "../types/Level";
 import Room from "../types/Room";
+import { assertNormalizedId, createNormalizedEntryMap, normalizeId } from "../idUtil";
 
 type CharacterDefinition = {
 	title:string,
@@ -41,12 +42,13 @@ export function parseRoomPopulationDefinitions(charactersSection:string, itemsSe
 function _parseCharacterDefinitions(charactersSection:string):Map<string, CharacterDefinition> {
 	const characterDefinitions = new Map<string, CharacterDefinition>();
 	const characterSections = parseSections(charactersSection, 2);
-	Object.entries(characterSections).forEach(([characterId, characterSection]) => {
+	Object.entries(characterSections).forEach(([authoredCharacterName, characterSection]) => {
 		const nameValues = parseNameValueLines(characterSection);
+		const characterId = normalizeId(authoredCharacterName);
 		characterDefinitions.set(characterId, {
-			title:nameValues.title || characterId,
+			title:nameValues.title || authoredCharacterName,
 			description:nameValues.description || "",
-			itemIds:parseOptions(nameValues.items || ""),
+			itemIds:parseOptions(nameValues.items || "").map(normalizeId),
 			faceImageUrl:nameValues.faceImage?.trim() || null,
 			isTitleKnown:(nameValues.isTitleKnown || '').toLowerCase() === 'true'
 		});
@@ -57,12 +59,13 @@ function _parseCharacterDefinitions(charactersSection:string):Map<string, Charac
 function _parseItemDefinitions(itemsSection:string):Map<string, ItemDefinition> {
 	const itemDefinitions = new Map<string, ItemDefinition>();
 	const itemSections = parseSections(itemsSection, 2);
-	Object.entries(itemSections).forEach(([itemId, itemSection]) => {
+	Object.entries(itemSections).forEach(([authoredItemName, itemSection]) => {
 		const nameValues = parseNameValueLines(itemSection);
+		const itemId = normalizeId(authoredItemName);
 		itemDefinitions.set(itemId, {
-			title:nameValues.title || itemId,
+			title:nameValues.title || authoredItemName,
 			description:nameValues.description || "",
-			displayChar:nameValues.displayChar || itemId.charAt(0) || "?"
+			displayChar:nameValues.displayChar || authoredItemName.charAt(0) || "?"
 		});
 	});
 	return itemDefinitions;
@@ -81,12 +84,13 @@ export function loadRoomPopulation(level:Level, roomsSection:string, definitions
 	_addInventoryItemsToCharacters(level, definitions.characterDefinitions, definitions.itemDefinitions);
 }
 
-function _createItemFromDefinition(itemId:string, itemDefinitions:Map<string, ItemDefinition>, position:{x:number, y:number}, isDiscovered:boolean):Item {
+
+function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemDefinitions:Map<string, ItemDefinition>, position:{x:number, y:number}, isDiscovered:boolean):Item {
 	const itemDefinition = itemDefinitions.get(itemId);
 	return {
 		id:itemId,
-		title:itemDefinition?.title || itemId,
-		displayChar:itemDefinition?.displayChar || itemId.charAt(0) || "?",
+		title:itemDefinition?.title || defaultTitleText,
+		displayChar:itemDefinition?.displayChar || defaultTitleText.charAt(0) || "?",
 		position:{ ...position },
 		description:itemDefinition?.description || "",
 		isDiscovered,
@@ -120,9 +124,10 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 
 function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string,
 	characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
-	const roomSections = parseSections(roomsSection, 2);
+	const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
 
-	Object.entries(roomSections).forEach(([roomId, roomSection]) => {
+	Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
+		const roomSection = roomSectionEntry.value;
 		const room = findRoom(level.rooms, roomId);
 		const gridLines = parseFirstFencedCodeBlockLines(roomSection);
 		if (!gridLines.length) return;
@@ -134,7 +139,8 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 			Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured')
 		);
 
-		findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId, row, col }) => {
+		findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:authoredEntryText, row, col }) => {
+			const entryId = normalizeId(authoredEntryText);
 			const [x, y] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
 			const characterDefinition = characterDefinitions.get(entryId);
 			if (characterDefinition) {
@@ -142,7 +148,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 				return;
 			}
 			if (itemDefinitions.has(entryId)) {
-				_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, itemDefinitions, { x, y }, false));
+				_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, authoredEntryText, itemDefinitions, { x, y }, false));
 			}
 		});
 	});
@@ -153,7 +159,7 @@ function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<st
 		const characterDefinition = characterDefinitions.get(character.id);
 		if (!characterDefinition) return;
 		_addItemsToCharacter(level, character.id, characterDefinition.itemIds.map(itemId =>
-			_createItemFromDefinition(itemId, itemDefinitions, { x:0, y:0 }, true)
+			_createItemFromDefinition(itemId, itemDefinitions.get(itemId)?.title || itemId, itemDefinitions, { x:0, y:0 }, true)
 		));
 	});
 }
@@ -170,6 +176,7 @@ function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovere
 }
 
 function _addItemsToCharacter(level:Level, characterId:string, items:Item[]) {
+	assertNormalizedId(characterId, 'character');
 	const character = level.characters.find(c => c.id === characterId);
 	assertNonNullable(character, `character ${characterId} not found`);
 	character.items.push(...items.map(item => ({ ...item, position:{ ...item.position } })));

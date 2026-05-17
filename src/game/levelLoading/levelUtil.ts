@@ -24,6 +24,7 @@ import { createGeneratedIdentitySolution, createSolutionCategoryOptionsByName, l
 import ClozeBlank from "../solutions/types/ClozeBlank";
 import ClozePartType from "../solutions/types/ClozePartType";
 import Solution from "../solutions/types/Solution";
+import { assertNormalizedId, normalizeOptionalId } from "../idUtil";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
 
@@ -59,7 +60,7 @@ function _parseTimeTextToMsecs(text:string):number {
 function _parseGeneralSection(generalSection:string):{ activeCharacterId:string, startTime:number|null, winSynopsis:string } {
   const generalNameValues = parseNameValueLines(generalSection, true);
   return {
-    activeCharacterId: generalNameValues.activeCharacter || "",
+    activeCharacterId: normalizeOptionalId(generalNameValues.activeCharacter) || "",
     startTime: generalNameValues.time ? _parseTimeTextToMsecs(generalNameValues.time) : null,
     winSynopsis: generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS
   };
@@ -174,7 +175,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   loadRoomPopulation(level, sections.rooms || "", roomPopulationDefinitions, levelFilename);
   const solutionCategoryOptionsByName = createSolutionCategoryOptionsByName(sections.solutions || "", _createDefaultSolutionCategoryOptions(level));
   const authoredSolutions = loadSolutionsFromSection(sections.solutions || "", solutionCategoryOptionsByName);
-  const generatedIdentitySolution = authoredSolutions.some(solution => solution.id === 'Identities')
+  const generatedIdentitySolution = authoredSolutions.some(solution => solution.id === 'identities')
     ? null
     : createGeneratedIdentitySolution(level.characters, solutionCategoryOptionsByName);
   level = {
@@ -199,6 +200,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     duration: itineraryData.duration,
     labels: _createTimeLabels(itineraryData.duration)
   };
+  if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');
   if (options.validateUnlockPhrases) _validateUnlockableSolutionPhrases(level, solutionCategoryOptionsByName, levelFilename, solutionsFirstLineNo);
   return level;
 }

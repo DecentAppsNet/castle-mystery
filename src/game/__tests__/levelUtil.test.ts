@@ -46,13 +46,13 @@ describe('levelUtil itinerary loading', () => {
   it('sorts timestamped activities instead of using file order', () => {
     const level = loadLevelFromText(itinerarySortingText);
 
-    const hero = level.characters.find(character => character.id === 'Hero');
+    const hero = level.characters.find(character => character.id === 'hero');
     expect(hero?.itinerary.map(event => event.startTime)).toEqual([1_000, 2_000]);
   });
 
   it('starts the first colon-timestamped activity at time zero', () => {
     const level = loadLevelFromText(afterPreviousActivityText);
-    const hero = level.characters.find(character => character.id === 'Hero');
+    const hero = level.characters.find(character => character.id === 'hero');
     const speechEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);
     const priorEvents = hero?.itinerary.filter(event => event.type !== ItineraryEventType.SPEECH) || [];
     const firstPriorEventStartTime = Math.min(...priorEvents.map(event => event.startTime));
@@ -64,7 +64,7 @@ describe('levelUtil itinerary loading', () => {
 
   it('chains colon timestamps from the previous activity completion time including overlapping events', () => {
     const level = loadLevelFromText(afterPreviousActivityOverlapText);
-    const hero = level.characters.find(character => character.id === 'Hero');
+    const hero = level.characters.find(character => character.id === 'hero');
     const speechEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);
     const priorEvents = hero?.itinerary.filter(event => event.type !== ItineraryEventType.SPEECH) || [];
     const priorCompletionTime = Math.max(0, ...priorEvents.map(event => event.startTime + event.duration));
@@ -78,7 +78,7 @@ describe('levelUtil itinerary loading', () => {
 
   it('loads a file-relative activity before a later same-character absolute activity in file order', () => {
     const level = loadLevelFromText(afterPreviousActivityBeforeLaterAbsoluteText);
-    const hero = level.characters.find(character => character.id === 'Hero');
+    const hero = level.characters.find(character => character.id === 'hero');
     const speechEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);
 
     expect(hero).not.toBeNull();
@@ -91,11 +91,11 @@ describe('levelUtil itinerary loading', () => {
 
   it('loads kingacide itinerary activities including title-based takes', () => {
     const level = loadLevelFromText(kingacideItineraryText);
-    const queen = level.characters.find(character => character.id === 'Queen');
-    const eastHall = level.rooms.find(room => room.id === 'East Hall');
-    const foyer = level.rooms.find(room => room.id === 'Foyer');
+    const queen = level.characters.find(character => character.id === 'queen');
+    const eastHall = level.rooms.find(room => room.id === 'east hall');
+    const foyer = level.rooms.find(room => room.id === 'foyer');
 
-    expect(queen?.items.map(item => item.id)).toContain('Romance Novel');
+    expect(queen?.items.map(item => item.id)).toContain('romance novel');
     expect(eastHall?.isObscured).toBe(true);
     expect(foyer?.isObscured).toBe(false);
     expect(level.solutions.map(solution => solution.title)).toEqual(['Identities']);
@@ -162,9 +162,9 @@ describe('levelUtil itinerary loading', () => {
   it('defaults titles from ids and generates identities for all characters', () => {
     const level = loadLevelFromText(titleDefaultsAndGeneratedIdentityText);
     const hall = findRoom(level.rooms, 'Hall');
-    const king = level.characters.find(character => character.id === 'King');
-    const queen = level.characters.find(character => character.id === 'Queen');
-    const crown = hall.items.find(item => item.id === 'Crown');
+    const king = level.characters.find(character => character.id === 'king');
+    const queen = level.characters.find(character => character.id === 'queen');
+    const crown = hall.items.find(item => item.id === 'crown');
     const identities = level.solutions.find(solution => solution.title === 'Identities') || null;
     const identityBlanks = (identities?.parts.filter(part => part.type === 'blank') || []) as ClozeBlank[];
 
@@ -185,7 +185,7 @@ describe('levelUtil itinerary loading', () => {
 
   it('marks identities complete when all character titles are already known', () => {
     const level = loadLevelFromText(identitiesAllTitlesKnownText);
-    const identities = level.solutions.find(solution => solution.id === 'Identities') || null;
+    const identities = level.solutions.find(solution => solution.id === 'identities') || null;
 
     expect(identities).not.toBeNull();
     expect(identities?.isLocked).toBe(false);
@@ -201,35 +201,35 @@ describe('levelUtil itinerary loading', () => {
     const level = loadLevelFromText(atRoomMarkerText);
     const library = findRoom(level.rooms, 'Library');
 
-    expect(library.positionMarkersById.SW).toEqual({ x:32, y:28 });
+    expect(library.positionMarkersById.sw).toEqual({ x:32, y:28 });
   });
 
   it('loads drop activities and removes dropped items from final carried inventory', () => {
     const level = loadLevelFromText(dropItemText);
-    const hero = level.characters.find(character => character.id === 'Hero');
+    const hero = level.characters.find(character => character.id === 'hero');
     const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, itemId:string, position:{ x:number, y:number } } | undefined;
 
-    expect(dropEvent?.itemId).toBe('Book');
-    expect(hero?.items.map(item => item.id)).not.toContain('Book');
+    expect(dropEvent?.itemId).toBe('book');
+    expect(hero?.items.map(item => item.id)).not.toContain('book');
     expect(findCharacterPose(hero!, dropEvent!.startTime).position).toEqual(dropEvent!.position);
   });
 
   it('loads give activities without movement when the recipient is already nearby', () => {
     const level = loadLevelFromText(giveItemNearText);
-    const king = level.characters.find(character => character.id === 'King');
-    const queen = level.characters.find(character => character.id === 'Queen');
+    const king = level.characters.find(character => character.id === 'king');
+    const queen = level.characters.find(character => character.id === 'queen');
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { itemId:string, recipientCharacterId:string } | undefined;
 
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK && event.startTime >= 5_000)).toBe(false);
-    expect(giveEvent).toEqual({ type:ItineraryEventType.GIVE_ITEM, startTime:5_000, duration:0, itemId:'Book', recipientCharacterId:'Queen' });
-    expect(king?.items.map(item => item.id)).not.toContain('Book');
-    expect(queen?.items.map(item => item.id)).toContain('Book');
+    expect(giveEvent).toEqual({ type:ItineraryEventType.GIVE_ITEM, startTime:5_000, duration:0, itemId:'book', recipientCharacterId:'queen' });
+    expect(king?.items.map(item => item.id)).not.toContain('book');
+    expect(queen?.items.map(item => item.id)).toContain('book');
   });
 
   it('adds movement before a give activity when the recipient is farther away', () => {
     const level = loadLevelFromText(giveItemWalkText);
-    const king = level.characters.find(character => character.id === 'King');
-    const queen = level.characters.find(character => character.id === 'Queen');
+    const king = level.characters.find(character => character.id === 'king');
+    const queen = level.characters.find(character => character.id === 'queen');
     const walkEvents = king?.itinerary.filter(event => event.type === ItineraryEventType.WALK) || [];
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number, itemId:string, recipientCharacterId:string } | undefined;
     const lastWalkEvent = walkEvents[walkEvents.length - 1] as { startTime:number, duration:number } | undefined;
@@ -238,18 +238,18 @@ describe('levelUtil itinerary loading', () => {
     expect(giveEvent).toBeDefined();
     expect(lastWalkEvent).toBeDefined();
     expect(giveEvent!.startTime).toBe(lastWalkEvent!.startTime + lastWalkEvent!.duration);
-    expect(giveEvent!.itemId).toBe('Book');
-    expect(giveEvent!.recipientCharacterId).toBe('Queen');
-    expect(king?.items.map(item => item.id)).not.toContain('Book');
-    expect(queen?.items.map(item => item.id)).toContain('Book');
+    expect(giveEvent!.itemId).toBe('book');
+    expect(giveEvent!.recipientCharacterId).toBe('queen');
+    expect(king?.items.map(item => item.id)).not.toContain('book');
+    expect(queen?.items.map(item => item.id)).toContain('book');
   });
 
   it('parses itinerary lines with extra punctuation and whitespace outside quotes', () => {
     const level = loadLevelFromText(itineraryExtraPunctuationText);
-    const king = level.characters.find(character => character.id === 'King');
-    const queen = level.characters.find(character => character.id === 'Queen');
+    const king = level.characters.find(character => character.id === 'king');
+    const queen = level.characters.find(character => character.id === 'queen');
     const library = findRoom(level.rooms, 'Library');
-    const markerPosition = library.positionMarkersById.NE;
+    const markerPosition = library.positionMarkersById.ne;
     const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
       if (!nearestWaypoint) return waypoint;
       const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
@@ -259,7 +259,7 @@ describe('levelUtil itinerary loading', () => {
     const speechEvent = king?.itinerary.find(event => event.type === ItineraryEventType.SPEECH && event.startTime === 7_000) as { speech:string } | undefined;
 
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK)).toBe(true);
-    expect(queen?.items.map(item => item.id)).toContain('Book');
+    expect(queen?.items.map(item => item.id)).toContain('book');
     expect(targetWaypoint).not.toBeNull();
     expect(findCharacterPose(king!, 6_000).position).toEqual(targetWaypoint!.position);
     expect(speechEvent?.speech).toBe('Hello, dear.');

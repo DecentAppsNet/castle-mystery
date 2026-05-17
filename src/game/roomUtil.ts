@@ -8,6 +8,7 @@ import Obstruction from "./types/Obstruction";
 import Waypoint from "./types/Waypoint";
 import Position from "./types/Position";
 import { CHARACTER_OBSTRUCTION_MARGIN, clipMoveToObstructions, isPositionInObstructions, isPositionInRect } from "./obstructionUtil";
+import { normalizeId } from "./idUtil";
 
 const WAYPOINT_SPACING = 5;
 const EXIT_WAYPOINT_INSET = CHARACTER_OBSTRUCTION_MARGIN + 1;
@@ -45,9 +46,10 @@ export function findExitWaypoint(roomId:string, roomRect:Rect, exit:RoomExit, wa
   return waypoint;
 }
 
-export function findRoom(rooms:Room[], roomId:string):Room {
+export function findRoom(rooms:Room[], roomRef:string):Room {
+  const roomId = normalizeId(roomRef);
   const room = rooms.find((r) => r.id === roomId);
-  if (!room) throw new Error(`room with id ${roomId} not found`);
+  if (!room) throw new Error(`room with id ${roomRef} not found`);
   return room;
 }
 

@@ -49,7 +49,7 @@ export function updateGameStateForChangeSolutions(gameState:GameState, event:Cha
     gameState.solutions = nextSolutions;
     gameState.solutionsRevision += 1;
   }
-  const identitiesSolution = gameState.solutions.find(solution => solution.id === "Identities") || null;
+  const identitiesSolution = gameState.solutions.find(solution => solution.id === "identities") || null;
   if (!identitiesSolution?.isComplete) return;
   gameState.characters.forEach(character => {
     character.isTitleKnown = true;

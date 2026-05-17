@@ -65,6 +65,15 @@ Guidelines:
 * Functions should only be exported if used outside the module they are declared in.
 * Private, unexported functions are prefixed with `_`.
 
+## ID Normalization
+
+* Any variable whose name includes `Id` may only be assigned a normalized ID value or `null`.
+* Raw authored or user-provided text should not be stored in a variable whose name includes `Id`. Normalize it first, or keep it in a variable named `...Text`, `...Name`, or `...Ref` until normalization happens.
+* When code reads a non-null value from a variable whose name includes `Id`, it may assume the value is already normalized.
+* Code must not redundantly call `normalizeId()` or `normalizeOptionalId()` on a non-null `...Id` variable.
+* If a code path wants a debug guard for that invariant, use an `assert()`-based check instead of re-normalizing the `...Id` variable.
+* Use the normalization utilities in `src/game/idUtil.ts` when converting raw text into normalized IDs.
+
 ## CSS
 
 * `vh` should be used as the default unit for fixed lengths and dimensions, even widths. ("vw" can be used if the measurement truly is meant to be tied to viewport width.) The use of "vh" is less about tying sizes to viewport height, and more about finding a general size for scaling that keeps layout reasonably constant in a non-scrolling web app. Reusing VH for width tends to preserve intended aspect ratios.

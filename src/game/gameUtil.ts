@@ -34,10 +34,12 @@ import {
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hoverStateUtil";
 import { syncSolutionUnlocks, updateGameStateForChangeSolutions } from "./solutionStateUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
+import { normalizeId } from "./idUtil";
 
-export function findCharacter(gameState:GameState, characterId:string):Character {
+export function findCharacter(gameState:GameState, characterRef:string):Character {
+  const characterId = normalizeId(characterRef);
   const character = gameState.characters.find((c) => c.id === characterId);
-  assertNonNullable(character, `character with id ${characterId} not found`);
+  assertNonNullable(character, `character with id ${characterRef} not found`);
   return character;
 }
 
@@ -139,7 +141,8 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
   });
 }
 
-function _findCharacterI(characters:Character[], characterId:string):number {
+function _findCharacterI(characters:Character[], characterRef:string):number {
+  const characterId = normalizeId(characterRef);
   for(let i = 0; i < characters.length; ++i) {
     if (characters[i].id === characterId) return i;
   }

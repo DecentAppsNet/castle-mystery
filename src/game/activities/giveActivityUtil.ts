@@ -17,6 +17,7 @@ import {
   findWaypointPath,
   stripTrailingPeriod
 } from "./activityUtil";
+import { normalizeId } from "../idUtil";
 
 const GIVE_ITEM_NEARBY_DISTANCE = 8;
 
@@ -25,7 +26,8 @@ function _calcDistance(fromX:number, fromY:number, toX:number, toY:number):numbe
 }
 
 function _matchesItemReference(itemId:string, itemTitle:string, reference:string):boolean {
-  return itemId === reference || itemTitle === reference;
+  const normalizedReference = normalizeId(reference);
+  return itemId === normalizedReference || normalizeId(itemTitle) === normalizedReference;
 }
 
 function _parseGiveParts(activityText:string):{ itemRef:string, recipientId:string } {
@@ -36,7 +38,7 @@ function _parseGiveParts(activityText:string):{ itemRef:string, recipientId:stri
   }
 
   const itemRef = stripTrailingPeriod(giveText.slice(0, separatorIndex).trim());
-  const recipientId = stripTrailingPeriod(giveText.slice(separatorIndex + ' to '.length).trim());
+  const recipientId = normalizeId(stripTrailingPeriod(giveText.slice(separatorIndex + ' to '.length).trim()));
   if (!itemRef || !recipientId) throw new Error(`missing item or recipient in itinerary activity '${activityText}'`);
   return { itemRef, recipientId };
 }

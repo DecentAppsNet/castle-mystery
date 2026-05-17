@@ -17,7 +17,7 @@ describe('give item integration', () => {
 
   it('transfers the item from giver to recipient when the give event is reached', () => {
     const level = loadLevelFromText(giveItemWalkText);
-    const king = level.characters.find(character => character.id === 'King');
+    const king = level.characters.find(character => character.id === 'king');
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
     const beforeGiveState = createGameState({ ...level, startTime:giveEvent!.startTime - 1 });
     const atGiveState = createGameState({ ...level, startTime:giveEvent!.startTime });
@@ -27,9 +27,9 @@ describe('give item integration', () => {
     const atGiveQueen = findCharacter(atGiveState, 'Queen');
 
     expect(giveEvent).toBeDefined();
-    expect(beforeKing.items.map(item => item.id)).toContain('Book');
-    expect(beforeQueen.items.map(item => item.id)).not.toContain('Book');
-    expect(atGiveKing.items.map(item => item.id)).not.toContain('Book');
-    expect(atGiveQueen.items.map(item => item.id)).toContain('Book');
+    expect(beforeKing.items.map(item => item.id)).toContain('book');
+    expect(beforeQueen.items.map(item => item.id)).not.toContain('book');
+    expect(atGiveKing.items.map(item => item.id)).not.toContain('book');
+    expect(atGiveQueen.items.map(item => item.id)).toContain('book');
   });
 });

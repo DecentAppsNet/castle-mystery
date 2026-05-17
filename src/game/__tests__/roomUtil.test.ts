@@ -91,7 +91,7 @@ describe('roomUtil', () => {
   describe('findRoom()', () => {
     it('returns the room with the matching id', () => {
       const throneRoom = _createRoom('Throne Room', { x:0, y:0, width:20, height:20 });
-      const library = _createRoom('Library', { x:20, y:0, width:20, height:20 });
+      const library = _createRoom('library', { x:20, y:0, width:20, height:20 });
 
       expect(findRoom([throneRoom, library], 'Library')).toBe(library);
     });

@@ -39,9 +39,9 @@ describe('wandering integration', () => {
   });
 
   it('character moves from initial waypoint for a wander activity', () => {
-    const [wanderEvent] = _findWalkEvents(wanderingSingleText, 'Hero');
-    const initialPosition = _createPositionSnapshot(wanderingSingleText, 0, 'Hero');
-    const endPosition = _createPositionSnapshot(wanderingSingleText, wanderEvent.startTime + wanderEvent.duration, 'Hero');
+    const [wanderEvent] = _findWalkEvents(wanderingSingleText, 'hero');
+    const initialPosition = _createPositionSnapshot(wanderingSingleText, 0, 'hero');
+    const endPosition = _createPositionSnapshot(wanderingSingleText, wanderEvent.startTime + wanderEvent.duration, 'hero');
 
     expect(endPosition).not.toEqual(initialPosition);
   });
@@ -49,31 +49,31 @@ describe('wandering integration', () => {
   it('character can wander in the throne-room layout from kingacide', () => {
     expect(() => loadLevelFromText(wanderingThroneRoomText)).not.toThrow();
 
-    const [wanderEvent] = _findWalkEvents(wanderingThroneRoomText, 'King');
-    const initialPosition = _createPositionSnapshot(wanderingThroneRoomText, 0, 'King');
-    const endPosition = _createPositionSnapshot(wanderingThroneRoomText, wanderEvent.startTime + wanderEvent.duration, 'King');
+    const [wanderEvent] = _findWalkEvents(wanderingThroneRoomText, 'king');
+    const initialPosition = _createPositionSnapshot(wanderingThroneRoomText, 0, 'king');
+    const endPosition = _createPositionSnapshot(wanderingThroneRoomText, wanderEvent.startTime + wanderEvent.duration, 'king');
 
     expect(endPosition).not.toEqual(initialPosition);
   });
 
   it('character moves two times for two wander activities', () => {
-    const walkEvents = _findWalkEvents(wanderingDoubleText, 'Hero');
+    const walkEvents = _findWalkEvents(wanderingDoubleText, 'hero');
     expect(walkEvents).toHaveLength(2);
 
     const [firstEvent, secondEvent] = walkEvents;
-    const initialPosition = _createPositionSnapshot(wanderingDoubleText, 0, 'Hero');
-    const firstEndPosition = _createPositionSnapshot(wanderingDoubleText, firstEvent.startTime + firstEvent.duration, 'Hero');
-    const secondEndPosition = _createPositionSnapshot(wanderingDoubleText, secondEvent.startTime + secondEvent.duration, 'Hero');
+    const initialPosition = _createPositionSnapshot(wanderingDoubleText, 0, 'hero');
+    const firstEndPosition = _createPositionSnapshot(wanderingDoubleText, firstEvent.startTime + firstEvent.duration, 'hero');
+    const secondEndPosition = _createPositionSnapshot(wanderingDoubleText, secondEvent.startTime + secondEvent.duration, 'hero');
 
     expect(firstEndPosition).not.toEqual(initialPosition);
     expect(secondEndPosition).not.toEqual(firstEndPosition);
   });
 
   it('character moves to an unclaimed waypoint for a wander activity', () => {
-    const [wanderEvent] = _findWalkEvents(wanderingUnclaimedText, 'Hero');
-    const heroInitialPosition = _createPositionSnapshot(wanderingUnclaimedText, 0, 'Hero');
-    const guardPositionAtWanderStart = _createPositionSnapshot(wanderingUnclaimedText, wanderEvent.startTime, 'Guard');
-    const heroEndPosition = _createPositionSnapshot(wanderingUnclaimedText, wanderEvent.startTime + wanderEvent.duration, 'Hero');
+    const [wanderEvent] = _findWalkEvents(wanderingUnclaimedText, 'hero');
+    const heroInitialPosition = _createPositionSnapshot(wanderingUnclaimedText, 0, 'hero');
+    const guardPositionAtWanderStart = _createPositionSnapshot(wanderingUnclaimedText, wanderEvent.startTime, 'guard');
+    const heroEndPosition = _createPositionSnapshot(wanderingUnclaimedText, wanderEvent.startTime + wanderEvent.duration, 'hero');
 
     expect(Math.hypot(guardPositionAtWanderStart.x - heroInitialPosition.x, guardPositionAtWanderStart.y - heroInitialPosition.y))
       .toBeLessThanOrEqual(Math.hypot(5, 5));
@@ -86,8 +86,8 @@ describe('wandering integration', () => {
 
   it('resolves after-previous-activity timestamps from the previous file activity when activities are interleaved', () => {
     const level = loadLevelFromText(interleavedAfterPreviousActivityText);
-    const king = level.characters.find(character => character.id === 'King');
-    const jester = level.characters.find(character => character.id === 'Jester');
+    const king = level.characters.find(character => character.id === 'king');
+    const jester = level.characters.find(character => character.id === 'jester');
     const kingOpeningSpeechEvent = king?.itinerary.find(event => event.type === 'Speech');
     const jesterSpeechEvent = jester?.itinerary.find(event => event.type === 'Speech');
     const kingSpeechEvent = king?.itinerary.findLast(event => event.type === 'Speech');

@@ -17,12 +17,12 @@ function _createTestLevel():Level {
 
   return {
     rooms:[{
-      id:'Hall',
+      id:'hall',
       title:'Hall',
       rect:{ x:0, y:0, width:10, height:10 },
       isObscured:false,
       items:[{
-        id:'Book',
+        id:'book',
         title:'Book',
         displayChar:'B',
         position:{ x:6, y:5 },
@@ -37,7 +37,7 @@ function _createTestLevel():Level {
       isDiscovered:false
     }],
     initialCharacters:[{
-      id:'Hero',
+      id:'hero',
       title:'Hero',
       faceImageUrl:null,
       randomSalt:0,
@@ -51,7 +51,7 @@ function _createTestLevel():Level {
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
     }],
     characters:[{
-      id:'Hero',
+      id:'hero',
       title:'Hero',
       faceImageUrl:null,
       randomSalt:0,
@@ -66,7 +66,7 @@ function _createTestLevel():Level {
     }],
     solutions:[
       {
-        id:'Open',
+        id:'open',
         title:'Open',
         parts:[{ type:ClozePartType.text, text:'Open' }],
         isComplete:false,
@@ -75,26 +75,26 @@ function _createTestLevel():Level {
         unlockForSolutionId:null
       },
       {
-        id:'Item Locked',
+        id:'item locked',
         title:'Item Locked',
         parts:[{ type:ClozePartType.text, text:'Item Locked' }],
         isComplete:false,
         isLocked:true,
-        unlockForItemId:'Book',
+        unlockForItemId:'book',
         unlockForSolutionId:null
       },
       {
-        id:'Solution Locked',
+        id:'solution locked',
         title:'Solution Locked',
         parts:[{ type:ClozePartType.text, text:'Solution Locked' }],
         isComplete:false,
         isLocked:true,
         unlockForItemId:null,
-        unlockForSolutionId:'Open'
+        unlockForSolutionId:'open'
       }
     ],
-      winSynopsis:'Solved it.',
-    activeCharacterId:'Hero',
+    winSynopsis:'Solved it.',
+    activeCharacterId:'hero',
     startTime:0,
     duration:5_000,
     labels:[{ minutes:0, label:'midnight' }, { minutes:5 / 60, label:'12:05am' }]

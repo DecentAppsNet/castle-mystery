@@ -8,15 +8,16 @@ import ClozeBlank, { UNSPECIFIED_ANSWER } from "../solutions/types/ClozeBlank";
 import ClozePart from "../solutions/types/ClozePart";
 import ClozePartType from "../solutions/types/ClozePartType";
 import Solution from "../solutions/types/Solution";
+import { normalizeId, normalizeOptionalId } from "../idUtil";
 
 type SolutionPrerequisite = {
   unlockForItemId:string|null,
   unlockForSolutionId:string|null
 }
 
-function _createSolution(id:string, title:string, parts:ClozePart[], prerequisite:SolutionPrerequisite):Solution {
+function _createSolution(solutionTitle:string, title:string, parts:ClozePart[], prerequisite:SolutionPrerequisite):Solution {
   return {
-    id,
+    id:normalizeId(solutionTitle),
     title,
     parts,
     isComplete:false,
@@ -35,17 +36,17 @@ function _parseBulletedLineValues(markdownText:string, name:string):string[] {
     .filter(Boolean);
 }
 
-function _parseSolutionPrerequisite(solutionSubsection:string, solutionId:string):SolutionPrerequisite {
-  const unlockForItemIds = _parseBulletedLineValues(solutionSubsection, 'unlockForItem');
-  const unlockForSolutionIds = _parseBulletedLineValues(solutionSubsection, 'unlockForSolution');
+function _parseSolutionPrerequisite(solutionSubsection:string, solutionTitle:string):SolutionPrerequisite {
+  const unlockForItemTexts = _parseBulletedLineValues(solutionSubsection, 'unlockForItem');
+  const unlockForSolutionTexts = _parseBulletedLineValues(solutionSubsection, 'unlockForSolution');
 
-  if (unlockForItemIds.length > 1) throw new Error(`solution '${solutionId}' has multiple unlockForItem lines`);
-  if (unlockForSolutionIds.length > 1) throw new Error(`solution '${solutionId}' has multiple unlockForSolution lines`);
-  if (unlockForItemIds.length && unlockForSolutionIds.length) throw new Error(`solution '${solutionId}' cannot define both unlockForItem and unlockForSolution`);
+  if (unlockForItemTexts.length > 1) throw new Error(`solution '${solutionTitle}' has multiple unlockForItem lines`);
+  if (unlockForSolutionTexts.length > 1) throw new Error(`solution '${solutionTitle}' has multiple unlockForSolution lines`);
+  if (unlockForItemTexts.length && unlockForSolutionTexts.length) throw new Error(`solution '${solutionTitle}' cannot define both unlockForItem and unlockForSolution`);
 
   return {
-    unlockForItemId:unlockForItemIds[0] || null,
-    unlockForSolutionId:unlockForSolutionIds[0] || null
+    unlockForItemId:normalizeOptionalId(unlockForItemTexts[0]),
+    unlockForSolutionId:normalizeOptionalId(unlockForSolutionTexts[0])
   };
 }
 
@@ -237,7 +238,7 @@ export function createGeneratedIdentitySolution(characters:Character[], category
   });
 
   return {
-    ..._createSolution('Identities', 'Identities', parts, { unlockForItemId:null, unlockForSolutionId:null }),
+    ..._createSolution('identities', 'Identities', parts, { unlockForItemId:null, unlockForSolutionId:null }),
     isComplete:characters.every(character => character.isTitleKnown)
   };
 }

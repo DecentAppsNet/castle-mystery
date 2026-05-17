@@ -2,9 +2,11 @@ import Item from "../types/Item";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import { createDropItemEvent } from "../itineraryUtil";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, stripTrailingPeriod } from "./activityUtil";
+import { normalizeId } from "../idUtil";
 
 function _matchesItemReference(item:Item, reference:string):boolean {
-  return item.id === reference || item.title === reference;
+  const normalizedReference = normalizeId(reference);
+  return item.id === normalizedReference || normalizeId(item.title) === normalizedReference;
 }
 
 export function tryCreateDropActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {

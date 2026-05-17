@@ -18,6 +18,7 @@ import {
   findCharacterPose,
   findRoomAtPositionOrNearest,
 } from "../itineraryUtil";
+import { assertNormalizedId, normalizeId } from "../idUtil";
 
 export type ActivityTimestampKind = 'absolute' | 'after-previous-activity';
 
@@ -43,7 +44,8 @@ export type ActivityContext = {
 };
 
 function _matchesItemReference(item:Item, reference:string):boolean {
-  return item.id === reference || item.title === reference;
+  const normalizedReference = normalizeId(reference);
+  return item.id === normalizedReference || normalizeId(item.title) === normalizedReference;
 }
 
 function _createWaypointKey(waypoint:Waypoint):string {
@@ -67,12 +69,15 @@ function _findTargetWaypointInRoom(room:Room, targetPosition:Position|null, occu
 }
 
 function _findConnectingExit(room:Room, otherRoomId:string):RoomExit {
+  assertNormalizedId(otherRoomId, 'room');
   const exit = room.exits.find(candidate => candidate.room1Id === otherRoomId || candidate.room2Id === otherRoomId);
   assertNonNullable(exit, `no exit connects ${room.id} to ${otherRoomId}`);
   return exit;
 }
 
 function _findRoomPath(level:Level, fromRoomId:string, targetRoomId:string):string[] {
+  assertNormalizedId(fromRoomId, 'room');
+  assertNormalizedId(targetRoomId, 'room');
   if (fromRoomId === targetRoomId) return [fromRoomId];
   const pending:string[] = [fromRoomId];
   const previousRoomIdByRoomId = new Map<string, string|null>([[fromRoomId, null]]);

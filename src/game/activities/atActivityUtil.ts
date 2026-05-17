@@ -2,12 +2,14 @@ import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
 import Position from "../types/Position";
 import { findRoom } from "../roomUtil";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
+import { normalizeId } from "../idUtil";
 
 function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:string, targetPosition:Position|null } {
   const targetText = activityText.trim().slice(1).trim();
   if (!targetText) throw new Error(`missing room id in authored activity '${activityText}'`);
 
-  const exactRoom = context.level.rooms.find(room => room.id === targetText) || null;
+  const targetId = normalizeId(targetText);
+  const exactRoom = context.level.rooms.find(room => room.id === targetId) || null;
   if (exactRoom) return { roomId:exactRoom.id, targetPosition:null };
 
   const separatorIndex = targetText.lastIndexOf('.');
@@ -15,12 +17,14 @@ function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:s
     throw new Error(`unknown room id '${targetText}' in authored activity '${activityText}'`);
   }
 
-  const roomId = targetText.slice(0, separatorIndex).trim();
-  const markerId = targetText.slice(separatorIndex + 1).trim();
+  const authoredRoomText = targetText.slice(0, separatorIndex).trim();
+  const authoredMarkerText = targetText.slice(separatorIndex + 1).trim();
+  const roomId = normalizeId(authoredRoomText);
+  const markerId = normalizeId(authoredMarkerText);
   if (!roomId || !markerId) throw new Error(`missing room or marker id in authored activity '${activityText}'`);
   const room = findRoom(context.level.rooms, roomId);
   const markerPosition = room.positionMarkersById[markerId];
-  if (!markerPosition) throw new Error(`unknown position marker ${roomId}.${markerId}`);
+  if (!markerPosition) throw new Error(`unknown position marker ${authoredRoomText}.${authoredMarkerText}`);
   return { roomId, targetPosition:markerPosition };
 }
 

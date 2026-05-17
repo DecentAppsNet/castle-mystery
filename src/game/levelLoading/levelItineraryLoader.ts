@@ -27,6 +27,7 @@ import Item, { duplicateItem } from "../types/Item";
 import Level from "../types/Level";
 import Position from "../types/Position";
 import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
+import { normalizeId } from "../idUtil";
 
 type ParsedItineraryActivity = {
   sourceIndex:number,
@@ -156,10 +157,10 @@ function _parseCharacterActivityLine(activityLine:string):{ characterId:string, 
   });
 
   if (splitIndex === -1) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
-  const characterId = _stripBoundaryPunctuation(normalizedLine.slice(0, splitIndex));
+  const characterText = _stripBoundaryPunctuation(normalizedLine.slice(0, splitIndex));
   const activityText = _normalizeParsedActivityText(normalizedLine.slice(splitIndex + 1));
-  if (!characterId || !activityText) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
-  return { characterId, activityText };
+  if (!characterText || !activityText) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
+  return { characterId:normalizeId(characterText), activityText };
 }
 
 function _parseItineraryActivities(itinerarySection:string, levelFilename:string, firstLineNo:number):ParsedItineraryActivity[] {

@@ -28,14 +28,14 @@ function _findNextEvent<T>(events:readonly unknown[], startIndex:number, predica
 
 function _expectRoutesThroughPairedExitWaypoints(levelText:string) {
   const level = loadLevelFromText(levelText);
-  const queen = level.characters.find(character => character.id === 'Queen');
+  const queen = level.characters.find(character => character.id === 'queen');
   expect(queen).not.toBeNull();
 
   const westHall = findRoom(level.rooms, 'West Hall');
   const foyer = findRoom(level.rooms, 'Foyer');
   const library = findRoom(level.rooms, 'Library');
-  const westHallToFoyerExit = westHall.exits.find(exit => exit.room1Id === 'Foyer' || exit.room2Id === 'Foyer');
-  const foyerToLibraryExit = foyer.exits.find(exit => exit.room1Id === 'Library' || exit.room2Id === 'Library');
+  const westHallToFoyerExit = westHall.exits.find(exit => exit.room1Id === 'foyer' || exit.room2Id === 'foyer');
+  const foyerToLibraryExit = foyer.exits.find(exit => exit.room1Id === 'library' || exit.room2Id === 'library');
   expect(westHallToFoyerExit).not.toBeUndefined();
   expect(foyerToLibraryExit).not.toBeUndefined();
 
@@ -57,7 +57,7 @@ function _expectRoutesThroughPairedExitWaypoints(levelText:string) {
   const foyerEntryEvent = _findNextEvent<RoomEntryEvent>(queen!.itinerary, westHallExitWaypointIndex,
     event => (event as RoomEntryEvent).type === ItineraryEventType.ROOM_ENTRY);
   expect(foyerEntryEvent?.type).toBe(ItineraryEventType.ROOM_ENTRY);
-  expect(foyerEntryEvent?.roomId).toBe('Foyer');
+  expect(foyerEntryEvent?.roomId).toBe('foyer');
 
   const foyerToLibraryExitWaypointIndex = queen!.itinerary.findIndex(event => event.type === ItineraryEventType.WALK
     && _positionsEqual((event as WalkEvent).toPosition, foyerToLibraryExitWaypoint.position));
@@ -72,7 +72,7 @@ function _expectRoutesThroughPairedExitWaypoints(levelText:string) {
   const libraryEntryEvent = _findNextEvent<RoomEntryEvent>(queen!.itinerary, foyerToLibraryExitWaypointIndex,
     event => (event as RoomEntryEvent).type === ItineraryEventType.ROOM_ENTRY);
   expect(libraryEntryEvent?.type).toBe(ItineraryEventType.ROOM_ENTRY);
-  expect(libraryEntryEvent?.roomId).toBe('Library');
+  expect(libraryEntryEvent?.roomId).toBe('library');
 }
 
 describe('at room integration', () => {
@@ -102,9 +102,9 @@ describe('at room integration', () => {
 
   it('routes @ Room.Marker to the waypoint nearest the authored marker position', () => {
     const level = loadLevelFromText(atRoomMarkerText);
-    const king = level.characters.find(character => character.id === 'King');
+    const king = level.characters.find(character => character.id === 'king');
     const library = findRoom(level.rooms, 'Library');
-    const markerPosition = library.positionMarkersById.SW;
+    const markerPosition = library.positionMarkersById.sw;
     const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
       if (!nearestWaypoint) return waypoint;
       const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
@@ -119,9 +119,9 @@ describe('at room integration', () => {
 
   it('moves within the same room for @ Room.Marker when already in that room', () => {
     const level = loadLevelFromText(atRoomMarkerSameRoomText);
-    const king = level.characters.find(character => character.id === 'King');
+    const king = level.characters.find(character => character.id === 'king');
     const library = findRoom(level.rooms, 'Library');
-    const markerPosition = library.positionMarkersById.SW;
+    const markerPosition = library.positionMarkersById.sw;
     const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
       if (!nearestWaypoint) return waypoint;
       const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
@@ -135,8 +135,8 @@ describe('at room integration', () => {
 
   it('starts relative @ Room movement only after the previous file activity completes', () => {
     const level = loadLevelFromText(afterPreviousActivityAtRoomText);
-    const king = level.characters.find(character => character.id === 'King');
-    const jester = level.characters.find(character => character.id === 'Jester');
+    const king = level.characters.find(character => character.id === 'king');
+    const jester = level.characters.find(character => character.id === 'jester');
     const jesterSpeechEvent = jester?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);
     const kingFirstWalkEvent = king?.itinerary.find(event => event.type === ItineraryEventType.WALK) as WalkEvent | undefined;
 

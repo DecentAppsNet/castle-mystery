@@ -23,10 +23,10 @@ describe('drop item integration', () => {
     const afterHero = findCharacter(afterDropState, 'Hero');
     const afterRoom = findRoom(afterDropState.rooms, 'Hall');
 
-    expect(beforeHero.items.map(item => item.id)).toContain('Book');
-    expect(findRoom(beforeDropState.rooms, 'Hall').items.map(item => item.id)).not.toContain('Book');
-    expect(afterHero.items.map(item => item.id)).not.toContain('Book');
-    const droppedItem = afterRoom.items.find(item => item.id === 'Book') || null;
+    expect(beforeHero.items.map(item => item.id)).toContain('book');
+    expect(findRoom(beforeDropState.rooms, 'Hall').items.map(item => item.id)).not.toContain('book');
+    expect(afterHero.items.map(item => item.id)).not.toContain('book');
+    const droppedItem = afterRoom.items.find(item => item.id === 'book') || null;
     expect(droppedItem).not.toBeNull();
     expect(droppedItem?.position).toEqual({ x:afterHero.x, y:afterHero.y });
   });
