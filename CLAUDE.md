@@ -19,7 +19,7 @@ The README's top half is a template placeholder — the real product is a murder
 
 ### Level files drive everything
 
-A level is an authored Markdown file in `public/levels/` (e.g. `the-calais-coach.md`). The Markdown is the source of truth for rooms, characters, items, an itinerary, and solutions. Loading is orchestrated by [src/game/levelLoading/levelUtil.ts](src/game/levelLoading/levelUtil.ts):
+A level is an authored Markdown file in `public/levels/` (e.g. `murder-on-the-orient-express.md`). The Markdown is the source of truth for rooms, characters, items, an itinerary, and solutions. Loading is orchestrated by [src/game/levelLoading/levelUtil.ts](src/game/levelLoading/levelUtil.ts):
 
 1. `parseSections()` (from [src/common/markdownUtil.ts](src/common/markdownUtil.ts)) splits the file by `#` headings into sections: `general`, `map`, `rooms`, `characters`, `items`, `itinerary`, `solutions`.
 2. Section-specific loaders (`levelRoomLayoutLoader`, `levelRoomPopulationLoader`, `levelItineraryLoader`, `levelSolutionsLoader`) progressively populate a `Level`.

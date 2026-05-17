@@ -1,6 +1,6 @@
 # general
 
-* title=The Calais Coach
+* title=Murder on the Orient Express
 * activeCharacter=Conductor
 * time=0:00
 * winSynopsis=Murder on the Orient Express

@@ -11,7 +11,7 @@ export type InitResults = {
 }
 
 export async function init():Promise<InitResults|null> {
-  const level = await loadLevelFromUrl(baseUrl('/levels/the-calais-coach.md'));
+  const level = await loadLevelFromUrl(baseUrl('/levels/murder-on-the-orient-express.md'));
   const imageSet = await createImageSetFromLevel(level);
   const gameState = createGameState(level, imageSet);
   const minutes = msecsToMinutes(gameState.time);
