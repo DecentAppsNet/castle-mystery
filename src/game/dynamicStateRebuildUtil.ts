@@ -16,12 +16,21 @@ import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
+import LockEvent from "./types/itineraryEvents/LockEvent";
+import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
+import ExitStatus from "./types/ExitStatus";
 
 type AppliedInventoryEvent = {
   characterId:string,
   eventIndex:number,
   startPosition:Position,
   event:TakeItemEvent|DropItemEvent|GiveItemEvent
+}
+
+type AppliedExitStateEvent = {
+  characterId:string,
+  eventIndex:number,
+  event:LockEvent|UnlockEvent
 }
 
 type PendingRoomEffect = {
@@ -96,6 +105,27 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
   return appliedEvents;
 }
 
+function _collectAppliedExitStateEvents(gameState:GameState, time:number):AppliedExitStateEvent[] {
+  const appliedEvents:AppliedExitStateEvent[] = [];
+  gameState.characters.forEach(character => {
+    character.itinerary.forEach((event, eventIndex) => {
+      if (event.startTime > time) return;
+      switch(event.type) {
+        case ItineraryEventType.LOCK:
+        case ItineraryEventType.UNLOCK:
+          appliedEvents.push({
+            characterId:character.id,
+            eventIndex,
+            event:event as LockEvent|UnlockEvent
+          });
+        break;
+      }
+    });
+  });
+  appliedEvents.sort((a, b) => a.event.startTime - b.event.startTime || a.characterId.localeCompare(b.characterId) || a.eventIndex - b.eventIndex);
+  return appliedEvents;
+}
+
 function _removeItemById(items:Item[], itemId:string):Item|null {
   const itemIndex = items.findIndex(item => item.id === itemId);
   if (itemIndex === -1) return null;
@@ -107,6 +137,18 @@ function _findCharacter(gameState:GameState, characterId:string):Character {
   const character = gameState.characters.find(currentCharacter => currentCharacter.id === characterId);
   assertNonNullable(character, `character with id ${characterId} not found`);
   return character;
+}
+
+function _setMatchingExitStatus(gameState:GameState, roomExitId:string, exitStatus:ExitStatus) {
+  let didFindMatch = false;
+  gameState.rooms.forEach(room => {
+    room.exits.forEach(candidate => {
+      if (candidate.id !== roomExitId) return;
+      candidate.exitStatus = exitStatus;
+      didFindMatch = true;
+    });
+  });
+  assertNonNullable(didFindMatch ? roomExitId : null, `unable to find rebuilt exit ${roomExitId}`);
 }
 
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime?:number) {
@@ -172,6 +214,18 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           }
           recipient.items.push(item);
         }
+      break;
+    }
+  });
+
+  _collectAppliedExitStateEvents(gameState, time).forEach(({ event }) => {
+    switch(event.type) {
+      case ItineraryEventType.LOCK:
+        _setMatchingExitStatus(gameState, event.roomExitId, ExitStatus.locked);
+      break;
+
+      case ItineraryEventType.UNLOCK:
+        _setMatchingExitStatus(gameState, event.roomExitId, ExitStatus.unlocked);
       break;
     }
   });

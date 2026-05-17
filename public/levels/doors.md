@@ -107,5 +107,6 @@ PGT.
 : Amos says, "Uh..."
 : Simon says, "You will inflict great pain upon me?"
 : Amos says, "Yes!"
+: Amos unlocks Second Cell
 
 # solutions

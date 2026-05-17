@@ -8,7 +8,7 @@ import Rect from '../types/Rect';
 import Room from '../types/Room';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
-import RoomExit from '../types/RoomExit';
+import RoomExit, { createRoomExitId } from '../types/RoomExit';
 import Waypoint from '../types/Waypoint';
 
 const ROOM_ID = 'Room';
@@ -16,6 +16,7 @@ const ROOM_RECT:Rect = { x:0, y:0, width:20, height:20 };
 
 function _createExit(room2Id:string, x:number, y:number):RoomExit {
   return {
+    id:createRoomExitId(ROOM_ID, room2Id, x, y),
     room1Id:ROOM_ID,
     room2Id,
     x,
@@ -276,6 +277,7 @@ describe('roomUtil', () => {
 
     it('creates exit routes when the room id is the second side of an exit', () => {
       const exits:RoomExit[] = [{
+        id:createRoomExitId('North', ROOM_ID, 10, 0),
         room1Id:'North',
         room2Id:ROOM_ID,
         x:10,

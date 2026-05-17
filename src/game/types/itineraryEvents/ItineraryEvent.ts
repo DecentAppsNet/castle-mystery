@@ -7,8 +7,10 @@ import CharacterEncounterEvent, { duplicateCharacterEncounterEvent } from "./Cha
 import TakeItemEvent, { duplicateTakeItemEvent } from "./TakeItemEvent";
 import DropItemEvent, { duplicateDropItemEvent } from "./DropItemEvent";
 import GiveItemEvent, { duplicateGiveItemEvent } from "./GiveItemEvent";
+import LockEvent, { duplicateLockEvent } from "./LockEvent";
+import UnlockEvent, { duplicateUnlockEvent } from "./UnlockEvent";
 
-type ItineraryEvent = WalkEvent | RoomEntryEvent | SpeechEvent | CharacterEncounterEvent | TakeItemEvent | DropItemEvent | GiveItemEvent;
+type ItineraryEvent = WalkEvent | RoomEntryEvent | SpeechEvent | CharacterEncounterEvent | TakeItemEvent | DropItemEvent | GiveItemEvent | LockEvent | UnlockEvent;
 
 export function duplicateItineraryEvent(from:ItineraryEvent):ItineraryEvent {
   switch(from.type) {
@@ -19,6 +21,8 @@ export function duplicateItineraryEvent(from:ItineraryEvent):ItineraryEvent {
     case ItineraryEventType.TAKE_ITEM: return duplicateTakeItemEvent(from as TakeItemEvent);
     case ItineraryEventType.DROP_ITEM: return duplicateDropItemEvent(from as DropItemEvent);
     case ItineraryEventType.GIVE_ITEM: return duplicateGiveItemEvent(from as GiveItemEvent);
+    case ItineraryEventType.LOCK: return duplicateLockEvent(from as LockEvent);
+    case ItineraryEventType.UNLOCK: return duplicateUnlockEvent(from as UnlockEvent);
     default: assert(false, `unsupported itinerary event type ${(from as ItineraryEvent).type}`);
   }
 }    

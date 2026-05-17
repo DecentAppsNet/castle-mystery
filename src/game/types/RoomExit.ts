@@ -2,6 +2,7 @@ import ExitStatus from './ExitStatus';
 import ExitType from './ExitType';
 
 type RoomExit = {
+  readonly id:string,
   readonly x:number,
   readonly y:number,
   readonly room1Id:string,
@@ -10,6 +11,10 @@ type RoomExit = {
   readonly isLockableFromRoom1:boolean,
   readonly isLockableFromRoom2:boolean,
   exitStatus:ExitStatus
+}
+
+export function createRoomExitId(room1Id:string, room2Id:string, x:number, y:number):string {
+  return `${room1Id}|${room2Id}|${x}|${y}`;
 }
 
 export function duplicateRoomExit(from:RoomExit):RoomExit {

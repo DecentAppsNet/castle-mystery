@@ -7,6 +7,7 @@ import afterPreviousActivityBeforeLaterAbsoluteText from './fixtures/after-previ
 import afterPreviousActivityRepeatedWandersText from './fixtures/after-previous-activity-repeated-wanders.md?raw';
 import afterPreviousActivityText from './fixtures/after-previous-activity.md?raw';
 import absoluteTakeDuringSpeechText from './fixtures/absolute-take-during-speech.md?raw';
+import lockUnlockActivityText from './fixtures/lock-unlock-activity.md?raw';
 import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
 import invalidMapLegendTileText from './fixtures/invalid-map-legend-tile.md?raw';
@@ -358,6 +359,23 @@ describe('levelUtil itinerary loading', () => {
     expect(giveEvent).toEqual({ type:ItineraryEventType.GIVE_ITEM, startTime:5_000, duration:0, itemId:'book', recipientCharacterId:'queen' });
     expect(king?.items.map(item => item.id)).not.toContain('book');
     expect(queen?.items.map(item => item.id)).toContain('book');
+  });
+
+  it('loads lock and unlock activities with stable exit ids', () => {
+    const level = loadLevelFromText(lockUnlockActivityText);
+    const keeper = level.characters.find(character => character.id === 'keeper');
+    const cell = findRoom(level.rooms, 'Cell');
+    const exit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell');
+    const walkEvents = keeper?.itinerary.filter(event => event.type === ItineraryEventType.WALK) || [];
+    const lockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.LOCK) as { startTime:number, roomExitId:string } | undefined;
+    const unlockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.UNLOCK) as { startTime:number, roomExitId:string } | undefined;
+
+    expect(exit).toBeDefined();
+    expect(walkEvents.length).toBeGreaterThan(0);
+    expect(lockEvent?.startTime).toBeGreaterThan(5_000);
+    expect(lockEvent?.roomExitId).toBe(exit?.id);
+    expect(unlockEvent?.startTime).toBe(20_000);
+    expect(unlockEvent?.roomExitId).toBe(exit?.id);
   });
 
   it('adds movement before a give activity when the recipient is farther away', () => {

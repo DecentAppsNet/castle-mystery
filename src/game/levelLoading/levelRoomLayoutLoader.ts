@@ -10,7 +10,7 @@ import Rect from "../types/Rect";
 import Room from "../types/Room";
 import ExitStatus from "../types/ExitStatus";
 import ExitType from "../types/ExitType";
-import RoomExit from "../types/RoomExit";
+import RoomExit, { createRoomExitId } from "../types/RoomExit";
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { createNormalizedEntryMap, normalizeId } from "../idUtil";
 
@@ -401,6 +401,7 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
   const [x, y] = _findExitPositionFromSharedWallSection(sharedWallSection);
   const exitType = _determineExitType(pendingExit);
   const exit:RoomExit = {
+    id:createRoomExitId(room1Id, room2Id, x, y),
     room1Id,
     room2Id,
     x,

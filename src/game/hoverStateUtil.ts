@@ -3,7 +3,6 @@
 import { getExitHoverRect } from "./drawing/exitDrawUtil";
 import { findDiscoveredItemAtPosition } from "./drawing/itemDrawUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
-import { createExitKey } from "./exitUtil";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
@@ -115,7 +114,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
     gameState.hoveredCharacterId = hoveredItem ? null : findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
     const hoveredExit = !hoveredItem && !gameState.hoveredCharacterId ? _findExitAtPosition(hoveredRoom, event.x, event.y, gameState) : null;
-    gameState.hoveredExitKey = hoveredExit ? createExitKey(hoveredExit) : null;
+    gameState.hoveredExitKey = hoveredExit?.id ?? null;
     return;
   }
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
@@ -136,5 +135,5 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
   if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
   gameState.hoveredCharacterId = hoveredItem ? null : findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
   const hoveredExit = !hoveredItem && !gameState.hoveredCharacterId ? _findExitAtPosition(activeRoom, event.x, event.y, gameState) : null;
-  gameState.hoveredExitKey = hoveredExit ? createExitKey(hoveredExit) : null;
+  gameState.hoveredExitKey = hoveredExit?.id ?? null;
 }

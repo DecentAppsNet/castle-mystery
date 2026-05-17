@@ -5,7 +5,9 @@ enum ItineraryEventType {
   CHARACTER_ENCOUNTER = "CharacterEncounter",
   TAKE_ITEM = "TakeItem",
   DROP_ITEM = "DropItem",
-  GIVE_ITEM = "GiveItem"
+  GIVE_ITEM = "GiveItem",
+  LOCK = "Lock",
+  UNLOCK = "Unlock"
 }
 
 export default ItineraryEventType;

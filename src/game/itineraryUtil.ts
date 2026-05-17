@@ -7,6 +7,8 @@ import CharacterEncounterEvent from "./types/itineraryEvents/CharacterEncounterE
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
+import LockEvent from "./types/itineraryEvents/LockEvent";
+import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Position, { duplicatePosition } from "./types/Position";
@@ -96,6 +98,14 @@ export function createGiveItemEvent(startTime:number, itemId:string, recipientCh
   return { type:ItineraryEventType.GIVE_ITEM, startTime, duration:0, itemId, recipientCharacterId };
 }
 
+export function createLockEvent(startTime:number, roomExitId:string):LockEvent {
+  return { type:ItineraryEventType.LOCK, startTime, duration:0, roomExitId };
+}
+
+export function createUnlockEvent(startTime:number, roomExitId:string):UnlockEvent {
+  return { type:ItineraryEventType.UNLOCK, startTime, duration:0, roomExitId };
+}
+
 export function createRoomEntryEvent(startTime:number, roomId:string):RoomEntryEvent {
   return { type:ItineraryEventType.ROOM_ENTRY, startTime, duration:0, roomId };
 }
@@ -114,6 +124,8 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
     case ItineraryEventType.GIVE_ITEM:
+    case ItineraryEventType.LOCK:
+    case ItineraryEventType.UNLOCK:
       return duplicatePosition(eventStartPosition);
     default:
       assert(false, `unsupported itinerary event type ${(event as ItineraryEvent).type}`);

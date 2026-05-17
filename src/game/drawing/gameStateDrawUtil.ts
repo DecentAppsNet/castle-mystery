@@ -3,7 +3,6 @@
 import { assertNonNullable } from "decent-portal";
 
 import { processLevelEffects } from "../effects/effectUtil";
-import { createExitKey } from "../exitUtil";
 import { calcRoomsBoundingRect, findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
 import RoomExit from "../types/RoomExit";
@@ -29,7 +28,7 @@ function _findHoveredItem(gameState:GameState) {
 function _findHoveredExit(gameState:GameState):RoomExit|null {
   if (!gameState.hoveredExitKey) return null;
   for (const room of gameState.rooms) {
-    const hoveredExit = room.exits.find(exit => createExitKey(exit) === gameState.hoveredExitKey) || null;
+    const hoveredExit = room.exits.find(exit => exit.id === gameState.hoveredExitKey) || null;
     if (hoveredExit) return hoveredExit;
   }
   return null;
