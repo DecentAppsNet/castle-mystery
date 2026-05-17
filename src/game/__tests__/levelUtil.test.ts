@@ -6,6 +6,7 @@ import afterPreviousActivityOverlapText from './fixtures/after-previous-activity
 import afterPreviousActivityBeforeLaterAbsoluteText from './fixtures/after-previous-activity-before-later-absolute.md?raw';
 import afterPreviousActivityRepeatedWandersText from './fixtures/after-previous-activity-repeated-wanders.md?raw';
 import afterPreviousActivityText from './fixtures/after-previous-activity.md?raw';
+import absoluteTakeDuringSpeechText from './fixtures/absolute-take-during-speech.md?raw';
 import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
 import invalidMapLegendTileText from './fixtures/invalid-map-legend-tile.md?raw';
@@ -416,6 +417,17 @@ describe('levelUtil itinerary loading', () => {
       .replace('0:00:12 Simon @ Hallway', '0:00:13 Simon @ Hallway');
 
     expect(() => loadLevelFromText(laterArrivalText, 'doors-arrival-timestamp.md')).not.toThrow();
+  });
+
+  it('allows an absolute take to move while the character is still speaking', () => {
+    const level = loadLevelFromText(absoluteTakeDuringSpeechText, 'absolute-take-during-speech.md');
+    const hero = level.characters.find(character => character.id === 'hero');
+    const walkEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.WALK);
+    const takeEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM);
+
+    expect(level).not.toBeNull();
+    expect(walkEvent?.startTime).toBe(1_000);
+    expect(takeEvent?.startTime).toBeGreaterThan(1_000);
   });
 
   it('throws when says would overlap another audible character speech', () => {

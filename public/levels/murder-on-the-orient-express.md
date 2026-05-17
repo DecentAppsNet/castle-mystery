@@ -916,7 +916,7 @@ below.
 
 22:30:00 MacQueen @ Compartment 3
 22:30:00 Schmidt @ Compartment 13
-: Schmidt says "Your Highness. I have brought the Tolstoy."
+: Schmidt interrupts "Your Highness. I have brought the Tolstoy."
 : Princess says "Read me the chapter we left."
 : Schmidt says "Yes, Your Highness."
 22:30:00 Pierre Michel @ Corridor.Vestibule
