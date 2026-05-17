@@ -98,9 +98,9 @@ PGT.
 : Amos says, "Oh, Simon! Come along now."
 : Simon says, "I think... I can go back in my cell."
 : Amos says, "No, no. That's not how it works."
-0:00:18 Simon @ Hallway.corner
+0:00:23 Simon @ Hallway.corner
 : Simon says, "Really, my cell is just fine."
-0:00:20 Amos @ Hallway
+0:00:26 Amos @ Hallway
 : Amos says, "If you don't get in the torture chamber..."
 : Amos says, "I will inflict great pain upon you."
 : Simon says, "And if I go in the torture chamber?"
