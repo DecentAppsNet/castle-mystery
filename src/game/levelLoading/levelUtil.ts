@@ -89,6 +89,7 @@ function _createTimeLabels(duration:number):TimeLabel[] {
   });
   const endLabel = labels[labels.length - 1]?.label || '';
   return labels.filter((timeLabel, index) => {
+    if (index === 0) return true;
     if (index === labels.length - 1) return true;
     if (timeLabel.label === endLabel) return false;
     return labels.findIndex(candidate => candidate.label === timeLabel.label) === index;
