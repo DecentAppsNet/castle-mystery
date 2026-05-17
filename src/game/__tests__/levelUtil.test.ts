@@ -20,7 +20,9 @@ import duplicateCharacterSubsectionsCaseText from './fixtures/duplicate-characte
 import duplicateCharacterPlacementText from './fixtures/duplicate-character-placement.md?raw';
 import duplicateItemSubsectionsCaseText from './fixtures/duplicate-item-subsections-case.md?raw';
 import duplicateItemIdInventoryText from './fixtures/duplicate-item-id-inventory.md?raw';
+import duplicateMapLegendEntryText from './fixtures/duplicate-map-legend-entry.md?raw';
 import duplicateRoomIdMapLegendText from './fixtures/duplicate-room-id-map-legend.md?raw';
+import duplicateRoomLegendEntryText from './fixtures/duplicate-room-legend-entry.md?raw';
 import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsections-case.md?raw';
 import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-solution-category-group-names.md?raw';
 import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-subsections-case.md?raw';
@@ -407,6 +409,28 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
+  it('wraps duplicate map legend entries with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateMapLegendEntryText, 'duplicate-map-legend-entry.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-map-legend-entry.md:7');
+      expect((error as LoadLevelException).message).toContain(`duplicate map legend entry 'A'`);
+    }
+  });
+
+  it('wraps duplicate room legend entries with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateRoomLegendEntryText, 'duplicate-room-legend-entry.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-room-legend-entry.md:15');
+      expect((error as LoadLevelException).message).toContain(`duplicate room hall entry 'H'`);
+    }
+  });
+
   it('wraps duplicate character ids from room placement with filename and line number', () => {
     try {
       loadLevelFromText(duplicateCharacterPlacementText, 'duplicate-character-placement.md');
@@ -490,7 +514,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-room-subsections-case.md:7');
+      expect((error as LoadLevelException).message).toContain('duplicate-room-subsections-case.md:15');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'HALL' conflicts with 'Hall'`);
     }
   });

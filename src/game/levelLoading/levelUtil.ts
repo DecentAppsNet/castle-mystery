@@ -12,6 +12,7 @@ import LoadLevelException from "./LoadLevelException";
 import {
   addRoomExitsFromRoomsSection,
   addRoomPositionMarkersFromSections,
+  applyRoomMetadataFromSections,
   createRoomsFromMapSection,
   generateRoomWaypointsForLevel
 } from "./levelRoomLayoutLoader";
@@ -195,7 +196,9 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     () => parseItemDefinitions(sections.items || ""));
   const roomPopulationDefinitions = { characterDefinitions, itemDefinitions };
   _runWithLoadLevelSectionContext(levelFilename, mapFirstLineNo,
-    () => createRoomsFromMapSection(level, sections.map || "", sections.rooms || ""));
+    () => createRoomsFromMapSection(level, sections.map || ""));
+  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+    () => applyRoomMetadataFromSections(level, sections.rooms || ""));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
     () => addRoomPositionMarkersFromSections(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions)));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,

@@ -8,7 +8,7 @@ import Level from "../types/Level";
 import Obstruction from "../types/Obstruction";
 import Rect from "../types/Rect";
 import Room from "../types/Room";
-import { parseFirstFencedCodeBlockLines, parseNameValueLines, parseOptions, parseSections } from "@/common/markdownUtil";
+import { parseFirstFencedCodeBlockLines, parseNameValueLineEntries, parseOptions, parseSections } from "@/common/markdownUtil";
 import { createNormalizedEntryMap, normalizeId } from "../idUtil";
 
 const MAP_TILE_SIZE = 20;
@@ -32,6 +32,15 @@ type MarkerTile = {
 
 function _isIgnoredGridTileChar(tileChar:string):boolean {
   return tileChar === '.' || tileChar === '#' || tileChar === ' ' || tileChar === '\t';
+}
+
+function _parseNameValueLinesOrThrowDuplicate(markdownText:string, contextLabel:string):Record<string, string> {
+  const nameValues:Record<string, string> = {};
+  parseNameValueLineEntries(markdownText).forEach(([name, value]) => {
+    if (Object.hasOwn(nameValues, name)) throw new Error(`duplicate ${contextLabel} entry '${name}'`);
+    nameValues[name] = value;
+  });
+  return nameValues;
 }
 
 function _findLegendEntryTextOrThrow(tileChar:string, legend:Record<string, string>, row:number, col:number, contextLabel:string):string|null {
@@ -172,10 +181,9 @@ function _addRoomObstructionsFromRoomsSection(level:Level, roomsSection:string) 
   });
 }
 
-export function createRoomsFromMapSection(level:Level, mapSection:string, roomsSection:string = "") {
+export function createRoomsFromMapSection(level:Level, mapSection:string) {
   const mapLines = parseFirstFencedCodeBlockLines(mapSection);
-  const legend = parseNameValueLines(mapSection);
-  const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
+  const legend = _parseNameValueLinesOrThrowDuplicate(mapSection, 'map legend');
   const roomBoundsById = new Map<string, { authoredName:string, tileChar:string, minCol:number, maxCol:number, minRow:number, maxRow:number }>();
 
   mapLines.forEach((line, row) => {
@@ -197,17 +205,16 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, roomsS
   });
 
   Array.from(roomBoundsById.entries()).forEach(([roomId, bounds]) => {
-    const roomNameValues = parseNameValueLines(roomSectionsById.get(roomId)?.value || "");
     level.rooms.push({
       id: roomId,
-      title: roomNameValues.title || bounds.authoredName.trim(),
+      title: bounds.authoredName.trim(),
       rect: {
         x: bounds.minCol * MAP_TILE_SIZE,
         y: bounds.minRow * MAP_TILE_SIZE,
         width: (bounds.maxCol - bounds.minCol + 1) * MAP_TILE_SIZE,
         height: (bounds.maxRow - bounds.minRow + 1) * MAP_TILE_SIZE
       },
-      isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true',
+      isObscured: false,
       items: [],
       obstructions: [],
       waypoints: [],
@@ -215,6 +222,20 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, roomsS
       exits: [],
       isDiscovered: false
     });
+  });
+}
+
+export function applyRoomMetadataFromSections(level:Level, roomsSection:string) {
+  const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
+  level.rooms.forEach((room, index) => {
+    const roomSectionEntry = roomSectionsById.get(room.id) || null;
+    if (!roomSectionEntry) return;
+    const roomNameValues = _parseNameValueLinesOrThrowDuplicate(roomSectionEntry.value, `room ${room.id}`);
+    level.rooms[index] = {
+      ...room,
+      title: roomNameValues.title || roomSectionEntry.authoredName.trim(),
+      isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
+    };
   });
 
   _addRoomObstructionsFromRoomsSection(level, roomsSection);
@@ -231,7 +252,7 @@ export function addRoomPositionMarkersFromSections(level:Level, roomsSection:str
 
     const gridWidth = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
     const gridHeight = gridLines.length;
-    const roomNameValues = parseNameValueLines(roomSection);
+    const roomNameValues = _parseNameValueLinesOrThrowDuplicate(roomSection, `room ${roomId}`);
     const roomLegend = Object.fromEntries(
       Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured')
     );
@@ -295,7 +316,7 @@ export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string) {
 
   Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
     const roomSection = roomSectionEntry.value;
-    const nameValues = parseNameValueLines(roomSection);
+    const nameValues = _parseNameValueLinesOrThrowDuplicate(roomSection, `room ${roomId}`);
     parseOptions(nameValues.exits || "").forEach(connectedRoomText => {
       const connectedRoomId = normalizeId(connectedRoomText);
       const exitPairKey = [roomId, connectedRoomId].sort().join("|");
