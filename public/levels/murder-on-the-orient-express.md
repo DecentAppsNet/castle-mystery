@@ -727,7 +727,7 @@ PE.......................V
 
 <!--
 WP4 — T1 dinner (19:30–21:00) in the Restaurant Car. All 13 characters
-seat themselves by 19:30:00 via back-planned walks (ADR 001 + ADR 007 §7).
+seat themselves by 19:30:00 via back-planned walks (ADR 001 + Orient Express conventions §7).
 Pierre Michel, Edward Masterman, and Hildegarde Schmidt sit at the SVC
 service tables; passengers fill T1–T5 per design §4-T1.
 
@@ -816,7 +816,7 @@ Mary slips out at 21:40 for a brief corridor exchange during which
 Arbuthnot drops the decoy pipe-cleaner. Hubbard's bell rings at 22:15
 and again at 22:45; Pierre answers each from Corridor.Outside10. At
 half-past ten MacQueen leaves Ratchett to sleep, Pierre locks the
-vestibule (narrative only — no exit-locking mechanic; see ADR-007 §8),
+vestibule (narrative only — no exit-locking mechanic; see Orient Express conventions §8),
 and Schmidt knocks at #13 to read Tolstoy until 23:15. By 23:30 every
 character is in their own compartment and Pierre is at Corridor.End.
 
@@ -910,7 +910,7 @@ below.
 
 <!--
 WP6 punch-list — itinerary-driven item placements deferred from WP3:
-* Lace Handkerchief — Princess Dragomiroff drops in Compartment 2 at 01:45 during T3 visit (item to be defined in WP6, ADR-007 slug-form e.g. "Princess's Lace Handkerchief").
+* Lace Handkerchief — Princess Dragomiroff drops in Compartment 2 at 01:45 during T3 visit (item to be defined in WP6, Orient Express conventions slug-form e.g. "Princess's Lace Handkerchief").
 * Bloody Dagger — Mrs Hubbard takes from Compartment 2 at 01:55 and conceals in her Sponge-Bag (final location Compartment 10). Item to be defined in WP6 and placed in Compartment 2 at level start so the take/hide chain works, or introduced via an itinerary drop in #2 just prior to Hubbard's visit.
 * Brass Uniform Button — Pierre Michel drops in the corridor outside Compartment 2 at 00:15 during T3.
 * Pipe-Cleaner Real — Colonel Arbuthnot drops in the corridor outside Compartment 2 during T3 at 01:25.

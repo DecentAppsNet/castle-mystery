@@ -1,4 +1,4 @@
-# ADR 007: Orient Express Level — Conductor Placement, Cast IDs, and Item-Slug Scheme
+# ADR: Orient Express Level — Conductor Placement, Cast IDs, and Item-Slug Scheme
 
 ## Status
 
