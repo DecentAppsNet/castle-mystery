@@ -66,6 +66,12 @@ import giveItemNearText from '../integration-tests/fixtures/give-item-near.md?ra
 import giveItemWalkText from '../integration-tests/fixtures/give-item-walk.md?raw';
 import wanderingTrappedText from '../integration-tests/fixtures/wandering-trapped.md?raw';
 import solutionsImageSeparatorText from './fixtures/solutions-image-separator.md?raw';
+import timelineStartTimeFieldText from './fixtures/timeline-start-time-field.md?raw';
+import timelineBothTimeAndStartTimeText from './fixtures/timeline-both-time-and-start-time.md?raw';
+import timelineExplicitEndSameDayText from './fixtures/timeline-explicit-end-same-day.md?raw';
+import timelineCrossMidnightText from './fixtures/timeline-cross-midnight.md?raw';
+import timelineEventOutsideWindowText from './fixtures/timeline-event-outside-window.md?raw';
+import { MSECS_IN_DAY } from '@/common/timeUtil';
 
 describe('levelUtil itinerary loading', () => {
   beforeEach(() => {
@@ -687,6 +693,87 @@ describe('levelUtil itinerary loading', () => {
       expect((error as LoadLevelException).message).toContain('duplicate-room-subsections-case.md:15');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'HALL' conflicts with 'Hall'`);
     }
+  });
+
+  describe('timeline start/end configuration', () => {
+    it('accepts startTime as a preferred alias for time', () => {
+      const level = loadLevelFromText(timelineStartTimeFieldText);
+
+      expect(level.startTime).toBe(10 * 60 * 60 * 1000);
+    });
+
+    it('throws when both time and startTime are specified', () => {
+      try {
+        loadLevelFromText(timelineBothTimeAndStartTimeText, 'timeline-both.md');
+        expect.fail('expected level loading to throw');
+      } catch (error) {
+        expect(error).toBeInstanceOf(LoadLevelException);
+        expect((error as LoadLevelException).message).toContain("cannot specify both 'time' and 'startTime'");
+      }
+    });
+
+    it('uses explicit endTime to compute duration for a same-day timeline', () => {
+      const level = loadLevelFromText(timelineExplicitEndSameDayText);
+
+      expect(level.startTime).toBe(10 * 60 * 60 * 1000);
+      expect(level.endTime).toBe(18 * 60 * 60 * 1000);
+      expect(level.duration).toBe(8 * 60 * 60 * 1000);
+    });
+
+    it('treats endTime <= startTime as cross-midnight and adds 24 hours to the resolved end', () => {
+      const level = loadLevelFromText(timelineCrossMidnightText);
+      const startTime = 19 * 60 * 60 * 1000 + 30 * 60 * 1000;
+      const rawEndTime = 7 * 60 * 60 * 1000;
+
+      expect(level.startTime).toBe(startTime);
+      expect(level.endTime).toBe(rawEndTime + MSECS_IN_DAY);
+      expect(level.duration).toBe(level.endTime - level.startTime);
+    });
+
+    it('resolves cross-midnight itinerary timestamps less than startTime to the next day', () => {
+      const level = loadLevelFromText(timelineCrossMidnightText);
+      const hero = level.characters.find(character => character.id === 'hero');
+
+      const speechEvents = hero?.itinerary.filter(event => event.type === ItineraryEventType.SPEECH) || [];
+      const speechStartTimes = speechEvents.map(event => event.startTime);
+
+      expect(speechStartTimes).toContain(22 * 60 * 60 * 1000);
+      expect(speechStartTimes).toContain(MSECS_IN_DAY + 15 * 60 * 1000);
+      expect(speechStartTimes).toContain(MSECS_IN_DAY + 6 * 60 * 60 * 1000 + 45 * 60 * 1000);
+    });
+
+    it('throws when an absolute itinerary timestamp falls outside the explicit timeline window', () => {
+      try {
+        loadLevelFromText(timelineEventOutsideWindowText, 'timeline-event-outside-window.md');
+        expect.fail('expected level loading to throw');
+      } catch (error) {
+        expect(error).toBeInstanceOf(LoadLevelException);
+        expect((error as LoadLevelException).message).toContain('outside the timeline window');
+      }
+    });
+
+    it('generates time labels in absolute-since-midnight space spanning startTime to endTime', () => {
+      const level = loadLevelFromText(timelineExplicitEndSameDayText);
+      const labelMinutes = level.labels.map(label => label.minutes);
+      const labelTexts = level.labels.map(label => label.label);
+
+      expect(labelMinutes[0]).toBe(10 * 60);
+      expect(labelMinutes[labelMinutes.length - 1]).toBe(18 * 60);
+      expect(labelTexts[0]).toBe('10am');
+      expect(labelTexts[labelTexts.length - 1]).toBe('6pm');
+    });
+
+    it('wraps cross-midnight time labels through the wall-clock 24-hour boundary', () => {
+      const level = loadLevelFromText(timelineCrossMidnightText);
+      const labelMinutes = level.labels.map(label => label.minutes);
+      const labelTexts = level.labels.map(label => label.label);
+
+      expect(labelMinutes[0]).toBe(19 * 60 + 30);
+      expect(labelMinutes[labelMinutes.length - 1]).toBe(31 * 60);
+      expect(labelTexts[0]).toBe('7:30pm');
+      expect(labelTexts[labelTexts.length - 1]).toBe('7am');
+      expect(labelTexts.some(text => text.endsWith('am') && !text.startsWith('7'))).toBe(true);
+    });
   });
 
 });

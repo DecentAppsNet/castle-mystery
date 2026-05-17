@@ -1,4 +1,7 @@
 import TimeLabel from "@/game/types/TimeLabel";
+import { HOURS_IN_DAY, SECS_IN_DAY, SECS_IN_HOUR, SECS_IN_MINUTE } from "@/common/timeUtil";
+
+const HOURS_IN_HALF_DAY = HOURS_IN_DAY / 2;
 
 function _clampMinutes(minutes:number, fromMinutes:number, toMinutes:number) {
   return Math.min(toMinutes, Math.max(fromMinutes, minutes));
@@ -24,12 +27,14 @@ export function percentToMinutes(percent:number, fromMinutes:number, toMinutes:n
 }
 
 export function formatMinutes(minutes:number) {
-  const totalSeconds = Math.round(minutes * 60);
-  const hours = Math.floor(totalSeconds / 3600);
-  const mins = Math.floor(totalSeconds / 60) % 60;
-  const secs = totalSeconds % 60;
-  if (secs === 0) return `${hours}:${mins.toString().padStart(2, '0')}`;
-  return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const totalSeconds = Math.round(minutes * SECS_IN_MINUTE);
+  const wallClockSeconds = ((totalSeconds % SECS_IN_DAY) + SECS_IN_DAY) % SECS_IN_DAY;
+  const hours24 = Math.floor(wallClockSeconds / SECS_IN_HOUR);
+  const mins = Math.floor(wallClockSeconds / SECS_IN_MINUTE) % SECS_IN_MINUTE;
+  const secs = wallClockSeconds % SECS_IN_MINUTE;
+  const suffix = hours24 < HOURS_IN_HALF_DAY ? 'AM' : 'PM';
+  const hours12 = hours24 % HOURS_IN_HALF_DAY === 0 ? HOURS_IN_HALF_DAY : hours24 % HOURS_IN_HALF_DAY;
+  return `${hours12}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')} ${suffix}`;
 }
 
 export function createPositionedLabels(labels:TimeLabel[], fromMinutes:number, toMinutes:number, sliderWidth:number):TimeLabel[] {

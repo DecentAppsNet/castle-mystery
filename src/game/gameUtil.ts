@@ -118,9 +118,10 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
   });
   if (gameState.isPlaying) {
     const previousTime = gameState.time;
-    const nextTime = Math.min(gameState.duration, Date.now() + gameState.realTimeToGameTimeOffset);
+    const endTime = gameState.startTime + gameState.duration;
+    const nextTime = Math.min(endTime, Date.now() + gameState.realTimeToGameTimeOffset);
     rebuildDynamicStateForTime(gameState, nextTime, previousTime);
-    if (nextTime >= gameState.duration) _pauseGameState(gameState);
+    if (nextTime >= endTime) _pauseGameState(gameState);
   }
   _setActiveRoomDiscovered(gameState);
 }
@@ -200,6 +201,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     isLevelComplete:false,
     isPlaying:false,
     time:level.startTime,
+    startTime:level.startTime,
     duration:level.duration,
     realTimeToGameTimeOffset:0,
     labels:level.labels.map(label => ({...label})),

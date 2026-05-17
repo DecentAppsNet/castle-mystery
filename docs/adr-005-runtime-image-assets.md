@@ -93,6 +93,12 @@ Instead, it should:
 - draw the matching `ImageBitmap` if present
 - fall back to the existing circle head if the image is absent
 
+### 8. Image loading is resilient
+
+A failure to load any single image (missing file, non-OK response, decode error, or the absence of `createImageBitmap` itself) must not reject the whole `createImageSetFromLevel()` call. Failed entries are simply omitted from the `ImageSet`, and the renderer's absence-fallback in §7 produces the circle head for those characters.
+
+This is what makes the §7 fallback contract meaningful: rendering can only fall back on absence if the loader is willing to produce a partial `ImageSet` instead of throwing.
+
 ## Rationale
 
 This design preserves clean boundaries:
@@ -120,7 +126,7 @@ Using the authored URL as the cache key is an acceptable short-term tradeoff for
 - rendering now depends on both character data and `gameState.imageSet`
 - initialization gains an extra explicit step to build the `ImageSet`
 - inconsistent authored URL spellings may lead to duplicate cache entries until normalization or stable asset ids are introduced
-- browsers without usable `ImageBitmap` support will not get a fallback path
+- browsers without usable `ImageBitmap` support get an empty `ImageSet` and render every character as a circle (per §8); they do not fail init
 
 ## Implementation Notes
 
@@ -128,7 +134,7 @@ Implementation should follow these principles:
 
 1. Replace `Character.faceImage` with `Character.faceImageUrl`.
 2. Introduce an `ImageSet` type, likely in a focused utility or type module.
-3. Add a helper that scans a loaded level for unique face-image URLs and loads them into an `ImageSet`.
+3. Add a helper that scans a loaded level for unique face-image URLs and loads them into an `ImageSet`. The helper catches per-URL load failures and omits the failed entries rather than rejecting the whole load (see §8).
 4. Rename `createGameStateFromLevel()` to `createGameState(level, imageSet?)`.
 5. Default `imageSet` to an empty set when omitted.
 6. Add `imageSet` to `GameState`.

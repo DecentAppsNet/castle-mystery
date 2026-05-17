@@ -21,8 +21,8 @@ export function updateTime(minutes:number, setIsPlaying:(isPlaying:boolean) => v
   setIsPlaying(false);
 }
 
-export function updateTimeMsecs(time:number, duration:number, setIsPlaying:(isPlaying:boolean) => void) {
-  changeTime(clamp(time, 0, duration));
+export function updateTimeMsecs(time:number, startTime:number, duration:number, setIsPlaying:(isPlaying:boolean) => void) {
+  changeTime(clamp(time, startTime, startTime + duration));
   setIsPlaying(false);
 }
 
