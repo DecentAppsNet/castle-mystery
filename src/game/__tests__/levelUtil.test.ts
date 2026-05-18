@@ -324,6 +324,68 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
+  it('fails level loading when no characters are placed in the level', () => {
+    const levelText = [
+      '# general',
+      '* activeCharacter=Hero',
+      '# map',
+      '```',
+      'A',
+      '```',
+      '* A=Hall',
+      '# rooms',
+      '## Hall',
+      '# characters',
+      '## Hero',
+      '* description=Ready for adventure.',
+      '# items',
+      '# itinerary',
+      '# solutions'
+    ].join('\n');
+
+    try {
+      loadLevelFromText(levelText, 'no-placed-characters.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('no-placed-characters.md:11');
+      expect((error as LoadLevelException).message).toContain('level must include at least one placed character');
+    }
+  });
+
+  it('fails level loading when general activeCharacter does not match a loaded character', () => {
+    const levelText = [
+      '# general',
+      '* activeCharacter=Ghost',
+      '# map',
+      '```',
+      'A',
+      '```',
+      '* A=Hall',
+      '# rooms',
+      '## Hall',
+      '```',
+      'H',
+      '```',
+      '* H=Hero',
+      '# characters',
+      '## Hero',
+      '* description=Ready for adventure.',
+      '# items',
+      '# itinerary',
+      '# solutions'
+    ].join('\n');
+
+    try {
+      loadLevelFromText(levelText, 'invalid-active-character.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-active-character.md:2');
+      expect((error as LoadLevelException).message).toContain(`general activeCharacter 'ghost' does not match any character in the level`);
+    }
+  });
+
   it('wraps conflicting exit modifiers with filename and line number', () => {
     try {
       loadLevelFromText(conflictingExitModifiersText, 'conflicting-exit-modifiers.md');

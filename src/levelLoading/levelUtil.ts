@@ -195,6 +195,17 @@ function _validateUnlockableSolutionPhrases(level:Level, categoryOptionsByName:M
   );
 }
 
+function _validateHasLoadedCharacters(level:Level) {
+  if (level.characters.length > 0) return;
+  throw new Error('level must include at least one placed character');
+}
+
+function _validateActiveCharacterId(activeCharacterId:string, characters:Level['characters']) {
+  if (!activeCharacterId) return;
+  if (characters.some(character => character.id === activeCharacterId)) return;
+  throw new Error(`general activeCharacter '${activeCharacterId}' does not match any character in the level`);
+}
+
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
   const sections = _runWithLoadLevelSectionContext(levelFilename, 1,
     () => parseSections(text, 1, true));
@@ -236,6 +247,10 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     () => loadRoomPopulationFromRoomsSection(level, sections.rooms || "", roomPopulationDefinitions));
   _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
     () => loadCharacterInventoryItems(level, roomPopulationDefinitions));
+  _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
+    () => _validateHasLoadedCharacters(level));
+  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+    () => _validateActiveCharacterId(level.activeCharacterId, level.characters));
   const solutionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
     () => createSolutionCategoryOptionsByName(sections.solutions || "", _createDefaultSolutionCategoryOptions(level)));
   const authoredSolutions = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
