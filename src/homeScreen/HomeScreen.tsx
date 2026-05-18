@@ -13,6 +13,9 @@ import SolutionsView from "./solutionsView/SolutionsView";
 import Solution from "@/game/solutions/types/Solution";
 import Itinerary from "@/game/types/Itinerary";
 import WinLevelDialog from "./dialogs/WinLevelDialog";
+import LevelManifest from "@/levelLoading/types/LevelManifest";
+import LevelSelector from "./levelSelector/LevelSelector";
+import { changeLevel } from "./interactions/levels";
 
 const ARROW_STEP_MSECS = 200;
 
@@ -40,6 +43,7 @@ function _shouldOpenWinLevelDialog(previousSolutions:ReadonlyArray<Solution>, ne
 
 function HomeScreen() {
   const [gameState, setGameState] = useState<GameState|null>(null);
+  const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
   const [winSynopsis, setWinSynopsis] = useState<string>("");
@@ -67,6 +71,7 @@ function HomeScreen() {
       if (initResults) {
         setMinutes(initResults.minutes);
         setGameState(initResults.gameState);
+        setLevelManifest(initResults.levelManifest);
         setWinSynopsis(initResults.gameState.winSynopsis);
         setSolutions(initResults.gameState.solutions);
         setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
@@ -122,12 +127,30 @@ function HomeScreen() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [gameState, isPlaying, isPlayPauseDisabled]);
 
-  if (!gameState) return null;
+  if (!gameState || !levelManifest) return null;
 
   return (
     <div className={styles.container}>
       <TopBar />
       <div className={styles.content}>
+        <LevelSelector
+          levelManifest={levelManifest}
+          onSelect={(levelUrl) => {
+            void changeLevel({
+              levelUrl,
+              setGameState,
+              setIsPlaying,
+              setMinutes,
+              setWinSynopsis,
+              setSolutions,
+              setSolutionClaimCooldowns,
+              setActiveCharacterId,
+              setIsScrubbing,
+              setModalDialogName,
+              winLevelDialogName:WinLevelDialog.name
+            });
+          }}
+        />
         <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onSolutionsChanged={_handleSolutionsChanged} isScrubbing={isScrubbing} />
         <TimeSlider
           fromMinutes={fromMinutes}

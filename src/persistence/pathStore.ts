@@ -175,7 +175,7 @@ export async function deleteDatabase():Promise<void> {
 async function _getRecordByKey(key:string):Promise<KeyValueRecord> {
   const db = await _open(_getDbName(), SCHEMA);
   const record = await _get(db, KEY_VALUE_STORE, key) as KeyValueRecord;
-  if (record.appDataVersion === APP_DATA_VERSION) return record;
+  if (record === undefined || record.appDataVersion === APP_DATA_VERSION) return record;
   if (record.appDataVersion > APP_DATA_VERSION) throw new Error(`Record at ${key} is v${record.appDataVersion} while app only knows versions up to v${APP_DATA_VERSION}.`); // TODO - need to surface this to UI to trigger a reload, and also handle the case where reloading doesn't fix it.
   _upgradeRecord(record);
   _put(db, KEY_VALUE_STORE, record);

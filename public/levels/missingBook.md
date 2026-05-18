@@ -1,6 +1,6 @@
 # general
 
-* title=Kingacide
+* title=The Missing Book
 * activeCharacter=King
 * time=0:00
 * winSynopsis=The King and Queen wanted to read the same book. She snatched the book and left it in the East Hall for a moment - just long enough for the jester to grab it. Fearing the King had no use for his courtside antics, the jester manipulated the King into watching him dance. The Jester's livelihood was safe for now.
@@ -225,14 +225,14 @@ King arrived in the library at 0:00:34.
 
 * actions=searched|lied|left|took
 
-## The Missing Book
+## Search for the Book
 
 * unlockForItem=Book
 * clozeStatement=The [King] [searched] for a [romance novel] in the [Throne Room], but was unsuccessful. The [King] went to the [Library] next, where the [Queen] [lied] to the [King] about the [romance novel].
 
 ## Possession of the Prize
 
-* unlockForSolution=The Missing Book
+* unlockForSolution=Search for the Book
 * clozeStatement=The [Queen] [left] the [romance novel] in the [East Hall] after a small deception.---The [Jester] [took] it, returning to [Throne Room].
 
 
