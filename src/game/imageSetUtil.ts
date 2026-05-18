@@ -1,5 +1,6 @@
 import { baseUrl } from "@/common/urlUtil";
 import { BUILT_IN_EXIT_IMAGE_URLS } from "./exitImageUtil";
+import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
 import ClozeImage from "./solutions/types/ClozeImage";
 import ClozePartType from "./solutions/types/ClozePartType";
 import Level from "./types/Level";
@@ -10,7 +11,7 @@ export function createEmptyImageSet():ImageSet {
 }
 
 function _findReferencedImageUrls(level:Level):string[] {
-  const imageUrls = new Set<string>(BUILT_IN_EXIT_IMAGE_URLS);
+  const imageUrls = new Set<string>([...BUILT_IN_EXIT_IMAGE_URLS, KEY_IMAGE_URL]);
   const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
   sourceCharacters.forEach(character => {
     if (character.faceImageUrl) imageUrls.add(character.faceImageUrl);

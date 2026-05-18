@@ -6,7 +6,8 @@ import PlayEffect from "./PlayEffect";
 import PauseEffect from "./PauseEffect";
 import CharacterSelectEffect from "./CharacterSelectEffect";
 import SpeechBubbleEffect from "./SpeechBubbleEffect";
+import LockChangeEffect from "./LockChangeEffect";
 
-type Effect = PlayEffect | PauseEffect | CharacterSelectEffect | SpeechBubbleEffect | ItemDiscoveryEffect | TakeItemEffect | DropItemEffect | GiveItemEffect;
+type Effect = PlayEffect | PauseEffect | CharacterSelectEffect | SpeechBubbleEffect | ItemDiscoveryEffect | TakeItemEffect | DropItemEffect | GiveItemEffect | LockChangeEffect;
 
 export default Effect;

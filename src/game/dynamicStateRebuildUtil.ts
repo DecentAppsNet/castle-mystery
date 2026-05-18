@@ -4,6 +4,7 @@ import { assertNonNullable } from "decent-portal";
 
 import { createDropItemEffect } from "./effects/dropItemUtil";
 import { createGiveItemEffect } from "./effects/giveItemUtil";
+import { createLockEffect, createUnlockEffect } from "./effects/lockEffectUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
 import { findCharacterPose } from "./itineraryUtil";
 import Position, { duplicatePosition } from "./types/Position";
@@ -30,6 +31,7 @@ type AppliedInventoryEvent = {
 type AppliedExitStateEvent = {
   characterId:string,
   eventIndex:number,
+  startPosition:Position,
   event:LockEvent|UnlockEvent
 }
 
@@ -113,11 +115,16 @@ function _collectAppliedExitStateEvents(gameState:GameState, time:number):Applie
       switch(event.type) {
         case ItineraryEventType.LOCK:
         case ItineraryEventType.UNLOCK:
+          {
+            const startPosition = character.itineraryIndex.eventStartPositions[eventIndex];
+            assertNonNullable(startPosition);
           appliedEvents.push({
             characterId:character.id,
             eventIndex,
+            startPosition:duplicatePosition(startPosition),
             event:event as LockEvent|UnlockEvent
           });
+          }
         break;
       }
     });
@@ -149,6 +156,10 @@ function _setMatchingExitStatus(gameState:GameState, roomExitId:string, exitStat
     });
   });
   assertNonNullable(didFindMatch ? roomExitId : null, `unable to find rebuilt exit ${roomExitId}`);
+}
+
+function _findRoomExitById(room:GameState['rooms'][number], roomExitId:string) {
+  return room.exits.find(candidate => candidate.id === roomExitId) || null;
 }
 
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime?:number) {
@@ -218,14 +229,22 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
     }
   });
 
-  _collectAppliedExitStateEvents(gameState, time).forEach(({ event }) => {
+  _collectAppliedExitStateEvents(gameState, time).forEach(({ startPosition, event }) => {
+    const room = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
+    const roomExit = room ? _findRoomExitById(room, event.roomExitId) : null;
     switch(event.type) {
       case ItineraryEventType.LOCK:
         _setMatchingExitStatus(gameState, event.roomExitId, ExitStatus.locked);
+        if (room && roomExit && previousTime !== undefined && event.startTime > previousTime && event.startTime <= time && !room.isObscured) {
+          pendingRoomEffects.push({ roomId:room.id, create:() => gameState.activeEffects.push(createLockEffect(room, roomExit, Date.now(), gameState.scalingFactors, gameState.imageSet)) });
+        }
       break;
 
       case ItineraryEventType.UNLOCK:
         _setMatchingExitStatus(gameState, event.roomExitId, ExitStatus.unlocked);
+        if (room && roomExit && previousTime !== undefined && event.startTime > previousTime && event.startTime <= time && !room.isObscured) {
+          pendingRoomEffects.push({ roomId:room.id, create:() => gameState.activeEffects.push(createUnlockEffect(room, roomExit, Date.now(), gameState.scalingFactors, gameState.imageSet)) });
+        }
       break;
     }
   });

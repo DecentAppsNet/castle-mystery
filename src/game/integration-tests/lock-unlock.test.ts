@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
+import LockChangeEffect from '../effects/types/LockChangeEffect';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { createGameState, findCharacter } from '../gameUtil';
 import { loadLevelFromText } from '../levelLoading/levelUtil';
-import { findExitWaypoint, findRoom } from '../roomUtil';
+import { findExitWaypoint, findRoom, findRoomAtPosition } from '../roomUtil';
 import ExitStatus from '../types/ExitStatus';
+import EffectType from '../effects/types/EffectType';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import WalkEvent from '../types/itineraryEvents/WalkEvent';
 import lockUnlockActivityText from '../__tests__/fixtures/lock-unlock-activity.md?raw';
@@ -100,6 +102,39 @@ describe('lock unlock integration', () => {
 
     rebuildDynamicStateForTime(gameState, lockEvent!.startTime, lockEvent!.startTime - 1);
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.locked);
+  });
+
+  it('creates lock and unlock room effects during playback but not scrubbing', () => {
+    const level = loadLevelFromText(lockUnlockActivityText);
+    const gameState = createGameState(level);
+    const keeper = gameState.characters.find(character => character.id === 'keeper');
+    const lockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.LOCK) as { startTime:number } | undefined;
+
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime);
+    expect(gameState.activeEffects.some(effect => effect.type === EffectType.LOCK || effect.type === EffectType.UNLOCK)).toBe(false);
+
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, lockEvent!.startTime - 1);
+    expect(gameState.activeEffects.some(effect => effect.type === EffectType.LOCK)).toBe(true);
+  });
+
+  it('anchors unlock effects to the event start room after movement', () => {
+    const level = loadLevelFromText(unlockAfterMoveText);
+    const keeper = level.characters.find(character => character.id === 'keeper');
+    const unlockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.UNLOCK) as { startTime:number } | undefined;
+    const unlockEventIndex = keeper?.itinerary.findIndex(event => event.type === ItineraryEventType.UNLOCK) ?? -1;
+    const unlockStartPosition = unlockEventIndex >= 0 ? keeper?.itineraryIndex.eventStartPositions[unlockEventIndex] : null;
+    const expectedRoom = unlockStartPosition ? findRoomAtPosition(level.rooms, unlockStartPosition.x, unlockStartPosition.y) : null;
+    const gameState = createGameState({ ...level, activeCharacterId:'Keeper' });
+
+    expect(unlockEvent).toBeDefined();
+    expect(unlockStartPosition).toBeDefined();
+    expect(expectedRoom).not.toBeNull();
+
+    rebuildDynamicStateForTime(gameState, unlockEvent!.startTime, unlockEvent!.startTime - 1);
+    const unlockEffect = gameState.activeEffects.find(effect => effect.type === EffectType.UNLOCK) as LockChangeEffect | undefined;
+
+    expect(unlockEffect).toBeDefined();
+    expect(unlockEffect?.room?.id).toBe(expectedRoom!.id);
   });
 
   it('walks to the exit waypoint before the lock event changes exit state', () => {
