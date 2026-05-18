@@ -4,7 +4,6 @@ import Room from "@/game/types/Room";
 import CharacterEncounterEvent from "@/game/types/itineraryEvents/CharacterEncounterEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import RoomEntryEvent from "@/game/types/itineraryEvents/RoomEntryEvent";
-import SpeechEvent from "@/game/types/itineraryEvents/SpeechEvent";
 
 export const SPEECH_CLUSTER_GAP_MSECS = 6 * MSECS_IN_SECOND;
 
@@ -80,12 +79,11 @@ function _createObscuredRanges(itinerary:Itinerary, rooms:Room[], initialRoomId:
 
 function _createSpeechRanges(itinerary:Itinerary):SpeechMarkerRange[] {
   return itinerary
-    .filter(event => event.type === ItineraryEventType.SPEECH)
+    .filter(event => event.type === ItineraryEventType.SPEECH || event.type === ItineraryEventType.THOUGHT)
     .map(event => {
-      const speechEvent = event as SpeechEvent;
       return {
-        startTime:speechEvent.startTime,
-        endTime:speechEvent.startTime + speechEvent.duration
+        startTime:event.startTime,
+        endTime:event.startTime + event.duration
       };
     })
     .sort((range1, range2) => range1.startTime - range2.startTime);

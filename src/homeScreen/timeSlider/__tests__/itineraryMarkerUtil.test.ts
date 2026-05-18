@@ -37,6 +37,20 @@ describe('itineraryMarkerUtil', () => {
       ]);
     });
 
+    it('clusters nearby speech and thought events into the same yellow range', () => {
+      const itinerary:Itinerary = [
+        { type:ItineraryEventType.SPEECH, startTime:0, duration:3_000, speech:'You can trust me!' },
+        { type:ItineraryEventType.THOUGHT, startTime:3_000 + SPEECH_CLUSTER_GAP_MSECS, duration:2_000, thought:'You absolutely should not trust me.' },
+        { type:ItineraryEventType.SPEECH, startTime:3_000 + SPEECH_CLUSTER_GAP_MSECS + 2_000 + SPEECH_CLUSTER_GAP_MSECS, duration:1_500, speech:'I will watch over your cookies.' }
+      ];
+
+      const markerModel = createItineraryMarkerModel(itinerary);
+
+      expect(markerModel.speechRanges).toEqual([
+        { startTime:0, endTime:3_000 + SPEECH_CLUSTER_GAP_MSECS + 2_000 + SPEECH_CLUSTER_GAP_MSECS + 1_500 }
+      ]);
+    });
+
     it('hides speech and encounter markers inside obscured rooms and adds obscured ranges', () => {
       const rooms = [_createRoom('Foyer', false), _createRoom('Closet', true), _createRoom('Hall', false)];
       const itinerary:Itinerary = [
@@ -58,6 +72,24 @@ describe('itineraryMarkerUtil', () => {
         { startTime:2_100, endTime:2_500 }
       ]);
       expect(markerModel.encounterMarkers).toEqual([]);
+    });
+
+    it('hides thought events inside obscured rooms from the shared yellow ranges', () => {
+      const rooms = [_createRoom('Foyer', false), _createRoom('Closet', true), _createRoom('Hall', false)];
+      const itinerary:Itinerary = [
+        { type:ItineraryEventType.SPEECH, startTime:500, duration:400, speech:'visible' },
+        { type:ItineraryEventType.ROOM_ENTRY, startTime:1_000, duration:0, roomId:'Closet' },
+        { type:ItineraryEventType.THOUGHT, startTime:1_200, duration:500, thought:'hidden thought' },
+        { type:ItineraryEventType.ROOM_ENTRY, startTime:2_000, duration:0, roomId:'Hall' },
+        { type:ItineraryEventType.THOUGHT, startTime:2_100, duration:400, thought:'visible again' }
+      ];
+
+      const markerModel = createItineraryMarkerModel(itinerary, rooms, 'Foyer', 3_000);
+
+      expect(markerModel.speechRanges).toEqual([
+        { startTime:500, endTime:900 },
+        { startTime:2_100, endTime:2_500 }
+      ]);
     });
   });
 });
