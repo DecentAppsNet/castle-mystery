@@ -5,6 +5,7 @@ import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import SpeechEvent from "../types/itineraryEvents/SpeechEvent";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findStatePoseAtTime } from "./activityUtil";
 import { isActiveAudibleRoom } from "../roomUtil";
+import { formatMsecsAsTimestamp } from "@/common/timestampUtil";
 
 type SpeechVerb = 'says' | 'interrupts';
 
@@ -19,18 +20,6 @@ function _parseSpeechText(activityText:string, speechVerb:SpeechVerb):string {
   return speechText;
 }
 
-function _formatTimestamp(milliseconds:number):string {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const remainingMilliseconds = milliseconds % 1000;
-  const wholeSecondsText = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  return remainingMilliseconds === 0
-    ? wholeSecondsText
-    : `${wholeSecondsText}.${String(remainingMilliseconds).padStart(3, '0')}`;
-}
-
 function _findOverlappingSpeechEvent(events:ItineraryEvent[], speechEvent:SpeechEvent):SpeechEvent|null {
   return events.find(event =>
     event.type === ItineraryEventType.SPEECH
@@ -43,7 +32,7 @@ function _createOverlappingSpeechMessage(overlappingSpeechEvent:SpeechEvent, spe
   const explanation = timestampKind === 'absolute'
     ? `This usually means an absolute timestamp started a new speech before the previous one finished.`
     : `This speech would begin before the previous speech finished.`;
-  return `same character speech overlap: '${speechEvent.speech}' starts at ${_formatTimestamp(speechEvent.startTime)} before earlier speech '${overlappingSpeechEvent.speech}' ends at ${_formatTimestamp(overlappingSpeechEndTime)}. ${explanation} Move the later speech later, or use ':' if it should wait for the previous activity.`;
+  return `same character speech overlap: '${speechEvent.speech}' starts at ${formatMsecsAsTimestamp(speechEvent.startTime)} before earlier speech '${overlappingSpeechEvent.speech}' ends at ${formatMsecsAsTimestamp(overlappingSpeechEndTime)}. ${explanation} Move the later speech later, or use ':' if it should wait for the previous activity.`;
 }
 
 function _findActiveSpeechEvent(events:ItineraryEvent[], time:number):SpeechEvent|null {
@@ -62,7 +51,7 @@ function _findCharacterRoomAtTime(context:ActivityContext, character:Character, 
 
 function _createAudibleSpeechOverlapMessage(otherCharacter:Character, otherSpeechEvent:SpeechEvent, speakerRoomTitle:string, speechEvent:SpeechEvent):string {
   const otherSpeechEndTime = otherSpeechEvent.startTime + otherSpeechEvent.duration;
-  return `audible speech overlap: '${speechEvent.speech}' starts at ${_formatTimestamp(speechEvent.startTime)} while ${otherCharacter.title} is already speaking '${otherSpeechEvent.speech}' until ${_formatTimestamp(otherSpeechEndTime)} in a room audible from ${speakerRoomTitle}. Use 'interrupts' instead of 'says' if talking over another audible character is intentional.`;
+  return `audible speech overlap: '${speechEvent.speech}' starts at ${formatMsecsAsTimestamp(speechEvent.startTime)} while ${otherCharacter.title} is already speaking '${otherSpeechEvent.speech}' until ${formatMsecsAsTimestamp(otherSpeechEndTime)} in a room audible from ${speakerRoomTitle}. Use 'interrupts' instead of 'says' if talking over another audible character is intentional.`;
 }
 
 function _throwOnAudibleSpeechOverlap(context:ActivityContext, speechEvent:SpeechEvent) {

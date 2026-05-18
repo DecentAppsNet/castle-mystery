@@ -2,7 +2,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/common/timestampUtil";
+import { formatMsecsAsTimestamp, LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/common/timestampUtil";
 import { MSECS_IN_DAY } from "@/common/timeUtil";
 import { tryCreateAtActivity } from "../activities/atActivityUtil";
 import { tryCreateDropActivity } from "../activities/dropActivityUtil";
@@ -151,17 +151,18 @@ function _normalizeParsedActivityText(activityText:string):string {
   return trimmedActivityText;
 }
 
-function _throwErrorWithLoadLevelContext(levelFilename:string, errorLineNo:number, error:unknown):never {
+function _throwErrorWithLoadLevelContext(levelFilename:string, errorLineNo:number, error:unknown, errorTime?:number):never {
+  const errorPrefix = errorTime === undefined ? '' : `At ${formatMsecsAsTimestamp(errorTime)}, `;
   if (error instanceof LoadLevelException) throw error;
-  if (error instanceof Error) throw new LoadLevelException(levelFilename, errorLineNo, error.message, error);
-  throw new LoadLevelException(levelFilename, errorLineNo, String(error), error);
+  if (error instanceof Error) throw new LoadLevelException(levelFilename, errorLineNo, `${errorPrefix}${error.message}`, error);
+  throw new LoadLevelException(levelFilename, errorLineNo, `${errorPrefix}${String(error)}`, error);
 }
 
-function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:number, callback:() => T):T {
+function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:number, callback:() => T, errorTime?:number):T {
   try {
     return callback();
   } catch (error) {
-    _throwErrorWithLoadLevelContext(levelFilename, errorLineNo, error);
+    _throwErrorWithLoadLevelContext(levelFilename, errorLineNo, error, errorTime);
   }
 }
 
@@ -295,7 +296,7 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
       appendEventsToCharacterState(level, character, previewState, events);
       poseOverridesByCharacterId.set(activity.characterId,
         findStatePoseAtTime(character, previewState, activity.resolvedTime).position);
-    });
+    }, activity.resolvedTime);
   });
 
   return poseOverridesByCharacterId;
@@ -370,7 +371,7 @@ function _scheduleActivities(level:Level, activities:ParsedItineraryActivity[], 
       appendEventsToCharacterState(level, character, context.state, events);
       if (!events.length) context.state.time = Math.max(context.state.time, activityStartTime);
       completionTimesBySourceIndex.set(activity.sourceIndex, _calcActivityCompletionTime(activityStartTime, events));
-    });
+    }, activity.resolvedTime);
   };
 
   const sortedActivities = _sortActivitiesByResolvedTime(activities);

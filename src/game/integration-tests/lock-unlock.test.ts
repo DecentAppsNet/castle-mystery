@@ -78,6 +78,30 @@ describe('lock unlock integration', () => {
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.unlocked);
   });
 
+  it('rebuilds the same exit status correctly when scrubbing backward and forward across lock changes', () => {
+    const level = loadLevelFromText(lockUnlockActivityText);
+    const gameState = createGameState(level);
+    const keeper = gameState.characters.find(character => character.id === 'keeper');
+    const lockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.LOCK) as { startTime:number } | undefined;
+    const unlockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.UNLOCK) as { startTime:number } | undefined;
+
+    expect(lockEvent).toBeDefined();
+    expect(unlockEvent).toBeDefined();
+    expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.unlocked);
+
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, 0);
+    expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.locked);
+
+    rebuildDynamicStateForTime(gameState, unlockEvent!.startTime, lockEvent!.startTime);
+    expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.unlocked);
+
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime - 1, unlockEvent!.startTime);
+    expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.unlocked);
+
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, lockEvent!.startTime - 1);
+    expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.locked);
+  });
+
   it('walks to the exit waypoint before the lock event changes exit state', () => {
     _expectWalkThenExitStateChange(lockUnlockActivityText, ItineraryEventType.LOCK, ExitStatus.unlocked, ExitStatus.locked);
   });
