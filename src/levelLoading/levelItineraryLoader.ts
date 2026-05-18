@@ -20,6 +20,7 @@ import {
 } from "./activities/activityUtil";
 import { tryCreateSayActivity } from "./activities/sayActivityUtil";
 import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
+import { tryCreateThinkActivity } from "./activities/thinkActivityUtil";
 import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
 import LoadLevelException from "./LoadLevelException";
 import { addCharacterEncounterEvents } from "../game/characterEncounterUtil";
@@ -111,6 +112,12 @@ function _normalizeSpeechActivityText(activityText:string, speechVerb:'says'|'in
   return `${speechVerb} ${speechText}`;
 }
 
+function _normalizeThoughtActivityText(activityText:string):string {
+  const thoughtText = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityText.slice('thinks'.length), new Set(['"', '\'', '-']));
+  if (!thoughtText.length) return 'thinks';
+  return `thinks ${thoughtText}`;
+}
+
 function _normalizeGiveActivityText(activityText:string):string {
   const giveText = activityText.slice('gives'.length).trim();
   const separatorIndex = giveText.lastIndexOf(' to ');
@@ -136,6 +143,7 @@ function _normalizeParsedActivityText(activityText:string):string {
   }
   if (trimmedActivityText.startsWith('says')) return _normalizeSpeechActivityText(trimmedActivityText, 'says');
   if (trimmedActivityText.startsWith('interrupts')) return _normalizeSpeechActivityText(trimmedActivityText, 'interrupts');
+  if (trimmedActivityText.startsWith('thinks')) return _normalizeThoughtActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('wanders')) return 'wanders';
   if (trimmedActivityText.startsWith('gives')) return _normalizeGiveActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('unlocks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'unlocks');
@@ -168,7 +176,7 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '"', '\'', '-']));
-  const activityMarkers = [' @', ' says ', ' interrupts ', ' wanders', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
+  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' wanders', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
@@ -306,6 +314,7 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
   const activityFactories = [
     tryCreateAtActivity,
     tryCreateSayActivity,
+    tryCreateThinkActivity,
     tryCreateWanderActivity,
     tryCreateGiveActivity,
     tryCreateDropActivity,

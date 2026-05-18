@@ -3,6 +3,7 @@ enum EffectType {
   PAUSE = "Pause",
   CHARACTER_SELECT = "CharacterSelect",
   SPEECH_BUBBLE = "SpeechBubble",
+  THOUGHT_BUBBLE = "ThoughtBubble",
   ITEM_DISCOVERY = "ItemDiscovery",
   TAKE_ITEM = "TakeItem",
   DROP_ITEM = "DropItem",

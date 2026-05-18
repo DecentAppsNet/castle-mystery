@@ -3,6 +3,7 @@ import Room from "./types/Room";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
 import RoomEntryEvent from "./types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
+import ThoughtEvent from "./types/itineraryEvents/ThoughtEvent";
 import CharacterEncounterEvent from "./types/itineraryEvents/CharacterEncounterEvent";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
@@ -25,7 +26,8 @@ const SPEECH_MSECS_PER_CHARACTER = 90;
 
 type CharacterPose = {
   position:Position,
-  speech:string|null
+  speech:string|null,
+  thought:string|null
 }
 
 function _calcSpeechDuration(speech:string):number {
@@ -77,6 +79,15 @@ export function createSpeechEvent(startTime:number, speech:string):SpeechEvent {
   };
 }
 
+export function createThoughtEvent(startTime:number, thought:string):ThoughtEvent {
+  return {
+    type:ItineraryEventType.THOUGHT,
+    startTime,
+    thought,
+    duration:_calcSpeechDuration(thought)
+  };
+}
+
 export function createCharacterEncounterEvent(startTime:number, encounteredCharacterIds:string[]):CharacterEncounterEvent {
   return {
     type:ItineraryEventType.CHARACTER_ENCOUNTER,
@@ -120,6 +131,7 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
       return duplicatePosition((event as WalkEvent).toPosition);
     case ItineraryEventType.ROOM_ENTRY:
     case ItineraryEventType.SPEECH:
+    case ItineraryEventType.THOUGHT:
     case ItineraryEventType.CHARACTER_ENCOUNTER:
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
@@ -146,7 +158,8 @@ export function findCharacterPose(character:Character, time:number):CharacterPos
   if (!character.itinerary.length || !character.itineraryIndex.eventStartTimes.length) {
     return {
       position:{ x:character.x, y:character.y },
-      speech:null
+      speech:null,
+      thought:null
     };
   }
   return _findItineraryPosition(character, time);
@@ -179,10 +192,22 @@ function _findSpeechAtTime(itinerary:ItineraryEvent[], time:number):string|null 
   return currentSpeech;
 }
 
+function _findThoughtAtTime(itinerary:ItineraryEvent[], time:number):string|null {
+  let currentThought:string|null = null;
+  for (const event of itinerary) {
+    if (event.startTime > time) break;
+    if (event.type !== ItineraryEventType.THOUGHT) continue;
+    const thoughtEvent = event as ThoughtEvent;
+    currentThought = time < thoughtEvent.startTime + thoughtEvent.duration ? thoughtEvent.thought : null;
+  }
+  return currentThought;
+}
+
 function _findItineraryPosition(character:Character, time:number):CharacterPose {
   return {
     position:_findPositionAtTime({ x:character.x, y:character.y }, character.itinerary, time),
-    speech:_findSpeechAtTime(character.itinerary, time)
+    speech:_findSpeechAtTime(character.itinerary, time),
+    thought:_findThoughtAtTime(character.itinerary, time)
   };
 }
 

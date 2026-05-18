@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import * as lastLevel from '@/persistence/lastLevel';
 import { loadLevelManifestFromUrl } from '../manifestUtil';
 
 describe('manifestUtil', () => {
@@ -9,6 +10,8 @@ describe('manifestUtil', () => {
   });
 
   it('loads level URLs from the manifest and titles from each level general section', async () => {
+    vi.spyOn(lastLevel, 'getLastLevelUrl').mockResolvedValue(null);
+
     const fetchMock = vi.fn(async (url:string) => {
       if (url.endsWith('/levels/levels.md')) {
         return {
@@ -41,6 +44,8 @@ describe('manifestUtil', () => {
   });
 
   it('throws when a listed level is missing a title in its general section', async () => {
+    vi.spyOn(lastLevel, 'getLastLevelUrl').mockResolvedValue(null);
+
     const fetchMock = vi.fn(async (url:string) => {
       if (url.endsWith('/levels/levels.md')) {
         return {

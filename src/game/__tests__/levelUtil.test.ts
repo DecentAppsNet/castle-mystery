@@ -469,6 +469,13 @@ describe('levelUtil itinerary loading', () => {
     expect(() => loadLevelFromText(audibleSpeechInterruptsText, 'audible-speech-interrupts.md')).not.toThrow();
   });
 
+  it('allows thinks to overlap another audible character speech', () => {
+    const audibleThoughtOverlapText = audibleSpeechOverlapText
+      .replace('0:00:01 June says "Hi, Bob."', '0:00:01 June thinks "Hi, Bob."');
+
+    expect(() => loadLevelFromText(audibleThoughtOverlapText, 'audible-thought-overlap.md')).not.toThrow();
+  });
+
   it('throws when a lock activity targets a room that is not directly connected', () => {
     try {
       loadLevelFromText(lockNonadjacentRoomText, 'lock-nonadjacent-room.md');
@@ -521,6 +528,38 @@ describe('levelUtil itinerary loading', () => {
       expect((error as LoadLevelException).message).toContain('absolute timestamp');
       expect((error as LoadLevelException).message).toContain(`use ':' if it should wait for the previous activity`);
     }
+  });
+
+  it('throws when the same character would think over their own earlier thought', () => {
+    const overlappingSameCharacterThoughtText = overlappingSameCharacterSpeechText
+      .replace('0:00:00 Bob says, "Why hello there, June! I have more than one second of things to say to you right now."',
+        '0:00:00 Bob thinks, "Why hello there, June! I have more than one second of things to think to myself right now."')
+      .replace('0:00:01 Bob says, "Hi again."', '0:00:01 Bob thinks, "Hi again."');
+
+    try {
+      loadLevelFromText(overlappingSameCharacterThoughtText, 'overlapping-same-character-thought.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('overlapping-same-character-thought.md');
+      expect((error as LoadLevelException).errorLineNo).toBe(33);
+      expect((error as LoadLevelException).message).toContain('same character thought overlap');
+      expect((error as LoadLevelException).message).toContain('0:00:01');
+      expect((error as LoadLevelException).message).toContain('absolute timestamp');
+      expect((error as LoadLevelException).message).toContain(`use ':' if it should wait for the previous activity`);
+    }
+  });
+
+  it('findCharacterPose returns active thoughts separately from speech', () => {
+    const thinkingCharacterText = shortDurationLabelsText
+      .replace('0:00:10 Hero says, "Done."', '0:00:10 Hero thinks, "Done."');
+    const level = loadLevelFromText(thinkingCharacterText, 'thinking-character.md');
+    const hero = level.characters.find(character => character.id === 'hero');
+
+    expect(hero).toBeTruthy();
+    expect(hero?.itinerary[0]?.type).toBe(ItineraryEventType.THOUGHT);
+    expect(findCharacterPose(hero!, 10_000).speech).toBeNull();
+    expect(findCharacterPose(hero!, 10_000).thought).toBe('Done.');
   });
 
 

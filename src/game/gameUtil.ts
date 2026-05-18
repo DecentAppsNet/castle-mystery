@@ -22,6 +22,7 @@ import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameState
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
+import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
 import Solution, { duplicateSolution } from "./solutions/types/Solution";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
@@ -146,6 +147,26 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
   });
 }
 
+function _syncThoughtBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
+  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.THOUGHT_BUBBLE);
+
+  if (!gameState.isLevelComplete && !gameState.isPlaying && !isScrubbing) return;
+
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  if (!gameState.isLevelComplete && (!activeRoom || activeRoom.isObscured)) return;
+
+  const visibleRooms = gameState.isLevelComplete
+    ? gameState.rooms.filter(room => room.isDiscovered)
+    : activeRoom ? [activeRoom] : [];
+
+  visibleRooms.flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
+    const thought = findCharacterPose(character, gameState.time).thought;
+    if (!thought) return;
+    gameState.activeEffects.push(createThoughtBubbleEffect(character, thought, gameState.scalingFactors, gameState.time));
+  });
+}
+
 function _findCharacterI(characters:Character[], characterRef:string):number {
   const characterId = normalizeId(characterRef);
   for(let i = 0; i < characters.length; ++i) {
@@ -178,6 +199,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 
   updateScalingFactorsAsNeeded(gameState, context);
   _syncSpeechBubbleEffects(gameState, isScrubbing);
+  _syncThoughtBubbleEffects(gameState, isScrubbing);
   syncSolutionUnlocks(gameState);
   if (onSolutionsChanged) callOnSolutionsChangedAsNeeded(gameState, onSolutionsChanged);
   drawGameState(gameState, context);

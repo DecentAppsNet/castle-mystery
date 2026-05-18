@@ -176,10 +176,10 @@ G....
 0:00:00 Queen @ West Hall
 0:00:01 Queen wanders
 0:00:05 Queen @ West Hall.NearDagger
-: Queen says "A Queen should not witness such untidiness."
+: Queen thinks "A Queen should not witness such untidiness."
 : Queen wanders
-0:00:10 Queen says "When one is bored, it is surely boring."
-: Queen says "I shall look upon the tomes for alleviation."
+0:00:10 Queen thinks "When one is bored, it is surely boring."
+: Queen thinks "I shall look upon the tomes for alleviation."
 0:00:30 Queen @ Library
 0:00:31 Queen says "Hmm."
 0:00:32 Queen takes Book
@@ -201,7 +201,7 @@ King arrived in the library at 0:00:34.
 0:00:49 Jester @ Throne Room
 : Jester wanders
 0:00:52 Queen @ Sanctum
-: Queen says "I imagine he will destroy it. That is not my concern."
+: Queen thinks "I imagine he will destroy it. That is not my concern."
 
 0:00:48 King @ Foyer
 0:00:50 King @ Throne Room
