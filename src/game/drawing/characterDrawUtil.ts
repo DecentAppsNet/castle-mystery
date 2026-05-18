@@ -27,24 +27,47 @@ function _getCharacterCarryText(character:Character):string {
   return `Carrying ${itemCount} items.`;
 }
 
+function _drawSpeechBubbleOutline(left:number, top:number, width:number, height:number,
+  tailTipX:number, tailTipY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const tailBaseWidth = Math.max(4, scalingFactors.roomLineWidth * 2);
+  const tailBaseCenterX = clamp(tailTipX, left + tailBaseWidth, left + width - tailBaseWidth);
+  const tailBaseLeftX = tailBaseCenterX - tailBaseWidth / 2;
+  const tailBaseRightX = tailBaseCenterX + tailBaseWidth / 2;
+  const bottomY = top + height;
+
+  context.beginPath();
+  context.moveTo(left, top);
+  context.lineTo(left + width, top);
+  context.lineTo(left + width, bottomY);
+  context.lineTo(tailBaseRightX, bottomY);
+  context.lineTo(tailTipX, tailTipY);
+  context.lineTo(tailBaseLeftX, bottomY);
+  context.lineTo(left, bottomY);
+  context.closePath();
+}
+
 export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
+  const tailHeight = Math.max(4, scalingFactors.roomLineWidth * 2);
   context.save();
   context.font = `${fontSize}px Jellee`;
   context.textAlign = "center";
   context.textBaseline = "middle";
   const boxWidth = context.measureText(speech).width + padding * 2;
   const unclampedLeft = anchorX - boxWidth / 2;
-  const unclampedTop = anchorTopY - boxHeight - scalingFactors.roomLineWidth * 2;
+  const unclampedTop = anchorTopY - boxHeight - tailHeight - scalingFactors.roomLineWidth * 2;
   const left = Math.round(clamp(unclampedLeft, 0, context.canvas.width - boxWidth));
-  const top = Math.round(clamp(unclampedTop, 0, context.canvas.height - boxHeight));
+  const top = Math.round(clamp(unclampedTop, 0, context.canvas.height - boxHeight - tailHeight));
+  const tailTipX = Math.round(clamp(anchorX, 0, context.canvas.width));
+  const tailTipY = top + boxHeight + tailHeight;
   context.fillStyle = COLOR_SPEECH_BUBBLE_FILL;
   context.strokeStyle = COLOR_DARK_GRAY;
   context.lineWidth = Math.max(1, scalingFactors.roomLineWidth / 2);
-  context.fillRect(left, top, boxWidth, boxHeight);
-  context.strokeRect(left, top, boxWidth, boxHeight);
+  _drawSpeechBubbleOutline(left, top, boxWidth, boxHeight, tailTipX, tailTipY, scalingFactors, context);
+  context.fill();
+  context.stroke();
   context.fillStyle = COLOR_BLACK;
   context.fillText(speech, left + boxWidth / 2, top + boxHeight / 2);
   context.restore();
