@@ -1,3 +1,4 @@
+// Follow test conventions from CONTRIBUTING.md when editing this file.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import itineraryExtraPunctuationText from './fixtures/itinerary-extra-punctuation.md?raw';
@@ -29,6 +30,7 @@ import audibleSpeechInterruptsText from './fixtures/audible-speech-interrupts.md
 import audibleSpeechOverlapText from './fixtures/audible-speech-overlap.md?raw';
 import duplicateGeneralEntryText from './fixtures/duplicate-general-entry.md?raw';
 import duplicateGeneralSectionText from './fixtures/duplicate-general-section.md?raw';
+import invalidActiveCharacterText from './fixtures/invalid-active-character.md?raw';
 import duplicateItemSubsectionsCaseText from './fixtures/duplicate-item-subsections-case.md?raw';
 import duplicateItemIdInventoryText from './fixtures/duplicate-item-id-inventory.md?raw';
 import duplicateMapLegendEntryText from './fixtures/duplicate-map-legend-entry.md?raw';
@@ -48,6 +50,7 @@ import lockableExitTwoSidedText from './fixtures/lockable-exit-two-sided.md?raw'
 import lowercaseTitleDefaultsText from './fixtures/lowercase-title-defaults.md?raw';
 import mapLegendRoomTitleDefaultText from './fixtures/map-legend-room-title-default.md?raw';
 import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
+import noPlacedCharactersText from './fixtures/no-placed-characters.md?raw';
 import overlappingSameCharacterSpeechText from './fixtures/overlapping-same-character-speech.md?raw';
 import overrideGeneratedCategoryGroupCaseText from './fixtures/override-generated-category-group-case.md?raw';
 import overrideRoomsText from './fixtures/override-rooms.md?raw';
@@ -325,26 +328,8 @@ describe('levelUtil itinerary loading', () => {
   });
 
   it('fails level loading when no characters are placed in the level', () => {
-    const levelText = [
-      '# general',
-      '* activeCharacter=Hero',
-      '# map',
-      '```',
-      'A',
-      '```',
-      '* A=Hall',
-      '# rooms',
-      '## Hall',
-      '# characters',
-      '## Hero',
-      '* description=Ready for adventure.',
-      '# items',
-      '# itinerary',
-      '# solutions'
-    ].join('\n');
-
     try {
-      loadLevelFromText(levelText, 'no-placed-characters.md');
+      loadLevelFromText(noPlacedCharactersText, 'no-placed-characters.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
@@ -354,30 +339,8 @@ describe('levelUtil itinerary loading', () => {
   });
 
   it('fails level loading when general activeCharacter does not match a loaded character', () => {
-    const levelText = [
-      '# general',
-      '* activeCharacter=Ghost',
-      '# map',
-      '```',
-      'A',
-      '```',
-      '* A=Hall',
-      '# rooms',
-      '## Hall',
-      '```',
-      'H',
-      '```',
-      '* H=Hero',
-      '# characters',
-      '## Hero',
-      '* description=Ready for adventure.',
-      '# items',
-      '# itinerary',
-      '# solutions'
-    ].join('\n');
-
     try {
-      loadLevelFromText(levelText, 'invalid-active-character.md');
+      loadLevelFromText(invalidActiveCharacterText, 'invalid-active-character.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
