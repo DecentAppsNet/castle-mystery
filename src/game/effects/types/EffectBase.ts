@@ -1,5 +1,5 @@
-import Character from "../../types/Character";
-import Room from "../../types/Room";
+import Character from "@/game/types/Character";
+import Room from "@/game/types/Room";
 import EffectType from "./EffectType";
 import type Effect from "./Effect";
 

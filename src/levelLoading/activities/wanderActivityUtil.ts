@@ -1,5 +1,5 @@
-import { createWalkEvent, findRoomAtPositionOrNearest } from "../../game/itineraryUtil";
-import ItineraryEvent from "../../game/types/itineraryEvents/ItineraryEvent";
+import { createWalkEvent, findRoomAtPositionOrNearest } from "@/game/itineraryUtil";
+import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, stripTrailingPeriod } from "./activityUtil";
 
 function _calcStableActivityHash(activitySourceIndex:number, characterId:string):number {

@@ -1,8 +1,8 @@
-import Item from "../../game/types/Item";
-import ItineraryEvent from "../../game/types/itineraryEvents/ItineraryEvent";
-import { createDropItemEvent } from "../../game/itineraryUtil";
+import Item from "@/game/types/Item";
+import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
+import { createDropItemEvent } from "@/game/itineraryUtil";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, stripTrailingPeriod } from "./activityUtil";
-import { normalizeId } from "../../game/idUtil";
+import { normalizeId } from "@/game/idUtil";
 
 function _matchesItemReference(item:Item, reference:string):boolean {
   const normalizedReference = normalizeId(reference);

@@ -1,8 +1,8 @@
 import { formatMsecsAsTimestamp } from "@/common/timestampUtil";
-import { createThoughtEvent } from "../../game/itineraryUtil";
-import ItineraryEvent from "../../game/types/itineraryEvents/ItineraryEvent";
-import ItineraryEventType from "../../game/types/itineraryEvents/ItineraryEventType";
-import ThoughtEvent from "../../game/types/itineraryEvents/ThoughtEvent";
+import { createThoughtEvent } from "@/game/itineraryUtil";
+import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
+import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
+import ThoughtEvent from "@/game/types/itineraryEvents/ThoughtEvent";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable } from "./activityUtil";
 
 function _parseThoughtText(activityText:string):string {

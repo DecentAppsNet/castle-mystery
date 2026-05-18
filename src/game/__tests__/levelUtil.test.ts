@@ -57,8 +57,8 @@ import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
 import winSynopsisText from './fixtures/win-synopsis.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
-import LoadLevelException from '../../levelLoading/LoadLevelException';
-import { loadLevelFromText } from '../../levelLoading/levelUtil';
+import LoadLevelException from '@/levelLoading/LoadLevelException';
+import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
 import ClozeBlank from '../solutions/types/ClozeBlank';

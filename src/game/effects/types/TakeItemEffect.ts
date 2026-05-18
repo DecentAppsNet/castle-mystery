@@ -1,4 +1,4 @@
-import Item from "../../types/Item";
+import Item from "@/game/types/Item";
 import EffectBase from "./EffectBase";
 
 type TakeItemEffect = EffectBase & {

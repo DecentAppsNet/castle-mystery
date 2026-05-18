@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
+import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState, findCharacter } from '../gameUtil';
-import { loadLevelFromText } from '../../levelLoading/levelUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import giveItemWalkText from './fixtures/give-item-walk.md?raw';
 

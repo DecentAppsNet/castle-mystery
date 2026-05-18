@@ -1,9 +1,9 @@
 import { assertNonNullable } from "decent-portal";
 
-import { createGiveItemEvent } from "../../game/itineraryUtil";
-import ItineraryEvent from "../../game/types/itineraryEvents/ItineraryEvent";
-import WalkEvent from "../../game/types/itineraryEvents/WalkEvent";
-import { findNearestWaypoint } from "../../game/roomUtil";
+import { createGiveItemEvent } from "@/game/itineraryUtil";
+import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
+import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
+import { findNearestWaypoint } from "@/game/roomUtil";
 import {
   ActivityContext,
   calcActivityStartTime,
@@ -17,7 +17,7 @@ import {
   findWaypointPath,
   stripTrailingPeriod
 } from "./activityUtil";
-import { normalizeId } from "../../game/idUtil";
+import { normalizeId } from "@/game/idUtil";
 
 const GIVE_ITEM_NEARBY_DISTANCE = 8;
 

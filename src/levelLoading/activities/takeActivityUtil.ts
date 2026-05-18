@@ -1,10 +1,10 @@
 import { assertNonNullable } from "decent-portal";
 
-import { createTakeItemEvent } from "../../game/itineraryUtil";
-import ItineraryEvent from "../../game/types/itineraryEvents/ItineraryEvent";
-import WalkEvent from "../../game/types/itineraryEvents/WalkEvent";
+import { createTakeItemEvent } from "@/game/itineraryUtil";
+import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
+import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import { ActivityContext, calcActivityStartTime, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
-import { findNearestWaypoint } from "../../game/roomUtil";
+import { findNearestWaypoint } from "@/game/roomUtil";
 
 const TAKE_ITEM_NEARBY_DISTANCE = 8;
 

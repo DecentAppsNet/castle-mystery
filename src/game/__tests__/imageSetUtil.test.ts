@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
+import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
-import { loadLevelFromText } from '../../levelLoading/levelUtil';
 
 describe('imageSetUtil.ts', () => {
   afterEach(() => {

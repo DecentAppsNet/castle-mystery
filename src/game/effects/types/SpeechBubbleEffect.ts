@@ -1,5 +1,5 @@
-import Character from "../../types/Character";
-import ScalingFactors from "../../types/ScalingFactors";
+import Character from "@/game/types/Character";
+import ScalingFactors from "@/game/types/ScalingFactors";
 import EffectBase from "./EffectBase";
 
 type SpeechBubbleEffect = EffectBase & {

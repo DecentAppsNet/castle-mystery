@@ -1,4 +1,4 @@
-import Solution from "../../solutions/types/Solution";
+import Solution from "@/game/solutions/types/Solution";
 import PlayerEventBase from "./PlayerEventBase";
 
 type ChangeSolutionsEvent = Readonly<PlayerEventBase & {
