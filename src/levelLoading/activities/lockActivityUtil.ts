@@ -1,10 +1,10 @@
-import ExitType from "../types/ExitType";
-import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import WalkEvent from "../types/itineraryEvents/WalkEvent";
-import Room from "../types/Room";
-import RoomExit from "../types/RoomExit";
-import { createLockEvent, createUnlockEvent } from "../itineraryUtil";
-import { findExitWaypoint, findRoom } from "../roomUtil";
+import ExitType from "../../game/types/ExitType";
+import ItineraryEvent from "../../game/types/itineraryEvents/ItineraryEvent";
+import WalkEvent from "../../game/types/itineraryEvents/WalkEvent";
+import Room from "../../game/types/Room";
+import RoomExit from "../../game/types/RoomExit";
+import { createLockEvent, createUnlockEvent } from "../../game/itineraryUtil";
+import { findExitWaypoint, findRoom } from "../../game/roomUtil";
 import {
   ActivityContext,
   calcActivityStartTime,

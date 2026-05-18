@@ -4,7 +4,7 @@ import { clearSeed, setSeed } from '@/common/randUtil';
 import LockChangeEffect from '../effects/types/LockChangeEffect';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { createGameState, findCharacter } from '../gameUtil';
-import { loadLevelFromText } from '../levelLoading/levelUtil';
+import { loadLevelFromText } from '../../levelLoading/levelUtil';
 import { findExitWaypoint, findRoom, findRoomAtPosition } from '../roomUtil';
 import ExitStatus from '../types/ExitStatus';
 import EffectType from '../effects/types/EffectType';

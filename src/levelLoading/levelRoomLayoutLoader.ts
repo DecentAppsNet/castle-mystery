@@ -2,17 +2,17 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { createObstruction } from "../obstructionUtil";
-import { findRoom, generateWaypoints } from "../roomUtil";
-import Level from "../types/Level";
-import Obstruction from "../types/Obstruction";
-import Rect from "../types/Rect";
-import Room from "../types/Room";
-import ExitStatus from "../types/ExitStatus";
-import ExitType from "../types/ExitType";
-import RoomExit, { createRoomExitId } from "../types/RoomExit";
+import { createObstruction } from "../game/obstructionUtil";
+import { findRoom, generateWaypoints } from "../game/roomUtil";
+import Level from "../game/types/Level";
+import Obstruction from "../game/types/Obstruction";
+import Rect from "../game/types/Rect";
+import Room from "../game/types/Room";
+import ExitStatus from "../game/types/ExitStatus";
+import ExitType from "../game/types/ExitType";
+import RoomExit, { createRoomExitId } from "../game/types/RoomExit";
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
-import { createNormalizedEntryMap, normalizeId } from "../idUtil";
+import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
 
 const MAP_TILE_SIZE = 20;
 

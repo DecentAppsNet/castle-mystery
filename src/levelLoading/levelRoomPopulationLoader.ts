@@ -4,14 +4,14 @@ import { assertNonNullable } from "decent-portal";
 
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
-import { isPositionInRoomObstruction } from "../obstructionUtil";
+import { isPositionInRoomObstruction } from "../game/obstructionUtil";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
-import { findNearestWaypoint, findRoom } from "../roomUtil";
-import Character from "../types/Character";
-import Item from "../types/Item";
-import Level from "../types/Level";
-import Room from "../types/Room";
-import { assertNormalizedId, createNormalizedEntryMap, normalizeId } from "../idUtil";
+import { findNearestWaypoint, findRoom } from "../game/roomUtil";
+import Character from "../game/types/Character";
+import Item from "../game/types/Item";
+import Level from "../game/types/Level";
+import Room from "../game/types/Room";
+import { assertNormalizedId, createNormalizedEntryMap, normalizeId } from "../game/idUtil";
 
 type CharacterDefinition = {
 	title:string,

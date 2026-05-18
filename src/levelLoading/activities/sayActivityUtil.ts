@@ -1,10 +1,10 @@
-import { createSpeechEvent } from "../itineraryUtil";
-import Character from "../types/Character";
-import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
-import SpeechEvent from "../types/itineraryEvents/SpeechEvent";
+import { createSpeechEvent } from "../../game/itineraryUtil";
+import Character from "../../game/types/Character";
+import ItineraryEvent from "../../game/types/itineraryEvents/ItineraryEvent";
+import ItineraryEventType from "../../game/types/itineraryEvents/ItineraryEventType";
+import SpeechEvent from "../../game/types/itineraryEvents/SpeechEvent";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findStatePoseAtTime } from "./activityUtil";
-import { isActiveAudibleRoom } from "../roomUtil";
+import { isActiveAudibleRoom } from "../../game/roomUtil";
 import { formatMsecsAsTimestamp } from "@/common/timestampUtil";
 
 type SpeechVerb = 'says' | 'interrupts';

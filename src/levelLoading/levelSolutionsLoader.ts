@@ -3,12 +3,12 @@
 import { parseNameValueLineEntries, parseOptions, parseSectionEntries, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 
-import Character from "../types/Character";
-import ClozeBlank, { UNSPECIFIED_ANSWER } from "../solutions/types/ClozeBlank";
-import ClozePart from "../solutions/types/ClozePart";
-import ClozePartType from "../solutions/types/ClozePartType";
-import Solution from "../solutions/types/Solution";
-import { createNormalizedEntryMap, normalizeId, normalizeOptionalId } from "../idUtil";
+import Character from "../game/types/Character";
+import ClozeBlank, { UNSPECIFIED_ANSWER } from "../game/solutions/types/ClozeBlank";
+import ClozePart from "../game/solutions/types/ClozePart";
+import ClozePartType from "../game/solutions/types/ClozePartType";
+import Solution from "../game/solutions/types/Solution";
+import { createNormalizedEntryMap, normalizeId, normalizeOptionalId } from "../game/idUtil";
 
 type SolutionPrerequisite = {
   unlockForItemId:string|null,

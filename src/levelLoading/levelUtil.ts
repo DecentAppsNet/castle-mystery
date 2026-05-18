@@ -1,8 +1,8 @@
 /* This module groups top-level level-loading orchestration, composing section-specific loaders into a validated Level model. */
 
-import Level from "../types/Level";
-import TimeLabel from "../types/TimeLabel";
-import { duplicateCharacter } from "../types/Character";
+import Level from "../game/types/Level";
+import TimeLabel from "../game/types/TimeLabel";
+import { duplicateCharacter } from "../game/types/Character";
 import { baseUrl } from "@/common/urlUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
@@ -24,10 +24,10 @@ import {
   parseItemDefinitions
 } from "./levelRoomPopulationLoader";
 import { createGeneratedIdentitySolution, createSolutionCategoryOptionsByName, loadSolutionsFromSection } from "./levelSolutionsLoader";
-import ClozeBlank from "../solutions/types/ClozeBlank";
-import ClozePartType from "../solutions/types/ClozePartType";
-import Solution from "../solutions/types/Solution";
-import { assertNormalizedId, normalizeOptionalId } from "../idUtil";
+import ClozeBlank from "../game/solutions/types/ClozeBlank";
+import ClozePartType from "../game/solutions/types/ClozePartType";
+import Solution from "../game/solutions/types/Solution";
+import { assertNormalizedId, normalizeOptionalId } from "../game/idUtil";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
 

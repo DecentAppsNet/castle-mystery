@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
-import { loadLevelFromText } from '../levelLoading/levelUtil';
+import { loadLevelFromText } from '../../levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findExitWaypoint, findRoom } from '../roomUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';

@@ -4,10 +4,10 @@ import { assertNonNullable } from "decent-portal";
 
 import { formatMsecsAsTimestamp, LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/common/timestampUtil";
 import { MSECS_IN_DAY } from "@/common/timeUtil";
-import { tryCreateAtActivity } from "../activities/atActivityUtil";
-import { tryCreateDropActivity } from "../activities/dropActivityUtil";
-import { tryCreateGiveActivity } from "../activities/giveActivityUtil.ts";
-import { tryCreateLockActivity, tryCreateUnlockActivity } from "../activities/lockActivityUtil";
+import { tryCreateAtActivity } from "./activities/atActivityUtil";
+import { tryCreateDropActivity } from "./activities/dropActivityUtil";
+import { tryCreateGiveActivity } from "./activities/giveActivityUtil.ts";
+import { tryCreateLockActivity, tryCreateUnlockActivity } from "./activities/lockActivityUtil";
 import {
   appendEventsToCharacterState,
   ActivityContext,
@@ -17,19 +17,19 @@ import {
   duplicateCharacterActivityState,
   duplicateRoomItemsByRoomId,
   findStatePoseAtTime
-} from "../activities/activityUtil";
-import { tryCreateSayActivity } from "../activities/sayActivityUtil";
-import { tryCreateTakeActivity } from "../activities/takeActivityUtil";
-import { tryCreateWanderActivity } from "../activities/wanderActivityUtil";
+} from "./activities/activityUtil";
+import { tryCreateSayActivity } from "./activities/sayActivityUtil";
+import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
+import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
 import LoadLevelException from "./LoadLevelException";
-import { addCharacterEncounterEvents } from "../characterEncounterUtil";
-import { createItineraryIndex } from "../itineraryUtil";
-import Character from "../types/Character";
-import Item, { duplicateItem } from "../types/Item";
-import Level from "../types/Level";
-import Position from "../types/Position";
-import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import { normalizeId } from "../idUtil";
+import { addCharacterEncounterEvents } from "../game/characterEncounterUtil";
+import { createItineraryIndex } from "../game/itineraryUtil";
+import Character from "../game/types/Character";
+import Item, { duplicateItem } from "../game/types/Item";
+import Level from "../game/types/Level";
+import Position from "../game/types/Position";
+import ItineraryEvent from "../game/types/itineraryEvents/ItineraryEvent";
+import { normalizeId } from "../game/idUtil";
 
 type ParsedItineraryActivity = {
   sourceIndex:number,

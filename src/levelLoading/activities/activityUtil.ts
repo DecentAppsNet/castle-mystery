@@ -1,24 +1,24 @@
 import { assertNonNullable } from "decent-portal";
 
-import Character from "../types/Character";
-import { duplicateItineraryEvent } from "../types/itineraryEvents/ItineraryEvent";
-import Item, { duplicateItem } from "../types/Item";
-import Level from "../types/Level";
-import Position, { duplicatePosition } from "../types/Position";
-import Room from "../types/Room";
-import RoomExit from "../types/RoomExit";
-import Waypoint from "../types/Waypoint";
-import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
-import { findExitWaypoint, findNearestWaypoint, findRoom } from "../roomUtil";
+import Character from "../../game/types/Character";
+import { duplicateItineraryEvent } from "../../game/types/itineraryEvents/ItineraryEvent";
+import Item, { duplicateItem } from "../../game/types/Item";
+import Level from "../../game/types/Level";
+import Position, { duplicatePosition } from "../../game/types/Position";
+import Room from "../../game/types/Room";
+import RoomExit from "../../game/types/RoomExit";
+import Waypoint from "../../game/types/Waypoint";
+import ItineraryEvent from "../../game/types/itineraryEvents/ItineraryEvent";
+import ItineraryEventType from "../../game/types/itineraryEvents/ItineraryEventType";
+import { findExitWaypoint, findNearestWaypoint, findRoom } from "../../game/roomUtil";
 import {
   createItineraryIndex,
   createRoomEntryEvent,
   createWalkEvent,
   findCharacterPose,
   findRoomAtPositionOrNearest,
-} from "../itineraryUtil";
-import { assertNormalizedId, normalizeId } from "../idUtil";
+} from "../../game/itineraryUtil";
+import { assertNormalizedId, normalizeId } from "../../game/idUtil";
 
 export type ActivityTimestampKind = 'absolute' | 'after-previous-activity';
 

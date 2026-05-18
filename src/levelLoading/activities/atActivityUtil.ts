@@ -1,8 +1,8 @@
-import ItineraryEvent from "../types/itineraryEvents/ItineraryEvent";
-import Position from "../types/Position";
-import { findRoom } from "../roomUtil";
+import ItineraryEvent from "../../game/types/itineraryEvents/ItineraryEvent";
+import Position from "../../game/types/Position";
+import { findRoom } from "../../game/roomUtil";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
-import { normalizeId } from "../idUtil";
+import { normalizeId } from "../../game/idUtil";
 
 function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:string, targetPosition:Position|null } {
   const targetText = activityText.trim().slice(1).trim();
