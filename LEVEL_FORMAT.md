@@ -34,24 +34,25 @@ To sum uo, when parsing the level file, we try a little (not a lot) to interpret
 
 The `general` section contains top-level name/value settings for the level.
 
-Currently supported name/value pairs are:
+## Name/value Pairs
 
-* `title` (required) - The display name of the level.
-* `activeCharacter` (optional) - the character selected when the level first opens. Optional. Defaults to the first loaded character in the level. If no characters exist, level loading fails.
-* `time` (optional) - the starting time of day for the level timeline. Optional. Defaults to `0:00`, which is midnight.
+* `title` (required) - the display name of the level.
+* `activeCharacter` (optional) - the character selected when the level first opens. Defaults to the first loaded character in the level. If no characters exist, level loading fails.
+* `startTime` (optional) - the earliest time that the level uses when describing when events occur. Defaults to the earliest timestamp from character itineraries, or midnight if there are no character itineraries.
+* `time` (optional) - the time shown on the slider when the player first begins the level. Defaults to `startTime`.
+* `endTime` (optional) - the latest time that the level uses when describing when events occur. Defaults to the latest timestamp plus duration from character itineraries, or `startTime` if there are no character itineraries.
+* `winSynopsis` (optional) - the text shown when the player completes the level.
 
-Details:
 
-* `activeCharacter` should match a character declared elsewhere in the level file. Character references are matched forgivingly, so case differences are ignored.
-* `time` is parsed as a timestamp and sets `Level.startTime`, which determines where the timeline begins and how the slider labels are anchored.
-* If the `general` section is omitted entirely, level loading fails.
-
-Example:
+## Example
 
 ```md
 # general
 
 * title=Feast of Poison
 * activeCharacter=King
-* time=8:30:00
+* startTime=8:30:00
+* time=8:45:00
+* endTime=11:00:00
+* winSynopsis=You discovered who poisoned the feast.
 ```
