@@ -1,3 +1,4 @@
+// Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, it, expect } from 'vitest';
 
 import { mimeTypeToExtension } from '../mimeTypes';

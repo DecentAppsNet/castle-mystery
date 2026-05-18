@@ -1,3 +1,4 @@
+// Follow test conventions from CONTRIBUTING.md when editing this file.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';

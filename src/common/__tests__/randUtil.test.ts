@@ -1,3 +1,4 @@
+// Follow test conventions from CONTRIBUTING.md when editing this file.
 import { expect, it, describe, beforeEach } from 'vitest';
 import { setSeed, clearSeed, rand, randInRange, randIntInRange } from '../randUtil';
 

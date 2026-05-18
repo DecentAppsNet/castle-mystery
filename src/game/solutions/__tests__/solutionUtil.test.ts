@@ -1,3 +1,4 @@
+// Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 import { countSolutionMistakes, isSolutionMissingAnswers } from '../solutionUtil';
 import Solution from '../types/Solution.ts';

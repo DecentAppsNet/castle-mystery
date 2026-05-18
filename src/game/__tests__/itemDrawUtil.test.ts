@@ -1,3 +1,4 @@
+// Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it, vi } from 'vitest';
 
 import { drawItemAtCanvasPosition } from '../drawing/itemDrawUtil';

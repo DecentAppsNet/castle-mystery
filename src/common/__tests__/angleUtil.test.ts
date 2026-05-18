@@ -1,3 +1,4 @@
+// Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
 import { calcAngleBetweenPoints, calcShortestAngleDelta, interpolateAngle, normalizeAngle } from '../angleUtil';
