@@ -23,8 +23,10 @@ import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-in
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
 import duplicateUnlockText from './fixtures/duplicate-unlock.md?raw';
 import duplicateCharacterSubsectionsCaseText from './fixtures/duplicate-character-subsections-case.md?raw';
+import duplicateCharacterSubsectionsSpacesText from './fixtures/duplicate-character-subsections-spaces.md?raw';
 import duplicateCharacterPlacementText from './fixtures/duplicate-character-placement.md?raw';
 import duplicateCharacterPropertyText from './fixtures/duplicate-character-property.md?raw';
+import characterIdWithSpacesRoomLegendText from './fixtures/character-id-with-spaces-room-legend.md?raw';
 import conflictingExitModifiersText from './fixtures/conflicting-exit-modifiers.md?raw';
 import audibleSpeechInterruptsText from './fixtures/audible-speech-interrupts.md?raw';
 import audibleSpeechOverlapText from './fixtures/audible-speech-overlap.md?raw';
@@ -740,6 +742,27 @@ describe('levelUtil itinerary loading', () => {
       expect((error as LoadLevelException).message).toContain('duplicate-character-subsections-case.md:25');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'HERO' conflicts with 'Hero'`);
     }
+  });
+
+  it('wraps duplicate normalized multi-word character subsection ids with filename and line number', () => {
+    try {
+      loadLevelFromText(duplicateCharacterSubsectionsSpacesText, 'duplicate-character-subsections-spaces.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('duplicate-character-subsections-spaces.md:25');
+      expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'BOB ODARE' conflicts with 'Bob Odare'`);
+    }
+  });
+
+  it('loads room legend character references whose normalized ids contain spaces', () => {
+    const level = loadLevelFromText(characterIdWithSpacesRoomLegendText);
+    const character = level.characters.find(candidate => candidate.id === 'bob odare') || null;
+
+    expect(character).not.toBeNull();
+    expect(character?.title).toBe('Bob Odare');
+    expect(level.activeCharacterId).toBe('bob odare');
+    expect(findRoom(level.rooms, 'Hall').items).toHaveLength(0);
   });
 
   it('wraps duplicate character property entries with filename and line number', () => {
