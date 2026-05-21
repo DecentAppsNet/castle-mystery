@@ -23,8 +23,8 @@ function _calcDistance(fromX:number, fromY:number, toX:number, toY:number):numbe
 }
 
 function _isLockableFromRoom(exit:RoomExit, room:Room):boolean {
-  if (exit.room1Id === room.id) return exit.isLockableFromRoom1;
-  if (exit.room2Id === room.id) return exit.isLockableFromRoom2;
+  if (exit.room1Id === room.id) return exit.lockableFromRoom1With !== null;
+  if (exit.room2Id === room.id) return exit.lockableFromRoom2With !== null;
   return false;
 }
 

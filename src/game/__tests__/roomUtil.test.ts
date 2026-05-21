@@ -23,8 +23,8 @@ function _createExit(room2Id:string, x:number, y:number):RoomExit {
     x,
     y,
     exitType:ExitType.doorway,
-    isLockableFromRoom1:false,
-    isLockableFromRoom2:false,
+    lockableFromRoom1With:null,
+    lockableFromRoom2With:null,
     exitStatus:ExitStatus.open
   };
 }
@@ -284,8 +284,8 @@ describe('roomUtil', () => {
         x:10,
         y:0,
         exitType:ExitType.doorway,
-        isLockableFromRoom1:false,
-        isLockableFromRoom2:false,
+        lockableFromRoom1With:null,
+        lockableFromRoom2With:null,
         exitStatus:ExitStatus.open
       }];
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, []);

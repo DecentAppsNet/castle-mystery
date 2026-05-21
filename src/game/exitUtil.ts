@@ -15,21 +15,29 @@ function _describeRoomReference(exit:RoomExit, room:Room):string {
   return room.isDiscovered ? room.title : _findUndiscoveredRoomSideLabel(exit, room);
 }
 
+function _isLockableFromRoom1(exit:RoomExit):boolean {
+  return exit.lockableFromRoom1With !== null;
+}
+
+function _isLockableFromRoom2(exit:RoomExit):boolean {
+  return exit.lockableFromRoom2With !== null;
+}
+
 function _describeLockedLockableDoor(exit:RoomExit, room1:Room, room2:Room):string {
   const room1Reference = _describeRoomReference(exit, room1);
   const room2Reference = _describeRoomReference(exit, room2);
-  if (exit.isLockableFromRoom1 && exit.isLockableFromRoom2) return 'This locked door can be unlocked from either side with a key.';
-  if (exit.isLockableFromRoom1) return `This locked door can be unlocked from ${room1Reference} with a key.`;
-  if (exit.isLockableFromRoom2) return `This locked door can be unlocked from ${room2Reference} with a key.`;
+  if (_isLockableFromRoom1(exit) && _isLockableFromRoom2(exit)) return 'This locked door can be unlocked from either side with a key.';
+  if (_isLockableFromRoom1(exit)) return `This locked door can be unlocked from ${room1Reference} with a key.`;
+  if (_isLockableFromRoom2(exit)) return `This locked door can be unlocked from ${room2Reference} with a key.`;
   return `This locked door can't be unlocked. Weird.`;
 }
 
 function _describeUnlockedLockableDoor(exit:RoomExit, room1:Room, room2:Room):string {
   const room1Reference = _describeRoomReference(exit, room1);
   const room2Reference = _describeRoomReference(exit, room2);
-  if (exit.isLockableFromRoom1 && exit.isLockableFromRoom2) return 'This unlocked door can be locked from either side with a key.';
-  if (exit.isLockableFromRoom1) return `This unlocked door can be locked from ${room1Reference} with a key.`;
-  if (exit.isLockableFromRoom2) return `This unlocked door can be locked from ${room2Reference} with a key.`;
+  if (_isLockableFromRoom1(exit) && _isLockableFromRoom2(exit)) return 'This unlocked door can be locked from either side with a key.';
+  if (_isLockableFromRoom1(exit)) return `This unlocked door can be locked from ${room1Reference} with a key.`;
+  if (_isLockableFromRoom2(exit)) return `This unlocked door can be locked from ${room2Reference} with a key.`;
   return `This unlocked door can't be locked. Weird.`;
 }
 

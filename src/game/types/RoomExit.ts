@@ -1,6 +1,8 @@
 import ExitStatus from './ExitStatus';
 import ExitType from './ExitType';
 
+export const LOCKABLE_WITHOUT_INV_CHECK = '*';
+
 type RoomExit = {
   readonly id:string,
   readonly x:number,
@@ -8,8 +10,8 @@ type RoomExit = {
   readonly room1Id:string,
   readonly room2Id:string,
   readonly exitType:ExitType,
-  readonly isLockableFromRoom1:boolean,
-  readonly isLockableFromRoom2:boolean,
+  readonly lockableFromRoom1With:string|null,
+  readonly lockableFromRoom2With:string|null,
   exitStatus:ExitStatus
 }
 

@@ -10,7 +10,7 @@ import Rect from "../game/types/Rect";
 import Room from "../game/types/Room";
 import ExitStatus from "../game/types/ExitStatus";
 import ExitType from "../game/types/ExitType";
-import RoomExit, { createRoomExitId } from "../game/types/RoomExit";
+import RoomExit, { createRoomExitId, LOCKABLE_WITHOUT_INV_CHECK } from "../game/types/RoomExit";
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
 
@@ -466,8 +466,12 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
     x,
     y,
     exitType,
-    isLockableFromRoom1: exitType === ExitType.lockableDoor && _hasAnyModifier(pendingExit.room1Modifiers, ['lockable', 'unlockable']),
-    isLockableFromRoom2: exitType === ExitType.lockableDoor && _hasAnyModifier(pendingExit.room2Modifiers, ['lockable', 'unlockable']),
+    lockableFromRoom1With: exitType === ExitType.lockableDoor && _hasAnyModifier(pendingExit.room1Modifiers, ['lockable', 'unlockable'])
+      ? LOCKABLE_WITHOUT_INV_CHECK
+      : null,
+    lockableFromRoom2With: exitType === ExitType.lockableDoor && _hasAnyModifier(pendingExit.room2Modifiers, ['lockable', 'unlockable'])
+      ? LOCKABLE_WITHOUT_INV_CHECK
+      : null,
     exitStatus: _determineExitStatus(pendingExit, exitType)
   };
   room1.exits.push(exit);

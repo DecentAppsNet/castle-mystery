@@ -75,6 +75,7 @@ import { findRoom } from '../roomUtil';
 import ClozeBlank from '../solutions/types/ClozeBlank';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
+import { LOCKABLE_WITHOUT_INV_CHECK } from '../types/RoomExit';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?raw';
 import dropItemText from '../integration-tests/fixtures/drop-item.md?raw';
@@ -301,8 +302,8 @@ describe('levelUtil itinerary loading', () => {
 
     expect(oneSidedExit.exitType).toBe(ExitType.lockableDoor);
     expect(oneSidedExit.exitStatus).toBe(ExitStatus.locked);
-    expect(oneSidedExit.isLockableFromRoom1).toBe(true);
-    expect(oneSidedExit.isLockableFromRoom2).toBe(false);
+    expect(oneSidedExit.lockableFromRoom1With).toBe(LOCKABLE_WITHOUT_INV_CHECK);
+    expect(oneSidedExit.lockableFromRoom2With).toBeNull();
     expect(twoSidedExit).toEqual(oneSidedExit);
   });
 
@@ -312,8 +313,8 @@ describe('levelUtil itinerary loading', () => {
 
     expect(exit.exitType).toBe(ExitType.door);
     expect(exit.exitStatus).toBe(ExitStatus.closed);
-    expect(exit.isLockableFromRoom1).toBe(false);
-    expect(exit.isLockableFromRoom2).toBe(false);
+    expect(exit.lockableFromRoom1With).toBeNull();
+    expect(exit.lockableFromRoom2With).toBeNull();
   });
 
   it('loads winSynopsis from the general section and defaults it when omitted', () => {
