@@ -1,6 +1,6 @@
 # general
 
-* time=10:00
+* time=8:30
 * startTime=10:00
 
 # map

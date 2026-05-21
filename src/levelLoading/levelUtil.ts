@@ -51,6 +51,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     winSynopsis: DEFAULT_WIN_SYNOPSIS,
     activeCharacterId: "",
     startTime: 0,
+    initialTime: 0,
     endTime: duration,
     duration,
     labels: _createTimeLabels(0, duration)
@@ -64,6 +65,7 @@ function _parseTimeTextToMsecs(text:string):number {
 type ParsedGeneralSection = {
   activeCharacterId:string,
   startTime:number|null,
+  initialTime:number|null,
   endTime:number|null,
   isCrossMidnight:boolean,
   winSynopsis:string
@@ -71,19 +73,18 @@ type ParsedGeneralSection = {
 
 function _parseGeneralSection(generalSection:string):ParsedGeneralSection {
   const generalNameValues = parseUniqueNameValueLines(generalSection, 'general', true);
-  if (generalNameValues.time && generalNameValues.startTime) {
-    throw new Error("general section cannot specify both 'time' and 'startTime'; prefer 'startTime'");
-  }
-  const startTimeText = generalNameValues.startTime || generalNameValues.time;
-  const startTime = startTimeText ? _parseTimeTextToMsecs(startTimeText) : null;
+  const startTime = generalNameValues.startTime ? _parseTimeTextToMsecs(generalNameValues.startTime) : null;
+  const initialTime = generalNameValues.time ? _parseTimeTextToMsecs(generalNameValues.time) : null;
+  const timelineStartTime = startTime ?? initialTime;
   const rawEndTime = generalNameValues.endTime ? _parseTimeTextToMsecs(generalNameValues.endTime) : null;
-  const isCrossMidnight = rawEndTime !== null && startTime !== null && rawEndTime <= startTime;
+  const isCrossMidnight = rawEndTime !== null && timelineStartTime !== null && rawEndTime <= timelineStartTime;
   const endTime = rawEndTime === null
     ? null
     : isCrossMidnight ? rawEndTime + MSECS_IN_DAY : rawEndTime;
   return {
     activeCharacterId: normalizeOptionalId(generalNameValues.activeCharacter) || "",
     startTime,
+    initialTime,
     endTime,
     isCrossMidnight,
     winSynopsis: generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS
@@ -220,11 +221,13 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   const generalSection = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
     () => _parseGeneralSection(sections.general || ""));
   let level = _createEmptyLevel();
-  const resolvedStartTime = generalSection.startTime ?? level.startTime;
+  const resolvedStartTime = generalSection.startTime ?? generalSection.initialTime ?? level.startTime;
+  const resolvedInitialTime = generalSection.initialTime ?? resolvedStartTime;
   level = {
     ...level,
     activeCharacterId: generalSection.activeCharacterId || level.activeCharacterId,
     startTime: resolvedStartTime,
+    initialTime: resolvedInitialTime,
     endTime: generalSection.endTime ?? (resolvedStartTime + level.duration),
     winSynopsis: generalSection.winSynopsis || level.winSynopsis
   };

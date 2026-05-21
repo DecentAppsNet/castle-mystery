@@ -11,10 +11,18 @@ A
 ## Hall
 
 ```
-B
+HB
 ```
 
+* H=Hero
 * B=Book
+
+# characters
+
+## Hero
+
+* title=Hero
+* isTitleKnown=true
 
 # items
 

@@ -222,7 +222,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isLevelComplete:false,
     isPlaying:false,
-    time:level.startTime,
+    time:level.initialTime,
     startTime:level.startTime,
     duration:level.duration,
     realTimeToGameTimeOffset:0,
@@ -234,7 +234,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     solutionsRevision:0,
     lastNotifiedSolutionsRevision:0
   }
-  rebuildDynamicStateForTime(gameState, level.startTime);
+  rebuildDynamicStateForTime(gameState, level.initialTime);
   _setActiveRoomDiscovered(gameState);
   syncSolutionUnlocks(gameState);
   return gameState;

@@ -97,6 +97,7 @@ function _createTestLevel():Level {
     winSynopsis:'Solved it.',
     activeCharacterId:'hero',
     startTime:0,
+    initialTime:0,
     endTime:5_000,
     duration:5_000,
     labels:[{ minutes:0, label:'midnight' }, { minutes:5 / 60, label:'12:05am' }]

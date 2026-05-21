@@ -11,6 +11,7 @@ type Level = Readonly<{
   winSynopsis:string,
   activeCharacterId:string,
   startTime:number,
+  initialTime:number,
   endTime:number,
   duration:number,
   labels:TimeLabel[]

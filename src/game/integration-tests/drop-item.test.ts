@@ -18,8 +18,8 @@ describe('drop item integration', () => {
 
   it('moves a dropped item from the character inventory to the room at the current waypoint', () => {
     const level = loadLevelFromText(dropItemText);
-    const beforeDropState = createGameState({ ...level, startTime:4_000 });
-    const afterDropState = createGameState({ ...level, startTime:5_000 });
+    const beforeDropState = createGameState({ ...level, initialTime:4_000 });
+    const afterDropState = createGameState({ ...level, initialTime:5_000 });
     const beforeHero = findCharacter(beforeDropState, 'Hero');
     const afterHero = findCharacter(afterDropState, 'Hero');
     const afterRoom = findRoom(afterDropState.rooms, 'Hall');

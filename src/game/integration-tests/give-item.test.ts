@@ -20,8 +20,8 @@ describe('give item integration', () => {
     const level = loadLevelFromText(giveItemWalkText);
     const king = level.characters.find(character => character.id === 'king');
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
-    const beforeGiveState = createGameState({ ...level, startTime:giveEvent!.startTime - 1 });
-    const atGiveState = createGameState({ ...level, startTime:giveEvent!.startTime });
+    const beforeGiveState = createGameState({ ...level, initialTime:giveEvent!.startTime - 1 });
+    const atGiveState = createGameState({ ...level, initialTime:giveEvent!.startTime });
     const beforeKing = findCharacter(beforeGiveState, 'King');
     const beforeQueen = findCharacter(beforeGiveState, 'Queen');
     const atGiveKing = findCharacter(atGiveState, 'King');

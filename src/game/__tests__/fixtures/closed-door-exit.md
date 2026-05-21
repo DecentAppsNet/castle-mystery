@@ -15,7 +15,18 @@ BH
 
 ## Hallway
 
+```
+H
+```
+
+* H=Hero
+
 # characters
+
+## Hero
+
+* title=Hero
+* isTitleKnown=true
 
 # items
 

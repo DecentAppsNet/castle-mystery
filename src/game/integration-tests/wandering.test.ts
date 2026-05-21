@@ -18,7 +18,7 @@ function _findWalkEvents(levelText:string, characterId:string) {
 
 function _createPositionSnapshot(levelText:string, time:number, characterId:string) {
   const level = loadLevelFromText(levelText);
-  const gameState = createGameState({ ...level, startTime:time });
+  const gameState = createGameState({ ...level, initialTime:time });
   const character = findCharacter(gameState, characterId);
   return { x:character.x, y:character.y };
 }

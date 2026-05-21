@@ -62,6 +62,7 @@ import winSynopsisText from './fixtures/win-synopsis.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import LoadLevelException from '@/levelLoading/LoadLevelException';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
+import { createGameState } from '../gameUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
 import ClozeBlank from '../solutions/types/ClozeBlank';
@@ -158,15 +159,17 @@ describe('levelUtil itinerary loading', () => {
 
   it('parses one solution per subsection from the solutions section', () => {
     const level = loadLevelFromText(solutionsTwoSubsectionsText);
+    const authoredSolutions = level.solutions.filter(solution => solution.title !== 'Identities');
 
-    expect(level.solutions.map(solution => solution.title)).toEqual(['First', 'Second']);
-    expect(level.solutions[0].parts.length).toBeGreaterThan(0);
-    expect(level.solutions[1].parts.length).toBeGreaterThan(0);
+    expect(authoredSolutions.map(solution => solution.title)).toEqual(['First', 'Second']);
+    expect(authoredSolutions[0].parts.length).toBeGreaterThan(0);
+    expect(authoredSolutions[1].parts.length).toBeGreaterThan(0);
   });
 
   it('collects available answers from all matching categories for each blank', () => {
     const level = loadLevelFromText(solutionsCategoryMatchesText);
-    const solution = level.solutions[0];
+    const solution = level.solutions.find(candidate => candidate.title === 'The Missing Book');
+    if (!solution) expect.fail('expected The Missing Book solution to exist');
     const firstBlank = solution.parts[0] as ClozeBlank;
     const secondBlank = solution.parts[2] as ClozeBlank;
 
@@ -178,7 +181,8 @@ describe('levelUtil itinerary loading', () => {
 
   it('falls back to blank values when no category contains all correct answers', () => {
     const level = loadLevelFromText(solutionsFallbackText);
-    const solution = level.solutions[0];
+    const solution = level.solutions.find(candidate => candidate.title === 'Lone Blank');
+    if (!solution) expect.fail('expected Lone Blank solution to exist');
     const firstBlank = solution.parts[0] as ClozeBlank;
 
     expect(firstBlank.availableAnswers).toEqual(['Throne Room']);
@@ -200,7 +204,8 @@ describe('levelUtil itinerary loading', () => {
 
   it('matches solution category phrases case-insensitively', () => {
     const level = loadLevelFromText(solutionsCaseInsensitiveCategoriesText, 'case-insensitive-categories.md', { validateUnlockPhrases:true });
-    const solution = level.solutions[0];
+    const solution = level.solutions.find(candidate => candidate.title === 'Mystery');
+    if (!solution) expect.fail('expected Mystery solution to exist');
     const firstBlank = solution.parts[0] as ClozeBlank;
 
     expect(firstBlank.availableAnswers).toEqual(['Book']);
@@ -661,7 +666,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:15');
+      expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:28');
       expect((error as LoadLevelException).message).toContain('multiple unlockForItem lines');
     }
   });
@@ -760,7 +765,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-solution-category-group-names.md:21');
+      expect((error as LoadLevelException).message).toContain('duplicate-solution-category-group-names.md:32');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'rooms' conflicts with 'Rooms'`);
     }
   });
@@ -771,7 +776,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-solution-subsections-case.md:21');
+      expect((error as LoadLevelException).message).toContain('duplicate-solution-subsections-case.md:32');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'mystery' conflicts with 'Mystery'`);
     }
   });
@@ -782,7 +787,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-solution-property.md:21');
+      expect((error as LoadLevelException).message).toContain('duplicate-solution-property.md:32');
       expect((error as LoadLevelException).message).toContain(`duplicate solution mystery entry 'solution'`);
     }
   });
@@ -832,20 +837,21 @@ describe('levelUtil itinerary loading', () => {
   });
 
   describe('timeline start/end configuration', () => {
-    it('accepts startTime as a preferred alias for time', () => {
+    it('parses startTime separately from the initial playhead time', () => {
       const level = loadLevelFromText(timelineStartTimeFieldText);
 
       expect(level.startTime).toBe(10 * 60 * 60 * 1000);
+      expect(level.initialTime).toBe(10 * 60 * 60 * 1000);
     });
 
-    it('throws when both time and startTime are specified', () => {
-      try {
-        loadLevelFromText(timelineBothTimeAndStartTimeText, 'timeline-both.md');
-        expect.fail('expected level loading to throw');
-      } catch (error) {
-        expect(error).toBeInstanceOf(LoadLevelException);
-        expect((error as LoadLevelException).message).toContain("cannot specify both 'time' and 'startTime'");
-      }
+    it('accepts both time and startTime and keeps them distinct', () => {
+      const level = loadLevelFromText(timelineBothTimeAndStartTimeText, 'timeline-both.md');
+      const gameState = createGameState(level);
+
+      expect(level.startTime).toBe(10 * 60 * 60 * 1000);
+      expect(level.initialTime).toBe(8 * 60 * 60 * 1000 + 30 * 60 * 1000);
+      expect(gameState.time).toBe(level.initialTime);
+      expect(gameState.startTime).toBe(level.startTime);
     });
 
     it('uses explicit endTime to compute duration for a same-day timeline', () => {

@@ -17,7 +17,18 @@ BH
 
 * exits=Bedroom(closed,locked)
 
+```
+H
+```
+
+* H=Hero
+
 # characters
+
+## Hero
+
+* title=Hero
+* isTitleKnown=true
 
 # items
 

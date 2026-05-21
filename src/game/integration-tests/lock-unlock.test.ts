@@ -31,8 +31,8 @@ function _expectWalkThenExitStateChange(levelText:string, eventType:ItineraryEve
     && event.startTime >= minimumWalkStartTime
     && event.startTime < (lockChangeEvent?.startTime ?? Number.NEGATIVE_INFINITY)) as WalkEvent[] | undefined;
   const lastWalkEvent = preChangeWalkEvents?.[preChangeWalkEvents.length - 1];
-  const beforeChangeState = createGameState({ ...level, startTime:lockChangeEvent!.startTime - 1 });
-  const atChangeState = createGameState({ ...level, startTime:lockChangeEvent!.startTime });
+  const beforeChangeState = createGameState({ ...level, initialTime:lockChangeEvent!.startTime - 1 });
+  const atChangeState = createGameState({ ...level, initialTime:lockChangeEvent!.startTime });
   const cell = findRoom(level.rooms, 'Cell');
   const cellExit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell');
   const exitWaypoint = findExitWaypoint(cell.id, cell.rect, cellExit!, cell.waypoints);
