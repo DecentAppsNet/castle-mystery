@@ -38,10 +38,19 @@ The `general` section contains top-level name/value settings for the level.
 
 * `title` (required) - the display name of the level.
 * `activeCharacter` (optional) - the character selected when the level first opens. Defaults to the first loaded character in the level. If no characters exist, level loading fails.
-* `startTime` (optional) - the earliest time that the level uses when describing when events occur. Defaults to the earliest timestamp from character itineraries, or midnight if there are no character itineraries.
+* `startTime` (optional) - the earliest time that the level uses when describing when events occur.
 * `time` (optional) - the time shown on the slider when the player first begins the level. Defaults to `startTime`.
-* `endTime` (optional) - the latest time that the level uses when describing when events occur. Defaults to the latest timestamp plus duration from character itineraries, or `startTime` if there are no character itineraries.
+* `endTime` (optional) - the latest time that the level uses when describing when events occur.
 * `winSynopsis` (optional) - the text shown when the player completes the level.
+
+In practice, an author can think of these three fields as answering three questions:
+* When does my story start? Use `startTime`.
+* Where should the player begin on the slider? Use `time`.
+* When does my story end? Use `endTime`.
+
+If `startTime` or `endTime` is omitted, the loader derives it from the itinerary when possible. If `time` is omitted, it defaults to `startTime`.
+
+If a level crosses midnight, write the times the way a person normally would. For example, `startTime=19:30` and `endTime=07:00` means the level starts in the evening and ends the next morning.
 
 
 ## Example
