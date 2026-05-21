@@ -39,6 +39,14 @@ export function parseRoomPopulationDefinitions(charactersSection:string, itemsSe
 	};
 }
 
+function _parseOptionalIsTitleKnownOrThrow(value:string|undefined, characterId:string):boolean {
+	if (value === undefined) return false;
+	const normalizedValue = value.trim().toLowerCase();
+	if (normalizedValue === 'true') return true;
+	if (normalizedValue === 'false') return false;
+	throw new Error(`character ${characterId} isTitleKnown must be true or false`);
+}
+
 export function parseCharacterDefinitions(charactersSection:string):Map<string, CharacterDefinition> {
 	const characterDefinitions = new Map<string, CharacterDefinition>();
 	const characterSectionsById = createNormalizedEntryMap(Object.entries(parseSections(charactersSection, 2)));
@@ -55,7 +63,7 @@ export function parseCharacterDefinitions(charactersSection:string):Map<string, 
 			description:nameValues.description || "",
 			inventoryItems,
 			faceImageUrl:nameValues.faceImage?.trim() || null,
-			isTitleKnown:(nameValues.isTitleKnown || '').toLowerCase() === 'true'
+			isTitleKnown:_parseOptionalIsTitleKnownOrThrow(nameValues.isTitleKnown, characterId)
 		});
 	});
 	return characterDefinitions;
@@ -90,6 +98,7 @@ export function loadRoomPopulationFromRoomsSection(level:Level, roomsSection:str
 }
 
 export function loadCharacterInventoryItems(level:Level, definitions:RoomPopulationDefinitions) {
+	_validateCharacterInventoryItems(definitions.characterDefinitions, definitions.itemDefinitions);
 	_addInventoryItemsToCharacters(level, definitions.characterDefinitions, definitions.itemDefinitions);
 }
 
@@ -185,6 +194,15 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 				_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, authoredEntryText, itemDefinitions, { x, y }, false));
 				return;
 			}
+		});
+	});
+}
+
+function _validateCharacterInventoryItems(characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
+	Array.from(characterDefinitions.entries()).forEach(([characterId, characterDefinition]) => {
+		characterDefinition.inventoryItems.forEach(item => {
+			if (itemDefinitions.has(item.id)) return;
+			throw new Error(`character ${characterId} inventory item '${item.title}' does not match any item in the items section`);
 		});
 	});
 }

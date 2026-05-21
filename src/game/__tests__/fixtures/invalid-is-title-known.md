@@ -5,10 +5,10 @@
 # map
 
 ```
-H
+A
 ```
 
-* H=Hall
+* A=Hall
 
 # rooms
 
@@ -20,14 +20,11 @@ H
 
 * H=Hero
 
+# items
+
 # characters
 
 ## Hero
 
-* items=Royal Decree
-
-# items
-
-## Royal Decree
-
-# solutions
+* description=Test hero.
+* isTitleKnown=maybe

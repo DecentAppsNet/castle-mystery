@@ -31,6 +31,8 @@ import audibleSpeechOverlapText from './fixtures/audible-speech-overlap.md?raw';
 import duplicateGeneralEntryText from './fixtures/duplicate-general-entry.md?raw';
 import duplicateGeneralSectionText from './fixtures/duplicate-general-section.md?raw';
 import invalidActiveCharacterText from './fixtures/invalid-active-character.md?raw';
+import invalidCharacterInventoryItemText from './fixtures/invalid-character-inventory-item.md?raw';
+import invalidIsTitleKnownText from './fixtures/invalid-is-title-known.md?raw';
 import missingMapSectionText from './fixtures/missing-map-section.md?raw';
 import mapMissingGridText from './fixtures/map-missing-grid.md?raw';
 import mapUnusedLegendEntryText from './fixtures/map-unused-legend-entry.md?raw';
@@ -276,7 +278,7 @@ describe('levelUtil itinerary loading', () => {
     expect(solution?.title).toBe('The MacDonald Mystery');
   });
 
-  it('preserves authored casing for inventory item title defaults without item definitions', () => {
+  it('preserves authored casing for inventory item titles from item subsection defaults', () => {
     const level = loadLevelFromText(inventoryItemTitleCasingText);
     const hero = level.characters.find(candidate => candidate.id === 'hero') || null;
 
@@ -754,6 +756,28 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('duplicate-character-placement.md:15');
       expect((error as LoadLevelException).message).toContain(`duplicate character id 'hero'`);
+    }
+  });
+
+  it('wraps character inventory items missing from the items section with filename and line number', () => {
+    try {
+      loadLevelFromText(invalidCharacterInventoryItemText, 'invalid-character-inventory-item.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-character-inventory-item.md:31');
+      expect((error as LoadLevelException).message).toContain(`character hero inventory item 'Missing Book' does not match any item in the items section`);
+    }
+  });
+
+  it('wraps invalid isTitleKnown values with filename and line number', () => {
+    try {
+      loadLevelFromText(invalidIsTitleKnownText, 'invalid-is-title-known.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-is-title-known.md:27');
+      expect((error as LoadLevelException).message).toContain('character hero isTitleKnown must be true or false');
     }
   });
 
