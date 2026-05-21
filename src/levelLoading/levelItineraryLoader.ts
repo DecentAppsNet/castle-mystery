@@ -43,6 +43,19 @@ type ParsedItineraryActivity = {
   activityText:string
 };
 
+type ResolvedItineraryTimeline = Readonly<{
+  earliestAbsoluteActivityTime:number|null,
+  earliestResolvedActivityTime:number|null,
+  latestResolvedActivityEndTime:number|null,
+  latestResolvedEventEndTime:number|null
+}>;
+
+type LoadItinerariesResult = {
+  characters:Character[],
+  duration:number,
+  resolvedTimeline:ResolvedItineraryTimeline
+};
+
 export type LoadItinerariesOptions = {
   isCrossMidnight:boolean,
   explicitEndTime:number|null
@@ -349,6 +362,44 @@ function _calcItineraryDuration(itinerary:ItineraryEvent[]):number {
   return lastEvent ? lastEvent.startTime + lastEvent.duration : 0;
 }
 
+function _findLatestResolvedEventEndTime(characters:Character[]):number|null {
+  const latestResolvedEventEndTime = Math.max(0, ...characters.map(character => _calcItineraryDuration(character.itinerary)));
+  return latestResolvedEventEndTime > 0 ? latestResolvedEventEndTime : null;
+}
+
+function _findEarliestAbsoluteActivityTime(activities:ParsedItineraryActivity[]):number|null {
+  const absoluteActivities = activities.filter(activity => activity.timestampKind === 'absolute');
+  return absoluteActivities.length ? Math.min(...absoluteActivities.map(activity => activity.resolvedTime)) : null;
+}
+
+function _findEarliestResolvedActivityTime(activities:ParsedItineraryActivity[]):number|null {
+  return activities.length ? Math.min(...activities.map(activity => activity.resolvedTime)) : null;
+}
+
+function _findLatestResolvedActivityEndTime(completionTimesBySourceIndex:Map<number, number>):number|null {
+  const resolvedEndTimes = Array.from(completionTimesBySourceIndex.values());
+  return resolvedEndTimes.length ? Math.max(...resolvedEndTimes) : null;
+}
+
+function _createResolvedItineraryTimeline(activities:ParsedItineraryActivity[], completionTimesBySourceIndex:Map<number, number>,
+  characters:Character[]):ResolvedItineraryTimeline {
+  return {
+    earliestAbsoluteActivityTime:_findEarliestAbsoluteActivityTime(activities),
+    earliestResolvedActivityTime:_findEarliestResolvedActivityTime(activities),
+    latestResolvedActivityEndTime:_findLatestResolvedActivityEndTime(completionTimesBySourceIndex),
+    latestResolvedEventEndTime:_findLatestResolvedEventEndTime(characters)
+  };
+}
+
+function _createEmptyResolvedItineraryTimeline(characters:Character[]):ResolvedItineraryTimeline {
+  return {
+    earliestAbsoluteActivityTime:null,
+    earliestResolvedActivityTime:null,
+    latestResolvedActivityEndTime:null,
+    latestResolvedEventEndTime:_findLatestResolvedEventEndTime(characters)
+  };
+}
+
 function _scheduleActivities(level:Level, activities:ParsedItineraryActivity[], levelFilename:string):{
   characters:Character[],
   duration:number,
@@ -429,7 +480,7 @@ function _validateActivitiesWithinWindow(activities:ParsedItineraryActivity[], s
 }
 
 export function loadItineraries(level:Level, itinerarySection:string, levelFilename:string, firstLineNo:number,
-  options:LoadItinerariesOptions = DEFAULT_LOAD_ITINERARIES_OPTIONS):{ characters:Character[], duration:number } {
+  options:LoadItinerariesOptions = DEFAULT_LOAD_ITINERARIES_OPTIONS):LoadItinerariesResult {
   const activities = _parseItineraryActivities(itinerarySection, levelFilename, firstLineNo, options, level.startTime);
   if (options.explicitEndTime !== null) {
     _validateActivitiesWithinWindow(activities, level.startTime, options.explicitEndTime, levelFilename);
@@ -437,7 +488,8 @@ export function loadItineraries(level:Level, itinerarySection:string, levelFilen
   if (!activities.length) {
     return {
       characters: level.characters,
-      duration:Math.max(0, ...level.characters.map(character => _calcItineraryDuration(character.itinerary)))
+      duration:Math.max(0, ...level.characters.map(character => _calcItineraryDuration(character.itinerary))),
+      resolvedTimeline:_createEmptyResolvedItineraryTimeline(level.characters)
     };
   }
   let resolvedActivities = _resolveItineraryActivityTimes(activities);
@@ -452,7 +504,8 @@ export function loadItineraries(level:Level, itinerarySection:string, levelFilen
       const charactersWithEncounterEvents = addCharacterEncounterEvents(scheduleResult.characters, level.rooms);
       return {
         characters:charactersWithEncounterEvents,
-        duration:scheduleResult.duration
+        duration:scheduleResult.duration,
+        resolvedTimeline:_createResolvedItineraryTimeline(resolvedActivities, scheduleResult.completionTimesBySourceIndex, charactersWithEncounterEvents)
       };
     }
     resolvedActivities = nextResolvedActivities;
