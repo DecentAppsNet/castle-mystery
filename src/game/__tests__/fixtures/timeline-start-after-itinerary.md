@@ -1,8 +1,6 @@
 # general
 
-* time=10:30
-* startTime=10:00
-* endTime=12:00
+* startTime=11:00
 
 # map
 
@@ -28,3 +26,7 @@ H
 
 * title=Hero
 * isTitleKnown=true
+
+# itinerary
+
+10:00:00 Hero @ Hall

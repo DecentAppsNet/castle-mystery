@@ -6,7 +6,7 @@ import { duplicateCharacter } from "../game/types/Character";
 import { baseUrl } from "@/common/urlUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
-import { parseTimestampToMsecs } from "@/common/timestampUtil";
+import { formatMsecsAsTimestamp, parseTimestampToMsecs } from "@/common/timestampUtil";
 import { loadItineraries } from "./levelItineraryLoader";
 import LoadLevelException from "./LoadLevelException";
 import {
@@ -207,6 +207,35 @@ function _validateActiveCharacterId(activeCharacterId:string, characters:Level['
   throw new Error(`general activeCharacter '${activeCharacterId}' does not match any character in the level`);
 }
 
+function _resolveExplicitEndTime(endTime:number|null, startTime:number):number|null {
+  if (endTime === null) return null;
+  return endTime <= startTime ? endTime + MSECS_IN_DAY : endTime;
+}
+
+function _validateInitialTimeWithinTimeline(initialTime:number, startTime:number, endTime:number) {
+  if (initialTime < startTime || initialTime > endTime) {
+    throw new Error(`general time ${formatMsecsAsTimestamp(initialTime)} must fall within the authored span ${formatMsecsAsTimestamp(startTime)} to ${formatMsecsAsTimestamp(endTime)}`);
+  }
+}
+
+function _shouldValidateExplicitInitialTime(generalSection:ParsedGeneralSection):boolean {
+  return generalSection.initialTime !== null && (generalSection.startTime !== null || generalSection.endTime !== null);
+}
+
+function _validateExplicitStartTimeAgainstItinerary(explicitStartTime:number|null, earliestResolvedActivityTime:number|null) {
+  if (explicitStartTime === null || earliestResolvedActivityTime === null || earliestResolvedActivityTime >= explicitStartTime) return;
+  throw new Error(
+    `general startTime ${formatMsecsAsTimestamp(explicitStartTime)} excludes itinerary content at ${formatMsecsAsTimestamp(earliestResolvedActivityTime)}. Try startTime=${formatMsecsAsTimestamp(earliestResolvedActivityTime)}`
+  );
+}
+
+function _validateExplicitEndTimeAgainstItinerary(explicitEndTime:number|null, latestResolvedEventEndTime:number|null) {
+  if (explicitEndTime === null || latestResolvedEventEndTime === null || latestResolvedEventEndTime <= explicitEndTime) return;
+  throw new Error(
+    `general endTime ${formatMsecsAsTimestamp(explicitEndTime)} excludes itinerary content ending at ${formatMsecsAsTimestamp(latestResolvedEventEndTime)}. Try endTime=${formatMsecsAsTimestamp(latestResolvedEventEndTime)}`
+  );
+}
+
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
   const sections = _runWithLoadLevelSectionContext(levelFilename, 1,
     () => parseSections(text, 1, true));
@@ -221,14 +250,14 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   const generalSection = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
     () => _parseGeneralSection(sections.general || ""));
   let level = _createEmptyLevel();
-  const resolvedStartTime = generalSection.startTime ?? generalSection.initialTime ?? level.startTime;
-  const resolvedInitialTime = generalSection.initialTime ?? resolvedStartTime;
+  const loadStartTime = generalSection.startTime ?? generalSection.initialTime ?? level.startTime;
+  const loadEndTime = _resolveExplicitEndTime(generalSection.endTime, loadStartTime);
   level = {
     ...level,
     activeCharacterId: generalSection.activeCharacterId || level.activeCharacterId,
-    startTime: resolvedStartTime,
-    initialTime: resolvedInitialTime,
-    endTime: generalSection.endTime ?? (resolvedStartTime + level.duration),
+    startTime: loadStartTime,
+    initialTime: generalSection.initialTime ?? loadStartTime,
+    endTime: loadEndTime ?? (loadStartTime + level.duration),
     winSynopsis: generalSection.winSynopsis || level.winSynopsis
   };
   const characterDefinitions = _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
@@ -268,8 +297,25 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   };
   const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo, {
     isCrossMidnight: generalSection.isCrossMidnight,
-    explicitEndTime: generalSection.endTime
+    explicitEndTime: loadEndTime
   });
+  const resolvedStartTime = generalSection.startTime
+    ?? generalSection.initialTime
+    ?? itineraryData.resolvedTimeline.earliestAbsoluteActivityTime
+    ?? itineraryData.resolvedTimeline.earliestResolvedActivityTime
+    ?? level.startTime;
+  const resolvedEndTime = _resolveExplicitEndTime(generalSection.endTime, resolvedStartTime)
+    ?? itineraryData.resolvedTimeline.latestResolvedEventEndTime
+    ?? resolvedStartTime;
+  const resolvedInitialTime = generalSection.initialTime ?? resolvedStartTime;
+  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+    () => _validateExplicitStartTimeAgainstItinerary(generalSection.startTime, itineraryData.resolvedTimeline.earliestResolvedActivityTime));
+  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+    () => _validateExplicitEndTimeAgainstItinerary(_resolveExplicitEndTime(generalSection.endTime, resolvedStartTime), itineraryData.resolvedTimeline.latestResolvedEventEndTime));
+  if (_shouldValidateExplicitInitialTime(generalSection)) {
+    _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+      () => _validateInitialTimeWithinTimeline(resolvedInitialTime, resolvedStartTime, resolvedEndTime));
+  }
   const initialCharacters = level.initialCharacters.map(initialCharacter => {
     const scheduledCharacter = itineraryData.characters.find(character => character.id === initialCharacter.id) || null;
     return scheduledCharacter ? {
@@ -278,17 +324,17 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       itineraryIndex:scheduledCharacter.itineraryIndex
     } : duplicateCharacter(initialCharacter);
   });
-  const resolvedDuration = generalSection.endTime !== null
-    ? generalSection.endTime - level.startTime
-    : itineraryData.duration;
+  const resolvedDuration = resolvedEndTime - resolvedStartTime;
   level = {
     ...level,
     initialCharacters,
     activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
     characters: itineraryData.characters,
-    endTime: level.startTime + resolvedDuration,
+    startTime: resolvedStartTime,
+    initialTime: resolvedInitialTime,
+    endTime: resolvedEndTime,
     duration: resolvedDuration,
-    labels: _createTimeLabels(level.startTime, resolvedDuration)
+    labels: _createTimeLabels(resolvedStartTime, resolvedDuration)
   };
   if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');
   if (options.validateUnlockPhrases) _validateUnlockableSolutionPhrases(level, solutionCategoryOptionsByName, levelFilename, solutionsFirstLineNo);

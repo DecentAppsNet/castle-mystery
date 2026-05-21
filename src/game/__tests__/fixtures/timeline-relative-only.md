@@ -1,9 +1,3 @@
-# general
-
-* time=10:30
-* startTime=10:00
-* endTime=12:00
-
 # map
 
 ```
@@ -28,3 +22,8 @@ H
 
 * title=Hero
 * isTitleKnown=true
+
+# itinerary
+
+: Hero says "First clue."
+: Hero says "Second clue."

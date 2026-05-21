@@ -1,8 +1,8 @@
 # general
 
-* time=10:30
+* time=8:30
 * startTime=10:00
-* endTime=12:00
+* endTime=18:00
 
 # map
 

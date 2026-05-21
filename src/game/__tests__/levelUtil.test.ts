@@ -80,6 +80,10 @@ import timelineBothTimeAndStartTimeText from './fixtures/timeline-both-time-and-
 import timelineExplicitEndSameDayText from './fixtures/timeline-explicit-end-same-day.md?raw';
 import timelineCrossMidnightText from './fixtures/timeline-cross-midnight.md?raw';
 import timelineEventOutsideWindowText from './fixtures/timeline-event-outside-window.md?raw';
+import timelineDerivedBoundsText from './fixtures/timeline-derived-bounds.md?raw';
+import timelineRelativeOnlyText from './fixtures/timeline-relative-only.md?raw';
+import timelineInitialTimeOutsideBoundsText from './fixtures/timeline-initial-time-outside-bounds.md?raw';
+import timelineStartAfterItineraryText from './fixtures/timeline-start-after-itinerary.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
 
 describe('levelUtil itinerary loading', () => {
@@ -849,9 +853,50 @@ describe('levelUtil itinerary loading', () => {
       const gameState = createGameState(level);
 
       expect(level.startTime).toBe(10 * 60 * 60 * 1000);
-      expect(level.initialTime).toBe(8 * 60 * 60 * 1000 + 30 * 60 * 1000);
+      expect(level.initialTime).toBe(10 * 60 * 60 * 1000 + 30 * 60 * 1000);
       expect(gameState.time).toBe(level.initialTime);
       expect(gameState.startTime).toBe(level.startTime);
+    });
+
+    it('derives omitted startTime, endTime, and default time from itinerary timing', () => {
+      const level = loadLevelFromText(timelineDerivedBoundsText);
+
+      expect(level.startTime).toBe(10 * 60 * 60 * 1000);
+      expect(level.initialTime).toBe(level.startTime);
+      expect(level.endTime).toBe(12 * 60 * 60 * 1000);
+      expect(level.duration).toBe(2 * 60 * 60 * 1000);
+    });
+
+    it('derives bounds from relative-only itinerary timing when there are no absolute timestamps', () => {
+      const level = loadLevelFromText(timelineRelativeOnlyText);
+
+      expect(level.startTime).toBe(0);
+      expect(level.initialTime).toBe(0);
+      expect(level.endTime).toBeGreaterThan(level.startTime);
+      expect(level.duration).toBe(level.endTime - level.startTime);
+    });
+
+    it('throws when general time falls outside the resolved authored span', () => {
+      try {
+        loadLevelFromText(timelineInitialTimeOutsideBoundsText, 'timeline-initial-time-outside-bounds.md');
+        expect.fail('expected level loading to throw');
+      } catch (error) {
+        expect(error).toBeInstanceOf(LoadLevelException);
+        expect((error as LoadLevelException).message).toContain('timeline-initial-time-outside-bounds.md:3');
+        expect((error as LoadLevelException).message).toContain('general time 8:30:00 must fall within the authored span 10:00:00 to 18:00:00');
+      }
+    });
+
+    it('throws when explicit startTime excludes resolved itinerary timing', () => {
+      try {
+        loadLevelFromText(timelineStartAfterItineraryText, 'timeline-start-after-itinerary.md');
+        expect.fail('expected level loading to throw');
+      } catch (error) {
+        expect(error).toBeInstanceOf(LoadLevelException);
+        expect((error as LoadLevelException).message).toContain('timeline-start-after-itinerary.md:3');
+        expect((error as LoadLevelException).message).toContain('general startTime 11:00:00 excludes itinerary content at 10:00:00');
+        expect((error as LoadLevelException).message).toContain('Try startTime=10:00:00');
+      }
     });
 
     it('uses explicit endTime to compute duration for a same-day timeline', () => {
