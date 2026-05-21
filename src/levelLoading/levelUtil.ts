@@ -14,7 +14,8 @@ import {
   addRoomPositionMarkersFromSections,
   applyRoomMetadataFromSections,
   createRoomsFromMapSection,
-  generateRoomWaypointsForLevel
+  generateRoomWaypointsForLevel,
+  validateMapLegendRoomsAgainstRoomsSection
 } from "./levelRoomLayoutLoader";
 import {
   createKnownPopulationEntryIds,
@@ -267,6 +268,8 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   const roomPopulationDefinitions = { characterDefinitions, itemDefinitions };
   _runWithLoadLevelSectionContext(levelFilename, mapFirstLineNo,
     () => createRoomsFromMapSection(level, sections.map || ""));
+  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+    () => validateMapLegendRoomsAgainstRoomsSection(sections.map || "", sections.rooms || ""));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
     () => applyRoomMetadataFromSections(level, sections.rooms || ""));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,

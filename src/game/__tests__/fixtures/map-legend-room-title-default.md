@@ -9,6 +9,8 @@ HS
 
 # rooms
 
+## MacDonald Hall
+
 ## Servants Closet
 
 ```

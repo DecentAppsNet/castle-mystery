@@ -57,6 +57,8 @@ PGT.
 * G=Amos
 * exits=Hallway (lockable)
 
+## Torture Chamber
+
 ## Prison Entry
 
 * exits=Guard Room (locked, lockable)

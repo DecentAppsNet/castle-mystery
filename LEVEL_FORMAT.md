@@ -65,3 +65,36 @@ If a level crosses midnight, write the times the way a person normally would. Fo
 * endTime=11:00:00
 * winSynopsis=You discovered who poisoned the feast.
 ```
+
+# "Map" Section
+
+The `map` section gives the broad layout of the level. Think of it as a simple floor plan made from text.
+
+## What To Write
+
+The section has two parts:
+* a text grid showing the overall shape of the map
+* a legend that says which room each map character stands for
+
+Each non-`.` character in the grid represents one room. All matching characters belong to the same room. `.` means empty space.
+
+In practice, an author can think of this section as answering two questions:
+* Where are the rooms on the overall map? Put them in the text grid.
+* Which room does each map character mean? Add it to the legend.
+
+Keep the map simple. This section is for the large-scale layout of the level, not the detailed inside of each room. Room interiors belong in the `rooms` section.
+
+## Example
+
+```md
+# map
+
+AAA..
+BBBCC
+BBBCC
+
+* A=Kitchen
+* B=Hall
+* C=Library
+```
+

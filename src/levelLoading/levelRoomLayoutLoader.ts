@@ -55,6 +55,47 @@ function _parseNameValueLinesOrThrowDuplicate(markdownText:string, contextLabel:
   return parseUniqueNameValueLines(markdownText, contextLabel);
 }
 
+function _validateMapSectionIsPresent(mapSection:string) {
+  if (mapSection.trim().length > 0) return;
+  throw new Error('missing required map section');
+}
+
+function _validateMapGridIsPresent(mapLines:string[]) {
+  if (mapLines.length > 0) return;
+  throw new Error('map section must include a fenced grid');
+}
+
+function _findUsedMapLegendChars(gridLines:string[]):Set<string> {
+  const usedLegendChars = new Set<string>();
+  gridLines.forEach(line => {
+    Array.from(line).forEach(tileChar => {
+      if (_isIgnoredGridTileChar(tileChar)) return;
+      usedLegendChars.add(tileChar);
+    });
+  });
+  return usedLegendChars;
+}
+
+function _validateLegendMatchesGrid(legend:Record<string, string>, usedLegendChars:Set<string>) {
+  Object.keys(legend).forEach(tileChar => {
+    if (tileChar === '.' || usedLegendChars.has(tileChar)) return;
+    throw new Error(`map legend tile '${tileChar}' is not used in the map grid`);
+  });
+}
+
+function _createNormalizedRoomSectionIds(roomsSection:string):Set<string> {
+  return new Set(Object.keys(parseSections(roomsSection, 2)).map(normalizeId));
+}
+
+function _validateMapLegendRoomsExistInRoomsSection(legend:Record<string, string>, roomsSection:string) {
+  const roomSectionIds = _createNormalizedRoomSectionIds(roomsSection);
+  Object.values(legend).forEach(roomName => {
+    const roomId = normalizeId(roomName);
+    if (roomSectionIds.has(roomId)) return;
+    throw new Error(`map legend room '${roomName}' does not match any room in the rooms section`);
+  });
+}
+
 function _findLegendEntryTextOrThrow(tileChar:string, legend:Record<string, string>, row:number, col:number, contextLabel:string):string|null {
   if (_isIgnoredGridTileChar(tileChar)) return null;
   const entryText = legend[tileChar];
@@ -194,9 +235,13 @@ function _addRoomObstructionsFromRoomsSection(level:Level, roomsSection:string) 
 }
 
 export function createRoomsFromMapSection(level:Level, mapSection:string) {
+  _validateMapSectionIsPresent(mapSection);
   const mapLines = parseFirstFencedCodeBlockLines(mapSection);
+  _validateMapGridIsPresent(mapLines);
   const legend = _parseNameValueLinesOrThrowDuplicate(mapSection, 'map legend');
+  _validateLegendMatchesGrid(legend, _findUsedMapLegendChars(mapLines));
   const roomBoundsById = new Map<string, { authoredName:string, tileChar:string, minCol:number, maxCol:number, minRow:number, maxRow:number }>();
+  const roomTileCountById = new Map<string, number>();
 
   mapLines.forEach((line, row) => {
     Array.from(line).forEach((tileChar, col) => {
@@ -206,6 +251,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
       const existingBounds = roomBoundsById.get(roomId);
       if (!existingBounds) {
         roomBoundsById.set(roomId, { authoredName:authoredRoomName, tileChar, minCol:col, maxCol:col, minRow:row, maxRow:row });
+        roomTileCountById.set(roomId, 1);
         return;
       }
       if (existingBounds.tileChar !== tileChar) throw new Error(`duplicate room id '${authoredRoomName}' conflicts with '${existingBounds.authoredName}' in map legend`);
@@ -213,10 +259,14 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
       existingBounds.maxCol = Math.max(existingBounds.maxCol, col);
       existingBounds.minRow = Math.min(existingBounds.minRow, row);
       existingBounds.maxRow = Math.max(existingBounds.maxRow, row);
+      roomTileCountById.set(roomId, (roomTileCountById.get(roomId) || 0) + 1);
     });
   });
 
   Array.from(roomBoundsById.entries()).forEach(([roomId, bounds]) => {
+    const expectedTileCount = (bounds.maxCol - bounds.minCol + 1) * (bounds.maxRow - bounds.minRow + 1);
+    const actualTileCount = roomTileCountById.get(roomId) || 0;
+    if (actualTileCount !== expectedTileCount) throw new Error(`map room '${bounds.authoredName}' must be rectangular`);
     level.rooms.push({
       id: roomId,
       title: bounds.authoredName.trim(),
@@ -235,6 +285,15 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
       isDiscovered: false
     });
   });
+}
+
+export function validateMapLegendRoomsAgainstRoomsSection(mapSection:string, roomsSection:string) {
+  _validateMapSectionIsPresent(mapSection);
+  const mapLines = parseFirstFencedCodeBlockLines(mapSection);
+  _validateMapGridIsPresent(mapLines);
+  const legend = _parseNameValueLinesOrThrowDuplicate(mapSection, 'map legend');
+  _validateLegendMatchesGrid(legend, _findUsedMapLegendChars(mapLines));
+  _validateMapLegendRoomsExistInRoomsSection(legend, roomsSection);
 }
 
 export function applyRoomMetadataFromSections(level:Level, roomsSection:string) {

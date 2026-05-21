@@ -31,6 +31,11 @@ import audibleSpeechOverlapText from './fixtures/audible-speech-overlap.md?raw';
 import duplicateGeneralEntryText from './fixtures/duplicate-general-entry.md?raw';
 import duplicateGeneralSectionText from './fixtures/duplicate-general-section.md?raw';
 import invalidActiveCharacterText from './fixtures/invalid-active-character.md?raw';
+import missingMapSectionText from './fixtures/missing-map-section.md?raw';
+import mapMissingGridText from './fixtures/map-missing-grid.md?raw';
+import mapUnusedLegendEntryText from './fixtures/map-unused-legend-entry.md?raw';
+import mapNonRectangularRoomText from './fixtures/map-non-rectangular-room.md?raw';
+import mapRoomMissingFromRoomsSectionText from './fixtures/map-room-missing-from-rooms-section.md?raw';
 import duplicateItemSubsectionsCaseText from './fixtures/duplicate-item-subsections-case.md?raw';
 import duplicateItemIdInventoryText from './fixtures/duplicate-item-id-inventory.md?raw';
 import duplicateMapLegendEntryText from './fixtures/duplicate-map-legend-entry.md?raw';
@@ -815,6 +820,61 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-map-legend-tile.md:7');
       expect((error as LoadLevelException).message).toContain(`unknown map legend tile 'B'`);
+    }
+  });
+
+  it('wraps a missing map section with filename and line number', () => {
+    try {
+      loadLevelFromText(missingMapSectionText, 'missing-map-section.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('missing-map-section.md:1');
+      expect((error as LoadLevelException).message).toContain('missing required map section');
+    }
+  });
+
+  it('wraps a missing map grid with filename and line number', () => {
+    try {
+      loadLevelFromText(mapMissingGridText, 'map-missing-grid.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('map-missing-grid.md:7');
+      expect((error as LoadLevelException).message).toContain('map section must include a fenced grid');
+    }
+  });
+
+  it('wraps unused map legend entries with filename and line number', () => {
+    try {
+      loadLevelFromText(mapUnusedLegendEntryText, 'map-unused-legend-entry.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('map-unused-legend-entry.md:7');
+      expect((error as LoadLevelException).message).toContain(`map legend tile 'B' is not used in the map grid`);
+    }
+  });
+
+  it('wraps non-rectangular map rooms with filename and line number', () => {
+    try {
+      loadLevelFromText(mapNonRectangularRoomText, 'map-non-rectangular-room.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('map-non-rectangular-room.md:7');
+      expect((error as LoadLevelException).message).toContain(`map room 'Hall' must be rectangular`);
+    }
+  });
+
+  it('wraps map legend rooms missing from the rooms section with filename and line number', () => {
+    try {
+      loadLevelFromText(mapRoomMissingFromRoomsSectionText, 'map-room-missing-from-rooms-section.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('map-room-missing-from-rooms-section.md:15');
+      expect((error as LoadLevelException).message).toContain(`map legend room 'Hall' does not match any room in the rooms section`);
     }
   });
 

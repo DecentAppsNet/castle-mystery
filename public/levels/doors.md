@@ -70,6 +70,8 @@ PGT.
 * exits=Guard Room (locked, lockable)
 * obscured=true
 
+## Torture Chamber
+
 # characters
 
 ## Simon
