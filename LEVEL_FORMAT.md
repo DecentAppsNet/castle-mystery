@@ -128,6 +128,7 @@ In `exits`, a plain room name such as `Kitchen` creates an open doorway.
 Adding modifiers in parentheses changes what kind of connection it is:
 * `closed` or `open` creates a door
 * `locked`, `unlocked`, `lockable`, or `unlockable` creates a lockable door
+* `lockable with Item Name` or `unlockable with Item Name` creates a lockable door that requires that item to operate from this side
 
 The supported modifiers are:
 * `open` - the door starts open
@@ -136,16 +137,23 @@ The supported modifiers are:
 * `unlocked` - the lockable door starts unlocked
 * `lockable` - the door can be locked or unlocked from this side
 * `unlockable` - also marks the door as lockable from this side (interchangable with "lockable")
+* `lockable with Item Name` - the door can be locked or unlocked from this side, but only by a character currently carrying the named item
+* `unlockable with Item Name` - same as `lockable with Item Name`; `unlockable` and `lockable` are interchangeable here too
 
 Modifiers from both sides are merged. That lets you control whether a lockable door can be operated from one side or both:
 * put `lockable` or `unlockable` on one side only to make it operable from that side only
 * put `lockable` or `unlockable` on both sides to make it operable from both sides
+* add `with Item Name` on a side to require that item when operating the door from that side
+
+The item named in `lockable with ...` or `unlockable with ...` must match an item defined in the `items` section. It can be written using either the item id form or the item title.
 
 Examples:
 * `Study` means an open doorway
 * `Study (closed)` means a non-lockable closed door
 * `Study (lockable, locked)` means a lockable door that starts locked and can be operated from this side
+* `Study (lockable with Iron Key, locked)` means a lockable door that starts locked and requires `Iron Key` to operate from this side
 * `Bedroom (locked, unlockable)` on one side and `Bedroom (locked)` on the other means the same locked door, operable from only the first side
+* `Bedroom (locked, unlockable with Iron Key)` on one side and `Bedroom (locked)` on the other means the same locked door, operable only from the first side and only with `Iron Key`
 * `Bedroom (lockable, locked)` on one side and `Bedroom (locked, unlockable)` on the other means a locked door operable from both sides
 
 If both sides mention the same connection, they should describe the same door. Conflicting states such as `locked, open` cause a load error.
