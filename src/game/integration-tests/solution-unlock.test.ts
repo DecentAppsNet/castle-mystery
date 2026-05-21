@@ -15,6 +15,15 @@ function _createTestLevel():Level {
   const initialPosition = { x:5, y:5 };
   const waypoint = { position:initialPosition, adjacentWaypoints:[], exitDirections:{} };
   const itinerary:Itinerary = [];
+  const bookItem = {
+    id:'book',
+    title:'Book',
+    displayChar:'B',
+    position:{ x:6, y:5 },
+    description:'A test book.',
+    isDiscovered:false,
+    isExamined:false
+  };
 
   return {
     rooms:[{
@@ -22,15 +31,7 @@ function _createTestLevel():Level {
       title:'Hall',
       rect:{ x:0, y:0, width:10, height:10 },
       isObscured:false,
-      items:[{
-        id:'book',
-        title:'Book',
-        displayChar:'B',
-        position:{ x:6, y:5 },
-        description:'A test book.',
-        isDiscovered:false,
-        isExamined:false
-      }],
+      items:[bookItem],
       obstructions:[],
       exits:[],
       waypoints:[waypoint],
@@ -65,6 +66,7 @@ function _createTestLevel():Level {
       itinerary,
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
     }],
+    itemsById:new Map([['book', bookItem]]),
     solutions:[
       {
         id:'open',

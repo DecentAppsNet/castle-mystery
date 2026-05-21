@@ -9,9 +9,9 @@ import { createTakeItemEffect } from "./effects/takeItemUtil";
 import { findCharacterPose } from "./itineraryUtil";
 import Position, { duplicatePosition } from "./types/Position";
 import Item from "./types/Item";
-import Character, { duplicateCharacter } from "./types/Character";
-import { duplicateRoom } from "./types/Room";
+import Character from "./types/Character";
 import GameState from "./types/GameState";
+import { duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import { findRoomAtPosition } from "./roomUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
@@ -167,8 +167,9 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
   const discoveredItemIds = _getDiscoveredItemIds(gameState);
   const examinedItemIds = _getExaminedItemIds(gameState);
   const pendingRoomEffects:PendingRoomEffect[] = [];
-  gameState.characters = gameState.initialCharacters.map(duplicateCharacter);
-  gameState.rooms = gameState.initialRooms.map(duplicateRoom);
+  gameState.itemsById = duplicateItemsById(gameState.initialItemsById);
+  gameState.characters = gameState.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, gameState.itemsById));
+  gameState.rooms = gameState.initialRooms.map(room => duplicateRoomUsingItemIndex(room, gameState.itemsById));
 
   _collectAppliedInventoryEvents(gameState, time).forEach(({ characterId, startPosition, event }) => {
     const actor = _findCharacter(gameState, characterId);
@@ -198,14 +199,14 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           if (!actorRoom || !dropRoom || actorRoom.id !== dropRoom.id) break;
           const item = _removeItemById(actor.items, dropEvent.itemId);
           if (!item) break;
-          const droppedItem = { ...item, position:duplicatePosition(dropEvent.position) };
+          item.position = duplicatePosition(dropEvent.position);
           if (!dropRoom.isObscured && previousTime !== undefined && dropEvent.startTime > previousTime && dropEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:dropRoom.id,
-              create:() => gameState.activeEffects.push(createDropItemEffect(droppedItem, dropRoom, Date.now(), gameState.scalingFactors))
+              create:() => gameState.activeEffects.push(createDropItemEffect(item, dropRoom, Date.now(), gameState.scalingFactors))
             });
           }
-          dropRoom.items.push(droppedItem);
+          dropRoom.items.push(item);
         }
       break;
 

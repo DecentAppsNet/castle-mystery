@@ -85,6 +85,15 @@ export function parseItemDefinitions(itemsSection:string):Map<string, ItemDefini
 	return itemDefinitions;
 }
 
+export function tryResolveItemId(referenceText:string, itemDefinitions:Map<string, { title:string }>):string|null {
+	const normalizedReference = normalizeId(referenceText);
+	if (itemDefinitions.has(normalizedReference)) return normalizedReference;
+	for (const [itemId, itemDefinition] of itemDefinitions.entries()) {
+		if (normalizeId(itemDefinition.title) === normalizedReference) return itemId;
+	}
+	return null;
+}
+
 export function createKnownPopulationEntryIds(definitions:RoomPopulationDefinitions):Set<string> {
 	return new Set([
 		...definitions.characterDefinitions.keys(),

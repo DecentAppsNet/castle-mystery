@@ -45,6 +45,9 @@ import duplicateRoomIdMapLegendText from './fixtures/duplicate-room-id-map-legen
 import duplicateRoomLegendEntryText from './fixtures/duplicate-room-legend-entry.md?raw';
 import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsections-case.md?raw';
 import doorsArrivalTimestampText from './fixtures/doors-arrival-timestamp.md?raw';
+import invalidLockableExitItemText from './fixtures/invalid-lockable-exit-item.md?raw';
+import lockRequiredItemMissingText from './fixtures/lock-required-item-missing.md?raw';
+import unlockRequiredItemMissingText from './fixtures/unlock-required-item-missing.md?raw';
 import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-solution-category-group-names.md?raw';
 import duplicateSolutionPropertyText from './fixtures/duplicate-solution-property.md?raw';
 import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-subsections-case.md?raw';
@@ -54,6 +57,7 @@ import inventoryItemTitleCasingText from './fixtures/inventory-item-title-casing
 import closedDoorExitText from './fixtures/closed-door-exit.md?raw';
 import lockableExitOneSidedText from './fixtures/lockable-exit-one-sided.md?raw';
 import lockableExitTwoSidedText from './fixtures/lockable-exit-two-sided.md?raw';
+import lockableExitWithItemText from './fixtures/lockable-exit-with-item.md?raw';
 import lowercaseTitleDefaultsText from './fixtures/lowercase-title-defaults.md?raw';
 import mapLegendRoomTitleDefaultText from './fixtures/map-legend-room-title-default.md?raw';
 import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
@@ -307,6 +311,17 @@ describe('levelUtil itinerary loading', () => {
     expect(twoSidedExit).toEqual(oneSidedExit);
   });
 
+  it('parses lockable-with item requirements by resolving item titles to item ids', () => {
+    const level = loadLevelFromText(lockableExitWithItemText);
+    const exit = findRoom(level.rooms, 'Bedroom').exits[0];
+
+    expect(exit.exitType).toBe(ExitType.lockableDoor);
+    expect(exit.exitStatus).toBe(ExitStatus.locked);
+    expect(exit.lockableFromRoom1With).toBe('red key');
+    expect(exit.lockableFromRoom2With).toBeNull();
+    expect(level.itemsById.get('red key')?.title).toBe('Red Key');
+  });
+
   it('parses closed non-lockable door exits', () => {
     const level = loadLevelFromText(closedDoorExitText);
     const exit = findRoom(level.rooms, 'Bedroom').exits[0];
@@ -374,6 +389,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('conflicting-exit-modifiers.md:12');
       expect((error as LoadLevelException).message).toContain('conflicting exit modifiers');
+    }
+  });
+
+  it('wraps unknown lockable-with item references with filename and line number', () => {
+    try {
+      loadLevelFromText(invalidLockableExitItemText, 'invalid-lockable-exit-item.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-lockable-exit-item.md:12');
+      expect((error as LoadLevelException).message).toContain(`unknown item 'Missing Key' in 'Hallway (lockable with Missing Key)'`);
     }
   });
 
@@ -554,6 +580,28 @@ describe('levelUtil itinerary loading', () => {
       expect((error as LoadLevelException).errorLineNo).toBe(48);
       expect((error as LoadLevelException).message).toContain('unlock-wrong-side.md:48');
       expect((error as LoadLevelException).message).toContain('exit to Second Cell cannot be locked or unlocked from Cell');
+    }
+  });
+
+  it('throws when a lock activity requires an item the character is not carrying', () => {
+    try {
+      loadLevelFromText(lockRequiredItemMissingText, 'lock-required-item-missing.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('lock-required-item-missing.md:52');
+      expect((error as LoadLevelException).message).toContain('exit to Second Cell requires item red key in inventory for itinerary activity');
+    }
+  });
+
+  it('throws when an unlock activity requires an item the character is not carrying', () => {
+    try {
+      loadLevelFromText(unlockRequiredItemMissingText, 'unlock-required-item-missing.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('unlock-required-item-missing.md:52');
+      expect((error as LoadLevelException).message).toContain('exit to Second Cell requires item red key in inventory for itinerary activity');
     }
   });
 

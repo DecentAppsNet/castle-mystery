@@ -1,8 +1,10 @@
 /* This module groups top-level level-loading orchestration, composing section-specific loaders into a validated Level model. */
 
 import Level from "../game/types/Level";
+import Item from "../game/types/Item";
 import TimeLabel from "../game/types/TimeLabel";
 import { duplicateCharacter } from "../game/types/Character";
+import { createItemsById } from "../game/itemUtil";
 import { baseUrl } from "@/common/urlUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
@@ -48,6 +50,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     rooms: [],
     initialCharacters: [],
     characters: [],
+    itemsById: new Map<string, Item>(),
     solutions: [],
     winSynopsis: DEFAULT_WIN_SYNOPSIS,
     activeCharacterId: "",
@@ -57,6 +60,23 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     duration,
     labels: _createTimeLabels(0, duration)
   };
+}
+
+function _createLevelItemsById(level:Level, itemDefinitions:Map<string, { title:string, description:string, displayChar:string }>):Map<string, Item> {
+  const itemsById = createItemsById(level.rooms, level.characters);
+  itemDefinitions.forEach((itemDefinition, itemId) => {
+    if (itemsById.has(itemId)) return;
+    itemsById.set(itemId, {
+      id:itemId,
+      title:itemDefinition.title,
+      displayChar:itemDefinition.displayChar,
+      position:{ x:0, y:0 },
+      description:itemDefinition.description,
+      isDiscovered:false,
+      isExamined:false
+    });
+  });
+  return itemsById;
 }
 
 function _parseTimeTextToMsecs(text:string):number {
@@ -275,7 +295,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
     () => addRoomPositionMarkersFromSections(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions)));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-    () => addRoomExitsFromRoomsSection(level, sections.rooms || ""));
+    () => addRoomExitsFromRoomsSection(level, sections.rooms || "", itemDefinitions));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
     () => generateRoomWaypointsForLevel(level));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
@@ -333,6 +353,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     initialCharacters,
     activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
     characters: itineraryData.characters,
+    itemsById: _createLevelItemsById({ ...level, characters:itineraryData.characters }, itemDefinitions),
     startTime: resolvedStartTime,
     initialTime: resolvedInitialTime,
     endTime: resolvedEndTime,

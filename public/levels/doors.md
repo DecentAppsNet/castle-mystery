@@ -52,7 +52,7 @@ PGT.
 
 * C=corner
 * X=center
-* exits=First Cell (locked, lockable) | Second Cell (locked, lockable) | Third Cell (locked, lockable) | Guard Room (locked, lockable) | Torture Chamber
+* exits=First Cell (locked, lockable with Red Key) | Second Cell (locked, lockable with Blue Key) | Third Cell (locked, lockable with Purple Key) | Guard Room (locked, lockable) | Torture Chamber
 
 ## Guard Room
 
@@ -83,8 +83,15 @@ PGT.
 
 * description=A man reluctantly willing to beat people up. He'd rather not, but he certainly will.
 * faceImage=/sprites/guardFace.png
+* items=Red Key|Blue Key|Purple Key
 
 # items
+
+## Red Key
+
+## Blue Key
+
+## Purple Key
 
 # itinerary
 

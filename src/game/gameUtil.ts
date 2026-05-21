@@ -1,9 +1,8 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks. */
 
 import { assertNonNullable, botch } from "decent-portal";
-import Character, { duplicateCharacter } from "./types/Character";
+import Character from "./types/Character";
 import GameState from "./types/GameState";
-import { duplicateRoom } from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
 import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
@@ -26,6 +25,7 @@ import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
 import Solution, { duplicateSolution } from "./solutions/types/Solution";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
+import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import EffectType from "./effects/types/EffectType";
 import {
   callOnActiveCharacterChangedAsNeeded,
@@ -206,14 +206,18 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 }
 
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
+  const initialItemsById = createItemsById(level.rooms, level.initialCharacters, duplicateItemsById(level.itemsById));
+  const itemsById = duplicateItemsById(initialItemsById);
   const gameState:GameState = {
-    characters:level.initialCharacters.map(duplicateCharacter),
-    rooms:level.rooms.map(duplicateRoom),
+    characters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById)),
+    rooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById)),
+    itemsById,
     solutions:level.solutions.map(duplicateSolution),
     winSynopsis:level.winSynopsis,
     imageSet,
-    initialCharacters:level.initialCharacters.map(duplicateCharacter),
-    initialRooms:level.rooms.map(duplicateRoom),
+    initialItemsById,
+    initialCharacters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById)),
+    initialRooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById)),
     activeEffects:[],
     hoveredItemId:null,
     hoveredCharacterId:null,

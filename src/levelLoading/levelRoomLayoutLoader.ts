@@ -13,6 +13,7 @@ import ExitType from "../game/types/ExitType";
 import RoomExit, { createRoomExitId, LOCKABLE_WITHOUT_INV_CHECK } from "../game/types/RoomExit";
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
+import { tryResolveItemId } from "./levelRoomPopulationLoader";
 
 const MAP_TILE_SIZE = 20;
 
@@ -35,14 +36,17 @@ type MarkerTile = {
 
 type ParsedExitReference = {
   connectedRoomId:string,
-  modifiers:Set<string>
+  modifiers:Set<string>,
+  lockableWith:string|null
 };
 
 type PendingExit = {
   room1Id:string,
   room2Id:string,
   room1Modifiers:Set<string>,
-  room2Modifiers:Set<string>
+  room2Modifiers:Set<string>,
+  room1LockableWith:string|null,
+  room2LockableWith:string|null
 };
 
 const VALID_EXIT_MODIFIERS = new Set(['lockable', 'unlockable', 'closed', 'open', 'locked', 'unlocked']);
@@ -53,6 +57,27 @@ function _isIgnoredGridTileChar(tileChar:string):boolean {
 
 function _parseNameValueLinesOrThrowDuplicate(markdownText:string, contextLabel:string):Record<string, string> {
   return parseUniqueNameValueLines(markdownText, contextLabel);
+}
+
+function _parseExitModifier(modifierText:string, trimmedExitText:string, itemDefinitions:Map<string, { title:string }>):{ modifier:string, lockableWith:string|null } {
+  const trimmedModifierText = modifierText.trim();
+  const lowerModifierText = trimmedModifierText.toLowerCase();
+  if (!lowerModifierText.startsWith('lockable with ') && !lowerModifierText.startsWith('unlockable with ')) {
+    return { modifier:lowerModifierText, lockableWith:null };
+  }
+
+  const modifier = lowerModifierText.startsWith('lockable with ') ? 'lockable' : 'unlockable';
+  const itemText = trimmedModifierText.slice(`${modifier} with `.length).trim();
+  if (!itemText.length) throw new Error(`missing item name in '${trimmedExitText}'`);
+  const itemId = tryResolveItemId(itemText, itemDefinitions);
+  if (!itemId) throw new Error(`unknown item '${itemText}' in '${trimmedExitText}'`);
+  return { modifier, lockableWith:itemId };
+}
+
+function _mergeLockableWith(existing:string|null, next:string|null, trimmedExitText:string):string|null {
+  if (existing === null) return next;
+  if (next === null || existing === next) return existing;
+  throw new Error(`conflicting lockable item requirements in '${trimmedExitText}'`);
 }
 
 function _validateMapSectionIsPresent(mapSection:string) {
@@ -370,10 +395,10 @@ function _findExitPositionFromSharedWallSection(sharedWallSection:Rect):[x:numbe
     : [sharedWallSection.x, Math.round(sharedWallSection.y + sharedWallSection.height / 2)];
 }
 
-function _parseExitReference(exitText:string):ParsedExitReference {
+function _parseExitReference(exitText:string, itemDefinitions:Map<string, { title:string }>):ParsedExitReference {
   const trimmedExitText = exitText.trim();
   const openParenIndex = trimmedExitText.indexOf('(');
-  if (openParenIndex === -1) return { connectedRoomId:normalizeId(trimmedExitText), modifiers:new Set() };
+  if (openParenIndex === -1) return { connectedRoomId:normalizeId(trimmedExitText), modifiers:new Set(), lockableWith:null };
 
   const closeParenIndex = trimmedExitText.lastIndexOf(')');
   if (closeParenIndex < openParenIndex) throw new Error(`invalid exit modifiers syntax '${trimmedExitText}'`);
@@ -381,14 +406,24 @@ function _parseExitReference(exitText:string):ParsedExitReference {
   if (trailingText.length > 0) throw new Error(`invalid exit modifiers syntax '${trimmedExitText}'`);
 
   const connectedRoomText = trimmedExitText.slice(0, openParenIndex).trim();
-  const modifiers = new Set(parseOptions(trimmedExitText.slice(openParenIndex + 1, closeParenIndex).split(',').join('|'))
-    .map(modifier => modifier.toLowerCase()));
+  const modifiers = new Set<string>();
+  let lockableWith:string|null = null;
+  parseOptions(trimmedExitText.slice(openParenIndex + 1, closeParenIndex).split(',').join('|')).forEach(modifierText => {
+    const parsedModifier = _parseExitModifier(modifierText, trimmedExitText, itemDefinitions);
+    modifiers.add(parsedModifier.modifier);
+    lockableWith = _mergeLockableWith(lockableWith, parsedModifier.lockableWith,
+      trimmedExitText);
+  });
 
   Array.from(modifiers).forEach(modifier => {
     if (!VALID_EXIT_MODIFIERS.has(modifier)) throw new Error(`invalid exit modifier '${modifier}' in '${trimmedExitText}'`);
   });
 
-  return { connectedRoomId:normalizeId(connectedRoomText), modifiers };
+  if (lockableWith !== null && !modifiers.has('lockable') && !modifiers.has('unlockable')) {
+    throw new Error(`invalid exit modifiers syntax '${trimmedExitText}'`);
+  }
+
+  return { connectedRoomId:normalizeId(connectedRoomText), modifiers, lockableWith };
 }
 
 function _hasAnyModifier(modifiers:Set<string>, candidateModifiers:string[]):boolean {
@@ -425,7 +460,7 @@ function _determineExitStatus(exit:PendingExit, exitType:ExitType):ExitStatus {
   return ExitStatus.closed;
 }
 
-function _createPendingExits(roomsSection:string):PendingExit[] {
+function _createPendingExits(roomsSection:string, itemDefinitions:Map<string, { title:string }>):PendingExit[] {
   const pendingExitsByPairKey = new Map<string, PendingExit>();
   const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
 
@@ -433,17 +468,24 @@ function _createPendingExits(roomsSection:string):PendingExit[] {
     const roomSection = roomSectionEntry.value;
     const nameValues = _parseNameValueLinesOrThrowDuplicate(roomSection, `room ${roomId}`);
     parseOptions(nameValues.exits || '').forEach(exitText => {
-      const parsedExit = _parseExitReference(exitText);
+      const parsedExit = _parseExitReference(exitText, itemDefinitions);
       const [room1Id, room2Id] = [roomId, parsedExit.connectedRoomId].sort();
       const pairKey = `${room1Id}|${room2Id}`;
       const pendingExit = pendingExitsByPairKey.get(pairKey) || {
         room1Id,
         room2Id,
         room1Modifiers:new Set<string>(),
-        room2Modifiers:new Set<string>()
+        room2Modifiers:new Set<string>(),
+        room1LockableWith:null,
+        room2LockableWith:null
       };
-      const sideModifiers = pendingExit.room1Id === roomId ? pendingExit.room1Modifiers : pendingExit.room2Modifiers;
+      const isRoom1Side = pendingExit.room1Id === roomId;
+      const sideModifiers = isRoom1Side ? pendingExit.room1Modifiers : pendingExit.room2Modifiers;
       parsedExit.modifiers.forEach(modifier => sideModifiers.add(modifier));
+      if (parsedExit.lockableWith !== null) {
+        if (isRoom1Side) pendingExit.room1LockableWith = _mergeLockableWith(pendingExit.room1LockableWith, parsedExit.lockableWith, exitText);
+        else pendingExit.room2LockableWith = _mergeLockableWith(pendingExit.room2LockableWith, parsedExit.lockableWith, exitText);
+      }
       pendingExitsByPairKey.set(pairKey, pendingExit);
     });
   });
@@ -466,11 +508,11 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
     x,
     y,
     exitType,
-    lockableFromRoom1With: exitType === ExitType.lockableDoor && _hasAnyModifier(pendingExit.room1Modifiers, ['lockable', 'unlockable'])
-      ? LOCKABLE_WITHOUT_INV_CHECK
+    lockableFromRoom1With: exitType === ExitType.lockableDoor
+      ? pendingExit.room1LockableWith ?? (_hasAnyModifier(pendingExit.room1Modifiers, ['lockable', 'unlockable']) ? LOCKABLE_WITHOUT_INV_CHECK : null)
       : null,
-    lockableFromRoom2With: exitType === ExitType.lockableDoor && _hasAnyModifier(pendingExit.room2Modifiers, ['lockable', 'unlockable'])
-      ? LOCKABLE_WITHOUT_INV_CHECK
+    lockableFromRoom2With: exitType === ExitType.lockableDoor
+      ? pendingExit.room2LockableWith ?? (_hasAnyModifier(pendingExit.room2Modifiers, ['lockable', 'unlockable']) ? LOCKABLE_WITHOUT_INV_CHECK : null)
       : null,
     exitStatus: _determineExitStatus(pendingExit, exitType)
   };
@@ -478,8 +520,8 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
   room2.exits.push(exit);
 }
 
-export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string) {
-  _createPendingExits(roomsSection).forEach(pendingExit => _addExitBetweenRooms(level, pendingExit));
+export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string, itemDefinitions:Map<string, { title:string }> = new Map()) {
+  _createPendingExits(roomsSection, itemDefinitions).forEach(pendingExit => _addExitBetweenRooms(level, pendingExit));
 }
 
 export function generateRoomWaypointsForLevel(level:Level) {

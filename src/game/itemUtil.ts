@@ -1,0 +1,33 @@
+import Character, { duplicateCharacter } from "./types/Character";
+import Item, { duplicateItem } from "./types/Item";
+import Room, { duplicateRoom } from "./types/Room";
+
+function _findIndexedItem(itemsById:ReadonlyMap<string, Item>, itemId:string):Item {
+	const item = itemsById.get(itemId) || null;
+	if (!item) throw new Error(`item ${itemId} not found in index`);
+	return item;
+}
+
+export function createItemsById(rooms:ReadonlyArray<Pick<Room, 'items'>>, characters:ReadonlyArray<Pick<Character, 'items'>>,
+	fallbackItemsById:ReadonlyMap<string, Item> = new Map()):Map<string, Item> {
+	const itemsById = new Map<string, Item>(fallbackItemsById.entries());
+	rooms.forEach(room => room.items.forEach(item => itemsById.set(item.id, item)));
+	characters.forEach(character => character.items.forEach(item => itemsById.set(item.id, item)));
+	return itemsById;
+}
+
+export function duplicateItemsById(itemsById:ReadonlyMap<string, Item>):Map<string, Item> {
+	return new Map(Array.from(itemsById.entries()).map(([itemId, item]) => [itemId, duplicateItem(item)]));
+}
+
+export function duplicateCharacterUsingItemIndex(from:Character, itemsById:ReadonlyMap<string, Item>):Character {
+	const character = duplicateCharacter(from);
+	character.items = from.items.map(item => _findIndexedItem(itemsById, item.id));
+	return character;
+}
+
+export function duplicateRoomUsingItemIndex(from:Room, itemsById:ReadonlyMap<string, Item>):Room {
+	const room = duplicateRoom(from);
+	room.items = from.items.map(item => _findIndexedItem(itemsById, item.id));
+	return room;
+}

@@ -29,6 +29,7 @@ describe('drop item integration', () => {
     expect(afterHero.items.map(item => item.id)).not.toContain('book');
     const droppedItem = afterRoom.items.find(item => item.id === 'book') || null;
     expect(droppedItem).not.toBeNull();
+    expect(afterDropState.itemsById.get('book')).toBe(droppedItem);
     expect(droppedItem?.position).toEqual({ x:afterHero.x, y:afterHero.y });
   });
 });

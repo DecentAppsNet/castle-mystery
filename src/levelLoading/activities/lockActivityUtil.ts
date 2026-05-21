@@ -2,7 +2,7 @@ import ExitType from "@/game/types/ExitType";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import Room from "@/game/types/Room";
-import RoomExit from "@/game/types/RoomExit";
+import RoomExit, { LOCKABLE_WITHOUT_INV_CHECK } from "@/game/types/RoomExit";
 import { createLockEvent, createUnlockEvent } from "@/game/itineraryUtil";
 import { findExitWaypoint, findRoom } from "@/game/roomUtil";
 import {
@@ -28,6 +28,19 @@ function _isLockableFromRoom(exit:RoomExit, room:Room):boolean {
   return false;
 }
 
+function _findLockableRequirementForRoom(exit:RoomExit, room:Room):string|null {
+  if (exit.room1Id === room.id) return exit.lockableFromRoom1With;
+  if (exit.room2Id === room.id) return exit.lockableFromRoom2With;
+  return null;
+}
+
+function _throwIfRequiredLockItemIsMissing(exit:RoomExit, currentRoom:Room, context:ActivityContext, targetRoomRef:string) {
+  const lockableRequirement = _findLockableRequirementForRoom(exit, currentRoom);
+  if (lockableRequirement === null || lockableRequirement === LOCKABLE_WITHOUT_INV_CHECK) return;
+  if (context.state.carriedItems.some(item => item.id === lockableRequirement)) return;
+  throw new Error(`exit to ${targetRoomRef} requires item ${lockableRequirement} in inventory for itinerary activity`);
+}
+
 function _findCurrentRoomExit(currentRoom:Room, targetRoomRef:string, context:ActivityContext):RoomExit {
   const targetRoom = findRoom(context.level.rooms, targetRoomRef);
   const exit = currentRoom.exits.find(candidate => candidate.room1Id === targetRoom.id || candidate.room2Id === targetRoom.id) || null;
@@ -36,6 +49,7 @@ function _findCurrentRoomExit(currentRoom:Room, targetRoomRef:string, context:Ac
   if (!_isLockableFromRoom(exit, currentRoom)) {
     throw new Error(`exit to ${targetRoomRef} cannot be locked or unlocked from ${currentRoom.title}`);
   }
+  _throwIfRequiredLockItemIsMissing(exit, currentRoom, context, targetRoomRef);
   return exit;
 }
 

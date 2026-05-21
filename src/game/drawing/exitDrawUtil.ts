@@ -1,4 +1,5 @@
 import { describeExit } from "../exitUtil";
+import Item from "../types/Item";
 import { findExitImageUrl } from "../exitImageUtil";
 import ExitType from "../types/ExitType";
 import ImageSet from "../types/ImageSet";
@@ -45,7 +46,7 @@ export function getExitHoverRect(exit:RoomExit, scalingFactors:ScalingFactors, i
   };
 }
 
-export function drawExitPopover(exit:RoomExit, room1:Room, room2:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+export function drawExitPopover(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [anchorX, anchorY] = gameToCanvasPosition(exit.x, exit.y, scalingFactors);
-  drawTextPopover({ anchorX, anchorY, bodyTexts:[describeExit(exit, room1, room2)], scalingFactors, context });
+  drawTextPopover({ anchorX, anchorY, bodyTexts:[describeExit(exit, room1, room2, itemsById)], scalingFactors, context });
 }
