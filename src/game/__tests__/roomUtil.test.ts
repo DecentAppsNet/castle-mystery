@@ -124,6 +124,16 @@ describe('roomUtil', () => {
       expect(waypoints).toContain(exitWaypoint);
     });
 
+    it('clamps corner exit waypoints inside the room', () => {
+      const exit = _createExit('East', 20, 20);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, [exit]);
+
+      const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exit, waypoints);
+
+      expect(exitWaypoint.position).toEqual({ x:15, y:15 });
+      expect(waypoints).toContain(exitWaypoint);
+    });
+
     it('throws when the waypoint collection does not contain the exit waypoint', () => {
       const exit = _createExit('North', 10, 0);
 

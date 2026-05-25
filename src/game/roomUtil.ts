@@ -31,11 +31,20 @@ function _createWaypointKey(x:number, y:number):string {
   return `${x},${y}`;
 }
 
+function _clampExitWaypointAxis(value:number, minValue:number, maxValue:number):number {
+  return Math.min(maxValue, Math.max(minValue, value));
+}
+
 function _findExitWaypointPosition(roomId:string, roomRect:Rect, exit:RoomExit):Position {
-  if (exit.x === roomRect.x) return { x: roomRect.x + EXIT_WAYPOINT_INSET, y: exit.y };
-  if (exit.x === roomRect.x + roomRect.width) return { x: roomRect.x + roomRect.width - EXIT_WAYPOINT_INSET, y: exit.y };
-  if (exit.y === roomRect.y) return { x: exit.x, y: roomRect.y + EXIT_WAYPOINT_INSET };
-  if (exit.y === roomRect.y + roomRect.height) return { x: exit.x, y: roomRect.y + roomRect.height - EXIT_WAYPOINT_INSET };
+  const minX = roomRect.x + EXIT_WAYPOINT_INSET;
+  const maxX = roomRect.x + roomRect.width - EXIT_WAYPOINT_INSET;
+  const minY = roomRect.y + EXIT_WAYPOINT_INSET;
+  const maxY = roomRect.y + roomRect.height - EXIT_WAYPOINT_INSET;
+
+  if (exit.x === roomRect.x) return { x: minX, y: _clampExitWaypointAxis(exit.y, minY, maxY) };
+  if (exit.x === roomRect.x + roomRect.width) return { x: maxX, y: _clampExitWaypointAxis(exit.y, minY, maxY) };
+  if (exit.y === roomRect.y) return { x: _clampExitWaypointAxis(exit.x, minX, maxX), y: minY };
+  if (exit.y === roomRect.y + roomRect.height) return { x: _clampExitWaypointAxis(exit.x, minX, maxX), y: maxY };
   throw new Error(`exit at (${exit.x}, ${exit.y}) is not on the boundary of room ${roomId}`);
 }
 

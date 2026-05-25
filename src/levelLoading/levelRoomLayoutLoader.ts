@@ -278,7 +278,7 @@ function _findSharedWallSectionBetweenRooms(room1:Room, room2:Room):Rect|null {
 function _findExitPositionFromSharedWallSection(sharedWallSection:Rect):[x:number, y:number] {
   return sharedWallSection.height === 0
     ? [Math.round(sharedWallSection.x + sharedWallSection.width / 2), sharedWallSection.y]
-    : [sharedWallSection.x, Math.round(sharedWallSection.y + sharedWallSection.height / 2)];
+    : [sharedWallSection.x, sharedWallSection.y + sharedWallSection.height];
 }
 
 function _parseExitReference(exitText:string, itemDefinitions:Map<string, { title:string }>):ParsedExitReference {

@@ -26,7 +26,7 @@ export function getExitCanvasRectForImageUrl(exit:Pick<RoomExit, 'x' | 'y'>, ima
   const height = _getExitDrawHeightPixels(imageUrl, roomLineWidth, imageSet);
   return {
     x: exitX - width / 2,
-    y: exitY - height / 2,
+    y: exitY - height,
     width,
     height
   };
@@ -40,7 +40,7 @@ export function getExitHoverRect(exit:RoomExit, scalingFactors:ScalingFactors, i
   const canvasRect = getExitCanvasRect(exit, exit.exitType, scalingFactors, imageSet);
   return {
     x: exit.x - (canvasRect.width / 2) / scalingFactors.scaleX,
-    y: exit.y - (canvasRect.height / 2) / scalingFactors.scaleY,
+    y: exit.y - canvasRect.height / scalingFactors.scaleY,
     width: canvasRect.width / scalingFactors.scaleX,
     height: canvasRect.height / scalingFactors.scaleY
   };

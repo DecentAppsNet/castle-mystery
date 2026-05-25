@@ -306,6 +306,8 @@ describe('levelUtil itinerary loading', () => {
     const oneSidedExit = findRoom(oneSidedLevel.rooms, 'Bedroom').exits[0];
     const twoSidedExit = findRoom(twoSidedLevel.rooms, 'Bedroom').exits[0];
 
+    expect(oneSidedExit.x).toBe(20);
+    expect(oneSidedExit.y).toBe(20);
     expect(oneSidedExit.exitType).toBe(ExitType.lockableDoor);
     expect(oneSidedExit.exitStatus).toBe(ExitStatus.locked);
     expect(oneSidedExit.lockableFromRoom1With).toBe(LOCKABLE_WITHOUT_INV_CHECK);
