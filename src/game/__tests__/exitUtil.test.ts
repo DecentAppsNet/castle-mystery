@@ -15,7 +15,6 @@ function _createRoom(id:string, title:string):Room {
     rect:{ x:0, y:0, width:10, height:10 },
     isObscured:false,
     items:[],
-    obstructions:[],
     exits:[],
     waypoints:[],
     positionMarkersById:{},

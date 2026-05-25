@@ -19,7 +19,6 @@ function _createRoom():Room {
     title:'Room',
     rect:{ x:0, y:0, width:100, height:100 },
     items:[],
-    obstructions:[],
     exits:[],
     waypoints:[],
     positionMarkersById:{},

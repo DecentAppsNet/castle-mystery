@@ -17,7 +17,7 @@ Engine reference points:
 - Cross-cutting ADRs: 001 (timestamp resolution), 003 (waypoints), 004 (`:`-relative timestamps), 005 (ImageSet), 006 (TimeSlider markers — Proposed)
 
 **Supported today:**
-- Multi-room maps with per-room grids, legends, obstructions (`#` tiles), and position markers
+- Multi-room maps with per-room grids, legends, and position markers
 - Exits between rooms with door modifiers (`lockable|unlockable|closed|open|locked|unlocked`)
 - Characters: title, description, inventory items, `faceImage` URL, `isTitleKnown` boolean
 - Items: title, description, `displayChar`
@@ -61,7 +61,7 @@ Each WP edits `public/levels/murder-on-the-orient-express.md` and may add docs. 
 
 **Files.** `public/levels/murder-on-the-orient-express.md`.
 
-**Risks.** Grid width — at 32+ tiles wide the corridor may need careful obstruction tiles (`#`) so waypoints aren't generated through compartment walls. Read [src/game/levelLoading/levelRoomLayoutLoader.ts](../src/game/levelLoading/levelRoomLayoutLoader.ts) for grid scale and obstruction rules.
+**Risks.** Grid width — at 32+ tiles wide the corridor may need careful legend and marker placement so authored positions remain readable. Read [src/game/levelLoading/levelRoomLayoutLoader.ts](../src/game/levelLoading/levelRoomLayoutLoader.ts) for grid scale rules.
 
 ---
 

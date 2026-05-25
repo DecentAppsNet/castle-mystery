@@ -897,15 +897,8 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('wraps room-layout failures with filename and line number', () => {
-    try {
-      loadLevelFromText(wanderingTrappedText, 'wandering-trapped.md');
-      expect.fail('expected level loading to throw');
-    } catch (error) {
-      expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('wandering-trapped.md:16');
-      expect((error as LoadLevelException).message).toContain('no connected waypoints');
-    }
+  it('loads legacy room grids that still contain # tiles', () => {
+    expect(() => loadLevelFromText(wanderingTrappedText, 'wandering-trapped.md')).not.toThrow();
   });
 
   it('wraps unknown map legend tiles with filename and line number', () => {

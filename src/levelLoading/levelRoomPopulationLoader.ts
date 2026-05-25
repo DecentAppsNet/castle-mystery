@@ -4,7 +4,6 @@ import { assertNonNullable } from "decent-portal";
 
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
-import { isPositionInRoomObstruction } from "../game/obstructionUtil";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
 import { findNearestWaypoint, findRoom } from "../game/roomUtil";
 import Character from "../game/types/Character";
@@ -234,7 +233,6 @@ function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovere
 	const isInsideRoom = x >= room.rect.x && x <= room.rect.x + room.rect.width
 		&& y >= room.rect.y && y <= room.rect.y + room.rect.height;
 	if (!isInsideRoom) throw new Error(`item ${item.id} is outside room ${roomId}`);
-	if (isPositionInRoomObstruction(room, x, y)) throw new Error(`item ${item.id} is inside an obstruction in room ${roomId}`);
 	room.items.push({ ...item, isDiscovered:false, isExamined:false });
 }
 

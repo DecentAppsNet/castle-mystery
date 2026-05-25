@@ -4,15 +4,14 @@ import Rect from "./types/Rect";
 import Room from "./types/Room";
 import Character from "./types/Character";
 import RoomExit from "./types/RoomExit";
-import Obstruction from "./types/Obstruction";
 import Waypoint from "./types/Waypoint";
 import Position from "./types/Position";
 import ExitStatus from "./types/ExitStatus";
-import { CHARACTER_OBSTRUCTION_MARGIN, clipMoveToObstructions, isPositionInObstructions, isPositionInRect } from "./obstructionUtil";
 import { normalizeId } from "./idUtil";
+import { isPositionInRect } from "./rectUtil";
 
 const WAYPOINT_SPACING = 5;
-const EXIT_WAYPOINT_INSET = CHARACTER_OBSTRUCTION_MARGIN + 1;
+const EXIT_WAYPOINT_INSET = 5;
 
 function _calcAxisWaypointPositions(start:number, length:number):number[] {
   const waypointCount = Math.max(1, Math.ceil(length / WAYPOINT_SPACING));
@@ -115,62 +114,30 @@ export function findNearestWaypoint(room:Room, x:number, y:number, predicate?:(w
   return nearestWaypoint;
 }
 
-function _connectAdjacentWaypoints(waypoints:Waypoint[], obstructions:Obstruction[]) {
+function _connectAdjacentWaypoints(waypoints:Waypoint[]) {
   const maxAdjacentDistance = Math.hypot(WAYPOINT_SPACING, WAYPOINT_SPACING);
-  const roomForConnectivity:Room = {
-    id: "",
-    title: "",
-    rect: { x:0, y:0, width:0, height:0 },
-    isObscured: false,
-    items: [],
-    obstructions,
-    exits: [],
-    waypoints: [],
-    positionMarkersById: {},
-    isDiscovered: false
-  };
   waypoints.forEach((waypoint, index) => {
     for (let otherIndex = index + 1; otherIndex < waypoints.length; ++otherIndex) {
       const otherWaypoint = waypoints[otherIndex];
       const distance = Math.hypot(otherWaypoint.position.x - waypoint.position.x, otherWaypoint.position.y - waypoint.position.y);
       if (distance > maxAdjacentDistance) continue;
-      const clippedMove = clipMoveToObstructions(roomForConnectivity, waypoint.position, otherWaypoint.position);
-      if (clippedMove.position.x !== otherWaypoint.position.x || clippedMove.position.y !== otherWaypoint.position.y) continue;
       waypoint.adjacentWaypoints.push(otherWaypoint);
       otherWaypoint.adjacentWaypoints.push(waypoint);
     }
   });
 }
 
-function _ensureExitWaypointsAreConnected(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[], obstructions:Obstruction[]) {
-  const roomForConnectivity:Room = {
-    id: roomId,
-    title: roomId,
-    rect: roomRect,
-    isObscured: false,
-    items: [],
-    obstructions,
-    exits: [],
-    waypoints: [],
-    positionMarkersById: {},
-    isDiscovered: false
-  };
-
+function _ensureExitWaypointsAreConnected(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[]) {
   exits.forEach(exit => {
     const exitWaypoint = findExitWaypoint(roomId, roomRect, exit, waypoints);
     if (exitWaypoint.adjacentWaypoints.length > 0) return;
 
     /* v8 ignore start */
     // This fallback path is useful defensive code for unusual waypoint layouts.
-    // Reaching it with a stable contract-based unit test would overfit to internal
-    // waypoint spacing and obstruction-margin implementation details rather than
-    // to a user-visible contract of the exported API.
     let nearestReachableWaypoint:Waypoint|null = null;
     let nearestDistance = Number.POSITIVE_INFINITY;
     waypoints.forEach(candidate => {
       if (candidate === exitWaypoint) return;
-      const clippedMove = clipMoveToObstructions(roomForConnectivity, exitWaypoint.position, candidate.position);
-      if (clippedMove.position.x !== candidate.position.x || clippedMove.position.y !== candidate.position.y) return;
       const distance = Math.hypot(candidate.position.x - exitWaypoint.position.x, candidate.position.y - exitWaypoint.position.y);
       if (distance >= nearestDistance) return;
       nearestReachableWaypoint = candidate;
@@ -217,7 +184,7 @@ function _populateExitDirectionsForRoom(roomId:string, roomRect:Rect, exits:Room
   });
 }
 
-export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[], obstructions:Obstruction[]):Waypoint[] {
+export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]):Waypoint[] {
   const xPositions = _mergeAxisWaypointPositions(
     _calcAxisWaypointPositions(roomRect.x, roomRect.width),
     exits.filter(exit => exit.y === roomRect.y || exit.y === roomRect.y + roomRect.height).map(exit => exit.x)
@@ -241,20 +208,16 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
   };
 
   yPositions.flatMap(y => xPositions.map(x => ({ x, y })))
-    .filter(({ x, y }) => !isPositionInObstructions(x, y, obstructions))
     .forEach(({ x, y }) => { _getOrCreateWaypoint(x, y); });
 
   exits.forEach(exit => {
     const exitWaypointPosition = _findExitWaypointPosition(roomId, roomRect, exit);
-    if (isPositionInObstructions(exitWaypointPosition.x, exitWaypointPosition.y, obstructions)) {
-      throw new Error(`exit waypoint for room ${roomId} is obstructed at (${exitWaypointPosition.x}, ${exitWaypointPosition.y})`);
-    }
     _getOrCreateWaypoint(exitWaypointPosition.x, exitWaypointPosition.y);
   });
 
   let waypoints = Array.from(waypointsByKey.values());
-  _connectAdjacentWaypoints(waypoints, obstructions);
-  _ensureExitWaypointsAreConnected(roomId, roomRect, exits, waypoints, obstructions);
+  _connectAdjacentWaypoints(waypoints);
+  _ensureExitWaypointsAreConnected(roomId, roomRect, exits, waypoints);
   waypoints = _pruneIsolatedNonExitWaypoints(roomId, roomRect, exits, waypoints);
   _populateExitDirectionsForRoom(roomId, roomRect, exits, waypoints);
 

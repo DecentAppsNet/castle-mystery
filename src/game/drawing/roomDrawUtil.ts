@@ -1,7 +1,6 @@
-/* This module groups room-focused drawing helpers, including room shells, obstructions, exits, and in-room contents. */
+/* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents. */
 
 import { drawObscuredActiveCharacter, drawVisibleCharactersInRoom } from "./characterDrawUtil";
-import { createObstructionBoundarySegments } from "../obstructionUtil";
 import { findExitImageUrl, UNKNOWN_DOOR_IMAGE_URL } from "../exitImageUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
@@ -9,7 +8,6 @@ import { gameToCanvasPosition } from "./drawUtil";
 import { getExitCanvasRectForImageUrl } from "./exitDrawUtil";
 import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
 import Character from "../types/Character";
-import Obstruction from "../types/Obstruction";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
@@ -54,47 +52,6 @@ function drawRoomExit(exit:RoomExit, characters:Character[], activeRoom:Room|nul
   context.fillRect(left, top, width, height);
 }
 
-function drawObstruction(obstruction:Obstruction, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const obstructionRects = obstruction.rects.map(rect => {
-    const [left, top] = gameToCanvasPosition(rect.x, rect.y, scalingFactors);
-    const [right, bottom] = gameToCanvasPosition(rect.x + rect.width, rect.y + rect.height, scalingFactors);
-    return { left, top, width:right - left, height:bottom - top };
-  });
-  const minLeft = obstructionRects.reduce((minValue, rect) => Math.min(minValue, rect.left), Number.POSITIVE_INFINITY);
-  const minTop = obstructionRects.reduce((minValue, rect) => Math.min(minValue, rect.top), Number.POSITIVE_INFINITY);
-  const maxRight = obstructionRects.reduce((maxValue, rect) => Math.max(maxValue, rect.left + rect.width), Number.NEGATIVE_INFINITY);
-  const maxBottom = obstructionRects.reduce((maxValue, rect) => Math.max(maxValue, rect.top + rect.height), Number.NEGATIVE_INFINITY);
-  const maxHeight = obstructionRects.reduce((maxValue, rect) => Math.max(maxValue, rect.height), 0);
-  const hatchSpacing = Math.max(6, scalingFactors.roomLineWidth * 3);
-  context.save();
-  context.fillStyle = COLOR_INACTIVE_ROOM_FILL;
-  context.beginPath();
-  obstructionRects.forEach(rect => context.rect(rect.left, rect.top, rect.width, rect.height));
-  context.fill();
-  context.beginPath();
-  obstructionRects.forEach(rect => context.rect(rect.left, rect.top, rect.width, rect.height));
-  context.clip();
-  context.strokeStyle = COLOR_BLACK;
-  context.lineWidth = Math.max(0.5, scalingFactors.roomLineWidth / 2);
-  for (let lineX = minLeft - maxHeight; lineX <= maxRight; lineX += hatchSpacing) {
-    context.beginPath();
-    context.moveTo(lineX, maxBottom);
-    context.lineTo(lineX + maxHeight, minTop);
-    context.stroke();
-  }
-  context.strokeStyle = COLOR_BLACK;
-  context.lineWidth = scalingFactors.roomLineWidth;
-  createObstructionBoundarySegments(obstruction).forEach(segment => {
-    const [startX, startY] = gameToCanvasPosition(segment.start.x, segment.start.y, scalingFactors);
-    const [endX, endY] = gameToCanvasPosition(segment.end.x, segment.end.y, scalingFactors);
-    context.beginPath();
-    context.moveTo(startX, startY);
-    context.lineTo(endX, endY);
-    context.stroke();
-  });
-  context.restore();
-}
-
 export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet,
   allCharacters:Character[] = charactersInRoom, activeRoom:Room|null = null, showFullContents:boolean = false) {
@@ -109,7 +66,6 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.strokeStyle = COLOR_DARK_GRAY;
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
-  if (!isRoomObscured) room.obstructions.forEach(obstruction => drawObstruction(obstruction, scalingFactors, context));
   if (!isRoomObscured && (showFullContents || (isActive && activeCharacter))) {
     drawDiscoveredItemsInRoom(room, effects, scalingFactors, context, { includeUndiscovered:true, ignoreRoomObscured:showFullContents });
   }

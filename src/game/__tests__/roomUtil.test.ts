@@ -1,9 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { createObstruction, isPositionInObstructions } from '../obstructionUtil';
 import { calcRoomsBoundingRect, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomNearestToPosition, generateWaypoints } from '../roomUtil';
-import Obstruction from '../types/Obstruction';
 import Character from '../types/Character';
 import Rect from '../types/Rect';
 import Room from '../types/Room';
@@ -35,7 +33,6 @@ function _createRoom(id:string, rect:Rect, exits:RoomExit[] = [], waypoints:Wayp
     title:id,
     rect,
     items:[],
-    obstructions:[],
     exits,
     waypoints,
     positionMarkersById:{},
@@ -119,7 +116,7 @@ describe('roomUtil', () => {
   describe('findExitWaypoint()', () => {
     it('returns the waypoint positioned at the in-room side of an exit', () => {
       const exit = _createExit('North', 10, 0);
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, [exit], []);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, [exit]);
 
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exit, waypoints);
 
@@ -233,25 +230,11 @@ describe('roomUtil', () => {
   });
 
   describe('generateWaypoints()', () => {
-    it('creates a fully connected waypoint grid for a simple room with no obstructions and no exits', () => {
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, [], []);
+    it('creates a fully connected waypoint grid for a simple room with no exits', () => {
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, []);
 
       expect(waypoints).toHaveLength(16);
       _assertAllWaypointsAreInsideRoomRect(waypoints, ROOM_RECT);
-      _assertAllWaypointsHaveNeighbors(waypoints);
-    });
-
-    it('omits obstructed positions while keeping the remaining waypoints connected', () => {
-      const unobstructedWaypoints = generateWaypoints(ROOM_ID, ROOM_RECT, [], []);
-      const obstructions:Obstruction[] = [createObstruction([{ x:6, y:6, width:5, height:5 }])];
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, [], obstructions);
-
-      expect(waypoints.length).toBeGreaterThan(0);
-      expect(waypoints.length).toBeLessThan(unobstructedWaypoints.length);
-      _assertAllWaypointsAreInsideRoomRect(waypoints, ROOM_RECT);
-      waypoints.forEach(waypoint => {
-        expect(isPositionInObstructions(waypoint.position.x, waypoint.position.y, obstructions)).toBe(false);
-      });
       _assertAllWaypointsHaveNeighbors(waypoints);
     });
 
@@ -262,7 +245,7 @@ describe('roomUtil', () => {
         _createExit('West', 0, 10),
         _createExit('East', 20, 10)
       ];
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, []);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
 
       _assertAllWaypointsAreInsideRoomRect(waypoints, ROOM_RECT);
       _assertAllWaypointsHaveNeighbors(waypoints);
@@ -288,7 +271,7 @@ describe('roomUtil', () => {
         lockableFromRoom2With:null,
         exitStatus:ExitStatus.open
       }];
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, []);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exits[0], waypoints);
 
       waypoints
@@ -301,32 +284,9 @@ describe('roomUtil', () => {
         _createExit('North', 5, 0),
         _createExit('West', 0, 10)
       ];
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, []);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
 
       expect(waypoints.filter(waypoint => waypoint.position.x === 5 && waypoint.position.y === 10)).toHaveLength(1);
-    });
-
-    it('throws when an exit waypoint is not reachable from any other waypoint', () => {
-      const exits = [_createExit('West', 0, 10)];
-      const obstructions:Obstruction[] = [
-        createObstruction([{ x:0, y:0, width:4, height:20 }]),
-        createObstruction([{ x:6, y:0, width:4, height:20 }])
-      ];
-
-      expect(() => generateWaypoints(ROOM_ID, ROOM_RECT, exits, obstructions)).toThrow(/has no connected waypoint/i);
-    });
-
-    it('throws when an exit waypoint would be obstructed', () => {
-      const exits = [_createExit('West', 0, 10)];
-      const obstructions:Obstruction[] = [createObstruction([{ x:4, y:9, width:3, height:3 }])];
-
-      expect(() => generateWaypoints(ROOM_ID, ROOM_RECT, exits, obstructions)).toThrow(/is obstructed/i);
-    });
-
-    it('throws when a room has no connected waypoints after obstruction filtering', () => {
-      const obstructions:Obstruction[] = [createObstruction([{ x:0, y:0, width:20, height:20 }])];
-
-      expect(() => generateWaypoints(ROOM_ID, ROOM_RECT, [], obstructions)).toThrow(/has no connected waypoints/i);
     });
   });
 });

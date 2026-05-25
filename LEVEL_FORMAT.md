@@ -113,7 +113,7 @@ Each room subsection can contain:
 
 In the room grid:
 * `.` means empty walkable space
-* `#` means an obstruction
+* `#` is ignored and behaves like empty walkable space
 * any other letter must appear in the room legend
 
 In the room legend:

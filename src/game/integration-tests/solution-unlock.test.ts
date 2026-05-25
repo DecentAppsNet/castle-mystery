@@ -32,7 +32,6 @@ function _createTestLevel():Level {
       rect:{ x:0, y:0, width:10, height:10 },
       isObscured:false,
       items:[bookItem],
-      obstructions:[],
       exits:[],
       waypoints:[waypoint],
       positionMarkersById:{},

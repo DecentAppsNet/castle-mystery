@@ -2,10 +2,8 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { createObstruction } from "../game/obstructionUtil";
 import { findRoom, generateWaypoints } from "../game/roomUtil";
 import Level from "../game/types/Level";
-import Obstruction from "../game/types/Obstruction";
 import Rect from "../game/types/Rect";
 import Room from "../game/types/Room";
 import ExitStatus from "../game/types/ExitStatus";
@@ -16,11 +14,6 @@ import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
 import { tryResolveItemId } from "./levelRoomPopulationLoader";
 
 const MAP_TILE_SIZE = 20;
-
-type ObstructionTile = {
-  row:number,
-  col:number
-};
 
 export type LegendTile = {
   entryId:string,
@@ -128,91 +121,6 @@ function _findLegendEntryTextOrThrow(tileChar:string, legend:Record<string, stri
   throw new Error(`unknown ${contextLabel} legend tile '${tileChar}' at row ${row + 1}, col ${col + 1}`);
 }
 
-function _findObstructionTilesInGrid(gridLines:string[]):ObstructionTile[][] {
-  if (!gridLines.length) return [];
-  const rowCount = gridLines.length;
-  const visited = new Set<string>();
-  const obstructionGroups:ObstructionTile[][] = [];
-
-  const _isObstructionTile = (row:number, col:number) => {
-    const line = gridLines[row];
-    return !!line && line[col] === '#';
-  };
-
-  for (let row = 0; row < rowCount; ++row) {
-    for (let col = 0; col < gridLines[row].length; ++col) {
-      const key = `${row},${col}`;
-      if (visited.has(key) || !_isObstructionTile(row, col)) continue;
-
-      const pending:[[number, number]]|Array<[number, number]> = [[row, col]];
-      const obstructionTiles:ObstructionTile[] = [];
-      visited.add(key);
-      while (pending.length > 0) {
-        const [currentRow, currentCol] = pending.pop()!;
-        obstructionTiles.push({ row:currentRow, col:currentCol });
-
-        const neighbors:Array<[number, number]> = [
-          [currentRow - 1, currentCol],
-          [currentRow + 1, currentCol],
-          [currentRow, currentCol - 1],
-          [currentRow, currentCol + 1]
-        ];
-        neighbors.forEach(([neighborRow, neighborCol]) => {
-          if (neighborRow < 0 || neighborRow >= rowCount || neighborCol < 0) return;
-          const neighborKey = `${neighborRow},${neighborCol}`;
-          if (visited.has(neighborKey) || !_isObstructionTile(neighborRow, neighborCol)) return;
-          visited.add(neighborKey);
-          pending.push([neighborRow, neighborCol]);
-        });
-      }
-
-      obstructionGroups.push(obstructionTiles);
-    }
-  }
-
-  return obstructionGroups;
-}
-
-function _createNormalizedObstructionFromTiles(room:Room, obstructionTiles:ObstructionTile[], gridWidth:number, gridHeight:number):Obstruction {
-  const tileWidth = room.rect.width / gridWidth;
-  const tileHeight = room.rect.height / gridHeight;
-  const rowRuns = new Map<number, Array<[number, number]>>();
-
-  obstructionTiles.forEach(tile => {
-    const runs = rowRuns.get(tile.row) || [];
-    runs.push([tile.col, tile.col]);
-    rowRuns.set(tile.row, runs);
-  });
-
-  const rects:Rect[] = [];
-  Array.from(rowRuns.entries()).sort((a, b) => a[0] - b[0]).forEach(([row, runs]) => {
-    runs.sort((a, b) => a[0] - b[0]);
-    let [currentStart, currentEnd] = runs[0];
-    for (let i = 1; i < runs.length; ++i) {
-      const [start, end] = runs[i];
-      if (start <= currentEnd + 1) currentEnd = Math.max(currentEnd, end);
-      else {
-        rects.push({
-          x: room.rect.x + currentStart * tileWidth,
-          y: room.rect.y + row * tileHeight,
-          width: (currentEnd - currentStart + 1) * tileWidth,
-          height: tileHeight
-        });
-        currentStart = start;
-        currentEnd = end;
-      }
-    }
-    rects.push({
-      x: room.rect.x + currentStart * tileWidth,
-      y: room.rect.y + row * tileHeight,
-      width: (currentEnd - currentStart + 1) * tileWidth,
-      height: tileHeight
-    });
-  });
-
-  return createObstruction(rects);
-}
-
 export function findLegendTilesInGrid(gridLines:string[], legend:Record<string, string>):LegendTile[] {
   const legendTiles:LegendTile[] = [];
   gridLines.forEach((line, row) => {
@@ -238,25 +146,6 @@ export function calcScaledRoomGridPosition(room:Room, row:number, col:number, gr
     Math.round(room.rect.x + (col + 0.5) * tileWidth),
     Math.round(room.rect.y + (row + 0.5) * tileHeight)
   ];
-}
-
-function _addRoomObstructionsFromRoomsSection(level:Level, roomsSection:string) {
-  const roomSections = parseSections(roomsSection, 2);
-
-  Object.entries(roomSections).forEach(([roomName, roomSection]) => {
-    const roomId = normalizeId(roomName);
-    const room = findRoom(level.rooms, roomId);
-    const gridLines = parseFirstFencedCodeBlockLines(roomSection);
-    if (!gridLines.length) return;
-
-    const gridWidth = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
-    const gridHeight = gridLines.length;
-    if (gridWidth <= 0 || gridHeight <= 0) return;
-
-    _findObstructionTilesInGrid(gridLines).forEach(obstructionTiles => {
-      room.obstructions.push(_createNormalizedObstructionFromTiles(room, obstructionTiles, gridWidth, gridHeight));
-    });
-  });
 }
 
 export function createRoomsFromMapSection(level:Level, mapSection:string) {
@@ -303,7 +192,6 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
       },
       isObscured: false,
       items: [],
-      obstructions: [],
       waypoints: [],
       positionMarkersById: {},
       exits: [],
@@ -333,8 +221,6 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string) 
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };
   });
-
-  _addRoomObstructionsFromRoomsSection(level, roomsSection);
 }
 
 export function addRoomPositionMarkersFromSections(level:Level, roomsSection:string, excludedEntryIds:Set<string>) {
@@ -528,7 +414,7 @@ export function generateRoomWaypointsForLevel(level:Level) {
   level.rooms.forEach((room, index) => {
     level.rooms[index] = {
       ...room,
-      waypoints: generateWaypoints(room.id, room.rect, room.exits, room.obstructions)
+      waypoints: generateWaypoints(room.id, room.rect, room.exits)
     };
   });
 }

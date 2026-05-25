@@ -20,7 +20,6 @@ function _createRoom(id:string, x:number):Room {
     title:id,
     rect:{ x, y:0, width:100, height:100 },
     items:[],
-    obstructions:[],
     exits:[],
     waypoints:[],
     positionMarkersById:{},

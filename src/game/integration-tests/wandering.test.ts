@@ -81,8 +81,14 @@ describe('wandering integration', () => {
     expect(heroEndPosition).not.toEqual(guardPositionAtWanderStart);
   });
 
-  it('throws while loading when a room has no connected waypoints', () => {
-    expect(() => loadLevelFromText(wanderingTrappedText)).toThrow(/no connected waypoints/i);
+  it('loads legacy room grids that still contain # tiles', () => {
+    expect(() => loadLevelFromText(wanderingTrappedText)).not.toThrow();
+
+    const [wanderEvent] = _findWalkEvents(wanderingTrappedText, 'hero');
+    const initialPosition = _createPositionSnapshot(wanderingTrappedText, 0, 'hero');
+    const endPosition = _createPositionSnapshot(wanderingTrappedText, wanderEvent.startTime + wanderEvent.duration, 'hero');
+
+    expect(endPosition).not.toEqual(initialPosition);
   });
 
   it('resolves after-previous-activity timestamps from the previous file activity when activities are interleaved', () => {

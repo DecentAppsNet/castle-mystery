@@ -18,7 +18,6 @@ import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
 import { findRoomAtPosition, findRoomNearestToPosition } from "./roomUtil";
 import ItineraryIndex from "./types/ItineraryIndex";
-import { clipMoveToObstructions } from "./obstructionUtil";
 
 const WALK_MSECS_PER_PIXEL = 30;
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
@@ -53,11 +52,10 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   return room;
 }
 
-export function createWalkEvent(room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEventCreationResult {
-  const clippedMove = clipMoveToObstructions(room, { x:fromX, y:fromY }, { x:toX, y:toY });
-  const finalToPosition = clippedMove.position;
+export function createWalkEvent(_room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEventCreationResult {
+  const finalToPosition = { x:toX, y:toY };
   const duration = _calcWalkDuration(fromX, fromY, finalToPosition.x, finalToPosition.y);
-  if (duration <= 0) return { event:null, wasClipped:clippedMove.wasClipped };
+  if (duration <= 0) return { event:null, wasClipped:false };
   return {
     event:{
       type:ItineraryEventType.WALK,
@@ -66,7 +64,7 @@ export function createWalkEvent(room:Room, startTime:number, fromX:number, fromY
       toPosition:finalToPosition,
       duration
     },
-    wasClipped:clippedMove.wasClipped
+    wasClipped:false
   };
 }
 
