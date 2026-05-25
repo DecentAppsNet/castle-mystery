@@ -4,6 +4,7 @@
   "version": "2.4.8",
   "type": "module",
   "scripts": {
+    "cmgen": "node --experimental-strip-types scripts/cmgen.ts",
     "dev": "vite",
     "copyViteManifestForDev": "cp -r dist/.vite public",
     "build": "tsc && vite build && npm run copyViteManifestForDev",
@@ -11,7 +12,8 @@
     "check:unused-exports": "knip --include exports",
     "preview": "vite preview",
     "setup-portal-workflows": "mkdir -p .github/workflows && cp -r ./node_modules/decent-portal/github-workflows/*.yml .github/workflows",
-    "test": "vitest --run",
+    "test": "vitest --run src",
+    "testscripts": "vitest --run scripts",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage"
   },
