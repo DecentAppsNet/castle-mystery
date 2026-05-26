@@ -59,10 +59,10 @@ describe('itineraryUtil', () => {
   describe('findCharacterPose()', () => {
     it('interpolates walking position over time', () => {
       const room = _createRoom();
-      const walkResult = createWalkEvent(room, 1_000, 0, 0, 10, 0);
-      expect(walkResult.event).not.toBeNull();
+      const walkEvent = createWalkEvent(room, 1_000, 0, 0, 10, 0);
+      expect(walkEvent).not.toBeNull();
 
-      const character = _createCharacter([walkResult.event!]);
+      const character = _createCharacter([walkEvent!]);
 
       const midWalkPose = findCharacterPose(character, 1_125);
       expect(midWalkPose.position.x).toBeGreaterThan(0);
@@ -76,10 +76,10 @@ describe('itineraryUtil', () => {
     it('preserves near-floor waypoint y positions while walking', () => {
       const room = _createRoom();
       const floorY = 20 - FLOOR_WAYPOINT_Y_OFFSET;
-      const walkResult = createWalkEvent(room, 1_000, 10, floorY, 15, floorY);
-      expect(walkResult.event).not.toBeNull();
+      const walkEvent = createWalkEvent(room, 1_000, 10, floorY, 15, floorY);
+      expect(walkEvent).not.toBeNull();
 
-      const character = _createCharacter([walkResult.event!]);
+      const character = _createCharacter([walkEvent!]);
       character.x = 10;
       character.y = floorY;
       character.itineraryIndex = createItineraryIndex(character.itinerary, { x:character.x, y:character.y });

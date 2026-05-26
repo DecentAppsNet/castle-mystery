@@ -38,11 +38,6 @@ function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):n
   return Math.floor(distance * WALK_MSECS_PER_PIXEL);
 }
 
-export type WalkEventCreationResult = {
-  event:WalkEvent|null,
-  wasClipped:boolean
-}
-
 function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   let room = findRoomAtPosition(rooms, x, y);
   if (!room) room = findRoomAtPositionOrTouchingBoundary(rooms, x, y);
@@ -53,19 +48,16 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   return room;
 }
 
-export function createWalkEvent(_room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEventCreationResult {
+export function createWalkEvent(_room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEvent|null {
   const finalToPosition = { x:toX, y:toY };
   const duration = _calcWalkDuration(fromX, fromY, finalToPosition.x, finalToPosition.y);
-  if (duration <= 0) return { event:null, wasClipped:false };
+  if (duration <= 0) return null;
   return {
-    event:{
-      type:ItineraryEventType.WALK,
-      startTime,
-      fromPosition:{x:fromX, y:fromY},
-      toPosition:finalToPosition,
-      duration
-    },
-    wasClipped:false
+    type:ItineraryEventType.WALK,
+    startTime,
+    fromPosition:{x:fromX, y:fromY},
+    toPosition:finalToPosition,
+    duration
   };
 }
 

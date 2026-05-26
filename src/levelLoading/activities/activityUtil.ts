@@ -306,11 +306,11 @@ export function planMovementWithinRoom(room:Room, fromWaypoint:Waypoint, targetW
 
   for (let i = 1; i < waypointPath.length; ++i) {
     const nextWaypoint = waypointPath[i];
-    const moveResult = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
+    const walkEvent = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
       nextWaypoint.position.x, nextWaypoint.position.y);
-    if (!moveResult.event || moveResult.wasClipped) throw new Error(`unable to follow waypoint route in room ${room.id}`);
-    events.push(moveResult.event);
-    currentTime = moveResult.event.startTime + moveResult.event.duration;
+    if (!walkEvent) throw new Error(`unable to follow waypoint route in room ${room.id}`);
+    events.push(walkEvent);
+    currentTime = walkEvent.startTime + walkEvent.duration;
     currentWaypoint = nextWaypoint;
   }
 
@@ -336,21 +336,21 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
     const nextRoom = findRoom(level.rooms, roomPath[i + 1]);
     while (currentWaypoint.exitDirections[nextRoom.id]) {
       const nextWaypoint = currentWaypoint.exitDirections[nextRoom.id]!;
-      const moveResult = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
+      const walkEvent = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
         nextWaypoint.position.x, nextWaypoint.position.y);
-      if (!moveResult.event || moveResult.wasClipped) throw new Error(`unable to reach exit waypoint from ${room.id} toward ${nextRoom.id}`);
-      events.push(moveResult.event);
-      currentTime = moveResult.event.startTime + moveResult.event.duration;
+      if (!walkEvent) throw new Error(`unable to reach exit waypoint from ${room.id} toward ${nextRoom.id}`);
+      events.push(walkEvent);
+      currentTime = walkEvent.startTime + walkEvent.duration;
       currentWaypoint = nextWaypoint;
     }
 
     const exit = _findConnectingExit(room, nextRoom.id);
     const nextRoomExitWaypoint = findExitWaypoint(nextRoom.id, nextRoom.rect, exit, nextRoom.waypoints);
-    const crossRoomResult = createWalkEvent(nextRoom, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
+    const crossRoomWalkEvent = createWalkEvent(nextRoom, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
       nextRoomExitWaypoint.position.x, nextRoomExitWaypoint.position.y);
-    if (!crossRoomResult.event || crossRoomResult.wasClipped) throw new Error(`unable to cross exit from ${room.id} to ${nextRoom.id}`);
-    events.push(crossRoomResult.event);
-    currentTime = crossRoomResult.event.startTime + crossRoomResult.event.duration;
+    if (!crossRoomWalkEvent) throw new Error(`unable to cross exit from ${room.id} to ${nextRoom.id}`);
+    events.push(crossRoomWalkEvent);
+    currentTime = crossRoomWalkEvent.startTime + crossRoomWalkEvent.duration;
     currentWaypoint = nextRoomExitWaypoint;
     events.push(createRoomEntryEvent(currentTime, nextRoom.id));
   }

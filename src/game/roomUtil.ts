@@ -25,10 +25,6 @@ function _findUniqueSortedNumbers(values:number[]):number[] {
   return Array.from(new Set(values)).sort((a, b) => a - b);
 }
 
-function _clampExitWaypointAxis(value:number, minValue:number, maxValue:number):number {
-  return Math.min(maxValue, Math.max(minValue, value));
-}
-
 function _assertExitIsNotOnCeilingOrFloor(roomId:string, roomRect:Rect, exit:RoomExit):void {
   if (exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width) return;
   assert(
