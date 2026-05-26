@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
+import { FLOOR_WAYPOINT_Y_OFFSET } from '../roomUtil';
 import Character from '../types/Character';
 import Room from '../types/Room';
 import ItineraryEvent from '../types/itineraryEvents/ItineraryEvent';
@@ -71,6 +72,23 @@ describe('itineraryUtil', () => {
       const laterPose = findCharacterPose(character, 1_275);
       expect(laterPose.position.x).toBeGreaterThan(midWalkPose.position.x);
       expect(laterPose.position.x).toBeLessThan(10);
+    });
+
+    it('preserves near-floor waypoint y positions while walking', () => {
+      const room = _createRoom();
+      const floorY = 20 - FLOOR_WAYPOINT_Y_OFFSET;
+      const walkResult = createWalkEvent(room, 1_000, 10, floorY, 15, floorY);
+      expect(walkResult.event).not.toBeNull();
+
+      const character = _createCharacter([walkResult.event!]);
+      character.x = 10;
+      character.y = floorY;
+      character.itineraryIndex = createItineraryIndex(character.itinerary, { x:character.x, y:character.y });
+
+      const midWalkPose = findCharacterPose(character, 1_075);
+      expect(midWalkPose.position.y).toBe(floorY);
+      expect(midWalkPose.position.x).toBeGreaterThan(10);
+      expect(midWalkPose.position.x).toBeLessThan(15);
     });
   });
 });

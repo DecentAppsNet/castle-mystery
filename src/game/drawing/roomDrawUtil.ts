@@ -17,6 +17,22 @@ import ExitType from "../types/ExitType";
 
 const OPEN_DOOR_NEARNESS = 2;
 
+function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const crosshairSize = Math.max(2, Math.round(scalingFactors.roomLineWidth * 1.5));
+  context.strokeStyle = COLOR_BLACK;
+  context.lineWidth = Math.max(1, scalingFactors.roomLineWidth / 2);
+
+  room.waypoints.forEach(waypoint => {
+    const [canvasX, canvasY] = gameToCanvasPosition(waypoint.position.x, waypoint.position.y, scalingFactors);
+    context.beginPath();
+    context.moveTo(canvasX - crosshairSize, canvasY);
+    context.lineTo(canvasX + crosshairSize, canvasY);
+    context.moveTo(canvasX, canvasY - crosshairSize);
+    context.lineTo(canvasX, canvasY + crosshairSize);
+    context.stroke();
+  });
+}
+
 function _isCharacterNearExit(character:Character, exit:RoomExit):boolean {
   const dx = character.x - exit.x;
   const dy = character.y - exit.y;
@@ -86,6 +102,7 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   }
   context.fillStyle = COLOR_BLACK;
   room.exits.forEach(exit => drawRoomExit(exit, allCharacters, activeRoom, showFullContents, scalingFactors, context, imageSet));
+  _drawWaypointCrosshairs(room, scalingFactors, context);
   if (showFullContents || (isActive && activeCharacter)) {
     const highlightedCharacter = activeCharacter || charactersInRoom[0] || null;
     if (highlightedCharacter) drawVisibleCharactersInRoom(charactersInRoom, highlightedCharacter, effects, scalingFactors, context, time, imageSet);

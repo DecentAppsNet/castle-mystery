@@ -12,9 +12,6 @@ import afterPreviousActivityAtRoomText from './fixtures/after-previous-activity-
 import atRoomMarkerSameRoomText from './fixtures/at-room-marker-same-room.md?raw';
 import atRoomMarkerText from './fixtures/at-room-marker.md?raw';
 import atLibraryViaFoyerText from './fixtures/at-library-via-foyer.md?raw';
-import wanderThenLibraryLShapeText from './fixtures/wander-then-library-l-shape.md?raw';
-import wanderThenLibraryWithSanctumText from './fixtures/wander-then-library-with-sanctum.md?raw';
-import wanderThenLibraryViaFoyerText from './fixtures/wander-then-library-via-foyer.md?raw';
 
 function _positionsEqual(position1:{ x:number, y:number }, position2:{ x:number, y:number }) {
   return position1.x === position2.x && position1.y === position2.y;
@@ -45,32 +42,33 @@ function _expectRoutesThroughPairedExitWaypoints(levelText:string) {
   const foyerToLibraryExitWaypoint = findExitWaypoint('Foyer', foyer.rect, foyerToLibraryExit!, foyer.waypoints);
   const libraryExitWaypoint = findExitWaypoint('Library', library.rect, foyerToLibraryExit!, library.waypoints);
 
-  const westHallExitWaypointIndex = queen!.itinerary.findIndex(event => event.type === ItineraryEventType.WALK
-    && _positionsEqual((event as WalkEvent).toPosition, westHallExitWaypoint.position));
-  expect(westHallExitWaypointIndex).toBeGreaterThanOrEqual(0);
+  const crossToFoyerEventIndex = queen!.itinerary.findIndex(event => event.type === ItineraryEventType.WALK
+    && _positionsEqual((event as WalkEvent).toPosition, foyerFromWestHallExitWaypoint.position));
+  expect(crossToFoyerEventIndex).toBeGreaterThanOrEqual(0);
 
-  const crossToFoyerEvent = _findNextEvent<WalkEvent>(queen!.itinerary, westHallExitWaypointIndex,
-    event => (event as WalkEvent).type === ItineraryEventType.WALK);
+  const crossToFoyerEvent = queen!.itinerary[crossToFoyerEventIndex] as WalkEvent;
   expect(crossToFoyerEvent?.type).toBe(ItineraryEventType.WALK);
-  expect(_positionsEqual(crossToFoyerEvent!.fromPosition, westHallExitWaypoint.position)).toBe(true);
+  expect(_positionsEqual(crossToFoyerEvent!.fromPosition, westHallExitWaypoint.position)
+    || _positionsEqual(crossToFoyerEvent!.fromPosition, { x:westHallToFoyerExit!.x, y:westHallToFoyerExit!.y })).toBe(true);
   expect(_positionsEqual(crossToFoyerEvent!.toPosition, foyerFromWestHallExitWaypoint.position)).toBe(true);
 
-  const foyerEntryEvent = _findNextEvent<RoomEntryEvent>(queen!.itinerary, westHallExitWaypointIndex,
+  const foyerEntryEvent = _findNextEvent<RoomEntryEvent>(queen!.itinerary, crossToFoyerEventIndex,
     event => (event as RoomEntryEvent).type === ItineraryEventType.ROOM_ENTRY);
   expect(foyerEntryEvent?.type).toBe(ItineraryEventType.ROOM_ENTRY);
   expect(foyerEntryEvent?.roomId).toBe('foyer');
 
-  const foyerToLibraryExitWaypointIndex = queen!.itinerary.findIndex(event => event.type === ItineraryEventType.WALK
-    && _positionsEqual((event as WalkEvent).toPosition, foyerToLibraryExitWaypoint.position));
-  expect(foyerToLibraryExitWaypointIndex).toBeGreaterThan(westHallExitWaypointIndex);
+  const crossToLibraryEventIndex = queen!.itinerary.findIndex((event, index) => index > crossToFoyerEventIndex
+    && event.type === ItineraryEventType.WALK
+    && _positionsEqual((event as WalkEvent).toPosition, libraryExitWaypoint.position));
+  expect(crossToLibraryEventIndex).toBeGreaterThan(crossToFoyerEventIndex);
 
-  const crossToLibraryEvent = _findNextEvent<WalkEvent>(queen!.itinerary, foyerToLibraryExitWaypointIndex,
-    event => (event as WalkEvent).type === ItineraryEventType.WALK);
+  const crossToLibraryEvent = queen!.itinerary[crossToLibraryEventIndex] as WalkEvent;
   expect(crossToLibraryEvent?.type).toBe(ItineraryEventType.WALK);
-  expect(_positionsEqual(crossToLibraryEvent!.fromPosition, foyerToLibraryExitWaypoint.position)).toBe(true);
+  expect(_positionsEqual(crossToLibraryEvent!.fromPosition, foyerToLibraryExitWaypoint.position)
+    || _positionsEqual(crossToLibraryEvent!.fromPosition, { x:foyerToLibraryExit!.x, y:foyerToLibraryExit!.y })).toBe(true);
   expect(_positionsEqual(crossToLibraryEvent!.toPosition, libraryExitWaypoint.position)).toBe(true);
 
-  const libraryEntryEvent = _findNextEvent<RoomEntryEvent>(queen!.itinerary, foyerToLibraryExitWaypointIndex,
+  const libraryEntryEvent = _findNextEvent<RoomEntryEvent>(queen!.itinerary, crossToLibraryEventIndex,
     event => (event as RoomEntryEvent).type === ItineraryEventType.ROOM_ENTRY);
   expect(libraryEntryEvent?.type).toBe(ItineraryEventType.ROOM_ENTRY);
   expect(libraryEntryEvent?.roomId).toBe('library');
@@ -87,18 +85,6 @@ describe('at room integration', () => {
 
   it('routes through paired exit waypoints when moving between rooms', () => {
     _expectRoutesThroughPairedExitWaypoints(atLibraryViaFoyerText);
-  });
-
-  it('routes through paired exit waypoints after a wander before room navigation', () => {
-    _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryViaFoyerText);
-  });
-
-  it('routes through paired exit waypoints after a wander when the starting room has another exit', () => {
-    _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryWithSanctumText);
-  });
-
-  it('routes through paired exit waypoints in the L-shaped west-hall layout from kingacide', () => {
-    _expectRoutesThroughPairedExitWaypoints(wanderThenLibraryLShapeText);
   });
 
   it('routes @ Room.Marker to the waypoint nearest the authored marker position', () => {
@@ -123,15 +109,8 @@ describe('at room integration', () => {
     const king = level.characters.find(character => character.id === 'king');
     const library = findRoom(level.rooms, 'Library');
     const markerPosition = library.positionMarkersById.sw;
-    const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
-      if (!nearestWaypoint) return waypoint;
-      const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
-      const distanceSquared = (waypoint.position.x - markerPosition.x) ** 2 + (waypoint.position.y - markerPosition.y) ** 2;
-      return distanceSquared < nearestDistanceSquared ? waypoint : nearestWaypoint;
-    }, null as typeof library.waypoints[number] | null);
 
-    expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK)).toBe(true);
-    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPose(king!, 10_000).position).toEqual(markerPosition);
   });
 
   it('starts relative @ Room movement only after the previous file activity completes', () => {

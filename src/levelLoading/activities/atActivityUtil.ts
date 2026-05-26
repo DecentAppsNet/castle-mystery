@@ -1,5 +1,6 @@
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import Position from "@/game/types/Position";
+import { createWalkEvent } from "@/game/itineraryUtil";
 import { findRoom } from "@/game/roomUtil";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
 import { normalizeId } from "@/game/idUtil";
@@ -40,7 +41,16 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
     .filter(([characterId]) => characterId !== context.character.id)
     .filter(([, state]) => findCurrentRoom(context.level, state.waypoint.position).id === targetRoomId)
     .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y}`));
-  const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, targetPosition);
+  const currentRoomId = findCurrentRoom(context.level, context.state.position).id;
+  let unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, targetPosition);
+  if (!unscheduledEvents.length && targetPosition && currentRoomId === targetRoomId
+    && (context.state.position.x !== targetPosition.x || context.state.position.y !== targetPosition.y)) {
+    const currentRoom = findRoom(context.level.rooms, targetRoomId);
+    const moveResult = createWalkEvent(currentRoom, 0, context.state.position.x, context.state.position.y,
+      targetPosition.x, targetPosition.y);
+    if (!moveResult.event || moveResult.wasClipped) throw new Error(`unable to reach marker in room ${targetRoomId}`);
+    unscheduledEvents = [moveResult.event];
+  }
   const scheduledEvents = context.timestampKind === 'absolute'
     ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, findEarliestAbsoluteActivityStartTime(context.state))
     : scheduleEventsToStartAtTime(unscheduledEvents, activityStartTime, context.state.time);

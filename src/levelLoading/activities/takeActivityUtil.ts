@@ -1,10 +1,10 @@
 import { assertNonNullable } from "decent-portal";
 
 import { createTakeItemEvent } from "@/game/itineraryUtil";
+import { findNearestWaypoint } from "@/game/roomUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
-import { ActivityContext, calcActivityStartTime, createWaypointKey, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
-import { findNearestWaypoint } from "@/game/roomUtil";
+import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 
 const TAKE_ITEM_NEARBY_DISTANCE = 8;
 
@@ -28,15 +28,7 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
   if (currentRoom.id !== itemLocation.room.id) throw new Error(`item ${itemRef} is not in the same room for take activity`);
   const isNearby = currentRoom.id === itemLocation.room.id
     && _calcDistance(context.state.position.x, context.state.position.y, itemLocation.item.position.x, itemLocation.item.position.y) <= TAKE_ITEM_NEARBY_DISTANCE;
-  const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
-    .filter(([characterId]) => characterId !== context.character.id)
-    .filter(([, state]) => findCurrentRoom(context.level, state.waypoint.position).id === currentRoom.id)
-    .map(([, state]) => createWaypointKey(state.waypoint)));
-  const targetWaypoint = findNearestWaypoint(currentRoom, itemLocation.item.position.x, itemLocation.item.position.y,
-    waypoint => !occupiedWaypointKeys.has(createWaypointKey(waypoint)));
-  if (_calcDistance(targetWaypoint.position.x, targetWaypoint.position.y, itemLocation.item.position.x, itemLocation.item.position.y) > TAKE_ITEM_NEARBY_DISTANCE) {
-    throw new Error(`item ${itemRef} is not near any unclaimed waypoint for take activity`);
-  }
+  const targetWaypoint = findNearestWaypoint(currentRoom, itemLocation.item.position.x, itemLocation.item.position.y);
   const unscheduledMovementEvents = isNearby ? [] : (() => {
     findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);

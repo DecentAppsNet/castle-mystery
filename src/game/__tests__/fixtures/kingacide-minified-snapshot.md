@@ -70,7 +70,6 @@ HL
 : Jester says "Surely it must be nearby."
 : King says "Where did I put that book?"
 0:00:00 Queen @ Library
-0:00:01 Queen wanders
 0:00:05 Queen takes Book
 0:00:06 King @ Library
 

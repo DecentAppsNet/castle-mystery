@@ -10,18 +10,8 @@ import ExitStatus from "./types/ExitStatus";
 import { normalizeId } from "./idUtil";
 import { isPositionInRect } from "./rectUtil";
 
-const WAYPOINT_SPACING = 5;
 const EXIT_WAYPOINT_INSET = 5;
-
-function _calcAxisWaypointPositions(start:number, length:number):number[] {
-  const waypointCount = Math.max(1, Math.ceil(length / WAYPOINT_SPACING));
-  const step = length / waypointCount;
-  return Array.from({ length: waypointCount }, (_, index) => Math.round(start + step * (index + 0.5)));
-}
-
-function _mergeAxisWaypointPositions(basePositions:number[], extraPositions:number[]):number[] {
-  return Array.from(new Set([...basePositions, ...extraPositions])).sort((a, b) => a - b);
-}
+export const FLOOR_WAYPOINT_Y_OFFSET = 0.001;
 
 function _findAdjacentRoomId(roomId:string, exit:RoomExit):string {
   return exit.room1Id === roomId ? exit.room2Id : exit.room1Id;
@@ -29,6 +19,10 @@ function _findAdjacentRoomId(roomId:string, exit:RoomExit):string {
 
 function _createWaypointKey(x:number, y:number):string {
   return `${x},${y}`;
+}
+
+function _findUniqueSortedNumbers(values:number[]):number[] {
+  return Array.from(new Set(values)).sort((a, b) => a - b);
 }
 
 function _clampExitWaypointAxis(value:number, minValue:number, maxValue:number):number {
@@ -39,12 +33,19 @@ function _findExitWaypointPosition(roomId:string, roomRect:Rect, exit:RoomExit):
   const minX = roomRect.x + EXIT_WAYPOINT_INSET;
   const maxX = roomRect.x + roomRect.width - EXIT_WAYPOINT_INSET;
   const minY = roomRect.y + EXIT_WAYPOINT_INSET;
-  const maxY = roomRect.y + roomRect.height - EXIT_WAYPOINT_INSET;
+  const maxY = roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
 
-  if (exit.x === roomRect.x) return { x: minX, y: _clampExitWaypointAxis(exit.y, minY, maxY) };
-  if (exit.x === roomRect.x + roomRect.width) return { x: maxX, y: _clampExitWaypointAxis(exit.y, minY, maxY) };
+  if (exit.x === roomRect.x) return { x: minX, y: exit.y === roomRect.y ? minY : (exit.y === roomRect.y + roomRect.height ? maxY : exit.y) };
+  if (exit.x === roomRect.x + roomRect.width) return { x: maxX, y: exit.y === roomRect.y ? minY : (exit.y === roomRect.y + roomRect.height ? maxY : exit.y) };
   if (exit.y === roomRect.y) return { x: _clampExitWaypointAxis(exit.x, minX, maxX), y: minY };
   if (exit.y === roomRect.y + roomRect.height) return { x: _clampExitWaypointAxis(exit.x, minX, maxX), y: maxY };
+  throw new Error(`exit at (${exit.x}, ${exit.y}) is not on the boundary of room ${roomId}`);
+}
+
+function _findExitBoundaryWaypointPosition(roomId:string, roomRect:Rect, exit:RoomExit):Position {
+  if (exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width || exit.y === roomRect.y || exit.y === roomRect.y + roomRect.height) {
+    return { x: exit.x, y: exit.y };
+  }
   throw new Error(`exit at (${exit.x}, ${exit.y}) is not on the boundary of room ${roomId}`);
 }
 
@@ -123,48 +124,63 @@ export function findNearestWaypoint(room:Room, x:number, y:number, predicate?:(w
   return nearestWaypoint;
 }
 
-function _connectAdjacentWaypoints(waypoints:Waypoint[]) {
-  const maxAdjacentDistance = Math.hypot(WAYPOINT_SPACING, WAYPOINT_SPACING);
-  waypoints.forEach((waypoint, index) => {
-    for (let otherIndex = index + 1; otherIndex < waypoints.length; ++otherIndex) {
-      const otherWaypoint = waypoints[otherIndex];
-      const distance = Math.hypot(otherWaypoint.position.x - waypoint.position.x, otherWaypoint.position.y - waypoint.position.y);
-      if (distance > maxAdjacentDistance) continue;
-      waypoint.adjacentWaypoints.push(otherWaypoint);
-      otherWaypoint.adjacentWaypoints.push(waypoint);
-    }
-  });
+function _connectWaypoints(waypoint1:Waypoint, waypoint2:Waypoint) {
+  if (!waypoint1.adjacentWaypoints.includes(waypoint2)) waypoint1.adjacentWaypoints.push(waypoint2);
+  if (!waypoint2.adjacentWaypoints.includes(waypoint1)) waypoint2.adjacentWaypoints.push(waypoint1);
 }
 
-function _ensureExitWaypointsAreConnected(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[]) {
-  exits.forEach(exit => {
-    const exitWaypoint = findExitWaypoint(roomId, roomRect, exit, waypoints);
-    if (exitWaypoint.adjacentWaypoints.length > 0) return;
+function _connectOrthogonalNearestWaypoints(waypoints:Waypoint[]) {
+  waypoints.forEach(waypoint => {
+    let nearestLeft:Waypoint|null = null;
+    let nearestRight:Waypoint|null = null;
+    let nearestUp:Waypoint|null = null;
+    let nearestDown:Waypoint|null = null;
+    let nearestLeftDistance = Number.POSITIVE_INFINITY;
+    let nearestRightDistance = Number.POSITIVE_INFINITY;
+    let nearestUpDistance = Number.POSITIVE_INFINITY;
+    let nearestDownDistance = Number.POSITIVE_INFINITY;
 
-    /* v8 ignore start */
-    // This fallback path is useful defensive code for unusual waypoint layouts.
-    let nearestReachableWaypoint:Waypoint|null = null;
-    let nearestDistance = Number.POSITIVE_INFINITY;
     waypoints.forEach(candidate => {
-      if (candidate === exitWaypoint) return;
-      const distance = Math.hypot(candidate.position.x - exitWaypoint.position.x, candidate.position.y - exitWaypoint.position.y);
-      if (distance >= nearestDistance) return;
-      nearestReachableWaypoint = candidate;
-      nearestDistance = distance;
+      if (candidate === waypoint) return;
+
+      if (candidate.position.y === waypoint.position.y) {
+        const xDistance = candidate.position.x - waypoint.position.x;
+        if (xDistance < 0 && Math.abs(xDistance) < nearestLeftDistance) {
+          nearestLeft = candidate;
+          nearestLeftDistance = Math.abs(xDistance);
+        }
+        if (xDistance > 0 && xDistance < nearestRightDistance) {
+          nearestRight = candidate;
+          nearestRightDistance = xDistance;
+        }
+      }
+
+      if (candidate.position.x === waypoint.position.x) {
+        const yDistance = candidate.position.y - waypoint.position.y;
+        if (yDistance < 0 && Math.abs(yDistance) < nearestUpDistance) {
+          nearestUp = candidate;
+          nearestUpDistance = Math.abs(yDistance);
+        }
+        if (yDistance > 0 && yDistance < nearestDownDistance) {
+          nearestDown = candidate;
+          nearestDownDistance = yDistance;
+        }
+      }
     });
 
-    if (nearestReachableWaypoint === null) return;
-    const connectedWaypoint:Waypoint = nearestReachableWaypoint;
-    exitWaypoint.adjacentWaypoints.push(connectedWaypoint);
-    connectedWaypoint.adjacentWaypoints.push(exitWaypoint);
-    /* v8 ignore stop */
+    [nearestLeft, nearestRight, nearestUp, nearestDown].forEach(candidate => {
+      if (candidate) _connectWaypoints(waypoint, candidate);
+    });
   });
 }
 
 function _pruneIsolatedNonExitWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[]):Waypoint[] {
-  const exitWaypointKeys = new Set(exits.map(exit => {
-    const position = _findExitWaypointPosition(roomId, roomRect, exit);
-    return _createWaypointKey(position.x, position.y);
+  if (exits.length === 0 && waypoints.length <= 1) return waypoints;
+
+  const exitWaypointKeys = new Set(exits.flatMap(exit => {
+    const boundaryPosition = _findExitBoundaryWaypointPosition(roomId, roomRect, exit);
+    const frontPosition = _findExitWaypointPosition(roomId, roomRect, exit);
+    return [_createWaypointKey(boundaryPosition.x, boundaryPosition.y), _createWaypointKey(frontPosition.x, frontPosition.y)];
   }));
   const remainingWaypoints = waypoints.filter(waypoint =>
     waypoint.adjacentWaypoints.length > 0 || exitWaypointKeys.has(_createWaypointKey(waypoint.position.x, waypoint.position.y)));
@@ -194,14 +210,6 @@ function _populateExitDirectionsForRoom(roomId:string, roomRect:Rect, exits:Room
 }
 
 export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]):Waypoint[] {
-  const xPositions = _mergeAxisWaypointPositions(
-    _calcAxisWaypointPositions(roomRect.x, roomRect.width),
-    exits.filter(exit => exit.y === roomRect.y || exit.y === roomRect.y + roomRect.height).map(exit => exit.x)
-  );
-  const yPositions = _mergeAxisWaypointPositions(
-    _calcAxisWaypointPositions(roomRect.y, roomRect.height),
-    exits.filter(exit => exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width).map(exit => exit.y)
-  );
   const waypointsByKey = new Map<string, Waypoint>();
   const _getOrCreateWaypoint = (x:number, y:number) => {
     const key = _createWaypointKey(x, y);
@@ -216,17 +224,28 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
     return waypoint;
   };
 
-  yPositions.flatMap(y => xPositions.map(x => ({ x, y })))
-    .forEach(({ x, y }) => { _getOrCreateWaypoint(x, y); });
+  const northExits = exits.filter(exit => exit.y === roomRect.y);
+  const spineXs = northExits.length > 0
+    ? _findUniqueSortedNumbers(northExits.map(exit => exit.x))
+    : [Math.round(roomRect.x + roomRect.width / 2)];
+  const frontWaypointPositions = exits.map(exit => _findExitWaypointPosition(roomId, roomRect, exit));
+  const spineYs = frontWaypointPositions.length > 0
+    ? _findUniqueSortedNumbers(frontWaypointPositions.map(position => position.y))
+    : [Math.round(roomRect.y + roomRect.height / 2)];
 
   exits.forEach(exit => {
-    const exitWaypointPosition = _findExitWaypointPosition(roomId, roomRect, exit);
-    _getOrCreateWaypoint(exitWaypointPosition.x, exitWaypointPosition.y);
+    const boundaryPosition = _findExitBoundaryWaypointPosition(roomId, roomRect, exit);
+    const frontPosition = _findExitWaypointPosition(roomId, roomRect, exit);
+    _getOrCreateWaypoint(boundaryPosition.x, boundaryPosition.y);
+    _getOrCreateWaypoint(frontPosition.x, frontPosition.y);
+  });
+
+  spineXs.flatMap(x => spineYs.map(y => ({ x, y }))).forEach(({ x, y }) => {
+    _getOrCreateWaypoint(x, y);
   });
 
   let waypoints = Array.from(waypointsByKey.values());
-  _connectAdjacentWaypoints(waypoints);
-  _ensureExitWaypointsAreConnected(roomId, roomRect, exits, waypoints);
+  _connectOrthogonalNearestWaypoints(waypoints);
   waypoints = _pruneIsolatedNonExitWaypoints(roomId, roomRect, exits, waypoints);
   _populateExitDirectionsForRoom(roomId, roomRect, exits, waypoints);
 

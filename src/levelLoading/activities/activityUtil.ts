@@ -225,9 +225,8 @@ export function appendEventsToCharacterState(level:Level, character:Character, s
   state.time = blockingTime;
   const pose = findStatePoseAtTime(character, state, state.time);
   state.position = duplicatePosition(pose.position);
-  const waypoint = level.rooms.flatMap(room => room.waypoints)
-    .find(candidate => candidate.position.x === state.position.x && candidate.position.y === state.position.y);
-  if (waypoint) state.waypoint = waypoint;
+  const room = findCurrentRoom(level, state.position);
+  state.waypoint = findNearestWaypoint(room, state.position.x, state.position.y);
 }
 
 export function findCurrentRoom(level:Level, position:Position):Room {

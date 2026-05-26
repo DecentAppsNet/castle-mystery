@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { calcRoomsBoundingRect, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomNearestToPosition, generateWaypoints } from '../roomUtil';
+import { calcRoomsBoundingRect, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomNearestToPosition, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints } from '../roomUtil';
 import Character from '../types/Character';
 import Rect from '../types/Rect';
 import Room from '../types/Room';
@@ -76,10 +76,14 @@ function _assertAllWaypointsHaveNeighbors(waypoints:Waypoint[]) {
 function _assertAllWaypointsAreInsideRoomRect(waypoints:Waypoint[], roomRect:Rect) {
   waypoints.forEach(waypoint => {
     expect(waypoint.position.x).toBeGreaterThanOrEqual(roomRect.x);
-    expect(waypoint.position.x).toBeLessThan(roomRect.x + roomRect.width);
+    expect(waypoint.position.x).toBeLessThanOrEqual(roomRect.x + roomRect.width);
     expect(waypoint.position.y).toBeGreaterThanOrEqual(roomRect.y);
-    expect(waypoint.position.y).toBeLessThan(roomRect.y + roomRect.height);
+    expect(waypoint.position.y).toBeLessThanOrEqual(roomRect.y + roomRect.height);
   });
+}
+
+function _findWaypoint(waypoints:Waypoint[], x:number, y:number):Waypoint | undefined {
+  return waypoints.find(waypoint => waypoint.position.x === x && waypoint.position.y === y);
 }
 
 function _assertExitRouteTerminates(exitWaypoint:Waypoint, startWaypoint:Waypoint, adjacentRoomId:string) {
@@ -124,13 +128,13 @@ describe('roomUtil', () => {
       expect(waypoints).toContain(exitWaypoint);
     });
 
-    it('clamps corner exit waypoints inside the room', () => {
+    it('keeps floor corner exit waypoints just inside the floor while clamping x inward', () => {
       const exit = _createExit('East', 20, 20);
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, [exit]);
 
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exit, waypoints);
 
-      expect(exitWaypoint.position).toEqual({ x:15, y:15 });
+      expect(exitWaypoint.position).toEqual({ x:15, y:ROOM_RECT.y + ROOM_RECT.height - FLOOR_WAYPOINT_Y_OFFSET });
       expect(waypoints).toContain(exitWaypoint);
     });
 
@@ -240,12 +244,77 @@ describe('roomUtil', () => {
   });
 
   describe('generateWaypoints()', () => {
-    it('creates a fully connected waypoint grid for a simple room with no exits', () => {
+    it('creates a single midpoint waypoint for a simple room with no exits', () => {
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, []);
 
-      expect(waypoints).toHaveLength(16);
+      expect(waypoints).toEqual([
+        expect.objectContaining({ position:{ x:10, y:10 } })
+      ]);
       _assertAllWaypointsAreInsideRoomRect(waypoints, ROOM_RECT);
-      _assertAllWaypointsHaveNeighbors(waypoints);
+    });
+
+    it('creates boundary and in-room waypoints for each exit', () => {
+      const exits = [
+        _createExit('North', 10, 0),
+        _createExit('West', 0, 12),
+        _createExit('East', 20, 18)
+      ];
+
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
+
+      expect(_findWaypoint(waypoints, 10, 0)).toBeDefined();
+      expect(_findWaypoint(waypoints, 10, 5)).toBeDefined();
+      expect(_findWaypoint(waypoints, 0, 12)).toBeDefined();
+      expect(_findWaypoint(waypoints, 5, 12)).toBeDefined();
+      expect(_findWaypoint(waypoints, 20, 18)).toBeDefined();
+      expect(_findWaypoint(waypoints, 15, 18)).toBeDefined();
+    });
+
+    it('creates vertical spine waypoints at left-right exit heights when the ceiling has an exit', () => {
+      const exits = [
+        _createExit('North', 8, 0),
+        _createExit('West', 0, 6),
+        _createExit('East', 20, 14)
+      ];
+
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
+
+      expect(_findWaypoint(waypoints, 8, 5)).toBeDefined();
+      expect(_findWaypoint(waypoints, 8, 6)).toBeDefined();
+      expect(_findWaypoint(waypoints, 8, 14)).toBeDefined();
+    });
+
+    it('creates a midpoint vertical spine when the ceiling has no exits', () => {
+      const exits = [
+        _createExit('West', 0, 6),
+        _createExit('East', 20, 14)
+      ];
+
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
+
+      expect(_findWaypoint(waypoints, 10, 6)).toBeDefined();
+      expect(_findWaypoint(waypoints, 10, 14)).toBeDefined();
+    });
+
+    it('connects waypoints only to the nearest orthogonal neighbors', () => {
+      const exits = [
+        _createExit('North', 8, 0),
+        _createExit('North 2', 14, 0),
+        _createExit('West', 0, 6),
+        _createExit('East', 20, 14)
+      ];
+
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
+      const spineWaypoint = _findWaypoint(waypoints, 8, 6);
+
+      expect(spineWaypoint).toBeDefined();
+      expect(spineWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
+        { x:5, y:6 },
+        { x:14, y:6 },
+        { x:8, y:5 },
+        { x:8, y:14 }
+      ]));
+      expect(spineWaypoint?.adjacentWaypoints).toHaveLength(4);
     });
 
     it('creates exit routes for rooms whose exits are reachable by waypoints', () => {

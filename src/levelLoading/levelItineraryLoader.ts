@@ -21,7 +21,6 @@ import {
 import { tryCreateSayActivity } from "./activities/sayActivityUtil";
 import { tryCreateTakeActivity } from "./activities/takeActivityUtil";
 import { tryCreateThinkActivity } from "./activities/thinkActivityUtil";
-import { tryCreateWanderActivity } from "./activities/wanderActivityUtil";
 import LoadLevelException from "./LoadLevelException";
 import { addCharacterEncounterEvents } from "../game/characterEncounterUtil";
 import { createItineraryIndex } from "../game/itineraryUtil";
@@ -157,7 +156,6 @@ function _normalizeParsedActivityText(activityText:string):string {
   if (trimmedActivityText.startsWith('says')) return _normalizeSpeechActivityText(trimmedActivityText, 'says');
   if (trimmedActivityText.startsWith('interrupts')) return _normalizeSpeechActivityText(trimmedActivityText, 'interrupts');
   if (trimmedActivityText.startsWith('thinks')) return _normalizeThoughtActivityText(trimmedActivityText);
-  if (trimmedActivityText.startsWith('wanders')) return 'wanders';
   if (trimmedActivityText.startsWith('gives')) return _normalizeGiveActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('unlocks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'unlocks');
   if (trimmedActivityText.startsWith('locks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'locks');
@@ -189,7 +187,7 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '"', '\'', '-']));
-  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' wanders', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
+  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
@@ -328,7 +326,6 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
     tryCreateAtActivity,
     tryCreateSayActivity,
     tryCreateThinkActivity,
-    tryCreateWanderActivity,
     tryCreateGiveActivity,
     tryCreateDropActivity,
     tryCreateTakeActivity,

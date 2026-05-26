@@ -130,7 +130,6 @@ WFL
 0:00:34 King @ Library
 
 0:00:00 Queen @ West Hall
-0:00:01 Queen wanders
 0:00:30 Queen @ Library
 0:00:31 Queen says "Hmm."
 0:00:32 Queen takes Book

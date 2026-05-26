@@ -7,14 +7,13 @@ import { findNearestWaypoint } from "@/game/roomUtil";
 import {
   ActivityContext,
   calcActivityStartTime,
-  createWaypointKey,
   ensureTimestampIsAvailable,
   findEarliestAbsoluteActivityStartTime,
   findCurrentRoom,
   findTargetPositionAtTime,
-  scheduleEventsToStartAtTime,
-  planMovementWithinRoom,
   findWaypointPath,
+  planMovementWithinRoom,
+  scheduleEventsToStartAtTime,
   stripTrailingPeriod
 } from "./activityUtil";
 import { normalizeId } from "@/game/idUtil";
@@ -63,15 +62,7 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
   if (recipientRoom.id !== currentRoom.id) throw new Error(`recipient ${recipientId} is not in the same room for give activity`);
 
   const isNearby = _calcDistance(context.state.position.x, context.state.position.y, recipientPosition.x, recipientPosition.y) <= GIVE_ITEM_NEARBY_DISTANCE;
-  const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
-    .filter(([characterId]) => characterId !== context.character.id)
-    .filter(([, state]) => findCurrentRoom(context.level, state.waypoint.position).id === currentRoom.id)
-    .map(([, state]) => createWaypointKey(state.waypoint)));
-  const targetWaypoint = findNearestWaypoint(currentRoom, recipientPosition.x, recipientPosition.y,
-    waypoint => !occupiedWaypointKeys.has(createWaypointKey(waypoint)));
-  if (_calcDistance(targetWaypoint.position.x, targetWaypoint.position.y, recipientPosition.x, recipientPosition.y) > GIVE_ITEM_NEARBY_DISTANCE) {
-    throw new Error(`recipient ${recipientId} is not near any unclaimed waypoint for give activity`);
-  }
+  const targetWaypoint = findNearestWaypoint(currentRoom, recipientPosition.x, recipientPosition.y);
   const unscheduledMovementEvents = isNearby ? [] : (() => {
     findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);

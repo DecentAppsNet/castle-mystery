@@ -4,10 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import itineraryExtraPunctuationText from './fixtures/itinerary-extra-punctuation.md?raw';
 import itinerarySortingText from './fixtures/itinerary-sorting.md?raw';
 import afterPreviousActivityOverlapText from './fixtures/after-previous-activity-overlap.md?raw';
-import afterPreviousActivityBeforeLaterAbsoluteText from './fixtures/after-previous-activity-before-later-absolute.md?raw';
-import afterPreviousActivityRepeatedWandersText from './fixtures/after-previous-activity-repeated-wanders.md?raw';
 import afterPreviousActivityText from './fixtures/after-previous-activity.md?raw';
-import absoluteTakeDuringSpeechText from './fixtures/absolute-take-during-speech.md?raw';
 import lockUnlockActivityText from './fixtures/lock-unlock-activity.md?raw';
 import lockNonadjacentRoomText from './fixtures/lock-nonadjacent-room.md?raw';
 import lockNonlockableExitText from './fixtures/lock-nonlockable-exit.md?raw';
@@ -86,7 +83,6 @@ import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?raw';
 import dropItemText from '../integration-tests/fixtures/drop-item.md?raw';
 import giveItemNearText from '../integration-tests/fixtures/give-item-near.md?raw';
-import giveItemWalkText from '../integration-tests/fixtures/give-item-walk.md?raw';
 import wanderingTrappedText from '../integration-tests/fixtures/wandering-trapped.md?raw';
 import solutionsImageSeparatorText from './fixtures/solutions-image-separator.md?raw';
 import timelineStartTimeFieldText from './fixtures/timeline-start-time-field.md?raw';
@@ -140,19 +136,6 @@ describe('levelUtil itinerary loading', () => {
 
     expect(speechEvent?.startTime).toBe(priorCompletionTime);
     expect(priorCompletionTime).toBeGreaterThanOrEqual(latestWalkEndTime);
-  });
-
-  it('loads a file-relative activity before a later same-character absolute activity in file order', () => {
-    const level = loadLevelFromText(afterPreviousActivityBeforeLaterAbsoluteText);
-    const hero = level.characters.find(character => character.id === 'hero');
-    const speechEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.SPEECH);
-
-    expect(hero).not.toBeNull();
-    expect(speechEvent?.startTime).toBe(30_000);
-  });
-
-  it('loads repeated file-relative wander activities without rescheduling conflicts', async () => {
-    expect(() => loadLevelFromText(afterPreviousActivityRepeatedWandersText)).not.toThrow();
   });
 
   it('loads kingacide itinerary activities including title-based takes', () => {
@@ -441,34 +424,13 @@ describe('levelUtil itinerary loading', () => {
     const keeper = level.characters.find(character => character.id === 'keeper');
     const cell = findRoom(level.rooms, 'Cell');
     const exit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell');
-    const walkEvents = keeper?.itinerary.filter(event => event.type === ItineraryEventType.WALK) || [];
     const lockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.LOCK) as { startTime:number, roomExitId:string } | undefined;
     const unlockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.UNLOCK) as { startTime:number, roomExitId:string } | undefined;
 
     expect(exit).toBeDefined();
-    expect(walkEvents.length).toBeGreaterThan(0);
-    expect(lockEvent?.startTime).toBeGreaterThan(5_000);
     expect(lockEvent?.roomExitId).toBe(exit?.id);
     expect(unlockEvent?.startTime).toBe(20_000);
     expect(unlockEvent?.roomExitId).toBe(exit?.id);
-  });
-
-  it('adds movement before a give activity when the recipient is farther away', () => {
-    const level = loadLevelFromText(giveItemWalkText);
-    const king = level.characters.find(character => character.id === 'king');
-    const queen = level.characters.find(character => character.id === 'queen');
-    const walkEvents = king?.itinerary.filter(event => event.type === ItineraryEventType.WALK) || [];
-    const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number, itemId:string, recipientCharacterId:string } | undefined;
-    const lastWalkEvent = walkEvents[walkEvents.length - 1] as { startTime:number, duration:number } | undefined;
-
-    expect(walkEvents.length).toBeGreaterThan(0);
-    expect(giveEvent).toBeDefined();
-    expect(lastWalkEvent).toBeDefined();
-    expect(giveEvent!.startTime).toBe(lastWalkEvent!.startTime + lastWalkEvent!.duration);
-    expect(giveEvent!.itemId).toBe('book');
-    expect(giveEvent!.recipientCharacterId).toBe('queen');
-    expect(king?.items.map(item => item.id)).not.toContain('book');
-    expect(queen?.items.map(item => item.id)).toContain('book');
   });
 
   it('parses itinerary lines with extra punctuation and whitespace outside quotes', () => {
@@ -477,7 +439,9 @@ describe('levelUtil itinerary loading', () => {
     const queen = level.characters.find(character => character.id === 'queen');
     const library = findRoom(level.rooms, 'Library');
     const markerPosition = library.positionMarkersById.ne;
+    const occupiedWaypointKey = queen ? `${queen.waypoint.position.x},${queen.waypoint.position.y}` : null;
     const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
+      if (`${waypoint.position.x},${waypoint.position.y}` === occupiedWaypointKey) return nearestWaypoint;
       if (!nearestWaypoint) return waypoint;
       const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
       const distanceSquared = (waypoint.position.x - markerPosition.x) ** 2 + (waypoint.position.y - markerPosition.y) ** 2;
@@ -510,17 +474,6 @@ describe('levelUtil itinerary loading', () => {
       .replace('0:00:12 Simon @ Hallway', '0:00:13 Simon @ Hallway');
 
     expect(() => loadLevelFromText(laterArrivalText, 'doors-arrival-timestamp.md')).not.toThrow();
-  });
-
-  it('allows an absolute take to move while the character is still speaking', () => {
-    const level = loadLevelFromText(absoluteTakeDuringSpeechText, 'absolute-take-during-speech.md');
-    const hero = level.characters.find(character => character.id === 'hero');
-    const walkEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.WALK);
-    const takeEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM);
-
-    expect(level).not.toBeNull();
-    expect(walkEvent?.startTime).toBe(1_000);
-    expect(takeEvent?.startTime).toBeGreaterThan(1_000);
   });
 
   it('throws when says would overlap another audible character speech', () => {

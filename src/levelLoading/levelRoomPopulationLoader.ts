@@ -148,7 +148,11 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 }
 
 function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number, claimedWaypoints:Set<string>) {
-	return findNearestWaypoint(room, targetX, targetY, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y}`));
+	try {
+		return findNearestWaypoint(room, targetX, targetY, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y}`));
+	} catch {
+		return findNearestWaypoint(room, targetX, targetY);
+	}
 }
 
 function _addCharacter(level:Level, room:Room, characterId:string, title:string, description:string, faceImageUrl:string|null, isTitleKnown:boolean, x:number, y:number) {

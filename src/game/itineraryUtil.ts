@@ -147,8 +147,8 @@ function _interpolatePosition(fromPosition:Position, toPosition:Position, interp
   assert(interpolateAmount <= 2);
   const vector = {x:toPosition.x - fromPosition.x, y:toPosition.y - fromPosition.y};
   return {
-    x:Math.floor(fromPosition.x + (interpolateAmount * vector.x)),
-    y:Math.floor(fromPosition.y + (interpolateAmount * vector.y))
+    x:fromPosition.x + (interpolateAmount * vector.x),
+    y:fromPosition.y + (interpolateAmount * vector.y)
   }
 }
 

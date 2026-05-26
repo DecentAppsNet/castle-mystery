@@ -30,7 +30,3 @@ A
 ## Hero
 
 * description=Trapped hero.
-
-# itinerary
-
-0:00:01 Hero wanders.
