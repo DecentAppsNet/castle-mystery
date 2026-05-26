@@ -7,7 +7,7 @@ import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_RO
 import { gameToCanvasPosition } from "./drawUtil";
 import { getExitCanvasRectForImageUrl } from "./exitDrawUtil";
 import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
-import { drawStairs } from "./stairDrawUtil";
+import { drawWindingStairs } from "./stairDrawUtil";
 import Character from "../types/Character";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
@@ -34,19 +34,21 @@ function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, conte
   });
 }
 
-function _shouldDrawLeftRisingStairs(room:Room):boolean {
-  return room.title.charCodeAt(0) % 2 === 1;
-}
+function _drawTemporaryWindingStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const floorY = Math.max(...room.waypoints.map(waypoint => waypoint.position.y));
+  const floorExitXs = new Set(room.exits
+    .filter(exit => exit.y === floorY)
+    .map(exit => exit.x));
+  const nonExitFloorPositions = room.waypoints
+    .filter(waypoint => waypoint.position.y === floorY)
+    .filter(waypoint => !floorExitXs.has(waypoint.position.x))
+    .map(waypoint => waypoint.position);
+  if (nonExitFloorPositions.length < 2) return;
 
-function _drawTemporaryRoomStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  if (room.rect.width !== room.rect.height) return;
-  const fromPosition = _shouldDrawLeftRisingStairs(room)
-    ? { x:room.rect.x + room.rect.width, y:room.rect.y }
-    : { x:room.rect.x, y:room.rect.y };
-  const toPosition = _shouldDrawLeftRisingStairs(room)
-    ? { x:room.rect.x, y:room.rect.y + room.rect.height }
-    : { x:room.rect.x + room.rect.width, y:room.rect.y + room.rect.height };
-  drawStairs(fromPosition, toPosition, scalingFactors, context);
+  const sortedNonExitFloorPositions = [...nonExitFloorPositions].sort((left, right) => left.x - right.x);
+  const floorLeftPosition = sortedNonExitFloorPositions[0];
+  const floorRightPosition = sortedNonExitFloorPositions[sortedNonExitFloorPositions.length - 1];
+  drawWindingStairs(floorLeftPosition, floorRightPosition, room.exits, scalingFactors, context);
 }
 
 function _isCharacterNearExit(character:Character, exit:RoomExit):boolean {
@@ -98,7 +100,7 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.strokeStyle = COLOR_DARK_GRAY;
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
-  _drawTemporaryRoomStairs(room, scalingFactors, context);
+  _drawTemporaryWindingStairs(room, scalingFactors, context);
   if (!isRoomObscured && (showFullContents || (isActive && activeCharacter))) {
     drawDiscoveredItemsInRoom(room, effects, scalingFactors, context, { includeUndiscovered:true, ignoreRoomObscured:showFullContents });
   }
