@@ -348,9 +348,12 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
     const nextRoomExitWaypoint = findExitWaypoint(nextRoom.id, nextRoom.rect, exit, nextRoom.waypoints);
     const crossRoomWalkEvent = createWalkEvent(nextRoom, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
       nextRoomExitWaypoint.position.x, nextRoomExitWaypoint.position.y);
-    if (!crossRoomWalkEvent) throw new Error(`unable to cross exit from ${room.id} to ${nextRoom.id}`);
-    events.push(crossRoomWalkEvent);
-    currentTime = crossRoomWalkEvent.startTime + crossRoomWalkEvent.duration;
+    if (crossRoomWalkEvent) {
+      events.push(crossRoomWalkEvent);
+      currentTime = crossRoomWalkEvent.startTime + crossRoomWalkEvent.duration;
+    } else if (currentWaypoint.position.x !== nextRoomExitWaypoint.position.x || currentWaypoint.position.y !== nextRoomExitWaypoint.position.y) {
+      throw new Error(`unable to cross exit from ${room.id} to ${nextRoom.id}`);
+    }
     currentWaypoint = nextRoomExitWaypoint;
     events.push(createRoomEntryEvent(currentTime, nextRoom.id));
   }

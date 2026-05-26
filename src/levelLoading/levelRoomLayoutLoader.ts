@@ -2,7 +2,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { findRoom, generateWaypoints } from "../game/roomUtil";
+import { findRoom, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints } from "../game/roomUtil";
 import Level from "../game/types/Level";
 import Rect from "../game/types/Rect";
 import Room from "../game/types/Room";
@@ -13,7 +13,7 @@ import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqu
 import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
 import { tryResolveItemId } from "./levelRoomPopulationLoader";
 
-const MAP_TILE_SIZE = 20;
+export const MAP_TILE_SIZE = 20;
 
 export type LegendTile = {
   entryId:string,
@@ -373,7 +373,12 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
   const sharedWallSection = _findSharedWallSectionBetweenRooms(room1, room2);
   assertNonNullable(sharedWallSection, 'rooms must be adjacent');
   _throwIfSharedWallSectionIsHorizontal(sharedWallSection, pendingExit);
-  const [x, y] = _findExitPositionFromSharedWallSection(sharedWallSection);
+  const [x, sharedY] = _findExitPositionFromSharedWallSection(sharedWallSection);
+  const room1FloorY = room1.rect.y + room1.rect.height;
+  const room2FloorY = room2.rect.y + room2.rect.height;
+  const y = sharedY === room1FloorY || sharedY === room2FloorY
+    ? sharedY - FLOOR_WAYPOINT_Y_OFFSET
+    : sharedY;
   const exitType = _determineExitType(pendingExit);
   const exit:RoomExit = {
     id:createRoomExitId(room1Id, room2Id, x, y),

@@ -5,13 +5,17 @@ import Room from "./types/Room";
 import Character from "./types/Character";
 import RoomExit from "./types/RoomExit";
 import Waypoint from "./types/Waypoint";
-import Position from "./types/Position";
 import ExitStatus from "./types/ExitStatus";
 import { normalizeId } from "./idUtil";
 import { isPositionInOrOnRect, isPositionInRect } from "./rectUtil";
+import { MAP_TILE_SIZE } from "../levelLoading/levelRoomLayoutLoader";
 
-const EXIT_WAYPOINT_INSET = 5;
+export const COLUMNS_PER_MAP_TILE = 4;
 export const FLOOR_WAYPOINT_Y_OFFSET = 0.001;
+
+export function roomWidthToColumnCount(roomWidth: number): number {
+  return Math.round(roomWidth / MAP_TILE_SIZE) * COLUMNS_PER_MAP_TILE;
+}
 
 function _findAdjacentRoomId(roomId:string, exit:RoomExit):string {
   return exit.room1Id === roomId ? exit.room2Id : exit.room1Id;
@@ -25,38 +29,24 @@ function _findUniqueSortedNumbers(values:number[]):number[] {
   return Array.from(new Set(values)).sort((a, b) => a - b);
 }
 
-function _assertExitIsNotOnCeilingOrFloor(roomId:string, roomRect:Rect, exit:RoomExit):void {
+function _assertExitIsNotOnCeiling(roomId:string, roomRect:Rect, exit:RoomExit):void {
   if (exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width) return;
   assert(
-    exit.y !== roomRect.y && exit.y !== roomRect.y + roomRect.height,
-    `ceiling/floor exits are not supported for room ${roomId} at (${exit.x}, ${exit.y})`
+    exit.y !== roomRect.y,
+    `ceiling exits are not supported for room ${roomId} at (${exit.x}, ${exit.y})`
   );
 }
 
-function _findExitWaypointPosition(roomId:string, roomRect:Rect, exit:RoomExit):Position {
-  const minX = roomRect.x + EXIT_WAYPOINT_INSET;
-  const maxX = roomRect.x + roomRect.width - EXIT_WAYPOINT_INSET;
-  const minY = roomRect.y + EXIT_WAYPOINT_INSET;
-  const maxY = roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
-
-  _assertExitIsNotOnCeilingOrFloor(roomId, roomRect, exit);
-  if (exit.x === roomRect.x) return { x: minX, y: exit.y === roomRect.y ? minY : (exit.y === roomRect.y + roomRect.height ? maxY : exit.y) };
-  if (exit.x === roomRect.x + roomRect.width) return { x: maxX, y: exit.y === roomRect.y ? minY : (exit.y === roomRect.y + roomRect.height ? maxY : exit.y) };
-  throw new Error(`exit at (${exit.x}, ${exit.y}) is not on the boundary of room ${roomId}`);
-}
-
-function _findExitBoundaryWaypointPosition(roomId:string, roomRect:Rect, exit:RoomExit):Position {
-  _assertExitIsNotOnCeilingOrFloor(roomId, roomRect, exit);
-  if (exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width) {
-    return { x: exit.x, y: exit.y };
-  }
-  throw new Error(`exit at (${exit.x}, ${exit.y}) is not on the boundary of room ${roomId}`);
+function _assertExitPositionIsSupported(roomId:string, roomRect:Rect, exit:RoomExit):void {
+  if (exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width) return;
+  if (exit.y === roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET) return;
+  throw new Error(`exit for room ${roomId} at (${exit.x}, ${exit.y}) is not on a supported boundary`);
 }
 
 export function findExitWaypoint(roomId:string, roomRect:Rect, exit:RoomExit, waypoints:Waypoint[]):Waypoint {
-  const position = _findExitWaypointPosition(roomId, roomRect, exit);
-  const waypoint = waypoints.find(candidate => candidate.position.x === position.x && candidate.position.y === position.y);
-  if (!waypoint) throw new Error(`missing exit waypoint for room ${roomId} at (${position.x}, ${position.y})`);
+  _assertExitPositionIsSupported(roomId, roomRect, exit);
+  const waypoint = waypoints.find(candidate => candidate.position.x === exit.x && candidate.position.y === exit.y);
+  if (!waypoint) throw new Error(`missing exit waypoint for room ${roomId} at (${exit.x}, ${exit.y})`);
   return waypoint;
 }
 
@@ -133,66 +123,32 @@ export function findNearestWaypoint(room:Room, x:number, y:number, predicate?:(w
 }
 
 function _connectWaypoints(waypoint1:Waypoint, waypoint2:Waypoint) {
+  if (waypoint1 === waypoint2) return;
   if (!waypoint1.adjacentWaypoints.includes(waypoint2)) waypoint1.adjacentWaypoints.push(waypoint2);
   if (!waypoint2.adjacentWaypoints.includes(waypoint1)) waypoint2.adjacentWaypoints.push(waypoint1);
 }
 
-function _connectOrthogonalNearestWaypoints(waypoints:Waypoint[]) {
-  waypoints.forEach(waypoint => {
-    let nearestLeft:Waypoint|null = null;
-    let nearestRight:Waypoint|null = null;
-    let nearestUp:Waypoint|null = null;
-    let nearestDown:Waypoint|null = null;
-    let nearestLeftDistance = Number.POSITIVE_INFINITY;
-    let nearestRightDistance = Number.POSITIVE_INFINITY;
-    let nearestUpDistance = Number.POSITIVE_INFINITY;
-    let nearestDownDistance = Number.POSITIVE_INFINITY;
+function _findNearestWaypointByX(waypoints:Waypoint[], x:number):Waypoint {
+  if (!waypoints.length) throw new Error('unable to find nearest waypoint in empty collection');
 
-    waypoints.forEach(candidate => {
-      if (candidate === waypoint) return;
-
-      if (candidate.position.y === waypoint.position.y) {
-        const xDistance = candidate.position.x - waypoint.position.x;
-        if (xDistance < 0 && Math.abs(xDistance) < nearestLeftDistance) {
-          nearestLeft = candidate;
-          nearestLeftDistance = Math.abs(xDistance);
-        }
-        if (xDistance > 0 && xDistance < nearestRightDistance) {
-          nearestRight = candidate;
-          nearestRightDistance = xDistance;
-        }
-      }
-
-      if (candidate.position.x === waypoint.position.x) {
-        const yDistance = candidate.position.y - waypoint.position.y;
-        if (yDistance < 0 && Math.abs(yDistance) < nearestUpDistance) {
-          nearestUp = candidate;
-          nearestUpDistance = Math.abs(yDistance);
-        }
-        if (yDistance > 0 && yDistance < nearestDownDistance) {
-          nearestDown = candidate;
-          nearestDownDistance = yDistance;
-        }
-      }
-    });
-
-    [nearestLeft, nearestRight, nearestUp, nearestDown].forEach(candidate => {
-      if (candidate) _connectWaypoints(waypoint, candidate);
-    });
-  });
+  let nearestWaypoint = waypoints[0];
+  let nearestDistance = Math.abs(waypoints[0].position.x - x);
+  for (let i = 1; i < waypoints.length; i++) {
+    const distance = Math.abs(waypoints[i].position.x - x);
+    if (distance >= nearestDistance) continue;
+    nearestWaypoint = waypoints[i];
+    nearestDistance = distance;
+  }
+  return nearestWaypoint;
 }
 
-function _pruneIsolatedNonExitWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[]):Waypoint[] {
+function _pruneIsolatedNonExitWaypoints(exits:RoomExit[], waypoints:Waypoint[]):Waypoint[] {
   if (exits.length === 0 && waypoints.length <= 1) return waypoints;
 
-  const exitWaypointKeys = new Set(exits.flatMap(exit => {
-    const boundaryPosition = _findExitBoundaryWaypointPosition(roomId, roomRect, exit);
-    const frontPosition = _findExitWaypointPosition(roomId, roomRect, exit);
-    return [_createWaypointKey(boundaryPosition.x, boundaryPosition.y), _createWaypointKey(frontPosition.x, frontPosition.y)];
-  }));
+  const exitWaypointKeys = new Set(exits.map(exit => _createWaypointKey(exit.x, exit.y)));
   const remainingWaypoints = waypoints.filter(waypoint =>
     waypoint.adjacentWaypoints.length > 0 || exitWaypointKeys.has(_createWaypointKey(waypoint.position.x, waypoint.position.y)));
-  if (!remainingWaypoints.length) throw new Error(`room ${roomId} has no connected waypoints`);
+  if (!remainingWaypoints.length) throw new Error('room has no connected waypoints');
   return remainingWaypoints;
 }
 
@@ -232,28 +188,64 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
     return waypoint;
   };
 
-  exits.forEach(exit => _assertExitIsNotOnCeilingOrFloor(roomId, roomRect, exit));
-  const spineXs = [Math.round(roomRect.x + roomRect.width / 2)];
+  exits.forEach(exit => _assertExitIsNotOnCeiling(roomId, roomRect, exit));
   const floorY = roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
-  const frontWaypointPositions = exits.map(exit => _findExitWaypointPosition(roomId, roomRect, exit));
-  const spineYs = _findUniqueSortedNumbers(frontWaypointPositions.length > 0
-    ? [...frontWaypointPositions.map(position => position.y), floorY]
-    : [floorY]);
+  const floorExits = exits.filter(exit => exit.y === floorY);
+  const nonFloorExits = exits.filter(exit => exit.y !== floorY);
 
-  exits.forEach(exit => {
-    const boundaryPosition = _findExitBoundaryWaypointPosition(roomId, roomRect, exit);
-    const frontPosition = _findExitWaypointPosition(roomId, roomRect, exit);
-    _getOrCreateWaypoint(boundaryPosition.x, boundaryPosition.y);
-    _getOrCreateWaypoint(frontPosition.x, frontPosition.y);
-  });
+  const columnCount = roomWidthToColumnCount(roomRect.width);
+  const columnWidth = roomRect.width / columnCount;
+  const floorWaypoints:Waypoint[] = [];
 
-  spineXs.flatMap(x => spineYs.map(y => ({ x, y }))).forEach(({ x, y }) => {
-    _getOrCreateWaypoint(x, y);
-  });
+  for (let i = 0; i < columnCount; i++) {
+    const x = roomRect.x + (i + 0.5) * columnWidth;
+    floorWaypoints.push(_getOrCreateWaypoint(x, floorY));
+  }
+
+  exits.forEach(exit => _getOrCreateWaypoint(exit.x, exit.y));
+
+  let spineX:number|null = null;
+  const spineWaypoints:Waypoint[] = [];
+  if (nonFloorExits.length > 0) {
+    const roomCenterX = roomRect.x + roomRect.width / 2;
+    const nearestFloorWaypoint = _findNearestWaypointByX(floorWaypoints, roomCenterX);
+    spineX = nearestFloorWaypoint.position.x;
+    const spineYs = _findUniqueSortedNumbers(nonFloorExits.map(exit => exit.y));
+    spineYs.forEach(y => {
+      spineWaypoints.push(_getOrCreateWaypoint(spineX!, y));
+    });
+  }
 
   let waypoints = Array.from(waypointsByKey.values());
-  _connectOrthogonalNearestWaypoints(waypoints);
-  waypoints = _pruneIsolatedNonExitWaypoints(roomId, roomRect, exits, waypoints);
+  for (let i = 0; i < floorWaypoints.length - 1; i++) {
+    _connectWaypoints(floorWaypoints[i], floorWaypoints[i + 1]);
+  }
+
+  floorExits.forEach(exit => {
+    const exitWaypoint = _getOrCreateWaypoint(exit.x, exit.y);
+    const nearestFloorWaypoint = _findNearestWaypointByX(floorWaypoints, exit.x);
+    _connectWaypoints(exitWaypoint, nearestFloorWaypoint);
+  });
+
+  if (spineWaypoints.length > 0) {
+    for (let i = 0; i < spineWaypoints.length - 1; i++) {
+      _connectWaypoints(spineWaypoints[i], spineWaypoints[i + 1]);
+    }
+
+    const floorSpineWaypoint = floorWaypoints.find(waypoint => waypoint.position.x === spineX);
+    assertNonNullable(floorSpineWaypoint, `floor waypoint at spine X ${spineX} not found`);
+    const lowestSpineWaypoint = spineWaypoints[spineWaypoints.length - 1];
+    _connectWaypoints(lowestSpineWaypoint, floorSpineWaypoint);
+
+    nonFloorExits.forEach(exit => {
+      const exitWaypoint = _getOrCreateWaypoint(exit.x, exit.y);
+      const spineWaypoint = spineWaypoints.find(waypoint => waypoint.position.y === exit.y);
+      assertNonNullable(spineWaypoint, `spine waypoint at Y ${exit.y} not found for exit`);
+      _connectWaypoints(spineWaypoint, exitWaypoint);
+    });
+  }
+
+  waypoints = _pruneIsolatedNonExitWaypoints(exits, waypoints);
   _populateExitDirectionsForRoom(roomId, roomRect, exits, waypoints);
 
   exits.forEach(exit => {

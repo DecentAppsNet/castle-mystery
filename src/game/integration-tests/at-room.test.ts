@@ -17,8 +17,8 @@ function _positionsEqual(position1:{ x:number, y:number }, position2:{ x:number,
   return position1.x === position2.x && position1.y === position2.y;
 }
 
-function _findNextEvent<T>(events:readonly unknown[], startIndex:number, predicate:(event:unknown) => boolean):T | undefined {
-  for (let i = startIndex + 1; i < events.length; ++i) {
+function _findPreviousEvent<T>(events:readonly unknown[], startIndex:number, predicate:(event:unknown) => boolean):T | undefined {
+  for (let i = startIndex - 1; i >= 0; --i) {
     if (predicate(events[i])) return events[i] as T;
   }
   return undefined;
@@ -42,34 +42,62 @@ function _expectRoutesThroughPairedExitWaypoints(levelText:string) {
   const foyerToLibraryExitWaypoint = findExitWaypoint('Foyer', foyer.rect, foyerToLibraryExit!, foyer.waypoints);
   const libraryExitWaypoint = findExitWaypoint('Library', library.rect, foyerToLibraryExit!, library.waypoints);
 
-  const crossToFoyerEventIndex = queen!.itinerary.findIndex(event => event.type === ItineraryEventType.WALK
-    && _positionsEqual((event as WalkEvent).toPosition, foyerFromWestHallExitWaypoint.position));
-  expect(crossToFoyerEventIndex).toBeGreaterThanOrEqual(0);
+  const foyerEntryEventIndex = queen!.itinerary.findIndex(event => event.type === ItineraryEventType.ROOM_ENTRY
+    && (event as RoomEntryEvent).roomId === 'foyer');
+  expect(foyerEntryEventIndex).toBeGreaterThanOrEqual(0);
 
-  const crossToFoyerEvent = queen!.itinerary[crossToFoyerEventIndex] as WalkEvent;
-  expect(crossToFoyerEvent?.type).toBe(ItineraryEventType.WALK);
-  expect(_positionsEqual(crossToFoyerEvent!.fromPosition, westHallExitWaypoint.position)
-    || _positionsEqual(crossToFoyerEvent!.fromPosition, { x:westHallToFoyerExit!.x, y:westHallToFoyerExit!.y })).toBe(true);
-  expect(_positionsEqual(crossToFoyerEvent!.toPosition, foyerFromWestHallExitWaypoint.position)).toBe(true);
+  const preFoyerWalkEvent = _findPreviousEvent<WalkEvent>(queen!.itinerary, foyerEntryEventIndex,
+    event => (event as WalkEvent).type === ItineraryEventType.WALK);
+  expect(preFoyerWalkEvent?.type).toBe(ItineraryEventType.WALK);
+  expect(_positionsEqual(preFoyerWalkEvent!.toPosition, westHallExitWaypoint.position)
+    || _positionsEqual(preFoyerWalkEvent!.toPosition, foyerFromWestHallExitWaypoint.position)).toBe(true);
 
-  const foyerEntryEvent = _findNextEvent<RoomEntryEvent>(queen!.itinerary, crossToFoyerEventIndex,
-    event => (event as RoomEntryEvent).type === ItineraryEventType.ROOM_ENTRY);
+  const crossToFoyerEvent = queen!.itinerary[foyerEntryEventIndex - 1] as WalkEvent | RoomEntryEvent | undefined;
+  if (crossToFoyerEvent?.type === ItineraryEventType.WALK) {
+    const isExplicitCrossToFoyer = (_positionsEqual((crossToFoyerEvent as WalkEvent).fromPosition, westHallExitWaypoint.position)
+      || _positionsEqual((crossToFoyerEvent as WalkEvent).fromPosition, { x:westHallToFoyerExit!.x, y:westHallToFoyerExit!.y }))
+      && _positionsEqual((crossToFoyerEvent as WalkEvent).toPosition, foyerFromWestHallExitWaypoint.position);
+    if (isExplicitCrossToFoyer) {
+      expect(_positionsEqual((crossToFoyerEvent as WalkEvent).toPosition, foyerFromWestHallExitWaypoint.position)).toBe(true);
+    } else {
+      expect(_positionsEqual((crossToFoyerEvent as WalkEvent).toPosition, westHallExitWaypoint.position)).toBe(true);
+      expect(_positionsEqual(westHallExitWaypoint.position, foyerFromWestHallExitWaypoint.position)).toBe(true);
+    }
+  } else {
+    expect(_positionsEqual(westHallExitWaypoint.position, foyerFromWestHallExitWaypoint.position)).toBe(true);
+  }
+
+  const foyerEntryEvent = queen!.itinerary[foyerEntryEventIndex] as RoomEntryEvent;
   expect(foyerEntryEvent?.type).toBe(ItineraryEventType.ROOM_ENTRY);
   expect(foyerEntryEvent?.roomId).toBe('foyer');
 
-  const crossToLibraryEventIndex = queen!.itinerary.findIndex((event, index) => index > crossToFoyerEventIndex
-    && event.type === ItineraryEventType.WALK
-    && _positionsEqual((event as WalkEvent).toPosition, libraryExitWaypoint.position));
-  expect(crossToLibraryEventIndex).toBeGreaterThan(crossToFoyerEventIndex);
+  const libraryEntryEventIndex = queen!.itinerary.findIndex((event, index) => index > foyerEntryEventIndex
+    && event.type === ItineraryEventType.ROOM_ENTRY
+    && (event as RoomEntryEvent).roomId === 'library');
+  expect(libraryEntryEventIndex).toBeGreaterThan(foyerEntryEventIndex);
 
-  const crossToLibraryEvent = queen!.itinerary[crossToLibraryEventIndex] as WalkEvent;
-  expect(crossToLibraryEvent?.type).toBe(ItineraryEventType.WALK);
-  expect(_positionsEqual(crossToLibraryEvent!.fromPosition, foyerToLibraryExitWaypoint.position)
-    || _positionsEqual(crossToLibraryEvent!.fromPosition, { x:foyerToLibraryExit!.x, y:foyerToLibraryExit!.y })).toBe(true);
-  expect(_positionsEqual(crossToLibraryEvent!.toPosition, libraryExitWaypoint.position)).toBe(true);
+  const preLibraryWalkEvent = _findPreviousEvent<WalkEvent>(queen!.itinerary, libraryEntryEventIndex,
+    event => (event as WalkEvent).type === ItineraryEventType.WALK);
+  expect(preLibraryWalkEvent?.type).toBe(ItineraryEventType.WALK);
+  expect(_positionsEqual(preLibraryWalkEvent!.toPosition, foyerToLibraryExitWaypoint.position)
+    || _positionsEqual(preLibraryWalkEvent!.toPosition, libraryExitWaypoint.position)).toBe(true);
 
-  const libraryEntryEvent = _findNextEvent<RoomEntryEvent>(queen!.itinerary, crossToLibraryEventIndex,
-    event => (event as RoomEntryEvent).type === ItineraryEventType.ROOM_ENTRY);
+  const crossToLibraryEvent = queen!.itinerary[libraryEntryEventIndex - 1] as WalkEvent | RoomEntryEvent | undefined;
+  if (crossToLibraryEvent?.type === ItineraryEventType.WALK) {
+    const isExplicitCrossToLibrary = (_positionsEqual((crossToLibraryEvent as WalkEvent).fromPosition, foyerToLibraryExitWaypoint.position)
+      || _positionsEqual((crossToLibraryEvent as WalkEvent).fromPosition, { x:foyerToLibraryExit!.x, y:foyerToLibraryExit!.y }))
+      && _positionsEqual((crossToLibraryEvent as WalkEvent).toPosition, libraryExitWaypoint.position);
+    if (isExplicitCrossToLibrary) {
+      expect(_positionsEqual((crossToLibraryEvent as WalkEvent).toPosition, libraryExitWaypoint.position)).toBe(true);
+    } else {
+      expect(_positionsEqual((crossToLibraryEvent as WalkEvent).toPosition, foyerToLibraryExitWaypoint.position)).toBe(true);
+      expect(_positionsEqual(foyerToLibraryExitWaypoint.position, libraryExitWaypoint.position)).toBe(true);
+    }
+  } else {
+    expect(_positionsEqual(foyerToLibraryExitWaypoint.position, libraryExitWaypoint.position)).toBe(true);
+  }
+
+  const libraryEntryEvent = queen!.itinerary[libraryEntryEventIndex] as RoomEntryEvent;
   expect(libraryEntryEvent?.type).toBe(ItineraryEventType.ROOM_ENTRY);
   expect(libraryEntryEvent?.roomId).toBe('library');
 }

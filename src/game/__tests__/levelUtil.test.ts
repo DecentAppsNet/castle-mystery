@@ -292,7 +292,7 @@ describe('levelUtil itinerary loading', () => {
     const twoSidedExit = findRoom(twoSidedLevel.rooms, 'Bedroom').exits[0];
 
     expect(oneSidedExit.x).toBe(20);
-    expect(oneSidedExit.y).toBe(20);
+    expect(oneSidedExit.y).toBe(20 - FLOOR_WAYPOINT_Y_OFFSET);
     expect(oneSidedExit.exitType).toBe(ExitType.lockableDoor);
     expect(oneSidedExit.exitStatus).toBe(ExitStatus.locked);
     expect(oneSidedExit.lockableFromRoom1With).toBe(LOCKABLE_WITHOUT_INV_CHECK);
@@ -456,7 +456,8 @@ describe('levelUtil itinerary loading', () => {
     const queen = level.characters.find(character => character.id === 'queen');
     const library = findRoom(level.rooms, 'Library');
     const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-    const occupiedWaypointKey = queen ? `${queen.waypoint.position.x},${queen.waypoint.position.y}` : null;
+    const queenPoseAtArrival = queen ? findCharacterPose(queen, 6_000).position : null;
+    const occupiedWaypointKey = queenPoseAtArrival ? `${queenPoseAtArrival.x},${queenPoseAtArrival.y}` : null;
     const targetWaypoint = library.waypoints.reduce((rightmostFloorWaypoint, waypoint) => {
       if (waypoint.position.y !== floorY || `${waypoint.position.x},${waypoint.position.y}` === occupiedWaypointKey) return rightmostFloorWaypoint;
       if (!rightmostFloorWaypoint) return waypoint;
