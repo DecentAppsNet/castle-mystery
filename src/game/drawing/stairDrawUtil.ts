@@ -1,21 +1,19 @@
 /* This module groups staircase line drawing helpers for room rendering. */
 
-import { assert, assertNonNullable } from "decent-portal";
+import { assert } from "decent-portal";
 
 import { COLOR_BLACK } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET } from "../roomUtil";
 import Position from "../types/Position";
 import RoomExit from "../types/RoomExit";
+import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
+import StairFlight from "../types/StairFlight";
 
 const PREFERRED_STEP_RISE_RUN = 1;
 const STAIRS_LINE_WIDTH_MULTIPLIER = 0.2;
 const STAIR_ANGLE_TOLERANCE = 0.000001;
-
-type StairFlight = {
-  startPosition:Position,
-  endPosition:Position
-};
 
 function _calcStairStepCount(totalDistance:number):number {
   return Math.max(1, Math.round(totalDistance / PREFERRED_STEP_RISE_RUN));
@@ -57,33 +55,14 @@ export function drawStairs(fromPosition:Position, toPosition:Position, scalingFa
   context.stroke();
 }
 
-function _findHighestNonFloorExitY(exits:RoomExit[], floorY:number):number|null {
-  const nonFloorExitYs = exits
+function _calcRoomFloorY(room:Room):number {
+  return room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+}
+
+function _findSortedNonFloorExits(room:Room, floorY:number):RoomExit[] {
+  return [...room.exits]
     .filter(exit => exit.y < floorY)
-    .map(exit => exit.y);
-  if (!nonFloorExitYs.length) return null;
-  return Math.min(...nonFloorExitYs);
-}
-
-function _calcVerticalIntersection(startPosition:Position, boundaryX:number, slope:1|-1):Position|null {
-  const rise = (boundaryX - startPosition.x) / slope;
-  if (rise <= 0) return null;
-  return { x:boundaryX, y:startPosition.y - rise };
-}
-
-function _calcTopIntersection(startPosition:Position, topY:number, slope:1|-1):Position|null {
-  const rise = startPosition.y - topY;
-  if (rise <= 0) return null;
-  return { x:startPosition.x + slope * rise, y:topY };
-}
-
-function _findCloserFlightEndToFloor(startPosition:Position, boundaryIntersection:Position|null, topIntersection:Position|null):Position|null {
-  if (boundaryIntersection && topIntersection) {
-    const boundaryRise = startPosition.y - boundaryIntersection.y;
-    const topRise = startPosition.y - topIntersection.y;
-    return boundaryRise <= topRise ? boundaryIntersection : topIntersection;
-  }
-  return boundaryIntersection || topIntersection;
+    .sort((left, right) => left.y - right.y || left.x - right.x);
 }
 
 function _findStairIntersectionXAtY(flights:StairFlight[], targetY:number):number|null {
@@ -101,39 +80,24 @@ function _findStairIntersectionXAtY(flights:StairFlight[], targetY:number):numbe
   return null;
 }
 
-function _drawExitConnectors(exits:RoomExit[], floorY:number, flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function _doesFlightEndAtExit(flights:StairFlight[], exit:RoomExit):boolean {
+  return flights.some(flight => Math.abs(flight.endPosition.x - exit.x) <= STAIR_ANGLE_TOLERANCE
+    && Math.abs(flight.endPosition.y - exit.y) <= STAIR_ANGLE_TOLERANCE);
+}
+
+function _drawLandings(exits:RoomExit[], flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   exits
-    .filter(exit => exit.y < floorY)
     .forEach(exit => {
+      if (_doesFlightEndAtExit(flights, exit)) return;
       const stairIntersectionX = _findStairIntersectionXAtY(flights, exit.y);
       if (stairIntersectionX === null) return;
       _drawHorizontalLine({ x:stairIntersectionX, y:exit.y }, { x:exit.x, y:exit.y }, scalingFactors, context);
     });
 }
 
-export function drawWindingStairs(floorLeftPosition:Position, floorRightPosition:Position, exits:RoomExit[], scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D) {
-  const floorY = Math.max(floorLeftPosition.y, floorRightPosition.y);
-  const stairsTopY = _findHighestNonFloorExitY(exits, floorY);
-  if (stairsTopY === null) return;
+export function drawRoomStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  if (!room.stairs.length) return;
 
-  const flightLeftX = floorLeftPosition.x;
-  const flightRightX = floorRightPosition.x;
-  let flightStartPosition = { ...floorLeftPosition };
-  let slope:1|-1 = 1;
-  const flights:StairFlight[] = [];
-
-  while (flightStartPosition.y > stairsTopY) {
-    const boundaryX = slope === 1 ? flightRightX : flightLeftX;
-    const boundaryIntersection = _calcVerticalIntersection(flightStartPosition, boundaryX, slope);
-    const topIntersection = _calcTopIntersection(flightStartPosition, stairsTopY, slope);
-    const flightEndPosition = _findCloserFlightEndToFloor(flightStartPosition, boundaryIntersection, topIntersection);
-    assertNonNullable(flightEndPosition, 'winding stairs must find a valid flight end position');
-    drawStairs(flightStartPosition, flightEndPosition, scalingFactors, context);
-    flights.push({ startPosition:flightStartPosition, endPosition:flightEndPosition });
-    flightStartPosition = flightEndPosition;
-    slope = slope === 1 ? -1 : 1;
-  }
-
-  _drawExitConnectors(exits, floorY, flights, scalingFactors, context);
+  room.stairs.forEach(flight => drawStairs(flight.startPosition, flight.endPosition, scalingFactors, context));
+  _drawLandings(_findSortedNonFloorExits(room, _calcRoomFloorY(room)), room.stairs, scalingFactors, context);
 }

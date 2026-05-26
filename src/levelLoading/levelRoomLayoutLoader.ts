@@ -3,6 +3,7 @@
 import { assertNonNullable } from "decent-portal";
 
 import { findRoom, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints } from "../game/roomUtil";
+import { generateStairFlights } from "../game/stairFlightUtil";
 import Level from "../game/types/Level";
 import Rect from "../game/types/Rect";
 import Room from "../game/types/Room";
@@ -180,8 +181,9 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
       },
       isObscured: false,
       items: [],
-      waypoints: [],
       exits: [],
+      stairs: [],
+      waypoints: [],
       isDiscovered: false
     });
   });
@@ -405,9 +407,14 @@ export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string, i
 
 export function generateRoomWaypointsForLevel(level:Level) {
   level.rooms.forEach((room, index) => {
-    level.rooms[index] = {
+    const waypoints = generateWaypoints(room.id, room.rect, room.exits);
+    const roomWithWaypoints = {
       ...room,
-      waypoints: generateWaypoints(room.id, room.rect, room.exits)
+      waypoints
+    };
+    level.rooms[index] = {
+      ...roomWithWaypoints,
+      stairs: generateStairFlights(roomWithWaypoints)
     };
   });
 }

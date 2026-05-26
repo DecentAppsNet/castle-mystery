@@ -8,8 +8,8 @@
 # map
 
 ```
-ABCC
-DBEF
+ABCCGGGH
+DBEFGGG
 ```
 
 * A=Library
@@ -18,6 +18,8 @@ DBEF
 * D=Guard Room
 * E=Foyer
 * F=Kitchen
+* G=Throne Room
+* H=Sanctum
 
 # rooms
 
@@ -56,6 +58,14 @@ DBEF
 
 ## Kitchen
 
+* exits=Throne Room
+
+## Throne Room
+
+* exits=Kitchen | Sanctum | Hallway
+
+## Sanctum
+
 # characters
 
 ## Simon
@@ -82,6 +92,6 @@ DBEF
 0:00:00 Simon says, "Here I am."
 : Simon @ Stairwell
 : Simon @ Hallway
-: Simon @ Kitchen
+: Simon @ Sanctum
 
 # solutions

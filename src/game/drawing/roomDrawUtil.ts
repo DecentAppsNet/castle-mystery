@@ -7,7 +7,7 @@ import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_RO
 import { gameToCanvasPosition } from "./drawUtil";
 import { getExitCanvasRectForImageUrl } from "./exitDrawUtil";
 import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
-import { drawWindingStairs } from "./stairDrawUtil";
+import { drawRoomStairs } from "./stairDrawUtil";
 import Character from "../types/Character";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
@@ -32,23 +32,6 @@ function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, conte
     context.lineTo(canvasX, canvasY + crosshairSize);
     context.stroke();
   });
-}
-
-function _drawTemporaryWindingStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const floorY = Math.max(...room.waypoints.map(waypoint => waypoint.position.y));
-  const floorExitXs = new Set(room.exits
-    .filter(exit => exit.y === floorY)
-    .map(exit => exit.x));
-  const nonExitFloorPositions = room.waypoints
-    .filter(waypoint => waypoint.position.y === floorY)
-    .filter(waypoint => !floorExitXs.has(waypoint.position.x))
-    .map(waypoint => waypoint.position);
-  if (nonExitFloorPositions.length < 2) return;
-
-  const sortedNonExitFloorPositions = [...nonExitFloorPositions].sort((left, right) => left.x - right.x);
-  const floorLeftPosition = sortedNonExitFloorPositions[0];
-  const floorRightPosition = sortedNonExitFloorPositions[sortedNonExitFloorPositions.length - 1];
-  drawWindingStairs(floorLeftPosition, floorRightPosition, room.exits, scalingFactors, context);
 }
 
 function _isCharacterNearExit(character:Character, exit:RoomExit):boolean {
@@ -100,7 +83,7 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.strokeStyle = COLOR_DARK_GRAY;
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
-  _drawTemporaryWindingStairs(room, scalingFactors, context);
+  drawRoomStairs(room, scalingFactors, context);
   if (!isRoomObscured && (showFullContents || (isActive && activeCharacter))) {
     drawDiscoveredItemsInRoom(room, effects, scalingFactors, context, { includeUndiscovered:true, ignoreRoomObscured:showFullContents });
   }

@@ -16,6 +16,7 @@ function _createRoom(id:string, title:string):Room {
     isObscured:false,
     items:[],
     exits:[],
+    stairs:[],
     waypoints:[],
     isDiscovered:true
   };
