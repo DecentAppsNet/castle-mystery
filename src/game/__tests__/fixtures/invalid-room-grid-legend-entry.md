@@ -6,37 +6,22 @@
 # map
 
 ```
-HLL
-.LL
+L
 ```
 
-* H=Hall
 * L=Library
 
 # rooms
 
-## Hall
-
-* exits=Library
-
-```
-K....
-.....
-.....
-```
-
-* K=King
-
 ## Library
 
-* exits=Hall
+```
+.X...
+.....
+.....
+```
 
-```
-.....
-.....
-.....
-.....
-```
+* X=Window
 
 # characters
 
@@ -44,6 +29,6 @@ K....
 
 * description=Test king.
 
-# itinerary
+# items
 
-0:00:10 King @ Library.0%
+# itinerary

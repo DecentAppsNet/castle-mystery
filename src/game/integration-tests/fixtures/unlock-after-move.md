@@ -20,11 +20,10 @@ CS
 ```
 K....
 .....
-X....
+.....
 ```
 
 * K=Keeper
-* X=SW
 
 ## Second Cell
 
@@ -47,5 +46,5 @@ X....
 # itinerary
 
 0:00:05 Keeper locks Second Cell
-0:00:10 Keeper @ Cell.SW
+0:00:10 Keeper @ Cell.0%
 0:00:20 Keeper unlocks Second Cell

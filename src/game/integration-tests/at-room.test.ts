@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
-import { findExitWaypoint, findRoom } from '../roomUtil';
+import { findExitWaypoint, findRoom, FLOOR_WAYPOINT_Y_OFFSET } from '../roomUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import WalkEvent from '../types/itineraryEvents/WalkEvent';
 import RoomEntryEvent from '../types/itineraryEvents/RoomEntryEvent';
@@ -87,16 +87,15 @@ describe('at room integration', () => {
     _expectRoutesThroughPairedExitWaypoints(atLibraryViaFoyerText);
   });
 
-  it('routes @ Room.Marker to the waypoint nearest the authored marker position', () => {
+  it('routes @ Room.0% to the unclaimed floor waypoint nearest the authored room percent', () => {
     const level = loadLevelFromText(atRoomMarkerText);
     const king = level.characters.find(character => character.id === 'king');
     const library = findRoom(level.rooms, 'Library');
-    const markerPosition = library.positionMarkersById.sw;
-    const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
-      if (!nearestWaypoint) return waypoint;
-      const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
-      const distanceSquared = (waypoint.position.x - markerPosition.x) ** 2 + (waypoint.position.y - markerPosition.y) ** 2;
-      return distanceSquared < nearestDistanceSquared ? waypoint : nearestWaypoint;
+    const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+    const targetWaypoint = library.waypoints.reduce((leftmostFloorWaypoint, waypoint) => {
+      if (waypoint.position.y !== floorY) return leftmostFloorWaypoint;
+      if (!leftmostFloorWaypoint) return waypoint;
+      return waypoint.position.x < leftmostFloorWaypoint.position.x ? waypoint : leftmostFloorWaypoint;
     }, null as typeof library.waypoints[number] | null);
 
     expect(king).not.toBeNull();
@@ -104,13 +103,19 @@ describe('at room integration', () => {
     expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 
-  it('moves within the same room for @ Room.Marker when already in that room', () => {
+  it('moves within the same room for @ Room.0%', () => {
     const level = loadLevelFromText(atRoomMarkerSameRoomText);
     const king = level.characters.find(character => character.id === 'king');
     const library = findRoom(level.rooms, 'Library');
-    const markerPosition = library.positionMarkersById.sw;
+    const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+    const targetWaypoint = library.waypoints.reduce((leftmostFloorWaypoint, waypoint) => {
+      if (waypoint.position.y !== floorY) return leftmostFloorWaypoint;
+      if (!leftmostFloorWaypoint) return waypoint;
+      return waypoint.position.x < leftmostFloorWaypoint.position.x ? waypoint : leftmostFloorWaypoint;
+    }, null as typeof library.waypoints[number] | null);
 
-    expect(findCharacterPose(king!, 10_000).position).toEqual(markerPosition);
+    expect(targetWaypoint).not.toBeNull();
+    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 
   it('starts relative @ Room movement only after the previous file activity completes', () => {

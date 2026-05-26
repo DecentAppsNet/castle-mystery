@@ -21,12 +21,6 @@ export type LegendTile = {
   col:number
 };
 
-type MarkerTile = {
-  markerId:string,
-  row:number,
-  col:number
-};
-
 type ParsedExitReference = {
   connectedRoomId:string,
   modifiers:Set<string>,
@@ -133,12 +127,6 @@ export function findLegendTilesInGrid(gridLines:string[], legend:Record<string, 
   return legendTiles;
 }
 
-function _findMarkerTilesInGrid(gridLines:string[], legend:Record<string, string>, excludedEntryIds:Set<string>):MarkerTile[] {
-  return findLegendTilesInGrid(gridLines, legend)
-    .filter(({ entryId:entryText }) => !excludedEntryIds.has(normalizeId(entryText)))
-    .map(({ entryId:entryText, row, col }) => ({ markerId:normalizeId(entryText), row, col }));
-}
-
 export function calcScaledRoomGridPosition(room:Room, row:number, col:number, gridWidth:number, gridHeight:number):[x:number, y:number] {
   const tileWidth = room.rect.width / gridWidth;
   const tileHeight = room.rect.height / gridHeight;
@@ -193,7 +181,6 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
       isObscured: false,
       items: [],
       waypoints: [],
-      positionMarkersById: {},
       exits: [],
       isDiscovered: false
     });
@@ -223,7 +210,7 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string) 
   });
 }
 
-export function addRoomPositionMarkersFromSections(level:Level, roomsSection:string, excludedEntryIds:Set<string>) {
+export function validateRoomGridLegendEntries(level:Level, roomsSection:string, knownPopulationEntryIds:Set<string>) {
   const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
 
   Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
@@ -232,17 +219,14 @@ export function addRoomPositionMarkersFromSections(level:Level, roomsSection:str
     const gridLines = parseFirstFencedCodeBlockLines(roomSection);
     if (!gridLines.length) return;
 
-    const gridWidth = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
-    const gridHeight = gridLines.length;
     const roomNameValues = _parseNameValueLinesOrThrowDuplicate(roomSection, `room ${roomId}`);
     const roomLegend = Object.fromEntries(
       Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured')
     );
 
-    _findMarkerTilesInGrid(gridLines, roomLegend, excludedEntryIds).forEach(({ markerId, row, col }) => {
-      if (room.positionMarkersById[markerId]) throw new Error(`duplicate position marker ${roomId}.${markerId}`);
-      const [x, y] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
-      room.positionMarkersById[markerId] = { x, y };
+    findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:entryText, row, col }) => {
+      if (knownPopulationEntryIds.has(normalizeId(entryText))) return;
+      throw new Error(`unknown room legend entry '${entryText}' at row ${row + 1}, col ${col + 1} in room ${room.title}`);
     });
   });
 }

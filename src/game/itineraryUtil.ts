@@ -16,7 +16,7 @@ import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
-import { findRoomAtPosition, findRoomNearestToPosition } from "./roomUtil";
+import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from "./roomUtil";
 import ItineraryIndex from "./types/ItineraryIndex";
 
 const WALK_MSECS_PER_PIXEL = 30;
@@ -45,6 +45,7 @@ export type WalkEventCreationResult = {
 
 function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   let room = findRoomAtPosition(rooms, x, y);
+  if (!room) room = findRoomAtPositionOrTouchingBoundary(rooms, x, y);
   if (!room) {
     console.warn(`Position (${x}, ${y}) is not in a room.`);
     room = findRoomNearestToPosition(rooms, x, y); // Don't know what happened, but try to be robust.

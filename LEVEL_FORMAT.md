@@ -5,7 +5,7 @@ The level format is still changing as we build the engine, but enough things hav
 The level file has these sections:
 * general - top-level section for settings applicable to the level.
 * map - describes the coarse room layout of the level as a tile grid, plus a legend mapping map letters to room names.
-* rooms - gives per-room details such as room-local grids, exits, character placement, item placement, and position markers.
+* rooms - gives per-room details such as room-local grids, exits, character placement, and item placement.
 * characters - declares characters and their descriptive metadata, including which items they begin with.
 * items - declares items and their display metadata.
 * itinerary - authors time-based character activities such as movement, speech, thoughts, item interactions, and door changes.
@@ -103,7 +103,7 @@ Write one subsection per room. The subsection name must match a room from the `m
 Each room subsection can contain:
 * room-level settings such as `title`, `exits`, and `obscured`
 * an optional fenced grid showing the inside of the room. It need not match any exact dimensions, but will instead be scaled to match the size of the room as defined in the map section.
-* a legend for people, items, and named position markers used inside that room
+* a legend for people and items used inside that room
 
 ## Name/value Pairs
 
@@ -119,7 +119,7 @@ In the room grid:
 In the room legend:
 * a known character name places that character in the room
 * a known item name places that item in the room
-* any other legend entry becomes a named position marker that can be used in itinerary lines such as `@ Kitchen.Window`
+* any other legend entry is an error
 
 ## Door Modifiers
 
@@ -171,12 +171,11 @@ If both sides mention the same connection, they should describe the same door. C
 ..B..
 ..#..
 ..H..
-..W..
+.....
 ```
 
 * H=Butler
 * B=Master Key
-* W=Window
 
 ## Kitchen
 
@@ -272,8 +271,8 @@ Each line usually describes one action for one character at one time. Different 
 
 Typical examples are:
 * moving to a room
+* moving to a precise floor position in a room
 * speaking or thinking
-* wandering inside a room
 * taking, dropping, or giving an item
 * locking or unlocking a door
 
@@ -322,9 +321,15 @@ That means file order is still important when you use `:`. A common pattern is t
 
 ### @
 
-`@ Room` means the character goes to a room. You can also target a named position marker with `@ Room.Marker`.
+`@ Room` means the character goes to a room. You can also target a floor waypoint by percentage with `@ Room.50%`.
 
-Example: `0:15:03 John @ Library.Window`
+`Room.50%` means: look at the room's floor waypoints, ignore any that are currently claimed by other characters if possible, and choose the one whose `x` position is closest to 50% of the room width. Any whole number from `0` through `100` is allowed.
+
+Examples:
+* `0:15:03 John @ Library`
+* `0:15:03 John @ Library.0%`
+* `0:15:03 John @ Library.50%`
+* `0:15:03 John @ Library.100%`
 
 This is the one activity where an absolute timestamp means when the character should finish an activity (walking to a room, in this case), not when they should start the activity. The loader plans movement so the character reaches the destination by that time.
 

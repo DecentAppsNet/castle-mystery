@@ -6,26 +6,31 @@
 # map
 
 ```
-R
+RA
 ```
 
 * R=Room
+* A=Annex
 
 # rooms
 
 ## Room
 
+* exits=Annex
+
 ```
-.......
-...XH..
-.......
-.......
-.......
-.......
+....H
+.....
+.....
+.....
+.....
 ```
 
 * H=Hero
-* X=West
+
+## Annex
+
+* exits=Room
 
 # characters
 
@@ -35,5 +40,5 @@ R
 
 # itinerary
 
-0:00:10 Hero @ Room.West
+0:00:10 Hero @ Annex
 : Hero says "done"

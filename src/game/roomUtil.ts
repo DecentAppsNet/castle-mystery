@@ -8,7 +8,7 @@ import Waypoint from "./types/Waypoint";
 import Position from "./types/Position";
 import ExitStatus from "./types/ExitStatus";
 import { normalizeId } from "./idUtil";
-import { isPositionInRect } from "./rectUtil";
+import { isPositionInOrOnRect, isPositionInRect } from "./rectUtil";
 
 const EXIT_WAYPOINT_INSET = 5;
 export const FLOOR_WAYPOINT_Y_OFFSET = 0.001;
@@ -65,6 +65,10 @@ export function findRoom(rooms:Room[], roomRef:string):Room {
 
 export function findRoomAtPosition(rooms:Room[], x:number, y:number):Room | null {
   return rooms.find((r) => isPositionInRect(x, y, r.rect)) || null;
+}
+
+export function findRoomAtPositionOrTouchingBoundary(rooms:Room[], x:number, y:number):Room | null {
+  return rooms.find((room) => isPositionInOrOnRect(x, y, room.rect)) || null;
 }
 
 export function findRoomNearestToPosition(rooms:Room[], x:number, y:number):Room {
@@ -228,10 +232,11 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
   const spineXs = northExits.length > 0
     ? _findUniqueSortedNumbers(northExits.map(exit => exit.x))
     : [Math.round(roomRect.x + roomRect.width / 2)];
+  const floorY = roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
   const frontWaypointPositions = exits.map(exit => _findExitWaypointPosition(roomId, roomRect, exit));
-  const spineYs = frontWaypointPositions.length > 0
-    ? _findUniqueSortedNumbers(frontWaypointPositions.map(position => position.y))
-    : [Math.round(roomRect.y + roomRect.height / 2)];
+  const spineYs = _findUniqueSortedNumbers(frontWaypointPositions.length > 0
+    ? [...frontWaypointPositions.map(position => position.y), floorY]
+    : [floorY]);
 
   exits.forEach(exit => {
     const boundaryPosition = _findExitBoundaryWaypointPosition(roomId, roomRect, exit);

@@ -16,14 +16,13 @@ R
 ## Room
 
 ```
-X...H
+....H
 .....
 .....
 .....
 .....
 ```
 
-* X=West
 * H=Hero
 
 # characters
@@ -34,6 +33,6 @@ X...H
 
 # itinerary
 
-0:00:10 Hero @ Room.West
-: Hero wanders
+0:00:10 Hero @ Room.0%
+: Hero @ Room
 0:00:30 Hero says "later"

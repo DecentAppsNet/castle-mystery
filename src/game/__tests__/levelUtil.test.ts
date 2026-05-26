@@ -12,6 +12,7 @@ import unlockWrongSideText from './fixtures/unlock-wrong-side.md?raw';
 import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
 import invalidMapLegendTileText from './fixtures/invalid-map-legend-tile.md?raw';
+import invalidRoomGridLegendEntryText from './fixtures/invalid-room-grid-legend-entry.md?raw';
 import invalidRoomLegendTileText from './fixtures/invalid-room-legend-tile.md?raw';
 import invalidItineraryTimestampText from './fixtures/invalid-itinerary-timestamp.md?raw';
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
@@ -74,7 +75,7 @@ import LoadLevelException from '@/levelLoading/LoadLevelException';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
 import { findCharacterPose } from '../itineraryUtil';
-import { findRoom } from '../roomUtil';
+import { findRoom, FLOOR_WAYPOINT_Y_OFFSET } from '../roomUtil';
 import ClozeBlank from '../solutions/types/ClozeBlank';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
@@ -390,11 +391,15 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('loads room position markers from room legends and grids', () => {
-    const level = loadLevelFromText(atRoomMarkerText);
-    const library = findRoom(level.rooms, 'Library');
-
-    expect(library.positionMarkersById.sw).toEqual({ x:32, y:28 });
+  it('throws when a room grid legend entry is not a known character or item', () => {
+    try {
+      loadLevelFromText(invalidRoomGridLegendEntryText, 'invalid-room-grid-legend-entry.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-room-grid-legend-entry.md:');
+      expect((error as LoadLevelException).message).toContain("unknown room legend entry 'Window'");
+    }
   });
 
   it('loads drop activities and removes dropped items from final carried inventory', () => {
@@ -438,14 +443,12 @@ describe('levelUtil itinerary loading', () => {
     const king = level.characters.find(character => character.id === 'king');
     const queen = level.characters.find(character => character.id === 'queen');
     const library = findRoom(level.rooms, 'Library');
-    const markerPosition = library.positionMarkersById.ne;
+    const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
     const occupiedWaypointKey = queen ? `${queen.waypoint.position.x},${queen.waypoint.position.y}` : null;
-    const targetWaypoint = library.waypoints.reduce((nearestWaypoint, waypoint) => {
-      if (`${waypoint.position.x},${waypoint.position.y}` === occupiedWaypointKey) return nearestWaypoint;
-      if (!nearestWaypoint) return waypoint;
-      const nearestDistanceSquared = (nearestWaypoint.position.x - markerPosition.x) ** 2 + (nearestWaypoint.position.y - markerPosition.y) ** 2;
-      const distanceSquared = (waypoint.position.x - markerPosition.x) ** 2 + (waypoint.position.y - markerPosition.y) ** 2;
-      return distanceSquared < nearestDistanceSquared ? waypoint : nearestWaypoint;
+    const targetWaypoint = library.waypoints.reduce((rightmostFloorWaypoint, waypoint) => {
+      if (waypoint.position.y !== floorY || `${waypoint.position.x},${waypoint.position.y}` === occupiedWaypointKey) return rightmostFloorWaypoint;
+      if (!rightmostFloorWaypoint) return waypoint;
+      return waypoint.position.x > rightmostFloorWaypoint.position.x ? waypoint : rightmostFloorWaypoint;
     }, null as typeof library.waypoints[number] | null);
     const speechEvent = king?.itinerary.find(event => event.type === ItineraryEventType.SPEECH && event.startTime === 7_000) as { speech:string } | undefined;
 
@@ -634,16 +637,16 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('wraps unknown room marker references with filename and line number', () => {
-    const invalidMarkerText = atRoomMarkerText.replace('@ Library.SW', '@ Library.NOPE');
+  it('wraps invalid @ room percent references with filename and line number', () => {
+    const invalidPercentText = atRoomMarkerText.replace('@ Library.0%', '@ Library.101%');
 
     try {
-      loadLevelFromText(invalidMarkerText, 'at-room-marker.md');
+      loadLevelFromText(invalidPercentText, 'at-room-marker.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('at-room-marker.md:52');
-      expect((error as LoadLevelException).message).toContain('unknown position marker Library.NOPE');
+      expect((error as LoadLevelException).message).toContain('at-room-marker.md:49');
+      expect((error as LoadLevelException).message).toContain("invalid room percent target '101%'");
     }
   });
 

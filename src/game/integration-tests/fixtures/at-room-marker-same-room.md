@@ -19,12 +19,10 @@ L
 ....K
 .....
 .....
-.X...
 .....
 ```
 
 * K=King
-* X=SW
 
 # characters
 
@@ -34,4 +32,4 @@ L
 
 # itinerary
 
-0:00:10 King @ Library.SW
+0:00:10 King @ Library.0%

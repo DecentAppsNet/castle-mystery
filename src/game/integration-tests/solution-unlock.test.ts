@@ -34,7 +34,6 @@ function _createTestLevel():Level {
       items:[bookItem],
       exits:[],
       waypoints:[waypoint],
-      positionMarkersById:{},
       isDiscovered:false
     }],
     initialCharacters:[{

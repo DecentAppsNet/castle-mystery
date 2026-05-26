@@ -104,18 +104,18 @@ function _normalizeWhitespaceAndPunctuationOutsideQuotes(text:string, preservedP
   return normalizedText.trim();
 }
 
-function _stripBoundaryPunctuation(text:string):string {
+function _stripBoundaryPunctuation(text:string, preservedPunctuationChars:Set<string> = new Set()):string {
   let startIndex = 0;
   let endIndex = text.length;
 
-  while (startIndex < endIndex && (_isWhitespace(text[startIndex]) || _isAsciiPunctuation(text[startIndex]))) startIndex += 1;
-  while (endIndex > startIndex && (_isWhitespace(text[endIndex - 1]) || _isAsciiPunctuation(text[endIndex - 1]))) endIndex -= 1;
+  while (startIndex < endIndex && (_isWhitespace(text[startIndex]) || (_isAsciiPunctuation(text[startIndex]) && !preservedPunctuationChars.has(text[startIndex])))) startIndex += 1;
+  while (endIndex > startIndex && (_isWhitespace(text[endIndex - 1]) || (_isAsciiPunctuation(text[endIndex - 1]) && !preservedPunctuationChars.has(text[endIndex - 1])))) endIndex -= 1;
 
   return text.slice(startIndex, endIndex).trim();
 }
 
 function _normalizeActivityArgument(text:string, preservedPunctuationChars:Set<string>):string {
-  return _stripBoundaryPunctuation(_normalizeWhitespaceAndPunctuationOutsideQuotes(text, preservedPunctuationChars));
+  return _stripBoundaryPunctuation(_normalizeWhitespaceAndPunctuationOutsideQuotes(text, preservedPunctuationChars), preservedPunctuationChars);
 }
 
 function _normalizeSpeechActivityText(activityText:string, speechVerb:'says'|'interrupts'):string {
@@ -150,7 +150,7 @@ function _normalizeParsedActivityText(activityText:string):string {
   const trimmedActivityText = activityText.trim();
 
   if (trimmedActivityText.startsWith('@')) {
-    const targetText = _normalizeActivityArgument(trimmedActivityText.slice(1), new Set(['.', '\'', '-']));
+    const targetText = _normalizeActivityArgument(trimmedActivityText.slice(1), new Set(['.', '%', '\'', '-']));
     return targetText ? `@ ${targetText}` : '@';
   }
   if (trimmedActivityText.startsWith('says')) return _normalizeSpeechActivityText(trimmedActivityText, 'says');
@@ -186,7 +186,7 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 }
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
-  const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '"', '\'', '-']));
+  const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '%', '"', '\'', '-']));
   const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
   let splitIndex = -1;
 

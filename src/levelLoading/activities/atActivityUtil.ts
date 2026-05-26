@@ -1,17 +1,25 @@
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
-import Position from "@/game/types/Position";
-import { createWalkEvent } from "@/game/itineraryUtil";
-import { findRoom } from "@/game/roomUtil";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activityUtil";
+import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 import { normalizeId } from "@/game/idUtil";
 
-function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:string, targetPosition:Position|null } {
-  const targetText = activityText.trim().slice(1).trim();
+function _parseRoomPercentTarget(targetText:string):number|null {
+  if (!targetText.endsWith('%')) return null;
+  const percentText = targetText.slice(0, -1).trim();
+  if (!/^\d+$/.test(percentText)) throw new Error(`invalid room percent target '${targetText}'`);
+  const targetPercent = Number(percentText);
+  if (!Number.isInteger(targetPercent) || targetPercent < 0 || targetPercent > 100) {
+    throw new Error(`invalid room percent target '${targetText}'`);
+  }
+  return targetPercent;
+}
+
+function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:string, targetXPercent:number|null } {
+  const targetText = stripTrailingPeriod(activityText.trim().slice(1).trim());
   if (!targetText) throw new Error(`missing room id in authored activity '${activityText}'`);
 
   const targetId = normalizeId(targetText);
   const exactRoom = context.level.rooms.find(room => room.id === targetId) || null;
-  if (exactRoom) return { roomId:exactRoom.id, targetPosition:null };
+  if (exactRoom) return { roomId:exactRoom.id, targetXPercent:null };
 
   const separatorIndex = targetText.lastIndexOf('.');
   if (separatorIndex <= 0 || separatorIndex === targetText.length - 1) {
@@ -19,14 +27,11 @@ function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:s
   }
 
   const authoredRoomText = targetText.slice(0, separatorIndex).trim();
-  const authoredMarkerText = targetText.slice(separatorIndex + 1).trim();
+  const authoredPercentText = targetText.slice(separatorIndex + 1).trim();
   const roomId = normalizeId(authoredRoomText);
-  const markerId = normalizeId(authoredMarkerText);
-  if (!roomId || !markerId) throw new Error(`missing room or marker id in authored activity '${activityText}'`);
-  const room = findRoom(context.level.rooms, roomId);
-  const markerPosition = room.positionMarkersById[markerId];
-  if (!markerPosition) throw new Error(`unknown position marker ${authoredRoomText}.${authoredMarkerText}`);
-  return { roomId, targetPosition:markerPosition };
+  const targetXPercent = _parseRoomPercentTarget(authoredPercentText);
+  if (!roomId || targetXPercent === null) throw new Error(`unknown room id '${targetText}' in authored activity '${activityText}'`);
+  return { roomId, targetXPercent };
 }
 
 export function tryCreateAtActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
@@ -35,22 +40,13 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
 
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
-  const { roomId:targetRoomId, targetPosition } = _parseAtTarget(trimmedActivityText, context);
-  if (findCurrentRoom(context.level, context.state.position).id === targetRoomId && !targetPosition) return [];
+  const { roomId:targetRoomId, targetXPercent } = _parseAtTarget(trimmedActivityText, context);
+  if (findCurrentRoom(context.level, context.state.position).id === targetRoomId && targetXPercent === null) return [];
   const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
     .filter(([characterId]) => characterId !== context.character.id)
     .filter(([, state]) => findCurrentRoom(context.level, state.waypoint.position).id === targetRoomId)
     .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y}`));
-  const currentRoomId = findCurrentRoom(context.level, context.state.position).id;
-  let unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, targetPosition);
-  if (!unscheduledEvents.length && targetPosition && currentRoomId === targetRoomId
-    && (context.state.position.x !== targetPosition.x || context.state.position.y !== targetPosition.y)) {
-    const currentRoom = findRoom(context.level.rooms, targetRoomId);
-    const moveResult = createWalkEvent(currentRoom, 0, context.state.position.x, context.state.position.y,
-      targetPosition.x, targetPosition.y);
-    if (!moveResult.event || moveResult.wasClipped) throw new Error(`unable to reach marker in room ${targetRoomId}`);
-    unscheduledEvents = [moveResult.event];
-  }
+  const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, null, targetXPercent);
   const scheduledEvents = context.timestampKind === 'absolute'
     ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, findEarliestAbsoluteActivityStartTime(context.state))
     : scheduleEventsToStartAtTime(unscheduledEvents, activityStartTime, context.state.time);

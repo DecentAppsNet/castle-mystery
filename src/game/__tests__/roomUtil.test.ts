@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { calcRoomsBoundingRect, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomNearestToPosition, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints } from '../roomUtil';
+import { calcRoomsBoundingRect, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints } from '../roomUtil';
 import Character from '../types/Character';
 import Rect from '../types/Rect';
 import Room from '../types/Room';
@@ -35,7 +35,6 @@ function _createRoom(id:string, rect:Rect, exits:RoomExit[] = [], waypoints:Wayp
     items:[],
     exits,
     waypoints,
-    positionMarkersById:{},
     isDiscovered:false,
     isObscured:false
   };
@@ -166,6 +165,14 @@ describe('roomUtil', () => {
     });
   });
 
+  describe('findRoomAtPositionOrTouchingBoundary()', () => {
+    it('returns the room when the position lies on its boundary', () => {
+      const hall = _createRoom('Hall', ROOM_RECT);
+
+      expect(findRoomAtPositionOrTouchingBoundary([hall], 20, 20)).toBe(hall);
+    });
+  });
+
   describe('findRoomNearestToPosition()', () => {
     it('returns the nearest room for a position outside all rooms', () => {
       const hall = _createRoom('Hall', { x:0, y:0, width:20, height:20 });
@@ -244,11 +251,11 @@ describe('roomUtil', () => {
   });
 
   describe('generateWaypoints()', () => {
-    it('creates a single midpoint waypoint for a simple room with no exits', () => {
+    it('creates a single floor waypoint for a simple room with no exits', () => {
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, []);
 
       expect(waypoints).toEqual([
-        expect.objectContaining({ position:{ x:10, y:10 } })
+        expect.objectContaining({ position:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET } })
       ]);
       _assertAllWaypointsAreInsideRoomRect(waypoints, ROOM_RECT);
     });

@@ -13,10 +13,10 @@ import { loadItineraries } from "./levelItineraryLoader";
 import LoadLevelException from "./LoadLevelException";
 import {
   addRoomExitsFromRoomsSection,
-  addRoomPositionMarkersFromSections,
   applyRoomMetadataFromSections,
   createRoomsFromMapSection,
   generateRoomWaypointsForLevel,
+  validateRoomGridLegendEntries,
   validateMapLegendRoomsAgainstRoomsSection
 } from "./levelRoomLayoutLoader";
 import {
@@ -293,7 +293,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
     () => applyRoomMetadataFromSections(level, sections.rooms || ""));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-    () => addRoomPositionMarkersFromSections(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions)));
+    () => validateRoomGridLegendEntries(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions)));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
     () => addRoomExitsFromRoomsSection(level, sections.rooms || "", itemDefinitions));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,

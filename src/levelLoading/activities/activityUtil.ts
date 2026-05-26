@@ -10,7 +10,8 @@ import RoomExit from "@/game/types/RoomExit";
 import Waypoint from "@/game/types/Waypoint";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
-import { findExitWaypoint, findNearestWaypoint, findRoom } from "@/game/roomUtil";
+import { isPositionStrictlyInRect } from "@/game/rectUtil";
+import { findExitWaypoint, findNearestWaypoint, findRoom, FLOOR_WAYPOINT_Y_OFFSET } from "@/game/roomUtil";
 import {
   createItineraryIndex,
   createRoomEntryEvent,
@@ -59,13 +60,50 @@ export function createWaypointKey(waypoint:Waypoint):string {
 function _findPreferredWaypointInRoom(room:Room, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
   const centerX = Math.floor(room.rect.x + room.rect.width / 2);
   const centerY = Math.floor(room.rect.y + room.rect.height / 2);
-  return findNearestWaypoint(room, centerX, centerY, waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
+  const isInteriorWaypoint = (waypoint:Waypoint) => isPositionStrictlyInRect(waypoint.position.x, waypoint.position.y, room.rect);
+
+  try {
+    return findNearestWaypoint(room, centerX, centerY,
+      waypoint => isInteriorWaypoint(waypoint) && !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
+  } catch {
+    try {
+      return findNearestWaypoint(room, centerX, centerY, isInteriorWaypoint);
+    } catch {
+      try {
+        return findNearestWaypoint(room, centerX, centerY, waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
+      } catch {
+        return findNearestWaypoint(room, centerX, centerY);
+      }
+    }
+  }
 }
 
-function _findTargetWaypointInRoom(room:Room, targetPosition:Position|null, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
+function _findFloorWaypoints(room:Room, occupiedWaypointKeys:Set<string>):Waypoint[] {
+  const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+  const unclaimedFloorWaypoints = room.waypoints.filter(waypoint => waypoint.position.y === floorY
+    && !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
+  if (unclaimedFloorWaypoints.length > 0) return unclaimedFloorWaypoints;
+  return room.waypoints.filter(waypoint => waypoint.position.y === floorY);
+}
+
+function _findNearestFloorWaypointByX(room:Room, targetX:number, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
+  const floorWaypoints = _findFloorWaypoints(room, occupiedWaypointKeys);
+  if (!floorWaypoints.length) throw new Error(`unable to find floor waypoint in room ${room.id}`);
+  return floorWaypoints.reduce((nearestWaypoint, waypoint) => {
+    if (!nearestWaypoint) return waypoint;
+    const nearestDistance = Math.abs(nearestWaypoint.position.x - targetX);
+    const distance = Math.abs(waypoint.position.x - targetX);
+    return distance < nearestDistance ? waypoint : nearestWaypoint;
+  }, null as Waypoint | null)!;
+}
+
+function _findTargetWaypointInRoom(room:Room, targetPosition:Position|null, occupiedWaypointKeys:Set<string> = new Set(), targetXPercent:number|null = null):Waypoint {
+  if (targetXPercent !== null) {
+    const targetX = room.rect.x + room.rect.width * (targetXPercent / 100);
+    return _findNearestFloorWaypointByX(room, targetX, occupiedWaypointKeys);
+  }
   if (!targetPosition) return _findPreferredWaypointInRoom(room, occupiedWaypointKeys);
-  return findNearestWaypoint(room, targetPosition.x, targetPosition.y,
-    waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
+  return findNearestWaypoint(room, targetPosition.x, targetPosition.y, waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
 }
 
 function _findConnectingExit(room:Room, otherRoomId:string):RoomExit {
@@ -280,10 +318,10 @@ export function planMovementWithinRoom(room:Room, fromWaypoint:Waypoint, targetW
 }
 
 export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoomId:string,
-  occupiedWaypointKeys:Set<string> = new Set(), targetPosition:Position|null = null):ItineraryEvent[] {
+  occupiedWaypointKeys:Set<string> = new Set(), targetPosition:Position|null = null, targetXPercent:number|null = null):ItineraryEvent[] {
   const currentRoom = findCurrentRoom(level, fromWaypoint.position);
   const targetRoom = findRoom(level.rooms, targetRoomId);
-  const targetWaypoint = _findTargetWaypointInRoom(targetRoom, targetPosition, occupiedWaypointKeys);
+  const targetWaypoint = _findTargetWaypointInRoom(targetRoom, targetPosition, occupiedWaypointKeys, targetXPercent);
   if (currentRoom.id === targetRoomId) {
     if (fromWaypoint.position.x === targetWaypoint.position.x && fromWaypoint.position.y === targetWaypoint.position.y) return [];
     return planMovementWithinRoom(currentRoom, fromWaypoint, targetWaypoint, 0);

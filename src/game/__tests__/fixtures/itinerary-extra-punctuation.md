@@ -31,14 +31,13 @@ HL
 * exits=Hall
 
 ```
-...Y.
+.....
 .....
 ..Q.B
 ```
 
 * Q=Queen
 * B=Book
-* Y=NE
 
 # characters
 
@@ -63,5 +62,5 @@ HL
    0:00:00    King    @   Hall   
 0:00:00 Queen @ Library
 0:00:05   Queen   takes   Book.   
-  0:00:06   King   @   Library.NE.   
+  0:00:06   King   @   Library.100%.   
 0:00:07   King   says,   "Hello, dear."   
