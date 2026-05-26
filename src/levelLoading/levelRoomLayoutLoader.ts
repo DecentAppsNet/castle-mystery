@@ -260,9 +260,12 @@ function _findSharedWallSectionBetweenRooms(room1:Room, room2:Room):Rect|null {
 }
 
 function _findExitPositionFromSharedWallSection(sharedWallSection:Rect):[x:number, y:number] {
-  return sharedWallSection.height === 0
-    ? [Math.round(sharedWallSection.x + sharedWallSection.width / 2), sharedWallSection.y]
-    : [sharedWallSection.x, sharedWallSection.y + sharedWallSection.height];
+  return [sharedWallSection.x, sharedWallSection.y + sharedWallSection.height];
+}
+
+function _throwIfSharedWallSectionIsHorizontal(sharedWallSection:Rect, pendingExit:PendingExit):void {
+  if (sharedWallSection.width === 0) return;
+  throw new Error(`ceiling or floor exits are not supported for ${pendingExit.room1Id}|${pendingExit.room2Id}`);
 }
 
 function _parseExitReference(exitText:string, itemDefinitions:Map<string, { title:string }>):ParsedExitReference {
@@ -369,6 +372,7 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
   const room2 = findRoom(level.rooms, room2Id);
   const sharedWallSection = _findSharedWallSectionBetweenRooms(room1, room2);
   assertNonNullable(sharedWallSection, 'rooms must be adjacent');
+  _throwIfSharedWallSectionIsHorizontal(sharedWallSection, pendingExit);
   const [x, y] = _findExitPositionFromSharedWallSection(sharedWallSection);
   const exitType = _determineExitType(pendingExit);
   const exit:RoomExit = {

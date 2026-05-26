@@ -8,9 +8,9 @@
 # map
 
 ```
-.ABC
-.HHH
-PGT.
+AH.
+BHT
+CHGP
 ```
 
 * A=First Cell

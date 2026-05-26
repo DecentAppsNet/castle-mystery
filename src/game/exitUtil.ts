@@ -1,3 +1,5 @@
+import { assert } from "decent-portal";
+
 import ExitStatus from "./types/ExitStatus";
 import ExitType from "./types/ExitType";
 import Item from "./types/Item";
@@ -5,10 +7,9 @@ import Room from "./types/Room";
 import RoomExit, { LOCKABLE_WITHOUT_INV_CHECK } from "./types/RoomExit";
 
 function _findUndiscoveredRoomSideLabel(exit:RoomExit, room:Room):string {
-  if (exit.y === room.rect.y) return "the south side";
-  if (exit.y === room.rect.y + room.rect.height) return "the north side";
   if (exit.x === room.rect.x) return "the east side";
   if (exit.x === room.rect.x + room.rect.width) return "the west side";
+  assert(false, `ceiling/floor exits are not supported for room ${room.id} at (${exit.x}, ${exit.y})`);
   return "that side";
 }
 

@@ -6,10 +6,7 @@
 # map
 
 ```
-SSS
-W..
-W..
-FL.
+SWFL
 ```
 
 * S=Sanctum

@@ -6,10 +6,9 @@
 # map
 
 ```
-SSS
-WTE
-WTE
-WFL
+SW...
+.WFTE
+.WFLE
 ```
 
 * S=Sanctum

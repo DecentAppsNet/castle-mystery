@@ -6,9 +6,7 @@
 # map
 
 ```
-W.
-W.
-FL
+WFL
 ```
 
 * W=West Hall

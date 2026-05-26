@@ -118,12 +118,12 @@ describe('roomUtil', () => {
 
   describe('findExitWaypoint()', () => {
     it('returns the waypoint positioned at the in-room side of an exit', () => {
-      const exit = _createExit('North', 10, 0);
+      const exit = _createExit('West', 0, 10);
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, [exit]);
 
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exit, waypoints);
 
-      expect(exitWaypoint.position).toEqual({ x:10, y:5 });
+      expect(exitWaypoint.position).toEqual({ x:5, y:10 });
       expect(waypoints).toContain(exitWaypoint);
     });
 
@@ -138,7 +138,7 @@ describe('roomUtil', () => {
     });
 
     it('throws when the waypoint collection does not contain the exit waypoint', () => {
-      const exit = _createExit('North', 10, 0);
+      const exit = _createExit('West', 0, 10);
 
       expect(() => findExitWaypoint(ROOM_ID, ROOM_RECT, exit, [])).toThrow(/missing exit waypoint/i);
     });
@@ -147,6 +147,12 @@ describe('roomUtil', () => {
       const invalidExit = _createExit('North', 10, 10);
 
       expect(() => findExitWaypoint(ROOM_ID, ROOM_RECT, invalidExit, [])).toThrow(/not on the boundary/i);
+    });
+
+    it('asserts when the exit is on the ceiling or floor', () => {
+      const ceilingExit = _createExit('North', 10, 0);
+
+      expect(() => findExitWaypoint(ROOM_ID, ROOM_RECT, ceilingExit, [])).toThrow(/ceiling\/floor exits are not supported/i);
     });
   });
 
@@ -262,36 +268,19 @@ describe('roomUtil', () => {
 
     it('creates boundary and in-room waypoints for each exit', () => {
       const exits = [
-        _createExit('North', 10, 0),
         _createExit('West', 0, 12),
         _createExit('East', 20, 18)
       ];
 
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
 
-      expect(_findWaypoint(waypoints, 10, 0)).toBeDefined();
-      expect(_findWaypoint(waypoints, 10, 5)).toBeDefined();
       expect(_findWaypoint(waypoints, 0, 12)).toBeDefined();
       expect(_findWaypoint(waypoints, 5, 12)).toBeDefined();
       expect(_findWaypoint(waypoints, 20, 18)).toBeDefined();
       expect(_findWaypoint(waypoints, 15, 18)).toBeDefined();
     });
 
-    it('creates vertical spine waypoints at left-right exit heights when the ceiling has an exit', () => {
-      const exits = [
-        _createExit('North', 8, 0),
-        _createExit('West', 0, 6),
-        _createExit('East', 20, 14)
-      ];
-
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
-
-      expect(_findWaypoint(waypoints, 8, 5)).toBeDefined();
-      expect(_findWaypoint(waypoints, 8, 6)).toBeDefined();
-      expect(_findWaypoint(waypoints, 8, 14)).toBeDefined();
-    });
-
-    it('creates a midpoint vertical spine when the ceiling has no exits', () => {
+    it('creates a midpoint vertical spine at left-right exit heights', () => {
       const exits = [
         _createExit('West', 0, 6),
         _createExit('East', 20, 14)
@@ -305,31 +294,27 @@ describe('roomUtil', () => {
 
     it('connects waypoints only to the nearest orthogonal neighbors', () => {
       const exits = [
-        _createExit('North', 8, 0),
-        _createExit('North 2', 14, 0),
         _createExit('West', 0, 6),
         _createExit('East', 20, 14)
       ];
 
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
-      const spineWaypoint = _findWaypoint(waypoints, 8, 6);
+      const spineWaypoint = _findWaypoint(waypoints, 10, 6);
 
       expect(spineWaypoint).toBeDefined();
       expect(spineWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
         { x:5, y:6 },
-        { x:14, y:6 },
-        { x:8, y:5 },
-        { x:8, y:14 }
+        { x:10, y:14 }
       ]));
-      expect(spineWaypoint?.adjacentWaypoints).toHaveLength(4);
+      expect(spineWaypoint?.adjacentWaypoints).toHaveLength(2);
     });
 
     it('creates exit routes for rooms whose exits are reachable by waypoints', () => {
       const exits = [
-        _createExit('North', 10, 0),
-        _createExit('South', 10, 20),
         _createExit('West', 0, 10),
-        _createExit('East', 20, 10)
+        _createExit('East', 20, 10),
+        _createExit('West', 0, 10),
+        _createExit('East 2', 20, 14)
       ];
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
 
@@ -347,11 +332,11 @@ describe('roomUtil', () => {
 
     it('creates exit routes when the room id is the second side of an exit', () => {
       const exits:RoomExit[] = [{
-        id:createRoomExitId('North', ROOM_ID, 10, 0),
-        room1Id:'North',
+        id:createRoomExitId('West', ROOM_ID, 0, 10),
+        room1Id:'West',
         room2Id:ROOM_ID,
-        x:10,
-        y:0,
+        x:0,
+        y:10,
         exitType:ExitType.doorway,
         lockableFromRoom1With:null,
         lockableFromRoom2With:null,
@@ -362,17 +347,23 @@ describe('roomUtil', () => {
 
       waypoints
         .filter(waypoint => waypoint !== exitWaypoint)
-        .forEach(waypoint => _assertExitRouteTerminates(exitWaypoint, waypoint, 'North'));
+        .forEach(waypoint => _assertExitRouteTerminates(exitWaypoint, waypoint, 'West'));
     });
 
     it('reuses an existing waypoint when exit alignment already creates the same position', () => {
       const exits = [
-        _createExit('North', 5, 0),
+        _createExit('West', 0, 5),
         _createExit('West', 0, 10)
       ];
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
 
-      expect(waypoints.filter(waypoint => waypoint.position.x === 5 && waypoint.position.y === 10)).toHaveLength(1);
+      expect(waypoints.filter(waypoint => waypoint.position.x === 10 && waypoint.position.y === 5)).toHaveLength(1);
+    });
+
+    it('asserts when asked to generate waypoints for a ceiling or floor exit', () => {
+      const exits = [_createExit('North', 10, 0)];
+
+      expect(() => generateWaypoints(ROOM_ID, ROOM_RECT, exits)).toThrow(/ceiling\/floor exits are not supported/i);
     });
   });
 });

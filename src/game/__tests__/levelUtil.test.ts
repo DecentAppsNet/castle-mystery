@@ -46,6 +46,7 @@ import duplicateRoomLegendEntryText from './fixtures/duplicate-room-legend-entry
 import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsections-case.md?raw';
 import doorsArrivalTimestampText from './fixtures/doors-arrival-timestamp.md?raw';
 import invalidLockableExitItemText from './fixtures/invalid-lockable-exit-item.md?raw';
+import invalidCeilingFloorExitText from './fixtures/invalid-ceiling-floor-exit.md?raw';
 import lockRequiredItemMissingText from './fixtures/lock-required-item-missing.md?raw';
 import unlockRequiredItemMissingText from './fixtures/unlock-required-item-missing.md?raw';
 import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-solution-category-group-names.md?raw';
@@ -388,6 +389,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-lockable-exit-item.md:12');
       expect((error as LoadLevelException).message).toContain(`unknown item 'Missing Key' in 'Hallway (lockable with Missing Key)'`);
+    }
+  });
+
+  it('wraps ceiling or floor exits with filename and line number', () => {
+    try {
+      loadLevelFromText(invalidCeilingFloorExitText, 'invalid-ceiling-floor-exit.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-ceiling-floor-exit.md:18');
+      expect((error as LoadLevelException).message).toContain('ceiling or floor exits are not supported');
     }
   });
 

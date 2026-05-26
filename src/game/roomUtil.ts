@@ -1,4 +1,4 @@
-import { assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 
 import Rect from "./types/Rect";
 import Room from "./types/Room";
@@ -29,21 +29,29 @@ function _clampExitWaypointAxis(value:number, minValue:number, maxValue:number):
   return Math.min(maxValue, Math.max(minValue, value));
 }
 
+function _assertExitIsNotOnCeilingOrFloor(roomId:string, roomRect:Rect, exit:RoomExit):void {
+  if (exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width) return;
+  assert(
+    exit.y !== roomRect.y && exit.y !== roomRect.y + roomRect.height,
+    `ceiling/floor exits are not supported for room ${roomId} at (${exit.x}, ${exit.y})`
+  );
+}
+
 function _findExitWaypointPosition(roomId:string, roomRect:Rect, exit:RoomExit):Position {
   const minX = roomRect.x + EXIT_WAYPOINT_INSET;
   const maxX = roomRect.x + roomRect.width - EXIT_WAYPOINT_INSET;
   const minY = roomRect.y + EXIT_WAYPOINT_INSET;
   const maxY = roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
 
+  _assertExitIsNotOnCeilingOrFloor(roomId, roomRect, exit);
   if (exit.x === roomRect.x) return { x: minX, y: exit.y === roomRect.y ? minY : (exit.y === roomRect.y + roomRect.height ? maxY : exit.y) };
   if (exit.x === roomRect.x + roomRect.width) return { x: maxX, y: exit.y === roomRect.y ? minY : (exit.y === roomRect.y + roomRect.height ? maxY : exit.y) };
-  if (exit.y === roomRect.y) return { x: _clampExitWaypointAxis(exit.x, minX, maxX), y: minY };
-  if (exit.y === roomRect.y + roomRect.height) return { x: _clampExitWaypointAxis(exit.x, minX, maxX), y: maxY };
   throw new Error(`exit at (${exit.x}, ${exit.y}) is not on the boundary of room ${roomId}`);
 }
 
 function _findExitBoundaryWaypointPosition(roomId:string, roomRect:Rect, exit:RoomExit):Position {
-  if (exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width || exit.y === roomRect.y || exit.y === roomRect.y + roomRect.height) {
+  _assertExitIsNotOnCeilingOrFloor(roomId, roomRect, exit);
+  if (exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width) {
     return { x: exit.x, y: exit.y };
   }
   throw new Error(`exit at (${exit.x}, ${exit.y}) is not on the boundary of room ${roomId}`);
@@ -228,10 +236,8 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
     return waypoint;
   };
 
-  const northExits = exits.filter(exit => exit.y === roomRect.y);
-  const spineXs = northExits.length > 0
-    ? _findUniqueSortedNumbers(northExits.map(exit => exit.x))
-    : [Math.round(roomRect.x + roomRect.width / 2)];
+  exits.forEach(exit => _assertExitIsNotOnCeilingOrFloor(roomId, roomRect, exit));
+  const spineXs = [Math.round(roomRect.x + roomRect.width / 2)];
   const floorY = roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
   const frontWaypointPositions = exits.map(exit => _findExitWaypointPosition(roomId, roomRect, exit));
   const spineYs = _findUniqueSortedNumbers(frontWaypointPositions.length > 0
