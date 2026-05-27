@@ -5,6 +5,7 @@ import { assert } from "decent-portal";
 import { COLOR_BLACK } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "../roomUtil";
+import { doesStairFlightEndAtPosition, findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "../stairUtil";
 import Position from "../types/Position";
 import RoomExit from "../types/RoomExit";
 import Room from "../types/Room";
@@ -13,7 +14,7 @@ import StairFlight from "../types/StairFlight";
 
 const PREFERRED_STEP_RISE_RUN = 1;
 const STAIRS_LINE_WIDTH_MULTIPLIER = 0.2;
-const STAIR_ANGLE_TOLERANCE = 0.000001;
+const STAIR_ANGLE_TOLERANCE = STAIR_POSITION_TOLERANCE;
 
 function _calcStairStepCount(totalDistance:number):number {
   return Math.max(1, Math.round(totalDistance / PREFERRED_STEP_RISE_RUN));
@@ -66,29 +67,13 @@ function _findSortedNonFloorExits(room:Room, floorY:number):RoomExit[] {
 }
 
 function _findStairIntersectionXAtY(flights:StairFlight[], targetY:number):number|null {
-  for (const flight of flights) {
-    const minY = Math.min(flight.startPosition.y, flight.endPosition.y);
-    const maxY = Math.max(flight.startPosition.y, flight.endPosition.y);
-    if (targetY < minY - STAIR_ANGLE_TOLERANCE || targetY > maxY + STAIR_ANGLE_TOLERANCE) continue;
-
-    const totalRise = flight.endPosition.y - flight.startPosition.y;
-    const totalRun = flight.endPosition.x - flight.startPosition.x;
-    if (Math.abs(totalRise) <= STAIR_ANGLE_TOLERANCE) continue;
-    const yRatio = (targetY - flight.startPosition.y) / totalRise;
-    return flight.startPosition.x + totalRun * yRatio;
-  }
-  return null;
-}
-
-function _doesFlightEndAtExit(flights:StairFlight[], exit:RoomExit):boolean {
-  return flights.some(flight => Math.abs(flight.endPosition.x - exit.x) <= STAIR_ANGLE_TOLERANCE
-    && Math.abs(flight.endPosition.y - exit.y) <= STAIR_ANGLE_TOLERANCE);
+  return findStairFlightIntersectionAtY(flights, targetY)?.x ?? null;
 }
 
 function _drawLandings(exits:RoomExit[], flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   exits
     .forEach(exit => {
-      if (_doesFlightEndAtExit(flights, exit)) return;
+      if (doesStairFlightEndAtPosition(flights, exit)) return;
       const stairIntersectionX = _findStairIntersectionXAtY(flights, exit.y);
       if (stairIntersectionX === null) return;
       _drawHorizontalLine({ x:stairIntersectionX, y:exit.y }, { x:exit.x, y:exit.y }, scalingFactors, context);

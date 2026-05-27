@@ -486,8 +486,8 @@ describe('levelUtil itinerary loading', () => {
 
   it('allows later simultaneous arrival timestamps in the doors itinerary', () => {
     const laterArrivalText = doorsArrivalTimestampText
-      .replace('0:00:12 Amos @ Torture Chamber', '0:00:13 Amos @ Torture Chamber')
-      .replace('0:00:12 Simon @ Hallway', '0:00:13 Simon @ Hallway');
+      .replace('0:00:12 Amos @ Torture Chamber', '0:00:17 Amos @ Torture Chamber')
+      .replace('0:00:12 Simon @ Hallway', '0:00:17 Simon @ Hallway');
 
     expect(() => loadLevelFromText(laterArrivalText, 'doors-arrival-timestamp.md')).not.toThrow();
   });

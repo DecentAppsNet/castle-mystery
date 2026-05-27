@@ -407,14 +407,16 @@ export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string, i
 
 export function generateRoomWaypointsForLevel(level:Level) {
   level.rooms.forEach((room, index) => {
-    const waypoints = generateWaypoints(room.id, room.rect, room.exits);
+    const baseWaypoints = generateWaypoints(room.id, room.rect, room.exits);
     const roomWithWaypoints = {
       ...room,
-      waypoints
+      waypoints:baseWaypoints
     };
+    const stairs = generateStairFlights(roomWithWaypoints);
     level.rooms[index] = {
       ...roomWithWaypoints,
-      stairs: generateStairFlights(roomWithWaypoints)
+      stairs,
+      waypoints: generateWaypoints(room.id, room.rect, room.exits, stairs)
     };
   });
 }

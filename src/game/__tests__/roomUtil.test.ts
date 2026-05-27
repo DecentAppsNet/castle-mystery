@@ -2,12 +2,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { calcRoomsBoundingRect, COLUMNS_PER_MAP_TILE, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints, roomWidthToColumnCount } from '../roomUtil';
+import { generateStairFlights } from '../stairFlightUtil';
 import Character from '../types/Character';
 import Rect from '../types/Rect';
 import Room from '../types/Room';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
 import RoomExit, { createRoomExitId } from '../types/RoomExit';
+import StairFlight from '../types/StairFlight';
 import Waypoint from '../types/Waypoint';
 
 const ROOM_ID = 'Room';
@@ -84,6 +86,18 @@ function _assertAllWaypointsAreInsideRoomRect(waypoints:Waypoint[], roomRect:Rec
 
 function _findWaypoint(waypoints:Waypoint[], x:number, y:number):Waypoint | undefined {
   return waypoints.find(waypoint => waypoint.position.x === x && waypoint.position.y === y);
+}
+
+function _findWaypointNear(waypoints:Waypoint[], x:number, y:number, precision:number = 3):Waypoint | undefined {
+  return waypoints.find(waypoint => {
+    return Math.abs(waypoint.position.x - x) < 10 ** -precision
+      && Math.abs(waypoint.position.y - y) < 10 ** -precision;
+  });
+}
+
+function _createStairs(rect:Rect, exits:RoomExit[]):StairFlight[] {
+  const baseWaypoints = generateWaypoints(ROOM_ID, rect, exits);
+  return generateStairFlights(_createRoom(ROOM_ID, rect, exits, baseWaypoints));
 }
 
 function _assertExitRouteTerminates(exitWaypoint:Waypoint, startWaypoint:Waypoint, adjacentRoomId:string) {
@@ -292,38 +306,45 @@ describe('roomUtil', () => {
       expect(_findWaypoint(waypoints, 17.5, 20 - FLOOR_WAYPOINT_Y_OFFSET)).toBeDefined();
     });
 
-    it('creates a centered vertical spine at non-floor exit heights', () => {
-      const exits = [
-        _createExit('West', 0, 6),
-        _createExit('East', 20, 14)
-      ];
+    it('creates stair and landing waypoints instead of a centered spine when stairs are provided', () => {
+      const exits = [_createExit('West', 0, 10)];
+      const stairs = _createStairs(ROOM_RECT, exits);
 
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, stairs);
 
-      expect(_findWaypoint(waypoints, 7.5, 6)).toBeDefined();
-      expect(_findWaypoint(waypoints, 7.5, 14)).toBeDefined();
+      expect(_findWaypointNear(waypoints, 12.499, 10)).toBeDefined();
+      expect(_findWaypoint(waypoints, 7.5, 10)).toBeUndefined();
     });
 
-    it('connects floor waypoints horizontally and the spine vertically', () => {
-      const exits = [
-        _createExit('West', 0, 6),
-        _createExit('East', 20, 14)
-      ];
+    it('connects landing waypoints to the exit and the stair flight', () => {
+      const exits = [_createExit('West', 0, 10)];
+      const stairs = _createStairs(ROOM_RECT, exits);
 
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
-      const spineWaypoint = _findWaypoint(waypoints, 7.5, 6);
-      const floorWaypoint = _findWaypoint(waypoints, 7.5, 20 - FLOOR_WAYPOINT_Y_OFFSET);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, stairs);
+      const landingWaypoint = _findWaypointNear(waypoints, 12.499, 10);
 
-      expect(spineWaypoint).toBeDefined();
-      expect(spineWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
-        { x:0, y:6 },
-        { x:7.5, y:14 }
+      expect(landingWaypoint).toBeDefined();
+      expect(landingWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
+        { x:0, y:10 },
+        { x:2.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET }
       ]));
-      expect(spineWaypoint?.adjacentWaypoints).toHaveLength(2);
-      expect(floorWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
-        { x:2.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
+    });
+
+    it('connects a floor stair start to both equally near floor waypoints', () => {
+      const rect = { x:0, y:0, width:40, height:20 };
+      const stairs:StairFlight[] = [{
+        startPosition:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
+        endPosition:{ x:0, y:10 }
+      }];
+
+      const waypoints = generateWaypoints(ROOM_ID, rect, [], stairs);
+      const stairStartWaypoint = _findWaypointNear(waypoints, 10, 20 - FLOOR_WAYPOINT_Y_OFFSET);
+
+      expect(stairStartWaypoint).toBeDefined();
+      expect(stairStartWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
+        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
         { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
-        { x:7.5, y:14 }
+        { x:0, y:10 }
       ]));
     });
 
@@ -341,14 +362,15 @@ describe('roomUtil', () => {
       expect(waypoints.every(waypoint => waypoint.position.y === 20 - FLOOR_WAYPOINT_Y_OFFSET)).toBe(true);
     });
 
-    it('creates exit routes for rooms whose exits are reachable by waypoints', () => {
+    it('creates exit routes for rooms whose exits are reachable by stair and landing waypoints', () => {
       const exits = [
         _createExit('West', 0, 10),
         _createExit('East', 20, 10),
         _createExit('West', 0, 10),
         _createExit('East 2', 20, 14)
       ];
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
+      const stairs = _createStairs(ROOM_RECT, exits);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, stairs);
 
       _assertAllWaypointsAreInsideRoomRect(waypoints, ROOM_RECT);
       _assertAllWaypointsHaveNeighbors(waypoints);
@@ -374,7 +396,8 @@ describe('roomUtil', () => {
         lockableFromRoom2With:null,
         exitStatus:ExitStatus.open
       }];
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
+      const stairs = _createStairs(ROOM_RECT, exits);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, stairs);
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exits[0], waypoints);
 
       waypoints
@@ -382,14 +405,15 @@ describe('roomUtil', () => {
         .forEach(waypoint => _assertExitRouteTerminates(exitWaypoint, waypoint, 'West'));
     });
 
-    it('reuses one spine waypoint for multiple exits at the same height', () => {
+    it('reuses one landing waypoint for multiple exits at the same height', () => {
       const exits = [
         _createExit('West', 0, 10),
         _createExit('East', 20, 10)
       ];
-      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
+      const stairs = _createStairs(ROOM_RECT, exits);
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits, stairs);
 
-      expect(waypoints.filter(waypoint => waypoint.position.x === 7.5 && waypoint.position.y === 10)).toHaveLength(1);
+      expect(waypoints.filter(waypoint => _findWaypointNear([waypoint], 12.499, 10))).toHaveLength(1);
     });
 
     it('asserts when asked to generate waypoints for a ceiling exit', () => {

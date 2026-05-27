@@ -402,3 +402,84 @@ If the two characters are too far apart, the loader adds the short walk needed t
 Example: `0:15:03 John wanders`
 
 This is useful for background motion when you do not care about the exact destination.
+
+# "Solutions" Section
+
+The `solutions` section controls the answer panels shown in the mystery-solving UI.
+
+Keep this section simple: each solution is usually a sentence with one or more blanks.
+
+## What To Write
+
+The section can contain:
+* optional category lists at the top
+* one subsection per solution
+
+Category lists are useful for populating blanks with options. Category lists for characters, rooms, and items are automatically generated.
+
+## Category Lists
+
+Write category lines before any `##` solution subsections.
+
+Format:
+* `* category name=Option 1|Option 2|Option 3`
+
+When a blank's correct answer or answers all appear in one of these categories, the whole category becomes the answer list for that blank.
+
+Example:
+
+```md
+# solutions
+
+* people=King|Queen|Butler
+* rooms=Library|Kitchen|Study
+```
+
+## Solution Subsections
+
+Write one `##` subsection per solution.
+
+Useful lines inside a solution subsection:
+* `* solution=...` - the cloze sentence that must be solved by the player
+* `* title=...` - optional display title; default is the subsection name
+* `* unlockForItem=...` - optional; this solution stays locked until that item is found
+* `* unlockForSolution=...` - optional; this solution stays locked until another solution is completed
+
+Use only one unlock rule per solution.
+
+## Writing Blanks
+
+Put a blank answer inside square brackets:
+* `[Butler]` - one correct answer
+* `[searched|looked]` - multiple correct answers
+
+Answers inside a blank are separated by `|`.
+
+If the blank matches one of your categories, the player will see that category's full answer list. If it does not match any category, the player will only see the correct answer or answers.
+
+## Images And Separators
+
+Inside a `solution=` line, you can also use:
+* `(/path/to/image.png)` for an image
+* `---` for a visual separator between parts
+
+This is most useful for identity-style solutions.
+
+## Example
+
+```md
+# solutions
+
+* people=King|Queen|Butler
+* actions=searched|looked|hid
+
+## The Missing Book
+
+* title=The Missing Book
+* solution=[Butler] [searched|looked] the Library.
+
+## Secret Identities
+
+* unlockForItem=Royal Seal
+* solution=(/sprites/kingFace.png) = [King] --- (/sprites/queenFace.png) = [Queen]
+```
