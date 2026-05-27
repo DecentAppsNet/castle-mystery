@@ -16,6 +16,8 @@ import ScalingFactors from "./types/ScalingFactors";
 import { findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 
+const ROOM_NAVIGATION_TIME_OFFSET = 100;
+
 function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFactors):Rect {
   const roomLineWidth = scalingFactors.roomLineWidth;
   const characterWidthPixels = roomLineWidth * 15;
@@ -75,6 +77,11 @@ function _findNavigableRoomAtPosition(gameState:GameState, x:number, y:number):R
   return hoveredItem || hoveredExit ? null : hoveredRoom;
 }
 
+function _adjustRoomNavigationTime(gameState:GameState, time:number):number {
+  const levelEndTime = gameState.startTime + gameState.duration;
+  return Math.min(levelEndTime, time + ROOM_NAVIGATION_TIME_OFFSET); // Adding the offset lets the character arrive in the room instead of being on the door - looks better.
+}
+
 function _jumpToRoomTime(gameState:GameState, roomId:string) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   let targetCharacter = activeCharacter;
@@ -96,6 +103,7 @@ function _jumpToRoomTime(gameState:GameState, roomId:string) {
     targetTime = bestFallbackTime;
   }
   if (targetTime === null) return;
+  targetTime = _adjustRoomNavigationTime(gameState, targetTime);
 
   const wasPlaying = gameState.isPlaying;
   const targetCharacterId = targetCharacter?.id || null;

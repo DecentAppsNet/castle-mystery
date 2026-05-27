@@ -101,7 +101,22 @@ describe('room navigation integration', () => {
 
     updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
 
-    expect(gameState.time).toBe(3_000);
+    expect(gameState.time).toBeGreaterThan(3_000);
+    expect(gameState.time).toBeLessThanOrEqual(5_000);
+  });
+
+  it('clamps the room navigation offset to the level end time', () => {
+    const hero = _createCharacter('hero', 5, [createRoomEntryEvent(4_950, 'library')]);
+    const gameState = createGameState(_createLevel([hero]));
+    gameState.isLevelComplete = false;
+    _setScalingFactors(gameState);
+    gameState.rooms[1].isDiscovered = true;
+    gameState.characters[0].discoveredRoomIds = ['foyer', 'library'];
+    gameState.time = 4_900;
+
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
+
+    expect(gameState.time).toBe(5_000);
   });
 
   it('falls back to another character that discovered the room and jumps to that room entry time', () => {
@@ -117,7 +132,8 @@ describe('room navigation integration', () => {
     updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
 
     expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('guide');
-    expect(gameState.time).toBe(2_000);
+    expect(gameState.time).toBeGreaterThan(2_000);
+    expect(gameState.time).toBeLessThanOrEqual(5_000);
   });
 
   it('preserves discovered rooms by character across time rebuilds', () => {

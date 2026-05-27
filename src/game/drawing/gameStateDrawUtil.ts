@@ -9,7 +9,7 @@ import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { drawExitPopover } from "./exitDrawUtil";
-import { drawRoom } from "./roomDrawUtil";
+import { drawRoomCharactersAndEffects, drawRoomExit, drawRoomShell } from "./roomDrawUtil";
 import { calcScalingFactorsForRect } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
 import { calcLevelCameraRect } from "../cameraUtil";
@@ -58,12 +58,23 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
 export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
-  for(let roomI = 0; roomI < gameState.rooms.length; ++roomI) {
-    const room = gameState.rooms[roomI];
+  const drawnExitIds = new Set<string>();
+  const roomRenderStates = gameState.rooms.map(room => {
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
-    drawRoom(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.time, gameState.imageSet,
-      gameState.characters, activeRoom, gameState.isLevelComplete);
+    return { room, charactersInRoom, isActive };
+  });
+  for (const { room, isActive } of roomRenderStates) {
+    drawRoomShell(room, isActive, activeCharacter, gameState.activeEffects, gameState.scalingFactors, context, gameState.isLevelComplete);
+  }
+  for (const { room } of roomRenderStates) {
+    if (!room.isDiscovered) continue;
+    room.exits.forEach(exit => drawRoomExit(exit, gameState.characters, activeRoom, gameState.isLevelComplete,
+      gameState.scalingFactors, context, gameState.imageSet, drawnExitIds));
+  }
+  for (const { room, charactersInRoom, isActive } of roomRenderStates) {
+    drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
+      gameState.scalingFactors, context, gameState.time, gameState.imageSet, gameState.isLevelComplete);
   }
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   if (canShowHoverPopovers && gameState.hoveredItemId) {
