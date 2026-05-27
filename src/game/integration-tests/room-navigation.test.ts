@@ -90,6 +90,23 @@ describe('room navigation integration', () => {
     expect(gameState.hoveredRoomId).toBe('library');
   });
 
+  it('does not treat the active room as navigable for hover or click', () => {
+    const hero = _createCharacter('hero', 5, [createRoomEntryEvent(1_000, 'library')]);
+    const gameState = createGameState(_createLevel([hero]));
+    gameState.isLevelComplete = false;
+    _setScalingFactors(gameState);
+    gameState.rooms[0].isDiscovered = true;
+    gameState.time = 750;
+
+    updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:5, y:5 });
+
+    expect(gameState.hoveredRoomId).toBe(null);
+
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:5, y:5 });
+
+    expect(gameState.time).toBe(750);
+  });
+
   it('jumps to the nearest room entry time in the active character itinerary when clicking a discovered room', () => {
     const hero = _createCharacter('hero', 5, [createRoomEntryEvent(1_000, 'library'), createRoomEntryEvent(3_000, 'library')]);
     const gameState = createGameState(_createLevel([hero]));

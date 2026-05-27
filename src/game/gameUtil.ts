@@ -217,7 +217,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   context.canvas.style.cursor = (gameState.isLevelComplete || !activeRoom?.isObscured) && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
     ? "pointer"
-    : gameState.hoveredRoomId ? "all-scroll" : "default";
+    : gameState.hoveredRoomId ? "pointer" : "default";
 
   updateScalingFactorsAsNeeded(gameState, context);
   _syncSpeechBubbleEffects(gameState, isScrubbing);
