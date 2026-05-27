@@ -17,6 +17,7 @@ import ImageSet from "../types/ImageSet";
 import ExitType from "../types/ExitType";
 
 const OPEN_DOOR_NEARNESS = 2;
+const DRAW_WAYPOINTS = false;
 
 function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const crosshairSize = Math.max(2, Math.round(scalingFactors.roomLineWidth * 1.5));
@@ -104,7 +105,7 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   }
   context.fillStyle = COLOR_BLACK;
   room.exits.forEach(exit => drawRoomExit(exit, allCharacters, activeRoom, showFullContents, scalingFactors, context, imageSet));
-  _drawWaypointCrosshairs(room, scalingFactors, context);
+  if (DRAW_WAYPOINTS) _drawWaypointCrosshairs(room, scalingFactors, context);
   if (showFullContents || (isActive && activeCharacter)) {
     const highlightedCharacter = activeCharacter || charactersInRoom[0] || null;
     if (highlightedCharacter) drawVisibleCharactersInRoom(charactersInRoom, highlightedCharacter, effects, scalingFactors, context, time, imageSet);
