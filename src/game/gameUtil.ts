@@ -55,7 +55,12 @@ function _setActiveRoomDiscovered(gameState:GameState) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI];
   if (activeCharacter) {
     const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y);
-    if (activeRoom) activeRoom.isDiscovered = true;
+    if (activeRoom) {
+      if (!activeRoom.isDiscovered) activeRoom.isDiscovered = true;
+      if (!activeCharacter.discoveredRoomIds.includes(activeRoom.id)) {
+        activeCharacter.discoveredRoomIds = [...activeCharacter.discoveredRoomIds, activeRoom.id];
+      }
+    }
   }
 }
 
@@ -212,7 +217,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   context.canvas.style.cursor = (gameState.isLevelComplete || !activeRoom?.isObscured) && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
     ? "pointer"
-    : "default";
+    : gameState.hoveredRoomId ? "all-scroll" : "default";
 
   updateScalingFactorsAsNeeded(gameState, context);
   _syncSpeechBubbleEffects(gameState, isScrubbing);
@@ -240,6 +245,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     hoveredItemId:null,
     hoveredCharacterId:null,
     hoveredExitKey:null,
+    hoveredRoomId:null,
     viewedItemIds:new Set<string>(),
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isLevelComplete:false,

@@ -14,6 +14,7 @@ type Character = {
   x:number,
   y:number,
   waypoint:Waypoint,
+  discoveredRoomIds:string[],
   itinerary:Itinerary,
   itineraryIndex:ItineraryIndex
 }
@@ -30,6 +31,7 @@ export function duplicateCharacter(from:Character):Character {
     x:from.x,
     y:from.y,
     waypoint:from.waypoint,
+    discoveredRoomIds:[...from.discoveredRoomIds],
     itinerary:from.itinerary,
     itineraryIndex:from.itineraryIndex
   };

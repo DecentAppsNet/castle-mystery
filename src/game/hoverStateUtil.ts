@@ -3,6 +3,8 @@
 import { getExitHoverRect } from "./drawing/exitDrawUtil";
 import { findDiscoveredItemAtPosition } from "./drawing/itemDrawUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
+import { createPauseEffect } from "./effects/playPauseEffectUtil";
+import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
@@ -12,6 +14,7 @@ import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import ScalingFactors from "./types/ScalingFactors";
 import { findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
+import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 
 function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFactors):Rect {
   const roomLineWidth = scalingFactors.roomLineWidth;
@@ -38,6 +41,75 @@ function _findExitAtPosition(room:Room, x:number, y:number, gameState:GameState)
     if (isInside) return exit;
   }
   return null;
+}
+
+function _findClosestRoomEntryTime(gameState:GameState, character:Character, roomId:string):number|null {
+  const roomEntryTimes = character.itinerary
+    .filter(event => event.type === ItineraryEventType.ROOM_ENTRY && 'roomId' in event && event.roomId === roomId)
+    .map(event => event.startTime);
+  if (!roomEntryTimes.length) {
+    const initialCharacter = gameState.initialCharacters.find(candidate => candidate.id === character.id) || null;
+    const initialRoom = initialCharacter ? findRoomAtPosition(gameState.initialRooms, initialCharacter.x, initialCharacter.y) : null;
+    if (initialRoom?.id === roomId) roomEntryTimes.push(0);
+  }
+  if (!roomEntryTimes.length) return null;
+  return roomEntryTimes.reduce((closestTime, candidateTime) =>
+    Math.abs(candidateTime - gameState.time) < Math.abs(closestTime - gameState.time) ? candidateTime : closestTime);
+}
+
+function _findNavigableRoomAtPosition(gameState:GameState, x:number, y:number):Room|null {
+  const hoveredRoom = findRoomAtPosition(gameState.rooms, x, y);
+  if (!hoveredRoom?.isDiscovered) return null;
+  const hoveredCharacter = findCharacterAtPosition(gameState, x, y);
+  if (hoveredCharacter) return null;
+  if (gameState.isLevelComplete) {
+    const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, x, y, gameState.scalingFactors, { includeUndiscovered:true, ignoreRoomObscured:true });
+    const hoveredExit = !hoveredItem ? _findExitAtPosition(hoveredRoom, x, y, gameState) : null;
+    return hoveredItem || hoveredExit ? null : hoveredRoom;
+  }
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  if (activeRoom?.id !== hoveredRoom.id) return hoveredRoom;
+  const hoveredItem = findDiscoveredItemAtPosition(activeRoom, x, y, gameState.scalingFactors, { includeUndiscovered:true });
+  const hoveredExit = !hoveredItem ? _findExitAtPosition(activeRoom, x, y, gameState) : null;
+  return hoveredItem || hoveredExit ? null : hoveredRoom;
+}
+
+function _jumpToRoomTime(gameState:GameState, roomId:string) {
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  let targetCharacter = activeCharacter;
+  let targetTime = activeCharacter ? _findClosestRoomEntryTime(gameState, activeCharacter, roomId) : null;
+  if (targetTime === null) {
+    let bestFallbackCharacter:Character|null = null;
+    let bestFallbackTime:number|null = null;
+    gameState.characters.forEach(character => {
+      if (!character.discoveredRoomIds.includes(roomId)) return;
+      const candidateTime = _findClosestRoomEntryTime(gameState, character, roomId);
+      if (candidateTime === null) return;
+      if (bestFallbackTime === null || Math.abs(candidateTime - gameState.time) < Math.abs(bestFallbackTime - gameState.time)) {
+        bestFallbackCharacter = character;
+        bestFallbackTime = candidateTime;
+      }
+    });
+    if (!bestFallbackCharacter || bestFallbackTime === null) return;
+    targetCharacter = bestFallbackCharacter;
+    targetTime = bestFallbackTime;
+  }
+  if (targetTime === null) return;
+
+  const wasPlaying = gameState.isPlaying;
+  const targetCharacterId = targetCharacter?.id || null;
+  if (targetCharacterId) gameState.activeCharacterI = gameState.characters.findIndex(character => character.id === targetCharacterId);
+  gameState.activeEffects.length = 0;
+  rebuildDynamicStateForTime(gameState, targetTime);
+  gameState.isPlaying = false;
+  gameState.realTimeToGameTimeOffset = 0;
+  const rebuiltTargetCharacter = targetCharacterId
+    ? gameState.characters.find(character => character.id === targetCharacterId) || null
+    : null;
+  if (rebuiltTargetCharacter) gameState.activeCharacterI = gameState.characters.indexOf(rebuiltTargetCharacter);
+  if (rebuiltTargetCharacter) gameState.activeEffects.push(createCharacterSelectEffect(rebuiltTargetCharacter, Date.now(), gameState.scalingFactors));
+  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
 }
 
 export function findCharacterAtPosition(gameState:GameState, x:number, y:number):Character|null {
@@ -89,10 +161,14 @@ export function findCharacterAtPosition(gameState:GameState, x:number, y:number)
 
 export function updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent) {
   const character = findCharacterAtPosition(gameState, event.x, event.y);
-  if (!character) return;
-  const characterI = gameState.characters.indexOf(character);
-  gameState.activeCharacterI = characterI;
-  gameState.activeEffects.push(createCharacterSelectEffect(character, Date.now(), gameState.scalingFactors));
+  if (character) {
+    const characterI = gameState.characters.indexOf(character);
+    gameState.activeCharacterI = characterI;
+    gameState.activeEffects.push(createCharacterSelectEffect(character, Date.now(), gameState.scalingFactors));
+    return;
+  }
+  const room = _findNavigableRoomAtPosition(gameState, event.x, event.y);
+  if (room) _jumpToRoomTime(gameState, room.id);
 }
 
 export function updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent) {
@@ -102,6 +178,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
       gameState.hoveredItemId = null;
       gameState.hoveredCharacterId = null;
       gameState.hoveredExitKey = null;
+      gameState.hoveredRoomId = null;
       return;
     }
     const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, event.x, event.y, gameState.scalingFactors,
@@ -115,6 +192,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     gameState.hoveredCharacterId = hoveredItem ? null : findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
     const hoveredExit = !hoveredItem && !gameState.hoveredCharacterId ? _findExitAtPosition(hoveredRoom, event.x, event.y, gameState) : null;
     gameState.hoveredExitKey = hoveredExit?.id ?? null;
+    gameState.hoveredRoomId = !hoveredItem && !gameState.hoveredCharacterId && !hoveredExit ? hoveredRoom.id : null;
     return;
   }
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
@@ -123,6 +201,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     gameState.hoveredItemId = null;
     gameState.hoveredCharacterId = null;
     gameState.hoveredExitKey = null;
+    gameState.hoveredRoomId = null;
     return;
   }
   const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors,
@@ -136,4 +215,5 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
   gameState.hoveredCharacterId = hoveredItem ? null : findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
   const hoveredExit = !hoveredItem && !gameState.hoveredCharacterId ? _findExitAtPosition(activeRoom, event.x, event.y, gameState) : null;
   gameState.hoveredExitKey = hoveredExit?.id ?? null;
+  gameState.hoveredRoomId = _findNavigableRoomAtPosition(gameState, event.x, event.y)?.id ?? null;
 }

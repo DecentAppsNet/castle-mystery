@@ -41,6 +41,7 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
     y:0,
     waypoint,
     faceImageUrl:null,
+    discoveredRoomIds:[],
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0 })
   };

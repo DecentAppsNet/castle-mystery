@@ -37,6 +37,7 @@ function _createCharacter(x:number, y:number):Character {
     x,
     y,
     waypoint,
+    discoveredRoomIds:[],
     itinerary:[],
     itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
   };

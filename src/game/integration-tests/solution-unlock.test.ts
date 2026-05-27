@@ -48,6 +48,7 @@ function _createTestLevel():Level {
       x:initialPosition.x,
       y:initialPosition.y,
       waypoint,
+      discoveredRoomIds:[],
       itinerary,
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
     }],
@@ -62,6 +63,7 @@ function _createTestLevel():Level {
       x:initialPosition.x,
       y:initialPosition.y,
       waypoint,
+      discoveredRoomIds:[],
       itinerary,
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
     }],

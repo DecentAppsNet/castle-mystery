@@ -44,6 +44,10 @@ function _getDiscoveredRoomIds(gameState:GameState):Set<string> {
   return new Set(gameState.rooms.filter(room => room.isDiscovered).map(room => room.id));
 }
 
+function _getCharacterDiscoveredRoomIds(gameState:GameState):Map<string, string[]> {
+  return new Map(gameState.characters.map(character => [character.id, [...character.discoveredRoomIds]]));
+}
+
 function _getDiscoveredItemIds(gameState:GameState):Set<string> {
   const discoveredItemIds = new Set<string>();
   gameState.rooms.forEach(room => room.items.forEach(item => {
@@ -66,7 +70,8 @@ function _getExaminedItemIds(gameState:GameState):Set<string> {
   return examinedItemIds;
 }
 
-function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<string>, discoveredItemIds:Set<string>, examinedItemIds:Set<string>) {
+function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<string>, discoveredItemIds:Set<string>, examinedItemIds:Set<string>,
+  characterDiscoveredRoomIds:Map<string, string[]>) {
   gameState.rooms.forEach(room => {
     if (discoveredRoomIds.has(room.id)) room.isDiscovered = true;
     room.items.forEach(item => {
@@ -78,6 +83,9 @@ function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<strin
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
     if (examinedItemIds.has(item.id)) item.isExamined = true;
   }));
+  gameState.characters.forEach(character => {
+    character.discoveredRoomIds = [...(characterDiscoveredRoomIds.get(character.id) || [])];
+  });
 }
 
 function _collectAppliedInventoryEvents(gameState:GameState, time:number):AppliedInventoryEvent[] {
@@ -164,6 +172,7 @@ function _findRoomExitById(room:GameState['rooms'][number], roomExitId:string) {
 
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime?:number) {
   const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
+  const characterDiscoveredRoomIds = _getCharacterDiscoveredRoomIds(gameState);
   const discoveredItemIds = _getDiscoveredItemIds(gameState);
   const examinedItemIds = _getExaminedItemIds(gameState);
   const pendingRoomEffects:PendingRoomEffect[] = [];
@@ -262,6 +271,6 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
       .filter(effect => effect.roomId === activeRoom.id)
       .forEach(effect => effect.create());
   }
-  _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds, examinedItemIds);
+  _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds, examinedItemIds, characterDiscoveredRoomIds);
   gameState.time = time;
 }

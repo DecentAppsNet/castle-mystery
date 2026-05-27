@@ -40,6 +40,7 @@ function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = [
     y,
     waypoint:_createWaypoint(x, y),
     faceImageUrl:null,
+    discoveredRoomIds:[],
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x, y })
   };

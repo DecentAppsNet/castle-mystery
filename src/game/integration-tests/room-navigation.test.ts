@@ -1,0 +1,134 @@
+// Follow test conventions from CONTRIBUTING.md when editing this file.
+import { describe, expect, it } from 'vitest';
+
+import { createItineraryIndex, createRoomEntryEvent } from '../itineraryUtil';
+import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
+import { updateGameStateForMouseDown, updateGameStateForMouseMove } from '../hoverStateUtil';
+import { createGameState } from '../gameUtil';
+import Level from '../types/Level';
+import Character from '../types/Character';
+import Room from '../types/Room';
+import PlayerEventType from '../types/playerEvents/PlayerEventType';
+
+function _createRoom(id:string, x:number):Room {
+  return {
+    id,
+    title:id,
+    rect:{ x, y:0, width:10, height:10 },
+    isObscured:false,
+    items:[],
+    exits:[],
+    stairs:[],
+    waypoints:[],
+    isDiscovered:false
+  };
+}
+
+function _createCharacter(id:string, x:number, itinerary:Character['itinerary']):Character {
+  return {
+    id,
+    title:id,
+    faceImageUrl:null,
+    randomSalt:0,
+    isTitleKnown:true,
+    description:id,
+    items:[],
+    x,
+    y:5,
+    waypoint:{ position:{ x, y:5 }, adjacentWaypoints:[], exitDirections:{} },
+    discoveredRoomIds:[],
+    itinerary,
+    itineraryIndex:createItineraryIndex(itinerary, { x, y:5 })
+  };
+}
+
+function _createLevel(characters:Character[]):Level {
+  const rooms = [_createRoom('foyer', 0), _createRoom('library', 20)];
+  return {
+    rooms,
+    initialCharacters:characters,
+    characters,
+    itemsById:new Map(),
+    solutions:[],
+    winSynopsis:'',
+    activeCharacterId:characters[0].id,
+    startTime:0,
+    initialTime:500,
+    endTime:5_000,
+    duration:5_000,
+    labels:[]
+  };
+}
+
+function _setScalingFactors(gameState:ReturnType<typeof createGameState>) {
+  gameState.scalingFactors = {
+    sourceX:0,
+    sourceY:0,
+    sourceWidth:100,
+    sourceHeight:100,
+    scaleX:1,
+    translateX:0,
+    scaleY:1,
+    translateY:0,
+    roomFontHeight:20,
+    roomLineWidth:2,
+    destWidth:100,
+    destHeight:100
+  };
+}
+
+describe('room navigation integration', () => {
+  it('shows a navigable hovered room when the mouse is over a discovered room without another popover target', () => {
+    const hero = _createCharacter('hero', 5, [createRoomEntryEvent(1_000, 'library')]);
+    const gameState = createGameState(_createLevel([hero]));
+    gameState.isLevelComplete = false;
+    _setScalingFactors(gameState);
+    gameState.rooms[1].isDiscovered = true;
+
+    updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:25, y:5 });
+
+    expect(gameState.hoveredRoomId).toBe('library');
+  });
+
+  it('jumps to the nearest room entry time in the active character itinerary when clicking a discovered room', () => {
+    const hero = _createCharacter('hero', 5, [createRoomEntryEvent(1_000, 'library'), createRoomEntryEvent(3_000, 'library')]);
+    const gameState = createGameState(_createLevel([hero]));
+    gameState.isLevelComplete = false;
+    _setScalingFactors(gameState);
+    gameState.rooms[1].isDiscovered = true;
+    gameState.characters[0].discoveredRoomIds = ['foyer', 'library'];
+    gameState.time = 2_600;
+
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
+
+    expect(gameState.time).toBe(3_000);
+  });
+
+  it('falls back to another character that discovered the room and jumps to that room entry time', () => {
+    const hero = _createCharacter('hero', 5, []);
+    const guide = _createCharacter('guide', 25, [createRoomEntryEvent(2_000, 'library')]);
+    const gameState = createGameState(_createLevel([hero, guide]));
+    gameState.isLevelComplete = false;
+    _setScalingFactors(gameState);
+    gameState.rooms[1].isDiscovered = true;
+    gameState.characters[1].discoveredRoomIds = ['library'];
+    rebuildDynamicStateForTime(gameState, gameState.time);
+
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
+
+    expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('guide');
+    expect(gameState.time).toBe(2_000);
+  });
+
+  it('preserves discovered rooms by character across time rebuilds', () => {
+    const hero = _createCharacter('hero', 5, []);
+    const guide = _createCharacter('guide', 25, [createRoomEntryEvent(2_000, 'library')]);
+    const gameState = createGameState(_createLevel([hero, guide]));
+    gameState.isLevelComplete = false;
+    gameState.characters[1].discoveredRoomIds = ['library'];
+
+    rebuildDynamicStateForTime(gameState, 1_000, 0);
+
+    expect(gameState.characters.find(character => character.id === 'guide')?.discoveredRoomIds).toContain('library');
+  });
+});
