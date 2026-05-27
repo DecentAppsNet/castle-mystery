@@ -1,4 +1,8 @@
 type ScalingFactors = Readonly<{
+  sourceX: number,
+  sourceY: number,
+  sourceWidth: number,
+  sourceHeight: number,
   scaleX: number,
   translateX: number,
   scaleY: number,

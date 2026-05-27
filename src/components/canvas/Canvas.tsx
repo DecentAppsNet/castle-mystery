@@ -17,7 +17,8 @@ interface IProps {
   exitFullScreenText?:string,
   onMouseMove?:MouseEventHandler<HTMLCanvasElement>,
   onMouseDown?:MouseEventHandler<HTMLCanvasElement>,
-  onMouseUp?:MouseEventHandler<HTMLCanvasElement>
+  onMouseUp?:MouseEventHandler<HTMLCanvasElement>,
+  onWheel?:(event:WheelEvent) => void
 }
 
 function _updateCanvasDimensions(container:HTMLDivElement, setContainerDimensions:Function, setFullScreenCanvasStyle:Function) {
@@ -33,7 +34,7 @@ function Canvas(props:IProps) {
   const [containerDimensions, setContainerDimensions] = useState<[number,number]|null>(null);
   const [fullScreenCanvasStyle, setFullScreenCanvasStyle] = useState<CSSProperties>({});
   const { onClick, onDraw, onExitFullScreen,
-    onMouseDown, onMouseMove, onMouseUp,
+    onMouseDown, onMouseMove, onMouseUp, onWheel,
     isAnimated, isFullScreen, exitFullScreenText } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,6 +69,15 @@ function Canvas(props:IProps) {
     if (!context) return;
     onDraw(context);
   }, [onDraw, containerDimensions]);
+
+  useEffect(() => { // Handle wheel with a non-passive listener so callers can prevent page scrolling.
+    const canvas = canvasRef.current;
+    if (!canvas || !onWheel) return;
+    canvas.addEventListener('wheel', onWheel, { passive:false });
+    return () => {
+      canvas.removeEventListener('wheel', onWheel);
+    };
+  }, [onWheel]);
 
   const canvasStyle:CSSProperties = isFullScreen ? fullScreenCanvasStyle : {};
   const exitFullScreenButton = isFullScreen && onExitFullScreen 

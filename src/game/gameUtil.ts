@@ -14,8 +14,10 @@ import { popPlayerEvents } from "./playerEventUtil";
 import Level from "./types/Level";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
 import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
+import { calcCanvasAspectRatio, createCamera, syncCameraTargetToActiveRoom, updateCamera } from "./cameraUtil";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
+import MouseWheelEvent from "./types/playerEvents/MouseWheelEvent";
 import { COLOR_BLACK } from "./drawing/drawConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
@@ -36,6 +38,10 @@ import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hove
 import { syncSolutionUnlocks, updateGameStateForChangeSolutions } from "./solutionStateUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { normalizeId } from "./idUtil";
+import { calcRoomsBoundingRect } from "./roomUtil";
+import { clamp } from "@/common/numberUtil";
+
+const CAMERA_ZOOM_STEP = 0.1;
 
 export function findCharacter(gameState:GameState, characterRef:string):Character {
   const characterId = normalizeId(characterRef);
@@ -105,7 +111,14 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter, Date.now(), gameState.scalingFactors));
 }
 
-function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
+function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEvent) {
+  if (event.deltaY === 0) return;
+  const zoomDirection = -Math.sign(event.deltaY);
+  if (zoomDirection === 0) return;
+  gameState.camera.zoomAmount = clamp(gameState.camera.zoomAmount + zoomDirection * CAMERA_ZOOM_STEP, 0, 1);
+}
+
+function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number, cameraAspectRatio:number) {
   events.forEach(event => {
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent); break;
@@ -114,16 +127,19 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[]) {
       case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent); break;
       case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, event as MouseDownEvent); break;
       case PlayerEventType.MOUSEMOVE: updateGameStateForMouseMove(gameState, event as MouseMoveEvent); break;
+      case PlayerEventType.MOUSEWHEEL: _updateGameStateForMouseWheel(gameState, event as MouseWheelEvent); break;
       default: botch();
     }
   });
   if (gameState.isPlaying) {
     const previousTime = gameState.time;
     const endTime = gameState.startTime + gameState.duration;
-    const nextTime = Math.min(endTime, Date.now() + gameState.realTimeToGameTimeOffset);
+    const nextTime = Math.min(endTime, now + gameState.realTimeToGameTimeOffset);
     rebuildDynamicStateForTime(gameState, nextTime, previousTime);
     if (nextTime >= endTime) _pauseGameState(gameState);
   }
+  syncCameraTargetToActiveRoom(gameState.camera, gameState.rooms, gameState.characters[gameState.activeCharacterI] || null, cameraAspectRatio, now);
+  updateCamera(gameState.camera, now);
   _setActiveRoomDiscovered(gameState);
 }
 
@@ -185,9 +201,10 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     return;
   }
 
+  const now = Date.now();
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
-  _updateGameState(gameState, events);
+  _updateGameState(gameState, events, now, calcCanvasAspectRatio(context));
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
   if (onActiveCharacterChanged) callOnActiveCharacterChangedAsNeeded(gameState, onActiveCharacterChanged);
@@ -218,6 +235,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     initialItemsById,
     initialCharacters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById)),
     initialRooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById)),
+    camera:createCamera(calcRoomsBoundingRect(level.rooms)),
     activeEffects:[],
     hoveredItemId:null,
     hoveredCharacterId:null,

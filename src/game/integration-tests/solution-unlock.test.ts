@@ -137,6 +137,10 @@ describe('solution unlock integration', () => {
   it('discovers and examines hovered items, preserving that state across time rebuilds', () => {
     const gameState = createGameState(_createTestLevel());
     gameState.scalingFactors = {
+      sourceX:0,
+      sourceY:0,
+      sourceWidth:100,
+      sourceHeight:100,
       scaleX:1,
       translateX:0,
       scaleY:1,

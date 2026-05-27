@@ -4,7 +4,8 @@ enum PlayerEventType {
   NEXT_CHARACTER = "NextCharacter",
   PLAY_PAUSE = "PlayPause",
   MOUSEDOWN = "MouseDown",
-  MOUSEMOVE = "MouseMove"
+  MOUSEMOVE = "MouseMove",
+  MOUSEWHEEL = "MouseWheel"
 }
 
 export default PlayerEventType;

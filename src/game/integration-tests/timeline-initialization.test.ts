@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import timelineBothTimeAndStartTimeText from '@/game/__tests__/fixtures/timeline-both-time-and-start-time.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
+import { calcRoomsBoundingRect } from '../roomUtil';
 
 describe('timeline initialization integration', () => {
   it('starts the game state at time while preserving authored slider bounds from startTime and endTime', () => {
@@ -19,5 +20,14 @@ describe('timeline initialization integration', () => {
     expect(gameState.time).toBe(level.initialTime);
     expect(gameState.labels[0]?.minutes).toBe(10 * 60);
     expect(gameState.labels[gameState.labels.length - 1]?.minutes).toBe(12 * 60);
+  });
+
+  it('initializes the camera from the full level bounds before the first draw retargets it', () => {
+    const level = loadLevelFromText(timelineBothTimeAndStartTimeText, 'timeline-both.md');
+    const gameState = createGameState(level);
+
+    expect(gameState.camera.currentRect).toEqual(calcRoomsBoundingRect(level.rooms));
+    expect(gameState.camera.targetRect).toEqual(calcRoomsBoundingRect(level.rooms));
+    expect(gameState.camera.isMoving).toBe(false);
   });
 });

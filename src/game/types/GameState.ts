@@ -1,4 +1,5 @@
 import TimeLabel from "./TimeLabel";
+import Camera from "./Camera";
 import Character from "./Character";
 import ImageSet from "./ImageSet";
 import Item from "./Item";
@@ -17,6 +18,7 @@ type GameState = {
   readonly initialItemsById:Map<string, Item>,
   readonly initialCharacters:Character[],
   readonly initialRooms:Room[],
+  camera:Camera,
   activeEffects:Effect[],
   hoveredItemId:string|null,
   hoveredCharacterId:string|null,

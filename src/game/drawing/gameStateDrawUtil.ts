@@ -3,14 +3,14 @@
 import { assertNonNullable } from "decent-portal";
 
 import { processLevelEffects } from "../effects/effectUtil";
-import { calcRoomsBoundingRect, findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
+import { findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { drawExitPopover } from "./exitDrawUtil";
 import { drawRoom } from "./roomDrawUtil";
-import { calcScalingFactors } from "./drawUtil";
+import { calcScalingFactorsForRect } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
 
 function _findHoveredItem(gameState:GameState) {
@@ -39,9 +39,10 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
   const destH = context.canvas.height;
   let scalingFactors = gameState.scalingFactors;
   assertNonNullable(scalingFactors);
-  if (scalingFactors.destWidth !== destW || scalingFactors.destHeight !== destH) {
-    const roomsBoundingRect = calcRoomsBoundingRect(gameState.rooms);
-    scalingFactors = calcScalingFactors(roomsBoundingRect.width, roomsBoundingRect.height, destW, destH);
+  if (scalingFactors.destWidth !== destW || scalingFactors.destHeight !== destH
+    || scalingFactors.sourceX !== gameState.camera.currentRect.x || scalingFactors.sourceY !== gameState.camera.currentRect.y
+    || scalingFactors.sourceWidth !== gameState.camera.currentRect.width || scalingFactors.sourceHeight !== gameState.camera.currentRect.height) {
+    scalingFactors = calcScalingFactorsForRect(gameState.camera.currentRect, destW, destH);
     gameState.scalingFactors = scalingFactors;
     gameState.activeEffects.length = 0;
   }
