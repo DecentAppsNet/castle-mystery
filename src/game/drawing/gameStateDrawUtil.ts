@@ -12,6 +12,7 @@ import { drawExitPopover } from "./exitDrawUtil";
 import { drawRoom } from "./roomDrawUtil";
 import { calcScalingFactorsForRect } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
+import { calcLevelCameraRect } from "../cameraUtil";
 
 function _findHoveredItem(gameState:GameState) {
   if (!gameState.hoveredItemId) return null;
@@ -43,6 +44,11 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
     || scalingFactors.sourceX !== gameState.camera.currentRect.x || scalingFactors.sourceY !== gameState.camera.currentRect.y
     || scalingFactors.sourceWidth !== gameState.camera.currentRect.width || scalingFactors.sourceHeight !== gameState.camera.currentRect.height) {
     scalingFactors = calcScalingFactorsForRect(gameState.camera.currentRect, destW, destH);
+    const levelCameraRect = calcLevelCameraRect(gameState.rooms, destW / destH);
+    scalingFactors = {
+      ...scalingFactors,
+      roomLineWidth:Math.max(1, scalingFactors.roomLineWidth * (levelCameraRect.height / gameState.camera.currentRect.height))
+    };
     gameState.scalingFactors = scalingFactors;
     gameState.activeEffects.length = 0;
   }

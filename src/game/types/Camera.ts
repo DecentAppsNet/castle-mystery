@@ -4,6 +4,8 @@ type Camera = {
   currentRect:Rect,
   targetRect:Rect,
   startRect:Rect,
+  currentZoomAmount:number,
+  startZoomAmount:number,
   trackedRoomId:string|null,
   aspectRatio:number,
   zoomAmount:number,

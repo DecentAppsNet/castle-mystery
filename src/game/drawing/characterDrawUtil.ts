@@ -15,6 +15,8 @@ const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.2;
 const CHARACTER_SWAY_INTERVAL = 1500;
 const CHARACTER_SWAY_AMOUNT = 1;
+const CHARACTER_WIDTH_SCALE = 3.75;
+const CHARACTER_HEIGHT_SCALE = 7.5;
 
 function _getCharacterDisplayName(character:Character):string {
   return character.title;
@@ -148,8 +150,8 @@ export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:numbe
 export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
   const { roomLineWidth } = scalingFactors;
   const [centerX, bottomY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
-  const characterWidth = roomLineWidth * 5;
-  const characterHeight = roomLineWidth * 10;
+  const characterWidth = roomLineWidth * CHARACTER_WIDTH_SCALE;
+  const characterHeight = roomLineWidth * CHARACTER_HEIGHT_SCALE;
   const centerY = Math.round(bottomY - characterHeight / 2);
   const swayPhase = ((time + character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
   const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
@@ -174,8 +176,8 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
   const [roomLeft] = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
   const [roomRight, roomBottom] = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   const centerX = roomLeft + (roomRight - roomLeft) / 2;
-  const characterWidth = scalingFactors.roomLineWidth * 5;
-  const characterHeight = scalingFactors.roomLineWidth * 10;
+  const characterWidth = scalingFactors.roomLineWidth * CHARACTER_WIDTH_SCALE;
+  const characterHeight = scalingFactors.roomLineWidth * CHARACTER_HEIGHT_SCALE;
   const headRadius = Math.min(characterWidth, characterHeight) / 4;
   const bottomY = roomBottom - scalingFactors.roomLineWidth;
   const centerY = bottomY - characterHeight / 2;

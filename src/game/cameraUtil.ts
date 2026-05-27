@@ -83,9 +83,11 @@ export function createCamera(initialRect:Rect):Camera {
     currentRect:_duplicateRect(initialRect),
     targetRect:_duplicateRect(initialRect),
     startRect:_duplicateRect(initialRect),
+    currentZoomAmount:1,
+    startZoomAmount:1,
     trackedRoomId:null,
     aspectRatio:NaN,
-    zoomAmount:0,
+    zoomAmount:1,
     moveStartTime:0,
     moveDuration:0,
     isMoving:false
@@ -96,8 +98,12 @@ export function calcRoomCameraRect(room:Room, aspectRatio:number):Rect {
   return _expandRectFromCenter(_fitRectToAspectRatio(room.rect, aspectRatio), CAMERA_MARGIN_RATIO);
 }
 
+export function calcLevelCameraRect(rooms:Room[], aspectRatio:number):Rect {
+  return _fitRectToAspectRatio(calcRoomsBoundingRect(rooms), aspectRatio);
+}
+
 function _findTargetCameraRect(rooms:Room[], activeCharacter:Character|null, aspectRatio:number, zoomAmount:number):{ roomId:string|null, rect:Rect } {
-  const levelCameraRect = _fitRectToAspectRatio(calcRoomsBoundingRect(rooms), aspectRatio);
+  const levelCameraRect = calcLevelCameraRect(rooms, aspectRatio);
   const activeRoom = activeCharacter ? findRoomAtPosition(rooms, activeCharacter.x, activeCharacter.y) : null;
   const focusedRect = activeRoom ? calcRoomCameraRect(activeRoom, aspectRatio) : levelCameraRect;
   return {
@@ -113,13 +119,17 @@ export function syncCameraTargetToActiveRoom(camera:Camera, rooms:Room[], active
     && _rectsMatch(camera.targetRect, target.rect)) return;
 
   camera.startRect = _duplicateRect(camera.currentRect);
+  camera.startZoomAmount = camera.currentZoomAmount;
   camera.targetRect = _duplicateRect(target.rect);
   camera.trackedRoomId = target.roomId;
   camera.aspectRatio = aspectRatio;
   camera.moveStartTime = now;
   camera.moveDuration = CAMERA_MOVE_DURATION_MSECS;
   camera.isMoving = !_rectsMatch(camera.currentRect, camera.targetRect);
-  if (!camera.isMoving) camera.currentRect = _duplicateRect(camera.targetRect);
+  if (!camera.isMoving) {
+    camera.currentRect = _duplicateRect(camera.targetRect);
+    camera.currentZoomAmount = camera.zoomAmount;
+  }
 }
 
 export function updateCamera(camera:Camera, now:number) {
@@ -127,10 +137,14 @@ export function updateCamera(camera:Camera, now:number) {
   if (camera.moveDuration <= 0 || now >= camera.moveStartTime + camera.moveDuration) {
     camera.currentRect = _duplicateRect(camera.targetRect);
     camera.startRect = _duplicateRect(camera.targetRect);
+    camera.currentZoomAmount = camera.zoomAmount;
+    camera.startZoomAmount = camera.zoomAmount;
     camera.isMoving = false;
     return;
   }
 
   const amount = clamp((now - camera.moveStartTime) / camera.moveDuration, 0, 1);
-  camera.currentRect = _interpolateRect(camera.startRect, camera.targetRect, _easeInOutCubic(amount));
+  const easedAmount = _easeInOutCubic(amount);
+  camera.currentRect = _interpolateRect(camera.startRect, camera.targetRect, easedAmount);
+  camera.currentZoomAmount = _interpolate(camera.startZoomAmount, camera.zoomAmount, easedAmount);
 }

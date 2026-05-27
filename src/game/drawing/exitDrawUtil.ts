@@ -10,19 +10,19 @@ import ScalingFactors from "../types/ScalingFactors";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";
 
-const EXIT_DRAW_WIDTH_MULTIPLIER = 6;
-const FALLBACK_EXIT_HEIGHT_MULTIPLIER = 3;
+const DOOR_WIDTH_SCALE = 6.75;
+const DOOR_FALLBACK_HEIGHT_SCALE = 3.375;
 
 function _getExitDrawHeightPixels(imageUrl:string, roomLineWidth:number, imageSet:ImageSet):number {
-  const width = roomLineWidth * EXIT_DRAW_WIDTH_MULTIPLIER;
+  const width = roomLineWidth * DOOR_WIDTH_SCALE;
   const exitImage = imageSet.get(imageUrl) || null;
-  return exitImage ? width * (exitImage.height / exitImage.width) : roomLineWidth * FALLBACK_EXIT_HEIGHT_MULTIPLIER;
+  return exitImage ? width * (exitImage.height / exitImage.width) : roomLineWidth * DOOR_FALLBACK_HEIGHT_SCALE;
 }
 
 export function getExitCanvasRectForImageUrl(exit:Pick<RoomExit, 'x' | 'y'>, imageUrl:string, scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
   const { roomLineWidth } = scalingFactors;
   const [exitX, exitY] = gameToCanvasPosition(exit.x, exit.y, scalingFactors);
-  const width = roomLineWidth * EXIT_DRAW_WIDTH_MULTIPLIER;
+  const width = roomLineWidth * DOOR_WIDTH_SCALE;
   const height = _getExitDrawHeightPixels(imageUrl, roomLineWidth, imageSet);
   return {
     x: exitX - width / 2,

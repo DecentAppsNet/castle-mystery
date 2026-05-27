@@ -15,8 +15,8 @@ import { findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
 
 function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFactors):Rect {
   const roomLineWidth = scalingFactors.roomLineWidth;
-  const characterWidthPixels = roomLineWidth * 5;
-  const characterHeightPixels = roomLineWidth * 10;
+  const characterWidthPixels = roomLineWidth * 15;
+  const characterHeightPixels = roomLineWidth * 30;
   // character.x/character.y represent the bottom-center point in game position space
   const halfWidthGame = (characterWidthPixels / 2) / scalingFactors.scaleX;
   const heightGame = characterHeightPixels / scalingFactors.scaleY;

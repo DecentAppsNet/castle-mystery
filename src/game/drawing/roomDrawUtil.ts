@@ -18,6 +18,7 @@ import ExitType from "../types/ExitType";
 
 const OPEN_DOOR_NEARNESS = 2;
 const DRAW_WAYPOINTS = false;
+const ROOM_TITLE_OUTLINE_WIDTH_RATIO = 0.15;
 
 function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const crosshairSize = Math.max(2, Math.round(scalingFactors.roomLineWidth * 1.5));
@@ -92,7 +93,7 @@ export function drawRoom(room:Room, charactersInRoom:Character[], isActive:boole
   context.textBaseline = "middle";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;
   if (isActive) {
-    context.lineWidth = Math.max(1, scalingFactors.roomLineWidth);
+    context.lineWidth = Math.max(1, scalingFactors.roomFontHeight * ROOM_TITLE_OUTLINE_WIDTH_RATIO);
     context.strokeStyle = COLOR_BLACK;
     context.strokeText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
   }

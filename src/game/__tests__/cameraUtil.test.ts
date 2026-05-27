@@ -88,6 +88,7 @@ describe('cameraUtil', () => {
     it('targets the active room with an aspect-correct rect without moving the camera immediately', () => {
       const room = _createRoom({ x:10, y:20, width:40, height:20 });
       const camera = createCamera({ x:0, y:0, width:100, height:100 });
+      camera.zoomAmount = 1;
       const originalRect = { ...camera.currentRect };
 
       syncCameraTargetToActiveRoom(camera, [room], _createCharacter(20, 30), 1, 1_000);
@@ -127,6 +128,7 @@ describe('cameraUtil', () => {
     it('moves the current rect from the start rect to the target rect over the configured duration', () => {
       const room = _createRoom({ x:10, y:20, width:40, height:20 });
       const camera = createCamera({ x:0, y:0, width:100, height:100 });
+      camera.zoomAmount = 1;
       syncCameraTargetToActiveRoom(camera, [room], _createCharacter(20, 30), 1, 1_000);
       const startRect = { ...camera.currentRect };
       const halfwayTime = camera.moveStartTime + camera.moveDuration / 2;
@@ -138,10 +140,12 @@ describe('cameraUtil', () => {
       _expectNumberToBeBetween(camera.currentRect.y, startRect.y, camera.targetRect.y);
       _expectNumberToBeBetween(camera.currentRect.width, startRect.width, camera.targetRect.width);
       _expectNumberToBeBetween(camera.currentRect.height, startRect.height, camera.targetRect.height);
+      _expectNumberToBeBetween(camera.currentZoomAmount, 0, camera.zoomAmount);
       expect(camera.isMoving).toBe(true);
 
       updateCamera(camera, camera.moveStartTime + camera.moveDuration);
       expect(camera.currentRect).toEqual(camera.targetRect);
+      expect(camera.currentZoomAmount).toBe(camera.zoomAmount);
       expect(camera.isMoving).toBe(false);
     });
   });
