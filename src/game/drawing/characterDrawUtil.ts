@@ -3,6 +3,7 @@
 import { clamp } from "@/common/numberUtil";
 import { processCharacterEffects } from "../effects/effectUtil";
 import { gameToCanvasPosition } from "./drawUtil";
+import { calcPanelOffset } from "./roomPanelDrawUtil";
 import Character from "../types/Character";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -17,6 +18,13 @@ const CHARACTER_SWAY_INTERVAL = 1500;
 const CHARACTER_SWAY_AMOUNT = 1;
 const CHARACTER_WIDTH_SCALE = 3.75;
 const CHARACTER_HEIGHT_SCALE = 7.5;
+
+function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:ScalingFactors):[number, number] {
+  const [baseX, baseY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
+  const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
+  const depth = clamp(character.depth, 0, 1);
+  return [baseX + offsetX * depth, baseY + offsetY * depth];
+}
 
 function _getCharacterDisplayName(character:Character):string {
   return character.title;
@@ -149,7 +157,7 @@ export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:numbe
 
 export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
   const { roomLineWidth } = scalingFactors;
-  const [centerX, bottomY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
+  const [centerX, bottomY] = _getCharacterCanvasBottomPosition(character, scalingFactors);
   const characterWidth = roomLineWidth * CHARACTER_WIDTH_SCALE;
   const characterHeight = roomLineWidth * CHARACTER_HEIGHT_SCALE;
   const centerY = Math.round(bottomY - characterHeight / 2);

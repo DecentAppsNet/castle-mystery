@@ -36,6 +36,7 @@ function _createCharacter(x:number, y:number):Character {
     items:[],
     x,
     y,
+    depth:0.5,
     waypoint,
     discoveredRoomIds:[],
     itinerary:[],

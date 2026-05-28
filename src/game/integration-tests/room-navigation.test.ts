@@ -35,6 +35,7 @@ function _createCharacter(id:string, x:number, itinerary:Character['itinerary'])
     items:[],
     x,
     y:5,
+    depth:0.5,
     waypoint:{ position:{ x, y:5 }, adjacentWaypoints:[], exitDirections:{} },
     discoveredRoomIds:[],
     itinerary,

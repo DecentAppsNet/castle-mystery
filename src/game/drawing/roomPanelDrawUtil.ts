@@ -5,6 +5,8 @@ import { gameToCanvasPosition } from "./drawUtil";
 const PANEL_OFFSET_X_SCALE = 8;
 const PANEL_OFFSET_Y_SCALE = 4;
 
+export { PANEL_OFFSET_X_SCALE, PANEL_OFFSET_Y_SCALE };
+
 function _fillPanel(points:Array<[number, number]>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   context.lineWidth = scalingFactors.roomLineWidth;
   context.beginPath();
@@ -24,7 +26,7 @@ function _strokePanelSegment(fromPoint:[number, number], toPoint:[number, number
   context.stroke();
 }
 
-function _calcPanelOffset(scalingFactors:ScalingFactors):[number, number] {
+export function calcPanelOffset(scalingFactors:ScalingFactors):[number, number] {
   return [
     scalingFactors.roomLineWidth * PANEL_OFFSET_X_SCALE,
     scalingFactors.roomLineWidth * PANEL_OFFSET_Y_SCALE
@@ -32,7 +34,7 @@ function _calcPanelOffset(scalingFactors:ScalingFactors):[number, number] {
 }
 
 export function drawFloorPanel(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const [offsetX, offsetY] = _calcPanelOffset(scalingFactors);
+  const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
   const bottomLeft = gameToCanvasPosition(room.rect.x, room.rect.y + room.rect.height, scalingFactors);
   const bottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   const outerBottomRight:[number, number] = [bottomRight[0] + offsetX, bottomRight[1] + offsetY];
@@ -49,7 +51,7 @@ export function drawFloorPanel(room:Room, scalingFactors:ScalingFactors, context
 }
 
 export function drawRightWallPanel(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const [offsetX, offsetY] = _calcPanelOffset(scalingFactors);
+  const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
   const topRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y, scalingFactors);
   const bottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   const outerBottomRight:[number, number] = [bottomRight[0] + offsetX, bottomRight[1] + offsetY];

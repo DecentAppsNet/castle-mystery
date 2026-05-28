@@ -38,6 +38,7 @@ function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = [
     items:[],
     x,
     y,
+    depth:0.5,
     waypoint:_createWaypoint(x, y),
     faceImageUrl:null,
     discoveredRoomIds:[],

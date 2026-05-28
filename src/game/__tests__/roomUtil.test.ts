@@ -54,6 +54,7 @@ function _createCharacter(id:string, x:number, y:number):Character {
     items:[],
     x,
     y,
+    depth:0.5,
     waypoint,
     faceImageUrl:null,
     discoveredRoomIds:[],

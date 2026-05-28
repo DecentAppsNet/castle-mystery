@@ -39,6 +39,7 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
     items:[],
     x:0,
     y:0,
+    depth:0.5,
     waypoint,
     faceImageUrl:null,
     discoveredRoomIds:[],
