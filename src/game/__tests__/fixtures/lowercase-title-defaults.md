@@ -11,7 +11,9 @@ W
 ## MacDonald Chamber
 
 ```
-qb
+....
+qb..
+....
 ```
 
 * q=Lady MacBeth

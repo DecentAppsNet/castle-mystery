@@ -14,7 +14,9 @@ HS
 ## Servants Closet
 
 ```
-H
+....
+.H..
+....
 ```
 
 * H=Hero

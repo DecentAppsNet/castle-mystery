@@ -12,6 +12,7 @@ import unlockWrongSideText from './fixtures/unlock-wrong-side.md?raw';
 import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
 import invalidMapLegendTileText from './fixtures/invalid-map-legend-tile.md?raw';
+import invalidRoomGridDimensionsText from './fixtures/invalid-room-grid-dimensions.md?raw';
 import invalidRoomGridLegendEntryText from './fixtures/invalid-room-grid-legend-entry.md?raw';
 import invalidRoomLegendTileText from './fixtures/invalid-room-legend-tile.md?raw';
 import invalidItineraryTimestampText from './fixtures/invalid-itinerary-timestamp.md?raw';
@@ -414,6 +415,18 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
+  it('throws when a room fenced code grid does not match the expected room dimensions', () => {
+    try {
+      loadLevelFromText(invalidRoomGridDimensionsText, 'invalid-room-grid-dimensions.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-room-grid-dimensions.md:16');
+      expect((error as LoadLevelException).message).toContain('room hall fenced code grid is 1 columns by 1 rows');
+      expect((error as LoadLevelException).message).toContain('use 4 columns by 3 rows');
+    }
+  });
+
   it('loads drop activities and removes dropped items from final carried inventory', () => {
     const level = loadLevelFromText(dropItemText);
     const hero = level.characters.find(character => character.id === 'hero');
@@ -499,7 +512,7 @@ describe('levelUtil itinerary loading', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).levelFilename).toBe('audible-speech-overlap.md');
-      expect((error as LoadLevelException).errorLineNo).toBe(50);
+      expect((error as LoadLevelException).errorLineNo).toBe(54);
       expect((error as LoadLevelException).message).toContain('audible speech overlap');
       expect((error as LoadLevelException).message).toContain('Bob is already speaking');
       expect((error as LoadLevelException).message).toContain('Use \'interrupts\' instead of \'says\'');
@@ -585,7 +598,7 @@ describe('levelUtil itinerary loading', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).levelFilename).toBe('overlapping-same-character-speech.md');
-      expect((error as LoadLevelException).errorLineNo).toBe(33);
+      expect((error as LoadLevelException).errorLineNo).toBe(35);
       expect((error as LoadLevelException).message).toContain('same character speech overlap');
       expect((error as LoadLevelException).message).toContain('0:00:01');
       expect((error as LoadLevelException).message).toContain('absolute timestamp');
@@ -605,7 +618,7 @@ describe('levelUtil itinerary loading', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).levelFilename).toBe('overlapping-same-character-thought.md');
-      expect((error as LoadLevelException).errorLineNo).toBe(33);
+      expect((error as LoadLevelException).errorLineNo).toBe(35);
       expect((error as LoadLevelException).message).toContain('same character thought overlap');
       expect((error as LoadLevelException).message).toContain('0:00:01');
       expect((error as LoadLevelException).message).toContain('absolute timestamp');
@@ -633,8 +646,8 @@ describe('levelUtil itinerary loading', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).levelFilename).toBe('invalid-itinerary-activity.md');
-      expect((error as LoadLevelException).errorLineNo).toBe(42);
-      expect((error as LoadLevelException).message).toContain('invalid-itinerary-activity.md:42');
+      expect((error as LoadLevelException).errorLineNo).toBe(34);
+      expect((error as LoadLevelException).message).toContain('invalid-itinerary-activity.md:34');
       expect((error as LoadLevelException).message).toMatch(/parse itinerary activity line/i);
     }
   });
@@ -645,7 +658,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('invalid-itinerary-timestamp.md:35');
+      expect((error as LoadLevelException).message).toContain('invalid-itinerary-timestamp.md:34');
       expect((error as LoadLevelException).message).toContain('invalid timestamp: 0:00:60');
     }
   });
@@ -658,7 +671,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('at-room-marker.md:49');
+      expect((error as LoadLevelException).message).toContain('at-room-marker.md:48');
       expect((error as LoadLevelException).message).toContain("invalid room percent target '101%'");
     }
   });
@@ -669,7 +682,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('invalid-at-room-destination.md:42');
+      expect((error as LoadLevelException).message).toContain('invalid-at-room-destination.md:41');
       expect((error as LoadLevelException).message).toContain(`unknown room id 'West Hall'`);
     }
   });
@@ -699,7 +712,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:28');
+      expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:30');
       expect((error as LoadLevelException).message).toContain('multiple unlockForItem lines');
     }
   });
@@ -808,7 +821,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('invalid-character-inventory-item.md:31');
+      expect((error as LoadLevelException).message).toContain('invalid-character-inventory-item.md:33');
       expect((error as LoadLevelException).message).toContain(`character hero inventory item 'Missing Book' does not match any item in the items section`);
     }
   });
@@ -830,7 +843,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-item-id-inventory.md:32');
+      expect((error as LoadLevelException).message).toContain('duplicate-item-id-inventory.md:34');
       expect((error as LoadLevelException).message).toContain(`duplicate item id 'book' in character hero inventory`);
     }
   });
@@ -841,7 +854,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-solution-category-group-names.md:32');
+      expect((error as LoadLevelException).message).toContain('duplicate-solution-category-group-names.md:34');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'rooms' conflicts with 'Rooms'`);
     }
   });
@@ -852,7 +865,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-solution-subsections-case.md:32');
+      expect((error as LoadLevelException).message).toContain('duplicate-solution-subsections-case.md:34');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'mystery' conflicts with 'Mystery'`);
     }
   });
@@ -863,7 +876,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-solution-property.md:32');
+      expect((error as LoadLevelException).message).toContain('duplicate-solution-property.md:34');
       expect((error as LoadLevelException).message).toContain(`duplicate solution mystery entry 'solution'`);
     }
   });

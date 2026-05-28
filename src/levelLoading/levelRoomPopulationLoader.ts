@@ -5,7 +5,7 @@ import { assertNonNullable } from "decent-portal";
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
-import { findNearestWaypoint, findRoom } from "../game/roomUtil";
+import { findNearestWaypoint, findRoom, roomWidthToColumnCount } from "../game/roomUtil";
 import Character from "../game/types/Character";
 import Item from "../game/types/Item";
 import Level from "../game/types/Level";
@@ -30,6 +30,8 @@ export type RoomPopulationDefinitions = {
 	characterDefinitions:Map<string, CharacterDefinition>,
 	itemDefinitions:Map<string, ItemDefinition>
 };
+
+const EXPECTED_ROOM_GRID_ROW_COUNT = 3;
 
 export function parseRoomPopulationDefinitions(charactersSection:string, itemsSection:string):RoomPopulationDefinitions {
 	return {
@@ -177,6 +179,18 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 	level.characters.push(character);
 }
 
+function _assertRoomGridMatchesExpectedDimensions(roomId:string, room:Room, gridLines:string[]) {
+	const expectedColumnCount = roomWidthToColumnCount(room.rect.width);
+	const actualRowCount = gridLines.length;
+	const actualColumnCount = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
+	const hasExpectedDimensions = actualRowCount === EXPECTED_ROOM_GRID_ROW_COUNT
+		&& gridLines.every(line => line.length === expectedColumnCount);
+	if (hasExpectedDimensions) return;
+	throw new Error(
+		`room ${roomId} fenced code grid is ${actualColumnCount} columns by ${actualRowCount} rows; use ${expectedColumnCount} columns by ${EXPECTED_ROOM_GRID_ROW_COUNT} rows`
+	);
+}
+
 function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string,
 	characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
 	const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
@@ -186,6 +200,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 		const room = findRoom(level.rooms, roomId);
 		const gridLines = parseFirstFencedCodeBlockLines(roomSection);
 		if (!gridLines.length) return;
+		_assertRoomGridMatchesExpectedDimensions(roomId, room, gridLines);
 
 		const gridWidth = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
 		const gridHeight = gridLines.length;

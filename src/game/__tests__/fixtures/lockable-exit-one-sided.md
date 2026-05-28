@@ -18,7 +18,9 @@ BH
 * exits=Bedroom (locked)
 
 ```
-H
+....
+.H..
+....
 ```
 
 * H=Hero

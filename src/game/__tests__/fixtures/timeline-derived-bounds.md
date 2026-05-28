@@ -14,7 +14,9 @@ AB
 * exits=Library
 
 ```
-H
+....
+.H..
+....
 ```
 
 * H=Hero

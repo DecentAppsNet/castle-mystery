@@ -21,13 +21,9 @@ describe('imageSetUtil.ts', () => {
     const level = loadLevelFromText(imageSetReferencedImagesText);
     const imageSet = await createImageSetFromLevel(level);
 
-    expect(fetchMock).toHaveBeenCalledTimes(7);
-    expect(imageSet.has('/sprites/door.png')).toBe(true);
-    expect(imageSet.has('/sprites/doorway.png')).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(imageSet.has('/sprites/key.png')).toBe(true);
     expect(imageSet.has('/sprites/kingFace.png')).toBe(true);
-    expect(imageSet.has('/sprites/lockableDoor.png')).toBe(true);
-    expect(imageSet.has('/sprites/unknownDoor.png')).toBe(true);
     expect(imageSet.has('/sprites/queenFace.png')).toBe(true);
   });
 

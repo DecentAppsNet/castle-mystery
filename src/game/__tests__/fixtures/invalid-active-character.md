@@ -8,7 +8,9 @@ A
 # rooms
 ## Hall
 ```
-H
+....
+.H..
+....
 ```
 * H=Hero
 # characters

@@ -13,8 +13,9 @@ H
 * title=Grand Hall
 
 ```
-KQ
-C.
+....
+KQC.
+....
 ```
 
 * K=King

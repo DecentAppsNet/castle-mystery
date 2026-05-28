@@ -6,29 +6,20 @@
 # map
 
 ```
-AB
+A
 ```
 
-* A=Room
-* B=Other Room
+* A=Hall
 
 # rooms
 
-## Room
-
-* exits=Other Room
+## Hall
 
 ```
-....
-.H..
-....
+H
 ```
 
 * H=Hero
-
-## Other Room
-
-* exits=Room
 
 # characters
 
@@ -38,4 +29,4 @@ AB
 
 # itinerary
 
-0:00:05 Hero @ West Hall
+0:00:01 Hero wanders.
