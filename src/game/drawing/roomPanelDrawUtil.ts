@@ -2,7 +2,7 @@ import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import { gameToCanvasPosition } from "./drawUtil";
 
-const PANEL_OFFSET_X_SCALE = 6;
+const PANEL_OFFSET_X_SCALE = 8;
 const PANEL_OFFSET_Y_SCALE = 4;
 
 function _drawPanel(points:Array<[number, number]>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
