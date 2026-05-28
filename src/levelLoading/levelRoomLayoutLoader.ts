@@ -13,6 +13,7 @@ import RoomExit, { createRoomExitId, LOCKABLE_WITHOUT_INV_CHECK } from "../game/
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
 import { tryResolveItemId } from "./levelRoomPopulationLoader";
+import { areRoomsWellOrdered, sortRoomsForDrawingOrder } from "./roomOrderingUtil";
 
 export const MAP_TILE_SIZE = 20;
 
@@ -166,11 +167,11 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
     });
   });
 
-  Array.from(roomBoundsById.entries()).forEach(([roomId, bounds]) => {
+  const rooms = Array.from(roomBoundsById.entries()).map(([roomId, bounds]) => {
     const expectedTileCount = (bounds.maxCol - bounds.minCol + 1) * (bounds.maxRow - bounds.minRow + 1);
     const actualTileCount = roomTileCountById.get(roomId) || 0;
     if (actualTileCount !== expectedTileCount) throw new Error(`map room '${bounds.authoredName}' must be rectangular`);
-    level.rooms.push({
+    return {
       id: roomId,
       title: bounds.authoredName.trim(),
       rect: {
@@ -185,8 +186,12 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
       stairs: [],
       waypoints: [],
       isDiscovered: false
-    });
+    };
   });
+
+  const sortedRooms = sortRoomsForDrawingOrder(rooms);
+  if (!areRoomsWellOrdered(sortedRooms)) throw new Error('internal error: rooms could not be ordered for drawing');
+  level.rooms.push(...sortedRooms);
 }
 
 export function validateMapLegendRoomsAgainstRoomsSection(mapSection:string, roomsSection:string) {
