@@ -46,6 +46,7 @@ describe('exitUtil', () => {
         title:'Iron Key',
         displayChar:'I',
         position:{ x:0, y:0 },
+        depth:0.5,
         description:'Opens the bedroom.',
         isDiscovered:false,
         isExamined:false

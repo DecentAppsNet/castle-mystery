@@ -99,6 +99,46 @@ import timelineInitialTimeOutsideBoundsText from './fixtures/timeline-initial-ti
 import timelineStartAfterItineraryText from './fixtures/timeline-start-after-itinerary.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
 
+const roomGridDepthText = `# map
+
+\`\`\`
+H
+\`\`\`
+
+* H=Hall
+
+# rooms
+
+## Hall
+
+\`\`\`
+a...
+.b..
+..cd
+\`\`\`
+
+* a=Apple
+* b=Baron
+* c=Coin
+* d=Duke
+
+# characters
+
+## Baron
+
+## Duke
+
+# items
+
+## Apple
+
+## Coin
+
+# itinerary
+
+# solutions
+`;
+
 describe('levelUtil itinerary loading', () => {
   beforeEach(() => {
     setSeed(1);
@@ -425,6 +465,20 @@ describe('levelUtil itinerary loading', () => {
       expect((error as LoadLevelException).message).toContain('room hall fenced code grid is 1 columns by 1 rows');
       expect((error as LoadLevelException).message).toContain('use 4 columns by 3 rows');
     }
+  });
+
+  it('assigns initial character and item depth from room grid rows', () => {
+    const level = loadLevelFromText(roomGridDepthText);
+    const hall = findRoom(level.rooms, 'Hall');
+    const apple = hall.items.find(item => item.id === 'apple') || null;
+    const coin = hall.items.find(item => item.id === 'coin') || null;
+    const baron = level.characters.find(character => character.id === 'baron') || null;
+    const duke = level.characters.find(character => character.id === 'duke') || null;
+
+    expect(apple?.depth).toBe(0);
+    expect(baron?.depth).toBe(0.5);
+    expect(coin?.depth).toBe(0.6667);
+    expect(duke?.depth).toBe(0.8334);
   });
 
   it('loads drop activities and removes dropped items from final carried inventory', () => {

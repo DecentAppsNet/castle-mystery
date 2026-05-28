@@ -1,6 +1,6 @@
 import { clamp } from "@/common/numberUtil";
 import { COLOR_ITEM_DISCOVERY_EFFECT } from "../drawing/drawConstants";
-import { gameToCanvasPosition } from "../drawing/drawUtil";
+import { getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -39,7 +39,7 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
 }
 
 export function createItemDiscoveryEffect(item:Item, room:Room, time:number, scalingFactors:ScalingFactors):ItemDiscoveryEffect {
-  const [centerCanvasX, centerCanvasY] = gameToCanvasPosition(item.position.x, item.position.y, scalingFactors);
+  const [centerCanvasX, centerCanvasY] = getItemCanvasPositionInRoom(room, item, scalingFactors);
   const baseRadiusPixels = Math.max(10, scalingFactors.roomFontHeight * 0.7);
   return {
     type:EffectType.ITEM_DISCOVERY,

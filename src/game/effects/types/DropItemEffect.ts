@@ -7,7 +7,11 @@ type DropItemEffect = EffectBase & {
   startCanvasY:number,
   endCanvasX:number,
   endCanvasY:number,
-  glyphFontSize:number,
+  cuboidWidthPixels:number,
+  cuboidHeightPixels:number,
+  cuboidDepthXPixels:number,
+  cuboidDepthYPixels:number,
+  cuboidLineWidthPixels:number,
   labelFontSize:number,
   labelOffsetY:number
 }

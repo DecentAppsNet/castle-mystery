@@ -48,8 +48,8 @@ NDBEFGGGMKKKK
 
 ```
 ....
-....
 .P..
+....
 ```
 
 * P=Simon
@@ -73,8 +73,8 @@ NDBEFGGGMKKKK
 
 ```
 ....
-....
-pG..
+.G..
+p...
 ```
 
 * G=Amos

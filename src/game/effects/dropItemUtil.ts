@@ -1,6 +1,5 @@
 import { clamp } from "@/common/numberUtil";
-import { gameToCanvasPosition } from "../drawing/drawUtil";
-import { calcItemDrawMetrics, drawItemAtCanvasPosition } from "../drawing/itemDrawUtil";
+import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -18,7 +17,11 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
   const x = dropItemEffect.startCanvasX + (dropItemEffect.endCanvasX - dropItemEffect.startCanvasX) * progress;
   const y = dropItemEffect.startCanvasY + (dropItemEffect.endCanvasY - dropItemEffect.startCanvasY) * progress;
   drawItemAtCanvasPosition(dropItemEffect.item, x, y, {
-    glyphFontSize:dropItemEffect.glyphFontSize,
+    cuboidWidthPixels:dropItemEffect.cuboidWidthPixels,
+    cuboidHeightPixels:dropItemEffect.cuboidHeightPixels,
+    cuboidDepthXPixels:dropItemEffect.cuboidDepthXPixels,
+    cuboidDepthYPixels:dropItemEffect.cuboidDepthYPixels,
+    cuboidLineWidthPixels:dropItemEffect.cuboidLineWidthPixels,
     labelFontSize:dropItemEffect.labelFontSize,
     labelOffsetY:dropItemEffect.labelOffsetY
   }, context);
@@ -26,8 +29,8 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
 }
 
 export function createDropItemEffect(item:Item, room:Room, time:number, scalingFactors:ScalingFactors):DropItemEffect {
-  const [endCanvasX, endCanvasY] = gameToCanvasPosition(item.position.x, item.position.y, scalingFactors);
-  const metrics = calcItemDrawMetrics(scalingFactors);
+  const [endCanvasX, endCanvasY] = getItemCanvasPositionInRoom(room, item, scalingFactors);
+  const metrics = calcItemDrawMetrics(room, scalingFactors);
   return {
     type:EffectType.DROP_ITEM,
     room,
@@ -37,7 +40,11 @@ export function createDropItemEffect(item:Item, room:Room, time:number, scalingF
     startCanvasY:endCanvasY - Math.max(18, scalingFactors.roomFontHeight * 1.5),
     endCanvasX,
     endCanvasY,
-    glyphFontSize:metrics.glyphFontSize,
+    cuboidWidthPixels:metrics.cuboidWidthPixels,
+    cuboidHeightPixels:metrics.cuboidHeightPixels,
+    cuboidDepthXPixels:metrics.cuboidDepthXPixels,
+    cuboidDepthYPixels:metrics.cuboidDepthYPixels,
+    cuboidLineWidthPixels:metrics.cuboidLineWidthPixels,
     labelFontSize:metrics.labelFontSize,
     labelOffsetY:metrics.labelOffsetY,
     onProcessRoomEffect:_onProcessRoomEffect

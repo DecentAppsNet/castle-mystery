@@ -21,7 +21,7 @@ function _findHoveredItem(gameState:GameState) {
     : gameState.rooms;
   for (const room of candidateRooms) {
     const hoveredItem = room.items.find(item => item.id === gameState.hoveredItemId && (gameState.isLevelComplete || item.isDiscovered)) || null;
-    if (hoveredItem) return hoveredItem;
+    if (hoveredItem) return { room, item:hoveredItem };
   }
   return null;
 }
@@ -79,7 +79,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(gameState);
-    if (hoveredItem) drawItemPopover(hoveredItem, gameState.scalingFactors, context);
+    if (hoveredItem) drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context);
     processLevelEffects(gameState.activeEffects, context);
     return;
   }

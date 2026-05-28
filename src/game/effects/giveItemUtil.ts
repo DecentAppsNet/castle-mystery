@@ -1,6 +1,5 @@
 import { clamp } from "@/common/numberUtil";
-import { gameToCanvasPosition } from "../drawing/drawUtil";
-import { calcItemDrawMetrics, drawItemAtCanvasPosition } from "../drawing/itemDrawUtil";
+import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPosition } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";
 import Item from "../types/Item";
 import Room from "../types/Room";
@@ -18,7 +17,11 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
   const x = giveItemEffect.startCanvasX + (giveItemEffect.endCanvasX - giveItemEffect.startCanvasX) * progress;
   const y = giveItemEffect.startCanvasY + (giveItemEffect.endCanvasY - giveItemEffect.startCanvasY) * progress;
   drawItemAtCanvasPosition(giveItemEffect.item, x, y, {
-    glyphFontSize:giveItemEffect.glyphFontSize,
+    cuboidWidthPixels:giveItemEffect.cuboidWidthPixels,
+    cuboidHeightPixels:giveItemEffect.cuboidHeightPixels,
+    cuboidDepthXPixels:giveItemEffect.cuboidDepthXPixels,
+    cuboidDepthYPixels:giveItemEffect.cuboidDepthYPixels,
+    cuboidLineWidthPixels:giveItemEffect.cuboidLineWidthPixels,
     labelFontSize:giveItemEffect.labelFontSize,
     labelOffsetY:giveItemEffect.labelOffsetY
   }, context);
@@ -26,9 +29,9 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
 }
 
 export function createGiveItemEffect(item:Item, room:Room, giver:Character, recipient:Character, time:number, scalingFactors:ScalingFactors):GiveItemEffect {
-  const [startCanvasX, startCanvasY] = gameToCanvasPosition(giver.x, giver.y, scalingFactors);
-  const [endCanvasX, endCanvasY] = gameToCanvasPosition(recipient.x, recipient.y, scalingFactors);
-  const metrics = calcItemDrawMetrics(scalingFactors);
+  const [startCanvasX, startCanvasY] = getItemCanvasPosition({ ...item, position:{ x:giver.x, y:giver.y }, depth:giver.depth }, scalingFactors);
+  const [endCanvasX, endCanvasY] = getItemCanvasPosition({ ...item, position:{ x:recipient.x, y:recipient.y }, depth:recipient.depth }, scalingFactors);
+  const metrics = calcItemDrawMetrics(room, scalingFactors);
   return {
     type:EffectType.GIVE_ITEM,
     room,
@@ -38,7 +41,11 @@ export function createGiveItemEffect(item:Item, room:Room, giver:Character, reci
     startCanvasY,
     endCanvasX,
     endCanvasY,
-    glyphFontSize:metrics.glyphFontSize,
+    cuboidWidthPixels:metrics.cuboidWidthPixels,
+    cuboidHeightPixels:metrics.cuboidHeightPixels,
+    cuboidDepthXPixels:metrics.cuboidDepthXPixels,
+    cuboidDepthYPixels:metrics.cuboidDepthYPixels,
+    cuboidLineWidthPixels:metrics.cuboidLineWidthPixels,
     labelFontSize:metrics.labelFontSize,
     labelOffsetY:metrics.labelOffsetY,
     onProcessRoomEffect:_onProcessRoomEffect

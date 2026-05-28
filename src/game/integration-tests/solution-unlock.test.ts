@@ -20,6 +20,7 @@ function _createTestLevel():Level {
     title:'Book',
     displayChar:'B',
     position:{ x:6, y:5 },
+    depth:0.5,
     description:'A test book.',
     isDiscovered:false,
     isExamined:false

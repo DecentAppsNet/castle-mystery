@@ -32,6 +32,8 @@ export type RoomPopulationDefinitions = {
 };
 
 const EXPECTED_ROOM_GRID_ROW_COUNT = 3;
+const ITEM_DEPTHS_BY_GRID_ROW = [0, 0.3333, 0.6667] as const;
+const CHARACTER_DEPTHS_BY_GRID_ROW = [0.1667, 0.5, 0.8334] as const;
 
 export function parseRoomPopulationDefinitions(charactersSection:string, itemsSection:string):RoomPopulationDefinitions {
 	return {
@@ -135,14 +137,23 @@ function _assertItemIdIsUnique(level:Level, itemId:string, context:string) {
 	if (_findExistingItem(level, itemId)) throw new Error(`duplicate item id '${itemId}' ${context}`);
 }
 
+function _getItemDepthForGridRow(row:number):number {
+	return ITEM_DEPTHS_BY_GRID_ROW[row] ?? 0.5;
+}
 
-function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemDefinitions:Map<string, ItemDefinition>, position:{x:number, y:number}, isDiscovered:boolean):Item {
+function _getCharacterDepthForGridRow(row:number):number {
+	return CHARACTER_DEPTHS_BY_GRID_ROW[row] ?? 0.5;
+}
+
+function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemDefinitions:Map<string, ItemDefinition>,
+	position:{x:number, y:number}, depth:number, isDiscovered:boolean):Item {
 	const itemDefinition = itemDefinitions.get(itemId);
 	return {
 		id:itemId,
 		title:itemDefinition?.title || defaultTitleText,
 		displayChar:itemDefinition?.displayChar || defaultTitleText.charAt(0) || "?",
 		position:{ ...position },
+		depth,
 		description:itemDefinition?.description || "",
 		isDiscovered,
 		isExamined:false
@@ -157,7 +168,8 @@ function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number
 	}
 }
 
-function _addCharacter(level:Level, room:Room, characterId:string, title:string, description:string, faceImageUrl:string|null, isTitleKnown:boolean, x:number, y:number) {
+function _addCharacter(level:Level, room:Room, characterId:string, title:string, description:string,
+	faceImageUrl:string|null, isTitleKnown:boolean, x:number, y:number, depth:number) {
 	const claimedWaypoints = new Set(level.characters.map(character => `${character.waypoint.position.x},${character.waypoint.position.y}`));
 	const waypoint = _findNearestUnclaimedWaypoint(room, x, y, claimedWaypoints);
 	const character:Character = {
@@ -170,7 +182,7 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 		items: [],
 		x:waypoint.position.x,
 		y:waypoint.position.y,
-		depth:0.5,
+		depth,
 		waypoint,
 		discoveredRoomIds:[],
 		itinerary:[],
@@ -212,15 +224,18 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 		findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:authoredEntryText, row, col }) => {
 			const entryId = normalizeId(authoredEntryText);
 			const [x, y] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
+			const characterDepth = _getCharacterDepthForGridRow(row);
+			const itemDepth = _getItemDepthForGridRow(row);
 			const characterDefinition = characterDefinitions.get(entryId);
 			if (characterDefinition) {
 				_assertCharacterIdIsUnique(level, entryId, roomId, row, col);
-				_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description, characterDefinition.faceImageUrl, characterDefinition.isTitleKnown, x, y);
+				_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description,
+					characterDefinition.faceImageUrl, characterDefinition.isTitleKnown, x, y, characterDepth);
 				return;
 			}
 			if (itemDefinitions.has(entryId)) {
 				_assertItemIdIsUnique(level, entryId, `at row ${row + 1}, col ${col + 1} in room ${roomId}`);
-				_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, authoredEntryText, itemDefinitions, { x, y }, false));
+				_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, authoredEntryText, itemDefinitions, { x, y }, itemDepth, false));
 				return;
 			}
 		});
@@ -242,7 +257,7 @@ function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<st
 		if (!characterDefinition) return;
 		_addItemsToCharacter(level, character.id, characterDefinition.inventoryItems.map(item => {
 			_assertItemIdIsUnique(level, item.id, `in character ${character.id} inventory`);
-			return _createItemFromDefinition(item.id, item.title, itemDefinitions, { x:0, y:0 }, true);
+			return _createItemFromDefinition(item.id, item.title, itemDefinitions, { x:0, y:0 }, 0.5, true);
 		}));
 	});
 }

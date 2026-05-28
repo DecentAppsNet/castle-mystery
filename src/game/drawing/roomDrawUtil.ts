@@ -3,7 +3,6 @@
 import { drawObscuredActiveCharacter, drawVisibleCharactersInRoom } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
-import { drawTemporaryRoomCenterCuboid } from "./cuboidDrawUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./exitDrawUtil";
 import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
@@ -79,7 +78,6 @@ export function drawRoomShell(room:Room, isActive:boolean, activeCharacter:Chara
   drawFloorPanel(room, scalingFactors, context);
   drawRightWallPanel(room, scalingFactors, context);
   drawRoomStairs(room, scalingFactors, context);
-  if (!isRoomObscured) drawTemporaryRoomCenterCuboid(room, scalingFactors, context);
   if (!isRoomObscured && (showFullContents || (isActive && activeCharacter))) {
     drawDiscoveredItemsInRoom(room, effects, scalingFactors, context, { includeUndiscovered:true, ignoreRoomObscured:showFullContents });
   }

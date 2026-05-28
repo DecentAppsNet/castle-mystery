@@ -71,6 +71,7 @@ function _createLevelItemsById(level:Level, itemDefinitions:Map<string, { title:
       title:itemDefinition.title,
       displayChar:itemDefinition.displayChar,
       position:{ x:0, y:0 },
+      depth:0.5,
       description:itemDefinition.description,
       isDiscovered:false,
       isExamined:false
