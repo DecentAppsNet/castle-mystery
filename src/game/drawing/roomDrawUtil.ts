@@ -7,6 +7,7 @@ import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_RO
 import { gameToCanvasPosition } from "./drawUtil";
 import { getExitCanvasRectForImageUrl } from "./exitDrawUtil";
 import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
+import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
 import { drawRoomStairs } from "./stairDrawUtil";
 import Character from "../types/Character";
 import Room from "../types/Room";
@@ -17,28 +18,8 @@ import ImageSet from "../types/ImageSet";
 import ExitType from "../types/ExitType";
 
 const OPEN_DOOR_NEARNESS = 2;
-const DRAW_ROOM_ORDER_TEST_LINES = true;
 const DRAW_WAYPOINTS = false;
 const ROOM_TITLE_OUTLINE_WIDTH_RATIO = 0.15;
-
-function _drawRoomOrderTestLines(scaledLeft:number, scaledTop:number, scaledWidth:number, scaledHeight:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const floorMidX = scaledLeft + scaledWidth / 2;
-  const floorMidY = scaledTop + scaledHeight;
-  const rightMidX = scaledLeft + scaledWidth;
-  const rightMidY = scaledTop + scaledHeight / 2;
-  const horizontalExtension = Math.max(scalingFactors.roomLineWidth * 4, scaledWidth * 0.3);
-  const verticalExtension = Math.max(scalingFactors.roomLineWidth * 4, scaledHeight * 0.3);
-
-  context.strokeStyle = COLOR_BLACK;
-  context.lineWidth = Math.max(1, scalingFactors.roomLineWidth);
-  context.beginPath();
-  context.moveTo(floorMidX, floorMidY);
-  context.lineTo(floorMidX + horizontalExtension, floorMidY + verticalExtension);
-  context.moveTo(rightMidX, rightMidY);
-  context.lineTo(rightMidX + horizontalExtension, rightMidY + verticalExtension);
-  context.stroke();
-}
 
 function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const crosshairSize = Math.max(2, Math.round(scalingFactors.roomLineWidth * 1.5));
@@ -106,7 +87,8 @@ export function drawRoomShell(room:Room, isActive:boolean, activeCharacter:Chara
   context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.strokeStyle = COLOR_DARK_GRAY;
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
-  if (DRAW_ROOM_ORDER_TEST_LINES) _drawRoomOrderTestLines(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight, scalingFactors, context);
+  drawFloorPanel(room, scalingFactors, context);
+  drawRightWallPanel(room, scalingFactors, context);
   drawRoomStairs(room, scalingFactors, context);
   if (!isRoomObscured && (showFullContents || (isActive && activeCharacter))) {
     drawDiscoveredItemsInRoom(room, effects, scalingFactors, context, { includeUndiscovered:true, ignoreRoomObscured:showFullContents });
