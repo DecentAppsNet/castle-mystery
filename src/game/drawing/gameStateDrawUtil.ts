@@ -69,8 +69,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   }
   for (const { room } of roomRenderStates) {
     if (!room.isDiscovered) continue;
-    room.exits.forEach(exit => drawRoomExit(exit, gameState.characters, activeRoom, gameState.isLevelComplete,
-      gameState.scalingFactors, context, gameState.imageSet, drawnExitIds));
+    room.exits.forEach(exit => drawRoomExit(room, exit, gameState.characters, gameState.isLevelComplete,
+      gameState.scalingFactors, context, drawnExitIds));
   }
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
@@ -92,7 +92,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   if (canShowHoverPopovers && gameState.hoveredExitKey) {
     const hoveredExit = _findHoveredExit(gameState);
     if (hoveredExit) {
-      drawExitPopover(hoveredExit, findRoom(gameState.rooms, hoveredExit.room1Id), findRoom(gameState.rooms, hoveredExit.room2Id), gameState.itemsById, gameState.scalingFactors, context);
+      drawExitPopover(hoveredExit, findRoom(gameState.rooms, hoveredExit.room1Id), findRoom(gameState.rooms, hoveredExit.room2Id),
+        gameState.itemsById, gameState.scalingFactors, context);
     }
   }
   processLevelEffects(gameState.activeEffects, context);

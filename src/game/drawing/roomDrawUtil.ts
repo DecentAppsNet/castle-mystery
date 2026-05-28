@@ -1,11 +1,10 @@
 /* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents. */
 
 import { drawObscuredActiveCharacter, drawVisibleCharactersInRoom } from "./characterDrawUtil";
-import { findExitImageUrl, UNKNOWN_DOOR_IMAGE_URL } from "../exitImageUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
-import { getExitCanvasRectForImageUrl } from "./exitDrawUtil";
+import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./exitDrawUtil";
 import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
 import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
 import { drawRoomStairs } from "./stairDrawUtil";
@@ -43,35 +42,24 @@ function _isCharacterNearExit(character:Character, exit:RoomExit):boolean {
   return dx * dx + dy * dy <= OPEN_DOOR_NEARNESS * OPEN_DOOR_NEARNESS;
 }
 
-function _findDisplayedExitType(exit:RoomExit, characters:Character[], isActive:boolean, showFullContents:boolean):ExitType {
+function _findDisplayedExitType(exit:RoomExit, characters:Character[], showFullContents:boolean):ExitType {
   if (exit.exitType === ExitType.doorway) return exit.exitType;
-  if (!showFullContents && !isActive) return exit.exitType;
+  if (!showFullContents) return exit.exitType;
   return characters.some(character => _isCharacterNearExit(character, exit)) ? ExitType.doorway : exit.exitType;
 }
 
-function _isExitAdjacentToActiveRoom(exit:RoomExit, activeRoom:Room|null):boolean {
-  return !!activeRoom && (exit.room1Id === activeRoom.id || exit.room2Id === activeRoom.id);
+function _shouldRoomDrawExit(room:Room, exit:RoomExit):boolean {
+  return exit.x === room.rect.x + room.rect.width;
 }
 
-function _findDisplayedExitImageUrl(exit:RoomExit, characters:Character[], activeRoom:Room|null, showFullContents:boolean):string {
-  if (!showFullContents && !_isExitAdjacentToActiveRoom(exit, activeRoom)) return UNKNOWN_DOOR_IMAGE_URL;
-  return findExitImageUrl(_findDisplayedExitType(exit, characters, true, showFullContents));
-}
-
-export function drawRoomExit(exit:RoomExit, characters:Character[], activeRoom:Room|null, showFullContents:boolean,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet, drawnExitIds:Set<string>) {
+export function drawRoomExit(room:Room, exit:RoomExit, characters:Character[], showFullContents:boolean,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, drawnExitIds:Set<string>) {
+  if (!_shouldRoomDrawExit(room, exit)) return;
   if (drawnExitIds.has(exit.id)) return;
   drawnExitIds.add(exit.id);
-  const displayedExitImageUrl = _findDisplayedExitImageUrl(exit, characters, activeRoom, showFullContents);
-  const exitImage = imageSet.get(displayedExitImageUrl) || null;
-  const { x:left, y:top, width, height } = getExitCanvasRectForImageUrl(exit, displayedExitImageUrl, scalingFactors, imageSet);
-  if (exitImage) {
-    context.drawImage(exitImage, left, top, width, height);
-    return;
-  }
-  context.fillStyle = COLOR_BLACK;
-  context.lineWidth = scalingFactors.roomLineWidth;
-  context.fillRect(left, top, width, height);
+  const displayedExitType = _findDisplayedExitType(exit, characters, showFullContents);
+  const { height } = getExitCanvasRect(exit, scalingFactors);
+  drawTemporaryRightWallDoorVectorOverlay(room, exit, displayedExitType, scalingFactors, context, height);
 }
 
 export function drawRoomShell(room:Room, isActive:boolean, activeCharacter:Character|null,

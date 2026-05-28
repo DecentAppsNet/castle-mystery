@@ -38,7 +38,7 @@ function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }
 function _findExitAtPosition(room:Room, x:number, y:number, gameState:GameState):RoomExit|null {
   for (let i = room.exits.length - 1; i >= 0; --i) {
     const exit = room.exits[i];
-    const rect = getExitHoverRect(exit, gameState.scalingFactors, gameState.imageSet);
+    const rect = getExitHoverRect(exit, gameState.scalingFactors);
     const isInside = x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
     if (isInside) return exit;
   }

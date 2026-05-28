@@ -7,10 +7,9 @@ import Room from "./types/Room";
 import RoomExit, { LOCKABLE_WITHOUT_INV_CHECK } from "./types/RoomExit";
 
 function _findUndiscoveredRoomSideLabel(exit:RoomExit, room:Room):string {
-  if (exit.x === room.rect.x) return "the east side";
-  if (exit.x === room.rect.x + room.rect.width) return "the west side";
-  assert(false, `ceiling/floor exits are not supported for room ${room.id} at (${exit.x}, ${exit.y})`);
-  return "that side";
+  if (exit.x === room.rect.x) return "the right side";
+  assert(exit.x === room.rect.x + room.rect.width); 
+  return "the left side";
 }
 
 function _describeRoomReference(exit:RoomExit, room:Room):string {
