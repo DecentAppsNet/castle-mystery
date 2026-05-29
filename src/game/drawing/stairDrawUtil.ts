@@ -20,7 +20,9 @@ const STAIR_ANGLE_TOLERANCE = FLOOR_WAYPOINT_Y_OFFSET + STAIR_POSITION_TOLERANCE
 const FRONT_ROW_Z = 0.6667;
 const STAIR_CUBOID_DEPTH = 0.3333;
 const LANDING_CUBOID_DEPTH = 0.6667;
+const MIDDLE_ROW_Z = 1 - LANDING_CUBOID_DEPTH;
 const WINDING_MID_STORY_LANDING_DEPTH = 1;
+const WINDING_STORY_LANDING_DEPTH = 1;
 const STAIR_CUBOID_FILL = "rgb(154, 154, 154)";
 
 function _calcStairStepCount(totalDistance:number):number {
@@ -206,6 +208,50 @@ function _drawWindingMidStoryLandings(room:Room, flights:StairFlight[], scalingF
   }
 }
 
+function _hasExitAtStoryY(room:Room, storyY:number, wallX:number):boolean {
+  return room.exits.some(exit =>
+    Math.abs(exit.x - wallX) <= STAIR_POSITION_TOLERANCE
+    && Math.abs(exit.y - storyY) <= STAIR_ANGLE_TOLERANCE);
+}
+
+function _drawWindingStoryLandings(room:Room, flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
+  const roomRightX = room.rect.x + room.rect.width;
+
+  for (let flightIndex = 1; flightIndex < flights.length; flightIndex += 2) {
+    const secondFlight = _snapFlightTo45DegreesForDrawing(flights[flightIndex].startPosition, flights[flightIndex].endPosition);
+    const landingLeftX = Math.min(secondFlight.fromPosition.x, secondFlight.toPosition.x) - columnWidth;
+    const landingTopY = Math.min(secondFlight.fromPosition.y, secondFlight.toPosition.y);
+    const landingHeight = _calcStairStepHeight(secondFlight.fromPosition, secondFlight.toPosition);
+    const areStairsContinuing = flightIndex + 1 < flights.length;
+    const isRightExitPresent = _hasExitAtStoryY(room, flights[flightIndex].endPosition.y, roomRightX);
+
+    if (isRightExitPresent) {
+      _drawLandingCuboid(
+        landingLeftX,
+        landingTopY,
+        columnWidth * 4,
+        landingHeight,
+        MIDDLE_ROW_Z,
+        STAIR_CUBOID_DEPTH,
+        scalingFactors,
+        context
+      );
+    }
+
+    _drawLandingCuboid(
+      landingLeftX,
+      landingTopY,
+      columnWidth,
+      landingHeight,
+      areStairsContinuing ? 0 : MIDDLE_ROW_Z,
+      areStairsContinuing ? WINDING_STORY_LANDING_DEPTH : LANDING_CUBOID_DEPTH,
+      scalingFactors,
+      context
+    );
+  }
+}
+
 export function drawRoomStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   if (!room.stairs.length) return;
 
@@ -241,4 +287,5 @@ export function drawRoomStairs(room:Room, scalingFactors:ScalingFactors, context
       scalingFactors,
       context
     ));
+  _drawWindingStoryLandings(room, room.stairs, scalingFactors, context);
 }
