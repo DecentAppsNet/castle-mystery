@@ -57,12 +57,12 @@ describe('stairFlightUtil', () => {
       const flights = generateStairFlights(_createRoom(rect, exits));
 
       expect(flights).toHaveLength(2);
-      expect(flights[0].startPosition.x).toBeCloseTo(14.999, 3);
+      expect(flights[0].startPosition.x).toBeCloseTo(19.999, 3);
       expect(flights[0].startPosition.y).toBeCloseTo(19.999, 3);
-      expect(flights[0].endPosition).toEqual({ x:0, y:5 });
-      expect(flights[1].startPosition.x).toBeCloseTo(9.999, 3);
+      expect(flights[0].endPosition).toEqual({ x:5, y:5 });
+      expect(flights[1].startPosition.x).toBeCloseTo(14.999, 3);
       expect(flights[1].startPosition.y).toBeCloseTo(19.999, 3);
-      expect(flights[1].endPosition).toEqual({ x:0, y:10 });
+      expect(flights[1].endPosition).toEqual({ x:5, y:10 });
     });
 
     it('falls back to winding flights when the room is only four columns wide', () => {

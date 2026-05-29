@@ -37,9 +37,10 @@ function _findSortedNonExitFloorPositions(room:Room, floorY:number):Position[] {
 
 function _calcDirectFlightForExit(room:Room, exit:RoomExit, floorY:number):StairFlight|null {
   const height = floorY - exit.y;
-  if (height >= room.rect.width) return null;
-  if (exit.x === room.rect.x) return _createStairFlight({ x:exit.x + height, y:floorY }, { x:exit.x, y:exit.y });
-  if (exit.x === room.rect.x + room.rect.width) return _createStairFlight({ x:exit.x - height, y:floorY }, { x:exit.x, y:exit.y });
+  const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
+  if (height + columnWidth >= room.rect.width) return null;
+  if (exit.x === room.rect.x) return _createStairFlight({ x:exit.x + height + columnWidth, y:floorY }, { x:exit.x + columnWidth, y:exit.y });
+  if (exit.x === room.rect.x + room.rect.width) return _createStairFlight({ x:exit.x - height - columnWidth, y:floorY }, { x:exit.x - columnWidth, y:exit.y });
   throw new Error(`exit for room ${room.id} at (${exit.x}, ${exit.y}) is not on a supported wall`);
 }
 
