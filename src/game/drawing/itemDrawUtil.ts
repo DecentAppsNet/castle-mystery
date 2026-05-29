@@ -121,6 +121,10 @@ function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:C
   drawItemAtCanvasPosition(item, x, y, calcItemDrawMetrics(room, scalingFactors), context);
 }
 
+export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  drawItem(room, item, scalingFactors, context);
+}
+
 function _drawItemCuboid(x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
   const frontBottomLeft:[number, number] = [x - metrics.cuboidWidthPixels / 2, y];
   const frontBottomRight:[number, number] = [x + metrics.cuboidWidthPixels / 2, y];
@@ -197,6 +201,10 @@ function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], includeUndisco
 
 function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
   return effects.some(effect => effect.type === EffectType.DROP_ITEM && "item" in effect && effect.item.id === item.id);
+}
+
+export function findVisibleRoomItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
+  return _getVisibleItemsInDrawOrder(room, effects, includeUndiscovered);
 }
 
 export function drawDiscoveredItemsInRoom(room:Room, effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,

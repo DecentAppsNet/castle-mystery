@@ -213,7 +213,7 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
   context.restore();
 }
 
-function drawCharacter(character:Character, scalingFactors:ScalingFactors,
+export function drawCharacter(character:Character, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, isActive:boolean) {
   const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
   const headRadius = Math.min(characterWidth, characterHeight) / 4;
@@ -260,7 +260,8 @@ function drawCharacter(character:Character, scalingFactors:ScalingFactors,
 
 export function drawVisibleCharactersInRoom(charactersInRoom:Character[], activeCharacter:Character,
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet) {
-  const charactersInDrawOrder = [...charactersInRoom].sort((character1, character2) => character1.y - character2.y);
+  const charactersInDrawOrder = [...charactersInRoom].sort((character1, character2) =>
+    character1.depth - character2.depth || character2.x - character1.x || character1.id.localeCompare(character2.id));
   charactersInDrawOrder.forEach(character => {
     drawCharacter(character, scalingFactors, context, time, imageSet, character.id === activeCharacter.id);
     processCharacterEffects(character, effects, context);

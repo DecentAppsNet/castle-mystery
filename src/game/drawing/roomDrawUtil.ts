@@ -1,24 +1,30 @@
 /* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents. */
 
-import { drawObscuredActiveCharacter, drawVisibleCharactersInRoom } from "./characterDrawUtil";
+import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./exitDrawUtil";
-import { drawDiscoveredItemsInRoom } from "./itemDrawUtil";
+import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
 import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
 import { drawRoomStairs } from "./stairDrawUtil";
 import Character from "../types/Character";
+import Item from "../types/Item";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "../effects/types/Effect";
 import ImageSet from "../types/ImageSet";
 import ExitType from "../types/ExitType";
+import { processCharacterEffects } from "../effects/effectUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
 const DRAW_WAYPOINTS = false;
 const ROOM_TITLE_OUTLINE_WIDTH_RATIO = 0.15;
+
+type RoomDrawableContent =
+  | { kind:'character', depth:number, x:number, sortId:string, character:Character }
+  | { kind:'item', depth:number, x:number, sortId:string, item:Item };
 
 function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const crosshairSize = Math.max(2, Math.round(scalingFactors.roomLineWidth * 1.5));
@@ -62,8 +68,8 @@ export function drawRoomExit(room:Room, exit:RoomExit, characters:Character[], s
   drawTemporaryRightWallDoorVectorOverlay(room, exit, displayedExitType, scalingFactors, context, height);
 }
 
-export function drawRoomShell(room:Room, isActive:boolean, activeCharacter:Character|null,
-  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
+export function drawRoomShell(room:Room, isActive:boolean, _activeCharacter:Character|null,
+  _effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
@@ -78,9 +84,6 @@ export function drawRoomShell(room:Room, isActive:boolean, activeCharacter:Chara
   drawFloorPanel(room, scalingFactors, context);
   drawRightWallPanel(room, scalingFactors, context);
   drawRoomStairs(room, scalingFactors, context);
-  if (!isRoomObscured && (showFullContents || (isActive && activeCharacter))) {
-    drawDiscoveredItemsInRoom(room, effects, scalingFactors, context, { includeUndiscovered:true, ignoreRoomObscured:showFullContents });
-  }
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;
@@ -96,6 +99,27 @@ export function drawRoomShell(room:Room, isActive:boolean, activeCharacter:Chara
   if (DRAW_WAYPOINTS) _drawWaypointCrosshairs(room, scalingFactors, context);
 }
 
+function _createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[], includeUndiscoveredItems:boolean):RoomDrawableContent[] {
+  return [
+    ...charactersInRoom.map(character => ({ kind:'character' as const, depth:character.depth, x:character.x, sortId:character.id, character })),
+    ...findVisibleRoomItemsInDrawOrder(room, effects, includeUndiscoveredItems)
+      .map(item => ({ kind:'item' as const, depth:item.depth, x:item.position.x, sortId:item.id, item }))
+  ].sort((content1, content2) =>
+    content1.depth - content2.depth || content2.x - content1.x || content1.sortId.localeCompare(content2.sortId));
+}
+
+function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharacter:Character|null, effects:Effect[],
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, includeUndiscoveredItems:boolean) {
+  _createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems).forEach(content => {
+    if (content.kind === 'item') {
+      drawRoomItem(room, content.item, scalingFactors, context);
+      return;
+    }
+    drawCharacter(content.character, scalingFactors, context, time, imageSet, content.character.id === activeCharacter?.id);
+    processCharacterEffects(content.character, effects, context);
+  });
+}
+
 export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet,
   showFullContents:boolean = false) {
@@ -106,8 +130,7 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
     return;
   }
   if (showFullContents || (isActive && activeCharacter)) {
-    const highlightedCharacter = activeCharacter || charactersInRoom[0] || null;
-    if (highlightedCharacter) drawVisibleCharactersInRoom(charactersInRoom, highlightedCharacter, effects, scalingFactors, context, time, imageSet);
+    _drawRoomContents(room, charactersInRoom, activeCharacter, effects, scalingFactors, context, time, imageSet, true);
   }
   processRoomEffects(room, effects, context, isActive);
 }
