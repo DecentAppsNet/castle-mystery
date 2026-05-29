@@ -9,9 +9,10 @@ import { COLOR_BLACK } from "./drawConstants";
 import { canvasToGamePosition, gameToCanvasPosition } from "./drawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";
 import { calcPanelOffset } from "./roomPanelDrawUtil";
+import { MAP_TILE_SIZE } from "@/levelLoading/levelRoomLayoutLoader";
 
-const DOOR_WIDTH_SCALE = 6.75;
-const DOOR_HEIGHT_SCALE = DOOR_WIDTH_SCALE * 548 / 313;
+const DOOR_HEIGHT_MAP_TILE_RATIO = 0.5;
+const DOOR_WIDTH_HEIGHT_RATIO = 313 / 548;
 const RIGHT_WALL_DOOR_LEFT_Z = 0.33333;
 const RIGHT_WALL_DOOR_RIGHT_Z = 0.66667;
 const DOOR_ARCH_HEIGHT_RATIO = 0.35;
@@ -22,15 +23,18 @@ const KEYHOLE_STEM_HEIGHT_RATIO = 0.2;
 const KEYHOLE_WIDTH_RATIO = 0.26;
 const KEYHOLE_STEM_WIDTH_RATIO = 0.1;
 
-function _getExitDrawHeightPixels(roomLineWidth:number):number {
-  return roomLineWidth * DOOR_HEIGHT_SCALE;
+function _getExitDrawHeightPixels(scalingFactors:ScalingFactors):number {
+  return MAP_TILE_SIZE * DOOR_HEIGHT_MAP_TILE_RATIO * scalingFactors.scaleY;
+}
+
+function _getExitDrawWidthPixels(scalingFactors:ScalingFactors):number {
+  return _getExitDrawHeightPixels(scalingFactors) * DOOR_WIDTH_HEIGHT_RATIO;
 }
 
 export function getExitCanvasRect(exit:Pick<RoomExit, 'x' | 'y'>, scalingFactors:ScalingFactors):Rect {
-  const { roomLineWidth } = scalingFactors;
   const [exitX, exitY] = gameToCanvasPosition(exit.x, exit.y, scalingFactors);
-  const width = roomLineWidth * DOOR_WIDTH_SCALE;
-  const height = _getExitDrawHeightPixels(roomLineWidth);
+  const width = _getExitDrawWidthPixels(scalingFactors);
+  const height = _getExitDrawHeightPixels(scalingFactors);
   return {
     x: exitX - width / 2,
     y: exitY - height,
@@ -75,7 +79,7 @@ function _createProjectedDoorOutlinePoints(rightWallX:number, doorBottomY:number
 }
 
 function _getProjectedDoorCanvasRect(exit:Pick<RoomExit, 'x' | 'y'>, scalingFactors:ScalingFactors):Rect {
-  const doorHeightPixels = _getExitDrawHeightPixels(scalingFactors.roomLineWidth);
+  const doorHeightPixels = _getExitDrawHeightPixels(scalingFactors);
   const doorHeight = doorHeightPixels / scalingFactors.scaleY;
   const outlinePoints = _createProjectedDoorOutlinePoints(exit.x, exit.y, doorHeight, scalingFactors);
   const xValues = outlinePoints.map(([x]) => x);
@@ -132,7 +136,7 @@ function _drawProjectedLockableDoorKeyhole(rightWallX:number, doorBottomY:number
 }
 
 export function drawTemporaryRightWallDoorVectorOverlay(room:Room, exit:RoomExit, displayedExitType:ExitType, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, doorHeightPixels:number) {
+  context:CanvasRenderingContext2D, doorHeightPixels:number = _getExitDrawHeightPixels(scalingFactors)) {
   const doorHeight = doorHeightPixels / scalingFactors.scaleY;
   const rightWallX = room.rect.x + room.rect.width;
   const doorBottomY = exit.y;

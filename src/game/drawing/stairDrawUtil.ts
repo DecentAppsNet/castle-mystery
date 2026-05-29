@@ -216,21 +216,27 @@ function _hasExitAtStoryY(room:Room, storyY:number, wallX:number):boolean {
 
 function _drawWindingStoryLandings(room:Room, flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
+  const roomLeftX = room.rect.x;
   const roomRightX = room.rect.x + room.rect.width;
+  const isWiderThanOneStoryTile = roomWidthToColumnCount(room.rect.width) > 4;
 
   for (let flightIndex = 1; flightIndex < flights.length; flightIndex += 2) {
     const secondFlight = _snapFlightTo45DegreesForDrawing(flights[flightIndex].startPosition, flights[flightIndex].endPosition);
     const landingLeftX = Math.min(secondFlight.fromPosition.x, secondFlight.toPosition.x) - columnWidth;
     const landingTopY = Math.min(secondFlight.fromPosition.y, secondFlight.toPosition.y);
     const landingHeight = _calcStairStepHeight(secondFlight.fromPosition, secondFlight.toPosition);
+    const storyY = flights[flightIndex].endPosition.y;
     const areStairsContinuing = flightIndex + 1 < flights.length;
-    const isRightExitPresent = _hasExitAtStoryY(room, flights[flightIndex].endPosition.y, roomRightX);
+    const isLeftExitPresent = _hasExitAtStoryY(room, storyY, roomLeftX);
+    const isRightExitPresent = _hasExitAtStoryY(room, storyY, roomRightX);
+    const leftLandingZ = areStairsContinuing ? 0 : MIDDLE_ROW_Z;
+    const leftLandingDepth = areStairsContinuing ? WINDING_STORY_LANDING_DEPTH : LANDING_CUBOID_DEPTH;
 
     if (isRightExitPresent) {
       _drawLandingCuboid(
         landingLeftX,
         landingTopY,
-        columnWidth * 4,
+        roomRightX - landingLeftX,
         landingHeight,
         MIDDLE_ROW_Z,
         STAIR_CUBOID_DEPTH,
@@ -244,11 +250,24 @@ function _drawWindingStoryLandings(room:Room, flights:StairFlight[], scalingFact
       landingTopY,
       columnWidth,
       landingHeight,
-      areStairsContinuing ? 0 : MIDDLE_ROW_Z,
-      areStairsContinuing ? WINDING_STORY_LANDING_DEPTH : LANDING_CUBOID_DEPTH,
+      leftLandingZ,
+      leftLandingDepth,
       scalingFactors,
       context
     );
+
+    if (isWiderThanOneStoryTile && isLeftExitPresent && landingLeftX - roomLeftX > STAIR_POSITION_TOLERANCE) {
+      _drawLandingCuboid(
+        roomLeftX,
+        landingTopY,
+        landingLeftX - roomLeftX,
+        landingHeight,
+        leftLandingZ,
+        STAIR_CUBOID_DEPTH,
+        scalingFactors,
+        context
+      );
+    }
   }
 }
 
