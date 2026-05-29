@@ -7,7 +7,6 @@ import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./exitDrawUtil";
 import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
 import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
-import { drawRoomStairs } from "./stairDrawUtil";
 import Character from "../types/Character";
 import Item from "../types/Item";
 import Room from "../types/Room";
@@ -68,7 +67,7 @@ export function drawRoomExit(room:Room, exit:RoomExit, characters:Character[], s
   drawTemporaryRightWallDoorVectorOverlay(room, exit, displayedExitType, scalingFactors, context, height);
 }
 
-export function drawRoomShell(room:Room, isActive:boolean,
+export function drawRoomShell(room:Room, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
@@ -83,7 +82,7 @@ export function drawRoomShell(room:Room, isActive:boolean,
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   drawFloorPanel(room, scalingFactors, context);
   drawRightWallPanel(room, scalingFactors, context);
-  drawRoomStairs(room, scalingFactors, context);
+  room.exits.forEach(exit => drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;

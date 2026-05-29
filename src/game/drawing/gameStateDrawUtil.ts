@@ -10,6 +10,7 @@ import ScalingFactors from "../types/ScalingFactors";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { drawExitPopover } from "./exitDrawUtil";
 import { drawRoomCharactersAndEffects, drawRoomExit, drawRoomShell } from "./roomDrawUtil";
+import { drawRoomStairs } from "./stairDrawUtil";
 import { calcScalingFactorsForRect } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
 import { calcLevelCameraRect } from "../cameraUtil";
@@ -64,15 +65,11 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
     return { room, charactersInRoom, isActive };
   });
-  for (const { room, isActive } of roomRenderStates) {
-    drawRoomShell(room, isActive, gameState.scalingFactors, context, gameState.isLevelComplete);
-  }
-  for (const { room } of roomRenderStates) {
-    if (!room.isDiscovered) continue;
-    room.exits.forEach(exit => drawRoomExit(room, exit, gameState.characters, gameState.isLevelComplete,
-      gameState.scalingFactors, context, drawnExitIds));
-  }
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
+    drawRoomShell(room, isActive, gameState.characters, drawnExitIds,
+      gameState.scalingFactors, context, gameState.isLevelComplete);
+    if (!room.isDiscovered) continue;
+    drawRoomStairs(room, gameState.scalingFactors, context);
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
       gameState.scalingFactors, context, gameState.time, gameState.imageSet, gameState.isLevelComplete);
   }
