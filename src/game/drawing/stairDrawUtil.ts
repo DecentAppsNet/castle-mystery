@@ -20,6 +20,7 @@ const STAIR_ANGLE_TOLERANCE = FLOOR_WAYPOINT_Y_OFFSET + STAIR_POSITION_TOLERANCE
 const FRONT_ROW_Z = 0.6667;
 const STAIR_CUBOID_DEPTH = 0.3333;
 const LANDING_CUBOID_DEPTH = 0.6667;
+const WINDING_MID_STORY_LANDING_DEPTH = 1;
 const STAIR_CUBOID_FILL = "rgb(154, 154, 154)";
 
 function _calcStairStepCount(totalDistance:number):number {
@@ -69,17 +70,17 @@ function _drawStairStepCuboid(leftX:number, topY:number, width:number, height:nu
   }, context);
 }
 
-function _drawLandingCuboid(leftX:number, topY:number, width:number, height:number,
+function _drawLandingCuboid(leftX:number, topY:number, width:number, height:number, z:number, depth:number,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const rightX = leftX + width;
   const bottomY = topY + height;
-  const backTopLeft = _projectRoomPointWithDepth(leftX, topY, 0, scalingFactors);
-  const backTopRight = _projectRoomPointWithDepth(rightX, topY, 0, scalingFactors);
-  const backBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, 0, scalingFactors);
-  const frontTopLeft = _projectRoomPointWithDepth(leftX, topY, LANDING_CUBOID_DEPTH, scalingFactors);
-  const frontTopRight = _projectRoomPointWithDepth(rightX, topY, LANDING_CUBOID_DEPTH, scalingFactors);
-  const frontBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, LANDING_CUBOID_DEPTH, scalingFactors);
-  const frontBottomRight = _projectRoomPointWithDepth(rightX, bottomY, LANDING_CUBOID_DEPTH, scalingFactors);
+  const backTopLeft = _projectRoomPointWithDepth(leftX, topY, z, scalingFactors);
+  const backTopRight = _projectRoomPointWithDepth(rightX, topY, z, scalingFactors);
+  const backBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, z, scalingFactors);
+  const frontTopLeft = _projectRoomPointWithDepth(leftX, topY, z + depth, scalingFactors);
+  const frontTopRight = _projectRoomPointWithDepth(rightX, topY, z + depth, scalingFactors);
+  const frontBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, z + depth, scalingFactors);
+  const frontBottomRight = _projectRoomPointWithDepth(rightX, bottomY, z + depth, scalingFactors);
   drawProjectedCuboid({
     backTopLeft,
     backTopRight,
@@ -184,11 +185,25 @@ function _drawLandings(room:Room, exits:RoomExit[], flights:StairFlight[], scali
       const landingWidth = Math.abs(exit.x - stairIntersectionX);
       if (Math.abs(landingWidth - columnWidth) <= STAIR_POSITION_TOLERANCE) {
         const stepHeight = _calcStairStepHeight(stairIntersection.flight.startPosition, stairIntersection.flight.endPosition);
-        _drawLandingCuboid(Math.min(exit.x, stairIntersectionX), exit.y, landingWidth, stepHeight, scalingFactors, context);
+        _drawLandingCuboid(Math.min(exit.x, stairIntersectionX), exit.y, landingWidth, stepHeight, 0, LANDING_CUBOID_DEPTH,
+          scalingFactors, context);
         return;
       }
       _drawHorizontalLine({ x:stairIntersectionX, y:exit.y }, { x:exit.x, y:exit.y }, scalingFactors, context);
     });
+}
+
+function _drawWindingMidStoryLandings(room:Room, flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
+
+  for (let flightIndex = 0; flightIndex + 1 < flights.length; flightIndex += 2) {
+    const firstFlight = _snapFlightTo45DegreesForDrawing(flights[flightIndex].startPosition, flights[flightIndex].endPosition);
+    const landingLeftX = Math.max(firstFlight.fromPosition.x, firstFlight.toPosition.x);
+    const landingTopY = Math.min(firstFlight.fromPosition.y, firstFlight.toPosition.y);
+    const landingHeight = _calcStairStepHeight(firstFlight.fromPosition, firstFlight.toPosition);
+    _drawLandingCuboid(landingLeftX, landingTopY, columnWidth, landingHeight, 0, WINDING_MID_STORY_LANDING_DEPTH,
+      scalingFactors, context);
+  }
 }
 
 export function drawRoomStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
@@ -196,12 +211,34 @@ export function drawRoomStairs(room:Room, scalingFactors:ScalingFactors, context
 
   const floorY = _calcRoomFloorY(room);
   const areDirectFlights = _areDirectFlights(room.stairs, floorY);
-  room.stairs.forEach((flight, flightIndex) => drawStairsAtRow(
-    flight.startPosition,
-    flight.endPosition,
-    areDirectFlights ? 0 : (flightIndex % 2 === 0 ? 0 : FRONT_ROW_Z),
-    scalingFactors,
-    context
-  ));
-  if (areDirectFlights) _drawLandings(room, _findSortedNonFloorExits(room, floorY), room.stairs, scalingFactors, context);
+  if (areDirectFlights) {
+    room.stairs.forEach(flight => drawStairsAtRow(
+      flight.startPosition,
+      flight.endPosition,
+      0,
+      scalingFactors,
+      context
+    ));
+    _drawLandings(room, _findSortedNonFloorExits(room, floorY), room.stairs, scalingFactors, context);
+    return;
+  }
+  _drawWindingMidStoryLandings(room, room.stairs, scalingFactors, context);
+  room.stairs
+    .filter((_, flightIndex) => flightIndex % 2 === 0)
+    .forEach(flight => drawStairsAtRow(
+      flight.startPosition,
+      flight.endPosition,
+      0,
+      scalingFactors,
+      context
+    ));
+  room.stairs
+    .filter((_, flightIndex) => flightIndex % 2 === 1)
+    .forEach(flight => drawStairsAtRow(
+      flight.startPosition,
+      flight.endPosition,
+      FRONT_ROW_Z,
+      scalingFactors,
+      context
+    ));
 }
