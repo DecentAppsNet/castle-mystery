@@ -1,6 +1,7 @@
 import { assert, assertNonNullable } from "decent-portal";
 
 import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./roomUtil";
+import { MAP_TILE_SIZE } from "../levelLoading/levelRoomLayoutLoader";
 import Position from "./types/Position";
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
@@ -8,6 +9,8 @@ import StairFlight, { duplicateStairFlight } from "./types/StairFlight";
 
 const MIN_DIRECT_STAIR_COLUMNS = 5;
 const MIN_STAIR_COLUMNS = 4;
+const WINDING_ACTIVE_COLUMNS = 4;
+const WINDING_FLIGHT_WIDTH_COLUMNS = 2;
 const INTERSECTION_TOLERANCE = 0.000001;
 
 function _createStairFlight(startPosition:Position, endPosition:Position):StairFlight {
@@ -22,17 +25,6 @@ function _findSortedNonFloorExits(room:Room, floorY:number):RoomExit[] {
   return [...room.exits]
     .filter(exit => exit.y < floorY)
     .sort((left, right) => left.y - right.y || left.x - right.x);
-}
-
-function _findSortedNonExitFloorPositions(room:Room, floorY:number):Position[] {
-  const floorExitXs = new Set(room.exits
-    .filter(exit => exit.y === floorY)
-    .map(exit => exit.x));
-  return room.waypoints
-    .filter(waypoint => waypoint.position.y === floorY)
-    .map(waypoint => waypoint.position)
-    .filter(position => !floorExitXs.has(position.x))
-    .sort((left, right) => left.x - right.x);
 }
 
 function _calcDirectFlightForExit(room:Room, exit:RoomExit, floorY:number):StairFlight|null {
@@ -90,48 +82,53 @@ function _findHighestNonFloorExitY(nonFloorExits:RoomExit[]):number|null {
   return Math.min(...nonFloorExits.map(exit => exit.y));
 }
 
-function _calcVerticalIntersection(startPosition:Position, boundaryX:number, slope:1|-1):Position|null {
-  const rise = (boundaryX - startPosition.x) / slope;
-  if (rise <= 0) return null;
-  return { x:boundaryX, y:startPosition.y - rise };
+function _calcWindingFlightColumnBounds(room:Room):{ leftX:number, rightX:number } {
+  const columnCount = roomWidthToColumnCount(room.rect.width);
+  assert(columnCount % 2 === 0, `room ${room.id} must have an even number of columns for winding stairs`);
+  const columnWidth = room.rect.width / columnCount;
+  const activeLeftX = room.rect.x + room.rect.width / 2 - WINDING_ACTIVE_COLUMNS / 2 * columnWidth;
+  return {
+    leftX: activeLeftX + columnWidth,
+    rightX: activeLeftX + (columnWidth * (1 + WINDING_FLIGHT_WIDTH_COLUMNS))
+  };
 }
 
-function _calcTopIntersection(startPosition:Position, topY:number, slope:1|-1):Position|null {
-  const rise = startPosition.y - topY;
-  if (rise <= 0) return null;
-  return { x:startPosition.x + slope * rise, y:topY };
+function _calcWindingStoryCount(room:Room, stairsTopY:number):number {
+  const roomBottomY = room.rect.y + room.rect.height;
+  const rawStoryCount = (roomBottomY - stairsTopY) / MAP_TILE_SIZE;
+  const storyCount = Math.round(rawStoryCount);
+  const alignedTopY = roomBottomY - storyCount * MAP_TILE_SIZE;
+  assert(Math.abs(stairsTopY - alignedTopY) <= FLOOR_WAYPOINT_Y_OFFSET + INTERSECTION_TOLERANCE,
+    `room ${room.id} non-floor exits must align with whole-story heights`);
+  return storyCount;
 }
 
-function _findCloserFlightEndToFloor(startPosition:Position, boundaryIntersection:Position|null, topIntersection:Position|null):Position|null {
-  if (boundaryIntersection && topIntersection) {
-    const boundaryRise = startPosition.y - boundaryIntersection.y;
-    const topRise = startPosition.y - topIntersection.y;
-    return boundaryRise <= topRise ? boundaryIntersection : topIntersection;
-  }
-  return boundaryIntersection || topIntersection;
+function _calcWindingFlightStartY(room:Room, floorY:number, halfFlightIndex:number):number {
+  if (halfFlightIndex === 0) return floorY;
+  return room.rect.y + room.rect.height - halfFlightIndex * MAP_TILE_SIZE / 2;
+}
+
+function _calcWindingFlightEndY(room:Room, halfFlightIndex:number, flightCount:number, stairsTopY:number):number {
+  if (halfFlightIndex === flightCount - 1) return stairsTopY;
+  return room.rect.y + room.rect.height - (halfFlightIndex + 1) * MAP_TILE_SIZE / 2;
 }
 
 function _generateWindingStairFlights(room:Room, floorY:number, nonFloorExits:RoomExit[]):StairFlight[] {
-  const floorPositions = _findSortedNonExitFloorPositions(room, floorY);
-  assert(floorPositions.length >= 2, `room ${room.id} must have at least two non-exit floor waypoints for winding stairs`);
   const stairsTopY = _findHighestNonFloorExitY(nonFloorExits);
   assertNonNullable(stairsTopY, `room ${room.id} must have a non-floor exit when generating winding stairs`);
-
-  const flightLeftX = floorPositions[0].x;
-  const flightRightX = floorPositions[floorPositions.length - 1].x;
-  let flightStartPosition = { ...floorPositions[0] };
-  let slope:1|-1 = 1;
+  const { leftX, rightX } = _calcWindingFlightColumnBounds(room);
+  const storyCount = _calcWindingStoryCount(room, stairsTopY);
+  const flightCount = storyCount * 2;
   const flights:StairFlight[] = [];
 
-  while (flightStartPosition.y > stairsTopY) {
-    const boundaryX = slope === 1 ? flightRightX : flightLeftX;
-    const boundaryIntersection = _calcVerticalIntersection(flightStartPosition, boundaryX, slope);
-    const topIntersection = _calcTopIntersection(flightStartPosition, stairsTopY, slope);
-    const flightEndPosition = _findCloserFlightEndToFloor(flightStartPosition, boundaryIntersection, topIntersection);
-    assertNonNullable(flightEndPosition, `room ${room.id} must produce a winding stair flight end position`);
-    flights.push(_createStairFlight(flightStartPosition, flightEndPosition));
-    flightStartPosition = { ...flightEndPosition };
-    slope = slope === 1 ? -1 : 1;
+  for (let halfFlightIndex = 0; halfFlightIndex < flightCount; halfFlightIndex++) {
+    const isBackRowFlight = halfFlightIndex % 2 === 0;
+    const startY = _calcWindingFlightStartY(room, floorY, halfFlightIndex);
+    const endY = _calcWindingFlightEndY(room, halfFlightIndex, flightCount, stairsTopY);
+    flights.push(_createStairFlight(
+      { x: isBackRowFlight ? leftX : rightX, y:startY },
+      { x: isBackRowFlight ? rightX : leftX, y:endY }
+    ));
   }
   return flights;
 }

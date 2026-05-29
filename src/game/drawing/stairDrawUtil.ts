@@ -16,7 +16,8 @@ import StairFlight from "../types/StairFlight";
 
 const PREFERRED_STEP_RISE_RUN = 1;
 const STAIRS_LINE_WIDTH_MULTIPLIER = 0.2;
-const STAIR_ANGLE_TOLERANCE = STAIR_POSITION_TOLERANCE;
+const STAIR_ANGLE_TOLERANCE = FLOOR_WAYPOINT_Y_OFFSET + STAIR_POSITION_TOLERANCE;
+const FRONT_ROW_Z = 0.6667;
 const STAIR_CUBOID_DEPTH = 0.3333;
 const LANDING_CUBOID_DEPTH = 0.6667;
 const STAIR_CUBOID_FILL = "rgb(154, 154, 154)";
@@ -42,17 +43,17 @@ function _projectRoomPointWithDepth(x:number, y:number, z:number, scalingFactors
   return [canvasX + offsetX * z, canvasY + offsetY * z];
 }
 
-function _drawStairStepCuboid(leftX:number, topY:number, width:number, height:number,
+function _drawStairStepCuboid(leftX:number, topY:number, width:number, height:number, z:number,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const rightX = leftX + width;
   const bottomY = topY + height;
-  const backTopLeft = _projectRoomPointWithDepth(leftX, topY, 0, scalingFactors);
-  const backTopRight = _projectRoomPointWithDepth(rightX, topY, 0, scalingFactors);
-  const backBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, 0, scalingFactors);
-  const frontTopLeft = _projectRoomPointWithDepth(leftX, topY, STAIR_CUBOID_DEPTH, scalingFactors);
-  const frontTopRight = _projectRoomPointWithDepth(rightX, topY, STAIR_CUBOID_DEPTH, scalingFactors);
-  const frontBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, STAIR_CUBOID_DEPTH, scalingFactors);
-  const frontBottomRight = _projectRoomPointWithDepth(rightX, bottomY, STAIR_CUBOID_DEPTH, scalingFactors);
+  const backTopLeft = _projectRoomPointWithDepth(leftX, topY, z, scalingFactors);
+  const backTopRight = _projectRoomPointWithDepth(rightX, topY, z, scalingFactors);
+  const backBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, z, scalingFactors);
+  const frontTopLeft = _projectRoomPointWithDepth(leftX, topY, z + STAIR_CUBOID_DEPTH, scalingFactors);
+  const frontTopRight = _projectRoomPointWithDepth(rightX, topY, z + STAIR_CUBOID_DEPTH, scalingFactors);
+  const frontBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, z + STAIR_CUBOID_DEPTH, scalingFactors);
+  const frontBottomRight = _projectRoomPointWithDepth(rightX, bottomY, z + STAIR_CUBOID_DEPTH, scalingFactors);
   drawProjectedCuboid({
     backTopLeft,
     backTopRight,
@@ -103,19 +104,39 @@ function _drawHorizontalLine(fromPosition:Position, toPosition:Position, scaling
 }
 
 export function drawStairs(fromPosition:Position, toPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  drawStairsAtRow(fromPosition, toPosition, 0, scalingFactors, context);
+}
+
+function _snapFlightTo45DegreesForDrawing(fromPosition:Position, toPosition:Position):{ fromPosition:Position, toPosition:Position } {
   const totalRise = toPosition.y - fromPosition.y;
   const totalRun = toPosition.x - fromPosition.x;
-  assert(Math.abs(Math.abs(totalRise) - Math.abs(totalRun)) <= STAIR_ANGLE_TOLERANCE, 'stairs must be drawn at a 45 degree angle');
+  const riseMagnitude = Math.abs(totalRise);
+  const runMagnitude = Math.abs(totalRun);
+  if (Math.abs(riseMagnitude - runMagnitude) > STAIR_ANGLE_TOLERANCE) return { fromPosition, toPosition };
+  return {
+    fromPosition,
+    toPosition:{
+      x:toPosition.x,
+      y:fromPosition.y + Math.sign(totalRise) * runMagnitude
+    }
+  };
+}
+
+function drawStairsAtRow(fromPosition:Position, toPosition:Position, z:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const snappedFlight = _snapFlightTo45DegreesForDrawing(fromPosition, toPosition);
+  const totalRise = snappedFlight.toPosition.y - snappedFlight.fromPosition.y;
+  const totalRun = snappedFlight.toPosition.x - snappedFlight.fromPosition.x;
+  assert(Math.abs(Math.abs(totalRise) - Math.abs(totalRun)) <= STAIR_POSITION_TOLERANCE, 'stairs must be drawn at a 45 degree angle');
 
   const stepCount = _calcStairStepCount(Math.max(Math.abs(totalRise), Math.abs(totalRun)));
   const stepRise = totalRise / stepCount;
   const stepRun = totalRun / stepCount;
-  let currentX = fromPosition.x;
-  let currentY = fromPosition.y;
+  let currentX = snappedFlight.fromPosition.x;
+  let currentY = snappedFlight.fromPosition.y;
   for (let i = 0; i < stepCount; i++) {
     const nextX = currentX + stepRun;
     const nextY = currentY + stepRise;
-    _drawStairStepCuboid(Math.min(currentX, nextX), Math.min(currentY, nextY), Math.abs(stepRun), Math.abs(stepRise),
+    _drawStairStepCuboid(Math.min(currentX, nextX), Math.min(currentY, nextY), Math.abs(stepRun), Math.abs(stepRise), z,
       scalingFactors, context);
     currentX = nextX;
     currentY = nextY;
@@ -148,6 +169,10 @@ function _findNearestStairIntersectionAtExit(flights:StairFlight[], exit:RoomExi
   return nearestIntersection;
 }
 
+function _areDirectFlights(flights:StairFlight[], floorY:number):boolean {
+  return flights.every(flight => Math.abs(flight.startPosition.y - floorY) <= STAIR_POSITION_TOLERANCE);
+}
+
 function _drawLandings(room:Room, exits:RoomExit[], flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
   exits
@@ -169,6 +194,14 @@ function _drawLandings(room:Room, exits:RoomExit[], flights:StairFlight[], scali
 export function drawRoomStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   if (!room.stairs.length) return;
 
-  room.stairs.forEach(flight => drawStairs(flight.startPosition, flight.endPosition, scalingFactors, context));
-  _drawLandings(room, _findSortedNonFloorExits(room, _calcRoomFloorY(room)), room.stairs, scalingFactors, context);
+  const floorY = _calcRoomFloorY(room);
+  const areDirectFlights = _areDirectFlights(room.stairs, floorY);
+  room.stairs.forEach((flight, flightIndex) => drawStairsAtRow(
+    flight.startPosition,
+    flight.endPosition,
+    areDirectFlights ? 0 : (flightIndex % 2 === 0 ? 0 : FRONT_ROW_Z),
+    scalingFactors,
+    context
+  ));
+  if (areDirectFlights) _drawLandings(room, _findSortedNonFloorExits(room, floorY), room.stairs, scalingFactors, context);
 }

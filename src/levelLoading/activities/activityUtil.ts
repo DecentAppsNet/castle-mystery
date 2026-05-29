@@ -308,7 +308,10 @@ export function planMovementWithinRoom(room:Room, fromWaypoint:Waypoint, targetW
     const nextWaypoint = waypointPath[i];
     const walkEvent = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
       nextWaypoint.position.x, nextWaypoint.position.y);
-    if (!walkEvent) throw new Error(`unable to follow waypoint route in room ${room.id}`);
+    if (!walkEvent) {
+      currentWaypoint = nextWaypoint;
+      continue;
+    }
     events.push(walkEvent);
     currentTime = walkEvent.startTime + walkEvent.duration;
     currentWaypoint = nextWaypoint;
@@ -338,7 +341,10 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
       const nextWaypoint = currentWaypoint.exitDirections[nextRoom.id]!;
       const walkEvent = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
         nextWaypoint.position.x, nextWaypoint.position.y);
-      if (!walkEvent) throw new Error(`unable to reach exit waypoint from ${room.id} toward ${nextRoom.id}`);
+      if (!walkEvent) {
+        currentWaypoint = nextWaypoint;
+        continue;
+      }
       events.push(walkEvent);
       currentTime = walkEvent.startTime + walkEvent.duration;
       currentWaypoint = nextWaypoint;
@@ -351,8 +357,6 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
     if (crossRoomWalkEvent) {
       events.push(crossRoomWalkEvent);
       currentTime = crossRoomWalkEvent.startTime + crossRoomWalkEvent.duration;
-    } else if (currentWaypoint.position.x !== nextRoomExitWaypoint.position.x || currentWaypoint.position.y !== nextRoomExitWaypoint.position.y) {
-      throw new Error(`unable to cross exit from ${room.id} to ${nextRoom.id}`);
     }
     currentWaypoint = nextRoomExitWaypoint;
     events.push(createRoomEntryEvent(currentTime, nextRoom.id));

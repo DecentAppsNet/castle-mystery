@@ -97,47 +97,9 @@ import timelineDerivedBoundsText from './fixtures/timeline-derived-bounds.md?raw
 import timelineRelativeOnlyText from './fixtures/timeline-relative-only.md?raw';
 import timelineInitialTimeOutsideBoundsText from './fixtures/timeline-initial-time-outside-bounds.md?raw';
 import timelineStartAfterItineraryText from './fixtures/timeline-start-after-itinerary.md?raw';
+import escapeStairwellRegressionText from './fixtures/escape-stairwell-regression.md?raw';
+import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
-
-const roomGridDepthText = `# map
-
-\`\`\`
-H
-\`\`\`
-
-* H=Hall
-
-# rooms
-
-## Hall
-
-\`\`\`
-a...
-.b..
-..cd
-\`\`\`
-
-* a=Apple
-* b=Baron
-* c=Coin
-* d=Duke
-
-# characters
-
-## Baron
-
-## Duke
-
-# items
-
-## Apple
-
-## Coin
-
-# itinerary
-
-# solutions
-`;
 
 describe('levelUtil itinerary loading', () => {
   beforeEach(() => {
@@ -1147,6 +1109,12 @@ describe('levelUtil itinerary loading', () => {
       expect(labelTexts[0]).toBe('7:30pm');
       expect(labelTexts[labelTexts.length - 1]).toBe('7am');
       expect(labelTexts.some(text => text.endsWith('am') && !text.startsWith('7'))).toBe(true);
+    });
+  });
+
+  describe('stairwell regression loading', () => {
+    it('loads escape without stairwell route planning errors', () => {
+      expect(() => loadLevelFromText(escapeStairwellRegressionText, 'escape-stairwell-regression.md')).not.toThrow();
     });
   });
 

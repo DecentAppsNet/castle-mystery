@@ -173,6 +173,22 @@ function _findAllNearestWaypointsByX(waypoints:Waypoint[], x:number):Waypoint[] 
   return nearestWaypoints;
 }
 
+function _findNearestStairIntersectionAtExit(stairs:ReadonlyArray<StairFlight>, exit:RoomExit):{ flight:StairFlight, x:number }|null {
+  let nearestIntersection:{ flight:StairFlight, x:number }|null = null;
+  let nearestDistance = Infinity;
+
+  for (const stair of stairs) {
+    const intersection = findStairFlightIntersectionAtY([stair], exit.y);
+    if (!intersection) continue;
+    const distance = Math.abs(exit.x - intersection.x);
+    if (distance >= nearestDistance - STAIR_POSITION_TOLERANCE) continue;
+    nearestIntersection = intersection;
+    nearestDistance = distance;
+  }
+
+  return nearestIntersection;
+}
+
 function _pruneIsolatedNonExitWaypoints(exits:RoomExit[], waypoints:Waypoint[]):Waypoint[] {
   if (exits.length === 0 && waypoints.length <= 1) return waypoints;
 
@@ -264,7 +280,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
       const exitWaypoint = _getOrCreateWaypoint(exit.x, exit.y);
       if (doesStairFlightEndAtPosition(stairs, exitWaypoint.position)) return;
 
-      const stairIntersection = findStairFlightIntersectionAtY(stairs, exit.y);
+      const stairIntersection = _findNearestStairIntersectionAtExit(stairs, exit);
       assertNonNullable(stairIntersection, `missing stair intersection for room ${roomId} exit at (${exit.x}, ${exit.y})`);
       const landingWaypoint = _getOrCreateWaypoint(stairIntersection.x, exit.y);
       _connectWaypoints(landingWaypoint, exitWaypoint);

@@ -66,29 +66,37 @@ describe('stairFlightUtil', () => {
     });
 
     it('falls back to winding flights when the room is only four columns wide', () => {
-      const rect = { x:0, y:0, width:20, height:20 };
-      const exits = [_createExit('Other', 0, 10)];
+      const rect = { x:0, y:0, width:20, height:40 };
+      const exits = [_createExit('Other', 0, 20)];
 
       const flights = generateStairFlights(_createRoom(rect, exits));
 
-      expect(flights).toHaveLength(1);
-      expect(flights[0].startPosition.x).toBeCloseTo(2.5, 3);
-      expect(flights[0].startPosition.y).toBeCloseTo(19.999, 3);
-      expect(flights[0].endPosition.x).toBeCloseTo(12.499, 3);
-      expect(flights[0].endPosition.y).toBeCloseTo(10, 3);
+      expect(flights).toHaveLength(2);
+      expect(flights[0].startPosition.x).toBeCloseTo(5, 3);
+      expect(flights[0].startPosition.y).toBeCloseTo(39.999, 3);
+      expect(flights[0].endPosition.x).toBeCloseTo(15, 3);
+      expect(flights[0].endPosition.y).toBeCloseTo(30, 3);
+      expect(flights[1].startPosition.x).toBeCloseTo(15, 3);
+      expect(flights[1].startPosition.y).toBeCloseTo(30, 3);
+      expect(flights[1].endPosition.x).toBeCloseTo(5, 3);
+      expect(flights[1].endPosition.y).toBeCloseTo(20, 3);
     });
 
     it('falls back to winding flights when direct flights would intersect', () => {
-      const rect = { x:0, y:0, width:30, height:20 };
-      const exits = [_createExit('Left', 0, 1), _createExit('Right', 30, 1)];
+      const rect = { x:0, y:0, width:30, height:40 };
+      const exits = [_createExit('Left', 0, 20), _createExit('Right', 30, 20)];
 
       const flights = generateStairFlights(_createRoom(rect, exits));
 
-      expect(flights).toHaveLength(1);
-      expect(flights[0].startPosition.x).toBeCloseTo(1.875, 3);
-      expect(flights[0].startPosition.y).toBeCloseTo(19.999, 3);
-      expect(flights[0].endPosition.x).toBeCloseTo(20.874, 3);
-      expect(flights[0].endPosition.y).toBeCloseTo(1, 3);
+      expect(flights).toHaveLength(2);
+      expect(flights[0].startPosition.x).toBeCloseTo(10, 3);
+      expect(flights[0].startPosition.y).toBeCloseTo(39.999, 3);
+      expect(flights[0].endPosition.x).toBeCloseTo(20, 3);
+      expect(flights[0].endPosition.y).toBeCloseTo(30, 3);
+      expect(flights[1].startPosition.x).toBeCloseTo(20, 3);
+      expect(flights[1].startPosition.y).toBeCloseTo(30, 3);
+      expect(flights[1].endPosition.x).toBeCloseTo(10, 3);
+      expect(flights[1].endPosition.y).toBeCloseTo(20, 3);
     });
   });
 });
