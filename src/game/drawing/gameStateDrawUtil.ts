@@ -9,7 +9,7 @@ import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { drawExitPopover } from "./exitDrawUtil";
-import { drawRoomCharactersAndEffects, drawRoomExit, drawRoomShell } from "./roomDrawUtil";
+import { drawRoomCharactersAndEffects, drawRoomShell } from "./roomDrawUtil";
 import { drawRoomStairs } from "./stairDrawUtil";
 import { calcScalingFactorsForRect } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
