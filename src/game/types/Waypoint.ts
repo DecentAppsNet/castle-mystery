@@ -1,4 +1,4 @@
-import Position from "./Position"
+import Position, { duplicatePosition } from "./Position"
 
 type Waypoint = {
   position:Position,
@@ -8,7 +8,7 @@ type Waypoint = {
 
 export function duplicateWaypoint(from:Waypoint):Waypoint {
   return {
-    position:from.position,
+    position:duplicatePosition(from.position),
     adjacentWaypoints:[...from.adjacentWaypoints],
     exitDirections:{ ...from.exitDirections }
   }

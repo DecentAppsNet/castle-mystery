@@ -44,7 +44,7 @@ function _createRoom(id:string, rect:Rect, exits:RoomExit[] = [], waypoints:Wayp
 }
 
 function _createCharacter(id:string, x:number, y:number):Character {
-  const waypoint:Waypoint = { position:{ x, y }, adjacentWaypoints:[], exitDirections:{} };
+  const waypoint:Waypoint = { position:{ x, y, z:0 }, adjacentWaypoints:[], exitDirections:{} };
   return {
     id,
     title:id,
@@ -64,7 +64,7 @@ function _createCharacter(id:string, x:number, y:number):Character {
 }
 
 function _createWaypoint(x:number, y:number):Waypoint {
-  return { position:{ x, y }, adjacentWaypoints:[], exitDirections:{} };
+  return { position:{ x, y, z:0 }, adjacentWaypoints:[], exitDirections:{} };
 }
 
 function _createWaypointKey(waypoint:Waypoint):string {
@@ -140,7 +140,7 @@ describe('roomUtil', () => {
 
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exit, waypoints);
 
-      expect(exitWaypoint.position).toEqual({ x:0, y:10 });
+      expect(exitWaypoint.position).toEqual({ x:0, y:10, z:0 });
       expect(waypoints).toContain(exitWaypoint);
     });
 
@@ -150,7 +150,7 @@ describe('roomUtil', () => {
 
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exit, waypoints);
 
-      expect(exitWaypoint.position).toEqual({ x:20, y:ROOM_RECT.y + ROOM_RECT.height - FLOOR_WAYPOINT_Y_OFFSET });
+      expect(exitWaypoint.position).toEqual({ x:20, y:ROOM_RECT.y + ROOM_RECT.height - FLOOR_WAYPOINT_Y_OFFSET, z:0 });
       expect(waypoints).toContain(exitWaypoint);
     });
 
@@ -286,10 +286,10 @@ describe('roomUtil', () => {
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, []);
 
       expect(waypoints.map(waypoint => waypoint.position)).toEqual([
-        { x:2.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
-        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
-        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
-        { x:17.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET }
+        { x:2.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
+        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
+        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
+        { x:17.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 }
       ]);
       _assertAllWaypointsAreInsideRoomRect(waypoints, ROOM_RECT);
     });
@@ -329,16 +329,16 @@ describe('roomUtil', () => {
 
       expect(landingWaypoint).toBeDefined();
       expect(landingWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
-        { x:0, y:20 },
-        { x:15, y:30 }
+        { x:0, y:20, z:0 },
+        { x:15, y:30, z:0 }
       ]));
     });
 
     it('connects a floor stair start to both equally near floor waypoints', () => {
       const rect = { x:0, y:0, width:40, height:20 };
       const stairs:StairFlight[] = [{
-        startPosition:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
-        endPosition:{ x:0, y:10 }
+        startPosition:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
+        endPosition:{ x:0, y:10, z:0 }
       }];
 
       const waypoints = generateWaypoints(ROOM_ID, rect, [], stairs);
@@ -346,9 +346,9 @@ describe('roomUtil', () => {
 
       expect(stairStartWaypoint).toBeDefined();
       expect(stairStartWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
-        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
-        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
-        { x:0, y:10 }
+        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
+        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
+        { x:0, y:10, z:0 }
       ]));
     });
 
@@ -431,12 +431,12 @@ describe('roomUtil', () => {
       ];
       const stairs:StairFlight[] = [
         {
-          startPosition:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
-          endPosition:{ x:5, y:5 }
+          startPosition:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
+          endPosition:{ x:5, y:5, z:0 }
         },
         {
-          startPosition:{ x:20, y:20 - FLOOR_WAYPOINT_Y_OFFSET },
-          endPosition:{ x:25, y:5 }
+          startPosition:{ x:20, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
+          endPosition:{ x:25, y:5, z:0 }
         }
       ];
 

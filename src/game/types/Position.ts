@@ -1,6 +1,7 @@
 type Position = {
   x: number,
-  y: number
+  y: number,
+  z: number
 }
 
 export function duplicatePosition(from:Position):Position {

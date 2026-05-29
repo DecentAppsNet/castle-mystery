@@ -11,7 +11,7 @@ import Waypoint from '../types/Waypoint';
 import CharacterEncounterEvent from '../types/itineraryEvents/CharacterEncounterEvent';
 
 function _createWaypoint(x:number, y:number):Waypoint {
-  return { position:{ x, y }, adjacentWaypoints:[], exitDirections:{} };
+  return { position:{ x, y, z:0 }, adjacentWaypoints:[], exitDirections:{} };
 }
 
 function _createRoom(id:string, x:number):Room {
@@ -43,7 +43,7 @@ function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = [
     faceImageUrl:null,
     discoveredRoomIds:[],
     itinerary,
-    itineraryIndex:createItineraryIndex(itinerary, { x, y })
+    itineraryIndex:createItineraryIndex(itinerary, { x, y, z:0.5 })
   };
 }
 
@@ -51,7 +51,7 @@ describe('characterEncounterUtil', () => {
   it('creates encounter events when a character enters an occupied room', () => {
     const rooms = [_createRoom('A', 0), _createRoom('B', 100)];
     const alice = _createCharacter('Alice', 10, 10, [
-      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:10, y:10 }, toPosition:{ x:150, y:10 } },
+      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:10, y:10, z:0 }, toPosition:{ x:150, y:10, z:0 } },
       { type:ItineraryEventType.ROOM_ENTRY, startTime:1_000, duration:0, roomId:'B' }
     ]);
     const bob = _createCharacter('Bob', 150, 10);
@@ -72,11 +72,11 @@ describe('characterEncounterUtil', () => {
     const rooms = [_createRoom('A', 0), _createRoom('B', 100), _createRoom('C', 200)];
     const alice = _createCharacter('Alice', 150, 10);
     const bob = _createCharacter('Bob', 10, 10, [
-      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:10, y:10 }, toPosition:{ x:150, y:10 } },
+      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:10, y:10, z:0 }, toPosition:{ x:150, y:10, z:0 } },
       { type:ItineraryEventType.ROOM_ENTRY, startTime:1_000, duration:0, roomId:'B' }
     ]);
     const charlie = _createCharacter('Charlie', 210, 10, [
-      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:210, y:10 }, toPosition:{ x:160, y:10 } },
+      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:210, y:10, z:0 }, toPosition:{ x:160, y:10, z:0 } },
       { type:ItineraryEventType.ROOM_ENTRY, startTime:1_000, duration:0, roomId:'B' }
     ]);
 

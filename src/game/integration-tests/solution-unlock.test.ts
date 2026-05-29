@@ -12,15 +12,14 @@ import Level from '../types/Level';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
 
 function _createTestLevel():Level {
-  const initialPosition = { x:5, y:5 };
+  const initialPosition = { x:5, y:5, z:0.5 };
   const waypoint = { position:initialPosition, adjacentWaypoints:[], exitDirections:{} };
   const itinerary:Itinerary = [];
   const bookItem = {
     id:'book',
     title:'Book',
     displayChar:'B',
-    position:{ x:6, y:5 },
-    depth:0.5,
+    position:{ x:6, y:5, z:0.5 },
     description:'A test book.',
     isDiscovered:false,
     isExamined:false

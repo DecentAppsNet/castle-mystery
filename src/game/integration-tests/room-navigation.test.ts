@@ -36,10 +36,10 @@ function _createCharacter(id:string, x:number, itinerary:Character['itinerary'])
     x,
     y:5,
     depth:0.5,
-    waypoint:{ position:{ x, y:5 }, adjacentWaypoints:[], exitDirections:{} },
+    waypoint:{ position:{ x, y:5, z:0 }, adjacentWaypoints:[], exitDirections:{} },
     discoveredRoomIds:[],
     itinerary,
-    itineraryIndex:createItineraryIndex(itinerary, { x, y:5 })
+    itineraryIndex:createItineraryIndex(itinerary, { x, y:5, z:0.5 })
   };
 }
 

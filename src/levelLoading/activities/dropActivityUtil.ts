@@ -25,7 +25,7 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
 
   const droppedItem = {
     ...item,
-    position:{ ...context.state.waypoint.position }
+    position:{ ...context.state.waypoint.position, z:context.character.depth }
   };
   const room = findCurrentRoom(context.level, context.state.position);
   const roomItems = context.roomItemsByRoomId.get(room.id) || null;

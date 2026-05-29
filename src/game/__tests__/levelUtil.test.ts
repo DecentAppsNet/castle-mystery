@@ -437,16 +437,16 @@ describe('levelUtil itinerary loading', () => {
     const baron = level.characters.find(character => character.id === 'baron') || null;
     const duke = level.characters.find(character => character.id === 'duke') || null;
 
-    expect(apple?.depth).toBe(0);
+    expect(apple?.position.z).toBe(0);
     expect(baron?.depth).toBe(0.5);
-    expect(coin?.depth).toBe(0.6667);
+    expect(coin?.position.z).toBe(0.6667);
     expect(duke?.depth).toBe(0.8334);
   });
 
   it('loads drop activities and removes dropped items from final carried inventory', () => {
     const level = loadLevelFromText(dropItemText);
     const hero = level.characters.find(character => character.id === 'hero');
-    const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, itemId:string, position:{ x:number, y:number } } | undefined;
+    const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, itemId:string, position:{ x:number, y:number, z:number } } | undefined;
 
     expect(dropEvent?.itemId).toBe('book');
     expect(hero?.items.map(item => item.id)).not.toContain('book');

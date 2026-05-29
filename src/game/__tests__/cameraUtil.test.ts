@@ -25,7 +25,7 @@ function _createRoom(rect:Room['rect']):Room {
 }
 
 function _createCharacter(x:number, y:number):Character {
-  const waypoint:Waypoint = { position:{ x, y }, adjacentWaypoints:[], exitDirections:{} };
+  const waypoint:Waypoint = { position:{ x, y, z:0 }, adjacentWaypoints:[], exitDirections:{} };
   return {
     id:'hero',
     title:'Hero',

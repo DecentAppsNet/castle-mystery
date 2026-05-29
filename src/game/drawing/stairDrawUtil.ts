@@ -120,7 +120,8 @@ function _snapFlightTo45DegreesForDrawing(fromPosition:Position, toPosition:Posi
     fromPosition,
     toPosition:{
       x:toPosition.x,
-      y:fromPosition.y + Math.sign(totalRise) * runMagnitude
+      y:fromPosition.y + Math.sign(totalRise) * runMagnitude,
+      z:toPosition.z
     }
   };
 }
@@ -180,7 +181,7 @@ function _drawLandings(room:Room, exits:RoomExit[], flights:StairFlight[], scali
   const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
   exits
     .forEach(exit => {
-      if (doesStairFlightEndAtPosition(flights, exit)) return;
+      if (doesStairFlightEndAtPosition(flights, { x:exit.x, y:exit.y, z:0 })) return;
       const stairIntersection = _findNearestStairIntersectionAtExit(flights, exit);
       if (stairIntersection === null) return;
       const stairIntersectionX = stairIntersection.x;
@@ -191,7 +192,7 @@ function _drawLandings(room:Room, exits:RoomExit[], flights:StairFlight[], scali
           scalingFactors, context);
         return;
       }
-      _drawHorizontalLine({ x:stairIntersectionX, y:exit.y }, { x:exit.x, y:exit.y }, scalingFactors, context);
+      _drawHorizontalLine({ x:stairIntersectionX, y:exit.y, z:0 }, { x:exit.x, y:exit.y, z:0 }, scalingFactors, context);
     });
 }
 

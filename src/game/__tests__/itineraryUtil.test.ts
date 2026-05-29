@@ -11,7 +11,7 @@ import RoomEntryEvent from '../types/itineraryEvents/RoomEntryEvent';
 import Waypoint from '../types/Waypoint';
 
 function _createWaypoint(x:number, y:number):Waypoint {
-  return { position:{ x, y }, adjacentWaypoints:[], exitDirections:{} };
+  return { position:{ x, y, z:0 }, adjacentWaypoints:[], exitDirections:{} };
 }
 
 function _createRoom():Room {
@@ -44,7 +44,7 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
     faceImageUrl:null,
     discoveredRoomIds:[],
     itinerary,
-    itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0 })
+    itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0, z:0.5 })
   };
 }
 
@@ -85,7 +85,7 @@ describe('itineraryUtil', () => {
       const character = _createCharacter([walkEvent!]);
       character.x = 10;
       character.y = floorY;
-      character.itineraryIndex = createItineraryIndex(character.itinerary, { x:character.x, y:character.y });
+      character.itineraryIndex = createItineraryIndex(character.itinerary, { x:character.x, y:character.y, z:character.depth });
 
       const midWalkPose = findCharacterPose(character, 1_075);
       expect(midWalkPose.position.y).toBe(floorY);

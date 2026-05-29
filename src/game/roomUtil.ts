@@ -227,7 +227,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
     const existingWaypoint = waypointsByKey.get(key);
     if (existingWaypoint) return existingWaypoint;
     const waypoint:Waypoint = {
-      position: { x, y },
+      position: { x, y, z:0 },
       adjacentWaypoints: [] as Readonly<Waypoint>[],
       exitDirections: {}
     };

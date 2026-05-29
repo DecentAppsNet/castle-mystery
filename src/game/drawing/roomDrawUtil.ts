@@ -102,7 +102,7 @@ function _createDrawableContents(room:Room, charactersInRoom:Character[], effect
   return [
     ...charactersInRoom.map(character => ({ kind:'character' as const, depth:character.depth, x:character.x, sortId:character.id, character })),
     ...findVisibleRoomItemsInDrawOrder(room, effects, includeUndiscoveredItems)
-      .map(item => ({ kind:'item' as const, depth:item.depth, x:item.position.x, sortId:item.id, item }))
+      .map(item => ({ kind:'item' as const, depth:item.position.z, x:item.position.x, sortId:item.id, item }))
   ].sort((content1, content2) =>
     content1.depth - content2.depth || content2.x - content1.x || content1.sortId.localeCompare(content2.sortId));
 }

@@ -31,8 +31,8 @@ function _calcDirectFlightForExit(room:Room, exit:RoomExit, floorY:number):Stair
   const height = floorY - exit.y;
   const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
   if (height + columnWidth >= room.rect.width) return null;
-  if (exit.x === room.rect.x) return _createStairFlight({ x:exit.x + height + columnWidth, y:floorY }, { x:exit.x + columnWidth, y:exit.y });
-  if (exit.x === room.rect.x + room.rect.width) return _createStairFlight({ x:exit.x - height - columnWidth, y:floorY }, { x:exit.x - columnWidth, y:exit.y });
+  if (exit.x === room.rect.x) return _createStairFlight({ x:exit.x + height + columnWidth, y:floorY, z:0 }, { x:exit.x + columnWidth, y:exit.y, z:0 });
+  if (exit.x === room.rect.x + room.rect.width) return _createStairFlight({ x:exit.x - height - columnWidth, y:floorY, z:0 }, { x:exit.x - columnWidth, y:exit.y, z:0 });
   throw new Error(`exit for room ${room.id} at (${exit.x}, ${exit.y}) is not on a supported wall`);
 }
 
@@ -126,8 +126,8 @@ function _generateWindingStairFlights(room:Room, floorY:number, nonFloorExits:Ro
     const startY = _calcWindingFlightStartY(room, floorY, halfFlightIndex);
     const endY = _calcWindingFlightEndY(room, halfFlightIndex, flightCount, stairsTopY);
     flights.push(_createStairFlight(
-      { x: isBackRowFlight ? leftX : rightX, y:startY },
-      { x: isBackRowFlight ? rightX : leftX, y:endY }
+      { x: isBackRowFlight ? leftX : rightX, y:startY, z:0 },
+      { x: isBackRowFlight ? rightX : leftX, y:endY, z:0 }
     ));
   }
   return flights;

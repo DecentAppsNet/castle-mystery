@@ -66,7 +66,7 @@ function _getApproxTextWidth(text:string, fontSize:number):number {
 }
 
 function _getItemFrontDepth(item:Item):number {
-  return Math.min(1, clamp(item.depth, 0, 1) + ITEM_CUBOID_LINE_WIDTH_RATIO + ITEM_CUBOID_DEPTH_RATIO / 3);
+  return Math.min(1, clamp(item.position.z, 0, 1) + ITEM_CUBOID_LINE_WIDTH_RATIO + ITEM_CUBOID_DEPTH_RATIO / 3);
 }
 
 function _getRoomItemGamePosition(room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
@@ -81,7 +81,7 @@ function _getRoomItemGamePosition(room:Room, item:Item, scalingFactors:ScalingFa
 export function getItemCanvasPosition(item:Item, scalingFactors:ScalingFactors):[number, number] {
   const [x, y] = gameToCanvasPosition(item.position.x, item.position.y, scalingFactors);
   const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
-  const depth = clamp(item.depth, 0, 1);
+  const depth = clamp(item.position.z, 0, 1);
   return [x + offsetX * depth, y + offsetY * depth];
 }
 
@@ -165,7 +165,7 @@ export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:
 function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
   return room.items
     .filter(item => (includeUndiscovered || item.isDiscovered) && !_isItemSuppressedByEffect(item, effects))
-    .sort((item1, item2) => item1.depth - item2.depth || item2.position.x - item1.position.x || item1.id.localeCompare(item2.id));
+    .sort((item1, item2) => item1.position.z - item2.position.z || item2.position.x - item1.position.x || item1.id.localeCompare(item2.id));
 }
 
 function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {

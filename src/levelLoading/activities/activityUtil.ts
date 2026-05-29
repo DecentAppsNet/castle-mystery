@@ -156,7 +156,7 @@ export function createCharacterActivityState(character:Character):CharacterActiv
   return {
     events:[],
     time:0,
-    position:{ x:character.x, y:character.y },
+    position:{ x:character.x, y:character.y, z:character.depth },
     waypoint:character.waypoint,
     carriedItems:character.items.map(duplicateItem)
   };
@@ -185,14 +185,14 @@ function createCharacterSnapshot(character:Character, state:CharacterActivitySta
     ...character,
     waypoint:state.waypoint,
     itinerary:[...state.events],
-    itineraryIndex:createItineraryIndex(state.events, { x:character.x, y:character.y })
+    itineraryIndex:createItineraryIndex(state.events, { x:character.x, y:character.y, z:character.depth })
   };
 }
 
 export function findStatePoseAtTime(character:Character, state:CharacterActivityState, time:number) {
   if (!state.events.length) {
     return {
-      position:{ x:character.x, y:character.y },
+      position:{ x:character.x, y:character.y, z:character.depth },
       speech:null
     };
   }

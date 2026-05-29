@@ -29,8 +29,8 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
 }
 
 export function createGiveItemEffect(item:Item, room:Room, giver:Character, recipient:Character, time:number, scalingFactors:ScalingFactors):GiveItemEffect {
-  const [startCanvasX, startCanvasY] = getItemCanvasPosition({ ...item, position:{ x:giver.x, y:giver.y }, depth:giver.depth }, scalingFactors);
-  const [endCanvasX, endCanvasY] = getItemCanvasPosition({ ...item, position:{ x:recipient.x, y:recipient.y }, depth:recipient.depth }, scalingFactors);
+  const [startCanvasX, startCanvasY] = getItemCanvasPosition({ ...item, position:{ x:giver.x, y:giver.y, z:giver.depth } }, scalingFactors);
+  const [endCanvasX, endCanvasY] = getItemCanvasPosition({ ...item, position:{ x:recipient.x, y:recipient.y, z:recipient.depth } }, scalingFactors);
   const metrics = calcItemDrawMetrics(room, scalingFactors);
   return {
     type:EffectType.GIVE_ITEM,

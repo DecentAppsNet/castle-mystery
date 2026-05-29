@@ -49,13 +49,13 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
 }
 
 export function createWalkEvent(_room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEvent|null {
-  const finalToPosition = { x:toX, y:toY };
+  const finalToPosition = { x:toX, y:toY, z:0 };
   const duration = _calcWalkDuration(fromX, fromY, finalToPosition.x, finalToPosition.y);
   if (duration <= 0) return null;
   return {
     type:ItineraryEventType.WALK,
     startTime,
-    fromPosition:{x:fromX, y:fromY},
+    fromPosition:{x:fromX, y:fromY, z:0},
     toPosition:finalToPosition,
     duration
   };
@@ -141,14 +141,15 @@ function _interpolatePosition(fromPosition:Position, toPosition:Position, interp
   const vector = {x:toPosition.x - fromPosition.x, y:toPosition.y - fromPosition.y};
   return {
     x:fromPosition.x + (interpolateAmount * vector.x),
-    y:fromPosition.y + (interpolateAmount * vector.y)
+    y:fromPosition.y + (interpolateAmount * vector.y),
+    z:fromPosition.z + (interpolateAmount * (toPosition.z - fromPosition.z))
   }
 }
 
 export function findCharacterPose(character:Character, time:number):CharacterPose {
   if (!character.itinerary.length || !character.itineraryIndex.eventStartTimes.length) {
     return {
-      position:{ x:character.x, y:character.y },
+      position:{ x:character.x, y:character.y, z:character.depth },
       speech:null,
       thought:null
     };
@@ -196,7 +197,7 @@ function _findThoughtAtTime(itinerary:ItineraryEvent[], time:number):string|null
 
 function _findItineraryPosition(character:Character, time:number):CharacterPose {
   return {
-    position:_findPositionAtTime({ x:character.x, y:character.y }, character.itinerary, time),
+    position:_findPositionAtTime({ x:character.x, y:character.y, z:character.depth }, character.itinerary, time),
     speech:_findSpeechAtTime(character.itinerary, time),
     thought:_findThoughtAtTime(character.itinerary, time)
   };
@@ -208,7 +209,7 @@ export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:P
   }
   const eventStartPositions:Position[] = [];
   const firstWalkEvent = events.find(event => event.type === ItineraryEventType.WALK) as WalkEvent|undefined;
-  let currentPosition:Position|null = initialPosition ? duplicatePosition(initialPosition) : duplicatePosition(firstWalkEvent?.fromPosition || { x:0, y:0 });
+  let currentPosition:Position|null = initialPosition ? duplicatePosition(initialPosition) : duplicatePosition(firstWalkEvent?.fromPosition || { x:0, y:0, z:0 });
   if (!initialPosition) assertNonNullable(firstWalkEvent);
 
   for (let i = 0; i < events.length; ++i) {
