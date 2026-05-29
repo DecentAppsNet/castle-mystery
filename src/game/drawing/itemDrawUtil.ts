@@ -196,7 +196,7 @@ export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:
 function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
   return room.items
     .filter(item => (includeUndiscovered || item.isDiscovered) && !_isItemSuppressedByEffect(item, effects))
-    .sort((item1, item2) => item1.depth - item2.depth || item1.position.y - item2.position.y || item1.id.localeCompare(item2.id));
+    .sort((item1, item2) => item1.depth - item2.depth || item2.position.x - item1.position.x || item1.id.localeCompare(item2.id));
 }
 
 function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
@@ -205,14 +205,6 @@ function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
 
 export function findVisibleRoomItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
   return _getVisibleItemsInDrawOrder(room, effects, includeUndiscovered);
-}
-
-export function drawDiscoveredItemsInRoom(room:Room, effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  options:RoomItemVisibilityOptions = {}) {
-  const { includeUndiscovered = false, ignoreRoomObscured = false } = options;
-  if (room.isObscured && !ignoreRoomObscured) return;
-  _getVisibleItemsInDrawOrder(room, effects, includeUndiscovered)
-    .forEach(item => drawItem(room, item, scalingFactors, context));
 }
 
 export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scalingFactors:ScalingFactors,

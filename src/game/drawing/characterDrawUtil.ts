@@ -1,13 +1,11 @@
 /* This module groups character-focused drawing helpers, including visible character rendering and character popovers. */
 
 import { clamp } from "@/common/numberUtil";
-import { processCharacterEffects } from "../effects/effectUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelDrawUtil";
 import Character from "../types/Character";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
-import Effect from "../effects/types/Effect";
 import ImageSet from "../types/ImageSet";
 import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_SPEECH_BUBBLE_FILL } from "./drawConstants";
 import { drawTextPopover } from "./popoverDrawUtil";
@@ -256,16 +254,6 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   const drawX = backboneX - drawWidth / 2;
   const drawY = centerY - drawHeight;
   context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
-}
-
-export function drawVisibleCharactersInRoom(charactersInRoom:Character[], activeCharacter:Character,
-  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet) {
-  const charactersInDrawOrder = [...charactersInRoom].sort((character1, character2) =>
-    character1.depth - character2.depth || character2.x - character1.x || character1.id.localeCompare(character2.id));
-  charactersInDrawOrder.forEach(character => {
-    drawCharacter(character, scalingFactors, context, time, imageSet, character.id === activeCharacter.id);
-    processCharacterEffects(character, effects, context);
-  });
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {

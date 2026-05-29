@@ -102,7 +102,7 @@ Write one subsection per room. The subsection name must match a room from the `m
 
 Each room subsection can contain:
 * room-level settings such as `title`, `exits`, and `obscured`
-* an optional fenced grid showing the inside of the room. It need not match any exact dimensions, but will instead be scaled to match the size of the room as defined in the map section.
+* an optional fenced grid showing the inside of the room. If present, it must match the room's expected dimensions exactly.
 * a legend for people and items used inside that room
 
 ## Name/value Pairs
@@ -112,14 +112,46 @@ Each room subsection can contain:
 * `obscured` (optional) - whether the room begins hidden from the player. Default: `false`.
 
 In the room grid:
+* the fenced grid always has exactly 3 rows: back row, middle row, and front row
+* the row count is fixed at 3, and the column count depends on the room width from the `map` section
+* each map tile of room width contributes 4 columns to the room grid, so a 1-tile-wide room uses 4 columns, a 2-tile-wide room uses 8 columns, and so on
 * `.` means empty walkable space
 * `#` is ignored and behaves like empty walkable space
 * any other letter must appear in the room legend
+
+The 3 rows are interpreted like this:
+* back row - the furthest row from the player
+* middle row - the middle depth row
+* front row - the closest row to the player
+
+For authored placement, the column chooses horizontal position. The row chooses front-to-back depth. Characters and items do not use the row as a literal walking `y` target inside the room.
 
 In the room legend:
 * a known character name places that character in the room
 * a known item name places that item in the room
 * any other legend entry is an error
+
+Example for a 1-tile-wide room:
+
+```md
+## Guard Room
+
+```
+....
+.G..
+K...
+```
+
+* G=Guard
+* K=Purple Key
+```
+
+In that example:
+* the first line is the back row
+* the second line is the middle row
+* the third line is the front row
+* `Guard` begins in the middle row
+* `Purple Key` begins in the front row
 
 ## Door Modifiers
 

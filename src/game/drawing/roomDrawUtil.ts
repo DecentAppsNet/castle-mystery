@@ -68,8 +68,8 @@ export function drawRoomExit(room:Room, exit:RoomExit, characters:Character[], s
   drawTemporaryRightWallDoorVectorOverlay(room, exit, displayedExitType, scalingFactors, context, height);
 }
 
-export function drawRoomShell(room:Room, isActive:boolean, _activeCharacter:Character|null,
-  _effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
+export function drawRoomShell(room:Room, isActive:boolean,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
