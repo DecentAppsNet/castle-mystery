@@ -13,6 +13,7 @@ import Effect from "../effects/types/Effect";
 import EffectType from "../effects/types/EffectType";
 import { drawTextPopover } from "./popoverDrawUtil";
 import { calcPanelOffset } from "./roomPanelDrawUtil";
+import { drawProjectedCuboid } from "./cuboidDrawUtil";
 
 const ITEM_LABEL_FONT_RATIO = 0.55;
 const ITEM_CUBOID_COLOR = "#c58b57";
@@ -133,51 +134,19 @@ function _drawItemCuboid(x:number, y:number, metrics:ItemDrawMetrics, context:Ca
   const backBottomLeft:[number, number] = [frontBottomLeft[0] - metrics.cuboidDepthXPixels, y - metrics.cuboidDepthYPixels];
   const backTopLeft:[number, number] = [backBottomLeft[0], backBottomLeft[1] - metrics.cuboidHeightPixels];
   const backTopRight:[number, number] = [frontTopRight[0] - metrics.cuboidDepthXPixels, frontTopRight[1] - metrics.cuboidDepthYPixels];
-
-  context.fillStyle = ITEM_CUBOID_COLOR;
-  context.beginPath();
-  context.moveTo(...backTopLeft);
-  context.lineTo(...backTopRight);
-  context.lineTo(...frontTopRight);
-  context.lineTo(...frontTopLeft);
-  context.closePath();
-  context.fill();
-
-  context.beginPath();
-  context.moveTo(...backTopLeft);
-  context.lineTo(...backBottomLeft);
-  context.lineTo(...frontBottomLeft);
-  context.lineTo(...frontTopLeft);
-  context.closePath();
-  context.fill();
-
-  context.beginPath();
-  context.moveTo(...frontTopLeft);
-  context.lineTo(...frontTopRight);
-  context.lineTo(...frontBottomRight);
-  context.lineTo(...frontBottomLeft);
-  context.closePath();
-  context.fill();
-
-  context.strokeStyle = COLOR_BLACK;
-  context.lineWidth = metrics.cuboidLineWidthPixels;
-  context.beginPath();
-  context.moveTo(...backTopLeft);
-  context.lineTo(...backTopRight);
-  context.lineTo(...frontTopRight);
-  context.lineTo(...frontBottomRight);
-  context.lineTo(...frontBottomLeft);
-  context.lineTo(...backBottomLeft);
-  context.lineTo(...backTopLeft);
-  context.moveTo(...frontTopLeft);
-  context.lineTo(...frontTopRight);
-  context.moveTo(...frontTopLeft);
-  context.lineTo(...frontBottomLeft);
-  context.moveTo(...backTopLeft);
-  context.lineTo(...frontTopLeft);
-  context.moveTo(...backTopRight);
-  context.lineTo(...frontTopRight);
-  context.stroke();
+  drawProjectedCuboid({
+    backTopLeft,
+    backTopRight,
+    backBottomLeft,
+    frontTopLeft,
+    frontTopRight,
+    frontBottomLeft,
+    frontBottomRight
+  }, {
+    fillStyle:ITEM_CUBOID_COLOR,
+    lineWidth:metrics.cuboidLineWidthPixels,
+    strokeStyle:COLOR_BLACK
+  }, context);
 }
 
 export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
