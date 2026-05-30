@@ -10,11 +10,12 @@ import { canvasToGamePosition, gameToCanvasPosition } from "./drawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";
 import { calcPanelOffset } from "./roomPanelDrawUtil";
 import { MAP_TILE_SIZE } from "../roomGridUtil";
+import { ROOM_FRONT_ROW_MIN_Z, ROOM_MIDDLE_ROW_MIN_Z } from "../roomSpaceConstants";
 
 const DOOR_HEIGHT_MAP_TILE_RATIO = 0.5;
 const DOOR_WIDTH_HEIGHT_RATIO = 313 / 548;
-const RIGHT_WALL_DOOR_LEFT_Z = 0.33333;
-const RIGHT_WALL_DOOR_RIGHT_Z = 0.66667;
+const RIGHT_WALL_DOOR_LEFT_Z = ROOM_MIDDLE_ROW_MIN_Z;
+const RIGHT_WALL_DOOR_RIGHT_Z = ROOM_FRONT_ROW_MIN_Z;
 const DOOR_ARCH_HEIGHT_RATIO = 0.35;
 const DOOR_ARCH_SAMPLE_COUNT = 12;
 const DOOR_FILL_BROWN = "#766850";

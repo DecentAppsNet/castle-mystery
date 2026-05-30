@@ -11,10 +11,11 @@ import { drawProjectedCuboid } from "./cuboidDrawUtil";
 import Position from "../types/Position";
 import ScalingFactors from "../types/ScalingFactors";
 import StairPart, { StairPartType } from "../types/StairPart";
+import { ROOM_ROW_DEPTH } from "../roomSpaceConstants";
 
 const PREFERRED_STEP_RISE_RUN = 1;
 const STAIR_ANGLE_TOLERANCE = FLOOR_WAYPOINT_Y_OFFSET + STAIR_POSITION_TOLERANCE;
-const STAIR_CUBOID_DEPTH = 0.3333;
+const STAIR_CUBOID_DEPTH = ROOM_ROW_DEPTH;
 const STAIR_CUBOID_FILL = "rgb(154, 154, 154)";
 
 function _calcStairStepCount(totalDistance:number):number {

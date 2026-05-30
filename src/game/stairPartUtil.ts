@@ -5,13 +5,15 @@ import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import StairPart, { StairPartType } from "./types/StairPart";
 import StairFlight from "./types/StairFlight";
+import { ROOM_BACK_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_FULL_DEPTH, ROOM_MIDDLE_ROW_MIN_Z, ROOM_ROW_DEPTH } from "./roomSpaceConstants";
 
-const FRONT_ROW_Z = 0.6667;
-const STAIR_CUBOID_DEPTH = 0.3333;
-const LANDING_CUBOID_DEPTH = 0.6667;
-const MIDDLE_ROW_Z = 1 - LANDING_CUBOID_DEPTH;
-const WINDING_MID_STORY_LANDING_DEPTH = 1;
-const WINDING_STORY_LANDING_DEPTH = 1;
+const BACK_ROW_Z = ROOM_BACK_Z;
+const FRONT_ROW_Z = ROOM_FRONT_ROW_MIN_Z;
+const STAIR_CUBOID_DEPTH = ROOM_ROW_DEPTH;
+const LANDING_CUBOID_DEPTH = ROOM_FRONT_ROW_MIN_Z;
+const MIDDLE_ROW_Z = ROOM_MIDDLE_ROW_MIN_Z;
+const WINDING_MID_STORY_LANDING_DEPTH = ROOM_FULL_DEPTH;
+const WINDING_STORY_LANDING_DEPTH = ROOM_FULL_DEPTH;
 const PREFERRED_STEP_RISE_RUN = 1;
 
 function _getStairAngleTolerance():number {
@@ -81,7 +83,7 @@ function _createDirectLandingPart(stairIntersectionX:number, exit:RoomExit, heig
     topY:exit.y,
     width:Math.abs(exit.x - stairIntersectionX),
     height,
-    z:0,
+    z:BACK_ROW_Z,
     depth:LANDING_CUBOID_DEPTH
   };
 }
@@ -113,13 +115,13 @@ function _createDirectParts(room:Room, exits:RoomExit[], flights:StairFlight[]):
   exits.forEach((exit, exitIndex) => {
     const flight = flights[exitIndex];
     if (flight === undefined) return;
-    if (doesStairFlightEndAtPosition(flights, { x:exit.x, y:exit.y, z:0 })) return;
+    if (doesStairFlightEndAtPosition(flights, { x:exit.x, y:exit.y, z:BACK_ROW_Z })) return;
     const stairIntersection = _findNearestStairIntersectionAtExit(flights, exit);
     if (stairIntersection === null) return;
     const stairIntersectionX = stairIntersection.x;
     const stepHeight = _calcStairStepHeight(stairIntersection.flight.startPosition, stairIntersection.flight.endPosition);
     const landingPart = _createDirectLandingPart(stairIntersectionX, exit, stepHeight);
-    const flightPart = _createFlightPart(flight, 0);
+    const flightPart = _createFlightPart(flight, BACK_ROW_Z);
     if (exit.x === room.rect.x) {
       stairParts.push(flightPart, landingPart);
       return;
@@ -144,7 +146,7 @@ function _createWindingMidStoryLandingParts(room:Room, flights:StairFlight[]):St
       topY:landingTopY,
       width:columnWidth,
       height:landingHeight,
-      z:0,
+      z:BACK_ROW_Z,
       depth:WINDING_MID_STORY_LANDING_DEPTH
     });
   }
@@ -210,7 +212,7 @@ export function generateStairParts(room:Room, flights:StairFlight[]):StairPart[]
   }
 
   const windingMidStoryLandingParts = _createWindingMidStoryLandingParts(room, flights);
-  const backRowFlightParts = flights.filter((_, flightIndex) => flightIndex % 2 === 0).map(flight => _createFlightPart(flight, 0));
+  const backRowFlightParts = flights.filter((_, flightIndex) => flightIndex % 2 === 0).map(flight => _createFlightPart(flight, BACK_ROW_Z));
   const { rightCatwalkParts, trailingStoryParts } = _createWindingStoryLandingParts(room, flights);
   const frontRowFlightParts = flights.filter((_, flightIndex) => flightIndex % 2 === 1).map(flight => _createFlightPart(flight, FRONT_ROW_Z));
   return [

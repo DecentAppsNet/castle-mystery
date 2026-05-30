@@ -6,12 +6,14 @@ import Position from "./types/Position";
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import StairFlight, { duplicateStairFlight } from "./types/StairFlight";
+import { ROOM_BACK_Z } from "./roomSpaceConstants";
 
 const MIN_DIRECT_STAIR_COLUMNS = 5;
 const MIN_STAIR_COLUMNS = 4;
 const WINDING_ACTIVE_COLUMNS = 4;
 const WINDING_FLIGHT_WIDTH_COLUMNS = 2;
 const INTERSECTION_TOLERANCE = 0.000001;
+const BACK_ROW_Z = ROOM_BACK_Z;
 
 function _createStairFlight(startPosition:Position, endPosition:Position):StairFlight {
   return duplicateStairFlight({ startPosition, endPosition });
@@ -31,8 +33,8 @@ function _calcDirectFlightForExit(room:Room, exit:RoomExit, floorY:number):Stair
   const height = floorY - exit.y;
   const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
   if (height + columnWidth >= room.rect.width) return null;
-  if (exit.x === room.rect.x) return _createStairFlight({ x:exit.x + height + columnWidth, y:floorY, z:0 }, { x:exit.x + columnWidth, y:exit.y, z:0 });
-  if (exit.x === room.rect.x + room.rect.width) return _createStairFlight({ x:exit.x - height - columnWidth, y:floorY, z:0 }, { x:exit.x - columnWidth, y:exit.y, z:0 });
+  if (exit.x === room.rect.x) return _createStairFlight({ x:exit.x + height + columnWidth, y:floorY, z:BACK_ROW_Z }, { x:exit.x + columnWidth, y:exit.y, z:BACK_ROW_Z });
+  if (exit.x === room.rect.x + room.rect.width) return _createStairFlight({ x:exit.x - height - columnWidth, y:floorY, z:BACK_ROW_Z }, { x:exit.x - columnWidth, y:exit.y, z:BACK_ROW_Z });
   throw new Error(`exit for room ${room.id} at (${exit.x}, ${exit.y}) is not on a supported wall`);
 }
 
@@ -126,8 +128,8 @@ function _generateWindingStairFlights(room:Room, floorY:number, nonFloorExits:Ro
     const startY = _calcWindingFlightStartY(room, floorY, halfFlightIndex);
     const endY = _calcWindingFlightEndY(room, halfFlightIndex, flightCount, stairsTopY);
     flights.push(_createStairFlight(
-      { x: isBackRowFlight ? leftX : rightX, y:startY, z:0 },
-      { x: isBackRowFlight ? rightX : leftX, y:endY, z:0 }
+      { x: isBackRowFlight ? leftX : rightX, y:startY, z:BACK_ROW_Z },
+      { x: isBackRowFlight ? rightX : leftX, y:endY, z:BACK_ROW_Z }
     ));
   }
   return flights;

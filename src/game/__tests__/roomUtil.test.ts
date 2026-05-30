@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { calcRoomsBoundingRect, findCharactersInRoom, findRoom, findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from '../roomUtil';
 import { generateWaypoints } from '@/levelLoading/waypointGenerationUtil';
+import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { COLUMNS_PER_MAP_TILE, findExitWaypoint, findNearestWaypoint, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import { generateStairFlights } from '../stairFlightUtil';
 import Character from '../types/Character';
@@ -16,6 +17,8 @@ import Waypoint from '../types/Waypoint';
 
 const ROOM_ID = 'Room';
 const ROOM_RECT:Rect = { x:0, y:0, width:20, height:20 };
+const BACK_ROW_Z = ROOM_BACK_Z;
+const DEFAULT_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
 
 function _createExit(room2Id:string, x:number, y:number):RoomExit {
   return {
@@ -47,7 +50,7 @@ function _createRoom(id:string, rect:Rect, exits:RoomExit[] = [], waypoints:Wayp
 }
 
 function _createCharacter(id:string, x:number, y:number):Character {
-  const waypoint:Waypoint = { position:{ x, y, z:0 }, adjacentWaypoints:[], exitDirections:{} };
+  const waypoint:Waypoint = { position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} };
   return {
     id,
     title:id,
@@ -57,7 +60,7 @@ function _createCharacter(id:string, x:number, y:number):Character {
     items:[],
     x,
     y,
-    depth:0.5,
+    depth:DEFAULT_CHARACTER_DEPTH,
     waypoint,
     faceImageUrl:null,
     discoveredRoomIds:[],
@@ -67,7 +70,7 @@ function _createCharacter(id:string, x:number, y:number):Character {
 }
 
 function _createWaypoint(x:number, y:number):Waypoint {
-  return { position:{ x, y, z:0 }, adjacentWaypoints:[], exitDirections:{} };
+  return { position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} };
 }
 
 function _createWaypointKey(waypoint:Waypoint):string {
@@ -393,8 +396,8 @@ describe('roomUtil', () => {
     it('connects a floor stair start to both equally near floor waypoints', () => {
       const rect = { x:0, y:0, width:40, height:20 };
       const stairs:StairFlight[] = [{
-        startPosition:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
-        endPosition:{ x:0, y:10, z:0 }
+        startPosition:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:BACK_ROW_Z },
+        endPosition:{ x:0, y:10, z:BACK_ROW_Z }
       }];
 
       const waypoints = generateWaypoints(ROOM_ID, rect, [], stairs);
@@ -525,12 +528,12 @@ describe('roomUtil', () => {
       ];
       const stairs:StairFlight[] = [
         {
-          startPosition:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
-          endPosition:{ x:5, y:5, z:0 }
+          startPosition:{ x:10, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:BACK_ROW_Z },
+          endPosition:{ x:5, y:5, z:BACK_ROW_Z }
         },
         {
-          startPosition:{ x:20, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
-          endPosition:{ x:25, y:5, z:0 }
+          startPosition:{ x:20, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:BACK_ROW_Z },
+          endPosition:{ x:25, y:5, z:BACK_ROW_Z }
         }
       ];
 

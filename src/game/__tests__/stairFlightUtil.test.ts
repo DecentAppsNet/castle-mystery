@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { generateWaypoints } from '@/levelLoading/waypointGenerationUtil';
+import { ROOM_BACK_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_MIDDLE_ROW_MIN_Z, ROOM_ROW_DEPTH } from '../roomSpaceConstants';
 import { generateStairParts } from '../stairPartUtil';
 import { generateStairFlights } from '../stairFlightUtil';
 import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
@@ -14,6 +15,11 @@ import { StairPartType } from '../types/StairPart';
 import Waypoint from '../types/Waypoint';
 
 const ROOM_ID = 'Room';
+const BACK_ROW_Z = ROOM_BACK_Z;
+const MIDDLE_ROW_Z = ROOM_MIDDLE_ROW_MIN_Z;
+const FRONT_ROW_Z = ROOM_FRONT_ROW_MIN_Z;
+const STAIR_CUBOID_DEPTH = ROOM_ROW_DEPTH;
+const LANDING_CUBOID_DEPTH = ROOM_FRONT_ROW_MIN_Z;
 
 function _createExit(room2Id:string, x:number, y:number):RoomExit {
   return {
@@ -62,10 +68,10 @@ describe('stairFlightUtil', () => {
       expect(flights).toHaveLength(2);
       expect(flights[0].startPosition.x).toBeCloseTo(19.999, 3);
       expect(flights[0].startPosition.y).toBeCloseTo(19.999, 3);
-      expect(flights[0].endPosition).toEqual({ x:5, y:5, z:0 });
+      expect(flights[0].endPosition).toEqual({ x:5, y:5, z:BACK_ROW_Z });
       expect(flights[1].startPosition.x).toBeCloseTo(14.999, 3);
       expect(flights[1].startPosition.y).toBeCloseTo(19.999, 3);
-      expect(flights[1].endPosition).toEqual({ x:5, y:10, z:0 });
+      expect(flights[1].endPosition).toEqual({ x:5, y:10, z:BACK_ROW_Z });
     });
 
     it('falls back to winding flights when the room is only four columns wide', () => {
@@ -113,13 +119,13 @@ describe('stairFlightUtil', () => {
       const stairParts = generateStairParts(room, flights);
 
       expect(stairParts.map(part => part.type)).toEqual([StairPartType.flight, StairPartType.landing]);
-      expect(stairParts[0]).toMatchObject({ type:StairPartType.flight, z:0 });
-      expect(stairParts[1]).toMatchObject({ type:StairPartType.landing, z:0 });
+      expect(stairParts[0]).toMatchObject({ type:StairPartType.flight, z:BACK_ROW_Z });
+      expect(stairParts[1]).toMatchObject({ type:StairPartType.landing, z:BACK_ROW_Z });
       if (stairParts[1].type !== StairPartType.landing) throw new Error('expected direct landing');
       expect(stairParts[1].leftX).toBeCloseTo(0, 4);
       expect(stairParts[1].width).toBeCloseTo(5, 4);
       expect(stairParts[1].height).toBeCloseTo(1, 3);
-      expect(stairParts[1].depth).toBeCloseTo(0.6667, 4);
+      expect(stairParts[1].depth).toBeCloseTo(LANDING_CUBOID_DEPTH, 4);
       expect(stairParts[1].topY).toBeCloseTo(5, 4);
     });
 
@@ -133,13 +139,13 @@ describe('stairFlightUtil', () => {
 
       expect(stairParts.map(part => part.type)).toEqual([StairPartType.landing, StairPartType.flight]);
       if (stairParts[0].type !== StairPartType.landing) throw new Error('expected direct landing');
-      expect(stairParts[0]).toMatchObject({ type:StairPartType.landing, z:0 });
+      expect(stairParts[0]).toMatchObject({ type:StairPartType.landing, z:BACK_ROW_Z });
       expect(stairParts[0].leftX).toBeCloseTo(35, 4);
       expect(stairParts[0].topY).toBeCloseTo(5, 4);
       expect(stairParts[0].width).toBeCloseTo(5, 4);
       expect(stairParts[0].height).toBeCloseTo(1, 3);
       if (stairParts[1].type !== StairPartType.flight) throw new Error('expected direct flight');
-      expect(stairParts[1]).toMatchObject({ type:StairPartType.flight, endPosition:{ x:35, y:5, z:0 }, z:0 });
+      expect(stairParts[1]).toMatchObject({ type:StairPartType.flight, endPosition:{ x:35, y:5, z:BACK_ROW_Z }, z:BACK_ROW_Z });
       expect(stairParts[1].endPosition.y).toBeCloseTo(stairParts[0].topY, 4);
       expect(stairParts[1].endPosition.x).toBeCloseTo(stairParts[0].leftX, 4);
     });
@@ -153,8 +159,8 @@ describe('stairFlightUtil', () => {
       const stairParts = generateStairParts(room, flights);
 
       expect(stairParts.map(part => part.type)).toEqual([StairPartType.landing, StairPartType.flight, StairPartType.flight, StairPartType.landing]);
-      expect(stairParts[1]).toMatchObject({ type:StairPartType.flight, z:0 });
-      expect(stairParts[2]).toMatchObject({ type:StairPartType.flight, z:0.6667 });
+      expect(stairParts[1]).toMatchObject({ type:StairPartType.flight, z:BACK_ROW_Z });
+      expect(stairParts[2]).toMatchObject({ type:StairPartType.flight, z:FRONT_ROW_Z });
     });
 
     it('draws right catwalks before front-row flights for intersecting exits', () => {
@@ -174,12 +180,12 @@ describe('stairFlightUtil', () => {
         StairPartType.catwalk
       ]);
       const storyLanding = stairParts[4];
-      expect(storyLanding).toMatchObject({ type:StairPartType.landing, depth:0.6667 });
+      expect(storyLanding).toMatchObject({ type:StairPartType.landing, depth:LANDING_CUBOID_DEPTH });
       expect(storyLanding.type).toBe(StairPartType.landing);
       if (storyLanding.type !== StairPartType.landing) throw new Error('expected winding story landing');
-      expect(storyLanding.z).toBeCloseTo(0.3333, 4);
-      expect(stairParts[2]).toMatchObject({ type:StairPartType.catwalk, leftX:11.25, width:18.75, depth:0.3333 });
-      expect(stairParts[5]).toMatchObject({ type:StairPartType.catwalk, leftX:0, width:7.5, depth:0.3333 });
+      expect(storyLanding.z).toBeCloseTo(MIDDLE_ROW_Z, 4);
+      expect(stairParts[2]).toMatchObject({ type:StairPartType.catwalk, leftX:11.25, width:18.75, depth:STAIR_CUBOID_DEPTH });
+      expect(stairParts[5]).toMatchObject({ type:StairPartType.catwalk, leftX:0, width:7.5, depth:STAIR_CUBOID_DEPTH });
     });
   });
 });

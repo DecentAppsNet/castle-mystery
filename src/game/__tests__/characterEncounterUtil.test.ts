@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { addCharacterEncounterEvents } from '../characterEncounterUtil';
 import { createItineraryIndex } from '../itineraryUtil';
+import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import Character from '../types/Character';
 import Itinerary from '../types/Itinerary';
 import Room from '../types/Room';
@@ -10,8 +11,11 @@ import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import Waypoint from '../types/Waypoint';
 import CharacterEncounterEvent from '../types/itineraryEvents/CharacterEncounterEvent';
 
+const BACK_ROW_Z = ROOM_BACK_Z;
+const DEFAULT_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
+
 function _createWaypoint(x:number, y:number):Waypoint {
-  return { position:{ x, y, z:0 }, adjacentWaypoints:[], exitDirections:{} };
+  return { position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} };
 }
 
 function _createRoom(id:string, x:number):Room {
@@ -39,12 +43,12 @@ function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = [
     items:[],
     x,
     y,
-    depth:0.5,
+    depth:DEFAULT_CHARACTER_DEPTH,
     waypoint:_createWaypoint(x, y),
     faceImageUrl:null,
     discoveredRoomIds:[],
     itinerary,
-    itineraryIndex:createItineraryIndex(itinerary, { x, y, z:0.5 })
+    itineraryIndex:createItineraryIndex(itinerary, { x, y, z:DEFAULT_CHARACTER_DEPTH })
   };
 }
 
@@ -52,7 +56,7 @@ describe('characterEncounterUtil', () => {
   it('creates encounter events when a character enters an occupied room', () => {
     const rooms = [_createRoom('A', 0), _createRoom('B', 100)];
     const alice = _createCharacter('Alice', 10, 10, [
-      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:10, y:10, z:0 }, toPosition:{ x:150, y:10, z:0 } },
+      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:10, y:10, z:BACK_ROW_Z }, toPosition:{ x:150, y:10, z:BACK_ROW_Z } },
       { type:ItineraryEventType.ROOM_ENTRY, startTime:1_000, duration:0, roomId:'B' }
     ]);
     const bob = _createCharacter('Bob', 150, 10);
@@ -73,11 +77,11 @@ describe('characterEncounterUtil', () => {
     const rooms = [_createRoom('A', 0), _createRoom('B', 100), _createRoom('C', 200)];
     const alice = _createCharacter('Alice', 150, 10);
     const bob = _createCharacter('Bob', 10, 10, [
-      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:10, y:10, z:0 }, toPosition:{ x:150, y:10, z:0 } },
+      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:10, y:10, z:BACK_ROW_Z }, toPosition:{ x:150, y:10, z:BACK_ROW_Z } },
       { type:ItineraryEventType.ROOM_ENTRY, startTime:1_000, duration:0, roomId:'B' }
     ]);
     const charlie = _createCharacter('Charlie', 210, 10, [
-      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:210, y:10, z:0 }, toPosition:{ x:160, y:10, z:0 } },
+      { type:ItineraryEventType.WALK, startTime:0, duration:1_000, fromPosition:{ x:210, y:10, z:BACK_ROW_Z }, toPosition:{ x:160, y:10, z:BACK_ROW_Z } },
       { type:ItineraryEventType.ROOM_ENTRY, startTime:1_000, duration:0, roomId:'B' }
     ]);
 

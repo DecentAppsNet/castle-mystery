@@ -5,10 +5,14 @@ import { createItineraryIndex, createRoomEntryEvent } from '../itineraryUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from '../hoverStateUtil';
 import { createGameState } from '../gameUtil';
+import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import Level from '../types/Level';
 import Character from '../types/Character';
 import Room from '../types/Room';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
+
+const BACK_ROW_Z = ROOM_BACK_Z;
+const DEFAULT_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
 
 function _createRoom(id:string, x:number):Room {
   return {
@@ -36,11 +40,11 @@ function _createCharacter(id:string, x:number, itinerary:Character['itinerary'])
     items:[],
     x,
     y:5,
-    depth:0.5,
-    waypoint:{ position:{ x, y:5, z:0 }, adjacentWaypoints:[], exitDirections:{} },
+    depth:DEFAULT_CHARACTER_DEPTH,
+    waypoint:{ position:{ x, y:5, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} },
     discoveredRoomIds:[],
     itinerary,
-    itineraryIndex:createItineraryIndex(itinerary, { x, y:5, z:0.5 })
+    itineraryIndex:createItineraryIndex(itinerary, { x, y:5, z:DEFAULT_CHARACTER_DEPTH })
   };
 }
 

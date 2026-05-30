@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
+import { ROOM_BACK_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
 import Character from '../types/Character';
 import Room from '../types/Room';
@@ -10,8 +11,12 @@ import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import RoomEntryEvent from '../types/itineraryEvents/RoomEntryEvent';
 import Waypoint from '../types/Waypoint';
 
+const BACK_ROW_Z = ROOM_BACK_Z;
+const MIDDLE_ROW_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
+const FRONT_ROW_DEPTH = ROOM_FRONT_ROW_CENTER_Z;
+
 function _createWaypoint(x:number, y:number):Waypoint {
-  return { position:{ x, y, z:0 }, adjacentWaypoints:[], exitDirections:{} };
+  return { position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} };
 }
 
 function _createRoom():Room {
@@ -40,12 +45,12 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
     items:[],
     x:0,
     y:0,
-    depth:0.5,
+    depth:MIDDLE_ROW_DEPTH,
     waypoint,
     faceImageUrl:null,
     discoveredRoomIds:[],
     itinerary,
-    itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0, z:0.5 })
+    itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0, z:MIDDLE_ROW_DEPTH })
   };
 }
 
@@ -97,20 +102,20 @@ describe('itineraryUtil', () => {
     it('creates z-only walk events between waypoints at the same x and y', () => {
       const room = _createRoom();
       const walkEvent = createWalkEvent(room, 1_000, 10, 10, 10, 10,
-        { x:10, y:10, z:0.5 }, { x:10, y:10, z:0.8333 });
+        { x:10, y:10, z:MIDDLE_ROW_DEPTH }, { x:10, y:10, z:FRONT_ROW_DEPTH });
       expect(walkEvent).not.toBeNull();
 
       const character = _createCharacter([walkEvent!]);
       character.x = 10;
       character.y = 10;
-      character.depth = 0.5;
-      character.itineraryIndex = createItineraryIndex(character.itinerary, { x:10, y:10, z:0.5 });
+      character.depth = MIDDLE_ROW_DEPTH;
+      character.itineraryIndex = createItineraryIndex(character.itinerary, { x:10, y:10, z:MIDDLE_ROW_DEPTH });
 
       const midWalkPose = findCharacterPose(character, walkEvent!.startTime + Math.floor(walkEvent!.duration / 2));
       expect(midWalkPose.position.x).toBe(10);
       expect(midWalkPose.position.y).toBe(10);
-      expect(midWalkPose.position.z).toBeGreaterThan(0.5);
-      expect(midWalkPose.position.z).toBeLessThan(0.8333);
+      expect(midWalkPose.position.z).toBeGreaterThan(MIDDLE_ROW_DEPTH);
+      expect(midWalkPose.position.z).toBeLessThan(FRONT_ROW_DEPTH);
     });
   });
 });

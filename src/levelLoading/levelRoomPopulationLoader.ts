@@ -4,6 +4,7 @@ import { assertNonNullable } from "decent-portal";
 
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
+import { ROOM_BACK_ROW_CENTER_Z, ROOM_BACK_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_MIDDLE_ROW_CENTER_Z, ROOM_MIDDLE_ROW_MIN_Z } from "@/game/roomSpaceConstants";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
 import { findRoom } from "../game/roomUtil";
 import { findNearestWaypoint, findNearestWaypointToPosition, roomWidthToColumnCount } from "../game/waypointUtil";
@@ -33,8 +34,15 @@ export type RoomPopulationDefinitions = {
 };
 
 const EXPECTED_ROOM_GRID_ROW_COUNT = 3;
-const ITEM_DEPTHS_BY_GRID_ROW = [0, 0.3333, 0.6667] as const;
-const CHARACTER_DEPTHS_BY_GRID_ROW = [0.1667, 0.5, 0.8334] as const;
+const BACK_ROW_ITEM_DEPTH = ROOM_BACK_Z;
+const MIDDLE_ROW_ITEM_DEPTH = ROOM_MIDDLE_ROW_MIN_Z;
+const FRONT_ROW_ITEM_DEPTH = ROOM_FRONT_ROW_MIN_Z;
+const BACK_ROW_CHARACTER_DEPTH = ROOM_BACK_ROW_CENTER_Z;
+const MIDDLE_ROW_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
+const FRONT_ROW_CHARACTER_DEPTH = ROOM_CHARACTER_FRONT_ROW_CENTER_Z;
+const DEFAULT_POPULATION_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
+const ITEM_DEPTHS_BY_GRID_ROW = [BACK_ROW_ITEM_DEPTH, MIDDLE_ROW_ITEM_DEPTH, FRONT_ROW_ITEM_DEPTH] as const;
+const CHARACTER_DEPTHS_BY_GRID_ROW = [BACK_ROW_CHARACTER_DEPTH, MIDDLE_ROW_CHARACTER_DEPTH, FRONT_ROW_CHARACTER_DEPTH] as const;
 
 function _parseOptionalIsTitleKnownOrThrow(value:string|undefined, characterId:string):boolean {
 	if (value === undefined) return false;
@@ -132,11 +140,11 @@ function _assertItemIdIsUnique(level:Level, itemId:string, context:string) {
 }
 
 function _getItemDepthForGridRow(row:number):number {
-	return ITEM_DEPTHS_BY_GRID_ROW[row] ?? 0.5;
+	return ITEM_DEPTHS_BY_GRID_ROW[row] ?? DEFAULT_POPULATION_DEPTH;
 }
 
 function _getCharacterDepthForGridRow(row:number):number {
-	return CHARACTER_DEPTHS_BY_GRID_ROW[row] ?? 0.5;
+	return CHARACTER_DEPTHS_BY_GRID_ROW[row] ?? DEFAULT_POPULATION_DEPTH;
 }
 
 function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemDefinitions:Map<string, ItemDefinition>,
@@ -155,7 +163,7 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 
 function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number, claimedWaypoints:Set<string>) {
 	try {
-		return findNearestWaypointToPosition(room, { x:targetX, y:targetY, z:0.5 }, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`));
+		return findNearestWaypointToPosition(room, { x:targetX, y:targetY, z:DEFAULT_POPULATION_DEPTH }, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`));
 	} catch {
 		return findNearestWaypoint(room, targetX, targetY);
 	}
@@ -256,7 +264,7 @@ function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<st
 		if (!characterDefinition) return;
 		_addItemsToCharacter(level, character.id, characterDefinition.inventoryItems.map(item => {
 			_assertItemIdIsUnique(level, item.id, `in character ${character.id} inventory`);
-			return _createItemFromDefinition(item.id, item.title, itemDefinitions, { x:0, y:0 }, 0.5, true);
+			return _createItemFromDefinition(item.id, item.title, itemDefinitions, { x:0, y:0 }, DEFAULT_POPULATION_DEPTH, true);
 		}));
 	});
 }

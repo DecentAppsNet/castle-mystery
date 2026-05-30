@@ -1,5 +1,6 @@
 import StairPart, { StairPartType } from "./types/StairPart";
 import { STAIR_POSITION_TOLERANCE } from "./stairUtil";
+import { ROOM_FRONT_ROW_MIN_Z, ROOM_FULL_DEPTH, ROOM_MIDDLE_ROW_MIN_Z } from "./roomSpaceConstants";
 
 const DRAW_ROW_EPSILON = 0.001;
 const MIDDLE_DRAW_ROW = 1;
@@ -8,8 +9,8 @@ const DEFAULT_DRAW_PHASE = 1;
 const LEFT_ASCENDING_FLIGHT_PHASE = 2;
 
 export function quantizeDepthToDrawRow(z:number):number {
-  if (z < 1 / 3 - DRAW_ROW_EPSILON) return 0;
-  if (z < 2 / 3 - DRAW_ROW_EPSILON) return 1;
+  if (z < ROOM_MIDDLE_ROW_MIN_Z - DRAW_ROW_EPSILON) return 0;
+  if (z < ROOM_FRONT_ROW_MIN_Z - DRAW_ROW_EPSILON) return 1;
   return 2;
 }
 
@@ -44,7 +45,7 @@ function _isCharacterOnFlight(characterX:number, characterY:number, stairPart:St
 
 function _isCharacterAtDirectLandingY(characterY:number, stairPart:StairPart):boolean {
   return stairPart.type === StairPartType.landing
-    && stairPart.depth < 1 - STAIR_POSITION_TOLERANCE
+    && stairPart.depth < ROOM_FULL_DEPTH - STAIR_POSITION_TOLERANCE
     && quantizeDepthToDrawRow(stairPart.z) === 0
     && Math.abs(characterY - stairPart.topY) <= STAIR_POSITION_TOLERANCE;
 }

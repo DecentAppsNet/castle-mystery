@@ -1,6 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { ROOM_BACK_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import itineraryExtraPunctuationText from './fixtures/itinerary-extra-punctuation.md?raw';
 import itinerarySortingText from './fixtures/itinerary-sorting.md?raw';
 import afterPreviousActivityOverlapText from './fixtures/after-previous-activity-overlap.md?raw';
@@ -449,10 +450,10 @@ describe('levelUtil itinerary loading', () => {
     const baron = level.characters.find(character => character.id === 'baron') || null;
     const duke = level.characters.find(character => character.id === 'duke') || null;
 
-    expect(apple?.position.z).toBe(0);
-    expect(baron?.depth).toBe(0.5);
-    expect(coin?.position.z).toBe(0.6667);
-    expect(duke?.depth).toBe(0.8334);
+    expect(apple?.position.z).toBe(ROOM_BACK_Z);
+    expect(baron?.depth).toBe(ROOM_MIDDLE_ROW_CENTER_Z);
+    expect(coin?.position.z).toBe(ROOM_FRONT_ROW_MIN_Z);
+    expect(duke?.depth).toBe(ROOM_CHARACTER_FRONT_ROW_CENTER_Z);
   });
 
   it('loads drop activities and removes dropped items from final carried inventory', () => {

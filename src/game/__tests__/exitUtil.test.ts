@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { describeExit } from '../exitUtil';
+import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
 import Item from '../types/Item';
@@ -46,7 +47,7 @@ describe('exitUtil', () => {
         id:'red key',
         title:'Iron Key',
         displayChar:'I',
-        position:{ x:0, y:0, z:0.5 },
+        position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
         description:'Opens the bedroom.',
         isDiscovered:false,
         isExamined:false

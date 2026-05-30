@@ -17,6 +17,7 @@ import Character from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
 import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from "./roomUtil";
+import { ROOM_BACK_Z } from "./roomSpaceConstants";
 import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./waypointUtil";
 import ItineraryIndex from "./types/ItineraryIndex";
 
@@ -61,8 +62,8 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
 
 export function createWalkEvent(_room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number,
   fromWaypointPosition?:Position, toWaypointPosition?:Position):WalkEvent|null {
-  const initialFromPosition = fromWaypointPosition ? duplicatePosition(fromWaypointPosition) : { x:fromX, y:fromY, z:0 };
-  const finalToPosition = toWaypointPosition ? duplicatePosition(toWaypointPosition) : { x:toX, y:toY, z:0 };
+  const initialFromPosition = fromWaypointPosition ? duplicatePosition(fromWaypointPosition) : { x:fromX, y:fromY, z:ROOM_BACK_Z };
+  const finalToPosition = toWaypointPosition ? duplicatePosition(toWaypointPosition) : { x:toX, y:toY, z:ROOM_BACK_Z };
   const duration = _calcWalkDuration(_room, initialFromPosition, finalToPosition);
   if (duration <= 0) return null;
   return {
@@ -224,7 +225,7 @@ export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:P
   }
   const eventStartPositions:Position[] = [];
   const firstWalkEvent = events.find(event => event.type === ItineraryEventType.WALK) as WalkEvent|undefined;
-  let currentPosition:Position|null = initialPosition ? duplicatePosition(initialPosition) : duplicatePosition(firstWalkEvent?.fromPosition || { x:0, y:0, z:0 });
+  let currentPosition:Position|null = initialPosition ? duplicatePosition(initialPosition) : duplicatePosition(firstWalkEvent?.fromPosition || { x:0, y:0, z:ROOM_BACK_Z });
   if (!initialPosition) assertNonNullable(firstWalkEvent);
 
   for (let i = 0; i < events.length; ++i) {

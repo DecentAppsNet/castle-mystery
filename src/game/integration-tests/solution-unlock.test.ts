@@ -5,6 +5,7 @@ import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { createGameState } from '../gameUtil';
 import { updateGameStateForMouseMove } from '../hoverStateUtil';
 import { createItineraryIndex } from '../itineraryUtil';
+import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { syncSolutionsWithUnlocks } from '../solutions/solutionDiscoveryUtil';
 import ClozePartType from '../solutions/types/ClozePartType';
 import Itinerary from '../types/Itinerary';
@@ -12,14 +13,14 @@ import Level from '../types/Level';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
 
 function _createTestLevel():Level {
-  const initialPosition = { x:5, y:5, z:0.5 };
+  const initialPosition = { x:5, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z };
   const waypoint = { position:initialPosition, adjacentWaypoints:[], exitDirections:{} };
   const itinerary:Itinerary = [];
   const bookItem = {
     id:'book',
     title:'Book',
     displayChar:'B',
-    position:{ x:6, y:5, z:0.5 },
+    position:{ x:6, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z },
     description:'A test book.',
     isDiscovered:false,
     isExamined:false
@@ -48,7 +49,7 @@ function _createTestLevel():Level {
       items:[],
       x:initialPosition.x,
       y:initialPosition.y,
-      depth:0.5,
+      depth:ROOM_MIDDLE_ROW_CENTER_Z,
       waypoint,
       discoveredRoomIds:[],
       itinerary,
@@ -64,7 +65,7 @@ function _createTestLevel():Level {
       items:[],
       x:initialPosition.x,
       y:initialPosition.y,
-      depth:0.5,
+      depth:ROOM_MIDDLE_ROW_CENTER_Z,
       waypoint,
       discoveredRoomIds:[],
       itinerary,
