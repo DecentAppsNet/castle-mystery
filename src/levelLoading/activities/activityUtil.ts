@@ -11,7 +11,8 @@ import Waypoint from "@/game/types/Waypoint";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import { isPositionStrictlyInRect } from "@/game/rectUtil";
-import { findExitWaypoint, findNearestWaypoint, findNearestWaypointToPosition, findRoom, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/roomUtil";
+import { findRoom } from "@/game/roomUtil";
+import { findExitWaypoint, findNearestWaypoint, findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
 import {
   createItineraryIndex,
   createRoomEntryEvent,

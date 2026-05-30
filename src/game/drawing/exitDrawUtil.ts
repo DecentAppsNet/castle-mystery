@@ -9,7 +9,7 @@ import { COLOR_BLACK } from "./drawConstants";
 import { canvasToGamePosition, gameToCanvasPosition } from "./drawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";
 import { calcPanelOffset } from "./roomPanelDrawUtil";
-import { MAP_TILE_SIZE } from "@/levelLoading/levelRoomLayoutLoader";
+import { MAP_TILE_SIZE } from "../roomGridUtil";
 
 const DOOR_HEIGHT_MAP_TILE_RATIO = 0.5;
 const DOOR_WIDTH_HEIGHT_RATIO = 313 / 548;

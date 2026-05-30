@@ -2,9 +2,12 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { findRoom, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints } from "../game/roomUtil";
+import { MAP_TILE_SIZE } from "../game/roomGridUtil";
+import { findRoom } from "../game/roomUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET } from "../game/waypointUtil";
 import { generateStairFlights } from "../game/stairFlightUtil";
 import { generateStairParts } from "../game/stairPartUtil";
+import { generateWaypoints } from "./waypointGenerationUtil";
 import Level from "../game/types/Level";
 import Rect from "../game/types/Rect";
 import Room from "../game/types/Room";
@@ -15,8 +18,6 @@ import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqu
 import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
 import { tryResolveItemId } from "./levelRoomPopulationLoader";
 import { areRoomsWellOrdered, sortRoomsForDrawingOrder } from "./roomOrderingUtil";
-
-export const MAP_TILE_SIZE = 20;
 
 export type LegendTile = {
   entryId:string,

@@ -1,9 +1,10 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints } from '../roomUtil';
+import { generateWaypoints } from '@/levelLoading/waypointGenerationUtil';
 import { generateStairParts } from '../stairPartUtil';
 import { generateStairFlights } from '../stairFlightUtil';
+import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
 import Rect from '../types/Rect';
 import Room from '../types/Room';
 import ExitStatus from '../types/ExitStatus';

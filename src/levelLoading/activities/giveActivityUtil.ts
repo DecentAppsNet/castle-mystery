@@ -3,7 +3,7 @@ import { assertNonNullable } from "decent-portal";
 import { createGiveItemEvent } from "@/game/itineraryUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
-import { findNearestWaypointToPosition } from "@/game/roomUtil";
+import { findNearestWaypointToPosition } from "@/game/waypointUtil";
 import {
   ActivityContext,
   calcActivityStartTime,

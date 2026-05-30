@@ -4,7 +4,7 @@ import { assert } from "decent-portal";
 
 import { COLOR_BLACK } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
-import { FLOOR_WAYPOINT_Y_OFFSET } from "../roomUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET } from "../waypointUtil";
 import { STAIR_POSITION_TOLERANCE } from "../stairUtil";
 import { calcPanelOffset } from "./roomPanelDrawUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";

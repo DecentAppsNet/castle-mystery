@@ -4,7 +4,8 @@ import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import Room from "@/game/types/Room";
 import RoomExit, { LOCKABLE_WITHOUT_INV_CHECK } from "@/game/types/RoomExit";
 import { createLockEvent, createUnlockEvent } from "@/game/itineraryUtil";
-import { findExitWaypoint, findRoom } from "@/game/roomUtil";
+import { findRoom } from "@/game/roomUtil";
+import { findExitWaypoint } from "@/game/waypointUtil";
 import {
   ActivityContext,
   calcActivityStartTime,

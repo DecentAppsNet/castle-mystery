@@ -1,7 +1,9 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { calcRoomsBoundingRect, COLUMNS_PER_MAP_TILE, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints, roomWidthToColumnCount, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from '../roomUtil';
+import { calcRoomsBoundingRect, findCharactersInRoom, findRoom, findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from '../roomUtil';
+import { generateWaypoints } from '@/levelLoading/waypointGenerationUtil';
+import { COLUMNS_PER_MAP_TILE, findExitWaypoint, findNearestWaypoint, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import { generateStairFlights } from '../stairFlightUtil';
 import Character from '../types/Character';
 import Rect from '../types/Rect';

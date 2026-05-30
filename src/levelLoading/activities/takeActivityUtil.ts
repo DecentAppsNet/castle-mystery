@@ -1,7 +1,7 @@
 import { assertNonNullable } from "decent-portal";
 
 import { createTakeItemEvent } from "@/game/itineraryUtil";
-import { findNearestWaypointToPosition } from "@/game/roomUtil";
+import { findNearestWaypointToPosition } from "@/game/waypointUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";

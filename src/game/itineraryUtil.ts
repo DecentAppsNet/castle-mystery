@@ -16,7 +16,8 @@ import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
-import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./roomUtil";
+import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from "./roomUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./waypointUtil";
 import ItineraryIndex from "./types/ItineraryIndex";
 
 const WALK_MSECS_PER_PIXEL = 30;

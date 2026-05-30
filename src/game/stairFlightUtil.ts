@@ -1,7 +1,7 @@
 import { assert, assertNonNullable } from "decent-portal";
 
-import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./roomUtil";
-import { MAP_TILE_SIZE } from "../levelLoading/levelRoomLayoutLoader";
+import { MAP_TILE_SIZE } from "./roomGridUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./waypointUtil";
 import Position from "./types/Position";
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";

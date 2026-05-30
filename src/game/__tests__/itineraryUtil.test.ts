@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
-import { FLOOR_WAYPOINT_Y_OFFSET } from '../roomUtil';
+import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
 import Character from '../types/Character';
 import Room from '../types/Room';
 import ItineraryEvent from '../types/itineraryEvents/ItineraryEvent';

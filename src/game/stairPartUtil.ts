@@ -1,4 +1,4 @@
-import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./roomUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./waypointUtil";
 import { doesStairFlightEndAtPosition, findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "./stairUtil";
 import Position from "./types/Position";
 import Room from "./types/Room";

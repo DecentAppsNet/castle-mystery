@@ -2,7 +2,7 @@
 /* This module groups item-focused drawing helpers, including item labels, hover hit-testing, and item popovers. */
 
 import { clamp } from "@/common/numberUtil";
-import { roomWidthToColumnCount } from "../roomUtil";
+import { roomWidthToColumnCount } from "../waypointUtil";
 import Rect from "../types/Rect";
 import { gameToCanvasPosition } from "./drawUtil";
 import { COLOR_BLACK } from "./drawConstants";
