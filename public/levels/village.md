@@ -8,8 +8,8 @@
 
 ```
 ....EEFH...
-..BCEEFGG..
-.ABCEEFII..
+..BCEEFGGJJ
+.ABCEEFIIJJ
 ```
 
 * A=Cottage
@@ -20,6 +20,7 @@
 * G=Throne Room
 * H=Sanctum
 * I=Great Hall
+* J=Stables
 
 # rooms
 
@@ -58,6 +59,11 @@
 
 ## Great Hall
 
+## Stables
+
+*exits=Throne Room
+*outside=true
+
 # characters
 
 ## Simon
@@ -70,7 +76,7 @@
 # itinerary
 
 : Simon @ Sanctum
-: Simon @ Throne Room
 : Simon @ Great Hall
+: Simon @ Stables
 
 # solutions

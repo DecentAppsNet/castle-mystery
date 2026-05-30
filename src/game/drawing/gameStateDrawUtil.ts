@@ -13,7 +13,6 @@ import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { drawExitPopover } from "./exitDrawUtil";
 import { drawRoomCharactersAndEffects, drawRoomShell, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
-import { drawRoomStairs } from "./stairDrawUtil";
 import { calcScalingFactorsForRect } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
 import { calcLevelCameraRect } from "../cameraUtil";
@@ -88,7 +87,6 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     drawRoomShell(room, isActive, gameState.characters, drawnExitIds,
       gameState.scalingFactors, context, gameState.isLevelComplete);
     if (!room.isDiscovered) continue;
-    drawRoomStairs(room, gameState.scalingFactors, context);
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
       gameState.scalingFactors, context, gameState.time, gameState.imageSet, gameState.isLevelComplete);
     drawRoomWaypointsWithHighlight(room, gameState.scalingFactors, context,

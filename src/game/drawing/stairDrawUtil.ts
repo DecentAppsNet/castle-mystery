@@ -9,9 +9,8 @@ import { STAIR_POSITION_TOLERANCE } from "../stairUtil";
 import { calcPanelOffset } from "./roomPanelDrawUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";
 import Position from "../types/Position";
-import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
-import { StairPartType } from "../types/StairPart";
+import StairPart, { StairPartType } from "../types/StairPart";
 
 const PREFERRED_STEP_RISE_RUN = 1;
 const STAIR_ANGLE_TOLERANCE = FLOOR_WAYPOINT_Y_OFFSET + STAIR_POSITION_TOLERANCE;
@@ -117,18 +116,15 @@ function drawStairsAtRow(fromPosition:Position, toPosition:Position, z:number, s
   }
 }
 
-export function drawRoomStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  if (!room.stairParts.length) return;
-  room.stairParts.forEach(stairPart => {
-    switch(stairPart.type) {
-      case StairPartType.flight:
-        drawStairsAtRow(stairPart.startPosition, stairPart.endPosition, stairPart.z, scalingFactors, context);
-        return;
-      case StairPartType.landing:
-      case StairPartType.catwalk:
-        _drawLandingCuboid(stairPart.leftX, stairPart.topY, stairPart.width, stairPart.height, stairPart.z, stairPart.depth,
-          scalingFactors, context);
-        return;
-    }
-  });
+export function drawStairPart(stairPart:StairPart, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  switch(stairPart.type) {
+    case StairPartType.flight:
+      drawStairsAtRow(stairPart.startPosition, stairPart.endPosition, stairPart.z, scalingFactors, context);
+      return;
+    case StairPartType.landing:
+    case StairPartType.catwalk:
+      _drawLandingCuboid(stairPart.leftX, stairPart.topY, stairPart.width, stairPart.height, stairPart.z, stairPart.depth,
+        scalingFactors, context);
+      return;
+  }
 }
