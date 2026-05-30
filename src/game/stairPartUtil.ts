@@ -158,12 +158,13 @@ function _hasExitAtStoryY(room:Room, storyY:number, wallX:number):boolean {
     && Math.abs(exit.y - storyY) <= _getStairAngleTolerance());
 }
 
-function _createWindingStoryLandingParts(room:Room, flights:StairFlight[]):StairPart[] {
+function _createWindingStoryLandingParts(room:Room, flights:StairFlight[]):{ rightCatwalkParts:StairPart[], trailingStoryParts:StairPart[] } {
   const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
   const roomLeftX = room.rect.x;
   const roomRightX = room.rect.x + room.rect.width;
   const isWiderThanOneStoryTile = roomWidthToColumnCount(room.rect.width) > 4;
-  const stairParts:StairPart[] = [];
+  const rightCatwalkParts:StairPart[] = [];
+  const trailingStoryParts:StairPart[] = [];
 
   for (let flightIndex = 1; flightIndex < flights.length; flightIndex += 2) {
     const secondFlight = _snapFlightTo45DegreesForDrawing(flights[flightIndex].startPosition, flights[flightIndex].endPosition);
@@ -181,9 +182,9 @@ function _createWindingStoryLandingParts(room:Room, flights:StairFlight[]):Stair
     const leftCatwalkPart = _createCatwalkPart(roomLeftX, landingTopY, landingLeftX - roomLeftX, landingHeight,
       leftLandingZ, STAIR_CUBOID_DEPTH);
 
-    if (isRightExitPresent && rightCatwalkPart !== null) stairParts.push(rightCatwalkPart);
+    if (isRightExitPresent && rightCatwalkPart !== null) rightCatwalkParts.push(rightCatwalkPart);
 
-    stairParts.push({
+    trailingStoryParts.push({
       type:StairPartType.landing,
       leftX:landingLeftX,
       topY:landingTopY,
@@ -193,10 +194,10 @@ function _createWindingStoryLandingParts(room:Room, flights:StairFlight[]):Stair
       depth:leftLandingDepth
     });
 
-    if (isWiderThanOneStoryTile && isLeftExitPresent && leftCatwalkPart !== null) stairParts.push(leftCatwalkPart);
+    if (isWiderThanOneStoryTile && isLeftExitPresent && leftCatwalkPart !== null) trailingStoryParts.push(leftCatwalkPart);
   }
 
-  return stairParts;
+  return { rightCatwalkParts, trailingStoryParts };
 }
 
 export function generateStairParts(room:Room, flights:StairFlight[]):StairPart[] {
@@ -210,12 +211,13 @@ export function generateStairParts(room:Room, flights:StairFlight[]):StairPart[]
 
   const windingMidStoryLandingParts = _createWindingMidStoryLandingParts(room, flights);
   const backRowFlightParts = flights.filter((_, flightIndex) => flightIndex % 2 === 0).map(flight => _createFlightPart(flight, 0));
+  const { rightCatwalkParts, trailingStoryParts } = _createWindingStoryLandingParts(room, flights);
   const frontRowFlightParts = flights.filter((_, flightIndex) => flightIndex % 2 === 1).map(flight => _createFlightPart(flight, FRONT_ROW_Z));
-  const windingStoryLandingParts = _createWindingStoryLandingParts(room, flights);
   return [
     ...windingMidStoryLandingParts,
     ...backRowFlightParts,
+    ...rightCatwalkParts,
     ...frontRowFlightParts,
-    ...windingStoryLandingParts
+    ...trailingStoryParts
   ];
 }

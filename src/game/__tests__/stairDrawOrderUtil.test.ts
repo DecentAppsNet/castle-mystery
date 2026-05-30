@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { calcStairPartDrawPhase, compareCharacterToStairPartRows, quantizeDepthToDrawRow } from '../stairDrawOrderUtil';
+import { calcStairPartDrawPhase, calcStairPartDrawRow, compareCharacterToStairPartRows, quantizeDepthToDrawRow } from '../stairDrawOrderUtil';
 import StairPart, { StairPartType } from '../types/StairPart';
 
 function _createFlight(startX:number, endX:number, z:number):StairPart {
@@ -21,6 +21,18 @@ function _createLanding(z:number):StairPart {
     height:1,
     z,
     depth:0.6667
+  };
+}
+
+function _createCatwalk(z:number):StairPart {
+  return {
+    type:StairPartType.catwalk,
+    leftX:0,
+    topY:10,
+    width:10,
+    height:1,
+    z,
+    depth:0.3333
   };
 }
 
@@ -51,12 +63,23 @@ describe('stairDrawOrderUtil', () => {
     it('leaves same-row non-flight stair parts to the default depth sort', () => {
       expect(compareCharacterToStairPartRows(0.5, _createLanding(0.3333))).toBe(0);
     });
+
+    it('draws catwalks before front-row characters even when the authored catwalk z is back-row', () => {
+      expect(compareCharacterToStairPartRows(0.8333, _createCatwalk(0))).toBeGreaterThan(0);
+    });
   });
 
   describe('calcStairPartDrawPhase()', () => {
     it('orders right-ascending flights before default content and left-ascending flights after it', () => {
       expect(calcStairPartDrawPhase(_createFlight(4, 8, 0.3333))).toBeLessThan(calcStairPartDrawPhase(_createLanding(0.3333)));
       expect(calcStairPartDrawPhase(_createFlight(8, 4, 0.3333))).toBeGreaterThan(calcStairPartDrawPhase(_createLanding(0.3333)));
+    });
+  });
+
+  describe('calcStairPartDrawRow()', () => {
+    it('treats catwalks as middle-row for draw ordering regardless of their authored z', () => {
+      expect(calcStairPartDrawRow(_createCatwalk(0))).toBe(1);
+      expect(calcStairPartDrawRow(_createCatwalk(0.3333))).toBe(1);
     });
   });
 });

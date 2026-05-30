@@ -157,7 +157,7 @@ describe('stairFlightUtil', () => {
       expect(stairParts[2]).toMatchObject({ type:StairPartType.flight, z:0.6667 });
     });
 
-    it('preserves the current winding story-part order for intersecting exits', () => {
+    it('draws right catwalks before front-row flights for intersecting exits', () => {
       const rect = { x:0, y:0, width:30, height:40 };
       const exits = [_createExit('Left', 0, 20), _createExit('Right', 30, 20)];
       const room = _createRoom(rect, exits);
@@ -168,8 +168,8 @@ describe('stairFlightUtil', () => {
       expect(stairParts.map(part => part.type)).toEqual([
         StairPartType.landing,
         StairPartType.flight,
-        StairPartType.flight,
         StairPartType.catwalk,
+        StairPartType.flight,
         StairPartType.landing,
         StairPartType.catwalk
       ]);
@@ -178,7 +178,7 @@ describe('stairFlightUtil', () => {
       expect(storyLanding.type).toBe(StairPartType.landing);
       if (storyLanding.type !== StairPartType.landing) throw new Error('expected winding story landing');
       expect(storyLanding.z).toBeCloseTo(0.3333, 4);
-      expect(stairParts[3]).toMatchObject({ type:StairPartType.catwalk, leftX:11.25, width:18.75, depth:0.3333 });
+      expect(stairParts[2]).toMatchObject({ type:StairPartType.catwalk, leftX:11.25, width:18.75, depth:0.3333 });
       expect(stairParts[5]).toMatchObject({ type:StairPartType.catwalk, leftX:0, width:7.5, depth:0.3333 });
     });
   });

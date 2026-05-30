@@ -1,6 +1,7 @@
 import StairPart, { StairPartType } from "./types/StairPart";
 
 const DRAW_ROW_EPSILON = 0.001;
+const MIDDLE_DRAW_ROW = 1;
 const RIGHT_ASCENDING_FLIGHT_PHASE = 0;
 const DEFAULT_DRAW_PHASE = 1;
 const LEFT_ASCENDING_FLIGHT_PHASE = 2;
@@ -20,9 +21,14 @@ export function calcStairPartDrawPhase(stairPart:StairPart):number {
   return _isRightAscendingFlight(stairPart) ? RIGHT_ASCENDING_FLIGHT_PHASE : LEFT_ASCENDING_FLIGHT_PHASE;
 }
 
+export function calcStairPartDrawRow(stairPart:StairPart):number {
+  if (stairPart.type === StairPartType.catwalk) return MIDDLE_DRAW_ROW;
+  return quantizeDepthToDrawRow(stairPart.z);
+}
+
 export function compareCharacterToStairPartRows(characterDepth:number, stairPart:StairPart):number {
   const characterRow = quantizeDepthToDrawRow(characterDepth);
-  const stairRow = quantizeDepthToDrawRow(stairPart.z);
+  const stairRow = calcStairPartDrawRow(stairPart);
   if (characterRow !== stairRow) return characterRow - stairRow;
   return DEFAULT_DRAW_PHASE - calcStairPartDrawPhase(stairPart);
 }
