@@ -27,33 +27,7 @@ function _projectRoomPointWithDepth(x:number, y:number, z:number, scalingFactors
   return [canvasX + offsetX * z, canvasY + offsetY * z];
 }
 
-function _drawStairStepCuboid(leftX:number, topY:number, width:number, height:number, z:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const rightX = leftX + width;
-  const bottomY = topY + height;
-  const backTopLeft = _projectRoomPointWithDepth(leftX, topY, z, scalingFactors);
-  const backTopRight = _projectRoomPointWithDepth(rightX, topY, z, scalingFactors);
-  const backBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, z, scalingFactors);
-  const frontTopLeft = _projectRoomPointWithDepth(leftX, topY, z + STAIR_CUBOID_DEPTH, scalingFactors);
-  const frontTopRight = _projectRoomPointWithDepth(rightX, topY, z + STAIR_CUBOID_DEPTH, scalingFactors);
-  const frontBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, z + STAIR_CUBOID_DEPTH, scalingFactors);
-  const frontBottomRight = _projectRoomPointWithDepth(rightX, bottomY, z + STAIR_CUBOID_DEPTH, scalingFactors);
-  drawProjectedCuboid({
-    backTopLeft,
-    backTopRight,
-    backBottomLeft,
-    frontTopLeft,
-    frontTopRight,
-    frontBottomLeft,
-    frontBottomRight
-  }, {
-    fillStyle:STAIR_CUBOID_FILL,
-    lineWidth:Math.max(1, scalingFactors.roomLineWidth * 0.2),
-    strokeStyle:COLOR_BLACK
-  }, context);
-}
-
-function _drawLandingCuboid(leftX:number, topY:number, width:number, height:number, z:number, depth:number,
+function _drawStairCuboid(leftX:number, topY:number, width:number, height:number, z:number, depth:number,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const rightX = leftX + width;
   const bottomY = topY + height;
@@ -95,7 +69,7 @@ function _snapFlightTo45DegreesForDrawing(fromPosition:Position, toPosition:Posi
   };
 }
 
-function drawStairsAtRow(fromPosition:Position, toPosition:Position, z:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function _drawStairsAtRow(fromPosition:Position, toPosition:Position, z:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const snappedFlight = _snapFlightTo45DegreesForDrawing(fromPosition, toPosition);
   const totalRise = snappedFlight.toPosition.y - snappedFlight.fromPosition.y;
   const totalRun = snappedFlight.toPosition.x - snappedFlight.fromPosition.x;
@@ -109,7 +83,7 @@ function drawStairsAtRow(fromPosition:Position, toPosition:Position, z:number, s
   for (let i = 0; i < stepCount; i++) {
     const nextX = currentX + stepRun;
     const nextY = currentY + stepRise;
-    _drawStairStepCuboid(Math.min(currentX, nextX), Math.min(currentY, nextY), Math.abs(stepRun), Math.abs(stepRise), z,
+    _drawStairCuboid(Math.min(currentX, nextX), Math.min(currentY, nextY), Math.abs(stepRun), Math.abs(stepRise), z, STAIR_CUBOID_DEPTH,
       scalingFactors, context);
     currentX = nextX;
     currentY = nextY;
@@ -119,11 +93,11 @@ function drawStairsAtRow(fromPosition:Position, toPosition:Position, z:number, s
 export function drawStairPart(stairPart:StairPart, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   switch(stairPart.type) {
     case StairPartType.flight:
-      drawStairsAtRow(stairPart.startPosition, stairPart.endPosition, stairPart.z, scalingFactors, context);
+      _drawStairsAtRow(stairPart.startPosition, stairPart.endPosition, stairPart.z, scalingFactors, context);
       return;
     case StairPartType.landing:
     case StairPartType.catwalk:
-      _drawLandingCuboid(stairPart.leftX, stairPart.topY, stairPart.width, stairPart.height, stairPart.z, stairPart.depth,
+      _drawStairCuboid(stairPart.leftX, stairPart.topY, stairPart.width, stairPart.height, stairPart.z, stairPart.depth,
         scalingFactors, context);
       return;
   }
