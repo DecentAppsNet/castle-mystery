@@ -485,12 +485,9 @@ describe('levelUtil itinerary loading', () => {
     const queen = level.characters.find(character => character.id === 'queen');
     const library = findRoom(level.rooms, 'Library');
     const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-    const queenPoseAtArrival = queen ? findCharacterPose(queen, 6_000).position : null;
-    const occupiedWaypointKey = queenPoseAtArrival ? `${queenPoseAtArrival.x},${queenPoseAtArrival.y}` : null;
     const targetWaypoint = library.waypoints.reduce((rightmostFloorWaypoint, waypoint) => {
       if (waypoint.position.y !== floorY
-        || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z
-        || `${waypoint.position.x},${waypoint.position.y}` === occupiedWaypointKey) return rightmostFloorWaypoint;
+        || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return rightmostFloorWaypoint;
       if (!rightmostFloorWaypoint) return waypoint;
       return waypoint.position.x > rightmostFloorWaypoint.position.x ? waypoint : rightmostFloorWaypoint;
     }, null as typeof library.waypoints[number] | null);
@@ -499,7 +496,7 @@ describe('levelUtil itinerary loading', () => {
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK)).toBe(true);
     expect(queen?.items.map(item => item.id)).toContain('book');
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(king!, 6_000).position).toEqual({ ...targetWaypoint!.position, z:0 });
+    expect(findCharacterPose(king!, 6_000).position).toEqual(targetWaypoint!.position);
     expect(speechEvent?.speech).toBe('Hello, dear.');
   });
 

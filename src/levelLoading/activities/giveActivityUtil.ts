@@ -3,7 +3,7 @@ import { assertNonNullable } from "decent-portal";
 import { createGiveItemEvent } from "@/game/itineraryUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
-import { findNearestWaypoint } from "@/game/roomUtil";
+import { findNearestWaypointToPosition } from "@/game/roomUtil";
 import {
   ActivityContext,
   calcActivityStartTime,
@@ -62,7 +62,7 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
   if (recipientRoom.id !== currentRoom.id) throw new Error(`recipient ${recipientId} is not in the same room for give activity`);
 
   const isNearby = _calcDistance(context.state.position.x, context.state.position.y, recipientPosition.x, recipientPosition.y) <= GIVE_ITEM_NEARBY_DISTANCE;
-  const targetWaypoint = findNearestWaypoint(currentRoom, recipientPosition.x, recipientPosition.y);
+  const targetWaypoint = findNearestWaypointToPosition(currentRoom, recipientPosition);
   const unscheduledMovementEvents = isNearby ? [] : (() => {
     findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);

@@ -80,7 +80,9 @@
 # itinerary
 
 0:00:00 Simon thinks, "Stairs are my favorite."
+: Simon @ hallway
 : Simon @ study
 : Simon @ closet
+: Simon @ library
 
 # solutions

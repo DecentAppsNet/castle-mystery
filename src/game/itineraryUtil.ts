@@ -16,12 +16,13 @@ import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
-import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from "./roomUtil";
+import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./roomUtil";
 import ItineraryIndex from "./types/ItineraryIndex";
 
 const WALK_MSECS_PER_PIXEL = 30;
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
 const SPEECH_MSECS_PER_CHARACTER = 90;
+const WAYPOINT_DEPTH_ROW_COUNT = 3;
 
 type CharacterPose = {
   position:Position,
@@ -33,8 +34,17 @@ function _calcSpeechDuration(speech:string):number {
   return clamp(speech.length * SPEECH_MSECS_PER_CHARACTER, MIN_SPEECH_TIME, Number.POSITIVE_INFINITY);
 }
 
-function _calcWalkDuration(fromX:number, fromY:number, toX:number, toY:number):number {
-  const distance = Math.hypot(toX - fromX, toY - fromY);
+function _calcWalkDuration(room:Room, fromPosition:Position, toPosition:Position):number {
+  const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+  const isFloorMove = Math.abs(fromPosition.y - floorY) <= FLOOR_WAYPOINT_Y_OFFSET
+    && Math.abs(toPosition.y - floorY) <= FLOOR_WAYPOINT_Y_OFFSET;
+  const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
+  const isDepthOnlyMove = fromPosition.x === toPosition.x
+    && fromPosition.y === toPosition.y
+    && fromPosition.z !== toPosition.z;
+  if (isDepthOnlyMove) return Math.max(1, Math.floor(columnWidth * WALK_MSECS_PER_PIXEL * 0.5));
+  const depthDistance = isFloorMove ? 0 : (toPosition.z - fromPosition.z) * WAYPOINT_DEPTH_ROW_COUNT * columnWidth;
+  const distance = Math.hypot(toPosition.x - fromPosition.x, toPosition.y - fromPosition.y, depthDistance);
   return Math.floor(distance * WALK_MSECS_PER_PIXEL);
 }
 
@@ -48,15 +58,19 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   return room;
 }
 
-export function createWalkEvent(_room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number):WalkEvent|null {
-  const finalToPosition = { x:toX, y:toY, z:0 };
-  const duration = _calcWalkDuration(fromX, fromY, finalToPosition.x, finalToPosition.y);
+export function createWalkEvent(_room:Room, startTime:number, fromX:number, fromY:number, toX:number, toY:number,
+  fromWaypointPosition?:Position, toWaypointPosition?:Position):WalkEvent|null {
+  const initialFromPosition = fromWaypointPosition ? duplicatePosition(fromWaypointPosition) : { x:fromX, y:fromY, z:0 };
+  const finalToPosition = toWaypointPosition ? duplicatePosition(toWaypointPosition) : { x:toX, y:toY, z:0 };
+  const duration = _calcWalkDuration(_room, initialFromPosition, finalToPosition);
   if (duration <= 0) return null;
   return {
     type:ItineraryEventType.WALK,
     startTime,
-    fromPosition:{x:fromX, y:fromY, z:0},
+    fromPosition:initialFromPosition,
     toPosition:finalToPosition,
+    fromWaypointPosition:fromWaypointPosition ? duplicatePosition(fromWaypointPosition) : undefined,
+    toWaypointPosition:toWaypointPosition ? duplicatePosition(toWaypointPosition) : undefined,
     duration
   };
 }

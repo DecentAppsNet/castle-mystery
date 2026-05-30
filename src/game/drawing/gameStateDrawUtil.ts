@@ -5,11 +5,14 @@ import { assertNonNullable } from "decent-portal";
 import { processLevelEffects } from "../effects/effectUtil";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
+import Position, { duplicatePosition } from "../types/Position";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
+import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
+import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { drawExitPopover } from "./exitDrawUtil";
-import { drawRoomCharactersAndEffects, drawRoomShell } from "./roomDrawUtil";
+import { drawRoomCharactersAndEffects, drawRoomShell, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
 import { drawRoomStairs } from "./stairDrawUtil";
 import { calcScalingFactorsForRect } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
@@ -36,6 +39,21 @@ function _findHoveredExit(gameState:GameState):RoomExit|null {
   return null;
 }
 
+function _findHighlightedWaypointPosition(gameState:GameState):Position|null {
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  if (!activeCharacter) return null;
+
+  let latestDestination:Position|null = activeCharacter.waypoint ? duplicatePosition(activeCharacter.waypoint.position) : null;
+  for (const event of activeCharacter.itinerary) {
+    if (event.type !== ItineraryEventType.WALK) continue;
+    const walkEvent = event as WalkEvent;
+    if (gameState.time < walkEvent.startTime) break;
+    latestDestination = duplicatePosition(walkEvent.toWaypointPosition ?? walkEvent.toPosition);
+    if (gameState.time < walkEvent.startTime + walkEvent.duration) return latestDestination;
+  }
+  return latestDestination;
+}
+
 export function updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRenderingContext2D):ScalingFactors {
   const destW = context.canvas.width;
   const destH = context.canvas.height;
@@ -58,6 +76,7 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
 
 export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const highlightedWaypointPosition = _findHighlightedWaypointPosition(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   const drawnExitIds = new Set<string>();
   const roomRenderStates = gameState.rooms.map(room => {
@@ -72,6 +91,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     drawRoomStairs(room, gameState.scalingFactors, context);
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
       gameState.scalingFactors, context, gameState.time, gameState.imageSet, gameState.isLevelComplete);
+    drawRoomWaypointsWithHighlight(room, gameState.scalingFactors, context,
+      highlightedWaypointPosition, gameState.isLevelComplete);
   }
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   if (canShowHoverPopovers && gameState.hoveredItemId) {

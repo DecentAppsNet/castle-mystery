@@ -1,7 +1,7 @@
 import { assertNonNullable } from "decent-portal";
 
 import { createTakeItemEvent } from "@/game/itineraryUtil";
-import { findNearestWaypoint } from "@/game/roomUtil";
+import { findNearestWaypointToPosition } from "@/game/roomUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
@@ -28,7 +28,7 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
   if (currentRoom.id !== itemLocation.room.id) throw new Error(`item ${itemRef} is not in the same room for take activity`);
   const isNearby = currentRoom.id === itemLocation.room.id
     && _calcDistance(context.state.position.x, context.state.position.y, itemLocation.item.position.x, itemLocation.item.position.y) <= TAKE_ITEM_NEARBY_DISTANCE;
-  const targetWaypoint = findNearestWaypoint(currentRoom, itemLocation.item.position.x, itemLocation.item.position.y);
+  const targetWaypoint = findNearestWaypointToPosition(currentRoom, itemLocation.item.position);
   const unscheduledMovementEvents = isNearby ? [] : (() => {
     findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);

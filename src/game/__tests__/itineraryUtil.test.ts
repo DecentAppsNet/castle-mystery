@@ -92,5 +92,24 @@ describe('itineraryUtil', () => {
       expect(midWalkPose.position.x).toBeGreaterThan(10);
       expect(midWalkPose.position.x).toBeLessThan(15);
     });
+
+    it('creates z-only walk events between waypoints at the same x and y', () => {
+      const room = _createRoom();
+      const walkEvent = createWalkEvent(room, 1_000, 10, 10, 10, 10,
+        { x:10, y:10, z:0.5 }, { x:10, y:10, z:0.8333 });
+      expect(walkEvent).not.toBeNull();
+
+      const character = _createCharacter([walkEvent!]);
+      character.x = 10;
+      character.y = 10;
+      character.depth = 0.5;
+      character.itineraryIndex = createItineraryIndex(character.itinerary, { x:10, y:10, z:0.5 });
+
+      const midWalkPose = findCharacterPose(character, walkEvent!.startTime + Math.floor(walkEvent!.duration / 2));
+      expect(midWalkPose.position.x).toBe(10);
+      expect(midWalkPose.position.y).toBe(10);
+      expect(midWalkPose.position.z).toBeGreaterThan(0.5);
+      expect(midWalkPose.position.z).toBeLessThan(0.8333);
+    });
   });
 });

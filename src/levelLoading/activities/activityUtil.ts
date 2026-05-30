@@ -11,7 +11,7 @@ import Waypoint from "@/game/types/Waypoint";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import { isPositionStrictlyInRect } from "@/game/rectUtil";
-import { findExitWaypoint, findNearestWaypoint, findRoom, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/roomUtil";
+import { findExitWaypoint, findNearestWaypoint, findNearestWaypointToPosition, findRoom, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/roomUtil";
 import {
   createItineraryIndex,
   createRoomEntryEvent,
@@ -100,7 +100,7 @@ function _findTargetWaypointInRoom(room:Room, targetPosition:Position|null, occu
     return _findNearestFloorWaypointByX(room, targetX, occupiedWaypointKeys);
   }
   if (!targetPosition) return _findPreferredWaypointInRoom(room, occupiedWaypointKeys);
-  return findNearestWaypoint(room, targetPosition.x, targetPosition.y, waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
+  return findNearestWaypointToPosition(room, targetPosition, waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
 }
 
 function _findConnectingExit(room:Room, otherRoomId:string):RoomExit {
@@ -261,7 +261,7 @@ export function appendEventsToCharacterState(level:Level, character:Character, s
   const pose = findStatePoseAtTime(character, state, state.time);
   state.position = duplicatePosition(pose.position);
   const room = findCurrentRoom(level, state.position);
-  state.waypoint = findNearestWaypoint(room, state.position.x, state.position.y);
+  state.waypoint = findNearestWaypointToPosition(room, state.position);
 }
 
 export function findCurrentRoom(level:Level, position:Position):Room {
@@ -304,7 +304,7 @@ export function planMovementWithinRoom(room:Room, fromWaypoint:Waypoint, targetW
   for (let i = 1; i < waypointPath.length; ++i) {
     const nextWaypoint = waypointPath[i];
     const walkEvent = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
-      nextWaypoint.position.x, nextWaypoint.position.y);
+      nextWaypoint.position.x, nextWaypoint.position.y, currentWaypoint.position, nextWaypoint.position);
     if (!walkEvent) {
       currentWaypoint = nextWaypoint;
       continue;
@@ -337,7 +337,7 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
     while (currentWaypoint.exitDirections[nextRoom.id]) {
       const nextWaypoint = currentWaypoint.exitDirections[nextRoom.id]!;
       const walkEvent = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
-        nextWaypoint.position.x, nextWaypoint.position.y);
+        nextWaypoint.position.x, nextWaypoint.position.y, currentWaypoint.position, nextWaypoint.position);
       if (!walkEvent) {
         currentWaypoint = nextWaypoint;
         continue;
@@ -350,7 +350,7 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
     const exit = _findConnectingExit(room, nextRoom.id);
     const nextRoomExitWaypoint = findExitWaypoint(nextRoom.id, nextRoom.rect, exit, nextRoom.waypoints);
     const crossRoomWalkEvent = createWalkEvent(nextRoom, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
-      nextRoomExitWaypoint.position.x, nextRoomExitWaypoint.position.y);
+      nextRoomExitWaypoint.position.x, nextRoomExitWaypoint.position.y, currentWaypoint.position, nextRoomExitWaypoint.position);
     if (crossRoomWalkEvent) {
       events.push(crossRoomWalkEvent);
       currentTime = crossRoomWalkEvent.startTime + crossRoomWalkEvent.duration;

@@ -121,13 +121,27 @@ export function calcRoomsBoundingRect(rooms:Room[]):Rect {
 }
 
 export function findNearestWaypoint(room:Room, x:number, y:number, predicate?:(waypoint:Waypoint) => boolean):Waypoint {
+  return _findNearestWaypoint(room, x, y, null, predicate);
+}
+
+export function findNearestWaypointToPosition(room:Room, position:Pick<Waypoint['position'], 'x'|'y'|'z'>,
+  predicate?:(waypoint:Waypoint) => boolean):Waypoint {
+  return _findNearestWaypoint(room, position.x, position.y, position.z, predicate);
+}
+
+function _findNearestWaypoint(room:Room, x:number, y:number, z:number|null,
+  predicate?:(waypoint:Waypoint) => boolean):Waypoint {
   let nearestWaypoint:Waypoint|null = null;
   let nearestDistanceSquared = Infinity;
   let nearestRowDistance = Infinity;
+  const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
   room.waypoints.forEach(waypoint => {
     if (predicate && !predicate(waypoint)) return;
-    const distanceSquared = (waypoint.position.x - x) ** 2 + (waypoint.position.y - y) ** 2;
-    const rowDistance = Math.abs(waypoint.position.z - WAYPOINT_MIDDLE_ROW_Z);
+    const depthDistance = z === null ? 0 : (waypoint.position.z - z) * columnWidth * 3;
+    const distanceSquared = (waypoint.position.x - x) ** 2 + (waypoint.position.y - y) ** 2 + depthDistance ** 2;
+    const rowDistance = z === null
+      ? Math.abs(waypoint.position.z - WAYPOINT_MIDDLE_ROW_Z)
+      : Math.abs(waypoint.position.z - z);
     if (distanceSquared > nearestDistanceSquared) return;
     if (distanceSquared === nearestDistanceSquared && rowDistance >= nearestRowDistance) return;
     nearestWaypoint = waypoint;
@@ -227,13 +241,19 @@ function _areDirectFlights(stairs:ReadonlyArray<StairFlight>, floorY:number):boo
   return stairs.every(flight => Math.abs(flight.startPosition.y - floorY) <= STAIR_POSITION_TOLERANCE);
 }
 
-function _connectWindingStoryWaypoints(firstFlight:StairFlight, secondFlight:StairFlight,
+function _calcWindingWaypointX(roomRect:Rect, x:number):number {
+  const columnWidth = roomRect.width / roomWidthToColumnCount(roomRect.width);
+  const roomCenterX = roomRect.x + roomRect.width / 2;
+  return x < roomCenterX ? x - columnWidth / 2 : x + columnWidth / 2;
+}
+
+function _connectWindingStoryWaypoints(roomRect:Rect, firstFlight:StairFlight, secondFlight:StairFlight,
   getOrCreateWaypoint:(x:number, y:number, z:number) => Waypoint):{ topLandingWaypoint:Waypoint, topMiddleWaypoint:Waypoint } {
-  const bottomBackWaypoint = getOrCreateWaypoint(firstFlight.startPosition.x, firstFlight.startPosition.y, WAYPOINT_BACK_ROW_Z);
-  const midBackWaypoint = getOrCreateWaypoint(firstFlight.endPosition.x, firstFlight.endPosition.y, WAYPOINT_BACK_ROW_Z);
-  const midFrontWaypoint = getOrCreateWaypoint(secondFlight.startPosition.x, secondFlight.startPosition.y, WAYPOINT_FRONT_ROW_Z);
-  const topFrontWaypoint = getOrCreateWaypoint(secondFlight.endPosition.x, secondFlight.endPosition.y, WAYPOINT_FRONT_ROW_Z);
-  const topMiddleWaypoint = getOrCreateWaypoint(secondFlight.endPosition.x, secondFlight.endPosition.y, WAYPOINT_MIDDLE_ROW_Z);
+  const bottomBackWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, firstFlight.startPosition.x), firstFlight.startPosition.y, WAYPOINT_BACK_ROW_Z);
+  const midBackWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, firstFlight.endPosition.x), firstFlight.endPosition.y, WAYPOINT_BACK_ROW_Z);
+  const midFrontWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, secondFlight.startPosition.x), secondFlight.startPosition.y, WAYPOINT_FRONT_ROW_Z);
+  const topFrontWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, secondFlight.endPosition.x), secondFlight.endPosition.y, WAYPOINT_FRONT_ROW_Z);
+  const topMiddleWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, secondFlight.endPosition.x), secondFlight.endPosition.y, WAYPOINT_MIDDLE_ROW_Z);
 
   _connectWaypoints(bottomBackWaypoint, midBackWaypoint);
   _connectWaypoints(midBackWaypoint, midFrontWaypoint);
@@ -345,8 +365,8 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
         const secondFlight:StairFlight|undefined = stairs[flightIndex + 1];
         assertNonNullable(firstFlight, `missing winding back-row flight for room ${roomId}`);
         assertNonNullable(secondFlight, `missing winding front-row flight for room ${roomId}`);
-        const currentBottomBackWaypoint = _getOrCreateWaypoint(firstFlight.startPosition.x, firstFlight.startPosition.y, WAYPOINT_BACK_ROW_Z);
-        const { topMiddleWaypoint } = _connectWindingStoryWaypoints(firstFlight, secondFlight, _getOrCreateWaypoint);
+        const currentBottomBackWaypoint = _getOrCreateWaypoint(_calcWindingWaypointX(roomRect, firstFlight.startPosition.x), firstFlight.startPosition.y, WAYPOINT_BACK_ROW_Z);
+        const { topMiddleWaypoint } = _connectWindingStoryWaypoints(roomRect, firstFlight, secondFlight, _getOrCreateWaypoint);
         topMiddleWaypoints.push(topMiddleWaypoint);
 
         if (previousTopMiddleWaypoint !== null) {

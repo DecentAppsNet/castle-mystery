@@ -324,10 +324,10 @@ describe('roomUtil', () => {
 
       const waypoints = generateWaypoints(ROOM_ID, stairRect, exits, stairs);
 
-      expect(_findWaypointNear(waypoints, 5, 20, WAYPOINT_MIDDLE_ROW_Z)).toBeDefined();
-      expect(_findWaypointNear(waypoints, 5, 20, WAYPOINT_FRONT_ROW_Z)).toBeDefined();
-      expect(_findWaypointNear(waypoints, 15, 30, WAYPOINT_BACK_ROW_Z)).toBeDefined();
-      expect(_findWaypointNear(waypoints, 15, 30, WAYPOINT_FRONT_ROW_Z)).toBeDefined();
+      expect(_findWaypointNear(waypoints, 2.5, 20, WAYPOINT_MIDDLE_ROW_Z)).toBeDefined();
+      expect(_findWaypointNear(waypoints, 2.5, 20, WAYPOINT_FRONT_ROW_Z)).toBeDefined();
+      expect(_findWaypointNear(waypoints, 17.5, 30, WAYPOINT_BACK_ROW_Z)).toBeDefined();
+      expect(_findWaypointNear(waypoints, 17.5, 30, WAYPOINT_FRONT_ROW_Z)).toBeDefined();
       expect(_findWaypoint(waypoints, 7.5, 20, WAYPOINT_MIDDLE_ROW_Z)).toBeUndefined();
     });
 
@@ -337,18 +337,18 @@ describe('roomUtil', () => {
       const stairs = _createStairs(stairRect, exits);
 
       const waypoints = generateWaypoints(ROOM_ID, stairRect, exits, stairs);
-      const landingWaypoint = _findWaypointNear(waypoints, 5, 20, WAYPOINT_MIDDLE_ROW_Z);
-      const topFrontWaypoint = _findWaypointNear(waypoints, 5, 20, WAYPOINT_FRONT_ROW_Z);
+      const landingWaypoint = _findWaypointNear(waypoints, 2.5, 20, WAYPOINT_MIDDLE_ROW_Z);
+      const topFrontWaypoint = _findWaypointNear(waypoints, 2.5, 20, WAYPOINT_FRONT_ROW_Z);
 
       expect(landingWaypoint).toBeDefined();
       expect(topFrontWaypoint).toBeDefined();
       expect(landingWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
         { x:0, y:20, z:WAYPOINT_MIDDLE_ROW_Z },
-        { x:5, y:20, z:WAYPOINT_FRONT_ROW_Z }
+        { x:2.5, y:20, z:WAYPOINT_FRONT_ROW_Z }
       ]));
       expect(topFrontWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
-        { x:5, y:20, z:WAYPOINT_MIDDLE_ROW_Z },
-        { x:15, y:30, z:WAYPOINT_FRONT_ROW_Z }
+        { x:2.5, y:20, z:WAYPOINT_MIDDLE_ROW_Z },
+        { x:17.5, y:30, z:WAYPOINT_FRONT_ROW_Z }
       ]));
     });
 
@@ -358,14 +358,14 @@ describe('roomUtil', () => {
       const stairs = _createStairs(stairRect, exits);
 
       const waypoints = generateWaypoints(ROOM_ID, stairRect, exits, stairs);
-      const backMidWaypoint = _findWaypointNear(waypoints, 15, 30, WAYPOINT_BACK_ROW_Z);
-      const frontMidWaypoint = _findWaypointNear(waypoints, 15, 30, WAYPOINT_FRONT_ROW_Z);
+      const backMidWaypoint = _findWaypointNear(waypoints, 17.5, 30, WAYPOINT_BACK_ROW_Z);
+      const frontMidWaypoint = _findWaypointNear(waypoints, 17.5, 30, WAYPOINT_FRONT_ROW_Z);
 
       expect(backMidWaypoint).toBeDefined();
       expect(frontMidWaypoint).toBeDefined();
       expect(backMidWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
-        { x:5, y:39.999, z:WAYPOINT_BACK_ROW_Z },
-        { x:15, y:30, z:WAYPOINT_FRONT_ROW_Z }
+        { x:2.5, y:39.999, z:WAYPOINT_BACK_ROW_Z },
+        { x:17.5, y:30, z:WAYPOINT_FRONT_ROW_Z }
       ]));
     });
 
@@ -375,13 +375,13 @@ describe('roomUtil', () => {
       const stairs = _createStairs(stairRect, exits);
 
       const waypoints = generateWaypoints(ROOM_ID, stairRect, exits, stairs);
-      const firstStoryTopMiddleWaypoint = _findWaypointNear(waypoints, 5, 40, WAYPOINT_MIDDLE_ROW_Z);
-      const secondStoryBottomBackWaypoint = _findWaypointNear(waypoints, 5, 40, WAYPOINT_BACK_ROW_Z);
+      const firstStoryTopMiddleWaypoint = _findWaypointNear(waypoints, 2.5, 40, WAYPOINT_MIDDLE_ROW_Z);
+      const secondStoryBottomBackWaypoint = _findWaypointNear(waypoints, 2.5, 40, WAYPOINT_BACK_ROW_Z);
 
       expect(firstStoryTopMiddleWaypoint).toBeDefined();
       expect(secondStoryBottomBackWaypoint).toBeDefined();
       expect(firstStoryTopMiddleWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
-        { x:5, y:40, z:WAYPOINT_BACK_ROW_Z }
+        { x:2.5, y:40, z:WAYPOINT_BACK_ROW_Z }
       ]));
     });
 
@@ -497,7 +497,7 @@ describe('roomUtil', () => {
       const stairs = _createStairs(stairRect, exits);
       const waypoints = generateWaypoints(ROOM_ID, stairRect, exits, stairs);
 
-      expect(waypoints.filter(waypoint => _findWaypointNear([waypoint], 5, 20, WAYPOINT_MIDDLE_ROW_Z))).toHaveLength(1);
+      expect(waypoints.filter(waypoint => _findWaypointNear([waypoint], 2.5, 20, WAYPOINT_MIDDLE_ROW_Z))).toHaveLength(1);
     });
 
     it('connects each same-height exit to the nearest stair flight', () => {

@@ -5,7 +5,7 @@ import { assertNonNullable } from "decent-portal";
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
-import { findNearestWaypoint, findRoom, roomWidthToColumnCount } from "../game/roomUtil";
+import { findNearestWaypoint, findNearestWaypointToPosition, findRoom, roomWidthToColumnCount } from "../game/roomUtil";
 import Character from "../game/types/Character";
 import Item from "../game/types/Item";
 import Level from "../game/types/Level";
@@ -154,7 +154,7 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 
 function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number, claimedWaypoints:Set<string>) {
 	try {
-		return findNearestWaypoint(room, targetX, targetY, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`));
+		return findNearestWaypointToPosition(room, { x:targetX, y:targetY, z:0.5 }, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`));
 	} catch {
 		return findNearestWaypoint(room, targetX, targetY);
 	}
@@ -163,7 +163,13 @@ function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number
 function _addCharacter(level:Level, room:Room, characterId:string, title:string, description:string,
 	faceImageUrl:string|null, isTitleKnown:boolean, x:number, y:number, depth:number) {
 	const claimedWaypoints = new Set(level.characters.map(character => `${character.waypoint.position.x},${character.waypoint.position.y},${character.waypoint.position.z}`));
-	const waypoint = _findNearestUnclaimedWaypoint(room, x, y, claimedWaypoints);
+	const waypoint = (() => {
+		try {
+			return findNearestWaypointToPosition(room, { x, y, z:depth }, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`));
+		} catch {
+			return _findNearestUnclaimedWaypoint(room, x, y, claimedWaypoints);
+		}
+	})();
 	const character:Character = {
 		id: characterId,
 		title,

@@ -3,12 +3,14 @@
 import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
+import { interpolateColor } from "./colorUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./exitDrawUtil";
 import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
-import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
+import { calcPanelOffset, drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
 import Character from "../types/Character";
 import Item from "../types/Item";
+import Position from "../types/Position";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
@@ -18,20 +20,66 @@ import ExitType from "../types/ExitType";
 import { processCharacterEffects } from "../effects/effectUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
-const DRAW_WAYPOINTS = false;
+const DRAW_WAYPOINTS = true;
 const ROOM_TITLE_OUTLINE_WIDTH_RATIO = 0.15;
+const WAYPOINT_HIGHLIGHT_TOLERANCE = 0.01;
+const WAYPOINT_BACKGROUND_START_COLOR = "#ffb3c1";
+const WAYPOINT_BACKGROUND_END_COLOR = "#880000";
+const WAYPOINT_HIGHLIGHT_START_COLOR = "#8fd8ff";
+const WAYPOINT_HIGHLIGHT_END_COLOR = "#003d99";
 
 type RoomDrawableContent =
   | { kind:'character', depth:number, x:number, sortId:string, character:Character }
   | { kind:'item', depth:number, x:number, sortId:string, item:Item };
 
-function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function _getWaypointCanvasPosition(x:number, y:number, z:number, scalingFactors:ScalingFactors):[number, number] {
+  const [canvasX, canvasY] = gameToCanvasPosition(x, y, scalingFactors);
+  const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
+  const depth = Math.max(0, Math.min(1, z));
+  return [canvasX + offsetX * depth, canvasY + offsetY * depth];
+}
+
+function _isCloseTo(value1:number, value2:number):boolean {
+  return Math.abs(value1 - value2) <= WAYPOINT_HIGHLIGHT_TOLERANCE;
+}
+
+function _isSameWaypointPosition(highlightedPosition:Position|null, waypoint:Character['waypoint']):boolean {
+  if (!highlightedPosition) return false;
+  return _isCloseTo(highlightedPosition.x, waypoint.position.x)
+    && _isCloseTo(highlightedPosition.y, waypoint.position.y)
+    && _isCloseTo(highlightedPosition.z, waypoint.position.z);
+}
+
+function _isSameWaypointXY(highlightedPosition:Position|null, waypoint:Character['waypoint']):boolean {
+  if (!highlightedPosition) return false;
+  return _isCloseTo(highlightedPosition.x, waypoint.position.x)
+    && _isCloseTo(highlightedPosition.y, waypoint.position.y);
+}
+
+function _calcWaypointColor(z:number):string {
+  return interpolateColor(WAYPOINT_BACKGROUND_START_COLOR, WAYPOINT_BACKGROUND_END_COLOR, z);
+}
+
+function _calcHighlightedWaypointColor(z:number):string {
+  return interpolateColor(WAYPOINT_HIGHLIGHT_START_COLOR, WAYPOINT_HIGHLIGHT_END_COLOR, z);
+}
+
+function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, highlightedPosition:Position|null = null) {
   const crosshairSize = Math.max(2, Math.round(scalingFactors.roomLineWidth * 1.5));
-  context.strokeStyle = COLOR_BLACK;
-  context.lineWidth = Math.max(1, scalingFactors.roomLineWidth / 2);
+
+  context.save();
+  context.strokeStyle = "#c00";
+  context.lineWidth = Math.max(0.2, scalingFactors.roomLineWidth * 0.2);
+
+  const hasExactHighlightedWaypoint = highlightedPosition !== null
+    && room.waypoints.some(waypoint => _isSameWaypointPosition(highlightedPosition, waypoint));
 
   room.waypoints.forEach(waypoint => {
-    const [canvasX, canvasY] = gameToCanvasPosition(waypoint.position.x, waypoint.position.y, scalingFactors);
+    const isHighlighted = hasExactHighlightedWaypoint
+      ? _isSameWaypointPosition(highlightedPosition, waypoint)
+      : _isSameWaypointXY(highlightedPosition, waypoint);
+    const [canvasX, canvasY] = _getWaypointCanvasPosition(waypoint.position.x, waypoint.position.y, waypoint.position.z, scalingFactors);
+    context.strokeStyle = isHighlighted ? _calcHighlightedWaypointColor(waypoint.position.z) : _calcWaypointColor(waypoint.position.z);
     context.beginPath();
     context.moveTo(canvasX - crosshairSize, canvasY);
     context.lineTo(canvasX + crosshairSize, canvasY);
@@ -39,6 +87,8 @@ function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, conte
     context.lineTo(canvasX, canvasY + crosshairSize);
     context.stroke();
   });
+
+  context.restore();
 }
 
 function _isCharacterNearExit(character:Character, exit:RoomExit):boolean {
@@ -94,8 +144,6 @@ export function drawRoomShell(room:Room, isActive:boolean, characters:Character[
   context.fillStyle = COLOR_ROOM_TITLE_TEXT;
   context.fillText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
   if (isRoomObscured) return;
-  context.fillStyle = COLOR_BLACK;
-  if (DRAW_WAYPOINTS) _drawWaypointCrosshairs(room, scalingFactors, context);
 }
 
 function _createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[], includeUndiscoveredItems:boolean):RoomDrawableContent[] {
@@ -132,4 +180,17 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
     _drawRoomContents(room, charactersInRoom, activeCharacter, effects, scalingFactors, context, time, imageSet, true);
   }
   processRoomEffects(room, effects, context, isActive);
+}
+
+export function drawRoomWaypoints(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
+  if (!DRAW_WAYPOINTS || !room.isDiscovered) return;
+  if (room.isObscured && !showFullContents) return;
+  _drawWaypointCrosshairs(room, scalingFactors, context);
+}
+
+export function drawRoomWaypointsWithHighlight(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+  highlightedPosition:Position|null = null, showFullContents:boolean = false) {
+  if (!DRAW_WAYPOINTS || !room.isDiscovered) return;
+  if (room.isObscured && !showFullContents) return;
+  _drawWaypointCrosshairs(room, scalingFactors, context, highlightedPosition);
 }
