@@ -36,14 +36,12 @@ function _formatTimeRemaining(remainingMsecs:number):string {
   return `${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'}`;
 }
 
-export type ClaimSolutionCallback = (solution:Solution) => boolean;
-
 type Props = {
   isOpen:boolean,
   solution:Solution,
   imageSet:ImageSet,
   cooldownUntilTime:number|null,
-  onClaim:ClaimSolutionCallback,
+  onClaim:(solution:Solution) => boolean,
   onClose:(solution:Solution) => void
 }
 

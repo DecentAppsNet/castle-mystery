@@ -12,7 +12,7 @@ type DrawTextPopoverOptions = {
   context:CanvasRenderingContext2D
 }
 
-export function wrapText(context:CanvasRenderingContext2D, text:string, maxWidth:number, font:string):string[] {
+function _wrapText(context:CanvasRenderingContext2D, text:string, maxWidth:number, font:string):string[] {
   const words = text.split(/\s+/).filter(Boolean);
   if (words.length === 0) return [""];
   context.save();
@@ -43,7 +43,7 @@ export function drawTextPopover({ anchorX, anchorY, title = "", bodyTexts, scali
   const lineGap = Math.max(3, scalingFactors.roomLineWidth);
   const maxTextWidth = Math.min(320, Math.max(140, canvasRight * 0.35));
   const bodyLines = bodyTexts.flatMap((bodyText, index) => {
-    const wrappedLines = wrapText(context, bodyText, maxTextWidth, bodyFont);
+    const wrappedLines = _wrapText(context, bodyText, maxTextWidth, bodyFont);
     return index === 0 ? wrappedLines : ["", ...wrappedLines];
   });
   context.save();

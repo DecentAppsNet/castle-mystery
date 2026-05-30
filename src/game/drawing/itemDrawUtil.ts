@@ -106,17 +106,6 @@ function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors):
   };
 }
 
-export function discoverVisibleItemsInRoom(room:Room) {
-  if (room.isObscured) return [];
-  const newlyDiscoveredItems:Item[] = [];
-  room.items.forEach(item => {
-    if (item.isDiscovered) return;
-    item.isDiscovered = true;
-    newlyDiscoveredItems.push(item);
-  });
-  return newlyDiscoveredItems;
-}
-
 function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
   drawItemAtCanvasPosition(item, x, y, calcItemDrawMetrics(room, scalingFactors), context);

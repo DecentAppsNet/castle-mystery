@@ -5,8 +5,6 @@ import { gameToCanvasPosition } from "./drawUtil";
 const PANEL_OFFSET_X_SCALE = 8;
 const PANEL_OFFSET_Y_SCALE = 4;
 
-export { PANEL_OFFSET_X_SCALE, PANEL_OFFSET_Y_SCALE };
-
 function _fillPanel(points:Array<[number, number]>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   context.lineWidth = scalingFactors.roomLineWidth;
   context.beginPath();

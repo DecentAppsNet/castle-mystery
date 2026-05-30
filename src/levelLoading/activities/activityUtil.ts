@@ -53,10 +53,6 @@ function _createWaypointKey(waypoint:Waypoint):string {
   return `${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`;
 }
 
-export function createWaypointKey(waypoint:Waypoint):string {
-  return _createWaypointKey(waypoint);
-}
-
 function _findPreferredWaypointInRoom(room:Room, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
   const centerX = Math.floor(room.rect.x + room.rect.width / 2);
   const centerY = Math.floor(room.rect.y + room.rect.height / 2);

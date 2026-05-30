@@ -184,7 +184,6 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
       isObscured: false,
       items: [],
       exits: [],
-      stairs: [],
       stairParts: [],
       waypoints: [],
       isDiscovered: false
@@ -414,16 +413,10 @@ export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string, i
 
 export function generateRoomWaypointsForLevel(level:Level) {
   level.rooms.forEach((room, index) => {
-    const baseWaypoints = generateWaypoints(room.id, room.rect, room.exits);
-    const roomWithWaypoints = {
-      ...room,
-      waypoints:baseWaypoints
-    };
-    const stairs = generateStairFlights(roomWithWaypoints);
-    const stairParts = generateStairParts(roomWithWaypoints, stairs);
+    const stairs = generateStairFlights(room);
+    const stairParts = generateStairParts(room, stairs);
     level.rooms[index] = {
-      ...roomWithWaypoints,
-      stairs,
+      ...room,
       stairParts,
       waypoints: generateWaypoints(room.id, room.rect, room.exits, stairs)
     };

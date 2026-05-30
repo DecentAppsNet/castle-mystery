@@ -35,13 +35,6 @@ const EXPECTED_ROOM_GRID_ROW_COUNT = 3;
 const ITEM_DEPTHS_BY_GRID_ROW = [0, 0.3333, 0.6667] as const;
 const CHARACTER_DEPTHS_BY_GRID_ROW = [0.1667, 0.5, 0.8334] as const;
 
-export function parseRoomPopulationDefinitions(charactersSection:string, itemsSection:string):RoomPopulationDefinitions {
-	return {
-		characterDefinitions: parseCharacterDefinitions(charactersSection),
-		itemDefinitions: parseItemDefinitions(itemsSection)
-	};
-}
-
 function _parseOptionalIsTitleKnownOrThrow(value:string|undefined, characterId:string):boolean {
 	if (value === undefined) return false;
 	const normalizedValue = value.trim().toLowerCase();

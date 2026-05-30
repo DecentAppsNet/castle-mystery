@@ -57,7 +57,7 @@ function _shouldRoomDrawExit(room:Room, exit:RoomExit):boolean {
   return exit.x === room.rect.x + room.rect.width;
 }
 
-export function drawRoomExit(room:Room, exit:RoomExit, characters:Character[], showFullContents:boolean,
+function _drawRoomExit(room:Room, exit:RoomExit, characters:Character[], showFullContents:boolean,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, drawnExitIds:Set<string>) {
   if (!_shouldRoomDrawExit(room, exit)) return;
   if (drawnExitIds.has(exit.id)) return;
@@ -82,7 +82,7 @@ export function drawRoomShell(room:Room, isActive:boolean, characters:Character[
   context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   drawFloorPanel(room, scalingFactors, context);
   drawRightWallPanel(room, scalingFactors, context);
-  room.exits.forEach(exit => drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
+  room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;

@@ -9,7 +9,6 @@ import Room from '../types/Room';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
 import RoomExit, { createRoomExitId } from '../types/RoomExit';
-import StairFlight from '../types/StairFlight';
 import { StairPartType } from '../types/StairPart';
 import Waypoint from '../types/Waypoint';
 
@@ -29,14 +28,13 @@ function _createExit(room2Id:string, x:number, y:number):RoomExit {
   };
 }
 
-function _createRoom(rect:Rect, exits:RoomExit[], waypoints?:Waypoint[], stairs:StairFlight[] = []):Room {
+function _createRoom(rect:Rect, exits:RoomExit[], waypoints?:Waypoint[]):Room {
   return {
     id:ROOM_ID,
     title:ROOM_ID,
     rect,
     items:[],
     exits,
-    stairs,
     stairParts:[],
     waypoints:waypoints || generateWaypoints(ROOM_ID, rect, exits),
     isDiscovered:false,

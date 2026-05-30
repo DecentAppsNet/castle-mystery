@@ -30,13 +30,6 @@ export function canvasToGamePosition(x:number, y:number, scalingFactors:ScalingF
   return [(x - scalingFactors.translateX) / scalingFactors.scaleX, (y - scalingFactors.translateY) / scalingFactors.scaleY];
 }
 
-// Calculate scaling factors that will translate a rect of sourceWidth and sourceHeight dimensions so that
-// it will fit centered insides of a rect of destWidth and destHeight, while maintaining the original aspect
-// ratio of the source rect.
-export function calcScalingFactors(sourceWidth:number, sourceHeight:number, destWidth:number, destHeight:number):ScalingFactors {
-  return calcScalingFactorsForRect({ x:0, y:0, width:sourceWidth, height:sourceHeight }, destWidth, destHeight);
-}
-
 export function calcScalingFactorsForRect(sourceRect:Rect, destWidth:number, destHeight:number):ScalingFactors {
   const { x:sourceX, y:sourceY, width:sourceWidth, height:sourceHeight } = sourceRect;
   if (sourceWidth <= 0 || sourceHeight <= 0 || destWidth <= 0 || destHeight <= 0) {

@@ -7,17 +7,17 @@ import RoomEntryEvent from "@/game/types/itineraryEvents/RoomEntryEvent";
 
 export const SPEECH_CLUSTER_GAP_MSECS = 6 * MSECS_IN_SECOND;
 
-export type SpeechMarkerRange = {
+type SpeechMarkerRange = {
   startTime:number,
   endTime:number
 }
 
-export type EncounterMarker = {
+type EncounterMarker = {
   startTime:number,
   encounteredCharacterIds:string[]
 }
 
-export type ObscuredMarkerRange = {
+type ObscuredMarkerRange = {
   startTime:number,
   endTime:number
 }

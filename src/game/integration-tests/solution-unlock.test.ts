@@ -33,7 +33,6 @@ function _createTestLevel():Level {
       isObscured:false,
       items:[bookItem],
       exits:[],
-      stairs:[],
       stairParts:[],
       waypoints:[waypoint],
       isDiscovered:false
