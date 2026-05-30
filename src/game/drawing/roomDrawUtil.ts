@@ -141,7 +141,7 @@ function _compareNonStairDrawableContents(content1:Exclude<RoomDrawableContent, 
 
 function _compareStairToContent(stairContent:Extract<RoomDrawableContent, { kind:'stair' }>, content:Exclude<RoomDrawableContent, { kind:'stair' }>):number {
   if (content.kind === 'character') {
-    const stairComparison = compareCharacterToStairPartRows(content.character.depth, stairContent.stairPart);
+    const stairComparison = compareCharacterToStairPartRows(content.character.x, content.character.y, content.character.depth, stairContent.stairPart);
     if (stairComparison !== 0) return -stairComparison;
   }
 

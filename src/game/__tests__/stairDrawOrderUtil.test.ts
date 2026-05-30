@@ -12,7 +12,7 @@ function _createFlight(startX:number, endX:number, z:number):StairPart {
   };
 }
 
-function _createLanding(z:number):StairPart {
+function _createLanding(z:number, depth:number = 0.6667):StairPart {
   return {
     type:StairPartType.landing,
     leftX:0,
@@ -20,7 +20,7 @@ function _createLanding(z:number):StairPart {
     width:10,
     height:1,
     z,
-    depth:0.6667
+    depth
   };
 }
 
@@ -49,23 +49,35 @@ describe('stairDrawOrderUtil', () => {
 
   describe('compareCharacterToStairPartRows()', () => {
     it('draws flights after characters in smaller rows', () => {
-      expect(compareCharacterToStairPartRows(0.1667, _createFlight(4, 8, 0.6667))).toBeLessThan(0);
+      expect(compareCharacterToStairPartRows(6, 15, 0.1667, _createFlight(4, 8, 0.6667))).toBeLessThan(0);
     });
 
     it('draws right-ascending flights before same-row characters', () => {
-      expect(compareCharacterToStairPartRows(0.5, _createFlight(4, 8, 0.3333))).toBeGreaterThan(0);
+      expect(compareCharacterToStairPartRows(6, 15, 0.5, _createFlight(4, 8, 0.3333))).toBeGreaterThan(0);
     });
 
     it('draws left-ascending flights after same-row characters', () => {
-      expect(compareCharacterToStairPartRows(0.5, _createFlight(8, 4, 0.3333))).toBeLessThan(0);
+      expect(compareCharacterToStairPartRows(6, 15, 0.5, _createFlight(8, 4, 0.3333))).toBeLessThan(0);
     });
 
     it('leaves same-row non-flight stair parts to the default depth sort', () => {
-      expect(compareCharacterToStairPartRows(0.5, _createLanding(0.3333))).toBe(0);
+      expect(compareCharacterToStairPartRows(6, 15, 0.5, _createLanding(0.3333))).toBe(0);
     });
 
     it('draws catwalks before front-row characters even when the authored catwalk z is back-row', () => {
-      expect(compareCharacterToStairPartRows(0.8333, _createCatwalk(0))).toBeGreaterThan(0);
+      expect(compareCharacterToStairPartRows(6, 15, 0.8333, _createCatwalk(0))).toBeGreaterThan(0);
+    });
+
+    it('draws a left-ascending flight before the character once the character has reached the landing y', () => {
+      expect(compareCharacterToStairPartRows(4, 10, 0.5, _createFlight(8, 4, 0.3333))).toBeGreaterThan(0);
+    });
+
+    it('draws a direct back-row landing before the character once the character has reached that landing y', () => {
+      expect(compareCharacterToStairPartRows(6, 10, 0.1667, _createLanding(0))).toBeGreaterThan(0);
+    });
+
+    it('draws unrelated flights before the character instead of letting them decide same-row left/right ordering', () => {
+      expect(compareCharacterToStairPartRows(20, 15, 0.5, _createFlight(4, 8, 0.3333))).toBeGreaterThan(0);
     });
   });
 
@@ -80,6 +92,11 @@ describe('stairDrawOrderUtil', () => {
     it('treats catwalks as middle-row for draw ordering regardless of their authored z', () => {
       expect(calcStairPartDrawRow(_createCatwalk(0))).toBe(1);
       expect(calcStairPartDrawRow(_createCatwalk(0.3333))).toBe(1);
+    });
+
+    it('still treats direct back-row landings as back-row for row comparisons', () => {
+      expect(calcStairPartDrawRow(_createLanding(0))).toBe(0);
+      expect(calcStairPartDrawRow(_createLanding(0, 1))).toBe(0);
     });
   });
 });

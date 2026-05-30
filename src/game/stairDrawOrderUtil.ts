@@ -1,4 +1,5 @@
 import StairPart, { StairPartType } from "./types/StairPart";
+import { STAIR_POSITION_TOLERANCE } from "./stairUtil";
 
 const DRAW_ROW_EPSILON = 0.001;
 const MIDDLE_DRAW_ROW = 1;
@@ -26,7 +27,33 @@ export function calcStairPartDrawRow(stairPart:StairPart):number {
   return quantizeDepthToDrawRow(stairPart.z);
 }
 
-export function compareCharacterToStairPartRows(characterDepth:number, stairPart:StairPart):number {
+function _isCharacterAtFlightLandingY(characterY:number, stairPart:StairPart):boolean {
+  return stairPart.type === StairPartType.flight
+    && Math.abs(characterY - stairPart.endPosition.y) <= STAIR_POSITION_TOLERANCE;
+}
+
+function _isCharacterOnFlight(characterX:number, characterY:number, stairPart:StairPart):boolean {
+  if (stairPart.type !== StairPartType.flight) return false;
+
+  const minX = Math.min(stairPart.startPosition.x, stairPart.endPosition.x) - STAIR_POSITION_TOLERANCE;
+  const maxX = Math.max(stairPart.startPosition.x, stairPart.endPosition.x) + STAIR_POSITION_TOLERANCE;
+  const minY = Math.min(stairPart.startPosition.y, stairPart.endPosition.y) - STAIR_POSITION_TOLERANCE;
+  const maxY = Math.max(stairPart.startPosition.y, stairPart.endPosition.y) + STAIR_POSITION_TOLERANCE;
+  return characterX >= minX && characterX <= maxX && characterY >= minY && characterY <= maxY;
+}
+
+function _isCharacterAtDirectLandingY(characterY:number, stairPart:StairPart):boolean {
+  return stairPart.type === StairPartType.landing
+    && stairPart.depth < 1 - STAIR_POSITION_TOLERANCE
+    && quantizeDepthToDrawRow(stairPart.z) === 0
+    && Math.abs(characterY - stairPart.topY) <= STAIR_POSITION_TOLERANCE;
+}
+
+export function compareCharacterToStairPartRows(characterX:number, characterY:number, characterDepth:number, stairPart:StairPart):number {
+  if (_isCharacterAtDirectLandingY(characterY, stairPart)) return 1;
+  if (_isCharacterAtFlightLandingY(characterY, stairPart)) return 1;
+  if (stairPart.type === StairPartType.flight && !_isCharacterOnFlight(characterX, characterY, stairPart)) return 1;
+
   const characterRow = quantizeDepthToDrawRow(characterDepth);
   const stairRow = calcStairPartDrawRow(stairPart);
   if (characterRow !== stairRow) return characterRow - stairRow;
