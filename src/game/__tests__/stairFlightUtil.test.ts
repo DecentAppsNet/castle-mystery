@@ -120,7 +120,7 @@ describe('stairFlightUtil', () => {
       expect(stairParts[1].width).toBeCloseTo(5, 4);
       expect(stairParts[1].height).toBeCloseTo(1, 3);
       expect(stairParts[1].depth).toBeCloseTo(0.6667, 4);
-      expect(stairParts[1].topY + stairParts[1].height).toBeCloseTo(5, 4);
+      expect(stairParts[1].topY).toBeCloseTo(5, 4);
     });
 
     it('aligns a direct right-exit landing with the topmost step cuboid', () => {
@@ -131,16 +131,17 @@ describe('stairFlightUtil', () => {
 
       const stairParts = generateStairParts(room, flights);
 
-      expect(stairParts.map(part => part.type)).toEqual([StairPartType.flight, StairPartType.landing]);
-      expect(stairParts[0]).toMatchObject({ type:StairPartType.flight, endPosition:{ x:35, y:5, z:0 }, z:0 });
-      if (stairParts[0].type !== StairPartType.flight) throw new Error('expected direct flight');
-      if (stairParts[1].type !== StairPartType.landing) throw new Error('expected direct landing');
-      expect(stairParts[1].leftX).toBeCloseTo(35, 4);
-      expect(stairParts[1].width).toBeCloseTo(5, 4);
-      expect(stairParts[1].height).toBeCloseTo(1, 3);
-      expect(stairParts[1].z).toBeCloseTo(0, 4);
-      expect(stairParts[0].endPosition.y).toBeCloseTo(stairParts[1].topY + stairParts[1].height, 4);
-      expect(stairParts[0].endPosition.x).toBeCloseTo(stairParts[1].leftX, 4);
+      expect(stairParts.map(part => part.type)).toEqual([StairPartType.landing, StairPartType.flight]);
+      if (stairParts[0].type !== StairPartType.landing) throw new Error('expected direct landing');
+      expect(stairParts[0]).toMatchObject({ type:StairPartType.landing, z:0 });
+      expect(stairParts[0].leftX).toBeCloseTo(35, 4);
+      expect(stairParts[0].topY).toBeCloseTo(5, 4);
+      expect(stairParts[0].width).toBeCloseTo(5, 4);
+      expect(stairParts[0].height).toBeCloseTo(1, 3);
+      if (stairParts[1].type !== StairPartType.flight) throw new Error('expected direct flight');
+      expect(stairParts[1]).toMatchObject({ type:StairPartType.flight, endPosition:{ x:35, y:5, z:0 }, z:0 });
+      expect(stairParts[1].endPosition.y).toBeCloseTo(stairParts[0].topY, 4);
+      expect(stairParts[1].endPosition.x).toBeCloseTo(stairParts[0].leftX, 4);
     });
 
     it('orders simple winding parts as landing, back flight, front flight, story landing', () => {

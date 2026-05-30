@@ -78,7 +78,7 @@ function _createDirectLandingPart(stairIntersectionX:number, exit:RoomExit, heig
   return {
     type:StairPartType.landing,
     leftX:Math.min(exit.x, stairIntersectionX),
-    topY:exit.y - height,
+    topY:exit.y,
     width:Math.abs(exit.x - stairIntersectionX),
     height,
     z:0,
@@ -108,25 +108,23 @@ function _createFlightPart(flight:StairFlight, z:number):StairPart {
   };
 }
 
-function _createDirectLandingParts(room:Room, exits:RoomExit[], flights:StairFlight[]):StairPart[] {
+function _createDirectParts(room:Room, exits:RoomExit[], flights:StairFlight[]):StairPart[] {
   const stairParts:StairPart[] = [];
-  exits.forEach(exit => {
+  exits.forEach((exit, exitIndex) => {
+    const flight = flights[exitIndex];
+    if (flight === undefined) return;
     if (doesStairFlightEndAtPosition(flights, { x:exit.x, y:exit.y, z:0 })) return;
     const stairIntersection = _findNearestStairIntersectionAtExit(flights, exit);
     if (stairIntersection === null) return;
     const stairIntersectionX = stairIntersection.x;
     const stepHeight = _calcStairStepHeight(stairIntersection.flight.startPosition, stairIntersection.flight.endPosition);
-    stairParts.push(_createDirectLandingPart(stairIntersectionX, exit, stepHeight));
-    const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
-    const catwalkPart = _createCatwalkPart(
-      exit.x === room.rect.x ? exit.x + columnWidth : stairIntersectionX,
-      exit.y - stepHeight,
-      Math.abs(exit.x - stairIntersectionX) - columnWidth,
-      stepHeight,
-      0,
-      LANDING_CUBOID_DEPTH
-    );
-    if (catwalkPart !== null) stairParts.push(catwalkPart);
+    const landingPart = _createDirectLandingPart(stairIntersectionX, exit, stepHeight);
+    const flightPart = _createFlightPart(flight, 0);
+    if (exit.x === room.rect.x) {
+      stairParts.push(flightPart, landingPart);
+      return;
+    }
+    stairParts.push(landingPart, flightPart);
   });
   return stairParts;
 }
@@ -206,12 +204,8 @@ export function generateStairParts(room:Room, flights:StairFlight[]):StairPart[]
 
   const floorY = _calcRoomFloorY(room);
   if (_areDirectFlights(flights, floorY)) {
-    const flightParts = flights.map(flight => _createFlightPart(flight, 0));
-    const directLandingParts = _createDirectLandingParts(room, _findSortedNonFloorExits(room, floorY), flights);
-    return [
-      ...flightParts,
-      ...directLandingParts
-    ];
+    const directParts = _createDirectParts(room, _findSortedNonFloorExits(room, floorY), flights);
+    return directParts;
   }
 
   const windingMidStoryLandingParts = _createWindingMidStoryLandingParts(room, flights);

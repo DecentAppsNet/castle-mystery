@@ -80,10 +80,6 @@ function _drawLandingCuboid(leftX:number, topY:number, width:number, height:numb
   }, context);
 }
 
-export function drawStairs(fromPosition:Position, toPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  drawStairsAtRow(fromPosition, toPosition, 0, scalingFactors, context);
-}
-
 function _snapFlightTo45DegreesForDrawing(fromPosition:Position, toPosition:Position):{ fromPosition:Position, toPosition:Position } {
   const totalRise = toPosition.y - fromPosition.y;
   const totalRun = toPosition.x - fromPosition.x;
