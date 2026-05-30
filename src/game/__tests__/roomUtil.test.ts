@@ -443,6 +443,18 @@ describe('roomUtil', () => {
       expect(waypoints.every(waypoint => waypoint.position.y === 20 - FLOOR_WAYPOINT_Y_OFFSET)).toBe(true);
     });
 
+    it('prefers stepping onto or continuing on the middle row when routing to a floor exit', () => {
+      const exits = [_createExit('East', 20, ROOM_RECT.y + ROOM_RECT.height - FLOOR_WAYPOINT_Y_OFFSET)];
+      const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
+      const backRowStartWaypoint = _findWaypoint(waypoints, 7.5, 20 - FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_BACK_ROW_Z);
+      const middleRowStartWaypoint = _findWaypoint(waypoints, 7.5, 20 - FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z);
+
+      expect(backRowStartWaypoint).toBeDefined();
+      expect(middleRowStartWaypoint).toBeDefined();
+      expect(backRowStartWaypoint?.exitDirections.East?.position.z).toBe(WAYPOINT_MIDDLE_ROW_Z);
+      expect(middleRowStartWaypoint?.exitDirections.East?.position.z).toBe(WAYPOINT_MIDDLE_ROW_Z);
+    });
+
     it('creates exit routes for rooms whose exits are reachable by stair and landing waypoints', () => {
       const stairRect = { x:0, y:0, width:20, height:40 };
       const exits = [

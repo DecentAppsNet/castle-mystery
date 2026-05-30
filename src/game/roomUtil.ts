@@ -175,16 +175,23 @@ function _findNearestWaypointByX(waypoints:Waypoint[], x:number):Waypoint {
 function _connectWaypointGridOrthogonallyAndDiagonally(waypointsByRow:Waypoint[][]) {
   for (let rowIndex = 0; rowIndex < waypointsByRow.length; rowIndex++) {
     for (let columnIndex = 0; columnIndex < waypointsByRow[rowIndex].length; columnIndex++) {
-      for (let rowOffset = -1; rowOffset <= 1; rowOffset++) {
-        for (let columnOffset = -1; columnOffset <= 1; columnOffset++) {
-          if (rowOffset === 0 && columnOffset === 0) continue;
-          const neighborRowIndex = rowIndex + rowOffset;
-          const neighborColumnIndex = columnIndex + columnOffset;
-          if (neighborRowIndex < 0 || neighborRowIndex >= waypointsByRow.length) continue;
-          if (neighborColumnIndex < 0 || neighborColumnIndex >= waypointsByRow[neighborRowIndex].length) continue;
-          _connectWaypoints(waypointsByRow[rowIndex][columnIndex], waypointsByRow[neighborRowIndex][neighborColumnIndex]);
-        }
-      }
+      _connectWaypointGridNeighbors(waypointsByRow, rowIndex, columnIndex, false);
+      _connectWaypointGridNeighbors(waypointsByRow, rowIndex, columnIndex, true);
+    }
+  }
+}
+
+function _connectWaypointGridNeighbors(waypointsByRow:Waypoint[][], rowIndex:number, columnIndex:number, diagonalOnly:boolean) {
+  for (let rowOffset = -1; rowOffset <= 1; rowOffset++) {
+    for (let columnOffset = -1; columnOffset <= 1; columnOffset++) {
+      if (rowOffset === 0 && columnOffset === 0) continue;
+      const isDiagonalNeighbor = rowOffset !== 0 && columnOffset !== 0;
+      if (diagonalOnly !== isDiagonalNeighbor) continue;
+      const neighborRowIndex = rowIndex + rowOffset;
+      const neighborColumnIndex = columnIndex + columnOffset;
+      if (neighborRowIndex < 0 || neighborRowIndex >= waypointsByRow.length) continue;
+      if (neighborColumnIndex < 0 || neighborColumnIndex >= waypointsByRow[neighborRowIndex].length) continue;
+      _connectWaypoints(waypointsByRow[rowIndex][columnIndex], waypointsByRow[neighborRowIndex][neighborColumnIndex]);
     }
   }
 }
@@ -273,6 +280,17 @@ function _pruneIsolatedNonExitWaypoints(exits:RoomExit[], waypoints:Waypoint[]):
   return remainingWaypoints;
 }
 
+function _sortWaypointsForExitTraversal(waypoints:ReadonlyArray<Waypoint>):Waypoint[] {
+  return [...waypoints].sort((waypoint1, waypoint2) => {
+    const middleRowDistance1 = Math.abs(waypoint1.position.z - WAYPOINT_MIDDLE_ROW_Z);
+    const middleRowDistance2 = Math.abs(waypoint2.position.z - WAYPOINT_MIDDLE_ROW_Z);
+    if (middleRowDistance1 !== middleRowDistance2) return middleRowDistance1 - middleRowDistance2;
+    if (waypoint1.position.y !== waypoint2.position.y) return waypoint2.position.y - waypoint1.position.y;
+    if (waypoint1.position.x !== waypoint2.position.x) return waypoint2.position.x - waypoint1.position.x;
+    return waypoint1.position.z - waypoint2.position.z;
+  });
+}
+
 
 function _populateExitDirectionsForRoom(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[]) {
   exits.forEach(exit => {
@@ -283,7 +301,7 @@ function _populateExitDirectionsForRoom(roomId:string, roomRect:Rect, exits:Room
 
     while (pending.length > 0) {
       const currentWaypoint = pending.shift()!;
-      currentWaypoint.adjacentWaypoints.forEach(adjacentWaypoint => {
+      _sortWaypointsForExitTraversal(currentWaypoint.adjacentWaypoints).forEach(adjacentWaypoint => {
         const key = _createWaypointKey(adjacentWaypoint.position.x, adjacentWaypoint.position.y, adjacentWaypoint.position.z);
         if (visited.has(key)) return;
         visited.add(key);
