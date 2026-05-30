@@ -352,13 +352,39 @@ describe('roomUtil', () => {
       }];
 
       const waypoints = generateWaypoints(ROOM_ID, rect, [], stairs);
-      const stairStartWaypoint = _findWaypointNear(waypoints, 10, 20 - FLOOR_WAYPOINT_Y_OFFSET, 0);
+      const stairStartWaypoint = _findWaypointNear(waypoints, 10, 20 - FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_BACK_ROW_Z);
 
       expect(stairStartWaypoint).toBeDefined();
       expect(stairStartWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
         { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_BACK_ROW_Z },
         { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_BACK_ROW_Z },
-        { x:0, y:10, z:0 }
+        { x:0, y:10, z:WAYPOINT_BACK_ROW_Z }
+      ]));
+    });
+
+    it('creates direct stair landing waypoints on the back row for direct stairs', () => {
+      const rect = { x:0, y:0, width:40, height:20 };
+      const exits = [_createExit('West', 0, 5)];
+      const stairs = _createStairs(rect, exits);
+
+      const waypoints = generateWaypoints(ROOM_ID, rect, exits, stairs);
+
+      expect(_findWaypointNear(waypoints, 5, 5, WAYPOINT_BACK_ROW_Z)).toBeDefined();
+      expect(_findWaypointNear(waypoints, 5, 5, WAYPOINT_MIDDLE_ROW_Z)).toBeUndefined();
+    });
+
+    it('connects a direct stair landing waypoint to the exit and stair start on the back row', () => {
+      const rect = { x:0, y:0, width:40, height:20 };
+      const exits = [_createExit('West', 0, 5)];
+      const stairs = _createStairs(rect, exits);
+
+      const waypoints = generateWaypoints(ROOM_ID, rect, exits, stairs);
+      const landingWaypoint = _findWaypointNear(waypoints, 5, 5, WAYPOINT_BACK_ROW_Z);
+
+      expect(landingWaypoint).toBeDefined();
+      expect(landingWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
+        { x:0, y:5, z:WAYPOINT_MIDDLE_ROW_Z },
+        expect.objectContaining({ x:expect.closeTo(19.999, 3), y:expect.closeTo(19.999, 3), z:WAYPOINT_BACK_ROW_Z })
       ]));
     });
 
