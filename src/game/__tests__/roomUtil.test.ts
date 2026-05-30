@@ -37,6 +37,7 @@ function _createRoom(id:string, rect:Rect, exits:RoomExit[] = [], waypoints:Wayp
     items:[],
     exits,
     stairs:[],
+    stairParts:[],
     waypoints,
     isDiscovered:false,
     isObscured:false

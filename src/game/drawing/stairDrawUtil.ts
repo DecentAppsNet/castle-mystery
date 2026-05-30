@@ -1,43 +1,25 @@
-/* This module groups staircase line drawing helpers for room rendering. */
+/* This module groups staircase cuboid drawing helpers for room rendering. */
 
 import { assert } from "decent-portal";
 
 import { COLOR_BLACK } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
-import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "../roomUtil";
-import { doesStairFlightEndAtPosition, findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "../stairUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET } from "../roomUtil";
+import { STAIR_POSITION_TOLERANCE } from "../stairUtil";
 import { calcPanelOffset } from "./roomPanelDrawUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";
 import Position from "../types/Position";
-import RoomExit from "../types/RoomExit";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
-import StairFlight from "../types/StairFlight";
+import { StairPartType } from "../types/StairPart";
 
 const PREFERRED_STEP_RISE_RUN = 1;
-const STAIRS_LINE_WIDTH_MULTIPLIER = 0.2;
 const STAIR_ANGLE_TOLERANCE = FLOOR_WAYPOINT_Y_OFFSET + STAIR_POSITION_TOLERANCE;
-const FRONT_ROW_Z = 0.6667;
 const STAIR_CUBOID_DEPTH = 0.3333;
-const LANDING_CUBOID_DEPTH = 0.6667;
-const MIDDLE_ROW_Z = 1 - LANDING_CUBOID_DEPTH;
-const WINDING_MID_STORY_LANDING_DEPTH = 1;
-const WINDING_STORY_LANDING_DEPTH = 1;
 const STAIR_CUBOID_FILL = "rgb(154, 154, 154)";
 
 function _calcStairStepCount(totalDistance:number):number {
   return Math.max(1, Math.round(totalDistance / PREFERRED_STEP_RISE_RUN));
-}
-
-function _calcStairStepHeight(fromPosition:Position, toPosition:Position):number {
-  const totalRise = Math.abs(toPosition.y - fromPosition.y);
-  const stepCount = _calcStairStepCount(Math.max(totalRise, Math.abs(toPosition.x - fromPosition.x)));
-  return totalRise / stepCount;
-}
-
-function _applyStairStrokeStyle(scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  context.strokeStyle = COLOR_BLACK;
-  context.lineWidth = Math.max(1, scalingFactors.roomLineWidth * STAIRS_LINE_WIDTH_MULTIPLIER);
 }
 
 function _projectRoomPointWithDepth(x:number, y:number, z:number, scalingFactors:ScalingFactors):[number, number] {
@@ -67,7 +49,7 @@ function _drawStairStepCuboid(leftX:number, topY:number, width:number, height:nu
     frontBottomRight
   }, {
     fillStyle:STAIR_CUBOID_FILL,
-    lineWidth:Math.max(1, scalingFactors.roomLineWidth * STAIRS_LINE_WIDTH_MULTIPLIER),
+    lineWidth:Math.max(1, scalingFactors.roomLineWidth * 0.2),
     strokeStyle:COLOR_BLACK
   }, context);
 }
@@ -93,17 +75,9 @@ function _drawLandingCuboid(leftX:number, topY:number, width:number, height:numb
     frontBottomRight
   }, {
     fillStyle:STAIR_CUBOID_FILL,
-    lineWidth:Math.max(1, scalingFactors.roomLineWidth * STAIRS_LINE_WIDTH_MULTIPLIER),
+    lineWidth:Math.max(1, scalingFactors.roomLineWidth * 0.2),
     strokeStyle:COLOR_BLACK
   }, context);
-}
-
-function _drawHorizontalLine(fromPosition:Position, toPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  _applyStairStrokeStyle(scalingFactors, context);
-  context.beginPath();
-  context.moveTo(...gameToCanvasPosition(fromPosition.x, fromPosition.y, scalingFactors));
-  context.lineTo(...gameToCanvasPosition(toPosition.x, toPosition.y, scalingFactors));
-  context.stroke();
 }
 
 export function drawStairs(fromPosition:Position, toPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
@@ -147,165 +121,18 @@ function drawStairsAtRow(fromPosition:Position, toPosition:Position, z:number, s
   }
 }
 
-function _calcRoomFloorY(room:Room):number {
-  return room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-}
-
-function _findSortedNonFloorExits(room:Room, floorY:number):RoomExit[] {
-  return [...room.exits]
-    .filter(exit => exit.y < floorY)
-    .sort((left, right) => left.y - right.y || left.x - right.x);
-}
-
-function _findNearestStairIntersectionAtExit(flights:StairFlight[], exit:RoomExit) {
-  let nearestIntersection:null|{ flight:StairFlight, x:number } = null;
-  let nearestDistance = Infinity;
-
-  for (const flight of flights) {
-    const intersection = findStairFlightIntersectionAtY([flight], exit.y);
-    if (intersection === null) continue;
-    const distance = Math.abs(exit.x - intersection.x);
-    if (distance >= nearestDistance - STAIR_POSITION_TOLERANCE) continue;
-    nearestIntersection = intersection;
-    nearestDistance = distance;
-  }
-
-  return nearestIntersection;
-}
-
-function _areDirectFlights(flights:StairFlight[], floorY:number):boolean {
-  return flights.every(flight => Math.abs(flight.startPosition.y - floorY) <= STAIR_POSITION_TOLERANCE);
-}
-
-function _drawLandings(room:Room, exits:RoomExit[], flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
-  exits
-    .forEach(exit => {
-      if (doesStairFlightEndAtPosition(flights, { x:exit.x, y:exit.y, z:0 })) return;
-      const stairIntersection = _findNearestStairIntersectionAtExit(flights, exit);
-      if (stairIntersection === null) return;
-      const stairIntersectionX = stairIntersection.x;
-      const landingWidth = Math.abs(exit.x - stairIntersectionX);
-      if (Math.abs(landingWidth - columnWidth) <= STAIR_POSITION_TOLERANCE) {
-        const stepHeight = _calcStairStepHeight(stairIntersection.flight.startPosition, stairIntersection.flight.endPosition);
-        _drawLandingCuboid(Math.min(exit.x, stairIntersectionX), exit.y, landingWidth, stepHeight, 0, LANDING_CUBOID_DEPTH,
+export function drawRoomStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  if (!room.stairParts.length) return;
+  room.stairParts.forEach(stairPart => {
+    switch(stairPart.type) {
+      case StairPartType.flight:
+        drawStairsAtRow(stairPart.startPosition, stairPart.endPosition, stairPart.z, scalingFactors, context);
+        return;
+      case StairPartType.landing:
+      case StairPartType.catwalk:
+        _drawLandingCuboid(stairPart.leftX, stairPart.topY, stairPart.width, stairPart.height, stairPart.z, stairPart.depth,
           scalingFactors, context);
         return;
-      }
-      _drawHorizontalLine({ x:stairIntersectionX, y:exit.y, z:0 }, { x:exit.x, y:exit.y, z:0 }, scalingFactors, context);
-    });
-}
-
-function _drawWindingMidStoryLandings(room:Room, flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
-
-  for (let flightIndex = 0; flightIndex + 1 < flights.length; flightIndex += 2) {
-    const firstFlight = _snapFlightTo45DegreesForDrawing(flights[flightIndex].startPosition, flights[flightIndex].endPosition);
-    const landingLeftX = Math.max(firstFlight.fromPosition.x, firstFlight.toPosition.x);
-    const landingTopY = Math.min(firstFlight.fromPosition.y, firstFlight.toPosition.y);
-    const landingHeight = _calcStairStepHeight(firstFlight.fromPosition, firstFlight.toPosition);
-    _drawLandingCuboid(landingLeftX, landingTopY, columnWidth, landingHeight, 0, WINDING_MID_STORY_LANDING_DEPTH,
-      scalingFactors, context);
-  }
-}
-
-function _hasExitAtStoryY(room:Room, storyY:number, wallX:number):boolean {
-  return room.exits.some(exit =>
-    Math.abs(exit.x - wallX) <= STAIR_POSITION_TOLERANCE
-    && Math.abs(exit.y - storyY) <= STAIR_ANGLE_TOLERANCE);
-}
-
-function _drawWindingStoryLandings(room:Room, flights:StairFlight[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
-  const roomLeftX = room.rect.x;
-  const roomRightX = room.rect.x + room.rect.width;
-  const isWiderThanOneStoryTile = roomWidthToColumnCount(room.rect.width) > 4;
-
-  for (let flightIndex = 1; flightIndex < flights.length; flightIndex += 2) {
-    const secondFlight = _snapFlightTo45DegreesForDrawing(flights[flightIndex].startPosition, flights[flightIndex].endPosition);
-    const landingLeftX = Math.min(secondFlight.fromPosition.x, secondFlight.toPosition.x) - columnWidth;
-    const landingTopY = Math.min(secondFlight.fromPosition.y, secondFlight.toPosition.y);
-    const landingHeight = _calcStairStepHeight(secondFlight.fromPosition, secondFlight.toPosition);
-    const storyY = flights[flightIndex].endPosition.y;
-    const areStairsContinuing = flightIndex + 1 < flights.length;
-    const isLeftExitPresent = _hasExitAtStoryY(room, storyY, roomLeftX);
-    const isRightExitPresent = _hasExitAtStoryY(room, storyY, roomRightX);
-    const leftLandingZ = areStairsContinuing ? 0 : MIDDLE_ROW_Z;
-    const leftLandingDepth = areStairsContinuing ? WINDING_STORY_LANDING_DEPTH : LANDING_CUBOID_DEPTH;
-
-    if (isRightExitPresent) {
-      _drawLandingCuboid(
-        landingLeftX,
-        landingTopY,
-        roomRightX - landingLeftX,
-        landingHeight,
-        MIDDLE_ROW_Z,
-        STAIR_CUBOID_DEPTH,
-        scalingFactors,
-        context
-      );
     }
-
-    _drawLandingCuboid(
-      landingLeftX,
-      landingTopY,
-      columnWidth,
-      landingHeight,
-      leftLandingZ,
-      leftLandingDepth,
-      scalingFactors,
-      context
-    );
-
-    if (isWiderThanOneStoryTile && isLeftExitPresent && landingLeftX - roomLeftX > STAIR_POSITION_TOLERANCE) {
-      _drawLandingCuboid(
-        roomLeftX,
-        landingTopY,
-        landingLeftX - roomLeftX,
-        landingHeight,
-        leftLandingZ,
-        STAIR_CUBOID_DEPTH,
-        scalingFactors,
-        context
-      );
-    }
-  }
-}
-
-export function drawRoomStairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  if (!room.stairs.length) return;
-
-  const floorY = _calcRoomFloorY(room);
-  const areDirectFlights = _areDirectFlights(room.stairs, floorY);
-  if (areDirectFlights) {
-    room.stairs.forEach(flight => drawStairsAtRow(
-      flight.startPosition,
-      flight.endPosition,
-      0,
-      scalingFactors,
-      context
-    ));
-    _drawLandings(room, _findSortedNonFloorExits(room, floorY), room.stairs, scalingFactors, context);
-    return;
-  }
-  _drawWindingMidStoryLandings(room, room.stairs, scalingFactors, context);
-  room.stairs
-    .filter((_, flightIndex) => flightIndex % 2 === 0)
-    .forEach(flight => drawStairsAtRow(
-      flight.startPosition,
-      flight.endPosition,
-      0,
-      scalingFactors,
-      context
-    ));
-  room.stairs
-    .filter((_, flightIndex) => flightIndex % 2 === 1)
-    .forEach(flight => drawStairsAtRow(
-      flight.startPosition,
-      flight.endPosition,
-      FRONT_ROW_Z,
-      scalingFactors,
-      context
-    ));
-  _drawWindingStoryLandings(room, room.stairs, scalingFactors, context);
+  });
 }

@@ -34,6 +34,7 @@ function _createTestLevel():Level {
       items:[bookItem],
       exits:[],
       stairs:[],
+      stairParts:[],
       waypoints:[waypoint],
       isDiscovered:false
     }],
@@ -143,11 +144,11 @@ describe('solution unlock integration', () => {
     gameState.scalingFactors = {
       sourceX:0,
       sourceY:0,
-      sourceWidth:100,
-      sourceHeight:100,
-      scaleX:1,
+      sourceWidth:10,
+      sourceHeight:10,
+      scaleX:10,
       translateX:0,
-      scaleY:1,
+      scaleY:10,
       translateY:0,
       roomFontHeight:20,
       roomLineWidth:2,
@@ -159,7 +160,7 @@ describe('solution unlock integration', () => {
     expect(itemBeforeHover.isDiscovered).toBe(false);
     expect(itemBeforeHover.isExamined).toBe(false);
 
-    updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:6, y:5 });
+    updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:7, y:10 });
 
     const itemAfterHover = gameState.rooms[0].items[0];
     expect(itemAfterHover.isDiscovered).toBe(true);

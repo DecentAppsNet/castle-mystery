@@ -17,6 +17,7 @@ function _createRoom(id:string, title:string):Room {
     items:[],
     exits:[],
     stairs:[],
+    stairParts:[],
     waypoints:[],
     isDiscovered:true
   };

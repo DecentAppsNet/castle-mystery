@@ -1,6 +1,7 @@
 import Rect from "./Rect"
 import Item, { duplicateItem } from "./Item"
 import RoomExit, { duplicateRoomExit } from "./RoomExit"
+import StairPart, { duplicateStairPart } from "./StairPart"
 import StairFlight, { duplicateStairFlight } from "./StairFlight"
 import Waypoint, { duplicateWaypoint } from "./Waypoint"
 
@@ -12,6 +13,7 @@ type Room = {
   items:Item[],
   readonly exits:RoomExit[],
   readonly stairs:StairFlight[],
+  readonly stairParts:StairPart[],
   readonly waypoints:Waypoint[],
   isDiscovered:boolean
 }
@@ -25,6 +27,7 @@ export function duplicateRoom(from:Room):Room {
     items:from.items.map(duplicateItem),
     exits:from.exits.map(duplicateRoomExit),
     stairs:from.stairs.map(duplicateStairFlight),
+    stairParts:from.stairParts.map(duplicateStairPart),
     waypoints:from.waypoints.map(duplicateWaypoint),
     isDiscovered:from.isDiscovered
   }

@@ -18,6 +18,7 @@ function _createRoom(rect:Room['rect']):Room {
     items:[],
     exits:[],
     stairs:[],
+    stairParts:[],
     waypoints:[],
     isDiscovered:false,
     isObscured:false
