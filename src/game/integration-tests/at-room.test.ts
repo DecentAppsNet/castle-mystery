@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
-import { findExitWaypoint, findRoom, FLOOR_WAYPOINT_Y_OFFSET } from '../roomUtil';
+import { findExitWaypoint, findRoom, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from '../roomUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import WalkEvent from '../types/itineraryEvents/WalkEvent';
 import RoomEntryEvent from '../types/itineraryEvents/RoomEntryEvent';
@@ -121,14 +121,14 @@ describe('at room integration', () => {
     const library = findRoom(level.rooms, 'Library');
     const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
     const targetWaypoint = library.waypoints.reduce((leftmostFloorWaypoint, waypoint) => {
-      if (waypoint.position.y !== floorY) return leftmostFloorWaypoint;
+      if (waypoint.position.y !== floorY || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return leftmostFloorWaypoint;
       if (!leftmostFloorWaypoint) return waypoint;
       return waypoint.position.x < leftmostFloorWaypoint.position.x ? waypoint : leftmostFloorWaypoint;
     }, null as typeof library.waypoints[number] | null);
 
     expect(king).not.toBeNull();
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPose(king!, 10_000).position).toEqual({ ...targetWaypoint!.position, z:0 });
   });
 
   it('moves within the same room for @ Room.0%', () => {
@@ -137,13 +137,13 @@ describe('at room integration', () => {
     const library = findRoom(level.rooms, 'Library');
     const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
     const targetWaypoint = library.waypoints.reduce((leftmostFloorWaypoint, waypoint) => {
-      if (waypoint.position.y !== floorY) return leftmostFloorWaypoint;
+      if (waypoint.position.y !== floorY || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return leftmostFloorWaypoint;
       if (!leftmostFloorWaypoint) return waypoint;
       return waypoint.position.x < leftmostFloorWaypoint.position.x ? waypoint : leftmostFloorWaypoint;
     }, null as typeof library.waypoints[number] | null);
 
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPose(king!, 10_000).position).toEqual({ ...targetWaypoint!.position, z:0 });
   });
 
   it('starts relative @ Room movement only after the previous file activity completes', () => {

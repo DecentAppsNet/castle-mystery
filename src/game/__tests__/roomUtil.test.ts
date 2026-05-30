@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { calcRoomsBoundingRect, COLUMNS_PER_MAP_TILE, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints, roomWidthToColumnCount } from '../roomUtil';
+import { calcRoomsBoundingRect, COLUMNS_PER_MAP_TILE, findCharactersInRoom, findExitWaypoint, findNearestWaypoint, findRoom, findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition, FLOOR_WAYPOINT_Y_OFFSET, generateWaypoints, roomWidthToColumnCount, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from '../roomUtil';
 import { generateStairFlights } from '../stairFlightUtil';
 import Character from '../types/Character';
 import Rect from '../types/Rect';
@@ -69,7 +69,7 @@ function _createWaypoint(x:number, y:number):Waypoint {
 }
 
 function _createWaypointKey(waypoint:Waypoint):string {
-  return `${waypoint.position.x},${waypoint.position.y}`;
+  return `${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`;
 }
 
 function _assertAllWaypointsHaveNeighbors(waypoints:Waypoint[]) {
@@ -87,14 +87,15 @@ function _assertAllWaypointsAreInsideRoomRect(waypoints:Waypoint[], roomRect:Rec
   });
 }
 
-function _findWaypoint(waypoints:Waypoint[], x:number, y:number):Waypoint | undefined {
-  return waypoints.find(waypoint => waypoint.position.x === x && waypoint.position.y === y);
+function _findWaypoint(waypoints:Waypoint[], x:number, y:number, z?:number):Waypoint | undefined {
+  return waypoints.find(waypoint => waypoint.position.x === x && waypoint.position.y === y && (z === undefined || waypoint.position.z === z));
 }
 
-function _findWaypointNear(waypoints:Waypoint[], x:number, y:number, precision:number = 3):Waypoint | undefined {
+function _findWaypointNear(waypoints:Waypoint[], x:number, y:number, z?:number, precision:number = 3):Waypoint | undefined {
   return waypoints.find(waypoint => {
     return Math.abs(waypoint.position.x - x) < 10 ** -precision
-      && Math.abs(waypoint.position.y - y) < 10 ** -precision;
+      && Math.abs(waypoint.position.y - y) < 10 ** -precision
+      && (z === undefined || Math.abs(waypoint.position.z - z) < 10 ** -precision);
   });
 }
 
@@ -141,7 +142,7 @@ describe('roomUtil', () => {
 
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exit, waypoints);
 
-      expect(exitWaypoint.position).toEqual({ x:0, y:10, z:0 });
+      expect(exitWaypoint.position).toEqual({ x:0, y:10, z:WAYPOINT_MIDDLE_ROW_Z });
       expect(waypoints).toContain(exitWaypoint);
     });
 
@@ -151,7 +152,7 @@ describe('roomUtil', () => {
 
       const exitWaypoint = findExitWaypoint(ROOM_ID, ROOM_RECT, exit, waypoints);
 
-      expect(exitWaypoint.position).toEqual({ x:20, y:ROOM_RECT.y + ROOM_RECT.height - FLOOR_WAYPOINT_Y_OFFSET, z:0 });
+      expect(exitWaypoint.position).toEqual({ x:20, y:ROOM_RECT.y + ROOM_RECT.height - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_MIDDLE_ROW_Z });
       expect(waypoints).toContain(exitWaypoint);
     });
 
@@ -287,10 +288,18 @@ describe('roomUtil', () => {
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, []);
 
       expect(waypoints.map(waypoint => waypoint.position)).toEqual([
-        { x:2.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
-        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
-        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
-        { x:17.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 }
+        { x:2.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_BACK_ROW_Z },
+        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_BACK_ROW_Z },
+        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_BACK_ROW_Z },
+        { x:17.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_BACK_ROW_Z },
+        { x:2.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_MIDDLE_ROW_Z },
+        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_MIDDLE_ROW_Z },
+        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_MIDDLE_ROW_Z },
+        { x:17.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_MIDDLE_ROW_Z },
+        { x:2.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_FRONT_ROW_Z },
+        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_FRONT_ROW_Z },
+        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_FRONT_ROW_Z },
+        { x:17.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_FRONT_ROW_Z }
       ]);
       _assertAllWaypointsAreInsideRoomRect(waypoints, ROOM_RECT);
     });
@@ -303,10 +312,10 @@ describe('roomUtil', () => {
 
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
 
-      expect(_findWaypoint(waypoints, 0, 12)).toBeDefined();
-      expect(_findWaypoint(waypoints, 20, ROOM_RECT.y + ROOM_RECT.height - FLOOR_WAYPOINT_Y_OFFSET)).toBeDefined();
-      expect(_findWaypoint(waypoints, 2.5, 20 - FLOOR_WAYPOINT_Y_OFFSET)).toBeDefined();
-      expect(_findWaypoint(waypoints, 17.5, 20 - FLOOR_WAYPOINT_Y_OFFSET)).toBeDefined();
+      expect(_findWaypoint(waypoints, 0, 12, WAYPOINT_MIDDLE_ROW_Z)).toBeDefined();
+      expect(_findWaypoint(waypoints, 20, ROOM_RECT.y + ROOM_RECT.height - FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z)).toBeDefined();
+      expect(_findWaypoint(waypoints, 2.5, 20 - FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_BACK_ROW_Z)).toBeDefined();
+      expect(_findWaypoint(waypoints, 17.5, 20 - FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_FRONT_ROW_Z)).toBeDefined();
     });
 
     it('creates stair and landing waypoints instead of a centered spine when stairs are provided', () => {
@@ -316,8 +325,8 @@ describe('roomUtil', () => {
 
       const waypoints = generateWaypoints(ROOM_ID, stairRect, exits, stairs);
 
-      expect(_findWaypointNear(waypoints, 5, 20)).toBeDefined();
-      expect(_findWaypoint(waypoints, 7.5, 20)).toBeUndefined();
+      expect(_findWaypointNear(waypoints, 5, 20, WAYPOINT_MIDDLE_ROW_Z)).toBeDefined();
+      expect(_findWaypoint(waypoints, 7.5, 20, WAYPOINT_MIDDLE_ROW_Z)).toBeUndefined();
     });
 
     it('connects landing waypoints to the exit and the stair flight', () => {
@@ -326,12 +335,12 @@ describe('roomUtil', () => {
       const stairs = _createStairs(stairRect, exits);
 
       const waypoints = generateWaypoints(ROOM_ID, stairRect, exits, stairs);
-      const landingWaypoint = _findWaypointNear(waypoints, 5, 20);
+      const landingWaypoint = _findWaypointNear(waypoints, 5, 20, WAYPOINT_MIDDLE_ROW_Z);
 
       expect(landingWaypoint).toBeDefined();
       expect(landingWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
-        { x:0, y:20, z:0 },
-        { x:15, y:30, z:0 }
+        { x:0, y:20, z:WAYPOINT_MIDDLE_ROW_Z },
+        { x:5, y:20, z:0 }
       ]));
     });
 
@@ -343,12 +352,12 @@ describe('roomUtil', () => {
       }];
 
       const waypoints = generateWaypoints(ROOM_ID, rect, [], stairs);
-      const stairStartWaypoint = _findWaypointNear(waypoints, 10, 20 - FLOOR_WAYPOINT_Y_OFFSET);
+      const stairStartWaypoint = _findWaypointNear(waypoints, 10, 20 - FLOOR_WAYPOINT_Y_OFFSET, 0);
 
       expect(stairStartWaypoint).toBeDefined();
       expect(stairStartWaypoint?.adjacentWaypoints.map(waypoint => waypoint.position)).toEqual(expect.arrayContaining([
-        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
-        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:0 },
+        { x:7.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_BACK_ROW_Z },
+        { x:12.5, y:20 - FLOOR_WAYPOINT_Y_OFFSET, z:WAYPOINT_BACK_ROW_Z },
         { x:0, y:10, z:0 }
       ]));
     });
@@ -362,8 +371,8 @@ describe('roomUtil', () => {
       const waypoints = generateWaypoints(ROOM_ID, ROOM_RECT, exits);
 
       expect(_findWaypoint(waypoints, 7.5, 6)).toBeUndefined();
-      expect(_findWaypoint(waypoints, 0, 20 - FLOOR_WAYPOINT_Y_OFFSET)).toBeDefined();
-      expect(_findWaypoint(waypoints, 20, 20 - FLOOR_WAYPOINT_Y_OFFSET)).toBeDefined();
+      expect(_findWaypoint(waypoints, 0, 20 - FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z)).toBeDefined();
+      expect(_findWaypoint(waypoints, 20, 20 - FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z)).toBeDefined();
       expect(waypoints.every(waypoint => waypoint.position.y === 20 - FLOOR_WAYPOINT_Y_OFFSET)).toBe(true);
     });
 
@@ -421,7 +430,7 @@ describe('roomUtil', () => {
       const stairs = _createStairs(stairRect, exits);
       const waypoints = generateWaypoints(ROOM_ID, stairRect, exits, stairs);
 
-      expect(waypoints.filter(waypoint => _findWaypointNear([waypoint], 5, 20))).toHaveLength(1);
+      expect(waypoints.filter(waypoint => _findWaypointNear([waypoint], 5, 20, WAYPOINT_MIDDLE_ROW_Z))).toHaveLength(1);
     });
 
     it('connects each same-height exit to the nearest stair flight', () => {

@@ -45,7 +45,7 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
   const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
     .filter(([characterId]) => characterId !== context.character.id)
     .filter(([, state]) => findCurrentRoom(context.level, state.waypoint.position).id === targetRoomId)
-    .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y}`));
+    .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y},${state.waypoint.position.z}`));
   const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, null, targetXPercent);
   const scheduledEvents = context.timestampKind === 'absolute'
     ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, findEarliestAbsoluteActivityStartTime(context.state))

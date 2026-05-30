@@ -77,7 +77,7 @@ import LoadLevelException from '@/levelLoading/LoadLevelException';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
 import { findCharacterPose } from '../itineraryUtil';
-import { findRoom, FLOOR_WAYPOINT_Y_OFFSET } from '../roomUtil';
+import { findRoom, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from '../roomUtil';
 import ClozeBlank from '../solutions/types/ClozeBlank';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
@@ -488,7 +488,9 @@ describe('levelUtil itinerary loading', () => {
     const queenPoseAtArrival = queen ? findCharacterPose(queen, 6_000).position : null;
     const occupiedWaypointKey = queenPoseAtArrival ? `${queenPoseAtArrival.x},${queenPoseAtArrival.y}` : null;
     const targetWaypoint = library.waypoints.reduce((rightmostFloorWaypoint, waypoint) => {
-      if (waypoint.position.y !== floorY || `${waypoint.position.x},${waypoint.position.y}` === occupiedWaypointKey) return rightmostFloorWaypoint;
+      if (waypoint.position.y !== floorY
+        || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z
+        || `${waypoint.position.x},${waypoint.position.y}` === occupiedWaypointKey) return rightmostFloorWaypoint;
       if (!rightmostFloorWaypoint) return waypoint;
       return waypoint.position.x > rightmostFloorWaypoint.position.x ? waypoint : rightmostFloorWaypoint;
     }, null as typeof library.waypoints[number] | null);
@@ -497,7 +499,7 @@ describe('levelUtil itinerary loading', () => {
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK)).toBe(true);
     expect(queen?.items.map(item => item.id)).toContain('book');
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(king!, 6_000).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPose(king!, 6_000).position).toEqual({ ...targetWaypoint!.position, z:0 });
     expect(speechEvent?.speech).toBe('Hello, dear.');
   });
 
