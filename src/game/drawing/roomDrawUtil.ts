@@ -236,6 +236,10 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
   });
 }
 
+function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  room.stairParts.forEach(stairPart => drawStairPart(stairPart, scalingFactors, context));
+}
+
 export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet,
   showFullContents:boolean = false) {
@@ -247,6 +251,8 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
   }
   if (showFullContents || (isActive && activeCharacter)) {
     _drawRoomContents(room, charactersInRoom, activeCharacter, effects, scalingFactors, context, time, imageSet, true);
+  } else {
+    _drawRoomStairsOnly(room, scalingFactors, context);
   }
   processRoomEffects(room, effects, context, isActive);
 }
