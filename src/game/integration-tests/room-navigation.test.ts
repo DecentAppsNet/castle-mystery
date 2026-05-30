@@ -15,6 +15,7 @@ function _createRoom(id:string, x:number):Room {
     id,
     title:id,
     rect:{ x, y:0, width:10, height:10 },
+    isOutside:false,
     isObscured:false,
     items:[],
     exits:[],

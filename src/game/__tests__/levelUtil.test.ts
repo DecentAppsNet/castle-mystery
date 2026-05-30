@@ -18,6 +18,7 @@ import invalidRoomLegendTileText from './fixtures/invalid-room-legend-tile.md?ra
 import invalidItineraryTimestampText from './fixtures/invalid-itinerary-timestamp.md?raw';
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
+import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
 import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
 import duplicateUnlockText from './fixtures/duplicate-unlock.md?raw';
@@ -154,6 +155,16 @@ describe('levelUtil itinerary loading', () => {
     expect(eastHall?.isObscured).toBe(true);
     expect(foyer?.isObscured).toBe(false);
     expect(level.solutions.map(solution => solution.title)).toEqual(['Identities']);
+  });
+
+  it('parses outside room metadata and defaults omitted outside flags to false', () => {
+    const level = loadLevelFromText(outsideRoomMetadataText, 'outside-room-metadata.md');
+
+    const courtyard = level.rooms.find(room => room.id === 'courtyard');
+    const hall = level.rooms.find(room => room.id === 'hall');
+
+    expect(courtyard?.isOutside).toBe(true);
+    expect(hall?.isOutside).toBe(false);
   });
 
   it('loads a minified kingacide snapshot with solutions and file-relative itinerary activity', () => {

@@ -19,6 +19,7 @@ function _createRoom(id:string, x:number):Room {
     id,
     title:id,
     rect:{ x, y:0, width:100, height:100 },
+    isOutside:false,
     items:[],
     exits:[],
     stairParts:[],

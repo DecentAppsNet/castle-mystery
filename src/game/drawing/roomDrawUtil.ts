@@ -127,9 +127,11 @@ export function drawRoomShell(room:Room, isActive:boolean, characters:Character[
   const scaledHeight = scaledBottomRight[1] - scaledTopLeft[1];
   context.lineWidth = scalingFactors.roomLineWidth;
   context.fillStyle = isRoomObscured ? COLOR_BLACK : (showFullContents || isActive ? COLOR_ACTIVE_ROOM_FILL : COLOR_INACTIVE_ROOM_FILL);
-  context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.strokeStyle = COLOR_DARK_GRAY;
-  context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
+  if (!room.isOutside) {
+    context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
+    context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
+  }
   drawFloorPanel(room, scalingFactors, context);
   drawRightWallPanel(room, scalingFactors, context);
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));

@@ -15,6 +15,7 @@ function _createRoom(rect:Room['rect']):Room {
     id:'room',
     title:'Room',
     rect,
+    isOutside:false,
     items:[],
     exits:[],
     stairParts:[],

@@ -182,6 +182,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
         width: (bounds.maxCol - bounds.minCol + 1) * MAP_TILE_SIZE,
         height: (bounds.maxRow - bounds.minRow + 1) * MAP_TILE_SIZE
       },
+      isOutside: false,
       isObscured: false,
       items: [],
       exits: [],
@@ -214,6 +215,7 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string) 
     level.rooms[index] = {
       ...room,
       title: roomNameValues.title || roomSectionEntry.authoredName.trim(),
+      isOutside: (roomNameValues.outside || '').toLowerCase() === 'true',
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };
   });
@@ -230,7 +232,7 @@ export function validateRoomGridLegendEntries(level:Level, roomsSection:string, 
 
     const roomNameValues = _parseNameValueLinesOrThrowDuplicate(roomSection, `room ${roomId}`);
     const roomLegend = Object.fromEntries(
-      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured')
+      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside')
     );
 
     findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:entryText, row, col }) => {

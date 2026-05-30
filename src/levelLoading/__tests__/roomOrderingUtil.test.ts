@@ -9,6 +9,7 @@ function _createRoom(id:string, rect:Rect):Room {
     id,
     title:id,
     rect,
+    isOutside:false,
     isObscured:false,
     items:[],
     exits:[],

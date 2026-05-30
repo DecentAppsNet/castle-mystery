@@ -30,6 +30,7 @@ function _createTestLevel():Level {
       id:'hall',
       title:'Hall',
       rect:{ x:0, y:0, width:10, height:10 },
+      isOutside:false,
       isObscured:false,
       items:[bookItem],
       exits:[],
