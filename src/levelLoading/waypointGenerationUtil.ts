@@ -145,14 +145,18 @@ function _calcWindingWaypointX(roomRect:Rect, x:number):number {
 function _connectWindingStoryWaypoints(roomRect:Rect, firstFlight:StairFlight, secondFlight:StairFlight,
   getOrCreateWaypoint:(x:number, y:number, z:number) => Waypoint):{ topLandingWaypoint:Waypoint, topMiddleWaypoint:Waypoint } {
   const bottomBackWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, firstFlight.startPosition.x), firstFlight.startPosition.y, WAYPOINT_BACK_ROW_Z);
-  const midBackWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, firstFlight.endPosition.x), firstFlight.endPosition.y, WAYPOINT_BACK_ROW_Z);
-  const midFrontWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, secondFlight.startPosition.x), secondFlight.startPosition.y, WAYPOINT_FRONT_ROW_Z);
+  const bottomBackEdgeWaypoint = getOrCreateWaypoint(firstFlight.startPosition.x, firstFlight.startPosition.y, WAYPOINT_BACK_ROW_Z);
+  const midBackEdgeWaypoint = getOrCreateWaypoint(firstFlight.endPosition.x, firstFlight.endPosition.y, WAYPOINT_BACK_ROW_Z);
+  const midFrontEdgeWaypoint = getOrCreateWaypoint(secondFlight.startPosition.x, secondFlight.startPosition.y, WAYPOINT_FRONT_ROW_Z);
+  const topFrontEdgeWaypoint = getOrCreateWaypoint(secondFlight.endPosition.x, secondFlight.endPosition.y, WAYPOINT_FRONT_ROW_Z);
   const topFrontWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, secondFlight.endPosition.x), secondFlight.endPosition.y, WAYPOINT_FRONT_ROW_Z);
   const topMiddleWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, secondFlight.endPosition.x), secondFlight.endPosition.y, WAYPOINT_MIDDLE_ROW_Z);
 
-  _connectWaypoints(bottomBackWaypoint, midBackWaypoint);
-  _connectWaypoints(midBackWaypoint, midFrontWaypoint);
-  _connectWaypoints(midFrontWaypoint, topFrontWaypoint);
+  _connectWaypoints(bottomBackWaypoint, bottomBackEdgeWaypoint);
+  _connectWaypoints(bottomBackEdgeWaypoint, midBackEdgeWaypoint);
+  _connectWaypoints(midBackEdgeWaypoint, midFrontEdgeWaypoint);
+  _connectWaypoints(midFrontEdgeWaypoint, topFrontEdgeWaypoint);
+  _connectWaypoints(topFrontEdgeWaypoint, topFrontWaypoint);
   _connectWaypoints(topFrontWaypoint, topMiddleWaypoint);
 
   return { topLandingWaypoint:topFrontWaypoint, topMiddleWaypoint };

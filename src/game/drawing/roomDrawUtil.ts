@@ -65,7 +65,7 @@ function _calcHighlightedWaypointColor(z:number):string {
 }
 
 function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, highlightedPosition:Position|null = null) {
-  const crosshairSize = Math.max(2, Math.round(scalingFactors.roomLineWidth * 1.5));
+  const crosshairSize = Math.max(1, Math.round(scalingFactors.roomLineWidth * .5));
 
   context.save();
   context.strokeStyle = "#c00";
