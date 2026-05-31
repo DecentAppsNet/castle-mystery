@@ -23,7 +23,7 @@ import {
 } from "@/game/itineraryUtil";
 import { assertNormalizedId, normalizeId } from "@/game/idUtil";
 
-export type ActivityTimestampKind = 'absolute' | 'after-previous-activity';
+export type ActivityTimestampType = 'absolute' | 'after-previous-activity';
 
 export type CharacterActivityState = {
   events:ItineraryEvent[],
@@ -43,7 +43,7 @@ export type ActivityContext = {
   characterStatesById:Map<string, CharacterActivityState>,
   poseOverridesByCharacterId:Map<string, Position>,
   timestamp:number,
-  timestampKind:ActivityTimestampKind
+  timestampType:ActivityTimestampType
 };
 
 function _matchesItemReference(item:Item, reference:string):boolean {
@@ -207,12 +207,12 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
   return findCharacterPose(createCharacterSnapshot(character, state), time);
 }
 
-export function calcActivityStartTime(state:CharacterActivityState, timestamp:number, timestampKind:ActivityTimestampKind):number {
-  return timestampKind === 'absolute' ? timestamp : Math.max(timestamp, state.time);
+export function calcActivityStartTime(state:CharacterActivityState, timestamp:number, timestampType:ActivityTimestampType):number {
+  return timestampType === 'absolute' ? timestamp : Math.max(timestamp, state.time);
 }
 
-export function ensureTimestampIsAvailable(state:CharacterActivityState, timestamp:number, activityText:string, timestampKind:ActivityTimestampKind) {
-  if (timestampKind === 'absolute' && timestamp < findEarliestAbsoluteActivityStartTime(state)) {
+export function ensureTimestampIsAvailable(state:CharacterActivityState, timestamp:number, activityText:string, timestampType:ActivityTimestampType) {
+  if (timestampType === 'absolute' && timestamp < findEarliestAbsoluteActivityStartTime(state)) {
     throw new Error(`unable to schedule itinerary activity '${activityText}' at ${timestamp}`);
   }
 }

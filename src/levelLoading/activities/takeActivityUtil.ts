@@ -16,8 +16,8 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('takes ')) return null;
 
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
-  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   const itemRef = stripTrailingPeriod(trimmedActivityText.slice('takes'.length).trim());
   if (!itemRef.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
 
@@ -34,7 +34,7 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
   })();
   const scheduledWalkEvents = scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime,
-    context.timestampKind === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
+    context.timestampType === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
   const takeEventTime = scheduledWalkEvents.length
     ? (() => {
       const lastWalkEvent = scheduledWalkEvents[scheduledWalkEvents.length - 1] as WalkEvent;

@@ -36,7 +36,7 @@ type ParsedItineraryActivity = {
   time:number|null,
   resolvedTime:number,
   isTimeResolved:boolean,
-  timestampKind:LeadingTimestampKind,
+  timestampType:LeadingTimestampKind,
   lineNo:number,
   characterId:string,
   activityText:string
@@ -227,7 +227,7 @@ function _parseItineraryActivities(itinerarySection:string, levelFilename:string
           time:resolvedTimestamp,
           resolvedTime:resolvedTimestamp ?? 0,
           isTimeResolved:timestamp.kind === 'absolute',
-          timestampKind:timestamp.kind,
+          timestampType:timestamp.kind,
           lineNo,
           characterId,
           activityText
@@ -242,12 +242,12 @@ function _resolveItineraryActivityTimes(activities:ParsedItineraryActivity[], co
 
   activities.forEach((activity, index) => {
     const previousActivitySourceIndex = index - 1;
-    const isTimeResolved = activity.timestampKind === 'absolute'
+    const isTimeResolved = activity.timestampType === 'absolute'
       ? true
       : previousActivitySourceIndex < 0
         ? true
         : completionTimesBySourceIndex?.has(previousActivitySourceIndex) ?? false;
-    const resolvedTime = activity.timestampKind === 'absolute'
+    const resolvedTime = activity.timestampType === 'absolute'
       ? (activity.time ?? 0)
       : previousActivitySourceIndex < 0
         ? 0
@@ -263,7 +263,7 @@ function _sortActivitiesByResolvedTime(activities:ParsedItineraryActivity[]):Par
     .sort((a, b) => a.resolvedTime - b.resolvedTime || a.characterId.localeCompare(b.characterId) || a.lineNo - b.lineNo);
 }
 
-function _createActivityContext(level:Level, character:Character, timestamp:number, timestampKind:LeadingTimestampKind,
+function _createActivityContext(level:Level, character:Character, timestamp:number, timestampType:LeadingTimestampKind,
   activitySourceIndex:number, roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
   characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>, poseOverridesByCharacterId:Map<string, Position>):ActivityContext {
   const state = characterStatesById.get(character.id);
@@ -278,12 +278,12 @@ function _createActivityContext(level:Level, character:Character, timestamp:numb
     characterStatesById,
     poseOverridesByCharacterId,
     timestamp,
-    timestampKind
+    timestampType
   };
 }
 
 function _activityAffectsPoseAtTimestamp(activity:ParsedItineraryActivity):boolean {
-  if (activity.timestampKind !== 'absolute') return false;
+  if (activity.timestampType !== 'absolute') return false;
   return activity.activityText.startsWith('@ ') || activity.activityText.startsWith('takes ');
 }
 
@@ -309,7 +309,7 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
       const previewCharacterStatesById = new Map(characterStatesById);
       previewCharacterStatesById.set(activity.characterId, previewState);
       const previewRoomItemsByRoomId = duplicateRoomItemsByRoomId(roomItemsByRoomId);
-      const previewContext = _createActivityContext(level, character, activity.resolvedTime, activity.timestampKind, activity.sourceIndex, previewRoomItemsByRoomId,
+      const previewContext = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, previewRoomItemsByRoomId,
         charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
       const events = _createEventsForActivity(activity.activityText, previewContext);
       appendEventsToCharacterState(level, character, previewState, events);
@@ -365,7 +365,7 @@ function _findLatestResolvedEventEndTime(characters:Character[]):number|null {
 }
 
 function _findEarliestAbsoluteActivityTime(activities:ParsedItineraryActivity[]):number|null {
-  const absoluteActivities = activities.filter(activity => activity.timestampKind === 'absolute');
+  const absoluteActivities = activities.filter(activity => activity.timestampType === 'absolute');
   return absoluteActivities.length ? Math.min(...absoluteActivities.map(activity => activity.resolvedTime)) : null;
 }
 
@@ -421,9 +421,9 @@ function _scheduleActivities(level:Level, activities:ParsedItineraryActivity[], 
       if (!readyToScheduleBySourceIndex.get(activity.sourceIndex)) return;
       const character = charactersById.get(activity.characterId);
       assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
-      const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampKind, activity.sourceIndex, roomItemsByRoomId, charactersById,
+      const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, roomItemsByRoomId, charactersById,
         characterStatesById, poseOverridesByCharacterId);
-      const activityStartTime = calcActivityStartTime(context.state, activity.resolvedTime, activity.timestampKind);
+      const activityStartTime = calcActivityStartTime(context.state, activity.resolvedTime, activity.timestampType);
       const events = _createEventsForActivity(activity.activityText, context);
       appendEventsToCharacterState(level, character, context.state, events);
       if (!events.length) context.state.time = Math.max(context.state.time, activityStartTime);
@@ -468,7 +468,7 @@ function _scheduleActivities(level:Level, activities:ParsedItineraryActivity[], 
 function _validateActivitiesWithinWindow(activities:ParsedItineraryActivity[], startTime:number, endTime:number,
   levelFilename:string) {
   activities.forEach(activity => {
-    if (activity.timestampKind !== 'absolute' || activity.time === null) return;
+    if (activity.timestampType !== 'absolute' || activity.time === null) return;
     if (activity.time < startTime || activity.time > endTime) {
       _throwErrorWithLoadLevelContext(levelFilename, activity.lineNo,
         new Error(`itinerary timestamp ${activity.time}ms is outside the timeline window [${startTime}ms, ${endTime}ms]`));

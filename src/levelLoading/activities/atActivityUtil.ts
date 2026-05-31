@@ -38,8 +38,8 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('@')) return null;
 
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
-  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   const { roomId:targetRoomId, targetXPercent } = _parseAtTarget(trimmedActivityText, context);
   if (findCurrentRoomForWaypoint(context.level, context.state.waypoint).id === targetRoomId && targetXPercent === null) return [];
   const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
@@ -47,7 +47,7 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
     .filter(([, state]) => findCurrentRoomForWaypoint(context.level, state.waypoint).id === targetRoomId)
     .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y},${state.waypoint.position.z}`));
   const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, null, targetXPercent);
-  const scheduledEvents = context.timestampKind === 'absolute'
+  const scheduledEvents = context.timestampType === 'absolute'
     ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, findEarliestAbsoluteActivityStartTime(context.state))
     : scheduleEventsToStartAtTime(unscheduledEvents, activityStartTime, context.state.time);
   return scheduledEvents;

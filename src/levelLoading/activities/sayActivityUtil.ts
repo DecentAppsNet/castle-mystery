@@ -27,9 +27,9 @@ function _findOverlappingSpeechEvent(events:ItineraryEvent[], speechEvent:Speech
     && event.startTime < speechEvent.startTime + speechEvent.duration) as SpeechEvent | undefined || null;
 }
 
-function _createOverlappingSpeechMessage(overlappingSpeechEvent:SpeechEvent, speechEvent:SpeechEvent, timestampKind:ActivityContext['timestampKind']):string {
+function _createOverlappingSpeechMessage(overlappingSpeechEvent:SpeechEvent, speechEvent:SpeechEvent, timestampType:ActivityContext['timestampType']):string {
   const overlappingSpeechEndTime = overlappingSpeechEvent.startTime + overlappingSpeechEvent.duration;
-  const explanation = timestampKind === 'absolute'
+  const explanation = timestampType === 'absolute'
     ? `This usually means an absolute timestamp started a new speech before the previous one finished.`
     : `This speech would begin before the previous speech finished.`;
   return `same character speech overlap: '${speechEvent.speech}' starts at ${formatMsecsAsTimestamp(speechEvent.startTime)} before earlier speech '${overlappingSpeechEvent.speech}' ends at ${formatMsecsAsTimestamp(overlappingSpeechEndTime)}. ${explanation} Move the later speech later, or use ':' if it should wait for the previous activity.`;
@@ -80,11 +80,11 @@ function _findSpeechVerb(activityText:string):SpeechVerb|null {
 export function tryCreateSayActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   const speechVerb = _findSpeechVerb(activityText);
   if (!speechVerb) return null;
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
-  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   const speechEvent = createSpeechEvent(activityStartTime, _parseSpeechText(activityText.trim(), speechVerb));
   const overlappingSpeechEvent = _findOverlappingSpeechEvent(context.state.events, speechEvent);
-  if (overlappingSpeechEvent) throw new Error(_createOverlappingSpeechMessage(overlappingSpeechEvent, speechEvent, context.timestampKind));
+  if (overlappingSpeechEvent) throw new Error(_createOverlappingSpeechMessage(overlappingSpeechEvent, speechEvent, context.timestampType));
   if (speechVerb === 'says') _throwOnAudibleSpeechOverlap(context, speechEvent);
   return [speechEvent];
 }

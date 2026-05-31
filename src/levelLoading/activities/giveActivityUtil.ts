@@ -46,8 +46,8 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('gives ')) return null;
 
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
-  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   const { itemRef, recipientId } = _parseGiveParts(trimmedActivityText);
   const recipientCharacter = context.charactersById.get(recipientId) || null;
   if (!recipientCharacter) throw new Error(`unknown recipient '${recipientId}' in itinerary activity '${activityText}'`);
@@ -68,7 +68,7 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
   })();
   const scheduledWalkEvents = scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime,
-    context.timestampKind === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
+    context.timestampType === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
   const giveEventTime = scheduledWalkEvents.length
     ? (() => {
       const lastWalkEvent = scheduledWalkEvents[scheduledWalkEvents.length - 1] as WalkEvent;

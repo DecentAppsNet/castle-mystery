@@ -13,8 +13,8 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('drops ')) return null;
 
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
-  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   const itemRef = stripTrailingPeriod(trimmedActivityText.slice('drops'.length).trim());
   if (!itemRef.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
 

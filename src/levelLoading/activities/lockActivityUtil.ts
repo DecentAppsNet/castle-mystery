@@ -58,8 +58,8 @@ function _createLockChangeActivity(activityText:string, verb:'locks'|'unlocks', 
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith(`${verb} `)) return null;
 
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
-  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   const roomRef = stripTrailingPeriod(trimmedActivityText.slice(verb.length).trim());
   if (!roomRef.length) throw new Error(`missing room id in itinerary activity '${activityText}'`);
 
@@ -70,7 +70,7 @@ function _createLockChangeActivity(activityText:string, verb:'locks'|'unlocks', 
     exitWaypoint.position.x, exitWaypoint.position.y) <= LOCK_EXIT_NEARBY_DISTANCE;
   const unscheduledMovementEvents = isNearby ? [] : planMovementWithinRoom(currentRoom, context.state.waypoint, exitWaypoint);
   const scheduledWalkEvents = scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime,
-    context.timestampKind === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
+    context.timestampType === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
   const eventTime = scheduledWalkEvents.length
     ? (() => {
       const lastWalkEvent = scheduledWalkEvents[scheduledWalkEvents.length - 1] as WalkEvent;
