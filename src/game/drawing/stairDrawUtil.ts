@@ -2,7 +2,7 @@
 
 import { assert } from "decent-portal";
 
-import { COLOR_BLACK } from "./drawConstants";
+import { COLOR_BLACK, COLOR_STAIR_FRONT_FILL, COLOR_STAIR_SIDE_FILL, COLOR_STAIR_TOP_FILL } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "../waypointUtil";
 import { STAIR_POSITION_TOLERANCE } from "../stairUtil";
@@ -16,7 +16,6 @@ import { ROOM_ROW_DEPTH } from "../roomSpaceConstants";
 const PREFERRED_STEP_RISE_RUN = 1;
 const STAIR_ANGLE_TOLERANCE = FLOOR_WAYPOINT_Y_OFFSET + STAIR_POSITION_TOLERANCE;
 const STAIR_CUBOID_DEPTH = ROOM_ROW_DEPTH;
-const STAIR_CUBOID_FILL = "rgb(154, 154, 154)";
 
 function _calcStairStepCount(totalDistance:number):number {
   return Math.max(1, Math.round(totalDistance / PREFERRED_STEP_RISE_RUN));
@@ -48,7 +47,9 @@ function _drawStairCuboid(leftX:number, topY:number, width:number, height:number
     frontBottomLeft,
     frontBottomRight
   }, {
-    fillStyle:STAIR_CUBOID_FILL,
+    topFillStyle:COLOR_STAIR_TOP_FILL,
+    sideFillStyle:COLOR_STAIR_SIDE_FILL,
+    frontFillStyle:COLOR_STAIR_FRONT_FILL,
     lineWidth:Math.max(1, scalingFactors.roomLineWidth * 0.2),
     strokeStyle:COLOR_BLACK
   }, context);

@@ -13,7 +13,9 @@ export type ProjectedCuboid = {
 }
 
 type DrawProjectedCuboidOptions = {
-  fillStyle:string,
+  topFillStyle:string,
+  sideFillStyle:string,
+  frontFillStyle:string,
   lineWidth:number,
   strokeStyle?:string
 }
@@ -28,9 +30,11 @@ function _fillFace(points:CanvasPoint[], context:CanvasRenderingContext2D) {
 
 export function drawProjectedCuboid(cuboid:ProjectedCuboid, options:DrawProjectedCuboidOptions, context:CanvasRenderingContext2D) {
   context.save();
-  context.fillStyle = options.fillStyle;
+  context.fillStyle = options.topFillStyle;
   _fillFace([cuboid.backTopLeft, cuboid.backTopRight, cuboid.frontTopRight, cuboid.frontTopLeft], context);
+  context.fillStyle = options.sideFillStyle;
   _fillFace([cuboid.backTopLeft, cuboid.backBottomLeft, cuboid.frontBottomLeft, cuboid.frontTopLeft], context);
+  context.fillStyle = options.frontFillStyle;
   _fillFace([cuboid.frontTopLeft, cuboid.frontTopRight, cuboid.frontBottomRight, cuboid.frontBottomLeft], context);
 
   context.strokeStyle = options.strokeStyle ?? COLOR_BLACK;

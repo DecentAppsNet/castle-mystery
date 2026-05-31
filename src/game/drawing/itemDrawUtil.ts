@@ -5,7 +5,7 @@ import { clamp } from "@/common/numberUtil";
 import { roomWidthToColumnCount } from "../waypointUtil";
 import Rect from "../types/Rect";
 import { gameToCanvasPosition } from "./drawUtil";
-import { COLOR_BLACK } from "./drawConstants";
+import { COLOR_BLACK, COLOR_ITEM_FRONT_FILL, COLOR_ITEM_SIDE_FILL, COLOR_ITEM_TOP_FILL } from "./drawConstants";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -16,7 +16,6 @@ import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";
 
 const ITEM_LABEL_FONT_RATIO = 0.55;
-const ITEM_CUBOID_COLOR = "#c58b57";
 const ITEM_CUBOID_WIDTH_RATIO = 0.68;
 const ITEM_CUBOID_HEIGHT_RATIO = 0.55;
 const ITEM_CUBOID_DEPTH_RATIO = 0.7;
@@ -132,7 +131,9 @@ function _drawItemCuboid(x:number, y:number, metrics:ItemDrawMetrics, context:Ca
     frontBottomLeft,
     frontBottomRight
   }, {
-    fillStyle:ITEM_CUBOID_COLOR,
+    topFillStyle:COLOR_ITEM_TOP_FILL,
+    sideFillStyle:COLOR_ITEM_SIDE_FILL,
+    frontFillStyle:COLOR_ITEM_FRONT_FILL,
     lineWidth:metrics.cuboidLineWidthPixels,
     strokeStyle:COLOR_BLACK
   }, context);
