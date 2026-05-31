@@ -84,7 +84,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     return { room, charactersInRoom, isActive };
   });
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
-    drawRoomShell(room, isActive, gameState.characters, drawnExitIds,
+    drawRoomShell(room, gameState.rooms, isActive, gameState.characters, drawnExitIds,
       gameState.scalingFactors, context, gameState.isLevelComplete);
     if (!room.isDiscovered) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,

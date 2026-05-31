@@ -1,0 +1,66 @@
+import { describe, expect, it } from 'vitest';
+
+import { MAP_TILE_SIZE } from '../../roomGridUtil';
+import Rect from '../../types/Rect';
+import Room from '../../types/Room';
+import { findRightWallPanelSpans } from '../roomPanelDrawUtil';
+
+function _createRoom(id:string, rect:Rect, isOutside:boolean):Room {
+  return {
+    id,
+    title:id,
+    rect,
+    isOutside,
+    isObscured:false,
+    items:[],
+    exits:[],
+    stairParts:[],
+    waypoints:[],
+    isDiscovered:true
+  };
+}
+
+describe('roomPanelDrawUtil', () => {
+  describe('findRightWallPanelSpans()', () => {
+    it('draws no right wall panels for an outside room with no room to the right', () => {
+      const room = _createRoom('outside', { x:0, y:0, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE }, true);
+
+      expect(findRightWallPanelSpans(room, [room])).toEqual([]);
+    });
+
+    it('draws no right wall panels for an outside room with only outside rooms to the right', () => {
+      const room = _createRoom('outside', { x:0, y:0, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE }, true);
+      const rightOutsideRoom = _createRoom('outside-2', { x:MAP_TILE_SIZE, y:0, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE }, true);
+
+      expect(findRightWallPanelSpans(room, [room, rightOutsideRoom])).toEqual([]);
+    });
+
+    it('draws a right wall panel for an outside room with an inside room to the right', () => {
+      const room = _createRoom('outside', { x:0, y:0, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE }, true);
+      const rightInsideRoom = _createRoom('inside', { x:MAP_TILE_SIZE, y:0, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE }, false);
+
+      expect(findRightWallPanelSpans(room, [room, rightInsideRoom])).toEqual([
+        { topY:0, height:MAP_TILE_SIZE }
+      ]);
+    });
+
+    it('merges vertically adjacent inside-room stories and leaves gaps unfilled for outside rooms', () => {
+      const outsideRoom = _createRoom('outside', { x:0, y:0, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE * 4 }, true);
+      const upperInsideRoom = _createRoom('inside-top', { x:MAP_TILE_SIZE, y:0, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE * 2 }, false);
+      const lowerInsideRoom = _createRoom('inside-bottom', { x:MAP_TILE_SIZE, y:MAP_TILE_SIZE * 3, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE }, false);
+
+      expect(findRightWallPanelSpans(outsideRoom, [outsideRoom, upperInsideRoom, lowerInsideRoom])).toEqual([
+        { topY:0, height:MAP_TILE_SIZE * 2 },
+        { topY:MAP_TILE_SIZE * 3, height:MAP_TILE_SIZE }
+      ]);
+    });
+
+    it('draws a full-height panel for inside rooms', () => {
+      const room = _createRoom('inside', { x:0, y:0, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE * 3 }, false);
+
+      expect(findRightWallPanelSpans(room, [room])).toEqual([
+        { topY:0, height:MAP_TILE_SIZE * 3 }
+      ]);
+    });
+  });
+});

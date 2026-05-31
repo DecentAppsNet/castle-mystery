@@ -129,7 +129,7 @@ function _calcStairPartSortX(stairPart:StairPart):number {
   }
 }
 
-export function drawRoomShell(room:Room, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
+export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
@@ -145,7 +145,7 @@ export function drawRoomShell(room:Room, isActive:boolean, characters:Character[
     context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   }
   drawFloorPanel(room, scalingFactors, context);
-  drawRightWallPanel(room, scalingFactors, context);
+  drawRightWallPanel(room, rooms, scalingFactors, context);
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
   context.textAlign = "center";
   context.textBaseline = "middle";
