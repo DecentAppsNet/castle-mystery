@@ -2,8 +2,12 @@
 
 export const COLOR_BLACK = "#000";
 export const COLOR_DARK_GRAY = "#333";
-export const COLOR_ACTIVE_ROOM_FILL = "#fff";
+export const COLOR_ACTIVE_ROOM_FILL = "#f2f2f2";
+export const COLOR_ACTIVE_FLOOR_FILL = "#fff";
+export const COLOR_ACTIVE_RIGHT_WALL_FILL = "#ddd";
 export const COLOR_INACTIVE_ROOM_FILL = "#aaa";
+export const COLOR_INACTIVE_FLOOR_FILL = "#bbb";
+export const COLOR_INACTIVE_RIGHT_WALL_FILL = "#999";
 export const COLOR_ROOM_TITLE_TEXT = "#ddd";
 export const COLOR_ACTIVE_CHARACTER_HIGHLIGHT = "#ffe60040";
 export const COLOR_CHARACTER_SELECT_EFFECT = "#ffe600";

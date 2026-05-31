@@ -3,7 +3,17 @@
 import { DRAW_WAYPOINTS } from "@/developer/config";
 import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
-import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
+import {
+  COLOR_ACTIVE_FLOOR_FILL,
+  COLOR_ACTIVE_RIGHT_WALL_FILL,
+  COLOR_ACTIVE_ROOM_FILL,
+  COLOR_BLACK,
+  COLOR_DARK_GRAY,
+  COLOR_INACTIVE_FLOOR_FILL,
+  COLOR_INACTIVE_RIGHT_WALL_FILL,
+  COLOR_INACTIVE_ROOM_FILL,
+  COLOR_ROOM_TITLE_TEXT
+} from "./drawConstants";
 import { interpolateColor } from "./colorUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./exitDrawUtil";
@@ -145,7 +155,13 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
     context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
     context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   }
+  context.fillStyle = isRoomObscured
+    ? COLOR_BLACK
+    : (showFullContents || isActive ? COLOR_ACTIVE_FLOOR_FILL : COLOR_INACTIVE_FLOOR_FILL);
   drawFloorPanel(room, scalingFactors, context);
+  context.fillStyle = isRoomObscured
+    ? COLOR_BLACK
+    : (showFullContents || isActive ? COLOR_ACTIVE_RIGHT_WALL_FILL : COLOR_INACTIVE_RIGHT_WALL_FILL);
   drawRightWallPanel(room, rooms, scalingFactors, context);
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
   drawRoomRoofs(room, rooms, scalingFactors, context);
