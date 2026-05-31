@@ -58,6 +58,7 @@ function _createLevel(characters:Character[]):Level {
     solutions:[],
     winSynopsis:'',
     backgroundImageUrl:null,
+    groundFloorY:10,
     activeCharacterId:characters[0].id,
     startTime:0,
     initialTime:500,

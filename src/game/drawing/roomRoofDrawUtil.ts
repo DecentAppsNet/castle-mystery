@@ -54,6 +54,7 @@ function _drawRoofTile(leftX:number, topY:number, width:number, scalingFactors:S
   _strokeRoofEdge(frontLeft, frontRight, scalingFactors.roomLineWidth, context);
 }
 
-export function drawRoomRoofs(room:Room, rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  findRoofTiles(room, rooms).forEach(tile => _drawRoofTile(tile.leftX, tile.topY, tile.width, scalingFactors, context));
+export function drawRoomRoofs(room:Room, rooms:ReadonlyArray<Room>, groundFloorY:number,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  findRoofTiles(room, rooms, groundFloorY).forEach(tile => _drawRoofTile(tile.leftX, tile.topY, tile.width, scalingFactors, context));
 }

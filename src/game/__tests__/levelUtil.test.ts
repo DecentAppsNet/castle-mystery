@@ -21,7 +21,10 @@ import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
 import emptyRoomTitleText from './fixtures/empty-room-title.md?raw';
 import backgroundImageText from './fixtures/background-image.md?raw';
+import groundFloorRoomText from './fixtures/ground-floor-room.md?raw';
+import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
+import outsideRoomBelowGroundFloorText from './fixtures/outside-room-below-ground-floor.md?raw';
 import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
 import duplicateUnlockText from './fixtures/duplicate-unlock.md?raw';
@@ -357,6 +360,36 @@ describe('levelUtil itinerary loading', () => {
     expect(level.backgroundImageUrl).toBe('castle-sky.png');
     expect(gameState.backgroundImageUrl).toBe('castle-sky.png');
     expect(gameState.groundFloorY).toBe(20);
+  });
+
+  it('resolves groundFloorRoom by room title and carries the resulting groundFloorY into game state', () => {
+    const level = loadLevelFromText(groundFloorRoomText, 'ground-floor-room.md');
+    const gameState = createGameState(level);
+
+    expect(level.groundFloorY).toBe(20);
+    expect(gameState.groundFloorY).toBe(20);
+  });
+
+  it('throws when general groundFloorRoom does not match any room id or title', () => {
+    try {
+      loadLevelFromText(invalidGroundFloorRoomText, 'invalid-ground-floor-room.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-ground-floor-room.md:3');
+      expect((error as LoadLevelException).message).toContain("general groundFloorRoom 'Missing Room' does not match any room in the level");
+    }
+  });
+
+  it('throws when an outside room is below the authored groundFloorRoom', () => {
+    try {
+      loadLevelFromText(outsideRoomBelowGroundFloorText, 'outside-room-below-ground-floor.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('outside-room-below-ground-floor.md:3');
+      expect((error as LoadLevelException).message).toContain("outside room 'Courtyard' is below general groundFloorRoom 'Upper Hallway'");
+    }
   });
 
   it('wraps duplicate general entries with filename and line number', () => {

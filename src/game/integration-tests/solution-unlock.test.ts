@@ -103,6 +103,7 @@ function _createTestLevel():Level {
     ],
     winSynopsis:'Solved it.',
     backgroundImageUrl:null,
+    groundFloorY:10,
     activeCharacterId:'hero',
     startTime:0,
     initialTime:0,

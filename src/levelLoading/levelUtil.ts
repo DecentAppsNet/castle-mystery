@@ -32,6 +32,7 @@ import ClozeBlank from "../game/solutions/types/ClozeBlank";
 import ClozePartType from "../game/solutions/types/ClozePartType";
 import Solution from "../game/solutions/types/Solution";
 import { assertNormalizedId, normalizeOptionalId } from "../game/idUtil";
+import { calcRoomsBoundingRect, findRoomByIdOrTitle } from "../game/roomUtil";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
 
@@ -55,6 +56,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     solutions: [],
     winSynopsis: DEFAULT_WIN_SYNOPSIS,
     backgroundImageUrl: null,
+    groundFloorY: 0,
     activeCharacterId: "",
     startTime: 0,
     initialTime: 0,
@@ -92,6 +94,7 @@ type ParsedGeneralSection = {
   endTime:number|null,
   isCrossMidnight:boolean,
   backgroundImageUrl:string|null,
+  groundFloorRoomRef:string|null,
   winSynopsis:string
 };
 
@@ -112,6 +115,7 @@ function _parseGeneralSection(generalSection:string):ParsedGeneralSection {
     endTime,
     isCrossMidnight,
     backgroundImageUrl: generalNameValues.background || null,
+    groundFloorRoomRef: generalNameValues.groundFloorRoom || null,
     winSynopsis: generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS
   };
 }
@@ -232,6 +236,32 @@ function _validateActiveCharacterId(activeCharacterId:string, characters:Level['
   throw new Error(`general activeCharacter '${activeCharacterId}' does not match any character in the level`);
 }
 
+function _findGroundFloorY(level:Level, groundFloorRoomRef:string|null):number {
+  if (!groundFloorRoomRef) {
+    const roomBounds = calcRoomsBoundingRect(level.rooms);
+    return roomBounds.y + roomBounds.height;
+  }
+
+  const groundFloorRoom = findRoomByIdOrTitle(level.rooms, groundFloorRoomRef);
+  return groundFloorRoom.rect.y + groundFloorRoom.rect.height;
+}
+
+function _validateGroundFloorRoomReference(level:Level, groundFloorRoomRef:string|null) {
+  if (!groundFloorRoomRef) return;
+  try {
+    findRoomByIdOrTitle(level.rooms, groundFloorRoomRef);
+  } catch {
+    throw new Error(`general groundFloorRoom '${groundFloorRoomRef}' does not match any room in the level`);
+  }
+}
+
+function _validateOutsideRoomsAgainstGroundFloor(level:Level, groundFloorRoomRef:string|null, groundFloorY:number) {
+  if (!groundFloorRoomRef) return;
+  const undergroundOutsideRoom = level.rooms.find(room => room.isOutside && room.rect.y >= groundFloorY) || null;
+  if (!undergroundOutsideRoom) return;
+  throw new Error(`outside room '${undergroundOutsideRoom.title || undergroundOutsideRoom.id}' is below general groundFloorRoom '${groundFloorRoomRef}'`);
+}
+
 function _resolveExplicitEndTime(endTime:number|null, startTime:number):number|null {
   if (endTime === null) return null;
   return endTime <= startTime ? endTime + MSECS_IN_DAY : endTime;
@@ -297,6 +327,16 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     () => validateMapLegendRoomsAgainstRoomsSection(sections.map || "", sections.rooms || ""));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
     () => applyRoomMetadataFromSections(level, sections.rooms || ""));
+  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+    () => _validateGroundFloorRoomReference(level, generalSection.groundFloorRoomRef));
+  const groundFloorY = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+    () => _findGroundFloorY(level, generalSection.groundFloorRoomRef));
+  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+    () => _validateOutsideRoomsAgainstGroundFloor(level, generalSection.groundFloorRoomRef, groundFloorY));
+  level = {
+    ...level,
+    groundFloorY
+  };
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
     () => validateRoomGridLegendEntries(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions)));
   _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,

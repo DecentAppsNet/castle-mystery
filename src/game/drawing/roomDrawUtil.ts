@@ -142,7 +142,7 @@ function _calcStairPartSortX(stairPart:StairPart):number {
 }
 
 export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
+  groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
@@ -165,7 +165,7 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
     : (showFullContents || isActive ? COLOR_ACTIVE_RIGHT_WALL_FILL : COLOR_INACTIVE_RIGHT_WALL_FILL);
   drawRightWallPanel(room, rooms, scalingFactors, context);
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
-  drawRoomRoofs(room, rooms, scalingFactors, context);
+  drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
   if (room.title.length === 0) return;
   context.textAlign = "center";
   context.textBaseline = "middle";

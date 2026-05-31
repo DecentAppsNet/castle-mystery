@@ -70,6 +70,12 @@ describe('roomRoofUtil', () => {
 
       expect(findRoofTiles(outsideRoom, [outsideRoom, insideRoomAbove])).toEqual([]);
     });
+
+    it('does not draw roofs for rooms at or below the ground floor', () => {
+      const undergroundRoom = _createRoom('underground', { x:0, y:80, width:MAP_TILE_SIZE * 2, height:40 });
+
+      expect(findRoofTiles(undergroundRoom, [undergroundRoom], 80)).toEqual([]);
+    });
   });
 
   describe('calcRoomRoofBounds()', () => {
@@ -93,6 +99,13 @@ describe('roomRoofUtil', () => {
       const rightRoom = _createRoom('right', { x:40, y:100, width:MAP_TILE_SIZE, height:20 });
 
       expect(calcRoomsBoundingRectWithRoofs([leftRoom, rightRoom])).toEqual({ x:0, y:76, width:60, height:44 });
+    });
+
+    it('ignores roof overhang for rooms at or below the ground floor', () => {
+      const upperRoom = _createRoom('upper', { x:0, y:60, width:MAP_TILE_SIZE, height:20 });
+      const undergroundRoom = _createRoom('underground', { x:0, y:80, width:MAP_TILE_SIZE, height:40 });
+
+      expect(calcRoomsBoundingRectWithRoofs([upperRoom, undergroundRoom], 80)).toEqual({ x:0, y:56, width:MAP_TILE_SIZE, height:64 });
     });
   });
 });

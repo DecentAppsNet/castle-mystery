@@ -24,8 +24,8 @@ function _doesRoomTouchRoofTileAbove(room:Room, rooms:ReadonlyArray<Room>, roofL
     && candidate.rect.x + candidate.rect.width > roofLeftX);
 }
 
-export function findRoofTiles(room:Room, rooms:ReadonlyArray<Room>):RoofTile[] {
-  if (room.isOutside) return [];
+export function findRoofTiles(room:Room, rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):RoofTile[] {
+  if (room.isOutside || room.rect.y >= groundFloorY) return [];
   const roomRightX = room.rect.x + room.rect.width;
   const roofTiles:RoofTile[] = [];
   for (let roofLeftX = room.rect.x; roofLeftX < roomRightX; roofLeftX += MAP_TILE_SIZE) {
@@ -36,8 +36,8 @@ export function findRoofTiles(room:Room, rooms:ReadonlyArray<Room>):RoofTile[] {
   return roofTiles;
 }
 
-export function calcRoomRoofBounds(room:Room, rooms:ReadonlyArray<Room>):Rect {
-  const roofTiles = findRoofTiles(room, rooms);
+export function calcRoomRoofBounds(room:Room, rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):Rect {
+  const roofTiles = findRoofTiles(room, rooms, groundFloorY);
   const roofTopY = roofTiles.length
     ? Math.min(...roofTiles.map(tile => tile.topY - calcRoofPeakHeight(tile.width)))
     : room.rect.y;
@@ -49,16 +49,16 @@ export function calcRoomRoofBounds(room:Room, rooms:ReadonlyArray<Room>):Rect {
   };
 }
 
-export function calcRoomsBoundingRectWithRoofs(rooms:ReadonlyArray<Room>):Rect {
+export function calcRoomsBoundingRectWithRoofs(rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):Rect {
   if (!rooms.length) throw new Error('cannot calculate room bounds with no rooms');
 
   let leftX = rooms[0].rect.x;
   let rightX = leftX + rooms[0].rect.width;
-  let topY = calcRoomRoofBounds(rooms[0], rooms).y;
+  let topY = calcRoomRoofBounds(rooms[0], rooms, groundFloorY).y;
   let bottomY = rooms[0].rect.y + rooms[0].rect.height;
 
   for (let i = 1; i < rooms.length; ++i) {
-    const roofBounds = calcRoomRoofBounds(rooms[i], rooms);
+    const roofBounds = calcRoomRoofBounds(rooms[i], rooms, groundFloorY);
     leftX = Math.min(leftX, roofBounds.x);
     rightX = Math.max(rightX, roofBounds.x + roofBounds.width);
     topY = Math.min(topY, roofBounds.y);

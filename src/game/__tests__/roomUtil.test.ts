@@ -1,7 +1,15 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { calcRoomsBoundingRect, findCharactersInRoom, findRoom, findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from '../roomUtil';
+import {
+  calcRoomsBoundingRect,
+  findCharactersInRoom,
+  findRoom,
+  findRoomAtPosition,
+  findRoomAtPositionOrTouchingBoundary,
+  findRoomByIdOrTitle,
+  findRoomNearestToPosition
+} from '../roomUtil';
 import { generateWaypoints } from '@/levelLoading/waypointGenerationUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { COLUMNS_PER_MAP_TILE, findExitWaypoint, findNearestWaypoint, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
@@ -137,6 +145,21 @@ describe('roomUtil', () => {
       const rooms = [_createRoom('Hall', ROOM_RECT)];
 
       expect(() => findRoom(rooms, 'Kitchen')).toThrow(/room with id Kitchen not found/i);
+    });
+  });
+
+  describe('findRoomByIdOrTitle()', () => {
+    it('returns the room with the matching title when the room id differs', () => {
+      const hall = _createRoom('hall', ROOM_RECT);
+      const balcony = { ..._createRoom('balcony', { x:20, y:0, width:20, height:20 }), title:'Upper Hallway' };
+
+      expect(findRoomByIdOrTitle([hall, balcony], 'Upper Hallway')).toBe(balcony);
+    });
+
+    it('throws when no room has the requested id or title', () => {
+      const rooms = [_createRoom('Hall', ROOM_RECT)];
+
+      expect(() => findRoomByIdOrTitle(rooms, 'Kitchen')).toThrow(/room with id or title Kitchen not found/i);
     });
   });
 

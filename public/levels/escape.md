@@ -3,6 +3,8 @@
 * title=Escape
 * activeCharacter=Simon
 * time=0:00
+* background=nightSky.png
+* groundFloorRoom=Upper Hallway
 * winSynopsis=Simon had but one chance to escape. He couldn't run from Amos in the castle forever. So he hid behind a suit of armor in the foyer, while the guard ran past him. And a moment later, Simon found his way to the guard room, where Amos had sloppily left the key to freedom.
 
 # map

@@ -4,13 +4,24 @@ import Rect from "./types/Rect";
 import Room from "./types/Room";
 import Character from "./types/Character";
 import ExitStatus from "./types/ExitStatus";
-import { normalizeId } from "./idUtil";
+import { normalizeId, normalizeOptionalId } from "./idUtil";
 import { isPositionInOrOnRect, isPositionInRect } from "./rectUtil";
+
+function _findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room|null {
+  const roomId = normalizeId(roomRef);
+  return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) || null;
+}
 
 export function findRoom(rooms:Room[], roomRef:string):Room {
   const roomId = normalizeId(roomRef);
   const room = rooms.find((r) => r.id === roomId);
   if (!room) throw new Error(`room with id ${roomRef} not found`);
+  return room;
+}
+
+export function findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room {
+  const room = _findRoomByIdOrTitle(rooms, roomRef);
+  if (!room) throw new Error(`room with id or title ${roomRef} not found`);
   return room;
 }
 

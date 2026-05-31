@@ -3,7 +3,8 @@
 * title=Stairs Test
 * activeCharacter=Simon
 * time=0:00
-* winSynopsis=Stairs.
+* background=daySky.png
+* groundFloorRoom=Library
 
 # map
 

@@ -7,7 +7,7 @@ import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
 import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
 import { findCharacterPose } from "./itineraryUtil";
-import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition, isActiveAudibleRoom } from "./roomUtil";
+import { findCharactersInRoom, findRoomAtPosition, isActiveAudibleRoom } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
@@ -144,7 +144,8 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number,
     rebuildDynamicStateForTime(gameState, nextTime, previousTime);
     if (nextTime >= endTime) _pauseGameState(gameState);
   }
-  syncCameraTargetToActiveRoom(gameState.camera, gameState.rooms, gameState.characters[gameState.activeCharacterI] || null, cameraAspectRatio, now);
+  syncCameraTargetToActiveRoom(gameState.camera, gameState.rooms, gameState.characters[gameState.activeCharacterI] || null,
+    cameraAspectRatio, now, gameState.groundFloorY);
   updateCamera(gameState.camera, now);
   _setActiveRoomDiscovered(gameState);
 }
@@ -268,7 +269,6 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
   const initialItemsById = createItemsById(level.rooms, level.initialCharacters, duplicateItemsById(level.itemsById));
   const itemsById = duplicateItemsById(initialItemsById);
-  const levelRoomBounds = calcRoomsBoundingRect(level.rooms);
   const gameState:GameState = {
     characters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById)),
     rooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById)),
@@ -276,12 +276,12 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     solutions:level.solutions.map(duplicateSolution),
     winSynopsis:level.winSynopsis,
     backgroundImageUrl:level.backgroundImageUrl,
-    groundFloorY:levelRoomBounds.y + levelRoomBounds.height,
+    groundFloorY:level.groundFloorY,
     imageSet,
     initialItemsById,
     initialCharacters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById)),
     initialRooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById)),
-    camera:createCamera(calcRoomsBoundingRectWithRoofs(level.rooms)),
+    camera:createCamera(calcRoomsBoundingRectWithRoofs(level.rooms, level.groundFloorY)),
     activeEffects:[],
     hoveredItemId:null,
     hoveredCharacterId:null,

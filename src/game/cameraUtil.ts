@@ -95,26 +95,28 @@ export function createCamera(initialRect:Rect):Camera {
   };
 }
 
-export function calcRoomCameraRect(room:Room, rooms:ReadonlyArray<Room>, aspectRatio:number):Rect {
-  return _expandRectFromCenter(_fitRectToAspectRatio(calcRoomRoofBounds(room, rooms), aspectRatio), CAMERA_MARGIN_RATIO);
+export function calcRoomCameraRect(room:Room, rooms:ReadonlyArray<Room>, aspectRatio:number, groundFloorY:number = Infinity):Rect {
+  return _expandRectFromCenter(_fitRectToAspectRatio(calcRoomRoofBounds(room, rooms, groundFloorY), aspectRatio), CAMERA_MARGIN_RATIO);
 }
 
-export function calcLevelCameraRect(rooms:Room[], aspectRatio:number):Rect {
-  return _fitRectToAspectRatio(calcRoomsBoundingRectWithRoofs(rooms), aspectRatio);
+export function calcLevelCameraRect(rooms:Room[], aspectRatio:number, groundFloorY:number = Infinity):Rect {
+  return _fitRectToAspectRatio(calcRoomsBoundingRectWithRoofs(rooms, groundFloorY), aspectRatio);
 }
 
-function _findTargetCameraRect(rooms:Room[], activeCharacter:Character|null, aspectRatio:number, zoomAmount:number):{ roomId:string|null, rect:Rect } {
-  const levelCameraRect = calcLevelCameraRect(rooms, aspectRatio);
+function _findTargetCameraRect(rooms:Room[], activeCharacter:Character|null, aspectRatio:number,
+  zoomAmount:number, groundFloorY:number):{ roomId:string|null, rect:Rect } {
+  const levelCameraRect = calcLevelCameraRect(rooms, aspectRatio, groundFloorY);
   const activeRoom = activeCharacter ? findRoomAtPosition(rooms, activeCharacter.x, activeCharacter.y) : null;
-  const focusedRect = activeRoom ? calcRoomCameraRect(activeRoom, rooms, aspectRatio) : levelCameraRect;
+  const focusedRect = activeRoom ? calcRoomCameraRect(activeRoom, rooms, aspectRatio, groundFloorY) : levelCameraRect;
   return {
     roomId:activeRoom?.id || null,
     rect:_interpolateRect(levelCameraRect, focusedRect, clamp(zoomAmount, 0, 1))
   };
 }
 
-export function syncCameraTargetToActiveRoom(camera:Camera, rooms:Room[], activeCharacter:Character|null, aspectRatio:number, now:number) {
-  const target = _findTargetCameraRect(rooms, activeCharacter, aspectRatio, camera.zoomAmount);
+export function syncCameraTargetToActiveRoom(camera:Camera, rooms:Room[], activeCharacter:Character|null,
+  aspectRatio:number, now:number, groundFloorY:number = Infinity) {
+  const target = _findTargetCameraRect(rooms, activeCharacter, aspectRatio, camera.zoomAmount, groundFloorY);
   if (camera.trackedRoomId === target.roomId
     && Math.abs(camera.aspectRatio - aspectRatio) <= CAMERA_EPSILON
     && _rectsMatch(camera.targetRect, target.rect)) return;

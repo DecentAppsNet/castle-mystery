@@ -95,7 +95,7 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
     || scalingFactors.sourceX !== gameState.camera.currentRect.x || scalingFactors.sourceY !== gameState.camera.currentRect.y
     || scalingFactors.sourceWidth !== gameState.camera.currentRect.width || scalingFactors.sourceHeight !== gameState.camera.currentRect.height) {
     scalingFactors = calcScalingFactorsForRect(gameState.camera.currentRect, destW, destH);
-    const levelCameraRect = calcLevelCameraRect(gameState.rooms, destW / destH);
+    const levelCameraRect = calcLevelCameraRect(gameState.rooms, destW / destH, gameState.groundFloorY);
     scalingFactors = {
       ...scalingFactors,
       roomLineWidth:Math.max(1, scalingFactors.roomLineWidth * (levelCameraRect.height / gameState.camera.currentRect.height))
@@ -119,7 +119,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   });
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
     drawRoomShell(room, gameState.rooms, isActive, gameState.characters, drawnExitIds,
-      gameState.scalingFactors, context, gameState.isLevelComplete);
+      gameState.groundFloorY, gameState.scalingFactors, context, gameState.isLevelComplete);
     if (!room.isDiscovered) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
       gameState.scalingFactors, context, gameState.time, gameState.imageSet, gameState.isLevelComplete);

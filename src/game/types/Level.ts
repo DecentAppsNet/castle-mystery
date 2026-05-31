@@ -12,6 +12,7 @@ type Level = Readonly<{
   solutions:Solution[],
   winSynopsis:string,
   backgroundImageUrl:string|null,
+  groundFloorY:number,
   activeCharacterId:string,
   startTime:number,
   initialTime:number,
