@@ -5,7 +5,7 @@ import backgroundImageText from './fixtures/background-image.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
-import { getGroundImageAssetUrl } from '../imageUrlUtil';
+import { getBackgroundImageAssetUrl, getFaceImageAssetUrl, getGroundImageAssetUrl } from '../imageUrlUtil';
 
 describe('imageSetUtil.ts', () => {
   afterEach(() => {
@@ -25,8 +25,8 @@ describe('imageSetUtil.ts', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(4);
     expect(imageSet.has(getGroundImageAssetUrl())).toBe(true);
-    expect(imageSet.has('/sprites/key.png')).toBe(true);
-    expect(imageSet.has('/sprites/kingFace.png')).toBe(true);
+    expect(imageSet.has('/assets/sprites/key.png')).toBe(true);
+    expect(imageSet.has(getFaceImageAssetUrl('kingFace.png'))).toBe(true);
     expect(imageSet.has('/sprites/queenFace.png')).toBe(true);
   });
 
@@ -42,7 +42,7 @@ describe('imageSetUtil.ts', () => {
     const level = loadLevelFromText(imageSetReferencedImagesText);
     const imageSet = await createImageSetFromLevel(level);
 
-    expect(imageSet.has('/sprites/kingFace.png')).toBe(true);
+    expect(imageSet.has(getFaceImageAssetUrl('kingFace.png'))).toBe(true);
     expect(imageSet.has('/sprites/queenFace.png')).toBe(false);
   });
 
@@ -81,10 +81,10 @@ describe('imageSetUtil.ts', () => {
     const level = loadLevelFromText(backgroundImageText, 'background-image.md');
     const imageSet = await createImageSetFromLevel(level);
 
-    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/sprites/key.png');
-    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/backgrounds/ground.png');
-    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/backgrounds/castle-sky.png');
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/sprites/key.png');
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/ground.png');
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/castle-sky.png');
     expect(imageSet.has(getGroundImageAssetUrl())).toBe(true);
-    expect(imageSet.has('/backgrounds/castle-sky.png')).toBe(true);
+    expect(imageSet.has(getBackgroundImageAssetUrl('castle-sky.png'))).toBe(true);
   });
 });

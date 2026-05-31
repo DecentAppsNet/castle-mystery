@@ -13,6 +13,7 @@ import Item from "../game/types/Item";
 import Level from "../game/types/Level";
 import Room from "../game/types/Room";
 import { assertNormalizedId, createNormalizedEntryMap, normalizeId } from "../game/idUtil";
+import { getFaceImageAssetUrl } from "../game/imageUrlUtil";
 
 type CharacterDefinition = {
 	title:string,
@@ -67,7 +68,7 @@ export function parseCharacterDefinitions(charactersSection:string):Map<string, 
 			title:nameValues.title || authoredCharacterName.trim(),
 			description:nameValues.description || "",
 			inventoryItems,
-			faceImageUrl:nameValues.faceImage?.trim() || null,
+			faceImageUrl:nameValues.faceImage ? getFaceImageAssetUrl(nameValues.faceImage.trim()) : null,
 			isTitleKnown:_parseOptionalIsTitleKnownOrThrow(nameValues.isTitleKnown, characterId)
 		});
 	});

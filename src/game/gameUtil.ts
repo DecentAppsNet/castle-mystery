@@ -20,7 +20,6 @@ import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
 import MouseWheelEvent from "./types/playerEvents/MouseWheelEvent";
 import { COLOR_BLACK } from "./drawing/drawConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
-import { getBackgroundImageAssetUrl } from "./imageUrlUtil";
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
@@ -227,7 +226,7 @@ function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D
     return;
   }
 
-  const backgroundImage = gameState.imageSet.get(getBackgroundImageAssetUrl(gameState.backgroundImageUrl)) || null;
+  const backgroundImage = gameState.imageSet.get(gameState.backgroundImageUrl) || null;
   if (!backgroundImage) {
     _fillCanvasBlack(context);
     return;

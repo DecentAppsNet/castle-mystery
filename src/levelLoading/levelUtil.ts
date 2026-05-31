@@ -33,6 +33,7 @@ import ClozePartType from "../game/solutions/types/ClozePartType";
 import Solution from "../game/solutions/types/Solution";
 import { assertNormalizedId, normalizeOptionalId } from "../game/idUtil";
 import { calcRoomsBoundingRect, findRoomByIdOrTitle } from "../game/roomUtil";
+import { getBackgroundImageAssetUrl } from "../game/imageUrlUtil";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
 
@@ -114,7 +115,7 @@ function _parseGeneralSection(generalSection:string):ParsedGeneralSection {
     initialTime,
     endTime,
     isCrossMidnight,
-    backgroundImageUrl: generalNameValues.background || null,
+    backgroundImageUrl: generalNameValues.background ? getBackgroundImageAssetUrl(generalNameValues.background) : null,
     groundFloorRoomRef: generalNameValues.groundFloorRoom || null,
     winSynopsis: generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS
   };

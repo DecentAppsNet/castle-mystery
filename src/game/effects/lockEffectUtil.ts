@@ -8,7 +8,7 @@ import Effect from "./types/Effect";
 import EffectType from "./types/EffectType";
 import LockChangeEffect from "./types/LockChangeEffect";
 
-export const KEY_IMAGE_URL = '/sprites/key.png';
+export const KEY_IMAGE_URL = '/assets/sprites/key.png';
 const LOCK_EFFECT_DURATION = 500;
 
 function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRenderingContext2D, isActive:boolean):boolean {

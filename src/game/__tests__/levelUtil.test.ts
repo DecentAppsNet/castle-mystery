@@ -22,6 +22,8 @@ import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapsho
 import emptyRoomTitleText from './fixtures/empty-room-title.md?raw';
 import backgroundImageText from './fixtures/background-image.md?raw';
 import groundFloorRoomText from './fixtures/ground-floor-room.md?raw';
+import invalidBackgroundImageText from './fixtures/invalid-background-image.md?raw';
+import invalidFaceImageText from './fixtures/invalid-face-image.md?raw';
 import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
 import outsideRoomBelowGroundFloorText from './fixtures/outside-room-below-ground-floor.md?raw';
@@ -357,9 +359,31 @@ describe('levelUtil itinerary loading', () => {
     const level = loadLevelFromText(backgroundImageText, 'background-image.md');
     const gameState = createGameState(level);
 
-    expect(level.backgroundImageUrl).toBe('castle-sky.png');
-    expect(gameState.backgroundImageUrl).toBe('castle-sky.png');
+    expect(level.backgroundImageUrl).toBe('/assets/backgrounds/castle-sky.png');
+    expect(gameState.backgroundImageUrl).toBe('/assets/backgrounds/castle-sky.png');
     expect(gameState.groundFloorY).toBe(20);
+  });
+
+  it('throws when general background is authored as a path instead of a filename', () => {
+    try {
+      loadLevelFromText(invalidBackgroundImageText, 'invalid-background-image.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-background-image.md:3');
+      expect((error as LoadLevelException).message).toContain('general background must be a filename, not a path or URL');
+    }
+  });
+
+  it('throws when character faceImage is authored as a path instead of a filename', () => {
+    try {
+      loadLevelFromText(invalidFaceImageText, 'invalid-face-image.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-face-image.md:23');
+      expect((error as LoadLevelException).message).toContain('character faceImage must be a filename, not a path or URL');
+    }
   });
 
   it('resolves groundFloorRoom by room title and carries the resulting groundFloorY into game state', () => {

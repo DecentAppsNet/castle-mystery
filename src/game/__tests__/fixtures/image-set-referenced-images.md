@@ -23,7 +23,7 @@ H
 ## King
 
 * description=A king.
-* faceImage=/sprites/kingFace.png
+* faceImage=kingFace.png
 
 # solutions
 
