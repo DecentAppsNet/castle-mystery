@@ -21,7 +21,7 @@ import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { getGroundImageAssetUrl } from "../imageUrlUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
-const GROUND_Y_OFFSET = -1;
+const GROUND_Y_OFFSET = -1.8;
 
 function _drawGround(gameState:GameState, context:CanvasRenderingContext2D) {
   const groundImage = gameState.imageSet.get(getGroundImageAssetUrl()) || null;
