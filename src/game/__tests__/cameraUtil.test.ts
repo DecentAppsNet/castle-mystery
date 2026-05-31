@@ -2,8 +2,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { calcRoomCameraRect, createCamera, syncCameraTargetToActiveRoom, updateCamera } from '../cameraUtil';
+import { calcRoomRoofBounds, calcRoomsBoundingRectWithRoofs } from '../roomRoofUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
-import { calcRoomsBoundingRect } from '../roomUtil';
 import Character from '../types/Character';
 import Rect from '../types/Rect';
 import Room from '../types/Room';
@@ -73,26 +73,29 @@ describe('cameraUtil', () => {
   describe('calcRoomCameraRect()', () => {
     it('returns an aspect-correct rect that fully contains and stays centered on a wide room', () => {
       const room = _createRoom({ x:10, y:20, width:40, height:20 });
-      const cameraRect = calcRoomCameraRect(room, 1);
+      const roofBounds = calcRoomRoofBounds(room, [room]);
+      const cameraRect = calcRoomCameraRect(room, [room], 1);
 
       _expectRectToMatchAspectRatio(cameraRect, 1);
       _expectRectToContainRect(cameraRect, room.rect);
-      _expectRectToBeCenteredOnRect(cameraRect, room.rect);
+      _expectRectToBeCenteredOnRect(cameraRect, roofBounds);
     });
 
     it('returns an aspect-correct rect that fully contains and stays centered on a tall room', () => {
       const room = _createRoom({ x:10, y:20, width:20, height:40 });
-      const cameraRect = calcRoomCameraRect(room, 2);
+      const roofBounds = calcRoomRoofBounds(room, [room]);
+      const cameraRect = calcRoomCameraRect(room, [room], 2);
 
       _expectRectToMatchAspectRatio(cameraRect, 2);
       _expectRectToContainRect(cameraRect, room.rect);
-      _expectRectToBeCenteredOnRect(cameraRect, room.rect);
+      _expectRectToBeCenteredOnRect(cameraRect, roofBounds);
     });
   });
 
   describe('syncCameraTargetToActiveRoom()', () => {
     it('targets the active room with an aspect-correct rect without moving the camera immediately', () => {
       const room = _createRoom({ x:10, y:20, width:40, height:20 });
+      const roofBounds = calcRoomRoofBounds(room, [room]);
       const camera = createCamera({ x:0, y:0, width:100, height:100 });
       camera.zoomAmount = 1;
       const originalRect = { ...camera.currentRect };
@@ -105,7 +108,7 @@ describe('cameraUtil', () => {
       expect(camera.currentRect).toEqual(originalRect);
       _expectRectToMatchAspectRatio(camera.targetRect, 1);
       _expectRectToContainRect(camera.targetRect, room.rect);
-      _expectRectToBeCenteredOnRect(camera.targetRect, room.rect);
+      _expectRectToBeCenteredOnRect(camera.targetRect, roofBounds);
       expect(camera.isMoving).toBe(true);
     });
 
@@ -123,7 +126,7 @@ describe('cameraUtil', () => {
       syncCameraTargetToActiveRoom(camera, rooms, _createCharacter(20, 30), 1, 1_001);
       const zoomedInRect = { ...camera.targetRect };
 
-      _expectRectToContainRect(zoomedOutRect, calcRoomsBoundingRect(rooms));
+      _expectRectToContainRect(zoomedOutRect, calcRoomsBoundingRectWithRoofs(rooms));
       _expectRectToContainRect(zoomedInRect, room.rect);
       expect(zoomedOutRect.width).toBeGreaterThan(zoomedInRect.width);
       expect(zoomedOutRect.height).toBeGreaterThan(zoomedInRect.height);

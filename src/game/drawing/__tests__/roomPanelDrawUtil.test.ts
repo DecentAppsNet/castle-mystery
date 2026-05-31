@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { MAP_TILE_SIZE } from '../../roomGridUtil';
 import Rect from '../../types/Rect';
 import Room from '../../types/Room';
 import { findRightWallPanelSpans } from '../roomPanelDrawUtil';
+import villageText from '../../../../public/levels/village.md?raw';
 
 function _createRoom(id:string, rect:Rect, isOutside:boolean):Room {
   return {
@@ -60,6 +62,16 @@ describe('roomPanelDrawUtil', () => {
 
       expect(findRightWallPanelSpans(room, [room])).toEqual([
         { topY:0, height:MAP_TILE_SIZE * 3 }
+      ]);
+    });
+
+    it('does not draw a second-story panel for village Stables when the room to the right there is outside', () => {
+      const level = loadLevelFromText(villageText, 'village.md');
+      const stables = level.rooms.find(room => room.id === 'stables');
+
+      expect(stables).toBeDefined();
+      expect(findRightWallPanelSpans(stables!, level.rooms)).toEqual([
+        { topY:40, height:MAP_TILE_SIZE }
       ]);
     });
   });

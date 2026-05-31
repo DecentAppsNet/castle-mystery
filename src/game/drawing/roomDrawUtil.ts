@@ -9,6 +9,7 @@ import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./ex
 import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
 import { compareNonStairDrawableContents, mergeStairsWithSortedContents, RoomDrawableContent } from "./roomContentDrawOrderUtil";
 import { calcPanelOffset, drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
+import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import Character from "../types/Character";
 import Position from "../types/Position";
@@ -147,6 +148,7 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
   drawFloorPanel(room, scalingFactors, context);
   drawRightWallPanel(room, rooms, scalingFactors, context);
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
+  drawRoomRoofs(room, rooms, scalingFactors, context);
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;

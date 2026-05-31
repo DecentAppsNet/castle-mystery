@@ -1,6 +1,7 @@
 import { clamp } from "@/common/numberUtil";
 
-import { calcRoomsBoundingRect, findRoomAtPosition } from "./roomUtil";
+import { findRoomAtPosition } from "./roomUtil";
+import { calcRoomRoofBounds, calcRoomsBoundingRectWithRoofs } from "./roomRoofUtil";
 import Camera from "./types/Camera";
 import Character from "./types/Character";
 import Rect from "./types/Rect";
@@ -94,18 +95,18 @@ export function createCamera(initialRect:Rect):Camera {
   };
 }
 
-export function calcRoomCameraRect(room:Room, aspectRatio:number):Rect {
-  return _expandRectFromCenter(_fitRectToAspectRatio(room.rect, aspectRatio), CAMERA_MARGIN_RATIO);
+export function calcRoomCameraRect(room:Room, rooms:ReadonlyArray<Room>, aspectRatio:number):Rect {
+  return _expandRectFromCenter(_fitRectToAspectRatio(calcRoomRoofBounds(room, rooms), aspectRatio), CAMERA_MARGIN_RATIO);
 }
 
 export function calcLevelCameraRect(rooms:Room[], aspectRatio:number):Rect {
-  return _fitRectToAspectRatio(calcRoomsBoundingRect(rooms), aspectRatio);
+  return _fitRectToAspectRatio(calcRoomsBoundingRectWithRoofs(rooms), aspectRatio);
 }
 
 function _findTargetCameraRect(rooms:Room[], activeCharacter:Character|null, aspectRatio:number, zoomAmount:number):{ roomId:string|null, rect:Rect } {
   const levelCameraRect = calcLevelCameraRect(rooms, aspectRatio);
   const activeRoom = activeCharacter ? findRoomAtPosition(rooms, activeCharacter.x, activeCharacter.y) : null;
-  const focusedRect = activeRoom ? calcRoomCameraRect(activeRoom, aspectRatio) : levelCameraRect;
+  const focusedRect = activeRoom ? calcRoomCameraRect(activeRoom, rooms, aspectRatio) : levelCameraRect;
   return {
     roomId:activeRoom?.id || null,
     rect:_interpolateRect(levelCameraRect, focusedRect, clamp(zoomAmount, 0, 1))

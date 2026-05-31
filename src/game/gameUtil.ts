@@ -38,7 +38,7 @@ import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hove
 import { syncSolutionUnlocks, updateGameStateForChangeSolutions } from "./solutionStateUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { normalizeId } from "./idUtil";
-import { calcRoomsBoundingRect } from "./roomUtil";
+import { calcRoomsBoundingRectWithRoofs } from "./roomRoofUtil";
 import { clamp } from "@/common/numberUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
@@ -240,7 +240,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     initialItemsById,
     initialCharacters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById)),
     initialRooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById)),
-    camera:createCamera(calcRoomsBoundingRect(level.rooms)),
+    camera:createCamera(calcRoomsBoundingRectWithRoofs(level.rooms)),
     activeEffects:[],
     hoveredItemId:null,
     hoveredCharacterId:null,

@@ -7,9 +7,9 @@
 # map
 
 ```
-....EEFH...
-..BCEEFGGJJ
-.ABCEEFIIJJ
+....EEFH......
+..BCEEFGGJJLM.
+.ABCEEFIIJJKKK
 ```
 
 * A=Cottage
@@ -21,6 +21,9 @@
 * H=Sanctum
 * I=Great Hall
 * J=Stables
+* K=East Hall
+* L=Roof Deck
+* M=Guest Quarters
 
 # rooms
 
@@ -61,8 +64,19 @@
 
 ## Stables
 
-*exits=Throne Room
-*outside=true
+* exits=Throne Room
+* outside=true
+
+## East Hall
+
+* exits=Stables
+
+## Roof Deck
+
+* outside=true
+* exits=Guest Quarters
+
+## Guest Quarters
 
 # characters
 
@@ -77,6 +91,6 @@
 
 : Simon @ Sanctum
 : Simon @ Great Hall
-: Simon @ Stables
+: Simon @ East Hall
 
 # solutions
