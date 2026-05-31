@@ -6,9 +6,9 @@ import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from '../hoverStateUtil';
 import { createGameState } from '../gameUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
-import Level from '../types/Level';
-import Character from '../types/Character';
-import Room from '../types/Room';
+import Level, { createDefaultLevel } from '../types/Level';
+import Character, { createDefaultCharacter } from '../types/Character';
+import Room, { createDefaultRoom } from '../types/Room';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
 
 const BACK_ROW_Z = ROOM_BACK_Z;
@@ -16,33 +16,23 @@ const DEFAULT_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
 
 function _createRoom(id:string, x:number):Room {
   return {
+    ...createDefaultRoom(),
     id,
     title:id,
-    rect:{ x, y:0, width:10, height:10 },
-    isOutside:false,
-    isObscured:false,
-    items:[],
-    exits:[],
-    stairParts:[],
-    waypoints:[],
-    isDiscovered:false
+    rect:{ x, y:0, width:10, height:10 }
   };
 }
 
 function _createCharacter(id:string, x:number, itinerary:Character['itinerary']):Character {
   return {
+    ...createDefaultCharacter(),
     id,
     title:id,
-    faceImageUrl:null,
-    randomSalt:0,
-    isTitleKnown:true,
     description:id,
-    items:[],
     x,
     y:5,
     depth:DEFAULT_CHARACTER_DEPTH,
     waypoint:{ position:{ x, y:5, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} },
-    discoveredRoomIds:[],
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x, y:5, z:DEFAULT_CHARACTER_DEPTH })
   };
@@ -51,20 +41,15 @@ function _createCharacter(id:string, x:number, itinerary:Character['itinerary'])
 function _createLevel(characters:Character[]):Level {
   const rooms = [_createRoom('foyer', 0), _createRoom('library', 20)];
   return {
+    ...createDefaultLevel(),
     rooms,
     initialCharacters:characters,
     characters,
-    itemsById:new Map(),
-    solutions:[],
-    winSynopsis:'',
-    backgroundImageUrl:null,
     groundFloorY:10,
     activeCharacterId:characters[0].id,
-    startTime:0,
     initialTime:500,
     endTime:5_000,
-    duration:5_000,
-    labels:[]
+    duration:5_000
   };
 }
 

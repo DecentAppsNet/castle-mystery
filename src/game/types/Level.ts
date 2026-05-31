@@ -21,4 +21,23 @@ type Level = Readonly<{
   labels:TimeLabel[]
 }>
 
+export function createDefaultLevel():Level {
+  return {
+    rooms:[],
+    initialCharacters:[],
+    characters:[],
+    itemsById:new Map<string, Item>(),
+    solutions:[],
+    winSynopsis:'',
+    backgroundImageUrl:null,
+    groundFloorY:0,
+    activeCharacterId:'',
+    startTime:0,
+    initialTime:0,
+    endTime:0,
+    duration:0,
+    labels:[]
+  };
+}
+
 export default Level;

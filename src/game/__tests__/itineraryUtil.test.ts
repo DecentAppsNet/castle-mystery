@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
 import { ROOM_BACK_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
-import Character from '../types/Character';
-import Room from '../types/Room';
+import Character, { createDefaultCharacter } from '../types/Character';
+import { createDefaultRoom } from '../types/Room';
 import ItineraryEvent from '../types/itineraryEvents/ItineraryEvent';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import RoomEntryEvent from '../types/itineraryEvents/RoomEntryEvent';
@@ -19,36 +19,24 @@ function _createWaypoint(x:number, y:number):Waypoint {
   return { position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} };
 }
 
-function _createRoom():Room {
+function _createRoom() {
   return {
+    ...createDefaultRoom(),
     id:'Room',
     title:'Room',
-    rect:{ x:0, y:0, width:100, height:100 },
-    isOutside:false,
-    items:[],
-    exits:[],
-    stairParts:[],
-    waypoints:[],
-    isDiscovered:false,
-    isObscured:false
+    rect:{ x:0, y:0, width:100, height:100 }
   };
 }
 
 function _createCharacter(itinerary:ItineraryEvent[]):Character {
   const waypoint = _createWaypoint(0, 0);
   return {
+    ...createDefaultCharacter(),
     id:'Hero',
     title:'Hero',
-    randomSalt:0,
     description:'Hero',
-    isTitleKnown:true,
-    items:[],
-    x:0,
-    y:0,
     depth:MIDDLE_ROW_DEPTH,
     waypoint,
-    faceImageUrl:null,
-    discoveredRoomIds:[],
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0, z:MIDDLE_ROW_DEPTH })
   };

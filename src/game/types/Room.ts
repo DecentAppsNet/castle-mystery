@@ -17,6 +17,21 @@ type Room = {
   isDiscovered:boolean
 }
 
+export function createDefaultRoom():Room {
+  return {
+    id:'room',
+    title:'Room',
+    rect:{ x:0, y:0, width:10, height:10 },
+    isOutside:false,
+    isObscured:false,
+    items:[],
+    exits:[],
+    stairParts:[],
+    waypoints:[],
+    isDiscovered:false
+  };
+}
+
 export function duplicateRoom(from:Room):Room {
   return {
     id:from.id,

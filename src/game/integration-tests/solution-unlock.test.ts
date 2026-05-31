@@ -9,7 +9,9 @@ import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { syncSolutionsWithUnlocks } from '../solutions/solutionDiscoveryUtil';
 import ClozePartType from '../solutions/types/ClozePartType';
 import Itinerary from '../types/Itinerary';
-import Level from '../types/Level';
+import Level, { createDefaultLevel } from '../types/Level';
+import { createDefaultCharacter } from '../types/Character';
+import { createDefaultRoom } from '../types/Room';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
 
 function _createTestLevel():Level {
@@ -27,47 +29,35 @@ function _createTestLevel():Level {
   };
 
   return {
+    ...createDefaultLevel(),
     rooms:[{
+      ...createDefaultRoom(),
       id:'hall',
       title:'Hall',
-      rect:{ x:0, y:0, width:10, height:10 },
-      isOutside:false,
-      isObscured:false,
       items:[bookItem],
-      exits:[],
-      stairParts:[],
-      waypoints:[waypoint],
-      isDiscovered:false
+      waypoints:[waypoint]
     }],
     initialCharacters:[{
+      ...createDefaultCharacter(),
       id:'hero',
       title:'Hero',
-      faceImageUrl:null,
-      randomSalt:0,
-      isTitleKnown:true,
       description:'Test hero.',
-      items:[],
       x:initialPosition.x,
       y:initialPosition.y,
       depth:ROOM_MIDDLE_ROW_CENTER_Z,
       waypoint,
-      discoveredRoomIds:[],
       itinerary,
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
     }],
     characters:[{
+      ...createDefaultCharacter(),
       id:'hero',
       title:'Hero',
-      faceImageUrl:null,
-      randomSalt:0,
-      isTitleKnown:true,
       description:'Test hero.',
-      items:[],
       x:initialPosition.x,
       y:initialPosition.y,
       depth:ROOM_MIDDLE_ROW_CENTER_Z,
       waypoint,
-      discoveredRoomIds:[],
       itinerary,
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
     }],
@@ -102,11 +92,8 @@ function _createTestLevel():Level {
       }
     ],
     winSynopsis:'Solved it.',
-    backgroundImageUrl:null,
     groundFloorY:10,
     activeCharacterId:'hero',
-    startTime:0,
-    initialTime:0,
     endTime:5_000,
     duration:5_000,
     labels:[{ minutes:0, label:'midnight' }, { minutes:5 / 60, label:'12:05am' }]

@@ -14,9 +14,9 @@ import { generateWaypoints } from '@/levelLoading/waypointGenerationUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { COLUMNS_PER_MAP_TILE, findExitWaypoint, findNearestWaypoint, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import { generateStairFlights } from '../stairFlightUtil';
-import Character from '../types/Character';
+import Character, { createDefaultCharacter } from '../types/Character';
 import Rect from '../types/Rect';
-import Room from '../types/Room';
+import Room, { createDefaultRoom } from '../types/Room';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
 import RoomExit, { createRoomExitId } from '../types/RoomExit';
@@ -44,36 +44,26 @@ function _createExit(room2Id:string, x:number, y:number):RoomExit {
 
 function _createRoom(id:string, rect:Rect, exits:RoomExit[] = [], waypoints:Waypoint[] = []):Room {
   return {
+    ...createDefaultRoom(),
     id,
     title:id,
     rect,
-    isOutside:false,
-    items:[],
     exits,
-    stairParts:[],
-    waypoints,
-    isDiscovered:false,
-    isObscured:false
+    waypoints
   };
 }
 
 function _createCharacter(id:string, x:number, y:number):Character {
   const waypoint:Waypoint = { position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} };
   return {
+    ...createDefaultCharacter(),
     id,
     title:id,
-    randomSalt:0,
-    isTitleKnown:true,
     description:id,
-    items:[],
     x,
     y,
     depth:DEFAULT_CHARACTER_DEPTH,
-    waypoint,
-    faceImageUrl:null,
-    discoveredRoomIds:[],
-    itinerary:[],
-    itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
+    waypoint
   };
 }
 
