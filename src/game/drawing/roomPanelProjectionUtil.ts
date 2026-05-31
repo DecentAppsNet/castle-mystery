@@ -3,11 +3,11 @@ import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { ROOM_FRONT_ROW_MIN_Z, ROOM_MIDDLE_ROW_MIN_Z } from "../roomSpaceConstants";
 
+export const RIGHT_WALL_DOOR_LEFT_Z = ROOM_MIDDLE_ROW_MIN_Z;
+export const RIGHT_WALL_DOOR_RIGHT_Z = ROOM_FRONT_ROW_MIN_Z;
 const PANEL_OFFSET_X_SCALE = 8;
 const PANEL_OFFSET_Y_SCALE = 4;
 const DOOR_HEIGHT_MAP_TILE_RATIO = 0.5;
-const RIGHT_WALL_DOOR_LEFT_Z = ROOM_MIDDLE_ROW_MIN_Z;
-const RIGHT_WALL_DOOR_RIGHT_Z = ROOM_FRONT_ROW_MIN_Z;
 const DOOR_ARCH_HEIGHT_RATIO = 0.35;
 const DOOR_ARCH_SAMPLE_COUNT = 12;
 

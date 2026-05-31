@@ -8,7 +8,13 @@ import ScalingFactors from "../types/ScalingFactors";
 import { COLOR_BLACK } from "./drawConstants";
 import { canvasToGamePosition, gameToCanvasPosition } from "./drawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";
-import { createProjectedRightWallDoorOutlinePoints, getRightWallDoorHeightPixels, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
+import {
+  createProjectedRightWallDoorOutlinePoints,
+  getRightWallDoorHeightPixels,
+  projectRoomPointWithDepth,
+  RIGHT_WALL_DOOR_LEFT_Z,
+  RIGHT_WALL_DOOR_RIGHT_Z
+} from "./roomPanelProjectionUtil";
 
 const DOOR_WIDTH_HEIGHT_RATIO = 313 / 548;
 const DOOR_FILL_BROWN = "#766850";
@@ -61,8 +67,6 @@ function _drawProjectedLockableDoorKeyhole(rightWallX:number, doorBottomY:number
   const keyholeCenterY = doorBottomY - doorHeight * 0.48;
   const keyholeTopBottomY = keyholeCenterY + keyholeTopHeight / 2;
   const keyholeStemBottomY = keyholeTopBottomY + keyholeStemHeight;
-  const RIGHT_WALL_DOOR_LEFT_Z = 0.5;
-  const RIGHT_WALL_DOOR_RIGHT_Z = 1;
   const zCenter = (RIGHT_WALL_DOOR_LEFT_Z + RIGHT_WALL_DOOR_RIGHT_Z) / 2;
   const keyholeHalfWidth = (RIGHT_WALL_DOOR_RIGHT_Z - RIGHT_WALL_DOOR_LEFT_Z) * KEYHOLE_WIDTH_RATIO / 2;
   const keyholeStemHalfWidth = (RIGHT_WALL_DOOR_RIGHT_Z - RIGHT_WALL_DOOR_LEFT_Z) * KEYHOLE_STEM_WIDTH_RATIO / 2;
