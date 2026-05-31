@@ -149,6 +149,7 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
   drawRightWallPanel(room, rooms, scalingFactors, context);
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
   drawRoomRoofs(room, rooms, scalingFactors, context);
+  if (room.title.length === 0) return;
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;

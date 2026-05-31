@@ -19,6 +19,7 @@ import invalidRoomLegendTileText from './fixtures/invalid-room-legend-tile.md?ra
 import invalidItineraryTimestampText from './fixtures/invalid-itinerary-timestamp.md?raw';
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
+import emptyRoomTitleText from './fixtures/empty-room-title.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
 import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
@@ -166,6 +167,12 @@ describe('levelUtil itinerary loading', () => {
 
     expect(courtyard?.isOutside).toBe(true);
     expect(hall?.isOutside).toBe(false);
+  });
+
+  it('preserves an explicitly empty room title instead of falling back to the room subsection name', () => {
+    const level = loadLevelFromText(emptyRoomTitleText, 'empty-room-title.md');
+
+    expect(level.rooms[0]?.title).toBe('');
   });
 
   it('loads a minified kingacide snapshot with solutions and file-relative itinerary activity', () => {

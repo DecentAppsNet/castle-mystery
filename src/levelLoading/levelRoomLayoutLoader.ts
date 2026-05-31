@@ -212,9 +212,12 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string) 
     const roomSectionEntry = roomSectionsById.get(room.id) || null;
     if (!roomSectionEntry) return;
     const roomNameValues = _parseNameValueLinesOrThrowDuplicate(roomSectionEntry.value, `room ${room.id}`);
+    const title = Object.hasOwn(roomNameValues, 'title')
+      ? roomNameValues.title
+      : roomSectionEntry.authoredName.trim();
     level.rooms[index] = {
       ...room,
-      title: roomNameValues.title || roomSectionEntry.authoredName.trim(),
+      title,
       isOutside: (roomNameValues.outside || '').toLowerCase() === 'true',
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };

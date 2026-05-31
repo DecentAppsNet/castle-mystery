@@ -37,6 +37,7 @@
 ....
 ```
 
+* title=
 * S=Simon
 * exits=Library | Hallway
 
@@ -47,11 +48,13 @@
 * exits=Stairwell 2
 
 ## Stairwell 2
+* title=
 
 ## Foyer
 * exits=Stairwell 2 | Stairwell 3
 
 ## Stairwell 3
+* title=
 
 ## Throne Room
 * exits=Stairwell 3 | Stairwell 4
@@ -60,6 +63,7 @@
 * exits=Stairwell 4
 
 ## Stairwell 4
+* title=
 
 ## Closet
 * exits=Stairwell 4
