@@ -54,6 +54,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     itemsById: new Map<string, Item>(),
     solutions: [],
     winSynopsis: DEFAULT_WIN_SYNOPSIS,
+    backgroundImageUrl: null,
     activeCharacterId: "",
     startTime: 0,
     initialTime: 0,
@@ -90,6 +91,7 @@ type ParsedGeneralSection = {
   initialTime:number|null,
   endTime:number|null,
   isCrossMidnight:boolean,
+  backgroundImageUrl:string|null,
   winSynopsis:string
 };
 
@@ -109,6 +111,7 @@ function _parseGeneralSection(generalSection:string):ParsedGeneralSection {
     initialTime,
     endTime,
     isCrossMidnight,
+    backgroundImageUrl: generalNameValues.background || null,
     winSynopsis: generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS
   };
 }
@@ -280,6 +283,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     startTime: loadStartTime,
     initialTime: generalSection.initialTime ?? loadStartTime,
     endTime: loadEndTime ?? (loadStartTime + level.duration),
+    backgroundImageUrl: generalSection.backgroundImageUrl,
     winSynopsis: generalSection.winSynopsis || level.winSynopsis
   };
   const characterDefinitions = _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,

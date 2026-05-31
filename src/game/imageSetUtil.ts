@@ -1,4 +1,5 @@
 import { baseUrl } from "@/common/urlUtil";
+import { getBackgroundImageAssetUrl, getGroundImageAssetUrl } from "./imageUrlUtil";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
 import ClozeImage from "./solutions/types/ClozeImage";
 import ClozePartType from "./solutions/types/ClozePartType";
@@ -10,7 +11,8 @@ export function createEmptyImageSet():ImageSet {
 }
 
 function _findReferencedImageUrls(level:Level):string[] {
-  const imageUrls = new Set<string>([KEY_IMAGE_URL]);
+  const imageUrls = new Set<string>([KEY_IMAGE_URL, getGroundImageAssetUrl()]);
+  if (level.backgroundImageUrl) imageUrls.add(getBackgroundImageAssetUrl(level.backgroundImageUrl));
   const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
   sourceCharacters.forEach(character => {
     if (character.faceImageUrl) imageUrls.add(character.faceImageUrl);

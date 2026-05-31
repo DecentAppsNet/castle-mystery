@@ -11,6 +11,7 @@ type Level = Readonly<{
   itemsById:Map<string, Item>,
   solutions:Solution[],
   winSynopsis:string,
+  backgroundImageUrl:string|null,
   activeCharacterId:string,
   startTime:number,
   initialTime:number,

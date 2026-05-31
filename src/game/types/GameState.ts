@@ -14,6 +14,8 @@ type GameState = {
   itemsById:Map<string, Item>,
   solutions:Solution[],
   readonly winSynopsis:string,
+  readonly backgroundImageUrl:string|null,
+  readonly groundFloorY:number,
   readonly imageSet:ImageSet,
   readonly initialItemsById:Map<string, Item>,
   readonly initialCharacters:Character[],

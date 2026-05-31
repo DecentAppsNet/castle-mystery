@@ -3,6 +3,7 @@
 * title=Village
 * activeCharacter=Simon
 * time=0:00
+* background=countryside.png
 
 # map
 

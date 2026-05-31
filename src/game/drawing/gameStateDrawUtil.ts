@@ -11,11 +11,44 @@ import ScalingFactors from "../types/ScalingFactors";
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
+import { COLOR_BLACK } from "./drawConstants";
 import { drawExitPopover } from "./exitDrawUtil";
 import { drawRoomCharactersAndEffects, drawRoomShell, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
-import { calcScalingFactorsForRect } from "./drawUtil";
+import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
 import { calcLevelCameraRect } from "../cameraUtil";
+import { MAP_TILE_SIZE } from "../roomGridUtil";
+import { getGroundImageAssetUrl } from "../imageUrlUtil";
+
+const GROUND_HEIGHT_STORIES = 4;
+const GROUND_Y_OFFSET = -1;
+
+function _drawGround(gameState:GameState, context:CanvasRenderingContext2D) {
+  const groundImage = gameState.imageSet.get(getGroundImageAssetUrl()) || null;
+  if (!groundImage || groundImage.width <= 0 || groundImage.height <= 0) return;
+
+  const groundHeight = MAP_TILE_SIZE * GROUND_HEIGHT_STORIES;
+  const groundWidth = groundHeight * (groundImage.width / groundImage.height);
+  const visibleLeftX = gameState.camera.currentRect.x;
+  const visibleRightX = gameState.camera.currentRect.x + gameState.camera.currentRect.width;
+  const firstTileI = Math.floor(visibleLeftX / groundWidth);
+  const lastTileI = Math.ceil(visibleRightX / groundWidth);
+
+  const groundY = gameState.groundFloorY + GROUND_Y_OFFSET;
+  for (let tileI = firstTileI; tileI <= lastTileI; ++tileI) {
+    const tileLeftX = tileI * groundWidth;
+    const tileRightX = tileLeftX + groundWidth;
+    const [canvasLeftX, canvasTopY] = gameToCanvasPosition(tileLeftX, groundY, gameState.scalingFactors);
+    const [canvasRightX, canvasBottomY] = gameToCanvasPosition(tileRightX, groundY + groundHeight, gameState.scalingFactors);
+    context.drawImage(groundImage, canvasLeftX, canvasTopY, canvasRightX - canvasLeftX, canvasBottomY - canvasTopY);
+  }
+
+  const [, groundCanvasBottomY] = gameToCanvasPosition(0, groundY + groundHeight, gameState.scalingFactors);
+  if (groundCanvasBottomY < context.canvas.height) {
+    context.fillStyle = COLOR_BLACK;
+    context.fillRect(0, Math.max(0, groundCanvasBottomY), context.canvas.width, context.canvas.height - Math.max(0, groundCanvasBottomY));
+  }
+}
 
 function _findHoveredItem(gameState:GameState) {
   if (!gameState.hoveredItemId) return null;
@@ -78,6 +111,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   const highlightedWaypointPosition = _findHighlightedWaypointPosition(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
   const drawnExitIds = new Set<string>();
+  _drawGround(gameState, context);
   const roomRenderStates = gameState.rooms.map(room => {
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;

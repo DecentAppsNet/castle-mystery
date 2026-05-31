@@ -20,6 +20,7 @@ import invalidItineraryTimestampText from './fixtures/invalid-itinerary-timestam
 import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
 import emptyRoomTitleText from './fixtures/empty-room-title.md?raw';
+import backgroundImageText from './fixtures/background-image.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
 import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
 import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
@@ -347,6 +348,15 @@ describe('levelUtil itinerary loading', () => {
   it('loads winSynopsis from the general section and defaults it when omitted', () => {
     expect(loadLevelFromText(winSynopsisText).winSynopsis).toBe('The mystery is solved.');
     expect(loadLevelFromText(identitiesAllTitlesKnownText).winSynopsis).toBe('You completed the level.');
+  });
+
+  it('loads background image url from the general section and carries it into game state', () => {
+    const level = loadLevelFromText(backgroundImageText, 'background-image.md');
+    const gameState = createGameState(level);
+
+    expect(level.backgroundImageUrl).toBe('castle-sky.png');
+    expect(gameState.backgroundImageUrl).toBe('castle-sky.png');
+    expect(gameState.groundFloorY).toBe(20);
   });
 
   it('wraps duplicate general entries with filename and line number', () => {

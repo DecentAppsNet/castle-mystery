@@ -102,6 +102,7 @@ function _createTestLevel():Level {
       }
     ],
     winSynopsis:'Solved it.',
+    backgroundImageUrl:null,
     activeCharacterId:'hero',
     startTime:0,
     initialTime:0,

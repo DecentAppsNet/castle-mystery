@@ -57,6 +57,7 @@ function _createLevel(characters:Character[]):Level {
     itemsById:new Map(),
     solutions:[],
     winSynopsis:'',
+    backgroundImageUrl:null,
     activeCharacterId:characters[0].id,
     startTime:0,
     initialTime:500,

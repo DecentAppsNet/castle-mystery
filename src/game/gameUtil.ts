@@ -7,7 +7,7 @@ import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
 import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
 import { findCharacterPose } from "./itineraryUtil";
-import { findCharactersInRoom, findRoomAtPosition, isActiveAudibleRoom } from "./roomUtil";
+import { calcRoomsBoundingRect, findCharactersInRoom, findRoomAtPosition, isActiveAudibleRoom } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
@@ -20,6 +20,7 @@ import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
 import MouseWheelEvent from "./types/playerEvents/MouseWheelEvent";
 import { COLOR_BLACK } from "./drawing/drawConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
+import { getBackgroundImageAssetUrl } from "./imageUrlUtil";
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
@@ -196,11 +197,48 @@ function _findCharacterI(characters:Character[], characterRef:string):number {
   return -1;
 }
 
+function _fillCanvasBlack(context:CanvasRenderingContext2D) {
+  context.fillStyle = COLOR_BLACK;
+  context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+}
+
+function _drawBackgroundImageToCanvas(backgroundImage:ImageBitmap, context:CanvasRenderingContext2D) {
+  if (backgroundImage.width <= 0 || backgroundImage.height <= 0) {
+    _fillCanvasBlack(context);
+    return;
+  }
+
+  const drawHeight = context.canvas.height;
+  const drawWidth = backgroundImage.width * (drawHeight / backgroundImage.height);
+  const centerX = (context.canvas.width - drawWidth) / 2;
+
+  for (let drawX = centerX; drawX < context.canvas.width; drawX += drawWidth) {
+    context.drawImage(backgroundImage, drawX, 0, drawWidth, drawHeight);
+  }
+  for (let drawX = centerX - drawWidth; drawX + drawWidth > 0; drawX -= drawWidth) {
+    context.drawImage(backgroundImage, drawX, 0, drawWidth, drawHeight);
+  }
+}
+
+function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D) {
+  if (!gameState?.backgroundImageUrl) {
+    _fillCanvasBlack(context);
+    return;
+  }
+
+  const backgroundImage = gameState.imageSet.get(getBackgroundImageAssetUrl(gameState.backgroundImageUrl)) || null;
+  if (!backgroundImage) {
+    _fillCanvasBlack(context);
+    return;
+  }
+
+  _drawBackgroundImageToCanvas(backgroundImage, context);
+}
+
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
   onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
   onActiveCharacterChanged?:(characterId:string) => void, onSolutionsChanged?:(solutions:Solution[]) => void, isScrubbing:boolean = false) {
-  context.fillStyle = COLOR_BLACK;
-  context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+  _clearCanvas(gameState, context);
   if (!gameState) {
     context.canvas.style.cursor = "default";
     return;
@@ -230,12 +268,15 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
   const initialItemsById = createItemsById(level.rooms, level.initialCharacters, duplicateItemsById(level.itemsById));
   const itemsById = duplicateItemsById(initialItemsById);
+  const levelRoomBounds = calcRoomsBoundingRect(level.rooms);
   const gameState:GameState = {
     characters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById)),
     rooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById)),
     itemsById,
     solutions:level.solutions.map(duplicateSolution),
     winSynopsis:level.winSynopsis,
+    backgroundImageUrl:level.backgroundImageUrl,
+    groundFloorY:levelRoomBounds.y + levelRoomBounds.height,
     imageSet,
     initialItemsById,
     initialCharacters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById)),
