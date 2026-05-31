@@ -12,7 +12,7 @@ import ScalingFactors from "../types/ScalingFactors";
 import Effect from "../effects/types/Effect";
 import EffectType from "../effects/types/EffectType";
 import { drawTextPopover } from "./popoverDrawUtil";
-import { calcPanelOffset } from "./roomPanelDrawUtil";
+import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";
 
 const ITEM_LABEL_FONT_RATIO = 0.55;

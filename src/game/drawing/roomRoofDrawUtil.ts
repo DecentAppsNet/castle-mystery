@@ -1,6 +1,6 @@
 import { COLOR_DARK_GRAY } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
-import { calcPanelOffset } from "./roomPanelDrawUtil";
+import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import { calcRoofPeakHeight, findRoofTiles, ROOF_APEX_Z } from "../roomRoofUtil";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";

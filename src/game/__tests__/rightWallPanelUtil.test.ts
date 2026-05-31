@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
-import { MAP_TILE_SIZE } from '../../roomGridUtil';
-import Rect from '../../types/Rect';
-import Room from '../../types/Room';
-import { findRightWallPanelSpans } from '../roomPanelDrawUtil';
-import villageText from '../../../../public/levels/village.md?raw';
+import { findRightWallPanelSpans } from '../rightWallPanelUtil';
+import { MAP_TILE_SIZE } from '../roomGridUtil';
+import Rect from '../types/Rect';
+import Room from '../types/Room';
+import villageText from '../../../public/levels/village.md?raw';
 
 function _createRoom(id:string, rect:Rect, isOutside:boolean):Room {
   return {
@@ -22,7 +22,7 @@ function _createRoom(id:string, rect:Rect, isOutside:boolean):Room {
   };
 }
 
-describe('roomPanelDrawUtil', () => {
+describe('rightWallPanelUtil', () => {
   describe('findRightWallPanelSpans()', () => {
     it('draws no right wall panels for an outside room with no room to the right', () => {
       const room = _createRoom('outside', { x:0, y:0, width:MAP_TILE_SIZE, height:MAP_TILE_SIZE }, true);

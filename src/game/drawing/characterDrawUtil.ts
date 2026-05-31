@@ -2,7 +2,7 @@
 
 import { clamp } from "@/common/numberUtil";
 import { gameToCanvasPosition } from "./drawUtil";
-import { calcPanelOffset } from "./roomPanelDrawUtil";
+import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Character from "../types/Character";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";

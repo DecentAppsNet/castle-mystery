@@ -6,7 +6,7 @@ import { COLOR_BLACK } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "../waypointUtil";
 import { STAIR_POSITION_TOLERANCE } from "../stairUtil";
-import { calcPanelOffset } from "./roomPanelDrawUtil";
+import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";
 import Position from "../types/Position";
 import ScalingFactors from "../types/ScalingFactors";

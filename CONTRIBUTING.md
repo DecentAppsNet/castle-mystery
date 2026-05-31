@@ -17,6 +17,8 @@ Unit tests verify the contract of a module. They may mock dependency modules whe
 Guidelines:
 
 * Prefer not to mock. Only mock file I/O, network I/O, operating-system functions, or other behavior that is non-deterministic or leaves persistent side effects.
+* Do not add unit tests for drawing or rendering modules. Their results are visual, contract-based tests are usually not practical, and implementation-coupled tests are low value.
+* If a drawing module depends on non-visual logic that would be valuable to test, refactor that logic into a separate non-drawing module and test that module instead.
 * Only test exported functions.
 * Put imports at the top of the file.
 * Place unit tests at `.../moduleFolder/tests/moduleName.test.ts`, where `moduleFolder` is the folder containing the module under test, and `moduleName` matches the module under test.
@@ -72,6 +74,8 @@ Guidelines:
 
 * Low-test-value modules should be ignored from code coverage.
 * In this project, low-test-value modules commonly include `.tsx` files and modules whose main purpose is drawing or rendering.
+* Do not add unit tests for drawing or rendering modules. Confirm those results with manual visual testing instead.
+* If a drawing or rendering module contains logic with a meaningful non-visual contract, extract that logic into a separate module and test the extracted module instead of the drawing module.
 * Low-test-value files may be excluded from coverage either with an in-source coverage ignore comment or with project-level coverage configuration. Prefer project configuration when excluding a broad category such as all `.tsx` files.
 * For file-level exclusion with Vitest's V8 coverage, place a comment such as `/* v8 ignore file -- @preserve */` at the top of the file.
 * For smaller in-file exclusions with Vitest's V8 coverage, use comments such as `/* v8 ignore next -- @preserve */` or a `/* v8 ignore start -- @preserve */` / `/* v8 ignore stop -- @preserve */` pair.
