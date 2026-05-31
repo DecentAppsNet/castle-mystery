@@ -12,8 +12,6 @@ const FRONT_ROW_Z = ROOM_FRONT_ROW_MIN_Z;
 const STAIR_CUBOID_DEPTH = ROOM_ROW_DEPTH;
 const LANDING_CUBOID_DEPTH = ROOM_FRONT_ROW_MIN_Z;
 const MIDDLE_ROW_Z = ROOM_MIDDLE_ROW_MIN_Z;
-const WINDING_MID_STORY_LANDING_DEPTH = ROOM_FULL_DEPTH;
-const WINDING_STORY_LANDING_DEPTH = ROOM_FULL_DEPTH;
 const PREFERRED_STEP_RISE_RUN = 1;
 
 function _getStairAngleTolerance():number {
@@ -150,7 +148,7 @@ function _createWindingMidStoryLandingParts(room:Room, flights:StairFlight[]):St
       width:columnWidth,
       height:landingHeight,
       z:BACK_ROW_Z,
-      depth:WINDING_MID_STORY_LANDING_DEPTH
+      depth:ROOM_FULL_DEPTH
     });
   }
 
@@ -180,8 +178,8 @@ function _createWindingStoryLandingParts(room:Room, flights:StairFlight[]):{ rig
     const areStairsContinuing = flightIndex + 1 < flights.length;
     const isLeftExitPresent = _hasExitAtStoryY(room, storyY, roomLeftX);
     const isRightExitPresent = _hasExitAtStoryY(room, storyY, roomRightX);
-    const leftLandingZ = areStairsContinuing ? 0 : MIDDLE_ROW_Z;
-    const leftLandingDepth = areStairsContinuing ? WINDING_STORY_LANDING_DEPTH : LANDING_CUBOID_DEPTH;
+    const leftLandingZ = areStairsContinuing ? BACK_ROW_Z : MIDDLE_ROW_Z;
+    const leftLandingDepth = areStairsContinuing ? ROOM_FULL_DEPTH : LANDING_CUBOID_DEPTH;
     const rightCatwalkPart = _createCatwalkPart(landingLeftX + columnWidth, landingTopY, roomRightX - (landingLeftX + columnWidth), landingHeight,
       MIDDLE_ROW_Z, STAIR_CUBOID_DEPTH);
     const leftCatwalkPart = _createCatwalkPart(roomLeftX, landingTopY, landingLeftX - roomLeftX, landingHeight,
@@ -210,10 +208,7 @@ export function generateStairParts(room:Room, flights:StairFlight[]):StairPart[]
   if (!flights.length) return [];
 
   const floorY = _calcRoomFloorY(room);
-  if (_areDirectFlights(flights, floorY)) {
-    const directParts = _createDirectParts(room, _findSortedNonFloorExits(room, floorY), flights);
-    return directParts;
-  }
+  if (_areDirectFlights(flights, floorY)) return _createDirectParts(room, _findSortedNonFloorExits(room, floorY), flights);
 
   const windingMidStoryLandingParts = _createWindingMidStoryLandingParts(room, flights);
   const backRowFlightParts = flights.filter((_, flightIndex) => flightIndex % 2 === 0).map(flight => _createFlightPart(flight, BACK_ROW_Z));

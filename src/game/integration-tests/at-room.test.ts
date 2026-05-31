@@ -2,17 +2,20 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
+import { planMovementToRoom } from '@/levelLoading/activities/activityUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
-import { findExitWaypoint, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
+import { findExitWaypoint, findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import WalkEvent from '../types/itineraryEvents/WalkEvent';
 import RoomEntryEvent from '../types/itineraryEvents/RoomEntryEvent';
 import afterPreviousActivityAtRoomText from './fixtures/after-previous-activity-at-room.md?raw';
+import atRoomDefaultStairRoomText from './fixtures/at-room-default-stair-room.md?raw';
 import atRoomMarkerSameRoomText from './fixtures/at-room-marker-same-room.md?raw';
 import atRoomMarkerText from './fixtures/at-room-marker.md?raw';
 import atLibraryViaFoyerText from './fixtures/at-library-via-foyer.md?raw';
+import villageText from '../../../public/levels/village.md?raw';
 
 function _positionsEqual(position1:{ x:number, y:number }, position2:{ x:number, y:number }) {
   return position1.x === position2.x && position1.y === position2.y;
@@ -23,6 +26,41 @@ function _findPreviousEvent<T>(events:readonly unknown[], startIndex:number, pre
     if (predicate(events[i])) return events[i] as T;
   }
   return undefined;
+}
+
+function _findMiddleFloorWaypointNearestRoomCenter(room:ReturnType<typeof findRoom>) {
+  const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+  const centerX = Math.floor(room.rect.x + room.rect.width / 2);
+  return room.waypoints.reduce((nearestFloorWaypoint, waypoint) => {
+    if (waypoint.position.y !== floorY || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return nearestFloorWaypoint;
+    if (!nearestFloorWaypoint) return waypoint;
+    const nearestDistance = Math.abs(nearestFloorWaypoint.position.x - centerX);
+    const distance = Math.abs(waypoint.position.x - centerX);
+    return distance < nearestDistance ? waypoint : nearestFloorWaypoint;
+  }, null as typeof room.waypoints[number] | null);
+}
+
+function _findLeftmostMiddleFloorWaypoint(room:ReturnType<typeof findRoom>) {
+  const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+  return room.waypoints.reduce((leftmostFloorWaypoint, waypoint) => {
+    if (waypoint.position.y !== floorY || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return leftmostFloorWaypoint;
+    if (!leftmostFloorWaypoint) return waypoint;
+    return waypoint.position.x < leftmostFloorWaypoint.position.x ? waypoint : leftmostFloorWaypoint;
+  }, null as typeof room.waypoints[number] | null);
+}
+
+function _findLastWalkEvent(events:readonly { type:ItineraryEventType }[]):WalkEvent | undefined {
+  return [...events].reverse().find(event => event.type === ItineraryEventType.WALK) as WalkEvent | undefined;
+}
+
+function _findWalkEventsForRoomVisit(itinerary:readonly (WalkEvent | RoomEntryEvent)[], roomId:string):WalkEvent[] {
+  const roomEntryEventIndex = itinerary.findIndex(event => event.type === ItineraryEventType.ROOM_ENTRY
+    && (event as RoomEntryEvent).roomId === roomId);
+  expect(roomEntryEventIndex).toBeGreaterThanOrEqual(0);
+  const nextRoomEntryEventIndex = itinerary.findIndex((event, index) => index > roomEntryEventIndex
+    && event.type === ItineraryEventType.ROOM_ENTRY);
+  const endIndex = nextRoomEntryEventIndex >= 0 ? nextRoomEntryEventIndex : itinerary.length;
+  return itinerary.slice(roomEntryEventIndex + 1, endIndex).filter(event => event.type === ItineraryEventType.WALK) as WalkEvent[];
 }
 
 function _expectRoutesThroughPairedExitWaypoints(levelText:string) {
@@ -120,12 +158,7 @@ describe('at room integration', () => {
     const level = loadLevelFromText(atRoomMarkerText);
     const king = level.characters.find(character => character.id === 'king');
     const library = findRoom(level.rooms, 'Library');
-    const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-    const targetWaypoint = library.waypoints.reduce((leftmostFloorWaypoint, waypoint) => {
-      if (waypoint.position.y !== floorY || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return leftmostFloorWaypoint;
-      if (!leftmostFloorWaypoint) return waypoint;
-      return waypoint.position.x < leftmostFloorWaypoint.position.x ? waypoint : leftmostFloorWaypoint;
-    }, null as typeof library.waypoints[number] | null);
+    const targetWaypoint = _findLeftmostMiddleFloorWaypoint(library);
 
     expect(king).not.toBeNull();
     expect(targetWaypoint).not.toBeNull();
@@ -136,15 +169,50 @@ describe('at room integration', () => {
     const level = loadLevelFromText(atRoomMarkerSameRoomText);
     const king = level.characters.find(character => character.id === 'king');
     const library = findRoom(level.rooms, 'Library');
-    const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-    const targetWaypoint = library.waypoints.reduce((leftmostFloorWaypoint, waypoint) => {
-      if (waypoint.position.y !== floorY || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return leftmostFloorWaypoint;
-      if (!leftmostFloorWaypoint) return waypoint;
-      return waypoint.position.x < leftmostFloorWaypoint.position.x ? waypoint : leftmostFloorWaypoint;
-    }, null as typeof library.waypoints[number] | null);
+    const targetWaypoint = _findLeftmostMiddleFloorWaypoint(library);
 
     expect(targetWaypoint).not.toBeNull();
     expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+  });
+
+  it('prefers a middle-row floor waypoint for default @ Room movement in a stair room', () => {
+    const level = loadLevelFromText(atRoomDefaultStairRoomText);
+    const simon = level.characters.find(character => character.id === 'simon');
+    const greatHall = findRoom(level.rooms, 'Great Hall');
+    const targetWaypoint = _findMiddleFloorWaypointNearestRoomCenter(greatHall);
+    const directEvents = planMovementToRoom(level, simon!.waypoint, 'Great Hall');
+    const directLastWalkEvent = _findLastWalkEvent(directEvents);
+    const sanctumEvents = planMovementToRoom(level, simon!.waypoint, 'Sanctum');
+    const sanctumLastWalkEvent = _findLastWalkEvent(sanctumEvents);
+    const sanctum = findRoom(level.rooms, 'Sanctum');
+    const sanctumFinalWaypoint = findNearestWaypointToPosition(sanctum, sanctumLastWalkEvent!.toPosition);
+    const greatHallFromSanctumEvents = planMovementToRoom(level, sanctumFinalWaypoint, 'Great Hall');
+    const greatHallFromSanctumLastWalkEvent = _findLastWalkEvent(greatHallFromSanctumEvents);
+    expect(simon).not.toBeNull();
+    expect(targetWaypoint).not.toBeNull();
+    expect(directLastWalkEvent).toBeDefined();
+    expect(sanctumLastWalkEvent).toBeDefined();
+    expect(greatHallFromSanctumLastWalkEvent).toBeDefined();
+    expect(directLastWalkEvent!.toPosition).toEqual(targetWaypoint!.position);
+    expect(greatHallFromSanctumLastWalkEvent!.toPosition).toEqual(targetWaypoint!.position);
+    expect(findCharacterPose(simon!, 100_000).position).toEqual(targetWaypoint!.position);
+  });
+
+  it('keeps village Great Hall room-visit floor movement on the middle row', () => {
+    const level = loadLevelFromText(villageText);
+    const simon = level.characters.find(character => character.id === 'simon');
+    const greatHall = findRoom(level.rooms, 'Great Hall');
+    const floorY = greatHall.rect.y + greatHall.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+    const greatHallWalkEvents = _findWalkEventsForRoomVisit(simon!.itinerary as (WalkEvent | RoomEntryEvent)[], greatHall.id);
+
+    expect(simon).not.toBeNull();
+    expect(greatHallWalkEvents.length).toBeGreaterThan(0);
+    expect(greatHallWalkEvents.every(walkEvent => {
+      const fromIsFloor = walkEvent.fromPosition.y === floorY;
+      const toIsFloor = walkEvent.toPosition.y === floorY;
+      return (!fromIsFloor || walkEvent.fromPosition.z === WAYPOINT_MIDDLE_ROW_Z)
+        && (!toIsFloor || walkEvent.toPosition.z === WAYPOINT_MIDDLE_ROW_Z);
+    })).toBe(true);
   });
 
   it('starts relative @ Room movement only after the previous file activity completes', () => {

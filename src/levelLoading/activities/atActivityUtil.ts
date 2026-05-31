@@ -1,5 +1,5 @@
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
+import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoomForWaypoint, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 import { normalizeId } from "@/game/idUtil";
 
 function _parseRoomPercentTarget(targetText:string):number|null {
@@ -41,10 +41,10 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampKind);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampKind);
   const { roomId:targetRoomId, targetXPercent } = _parseAtTarget(trimmedActivityText, context);
-  if (findCurrentRoom(context.level, context.state.position).id === targetRoomId && targetXPercent === null) return [];
+  if (findCurrentRoomForWaypoint(context.level, context.state.waypoint).id === targetRoomId && targetXPercent === null) return [];
   const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
     .filter(([characterId]) => characterId !== context.character.id)
-    .filter(([, state]) => findCurrentRoom(context.level, state.waypoint.position).id === targetRoomId)
+    .filter(([, state]) => findCurrentRoomForWaypoint(context.level, state.waypoint).id === targetRoomId)
     .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y},${state.waypoint.position.z}`));
   const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, null, targetXPercent);
   const scheduledEvents = context.timestampKind === 'absolute'

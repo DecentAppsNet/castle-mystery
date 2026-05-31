@@ -28,16 +28,19 @@ export function calcStairPartDrawRow(stairPart:StairPart):number {
   return quantizeDepthToDrawRow(stairPart.z);
 }
 
+function _isCharacterWithinPartYBounds(characterY:number, topY:number, height:number):boolean {
+  return characterY >= topY - STAIR_POSITION_TOLERANCE
+    && characterY <= topY + height + STAIR_POSITION_TOLERANCE;
+}
+
 function _isCharacterWithinCatwalkYBounds(characterY:number, stairPart:StairPart):boolean {
   return stairPart.type === StairPartType.catwalk
-    && characterY >= stairPart.topY - STAIR_POSITION_TOLERANCE
-    && characterY <= stairPart.topY + stairPart.height + STAIR_POSITION_TOLERANCE;
+    && _isCharacterWithinPartYBounds(characterY, stairPart.topY, stairPart.height);
 }
 
 function _isCharacterWithinLandingYBounds(characterY:number, stairPart:StairPart):boolean {
   return stairPart.type === StairPartType.landing
-    && characterY >= stairPart.topY - STAIR_POSITION_TOLERANCE
-    && characterY <= stairPart.topY + stairPart.height + STAIR_POSITION_TOLERANCE;
+    && _isCharacterWithinPartYBounds(characterY, stairPart.topY, stairPart.height);
 }
 
 function _isCharacterAtFlightLandingY(characterY:number, stairPart:StairPart):boolean {

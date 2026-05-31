@@ -10,6 +10,7 @@ import RoomExit from "@/game/types/RoomExit";
 import Waypoint from "@/game/types/Waypoint";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
+import RoomEntryEvent from "@/game/types/itineraryEvents/RoomEntryEvent";
 import { isPositionStrictlyInRect } from "@/game/rectUtil";
 import { findRoom } from "@/game/roomUtil";
 import { findExitWaypoint, findNearestWaypoint, findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
@@ -54,27 +55,6 @@ function _createWaypointKey(waypoint:Waypoint):string {
   return `${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`;
 }
 
-function _findPreferredWaypointInRoom(room:Room, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
-  const centerX = Math.floor(room.rect.x + room.rect.width / 2);
-  const centerY = Math.floor(room.rect.y + room.rect.height / 2);
-  const isInteriorWaypoint = (waypoint:Waypoint) => isPositionStrictlyInRect(waypoint.position.x, waypoint.position.y, room.rect);
-
-  try {
-    return findNearestWaypoint(room, centerX, centerY,
-      waypoint => isInteriorWaypoint(waypoint) && !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
-  } catch {
-    try {
-      return findNearestWaypoint(room, centerX, centerY, isInteriorWaypoint);
-    } catch {
-      try {
-        return findNearestWaypoint(room, centerX, centerY, waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
-      } catch {
-        return findNearestWaypoint(room, centerX, centerY);
-      }
-    }
-  }
-}
-
 function _findFloorWaypoints(room:Room, occupiedWaypointKeys:Set<string>):Waypoint[] {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   const unclaimedFloorWaypoints = room.waypoints.filter(waypoint => waypoint.position.y === floorY
@@ -93,6 +73,36 @@ function _findNearestFloorWaypointByX(room:Room, targetX:number, occupiedWaypoin
     const distance = Math.abs(waypoint.position.x - targetX);
     return distance < nearestDistance ? waypoint : nearestWaypoint;
   }, null as Waypoint | null)!;
+}
+
+function _findNearestWaypointWithFallbacks(room:Room, x:number, y:number,
+  predicates:((((waypoint:Waypoint) => boolean)) | undefined)[]):Waypoint {
+  for (const predicate of predicates) {
+    try {
+      return findNearestWaypoint(room, x, y, predicate);
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error(`unable to find waypoint in room ${room.id}`);
+}
+
+function _findPreferredWaypointInRoom(room:Room, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
+  const centerX = Math.floor(room.rect.x + room.rect.width / 2);
+  const centerY = Math.floor(room.rect.y + room.rect.height / 2);
+  const isInteriorWaypoint = (waypoint:Waypoint) => isPositionStrictlyInRect(waypoint.position.x, waypoint.position.y, room.rect);
+
+  try {
+    return _findNearestFloorWaypointByX(room, centerX, occupiedWaypointKeys);
+  } catch {
+    return _findNearestWaypointWithFallbacks(room, centerX, centerY, [
+      waypoint => isInteriorWaypoint(waypoint) && !occupiedWaypointKeys.has(_createWaypointKey(waypoint)),
+      isInteriorWaypoint,
+      waypoint => !occupiedWaypointKeys.has(_createWaypointKey(waypoint)),
+      undefined
+    ]);
+  }
 }
 
 function _findTargetWaypointInRoom(room:Room, targetPosition:Position|null, occupiedWaypointKeys:Set<string> = new Set(), targetXPercent:number|null = null):Waypoint {
@@ -261,12 +271,60 @@ export function appendEventsToCharacterState(level:Level, character:Character, s
   state.time = blockingTime;
   const pose = findStatePoseAtTime(character, state, state.time);
   state.position = duplicatePosition(pose.position);
-  const room = findCurrentRoom(level, state.position);
+  const room = _findRoomForStateWaypointUpdate(level, state.waypoint, events);
   state.waypoint = findNearestWaypointToPosition(room, state.position);
 }
 
 export function findCurrentRoom(level:Level, position:Position):Room {
   return findRoomAtPositionOrNearest(level.rooms, position.x, position.y);
+}
+
+function _findWaypointOwningRoom(level:Level, waypoint:Waypoint):Room|null {
+  return level.rooms.find(room => room.waypoints.includes(waypoint)) || null;
+}
+
+export function findCurrentRoomForWaypoint(level:Level, waypoint:Waypoint):Room {
+  return _findWaypointOwningRoom(level, waypoint) || findCurrentRoom(level, waypoint.position);
+}
+
+function _findRoomForStateWaypointUpdate(level:Level, waypoint:Waypoint, events:ItineraryEvent[]):Room {
+  for (let eventIndex = events.length - 1; eventIndex >= 0; eventIndex -= 1) {
+    const event = events[eventIndex];
+    if (event.type === ItineraryEventType.ROOM_ENTRY) return findRoom(level.rooms, (event as RoomEntryEvent).roomId);
+  }
+
+  return _findWaypointOwningRoom(level, waypoint) || findCurrentRoom(level, waypoint.position);
+}
+
+function _isMiddleRowFloorWaypoint(room:Room, waypoint:Waypoint):boolean {
+  const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+  return Math.abs(waypoint.position.y - floorY) <= FLOOR_WAYPOINT_Y_OFFSET
+    && waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z;
+}
+
+function _sortAdjacentWaypointsForPathTraversal(room:Room, targetWaypoint:Waypoint, adjacentWaypoints:ReadonlyArray<Waypoint>):Waypoint[] {
+  const targetIsMiddleRowFloorWaypoint = _isMiddleRowFloorWaypoint(room, targetWaypoint);
+  return [...adjacentWaypoints].sort((waypoint1, waypoint2) => {
+    if (targetIsMiddleRowFloorWaypoint) {
+      const waypoint1IsMiddleRowFloor = _isMiddleRowFloorWaypoint(room, waypoint1);
+      const waypoint2IsMiddleRowFloor = _isMiddleRowFloorWaypoint(room, waypoint2);
+      if (waypoint1IsMiddleRowFloor !== waypoint2IsMiddleRowFloor) return waypoint1IsMiddleRowFloor ? -1 : 1;
+    }
+
+    const rowDistance1 = Math.abs(waypoint1.position.z - targetWaypoint.position.z);
+    const rowDistance2 = Math.abs(waypoint2.position.z - targetWaypoint.position.z);
+    if (rowDistance1 !== rowDistance2) return rowDistance1 - rowDistance2;
+
+    const yDistance1 = Math.abs(waypoint1.position.y - targetWaypoint.position.y);
+    const yDistance2 = Math.abs(waypoint2.position.y - targetWaypoint.position.y);
+    if (yDistance1 !== yDistance2) return yDistance1 - yDistance2;
+
+    const xDistance1 = Math.abs(waypoint1.position.x - targetWaypoint.position.x);
+    const xDistance2 = Math.abs(waypoint2.position.x - targetWaypoint.position.x);
+    if (xDistance1 !== xDistance2) return xDistance1 - xDistance2;
+
+    return waypoint1.position.x - waypoint2.position.x || waypoint1.position.y - waypoint2.position.y;
+  });
 }
 
 export function findWaypointPath(room:Room, fromWaypoint:Waypoint, toWaypoint:Waypoint):Waypoint[] {
@@ -276,7 +334,7 @@ export function findWaypointPath(room:Room, fromWaypoint:Waypoint, toWaypoint:Wa
 
   while (pending.length > 0) {
     const waypoint = pending.shift()!;
-    for (const adjacentWaypoint of waypoint.adjacentWaypoints) {
+    for (const adjacentWaypoint of _sortAdjacentWaypointsForPathTraversal(room, toWaypoint, waypoint.adjacentWaypoints)) {
       const key = _createWaypointKey(adjacentWaypoint);
       if (previousByKey.has(key)) continue;
       previousByKey.set(key, waypoint);
@@ -320,7 +378,7 @@ export function planMovementWithinRoom(room:Room, fromWaypoint:Waypoint, targetW
 
 export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoomId:string,
   occupiedWaypointKeys:Set<string> = new Set(), targetPosition:Position|null = null, targetXPercent:number|null = null):ItineraryEvent[] {
-  const currentRoom = findCurrentRoom(level, fromWaypoint.position);
+  const currentRoom = findCurrentRoomForWaypoint(level, fromWaypoint);
   const targetRoom = findRoom(level.rooms, targetRoomId);
   const targetWaypoint = _findTargetWaypointInRoom(targetRoom, targetPosition, occupiedWaypointKeys, targetXPercent);
   if (currentRoom.id === targetRoomId) {

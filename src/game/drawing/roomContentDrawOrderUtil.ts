@@ -28,12 +28,13 @@ export type ItemDrawableContent = {
 };
 
 export type RoomDrawableContent = StairDrawableContent | CharacterDrawableContent | ItemDrawableContent;
+type NonStairDrawableContent = CharacterDrawableContent | ItemDrawableContent;
 
-export function compareNonStairDrawableContents(content1:Exclude<RoomDrawableContent, { kind:'stair' }>, content2:Exclude<RoomDrawableContent, { kind:'stair' }>):number {
+export function compareNonStairDrawableContents(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
   return content1.depth - content2.depth || content2.x - content1.x || content1.sortId.localeCompare(content2.sortId);
 }
 
-export function compareStairToContent(stairContent:StairDrawableContent, content:Exclude<RoomDrawableContent, { kind:'stair' }>):number {
+export function compareStairToContent(stairContent:StairDrawableContent, content:NonStairDrawableContent):number {
   if (content.type === 'character') {
     const stairComparison = compareCharacterToStairPartRows(content.character.x, content.character.y, content.character.depth, stairContent.stairPart);
     if (stairComparison !== 0) return -stairComparison;
@@ -43,7 +44,7 @@ export function compareStairToContent(stairContent:StairDrawableContent, content
 }
 
 function _hasLaterFullStoryLandingBeforeCharacter(stairContents:StairDrawableContent[], startIndex:number,
-  content:Exclude<RoomDrawableContent, { kind:'stair' }>):boolean {
+  content:NonStairDrawableContent):boolean {
   if (content.type !== 'character') return false;
 
   for (let stairIndex = startIndex + 1; stairIndex < stairContents.length; stairIndex += 1) {
@@ -56,7 +57,7 @@ function _hasLaterFullStoryLandingBeforeCharacter(stairContents:StairDrawableCon
 }
 
 export function mergeStairsWithSortedContents(stairContents:StairDrawableContent[],
-  sortedContents:Exclude<RoomDrawableContent, { kind:'stair' }>[]):RoomDrawableContent[] {
+  sortedContents:NonStairDrawableContent[]):RoomDrawableContent[] {
   const mergedContents:RoomDrawableContent[] = [];
   let stairIndex = 0;
 
