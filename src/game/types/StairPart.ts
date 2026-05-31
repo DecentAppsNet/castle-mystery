@@ -6,6 +6,14 @@ export enum StairPartType {
   catwalk = 'catwalk'
 }
 
+export enum StairLandingType {
+  directLeft = 'directLeft',
+  directRight = 'directRight',
+  midStory = 'midStory',
+  fullStory = 'fullStory',
+  terminalStory = 'terminalStory'
+}
+
 type StairFlightPart = {
   type:StairPartType.flight,
   startPosition:Position,
@@ -15,6 +23,7 @@ type StairFlightPart = {
 
 type StairLandingPart = {
   type:StairPartType.landing,
+  landingType:StairLandingType,
   leftX:number,
   topY:number,
   width:number,

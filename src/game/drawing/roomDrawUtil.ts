@@ -2,16 +2,15 @@
 
 import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
-import { compareCharacterToStairPartRows } from "../stairDrawOrderUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
 import { interpolateColor } from "./colorUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./exitDrawUtil";
 import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
+import { compareNonStairDrawableContents, mergeStairsWithSortedContents, RoomDrawableContent } from "./roomContentDrawOrderUtil";
 import { calcPanelOffset, drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import Character from "../types/Character";
-import Item from "../types/Item";
 import Position from "../types/Position";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
@@ -30,11 +29,6 @@ const WAYPOINT_BACKGROUND_START_COLOR = "#ffb3c1";
 const WAYPOINT_BACKGROUND_END_COLOR = "#880000";
 const WAYPOINT_HIGHLIGHT_START_COLOR = "#8fd8ff";
 const WAYPOINT_HIGHLIGHT_END_COLOR = "#003d99";
-
-type RoomDrawableContent =
-  | { kind:'stair', depth:number, x:number, sortId:string, stairIndex:number, stairPart:StairPart }
-  | { kind:'character', depth:number, x:number, sortId:string, character:Character }
-  | { kind:'item', depth:number, x:number, sortId:string, item:Item };
 
 function _getWaypointCanvasPosition(x:number, y:number, z:number, scalingFactors:ScalingFactors):[number, number] {
   const [canvasX, canvasY] = gameToCanvasPosition(x, y, scalingFactors);
@@ -135,40 +129,6 @@ function _calcStairPartSortX(stairPart:StairPart):number {
   }
 }
 
-function _compareNonStairDrawableContents(content1:Exclude<RoomDrawableContent, { kind:'stair' }>, content2:Exclude<RoomDrawableContent, { kind:'stair' }>):number {
-  return content1.depth - content2.depth || content2.x - content1.x || content1.sortId.localeCompare(content2.sortId);
-}
-
-function _compareStairToContent(stairContent:Extract<RoomDrawableContent, { kind:'stair' }>, content:Exclude<RoomDrawableContent, { kind:'stair' }>):number {
-  if (content.kind === 'character') {
-    const stairComparison = compareCharacterToStairPartRows(content.character.x, content.character.y, content.character.depth, stairContent.stairPart);
-    if (stairComparison !== 0) return -stairComparison;
-  }
-
-  return stairContent.depth - content.depth || content.x - stairContent.x || stairContent.sortId.localeCompare(content.sortId);
-}
-
-function _mergeStairsWithSortedContents(stairContents:Extract<RoomDrawableContent, { kind:'stair' }>[],
-  sortedContents:Exclude<RoomDrawableContent, { kind:'stair' }>[]):RoomDrawableContent[] {
-  const mergedContents:RoomDrawableContent[] = [];
-  let stairIndex = 0;
-
-  sortedContents.forEach(content => {
-    while (stairIndex < stairContents.length && _compareStairToContent(stairContents[stairIndex], content) <= 0) {
-      mergedContents.push(stairContents[stairIndex]);
-      stairIndex += 1;
-    }
-    mergedContents.push(content);
-  });
-
-  while (stairIndex < stairContents.length) {
-    mergedContents.push(stairContents[stairIndex]);
-    stairIndex += 1;
-  }
-
-  return mergedContents;
-}
-
 export function drawRoomShell(room:Room, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
   if (!room.isDiscovered) return;
@@ -202,26 +162,25 @@ export function drawRoomShell(room:Room, isActive:boolean, characters:Character[
 
 function _createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[], includeUndiscoveredItems:boolean):RoomDrawableContent[] {
   const stairContents = room.stairParts.map((stairPart, stairIndex) => ({
-    kind:'stair' as const,
+    type:'stair' as const,
     depth:_calcStairPartSortDepth(stairPart),
     x:_calcStairPartSortX(stairPart),
     sortId:`stair-${stairIndex}`,
-    stairIndex,
     stairPart
   }));
   const sortedNonStairContents = [
-    ...charactersInRoom.map(character => ({ kind:'character' as const, depth:character.depth, x:character.x, sortId:character.id, character })),
+    ...charactersInRoom.map(character => ({ type:'character' as const, depth:character.depth, x:character.x, sortId:character.id, character })),
     ...findVisibleRoomItemsInDrawOrder(room, effects, includeUndiscoveredItems)
-      .map(item => ({ kind:'item' as const, depth:item.position.z, x:item.position.x, sortId:item.id, item }))
-  ].sort(_compareNonStairDrawableContents);
+      .map(item => ({ type:'item' as const, depth:item.position.z, x:item.position.x, sortId:item.id, item }))
+  ].sort(compareNonStairDrawableContents);
 
-  return _mergeStairsWithSortedContents(stairContents, sortedNonStairContents);
+  return mergeStairsWithSortedContents(stairContents, sortedNonStairContents);
 }
 
 function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharacter:Character|null, effects:Effect[],
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, includeUndiscoveredItems:boolean) {
   _createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems).forEach(content => {
-    switch(content.kind) {
+    switch(content.type) {
       case 'stair':
         drawStairPart(content.stairPart, scalingFactors, context);
         return;

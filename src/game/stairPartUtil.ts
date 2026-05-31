@@ -3,7 +3,7 @@ import { doesStairFlightEndAtPosition, findStairFlightIntersectionAtY, STAIR_POS
 import Position from "./types/Position";
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
-import StairPart, { StairPartType } from "./types/StairPart";
+import StairPart, { StairLandingType, StairPartType } from "./types/StairPart";
 import StairFlight from "./types/StairFlight";
 import { ROOM_BACK_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_FULL_DEPTH, ROOM_MIDDLE_ROW_MIN_Z, ROOM_ROW_DEPTH } from "./roomSpaceConstants";
 
@@ -76,9 +76,10 @@ function _areDirectFlights(flights:StairFlight[], floorY:number):boolean {
   return flights.every(flight => Math.abs(flight.startPosition.y - floorY) <= STAIR_POSITION_TOLERANCE);
 }
 
-function _createDirectLandingPart(stairIntersectionX:number, exit:RoomExit, height:number):StairPart {
+function _createDirectLandingPart(stairIntersectionX:number, exit:RoomExit, height:number, landingType:StairLandingType):StairPart {
   return {
     type:StairPartType.landing,
+    landingType,
     leftX:Math.min(exit.x, stairIntersectionX),
     topY:exit.y,
     width:Math.abs(exit.x - stairIntersectionX),
@@ -120,7 +121,8 @@ function _createDirectParts(room:Room, exits:RoomExit[], flights:StairFlight[]):
     if (stairIntersection === null) return;
     const stairIntersectionX = stairIntersection.x;
     const stepHeight = _calcStairStepHeight(stairIntersection.flight.startPosition, stairIntersection.flight.endPosition);
-    const landingPart = _createDirectLandingPart(stairIntersectionX, exit, stepHeight);
+    const landingPart = _createDirectLandingPart(stairIntersectionX, exit, stepHeight,
+      exit.x === room.rect.x ? StairLandingType.directLeft : StairLandingType.directRight);
     const flightPart = _createFlightPart(flight, BACK_ROW_Z);
     if (exit.x === room.rect.x) {
       stairParts.push(flightPart, landingPart);
@@ -142,6 +144,7 @@ function _createWindingMidStoryLandingParts(room:Room, flights:StairFlight[]):St
     const landingHeight = _calcStairStepHeight(firstFlight.fromPosition, firstFlight.toPosition);
     stairParts.push({
       type:StairPartType.landing,
+      landingType:StairLandingType.midStory,
       leftX:landingLeftX,
       topY:landingTopY,
       width:columnWidth,
@@ -188,6 +191,7 @@ function _createWindingStoryLandingParts(room:Room, flights:StairFlight[]):{ rig
 
     trailingStoryParts.push({
       type:StairPartType.landing,
+      landingType:areStairsContinuing ? StairLandingType.fullStory : StairLandingType.terminalStory,
       leftX:landingLeftX,
       topY:landingTopY,
       width:columnWidth,
