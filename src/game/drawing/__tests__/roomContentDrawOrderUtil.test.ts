@@ -8,7 +8,8 @@ import { generateStairParts } from '../../stairPartUtil';
 import ExitStatus from '../../types/ExitStatus';
 import ExitType from '../../types/ExitType';
 import Rect from '../../types/Rect';
-import Room from '../../types/Room';
+import Room, { createDefaultRoom } from '../../types/Room';
+import { createDefaultCharacter } from '../../types/Character';
 import RoomExit, { createRoomExitId } from '../../types/RoomExit';
 import { StairLandingType, StairPartType } from '../../types/StairPart';
 import Waypoint from '../../types/Waypoint';
@@ -36,16 +37,12 @@ function _createExit(room2Id:string, x:number, y:number):RoomExit {
 
 function _createRoom(rect:Rect, exits:RoomExit[], waypoints?:Waypoint[]):Room {
   return {
+    ...createDefaultRoom(),
     id:ROOM_ID,
     title:ROOM_ID,
     rect,
-    isOutside:false,
-    items:[],
     exits,
-    stairParts:[],
-    waypoints:waypoints || generateWaypoints(ROOM_ID, rect, exits),
-    isDiscovered:false,
-    isObscured:false
+    waypoints:waypoints || generateWaypoints(ROOM_ID, rect, exits)
   };
 }
 
@@ -56,20 +53,14 @@ function _createCharacterContent(x:number, y:number):Exclude<RoomDrawableContent
     x,
     sortId:'character',
     character:{
+      ...createDefaultCharacter(),
       id:'character',
       title:'Character',
-      faceImageUrl:null,
-      randomSalt:0,
-      isTitleKnown:true,
       description:'Character',
-      items:[],
       x,
       y,
       depth:BACK_ROW_CHARACTER_DEPTH,
-      waypoint:{ position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} },
-      discoveredRoomIds:[],
-      itinerary:[],
-      itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
+      waypoint:{ position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} }
     }
   };
 }

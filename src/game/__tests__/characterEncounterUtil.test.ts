@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { addCharacterEncounterEvents } from '../characterEncounterUtil';
 import { createItineraryIndex } from '../itineraryUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
-import Character from '../types/Character';
+import Character, { createDefaultCharacter } from '../types/Character';
 import Itinerary from '../types/Itinerary';
-import Room from '../types/Room';
+import Room, { createDefaultRoom } from '../types/Room';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import Waypoint from '../types/Waypoint';
 import CharacterEncounterEvent from '../types/itineraryEvents/CharacterEncounterEvent';
@@ -20,33 +20,23 @@ function _createWaypoint(x:number, y:number):Waypoint {
 
 function _createRoom(id:string, x:number):Room {
   return {
+    ...createDefaultRoom(),
     id,
     title:id,
-    rect:{ x, y:0, width:100, height:100 },
-    isOutside:false,
-    items:[],
-    exits:[],
-    stairParts:[],
-    waypoints:[],
-    isDiscovered:false,
-    isObscured:false
+    rect:{ x, y:0, width:100, height:100 }
   };
 }
 
 function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = []):Character {
   return {
+    ...createDefaultCharacter(),
     id,
     title:id,
-    randomSalt:0,
     description:id,
-    isTitleKnown:true,
-    items:[],
     x,
     y,
     depth:DEFAULT_CHARACTER_DEPTH,
     waypoint:_createWaypoint(x, y),
-    faceImageUrl:null,
-    discoveredRoomIds:[],
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x, y, z:DEFAULT_CHARACTER_DEPTH })
   };

@@ -6,20 +6,14 @@ import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
 import Item from '../types/Item';
-import Room from '../types/Room';
+import Room, { createDefaultRoom } from '../types/Room';
 import RoomExit, { LOCKABLE_WITHOUT_INV_CHECK } from '../types/RoomExit';
 
 function _createRoom(id:string, title:string):Room {
   return {
+    ...createDefaultRoom(),
     id,
     title,
-    rect:{ x:0, y:0, width:10, height:10 },
-    isOutside:false,
-    isObscured:false,
-    items:[],
-    exits:[],
-    stairParts:[],
-    waypoints:[],
     isDiscovered:true
   };
 }

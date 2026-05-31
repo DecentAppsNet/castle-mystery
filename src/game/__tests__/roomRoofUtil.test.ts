@@ -3,19 +3,14 @@ import { describe, expect, it } from 'vitest';
 import { MAP_TILE_SIZE } from '../roomGridUtil';
 import { calcRoomRoofBounds, calcRoomsBoundingRectWithRoofs, findRoofTiles } from '../roomRoofUtil';
 import Rect from '../types/Rect';
-import Room from '../types/Room';
+import Room, { createDefaultRoom } from '../types/Room';
 
 function _createRoom(id:string, rect:Rect):Room {
   return {
+    ...createDefaultRoom(),
     id,
     title:id,
     rect,
-    isOutside:false,
-    isObscured:false,
-    items:[],
-    exits:[],
-    stairParts:[],
-    waypoints:[],
     isDiscovered:true
   };
 }

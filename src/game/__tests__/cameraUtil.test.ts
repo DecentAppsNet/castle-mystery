@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { calcRoomCameraRect, createCamera, syncCameraTargetToActiveRoom, updateCamera } from '../cameraUtil';
 import { calcRoomRoofBounds, calcRoomsBoundingRectWithRoofs } from '../roomRoofUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
-import Character from '../types/Character';
+import Character, { createDefaultCharacter } from '../types/Character';
 import Rect from '../types/Rect';
-import Room from '../types/Room';
+import Room, { createDefaultRoom } from '../types/Room';
 import Waypoint from '../types/Waypoint';
 
 const FLOAT_EPSILON = 0.000001;
@@ -15,36 +15,22 @@ const DEFAULT_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
 
 function _createRoom(rect:Room['rect']):Room {
   return {
-    id:'room',
-    title:'Room',
-    rect,
-    isOutside:false,
-    items:[],
-    exits:[],
-    stairParts:[],
-    waypoints:[],
-    isDiscovered:false,
-    isObscured:false
+    ...createDefaultRoom(),
+    rect
   };
 }
 
 function _createCharacter(x:number, y:number):Character {
   const waypoint:Waypoint = { position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} };
   return {
+    ...createDefaultCharacter(),
     id:'hero',
     title:'Hero',
-    faceImageUrl:null,
-    randomSalt:0,
-    isTitleKnown:true,
     description:'Hero',
-    items:[],
     x,
     y,
     depth:DEFAULT_CHARACTER_DEPTH,
-    waypoint,
-    discoveredRoomIds:[],
-    itinerary:[],
-    itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
+    waypoint
   };
 }
 

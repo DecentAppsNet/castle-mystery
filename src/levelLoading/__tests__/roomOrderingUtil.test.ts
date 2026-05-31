@@ -1,21 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import Room from '@/game/types/Room';
+import Room, { createDefaultRoom } from '@/game/types/Room';
 import Rect from '@/game/types/Rect';
 import { areRoomsWellOrdered, sortRoomsForDrawingOrder } from '../roomOrderingUtil';
 
 function _createRoom(id:string, rect:Rect):Room {
   return {
+    ...createDefaultRoom(),
     id,
     title:id,
-    rect,
-    isOutside:false,
-    isObscured:false,
-    items:[],
-    exits:[],
-    stairParts:[],
-    waypoints:[],
-    isDiscovered:false
+    rect
   };
 }
 
