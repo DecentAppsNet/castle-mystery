@@ -1,5 +1,6 @@
 /* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents. */
 
+import { DRAW_WAYPOINTS } from "@/developer/config";
 import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import { COLOR_ACTIVE_ROOM_FILL, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_INACTIVE_ROOM_FILL, COLOR_ROOM_TITLE_TEXT } from "./drawConstants";
@@ -23,7 +24,6 @@ import StairPart, { StairPartType } from "../types/StairPart";
 import { processCharacterEffects } from "../effects/effectUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
-const DRAW_WAYPOINTS = true;
 const ROOM_TITLE_OUTLINE_WIDTH_RATIO = 0.15;
 const WAYPOINT_HIGHLIGHT_TOLERANCE = 0.01;
 const WAYPOINT_BACKGROUND_START_COLOR = "#ffb3c1";

@@ -1,0 +1,1 @@
+export const DRAW_WAYPOINTS = false;
