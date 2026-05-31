@@ -23,6 +23,7 @@ import emptyRoomTitleText from './fixtures/empty-room-title.md?raw';
 import backgroundImageText from './fixtures/background-image.md?raw';
 import groundFloorRoomText from './fixtures/ground-floor-room.md?raw';
 import invalidBackgroundImageText from './fixtures/invalid-background-image.md?raw';
+import invalidClozeImageText from './fixtures/invalid-cloze-image.md?raw';
 import invalidFaceImageText from './fixtures/invalid-face-image.md?raw';
 import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
@@ -108,6 +109,7 @@ import timelineRelativeOnlyText from './fixtures/timeline-relative-only.md?raw';
 import timelineInitialTimeOutsideBoundsText from './fixtures/timeline-initial-time-outside-bounds.md?raw';
 import timelineStartAfterItineraryText from './fixtures/timeline-start-after-itinerary.md?raw';
 import escapeStairwellRegressionText from './fixtures/escape-stairwell-regression.md?raw';
+import { getClozeImageCandidateUrls } from '../imageUrlUtil';
 import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
 
@@ -249,8 +251,8 @@ describe('levelUtil itinerary loading', () => {
     const solution = level.solutions[0];
 
     expect(solution.parts.map(part => part.type)).toEqual(['image', 'text', 'blank', 'separator', 'image', 'text', 'blank']);
-    expect((solution.parts[0] as { imageUrl:string }).imageUrl).toBe('/sprites/kingFace.png');
-    expect((solution.parts[4] as { imageUrl:string }).imageUrl).toBe('/sprites/queenFace.png');
+    expect((solution.parts[0] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('kingFace.png'));
+    expect((solution.parts[4] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('queenFace.png'));
   });
 
   it('defaults titles from ids and generates identities for all characters', () => {
@@ -383,6 +385,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-face-image.md:23');
       expect((error as LoadLevelException).message).toContain('character faceImage must be a filename, not a path or URL');
+    }
+  });
+
+  it('throws when a solution cloze image is authored as a path instead of a filename', () => {
+    try {
+      loadLevelFromText(invalidClozeImageText, 'invalid-cloze-image.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-cloze-image.md:29');
+      expect((error as LoadLevelException).message).toContain('solution cloze image must be a filename, not a path or URL');
     }
   });
 

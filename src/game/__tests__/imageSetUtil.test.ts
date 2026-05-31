@@ -5,7 +5,7 @@ import backgroundImageText from './fixtures/background-image.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
-import { getBackgroundImageAssetUrl, getFaceImageAssetUrl, getGroundImageAssetUrl } from '../imageUrlUtil';
+import { getBackgroundImageAssetUrl, getClozeImageCandidateUrls, getFaceImageAssetUrl, getGroundImageAssetUrl } from '../imageUrlUtil';
 
 describe('imageSetUtil.ts', () => {
   afterEach(() => {
@@ -13,8 +13,10 @@ describe('imageSetUtil.ts', () => {
     vi.restoreAllMocks();
   });
 
-  it('loads unique image URLs referenced by characters and cloze statement image parts', async () => {
-    const fetchMock = vi.fn(async () => ({ ok:true, blob:async () => new Blob(['fake']) }));
+  it('loads unique image URLs referenced by characters and resolves cloze statement image candidates in order', async () => {
+    const fetchMock = vi.fn(async (url:string) => url.includes('/assets/solutions/')
+      ? { ok:false, blob:async () => new Blob([]) }
+      : { ok:true, blob:async () => new Blob(['fake']) });
     const createImageBitmapMock = vi.fn(async () => ({ width:32, height:32 } as ImageBitmap));
     vi.stubGlobal('fetch', fetchMock);
     vi.stubGlobal('createImageBitmap', createImageBitmapMock);
@@ -23,11 +25,13 @@ describe('imageSetUtil.ts', () => {
     const level = loadLevelFromText(imageSetReferencedImagesText);
     const imageSet = await createImageSetFromLevel(level);
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
     expect(imageSet.has(getGroundImageAssetUrl())).toBe(true);
     expect(imageSet.has('/assets/sprites/key.png')).toBe(true);
     expect(imageSet.has(getFaceImageAssetUrl('kingFace.png'))).toBe(true);
-    expect(imageSet.has('/sprites/queenFace.png')).toBe(true);
+    expect(imageSet.has(getFaceImageAssetUrl('queenFace.png'))).toBe(true);
+    expect(imageSet.has(getClozeImageCandidateUrls('queenFace.png')[0])).toBe(false);
+    expect((level.solutions[0].parts[0] as { imageUrl:string }).imageUrl).toBe(getFaceImageAssetUrl('queenFace.png'));
   });
 
   it('omits image URLs whose fetch returns a non-OK response', async () => {
@@ -43,7 +47,8 @@ describe('imageSetUtil.ts', () => {
     const imageSet = await createImageSetFromLevel(level);
 
     expect(imageSet.has(getFaceImageAssetUrl('kingFace.png'))).toBe(true);
-    expect(imageSet.has('/sprites/queenFace.png')).toBe(false);
+    expect(imageSet.has(getFaceImageAssetUrl('queenFace.png'))).toBe(false);
+    expect((level.solutions[0].parts[0] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('queenFace.png'));
   });
 
   it('omits image URLs whose body fails to decode', async () => {

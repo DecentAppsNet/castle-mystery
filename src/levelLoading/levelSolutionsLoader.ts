@@ -2,6 +2,7 @@
 
 import { parseNameValueLineEntries, parseOptions, parseSectionEntries, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
+import { getClozeImageCandidateUrls } from "@/game/imageUrlUtil";
 
 import Character from "../game/types/Character";
 import ClozeBlank, { UNSPECIFIED_ANSWER } from "../game/solutions/types/ClozeBlank";
@@ -186,7 +187,7 @@ function _parseClozeTemplateToParts(clozeTemplate:string, categoryOptionsByName:
     } else if (nextToken.type === 'image') {
       parts.push({
         type:ClozePartType.image,
-        imageUrl:clozeTemplate.slice(nextToken.startIndex + 1, nextToken.endIndex - 1).trim()
+        imageUrl:getClozeImageCandidateUrls(clozeTemplate.slice(nextToken.startIndex + 1, nextToken.endIndex - 1).trim())
       });
     } else {
       parts.push({

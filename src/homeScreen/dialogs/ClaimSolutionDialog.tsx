@@ -11,6 +11,7 @@ import ClozePartType from "@/game/solutions/types/ClozePartType";
 import { duplicateSolution } from "@/game/solutions/types/Solution";
 import { isSolutionMissingAnswers } from "@/game/solutions/solutionUtil";
 import ImageSet from "@/game/types/ImageSet";
+import { isCandidateUrls } from "@/game/imageUrlUtil";
 
 import styles from './ClaimSolutionDialog.module.css';
 
@@ -106,6 +107,19 @@ function _createClozeLines(solution:Solution):ClozeLine[] {
   return lines;
 }
 
+function _findClozeImageBitmap(imagePart:ClozeImage, imageSet:ImageSet):ImageBitmap|null {
+  if (!isCandidateUrls(imagePart.imageUrl)) {
+    return imageSet.get(imagePart.imageUrl) || null;
+  }
+
+  for (const candidateUrl of imagePart.imageUrl) {
+    const imageBitmap = imageSet.get(candidateUrl) || null;
+    if (imageBitmap) return imageBitmap;
+  }
+
+  return null;
+}
+
 function _renderClozePart(part:Solution['parts'][number], partIndex:number, solution:Solution, imageSet:ImageSet,
   onBlankAnswerChanged:(blankPartIndex:number, playerAnswerIndex:number) => void, imageWrapperClassName?:string):ReactNode {
   if (part.type === ClozePartType.text) {
@@ -115,7 +129,7 @@ function _renderClozePart(part:Solution['parts'][number], partIndex:number, solu
 
   if (part.type === ClozePartType.image) {
     const imagePart = part as ClozeImage;
-    const imageBitmap = imageSet.get(imagePart.imageUrl) || null;
+    const imageBitmap = _findClozeImageBitmap(imagePart, imageSet);
     return <span key={partIndex} className={imageWrapperClassName || styles.imagePartWrapper}>
       {imageBitmap ? <ImageBitmapCanvas imageBitmap={imageBitmap} /> : <span className={styles.missingImage}>[image unavailable]</span>}
     </span>;

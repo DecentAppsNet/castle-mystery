@@ -1,7 +1,8 @@
+import { CandidateUrls } from '@/game/imageUrlUtil';
 import ClozePartBase from './ClozePartBase';
 
 type ClozeImage = Readonly<ClozePartBase & {
-  imageUrl: string;
+  imageUrl: string|CandidateUrls;
 }>;
 
 export function duplicateClozeImage(from:ClozeImage):ClozeImage {

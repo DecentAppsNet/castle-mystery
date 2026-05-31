@@ -23,12 +23,9 @@ H
 ## King
 
 * description=A king.
-* faceImage=kingFace.png
 
 # solutions
 
-* characters=Queen
-
 ## Identities
 
-* clozeStatement=(queenFace.png) = [Queen]
+* clozeStatement=(/sprites/queenFace.png) = [Queen]

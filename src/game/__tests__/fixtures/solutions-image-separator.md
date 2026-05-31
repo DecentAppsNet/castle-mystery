@@ -35,4 +35,4 @@ A
 
 ## Identities
 
-* clozeStatement=(/sprites/kingFace.png) = [King]---(/sprites/queenFace.png) = [Queen]
+* clozeStatement=(kingFace.png) = [King]---(queenFace.png) = [Queen]

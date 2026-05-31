@@ -1,5 +1,8 @@
+export type CandidateUrls = string[];
+
 const BACKGROUND_IMAGE_ASSET_BASE_URL = '/assets/backgrounds/';
 const FACE_IMAGE_ASSET_BASE_URL = '/assets/faces/';
+const SOLUTION_IMAGE_ASSET_BASE_URL = '/assets/solutions/';
 
 function _containsNonFilenameAssetSyntax(assetFilename:string):boolean {
   return assetFilename.includes('/')
@@ -11,21 +14,37 @@ function _containsNonFilenameAssetSyntax(assetFilename:string):boolean {
     || assetFilename.includes('|');
 }
 
-function _assertIsAssetFilename(assetFilename:string, fieldName:string) {
+function _validateAssetFilename(assetFilename:string, fieldName:string) {
   if (!assetFilename) throw new Error(`${fieldName} must be a filename`);
   if (_containsNonFilenameAssetSyntax(assetFilename)) {
     throw new Error(`${fieldName} must be a filename, not a path or URL`);
   }
 }
 
+export function isCandidateUrls(assetUrl:string|CandidateUrls):assetUrl is CandidateUrls {
+  return Array.isArray(assetUrl);
+}
+
 export function getBackgroundImageAssetUrl(backgroundImageFilename:string):string {
-  _assertIsAssetFilename(backgroundImageFilename, 'general background');
+  _validateAssetFilename(backgroundImageFilename, 'general background');
   return `${BACKGROUND_IMAGE_ASSET_BASE_URL}${backgroundImageFilename}`;
 }
 
 export function getFaceImageAssetUrl(faceImageFilename:string):string {
-  _assertIsAssetFilename(faceImageFilename, 'character faceImage');
+  _validateAssetFilename(faceImageFilename, 'character faceImage');
   return `${FACE_IMAGE_ASSET_BASE_URL}${faceImageFilename}`;
+}
+
+function _getSolutionImageAssetUrl(solutionImageFilename:string):string {
+  _validateAssetFilename(solutionImageFilename, 'solution cloze image');
+  return `${SOLUTION_IMAGE_ASSET_BASE_URL}${solutionImageFilename}`;
+}
+
+export function getClozeImageCandidateUrls(solutionImageFilename:string):CandidateUrls {
+  return [
+    _getSolutionImageAssetUrl(solutionImageFilename),
+    getFaceImageAssetUrl(solutionImageFilename)
+  ];
 }
 
 export function getGroundImageAssetUrl():string {
