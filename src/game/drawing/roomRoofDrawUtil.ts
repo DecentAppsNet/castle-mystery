@@ -7,6 +7,7 @@ import ScalingFactors from "../types/ScalingFactors";
 
 const COLOR_ROOF_LEFT_FILL = "#9f8569";
 const COLOR_ROOF_FRONT_FILL = "#b59a7a";
+const ROOF_INNER_LINE_WIDTH_RATIO = 0.5;
 
 function _projectRoomPointWithDepth(x:number, y:number, z:number, scalingFactors:ScalingFactors):[number, number] {
   const [canvasX, canvasY] = gameToCanvasPosition(x, y, scalingFactors);
@@ -14,10 +15,8 @@ function _projectRoomPointWithDepth(x:number, y:number, z:number, scalingFactors
   return [canvasX + offsetX * z, canvasY + offsetY * z];
 }
 
-function _drawRoofFace(points:Array<[number, number]>, fillStyle:string, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function _drawRoofFace(points:Array<[number, number]>, fillStyle:string, context:CanvasRenderingContext2D) {
   context.fillStyle = fillStyle;
-  context.strokeStyle = COLOR_DARK_GRAY;
-  context.lineWidth = scalingFactors.roomLineWidth;
   context.beginPath();
   context.moveTo(...points[0]);
   for (let pointIndex = 1; pointIndex < points.length; ++pointIndex) {
@@ -25,6 +24,14 @@ function _drawRoofFace(points:Array<[number, number]>, fillStyle:string, scaling
   }
   context.closePath();
   context.fill();
+}
+
+function _strokeRoofEdge(fromPoint:[number, number], toPoint:[number, number], lineWidth:number, context:CanvasRenderingContext2D) {
+  context.strokeStyle = COLOR_DARK_GRAY;
+  context.lineWidth = lineWidth;
+  context.beginPath();
+  context.moveTo(...fromPoint);
+  context.lineTo(...toPoint);
   context.stroke();
 }
 
@@ -37,8 +44,14 @@ function _drawRoofTile(leftX:number, topY:number, width:number, scalingFactors:S
   const frontLeft = _projectRoomPointWithDepth(leftX, topY, 1, scalingFactors);
   const frontRight = _projectRoomPointWithDepth(rightX, topY, 1, scalingFactors);
 
-  _drawRoofFace([backLeft, apex, frontLeft], COLOR_ROOF_LEFT_FILL, scalingFactors, context);
-  _drawRoofFace([frontLeft, apex, frontRight], COLOR_ROOF_FRONT_FILL, scalingFactors, context);
+  _drawRoofFace([backLeft, apex, frontLeft], COLOR_ROOF_LEFT_FILL, context);
+  _drawRoofFace([frontLeft, apex, frontRight], COLOR_ROOF_FRONT_FILL, context);
+
+  _strokeRoofEdge(backLeft, apex, scalingFactors.roomLineWidth, context);
+  _strokeRoofEdge(backLeft, frontLeft, scalingFactors.roomLineWidth, context);
+  _strokeRoofEdge(frontLeft, apex, scalingFactors.roomLineWidth * ROOF_INNER_LINE_WIDTH_RATIO, context);
+  _strokeRoofEdge(apex, frontRight, scalingFactors.roomLineWidth, context);
+  _strokeRoofEdge(frontLeft, frontRight, scalingFactors.roomLineWidth, context);
 }
 
 export function drawRoomRoofs(room:Room, rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
