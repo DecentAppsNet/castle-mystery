@@ -1,28 +1,32 @@
 import Position, { duplicatePosition } from "./Position";
 
-export enum StairPartType {
-  flight = 'flight',
-  landing = 'landing',
-  catwalk = 'catwalk'
-}
+export const StairPartType = {
+  flight:'flight',
+  landing:'landing',
+  catwalk:'catwalk'
+} as const;
 
-export enum StairLandingType {
-  directLeft = 'directLeft',
-  directRight = 'directRight',
-  midStory = 'midStory',
-  fullStory = 'fullStory',
-  terminalStory = 'terminalStory'
-}
+export type StairPartType = typeof StairPartType[keyof typeof StairPartType];
+
+export const StairLandingType = {
+  directLeft:'directLeft',
+  directRight:'directRight',
+  midStory:'midStory',
+  fullStory:'fullStory',
+  terminalStory:'terminalStory'
+} as const;
+
+export type StairLandingType = typeof StairLandingType[keyof typeof StairLandingType];
 
 type StairFlightPart = {
-  type:StairPartType.flight,
+  type:typeof StairPartType.flight,
   startPosition:Position,
   endPosition:Position,
   z:number
 };
 
 type StairLandingPart = {
-  type:StairPartType.landing,
+  type:typeof StairPartType.landing,
   landingType:StairLandingType,
   leftX:number,
   topY:number,
@@ -33,7 +37,7 @@ type StairLandingPart = {
 };
 
 type StairCatwalkPart = {
-  type:StairPartType.catwalk,
+  type:typeof StairPartType.catwalk,
   leftX:number,
   topY:number,
   width:number,

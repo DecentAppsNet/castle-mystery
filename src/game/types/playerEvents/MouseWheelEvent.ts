@@ -1,7 +1,7 @@
 import PlayerEventType from "./PlayerEventType";
 
 type MouseWheelEvent = {
-  type:PlayerEventType.MOUSEWHEEL,
+  type:typeof PlayerEventType.MOUSEWHEEL,
   deltaY:number
 }
 

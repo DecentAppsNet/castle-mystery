@@ -34,7 +34,7 @@ function _calcKeyDrawDimensions(sizePixels:number, image:ImageBitmap|null) {
   };
 }
 
-function _createLockChangeEffect(type:EffectType.LOCK|EffectType.UNLOCK, room:Room, exit:RoomExit,
+function _createLockChangeEffect(type:typeof EffectType.LOCK|typeof EffectType.UNLOCK, room:Room, exit:RoomExit,
   time:number, scalingFactors:ScalingFactors, imageSet:ImageSet, travelYPixels:number):LockChangeEffect {
   const sizePixels = Math.max(12, scalingFactors.roomLineWidth * 4);
   const image = imageSet.get(KEY_IMAGE_URL) || null;

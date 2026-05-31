@@ -28,7 +28,7 @@ function _calcDistance(fromX:number, fromY:number, toX:number, toY:number):numbe
   return Math.hypot(toX - fromX, toY - fromY);
 }
 
-function _expectWalkThenExitStateChange(levelText:string, eventType:ItineraryEventType.LOCK|ItineraryEventType.UNLOCK,
+function _expectWalkThenExitStateChange(levelText:string, eventType:typeof ItineraryEventType.LOCK|typeof ItineraryEventType.UNLOCK,
   beforeStatus:ExitStatus, afterStatus:ExitStatus, minimumWalkStartTime:number = 0) {
   const level = loadLevelFromText(levelText);
   const keeper = level.characters.find(character => character.id === 'keeper');
