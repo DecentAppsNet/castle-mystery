@@ -13,8 +13,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForItemId: null,
         unlockForSolutionId: null,
+        revealRoomIds: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -34,8 +34,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForItemId: null,
         unlockForSolutionId: null,
+        revealRoomIds: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -55,8 +55,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForItemId: null,
         unlockForSolutionId: null,
+        revealRoomIds: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -78,8 +78,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForItemId: null,
         unlockForSolutionId: null,
+        revealRoomIds: [],
         parts: [
           {
             type: ClozePartType.text,
@@ -97,8 +97,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForItemId: null,
         unlockForSolutionId: null,
+        revealRoomIds: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -128,8 +128,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForItemId: null,
         unlockForSolutionId: null,
+        revealRoomIds: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -149,8 +149,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForItemId: null,
         unlockForSolutionId: null,
+        revealRoomIds: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -190,8 +190,8 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForItemId: null,
         unlockForSolutionId: null,
+        revealRoomIds: [],
         parts: [
           {
             type: ClozePartType.blank,
@@ -211,8 +211,8 @@ describe('solutionUtil', () => {
         title: 'Empty Statement',
         isComplete: false,
         isLocked: false,
-        unlockForItemId: null,
         unlockForSolutionId: null,
+        revealRoomIds: [],
         parts: []
       };
 

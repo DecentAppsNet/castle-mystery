@@ -14,8 +14,8 @@ function _haveSameSolutions(solution1:Solution, solution2:Solution):boolean {
     && _haveSameParts(solution1, solution2)
     && solution1.isComplete === solution2.isComplete
     && solution1.isLocked === solution2.isLocked
-    && solution1.unlockForItemId === solution2.unlockForItemId
-    && solution1.unlockForSolutionId === solution2.unlockForSolutionId;
+    && solution1.unlockForSolutionId === solution2.unlockForSolutionId
+    && JSON.stringify(solution1.revealRoomIds) === JSON.stringify(solution2.revealRoomIds);
 }
 
 function _haveSameSolutionLists(solutions1:ReadonlyArray<Solution>, solutions2:ReadonlyArray<Solution>):boolean {
@@ -33,12 +33,26 @@ function _syncLevelCompleteState(gameState:GameState):boolean {
   return true;
 }
 
+function _applyCompletedSolutionRoomReveals(gameState:GameState) {
+  const revealedRoomIds = new Set(gameState.solutions
+    .filter(solution => solution.isComplete)
+    .flatMap(solution => solution.revealRoomIds));
+  if (!revealedRoomIds.size) return;
+  gameState.rooms.forEach(room => {
+    if (revealedRoomIds.has(room.id)) room.isObscured = false;
+  });
+  gameState.initialRooms.forEach(room => {
+    if (revealedRoomIds.has(room.id)) room.isObscured = false;
+  });
+}
+
 export function syncSolutionUnlocks(gameState:GameState):boolean {
-  const { solutions, didChange } = syncSolutionsWithUnlocks(gameState.solutions, gameState.viewedItemIds);
+  const { solutions, didChange } = syncSolutionsWithUnlocks(gameState.solutions);
   if (didChange) {
     gameState.solutions = solutions;
     gameState.solutionsRevision += 1;
   }
+  _applyCompletedSolutionRoomReveals(gameState);
   _syncLevelCompleteState(gameState);
   return didChange;
 }
@@ -49,6 +63,7 @@ export function updateGameStateForChangeSolutions(gameState:GameState, event:Cha
     gameState.solutions = nextSolutions;
     gameState.solutionsRevision += 1;
   }
+  _applyCompletedSolutionRoomReveals(gameState);
   const identitiesSolution = gameState.solutions.find(solution => solution.id === "identities") || null;
   if (!identitiesSolution?.isComplete) return;
   gameState.characters.forEach(character => {

@@ -7,6 +7,7 @@ import { updateGameStateForMouseMove } from '../hoverStateUtil';
 import { createItineraryIndex } from '../itineraryUtil';
 import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { syncSolutionsWithUnlocks } from '../solutions/solutionDiscoveryUtil';
+import { updateGameStateForChangeSolutions } from '../solutionStateUtil';
 import ClozePartType from '../solutions/types/ClozePartType';
 import Itinerary from '../types/Itinerary';
 import Level, { createDefaultLevel } from '../types/Level';
@@ -36,6 +37,12 @@ function _createTestLevel():Level {
       title:'Hall',
       items:[bookItem],
       waypoints:[waypoint]
+    }, {
+      ...createDefaultRoom(),
+      id:'study',
+      title:'Study',
+      rect:{ x:10, y:0, width:10, height:10 },
+      isObscured:true
     }],
     initialCharacters:[{
       ...createDefaultCharacter(),
@@ -69,17 +76,8 @@ function _createTestLevel():Level {
         parts:[{ type:ClozePartType.text, text:'Open' }],
         isComplete:false,
         isLocked:false,
-        unlockForItemId:null,
-        unlockForSolutionId:null
-      },
-      {
-        id:'item locked',
-        title:'Item Locked',
-        parts:[{ type:ClozePartType.text, text:'Item Locked' }],
-        isComplete:false,
-        isLocked:true,
-        unlockForItemId:'book',
-        unlockForSolutionId:null
+        unlockForSolutionId:null,
+        revealRoomIds:['study']
       },
       {
         id:'solution locked',
@@ -87,8 +85,8 @@ function _createTestLevel():Level {
         parts:[{ type:ClozePartType.text, text:'Solution Locked' }],
         isComplete:false,
         isLocked:true,
-        unlockForItemId:null,
-        unlockForSolutionId:'open'
+        unlockForSolutionId:'open',
+        revealRoomIds:[]
       }
     ],
     winSynopsis:'Solved it.',
@@ -104,20 +102,19 @@ describe('solution unlock integration', () => {
   it('preserves authored lock prerequisites in the initial game state', () => {
     const gameState = createGameState(_createTestLevel());
 
-    expect(gameState.solutions.map(solution => solution.isLocked)).toEqual([false, true, true]);
+    expect(gameState.solutions.map(solution => solution.isLocked)).toEqual([false, true]);
     expect(gameState.isLevelComplete).toBe(false);
     expect(gameState.winSynopsis).toBe('Solved it.');
   });
 
-  it('unlocks item-based and solution-based prerequisites when their requirements are met', () => {
+  it('unlocks solution-based prerequisites when their requirements are met', () => {
     const gameState = createGameState(_createTestLevel());
 
-    const afterItemUnlock = syncSolutionsWithUnlocks(gameState.solutions, new Set(['Book'])).solutions;
-    expect(afterItemUnlock.map(solution => solution.isLocked)).toEqual([false, false, true]);
-
-    afterItemUnlock[0] = { ...afterItemUnlock[0], isComplete:true };
-    const afterSolutionUnlock = syncSolutionsWithUnlocks(afterItemUnlock, new Set(['Book'])).solutions;
-    expect(afterSolutionUnlock.map(solution => solution.isLocked)).toEqual([false, false, false]);
+    const completedSolutions = gameState.solutions.map(solution => solution.id === 'open'
+      ? { ...solution, isComplete:true }
+      : solution);
+    const afterSolutionUnlock = syncSolutionsWithUnlocks(completedSolutions).solutions;
+    expect(afterSolutionUnlock.map(solution => solution.isLocked)).toEqual([false, false]);
   });
 
   it('marks the game state complete when all solutions begin unlocked and complete', () => {
@@ -127,6 +124,27 @@ describe('solution unlock integration', () => {
     };
 
     expect(createGameState(completeLevel).isLevelComplete).toBe(true);
+  });
+
+  it('reveals rooms from completed solutions and preserves that reveal across time rebuilds', () => {
+    const gameState = createGameState(_createTestLevel());
+    const studyBeforeReveal = gameState.rooms.find(room => room.id === 'study') || null;
+    const initialStudyBeforeReveal = gameState.initialRooms.find(room => room.id === 'study') || null;
+
+    expect(studyBeforeReveal?.isObscured).toBe(true);
+    expect(initialStudyBeforeReveal?.isObscured).toBe(true);
+
+    const nextSolutions = gameState.solutions.map(solution => solution.id === 'open'
+      ? { ...solution, isComplete:true }
+      : solution);
+    updateGameStateForChangeSolutions(gameState, { type:PlayerEventType.CHANGE_SOLUTIONS, solutions:nextSolutions });
+
+    expect(gameState.rooms.find(room => room.id === 'study')?.isObscured).toBe(false);
+    expect(gameState.initialRooms.find(room => room.id === 'study')?.isObscured).toBe(false);
+
+    rebuildDynamicStateForTime(gameState, 1_000, 0);
+
+    expect(gameState.rooms.find(room => room.id === 'study')?.isObscured).toBe(false);
   });
 
   it('discovers and examines hovered items, preserving that state across time rebuilds', () => {

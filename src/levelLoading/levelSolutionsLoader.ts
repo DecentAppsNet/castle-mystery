@@ -3,6 +3,7 @@
 import { parseNameValueLineEntries, parseOptions, parseSectionEntries, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 import { getClozeImageCandidateUrls } from "@/game/imageUrlUtil";
+import { findRoomByIdOrTitle } from "@/game/roomUtil";
 
 import Character from "../game/types/Character";
 import ClozeBlank, { UNSPECIFIED_ANSWER } from "../game/solutions/types/ClozeBlank";
@@ -10,21 +11,27 @@ import ClozePart from "../game/solutions/types/ClozePart";
 import ClozePartType from "../game/solutions/types/ClozePartType";
 import Solution from "../game/solutions/types/Solution";
 import { createNormalizedEntryMap, normalizeId, normalizeOptionalId } from "../game/idUtil";
+import Room from "../game/types/Room";
 
 type SolutionPrerequisite = {
-  unlockForItemId:string|null,
   unlockForSolutionId:string|null
 }
 
-function _createSolution(solutionTitle:string, title:string|null, parts:ClozePart[], prerequisite:SolutionPrerequisite):Solution {
+function _resolveRevealRoomIds(revealRoomsText:string|undefined, rooms:ReadonlyArray<Room>):string[] {
+  if (!revealRoomsText) return [];
+  return parseOptions(revealRoomsText).map(roomRef => findRoomByIdOrTitle([...rooms], roomRef).id);
+}
+
+function _createSolution(solutionTitle:string, title:string|null, parts:ClozePart[], prerequisite:SolutionPrerequisite,
+  revealRoomIds:string[]):Solution {
   return {
     id:normalizeId(solutionTitle),
     title:title || solutionTitle.trim(),
     parts,
     isComplete:false,
-    isLocked:Boolean(prerequisite.unlockForItemId || prerequisite.unlockForSolutionId),
-    unlockForItemId:prerequisite.unlockForItemId,
-    unlockForSolutionId:prerequisite.unlockForSolutionId
+    isLocked:Boolean(prerequisite.unlockForSolutionId),
+    unlockForSolutionId:prerequisite.unlockForSolutionId,
+    revealRoomIds
   };
 }
 
@@ -38,15 +45,11 @@ function _parseBulletedLineValues(markdownText:string, name:string):string[] {
 }
 
 function _parseSolutionPrerequisite(solutionSubsection:string, solutionTitle:string):SolutionPrerequisite {
-  const unlockForItemTexts = _parseBulletedLineValues(solutionSubsection, 'unlockForItem');
   const unlockForSolutionTexts = _parseBulletedLineValues(solutionSubsection, 'unlockForSolution');
 
-  if (unlockForItemTexts.length > 1) throw new Error(`solution '${solutionTitle}' has multiple unlockForItem lines`);
   if (unlockForSolutionTexts.length > 1) throw new Error(`solution '${solutionTitle}' has multiple unlockForSolution lines`);
-  if (unlockForItemTexts.length && unlockForSolutionTexts.length) throw new Error(`solution '${solutionTitle}' cannot define both unlockForItem and unlockForSolution`);
 
   return {
-    unlockForItemId:normalizeOptionalId(unlockForItemTexts[0]),
     unlockForSolutionId:normalizeOptionalId(unlockForSolutionTexts[0])
   };
 }
@@ -201,7 +204,7 @@ function _parseClozeTemplateToParts(clozeTemplate:string, categoryOptionsByName:
   return parts;
 }
 
-export function loadSolutionsFromSection(solutionsSection:string, categoryOptionsByName?:Map<string, string[]>):Solution[] {
+export function loadSolutionsFromSection(solutionsSection:string, rooms:ReadonlyArray<Room>, categoryOptionsByName?:Map<string, string[]>):Solution[] {
   const section = solutionsSection || "";
   if (!section.trim()) return [];
 
@@ -217,7 +220,8 @@ export function loadSolutionsFromSection(solutionsSection:string, categoryOption
       title,
       nameValues.title || null,
       _parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName),
-      prerequisite
+      prerequisite,
+      _resolveRevealRoomIds(nameValues.revealRooms, rooms)
     );
   });
 }
@@ -240,7 +244,7 @@ export function createGeneratedIdentitySolution(characters:Character[], category
   });
 
   return {
-    ..._createSolution('identities', 'Identities', parts, { unlockForItemId:null, unlockForSolutionId:null }),
+    ..._createSolution('identities', 'Identities', parts, { unlockForSolutionId:null }, []),
     isComplete:characters.every(character => character.isTitleKnown)
   };
 }

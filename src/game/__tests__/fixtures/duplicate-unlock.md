@@ -29,6 +29,6 @@ A
 
 ## Mystery
 
-* unlockForItem=Book
-* unlockForItem=Dagger
+* unlockForSolution=Open
+* unlockForSolution=Close
 * clozeStatement=Open the case.

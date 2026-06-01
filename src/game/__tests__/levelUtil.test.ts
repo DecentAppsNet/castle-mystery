@@ -78,6 +78,7 @@ import overlappingSameCharacterSpeechText from './fixtures/overlapping-same-char
 import overrideGeneratedCategoryGroupCaseText from './fixtures/override-generated-category-group-case.md?raw';
 import overrideRoomsText from './fixtures/override-rooms.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
+import solutionRevealRoomsText from './fixtures/solution-reveal-rooms.md?raw';
 import shortDurationLabelsText from './fixtures/short-duration-labels.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
@@ -222,7 +223,6 @@ describe('levelUtil itinerary loading', () => {
     expect(firstBlank.availableAnswers).toEqual(['Throne Room']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
     expect(solution.isLocked).toBe(false);
-    expect(solution.unlockForItemId).toBe(null);
     expect(solution.unlockForSolutionId).toBe(null);
   });
 
@@ -234,6 +234,14 @@ describe('levelUtil itinerary loading', () => {
 
     expect(firstBlank.availableAnswers).toEqual(['Crown', 'Book']);
     expect(firstBlank.correctAnswerIndexes).toEqual([1]);
+  });
+
+  it('resolves solution revealRooms references by room id or title', () => {
+    const level = loadLevelFromText(solutionRevealRoomsText);
+    const solution = level.solutions.find(candidate => candidate.id === 'discovery') || null;
+
+    expect(solution).not.toBeNull();
+    expect(solution?.revealRoomIds).toEqual(['atrium', 'library']);
   });
 
   it('matches solution category phrases case-insensitively', () => {
@@ -828,7 +836,7 @@ describe('levelUtil itinerary loading', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:30');
-      expect((error as LoadLevelException).message).toContain('multiple unlockForItem lines');
+      expect((error as LoadLevelException).message).toContain('multiple unlockForSolution lines');
     }
   });
 

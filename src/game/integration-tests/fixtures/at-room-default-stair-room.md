@@ -63,7 +63,7 @@
 ## Simon
 
 * description=A filthy and emaciated man, wearing tattered rags and a very long beard.
-* faceImage=/sprites/advisorFace.png
+* faceImage=advisorFace.png
 
 # items
 

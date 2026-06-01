@@ -9,7 +9,7 @@ type Room = {
   readonly title:string,
   readonly rect:Rect,
   readonly isOutside:boolean,
-  readonly isObscured:boolean,
+  isObscured:boolean,
   items:Item[],
   readonly exits:RoomExit[],
   readonly stairParts:StairPart[],
