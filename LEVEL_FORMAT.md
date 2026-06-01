@@ -247,7 +247,7 @@ This section defines the character, but it does not place them on the map. Chara
 * title=Edgar Flint
 * description=A careful old servant who notices more than he says.
 * items=Master Key|Notebook
-* faceImage=/sprites/butlerFace.png
+* faceImage=butlerFace.png
 * isTitleKnown=true
 
 ## Lady Marlowe
@@ -474,10 +474,12 @@ Write one `##` subsection per solution.
 Useful lines inside a solution subsection:
 * `* solution=...` - the cloze sentence that must be solved by the player
 * `* title=...` - optional display title; default is the subsection name
-* `* unlockForItem=...` - optional; this solution stays locked until that item is found
-* `* unlockForSolution=...` - optional; this solution stays locked until another solution is completed
+* `* revealRooms=Room A|Room B` - optional; completing this solution reveals the named rooms
+* `* unlockSolutions=Solution A|Solution B` - optional; completing this solution unlocks the named solutions
 
-Use only one unlock rule per solution.
+`revealRooms` can match room ids or room titles. `unlockSolutions` can match solution ids or solution titles.
+
+Solutions named by `unlockSolutions` begin locked until one of their prerequisite solutions is completed.
 
 ## Writing Blanks
 
@@ -492,10 +494,20 @@ If the blank matches one of your categories, the player will see that category's
 ## Images And Separators
 
 Inside a `solution=` line, you can also use:
-* `(/path/to/image.png)` for an image
+* `(imageFileName.png)` for an image
 * `---` for a visual separator between parts
 
+Image references are authored as filenames, not paths. The engine resolves them against the supported asset folders at load time.
+
 This is most useful for identity-style solutions.
+
+## Secret Identities
+
+The engine automatically generates an `Identities` solution when the level has characters.
+
+If you want to customize only the metadata for that generated solution, add an `## identities` subsection without a `solution=` line. In that special case, the generated identity blanks are kept, while authored metadata such as `title`, `revealRooms`, and `unlockSolutions` is applied.
+
+If you do author a `solution=` line inside `## identities`, that authored solution replaces the generated one.
 
 ## Example
 
@@ -508,10 +520,16 @@ This is most useful for identity-style solutions.
 ## The Missing Book
 
 * title=The Missing Book
+* revealRooms=Library
+* unlockSolutions=Secret Identities
 * solution=[Butler] [searched|looked] the Library.
 
 ## Secret Identities
 
-* unlockForItem=Royal Seal
-* solution=(/sprites/kingFace.png) = [King] --- (/sprites/queenFace.png) = [Queen]
+* solution=(kingFace.png) = [King] --- (queenFace.png) = [Queen]
+
+## identities
+
+* revealRooms=Study|Vault
+* unlockSolutions=Final Accusation
 ```
