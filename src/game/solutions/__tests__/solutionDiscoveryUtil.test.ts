@@ -7,21 +7,21 @@ import ClozePartType from '../types/ClozePartType';
 
 function createSolution(overrides:Partial<Solution> = {}):Solution {
   return {
-    id:'Test',
+    id:'test',
     title:'Test',
     parts:[{ type:ClozePartType.text, text:'Test' }],
     isComplete:false,
     isLocked:true,
-    unlockForSolutionId:null,
+    unlockSolutionIds:[],
     revealRoomIds:[],
     ...overrides
   };
 }
 
 describe('solutionDiscoveryUtil', () => {
-  it('unlocks a solution when its prerequisite solution is complete', () => {
-    const prerequisite = createSolution({ id:'First', isComplete:true, isLocked:false });
-    const lockedSolution = createSolution({ id:'Second', unlockForSolutionId:'First' });
+  it('unlocks a solution when a completed solution lists it in unlockSolutionIds', () => {
+    const prerequisite = createSolution({ id:'first', isComplete:true, isLocked:false, unlockSolutionIds:['second'] });
+    const lockedSolution = createSolution({ id:'second' });
     const { solutions, didChange } = syncSolutionsWithUnlocks([prerequisite, lockedSolution]);
 
     expect(didChange).toBe(true);

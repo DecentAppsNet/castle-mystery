@@ -29,6 +29,6 @@ A
 
 ## Mystery
 
-* unlockForSolution=Open
-* unlockForSolution=Close
+* unlockSolutions=Open
+* unlockSolutions=Close
 * clozeStatement=Open the case.

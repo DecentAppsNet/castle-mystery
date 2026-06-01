@@ -76,7 +76,7 @@ function _createTestLevel():Level {
         parts:[{ type:ClozePartType.text, text:'Open' }],
         isComplete:false,
         isLocked:false,
-        unlockForSolutionId:null,
+        unlockSolutionIds:['solution locked'],
         revealRoomIds:['study']
       },
       {
@@ -85,7 +85,7 @@ function _createTestLevel():Level {
         parts:[{ type:ClozePartType.text, text:'Solution Locked' }],
         isComplete:false,
         isLocked:true,
-        unlockForSolutionId:'open',
+        unlockSolutionIds:[],
         revealRoomIds:[]
       }
     ],
@@ -99,15 +99,17 @@ function _createTestLevel():Level {
 }
 
 describe('solution unlock integration', () => {
-  it('preserves authored lock prerequisites in the initial game state', () => {
+  it('preserves authored outgoing unlock edges and initial locked targets in the game state', () => {
     const gameState = createGameState(_createTestLevel());
 
     expect(gameState.solutions.map(solution => solution.isLocked)).toEqual([false, true]);
+    expect(gameState.solutions[0].unlockSolutionIds).toEqual(['solution locked']);
+    expect(gameState.solutions[1].unlockSolutionIds).toEqual([]);
     expect(gameState.isLevelComplete).toBe(false);
     expect(gameState.winSynopsis).toBe('Solved it.');
   });
 
-  it('unlocks solution-based prerequisites when their requirements are met', () => {
+  it('unlocks solutions listed by a completed solution', () => {
     const gameState = createGameState(_createTestLevel());
 
     const completedSolutions = gameState.solutions.map(solution => solution.id === 'open'

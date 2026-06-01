@@ -14,7 +14,7 @@ function _haveSameSolutions(solution1:Solution, solution2:Solution):boolean {
     && _haveSameParts(solution1, solution2)
     && solution1.isComplete === solution2.isComplete
     && solution1.isLocked === solution2.isLocked
-    && solution1.unlockForSolutionId === solution2.unlockForSolutionId
+    && JSON.stringify(solution1.unlockSolutionIds) === JSON.stringify(solution2.unlockSolutionIds)
     && JSON.stringify(solution1.revealRoomIds) === JSON.stringify(solution2.revealRoomIds);
 }
 

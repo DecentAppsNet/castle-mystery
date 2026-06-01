@@ -10,49 +10,39 @@ import ClozeBlank, { UNSPECIFIED_ANSWER } from "../game/solutions/types/ClozeBla
 import ClozePart from "../game/solutions/types/ClozePart";
 import ClozePartType from "../game/solutions/types/ClozePartType";
 import Solution from "../game/solutions/types/Solution";
-import { createNormalizedEntryMap, normalizeId, normalizeOptionalId } from "../game/idUtil";
+import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
 import Room from "../game/types/Room";
-
-type SolutionPrerequisite = {
-  unlockForSolutionId:string|null
-}
 
 function _resolveRevealRoomIds(revealRoomsText:string|undefined, rooms:ReadonlyArray<Room>):string[] {
   if (!revealRoomsText) return [];
   return parseOptions(revealRoomsText).map(roomRef => findRoomByIdOrTitle([...rooms], roomRef).id);
 }
 
-function _createSolution(solutionTitle:string, title:string|null, parts:ClozePart[], prerequisite:SolutionPrerequisite,
+function _findSolutionByIdOrTitle(solutions:ReadonlyArray<Pick<Solution, 'id' | 'title'>>, solutionRef:string):Pick<Solution, 'id' | 'title'> {
+  const solutionId = normalizeId(solutionRef);
+  const solution = solutions.find(candidate => candidate.id === solutionId || normalizeId(candidate.title) === solutionId) || null;
+  if (!solution) throw new Error(`solution with id or title ${solutionRef} not found`);
+  return solution;
+}
+
+function _resolveUnlockSolutionIds(unlockSolutionsText:string|undefined, solutions:ReadonlyArray<Pick<Solution, 'id' | 'title'>>):string[] {
+  if (!unlockSolutionsText) return [];
+  return parseOptions(unlockSolutionsText).map(solutionRef => _findSolutionByIdOrTitle(solutions, solutionRef).id);
+}
+
+function _createSolution(solutionTitle:string, title:string|null, parts:ClozePart[], unlockSolutionIds:string[],
   revealRoomIds:string[]):Solution {
   return {
     id:normalizeId(solutionTitle),
     title:title || solutionTitle.trim(),
     parts,
     isComplete:false,
-    isLocked:Boolean(prerequisite.unlockForSolutionId),
-    unlockForSolutionId:prerequisite.unlockForSolutionId,
+    isLocked:false,
+    unlockSolutionIds,
     revealRoomIds
   };
 }
 
-function _parseBulletedLineValues(markdownText:string, name:string):string[] {
-  return markdownText
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.startsWith(`* ${name}=`))
-    .map(line => line.slice(`* ${name}=`.length).trim())
-    .filter(Boolean);
-}
-
-function _parseSolutionPrerequisite(solutionSubsection:string, solutionTitle:string):SolutionPrerequisite {
-  const unlockForSolutionTexts = _parseBulletedLineValues(solutionSubsection, 'unlockForSolution');
-
-  if (unlockForSolutionTexts.length > 1) throw new Error(`solution '${solutionTitle}' has multiple unlockForSolution lines`);
-
-  return {
-    unlockForSolutionId:normalizeOptionalId(unlockForSolutionTexts[0])
-  };
-}
 
 function _findNextSeparatorStartIndex(text:string, startIndex:number):number {
   return text.indexOf('---', startIndex);
@@ -211,19 +201,43 @@ export function loadSolutionsFromSection(solutionsSection:string, rooms:Readonly
   const resolvedCategoryOptionsByName = categoryOptionsByName || createSolutionCategoryOptionsByName(section);
   const solutionSubsectionsById = createNormalizedEntryMap(parseSectionEntries(section, 2));
 
-  return Array.from(solutionSubsectionsById.values()).map(({ authoredName:title, value:solutionSubsection }) => {
-    const prerequisite = _parseSolutionPrerequisite(solutionSubsection, title);
+  const parsedSolutions = Array.from(solutionSubsectionsById.values()).map(({ authoredName:title, value:solutionSubsection }) => {
     const nameValues = parseUniqueNameValueLines(solutionSubsection, `solution ${normalizeId(title)}`);
     const clozeTemplate = nameValues.solution || nameValues.clozeStatement || "";
 
-    return _createSolution(
-      title,
-      nameValues.title || null,
-      _parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName),
-      prerequisite,
-      _resolveRevealRoomIds(nameValues.revealRooms, rooms)
-    );
+    return {
+      authoredTitle:title,
+      displayTitle:nameValues.title || null,
+      parts:_parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName),
+      revealRoomIds:_resolveRevealRoomIds(nameValues.revealRooms, rooms),
+      unlockSolutionsText:nameValues.unlockSolutions
+    };
   });
+
+  const preliminarySolutions = parsedSolutions.map(parsedSolution => _createSolution(
+    parsedSolution.authoredTitle,
+    parsedSolution.displayTitle,
+    parsedSolution.parts,
+    [],
+    parsedSolution.revealRoomIds
+  ));
+
+  const incomingUnlockedSolutionIds = new Set<string>();
+  const authoredSolutions = parsedSolutions.map((parsedSolution, index) => {
+    const preliminarySolution = preliminarySolutions[index];
+    const unlockSolutionIds = _resolveUnlockSolutionIds(parsedSolution.unlockSolutionsText, preliminarySolutions);
+    unlockSolutionIds.forEach(solutionId => incomingUnlockedSolutionIds.add(solutionId));
+
+    return {
+      ...preliminarySolution,
+      unlockSolutionIds
+    };
+  });
+
+  return authoredSolutions.map(solution => ({
+    ...solution,
+    isLocked:incomingUnlockedSolutionIds.has(solution.id)
+  }));
 }
 
 export function createGeneratedIdentitySolution(characters:Character[], categoryOptionsByName:Map<string, string[]>):Solution|null {
@@ -244,7 +258,7 @@ export function createGeneratedIdentitySolution(characters:Character[], category
   });
 
   return {
-    ..._createSolution('identities', 'Identities', parts, { unlockForSolutionId:null }, []),
+    ..._createSolution('identities', 'Identities', parts, [], []),
     isComplete:characters.every(character => character.isTitleKnown)
   };
 }

@@ -13,7 +13,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForSolutionId: null,
+        unlockSolutionIds: [],
         revealRoomIds: [],
         parts: [
           {
@@ -34,7 +34,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForSolutionId: null,
+        unlockSolutionIds: [],
         revealRoomIds: [],
         parts: [
           {
@@ -55,7 +55,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForSolutionId: null,
+        unlockSolutionIds: [],
         revealRoomIds: [],
         parts: [
           {
@@ -78,7 +78,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForSolutionId: null,
+        unlockSolutionIds: [],
         revealRoomIds: [],
         parts: [
           {
@@ -97,7 +97,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForSolutionId: null,
+        unlockSolutionIds: [],
         revealRoomIds: [],
         parts: [
           {
@@ -128,7 +128,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForSolutionId: null,
+        unlockSolutionIds: [],
         revealRoomIds: [],
         parts: [
           {
@@ -149,7 +149,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForSolutionId: null,
+        unlockSolutionIds: [],
         revealRoomIds: [],
         parts: [
           {
@@ -190,7 +190,7 @@ describe('solutionUtil', () => {
         title: 'Test Statement',
         isComplete: false,
         isLocked: false,
-        unlockForSolutionId: null,
+        unlockSolutionIds: [],
         revealRoomIds: [],
         parts: [
           {
@@ -211,7 +211,7 @@ describe('solutionUtil', () => {
         title: 'Empty Statement',
         isComplete: false,
         isLocked: false,
-        unlockForSolutionId: null,
+        unlockSolutionIds: [],
         revealRoomIds: [],
         parts: []
       };

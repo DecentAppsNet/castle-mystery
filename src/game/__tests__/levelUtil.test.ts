@@ -79,6 +79,7 @@ import overrideGeneratedCategoryGroupCaseText from './fixtures/override-generate
 import overrideRoomsText from './fixtures/override-rooms.md?raw';
 import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
 import solutionRevealRoomsText from './fixtures/solution-reveal-rooms.md?raw';
+import solutionUnlockSolutionsText from './fixtures/solution-unlock-solutions.md?raw';
 import shortDurationLabelsText from './fixtures/short-duration-labels.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
@@ -223,7 +224,7 @@ describe('levelUtil itinerary loading', () => {
     expect(firstBlank.availableAnswers).toEqual(['Throne Room']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
     expect(solution.isLocked).toBe(false);
-    expect(solution.unlockForSolutionId).toBe(null);
+    expect(solution.unlockSolutionIds).toEqual([]);
   });
 
   it('includes character inventory item titles in default solution item categories', () => {
@@ -242,6 +243,19 @@ describe('levelUtil itinerary loading', () => {
 
     expect(solution).not.toBeNull();
     expect(solution?.revealRoomIds).toEqual(['atrium', 'library']);
+  });
+
+  it('resolves unlockSolutions by solution id or title and locks targeted solutions initially', () => {
+    const level = loadLevelFromText(solutionUnlockSolutionsText);
+    const opener = level.solutions.find(candidate => candidate.id === 'first') || null;
+    const hiddenFollowup = level.solutions.find(candidate => candidate.id === 'second') || null;
+
+    expect(opener).not.toBeNull();
+    expect(hiddenFollowup).not.toBeNull();
+    expect(opener?.unlockSolutionIds).toEqual(['second']);
+    expect(opener?.isLocked).toBe(false);
+    expect(hiddenFollowup?.unlockSolutionIds).toEqual([]);
+    expect(hiddenFollowup?.isLocked).toBe(true);
   });
 
   it('matches solution category phrases case-insensitively', () => {
@@ -829,14 +843,14 @@ describe('levelUtil itinerary loading', () => {
     expect(() => loadLevelFromText(overrideGeneratedCategoryGroupCaseText, 'override-generated-category-group-case.md', { validateUnlockPhrases:true })).not.toThrow();
   });
 
-  it('throws when a solution defines duplicate unlock prerequisites', () => {
+  it('throws when a solution defines duplicate unlockSolutions entries', () => {
     try {
       loadLevelFromText(duplicateUnlockText, 'duplicate-unlock.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:30');
-      expect((error as LoadLevelException).message).toContain('multiple unlockForSolution lines');
+      expect((error as LoadLevelException).message).toContain("duplicate solution mystery entry 'unlockSolutions'");
     }
   });
 
