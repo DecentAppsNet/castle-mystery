@@ -19,6 +19,7 @@ import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./exitDrawUtil";
 import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
 import { compareNonStairDrawableContents, mergeStairsWithSortedContents, RoomDrawableContent } from "./roomContentDrawOrderUtil";
+import { wrapRoomTitle } from "./roomTitleLayoutUtil";
 import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { drawRoomRoofs } from "./roomRoofDrawUtil";
@@ -35,6 +36,7 @@ import StairPart, { StairPartType } from "../types/StairPart";
 import { processCharacterEffects } from "../effects/effectUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
+const CX_ROOM_TITLE_MARGIN = 2;
 const ROOM_TITLE_OUTLINE_WIDTH_RATIO = 0.15;
 const WAYPOINT_HIGHLIGHT_TOLERANCE = 0.01;
 const WAYPOINT_BACKGROUND_START_COLOR = "#ffb3c1";
@@ -172,23 +174,43 @@ export function drawRoomTitle(room:Room, isActive:boolean, scalingFactors:Scalin
   if (!room.isDiscovered) return;
   if (room.title.length === 0) return;
 
+  const titleMargin = Math.min(CX_ROOM_TITLE_MARGIN, room.rect.width / 2);
+
   const [centerX, centerY] = projectRoomPointWithDepth(
     room.rect.x + room.rect.width / 2,
     room.rect.y + room.rect.height / 2,
     1,
     scalingFactors
   );
+  const [leftX] = projectRoomPointWithDepth(room.rect.x + titleMargin, room.rect.y + room.rect.height / 2, 1, scalingFactors);
+  const [rightX] = projectRoomPointWithDepth(room.rect.x + room.rect.width - titleMargin, room.rect.y + room.rect.height / 2, 1, scalingFactors);
+  const maxWidth = Math.max(0, rightX - leftX);
+  const font = `${scalingFactors.roomFontHeight}px Jellee`;
+  const lines = wrapRoomTitle(room.title, maxWidth, titleText => {
+    context.save();
+    context.font = font;
+    const measuredWidth = context.measureText(titleText).width;
+    context.restore();
+    return measuredWidth;
+  });
+  const lineHeight = scalingFactors.roomFontHeight;
+  const totalTextHeight = lines.length * lineHeight;
+  const firstLineCenterY = centerY - totalTextHeight / 2 + lineHeight / 2;
 
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = `${scalingFactors.roomFontHeight}px Jellee`;
+  context.font = font;
+  context.fillStyle = COLOR_ROOM_TITLE_TEXT;
   if (isActive) {
     context.lineWidth = Math.max(1, scalingFactors.roomFontHeight * ROOM_TITLE_OUTLINE_WIDTH_RATIO);
     context.strokeStyle = COLOR_BLACK;
-    context.strokeText(room.title, centerX, centerY);
   }
-  context.fillStyle = COLOR_ROOM_TITLE_TEXT;
-  context.fillText(room.title, centerX, centerY);
+
+  lines.forEach((line, lineIndex) => {
+    const lineCenterY = firstLineCenterY + lineIndex * lineHeight;
+    if (isActive) context.strokeText(line, centerX, lineCenterY);
+    context.fillText(line, centerX, lineCenterY);
+  });
 }
 
 function _createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[], includeUndiscoveredItems:boolean):RoomDrawableContent[] {
