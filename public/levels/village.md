@@ -98,6 +98,9 @@
 # solutions
 * seconds=1|2|3|4|5|6|7|8|9
 
+## Identities
+* unlockSolutions=Travel Time
+
 ## Travel Time
 * solution=It took [6] seconds for Simon to arrive in the sanctum.
 * revealRooms=Great Hall

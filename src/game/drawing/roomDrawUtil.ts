@@ -20,7 +20,7 @@ import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./ex
 import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
 import { compareNonStairDrawableContents, mergeStairsWithSortedContents, RoomDrawableContent } from "./roomContentDrawOrderUtil";
 import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
-import { calcPanelOffset } from "./roomPanelProjectionUtil";
+import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import Character from "../types/Character";
@@ -166,18 +166,29 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
   drawRightWallPanel(room, rooms, scalingFactors, context);
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
   drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
+}
+
+export function drawRoomTitle(room:Room, isActive:boolean, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  if (!room.isDiscovered) return;
   if (room.title.length === 0) return;
+
+  const [centerX, centerY] = projectRoomPointWithDepth(
+    room.rect.x + room.rect.width / 2,
+    room.rect.y + room.rect.height / 2,
+    1,
+    scalingFactors
+  );
+
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = `${scalingFactors.roomFontHeight}px Jellee`;
   if (isActive) {
     context.lineWidth = Math.max(1, scalingFactors.roomFontHeight * ROOM_TITLE_OUTLINE_WIDTH_RATIO);
     context.strokeStyle = COLOR_BLACK;
-    context.strokeText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
+    context.strokeText(room.title, centerX, centerY);
   }
   context.fillStyle = COLOR_ROOM_TITLE_TEXT;
-  context.fillText(room.title, scaledTopLeft[0] + scaledWidth / 2, scaledTopLeft[1] + scaledHeight / 2);
-  if (isRoomObscured) return;
+  context.fillText(room.title, centerX, centerY);
 }
 
 function _createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[], includeUndiscoveredItems:boolean):RoomDrawableContent[] {

@@ -13,7 +13,7 @@ import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { COLOR_BLACK } from "./drawConstants";
 import { drawExitPopover } from "./exitDrawUtil";
-import { drawRoomCharactersAndEffects, drawRoomShell, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
+import { drawRoomCharactersAndEffects, drawRoomShell, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
 import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
 import { calcLevelCameraRect } from "../cameraUtil";
@@ -125,6 +125,9 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
       gameState.scalingFactors, context, gameState.time, gameState.imageSet, gameState.isLevelComplete);
     drawRoomWaypointsWithHighlight(room, gameState.scalingFactors, context,
       highlightedWaypointPosition, gameState.isLevelComplete);
+  }
+  for (const { room, isActive } of roomRenderStates) {
+    drawRoomTitle(room, isActive, gameState.scalingFactors, context);
   }
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   if (canShowHoverPopovers && gameState.hoveredItemId) {
