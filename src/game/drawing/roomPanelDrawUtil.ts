@@ -70,6 +70,7 @@ function _drawRightWallPanelSpan(room:Room, topY:number, height:number, scalingF
     _fillPanelWithCutouts(panelPoints, cutoutPoints, scalingFactors, context);
   }
 
+  _strokePanelSegment(topRight, bottomRight, scalingFactors, context);
   _strokePanelSegment(topRight, outerTopRight, scalingFactors, context);
   _strokePanelSegment(outerTopRight, outerBottomRight, scalingFactors, context);
 }
