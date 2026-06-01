@@ -15,7 +15,7 @@ import Itinerary from "@/game/types/Itinerary";
 import WinLevelDialog from "./dialogs/WinLevelDialog";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import LevelSelector from "./levelSelector/LevelSelector";
-import { changeLevel } from "./interactions/levels";
+import { changeLevel, continueToNextLevel } from "./interactions/levels";
 
 const ARROW_STEP_MSECS = 200;
 
@@ -138,7 +138,9 @@ function HomeScreen() {
           onSelect={(levelUrl) => {
             void changeLevel({
               levelUrl,
+              levelManifest,
               setGameState,
+              setLevelManifest,
               setIsPlaying,
               setMinutes,
               setWinSynopsis,
@@ -146,8 +148,7 @@ function HomeScreen() {
               setSolutionClaimCooldowns,
               setActiveCharacterId,
               setIsScrubbing,
-              setModalDialogName,
-              winLevelDialogName:WinLevelDialog.name
+              setModalDialogName
             });
           }}
         />
@@ -184,7 +185,21 @@ function HomeScreen() {
       <WinLevelDialog 
         synopsis={winSynopsis} 
         isOpen={modalDialogName === WinLevelDialog.name} 
-        onContinue={() => {}}
+        onContinue={() => {
+          void continueToNextLevel({
+            levelManifest,
+            setGameState,
+            setLevelManifest,
+            setIsPlaying,
+            setMinutes,
+            setWinSynopsis,
+            setSolutions,
+            setSolutionClaimCooldowns,
+            setActiveCharacterId,
+            setIsScrubbing,
+            setModalDialogName
+          });
+        }}
         onReturn={() => setModalDialogName(null)} 
       />
     </div>
