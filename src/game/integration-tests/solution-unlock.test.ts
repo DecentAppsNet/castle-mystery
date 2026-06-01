@@ -9,6 +9,7 @@ import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { syncSolutionsWithUnlocks } from '../solutions/solutionDiscoveryUtil';
 import { updateGameStateForChangeSolutions } from '../solutionStateUtil';
 import ClozePartType from '../solutions/types/ClozePartType';
+import { createDefaultSolution } from '../solutions/types/Solution';
 import Itinerary from '../types/Itinerary';
 import Level, { createDefaultLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
@@ -71,22 +72,20 @@ function _createTestLevel():Level {
     itemsById:new Map([['book', bookItem]]),
     solutions:[
       {
+        ...createDefaultSolution(),
         id:'open',
         title:'Open',
         parts:[{ type:ClozePartType.text, text:'Open' }],
-        isComplete:false,
         isLocked:false,
         unlockSolutionIds:['solution locked'],
         revealRoomIds:['study']
       },
       {
+        ...createDefaultSolution(),
         id:'solution locked',
         title:'Solution Locked',
         parts:[{ type:ClozePartType.text, text:'Solution Locked' }],
-        isComplete:false,
         isLocked:true,
-        unlockSolutionIds:[],
-        revealRoomIds:[]
       }
     ],
     winSynopsis:'Solved it.',

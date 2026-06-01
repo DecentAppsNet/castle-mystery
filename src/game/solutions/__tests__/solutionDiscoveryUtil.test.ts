@@ -2,18 +2,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { syncSolutionsWithUnlocks } from '../solutionDiscoveryUtil';
-import Solution from '../types/Solution';
+import Solution, { createDefaultSolution } from '../types/Solution';
 import ClozePartType from '../types/ClozePartType';
 
 function createSolution(overrides:Partial<Solution> = {}):Solution {
   return {
-    id:'test',
-    title:'Test',
+    ...createDefaultSolution(),
     parts:[{ type:ClozePartType.text, text:'Test' }],
-    isComplete:false,
     isLocked:true,
-    unlockSolutionIds:[],
-    revealRoomIds:[],
     ...overrides
   };
 }

@@ -10,6 +10,18 @@ type Solution = {
   readonly revealRoomIds:readonly string[];
 };
 
+export function createDefaultSolution():Solution {
+  return {
+    id:'solution',
+    title:'Solution',
+    parts:[],
+    isComplete:false,
+    isLocked:false,
+    unlockSolutionIds:[],
+    revealRoomIds:[]
+  };
+}
+
 export function duplicateSolution(from:Solution):Solution {
   return {
     id:from.id,
