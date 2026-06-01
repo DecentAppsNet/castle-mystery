@@ -64,6 +64,7 @@ import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-soluti
 import duplicateSolutionPropertyText from './fixtures/duplicate-solution-property.md?raw';
 import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-subsections-case.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
+import identitiesAuthoredMetadataText from './fixtures/identities-authored-metadata.md?raw';
 import inventoryItemDefaultCategoryText from './fixtures/inventory-item-default-category.md?raw';
 import inventoryItemTitleCasingText from './fixtures/inventory-item-title-casing.md?raw';
 import closedDoorExitText from './fixtures/closed-door-exit.md?raw';
@@ -308,6 +309,20 @@ describe('levelUtil itinerary loading', () => {
     expect(identities).not.toBeNull();
     expect(identities?.isLocked).toBe(false);
     expect(identities?.isComplete).toBe(true);
+  });
+
+  it('uses the generated identities solution as the default when an identities subsection only authors metadata', () => {
+    const level = loadLevelFromText(identitiesAuthoredMetadataText);
+    const identities = level.solutions.find(solution => solution.id === 'identities') || null;
+    const finalMystery = level.solutions.find(solution => solution.id === 'final mystery') || null;
+    const identityBlanks = (identities?.parts.filter(part => part.type === 'blank') || []) as ClozeBlank[];
+
+    expect(identities).not.toBeNull();
+    expect(identityBlanks).toHaveLength(1);
+    expect(identities?.revealRoomIds).toEqual(['study']);
+    expect(identities?.unlockSolutionIds).toEqual(['final mystery']);
+    expect(identities?.isLocked).toBe(false);
+    expect(finalMystery?.isLocked).toBe(true);
   });
 
   it('defaults titles by preserving authored casing from subsection names', () => {

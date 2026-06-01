@@ -355,7 +355,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   const solutionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
     () => createSolutionCategoryOptionsByName(sections.solutions || "", _createDefaultSolutionCategoryOptions(level)));
   const authoredSolutions = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
-    () => loadSolutionsFromSection(sections.solutions || "", level.rooms, solutionCategoryOptionsByName));
+    () => loadSolutionsFromSection(sections.solutions || "", level.rooms, solutionCategoryOptionsByName, level.characters));
   const generatedIdentitySolution = authoredSolutions.some(solution => solution.id === 'identities')
     ? null
     : createGeneratedIdentitySolution(level.characters, solutionCategoryOptionsByName);

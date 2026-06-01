@@ -30,6 +30,10 @@ function _resolveUnlockSolutionIds(unlockSolutionsText:string|undefined, solutio
   return parseOptions(unlockSolutionsText).map(solutionRef => _findSolutionByIdOrTitle(solutions, solutionRef).id);
 }
 
+function _isGeneratedIdentitiesSubsection(authoredTitle:string, clozeTemplate:string):boolean {
+  return normalizeId(authoredTitle) === 'identities' && !clozeTemplate.trim();
+}
+
 function _createSolution(solutionTitle:string, title:string|null, parts:ClozePart[], unlockSolutionIds:string[],
   revealRoomIds:string[]):Solution {
   return {
@@ -194,7 +198,8 @@ function _parseClozeTemplateToParts(clozeTemplate:string, categoryOptionsByName:
   return parts;
 }
 
-export function loadSolutionsFromSection(solutionsSection:string, rooms:ReadonlyArray<Room>, categoryOptionsByName?:Map<string, string[]>):Solution[] {
+export function loadSolutionsFromSection(solutionsSection:string, rooms:ReadonlyArray<Room>, categoryOptionsByName?:Map<string, string[]>,
+  characters:ReadonlyArray<Character> = []):Solution[] {
   const section = solutionsSection || "";
   if (!section.trim()) return [];
 
@@ -208,19 +213,35 @@ export function loadSolutionsFromSection(solutionsSection:string, rooms:Readonly
     return {
       authoredTitle:title,
       displayTitle:nameValues.title || null,
+      clozeTemplate,
       parts:_parseClozeTemplateToParts(clozeTemplate, resolvedCategoryOptionsByName),
       revealRoomIds:_resolveRevealRoomIds(nameValues.revealRooms, rooms),
       unlockSolutionsText:nameValues.unlockSolutions
     };
   });
 
-  const preliminarySolutions = parsedSolutions.map(parsedSolution => _createSolution(
-    parsedSolution.authoredTitle,
-    parsedSolution.displayTitle,
-    parsedSolution.parts,
-    [],
-    parsedSolution.revealRoomIds
-  ));
+  const preliminarySolutions = parsedSolutions.map(parsedSolution => {
+    if (_isGeneratedIdentitiesSubsection(parsedSolution.authoredTitle, parsedSolution.clozeTemplate)) {
+      return createGeneratedIdentitySolution(characters, resolvedCategoryOptionsByName, {
+        title:parsedSolution.displayTitle,
+        revealRoomIds:parsedSolution.revealRoomIds
+      }) || _createSolution(
+        parsedSolution.authoredTitle,
+        parsedSolution.displayTitle,
+        parsedSolution.parts,
+        [],
+        parsedSolution.revealRoomIds
+      );
+    }
+
+    return _createSolution(
+      parsedSolution.authoredTitle,
+      parsedSolution.displayTitle,
+      parsedSolution.parts,
+      [],
+      parsedSolution.revealRoomIds
+    );
+  });
 
   const incomingUnlockedSolutionIds = new Set<string>();
   const authoredSolutions = parsedSolutions.map((parsedSolution, index) => {
@@ -240,7 +261,8 @@ export function loadSolutionsFromSection(solutionsSection:string, rooms:Readonly
   }));
 }
 
-export function createGeneratedIdentitySolution(characters:Character[], categoryOptionsByName:Map<string, string[]>):Solution|null {
+export function createGeneratedIdentitySolution(characters:ReadonlyArray<Character>, categoryOptionsByName:Map<string, string[]>,
+  overrides:{ title?:string|null, unlockSolutionIds?:string[], revealRoomIds?:string[] } = {}):Solution|null {
   if (!characters.length) return null;
 
   const parts:ClozePart[] = [];
@@ -258,7 +280,7 @@ export function createGeneratedIdentitySolution(characters:Character[], category
   });
 
   return {
-    ..._createSolution('identities', 'Identities', parts, [], []),
+    ..._createSolution('identities', overrides.title ?? 'Identities', parts, overrides.unlockSolutionIds || [], overrides.revealRoomIds || []),
     isComplete:characters.every(character => character.isTitleKnown)
   };
 }
