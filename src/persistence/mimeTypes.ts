@@ -1,3 +1,6 @@
+/* This module groups persistence MIME-type constants and extension-mapping helpers used by stored file records.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 export const MIMETYPE_AUDIO_WAV = 'audio/wav';
 export const MIMETYPE_GIF = 'image/gif';
 export const MIMETYPE_JPEG = 'image/jpeg';

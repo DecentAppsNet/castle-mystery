@@ -1,3 +1,6 @@
+/* This module groups persistence path and filename helpers for keys, templates, and extension splitting.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 export function keyToPath(key:string):string {
   const pathEnd = key.lastIndexOf('/') + 1;
   return key.substring(0, pathEnd);

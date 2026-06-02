@@ -1,3 +1,6 @@
+/* This module groups the vendored IndexedDB-backed path store used for persistent key-value records and file-like data.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import {keyToPath} from "./pathUtil.ts";
 import {MIMETYPE_OCTET_STREAM, MIMETYPE_PLAIN_TEXT} from "./mimeTypes.ts";
 import {createNonGlobalRegex, escapeRegexCharacters} from "@/common/regExUtil";

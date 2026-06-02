@@ -1,3 +1,6 @@
+/* This module groups app-startup initialization helpers for service workers, metadata, and local-development seeding.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { setSeed } from "@/common/randUtil";
 import { baseUrl } from "@/common/urlUtil";
 import { isServingLocally } from "@/developer/devEnvUtil";
