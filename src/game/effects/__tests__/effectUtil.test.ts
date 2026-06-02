@@ -8,6 +8,7 @@ import { createDropItemEffect } from '../dropItemUtil';
 import { createTakeItemEffect } from '../takeItemUtil';
 import EffectType from '../types/EffectType';
 import type Effect from '../types/Effect';
+import type { ProcessCharacterEffectCallback } from '../types/EffectBase';
 
 function _createItem(id:string, z:number) {
   return {
@@ -26,28 +27,32 @@ describe('effectUtil', () => {
     it('runs character effects only in their matching draw phase', () => {
       const character = createDefaultCharacter();
       const calls:string[] = [];
-      const effects = [
+      const onBeforeCharacterEffect:ProcessCharacterEffectCallback = () => {
+        calls.push('before');
+        return true;
+      };
+      const onAfterCharacterEffect:ProcessCharacterEffectCallback = () => {
+        calls.push('after');
+        return true;
+      };
+      const effects:Effect[] = [
         {
           type:EffectType.TAKE_ITEM,
           character,
           drawsBefore:true,
           startTime:0,
-          onProcessCharacterEffect:() => {
-            calls.push('before');
-            return true;
-          }
+          item:_createItem('before-item', 0.3),
+          onProcessCharacterEffect:onBeforeCharacterEffect
         },
         {
           type:EffectType.DROP_ITEM,
           character,
           drawsBefore:false,
           startTime:0,
-          onProcessCharacterEffect:() => {
-            calls.push('after');
-            return true;
-          }
+          item:_createItem('after-item', 0.7),
+          onProcessCharacterEffect:onAfterCharacterEffect
         }
-      ] as Effect[];
+      ];
 
       processBeforeCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS);
       processAfterCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS);

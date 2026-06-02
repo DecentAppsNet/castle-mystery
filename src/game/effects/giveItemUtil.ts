@@ -26,7 +26,7 @@ function _onProcessRoomEffect(room:Room, effect:Effect, context:CanvasRenderingC
   return elapsed < ITEM_EFFECT_DURATION;
 }
 
-export function createGiveItemEffect(item:Item, room:Room, giver:Character, recipient:Character, time:number, scalingFactors:ScalingFactors):GiveItemEffect {
+export function createGiveItemEffect(item:Item, room:Room, giver:Character, recipient:Character, time:number, _scalingFactors:ScalingFactors):GiveItemEffect {
   return {
     type:EffectType.GIVE_ITEM,
     room,

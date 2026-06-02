@@ -3,7 +3,7 @@ import { assertNonNullable } from "decent-portal";
 import { createGiveItemEvent } from "@/game/itineraryUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
-import { findNearestWaypointToPosition } from "@/game/waypointUtil";
+import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET } from "@/game/waypointUtil";
 import {
   ActivityContext,
   calcActivityStartTime,
@@ -20,8 +20,12 @@ import { normalizeId } from "@/game/idUtil";
 
 const GIVE_ITEM_NEARBY_DISTANCE = 8;
 
-function _calcDistance(fromX:number, fromY:number, toX:number, toY:number):number {
-  return Math.hypot(toX - fromX, toY - fromY);
+function _calcFloorDistance(fromX:number, fromZ:number, toX:number, toZ:number):number {
+  return Math.hypot(toX - fromX, toZ - fromZ);
+}
+
+function _isOnSameFloorY(y1:number, y2:number):boolean {
+  return Math.abs(y1 - y2) <= FLOOR_WAYPOINT_Y_OFFSET;
 }
 
 function _matchesItemReference(itemId:string, itemTitle:string, reference:string):boolean {
@@ -61,9 +65,10 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
   const recipientRoom = findCurrentRoom(context.level, recipientPosition);
   if (recipientRoom.id !== currentRoom.id) throw new Error(`recipient ${recipientId} is not in the same room for give activity`);
 
-  const isNearby = _calcDistance(context.state.position.x, context.state.position.y, recipientPosition.x, recipientPosition.y) <= GIVE_ITEM_NEARBY_DISTANCE;
-  const targetWaypoint = findNearestWaypointToPosition(currentRoom, recipientPosition);
-  const unscheduledMovementEvents = isNearby ? [] : (() => {
+  const isNearby = _calcFloorDistance(context.state.position.x, context.state.position.z, recipientPosition.x, recipientPosition.z) <= GIVE_ITEM_NEARBY_DISTANCE;
+  const targetWaypoint = findNearestWaypointToPosition(currentRoom, recipientPosition,
+    waypoint => _isOnSameFloorY(waypoint.position.y, recipientPosition.y));
+  const unscheduledMovementEvents = isNearby || targetWaypoint === context.state.waypoint ? [] : (() => {
     findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
     return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
   })();
