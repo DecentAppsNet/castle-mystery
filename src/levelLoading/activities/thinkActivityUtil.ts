@@ -1,4 +1,4 @@
-import { formatMsecsAsTimestamp } from "@/common/timestampUtil";
+import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
 import { createThoughtEvent } from "@/game/itineraryUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";

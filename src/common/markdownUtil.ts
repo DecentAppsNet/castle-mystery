@@ -1,4 +1,6 @@
 /*
+This module groups shared markdown-parsing helpers for section, line, and name/value conventions used as configuration formats.
+
 There's some parsing conventions that seem to work well across multiple formats based on markdown. Think of the format layering like:
 
   markdown format                                                        (base)
@@ -14,6 +16,7 @@ Some conventions this module supports/promotes:
 * Use of Markdown headings to hierarchically arrange sections.
 * Name/value pairs retrieved from bulleted lines.
 
+If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes.
 */
 
 // Type for associative array

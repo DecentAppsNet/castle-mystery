@@ -1,3 +1,6 @@
+/* This module groups common angle math helpers for normalization, comparison, and interpolation.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 export function normalizeAngle(angle:number):number {
   while (angle <= -Math.PI) angle += Math.PI * 2;
   while (angle > Math.PI) angle -= Math.PI * 2;

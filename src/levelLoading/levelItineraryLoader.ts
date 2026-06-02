@@ -2,7 +2,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { formatMsecsAsTimestamp, LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/common/timestampUtil";
+import { formatMsecsAsTimestamp, LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/levelLoading/timestampUtil";
 import { MSECS_IN_DAY } from "@/common/timeUtil";
 import { tryCreateAtActivity } from "./activities/atActivityUtil";
 import { tryCreateDropActivity } from "./activities/dropActivityUtil";

@@ -10,7 +10,7 @@ import { rand } from "@/common/randUtil";
 import { baseUrl } from "@/common/urlUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
-import { formatMsecsAsTimestamp, parseTimestampToMsecs } from "@/common/timestampUtil";
+import { formatMsecsAsTimestamp, parseTimestampToMsecs } from "@/levelLoading/timestampUtil";
 import { loadItineraries } from "./levelItineraryLoader";
 import LoadLevelException from "./LoadLevelException";
 import {

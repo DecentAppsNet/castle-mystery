@@ -1,3 +1,6 @@
+/* This module groups shared time-unit constants used for timestamp and duration calculations.
+	If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 export const MINUTES_IN_HOUR = 60;
 export const HOURS_IN_DAY = 24;
 export const MINUTES_IN_DAY = HOURS_IN_DAY * MINUTES_IN_HOUR;

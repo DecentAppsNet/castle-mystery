@@ -13,7 +13,7 @@ import {
   parseSentenceStyleActivityText
 } from "./activityUtil";
 import { isActiveAudibleRoom } from "@/game/roomUtil";
-import { formatMsecsAsTimestamp } from "@/common/timestampUtil";
+import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
 
 type SpeechVerb = 'says' | 'interrupts';
 

@@ -1,3 +1,6 @@
+/* This module groups shared regex-based text helpers for escaping and extracting common text patterns.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 export function escapeRegexCharacters(text:string):string {
   return text.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }

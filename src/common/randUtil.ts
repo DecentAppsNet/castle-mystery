@@ -1,3 +1,6 @@
+/* This module groups seeded and unseeded random-number helpers for deterministic and runtime behavior.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 let theSeed:boolean = false;
 let theSequenceState:number = 0;
 

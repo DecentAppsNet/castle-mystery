@@ -6,6 +6,32 @@
 2. Start the dev server with `npm run dev`.
 3. Run tests with `npm test`.
 
+# Refactoring
+
+## Module Summary Comments
+
+* Every eligible module should have a concise comment at the top that has the following:
+  * one-sentence description of scope of functionality the module includes
+  * This statement `If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes.`
+* An "eligible" module is a Typescript module that is not: a test file, a .tsx file, a type file (file that only contains a type definition)
+* Here is an example of a module summary comment:
+
+```Javascript
+/* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents. 
+   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+```
+
+## Refactoring Large Modules
+
+* AI agent instructions: If a module contains more than 500 lines of code, ask the user if they want to refactor that module. You don't need to interrupt a running task - just ask at the next graceful opportunity, e.g., at the end of completing a request.
+* When refactoring a large module, look for an optimal set of sub-modules and propose to the user. 
+  * A good sub-module will have a name that easily describes its scope, e.g. "levelIinteraryLoader". If it's difficult for a single module name to describe the scope, that's a sign that scope is not good for grouping.
+  * A good sub-module will encapsulate functionality as private functions within the module, so that it becomes easier to think about the module in terms of its exported functions.
+  * If there are a number of modules that could be usefully encapsulated inside of a folder, propose this in your plan. For example, say `roomDrawUtil.ts` is the exclusive caller of a set of modules like `roomRoofDrawUtil.ts` and `roomPanelDrawUtil.ts`. This set of modules could be moved to a new `/src/game/drawing/rooms/` folder.
+* Get agreement from the user before implementing the refactor.
+* All created sub-modules should contain the module summary comment.
+* The module from which sub-modules were created should have its module summary comment updated.
+
 # Testing
 
 This project uses two test categories.
