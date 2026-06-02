@@ -3,17 +3,16 @@ import { createThoughtEvent } from "@/game/itineraryUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import ThoughtEvent from "@/game/types/itineraryEvents/ThoughtEvent";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable } from "./activityUtil";
+import {
+  ActivityContext,
+  calcActivityStartTime,
+  ensureTimestampIsAvailable,
+  findSentenceStyleActivityVerb,
+  parseSentenceStyleActivityText
+} from "./activityUtil";
 
 function _parseThoughtText(activityText:string):string {
-  const thoughtText = activityText.slice("thinks".length).trim();
-  if (!thoughtText.length) throw new Error(`missing thought text in authored activity '${activityText}'`);
-  if (thoughtText.startsWith('"')) {
-    const closingQuoteIndex = thoughtText.lastIndexOf('"');
-    if (closingQuoteIndex <= 0) throw new Error(`unterminated thought text in authored activity '${activityText}'`);
-    return thoughtText.slice(1, closingQuoteIndex);
-  }
-  return thoughtText;
+  return parseSentenceStyleActivityText(activityText, 'thinks', 'thought');
 }
 
 function _findOverlappingThoughtEvent(events:ItineraryEvent[], thoughtEvent:ThoughtEvent):ThoughtEvent|null {
@@ -32,11 +31,10 @@ function _createOverlappingThoughtMessage(overlappingThoughtEvent:ThoughtEvent, 
 }
 
 export function tryCreateThinkActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
-  const trimmedActivityText = activityText.trim();
-  if (!trimmedActivityText.startsWith('thinks ')) return null;
+  if (!findSentenceStyleActivityVerb(activityText, ['thinks'])) return null;
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  const thoughtEvent = createThoughtEvent(activityStartTime, _parseThoughtText(trimmedActivityText));
+  const thoughtEvent = createThoughtEvent(activityStartTime, _parseThoughtText(activityText));
   const overlappingThoughtEvent = _findOverlappingThoughtEvent(context.state.events, thoughtEvent);
   if (overlappingThoughtEvent) throw new Error(_createOverlappingThoughtMessage(overlappingThoughtEvent, thoughtEvent, context.timestampType));
   return [thoughtEvent];

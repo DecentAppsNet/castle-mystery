@@ -88,6 +88,7 @@ import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and
 import winSynopsisText from './fixtures/win-synopsis.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { calcItemCuboidHeightGame } from '@/game/itemSizeUtil';
+import { ITEM_EFFECT_DURATION } from '@/game/effects/dropItemUtil';
 import LoadLevelException from '@/levelLoading/LoadLevelException';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
@@ -614,6 +615,32 @@ describe('levelUtil itinerary loading', () => {
     expect(dropEvent?.position).not.toEqual(dropStartPose);
   });
 
+  it('adds a short blocking pause after drop activities before after-previous events', () => {
+    const dropPauseText = `${dropItemText}\n: Hero thinks "Done."`;
+    const level = loadLevelFromText(dropPauseText, 'drop-pause.md');
+    const hero = level.characters.find(character => character.id === 'hero');
+    const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, duration:number } | undefined;
+    const thoughtEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.THOUGHT) as { startTime:number } | undefined;
+
+    expect(dropEvent?.duration).toBe(ITEM_EFFECT_DURATION);
+    expect(thoughtEvent?.startTime).toBe(dropEvent!.startTime + dropEvent!.duration);
+  });
+
+  it('adds a short blocking pause after take activities before after-previous events', () => {
+    const takePauseText = dropItemText
+      .replace('....\n.H..\n....', '..B.\n.H..\n....')
+      .replace('* H=Hero', '* H=Hero\n* B=Book')
+      .replace('* items=Book\n', '')
+      .replace('0:00:05 Hero drops Book', '0:00:05 Hero takes Book\n: Hero thinks "Done."');
+    const level = loadLevelFromText(takePauseText, 'take-pause.md');
+    const hero = level.characters.find(character => character.id === 'hero');
+    const takeEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM) as { startTime:number, duration:number } | undefined;
+    const thoughtEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.THOUGHT) as { startTime:number } | undefined;
+
+    expect(takeEvent?.duration).toBe(ITEM_EFFECT_DURATION);
+    expect(thoughtEvent?.startTime).toBe(takeEvent!.startTime + takeEvent!.duration);
+  });
+
   it('loads give activities without movement when the recipient is already nearby', () => {
     const level = loadLevelFromText(giveItemNearText);
     const king = level.characters.find(character => character.id === 'king');
@@ -697,6 +724,17 @@ describe('levelUtil itinerary loading', () => {
 
   it('allows interrupts to overlap another audible character speech', () => {
     expect(() => loadLevelFromText(audibleSpeechInterruptsText, 'audible-speech-interrupts.md')).not.toThrow();
+  });
+
+  it('accepts comma punctuation after says, interrupts, and thinks', () => {
+    const punctuatedInterruptsText = audibleSpeechInterruptsText
+      .replace('0:00:01 June interrupts "Hi, Bob."', '0:00:01 June interrupts, "Hi, Bob."');
+    const punctuatedThoughtText = audibleSpeechOverlapText
+      .replace('0:00:01 June says "Hi, Bob."', '0:00:01 June thinks, "Hi, Bob."');
+
+    expect(() => loadLevelFromText(itineraryExtraPunctuationText, 'itinerary-extra-punctuation.md')).not.toThrow();
+    expect(() => loadLevelFromText(punctuatedInterruptsText, 'audible-speech-interrupts.md')).not.toThrow();
+    expect(() => loadLevelFromText(punctuatedThoughtText, 'audible-thought-overlap.md')).not.toThrow();
   });
 
   it('allows thinks to overlap another audible character speech', () => {
@@ -785,8 +823,8 @@ describe('levelUtil itinerary loading', () => {
   it('throws when the same character would think over their own earlier thought', () => {
     const overlappingSameCharacterThoughtText = overlappingSameCharacterSpeechText
       .replace('0:00:00 Bob says, "Why hello there, June! I have more than one second of things to say to you right now."',
-        '0:00:00 Bob thinks, "Why hello there, June! I have more than one second of things to think to myself right now."')
-      .replace('0:00:01 Bob says, "Hi again."', '0:00:01 Bob thinks, "Hi again."');
+        '0:00:00 Bob thinks "Why hello there, June! I have more than one second of things to think to myself right now."')
+      .replace('0:00:01 Bob says, "Hi again."', '0:00:01 Bob thinks "Hi again."');
 
     try {
       loadLevelFromText(overlappingSameCharacterThoughtText, 'overlapping-same-character-thought.md');

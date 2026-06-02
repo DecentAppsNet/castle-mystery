@@ -20,6 +20,7 @@ import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNeare
 import { ROOM_BACK_Z } from "./roomSpaceConstants";
 import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./waypointUtil";
 import ItineraryIndex from "./types/ItineraryIndex";
+import { ITEM_EFFECT_DURATION } from "./effects/dropItemUtil";
 
 const WALK_MSECS_PER_PIXEL = 30;
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
@@ -105,11 +106,11 @@ export function createCharacterEncounterEvent(startTime:number, encounteredChara
 }
 
 export function createTakeItemEvent(startTime:number, itemId:string):TakeItemEvent {
-  return { type:ItineraryEventType.TAKE_ITEM, startTime, duration:0, itemId };
+  return { type:ItineraryEventType.TAKE_ITEM, startTime, duration:ITEM_EFFECT_DURATION, itemId };
 }
 
 export function createDropItemEvent(startTime:number, itemId:string, position:Position):DropItemEvent {
-  return { type:ItineraryEventType.DROP_ITEM, startTime, duration:0, itemId, position:duplicatePosition(position) };
+  return { type:ItineraryEventType.DROP_ITEM, startTime, duration:ITEM_EFFECT_DURATION, itemId, position:duplicatePosition(position) };
 }
 
 export function createGiveItemEvent(startTime:number, itemId:string, recipientCharacterId:string):GiveItemEvent {

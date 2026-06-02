@@ -155,6 +155,32 @@ function _shiftEventTimes(events:ItineraryEvent[], delta:number):ItineraryEvent[
   return events.map(event => ({ ...event, startTime:event.startTime + delta }) as ItineraryEvent);
 }
 
+function _matchesSentenceStyleActivityVerb(trimmedActivityText:string, verb:string):boolean {
+  if (!trimmedActivityText.startsWith(verb)) return false;
+  const nextChar = trimmedActivityText.charAt(verb.length);
+  return !nextChar || nextChar === ' ' || nextChar === ',';
+}
+
+function _trimLeadingOptionalCommaAndWhiteSpace(text:string):string {
+  return text.replace(/^,\s*/, '');
+}
+
+export function findSentenceStyleActivityVerb<Verb extends string>(activityText:string, verbs:readonly Verb[]):Verb|null {
+  const trimmedActivityText = activityText.trim();
+  return verbs.find(verb => _matchesSentenceStyleActivityVerb(trimmedActivityText, verb)) ?? null;
+}
+
+export function parseSentenceStyleActivityText(activityText:string, verb:string, contentType:string):string {
+  const contentText = _trimLeadingOptionalCommaAndWhiteSpace(activityText.trim().slice(verb.length).trim());
+  if (!contentText.length) throw new Error(`missing ${contentType} text in authored activity '${activityText}'`);
+  if (contentText.startsWith('"')) {
+    const closingQuoteIndex = contentText.lastIndexOf('"');
+    if (closingQuoteIndex <= 0) throw new Error(`unterminated ${contentType} text in authored activity '${activityText}'`);
+    return contentText.slice(1, closingQuoteIndex);
+  }
+  return contentText;
+}
+
 export function stripTrailingPeriod(text:string):string {
   const trimmedText = text.trim();
   return trimmedText.endsWith('.') ? trimmedText.slice(0, -1).trim() : trimmedText;
@@ -248,11 +274,21 @@ export function scheduleEventsToStartAtTime(events:ItineraryEvent[], timestamp:n
 
 export function findEarliestAbsoluteActivityStartTime(state:CharacterActivityState):number {
   return state.events.reduce((blockingTime, event) =>
-    event.type === ItineraryEventType.WALK
-      ? Math.max(blockingTime, event.startTime + event.duration)
-      : event.type === ItineraryEventType.SPEECH
-        ? blockingTime
-        : Math.max(blockingTime, event.startTime), 0);
+    Math.max(blockingTime, event.startTime + _getBlockingDurationForScheduling(event, 'absolute')), 0);
+}
+
+function _getBlockingDurationForScheduling(event:ItineraryEvent, timestampType:ActivityTimestampType):number {
+  switch (event.type) {
+    case ItineraryEventType.WALK:
+      return event.duration;
+    case ItineraryEventType.SPEECH:
+      return timestampType === 'after-previous-activity' ? event.duration : 0;
+    case ItineraryEventType.TAKE_ITEM:
+    case ItineraryEventType.DROP_ITEM:
+      return event.duration;
+    default:
+      return 0;
+  }
 }
 
 export function appendEventsToCharacterState(level:Level, character:Character, state:CharacterActivityState, events:ItineraryEvent[]) {
@@ -262,11 +298,7 @@ export function appendEventsToCharacterState(level:Level, character:Character, s
   assertNonNullable(lastEvent);
   let blockingTime = state.time;
   for (const event of events) {
-    if (event.type !== ItineraryEventType.WALK) {
-      blockingTime = Math.max(blockingTime, event.startTime + (event.type === ItineraryEventType.SPEECH ? event.duration : 0));
-      continue;
-    }
-    blockingTime = Math.max(blockingTime, event.startTime + event.duration);
+    blockingTime = Math.max(blockingTime, event.startTime + _getBlockingDurationForScheduling(event, 'after-previous-activity'));
   }
   state.time = blockingTime;
   const pose = findStatePoseAtTime(character, state, state.time);

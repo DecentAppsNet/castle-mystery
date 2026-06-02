@@ -7,7 +7,7 @@ import Effect from "./types/Effect";
 import DropItemEffect from "./types/DropItemEffect";
 import EffectType from "./types/EffectType";
 
-export const ITEM_EFFECT_DURATION = 200;
+export const ITEM_EFFECT_DURATION = 500;
 
 function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRenderingContext2D, isActive:boolean):boolean {
   const dropItemEffect = effect as DropItemEffect;

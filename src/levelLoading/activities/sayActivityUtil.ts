@@ -3,21 +3,22 @@ import Character from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import SpeechEvent from "@/game/types/itineraryEvents/SpeechEvent";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findStatePoseAtTime } from "./activityUtil";
+import {
+  ActivityContext,
+  calcActivityStartTime,
+  ensureTimestampIsAvailable,
+  findCurrentRoom,
+  findSentenceStyleActivityVerb,
+  findStatePoseAtTime,
+  parseSentenceStyleActivityText
+} from "./activityUtil";
 import { isActiveAudibleRoom } from "@/game/roomUtil";
 import { formatMsecsAsTimestamp } from "@/common/timestampUtil";
 
 type SpeechVerb = 'says' | 'interrupts';
 
 function _parseSpeechText(activityText:string, speechVerb:SpeechVerb):string {
-  const speechText = activityText.slice(speechVerb.length).trim();
-  if (!speechText.length) throw new Error(`missing speech text in authored activity '${activityText}'`);
-  if (speechText.startsWith('"')) {
-    const closingQuoteIndex = speechText.lastIndexOf('"');
-    if (closingQuoteIndex <= 0) throw new Error(`unterminated speech text in authored activity '${activityText}'`);
-    return speechText.slice(1, closingQuoteIndex);
-  }
-  return speechText;
+  return parseSentenceStyleActivityText(activityText, speechVerb, 'speech');
 }
 
 function _findOverlappingSpeechEvent(events:ItineraryEvent[], speechEvent:SpeechEvent):SpeechEvent|null {
@@ -71,10 +72,7 @@ function _throwOnAudibleSpeechOverlap(context:ActivityContext, speechEvent:Speec
 }
 
 function _findSpeechVerb(activityText:string):SpeechVerb|null {
-  const trimmedActivityText = activityText.trim();
-  if (trimmedActivityText.startsWith('says ')) return 'says';
-  if (trimmedActivityText.startsWith('interrupts ')) return 'interrupts';
-  return null;
+  return findSentenceStyleActivityVerb(activityText, ['says', 'interrupts']);
 }
 
 export function tryCreateSayActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {

@@ -101,7 +101,6 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
       roomLineWidth:Math.max(1, scalingFactors.roomLineWidth * (levelCameraRect.height / gameState.camera.currentRect.height))
     };
     gameState.scalingFactors = scalingFactors;
-    gameState.activeEffects.length = 0;
   }
   return scalingFactors;
 }
