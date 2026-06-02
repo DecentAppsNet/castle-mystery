@@ -600,6 +600,24 @@ describe('levelUtil itinerary loading', () => {
     expect(vase?.position.y).toBe(floorY - calcItemCuboidHeightGame(hall));
   });
 
+  it('uses item floor position scoring to choose the take waypoint before taking a stacked item', () => {
+    const takeStackedItemText = `${stackedRoomItemsText}\n0:00:00 Hero takes Vase\n`;
+    const level = loadLevelFromText(takeStackedItemText, 'take-stacked-item.md');
+    const hall = findRoom(level.rooms, 'Hall');
+    const hero = level.characters.find(character => character.id === 'hero') || null;
+    const takeEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM) as { startTime:number } | undefined;
+    const table = hall.items.find(item => item.id === 'table') || null;
+    const targetWaypoint = hall.waypoints.find(waypoint => waypoint.position.x === table?.position.x
+      && waypoint.position.y === table?.position.y
+      && waypoint.position.z === ROOM_MIDDLE_ROW_CENTER_Z) || null;
+
+    expect(hero).not.toBeNull();
+    expect(table).not.toBeNull();
+    expect(takeEvent).toBeDefined();
+    expect(targetWaypoint).not.toBeNull();
+    expect(findCharacterPose(hero!, takeEvent!.startTime).position).toEqual(targetWaypoint!.position);
+  });
+
   it('loads drop activities and removes dropped items from final carried inventory', () => {
     const level = loadLevelFromText(dropItemText);
     const hero = level.characters.find(character => character.id === 'hero');
@@ -673,11 +691,13 @@ describe('levelUtil itinerary loading', () => {
     const queen = level.characters.find(character => character.id === 'queen');
     const library = findRoom(level.rooms, 'Library');
     const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-    const targetWaypoint = library.waypoints.reduce((rightmostFloorWaypoint, waypoint) => {
+    const queenPose = findCharacterPose(queen!, 6_000).position;
+    const targetWaypoint = library.waypoints.reduce((rightmostUnclaimedFloorWaypoint, waypoint) => {
       if (waypoint.position.y !== floorY
-        || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return rightmostFloorWaypoint;
-      if (!rightmostFloorWaypoint) return waypoint;
-      return waypoint.position.x > rightmostFloorWaypoint.position.x ? waypoint : rightmostFloorWaypoint;
+        || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return rightmostUnclaimedFloorWaypoint;
+      if (waypoint.position.x === queenPose.x) return rightmostUnclaimedFloorWaypoint;
+      if (!rightmostUnclaimedFloorWaypoint) return waypoint;
+      return waypoint.position.x > rightmostUnclaimedFloorWaypoint.position.x ? waypoint : rightmostUnclaimedFloorWaypoint;
     }, null as typeof library.waypoints[number] | null);
     const speechEvent = king?.itinerary.find(event => event.type === ItineraryEventType.SPEECH && event.startTime === 7_000) as { speech:string } | undefined;
 
