@@ -7,6 +7,7 @@ import { MSECS_IN_DAY } from "@/common/timeUtil";
 import { tryCreateAtActivity } from "./activities/atActivityUtil";
 import { tryCreateDropActivity } from "./activities/dropActivityUtil";
 import { tryCreateGiveActivity } from "./activities/giveActivityUtil.ts";
+import { tryCreateFaceActivity } from "./activities/facesActivityUtil";
 import { tryCreateLockActivity, tryCreateUnlockActivity } from "./activities/lockActivityUtil";
 import {
   appendEventsToCharacterState,
@@ -130,6 +131,11 @@ function _normalizeThoughtActivityText(activityText:string):string {
   return `thinks ${thoughtText}`;
 }
 
+function _normalizeFacingActivityText(activityText:string):string {
+  const facingDirection = _normalizeActivityArgument(activityText.slice('faces'.length), new Set(['\'', '-'])).toLowerCase();
+  return facingDirection ? `faces ${facingDirection}` : 'faces';
+}
+
 function _normalizeGiveActivityText(activityText:string):string {
   const giveText = activityText.slice('gives'.length).trim();
   const separatorIndex = giveText.lastIndexOf(' to ');
@@ -156,6 +162,7 @@ function _normalizeParsedActivityText(activityText:string):string {
   if (trimmedActivityText.startsWith('says')) return _normalizeSpeechActivityText(trimmedActivityText, 'says');
   if (trimmedActivityText.startsWith('interrupts')) return _normalizeSpeechActivityText(trimmedActivityText, 'interrupts');
   if (trimmedActivityText.startsWith('thinks')) return _normalizeThoughtActivityText(trimmedActivityText);
+  if (trimmedActivityText.startsWith('faces')) return _normalizeFacingActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('gives')) return _normalizeGiveActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('unlocks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'unlocks');
   if (trimmedActivityText.startsWith('locks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'locks');
@@ -187,7 +194,7 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '%', '"', '\'', '-']));
-  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
+  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' faces ', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
@@ -326,6 +333,7 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
     tryCreateAtActivity,
     tryCreateSayActivity,
     tryCreateThinkActivity,
+    tryCreateFaceActivity,
     tryCreateGiveActivity,
     tryCreateDropActivity,
     tryCreateTakeActivity,

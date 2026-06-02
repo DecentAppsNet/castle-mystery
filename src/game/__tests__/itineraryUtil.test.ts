@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
+import { createFaceEvent, createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
 import { ROOM_BACK_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
 import Character, { createDefaultCharacter } from '../types/Character';
@@ -104,6 +104,29 @@ describe('itineraryUtil', () => {
       expect(midWalkPose.position.y).toBe(10);
       expect(midWalkPose.position.z).toBeGreaterThan(MIDDLE_ROW_DEPTH);
       expect(midWalkPose.position.z).toBeLessThan(FRONT_ROW_DEPTH);
+    });
+
+    it('faces in the direction of the latest horizontal walk once that walk starts', () => {
+      const room = _createRoom();
+      const walkRightEvent = createWalkEvent(room, 1_000, 0, 0, 10, 0);
+      const walkLeftEvent = createWalkEvent(room, 2_000, 10, 0, 2, 0);
+      expect(walkRightEvent).not.toBeNull();
+      expect(walkLeftEvent).not.toBeNull();
+
+      const character = _createCharacter([walkRightEvent!, walkLeftEvent!]);
+
+      expect(findCharacterPose(character, 999).facingDirection).toBe('right');
+      expect(findCharacterPose(character, 1_000).facingDirection).toBe('right');
+      expect(findCharacterPose(character, 2_000).facingDirection).toBe('left');
+      expect(findCharacterPose(character, 2_500).facingDirection).toBe('left');
+    });
+
+    it('applies explicit face events immediately at their start time', () => {
+      const character = _createCharacter([createFaceEvent(1_000, 'left')]);
+
+      expect(findCharacterPose(character, 999).facingDirection).toBe('right');
+      expect(findCharacterPose(character, 1_000).facingDirection).toBe('left');
+      expect(findCharacterPose(character, 1_500).facingDirection).toBe('left');
     });
   });
 });

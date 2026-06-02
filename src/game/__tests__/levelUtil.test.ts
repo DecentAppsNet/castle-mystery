@@ -115,6 +115,7 @@ import timelineRelativeOnlyText from './fixtures/timeline-relative-only.md?raw';
 import timelineInitialTimeOutsideBoundsText from './fixtures/timeline-initial-time-outside-bounds.md?raw';
 import timelineStartAfterItineraryText from './fixtures/timeline-start-after-itinerary.md?raw';
 import escapeStairwellRegressionText from './fixtures/escape-stairwell-regression.md?raw';
+import facesActivityText from './fixtures/faces-activity.md?raw';
 import { getClozeImageCandidateUrls } from '../imageUrlUtil';
 import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
@@ -171,6 +172,16 @@ describe('levelUtil itinerary loading', () => {
     expect(eastHall?.isObscured).toBe(true);
     expect(foyer?.isObscured).toBe(false);
     expect(level.solutions.map(solution => solution.title)).toEqual(['Identities']);
+  });
+
+  it('parses immediate faces activities and applies their facing direction at the authored time', () => {
+    const level = loadLevelFromText(facesActivityText);
+    const king = level.characters.find(character => character.id === 'king');
+    if (!king) expect.fail('expected king character to exist');
+
+    expect(king.itinerary.some(event => event.type === ItineraryEventType.FACE)).toBe(true);
+    expect(findCharacterPose(king, 4_999).facingDirection).toBe('right');
+    expect(findCharacterPose(king, 5_000).facingDirection).toBe('left');
   });
 
   it('parses outside room metadata and defaults omitted outside flags to false', () => {

@@ -178,6 +178,33 @@ function _drawActiveCharacterHighlight(centerX:number, centerY:number, character
   context.fill();
 }
 
+function _drawCharacterBody(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
+  facingDirection:Character['facingDirection'], context:CanvasRenderingContext2D) {
+  const facingSign = facingDirection === 'right' ? 1 : -1;
+  const headCenterY = centerY - characterHeight / 4;
+  const shoulderY = centerY;
+  const hipY = centerY + characterHeight / 4;
+  const leadingArmX = backboneX + facingSign * characterWidth / 2;
+  const trailingArmX = backboneX - facingSign * characterWidth / 4;
+  const leadingArmY = centerY + characterHeight / 8;
+  const trailingArmY = centerY + characterHeight / 16;
+  const leadingFootX = backboneX + facingSign * characterWidth / 2;
+  const trailingFootX = backboneX - facingSign * characterWidth / 8;
+  const footY = centerY + characterHeight / 2;
+
+  context.beginPath();
+  context.moveTo(backboneX, headCenterY + Math.min(characterWidth, characterHeight) / 4);
+  context.lineTo(backboneX, hipY);
+  context.moveTo(backboneX, shoulderY);
+  context.lineTo(trailingArmX, trailingArmY);
+  context.moveTo(backboneX, shoulderY);
+  context.lineTo(leadingArmX, leadingArmY);
+  context.moveTo(backboneX, hipY);
+  context.lineTo(trailingFootX, footY);
+  context.moveTo(backboneX, hipY);
+  context.lineTo(leadingFootX, footY);
+}
+
 export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [roomLeft] = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
   const [roomRight, roomBottom] = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
@@ -219,17 +246,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   if (isActive) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
-  context.beginPath();
-  context.moveTo(backboneX, centerY - characterHeight / 4 + headRadius);
-  context.lineTo(backboneX, centerY + characterHeight / 4);
-  context.moveTo(backboneX, centerY);
-  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 8);
-  context.moveTo(backboneX, centerY);
-  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 8);
-  context.moveTo(backboneX, centerY + characterHeight / 4);
-  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 2);
-  context.moveTo(backboneX, centerY + characterHeight / 4);
-  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 2);
+  _drawCharacterBody(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, context);
   if (!faceImage) {
     context.moveTo(backboneX + headRadius, centerY - characterHeight / 4);
     context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);

@@ -3,6 +3,9 @@ import ItineraryIndex from "./ItineraryIndex";
 import Item, { duplicateItem } from "./Item";
 import Waypoint from "./Waypoint";
 
+export type FacingDirection = 'left' | 'right';
+export type BodyOrientation = 'standing' | 'sitting' | 'laying';
+
 function _createDefaultWaypoint():Waypoint {
   return {
     position:{ x:0, y:0, z:0 },
@@ -24,6 +27,8 @@ type Character = {
   readonly title:string,
   readonly faceImageUrl:string|null,
   readonly randomSalt:number,
+  facingDirection:FacingDirection,
+  bodyOrientation:BodyOrientation,
   isTitleKnown:boolean,
   description:string,
   items:Item[],
@@ -42,6 +47,8 @@ export function createDefaultCharacter():Character {
     title:'Character',
     faceImageUrl:null,
     randomSalt:0,
+    facingDirection:'right',
+    bodyOrientation:'standing',
     isTitleKnown:true,
     description:'',
     items:[],
@@ -61,6 +68,8 @@ export function duplicateCharacter(from:Character):Character {
     title:from.title,
     faceImageUrl:from.faceImageUrl,
     randomSalt:from.randomSalt,
+    facingDirection:from.facingDirection,
+    bodyOrientation:from.bodyOrientation,
     isTitleKnown:from.isTitleKnown,
     description:from.description,
     items:from.items.map(duplicateItem),

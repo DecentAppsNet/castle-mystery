@@ -1,5 +1,6 @@
 const ItineraryEventType = {
   WALK:"Walk",
+  FACE:"Face",
   ROOM_ENTRY:"RoomEntry",
   SPEECH:"Speech",
   THOUGHT:"Thought",

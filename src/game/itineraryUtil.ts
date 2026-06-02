@@ -14,6 +14,7 @@ import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
+import type { FacingDirection } from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
 import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from "./roomUtil";
@@ -21,6 +22,7 @@ import { ROOM_BACK_Z } from "./roomSpaceConstants";
 import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./waypointUtil";
 import ItineraryIndex from "./types/ItineraryIndex";
 import { ITEM_EFFECT_DURATION } from "./effects/dropItemUtil";
+import FaceEvent from "./types/itineraryEvents/FaceEvent";
 
 const WALK_MSECS_PER_PIXEL = 30;
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
@@ -29,6 +31,7 @@ const WAYPOINT_DEPTH_ROW_COUNT = 3;
 
 type CharacterPose = {
   position:Position,
+  facingDirection:FacingDirection,
   speech:string|null,
   thought:string|null
 }
@@ -87,6 +90,15 @@ export function createSpeechEvent(startTime:number, speech:string):SpeechEvent {
   };
 }
 
+export function createFaceEvent(startTime:number, facingDirection:FacingDirection):FaceEvent {
+  return {
+    type:ItineraryEventType.FACE,
+    startTime,
+    duration:0,
+    facingDirection
+  };
+}
+
 export function createThoughtEvent(startTime:number, thought:string):ThoughtEvent {
   return {
     type:ItineraryEventType.THOUGHT,
@@ -138,6 +150,7 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
     case ItineraryEventType.WALK:
       return duplicatePosition((event as WalkEvent).toPosition);
     case ItineraryEventType.ROOM_ENTRY:
+    case ItineraryEventType.FACE:
     case ItineraryEventType.SPEECH:
     case ItineraryEventType.THOUGHT:
     case ItineraryEventType.CHARACTER_ENCOUNTER:
@@ -167,11 +180,30 @@ export function findCharacterPose(character:Character, time:number):CharacterPos
   if (!character.itinerary.length || !character.itineraryIndex.eventStartTimes.length) {
     return {
       position:{ x:character.x, y:character.y, z:character.depth },
+      facingDirection:character.facingDirection,
       speech:null,
       thought:null
     };
   }
   return _findItineraryPosition(character, time);
+}
+
+function _findFacingDirectionAtTime(character:Character, itinerary:ItineraryEvent[], time:number):FacingDirection {
+  let facingDirection = character.facingDirection;
+
+  for (const event of itinerary) {
+    if (event.startTime > time) break;
+    if (event.type === ItineraryEventType.FACE) {
+      facingDirection = (event as FaceEvent).facingDirection;
+      continue;
+    }
+    if (event.type !== ItineraryEventType.WALK) continue;
+    const walkEvent = event as WalkEvent;
+    if (walkEvent.toPosition.x > walkEvent.fromPosition.x) facingDirection = 'right';
+    else if (walkEvent.toPosition.x < walkEvent.fromPosition.x) facingDirection = 'left';
+  }
+
+  return facingDirection;
 }
 
 function _findPositionAtTime(initialPosition:Position, itinerary:ItineraryEvent[], time:number):Position {
@@ -215,6 +247,7 @@ function _findThoughtAtTime(itinerary:ItineraryEvent[], time:number):string|null
 function _findItineraryPosition(character:Character, time:number):CharacterPose {
   return {
     position:_findPositionAtTime({ x:character.x, y:character.y, z:character.depth }, character.itinerary, time),
+    facingDirection:_findFacingDirectionAtTime(character, character.itinerary, time),
     speech:_findSpeechAtTime(character.itinerary, time),
     thought:_findThoughtAtTime(character.itinerary, time)
   };
