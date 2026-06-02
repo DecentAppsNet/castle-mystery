@@ -158,11 +158,7 @@ function _shiftEventTimes(events:ItineraryEvent[], delta:number):ItineraryEvent[
 function _matchesSentenceStyleActivityVerb(trimmedActivityText:string, verb:string):boolean {
   if (!trimmedActivityText.startsWith(verb)) return false;
   const nextChar = trimmedActivityText.charAt(verb.length);
-  return !nextChar || nextChar === ' ' || nextChar === ',';
-}
-
-function _trimLeadingOptionalCommaAndWhiteSpace(text:string):string {
-  return text.replace(/^,\s*/, '');
+  return !nextChar || nextChar === ' ';
 }
 
 export function findSentenceStyleActivityVerb<Verb extends string>(activityText:string, verbs:readonly Verb[]):Verb|null {
@@ -171,7 +167,7 @@ export function findSentenceStyleActivityVerb<Verb extends string>(activityText:
 }
 
 export function parseSentenceStyleActivityText(activityText:string, verb:string, contentType:string):string {
-  const contentText = _trimLeadingOptionalCommaAndWhiteSpace(activityText.trim().slice(verb.length).trim());
+  const contentText = activityText.trim().slice(verb.length).trim();
   if (!contentText.length) throw new Error(`missing ${contentType} text in authored activity '${activityText}'`);
   if (contentText.startsWith('"')) {
     const closingQuoteIndex = contentText.lastIndexOf('"');
