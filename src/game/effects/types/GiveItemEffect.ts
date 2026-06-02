@@ -1,17 +1,11 @@
 import Item from "@/game/types/Item";
+import Position from "@/game/types/Position";
 import EffectBase from "./EffectBase";
 
 type GiveItemEffect = EffectBase & {
   item:Item,
-  startCanvasX:number,
-  startCanvasY:number,
-  endCanvasX:number,
-  endCanvasY:number,
-  cuboidWidthPixels:number,
-  cuboidHeightPixels:number,
-  cuboidDepthXPixels:number,
-  cuboidDepthYPixels:number,
-  cuboidLineWidthPixels:number
+  startPosition:Position,
+  endPosition:Position
 }
 
 export default GiveItemEffect;

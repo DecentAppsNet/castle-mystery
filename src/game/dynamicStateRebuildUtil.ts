@@ -179,7 +179,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           if (!room.isObscured && previousTime !== undefined && takeEvent.startTime > previousTime && takeEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:room.id,
-              create:() => gameState.activeEffects.push(createTakeItemEffect(item, room, Date.now(), gameState.scalingFactors))
+              create:() => gameState.activeEffects.push(createTakeItemEffect(item, actor, room, Date.now(), startPosition.z))
             });
           }
           actor.items.push(item);
@@ -198,7 +198,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           if (!dropRoom.isObscured && previousTime !== undefined && dropEvent.startTime > previousTime && dropEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:dropRoom.id,
-              create:() => gameState.activeEffects.push(createDropItemEffect(item, dropRoom, Date.now(), gameState.scalingFactors))
+              create:() => gameState.activeEffects.push(createDropItemEffect(item, actor, dropRoom, Date.now(), startPosition.z))
             });
           }
           dropRoom.items.push(item);

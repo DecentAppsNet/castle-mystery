@@ -11,16 +11,22 @@ import LockChangeEffect from "./types/LockChangeEffect";
 export const KEY_IMAGE_URL = '/assets/sprites/key.png';
 const LOCK_EFFECT_DURATION = 500;
 
-function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRenderingContext2D, isActive:boolean):boolean {
+function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRenderingContext2D,
+  scalingFactors:ScalingFactors, canDrawEffect:boolean):boolean {
   const lockEffect = effect as LockChangeEffect;
   const elapsed = Date.now() - lockEffect.startTime;
-  if (!isActive) return elapsed < LOCK_EFFECT_DURATION;
+  if (!canDrawEffect) return elapsed < LOCK_EFFECT_DURATION;
   const progress = clamp(elapsed / LOCK_EFFECT_DURATION, 0, 1);
-  const y = lockEffect.startCanvasY + progress * lockEffect.travelYPixels;
+  const sizePixels = Math.max(12, scalingFactors.roomLineWidth * 4);
+  const { drawWidthPixels, drawHeightPixels } = _calcKeyDrawDimensions(sizePixels, lockEffect.image);
+  const [exitCanvasX, exitCanvasY] = gameToCanvasPosition(lockEffect.exitX, lockEffect.exitY, scalingFactors);
+  const travelYPixels = lockEffect.travelDirection * Math.max(12, scalingFactors.roomLineWidth * 4);
+  const x = exitCanvasX - drawWidthPixels / 2;
+  const y = exitCanvasY - drawHeightPixels / 2 + progress * travelYPixels;
   context.save();
   context.globalAlpha = 1 - progress;
   if (lockEffect.image) {
-    context.drawImage(lockEffect.image, lockEffect.startCanvasX, y, lockEffect.drawWidthPixels, lockEffect.drawHeightPixels);
+    context.drawImage(lockEffect.image, x, y, drawWidthPixels, drawHeightPixels);
   }
   context.restore();
   return elapsed < LOCK_EFFECT_DURATION;
@@ -36,21 +42,15 @@ function _calcKeyDrawDimensions(sizePixels:number, image:ImageBitmap|null) {
 
 function _createLockChangeEffect(type:typeof EffectType.LOCK|typeof EffectType.UNLOCK, room:Room, exit:RoomExit,
   time:number, scalingFactors:ScalingFactors, imageSet:ImageSet, travelYPixels:number):LockChangeEffect {
-  const sizePixels = Math.max(12, scalingFactors.roomLineWidth * 4);
   const image = imageSet.get(KEY_IMAGE_URL) || null;
-  const { drawWidthPixels, drawHeightPixels } = _calcKeyDrawDimensions(sizePixels, image);
-  const [exitCanvasX, exitCanvasY] = gameToCanvasPosition(exit.x, exit.y, scalingFactors);
   return {
     type,
     room,
     startTime:time,
     image,
-    startCanvasX:exitCanvasX - drawWidthPixels / 2,
-    startCanvasY:exitCanvasY - drawHeightPixels / 2,
-    drawWidthPixels,
-    drawHeightPixels,
-    offsetXPixels:0,
-    travelYPixels,
+    exitX:exit.x,
+    exitY:exit.y,
+    travelDirection:Math.sign(travelYPixels) || 1,
     onProcessRoomEffect:_onProcessRoomEffect
   };
 }

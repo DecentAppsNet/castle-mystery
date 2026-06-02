@@ -1,5 +1,6 @@
 import { clamp } from "@/common/numberUtil";
 import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
+import Character from "../types/Character";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -8,42 +9,33 @@ import EffectType from "./types/EffectType";
 import TakeItemEffect from "./types/TakeItemEffect";
 import { ITEM_EFFECT_DURATION } from "./dropItemUtil";
 
-function _drawAnimatedItem(takeItemEffect:TakeItemEffect, context:CanvasRenderingContext2D, progress:number) {
-  const y = takeItemEffect.startCanvasY - progress * takeItemEffect.riseDistancePixels;
-  drawItemAtCanvasPosition(takeItemEffect.item, takeItemEffect.startCanvasX, y, {
-    cuboidWidthPixels:takeItemEffect.cuboidWidthPixels,
-    cuboidHeightPixels:takeItemEffect.cuboidHeightPixels,
-    cuboidDepthXPixels:takeItemEffect.cuboidDepthXPixels,
-    cuboidDepthYPixels:takeItemEffect.cuboidDepthYPixels,
-    cuboidLineWidthPixels:takeItemEffect.cuboidLineWidthPixels
-  }, context);
+function _drawAnimatedItem(room:Room, takeItemEffect:TakeItemEffect, context:CanvasRenderingContext2D,
+  scalingFactors:ScalingFactors, progress:number) {
+  const [x, baseY] = getItemCanvasPositionInRoom(room, takeItemEffect.item, scalingFactors);
+  const riseDistancePixels = Math.max(18, scalingFactors.roomFontHeight * 1.5);
+  const y = baseY - progress * riseDistancePixels;
+  drawItemAtCanvasPosition(takeItemEffect.item, x, y, calcItemDrawMetrics(room, scalingFactors), context);
 }
 
-function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRenderingContext2D, isActive:boolean):boolean {
+function _onProcessCharacterEffect(_character:Character, effect:Effect, context:CanvasRenderingContext2D,
+  scalingFactors:ScalingFactors):boolean {
   const takeItemEffect = effect as TakeItemEffect;
   const elapsed = Date.now() - takeItemEffect.startTime;
-  if (!isActive) return elapsed < ITEM_EFFECT_DURATION;
+  const room = takeItemEffect.room;
+  if (!room) return false;
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
-  _drawAnimatedItem(takeItemEffect, context, progress);
+  _drawAnimatedItem(room, takeItemEffect, context, scalingFactors, progress);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 
-export function createTakeItemEffect(item:Item, room:Room, time:number, scalingFactors:ScalingFactors):TakeItemEffect {
-  const [startCanvasX, startCanvasY] = getItemCanvasPositionInRoom(room, item, scalingFactors);
-  const metrics = calcItemDrawMetrics(room, scalingFactors);
+export function createTakeItemEffect(item:Item, character:Character, room:Room, time:number, characterDepth:number):TakeItemEffect {
   return {
     type:EffectType.TAKE_ITEM,
+    character,
     room,
+    drawsBefore:item.position.z <= characterDepth,
     item:{ ...item, position:{ ...item.position } },
     startTime:time,
-    startCanvasX,
-    startCanvasY,
-    cuboidWidthPixels:metrics.cuboidWidthPixels,
-    cuboidHeightPixels:metrics.cuboidHeightPixels,
-    cuboidDepthXPixels:metrics.cuboidDepthXPixels,
-    cuboidDepthYPixels:metrics.cuboidDepthYPixels,
-    cuboidLineWidthPixels:metrics.cuboidLineWidthPixels,
-    riseDistancePixels:Math.max(18, scalingFactors.roomFontHeight * 1.5),
-    onProcessRoomEffect:_onProcessRoomEffect
+    onProcessCharacterEffect:_onProcessCharacterEffect
   };
 }

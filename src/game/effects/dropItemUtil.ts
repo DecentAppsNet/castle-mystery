@@ -1,5 +1,6 @@
 import { clamp } from "@/common/numberUtil";
 import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
+import Character from "../types/Character";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -9,40 +10,28 @@ import EffectType from "./types/EffectType";
 
 export const ITEM_EFFECT_DURATION = 500;
 
-function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRenderingContext2D, isActive:boolean):boolean {
+function _onProcessCharacterEffect(_character:Character, effect:Effect, context:CanvasRenderingContext2D,
+  scalingFactors:ScalingFactors):boolean {
   const dropItemEffect = effect as DropItemEffect;
   const elapsed = Date.now() - dropItemEffect.startTime;
-  if (!isActive) return elapsed < ITEM_EFFECT_DURATION;
+  const room = dropItemEffect.room;
+  if (!room) return false;
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
-  const x = dropItemEffect.startCanvasX + (dropItemEffect.endCanvasX - dropItemEffect.startCanvasX) * progress;
-  const y = dropItemEffect.startCanvasY + (dropItemEffect.endCanvasY - dropItemEffect.startCanvasY) * progress;
-  drawItemAtCanvasPosition(dropItemEffect.item, x, y, {
-    cuboidWidthPixels:dropItemEffect.cuboidWidthPixels,
-    cuboidHeightPixels:dropItemEffect.cuboidHeightPixels,
-    cuboidDepthXPixels:dropItemEffect.cuboidDepthXPixels,
-    cuboidDepthYPixels:dropItemEffect.cuboidDepthYPixels,
-    cuboidLineWidthPixels:dropItemEffect.cuboidLineWidthPixels
-  }, context);
+  const [x, endY] = getItemCanvasPositionInRoom(room, dropItemEffect.item, scalingFactors);
+  const startYOffsetPixels = Math.max(18, scalingFactors.roomFontHeight * 1.5);
+  const y = endY - startYOffsetPixels * (1 - progress);
+  drawItemAtCanvasPosition(dropItemEffect.item, x, y, calcItemDrawMetrics(room, scalingFactors), context);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 
-export function createDropItemEffect(item:Item, room:Room, time:number, scalingFactors:ScalingFactors):DropItemEffect {
-  const [endCanvasX, endCanvasY] = getItemCanvasPositionInRoom(room, item, scalingFactors);
-  const metrics = calcItemDrawMetrics(room, scalingFactors);
+export function createDropItemEffect(item:Item, character:Character, room:Room, time:number, characterDepth:number):DropItemEffect {
   return {
     type:EffectType.DROP_ITEM,
+    character,
     room,
+    drawsBefore:item.position.z <= characterDepth,
     item:{ ...item, position:{ ...item.position } },
     startTime:time,
-    startCanvasX:endCanvasX,
-    startCanvasY:endCanvasY - Math.max(18, scalingFactors.roomFontHeight * 1.5),
-    endCanvasX,
-    endCanvasY,
-    cuboidWidthPixels:metrics.cuboidWidthPixels,
-    cuboidHeightPixels:metrics.cuboidHeightPixels,
-    cuboidDepthXPixels:metrics.cuboidDepthXPixels,
-    cuboidDepthYPixels:metrics.cuboidDepthYPixels,
-    cuboidLineWidthPixels:metrics.cuboidLineWidthPixels,
-    onProcessRoomEffect:_onProcessRoomEffect
+    onProcessCharacterEffect:_onProcessCharacterEffect
   };
 }

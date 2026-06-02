@@ -33,7 +33,7 @@ import Effect from "../effects/types/Effect";
 import ImageSet from "../types/ImageSet";
 import ExitType from "../types/ExitType";
 import StairPart, { StairPartType } from "../types/StairPart";
-import { processCharacterEffects } from "../effects/effectUtil";
+import { processAfterCharacterEffects, processBeforeCharacterEffects } from "../effects/effectUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -241,8 +241,9 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
         drawRoomItem(room, content.item, scalingFactors, context);
         return;
       case 'character':
+        processBeforeCharacterEffects(content.character, effects, context, scalingFactors);
         drawCharacter(content.character, scalingFactors, context, time, imageSet, content.character.id === activeCharacter?.id);
-        processCharacterEffects(content.character, effects, context);
+        processAfterCharacterEffects(content.character, effects, context, scalingFactors);
         return;
     }
   });
@@ -257,6 +258,7 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
   showFullContents:boolean = false) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
+  const canDrawEffect = showFullContents || isActive;
   if (isRoomObscured) {
     if (isActive && activeCharacter) drawObscuredActiveCharacter(room, scalingFactors, context);
     return;
@@ -266,7 +268,7 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
   } else {
     _drawRoomStairsOnly(room, scalingFactors, context);
   }
-  processRoomEffects(room, effects, context, isActive);
+  processRoomEffects(room, effects, context, scalingFactors, canDrawEffect);
 }
 
 export function drawRoomWaypoints(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
