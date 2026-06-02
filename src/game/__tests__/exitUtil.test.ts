@@ -43,8 +43,7 @@ describe('exitUtil', () => {
         displayChar:'I',
         position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
         description:'Opens the bedroom.',
-        isDiscovered:false,
-        isExamined:false
+        isDiscovered:false
       }]]);
 
       expect(describeExit(_createExit('red key'), room1, room2, itemsById)).toBe('This locked door can be unlocked from Bedroom with Iron Key.');

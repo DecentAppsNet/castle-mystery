@@ -77,8 +77,7 @@ function _createLevelItemsById(level:Level, itemDefinitions:Map<string, { title:
       displayChar:itemDefinition.displayChar,
       position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
       description:itemDefinition.description,
-      isDiscovered:false,
-      isExamined:false
+      isDiscovered:false
     });
   });
   return itemsById;

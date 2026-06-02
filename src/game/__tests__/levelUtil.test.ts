@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { ROOM_BACK_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
+import { ROOM_BACK_ROW_CENTER_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import itineraryExtraPunctuationText from './fixtures/itinerary-extra-punctuation.md?raw';
 import itinerarySortingText from './fixtures/itinerary-sorting.md?raw';
 import afterPreviousActivityOverlapText from './fixtures/after-previous-activity-overlap.md?raw';
@@ -82,10 +82,12 @@ import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
 import solutionRevealRoomsText from './fixtures/solution-reveal-rooms.md?raw';
 import solutionUnlockSolutionsText from './fixtures/solution-unlock-solutions.md?raw';
 import shortDurationLabelsText from './fixtures/short-duration-labels.md?raw';
+import stackedRoomItemsText from './fixtures/stacked-room-items.md?raw';
 import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
 import winSynopsisText from './fixtures/win-synopsis.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
+import { calcItemCuboidHeightGame } from '@/game/itemSizeUtil';
 import LoadLevelException from '@/levelLoading/LoadLevelException';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
@@ -574,10 +576,27 @@ describe('levelUtil itinerary loading', () => {
     const baron = level.characters.find(character => character.id === 'baron') || null;
     const duke = level.characters.find(character => character.id === 'duke') || null;
 
-    expect(apple?.position.z).toBe(ROOM_BACK_Z);
+    expect(apple?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
     expect(baron?.depth).toBe(ROOM_MIDDLE_ROW_CENTER_Z);
-    expect(coin?.position.z).toBe(ROOM_FRONT_ROW_MIN_Z);
+    expect(coin?.position.z).toBe(ROOM_FRONT_ROW_CENTER_Z);
     expect(duke?.depth).toBe(ROOM_CHARACTER_FRONT_ROW_CENTER_Z);
+  });
+
+  it('loads multiple room items from one legend tile using stacked floor-based y offsets', () => {
+    const level = loadLevelFromText(stackedRoomItemsText);
+    const hall = findRoom(level.rooms, 'Hall');
+    const table = hall.items.find(item => item.id === 'table') || null;
+    const vase = hall.items.find(item => item.id === 'vase') || null;
+    const centeredX = hall.rect.x + (2 + 0.5) * (hall.rect.width / 4);
+    const floorY = hall.rect.y + hall.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+
+    expect(hall.items.map(item => item.id)).toEqual(['table', 'vase']);
+    expect(table?.position.x).toBe(centeredX);
+    expect(vase?.position.x).toBe(centeredX);
+    expect(table?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
+    expect(vase?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
+    expect(table?.position.y).toBe(floorY);
+    expect(vase?.position.y).toBe(floorY - calcItemCuboidHeightGame(hall));
   });
 
   it('loads drop activities and removes dropped items from final carried inventory', () => {

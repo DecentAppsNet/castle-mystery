@@ -59,29 +59,16 @@ function _getDiscoveredItemIds(gameState:GameState):Set<string> {
   return discoveredItemIds;
 }
 
-function _getExaminedItemIds(gameState:GameState):Set<string> {
-  const examinedItemIds = new Set<string>();
-  gameState.rooms.forEach(room => room.items.forEach(item => {
-    if (item.isExamined) examinedItemIds.add(item.id);
-  }));
-  gameState.characters.forEach(character => character.items.forEach(item => {
-    if (item.isExamined) examinedItemIds.add(item.id);
-  }));
-  return examinedItemIds;
-}
-
-function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<string>, discoveredItemIds:Set<string>, examinedItemIds:Set<string>,
+function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<string>, discoveredItemIds:Set<string>,
   characterDiscoveredRoomIds:Map<string, string[]>) {
   gameState.rooms.forEach(room => {
     if (discoveredRoomIds.has(room.id)) room.isDiscovered = true;
     room.items.forEach(item => {
       if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
-      if (examinedItemIds.has(item.id)) item.isExamined = true;
     });
   });
   gameState.characters.forEach(character => character.items.forEach(item => {
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
-    if (examinedItemIds.has(item.id)) item.isExamined = true;
   }));
   gameState.characters.forEach(character => {
     character.discoveredRoomIds = [...(characterDiscoveredRoomIds.get(character.id) || [])];
@@ -174,7 +161,6 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
   const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
   const characterDiscoveredRoomIds = _getCharacterDiscoveredRoomIds(gameState);
   const discoveredItemIds = _getDiscoveredItemIds(gameState);
-  const examinedItemIds = _getExaminedItemIds(gameState);
   const pendingRoomEffects:PendingRoomEffect[] = [];
   gameState.itemsById = duplicateItemsById(gameState.initialItemsById);
   gameState.characters = gameState.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, gameState.itemsById));
@@ -273,6 +259,6 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
       .filter(effect => effect.roomId === activeRoom.id)
       .forEach(effect => effect.create());
   }
-  _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds, examinedItemIds, characterDiscoveredRoomIds);
+  _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds, characterDiscoveredRoomIds);
   gameState.time = time;
 }

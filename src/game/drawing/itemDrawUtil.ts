@@ -1,10 +1,11 @@
 /* v8 ignore file -- @preserve visual canvas drawing module with low contract-test value. */
-/* This module groups item-focused drawing helpers, including item labels, hover hit-testing, and item popovers. */
+/* This module groups item-focused drawing helpers, including item hit-testing and item popovers. */
 
 import { clamp } from "@/common/numberUtil";
+import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
 import { roomWidthToColumnCount } from "../waypointUtil";
 import Rect from "../types/Rect";
-import { gameToCanvasPosition } from "./drawUtil";
+import { canvasToGamePosition } from "./drawUtil";
 import { COLOR_BLACK, COLOR_ITEM_FRONT_FILL, COLOR_ITEM_SIDE_FILL, COLOR_ITEM_TOP_FILL } from "./drawConstants";
 import Item from "../types/Item";
 import Room from "../types/Room";
@@ -12,12 +13,9 @@ import ScalingFactors from "../types/ScalingFactors";
 import Effect from "../effects/types/Effect";
 import EffectType from "../effects/types/EffectType";
 import { drawTextPopover } from "./popoverDrawUtil";
-import { calcPanelOffset } from "./roomPanelProjectionUtil";
+import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";
 
-const ITEM_LABEL_FONT_RATIO = 0.55;
-const ITEM_CUBOID_WIDTH_RATIO = 0.68;
-const ITEM_CUBOID_HEIGHT_RATIO = 0.55;
 const ITEM_CUBOID_DEPTH_RATIO = 0.7;
 const ITEM_CUBOID_LINE_WIDTH_RATIO = 0.25;
 
@@ -26,18 +24,12 @@ type ItemDrawMetrics = {
   cuboidHeightPixels:number,
   cuboidDepthXPixels:number,
   cuboidDepthYPixels:number,
-  cuboidLineWidthPixels:number,
-  labelFontSize:number,
-  labelOffsetY:number
+  cuboidLineWidthPixels:number
 }
 
 type RoomItemVisibilityOptions = {
   includeUndiscovered?:boolean,
   ignoreRoomObscured?:boolean
-}
-
-function _getItemLabelFontSize(scalingFactors:ScalingFactors):number {
-  return Math.max(7, Math.round(scalingFactors.roomFontHeight * ITEM_LABEL_FONT_RATIO));
 }
 
 export function calcItemDrawMetrics(room:Room, scalingFactors:ScalingFactors):ItemDrawMetrics {
@@ -46,55 +38,33 @@ export function calcItemDrawMetrics(room:Room, scalingFactors:ScalingFactors):It
   const [panelOffsetX, panelOffsetY] = calcPanelOffset(scalingFactors);
   const cuboidDepthXPixels = Math.max(2, panelOffsetX / 3 * ITEM_CUBOID_DEPTH_RATIO);
   const cuboidDepthYPixels = Math.max(1, panelOffsetY / 3 * ITEM_CUBOID_DEPTH_RATIO);
-  const cuboidWidthPixels = Math.max(4, columnWidthPixels * ITEM_CUBOID_WIDTH_RATIO);
-  const cuboidHeightPixels = Math.max(4, cuboidWidthPixels * ITEM_CUBOID_HEIGHT_RATIO);
-  const labelFontSize = _getItemLabelFontSize(scalingFactors);
+  const cuboidWidthPixels = calcItemCuboidWidthPixels(columnWidthPixels);
+  const cuboidHeightPixels = calcItemCuboidHeightPixels(cuboidWidthPixels);
   return {
     cuboidWidthPixels,
     cuboidHeightPixels,
     cuboidDepthXPixels,
     cuboidDepthYPixels,
-    cuboidLineWidthPixels:Math.max(0.5, scalingFactors.roomLineWidth * ITEM_CUBOID_LINE_WIDTH_RATIO),
-    labelFontSize,
-    labelOffsetY:-(cuboidHeightPixels + cuboidDepthYPixels + labelFontSize * 0.8)
+    cuboidLineWidthPixels:Math.max(0.5, scalingFactors.roomLineWidth * ITEM_CUBOID_LINE_WIDTH_RATIO)
   };
 }
 
-function _getApproxTextWidth(text:string, fontSize:number):number {
-  return Math.max(fontSize, text.length * fontSize * 0.6);
-}
-
-function _getItemFrontDepth(item:Item):number {
-  return Math.min(1, clamp(item.position.z, 0, 1) + ITEM_CUBOID_LINE_WIDTH_RATIO + ITEM_CUBOID_DEPTH_RATIO / 3);
-}
-
-function _getRoomItemGamePosition(room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
-  const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
-  const frontDepth = _getItemFrontDepth(item);
-  return [
-    item.position.x + offsetX * frontDepth / scalingFactors.scaleX,
-    room.rect.y + room.rect.height + offsetY * frontDepth / scalingFactors.scaleY
-  ];
+function _getRoomItemGamePosition(_room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
+  return canvasToGamePosition(...projectRoomPointWithDepth(item.position.x, item.position.y, item.position.z, scalingFactors), scalingFactors);
 }
 
 export function getItemCanvasPosition(item:Item, scalingFactors:ScalingFactors):[number, number] {
-  const [x, y] = gameToCanvasPosition(item.position.x, item.position.y, scalingFactors);
-  const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
-  const depth = clamp(item.position.z, 0, 1);
-  return [x + offsetX * depth, y + offsetY * depth];
+  return projectRoomPointWithDepth(item.position.x, item.position.y, clamp(item.position.z, 0, 1), scalingFactors);
 }
 
-export function getItemCanvasPositionInRoom(room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
-  const [x, y] = gameToCanvasPosition(item.position.x, room.rect.y + room.rect.height, scalingFactors);
-  const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
-  const frontDepth = _getItemFrontDepth(item);
-  return [x + offsetX * frontDepth, y + offsetY * frontDepth];
+export function getItemCanvasPositionInRoom(_room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
+  return projectRoomPointWithDepth(item.position.x, item.position.y, item.position.z, scalingFactors);
 }
 
 function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors):Rect {
   const metrics = calcItemDrawMetrics(room, scalingFactors);
-  const hoverWidthPixels = Math.max(metrics.cuboidWidthPixels + metrics.cuboidDepthXPixels, _getApproxTextWidth(item.title, metrics.labelFontSize));
-  const topPixels = item.isExamined ? metrics.labelOffsetY - metrics.labelFontSize * 0.8 : -(metrics.cuboidHeightPixels + metrics.cuboidDepthYPixels);
+  const hoverWidthPixels = metrics.cuboidWidthPixels + metrics.cuboidDepthXPixels;
+  const topPixels = -(metrics.cuboidHeightPixels + metrics.cuboidDepthYPixels);
   const bottomPixels = 0;
   const [x, y] = _getRoomItemGamePosition(room, item, scalingFactors);
   return {
@@ -107,7 +77,7 @@ function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors):
 
 function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
-  drawItemAtCanvasPosition(item, x, y, calcItemDrawMetrics(room, scalingFactors), context);
+  drawItemAtCanvasPosition(x, y, calcItemDrawMetrics(room, scalingFactors), context);
 }
 
 export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
@@ -139,23 +109,19 @@ function _drawItemCuboid(x:number, y:number, metrics:ItemDrawMetrics, context:Ca
   }, context);
 }
 
-export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
+export function drawItemAtCanvasPosition(x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
   context.save();
   _drawItemCuboid(x, y, metrics, context);
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  if (item.isExamined) {
-    context.font = `${metrics.labelFontSize}px Jellee`;
-    context.fillStyle = COLOR_BLACK;
-    context.fillText(item.title, x + metrics.cuboidDepthXPixels / 2, y + metrics.labelOffsetY);
-  }
   context.restore();
 }
 
 function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
   return room.items
     .filter(item => (includeUndiscovered || item.isDiscovered) && !_isItemSuppressedByEffect(item, effects))
-    .sort((item1, item2) => item1.position.z - item2.position.z || item2.position.x - item1.position.x || item1.id.localeCompare(item2.id));
+    .sort((item1, item2) => item1.position.z - item2.position.z
+      || item2.position.x - item1.position.x
+      || item2.position.y - item1.position.y
+      || item1.id.localeCompare(item2.id));
 }
 
 function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {

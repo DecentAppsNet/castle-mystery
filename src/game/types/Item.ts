@@ -6,8 +6,7 @@ type Item = {
   readonly displayChar:string,
   position:Position,
   description:string,
-  isDiscovered:boolean,
-  isExamined:boolean
+  isDiscovered:boolean
 }
 
 export function duplicateItem(from:Item):Item {
@@ -17,8 +16,7 @@ export function duplicateItem(from:Item):Item {
     displayChar:from.displayChar,
     position:duplicatePosition(from.position),
     description:from.description,
-    isDiscovered:from.isDiscovered,
-    isExamined:from.isExamined
+    isDiscovered:from.isDiscovered
   };
 }
 

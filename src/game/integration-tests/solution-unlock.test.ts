@@ -26,8 +26,7 @@ function _createTestLevel():Level {
     displayChar:'B',
     position:{ x:6, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z },
     description:'A test book.',
-    isDiscovered:false,
-    isExamined:false
+    isDiscovered:false
   };
 
   return {
@@ -148,7 +147,7 @@ describe('solution unlock integration', () => {
     expect(gameState.rooms.find(room => room.id === 'study')?.isObscured).toBe(false);
   });
 
-  it('discovers and examines hovered items, preserving that state across time rebuilds', () => {
+  it('discovers hovered items, preserving that state across time rebuilds', () => {
     const gameState = createGameState(_createTestLevel());
     gameState.scalingFactors = {
       sourceX:0,
@@ -167,19 +166,16 @@ describe('solution unlock integration', () => {
 
     const itemBeforeHover = gameState.rooms[0].items[0];
     expect(itemBeforeHover.isDiscovered).toBe(false);
-    expect(itemBeforeHover.isExamined).toBe(false);
 
-    updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:7, y:10 });
+    updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:7, y:5 });
 
     const itemAfterHover = gameState.rooms[0].items[0];
     expect(itemAfterHover.isDiscovered).toBe(true);
-    expect(itemAfterHover.isExamined).toBe(true);
     expect(gameState.viewedItemIds.has('Book')).toBe(true);
 
     rebuildDynamicStateForTime(gameState, 1_000, 0);
 
     const itemAfterRebuild = gameState.rooms[0].items[0];
     expect(itemAfterRebuild.isDiscovered).toBe(true);
-    expect(itemAfterRebuild.isExamined).toBe(true);
   });
 });

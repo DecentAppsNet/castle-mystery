@@ -239,8 +239,10 @@ export function validateRoomGridLegendEntries(level:Level, roomsSection:string, 
     );
 
     findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:entryText, row, col }) => {
-      if (knownPopulationEntryIds.has(normalizeId(entryText))) return;
-      throw new Error(`unknown room legend entry '${entryText}' at row ${row + 1}, col ${col + 1} in room ${room.title}`);
+      parseOptions(entryText).forEach(populationEntryText => {
+        if (knownPopulationEntryIds.has(normalizeId(populationEntryText))) return;
+        throw new Error(`unknown room legend entry '${populationEntryText}' at row ${row + 1}, col ${col + 1} in room ${room.title}`);
+      });
     });
   });
 }

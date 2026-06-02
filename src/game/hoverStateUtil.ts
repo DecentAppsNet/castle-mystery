@@ -191,7 +191,6 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
       { includeUndiscovered:true, ignoreRoomObscured:true });
     if (hoveredItem) {
       hoveredItem.isDiscovered = true;
-      hoveredItem.isExamined = true;
     }
     gameState.hoveredItemId = hoveredItem?.id ?? null;
     if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
@@ -214,7 +213,6 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     { includeUndiscovered:true });
   if (hoveredItem) {
     hoveredItem.isDiscovered = true;
-    hoveredItem.isExamined = true;
   }
   gameState.hoveredItemId = hoveredItem?.id ?? null;
   if (hoveredItem) _recordViewedItem(gameState, hoveredItem);

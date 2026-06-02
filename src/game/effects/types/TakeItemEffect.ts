@@ -10,8 +10,6 @@ type TakeItemEffect = EffectBase & {
   cuboidDepthXPixels:number,
   cuboidDepthYPixels:number,
   cuboidLineWidthPixels:number,
-  labelFontSize:number,
-  labelOffsetY:number,
   riseDistancePixels:number
 }
 

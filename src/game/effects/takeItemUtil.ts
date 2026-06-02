@@ -10,14 +10,12 @@ import { ITEM_EFFECT_DURATION } from "./dropItemUtil";
 
 function _drawAnimatedItem(takeItemEffect:TakeItemEffect, context:CanvasRenderingContext2D, progress:number) {
   const y = takeItemEffect.startCanvasY - progress * takeItemEffect.riseDistancePixels;
-  drawItemAtCanvasPosition(takeItemEffect.item, takeItemEffect.startCanvasX, y, {
+  drawItemAtCanvasPosition(takeItemEffect.startCanvasX, y, {
     cuboidWidthPixels:takeItemEffect.cuboidWidthPixels,
     cuboidHeightPixels:takeItemEffect.cuboidHeightPixels,
     cuboidDepthXPixels:takeItemEffect.cuboidDepthXPixels,
     cuboidDepthYPixels:takeItemEffect.cuboidDepthYPixels,
-    cuboidLineWidthPixels:takeItemEffect.cuboidLineWidthPixels,
-    labelFontSize:takeItemEffect.labelFontSize,
-    labelOffsetY:takeItemEffect.labelOffsetY
+    cuboidLineWidthPixels:takeItemEffect.cuboidLineWidthPixels
   }, context);
 }
 
@@ -45,8 +43,6 @@ export function createTakeItemEffect(item:Item, room:Room, time:number, scalingF
     cuboidDepthXPixels:metrics.cuboidDepthXPixels,
     cuboidDepthYPixels:metrics.cuboidDepthYPixels,
     cuboidLineWidthPixels:metrics.cuboidLineWidthPixels,
-    labelFontSize:metrics.labelFontSize,
-    labelOffsetY:metrics.labelOffsetY,
     riseDistancePixels:Math.max(18, scalingFactors.roomFontHeight * 1.5),
     onProcessRoomEffect:_onProcessRoomEffect
   };

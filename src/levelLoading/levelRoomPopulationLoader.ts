@@ -4,10 +4,11 @@ import { assertNonNullable } from "decent-portal";
 
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
-import { ROOM_BACK_ROW_CENTER_Z, ROOM_BACK_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_MIDDLE_ROW_CENTER_Z, ROOM_MIDDLE_ROW_MIN_Z } from "@/game/roomSpaceConstants";
+import { calcItemCuboidHeightGame } from "@/game/itemSizeUtil";
+import { ROOM_BACK_ROW_CENTER_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
 import { findRoom } from "../game/roomUtil";
-import { findNearestWaypoint, findNearestWaypointToPosition, roomWidthToColumnCount } from "../game/waypointUtil";
+import { findNearestWaypoint, findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "../game/waypointUtil";
 import Character from "../game/types/Character";
 import Item from "../game/types/Item";
 import Level from "../game/types/Level";
@@ -35,9 +36,9 @@ export type RoomPopulationDefinitions = {
 };
 
 const EXPECTED_ROOM_GRID_ROW_COUNT = 3;
-const BACK_ROW_ITEM_DEPTH = ROOM_BACK_Z;
-const MIDDLE_ROW_ITEM_DEPTH = ROOM_MIDDLE_ROW_MIN_Z;
-const FRONT_ROW_ITEM_DEPTH = ROOM_FRONT_ROW_MIN_Z;
+const BACK_ROW_ITEM_DEPTH = ROOM_BACK_ROW_CENTER_Z;
+const MIDDLE_ROW_ITEM_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
+const FRONT_ROW_ITEM_DEPTH = ROOM_FRONT_ROW_CENTER_Z;
 const BACK_ROW_CHARACTER_DEPTH = ROOM_BACK_ROW_CENTER_Z;
 const MIDDLE_ROW_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
 const FRONT_ROW_CHARACTER_DEPTH = ROOM_CHARACTER_FRONT_ROW_CENTER_Z;
@@ -148,6 +149,27 @@ function _getCharacterDepthForGridRow(row:number):number {
 	return CHARACTER_DEPTHS_BY_GRID_ROW[row] ?? DEFAULT_POPULATION_DEPTH;
 }
 
+function _parseRoomLegendPopulationEntries(authoredEntryText:string):Array<{ entryId:string, entryText:string }> {
+	return parseOptions(authoredEntryText).map(entryText => ({
+		entryId:normalizeId(entryText),
+		entryText
+	}));
+}
+
+function _createStackedRoomItemY(room:Room, stackIndex:number):number {
+	return room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET - stackIndex * calcItemCuboidHeightGame(room);
+}
+
+function _createRoomItemPosition(room:Room, targetX:number, depth:number, stackIndex:number) {
+	const floorY = _createStackedRoomItemY(room, 0);
+	const waypoint = findNearestWaypointToPosition(room, { x:targetX, y:floorY, z:depth });
+	return {
+		x:waypoint.position.x,
+		y:_createStackedRoomItemY(room, stackIndex),
+		z:waypoint.position.z
+	};
+}
+
 function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemDefinitions:Map<string, ItemDefinition>,
 	position:{x:number, y:number}, depth:number, isDiscovered:boolean):Item {
 	const itemDefinition = itemDefinitions.get(itemId);
@@ -157,8 +179,7 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 		displayChar:itemDefinition?.displayChar || defaultTitleText.charAt(0) || "?",
 		position:{ ...position, z:depth },
 		description:itemDefinition?.description || "",
-		isDiscovered,
-		isExamined:false
+		isDiscovered
 	};
 }
 
@@ -211,6 +232,43 @@ function _assertRoomGridMatchesExpectedDimensions(roomId:string, room:Room, grid
 	);
 }
 
+function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, authoredEntryText:string, row:number, col:number,
+	gridWidth:number, gridHeight:number, characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
+	const legendEntries = _parseRoomLegendPopulationEntries(authoredEntryText);
+	const [x, characterY] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
+	const characterDepth = _getCharacterDepthForGridRow(row);
+	const itemDepth = _getItemDepthForGridRow(row);
+
+	if (legendEntries.length === 1) {
+		const [{ entryId, entryText }] = legendEntries;
+		const characterDefinition = characterDefinitions.get(entryId);
+		if (characterDefinition) {
+			_assertCharacterIdIsUnique(level, entryId, roomId, row, col);
+			_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description,
+				characterDefinition.faceImageUrl, characterDefinition.isTitleKnown, x, characterY, characterDepth);
+			return;
+		}
+		if (itemDefinitions.has(entryId)) {
+			_assertItemIdIsUnique(level, entryId, `at row ${row + 1}, col ${col + 1} in room ${roomId}`);
+			const itemPosition = _createRoomItemPosition(room, x, itemDepth, 0);
+			_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, entryText, itemDefinitions,
+				{ x:itemPosition.x, y:itemPosition.y }, itemPosition.z, false));
+		}
+		return;
+	}
+
+	legendEntries.forEach(({ entryId, entryText }, stackIndex) => {
+		if (characterDefinitions.has(entryId)) {
+			throw new Error(`room legend entry '${authoredEntryText}' at row ${row + 1}, col ${col + 1} in room ${roomId} may only stack items`);
+		}
+		if (!itemDefinitions.has(entryId)) return;
+		_assertItemIdIsUnique(level, entryId, `at row ${row + 1}, col ${col + 1} in room ${roomId}`);
+		const itemPosition = _createRoomItemPosition(room, x, itemDepth, stackIndex);
+		_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, entryText, itemDefinitions,
+			{ x:itemPosition.x, y:itemPosition.y }, itemPosition.z, false));
+	});
+}
+
 function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string,
 	characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
 	const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
@@ -230,22 +288,8 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 		);
 
 		findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:authoredEntryText, row, col }) => {
-			const entryId = normalizeId(authoredEntryText);
-			const [x, y] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
-			const characterDepth = _getCharacterDepthForGridRow(row);
-			const itemDepth = _getItemDepthForGridRow(row);
-			const characterDefinition = characterDefinitions.get(entryId);
-			if (characterDefinition) {
-				_assertCharacterIdIsUnique(level, entryId, roomId, row, col);
-				_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description,
-					characterDefinition.faceImageUrl, characterDefinition.isTitleKnown, x, y, characterDepth);
-				return;
-			}
-			if (itemDefinitions.has(entryId)) {
-				_assertItemIdIsUnique(level, entryId, `at row ${row + 1}, col ${col + 1} in room ${roomId}`);
-				_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, authoredEntryText, itemDefinitions, { x, y }, itemDepth, false));
-				return;
-			}
+			_addLegendEntryPopulation(level, room, roomId, authoredEntryText, row, col, gridWidth, gridHeight,
+				characterDefinitions, itemDefinitions);
 		});
 	});
 }
@@ -270,14 +314,14 @@ function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<st
 	});
 }
 
-function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovered'|'isExamined'>) {
+function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovered'>) {
 	const room = findRoom(level.rooms, roomId);
 	assertNonNullable(room);
 	const { x, y } = item.position;
 	const isInsideRoom = x >= room.rect.x && x <= room.rect.x + room.rect.width
 		&& y >= room.rect.y && y <= room.rect.y + room.rect.height;
 	if (!isInsideRoom) throw new Error(`item ${item.id} is outside room ${roomId}`);
-	room.items.push({ ...item, isDiscovered:false, isExamined:false });
+	room.items.push({ ...item, isDiscovered:false });
 }
 
 function _addItemsToCharacter(level:Level, characterId:string, items:Item[]) {

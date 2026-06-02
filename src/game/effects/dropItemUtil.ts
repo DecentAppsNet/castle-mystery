@@ -16,14 +16,12 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
   const x = dropItemEffect.startCanvasX + (dropItemEffect.endCanvasX - dropItemEffect.startCanvasX) * progress;
   const y = dropItemEffect.startCanvasY + (dropItemEffect.endCanvasY - dropItemEffect.startCanvasY) * progress;
-  drawItemAtCanvasPosition(dropItemEffect.item, x, y, {
+  drawItemAtCanvasPosition(x, y, {
     cuboidWidthPixels:dropItemEffect.cuboidWidthPixels,
     cuboidHeightPixels:dropItemEffect.cuboidHeightPixels,
     cuboidDepthXPixels:dropItemEffect.cuboidDepthXPixels,
     cuboidDepthYPixels:dropItemEffect.cuboidDepthYPixels,
-    cuboidLineWidthPixels:dropItemEffect.cuboidLineWidthPixels,
-    labelFontSize:dropItemEffect.labelFontSize,
-    labelOffsetY:dropItemEffect.labelOffsetY
+    cuboidLineWidthPixels:dropItemEffect.cuboidLineWidthPixels
   }, context);
   return elapsed < ITEM_EFFECT_DURATION;
 }
@@ -45,8 +43,6 @@ export function createDropItemEffect(item:Item, room:Room, time:number, scalingF
     cuboidDepthXPixels:metrics.cuboidDepthXPixels,
     cuboidDepthYPixels:metrics.cuboidDepthYPixels,
     cuboidLineWidthPixels:metrics.cuboidLineWidthPixels,
-    labelFontSize:metrics.labelFontSize,
-    labelOffsetY:metrics.labelOffsetY,
     onProcessRoomEffect:_onProcessRoomEffect
   };
 }

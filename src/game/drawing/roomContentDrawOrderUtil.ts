@@ -30,8 +30,16 @@ export type ItemDrawableContent = {
 export type RoomDrawableContent = StairDrawableContent | CharacterDrawableContent | ItemDrawableContent;
 type NonStairDrawableContent = CharacterDrawableContent | ItemDrawableContent;
 
+function _compareSameColumnItems(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
+  if (content1.type !== 'item' || content2.type !== 'item') return 0;
+  return content2.item.position.y - content1.item.position.y;
+}
+
 export function compareNonStairDrawableContents(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
-  return content1.depth - content2.depth || content2.x - content1.x || content1.sortId.localeCompare(content2.sortId);
+  return content1.depth - content2.depth
+    || content2.x - content1.x
+    || _compareSameColumnItems(content1, content2)
+    || content1.sortId.localeCompare(content2.sortId);
 }
 
 export function compareStairToContent(stairContent:StairDrawableContent, content:NonStairDrawableContent):number {

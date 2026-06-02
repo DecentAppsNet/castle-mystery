@@ -31,12 +31,13 @@
 ## Cottage
 
 ```
-....
-.S..
+..B.
+S...
 ....
 ```
 
 * S=Simon
+* B=Table|Box
 * exits=Muddy Road
 
 ## Muddy Road
@@ -88,6 +89,12 @@
 * faceImage=advisorFace.png
 
 # items
+
+## Table
+* description = A solid table with barely a wobble.
+
+## Box
+* description = This box is empty.
 
 # itinerary
 

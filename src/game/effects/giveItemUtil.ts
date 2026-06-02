@@ -16,14 +16,12 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
   const x = giveItemEffect.startCanvasX + (giveItemEffect.endCanvasX - giveItemEffect.startCanvasX) * progress;
   const y = giveItemEffect.startCanvasY + (giveItemEffect.endCanvasY - giveItemEffect.startCanvasY) * progress;
-  drawItemAtCanvasPosition(giveItemEffect.item, x, y, {
+  drawItemAtCanvasPosition(x, y, {
     cuboidWidthPixels:giveItemEffect.cuboidWidthPixels,
     cuboidHeightPixels:giveItemEffect.cuboidHeightPixels,
     cuboidDepthXPixels:giveItemEffect.cuboidDepthXPixels,
     cuboidDepthYPixels:giveItemEffect.cuboidDepthYPixels,
-    cuboidLineWidthPixels:giveItemEffect.cuboidLineWidthPixels,
-    labelFontSize:giveItemEffect.labelFontSize,
-    labelOffsetY:giveItemEffect.labelOffsetY
+    cuboidLineWidthPixels:giveItemEffect.cuboidLineWidthPixels
   }, context);
   return elapsed < ITEM_EFFECT_DURATION;
 }
@@ -46,8 +44,6 @@ export function createGiveItemEffect(item:Item, room:Room, giver:Character, reci
     cuboidDepthXPixels:metrics.cuboidDepthXPixels,
     cuboidDepthYPixels:metrics.cuboidDepthYPixels,
     cuboidLineWidthPixels:metrics.cuboidLineWidthPixels,
-    labelFontSize:metrics.labelFontSize,
-    labelOffsetY:metrics.labelOffsetY,
     onProcessRoomEffect:_onProcessRoomEffect
   };
 }

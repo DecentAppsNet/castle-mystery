@@ -11,9 +11,7 @@ type DropItemEffect = EffectBase & {
   cuboidHeightPixels:number,
   cuboidDepthXPixels:number,
   cuboidDepthYPixels:number,
-  cuboidLineWidthPixels:number,
-  labelFontSize:number,
-  labelOffsetY:number
+  cuboidLineWidthPixels:number
 }
 
 export default DropItemEffect;
