@@ -13,7 +13,8 @@
 * Every eligible module should have a concise comment at the top that has the following:
   * one-sentence description of scope of functionality the module includes
   * This statement `If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes.`
-* An "eligible" module is a Typescript module that is not: a test file, a .tsx file, a type file (file that only contains a type definition)
+* An "eligible" module is a Typescript module that is not: a test file, a .tsx file, a file inside a `types` folder, or a type-focused file whose primary purpose is declaring types, unions, or enum-like value sets.
+* In particular, modules inside folders such as `src/game/types/`, `src/game/types/itineraryEvents/`, `src/game/types/playerEvents/`, and `src/game/solutions/types/` are not eligible for module summary comments, even if they also include small helpers such as `duplicateX()` or `createDefaultX()`.
 * Here is an example of a module summary comment:
 
 ```Javascript

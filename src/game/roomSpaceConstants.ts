@@ -1,3 +1,6 @@
+/* This module groups shared room-space constants for depth rows, character placement, and room geometry.
+	If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 export const ROOM_BACK_Z = 0;
 export const ROOM_ROW_DEPTH = 0.3333;
 export const ROOM_MIDDLE_ROW_MIN_Z = 0.3333;

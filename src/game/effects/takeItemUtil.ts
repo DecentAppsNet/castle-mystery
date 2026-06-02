@@ -1,3 +1,6 @@
+/* This module groups take-item effect creation and drawing helpers for animated item pickups.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { clamp } from "@/common/numberUtil";
 import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";

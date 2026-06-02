@@ -1,3 +1,6 @@
+/* This module groups shared popover drawing helpers for room, character, and exit overlays.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { clamp } from "@/common/numberUtil";
 
 import ScalingFactors from "../types/ScalingFactors";

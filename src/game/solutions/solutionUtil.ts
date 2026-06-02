@@ -1,3 +1,6 @@
+/* This module groups solution comparison, blank-state, and cloze-answer helpers for the solutions UI.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Solution from "./types/Solution.ts";
 import ClozePartType from "./types/ClozePartType";
 import ClozeBlank, { UNSPECIFIED_ANSWER } from "./types/ClozeBlank";

@@ -1,3 +1,6 @@
+/* This module groups play and pause effect creation and drawing helpers for playback status feedback.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { clamp } from "@/common/numberUtil";
 import { PAUSE_ICON_TEXT, PLAY_ICON_TEXT } from "@/components/playPauseButton/playPauseText";
 import { COLOR_BLACK, COLOR_POPOVER_FILL } from "../drawing/drawConstants";

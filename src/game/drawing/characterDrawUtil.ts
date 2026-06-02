@@ -1,4 +1,5 @@
-/* This module groups character-focused drawing helpers, including visible character rendering and character popovers. */
+/* This module groups character-focused drawing helpers, including visible character rendering and character popovers.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
 import { gameToCanvasPosition } from "./drawUtil";

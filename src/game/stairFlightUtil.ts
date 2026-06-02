@@ -1,3 +1,6 @@
+/* This module groups stair-flight generation helpers that derive traversable stair segments from room geometry.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assert, assertNonNullable } from "decent-portal";
 
 import { MAP_TILE_SIZE } from "./roomGridUtil";

@@ -1,3 +1,6 @@
+/* This module groups the itinerary-event union and helpers that duplicate concrete itinerary events.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from "decent-portal";
 import ItineraryEventType from "./ItineraryEventType";
 import WalkEvent, { duplicateWalkEvent } from "./WalkEvent";

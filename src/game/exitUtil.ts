@@ -1,3 +1,6 @@
+/* This module groups exit-state query helpers used by gameplay, rendering, and room-audibility logic.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from "decent-portal";
 
 import ExitStatus from "./types/ExitStatus";

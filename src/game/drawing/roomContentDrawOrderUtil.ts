@@ -1,3 +1,6 @@
+/* This module groups room-content ordering helpers that merge characters, items, and stair parts for drawing.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { compareCharacterToStairPartRows } from "../stairDrawOrderUtil";
 import Character from "../types/Character";
 import Item from "../types/Item";

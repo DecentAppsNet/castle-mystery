@@ -1,4 +1,5 @@
-/* This module groups mutable solution-state helpers, including solution comparison, author edits, and runtime unlock syncing. */
+/* This module groups mutable solution-state helpers, including solution comparison, author edits, and runtime unlock syncing.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { syncSolutionsWithUnlocks } from "./solutions/solutionDiscoveryUtil";
 import Solution, { duplicateSolution } from "./solutions/types/Solution";

@@ -1,3 +1,6 @@
+/* This module groups room-panel drawing helpers for wall panels, floors, and room-side surfaces.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";

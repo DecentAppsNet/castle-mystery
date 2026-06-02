@@ -1,4 +1,5 @@
-/* This module groups pointer-hit testing and hover-driven state updates for characters, items, and exit popovers. */
+/* This module groups pointer-hit testing and hover-driven state updates for characters, items, and exit popovers.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { getExitHoverRect } from "./drawing/exitDrawUtil";
 import { findDiscoveredItemAtPosition } from "./drawing/itemDrawUtil";

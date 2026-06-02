@@ -1,4 +1,5 @@
-/* This module groups outward notification helpers that translate mutable game-state changes into throttled UI callbacks. */
+/* This module groups outward notification helpers that translate mutable game-state changes into throttled UI callbacks.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { msecsToMinutes } from "@/homeScreen/interactions/gameplay";
 

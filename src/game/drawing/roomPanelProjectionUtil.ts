@@ -1,3 +1,6 @@
+/* This module groups room-panel projection helpers that convert room depth into panel offsets.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import ScalingFactors from "../types/ScalingFactors";
 import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { gameToCanvasPosition } from "./drawUtil";

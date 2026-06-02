@@ -1,3 +1,6 @@
+/* This module groups camera creation, targeting, and viewport update helpers for the game scene.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { clamp } from "@/common/numberUtil";
 
 import { findRoomAtPosition } from "./roomUtil";

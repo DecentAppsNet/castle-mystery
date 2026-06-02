@@ -1,3 +1,6 @@
+/* This module groups character-encounter detection helpers that derive encounter itinerary events from room co-presence.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { createCharacterEncounterEvent, createItineraryIndex, findCharacterPose } from "./itineraryUtil";
 import Character from "./types/Character";
 import Room from "./types/Room";

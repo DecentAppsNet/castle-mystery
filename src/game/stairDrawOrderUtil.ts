@@ -1,3 +1,6 @@
+/* This module groups stair-versus-character draw-order helpers derived from stair geometry and depth rows.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import StairPart, { StairLandingType, StairPartType } from "./types/StairPart";
 import { STAIR_POSITION_TOLERANCE } from "./stairUtil";
 import { ROOM_FRONT_ROW_MIN_Z, ROOM_MIDDLE_ROW_MIN_Z } from "./roomSpaceConstants";

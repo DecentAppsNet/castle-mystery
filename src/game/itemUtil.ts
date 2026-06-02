@@ -1,3 +1,6 @@
+/* This module groups item-indexing and shared room or character item-duplication helpers.
+	If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Character, { duplicateCharacter } from "./types/Character";
 import Item, { duplicateItem } from "./types/Item";
 import Room, { duplicateRoom } from "./types/Room";

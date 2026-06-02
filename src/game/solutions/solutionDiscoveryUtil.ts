@@ -1,3 +1,6 @@
+/* This module groups runtime solution-unlock discovery helpers that synchronize unlocked solutions from solved ones.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Solution, { duplicateSolution } from './types/Solution';
 
 export function syncSolutionsWithUnlocks(solutions:Solution[]):{ solutions:Solution[], didChange:boolean } {

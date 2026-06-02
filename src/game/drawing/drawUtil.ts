@@ -1,4 +1,5 @@
-/* This module groups shared coordinate conversion and scaling helpers for game drawing. */
+/* This module groups shared coordinate conversion and scaling helpers for game drawing.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import ScalingFactors from "../types/ScalingFactors";
 import Rect from "../types/Rect";

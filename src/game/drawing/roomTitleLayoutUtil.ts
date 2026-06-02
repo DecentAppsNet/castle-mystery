@@ -1,3 +1,6 @@
+/* This module groups room-title layout helpers for wrapping and sizing room header text.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 export function wrapRoomTitle(text:string, maxWidth:number, measureText:(text:string) => number):string[] {
   const words = text.split(/\s+/).filter(Boolean);
   if (words.length === 0) return [];

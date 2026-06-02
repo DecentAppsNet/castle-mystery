@@ -1,3 +1,6 @@
+/* This module groups effect-processing helpers that dispatch active effects by room, character, and scene phase.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Character from "../types/Character";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";

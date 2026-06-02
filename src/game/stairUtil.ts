@@ -1,3 +1,6 @@
+/* This module groups shared stair geometry constants and low-level helpers for stair navigation and rendering.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Position from "./types/Position";
 import StairFlight from "./types/StairFlight";
 

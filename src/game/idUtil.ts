@@ -1,3 +1,6 @@
+/* This module groups identifier normalization and validation helpers for authored and runtime ids.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from "decent-portal";
 
 export function normalizeId(text:string):string {

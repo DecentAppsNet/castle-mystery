@@ -1,3 +1,6 @@
+/* This module groups shared drawing-color helpers for channel clamping and color interpolation.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 function _clampColorChannel(value:number):number {
   return Math.max(0, Math.min(255, Math.round(value)));
 }

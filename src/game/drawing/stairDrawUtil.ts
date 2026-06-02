@@ -1,4 +1,5 @@
-/* This module groups staircase cuboid drawing helpers for room rendering. */
+/* This module groups staircase cuboid drawing helpers for room rendering.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from "decent-portal";
 

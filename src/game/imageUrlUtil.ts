@@ -1,3 +1,6 @@
+/* This module groups authored image-asset URL helpers and filename validation for game content.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 export type CandidateUrls = string[];
 
 const BACKGROUND_IMAGE_ASSET_BASE_URL = '/assets/backgrounds/';

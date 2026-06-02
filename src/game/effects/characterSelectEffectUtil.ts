@@ -1,3 +1,6 @@
+/* This module groups character-selection effect creation and processing helpers for the active-character highlight animation.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { clamp } from "@/common/numberUtil";
 import { COLOR_CHARACTER_SELECT_EFFECT } from "../drawing/drawConstants";
 import { gameToCanvasPosition } from "../drawing/drawUtil";

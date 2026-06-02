@@ -1,5 +1,6 @@
 /* v8 ignore file -- @preserve visual canvas drawing module with low contract-test value. */
-/* This module groups item-focused drawing helpers, including item hit-testing and item popovers. */
+/* This module groups item-focused drawing helpers, including item hit-testing and item popovers.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";

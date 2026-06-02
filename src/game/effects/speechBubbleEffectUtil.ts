@@ -1,3 +1,6 @@
+/* This module groups speech-bubble effect creation helpers for audible dialogue overlays.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Effect from "./types/Effect";
 import EffectType from "./types/EffectType";
 import SpeechBubbleEffect from "./types/SpeechBubbleEffect";

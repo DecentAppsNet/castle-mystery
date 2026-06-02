@@ -1,3 +1,6 @@
+/* This module groups right-wall panel span helpers for deciding which room wall sections should render.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Room from "./types/Room";
 import { MAP_TILE_SIZE } from "./roomGridUtil";
 

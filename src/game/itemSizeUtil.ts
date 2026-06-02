@@ -1,3 +1,6 @@
+/* This module groups shared item-size helpers used to convert item dimensions between game and canvas space.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Room from "./types/Room";
 import { roomWidthToColumnCount } from "./waypointUtil";
 

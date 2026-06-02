@@ -1,3 +1,6 @@
+/* This module groups waypoint constants and lookup helpers used by room navigation and authored placement logic.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import Waypoint from "./types/Waypoint";

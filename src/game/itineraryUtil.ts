@@ -1,3 +1,6 @@
+/* This module groups itinerary event creation, indexing, duration, and pose-reconstruction helpers.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assert, assertNonNullable } from "decent-portal";
 import Room from "./types/Room";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";

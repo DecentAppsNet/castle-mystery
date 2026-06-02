@@ -1,3 +1,6 @@
+/* This module groups player-event queue helpers used to accumulate and consume UI-driven game actions.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";

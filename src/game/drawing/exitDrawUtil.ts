@@ -1,3 +1,6 @@
+/* This module groups room-exit drawing and hover-hit helpers for doors, locks, and exit items.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { describeExit } from "../exitUtil";
 import Item from "../types/Item";
 import ExitType from "../types/ExitType";

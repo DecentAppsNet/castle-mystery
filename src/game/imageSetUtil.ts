@@ -1,3 +1,6 @@
+/* This module groups image-set creation and loading helpers for built-in and authored runtime image assets.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { baseUrl } from "@/common/urlUtil";
 import { getGroundImageAssetUrl, isCandidateUrls } from "./imageUrlUtil";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";

@@ -1,3 +1,6 @@
+/* This module groups thought-bubble effect creation helpers for visible thought overlays.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { drawThoughtBubble, getCharacterSpeechAnchor } from "../drawing/characterDrawUtil";
 import Character from "../types/Character";
 import ScalingFactors from "../types/ScalingFactors";

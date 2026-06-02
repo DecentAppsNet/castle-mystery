@@ -1,3 +1,6 @@
+/* This module groups the cloze-part union and helpers that duplicate concrete cloze parts.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import ClozeBlank, { duplicateClozeBlank } from './ClozeBlank';
 import ClozeImage, { duplicateClozeImage } from './ClozeImage';
 import ClozeSeparator, { duplicateClozeSeparator } from './ClozeSeparator';

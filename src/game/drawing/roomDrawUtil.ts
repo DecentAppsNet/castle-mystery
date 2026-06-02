@@ -1,4 +1,5 @@
-/* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents. */
+/* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { DRAW_WAYPOINTS } from "@/developer/config";
 import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";

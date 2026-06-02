@@ -1,3 +1,6 @@
+/* This module groups roof-surface drawing helpers for room tops and roof-facing panels.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { COLOR_DARK_GRAY } from "./drawConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";

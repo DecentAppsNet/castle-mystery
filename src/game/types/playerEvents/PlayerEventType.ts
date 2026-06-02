@@ -1,3 +1,6 @@
+/* This module groups player-event type values used by queued UI input events.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 const PlayerEventType = {
   CHANGE_TIME:"ChangeTime",
   CHANGE_SOLUTIONS:"ChangeSolutions",

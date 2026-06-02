@@ -1,4 +1,5 @@
-/* This module groups shared color constants used by game drawing and draw-driven effects. */
+/* This module groups shared color constants used by game drawing and draw-driven effects.
+	If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 export const COLOR_BLACK = "#000";
 export const COLOR_DARK_GRAY = "#333";

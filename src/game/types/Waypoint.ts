@@ -1,3 +1,6 @@
+/* This module groups the waypoint model and its duplication helper for room navigation state.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Position, { duplicatePosition } from "./Position"
 
 type Waypoint = {

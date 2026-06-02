@@ -1,3 +1,6 @@
+/* This module groups lock and unlock effect creation and drawing helpers for exit-state animations.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { clamp } from "@/common/numberUtil";
 import { gameToCanvasPosition } from "../drawing/drawUtil";
 import ImageSet from "../types/ImageSet";

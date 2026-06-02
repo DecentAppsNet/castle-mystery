@@ -1,4 +1,5 @@
-/* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks. */
+/* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable, botch } from "decent-portal";
 import Character from "./types/Character";

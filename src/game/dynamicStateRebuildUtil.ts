@@ -1,4 +1,5 @@
-/* This module groups time-based dynamic-state rebuilding, recreating mutable room and inventory state from the authored level timeline. */
+/* This module groups time-based dynamic-state rebuilding, recreating mutable room and inventory state from the authored level timeline.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from "decent-portal";
 

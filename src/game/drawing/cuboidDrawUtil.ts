@@ -1,3 +1,6 @@
+/* This module groups cuboid drawing helpers used by room, stair, and item rendering.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { COLOR_BLACK } from "./drawConstants";
 
 type CanvasPoint = [number, number];
