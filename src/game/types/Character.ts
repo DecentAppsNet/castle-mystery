@@ -1,6 +1,3 @@
-/* This module groups the mutable character model and its defaulting or duplication helpers.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
-
 import Itinerary from "./Itinerary";
 import ItineraryIndex from "./ItineraryIndex";
 import Item, { duplicateItem } from "./Item";

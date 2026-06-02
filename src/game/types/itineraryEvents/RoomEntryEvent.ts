@@ -1,6 +1,3 @@
-/* This module groups the room-entry itinerary event model and its duplication helper.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
-
 import ItineraryEventBase from "./ItineraryEventBase";
 
 type RoomEntryEvent = Readonly<ItineraryEventBase & {

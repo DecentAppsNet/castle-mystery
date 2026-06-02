@@ -1,3 +1,6 @@
+/* This module groups time-slider conversion and label-positioning helpers for minute-based slider interactions.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import TimeLabel from "@/game/types/TimeLabel";
 import { HOURS_IN_DAY, SECS_IN_DAY, SECS_IN_HOUR, SECS_IN_MINUTE } from "@/common/timeUtil";
 

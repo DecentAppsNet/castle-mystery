@@ -1,3 +1,6 @@
+/* This module groups home-screen gameplay interaction helpers that translate UI actions into player events and state updates.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { clamp } from "@/common/numberUtil";
 import { MSECS_IN_MINUTE } from "@/common/timeUtil";
 import Solution from "@/game/solutions/types/Solution";

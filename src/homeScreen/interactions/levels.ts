@@ -1,3 +1,6 @@
+/* This module groups home-screen level-switching helpers that load, apply, and persist selected levels.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import type { Dispatch, SetStateAction } from "react";
 
 import { createGameState } from "@/game/gameUtil";

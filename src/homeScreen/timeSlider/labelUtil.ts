@@ -1,3 +1,6 @@
+/* This module groups time-slider label layout helpers for nudging, hiding, and positioning time labels.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import TimeLabel from "@/game/types/TimeLabel";
 import TimeLabelPositions from "./types/TimeLabelPositions";
 

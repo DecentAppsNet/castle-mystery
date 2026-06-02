@@ -1,6 +1,3 @@
-/* This module groups the solution model and helpers for creating default or duplicated solution state.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
-
 import ClozePart, { duplicateClozePart } from './ClozePart';
 
 type Solution = {

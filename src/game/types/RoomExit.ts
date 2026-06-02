@@ -1,6 +1,3 @@
-/* This module groups the room-exit model, exit-id creation, and room-exit duplication helpers.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
-
 import ExitStatus from './ExitStatus';
 import ExitType from './ExitType';
 

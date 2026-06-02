@@ -1,6 +1,3 @@
-/* This module groups itinerary-event type values shared across authored timelines and runtime processing.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
-
 const ItineraryEventType = {
   WALK:"Walk",
   FACE:"Face",

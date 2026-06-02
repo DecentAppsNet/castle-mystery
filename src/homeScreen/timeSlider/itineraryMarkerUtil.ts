@@ -1,3 +1,6 @@
+/* This module groups itinerary-marker derivation helpers for time-slider room, speech, and encounter markers.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import Itinerary from "@/game/types/Itinerary";
 import Room from "@/game/types/Room";

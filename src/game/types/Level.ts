@@ -1,6 +1,3 @@
-/* This module groups the level model and helpers for creating default authored level state.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
-
 import TimeLabel from "./TimeLabel";
 import Character from "./Character";
 import Item from "./Item";

@@ -1,3 +1,6 @@
+/* This module groups solution-claim interaction helpers for the home-screen solutions UI.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { countSolutionMistakes } from "@/game/solutions/solutionUtil";
 import Solution, { duplicateSolution } from "@/game/solutions/types/Solution";
 
