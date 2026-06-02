@@ -195,7 +195,6 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           const item = _removeItemById(actor.items, dropEvent.itemId);
           if (!item) break;
           item.position = duplicatePosition(dropEvent.position);
-          item.position.z = actor.depth;
           if (!dropRoom.isObscured && previousTime !== undefined && dropEvent.startTime > previousTime && dropEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:dropRoom.id,

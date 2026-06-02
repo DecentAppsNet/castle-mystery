@@ -24,6 +24,7 @@ function _createTestLevel():Level {
     id:'book',
     title:'Book',
     displayChar:'B',
+    randomSalt:0,
     position:{ x:6, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z },
     description:'A test book.',
     isDiscovered:false

@@ -6,6 +6,7 @@ import TimeLabel from "../game/types/TimeLabel";
 import { duplicateCharacter } from "../game/types/Character";
 import { createItemsById } from "../game/itemUtil";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
+import { rand } from "@/common/randUtil";
 import { baseUrl } from "@/common/urlUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
@@ -75,6 +76,7 @@ function _createLevelItemsById(level:Level, itemDefinitions:Map<string, { title:
       id:itemId,
       title:itemDefinition.title,
       displayChar:itemDefinition.displayChar,
+      randomSalt:rand(),
       position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
       description:itemDefinition.description,
       isDiscovered:false

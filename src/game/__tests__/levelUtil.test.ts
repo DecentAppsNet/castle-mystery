@@ -603,10 +603,15 @@ describe('levelUtil itinerary loading', () => {
     const level = loadLevelFromText(dropItemText);
     const hero = level.characters.find(character => character.id === 'hero');
     const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, itemId:string, position:{ x:number, y:number, z:number } } | undefined;
+    const dropStartPose = hero && dropEvent ? findCharacterPose(hero, dropEvent.startTime).position : null;
 
     expect(dropEvent?.itemId).toBe('book');
     expect(hero?.items.map(item => item.id)).not.toContain('book');
-    expect(findCharacterPose(hero!, dropEvent!.startTime).position).toEqual(dropEvent!.position);
+    expect(dropStartPose).not.toBeNull();
+    expect(dropEvent!.position.x).toBeGreaterThan(dropStartPose!.x);
+    expect(dropEvent?.position.y).toBe(dropStartPose?.y);
+    expect(dropEvent?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
+    expect(dropEvent?.position).not.toEqual(dropStartPose);
   });
 
   it('loads give activities without movement when the recipient is already nearby', () => {

@@ -177,6 +177,7 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 		id:itemId,
 		title:itemDefinition?.title || defaultTitleText,
 		displayChar:itemDefinition?.displayChar || defaultTitleText.charAt(0) || "?",
+		randomSalt:rand(),
 		position:{ ...position, z:depth },
 		description:itemDefinition?.description || "",
 		isDiscovered

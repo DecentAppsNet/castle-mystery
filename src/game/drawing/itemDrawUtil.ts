@@ -6,7 +6,8 @@ import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/it
 import { roomWidthToColumnCount } from "../waypointUtil";
 import Rect from "../types/Rect";
 import { canvasToGamePosition } from "./drawUtil";
-import { COLOR_BLACK, COLOR_ITEM_FRONT_FILL, COLOR_ITEM_SIDE_FILL, COLOR_ITEM_TOP_FILL } from "./drawConstants";
+import { COLOR_BLACK } from "./drawConstants";
+import { interpolateColor } from "./colorUtil";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -18,6 +19,12 @@ import { drawProjectedCuboid } from "./cuboidDrawUtil";
 
 const ITEM_CUBOID_DEPTH_RATIO = 0.7;
 const ITEM_CUBOID_LINE_WIDTH_RATIO = 0.25;
+const ITEM_LIGHT_BROWN = "#d6a06a";
+const ITEM_DARK_BROWN = "#8b5a2b";
+const ITEM_LIGHT_TOP_BROWN = "#e3b785";
+const ITEM_DARK_TOP_BROWN = "#9f7242";
+const ITEM_LIGHT_SIDE_BROWN = "#bd8650";
+const ITEM_DARK_SIDE_BROWN = "#72461f";
 
 type ItemDrawMetrics = {
   cuboidWidthPixels:number,
@@ -77,14 +84,14 @@ function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors):
 
 function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
-  drawItemAtCanvasPosition(x, y, calcItemDrawMetrics(room, scalingFactors), context);
+  drawItemAtCanvasPosition(item, x, y, calcItemDrawMetrics(room, scalingFactors), context);
 }
 
 export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   drawItem(room, item, scalingFactors, context);
 }
 
-function _drawItemCuboid(x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
+function _drawItemCuboid(item:Item, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
   const frontBottomLeft:[number, number] = [x - metrics.cuboidWidthPixels / 2, y];
   const frontBottomRight:[number, number] = [x + metrics.cuboidWidthPixels / 2, y];
   const frontTopLeft:[number, number] = [frontBottomLeft[0], y - metrics.cuboidHeightPixels];
@@ -92,6 +99,9 @@ function _drawItemCuboid(x:number, y:number, metrics:ItemDrawMetrics, context:Ca
   const backBottomLeft:[number, number] = [frontBottomLeft[0] - metrics.cuboidDepthXPixels, y - metrics.cuboidDepthYPixels];
   const backTopLeft:[number, number] = [backBottomLeft[0], backBottomLeft[1] - metrics.cuboidHeightPixels];
   const backTopRight:[number, number] = [frontTopRight[0] - metrics.cuboidDepthXPixels, frontTopRight[1] - metrics.cuboidDepthYPixels];
+  const topFillStyle = interpolateColor(ITEM_LIGHT_TOP_BROWN, ITEM_DARK_TOP_BROWN, item.randomSalt);
+  const sideFillStyle = interpolateColor(ITEM_LIGHT_SIDE_BROWN, ITEM_DARK_SIDE_BROWN, item.randomSalt);
+  const frontFillStyle = interpolateColor(ITEM_LIGHT_BROWN, ITEM_DARK_BROWN, item.randomSalt);
   drawProjectedCuboid({
     backTopLeft,
     backTopRight,
@@ -101,17 +111,17 @@ function _drawItemCuboid(x:number, y:number, metrics:ItemDrawMetrics, context:Ca
     frontBottomLeft,
     frontBottomRight
   }, {
-    topFillStyle:COLOR_ITEM_TOP_FILL,
-    sideFillStyle:COLOR_ITEM_SIDE_FILL,
-    frontFillStyle:COLOR_ITEM_FRONT_FILL,
+    topFillStyle,
+    sideFillStyle,
+    frontFillStyle,
     lineWidth:metrics.cuboidLineWidthPixels,
     strokeStyle:COLOR_BLACK
   }, context);
 }
 
-export function drawItemAtCanvasPosition(x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
+export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
   context.save();
-  _drawItemCuboid(x, y, metrics, context);
+  _drawItemCuboid(item, x, y, metrics, context);
   context.restore();
 }
 

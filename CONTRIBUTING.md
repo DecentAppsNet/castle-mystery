@@ -48,9 +48,9 @@ Guidelines:
 * Do not add shell commands or subprocess execution to tests.
 * Do not add network calls to tests.
 * AI agents and automated tools must follow the same rule: do not introduce filesystem, shell, subprocess, or network access into tests.
-* AI agents should not put generated code into shell execution requests. If temporary generated test code is needed during development, create an adhoc unit test under `/adhocTests` instead.
-* Adhoc tests under `/adhocTests` do not need to follow the usual unit-test placement and structure rules, but they must still follow the filesystem, shell, subprocess, and network safety rules above.
-* Delete adhoc tests when they are no longer needed. If the same test keeps proving useful, replace it with a permanent test that follows the normal project test rules.
+* AI agents should not put generated code into shell execution requests. If temporary generated test code is needed during development, create a diagnostic unit test under `/tempTests` instead.
+* Diagnostic tests under `/tempTests` do not need to follow the usual unit-test placement and structure rules, but they must still follow the filesystem, shell, subprocess, and network safety rules above.
+* Delete diagnostic tests when they are no longer needed. If the same test keeps proving useful, replace it with a permanent test that follows the normal project test rules.
 * If a test needs authored fixture content, import the fixture as text instead of loading it from the filesystem at runtime.
 * Do not use multi-line assignments to a single test value. Put substantial authored test data in fixtures and import it instead.
 * If code under test would otherwise perform filesystem, shell, subprocess, or network I/O, mock that boundary rather than performing the real operation.

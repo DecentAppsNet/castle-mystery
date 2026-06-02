@@ -37,7 +37,7 @@ S...
 ```
 
 * S=Simon
-* B=Table|Box
+* B=Table|Box|Capybara
 * exits=Muddy Road
 
 ## Muddy Road
@@ -96,9 +96,18 @@ S...
 ## Box
 * description = This box is empty.
 
+## Capybara
+* description = This critter is as friendly as she is smelly.
+
 # itinerary
 
+: Simon takes Capybara
 : Simon @ Sanctum
+: Simon drops Capybara
+: Simon @ Cottage
+: Simon takes Box
+: Simon @ Sanctum
+: Simon drops Box
 : Simon @ Great Hall
 : Simon @ East Hall
 

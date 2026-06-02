@@ -16,7 +16,7 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
   const x = dropItemEffect.startCanvasX + (dropItemEffect.endCanvasX - dropItemEffect.startCanvasX) * progress;
   const y = dropItemEffect.startCanvasY + (dropItemEffect.endCanvasY - dropItemEffect.startCanvasY) * progress;
-  drawItemAtCanvasPosition(x, y, {
+  drawItemAtCanvasPosition(dropItemEffect.item, x, y, {
     cuboidWidthPixels:dropItemEffect.cuboidWidthPixels,
     cuboidHeightPixels:dropItemEffect.cuboidHeightPixels,
     cuboidDepthXPixels:dropItemEffect.cuboidDepthXPixels,

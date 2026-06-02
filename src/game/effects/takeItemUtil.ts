@@ -10,7 +10,7 @@ import { ITEM_EFFECT_DURATION } from "./dropItemUtil";
 
 function _drawAnimatedItem(takeItemEffect:TakeItemEffect, context:CanvasRenderingContext2D, progress:number) {
   const y = takeItemEffect.startCanvasY - progress * takeItemEffect.riseDistancePixels;
-  drawItemAtCanvasPosition(takeItemEffect.startCanvasX, y, {
+  drawItemAtCanvasPosition(takeItemEffect.item, takeItemEffect.startCanvasX, y, {
     cuboidWidthPixels:takeItemEffect.cuboidWidthPixels,
     cuboidHeightPixels:takeItemEffect.cuboidHeightPixels,
     cuboidDepthXPixels:takeItemEffect.cuboidDepthXPixels,

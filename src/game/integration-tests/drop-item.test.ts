@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
+import { ROOM_BACK_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { createGameState, findCharacter } from '../gameUtil';
 import { findRoom } from '../roomUtil';
 import dropItemText from './fixtures/drop-item.md?raw';
@@ -16,7 +17,7 @@ describe('drop item integration', () => {
     clearSeed();
   });
 
-  it('moves a dropped item from the character inventory to the room at the current waypoint', () => {
+  it('moves a dropped item from the character inventory to an adjacent scored waypoint', () => {
     const level = loadLevelFromText(dropItemText);
     const beforeDropState = createGameState({ ...level, initialTime:4_000 });
     const afterDropState = createGameState({ ...level, initialTime:5_000 });
@@ -30,6 +31,8 @@ describe('drop item integration', () => {
     const droppedItem = afterRoom.items.find(item => item.id === 'book') || null;
     expect(droppedItem).not.toBeNull();
     expect(afterDropState.itemsById.get('book')).toBe(droppedItem);
-    expect(droppedItem?.position).toEqual({ x:afterHero.x, y:afterHero.y, z:afterHero.depth });
+    expect(droppedItem!.position.x).toBeGreaterThan(afterHero.x);
+    expect(droppedItem?.position.y).toBe(afterHero.y);
+    expect(droppedItem?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
   });
 });
