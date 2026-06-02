@@ -1,3 +1,6 @@
+/* This module groups drop-activity parsing and drop-target waypoint selection during itinerary loading.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Item from "@/game/types/Item";
 import Waypoint from "@/game/types/Waypoint";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";

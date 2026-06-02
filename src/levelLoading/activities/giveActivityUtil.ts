@@ -1,3 +1,6 @@
+/* This module groups give-activity parsing and nearby-recipient movement planning during itinerary loading.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assertNonNullable } from "decent-portal";
 
 import { createGiveItemEvent } from "@/game/itineraryUtil";

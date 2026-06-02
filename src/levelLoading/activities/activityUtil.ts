@@ -1,3 +1,6 @@
+/* This module groups shared level-loading activity helpers for timing, movement planning, parsing, and state replay.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assertNonNullable } from "decent-portal";
 
 import Character from "@/game/types/Character";

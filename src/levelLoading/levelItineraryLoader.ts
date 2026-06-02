@@ -1,4 +1,5 @@
-// Groups itinerary parsing, relative timestamp resolution, and activity scheduling during level load.
+/* This module groups itinerary parsing, relative timestamp resolution, and activity scheduling during level load.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from "decent-portal";
 

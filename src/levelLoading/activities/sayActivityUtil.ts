@@ -1,3 +1,6 @@
+/* This module groups speech-activity parsing and overlap validation during itinerary loading.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { createSpeechEvent } from "@/game/itineraryUtil";
 import Character from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";

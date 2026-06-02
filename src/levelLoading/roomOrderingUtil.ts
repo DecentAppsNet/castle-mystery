@@ -1,3 +1,6 @@
+/* This module groups room-ordering helpers that derive a stable drawing order from room adjacency and layout.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Room from "@/game/types/Room";
 
 function _intersectRange(aStart:number, aEnd:number, bStart:number, bEnd:number): [number, number] | null {

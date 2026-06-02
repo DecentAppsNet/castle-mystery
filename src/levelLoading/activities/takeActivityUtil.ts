@@ -1,3 +1,6 @@
+/* This module groups take-activity parsing and item-target waypoint planning during itinerary loading.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assertNonNullable } from "decent-portal";
 
 import { createTakeItemEvent } from "@/game/itineraryUtil";

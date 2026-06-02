@@ -1,4 +1,5 @@
-// Groups character and item definition parsing with room and inventory population during level load.
+/* This module groups character and item definition parsing with room and inventory population during level load.
+	If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from "decent-portal";
 

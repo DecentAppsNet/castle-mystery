@@ -1,3 +1,6 @@
+/* This module groups authored `@ room` activity parsing and event creation during itinerary loading.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoomForWaypoint, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 import { normalizeId } from "@/game/idUtil";

@@ -1,3 +1,6 @@
+/* This module groups level-manifest loading, URL resolution, and selected-level persistence helpers.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { baseUrl } from "@/common/urlUtil";
 import { parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import LevelManifest from "./types/LevelManifest";

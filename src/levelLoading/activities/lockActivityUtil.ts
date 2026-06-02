@@ -1,3 +1,6 @@
+/* This module groups lock and unlock activity parsing with exit-target movement planning during itinerary loading.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import ExitType from "@/game/types/ExitType";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
