@@ -1,0 +1,208 @@
+/* This module groups itinerary activity scheduling and state-application helpers used during level load.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
+import { assertNonNullable } from "decent-portal";
+
+import { LeadingTimestampKind } from "@/levelLoading/timestampUtil";
+import { addCharacterEncounterEvents } from "@/game/characterEncounterUtil";
+import { createItineraryIndex } from "@/game/itineraryUtil";
+import Character from "@/game/types/Character";
+import Item, { duplicateItem } from "@/game/types/Item";
+import Level from "@/game/types/Level";
+import Position from "@/game/types/Position";
+import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
+
+import { tryCreateAtActivity } from "../activities/atActivityUtil";
+import { tryCreateBodyOrientationActivity } from "../activities/bodyOrientationActivityUtil";
+import { tryCreateDieActivity } from "../activities/dieActivityUtil";
+import { tryCreateDropActivity } from "../activities/dropActivityUtil";
+import { tryCreateFaceActivity } from "../activities/facesActivityUtil";
+import { tryCreateGiveActivity } from "../activities/giveActivityUtil.ts";
+import { tryCreateLockActivity, tryCreateUnlockActivity } from "../activities/lockActivityUtil";
+import { tryCreateSayActivity } from "../activities/sayActivityUtil";
+import { tryCreateTakeActivity } from "../activities/takeActivityUtil";
+import { tryCreateThinkActivity } from "../activities/thinkActivityUtil";
+import {
+  appendEventsToCharacterState,
+  ActivityContext,
+  calcActivityStartTime,
+  createCharacterActivityState,
+  createInitialRoomItemsByRoomId,
+  duplicateCharacterActivityState,
+  duplicateRoomItemsByRoomId,
+  findStatePoseAtTime
+} from "../activities/activityUtil";
+import { runWithItineraryLineContext } from "./itineraryLoadErrorUtil";
+import { calcCharactersItineraryDuration, sortActivitiesByResolvedTime } from "./itineraryTimeResolutionUtil";
+import ParsedItineraryActivity from "./types/ParsedItineraryActivity";
+
+type ScheduleActivitiesResult = {
+  characters:Character[],
+  duration:number,
+  completionTimesBySourceIndex:Map<number, number>
+};
+
+function _createActivityContext(level:Level, character:Character, timestamp:number, timestampType:LeadingTimestampKind,
+  activitySourceIndex:number, roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
+  characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>, poseOverridesByCharacterId:Map<string, Position>):ActivityContext {
+  const state = characterStatesById.get(character.id);
+  assertNonNullable(state, `missing itinerary state for ${character.id}`);
+  return {
+    level,
+    character,
+    activitySourceIndex,
+    state,
+    roomItemsByRoomId,
+    charactersById,
+    characterStatesById,
+    poseOverridesByCharacterId,
+    timestamp,
+    timestampType
+  };
+}
+
+function _activityAffectsPoseAtTimestamp(activity:ParsedItineraryActivity):boolean {
+  if (activity.timestampType !== 'absolute') return false;
+  return activity.activityText.startsWith('@ ') || activity.activityText.startsWith('takes ');
+}
+
+function _calcActivityCompletionTime(activityStartTime:number, events:ItineraryEvent[]):number {
+  return events.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), activityStartTime);
+}
+
+function _createEventsForActivity(activityText:string, context:ActivityContext):ItineraryEvent[] {
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
+  if (!findStatePoseAtTime(context.character, context.state, activityStartTime).isAlive) {
+    throw new Error(`dead character ${context.character.id} cannot perform itinerary activity '${activityText}'`);
+  }
+
+  const activityFactories = [
+    tryCreateAtActivity,
+    tryCreateSayActivity,
+    tryCreateThinkActivity,
+    tryCreateFaceActivity,
+    tryCreateDieActivity,
+    tryCreateBodyOrientationActivity,
+    tryCreateGiveActivity,
+    tryCreateDropActivity,
+    tryCreateTakeActivity,
+    tryCreateLockActivity,
+    tryCreateUnlockActivity
+  ];
+
+  for (const createActivityEvents of activityFactories) {
+    const events = createActivityEvents(activityText, context);
+    if (events !== null) return events;
+  }
+
+  throw new Error(`unsupported itinerary activity '${activityText}'`);
+}
+
+function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItineraryActivity[], roomItemsByRoomId:Map<string, Item[]>,
+  charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+  levelFilename:string):Map<string, Position> {
+  const poseOverridesByCharacterId = new Map<string, Position>();
+
+  activities.forEach(activity => {
+    runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
+      if (!_activityAffectsPoseAtTimestamp(activity)) return;
+      const character = charactersById.get(activity.characterId);
+      assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
+
+      const state = characterStatesById.get(activity.characterId);
+      assertNonNullable(state, `missing itinerary state for ${activity.characterId}`);
+
+      const previewState = duplicateCharacterActivityState(state);
+      const previewCharacterStatesById = new Map(characterStatesById);
+      previewCharacterStatesById.set(activity.characterId, previewState);
+      const previewRoomItemsByRoomId = duplicateRoomItemsByRoomId(roomItemsByRoomId);
+      const previewContext = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, previewRoomItemsByRoomId,
+        charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
+      const events = _createEventsForActivity(activity.activityText, previewContext);
+      appendEventsToCharacterState(level, character, previewState, events);
+      poseOverridesByCharacterId.set(activity.characterId,
+        findStatePoseAtTime(character, previewState, activity.resolvedTime).position);
+    }, activity.resolvedTime);
+  });
+
+  return poseOverridesByCharacterId;
+}
+
+function _createReadyToScheduleBySourceIndex(activities:ParsedItineraryActivity[]):Map<number, boolean> {
+  const readyBySourceIndex = new Map<number, boolean>();
+  const charactersWithUnresolvedEarlierActivities = new Set<string>();
+
+  activities.forEach(activity => {
+    const isReady = activity.isTimeResolved && !charactersWithUnresolvedEarlierActivities.has(activity.characterId);
+    readyBySourceIndex.set(activity.sourceIndex, isReady);
+    if (!activity.isTimeResolved) charactersWithUnresolvedEarlierActivities.add(activity.characterId);
+  });
+
+  return readyBySourceIndex;
+}
+
+export function scheduleActivities(level:Level, activities:ParsedItineraryActivity[], levelFilename:string):ScheduleActivitiesResult {
+  if (!activities.length) {
+    return {
+      characters: level.characters,
+      duration:calcCharactersItineraryDuration(level.characters),
+      completionTimesBySourceIndex:new Map()
+    };
+  }
+
+  const charactersById = new Map(level.characters.map(character => [character.id, character]));
+  const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
+  const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
+  const completionTimesBySourceIndex = new Map<number, number>();
+  const readyToScheduleBySourceIndex = _createReadyToScheduleBySourceIndex(activities);
+
+  const _processActivity = (activity:ParsedItineraryActivity, poseOverridesByCharacterId:Map<string, Position>) => {
+    runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
+      if (!readyToScheduleBySourceIndex.get(activity.sourceIndex)) return;
+      const character = charactersById.get(activity.characterId);
+      assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
+      const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, roomItemsByRoomId, charactersById,
+        characterStatesById, poseOverridesByCharacterId);
+      const activityStartTime = calcActivityStartTime(context.state, activity.resolvedTime, activity.timestampType);
+      const events = _createEventsForActivity(activity.activityText, context);
+      appendEventsToCharacterState(level, character, context.state, events);
+      if (!events.length) context.state.time = Math.max(context.state.time, activityStartTime);
+      completionTimesBySourceIndex.set(activity.sourceIndex, _calcActivityCompletionTime(activityStartTime, events));
+    }, activity.resolvedTime);
+  };
+
+  const sortedActivities = sortActivitiesByResolvedTime(activities);
+  for (let i = 0; i < sortedActivities.length;) {
+    const timestamp = sortedActivities[i].resolvedTime;
+    const sameTimeActivities:ParsedItineraryActivity[] = [];
+    while (i < sortedActivities.length && sortedActivities[i].resolvedTime === timestamp) {
+      sameTimeActivities.push(sortedActivities[i]);
+      ++i;
+    }
+
+    const readySameTimeActivities = sameTimeActivities.filter(activity => readyToScheduleBySourceIndex.get(activity.sourceIndex));
+    const poseOverridesByCharacterId = _createPoseOverridesForTimestamp(level, readySameTimeActivities,
+      roomItemsByRoomId, charactersById, characterStatesById, levelFilename);
+    sameTimeActivities.forEach(activity => _processActivity(activity, poseOverridesByCharacterId));
+  }
+
+  const characters = level.characters.map(character => {
+    const state = characterStatesById.get(character.id);
+    assertNonNullable(state, `missing final itinerary state for ${character.id}`);
+    const itinerary = [...state.events];
+    return {
+      ...character,
+      itinerary,
+      itineraryIndex: createItineraryIndex(itinerary, { x:character.x, y:character.y, z:character.depth }),
+      items: state.items.map(duplicateItem),
+      leftHandItem: state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
+      rightHandItem: state.rightHandItem ? duplicateItem(state.rightHandItem) : null
+    };
+  });
+
+  return {
+    characters:addCharacterEncounterEvents(characters, level.rooms),
+    duration:calcCharactersItineraryDuration(characters),
+    completionTimesBySourceIndex
+  };
+}
