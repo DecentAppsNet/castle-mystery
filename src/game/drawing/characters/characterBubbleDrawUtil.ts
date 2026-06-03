@@ -2,8 +2,8 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import ScalingFactors from "@/game/types/ScalingFactors";
 import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_SPEECH_BUBBLE_FILL } from "../drawConstants";
-import ScalingFactors from "../../types/ScalingFactors";
 
 function _drawSpeechBubbleOutline(left:number, top:number, width:number, height:number,
   tailTipX:number, tailTipY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {

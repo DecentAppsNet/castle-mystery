@@ -7,9 +7,9 @@ import EffectType from "@/game/effects/types/EffectType";
 import TakeItemEffect from "@/game/effects/types/TakeItemEffect";
 import { calcPanelOffset } from "../roomPanelProjectionUtil";
 import { drawItemAtCanvasPosition } from "../itemDrawUtil";
-import Character from "../../types/Character";
-import Item from "../../types/Item";
-import ScalingFactors from "../../types/ScalingFactors";
+import Character from "@/game/types/Character";
+import Item from "@/game/types/Item";
+import ScalingFactors from "@/game/types/ScalingFactors";
 import { CharacterLayout } from "./characterLayoutUtil";
 
 function _createHeldItemDrawMetrics(scalingFactors:ScalingFactors) {

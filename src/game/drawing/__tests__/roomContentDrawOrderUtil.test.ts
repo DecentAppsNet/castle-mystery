@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
+import { createDefaultCharacter } from '@/game/types/Character';
+import ExitStatus from '@/game/types/ExitStatus';
+import ExitType from '@/game/types/ExitType';
+import Rect from '@/game/types/Rect';
+import Room, { createDefaultRoom } from '@/game/types/Room';
+import RoomExit, { createRoomExitId } from '@/game/types/RoomExit';
+import { StairLandingType, StairPartType } from '@/game/types/StairPart';
+import Waypoint from '@/game/types/Waypoint';
 import { generateWaypoints } from '@/levelLoading/waypointGenerationUtil';
-import { ROOM_BACK_ROW_CENTER_Z, ROOM_BACK_Z, ROOM_FULL_DEPTH, ROOM_MIDDLE_ROW_MIN_Z, ROOM_ROW_DEPTH } from '../../roomSpaceConstants';
+import { ROOM_BACK_ROW_CENTER_Z, ROOM_BACK_Z, ROOM_FULL_DEPTH, ROOM_MIDDLE_ROW_MIN_Z, ROOM_ROW_DEPTH } from '@/game/roomSpaceConstants';
+import { generateStairFlights } from '@/game/stairFlightUtil';
+import { generateStairParts } from '@/game/stairPartUtil';
 import { compareStairToContent, mergeStairsWithSortedContents, RoomDrawableContent, StairDrawableContent } from '../roomContentDrawOrderUtil';
-import { generateStairFlights } from '../../stairFlightUtil';
-import { generateStairParts } from '../../stairPartUtil';
-import ExitStatus from '../../types/ExitStatus';
-import ExitType from '../../types/ExitType';
-import Rect from '../../types/Rect';
-import Room, { createDefaultRoom } from '../../types/Room';
-import { createDefaultCharacter } from '../../types/Character';
-import RoomExit, { createRoomExitId } from '../../types/RoomExit';
-import { StairLandingType, StairPartType } from '../../types/StairPart';
-import Waypoint from '../../types/Waypoint';
 
 const BACK_ROW_Z = ROOM_BACK_Z;
 const BACK_ROW_CHARACTER_DEPTH = ROOM_BACK_ROW_CENTER_Z;
