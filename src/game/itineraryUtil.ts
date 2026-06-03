@@ -4,6 +4,7 @@
 import { assert, assertNonNullable } from "decent-portal";
 import Room from "./types/Room";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
+import DieEvent from "./types/itineraryEvents/DieEvent";
 import RoomEntryEvent from "./types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
 import ThoughtEvent from "./types/itineraryEvents/ThoughtEvent";
@@ -35,6 +36,7 @@ const WAYPOINT_DEPTH_ROW_COUNT = 3;
 
 type CharacterPose = {
   position:Position,
+  isAlive:boolean,
   facingDirection:FacingDirection,
   bodyOrientation:BodyOrientation,
   speech:string|null,
@@ -92,6 +94,14 @@ export function createSpeechEvent(startTime:number, speech:string):SpeechEvent {
     startTime,
     speech,
     duration:_calcSpeechDuration(speech)
+  };
+}
+
+export function createDieEvent(startTime:number):DieEvent {
+  return {
+    type:ItineraryEventType.DIE,
+    startTime,
+    duration:0
   };
 }
 
@@ -163,6 +173,7 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
   switch(event.type) {
     case ItineraryEventType.WALK:
       return duplicatePosition((event as WalkEvent).toPosition);
+    case ItineraryEventType.DIE:
     case ItineraryEventType.ROOM_ENTRY:
     case ItineraryEventType.FACE:
     case ItineraryEventType.BODY_ORIENTATION:
@@ -195,6 +206,7 @@ export function findCharacterPose(character:Character, time:number):CharacterPos
   if (!character.itinerary.length || !character.itineraryIndex.eventStartTimes.length) {
     return {
       position:{ x:character.x, y:character.y, z:character.depth },
+      isAlive:character.isAlive,
       facingDirection:character.facingDirection,
       bodyOrientation:character.bodyOrientation,
       speech:null,
@@ -202,6 +214,17 @@ export function findCharacterPose(character:Character, time:number):CharacterPos
     };
   }
   return _findItineraryPosition(character, time);
+}
+
+function _findIsAliveAtTime(character:Character, itinerary:ItineraryEvent[], time:number):boolean {
+  let isAlive = character.isAlive;
+
+  for (const event of itinerary) {
+    if (event.startTime > time) break;
+    if (event.type === ItineraryEventType.DIE) isAlive = false;
+  }
+
+  return isAlive;
 }
 
 function _findFacingDirectionAtTime(character:Character, itinerary:ItineraryEvent[], time:number):FacingDirection {
@@ -278,6 +301,7 @@ function _findThoughtAtTime(itinerary:ItineraryEvent[], time:number):string|null
 function _findItineraryPosition(character:Character, time:number):CharacterPose {
   return {
     position:_findPositionAtTime({ x:character.x, y:character.y, z:character.depth }, character.itinerary, time),
+    isAlive:_findIsAliveAtTime(character, character.itinerary, time),
     facingDirection:_findFacingDirectionAtTime(character, character.itinerary, time),
     bodyOrientation:_findBodyOrientationAtTime(character, character.itinerary, time),
     speech:_findSpeechAtTime(character.itinerary, time),

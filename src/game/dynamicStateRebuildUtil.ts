@@ -251,6 +251,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
     character.x = pose.position.x;
     character.y = pose.position.y;
     character.depth = pose.position.z;
+    character.isAlive = pose.isAlive;
     character.facingDirection = pose.facingDirection;
     character.bodyOrientation = pose.bodyOrientation;
   });

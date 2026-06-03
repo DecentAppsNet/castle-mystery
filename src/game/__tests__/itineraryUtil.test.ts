@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { createBodyOrientationEvent, createFaceEvent, createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
+import { createBodyOrientationEvent, createDieEvent, createFaceEvent, createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
 import { ROOM_BACK_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
 import Character, { createDefaultCharacter } from '../types/Character';
@@ -141,6 +141,14 @@ describe('itineraryUtil', () => {
       expect(findCharacterPose(character, 1_999).bodyOrientation).toBe('sitting');
       expect(findCharacterPose(character, 2_000).bodyOrientation).toBe('standing');
       expect(findCharacterPose(character, 2_500).bodyOrientation).toBe('standing');
+    });
+
+    it('applies death events immediately and keeps characters dead afterwards', () => {
+      const character = _createCharacter([createDieEvent(1_000)]);
+
+      expect(findCharacterPose(character, 999).isAlive).toBe(true);
+      expect(findCharacterPose(character, 1_000).isAlive).toBe(false);
+      expect(findCharacterPose(character, 1_500).isAlive).toBe(false);
     });
   });
 });

@@ -187,7 +187,7 @@ export function getCharacterSpeechAnchor(character:Character, scalingFactors:Sca
   const provisionalLayout = _createCharacterLayout(0, 0, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
   const centerY = Math.round(bottomY - provisionalLayout.bottomY);
   const swayPhase = ((time + character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
-  const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
+  const sway = character.isAlive ? Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT : 0;
   const anchorX = centerX + sway;
   const anchorTopY = Math.round(centerY + provisionalLayout.topY);
   return { anchorX, anchorTopY, centerX, centerY, characterWidth, characterHeight:provisionalLayout.bottomY - provisionalLayout.topY };

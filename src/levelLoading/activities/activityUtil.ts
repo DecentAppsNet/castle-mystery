@@ -226,6 +226,7 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
   if (!state.events.length) {
     return {
       position:{ x:character.x, y:character.y, z:character.depth },
+      isAlive:character.isAlive,
       facingDirection:character.facingDirection,
       bodyOrientation:character.bodyOrientation,
       speech:null,

@@ -10,7 +10,7 @@ import { ROOM_BACK_ROW_CENTER_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_R
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
 import { findRoom } from "../game/roomUtil";
 import { findNearestWaypoint, findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "../game/waypointUtil";
-import Character from "../game/types/Character";
+import Character, { type BodyOrientation, type FacingDirection } from "../game/types/Character";
 import Item from "../game/types/Item";
 import Level from "../game/types/Level";
 import Room from "../game/types/Room";
@@ -22,6 +22,9 @@ type CharacterDefinition = {
 	description:string,
 	inventoryItems:Array<{ id:string, title:string }>,
 	faceImageUrl:string|null,
+	isAlive:boolean,
+	facingDirection:FacingDirection,
+	bodyOrientation:BodyOrientation,
 	isTitleKnown:boolean
 };
 
@@ -55,6 +58,28 @@ function _parseOptionalIsTitleKnownOrThrow(value:string|undefined, characterId:s
 	throw new Error(`character ${characterId} isTitleKnown must be true or false`);
 }
 
+function _parseOptionalIsAliveOrThrow(value:string|undefined, characterId:string):boolean {
+	if (value === undefined) return true;
+	const normalizedValue = value.trim().toLowerCase();
+	if (normalizedValue === 'true') return true;
+	if (normalizedValue === 'false') return false;
+	throw new Error(`character ${characterId} alive must be true or false`);
+}
+
+function _parseOptionalFacingDirectionOrThrow(value:string|undefined, characterId:string):FacingDirection {
+	if (value === undefined) return 'right';
+	const normalizedValue = value.trim().toLowerCase();
+	if (normalizedValue === 'left' || normalizedValue === 'right') return normalizedValue;
+	throw new Error(`character ${characterId} facing must be left or right`);
+}
+
+function _parseOptionalBodyOrientationOrThrow(value:string|undefined, characterId:string):BodyOrientation {
+	if (value === undefined) return 'standing';
+	const normalizedValue = value.trim().toLowerCase();
+	if (normalizedValue === 'standing' || normalizedValue === 'sitting' || normalizedValue === 'laying') return normalizedValue;
+	throw new Error(`character ${characterId} orientation must be standing, sitting, or laying`);
+}
+
 export function parseCharacterDefinitions(charactersSection:string):Map<string, CharacterDefinition> {
 	const characterDefinitions = new Map<string, CharacterDefinition>();
 	const characterSectionsById = createNormalizedEntryMap(Object.entries(parseSections(charactersSection, 2)));
@@ -71,6 +96,9 @@ export function parseCharacterDefinitions(charactersSection:string):Map<string, 
 			description:nameValues.description || "",
 			inventoryItems,
 			faceImageUrl:nameValues.faceImage ? getFaceImageAssetUrl(nameValues.faceImage.trim()) : null,
+			isAlive:_parseOptionalIsAliveOrThrow(nameValues.alive, characterId),
+			facingDirection:_parseOptionalFacingDirectionOrThrow(nameValues.facing, characterId),
+			bodyOrientation:_parseOptionalBodyOrientationOrThrow(nameValues.orientation, characterId),
 			isTitleKnown:_parseOptionalIsTitleKnownOrThrow(nameValues.isTitleKnown, characterId)
 		});
 	});
@@ -194,7 +222,8 @@ function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number
 }
 
 function _addCharacter(level:Level, room:Room, characterId:string, title:string, description:string,
-	faceImageUrl:string|null, isTitleKnown:boolean, x:number, y:number, depth:number) {
+	faceImageUrl:string|null, isAlive:boolean, facingDirection:FacingDirection, bodyOrientation:BodyOrientation,
+	isTitleKnown:boolean, x:number, y:number, depth:number) {
 	const claimedWaypoints = new Set(level.characters.map(character => `${character.waypoint.position.x},${character.waypoint.position.y},${character.waypoint.position.z}`));
 	const waypoint = (() => {
 		try {
@@ -208,8 +237,9 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 		title,
 		faceImageUrl,
 		randomSalt:rand(),
-		facingDirection:'right',
-		bodyOrientation:'standing',
+		isAlive,
+		facingDirection,
+		bodyOrientation,
 		isTitleKnown,
 		description,
 		items: [],
@@ -249,7 +279,8 @@ function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, author
 		if (characterDefinition) {
 			_assertCharacterIdIsUnique(level, entryId, roomId, row, col);
 			_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description,
-				characterDefinition.faceImageUrl, characterDefinition.isTitleKnown, x, characterY, characterDepth);
+				characterDefinition.faceImageUrl, characterDefinition.isAlive, characterDefinition.facingDirection,
+				characterDefinition.bodyOrientation, characterDefinition.isTitleKnown, x, characterY, characterDepth);
 			return;
 		}
 		if (itemDefinitions.has(entryId)) {

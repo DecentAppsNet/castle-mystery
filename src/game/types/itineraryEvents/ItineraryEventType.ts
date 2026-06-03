@@ -1,5 +1,6 @@
 const ItineraryEventType = {
   WALK:"Walk",
+  DIE:"Die",
   FACE:"Face",
   BODY_ORIENTATION:"BodyOrientation",
   ROOM_ENTRY:"RoomEntry",

@@ -3,7 +3,7 @@
 * title=Village
 * activeCharacter=Simon
 * time=0:00
-* endTime=00:01:00
+* endTime=00:00:45
 * background=countryside.png
 
 # map
@@ -61,6 +61,14 @@ S...
 
 ## Throne Room
 
+```
+...Q....
+........
+........
+```
+
+* Q=Queen
+
 ## Sanctum
 
 ## Great Hall
@@ -89,6 +97,14 @@ S...
 * description=A filthy and emaciated man, wearing tattered rags and a very long beard.
 * faceImage=advisorFace.png
 
+## Queen
+
+* description=She's seen better days.
+* faceImage=queenFace.png
+* alive=false
+* orientation=laying
+* facing=right
+
 # items
 
 ## Table
@@ -108,7 +124,7 @@ S...
 : Simon @ Cottage
 : Simon takes Box
 : Simon lays
-0:00:20 Simon @ Sanctum
+0:00:25 Simon @ Sanctum
 : Simon drops Box
 : Simon @ Great Hall
 : Simon @ East Hall
