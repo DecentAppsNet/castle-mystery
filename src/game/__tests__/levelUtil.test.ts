@@ -116,6 +116,7 @@ import timelineInitialTimeOutsideBoundsText from './fixtures/timeline-initial-ti
 import timelineStartAfterItineraryText from './fixtures/timeline-start-after-itinerary.md?raw';
 import escapeStairwellRegressionText from './fixtures/escape-stairwell-regression.md?raw';
 import facesActivityText from './fixtures/faces-activity.md?raw';
+import bodyOrientationActivityText from './fixtures/body-orientation-activity.md?raw';
 import { getClozeImageCandidateUrls } from '../imageUrlUtil';
 import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
@@ -182,6 +183,22 @@ describe('levelUtil itinerary loading', () => {
     expect(king.itinerary.some(event => event.type === ItineraryEventType.FACE)).toBe(true);
     expect(findCharacterPose(king, 4_999).facingDirection).toBe('right');
     expect(findCharacterPose(king, 5_000).facingDirection).toBe('left');
+  });
+
+  it('parses standing, sitting, and laying activities and resets body orientation to standing on walks', () => {
+    const level = loadLevelFromText(bodyOrientationActivityText);
+    const king = level.characters.find(character => character.id === 'king');
+    if (!king) expect.fail('expected king character to exist');
+    const walkEvent = king.itinerary.find(event => event.type === ItineraryEventType.WALK);
+    if (!walkEvent) expect.fail('expected posture test fixture to generate a walk event');
+
+    expect(king.itinerary.some(event => event.type === ItineraryEventType.BODY_ORIENTATION)).toBe(true);
+    expect(findCharacterPose(king, 4_999).bodyOrientation).toBe('standing');
+    expect(findCharacterPose(king, 5_000).bodyOrientation).toBe('sitting');
+    expect(findCharacterPose(king, 6_000).bodyOrientation).toBe('laying');
+    expect(findCharacterPose(king, walkEvent.startTime - 1).bodyOrientation).toBe('laying');
+    expect(findCharacterPose(king, walkEvent.startTime).bodyOrientation).toBe('standing');
+    expect(findCharacterPose(king, 8_000).bodyOrientation).toBe('standing');
   });
 
   it('parses outside room metadata and defaults omitted outside flags to false', () => {

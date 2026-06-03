@@ -17,6 +17,28 @@ const CHARACTER_SWAY_INTERVAL = 1500;
 const CHARACTER_SWAY_AMOUNT = 1;
 const CHARACTER_WIDTH_SCALE = 3.75;
 const CHARACTER_HEIGHT_SCALE = 7.5;
+const LAYING_HORIZONTAL_SPREAD_SCALE = 2.18;
+const LAYING_HEAD_RADIUS_SCALE = 1.2;
+
+type HeadLayout = {
+  centerX:number,
+  centerY:number,
+  radius:number
+}
+
+type StrokeSegment = {
+  fromX:number,
+  fromY:number,
+  toX:number,
+  toY:number
+}
+
+type CharacterLayout = {
+  head:HeadLayout,
+  segments:StrokeSegment[],
+  topY:number,
+  bottomY:number
+}
 
 function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:ScalingFactors):[number, number] {
   const [baseX, baseY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
@@ -159,12 +181,19 @@ export function getCharacterSpeechAnchor(character:Character, scalingFactors:Sca
   const [centerX, bottomY] = _getCharacterCanvasBottomPosition(character, scalingFactors);
   const characterWidth = roomLineWidth * CHARACTER_WIDTH_SCALE;
   const characterHeight = roomLineWidth * CHARACTER_HEIGHT_SCALE;
-  const centerY = Math.round(bottomY - characterHeight / 2);
+  const provisionalLayout = _createCharacterLayout(0, 0, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
+  const centerY = Math.round(bottomY - provisionalLayout.bottomY);
   const swayPhase = ((time + character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
   const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
   const anchorX = centerX + sway;
-  const anchorTopY = centerY - characterHeight / 2;
-  return { anchorX, anchorTopY, centerX, centerY, characterWidth, characterHeight };
+  const anchorTopY = Math.round(centerY + provisionalLayout.topY);
+  return { anchorX, anchorTopY, centerX, centerY, characterWidth, characterHeight:provisionalLayout.bottomY - provisionalLayout.topY };
+}
+
+function _createCharacterLayout(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
+  facingDirection:Character['facingDirection'], bodyOrientation:Character['bodyOrientation']):CharacterLayout {
+  if (bodyOrientation === 'laying') return _createLayingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
+  return _createStandingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
 }
 
 function _drawActiveCharacterHighlight(centerX:number, centerY:number, characterWidth:number, characterHeight:number,
@@ -179,9 +208,60 @@ function _drawActiveCharacterHighlight(centerX:number, centerY:number, character
   context.fill();
 }
 
-function _drawCharacterBody(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
-  facingDirection:Character['facingDirection'], context:CanvasRenderingContext2D) {
+function _createLayout(head:HeadLayout, segments:StrokeSegment[]):CharacterLayout {
+  const segmentYs = segments.flatMap(segment => [segment.fromY, segment.toY]);
+  return {
+    head,
+    segments,
+    topY:Math.min(head.centerY - head.radius, ...segmentYs),
+    bottomY:Math.max(head.centerY + head.radius, ...segmentYs)
+  };
+}
+
+function _getLayoutHorizontalBounds(layout:CharacterLayout):{ leftX:number, rightX:number } {
+  const segmentXs = layout.segments.flatMap(segment => [segment.fromX, segment.toX]);
+  return {
+    leftX:Math.min(layout.head.centerX - layout.head.radius, ...segmentXs),
+    rightX:Math.max(layout.head.centerX + layout.head.radius, ...segmentXs)
+  };
+}
+
+function _translateLayout(layout:CharacterLayout, deltaX:number):CharacterLayout {
+  return _createLayout(
+    {
+      centerX:layout.head.centerX + deltaX,
+      centerY:layout.head.centerY,
+      radius:layout.head.radius
+    },
+    layout.segments.map(segment => ({
+      fromX:segment.fromX + deltaX,
+      fromY:segment.fromY,
+      toX:segment.toX + deltaX,
+      toY:segment.toY
+    }))
+  );
+}
+
+function _scaleLayoutX(layout:CharacterLayout, pivotX:number, scale:number):CharacterLayout {
+  return _createLayout(
+    {
+      centerX:pivotX + (layout.head.centerX - pivotX) * scale,
+      centerY:layout.head.centerY,
+      radius:layout.head.radius
+    },
+    layout.segments.map(segment => ({
+      fromX:pivotX + (segment.fromX - pivotX) * scale,
+      fromY:segment.fromY,
+      toX:pivotX + (segment.toX - pivotX) * scale,
+      toY:segment.toY
+    }))
+  );
+}
+
+function _createStandingCharacterLayout(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
+  facingDirection:Character['facingDirection']):CharacterLayout {
   const facingSign = facingDirection === 'right' ? 1 : -1;
+  const headRadius = Math.min(characterWidth, characterHeight) / 4;
   const headCenterY = centerY - characterHeight / 4;
   const shoulderY = centerY;
   const hipY = centerY + characterHeight / 4;
@@ -193,17 +273,60 @@ function _drawCharacterBody(backboneX:number, centerY:number, characterWidth:num
   const trailingFootX = backboneX - facingSign * characterWidth / 8;
   const footY = centerY + characterHeight / 2;
 
+  return _createLayout(
+    { centerX:backboneX, centerY:headCenterY, radius:headRadius },
+    [
+      { fromX:backboneX, fromY:headCenterY + headRadius, toX:backboneX, toY:hipY },
+      { fromX:backboneX, fromY:shoulderY, toX:trailingArmX, toY:trailingArmY },
+      { fromX:backboneX, fromY:shoulderY, toX:leadingArmX, toY:leadingArmY },
+      { fromX:backboneX, fromY:hipY, toX:trailingFootX, toY:footY },
+      { fromX:backboneX, fromY:hipY, toX:leadingFootX, toY:footY }
+    ]
+  );
+}
+
+function _rotatePointQuarterTurn(x:number, y:number, pivotX:number, pivotY:number, direction:'clockwise'|'counterclockwise') {
+  const relativeX = x - pivotX;
+  const relativeY = y - pivotY;
+  return direction === 'clockwise'
+    ? { x:pivotX + relativeY, y:pivotY - relativeX }
+    : { x:pivotX - relativeY, y:pivotY + relativeX };
+}
+
+function _createLayingCharacterLayout(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
+  facingDirection:Character['facingDirection']):CharacterLayout {
+  const standingLayout = _createStandingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
+  const rotationDirection = facingDirection === 'right' ? 'clockwise' : 'counterclockwise';
+  const rotatedHeadCenter = _rotatePointQuarterTurn(standingLayout.head.centerX, standingLayout.head.centerY, backboneX, centerY, rotationDirection);
+
+  const rotatedLayout = _createLayout(
+    {
+      centerX:rotatedHeadCenter.x,
+      centerY:rotatedHeadCenter.y,
+      radius:standingLayout.head.radius * LAYING_HEAD_RADIUS_SCALE
+    },
+    standingLayout.segments.map(segment => {
+      const from = _rotatePointQuarterTurn(segment.fromX, segment.fromY, backboneX, centerY, rotationDirection);
+      const to = _rotatePointQuarterTurn(segment.toX, segment.toY, backboneX, centerY, rotationDirection);
+      return { fromX:from.x, fromY:from.y, toX:to.x, toY:to.y };
+    })
+  );
+
+  const widenedLayout = _scaleLayoutX(rotatedLayout, backboneX, LAYING_HORIZONTAL_SPREAD_SCALE);
+  const { leftX, rightX } = _getLayoutHorizontalBounds(widenedLayout);
+  const layoutCenterX = (leftX + rightX) / 2;
+  return _translateLayout(widenedLayout, backboneX - layoutCenterX);
+}
+
+function _drawCharacterBody(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
+  facingDirection:Character['facingDirection'], bodyOrientation:Character['bodyOrientation'], context:CanvasRenderingContext2D):CharacterLayout {
+  const layout = _createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection, bodyOrientation);
   context.beginPath();
-  context.moveTo(backboneX, headCenterY + Math.min(characterWidth, characterHeight) / 4);
-  context.lineTo(backboneX, hipY);
-  context.moveTo(backboneX, shoulderY);
-  context.lineTo(trailingArmX, trailingArmY);
-  context.moveTo(backboneX, shoulderY);
-  context.lineTo(leadingArmX, leadingArmY);
-  context.moveTo(backboneX, hipY);
-  context.lineTo(trailingFootX, footY);
-  context.moveTo(backboneX, hipY);
-  context.lineTo(leadingFootX, footY);
+  layout.segments.forEach(segment => {
+    context.moveTo(segment.fromX, segment.fromY);
+    context.lineTo(segment.toX, segment.toY);
+  });
+  return layout;
 }
 
 export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
@@ -242,15 +365,15 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
 export function drawCharacter(character:Character, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, isActive:boolean) {
   const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
-  const headRadius = Math.min(characterWidth, characterHeight) / 4;
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
   if (isActive) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
-  _drawCharacterBody(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, context);
+  const layout = _drawCharacterBody(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation, context);
+  const headRadius = layout.head.radius;
   if (!faceImage) {
-    context.moveTo(backboneX + headRadius, centerY - characterHeight / 4);
-    context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
+    context.moveTo(layout.head.centerX + headRadius, layout.head.centerY);
+    context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     return;
   }
@@ -260,7 +383,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   const faceImageHeight = faceImage.height;
   if (!faceImageWidth || !faceImageHeight) {
     context.beginPath();
-    context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
+    context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     return;
   }
@@ -269,9 +392,18 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   const faceScale = Math.min(maxFaceWidth / faceImageWidth, maxFaceHeight / faceImageHeight);
   const drawWidth = faceImageWidth * faceScale;
   const drawHeight = faceImageHeight * faceScale;
-  const drawX = backboneX - drawWidth / 2;
-  const drawY = centerY - drawHeight;
-  context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
+  if (character.bodyOrientation !== 'laying') {
+    const drawX = layout.head.centerX - drawWidth / 2;
+    const drawY = layout.head.centerY - drawHeight / 2;
+    context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
+    return;
+  }
+
+  context.save();
+  context.translate(layout.head.centerX, layout.head.centerY);
+  context.rotate(character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2);
+  context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+  context.restore();
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {

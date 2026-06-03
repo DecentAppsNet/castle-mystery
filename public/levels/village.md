@@ -106,7 +106,8 @@ S...
 : Simon drops Capybara
 : Simon @ Cottage
 : Simon takes Box
-: Simon @ Sanctum
+: Simon lays
+0:00:20 Simon @ Sanctum
 : Simon drops Box
 : Simon @ Great Hall
 : Simon @ East Hall

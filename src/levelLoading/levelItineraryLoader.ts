@@ -6,6 +6,7 @@ import { assertNonNullable } from "decent-portal";
 import { formatMsecsAsTimestamp, LeadingTimestampKind, parseLeadingTimestampOrThrowOnInvalid } from "@/levelLoading/timestampUtil";
 import { MSECS_IN_DAY } from "@/common/timeUtil";
 import { tryCreateAtActivity } from "./activities/atActivityUtil";
+import { tryCreateBodyOrientationActivity } from "./activities/bodyOrientationActivityUtil";
 import { tryCreateDropActivity } from "./activities/dropActivityUtil";
 import { tryCreateGiveActivity } from "./activities/giveActivityUtil.ts";
 import { tryCreateFaceActivity } from "./activities/facesActivityUtil";
@@ -137,6 +138,11 @@ function _normalizeFacingActivityText(activityText:string):string {
   return facingDirection ? `faces ${facingDirection}` : 'faces';
 }
 
+function _normalizeBodyOrientationActivityText(activityText:string, verb:'stands'|'sits'|'lays'):string {
+  const normalizedText = _normalizeActivityArgument(activityText.slice(verb.length), new Set(['\'', '-']));
+  return normalizedText ? `${verb} ${normalizedText}` : verb;
+}
+
 function _normalizeGiveActivityText(activityText:string):string {
   const giveText = activityText.slice('gives'.length).trim();
   const separatorIndex = giveText.lastIndexOf(' to ');
@@ -164,6 +170,9 @@ function _normalizeParsedActivityText(activityText:string):string {
   if (trimmedActivityText.startsWith('interrupts')) return _normalizeSpeechActivityText(trimmedActivityText, 'interrupts');
   if (trimmedActivityText.startsWith('thinks')) return _normalizeThoughtActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('faces')) return _normalizeFacingActivityText(trimmedActivityText);
+  if (trimmedActivityText.startsWith('stands')) return _normalizeBodyOrientationActivityText(trimmedActivityText, 'stands');
+  if (trimmedActivityText.startsWith('sits')) return _normalizeBodyOrientationActivityText(trimmedActivityText, 'sits');
+  if (trimmedActivityText.startsWith('lays')) return _normalizeBodyOrientationActivityText(trimmedActivityText, 'lays');
   if (trimmedActivityText.startsWith('gives')) return _normalizeGiveActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('unlocks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'unlocks');
   if (trimmedActivityText.startsWith('locks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'locks');
@@ -195,7 +204,7 @@ function _runWithItineraryLineContext<T>(levelFilename:string, errorLineNo:numbe
 
 function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '%', '"', '\'', '-']));
-  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' faces ', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
+  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' faces ', ' stands', ' sits', ' lays', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
@@ -335,6 +344,7 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
     tryCreateSayActivity,
     tryCreateThinkActivity,
     tryCreateFaceActivity,
+    tryCreateBodyOrientationActivity,
     tryCreateGiveActivity,
     tryCreateDropActivity,
     tryCreateTakeActivity,

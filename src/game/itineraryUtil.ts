@@ -17,7 +17,7 @@ import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
-import type { FacingDirection } from "./types/Character";
+import type { BodyOrientation, FacingDirection } from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
 import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from "./roomUtil";
@@ -26,6 +26,7 @@ import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./waypointUtil"
 import ItineraryIndex from "./types/ItineraryIndex";
 import { ITEM_EFFECT_DURATION } from "./effects/dropItemUtil";
 import FaceEvent from "./types/itineraryEvents/FaceEvent";
+import BodyOrientationEvent from "./types/itineraryEvents/BodyOrientationEvent";
 
 const WALK_MSECS_PER_PIXEL = 30;
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
@@ -35,6 +36,7 @@ const WAYPOINT_DEPTH_ROW_COUNT = 3;
 type CharacterPose = {
   position:Position,
   facingDirection:FacingDirection,
+  bodyOrientation:BodyOrientation,
   speech:string|null,
   thought:string|null
 }
@@ -102,6 +104,15 @@ export function createFaceEvent(startTime:number, facingDirection:FacingDirectio
   };
 }
 
+export function createBodyOrientationEvent(startTime:number, bodyOrientation:BodyOrientation):BodyOrientationEvent {
+  return {
+    type:ItineraryEventType.BODY_ORIENTATION,
+    startTime,
+    duration:0,
+    bodyOrientation
+  };
+}
+
 export function createThoughtEvent(startTime:number, thought:string):ThoughtEvent {
   return {
     type:ItineraryEventType.THOUGHT,
@@ -154,6 +165,7 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
       return duplicatePosition((event as WalkEvent).toPosition);
     case ItineraryEventType.ROOM_ENTRY:
     case ItineraryEventType.FACE:
+    case ItineraryEventType.BODY_ORIENTATION:
     case ItineraryEventType.SPEECH:
     case ItineraryEventType.THOUGHT:
     case ItineraryEventType.CHARACTER_ENCOUNTER:
@@ -184,6 +196,7 @@ export function findCharacterPose(character:Character, time:number):CharacterPos
     return {
       position:{ x:character.x, y:character.y, z:character.depth },
       facingDirection:character.facingDirection,
+      bodyOrientation:character.bodyOrientation,
       speech:null,
       thought:null
     };
@@ -207,6 +220,21 @@ function _findFacingDirectionAtTime(character:Character, itinerary:ItineraryEven
   }
 
   return facingDirection;
+}
+
+function _findBodyOrientationAtTime(character:Character, itinerary:ItineraryEvent[], time:number):BodyOrientation {
+  let bodyOrientation = character.bodyOrientation;
+
+  for (const event of itinerary) {
+    if (event.startTime > time) break;
+    if (event.type === ItineraryEventType.BODY_ORIENTATION) {
+      bodyOrientation = (event as BodyOrientationEvent).bodyOrientation;
+      continue;
+    }
+    if (event.type === ItineraryEventType.WALK) bodyOrientation = 'standing';
+  }
+
+  return bodyOrientation;
 }
 
 function _findPositionAtTime(initialPosition:Position, itinerary:ItineraryEvent[], time:number):Position {
@@ -251,6 +279,7 @@ function _findItineraryPosition(character:Character, time:number):CharacterPose 
   return {
     position:_findPositionAtTime({ x:character.x, y:character.y, z:character.depth }, character.itinerary, time),
     facingDirection:_findFacingDirectionAtTime(character, character.itinerary, time),
+    bodyOrientation:_findBodyOrientationAtTime(character, character.itinerary, time),
     speech:_findSpeechAtTime(character.itinerary, time),
     thought:_findThoughtAtTime(character.itinerary, time)
   };
