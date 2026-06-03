@@ -4,6 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
+import Effect from "@/game/effects/types/Effect";
 import Character from "../types/Character";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -115,14 +116,14 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
 }
 
 export function drawCharacter(character:Character, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, isActive:boolean) {
+  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, effects:Effect[], isActive:boolean) {
   const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
   if (isActive) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
-  drawHeldItemsBehindCharacter(character, layout, scalingFactors, context);
+  drawHeldItemsBehindCharacter(character, layout, effects, scalingFactors, context);
   strokeCharacterBody(layout, context);
   const headRadius = layout.head.radius;
   if (!faceImage) {
@@ -130,7 +131,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.moveTo(layout.head.centerX + headRadius, layout.head.centerY);
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
-    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context);
+    drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
     return;
   }
 
@@ -140,7 +141,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.beginPath();
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
-    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context);
+    drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
     return;
   }
   const maxFaceWidth = headRadius * 6;
@@ -152,7 +153,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     const drawX = layout.head.centerX - drawWidth / 2;
     const drawY = layout.head.centerY - drawHeight / 2;
     context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
-    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context);
+    drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
     return;
   }
 
@@ -161,7 +162,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context.rotate(character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2);
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
-  drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context);
+  drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {

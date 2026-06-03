@@ -243,7 +243,7 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
         return;
       case 'character':
         processBeforeCharacterEffects(content.character, effects, context, scalingFactors);
-        drawCharacter(content.character, scalingFactors, context, time, imageSet, content.character.id === activeCharacter?.id);
+        drawCharacter(content.character, scalingFactors, context, time, imageSet, effects, content.character.id === activeCharacter?.id);
         processAfterCharacterEffects(content.character, effects, context, scalingFactors);
         return;
     }
