@@ -1,0 +1,16 @@
+import Item from "@/game/types/Item";
+import Position from "@/game/types/Position";
+import Waypoint from "@/game/types/Waypoint";
+import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
+
+type CharacterActivityState = {
+  events:ItineraryEvent[],
+  time:number,
+  position:Position,
+  waypoint:Waypoint,
+  items:Item[],
+  leftHandItem:Item|null,
+  rightHandItem:Item|null
+};
+
+export default CharacterActivityState;
