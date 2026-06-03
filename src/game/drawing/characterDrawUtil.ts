@@ -19,6 +19,9 @@ const CHARACTER_WIDTH_SCALE = 3.75;
 const CHARACTER_HEIGHT_SCALE = 7.5;
 const LAYING_HORIZONTAL_SPREAD_SCALE = 2.18;
 const LAYING_HEAD_RADIUS_SCALE = 1.2;
+const SITTING_BODY_LENGTH_SCALE = 0.7;
+const SITTING_LEG_LENGTH_SCALE = 0.52;
+const SITTING_TRAILING_LEG_LENGTH_SCALE = 0.32;
 
 type HeadLayout = {
   centerX:number,
@@ -193,6 +196,7 @@ export function getCharacterSpeechAnchor(character:Character, scalingFactors:Sca
 function _createCharacterLayout(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
   facingDirection:Character['facingDirection'], bodyOrientation:Character['bodyOrientation']):CharacterLayout {
   if (bodyOrientation === 'laying') return _createLayingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
+  if (bodyOrientation === 'sitting') return _createSittingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
   return _createStandingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
 }
 
@@ -281,6 +285,45 @@ function _createStandingCharacterLayout(backboneX:number, centerY:number, charac
       { fromX:backboneX, fromY:shoulderY, toX:leadingArmX, toY:leadingArmY },
       { fromX:backboneX, fromY:hipY, toX:trailingFootX, toY:footY },
       { fromX:backboneX, fromY:hipY, toX:leadingFootX, toY:footY }
+    ]
+  );
+}
+
+function _createSittingCharacterLayout(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
+  facingDirection:Character['facingDirection']):CharacterLayout {
+  const facingSign = facingDirection === 'right' ? 1 : -1;
+  const headRadius = Math.min(characterWidth, characterHeight) / 4;
+  const standingHeadCenterY = centerY - characterHeight / 4;
+  const standingBodyTopY = standingHeadCenterY + headRadius;
+  const hipY = centerY + characterHeight / 4;
+  const standingShoulderY = centerY;
+  const standingLeadingArmY = centerY + characterHeight / 8;
+  const standingTrailingArmY = centerY + characterHeight / 16;
+  const standingBodyLength = hipY - standingBodyTopY;
+  const bodyLength = standingBodyLength * SITTING_BODY_LENGTH_SCALE;
+  const bodyTopY = hipY - bodyLength;
+  const shoulderOffsetRatio = (standingShoulderY - standingBodyTopY) / standingBodyLength;
+  const leadingArmOffsetRatio = (standingLeadingArmY - standingShoulderY) / standingBodyLength;
+  const trailingArmOffsetRatio = (standingTrailingArmY - standingShoulderY) / standingBodyLength;
+  const headCenterY = bodyTopY - headRadius;
+  const shoulderY = bodyTopY + bodyLength * shoulderOffsetRatio;
+  const leadingArmX = backboneX + facingSign * characterWidth / 2;
+  const trailingArmX = backboneX - facingSign * characterWidth / 4;
+  const leadingArmY = shoulderY + bodyLength * leadingArmOffsetRatio;
+  const trailingArmY = shoulderY + bodyLength * trailingArmOffsetRatio;
+  const footY = centerY + characterHeight / 2;
+  const leadingFootX = backboneX + facingSign * characterWidth * SITTING_LEG_LENGTH_SCALE;
+  const trailingFootX = backboneX + facingSign * characterWidth * SITTING_TRAILING_LEG_LENGTH_SCALE;
+
+  return _createLayout(
+    { centerX:backboneX, centerY:headCenterY, radius:headRadius },
+    [
+      { fromX:backboneX, fromY:headCenterY + headRadius, toX:backboneX, toY:hipY },
+      { fromX:backboneX, fromY:shoulderY, toX:trailingArmX, toY:trailingArmY },
+      { fromX:backboneX, fromY:shoulderY, toX:leadingArmX, toY:leadingArmY },
+      { fromX:backboneX, fromY:hipY, toX:backboneX, toY:footY },
+      { fromX:backboneX, fromY:footY, toX:trailingFootX, toY:footY },
+      { fromX:backboneX, fromY:footY, toX:leadingFootX, toY:footY }
     ]
   );
 }

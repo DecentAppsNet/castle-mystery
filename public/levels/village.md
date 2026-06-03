@@ -3,6 +3,7 @@
 * title=Village
 * activeCharacter=Simon
 * time=0:00
+* endTime=00:01:00
 * background=countryside.png
 
 # map
@@ -111,6 +112,7 @@ S...
 : Simon drops Box
 : Simon @ Great Hall
 : Simon @ East Hall
+: Simon sits
 
 # solutions
 * seconds=1|2|3|4|5|6|7|8|9
