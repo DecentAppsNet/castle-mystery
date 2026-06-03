@@ -1,7 +1,9 @@
 import ItineraryEventBase from "./ItineraryEventBase";
+import ItemHoldLocation from "../ItemHoldLocation";
 
 type TakeItemEvent = Readonly<ItineraryEventBase & {
-  itemId:string
+  itemId:string,
+  destination:ItemHoldLocation
 }>
 
 export function duplicateTakeItemEvent(from:TakeItemEvent):TakeItemEvent {
@@ -9,7 +11,8 @@ export function duplicateTakeItemEvent(from:TakeItemEvent):TakeItemEvent {
     type:from.type,
     startTime:from.startTime,
     duration:from.duration,
-    itemId:from.itemId
+    itemId:from.itemId,
+    destination:from.destination
   };
 }
 

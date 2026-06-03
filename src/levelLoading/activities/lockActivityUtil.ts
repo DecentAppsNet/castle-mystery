@@ -41,7 +41,7 @@ function _findLockableRequirementForRoom(exit:RoomExit, room:Room):string|null {
 function _throwIfRequiredLockItemIsMissing(exit:RoomExit, currentRoom:Room, context:ActivityContext, targetRoomRef:string) {
   const lockableRequirement = _findLockableRequirementForRoom(exit, currentRoom);
   if (lockableRequirement === null || lockableRequirement === LOCKABLE_WITHOUT_INV_CHECK) return;
-  if (context.state.carriedItems.some(item => item.id === lockableRequirement)) return;
+  if (context.state.items.some(item => item.id === lockableRequirement)) return;
   throw new Error(`exit to ${targetRoomRef} requires item ${lockableRequirement} in inventory for itinerary activity`);
 }
 

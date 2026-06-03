@@ -18,6 +18,7 @@ import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
+import ItemHoldLocation from "./types/ItemHoldLocation";
 import type { BodyOrientation, FacingDirection } from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
@@ -141,8 +142,8 @@ export function createCharacterEncounterEvent(startTime:number, encounteredChara
   };
 }
 
-export function createTakeItemEvent(startTime:number, itemId:string):TakeItemEvent {
-  return { type:ItineraryEventType.TAKE_ITEM, startTime, duration:ITEM_EFFECT_DURATION, itemId };
+export function createTakeItemEvent(startTime:number, itemId:string, destination:ItemHoldLocation):TakeItemEvent {
+  return { type:ItineraryEventType.TAKE_ITEM, startTime, duration:ITEM_EFFECT_DURATION, itemId, destination };
 }
 
 export function createDropItemEvent(startTime:number, itemId:string, position:Position):DropItemEvent {

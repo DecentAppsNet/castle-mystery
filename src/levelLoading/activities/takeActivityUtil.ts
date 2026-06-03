@@ -5,11 +5,40 @@ import { assertNonNullable } from "decent-portal";
 
 import { createTakeItemEvent } from "@/game/itineraryUtil";
 import Item from "@/game/types/Item";
+import ItemHoldLocation from "@/game/types/ItemHoldLocation";
 import Waypoint from "@/game/types/Waypoint";
 import { FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findEarliestAbsoluteActivityStartTime, findRoomItemById, findWaypointPath, planMovementWithinRoom, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
+import {
+  ActivityContext,
+  addStateOwnedItem,
+  calcActivityStartTime,
+  ensureTimestampIsAvailable,
+  findCurrentRoom,
+  findEarliestAbsoluteActivityStartTime,
+  findRoomItemById,
+  findStateOwnedItem,
+  findWaypointPath,
+  planMovementWithinRoom,
+  removeStateOwnedItem,
+  scheduleEventsToStartAtTime,
+  stripTrailingPeriod
+} from "./activityUtil";
+
+type ParsedTakeParts = {
+  itemRef:string,
+  destination:ItemHoldLocation
+};
+
+type TakeSource = {
+  type:'room',
+  item:Item,
+  room:ReturnType<typeof findCurrentRoom>
+} | {
+  type:'held',
+  item:Item
+};
 
 function _isExitWaypoint(room:ReturnType<typeof findCurrentRoom>, waypoint:Waypoint):boolean {
   return waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z
@@ -73,26 +102,60 @@ function _chooseBestTakeWaypoint(room:ReturnType<typeof findCurrentRoom>, item:I
   }).waypoint;
 }
 
+function _parseTakeParts(activityText:string):ParsedTakeParts {
+  const takeText = stripTrailingPeriod(activityText.trim().slice('takes'.length).trim());
+  const suffixes:{ suffix:string, destination:ItemHoldLocation }[] = [
+    { suffix:' into right hand', destination:'right-hand' },
+    { suffix:' in right hand', destination:'right-hand' },
+    { suffix:' into left hand', destination:'left-hand' },
+    { suffix:' in left hand', destination:'left-hand' },
+    { suffix:' into hand', destination:'right-hand' },
+    { suffix:' in hand', destination:'right-hand' },
+    { suffix:' into inventory', destination:'inventory' },
+    { suffix:' in inventory', destination:'inventory' }
+  ];
+
+  for (const { suffix, destination } of suffixes) {
+    if (!takeText.endsWith(suffix)) continue;
+    const itemRef = takeText.slice(0, -suffix.length).trim();
+    if (!itemRef.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
+    return { itemRef, destination };
+  }
+
+  if (!takeText.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
+  return { itemRef:takeText, destination:'inventory' };
+}
+
+function _findTakeSource(context:ActivityContext, itemRef:string):TakeSource|null {
+  const currentRoom = findCurrentRoom(context.level, context.state.position);
+  const roomItemLocation = findRoomItemById(context.roomItemsByRoomId, context.level, itemRef);
+  if (roomItemLocation?.room.id === currentRoom.id) {
+    return { type:'room', item:roomItemLocation.item, room:roomItemLocation.room };
+  }
+
+  const heldItem = findStateOwnedItem(context.state, itemRef);
+  if (heldItem) return { type:'held', item:heldItem };
+  return null;
+}
+
 export function tryCreateTakeActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('takes ')) return null;
 
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  const itemRef = stripTrailingPeriod(trimmedActivityText.slice('takes'.length).trim());
-  if (!itemRef.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
-
-  const itemLocation = findRoomItemById(context.roomItemsByRoomId, context.level, itemRef);
-  if (!itemLocation) throw new Error(`item ${itemRef} is not available for take activity`);
+  const { itemRef, destination } = _parseTakeParts(trimmedActivityText);
+  const itemSource = _findTakeSource(context, itemRef);
+  if (!itemSource) throw new Error(`item ${itemRef} is not available for take activity`);
 
   const currentRoom = findCurrentRoom(context.level, context.state.position);
-  if (currentRoom.id !== itemLocation.room.id) throw new Error(`item ${itemRef} is not in the same room for take activity`);
-  const roomItems = context.roomItemsByRoomId.get(itemLocation.room.id);
-  assertNonNullable(roomItems, `missing room items for ${itemLocation.room.id}`);
-  const targetWaypoint = _chooseBestTakeWaypoint(currentRoom, itemLocation.item, roomItems, context.state.waypoint);
-  const unscheduledMovementEvents = targetWaypoint === context.state.waypoint ? [] : (() => {
-    findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
-    return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
+  const unscheduledMovementEvents = itemSource.type !== 'room' ? [] : (() => {
+  const roomItems = context.roomItemsByRoomId.get(itemSource.room.id);
+  assertNonNullable(roomItems, `missing room items for ${itemSource.room.id}`);
+  const targetWaypoint = _chooseBestTakeWaypoint(currentRoom, itemSource.item, roomItems, context.state.waypoint);
+  if (targetWaypoint === context.state.waypoint) return [];
+  findWaypointPath(currentRoom, context.state.waypoint, targetWaypoint);
+  return planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
   })();
   const scheduledWalkEvents = scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime,
     context.timestampType === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
@@ -102,10 +165,18 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
       return lastWalkEvent.startTime + lastWalkEvent.duration;
     })()
     : activityStartTime;
-  const itemIndex = roomItems.findIndex(item => item.id === itemLocation.item.id);
-  if (itemIndex === -1) throw new Error(`item ${itemRef} is no longer available for take activity`);
-  const [item] = roomItems.splice(itemIndex, 1);
-  assertNonNullable(item, `expected item ${itemRef} to be removable`);
-  context.state.carriedItems.push(item);
-  return [...scheduledWalkEvents, createTakeItemEvent(takeEventTime, item.id)];
+  const item = itemSource.type === 'room'
+	? (() => {
+		const roomItems = context.roomItemsByRoomId.get(itemSource.room.id);
+		assertNonNullable(roomItems, `missing room items for ${itemSource.room.id}`);
+		const itemIndex = roomItems.findIndex(candidate => candidate.id === itemSource.item.id);
+		if (itemIndex === -1) throw new Error(`item ${itemRef} is no longer available for take activity`);
+		const [removedItem] = roomItems.splice(itemIndex, 1);
+		assertNonNullable(removedItem, `expected item ${itemRef} to be removable`);
+		return removedItem;
+	})()
+	: removeStateOwnedItem(context.state, itemRef);
+  assertNonNullable(item, `expected item ${itemRef} to be movable`);
+  addStateOwnedItem(context.state, item, destination);
+  return [...scheduledWalkEvents, createTakeItemEvent(takeEventTime, item.id, destination)];
 }

@@ -2,13 +2,16 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Character from "../types/Character";
+import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import ImageSet from "../types/ImageSet";
 import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK, COLOR_DARK_GRAY, COLOR_SPEECH_BUBBLE_FILL } from "./drawConstants";
+import { drawItemAtCanvasPosition } from "./itemDrawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";
 
 const PULSE_CADENCE_MS = 1000;
@@ -36,9 +39,16 @@ type StrokeSegment = {
   toY:number
 }
 
+type Point = {
+  x:number,
+  y:number
+}
+
 type CharacterLayout = {
   head:HeadLayout,
   segments:StrokeSegment[],
+  leftHand:Point,
+  rightHand:Point,
   topY:number,
   bottomY:number
 }
@@ -54,11 +64,25 @@ function _getCharacterDisplayName(character:Character):string {
   return character.title;
 }
 
+function _countInHandItems(character:Character):number {
+  return (character.leftHandItem ? 1 : 0) + (character.rightHandItem ? 1 : 0);
+}
+
+function _countCarriedItems(character:Character):number {
+  return character.items.length + _countInHandItems(character);
+}
+
 function _getCharacterCarryText(character:Character):string {
-  const itemCount = character.items.length;
+  const itemCount = _countCarriedItems(character);
+  const inHandItemCount = _countInHandItems(character);
+  const inHandText = inHandItemCount > 0 
+    ? (itemCount === inHandItemCount) 
+      ? ` (in hand)`
+      : ` (${inHandItemCount} in hand)` 
+    : ``;
   if (itemCount === 0) return "Carrying nothing.";
-  if (itemCount === 1) return "Carrying 1 item.";
-  return `Carrying ${itemCount} items.`;
+  if (itemCount === 1) return `Carrying 1 item${inHandText}.`;
+  return `Carrying ${itemCount} items${inHandText}.`;
 }
 
 function _drawSpeechBubbleOutline(left:number, top:number, width:number, height:number,
@@ -212,11 +236,13 @@ function _drawActiveCharacterHighlight(centerX:number, centerY:number, character
   context.fill();
 }
 
-function _createLayout(head:HeadLayout, segments:StrokeSegment[]):CharacterLayout {
+function _createLayoutWithHands(head:HeadLayout, segments:StrokeSegment[], leftHand:Point, rightHand:Point):CharacterLayout {
   const segmentYs = segments.flatMap(segment => [segment.fromY, segment.toY]);
   return {
     head,
     segments,
+    leftHand,
+    rightHand,
     topY:Math.min(head.centerY - head.radius, ...segmentYs),
     bottomY:Math.max(head.centerY + head.radius, ...segmentYs)
   };
@@ -231,7 +257,7 @@ function _getLayoutHorizontalBounds(layout:CharacterLayout):{ leftX:number, righ
 }
 
 function _translateLayout(layout:CharacterLayout, deltaX:number):CharacterLayout {
-  return _createLayout(
+  return _createLayoutWithHands(
     {
       centerX:layout.head.centerX + deltaX,
       centerY:layout.head.centerY,
@@ -242,12 +268,14 @@ function _translateLayout(layout:CharacterLayout, deltaX:number):CharacterLayout
       fromY:segment.fromY,
       toX:segment.toX + deltaX,
       toY:segment.toY
-    }))
+    })),
+    { x:layout.leftHand.x + deltaX, y:layout.leftHand.y },
+    { x:layout.rightHand.x + deltaX, y:layout.rightHand.y }
   );
 }
 
 function _scaleLayoutX(layout:CharacterLayout, pivotX:number, scale:number):CharacterLayout {
-  return _createLayout(
+  return _createLayoutWithHands(
     {
       centerX:pivotX + (layout.head.centerX - pivotX) * scale,
       centerY:layout.head.centerY,
@@ -258,7 +286,9 @@ function _scaleLayoutX(layout:CharacterLayout, pivotX:number, scale:number):Char
       fromY:segment.fromY,
       toX:pivotX + (segment.toX - pivotX) * scale,
       toY:segment.toY
-    }))
+    })),
+    { x:pivotX + (layout.leftHand.x - pivotX) * scale, y:layout.leftHand.y },
+    { x:pivotX + (layout.rightHand.x - pivotX) * scale, y:layout.rightHand.y }
   );
 }
 
@@ -276,8 +306,10 @@ function _createStandingCharacterLayout(backboneX:number, centerY:number, charac
   const leadingFootX = backboneX + facingSign * characterWidth / 2;
   const trailingFootX = backboneX - facingSign * characterWidth / 8;
   const footY = centerY + characterHeight / 2;
+  const trailingHand = { x:trailingArmX, y:trailingArmY };
+  const leadingHand = { x:leadingArmX, y:leadingArmY };
 
-  return _createLayout(
+  return _createLayoutWithHands(
     { centerX:backboneX, centerY:headCenterY, radius:headRadius },
     [
       { fromX:backboneX, fromY:headCenterY + headRadius, toX:backboneX, toY:hipY },
@@ -285,7 +317,9 @@ function _createStandingCharacterLayout(backboneX:number, centerY:number, charac
       { fromX:backboneX, fromY:shoulderY, toX:leadingArmX, toY:leadingArmY },
       { fromX:backboneX, fromY:hipY, toX:trailingFootX, toY:footY },
       { fromX:backboneX, fromY:hipY, toX:leadingFootX, toY:footY }
-    ]
+    ],
+    facingDirection === 'right' ? trailingHand : leadingHand,
+    facingDirection === 'right' ? leadingHand : trailingHand
   );
 }
 
@@ -314,8 +348,10 @@ function _createSittingCharacterLayout(backboneX:number, centerY:number, charact
   const footY = centerY + characterHeight / 2;
   const leadingFootX = backboneX + facingSign * characterWidth * SITTING_LEG_LENGTH_SCALE;
   const trailingFootX = backboneX + facingSign * characterWidth * SITTING_TRAILING_LEG_LENGTH_SCALE;
+  const trailingHand = { x:trailingArmX, y:trailingArmY };
+  const leadingHand = { x:leadingArmX, y:leadingArmY };
 
-  return _createLayout(
+  return _createLayoutWithHands(
     { centerX:backboneX, centerY:headCenterY, radius:headRadius },
     [
       { fromX:backboneX, fromY:headCenterY + headRadius, toX:backboneX, toY:hipY },
@@ -324,7 +360,9 @@ function _createSittingCharacterLayout(backboneX:number, centerY:number, charact
       { fromX:backboneX, fromY:hipY, toX:backboneX, toY:footY },
       { fromX:backboneX, fromY:footY, toX:trailingFootX, toY:footY },
       { fromX:backboneX, fromY:footY, toX:leadingFootX, toY:footY }
-    ]
+    ],
+    facingDirection === 'right' ? trailingHand : leadingHand,
+    facingDirection === 'right' ? leadingHand : trailingHand
   );
 }
 
@@ -342,7 +380,9 @@ function _createLayingCharacterLayout(backboneX:number, centerY:number, characte
   const rotationDirection = facingDirection === 'right' ? 'clockwise' : 'counterclockwise';
   const rotatedHeadCenter = _rotatePointQuarterTurn(standingLayout.head.centerX, standingLayout.head.centerY, backboneX, centerY, rotationDirection);
 
-  const rotatedLayout = _createLayout(
+  const rotatedLeftHand = _rotatePointQuarterTurn(standingLayout.leftHand.x, standingLayout.leftHand.y, backboneX, centerY, rotationDirection);
+  const rotatedRightHand = _rotatePointQuarterTurn(standingLayout.rightHand.x, standingLayout.rightHand.y, backboneX, centerY, rotationDirection);
+  const rotatedLayout = _createLayoutWithHands(
     {
       centerX:rotatedHeadCenter.x,
       centerY:rotatedHeadCenter.y,
@@ -352,7 +392,9 @@ function _createLayingCharacterLayout(backboneX:number, centerY:number, characte
       const from = _rotatePointQuarterTurn(segment.fromX, segment.fromY, backboneX, centerY, rotationDirection);
       const to = _rotatePointQuarterTurn(segment.toX, segment.toY, backboneX, centerY, rotationDirection);
       return { fromX:from.x, fromY:from.y, toX:to.x, toY:to.y };
-    })
+    }),
+    rotatedLeftHand,
+    rotatedRightHand
   );
 
   const widenedLayout = _scaleLayoutX(rotatedLayout, backboneX, LAYING_HORIZONTAL_SPREAD_SCALE);
@@ -361,15 +403,59 @@ function _createLayingCharacterLayout(backboneX:number, centerY:number, characte
   return _translateLayout(widenedLayout, backboneX - layoutCenterX);
 }
 
-function _drawCharacterBody(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
-  facingDirection:Character['facingDirection'], bodyOrientation:Character['bodyOrientation'], context:CanvasRenderingContext2D):CharacterLayout {
-  const layout = _createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection, bodyOrientation);
+function _strokeCharacterBody(layout:CharacterLayout, context:CanvasRenderingContext2D) {
   context.beginPath();
   layout.segments.forEach(segment => {
     context.moveTo(segment.fromX, segment.fromY);
     context.lineTo(segment.toX, segment.toY);
   });
-  return layout;
+  context.stroke();
+}
+
+function _createHeldItemDrawMetrics(scalingFactors:ScalingFactors) {
+  const [panelOffsetX, panelOffsetY] = calcPanelOffset(scalingFactors);
+  const baseWidthPixels = Math.max(6, scalingFactors.roomLineWidth * 3.5);
+  const cuboidWidthPixels = calcItemCuboidWidthPixels(baseWidthPixels);
+  return {
+    cuboidWidthPixels,
+    cuboidHeightPixels:calcItemCuboidHeightPixels(cuboidWidthPixels),
+    cuboidDepthXPixels:Math.max(2, panelOffsetX / 4),
+    cuboidDepthYPixels:Math.max(1, panelOffsetY / 4),
+    cuboidLineWidthPixels:Math.max(0.5, scalingFactors.roomLineWidth * 0.25)
+  };
+}
+
+function _drawHeldItem(item:Item, handPosition:Point, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const metrics = _createHeldItemDrawMetrics(scalingFactors);
+  drawItemAtCanvasPosition(item, handPosition.x, handPosition.y + metrics.cuboidHeightPixels * 0.35, metrics, context);
+}
+
+function _findBackHandItem(character:Character):{ item:Item, handPosition:Point }|null {
+  if (character.facingDirection === 'right') {
+    return character.leftHandItem ? { item:character.leftHandItem, handPosition:{ x:0, y:0 } } : null;
+  }
+  return character.rightHandItem ? { item:character.rightHandItem, handPosition:{ x:0, y:0 } } : null;
+}
+
+function _findFrontHandItem(character:Character):{ item:Item, handPosition:Point }|null {
+  if (character.facingDirection === 'right') {
+    return character.rightHandItem ? { item:character.rightHandItem, handPosition:{ x:0, y:0 } } : null;
+  }
+  return character.leftHandItem ? { item:character.leftHandItem, handPosition:{ x:0, y:0 } } : null;
+}
+
+function _drawHeldItemsBehindCharacter(character:Character, layout:CharacterLayout, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const backHandItem = _findBackHandItem(character);
+  if (!backHandItem) return;
+  const handPosition = character.facingDirection === 'right' ? layout.leftHand : layout.rightHand;
+  _drawHeldItem(backHandItem.item, handPosition, scalingFactors, context);
+}
+
+function _drawHeldItemsInFrontOfCharacter(character:Character, layout:CharacterLayout, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const frontHandItem = _findFrontHandItem(character);
+  if (!frontHandItem) return;
+  const handPosition = character.facingDirection === 'right' ? layout.rightHand : layout.leftHand;
+  _drawHeldItem(frontHandItem.item, handPosition, scalingFactors, context);
 }
 
 export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
@@ -412,15 +498,18 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   if (isActive) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
-  const layout = _drawCharacterBody(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation, context);
+  const layout = _createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
+  _drawHeldItemsBehindCharacter(character, layout, scalingFactors, context);
+  _strokeCharacterBody(layout, context);
   const headRadius = layout.head.radius;
   if (!faceImage) {
+    context.beginPath();
     context.moveTo(layout.head.centerX + headRadius, layout.head.centerY);
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
+    _drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context);
     return;
   }
-  context.stroke();
 
   const faceImageWidth = faceImage.width;
   const faceImageHeight = faceImage.height;
@@ -428,6 +517,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.beginPath();
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
+    _drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context);
     return;
   }
   const maxFaceWidth = headRadius * 6;
@@ -439,6 +529,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     const drawX = layout.head.centerX - drawWidth / 2;
     const drawY = layout.head.centerY - drawHeight / 2;
     context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
+    _drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context);
     return;
   }
 
@@ -447,6 +538,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context.rotate(character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2);
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
+  _drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {

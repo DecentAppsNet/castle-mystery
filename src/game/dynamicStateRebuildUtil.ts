@@ -8,8 +8,8 @@ import { createGiveItemEffect } from "./effects/giveItemUtil";
 import { createLockEffect, createUnlockEffect } from "./effects/lockEffectUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
 import { findCharacterPose } from "./itineraryUtil";
+import { addOwnedItem, getOwnedItems, removeOwnedItemById } from "./itemOwnershipUtil";
 import Position, { duplicatePosition } from "./types/Position";
-import Item from "./types/Item";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import { duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
@@ -54,7 +54,7 @@ function _getDiscoveredItemIds(gameState:GameState):Set<string> {
   gameState.rooms.forEach(room => room.items.forEach(item => {
     if (item.isDiscovered) discoveredItemIds.add(item.id);
   }));
-  gameState.characters.forEach(character => character.items.forEach(item => {
+  gameState.characters.forEach(character => getOwnedItems(character).forEach(item => {
     if (item.isDiscovered) discoveredItemIds.add(item.id);
   }));
   return discoveredItemIds;
@@ -68,7 +68,7 @@ function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<strin
       if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
     });
   });
-  gameState.characters.forEach(character => character.items.forEach(item => {
+  gameState.characters.forEach(character => getOwnedItems(character).forEach(item => {
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
   }));
   gameState.characters.forEach(character => {
@@ -129,7 +129,7 @@ function _collectAppliedExitStateEvents(gameState:GameState, time:number):Applie
   return appliedEvents;
 }
 
-function _removeItemById(items:Item[], itemId:string):Item|null {
+function _removeItemById(items:GameState['rooms'][number]['items'], itemId:string) {
   const itemIndex = items.findIndex(item => item.id === itemId);
   if (itemIndex === -1) return null;
   const [item] = items.splice(itemIndex, 1);
@@ -174,16 +174,16 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
         {
           const takeEvent = event as TakeItemEvent;
           const room = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
-          if (!room) break;
-          const item = _removeItemById(room.items, takeEvent.itemId);
+          const itemFromRoom = room ? _removeItemById(room.items, takeEvent.itemId) : null;
+          const item = itemFromRoom || removeOwnedItemById(actor, takeEvent.itemId);
           if (!item) break;
-          if (!room.isObscured && previousTime !== undefined && takeEvent.startTime > previousTime && takeEvent.startTime <= time) {
+          if (itemFromRoom && room && !room.isObscured && previousTime !== undefined && takeEvent.startTime > previousTime && takeEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:room.id,
               create:() => gameState.activeEffects.push(createTakeItemEffect(item, actor, room, Date.now(), startPosition.z))
             });
           }
-          actor.items.push(item);
+          addOwnedItem(actor, item, takeEvent.destination);
         }
       break;
 
@@ -193,7 +193,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           const actorRoom = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
           const dropRoom = findRoomAtPosition(gameState.rooms, dropEvent.position.x, dropEvent.position.y);
           if (!actorRoom || !dropRoom || actorRoom.id !== dropRoom.id) break;
-          const item = _removeItemById(actor.items, dropEvent.itemId);
+          const item = removeOwnedItemById(actor, dropEvent.itemId);
           if (!item) break;
           item.position = duplicatePosition(dropEvent.position);
           if (!dropRoom.isObscured && previousTime !== undefined && dropEvent.startTime > previousTime && dropEvent.startTime <= time) {
@@ -211,7 +211,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           const giveEvent = event as GiveItemEvent;
           const recipient = gameState.characters.find(character => character.id === giveEvent.recipientCharacterId) || null;
           if (!recipient) break;
-          const item = _removeItemById(actor.items, giveEvent.itemId);
+          const item = removeOwnedItemById(actor, giveEvent.itemId);
           if (!item) break;
           const actorRoom = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
           if (!actorRoom?.isObscured && previousTime !== undefined && giveEvent.startTime > previousTime && giveEvent.startTime <= time && actorRoom) {
@@ -220,7 +220,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
               create:() => gameState.activeEffects.push(createGiveItemEffect(item, actorRoom, actor, recipient, Date.now(), gameState.scalingFactors))
             });
           }
-          recipient.items.push(item);
+          addOwnedItem(recipient, item, 'inventory');
         }
       break;
     }

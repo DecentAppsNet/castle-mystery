@@ -7,13 +7,7 @@ import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { createDropItemEvent } from "@/game/itineraryUtil";
 import { calcItemCuboidHeightGame } from "@/game/itemSizeUtil";
 import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findTargetPositionAtTime, stripTrailingPeriod } from "./activityUtil";
-import { normalizeId } from "@/game/idUtil";
-
-function _matchesItemReference(item:Item, reference:string):boolean {
-  const normalizedReference = normalizeId(reference);
-  return item.id === normalizedReference || normalizeId(item.title) === normalizedReference;
-}
+import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findTargetPositionAtTime, removeStateOwnedItem, stripTrailingPeriod } from "./activityUtil";
 
 function _createWaypointKey(waypoint:Waypoint):string {
   return `${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`;
@@ -121,10 +115,8 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
   const itemRef = stripTrailingPeriod(trimmedActivityText.slice('drops'.length).trim());
   if (!itemRef.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
 
-  const itemIndex = context.state.carriedItems.findIndex(candidate => _matchesItemReference(candidate, itemRef));
-  if (itemIndex === -1) throw new Error(`item ${itemRef} is not carried for drop activity`);
-  const item = context.state.carriedItems[itemIndex] || null;
-  if (!item) throw new Error(`item ${itemRef} is no longer carried for drop activity`);
+  const item = removeStateOwnedItem(context.state, itemRef);
+  if (!item) throw new Error(`item ${itemRef} is not carried for drop activity`);
 
   const room = findCurrentRoom(context.level, context.state.position);
   const roomItems = context.roomItemsByRoomId.get(room.id) || null;
@@ -134,7 +126,6 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
     ...item,
     position:_createDroppedItemPosition(room, dropWaypoint, roomItems)
   };
-  context.state.carriedItems.splice(itemIndex, 1);
   roomItems.push(droppedItem);
 
   return [createDropItemEvent(activityStartTime, droppedItem.id, droppedItem.position)];

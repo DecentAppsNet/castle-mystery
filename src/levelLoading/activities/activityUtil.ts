@@ -4,8 +4,10 @@
 import { assertNonNullable } from "decent-portal";
 
 import Character from "@/game/types/Character";
+import { addOwnedItem, getOwnedItems, removeOwnedItemById } from "@/game/itemOwnershipUtil";
 import { duplicateItineraryEvent } from "@/game/types/itineraryEvents/ItineraryEvent";
 import Item, { duplicateItem } from "@/game/types/Item";
+import ItemHoldLocation from "@/game/types/ItemHoldLocation";
 import Level from "@/game/types/Level";
 import Position, { duplicatePosition } from "@/game/types/Position";
 import Room from "@/game/types/Room";
@@ -33,7 +35,9 @@ export type CharacterActivityState = {
   time:number,
   position:Position,
   waypoint:Waypoint,
-  carriedItems:Item[]
+  items:Item[],
+  leftHandItem:Item|null,
+  rightHandItem:Item|null
 };
 
 export type ActivityContext = {
@@ -191,7 +195,9 @@ export function createCharacterActivityState(character:Character):CharacterActiv
     time:0,
     position:{ x:character.x, y:character.y, z:character.depth },
     waypoint:character.waypoint,
-    carriedItems:character.items.map(duplicateItem)
+    items:character.items.map(duplicateItem),
+    leftHandItem:character.leftHandItem ? duplicateItem(character.leftHandItem) : null,
+    rightHandItem:character.rightHandItem ? duplicateItem(character.rightHandItem) : null
   };
 }
 
@@ -205,8 +211,24 @@ export function duplicateCharacterActivityState(state:CharacterActivityState):Ch
     time:state.time,
     position:duplicatePosition(state.position),
     waypoint:state.waypoint,
-    carriedItems:state.carriedItems.map(duplicateItem)
+    items:state.items.map(duplicateItem),
+    leftHandItem:state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
+    rightHandItem:state.rightHandItem ? duplicateItem(state.rightHandItem) : null
   };
+}
+
+export function addStateOwnedItem(state:CharacterActivityState, item:Item, location:ItemHoldLocation) {
+	addOwnedItem(state, item, location);
+}
+
+export function findStateOwnedItem(state:CharacterActivityState, itemRef:string):Item|null {
+	return getOwnedItems(state).find(candidate => _matchesItemReference(candidate, itemRef)) || null;
+}
+
+export function removeStateOwnedItem(state:CharacterActivityState, itemRef:string):Item|null {
+	const item = findStateOwnedItem(state, itemRef);
+	if (!item) return null;
+	return removeOwnedItemById(state, item.id);
 }
 
 export function duplicateRoomItemsByRoomId(roomItemsByRoomId:Map<string, Item[]>):Map<string, Item[]> {
@@ -486,7 +508,7 @@ export function findTargetPositionAtTime(targetId:string, timestamp:number, char
   }
 
   for (const [characterId, state] of characterStatesById.entries()) {
-    const item = state.carriedItems.find(candidate => _matchesItemReference(candidate, targetId)) || null;
+    const item = getOwnedItems(state).find(candidate => _matchesItemReference(candidate, targetId)) || null;
     if (!item) continue;
     const targetCharacterForItem = charactersById.get(characterId) || null;
     assertNonNullable(targetCharacterForItem, `missing character ${characterId} for carried item ${targetId}`);

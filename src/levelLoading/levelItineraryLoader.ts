@@ -486,7 +486,9 @@ function _scheduleActivities(level:Level, activities:ParsedItineraryActivity[], 
       ...character,
       itinerary,
       itineraryIndex: createItineraryIndex(itinerary, { x:character.x, y:character.y, z:character.depth }),
-      items: state.carriedItems.map(duplicateItem)
+      items: state.items.map(duplicateItem),
+      leftHandItem: state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
+      rightHandItem: state.rightHandItem ? duplicateItem(state.rightHandItem) : null
     };
   });
 

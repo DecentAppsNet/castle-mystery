@@ -118,11 +118,11 @@ S...
 
 # itinerary
 
-: Simon takes Capybara
+: Simon takes Capybara in right hand
 : Simon @ Sanctum
 : Simon drops Capybara
 : Simon @ Cottage
-: Simon takes Box
+: Simon takes Box in left hand
 : Simon lays
 0:00:25 Simon @ Sanctum
 : Simon drops Box

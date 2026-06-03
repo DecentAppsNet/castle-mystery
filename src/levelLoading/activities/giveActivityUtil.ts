@@ -9,6 +9,7 @@ import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET } from "@/game/waypointUtil";
 import {
   ActivityContext,
+  addStateOwnedItem,
   calcActivityStartTime,
   ensureTimestampIsAvailable,
   findEarliestAbsoluteActivityStartTime,
@@ -16,6 +17,7 @@ import {
   findTargetPositionAtTime,
   findWaypointPath,
   planMovementWithinRoom,
+  removeStateOwnedItem,
   scheduleEventsToStartAtTime,
   stripTrailingPeriod
 } from "./activityUtil";
@@ -29,11 +31,6 @@ function _calcFloorDistance(fromX:number, fromZ:number, toX:number, toZ:number):
 
 function _isOnSameFloorY(y1:number, y2:number):boolean {
   return Math.abs(y1 - y2) <= FLOOR_WAYPOINT_Y_OFFSET;
-}
-
-function _matchesItemReference(itemId:string, itemTitle:string, reference:string):boolean {
-  const normalizedReference = normalizeId(reference);
-  return itemId === normalizedReference || normalizeId(itemTitle) === normalizedReference;
 }
 
 function _parseGiveParts(activityText:string):{ itemRef:string, recipientId:string } {
@@ -84,11 +81,10 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
     })()
     : activityStartTime;
 
-  const itemIndex = context.state.carriedItems.findIndex(item => _matchesItemReference(item.id, item.title, itemRef));
-  if (itemIndex === -1) throw new Error(`item ${itemRef} is not carried for give activity`);
-  const [item] = context.state.carriedItems.splice(itemIndex, 1);
+  const item = removeStateOwnedItem(context.state, itemRef);
+  if (!item) throw new Error(`item ${itemRef} is not carried for give activity`);
   assertNonNullable(item, `expected item ${itemRef} to be removable`);
-  recipientState.carriedItems.push(item);
+  addStateOwnedItem(recipientState, item, 'inventory');
 
   return [...scheduledWalkEvents, createGiveItemEvent(giveEventTime, item.id, recipientId)];
 }
