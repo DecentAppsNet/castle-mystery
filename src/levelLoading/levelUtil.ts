@@ -7,10 +7,10 @@ import { duplicateCharacter } from "../game/types/Character";
 import { createItemsById } from "../game/itemUtil";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { rand } from "@/common/randUtil";
-import { baseUrl } from "@/common/urlUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { formatMsecsAsTimestamp, parseTimestampToMsecs } from "@/levelLoading/timestampUtil";
+import { loadLevelTextWithImports } from "./levelImportUtil";
 import { loadItineraries } from "./levelItineraryLoader";
 import LoadLevelException from "./LoadLevelException";
 import {
@@ -264,6 +264,11 @@ function _validateOutsideRoomsAgainstGroundFloor(level:Level, groundFloorRoomRef
   throw new Error(`outside room '${undergroundOutsideRoom.title || undergroundOutsideRoom.id}' is below general groundFloorRoom '${groundFloorRoomRef}'`);
 }
 
+function _levelUrlToFilename(levelUrl:string):string {
+  const urlSegments = levelUrl.split('/').filter(segment => segment.length > 0);
+  return urlSegments[urlSegments.length - 1] || levelUrl;
+}
+
 function _resolveExplicitEndTime(endTime:number|null, startTime:number):number|null {
   if (endTime === null) return null;
   return endTime <= startTime ? endTime + MSECS_IN_DAY : endTime;
@@ -413,7 +418,6 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
 }
 
 export async function loadLevelFromUrl(levelFileUrl:string):Promise<Level> {
-  const response = await fetch(baseUrl(levelFileUrl));
-  const text = await response.text();
+  const text = await loadLevelTextWithImports(_levelUrlToFilename(levelFileUrl));
   return loadLevelFromText(text, levelFileUrl, { validateUnlockPhrases:true });
 }

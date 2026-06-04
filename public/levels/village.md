@@ -5,6 +5,7 @@
 * time=0:00
 * endTime=00:00:45
 * background=countryside.png
+* imports=items.md | characters.md
 
 # map
 
@@ -94,7 +95,6 @@ S...
 
 ## Simon
 
-* description=A filthy and emaciated man, wearing tattered rags and a very long beard.
 * faceImage=advisorFace.png
 
 ## Queen
@@ -108,7 +108,6 @@ S...
 # items
 
 ## Table
-* description = A solid table with barely a wobble.
 
 ## Box
 * description = This box is empty.

@@ -55,6 +55,10 @@ function _getCharacterCarryText(character:Character):string {
   return `Carrying ${itemCount} items${inHandText}.`;
 }
 
+function _hasDescription(text:string):boolean {
+  return text.trim().length > 0;
+}
+
 export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
   const { roomLineWidth } = scalingFactors;
   const [centerX, bottomY] = _getCharacterCanvasBottomPosition(character, scalingFactors);
@@ -166,6 +170,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  if (!_hasDescription(character.description)) return;
   const [anchorX, anchorY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
   const title = character.isTitleKnown ? _getCharacterDisplayName(character) : "";
   const carryText = _getCharacterCarryText(character);

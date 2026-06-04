@@ -72,6 +72,10 @@ function _findHoveredExit(gameState:GameState):RoomExit|null {
   return null;
 }
 
+function _hasDescription(text:string):boolean {
+  return text.trim().length > 0;
+}
+
 function _findHighlightedWaypointPosition(gameState:GameState):Position|null {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   if (!activeCharacter) return null;
@@ -132,13 +136,17 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(gameState);
-    if (hoveredItem) drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context);
+    if (hoveredItem && _hasDescription(hoveredItem.item.description)) {
+      drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context);
+    }
     processLevelEffects(gameState.activeEffects, context);
     return;
   }
   if (canShowHoverPopovers && gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
-    if (hoveredCharacter) drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context);
+    if (hoveredCharacter && _hasDescription(hoveredCharacter.description)) {
+      drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context);
+    }
     processLevelEffects(gameState.activeEffects, context);
     return;
   }

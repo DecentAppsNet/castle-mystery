@@ -1,5 +1,5 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import itineraryExtraPunctuationText from './fixtures/itinerary-extra-punctuation.md?raw';
@@ -63,6 +63,8 @@ import unlockRequiredItemMissingText from './fixtures/unlock-required-item-missi
 import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-solution-category-group-names.md?raw';
 import duplicateSolutionPropertyText from './fixtures/duplicate-solution-property.md?raw';
 import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-subsections-case.md?raw';
+import loadLevelFromUrlWithImportsCharactersText from './fixtures/load-level-from-url-with-imports-characters.md?raw';
+import loadLevelFromUrlWithImportsText from './fixtures/load-level-from-url-with-imports.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
 import identitiesAuthoredMetadataText from './fixtures/identities-authored-metadata.md?raw';
 import inventoryItemDefaultCategoryText from './fixtures/inventory-item-default-category.md?raw';
@@ -90,7 +92,7 @@ import { clearSeed, setSeed } from '@/common/randUtil';
 import { calcItemCuboidHeightGame } from '@/game/itemSizeUtil';
 import { ITEM_EFFECT_DURATION } from '@/game/effects/dropItemUtil';
 import LoadLevelException from '@/levelLoading/LoadLevelException';
-import { loadLevelFromText } from '@/levelLoading/levelUtil';
+import { loadLevelFromText, loadLevelFromUrl } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
@@ -1406,4 +1408,30 @@ describe('levelUtil itinerary loading', () => {
     });
   });
 
+});
+
+describe('levelUtil url loading', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('loads imported level content when called with a level url', async () => {
+    const fetchMock = vi.fn(async (url:string) => {
+      if (url.endsWith('/levels/load-level-from-url-with-imports.md')) {
+        return { ok:true, text:async () => loadLevelFromUrlWithImportsText };
+      }
+      if (url.endsWith('/levels/load-level-from-url-with-imports-characters.md')) {
+        return { ok:true, text:async () => loadLevelFromUrlWithImportsCharactersText };
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = await loadLevelFromUrl('/levels/load-level-from-url-with-imports.md');
+
+    expect(level.characters.find(character => character.id === 'hero')?.faceImageUrl).toBe('/assets/faces/heroFace.png');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
