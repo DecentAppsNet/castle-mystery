@@ -47,9 +47,9 @@
 ## Living Space
 
 ```
-....
 .I..
 .A..
+....
 ```
 
 * A=Sticky Agatha

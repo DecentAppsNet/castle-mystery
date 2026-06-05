@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Effect from "@/game/effects/types/Effect";
@@ -20,8 +21,16 @@ const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.2;
 const CHARACTER_SWAY_INTERVAL = 1500;
 const CHARACTER_SWAY_AMOUNT = 1;
-const CHARACTER_WIDTH_SCALE = 3.75;
-const CHARACTER_HEIGHT_SCALE = 7.5;
+const CHARACTER_HEIGHT_STORY_RATIO = 0.4;
+const CHARACTER_WIDTH_HEIGHT_RATIO = 0.5;
+
+function _getCharacterSizePixels(scalingFactors:ScalingFactors):{ characterWidth:number, characterHeight:number } {
+  const characterHeight = MAP_TILE_SIZE * CHARACTER_HEIGHT_STORY_RATIO * scalingFactors.scaleY;
+  return {
+    characterWidth:characterHeight * CHARACTER_WIDTH_HEIGHT_RATIO,
+    characterHeight
+  };
+}
 
 function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:ScalingFactors):[number, number] {
   const [baseX, baseY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
@@ -60,10 +69,8 @@ function _hasDescription(text:string):boolean {
 }
 
 export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
-  const { roomLineWidth } = scalingFactors;
   const [centerX, bottomY] = _getCharacterCanvasBottomPosition(character, scalingFactors);
-  const characterWidth = roomLineWidth * CHARACTER_WIDTH_SCALE;
-  const characterHeight = roomLineWidth * CHARACTER_HEIGHT_SCALE;
+  const { characterWidth, characterHeight } = _getCharacterSizePixels(scalingFactors);
   const provisionalLayout = createCharacterLayout(0, 0, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
   const centerY = Math.round(bottomY - provisionalLayout.bottomY);
   const swayPhase = ((time + character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
@@ -90,8 +97,7 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
   const [roomLeft] = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
   const [roomRight, roomBottom] = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   const centerX = roomLeft + (roomRight - roomLeft) / 2;
-  const characterWidth = scalingFactors.roomLineWidth * CHARACTER_WIDTH_SCALE;
-  const characterHeight = scalingFactors.roomLineWidth * CHARACTER_HEIGHT_SCALE;
+  const { characterWidth, characterHeight } = _getCharacterSizePixels(scalingFactors);
   const headRadius = Math.min(characterWidth, characterHeight) / 4;
   const bottomY = roomBottom - scalingFactors.roomLineWidth;
   const centerY = bottomY - characterHeight / 2;
