@@ -5,6 +5,8 @@ import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/it
 import Effect from "@/game/effects/types/Effect";
 import EffectType from "@/game/effects/types/EffectType";
 import TakeItemEffect from "@/game/effects/types/TakeItemEffect";
+import { MAP_TILE_SIZE } from "@/game/roomGridUtil";
+import { roomWidthToColumnCount } from "@/game/waypointUtil";
 import { calcPanelOffset } from "../roomPanelProjectionUtil";
 import { drawItemAtCanvasPosition } from "../itemDrawUtil";
 import Character from "@/game/types/Character";
@@ -14,7 +16,7 @@ import { CharacterLayout } from "./characterLayoutUtil";
 
 function _createHeldItemDrawMetrics(scalingFactors:ScalingFactors) {
   const [panelOffsetX, panelOffsetY] = calcPanelOffset(scalingFactors);
-  const baseWidthPixels = Math.max(6, scalingFactors.roomLineWidth * 3.5);
+  const baseWidthPixels = MAP_TILE_SIZE / roomWidthToColumnCount(MAP_TILE_SIZE) * scalingFactors.scaleX;
   const cuboidWidthPixels = calcItemCuboidWidthPixels(baseWidthPixels);
   return {
     cuboidWidthPixels,
