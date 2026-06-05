@@ -16,12 +16,12 @@ export function resolveItineraryActivityTimes(activities:ParsedItineraryActivity
     const isTimeResolved = activity.timestampType === 'absolute'
       ? true
       : previousActivitySourceIndex < 0
-        ? true
+        ? activity.isTimeResolved
         : completionTimesBySourceIndex?.has(previousActivitySourceIndex) ?? false;
     const resolvedTime = activity.timestampType === 'absolute'
       ? (activity.time ?? 0)
       : previousActivitySourceIndex < 0
-        ? 0
+        ? activity.resolvedTime
         : completionTimesBySourceIndex?.get(previousActivitySourceIndex) ?? resolvedActivities[previousActivitySourceIndex].resolvedTime;
     resolvedActivities.push({ ...activity, resolvedTime, isTimeResolved });
   });

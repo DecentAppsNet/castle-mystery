@@ -183,5 +183,10 @@ export function parseItineraryActivities(itinerarySection:string, levelFilename:
         }];
       });
     })
-    .map((activity, sourceIndex) => ({ ...activity, sourceIndex }));
+    .map((activity, sourceIndex) => ({
+      ...activity,
+      sourceIndex,
+      resolvedTime:activity.timestampType === 'after-previous-activity' && sourceIndex === 0 ? startTime : activity.resolvedTime,
+      isTimeResolved:activity.timestampType === 'absolute' || sourceIndex === 0
+    }));
 }

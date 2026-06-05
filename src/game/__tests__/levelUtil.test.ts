@@ -116,6 +116,7 @@ import timelineDerivedBoundsText from './fixtures/timeline-derived-bounds.md?raw
 import timelineRelativeOnlyText from './fixtures/timeline-relative-only.md?raw';
 import timelineInitialTimeOutsideBoundsText from './fixtures/timeline-initial-time-outside-bounds.md?raw';
 import timelineStartAfterItineraryText from './fixtures/timeline-start-after-itinerary.md?raw';
+import birthOfConstantineRegressionText from './fixtures/birth-of-constantine-regression.md?raw';
 import escapeStairwellRegressionText from './fixtures/escape-stairwell-regression.md?raw';
 import facesActivityText from './fixtures/faces-activity.md?raw';
 import diesActivityText from './fixtures/dies-activity.md?raw';
@@ -1313,6 +1314,18 @@ describe('levelUtil itinerary loading', () => {
       expect(level.initialTime).toBe(0);
       expect(level.endTime).toBeGreaterThan(level.startTime);
       expect(level.duration).toBe(level.endTime - level.startTime);
+    });
+
+    it('starts the first relative itinerary activity at the level start time when time is authored without startTime', () => {
+      const level = loadLevelFromText(birthOfConstantineRegressionText, 'birth-of-constantine-regression.md');
+      const agatha = level.characters.find(character => character.id === 'sticky agatha');
+      const firstSpeech = agatha?.itinerary.find(event => event.type === ItineraryEventType.SPEECH) || null;
+      const takeEvent = agatha?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM) || null;
+
+      expect(level.startTime).toBe(9 * 60 * 60 * 1000);
+      expect(level.initialTime).toBe(level.startTime);
+      expect(firstSpeech?.startTime).toBe(level.startTime);
+      expect(takeEvent?.startTime).toBeGreaterThanOrEqual(level.startTime);
     });
 
     it('throws when general time falls outside the resolved authored span', () => {
