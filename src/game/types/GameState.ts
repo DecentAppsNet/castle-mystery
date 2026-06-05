@@ -36,6 +36,8 @@ type GameState = {
   readonly duration:number,
   labels:TimeLabel[],
   scalingFactors: ScalingFactors,
+  roomTitleWrapScalingFactors:ScalingFactors,
+  roomTitleWrapsByRoomId:Map<string, string[]>,
   lastMinutesChangedCallRealTime:number,
   lastMinutesChangedValue:number,
   lastActiveCharacterChangedValue:string,

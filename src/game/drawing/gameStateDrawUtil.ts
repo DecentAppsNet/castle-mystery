@@ -76,6 +76,20 @@ function _hasDescription(text:string):boolean {
   return text.trim().length > 0;
 }
 
+function _findHoveredCharacterHighlightId(gameState:GameState, canShowHoverPopovers:boolean):string|null {
+  if (!canShowHoverPopovers || !gameState.hoveredCharacterId) return null;
+  const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
+  if (!hoveredCharacter || !_hasDescription(hoveredCharacter.description)) return null;
+  return hoveredCharacter.id;
+}
+
+function _findHoveredItemHighlightId(gameState:GameState, canShowHoverPopovers:boolean):string|null {
+  if (!canShowHoverPopovers || !gameState.hoveredItemId) return null;
+  const hoveredItem = _findHoveredItem(gameState);
+  if (!hoveredItem || !_hasDescription(hoveredItem.item.description)) return null;
+  return hoveredItem.item.id;
+}
+
 function _findHighlightedWaypointPosition(gameState:GameState):Position|null {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   if (!activeCharacter) return null;
@@ -96,11 +110,14 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
   const destH = context.canvas.height;
   let scalingFactors = gameState.scalingFactors;
   assertNonNullable(scalingFactors);
-  if (scalingFactors.destWidth !== destW || scalingFactors.destHeight !== destH
+  const destSizeChanged = scalingFactors.destWidth !== destW || scalingFactors.destHeight !== destH;
+  if (destSizeChanged
     || scalingFactors.sourceX !== gameState.camera.currentRect.x || scalingFactors.sourceY !== gameState.camera.currentRect.y
     || scalingFactors.sourceWidth !== gameState.camera.currentRect.width || scalingFactors.sourceHeight !== gameState.camera.currentRect.height) {
     scalingFactors = calcScalingFactorsForRect(gameState.camera.currentRect, destW, destH);
     const levelCameraRect = calcLevelCameraRect(gameState.rooms, destW / destH, gameState.groundFloorY);
+    gameState.roomTitleWrapScalingFactors = calcScalingFactorsForRect(levelCameraRect, destW, destH);
+    if (destSizeChanged) gameState.roomTitleWrapsByRoomId.clear();
     scalingFactors = {
       ...scalingFactors,
       roomLineWidth:Math.max(1, scalingFactors.roomLineWidth * (levelCameraRect.height / gameState.camera.currentRect.height))
@@ -114,6 +131,9 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const highlightedWaypointPosition = _findHighlightedWaypointPosition(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
+  const hoveredCharacterHighlightId = _findHoveredCharacterHighlightId(gameState, canShowHoverPopovers);
+  const hoveredItemHighlightId = _findHoveredItemHighlightId(gameState, canShowHoverPopovers);
   const drawnExitIds = new Set<string>();
   _drawGround(gameState, context);
   const roomRenderStates = gameState.rooms.map(room => {
@@ -126,14 +146,14 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
       gameState.groundFloorY, gameState.scalingFactors, context, gameState.isLevelComplete);
     if (!room.isDiscovered) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
-      gameState.scalingFactors, context, gameState.time, gameState.imageSet, gameState.isLevelComplete);
+      hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,
+      gameState.time, gameState.imageSet, gameState.isLevelComplete);
     drawRoomWaypointsWithHighlight(room, gameState.scalingFactors, context,
       highlightedWaypointPosition, gameState.isLevelComplete);
   }
   for (const { room, isActive } of roomRenderStates) {
-    drawRoomTitle(room, isActive, gameState.scalingFactors, context);
+    drawRoomTitle(room, isActive, gameState, context);
   }
-  const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(gameState);
     if (hoveredItem && _hasDescription(hoveredItem.item.description)) {

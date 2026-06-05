@@ -7,7 +7,7 @@ import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/it
 import { roomWidthToColumnCount } from "../waypointUtil";
 import Rect from "../types/Rect";
 import { canvasToGamePosition } from "./drawUtil";
-import { COLOR_BLACK } from "./drawConstants";
+import { COLOR_BLACK, COLOR_ITEM_POPOVER_HIGHLIGHT } from "./drawConstants";
 import { interpolateColor } from "./colorUtil";
 import Item from "../types/Item";
 import Room from "../types/Room";
@@ -26,6 +26,8 @@ const ITEM_LIGHT_TOP_BROWN = "#e3b785";
 const ITEM_DARK_TOP_BROWN = "#9f7242";
 const ITEM_LIGHT_SIDE_BROWN = "#bd8650";
 const ITEM_DARK_SIDE_BROWN = "#72461f";
+const PULSE_CADENCE_MS = 1000;
+const PULSE_SCALE_PEAK = 1.08;
 
 type ItemDrawMetrics = {
   cuboidWidthPixels:number,
@@ -33,6 +35,16 @@ type ItemDrawMetrics = {
   cuboidDepthXPixels:number,
   cuboidDepthYPixels:number,
   cuboidLineWidthPixels:number
+}
+
+type ItemCuboidPoints = {
+  backTopLeft:[number, number],
+  backTopRight:[number, number],
+  backBottomLeft:[number, number],
+  frontTopLeft:[number, number],
+  frontTopRight:[number, number],
+  frontBottomLeft:[number, number],
+  frontBottomRight:[number, number]
 }
 
 type RoomItemVisibilityOptions = {
@@ -83,16 +95,7 @@ function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors):
   };
 }
 
-function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
-  drawItemAtCanvasPosition(item, x, y, calcItemDrawMetrics(room, scalingFactors), context);
-}
-
-export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  drawItem(room, item, scalingFactors, context);
-}
-
-function _drawItemCuboid(item:Item, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
+function _createItemCuboidPoints(x:number, y:number, metrics:ItemDrawMetrics):ItemCuboidPoints {
   const frontBottomLeft:[number, number] = [x - metrics.cuboidWidthPixels / 2, y];
   const frontBottomRight:[number, number] = [x + metrics.cuboidWidthPixels / 2, y];
   const frontTopLeft:[number, number] = [frontBottomLeft[0], y - metrics.cuboidHeightPixels];
@@ -100,10 +103,7 @@ function _drawItemCuboid(item:Item, x:number, y:number, metrics:ItemDrawMetrics,
   const backBottomLeft:[number, number] = [frontBottomLeft[0] - metrics.cuboidDepthXPixels, y - metrics.cuboidDepthYPixels];
   const backTopLeft:[number, number] = [backBottomLeft[0], backBottomLeft[1] - metrics.cuboidHeightPixels];
   const backTopRight:[number, number] = [frontTopRight[0] - metrics.cuboidDepthXPixels, frontTopRight[1] - metrics.cuboidDepthYPixels];
-  const topFillStyle = interpolateColor(ITEM_LIGHT_TOP_BROWN, ITEM_DARK_TOP_BROWN, item.randomSalt);
-  const sideFillStyle = interpolateColor(ITEM_LIGHT_SIDE_BROWN, ITEM_DARK_SIDE_BROWN, item.randomSalt);
-  const frontFillStyle = interpolateColor(ITEM_LIGHT_BROWN, ITEM_DARK_BROWN, item.randomSalt);
-  drawProjectedCuboid({
+  return {
     backTopLeft,
     backTopRight,
     backBottomLeft,
@@ -111,6 +111,72 @@ function _drawItemCuboid(item:Item, x:number, y:number, metrics:ItemDrawMetrics,
     frontTopRight,
     frontBottomLeft,
     frontBottomRight
+  };
+}
+
+function _traceItemSilhouettePath(points:ItemCuboidPoints, context:CanvasRenderingContext2D) {
+  context.beginPath();
+  context.moveTo(...points.backTopLeft);
+  context.lineTo(...points.backTopRight);
+  context.lineTo(...points.frontTopRight);
+  context.lineTo(...points.frontBottomRight);
+  context.lineTo(...points.frontBottomLeft);
+  context.lineTo(...points.backBottomLeft);
+  context.closePath();
+}
+
+function _drawItemHighlight(points:ItemCuboidPoints, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D, time:number) {
+  const phase = (time % PULSE_CADENCE_MS) / PULSE_CADENCE_MS;
+  const pulse = phase <= 0.5 ? phase * 2 : 2 * (1 - phase);
+  const glowScale = 1 + (PULSE_SCALE_PEAK - 1) * pulse;
+  const glowWidth = Math.max(2, metrics.cuboidLineWidthPixels * 6 * glowScale);
+  const glowBlur = glowWidth * 1.2;
+
+  context.save();
+  context.strokeStyle = COLOR_ITEM_POPOVER_HIGHLIGHT;
+  context.shadowColor = COLOR_ITEM_POPOVER_HIGHLIGHT;
+  context.shadowBlur = glowBlur;
+  context.lineJoin = 'round';
+  context.lineCap = 'round';
+  context.lineWidth = glowWidth;
+  _traceItemSilhouettePath(points, context);
+  context.stroke();
+
+  context.shadowBlur = 0;
+  context.lineWidth = Math.max(1.5, glowWidth * 0.55);
+  _traceItemSilhouettePath(points, context);
+  context.stroke();
+  context.restore();
+}
+
+function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+  isHighlighted:boolean = false, time:number = 0) {
+  const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
+  const metrics = calcItemDrawMetrics(room, scalingFactors);
+  const cuboidPoints = _createItemCuboidPoints(x, y, metrics);
+  context.save();
+  if (isHighlighted) _drawItemHighlight(cuboidPoints, metrics, context, time);
+  _drawItemCuboid(item, cuboidPoints, metrics, context);
+  context.restore();
+}
+
+export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+  isHighlighted:boolean = false, time:number = 0) {
+  drawItem(room, item, scalingFactors, context, isHighlighted, time);
+}
+
+function _drawItemCuboid(item:Item, points:ItemCuboidPoints, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
+  const topFillStyle = interpolateColor(ITEM_LIGHT_TOP_BROWN, ITEM_DARK_TOP_BROWN, item.randomSalt);
+  const sideFillStyle = interpolateColor(ITEM_LIGHT_SIDE_BROWN, ITEM_DARK_SIDE_BROWN, item.randomSalt);
+  const frontFillStyle = interpolateColor(ITEM_LIGHT_BROWN, ITEM_DARK_BROWN, item.randomSalt);
+  drawProjectedCuboid({
+    backTopLeft:points.backTopLeft,
+    backTopRight:points.backTopRight,
+    backBottomLeft:points.backBottomLeft,
+    frontTopLeft:points.frontTopLeft,
+    frontTopRight:points.frontTopRight,
+    frontBottomLeft:points.frontBottomLeft,
+    frontBottomRight:points.frontBottomRight
   }, {
     topFillStyle,
     sideFillStyle,
@@ -122,7 +188,7 @@ function _drawItemCuboid(item:Item, x:number, y:number, metrics:ItemDrawMetrics,
 
 export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
   context.save();
-  _drawItemCuboid(item, x, y, metrics, context);
+  _drawItemCuboid(item, _createItemCuboidPoints(x, y, metrics), metrics, context);
   context.restore();
 }
 

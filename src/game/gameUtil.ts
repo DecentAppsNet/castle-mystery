@@ -297,6 +297,8 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     realTimeToGameTimeOffset:0,
     labels:level.labels.map(label => ({...label})),
     scalingFactors:ZERO_SCALING_FACTORS,
+    roomTitleWrapScalingFactors:ZERO_SCALING_FACTORS,
+    roomTitleWrapsByRoomId:new Map<string, string[]>(),
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN,
     lastActiveCharacterChangedValue:"",

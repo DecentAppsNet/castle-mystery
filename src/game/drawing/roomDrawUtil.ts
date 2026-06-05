@@ -26,6 +26,7 @@ import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectio
 import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import Character from "../types/Character";
+import GameState from "../types/GameState";
 import Position from "../types/Position";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
@@ -171,29 +172,44 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
   drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
 }
 
-export function drawRoomTitle(room:Room, isActive:boolean, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function _calcRoomTitleMaxWidth(room:Room, scalingFactors:ScalingFactors):number {
+  const titleMargin = Math.min(CX_ROOM_TITLE_MARGIN, room.rect.width / 2);
+
+  const [leftX] = projectRoomPointWithDepth(room.rect.x + titleMargin, room.rect.y + room.rect.height / 2, 1, scalingFactors);
+  const [rightX] = projectRoomPointWithDepth(room.rect.x + room.rect.width - titleMargin, room.rect.y + room.rect.height / 2, 1, scalingFactors);
+  return Math.max(0, rightX - leftX);
+}
+
+function _getWrappedRoomTitleLines(gameState:GameState, room:Room, context:CanvasRenderingContext2D):string[] {
+  const cachedLines = gameState.roomTitleWrapsByRoomId.get(room.id);
+  if (cachedLines) return cachedLines;
+
+  const wrapScalingFactors = gameState.roomTitleWrapScalingFactors;
+  const wrapFont = `${wrapScalingFactors.roomFontHeight}px Jellee`;
+  const lines = wrapRoomTitle(room.title, _calcRoomTitleMaxWidth(room, wrapScalingFactors), titleText => {
+    context.save();
+    context.font = wrapFont;
+    const measuredWidth = context.measureText(titleText).width;
+    context.restore();
+    return measuredWidth;
+  });
+  gameState.roomTitleWrapsByRoomId.set(room.id, lines);
+  return lines;
+}
+
+export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, context:CanvasRenderingContext2D) {
   if (!room.isDiscovered) return;
   if (room.title.length === 0) return;
 
-  const titleMargin = Math.min(CX_ROOM_TITLE_MARGIN, room.rect.width / 2);
-
+  const scalingFactors = gameState.scalingFactors;
   const [centerX, centerY] = projectRoomPointWithDepth(
     room.rect.x + room.rect.width / 2,
     room.rect.y + room.rect.height / 2,
     1,
     scalingFactors
   );
-  const [leftX] = projectRoomPointWithDepth(room.rect.x + titleMargin, room.rect.y + room.rect.height / 2, 1, scalingFactors);
-  const [rightX] = projectRoomPointWithDepth(room.rect.x + room.rect.width - titleMargin, room.rect.y + room.rect.height / 2, 1, scalingFactors);
-  const maxWidth = Math.max(0, rightX - leftX);
   const font = `${scalingFactors.roomFontHeight}px Jellee`;
-  const lines = wrapRoomTitle(room.title, maxWidth, titleText => {
-    context.save();
-    context.font = font;
-    const measuredWidth = context.measureText(titleText).width;
-    context.restore();
-    return measuredWidth;
-  });
+  const lines = _getWrappedRoomTitleLines(gameState, room, context);
   const lineHeight = scalingFactors.roomFontHeight;
   const totalTextHeight = lines.length * lineHeight;
   const firstLineCenterY = centerY - totalTextHeight / 2 + lineHeight / 2;
@@ -232,18 +248,20 @@ function _createDrawableContents(room:Room, charactersInRoom:Character[], effect
 }
 
 function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharacter:Character|null, effects:Effect[],
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, includeUndiscoveredItems:boolean) {
+  hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
+  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, includeUndiscoveredItems:boolean) {
   _createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems).forEach(content => {
     switch(content.type) {
       case 'stair':
         drawStairPart(content.stairPart, scalingFactors, context);
         return;
       case 'item':
-        drawRoomItem(room, content.item, scalingFactors, context);
+        drawRoomItem(room, content.item, scalingFactors, context, content.item.id === hoveredItemId, time);
         return;
       case 'character':
         processBeforeCharacterEffects(content.character, effects, context, scalingFactors);
-        drawCharacter(content.character, scalingFactors, context, time, imageSet, effects, content.character.id === activeCharacter?.id);
+        drawCharacter(content.character, scalingFactors, context, time, imageSet, effects,
+          content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId);
         processAfterCharacterEffects(content.character, effects, context, scalingFactors);
         return;
     }
@@ -255,7 +273,8 @@ function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:C
 }
 
 export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
-  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number, imageSet:ImageSet,
+  effects:Effect[], hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
+  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet,
   showFullContents:boolean = false) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
@@ -265,7 +284,8 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
     return;
   }
   if (showFullContents || (isActive && activeCharacter)) {
-    _drawRoomContents(room, charactersInRoom, activeCharacter, effects, scalingFactors, context, time, imageSet, true);
+    _drawRoomContents(room, charactersInRoom, activeCharacter, effects, hoveredCharacterId, hoveredItemId,
+      scalingFactors, context, time, imageSet, true);
   } else {
     _drawRoomStairsOnly(room, scalingFactors, context);
   }

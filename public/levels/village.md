@@ -44,6 +44,7 @@ S...
 
 ## Muddy Road
 
+* title=
 * outside=true
 * exits=Guard House
 
@@ -53,6 +54,7 @@ S...
 
 ## Drawbridge
 
+* title=
 * outside=true
 * exits=Stairwell
 

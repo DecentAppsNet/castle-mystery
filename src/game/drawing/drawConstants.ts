@@ -17,6 +17,7 @@ export const COLOR_ITEM_TOP_FILL = "#d69c68";
 export const COLOR_ITEM_SIDE_FILL = "#b47a46";
 export const COLOR_ROOM_TITLE_TEXT = "#ddd";
 export const COLOR_ACTIVE_CHARACTER_HIGHLIGHT = "#ffe60040";
+export const COLOR_ITEM_POPOVER_HIGHLIGHT = "#ffe60088";
 export const COLOR_CHARACTER_SELECT_EFFECT = "#ffe600";
 export const COLOR_SPEECH_BUBBLE_FILL = "#fff8cc";
 export const COLOR_POPOVER_FILL = "#fff";

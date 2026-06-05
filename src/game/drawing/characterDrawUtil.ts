@@ -120,10 +120,10 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
 }
 
 export function drawCharacter(character:Character, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, effects:Effect[], isActive:boolean) {
+  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, effects:Effect[], isHighlighted:boolean) {
   const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
-  if (isActive) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
+  if (isHighlighted) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
