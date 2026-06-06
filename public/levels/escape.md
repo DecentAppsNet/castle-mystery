@@ -5,6 +5,7 @@
 * time=0:00
 * background=nightSky.png
 * groundFloorRoom=Upper Hallway
+* imports=characters.md
 * winSynopsis=Simon had but one chance to escape. He couldn't run from Amos in the castle forever. So he hid behind a suit of armor in the foyer, while the guard ran past him. And a moment later, Simon found his way to the guard room, where Amos had sloppily left the key to freedom.
 
 # map
@@ -116,13 +117,8 @@ p...
 
 ## Simon
 
-* description=A filthy and emaciated man, wearing tattered rags and a very long beard.
-* faceImage=advisorFace.png
-
 ## Amos
 
-* description=A man reluctantly willing to beat people up. He'd rather not, but he certainly will.
-* faceImage=guardFace.png
 * items=Red Key|Blue Key
 
 # items

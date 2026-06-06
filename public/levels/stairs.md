@@ -3,6 +3,7 @@
 * title=Stairs Test
 * activeCharacter=Simon
 * time=0:00
+* imports=characters.md
 * background=daySky.png
 * groundFloorRoom=Library
 
@@ -76,9 +77,6 @@
 # characters
 
 ## Simon
-
-* description=A filthy and emaciated man, wearing tattered rags and a very long beard.
-* faceImage=advisorFace.png
 
 # items
 

@@ -97,8 +97,6 @@ S...
 
 ## Simon
 
-* faceImage=advisorFace.png
-
 ## Queen
 
 * description=She's seen better days.
@@ -129,6 +127,7 @@ S...
 : Simon drops Box
 : Simon @ Great Hall
 : Simon @ East Hall
+: Simon faces left
 : Simon sits
 
 # solutions

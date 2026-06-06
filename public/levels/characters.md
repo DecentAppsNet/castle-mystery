@@ -7,18 +7,18 @@
 
 ## Amos
 
-* description=A man reluctantly willing to beat people up. He'd rather not, but he certainly will.
-* faceImage=guardFace.png
+* description=He'd rather not beat people up, but he certainly will.
+* faceImage=amosTheGuard.png
 
 ## Simon
 
-* description=A filthy and emaciated man, wearing tattered rags and a very long beard.
-* faceImage=advisorFace.png
+* description=A filthy and emaciated man, wearing tattered rags.
+* faceImage=simon.png
 
 ## Emperor Frederick
 
 * description=Frederick, by the grace of God, Emperor of the Romans, ever august, King of Jerusalem and Sicily.
-* faceImage=kingFace.png
+* faceImage=emperorFred.png
 
 ## Empress Constance
 
@@ -28,5 +28,13 @@
 ## Sticky Agatha
 
 * description=A young woman, in her twenties. She just looks sticky for some reason.
-* faceImage=queenFace.png
+* faceImage=femalePeasant.png
+
+## Male Peasant
+
+* faceImage=malePeasant.png
+
+## Female Peasant
+
+* faceImage=femalePeasant.png
 

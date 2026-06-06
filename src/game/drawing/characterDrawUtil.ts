@@ -162,6 +162,15 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   if (character.bodyOrientation !== 'laying') {
     const drawX = layout.head.centerX - drawWidth / 2;
     const drawY = layout.head.centerY - drawHeight / 2;
+    if (character.facingDirection === 'left') {
+      context.save();
+      context.translate(drawX + drawWidth, 0);
+      context.scale(-1, 1);
+      context.drawImage(faceImage, 0, drawY, drawWidth, drawHeight);
+      context.restore();
+      drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
+      return;
+    }
     context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
     return;

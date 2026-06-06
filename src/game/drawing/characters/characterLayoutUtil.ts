@@ -8,6 +8,8 @@ const LAYING_HEAD_RADIUS_SCALE = 1.2;
 const SITTING_BODY_LENGTH_SCALE = 0.7;
 const SITTING_LEG_LENGTH_SCALE = 0.52;
 const SITTING_TRAILING_LEG_LENGTH_SCALE = 0.32;
+const STANDING_LEADING_ARM_HEIGHT_SCALE = 0.16;
+const STANDING_TRAILING_ARM_HEIGHT_SCALE = 0.1;
 
 type HeadLayout = {
   centerX:number,
@@ -101,8 +103,8 @@ function _createStandingCharacterLayout(backboneX:number, centerY:number, charac
   const hipY = centerY + characterHeight / 4;
   const leadingArmX = backboneX + facingSign * characterWidth / 2;
   const trailingArmX = backboneX - facingSign * characterWidth / 4;
-  const leadingArmY = centerY + characterHeight / 8;
-  const trailingArmY = centerY + characterHeight / 16;
+  const leadingArmY = centerY + characterHeight * STANDING_LEADING_ARM_HEIGHT_SCALE;
+  const trailingArmY = centerY + characterHeight * STANDING_TRAILING_ARM_HEIGHT_SCALE;
   const leadingFootX = backboneX + facingSign * characterWidth / 2;
   const trailingFootX = backboneX - facingSign * characterWidth / 8;
   const footY = centerY + characterHeight / 2;
