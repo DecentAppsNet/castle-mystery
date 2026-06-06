@@ -35,8 +35,7 @@ export function sortActivitiesByResolvedTime(activities:ParsedItineraryActivity[
 }
 
 export function calcItineraryDuration(itinerary:ItineraryEvent[]):number {
-  const lastEvent = itinerary[itinerary.length - 1];
-  return lastEvent ? lastEvent.startTime + lastEvent.duration : 0;
+  return itinerary.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), 0);
 }
 
 export function calcCharactersItineraryDuration(characters:Character[]):number {

@@ -1,7 +1,7 @@
 # General
 
 * title=Birth of Constantine
-* activeCharacter=Sticky Agatha
+* activeCharacter=Amos
 * time=9:00
 * background=countryside.png
 * imports=items.md | characters.md
@@ -25,10 +25,19 @@
 
 ## Cathedral
 
+```
+....
+U.P.
+....
+```
+
+* P=Pope Innocent III
+* U=Ugolino di Conti
 * exits=West Square
 
 ## West Square
 
+* title=
 * outside=true
 * exits=Birthing Tent
 
@@ -36,17 +45,25 @@
 
 ```
 ..C.
-P...
+M...
 ....
 ```
 
 * C=Constance I
-* P=Pope Innocent III
+* M=Midwife
 * outside=true
 * exits=East Square
 
 ## East Square
 
+```
+........
+A.......
+........
+```
+
+* A=Amos
+* title=
 * outside=true
 * exits=Market Stall|Living Space
 
@@ -70,9 +87,15 @@ P...
 
 ## Pope Innocent III
 
+* items=Holy Binky
+
 ## Sticky Agatha
 
 # Items
+
+## Holy Binky
+
+* description=A device roughly carved from wood.
 
 ## Infant
 
@@ -80,7 +103,45 @@ P...
 
 # Itinerary
 
-: Sticky Agatha says "Today, we may both die."
-: Sticky Agatha takes infant in right hand.
-: Sticky Agatha says "Yet God may smile upon us."
-9:00:07 Sticky Agatha @ Cathedral
+9:00:00 Sticky Agatha says "Today, we shall see our Queen."
+: takes infant in right hand.
+: says "May God smile upon us."
+9:00:07 @ East Square.10%
+
+9:00:00 Pope Innocent III takes Holy Binky in right hand
+: says "Behold the Holy Binky!"
+: faces left.
+: says "Carved by Joseph. Given to the baby Jesus."
+: Ugolino di Conti says "No gift could be more precious."
+
+9:00:20 Pope Innocent III @ Birthing Tent.90%
+: faces left
+: Midwife says, "My lady, his Holiness has arrived."
+: Constance I says, "I know! He reeks of perfume."
+: Pope Innocent III says, "Oh, beloved daughter, Queen of Sicily."
+: Constance I says, "(huff) (huff)"
+: Pope Innocent III says, "I bestow to your newborn a gift most-"
+: Constance I says, "Just leave it on the pile."
+: Pope Innocent III says, "But-"
+: Constance I says, "Thank you! You can go."
+: Pope Innocent III drops Holy Binky
+: Constance I says, "(huff) (huff)"
+
+9:00:42 Amos @ Birthing Tent.90%
+: Amos says, "Your Majesty, shall I bring them in?"
+: Constance I says, "Yes, damn it! As many as possible."
+: Constance I says, "All must see!"
+: Amos @ East Square
+
+9:00:42 Pope Innocent III @ Cathedral
+: Ugolino di Conti says, "Your Holiness has returned."
+: Pope Innocent III says, "That is apparent. Why say it?"
+: Ugolino di Conti says, "I... uh... "
+: says "...wanted to acknowledge your presence respectfully."
+: Pope Innocent III says, "A simple bow suffices."
+
+9:00:00 Constance I says "Aiiieeee!"
+: says "(huff) (huff) (huff)"
+: Midwife says "My lady, let me send these common folk away."
+: Constance I says "No! They must all see!"
+: Midwife says "As you wish."

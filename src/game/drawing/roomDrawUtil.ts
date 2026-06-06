@@ -36,6 +36,7 @@ import ImageSet from "../types/ImageSet";
 import ExitType from "../types/ExitType";
 import StairPart, { StairPartType } from "../types/StairPart";
 import { processAfterCharacterEffects, processBeforeCharacterEffects } from "../effects/effectUtil";
+import { findRoom } from "../roomUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -122,10 +123,11 @@ function _shouldRoomDrawExit(room:Room, exit:RoomExit):boolean {
 }
 
 function _drawRoomExit(room:Room, exit:RoomExit, characters:Character[], showFullContents:boolean,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, drawnExitIds:Set<string>) {
+  rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, drawnExitIds:Set<string>) {
   if (!_shouldRoomDrawExit(room, exit)) return;
   if (drawnExitIds.has(exit.id)) return;
   drawnExitIds.add(exit.id);
+  if (findRoom(rooms as Room[], exit.room1Id).isOutside && findRoom(rooms as Room[], exit.room2Id).isOutside) return;
   const displayedExitType = _findDisplayedExitType(exit, characters, showFullContents);
   const { height } = getExitCanvasRect(exit, scalingFactors);
   drawTemporaryRightWallDoorVectorOverlay(room, exit, displayedExitType, scalingFactors, context, height);
@@ -168,7 +170,7 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
     ? COLOR_BLACK
     : (showFullContents || isActive ? COLOR_ACTIVE_RIGHT_WALL_FILL : COLOR_INACTIVE_RIGHT_WALL_FILL);
   drawRightWallPanel(room, rooms, scalingFactors, context);
-  room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, scalingFactors, context, drawnExitIds));
+  room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds));
   drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
 }
 

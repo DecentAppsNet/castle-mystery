@@ -38,8 +38,19 @@
 ## Male Peasant
 
 * faceImage=malePeasant.png
+* description=An ordinary man doing ordinary things.
 
 ## Female Peasant
 
 * faceImage=femalePeasant.png
+* description=Just a dime-a-dozen peasant.
 
+## Midwife
+
+* faceImage=midwife.png
+* description=A woman content to do her work.
+
+## Ugolino di Conti
+
+* faceImage=ugolino.png
+* description=Crafty, calm, biding his time.

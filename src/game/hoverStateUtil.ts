@@ -14,7 +14,8 @@ import Rect from "./types/Rect";
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import ScalingFactors from "./types/ScalingFactors";
-import { findCharactersInRoom, findRoomAtPosition } from "./roomUtil";
+import ExitType from "./types/ExitType";
+import { findCharactersInRoom, findRoom, findRoomAtPosition } from "./roomUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 
 const ROOM_NAVIGATION_TIME_OFFSET = 100;
@@ -39,6 +40,9 @@ function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }
 function _findExitAtPosition(room:Room, x:number, y:number, gameState:GameState):RoomExit|null {
   for (let i = room.exits.length - 1; i >= 0; --i) {
     const exit = room.exits[i];
+    if (exit.exitType === ExitType.doorway
+      && findRoom(gameState.rooms, exit.room1Id).isOutside
+      && findRoom(gameState.rooms, exit.room2Id).isOutside) continue;
     const rect = getExitHoverRect(exit, gameState.scalingFactors);
     const isInside = x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
     if (isInside) return exit;

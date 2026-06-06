@@ -445,7 +445,22 @@ The item can be referred to by its id or title.
 
 Example: `0:15:03 John takes Note`
 
-If the item is elsewhere in the room, the loader adds the needed walk first. The item can be referred to by its id or title.
+By default, a bare `takes Item` puts the item into the character's inventory, where it is not visible to the player.
+
+You can also choose where the item goes:
+* `takes Item in left hand`
+* `takes Item in right hand`
+* `takes Item in hand`
+* `takes Item in inventory`
+
+Examples:
+* `0:15:03 John takes Note in left hand`
+* `0:15:03 John takes Note in right hand`
+* `0:15:03 John takes Note in inventory`
+
+`in hand` means the right hand.
+
+If the item is elsewhere in the room, the loader adds the needed walk first. The item can be referred to by its id or title. A `takes` activity can also move an item the character is already carrying between inventory and hand positions.
 
 ### Gives
 
