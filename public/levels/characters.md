@@ -1,14 +1,19 @@
 # characters
 
-## Constance I
-
-* description=A middle-aged woman wearing a middle gown of expensive fabric.
-* faceImage=queenFace.png
-
 ## Amos
 
 * description=He'd rather not beat people up, but he certainly will.
 * faceImage=amosTheGuard.png
+
+## Constance I
+
+* description=A middle-aged woman wearing a gown of expensive fabric.
+* faceImage=constanceI.png
+
+## Pope Innocent III
+
+* description=What is this guy up to?
+* faceImage=pope.png
 
 ## Simon
 

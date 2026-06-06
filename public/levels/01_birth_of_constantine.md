@@ -34,6 +34,14 @@
 
 ## Birthing Tent
 
+```
+..C.
+P...
+....
+```
+
+* C=Constance I
+* P=Pope Innocent III
 * outside=true
 * exits=East Square
 
@@ -56,6 +64,11 @@
 * I=infant
 
 # Characters
+
+## Constance I
+* orientation=laying
+
+## Pope Innocent III
 
 ## Sticky Agatha
 

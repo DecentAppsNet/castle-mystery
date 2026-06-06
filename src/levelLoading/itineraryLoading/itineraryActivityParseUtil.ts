@@ -134,8 +134,14 @@ function _normalizeParsedActivityText(activityText:string):string {
   return trimmedActivityText;
 }
 
-function _parseCharacterActivityLine(activityLine:string):{ characterId:string, activityText:string } {
+function _parseCharacterActivityLine(activityLine:string, impliedCharacterId:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '%', '"', '\'', '-']));
+  if (['@', 'says ', 'interrupts ', 'thinks ', 'faces ', 'dies', 'stands', 'sits', 'lays', 'gives ', 'drops ', 'takes ', 'locks ', 'unlocks ']
+    .some(marker => normalizedLine.startsWith(marker))) {
+    const activityText = _normalizeParsedActivityText(normalizedLine);
+    if (!impliedCharacterId || !activityText) throw new Error(`unable to infer character for itinerary activity line '${activityLine}'`);
+    return { characterId:impliedCharacterId, activityText };
+  }
   const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' faces ', ' dies', ' stands', ' sits', ' lays', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
   let splitIndex = -1;
 
@@ -159,7 +165,8 @@ function _resolveAbsoluteTimestamp(rawMsecs:number|null, options:LoadItineraries
 }
 
 export function parseItineraryActivities(itinerarySection:string, levelFilename:string, firstLineNo:number,
-  options:LoadItinerariesOptions, startTime:number):ParsedItineraryActivity[] {
+  options:LoadItinerariesOptions, startTime:number, activeCharacterId:string):ParsedItineraryActivity[] {
+  let impliedCharacterId = activeCharacterId;
   return itinerarySection.split('\n').map((line, index) => ({ line, lineNo:firstLineNo + index }))
     .flatMap(({ line, lineNo }) => {
       return runWithItineraryLineContext(levelFilename, lineNo, () => {
@@ -167,7 +174,8 @@ export function parseItineraryActivities(itinerarySection:string, levelFilename:
         if (!timestamp) return [];
         const activityLine = timestamp.remainingText.trim();
         if (!activityLine.length) throw new Error('missing itinerary activity');
-        const { characterId, activityText } = _parseCharacterActivityLine(activityLine);
+        const { characterId, activityText } = _parseCharacterActivityLine(activityLine, impliedCharacterId);
+        impliedCharacterId = characterId;
         const resolvedTimestamp = timestamp.kind === 'absolute'
           ? _resolveAbsoluteTimestamp(timestamp.time, options, startTime)
           : timestamp.time;

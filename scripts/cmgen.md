@@ -18,6 +18,16 @@
 * image1=lastGen.png
 * size=1024x1024
 
+## male-head
+* prompt=Generate head of a Medieval [occupation] using the same STYLE as image #1. The head should face right and have a neutral expression. Gender is male.{ Hair is [hair].}{ Skin is [skin].}{ [otherDetails].} Do not include a neck. Low detail to support displaying at small scale. Background should be fully transparent pixels.
+* image1=malePeasant.png
+* size=1024x1024
+
+## female-head
+* prompt=Generate head of a Medieval [occupation] using the same STYLE as image #1. The head should face right and have a neutral expression. Gender is female.{ Hair is [hair].}{ Skin is [skin].}{ [otherDetails].} Do not include a neck. Low detail to support displaying at small scale. Background should be fully transparent pixels.
+* image1=constanceI.png
+* size=1024x1024
+
 ## character-faces
 
 * prompt=Using image #1 as a basis, make copies of the head expressing each of the following emotions - neutral, angry, sad, happy, confused, afraid. Neutral should be close to the original expression from image #1. The other emotions should be exaggerated and easily recognizable. Mouth should be slightly open on all faces. Head should not include the neck. Each head should be fully separated from the others. Background should be fully transparent pixels.

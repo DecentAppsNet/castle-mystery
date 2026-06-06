@@ -25,7 +25,7 @@ const DEFAULT_LOAD_ITINERARIES_OPTIONS:LoadItinerariesOptions = {
 
 export function loadItineraries(level:Level, itinerarySection:string, levelFilename:string, firstLineNo:number,
   options:LoadItinerariesOptions = DEFAULT_LOAD_ITINERARIES_OPTIONS):LoadItinerariesResult {
-  const activities = parseItineraryActivities(itinerarySection, levelFilename, firstLineNo, options, level.startTime);
+  const activities = parseItineraryActivities(itinerarySection, levelFilename, firstLineNo, options, level.startTime, level.activeCharacterId);
   if (options.explicitEndTime !== null) {
     validateActivitiesWithinWindow(activities, level.startTime, options.explicitEndTime, levelFilename);
   }

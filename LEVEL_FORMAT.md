@@ -228,12 +228,10 @@ Write one subsection per character. The subsection name is the character's name.
 * `description` (optional) - a short description of the character. Default: empty.
 * `items` (optional) - items the character begins with, separated by `|`. Default: no starting items.
 * `faceImage` (optional) - the image used for the character's face in the UI. Default: no face image.
+* `alive` (optional) - whether the character begins alive. Must be `true` or `false`. Default: `true`.
+* `facing` (optional) - which way the character initially faces. Must be `left` or `right`. Default: `right`.
+* `orientation` (optional) - the character's initial body pose. Must be `standing`, `sitting`, or `laying`. Default: `standing`.
 * `isTitleKnown` (optional) - `true` if the player should already know this character's identity when the level begins. Default: `false`.
-
-In practice, an author can think of this section as answering three questions:
-* Who is this person? Use the subsection name and, if needed, `title`.
-* What should the player know about them? Use `description`.
-* What do they begin with? Use `items`.
 
 This section defines the character, but it does not place them on the map. Character placement belongs in the `rooms` section.
 
@@ -254,6 +252,17 @@ This section defines the character, but it does not place them on the map. Chara
 
 * description=The lady of the house, calm in public and furious in private.
 ```
+
+## Initial Pose And Facing
+
+The `characters` section can set a character's initial visual state before the itinerary changes it.
+
+Examples:
+* `* alive=false`
+* `* facing=left`
+* `* orientation=sitting`
+
+These values control only the starting state. Later itinerary lines such as `faces left`, `sits`, `stands`, `lays`, or `dies` can change them over time.
 
 # "Items" Section
 
@@ -319,6 +328,17 @@ Examples:
 * `0:00:20 Lady Marlowe @ Study`
 * `: Butler takes Master Key`
 
+You may also omit the `CHARACTER` part:
+
+`TIMESTAMP ACTIVITY`
+
+Examples:
+* `0:00:05 says "Who am I?"`
+* `: faces left`
+* `: takes Master Key`
+
+When the character is omitted, the loader uses the last character referenced earlier in the file. This follows file order, not chronological time order. If the first itinerary line in the file omits the character, the loader uses the level's `activeCharacter` from the `general` section.
+
 There are two kinds of timestamps:
 * an absolute timestamp such as `0:00:10`, which places the activity at a specific time
 * a relative timestamp written as `:`, which means "after this character's previous authored activity finishes".
@@ -348,6 +368,14 @@ Absolute timestamps are reordered by time when the level loads, so these two lin
 Relative `:` timestamps are different. They follow the immediately previous authored activity in the file, even if that previous line belongs to a different character.
 
 That means file order is still important when you use `:`. A common pattern is to group a short multi-character exchange together in the file and use `:` to make each line follow the one above it.
+
+Implied characters also follow file order. For example:
+* `0:00:03 Steve @ Bakery`
+* `0:00:05 faces right`
+* `0:00:07 says "Boy, does it smell delicious in here!"`
+* `0:00:06 Baker faces left`
+
+In that example, the `:05` and `:07` lines both still refer to Steve, because Steve was the most recently referenced character earlier in the file at those lines. The later `Baker` line does not retroactively change the earlier implied character.
 
 ## Activities
 
