@@ -81,6 +81,19 @@ export function getItemCanvasPositionInRoom(_room:Room, item:Item, scalingFactor
   return projectRoomPointWithDepth(item.position.x, item.position.y, item.position.z, scalingFactors);
 }
 
+export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:ScalingFactors):Rect {
+  const metrics = calcItemDrawMetrics(room, scalingFactors);
+  const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
+  const hoverWidthPixels = metrics.cuboidWidthPixels + metrics.cuboidDepthXPixels;
+  const topPixels = -(metrics.cuboidHeightPixels + metrics.cuboidDepthYPixels);
+  return {
+    x:x - hoverWidthPixels / 2,
+    y:y + topPixels,
+    width:hoverWidthPixels,
+    height:-topPixels
+  };
+}
+
 function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors):Rect {
   const metrics = calcItemDrawMetrics(room, scalingFactors);
   const hoverWidthPixels = metrics.cuboidWidthPixels + metrics.cuboidDepthXPixels;
@@ -229,6 +242,6 @@ export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scal
 
 export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   if (!_hasDescription(item.description)) return;
-  const [anchorX, anchorY] = getItemCanvasPositionInRoom(room, item, scalingFactors);
-  drawTextPopover({ anchorX, anchorY, title:item.title, bodyTexts:[item.description], scalingFactors, context });
+  drawTextPopover({ targetRect:getItemCanvasRectInRoom(room, item, scalingFactors), title:item.title,
+    bodyTexts:[item.description], scalingFactors, context });
 }

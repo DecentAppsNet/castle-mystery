@@ -155,7 +155,5 @@ export function getExitHoverRect(exit:RoomExit, scalingFactors:ScalingFactors):R
 export function drawExitPopover(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const canvasRect = _getProjectedDoorCanvasRect(exit, scalingFactors);
-  const anchorX = canvasRect.x + canvasRect.width / 2;
-  const anchorY = canvasRect.y;
-  drawTextPopover({ anchorX, anchorY, bodyTexts:[describeExit(exit, room1, room2, itemsById)], scalingFactors, context });
+  drawTextPopover({ targetRect:canvasRect, bodyTexts:[describeExit(exit, room1, room2, itemsById)], scalingFactors, context });
 }

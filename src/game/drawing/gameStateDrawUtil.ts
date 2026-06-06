@@ -165,7 +165,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   if (canShowHoverPopovers && gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter && _hasDescription(hoveredCharacter.description)) {
-      drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context);
+      drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time);
     }
     processLevelEffects(gameState.activeEffects, context);
     return;

@@ -7,6 +7,7 @@ import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Effect from "@/game/effects/types/Effect";
 import Character from "../types/Character";
+import Rect from "../types/Rect";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import ImageSet from "../types/ImageSet";
@@ -66,6 +67,20 @@ function _getCharacterCarryText(character:Character):string {
 
 function _hasDescription(text:string):boolean {
   return text.trim().length > 0;
+}
+
+function _getCharacterCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number):Rect {
+  const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
+  const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
+  const segmentXs = layout.segments.flatMap(segment => [segment.fromX, segment.toX]);
+  const leftX = Math.min(layout.head.centerX - layout.head.radius, ...segmentXs);
+  const rightX = Math.max(layout.head.centerX + layout.head.radius, ...segmentXs);
+  return {
+    x:leftX,
+    y:layout.topY,
+    width:rightX - leftX,
+    height:layout.bottomY - layout.topY
+  };
 }
 
 export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
@@ -184,10 +199,10 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
 }
 
-export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
   if (!_hasDescription(character.description)) return;
-  const [anchorX, anchorY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
   const title = character.isTitleKnown ? _getCharacterDisplayName(character) : "";
   const carryText = _getCharacterCarryText(character);
-  drawTextPopover({ anchorX, anchorY, title, bodyTexts:[character.description, carryText], scalingFactors, context });
+  drawTextPopover({ targetRect:_getCharacterCanvasRect(character, scalingFactors, time), title,
+    bodyTexts:[character.description, carryText], scalingFactors, context });
 }
