@@ -14,8 +14,9 @@ import afterPreviousActivityAtRoomText from './fixtures/after-previous-activity-
 import atRoomDefaultStairRoomText from './fixtures/at-room-default-stair-room.md?raw';
 import atRoomMarkerSameRoomText from './fixtures/at-room-marker-same-room.md?raw';
 import atRoomMarkerText from './fixtures/at-room-marker.md?raw';
+import atRoomMiddleRowVisitText from './fixtures/at-room-middle-row-visit.md?raw';
+import atRoomPercentClaimedInteriorText from './fixtures/at-room-percent-claimed-interior.md?raw';
 import atLibraryViaFoyerText from './fixtures/at-library-via-foyer.md?raw';
-import villageText from '../../../public/levels/village.md?raw';
 
 function _positionsEqual(position1:{ x:number, y:number }, position2:{ x:number, y:number }) {
   return position1.x === position2.x && position1.y === position2.y;
@@ -47,6 +48,20 @@ function _findLeftmostMiddleFloorWaypoint(room:ReturnType<typeof findRoom>) {
     if (!leftmostFloorWaypoint) return waypoint;
     return waypoint.position.x < leftmostFloorWaypoint.position.x ? waypoint : leftmostFloorWaypoint;
   }, null as typeof room.waypoints[number] | null);
+}
+
+function _findInteriorMiddleFloorWaypointsByDescendingX(room:ReturnType<typeof findRoom>) {
+  const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+  return room.waypoints
+    .filter(waypoint => waypoint.position.y === floorY
+      && waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z
+      && waypoint.position.x > room.rect.x
+      && waypoint.position.x < room.rect.x + room.rect.width)
+    .sort((waypoint1, waypoint2) => waypoint2.position.x - waypoint1.position.x);
+}
+
+function _createWaypointKey(position:{ x:number, y:number, z:number }) {
+  return `${position.x},${position.y},${position.z}`;
 }
 
 function _findLastWalkEvent(events:readonly { type:ItineraryEventType }[]):WalkEvent | undefined {
@@ -175,6 +190,25 @@ describe('at room integration', () => {
     expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 
+  it('routes @ Room.90% to the next-closest interior floor waypoint when the nearest interior floor waypoint is occupied', () => {
+    const level = loadLevelFromText(atRoomPercentClaimedInteriorText);
+    const scout = level.characters.find(character => character.id === 'scout');
+    const target = findRoom(level.rooms, 'Target');
+    const tailExit = target.exits.find(exit => exit.room1Id === 'tail' || exit.room2Id === 'tail');
+    const targetExitWaypoint = findExitWaypoint(target.id, target.rect, tailExit!, target.waypoints);
+    const interiorWaypoints = _findInteriorMiddleFloorWaypointsByDescendingX(target);
+    const occupiedWaypointKeys = new Set([_createWaypointKey(interiorWaypoints[0].position)]);
+    const events = planMovementToRoom(level, scout!.waypoint, target.id, occupiedWaypointKeys, null, 90);
+    const lastWalkEvent = _findLastWalkEvent(events);
+
+    expect(scout).not.toBeNull();
+    expect(tailExit).toBeDefined();
+    expect(interiorWaypoints.length).toBeGreaterThanOrEqual(2);
+    expect(lastWalkEvent).toBeDefined();
+    expect(lastWalkEvent!.toPosition).not.toEqual(targetExitWaypoint.position);
+    expect(lastWalkEvent!.toPosition).toEqual(interiorWaypoints[1].position);
+  });
+
   it('prefers a middle-row floor waypoint for default @ Room movement in a stair room', () => {
     const level = loadLevelFromText(atRoomDefaultStairRoomText);
     const simon = level.characters.find(character => character.id === 'simon');
@@ -198,8 +232,8 @@ describe('at room integration', () => {
     expect(findCharacterPose(simon!, 100_000).position).toEqual(targetWaypoint!.position);
   });
 
-  it('keeps village Great Hall room-visit floor movement on the middle row', () => {
-    const level = loadLevelFromText(villageText);
+  it('keeps Great Hall room-visit floor movement on the middle row', () => {
+    const level = loadLevelFromText(atRoomMiddleRowVisitText);
     const simon = level.characters.find(character => character.id === 'simon');
     const greatHall = findRoom(level.rooms, 'Great Hall');
     const floorY = greatHall.rect.y + greatHall.rect.height - FLOOR_WAYPOINT_Y_OFFSET;

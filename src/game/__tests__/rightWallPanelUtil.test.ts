@@ -5,7 +5,7 @@ import { findRightWallPanelSpans } from '../rightWallPanelUtil';
 import { MAP_TILE_SIZE } from '../roomGridUtil';
 import Rect from '../types/Rect';
 import Room from '../types/Room';
-import villageText from '../../../public/levels/village.md?raw';
+import rightWallPanelStablesShapeText from './fixtures/right-wall-panel-stables-shape.md?raw';
 
 function _createRoom(id:string, rect:Rect, isOutside:boolean):Room {
   return {
@@ -65,13 +65,13 @@ describe('rightWallPanelUtil', () => {
       ]);
     });
 
-    it('does not draw a second-story panel for village Stables when the room to the right there is outside', () => {
-      const level = loadLevelFromText(villageText, 'village.md');
+    it('does not draw an upper-story panel when only the lower story has an inside room to the right', () => {
+      const level = loadLevelFromText(rightWallPanelStablesShapeText, 'right-wall-panel-stables-shape.md');
       const stables = level.rooms.find(room => room.id === 'stables');
 
       expect(stables).toBeDefined();
       expect(findRightWallPanelSpans(stables!, level.rooms)).toEqual([
-        { topY:40, height:MAP_TILE_SIZE }
+        { topY:MAP_TILE_SIZE, height:MAP_TILE_SIZE }
       ]);
     });
   });

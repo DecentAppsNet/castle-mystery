@@ -24,17 +24,23 @@ function _createWaypointKey(waypoint:Waypoint):string {
   return `${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`;
 }
 
-function _findFloorWaypoints(room:Room, occupiedWaypointKeys:Set<string>):Waypoint[] {
+function _isInteriorWaypoint(room:Room, waypoint:Waypoint):boolean {
+  return waypoint.position.x > room.rect.x && waypoint.position.x < room.rect.x + room.rect.width;
+}
+
+function _findInteriorMiddleRowFloorWaypoints(room:Room, occupiedWaypointKeys:Set<string>):Waypoint[] {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-  const unclaimedFloorWaypoints = room.waypoints.filter(waypoint => waypoint.position.y === floorY
+  const isInteriorMiddleRowFloorWaypoint = (waypoint:Waypoint) => waypoint.position.y === floorY
     && waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z
+    && _isInteriorWaypoint(room, waypoint);
+  const unclaimedInteriorMiddleRowFloorWaypoints = room.waypoints.filter(waypoint => isInteriorMiddleRowFloorWaypoint(waypoint)
     && !occupiedWaypointKeys.has(_createWaypointKey(waypoint)));
-  if (unclaimedFloorWaypoints.length > 0) return unclaimedFloorWaypoints;
-  return room.waypoints.filter(waypoint => waypoint.position.y === floorY && waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z);
+  if (unclaimedInteriorMiddleRowFloorWaypoints.length > 0) return unclaimedInteriorMiddleRowFloorWaypoints;
+  return room.waypoints.filter(isInteriorMiddleRowFloorWaypoint);
 }
 
 function _findNearestFloorWaypointByX(room:Room, targetX:number, occupiedWaypointKeys:Set<string> = new Set()):Waypoint {
-  const floorWaypoints = _findFloorWaypoints(room, occupiedWaypointKeys);
+  const floorWaypoints = _findInteriorMiddleRowFloorWaypoints(room, occupiedWaypointKeys);
   if (!floorWaypoints.length) throw new Error(`unable to find floor waypoint in room ${room.id}`);
   return floorWaypoints.reduce((nearestWaypoint, waypoint) => {
     if (!nearestWaypoint) return waypoint;

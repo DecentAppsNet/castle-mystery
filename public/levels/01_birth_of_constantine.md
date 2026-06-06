@@ -84,6 +84,7 @@ A.......
 
 ## Constance I
 * orientation=laying
+* items=newborn baby
 
 ## Pope Innocent III
 
@@ -101,9 +102,13 @@ A.......
 
 * description=A swaddled-up infant, peering calmly at the World around him.
 
+## Newborn Baby
+
+* description=A swaddled-up infant, peering irritatedly at the World around him.
+
 # Itinerary
 
-9:00:00 Sticky Agatha says "Today, we shall see our Queen."
+9:00:00 Sticky Agatha says "Today, we may see our Queen."
 : takes infant in right hand.
 : says "May God smile upon us."
 9:00:07 @ East Square.10%
@@ -127,11 +132,34 @@ A.......
 : Pope Innocent III drops Holy Binky
 : Constance I says, "(huff) (huff)"
 
-9:00:42 Amos @ Birthing Tent.90%
+9:00:43 Amos @ Birthing Tent.90%
 : Amos says, "Your Majesty, shall I bring them in?"
 : Constance I says, "Yes, damn it! As many as possible."
 : Constance I says, "All must see!"
-: Amos @ East Square
+
+9:00:52 Amos @ East Square
+: faces left.
+: says, "You there."
+: Sticky Agatha says, "Me?"
+: Amos says, "Yes. Go inside the tent."
+
+: Sticky Agatha @ Birthing Tent.90%
+: Constance I says, "Aiieeee!"
+: Midwife @ Birthing Tent.70%
+: faces left.
+: Constance I gives Midwife newborn baby.
+: Constance I says, "Did you see?"
+: Sticky Agatha says, "Your Majesty?"
+: Constance I says, "Did you see the birth!"
+: Sticky Agatha says, "Yes!"
+: Constance I says, "Oh, you have a little one too!"
+: Sticky Agatha says, "Yes, your Majesty."
+: Constance I says, "See that pile of gifts?"
+: Constance I says, "Grab one of them for your baby."
+: Sticky Agatha takes Holy Binky.
+: says, "I am overwhelmed by your Grace."
+: Constance I says, "Just tell everybody I wasn't faking."
+: Sticky Agatha @ Living Quarters
 
 9:00:42 Pope Innocent III @ Cathedral
 : Ugolino di Conti says, "Your Holiness has returned."

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import villageText from '../../../../public/levels/village.md?raw';
+import gameStateDrawUtilLevelText from './fixtures/game-state-draw-util-level.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState } from '@/game/gameUtil';
 import { updateScalingFactorsAsNeeded } from '../gameStateDrawUtil';
@@ -8,7 +8,7 @@ import { updateScalingFactorsAsNeeded } from '../gameStateDrawUtil';
 describe('gameStateDrawUtil', () => {
   describe('updateScalingFactorsAsNeeded()', () => {
     it('preserves active effects when the camera rect changes', () => {
-      const level = loadLevelFromText(villageText, 'village.md');
+      const level = loadLevelFromText(gameStateDrawUtilLevelText, 'game-state-draw-util-level.md');
       const gameState = createGameState(level);
       const sentinelEffect = { type:'sentinel-effect', startTime:123 } as never;
       const context = { canvas:{ width:1280, height:720 } } as CanvasRenderingContext2D;
@@ -26,7 +26,7 @@ describe('gameStateDrawUtil', () => {
     });
 
     it('preserves cached room title wraps when only the camera rect changes', () => {
-      const level = loadLevelFromText(villageText, 'village.md');
+      const level = loadLevelFromText(gameStateDrawUtilLevelText, 'game-state-draw-util-level.md');
       const gameState = createGameState(level);
       const context = { canvas:{ width:1280, height:720 } } as CanvasRenderingContext2D;
 
@@ -44,7 +44,7 @@ describe('gameStateDrawUtil', () => {
     });
 
     it('clears cached room title wraps when the canvas dimensions change', () => {
-      const level = loadLevelFromText(villageText, 'village.md');
+      const level = loadLevelFromText(gameStateDrawUtilLevelText, 'game-state-draw-util-level.md');
       const gameState = createGameState(level);
       const initialContext = { canvas:{ width:1280, height:720 } } as CanvasRenderingContext2D;
       const resizedContext = { canvas:{ width:1024, height:720 } } as CanvasRenderingContext2D;
