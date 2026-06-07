@@ -39,6 +39,18 @@ AABBCCDDE.
 
 ## West Square
 
+```
+..NMFGHI
+........
+........
+```
+
+* M=male peasant
+* F=female peasant
+* N=male peasant 3
+* G=female peasant 3
+* H=old male peasant
+* I=old female peasant
 * title=
 * outside=true
 * exits=Birthing Tent
@@ -59,13 +71,19 @@ AABBCCDDE.
 ## East Square
 
 ```
-v.......
+v.F..GH.
 A.......
-........
+...MNI..
 ```
 
 * A=Amos
 * v=Vase
+* M=male peasant 2
+* F=female peasant 2
+* N=male peasant 4
+* G=female peasant 4
+* H=old male peasant 2
+* I=old female peasant 2
 * title=
 * outside=true
 * exits=Guard Quarters|Living Space
@@ -92,6 +110,24 @@ A.......
 ## Pope Innocent III
 
 * items=Holy Binky
+
+## Male Peasant 2
+* facing=left
+
+## Female Peasant 2
+* facing=left
+
+## Male Peasant 4
+* facing=left
+
+## Female Peasant 4
+* facing=left
+
+## Old Male Peasant 2
+* facing=left
+
+## Old Female Peasant 2
+* facing=left
 
 ## Sticky Agatha
 
@@ -165,6 +201,7 @@ A.......
 9:00:59 Amos takes vase in right hand.
 : @ Guard Quarters
 : Amos drops vase.
+: thinks, "Best to keep it here."
 : @ East Square
 
 9:00:57 Sticky Agatha @ Birthing Tent.90%
@@ -182,7 +219,7 @@ A.......
 : Constance I says, "See that pile of gifts?"
 : Constance I says, "Grab one of them for your baby."
 : Sticky Agatha takes Holy Binky.
-: says, "I am overwhelmed by your Grace."
+: says, "I am overwhelmed by your grace."
 : Constance I says, "Just tell everybody I wasn't faking."
 (Agatha leaves)
 : Midwife says, "Majesty, what shall you name him?"
@@ -205,8 +242,23 @@ A.......
 : Midwife says "My lady, let me send these common folk away."
 : Constance I says "No! They must all see!"
 : Midwife says "As you wish."
+9:00:15 Constance I says "(huff) (huff)"
 
 9:01:27 Amos says, "Next!"
 : says, "Get in there and witness."
 
 9:01:22 Sticky Agatha @ Living Space
+
+9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
+9:00:57 Male Peasant 4 thinks, "She brings a baby into the tent?"
+: Old Female Peasant 2 thinks, "What fraud is this? We are not blind."
+
+9:00:19 Female Peasant thinks, "40 years? She's too old to have a child!"
+
+# Solutions
+
+## Identities
+* unlockSolutions=The Relic
+
+## The Relic
+* solution=The [Holy Binky] was regifted to [Sticky Agatha].

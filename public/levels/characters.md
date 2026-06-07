@@ -30,25 +30,63 @@
 * description=Constance of Aragorn - not to be confused with Fred's mom.
 * faceImage=queenFace.png
 
-## Sticky Agatha
+## Female Peasant
 
-* description=A young woman, in her twenties. She just looks sticky for some reason.
 * faceImage=femalePeasant.png
+
+## Female Peasant 2
+
+* faceImage=femalePeasant2.png
+
+## Female Peasant 3
+
+* faceImage=femalePeasant3.png
+
+## Female Peasant 4
+
+* faceImage=femalePeasant4.png
 
 ## Male Peasant
 
 * faceImage=malePeasant.png
-* description=An ordinary man doing ordinary things.
 
-## Female Peasant
+## Male Peasant 2
 
-* faceImage=femalePeasant.png
-* description=Just a dime-a-dozen peasant.
+* faceImage=malePeasant2.png
+
+## Male Peasant 3
+
+* faceImage=malePeasant3.png
+
+## Male Peasant 4
+
+* faceImage=malePeasant4.png
 
 ## Midwife
 
 * faceImage=midwife.png
 * description=A woman content to do her work.
+
+## Old Female Peasant
+
+* faceImage=oldFemalePeasant.png
+
+## Old Female Peasant 2
+
+* faceImage=oldFemalePeasant2.png
+
+## Old Male Peasant
+
+* faceImage=oldMalePeasant.png
+
+## Old Male Peasant 2
+
+* faceImage=oldMalePeasant2.png
+
+## Sticky Agatha
+
+* description=A young woman, in her twenties. She just looks sticky for some reason.
+* faceImage=stickyAgatha.png
 
 ## Ugolino di Conti
 
