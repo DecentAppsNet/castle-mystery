@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import { isCharacterInteractive } from "@/game/interactivityUtil";
 import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
@@ -63,10 +64,6 @@ function _getCharacterCarryText(character:Character):string {
   if (itemCount === 0) return "Carrying nothing.";
   if (itemCount === 1) return `Carrying 1 item${inHandText}.`;
   return `Carrying ${itemCount} items${inHandText}.`;
-}
-
-function _hasDescription(text:string):boolean {
-  return text.trim().length > 0;
 }
 
 function _getCharacterCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number):Rect {
@@ -210,7 +207,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
-  if (!_hasDescription(character.description)) return;
+  if (!isCharacterInteractive(character)) return;
   const title = character.isTitleKnown ? _getCharacterDisplayName(character) : "";
   const carryText = _getCharacterCarryText(character);
   drawTextPopover({ targetRect:_getCharacterCanvasRect(character, scalingFactors, time), title,

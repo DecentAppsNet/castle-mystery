@@ -4,6 +4,7 @@
 import { assertNonNullable } from "decent-portal";
 
 import { processLevelEffects } from "../effects/effectUtil";
+import { isCharacterInteractive, isItemInteractive } from "../interactivityUtil";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
 import Position, { duplicatePosition } from "../types/Position";
@@ -72,21 +73,17 @@ function _findHoveredExit(gameState:GameState):RoomExit|null {
   return null;
 }
 
-function _hasDescription(text:string):boolean {
-  return text.trim().length > 0;
-}
-
 function _findHoveredCharacterHighlightId(gameState:GameState, canShowHoverPopovers:boolean):string|null {
   if (!canShowHoverPopovers || !gameState.hoveredCharacterId) return null;
   const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
-  if (!hoveredCharacter || !_hasDescription(hoveredCharacter.description)) return null;
+  if (!hoveredCharacter || !isCharacterInteractive(hoveredCharacter)) return null;
   return hoveredCharacter.id;
 }
 
 function _findHoveredItemHighlightId(gameState:GameState, canShowHoverPopovers:boolean):string|null {
   if (!canShowHoverPopovers || !gameState.hoveredItemId) return null;
   const hoveredItem = _findHoveredItem(gameState);
-  if (!hoveredItem || !_hasDescription(hoveredItem.item.description)) return null;
+  if (!hoveredItem || !isItemInteractive(hoveredItem.item)) return null;
   return hoveredItem.item.id;
 }
 
@@ -156,7 +153,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   }
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(gameState);
-    if (hoveredItem && _hasDescription(hoveredItem.item.description)) {
+    if (hoveredItem && isItemInteractive(hoveredItem.item)) {
       drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context);
     }
     processLevelEffects(gameState.activeEffects, context);
@@ -164,7 +161,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   }
   if (canShowHoverPopovers && gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
-    if (hoveredCharacter && _hasDescription(hoveredCharacter.description)) {
+    if (hoveredCharacter && isCharacterInteractive(hoveredCharacter)) {
       drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time);
     }
     processLevelEffects(gameState.activeEffects, context);

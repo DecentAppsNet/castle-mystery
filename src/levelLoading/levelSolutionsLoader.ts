@@ -3,6 +3,7 @@
 import { parseNameValueLineEntries, parseOptions, parseSectionEntries, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 import { getClozeImageCandidateUrls } from "@/game/imageUrlUtil";
+import { isCharacterInteractive } from "@/game/interactivityUtil";
 import { findRoomByIdOrTitle } from "@/game/roomUtil";
 
 import Character from "../game/types/Character";
@@ -263,10 +264,14 @@ export function loadSolutionsFromSection(solutionsSection:string, rooms:Readonly
 
 export function createGeneratedIdentitySolution(characters:ReadonlyArray<Character>, categoryOptionsByName:Map<string, string[]>,
   overrides:{ title?:string|null, unlockSolutionIds?:string[], revealRoomIds?:string[] } = {}):Solution|null {
-  if (!characters.length) return null;
+  const interactiveCharacters = characters.filter(isCharacterInteractive);
+  if (!interactiveCharacters.length) return null;
+  const interactiveCharacterTitles = interactiveCharacters.map(character => character.title);
+  const identityCategoryOptionsByName = new Map(categoryOptionsByName);
+  identityCategoryOptionsByName.set('characters', interactiveCharacterTitles);
 
   const parts:ClozePart[] = [];
-  characters.forEach((character, characterIndex) => {
+  interactiveCharacters.forEach((character, characterIndex) => {
     if (characterIndex > 0) {
       parts.push({ type:ClozePartType.separator });
     }
@@ -276,11 +281,11 @@ export function createGeneratedIdentitySolution(characters:ReadonlyArray<Charact
       parts.push({ type:ClozePartType.text, text:'???' });
     }
     parts.push({ type:ClozePartType.text, text:' = ' });
-    parts.push(_createClozeBlankFromCorrectAnswer(character.title, categoryOptionsByName));
+    parts.push(_createClozeBlankFromCorrectAnswer(character.title, identityCategoryOptionsByName));
   });
 
   return {
     ..._createSolution('identities', overrides.title ?? 'Identities', parts, overrides.unlockSolutionIds || [], overrides.revealRoomIds || []),
-    isComplete:characters.every(character => character.isTitleKnown)
+    isComplete:interactiveCharacters.every(character => character.isTitleKnown)
   };
 }

@@ -67,6 +67,7 @@ import loadLevelFromUrlWithImportsCharactersText from './fixtures/load-level-fro
 import loadLevelFromUrlWithImportsText from './fixtures/load-level-from-url-with-imports.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
 import identitiesAuthoredMetadataText from './fixtures/identities-authored-metadata.md?raw';
+import identitiesExcludesNoninteractiveCharactersText from './fixtures/identities-excludes-noninteractive-characters.md?raw';
 import inventoryItemDefaultCategoryText from './fixtures/inventory-item-default-category.md?raw';
 import inventoryItemTitleCasingText from './fixtures/inventory-item-title-casing.md?raw';
 import closedDoorExitText from './fixtures/closed-door-exit.md?raw';
@@ -399,6 +400,17 @@ describe('levelUtil itinerary loading', () => {
     expect(identities?.unlockSolutionIds).toEqual(['final mystery']);
     expect(identities?.isLocked).toBe(false);
     expect(finalMystery?.isLocked).toBe(true);
+  });
+
+  it('excludes characters with empty descriptions from generated identities', () => {
+    const level = loadLevelFromText(identitiesExcludesNoninteractiveCharactersText);
+    const identities = level.solutions.find(solution => solution.id === 'identities') || null;
+    const identityBlanks = (identities?.parts.filter(part => part.type === 'blank') || []) as ClozeBlank[];
+
+    expect(identities).not.toBeNull();
+    expect(identityBlanks).toHaveLength(2);
+    expect(identityBlanks[0].availableAnswers).toEqual(['King', 'Queen']);
+    expect(identityBlanks[1].availableAnswers).toEqual(['King', 'Queen']);
   });
 
   it('defaults titles by preserving authored casing from subsection names', () => {

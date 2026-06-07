@@ -4,6 +4,7 @@
 
 import { clamp } from "@/common/numberUtil";
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
+import { isItemInteractive } from "@/game/interactivityUtil";
 import { roomWidthToColumnCount } from "../waypointUtil";
 import Rect from "../types/Rect";
 import { canvasToGamePosition } from "./drawUtil";
@@ -218,10 +219,6 @@ function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
   return effects.some(effect => effect.type === EffectType.DROP_ITEM && "item" in effect && effect.item.id === item.id);
 }
 
-function _hasDescription(text:string):boolean {
-  return text.trim().length > 0;
-}
-
 export function findVisibleRoomItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
   return _getVisibleItemsInDrawOrder(room, effects, includeUndiscovered);
 }
@@ -241,7 +238,7 @@ export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scal
 }
 
 export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  if (!_hasDescription(item.description)) return;
+  if (!isItemInteractive(item)) return;
   drawTextPopover({ targetRect:getItemCanvasRectInRoom(room, item, scalingFactors), title:item.title,
     bodyTexts:[item.description], scalingFactors, context });
 }
