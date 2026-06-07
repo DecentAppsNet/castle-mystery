@@ -83,6 +83,16 @@ function _getCharacterCanvasRect(character:Character, scalingFactors:ScalingFact
   };
 }
 
+export function getCharacterBodyCenterCanvasPosition(character:Character, scalingFactors:ScalingFactors, time:number):{ x:number, y:number } {
+  const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
+  const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
+  const bodySegment = layout.segments[0];
+  return {
+    x:(bodySegment.fromX + bodySegment.toX) / 2,
+    y:(bodySegment.fromY + bodySegment.toY) / 2
+  };
+}
+
 export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
   const [centerX, bottomY] = _getCharacterCanvasBottomPosition(character, scalingFactors);
   const { characterWidth, characterHeight } = _getCharacterSizePixels(scalingFactors);

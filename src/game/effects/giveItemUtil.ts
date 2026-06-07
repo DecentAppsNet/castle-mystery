@@ -2,10 +2,10 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import { getCharacterBodyCenterCanvasPosition } from "../drawing/characterDrawUtil";
 import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPosition } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";
 import Item from "../types/Item";
-import { duplicatePosition } from "../types/Position";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
@@ -19,24 +19,30 @@ function _onProcessRoomEffect(room:Room, effect:Effect, context:CanvasRenderingC
   const elapsed = Date.now() - giveItemEffect.startTime;
   if (!canDrawEffect) return elapsed < ITEM_EFFECT_DURATION;
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
-  const position = {
-    x:giveItemEffect.startPosition.x + (giveItemEffect.endPosition.x - giveItemEffect.startPosition.x) * progress,
-    y:giveItemEffect.startPosition.y + (giveItemEffect.endPosition.y - giveItemEffect.startPosition.y) * progress,
-    z:giveItemEffect.startPosition.z + (giveItemEffect.endPosition.z - giveItemEffect.startPosition.z) * progress
-  };
-  const [x, y] = getItemCanvasPosition({ ...giveItemEffect.item, position }, scalingFactors);
+  const x = giveItemEffect.startCanvasPosition.x + (giveItemEffect.endCanvasPosition.x - giveItemEffect.startCanvasPosition.x) * progress;
+  const y = giveItemEffect.startCanvasPosition.y + (giveItemEffect.endCanvasPosition.y - giveItemEffect.startCanvasPosition.y) * progress;
   drawItemAtCanvasPosition(giveItemEffect.item, x, y, calcItemDrawMetrics(room, scalingFactors), context);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 
-export function createGiveItemEffect(item:Item, room:Room, giver:Character, recipient:Character, time:number, _scalingFactors:ScalingFactors):GiveItemEffect {
+export function createGiveItemEffect(item:Item, room:Room, giver:Character, recipient:Character, time:number, scalingFactors:ScalingFactors):GiveItemEffect {
+  const metrics = calcItemDrawMetrics(room, scalingFactors);
+  const [startCanvasX, startCanvasY] = getItemCanvasPosition({
+    ...item,
+    position:{ x:giver.x, y:giver.y, z:giver.depth }
+  }, scalingFactors);
+  const recipientBodyCenter = getCharacterBodyCenterCanvasPosition(recipient, scalingFactors, 0);
   return {
     type:EffectType.GIVE_ITEM,
     room,
+    character:recipient,
     item:{ ...item, position:{ ...item.position } },
     startTime:time,
-    startPosition:duplicatePosition({ x:giver.x, y:giver.y, z:giver.depth }),
-    endPosition:duplicatePosition({ x:recipient.x, y:recipient.y, z:recipient.depth }),
+    startCanvasPosition:{ x:startCanvasX, y:startCanvasY },
+    endCanvasPosition:{
+      x:recipientBodyCenter.x + metrics.cuboidDepthXPixels / 2,
+      y:recipientBodyCenter.y + (metrics.cuboidHeightPixels + metrics.cuboidDepthYPixels) / 2
+    },
     onProcessRoomEffect:_onProcessRoomEffect
   };
 }
