@@ -57,9 +57,7 @@ function _createCharacterContent(x:number, y:number):Exclude<RoomDrawableContent
       id:'character',
       title:'Character',
       description:'Character',
-      x,
-      y,
-      depth:BACK_ROW_CHARACTER_DEPTH,
+      position:{ x, y, z:BACK_ROW_CHARACTER_DEPTH },
       waypoint:{ position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} }
     }
   };

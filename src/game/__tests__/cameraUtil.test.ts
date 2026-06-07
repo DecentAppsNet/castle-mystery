@@ -27,9 +27,7 @@ function _createCharacter(x:number, y:number):Character {
     id:'hero',
     title:'Hero',
     description:'Hero',
-    x,
-    y,
-    depth:DEFAULT_CHARACTER_DEPTH,
+    position:{ x, y, z:DEFAULT_CHARACTER_DEPTH },
     waypoint
   };
 }

@@ -29,7 +29,7 @@ export function createGiveItemEffect(item:Item, room:Room, giver:Character, reci
   const metrics = calcItemDrawMetrics(room, scalingFactors);
   const [startCanvasX, startCanvasY] = getItemCanvasPosition({
     ...item,
-    position:{ x:giver.x, y:giver.y, z:giver.depth }
+    position:{ ...giver.position }
   }, scalingFactors);
   const recipientBodyCenter = getCharacterBodyCenterCanvasPosition(recipient, scalingFactors, 0);
   return {

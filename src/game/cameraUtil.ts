@@ -109,7 +109,7 @@ export function calcLevelCameraRect(rooms:Room[], aspectRatio:number, groundFloo
 function _findTargetCameraRect(rooms:Room[], activeCharacter:Character|null, aspectRatio:number,
   zoomAmount:number, groundFloorY:number):{ roomId:string|null, rect:Rect } {
   const levelCameraRect = calcLevelCameraRect(rooms, aspectRatio, groundFloorY);
-  const activeRoom = activeCharacter ? findRoomAtPosition(rooms, activeCharacter.x, activeCharacter.y) : null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   const focusedRect = activeRoom ? calcRoomCameraRect(activeRoom, rooms, aspectRatio, groundFloorY) : levelCameraRect;
   return {
     roomId:activeRoom?.id || null,

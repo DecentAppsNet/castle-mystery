@@ -34,9 +34,9 @@ function _getCharacterSizePixels(scalingFactors:ScalingFactors):{ characterWidth
 }
 
 function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:ScalingFactors):[number, number] {
-  const [baseX, baseY] = gameToCanvasPosition(character.x, character.y, scalingFactors);
+  const [baseX, baseY] = gameToCanvasPosition(character.position.x, character.position.y, scalingFactors);
   const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
-  const depth = clamp(character.depth, 0, 1);
+  const depth = clamp(character.position.z, 0, 1);
   return [baseX + offsetX * depth, baseY + offsetY * depth];
 }
 

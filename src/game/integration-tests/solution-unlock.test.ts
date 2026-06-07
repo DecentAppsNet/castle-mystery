@@ -50,9 +50,7 @@ function _createTestLevel():Level {
       id:'hero',
       title:'Hero',
       description:'Test hero.',
-      x:initialPosition.x,
-      y:initialPosition.y,
-      depth:ROOM_MIDDLE_ROW_CENTER_Z,
+      position:{ ...initialPosition },
       waypoint,
       itinerary,
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
@@ -62,9 +60,7 @@ function _createTestLevel():Level {
       id:'hero',
       title:'Hero',
       description:'Test hero.',
-      x:initialPosition.x,
-      y:initialPosition.y,
-      depth:ROOM_MIDDLE_ROW_CENTER_Z,
+      position:{ ...initialPosition },
       waypoint,
       itinerary,
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)

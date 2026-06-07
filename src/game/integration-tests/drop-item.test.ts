@@ -31,8 +31,8 @@ describe('drop item integration', () => {
     const droppedItem = afterRoom.items.find(item => item.id === 'book') || null;
     expect(droppedItem).not.toBeNull();
     expect(afterDropState.itemsById.get('book')).toBe(droppedItem);
-    expect(droppedItem!.position.x).toBeGreaterThan(afterHero.x);
-    expect(droppedItem?.position.y).toBe(afterHero.y);
+    expect(droppedItem!.position.x).toBeGreaterThan(afterHero.position.x);
+    expect(droppedItem?.position.y).toBe(afterHero.position.y);
     expect(droppedItem?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
   });
 });

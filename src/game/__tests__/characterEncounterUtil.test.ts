@@ -33,9 +33,7 @@ function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = [
     id,
     title:id,
     description:id,
-    x,
-    y,
-    depth:DEFAULT_CHARACTER_DEPTH,
+    position:{ x, y, z:DEFAULT_CHARACTER_DEPTH },
     waypoint:_createWaypoint(x, y),
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x, y, z:DEFAULT_CHARACTER_DEPTH })

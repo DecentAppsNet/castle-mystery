@@ -63,7 +63,7 @@ function HomeScreen() {
     : activeInitialCharacter?.itinerary || null;
   const activeInitialRoomId = !gameState || !activeInitialCharacter
     ? null
-    : findRoomAtPosition(gameState.initialRooms, activeInitialCharacter.x, activeInitialCharacter.y)?.id || null;
+    : findRoomAtPosition(gameState.initialRooms, activeInitialCharacter.position.x, activeInitialCharacter.position.y)?.id || null;
   
   useEffect(() => {
     if (gameState) return;

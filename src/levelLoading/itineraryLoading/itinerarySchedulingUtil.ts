@@ -193,7 +193,7 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
     return {
       ...character,
       itinerary,
-      itineraryIndex: createItineraryIndex(itinerary, { x:character.x, y:character.y, z:character.depth }),
+      itineraryIndex: createItineraryIndex(itinerary, character.position),
       items: state.items.map(duplicateItem),
       leftHandItem: state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
       rightHandItem: state.rightHandItem ? duplicateItem(state.rightHandItem) : null

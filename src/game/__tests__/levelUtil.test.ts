@@ -652,11 +652,11 @@ describe('levelUtil itinerary loading', () => {
     const floorY = hall.rect.y + hall.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
 
     expect(apple?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
-    expect(baron?.depth).toBe(ROOM_MIDDLE_ROW_CENTER_Z);
-    expect(baron?.y).toBe(floorY);
+    expect(baron?.position.z).toBe(ROOM_MIDDLE_ROW_CENTER_Z);
+    expect(baron?.position.y).toBe(floorY);
     expect(coin?.position.z).toBe(ROOM_FRONT_ROW_CENTER_Z);
-    expect(duke?.depth).toBe(ROOM_FRONT_ROW_CENTER_Z);
-    expect(duke?.y).toBe(floorY);
+    expect(duke?.position.z).toBe(ROOM_FRONT_ROW_CENTER_Z);
+    expect(duke?.position.y).toBe(floorY);
   });
 
   it('loads multiple room items from one legend tile using stacked floor-based y offsets', () => {

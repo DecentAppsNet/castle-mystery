@@ -206,7 +206,7 @@ function _interpolatePosition(fromPosition:Position, toPosition:Position, interp
 export function findCharacterPose(character:Character, time:number):CharacterPose {
   if (!character.itinerary.length || !character.itineraryIndex.eventStartTimes.length) {
     return {
-      position:{ x:character.x, y:character.y, z:character.depth },
+      position:duplicatePosition(character.position),
       isAlive:character.isAlive,
       facingDirection:character.facingDirection,
       bodyOrientation:character.bodyOrientation,
@@ -301,7 +301,7 @@ function _findThoughtAtTime(itinerary:ItineraryEvent[], time:number):string|null
 
 function _findItineraryPosition(character:Character, time:number):CharacterPose {
   return {
-    position:_findPositionAtTime({ x:character.x, y:character.y, z:character.depth }, character.itinerary, time),
+    position:_findPositionAtTime(character.position, character.itinerary, time),
     isAlive:_findIsAliveAtTime(character, character.itinerary, time),
     facingDirection:_findFacingDirectionAtTime(character, character.itinerary, time),
     bodyOrientation:_findBodyOrientationAtTime(character, character.itinerary, time),

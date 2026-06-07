@@ -24,8 +24,8 @@ function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):
   const elapsed = Date.now() - characterSelectEffect.startTime;
   const progress = clamp(elapsed / CHARACTER_SELECT_EFFECT_DURATION, 0, 1);
   const [centerX, bottomY] = gameToCanvasPosition(
-    characterSelectEffect.character.x,
-    characterSelectEffect.character.y,
+    characterSelectEffect.character.position.x,
+    characterSelectEffect.character.position.y,
     characterSelectEffect.scalingFactors
   );
   const centerY = bottomY - characterSelectEffect.centerYOffsetPixels;

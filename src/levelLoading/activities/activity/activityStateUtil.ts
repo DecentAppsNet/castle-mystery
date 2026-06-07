@@ -32,7 +32,7 @@ function _createCharacterSnapshot(character:Character, state:CharacterActivitySt
     ...character,
     waypoint:state.waypoint,
     itinerary:[...state.events],
-    itineraryIndex:createItineraryIndex(state.events, { x:character.x, y:character.y, z:character.depth })
+    itineraryIndex:createItineraryIndex(state.events, character.position)
   };
 }
 
@@ -53,7 +53,7 @@ export function createCharacterActivityState(character:Character):CharacterActiv
   return {
     events:[],
     time:0,
-    position:{ x:character.x, y:character.y, z:character.depth },
+    position:duplicatePosition(character.position),
     waypoint:character.waypoint,
     items:character.items.map(duplicateItem),
     leftHandItem:character.leftHandItem ? duplicateItem(character.leftHandItem) : null,
@@ -98,7 +98,7 @@ export function duplicateRoomItemsByRoomId(roomItemsByRoomId:Map<string, Item[]>
 export function findStatePoseAtTime(character:Character, state:CharacterActivityState, time:number) {
   if (!state.events.length) {
     return {
-      position:{ x:character.x, y:character.y, z:character.depth },
+      position:duplicatePosition(character.position),
       isAlive:character.isAlive,
       facingDirection:character.facingDirection,
       bodyOrientation:character.bodyOrientation,

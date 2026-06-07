@@ -1,6 +1,7 @@
 import Itinerary from "./Itinerary";
 import ItineraryIndex from "./ItineraryIndex";
 import Item, { duplicateItem } from "./Item";
+import Position, { duplicatePosition } from "./Position";
 import Waypoint from "./Waypoint";
 
 export type FacingDirection = 'left' | 'right';
@@ -35,9 +36,7 @@ type Character = {
   items:Item[],
   leftHandItem:Item|null,
   rightHandItem:Item|null,
-  x:number,
-  y:number,
-  depth:number,
+  position:Position,
   waypoint:Waypoint,
   discoveredRoomIds:string[],
   itinerary:Itinerary,
@@ -58,9 +57,7 @@ export function createDefaultCharacter():Character {
     items:[],
     leftHandItem:null,
     rightHandItem:null,
-    x:0,
-    y:0,
-    depth:0,
+    position:{ x:0, y:0, z:0 },
     waypoint:_createDefaultWaypoint(),
     discoveredRoomIds:[],
     itinerary:[],
@@ -82,9 +79,7 @@ export function duplicateCharacter(from:Character):Character {
     items:from.items.map(duplicateItem),
     leftHandItem:from.leftHandItem ? duplicateItem(from.leftHandItem) : null,
     rightHandItem:from.rightHandItem ? duplicateItem(from.rightHandItem) : null,
-    x:from.x,
-    y:from.y,
-    depth:from.depth,
+    position:duplicatePosition(from.position),
     waypoint:from.waypoint,
     discoveredRoomIds:[...from.discoveredRoomIds],
     itinerary:from.itinerary,

@@ -60,9 +60,7 @@ function _createCharacter(id:string, x:number, y:number):Character {
     id,
     title:id,
     description:id,
-    x,
-    y,
-    depth:DEFAULT_CHARACTER_DEPTH,
+    position:{ x, y, z:DEFAULT_CHARACTER_DEPTH },
     waypoint
   };
 }

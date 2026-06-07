@@ -49,7 +49,7 @@ function _expectWalkThenExitStateChange(levelText:string, eventType:typeof Itine
   expect(_findCellExit(beforeChangeState).exitStatus).toBe(beforeStatus);
   expect(_findCellExit(atChangeState).exitStatus).toBe(afterStatus);
   if (lastWalkEvent) expect(lastWalkEvent.startTime + lastWalkEvent.duration).toBe(lockChangeEvent!.startTime);
-  expect(_calcDistance(atChangeKeeper.x, atChangeKeeper.y, exitWaypoint.position.x, exitWaypoint.position.y))
+  expect(_calcDistance(atChangeKeeper.position.x, atChangeKeeper.position.y, exitWaypoint.position.x, exitWaypoint.position.y))
     .toBeLessThanOrEqual(LOCK_EXIT_NEARBY_DISTANCE);
 }
 

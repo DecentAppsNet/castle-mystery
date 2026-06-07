@@ -24,11 +24,11 @@ function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFa
   const roomLineWidth = scalingFactors.roomLineWidth;
   const characterWidthPixels = roomLineWidth * 15;
   const characterHeightPixels = roomLineWidth * 30;
-  // character.x/character.y represent the bottom-center point in game position space
+  // character.position.x/character.position.y represent the bottom-center point in game position space
   const halfWidthGame = (characterWidthPixels / 2) / scalingFactors.scaleX;
   const heightGame = characterHeightPixels / scalingFactors.scaleY;
-  const left = character.x - halfWidthGame;
-  const top = character.y - heightGame;
+  const left = character.position.x - halfWidthGame;
+  const top = character.position.y - heightGame;
   return { x: left, y: top, width: halfWidthGame * 2, height: heightGame };
 }
 
@@ -56,7 +56,7 @@ function _findClosestRoomEntryTime(gameState:GameState, character:Character, roo
     .map(event => event.startTime);
   if (!roomEntryTimes.length) {
     const initialCharacter = gameState.initialCharacters.find(candidate => candidate.id === character.id) || null;
-    const initialRoom = initialCharacter ? findRoomAtPosition(gameState.initialRooms, initialCharacter.x, initialCharacter.y) : null;
+    const initialRoom = initialCharacter ? findRoomAtPosition(gameState.initialRooms, initialCharacter.position.x, initialCharacter.position.y) : null;
     if (initialRoom?.id === roomId) roomEntryTimes.push(0);
   }
   if (!roomEntryTimes.length) return null;
@@ -70,7 +70,7 @@ function _findNavigableRoomAtPosition(gameState:GameState, x:number, y:number):R
   const hoveredCharacter = _findCharacterAtPosition(gameState, x, y);
   if (hoveredCharacter) return null;
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (activeRoom?.id === hoveredRoom.id) return null;
   if (gameState.isLevelComplete) {
     const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, x, y, gameState.scalingFactors, { includeUndiscovered:true, ignoreRoomObscured:true });
@@ -132,10 +132,10 @@ function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Chara
     if (candidateCharacters.length === 0) return null;
 
     let nearest:Character = candidateCharacters[0];
-    let nearestDist = Math.hypot(nearest.x - x, nearest.y - y);
+    let nearestDist = Math.hypot(nearest.position.x - x, nearest.position.y - y);
     for (let i = 1; i < candidateCharacters.length; ++i) {
       const character = candidateCharacters[i];
-      const distance = Math.hypot(character.x - x, character.y - y);
+      const distance = Math.hypot(character.position.x - x, character.position.y - y);
       if (distance < nearestDist) {
         nearest = character;
         nearestDist = distance;
@@ -147,7 +147,7 @@ function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Chara
     return null;
   }
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (activeRoom?.isObscured) return null;
   const candidateCharacters = activeCharacter && activeRoom
     ? findCharactersInRoom(activeRoom, gameState.characters)
@@ -155,10 +155,10 @@ function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Chara
   if (candidateCharacters.length === 0) return null;
 
   let nearest:Character = candidateCharacters[0];
-  let nearestDist = Math.hypot(nearest.x - x, nearest.y - y);
+  let nearestDist = Math.hypot(nearest.position.x - x, nearest.position.y - y);
   for (let i = 1; i < candidateCharacters.length; ++i) {
     const character = candidateCharacters[i];
-    const distance = Math.hypot(character.x - x, character.y - y);
+    const distance = Math.hypot(character.position.x - x, character.position.y - y);
     if (distance < nearestDist) {
       nearest = character;
       nearestDist = distance;
@@ -206,7 +206,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     return;
   }
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (!activeCharacter || !activeRoom) {
     gameState.hoveredItemId = null;
     gameState.hoveredCharacterId = null;

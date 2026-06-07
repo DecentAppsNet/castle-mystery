@@ -248,15 +248,13 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
 
   gameState.characters.forEach(character => {
     const pose = findCharacterPose(character, time);
-    character.x = pose.position.x;
-    character.y = pose.position.y;
-    character.depth = pose.position.z;
+    character.position = { ...pose.position };
     character.isAlive = pose.isAlive;
     character.facingDirection = pose.facingDirection;
     character.bodyOrientation = pose.bodyOrientation;
   });
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (activeRoom) {
     pendingRoomEffects
       .filter(effect => effect.roomId === activeRoom.id)

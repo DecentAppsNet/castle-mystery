@@ -130,7 +130,7 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
 export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const highlightedWaypointPosition = _findHighlightedWaypointPosition(gameState);
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.x, activeCharacter.y) : null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   const hoveredCharacterHighlightId = _findHoveredCharacterHighlightId(gameState, canShowHoverPopovers);
   const hoveredItemHighlightId = _findHoveredItemHighlightId(gameState, canShowHoverPopovers);

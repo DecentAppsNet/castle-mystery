@@ -107,8 +107,8 @@ function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, conte
 }
 
 function _isCharacterNearExit(character:Character, exit:RoomExit):boolean {
-  const dx = character.x - exit.x;
-  const dy = character.y - exit.y;
+  const dx = character.position.x - exit.x;
+  const dy = character.position.y - exit.y;
   return dx * dx + dy * dy <= OPEN_DOOR_NEARNESS * OPEN_DOOR_NEARNESS;
 }
 
@@ -241,7 +241,7 @@ function _createDrawableContents(room:Room, charactersInRoom:Character[], effect
     stairPart
   }));
   const sortedNonStairContents = [
-    ...charactersInRoom.map(character => ({ type:'character' as const, depth:character.depth, x:character.x, sortId:character.id, character })),
+    ...charactersInRoom.map(character => ({ type:'character' as const, depth:character.position.z, x:character.position.x, sortId:character.id, character })),
     ...findVisibleRoomItemsInDrawOrder(room, effects, includeUndiscoveredItems)
       .map(item => ({ type:'item' as const, depth:item.position.z, x:item.position.x, sortId:item.id, item }))
   ].sort(compareNonStairDrawableContents);

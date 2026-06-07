@@ -54,7 +54,7 @@ export function findRoomNearestToPosition(rooms:Room[], x:number, y:number):Room
 }
 
 export function findCharactersInRoom(room:Room, characters:Character[]):Character[] {
-  return characters.filter(character => isPositionInRect(character.x, character.y, room.rect));
+  return characters.filter(character => isPositionInRect(character.position.x, character.position.y, room.rect));
 }
 
 export function isActiveAudibleRoom(room:Room, activeRoom:Room):boolean {

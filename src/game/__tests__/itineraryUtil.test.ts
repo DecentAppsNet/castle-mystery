@@ -35,7 +35,7 @@ function _createCharacter(itinerary:ItineraryEvent[]):Character {
     id:'Hero',
     title:'Hero',
     description:'Hero',
-    depth:MIDDLE_ROW_DEPTH,
+    position:{ x:0, y:0, z:MIDDLE_ROW_DEPTH },
     waypoint,
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0, z:MIDDLE_ROW_DEPTH })
@@ -77,9 +77,8 @@ describe('itineraryUtil', () => {
       expect(walkEvent).not.toBeNull();
 
       const character = _createCharacter([walkEvent!]);
-      character.x = 10;
-      character.y = floorY;
-      character.itineraryIndex = createItineraryIndex(character.itinerary, { x:character.x, y:character.y, z:character.depth });
+      character.position = { x:10, y:floorY, z:MIDDLE_ROW_DEPTH };
+      character.itineraryIndex = createItineraryIndex(character.itinerary, character.position);
 
       const midWalkPose = findCharacterPose(character, 1_075);
       expect(midWalkPose.position.y).toBe(floorY);
@@ -94,9 +93,7 @@ describe('itineraryUtil', () => {
       expect(walkEvent).not.toBeNull();
 
       const character = _createCharacter([walkEvent!]);
-      character.x = 10;
-      character.y = 10;
-      character.depth = MIDDLE_ROW_DEPTH;
+      character.position = { x:10, y:10, z:MIDDLE_ROW_DEPTH };
       character.itineraryIndex = createItineraryIndex(character.itinerary, { x:10, y:10, z:MIDDLE_ROW_DEPTH });
 
       const midWalkPose = findCharacterPose(character, walkEvent!.startTime + Math.floor(walkEvent!.duration / 2));

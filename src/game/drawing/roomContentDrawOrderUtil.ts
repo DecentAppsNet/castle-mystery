@@ -47,7 +47,12 @@ export function compareNonStairDrawableContents(content1:NonStairDrawableContent
 
 export function compareStairToContent(stairContent:StairDrawableContent, content:NonStairDrawableContent):number {
   if (content.type === 'character') {
-    const stairComparison = compareCharacterToStairPartRows(content.character.x, content.character.y, content.character.depth, stairContent.stairPart);
+    const stairComparison = compareCharacterToStairPartRows(
+      content.character.position.x,
+      content.character.position.y,
+      content.character.position.z,
+      stairContent.stairPart
+    );
     if (stairComparison !== 0) return -stairComparison;
   }
 

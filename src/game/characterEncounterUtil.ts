@@ -63,7 +63,7 @@ export function addCharacterEncounterEvents(characters:Character[], rooms:Room[]
     return {
       ...character,
       itinerary,
-      itineraryIndex:createItineraryIndex(itinerary, { x:character.x, y:character.y, z:character.depth })
+      itineraryIndex:createItineraryIndex(itinerary, character.position)
     };
   });
 }
