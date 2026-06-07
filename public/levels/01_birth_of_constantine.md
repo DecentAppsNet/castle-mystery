@@ -148,6 +148,7 @@ A.......
 ## Newborn Baby
 
 * description=A swaddled-up infant, peering irritatedly at the World around him.
+* image=newborn.png
 
 ## Coffer
 
@@ -165,11 +166,11 @@ A.......
 : says "May God smile upon us."
 9:00:07 @ East Square.10%
 
-9:00:00 Pope Innocent III takes Holy Binky in right hand
+9:00:00 Pope Innocent III takes Holy Binky in left hand
 : says "Behold the Holy Binky!"
 : faces left.
 : says "Carved by Joseph. Given to the baby Jesus."
-: Ugolino di Conti says "No gift could be more precious."
+: Ugolino di Conti says "A fitting gift for our new mother."
 
 9:00:19 Ugolino di Conti @ Cathedral.30%
 : faces right.
@@ -230,7 +231,7 @@ A.......
 : Pope Innocent III says, "That is apparent. Why say it?"
 : Ugolino di Conti says, "I... uh... "
 : says "...wanted to acknowledge your presence respectfully."
-: Pope Innocent III says, "A simple bow suffices."
+: Pope Innocent III says, "A simple bow suffices, Archbishop."
 9:00:58 faces right.
 : says, "What a drab little church."
 : says, "Not a single flying buttress!"

@@ -15,7 +15,7 @@ import Item from "../game/types/Item";
 import Level from "../game/types/Level";
 import Room from "../game/types/Room";
 import { assertNormalizedId, createNormalizedEntryMap, normalizeId } from "../game/idUtil";
-import { getFaceImageAssetUrl } from "../game/imageUrlUtil";
+import { getFaceImageAssetUrl, getItemImageAssetUrl } from "../game/imageUrlUtil";
 
 type CharacterDefinition = {
 	title:string,
@@ -31,7 +31,8 @@ type CharacterDefinition = {
 type ItemDefinition = {
 	title:string,
 	description:string,
-	displayChar:string
+	displayChar:string,
+	imageUrl:string|null
 };
 
 export type RoomPopulationDefinitions = {
@@ -115,7 +116,8 @@ export function parseItemDefinitions(itemsSection:string):Map<string, ItemDefini
 		itemDefinitions.set(itemId, {
 			title:nameValues.title || authoredItemName.trim(),
 			description:nameValues.description || "",
-			displayChar:nameValues.displayChar || authoredItemName.charAt(0) || "?"
+			displayChar:nameValues.displayChar || authoredItemName.charAt(0) || "?",
+			imageUrl:nameValues.image ? getItemImageAssetUrl(nameValues.image.trim()) : null
 		});
 	});
 	return itemDefinitions;
@@ -210,6 +212,7 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 		id:itemId,
 		title:itemDefinition?.title || defaultTitleText,
 		displayChar:itemDefinition?.displayChar || defaultTitleText.charAt(0) || "?",
+		imageUrl:itemDefinition?.imageUrl || null,
 		randomSalt:rand(),
 		position:{ ...position, z:depth },
 		description:itemDefinition?.description || "",

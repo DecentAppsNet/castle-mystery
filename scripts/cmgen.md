@@ -1,5 +1,11 @@
 # templates
 
+## item
+
+* prompt=Generate image of an [item] using the same STYLE as image #1. Limit detail so that the output image can be used as a tiny sprite. Don't create jagged edges on lines. Background should be fully transparent pixels.
+* image1=item.png
+* size=1024x1024
+
 ## character
 
 * prompt=Generate image of a [occupation] using the same STYLE as image #1. The character should face right and have a neutral expression. Arms are slightly bent, hands held loosely open.{ The character is wearing [wearing].}{ Hair is [hair].}{ Skin is [skin].}{ [otherDetails].} Background should be fully transparent pixels.

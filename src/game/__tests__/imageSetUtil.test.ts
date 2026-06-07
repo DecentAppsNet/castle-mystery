@@ -3,9 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import backgroundImageText from './fixtures/background-image.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
+import itemImageText from './fixtures/item-image.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
-import { getBackgroundImageAssetUrl, getClozeImageCandidateUrls, getFaceImageAssetUrl, getGroundImageAssetUrl } from '../imageUrlUtil';
+import { getBackgroundImageAssetUrl, getClozeImageCandidateUrls, getFaceImageAssetUrl, getGroundImageAssetUrl, getItemImageAssetUrl } from '../imageUrlUtil';
 
 describe('imageSetUtil.ts', () => {
   afterEach(() => {
@@ -91,5 +92,21 @@ describe('imageSetUtil.ts', () => {
     expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/castle-sky.png');
     expect(imageSet.has(getGroundImageAssetUrl())).toBe(true);
     expect(imageSet.has(getBackgroundImageAssetUrl('castle-sky.png'))).toBe(true);
+  });
+
+  it('loads item images from the items directory', async () => {
+    const fetchMock = vi.fn(async () => ({ ok:true, blob:async () => new Blob(['fake']) }));
+    const createImageBitmapMock = vi.fn(async () => ({ width:64, height:32 } as ImageBitmap));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createImageBitmapMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = loadLevelFromText(itemImageText, 'item-image.md');
+    const imageSet = await createImageSetFromLevel(level);
+
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/sprites/key.png');
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/ground.png');
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/items/crown.png');
+    expect(imageSet.has(getItemImageAssetUrl('crown.png'))).toBe(true);
   });
 });

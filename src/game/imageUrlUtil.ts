@@ -7,6 +7,7 @@ export type CandidateUrls = string[];
 
 const BACKGROUND_IMAGE_ASSET_BASE_URL = '/assets/backgrounds/';
 const FACE_IMAGE_ASSET_BASE_URL = '/assets/faces/';
+const ITEM_IMAGE_ASSET_BASE_URL = '/assets/items/';
 const SOLUTION_IMAGE_ASSET_BASE_URL = '/assets/solutions/';
 
 export function isCandidateUrls(assetUrl:string|CandidateUrls):assetUrl is CandidateUrls {
@@ -21,6 +22,11 @@ export function getBackgroundImageAssetUrl(backgroundImageFilename:string):strin
 export function getFaceImageAssetUrl(faceImageFilename:string):string {
   validateFilename(faceImageFilename, 'character faceImage');
   return `${FACE_IMAGE_ASSET_BASE_URL}${faceImageFilename}`;
+}
+
+export function getItemImageAssetUrl(itemImageFilename:string):string {
+  validateFilename(itemImageFilename, 'item image');
+  return `${ITEM_IMAGE_ASSET_BASE_URL}${itemImageFilename}`;
 }
 
 function _getSolutionImageAssetUrl(solutionImageFilename:string):string {

@@ -16,9 +16,17 @@ export function createEmptyImageSet():ImageSet {
 function _findDirectReferencedImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>([KEY_IMAGE_URL, getGroundImageAssetUrl()]);
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
+  level.rooms.forEach(room => room.items.forEach(item => {
+    if (item.imageUrl) imageUrls.add(item.imageUrl);
+  }));
   const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
   sourceCharacters.forEach(character => {
     if (character.faceImageUrl) imageUrls.add(character.faceImageUrl);
+    character.items.forEach(item => {
+      if (item.imageUrl) imageUrls.add(item.imageUrl);
+    });
+    if (character.leftHandItem?.imageUrl) imageUrls.add(character.leftHandItem.imageUrl);
+    if (character.rightHandItem?.imageUrl) imageUrls.add(character.rightHandItem.imageUrl);
   });
   level.solutions.forEach(solution => solution.parts.forEach(part => {
     if (part.type !== ClozePartType.image) return;

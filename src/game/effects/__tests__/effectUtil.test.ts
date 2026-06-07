@@ -15,6 +15,7 @@ function _createItem(id:string, z:number) {
     id,
     title:id,
     displayChar:id.charAt(0).toUpperCase(),
+    imageUrl:null,
     randomSalt:0,
     position:{ x:1, y:2, z },
     description:'',

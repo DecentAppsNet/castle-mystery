@@ -25,7 +25,9 @@ import groundFloorRoomText from './fixtures/ground-floor-room.md?raw';
 import invalidBackgroundImageText from './fixtures/invalid-background-image.md?raw';
 import invalidClozeImageText from './fixtures/invalid-cloze-image.md?raw';
 import invalidFaceImageText from './fixtures/invalid-face-image.md?raw';
+import invalidItemImageText from './fixtures/invalid-item-image.md?raw';
 import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?raw';
+import itemImageText from './fixtures/item-image.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
 import outsideRoomBelowGroundFloorText from './fixtures/outside-room-below-ground-floor.md?raw';
 import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
@@ -125,7 +127,7 @@ import deadCharacterActivityText from './fixtures/dead-character-activity.md?raw
 import initiallyDeadCharacterActivityText from './fixtures/initially-dead-character-activity.md?raw';
 import initialCharacterPoseText from './fixtures/initial-character-pose.md?raw';
 import bodyOrientationActivityText from './fixtures/body-orientation-activity.md?raw';
-import { getClozeImageCandidateUrls } from '../imageUrlUtil';
+import { getClozeImageCandidateUrls, getItemImageAssetUrl } from '../imageUrlUtil';
 import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
 
@@ -510,6 +512,25 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-face-image.md:23');
       expect((error as LoadLevelException).message).toContain('character faceImage must be a filename, not a path or URL');
+    }
+  });
+
+  it('loads item image url from item subsections into placed items and the item index', () => {
+    const level = loadLevelFromText(itemImageText, 'item-image.md');
+    const crown = level.rooms[0].items.find(item => item.id === 'crown') || null;
+
+    expect(crown?.imageUrl).toBe(getItemImageAssetUrl('crown.png'));
+    expect(level.itemsById.get('crown')?.imageUrl).toBe(getItemImageAssetUrl('crown.png'));
+  });
+
+  it('throws when item image is authored as a path instead of a filename', () => {
+    try {
+      loadLevelFromText(invalidItemImageText, 'invalid-item-image.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-item-image.md:24');
+      expect((error as LoadLevelException).message).toContain('item image must be a filename, not a path or URL');
     }
   });
 

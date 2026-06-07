@@ -41,6 +41,7 @@ describe('exitUtil', () => {
         id:'red key',
         title:'Iron Key',
         displayChar:'I',
+        imageUrl:null,
         randomSalt:0,
         position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
         description:'Opens the bedroom.',
