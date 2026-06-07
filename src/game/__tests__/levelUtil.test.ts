@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ROOM_BACK_ROW_CENTER_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
+import { ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import itineraryExtraPunctuationText from './fixtures/itinerary-extra-punctuation.md?raw';
 import itinerarySortingText from './fixtures/itinerary-sorting.md?raw';
 import afterPreviousActivityOverlapText from './fixtures/after-previous-activity-overlap.md?raw';
@@ -649,11 +649,14 @@ describe('levelUtil itinerary loading', () => {
     const coin = hall.items.find(item => item.id === 'coin') || null;
     const baron = level.characters.find(character => character.id === 'baron') || null;
     const duke = level.characters.find(character => character.id === 'duke') || null;
+    const floorY = hall.rect.y + hall.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
 
     expect(apple?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
     expect(baron?.depth).toBe(ROOM_MIDDLE_ROW_CENTER_Z);
+    expect(baron?.y).toBe(floorY);
     expect(coin?.position.z).toBe(ROOM_FRONT_ROW_CENTER_Z);
-    expect(duke?.depth).toBe(ROOM_CHARACTER_FRONT_ROW_CENTER_Z);
+    expect(duke?.depth).toBe(ROOM_FRONT_ROW_CENTER_Z);
+    expect(duke?.y).toBe(floorY);
   });
 
   it('loads multiple room items from one legend tile using stacked floor-based y offsets', () => {

@@ -1,15 +1,15 @@
 /* This module groups character and item definition parsing with room and inventory population during level load.
 	If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 
 import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
 import { calcItemCuboidHeightGame } from "@/game/itemSizeUtil";
-import { ROOM_BACK_ROW_CENTER_Z, ROOM_CHARACTER_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
+import { ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { calcScaledRoomGridPosition, findLegendTilesInGrid } from "./levelRoomLayoutLoader";
 import { findRoom } from "../game/roomUtil";
-import { findNearestWaypoint, findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "../game/waypointUtil";
+import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "../game/waypointUtil";
 import Character, { type BodyOrientation, type FacingDirection } from "../game/types/Character";
 import Item from "../game/types/Item";
 import Level from "../game/types/Level";
@@ -45,7 +45,7 @@ const MIDDLE_ROW_ITEM_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
 const FRONT_ROW_ITEM_DEPTH = ROOM_FRONT_ROW_CENTER_Z;
 const BACK_ROW_CHARACTER_DEPTH = ROOM_BACK_ROW_CENTER_Z;
 const MIDDLE_ROW_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
-const FRONT_ROW_CHARACTER_DEPTH = ROOM_CHARACTER_FRONT_ROW_CENTER_Z;
+const FRONT_ROW_CHARACTER_DEPTH = ROOM_FRONT_ROW_CENTER_Z;
 const DEFAULT_POPULATION_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
 const ITEM_DEPTHS_BY_GRID_ROW = [BACK_ROW_ITEM_DEPTH, MIDDLE_ROW_ITEM_DEPTH, FRONT_ROW_ITEM_DEPTH] as const;
 const CHARACTER_DEPTHS_BY_GRID_ROW = [BACK_ROW_CHARACTER_DEPTH, MIDDLE_ROW_CHARACTER_DEPTH, FRONT_ROW_CHARACTER_DEPTH] as const;
@@ -189,6 +189,10 @@ function _createStackedRoomItemY(room:Room, stackIndex:number):number {
 	return room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET - stackIndex * calcItemCuboidHeightGame(room);
 }
 
+function _createCharacterFloorY(room:Room):number {
+	return room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+}
+
 function _createRoomItemPosition(room:Room, targetX:number, depth:number, stackIndex:number) {
 	const floorY = _createStackedRoomItemY(room, 0);
 	const waypoint = findNearestWaypointToPosition(room, { x:targetX, y:floorY, z:depth });
@@ -213,25 +217,15 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 	};
 }
 
-function _findNearestUnclaimedWaypoint(room:Room, targetX:number, targetY:number, claimedWaypoints:Set<string>) {
-	try {
-		return findNearestWaypointToPosition(room, { x:targetX, y:targetY, z:DEFAULT_POPULATION_DEPTH }, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`));
-	} catch {
-		return findNearestWaypoint(room, targetX, targetY);
-	}
-}
-
 function _addCharacter(level:Level, room:Room, characterId:string, title:string, description:string,
 	faceImageUrl:string|null, isAlive:boolean, facingDirection:FacingDirection, bodyOrientation:BodyOrientation,
 	isTitleKnown:boolean, x:number, y:number, depth:number) {
 	const claimedWaypoints = new Set(level.characters.map(character => `${character.waypoint.position.x},${character.waypoint.position.y},${character.waypoint.position.z}`));
-	const waypoint = (() => {
-		try {
-			return findNearestWaypointToPosition(room, { x, y, z:depth }, waypoint => !claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`));
-		} catch {
-			return _findNearestUnclaimedWaypoint(room, x, y, claimedWaypoints);
-		}
-	})();
+	const waypoint = findNearestWaypointToPosition(room, { x, y, z:depth });
+	assert(waypoint.position.x === x && waypoint.position.y === y && waypoint.position.z === depth,
+		`initial character placement for ${characterId} must match an exact waypoint at (${x}, ${y}, ${depth}) in room ${room.id}`);
+	assert(!claimedWaypoints.has(`${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`),
+		`initial character placement waypoint for ${characterId} is already claimed at (${waypoint.position.x}, ${waypoint.position.y}, ${waypoint.position.z}) in room ${room.id}`);
 	const character:Character = {
 		id: characterId,
 		title,
@@ -245,8 +239,8 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 		items: [],
 		leftHandItem:null,
 		rightHandItem:null,
-		x:waypoint.position.x,
-		y:waypoint.position.y,
+		x,
+		y,
 		depth,
 		waypoint,
 		discoveredRoomIds:[],
@@ -271,7 +265,8 @@ function _assertRoomGridMatchesExpectedDimensions(roomId:string, room:Room, grid
 function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, authoredEntryText:string, row:number, col:number,
 	gridWidth:number, gridHeight:number, characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
 	const legendEntries = _parseRoomLegendPopulationEntries(authoredEntryText);
-	const [x, characterY] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
+	const [x] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
+	const characterY = _createCharacterFloorY(room);
 	const characterDepth = _getCharacterDepthForGridRow(row);
 	const itemDepth = _getItemDepthForGridRow(row);
 

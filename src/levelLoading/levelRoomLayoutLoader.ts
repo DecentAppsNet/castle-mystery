@@ -136,8 +136,8 @@ export function calcScaledRoomGridPosition(room:Room, row:number, col:number, gr
   const tileWidth = room.rect.width / gridWidth;
   const tileHeight = room.rect.height / gridHeight;
   return [
-    Math.round(room.rect.x + (col + 0.5) * tileWidth),
-    Math.round(room.rect.y + (row + 0.5) * tileHeight)
+    room.rect.x + (col + 0.5) * tileWidth,
+    room.rect.y + (row + 0.5) * tileHeight
   ];
 }
 
