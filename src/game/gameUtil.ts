@@ -25,6 +25,7 @@ import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUt
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
 import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
+import { isCharacterInteractive } from "./interactivityUtil";
 import Solution, { duplicateSolution } from "./solutions/types/Solution";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
@@ -97,7 +98,7 @@ function _pauseGameState(gameState:GameState) {
 }
 
 function _compareCharactersForCycleOrder(character1:Character, character2:Character) {
-  return character1.position.y - character2.position.y || character1.position.x - character2.position.x;
+  return character1.position.z - character2.position.z || character1.position.x - character2.position.x;
 }
 
 function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharacterEvent) {
@@ -106,6 +107,7 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y);
   if (!activeRoom || (activeRoom.isObscured && !gameState.isLevelComplete)) return;
   const charactersInRoom = findCharactersInRoom(activeRoom, gameState.characters)
+    .filter(isCharacterInteractive)
     .sort(_compareCharactersForCycleOrder);
   if (charactersInRoom.length <= 1) return;
 

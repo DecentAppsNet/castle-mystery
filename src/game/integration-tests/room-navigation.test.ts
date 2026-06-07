@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { createItineraryIndex, createRoomEntryEvent } from '../itineraryUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from '../hoverStateUtil';
-import { createGameState } from '../gameUtil';
+import { createGameState, updateAndDraw } from '../gameUtil';
+import { nextCharacter } from '../playerEventUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import Level, { createDefaultLevel } from '../types/Level';
 import Character, { createDefaultCharacter } from '../types/Character';
@@ -66,6 +67,22 @@ function _setScalingFactors(gameState:ReturnType<typeof createGameState>) {
     destWidth:100,
     destHeight:100
   };
+}
+
+function _createMockContext():CanvasRenderingContext2D {
+  return new Proxy({
+    canvas:{ width:1280, height:720, style:{} },
+    measureText:() => ({ width:0, actualBoundingBoxAscent:0, actualBoundingBoxDescent:0 })
+  } as unknown as CanvasRenderingContext2D, {
+    get(target, property) {
+      if (property in target) return (target as unknown as Record<PropertyKey, unknown>)[property];
+      return () => {};
+    },
+    set(target, property, value) {
+      (target as unknown as Record<PropertyKey, unknown>)[property] = value;
+      return true;
+    }
+  });
 }
 
 describe('room navigation integration', () => {
@@ -169,6 +186,21 @@ describe('room navigation integration', () => {
     expect(gameState.hoveredCharacterId).toBe(null);
 
     updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
+
+    expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('hero');
+  });
+
+  it('does not select non-interactive characters when cycling with tab', () => {
+    const hero = _createCharacter('hero', 5, []);
+    const bystander = { ..._createCharacter('bystander', 25, []), description:'' };
+    const gameState = createGameState(_createLevel([hero, bystander]));
+    const context = _createMockContext();
+    gameState.isLevelComplete = true;
+    _setScalingFactors(gameState);
+    gameState.rooms.forEach(room => { room.isDiscovered = true; });
+
+    nextCharacter();
+    updateAndDraw(gameState, context, () => {});
 
     expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('hero');
   });
