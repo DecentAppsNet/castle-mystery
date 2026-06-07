@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { createEmptyImageSet } from '@/game/imageSetUtil';
 import { ZERO_SCALING_FACTORS } from '@/game/drawing/drawUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultRoom } from '@/game/types/Room';
@@ -54,9 +55,10 @@ describe('effectUtil', () => {
           onProcessCharacterEffect:onAfterCharacterEffect
         }
       ];
+      const imageSet = createEmptyImageSet();
 
-      processBeforeCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS);
-      processAfterCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS);
+      processBeforeCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS, imageSet);
+      processAfterCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS, imageSet);
 
       expect(calls).toEqual(['before', 'after']);
     });

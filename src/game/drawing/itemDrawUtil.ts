@@ -13,6 +13,7 @@ import { interpolateColor } from "./colorUtil";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
+import ImageSet from "../types/ImageSet";
 import Effect from "../effects/types/Effect";
 import EffectType from "../effects/types/EffectType";
 import { drawTextPopover } from "./popoverDrawUtil";
@@ -35,7 +36,11 @@ type ItemDrawMetrics = {
   cuboidHeightPixels:number,
   cuboidDepthXPixels:number,
   cuboidDepthYPixels:number,
-  cuboidLineWidthPixels:number
+  cuboidLineWidthPixels:number,
+  imageLeftOffsetPixels:number,
+  imageTopOffsetPixels:number,
+  imageWidthPixels:number,
+  imageHeightPixels:number
 }
 
 type ItemCuboidPoints = {
@@ -61,12 +66,18 @@ export function calcItemDrawMetrics(room:Room, scalingFactors:ScalingFactors):It
   const cuboidDepthYPixels = Math.max(1, panelOffsetY / 3 * ITEM_CUBOID_DEPTH_RATIO);
   const cuboidWidthPixels = calcItemCuboidWidthPixels(columnWidthPixels);
   const cuboidHeightPixels = calcItemCuboidHeightPixels(cuboidWidthPixels);
+  const imageLeftOffsetPixels = -(cuboidWidthPixels / 2 + cuboidDepthXPixels);
+  const imageTopOffsetPixels = -(cuboidHeightPixels + cuboidDepthYPixels);
   return {
     cuboidWidthPixels,
     cuboidHeightPixels,
     cuboidDepthXPixels,
     cuboidDepthYPixels,
-    cuboidLineWidthPixels:Math.max(0.5, scalingFactors.roomLineWidth * ITEM_CUBOID_LINE_WIDTH_RATIO)
+    cuboidLineWidthPixels:Math.max(0.5, scalingFactors.roomLineWidth * ITEM_CUBOID_LINE_WIDTH_RATIO),
+    imageLeftOffsetPixels,
+    imageTopOffsetPixels,
+    imageWidthPixels:cuboidWidthPixels + cuboidDepthXPixels,
+    imageHeightPixels:cuboidHeightPixels + cuboidDepthYPixels
   };
 }
 
@@ -85,28 +96,39 @@ export function getItemCanvasPositionInRoom(_room:Room, item:Item, scalingFactor
 export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:ScalingFactors):Rect {
   const metrics = calcItemDrawMetrics(room, scalingFactors);
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
-  const hoverWidthPixels = metrics.cuboidWidthPixels + metrics.cuboidDepthXPixels;
-  const topPixels = -(metrics.cuboidHeightPixels + metrics.cuboidDepthYPixels);
   return {
-    x:x - hoverWidthPixels / 2,
-    y:y + topPixels,
-    width:hoverWidthPixels,
-    height:-topPixels
+    x:x + metrics.imageLeftOffsetPixels,
+    y:y + metrics.imageTopOffsetPixels,
+    width:metrics.imageWidthPixels,
+    height:metrics.imageHeightPixels
   };
 }
 
 function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors):Rect {
   const metrics = calcItemDrawMetrics(room, scalingFactors);
-  const hoverWidthPixels = metrics.cuboidWidthPixels + metrics.cuboidDepthXPixels;
-  const topPixels = -(metrics.cuboidHeightPixels + metrics.cuboidDepthYPixels);
-  const bottomPixels = 0;
   const [x, y] = _getRoomItemGamePosition(room, item, scalingFactors);
   return {
-    x: x - (hoverWidthPixels / 2) / scalingFactors.scaleX,
-    y: y + topPixels / scalingFactors.scaleY,
-    width: hoverWidthPixels / scalingFactors.scaleX,
-    height: (bottomPixels - topPixels) / scalingFactors.scaleY
+    x: x + metrics.imageLeftOffsetPixels / scalingFactors.scaleX,
+    y: y + metrics.imageTopOffsetPixels / scalingFactors.scaleY,
+    width: metrics.imageWidthPixels / scalingFactors.scaleX,
+    height: metrics.imageHeightPixels / scalingFactors.scaleY
   };
+}
+
+function _findItemImage(item:Item, imageSet:ImageSet):ImageBitmap|null {
+  if (!item.imageUrl) return null;
+  return imageSet.get(item.imageUrl) || null;
+}
+
+function _drawItemImage(image:ImageBitmap, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
+  if (!image.width || !image.height) return;
+  context.drawImage(
+    image,
+    x + metrics.imageLeftOffsetPixels,
+    y + metrics.imageTopOffsetPixels,
+    metrics.imageWidthPixels,
+    metrics.imageHeightPixels
+  );
 }
 
 function _createItemCuboidPoints(x:number, y:number, metrics:ItemDrawMetrics):ItemCuboidPoints {
@@ -164,19 +186,24 @@ function _drawItemHighlight(points:ItemCuboidPoints, metrics:ItemDrawMetrics, co
 }
 
 function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  isHighlighted:boolean = false, time:number = 0) {
+  imageSet:ImageSet, isHighlighted:boolean = false, time:number = 0) {
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
   const metrics = calcItemDrawMetrics(room, scalingFactors);
   const cuboidPoints = _createItemCuboidPoints(x, y, metrics);
+  const image = _findItemImage(item, imageSet);
   context.save();
   if (isHighlighted) _drawItemHighlight(cuboidPoints, metrics, context, time);
-  _drawItemCuboid(item, cuboidPoints, metrics, context);
+  if (image) {
+    _drawItemImage(image, x, y, metrics, context);
+  } else {
+    _drawItemCuboid(item, cuboidPoints, metrics, context);
+  }
   context.restore();
 }
 
 export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  isHighlighted:boolean = false, time:number = 0) {
-  drawItem(room, item, scalingFactors, context, isHighlighted, time);
+  imageSet:ImageSet, isHighlighted:boolean = false, time:number = 0) {
+  drawItem(room, item, scalingFactors, context, imageSet, isHighlighted, time);
 }
 
 function _drawItemCuboid(item:Item, points:ItemCuboidPoints, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
@@ -200,9 +227,15 @@ function _drawItemCuboid(item:Item, points:ItemCuboidPoints, metrics:ItemDrawMet
   }, context);
 }
 
-export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
+export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:ItemDrawMetrics,
+  context:CanvasRenderingContext2D, imageSet:ImageSet) {
   context.save();
-  _drawItemCuboid(item, _createItemCuboidPoints(x, y, metrics), metrics, context);
+  const image = _findItemImage(item, imageSet);
+  if (image) {
+    _drawItemImage(image, x, y, metrics, context);
+  } else {
+    _drawItemCuboid(item, _createItemCuboidPoints(x, y, metrics), metrics, context);
+  }
   context.restore();
 }
 

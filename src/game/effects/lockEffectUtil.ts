@@ -15,7 +15,7 @@ export const KEY_IMAGE_URL = '/assets/sprites/key.png';
 const LOCK_EFFECT_DURATION = 500;
 
 function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRenderingContext2D,
-  scalingFactors:ScalingFactors, canDrawEffect:boolean):boolean {
+  scalingFactors:ScalingFactors, canDrawEffect:boolean, _imageSet:ImageSet):boolean {
   const lockEffect = effect as LockChangeEffect;
   const elapsed = Date.now() - lockEffect.startTime;
   if (!canDrawEffect) return elapsed < LOCK_EFFECT_DURATION;

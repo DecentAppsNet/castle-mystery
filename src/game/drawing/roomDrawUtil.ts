@@ -258,13 +258,13 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
         drawStairPart(content.stairPart, scalingFactors, context);
         return;
       case 'item':
-        drawRoomItem(room, content.item, scalingFactors, context, content.item.id === hoveredItemId, time);
+        drawRoomItem(room, content.item, scalingFactors, context, imageSet, content.item.id === hoveredItemId, time);
         return;
       case 'character':
-        processBeforeCharacterEffects(content.character, effects, context, scalingFactors);
+        processBeforeCharacterEffects(content.character, effects, context, scalingFactors, imageSet);
         drawCharacter(content.character, scalingFactors, context, time, imageSet, effects,
           content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId);
-        processAfterCharacterEffects(content.character, effects, context, scalingFactors);
+        processAfterCharacterEffects(content.character, effects, context, scalingFactors, imageSet);
         return;
     }
   });
@@ -291,7 +291,7 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
   } else {
     _drawRoomStairsOnly(room, scalingFactors, context);
   }
-  processRoomEffects(room, effects, context, scalingFactors, canDrawEffect);
+  processRoomEffects(room, effects, context, scalingFactors, canDrawEffect, imageSet);
 }
 
 export function drawRoomWaypoints(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {

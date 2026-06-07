@@ -4,6 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";
+import ImageSet from "../types/ImageSet";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -14,7 +15,7 @@ import EffectType from "./types/EffectType";
 export const ITEM_EFFECT_DURATION = 500;
 
 function _onProcessCharacterEffect(_character:Character, effect:Effect, context:CanvasRenderingContext2D,
-  scalingFactors:ScalingFactors):boolean {
+  scalingFactors:ScalingFactors, imageSet:ImageSet):boolean {
   const dropItemEffect = effect as DropItemEffect;
   const elapsed = Date.now() - dropItemEffect.startTime;
   const room = dropItemEffect.room;
@@ -23,7 +24,7 @@ function _onProcessCharacterEffect(_character:Character, effect:Effect, context:
   const [x, endY] = getItemCanvasPositionInRoom(room, dropItemEffect.item, scalingFactors);
   const startYOffsetPixels = Math.max(18, scalingFactors.roomFontHeight * 1.5);
   const y = endY - startYOffsetPixels * (1 - progress);
-  drawItemAtCanvasPosition(dropItemEffect.item, x, y, calcItemDrawMetrics(room, scalingFactors), context);
+  drawItemAtCanvasPosition(dropItemEffect.item, x, y, calcItemDrawMetrics(room, scalingFactors), context, imageSet);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 

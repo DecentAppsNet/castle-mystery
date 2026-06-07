@@ -4,6 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";
+import ImageSet from "../types/ImageSet";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -13,21 +14,21 @@ import TakeItemEffect from "./types/TakeItemEffect";
 import { ITEM_EFFECT_DURATION } from "./dropItemUtil";
 
 function _drawAnimatedItem(room:Room, takeItemEffect:TakeItemEffect, context:CanvasRenderingContext2D,
-  scalingFactors:ScalingFactors, progress:number) {
+  scalingFactors:ScalingFactors, imageSet:ImageSet, progress:number) {
   const [x, baseY] = getItemCanvasPositionInRoom(room, takeItemEffect.item, scalingFactors);
   const riseDistancePixels = Math.max(18, scalingFactors.roomFontHeight * 1.5);
   const y = baseY - progress * riseDistancePixels;
-  drawItemAtCanvasPosition(takeItemEffect.item, x, y, calcItemDrawMetrics(room, scalingFactors), context);
+  drawItemAtCanvasPosition(takeItemEffect.item, x, y, calcItemDrawMetrics(room, scalingFactors), context, imageSet);
 }
 
 function _onProcessCharacterEffect(_character:Character, effect:Effect, context:CanvasRenderingContext2D,
-  scalingFactors:ScalingFactors):boolean {
+  scalingFactors:ScalingFactors, imageSet:ImageSet):boolean {
   const takeItemEffect = effect as TakeItemEffect;
   const elapsed = Date.now() - takeItemEffect.startTime;
   const room = takeItemEffect.room;
   if (!room) return false;
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
-  _drawAnimatedItem(room, takeItemEffect, context, scalingFactors, progress);
+  _drawAnimatedItem(room, takeItemEffect, context, scalingFactors, imageSet, progress);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 

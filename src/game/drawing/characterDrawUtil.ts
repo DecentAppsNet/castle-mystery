@@ -155,7 +155,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
-  drawHeldItemsBehindCharacter(character, layout, effects, scalingFactors, context);
+  drawHeldItemsBehindCharacter(character, layout, effects, scalingFactors, context, imageSet);
   strokeCharacterBody(layout, context);
   const headRadius = layout.head.radius;
   if (!faceImage) {
@@ -163,7 +163,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.moveTo(layout.head.centerX + headRadius, layout.head.centerY);
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
-    drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
+    drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
     return;
   }
 
@@ -173,7 +173,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.beginPath();
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
-    drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
+    drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
     return;
   }
   const maxFaceWidth = headRadius * 6;
@@ -190,11 +190,11 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
       context.scale(-1, 1);
       context.drawImage(faceImage, 0, drawY, drawWidth, drawHeight);
       context.restore();
-      drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
+      drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
       return;
     }
     context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
-    drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
+    drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
     return;
   }
 
@@ -203,7 +203,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context.rotate(character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2);
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
-  drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context);
+  drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
