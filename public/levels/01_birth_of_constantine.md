@@ -136,14 +136,14 @@ A.......
 ## Vase
 
 * description=A vase of water with "Amos" written on it.
+* image=amosVase.png
 
 ## Holy Binky
-
-* description=A device roughly carved from wood.
 
 ## Infant
 
 * description=A swaddled-up infant, peering calmly at the World around him.
+* image=swaddledBaby.png
 
 ## Newborn Baby
 
@@ -166,7 +166,7 @@ A.......
 : says "May God smile upon us."
 9:00:07 @ East Square.10%
 
-9:00:00 Pope Innocent III takes Holy Binky in left hand
+9:00:00 Pope Innocent III takes Holy Binky in right hand
 : says "Behold the Holy Binky!"
 : faces left.
 : says "Carved by Joseph. Given to the baby Jesus."
@@ -203,7 +203,7 @@ A.......
 : @ Guard Quarters
 : Amos of Jesi drops vase.
 : thinks, "Best to keep it here."
-: @ East Square
+: @ East Square.10%
 
 9:00:57 Sticky Agatha @ Birthing Tent.90%
 : Constance I says, "Aiieeee!"
