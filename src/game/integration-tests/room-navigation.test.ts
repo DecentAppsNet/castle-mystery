@@ -155,4 +155,21 @@ describe('room navigation integration', () => {
 
     expect(gameState.characters.find(character => character.id === 'guide')?.discoveredRoomIds).toContain('library');
   });
+
+  it('does not hover or select non-interactive characters', () => {
+    const hero = _createCharacter('hero', 5, []);
+    const bystander = { ..._createCharacter('bystander', 25, []), description:'' };
+    const gameState = createGameState(_createLevel([hero, bystander]));
+    gameState.isLevelComplete = true;
+    _setScalingFactors(gameState);
+    gameState.rooms.forEach(room => { room.isDiscovered = true; });
+
+    updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:25, y:5 });
+
+    expect(gameState.hoveredCharacterId).toBe(null);
+
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
+
+    expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('hero');
+  });
 });

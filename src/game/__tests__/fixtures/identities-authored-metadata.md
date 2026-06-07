@@ -36,6 +36,7 @@ AS
 
 * title=King
 * faceImage=kingFace.png
+* description=A king.
 
 # items
 

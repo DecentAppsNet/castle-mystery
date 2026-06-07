@@ -64,7 +64,7 @@ AABBCCDDE.
 ```
 
 * C=Constance I
-* M=Midwife
+* M=Sofia the Midwife
 * outside=true
 * exits=East Square
 
@@ -76,7 +76,7 @@ A.......
 ...MNI..
 ```
 
-* A=Amos
+* A=Amos of Jesi
 * v=Vase
 * M=male peasant 2
 * F=female peasant 2
@@ -175,7 +175,7 @@ A.......
 : faces right.
 
 9:00:20 Pope Innocent III @ Birthing Tent.20%
-: Midwife says, "My lady, his Holiness has arrived."
+: Sofia the Midwife says, "My lady, his Holiness has arrived."
 : Constance I says, "I know! He reeks of frankincense."
 : Pope Innocent III says, "Oh, beloved daughter, Queen of Sicily."
 : Constance I says, "(huff) (huff)"
@@ -187,29 +187,29 @@ A.......
 : drops Holy Binky
 : Constance I says, "(huff) (huff)"
 
-9:00:43 Amos @ Birthing Tent.90%
-: Amos says, "Your Majesty, shall I bring them in?"
+9:00:43 Amos of Jesi @ Birthing Tent.90%
+: Amos of Jesi says, "Your Majesty, shall I bring them in?"
 : Constance I says, "Yes, damn it! As many as possible."
 : Constance I says, "All must see!"
 
-9:00:52 Amos @ East Square
+9:00:52 Amos of Jesi @ East Square
 : faces left.
 : says, "You there."
 : Sticky Agatha faces right.
 : says, "Me?"
-: Amos says, "Yes. Go inside the tent."
-9:00:59 Amos takes vase in right hand.
+: Amos of Jesi says, "Yes. Go inside the tent."
+9:00:59 Amos of Jesi takes vase in right hand.
 : @ Guard Quarters
-: Amos drops vase.
+: Amos of Jesi drops vase.
 : thinks, "Best to keep it here."
 : @ East Square
 
 9:00:57 Sticky Agatha @ Birthing Tent.90%
 : Constance I says, "Aiieeee!"
-: Midwife @ Birthing Tent.70%
+: Sofia the Midwife @ Birthing Tent.70%
 : faces left.
-: Constance I gives newborn baby to Midwife.
-: Midwife takes newborn baby in left hand.
+: Constance I gives newborn baby to Sofia the Midwife.
+: Sofia the Midwife takes newborn baby in left hand.
 : Constance I says, "Did you see?"
 : Sticky Agatha says, "Your Majesty?"
 : Constance I says, "Did you see the birth!"
@@ -222,7 +222,7 @@ A.......
 : says, "I am overwhelmed by your grace."
 : Constance I says, "Just tell everybody I wasn't faking."
 (Agatha leaves)
-: Midwife says, "Majesty, what shall you name him?"
+: Sofia the Midwife says, "Majesty, what shall you name him?"
 : Constance I says, "Constantine. After myself, of course."
 
 9:00:44 Pope Innocent III @ Cathedral
@@ -239,12 +239,12 @@ A.......
 
 9:00:00 Constance I says "Aiiieeee!"
 : says "(huff) (huff) (huff)"
-: Midwife says "My lady, let me send these common folk away."
+: Sofia the Midwife says "My lady, let me send these common folk away."
 : Constance I says "No! They must all see!"
-: Midwife says "As you wish."
+: Sofia the Midwife says "As you wish."
 9:00:15 Constance I says "(huff) (huff)"
 
-9:01:27 Amos says, "Next!"
+9:01:27 Amos of Jesi says, "Next!"
 : says, "Get in there and witness."
 
 9:01:22 Sticky Agatha @ Living Space

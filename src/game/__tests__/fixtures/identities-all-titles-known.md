@@ -24,3 +24,4 @@ A
 
 * title=Hero
 * isTitleKnown=true
+* description=A hero.

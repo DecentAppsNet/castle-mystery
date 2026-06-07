@@ -1,6 +1,6 @@
 # characters
 
-## Amos
+## Amos of Jesi
 
 * description=He'd rather not beat people up, but he certainly will.
 * faceImage=amosTheGuard.png
@@ -12,7 +12,7 @@
 
 ## Pope Innocent III
 
-* description=What is this guy up to?
+* description=A clergyman with a strong whiff of perfume about him.
 * faceImage=pope.png
 
 ## Simon
@@ -62,7 +62,7 @@
 
 * faceImage=malePeasant4.png
 
-## Midwife
+## Sofia the Midwife
 
 * faceImage=midwife.png
 * description=A woman content to do her work.

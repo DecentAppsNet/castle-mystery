@@ -6,6 +6,7 @@ import { findDiscoveredItemAtPosition } from "./drawing/itemDrawUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createPauseEffect } from "./effects/playPauseEffectUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
+import { isCharacterInteractive } from "./interactivityUtil";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
@@ -67,7 +68,7 @@ function _findClosestRoomEntryTime(gameState:GameState, character:Character, roo
 function _findNavigableRoomAtPosition(gameState:GameState, x:number, y:number):Room|null {
   const hoveredRoom = findRoomAtPosition(gameState.rooms, x, y);
   if (!hoveredRoom?.isDiscovered) return null;
-  const hoveredCharacter = _findCharacterAtPosition(gameState, x, y);
+  const hoveredCharacter = _findInteractiveCharacterAtPosition(gameState, x, y);
   if (hoveredCharacter) return null;
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
@@ -123,12 +124,12 @@ function _jumpToRoomTime(gameState:GameState, roomId:string) {
   if (wasPlaying) gameState.activeEffects.push(createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
 }
 
-function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Character|null {
+function _findInteractiveCharacterAtPosition(gameState:GameState, x:number, y:number):Character|null {
   if (gameState.characters.length === 0) return null;
   if (gameState.isLevelComplete) {
     const hoveredRoom = findRoomAtPosition(gameState.rooms, x, y);
     if (!hoveredRoom?.isDiscovered) return null;
-    const candidateCharacters = findCharactersInRoom(hoveredRoom, gameState.characters);
+    const candidateCharacters = findCharactersInRoom(hoveredRoom, gameState.characters).filter(isCharacterInteractive);
     if (candidateCharacters.length === 0) return null;
 
     let nearest:Character = candidateCharacters[0];
@@ -150,8 +151,8 @@ function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Chara
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (activeRoom?.isObscured) return null;
   const candidateCharacters = activeCharacter && activeRoom
-    ? findCharactersInRoom(activeRoom, gameState.characters)
-    : gameState.characters;
+    ? findCharactersInRoom(activeRoom, gameState.characters).filter(isCharacterInteractive)
+    : gameState.characters.filter(isCharacterInteractive);
   if (candidateCharacters.length === 0) return null;
 
   let nearest:Character = candidateCharacters[0];
@@ -171,7 +172,7 @@ function _findCharacterAtPosition(gameState:GameState, x:number, y:number):Chara
 }
 
 export function updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent) {
-  const character = _findCharacterAtPosition(gameState, event.x, event.y);
+  const character = _findInteractiveCharacterAtPosition(gameState, event.x, event.y);
   if (character) {
     const characterI = gameState.characters.indexOf(character);
     gameState.activeCharacterI = characterI;
@@ -199,7 +200,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     }
     gameState.hoveredItemId = hoveredItem?.id ?? null;
     if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
-    gameState.hoveredCharacterId = hoveredItem ? null : _findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
+    gameState.hoveredCharacterId = hoveredItem ? null : _findInteractiveCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
     const hoveredExit = !hoveredItem && !gameState.hoveredCharacterId ? _findExitAtPosition(hoveredRoom, event.x, event.y, gameState) : null;
     gameState.hoveredExitKey = hoveredExit?.id ?? null;
     gameState.hoveredRoomId = !hoveredItem && !gameState.hoveredCharacterId && !hoveredExit ? hoveredRoom.id : null;
@@ -221,7 +222,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
   }
   gameState.hoveredItemId = hoveredItem?.id ?? null;
   if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
-  gameState.hoveredCharacterId = hoveredItem ? null : _findCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
+  gameState.hoveredCharacterId = hoveredItem ? null : _findInteractiveCharacterAtPosition(gameState, event.x, event.y)?.id ?? null;
   const hoveredExit = !hoveredItem && !gameState.hoveredCharacterId ? _findExitAtPosition(activeRoom, event.x, event.y, gameState) : null;
   gameState.hoveredExitKey = hoveredExit?.id ?? null;
   gameState.hoveredRoomId = _findNavigableRoomAtPosition(gameState, event.x, event.y)?.id ?? null;
