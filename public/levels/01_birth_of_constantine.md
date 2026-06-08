@@ -58,11 +58,12 @@ AABBCCDDE.
 ## Birthing Tent
 
 ```
-....C...
+....C.p.
 ..M.....
 ........
 ```
 
+* p=Pile of Presents
 * C=Constance I
 * M=Sofia the Midwife
 * outside=true
@@ -132,6 +133,9 @@ A.......
 ## Sticky Agatha
 
 # Items
+
+## Pile of Presents
+* image=presents.png
 
 ## Vase
 
