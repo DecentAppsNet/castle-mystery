@@ -2,6 +2,9 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import { calcTalkingAngleOffsetRadians } from "@/game/effects/talkingEffectUtil";
+import EffectType from "@/game/effects/types/EffectType";
+import TalkingEffect from "@/game/effects/types/TalkingEffect";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
 import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { gameToCanvasPosition } from "./drawUtil";
@@ -151,6 +154,12 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, effects:Effect[], isHighlighted:boolean) {
   const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
+  const talkingEffect = faceImage
+    ? effects.find(effect => effect.type === EffectType.TALKING && effect.character?.id === character.id) as TalkingEffect|undefined
+    : undefined;
+  const talkingAngleOffsetRadians = talkingEffect
+    ? calcTalkingAngleOffsetRadians(talkingEffect, time) * (character.facingDirection === 'right' ? 1 : -1)
+    : 0;
   if (isHighlighted) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
@@ -182,25 +191,19 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   const drawWidth = faceImageWidth * faceScale;
   const drawHeight = faceImageHeight * faceScale;
   if (character.bodyOrientation !== 'laying') {
-    const drawX = layout.head.centerX - drawWidth / 2;
-    const drawY = layout.head.centerY - drawHeight / 2;
-    if (character.facingDirection === 'left') {
-      context.save();
-      context.translate(drawX + drawWidth, 0);
-      context.scale(-1, 1);
-      context.drawImage(faceImage, 0, drawY, drawWidth, drawHeight);
-      context.restore();
-      drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-      return;
-    }
-    context.drawImage(faceImage, drawX, drawY, drawWidth, drawHeight);
+    context.save();
+    context.translate(layout.head.centerX, layout.head.centerY);
+    context.rotate(talkingAngleOffsetRadians);
+    if (character.facingDirection === 'left') context.scale(-1, 1);
+    context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+    context.restore();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
     return;
   }
 
   context.save();
   context.translate(layout.head.centerX, layout.head.centerY);
-  context.rotate(character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2);
+  context.rotate((character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2) + talkingAngleOffsetRadians);
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
   drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);

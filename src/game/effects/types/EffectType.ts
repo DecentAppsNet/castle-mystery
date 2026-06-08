@@ -2,6 +2,7 @@ const EffectType = {
   PLAY:"Play",
   PAUSE:"Pause",
   CHARACTER_SELECT:"CharacterSelect",
+  TALKING:"Talking",
   SPEECH_BUBBLE:"SpeechBubble",
   THOUGHT_BUBBLE:"ThoughtBubble",
   TAKE_ITEM:"TakeItem",

@@ -1,7 +1,7 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assertNonNullable, botch } from "decent-portal";
+import { assert, assertNonNullable, botch } from "decent-portal";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
@@ -14,6 +14,8 @@ import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
 import Level from "./types/Level";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
+import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
+import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
 import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera, syncCameraTargetToActiveRoom, updateCamera } from "./cameraUtil";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
@@ -24,12 +26,14 @@ import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameState
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
+import { createTalkingEffect } from "./effects/talkingEffectUtil";
 import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
 import { isCharacterInteractive } from "./interactivityUtil";
 import Solution, { duplicateSolution } from "./solutions/types/Solution";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
 import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
+import { MAX_ACTIVE_EFFECTS } from "./effects/effectUtil";
 import EffectType from "./effects/types/EffectType";
 import {
   callOnActiveCharacterChangedAsNeeded,
@@ -95,6 +99,17 @@ function _pauseGameState(gameState:GameState) {
   gameState.isPlaying = false;
   gameState.realTimeToGameTimeOffset = 0;
   if (wasPlaying) gameState.activeEffects.push(createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
+}
+
+function _findActiveSpeechEvent(character:Character, time:number):SpeechEvent|null {
+  let activeSpeechEvent:SpeechEvent|null = null;
+  for (const event of character.itinerary) {
+    if (event.startTime > time) break;
+    if (event.type !== ItineraryEventType.SPEECH) continue;
+    const speechEvent = event as SpeechEvent;
+    activeSpeechEvent = time < speechEvent.startTime + speechEvent.duration ? speechEvent : null;
+  }
+  return activeSpeechEvent;
 }
 
 function _compareCharactersForCycleOrder(character1:Character, character2:Character) {
@@ -169,6 +184,31 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
     const speech = findCharacterPose(character, gameState.time).speech;
     if (!speech) return;
     gameState.activeEffects.push(createSpeechBubbleEffect(character, speech, gameState.scalingFactors, gameState.time));
+  });
+}
+
+function _syncTalkingEffects(gameState:GameState, isScrubbing:boolean = false) {
+  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.TALKING);
+
+  if (!gameState.isPlaying || isScrubbing) return;
+
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
+  if (!activeRoom || (activeRoom.isObscured && !gameState.isLevelComplete)) return;
+
+  const audibleRooms = gameState.isLevelComplete
+    ? [activeRoom]
+    : gameState.rooms.filter(room => isActiveAudibleRoom(room, activeRoom));
+
+  audibleRooms.flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
+    const activeSpeechEvent = _findActiveSpeechEvent(character, gameState.time);
+    if (!activeSpeechEvent) return;
+    gameState.activeEffects.push(createTalkingEffect(
+      character,
+      activeSpeechEvent.startTime,
+      activeSpeechEvent.startTime + activeSpeechEvent.duration,
+      gameState.time
+    ));
   });
 }
 
@@ -262,7 +302,10 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 
   updateScalingFactorsAsNeeded(gameState, context);
   _syncSpeechBubbleEffects(gameState, isScrubbing);
+  _syncTalkingEffects(gameState, isScrubbing);
   _syncThoughtBubbleEffects(gameState, isScrubbing);
+  assert(gameState.activeEffects.length <= MAX_ACTIVE_EFFECTS,
+    `active effect count ${gameState.activeEffects.length} exceeds MAX_ACTIVE_EFFECTS ${MAX_ACTIVE_EFFECTS}; an effect callback may not be returning false to remove itself`);
   syncSolutionUnlocks(gameState);
   if (onSolutionsChanged) callOnSolutionsChangedAsNeeded(gameState, onSolutionsChanged);
   drawGameState(gameState, context);

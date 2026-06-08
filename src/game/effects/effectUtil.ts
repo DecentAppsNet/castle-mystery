@@ -7,6 +7,8 @@ import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 
+export const MAX_ACTIVE_EFFECTS = 50;
+
 export function processLevelEffects(effects:Effect[], context:CanvasRenderingContext2D) {
   for (let i = effects.length - 1; i >= 0; --i) {
     const effect = effects[i];
