@@ -147,8 +147,8 @@ p...
 : Simon @ Auditorium
 : Simon @ Lower Stairwell
 : Simon @ Foyer
-0:00:30 Simon @ Kitchen
-0:00:35 Simon @ Guard Room
+0:00:45 Simon @ Kitchen
+0:01:00 Simon @ Guard Room
 : Simon takes Purple Key
 : Simon unlocks Outer Hall
 : Simon thinks, "Freedom awaits."

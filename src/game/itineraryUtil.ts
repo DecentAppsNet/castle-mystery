@@ -30,7 +30,7 @@ import { ITEM_EFFECT_DURATION } from "./effects/dropItemUtil";
 import FaceEvent from "./types/itineraryEvents/FaceEvent";
 import BodyOrientationEvent from "./types/itineraryEvents/BodyOrientationEvent";
 
-const WALK_MSECS_PER_PIXEL = 30;
+const WALK_MSECS_PER_PIXEL = 60;
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
 const SPEECH_MSECS_PER_CHARACTER = 90;
 const WAYPOINT_DEPTH_ROW_COUNT = 3;

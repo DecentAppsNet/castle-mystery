@@ -82,7 +82,7 @@ CHGP
 
 0:00:00 Simon @ First Cell
 0:00:00 Amos @ Guard Room
-0:00:04 Amos @ First Cell
+0:00:08 Amos @ First Cell
 : Amos says, "Simon, my long-bearded, foul-smelling friend."
 : Simon says, "Yes?"
 : Amos says, "You get to go outside today."

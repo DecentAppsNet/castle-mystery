@@ -163,14 +163,13 @@ A.......
 
 9:00:00 Sticky Agatha says "Today, we may see our Queen."
 : takes infant in right hand.
-: says "May God smile upon us."
 9:00:07 @ East Square.10%
 
 9:00:00 Pope Innocent III takes Holy Binky in right hand
 : says "Behold the Holy Binky!"
 : faces left.
 : says "Carved by Joseph. Given to the baby Jesus."
-: Ugolino di Conti says "A fitting gift for our new mother."
+: Ugolino di Conti says "A fitting gift for the new mother."
 
 9:00:19 Ugolino di Conti @ Cathedral.30%
 : faces right.
@@ -190,7 +189,7 @@ A.......
 
 9:00:43 Amos of Jesi @ Birthing Tent.90%
 : Amos of Jesi says, "Your Majesty, shall I bring them in?"
-: Constance I says, "Yes, damn it! As many as possible."
+: Constance I says, "Yes! As many as possible."
 : Constance I says, "All must see!"
 
 9:00:52 Amos of Jesi @ East Square
@@ -226,17 +225,17 @@ A.......
 : Sofia the Midwife says, "Majesty, what shall you name him?"
 : Constance I says, "Constantine. After myself, of course."
 
-9:00:44 Pope Innocent III @ Cathedral
+9:00:48 Pope Innocent III @ Cathedral
 : Ugolino di Conti says, "Your Holiness has returned."
 : Pope Innocent III says, "That is apparent. Why say it?"
 : Ugolino di Conti says, "I... uh... "
 : says "...wanted to acknowledge your presence respectfully."
 : Pope Innocent III says, "A simple bow suffices, Archbishop."
-9:00:58 faces right.
+9:01:02 faces right.
 : says, "What a drab little church."
 : says, "Not a single flying buttress!"
 : Ugolino di Conti says, "I shall tell the parish priest of your dissatisfaction."
-: Pope Innocent III says, "Yes."
+: Pope Innocent III says, "Good."
 
 9:00:00 Constance I says "Aiiieeee!"
 : says "(huff) (huff) (huff)"
@@ -248,13 +247,13 @@ A.......
 9:01:27 Amos of Jesi says, "Next!"
 : says, "Get in there and witness."
 
-9:01:22 Sticky Agatha @ Living Space
+9:01:25 Sticky Agatha @ Living Space
 
 9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
 9:00:57 Male Peasant 4 thinks, "She brings a baby into the tent?"
 : Old Female Peasant 2 thinks, "What fraud is this? We are not blind."
 
-9:00:19 Female Peasant thinks, "40 years? She's too old to have a child!"
+9:00:18 Female Peasant thinks, "40 years? She's too old to have a child!"
 
 # Solutions
 
