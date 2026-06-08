@@ -23,7 +23,7 @@ const SCALING_FACTORS:ScalingFactors = {
 
 describe('itemDrawUtil', () => {
   describe('drawRoomItem()', () => {
-    it('draws an item image into the projected cuboid bounding box when imageUrl is present', () => {
+    it('scales an item image draw width by the inferred 256-pixel column count when imageUrl is present', () => {
       const imageUrl = '/assets/items/crown.png';
       const room = {
         ...createDefaultRoom(),
@@ -39,7 +39,7 @@ describe('itemDrawUtil', () => {
         description:'A crown.',
         isDiscovered:true
       };
-      const imageBitmap = { width:40, height:20 } as ImageBitmap;
+      const imageBitmap = { width:520, height:20 } as ImageBitmap;
       const imageSet = createEmptyImageSet();
       imageSet.set(imageUrl, imageBitmap);
       const drawImage = vi.fn();
@@ -49,6 +49,7 @@ describe('itemDrawUtil', () => {
         restore:vi.fn()
       } as unknown as CanvasRenderingContext2D;
       const metrics = calcItemDrawMetrics(room, SCALING_FACTORS);
+      const expectedImageWidthPixels = metrics.imageWidthPixels * 2;
       const projectedX = item.position.x * SCALING_FACTORS.scaleX + SCALING_FACTORS.roomLineWidth * 8 * item.position.z;
       const projectedY = item.position.y * SCALING_FACTORS.scaleY + SCALING_FACTORS.roomLineWidth * 4 * item.position.z;
 
@@ -56,9 +57,9 @@ describe('itemDrawUtil', () => {
 
       expect(drawImage).toHaveBeenCalledWith(
         imageBitmap,
-        projectedX + metrics.imageLeftOffsetPixels,
+        projectedX + metrics.imageLeftOffsetPixels - metrics.imageWidthPixels / 2,
         projectedY + metrics.imageTopOffsetPixels,
-        metrics.imageWidthPixels,
+        expectedImageWidthPixels,
         metrics.imageHeightPixels
       );
     });

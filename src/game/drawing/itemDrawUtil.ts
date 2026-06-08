@@ -58,6 +58,19 @@ type RoomItemVisibilityOptions = {
   ignoreRoomObscured?:boolean
 }
 
+function _calcItemImageColumnCount(image:ImageBitmap):number {
+  return Math.max(1, Math.round(image.width / 256));
+}
+
+function _calcItemImageDrawWidthPixels(metrics:ItemDrawMetrics, image:ImageBitmap):number {
+  return metrics.imageWidthPixels * _calcItemImageColumnCount(image);
+}
+
+function _calcItemImageLeftOffsetPixels(metrics:ItemDrawMetrics, image:ImageBitmap):number {
+  const drawWidthPixels = _calcItemImageDrawWidthPixels(metrics, image);
+  return metrics.imageLeftOffsetPixels - (drawWidthPixels - metrics.imageWidthPixels) / 2;
+}
+
 export function calcItemDrawMetrics(room:Room, scalingFactors:ScalingFactors):ItemDrawMetrics {
   const columnWidthGame = room.rect.width / roomWidthToColumnCount(room.rect.width);
   const columnWidthPixels = columnWidthGame * scalingFactors.scaleX;
@@ -122,11 +135,12 @@ function _findItemImage(item:Item, imageSet:ImageSet):ImageBitmap|null {
 
 function _drawItemImage(image:ImageBitmap, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
   if (!image.width || !image.height) return;
+  const drawWidthPixels = _calcItemImageDrawWidthPixels(metrics, image);
   context.drawImage(
     image,
-    x + metrics.imageLeftOffsetPixels,
+    x + _calcItemImageLeftOffsetPixels(metrics, image),
     y + metrics.imageTopOffsetPixels,
-    metrics.imageWidthPixels,
+    drawWidthPixels,
     metrics.imageHeightPixels
   );
 }
