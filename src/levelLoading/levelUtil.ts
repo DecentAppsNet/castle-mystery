@@ -33,19 +33,24 @@ import ClozeBlank from "../game/solutions/types/ClozeBlank";
 import ClozePartType from "../game/solutions/types/ClozePartType";
 import Solution from "../game/solutions/types/Solution";
 import { assertNormalizedId, normalizeOptionalId } from "../game/idUtil";
+import { isCharacterInteractive, isItemInteractive } from "../game/interactivityUtil";
 import { calcRoomsBoundingRect, findRoomByIdOrTitle } from "../game/roomUtil";
 import { getBackgroundImageAssetUrl } from "../game/imageUrlUtil";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
 
+function _sortGeneratedSolutionOptions(options:string[]):string[] {
+  return [...options].sort((option1, option2) => option1.localeCompare(option2, undefined, { sensitivity:'base' }));
+}
+
 function _createDefaultSolutionCategoryOptions(level:Level):Map<string, string[]> {
   return new Map([
     ['rooms', level.rooms.map(room => room.title)],
-    ['items', [
+    ['items', _sortGeneratedSolutionOptions([
       ...level.rooms.flatMap(room => room.items),
       ...level.characters.flatMap(character => character.items)
-    ].map(item => item.title)],
-    ['characters', level.characters.map(character => character.title)]
+    ].filter(isItemInteractive).map(item => item.title))],
+    ['characters', _sortGeneratedSolutionOptions(level.characters.filter(isCharacterInteractive).map(character => character.title))]
   ]);
 }
 

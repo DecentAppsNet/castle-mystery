@@ -31,6 +31,7 @@ HB..
 ## Book
 
 * title=Book
+* description=A book.
 
 # solutions
 

@@ -72,6 +72,8 @@ import identitiesAuthoredMetadataText from './fixtures/identities-authored-metad
 import identitiesExcludesNoninteractiveCharactersText from './fixtures/identities-excludes-noninteractive-characters.md?raw';
 import inventoryItemDefaultCategoryText from './fixtures/inventory-item-default-category.md?raw';
 import inventoryItemTitleCasingText from './fixtures/inventory-item-title-casing.md?raw';
+import alphabetizedCharacterDefaultCategoryText from './fixtures/alphabetized-character-default-category.md?raw';
+import noninteractiveCharacterDefaultCategoryText from './fixtures/noninteractive-character-default-category.md?raw';
 import closedDoorExitText from './fixtures/closed-door-exit.md?raw';
 import lockableExitOneSidedText from './fixtures/lockable-exit-one-sided.md?raw';
 import lockableExitTwoSidedText from './fixtures/lockable-exit-two-sided.md?raw';
@@ -313,8 +315,19 @@ describe('levelUtil itinerary loading', () => {
     if (!solution) expect.fail('expected Missing Item solution to exist');
     const firstBlank = solution.parts[0] as ClozeBlank;
 
-    expect(firstBlank.availableAnswers).toEqual(['Crown', 'Book']);
-    expect(firstBlank.correctAnswerIndexes).toEqual([1]);
+    expect(firstBlank.availableAnswers).toEqual(['Book', 'Crown']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([0]);
+  });
+
+  it('excludes noninteractive items from auto-generated cloze answer lists', () => {
+    const level = loadLevelFromText(inventoryItemDefaultCategoryText
+      .replace('* description=A crown.', '* description='));
+    const solution = level.solutions.find(candidate => candidate.id === 'missing item') || null;
+    if (!solution) expect.fail('expected Missing Item solution to exist');
+    const firstBlank = solution.parts[0] as ClozeBlank;
+
+    expect(firstBlank.availableAnswers).toEqual(['Book']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([0]);
   });
 
   it('resolves solution revealRooms references by room id or title', () => {
@@ -379,6 +392,26 @@ describe('levelUtil itinerary loading', () => {
     expect(identityBlanks[0].correctAnswerIndexes).toEqual([0]);
     expect(identityBlanks[1].availableAnswers).toEqual(['His Majesty', 'Queen']);
     expect(identityBlanks[1].correctAnswerIndexes).toEqual([1]);
+  });
+
+  it('excludes noninteractive characters from auto-generated cloze answer lists', () => {
+    const level = loadLevelFromText(noninteractiveCharacterDefaultCategoryText);
+    const solution = level.solutions.find(candidate => candidate.id === 'mystery') || null;
+    if (!solution) expect.fail('expected Mystery solution to exist');
+    const firstBlank = solution.parts[0] as ClozeBlank;
+
+    expect(firstBlank.availableAnswers).toEqual(['His Majesty']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([0]);
+  });
+
+  it('alphabetizes auto-generated character cloze answer lists', () => {
+    const level = loadLevelFromText(alphabetizedCharacterDefaultCategoryText);
+    const solution = level.solutions.find(candidate => candidate.id === 'mystery') || null;
+    if (!solution) expect.fail('expected Mystery solution to exist');
+    const firstBlank = solution.parts[0] as ClozeBlank;
+
+    expect(firstBlank.availableAnswers).toEqual(['Alpha', 'Zulu']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([0]);
   });
 
   it('marks identities complete when all character titles are already known', () => {

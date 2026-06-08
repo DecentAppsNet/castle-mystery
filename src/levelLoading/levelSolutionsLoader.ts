@@ -99,6 +99,10 @@ function _normalizeCategoryPhrase(phrase:string):string {
   return phrase.trim().toLowerCase();
 }
 
+function _sortGeneratedSolutionOptions(options:string[]):string[] {
+  return [...options].sort((option1, option2) => option1.localeCompare(option2, undefined, { sensitivity:'base' }));
+}
+
 export function createSolutionCategoryOptionsByName(solutionsSection:string, defaultCategoryOptionsByName:Map<string, string[]> = new Map()):Map<string, string[]> {
   const authoredCategoryEntriesById = createNormalizedEntryMap(parseNameValueLineEntries(_parseSolutionCategoryText(solutionsSection)));
   const categoryOptionsByName = new Map<string, string[]>(Array.from(defaultCategoryOptionsByName.entries())
@@ -266,7 +270,7 @@ export function createGeneratedIdentitySolution(characters:ReadonlyArray<Charact
   overrides:{ title?:string|null, unlockSolutionIds?:string[], revealRoomIds?:string[] } = {}):Solution|null {
   const interactiveCharacters = characters.filter(isCharacterInteractive);
   if (!interactiveCharacters.length) return null;
-  const interactiveCharacterTitles = interactiveCharacters.map(character => character.title);
+  const interactiveCharacterTitles = _sortGeneratedSolutionOptions(interactiveCharacters.map(character => character.title));
   const identityCategoryOptionsByName = new Map(categoryOptionsByName);
   identityCategoryOptionsByName.set('characters', interactiveCharacterTitles);
 
