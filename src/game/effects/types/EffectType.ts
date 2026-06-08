@@ -3,6 +3,7 @@ const EffectType = {
   PAUSE:"Pause",
   CHARACTER_SELECT:"CharacterSelect",
   TALKING:"Talking",
+  THINKING:"Thinking",
   SPEECH_BUBBLE:"SpeechBubble",
   THOUGHT_BUBBLE:"ThoughtBubble",
   TAKE_ITEM:"TakeItem",

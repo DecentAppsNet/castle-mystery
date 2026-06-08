@@ -2,8 +2,10 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import { calcThinkingAngleOffsetRadians } from "@/game/effects/thinkingEffectUtil";
 import { calcTalkingAngleOffsetRadians } from "@/game/effects/talkingEffectUtil";
 import EffectType from "@/game/effects/types/EffectType";
+import ThinkingEffect from "@/game/effects/types/ThinkingEffect";
 import TalkingEffect from "@/game/effects/types/TalkingEffect";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
 import { MAP_TILE_SIZE } from "../roomGridUtil";
@@ -156,10 +158,17 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
   const talkingEffect = faceImage
     ? effects.find(effect => effect.type === EffectType.TALKING && effect.character?.id === character.id) as TalkingEffect|undefined
-    : undefined;
+    : null;
+  const thinkingEffect = faceImage
+    ? effects.find(effect => effect.type === EffectType.THINKING && effect.character?.id === character.id) as ThinkingEffect|undefined
+    : null;
   const talkingAngleOffsetRadians = talkingEffect
     ? calcTalkingAngleOffsetRadians(talkingEffect, time) * (character.facingDirection === 'right' ? 1 : -1)
     : 0;
+  const thinkingAngleOffsetRadians = thinkingEffect && character.bodyOrientation !== 'laying'
+    ? calcThinkingAngleOffsetRadians(thinkingEffect, time) * (character.facingDirection === 'right' ? 1 : -1)
+    : 0;
+  const faceAngleOffsetRadians = talkingAngleOffsetRadians + thinkingAngleOffsetRadians;
   if (isHighlighted) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
@@ -193,7 +202,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   if (character.bodyOrientation !== 'laying') {
     context.save();
     context.translate(layout.head.centerX, layout.head.centerY);
-    context.rotate(talkingAngleOffsetRadians);
+    context.rotate(faceAngleOffsetRadians);
     if (character.facingDirection === 'left') context.scale(-1, 1);
     context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
     context.restore();

@@ -16,6 +16,7 @@ import Level from "./types/Level";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
+import ThoughtEvent from "./types/itineraryEvents/ThoughtEvent";
 import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera, syncCameraTargetToActiveRoom, updateCamera } from "./cameraUtil";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
@@ -26,6 +27,7 @@ import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameState
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
+import { createThinkingEffect, THINKING_LOOK_UP_DURATION_MSECS } from "./effects/thinkingEffectUtil";
 import { createTalkingEffect } from "./effects/talkingEffectUtil";
 import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
 import { isCharacterInteractive } from "./interactivityUtil";
@@ -110,6 +112,17 @@ function _findActiveSpeechEvent(character:Character, time:number):SpeechEvent|nu
     activeSpeechEvent = time < speechEvent.startTime + speechEvent.duration ? speechEvent : null;
   }
   return activeSpeechEvent;
+}
+
+function _findThinkingEvent(character:Character, time:number):ThoughtEvent|null {
+  let thinkingEvent:ThoughtEvent|null = null;
+  for (const event of character.itinerary) {
+    if (event.startTime > time) break;
+    if (event.type !== ItineraryEventType.THOUGHT) continue;
+    const thoughtEvent = event as ThoughtEvent;
+    thinkingEvent = time < thoughtEvent.startTime + thoughtEvent.duration + THINKING_LOOK_UP_DURATION_MSECS ? thoughtEvent : null;
+  }
+  return thinkingEvent;
 }
 
 function _compareCharactersForCycleOrder(character1:Character, character2:Character) {
@@ -232,6 +245,31 @@ function _syncThoughtBubbleEffects(gameState:GameState, isScrubbing:boolean = fa
   });
 }
 
+function _syncThinkingEffects(gameState:GameState, isScrubbing:boolean = false) {
+  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.THINKING);
+
+  if (isScrubbing) return;
+
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
+  if (!gameState.isLevelComplete && (!activeRoom || activeRoom.isObscured)) return;
+
+  const visibleRooms = gameState.isLevelComplete
+    ? gameState.rooms.filter(room => room.isDiscovered)
+    : activeRoom ? [activeRoom] : [];
+
+  visibleRooms.flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
+    const thinkingEvent = _findThinkingEvent(character, gameState.time);
+    if (!thinkingEvent) return;
+    gameState.activeEffects.push(createThinkingEffect(
+      character,
+      thinkingEvent.startTime,
+      thinkingEvent.startTime + thinkingEvent.duration,
+      gameState.time
+    ));
+  });
+}
+
 function _findCharacterI(characters:Character[], characterRef:string):number {
   const characterId = normalizeId(characterRef);
   for(let i = 0; i < characters.length; ++i) {
@@ -304,6 +342,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   _syncSpeechBubbleEffects(gameState, isScrubbing);
   _syncTalkingEffects(gameState, isScrubbing);
   _syncThoughtBubbleEffects(gameState, isScrubbing);
+  _syncThinkingEffects(gameState, isScrubbing);
   assert(gameState.activeEffects.length <= MAX_ACTIVE_EFFECTS,
     `active effect count ${gameState.activeEffects.length} exceeds MAX_ACTIVE_EFFECTS ${MAX_ACTIVE_EFFECTS}; an effect callback may not be returning false to remove itself`);
   syncSolutionUnlocks(gameState);
