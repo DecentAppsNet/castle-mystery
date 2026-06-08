@@ -36,6 +36,7 @@ describe('itemDrawUtil', () => {
         imageUrl,
         randomSalt:0,
         position:{ x:5, y:8, z:0.5 },
+        drawOffset:{ x:1.5, y:-0.25, z:0.1 },
         description:'A crown.',
         isDiscovered:true
       };
@@ -50,8 +51,10 @@ describe('itemDrawUtil', () => {
       } as unknown as CanvasRenderingContext2D;
       const metrics = calcItemDrawMetrics(room, SCALING_FACTORS);
       const expectedImageWidthPixels = metrics.imageWidthPixels * 2;
-      const projectedX = item.position.x * SCALING_FACTORS.scaleX + SCALING_FACTORS.roomLineWidth * 8 * item.position.z;
-      const projectedY = item.position.y * SCALING_FACTORS.scaleY + SCALING_FACTORS.roomLineWidth * 4 * item.position.z;
+      const projectedX = (item.position.x + item.drawOffset.x) * SCALING_FACTORS.scaleX
+        + SCALING_FACTORS.roomLineWidth * 8 * (item.position.z + item.drawOffset.z);
+      const projectedY = (item.position.y + item.drawOffset.y) * SCALING_FACTORS.scaleY
+        + SCALING_FACTORS.roomLineWidth * 4 * (item.position.z + item.drawOffset.z);
 
       drawRoomItem(room, item, SCALING_FACTORS, context, imageSet);
 

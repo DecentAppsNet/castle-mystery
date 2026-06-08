@@ -23,14 +23,12 @@ VVVHHGG
 ## Exhibit Room
 
 ```
-...21s...v..
-..L....M....
+.....s...v..
+..M....L....
 ............
 ```
 
 * s=Sarcophagus | Sarcophagus Lid
-* 1=marker 1
-* 2=marker 2
 * exits=hallway
 * v=Vase 
 * L=Lorenzo
@@ -74,9 +72,12 @@ VVVHHGG
 
 * description=A nearby plaque reads, "Federico II (1194–1250), Imperatore del Sacro Romano Impero e Re di Sicilia. Sepolto nel sarcofago imperiale di porfido della Cattedrale di Palermo."
 * image=sarcophagus.png
+* drawOffsetX=1
 
 ## Sarcophagus Lid
 * image=sarcophagusLid.png
+* drawOffsetX=4.5
+* drawOffsetY=.3
 
 ## Vase
 
@@ -99,6 +100,18 @@ VVVHHGG
 * description=A vase made of clay with lettering on the side.
 * image=amosVase.png
 
-## marker 1
+# itinerary
 
-## marker 2
+11:00:00 Marty faces left.
+: says, "Aren't you going to give a tour?"
+: Lorenzo says, "I need more people here before I can start."
+: Marty says, "Why?"
+: Lorenzo says, "It's weird to give a tour to just one person."
+: Marty says, "LARRY!"
+: Lorenzo says, "Okay, I guess two people is enough for a tour."
+: says, "Here you stand before the final tomb of Emperor Frederick II of the Holy Roman-"
+: Marty says, "Is he in that box right now?"
+: Lorenzo says, "Yes, his remains are actually inside the sarcoph-"
+: Marty says, "Can we see?"
+: Lorenzo says, "No! Let me give the tour."
+: says "Here you stand before the final tomb of-"

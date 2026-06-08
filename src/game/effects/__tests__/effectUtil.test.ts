@@ -19,6 +19,7 @@ function _createItem(id:string, z:number) {
     imageUrl:null,
     randomSalt:0,
     position:{ x:1, y:2, z },
+    drawOffset:{ x:0, y:0, z:0 },
     description:'',
     isDiscovered:true
   };

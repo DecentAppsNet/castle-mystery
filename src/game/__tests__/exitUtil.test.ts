@@ -44,6 +44,7 @@ describe('exitUtil', () => {
         imageUrl:null,
         randomSalt:0,
         position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
+        drawOffset:{ x:0, y:0, z:0 },
         description:'Opens the bedroom.',
         isDiscovered:false
       }]]);

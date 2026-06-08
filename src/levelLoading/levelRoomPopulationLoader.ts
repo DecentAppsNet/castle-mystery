@@ -13,6 +13,7 @@ import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColu
 import Character, { type BodyOrientation, type FacingDirection } from "../game/types/Character";
 import Item from "../game/types/Item";
 import Level from "../game/types/Level";
+import Position from "../game/types/Position";
 import Room from "../game/types/Room";
 import { assertNormalizedId, createNormalizedEntryMap, normalizeId } from "../game/idUtil";
 import { getFaceImageAssetUrl, getItemImageAssetUrl } from "../game/imageUrlUtil";
@@ -32,7 +33,8 @@ type ItemDefinition = {
 	title:string,
 	description:string,
 	displayChar:string,
-	imageUrl:string|null
+	imageUrl:string|null,
+	drawOffset:Position
 };
 
 export type RoomPopulationDefinitions = {
@@ -81,6 +83,13 @@ function _parseOptionalBodyOrientationOrThrow(value:string|undefined, characterI
 	throw new Error(`character ${characterId} orientation must be standing, sitting, or laying`);
 }
 
+function _parseOptionalNumberOrThrow(value:string|undefined, propertyName:string, itemId:string):number {
+	if (value === undefined) return 0;
+	const parsedValue = Number(value.trim());
+	if (Number.isFinite(parsedValue)) return parsedValue;
+	throw new Error(`item ${itemId} ${propertyName} must be a number`);
+}
+
 export function parseCharacterDefinitions(charactersSection:string):Map<string, CharacterDefinition> {
 	const characterDefinitions = new Map<string, CharacterDefinition>();
 	const characterSectionsById = createNormalizedEntryMap(Object.entries(parseSections(charactersSection, 2)));
@@ -117,7 +126,12 @@ export function parseItemDefinitions(itemsSection:string):Map<string, ItemDefini
 			title:nameValues.title || authoredItemName.trim(),
 			description:nameValues.description || "",
 			displayChar:nameValues.displayChar || authoredItemName.charAt(0) || "?",
-			imageUrl:nameValues.image ? getItemImageAssetUrl(nameValues.image.trim()) : null
+			imageUrl:nameValues.image ? getItemImageAssetUrl(nameValues.image.trim()) : null,
+			drawOffset:{
+				x:_parseOptionalNumberOrThrow(nameValues.drawOffsetX, 'drawOffsetX', itemId),
+				y:_parseOptionalNumberOrThrow(nameValues.drawOffsetY, 'drawOffsetY', itemId),
+				z:_parseOptionalNumberOrThrow(nameValues.drawOffsetZ, 'drawOffsetZ', itemId)
+			}
 		});
 	});
 	return itemDefinitions;
@@ -215,6 +229,7 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 		imageUrl:itemDefinition?.imageUrl || null,
 		randomSalt:rand(),
 		position:{ ...position, z:depth },
+		drawOffset:itemDefinition?.drawOffset || { x:0, y:0, z:0 },
 		description:itemDefinition?.description || "",
 		isDiscovered
 	};

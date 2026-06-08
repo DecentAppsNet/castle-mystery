@@ -71,6 +71,14 @@ function _calcItemImageLeftOffsetPixels(metrics:ItemDrawMetrics, image:ImageBitm
   return metrics.imageLeftOffsetPixels - (drawWidthPixels - metrics.imageWidthPixels) / 2;
 }
 
+function _getItemDrawPosition(item:Item) {
+  return {
+    x:item.position.x + item.drawOffset.x,
+    y:item.position.y + item.drawOffset.y,
+    z:item.position.z + item.drawOffset.z
+  };
+}
+
 export function calcItemDrawMetrics(room:Room, scalingFactors:ScalingFactors):ItemDrawMetrics {
   const columnWidthGame = room.rect.width / roomWidthToColumnCount(room.rect.width);
   const columnWidthPixels = columnWidthGame * scalingFactors.scaleX;
@@ -95,15 +103,18 @@ export function calcItemDrawMetrics(room:Room, scalingFactors:ScalingFactors):It
 }
 
 function _getRoomItemGamePosition(_room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
-  return canvasToGamePosition(...projectRoomPointWithDepth(item.position.x, item.position.y, item.position.z, scalingFactors), scalingFactors);
+  const drawPosition = _getItemDrawPosition(item);
+  return canvasToGamePosition(...projectRoomPointWithDepth(drawPosition.x, drawPosition.y, drawPosition.z, scalingFactors), scalingFactors);
 }
 
 export function getItemCanvasPosition(item:Item, scalingFactors:ScalingFactors):[number, number] {
-  return projectRoomPointWithDepth(item.position.x, item.position.y, clamp(item.position.z, 0, 1), scalingFactors);
+  const drawPosition = _getItemDrawPosition(item);
+  return projectRoomPointWithDepth(drawPosition.x, drawPosition.y, clamp(drawPosition.z, 0, 1), scalingFactors);
 }
 
 export function getItemCanvasPositionInRoom(_room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
-  return projectRoomPointWithDepth(item.position.x, item.position.y, item.position.z, scalingFactors);
+  const drawPosition = _getItemDrawPosition(item);
+  return projectRoomPointWithDepth(drawPosition.x, drawPosition.y, drawPosition.z, scalingFactors);
 }
 
 export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:ScalingFactors):Rect {

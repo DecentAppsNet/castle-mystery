@@ -7,6 +7,7 @@ type Item = {
   readonly imageUrl:string|null,
   readonly randomSalt:number,
   position:Position,
+  drawOffset:Position,
   description:string,
   isDiscovered:boolean
 }
@@ -19,6 +20,7 @@ export function duplicateItem(from:Item):Item {
     imageUrl:from.imageUrl,
     randomSalt:from.randomSalt,
     position:duplicatePosition(from.position),
+    drawOffset:duplicatePosition(from.drawOffset),
     description:from.description,
     isDiscovered:from.isDiscovered
   };
