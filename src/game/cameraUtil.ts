@@ -12,7 +12,7 @@ import Room from "./types/Room";
 
 const CAMERA_MOVE_DURATION_MSECS = 400;
 const CAMERA_EPSILON = 0.000001;
-const CAMERA_MARGIN_RATIO = 0.2;
+const CAMERA_MARGIN_RATIO = 0.05;
 
 function _duplicateRect(rect:Rect):Rect {
   return { ...rect };

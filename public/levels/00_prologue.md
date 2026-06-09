@@ -108,7 +108,7 @@ VVVHHGG
 : Larry faces left.
 : Lorenzo says, "I need more people here before I can start."
 : Marty says, "Why?"
-: Lorenzo says, "It's weird to give a tour to just one person."
+: Lorenzo says, "It's weird to give a museum tour to just one person."
 : Marty says, "LARRY!"
 11:00:16 Larry @ Exhibit Room.90%
 : Lorenzo faces right.
@@ -124,10 +124,10 @@ VVVHHGG
 : Larry takes Vase in right hand
 : Lorenzo faces right.
 : says, "Put that down!"
-11:00:46 Larry @ Gift Shop.80%
+11:00:45 Larry @ Gift Shop.80%
 : drops Vase (.5,-.8,0)
 : @ Gift Shop.30%
-11:00:49 Lorenzo @ Gift Shop.10%
+11:00:46 Lorenzo @ Gift Shop.10%
 : says, "Where is it?"
 : Larry faces right.
 : Lorenzo @ Gift Shop.80%
