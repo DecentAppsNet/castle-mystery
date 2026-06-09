@@ -16,3 +16,9 @@
 ## Coffer
 
 * image=coffer.png
+
+## Pedestal
+* image=pedestal.png
+* drawOffsetX=-.45
+* drawOffsetY=.15
+* drawOffsetZ=.07

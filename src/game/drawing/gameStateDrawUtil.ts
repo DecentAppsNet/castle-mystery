@@ -154,7 +154,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(gameState);
     if (hoveredItem && isItemInteractive(hoveredItem.item)) {
-      drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context);
+      drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context, gameState.imageSet);
     }
     processLevelEffects(gameState.activeEffects, context);
     return;

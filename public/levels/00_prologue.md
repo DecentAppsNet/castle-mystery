@@ -30,41 +30,50 @@ VVVHHGG
 
 * s=Sarcophagus | Sarcophagus Lid
 * exits=hallway
-* v=Vase 
+* v=Pedestal | Vase 
 * L=Lorenzo
 * M=Marty
 
 ## Hallway
 
+```
+........
+....L...
+........
+```
+
+* L=Larry
 * exits=Gift Shop
 
 ## Gift Shop
 
 ```
-.2345...
-.....L..
+..1.2.3.
+........
 ........
 ```
 
-* L=Larry
-* 2=Vase 2
-* 3=Vase 3
-* 4=Vase 4
-* 5=Vase 5
+* 1=Shelf 1
+* 2=Shelf 2
+* 3=Shelf 3
 
 # Characters
 
 ## Lorenzo
 
 * description=He wears a name badge that says "Guida / Guide - Lorenzo".
+* facing=left
+* faceImage=lorenzo.png
 
 ## Larry
 
 * description=A seven-year-old boy, ready for trouble.
+* faceImage=larry.png
 
 ## Marty
 
 * description=He seems bored and curious at the same time.
+* faceImage=marty.png
 
 # Items
 
@@ -76,7 +85,7 @@ VVVHHGG
 
 ## Sarcophagus Lid
 * image=sarcophagusLid.png
-* drawOffsetX=4.5
+* drawOffsetX=1
 * drawOffsetY=.3
 
 ## Vase
@@ -84,34 +93,45 @@ VVVHHGG
 * description=A nearby plaque reads, "Questo vaso di terracotta, realizzato nel XII secolo, apparteneva probabilmente a un romano della classe lavoratrice."
 * image=amosVase.png
 
-## Vase 2
-* description=A vase made of clay with lettering on the side.
-* image=amosVase.png
+## Shelf 1
+* image=giftShopShelf1.png
 
-## Vase 3
-* description=A vase made of clay with lettering on the side.
-* image=amosVase.png
+## Shelf 2
+* image=giftShopShelf2.png
 
-## Vase 4
-* description=A vase made of clay with lettering on the side.
-* image=amosVase.png
-
-## Vase 5
-* description=A vase made of clay with lettering on the side.
-* image=amosVase.png
+## Shelf 3
+* image=giftShopShelf3.png
 
 # itinerary
 
-11:00:00 Marty faces left.
-: says, "Aren't you going to give a tour?"
+11:00:00 Marty says, "Aren't you going to give a tour?"
+: Larry faces left.
 : Lorenzo says, "I need more people here before I can start."
 : Marty says, "Why?"
 : Lorenzo says, "It's weird to give a tour to just one person."
 : Marty says, "LARRY!"
-: Lorenzo says, "Okay, I guess two people is enough for a tour."
-: says, "Here you stand before the final tomb of Emperor Frederick II of the Holy Roman-"
+11:00:16 Larry @ Exhibit Room.90%
+: Lorenzo faces right.
+: says, "Okay, I guess two people is enough for a tour."
+: faces left.
+: says, "You stand before the final tomb of"
+: says, "Emperor Frederick II, ruler of-"
 : Marty says, "Is he in that box right now?"
-: Lorenzo says, "Yes, his remains are actually inside the sarcoph-"
+: Lorenzo says, "Yes."
 : Marty says, "Can we see?"
 : Lorenzo says, "No! Let me give the tour."
-: says "Here you stand before the final tomb of-"
+: says "You stand before the final tomb-"
+: Larry takes Vase in right hand
+: Lorenzo faces right.
+: says, "Put that down!"
+11:00:46 Larry @ Gift Shop.80%
+: drops Vase
+: @ Gift Shop.30%
+11:00:49 Lorenzo @ Gift Shop.10%
+
+11:00:48 Marty takes Sarcophagus Lid in left hand
+: @ Exhibit Room.30%
+: drops Sarcophagus Lid
+: @ Exhibit Room.50%
+: faces left
+: says, "Sick!"

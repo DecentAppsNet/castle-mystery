@@ -71,6 +71,17 @@ function _calcItemImageLeftOffsetPixels(metrics:ItemDrawMetrics, image:ImageBitm
   return metrics.imageLeftOffsetPixels - (drawWidthPixels - metrics.imageWidthPixels) / 2;
 }
 
+function _calcItemImageRect(metrics:ItemDrawMetrics, image:ImageBitmap):{ leftOffsetPixels:number, topOffsetPixels:number, widthPixels:number, heightPixels:number } {
+  const widthPixels = _calcItemImageDrawWidthPixels(metrics, image);
+  const heightPixels = widthPixels * image.height / image.width;
+  return {
+    leftOffsetPixels:_calcItemImageLeftOffsetPixels(metrics, image),
+    topOffsetPixels:-heightPixels,
+    widthPixels,
+    heightPixels
+  };
+}
+
 function _getItemDrawPosition(item:Item) {
   return {
     x:item.position.x + item.drawOffset.x,
@@ -117,25 +128,29 @@ export function getItemCanvasPositionInRoom(_room:Room, item:Item, scalingFactor
   return projectRoomPointWithDepth(drawPosition.x, drawPosition.y, drawPosition.z, scalingFactors);
 }
 
-export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:ScalingFactors):Rect {
+export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
   const metrics = calcItemDrawMetrics(room, scalingFactors);
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
+  const image = _findItemImage(item, imageSet);
+  const imageRect = image ? _calcItemImageRect(metrics, image) : null;
   return {
-    x:x + metrics.imageLeftOffsetPixels,
-    y:y + metrics.imageTopOffsetPixels,
-    width:metrics.imageWidthPixels,
-    height:metrics.imageHeightPixels
+    x:x + (imageRect?.leftOffsetPixels ?? metrics.imageLeftOffsetPixels),
+    y:y + (imageRect?.topOffsetPixels ?? metrics.imageTopOffsetPixels),
+    width:imageRect?.widthPixels ?? metrics.imageWidthPixels,
+    height:imageRect?.heightPixels ?? metrics.imageHeightPixels
   };
 }
 
-function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors):Rect {
+function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
   const metrics = calcItemDrawMetrics(room, scalingFactors);
   const [x, y] = _getRoomItemGamePosition(room, item, scalingFactors);
+  const image = _findItemImage(item, imageSet);
+  const imageRect = image ? _calcItemImageRect(metrics, image) : null;
   return {
-    x: x + metrics.imageLeftOffsetPixels / scalingFactors.scaleX,
-    y: y + metrics.imageTopOffsetPixels / scalingFactors.scaleY,
-    width: metrics.imageWidthPixels / scalingFactors.scaleX,
-    height: metrics.imageHeightPixels / scalingFactors.scaleY
+    x: x + (imageRect?.leftOffsetPixels ?? metrics.imageLeftOffsetPixels) / scalingFactors.scaleX,
+    y: y + (imageRect?.topOffsetPixels ?? metrics.imageTopOffsetPixels) / scalingFactors.scaleY,
+    width: (imageRect?.widthPixels ?? metrics.imageWidthPixels) / scalingFactors.scaleX,
+    height: (imageRect?.heightPixels ?? metrics.imageHeightPixels) / scalingFactors.scaleY
   };
 }
 
@@ -146,13 +161,13 @@ function _findItemImage(item:Item, imageSet:ImageSet):ImageBitmap|null {
 
 function _drawItemImage(image:ImageBitmap, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
   if (!image.width || !image.height) return;
-  const drawWidthPixels = _calcItemImageDrawWidthPixels(metrics, image);
+  const imageRect = _calcItemImageRect(metrics, image);
   context.drawImage(
     image,
-    x + _calcItemImageLeftOffsetPixels(metrics, image),
-    y + metrics.imageTopOffsetPixels,
-    drawWidthPixels,
-    metrics.imageHeightPixels
+    x + imageRect.leftOffsetPixels,
+    y + imageRect.topOffsetPixels,
+    imageRect.widthPixels,
+    imageRect.heightPixels
   );
 }
 
@@ -282,21 +297,21 @@ export function findVisibleRoomItemsInDrawOrder(room:Room, effects:Effect[], inc
 }
 
 export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scalingFactors:ScalingFactors,
-  options:RoomItemVisibilityOptions = {}):Item|null {
+  imageSet:ImageSet, options:RoomItemVisibilityOptions = {}):Item|null {
   const { includeUndiscovered = false, ignoreRoomObscured = false } = options;
   if (room.isObscured && !ignoreRoomObscured) return null;
   const itemsInDrawOrder = _getVisibleItemsInDrawOrder(room, [], includeUndiscovered);
   for (let i = itemsInDrawOrder.length - 1; i >= 0; --i) {
     const item = itemsInDrawOrder[i];
-    const rect = _getItemHoverRect(room, item, scalingFactors);
+    const rect = _getItemHoverRect(room, item, scalingFactors, imageSet);
     const isInside = x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
     if (isInside) return item;
   }
   return null;
 }
 
-export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   if (!isItemInteractive(item)) return;
-  drawTextPopover({ targetRect:getItemCanvasRectInRoom(room, item, scalingFactors), title:item.title,
+  drawTextPopover({ targetRect:getItemCanvasRectInRoom(room, item, scalingFactors, imageSet), title:item.title,
     bodyTexts:[item.description], scalingFactors, context });
 }

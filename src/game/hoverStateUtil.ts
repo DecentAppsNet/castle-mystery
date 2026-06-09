@@ -74,7 +74,8 @@ function _findNavigableRoomAtPosition(gameState:GameState, x:number, y:number):R
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (activeRoom?.id === hoveredRoom.id) return null;
   if (gameState.isLevelComplete) {
-    const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, x, y, gameState.scalingFactors, { includeUndiscovered:true, ignoreRoomObscured:true });
+    const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, x, y, gameState.scalingFactors, gameState.imageSet,
+      { includeUndiscovered:true, ignoreRoomObscured:true });
     const hoveredExit = !hoveredItem ? _findExitAtPosition(hoveredRoom, x, y, gameState) : null;
     return hoveredItem || hoveredExit ? null : hoveredRoom;
   }
@@ -193,7 +194,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
       gameState.hoveredRoomId = null;
       return;
     }
-    const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, event.x, event.y, gameState.scalingFactors,
+    const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, event.x, event.y, gameState.scalingFactors, gameState.imageSet,
       { includeUndiscovered:true, ignoreRoomObscured:true });
     if (hoveredItem) {
       hoveredItem.isDiscovered = true;
@@ -215,7 +216,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     gameState.hoveredRoomId = null;
     return;
   }
-  const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors,
+  const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors, gameState.imageSet,
     { includeUndiscovered:true });
   if (hoveredItem) {
     hoveredItem.isDiscovered = true;

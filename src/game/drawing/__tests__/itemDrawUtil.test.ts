@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { drawRoomItem, calcItemDrawMetrics } from '../itemDrawUtil';
+import { drawRoomItem, calcItemDrawMetrics, getItemCanvasRectInRoom } from '../itemDrawUtil';
 import { createDefaultRoom } from '@/game/types/Room';
 import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
@@ -22,6 +22,44 @@ const SCALING_FACTORS:ScalingFactors = {
 };
 
 describe('itemDrawUtil', () => {
+  describe('getItemCanvasRectInRoom()', () => {
+    it('matches the widened image bounds when the source image implies multiple columns', () => {
+      const imageUrl = '/assets/items/crown.png';
+      const room = {
+        ...createDefaultRoom(),
+        rect:{ x:0, y:0, width:10, height:10 }
+      };
+      const item:Item = {
+        id:'crown',
+        title:'Crown',
+        displayChar:'C',
+        imageUrl,
+        randomSalt:0,
+        position:{ x:5, y:8, z:0.5 },
+        drawOffset:{ x:1.5, y:-0.25, z:0.1 },
+        description:'A crown.',
+        isDiscovered:true
+      };
+      const imageBitmap = { width:520, height:20 } as ImageBitmap;
+      const imageSet = createEmptyImageSet();
+      imageSet.set(imageUrl, imageBitmap);
+      const metrics = calcItemDrawMetrics(room, SCALING_FACTORS);
+      const expectedImageWidthPixels = metrics.imageWidthPixels * 2;
+      const expectedImageHeightPixels = expectedImageWidthPixels * imageBitmap.height / imageBitmap.width;
+      const projectedX = (item.position.x + item.drawOffset.x) * SCALING_FACTORS.scaleX
+        + SCALING_FACTORS.roomLineWidth * 8 * (item.position.z + item.drawOffset.z);
+      const projectedY = (item.position.y + item.drawOffset.y) * SCALING_FACTORS.scaleY
+        + SCALING_FACTORS.roomLineWidth * 4 * (item.position.z + item.drawOffset.z);
+
+      expect(getItemCanvasRectInRoom(room, item, SCALING_FACTORS, imageSet)).toEqual({
+        x:projectedX + metrics.imageLeftOffsetPixels - metrics.imageWidthPixels / 2,
+        y:projectedY - expectedImageHeightPixels,
+        width:expectedImageWidthPixels,
+        height:expectedImageHeightPixels
+      });
+    });
+  });
+
   describe('drawRoomItem()', () => {
     it('scales an item image draw width by the inferred 256-pixel column count when imageUrl is present', () => {
       const imageUrl = '/assets/items/crown.png';
@@ -51,6 +89,7 @@ describe('itemDrawUtil', () => {
       } as unknown as CanvasRenderingContext2D;
       const metrics = calcItemDrawMetrics(room, SCALING_FACTORS);
       const expectedImageWidthPixels = metrics.imageWidthPixels * 2;
+      const expectedImageHeightPixels = expectedImageWidthPixels * imageBitmap.height / imageBitmap.width;
       const projectedX = (item.position.x + item.drawOffset.x) * SCALING_FACTORS.scaleX
         + SCALING_FACTORS.roomLineWidth * 8 * (item.position.z + item.drawOffset.z);
       const projectedY = (item.position.y + item.drawOffset.y) * SCALING_FACTORS.scaleY
@@ -61,9 +100,9 @@ describe('itemDrawUtil', () => {
       expect(drawImage).toHaveBeenCalledWith(
         imageBitmap,
         projectedX + metrics.imageLeftOffsetPixels - metrics.imageWidthPixels / 2,
-        projectedY + metrics.imageTopOffsetPixels,
+        projectedY - expectedImageHeightPixels,
         expectedImageWidthPixels,
-        metrics.imageHeightPixels
+        expectedImageHeightPixels
       );
     });
   });
