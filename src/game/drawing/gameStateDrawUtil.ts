@@ -3,6 +3,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
+import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { processLevelEffects } from "../effects/effectUtil";
 import { isCharacterInteractive, isItemInteractive } from "../interactivityUtil";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
@@ -132,6 +133,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   const hoveredCharacterHighlightId = _findHoveredCharacterHighlightId(gameState, canShowHoverPopovers);
   const hoveredItemHighlightId = _findHoveredItemHighlightId(gameState, canShowHoverPopovers);
   const drawnExitIds = new Set<string>();
+  const layoutPlanner = new CanvasLayoutPlanner(context.canvas.width, context.canvas.height);
   _drawGround(gameState, context);
   const roomRenderStates = gameState.rooms.map(room => {
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
@@ -140,16 +142,16 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   });
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
     drawRoomShell(room, gameState.rooms, isActive, gameState.characters, drawnExitIds,
-      gameState.groundFloorY, gameState.scalingFactors, context, gameState.isLevelComplete);
+      gameState.groundFloorY, gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner);
     if (!room.isDiscovered) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
       hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,
-      gameState.time, gameState.imageSet, gameState.isLevelComplete);
+      gameState.time, gameState.imageSet, gameState.isLevelComplete, layoutPlanner);
     drawRoomWaypointsWithHighlight(room, gameState.scalingFactors, context,
       highlightedWaypointPosition, gameState.isLevelComplete);
   }
   for (const { room, isActive } of roomRenderStates) {
-    drawRoomTitle(room, isActive, gameState, context);
+    drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
   }
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(gameState);

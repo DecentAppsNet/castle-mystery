@@ -71,7 +71,7 @@ function _getCharacterCarryText(character:Character):string {
   return `Carrying ${itemCount} items${inHandText}.`;
 }
 
-function _getCharacterCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number):Rect {
+export function getCharacterCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number):Rect {
   const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
   const segmentXs = layout.segments.flatMap(segment => [segment.fromX, segment.toX]);
@@ -222,6 +222,6 @@ export function drawCharacterPopover(character:Character, scalingFactors:Scaling
   if (!isCharacterInteractive(character)) return;
   const title = character.isTitleKnown ? _getCharacterDisplayName(character) : "";
   const carryText = _getCharacterCarryText(character);
-  drawTextPopover({ targetRect:_getCharacterCanvasRect(character, scalingFactors, time), title,
+  drawTextPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time), title,
     bodyTexts:[character.description, carryText], scalingFactors, context });
 }

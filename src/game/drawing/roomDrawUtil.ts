@@ -2,6 +2,8 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { DRAW_WAYPOINTS } from "@/developer/config";
+import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
+import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import {
@@ -17,7 +19,7 @@ import {
 } from "./drawConstants";
 import { interpolateColor } from "./colorUtil";
 import { gameToCanvasPosition } from "./drawUtil";
-import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect } from "./exitDrawUtil";
+import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect, getProjectedExitCanvasRect } from "./exitDrawUtil";
 import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
 import { compareNonStairDrawableContents, mergeStairsWithSortedContents, RoomDrawableContent } from "./roomContentDrawOrderUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
@@ -37,6 +39,8 @@ import ExitType from "../types/ExitType";
 import StairPart, { StairPartType } from "../types/StairPart";
 import { processAfterCharacterEffects, processBeforeCharacterEffects } from "../effects/effectUtil";
 import { findRoom } from "../roomUtil";
+import { getCharacterCanvasRect } from "./characterDrawUtil";
+import { getItemCanvasRectInRoom } from "./itemDrawUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -123,11 +127,13 @@ function _shouldRoomDrawExit(room:Room, exit:RoomExit):boolean {
 }
 
 function _drawRoomExit(room:Room, exit:RoomExit, characters:Character[], showFullContents:boolean,
-  rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, drawnExitIds:Set<string>) {
+  rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, drawnExitIds:Set<string>,
+  layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!_shouldRoomDrawExit(room, exit)) return;
   if (drawnExitIds.has(exit.id)) return;
   drawnExitIds.add(exit.id);
   if (findRoom(rooms as Room[], exit.room1Id).isOutside && findRoom(rooms as Room[], exit.room2Id).isOutside) return;
+  if (layoutPlanner) layoutPlanner.reserveRect(getProjectedExitCanvasRect(exit, scalingFactors));
   const displayedExitType = _findDisplayedExitType(exit, characters, showFullContents);
   const { height } = getExitCanvasRect(exit, scalingFactors);
   drawTemporaryRightWallDoorVectorOverlay(room, exit, displayedExitType, scalingFactors, context, height);
@@ -148,7 +154,8 @@ function _calcStairPartSortX(stairPart:StairPart):number {
 }
 
 export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
-  groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
+  groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
+  layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
@@ -170,7 +177,7 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
     ? COLOR_BLACK
     : (showFullContents || isActive ? COLOR_ACTIVE_RIGHT_WALL_FILL : COLOR_INACTIVE_RIGHT_WALL_FILL);
   drawRightWallPanel(room, rooms, scalingFactors, context);
-  room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds));
+  room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds, layoutPlanner));
   drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
 }
 
@@ -199,9 +206,34 @@ function _getWrappedRoomTitleLines(gameState:GameState, room:Room, context:Canva
   return lines;
 }
 
-export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, context:CanvasRenderingContext2D) {
+function _getRoomTitleCanvasRect(room:Room, gameState:GameState, context:CanvasRenderingContext2D) {
+  const scalingFactors = gameState.scalingFactors;
+  const [centerX, centerY] = projectRoomPointWithDepth(
+    room.rect.x + room.rect.width / 2,
+    room.rect.y + room.rect.height / 2,
+    1,
+    scalingFactors
+  );
+  const lines = _getWrappedRoomTitleLines(gameState, room, context);
+  context.save();
+  context.font = `${scalingFactors.roomFontHeight}px Jellee`;
+  const maxLineWidth = lines.reduce((maxWidth, line) => Math.max(maxWidth, context.measureText(line).width), 0);
+  context.restore();
+  const totalTextHeight = lines.length * scalingFactors.roomFontHeight;
+  return {
+    x:centerX - maxLineWidth / 2,
+    y:centerY - totalTextHeight / 2,
+    width:maxLineWidth,
+    height:totalTextHeight
+  };
+}
+
+export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, context:CanvasRenderingContext2D,
+  layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!room.isDiscovered) return;
   if (room.title.length === 0) return;
+
+  if (layoutPlanner) layoutPlanner.reserveRect(_getRoomTitleCanvasRect(room, gameState, context));
 
   const scalingFactors = gameState.scalingFactors;
   const [centerX, centerY] = projectRoomPointWithDepth(
@@ -251,16 +283,19 @@ function _createDrawableContents(room:Room, charactersInRoom:Character[], effect
 
 function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharacter:Character|null, effects:Effect[],
   hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, includeUndiscoveredItems:boolean) {
+  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
+  layoutPlanner:CanvasLayoutPlanner|null = null) {
   _createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems).forEach(content => {
     switch(content.type) {
       case 'stair':
         drawStairPart(content.stairPart, scalingFactors, context);
         return;
       case 'item':
+        if (layoutPlanner && isItemInteractive(content.item)) layoutPlanner.reserveRect(getItemCanvasRectInRoom(room, content.item, scalingFactors, imageSet));
         drawRoomItem(room, content.item, scalingFactors, context, imageSet, content.item.id === hoveredItemId, time);
         return;
       case 'character':
+        if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, time));
         processBeforeCharacterEffects(content.character, effects, context, scalingFactors, imageSet);
         drawCharacter(content.character, scalingFactors, context, time, imageSet, effects,
           content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId);
@@ -277,7 +312,7 @@ function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:C
 export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
   effects:Effect[], hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, time:number, imageSet:ImageSet,
-  showFullContents:boolean = false) {
+  showFullContents:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
   const canDrawEffect = showFullContents || isActive;
@@ -287,7 +322,7 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
   }
   if (showFullContents || (isActive && activeCharacter)) {
     _drawRoomContents(room, charactersInRoom, activeCharacter, effects, hoveredCharacterId, hoveredItemId,
-      scalingFactors, context, time, imageSet, true);
+      scalingFactors, context, time, imageSet, true, layoutPlanner);
   } else {
     _drawRoomStairsOnly(room, scalingFactors, context);
   }

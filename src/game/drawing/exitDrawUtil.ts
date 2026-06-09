@@ -59,6 +59,10 @@ function _getProjectedDoorCanvasRect(exit:Pick<RoomExit, 'x' | 'y'>, scalingFact
   return { x:minX, y:minY, width:maxX - minX, height:maxY - minY };
 }
 
+export function getProjectedExitCanvasRect(exit:Pick<RoomExit, 'x' | 'y'>, scalingFactors:ScalingFactors):Rect {
+  return _getProjectedDoorCanvasRect(exit, scalingFactors);
+}
+
 function _findDoorFillColor(exitType:ExitType):string {
   return exitType === ExitType.doorway ? "#fff" : DOOR_FILL_BROWN;
 }
@@ -141,7 +145,7 @@ export function drawTemporaryRightWallDoorVectorOverlay(room:Room, exit:RoomExit
 }
 
 export function getExitHoverRect(exit:RoomExit, scalingFactors:ScalingFactors):Rect {
-  const canvasRect = _getProjectedDoorCanvasRect(exit, scalingFactors);
+  const canvasRect = getProjectedExitCanvasRect(exit, scalingFactors);
   const [left, top] = canvasToGamePosition(canvasRect.x, canvasRect.y, scalingFactors);
   const [right, bottom] = canvasToGamePosition(canvasRect.x + canvasRect.width, canvasRect.y + canvasRect.height, scalingFactors);
   return {
@@ -154,6 +158,6 @@ export function getExitHoverRect(exit:RoomExit, scalingFactors:ScalingFactors):R
 
 export function drawExitPopover(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const canvasRect = _getProjectedDoorCanvasRect(exit, scalingFactors);
+  const canvasRect = getProjectedExitCanvasRect(exit, scalingFactors);
   drawTextPopover({ targetRect:canvasRect, bodyTexts:[describeExit(exit, room1, room2, itemsById)], scalingFactors, context });
 }
