@@ -114,13 +114,13 @@ VVVHHGG
 : Lorenzo faces right.
 : says, "Okay, I guess two people is enough for a tour."
 : faces left.
-: says, "You stand before the final tomb of"
+: says, "You stand before the tomb of"
 : says, "Emperor Frederick II, ruler of-"
 : Marty says, "Is he in that box right now?"
 : Lorenzo says, "Yes."
 : Marty says, "Can we see?"
 : Lorenzo says, "No! Let me give the tour."
-: says "You stand before the final tomb-"
+: says "You stand before the tomb-"
 : Larry takes Vase in right hand
 : Lorenzo faces right.
 : says, "Put that down!"
