@@ -55,7 +55,9 @@ export default class CanvasLayoutPlanner {
       const popoverRect = createRect(popoverX, popoverY, popoverWidth, popoverHeight);
       const topmostReservedRectY = _findTopmostOverlappingReservedRectY(popoverRect, this.reservedRects);
       if (topmostReservedRectY === null) return popoverRect;
-      popoverY = topmostReservedRectY - popoverHeight;
+      const nextPopoverY = topmostReservedRectY - popoverHeight;
+      if (!(nextPopoverY < popoverY)) return createRect(popoverX, Math.max(0, popoverY - 1), popoverWidth, popoverHeight);
+      popoverY = nextPopoverY;
     }
 
     return createRect(popoverX, 0, popoverWidth, popoverHeight);

@@ -90,10 +90,14 @@ function _measurePopoverBox(title:string, bodyLines:string[], targetRect:Rect,
   const titleSectionHeight = title ? titleHeight + lineGap : 0;
   const bodyHeight = bodyLines.length * bodyFontSize + Math.max(0, bodyLines.length - 1) * lineGap;
   const boxHeight = padding * 2 + titleSectionHeight + bodyHeight;
-  const boxRect = layoutPlanner
-    ? layoutPlanner.findBestPopoverRect(targetRect, boxWidth, boxHeight)
-    : choosePopoverBoxRect(targetRect, boxWidth, boxHeight, context.canvas.width, context.canvas.height, scalingFactors.roomLineWidth * 2);
-  const { x:left, y:top } = boxRect;
+  const borderWidth = Math.max(1, scalingFactors.roomLineWidth);
+  const borderOverflow = borderWidth / 2;
+  const outerBoxRect = layoutPlanner
+    ? layoutPlanner.findBestPopoverRect(targetRect, boxWidth + borderWidth, boxHeight + borderWidth)
+    : choosePopoverBoxRect(targetRect, boxWidth + borderWidth, boxHeight + borderWidth,
+      context.canvas.width, context.canvas.height, scalingFactors.roomLineWidth * 2);
+  const left = outerBoxRect.x + borderOverflow;
+  const top = outerBoxRect.y + borderOverflow;
   return {
     left,
     top,

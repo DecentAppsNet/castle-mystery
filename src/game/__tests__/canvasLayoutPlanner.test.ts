@@ -73,5 +73,6 @@ describe('canvasLayoutPlanner', () => {
         height:25
       });
     });
+
   });
 });
