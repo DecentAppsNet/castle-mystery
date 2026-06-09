@@ -3,7 +3,8 @@ import ItineraryEventBase from "./ItineraryEventBase";
 
 type DropItemEvent = Readonly<ItineraryEventBase & {
   itemId:string,
-  position:Position
+  position:Position,
+  drawOffset:Position
 }>
 
 export function duplicateDropItemEvent(from:DropItemEvent):DropItemEvent {
@@ -12,7 +13,8 @@ export function duplicateDropItemEvent(from:DropItemEvent):DropItemEvent {
     startTime:from.startTime,
     duration:from.duration,
     itemId:from.itemId,
-    position:duplicatePosition(from.position)
+    position:duplicatePosition(from.position),
+    drawOffset:duplicatePosition(from.drawOffset)
   };
 }
 

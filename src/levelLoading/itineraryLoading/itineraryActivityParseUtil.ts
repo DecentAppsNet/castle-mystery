@@ -100,6 +100,11 @@ function _normalizeGiveActivityText(activityText:string):string {
   return `gives ${itemRef} to ${recipientId}`;
 }
 
+function _normalizeDropActivityText(activityText:string):string {
+  const itemRef = _normalizeActivityArgument(activityText.slice('drops'.length), new Set(['(', ')', '.', '\'', '-']));
+  return itemRef ? `drops ${itemRef}` : 'drops';
+}
+
 function _normalizeRoomTargetActivityText(activityText:string, verb:'locks'|'unlocks'):string {
   const roomRef = _normalizeActivityArgument(activityText.slice(verb.length), new Set(['.', '\'', '-']));
   return roomRef ? `${verb} ${roomRef}` : verb;
@@ -123,10 +128,7 @@ function _normalizeParsedActivityText(activityText:string):string {
   if (trimmedActivityText.startsWith('gives')) return _normalizeGiveActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('unlocks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'unlocks');
   if (trimmedActivityText.startsWith('locks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'locks');
-  if (trimmedActivityText.startsWith('drops')) {
-    const itemRef = _normalizeActivityArgument(trimmedActivityText.slice('drops'.length), new Set(['.', '\'', '-']));
-    return itemRef ? `drops ${itemRef}` : 'drops';
-  }
+  if (trimmedActivityText.startsWith('drops')) return _normalizeDropActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('takes')) {
     const itemRef = _normalizeActivityArgument(trimmedActivityText.slice('takes'.length), new Set(['.', '\'', '-']));
     return itemRef ? `takes ${itemRef}` : 'takes';
@@ -135,7 +137,7 @@ function _normalizeParsedActivityText(activityText:string):string {
 }
 
 function _parseCharacterActivityLine(activityLine:string, impliedCharacterId:string):{ characterId:string, activityText:string } {
-  const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '.', '%', '"', '\'', '-']));
+  const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '(', ')', '.', '%', '"', '\'', '-']));
   if (['@', 'says ', 'interrupts ', 'thinks ', 'faces ', 'dies', 'stands', 'sits', 'lays', 'gives ', 'drops ', 'takes ', 'locks ', 'unlocks ']
     .some(marker => normalizedLine.startsWith(marker))) {
     const activityText = _normalizeParsedActivityText(normalizedLine);

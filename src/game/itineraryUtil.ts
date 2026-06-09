@@ -146,8 +146,15 @@ export function createTakeItemEvent(startTime:number, itemId:string, destination
   return { type:ItineraryEventType.TAKE_ITEM, startTime, duration:ITEM_EFFECT_DURATION, itemId, destination };
 }
 
-export function createDropItemEvent(startTime:number, itemId:string, position:Position):DropItemEvent {
-  return { type:ItineraryEventType.DROP_ITEM, startTime, duration:ITEM_EFFECT_DURATION, itemId, position:duplicatePosition(position) };
+export function createDropItemEvent(startTime:number, itemId:string, position:Position, drawOffset:Position):DropItemEvent {
+  return {
+    type:ItineraryEventType.DROP_ITEM,
+    startTime,
+    duration:ITEM_EFFECT_DURATION,
+    itemId,
+    position:duplicatePosition(position),
+    drawOffset:duplicatePosition(drawOffset)
+  };
 }
 
 export function createGiveItemEvent(startTime:number, itemId:string, recipientCharacterId:string):GiveItemEvent {

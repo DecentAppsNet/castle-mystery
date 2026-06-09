@@ -90,7 +90,7 @@ VVVHHGG
 
 ## Vase
 
-* description=A nearby plaque reads, "Questo vaso di terracotta, realizzato nel XII secolo, apparteneva probabilmente a un romano della classe lavoratrice."
+* description=An ancient clay vase with faded symbols on it.
 * image=amosVase.png
 
 ## Shelf 1
@@ -125,9 +125,17 @@ VVVHHGG
 : Lorenzo faces right.
 : says, "Put that down!"
 11:00:46 Larry @ Gift Shop.80%
-: drops Vase
+: drops Vase (.5,-.8,0)
 : @ Gift Shop.30%
 11:00:49 Lorenzo @ Gift Shop.10%
+: says, "Where is it?"
+: Larry faces right.
+: Lorenzo @ Gift Shop.80%
+: @ Gift Shop.70%
+: says, "Oh no!"
+: @ Gift Shop.80%
+: @ Gift Shop.60%
+: @ Gift Shop.70%
 
 11:00:48 Marty takes Sarcophagus Lid in left hand
 : @ Exhibit Room.30%
@@ -135,3 +143,16 @@ VVVHHGG
 : @ Exhibit Room.50%
 : faces left
 : says, "Sick!"
+
+# Solutions
+
+* verbs=stole|hid|broke|smashed|painted|crushed|dropped
+* withObjects=a hammer|his fist|a brush|other vases|his foot|difficulty|his uncle
+
+## Identities
+
+* unlockSolutions=What Happened to the Vase?
+
+## What Happened to the Vase?
+
+* solution=[Larry] took the vase to the [Gift Shop] and [hid] it with [other vases].
