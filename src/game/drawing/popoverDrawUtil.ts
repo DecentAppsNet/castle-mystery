@@ -1,6 +1,7 @@
 /* This module groups shared popover drawing helpers for room, character, and exit overlays.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { choosePopoverBoxRect } from "@/game/popoverLayoutUtil";
 
 import Rect from "../types/Rect";
@@ -12,7 +13,8 @@ type DrawTextPopoverOptions = {
   title?:string,
   bodyTexts:string[],
   scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D
+  context:CanvasRenderingContext2D,
+  layoutPlanner?:CanvasLayoutPlanner|null
 }
 
 type PopoverTypographyAndSpacing = {
@@ -76,7 +78,7 @@ function _createPopoverBodyLines(bodyTexts:string[], maxTextWidth:number, bodyFo
 
 function _measurePopoverBox(title:string, bodyLines:string[], targetRect:Rect,
   typographyAndSpacing:PopoverTypographyAndSpacing, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D):PopoverBoxLayout {
+  context:CanvasRenderingContext2D, layoutPlanner:CanvasLayoutPlanner|null = null):PopoverBoxLayout {
   const { titleFontSize, bodyFontSize, titleFont, bodyFont, padding, lineGap } = typographyAndSpacing;
 
   context.font = bodyFont;
@@ -88,8 +90,10 @@ function _measurePopoverBox(title:string, bodyLines:string[], targetRect:Rect,
   const titleSectionHeight = title ? titleHeight + lineGap : 0;
   const bodyHeight = bodyLines.length * bodyFontSize + Math.max(0, bodyLines.length - 1) * lineGap;
   const boxHeight = padding * 2 + titleSectionHeight + bodyHeight;
-  const { x:left, y:top } = choosePopoverBoxRect(
-    targetRect, boxWidth, boxHeight, context.canvas.width, context.canvas.height, scalingFactors.roomLineWidth * 2);
+  const boxRect = layoutPlanner
+    ? layoutPlanner.findBestPopoverRect(targetRect, boxWidth, boxHeight)
+    : choosePopoverBoxRect(targetRect, boxWidth, boxHeight, context.canvas.width, context.canvas.height, scalingFactors.roomLineWidth * 2);
+  const { x:left, y:top } = boxRect;
   return {
     left,
     top,
@@ -99,7 +103,7 @@ function _measurePopoverBox(title:string, bodyLines:string[], targetRect:Rect,
   };
 }
 
-export function drawTextPopover({ targetRect, title = "", bodyTexts, scalingFactors, context }:DrawTextPopoverOptions) {
+export function drawTextPopover({ targetRect, title = "", bodyTexts, scalingFactors, context, layoutPlanner = null }:DrawTextPopoverOptions) {
   const typographyAndSpacing = _createPopoverTypographyAndSpacing(scalingFactors, context.canvas.width);
   const { bodyFontSize, titleFont, bodyFont, padding, lineGap } = typographyAndSpacing;
   const bodyLines = _createPopoverBodyLines(bodyTexts, typographyAndSpacing.maxTextWidth, bodyFont, context);
@@ -107,7 +111,7 @@ export function drawTextPopover({ targetRect, title = "", bodyTexts, scalingFact
   context.textAlign = "left";
   context.textBaseline = "top";
   const { left, top, boxWidth, boxHeight, titleSectionHeight } = _measurePopoverBox(
-    title, bodyLines, targetRect, typographyAndSpacing, scalingFactors, context);
+    title, bodyLines, targetRect, typographyAndSpacing, scalingFactors, context, layoutPlanner);
   context.fillStyle = COLOR_POPOVER_FILL;
   context.strokeStyle = COLOR_BLACK;
   context.lineWidth = Math.max(1, scalingFactors.roomLineWidth);

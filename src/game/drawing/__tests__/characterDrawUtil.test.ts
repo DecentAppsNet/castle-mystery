@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCharacterSpeechAnchor } from '../characterDrawUtil';
+import { getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 
@@ -41,6 +41,23 @@ describe('characterDrawUtil', () => {
         expect(aliveAnchor.anchorX).not.toBe(aliveAnchor.centerX);
         expect(deadAnchor.anchorX).toBe(deadAnchor.centerX);
       });
+    });
+  });
+
+  describe('getCharacterCanvasRect()', () => {
+    it('extends bounds to include a drawn face image', () => {
+      const character = {
+        ...createDefaultCharacter(),
+        faceImageUrl:'/assets/faces/test.png'
+      };
+      const imageSet = new Map<string, ImageBitmap>([['/assets/faces/test.png', { width:120, height:120 } as ImageBitmap]]);
+
+      const rectWithoutFaceImage = getCharacterCanvasRect({ ...character, faceImageUrl:null }, SCALING_FACTORS, 0, imageSet);
+      const rectWithFaceImage = getCharacterCanvasRect(character, SCALING_FACTORS, 0, imageSet);
+
+      expect(rectWithFaceImage.y).toBeLessThan(rectWithoutFaceImage.y);
+      expect(rectWithFaceImage.height).toBeGreaterThan(rectWithoutFaceImage.height);
+      expect(rectWithFaceImage.width).toBeGreaterThan(rectWithoutFaceImage.width);
     });
   });
 });

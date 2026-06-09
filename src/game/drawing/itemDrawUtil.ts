@@ -3,6 +3,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
 import { isItemInteractive } from "@/game/interactivityUtil";
 import { roomWidthToColumnCount } from "../waypointUtil";
@@ -310,8 +311,9 @@ export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scal
   return null;
 }
 
-export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
+export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+  imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!isItemInteractive(item)) return;
   drawTextPopover({ targetRect:getItemCanvasRectInRoom(room, item, scalingFactors, imageSet), title:item.title,
-    bodyTexts:[item.description], scalingFactors, context });
+    bodyTexts:[item.description], scalingFactors, context, layoutPlanner });
 }

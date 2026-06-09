@@ -3,6 +3,7 @@
 
 import Rect from "./types/Rect";
 import Room from "./types/Room";
+import { extendRectToContainRect } from "./rectUtil";
 import { MAP_TILE_SIZE } from "./roomGridUtil";
 
 export const ROOF_APEX_Z = 0.5;
@@ -55,18 +56,11 @@ export function calcRoomRoofBounds(room:Room, rooms:ReadonlyArray<Room>, groundF
 export function calcRoomsBoundingRectWithRoofs(rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):Rect {
   if (!rooms.length) throw new Error('cannot calculate room bounds with no rooms');
 
-  let leftX = rooms[0].rect.x;
-  let rightX = leftX + rooms[0].rect.width;
-  let topY = calcRoomRoofBounds(rooms[0], rooms, groundFloorY).y;
-  let bottomY = rooms[0].rect.y + rooms[0].rect.height;
+  let boundingRect = calcRoomRoofBounds(rooms[0], rooms, groundFloorY);
 
   for (let i = 1; i < rooms.length; ++i) {
-    const roofBounds = calcRoomRoofBounds(rooms[i], rooms, groundFloorY);
-    leftX = Math.min(leftX, roofBounds.x);
-    rightX = Math.max(rightX, roofBounds.x + roofBounds.width);
-    topY = Math.min(topY, roofBounds.y);
-    bottomY = Math.max(bottomY, roofBounds.y + roofBounds.height);
+    boundingRect = extendRectToContainRect(boundingRect, calcRoomRoofBounds(rooms[i], rooms, groundFloorY));
   }
 
-  return { x:leftX, y:topY, width:rightX - leftX, height:bottomY - topY };
+  return boundingRect;
 }

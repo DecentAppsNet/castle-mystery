@@ -3,6 +3,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
+import { DRAW_RESERVED_RECTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { processLevelEffects } from "../effects/effectUtil";
 import { isCharacterInteractive, isItemInteractive } from "../interactivityUtil";
@@ -25,6 +26,15 @@ import { getGroundImageAssetUrl } from "../imageUrlUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
+
+function _drawReservedRects(layoutPlanner:CanvasLayoutPlanner, context:CanvasRenderingContext2D) {
+  if (!DRAW_RESERVED_RECTS) return;
+  context.save();
+  context.strokeStyle = '#f00';
+  context.lineWidth = 1;
+  layoutPlanner.reservedRects.forEach(rect => context.strokeRect(rect.x, rect.y, rect.width, rect.height));
+  context.restore();
+}
 
 function _drawGround(gameState:GameState, context:CanvasRenderingContext2D) {
   const groundImage = gameState.imageSet.get(getGroundImageAssetUrl()) || null;
@@ -156,25 +166,20 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(gameState);
     if (hoveredItem && isItemInteractive(hoveredItem.item)) {
-      drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context, gameState.imageSet);
+      drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context, gameState.imageSet, layoutPlanner);
     }
-    processLevelEffects(gameState.activeEffects, context);
-    return;
-  }
-  if (canShowHoverPopovers && gameState.hoveredCharacterId) {
+  } else if (canShowHoverPopovers && gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter && isCharacterInteractive(hoveredCharacter)) {
-      drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time);
+      drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time, gameState.imageSet, layoutPlanner);
     }
-    processLevelEffects(gameState.activeEffects, context);
-    return;
-  }
-  if (canShowHoverPopovers && gameState.hoveredExitKey) {
+  } else if (canShowHoverPopovers && gameState.hoveredExitKey) {
     const hoveredExit = _findHoveredExit(gameState);
     if (hoveredExit) {
       drawExitPopover(hoveredExit, findRoom(gameState.rooms, hoveredExit.room1Id), findRoom(gameState.rooms, hoveredExit.room2Id),
-        gameState.itemsById, gameState.scalingFactors, context);
+        gameState.itemsById, gameState.scalingFactors, context, layoutPlanner);
     }
   }
+  _drawReservedRects(layoutPlanner, context);
   processLevelEffects(gameState.activeEffects, context);
 }

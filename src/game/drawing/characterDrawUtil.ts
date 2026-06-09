@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { calcThinkingAngleOffsetRadians } from "@/game/effects/thinkingEffectUtil";
 import { calcTalkingAngleOffsetRadians } from "@/game/effects/talkingEffectUtil";
 import EffectType from "@/game/effects/types/EffectType";
@@ -21,6 +22,7 @@ import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK } from "./drawConstants";
 import { drawTextPopover } from "./popoverDrawUtil";
 import { createCharacterLayout, strokeCharacterBody } from "./characters/characterLayoutUtil";
 import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from "./characters/characterHeldItemDrawUtil";
+import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 
 export { drawSpeechBubble, drawThoughtBubble } from "./characters/characterBubbleDrawUtil";
 
@@ -71,23 +73,56 @@ function _getCharacterCarryText(character:Character):string {
   return `Carrying ${itemCount} items${inHandText}.`;
 }
 
-export function getCharacterCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number):Rect {
+function _createCharacterCanvasLayout(character:Character, scalingFactors:ScalingFactors, time:number) {
   const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
-  const segmentXs = layout.segments.flatMap(segment => [segment.fromX, segment.toX]);
-  const leftX = Math.min(layout.head.centerX - layout.head.radius, ...segmentXs);
-  const rightX = Math.max(layout.head.centerX + layout.head.radius, ...segmentXs);
+  return { layout, characterWidth, characterHeight };
+}
+
+function _getFaceImageDrawSize(faceImage:ImageBitmap, headRadius:number):{ drawWidth:number, drawHeight:number }|null {
+  const faceImageWidth = faceImage.width;
+  const faceImageHeight = faceImage.height;
+  if (!faceImageWidth || !faceImageHeight) return null;
+  const maxFaceWidth = headRadius * 6;
+  const maxFaceHeight = headRadius * 6;
+  const faceScale = Math.min(maxFaceWidth / faceImageWidth, maxFaceHeight / faceImageHeight);
   return {
-    x:leftX,
-    y:layout.topY,
-    width:rightX - leftX,
-    height:layout.bottomY - layout.topY
+    drawWidth:faceImageWidth * faceScale,
+    drawHeight:faceImageHeight * faceScale
   };
 }
 
+function _getCharacterBodyCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number):Rect {
+  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time);
+  const segmentXs = layout.segments.flatMap(segment => [segment.fromX, segment.toX]);
+  const leftX = Math.min(layout.head.centerX - layout.head.radius, ...segmentXs);
+  const rightX = Math.max(layout.head.centerX + layout.head.radius, ...segmentXs);
+  return createRect(leftX, layout.topY, rightX - leftX, layout.bottomY - layout.topY);
+}
+
+function _getCharacterFaceCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet):Rect|null {
+  if (!character.faceImageUrl) return null;
+  const faceImage = imageSet.get(character.faceImageUrl) || null;
+  if (!faceImage) return null;
+
+  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time);
+  const faceImageDrawSize = _getFaceImageDrawSize(faceImage, layout.head.radius);
+  if (!faceImageDrawSize) return null;
+
+  const drawWidth = character.bodyOrientation === 'laying' ? faceImageDrawSize.drawHeight : faceImageDrawSize.drawWidth;
+  const drawHeight = character.bodyOrientation === 'laying' ? faceImageDrawSize.drawWidth : faceImageDrawSize.drawHeight;
+  return createRect(layout.head.centerX - drawWidth / 2, layout.head.centerY - drawHeight / 2, drawWidth, drawHeight);
+}
+
+export function getCharacterCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet|null = null):Rect {
+  const bodyRect = _getCharacterBodyCanvasRect(character, scalingFactors, time);
+  if (!imageSet) return bodyRect;
+  const faceRect = _getCharacterFaceCanvasRect(character, scalingFactors, time, imageSet);
+  return faceRect ? extendRectToContainRect(bodyRect, faceRect) : bodyRect;
+}
+
 export function getCharacterBodyCenterCanvasPosition(character:Character, scalingFactors:ScalingFactors, time:number):{ x:number, y:number } {
-  const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
-  const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
+  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time);
   const bodySegment = layout.segments[0];
   return {
     x:(bodySegment.fromX + bodySegment.toX) / 2,
@@ -185,20 +220,15 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     return;
   }
 
-  const faceImageWidth = faceImage.width;
-  const faceImageHeight = faceImage.height;
-  if (!faceImageWidth || !faceImageHeight) {
+  const faceImageDrawSize = _getFaceImageDrawSize(faceImage, headRadius);
+  if (!faceImageDrawSize) {
     context.beginPath();
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
     return;
   }
-  const maxFaceWidth = headRadius * 6;
-  const maxFaceHeight = headRadius * 6;
-  const faceScale = Math.min(maxFaceWidth / faceImageWidth, maxFaceHeight / faceImageHeight);
-  const drawWidth = faceImageWidth * faceScale;
-  const drawHeight = faceImageHeight * faceScale;
+  const { drawWidth, drawHeight } = faceImageDrawSize;
   if (character.bodyOrientation !== 'laying') {
     context.save();
     context.translate(layout.head.centerX, layout.head.centerY);
@@ -218,10 +248,11 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
 }
 
-export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
+export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,
+  imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!isCharacterInteractive(character)) return;
   const title = character.isTitleKnown ? _getCharacterDisplayName(character) : "";
   const carryText = _getCharacterCarryText(character);
-  drawTextPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time), title,
-    bodyTexts:[character.description, carryText], scalingFactors, context });
+  drawTextPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time, imageSet), title,
+    bodyTexts:[character.description, carryText], scalingFactors, context, layoutPlanner });
 }

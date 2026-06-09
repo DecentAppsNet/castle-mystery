@@ -1,6 +1,7 @@
 /* This module groups room-exit drawing and hover-hit helpers for doors, locks, and exit items.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { describeExit } from "../exitUtil";
 import Item from "../types/Item";
 import ExitType from "../types/ExitType";
@@ -157,7 +158,7 @@ export function getExitHoverRect(exit:RoomExit, scalingFactors:ScalingFactors):R
 }
 
 export function drawExitPopover(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, layoutPlanner:CanvasLayoutPlanner|null = null) {
   const canvasRect = getProjectedExitCanvasRect(exit, scalingFactors);
-  drawTextPopover({ targetRect:canvasRect, bodyTexts:[describeExit(exit, room1, room2, itemsById)], scalingFactors, context });
+  drawTextPopover({ targetRect:canvasRect, bodyTexts:[describeExit(exit, room1, room2, itemsById)], scalingFactors, context, layoutPlanner });
 }

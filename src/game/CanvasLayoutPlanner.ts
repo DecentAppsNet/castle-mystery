@@ -8,8 +8,8 @@ function _calcAnchorCenterX(anchorRect:Rect):number {
   return anchorRect.x + anchorRect.width / 2;
 }
 
-function _calcAnchorBottomY(anchorRect:Rect):number {
-  return anchorRect.y + anchorRect.height;
+function _calcInitialPopoverY(anchorRect:Rect, popoverHeight:number):number {
+  return anchorRect.y - popoverHeight;
 }
 
 function _calcInitialPopoverX(anchorRect:Rect, popoverWidth:number):number {
@@ -49,7 +49,7 @@ export default class CanvasLayoutPlanner {
 
   findBestPopoverRect(anchorRect:Rect, popoverWidth:number, popoverHeight:number):Rect {
     const popoverX = _clampPopoverXIntoCanvas(_calcInitialPopoverX(anchorRect, popoverWidth), popoverWidth, this.canvasWidth);
-    let popoverY = _calcAnchorBottomY(anchorRect);
+    let popoverY = _calcInitialPopoverY(anchorRect, popoverHeight);
 
     while (popoverY > 0) {
       const popoverRect = createRect(popoverX, popoverY, popoverWidth, popoverHeight);

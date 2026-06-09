@@ -2,3 +2,4 @@
 	If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 export const DRAW_WAYPOINTS = false;
+export const DRAW_RESERVED_RECTS = true;

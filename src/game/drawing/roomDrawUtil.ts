@@ -295,7 +295,7 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
         drawRoomItem(room, content.item, scalingFactors, context, imageSet, content.item.id === hoveredItemId, time);
         return;
       case 'character':
-        if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, time));
+        if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, time, imageSet));
         processBeforeCharacterEffects(content.character, effects, context, scalingFactors, imageSet);
         drawCharacter(content.character, scalingFactors, context, time, imageSet, effects,
           content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId);

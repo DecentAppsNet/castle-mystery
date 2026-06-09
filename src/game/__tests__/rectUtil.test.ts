@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { createRect, doRectsOverlap, isPositionInOrOnRect, isPositionStrictlyInRect } from '../rectUtil';
+import { createRect, doRectsOverlap, extendRectToContainRect, isPositionInOrOnRect, isPositionStrictlyInRect } from '../rectUtil';
 import Rect from '../types/Rect';
 
 const ROOM_RECT:Rect = { x:10, y:20, width:30, height:40 };
@@ -58,6 +58,15 @@ describe('rectUtil.ts', () => {
         { x:10, y:10, width:20, height:20 },
         { x:30, y:30, width:20, height:20 }
       )).toBe(false);
+    });
+  });
+
+  describe('extendRectToContainRect()', () => {
+    it('returns the smallest rect containing both inputs', () => {
+      expect(extendRectToContainRect(
+        { x:10, y:20, width:30, height:40 },
+        { x:0, y:30, width:25, height:50 }
+      )).toEqual({ x:0, y:20, width:40, height:60 });
     });
   });
 
