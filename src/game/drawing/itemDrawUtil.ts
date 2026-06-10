@@ -31,6 +31,10 @@ const ITEM_LIGHT_SIDE_BROWN = "#bd8650";
 const ITEM_DARK_SIDE_BROWN = "#72461f";
 const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.08;
+const ITEM_IMAGE_HIGHLIGHT_ALPHA_THRESHOLD = 16;
+const ITEM_IMAGE_HIGHLIGHT_OUTSET_LINE_WIDTHS = .5;
+
+const _itemImageHighlightSilhouetteCanvasCache = new WeakMap<ImageBitmap, Map<string, HTMLCanvasElement>>();
 
 type ItemDrawMetrics = {
   cuboidWidthPixels:number,
@@ -59,6 +63,18 @@ type RoomItemVisibilityOptions = {
   ignoreRoomObscured?:boolean
 }
 
+type ItemImageRect = {
+  leftOffsetPixels:number,
+  topOffsetPixels:number,
+  widthPixels:number,
+  heightPixels:number
+}
+
+type ItemHighlightGlowMetrics = {
+  glowWidth:number,
+  glowBlur:number
+}
+
 function _calcItemImageColumnCount(image:ImageBitmap):number {
   return Math.max(1, Math.round(image.width / 256));
 }
@@ -72,7 +88,7 @@ function _calcItemImageLeftOffsetPixels(metrics:ItemDrawMetrics, image:ImageBitm
   return metrics.imageLeftOffsetPixels - (drawWidthPixels - metrics.imageWidthPixels) / 2;
 }
 
-function _calcItemImageRect(metrics:ItemDrawMetrics, image:ImageBitmap):{ leftOffsetPixels:number, topOffsetPixels:number, widthPixels:number, heightPixels:number } {
+function _calcItemImageRect(metrics:ItemDrawMetrics, image:ImageBitmap):ItemImageRect {
   const widthPixels = _calcItemImageDrawWidthPixels(metrics, image);
   const heightPixels = widthPixels * image.height / image.width;
   return {
@@ -172,6 +188,60 @@ function _drawItemImage(image:ImageBitmap, x:number, y:number, metrics:ItemDrawM
   );
 }
 
+function _calcItemHighlightGlowMetrics(metrics:ItemDrawMetrics, time:number):ItemHighlightGlowMetrics {
+  const phase = (time % PULSE_CADENCE_MS) / PULSE_CADENCE_MS;
+  const pulse = phase <= 0.5 ? phase * 2 : 2 * (1 - phase);
+  const glowScale = 1 + (PULSE_SCALE_PEAK - 1) * pulse;
+  const glowWidth = Math.max(2, metrics.cuboidLineWidthPixels * 6 * glowScale);
+  return {
+    glowWidth,
+    glowBlur:glowWidth * 1.2
+  };
+}
+
+function _calcItemImageHighlightCanvasKey(widthPixels:number, heightPixels:number):string {
+  return `${Math.max(1, Math.round(widthPixels))}x${Math.max(1, Math.round(heightPixels))}`;
+}
+
+function _createItemImageHighlightSilhouetteCanvas(widthPixels:number, heightPixels:number):HTMLCanvasElement|null {
+  if (typeof document === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(widthPixels));
+  canvas.height = Math.max(1, Math.round(heightPixels));
+  return canvas;
+}
+
+function _renderItemImageHighlightSilhouetteCanvas(image:ImageBitmap, silhouetteCanvas:HTMLCanvasElement) {
+  const context = silhouetteCanvas.getContext("2d", { willReadFrequently:true });
+  if (!context) return;
+  context.clearRect(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
+  context.drawImage(image, 0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
+
+  const imageData = context.getImageData(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    imageData.data[i + 3] = imageData.data[i + 3] >= ITEM_IMAGE_HIGHLIGHT_ALPHA_THRESHOLD ? 255 : 0;
+  }
+  context.putImageData(imageData, 0, 0);
+  context.globalCompositeOperation = "source-in";
+  context.fillStyle = COLOR_ITEM_POPOVER_HIGHLIGHT;
+  context.fillRect(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
+  context.globalCompositeOperation = "source-over";
+}
+
+function _findItemImageHighlightSilhouetteCanvas(image:ImageBitmap, imageRect:ItemImageRect):HTMLCanvasElement|null {
+  const cacheKey = _calcItemImageHighlightCanvasKey(imageRect.widthPixels, imageRect.heightPixels);
+  const cachedCanvasesBySize = _itemImageHighlightSilhouetteCanvasCache.get(image) ?? new Map<string, HTMLCanvasElement>();
+  const cachedCanvas = cachedCanvasesBySize.get(cacheKey) || null;
+  if (cachedCanvas) return cachedCanvas;
+
+  const silhouetteCanvas = _createItemImageHighlightSilhouetteCanvas(imageRect.widthPixels, imageRect.heightPixels);
+  if (!silhouetteCanvas) return null;
+  _renderItemImageHighlightSilhouetteCanvas(image, silhouetteCanvas);
+  cachedCanvasesBySize.set(cacheKey, silhouetteCanvas);
+  _itemImageHighlightSilhouetteCanvasCache.set(image, cachedCanvasesBySize);
+  return silhouetteCanvas;
+}
+
 function _createItemCuboidPoints(x:number, y:number, metrics:ItemDrawMetrics):ItemCuboidPoints {
   const frontBottomLeft:[number, number] = [x - metrics.cuboidWidthPixels / 2, y];
   const frontBottomRight:[number, number] = [x + metrics.cuboidWidthPixels / 2, y];
@@ -202,12 +272,8 @@ function _traceItemSilhouettePath(points:ItemCuboidPoints, context:CanvasRenderi
   context.closePath();
 }
 
-function _drawItemHighlight(points:ItemCuboidPoints, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D, time:number) {
-  const phase = (time % PULSE_CADENCE_MS) / PULSE_CADENCE_MS;
-  const pulse = phase <= 0.5 ? phase * 2 : 2 * (1 - phase);
-  const glowScale = 1 + (PULSE_SCALE_PEAK - 1) * pulse;
-  const glowWidth = Math.max(2, metrics.cuboidLineWidthPixels * 6 * glowScale);
-  const glowBlur = glowWidth * 1.2;
+function _drawItemCuboidHighlight(points:ItemCuboidPoints, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D, time:number) {
+  const { glowWidth, glowBlur } = _calcItemHighlightGlowMetrics(metrics, time);
 
   context.save();
   context.strokeStyle = COLOR_ITEM_POPOVER_HIGHLIGHT;
@@ -226,6 +292,42 @@ function _drawItemHighlight(points:ItemCuboidPoints, metrics:ItemDrawMetrics, co
   context.restore();
 }
 
+function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, metrics:ItemDrawMetrics,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
+  if (!image.width || !image.height) return;
+  const imageRect = _calcItemImageRect(metrics, image);
+  const silhouetteCanvas = _findItemImageHighlightSilhouetteCanvas(image, imageRect);
+  if (!silhouetteCanvas) return;
+  const { glowWidth, glowBlur } = _calcItemHighlightGlowMetrics(metrics, time);
+  const outsetPixels = scalingFactors.roomLineWidth * ITEM_IMAGE_HIGHLIGHT_OUTSET_LINE_WIDTHS;
+  const highlightLeft = x + imageRect.leftOffsetPixels - outsetPixels;
+  const highlightTop = y + imageRect.topOffsetPixels - outsetPixels;
+  const highlightWidth = imageRect.widthPixels + outsetPixels * 2;
+  const highlightHeight = imageRect.heightPixels + outsetPixels * 2;
+
+  context.save();
+  context.shadowColor = COLOR_ITEM_POPOVER_HIGHLIGHT;
+  context.shadowBlur = glowBlur;
+  context.drawImage(
+    silhouetteCanvas,
+    highlightLeft,
+    highlightTop,
+    highlightWidth,
+    highlightHeight
+  );
+
+  context.shadowBlur = 0;
+  context.globalAlpha = Math.min(1, Math.max(0.35, glowWidth / 10));
+  context.drawImage(
+    silhouetteCanvas,
+    highlightLeft,
+    highlightTop,
+    highlightWidth,
+    highlightHeight
+  );
+  context.restore();
+}
+
 function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet, isHighlighted:boolean = false, time:number = 0) {
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
@@ -233,7 +335,10 @@ function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:C
   const cuboidPoints = _createItemCuboidPoints(x, y, metrics);
   const image = _findItemImage(item, imageSet);
   context.save();
-  if (isHighlighted) _drawItemHighlight(cuboidPoints, metrics, context, time);
+  if (isHighlighted) {
+    if (image) _drawItemImageHighlight(image, x, y, metrics, scalingFactors, context, time);
+    else _drawItemCuboidHighlight(cuboidPoints, metrics, context, time);
+  }
   if (image) {
     _drawItemImage(image, x, y, metrics, context);
   } else {
