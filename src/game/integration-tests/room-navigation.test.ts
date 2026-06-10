@@ -6,6 +6,8 @@ import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from '../hoverStateUtil';
 import { createGameState, updateAndDraw } from '../gameUtil';
 import { nextCharacter } from '../playerEventUtil';
+import { getCharacterCanvasRect } from '../drawing/characterDrawUtil';
+import { canvasToGamePosition } from '../drawing/drawUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import Level, { createDefaultLevel } from '../types/Level';
 import Character, { createDefaultCharacter } from '../types/Character';
@@ -188,6 +190,33 @@ describe('room navigation integration', () => {
     updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
 
     expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('hero');
+  });
+
+  it('uses the projected character bounds for hover hit testing', () => {
+    const hero = _createCharacter('hero', 5, []);
+    const gameState = createGameState(_createLevel([hero]));
+    gameState.isLevelComplete = false;
+    _setScalingFactors(gameState);
+
+    const canvasRect = getCharacterCanvasRect(hero, gameState.scalingFactors, gameState.time, gameState.imageSet);
+    const [left, top] = canvasToGamePosition(canvasRect.x, canvasRect.y, gameState.scalingFactors);
+    const [right, bottom] = canvasToGamePosition(canvasRect.x + canvasRect.width, canvasRect.y + canvasRect.height, gameState.scalingFactors);
+
+    updateGameStateForMouseMove(gameState, {
+      type:PlayerEventType.MOUSEMOVE,
+      x:(left + right) / 2,
+      y:(top + bottom) / 2
+    });
+
+    expect(gameState.hoveredCharacterId).toBe('hero');
+
+    updateGameStateForMouseMove(gameState, {
+      type:PlayerEventType.MOUSEMOVE,
+      x:left - 0.01,
+      y:top - 0.01
+    });
+
+    expect(gameState.hoveredCharacterId).toBe(null);
   });
 
   it('does not select non-interactive characters when cycling with tab', () => {

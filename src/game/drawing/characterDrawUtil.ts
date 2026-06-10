@@ -23,6 +23,7 @@ import { drawTextPopover } from "./popoverDrawUtil";
 import { createCharacterLayout, strokeCharacterBody } from "./characters/characterLayoutUtil";
 import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from "./characters/characterHeldItemDrawUtil";
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
+import { canvasToGamePosition } from "./drawUtil";
 
 export { drawSpeechBubble, drawThoughtBubble } from "./characters/characterBubbleDrawUtil";
 
@@ -119,6 +120,13 @@ export function getCharacterCanvasRect(character:Character, scalingFactors:Scali
   if (!imageSet) return bodyRect;
   const faceRect = _getCharacterFaceCanvasRect(character, scalingFactors, time, imageSet);
   return faceRect ? extendRectToContainRect(bodyRect, faceRect) : bodyRect;
+}
+
+export function getCharacterHoverRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet):Rect {
+  const canvasRect = getCharacterCanvasRect(character, scalingFactors, time, imageSet);
+  const [left, top] = canvasToGamePosition(canvasRect.x, canvasRect.y, scalingFactors);
+  const [right, bottom] = canvasToGamePosition(canvasRect.x + canvasRect.width, canvasRect.y + canvasRect.height, scalingFactors);
+  return createRect(left, top, right - left, bottom - top);
 }
 
 export function getCharacterBodyCenterCanvasPosition(character:Character, scalingFactors:ScalingFactors, time:number):{ x:number, y:number } {

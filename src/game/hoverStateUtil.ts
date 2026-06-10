@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { getExitHoverRect } from "./drawing/exitDrawUtil";
+import { getCharacterHoverRect } from "./drawing/characterDrawUtil";
 import { findDiscoveredItemAtPosition } from "./drawing/itemDrawUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createPauseEffect } from "./effects/playPauseEffectUtil";
@@ -11,27 +12,13 @@ import Character from "./types/Character";
 import GameState from "./types/GameState";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
-import Rect from "./types/Rect";
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
-import ScalingFactors from "./types/ScalingFactors";
 import ExitType from "./types/ExitType";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "./roomUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 
 const ROOM_NAVIGATION_TIME_OFFSET = 100;
-
-function _getCharacterBoundingRect(character:Character, scalingFactors:ScalingFactors):Rect {
-  const roomLineWidth = scalingFactors.roomLineWidth;
-  const characterWidthPixels = roomLineWidth * 15;
-  const characterHeightPixels = roomLineWidth * 30;
-  // character.position.x/character.position.y represent the bottom-center point in game position space
-  const halfWidthGame = (characterWidthPixels / 2) / scalingFactors.scaleX;
-  const heightGame = characterHeightPixels / scalingFactors.scaleY;
-  const left = character.position.x - halfWidthGame;
-  const top = character.position.y - heightGame;
-  return { x: left, y: top, width: halfWidthGame * 2, height: heightGame };
-}
 
 function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }) {
   gameState.viewedItemIds.add(item.id);
@@ -144,7 +131,7 @@ function _findInteractiveCharacterAtPosition(gameState:GameState, x:number, y:nu
       }
     }
 
-    const rect = _getCharacterBoundingRect(nearest, gameState.scalingFactors);
+    const rect = getCharacterHoverRect(nearest, gameState.scalingFactors, gameState.time, gameState.imageSet);
     if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) return nearest;
     return null;
   }
@@ -167,7 +154,7 @@ function _findInteractiveCharacterAtPosition(gameState:GameState, x:number, y:nu
     }
   }
 
-  const rect = _getCharacterBoundingRect(nearest, gameState.scalingFactors);
+  const rect = getCharacterHoverRect(nearest, gameState.scalingFactors, gameState.time, gameState.imageSet);
   if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) return nearest;
   return null;
 }

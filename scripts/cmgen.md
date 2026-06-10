@@ -8,7 +8,7 @@
 
 ## character
 
-* prompt=Generate image of a [occupation] using the same STYLE as image #1. The character should face right and have a neutral expression. Arms are slightly bent, hands held loosely open.{ The character is wearing [wearing].}{ Hair is [hair].}{ Skin is [skin].}{ [otherDetails].} Background should be fully transparent pixels.
+* prompt=Generate image of a Medieval [occupation] using the same STYLE as image #1. The character should face right and have a neutral expression. Arms are slightly bent, hands held loosely open.{ The character is wearing [wearing].}{ Hair is [hair].}{ Skin is [skin].}{ [otherDetails].} Background should be fully transparent pixels.
 * image1=medievalFigure.png
 * size=1024x1024
 
