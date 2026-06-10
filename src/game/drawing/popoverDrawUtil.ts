@@ -35,6 +35,23 @@ type PopoverBoxLayout = {
   titleSectionHeight:number
 }
 
+function _drawPopoverConnectorLine(targetRect:Rect, boxLayout:PopoverBoxLayout,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const fromX = boxLayout.left + boxLayout.boxWidth / 2;
+  const fromY = boxLayout.top + boxLayout.boxHeight;
+  const toX = targetRect.x + targetRect.width / 2;
+  const toY = targetRect.y;
+  context.save();
+  context.strokeStyle = COLOR_BLACK;
+  context.lineWidth = scalingFactors.roomLineWidth * 0.2;
+  context.setLineDash([4, 3]);
+  context.beginPath();
+  context.moveTo(fromX, fromY);
+  context.lineTo(toX, toY);
+  context.stroke();
+  context.restore();
+}
+
 function _createPopoverTypographyAndSpacing(scalingFactors:ScalingFactors, canvasWidth:number):PopoverTypographyAndSpacing {
   const titleFontSize = Math.max(20, Math.round(scalingFactors.roomFontHeight * 1.4));
   const bodyFontSize = Math.max(16, Math.round(scalingFactors.roomFontHeight * 1.0));
@@ -114,8 +131,10 @@ export function drawTextPopover({ targetRect, title = "", bodyTexts, scalingFact
   context.save();
   context.textAlign = "left";
   context.textBaseline = "top";
-  const { left, top, boxWidth, boxHeight, titleSectionHeight } = _measurePopoverBox(
+  const boxLayout = _measurePopoverBox(
     title, bodyLines, targetRect, typographyAndSpacing, scalingFactors, context, layoutPlanner);
+  const { left, top, boxWidth, boxHeight, titleSectionHeight } = boxLayout;
+  _drawPopoverConnectorLine(targetRect, boxLayout, scalingFactors, context);
   context.fillStyle = COLOR_POPOVER_FILL;
   context.strokeStyle = COLOR_BLACK;
   context.lineWidth = Math.max(1, scalingFactors.roomLineWidth);

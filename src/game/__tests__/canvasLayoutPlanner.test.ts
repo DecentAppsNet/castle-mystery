@@ -9,7 +9,7 @@ describe('canvasLayoutPlanner', () => {
 
       expect(planner.findBestPopoverRect({ x:40, y:30, width:20, height:10 }, 50, 20)).toEqual({
         x:25,
-        y:10,
+        y:5,
         width:50,
         height:20
       });
@@ -34,7 +34,7 @@ describe('canvasLayoutPlanner', () => {
 
       expect(planner.findBestPopoverRect({ x:70, y:70, width:40, height:15 }, 60, 30)).toEqual({
         x:60,
-        y:20,
+        y:15,
         width:60,
         height:30
       });
@@ -45,7 +45,7 @@ describe('canvasLayoutPlanner', () => {
 
       expect(planner.findBestPopoverRect({ x:170, y:25, width:8, height:8 }, 40, 20)).toEqual({
         x:140,
-        y:5,
+        y:0,
         width:40,
         height:20
       });
@@ -68,9 +68,38 @@ describe('canvasLayoutPlanner', () => {
 
       expect(planner.findBestPopoverRect({ x:70, y:60, width:40, height:70 }, 60, 25)).toEqual({
         x:60,
-        y:35,
+        y:30,
         width:60,
         height:25
+      });
+    });
+
+    it('falls back to the canvas top when no non-overlapping placement exists above', () => {
+      const planner = new CanvasLayoutPlanner(240, 200);
+      planner.reserveRect({ x:40, y:0, width:120, height:50 });
+
+      expect(planner.findBestPopoverRect({ x:70, y:30, width:20, height:10 }, 60, 20)).toEqual({
+        x:50,
+        y:0,
+        width:60,
+        height:20
+      });
+    });
+
+    it('avoids top fallback for the logged mousewheel repro and accepts the available above-anchor placement', () => {
+      const planner = new CanvasLayoutPlanner(1200, 1200);
+
+      planner.reserveRect({ x:601.0215233291755, y:478.5583148051124, width:118.39494484280033, height:154.50540301985444 });
+
+      expect(planner.findBestPopoverRect(
+        { x:601.0215233291755, y:478.5583148051124, width:118.39494484280033, height:154.50540301985444 },
+        371.34017295333035,
+        186.2817767253285
+      )).toEqual({
+        x:474.5489092739105,
+        y:287.2765380797839,
+        width:371.34017295333035,
+        height:186.2817767253285
       });
     });
 
