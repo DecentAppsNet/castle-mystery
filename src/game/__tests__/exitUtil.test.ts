@@ -58,5 +58,18 @@ describe('exitUtil', () => {
 
       expect(describeExit(_createExit(LOCKABLE_WITHOUT_INV_CHECK), room1, room2, new Map())).toBe('This locked door can be unlocked from Bedroom.');
     });
+
+    it('falls back to side-based wording when the discovered room title is empty', () => {
+      const room1 = {
+        ..._createRoom('bedroom', ''),
+        rect:{ x:0, y:0, width:5, height:5 }
+      };
+      const room2 = {
+        ..._createRoom('hallway', 'Hallway'),
+        rect:{ x:5, y:0, width:5, height:5 }
+      };
+
+      expect(describeExit(_createExit(LOCKABLE_WITHOUT_INV_CHECK), room1, room2, new Map())).toBe('This locked door can be unlocked from the left side.');
+    });
   });
 });

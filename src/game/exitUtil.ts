@@ -15,8 +15,14 @@ function _findUndiscoveredRoomSideLabel(exit:RoomExit, room:Room):string {
   return "the left side";
 }
 
+function _hasNamedRoomTitle(room:Room):boolean {
+  return room.title.trim().length > 0;
+}
+
 function _describeRoomReference(exit:RoomExit, room:Room):string {
-  return room.isDiscovered ? room.title : _findUndiscoveredRoomSideLabel(exit, room);
+  return room.isDiscovered && _hasNamedRoomTitle(room)
+    ? room.title
+    : _findUndiscoveredRoomSideLabel(exit, room);
 }
 
 function _isLockableFromRoom1(exit:RoomExit):boolean {
