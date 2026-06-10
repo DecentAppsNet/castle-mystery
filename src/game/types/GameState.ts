@@ -6,13 +6,13 @@ import Item from "./Item";
 import Room from "./Room";
 import ScalingFactors from "./ScalingFactors";
 import Effect from "../effects/types/Effect";
-import Solution from "../solutions/types/Solution";
+import Conclusion from "../conclusions/types/Conclusion";
 
 type GameState = {
   characters:Character[],
   rooms:Room[],
   itemsById:Map<string, Item>,
-  solutions:Solution[],
+  conclusions:Conclusion[],
   readonly winSynopsis:string,
   readonly backgroundImageUrl:string|null,
   readonly groundFloorY:number,
@@ -41,8 +41,8 @@ type GameState = {
   lastMinutesChangedCallRealTime:number,
   lastMinutesChangedValue:number,
   lastActiveCharacterChangedValue:string,
-  solutionsRevision:number,
-  lastNotifiedSolutionsRevision:number
+  conclusionsRevision:number,
+  lastNotifiedConclusionsRevision:number
 }
 
 export default GameState;

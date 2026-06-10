@@ -15,7 +15,7 @@ describe('imageSetUtil.ts', () => {
   });
 
   it('loads unique image URLs referenced by characters and resolves cloze statement image candidates in order', async () => {
-    const fetchMock = vi.fn(async (url:string) => url.includes('/assets/solutions/')
+    const fetchMock = vi.fn(async (url:string) => url.includes('/assets/conclusions/')
       ? { ok:false, blob:async () => new Blob([]) }
       : { ok:true, blob:async () => new Blob(['fake']) });
     const createImageBitmapMock = vi.fn(async () => ({ width:32, height:32 } as ImageBitmap));
@@ -32,7 +32,7 @@ describe('imageSetUtil.ts', () => {
     expect(imageSet.has(getFaceImageAssetUrl('kingFace.png'))).toBe(true);
     expect(imageSet.has(getFaceImageAssetUrl('queenFace.png'))).toBe(true);
     expect(imageSet.has(getClozeImageCandidateUrls('queenFace.png')[0])).toBe(false);
-    expect((level.solutions[0].parts[0] as { imageUrl:string }).imageUrl).toBe(getFaceImageAssetUrl('queenFace.png'));
+    expect((level.conclusions[0].parts[0] as { imageUrl:string }).imageUrl).toBe(getFaceImageAssetUrl('queenFace.png'));
   });
 
   it('omits image URLs whose fetch returns a non-OK response', async () => {
@@ -49,7 +49,7 @@ describe('imageSetUtil.ts', () => {
 
     expect(imageSet.has(getFaceImageAssetUrl('kingFace.png'))).toBe(true);
     expect(imageSet.has(getFaceImageAssetUrl('queenFace.png'))).toBe(false);
-    expect((level.solutions[0].parts[0] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('queenFace.png'));
+    expect((level.conclusions[0].parts[0] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('queenFace.png'));
   });
 
   it('omits image URLs whose body fails to decode', async () => {

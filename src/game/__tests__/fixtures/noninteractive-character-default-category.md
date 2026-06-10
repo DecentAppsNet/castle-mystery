@@ -40,8 +40,8 @@ KQC.
 
 * description=A crown.
 
-# solutions
+# conclusions
 
 ## Mystery
 
-* solution=[His Majesty]
+* conclusion=[His Majesty]

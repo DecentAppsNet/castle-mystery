@@ -41,9 +41,9 @@ AB
 
 # itinerary
 
-# solutions
+# conclusions
 
 ## Discovery
 
 * revealRooms=Atrium|Hidden Library
-* solution=Found it.
+* conclusion=Found it.

@@ -5,7 +5,7 @@ import { assert, assertNonNullable, botch } from "decent-portal";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
-import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
+import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
 import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
 import { findCharacterPose } from "./itineraryUtil";
 import { findCharactersInRoom, findRoomAtPosition, isActiveAudibleRoom } from "./roomUtil";
@@ -31,7 +31,7 @@ import { createThinkingEffect, THINKING_LOOK_UP_DURATION_MSECS } from "./effects
 import { createTalkingEffect } from "./effects/talkingEffectUtil";
 import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
 import { isCharacterInteractive } from "./interactivityUtil";
-import Solution, { duplicateSolution } from "./solutions/types/Solution";
+import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
 import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
@@ -40,10 +40,10 @@ import EffectType from "./effects/types/EffectType";
 import {
   callOnActiveCharacterChangedAsNeeded,
   callOnMinutesChangedAsNeeded,
-  callOnSolutionsChangedAsNeeded
+  callOnConclusionsChangedAsNeeded
 } from "./gameStateNotificationUtil";
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hoverStateUtil";
-import { syncSolutionUnlocks, updateGameStateForChangeSolutions } from "./solutionStateUtil";
+import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from "./conclusionStateUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { normalizeId } from "./idUtil";
 import { calcRoomsBoundingRectWithRoofs } from "./roomRoofUtil";
@@ -158,7 +158,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number,
   events.forEach(event => {
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent); break;
-      case PlayerEventType.CHANGE_SOLUTIONS: updateGameStateForChangeSolutions(gameState, event as ChangeSolutionsEvent); break;
+      case PlayerEventType.CHANGE_CONCLUSIONS: updateGameStateForChangeConclusions(gameState, event as ChangeConclusionsEvent); break;
       case PlayerEventType.NEXT_CHARACTER: _updateGameStateForNextCharacter(gameState, event as NextCharacterEvent); break;
       case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent); break;
       case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, event as MouseDownEvent); break;
@@ -318,7 +318,7 @@ function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D
 
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
   onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
-  onActiveCharacterChanged?:(characterId:string) => void, onSolutionsChanged?:(solutions:Solution[]) => void, isScrubbing:boolean = false) {
+  onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void, isScrubbing:boolean = false) {
   _clearCanvas(gameState, context);
   if (!gameState) {
     context.canvas.style.cursor = "default";
@@ -345,8 +345,8 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   _syncThinkingEffects(gameState, isScrubbing);
   assert(gameState.activeEffects.length <= MAX_ACTIVE_EFFECTS,
     `active effect count ${gameState.activeEffects.length} exceeds MAX_ACTIVE_EFFECTS ${MAX_ACTIVE_EFFECTS}; an effect callback may not be returning false to remove itself`);
-  syncSolutionUnlocks(gameState);
-  if (onSolutionsChanged) callOnSolutionsChangedAsNeeded(gameState, onSolutionsChanged);
+  syncConclusionUnlocks(gameState);
+  if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
   drawGameState(gameState, context);
 }
 
@@ -357,7 +357,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     characters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById)),
     rooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById)),
     itemsById,
-    solutions:level.solutions.map(duplicateSolution),
+    conclusions:level.conclusions.map(duplicateConclusion),
     winSynopsis:level.winSynopsis,
     backgroundImageUrl:level.backgroundImageUrl,
     groundFloorY:level.groundFloorY,
@@ -386,11 +386,11 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN,
     lastActiveCharacterChangedValue:"",
-    solutionsRevision:0,
-    lastNotifiedSolutionsRevision:0
+    conclusionsRevision:0,
+    lastNotifiedConclusionsRevision:0
   }
   rebuildDynamicStateForTime(gameState, level.initialTime);
   _setActiveRoomDiscovered(gameState);
-  syncSolutionUnlocks(gameState);
+  syncConclusionUnlocks(gameState);
   return gameState;
 }

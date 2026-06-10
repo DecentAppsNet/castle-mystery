@@ -2,14 +2,14 @@ import TimeLabel from "./TimeLabel";
 import Character from "./Character";
 import Item from "./Item";
 import Room from "./Room"
-import Solution from "../solutions/types/Solution";
+import Conclusion from "../conclusions/types/Conclusion";
 
 type Level = Readonly<{
   rooms:Room[],
   initialCharacters:Character[],
   characters:Character[],
   itemsById:Map<string, Item>,
-  solutions:Solution[],
+  conclusions:Conclusion[],
   winSynopsis:string,
   backgroundImageUrl:string|null,
   groundFloorY:number,
@@ -27,7 +27,7 @@ export function createDefaultLevel():Level {
     initialCharacters:[],
     characters:[],
     itemsById:new Map<string, Item>(),
-    solutions:[],
+    conclusions:[],
     winSynopsis:'',
     backgroundImageUrl:null,
     groundFloorY:0,

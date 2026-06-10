@@ -38,4 +38,4 @@ BH
 
 * description=Unlocks the bedroom.
 
-# solutions
+# conclusions

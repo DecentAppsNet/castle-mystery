@@ -29,11 +29,11 @@ A
 
 # itinerary
 
-# solutions
+# conclusions
 
 * Rooms=Ghost
 * specters=Ghost
 
 ## Mystery
 
-* solution=[Ghost]
+* conclusion=[Ghost]

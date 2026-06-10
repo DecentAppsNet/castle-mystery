@@ -1,37 +1,37 @@
 import ClozePart, { duplicateClozePart } from './ClozePart';
 
-type Solution = {
+type Conclusion = {
   readonly id: string;
   readonly title: string;
   parts: ClozePart[];
   isComplete:boolean;
   isLocked:boolean;
-  readonly unlockSolutionIds:readonly string[];
+  readonly unlockConclusionIds:readonly string[];
   readonly revealRoomIds:readonly string[];
 };
 
-export function createDefaultSolution():Solution {
+export function createDefaultConclusion():Conclusion {
   return {
-    id:'solution',
-    title:'Solution',
+    id:'conclusion',
+    title:'Conclusion',
     parts:[],
     isComplete:false,
     isLocked:false,
-    unlockSolutionIds:[],
+    unlockConclusionIds:[],
     revealRoomIds:[]
   };
 }
 
-export function duplicateSolution(from:Solution):Solution {
+export function duplicateConclusion(from:Conclusion):Conclusion {
   return {
     id:from.id,
     title:from.title,
     parts:from.parts.map(duplicateClozePart),
     isComplete:from.isComplete,
     isLocked:from.isLocked,
-    unlockSolutionIds:[...from.unlockSolutionIds],
+    unlockConclusionIds:[...from.unlockConclusionIds],
     revealRoomIds:[...from.revealRoomIds]
   };
 }
 
-export default Solution;
+export default Conclusion;

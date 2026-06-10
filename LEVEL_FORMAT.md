@@ -9,7 +9,7 @@ The level file has these sections:
 * characters - declares characters and their descriptive metadata, including which items they begin with.
 * items - declares items and their display metadata.
 * itinerary - authors time-based character activities such as movement, speech, thoughts, item interactions, and door changes.
-* solutions - declares the solution prompts and answers used by the mystery-solving UI.
+* conclusions - declares the conclusion prompts and answers used by the mystery-solving UI.
 
 # Syntax Style - Forgiving and Protective
 
@@ -478,23 +478,23 @@ Example: `0:15:03 John wanders`
 
 This is useful for background motion when you do not care about the exact destination.
 
-# "Solutions" Section
+# "Conclusions" Section
 
-The `solutions` section controls the answer panels shown in the mystery-solving UI.
+The `conclusions` section controls the answer panels shown in the mystery-solving UI.
 
-Keep this section simple: each solution is usually a sentence with one or more blanks.
+Keep this section simple: each conclusion is usually a sentence with one or more blanks.
 
 ## What To Write
 
 The section can contain:
 * optional category lists at the top
-* one subsection per solution
+* one subsection per conclusion
 
 Category lists are useful for populating blanks with options. Category lists for characters, rooms, and items are automatically generated.
 
 ## Category Lists
 
-Write category lines before any `##` solution subsections.
+Write category lines before any `##` conclusion subsections.
 
 Format:
 * `* category name=Option 1|Option 2|Option 3`
@@ -504,25 +504,25 @@ When a blank's correct answer or answers all appear in one of these categories, 
 Example:
 
 ```md
-# solutions
+# conclusions
 
 * people=King|Queen|Butler
 * rooms=Library|Kitchen|Study
 ```
 
-## Solution Subsections
+## Conclusion Subsections
 
-Write one `##` subsection per solution.
+Write one `##` subsection per conclusion.
 
-Useful lines inside a solution subsection:
-* `* solution=...` - the cloze sentence that must be solved by the player
+Useful lines inside a conclusion subsection:
+* `* conclusion=...` - the cloze sentence that must be solved by the player
 * `* title=...` - optional display title; default is the subsection name
-* `* revealRooms=Room A|Room B` - optional; completing this solution reveals the named rooms
-* `* unlockSolutions=Solution A|Solution B` - optional; completing this solution unlocks the named solutions
+* `* revealRooms=Room A|Room B` - optional; completing this conclusion reveals the named rooms
+* `* unlockConclusions=Conclusion A|Conclusion B` - optional; completing this conclusion unlocks the named conclusions
 
-`revealRooms` can match room ids or room titles. `unlockSolutions` can match solution ids or solution titles.
+`revealRooms` can match room ids or room titles. `unlockConclusions` can match conclusion ids or conclusion titles.
 
-Solutions named by `unlockSolutions` begin locked until one of their prerequisite solutions is completed.
+Conclusions named by `unlockConclusions` begin locked until one of their prerequisite conclusions is completed.
 
 ## Writing Blanks
 
@@ -536,26 +536,26 @@ If the blank matches one of your categories, the player will see that category's
 
 ## Images And Separators
 
-Inside a `solution=` line, you can also use:
+Inside a `conclusion=` line, you can also use:
 * `(imageFileName.png)` for an image
 * `---` for a visual separator between parts
 
 Image references are authored as filenames, not paths. The engine resolves them against the supported asset folders at load time.
 
-This is most useful for identity-style solutions.
+This is most useful for identity-style conclusions.
 
 ## Secret Identities
 
-The engine automatically generates an `Identities` solution when the level has characters.
+The engine automatically generates an `Identities` conclusion when the level has characters.
 
-If you want to customize only the metadata for that generated solution, add an `## identities` subsection without a `solution=` line. In that special case, the generated identity blanks are kept, while authored metadata such as `title`, `revealRooms`, and `unlockSolutions` is applied.
+If you want to customize only the metadata for that generated conclusion, add an `## identities` subsection without a `conclusion=` line. In that special case, the generated identity blanks are kept, while authored metadata such as `title`, `revealRooms`, and `unlockConclusions` is applied.
 
-If you do author a `solution=` line inside `## identities`, that authored solution replaces the generated one.
+If you do author a `conclusion=` line inside `## identities`, that authored conclusion replaces the generated one.
 
 ## Example
 
 ```md
-# solutions
+# conclusions
 
 * people=King|Queen|Butler
 * actions=searched|looked|hid
@@ -564,15 +564,15 @@ If you do author a `solution=` line inside `## identities`, that authored soluti
 
 * title=The Missing Book
 * revealRooms=Library
-* unlockSolutions=Secret Identities
-* solution=[Butler] [searched|looked] the Library.
+* unlockConclusions=Secret Identities
+* conclusion=[Butler] [searched|looked] the Library.
 
 ## Secret Identities
 
-* solution=(kingFace.png) = [King] --- (queenFace.png) = [Queen]
+* conclusion=(kingFace.png) = [King] --- (queenFace.png) = [Queen]
 
 ## identities
 
 * revealRooms=Study|Vault
-* unlockSolutions=Final Accusation
+* unlockConclusions=Final Accusation
 ```

@@ -31,8 +31,8 @@ qb..
 
 * description=A book.
 
-# solutions
+# conclusions
 
 ## The MacDonald Mystery
 
-* solution=[Lady MacBeth] found the [Royal Decree] in [MacDonald Chamber].
+* conclusion=[Lady MacBeth] found the [Royal Decree] in [MacDonald Chamber].

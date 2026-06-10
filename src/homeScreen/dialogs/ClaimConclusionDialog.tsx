@@ -3,20 +3,20 @@ import { ChangeEvent, Fragment, ReactNode, useEffect, useRef, useState } from "r
 import ModalDialog from "@/components/modalDialogs/ModalDialog";
 import DialogButton from "@/components/modalDialogs/DialogButton";
 import DialogFooter from "@/components/modalDialogs/DialogFooter";
-import Solution from "@/game/solutions/types/Solution";
-import ClozeBlank, { UNSPECIFIED_ANSWER } from "@/game/solutions/types/ClozeBlank";
-import ClozeImage from "@/game/solutions/types/ClozeImage";
-import ClozeText from "@/game/solutions/types/ClozeText";
-import ClozePartType from "@/game/solutions/types/ClozePartType";
-import { duplicateSolution } from "@/game/solutions/types/Solution";
-import { isSolutionMissingAnswers } from "@/game/solutions/solutionUtil";
+import Conclusion from "@/game/conclusions/types/Conclusion";
+import ClozeBlank, { UNSPECIFIED_ANSWER } from "@/game/conclusions/types/ClozeBlank";
+import ClozeImage from "@/game/conclusions/types/ClozeImage";
+import ClozeText from "@/game/conclusions/types/ClozeText";
+import ClozePartType from "@/game/conclusions/types/ClozePartType";
+import { duplicateConclusion } from "@/game/conclusions/types/Conclusion";
+import { isConclusionMissingAnswers } from "@/game/conclusions/conclusionUtil";
 import ImageSet from "@/game/types/ImageSet";
 import { isCandidateUrls } from "@/game/imageUrlUtil";
 
-import styles from './ClaimSolutionDialog.module.css';
+import styles from './ClaimConclusionDialog.module.css';
 
 type IndexedClozePart = {
-  part:Solution['parts'][number],
+  part:Conclusion['parts'][number],
   partIndex:number
 }
 
@@ -39,11 +39,11 @@ function _formatTimeRemaining(remainingMsecs:number):string {
 
 type Props = {
   isOpen:boolean,
-  solution:Solution,
+  conclusion:Conclusion,
   imageSet:ImageSet,
   cooldownUntilTime:number|null,
-  onClaim:(solution:Solution) => boolean,
-  onClose:(solution:Solution) => void
+  onClaim:(conclusion:Conclusion) => boolean,
+  onClose:(conclusion:Conclusion) => void
 }
 
 function ImageBitmapCanvas({ imageBitmap }: { imageBitmap:ImageBitmap }) {
@@ -63,7 +63,7 @@ function ImageBitmapCanvas({ imageBitmap }: { imageBitmap:ImageBitmap }) {
     context.drawImage(imageBitmap, 0, 0);
   }, [imageBitmap]);
 
-  return <canvas ref={canvasRef} className={styles.statementImage} aria-label='Solution reference image' />;
+  return <canvas ref={canvasRef} className={styles.statementImage} aria-label='Conclusion reference image' />;
 }
 
 function _createBlankText(blank:ClozeBlank):string {
@@ -71,11 +71,11 @@ function _createBlankText(blank:ClozeBlank):string {
   return blank.availableAnswers[blank.playerAnswerIndex] || '';
 }
 
-function _updateSolutionBlankAnswer(solution:Solution, blankPartIndex:number, playerAnswerIndex:number):Solution {
-  const updatedSolution = duplicateSolution(solution);
-  const blank = updatedSolution.parts[blankPartIndex] as ClozeBlank;
+function _updateConclusionBlankAnswer(conclusion:Conclusion, blankPartIndex:number, playerAnswerIndex:number):Conclusion {
+  const updatedConclusion = duplicateConclusion(conclusion);
+  const blank = updatedConclusion.parts[blankPartIndex] as ClozeBlank;
   blank.playerAnswerIndex = playerAnswerIndex;
-  return updatedSolution;
+  return updatedConclusion;
 }
 
 function _createClozeLineLayout(parts:IndexedClozePart[]):ClozeLineLayout {
@@ -84,11 +84,11 @@ function _createClozeLineLayout(parts:IndexedClozePart[]):ClozeLineLayout {
   return 'flow';
 }
 
-function _createClozeLines(solution:Solution):ClozeLine[] {
+function _createClozeLines(conclusion:Conclusion):ClozeLine[] {
   const lines:ClozeLine[] = [];
   let currentLineParts:IndexedClozePart[] = [];
 
-  solution.parts.forEach((part, partIndex) => {
+  conclusion.parts.forEach((part, partIndex) => {
     if (part.type === ClozePartType.separator) {
       if (currentLineParts.length > 0) {
         lines.push({ parts:currentLineParts, layout:_createClozeLineLayout(currentLineParts) });
@@ -120,7 +120,7 @@ function _findClozeImageBitmap(imagePart:ClozeImage, imageSet:ImageSet):ImageBit
   return null;
 }
 
-function _renderClozePart(part:Solution['parts'][number], partIndex:number, solution:Solution, imageSet:ImageSet,
+function _renderClozePart(part:Conclusion['parts'][number], partIndex:number, conclusion:Conclusion, imageSet:ImageSet,
   onBlankAnswerChanged:(blankPartIndex:number, playerAnswerIndex:number) => void, imageWrapperClassName?:string):ReactNode {
   if (part.type === ClozePartType.text) {
     const textPart = part as ClozeText;
@@ -136,7 +136,7 @@ function _renderClozePart(part:Solution['parts'][number], partIndex:number, solu
   }
 
   const blank = part as ClozeBlank;
-  if (solution.isComplete) {
+  if (conclusion.isComplete) {
     return <span key={partIndex} className={styles.completedBlank}>{_createBlankText(blank)}</span>;
   }
 
@@ -154,58 +154,58 @@ function _renderClozePart(part:Solution['parts'][number], partIndex:number, solu
   </select>;
 }
 
-function _renderClozeLine(line:ClozeLine, lineIndex:number, solution:Solution, imageSet:ImageSet,
+function _renderClozeLine(line:ClozeLine, lineIndex:number, conclusion:Conclusion, imageSet:ImageSet,
   onBlankAnswerChanged:(blankPartIndex:number, playerAnswerIndex:number) => void):ReactNode {
   if (line.layout === 'leading-image-column') {
     const [leadingImagePart, ...remainingParts] = line.parts;
     return <div key={lineIndex} className={styles.statementLineLeadingImageColumn}>
       <div className={styles.statementLineImageColumn}>
-        {_renderClozePart(leadingImagePart.part, leadingImagePart.partIndex, solution, imageSet, onBlankAnswerChanged, styles.leadingImagePartWrapper)}
+        {_renderClozePart(leadingImagePart.part, leadingImagePart.partIndex, conclusion, imageSet, onBlankAnswerChanged, styles.leadingImagePartWrapper)}
       </div>
       <div className={styles.statementLineContentColumn}>
-        {remainingParts.map(({ part, partIndex }) => _renderClozePart(part, partIndex, solution, imageSet, onBlankAnswerChanged))}
+        {remainingParts.map(({ part, partIndex }) => _renderClozePart(part, partIndex, conclusion, imageSet, onBlankAnswerChanged))}
       </div>
     </div>;
   }
 
   return <div key={lineIndex} className={styles.statementLine}>
-    {line.parts.map(({ part, partIndex }) => _renderClozePart(part, partIndex, solution, imageSet, onBlankAnswerChanged))}
+    {line.parts.map(({ part, partIndex }) => _renderClozePart(part, partIndex, conclusion, imageSet, onBlankAnswerChanged))}
   </div>;
 }
 
-function _renderClozeStatementContent(solution:Solution, imageSet:ImageSet, onBlankAnswerChanged:(blankPartIndex:number, playerAnswerIndex:number) => void):ReactNode {
-  const lines = _createClozeLines(solution);
+function _renderClozeStatementContent(conclusion:Conclusion, imageSet:ImageSet, onBlankAnswerChanged:(blankPartIndex:number, playerAnswerIndex:number) => void):ReactNode {
+  const lines = _createClozeLines(conclusion);
   return <div className={styles.statement}>
     {lines.map((line, lineIndex) => <Fragment key={lineIndex}>
-      {_renderClozeLine(line, lineIndex, solution, imageSet, onBlankAnswerChanged)}
+      {_renderClozeLine(line, lineIndex, conclusion, imageSet, onBlankAnswerChanged)}
       {lineIndex < lines.length - 1 ? <hr className={styles.separator} /> : null}
     </Fragment>)}
   </div>;
 }
 
-function _renderSolutionStatus(solution:Solution, cooldownRemainingMsecs:number|null) {
-  if (solution.isComplete) {
-    return <p className={styles.status}>Your claimed solution is correct.</p>;
+function _renderConclusionStatus(conclusion:Conclusion, cooldownRemainingMsecs:number|null) {
+  if (conclusion.isComplete) {
+    return <p className={styles.status}>Your claimed conclusion is correct.</p>;
   }
 
   if (cooldownRemainingMsecs !== null) {
     return <p className={styles.status}>Your last claim was incorrect. You may guess again in {_formatTimeRemaining(cooldownRemainingMsecs)}.</p>;
   }
 
-  if (isSolutionMissingAnswers(solution)) {
-    return <p className={styles.status}>All blanks must be filled in before claiming the solution.</p>;
+  if (isConclusionMissingAnswers(conclusion)) {
+    return <p className={styles.status}>All blanks must be filled in before claiming the conclusion.</p>;
   }
 
-  return <p className={styles.status}>Claim this as the solution only when you are confident.</p>;
+  return <p className={styles.status}>Claim this as the conclusion only when you are confident.</p>;
 }
 
-function ClaimSolutionDialog({solution, imageSet, cooldownUntilTime, onClaim, onClose, isOpen}:Props) {
-  const [draftSolution, setDraftSolution] = useState<Solution>(duplicateSolution(solution));
+function ClaimConclusionDialog({conclusion, imageSet, cooldownUntilTime, onClaim, onClose, isOpen}:Props) {
+  const [draftConclusion, setDraftConclusion] = useState<Conclusion>(duplicateConclusion(conclusion));
   const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
-    setDraftSolution(duplicateSolution(solution));
-  }, [solution]);
+    setDraftConclusion(duplicateConclusion(conclusion));
+  }, [conclusion]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -228,24 +228,24 @@ function ClaimSolutionDialog({solution, imageSet, cooldownUntilTime, onClaim, on
     : Math.max(0, cooldownUntilTime - now);
   const isOnCooldown = cooldownRemainingMsecs !== null && cooldownRemainingMsecs > 0;
 
-  const isClaimDisabled = draftSolution.isComplete || isSolutionMissingAnswers(draftSolution) || isOnCooldown;
-  const clozeStatementContent = _renderClozeStatementContent(draftSolution, imageSet, (blankPartIndex, playerAnswerIndex) => {
-    setDraftSolution(from => _updateSolutionBlankAnswer(from, blankPartIndex, playerAnswerIndex));
+  const isClaimDisabled = draftConclusion.isComplete || isConclusionMissingAnswers(draftConclusion) || isOnCooldown;
+  const clozeStatementContent = _renderClozeStatementContent(draftConclusion, imageSet, (blankPartIndex, playerAnswerIndex) => {
+    setDraftConclusion(from => _updateConclusionBlankAnswer(from, blankPartIndex, playerAnswerIndex));
   });
-  const solutionStatusContent = _renderSolutionStatus(draftSolution, isOnCooldown ? cooldownRemainingMsecs : null);
+  const conclusionStatusContent = _renderConclusionStatus(draftConclusion, isOnCooldown ? cooldownRemainingMsecs : null);
 
   return (
-    <ModalDialog onCancel={() => onClose(draftSolution)} title={solution.title} isOpen={isOpen}>
+    <ModalDialog onCancel={() => onClose(draftConclusion)} title={conclusion.title} isOpen={isOpen}>
       {clozeStatementContent}
-      {solutionStatusContent}
+      {conclusionStatusContent}
       <DialogFooter>
-        <DialogButton text='Close' onClick={() => onClose(draftSolution)} />  
-        <DialogButton text='Claim Solution' onClick={() => {
-          onClaim(draftSolution);
+        <DialogButton text='Close' onClick={() => onClose(draftConclusion)} />  
+        <DialogButton text='Claim Conclusion' onClick={() => {
+          onClaim(draftConclusion);
         }} disabled={isClaimDisabled} isPrimary />
       </DialogFooter>
     </ModalDialog>
   );
 }
 
-export default ClaimSolutionDialog;
+export default ClaimConclusionDialog;

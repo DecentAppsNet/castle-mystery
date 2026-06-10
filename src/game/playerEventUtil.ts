@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
-import ChangeSolutionsEvent from "./types/playerEvents/ChangeSolutionsEvent";
+import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
@@ -10,7 +10,7 @@ import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
 import MouseWheelEvent from "./types/playerEvents/MouseWheelEvent";
 import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
-import Solution from "./solutions/types/Solution";
+import Conclusion from "./conclusions/types/Conclusion";
 
 let thePlayerEvents:PlayerEvent[] = [];
 
@@ -37,8 +37,8 @@ export function playPause(isPlaying:boolean) {
   _replaceOrAddEventOfType(thePlayerEvents, event);
 }
 
-export function changeSolutions(solutions:Solution[]) {
-  const event:ChangeSolutionsEvent = { type:PlayerEventType.CHANGE_SOLUTIONS, solutions };
+export function changeConclusions(conclusions:Conclusion[]) {
+  const event:ChangeConclusionsEvent = { type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions };
   _replaceOrAddEventOfType(thePlayerEvents, event);
 }
 

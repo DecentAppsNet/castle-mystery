@@ -1,6 +1,6 @@
 const PlayerEventType = {
   CHANGE_TIME:"ChangeTime",
-  CHANGE_SOLUTIONS:"ChangeSolutions",
+  CHANGE_CONCLUSIONS:"ChangeConclusions",
   NEXT_CHARACTER:"NextCharacter",
   PLAY_PAUSE:"PlayPause",
   MOUSEDOWN:"MouseDown",

@@ -79,7 +79,7 @@ The author does not control the directory, scheme, host, query string, or fragme
 
 ### 5. Stored asset references use the concatenated runtime form
 
-When asset references are stored in `Level`, `GameState`, `Character`, solution parts, image caches, or other runtime data structures, they should use the concatenated trusted runtime path, not the raw authored filename.
+When asset references are stored in `Level`, `GameState`, `Character`, conclusion parts, image caches, or other runtime data structures, they should use the concatenated trusted runtime path, not the raw authored filename.
 
 For example, if a level authors `background=sky.png`, the stored value should be `/assets/backgrounds/sky.png`.
 

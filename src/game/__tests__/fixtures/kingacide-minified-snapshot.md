@@ -73,7 +73,7 @@ HL
 0:00:05 Queen takes Book
 0:00:06 King @ Library
 
-# solutions
+# conclusions
 
 * characters=King|Queen|Jester
 * items=book|sceptre|dagger

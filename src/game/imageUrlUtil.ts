@@ -8,7 +8,7 @@ export type CandidateUrls = string[];
 const BACKGROUND_IMAGE_ASSET_BASE_URL = '/assets/backgrounds/';
 const FACE_IMAGE_ASSET_BASE_URL = '/assets/faces/';
 const ITEM_IMAGE_ASSET_BASE_URL = '/assets/items/';
-const SOLUTION_IMAGE_ASSET_BASE_URL = '/assets/solutions/';
+const CONCLUSION_IMAGE_ASSET_BASE_URL = '/assets/conclusions/';
 
 export function isCandidateUrls(assetUrl:string|CandidateUrls):assetUrl is CandidateUrls {
   return Array.isArray(assetUrl);
@@ -29,15 +29,15 @@ export function getItemImageAssetUrl(itemImageFilename:string):string {
   return `${ITEM_IMAGE_ASSET_BASE_URL}${itemImageFilename}`;
 }
 
-function _getSolutionImageAssetUrl(solutionImageFilename:string):string {
-  validateFilename(solutionImageFilename, 'solution cloze image');
-  return `${SOLUTION_IMAGE_ASSET_BASE_URL}${solutionImageFilename}`;
+function _getConclusionImageAssetUrl(conclusionImageFilename:string):string {
+  validateFilename(conclusionImageFilename, 'conclusion cloze image');
+  return `${CONCLUSION_IMAGE_ASSET_BASE_URL}${conclusionImageFilename}`;
 }
 
-export function getClozeImageCandidateUrls(solutionImageFilename:string):CandidateUrls {
+export function getClozeImageCandidateUrls(conclusionImageFilename:string):CandidateUrls {
   return [
-    _getSolutionImageAssetUrl(solutionImageFilename),
-    getFaceImageAssetUrl(solutionImageFilename)
+    _getConclusionImageAssetUrl(conclusionImageFilename),
+    getFaceImageAssetUrl(conclusionImageFilename)
   ];
 }
 

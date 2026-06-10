@@ -6,10 +6,10 @@ import { createGameState } from '../gameUtil';
 import { updateGameStateForMouseMove } from '../hoverStateUtil';
 import { createItineraryIndex } from '../itineraryUtil';
 import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
-import { syncSolutionsWithUnlocks } from '../solutions/solutionDiscoveryUtil';
-import { updateGameStateForChangeSolutions } from '../solutionStateUtil';
-import ClozePartType from '../solutions/types/ClozePartType';
-import { createDefaultSolution } from '../solutions/types/Solution';
+import { syncConclusionsWithUnlocks } from '../conclusions/conclusionDiscoveryUtil';
+import { updateGameStateForChangeConclusions } from '../conclusionStateUtil';
+import ClozePartType from '../conclusions/types/ClozePartType';
+import { createDefaultConclusion } from '../conclusions/types/Conclusion';
 import Itinerary from '../types/Itinerary';
 import Level, { createDefaultLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
@@ -68,21 +68,21 @@ function _createTestLevel():Level {
       itineraryIndex:createItineraryIndex(itinerary, initialPosition)
     }],
     itemsById:new Map([['book', bookItem]]),
-    solutions:[
+    conclusions:[
       {
-        ...createDefaultSolution(),
+        ...createDefaultConclusion(),
         id:'open',
         title:'Open',
         parts:[{ type:ClozePartType.text, text:'Open' }],
         isLocked:false,
-        unlockSolutionIds:['solution locked'],
+        unlockConclusionIds:['conclusion locked'],
         revealRoomIds:['study']
       },
       {
-        ...createDefaultSolution(),
-        id:'solution locked',
-        title:'Solution Locked',
-        parts:[{ type:ClozePartType.text, text:'Solution Locked' }],
+        ...createDefaultConclusion(),
+        id:'conclusion locked',
+        title:'Conclusion Locked',
+        parts:[{ type:ClozePartType.text, text:'Conclusion Locked' }],
         isLocked:true,
       }
     ],
@@ -95,37 +95,37 @@ function _createTestLevel():Level {
   };
 }
 
-describe('solution unlock integration', () => {
+describe('conclusion unlock integration', () => {
   it('preserves authored outgoing unlock edges and initial locked targets in the game state', () => {
     const gameState = createGameState(_createTestLevel());
 
-    expect(gameState.solutions.map(solution => solution.isLocked)).toEqual([false, true]);
-    expect(gameState.solutions[0].unlockSolutionIds).toEqual(['solution locked']);
-    expect(gameState.solutions[1].unlockSolutionIds).toEqual([]);
+    expect(gameState.conclusions.map(conclusion => conclusion.isLocked)).toEqual([false, true]);
+    expect(gameState.conclusions[0].unlockConclusionIds).toEqual(['conclusion locked']);
+    expect(gameState.conclusions[1].unlockConclusionIds).toEqual([]);
     expect(gameState.isLevelComplete).toBe(false);
     expect(gameState.winSynopsis).toBe('Solved it.');
   });
 
-  it('unlocks solutions listed by a completed solution', () => {
+  it('unlocks conclusions listed by a completed conclusion', () => {
     const gameState = createGameState(_createTestLevel());
 
-    const completedSolutions = gameState.solutions.map(solution => solution.id === 'open'
-      ? { ...solution, isComplete:true }
-      : solution);
-    const afterSolutionUnlock = syncSolutionsWithUnlocks(completedSolutions).solutions;
-    expect(afterSolutionUnlock.map(solution => solution.isLocked)).toEqual([false, false]);
+    const completedConclusions = gameState.conclusions.map(conclusion => conclusion.id === 'open'
+      ? { ...conclusion, isComplete:true }
+      : conclusion);
+    const afterConclusionUnlock = syncConclusionsWithUnlocks(completedConclusions).conclusions;
+    expect(afterConclusionUnlock.map(conclusion => conclusion.isLocked)).toEqual([false, false]);
   });
 
-  it('marks the game state complete when all solutions begin unlocked and complete', () => {
+  it('marks the game state complete when all conclusions begin unlocked and complete', () => {
     const completeLevel = {
       ..._createTestLevel(),
-      solutions:_createTestLevel().solutions.map(solution => ({ ...solution, isLocked:false, isComplete:true }))
+      conclusions:_createTestLevel().conclusions.map(conclusion => ({ ...conclusion, isLocked:false, isComplete:true }))
     };
 
     expect(createGameState(completeLevel).isLevelComplete).toBe(true);
   });
 
-  it('reveals rooms from completed solutions and preserves that reveal across time rebuilds', () => {
+  it('reveals rooms from completed conclusions and preserves that reveal across time rebuilds', () => {
     const gameState = createGameState(_createTestLevel());
     const studyBeforeReveal = gameState.rooms.find(room => room.id === 'study') || null;
     const initialStudyBeforeReveal = gameState.initialRooms.find(room => room.id === 'study') || null;
@@ -133,10 +133,10 @@ describe('solution unlock integration', () => {
     expect(studyBeforeReveal?.isObscured).toBe(true);
     expect(initialStudyBeforeReveal?.isObscured).toBe(true);
 
-    const nextSolutions = gameState.solutions.map(solution => solution.id === 'open'
-      ? { ...solution, isComplete:true }
-      : solution);
-    updateGameStateForChangeSolutions(gameState, { type:PlayerEventType.CHANGE_SOLUTIONS, solutions:nextSolutions });
+    const nextConclusions = gameState.conclusions.map(conclusion => conclusion.id === 'open'
+      ? { ...conclusion, isComplete:true }
+      : conclusion);
+    updateGameStateForChangeConclusions(gameState, { type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions:nextConclusions });
 
     expect(gameState.rooms.find(room => room.id === 'study')?.isObscured).toBe(false);
     expect(gameState.initialRooms.find(room => room.id === 'study')?.isObscured).toBe(false);

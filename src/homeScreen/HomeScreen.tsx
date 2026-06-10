@@ -5,12 +5,12 @@ import { init } from "./interactions/initialization";
 import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/homeScreen/levelView/LevelView";
 import TimeSlider from "@/homeScreen/timeSlider/TimeSlider";
-import { updateNextCharacter, updatePlayPause, updateSolutions, updateTime, updateTimeMsecs } from "./interactions/gameplay";
+import { updateNextCharacter, updatePlayPause, updateConclusions, updateTime, updateTimeMsecs } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
 import { findNextRoomEntryTime, findPreviousRoomEntryTime } from "@/game/itineraryUtil";
 import { findRoomAtPosition } from "@/game/roomUtil";
-import SolutionsView from "./solutionsView/SolutionsView";
-import Solution from "@/game/solutions/types/Solution";
+import ConclusionsView from "./conclusionsView/ConclusionsView";
+import Conclusion from "@/game/conclusions/types/Conclusion";
 import Itinerary from "@/game/types/Itinerary";
 import WinLevelDialog from "./dialogs/WinLevelDialog";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
@@ -33,12 +33,12 @@ function _isEditableTarget(target:EventTarget|null):boolean {
   return target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || tagName === "BUTTON";
 }
 
-function _isLevelComplete(solutions:ReadonlyArray<Solution>):boolean {
-  return solutions.every(solution => !solution.isLocked && solution.isComplete);
+function _isLevelComplete(conclusions:ReadonlyArray<Conclusion>):boolean {
+  return conclusions.every(conclusion => !conclusion.isLocked && conclusion.isComplete);
 }
 
-function _shouldOpenWinLevelDialog(previousSolutions:ReadonlyArray<Solution>, nextSolutions:ReadonlyArray<Solution>):boolean {
-  return _isLevelComplete(nextSolutions) && !_isLevelComplete(previousSolutions);
+function _shouldOpenWinLevelDialog(previousConclusions:ReadonlyArray<Conclusion>, nextConclusions:ReadonlyArray<Conclusion>):boolean {
+  return _isLevelComplete(nextConclusions) && !_isLevelComplete(previousConclusions);
 }
 
 function HomeScreen() {
@@ -47,8 +47,8 @@ function HomeScreen() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
   const [winSynopsis, setWinSynopsis] = useState<string>("");
-  const [solutions, setSolutions] = useState<Solution[]>([]);
-  const [solutionClaimCooldowns, setSolutionClaimCooldowns] = useState<Record<string, number>>({});
+  const [conclusions, setConclusions] = useState<Conclusion[]>([]);
+  const [conclusionClaimCooldowns, setConclusionClaimCooldowns] = useState<Record<string, number>>({});
   const [activeCharacterId, setActiveCharacterId] = useState<string>("");
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
@@ -73,24 +73,24 @@ function HomeScreen() {
         setGameState(initResults.gameState);
         setLevelManifest(initResults.levelManifest);
         setWinSynopsis(initResults.gameState.winSynopsis);
-        setSolutions(initResults.gameState.solutions);
+        setConclusions(initResults.gameState.conclusions);
         setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
         if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
       }
     });
   }, []);
 
-  function _handleSolutionsChanged(nextSolutions:Solution[]) {
-    setSolutions(previousSolutions => {
-      if (_shouldOpenWinLevelDialog(previousSolutions, nextSolutions)) setModalDialogName(WinLevelDialog.name);
-      return nextSolutions;
+  function _handleConclusionsChanged(nextConclusions:Conclusion[]) {
+    setConclusions(previousConclusions => {
+      if (_shouldOpenWinLevelDialog(previousConclusions, nextConclusions)) setModalDialogName(WinLevelDialog.name);
+      return nextConclusions;
     });
   }
 
-  function _handleManualSolutionsUpdate(nextSolutions:Solution[]) {
-    setSolutions(previousSolutions => {
-      if (_shouldOpenWinLevelDialog(previousSolutions, nextSolutions)) setModalDialogName(WinLevelDialog.name);
-      return nextSolutions;
+  function _handleManualConclusionsUpdate(nextConclusions:Conclusion[]) {
+    setConclusions(previousConclusions => {
+      if (_shouldOpenWinLevelDialog(previousConclusions, nextConclusions)) setModalDialogName(WinLevelDialog.name);
+      return nextConclusions;
     });
   }
 
@@ -144,15 +144,15 @@ function HomeScreen() {
               setIsPlaying,
               setMinutes,
               setWinSynopsis,
-              setSolutions,
-              setSolutionClaimCooldowns,
+              setConclusions,
+              setConclusionClaimCooldowns,
               setActiveCharacterId,
               setIsScrubbing,
               setModalDialogName
             });
           }}
         />
-        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onSolutionsChanged={_handleSolutionsChanged} isScrubbing={isScrubbing} />
+        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onConclusionsChanged={_handleConclusionsChanged} isScrubbing={isScrubbing} />
         <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
@@ -169,17 +169,17 @@ function HomeScreen() {
         />
       </div>
       <div className={styles.sidePane}>
-        <SolutionsView 
-          solutions={solutions} 
+        <ConclusionsView 
+          conclusions={conclusions} 
           imageSet={gameState.imageSet} 
-          solutionClaimCooldowns={solutionClaimCooldowns}
-          onIncorrectClaim={(solutionId) => {
-            setSolutionClaimCooldowns(from => ({
+          conclusionClaimCooldowns={conclusionClaimCooldowns}
+          onIncorrectClaim={(conclusionId) => {
+            setConclusionClaimCooldowns(from => ({
               ...from,
-              [solutionId]: Date.now() + 2 * 60 * 1000
+              [conclusionId]: Date.now() + 2 * 60 * 1000
             }));
           }}
-          onUpdate={(nextSolutions) => { updateSolutions(nextSolutions, _handleManualSolutionsUpdate)} }
+          onUpdate={(nextConclusions) => { updateConclusions(nextConclusions, _handleManualConclusionsUpdate)} }
         />
       </div>
       <WinLevelDialog 
@@ -193,8 +193,8 @@ function HomeScreen() {
             setIsPlaying,
             setMinutes,
             setWinSynopsis,
-            setSolutions,
-            setSolutionClaimCooldowns,
+            setConclusions,
+            setConclusionClaimCooldowns,
             setActiveCharacterId,
             setIsScrubbing,
             setModalDialogName

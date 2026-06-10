@@ -1,16 +1,16 @@
-.solutionCardContainer {
+.conclusionCardContainer {
 	position: relative;
 	width: 100%;
 }
 
-.solutionCardPlaceholder {
+.conclusionCardPlaceholder {
 	box-sizing: border-box;
 	width: 100%;
 	min-height: 2.4rem;
 	padding: 0.45rem 0.7rem;
 }
 
-.obscuredSolutionOverlay {
+.obscuredConclusionOverlay {
 	position: absolute;
 	inset: 0;
 	display: flex;
@@ -26,7 +26,7 @@
 }
 
 
-.lockedSolutionIcon {
+.lockedConclusionIcon {
 	width: 2.8vh;
 	height: 2.8vh;
 	object-fit: contain;
@@ -34,13 +34,13 @@
 	z-index: 1;
 }
 
-.obscuredSolutionRevealOverlay {
+.obscuredConclusionRevealOverlay {
 	animation:
-		obscuredSolutionConsume 1050ms ease forwards,
-		obscuredSolutionReveal 3000ms linear 1050ms forwards;
+		obscuredConclusionConsume 1050ms ease forwards,
+		obscuredConclusionReveal 3000ms linear 1050ms forwards;
 }
 
-.solutionButton {
+.conclusionButton {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -60,17 +60,17 @@
 	text-align: left;
 }
 
-.solutionButton:hover {
+.conclusionButton:hover {
 	background: #e68a40 radial-gradient(circle, transparent 1%, #c57431 1%) center/23000%;
 }
 
-.solutionButton:active {
+.conclusionButton:active {
 	background-color: #e68a40;
 	background-size: 100%;
 	transition: background 0s;
 }
 
-.solutionTitle {
+.conclusionTitle {
 	font-size: 1.4vh;
 	line-height: 1.15;
 	letter-spacing: 0.1vh;
@@ -104,7 +104,7 @@
 	line-height: 1;
 }
 
-@keyframes obscuredSolutionConsume {
+@keyframes obscuredConclusionConsume {
 	0% {
 		transform: scale(1);
 	}
@@ -122,7 +122,7 @@
 	}
 }
 
-@keyframes obscuredSolutionReveal {
+@keyframes obscuredConclusionReveal {
 	0% {
 		opacity: 1;
 	}

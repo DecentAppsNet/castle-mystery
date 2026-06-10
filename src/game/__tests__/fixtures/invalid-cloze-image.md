@@ -24,7 +24,7 @@ H
 
 * description=A king.
 
-# solutions
+# conclusions
 
 ## Identities
 

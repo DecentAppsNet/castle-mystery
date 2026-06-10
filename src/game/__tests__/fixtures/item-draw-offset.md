@@ -38,4 +38,4 @@ HC..
 * drawOffsetY=-0.25
 * drawOffsetZ=0.1
 
-# solutions
+# conclusions

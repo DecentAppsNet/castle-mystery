@@ -72,4 +72,4 @@
 : Simon @ Sanctum
 : Simon @ Great Hall
 
-# solutions
+# conclusions

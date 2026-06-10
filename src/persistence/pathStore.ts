@@ -25,7 +25,7 @@ import { getAppId } from "decent-portal";
   
   The IndexedDb schema has a SCHEMA_VERSION, which is different than the APP_DATA_VERSION. The 
   SCHEMA_VERSION should only change if you decide to go beyond the key/value storage mechanism of this module or there is some update from
-  the template affecting the schema. (In the latter case, that update should have a migration solution available in newer template code.) 
+  the template affecting the schema. (In the latter case, that update should have a migration conclusion available in newer template code.) 
   
   The APP_DATA_VERSION, on the other hand, should increment each time you release a new
   version of your web app to production that relies on a different app-defined format of data stored in the key/value store. 

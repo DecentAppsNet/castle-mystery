@@ -29,10 +29,10 @@ A
 
 # itinerary
 
-# solutions
+# conclusions
 
 * characters=King|Queen
 
 ## Lone Blank
 
-* solution=[Throne Room] was empty.
+* conclusion=[Throne Room] was empty.

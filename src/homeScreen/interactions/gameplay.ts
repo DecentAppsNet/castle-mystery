@@ -3,8 +3,8 @@
 
 import { clamp } from "@/common/numberUtil";
 import { MSECS_IN_MINUTE } from "@/common/timeUtil";
-import Solution from "@/game/solutions/types/Solution";
-import { changeSolutions, changeTime, nextCharacter, playPause } from "@/game/playerEventUtil";
+import Conclusion from "@/game/conclusions/types/Conclusion";
+import { changeConclusions, changeTime, nextCharacter, playPause } from "@/game/playerEventUtil";
 
 export function msecsToMinutes(msecs:number):number {
   return msecs / MSECS_IN_MINUTE;
@@ -29,9 +29,9 @@ export function updateTimeMsecs(time:number, startTime:number, duration:number, 
   setIsPlaying(false);
 }
 
-export function updateSolutions(nextSolutions:Solution[], setSolutions:(solutions:Solution[]) => void) {
-  setSolutions(nextSolutions); // Update for React UI.
-  changeSolutions(nextSolutions); // Update gameState.
+export function updateConclusions(nextConclusions:Conclusion[], setConclusions:(conclusions:Conclusion[]) => void) {
+  setConclusions(nextConclusions); // Update for React UI.
+  changeConclusions(nextConclusions); // Update gameState.
 }
 
 export function updateNextCharacter() {

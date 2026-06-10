@@ -169,10 +169,10 @@ p...
 : Amos thinks, "Oh, Amos, you big fool."
 
 
-# solutions
+# conclusions
 
 * actions=hid | stole | evaded | wanted | spotted
 
 ## The Escape Route
 
-* solution=[Simon] [wanted] to escape.---[Amos] first [spotted] [Simon] in the [throne room], calling out to him.---With [Amos] in pursuit, [Simon] [hid] in the [foyer].---After [Amos] passed through, [Simon] doubled back, escaping via the [Guard Room].
+* conclusion=[Simon] [wanted] to escape.---[Amos] first [spotted] [Simon] in the [throne room], calling out to him.---With [Amos] in pursuit, [Simon] [hid] in the [foyer].---After [Amos] passed through, [Simon] doubled back, escaping via the [Guard Room].

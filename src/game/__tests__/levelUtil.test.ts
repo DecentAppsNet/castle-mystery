@@ -31,8 +31,8 @@ import itemImageText from './fixtures/item-image.md?raw';
 import itemDrawOffsetText from './fixtures/item-draw-offset.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
 import outsideRoomBelowGroundFloorText from './fixtures/outside-room-below-ground-floor.md?raw';
-import solutionsCaseInsensitiveCategoriesText from './fixtures/solutions-case-insensitive-categories.md?raw';
-import solutionsCategoryMatchesText from './fixtures/solutions-category-matches.md?raw';
+import conclusionsCaseInsensitiveCategoriesText from './fixtures/conclusions-case-insensitive-categories.md?raw';
+import conclusionsCategoryMatchesText from './fixtures/conclusions-category-matches.md?raw';
 import duplicateUnlockText from './fixtures/duplicate-unlock.md?raw';
 import duplicateCharacterSubsectionsCaseText from './fixtures/duplicate-character-subsections-case.md?raw';
 import duplicateCharacterSubsectionsSpacesText from './fixtures/duplicate-character-subsections-spaces.md?raw';
@@ -63,9 +63,9 @@ import invalidLockableExitItemText from './fixtures/invalid-lockable-exit-item.m
 import invalidCeilingFloorExitText from './fixtures/invalid-ceiling-floor-exit.md?raw';
 import lockRequiredItemMissingText from './fixtures/lock-required-item-missing.md?raw';
 import unlockRequiredItemMissingText from './fixtures/unlock-required-item-missing.md?raw';
-import duplicateSolutionCategoryGroupNamesText from './fixtures/duplicate-solution-category-group-names.md?raw';
-import duplicateSolutionPropertyText from './fixtures/duplicate-solution-property.md?raw';
-import duplicateSolutionSubsectionsCaseText from './fixtures/duplicate-solution-subsections-case.md?raw';
+import duplicateConclusionCategoryGroupNamesText from './fixtures/duplicate-conclusion-category-group-names.md?raw';
+import duplicateConclusionPropertyText from './fixtures/duplicate-conclusion-property.md?raw';
+import duplicateConclusionSubsectionsCaseText from './fixtures/duplicate-conclusion-subsections-case.md?raw';
 import loadLevelFromUrlWithImportsCharactersText from './fixtures/load-level-from-url-with-imports-characters.md?raw';
 import loadLevelFromUrlWithImportsText from './fixtures/load-level-from-url-with-imports.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
@@ -81,17 +81,17 @@ import lockableExitTwoSidedText from './fixtures/lockable-exit-two-sided.md?raw'
 import lockableExitWithItemText from './fixtures/lockable-exit-with-item.md?raw';
 import lowercaseTitleDefaultsText from './fixtures/lowercase-title-defaults.md?raw';
 import mapLegendRoomTitleDefaultText from './fixtures/map-legend-room-title-default.md?raw';
-import missingSolutionPhraseText from './fixtures/missing-solution-phrase.md?raw';
+import missingConclusionPhraseText from './fixtures/missing-conclusion-phrase.md?raw';
 import noPlacedCharactersText from './fixtures/no-placed-characters.md?raw';
 import overlappingSameCharacterSpeechText from './fixtures/overlapping-same-character-speech.md?raw';
 import overrideGeneratedCategoryGroupCaseText from './fixtures/override-generated-category-group-case.md?raw';
 import overrideRoomsText from './fixtures/override-rooms.md?raw';
-import solutionsFallbackText from './fixtures/solutions-fallback.md?raw';
-import solutionRevealRoomsText from './fixtures/solution-reveal-rooms.md?raw';
-import solutionUnlockSolutionsText from './fixtures/solution-unlock-solutions.md?raw';
+import conclusionsFallbackText from './fixtures/conclusions-fallback.md?raw';
+import conclusionRevealRoomsText from './fixtures/conclusion-reveal-rooms.md?raw';
+import conclusionUnlockConclusionsText from './fixtures/conclusion-unlock-conclusions.md?raw';
 import shortDurationLabelsText from './fixtures/short-duration-labels.md?raw';
 import stackedRoomItemsText from './fixtures/stacked-room-items.md?raw';
-import solutionsTwoSubsectionsText from './fixtures/solutions-two-subsections.md?raw';
+import conclusionsTwoSubsectionsText from './fixtures/conclusions-two-subsections.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
 import winSynopsisText from './fixtures/win-synopsis.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
@@ -104,7 +104,7 @@ import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
 import { FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
-import ClozeBlank from '../solutions/types/ClozeBlank';
+import ClozeBlank from '../conclusions/types/ClozeBlank';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
 import { LOCKABLE_WITHOUT_INV_CHECK } from '../types/RoomExit';
@@ -113,7 +113,7 @@ import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?ra
 import dropItemText from '../integration-tests/fixtures/drop-item.md?raw';
 import giveItemNearText from '../integration-tests/fixtures/give-item-near.md?raw';
 import wanderingTrappedText from '../integration-tests/fixtures/wandering-trapped.md?raw';
-import solutionsImageSeparatorText from './fixtures/solutions-image-separator.md?raw';
+import conclusionsImageSeparatorText from './fixtures/conclusions-image-separator.md?raw';
 import timelineStartTimeFieldText from './fixtures/timeline-start-time-field.md?raw';
 import timelineBothTimeAndStartTimeText from './fixtures/timeline-both-time-and-start-time.md?raw';
 import timelineExplicitEndSameDayText from './fixtures/timeline-explicit-end-same-day.md?raw';
@@ -186,7 +186,7 @@ describe('levelUtil itinerary loading', () => {
     expect(queen?.items.map(item => item.id)).toContain('romance novel');
     expect(eastHall?.isObscured).toBe(true);
     expect(foyer?.isObscured).toBe(false);
-    expect(level.solutions.map(solution => solution.title)).toEqual(['Identities']);
+    expect(level.conclusions.map(conclusion => conclusion.title)).toEqual(['Identities']);
   });
 
   it('parses immediate faces activities and applies their facing direction at the authored time', () => {
@@ -269,29 +269,29 @@ describe('levelUtil itinerary loading', () => {
     expect(level.rooms[0]?.title).toBe('');
   });
 
-  it('loads a minified kingacide snapshot with solutions and file-relative itinerary activity', () => {
+  it('loads a minified kingacide snapshot with conclusions and file-relative itinerary activity', () => {
     const level = loadLevelFromText(kingacideMinifiedSnapshotText, 'kingacide-minified-snapshot.md');
 
-    expect(level.solutions.map(solution => solution.title)).toEqual(['Identities', 'The Missing Book']);
-    expect(level.solutions[1].parts.length).toBeGreaterThan(0);
-    expect(level.solutions[1].parts[0].type).toBe('blank');
+    expect(level.conclusions.map(conclusion => conclusion.title)).toEqual(['Identities', 'The Missing Book']);
+    expect(level.conclusions[1].parts.length).toBeGreaterThan(0);
+    expect(level.conclusions[1].parts[0].type).toBe('blank');
   });
 
-  it('parses one solution per subsection from the solutions section', () => {
-    const level = loadLevelFromText(solutionsTwoSubsectionsText);
-    const authoredSolutions = level.solutions.filter(solution => solution.title !== 'Identities');
+  it('parses one conclusion per subsection from the conclusions section', () => {
+    const level = loadLevelFromText(conclusionsTwoSubsectionsText);
+    const authoredConclusions = level.conclusions.filter(conclusion => conclusion.title !== 'Identities');
 
-    expect(authoredSolutions.map(solution => solution.title)).toEqual(['First', 'Second']);
-    expect(authoredSolutions[0].parts.length).toBeGreaterThan(0);
-    expect(authoredSolutions[1].parts.length).toBeGreaterThan(0);
+    expect(authoredConclusions.map(conclusion => conclusion.title)).toEqual(['First', 'Second']);
+    expect(authoredConclusions[0].parts.length).toBeGreaterThan(0);
+    expect(authoredConclusions[1].parts.length).toBeGreaterThan(0);
   });
 
   it('collects available answers from all matching categories for each blank', () => {
-    const level = loadLevelFromText(solutionsCategoryMatchesText);
-    const solution = level.solutions.find(candidate => candidate.title === 'The Missing Book');
-    if (!solution) expect.fail('expected The Missing Book solution to exist');
-    const firstBlank = solution.parts[0] as ClozeBlank;
-    const secondBlank = solution.parts[2] as ClozeBlank;
+    const level = loadLevelFromText(conclusionsCategoryMatchesText);
+    const conclusion = level.conclusions.find(candidate => candidate.title === 'The Missing Book');
+    if (!conclusion) expect.fail('expected The Missing Book conclusion to exist');
+    const firstBlank = conclusion.parts[0] as ClozeBlank;
+    const secondBlank = conclusion.parts[2] as ClozeBlank;
 
     expect(firstBlank.availableAnswers).toEqual(['King', 'Queen', 'Prince']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
@@ -300,22 +300,22 @@ describe('levelUtil itinerary loading', () => {
   });
 
   it('falls back to blank values when no category contains all correct answers', () => {
-    const level = loadLevelFromText(solutionsFallbackText);
-    const solution = level.solutions.find(candidate => candidate.title === 'Lone Blank');
-    if (!solution) expect.fail('expected Lone Blank solution to exist');
-    const firstBlank = solution.parts[0] as ClozeBlank;
+    const level = loadLevelFromText(conclusionsFallbackText);
+    const conclusion = level.conclusions.find(candidate => candidate.title === 'Lone Blank');
+    if (!conclusion) expect.fail('expected Lone Blank conclusion to exist');
+    const firstBlank = conclusion.parts[0] as ClozeBlank;
 
     expect(firstBlank.availableAnswers).toEqual(['Throne Room']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
-    expect(solution.isLocked).toBe(false);
-    expect(solution.unlockSolutionIds).toEqual([]);
+    expect(conclusion.isLocked).toBe(false);
+    expect(conclusion.unlockConclusionIds).toEqual([]);
   });
 
-  it('includes character inventory item titles in default solution item categories', () => {
+  it('includes character inventory item titles in default conclusion item categories', () => {
     const level = loadLevelFromText(inventoryItemDefaultCategoryText);
-    const solution = level.solutions.find(candidate => candidate.id === 'missing item') || null;
-    if (!solution) expect.fail('expected Missing Item solution to exist');
-    const firstBlank = solution.parts[0] as ClozeBlank;
+    const conclusion = level.conclusions.find(candidate => candidate.id === 'missing item') || null;
+    if (!conclusion) expect.fail('expected Missing Item conclusion to exist');
+    const firstBlank = conclusion.parts[0] as ClozeBlank;
 
     expect(firstBlank.availableAnswers).toEqual(['Book', 'Crown']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
@@ -324,52 +324,52 @@ describe('levelUtil itinerary loading', () => {
   it('excludes noninteractive items from auto-generated cloze answer lists', () => {
     const level = loadLevelFromText(inventoryItemDefaultCategoryText
       .replace('* description=A crown.', '* description='));
-    const solution = level.solutions.find(candidate => candidate.id === 'missing item') || null;
-    if (!solution) expect.fail('expected Missing Item solution to exist');
-    const firstBlank = solution.parts[0] as ClozeBlank;
+    const conclusion = level.conclusions.find(candidate => candidate.id === 'missing item') || null;
+    if (!conclusion) expect.fail('expected Missing Item conclusion to exist');
+    const firstBlank = conclusion.parts[0] as ClozeBlank;
 
     expect(firstBlank.availableAnswers).toEqual(['Book']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
   });
 
-  it('resolves solution revealRooms references by room id or title', () => {
-    const level = loadLevelFromText(solutionRevealRoomsText);
-    const solution = level.solutions.find(candidate => candidate.id === 'discovery') || null;
+  it('resolves conclusion revealRooms references by room id or title', () => {
+    const level = loadLevelFromText(conclusionRevealRoomsText);
+    const conclusion = level.conclusions.find(candidate => candidate.id === 'discovery') || null;
 
-    expect(solution).not.toBeNull();
-    expect(solution?.revealRoomIds).toEqual(['atrium', 'library']);
+    expect(conclusion).not.toBeNull();
+    expect(conclusion?.revealRoomIds).toEqual(['atrium', 'library']);
   });
 
-  it('resolves unlockSolutions by solution id or title and locks targeted solutions initially', () => {
-    const level = loadLevelFromText(solutionUnlockSolutionsText);
-    const opener = level.solutions.find(candidate => candidate.id === 'first') || null;
-    const hiddenFollowup = level.solutions.find(candidate => candidate.id === 'second') || null;
+  it('resolves unlockConclusions by conclusion id or title and locks targeted conclusions initially', () => {
+    const level = loadLevelFromText(conclusionUnlockConclusionsText);
+    const opener = level.conclusions.find(candidate => candidate.id === 'first') || null;
+    const hiddenFollowup = level.conclusions.find(candidate => candidate.id === 'second') || null;
 
     expect(opener).not.toBeNull();
     expect(hiddenFollowup).not.toBeNull();
-    expect(opener?.unlockSolutionIds).toEqual(['second']);
+    expect(opener?.unlockConclusionIds).toEqual(['second']);
     expect(opener?.isLocked).toBe(false);
-    expect(hiddenFollowup?.unlockSolutionIds).toEqual([]);
+    expect(hiddenFollowup?.unlockConclusionIds).toEqual([]);
     expect(hiddenFollowup?.isLocked).toBe(true);
   });
 
-  it('matches solution category phrases case-insensitively', () => {
-    const level = loadLevelFromText(solutionsCaseInsensitiveCategoriesText, 'case-insensitive-categories.md', { validateUnlockPhrases:true });
-    const solution = level.solutions.find(candidate => candidate.title === 'Mystery');
-    if (!solution) expect.fail('expected Mystery solution to exist');
-    const firstBlank = solution.parts[0] as ClozeBlank;
+  it('matches conclusion category phrases case-insensitively', () => {
+    const level = loadLevelFromText(conclusionsCaseInsensitiveCategoriesText, 'case-insensitive-categories.md', { validateUnlockPhrases:true });
+    const conclusion = level.conclusions.find(candidate => candidate.title === 'Mystery');
+    if (!conclusion) expect.fail('expected Mystery conclusion to exist');
+    const firstBlank = conclusion.parts[0] as ClozeBlank;
 
     expect(firstBlank.availableAnswers).toEqual(['Book']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
   });
 
   it('parses cloze statement image and separator parts', () => {
-    const level = loadLevelFromText(solutionsImageSeparatorText);
-    const solution = level.solutions[0];
+    const level = loadLevelFromText(conclusionsImageSeparatorText);
+    const conclusion = level.conclusions[0];
 
-    expect(solution.parts.map(part => part.type)).toEqual(['image', 'text', 'blank', 'separator', 'image', 'text', 'blank']);
-    expect((solution.parts[0] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('kingFace.png'));
-    expect((solution.parts[4] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('queenFace.png'));
+    expect(conclusion.parts.map(part => part.type)).toEqual(['image', 'text', 'blank', 'separator', 'image', 'text', 'blank']);
+    expect((conclusion.parts[0] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('kingFace.png'));
+    expect((conclusion.parts[4] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('queenFace.png'));
   });
 
   it('defaults titles from ids and generates identities for all characters', () => {
@@ -378,7 +378,7 @@ describe('levelUtil itinerary loading', () => {
     const king = level.characters.find(character => character.id === 'king');
     const queen = level.characters.find(character => character.id === 'queen');
     const crown = hall.items.find(item => item.id === 'crown');
-    const identities = level.solutions.find(solution => solution.title === 'Identities') || null;
+    const identities = level.conclusions.find(conclusion => conclusion.title === 'Identities') || null;
     const identityBlanks = (identities?.parts.filter(part => part.type === 'blank') || []) as ClozeBlank[];
 
     expect(hall.title).toBe('Grand Hall');
@@ -398,9 +398,9 @@ describe('levelUtil itinerary loading', () => {
 
   it('excludes noninteractive characters from auto-generated cloze answer lists', () => {
     const level = loadLevelFromText(noninteractiveCharacterDefaultCategoryText);
-    const solution = level.solutions.find(candidate => candidate.id === 'mystery') || null;
-    if (!solution) expect.fail('expected Mystery solution to exist');
-    const firstBlank = solution.parts[0] as ClozeBlank;
+    const conclusion = level.conclusions.find(candidate => candidate.id === 'mystery') || null;
+    if (!conclusion) expect.fail('expected Mystery conclusion to exist');
+    const firstBlank = conclusion.parts[0] as ClozeBlank;
 
     expect(firstBlank.availableAnswers).toEqual(['His Majesty']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
@@ -408,9 +408,9 @@ describe('levelUtil itinerary loading', () => {
 
   it('alphabetizes auto-generated character cloze answer lists', () => {
     const level = loadLevelFromText(alphabetizedCharacterDefaultCategoryText);
-    const solution = level.solutions.find(candidate => candidate.id === 'mystery') || null;
-    if (!solution) expect.fail('expected Mystery solution to exist');
-    const firstBlank = solution.parts[0] as ClozeBlank;
+    const conclusion = level.conclusions.find(candidate => candidate.id === 'mystery') || null;
+    if (!conclusion) expect.fail('expected Mystery conclusion to exist');
+    const firstBlank = conclusion.parts[0] as ClozeBlank;
 
     expect(firstBlank.availableAnswers).toEqual(['Alpha', 'Zulu']);
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
@@ -418,30 +418,30 @@ describe('levelUtil itinerary loading', () => {
 
   it('marks identities complete when all character titles are already known', () => {
     const level = loadLevelFromText(identitiesAllTitlesKnownText);
-    const identities = level.solutions.find(solution => solution.id === 'identities') || null;
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities') || null;
 
     expect(identities).not.toBeNull();
     expect(identities?.isLocked).toBe(false);
     expect(identities?.isComplete).toBe(true);
   });
 
-  it('uses the generated identities solution as the default when an identities subsection only authors metadata', () => {
+  it('uses the generated identities conclusion as the default when an identities subsection only authors metadata', () => {
     const level = loadLevelFromText(identitiesAuthoredMetadataText);
-    const identities = level.solutions.find(solution => solution.id === 'identities') || null;
-    const finalMystery = level.solutions.find(solution => solution.id === 'final mystery') || null;
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities') || null;
+    const finalMystery = level.conclusions.find(conclusion => conclusion.id === 'final mystery') || null;
     const identityBlanks = (identities?.parts.filter(part => part.type === 'blank') || []) as ClozeBlank[];
 
     expect(identities).not.toBeNull();
     expect(identityBlanks).toHaveLength(1);
     expect(identities?.revealRoomIds).toEqual(['study']);
-    expect(identities?.unlockSolutionIds).toEqual(['final mystery']);
+    expect(identities?.unlockConclusionIds).toEqual(['final mystery']);
     expect(identities?.isLocked).toBe(false);
     expect(finalMystery?.isLocked).toBe(true);
   });
 
   it('excludes characters with empty descriptions from generated identities', () => {
     const level = loadLevelFromText(identitiesExcludesNoninteractiveCharactersText);
-    const identities = level.solutions.find(solution => solution.id === 'identities') || null;
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities') || null;
     const identityBlanks = (identities?.parts.filter(part => part.type === 'blank') || []) as ClozeBlank[];
 
     expect(identities).not.toBeNull();
@@ -455,12 +455,12 @@ describe('levelUtil itinerary loading', () => {
     const room = findRoom(level.rooms, 'MacDonald Chamber');
     const character = level.characters.find(candidate => candidate.id === 'lady macbeth') || null;
     const item = room.items.find(candidate => candidate.id === 'royal decree') || null;
-    const solution = level.solutions.find(candidate => candidate.id === 'the macdonald mystery') || null;
+    const conclusion = level.conclusions.find(candidate => candidate.id === 'the macdonald mystery') || null;
 
     expect(room.title).toBe('MacDonald Chamber');
     expect(character?.title).toBe('Lady MacBeth');
     expect(item?.title).toBe('royal decree');
-    expect(solution?.title).toBe('The MacDonald Mystery');
+    expect(conclusion?.title).toBe('The MacDonald Mystery');
   });
 
   it('preserves authored casing for inventory item titles from item subsection defaults', () => {
@@ -577,14 +577,14 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('throws when a solution cloze image is authored as a path instead of a filename', () => {
+  it('throws when a conclusion cloze image is authored as a path instead of a filename', () => {
     try {
       loadLevelFromText(invalidClozeImageText, 'invalid-cloze-image.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-cloze-image.md:29');
-      expect((error as LoadLevelException).message).toContain('solution cloze image must be a filename, not a path or URL');
+      expect((error as LoadLevelException).message).toContain('conclusion cloze image must be a filename, not a path or URL');
     }
   });
 
@@ -1093,18 +1093,18 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('throws when a cloze answer phrase is missing from all solution categories', () => {
+  it('throws when a cloze answer phrase is missing from all conclusion categories', () => {
     try {
-      loadLevelFromText(missingSolutionPhraseText, 'missing-solution-phrase.md', { validateUnlockPhrases:true });
+      loadLevelFromText(missingConclusionPhraseText, 'missing-conclusion-phrase.md', { validateUnlockPhrases:true });
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('missing-solution-phrase.md');
-      expect((error as LoadLevelException).message).toContain('missing solution answer phrases from solution categories: Ghost');
+      expect((error as LoadLevelException).message).toContain('missing-conclusion-phrase.md');
+      expect((error as LoadLevelException).message).toContain('missing conclusion answer phrases from conclusion categories: Ghost');
     }
   });
 
-  it('allows authored solution category overrides to replace default room names', () => {
+  it('allows authored conclusion category overrides to replace default room names', () => {
     expect(() => loadLevelFromText(overrideRoomsText, 'override-rooms.md', { validateUnlockPhrases:true })).not.toThrow();
   });
 
@@ -1112,14 +1112,14 @@ describe('levelUtil itinerary loading', () => {
     expect(() => loadLevelFromText(overrideGeneratedCategoryGroupCaseText, 'override-generated-category-group-case.md', { validateUnlockPhrases:true })).not.toThrow();
   });
 
-  it('throws when a solution defines duplicate unlockSolutions entries', () => {
+  it('throws when a conclusion defines duplicate unlockConclusions entries', () => {
     try {
       loadLevelFromText(duplicateUnlockText, 'duplicate-unlock.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:30');
-      expect((error as LoadLevelException).message).toContain("duplicate solution mystery entry 'unlockSolutions'");
+      expect((error as LoadLevelException).message).toContain("duplicate conclusion mystery entry 'unlockConclusions'");
     }
   });
 
@@ -1254,36 +1254,36 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('wraps duplicate normalized solution category group names with filename and line number', () => {
+  it('wraps duplicate normalized conclusion category group names with filename and line number', () => {
     try {
-      loadLevelFromText(duplicateSolutionCategoryGroupNamesText, 'duplicate-solution-category-group-names.md');
+      loadLevelFromText(duplicateConclusionCategoryGroupNamesText, 'duplicate-conclusion-category-group-names.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-solution-category-group-names.md:34');
+      expect((error as LoadLevelException).message).toContain('duplicate-conclusion-category-group-names.md:34');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'rooms' conflicts with 'Rooms'`);
     }
   });
 
-  it('wraps duplicate normalized solution subsection ids with filename and line number', () => {
+  it('wraps duplicate normalized conclusion subsection ids with filename and line number', () => {
     try {
-      loadLevelFromText(duplicateSolutionSubsectionsCaseText, 'duplicate-solution-subsections-case.md');
+      loadLevelFromText(duplicateConclusionSubsectionsCaseText, 'duplicate-conclusion-subsections-case.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-solution-subsections-case.md:34');
+      expect((error as LoadLevelException).message).toContain('duplicate-conclusion-subsections-case.md:34');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'mystery' conflicts with 'Mystery'`);
     }
   });
 
-  it('wraps duplicate solution property entries with filename and line number', () => {
+  it('wraps duplicate conclusion property entries with filename and line number', () => {
     try {
-      loadLevelFromText(duplicateSolutionPropertyText, 'duplicate-solution-property.md');
+      loadLevelFromText(duplicateConclusionPropertyText, 'duplicate-conclusion-property.md');
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-solution-property.md:34');
-      expect((error as LoadLevelException).message).toContain(`duplicate solution mystery entry 'solution'`);
+      expect((error as LoadLevelException).message).toContain('duplicate-conclusion-property.md:34');
+      expect((error as LoadLevelException).message).toContain(`duplicate conclusion mystery entry 'conclusion'`);
     }
   });
 

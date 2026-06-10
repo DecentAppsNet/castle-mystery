@@ -39,8 +39,8 @@ HC..
 
 * description=A book.
 
-# solutions
+# conclusions
 
 ## Missing Item
 
-* solution=[Book]
+* conclusion=[Book]

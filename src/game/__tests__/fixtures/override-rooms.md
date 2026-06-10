@@ -25,7 +25,7 @@ A
 * title=Hero
 * isTitleKnown=true
 
-# solutions
+# conclusions
 
 * rooms=Ghost
 

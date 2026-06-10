@@ -29,15 +29,15 @@ A
 
 # itinerary
 
-# solutions
-
-* names=King|Queen
-* places=Throne Room|Library
+# conclusions
 
 ## First
 
-* solution=[King] entered [Library].
+* title=Opener
+* unlockConclusions=Hidden Followup
+* conclusion=[Atrium]
 
-## Second
+## second
 
-* solution=[Queen] left [Throne Room].
+* title=Hidden Followup
+* conclusion=[Atrium]

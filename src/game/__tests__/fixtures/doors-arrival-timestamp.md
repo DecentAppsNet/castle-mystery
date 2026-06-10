@@ -95,4 +95,4 @@ CHGP
 : Amos says, "No, no. That's not how it works."
 : Simon says, "Really, my cell is just fine."
 
-# solutions
+# conclusions

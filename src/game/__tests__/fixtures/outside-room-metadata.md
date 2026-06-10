@@ -31,6 +31,6 @@ ab
 # itinerary
 * Hero @ Courtyard
 
-# solutions
+# conclusions
 ## Test
 Hero was in [Courtyard].

@@ -29,11 +29,15 @@ A
 
 # itinerary
 
-# solutions
+# conclusions
 
-* Rooms=Ghost
-* rooms=Spirit
+* names=King|Queen
+* places=Throne Room|Library
 
-## Mystery
+## First
 
-* solution=[Ghost]
+* conclusion=[King] entered [Library].
+
+## Second
+
+* conclusion=[Queen] left [Throne Room].

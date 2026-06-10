@@ -12,11 +12,12 @@ A
 
 ```
 ....
-.H..
+HB..
 ....
 ```
 
 * H=Hero
+* B=Book
 
 # characters
 
@@ -27,12 +28,13 @@ A
 
 # items
 
-# itinerary
+## Book
 
-# solutions
+* title=Book
+* description=A book.
 
-* characters=King|Queen|Jester
+# conclusions
 
-## Identities
+## Mystery
 
-* clozeStatement=(kingFace.png) = [King]---(queenFace.png) = [Queen]
+* clozeStatement=[book]

@@ -4,11 +4,11 @@
 A
 ```
 
-* A=Hall
+* A=Atrium
 
 # rooms
 
-## Hall
+## Atrium
 
 ```
 ....
@@ -25,8 +25,16 @@ A
 * title=Hero
 * isTitleKnown=true
 
-# solutions
+# items
+
+# itinerary
+
+# conclusions
 
 ## Mystery
 
-* clozeStatement=[Ghost]
+* conclusion=[Ghost]
+
+## mystery
+
+* conclusion=[Spirit]

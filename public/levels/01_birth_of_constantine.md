@@ -259,10 +259,10 @@ A.......
 
 9:00:18 Female Peasant thinks, "40 years? She's too old to have a child!"
 
-# Solutions
+# Conclusions
 
 ## Identities
-* unlockSolutions=The Relic
+* unlockConclusions=The Relic
 
 ## The Relic
-* solution=The [Holy Binky] was regifted to [Sticky Agatha].
+* conclusion=The [Holy Binky] was regifted to [Sticky Agatha].

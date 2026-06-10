@@ -9,7 +9,7 @@ Accepted (level-author convention; not engine code).
 Murder on the Orient Express is being authored as a single level file in `public/levels/murder-on-the-orient-express.md`, in sequential work packages (see [docs/murder-on-the-orient-express-work-packages.md](murder-on-the-orient-express-work-packages.md)). WP2 added the 13-character cast plus their signature carried inventory and had to lock in a few conventions that every later WP (especially WP3 examinables and WP4–WP7 itinerary) will rely on:
 
 1. **Where the conductor stands at level start.** Design §2 describes Pierre Michel's "room" as the corridor itself, with Compartment 1 acting as his locker/workspace.
-2. **Character IDs vs public titles.** Several characters have rank/honorific titles ("Princess Dragomiroff", "Colonel Arbuthnot", "Mrs Caroline Hubbard") and a few share a surname ("Count" / "Countess" Andrenyi). Item IDs and inventory references derive from titles via `normalizeId`, so any later mention of a character (in itinerary or in solution cloze blanks) has to match the title chosen here.
+2. **Character IDs vs public titles.** Several characters have rank/honorific titles ("Princess Dragomiroff", "Colonel Arbuthnot", "Mrs Caroline Hubbard") and a few share a surname ("Count" / "Countess" Andrenyi). Item IDs and inventory references derive from titles via `normalizeId`, so any later mention of a character (in itinerary or in conclusion cloze blanks) has to match the title chosen here.
 3. **Item titles are level-wide unique.** Several object types recur across characters (passport, ticket, telegram, photograph). Without a naming convention these will collide in WP3+.
 
 ## Decision
@@ -51,13 +51,13 @@ Each character's `## <Heading>` is the short, unambiguous identifier the level l
 
 Itinerary references must use the **section-heading (id) form** (e.g. `Princess @ Compartment 13`, *not* `Princess Dragomiroff @ ...`), because [src/game/levelLoading/levelItineraryLoader.ts](../src/game/levelLoading/levelItineraryLoader.ts) `_parseCharacterActivityLine` normalizes the leading text and looks it up against `Character.id` via `charactersById.get(...)`. There is no title-based fallback (verified against the engine in WP4 — an earlier revision of this ADR claimed lookups matched by title, which surfaced as `unknown character 'antonio foscarelli' in itinerary` when WP4 first tried the full-title form). Compartment / room legend tile entries (`V=Ratchett`, `M=MacQueen`, …) use the same id form for the same reason.
 
-Solution cloze blanks reference characters by their **title** (the `[character]` blank is matched against the auto-generated `characters` category list, which is built from `character.title` — see [levelUtil.ts:34-43](../src/game/levelLoading/levelUtil.ts#L34-L43)). So `[Princess Dragomiroff]` in a cloze is correct, but `Princess Dragomiroff says "..."` in an itinerary is not.
+Conclusion cloze blanks reference characters by their **title** (the `[character]` blank is matched against the auto-generated `characters` category list, which is built from `character.title` — see [levelUtil.ts:34-43](../src/game/levelLoading/levelUtil.ts#L34-L43)). So `[Princess Dragomiroff]` in a cloze is correct, but `Princess Dragomiroff says "..."` in an itinerary is not.
 
 Cast-size note: design §3 reads "14 characters — 12 conspirators + victim + conductor", but that heading double-counts Pierre Michel (he is both a conspirator and the conductor, one person, not two). The actual cast is 13: 1 victim + 12 conspirators, with Pierre as the 12th conspirator. Cross-referenced against §2's compartment assignments, §4-T3's stab order, §5's clue inventory, and §6's clozes — none reference a 14th character.
 
 ### 3. `isTitleKnown=false` for all 13 characters
 
-Every character starts with `isTitleKnown=false` so the auto-generated `identities` cloze (see [src/game/levelLoading/levelSolutionsLoader.ts](../src/game/levelLoading/levelSolutionsLoader.ts) `createGeneratedIdentitySolution`) presents 13 unknowns. Pierre Michel is included even though his uniform is identifying — symmetric treatment keeps the identity puzzle uniform.
+Every character starts with `isTitleKnown=false` so the auto-generated `identities` cloze (see [src/game/levelLoading/levelConclusionsLoader.ts](../src/game/levelLoading/levelConclusionsLoader.ts) `createGeneratedIdentityConclusion`) presents 13 unknowns. Pierre Michel is included even though his uniform is identifying — symmetric treatment keeps the identity puzzle uniform.
 
 Multi-stage identity reveal (iconography → public name → true name) is FU2 follow-up engine work and not in scope for Phase 1.
 
@@ -172,7 +172,7 @@ Authoring rules for WP6+:
 
 ### 10. Cloze narrative text must not contain parenthesised tokens with no whitespace inside
 
-`_isImageToken` in [src/game/levelLoading/levelSolutionsLoader.ts:61](../src/game/levelLoading/levelSolutionsLoader.ts#L61) treats any `(...)` segment whose trimmed contents are non-empty and contain no whitespace as an image-token reference, regardless of context. `_findNextSpecialToken` picks the earliest token, so an `(X)` ahead of a `[blank]` is consumed first and rendered as an image with `imageUrl='X'`.
+`_isImageToken` in [src/game/levelLoading/levelConclusionsLoader.ts:61](../src/game/levelLoading/levelConclusionsLoader.ts#L61) treats any `(...)` segment whose trimmed contents are non-empty and contain no whitespace as an image-token reference, regardless of context. `_findNextSpecialToken` picks the earliest token, so an `(X)` ahead of a `[blank]` is consumed first and rendered as an image with `imageUrl='X'`.
 
 Consequence: cloze `clozeStatement=` text like `... outside #8 (T2): [planted].` parses as `text + image{imageUrl:'T2'} + text + blank{planted}` — the literal "T2" is replaced by a (broken) image placeholder, and the blank still works but the rendered sentence is wrong.
 
@@ -184,13 +184,13 @@ Authoring rules for WP8+:
 ## Consequences
 
 - WP3 examinables will follow §5 slug rules when adding passports, tickets, photographs, and luggage.
-- WP4–WP7 itinerary lines must use the **section-heading (id) form** for each character (`Princess says "..."`, not `Princess Dragomiroff says "..."`). Cloze solutions use the title form.
+- WP4–WP7 itinerary lines must use the **section-heading (id) form** for each character (`Princess says "..."`, not `Princess Dragomiroff says "..."`). Cloze conclusions use the title form.
 - WP5+ itinerary lines target the corridor's compartment-adjacent positions via `Corridor.OutsideN` (1≤N≤13) and the narrative anchor `Corridor.Vestibule`, both defined once in the §8 grid expansion. Do not re-expand the corridor grid in WP6/WP7.
 - WP6+ narrative HTML comments inside the `# itinerary` section must keep timestamps off line starts (per §9) — every line in that section is parsed for a leading-timestamp pattern, comments included.
 - WP8+ cloze `clozeStatement=` narrative must avoid `(X)` patterns whose parens enclose whitespace-less content (per §10) — those are parsed as image tokens and render as broken image placeholders.
 - New characters added to this level (or characters whose `faceImage` is changed during ongoing work) must reuse one of the three shared sprite URLs in §4 unless the change is part of FU5. Don't reintroduce per-character placeholder URLs pointing at nonexistent files — that's what caused the prior `InvalidStateError` decode crash.
 - When FU5 produces real per-character art, swap the shared sprite URLs for the per-character slugs listed at the bottom of §4.
-- The auto-generated `identities` cloze (13 unknowns) is part of the level's win condition. WP8's authored solutions don't need to include character-identity blanks.
+- The auto-generated `identities` cloze (13 unknowns) is part of the level's win condition. WP8's authored conclusions don't need to include character-identity blanks.
 
 ## Related
 

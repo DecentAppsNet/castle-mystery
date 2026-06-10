@@ -33,8 +33,8 @@ AB..
 
 # items
 
-# solutions
+# conclusions
 
 ## Mystery
 
-* solution=[Alpha]
+* conclusion=[Alpha]

@@ -25,10 +25,10 @@ A
 * title=Hero
 * isTitleKnown=true
 
-# solutions
+# conclusions
 
 ## Mystery
 
-* unlockSolutions=Open
-* unlockSolutions=Close
+* unlockConclusions=Open
+* unlockConclusions=Close
 * clozeStatement=Open the case.

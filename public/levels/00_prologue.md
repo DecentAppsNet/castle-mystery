@@ -145,15 +145,15 @@ VVVHHGG
 : faces left
 : says, "Sick!"
 
-# Solutions
+# Conclusions
 
 * verbs=stole|hid|broke|smashed|painted|crushed|dropped
 * withObjects=a hammer|his fist|a brush|other vases|his foot|difficulty|his uncle
 
 ## Identities
 
-* unlockSolutions=What Happened to the Vase?
+* unlockConclusions=What Happened to the Vase?
 
 ## What Happened to the Vase?
 
-* solution=[Larry] took the vase to the [Gift Shop] and [hid] it with [other vases].
+* conclusion=[Larry] took the vase to the [Gift Shop] and [hid] it with [other vases].

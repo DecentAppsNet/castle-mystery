@@ -19,10 +19,10 @@ The README's top half is a template placeholder — the real product is a murder
 
 ### Level files drive everything
 
-A level is an authored Markdown file in `public/levels/` (e.g. `murder-on-the-orient-express.md`). The Markdown is the source of truth for rooms, characters, items, an itinerary, and solutions. Loading is orchestrated by [src/game/levelLoading/levelUtil.ts](src/game/levelLoading/levelUtil.ts):
+A level is an authored Markdown file in `public/levels/` (e.g. `murder-on-the-orient-express.md`). The Markdown is the source of truth for rooms, characters, items, an itinerary, and conclusions. Loading is orchestrated by [src/game/levelLoading/levelUtil.ts](src/game/levelLoading/levelUtil.ts):
 
-1. `parseSections()` (from [src/common/markdownUtil.ts](src/common/markdownUtil.ts)) splits the file by `#` headings into sections: `general`, `map`, `rooms`, `characters`, `items`, `itinerary`, `solutions`.
-2. Section-specific loaders (`levelRoomLayoutLoader`, `levelRoomPopulationLoader`, `levelItineraryLoader`, `levelSolutionsLoader`) progressively populate a `Level`.
+1. `parseSections()` (from [src/common/markdownUtil.ts](src/common/markdownUtil.ts)) splits the file by `#` headings into sections: `general`, `map`, `rooms`, `characters`, `items`, `itinerary`, `conclusions`.
+2. Section-specific loaders (`levelRoomLayoutLoader`, `levelRoomPopulationLoader`, `levelItineraryLoader`, `levelConclusionsLoader`) progressively populate a `Level`.
 3. Errors are wrapped via `LoadLevelException` with the offending source line — preserve that context when refactoring loaders.
 
 The middle layer (`markdownUtil`) is a generic "Markdown-as-config" convention (heading sections + `* name=value` bulleted lines). New authored formats should use these helpers rather than inventing parsing.
@@ -46,8 +46,8 @@ The middle layer (`markdownUtil`) is a generic "Markdown-as-config" convention (
 `src/homeScreen/HomeScreen.tsx` is the only screen. UI surface is split into:
 - `levelView/` — canvas rendering of rooms/characters (delegates to `src/game/drawing/*`).
 - `timeSlider/` — scrub bar with itinerary markers (see ADR 006).
-- `solutionsView/` — cloze-style solution UI; `src/game/solutions/` owns solution data + discovery.
-- `interactions/` — `initialization.ts` boots a level, `gameplay.ts` exposes update callbacks (`updateTime`, `updatePlayPause`, `updateSolutions`, …). The `interactions/` folder is coverage-excluded by design — keep logic worth testing in `src/game/*Util.ts` modules instead.
+- `conclusionsView/` — cloze-style conclusion UI; `src/game/conclusions/` owns conclusion data + discovery.
+- `interactions/` — `initialization.ts` boots a level, `gameplay.ts` exposes update callbacks (`updateTime`, `updatePlayPause`, `updateConclusions`, …). The `interactions/` folder is coverage-excluded by design — keep logic worth testing in `src/game/*Util.ts` modules instead.
 
 ### Exits and doors
 

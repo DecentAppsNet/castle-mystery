@@ -42,13 +42,13 @@ AS
 
 # itinerary
 
-# solutions
+# conclusions
 
 ## identities
 
 * revealRooms=Study
-* unlockSolutions=Final Mystery
+* unlockConclusions=Final Mystery
 
 ## final mystery
 
-* solution=[King] did it.
+* conclusion=[King] did it.

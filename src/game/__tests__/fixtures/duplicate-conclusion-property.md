@@ -29,15 +29,9 @@ A
 
 # itinerary
 
-# solutions
+# conclusions
 
-## First
+## Mystery
 
-* title=Opener
-* unlockSolutions=Hidden Followup
-* solution=[Atrium]
-
-## second
-
-* title=Hidden Followup
-* solution=[Atrium]
+* conclusion=[Ghost]
+* conclusion=[Spirit]

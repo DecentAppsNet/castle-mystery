@@ -11,7 +11,7 @@ Engine reference points:
 - Room geometry, map grid, exits, waypoints: [src/game/levelLoading/levelRoomLayoutLoader.ts](../src/game/levelLoading/levelRoomLayoutLoader.ts)
 - Characters, items, room population: [src/game/levelLoading/levelRoomPopulationLoader.ts](../src/game/levelLoading/levelRoomPopulationLoader.ts)
 - Itinerary parsing & relative timestamps: [src/game/levelLoading/levelItineraryLoader.ts](../src/game/levelLoading/levelItineraryLoader.ts)
-- Cloze solutions: [src/game/levelLoading/levelSolutionsLoader.ts](../src/game/levelLoading/levelSolutionsLoader.ts)
+- Cloze conclusions: [src/game/levelLoading/levelConclusionsLoader.ts](../src/game/levelLoading/levelConclusionsLoader.ts)
 - Activity types supported today: `@ <room>` / `@ <room>.<marker>`, `says "..."`, `wanders`, `gives <item> to <recipient>`, `drops <item>`, `takes <item>` (see [src/game/activities/](../src/game/activities/))
 - Working example: [public/levels/kingacide.md](../public/levels/kingacide.md)
 - Cross-cutting ADRs: 001 (timestamp resolution), 003 (waypoints), 004 (`:`-relative timestamps), 005 (ImageSet), 006 (TimeSlider markers — Proposed)
@@ -22,13 +22,13 @@ Engine reference points:
 - Characters: title, description, inventory items, `faceImage` URL, `isTitleKnown` boolean
 - Items: title, description, `displayChar`
 - Itinerary with absolute and `:`-relative timestamps; same-timestamp pose resolution (ADR 001)
-- Cloze solutions with `[blank]` syntax, `---` separators, `(url)` image tokens, `actions=` and other category lists, and `unlockForItem` / `unlockForSolution` prerequisites
+- Cloze conclusions with `[blank]` syntax, `---` separators, `(url)` image tokens, `actions=` and other category lists, and `unlockForItem` / `unlockForConclusion` prerequisites
 - Auto-generated `identities` cloze that asks the player to match face → public name
 
 **Not supported today (Phase 2 / followup engine work):**
 - POV-gated witnessing — events that fire only when the player is "following" a specific character
 - Multi-stage identity reveal (iconography → public name → true name); `isTitleKnown` is a single flip
-- Bonus-cloze unlock conditions beyond `unlockForItem` / `unlockForSolution` (e.g. "examined ≥3 Armstrong items", "POV-switched ≥8 conspirators")
+- Bonus-cloze unlock conditions beyond `unlockForItem` / `unlockForConclusion` (e.g. "examined ≥3 Armstrong items", "POV-switched ≥8 conspirators")
 - Custom interactive art for items (e.g. the wound-count diagram on Ratchett's body)
 - A "discovery" mechanic distinct from cloze answering (the design talks about clues "unlocking" identities)
 - 14 face-sprite assets — ADR 005 falls back to circle, so we can leave `faceImage` URLs pointing at nonexistent files and the level still works visually
@@ -57,7 +57,7 @@ Each WP edits `public/levels/murder-on-the-orient-express.md` and may add docs. 
 **Acceptance.**
 - `npm test` passes.
 - Level loads in the browser; all 15 rooms reachable from one another via the corridor (or restaurant car).
-- Empty `# characters`, `# items`, `# itinerary`, `# solutions` sections — file still loads.
+- Empty `# characters`, `# items`, `# itinerary`, `# conclusions` sections — file still loads.
 
 **Files.** `public/levels/murder-on-the-orient-express.md`.
 
@@ -72,14 +72,14 @@ Each WP edits `public/levels/murder-on-the-orient-express.md` and may add docs. 
 **Inputs.** Design §3 (cast table) plus §5 (which characters carry which signature item at T1: MacQueen's flask, Masterman's vial, Greta's holy-oil phial, the Princess's cane and Russian newspaper, Schmidt's sewing kit, Mrs Hubbard's sponge-bag, Mary Debenham's reticule, Pierre Michel's master key and logbook).
 
 **Design choices:**
-- `isTitleKnown` — set to `false` for all conspirators (so they show iconography until identified). Pierre Michel and Ratchett: design says Ratchett is "the elderly American gentleman" — also `false`. Pierre is the conductor — could be `true` since uniform is identifier enough; or `false` for symmetry. Suggest `false` across the board; the auto-generated `identities` cloze (see [levelSolutionsLoader.ts:224](../src/game/levelLoading/levelSolutionsLoader.ts#L224)) handles the reveal.
+- `isTitleKnown` — set to `false` for all conspirators (so they show iconography until identified). Pierre Michel and Ratchett: design says Ratchett is "the elderly American gentleman" — also `false`. Pierre is the conductor — could be `true` since uniform is identifier enough; or `false` for symmetry. Suggest `false` across the board; the auto-generated `identities` cloze (see [levelConclusionsLoader.ts:224](../src/game/levelLoading/levelConclusionsLoader.ts#L224)) handles the reveal.
 - `faceImage` URLs — point at `/sprites/<name>Face.png` for each. The files don't exist yet; ADR 005 fall-back renders a circle.
 - Position markers — add a position marker for each conspirator in their compartment (the legend tile that puts them at their starting pose), e.g. `R=Ratchett` inside `## Compartment 2`. Pierre Michel starts at `COR-end`.
 
 **Acceptance.**
 - All 14 characters present in the cast.
 - Each character is drawn in their compartment at time 0.
-- Generated `identities` cloze appears in the solutions panel showing 14 unknowns.
+- Generated `identities` cloze appears in the conclusions panel showing 14 unknowns.
 
 **Files.** `public/levels/murder-on-the-orient-express.md`.
 
@@ -197,22 +197,22 @@ Each WP edits `public/levels/murder-on-the-orient-express.md` and may add docs. 
 
 ---
 
-### WP8 — Solutions (clozes)
+### WP8 — Conclusions (clozes)
 
 **Goal.** Implement the mandatory cloze 6a and the three bonus clozes 6b/6c/6d, with whatever unlock conditions the engine supports.
 
 **Inputs.** Design §6.
 
 **Design choices:**
-- Define category lists in the solutions preamble (kingacide does `actions=...`). Murder on the Orient Express needs at least: `numbers=one|two|...|twelve`, `substances=chloral hydrate|...`, `relationships=mother|grandmother|sister|aunt|godmother|...`, `roles=district attorney|valet|chauffeur|governess|nurse|cook|officer|batman|friend|godmother|old friend`, `containers=sponge-bag|...`. The engine auto-creates `characters`, `items`, `rooms` categories from level data ([levelUtil.ts:34-43](../src/game/levelLoading/levelUtil.ts#L34-L43)); compartment names will be in `rooms`.
-- For accepted-alternative answers ("valet (accept batman)", "officer (accept friend)") — the engine supports multiple correct answers per blank via `|`-separated values inside the brackets, e.g. `[valet|batman]`. Confirm in [levelSolutionsLoader.ts:137](../src/game/levelLoading/levelSolutionsLoader.ts#L137).
-- Mandatory cloze 6a — single solution titled "What happened on the Orient Express". No `unlockFor*` (it's the main puzzle).
+- Define category lists in the conclusions preamble (kingacide does `actions=...`). Murder on the Orient Express needs at least: `numbers=one|two|...|twelve`, `substances=chloral hydrate|...`, `relationships=mother|grandmother|sister|aunt|godmother|...`, `roles=district attorney|valet|chauffeur|governess|nurse|cook|officer|batman|friend|godmother|old friend`, `containers=sponge-bag|...`. The engine auto-creates `characters`, `items`, `rooms` categories from level data ([levelUtil.ts:34-43](../src/game/levelLoading/levelUtil.ts#L34-L43)); compartment names will be in `rooms`.
+- For accepted-alternative answers ("valet (accept batman)", "officer (accept friend)") — the engine supports multiple correct answers per blank via `|`-separated values inside the brackets, e.g. `[valet|batman]`. Confirm in [levelConclusionsLoader.ts:137](../src/game/levelLoading/levelConclusionsLoader.ts#L137).
+- Mandatory cloze 6a — single conclusion titled "What happened on the Orient Express". No `unlockFor*` (it's the main puzzle).
 - Bonus 6b "The Armstrong dossier" — design says unlock after examining ≥3 Armstrong-connection items. The engine only supports `unlockForItem` (a single item). Compromise: `unlockForItem=Theatre Programme` (the most distinctive Armstrong item). Flag for FU3.
-- Bonus 6c "The order of the visits" — design says unlock after POV-switching ≥8 conspirators. No engine support; fall back to `unlockForSolution=What happened on the Orient Express` (must solve mandatory first). Flag for FU3.
-- Bonus 6d "Planted, accidental, or genuine?" — design says unlock after examining ≥10 clues. Fall back to `unlockForSolution=The Armstrong dossier`. Flag for FU3.
-- The level's win condition is "all unlocked solutions complete" per [HomeScreen.tsx](../src/homeScreen/HomeScreen.tsx#L33-L35). Mandatory + the auto-generated identities cloze must both be solvable for the level to win. The bonuses are locked behind mandatory in the proposal above so the win remains achievable.
+- Bonus 6c "The order of the visits" — design says unlock after POV-switching ≥8 conspirators. No engine support; fall back to `unlockForConclusion=What happened on the Orient Express` (must solve mandatory first). Flag for FU3.
+- Bonus 6d "Planted, accidental, or genuine?" — design says unlock after examining ≥10 clues. Fall back to `unlockForConclusion=The Armstrong dossier`. Flag for FU3.
+- The level's win condition is "all unlocked conclusions complete" per [HomeScreen.tsx](../src/homeScreen/HomeScreen.tsx#L33-L35). Mandatory + the auto-generated identities cloze must both be solvable for the level to win. The bonuses are locked behind mandatory in the proposal above so the win remains achievable.
 
-**Unlock-chain — load-bearing choice.** Use `unlockForItem=Theatre Programme` on 6b rather than chaining 6b off 6a, because the engine treats locked solutions as not-required for level completion (`_isLevelComplete` in [HomeScreen.tsx](../src/homeScreen/HomeScreen.tsx)). With this chain:
+**Unlock-chain — load-bearing choice.** Use `unlockForItem=Theatre Programme` on 6b rather than chaining 6b off 6a, because the engine treats locked conclusions as not-required for level completion (`_isLevelComplete` in [HomeScreen.tsx](../src/homeScreen/HomeScreen.tsx)). With this chain:
 - A player who solves identities + 6a + 6c — never examining the Theatre Programme — wins. 6b and 6d stay locked, so the win condition ignores them.
 - A player who *also* examines the Theatre Programme unlocks 6b, which (if solved) unlocks 6d, which must then also be solved to win.
 
@@ -221,9 +221,9 @@ That makes 6b/6d genuinely optional via the player's exploration path. A strictl
 **Cloze narrative authoring (§10 of conventions ADR).** When phrasing the `clozeStatement=` text, avoid parens with no whitespace inside (`(T2)`, `(X)`) — the cloze parser misreads those as image tokens. Reword (`at T2`, `during T3`) or insert a space. Parens whose contents contain whitespace (`(left to mislead)`) are fine.
 
 **Acceptance.**
-- All four clozes render in the solutions panel.
+- All four clozes render in the conclusions panel.
 - Mandatory unlocks immediately; bonuses lock per the chosen `unlockFor*` chain.
-- Filling the mandatory cloze with the §6a solution validates correctly.
+- Filling the mandatory cloze with the §6a conclusion validates correctly.
 - Level reaches `isLevelComplete=true` after mandatory + identities are solved.
 
 **Files.** `public/levels/murder-on-the-orient-express.md`.
@@ -243,7 +243,7 @@ Add an `observerCharacterId` field (or similar) to `ItineraryEvent` so dialogue 
 Extend `Character` with `trueTitle` / `isTrueTitleKnown` (or a small enum). Update the cast view to show iconography → public name → true name. Add a discovery mechanic so examining a "true-identity" clue item flips a flag on the linked character. Add a generated "true identities" cloze parallel to the existing `identities` cloze.
 
 ### FU3 — Custom cloze unlock conditions
-Generalize `unlockForItem` / `unlockForSolution` to a list of predicates: `unlockAfterItemsExamined=Theatre Programme|Regimental Photo|Greta's Bible`, `unlockAfterPovSwitches=8`, etc. Update `Solution.isLocked` evaluation. Wire WP8's bonus clozes to use the real conditions.
+Generalize `unlockForItem` / `unlockForConclusion` to a list of predicates: `unlockAfterItemsExamined=Theatre Programme|Regimental Photo|Greta's Bible`, `unlockAfterPovSwitches=8`, etc. Update `Conclusion.isLocked` evaluation. Wire WP8's bonus clozes to use the real conditions.
 
 ### FU4 — Interactive wound diagram
 A custom item viewer for "Ratchett's Body" that shows the 12 wound points with hoverable detail. Probably a new `Item.viewer` field that the UI dispatches on; default is the standard description popup.
@@ -257,6 +257,6 @@ A custom item viewer for "Ratchett's Body" that shows the 12 wound points with h
 
 WP1 → WP2 → WP3 → WP8 → WP4 → WP5 → WP6 → WP7
 
-Rationale: doing WP8 (solutions) right after the structural pieces lets you confirm the cloze + identities-cloze flow works end-to-end before committing to the multi-hour timeline of WP4–WP7. If a cloze design issue surfaces, it's caught with one hour of itinerary work to rewrite, not seven.
+Rationale: doing WP8 (conclusions) right after the structural pieces lets you confirm the cloze + identities-cloze flow works end-to-end before committing to the multi-hour timeline of WP4–WP7. If a cloze design issue surfaces, it's caught with one hour of itinerary work to rewrite, not seven.
 
 After WP1, run `npm test` — the test suite covers the level loaders and will catch grid/exit regressions early.

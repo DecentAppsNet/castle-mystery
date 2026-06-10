@@ -29,9 +29,12 @@ A
 
 # itinerary
 
-# solutions
+# conclusions
 
-## Mystery
+* suspects=King|Queen
+* royals=King|Prince
+* actions=searched|looked|lied
 
-* solution=[Ghost]
-* solution=[Spirit]
+## The Missing Book
+
+* conclusion=[King] [searched|looked] for clues.

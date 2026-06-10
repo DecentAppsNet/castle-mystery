@@ -28,10 +28,10 @@ import {
   parseCharacterDefinitions,
   parseItemDefinitions
 } from "./levelRoomPopulationLoader";
-import { createGeneratedIdentitySolution, createSolutionCategoryOptionsByName, loadSolutionsFromSection } from "./levelSolutionsLoader";
-import ClozeBlank from "../game/solutions/types/ClozeBlank";
-import ClozePartType from "../game/solutions/types/ClozePartType";
-import Solution from "../game/solutions/types/Solution";
+import { createGeneratedIdentityConclusion, createConclusionCategoryOptionsByName, loadConclusionsFromSection } from "./levelConclusionsLoader";
+import ClozeBlank from "../game/conclusions/types/ClozeBlank";
+import ClozePartType from "../game/conclusions/types/ClozePartType";
+import Conclusion from "../game/conclusions/types/Conclusion";
 import { assertNormalizedId, normalizeOptionalId } from "../game/idUtil";
 import { isCharacterInteractive, isItemInteractive } from "../game/interactivityUtil";
 import { calcRoomsBoundingRect, findRoomByIdOrTitle } from "../game/roomUtil";
@@ -39,18 +39,18 @@ import { getBackgroundImageAssetUrl } from "../game/imageUrlUtil";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
 
-function _sortGeneratedSolutionOptions(options:string[]):string[] {
+function _sortGeneratedConclusionOptions(options:string[]):string[] {
   return [...options].sort((option1, option2) => option1.localeCompare(option2, undefined, { sensitivity:'base' }));
 }
 
-function _createDefaultSolutionCategoryOptions(level:Level):Map<string, string[]> {
+function _createDefaultConclusionCategoryOptions(level:Level):Map<string, string[]> {
   return new Map([
     ['rooms', level.rooms.map(room => room.title)],
-    ['items', _sortGeneratedSolutionOptions([
+    ['items', _sortGeneratedConclusionOptions([
       ...level.rooms.flatMap(room => room.items),
       ...level.characters.flatMap(character => character.items)
     ].filter(isItemInteractive).map(item => item.title))],
-    ['characters', _sortGeneratedSolutionOptions(level.characters.filter(isCharacterInteractive).map(character => character.title))]
+    ['characters', _sortGeneratedConclusionOptions(level.characters.filter(isCharacterInteractive).map(character => character.title))]
   ]);
 }
 
@@ -60,7 +60,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     initialCharacters: [],
     characters: [],
     itemsById: new Map<string, Item>(),
-    solutions: [],
+    conclusions: [],
     winSynopsis: DEFAULT_WIN_SYNOPSIS,
     backgroundImageUrl: null,
     groundFloorY: 0,
@@ -199,21 +199,21 @@ type LoadLevelOptions = {
   validateUnlockPhrases?:boolean
 }
 
-function _normalizeSolutionCategoryPhrase(phrase:string):string {
+function _normalizeConclusionCategoryPhrase(phrase:string):string {
   return phrase.trim().toLowerCase();
 }
 
-function _findMissingSolutionAnswerPhrases(solutions:Solution[], categoryOptionsByName:Map<string, string[]>):string[] {
-  const availablePhrases = new Set(Array.from(categoryOptionsByName.values()).flat().map(_normalizeSolutionCategoryPhrase));
+function _findMissingConclusionAnswerPhrases(conclusions:Conclusion[], categoryOptionsByName:Map<string, string[]>):string[] {
+  const availablePhrases = new Set(Array.from(categoryOptionsByName.values()).flat().map(_normalizeConclusionCategoryPhrase));
   const missingPhrases:string[] = [];
 
-  solutions.forEach(solution => {
-    solution.parts.forEach(part => {
+  conclusions.forEach(conclusion => {
+    conclusion.parts.forEach(part => {
       if (part.type !== ClozePartType.blank) return;
       const blank = part as ClozeBlank;
       blank.correctAnswerIndexes.forEach(answerIndex => {
         const answer = blank.availableAnswers[answerIndex] || '';
-        const normalizedAnswer = _normalizeSolutionCategoryPhrase(answer);
+        const normalizedAnswer = _normalizeConclusionCategoryPhrase(answer);
         if (!answer || availablePhrases.has(normalizedAnswer) || missingPhrases.includes(answer)) return;
         missingPhrases.push(answer);
       });
@@ -223,14 +223,14 @@ function _findMissingSolutionAnswerPhrases(solutions:Solution[], categoryOptions
   return missingPhrases;
 }
 
-function _validateUnlockableSolutionPhrases(level:Level, categoryOptionsByName:Map<string, string[]>, levelFilename:string, errorLineNo:number) {
-  const missingPhrases = _findMissingSolutionAnswerPhrases(level.solutions, categoryOptionsByName);
+function _validateUnlockableConclusionPhrases(level:Level, categoryOptionsByName:Map<string, string[]>, levelFilename:string, errorLineNo:number) {
+  const missingPhrases = _findMissingConclusionAnswerPhrases(level.conclusions, categoryOptionsByName);
   if (!missingPhrases.length) return;
 
   throw new LoadLevelException(
     levelFilename,
     errorLineNo,
-    `missing solution answer phrases from solution categories: ${missingPhrases.join(', ')}`
+    `missing conclusion answer phrases from conclusion categories: ${missingPhrases.join(', ')}`
   );
 }
 
@@ -315,7 +315,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
   const itemsFirstLineNo = _findSectionFirstContentLineNo(text, 'items') || 1;
   const itinerarySection = sections.itinerary || "";
   const itineraryFirstLineNo = _findSectionFirstContentLineNo(text, 'itinerary') || 1;
-  const solutionsFirstLineNo = _findSectionFirstContentLineNo(text, 'solutions') || 1;
+  const conclusionsFirstLineNo = _findSectionFirstContentLineNo(text, 'conclusions') || 1;
   const generalSection = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
     () => _parseGeneralSection(sections.general || ""));
   let level = _createEmptyLevel();
@@ -365,16 +365,16 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     () => _validateHasLoadedCharacters(level));
   _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
     () => _validateActiveCharacterId(level.activeCharacterId, level.characters));
-  const solutionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
-    () => createSolutionCategoryOptionsByName(sections.solutions || "", _createDefaultSolutionCategoryOptions(level)));
-  const authoredSolutions = _runWithLoadLevelSectionContext(levelFilename, solutionsFirstLineNo,
-    () => loadSolutionsFromSection(sections.solutions || "", level.rooms, solutionCategoryOptionsByName, level.characters));
-  const generatedIdentitySolution = authoredSolutions.some(solution => solution.id === 'identities')
+  const conclusionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
+    () => createConclusionCategoryOptionsByName(sections.conclusions || "", _createDefaultConclusionCategoryOptions(level)));
+  const authoredConclusions = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
+    () => loadConclusionsFromSection(sections.conclusions || "", level.rooms, conclusionCategoryOptionsByName, level.characters));
+  const generatedIdentityConclusion = authoredConclusions.some(conclusion => conclusion.id === 'identities')
     ? null
-    : createGeneratedIdentitySolution(level.characters, solutionCategoryOptionsByName);
+    : createGeneratedIdentityConclusion(level.characters, conclusionCategoryOptionsByName);
   level = {
     ...level,
-    solutions:generatedIdentitySolution ? [generatedIdentitySolution, ...authoredSolutions] : authoredSolutions,
+    conclusions:generatedIdentityConclusion ? [generatedIdentityConclusion, ...authoredConclusions] : authoredConclusions,
     initialCharacters:level.characters.map(duplicateCharacter)
   };
   const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo, {
@@ -420,7 +420,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     labels: _createTimeLabels(resolvedStartTime, resolvedDuration)
   };
   if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');
-  if (options.validateUnlockPhrases) _validateUnlockableSolutionPhrases(level, solutionCategoryOptionsByName, levelFilename, solutionsFirstLineNo);
+  if (options.validateUnlockPhrases) _validateUnlockableConclusionPhrases(level, conclusionCategoryOptionsByName, levelFilename, conclusionsFirstLineNo);
   return level;
 }
 

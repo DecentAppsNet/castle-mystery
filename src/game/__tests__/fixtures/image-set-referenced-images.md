@@ -25,7 +25,7 @@ H
 * description=A king.
 * faceImage=kingFace.png
 
-# solutions
+# conclusions
 
 * characters=Queen
 

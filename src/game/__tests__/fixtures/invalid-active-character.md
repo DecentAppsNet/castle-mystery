@@ -18,4 +18,4 @@ A
 * description=Ready for adventure.
 # items
 # itinerary
-# solutions
+# conclusions

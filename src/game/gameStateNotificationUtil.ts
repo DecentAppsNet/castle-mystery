@@ -3,7 +3,7 @@
 
 import { msecsToMinutes } from "@/homeScreen/interactions/gameplay";
 
-import Solution, { duplicateSolution } from "./solutions/types/Solution";
+import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import GameState from "./types/GameState";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
@@ -26,8 +26,8 @@ export function callOnActiveCharacterChangedAsNeeded(gameState:GameState, onActi
   onActiveCharacterChanged(activeCharacterId);
 }
 
-export function callOnSolutionsChangedAsNeeded(gameState:GameState, onSolutionsChanged:(solutions:Solution[]) => void) {
-  if (gameState.solutionsRevision === gameState.lastNotifiedSolutionsRevision) return;
-  gameState.lastNotifiedSolutionsRevision = gameState.solutionsRevision;
-  onSolutionsChanged(gameState.solutions.map(duplicateSolution));
+export function callOnConclusionsChangedAsNeeded(gameState:GameState, onConclusionsChanged:(conclusions:Conclusion[]) => void) {
+  if (gameState.conclusionsRevision === gameState.lastNotifiedConclusionsRevision) return;
+  gameState.lastNotifiedConclusionsRevision = gameState.conclusionsRevision;
+  onConclusionsChanged(gameState.conclusions.map(duplicateConclusion));
 }

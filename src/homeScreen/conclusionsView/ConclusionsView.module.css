@@ -16,7 +16,7 @@
 	letter-spacing: 0.08em;
 }
 
-.solutionList {
+.conclusionList {
 	display: flex;
 	flex-direction: column;
 	gap: 0.6vh;

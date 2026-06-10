@@ -28,11 +28,11 @@ describe('markdownUtil', () => {
         '  # General',
         '* activeCharacter=Hero',
         '',
-        '\t# SOLUTIONS',
+        '\t# CONCLUSIONS',
         '## First'
       ].join('\n'), 1, true);
 
-      expect(Object.keys(sections)).toEqual(['general', 'solutions']);
+      expect(Object.keys(sections)).toEqual(['general', 'conclusions']);
       expect(sections.general).toContain('* activeCharacter=Hero');
     });
 

@@ -4,8 +4,8 @@
 import { baseUrl } from "@/common/urlUtil";
 import { getGroundImageAssetUrl, isCandidateUrls } from "./imageUrlUtil";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
-import ClozeImage from "./solutions/types/ClozeImage";
-import ClozePartType from "./solutions/types/ClozePartType";
+import ClozeImage from "./conclusions/types/ClozeImage";
+import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
 
@@ -28,7 +28,7 @@ function _findDirectReferencedImageUrls(level:Level):string[] {
     if (character.leftHandItem?.imageUrl) imageUrls.add(character.leftHandItem.imageUrl);
     if (character.rightHandItem?.imageUrl) imageUrls.add(character.rightHandItem.imageUrl);
   });
-  level.solutions.forEach(solution => solution.parts.forEach(part => {
+  level.conclusions.forEach(conclusion => conclusion.parts.forEach(part => {
     if (part.type !== ClozePartType.image) return;
     const imageUrl = (part as ClozeImage).imageUrl;
     if (isCandidateUrls(imageUrl)) return;
@@ -89,16 +89,16 @@ async function _resolveCandidateUrl(candidateUrls:string[], imageSet:ImageSet,
   return null;
 }
 
-async function _resolveLevelSolutionImageUrls(level:Level, imageSet:ImageSet,
+async function _resolveLevelConclusionImageUrls(level:Level, imageSet:ImageSet,
   loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>) {
-  for (const solution of level.solutions) {
-    for (const [partIndex, part] of solution.parts.entries()) {
+  for (const conclusion of level.conclusions) {
+    for (const [partIndex, part] of conclusion.parts.entries()) {
       if (part.type !== ClozePartType.image) continue;
       const imagePart = part as ClozeImage;
       if (!isCandidateUrls(imagePart.imageUrl)) continue;
       const resolvedImageUrl = await _resolveCandidateUrl(imagePart.imageUrl, imageSet, loadImageBitmap);
       if (!resolvedImageUrl) continue;
-      solution.parts[partIndex] = {
+      conclusion.parts[partIndex] = {
         ...imagePart,
         imageUrl:resolvedImageUrl
       };
@@ -110,6 +110,6 @@ export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
   const imageSet = createEmptyImageSet();
   const loadImageBitmap = _createLoadImageBitmapCache();
   await _loadDirectReferencedImages(level, imageSet, loadImageBitmap);
-  await _resolveLevelSolutionImageUrls(level, imageSet, loadImageBitmap);
+  await _resolveLevelConclusionImageUrls(level, imageSet, loadImageBitmap);
   return imageSet;
 }

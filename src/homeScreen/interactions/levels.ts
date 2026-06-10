@@ -6,7 +6,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { createGameState } from "@/game/gameUtil";
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
 import GameState from "@/game/types/GameState";
-import Solution from "@/game/solutions/types/Solution";
+import Conclusion from "@/game/conclusions/types/Conclusion";
 import { loadLevelFromUrl } from "@/levelLoading/levelUtil";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
@@ -21,8 +21,8 @@ type ChangeLevelParams = {
   setIsPlaying:Dispatch<SetStateAction<boolean>>,
   setMinutes:Dispatch<SetStateAction<number>>,
   setWinSynopsis:Dispatch<SetStateAction<string>>,
-  setSolutions:Dispatch<SetStateAction<Solution[]>>,
-  setSolutionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>,
+  setConclusions:Dispatch<SetStateAction<Conclusion[]>>,
+  setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>,
   setActiveCharacterId:Dispatch<SetStateAction<string>>,
   setIsScrubbing:Dispatch<SetStateAction<boolean>>,
   setModalDialogName:Dispatch<SetStateAction<string|null>>
@@ -43,8 +43,8 @@ function _createLevelManifestWithSelectedLevel(levelManifest:LevelManifest, leve
 async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setGameState:Dispatch<SetStateAction<GameState|null>>, setLevelManifest:Dispatch<SetStateAction<LevelManifest|null>>,
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
-  setWinSynopsis:Dispatch<SetStateAction<string>>, setSolutions:Dispatch<SetStateAction<Solution[]>>,
-  setSolutionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
+  setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>,
+  setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
   setIsScrubbing:Dispatch<SetStateAction<boolean>>, setModalDialogName:Dispatch<SetStateAction<string|null>>):Promise<void> {
   const level = await loadLevelFromUrl(levelUrl);
   const imageSet = await createImageSetFromLevel(level);
@@ -55,8 +55,8 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setIsPlaying(false);
   setMinutes(msecsToMinutes(gameState.time));
   setWinSynopsis(gameState.winSynopsis);
-  setSolutions(gameState.solutions);
-  setSolutionClaimCooldowns({});
+  setConclusions(gameState.conclusions);
+  setConclusionClaimCooldowns({});
   setActiveCharacterId(gameState.characters[gameState.activeCharacterI]?.id || "");
   setIsScrubbing(false);
   setModalDialogName(gameState.isLevelComplete ? WinLevelDialog.name : null);
@@ -72,14 +72,14 @@ export async function changeLevel({
   setIsPlaying,
   setMinutes,
   setWinSynopsis,
-  setSolutions,
-  setSolutionClaimCooldowns,
+  setConclusions,
+  setConclusionClaimCooldowns,
   setActiveCharacterId,
   setIsScrubbing,
   setModalDialogName
 }:ChangeLevelParams):Promise<void> {
   await _loadAndApplyLevel(levelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
-    setWinSynopsis, setSolutions, setSolutionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
+    setWinSynopsis, setConclusions, setConclusionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
     setModalDialogName);
 }
 
@@ -92,8 +92,8 @@ export async function continueToNextLevel({
   setIsPlaying,
   setMinutes,
   setWinSynopsis,
-  setSolutions,
-  setSolutionClaimCooldowns,
+  setConclusions,
+  setConclusionClaimCooldowns,
   setActiveCharacterId,
   setIsScrubbing,
   setModalDialogName
@@ -105,6 +105,6 @@ export async function continueToNextLevel({
   }
 
   await _loadAndApplyLevel(nextLevelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
-    setWinSynopsis, setSolutions, setSolutionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
+    setWinSynopsis, setConclusions, setConclusionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
     setModalDialogName);
 }
