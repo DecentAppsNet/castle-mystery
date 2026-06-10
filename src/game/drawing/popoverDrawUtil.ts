@@ -37,9 +37,16 @@ type PopoverBoxLayout = {
 
 function _drawPopoverConnectorLine(targetRect:Rect, boxLayout:PopoverBoxLayout,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const fromX = boxLayout.left + boxLayout.boxWidth / 2;
+  const anchorCenterX = targetRect.x + targetRect.width / 2;
+  const popoverLeft = boxLayout.left;
+  const popoverRight = boxLayout.left + boxLayout.boxWidth;
+  const fromX = anchorCenterX < popoverLeft
+    ? popoverLeft
+    : anchorCenterX > popoverRight
+      ? popoverRight
+      : anchorCenterX;
   const fromY = boxLayout.top + boxLayout.boxHeight;
-  const toX = targetRect.x + targetRect.width / 2;
+  const toX = anchorCenterX;
   const toY = targetRect.y;
   context.save();
   context.strokeStyle = COLOR_BLACK;

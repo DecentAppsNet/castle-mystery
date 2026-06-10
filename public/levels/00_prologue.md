@@ -5,6 +5,7 @@
 * time=11:00:00
 * background=daySky.png
 * imports=items.md | characters.md
+* winSynopsis=Storywise, nothing important happened in this level - it was just a tutorial to get you warmed up. We'll let you figure out the rest of the game on your own. The real story begins next!
 
 # Map
 
