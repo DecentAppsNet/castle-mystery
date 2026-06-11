@@ -1,5 +1,15 @@
 # characters
 
+## Ahmad
+
+* title=Ahmad ibn Faraj al-Balarmi
+* description=He seems energetic and demanding.
+* faceImage=ahmad.png
+
+age=35
+occupation=Labor foreman
+ethnicityBackground=Sicilian Muslim
+
 ## Amos of Jesi
 
 * description=He'd rather not beat people up, but he certainly will.
@@ -12,6 +22,16 @@
 * faceImage=andreas.png
 
 occupation=Apprentice carver
+ethnicityBackground=Greek Sicilian
+
+## Anna
+
+* title=Anna di Giorgio Greco
+* description=This young woman keeps her mind on her duties.
+* faceImage=anna.png
+
+age=22
+occupation=Household servant
 ethnicityBackground=Greek Sicilian
 
 ## Constance I
@@ -79,10 +99,20 @@ ethnicityBackground=Greek Sicilian
 
 * faceImage=malePeasant4.png
 
+## Maria
+
+* title=Maria vedova di Tommaso
+* description=A middle-aged woman with many stains on her apron.
+* faceImage=maria.png
+
+age=47
+occupation=Cook and house manager
+ethnicityBackground=Latin Sicilian
+
 ## Niccolo
 
 * title=Niccolò il Calabrese
-* description=A man in his 30s. He holds dark thoughts.
+* description=This man holds dark thoughts.
 * faceImage=niccolo.png
 
 ## Old Female Peasant
@@ -112,6 +142,16 @@ ethnicityBackground=Greek Sicilian
 * description=A clergyman with a strong whiff of perfume about him.
 * faceImage=pope.png
 
+## Salomone
+
+* title=Salomone ben David di Palermo
+* description=Thoughtful eyes, slim build. This middle-aged man seems well-suited to mental work.
+* faceImage=salamone.png
+
+age=49
+occupation=Clerk and accountant
+ethnicityBackground=Jewish Sicilian
+
 ## Simon
 
 * description=A filthy and emaciated man, wearing tattered rags.
@@ -121,6 +161,15 @@ ethnicityBackground=Greek Sicilian
 
 * faceImage=midwife.png
 * description=A woman content to do her work.
+
+## Stefan
+
+* faceImage=stefan.png
+* description=A young man that has seen hard years of labor.
+
+age=28
+occupation=Quarry laborer and mule handler
+ethnicityBackground=Dalmatian
 
 ## Sticky Agatha
 
