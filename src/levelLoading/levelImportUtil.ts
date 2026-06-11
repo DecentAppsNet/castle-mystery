@@ -7,11 +7,29 @@ import { validateFilename } from "@/common/filenameValidationUtil";
 import { normalizeId } from "@/game/idUtil";
 import { parseNameValueLineEntries } from "@/common/markdownUtil";
 
+export type SourceLine = {
+  filename:string,
+  lineNo:number
+};
+
+export type SourceLineMap = SourceLine[];
+
+export type SourceMappedText = {
+  text:string,
+  sourceLineMap:SourceLineMap
+};
+
+type ImportedLine = {
+  text:string,
+  sourceLine:SourceLine
+};
+
 type ImportedSection = {
   headingText:string,
   normalizedHeading:string,
   depth:number,
-  bodyText:string,
+  headingSourceLine:SourceLine,
+  bodyLines:ImportedLine[],
   children:ImportedSection[]
 };
 
@@ -59,22 +77,30 @@ function _createSection(headingText:string):ImportedSection {
     headingText,
     normalizedHeading:normalizeId(headingText),
     depth:1,
-    bodyText:'',
+    headingSourceLine:{ filename:'<unknown>', lineNo:1 },
+    bodyLines:[],
     children:[]
   };
 }
 
-function _parseSectionTree(markdownText:string):ImportedSection[] {
+function _createSourceLine(filename:string, lineNo:number):SourceLine {
+  return { filename, lineNo };
+}
+
+function _parseSectionTree(sourceMappedText:SourceMappedText):ImportedSection[] {
   const roots:ImportedSection[] = [];
   const stack:Array<{ depth:number, section:ImportedSection }> = [];
 
-  markdownText.split('\n').forEach(line => {
+  const lines = sourceMappedText.text.split('\n');
+  lines.forEach((line, index) => {
+    const sourceLine = sourceMappedText.sourceLineMap[index] || _createSourceLine('<unknown>', index + 1);
     const heading = _findMarkdownHeadingLine(line);
     if (heading) {
       while (stack.length > 0 && stack[stack.length - 1].depth >= heading.depth) stack.pop();
       const section = {
         ..._createSection(heading.headingText),
-        depth:heading.depth
+        depth:heading.depth,
+        headingSourceLine:sourceLine
       };
       const parentSection = stack[stack.length - 1]?.section || null;
       if (parentSection) parentSection.children.push(section);
@@ -85,62 +111,98 @@ function _parseSectionTree(markdownText:string):ImportedSection[] {
 
     const currentSection = stack[stack.length - 1]?.section || null;
     if (!currentSection) return;
-    currentSection.bodyText += `${line}\n`;
+    currentSection.bodyLines.push({ text:line, sourceLine });
   });
 
   return roots;
 }
 
-function _trimBodyText(text:string):string {
-  return text.trim();
+function _isBlankBodyLine(line:ImportedLine):boolean {
+  return line.text.trim().length === 0;
 }
 
-function _isBulletOnlyBody(text:string):boolean {
-  const trimmedLines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-  return trimmedLines.every(line => line.startsWith('*') && line.includes('='));
+function _trimBodyLines(lines:ImportedLine[]):ImportedLine[] {
+  let startIndex = 0;
+  let endIndex = lines.length;
+  while (startIndex < endIndex && _isBlankBodyLine(lines[startIndex])) startIndex += 1;
+  while (endIndex > startIndex && _isBlankBodyLine(lines[endIndex - 1])) endIndex -= 1;
+  return lines.slice(startIndex, endIndex);
 }
 
-function _serializeBulletEntries(entries:Array<readonly [string, string]>):string {
-  return entries.map(([name, value]) => `* ${name}=${value}`).join('\n');
+function _isBulletOnlyBody(lines:ImportedLine[]):boolean {
+  const trimmedLines = _trimBodyLines(lines).map(line => line.text.trim()).filter(line => line.length > 0);
+  return trimmedLines.length > 0 && trimmedLines.every(line => line.startsWith('*') && line.includes('='));
 }
 
-function _mergeBulletOnlyBody(levelBodyText:string, importBodyText:string):string {
-  const levelEntries = parseNameValueLineEntries(levelBodyText, false);
-  const importEntries = parseNameValueLineEntries(importBodyText, false);
+type BodyEntry = {
+  authoredName:string,
+  normalizedName:string,
+  value:string,
+  sourceLine:SourceLine
+};
+
+function _parseBodyEntries(lines:ImportedLine[]):BodyEntry[] {
+  const entries:BodyEntry[] = [];
+  _trimBodyLines(lines).forEach(line => {
+    const trimmedLine = line.text.trim();
+    if (!trimmedLine.startsWith('*')) return;
+    const bulletText = trimmedLine.slice(1).trim();
+    const equalsIndex = bulletText.indexOf('=');
+    if (equalsIndex === -1) return;
+    const authoredName = bulletText.slice(0, equalsIndex).trim();
+    if (!authoredName.length) return;
+    entries.push({
+      authoredName,
+      normalizedName:normalizeId(authoredName),
+      value:bulletText.slice(equalsIndex + 1).trim(),
+      sourceLine:line.sourceLine
+    });
+  });
+  return entries;
+}
+
+function _serializeBulletEntries(entries:BodyEntry[]):ImportedLine[] {
+  return entries.map(entry => ({
+    text:`* ${entry.authoredName}=${entry.value}`,
+    sourceLine:entry.sourceLine
+  }));
+}
+
+function _mergeBulletOnlyBody(levelBodyLines:ImportedLine[], importBodyLines:ImportedLine[]):ImportedLine[] {
+  const levelEntries = _parseBodyEntries(levelBodyLines);
+  const importEntries = _parseBodyEntries(importBodyLines);
   if (!levelEntries.length) return _serializeBulletEntries(importEntries);
   if (!importEntries.length) return _serializeBulletEntries(levelEntries);
 
-  const mergedEntries = new Map<string, { authoredName:string, value:string }>();
+  const mergedEntries = new Map<string, BodyEntry>();
   const mergedEntryOrder:string[] = [];
 
-  levelEntries.forEach(([name, value]) => {
-    const normalizedName = normalizeId(name);
-    if (!mergedEntries.has(normalizedName)) mergedEntryOrder.push(normalizedName);
-    mergedEntries.set(normalizedName, { authoredName:name, value });
+  levelEntries.forEach(entry => {
+    if (!mergedEntries.has(entry.normalizedName)) mergedEntryOrder.push(entry.normalizedName);
+    mergedEntries.set(entry.normalizedName, entry);
   });
-  importEntries.forEach(([name, value]) => {
-    const normalizedName = normalizeId(name);
-    if (mergedEntries.has(normalizedName)) return;
-    mergedEntryOrder.push(normalizedName);
-    mergedEntries.set(normalizedName, { authoredName:name, value });
+  importEntries.forEach(entry => {
+    if (mergedEntries.has(entry.normalizedName)) return;
+    mergedEntryOrder.push(entry.normalizedName);
+    mergedEntries.set(entry.normalizedName, entry);
   });
 
   return _serializeBulletEntries(mergedEntryOrder.map(normalizedName => {
     const mergedEntry = mergedEntries.get(normalizedName);
     if (!mergedEntry) throw new Error(`missing merged entry for '${normalizedName}'`);
-    return [mergedEntry.authoredName, mergedEntry.value] as const;
+    return mergedEntry;
   }));
 }
 
-function _mergeSectionBody(levelBodyText:string, importBodyText:string):string {
-  const trimmedLevelBodyText = _trimBodyText(levelBodyText);
-  const trimmedImportBodyText = _trimBodyText(importBodyText);
-  if (!trimmedLevelBodyText.length) return trimmedImportBodyText;
-  if (!trimmedImportBodyText.length) return trimmedLevelBodyText;
-  if (_isBulletOnlyBody(trimmedLevelBodyText) && _isBulletOnlyBody(trimmedImportBodyText)) {
-    return _mergeBulletOnlyBody(trimmedLevelBodyText, trimmedImportBodyText);
+function _mergeSectionBody(levelBodyLines:ImportedLine[], importBodyLines:ImportedLine[]):ImportedLine[] {
+  const trimmedLevelBodyLines = _trimBodyLines(levelBodyLines);
+  const trimmedImportBodyLines = _trimBodyLines(importBodyLines);
+  if (!trimmedLevelBodyLines.length) return trimmedImportBodyLines;
+  if (!trimmedImportBodyLines.length) return trimmedLevelBodyLines;
+  if (_isBulletOnlyBody(trimmedLevelBodyLines) && _isBulletOnlyBody(trimmedImportBodyLines)) {
+    return _mergeBulletOnlyBody(trimmedLevelBodyLines, trimmedImportBodyLines);
   }
-  return trimmedLevelBodyText;
+  return trimmedLevelBodyLines;
 }
 
 function _mergeSectionTrees(levelSections:ImportedSection[], importSections:ImportedSection[]):ImportedSection[] {
@@ -165,45 +227,103 @@ function _mergeSectionNodes(levelSection:ImportedSection|null, importSection:Imp
     headingText:mergedLevelSection.headingText,
     normalizedHeading:mergedLevelSection.normalizedHeading,
     depth:mergedLevelSection.depth,
-    bodyText:_mergeSectionBody(mergedLevelSection.bodyText, importSection.bodyText),
+    headingSourceLine:mergedLevelSection.headingSourceLine.filename === '<unknown>'
+      ? importSection.headingSourceLine
+      : mergedLevelSection.headingSourceLine,
+    bodyLines:_mergeSectionBody(mergedLevelSection.bodyLines, importSection.bodyLines),
     children:_mergeSectionTrees(mergedLevelSection.children, importSection.children)
   };
 }
 
-function _serializeSectionTree(sections:ImportedSection[]):string {
-  return sections.map(section => _serializeSectionNode(section)).join('\n\n').trim();
+function _createSourceMappedText(text:string, sourceLineMap:SourceLineMap):SourceMappedText {
+  return { text, sourceLineMap };
 }
 
-function _serializeSectionNode(section:ImportedSection):string {
-  const parts = [`${'#'.repeat(section.depth)} ${section.headingText}`];
-  const bodyText = _trimBodyText(section.bodyText);
-  if (bodyText.length > 0) parts.push(bodyText);
-  const childText = _serializeSectionTree(section.children);
-  if (childText.length > 0) parts.push(childText);
-  return parts.join('\n\n');
+function _createRawSourceMappedText(text:string, filename:string):SourceMappedText {
+  return _createSourceMappedText(text, text.split('\n').map((_, index) => _createSourceLine(filename, index + 1)));
 }
 
-function _mergeImportIntoLevelText(levelText:string, importText:string):string {
-  const levelSections = _parseSectionTree(levelText);
-  const importSections = _parseSectionTree(importText);
-  if (!levelSections.length) return importText.trim();
-  if (!importSections.length) return levelText.trim();
-  return _serializeSectionTree(_mergeSectionTrees(levelSections, importSections));
+function _createBlankLine(sourceLine:SourceLine):ImportedLine {
+  return { text:'', sourceLine };
+}
+
+function _serializeSectionNode(section:ImportedSection):ImportedLine[] {
+  const lines:ImportedLine[] = [{
+    text:`${'#'.repeat(section.depth)} ${section.headingText}`,
+    sourceLine:section.headingSourceLine
+  }];
+  const bodyLines = _trimBodyLines(section.bodyLines);
+  if (bodyLines.length) {
+    lines.push(_createBlankLine(section.headingSourceLine));
+    lines.push(...bodyLines);
+  }
+  const childLines = _serializeSectionTree(section.children);
+  if (childLines.length) {
+    lines.push(_createBlankLine(bodyLines[bodyLines.length - 1]?.sourceLine || section.headingSourceLine));
+    lines.push(...childLines);
+  }
+  return lines;
+}
+
+function _serializeSectionTree(sections:ImportedSection[]):ImportedLine[] {
+  const lines:ImportedLine[] = [];
+  sections.forEach(section => {
+    const sectionLines = _serializeSectionNode(section);
+    if (!sectionLines.length) return;
+    if (lines.length) lines.push(_createBlankLine(lines[lines.length - 1].sourceLine));
+    lines.push(...sectionLines);
+  });
+  return lines;
+}
+
+function _serializeSourceMappedSections(sections:ImportedSection[]):SourceMappedText {
+  const lines = _serializeSectionTree(sections);
+  return _createSourceMappedText(lines.map(line => line.text).join('\n'), lines.map(line => line.sourceLine));
+}
+
+function _mergeImportIntoLevelSource(levelSource:SourceMappedText, importSource:SourceMappedText):SourceMappedText {
+  const levelSections = _parseSectionTree(levelSource);
+  const importSections = _parseSectionTree(importSource);
+  if (!levelSections.length) return {
+    text:importSource.text.trim(),
+    sourceLineMap:importSource.sourceLineMap.slice(0, importSource.text.trim().split('\n').length)
+  };
+  if (!importSections.length) return {
+    text:levelSource.text.trim(),
+    sourceLineMap:levelSource.sourceLineMap.slice(0, levelSource.text.trim().split('\n').length)
+  };
+  return _serializeSourceMappedSections(_mergeSectionTrees(levelSections, importSections));
+}
+
+export function createLevelTextWithImportTextsAndSourceLineMap(importSources:Array<{ filename:string, text:string }>,
+  levelSource:{ filename:string, text:string }):SourceMappedText {
+  let mergedSource = _createRawSourceMappedText(levelSource.text, levelSource.filename);
+  for (let i = 0; i < importSources.length; ++i) {
+    mergedSource = _mergeImportIntoLevelSource(mergedSource, _createRawSourceMappedText(importSources[i].text, importSources[i].filename));
+  }
+  return mergedSource;
 }
 
 export function createLevelTextWithImportTexts(importTexts:string[], levelText:string):string {
-  let mergedText = levelText;
-  for(let i = 0; i < importTexts.length; ++i) {
-    mergedText = _mergeImportIntoLevelText(mergedText, importTexts[i]);
-  }
-  return mergedText;
+  return createLevelTextWithImportTextsAndSourceLineMap(
+    importTexts.map((text, index) => ({ filename:`<import ${index + 1}>`, text })),
+    { filename:'<level>', text:levelText }
+  ).text;
 }
 
-export async function loadLevelTextWithImports(filename:string):Promise<string> {
+export async function loadLevelTextWithSourceLineMap(filename:string):Promise<SourceMappedText> {
   const levelUrl = _levelFilenameToUrl(filename);
   const sourceText = await _fetchTextFromUrl(levelUrl);
   const importFilenames = _findImportedFilenames(sourceText);
-  if (!importFilenames.length) return sourceText;
-  const importTexts = await Promise.all(importFilenames.map(importFilename => loadLevelTextWithImports(importFilename)));
-  return createLevelTextWithImportTexts(importTexts, sourceText);
+  if (!importFilenames.length) return _createRawSourceMappedText(sourceText, filename);
+  const importSources = await Promise.all(importFilenames.map(importFilename => loadLevelTextWithSourceLineMap(importFilename)));
+  let mergedSource = _createRawSourceMappedText(sourceText, filename);
+  for (let i = 0; i < importSources.length; ++i) {
+    mergedSource = _mergeImportIntoLevelSource(mergedSource, importSources[i]);
+  }
+  return mergedSource;
+}
+
+export async function loadLevelTextWithImports(filename:string):Promise<string> {
+  return (await loadLevelTextWithSourceLineMap(filename)).text;
 }

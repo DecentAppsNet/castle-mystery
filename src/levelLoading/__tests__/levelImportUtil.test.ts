@@ -8,7 +8,13 @@ import recursiveItemsText from './fixtures/levelImportRecursive/items.md?raw';
 import recursiveSourceText from './fixtures/levelImportRecursive/source.md?raw';
 import whitespaceImportText from './fixtures/levelImportWhitespace/import.md?raw';
 import whitespaceLevelText from './fixtures/levelImportWhitespace/level.md?raw';
-import { createLevelTextWithImportTexts, loadLevelTextWithImports } from '../levelImportUtil';
+import { createLevelTextWithImportTexts, createLevelTextWithImportTextsAndSourceLineMap, loadLevelTextWithImports, loadLevelTextWithSourceLineMap } from '../levelImportUtil';
+
+function _findMergedLineNo(text:string, needle:string):number {
+  const lineIndex = text.split('\n').findIndex(line => line === needle);
+  expect(lineIndex).toBeGreaterThanOrEqual(0);
+  return lineIndex + 1;
+}
 
 describe('levelImportUtil', () => {
   afterEach(() => {
@@ -58,6 +64,21 @@ describe('levelImportUtil', () => {
     expect(mergedText).toContain('* description=level orange color');
   });
 
+  it('builds a SourceLineMap for merged lines from both level and import files', () => {
+    const merged = createLevelTextWithImportTextsAndSourceLineMap(
+      [{ filename:'import.md', text:importText }],
+      { filename:'level.md', text:levelText }
+    );
+
+    const titleLineNo = _findMergedLineNo(merged.text, '* title=Level Title');
+    const backgroundLineNo = _findMergedLineNo(merged.text, '* background=import.png');
+    const faceImageLineNo = _findMergedLineNo(merged.text, '* faceImage=importFace.png');
+
+    expect(merged.sourceLineMap[titleLineNo - 1]).toEqual({ filename:'level.md', lineNo:3 });
+    expect(merged.sourceLineMap[backgroundLineNo - 1]).toEqual({ filename:'import.md', lineNo:4 });
+    expect(merged.sourceLineMap[faceImageLineNo - 1]).toEqual({ filename:'import.md', lineNo:23 });
+  });
+
   it('returns the source text unchanged when a level has no imports', async () => {
     const fetchMock = vi.fn(async (url:string) => {
       if (url.endsWith('/levels/level.md')) {
@@ -75,6 +96,26 @@ describe('levelImportUtil', () => {
 
     expect(loadedText).toBe(levelText);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns an identity SourceLineMap when a level has no imports', async () => {
+    const fetchMock = vi.fn(async (url:string) => {
+      if (url.endsWith('/levels/level.md')) {
+        return {
+          ok:true,
+          text:async () => levelText
+        };
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const loaded = await loadLevelTextWithSourceLineMap('level.md');
+
+    expect(loaded.text).toBe(levelText);
+    expect(loaded.sourceLineMap[0]).toEqual({ filename:'level.md', lineNo:1 });
+    expect(loaded.sourceLineMap[loaded.sourceLineMap.length - 1]).toEqual({ filename:'level.md', lineNo:levelText.split('\n').length });
   });
 
   it('loads nested imports recursively before merging them into the source level text', async () => {
@@ -111,6 +152,41 @@ describe('levelImportUtil', () => {
     expect(loadedText).toContain('## Side Table');
     expect(loadedText).toContain('* description=Nested item import');
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('preserves nested import provenance in the SourceLineMap', async () => {
+    const fetchMock = vi.fn(async (url:string) => {
+      if (url.endsWith('/levels/source.md')) {
+        return {
+          ok:true,
+          text:async () => recursiveSourceText
+        };
+      }
+      if (url.endsWith('/levels/characters.md')) {
+        return {
+          ok:true,
+          text:async () => recursiveCharactersText
+        };
+      }
+      if (url.endsWith('/levels/items.md')) {
+        return {
+          ok:true,
+          text:async () => recursiveItemsText
+        };
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const loaded = await loadLevelTextWithSourceLineMap('source.md');
+    const nestedItemLineNo = _findMergedLineNo(loaded.text, '* description=Nested item import');
+    const faceImageLineNo = _findMergedLineNo(loaded.text, '* faceImage=importFace.png');
+    const sourceDescriptionLineNo = _findMergedLineNo(loaded.text, '* description=Source Simon');
+
+    expect(loaded.sourceLineMap[sourceDescriptionLineNo - 1]).toEqual({ filename:'source.md', lineNo:10 });
+    expect(loaded.sourceLineMap[faceImageLineNo - 1]).toEqual({ filename:'characters.md', lineNo:9 });
+    expect(loaded.sourceLineMap[nestedItemLineNo - 1]).toEqual({ filename:'items.md', lineNo:5 });
   });
 
   it('rejects import entries that are paths or urls', async () => {
