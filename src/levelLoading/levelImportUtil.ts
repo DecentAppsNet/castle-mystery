@@ -19,6 +19,10 @@ export type SourceMappedText = {
   sourceLineMap:SourceLineMap
 };
 
+type LoadImportsContext = {
+  cache:Map<string, Promise<SourceMappedText>>
+};
+
 type ImportedLine = {
   text:string,
   sourceLine:SourceLine
@@ -311,17 +315,45 @@ export function createLevelTextWithImportTexts(importTexts:string[], levelText:s
   ).text;
 }
 
-export async function loadLevelTextWithSourceLineMap(filename:string):Promise<SourceMappedText> {
+function _throwOnDirectSelfImport(filename:string, importFilename:string):void {
+  if (importFilename !== filename) return;
+  throw new Error(`A level file can't import itself.`);
+}
+
+async function _loadLevelTextWithSourceLineMap(filename:string, context:LoadImportsContext,
+  loadingStack:readonly string[]):Promise<SourceMappedText> {
+  const cachedSource = context.cache.get(filename) || null;
+  if (cachedSource) return cachedSource;
+
+  const sourcePromise = (async () => {
   const levelUrl = _levelFilenameToUrl(filename);
   const sourceText = await _fetchTextFromUrl(levelUrl);
   const importFilenames = _findImportedFilenames(sourceText);
   if (!importFilenames.length) return _createRawSourceMappedText(sourceText, filename);
-  const importSources = await Promise.all(importFilenames.map(importFilename => loadLevelTextWithSourceLineMap(importFilename)));
+
+    const importSources = await Promise.all(importFilenames.flatMap(importFilename => {
+      _throwOnDirectSelfImport(filename, importFilename);
+      if (loadingStack.includes(importFilename)) return [];
+      return [_loadLevelTextWithSourceLineMap(importFilename, context, [...loadingStack, importFilename])];
+    }));
   let mergedSource = _createRawSourceMappedText(sourceText, filename);
   for (let i = 0; i < importSources.length; ++i) {
     mergedSource = _mergeImportIntoLevelSource(mergedSource, importSources[i]);
   }
   return mergedSource;
+  })();
+
+  context.cache.set(filename, sourcePromise);
+  try {
+    return await sourcePromise;
+  } catch (error) {
+    context.cache.delete(filename);
+    throw error;
+  }
+}
+
+export async function loadLevelTextWithSourceLineMap(filename:string):Promise<SourceMappedText> {
+  return _loadLevelTextWithSourceLineMap(filename, { cache:new Map() }, [filename]);
 }
 
 export async function loadLevelTextWithImports(filename:string):Promise<string> {
