@@ -67,6 +67,12 @@ import duplicateConclusionCategoryGroupNamesText from './fixtures/duplicate-conc
 import duplicateConclusionPropertyText from './fixtures/duplicate-conclusion-property.md?raw';
 import duplicateConclusionSubsectionsCaseText from './fixtures/duplicate-conclusion-subsections-case.md?raw';
 import loadLevelFromUrlWithImportsCharactersText from './fixtures/load-level-from-url-with-imports-characters.md?raw';
+import loadLevelFromUrlImportedDuplicateCharacterPropertySourceText from './fixtures/load-level-from-url-imported-duplicate-character-property-source.md?raw';
+import loadLevelFromUrlImportedDuplicateCharacterPropertyText from './fixtures/load-level-from-url-imported-duplicate-character-property.md?raw';
+import loadLevelFromUrlImportedDuplicateConclusionPropertySourceText from './fixtures/load-level-from-url-imported-duplicate-conclusion-property-source.md?raw';
+import loadLevelFromUrlImportedDuplicateConclusionPropertyText from './fixtures/load-level-from-url-imported-duplicate-conclusion-property.md?raw';
+import loadLevelFromUrlImportedDuplicateRoomLegendEntrySourceText from './fixtures/load-level-from-url-imported-duplicate-room-legend-entry-source.md?raw';
+import loadLevelFromUrlImportedDuplicateRoomLegendEntryText from './fixtures/load-level-from-url-imported-duplicate-room-legend-entry.md?raw';
 import loadLevelFromUrlWithImportsText from './fixtures/load-level-from-url-with-imports.md?raw';
 import loadLevelFromUrlImportedItineraryText from './fixtures/load-level-from-url-imported-itinerary.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
@@ -1524,23 +1530,27 @@ describe('levelUtil itinerary loading', () => {
 });
 
 describe('levelUtil url loading', () => {
+  function _stubLevelUrlFetch(levelTextsByPath:Record<string, string>) {
+    const fetchMock = vi.fn(async (url:string) => {
+      const entry = Object.entries(levelTextsByPath).find(([path]) => url.endsWith(path)) || null;
+      if (!entry) throw new Error(`unexpected url ${url}`);
+      return { ok:true, text:async () => entry[1] };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+    return fetchMock;
+  }
+
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
   it('loads imported level content when called with a level url', async () => {
-    const fetchMock = vi.fn(async (url:string) => {
-      if (url.endsWith('/levels/load-level-from-url-with-imports.md')) {
-        return { ok:true, text:async () => loadLevelFromUrlWithImportsText };
-      }
-      if (url.endsWith('/levels/load-level-from-url-with-imports-characters.md')) {
-        return { ok:true, text:async () => loadLevelFromUrlWithImportsCharactersText };
-      }
-      throw new Error(`unexpected url ${url}`);
+    const fetchMock = _stubLevelUrlFetch({
+      '/levels/load-level-from-url-with-imports.md':loadLevelFromUrlWithImportsText,
+      '/levels/load-level-from-url-with-imports-characters.md':loadLevelFromUrlWithImportsCharactersText
     });
-    vi.stubGlobal('fetch', fetchMock);
-    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
 
     const level = await loadLevelFromUrl('/levels/load-level-from-url-with-imports.md');
 
@@ -1550,13 +1560,10 @@ describe('levelUtil url loading', () => {
 
   it('reports root-file validation errors using the original root source line', async () => {
     const sourceText = loadLevelFromUrlWithImportsText.replace('* title=Imported URL Level', '* activeCharacter=Ghost');
-    const fetchMock = vi.fn(async (url:string) => {
-      if (url.endsWith('/levels/source.md')) return { ok:true, text:async () => sourceText };
-      if (url.endsWith('/levels/load-level-from-url-with-imports-characters.md')) return { ok:true, text:async () => loadLevelFromUrlWithImportsCharactersText };
-      throw new Error(`unexpected url ${url}`);
+    _stubLevelUrlFetch({
+      '/levels/source.md':sourceText,
+      '/levels/load-level-from-url-with-imports-characters.md':loadLevelFromUrlWithImportsCharactersText
     });
-    vi.stubGlobal('fetch', fetchMock);
-    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
 
     await expect(loadLevelFromUrl('/levels/source.md')).rejects.toMatchObject({
       levelFilename:'source.md',
@@ -1570,18 +1577,54 @@ describe('levelUtil url loading', () => {
       'load-level-from-url-with-imports-characters.md',
       'load-level-from-url-imported-itinerary.md'
     );
-    const fetchMock = vi.fn(async (url:string) => {
-      if (url.endsWith('/levels/source.md')) return { ok:true, text:async () => sourceText };
-      if (url.endsWith('/levels/load-level-from-url-imported-itinerary.md')) return { ok:true, text:async () => loadLevelFromUrlImportedItineraryText };
-      throw new Error(`unexpected url ${url}`);
+    _stubLevelUrlFetch({
+      '/levels/source.md':sourceText,
+      '/levels/load-level-from-url-imported-itinerary.md':loadLevelFromUrlImportedItineraryText
     });
-    vi.stubGlobal('fetch', fetchMock);
-    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
 
     await expect(loadLevelFromUrl('/levels/source.md')).rejects.toMatchObject({
       levelFilename:'load-level-from-url-imported-itinerary.md',
       errorLineNo:2
     });
     await expect(loadLevelFromUrl('/levels/source.md')).rejects.toThrow('load-level-from-url-imported-itinerary.md:2: missing itinerary activity');
+  });
+
+  it('reports imported character property errors using the imported source line', async () => {
+    _stubLevelUrlFetch({
+      '/levels/source.md':loadLevelFromUrlImportedDuplicateCharacterPropertySourceText,
+      '/levels/load-level-from-url-imported-duplicate-character-property.md':loadLevelFromUrlImportedDuplicateCharacterPropertyText
+    });
+
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toMatchObject({
+      levelFilename:'load-level-from-url-imported-duplicate-character-property.md',
+      errorLineNo:6
+    });
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toThrow("load-level-from-url-imported-duplicate-character-property.md:6: duplicate character hero entry 'description'");
+  });
+
+  it('reports imported room legend errors using the imported source line', async () => {
+    _stubLevelUrlFetch({
+      '/levels/source.md':loadLevelFromUrlImportedDuplicateRoomLegendEntrySourceText,
+      '/levels/load-level-from-url-imported-duplicate-room-legend-entry.md':loadLevelFromUrlImportedDuplicateRoomLegendEntryText
+    });
+
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toMatchObject({
+      levelFilename:'load-level-from-url-imported-duplicate-room-legend-entry.md',
+      errorLineNo:10
+    });
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toThrow("load-level-from-url-imported-duplicate-room-legend-entry.md:10: duplicate room foyer entry 'H'");
+  });
+
+  it('reports imported conclusion subsection errors using the imported source line', async () => {
+    _stubLevelUrlFetch({
+      '/levels/source.md':loadLevelFromUrlImportedDuplicateConclusionPropertySourceText,
+      '/levels/load-level-from-url-imported-duplicate-conclusion-property.md':loadLevelFromUrlImportedDuplicateConclusionPropertyText
+    });
+
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toMatchObject({
+      levelFilename:'load-level-from-url-imported-duplicate-conclusion-property.md',
+      errorLineNo:7
+    });
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toThrow("load-level-from-url-imported-duplicate-conclusion-property.md:7: duplicate normalized entry 'mystery' conflicts with 'Mystery'");
   });
 });
