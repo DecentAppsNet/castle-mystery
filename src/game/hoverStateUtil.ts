@@ -4,10 +4,12 @@
 import { getExitHoverRect } from "./drawing/exitDrawUtil";
 import { getCharacterHoverRect } from "./drawing/characterDrawUtil";
 import { findDiscoveredItemAtPosition } from "./drawing/itemDrawUtil";
+import { compareNonStairDrawableContents } from "./drawing/roomContentDrawOrderUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createPauseEffect } from "./effects/playPauseEffectUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { isCharacterInteractive } from "./interactivityUtil";
+import { isPositionInOrOnRect } from "./rectUtil";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
@@ -25,6 +27,29 @@ function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }
   gameState.viewedItemIds.add(item.title);
 }
 
+function _findTopmostHoveredCharacter(candidateCharacters:Character[], gameState:GameState, x:number, y:number):Character|null {
+  const hoveredCharacters = candidateCharacters.filter(character =>
+    isPositionInOrOnRect(x, y, getCharacterHoverRect(character, gameState.scalingFactors, gameState.time, gameState.imageSet)));
+  if (!hoveredCharacters.length) return null;
+
+  return hoveredCharacters.sort((character1, character2) => compareNonStairDrawableContents(
+    {
+      type:'character',
+      depth:character1.position.z,
+      x:character1.position.x,
+      sortId:character1.id,
+      character:character1
+    },
+    {
+      type:'character',
+      depth:character2.position.z,
+      x:character2.position.x,
+      sortId:character2.id,
+      character:character2
+    }
+  ))[hoveredCharacters.length - 1] || null;
+}
+
 function _findExitAtPosition(room:Room, x:number, y:number, gameState:GameState):RoomExit|null {
   for (let i = room.exits.length - 1; i >= 0; --i) {
     const exit = room.exits[i];
@@ -32,7 +57,7 @@ function _findExitAtPosition(room:Room, x:number, y:number, gameState:GameState)
       && findRoom(gameState.rooms, exit.room1Id).isOutside
       && findRoom(gameState.rooms, exit.room2Id).isOutside) continue;
     const rect = getExitHoverRect(exit, gameState.scalingFactors);
-    const isInside = x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
+    const isInside = isPositionInOrOnRect(x, y, rect);
     if (isInside) return exit;
   }
   return null;
@@ -118,22 +143,7 @@ function _findInteractiveCharacterAtPosition(gameState:GameState, x:number, y:nu
     const hoveredRoom = findRoomAtPosition(gameState.rooms, x, y);
     if (!hoveredRoom?.isDiscovered) return null;
     const candidateCharacters = findCharactersInRoom(hoveredRoom, gameState.characters).filter(isCharacterInteractive);
-    if (candidateCharacters.length === 0) return null;
-
-    let nearest:Character = candidateCharacters[0];
-    let nearestDist = Math.hypot(nearest.position.x - x, nearest.position.y - y);
-    for (let i = 1; i < candidateCharacters.length; ++i) {
-      const character = candidateCharacters[i];
-      const distance = Math.hypot(character.position.x - x, character.position.y - y);
-      if (distance < nearestDist) {
-        nearest = character;
-        nearestDist = distance;
-      }
-    }
-
-    const rect = getCharacterHoverRect(nearest, gameState.scalingFactors, gameState.time, gameState.imageSet);
-    if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) return nearest;
-    return null;
+    return _findTopmostHoveredCharacter(candidateCharacters, gameState, x, y);
   }
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
@@ -141,22 +151,7 @@ function _findInteractiveCharacterAtPosition(gameState:GameState, x:number, y:nu
   const candidateCharacters = activeCharacter && activeRoom
     ? findCharactersInRoom(activeRoom, gameState.characters).filter(isCharacterInteractive)
     : gameState.characters.filter(isCharacterInteractive);
-  if (candidateCharacters.length === 0) return null;
-
-  let nearest:Character = candidateCharacters[0];
-  let nearestDist = Math.hypot(nearest.position.x - x, nearest.position.y - y);
-  for (let i = 1; i < candidateCharacters.length; ++i) {
-    const character = candidateCharacters[i];
-    const distance = Math.hypot(character.position.x - x, character.position.y - y);
-    if (distance < nearestDist) {
-      nearest = character;
-      nearestDist = distance;
-    }
-  }
-
-  const rect = getCharacterHoverRect(nearest, gameState.scalingFactors, gameState.time, gameState.imageSet);
-  if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) return nearest;
-  return null;
+  return _findTopmostHoveredCharacter(candidateCharacters, gameState, x, y);
 }
 
 export function updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent) {

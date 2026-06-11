@@ -219,6 +219,33 @@ describe('room navigation integration', () => {
     expect(gameState.hoveredCharacterId).toBe(null);
   });
 
+  it('prefers the topmost drawn character when hover bounds overlap', () => {
+    const hero = _createCharacter('hero', 5, []);
+    const guide = _createCharacter('guide', 6, []);
+    const gameState = createGameState(_createLevel([hero, guide]));
+    gameState.isLevelComplete = false;
+    _setScalingFactors(gameState);
+
+    const heroRect = getCharacterCanvasRect(hero, gameState.scalingFactors, gameState.time, gameState.imageSet);
+    const guideRect = getCharacterCanvasRect(guide, gameState.scalingFactors, gameState.time, gameState.imageSet);
+    const [heroLeft, heroTop] = canvasToGamePosition(heroRect.x, heroRect.y, gameState.scalingFactors);
+    const [heroRight, heroBottom] = canvasToGamePosition(heroRect.x + heroRect.width, heroRect.y + heroRect.height, gameState.scalingFactors);
+    const [guideLeft] = canvasToGamePosition(guideRect.x, guideRect.y, gameState.scalingFactors);
+    const [guideRight] = canvasToGamePosition(guideRect.x + guideRect.width, guideRect.y + guideRect.height, gameState.scalingFactors);
+    const overlapLeft = Math.max(heroLeft, guideLeft);
+    const overlapRight = Math.min(heroRight, guideRight);
+
+    expect(overlapRight).toBeGreaterThan(overlapLeft);
+
+    updateGameStateForMouseMove(gameState, {
+      type:PlayerEventType.MOUSEMOVE,
+      x:overlapLeft + (overlapRight - overlapLeft) * 0.75,
+      y:(heroTop + heroBottom) / 2
+    });
+
+    expect(gameState.hoveredCharacterId).toBe('hero');
+  });
+
   it('does not select non-interactive characters when cycling with tab', () => {
     const hero = _createCharacter('hero', 5, []);
     const bystander = { ..._createCharacter('bystander', 25, []), description:'' };
