@@ -636,7 +636,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-general-section.md:1');
+      expect((error as LoadLevelException).message).toContain('duplicate-general-section.md:5');
       expect((error as LoadLevelException).message).toContain(`duplicate section 'general'`);
     }
   });
@@ -1119,7 +1119,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:30');
+      expect((error as LoadLevelException).message).toContain('duplicate-unlock.md:34');
       expect((error as LoadLevelException).message).toContain("duplicate conclusion mystery entry 'unlockConclusions'");
     }
   });
@@ -1130,7 +1130,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-character-subsections-case.md:25');
+      expect((error as LoadLevelException).message).toContain('duplicate-character-subsections-case.md:30');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'HERO' conflicts with 'Hero'`);
     }
   });
@@ -1141,7 +1141,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-character-subsections-spaces.md:25');
+      expect((error as LoadLevelException).message).toContain('duplicate-character-subsections-spaces.md:30');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'BOB ODARE' conflicts with 'Bob Odare'`);
     }
   });
@@ -1162,7 +1162,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-character-property.md:25');
+      expect((error as LoadLevelException).message).toContain('duplicate-character-property.md:29');
       expect((error as LoadLevelException).message).toContain(`duplicate character hero entry 'description'`);
     }
   });
@@ -1173,7 +1173,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-item-subsections-case.md:23');
+      expect((error as LoadLevelException).message).toContain('duplicate-item-subsections-case.md:28');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'BOOK' conflicts with 'Book'`);
     }
   });
@@ -1195,7 +1195,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-map-legend-entry.md:7');
+      expect((error as LoadLevelException).message).toContain('duplicate-map-legend-entry.md:13');
       expect((error as LoadLevelException).message).toContain(`duplicate map legend entry 'A'`);
     }
   });
@@ -1206,7 +1206,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-room-legend-entry.md:15');
+      expect((error as LoadLevelException).message).toContain('duplicate-room-legend-entry.md:23');
       expect((error as LoadLevelException).message).toContain(`duplicate room hall entry 'H'`);
     }
   });
@@ -1261,7 +1261,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-conclusion-category-group-names.md:34');
+      expect((error as LoadLevelException).message).toContain('duplicate-conclusion-category-group-names.md:36');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'rooms' conflicts with 'Rooms'`);
     }
   });
@@ -1272,7 +1272,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-conclusion-subsections-case.md:34');
+      expect((error as LoadLevelException).message).toContain('duplicate-conclusion-subsections-case.md:39');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'mystery' conflicts with 'Mystery'`);
     }
   });
@@ -1283,7 +1283,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-conclusion-property.md:34');
+      expect((error as LoadLevelException).message).toContain('duplicate-conclusion-property.md:38');
       expect((error as LoadLevelException).message).toContain(`duplicate conclusion mystery entry 'conclusion'`);
     }
   });
@@ -1375,7 +1375,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('duplicate-room-subsections-case.md:15');
+      expect((error as LoadLevelException).message).toContain('duplicate-room-subsections-case.md:24');
       expect((error as LoadLevelException).message).toContain(`duplicate normalized entry 'HALL' conflicts with 'Hall'`);
     }
   });

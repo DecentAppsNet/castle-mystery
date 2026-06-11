@@ -1,6 +1,6 @@
 /* This module groups conclusion-section parsing and generated-conclusion creation during level load. */
 
-import { parseNameValueLineEntries, parseOptions, parseSectionEntries, parseUniqueNameValueLines } from "@/common/markdownUtil";
+import { MarkdownLineError, parseNameValueLineEntriesWithLines, parseOptions, parseSectionEntriesWithLines, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 import { getClozeImageCandidateUrls } from "@/game/imageUrlUtil";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
@@ -11,7 +11,7 @@ import ClozeBlank, { UNSPECIFIED_ANSWER } from "../game/conclusions/types/ClozeB
 import ClozePart from "../game/conclusions/types/ClozePart";
 import ClozePartType from "../game/conclusions/types/ClozePartType";
 import Conclusion from "../game/conclusions/types/Conclusion";
-import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
+import { normalizeId } from "../game/idUtil";
 import Room from "../game/types/Room";
 
 function _resolveRevealRoomIds(revealRoomsText:string|undefined, rooms:ReadonlyArray<Room>):string[] {
@@ -103,8 +103,35 @@ function _sortGeneratedConclusionOptions(options:string[]):string[] {
   return [...options].sort((option1, option2) => option1.localeCompare(option2, undefined, { sensitivity:'base' }));
 }
 
-export function createConclusionCategoryOptionsByName(conclusionsSection:string, defaultCategoryOptionsByName:Map<string, string[]> = new Map()):Map<string, string[]> {
-  const authoredCategoryEntriesById = createNormalizedEntryMap(parseNameValueLineEntries(_parseConclusionCategoryText(conclusionsSection)));
+function _createNormalizedConclusionSubsectionEntries(conclusionsSection:string, firstLineNo:number):Array<{ authoredName:string, value:string, lineNo:number }> {
+  const normalizedEntries = new Map<string, { authoredName:string, value:string, lineNo:number }>();
+  parseSectionEntriesWithLines(conclusionsSection, 2, false, firstLineNo).forEach(sectionEntry => {
+    const normalizedName = normalizeId(sectionEntry.name);
+    const existingEntry = normalizedEntries.get(normalizedName) || null;
+    if (existingEntry) throw new MarkdownLineError(sectionEntry.lineNo,
+      `duplicate normalized entry '${sectionEntry.name}' conflicts with '${existingEntry.authoredName}'`);
+    normalizedEntries.set(normalizedName, {
+      authoredName:sectionEntry.name,
+      value:sectionEntry.value,
+      lineNo:sectionEntry.lineNo
+    });
+  });
+  return Array.from(normalizedEntries.values());
+}
+
+export function createConclusionCategoryOptionsByName(conclusionsSection:string, defaultCategoryOptionsByName:Map<string, string[]> = new Map(),
+  firstLineNo:number = 1):Map<string, string[]> {
+  const authoredCategoryEntriesById = new Map<string, { authoredName:string, value:string }>();
+  parseNameValueLineEntriesWithLines(_parseConclusionCategoryText(conclusionsSection), false, firstLineNo).forEach(categoryEntry => {
+    const normalizedCategoryId = normalizeId(categoryEntry.name);
+    const existingEntry = authoredCategoryEntriesById.get(normalizedCategoryId) || null;
+    if (existingEntry) throw new MarkdownLineError(categoryEntry.lineNo,
+      `duplicate normalized entry '${categoryEntry.name}' conflicts with '${existingEntry.authoredName}'`);
+    authoredCategoryEntriesById.set(normalizedCategoryId, {
+      authoredName:categoryEntry.name,
+      value:categoryEntry.value
+    });
+  });
   const categoryOptionsByName = new Map<string, string[]>(Array.from(defaultCategoryOptionsByName.entries())
     .map(([categoryName, categoryOptions]) => [normalizeId(categoryName), [...categoryOptions]]));
   Array.from(authoredCategoryEntriesById.entries()).forEach(([categoryId, categoryEntry]) => {
@@ -204,15 +231,15 @@ function _parseClozeTemplateToParts(clozeTemplate:string, categoryOptionsByName:
 }
 
 export function loadConclusionsFromSection(conclusionsSection:string, rooms:ReadonlyArray<Room>, categoryOptionsByName?:Map<string, string[]>,
-  characters:ReadonlyArray<Character> = []):Conclusion[] {
+  characters:ReadonlyArray<Character> = [], firstLineNo:number = 1):Conclusion[] {
   const section = conclusionsSection || "";
   if (!section.trim()) return [];
 
-  const resolvedCategoryOptionsByName = categoryOptionsByName || createConclusionCategoryOptionsByName(section);
-  const conclusionSubsectionsById = createNormalizedEntryMap(parseSectionEntries(section, 2));
+  const resolvedCategoryOptionsByName = categoryOptionsByName || createConclusionCategoryOptionsByName(section, new Map(), firstLineNo);
+  const conclusionSubsections = _createNormalizedConclusionSubsectionEntries(section, firstLineNo);
 
-  const parsedConclusions = Array.from(conclusionSubsectionsById.values()).map(({ authoredName:title, value:conclusionSubsection }) => {
-    const nameValues = parseUniqueNameValueLines(conclusionSubsection, `conclusion ${normalizeId(title)}`);
+  const parsedConclusions = conclusionSubsections.map(({ authoredName:title, value:conclusionSubsection, lineNo }) => {
+    const nameValues = parseUniqueNameValueLines(conclusionSubsection, `conclusion ${normalizeId(title)}`, false, lineNo + 1);
     const clozeTemplate = nameValues.conclusion || nameValues.clozeStatement || "";
 
     return {

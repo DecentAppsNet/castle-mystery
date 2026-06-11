@@ -3,7 +3,7 @@
 
 import { assert, assertNonNullable } from "decent-portal";
 
-import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
+import { MarkdownLineError, parseFirstFencedCodeBlockLines, parseOptions, parseSectionEntriesWithLines, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { rand } from "@/common/randUtil";
 import { calcItemCuboidHeightGame } from "@/game/itemSizeUtil";
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
@@ -15,7 +15,7 @@ import Item from "../game/types/Item";
 import Level from "../game/types/Level";
 import Position from "../game/types/Position";
 import Room from "../game/types/Room";
-import { assertNormalizedId, createNormalizedEntryMap, normalizeId } from "../game/idUtil";
+import { assertNormalizedId, normalizeId } from "../game/idUtil";
 import { getFaceImageAssetUrl, getItemImageAssetUrl } from "../game/imageUrlUtil";
 
 type CharacterDefinition = {
@@ -90,13 +90,30 @@ function _parseOptionalNumberOrThrow(value:string|undefined, propertyName:string
 	throw new Error(`item ${itemId} ${propertyName} must be a number`);
 }
 
-export function parseCharacterDefinitions(charactersSection:string):Map<string, CharacterDefinition> {
+function _createNormalizedSectionEntryMap(markdownText:string, indentLevel:number, firstLineNo:number):Map<string, { authoredName:string, value:string, lineNo:number }> {
+	const normalizedEntries = new Map<string, { authoredName:string, value:string, lineNo:number }>();
+	parseSectionEntriesWithLines(markdownText, indentLevel, false, firstLineNo).forEach(sectionEntry => {
+		const normalizedName = normalizeId(sectionEntry.name);
+		const existingEntry = normalizedEntries.get(normalizedName) || null;
+		if (existingEntry) throw new MarkdownLineError(sectionEntry.lineNo,
+			`duplicate normalized entry '${sectionEntry.name}' conflicts with '${existingEntry.authoredName}'`);
+		normalizedEntries.set(normalizedName, {
+			authoredName:sectionEntry.name,
+			value:sectionEntry.value,
+			lineNo:sectionEntry.lineNo
+		});
+	});
+	return normalizedEntries;
+}
+
+
+export function parseCharacterDefinitions(charactersSection:string, firstLineNo:number = 1):Map<string, CharacterDefinition> {
 	const characterDefinitions = new Map<string, CharacterDefinition>();
-	const characterSectionsById = createNormalizedEntryMap(Object.entries(parseSections(charactersSection, 2)));
+	const characterSectionsById = _createNormalizedSectionEntryMap(charactersSection, 2, firstLineNo);
 	Array.from(characterSectionsById.entries()).forEach(([characterId, characterSectionEntry]) => {
 		const authoredCharacterName = characterSectionEntry.authoredName;
 		const characterSection = characterSectionEntry.value;
-		const nameValues = parseUniqueNameValueLines(characterSection, `character ${characterId}`);
+		const nameValues = parseUniqueNameValueLines(characterSection, `character ${characterId}`, false, characterSectionEntry.lineNo + 1);
 		const inventoryItems = parseOptions(nameValues.items || "").map(itemText => ({
 			id:normalizeId(itemText),
 			title:itemText.trim()
@@ -115,13 +132,13 @@ export function parseCharacterDefinitions(charactersSection:string):Map<string, 
 	return characterDefinitions;
 }
 
-export function parseItemDefinitions(itemsSection:string):Map<string, ItemDefinition> {
+export function parseItemDefinitions(itemsSection:string, firstLineNo:number = 1):Map<string, ItemDefinition> {
 	const itemDefinitions = new Map<string, ItemDefinition>();
-	const itemSectionsById = createNormalizedEntryMap(Object.entries(parseSections(itemsSection, 2)));
+	const itemSectionsById = _createNormalizedSectionEntryMap(itemsSection, 2, firstLineNo);
 	Array.from(itemSectionsById.entries()).forEach(([itemId, itemSectionEntry]) => {
 		const authoredItemName = itemSectionEntry.authoredName;
 		const itemSection = itemSectionEntry.value;
-		const nameValues = parseUniqueNameValueLines(itemSection, `item ${itemId}`);
+		const nameValues = parseUniqueNameValueLines(itemSection, `item ${itemId}`, false, itemSectionEntry.lineNo + 1);
 		itemDefinitions.set(itemId, {
 			title:nameValues.title || authoredItemName.trim(),
 			description:nameValues.description || "",
@@ -154,8 +171,9 @@ export function createKnownPopulationEntryIds(definitions:RoomPopulationDefiniti
 	]);
 }
 
-export function loadRoomPopulationFromRoomsSection(level:Level, roomsSection:string, definitions:RoomPopulationDefinitions) {
-	_addCharactersAndRoomItemsFromSections(level, roomsSection, definitions.characterDefinitions, definitions.itemDefinitions);
+export function loadRoomPopulationFromRoomsSection(level:Level, roomsSection:string, definitions:RoomPopulationDefinitions,
+	firstLineNo:number = 1) {
+	_addCharactersAndRoomItemsFromSections(level, roomsSection, definitions.characterDefinitions, definitions.itemDefinitions, firstLineNo);
 }
 
 export function loadCharacterInventoryItems(level:Level, definitions:RoomPopulationDefinitions) {
@@ -318,8 +336,8 @@ function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, author
 }
 
 function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string,
-	characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
-	const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
+	characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>, firstLineNo:number = 1) {
+	const roomSectionsById = _createNormalizedSectionEntryMap(roomsSection, 2, firstLineNo);
 
 	Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
 		const roomSection = roomSectionEntry.value;
@@ -330,7 +348,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 
 		const gridWidth = gridLines.reduce((maxWidth, line) => Math.max(maxWidth, line.length), 0);
 		const gridHeight = gridLines.length;
-		const roomNameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`);
+		const roomNameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`, false, roomSectionEntry.lineNo + 1);
 		const roomLegend = Object.fromEntries(
 			Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured')
 		);

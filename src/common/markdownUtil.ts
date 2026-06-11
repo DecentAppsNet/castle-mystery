@@ -22,6 +22,18 @@ If this module grows beyond 500 lines of code, read the "Refactoring Large Modul
 // Type for associative array
 type Sections = { [sectionName:string]:string };
 export type NameValues = { [name:string]:string };
+export type SectionEntryWithLine = { name:string, value:string, lineNo:number };
+export type NameValueEntryWithLine = { name:string, value:string, lineNo:number };
+
+export class MarkdownLineError extends Error {
+  readonly lineNo:number;
+
+  constructor(lineNo:number, message:string) {
+    super(message);
+    this.name = 'MarkdownLineError';
+    this.lineNo = lineNo;
+  }
+}
 
 // E.g., "hello world" -> "helloWorld".
 export function normalizeMarkdownName(text:string):string {
@@ -55,32 +67,60 @@ function _findBulletedLineText(line:string):string|null {
   return trimmedLeftLine.slice(1).trim();
 }
 
-// Parse the heading sections of a markdown text. The header of each section is the section name, and the content of each section is the value for the section.
-function _parseSectionArrays(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):{sectionNames:string[], sectionContents:string[]} {
-  const _addSection = (_sectionName:string, _sectionContent:string) => {
-    if (sectionNames.includes(_sectionName)) throw new Error(`duplicate section '${_sectionName}'`);
-    sectionNames.push(_sectionName);
-    sectionContents.push(_sectionContent.endsWith('\n') ? _sectionContent.slice(0, -1) : _sectionContent);
-  };
+function _trimStoredSectionContent(sectionContent:string):string {
+  return sectionContent.endsWith('\n') ? sectionContent.slice(0, -1) : sectionContent;
+}
 
+function _parseSectionEntriesWithLines(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false,
+  firstLineNo:number = 1):SectionEntryWithLine[] {
   const lines = markdownText.split('\n');
-  const sectionNames:string[] = [], sectionContents:string[] = [];
+  const sectionEntries:SectionEntryWithLine[] = [];
 
   let sectionName = '';
   let sectionContent = '';
-  for (const line of lines) {
+  let sectionLineNo = firstLineNo;
+  for (let index = 0; index < lines.length; ++index) {
+    const line = lines[index];
     const headingText = _findHeadingText(line, indentLevel);
     if (headingText !== null) {
-      if (sectionName) _addSection(sectionName, sectionContent); // Store previous section before beginning a new one.
+      if (sectionName) {
+        sectionEntries.push({
+          name:sectionName,
+          value:_trimStoredSectionContent(sectionContent),
+          lineNo:sectionLineNo
+        });
+      }
       sectionName = useCamelCase ? normalizeMarkdownName(headingText) : headingText;
+      sectionLineNo = firstLineNo + index;
       sectionContent = '';
     } else {
       sectionContent += line + '\n';
     }
   }
-  if (sectionName) _addSection(sectionName, sectionContent); // Store the last section.
+  if (sectionName) {
+    sectionEntries.push({
+      name:sectionName,
+      value:_trimStoredSectionContent(sectionContent),
+      lineNo:sectionLineNo
+    });
+  }
 
-  return {sectionNames, sectionContents};
+  const seenSectionNames = new Set<string>();
+  sectionEntries.forEach(sectionEntry => {
+    if (seenSectionNames.has(sectionEntry.name)) throw new MarkdownLineError(sectionEntry.lineNo, `duplicate section '${sectionEntry.name}'`);
+    seenSectionNames.add(sectionEntry.name);
+  });
+
+  return sectionEntries;
+}
+
+// Parse the heading sections of a markdown text. The header of each section is the section name, and the content of each section is the value for the section.
+function _parseSectionArrays(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):{sectionNames:string[], sectionContents:string[]} {
+  const sectionEntries = _parseSectionEntriesWithLines(markdownText, indentLevel, useCamelCase);
+  return {
+    sectionNames:sectionEntries.map(sectionEntry => sectionEntry.name),
+    sectionContents:sectionEntries.map(sectionEntry => sectionEntry.value)
+  };
 }
 
 // Parse the heading sections of a markdown text. The header of each section is the sectionName key, and the content of each section is the value.
@@ -98,6 +138,11 @@ export function parseSectionEntries(markdownText:string, indentLevel:number = 1,
   return sectionNames.map((sectionName, index) => [sectionName, sectionContents[index]] as const);
 }
 
+export function parseSectionEntriesWithLines(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false,
+  firstLineNo:number = 1):SectionEntryWithLine[] {
+  return _parseSectionEntriesWithLines(markdownText, indentLevel, useCamelCase, firstLineNo);
+}
+
 // Parse the lines of a markdown text. Remove any extra whitespace or bullet points.
 function _parseLines(markdownText:string):string[] {
   return markdownText.split('\n').map(line => line.trim());
@@ -108,8 +153,9 @@ function _unescapeValue(text:string):string {
   return text.split('\\n').join('\n');
 }
 
-function _parseNameValueEntries(markdownText:string, useCamelCase:boolean = false):Array<readonly [string, string]> {
-  const entries:Array<readonly [string, string]> = [];
+function _parseNameValueEntriesWithLines(markdownText:string, useCamelCase:boolean = false,
+  firstLineNo:number = 1):NameValueEntryWithLine[] {
+  const entries:NameValueEntryWithLine[] = [];
   const lines = _parseLines(markdownText);
   for (let i = 0; i < lines.length; ++i) {
     const line = lines[i];
@@ -120,15 +166,20 @@ function _parseNameValueEntries(markdownText:string, useCamelCase:boolean = fals
     const name = bulletText.slice(0, hyphenPos).trim();
     if (!name.length) continue;
     const value = _unescapeValue(bulletText.slice(hyphenPos + 1).trim());
-    entries.push([useCamelCase ? normalizeMarkdownName(name) : name, value] as const);
+    entries.push({ name:useCamelCase ? normalizeMarkdownName(name) : name, value, lineNo:firstLineNo + i });
   }
   return entries;
 }
 
-export function parseUniqueNameValueLines(markdownText:string, contextLabel:string, useCamelCase:boolean = false):NameValues {
+function _parseNameValueEntries(markdownText:string, useCamelCase:boolean = false):Array<readonly [string, string]> {
+  return _parseNameValueEntriesWithLines(markdownText, useCamelCase).map(({ name, value }) => [name, value] as const);
+}
+
+export function parseUniqueNameValueLines(markdownText:string, contextLabel:string, useCamelCase:boolean = false,
+  firstLineNo:number = 1):NameValues {
   const nameValues:NameValues = {};
-  _parseNameValueEntries(markdownText, useCamelCase).forEach(([name, value]) => {
-    if (Object.hasOwn(nameValues, name)) throw new Error(`duplicate ${contextLabel} entry '${name}'`);
+  _parseNameValueEntriesWithLines(markdownText, useCamelCase, firstLineNo).forEach(({ name, value, lineNo }) => {
+    if (Object.hasOwn(nameValues, name)) throw new MarkdownLineError(lineNo, `duplicate ${contextLabel} entry '${name}'`);
     nameValues[name] = value;
   });
   return nameValues;
@@ -136,6 +187,11 @@ export function parseUniqueNameValueLines(markdownText:string, contextLabel:stri
 
 export function parseNameValueLineEntries(markdownText:string, useCamelCase:boolean = false):Array<readonly [string, string]> {
   return _parseNameValueEntries(markdownText, useCamelCase);
+}
+
+export function parseNameValueLineEntriesWithLines(markdownText:string, useCamelCase:boolean = false,
+  firstLineNo:number = 1):NameValueEntryWithLine[] {
+  return _parseNameValueEntriesWithLines(markdownText, useCamelCase, firstLineNo);
 }
 
 export function parseOptions(optionText:string):string[] {

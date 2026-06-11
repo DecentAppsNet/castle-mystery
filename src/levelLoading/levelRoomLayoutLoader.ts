@@ -15,8 +15,8 @@ import Room from "../game/types/Room";
 import ExitStatus from "../game/types/ExitStatus";
 import ExitType from "../game/types/ExitType";
 import RoomExit, { createRoomExitId, LOCKABLE_WITHOUT_INV_CHECK } from "../game/types/RoomExit";
-import { parseFirstFencedCodeBlockLines, parseOptions, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
-import { createNormalizedEntryMap, normalizeId } from "../game/idUtil";
+import { MarkdownLineError, parseFirstFencedCodeBlockLines, parseOptions, parseSectionEntriesWithLines, parseUniqueNameValueLines } from "@/common/markdownUtil";
+import { normalizeId } from "../game/idUtil";
 import { tryResolveItemId } from "./levelRoomPopulationLoader";
 import { areRoomsWellOrdered, sortRoomsForDrawingOrder } from "./roomOrderingUtil";
 
@@ -45,10 +45,6 @@ const VALID_EXIT_MODIFIERS = new Set(['lockable', 'unlockable', 'closed', 'open'
 
 function _isIgnoredGridTileChar(tileChar:string):boolean {
   return tileChar === '.' || tileChar === '#' || tileChar === ' ' || tileChar === '\t';
-}
-
-function _parseNameValueLinesOrThrowDuplicate(markdownText:string, contextLabel:string):Record<string, string> {
-  return parseUniqueNameValueLines(markdownText, contextLabel);
 }
 
 function _parseExitModifier(modifierText:string, trimmedExitText:string, itemDefinitions:Map<string, { title:string }>):{ modifier:string, lockableWith:string|null } {
@@ -100,12 +96,28 @@ function _validateLegendMatchesGrid(legend:Record<string, string>, usedLegendCha
   });
 }
 
-function _createNormalizedRoomSectionIds(roomsSection:string):Set<string> {
-  return new Set(Object.keys(parseSections(roomsSection, 2)).map(normalizeId));
+function _createNormalizedSectionEntryMap(markdownText:string, indentLevel:number, firstLineNo:number):Map<string, { authoredName:string, value:string, lineNo:number }> {
+  const normalizedEntries = new Map<string, { authoredName:string, value:string, lineNo:number }>();
+  parseSectionEntriesWithLines(markdownText, indentLevel, false, firstLineNo).forEach(sectionEntry => {
+    const normalizedName = normalizeId(sectionEntry.name);
+    const existingEntry = normalizedEntries.get(normalizedName) || null;
+    if (existingEntry) throw new MarkdownLineError(sectionEntry.lineNo,
+      `duplicate normalized entry '${sectionEntry.name}' conflicts with '${existingEntry.authoredName}'`);
+    normalizedEntries.set(normalizedName, {
+      authoredName:sectionEntry.name,
+      value:sectionEntry.value,
+      lineNo:sectionEntry.lineNo
+    });
+  });
+  return normalizedEntries;
 }
 
-function _validateMapLegendRoomsExistInRoomsSection(legend:Record<string, string>, roomsSection:string) {
-  const roomSectionIds = _createNormalizedRoomSectionIds(roomsSection);
+function _createNormalizedRoomSectionIds(roomsSection:string, firstLineNo:number):Set<string> {
+  return new Set(Array.from(_createNormalizedSectionEntryMap(roomsSection, 2, firstLineNo).keys()));
+}
+
+function _validateMapLegendRoomsExistInRoomsSection(legend:Record<string, string>, roomsSection:string, roomsFirstLineNo:number) {
+  const roomSectionIds = _createNormalizedRoomSectionIds(roomsSection, roomsFirstLineNo);
   Object.values(legend).forEach(roomName => {
     const roomId = normalizeId(roomName);
     if (roomSectionIds.has(roomId)) return;
@@ -141,11 +153,11 @@ export function calcScaledRoomGridPosition(room:Room, row:number, col:number, gr
   ];
 }
 
-export function createRoomsFromMapSection(level:Level, mapSection:string) {
+export function createRoomsFromMapSection(level:Level, mapSection:string, firstLineNo:number = 1) {
   _validateMapSectionIsPresent(mapSection);
   const mapLines = parseFirstFencedCodeBlockLines(mapSection);
   _validateMapGridIsPresent(mapLines);
-  const legend = _parseNameValueLinesOrThrowDuplicate(mapSection, 'map legend');
+  const legend = parseUniqueNameValueLines(mapSection, 'map legend', false, firstLineNo);
   _validateLegendMatchesGrid(legend, _findUsedMapLegendChars(mapLines));
   const roomBoundsById = new Map<string, { authoredName:string, tileChar:string, minCol:number, maxCol:number, minRow:number, maxRow:number }>();
   const roomTileCountById = new Map<string, number>();
@@ -198,21 +210,21 @@ export function createRoomsFromMapSection(level:Level, mapSection:string) {
   level.rooms.push(...sortedRooms);
 }
 
-export function validateMapLegendRoomsAgainstRoomsSection(mapSection:string, roomsSection:string) {
+export function validateMapLegendRoomsAgainstRoomsSection(mapSection:string, roomsSection:string, mapFirstLineNo:number = 1, roomsFirstLineNo:number = 1) {
   _validateMapSectionIsPresent(mapSection);
   const mapLines = parseFirstFencedCodeBlockLines(mapSection);
   _validateMapGridIsPresent(mapLines);
-  const legend = _parseNameValueLinesOrThrowDuplicate(mapSection, 'map legend');
+  const legend = parseUniqueNameValueLines(mapSection, 'map legend', false, mapFirstLineNo);
   _validateLegendMatchesGrid(legend, _findUsedMapLegendChars(mapLines));
-  _validateMapLegendRoomsExistInRoomsSection(legend, roomsSection);
+  _validateMapLegendRoomsExistInRoomsSection(legend, roomsSection, roomsFirstLineNo);
 }
 
-export function applyRoomMetadataFromSections(level:Level, roomsSection:string) {
-  const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
+export function applyRoomMetadataFromSections(level:Level, roomsSection:string, firstLineNo:number = 1) {
+  const roomSectionsById = _createNormalizedSectionEntryMap(roomsSection, 2, firstLineNo);
   level.rooms.forEach((room, index) => {
     const roomSectionEntry = roomSectionsById.get(room.id) || null;
     if (!roomSectionEntry) return;
-    const roomNameValues = _parseNameValueLinesOrThrowDuplicate(roomSectionEntry.value, `room ${room.id}`);
+    const roomNameValues = parseUniqueNameValueLines(roomSectionEntry.value, `room ${room.id}`, false, roomSectionEntry.lineNo + 1);
     const title = Object.hasOwn(roomNameValues, 'title')
       ? roomNameValues.title
       : roomSectionEntry.authoredName.trim();
@@ -225,8 +237,8 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string) 
   });
 }
 
-export function validateRoomGridLegendEntries(level:Level, roomsSection:string, knownPopulationEntryIds:Set<string>) {
-  const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
+export function validateRoomGridLegendEntries(level:Level, roomsSection:string, knownPopulationEntryIds:Set<string>, firstLineNo:number = 1) {
+  const roomSectionsById = _createNormalizedSectionEntryMap(roomsSection, 2, firstLineNo);
 
   Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
     const roomSection = roomSectionEntry.value;
@@ -234,7 +246,7 @@ export function validateRoomGridLegendEntries(level:Level, roomsSection:string, 
     const gridLines = parseFirstFencedCodeBlockLines(roomSection);
     if (!gridLines.length) return;
 
-    const roomNameValues = _parseNameValueLinesOrThrowDuplicate(roomSection, `room ${roomId}`);
+    const roomNameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`, false, roomSectionEntry.lineNo + 1);
     const roomLegend = Object.fromEntries(
       Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside')
     );
@@ -350,13 +362,13 @@ function _determineExitStatus(exit:PendingExit, exitType:ExitType):ExitStatus {
   return ExitStatus.closed;
 }
 
-function _createPendingExits(roomsSection:string, itemDefinitions:Map<string, { title:string }>):PendingExit[] {
+function _createPendingExits(roomsSection:string, itemDefinitions:Map<string, { title:string }>, firstLineNo:number):PendingExit[] {
   const pendingExitsByPairKey = new Map<string, PendingExit>();
-  const roomSectionsById = createNormalizedEntryMap(Object.entries(parseSections(roomsSection, 2)));
+  const roomSectionsById = _createNormalizedSectionEntryMap(roomsSection, 2, firstLineNo);
 
   Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
     const roomSection = roomSectionEntry.value;
-    const nameValues = _parseNameValueLinesOrThrowDuplicate(roomSection, `room ${roomId}`);
+    const nameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`, false, roomSectionEntry.lineNo + 1);
     parseOptions(nameValues.exits || '').forEach(exitText => {
       const parsedExit = _parseExitReference(exitText, itemDefinitions);
       const [room1Id, room2Id] = [roomId, parsedExit.connectedRoomId].sort();
@@ -416,8 +428,9 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
   room2.exits.push(exit);
 }
 
-export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string, itemDefinitions:Map<string, { title:string }> = new Map()) {
-  _createPendingExits(roomsSection, itemDefinitions).forEach(pendingExit => _addExitBetweenRooms(level, pendingExit));
+export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string, itemDefinitions:Map<string, { title:string }> = new Map(),
+  firstLineNo:number = 1) {
+  _createPendingExits(roomsSection, itemDefinitions, firstLineNo).forEach(pendingExit => _addExitBetweenRooms(level, pendingExit));
 }
 
 export function generateRoomWaypointsForLevel(level:Level) {

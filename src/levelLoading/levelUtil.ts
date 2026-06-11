@@ -1,4 +1,5 @@
-/* This module groups top-level level-loading orchestration, composing section-specific loaders into a validated Level model. */
+/* This module groups top-level level-loading orchestration, composing section-specific loaders into a validated Level model. 
+   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import Level from "../game/types/Level";
 import Item from "../game/types/Item";
@@ -8,7 +9,7 @@ import { createItemsById } from "../game/itemUtil";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { rand } from "@/common/randUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
-import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
+import { MarkdownLineError, normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { formatMsecsAsTimestamp, parseTimestampToMsecs } from "@/levelLoading/timestampUtil";
 import { loadLevelTextWithSourceLineMap, type SourceLineMap } from "./levelImportUtil";
 import { loadItineraries } from "./levelItineraryLoader";
@@ -183,6 +184,7 @@ function _findSectionFirstContentLineNo(markdownText:string, sectionName:string,
 
 function _throwErrorWithLoadLevelContext(levelFilename:string, errorLineNo:number, error:unknown):never {
   if (error instanceof LoadLevelException) throw error;
+  if (error instanceof MarkdownLineError) throw new LoadLevelException(levelFilename, error.lineNo, error.message, error);
   if (error instanceof Error) throw new LoadLevelException(levelFilename, errorLineNo, error.message, error);
   throw new LoadLevelException(levelFilename, errorLineNo, String(error), error);
 }
@@ -346,16 +348,16 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       winSynopsis: generalSection.winSynopsis || level.winSynopsis
     };
     const characterDefinitions = _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
-      () => parseCharacterDefinitions(sections.characters || ""));
+      () => parseCharacterDefinitions(sections.characters || "", charactersFirstLineNo));
     const itemDefinitions = _runWithLoadLevelSectionContext(levelFilename, itemsFirstLineNo,
-      () => parseItemDefinitions(sections.items || ""));
+      () => parseItemDefinitions(sections.items || "", itemsFirstLineNo));
     const roomPopulationDefinitions = { characterDefinitions, itemDefinitions };
     _runWithLoadLevelSectionContext(levelFilename, mapFirstLineNo,
-      () => createRoomsFromMapSection(level, sections.map || ""));
+      () => createRoomsFromMapSection(level, sections.map || "", mapFirstLineNo));
     _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-      () => validateMapLegendRoomsAgainstRoomsSection(sections.map || "", sections.rooms || ""));
+      () => validateMapLegendRoomsAgainstRoomsSection(sections.map || "", sections.rooms || "", mapFirstLineNo, roomsFirstLineNo));
     _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-      () => applyRoomMetadataFromSections(level, sections.rooms || ""));
+      () => applyRoomMetadataFromSections(level, sections.rooms || "", roomsFirstLineNo));
     _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
       () => _validateGroundFloorRoomReference(level, generalSection.groundFloorRoomRef));
     const groundFloorY = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
@@ -367,13 +369,13 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       groundFloorY
     };
     _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-      () => validateRoomGridLegendEntries(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions)));
+      () => validateRoomGridLegendEntries(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions), roomsFirstLineNo));
     _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-      () => addRoomExitsFromRoomsSection(level, sections.rooms || "", itemDefinitions));
+      () => addRoomExitsFromRoomsSection(level, sections.rooms || "", itemDefinitions, roomsFirstLineNo));
     _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
       () => generateRoomWaypointsForLevel(level));
     _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-      () => loadRoomPopulationFromRoomsSection(level, sections.rooms || "", roomPopulationDefinitions));
+      () => loadRoomPopulationFromRoomsSection(level, sections.rooms || "", roomPopulationDefinitions, roomsFirstLineNo));
     _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
       () => loadCharacterInventoryItems(level, roomPopulationDefinitions));
     _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
@@ -381,9 +383,9 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
       () => _validateActiveCharacterId(level.activeCharacterId, level.characters));
     const conclusionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
-      () => createConclusionCategoryOptionsByName(sections.conclusions || "", _createDefaultConclusionCategoryOptions(level)));
+      () => createConclusionCategoryOptionsByName(sections.conclusions || "", _createDefaultConclusionCategoryOptions(level), conclusionsFirstLineNo));
     const authoredConclusions = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
-      () => loadConclusionsFromSection(sections.conclusions || "", level.rooms, conclusionCategoryOptionsByName, level.characters));
+      () => loadConclusionsFromSection(sections.conclusions || "", level.rooms, conclusionCategoryOptionsByName, level.characters, conclusionsFirstLineNo));
     const generatedIdentityConclusion = authoredConclusions.some(conclusion => conclusion.id === 'identities')
       ? null
       : createGeneratedIdentityConclusion(level.characters, conclusionCategoryOptionsByName);
