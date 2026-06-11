@@ -4,6 +4,7 @@
 export default class LoadLevelException extends Error {
   readonly levelFilename:string;
   readonly errorLineNo:number;
+  readonly detailMessage:string;
   override readonly cause:unknown;
 
   constructor(levelFilename:string, errorLineNo:number, message:string, cause?:unknown) {
@@ -11,6 +12,7 @@ export default class LoadLevelException extends Error {
     this.name = 'LoadLevelException';
     this.levelFilename = levelFilename;
     this.errorLineNo = errorLineNo;
+    this.detailMessage = message;
     this.cause = cause;
   }
 }

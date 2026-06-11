@@ -10,7 +10,7 @@ import { rand } from "@/common/randUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { formatMsecsAsTimestamp, parseTimestampToMsecs } from "@/levelLoading/timestampUtil";
-import { loadLevelTextWithImports } from "./levelImportUtil";
+import { loadLevelTextWithSourceLineMap, type SourceLineMap } from "./levelImportUtil";
 import { loadItineraries } from "./levelItineraryLoader";
 import LoadLevelException from "./LoadLevelException";
 import {
@@ -196,7 +196,15 @@ function _runWithLoadLevelSectionContext<T>(levelFilename:string, errorLineNo:nu
 }
 
 type LoadLevelOptions = {
-  validateUnlockPhrases?:boolean
+  validateUnlockPhrases?:boolean,
+  sourceLineMap?:SourceLineMap
+}
+
+function _translateLoadLevelException(error:LoadLevelException, sourceLineMap:SourceLineMap):LoadLevelException {
+  const sourceLine = sourceLineMap[error.errorLineNo - 1] || null;
+  if (!sourceLine) return error;
+  if (sourceLine.filename === error.levelFilename && sourceLine.lineNo === error.errorLineNo) return error;
+  return new LoadLevelException(sourceLine.filename, sourceLine.lineNo, error.detailMessage, error.cause);
 }
 
 function _normalizeConclusionCategoryPhrase(phrase:string):string {
@@ -281,6 +289,12 @@ function _resolveExplicitEndTime(endTime:number|null, startTime:number):number|n
   return endTime <= startTime ? endTime + MSECS_IN_DAY : endTime;
 }
 
+function _trimLeadingBlankLines(text:string):string {
+  const lines = text.split('\n');
+  while (lines.length > 0 && lines[0].trim() === '') lines.shift();
+  return lines.join('\n');
+}
+
 function _validateInitialTimeWithinTimeline(initialTime:number, startTime:number, endTime:number) {
   if (initialTime < startTime || initialTime > endTime) {
     throw new Error(`general time ${formatMsecsAsTimestamp(initialTime)} must fall within the authored span ${formatMsecsAsTimestamp(startTime)} to ${formatMsecsAsTimestamp(endTime)}`);
@@ -306,125 +320,135 @@ function _validateExplicitEndTimeAgainstItinerary(explicitEndTime:number|null, l
 }
 
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
-  const sections = _runWithLoadLevelSectionContext(levelFilename, 1,
-    () => parseSections(text, 1, true));
-  const generalFirstLineNo = _findSectionFirstContentLineNo(text, 'general') || 1;
-  const mapFirstLineNo = _findSectionFirstContentLineNo(text, 'map') || 1;
-  const roomsFirstLineNo = _findSectionFirstContentLineNo(text, 'rooms') || 1;
-  const charactersFirstLineNo = _findSectionFirstContentLineNo(text, 'characters') || 1;
-  const itemsFirstLineNo = _findSectionFirstContentLineNo(text, 'items') || 1;
-  const itinerarySection = sections.itinerary || "";
-  const itineraryFirstLineNo = _findSectionFirstContentLineNo(text, 'itinerary') || 1;
-  const conclusionsFirstLineNo = _findSectionFirstContentLineNo(text, 'conclusions') || 1;
-  const generalSection = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
-    () => _parseGeneralSection(sections.general || ""));
-  let level = _createEmptyLevel();
-  const loadStartTime = generalSection.startTime ?? generalSection.initialTime ?? level.startTime;
-  const loadEndTime = _resolveExplicitEndTime(generalSection.endTime, loadStartTime);
-  level = {
-    ...level,
-    activeCharacterId: generalSection.activeCharacterId || level.activeCharacterId,
-    startTime: loadStartTime,
-    initialTime: generalSection.initialTime ?? loadStartTime,
-    endTime: loadEndTime ?? (loadStartTime + level.duration),
-    backgroundImageUrl: generalSection.backgroundImageUrl,
-    winSynopsis: generalSection.winSynopsis || level.winSynopsis
-  };
-  const characterDefinitions = _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
-    () => parseCharacterDefinitions(sections.characters || ""));
-  const itemDefinitions = _runWithLoadLevelSectionContext(levelFilename, itemsFirstLineNo,
-    () => parseItemDefinitions(sections.items || ""));
-  const roomPopulationDefinitions = { characterDefinitions, itemDefinitions };
-  _runWithLoadLevelSectionContext(levelFilename, mapFirstLineNo,
-    () => createRoomsFromMapSection(level, sections.map || ""));
-  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-    () => validateMapLegendRoomsAgainstRoomsSection(sections.map || "", sections.rooms || ""));
-  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-    () => applyRoomMetadataFromSections(level, sections.rooms || ""));
-  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
-    () => _validateGroundFloorRoomReference(level, generalSection.groundFloorRoomRef));
-  const groundFloorY = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
-    () => _findGroundFloorY(level, generalSection.groundFloorRoomRef));
-  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
-    () => _validateOutsideRoomsAgainstGroundFloor(level, generalSection.groundFloorRoomRef, groundFloorY));
-  level = {
-    ...level,
-    groundFloorY
-  };
-  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-    () => validateRoomGridLegendEntries(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions)));
-  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-    () => addRoomExitsFromRoomsSection(level, sections.rooms || "", itemDefinitions));
-  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-    () => generateRoomWaypointsForLevel(level));
-  _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-    () => loadRoomPopulationFromRoomsSection(level, sections.rooms || "", roomPopulationDefinitions));
-  _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
-    () => loadCharacterInventoryItems(level, roomPopulationDefinitions));
-  _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
-    () => _validateHasLoadedCharacters(level));
-  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
-    () => _validateActiveCharacterId(level.activeCharacterId, level.characters));
-  const conclusionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
-    () => createConclusionCategoryOptionsByName(sections.conclusions || "", _createDefaultConclusionCategoryOptions(level)));
-  const authoredConclusions = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
-    () => loadConclusionsFromSection(sections.conclusions || "", level.rooms, conclusionCategoryOptionsByName, level.characters));
-  const generatedIdentityConclusion = authoredConclusions.some(conclusion => conclusion.id === 'identities')
-    ? null
-    : createGeneratedIdentityConclusion(level.characters, conclusionCategoryOptionsByName);
-  level = {
-    ...level,
-    conclusions:generatedIdentityConclusion ? [generatedIdentityConclusion, ...authoredConclusions] : authoredConclusions,
-    initialCharacters:level.characters.map(duplicateCharacter)
-  };
-  const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo, {
-    isCrossMidnight: generalSection.isCrossMidnight,
-    explicitEndTime: loadEndTime
-  });
-  const resolvedStartTime = generalSection.startTime
-    ?? generalSection.initialTime
-    ?? itineraryData.resolvedTimeline.earliestAbsoluteActivityTime
-    ?? itineraryData.resolvedTimeline.earliestResolvedActivityTime
-    ?? level.startTime;
-  const resolvedEndTime = _resolveExplicitEndTime(generalSection.endTime, resolvedStartTime)
-    ?? itineraryData.resolvedTimeline.latestResolvedEventEndTime
-    ?? resolvedStartTime;
-  const resolvedInitialTime = generalSection.initialTime ?? resolvedStartTime;
-  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
-    () => _validateExplicitStartTimeAgainstItinerary(generalSection.startTime, itineraryData.resolvedTimeline.earliestResolvedActivityTime));
-  _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
-    () => _validateExplicitEndTimeAgainstItinerary(_resolveExplicitEndTime(generalSection.endTime, resolvedStartTime), itineraryData.resolvedTimeline.latestResolvedEventEndTime));
-  if (_shouldValidateExplicitInitialTime(generalSection)) {
+  try {
+    const sections = _runWithLoadLevelSectionContext(levelFilename, 1,
+      () => parseSections(text, 1, true));
+    const generalFirstLineNo = _findSectionFirstContentLineNo(text, 'general') || 1;
+    const mapFirstLineNo = _findSectionFirstContentLineNo(text, 'map') || 1;
+    const roomsFirstLineNo = _findSectionFirstContentLineNo(text, 'rooms') || 1;
+    const charactersFirstLineNo = _findSectionFirstContentLineNo(text, 'characters') || 1;
+    const itemsFirstLineNo = _findSectionFirstContentLineNo(text, 'items') || 1;
+    const itinerarySection = _trimLeadingBlankLines(sections.itinerary || "");
+    const itineraryFirstLineNo = _findSectionFirstContentLineNo(text, 'itinerary') || 1;
+    const conclusionsFirstLineNo = _findSectionFirstContentLineNo(text, 'conclusions') || 1;
+    const generalSection = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+      () => _parseGeneralSection(sections.general || ""));
+    let level = _createEmptyLevel();
+    const loadStartTime = generalSection.startTime ?? generalSection.initialTime ?? level.startTime;
+    const loadEndTime = _resolveExplicitEndTime(generalSection.endTime, loadStartTime);
+    level = {
+      ...level,
+      activeCharacterId: generalSection.activeCharacterId || level.activeCharacterId,
+      startTime: loadStartTime,
+      initialTime: generalSection.initialTime ?? loadStartTime,
+      endTime: loadEndTime ?? (loadStartTime + level.duration),
+      backgroundImageUrl: generalSection.backgroundImageUrl,
+      winSynopsis: generalSection.winSynopsis || level.winSynopsis
+    };
+    const characterDefinitions = _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
+      () => parseCharacterDefinitions(sections.characters || ""));
+    const itemDefinitions = _runWithLoadLevelSectionContext(levelFilename, itemsFirstLineNo,
+      () => parseItemDefinitions(sections.items || ""));
+    const roomPopulationDefinitions = { characterDefinitions, itemDefinitions };
+    _runWithLoadLevelSectionContext(levelFilename, mapFirstLineNo,
+      () => createRoomsFromMapSection(level, sections.map || ""));
+    _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+      () => validateMapLegendRoomsAgainstRoomsSection(sections.map || "", sections.rooms || ""));
+    _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+      () => applyRoomMetadataFromSections(level, sections.rooms || ""));
     _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
-      () => _validateInitialTimeWithinTimeline(resolvedInitialTime, resolvedStartTime, resolvedEndTime));
+      () => _validateGroundFloorRoomReference(level, generalSection.groundFloorRoomRef));
+    const groundFloorY = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+      () => _findGroundFloorY(level, generalSection.groundFloorRoomRef));
+    _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+      () => _validateOutsideRoomsAgainstGroundFloor(level, generalSection.groundFloorRoomRef, groundFloorY));
+    level = {
+      ...level,
+      groundFloorY
+    };
+    _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+      () => validateRoomGridLegendEntries(level, sections.rooms || "", createKnownPopulationEntryIds(roomPopulationDefinitions)));
+    _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+      () => addRoomExitsFromRoomsSection(level, sections.rooms || "", itemDefinitions));
+    _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+      () => generateRoomWaypointsForLevel(level));
+    _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
+      () => loadRoomPopulationFromRoomsSection(level, sections.rooms || "", roomPopulationDefinitions));
+    _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
+      () => loadCharacterInventoryItems(level, roomPopulationDefinitions));
+    _runWithLoadLevelSectionContext(levelFilename, charactersFirstLineNo,
+      () => _validateHasLoadedCharacters(level));
+    _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+      () => _validateActiveCharacterId(level.activeCharacterId, level.characters));
+    const conclusionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
+      () => createConclusionCategoryOptionsByName(sections.conclusions || "", _createDefaultConclusionCategoryOptions(level)));
+    const authoredConclusions = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
+      () => loadConclusionsFromSection(sections.conclusions || "", level.rooms, conclusionCategoryOptionsByName, level.characters));
+    const generatedIdentityConclusion = authoredConclusions.some(conclusion => conclusion.id === 'identities')
+      ? null
+      : createGeneratedIdentityConclusion(level.characters, conclusionCategoryOptionsByName);
+    level = {
+      ...level,
+      conclusions:generatedIdentityConclusion ? [generatedIdentityConclusion, ...authoredConclusions] : authoredConclusions,
+      initialCharacters:level.characters.map(duplicateCharacter)
+    };
+    const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo, {
+      isCrossMidnight: generalSection.isCrossMidnight,
+      explicitEndTime: loadEndTime
+    });
+    const resolvedStartTime = generalSection.startTime
+      ?? generalSection.initialTime
+      ?? itineraryData.resolvedTimeline.earliestAbsoluteActivityTime
+      ?? itineraryData.resolvedTimeline.earliestResolvedActivityTime
+      ?? level.startTime;
+    const resolvedEndTime = _resolveExplicitEndTime(generalSection.endTime, resolvedStartTime)
+      ?? itineraryData.resolvedTimeline.latestResolvedEventEndTime
+      ?? resolvedStartTime;
+    const resolvedInitialTime = generalSection.initialTime ?? resolvedStartTime;
+    _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+      () => _validateExplicitStartTimeAgainstItinerary(generalSection.startTime, itineraryData.resolvedTimeline.earliestResolvedActivityTime));
+    _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+      () => _validateExplicitEndTimeAgainstItinerary(_resolveExplicitEndTime(generalSection.endTime, resolvedStartTime), itineraryData.resolvedTimeline.latestResolvedEventEndTime));
+    if (_shouldValidateExplicitInitialTime(generalSection)) {
+      _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
+        () => _validateInitialTimeWithinTimeline(resolvedInitialTime, resolvedStartTime, resolvedEndTime));
+    }
+    const initialCharacters = level.initialCharacters.map(initialCharacter => {
+      const scheduledCharacter = itineraryData.characters.find(character => character.id === initialCharacter.id) || null;
+      return scheduledCharacter ? {
+        ...duplicateCharacter(initialCharacter),
+        itinerary:scheduledCharacter.itinerary,
+        itineraryIndex:scheduledCharacter.itineraryIndex
+      } : duplicateCharacter(initialCharacter);
+    });
+    const resolvedDuration = resolvedEndTime - resolvedStartTime;
+    level = {
+      ...level,
+      initialCharacters,
+      activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
+      characters: itineraryData.characters,
+      itemsById: _createLevelItemsById({ ...level, characters:itineraryData.characters }, itemDefinitions),
+      startTime: resolvedStartTime,
+      initialTime: resolvedInitialTime,
+      endTime: resolvedEndTime,
+      duration: resolvedDuration,
+      labels: _createTimeLabels(resolvedStartTime, resolvedDuration)
+    };
+    if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');
+    if (options.validateUnlockPhrases) _validateUnlockableConclusionPhrases(level, conclusionCategoryOptionsByName, levelFilename, conclusionsFirstLineNo);
+    return level;
+  } catch (error) {
+    if (error instanceof LoadLevelException && options.sourceLineMap) {
+      throw _translateLoadLevelException(error, options.sourceLineMap);
+    }
+    throw error;
   }
-  const initialCharacters = level.initialCharacters.map(initialCharacter => {
-    const scheduledCharacter = itineraryData.characters.find(character => character.id === initialCharacter.id) || null;
-    return scheduledCharacter ? {
-      ...duplicateCharacter(initialCharacter),
-      itinerary:scheduledCharacter.itinerary,
-      itineraryIndex:scheduledCharacter.itineraryIndex
-    } : duplicateCharacter(initialCharacter);
-  });
-  const resolvedDuration = resolvedEndTime - resolvedStartTime;
-  level = {
-    ...level,
-    initialCharacters,
-    activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
-    characters: itineraryData.characters,
-    itemsById: _createLevelItemsById({ ...level, characters:itineraryData.characters }, itemDefinitions),
-    startTime: resolvedStartTime,
-    initialTime: resolvedInitialTime,
-    endTime: resolvedEndTime,
-    duration: resolvedDuration,
-    labels: _createTimeLabels(resolvedStartTime, resolvedDuration)
-  };
-  if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');
-  if (options.validateUnlockPhrases) _validateUnlockableConclusionPhrases(level, conclusionCategoryOptionsByName, levelFilename, conclusionsFirstLineNo);
-  return level;
 }
 
 export async function loadLevelFromUrl(levelFileUrl:string):Promise<Level> {
-  const text = await loadLevelTextWithImports(_levelUrlToFilename(levelFileUrl));
-  return loadLevelFromText(text, levelFileUrl, { validateUnlockPhrases:true });
+  const sourceMappedText = await loadLevelTextWithSourceLineMap(_levelUrlToFilename(levelFileUrl));
+  return loadLevelFromText(sourceMappedText.text, levelFileUrl, {
+    validateUnlockPhrases:true,
+    sourceLineMap:sourceMappedText.sourceLineMap
+  });
 }

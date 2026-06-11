@@ -68,6 +68,7 @@ import duplicateConclusionPropertyText from './fixtures/duplicate-conclusion-pro
 import duplicateConclusionSubsectionsCaseText from './fixtures/duplicate-conclusion-subsections-case.md?raw';
 import loadLevelFromUrlWithImportsCharactersText from './fixtures/load-level-from-url-with-imports-characters.md?raw';
 import loadLevelFromUrlWithImportsText from './fixtures/load-level-from-url-with-imports.md?raw';
+import loadLevelFromUrlImportedItineraryText from './fixtures/load-level-from-url-imported-itinerary.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
 import identitiesAuthoredMetadataText from './fixtures/identities-authored-metadata.md?raw';
 import identitiesExcludesNoninteractiveCharactersText from './fixtures/identities-excludes-noninteractive-characters.md?raw';
@@ -1545,5 +1546,42 @@ describe('levelUtil url loading', () => {
 
     expect(level.characters.find(character => character.id === 'hero')?.faceImageUrl).toBe('/assets/faces/heroFace.png');
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports root-file validation errors using the original root source line', async () => {
+    const sourceText = loadLevelFromUrlWithImportsText.replace('* title=Imported URL Level', '* activeCharacter=Ghost');
+    const fetchMock = vi.fn(async (url:string) => {
+      if (url.endsWith('/levels/source.md')) return { ok:true, text:async () => sourceText };
+      if (url.endsWith('/levels/load-level-from-url-with-imports-characters.md')) return { ok:true, text:async () => loadLevelFromUrlWithImportsCharactersText };
+      throw new Error(`unexpected url ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toMatchObject({
+      levelFilename:'source.md',
+      errorLineNo:3
+    });
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toThrow("source.md:3: general activeCharacter 'ghost' does not match any character in the level");
+  });
+
+  it('reports imported-file itinerary errors using the imported source line', async () => {
+    const sourceText = loadLevelFromUrlWithImportsText.replace(
+      'load-level-from-url-with-imports-characters.md',
+      'load-level-from-url-imported-itinerary.md'
+    );
+    const fetchMock = vi.fn(async (url:string) => {
+      if (url.endsWith('/levels/source.md')) return { ok:true, text:async () => sourceText };
+      if (url.endsWith('/levels/load-level-from-url-imported-itinerary.md')) return { ok:true, text:async () => loadLevelFromUrlImportedItineraryText };
+      throw new Error(`unexpected url ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toMatchObject({
+      levelFilename:'load-level-from-url-imported-itinerary.md',
+      errorLineNo:2
+    });
+    await expect(loadLevelFromUrl('/levels/source.md')).rejects.toThrow('load-level-from-url-imported-itinerary.md:2: missing itinerary activity');
   });
 });
