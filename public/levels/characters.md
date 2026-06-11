@@ -80,7 +80,7 @@ ethnicityBackground=Greek Sicilian
 ## Heinrich
 
 * title=Heinrich Sohn des Konrad
-* description=An 11-year-old boy with a calm bearing.
+* description=An 11-year-old boy, peering calmly.
 * faceImage=heinrich.png
 
 ## Male Peasant
@@ -164,6 +164,7 @@ ethnicityBackground=Jewish Sicilian
 
 ## Stefan
 
+* title=Stefan of Ragusa
 * faceImage=stefan.png
 * description=A young man that has seen hard years of labor.
 

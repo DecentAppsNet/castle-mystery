@@ -60,10 +60,10 @@ function _parseSectionArrays(markdownText:string, indentLevel:number = 1, useCam
   const _addSection = (_sectionName:string, _sectionContent:string) => {
     if (sectionNames.includes(_sectionName)) throw new Error(`duplicate section '${_sectionName}'`);
     sectionNames.push(_sectionName);
-    sectionContents.push(_sectionContent.trim());
+    sectionContents.push(_sectionContent.endsWith('\n') ? _sectionContent.slice(0, -1) : _sectionContent);
   };
 
-  const lines = markdownText.split('\n').filter(line => line.trim().length > 0);
+  const lines = markdownText.split('\n');
   const sectionNames:string[] = [], sectionContents:string[] = [];
 
   let sectionName = '';
@@ -100,10 +100,7 @@ export function parseSectionEntries(markdownText:string, indentLevel:number = 1,
 
 // Parse the lines of a markdown text. Remove any extra whitespace or bullet points.
 function _parseLines(markdownText:string):string[] {
-  const lines = markdownText.split('\n');
-  return lines
-    .map(line => line.trim())
-    .filter(line => line && line.length > 0);
+  return markdownText.split('\n').map(line => line.trim());
 }
 
 // Parse the value portion of markdown text and replace any supported escaping, e.g. "\n".

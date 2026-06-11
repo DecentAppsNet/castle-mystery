@@ -6,6 +6,19 @@
 * background=countryside.png
 * imports=items.md | characters.md
 
+Conclusions:
+Identities
+Occupations
+
+Things that should happen:
+Heinrich gets insulted by the other apprentice.
+Heinrich gets told by Giovanni not to waste his time with the Prince. (The relationship can't last, and takes away time from Heinrich's work)
+Heinrich gets told by Pietro to spend more time with the Prince. (Maybe it leads to more sales of stone.)
+The foreman yells at people for spending too long eating breakfast. Get to work!
+Pietro calls out to Heinrich, "your friend is here". 11-year-old Fred is on the street with his falcon. End of scene.
+
+Don't overdo it with story events. Have a bunch of people that just work and don't say/do much.
+
 # Map
 
 ```

@@ -36,6 +36,20 @@ describe('markdownUtil', () => {
       expect(sections.general).toContain('* activeCharacter=Hero');
     });
 
+    it('preserves blank lines inside section bodies', () => {
+      const sections = parseSections([
+        '# General',
+        '',
+        '* activeCharacter=Hero',
+        '',
+        '* time=7:30',
+        '# Rooms',
+        '* ignored=true'
+      ].join('\n'), 1, true);
+
+      expect(sections.general).toBe(['', '* activeCharacter=Hero', '', '* time=7:30'].join('\n'));
+    });
+
     it('preserves subsection ids when name normalization is not requested', () => {
       const sections = parseSections([
         '## East Hall',
