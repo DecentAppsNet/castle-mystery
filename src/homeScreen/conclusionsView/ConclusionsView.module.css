@@ -17,6 +17,12 @@
 	letter-spacing: 0.08em;
 }
 
+.actions {
+	display: flex;
+	margin: .3vh 0 0.8vh;
+	flex: 0 0 auto;
+}
+
 .conclusionList {
 	display: flex;
 	flex-direction: column;
