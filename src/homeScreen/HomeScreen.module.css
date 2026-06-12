@@ -69,4 +69,19 @@
 
 .sidePane {
   grid-area: sidePane;
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+  min-height: 0;
+}
+
+.conclusionsPane {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.discoveriesPane {
+  flex: 0 0 20vh;
+  height: 20vh;
+  min-height: 0;
 }

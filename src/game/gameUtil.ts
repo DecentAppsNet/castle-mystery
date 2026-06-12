@@ -39,15 +39,18 @@ import { MAX_ACTIVE_EFFECTS } from "./effects/effectUtil";
 import EffectType from "./effects/types/EffectType";
 import {
   callOnActiveCharacterChangedAsNeeded,
+  callOnDiscoveriesChangedAsNeeded,
   callOnMinutesChangedAsNeeded,
   callOnConclusionsChangedAsNeeded
 } from "./gameStateNotificationUtil";
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hoverStateUtil";
 import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from "./conclusionStateUtil";
+import { syncDiscoveries } from "./discoveriesUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { normalizeId } from "./idUtil";
 import { calcRoomsBoundingRectWithRoofs } from "./roomRoofUtil";
 import { clamp } from "@/common/numberUtil";
+import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -318,7 +321,8 @@ function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D
 
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
   onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
-  onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void, isScrubbing:boolean = false) {
+  onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
+  isScrubbing:boolean = false, onDiscoveriesChanged?:(discoveries:Discoveries) => void) {
   _clearCanvas(gameState, context);
   if (!gameState) {
     context.canvas.style.cursor = "default";
@@ -329,6 +333,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
   _updateGameState(gameState, events, now, calcCanvasAspectRatio(context));
+  syncDiscoveries(gameState);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
   if (onActiveCharacterChanged) callOnActiveCharacterChangedAsNeeded(gameState, onActiveCharacterChanged);
@@ -347,6 +352,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     `active effect count ${gameState.activeEffects.length} exceeds MAX_ACTIVE_EFFECTS ${MAX_ACTIVE_EFFECTS}; an effect callback may not be returning false to remove itself`);
   syncConclusionUnlocks(gameState);
   if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
+  if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
   drawGameState(gameState, context);
 }
 
@@ -357,6 +363,8 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     characters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById)),
     rooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById)),
     itemsById,
+    discoveredCharacterIds:[],
+    discoveredItemIds:[],
     conclusions:level.conclusions.map(duplicateConclusion),
     winSynopsis:level.winSynopsis,
     backgroundImageUrl:level.backgroundImageUrl,
@@ -387,10 +395,12 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     lastMinutesChangedValue:NaN,
     lastActiveCharacterChangedValue:"",
     conclusionsRevision:0,
-    lastNotifiedConclusionsRevision:0
+    lastNotifiedConclusionsRevision:0,
+    lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries())
   }
   rebuildDynamicStateForTime(gameState, level.initialTime);
   _setActiveRoomDiscovered(gameState);
+  syncDiscoveries(gameState);
   syncConclusionUnlocks(gameState);
   return gameState;
 }

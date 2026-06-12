@@ -10,12 +10,15 @@ import GameState from "@/game/types/GameState";
 import { findNextRoomEntryTime, findPreviousRoomEntryTime } from "@/game/itineraryUtil";
 import { findRoomAtPosition } from "@/game/roomUtil";
 import ConclusionsView from "./conclusionsView/ConclusionsView";
+import DiscoveriesView from "./discoveriesView/DiscoveriesView";
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import Itinerary from "@/game/types/Itinerary";
 import WinLevelDialog from "./dialogs/WinLevelDialog";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import LevelSelector from "./levelSelector/LevelSelector";
 import { changeLevel, continueToNextLevel } from "./interactions/levels";
+import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
+import { createDiscoveries } from "@/game/discoveriesUtil";
 
 const ARROW_STEP_MSECS = 200;
 
@@ -48,6 +51,7 @@ function HomeScreen() {
   const [minutes, setMinutes] = useState<number>(0);
   const [winSynopsis, setWinSynopsis] = useState<string>("");
   const [conclusions, setConclusions] = useState<Conclusion[]>([]);
+  const [discoveries, setDiscoveries] = useState<Discoveries>(createEmptyDiscoveries());
   const [conclusionClaimCooldowns, setConclusionClaimCooldowns] = useState<Record<string, number>>({});
   const [activeCharacterId, setActiveCharacterId] = useState<string>("");
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
@@ -74,6 +78,7 @@ function HomeScreen() {
         setLevelManifest(initResults.levelManifest);
         setWinSynopsis(initResults.gameState.winSynopsis);
         setConclusions(initResults.gameState.conclusions);
+        setDiscoveries(createDiscoveries(initResults.gameState));
         setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
         if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
       }
@@ -145,6 +150,7 @@ function HomeScreen() {
               setMinutes,
               setWinSynopsis,
               setConclusions,
+              setDiscoveries,
               setConclusionClaimCooldowns,
               setActiveCharacterId,
               setIsScrubbing,
@@ -152,7 +158,7 @@ function HomeScreen() {
             });
           }}
         />
-        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onConclusionsChanged={_handleConclusionsChanged} isScrubbing={isScrubbing} />
+        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onConclusionsChanged={_handleConclusionsChanged} onDiscoveriesChanged={setDiscoveries} isScrubbing={isScrubbing} />
         <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
@@ -169,18 +175,23 @@ function HomeScreen() {
         />
       </div>
       <div className={styles.sidePane}>
-        <ConclusionsView 
-          conclusions={conclusions} 
-          imageSet={gameState.imageSet} 
-          conclusionClaimCooldowns={conclusionClaimCooldowns}
-          onIncorrectClaim={(conclusionId) => {
-            setConclusionClaimCooldowns(from => ({
-              ...from,
-              [conclusionId]: Date.now() + 2 * 60 * 1000
-            }));
-          }}
-          onUpdate={(nextConclusions) => { updateConclusions(nextConclusions, _handleManualConclusionsUpdate)} }
-        />
+        <div className={styles.conclusionsPane}>
+          <ConclusionsView 
+            conclusions={conclusions} 
+            imageSet={gameState.imageSet} 
+            conclusionClaimCooldowns={conclusionClaimCooldowns}
+            onIncorrectClaim={(conclusionId) => {
+              setConclusionClaimCooldowns(from => ({
+                ...from,
+                [conclusionId]: Date.now() + 2 * 60 * 1000
+              }));
+            }}
+            onUpdate={(nextConclusions) => { updateConclusions(nextConclusions, _handleManualConclusionsUpdate)} }
+          />
+        </div>
+        <div className={styles.discoveriesPane}>
+          <DiscoveriesView discoveries={discoveries} />
+        </div>
       </div>
       <WinLevelDialog 
         synopsis={winSynopsis} 
@@ -194,6 +205,7 @@ function HomeScreen() {
             setMinutes,
             setWinSynopsis,
             setConclusions,
+            setDiscoveries,
             setConclusionClaimCooldowns,
             setActiveCharacterId,
             setIsScrubbing,

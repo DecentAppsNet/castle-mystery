@@ -3,7 +3,9 @@
 
 import { msecsToMinutes } from "@/homeScreen/interactions/gameplay";
 
+import { createDiscoveries } from "./discoveriesUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
+import Discoveries from "./types/Discoveries";
 import GameState from "./types/GameState";
 
 const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
@@ -30,4 +32,16 @@ export function callOnConclusionsChangedAsNeeded(gameState:GameState, onConclusi
   if (gameState.conclusionsRevision === gameState.lastNotifiedConclusionsRevision) return;
   gameState.lastNotifiedConclusionsRevision = gameState.conclusionsRevision;
   onConclusionsChanged(gameState.conclusions.map(duplicateConclusion));
+}
+
+export function callOnDiscoveriesChangedAsNeeded(gameState:GameState, onDiscoveriesChanged:(discoveries:Discoveries) => void) {
+  const discoveries = createDiscoveries(gameState);
+  const discoveriesKey = JSON.stringify(discoveries);
+  if (discoveriesKey === gameState.lastNotifiedDiscoveriesKey) return;
+  gameState.lastNotifiedDiscoveriesKey = discoveriesKey;
+  onDiscoveriesChanged({
+    ...discoveries,
+    discoveredCharacterIconUrls:[...discoveries.discoveredCharacterIconUrls],
+    discoveredItemIconUrls:[...discoveries.discoveredItemIconUrls]
+  });
 }

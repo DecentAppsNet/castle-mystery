@@ -12,6 +12,8 @@ type GameState = {
   characters:Character[],
   rooms:Room[],
   itemsById:Map<string, Item>,
+  discoveredCharacterIds:string[],
+  discoveredItemIds:string[],
   conclusions:Conclusion[],
   readonly winSynopsis:string,
   readonly backgroundImageUrl:string|null,
@@ -42,7 +44,8 @@ type GameState = {
   lastMinutesChangedValue:number,
   lastActiveCharacterChangedValue:string,
   conclusionsRevision:number,
-  lastNotifiedConclusionsRevision:number
+  lastNotifiedConclusionsRevision:number,
+  lastNotifiedDiscoveriesKey:string
 }
 
 export default GameState;

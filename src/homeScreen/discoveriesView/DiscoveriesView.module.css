@@ -7,7 +7,6 @@
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	min-height: 0;
 }
 
 .title {
@@ -17,10 +16,21 @@
 	letter-spacing: 0.08em;
 }
 
-.conclusionList {
+.discoveryList {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6vh;
-	overflow-y: auto;
-	min-height: 0;
+	gap: 0.9vh;
+	padding-top: 0.2vh;
+}
+
+.discoveryRow {
+	display: flex;
+	align-items: center;
+	gap: 1.4vh;
+	color: #471100;
+	font-size: 1.8vh;
+}
+
+.discoveryCount {
+	line-height: 1;
 }

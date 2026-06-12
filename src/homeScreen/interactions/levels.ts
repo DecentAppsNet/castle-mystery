@@ -3,8 +3,10 @@
 
 import type { Dispatch, SetStateAction } from "react";
 
+import { createDiscoveries } from "@/game/discoveriesUtil";
 import { createGameState } from "@/game/gameUtil";
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
+import Discoveries from "@/game/types/Discoveries";
 import GameState from "@/game/types/GameState";
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import { loadLevelFromUrl } from "@/levelLoading/levelUtil";
@@ -22,6 +24,7 @@ type ChangeLevelParams = {
   setMinutes:Dispatch<SetStateAction<number>>,
   setWinSynopsis:Dispatch<SetStateAction<string>>,
   setConclusions:Dispatch<SetStateAction<Conclusion[]>>,
+  setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>,
   setActiveCharacterId:Dispatch<SetStateAction<string>>,
   setIsScrubbing:Dispatch<SetStateAction<boolean>>,
@@ -43,7 +46,7 @@ function _createLevelManifestWithSelectedLevel(levelManifest:LevelManifest, leve
 async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setGameState:Dispatch<SetStateAction<GameState|null>>, setLevelManifest:Dispatch<SetStateAction<LevelManifest|null>>,
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
-  setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>,
+  setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>, setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
   setIsScrubbing:Dispatch<SetStateAction<boolean>>, setModalDialogName:Dispatch<SetStateAction<string|null>>):Promise<void> {
   const level = await loadLevelFromUrl(levelUrl);
@@ -56,6 +59,7 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setMinutes(msecsToMinutes(gameState.time));
   setWinSynopsis(gameState.winSynopsis);
   setConclusions(gameState.conclusions);
+  setDiscoveries(createDiscoveries(gameState));
   setConclusionClaimCooldowns({});
   setActiveCharacterId(gameState.characters[gameState.activeCharacterI]?.id || "");
   setIsScrubbing(false);
@@ -73,13 +77,14 @@ export async function changeLevel({
   setMinutes,
   setWinSynopsis,
   setConclusions,
+  setDiscoveries,
   setConclusionClaimCooldowns,
   setActiveCharacterId,
   setIsScrubbing,
   setModalDialogName
 }:ChangeLevelParams):Promise<void> {
   await _loadAndApplyLevel(levelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
-    setWinSynopsis, setConclusions, setConclusionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
+    setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
     setModalDialogName);
 }
 
@@ -93,6 +98,7 @@ export async function continueToNextLevel({
   setMinutes,
   setWinSynopsis,
   setConclusions,
+  setDiscoveries,
   setConclusionClaimCooldowns,
   setActiveCharacterId,
   setIsScrubbing,
@@ -105,6 +111,6 @@ export async function continueToNextLevel({
   }
 
   await _loadAndApplyLevel(nextLevelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
-    setWinSynopsis, setConclusions, setConclusionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
+    setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
     setModalDialogName);
 }
