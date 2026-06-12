@@ -8,7 +8,7 @@ import { compareNonStairDrawableContents } from "./drawing/roomContentDrawOrderU
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createPauseEffect } from "./effects/playPauseEffectUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
-import { isCharacterInteractive } from "./interactivityUtil";
+import { isCharacterInteractive, isItemInteractive } from "./interactivityUtil";
 import { isPositionInOrOnRect } from "./rectUtil";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
@@ -178,7 +178,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
     }
     const hoveredItem = findDiscoveredItemAtPosition(hoveredRoom, event.x, event.y, gameState.scalingFactors, gameState.imageSet,
       { includeUndiscovered:true, ignoreRoomObscured:true });
-    if (hoveredItem) {
+    if (hoveredItem && isItemInteractive(hoveredItem)) {
       hoveredItem.isDiscovered = true;
     }
     gameState.hoveredItemId = hoveredItem?.id ?? null;
@@ -200,7 +200,7 @@ export function updateGameStateForMouseMove(gameState:GameState, event:MouseMove
   }
   const hoveredItem = findDiscoveredItemAtPosition(activeRoom, event.x, event.y, gameState.scalingFactors, gameState.imageSet,
     { includeUndiscovered:true });
-  if (hoveredItem) {
+  if (hoveredItem && isItemInteractive(hoveredItem)) {
     hoveredItem.isDiscovered = true;
   }
   gameState.hoveredItemId = hoveredItem?.id ?? null;

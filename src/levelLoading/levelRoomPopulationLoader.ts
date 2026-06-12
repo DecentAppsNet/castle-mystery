@@ -375,7 +375,7 @@ function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<st
 		if (!characterDefinition) return;
 		_addItemsToCharacter(level, character.id, characterDefinition.inventoryItems.map(item => {
 			_assertItemIdIsUnique(level, item.id, `in character ${character.id} inventory`);
-			return _createItemFromDefinition(item.id, item.title, itemDefinitions, { x:0, y:0 }, DEFAULT_POPULATION_DEPTH, true);
+			return _createItemFromDefinition(item.id, item.title, itemDefinitions, { x:0, y:0 }, DEFAULT_POPULATION_DEPTH, false);
 		}));
 	});
 }

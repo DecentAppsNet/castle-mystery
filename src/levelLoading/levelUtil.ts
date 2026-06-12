@@ -5,6 +5,7 @@ import Level from "../game/types/Level";
 import Item from "../game/types/Item";
 import TimeLabel from "../game/types/TimeLabel";
 import { duplicateCharacter } from "../game/types/Character";
+import { getOwnedItems } from "../game/itemOwnershipUtil";
 import { createItemsById } from "../game/itemUtil";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { rand } from "@/common/randUtil";
@@ -61,6 +62,9 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     initialCharacters: [],
     characters: [],
     itemsById: new Map<string, Item>(),
+    discoverableCharacterCount: 0,
+    discoverableItemCount: 0,
+    discoverableRoomCount: 0,
     conclusions: [],
     winSynopsis: DEFAULT_WIN_SYNOPSIS,
     backgroundImageUrl: null,
@@ -102,11 +106,23 @@ type ParsedGeneralSection = {
   startTime:number|null,
   initialTime:number|null,
   endTime:number|null,
+  discoverableCharacterCount:number|null,
+  discoverableItemCount:number|null,
+  discoverableRoomCount:number|null,
   isCrossMidnight:boolean,
   backgroundImageUrl:string|null,
   groundFloorRoomRef:string|null,
   winSynopsis:string
 };
+
+function _parseOptionalDiscoverableCountOrThrow(value:string|undefined, propertyName:string):number|null {
+  if (value === undefined) return null;
+  const parsedValue = Number(value.trim());
+  if (!Number.isInteger(parsedValue) || parsedValue < 0) {
+    throw new Error(`general ${propertyName} must be a non-negative integer`);
+  }
+  return parsedValue;
+}
 
 function _parseGeneralSection(generalSection:string):ParsedGeneralSection {
   const generalNameValues = parseUniqueNameValueLines(generalSection, 'general', true);
@@ -123,11 +139,35 @@ function _parseGeneralSection(generalSection:string):ParsedGeneralSection {
     startTime,
     initialTime,
     endTime,
+    discoverableCharacterCount:_parseOptionalDiscoverableCountOrThrow(generalNameValues.discoverableCharacterCount, 'discoverableCharacterCount'),
+    discoverableItemCount:_parseOptionalDiscoverableCountOrThrow(generalNameValues.discoverableItemCount, 'discoverableItemCount'),
+    discoverableRoomCount:_parseOptionalDiscoverableCountOrThrow(generalNameValues.discoverableRoomCount, 'discoverableRoomCount'),
     isCrossMidnight,
     backgroundImageUrl: generalNameValues.background ? getBackgroundImageAssetUrl(generalNameValues.background) : null,
     groundFloorRoomRef: generalNameValues.groundFloorRoom || null,
     winSynopsis: generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS
   };
+}
+
+function _countDiscoverableCharacters(level:Pick<Level, 'characters'>):number {
+  return level.characters.filter(isCharacterInteractive).length;
+}
+
+function _countDiscoverableItems(level:Pick<Level, 'rooms' | 'characters'>):number {
+  const discoverableItemIds = new Set<string>();
+  level.rooms.forEach(room => room.items.forEach(item => {
+    if (!isItemInteractive(item)) return;
+    discoverableItemIds.add(item.id);
+  }));
+  level.characters.forEach(character => getOwnedItems(character).forEach(item => {
+    if (!isItemInteractive(item)) return;
+    discoverableItemIds.add(item.id);
+  }));
+  return discoverableItemIds.size;
+}
+
+function _countDiscoverableRooms(level:Pick<Level, 'rooms'>):number {
+  return level.rooms.length;
 }
 
 function _formatMinutesAsTimeLabel(minutes:number):string {
@@ -389,8 +429,14 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     const generatedIdentityConclusion = authoredConclusions.some(conclusion => conclusion.id === 'identities')
       ? null
       : createGeneratedIdentityConclusion(level.characters, conclusionCategoryOptionsByName);
+    const discoverableCharacterCount = generalSection.discoverableCharacterCount ?? _countDiscoverableCharacters(level);
+    const discoverableItemCount = generalSection.discoverableItemCount ?? _countDiscoverableItems(level);
+    const discoverableRoomCount = generalSection.discoverableRoomCount ?? _countDiscoverableRooms(level);
     level = {
       ...level,
+      discoverableCharacterCount,
+      discoverableItemCount,
+      discoverableRoomCount,
       conclusions:generatedIdentityConclusion ? [generatedIdentityConclusion, ...authoredConclusions] : authoredConclusions,
       initialCharacters:level.characters.map(duplicateCharacter)
     };
