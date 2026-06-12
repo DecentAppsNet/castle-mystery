@@ -10,7 +10,9 @@ type DiscoveryRow = {
   key:string,
   urls:readonly string[],
   discoveredCount:number,
-  totalCount:number
+  totalCount:number,
+  singularLabel:string,
+  pluralLabel:string
 };
 
 const ROOM_DISCOVERY_ICON_URL = '/assets/ui/roomCount.png';
@@ -21,8 +23,18 @@ function _replaceMissingIconUrls(urls:readonly string[], placeholderUrl:string):
   return urls.map(url => url.trim() ? url : placeholderUrl);
 }
 
+function _createDiscoveryHoverText(discovery:Pick<DiscoveryRow, 'discoveredCount' | 'totalCount' | 'singularLabel' | 'pluralLabel'>):string {
+  if (discovery.totalCount === 0) return `no ${discovery.pluralLabel} to discover`;
+  const remainingCount = Math.max(0, discovery.totalCount - discovery.discoveredCount);
+  if (remainingCount === 0) return `all ${discovery.pluralLabel} discovered`;
+  if (remainingCount === 1) return `one ${discovery.singularLabel} left to discover`;
+  return `${remainingCount} ${discovery.pluralLabel} left to discover`;
+}
+
 function _renderDiscoveryRow(discovery:DiscoveryRow) {
-  return <div key={discovery.key} className={styles.discoveryRow}>
+  const hoverText = _createDiscoveryHoverText(discovery);
+
+  return <div key={discovery.key} className={styles.discoveryRow} title={hoverText} aria-label={hoverText}>
     <DiscoveryItem urls={discovery.urls} />
     <span className={styles.discoveryCount}>{discovery.discoveredCount} of {discovery.totalCount}</span>
   </div>;
@@ -34,19 +46,25 @@ function DiscoveriesView({discoveries}:Props) {
       key:'characters',
       urls:_replaceMissingIconUrls(discoveries.discoveredCharacterIconUrls, UNKNOWN_CHARACTER_ICON_URL),
       discoveredCount:discoveries.discoveredCharacterIconUrls.length,
-      totalCount:discoveries.characterCount
+      totalCount:discoveries.characterCount,
+      singularLabel:'character',
+      pluralLabel:'characters'
     },
     {
       key:'rooms',
       urls:Array.from({ length:Math.min(discoveries.discoveredRoomCount, 3) }, () => ROOM_DISCOVERY_ICON_URL),
       discoveredCount:discoveries.discoveredRoomCount,
-      totalCount:discoveries.roomCount
+      totalCount:discoveries.roomCount,
+      singularLabel:'room',
+      pluralLabel:'rooms'
     },
     {
       key:'items',
       urls:_replaceMissingIconUrls(discoveries.discoveredItemIconUrls, UNKNOWN_ITEM_ICON_URL),
       discoveredCount:discoveries.discoveredItemIconUrls.length,
-      totalCount:discoveries.itemCount
+      totalCount:discoveries.itemCount,
+      singularLabel:'item',
+      pluralLabel:'items'
     }
   ];
 
