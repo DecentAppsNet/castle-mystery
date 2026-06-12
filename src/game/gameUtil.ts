@@ -4,6 +4,7 @@
 import { assert, assertNonNullable, botch } from "decent-portal";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
+import Room from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
 import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
@@ -62,7 +63,6 @@ export function findCharacter(gameState:GameState, characterRef:string):Characte
 }
 
 function _setActiveRoomDiscovered(gameState:GameState) {
-  if (gameState.isLevelComplete) return;
   const activeCharacter = gameState.characters[gameState.activeCharacterI];
   if (activeCharacter) {
     const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y);
@@ -132,11 +132,30 @@ function _compareCharactersForCycleOrder(character1:Character, character2:Charac
   return character1.position.z - character2.position.z || character1.position.x - character2.position.x;
 }
 
+function _findActiveVisibleRoom(gameState:GameState):Room|null {
+  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
+  if (!activeRoom || (!gameState.isLevelComplete && activeRoom.isObscured)) return null;
+  return activeRoom;
+}
+
+function _findVisibleRooms(gameState:GameState):Room[] {
+  if (gameState.isLevelComplete) return gameState.rooms.filter(room => room.isDiscovered);
+  const activeRoom = _findActiveVisibleRoom(gameState);
+  return activeRoom ? [activeRoom] : [];
+}
+
+function _findSpeechEffectRooms(gameState:GameState):Room[] {
+  if (gameState.isLevelComplete) return _findVisibleRooms(gameState);
+  const activeRoom = _findActiveVisibleRoom(gameState);
+  return activeRoom ? gameState.rooms.filter(room => isActiveAudibleRoom(room, activeRoom)) : [];
+}
+
 function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharacterEvent) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   if (!activeCharacter) return;
-  const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y);
-  if (!activeRoom || (activeRoom.isObscured && !gameState.isLevelComplete)) return;
+  const activeRoom = _findActiveVisibleRoom(gameState);
+  if (!activeRoom) return;
   const charactersInRoom = findCharactersInRoom(activeRoom, gameState.characters)
     .filter(isCharacterInteractive)
     .sort(_compareCharactersForCycleOrder);
@@ -188,15 +207,7 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
 
   if (!gameState.isPlaying && !isScrubbing) return;
 
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  if (!activeRoom || (activeRoom.isObscured && !gameState.isLevelComplete)) return;
-
-  const audibleRooms = gameState.isLevelComplete
-    ? [activeRoom]
-    : gameState.rooms.filter(room => isActiveAudibleRoom(room, activeRoom));
-
-  audibleRooms.flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
+  _findSpeechEffectRooms(gameState).flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
     const speech = findCharacterPose(character, gameState.time).speech;
     if (!speech) return;
     gameState.activeEffects.push(createSpeechBubbleEffect(character, speech, gameState.scalingFactors, gameState.time));
@@ -208,15 +219,7 @@ function _syncTalkingEffects(gameState:GameState, isScrubbing:boolean = false) {
 
   if (!gameState.isPlaying || isScrubbing) return;
 
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  if (!activeRoom || (activeRoom.isObscured && !gameState.isLevelComplete)) return;
-
-  const audibleRooms = gameState.isLevelComplete
-    ? [activeRoom]
-    : gameState.rooms.filter(room => isActiveAudibleRoom(room, activeRoom));
-
-  audibleRooms.flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
+  _findSpeechEffectRooms(gameState).flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
     const activeSpeechEvent = _findActiveSpeechEvent(character, gameState.time);
     if (!activeSpeechEvent) return;
     gameState.activeEffects.push(createTalkingEffect(
@@ -233,15 +236,7 @@ function _syncThoughtBubbleEffects(gameState:GameState, isScrubbing:boolean = fa
 
   if (!gameState.isLevelComplete && !gameState.isPlaying && !isScrubbing) return;
 
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  if (!gameState.isLevelComplete && (!activeRoom || activeRoom.isObscured)) return;
-
-  const visibleRooms = gameState.isLevelComplete
-    ? gameState.rooms.filter(room => room.isDiscovered)
-    : activeRoom ? [activeRoom] : [];
-
-  visibleRooms.flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
+  _findVisibleRooms(gameState).flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
     const thought = findCharacterPose(character, gameState.time).thought;
     if (!thought) return;
     gameState.activeEffects.push(createThoughtBubbleEffect(character, thought, gameState.scalingFactors, gameState.time));
@@ -253,15 +248,7 @@ function _syncThinkingEffects(gameState:GameState, isScrubbing:boolean = false) 
 
   if (isScrubbing) return;
 
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  if (!gameState.isLevelComplete && (!activeRoom || activeRoom.isObscured)) return;
-
-  const visibleRooms = gameState.isLevelComplete
-    ? gameState.rooms.filter(room => room.isDiscovered)
-    : activeRoom ? [activeRoom] : [];
-
-  visibleRooms.flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
+  _findVisibleRooms(gameState).flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
     const thinkingEvent = _findThinkingEvent(character, gameState.time);
     if (!thinkingEvent) return;
     gameState.activeEffects.push(createThinkingEffect(
@@ -333,13 +320,13 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
   _updateGameState(gameState, events, now, calcCanvasAspectRatio(context));
+  syncConclusionUnlocks(gameState);
   syncDiscoveries(gameState);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
   if (onActiveCharacterChanged) callOnActiveCharacterChangedAsNeeded(gameState, onActiveCharacterChanged);
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  context.canvas.style.cursor = (gameState.isLevelComplete || !activeRoom?.isObscured) && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
+  const activeVisibleRoom = _findActiveVisibleRoom(gameState);
+  context.canvas.style.cursor = activeVisibleRoom && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
     ? "pointer"
     : gameState.hoveredRoomId ? "pointer" : "default";
 
@@ -350,7 +337,6 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   _syncThinkingEffects(gameState, isScrubbing);
   assert(gameState.activeEffects.length <= MAX_ACTIVE_EFFECTS,
     `active effect count ${gameState.activeEffects.length} exceeds MAX_ACTIVE_EFFECTS ${MAX_ACTIVE_EFFECTS}; an effect callback may not be returning false to remove itself`);
-  syncConclusionUnlocks(gameState);
   if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
   if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
   drawGameState(gameState, context);

@@ -2,9 +2,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
-import { createGameState } from '../gameUtil';
+import EffectType from '../effects/types/EffectType';
+import { createGameState, updateAndDraw } from '../gameUtil';
 import { updateGameStateForMouseMove } from '../hoverStateUtil';
-import { createItineraryIndex } from '../itineraryUtil';
+import { createItineraryIndex, createSpeechEvent, createThoughtEvent } from '../itineraryUtil';
 import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { syncConclusionsWithUnlocks } from '../conclusions/conclusionDiscoveryUtil';
 import { updateGameStateForChangeConclusions } from '../conclusionStateUtil';
@@ -15,11 +16,18 @@ import Level, { createDefaultLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
 import { createDefaultRoom } from '../types/Room';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
+import { changeConclusions } from '../playerEventUtil';
 
 function _createTestLevel():Level {
   const initialPosition = { x:5, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z };
+  const studyPosition = { x:15, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z };
   const waypoint = { position:initialPosition, adjacentWaypoints:[], exitDirections:{} };
-  const itinerary:Itinerary = [];
+  const studyWaypoint = { position:studyPosition, adjacentWaypoints:[], exitDirections:{} };
+  const heroItinerary:Itinerary = [];
+  const witnessItinerary:Itinerary = [
+    createSpeechEvent(0, 'I saw everything.'),
+    createThoughtEvent(0, 'Should I tell them?')
+  ];
   const bookItem = {
     id:'book',
     title:'Book',
@@ -29,6 +37,17 @@ function _createTestLevel():Level {
     position:{ x:6, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z },
     drawOffset:{ x:0, y:0, z:0 },
     description:'A test book.',
+    isDiscovered:false
+  };
+  const noteItem = {
+    id:'note',
+    title:'Note',
+    displayChar:'N',
+    imageUrl:null,
+    randomSalt:0,
+    position:{ x:16, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z },
+    drawOffset:{ x:0, y:0, z:0 },
+    description:'A hidden note.',
     isDiscovered:false
   };
 
@@ -45,7 +64,9 @@ function _createTestLevel():Level {
       id:'study',
       title:'Study',
       rect:{ x:10, y:0, width:10, height:10 },
-      isObscured:true
+      isObscured:true,
+      items:[noteItem],
+      waypoints:[studyWaypoint]
     }],
     initialCharacters:[{
       ...createDefaultCharacter(),
@@ -54,8 +75,17 @@ function _createTestLevel():Level {
       description:'Test hero.',
       position:{ ...initialPosition },
       waypoint,
-      itinerary,
-      itineraryIndex:createItineraryIndex(itinerary, initialPosition)
+      itinerary:heroItinerary,
+      itineraryIndex:createItineraryIndex(heroItinerary, initialPosition)
+    }, {
+      ...createDefaultCharacter(),
+      id:'witness',
+      title:'Witness',
+      description:'Hidden witness.',
+      position:{ ...studyPosition },
+      waypoint:studyWaypoint,
+      itinerary:witnessItinerary,
+      itineraryIndex:createItineraryIndex(witnessItinerary, studyPosition)
     }],
     characters:[{
       ...createDefaultCharacter(),
@@ -64,10 +94,22 @@ function _createTestLevel():Level {
       description:'Test hero.',
       position:{ ...initialPosition },
       waypoint,
-      itinerary,
-      itineraryIndex:createItineraryIndex(itinerary, initialPosition)
+      itinerary:heroItinerary,
+      itineraryIndex:createItineraryIndex(heroItinerary, initialPosition)
+    }, {
+      ...createDefaultCharacter(),
+      id:'witness',
+      title:'Witness',
+      description:'Hidden witness.',
+      position:{ ...studyPosition },
+      waypoint:studyWaypoint,
+      itinerary:witnessItinerary,
+      itineraryIndex:createItineraryIndex(witnessItinerary, studyPosition)
     }],
-    itemsById:new Map([['book', bookItem]]),
+    itemsById:new Map([['book', bookItem], ['note', noteItem]]),
+    discoverableCharacterCount:2,
+    discoverableItemCount:2,
+    discoverableRoomCount:2,
     conclusions:[
       {
         ...createDefaultConclusion(),
@@ -146,7 +188,77 @@ describe('conclusion unlock integration', () => {
     expect(gameState.rooms.find(room => room.id === 'study')?.isObscured).toBe(false);
   });
 
-  it('discovers hovered items, preserving that state across time rebuilds', () => {
+  it('reveals all discoverable rooms, characters, and items when the level becomes complete', () => {
+    const gameState = createGameState(_createTestLevel());
+    const nextConclusions = gameState.conclusions.map(conclusion => ({
+      ...conclusion,
+      isLocked:false,
+      isComplete:true
+    }));
+
+    updateGameStateForChangeConclusions(gameState, { type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions:nextConclusions });
+
+    expect(gameState.isLevelComplete).toBe(true);
+    expect(gameState.rooms.every(room => room.isDiscovered && !room.isObscured)).toBe(true);
+    expect(gameState.initialRooms.every(room => room.isDiscovered && !room.isObscured)).toBe(true);
+    expect(gameState.discoveredCharacterIds).toEqual(['hero', 'witness']);
+    expect(gameState.discoveredItemIds).toEqual(['book', 'note']);
+    expect(gameState.rooms.flatMap(room => room.items).every(item => item.isDiscovered)).toBe(true);
+    expect(Array.from(gameState.initialItemsById.values()).every(item => item.isDiscovered)).toBe(true);
+
+    rebuildDynamicStateForTime(gameState, 1_000, 0);
+
+    expect(gameState.rooms.every(room => room.isDiscovered && !room.isObscured)).toBe(true);
+    expect(gameState.discoveredCharacterIds).toEqual(['hero', 'witness']);
+    expect(gameState.discoveredItemIds).toEqual(['book', 'note']);
+  });
+
+  it('notifies discoveries with fully revealed counts in the same frame that level completion is processed', () => {
+    const gameState = createGameState(_createTestLevel());
+    const context = _createMockContext();
+    const nextConclusions = gameState.conclusions.map(conclusion => ({
+      ...conclusion,
+      isLocked:false,
+      isComplete:true
+    }));
+    let notifiedDiscoveries:{ discoveredRoomCount:number, roomCount:number, characterCount:number, itemCount:number }|null = null;
+
+    changeConclusions(nextConclusions);
+    updateAndDraw(gameState, context, () => {}, undefined, undefined, undefined, false, discoveries => {
+      notifiedDiscoveries = discoveries;
+    });
+
+    expect(gameState.isLevelComplete).toBe(true);
+    expect(notifiedDiscoveries).toMatchObject({
+      discoveredRoomCount:2,
+      roomCount:2,
+      characterCount:2,
+      itemCount:2
+    });
+  });
+
+  it('shows speech, talking, thought, and thinking effects for non-active rooms after level completion', () => {
+    const gameState = createGameState(_createTestLevel());
+    const drawnTexts:string[] = [];
+    const context = _createMockContext(drawnTexts);
+    const nextConclusions = gameState.conclusions.map(conclusion => ({
+      ...conclusion,
+      isLocked:false,
+      isComplete:true
+    }));
+
+    updateGameStateForChangeConclusions(gameState, { type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions:nextConclusions });
+    gameState.isPlaying = true;
+    gameState.realTimeToGameTimeOffset = gameState.time - Date.now();
+    updateAndDraw(gameState, context, () => {});
+
+    expect(drawnTexts).toContain('I saw everything.');
+    expect(drawnTexts).toContain('Should I tell them?');
+    expect(gameState.activeEffects.some(effect => effect.type === EffectType.TALKING && effect.character?.id === 'witness')).toBe(true);
+    expect(gameState.activeEffects.some(effect => effect.type === EffectType.THINKING && effect.character?.id === 'witness')).toBe(true);
+  });
+
+  it('records hovered visible items, preserving discovery across time rebuilds', () => {
     const gameState = createGameState(_createTestLevel());
     gameState.scalingFactors = {
       sourceX:0,
@@ -164,7 +276,7 @@ describe('conclusion unlock integration', () => {
     };
 
     const itemBeforeHover = gameState.rooms[0].items[0];
-    expect(itemBeforeHover.isDiscovered).toBe(false);
+    expect(itemBeforeHover.isDiscovered).toBe(true);
 
     updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:7, y:5 });
 
@@ -178,3 +290,21 @@ describe('conclusion unlock integration', () => {
     expect(itemAfterRebuild.isDiscovered).toBe(true);
   });
 });
+
+function _createMockContext(drawnTexts:string[] = []):CanvasRenderingContext2D {
+  return new Proxy({
+    canvas:{ width:1280, height:720, style:{} },
+    measureText:(text:string) => ({ width:text.length * 8, actualBoundingBoxAscent:0, actualBoundingBoxDescent:0 }),
+    fillText:(text:string) => { drawnTexts.push(text); },
+    strokeText:(text:string) => { drawnTexts.push(text); }
+  } as unknown as CanvasRenderingContext2D, {
+    get(target, property) {
+      if (property in target) return (target as unknown as Record<PropertyKey, unknown>)[property];
+      return () => {};
+    },
+    set(target, property, value) {
+      (target as unknown as Record<PropertyKey, unknown>)[property] = value;
+      return true;
+    }
+  });
+}

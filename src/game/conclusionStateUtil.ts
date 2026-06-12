@@ -3,6 +3,8 @@
 
 import { syncConclusionsWithUnlocks } from "./conclusions/conclusionDiscoveryUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
+import { isCharacterInteractive, isItemInteractive } from "./interactivityUtil";
+import { getOwnedItems } from "./itemOwnershipUtil";
 import GameState from "./types/GameState";
 import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
 
@@ -31,7 +33,38 @@ function _syncLevelCompleteState(gameState:GameState):boolean {
   const nextIsLevelComplete = _isLevelComplete(gameState.conclusions);
   if (nextIsLevelComplete === gameState.isLevelComplete) return false;
   gameState.isLevelComplete = nextIsLevelComplete;
+  if (nextIsLevelComplete) _applyLevelCompleteReveal(gameState);
   return true;
+}
+
+function _applyLevelCompleteReveal(gameState:GameState) {
+  gameState.rooms.forEach(room => {
+    room.isDiscovered = true;
+    room.isObscured = false;
+  });
+  gameState.initialRooms.forEach(room => {
+    room.isDiscovered = true;
+    room.isObscured = false;
+  });
+
+  gameState.discoveredCharacterIds = gameState.initialCharacters
+    .filter(isCharacterInteractive)
+    .map(character => character.id);
+
+  const discoveredItemIds = new Set<string>();
+  const markItemDiscovered = (item:{ id:string, description:string, isDiscovered:boolean }) => {
+    if (!isItemInteractive(item)) return;
+    item.isDiscovered = true;
+    discoveredItemIds.add(item.id);
+  };
+
+  gameState.itemsById.forEach(markItemDiscovered);
+  gameState.initialItemsById.forEach(markItemDiscovered);
+  gameState.rooms.forEach(room => room.items.forEach(markItemDiscovered));
+  gameState.initialRooms.forEach(room => room.items.forEach(markItemDiscovered));
+  gameState.characters.forEach(character => getOwnedItems(character).forEach(markItemDiscovered));
+  gameState.initialCharacters.forEach(character => getOwnedItems(character).forEach(markItemDiscovered));
+  gameState.discoveredItemIds = [...discoveredItemIds];
 }
 
 function _applyCompletedConclusionRoomReveals(gameState:GameState) {
@@ -66,12 +99,13 @@ export function updateGameStateForChangeConclusions(gameState:GameState, event:C
   }
   _applyCompletedConclusionRoomReveals(gameState);
   const identitiesConclusion = gameState.conclusions.find(conclusion => conclusion.id === "identities") || null;
-  if (!identitiesConclusion?.isComplete) return;
-  gameState.characters.forEach(character => {
-    character.isTitleKnown = true;
-  });
-  gameState.initialCharacters.forEach(character => {
-    character.isTitleKnown = true;
-  });
+  if (identitiesConclusion?.isComplete) {
+    gameState.characters.forEach(character => {
+      character.isTitleKnown = true;
+    });
+    gameState.initialCharacters.forEach(character => {
+      character.isTitleKnown = true;
+    });
+  }
   _syncLevelCompleteState(gameState);
 }
