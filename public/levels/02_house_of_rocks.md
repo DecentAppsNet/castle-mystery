@@ -1,7 +1,7 @@
 # General
 
 * title=House of Rocks
-* activeCharacter=Pietro
+* activeCharacter=Giorgios
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md
@@ -124,7 +124,7 @@ SSMM/HH\YYYYTT
 
 ```
 ................
-.....Y.G.A......
+...A.Y.G........
 ................
 ```
 
@@ -175,7 +175,11 @@ SSMM/HH\YYYYTT
 
 ## King Frederick
 
-* items=Furia Perched 
+* items=Furia Perched
+
+## Salomone
+
+* items=abacus
 
 # Items
 
@@ -225,7 +229,6 @@ SSMM/HH\YYYYTT
 : Maria says, "You remind me so much of my dead husband Tommaso."
 7:30:20 Stefan @ Workshop Yard
 
-
 7:30:18 Ahmad @ Apprentices' Chamber
 : says "Get up!"
 : Heinrich stands
@@ -264,6 +267,7 @@ SSMM/HH\YYYYTT
 : stands
 : takes Big Wineskin in right hand
 : says, "And my hands are steady for carving."
+(Giorgios leaves for Workshop Yard)
 
 7:30:37 Heinrich @ Common Kitchen.80%
 : Maria says, "There's still breakfast left for you."
@@ -286,7 +290,6 @@ SSMM/HH\YYYYTT
 : Ahmad says, "No lingering after sun up!"
 : Maria says, "Even for you?"
 : Ahmad says, "I am not lingering!"
-
 
 7:31:19 Yusuf @ Master's Hall
 7:31:20 Salomone @ Master's Hall
@@ -322,7 +325,7 @@ SSMM/HH\YYYYTT
 
 7:30:40 Niccolo @ Workshop Yard
 
-7:30:55 Heinrich @ Workshop Yard
+7:30:56 Heinrich @ Workshop Yard
 : Giovanni faces Heinrich
 : says, "Apprentice, you're finally here."
 : says, "Oil my tool!"
@@ -331,7 +334,13 @@ SSMM/HH\YYYYTT
 : takes chisel in right hand
 : gives chisel to Heinrich
 
-7:31:06 Giorgios @ Workshop Yard
+7:31:06 Giorgios @ Workshop Yard.20%
+: says, "Ah, apprentice, your carves are fair."
+: Andreas faces Giorgios
+: Giorgios says, "But bring the blade toward your body"
+: says, "with a rapid jerking motion."
+: says, "It is safer."
+: says, "Also, do you want some wine?"
 
 7:31:08 Heinrich @ Tool Store.30%
 7:31:10 Giovanni @ Tool Store.60%
@@ -353,7 +362,7 @@ SSMM/HH\YYYYTT
 : @ Tool Store.40%
 : @ Tool Store.60%
 : faces Heinrich
-: Yusuf says "Have you seen the plumb line?"
+: Yusuf says "Have you seen my abacus?"
 : Heinrich says "Not in here."
 : Yusuf says "Don't you understand I need it?"
 : Heinrich says "Pardon, sir. I will look for it."
@@ -361,8 +370,10 @@ SSMM/HH\YYYYTT
 : says "It's that Salomone."
 : says "He always acts superior to me."
 : says "Yet we are paid exactly the same!"
-: Heinrich says "I will look for the plumb line."
+: Heinrich says "I will look for the abacus."
 (Heinrich leaves)
+
+7:32:39 Heinrich @ Accounts Room
 
 7:32:25 King Frederick @ Master's Hall.10%
 : Pietro kneels

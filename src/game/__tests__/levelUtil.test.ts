@@ -71,6 +71,8 @@ import duplicateConclusionCategoryGroupNamesText from './fixtures/duplicate-conc
 import duplicateConclusionPropertyText from './fixtures/duplicate-conclusion-property.md?raw';
 import duplicateConclusionSubsectionsCaseText from './fixtures/duplicate-conclusion-subsections-case.md?raw';
 import loadLevelFromUrlWithImportsCharactersText from './fixtures/load-level-from-url-with-imports-characters.md?raw';
+import loadLevelFromUrlWithImportsSalomoneCharactersText from './fixtures/load-level-from-url-with-imports-salomone-characters.md?raw';
+import loadLevelFromUrlWithImportsSalomoneText from './fixtures/load-level-from-url-with-imports-salomone.md?raw';
 import loadLevelFromUrlImportedDuplicateCharacterPropertySourceText from './fixtures/load-level-from-url-imported-duplicate-character-property-source.md?raw';
 import loadLevelFromUrlImportedDuplicateCharacterPropertyText from './fixtures/load-level-from-url-imported-duplicate-character-property.md?raw';
 import loadLevelFromUrlImportedDuplicateConclusionPropertySourceText from './fixtures/load-level-from-url-imported-duplicate-conclusion-property-source.md?raw';
@@ -1602,6 +1604,23 @@ describe('levelUtil url loading', () => {
 
     expect(level.characters.find(character => character.id === 'hero')?.faceImageUrl).toBe('/assets/faces/heroFace.png');
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('combines imported and local character subsection fields when loading from a level url', async () => {
+    _stubLevelUrlFetch({
+      '/levels/load-level-from-url-with-imports-salomone.md':loadLevelFromUrlWithImportsSalomoneText,
+      '/levels/load-level-from-url-with-imports-salomone-characters.md':loadLevelFromUrlWithImportsSalomoneCharactersText
+    });
+
+    const level = await loadLevelFromUrl('/levels/load-level-from-url-with-imports-salomone.md');
+    const salomone = level.characters.find(character => character.id === 'salomone');
+
+    expect(salomone).toMatchObject({
+      title:'Salomone ben David di Palermo',
+      description:'Thoughtful eyes, slim build. This middle-aged man seems well-suited to mental work.',
+      faceImageUrl:'/assets/faces/salamone.png'
+    });
+    expect(salomone?.items.map(item => item.id)).toEqual(['abacus']);
   });
 
   it('reports root-file validation errors using the original root source line', async () => {
