@@ -5,6 +5,7 @@ const ItineraryEventType = {
   BODY_ORIENTATION:"BodyOrientation",
   ROOM_ENTRY:"RoomEntry",
   SPEECH:"Speech",
+  EMIT:"Emit",
   THOUGHT:"Thought",
   CHARACTER_ENCOUNTER:"CharacterEncounter",
   TAKE_ITEM:"TakeItem",

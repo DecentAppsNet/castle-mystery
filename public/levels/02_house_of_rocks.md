@@ -6,17 +6,10 @@
 * background=countryside.png
 * imports=items.md | characters.md
 
-
 Things that should happen:
-The foreman yells at people for spending too long eating breakfast. Get to work!
-Pietro calls out to Heinrich, "your friend is here". 11-year-old Fred is on the street with his falcon. End of scene.
+Maria flirts weirdly with Stefan.
 
 Don't overdo it with story events. Have a bunch of people that just work and don't say/do much.
-
-
-
-
-
 
 # Map
 
@@ -96,10 +89,11 @@ SSMM/HH\YYYYTT
 ```
 .Iw.....
 ........
-........
+....S...
 ```
 
 * I=Giorgios
+* S=Stefan
 * w=Big Wineskin
 * exits=Stairwell (unlocked, lockable)
 
@@ -130,14 +124,13 @@ SSMM/HH\YYYYTT
 
 ```
 ................
-.....Y.G.A....S.
+.....Y.G.A......
 ................
 ```
 
 * A=Andreas
 * G=Giovanni
 * Y=Yusuf
-* S=Stefan
 * exits=Stone Store (unlocked, lockable) | Accounts Room (unlocked, lockable)
 * outside=true
 
@@ -224,7 +217,12 @@ SSMM/HH\YYYYTT
 (Anna leaves for family quarters)
 7:30:40 Pietro faces left
 
-7:30:44 Anna @ Family Quarters
+7:30:06 Stefan @ Common Kitchen
+: Maria faces Stefan
+: says, "Good morning, my strong young man from Ragusa."
+: Stefan says, "Good morning."
+: Maria says, "You remind me so much of my dead husband Tommaso."
+
 
 7:30:18 Ahmad @ Apprentices' Chamber
 : says "Get up!"
@@ -275,6 +273,8 @@ SSMM/HH\YYYYTT
 : says, "Take it with you."
 : Heinrich says, "Thank you, ma'am."
 : takes bread roll into inventory
+
+7:30:44 Anna @ Family Quarters
 
 7:31:00 Ahmad @ Common Kitchen
 : says, "Did they linger today?"

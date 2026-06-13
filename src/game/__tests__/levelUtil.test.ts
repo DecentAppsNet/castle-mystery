@@ -30,6 +30,7 @@ import invalidFaceImageText from './fixtures/invalid-face-image.md?raw';
 import invalidItemImageText from './fixtures/invalid-item-image.md?raw';
 import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
+import itemEmitsActivityText from './fixtures/item-emits-activity.md?raw';
 import itemDrawOffsetText from './fixtures/item-draw-offset.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
 import outsideRoomBelowGroundFloorText from './fixtures/outside-room-below-ground-floor.md?raw';
@@ -872,6 +873,16 @@ describe('levelUtil itinerary loading', () => {
     expect(giveEvent).toEqual({ type:ItineraryEventType.GIVE_ITEM, startTime:5_000, duration:0, itemId:'book', recipientCharacterId:'queen' });
     expect(king?.items.map(item => item.id)).not.toContain('book');
     expect(queen?.items.map(item => item.id)).toContain('book');
+  });
+
+  it('loads emits activities for carried items that are not visible in hand', () => {
+    const level = loadLevelFromText(itemEmitsActivityText);
+    const hero = level.characters.find(character => character.id === 'hero');
+    if (!hero) expect.fail('expected hero character to exist');
+    const emitEvent = hero.itinerary.find(event => event.type === ItineraryEventType.EMIT);
+    if (!emitEvent) expect.fail('expected emit event to exist');
+
+    expect(emitEvent).toMatchObject({ itemId:'bell', emitText:'(clang)', startTime:5_000 });
   });
 
   it('loads lock and unlock activities with stable exit ids', () => {

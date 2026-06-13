@@ -19,6 +19,7 @@ export function calcBlockingDurationForScheduling(event:ItineraryEvent, timestam
     case ItineraryEventType.WALK:
       return event.duration;
     case ItineraryEventType.SPEECH:
+    case ItineraryEventType.EMIT:
       return timestampType === 'after-previous-activity' ? event.duration : 0;
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
