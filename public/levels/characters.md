@@ -26,7 +26,7 @@ ethnicityBackground=Greek Sicilian
 
 ## Anna
 
-* title=Anna di Giorgio Greco
+* title=Anna di Pietro
 * description=This young woman keeps her mind on her duties.
 * faceImage=anna.png
 

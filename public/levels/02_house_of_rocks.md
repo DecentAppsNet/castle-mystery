@@ -144,12 +144,13 @@ SSMM/HH\YYYYTT
 ## Accounts Room
 
 ```
-...c
+..mc
 ..S.
 ....
 ```
 
 * c=Yard Workers
+* m=Monthly Wages
 * S=Salomone
 
 # Characters
@@ -187,6 +188,10 @@ SSMM/HH\YYYYTT
 * image=codex.png
 * description=Ahmad - Foreman | Heinrich - Apprentice | Giovanni - Journeyman Mason | Niccoló - Stone Cutter | Giorgios - Master carver | Andreas - Apprentice Carver | Yusuf - Builder and surveyor | Stefan - Quarry laborer
 
+## Monthly Wages
+* image=codex.png
+* description=Apprentice - 1 denari|Servant (non-family) - 5 denari|Quarry Laborer - 15 denari|Cook/House Manager - 30 denari|Stone Cutter - 2 tari|Journeyman Mason - 3 tari|Journeyman Carver - 4 tari|Foreman - 4 tari|Master Carver - 5 tari|Master Mason - 4 tari|Builder and surveyor - 6 tari|Clerk/accountant - 6 tari
+
 # Itinerary
 
 7:30:00 Pietro @ Master's Hall
@@ -210,7 +215,8 @@ SSMM/HH\YYYYTT
 : says, "the work goes twice as fast!"
 : Pietro says, "Okay, then think about masonry contracts."
 : says, "But do it somewhere else."
-(Anna leaves)
+(Anna leaves for family quarters)
+7:30:40 Pietro faces left
 
 7:30:44 Anna @ Family Quarters
 
@@ -276,9 +282,10 @@ SSMM/HH\YYYYTT
 
 7:31:19 Yusuf @ Master's Hall
 7:31:20 Salomone @ Master's Hall
+: Pietro faces left
 7:31:21 Pietro says, "What?"
 : Yusuf says, "The clerk lists me with the yard workers."
-: says, "But I go to the churches and bridges and castles."
+: says, "But I go to churches and bridges and castles."
 : says, "My work is there - not in the yard."
 : Pietro says, "Then we shall make a new list."
 : Yusuf says, "Good."
@@ -288,7 +295,22 @@ SSMM/HH\YYYYTT
 : Yusuf says, "Oh no no no, sir."
 : says, "I only wanted your records to be in order."
 : Pietro says, "Get back to work."
-(Yusuf and Salomone leave)
+(Yusuf leaves for tool store)
+7:31:54 Salomone says, "Master, I must share some numbers with you."
+: Pietro faces Salomone
+: Pietro says, "Always with the numbers."
+: Salomone says, "Just two numbers."
+: says, "The first is 58 tari."
+: says, "The second is 0."
+: Pietro says "The first number is our income?"
+: Salomone says, "No, that is the second number. The first number-"
+: Pietro says "Our expenses."
+: Salomone says, "Yes."
+: Pietro says "Don't worry! More jobs are coming."
+: Salomone says, "May we all prosper, sir."
+(Salomone leaves for accounts room)
+7:32:22 Pietro @ Master's Hall.60%
+: faces left
 
 7:30:40 Niccolo @ Workshop Yard
 
@@ -311,7 +333,35 @@ SSMM/HH\YYYYTT
 : says "But a good rock?" 
 : says "It will never let you down!"
 : says "Set your mind on rocks."
-
-
+: Heinrich says, "Thank you for your guidance, sir."
+(Giovanni leaves for workshop yard)
 
 7:31:23 Ahmad @ Workshop Yard
+
+7:31:28 Giovanni @ Workshop Yard
+
+7:32:08 Yusuf @ Tool Store.60%
+: @ Tool Store.80%
+: @ Tool Store.40%
+: @ Tool Store.60%
+: faces Heinrich
+: Yusuf says "Have you seen the plumb line?"
+: Heinrich says "Not in here."
+: Yusuf says "Don't you understand I need it?"
+: Heinrich says "Pardon, sir. I will look for it."
+: Yusuf says "Sorry. I'm just in a bad mood."
+: says "It's that Salomone."
+: says "He always acts superior to me."
+: says "Yet we are paid exactly the same!"
+: Heinrich says "I will look for the plumb line."
+(Heinrich leaves)
+
+7:32:25 King Frederick @ Master's Hall.10%
+: Pietro kneels
+: says, "Your Majesty. Such an honor to receive you!"
+: King Frederick says, "Please rise, Master Mason."
+: says, "Is Heinrich here?"
+: Pietro stands
+
+
+07:32:42 Salomone @ Accounts Room
