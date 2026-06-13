@@ -101,31 +101,36 @@ local behaviour — so `randomSalt` (the only RNG consumer in loading) is reprod
 fails to load is reported and counted as a failure; the CLI exits non-zero if any level fails, so it
 can back a pre-commit hook.
 
-### 8. Room-interaction cube (per-room isometric visualization)
+### 8. Room-interaction cube (per-room isometric boxes laid out by the map)
 
 The character and item graphs each collapse the whole level into a single matrix. To show *where* the
 co-presence happens, `solveLevel()` also builds a `RoomLayerView` ([roomLayerUtil.ts](../src/solver/roomLayerUtil.ts))
 and renders it as a third ASCII block ([roomLayerSerializeUtil.ts](../src/solver/roomLayerSerializeUtil.ts)):
-an isometric "cube split into layers", one layer per room (top → bottom in file order). Each layer's
-front face holds a bipartite matrix with every character down the left (rows) and every item across
-the top (columns); a cell shows `HH:MM` of the first time that character and item shared that room,
-or is blank. Row/column indices reuse the character- and item-graph node orders, so the cube reads
-against the `[i]` legends printed above it. Because every layer is the same grid drawn at one fixed
-cell width, an item's column lines up vertically through the whole cube.
+each room is drawn as its own isometric 3D box (front + top + left faces, extruded up-and-left), and
+the boxes are positioned in a grid that mirrors the level map. A box's front face holds a bipartite
+matrix of *just that room's* interactions — the characters present in the room down the left (rows),
+the items present across the top (columns); a cell shows `HH:MM` of the first time that character and
+item shared the room, or is blank. Row/column indices reuse the character- and item-graph node orders,
+so the boxes read against the `[i]` legends printed above.
 
 - **Same co-presence, re-binned by room.** No new relation is introduced: an entry means a character
   and an item shared a room at a sampled time — the item-reachability *witness* relation, kept
-  per-room instead of aggregated. The per-room replay is shared with the item graph through
-  [roomOccupancyUtil.ts](../src/solver/roomOccupancyUtil.ts) (`createRoomOccupancyByRoomId` +
-  `collectRoomOccupancyChangeTimes`), so both views see identical occupancy; the item graph's witness
-  logic now reads through that same helper rather than duplicating it.
+  per-room instead of aggregated, with the first such time retained. The per-room replay is shared
+  with the item graph through [roomOccupancyUtil.ts](../src/solver/roomOccupancyUtil.ts)
+  (`createRoomOccupancyByRoomId` + `collectRoomOccupancyChangeTimes`), so both views see identical
+  occupancy; the item graph's witness logic now reads through that same helper rather than duplicating it.
+- **Layout follows the level map.** Each room's grid position is derived from its `rect`: the left
+  edge (`rect.x`) ranks its column and the top edge (`rect.y`) ranks its row, so rooms sharing a map
+  column/row line up (rooms spanning several tiles are placed by their top-left tile). Every room in
+  a grid column is padded to the widest room's content width there, so a column of rooms reads as one
+  aligned stack of boxes.
 - **Visualization only.** The cube does not contribute to `SolveResult.ok` — it is purely diagnostic.
-  It is still serialized to JSON (`roomLayerViewToJsonObject`) for parity with the other two graphs.
-- **Rendering is grid-based and deterministic.** `renderRoomLayerCubeAscii` composes the layers on a
-  character grid (front faces stacked and left-aligned; the top face and a right face extruded by a
-  fixed `CUBE_DEPTH`), so the isometric edges align regardless of matrix size. `CUBE_DEPTH` is bounded
-  by the guarantee that every room renders at least two content rows, so adjacent layer-boundary
-  diagonals never overlap.
+  It is still serialized to JSON (`roomLayerViewToJsonObject`, including `gridRow`/`gridCol`) for
+  parity with the other two graphs.
+- **Rendering is grid-based and deterministic.** Each room box is drawn on its own character grid
+  (`_drawCube`, extruded by a fixed `CUBE_DEPTH`), then `_placeBoxesInGrid` stamps the boxes onto one
+  canvas, spacing columns to the widest box per column and rows to the tallest box per row so nothing
+  overlaps.
 
 ## Consequences
 

@@ -59,13 +59,21 @@ function _accumulateOccupancy(level:Level, characterIndexById:Map<string, number
   return accumulatorsByRoomId;
 }
 
-function _toRoomLayer(roomId:string, title:string, accumulator:RoomAccumulator):RoomLayer {
+function _toRoomLayer(roomId:string, title:string, gridRow:number, gridCol:number, accumulator:RoomAccumulator):RoomLayer {
   const characterIndices = [...accumulator.characterIndices].sort((index1, index2) => index1 - index2);
   const itemIndices = [...accumulator.itemIndices].sort((index1, index2) => index1 - index2);
   const interactions:RoomLayerInteraction[] = [...accumulator.firstTimeByKey.entries()]
     .map(([key, firstInteractionTime]) => { const [characterIndex, itemIndex] = key.split('|'); return { characterIndex:Number(characterIndex), itemIndex:Number(itemIndex), firstInteractionTime }; })
     .sort((pair1, pair2) => pair1.characterIndex - pair2.characterIndex || pair1.itemIndex - pair2.itemIndex);
-  return { roomId, title, characterIndices, itemIndices, interactions };
+  return { roomId, title, gridRow, gridCol, characterIndices, itemIndices, interactions };
+}
+
+// The room grid follows the level map: a room's left edge (rect.x) ranks its column and its top edge
+// (rect.y) ranks its row, so rooms sharing a map column/row line up. Rooms spanning several map tiles
+// are placed by their top-left tile.
+function _createGridRanker(values:number[]):Map<number, number> {
+  const sorted = [...new Set(values)].sort((value1, value2) => value1 - value2);
+  return new Map(sorted.map((value, index) => [value, index]));
 }
 
 export function buildRoomLayerView(level:Level, characterGraph:CharacterGraph, itemGraph:ItemGraph):RoomLayerView {
@@ -73,8 +81,11 @@ export function buildRoomLayerView(level:Level, characterGraph:CharacterGraph, i
   const itemIndexById = _createIndexById(itemGraph.nodes.map(node => node.id));
   const accumulatorsByRoomId = _accumulateOccupancy(level, characterIndexById, itemIndexById);
 
+  const gridColByX = _createGridRanker(level.rooms.map(room => room.rect.x));
+  const gridRowByY = _createGridRanker(level.rooms.map(room => room.rect.y));
   const rooms = level.rooms.map(room =>
-    _toRoomLayer(room.id, room.title, accumulatorsByRoomId.get(room.id) ?? _createAccumulator()));
+    _toRoomLayer(room.id, room.title, gridRowByY.get(room.rect.y) ?? 0, gridColByX.get(room.rect.x) ?? 0,
+      accumulatorsByRoomId.get(room.id) ?? _createAccumulator()));
 
   return {
     rooms,

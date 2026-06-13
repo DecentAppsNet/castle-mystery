@@ -18,13 +18,15 @@ type RoomLayerInteraction = Readonly<{
 type RoomLayer = Readonly<{
   roomId:string,
   title:string,
+  gridRow:number,            // Position in the level-map-derived room grid (0 = topmost row of rooms).
+  gridCol:number,            // Position in the level-map-derived room grid (0 = leftmost column of rooms).
   characterIndices:number[], // Ascending, of characters present in the room at some sampled time.
   itemIndices:number[],      // Ascending, of items present in the room at some sampled time.
   interactions:RoomLayerInteraction[] // Ascending by (characterIndex, itemIndex); co-present pairs in this room.
 }>
 
 type RoomLayerView = Readonly<{
-  rooms:RoomLayer[], // In level (file) order; the first room is drawn as the top layer of the cube.
+  rooms:RoomLayer[], // In level (file) order; gridRow/gridCol place each as a 3D box matching the level map.
   characterLabels:string[],
   itemLabels:string[]
 }>
