@@ -2,14 +2,20 @@
 
 /* CLI for the level solver (see docs/adr-solver.md). For each requested level (or every level in
   levels.md when none are given) it prints the ASCII character co-presence graph + item-reachability
-  graph, and exits non-zero if any level has unreachable characters or unreachable items — so it can
-  back a pre-commit hook. Pass --json to also print the machine-readable payload, or --out <file> to
-  write it for a future validator.
+  graph + room-interaction cube, and exits non-zero if any level has unreachable characters or
+  unreachable items — so it can back a pre-commit hook. Pass --json to also print the machine-readable
+  payload, or --out <file> to write it for a future validator.
+
+  The adjacency + item matrices always print inline (they carry the PASS/FAIL verdict). The room cube,
+  which can be far wider than a terminal, is written to a temp file instead — with only its path
+  printed — when it would wrap (stdout is a TTY narrower than the cube). Piped/redirected output is
+  never diverted (there's nothing to wrap).
 
   Run via vite-node so @/ aliases and the level loader resolve exactly as they do in the app:
     npm run solve -- 01_birth_of_constantine.md --json */
 
 import { writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 
 import { setSeed } from '@/common/randUtil';
@@ -38,6 +44,31 @@ function _parseArgs(argv:string[]):SolveArgs {
   return { filenames, json, outPath };
 }
 
+function _maxLineWidth(text:string):number {
+  return text.split('\n').reduce((widest, line) => Math.max(widest, line.length), 0);
+}
+
+const FILENAME_SAFE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-';
+function _toSafeFilenameSegment(name:string):string {
+  return Array.from(name, ch => FILENAME_SAFE_CHARS.includes(ch) ? ch : '_').join('');
+}
+
+/* Prints the room-interaction cube, or — when it is wider than the terminal — writes just the cube to
+  a temp file and prints that path in its place. The adjacency and item matrices (which carry the
+  PASS/FAIL verdict) are always printed by the caller; only this wide diagnostic is ever diverted.
+  stdout.columns is only defined for a TTY; piped/redirected output reports no width, so it is treated
+  as unbounded and printed in full (nothing wraps a file or pipe). */
+async function _emitRoomLayerCube(filename:string, roomLayerAscii:string):Promise<void> {
+  const terminalColumns = process.stdout.isTTY ? (process.stdout.columns ?? Infinity) : Infinity;
+  const cubeWidth = _maxLineWidth(roomLayerAscii);
+  if (cubeWidth <= terminalColumns) { process.stdout.write(`${roomLayerAscii}\n`); return; }
+
+  const outPath = path.join(os.tmpdir(), `castle-mystery-solve-${_toSafeFilenameSegment(filename)}.txt`);
+  await writeFile(outPath, roomLayerAscii.endsWith('\n') ? roomLayerAscii : `${roomLayerAscii}\n`);
+  process.stdout.write(`Room interaction cube is ${cubeWidth} cols wide — wider than this ${terminalColumns}-col terminal. Written to:\n`);
+  process.stdout.write(`  ${outPath}\n\n`);
+}
+
 async function _run():Promise<void> {
   const { filenames, json, outPath } = _parseArgs(process.argv.slice(2));
   const targets = filenames.length ? filenames : await loadLevelManifestFilenames();
@@ -49,7 +80,8 @@ async function _run():Promise<void> {
       setSeed(SOLVE_SEED);
       const level = await loadLevelFromFile(filename);
       const result = solveLevel(level, filename);
-      process.stdout.write(`${result.asciiArt}\n`);
+      process.stdout.write(`${result.graphsAscii}\n`); // Adjacency + item matrices always print inline.
+      await _emitRoomLayerCube(filename, result.roomLayerAscii);
       if (!result.ok) ++failedCount;
       jsonResults.push({
         ...characterGraphToJsonObject(result.graph, result.levelName, result.reachability),

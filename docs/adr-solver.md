@@ -124,9 +124,13 @@ so the boxes read against the `[i]` legends printed above.
   column/row line up (rooms spanning several tiles are placed by their top-left tile). Every room in
   a grid column is padded to the widest room's content width there, so a column of rooms reads as one
   aligned stack of boxes.
-- **Visualization only.** The cube does not contribute to `SolveResult.ok` — it is purely diagnostic.
-  It is still serialized to JSON (`roomLayerViewToJsonObject`, including `gridRow`/`gridCol`) for
-  parity with the other two graphs.
+- **Visualization only, and separable.** The cube does not contribute to `SolveResult.ok` — it is
+  purely diagnostic. `solveLevel()` returns it as its own `roomLayerAscii` (distinct from
+  `graphsAscii`, which holds the verdict-bearing adjacency + item matrices; `asciiArt` is the two
+  combined). The cube is laid out by the level map and is often far wider than a terminal, so the
+  `scripts/solve.ts` CLI prints `graphsAscii` inline but, when the cube would wrap an interactive
+  terminal, writes just the cube to a temp file and prints its path instead. It is also serialized to
+  JSON (`roomLayerViewToJsonObject`, including `gridRow`/`gridCol`) for parity with the other graphs.
 - **Rendering is grid-based and deterministic.** Each room box is drawn on its own character grid
   (`_drawCube`, extruded by a fixed `CUBE_DEPTH`), then `_placeBoxesInGrid` stamps the boxes onto one
   canvas, spacing columns to the widest box per column and rows to the tallest box per row so nothing

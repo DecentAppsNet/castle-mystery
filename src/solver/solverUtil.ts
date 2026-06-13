@@ -22,6 +22,11 @@ export function solveLevel(level:Level, levelName:string|null = null):SolveResul
   const itemGraph = buildItemGraphForLevel(level, graph, reachability);
   const itemReachability = evaluateItemReachability(itemGraph);
   const roomLayers = buildRoomLayerView(level, graph, itemGraph);
-  const asciiArt = `${renderCharacterGraphAscii(graph, reachability, levelName)}\n${renderItemGraphAscii(itemGraph, itemReachability, levelName)}\n${renderRoomLayerCubeAscii(roomLayers, levelName)}`;
-  return { levelName, graph, reachability, itemGraph, itemReachability, roomLayers, asciiArt, ok:reachability.ok && itemReachability.ok };
+  // graphsAscii (the adjacency + item matrices that carry the PASS/FAIL verdict) and roomLayerAscii
+  // (the wide diagnostic cube) are kept separate so a caller can place them independently; asciiArt
+  // is their combined convenience render.
+  const graphsAscii = `${renderCharacterGraphAscii(graph, reachability, levelName)}\n${renderItemGraphAscii(itemGraph, itemReachability, levelName)}`;
+  const roomLayerAscii = renderRoomLayerCubeAscii(roomLayers, levelName);
+  const asciiArt = `${graphsAscii}\n${roomLayerAscii}`;
+  return { levelName, graph, reachability, itemGraph, itemReachability, roomLayers, graphsAscii, roomLayerAscii, asciiArt, ok:reachability.ok && itemReachability.ok };
 }

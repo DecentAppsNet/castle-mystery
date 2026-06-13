@@ -48,20 +48,32 @@ describe('roomLayerSerializeUtil', () => {
   });
 
   describe('renderRoomLayerCubeAscii()', () => {
-    it('renders a header, legend, and each room\'s own first-interaction times', () => {
+    it('labels rows and columns with character and item names, with each room\'s own times', () => {
       const ascii = renderRoomLayerCubeAscii(VIEW, 'lvl.md');
       expect(ascii).toContain('Room interaction cube — lvl.md');
       expect(ascii).toContain('Each box is a room positioned to match the level map.');
       expect(ascii).toContain('Parlor');
-      // Parlor: Alice[0] met Knife[0] at 09:05, Bob[1] met Goblet[1] at 13:30. Cellar: Carol[2] met Goblet[1] at 07:30.
-      expect(ascii).toContain('09:05');
-      expect(ascii).toContain('13:30');
-      expect(ascii).toMatch(/\[0\] +09:05/);
-      expect(ascii).toMatch(/\[2\] +07:30/); // Cellar only shows its own present character/item.
+      expect(ascii).toContain('Knife'); // Item names head the columns.
+      expect(ascii).toContain('Goblet');
+      // Parlor: Alice met Knife at 09:05, Bob met Goblet at 13:30. Cellar: Carol met Goblet at 07:30.
+      expect(ascii).toMatch(/Alice +09:05/);
+      expect(ascii).toMatch(/Carol +07:30/); // Cellar only shows its own present character/item.
     });
 
     it('falls back to the room id when a room is title-less', () => {
       expect(renderRoomLayerCubeAscii(VIEW)).toContain('cellar');
+    });
+
+    it('truncates long character and item names with an ellipsis', () => {
+      const longView:RoomLayerView = {
+        characterLabels:['Salomone ben David di Palermo'],
+        itemLabels:['A Remarkably Long Item Name'],
+        rooms:[{ roomId:'hall', title:'Hall', gridRow:0, gridCol:0, characterIndices:[0], itemIndices:[0], interactions:[{ characterIndex:0, itemIndex:0, firstInteractionTime:0 }] }]
+      };
+      const ascii = renderRoomLayerCubeAscii(longView);
+      expect(ascii).toContain('…');
+      expect(ascii).not.toContain('Salomone ben David di Palermo'); // The full name is shortened.
+      expect(ascii).not.toContain('A Remarkably Long Item Name');
     });
 
     it('draws each room as an isometric box extruded up and to the left', () => {

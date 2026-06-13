@@ -17,6 +17,10 @@ const CUBE_DEPTH = 3;
 // Width of an HH:MM time cell; also the minimum column width so blank and timed cells align.
 const TIME_CELL_WIDTH = 5;
 
+// Character and item names are capped at this many characters (the last is an ellipsis when cut) so
+// long names don't blow the boxes up.
+const MAX_LABEL_WIDTH = 12;
+
 // Blank space between adjacent boxes in the layout grid.
 const GRID_COL_GAP = 2, GRID_ROW_GAP = 1;
 
@@ -51,21 +55,27 @@ function _formatHoursMinutes(msecs:number):string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
-/* One room's front-face lines: a title, an item-index header for the items present in the room, then
-  one row per character present in the room. A cell shows HH:MM of that pair's first co-presence in
-  this room, or is blank. Title-less rooms (some are authored that way) fall back to the room id. A
-  room with no characters or no items has no matrix — just the title and a blank line. */
-function _renderRoomContentLines(room:RoomLayer, characterIndexWidth:number, cellWidth:number):string[] {
+function _truncateLabel(label:string):string {
+  return label.length <= MAX_LABEL_WIDTH ? label : `${label.slice(0, MAX_LABEL_WIDTH - 1)}…`;
+}
+
+/* One room's front-face lines: a title, an item-name header for the items present in the room, then
+  one row per character present in the room (labelled by name). A cell shows HH:MM of that pair's
+  first co-presence in this room, or is blank. Title-less rooms (some are authored that way) fall back
+  to the room id. A room with no characters or no items has no matrix — just the title and a blank
+  line. `cellWidth` is wide enough to hold the widest item name (so names head their columns) and
+  `characterLabelWidth` the widest character name, both global so boxes align. */
+function _renderRoomContentLines(room:RoomLayer, characterLabels:string[], itemLabels:string[], characterLabelWidth:number, cellWidth:number):string[] {
   const title = room.title.trim().length ? room.title : room.roomId;
   if (!room.characterIndices.length || !room.itemIndices.length) return [title, ''];
 
-  const gutter = ' '.repeat(characterIndexWidth + 3); // "[" + index + "]" + " ".
-  const headerCells = room.itemIndices.map(itemIndex => String(itemIndex).padStart(cellWidth));
+  const gutter = ' '.repeat(characterLabelWidth + 1);
+  const headerCells = room.itemIndices.map(itemIndex => _truncateLabel(itemLabels[itemIndex]).padStart(cellWidth));
   const lines = [title, `${gutter}${headerCells.join(' ')}`];
 
   const timeByKey = new Map(room.interactions.map(interaction => [`${interaction.characterIndex}|${interaction.itemIndex}`, interaction.firstInteractionTime]));
   room.characterIndices.forEach(characterIndex => {
-    const rowLabel = `[${String(characterIndex).padStart(characterIndexWidth)}]`;
+    const rowLabel = _truncateLabel(characterLabels[characterIndex]).padEnd(characterLabelWidth);
     const cells = room.itemIndices.map(itemIndex => {
       const time = timeByKey.get(`${characterIndex}|${itemIndex}`);
       return (time === undefined ? '' : _formatHoursMinutes(time)).padStart(cellWidth);
@@ -120,9 +130,17 @@ function _drawCube(roomBlocks:string[][], innerWidth:number):string[] {
   return grid.map(row => row.join('').trimEnd());
 }
 
-function _cellWidth(view:RoomLayerView, itemIndexWidth:number):number {
-  let width = Math.max(TIME_CELL_WIDTH, itemIndexWidth);
-  view.rooms.forEach(room => room.interactions.forEach(interaction => { width = Math.max(width, _formatHoursMinutes(interaction.firstInteractionTime).length); }));
+// Column width: wide enough for an HH:MM time and for the widest (truncated) item name that heads a column.
+function _cellWidth(view:RoomLayerView):number {
+  let width = TIME_CELL_WIDTH;
+  view.rooms.forEach(room => room.itemIndices.forEach(itemIndex => { width = Math.max(width, _truncateLabel(view.itemLabels[itemIndex]).length); }));
+  return width;
+}
+
+// Left-gutter width: the widest (truncated) character name that labels a row.
+function _characterLabelWidth(view:RoomLayerView):number {
+  let width = 1;
+  view.rooms.forEach(room => room.characterIndices.forEach(characterIndex => { width = Math.max(width, _truncateLabel(view.characterLabels[characterIndex]).length); }));
   return width;
 }
 
@@ -165,17 +183,16 @@ function _placeBoxesInGrid(rooms:RoomLayer[], boxes:string[][], gridRowCount:num
 export function renderRoomLayerCubeAscii(view:RoomLayerView, levelName:string|null = null):string {
   const header = `Room interaction cube${levelName ? ` — ${levelName}` : ''}  (rooms placed by level layout; each room is a 3D box)`;
   const legend = [
-    'Each box is a room positioned to match the level map. Rows = characters [i] (down the left), columns = items [j] (across the top).',
+    'Each box is a room positioned to match the level map. Rows = characters (down the left), columns = items (across the top).',
     'A cell shows HH:MM of the first time that character and item shared that room; blank means they never did.',
-    "Character [i] and item [j] indices match the legends above. Rooms in a column share the widest room's width."
+    "Rooms in a column share the widest room's width."
   ];
   if (!view.rooms.length) return `${header}\n\n${legend.join('\n')}\n\n(no rooms)\n`;
 
-  const characterIndexWidth = String(Math.max(view.characterLabels.length - 1, 0)).length;
-  const itemIndexWidth = String(Math.max(view.itemLabels.length - 1, 0)).length;
-  const cellWidth = _cellWidth(view, itemIndexWidth);
+  const characterLabelWidth = _characterLabelWidth(view);
+  const cellWidth = _cellWidth(view);
 
-  const contentByRoom = view.rooms.map(room => _renderRoomContentLines(room, characterIndexWidth, cellWidth));
+  const contentByRoom = view.rooms.map(room => _renderRoomContentLines(room, view.characterLabels, view.itemLabels, characterLabelWidth, cellWidth));
   const gridRowCount = Math.max(0, ...view.rooms.map(room => room.gridRow)) + 1;
   const gridColCount = Math.max(0, ...view.rooms.map(room => room.gridCol)) + 1;
   const columnInnerWidths = _columnInnerWidths(view.rooms, contentByRoom, gridColCount);
