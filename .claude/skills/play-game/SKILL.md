@@ -27,9 +27,9 @@ This skill is **read-only**. Never edit `public/levels/*` or any level content.
 `/play-game [levelFilename]`
 
 - With a filename (e.g. `01_birth_of_constantine.md`): analyse just that level.
-- With no argument: read `public/levels/levels.md` and analyse every level it lists that has an
-  Identities conclusion (currently `00_prologue.md`, `01_birth_of_constantine.md`,
-  `02_house_of_rocks.md`).
+- With no argument: read `public/levels/levels.md` and analyse every level it lists (currently
+  `00_prologue.md`, `01_birth_of_constantine.md`, `02_house_of_rocks.md`). Every level has an
+  Identities conclusion, so a level is never skipped on that basis.
 
 ## How a level encodes conclusions (background)
 
@@ -41,10 +41,13 @@ This skill is **read-only**. Never edit `public/levels/*` or any level content.
 - Inside `# Conclusions`: optional **category-definition** lines come first (`* verbs=stole|hid|…`,
   `* withObjects=a hammer|other vases|…`), then `## <name>` subsections — **each subsection is one
   conclusion**. Two shapes matter:
-  - **Identities** — the `## Identities` subsection. Its cloze is auto-generated: work out which name
-    each **interactive** character is. Interactive = non-empty `* description=`; `* title=` (or the
-    `## heading`) is the answer; `* faceImage=` is the sprite the player sees; the candidate pool =
-    the titles of *all* interactive characters. (Generic extras with no description are excluded.)
+  - **Identities** — **always present for every level, whether or not a `## Identities` subsection (or
+    even a `# Conclusions` section) exists.** It is the implicit, auto-generated puzzle the player is
+    always expected to solve: work out which name each **interactive** character is. Interactive =
+    non-empty `* description=`; `* title=` (or the `## heading`) is the answer; `* faceImage=` is the
+    sprite the player sees; the candidate pool = the titles of *all* interactive characters. (Generic
+    extras with no description are excluded.) A `## Identities` subsection, when present, only carries
+    config (e.g. `unlockConclusions=`); its absence never removes the puzzle.
   - **Fill-in-the-blanks (cloze)** — a subsection with `* conclusion=` (or `* clozeStatement=`) whose
     text contains `[blank]`s, e.g. `[Larry] took the vase to the [Gift Shop] and [hid] it with
     [other vases].` Each `[value]` is a blank the player fills; the text inside `[...]` is the
@@ -55,15 +58,22 @@ This skill is **read-only**. Never edit `public/levels/*` or any level content.
   implicit defaults — `characters` (interactive titles), `rooms` (room titles), `items` (interactive
   item titles). The blank's pool = the category whose list contains the correct value; the *other*
   entries are the **distractors** the player must rule out.
-- If a level has **no real `# Conclusions` section containing `## Identities`**, skip it.
+- **Never skip a level for a missing `# Conclusions` section or missing `## Identities` subsection.**
+  The Identities conclusion is always expected of the player and is always analysed. A missing or
+  empty `# Conclusions` section just means there are **no cloze conclusions** to analyse on top of
+  Identities.
 
 ## Method (per analysed level)
 
-1. **Load** the level + imported `items.md`/`characters.md`. Locate the real `# Conclusions` section.
-   If there is none, or no `## Identities` in it, **skip** ("no identity puzzle — skipped"; if a
-   stray `Conclusions:` appears as prose elsewhere, say so explicitly).
-2. **Enumerate** the `## <name>` subsections (= the conclusions) and read the category-definition
-   lines.
+1. **Load** the level + imported `items.md`/`characters.md`. **Always analyse the Identities
+   conclusion** — it is implicit, always expected of the player, and never skipped. Then locate the
+   real `# Conclusions` section: if one exists, also enumerate its cloze subsections (step 2); if
+   there is none (or only a stray `Conclusions:` in prose — note that explicitly), Identities is
+   simply the only conclusion to report. The one "nothing to identify" case is a level with **zero
+   interactive characters** — say so explicitly rather than skipping.
+2. **Enumerate** the conclusions: always the implicit **Identities**, plus — when a real
+   `# Conclusions` section exists — each `## <name>` subsection in it (reading the
+   category-definition lines first).
 3. **Take the player's view.** Treat each character's authored name/title, `## heading`, and
    itinerary **speaker attribution** as the HIDDEN answer — reason about each character only from what
    a player can witness: its **description**, the **words it speaks** (verbatim), what it **does**
@@ -120,8 +130,9 @@ Summary (<name>): <all blanks inferable | blanks needing work: …>; too easy: �
 
 ## Scope & limitations (state when relevant)
 
-- Covers the **Identities** conclusion and **fill-in-the-blanks (cloze)** conclusions. Subsections
-  that are neither (e.g. unlock-only) are listed but not analysed.
+- Covers the **Identities** conclusion — **always present and analysed for every level, even with no
+  `# Conclusions` section** — and **fill-in-the-blanks (cloze)** conclusions. Subsections that are
+  neither (e.g. unlock-only) are listed but not analysed.
 - **No witnessability gating yet**: a clue counts even if the player might not reach the scene where
   it occurs. (Reachability gating via the logical solver is a future enhancement.)
 - Identity is something to *derive* from evidence, not assume — reason from what's witnessable, not
