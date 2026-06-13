@@ -19,22 +19,31 @@ function _createAdjacencyMap(graph:CharacterGraph):Map<string, string[]> {
   return adjacency;
 }
 
-export function findReachableCharacterIds(graph:CharacterGraph, startId:string):Set<string> {
-  const reachable = new Set<string>();
+/* Breadth-first shortest-path distances from startId, measured in edges walked — i.e. the number of
+  character switches the player makes to reach each character (the start character is 0). Characters
+  with no path from the start are simply absent from the map. Edge direction is honored, so this is
+  ready for the future hidden-actor directed edges. */
+export function findTransferDistances(graph:CharacterGraph, startId:string):Map<string, number> {
+  const distances = new Map<string, number>();
   const adjacency = _createAdjacencyMap(graph);
-  if (!adjacency.has(startId)) return reachable;
+  if (!adjacency.has(startId)) return distances;
 
+  distances.set(startId, 0);
   const queue = [startId];
-  reachable.add(startId);
   while (queue.length) {
     const currentId = queue.shift() as string;
+    const neighborDistance = (distances.get(currentId) as number) + 1;
     (adjacency.get(currentId) ?? []).forEach(neighborId => {
-      if (reachable.has(neighborId)) return;
-      reachable.add(neighborId);
+      if (distances.has(neighborId)) return;
+      distances.set(neighborId, neighborDistance);
       queue.push(neighborId);
     });
   }
-  return reachable;
+  return distances;
+}
+
+export function findReachableCharacterIds(graph:CharacterGraph, startId:string):Set<string> {
+  return new Set(findTransferDistances(graph, startId).keys());
 }
 
 export function evaluateReachability(graph:CharacterGraph, startId:string):ReachabilityResult {

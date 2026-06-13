@@ -91,6 +91,27 @@ non-zero if either check fails.
   with the same `[i]` index above), and each column is marked reachable/unreachable so a failure is
   self-explanatory.
 
+### 6b. Item-access cost: minimum character transfers (first complexity metric)
+
+Reachability answers *whether* the player can find each item; the next question is *how hard*. The
+first complexity metric is the **minimum number of character transfers** (switches) from each
+character to each item, combining the two backing graphs ([transferCostUtil.ts](../src/solver/transferCostUtil.ts),
+rendered by [transferCostSerializeUtil.ts](../src/solver/transferCostSerializeUtil.ts)).
+
+- **Definition.** An item is reached once the player controls a character co-present with it (a
+  witness). BFS over the character co-presence graph (`findTransferDistances`, a distance-returning
+  sibling of `findReachableCharacterIds`) gives the switch count from a start character to every
+  other; the cost to an item is the smallest such distance over the item's witnesses (0 = the start
+  character already witnesses it), or `null`/∞ when no chain of switches reaches a witness.
+- **Shape.** A table with characters down the left (rows, in character-graph order) and items across
+  the top (columns, in item-graph order). It is a structured `transferCostTable` on `SolveResult` so a
+  later phase can fold in timing and the specific switch sequence. The ASCII rendering truncates
+  character names exactly as the room cube does (shared [labelUtil.ts](../src/solver/labelUtil.ts))
+  but shows item names in full.
+- **Placement.** This is validation/complexity, so it prints in the always-inline `analysisAscii`
+  (after the two graphs, before the cube). The cube stays last as a "nice to have" the architect can
+  visualise; it never gates correctness or complexity.
+
 ### 7. CLI runs via `vite-node`, seeded for determinism
 
 `scripts/solve.ts` (`npm run solve`) reads levels from disk and reuses the transport-agnostic

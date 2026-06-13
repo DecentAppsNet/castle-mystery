@@ -14,6 +14,8 @@ import { evaluateItemReachability } from "./itemReachabilityUtil";
 import { buildRoomLayerView } from "./roomLayerUtil";
 import { renderRoomLayerCubeAscii } from "./roomLayerSerializeUtil";
 import { evaluateReachability } from "./reachabilityUtil";
+import { buildTransferCostTable } from "./transferCostUtil";
+import { renderTransferCostTableAscii } from "./transferCostSerializeUtil";
 import SolveResult from "./types/SolveResult";
 
 export function solveLevel(level:Level, levelName:string|null = null):SolveResult {
@@ -21,12 +23,14 @@ export function solveLevel(level:Level, levelName:string|null = null):SolveResul
   const reachability = evaluateReachability(graph, level.activeCharacterId);
   const itemGraph = buildItemGraphForLevel(level, graph, reachability);
   const itemReachability = evaluateItemReachability(itemGraph);
+  const transferCostTable = buildTransferCostTable(graph, itemGraph);
   const roomLayers = buildRoomLayerView(level, graph, itemGraph);
-  // graphsAscii (the adjacency + item matrices that carry the PASS/FAIL verdict) and roomLayerAscii
-  // (the wide diagnostic cube) are kept separate so a caller can place them independently; asciiArt
-  // is their combined convenience render.
-  const graphsAscii = `${renderCharacterGraphAscii(graph, reachability, levelName)}\n${renderItemGraphAscii(itemGraph, itemReachability, levelName)}`;
+  // analysisAscii is the always-shown analysis — the adjacency + item matrices (which carry the
+  // PASS/FAIL verdict) followed by the item-access-cost table (level complexity). roomLayerAscii is
+  // the wide, "nice to have" diagnostic cube, kept separate so a caller can place/divert it on its
+  // own. asciiArt is their combined convenience render, in display order.
+  const analysisAscii = `${renderCharacterGraphAscii(graph, reachability, levelName)}\n${renderItemGraphAscii(itemGraph, itemReachability, levelName)}\n${renderTransferCostTableAscii(transferCostTable, levelName)}`;
   const roomLayerAscii = renderRoomLayerCubeAscii(roomLayers, levelName);
-  const asciiArt = `${graphsAscii}\n${roomLayerAscii}`;
-  return { levelName, graph, reachability, itemGraph, itemReachability, roomLayers, graphsAscii, roomLayerAscii, asciiArt, ok:reachability.ok && itemReachability.ok };
+  const asciiArt = `${analysisAscii}\n${roomLayerAscii}`;
+  return { levelName, graph, reachability, itemGraph, itemReachability, transferCostTable, roomLayers, analysisAscii, roomLayerAscii, asciiArt, ok:reachability.ok && itemReachability.ok };
 }

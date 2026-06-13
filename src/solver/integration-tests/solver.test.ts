@@ -74,5 +74,15 @@ describe('solver integration', () => {
     expect(cellar?.interactions[0]).toMatchObject({ characterIndex:2, itemIndex:1 });
     expect(typeof cellar?.interactions[0].firstInteractionTime).toBe('number');
     expect(result.asciiArt).toContain('Room interaction cube — item-reachability-level.md');
+
+    // Transfer-cost complexity: from the active Alice, the knife (she witnesses it) costs 0 switches,
+    // while the Goblet — witnessed only by the unreachable Carol — is null. The cost table prints in
+    // the always-inline analysis section, before the cube.
+    const items = result.transferCostTable.items;
+    const aliceRow = result.transferCostTable.rows.find(row => row.characterId === 'alice');
+    expect(aliceRow?.costs[items.findIndex(item => item.id === 'knife')]).toBe(0);
+    expect(aliceRow?.costs[items.findIndex(item => item.id === 'goblet')]).toBeNull();
+    expect(result.analysisAscii).toContain('Item access cost — item-reachability-level.md');
+    expect(result.analysisAscii).toContain('Item reachability graph — item-reachability-level.md');
   });
 });

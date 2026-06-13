@@ -22,6 +22,7 @@ import { setSeed } from '@/common/randUtil';
 import { characterGraphToJsonObject } from '@/solver/graphSerializeUtil';
 import { itemGraphToJsonObject } from '@/solver/itemGraphSerializeUtil';
 import { roomLayerViewToJsonObject } from '@/solver/roomLayerSerializeUtil';
+import { transferCostTableToJsonObject } from '@/solver/transferCostSerializeUtil';
 import { solveLevel } from '@/solver/solverUtil';
 import { loadLevelFromFile, loadLevelManifestFilenames } from './helpers/levelFileUtil.ts';
 
@@ -73,19 +74,20 @@ async function _run():Promise<void> {
   const { filenames, json, outPath } = _parseArgs(process.argv.slice(2));
   const targets = filenames.length ? filenames : await loadLevelManifestFilenames();
 
-  const jsonResults:Array<(ReturnType<typeof characterGraphToJsonObject> & { items:ReturnType<typeof itemGraphToJsonObject>, roomLayers:ReturnType<typeof roomLayerViewToJsonObject> }) | { level:string, error:string }> = [];
+  const jsonResults:Array<(ReturnType<typeof characterGraphToJsonObject> & { items:ReturnType<typeof itemGraphToJsonObject>, transferCost:ReturnType<typeof transferCostTableToJsonObject>, roomLayers:ReturnType<typeof roomLayerViewToJsonObject> }) | { level:string, error:string }> = [];
   let failedCount = 0;
   for (const filename of targets) {
     try {
       setSeed(SOLVE_SEED);
       const level = await loadLevelFromFile(filename);
       const result = solveLevel(level, filename);
-      process.stdout.write(`${result.graphsAscii}\n`); // Adjacency + item matrices always print inline.
+      process.stdout.write(`${result.analysisAscii}\n`); // Adjacency + item matrices + cost table always print inline.
       await _emitRoomLayerCube(filename, result.roomLayerAscii);
       if (!result.ok) ++failedCount;
       jsonResults.push({
         ...characterGraphToJsonObject(result.graph, result.levelName, result.reachability),
         items:itemGraphToJsonObject(result.itemGraph, result.levelName, result.itemReachability),
+        transferCost:transferCostTableToJsonObject(result.transferCostTable, result.levelName),
         roomLayers:roomLayerViewToJsonObject(result.roomLayers, result.levelName)
       });
     } catch (error) {

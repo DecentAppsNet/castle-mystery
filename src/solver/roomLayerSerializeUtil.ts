@@ -9,6 +9,7 @@
     to the widest room's width there, so a column of rooms reads as one aligned stack. Row/column
     indices match the `[i]` legends of the character and item graphs printed above. */
 
+import { truncateLabel } from "./labelUtil";
 import RoomLayerView, { RoomLayer } from "./types/RoomLayerView";
 
 // Isometric offset (in characters) of each box's top and left faces.
@@ -16,10 +17,6 @@ const CUBE_DEPTH = 3;
 
 // Width of an HH:MM time cell; also the minimum column width so blank and timed cells align.
 const TIME_CELL_WIDTH = 5;
-
-// Character and item names are capped at this many characters (the last is an ellipsis when cut) so
-// long names don't blow the boxes up.
-const MAX_LABEL_WIDTH = 12;
 
 // Blank space between adjacent boxes in the layout grid.
 const GRID_COL_GAP = 2, GRID_ROW_GAP = 1;
@@ -55,10 +52,6 @@ function _formatHoursMinutes(msecs:number):string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
-function _truncateLabel(label:string):string {
-  return label.length <= MAX_LABEL_WIDTH ? label : `${label.slice(0, MAX_LABEL_WIDTH - 1)}…`;
-}
-
 /* One room's front-face lines: a title, an item-name header for the items present in the room, then
   one row per character present in the room (labelled by name). A cell shows HH:MM of that pair's
   first co-presence in this room, or is blank. Title-less rooms (some are authored that way) fall back
@@ -70,12 +63,12 @@ function _renderRoomContentLines(room:RoomLayer, characterLabels:string[], itemL
   if (!room.characterIndices.length || !room.itemIndices.length) return [title, ''];
 
   const gutter = ' '.repeat(characterLabelWidth + 1);
-  const headerCells = room.itemIndices.map(itemIndex => _truncateLabel(itemLabels[itemIndex]).padStart(cellWidth));
+  const headerCells = room.itemIndices.map(itemIndex => truncateLabel(itemLabels[itemIndex]).padStart(cellWidth));
   const lines = [title, `${gutter}${headerCells.join(' ')}`];
 
   const timeByKey = new Map(room.interactions.map(interaction => [`${interaction.characterIndex}|${interaction.itemIndex}`, interaction.firstInteractionTime]));
   room.characterIndices.forEach(characterIndex => {
-    const rowLabel = _truncateLabel(characterLabels[characterIndex]).padEnd(characterLabelWidth);
+    const rowLabel = truncateLabel(characterLabels[characterIndex]).padEnd(characterLabelWidth);
     const cells = room.itemIndices.map(itemIndex => {
       const time = timeByKey.get(`${characterIndex}|${itemIndex}`);
       return (time === undefined ? '' : _formatHoursMinutes(time)).padStart(cellWidth);
@@ -133,14 +126,14 @@ function _drawCube(roomBlocks:string[][], innerWidth:number):string[] {
 // Column width: wide enough for an HH:MM time and for the widest (truncated) item name that heads a column.
 function _cellWidth(view:RoomLayerView):number {
   let width = TIME_CELL_WIDTH;
-  view.rooms.forEach(room => room.itemIndices.forEach(itemIndex => { width = Math.max(width, _truncateLabel(view.itemLabels[itemIndex]).length); }));
+  view.rooms.forEach(room => room.itemIndices.forEach(itemIndex => { width = Math.max(width, truncateLabel(view.itemLabels[itemIndex]).length); }));
   return width;
 }
 
 // Left-gutter width: the widest (truncated) character name that labels a row.
 function _characterLabelWidth(view:RoomLayerView):number {
   let width = 1;
-  view.rooms.forEach(room => room.characterIndices.forEach(characterIndex => { width = Math.max(width, _truncateLabel(view.characterLabels[characterIndex]).length); }));
+  view.rooms.forEach(room => room.characterIndices.forEach(characterIndex => { width = Math.max(width, truncateLabel(view.characterLabels[characterIndex]).length); }));
   return width;
 }
 
