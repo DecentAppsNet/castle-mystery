@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run test:coverage` — V8 coverage. `**/*.tsx` and `**/interactions/**` are excluded in `vite.config.ts`.
 - Run a single test file: `npx vitest run path/to/file.test.ts`. Filter by name: `npx vitest run -t "test name"`.
 - `npm run cmgen` — content/image-generation CLI (`scripts/cmgen.ts`); see "Content & asset generation" below.
+- `npm run solve` — level solver/validator CLI (`scripts/solve.ts`, via `vite-node`); see "Level solver" below. Exits non-zero if any level has unreachable characters or fails to load.
 
 The README's top half is a template placeholder — the real product is a murder-mystery puzzle game (see `public/levels/*.md`). The "What You Have Now" section of README describing an LLM home screen is stale; the actual `HomeScreen` is the game UI.
 
@@ -48,6 +49,7 @@ The middle layer (`markdownUtil`) is a generic "Markdown-as-config" convention (
 - [ADR 009](docs/adr-009-general-time-fields-reinterpretation.md) — General time fields reinterpretation. `startTime`, `time`, and `endTime` are intended as separate author-facing concepts: authored earliest time, initial slider time, and authored latest time. Read this ADR before changing general-section time parsing or timeline derivation.
 - [ADR 010](docs/adr-010-level-asset-filename-normalization.md) — Level asset filename normalization. Authored fields for HTTP-loaded assets (e.g. `background=filename.png`) carry **filenames, not URLs** — the field name selects the asset bucket. Complements CONTRIBUTING's network rule and `baseUrl()`.
 - [ADR (Orient Express)](docs/adr-orient-express-conventions.md) — Level-specific conventions for the Orient Express level: conductor placement, character section IDs vs `title`, and the item-slug scheme. Read before editing that level's authored data.
+- [ADR (Solver)](docs/adr-solver.md) — Level solver. Characters are nodes; an undirected edge means two characters shared a room at the same time (co-presence, recomputed by sampling — *not* reused from `CharacterEncounterEvent`s, which skip start-of-level co-presence). Edge model is future-proofed for directed (hidden-actor) edges. Phase 1 validates reachability from the active character. Read before changing `src/solver/`.
 
 ### Screen / interaction split
 
@@ -69,6 +71,10 @@ The middle layer (`markdownUtil`) is a generic "Markdown-as-config" convention (
 ### Content & asset generation (`scripts/`)
 
 `scripts/cmgen.ts` (run via `npm run cmgen`) is an authoring-time CLI that generates level content and sprite images from templates declared in `scripts/cmgen.md` (e.g. `item`, `character`, `character-split`). It has its own `scripts/tsconfig.json`, helpers under `scripts/helpers/`, template source images in `scripts/templateImages/`, and its own test suite (`npm run testscripts`). It is **not** part of the app bundle.
+
+### Level solver (`src/solver/`)
+
+An offline analysis layer over the game domain (see [ADR (Solver)](docs/adr-solver.md)). `solveLevel(level)` in [src/solver/solverUtil.ts](src/solver/solverUtil.ts) builds a character co-presence graph ([characterGraphUtil.ts](src/solver/characterGraphUtil.ts)), evaluates reachability from the active character ([reachabilityUtil.ts](src/solver/reachabilityUtil.ts)), and renders an always-on ASCII view + JSON ([graphSerializeUtil.ts](src/solver/graphSerializeUtil.ts)). It is pure/synchronous and depends on `@/game/*` only (nothing depends back on it). The `scripts/solve.ts` CLI (`npm run solve`, via `vite-node`) adds disk I/O: it reads levels from `public/levels/`, merges imports with `createLevelTextWithImportTexts`, then calls `loadLevelFromText` + `solveLevel`.
 
 ### Exits and doors
 
