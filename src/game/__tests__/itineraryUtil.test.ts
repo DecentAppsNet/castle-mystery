@@ -131,11 +131,11 @@ describe('itineraryUtil', () => {
       const walkEvent = createWalkEvent(room, 2_000, 0, 0, 10, 0);
       expect(walkEvent).not.toBeNull();
 
-      const character = _createCharacter([createBodyOrientationEvent(1_000, 'sitting'), walkEvent!]);
+      const character = _createCharacter([createBodyOrientationEvent(1_000, 'kneeling'), walkEvent!]);
 
       expect(findCharacterPose(character, 999).bodyOrientation).toBe('standing');
-      expect(findCharacterPose(character, 1_000).bodyOrientation).toBe('sitting');
-      expect(findCharacterPose(character, 1_999).bodyOrientation).toBe('sitting');
+      expect(findCharacterPose(character, 1_000).bodyOrientation).toBe('kneeling');
+      expect(findCharacterPose(character, 1_999).bodyOrientation).toBe('kneeling');
       expect(findCharacterPose(character, 2_000).bodyOrientation).toBe('standing');
       expect(findCharacterPose(character, 2_500).bodyOrientation).toBe('standing');
     });

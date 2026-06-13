@@ -5,7 +5,7 @@ import Position, { duplicatePosition } from "./Position";
 import Waypoint from "./Waypoint";
 
 export type FacingDirection = 'left' | 'right';
-export type BodyOrientation = 'standing' | 'sitting' | 'laying';
+export type BodyOrientation = 'standing' | 'sitting' | 'kneeling' | 'laying';
 
 function _createDefaultWaypoint():Waypoint {
   return {

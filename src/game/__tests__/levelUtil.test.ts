@@ -256,7 +256,7 @@ describe('levelUtil itinerary loading', () => {
     expect(() => loadLevelFromText(initiallyDeadCharacterActivityText, 'initially-dead-character-activity.md')).toThrow(/dead character king cannot perform itinerary activity/i);
   });
 
-  it('parses standing, sitting, and laying activities and resets body orientation to standing on walks', () => {
+  it('parses standing, sitting, kneeling, and laying activities and resets body orientation to standing on walks', () => {
     const level = loadLevelFromText(bodyOrientationActivityText);
     const king = level.characters.find(character => character.id === 'king');
     if (!king) expect.fail('expected king character to exist');
@@ -266,10 +266,11 @@ describe('levelUtil itinerary loading', () => {
     expect(king.itinerary.some(event => event.type === ItineraryEventType.BODY_ORIENTATION)).toBe(true);
     expect(findCharacterPose(king, 4_999).bodyOrientation).toBe('standing');
     expect(findCharacterPose(king, 5_000).bodyOrientation).toBe('sitting');
-    expect(findCharacterPose(king, 6_000).bodyOrientation).toBe('laying');
+    expect(findCharacterPose(king, 6_000).bodyOrientation).toBe('kneeling');
+    expect(findCharacterPose(king, 7_000).bodyOrientation).toBe('laying');
     expect(findCharacterPose(king, walkEvent.startTime - 1).bodyOrientation).toBe('laying');
     expect(findCharacterPose(king, walkEvent.startTime).bodyOrientation).toBe('standing');
-    expect(findCharacterPose(king, 8_000).bodyOrientation).toBe('standing');
+    expect(findCharacterPose(king, 9_000).bodyOrientation).toBe('standing');
   });
 
   it('parses outside room metadata and defaults omitted outside flags to false', () => {

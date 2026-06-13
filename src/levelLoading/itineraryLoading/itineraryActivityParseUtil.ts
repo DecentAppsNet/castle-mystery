@@ -79,7 +79,7 @@ function _normalizeFacingActivityText(activityText:string):string {
   return facingDirection ? `faces ${facingDirection}` : 'faces';
 }
 
-function _normalizeBodyOrientationActivityText(activityText:string, verb:'stands'|'sits'|'lays'):string {
+function _normalizeBodyOrientationActivityText(activityText:string, verb:'stands'|'sits'|'kneels'|'lays'):string {
   const normalizedText = _normalizeActivityArgument(activityText.slice(verb.length), new Set(['\'', '-']));
   return normalizedText ? `${verb} ${normalizedText}` : verb;
 }
@@ -124,6 +124,7 @@ function _normalizeParsedActivityText(activityText:string):string {
   if (trimmedActivityText.startsWith('dies')) return _normalizeDieActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('stands')) return _normalizeBodyOrientationActivityText(trimmedActivityText, 'stands');
   if (trimmedActivityText.startsWith('sits')) return _normalizeBodyOrientationActivityText(trimmedActivityText, 'sits');
+  if (trimmedActivityText.startsWith('kneels')) return _normalizeBodyOrientationActivityText(trimmedActivityText, 'kneels');
   if (trimmedActivityText.startsWith('lays')) return _normalizeBodyOrientationActivityText(trimmedActivityText, 'lays');
   if (trimmedActivityText.startsWith('gives')) return _normalizeGiveActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('unlocks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'unlocks');
@@ -138,13 +139,13 @@ function _normalizeParsedActivityText(activityText:string):string {
 
 function _parseCharacterActivityLine(activityLine:string, impliedCharacterId:string):{ characterId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '(', ')', '.', '%', '"', '\'', '-']));
-  if (['@', 'says ', 'interrupts ', 'thinks ', 'faces ', 'dies', 'stands', 'sits', 'lays', 'gives ', 'drops ', 'takes ', 'locks ', 'unlocks ']
+  if (['@', 'says ', 'interrupts ', 'thinks ', 'faces ', 'dies', 'stands', 'sits', 'kneels', 'lays', 'gives ', 'drops ', 'takes ', 'locks ', 'unlocks ']
     .some(marker => normalizedLine.startsWith(marker))) {
     const activityText = _normalizeParsedActivityText(normalizedLine);
     if (!impliedCharacterId || !activityText) throw new Error(`unable to infer character for itinerary activity line '${activityLine}'`);
     return { characterId:impliedCharacterId, activityText };
   }
-  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' faces ', ' dies', ' stands', ' sits', ' lays', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
+  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' faces ', ' dies', ' stands', ' sits', ' kneels', ' lays', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
