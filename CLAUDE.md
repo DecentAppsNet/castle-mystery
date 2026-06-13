@@ -8,10 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run build` — `tsc` typecheck, Vite build, then copy `dist/.vite` into `public/` (needed so dev server can serve the manifest).
 - `npm run lint` — ESLint over `.ts`/`.tsx`; warnings fail (`--max-warnings 0`).
 - `npm run check:unused-exports` — `knip` for unused exports.
-- `npm test` — Vitest single-run.
+- `npm test` — Vitest single-run over `src/` (app code only).
+- `npm run testscripts` — Vitest single-run over `scripts/` (the `cmgen` tooling has its own `tsconfig.json` and tests).
 - `npm run test:watch` — Vitest watch mode.
 - `npm run test:coverage` — V8 coverage. `**/*.tsx` and `**/interactions/**` are excluded in `vite.config.ts`.
 - Run a single test file: `npx vitest run path/to/file.test.ts`. Filter by name: `npx vitest run -t "test name"`.
+- `npm run cmgen` — content/image-generation CLI (`scripts/cmgen.ts`); see "Content & asset generation" below.
 
 The README's top half is a template placeholder — the real product is a murder-mystery puzzle game (see `public/levels/*.md`). The "What You Have Now" section of README describing an LLM home screen is stale; the actual `HomeScreen` is the game UI.
 
@@ -19,11 +21,13 @@ The README's top half is a template placeholder — the real product is a murder
 
 ### Level files drive everything
 
-A level is an authored Markdown file in `public/levels/` (e.g. `murder-on-the-orient-express.md`). The Markdown is the source of truth for rooms, characters, items, an itinerary, and conclusions. Loading is orchestrated by [src/game/levelLoading/levelUtil.ts](src/game/levelLoading/levelUtil.ts):
+A level is an authored Markdown file in `public/levels/`. The available levels are indexed by `public/levels/levels.md` (currently `00_prologue.md`, `01_birth_of_constantine.md`, `02_house_of_rocks.md`); shared `characters.md` and `items.md` are pulled into individual levels by the import mechanism in [src/levelLoading/levelImportUtil.ts](src/levelLoading/levelImportUtil.ts) (cycle- and duplicate-aware, with per-line source tracking for error messages). The Markdown is the source of truth for rooms, characters, items, an itinerary, and conclusions. Loading is orchestrated by [src/levelLoading/levelUtil.ts](src/levelLoading/levelUtil.ts):
 
 1. `parseSections()` (from [src/common/markdownUtil.ts](src/common/markdownUtil.ts)) splits the file by `#` headings into sections: `general`, `map`, `rooms`, `characters`, `items`, `itinerary`, `conclusions`.
 2. Section-specific loaders (`levelRoomLayoutLoader`, `levelRoomPopulationLoader`, `levelItineraryLoader`, `levelConclusionsLoader`) progressively populate a `Level`.
 3. Errors are wrapped via `LoadLevelException` with the offending source line — preserve that context when refactoring loaders.
+
+All loaders live under [src/levelLoading/](src/levelLoading/) (top-level — **not** under `src/game/`), with itinerary sub-loaders under `src/levelLoading/itineraryLoading/` and the level-set manifest in `manifestUtil.ts`.
 
 The middle layer (`markdownUtil`) is a generic "Markdown-as-config" convention (heading sections + `* name=value` bulleted lines). New authored formats should use these helpers rather than inventing parsing.
 
@@ -39,15 +43,32 @@ The middle layer (`markdownUtil`) is a generic "Markdown-as-config" convention (
 - [ADR 004](docs/adr-004-file-order-relative-itinerary-timestamps.md) — `:` timestamps are file-order relative lower bounds: the activity begins only after the previously authored activity has completed. Distinct from absolute `H:MM:SS` timestamps. For `: Character @ Room`, generated movement starts after the prior activity rather than being back-planned.
 - [ADR 005](docs/adr-005-runtime-image-assets.md) — Runtime image assets live on `GameState.imageSet` (`Map<string, ImageBitmap>`), not on `Character`. `Character` stores `faceImageUrl:string|null` (the cache key); `loadLevelFromText/Url()` does **not** load images; `createGameState(level, imageSet?)` stays synchronous (empty `ImageSet` when omitted). Image loading is orchestrated explicitly in app init (level → ImageSet → game state). Drawing code resolves images via `gameState.imageSet[character.faceImageUrl]` with a circle fallback. Only `ImageBitmap` is supported as the decoded type.
 - [ADR 006](docs/adr-006-time-slider-itinerary-markers.md) — TimeSlider itinerary markers (Proposed). `TimeSlider` stays presentational and receives the active character's itinerary as a prop derived from `gameState.initialCharacters` (the immutable source), not from the mutable `gameState.characters`. The active character is plumbed React-ward via the same `LevelView` → `updateAndDraw()` callback pattern already used for `onMinutesChanged`. Marker derivation (room-entry ticks, clustered speech spans using `SPEECH_CLUSTER_GAP_MSECS`, encounter icons) belongs in a dedicated utility, not in JSX. `CharacterEncounterEvent` is a first-class itinerary event generated during itinerary postprocessing, not computed in the UI.
+- [ADR 007](docs/adr-007-timeline-start-end-config.md) — Timeline start/end configuration. The `# general` section gains `startTime` (the preferred name; `time` remains a legacy alias) and an optional `endTime` that may wrap past midnight. Read alongside ADR 009 before touching general-section time parsing.
+- [ADR 008](docs/adr-008-dialogue-overlap-authoring.md) — Dialogue overlap authoring. `says` (the non-overlapping audible default) and `interrupts` are distinct authoring verbs; a single character may never have two overlapping speech events, and level loading fails if generated speech would overlap.
 - [ADR 009](docs/adr-009-general-time-fields-reinterpretation.md) — General time fields reinterpretation. `startTime`, `time`, and `endTime` are intended as separate author-facing concepts: authored earliest time, initial slider time, and authored latest time. Read this ADR before changing general-section time parsing or timeline derivation.
+- [ADR 010](docs/adr-010-level-asset-filename-normalization.md) — Level asset filename normalization. Authored fields for HTTP-loaded assets (e.g. `background=filename.png`) carry **filenames, not URLs** — the field name selects the asset bucket. Complements CONTRIBUTING's network rule and `baseUrl()`.
+- [ADR (Orient Express)](docs/adr-orient-express-conventions.md) — Level-specific conventions for the Orient Express level: conductor placement, character section IDs vs `title`, and the item-slug scheme. Read before editing that level's authored data.
 
 ### Screen / interaction split
 
 `src/homeScreen/HomeScreen.tsx` is the only screen. UI surface is split into:
 - `levelView/` — canvas rendering of rooms/characters (delegates to `src/game/drawing/*`).
 - `timeSlider/` — scrub bar with itinerary markers (see ADR 006).
+- `levelSelector/` — picks the active level from the `levels.md` manifest.
 - `conclusionsView/` — cloze-style conclusion UI; `src/game/conclusions/` owns conclusion data + discovery.
+- `discoveriesView/` — shows clues/discoveries the player has uncovered (`DiscoveriesView`, `DiscoveryItem`).
+- `dialogs/` — home-screen modals (`ClaimConclusionDialog`, `WinLevelDialog`), built on `src/components/modalDialogs/`.
 - `interactions/` — `initialization.ts` boots a level, `gameplay.ts` exposes update callbacks (`updateTime`, `updatePlayPause`, `updateConclusions`, …). The `interactions/` folder is coverage-excluded by design — keep logic worth testing in `src/game/*Util.ts` modules instead.
+
+### Shared components & app shell
+
+- [src/components/](src/components/) is the reusable, presentational UI kit (`.tsx` + CSS modules): `canvas/Canvas`, `modalDialogs/*`, `slider/Slider`, `selector/Selector`, `progressBar/ProgressBar`, `playPauseButton/*`, `topBar/TopBar`, `contentButton/*`, `waitingEllipsis/*`. Screens compose these — don't duplicate them.
+- `decent-portal` is the one substantive runtime dependency. It supplies assertion helpers (`assert`, `assertNonNullable`, `botch`) used throughout `src/`, plus the app shell: `DecentBar` (rendered by `components/topBar/TopBar.tsx`) and app-metadata init (`initAppMetaData`, `getAppId`) wired up in `src/init/`. (The README's "WebLLM home screen" text is template boilerplate and does not reflect this app.)
+- `src/developer/` holds dev-only configuration (`config.ts`, `devEnvUtil.ts`).
+
+### Content & asset generation (`scripts/`)
+
+`scripts/cmgen.ts` (run via `npm run cmgen`) is an authoring-time CLI that generates level content and sprite images from templates declared in `scripts/cmgen.md` (e.g. `item`, `character`, `character-split`). It has its own `scripts/tsconfig.json`, helpers under `scripts/helpers/`, template source images in `scripts/templateImages/`, and its own test suite (`npm run testscripts`). It is **not** part of the app bundle.
 
 ### Exits and doors
 
