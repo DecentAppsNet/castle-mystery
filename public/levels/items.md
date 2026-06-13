@@ -18,6 +18,10 @@
 ## Coffer
 * image=coffer.png
 
+## Furia Perched
+* description=A beautiful falcon, perched and hooded.
+* image=furiaPerched.png
+
 ## Holy Binky
 * description=A device roughly carved from wood.
 * image=holybinky.png

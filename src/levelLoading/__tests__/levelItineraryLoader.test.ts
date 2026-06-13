@@ -36,5 +36,18 @@ describe('levelItineraryLoader', () => {
       expect(parseItineraryActivities('0:00:05 says "Who am I?"', 'implicit-first.md', 1, options, 0, 'hero').map(a => a.characterId)).toEqual(['hero']);
       expect(parseItineraryActivities(['0:00:03 Steve @ Bakery', '0:00:05 faces right', '0:00:07 says "Boy, does it smell delicious in here!"', '0:00:06 Baker faces left'].join('\n'), 'implicit-followup.md', 1, options, 0, 'hero').map(a => a.characterId)).toEqual(['steve', 'steve', 'steve', 'baker']);
     });
+
+    it('parses emits activities with an item subject while preserving the current scheduling character', () => {
+      const options = { isCrossMidnight:false, explicitEndTime:null };
+      const [activity] = parseItineraryActivities(['0:00:03 Niccollo @ Aviary', ': Furia Perched emits "(squawk)"'].join('\n'), 'item-emits.md', 1, options, 0, 'hero');
+      const [, emitsActivity] = parseItineraryActivities(['0:00:03 Niccollo @ Aviary', ': Furia Perched emits "(squawk)"'].join('\n'), 'item-emits.md', 1, options, 0, 'hero');
+
+      expect(activity.subjectKind).toBe('character');
+      expect(activity.subjectId).toBe('niccollo');
+      expect(emitsActivity.characterId).toBe('niccollo');
+      expect(emitsActivity.subjectKind).toBe('item');
+      expect(emitsActivity.subjectId).toBe('furia perched');
+      expect(emitsActivity.activityText).toBe('emits "(squawk)"');
+    });
   });
 });

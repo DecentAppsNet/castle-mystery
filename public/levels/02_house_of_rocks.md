@@ -180,6 +180,10 @@ SSMM/HH\YYYYTT
 
 ## Maria
 
+## King Frederick
+
+* items=Furia Perched 
+
 # Items
 
 ## Owner's Key
@@ -193,6 +197,8 @@ SSMM/HH\YYYYTT
 * description=Apprentice - 1 denari|Servant (non-family) - 5 denari|Quarry Laborer - 15 denari|Cook/House Manager - 30 denari|Stone Cutter - 2 tari|Journeyman Mason - 3 tari|Journeyman Carver - 4 tari|Foreman - 4 tari|Master Carver - 5 tari|Master Mason - 4 tari|Builder and surveyor - 6 tari|Clerk/accountant - 6 tari
 
 # Itinerary
+
+7:30:00 King Frederick takes Furia Perched in right hand
 
 7:30:00 Pietro @ Master's Hall
 7:30:03 Ahmad @ Master's Hall.80%
@@ -360,8 +366,18 @@ SSMM/HH\YYYYTT
 : Pietro kneels
 : says, "Your Majesty. Such an honor to receive you!"
 : King Frederick says, "Please rise, Master Mason."
-: says, "Is Heinrich here?"
 : Pietro stands
-
+: says, "Is Heinrich here?"
+: says, "Of course. Shall I fetch him for you?"
+: King Frederick says, "Yes, I thought we'd go falconing."
+: Pietro says, "Majesty, did I ever show you my stones?"
+: King Frederick says, "I've seen many stones. They are all the same."
+: Pietro says, "Oh, no, Majesty. My stones are quite special."
+: says, "I would love to show them to you."
+: King Frederick says, "I shall ask my falcon."
+: says, "Furia, do you wish to see this man's special stones?"
+// : Furia Perched emits "(squawk)"
+: King Frederick says, "She prefers to fly in the air and hunt."
+: Pietro says "I shall return with Heinrich shortly, my King."
 
 07:32:42 Salomone @ Accounts Room
