@@ -10,7 +10,7 @@ import { createItemsById } from "../game/itemUtil";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { rand } from "@/common/randUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
-import { MarkdownLineError, normalizeMarkdownName, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
+import { MarkdownLineError, normalizeMarkdownName, parseSectionEntriesWithLines, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { formatMsecsAsTimestamp, parseTimestampToMsecs } from "@/levelLoading/timestampUtil";
 import { loadLevelTextWithSourceLineMap, type SourceLineMap } from "./levelImportUtil";
 import { loadItineraries } from "./levelItineraryLoader";
@@ -40,6 +40,7 @@ import { calcRoomsBoundingRect, findRoomByIdOrTitle } from "../game/roomUtil";
 import { getBackgroundImageAssetUrl } from "../game/imageUrlUtil";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
+const KNOWN_TOP_LEVEL_SECTION_NAMES = new Set(['general', 'map', 'rooms', 'characters', 'items', 'itinerary', 'conclusions']);
 
 function _sortGeneratedConclusionOptions(options:string[]):string[] {
   return [...options].sort((option1, option2) => option1.localeCompare(option2, undefined, { sensitivity:'base' }));
@@ -222,6 +223,13 @@ function _findSectionFirstContentLineNo(markdownText:string, sectionName:string,
   return null;
 }
 
+function _validateKnownTopLevelSections(text:string) {
+  parseSectionEntriesWithLines(text, 1, true).forEach(sectionEntry => {
+    if (KNOWN_TOP_LEVEL_SECTION_NAMES.has(sectionEntry.name)) return;
+    throw new MarkdownLineError(sectionEntry.lineNo, `unknown top-level section '${sectionEntry.name}'`);
+  });
+}
+
 function _throwErrorWithLoadLevelContext(levelFilename:string, errorLineNo:number, error:unknown):never {
   if (error instanceof LoadLevelException) throw error;
   if (error instanceof MarkdownLineError) throw new LoadLevelException(levelFilename, error.lineNo, error.message, error);
@@ -363,6 +371,8 @@ function _validateExplicitEndTimeAgainstItinerary(explicitEndTime:number|null, l
 
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
   try {
+    _runWithLoadLevelSectionContext(levelFilename, 1,
+      () => _validateKnownTopLevelSections(text));
     const sections = _runWithLoadLevelSectionContext(levelFilename, 1,
       () => parseSections(text, 1, true));
     const generalFirstLineNo = _findSectionFirstContentLineNo(text, 'general') || 1;

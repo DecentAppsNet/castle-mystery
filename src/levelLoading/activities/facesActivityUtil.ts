@@ -4,11 +4,14 @@
 import type { FacingDirection } from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { createFaceEvent } from "@/game/itineraryUtil";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findSentenceStyleActivityVerb, stripTrailingPeriod } from "./activityUtil";
+import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findSentenceStyleActivityVerb, findStatePoseAtTime, findTargetPositionAtTime, stripTrailingPeriod } from "./activityUtil";
 
-function _parseFacingDirection(activityText:string):FacingDirection {
+function _parseFacingDirection(activityText:string, context:ActivityContext, activityStartTime:number):FacingDirection {
   const directionText = stripTrailingPeriod(activityText.trim().slice('faces'.length).trim()).toLowerCase();
   if (directionText === 'left' || directionText === 'right') return directionText;
+  const targetPosition = findTargetPositionAtTime(directionText, activityStartTime,
+    context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
+  if (targetPosition) return targetPosition.x < findStatePoseAtTime(context.character, context.state, activityStartTime).position.x ? 'left' : 'right';
   throw new Error(`invalid facing direction '${directionText || '(missing)'}' in authored activity '${activityText}'`);
 }
 
@@ -18,5 +21,5 @@ export function tryCreateFaceActivity(activityText:string, context:ActivityConte
 
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  return [createFaceEvent(activityStartTime, _parseFacingDirection(activityText))];
+  return [createFaceEvent(activityStartTime, _parseFacingDirection(activityText, context, activityStartTime))];
 }

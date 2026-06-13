@@ -1,25 +1,19 @@
 # General
 
 * title=House of Rocks
-* activeCharacter=Ahmad
+* activeCharacter=Pietro
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md
 
-Conclusions:
-Identities
-Occupations
 
 Things that should happen:
-Heinrich gets insulted by the other apprentice.
-Heinrich gets told by Giovanni not to waste his time with the Prince. (The relationship can't last, and takes away time from Heinrich's work)
-Heinrich gets told by Pietro to spend more time with the Prince. (Maybe it leads to more sales of stone.)
 The foreman yells at people for spending too long eating breakfast. Get to work!
 Pietro calls out to Heinrich, "your friend is here". 11-year-old Fred is on the street with his falcon. End of scene.
 
 Don't overdo it with story events. Have a bunch of people that just work and don't say/do much.
 
-Arcs
+
 
 
 
@@ -150,11 +144,12 @@ SSMM/HH\YYYYTT
 ## Accounts Room
 
 ```
-....
+...c
 ..S.
 ....
 ```
 
+* c=Yard Workers
 * S=Salomone
 
 # Characters
@@ -163,6 +158,10 @@ SSMM/HH\YYYYTT
 
 * orientation=sitting
 * facing=right
+
+## Giovanni
+
+* items=Chisel
 
 ## Heinrich
 
@@ -184,6 +183,10 @@ SSMM/HH\YYYYTT
 
 ## Owner's Key
 
+## Yard Workers
+* image=codex.png
+* description=Ahmad - Foreman | Heinrich - Apprentice | Giovanni - Journeyman Mason | Niccoló - Stone Cutter | Giorgios - Master carver | Andreas - Apprentice Carver | Yusuf - Builder and surveyor | Stefan - Quarry laborer
+
 # Itinerary
 
 7:30:00 Pietro @ Master's Hall
@@ -192,7 +195,24 @@ SSMM/HH\YYYYTT
 : says, "Are they up and working, Ahmad?"
 : Ahmad says, "I haven't checked yet."
 : Pietro says, "Well, you better - that's your job."
-: faces left
+: Pietro @ Master's Hall.20%
+(Ahmad leaves)
+7:30:14 Anna @ Master's Hall
+: Pietro faces right
+: says, "Daughter, why do you disturb me?"
+: Anna says, "You weren't doing anything."
+: Pietro says, "I was thinking!"
+: says, "A man like me must do a lot of thinking."
+: thinks, "(thinking)"
+: Anna thinks, "(thinking)"
+: Pietro says, "What are you doing?"
+: Anna says, "Papa, if both of us think,"
+: says, "the work goes twice as fast!"
+: Pietro says, "Okay, then think about masonry contracts."
+: says, "But do it somewhere else."
+(Anna leaves)
+
+7:30:44 Anna @ Family Quarters
 
 7:30:18 Ahmad @ Apprentices' Chamber
 : says "Get up!"
@@ -205,9 +225,24 @@ SSMM/HH\YYYYTT
 : faces left
 : says, "Niccolò, you know he's going to come"
 : says, "and yell at you."
-: says, "(sigh)"
-: Niccolo stands
+: Niccolo says, "(sigh)"
+: stands
 : says, "Time to chop rocks."
+7:30:37 Maria faces right
+
+7:30:30 Yusuf @ Accounts Room
+: says, "Good morning, my friend!"
+: Salomone says, "Good morning."
+: Yusuf says, "You know I can read, right?"
+: Salomone says, "Of course."
+: Yusuf says, "In the codex, you list me among the yard workers."
+: Salomone says, "Why would I not?"
+: Yusuf says, "I visit the yard. But I do not work there."
+: Salomone says, "It is just a list."
+: Yusuf says, "But is it a correct list?"
+: Salomone says, "Correct enough."
+: Yusuf says, "I will speak with Pietro about this."
+(they both leave)
 
 7:30:37 Ahmad @ Workers' Dormitory
 : says, "Drunken fool!"
@@ -226,7 +261,8 @@ SSMM/HH\YYYYTT
 : takes bread roll in left hand
 : gives bread roll to Heinrich
 : says, "Take it with you."
-: Heinrich says, "Thank you so much!"
+: Heinrich says, "Thank you, ma'am."
+: takes bread roll into inventory
 
 7:31:00 Ahmad @ Common Kitchen
 : says, "Did they linger today?"
@@ -237,10 +273,45 @@ SSMM/HH\YYYYTT
 : Maria says, "Even for you?"
 : Ahmad says, "I am not lingering!"
 
-7:30:30 Niccolo @ Workshop Yard
+
+7:31:19 Yusuf @ Master's Hall
+7:31:20 Salomone @ Master's Hall
+7:31:21 Pietro says, "What?"
+: Yusuf says, "The clerk lists me with the yard workers."
+: says, "But I go to the churches and bridges and castles."
+: says, "My work is there - not in the yard."
+: Pietro says, "Then we shall make a new list."
+: Yusuf says, "Good."
+: Pietro says, "And only your name will be on it."
+: Yusuf says, "Very good. What is this list?"
+: Pietro says, "A list of people who complain."
+: Yusuf says, "Oh no no no, sir."
+: says, "I only wanted your records to be in order."
+: Pietro says, "Get back to work."
+(Yusuf and Salomone leave)
+
+7:30:40 Niccolo @ Workshop Yard
 
 7:30:55 Heinrich @ Workshop Yard
+: Giovanni faces Heinrich
+: says, "Apprentice, you're finally here."
+: says, "Oil my tool!"
+: Andreas says, "(snickers)"
+: Giovanni says, "Oh, shut up."
+: takes chisel in right hand
+: gives chisel to Heinrich
 
 7:31:06 Giorgios @ Workshop Yard
+
+7:31:08 Heinrich @ Tool Store.30%
+7:31:10 Giovanni @ Tool Store.60%
+: says, "Listen,"
+: Heinrich faces Giovanni
+: Giovanni says, "Kings don't make good friends."
+: says "But a good rock?" 
+: says "It will never let you down!"
+: says "Set your mind on rocks."
+
+
 
 7:31:23 Ahmad @ Workshop Yard
