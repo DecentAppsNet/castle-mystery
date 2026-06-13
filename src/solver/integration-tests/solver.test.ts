@@ -70,7 +70,9 @@ describe('solver integration', () => {
     const cellar = result.roomLayers.rooms.find(room => room.roomId === 'cellar');
     expect(cellar?.characterIndices).toEqual([2]);
     expect(cellar?.itemIndices).toEqual([1]);
-    expect(cellar?.interactions).toEqual([{ characterIndex:2, itemIndex:1 }]);
+    expect(cellar?.interactions).toHaveLength(1);
+    expect(cellar?.interactions[0]).toMatchObject({ characterIndex:2, itemIndex:1 });
+    expect(typeof cellar?.interactions[0].firstInteractionTime).toBe('number');
     expect(result.asciiArt).toContain('Room interaction cube — item-reachability-level.md');
   });
 });

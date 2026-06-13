@@ -16,7 +16,13 @@ import CharacterGraph from "./types/CharacterGraph";
 import ItemGraph from "./types/ItemGraph";
 import RoomLayerView, { RoomLayer, RoomLayerInteraction } from "./types/RoomLayerView";
 
-type RoomAccumulator = { characterIndices:Set<number>, itemIndices:Set<number>, interactionKeys:Set<string> };
+// firstTimeByKey maps a `${characterIndex}|${itemIndex}` pair to the earliest sampled time the two
+// shared the room. Because sample times are visited in ascending order, the first write per key wins.
+type RoomAccumulator = { characterIndices:Set<number>, itemIndices:Set<number>, firstTimeByKey:Map<string, number> };
+
+function _createAccumulator():RoomAccumulator {
+  return { characterIndices:new Set(), itemIndices:new Set(), firstTimeByKey:new Map() };
+}
 
 function _createIndexById(ids:string[]):Map<string, number> {
   return new Map(ids.map((id, index) => [id, index]));
@@ -24,7 +30,7 @@ function _createIndexById(ids:string[]):Map<string, number> {
 
 function _createAccumulatorsByRoomId(level:Level):Map<string, RoomAccumulator> {
   const accumulatorsByRoomId = new Map<string, RoomAccumulator>();
-  level.rooms.forEach(room => accumulatorsByRoomId.set(room.id, { characterIndices:new Set(), itemIndices:new Set(), interactionKeys:new Set() }));
+  level.rooms.forEach(room => accumulatorsByRoomId.set(room.id, _createAccumulator()));
   return accumulatorsByRoomId;
 }
 
@@ -44,7 +50,10 @@ function _accumulateOccupancy(level:Level, characterIndexById:Map<string, number
       const itemIndices = _resolveIndices(occupancy.itemIds, itemIndexById);
       characterIndices.forEach(characterIndex => accumulator.characterIndices.add(characterIndex));
       itemIndices.forEach(itemIndex => accumulator.itemIndices.add(itemIndex));
-      characterIndices.forEach(characterIndex => itemIndices.forEach(itemIndex => accumulator.interactionKeys.add(`${characterIndex}|${itemIndex}`)));
+      characterIndices.forEach(characterIndex => itemIndices.forEach(itemIndex => {
+        const key = `${characterIndex}|${itemIndex}`;
+        if (!accumulator.firstTimeByKey.has(key)) accumulator.firstTimeByKey.set(key, time);
+      }));
     });
   });
   return accumulatorsByRoomId;
@@ -53,8 +62,8 @@ function _accumulateOccupancy(level:Level, characterIndexById:Map<string, number
 function _toRoomLayer(roomId:string, title:string, accumulator:RoomAccumulator):RoomLayer {
   const characterIndices = [...accumulator.characterIndices].sort((index1, index2) => index1 - index2);
   const itemIndices = [...accumulator.itemIndices].sort((index1, index2) => index1 - index2);
-  const interactions:RoomLayerInteraction[] = [...accumulator.interactionKeys]
-    .map(key => { const [characterIndex, itemIndex] = key.split('|'); return { characterIndex:Number(characterIndex), itemIndex:Number(itemIndex) }; })
+  const interactions:RoomLayerInteraction[] = [...accumulator.firstTimeByKey.entries()]
+    .map(([key, firstInteractionTime]) => { const [characterIndex, itemIndex] = key.split('|'); return { characterIndex:Number(characterIndex), itemIndex:Number(itemIndex), firstInteractionTime }; })
     .sort((pair1, pair2) => pair1.characterIndex - pair2.characterIndex || pair1.itemIndex - pair2.itemIndex);
   return { roomId, title, characterIndices, itemIndices, interactions };
 }
@@ -65,7 +74,7 @@ export function buildRoomLayerView(level:Level, characterGraph:CharacterGraph, i
   const accumulatorsByRoomId = _accumulateOccupancy(level, characterIndexById, itemIndexById);
 
   const rooms = level.rooms.map(room =>
-    _toRoomLayer(room.id, room.title, accumulatorsByRoomId.get(room.id) ?? { characterIndices:new Set(), itemIndices:new Set(), interactionKeys:new Set() }));
+    _toRoomLayer(room.id, room.title, accumulatorsByRoomId.get(room.id) ?? _createAccumulator()));
 
   return {
     rooms,

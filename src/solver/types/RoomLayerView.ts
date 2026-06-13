@@ -11,7 +11,8 @@
 
 type RoomLayerInteraction = Readonly<{
   characterIndex:number,
-  itemIndex:number
+  itemIndex:number,
+  firstInteractionTime:number // Msecs of the earliest sampled time the character and item shared this room.
 }>
 
 type RoomLayer = Readonly<{

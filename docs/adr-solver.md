@@ -107,9 +107,11 @@ The character and item graphs each collapse the whole level into a single matrix
 co-presence happens, `solveLevel()` also builds a `RoomLayerView` ([roomLayerUtil.ts](../src/solver/roomLayerUtil.ts))
 and renders it as a third ASCII block ([roomLayerSerializeUtil.ts](../src/solver/roomLayerSerializeUtil.ts)):
 an isometric "cube split into layers", one layer per room (top → bottom in file order). Each layer's
-front face holds a bipartite matrix of the characters (rows) and items (columns) that shared that
-room, with `X` marking a co-presence; row/column indices reuse the character- and item-graph node
-orders, so the cube reads against the `[i]` legends printed above it.
+front face holds a bipartite matrix with every character down the left (rows) and every item across
+the top (columns); a cell shows `HH:MM` of the first time that character and item shared that room,
+or is blank. Row/column indices reuse the character- and item-graph node orders, so the cube reads
+against the `[i]` legends printed above it. Because every layer is the same grid drawn at one fixed
+cell width, an item's column lines up vertically through the whole cube.
 
 - **Same co-presence, re-binned by room.** No new relation is introduced: an entry means a character
   and an item shared a room at a sampled time — the item-reachability *witness* relation, kept

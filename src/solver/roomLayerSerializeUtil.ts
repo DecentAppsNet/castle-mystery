@@ -2,22 +2,27 @@
   serializers:
   - roomLayerViewToJsonObject(): the stable machine contract a future level validator consumes.
   - renderRoomLayerCubeAscii(): an isometric "cube split into layers" rendered below the two graphs.
-    Each layer is a room; the room's front face holds a bipartite matrix of the characters (rows) and
-    items (columns) that shared that room, with X marking a co-presence. Row/column indices match the
-    `[i]` legends of the character and item graphs printed above. */
+    Each layer is a room. Its front face holds a bipartite matrix with every character down the left
+    (rows) and every item across the top (columns); a cell shows HH:MM of the first time that
+    character and item shared that room, or is blank. The grid is the same shape and uses a single
+    fixed cell width in every layer, so an item's column lines up vertically through the whole cube.
+    Row/column indices match the `[i]` legends of the character and item graphs printed above. */
 
 import RoomLayerView, { RoomLayer } from "./types/RoomLayerView";
 
-// Isometric offset (in characters) of the top and right faces. Must be small enough that adjacent
-// layer-boundary diagonals never overlap: every room renders at least 2 content rows (see
-// _renderRoomContentLines), so a depth of 3 leaves a clear gap between consecutive boundaries.
+// Isometric offset (in characters) of the top and left faces. Must be small enough that adjacent
+// layer-boundary diagonals never overlap: every room renders at least 2 content rows (title +
+// item-index header), so a depth of 3 leaves a clear gap between consecutive boundaries.
 const CUBE_DEPTH = 3;
+
+// Width of an HH:MM time cell; also the minimum column width so blank and timed cells align.
+const TIME_CELL_WIDTH = 5;
 
 type RoomLayerViewJson = {
   level:string|null,
   characterLabels:string[],
   itemLabels:string[],
-  rooms:Array<{ roomId:string, title:string, characterIndices:number[], itemIndices:number[], interactions:Array<{ characterIndex:number, itemIndex:number }> }>
+  rooms:Array<{ roomId:string, title:string, characterIndices:number[], itemIndices:number[], interactions:Array<{ characterIndex:number, itemIndex:number, firstInteractionTime:number }> }>
 };
 
 export function roomLayerViewToJsonObject(view:RoomLayerView, levelName:string|null = null):RoomLayerViewJson {
@@ -30,33 +35,42 @@ export function roomLayerViewToJsonObject(view:RoomLayerView, levelName:string|n
       title:room.title,
       characterIndices:[...room.characterIndices],
       itemIndices:[...room.itemIndices],
-      interactions:room.interactions.map(interaction => ({ characterIndex:interaction.characterIndex, itemIndex:interaction.itemIndex }))
+      interactions:room.interactions.map(interaction => ({ characterIndex:interaction.characterIndex, itemIndex:interaction.itemIndex, firstInteractionTime:interaction.firstInteractionTime }))
     }))
   };
 }
 
-function _renderRoomContentLines(room:RoomLayer, characterIndexWidth:number, itemIndexWidth:number):string[] {
-  const lines = [room.title.trim().length ? room.title : room.roomId]; // Some rooms are authored title-less; show the id so the layer is identifiable.
-  if (!room.characterIndices.length || !room.itemIndices.length) {
-    lines.push(''); // No characters or no items here means no matrix; keep a blank second row so the layer stays >= 2 rows tall (see CUBE_DEPTH) without widening the cube.
-    return lines;
-  }
-  const cellWidth = Math.max(itemIndexWidth, 1);
-  const rowLabelWidth = characterIndexWidth + 2; // "[" + index + "]".
-  const interactions = new Set(room.interactions.map(interaction => `${interaction.characterIndex}|${interaction.itemIndex}`));
-  const headerCells = room.itemIndices.map(itemIndex => String(itemIndex).padStart(cellWidth));
-  lines.push(`${' '.repeat(rowLabelWidth + 1)}${headerCells.join(' ')}`);
-  room.characterIndices.forEach(characterIndex => {
+function _formatHoursMinutes(msecs:number):string {
+  const totalMinutes = Math.floor(msecs / 60_000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+/* One layer's front-face lines: a title, an item-index header, then one row per character. Every
+  character and item is shown (the same grid in every layer), so columns align across the cube;
+  empty cells are blank, interacting cells show HH:MM of the first co-presence in this room. */
+function _renderRoomContentLines(room:RoomLayer, characterCount:number, itemCount:number, characterIndexWidth:number, cellWidth:number):string[] {
+  const gutter = ' '.repeat(characterIndexWidth + 3); // "[" + index + "]" + " ".
+  const headerCells = Array.from({ length:itemCount }, (_unused, itemIndex) => String(itemIndex).padStart(cellWidth));
+  const lines = [room.title.trim().length ? room.title : room.roomId, `${gutter}${headerCells.join(' ')}`];
+
+  const timeByKey = new Map(room.interactions.map(interaction => [`${interaction.characterIndex}|${interaction.itemIndex}`, interaction.firstInteractionTime]));
+  for (let characterIndex = 0; characterIndex < characterCount; ++characterIndex) {
     const rowLabel = `[${String(characterIndex).padStart(characterIndexWidth)}]`;
-    const cells = room.itemIndices.map(itemIndex => (interactions.has(`${characterIndex}|${itemIndex}`) ? 'X' : '.').padStart(cellWidth));
+    const cells = Array.from({ length:itemCount }, (_unused, itemIndex) => {
+      const time = timeByKey.get(`${characterIndex}|${itemIndex}`);
+      return (time === undefined ? '' : _formatHoursMinutes(time)).padStart(cellWidth);
+    });
     lines.push(`${rowLabel} ${cells.join(' ')}`);
-  });
+  }
   return lines;
 }
 
-/* Draws the stacked layers as one isometric cube on a character grid. The front faces stack
-  left-aligned; the top face (top layer only) and a right face (all layers) are extruded up-right by
-  CUBE_DEPTH. `roomBlocks` content lines are already padded to `innerWidth`. */
+/* Draws the stacked layers as one isometric cube on a character grid. The front faces are shifted
+  right by `depth` and down by `depth` so the top face and a left face extrude up-and-left from them
+  (the cube's bulk grows toward the top-left, front face anchored bottom-right). `roomBlocks` content
+  lines are already padded to `innerWidth`. */
 function _drawCube(roomBlocks:string[][], innerWidth:number):string[] {
   const depth = CUBE_DEPTH;
   const horizontalBorder = `+${'-'.repeat(innerWidth + 2)}+`;
@@ -70,45 +84,54 @@ function _drawCube(roomBlocks:string[][], innerWidth:number):string[] {
 
   const frontRowCount = frontLines.length;
   const frontWidth = innerWidth + 4; // "| " + content + " |".
-  const rightEdgeCol = frontWidth - 1; // The front face's right border column.
-  const backRightCol = rightEdgeCol + depth;
+  const leftEdgeCol = depth; // The front face's left border column; cols 0..depth-1 hold the left/top faces.
+  const rightEdgeCol = leftEdgeCol + frontWidth - 1; // The front face's right border column.
   const totalRows = depth + frontRowCount;
-  const totalCols = backRightCol + 1;
+  const totalCols = leftEdgeCol + frontWidth;
   const grid:string[][] = Array.from({ length:totalRows }, () => Array.from({ length:totalCols }, () => ' '));
   const put = (row:number, col:number, ch:string) => { if (row >= 0 && row < totalRows && col >= 0 && col < totalCols) grid[row][col] = ch; };
 
-  // Front faces, dropped `depth` rows so the extruded faces have room above and to the right.
-  frontLines.forEach((line, index) => { for (let col = 0; col < line.length; ++col) put(depth + index, col, line[col]); });
+  // Front faces, dropped `depth` rows and shifted right `depth` cols so the extruded faces sit above and to the left.
+  frontLines.forEach((line, index) => { for (let col = 0; col < line.length; ++col) put(depth + index, leftEdgeCol + col, line[col]); });
 
-  // Top face: the front-top border shifted up-right by `depth`, joined by the two top diagonals.
-  for (let col = 0; col < horizontalBorder.length; ++col) put(0, depth + col, horizontalBorder[col]);
+  // Top face: the front-top border shifted up-left by `depth`, joined by the two top diagonals.
+  for (let col = 0; col < horizontalBorder.length; ++col) put(0, col, horizontalBorder[col]);
   for (let k = 1; k < depth; ++k) {
-    put(depth - k, k, '/');                // Left top edge: front-top-left -> back-top-left.
-    put(depth - k, rightEdgeCol + k, '/'); // Right top edge: front-top-right -> back-top-right.
+    put(depth - k, leftEdgeCol - k, '\\');  // Left top edge: front-top-left -> back-top-left.
+    put(depth - k, rightEdgeCol - k, '\\'); // Right top edge: front-top-right -> back-top-right.
   }
 
-  // Right face: a back-right vertical with a "+" at each layer boundary, and a diagonal per boundary
-  // (the topmost coincides with the top face's right edge; the bottom one closes the cube).
-  for (let row = 0; row < frontRowCount; ++row) put(row, backRightCol, '|');
+  // Left face: a back-left vertical with a "+" at each layer boundary, and a diagonal per boundary
+  // (the topmost coincides with the top face's left edge; the bottom one closes the cube).
+  for (let row = 0; row < frontRowCount; ++row) put(row, 0, '|');
   borderRowIndices.forEach(borderRowIndex => {
-    put(borderRowIndex, backRightCol, '+');
-    for (let k = 1; k < depth; ++k) put(depth + borderRowIndex - k, rightEdgeCol + k, '/');
+    put(borderRowIndex, 0, '+');
+    for (let k = 1; k < depth; ++k) put(depth + borderRowIndex - k, leftEdgeCol - k, '\\');
   });
 
   return grid.map(row => row.join('').trimEnd());
 }
 
+function _cellWidth(view:RoomLayerView, itemIndexWidth:number):number {
+  let width = Math.max(TIME_CELL_WIDTH, itemIndexWidth);
+  view.rooms.forEach(room => room.interactions.forEach(interaction => { width = Math.max(width, _formatHoursMinutes(interaction.firstInteractionTime).length); }));
+  return width;
+}
+
 export function renderRoomLayerCubeAscii(view:RoomLayerView, levelName:string|null = null):string {
   const header = `Room interaction cube${levelName ? ` — ${levelName}` : ''}  (layers = rooms, top to bottom = file order)`;
   const legend = [
-    'Each layer is a room. Within a layer: rows = characters [i], columns = items [j]; X = the two shared that room at a sampled time.',
-    'Character [i] and item [j] indices match the legends above.'
+    'Each layer is a room. Rows = characters [i] (down the left), columns = items [j] (across the top).',
+    'A cell shows HH:MM of the first time that character and item shared that room; blank means they never did.',
+    'Character [i] and item [j] indices match the legends above; item columns line up vertically across layers.'
   ];
   if (!view.rooms.length) return `${header}\n\n${legend.join('\n')}\n\n(no rooms)\n`;
 
-  const characterIndexWidth = String(Math.max(view.characterLabels.length - 1, 0)).length;
-  const itemIndexWidth = String(Math.max(view.itemLabels.length - 1, 0)).length;
-  const roomBlocks = view.rooms.map(room => _renderRoomContentLines(room, characterIndexWidth, itemIndexWidth));
+  const characterCount = view.characterLabels.length, itemCount = view.itemLabels.length;
+  const characterIndexWidth = String(Math.max(characterCount - 1, 0)).length;
+  const itemIndexWidth = String(Math.max(itemCount - 1, 0)).length;
+  const cellWidth = _cellWidth(view, itemIndexWidth);
+  const roomBlocks = view.rooms.map(room => _renderRoomContentLines(room, characterCount, itemCount, characterIndexWidth, cellWidth));
   const innerWidth = Math.max(1, ...roomBlocks.flat().map(line => line.length));
   const paddedBlocks = roomBlocks.map(block => block.map(line => line.padEnd(innerWidth)));
 
