@@ -59,5 +59,18 @@ describe('solver integration', () => {
     expect(candle?.witnessCharacterIds).toEqual(['alice', 'bob']);
 
     expect(result.asciiArt).toContain('Item reachability graph — item-reachability-level.md');
+
+    // The room-layer cube re-bins the same co-presence by room. Item indices are id-sorted
+    // (candle=0, goblet=1, knife=2, locket=3); character indices follow the character graph (alice=0,
+    // bob=1, carol=2). The Parlor holds Alice & Bob with the Knife, Locket, and Bob's Candle; the
+    // Cellar holds only Carol with the Goblet.
+    const parlor = result.roomLayers.rooms.find(room => room.roomId === 'parlor');
+    expect(parlor?.characterIndices).toEqual([0, 1]);
+    expect(parlor?.itemIndices).toEqual([0, 2, 3]);
+    const cellar = result.roomLayers.rooms.find(room => room.roomId === 'cellar');
+    expect(cellar?.characterIndices).toEqual([2]);
+    expect(cellar?.itemIndices).toEqual([1]);
+    expect(cellar?.interactions).toEqual([{ characterIndex:2, itemIndex:1 }]);
+    expect(result.asciiArt).toContain('Room interaction cube — item-reachability-level.md');
   });
 });

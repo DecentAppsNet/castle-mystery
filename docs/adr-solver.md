@@ -101,12 +101,38 @@ local behaviour — so `randomSalt` (the only RNG consumer in loading) is reprod
 fails to load is reported and counted as a failure; the CLI exits non-zero if any level fails, so it
 can back a pre-commit hook.
 
+### 8. Room-interaction cube (per-room isometric visualization)
+
+The character and item graphs each collapse the whole level into a single matrix. To show *where* the
+co-presence happens, `solveLevel()` also builds a `RoomLayerView` ([roomLayerUtil.ts](../src/solver/roomLayerUtil.ts))
+and renders it as a third ASCII block ([roomLayerSerializeUtil.ts](../src/solver/roomLayerSerializeUtil.ts)):
+an isometric "cube split into layers", one layer per room (top → bottom in file order). Each layer's
+front face holds a bipartite matrix of the characters (rows) and items (columns) that shared that
+room, with `X` marking a co-presence; row/column indices reuse the character- and item-graph node
+orders, so the cube reads against the `[i]` legends printed above it.
+
+- **Same co-presence, re-binned by room.** No new relation is introduced: an entry means a character
+  and an item shared a room at a sampled time — the item-reachability *witness* relation, kept
+  per-room instead of aggregated. The per-room replay is shared with the item graph through
+  [roomOccupancyUtil.ts](../src/solver/roomOccupancyUtil.ts) (`createRoomOccupancyByRoomId` +
+  `collectRoomOccupancyChangeTimes`), so both views see identical occupancy; the item graph's witness
+  logic now reads through that same helper rather than duplicating it.
+- **Visualization only.** The cube does not contribute to `SolveResult.ok` — it is purely diagnostic.
+  It is still serialized to JSON (`roomLayerViewToJsonObject`) for parity with the other two graphs.
+- **Rendering is grid-based and deterministic.** `renderRoomLayerCubeAscii` composes the layers on a
+  character grid (front faces stacked and left-aligned; the top face and a right face extruded by a
+  fixed `CUBE_DEPTH`), so the isometric edges align regardless of matrix size. `CUBE_DEPTH` is bounded
+  by the guarantee that every room renders at least two content rows, so adjacent layer-boundary
+  diagonals never overlap.
+
 ## Consequences
 
 - The co-presence graph reflects generated movement, which depends on the RNG seed; the CLI fixes
   seed `0` for reproducibility. Document this if the deployed game ever uses a different seed.
 - Reachability here is co-presence connectivity, not room/door connectivity — a deliberately
   narrow Phase 1 definition that will expand.
+- The room-interaction cube widens with the largest per-room matrix, so item-dense rooms produce wide
+  layers. It is diagnostic only and never changes the pass/fail verdict.
 
 ## Future phases (out of scope here)
 

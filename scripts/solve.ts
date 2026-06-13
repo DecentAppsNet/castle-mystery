@@ -15,6 +15,7 @@ import path from 'node:path';
 import { setSeed } from '@/common/randUtil';
 import { characterGraphToJsonObject } from '@/solver/graphSerializeUtil';
 import { itemGraphToJsonObject } from '@/solver/itemGraphSerializeUtil';
+import { roomLayerViewToJsonObject } from '@/solver/roomLayerSerializeUtil';
 import { solveLevel } from '@/solver/solverUtil';
 import { loadLevelFromFile, loadLevelManifestFilenames } from './helpers/levelFileUtil.ts';
 
@@ -41,7 +42,7 @@ async function _run():Promise<void> {
   const { filenames, json, outPath } = _parseArgs(process.argv.slice(2));
   const targets = filenames.length ? filenames : await loadLevelManifestFilenames();
 
-  const jsonResults:Array<(ReturnType<typeof characterGraphToJsonObject> & { items:ReturnType<typeof itemGraphToJsonObject> }) | { level:string, error:string }> = [];
+  const jsonResults:Array<(ReturnType<typeof characterGraphToJsonObject> & { items:ReturnType<typeof itemGraphToJsonObject>, roomLayers:ReturnType<typeof roomLayerViewToJsonObject> }) | { level:string, error:string }> = [];
   let failedCount = 0;
   for (const filename of targets) {
     try {
@@ -52,7 +53,8 @@ async function _run():Promise<void> {
       if (!result.ok) ++failedCount;
       jsonResults.push({
         ...characterGraphToJsonObject(result.graph, result.levelName, result.reachability),
-        items:itemGraphToJsonObject(result.itemGraph, result.levelName, result.itemReachability)
+        items:itemGraphToJsonObject(result.itemGraph, result.levelName, result.itemReachability),
+        roomLayers:roomLayerViewToJsonObject(result.roomLayers, result.levelName)
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
