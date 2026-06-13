@@ -1,23 +1,24 @@
 ---
 name: play-game
 description: >-
-  Play a Castle Mystery level as a player would and report whether each character's IDENTITY is
-  inferable from witnessable clues (their description, conversations, object/item text, and
-  behaviour) — without being told who is who. Produces per-level, per-conclusion authoring feedback:
-  each character mapped to the clues that reveal them, plus too-easy / too-hard / unsolvable-gap
-  call-outs. Use when asked to "play" a level, check identity solvability or clues, or get design
-  feedback on a level's Identities conclusion. ANALYSIS ONLY — never edits level files.
+  Play a Castle Mystery level as a player would and report whether each CONCLUSION is solvable from
+  witnessable evidence — without being told the answers. Covers the Identities conclusion (match each
+  anonymous face to a name) and fill-in-the-blanks (cloze) conclusions (for each blank, explain how
+  the player can infer the correct value is true). Produces per-level, per-conclusion authoring
+  feedback: the clue/inference chain for every character and every blank, plus too-easy / too-hard /
+  unsolvable-gap call-outs. Use when asked to "play" a level, check conclusion/identity solvability
+  or clues, or get design feedback. ANALYSIS ONLY — never edits level files.
 ---
 
-# play-game — identity inferability analysis
+# play-game — conclusion solvability analysis
 
 You are simulating a **player** of a Castle Mystery level. A player sees each character only as an
-anonymous **face** (the `faceImage`) and a set of behaviours; they do **not** know who anyone is
-until they solve the **Identities** conclusion by matching every face to a name from a known pool.
+anonymous **face** (the `faceImage`) and witnesses behaviour, speech, and objects; they do **not**
+know who anyone is or what "really happened" until they solve the level's **conclusions**.
 
-Your job: decide whether a player *could* deduce each character's identity from what they can
-witness, and report the clue chain for every character as **authoring feedback** — not just
-pass/fail. This helps the author steer storytelling and tune difficulty.
+Your job, per conclusion: decide whether a player *could* deduce the answer(s) from what they
+witness, and report the clue/inference chain as **authoring feedback** (not just pass/fail) — so the
+author can steer storytelling and tune difficulty.
 
 This skill is **read-only**. Never edit `public/levels/*` or any level content.
 
@@ -30,95 +31,91 @@ This skill is **read-only**. Never edit `public/levels/*` or any level content.
   Identities conclusion (currently `00_prologue.md`, `01_birth_of_constantine.md`,
   `02_house_of_rocks.md`).
 
-## How a level encodes identities (background)
+## How a level encodes conclusions (background)
 
-- A level file lives in `public/levels/` and pulls in shared `characters.md` and `items.md` via its
-  `# General` `* imports=` line. Read the level **and** its imports.
-- The `# Conclusions` section has `## <name>` subsections. One is **Identities** (auto-generated from
-  the cast). Each subsection name is a conclusion present in the level.
-- **Interactive characters** are those with a non-empty `* description=` (in `characters.md` or the
-  level's `# characters`). Only interactive characters appear in the Identities puzzle; generic
-  extras with no description (e.g. "Male Peasant 3") are excluded — ignore them.
-- For each interactive character: their `* title=` (or, if absent, the `## heading`) is the **answer**;
-  their `* faceImage=` is the **anonymous handle** the player sees. The **candidate name pool** the
-  player chooses from = the titles of *all* interactive characters.
-- If a level has **no Identities conclusion**, skip it: report "no identity puzzle — skipped".
+- A level file in `public/levels/` pulls in shared `characters.md` and `items.md` via its `# General`
+  `* imports=` line. Read the level **and** its imports.
+- The **real** `# Conclusions` section is a top-level `#` heading literally named "Conclusions".
+  Only that section counts. A bare `Conclusions:` line sitting inside another section (e.g. authoring
+  notes in `# General`) is **prose, not a conclusions section** — ignore it.
+- Inside `# Conclusions`: optional **category-definition** lines come first (`* verbs=stole|hid|…`,
+  `* withObjects=a hammer|other vases|…`), then `## <name>` subsections — **each subsection is one
+  conclusion**. Two shapes matter:
+  - **Identities** — the `## Identities` subsection. Its cloze is auto-generated: match each
+    **interactive** face to a name. Interactive = non-empty `* description=`; `* faceImage=` is the
+    anonymous handle; `* title=` (or the `## heading`) is the answer; the candidate pool = the titles
+    of *all* interactive characters. (Generic extras with no description are excluded.)
+  - **Fill-in-the-blanks (cloze)** — a subsection with `* conclusion=` (or `* clozeStatement=`) whose
+    text contains `[blank]`s, e.g. `[Larry] took the vase to the [Gift Shop] and [hid] it with
+    [other vases].` Each `[value]` is a blank the player fills; the text inside `[...]` is the
+    **correct answer** (`a|b` means either is accepted).
+  - Any other subsection (only `unlockConclusions` / `revealRooms`, no cloze) — list it, nothing to
+    infer.
+- **Blank option pools.** Each blank's value comes from a category: author-defined ones above, plus
+  implicit defaults — `characters` (interactive titles), `rooms` (room titles), `items` (interactive
+  item titles). The blank's pool = the category whose list contains the correct value; the *other*
+  entries are the **distractors** the player must rule out.
+- If a level has **no real `# Conclusions` section containing `## Identities`**, skip it.
 
-## Method (do this for each analysed level)
+## Method (per analysed level)
 
-1. **Load.** Read the level file + its imported `items.md` / `characters.md`. Enumerate every
-   conclusion (`## <name>` under `# Conclusions`, including Identities). If no Identities conclusion,
-   skip the level.
-2. **Roster.** List the interactive characters with their face handle, title (answer), and the shared
-   candidate name pool. Flag any two interactive characters sharing a `faceImage` — the player can't
-   tell those faces apart, which is itself a finding.
+1. **Load** the level + imported `items.md`/`characters.md`. Locate the real `# Conclusions` section.
+   If there is none, or no `## Identities` in it, **skip** ("no identity puzzle — skipped"; if a
+   stray `Conclusions:` appears as prose elsewhere, say so explicitly).
+2. **Enumerate** the `## <name>` subsections (= the conclusions) and read the category-definition
+   lines.
 3. **Adopt the player's view (anonymise).** Treat each character's authored title, `## heading`, and
-   itinerary **speaker attribution** as the HIDDEN answer — the player does not see these. The player
-   *does* witness, per face:
-   - the character's own **description** (what they look like / wear / badges they carry),
-   - the **words each face speaks** (quoted speech, verbatim),
-   - what each face **does** (moves between rooms, takes/drops/gives items, dies, etc.),
-   - **items** the face carries or that sit in its room, and those items' **titles/descriptions**,
-   - and crucially, **names or epithets spoken aloud** ("LARRY!", "Queen of Sicily", "Amos") and
-     names **written on objects** — these are in-world clues the player hears/reads. Keep them; only
-     the *attribution* of who-is-who is hidden.
-4. **Infer.** Reasoning **only from the witnessable evidence** (not the answer key), deduce which
-   candidate name each face is. For every clue you use, quote it and tag it:
-   - `object` — text on/in an item (plaque, label, letter, monogram).
-   - `conversation` — something said aloud that names or addresses the face, or that the face says
-     about itself.
-   - `description` — the face's own visible description (uniform, badge, age, role).
-   - `behaviour` — what the face does / their role over the timeline.
-   Classify each identity:
-   - **direct** — a single clue pins it unambiguously.
-   - **combined** — needs ≥2 clues together (e.g. role + who-addresses-them).
-   - **none** — no witnessable clue distinguishes this face → the player cannot deduce it.
-
-   Two weak aids to consider, and to **flag** when a face relies on them:
-   - **POV** — the level's `* activeCharacter=` is the face the player inhabits; its identity may be
-     self-known even with no third-party clue.
-   - **elimination** — once every other face is pinned, the last one is forced. Treat as `combined`,
-     but call it out: a face identifiable *only* by elimination or POV has **no positive clue**,
-     which is useful design feedback (the author may want to plant one).
-5. **Grade.** Now compare against the authored titles and mark each face ✓/✗. The real verdict is
-   whether the clues **suffice** for a disciplined player — be honest if you only "knew" the answer
-   from the attribution rather than from a real clue.
-6. **Report** (below). Read-only — do not modify any file.
+   itinerary **speaker attribution** as the HIDDEN answer. The player witnesses, per face: its
+   **description**, the **words it speaks** (verbatim), what it **does** (move / take / drop / give /
+   die), **items** it carries or co-located items (+ their titles/descriptions), and **names or
+   epithets spoken aloud / written on objects** ("LARRY!", "Queen of Sicily", `"Amos"` on a vase) —
+   keep those; only who-is-who is hidden.
+4. **Analyse each conclusion** (reason only from witnessable evidence, not the answer key):
+   - **Identities** — for every interactive face: `face → inferred name`, the clue chain (quote +
+     tag each `object` / `conversation` / `description` / `behaviour`), classified **direct** (one
+     clue), **combined** (≥2), or **none** (no clue). Flag faces resting only on **POV**
+     (`* activeCharacter=`) or **elimination** — they have no positive clue.
+   - **Cloze** — print the sentence with its blanks, then for **each blank**: the correct value, its
+     **pool** (category + the notable distractors), and **how the player infers it is true** — quote
+     the witnessable evidence and tag it (`timeline` / `conversation` / `object` / `behaviour`),
+     classified direct / combined / none. Say when a blank **depends on another conclusion** (a
+     `characters` blank needs Identities solved first; an `items` blank needs the object examined).
+5. **Grade** against the authored answers and mark ✓/✗. Be honest: the verdict is whether the
+   evidence **suffices** for a disciplined player, not whether you knew the answer. Use `❌` if the
+   evidence points a careful player to the *wrong* value (a misleading-clue bug).
+6. **Report** (below). Read-only — modify nothing.
 
 ## Output format
 
-Print one block per level. Lead with the level, list **all** its conclusions (Identities analysed
-now; others marked "not yet analysed"), then the Identities analysis for **every** character, then a
-summary with authoring feedback. Keep it scannable.
+One block per level. Lead with the level and the list of its conclusions, then a section per
+conclusion (a `── Conclusion: <name> ──` heading), then a per-conclusion summary. Keep it scannable.
 
 ```
 ═══ Level: <file> ═══
-Conclusions in this level: <Identities, …>
-  • <Other Conclusion> — not yet analysed
+Conclusions: <Identities, What Happened to the Vase?, …>
 
 ── Conclusion: Identities ──   (<N> interactive characters; pool = their <N> titles)
-
-✅ <faceImage> → <inferred name>            [direct|combined — <difficulty note>]
+✅ <faceImage> → <name>          [direct|combined — <note>]
    • <tag>: <quoted clue>
-   • <tag>: <quoted clue>
-⚠️  <faceImage> → <best guess or "?">        [none — UNSOLVABLE GAP]
-   • no object/conversation/description/behaviour clue identifies this face
+⚠️  <faceImage> → <? >            [none — UNSOLVABLE GAP / POV / elimination]
+Summary (Identities): <X>/<N> identifiable.  Gaps: …  Too easy: …  Too hard: …
 
-Summary (Identities): <X>/<N> identifiable.
-  • Gaps (fix before ship): <names with no clue, or "none">
-  • Maybe too easy: <names pinned by a single give-away, or "none">
-  • Maybe too hard: <names needing long/subtle combined chains, or "none">
+── Conclusion: <Cloze name> ──
+"<the cloze sentence, with [blanks] shown>"
+✅ [Larry]       (pool: characters)  → Larry        [direct — depends on Identities]
+   • timeline: "Larry takes Vase in right hand" then bolts off — the player sees this face grab it
+✅ [Gift Shop]   (pool: rooms)       → Gift Shop     [direct]
+   • timeline: the thief runs to the Gift Shop and "drops Vase"; the guide chases ("Where is it?")
+⚠️  [other vases](pool: withObjects) → other vases   [combined — mostly by elimination]
+   • behaviour: dropped among the gift-shop shelves; rival options (a hammer, his uncle…) are absurd
+Summary (<name>): <all blanks inferable | blanks needing work: …>; too easy: …; too hard: …
 ```
 
-Use `✅` when the clues suffice and the inferred name is correct, `⚠️` for an unsolvable gap, and
-`❌` if the clues point a disciplined player to the *wrong* name (a misleading-clue problem — worth
-flagging). Mention shared-face collisions in the summary.
+## Scope & limitations (state when relevant)
 
-## Scope & limitations (state these if relevant)
-
-- **Identities only** for now. Other conclusions (e.g. Occupations) are listed but not yet analysed.
-- **No witnessability gating yet**: a clue counts even if a player might not reach the room/scene
-  where it occurs. (Reachability gating via the logical solver is a future enhancement.)
+- Covers the **Identities** conclusion and **fill-in-the-blanks (cloze)** conclusions. Subsections
+  that are neither (e.g. unlock-only) are listed but not analysed.
+- **No witnessability gating yet**: a clue counts even if the player might not reach the scene where
+  it occurs. (Reachability gating via the logical solver is a future enhancement.)
 - Anonymisation is by discipline, not a tool — reason from the evidence, not the answer key.
-- This complements, and is independent of, the deterministic logical solver (`npm run solve`); it
-  does not call it.
+- Independent of the deterministic logical solver (`npm run solve`); does not call it.
