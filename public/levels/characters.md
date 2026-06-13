@@ -87,7 +87,7 @@ ethnicityBackground=Greek Sicilian
 ## Heinrich
 
 * title=Heinrich Sohn des Konrad
-* description=An 11-year-old boy, peering calmly.
+* description=An 11-year-old boy.
 * faceImage=heinrich.png
 
 ## Male Peasant

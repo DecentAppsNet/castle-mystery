@@ -21,6 +21,7 @@ import kingacideItineraryText from './fixtures/kingacide-itinerary.md?raw';
 import kingacideMinifiedSnapshotText from './fixtures/kingacide-minified-snapshot.md?raw';
 import emptyRoomTitleText from './fixtures/empty-room-title.md?raw';
 import backgroundImageText from './fixtures/background-image.md?raw';
+import facesCharacterTargetText from './fixtures/faces-character-target.md?raw';
 import groundFloorRoomText from './fixtures/ground-floor-room.md?raw';
 import invalidBackgroundImageText from './fixtures/invalid-background-image.md?raw';
 import invalidClozeImageText from './fixtures/invalid-cloze-image.md?raw';
@@ -52,6 +53,7 @@ import mapMissingGridText from './fixtures/map-missing-grid.md?raw';
 import mapUnusedLegendEntryText from './fixtures/map-unused-legend-entry.md?raw';
 import mapNonRectangularRoomText from './fixtures/map-non-rectangular-room.md?raw';
 import mapRoomMissingFromRoomsSectionText from './fixtures/map-room-missing-from-rooms-section.md?raw';
+import unknownTopLevelSectionText from './fixtures/unknown-top-level-section.md?raw';
 import duplicateItemSubsectionsCaseText from './fixtures/duplicate-item-subsections-case.md?raw';
 import duplicateItemIdInventoryText from './fixtures/duplicate-item-id-inventory.md?raw';
 import duplicateMapLegendEntryText from './fixtures/duplicate-map-legend-entry.md?raw';
@@ -204,6 +206,15 @@ describe('levelUtil itinerary loading', () => {
     expect(king.itinerary.some(event => event.type === ItineraryEventType.FACE)).toBe(true);
     expect(findCharacterPose(king, 4_999).facingDirection).toBe('right');
     expect(findCharacterPose(king, 5_000).facingDirection).toBe('left');
+  });
+
+  it('parses faces activities that target another character', () => {
+    const level = loadLevelFromText(facesCharacterTargetText);
+    const niccollo = level.characters.find(character => character.id === 'niccollo');
+    if (!niccollo) expect.fail('expected niccollo character to exist');
+
+    expect(findCharacterPose(niccollo, 4_999).facingDirection).toBe('right');
+    expect(findCharacterPose(niccollo, 5_000).facingDirection).toBe('left');
   });
 
   it('parses dies activities and defaults unspecified alive to true', () => {
@@ -644,6 +655,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('duplicate-general-section.md:5');
       expect((error as LoadLevelException).message).toContain(`duplicate section 'general'`);
+    }
+  });
+
+  it('wraps unknown top-level sections with filename and line number', () => {
+    try {
+      loadLevelFromText(unknownTopLevelSectionText, 'unknown-top-level-section.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('unknown-top-level-section.md:5');
+      expect((error as LoadLevelException).message).toContain(`unknown top-level section 'giovanni'`);
     }
   });
 
