@@ -65,6 +65,32 @@ The Phase 1 check is graph reachability from `level.activeCharacterId`. All char
 active character is absent from the graph, the result is reported as failed with a clear reason
 rather than guessing.
 
+### 6a. Second validation: item reachability through characters
+
+Reaching every character is necessary but not sufficient — the player must also be able to *find*
+the items. We add an item-reachability graph rendered below the character graph (same node-legend +
+matrix + reachability + `RESULT` style), and `solveLevel()` returns a combined `ok`: the level
+passes only when **both** every character and every placed item are reachable. The CLI exits
+non-zero if either check fails.
+
+- **Nodes are placed items.** An item is a node when it is actually placed in the level (in a room
+  or held by a character), enumerated via `createItemsById(level.rooms, level.characters)`.
+  `level.itemsById` is deliberately *not* used as the node source: it also carries
+  imported-but-unplaced definitions (`items.md` is shared across levels), which would produce
+  spurious "unreachable" nodes.
+- **Witnesses come from co-presence, resolved through the real game runtime.** Items move during the
+  timeline (characters take/drop/give them), so item→room is dynamic. Rather than re-derive item
+  locations, the builder constructs a `GameState` and replays it with `rebuildDynamicStateForTime()`
+  at each sample time (level start plus every `ROOM_ENTRY` and item-movement tick — the only times a
+  character's or item's room can change). At each sample, every item records the characters sharing
+  its room as "witnesses". This reuses the single source of truth for item movement instead of
+  duplicating take/drop/give semantics.
+- **An item is reachable iff a *reachable* character witnesses it.** There is no item-to-item
+  propagation: the player reaches items only by following reachable characters. The witness matrix's
+  columns are the characters in the same order as the character legend (so a column index lines up
+  with the same `[i]` index above), and each column is marked reachable/unreachable so a failure is
+  self-explanatory.
+
 ### 7. CLI runs via `vite-node`, seeded for determinism
 
 `scripts/solve.ts` (`npm run solve`) reads levels from disk and reuses the transport-agnostic
@@ -84,6 +110,7 @@ can back a pre-commit hook.
 
 ## Future phases (out of scope here)
 
-Clue/item nodes and "where clues are found"; directed edges for hidden actors; deeper inference
-("can the conclusion be proven from what the player can observe?"); wiring the CLI into an actual
-git pre-commit hook; in-app visualization.
+Item *reachability* (can the player be co-present with each item) now ships alongside character
+reachability; still ahead: tying items to the specific clues/conclusions they support ("where clues
+are found" and "can the conclusion be proven from what the player can observe?"), directed edges for
+hidden actors, wiring the CLI into an actual git pre-commit hook, and in-app visualization.

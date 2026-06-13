@@ -6,6 +6,7 @@ import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { characterGraphToJsonObject } from '../graphSerializeUtil';
 import { solveLevel } from '../solverUtil';
 import levelText from './fixtures/co-presence-level.md?raw';
+import itemLevelText from './fixtures/item-reachability-level.md?raw';
 
 describe('solver integration', () => {
   it('builds a graph and reachability from a fully loaded level', () => {
@@ -31,5 +32,32 @@ describe('solver integration', () => {
     expect(result.asciiArt).toContain('RESULT: FAIL');
 
     expect(characterGraphToJsonObject(result.graph, result.levelName, result.reachability).nodes).toHaveLength(3);
+  });
+
+  it('flags an item only an unreachable character is co-present with', () => {
+    setSeed(0);
+    const level = loadLevelFromText(itemLevelText);
+
+    const result = solveLevel(level, 'item-reachability-level.md');
+
+    // Placed items only (the shared items.md definitions are excluded), one node per item.
+    expect(result.itemGraph.nodes.map(node => node.id)).toEqual(['candle', 'goblet', 'knife', 'locket']);
+
+    // Knife/Locket sit in the Parlor with reachable Alice & Bob; Candle is held by reachable Bob.
+    // The Goblet is in the Cellar, where only unreachable Carol ever stands -> unreachable.
+    expect(result.itemReachability.unreachableItemIds).toEqual(['goblet']);
+    expect(result.itemReachability.reachableItemIds).toEqual(['candle', 'knife', 'locket']);
+    expect(result.itemReachability.ok).toBe(false);
+
+    // Carol is also an unreachable character, so the level fails overall on both checks.
+    expect(result.reachability.unreachableIds).toEqual(['carol']);
+    expect(result.ok).toBe(false);
+
+    const goblet = result.itemGraph.nodes.find(node => node.id === 'goblet');
+    expect(goblet?.witnessCharacterIds).toEqual(['carol']);
+    const candle = result.itemGraph.nodes.find(node => node.id === 'candle');
+    expect(candle?.witnessCharacterIds).toEqual(['alice', 'bob']);
+
+    expect(result.asciiArt).toContain('Item reachability graph — item-reachability-level.md');
   });
 });

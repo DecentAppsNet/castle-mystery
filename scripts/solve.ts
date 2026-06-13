@@ -1,9 +1,10 @@
 /// <reference types="node" />
 
 /* CLI for the level solver (see docs/adr-solver.md). For each requested level (or every level in
-  levels.md when none are given) it prints the ASCII co-presence graph + reachability, and exits
-  non-zero if any level has unreachable characters — so it can back a pre-commit hook. Pass --json
-  to also print the machine-readable payload, or --out <file> to write it for a future validator.
+  levels.md when none are given) it prints the ASCII character co-presence graph + item-reachability
+  graph, and exits non-zero if any level has unreachable characters or unreachable items — so it can
+  back a pre-commit hook. Pass --json to also print the machine-readable payload, or --out <file> to
+  write it for a future validator.
 
   Run via vite-node so @/ aliases and the level loader resolve exactly as they do in the app:
     npm run solve -- 01_birth_of_constantine.md --json */
@@ -13,6 +14,7 @@ import path from 'node:path';
 
 import { setSeed } from '@/common/randUtil';
 import { characterGraphToJsonObject } from '@/solver/graphSerializeUtil';
+import { itemGraphToJsonObject } from '@/solver/itemGraphSerializeUtil';
 import { solveLevel } from '@/solver/solverUtil';
 import { loadLevelFromFile, loadLevelManifestFilenames } from './helpers/levelFileUtil.ts';
 
@@ -39,7 +41,7 @@ async function _run():Promise<void> {
   const { filenames, json, outPath } = _parseArgs(process.argv.slice(2));
   const targets = filenames.length ? filenames : await loadLevelManifestFilenames();
 
-  const jsonResults:Array<ReturnType<typeof characterGraphToJsonObject> | { level:string, error:string }> = [];
+  const jsonResults:Array<(ReturnType<typeof characterGraphToJsonObject> & { items:ReturnType<typeof itemGraphToJsonObject> }) | { level:string, error:string }> = [];
   let failedCount = 0;
   for (const filename of targets) {
     try {
@@ -47,8 +49,11 @@ async function _run():Promise<void> {
       const level = await loadLevelFromFile(filename);
       const result = solveLevel(level, filename);
       process.stdout.write(`${result.asciiArt}\n`);
-      if (!result.reachability.ok) ++failedCount;
-      jsonResults.push(characterGraphToJsonObject(result.graph, result.levelName, result.reachability));
+      if (!result.ok) ++failedCount;
+      jsonResults.push({
+        ...characterGraphToJsonObject(result.graph, result.levelName, result.reachability),
+        items:itemGraphToJsonObject(result.itemGraph, result.levelName, result.itemReachability)
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       process.stdout.write(`${filename}\n  FAILED TO LOAD: ${message}\nRESULT: FAIL\n\n`);
@@ -65,7 +70,7 @@ async function _run():Promise<void> {
   }
 
   if (failedCount > 0) {
-    process.stdout.write(`\n${failedCount} of ${targets.length} level(s) failed (unreachable characters or load error).\n`);
+    process.stdout.write(`\n${failedCount} of ${targets.length} level(s) failed (unreachable characters or items, or load error).\n`);
     process.exitCode = 1;
   }
 }
