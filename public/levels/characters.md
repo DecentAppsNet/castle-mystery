@@ -39,8 +39,15 @@ ethnicityBackground=Greek Sicilian
 * description=A middle-aged woman wearing a gown of expensive fabric.
 * faceImage=constanceI.png
 
+## King Frederick
+
+* title=King Frederick
+* description=A boy wearing fine clothing.
+* faceImage=kingFred.png
+
 ## Emperor Frederick
 
+* title=Emperor Frederick
 * description=Frederick, by the grace of God, Emperor of the Romans, ever august, King of Jerusalem and Sicily.
 * faceImage=emperorFred.png
 

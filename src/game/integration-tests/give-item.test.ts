@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState, findCharacter } from '../gameUtil';
+import { findCharacterPose } from '../itineraryUtil';
+import { WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import giveItemLeftHandText from './fixtures/give-item-left-hand.md?raw';
 import giveItemRightHandText from './fixtures/give-item-right-hand.md?raw';
@@ -34,6 +36,19 @@ describe('give item integration', () => {
     expect(beforeQueen.items.map(item => item.id)).not.toContain('book');
     expect(atGiveKing.items.map(item => item.id)).not.toContain('book');
     expect(atGiveQueen.items.map(item => item.id)).toContain('book');
+  });
+
+  it('stops at a different nearby waypoint than the recipient when movement is required', () => {
+    const level = loadLevelFromText(giveItemWalkText);
+    const king = level.characters.find(character => character.id === 'king');
+    const queen = level.characters.find(character => character.id === 'queen');
+    const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
+    const lastWalkEvent = king?.itinerary.filter(event => event.type === ItineraryEventType.WALK).at(-1) as { toWaypointPosition?:{ x:number, y:number, z:number } } | undefined;
+
+    expect(giveEvent).toBeDefined();
+    expect(lastWalkEvent?.toWaypointPosition).toBeDefined();
+    expect(lastWalkEvent?.toWaypointPosition?.z).toBe(WAYPOINT_MIDDLE_ROW_Z);
+    expect(lastWalkEvent?.toWaypointPosition).not.toEqual(findCharacterPose(queen!, giveEvent!.startTime).position);
   });
 
   it('allows giving an item from the left hand', () => {
