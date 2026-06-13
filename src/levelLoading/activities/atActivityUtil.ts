@@ -4,6 +4,7 @@
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoomForWaypoint, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 import { normalizeId } from "@/game/idUtil";
+import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
 
 function _parseRoomPercentTarget(targetText:string):number|null {
   if (!targetText.endsWith('%')) return null;
@@ -50,8 +51,10 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
     .filter(([, state]) => findCurrentRoomForWaypoint(context.level, state.waypoint).id === targetRoomId)
     .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y},${state.waypoint.position.z}`));
   const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, null, targetXPercent);
+  const targetRoomTitle = context.level.rooms.find(room => room.id === targetRoomId)?.title || targetRoomId;
   const scheduledEvents = context.timestampType === 'absolute'
-    ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, findEarliestAbsoluteActivityStartTime(context.state))
+    ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, findEarliestAbsoluteActivityStartTime(context.state), earliestArrivalTime =>
+      `Unable to arrive to ${targetRoomTitle} by ${formatMsecsAsTimestamp(context.timestamp)}. The earliest possible arrival is ${formatMsecsAsTimestamp(earliestArrivalTime)}.`)
     : scheduleEventsToStartAtTime(unscheduledEvents, activityStartTime, context.state.time);
   return scheduledEvents;
 }

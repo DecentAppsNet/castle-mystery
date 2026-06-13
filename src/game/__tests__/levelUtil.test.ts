@@ -11,6 +11,7 @@ import lockNonadjacentRoomText from './fixtures/lock-nonadjacent-room.md?raw';
 import lockNonlockableExitText from './fixtures/lock-nonlockable-exit.md?raw';
 import unlockWrongSideText from './fixtures/unlock-wrong-side.md?raw';
 import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
+import impossibleAtRoomArrivalText from './fixtures/impossible-at-room-arrival.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
 import invalidMapLegendTileText from './fixtures/invalid-map-legend-tile.md?raw';
 import invalidRoomGridDimensionsText from './fixtures/invalid-room-grid-dimensions.md?raw';
@@ -1119,6 +1120,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-at-room-destination.md:41');
       expect((error as LoadLevelException).message).toContain(`unknown room id 'West Hall'`);
+    }
+  });
+
+  it('suggests the earliest possible arrival time for impossible absolute @ room timestamps', () => {
+    try {
+      loadLevelFromText(impossibleAtRoomArrivalText, 'impossible-at-room-arrival.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('impossible-at-room-arrival.md:45');
+      expect((error as LoadLevelException).message).toContain('Unable to arrive to Tool Store by 0:00:00. The earliest possible arrival is ');
     }
   });
 
