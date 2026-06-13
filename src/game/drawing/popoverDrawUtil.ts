@@ -93,9 +93,14 @@ function _wrapText(context:CanvasRenderingContext2D, text:string, maxWidth:numbe
   return lines;
 }
 
+function _splitPopoverBodyTextIntoAuthoredLines(bodyText:string):string[] {
+  return bodyText.split('|').map(line => line.trim());
+}
+
 function _createPopoverBodyLines(bodyTexts:string[], maxTextWidth:number, bodyFont:string, context:CanvasRenderingContext2D):string[] {
   return bodyTexts.flatMap((bodyText, index) => {
-    const wrappedLines = _wrapText(context, bodyText, maxTextWidth, bodyFont);
+    const wrappedLines = _splitPopoverBodyTextIntoAuthoredLines(bodyText)
+      .flatMap(line => _wrapText(context, line, maxTextWidth, bodyFont));
     return index === 0 ? wrappedLines : ["", ...wrappedLines];
   });
 }
