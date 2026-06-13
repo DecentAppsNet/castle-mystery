@@ -9,7 +9,7 @@
     to the widest room's width there, so a column of rooms reads as one aligned stack. Row/column
     indices match the `[i]` legends of the character and item graphs printed above. */
 
-import { truncateLabel } from "./labelUtil";
+import { formatHoursMinutes, truncateLabel } from "./labelUtil";
 import RoomLayerView, { RoomLayer } from "./types/RoomLayerView";
 
 // Isometric offset (in characters) of each box's top and left faces.
@@ -45,13 +45,6 @@ export function roomLayerViewToJsonObject(view:RoomLayerView, levelName:string|n
   };
 }
 
-function _formatHoursMinutes(msecs:number):string {
-  const totalMinutes = Math.floor(msecs / 60_000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-}
-
 /* One room's front-face lines: a title, an item-name header for the items present in the room, then
   one row per character present in the room (labelled by name). A cell shows HH:MM of that pair's
   first co-presence in this room, or is blank. Title-less rooms (some are authored that way) fall back
@@ -71,7 +64,7 @@ function _renderRoomContentLines(room:RoomLayer, characterLabels:string[], itemL
     const rowLabel = truncateLabel(characterLabels[characterIndex]).padEnd(characterLabelWidth);
     const cells = room.itemIndices.map(itemIndex => {
       const time = timeByKey.get(`${characterIndex}|${itemIndex}`);
-      return (time === undefined ? '' : _formatHoursMinutes(time)).padStart(cellWidth);
+      return (time === undefined ? '' : formatHoursMinutes(time)).padStart(cellWidth);
     });
     lines.push(`${rowLabel} ${cells.join(' ')}`);
   });

@@ -64,14 +64,17 @@ describe('roomLayerSerializeUtil', () => {
       expect(renderRoomLayerCubeAscii(VIEW)).toContain('cellar');
     });
 
-    it('truncates long character and item names with an ellipsis', () => {
+    it('truncates long character and item names with no marker', () => {
       const longView:RoomLayerView = {
         characterLabels:['Salomone ben David di Palermo'],
         itemLabels:['A Remarkably Long Item Name'],
         rooms:[{ roomId:'hall', title:'Hall', gridRow:0, gridCol:0, characterIndices:[0], itemIndices:[0], interactions:[{ characterIndex:0, itemIndex:0, firstInteractionTime:0 }] }]
       };
       const ascii = renderRoomLayerCubeAscii(longView);
-      expect(ascii).toContain('…');
+      expect(ascii).toContain('Salomone ben'); // Hard-truncated to 12 chars, no ellipsis or arrow.
+      expect(ascii).toContain('A Remarkably');
+      expect(ascii).not.toContain('…');
+      expect(ascii).not.toContain('→');
       expect(ascii).not.toContain('Salomone ben David di Palermo'); // The full name is shortened.
       expect(ascii).not.toContain('A Remarkably Long Item Name');
     });

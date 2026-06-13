@@ -80,8 +80,8 @@ describe('solver integration', () => {
     // the always-inline analysis section, before the cube.
     const items = result.transferCostTable.items;
     const aliceRow = result.transferCostTable.rows.find(row => row.characterId === 'alice');
-    expect(aliceRow?.costs[items.findIndex(item => item.id === 'knife')]).toBe(0);
-    expect(aliceRow?.costs[items.findIndex(item => item.id === 'goblet')]).toBeNull();
+    expect(aliceRow?.cells[items.findIndex(item => item.id === 'knife')].cost).toBe(0);
+    expect(aliceRow?.cells[items.findIndex(item => item.id === 'goblet')].cost).toBeNull();
     expect(result.analysisAscii).toContain('Item access cost — item-reachability-level.md');
     expect(result.analysisAscii).toContain('Item reachability graph — item-reachability-level.md');
   });

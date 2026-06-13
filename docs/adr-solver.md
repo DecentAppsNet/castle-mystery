@@ -91,23 +91,32 @@ non-zero if either check fails.
   with the same `[i]` index above), and each column is marked reachable/unreachable so a failure is
   self-explanatory.
 
-### 6b. Item-access cost: minimum character transfers (first complexity metric)
+### 6b. Item-access cost: time-respecting character switches (first complexity metric)
 
 Reachability answers *whether* the player can find each item; the next question is *how hard*. The
-first complexity metric is the **minimum number of character transfers** (switches) from each
-character to each item, combining the two backing graphs ([transferCostUtil.ts](../src/solver/transferCostUtil.ts),
+first complexity metric is the **fewest time-respecting character switches** — and the specific switch
+chain — from each character to each item, combining the two backing graphs ([transferCostUtil.ts](../src/solver/transferCostUtil.ts),
 rendered by [transferCostSerializeUtil.ts](../src/solver/transferCostSerializeUtil.ts)).
 
 - **Definition.** An item is reached once the player controls a character co-present with it (a
-  witness). BFS over the character co-presence graph (`findTransferDistances`, a distance-returning
-  sibling of `findReachableCharacterIds`) gives the switch count from a start character to every
-  other; the cost to an item is the smallest such distance over the item's witnesses (0 = the start
-  character already witnesses it), or `null`/∞ when no chain of switches reaches a witness.
+  witness). A switch is possible only at a co-presence (an edge), and a chain's switch times must be
+  **non-decreasing** — the player rides each character forward in time and cannot switch into a moment
+  already past. A time-aware shortest path from the start character (`_findSwitchChains`) walks
+  `(character, current time)` states, advancing along each edge to the earliest co-presence not before
+  now; the first time a character is settled fixes its fewest-switch chain (a character can be revisited
+  at an earlier time with more switches, since a later switch may depend on that earlier arrival). The
+  cost to an item is the lightest such chain over its witnesses (0 = the start character already
+  witnesses it), or `null`/∞ when no time-respecting chain reaches a witness. Honouring time can be
+  stricter than plain graph distance — an item whose only witness is reachable on the undirected graph
+  can still be ∞ here when no chain of switches lines up in time, which is itself a validation signal.
 - **Shape.** A table with characters down the left (rows, in character-graph order) and items across
-  the top (columns, in item-graph order). It is a structured `transferCostTable` on `SolveResult` so a
-  later phase can fold in timing and the specific switch sequence. The ASCII rendering truncates
-  character names exactly as the room cube does (shared [labelUtil.ts](../src/solver/labelUtil.ts))
-  but shows item names in full.
+  the top (columns, in item-graph order). Each cell carries the switch `cost` and the ordered
+  `switches` chain (the character switched to and the co-presence time of each switch). The ASCII
+  rendering is a **bordered grid** that **stacks that chain inside each cell** — one `character → HH:MM`
+  line per switch (the `→` separates whom to switch to from when; `—` when the row character already
+  witnesses the item, `∞` when unreachable) — truncating character names exactly as the room cube does
+  (hard truncation, no marker) and sharing its `HH:MM` formatter (both in
+  [labelUtil.ts](../src/solver/labelUtil.ts)); item names show in full.
 - **Placement.** This is validation/complexity, so it prints in the always-inline `analysisAscii`
   (after the two graphs, before the cube). The cube stays last as a "nice to have" the architect can
   visualise; it never gates correctness or complexity.
