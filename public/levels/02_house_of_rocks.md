@@ -220,8 +220,10 @@ SSMM/HH\YYYYTT
 7:30:06 Stefan @ Common Kitchen
 : Maria faces Stefan
 : says, "Good morning, my strong young man from Ragusa."
+: Stefan faces left
 : Stefan says, "Good morning."
 : Maria says, "You remind me so much of my dead husband Tommaso."
+7:30:20 Stefan @ Workshop Yard
 
 
 7:30:18 Ahmad @ Apprentices' Chamber
@@ -367,8 +369,8 @@ SSMM/HH\YYYYTT
 : says, "Your Majesty. Such an honor to receive you!"
 : King Frederick says, "Please rise, Master Mason."
 : Pietro stands
-: says, "Is Heinrich here?"
-: says, "Of course. Shall I fetch him for you?"
+: King Frederick says, "Is Heinrich here?"
+: Pietro says, "Of course. Shall I fetch him for you?"
 : King Frederick says, "Yes, I thought we'd go falconing."
 : Pietro says, "Majesty, did I ever show you my stones?"
 : King Frederick says, "I've seen many stones. They are all the same."
@@ -376,7 +378,7 @@ SSMM/HH\YYYYTT
 : says, "I would love to show them to you."
 : King Frederick says, "I shall ask my falcon."
 : says, "Furia, do you wish to see this man's special stones?"
-// : Furia Perched emits "(squawk)"
+: Furia Perched emits "(squawk)"
 : King Frederick says, "She prefers to fly in the air and hunt."
 : Pietro says "I shall return with Heinrich shortly, my King."
 

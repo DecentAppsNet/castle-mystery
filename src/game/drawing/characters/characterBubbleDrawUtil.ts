@@ -123,3 +123,33 @@ export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:numbe
   context.fillText(speech, left + boxWidth / 2, top + boxHeight / 2);
   context.restore();
 }
+
+export function drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
+  const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
+  const boxHeight = fontSize + padding * 2;
+
+  context.save();
+  context.font = `${fontSize}px Jellee`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+
+  const boxWidth = context.measureText(emitText).width + padding * 2;
+  const unclampedLeft = anchorX - boxWidth / 2;
+  const unclampedTop = anchorTopY - boxHeight - scalingFactors.roomLineWidth * 2;
+  const left = Math.round(clamp(unclampedLeft, 0, context.canvas.width - boxWidth));
+  const top = Math.round(clamp(unclampedTop, 0, context.canvas.height - boxHeight));
+
+  context.fillStyle = COLOR_SPEECH_BUBBLE_FILL;
+  context.strokeStyle = COLOR_DARK_GRAY;
+  context.lineWidth = Math.max(1, scalingFactors.roomLineWidth / 2);
+  context.beginPath();
+  context.rect(left, top, boxWidth, boxHeight);
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = COLOR_BLACK;
+  context.fillText(emitText, left + boxWidth / 2, top + boxHeight / 2);
+  context.restore();
+}

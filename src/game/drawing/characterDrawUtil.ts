@@ -25,7 +25,7 @@ import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from ".
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
 
-export { drawSpeechBubble, drawThoughtBubble } from "./characters/characterBubbleDrawUtil";
+export { drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "./characters/characterBubbleDrawUtil";
 
 const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.2;
