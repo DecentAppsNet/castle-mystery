@@ -15,6 +15,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The README's top half is a template placeholder — the real product is a murder-mystery puzzle game (see `public/levels/*.md`). The "What You Have Now" section of README describing an LLM home screen is stale; the actual `HomeScreen` is the game UI.
 
+## Skills
+
+- `/play-game [level]` — analysis-only Claude skill ([.claude/skills/play-game/SKILL.md](.claude/skills/play-game/SKILL.md)) that "plays" a level the way a player would and reports whether each character's **Identities** are inferable from witnessable clues (their description, conversations, object/item text, behaviour). Output is per-level and per-conclusion: each character mapped to its clue chain, with too-easy / too-hard / unsolvable-gap authoring feedback. Skips levels with no Identities conclusion; reads `public/levels/*` only and never edits them. Identities is the only conclusion analysed for now.
+
 ## Architecture
 
 ### Level files drive everything
