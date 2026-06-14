@@ -218,13 +218,21 @@ conclusion.
 * conclusion=[The Farmer's Wife] [cut] off the mice's tails with [a carving knife].
 ```
 
-- **Identities** — include an (often empty) `## Identities` subsection; it **auto-generates one
-  fill-the-name blank per interactive character**. This is the core puzzle. `* unlockConclusions=`
-  may gate other conclusions behind it.
+- **Always include an explicit `## Identities`** subsection (even if it only carries config like
+  `* unlockConclusions=`). The loader fills it with **one fill-the-name blank per interactive
+  character** (answers = the characters' titles). This is the core puzzle; making it explicit lets the
+  conclusions agent focus on the *other* conclusions.
 - **Cloze** — `* conclusion=` (alias `* clozeStatement=`) text with `[blank]`s. The text inside
-  `[...]` is the **correct answer** (`a|b` = either accepted). A blank's options come from a category:
-  author-defined (`verbs`, `withObjects`, …) or implicit (`characters`, `rooms`, `items`). The
-  blank's value must appear in some category's list.
+  `[...]` is the **correct answer** (`a|b` = either accepted).
+- **Every cloze answer MUST be a member of a conclusion category** (matched case-insensitively), or
+  the level fails to load: *"missing conclusion answer phrases from conclusion categories: X"*. The
+  categories are:
+  - **implicit `characters`** = the interactive characters' **`* title=`** values (NOT the `##`
+    heading/id) — so a character blank must use the title: `[The Farmer's Wife]`, not `[Dame Hartwell]`.
+  - **implicit `rooms`** = room titles; **implicit `items`** = interactive item titles.
+  - **author-defined** = each `* name=opt1|opt2|…` line at the top of `# Conclusions` (e.g. `verbs`,
+    `withObjects`). Every answer that isn't a character/room/item title must be listed in one of these.
+  The other options in a blank's category become the **distractors** the player must rule out.
 - Optional per subsection: `* title=`, `* unlockConclusions=A | B`, `* revealRooms=Room | Room`.
 
 ---

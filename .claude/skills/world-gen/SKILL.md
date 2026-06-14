@@ -68,10 +68,11 @@ short summary of what came back).
    rectangular map blocks, 3-row room grids, exits between adjacent rooms, the active character
    chosen). Lay out 3–5 rooms that fit the story.
 
-3. **game-scout** — input: current candidate + story + contract. Output: adds `# Characters` (each
-   with a description that is the *hidden-identity clue*), places them in room grids, and adds a
-   `## Identities` conclusion (auto-generates the per-character name blanks). Pick the
-   `activeCharacter` and ensure everyone can become connected to them.
+3. **game-scout** — input: current candidate + story + contract. Output: adds `# Characters` and
+   places each in a room grid. Each character's `* title=` is the **hidden identity the player
+   deduces** (the conclusion answer); its `* description=` carries the *witnessable clue* to that
+   identity. Pick the `activeCharacter` and ensure everyone can become connected to them.
+   (game-scout only creates the cast — Conclusions are stage 6.)
 
 4. **game-itemiser** — input: current candidate + story + contract. Output: adds `# Items` and places
    them in room grids (or characters' inventories). Phase 1: items are story-flavour; just ensure each
@@ -80,8 +81,22 @@ short summary of what came back).
 5. **game-cron** — input: current candidate + story + contract. Output: writes the `# Itinerary` — a
    timeline of movement and dialogue that **(a)** transitively connects every character to the active
    character via shared-room co-presence and **(b)** brings reachable characters into the rooms where
-   items sit. This is the stage that makes the level *solve*. Add a cloze `## <what happened>`
-   conclusion if the story has a clear "what happened".
+   items sit. This is the stage that makes the level *solve*. (Conclusions are the next stage.)
+
+6. **game-conclusions** — input: current candidate + story + contract. Output: writes the
+   `# Conclusions` section, grounded in the story:
+   - **Always an explicit `## Identities`** subsection (even if it only carries `* unlockConclusions=`)
+     — the loader fills it with one name blank per interactive character. Making it explicit lets this
+     agent focus on the *other* conclusions.
+   - One or more **cloze** conclusions for "what happened" (later also: role / age / favourite colour).
+   - The author-defined **answer categories** (`* verbs=…`, `* withObjects=…`, …) the blanks draw from.
+   - **Hard rule (load-blocking):** every cloze answer must be a member of a category, matched
+     case-insensitively, or the level fails to load with *"missing conclusion answer phrases from
+     conclusion categories: X"*. Character/room/item blanks must use the **title**
+     (`[The Farmer's Wife]`, not `[Dame Hartwell]`); any other answer must be listed in an
+     author-defined category. `npm run evaluate` enforces this (same as the app).
+   The **`/play-game` semantic validator** (Phase 2) then checks whether each conclusion's answers are
+   actually *inferable* from witnessable clues, and flags conflicting / ambiguous solutions.
 
 ## Assemble & validate
 
@@ -89,8 +104,11 @@ short summary of what came back).
    **flat** file, NOT a subdirectory (the app loads only flat filenames under `/levels/`).
 2. Score it: `npm run evaluate --silent -- _gen.<slug>.md`.
 3. Read the fitness JSON:
-   - `loaded:false` → a **format error** (the message names the offending line). Fix via the relevant
-     stage and re-validate. This is the loader acting as linter.
+   - `loaded:false` → a **format error** (the message names the offending line). Route it to the
+     responsible stage and re-validate — this is the loader acting as linter. A *"missing conclusion
+     answer phrases from conclusion categories: X"* message is a **game-conclusions** bug (a cloze
+     answer `X` isn't in any category — usually a character/room/item blank that used a heading/id
+     instead of the title, or an answer with no author-defined category).
    - `gates.ok:false` → a **solvability error**. `unreachable.characterIds` / `unreachable.itemIds`
      name what's stranded. Send those back to **game-cron** (usually) to add co-presence / move items,
      and re-validate.

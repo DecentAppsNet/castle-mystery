@@ -49,5 +49,7 @@ export async function loadLevelFromFile(filename:string):Promise<Level> {
   const levelText = await _readLevelsFile(filename);
   const importTexts = await Promise.all(findImportedFilenames(levelText).map(_readLevelsFile));
   const mergedText = createLevelTextWithImportTexts(importTexts, levelText);
-  return loadLevelFromText(mergedText, filename);
+  // Match the app's loadLevelFromUrl strictness so the CLI (solve / evaluate) rejects what the app
+  // would reject — e.g. cloze answers missing from the conclusion categories (validateUnlockPhrases).
+  return loadLevelFromText(mergedText, filename, { validateUnlockPhrases:true });
 }

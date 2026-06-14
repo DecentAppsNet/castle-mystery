@@ -222,11 +222,11 @@ candidate(s) as flat `public/levels/_gen.*.md` files so imports resolve and they
                      ┌───────────┐    │
                      │coordinator│    │  builder: realizes ONE mutation
                      └─────┬─────┘    │
-        ┌──────────┬──────┼──────┬────────────┐
-        ▼          ▼      ▼      ▼            ▼
-   story-teller architect scout itemiser   game-cron     specialist generators
-     (story)   (rooms+   (chars+ (items)  (itinerary/      each patches level.md,
-                exits)   identities)        movement)       returns a diff + rationale
+        ┌────────┬────────┬──────┬────────┬──────────┬──────────────────┐
+        ▼        ▼        ▼      ▼        ▼          ▼                  ▼
+   story-teller architect scout itemiser game-cron game-conclusions    specialist generators
+     (story)   (rooms+   (chars)(items) (itinerary  (# Conclusions:     each patches level.md,
+                exits)                    /movement)  Identities+cloze)  returns a diff + rationale
                                   │
                                   ▼
                         ┌──────────────────────┐
@@ -248,10 +248,11 @@ Two distinct controllers — keep them separate:
 |---|---|---|---|
 | story-teller | player prompt | `story.md` | — |
 | game-architect | story | `# Map`, `# Rooms` (grid, exits/doors, start rooms) | — |
-| game-scout | story | `# Characters` + hidden identities + empty `## Identities` | — |
+| game-scout | story | `# Characters` (each `* title=` is the hidden identity; `* description=` is the clue) + placement in room grids | — |
 | game-itemiser | story, rooms | `# Items` + placement in room grids | — |
 | game-cron | story, rooms, chars, items | `# Itinerary` (movement / speech / encounters) | — |
-| clue-author *(Phase 5)* | story, a conclusion type | one story-consistent clue (itinerary / item / description) | — |
+| game-conclusions | story, level | `# Conclusions`: explicit `## Identities` + cloze conclusions + author-defined answer categories (every cloze answer a category member; character/room/item blanks use the **title**) | — |
+| clue-author *(Phase 5)* | story, a conclusion type | one story-consistent clue extending **game-conclusions** (itinerary / item / description) | — |
 | **solver** (validator) | candidate | gates + complexity ints | structural |
 | **play-game** (validator) | candidate | per-char inferable + difficulty + gaps | semantic |
 
@@ -266,7 +267,7 @@ Authoring-format reference for the specialists (the contract they are fed) is di
 
 | Gate | Source |
 |---|---|
-| G1 `loads` — parses, no `LoadLevelException` | loader |
+| G1 `loads` — parses + every cloze answer is in a conclusion category (`validateUnlockPhrases`), no `LoadLevelException` | loader |
 | G2 `reachability.ok` — all characters reachable | solver |
 | G3 `itemReachability.ok` — all items witnessed by a reachable character | solver |
 | G4 `identitiesInferable` — no `⚠️ none` gaps *(configurable)* | play-game |
@@ -527,6 +528,26 @@ than deleting.
   (invasive, violates ADR 010, touches all level/import loading); a dev middleware mapping a flat URL
   to a subdir file (magic, fragile).
 
+### DR-010 — A dedicated `game-conclusions` agent; CLI scorer matches the app's load strictness
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Context:** The Phase 1 builder authored conclusions inline and produced a cloze whose character
+  blank used the `##` heading (`[Dame Hartwell]`) instead of the character's title. The **app** rejected
+  it ("missing conclusion answer phrases from conclusion categories"), but `npm run evaluate` accepted
+  it — `loadLevelFromFile` didn't pass `validateUnlockPhrases:true`. Another validator/app divergence
+  (cf. DR-009).
+- **Decision:** (1) `loadLevelFromFile` (used by `solve` + `evaluate`) now loads with
+  `validateUnlockPhrases:true`, so the CLI scorer rejects exactly what the app rejects. (2) Add a
+  dedicated **game-conclusions** specialist (pipeline stage 6) that owns the `# Conclusions` section: an
+  **explicit `## Identities`** plus cloze conclusions and their answer categories, grounded in the
+  story, with every cloze answer a category member (character/room/item blanks use the **title**). The
+  `/play-game` semantic validator (Phase 2) then judges inferability and flags conflicting / ambiguous
+  solutions.
+- **Consequences:** Conclusion authoring is a focused, separately-validated stage; Identities is always
+  present so other conclusions can be layered on. CLI/app load parity removes another class of "passes
+  `evaluate`, fails in the app" surprises.
+- **Alternatives rejected:** leaving conclusions to game-scout/game-cron (diffuse, under-validated);
+  keeping `evaluate` lenient (defeats the purpose of a structural validator).
+
 ---
 
 ## 14. Iteration history (what worked / what didn't)
@@ -540,6 +561,7 @@ Empirical learnings from actually running the system. Append dated entries as we
 | 2026-06-14 | Built Phase 0 scoring; ran `evaluate` on `01_birth_of_constantine.md` | Works: 18 chars / 8 items all reachable, `maxCost 2`, `meanCost 0.88`, histogram `{0:52,1:57,2:35}`. Existing levels skew **shallow** (most clues 0–1 switches deep) | Recorded as the baseline for the complexity target band; defer setting the band until we have generated examples to compare |
 | 2026-06-14 | Phase 1 one-shot run: story-teller + builder agents → `three_blind_mice.md` | Loads & solves (`gates.ok:true`, 6 chars / 4 items reachable) but trivially **shallow**: `meanCost 0.08`, `maxCost 1` — the builder converges the whole cast in one room, so most items are cost 0. The builder needed 3 repairs and exposed 3 wrong/missing contract rules | Fixed the authoring contract (normalizeId is `trim+lowercase` only; room-grid width = map-tiles×4 by 3 rows; exits are horizontal-only; characters must be **placed** in a grid to exist). Shallow complexity confirms Phase 3 (optimization) is where depth must be engineered |
 | 2026-06-14 | Loaded the generated level in the app via the new `(GEN)` tab | **Failed**: "missing required map section" despite the level having a `# Map`. Root cause: the `_gen/` **subdirectory** doesn't round-trip through the app's filename loader (`loadLevelFromUrl` drops the subdir; `validateFilename` forbids `/`), so the app fetched the wrong path → `index.html`. `evaluate` (CLI) passed because it loads via a subdir-tolerant path — a validator/app divergence | Switched candidates to **flat** `_gen.*.md` files under `public/levels/` (DR-009); CLI scorer and app now load the identical file. Reinforced `# Map` as required in the authoring contract |
+| 2026-06-14 | Loaded the (flat) level in the app | **Failed** at conclusion validation: "missing conclusion answer phrases … Dame Hartwell" — the cloze used the character's `##` heading, but the `characters` category holds **titles**. `evaluate` had passed it because the CLI loader skipped `validateUnlockPhrases` | Made `loadLevelFromFile` load with `validateUnlockPhrases:true` (CLI now matches the app — it now *catches* this); added a dedicated **game-conclusions** agent + contract rule (cloze answers must be category members; character/room/item blanks use the title); always emit an explicit `## Identities` (DR-010). Patched the demo cloze to `[The Farmer's Wife]` |
 
 Use this table for: cap tunings (B/N/R/P) and their effect; mutation classes that
 reliably help vs waste budget; prompts/schemas that produced invalid levels; solver/
@@ -634,3 +656,8 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   round-trip through the app's filename-based loader (surfaced as "missing required map section").
   Switched candidates to **flat** `public/levels/_gen.*.md` files so the CLI scorer and app load
   identically; updated dev-gen, manifest, skill, `.gitignore`, and the contract accordingly.
+- **2026-06-14** — Conclusion-phrase parity + agent (DR-010): `loadLevelFromFile` (solve/evaluate) now
+  loads with `validateUnlockPhrases:true`, so the CLI scorer rejects cloze answers missing from
+  conclusion categories — exactly as the app does. Added a `game-conclusions` pipeline stage and
+  contract rules (cloze answers must be category members; character/room/item blanks use the title;
+  always an explicit `## Identities`).
