@@ -28,6 +28,15 @@ promoted PLANNED→LIVE — update the diagrams, the [call table](#call-table), 
 - **deterministic** — a non-LLM step (a Bash/CLI call, e.g. the solver); no model.
 - **LIVE** = wired in the skill today. **PLANNED** = designed, not yet wired.
 
+**Layout convention.** The diagrams read **left → right**: a caller is always to the **left** of its
+callee, so a **solid arrow is a forward request and always points rightward**. A hub's callees are
+drawn to the hub's right — and because the **validator-coordinator** is itself a hub that calls agents,
+**its callees are replicated to its right** (the validator-side solver, play-game, re-gen subagent, and
+synthesiser are distinct nodes from the main coordinator's, on the validator's right). **Dashed arrows**
+are returns, escalations, or human-facing prompts back toward a hub/the user (rightward replies are the
+hub passing data down). Parallel groups and loops are shown as **shaded regions with a full-English
+label** — no bare Mermaid keyword tabs (`par`/`loop`/`opt`).
+
 ---
 
 ## Communication rules (invariants)
@@ -58,6 +67,8 @@ promoted PLANNED→LIVE — update the diagrams, the [call table](#call-table), 
 
 ```mermaid
 sequenceDiagram
+    %% Left to right: solid arrow = forward request (always points right); dashed = return / escalation /
+    %% human prompt. The validator-coordinator's callees are replicated to its right (EV, PG, VR, SY2).
     actor User
     participant WG as coordinator (/world-gen)
     participant ST as story-teller
@@ -69,10 +80,15 @@ sequenceDiagram
     participant CN as game-conclusions
     participant SY as synthesiser (sole writer)
     participant VC as validator-coordinator
+    participant EV as solver (npm run evaluate)
+    participant PG as play-game
+    participant VR as wave subagent (validator re-gen)
+    participant SY2 as synthesiser (validator writes)
 
     User->>WG: /world-gen prompt
     WG->>ST: playerPrompt
-    loop story-teller's private critic loop (capped)
+    rect rgb(245, 240, 255)
+        Note over ST,SK: Repeats until accepted, capped — story-teller's private critic loop
         ST->>SK: playerPrompt + draft story
         SK-->>ST: verdict + scores + reasons + improvements
     end
@@ -80,13 +96,12 @@ sequenceDiagram
     WG->>SY: create file — story-teller return + id
     SY-->>WG: level md (file written)
 
-    par In Parallel — wave 2 (input = the story)
+    rect rgb(235, 245, 255)
+        Note over WG,IT: In Parallel — wave 2 (input = the story)
         WG->>AR: story
         AR-->>WG: rooms-map data + apply-prompt
-    and
         WG->>SC: story
         SC-->>WG: characters + faces data + apply-prompt
-    and
         WG->>IT: story
         IT-->>WG: items data + apply-prompt
     end
@@ -98,10 +113,10 @@ sequenceDiagram
     WG->>SY: md + itemiser return + id
     SY-->>WG: md (written)
 
-    par In Parallel — wave 3 (input = story + current md)
+    rect rgb(235, 245, 255)
+        Note over WG,CN: In Parallel — wave 3 (input = story + current md)
         WG->>CR: story + level md
         CR-->>WG: itinerary data + apply-prompt
-    and
         WG->>CN: story + level md
         CN-->>WG: conclusions data + apply-prompt
     end
@@ -111,30 +126,34 @@ sequenceDiagram
     SY-->>WG: md (written)
 
     WG->>VC: validate-and-tweak (levelFilename, story, maxIterations)
-    loop until pass or maxIterations (PLANNED)
-        VC->>VC: npm run evaluate (solver) and play-game
-        opt a fix is needed
-            VC->>SC: targeted re-gen (any wave subagent)
-            SC-->>VC: delta data + apply-prompt
-            VC->>SY: md + delta + id
-            SY-->>VC: md (written)
-        end
-        opt needs user input
-            VC-->>WG: humanQuestion
-            WG->>User: AskUserQuestion
-            User-->>WG: answer
-            WG-->>VC: answer
-        end
+    rect rgb(240, 250, 240)
+        Note over VC,SY2: Repeats until pass or maxIterations (PLANNED)
+        VC->>EV: npm run evaluate (solver)
+        EV-->>VC: fitness JSON — gates incl. noAnachronisms
+        VC->>PG: semantic check
+        PG-->>VC: per-character inferability + gaps
+        Note over VC,VR: When a fix is needed — an anachronism or co-presence gap routes to game-cron
+        VC->>VR: targeted re-gen (any wave subagent)
+        VR-->>VC: delta data + apply-prompt
+        VC->>SY2: md + delta + id
+        SY2-->>VC: md (written)
+    end
+    rect rgb(255, 250, 235)
+        Note over User,VC: When user input is needed — escalate up to the hub (PLANNED)
+        VC-->>WG: humanQuestion
+        WG-->>User: AskUserQuestion
+        User->>WG: answer
+        WG-->>VC: answer
     end
     VC-->>WG: status + fitness + play-game findings
 
-    loop human-in-the-loop until the user says it is ok (PLANNED)
-        WG->>User: present the playable level (test via dev-gen)
-        User-->>WG: change request or it is ok
-        opt change request
-            WG->>VC: apply the requested change
-            VC-->>WG: updated (synthesiser wrote each transition)
-        end
+    rect rgb(255, 250, 235)
+        Note over User,VC: Repeats until the user says it is ok (PLANNED)
+        WG-->>User: present the playable level (test via dev-gen)
+        User->>WG: change request or it is ok
+        Note over WG,VC: On a change request
+        WG->>VC: apply the requested change
+        VC-->>WG: updated (synthesiser wrote each transition)
     end
     Note over User,WG: the user confirming ends the agentic interaction
 ```
@@ -142,7 +161,7 @@ sequenceDiagram
 ## Delegation graph
 
 ```mermaid
-flowchart TD
+flowchart LR
     U([User]) -->|"/world-gen"| WG["main coordinator"]
     WG -.->|"report · ask · confirm"| U
 
@@ -150,11 +169,13 @@ flowchart TD
     ST -.->|"private critic loop (capped)"| SK["story-critic"]:::child
 
     subgraph wave2["wave 2 — In Parallel · input = story"]
+        direction TB
         AR["game-architect"]
         SC["game-scout"]
         IT["game-itemiser"]
     end
     subgraph wave3["wave 3 — In Parallel · input = story + level md"]
+        direction TB
         CR["game-cron"]
         CN["game-conclusions"]
     end
@@ -163,14 +184,23 @@ flowchart TD
     WG --> CR & CN
     WG -->|"md + one return + id"| SY["synthesiser — SOLE WRITER"]:::writer
     SY -->|"writes every transition"| FILE["the level md on disk"]
-    SY -->|"updated md"| WG
+    SY -.->|"updated md"| WG
 
     WG -->|"when generation is done"| VC["validator-coordinator — sub-hub"]
-    VC -->|"npm run evaluate"| EV["solver · deterministic"]
-    VC -->|"semantic check"| PG["play-game"]
-    VC -->|"targeted re-gen"| AR & SC & IT & CR & CN
-    VC -->|"delta + id"| SY
-    VC -.->|"human question"| WG
+
+    subgraph vfan["validator-coordinator's calls — replicated to its right"]
+        direction TB
+        EV["solver · deterministic"]
+        PG["play-game"]
+        VR["wave subagent — re-gen"]
+        SY2["synthesiser — validator writes"]:::writer
+    end
+
+    VC -->|"npm run evaluate"| EV
+    VC -->|"semantic check"| PG
+    VC -->|"targeted re-gen · anachronism/co-presence to game-cron"| VR
+    VC -->|"delta + id"| SY2
+    VC -.->|"escalate human question"| WG
 
     classDef writer fill:#efe,stroke:#2a2;
     classDef child stroke-dasharray:3 2,stroke:#2266aa;
@@ -193,9 +223,9 @@ flowchart TD
 | 8 | coordinator | game-conclusions | subagent | `story` + level md | conclusions data + prompt | **In Parallel (wave 3)** | LIVE |
 | 9 | coordinator | synthesiser | synthesiser | md + one subagent return + id | level md (writes file) | once per return (serialized) | LIVE |
 | 10 | coordinator | validator-coordinator | subagent (sub-hub) | levelFilename + story + maxIterations | status + fitness + findings (+ humanQuestion) | — | PLANNED |
-| 11 | validator-coordinator | `npm run evaluate` | deterministic | candidate file | fitness JSON | — | PLANNED |
+| 11 | validator-coordinator | `npm run evaluate` | deterministic | candidate file | fitness JSON (gates incl. `noAnachronisms` + `anachronisms` detail) | — | PLANNED |
 | 12 | validator-coordinator | play-game | subagent | candidate file | per-character inferability + gaps | — | PLANNED |
-| 13 | validator-coordinator | any wave subagent | subagent | targeted directive (custom IN) | delta data + prompt | as applicable | PLANNED |
+| 13 | validator-coordinator | any wave subagent | subagent | targeted directive (custom IN; anachronism / co-presence → game-cron) | delta data + prompt | as applicable | PLANNED |
 | 14 | validator-coordinator | synthesiser | synthesiser | md + delta + id | level md (writes file) | serialized | PLANNED |
 | 15 | validator-coordinator | coordinator | up-call | `humanQuestion` | user's answer | — | PLANNED |
 | 16 | coordinator | Human | `AskUserQuestion` | question / level to review | answer / "it's ok" (ends run) | — | PLANNED |
@@ -220,10 +250,15 @@ flowchart TD
 - **Exercise status.** The revised model has been exercised **through waves 1–3** (Sing a Song of
   Sixpence, 2026-06-14): the story-teller→story-critic loop, the **In-Parallel** waves 2 and 3, pure
   subagent returns, and the synthesiser all ran; the level loads with the full Identities + cloze
-  puzzle, and movement-based co-presence works (absolute-timestamp tour → depth `meanCost 0.38`). One
-  far-room link is an open solver finding (see the design doc's Iteration History). **Not yet
+  puzzle, and movement-based co-presence works. The far-room link that first read as an open finding was
+  a **solver** blind spot (a tour's final room was never sampled), now **fixed** (DR-016): the level is
+  fully solvable — **6/6 characters, 8/8 items**, `meanCost 0.60`, zero anachronisms. **Not yet
   exercised:** the dedicated validator-coordinator loop and the human-in-the-loop. The earlier *full*
   runs (Three Blind Mice, Tinker Tailor Soldier Spy) predate this architecture (prior whole-md model).
+- **Anachronism gate (new).** The solver now also detects **timeline anachronisms** (a character in two
+  places at once — an absolute arrival back-planned over an earlier one); `npm run evaluate` exposes it
+  as the `noAnachronisms` gate + an `anachronisms` detail list, so the validator-coordinator routes such
+  a fault to **game-cron** (the itinerary owner). See design-doc DR-016 + adr-solver §6c.
 - **Synthesiser is currently fulfilled inline.** In runs so far the **coordinator performs the
   synthesiser role itself** (writing the file as it applies each return); a *dedicated synthesiser
   agent* is the target — same status as the validator-coordinator (designed, not yet a separately
@@ -253,3 +288,14 @@ flowchart TD
   exercise status to **waves 1–3** (no un-exercised waves remain). Relabelled the parallel blocks
   explicitly **"In Parallel"** (the bare Mermaid `par` keyword stays — it's required syntax — but every
   grouping's visible label now reads "In Parallel").
+- **2026-06-14** — Solver-side update (DR-016): the far-room "open finding" was a co-presence
+  **sampling** blind spot, now fixed (timeline-end sample) — the level is fully solvable (6/6 chars, 8/8
+  items, `meanCost 0.60`). Added the **anachronism** signal to the validator's `evaluate` return
+  (`noAnachronisms` gate) and noted the fault routes to **game-cron**.
+- **2026-06-14** — **Diagrams reoriented left → right.** Both the sequence and delegation diagrams now
+  read caller-on-left, callee-on-right; the **validator-coordinator's callees are replicated to its
+  right** (EV/PG/VR/SY2 as distinct nodes). Flowchart switched to `flowchart LR`. **Removed every bare
+  Mermaid keyword tab** (`par`/`loop`/`opt`) in the sequence diagram — parallel groups and loops are now
+  **shaded `rect` regions with a full-English label** ("In Parallel …", "Repeats until …", "When a fix is
+  needed …"). Solid arrow = forward request (always rightward); dashed = return / escalation / human
+  prompt. (Supersedes the prior "the `par` keyword stays" note.)
