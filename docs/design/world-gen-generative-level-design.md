@@ -393,6 +393,15 @@ Verified end-to-end on `01_birth_of_constantine.md` (18 chars, 8 items, all reac
 into the form fed to agents, and define the inter-agent JSON schemas — both deferred to
 Phase 1, where the agents that use them are built.
 
+**Phase 1 status (2026-06-14):** the one-shot pipeline is **done and validated**. Built the
+`/world-gen` skill (`.claude/skills/world-gen/SKILL.md`) and the authoring contract fed to agents
+(`.claude/skills/world-gen/references/authoring-contract.md`). A real run (story-teller agent →
+combined builder agent) generated `public/levels/_gen/three_blind_mice.md` — a 4-room, 6-character,
+4-item Three Blind Mice level that **loads and passes the solver** (`gates.ok:true`, nothing
+unreachable). Inter-agent contracts are described informally in the skill; formal JSON schemas stay
+deferred until the Phase 3 optimization loop needs them. Two learnings fed back into the authoring
+contract — see Iteration History.
+
 ---
 
 ## 13. Decision Log
@@ -508,6 +517,7 @@ Empirical learnings from actually running the system. Append dated entries as we
 |---|---|---|---|
 | 2026-06-14 | — | Design accepted | — |
 | 2026-06-14 | Built Phase 0 scoring; ran `evaluate` on `01_birth_of_constantine.md` | Works: 18 chars / 8 items all reachable, `maxCost 2`, `meanCost 0.88`, histogram `{0:52,1:57,2:35}`. Existing levels skew **shallow** (most clues 0–1 switches deep) | Recorded as the baseline for the complexity target band; defer setting the band until we have generated examples to compare |
+| 2026-06-14 | Phase 1 one-shot run: story-teller + builder agents → `three_blind_mice.md` | Loads & solves (`gates.ok:true`, 6 chars / 4 items reachable) but trivially **shallow**: `meanCost 0.08`, `maxCost 1` — the builder converges the whole cast in one room, so most items are cost 0. The builder needed 3 repairs and exposed 3 wrong/missing contract rules | Fixed the authoring contract (normalizeId is `trim+lowercase` only; room-grid width = map-tiles×4 by 3 rows; exits are horizontal-only; characters must be **placed** in a grid to exist). Shallow complexity confirms Phase 3 (optimization) is where depth must be engineered |
 
 Use this table for: cap tunings (B/N/R/P) and their effect; mutation classes that
 reliably help vs waste budget; prompts/schemas that produced invalid levels; solver/
@@ -587,3 +597,7 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   `buildLevelFitness` + complexity aggregates + `scripts/evaluateLevel.ts`
   (`npm run evaluate`) + `public/levels/_gen/` scratch dir (DR-008). Typecheck clean, 53
   solver tests pass, verified on a real level.
+- **2026-06-14** — Phase 1 (one-shot generator pipeline) implemented & validated: `/world-gen`
+  skill + authoring-contract reference; a real story-teller→builder run produced a loadable,
+  solver-passing Three Blind Mice level (`_gen/three_blind_mice.md`, `meanCost 0.08`). Corrected the
+  authoring contract from run learnings (grid width, horizontal-only exits, `normalizeId`, placement).
