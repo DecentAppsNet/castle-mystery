@@ -161,16 +161,26 @@ every field, complete free-text values. **Never** abbreviate: no `…`, no `(N c
 no "(omitted)". If the `story` prose or a `description` is long, print all of it. The point of verbose
 mode is to see the real data.
 
-### Enforcement across subagents
+### Enforcement — the CALLER echoes its callee's IN/OUT inline (so it is always visible)
 
-A subagent runs in its own context, so the coordinator only sees what it **returns**. Therefore **every
-subagent spawned in verbose mode is instructed to build its own trace** — its `[SELF|IN]`, a `[SELF|CALL]`
-line for each agent it calls, the **full nested trace** of those callees, and its `[SELF|OUT]` — and to
-**include that whole trace verbatim in its returned message**. The coordinator then prints the returned
-trace **unmodified and untruncated**. This makes nested calls visible too: e.g. the story-teller returns
-its own `|IN`/`|OUT` plus the embedded `[story-critic|IN]`/`[story-critic|OUT]` of each critic round; the
-validator-coordinator returns the embedded `[solver|…]`, `[play-game|…]`, `[game-cron|…]`,
-`[file-writer|…]` lines of every iteration.
+A subagent runs in its own isolated context, so its self-emitted lines only reach the user **when it
+returns** (buried in that call's result), and **not at all if it is interrupted**. So visibility cannot
+depend on the subagent alone. The rule:
+
+- **The calling agent (normally the COORDINATOR) prints the callee's `[<callee>|IN] {full input}`
+  immediately *before* spawning it**, and the callee's `[<callee>|OUT] {full output}` immediately
+  *after* it returns — **inline in the main console**, untruncated. This guarantees every agent's `|IN`
+  is visible the moment it is called (even if the call is then interrupted) and its `|OUT` the moment it
+  returns, in correct order, without the user expanding any tool result.
+- **Every spawned subagent is ALSO instructed to build its own trace** — `[SELF|IN]`, a `[SELF|CALL]`
+  per call, the **full nested trace** of its callees, and `[SELF|OUT]` — and **return it verbatim**.
+  This is how *nested* calls become visible: the coordinator cannot print a grandchild's lines itself,
+  so the parent returns them and the coordinator relays them inline. E.g. the story-teller returns the
+  embedded `[story-critic|IN]`/`[story-critic|OUT]` of each round; the validator returns the embedded
+  `[solver|…]`, `[play-game|…]`, `[game-cron|…]`, `[file-writer|…]` lines of every iteration.
+- Net effect: the coordinator drives a single, ordered, full trace in the main console — its own
+  `|IN`/`|CALL`/`|OUT` for direct calls, plus the relayed nested traces — so **every agent adheres to
+  the contract and the user sees them all while the skill runs**.
 
 ### Parallel groups
 
