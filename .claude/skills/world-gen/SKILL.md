@@ -71,8 +71,10 @@ short summary of what came back).
 3. **game-scout** — input: current candidate + story + contract. Output: adds `# Characters` and
    places each in a room grid. Each character's `* title=` is the **hidden identity the player
    deduces** (the conclusion answer); its `* description=` carries the *witnessable clue* to that
-   identity. Pick the `activeCharacter` and ensure everyone can become connected to them.
-   (game-scout only creates the cast — Conclusions are stage 6.)
+   identity. Give each a `* faceImage=` chosen from `public/assets/faces/` — **list that directory and
+   assign a distinct real file to every character** (pick at random; ~37 available, enough for large
+   casts) so the level renders for playtesting. Pick the `activeCharacter` and ensure everyone can
+   become connected to them. (game-scout only creates the cast — Conclusions are stage 6.)
 
 4. **game-itemiser** — input: current candidate + story + contract. Output: adds `# Items` and places
    them in room grids (or characters' inventories). Phase 1: items are story-flavour; just ensure each

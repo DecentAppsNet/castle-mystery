@@ -248,7 +248,7 @@ Two distinct controllers — keep them separate:
 |---|---|---|---|
 | story-teller | player prompt | `story.md` | — |
 | game-architect | story | `# Map`, `# Rooms` (grid, exits/doors, start rooms) | — |
-| game-scout | story | `# Characters` (each `* title=` is the hidden identity; `* description=` is the clue) + placement in room grids | — |
+| game-scout | story | `# Characters` (each `* title=` is the hidden identity; `* description=` is the clue; `* faceImage=` a distinct real file from `public/assets/faces/`) + placement in room grids | — |
 | game-itemiser | story, rooms | `# Items` + placement in room grids | — |
 | game-cron | story, rooms, chars, items | `# Itinerary` (movement / speech / encounters) | — |
 | game-conclusions | story, level | `# Conclusions`: explicit `## Identities` + cloze conclusions + author-defined answer categories (every cloze answer a category member; character/room/item blanks use the **title**) | — |
@@ -661,3 +661,5 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   conclusion categories — exactly as the app does. Added a `game-conclusions` pipeline stage and
   contract rules (cloze answers must be category members; character/room/item blanks use the title;
   always an explicit `## Identities`).
+- **2026-06-14** — Generated characters now use a **distinct real face** from `public/assets/faces/`
+  (~37 available) so levels render for playtesting (game-scout + authoring contract).

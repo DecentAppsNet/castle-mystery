@@ -148,8 +148,10 @@ deduce (characters are `isTitleKnown=false` by default).
   enough**; an unplaced character causes an "unknown character" failure. Place every character you use.
 - `description` — a character is **interactive** (and gets an Identities blank) when it has a
   non-empty description (or a faceImage, or is placed). Always give real characters a description.
-- `faceImage=<name>.png` — the sprite. Assume `<charactername>.png` exists; it is not loaded during
-  scoring.
+- `faceImage=<name>.png` — the sprite, resolved to `/assets/faces/<name>.png`. **Use a real file from
+  `public/assets/faces/`, and give every character a *different* one** (~37 are available — plenty even
+  for large casts) so the generated level actually renders for playtesting (`npm run dev-gen`). The
+  image isn't loaded during scoring, but a real, unique face keeps the level usable.
 - Optional: `* title=` (full name if different from heading), `* facing=left|right`,
   `* orientation=standing|sitting|laying`, `* items=A | B` (carried), `* alive=false`,
   `* isTitleKnown=true` (reveal from the start — usually leave false).
