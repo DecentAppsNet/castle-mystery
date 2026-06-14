@@ -1,21 +1,30 @@
-# HLD: world-gen Agentic Call Graph
+# HLD: world-gen & world-fix Agentic Call Graphs
 
 ## Status
 
 **Living document.** Started 2026-06-14 on the `world-gen` branch. Tracks the agentic
-request/delegation flow of the `/world-gen` generative level generator — who calls whom, what is
-passed and returned, which calls are LLM subagents vs deterministic steps, and which run in parallel.
+request/delegation flow of the **two skills** that make up the generative level system — who calls whom,
+what is passed and returned, which calls are LLM subagents vs deterministic steps, and which run in
+parallel:
+
+- **`/world-gen`** — the generative level *generator*: story → rooms/cast/items → itinerary/conclusions,
+  then a fix loop that gates on world-fix until the level is `READY`. (It is the implementer + sole
+  writer.)
+- **`/world-fix`** — the read-only level *validator/decider*: runs the solver + play-game on one level
+  and returns a prioritised fix TODO + a `READY`/`NEEDS-WORK` verdict. Used **standalone** by a game
+  architect, and **as the gate** world-gen loops against. (It writes nothing.)
+
 The *why* (design, fitness model, roadmap) lives in the sibling
 [world-gen-generative-level-design.md](world-gen-generative-level-design.md); the exact per-agent
 input/output structures live in
 [../../.claude/skills/world-gen/references/agent-contracts.md](../../.claude/skills/world-gen/references/agent-contracts.md).
-This document is the *how-it-calls* view.
+This document is the *how-it-calls* view of both skills.
 
 ## How to use & maintain
 
-Keep this reflecting the **calls that actually happen**. **Whenever an agent call changes — a new/
-removed/merged agent, a changed payload, a new delegation, a changed parallel grouping, or a call
-promoted PLANNED→LIVE — update the diagrams, the [call table](#call-table), and the
+Keep this reflecting the **calls that actually happen** for **both skills**. **Whenever an agent call
+changes — a new/removed/merged agent, a changed payload, a new delegation, a changed parallel grouping,
+or a call promoted PLANNED→LIVE — update the affected skill's diagrams, its call table, and the
 [Changelog](#changelog) in the same change.** Keep PLANNED visibly separate from LIVE.
 
 ## Legend
@@ -66,7 +75,10 @@ are shown as **shaded regions with a full-English label** — no bare Mermaid ke
 
 ---
 
-## Request flow
+## world-gen — request flow
+
+The full generation pipeline (waves 1–3) followed by the world-fix gate loop. `world-fix` appears here
+as the decider the coordinator calls; its own internals are detailed in the **world-fix** section below.
 
 ```mermaid
 sequenceDiagram
@@ -158,7 +170,7 @@ sequenceDiagram
     Note over User,WG: the user confirming ends the agentic interaction
 ```
 
-## Delegation graph
+## world-gen — delegation graph
 
 ```mermaid
 flowchart LR
@@ -208,7 +220,7 @@ flowchart LR
 
 ---
 
-## Call table
+## world-gen — call table
 
 | # | Caller | Callee | Kind | Sends | Returns | Parallel? | Status |
 |---|---|---|---|---|---|---|---|
@@ -229,6 +241,62 @@ flowchart LR
 | 14 | coordinator | file-writer (synthesiser) | synthesiser | **canonical** md + delta + id | canonical md (writes `_gen.slug.md`, each transition) | once per fix | PLANNED |
 | 15 | coordinator | world-fix | subagent (read-only) | `levelFile` (re-check) | TODO + verdict — loop until `READY` or maxIterations | per pass | PLANNED |
 | 16 | coordinator | Human | `AskUserQuestion` | question (ambiguous / unrepairable must-fix) | answer / "it's ok" (ends run) | — | PLANNED |
+
+---
+
+## world-fix — request flow
+
+`world-fix` is the **read-only decider**, invoked the **same way** whether a game architect runs it
+standalone (`/world-fix <level>`) or the world-gen coordinator calls it as its gate. It calls only the
+solver and play-game and returns advice — it **never writes and never calls the wave agents**.
+
+```mermaid
+sequenceDiagram
+    %% world-fix is READ-ONLY. solid = forward request (points right); dashed = return.
+    %% Caller is a human (standalone /world-fix) OR the world-gen coordinator — identical call graph.
+    actor Caller as User / world-gen coordinator
+    participant WF as world-fix (decider, read-only)
+    participant EV as solver (npm run evaluate)
+    participant PG as play-game (player oracle, private child)
+
+    Caller->>WF: world-fix (levelFile)
+    rect rgb(235, 245, 255)
+        Note over WF,PG: Read-only analysis — world-fix writes nothing
+        WF->>EV: npm run evaluate -- levelFile
+        EV-->>WF: fitness — gates (charactersReachable, itemsReachable, noAnachronisms) + complexity
+        WF->>PG: analyse levelFile (player view)
+        PG-->>WF: per-character inferability + per-conclusion difficulty + conflicts
+    end
+    WF->>WF: synthesise prioritised TODO (BLOCKER then MAJOR then MINOR) + verdict
+    WF-->>Caller: TODO (items: severity · area · fix · evidence) + verdict READY/NEEDS-WORK
+    Note over Caller,WF: the caller implements (world-gen) or reads the list (architect) — world-fix never edits
+```
+
+## world-fix — delegation graph
+
+```mermaid
+flowchart LR
+    C(["User · or world-gen coordinator"]) -->|"world-fix (levelFile)"| WF["world-fix — decider · READ-ONLY"]:::ro
+    WF -->|"npm run evaluate"| EV["solver · deterministic"]
+    WF -->|"player analysis"| PG["play-game · semantic oracle"]
+    EV -.->|"fitness"| WF
+    PG -.->|"findings"| WF
+    WF -.->|"TODO (severity · area · fix) + verdict READY/NEEDS-WORK"| C
+
+    classDef ro fill:#eef,stroke:#5577aa;
+```
+
+## world-fix — call table
+
+| # | Caller | Callee | Kind | Sends | Returns | Status |
+|---|---|---|---|---|---|---|
+| F1 | User (standalone) · or world-gen coordinator | world-fix | skill / subagent (**read-only**) | `levelFile` (mandatory) | TODO `items:[severity, area, issue, fix, evidence]` + verdict `READY`/`NEEDS-WORK` + raw solver/play-game | LIVE (standalone skill) |
+| F2 | world-fix | `npm run evaluate` (solver) | deterministic | the level file | fitness JSON (gates + complexity + anachronisms) | LIVE |
+| F3 | world-fix | play-game | subagent (**private child** — vertical sub-delegation) | the level file | structured per-character inferability + per-conclusion difficulty + conflicts | LIVE |
+
+These same three calls appear inside the **world-gen** call table (rows 10–12) when world-gen uses
+world-fix as its gate; there they are `PLANNED` because world-gen runs the whole loop inline today. As a
+**standalone** skill, world-fix is `LIVE` — it writes nothing, so it is safe to run on any level.
 
 ---
 
@@ -329,3 +397,9 @@ flowchart LR
   wave agent + file-writer and **re-runs world-fix until `READY`** (gate-until-READY, replacing DR-017's
   scratch/accept-if-better). Removed the validator-side `VR`/`SY2` scratch nodes. Call table rows 10–16,
   legend, invariants (now "one hub + read-only decider sub-hub"), and current-state notes updated.
+- **2026-06-14** — **Documented BOTH skills.** Retitled to *world-gen & world-fix Agentic Call Graphs*;
+  the existing diagrams are now the **world-gen** section, and a dedicated **world-fix** section was added
+  with its own request-flow sequence, delegation flowchart, and call table (F1–F3) — showing world-fix
+  invoked identically standalone (a game architect) or as world-gen's gate, calling only solver +
+  play-game (read-only). Noted the status nuance: world-fix is `LIVE` standalone but appears `PLANNED`
+  inside world-gen's inline loop.
