@@ -9,9 +9,10 @@ description: >-
   is the only writer of the level md (one return per call, writing every transition). A
   validator-coordinator runs a capped dual-oracle (solver + play-game) accept-if-better loop and
   returns the accepted improvements for the coordinator to write via the synthesiser; human-in-the-loop
-  until the user confirms. Use when asked to generate/author a new level, "world-gen", or continue the
-  generative level generator. WRITES only _gen.*.md candidate files under public/levels/ (via the
-  synthesiser).
+  until the user confirms. Pass --verbose (--debug / -v) for a full agentic trace — every agent call and
+  return, the validator's reasoning over the solver + play-game outputs, and the coordinator's
+  delegations. Use when asked to generate/author a new level, "world-gen", or continue the generative
+  level generator. WRITES only _gen.*.md candidate files under public/levels/ (via the synthesiser).
 ---
 
 # world-gen — generative level designer
@@ -42,8 +43,10 @@ is the generator half of the generator/validator system designed in
 
 ## Input
 
-`/world-gen [prompt]` — if a prompt arg is given, use it. For development, the hardcoded fixture is the
-"Three Blind Mice" rhyme (the `getPlayerInput()` seam).
+`/world-gen [prompt] [--verbose]` — if a prompt arg is given, use it; for development the hardcoded
+fixture is the "Three Blind Mice" rhyme (the `getPlayerInput()` seam). **`--verbose`** (aliases
+`--debug`, `-v`) turns on the full agentic trace — see [Verbose / debug mode](#verbose--debug-mode).
+Default (no flag) prints only step headlines.
 
 ## Before you start
 
@@ -52,7 +55,9 @@ Read `references/authoring-contract.md` (the level format the synthesiser must p
 
 ## Pipeline (coordinator = you, the main loop)
 
-Narrate each step for observability (the call made + a short summary of the return).
+Narrate each step for observability (the call made + a short summary of the return). **When `--verbose`
+is set, emit the full trace defined in [Verbose / debug mode](#verbose--debug-mode) for every step
+below** — each call, each return, the validator's reasoning, and each coordinator delegation.
 
 **Wave 1 — story-teller** (solo). IN `playerPrompt` → OUT `story` (+ apply-prompt). **Internally the
 story-teller runs its own private `story-critic` loop** (vertical sub-delegation): it drafts the story,
@@ -125,10 +130,86 @@ accept-if-better loop and returns improvements, which you write via the **file-w
 written, so the user re-tests live). **The run ends only when the user confirms they're happy**
 ("it's ok").
 
+## Verbose / debug mode
+
+When `--verbose` (`--debug` / `-v`) is set, stream the **entire agentic trace** to the Claude console.
+This is a developer aid — **completeness over brevity, and ZERO truncation.**
+
+### The line format — uniform across EVERY agent (enforced)
+
+Every agent (the `COORDINATOR`, every subagent — story-teller, story-critic, game-architect, game-scout,
+game-itemiser, game-cron, game-conclusions — the `file-writer`, the `validator-coordinator`, the
+`play-game` oracle, and the `solver`) emits these exact lines, identified by its own name:
+
+```
+[<AGENT_NAME>|IN]   <the agent's full input, as JSON>
+[<AGENT_NAME>|CALL] <name of the agent it is about to call>
+[<AGENT_NAME>|OUT]  <the agent's full output, as JSON, emitted just before it returns>
+```
+
+- `[<AGENT>|IN]` — emitted **on entry**, echoing the complete input it received.
+- `[<AGENT>|CALL] <callee>` — emitted **immediately before** it calls another agent; the value is the
+  **callee's name** (the called agent then emits its own `|IN` … `|OUT`). One `|CALL` line per call.
+- `[<AGENT>|OUT]` — emitted **just before returning**, with the complete output.
+- Free-form reasoning uses the bare prefix: `[<AGENT>] <note>` (e.g. the validator's think-aloud, or
+  `[COORDINATOR] slug → _gen.x.md`). Use `[AGENT_NAME]` (uppercase the role) consistently.
+
+### NO TRUNCATION (hard rule)
+
+Every JSON in an `|IN` / `|OUT` line is printed **in full in the Claude console** — the whole object,
+every field, complete free-text values. **Never** abbreviate: no `…`, no `(N chars)`, no "summary",
+no "(omitted)". If the `story` prose or a `description` is long, print all of it. The point of verbose
+mode is to see the real data.
+
+### Enforcement across subagents
+
+A subagent runs in its own context, so the coordinator only sees what it **returns**. Therefore **every
+subagent spawned in verbose mode is instructed to build its own trace** — its `[SELF|IN]`, a `[SELF|CALL]`
+line for each agent it calls, the **full nested trace** of those callees, and its `[SELF|OUT]` — and to
+**include that whole trace verbatim in its returned message**. The coordinator then prints the returned
+trace **unmodified and untruncated**. This makes nested calls visible too: e.g. the story-teller returns
+its own `|IN`/`|OUT` plus the embedded `[story-critic|IN]`/`[story-critic|OUT]` of each critic round; the
+validator-coordinator returns the embedded `[solver|…]`, `[play-game|…]`, `[game-cron|…]`,
+`[file-writer|…]` lines of every iteration.
+
+### Parallel groups
+
+Mark a parallel wave with a free-form line, then the members' full traces (which may interleave):
+`[COORDINATOR] ‖ IN PARALLEL — wave 2 {game-architect, game-scout, game-itemiser}`.
+
+### The validator-coordinator's reasoning (its think-aloud)
+
+In addition to its `|IN`/`|CALL`/`|OUT` lines, the validator emits `[VALIDATOR] …` reasoning lines each
+iteration so a developer sees *why* it decides what it returns:
+
+```
+[VALIDATOR] iteration N
+[VALIDATOR] solver result: <full fitness JSON>
+[VALIDATOR] play-game result: <full findings JSON>
+[VALIDATOR] combined fitness = <value>  (failing gate dominates; else soft = band + difficulty balance + breadth + coherence)
+[VALIDATOR] diagnose: <signal> → route <agent>  because <reason>
+[VALIDATOR] plan: attack <X> first  because <a failing gate dominates | weakest soft signal>
+[VALIDATOR|CALL] game-cron            … then the game-cron |IN/|OUT …
+[VALIDATOR|CALL] file-writer          … writes scratch _gen.<slug>.try.md, file-writer |IN/|OUT …
+[VALIDATOR] recheck combined fitness' = <value'>
+[VALIDATOR] decision: ACCEPT (Δ +<x>, no gate regressed) → ledger += <delta>  |  REJECT (<why>) → discard, try <next>
+[VALIDATOR|OUT] { status, finalFitness, playGameFindings, improvements:[…], recommendedApplyOrder:[…], humanQuestion }
+```
+
+Then the coordinator's delegation on that return:
+
+```
+[COORDINATOR] received validator return — decision: <apply improvements | AskUserQuestion "…">
+[COORDINATOR|CALL] file-writer        … write CANONICAL improvement 1/<n>, file-writer |IN/|OUT …
+```
+
+Keep the trace **truthful**: a skipped call, a rejected delta, a cap hit, or a fix re-routed to a
+different agent must appear in the trace. Verbose mode **never changes behaviour — it only exposes it**.
+
 ## Caps (no runaway)
 
 - story-teller's internal **story-critic** loop: **≤ 3** critic rounds before it returns its best draft.
-- Validator-coordinator tweak loop: **≤ `maxIterations`** (default 3) before it returns/asks the human.
+- Validator-coordinator improvement loop: **≤ `maxIterations`** (default 3) before it returns/asks the human.
 - One candidate per run. The human-in-the-loop is user-gated, not automatic.
 
 ## Report

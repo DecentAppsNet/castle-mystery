@@ -278,6 +278,12 @@ flowchart LR
   places at once — an absolute arrival back-planned over an earlier one); `npm run evaluate` exposes it
   as the `noAnachronisms` gate + an `anachronisms` detail list, so the validator-coordinator routes such
   a fault to **game-cron** (the itinerary owner). See design-doc DR-016 + adr-solver §6c.
+- **Verbose mode mirrors this graph (DR-018).** `/world-gen --verbose` streams a **live instance of this
+  call graph**: each edge here becomes a `→ CALL` / `← RET` line (indented by depth, parallel waves
+  marked), plus the **validator-coordinator's per-iteration reasoning** (its solver + play-game reads →
+  diagnosis → routing → scratch re-check → accept/reject) and the **coordinator's** delegation of each
+  accepted improvement to the file-writer. Off by default; exposes behaviour without changing it. Trace
+  format: the skill's *Verbose / debug mode* section.
 - **Synthesiser is currently fulfilled inline.** In runs so far the **coordinator performs the
   synthesiser role itself** (writing the file as it applies each return); a *dedicated synthesiser
   agent* is the target — same status as the validator-coordinator (designed, not yet a separately
@@ -325,3 +331,6 @@ flowchart LR
   regression. It **returns the aggregated improvement ledger** to the coordinator (no canonical write);
   the **coordinator asks the user** on `humanQuestion`/ambiguity, then **writes the canonical md via the
   file-writer** (one accepted improvement per call). Call table rows 10–17 + the validator note updated.
+- **2026-06-14** — Noted **verbose mode (DR-018)**: `/world-gen --verbose` streams a live instance of
+  this call graph (every `→ CALL` / `← RET`, the validator's per-iteration reasoning, the coordinator's
+  delegations). Added a current-state note; trace format lives in the skill.

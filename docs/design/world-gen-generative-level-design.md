@@ -358,6 +358,13 @@ right start.
   written to `ledger.jsonl` and shown as a per-round digest. The strategist's "cognitive
   process" is a **schema-forced rationale field** on every decision, surfaced verbatim. In
   the Workflow substrate, `/workflows` additionally shows the live agent tree.
+- **Verbose mode (`--verbose` / `--debug`) — DR-018.** A developer flag on `/world-gen` that streams the
+  **whole agentic trace** to the user: every **agent → agent call** with its input, every **return** with
+  its value (paired and indented by call depth; parallel waves marked), the **validator-coordinator's
+  per-iteration reasoning** over the solver + play-game outputs (diagnosis → routing → the delta →
+  scratch re-check → the accept/reject decision and *why*), and the **coordinator's delegation** of each
+  accepted improvement to the file-writer (and any `AskUserQuestion`). Off by default (headlines only);
+  it exposes behaviour without changing it. Trace format in the skill's *Verbose / debug mode* section.
 
 ---
 
@@ -724,6 +731,26 @@ than deleting.
   + user gate the user asked for); accept-any-change (drifts/regresses without the better-than test);
   solver-only (misses semantic gaps play-game catches, and vice-versa).
 
+### DR-018 — Verbose / debug mode: stream the full agentic trace
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Context:** The pipeline is many nested agent calls (waves, the story-critic loop, the
+  validator-coordinator's per-iteration accept-if-better loop). Default narration shows headlines only;
+  a developer debugging *why* a level came out as it did needs to see every call, every return, and —
+  above all — the **validator's reasoning** over the solver + play-game outputs.
+- **Decision:** Add a `--verbose` (`--debug` / `-v`) flag to `/world-gen`. When set, the coordinator
+  streams: (1) every **agent → agent call** with its input; (2) every **return** with its value (paired,
+  indented by call depth, parallel waves marked, long free-text abbreviated-with-length not dropped);
+  (3) the **validator-coordinator's per-iteration think-aloud** — solver result, play-game result,
+  combined fitness, diagnosis → routing (with the *reason*), the proposed delta, the scratch re-check,
+  and the ACCEPT/REJECT decision and why; (4) the **coordinator's delegation** of each accepted
+  improvement to the file-writer + any `AskUserQuestion`. Off by default. Trace format lives in the
+  skill's *Verbose / debug mode* section.
+- **Consequences:** A developer can audit the whole decision chain; the format mirrors the HLD call
+  graph, so the trace reads as a live instance of it. Verbose **never changes behaviour** — it only
+  exposes it (a skipped call, rejected delta, or re-routed fix must appear in the trace).
+- **Alternatives rejected:** always-verbose (noise for normal use); a separate post-hoc log file only
+  (the user wants it inline, live, while the run happens).
+
 ---
 
 ## 14. Iteration history (what worked / what didn't)
@@ -878,3 +905,9 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   **asks the user** when the validator returns a `humanQuestion` or ambiguous data. Updated
   agent-contracts (validator-coordinator + new play-game oracle contract), SKILL, topology, §7 fitness
   (acceptance rule), §8 loop.
+- **2026-06-14** — Added **verbose / debug mode** (DR-018): `/world-gen --verbose` streams the full
+  agentic trace — every agent call + return (indented by depth, parallel waves marked), the
+  validator-coordinator's per-iteration reasoning over the solver + play-game outputs (diagnosis →
+  routing → delta → scratch re-check → accept/reject + why), and the coordinator's delegation of each
+  accepted improvement. Off by default; never changes behaviour. SKILL gains a *Verbose / debug mode*
+  section; §9 observability + HLD note updated.
