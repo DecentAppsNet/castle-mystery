@@ -246,7 +246,8 @@ Two distinct controllers — keep them separate:
 
 | Agent | Input | Output / patches | Oracle? |
 |---|---|---|---|
-| story-teller | player prompt | `story.md` | — |
+| story-teller | player prompt | `story.md` (runs a private **story-critic** loop until accepted) | — |
+| ⮡ story-critic | story (from story-teller) | accept/revise + scores + reasons + improvements — story-teller's **private** child, capped | quality (story) |
 | game-architect | story | `# Map`, `# Rooms` (grid, exits/doors, start rooms) | — |
 | game-scout | story | `# Characters` (each `* title=` is the hidden identity; `* description=` is the clue; `* faceImage=` a distinct real file from `public/assets/faces/`) + placement in room grids | — |
 | game-itemiser | story, rooms | `# Items` + placement in room grids | — |
@@ -293,7 +294,7 @@ termination. Per-agent IO:
 | **Difficulty balance** | play-game ratio of just-right vs too-easy vs too-hard | mostly just-right; zero gaps |
 | **Breadth** | #rooms / #chars / #items / #conclusions | human target |
 | **Exploration spread** | co-presence graph + room-layer occupancy | interactions distributed; doors used |
-| **Story fidelity** | a story-critic agent's judgment | stays recognizably on-theme |
+| **Story quality** | the **story-critic** (story-teller's internal gate: plot / flow / intrigue / accuracy / denouement) | a publisher-grade story up front; stays on-theme |
 
 The objective is **not fixed** — the human sets a *direction/target* each round ("make
 identities harder", "add a room", "deepen the cook's clue chain"), which reconfigures the
@@ -359,6 +360,7 @@ reason.
 | Iteration cap / round | N | 5 | max accept/reject iterations before returning to human |
 | Repair cap | R | 2 | bounded auto-repair attempts on a gate failure |
 | Plateau stop | P | 2 | stop a round after P iterations with no improvement |
+| story-critic loop | — | ≤ 3 | story-teller's private critic rounds before it returns its best draft |
 | play-game cadence | — | survivors-only, ≤ every 2 iters | controls cost of the expensive semantic oracle |
 | Rounds / session | — | human-gated (no fixed cap) | the human approves each round |
 | Token budget | — | optional (`budget.total`) | hard ceiling when a token target is set |
@@ -617,6 +619,23 @@ than deleting.
 - **Alternatives rejected:** the main coordinator validating inline (mixes concerns — the earlier ≤3
   inline repair was a stopgap); auto-terminating on `gates.ok` (skips human judgement of playability).
 
+### DR-015 — story-critic: the story-teller's internal quality gate (first vertical sub-delegation)
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Context:** The story conditions every downstream agent (rooms, cast, items, timeline, conclusions),
+  so a thin or incoherent story poisons the whole run. We want a publisher-grade story *before*
+  generation proceeds.
+- **Decision:** The **story-teller** spawns its own **private `story-critic`** subagent (the DR-011
+  vertical sub-delegation pattern — first realized use) and loops: draft → critic scores it (plot,
+  flow, intrigue, historical/setting accuracy, characters, denouement) → apply the critic's
+  `improvements` → re-score. The story-teller **returns to the coordinator only a story the critic has
+  `accept`ed** (or its best draft once the critic-loop cap is hit, flagged as short). The critic is
+  pure (scores + advice; no file writes) and invisible to the coordinator.
+- **Consequences:** Story quality is enforced at the source, lifting every downstream stage; it is the
+  first concrete vertical sub-delegation (validates the DR-011 pattern). Capped to avoid runaway.
+- **Alternatives rejected:** the coordinator critiquing the story (mixes concerns — the critic is the
+  story-teller's own tool); no critic at all (thin stories degrade the whole pipeline — the recurring
+  too-easy / too-shallow results trace back to under-developed stories).
+
 ---
 
 ## 14. Iteration history (what worked / what didn't)
@@ -748,3 +767,7 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   subagents (wave 2 = architect/scout/itemiser; wave 3 = cron/conclusions); a **validator-coordinator**
   sub-hub owning the capped solver/play-game tweak loop with human-in-the-loop termination. Rewrote the
   HLD + skill; added `references/agent-contracts.md` (per-agent IO).
+- **2026-06-14** — Added **story-critic** (DR-015): the story-teller now runs a private, capped critic
+  loop (plot / flow / intrigue / accuracy / characters / denouement) and returns only a critic-accepted
+  story — the first realized vertical sub-delegation (DR-011). Updated contracts, HLD, skill, topology,
+  fitness, and caps.

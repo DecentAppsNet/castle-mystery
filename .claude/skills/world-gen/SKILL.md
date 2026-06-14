@@ -3,7 +3,8 @@ name: world-gen
 description: >-
   Generate a new Castle Mystery level from a short player prompt with a multi-agent pipeline, then
   validate it with the solver and the play-game semantic check. A coordinator runs PURE specialist
-  subagents — story-teller, game-architect, game-scout, game-itemiser, game-cron, game-conclusions —
+  subagents — story-teller (gated by its own private story-critic quality loop), game-architect,
+  game-scout, game-itemiser, game-cron, game-conclusions —
   in parallel where independent; each returns data + an apply-prompt, and a single SYNTHESISER agent
   is the only writer of the level md (one return per call, writing every transition). A
   validator-coordinator runs the capped solver/play-game tweak loop, with human-in-the-loop until the
@@ -34,8 +35,9 @@ is the generator half of the generator/validator system designed in
 - **Run independent subagents in parallel.** Subagents that need the *same* input (and not a prior
   modified md) are spawned concurrently; the synthesiser still applies their returns one at a time.
 - **Hub-and-spoke, no lateral calls.** Subagents never call each other; everything routes through a
-  coordinator. The validator-coordinator is a sub-hub you spawn; it may call the wave subagents + the
-  synthesiser, and routes human questions back up to you.
+  coordinator. A subagent may spawn its *own* private child (vertical sub-delegation — e.g.
+  **story-teller → story-critic**) but never a sibling. The validator-coordinator is a sub-hub you
+  spawn; it may call the wave subagents + the synthesiser, and routes human questions back up to you.
 
 ## Input
 
@@ -51,9 +53,14 @@ Read `references/authoring-contract.md` (the level format the synthesiser must p
 
 Narrate each step for observability (the call made + a short summary of the return).
 
-**Wave 1 — story-teller** (solo). IN `playerPrompt` → OUT `story` (+ apply-prompt). Then call the
-**synthesiser** (md=none, id=`story-teller`) to create the file (General title/winSynopsis). The full
-`story` is **context** you pass to later waves — it is not otherwise written to the md.
+**Wave 1 — story-teller** (solo). IN `playerPrompt` → OUT `story` (+ apply-prompt). **Internally the
+story-teller runs its own private `story-critic` loop** (vertical sub-delegation): it drafts the story,
+spawns the **story-critic** to score it (plot, flow, intrigue, historical/setting accuracy, characters,
+denouement — book-publisher craft), applies the critic's `improvements`, and re-scores — returning only
+a story the critic **`accept`s** (or its best draft after the critic-loop cap, flagged as short). The
+critic is private — the coordinator never sees it. Then call the **synthesiser** (md=none,
+id=`story-teller`) to create the file (General title/winSynopsis). The full `story` is **context** you
+pass to later waves — it is not otherwise written to the md.
 
 **Wave 2 — architect ∥ scout ∥ itemiser** (spawn all three in parallel; each IN = `story`).
 - game-architect → rooms/map data; game-scout → characters + distinct real faces from
@@ -94,6 +101,7 @@ confirms they're happy** ("it's ok").
 
 ## Caps (no runaway)
 
+- story-teller's internal **story-critic** loop: **≤ 3** critic rounds before it returns its best draft.
 - Validator-coordinator tweak loop: **≤ `maxIterations`** (default 3) before it returns/asks the human.
 - One candidate per run. The human-in-the-loop is user-gated, not automatic.
 

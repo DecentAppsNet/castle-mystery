@@ -39,7 +39,8 @@ promoted PLANNED→LIVE — update the diagrams, the [call table](#call-table), 
    The **validator-coordinator** is a sub-hub it spawns (the DR-011 "vertical sub-delegation" pattern,
    now actively used): it delegates to the same wave subagents + the synthesiser, and routes any
    human-input request **up** to the main coordinator (which asks the user and passes the answer back
-   down). A subagent's own private deeper helpers are still allowed (none today).
+   down). Subagents may also have their own private deeper helpers — the **story-teller → story-critic**
+   loop (below) is the first realized case.
 3. **The synthesiser is the sole writer (DR-012).** Subagents are *pure* — they return data + an apply
    `prompt`; only the synthesiser creates/updates `public/levels/_gen.<slug>.md`. It applies **one**
    subagent return per call and **writes the file every call**, so every transitional state is
@@ -60,6 +61,7 @@ sequenceDiagram
     actor User
     participant WG as coordinator (/world-gen)
     participant ST as story-teller
+    participant SK as story-critic (story-teller's child)
     participant AR as game-architect
     participant SC as game-scout
     participant IT as game-itemiser
@@ -70,7 +72,11 @@ sequenceDiagram
 
     User->>WG: /world-gen prompt
     WG->>ST: playerPrompt
-    ST-->>WG: story + apply-prompt
+    loop story-teller's private critic loop (capped)
+        ST->>SK: playerPrompt + draft story
+        SK-->>ST: verdict + scores + reasons + improvements
+    end
+    ST-->>WG: critic-accepted story + apply-prompt
     WG->>SY: create file — story-teller return + id
     SY-->>WG: level md (file written)
 
@@ -141,6 +147,7 @@ flowchart TD
     WG -.->|"report · ask · confirm"| U
 
     WG -->|"playerPrompt"| ST["story-teller"]
+    ST -.->|"private critic loop (capped)"| SK["story-critic"]:::child
 
     subgraph wave2["wave 2 — parallel · input = story"]
         AR["game-architect"]
@@ -166,6 +173,7 @@ flowchart TD
     VC -.->|"human question"| WG
 
     classDef writer fill:#efe,stroke:#2a2;
+    classDef child stroke-dasharray:3 2,stroke:#2266aa;
 ```
 
 ---
@@ -176,6 +184,7 @@ flowchart TD
 |---|---|---|---|---|---|---|---|
 | 1 | User | main coordinator | invocation | player prompt | report / confirm prompt | — | LIVE |
 | 2 | coordinator | story-teller | subagent | `playerPrompt` | `story` + apply-prompt | solo (wave 1) | LIVE |
+| 2a | story-teller | story-critic | subagent (**private child**) | `playerPrompt` + draft story | verdict + scores + reasons + improvements | looped (capped) | LIVE |
 | 3 | coordinator | synthesiser | synthesiser | md(null) + story-teller return + id | level md (writes file) | serialized | LIVE |
 | 4 | coordinator | game-architect | subagent | `story` | rooms/map data + prompt | **∥ wave 2** | LIVE |
 | 5 | coordinator | game-scout | subagent | `story` | characters/faces data + prompt | **∥ wave 2** | LIVE |
@@ -199,6 +208,9 @@ flowchart TD
   resolves cross-references (owner→character id, `activeCharacter`→id, cloze answer→title) as it
   applies each return, and writes the file each call. See
   [agent-contracts.md](../../.claude/skills/world-gen/references/agent-contracts.md).
+- **Vertical sub-delegation (now used).** The story-teller runs a private **story-critic** loop (its
+  own child, capped) before returning — the first realized vertical sub-delegation. The critic is pure
+  (scores + advice; no file writes) and is invisible to the coordinator.
 - **Parallel groups.** Wave 2 = {architect, scout, itemiser} (all take only the `story`); wave 3 =
   {cron, conclusions} (both take `story` + the integrated md, neither depends on the other). story-
   teller is solo (root). The synthesiser is inherently **serialized** (one return per call).
@@ -222,3 +234,6 @@ flowchart TD
   play-game tweak loop and routes human-input up to the main coordinator; the run ends on human
   confirmation. Diagrams, call table, and invariants rewritten; per-agent IO moved to
   `agent-contracts.md`. (Design doc DR-012/013/014.)
+- **2026-06-14** — Added the **story-critic** (story-teller's private child): the story-teller now runs
+  a capped critic loop and returns only a critic-accepted story — the first realized **vertical
+  sub-delegation**. (Design doc DR-015.)

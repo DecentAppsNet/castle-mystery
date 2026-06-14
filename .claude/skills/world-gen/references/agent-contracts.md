@@ -29,9 +29,37 @@ Story = {
 ## story-teller  (wave 1 — root)
 - **IN** `{ playerPrompt: string }`
 - **OUT** `{ story: Story, prompt: string }`
+- **Internal quality gate (vertical sub-delegation).** Before returning, the story-teller spawns its
+  own private **story-critic** subagent and loops — draft/revise the story → get it scored → apply the
+  critic's suggested improvements — and **only returns a story the critic has `accept`ed** (or the
+  best-scoring draft once the critic-loop cap is hit, noting it fell short). The coordinator never sees
+  the critic; it receives only the accepted `story`. This guarantees a fully-fleshed story, which every
+  downstream agent depends on.
 - `prompt` → synthesiser: *create the level file and write `# General` `title`/`winSynopsis` from the
   story.* The rest of `story` is **context** the coordinator passes to wave-2/3 agents — it is **not**
   written into the md.
+
+## story-critic  (private child of story-teller — NOT called by the coordinator)
+- **IN** `{ playerPrompt: string, story: Story }`
+- **OUT** `{ verdict: "accept" | "revise",
+  scores: { plot, flow, intrigue, historicalAccuracy, characters, denouement },  // each e.g. 1-5
+  failingMetrics: string[],     // dimensions below the bar
+  reasons: string[],            // why each falls short
+  improvements: string[] }`     // concrete, actionable edits for the story-teller to apply
+- **Sole purpose: judge story quality** by the craft of story-writing — as a book editor/publisher
+  would. It writes nothing, never touches the level md, and returns only to its parent (the
+  story-teller). It scores and advises; it does not rewrite the story.
+- **Rubric — the bar a story must clear to `accept`:**
+  - **plot** — a coherent arc: setup → conflict/complication → resolution; stakes that matter.
+  - **flow / structure** — characters are *introduced* before they act; rising action; a clear
+    **denouement** that ties the threads; a satisfying close; no abrupt jumps.
+  - **intrigue** — a hook that **keeps the reader guessing** (tension / an open question / mystery) and
+    pays it off — doubly apt here, since the player's job is to *deduce*.
+  - **historical / setting accuracy** — period- and world-plausible; internally consistent.
+  - **characters** — distinct, motivated people, each with a deducible hidden identity (so downstream
+    scout/itemiser/conclusions have real material).
+  - **denouement** — the incident resolves in a way that rewards the reader's attention.
+  Accept only when every dimension meets the bar; otherwise `revise` with `reasons` + `improvements`.
 
 ## game-architect  (wave 2 — parallel · IN = story)
 - **IN** `{ story: Story }`
