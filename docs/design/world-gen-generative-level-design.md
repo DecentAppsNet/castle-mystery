@@ -603,3 +603,6 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   authoring contract from run learnings (grid width, horizontal-only exits, `normalizeId`, placement).
 - **2026-06-14** — `.gitignore`d `public/levels/_gen/` (kept `.gitkeep`; untracked the demo
   `three_blind_mice.md`) — generated level candidates are scratch, not committed.
+- **2026-06-14** — Authoring-contract correction (user feedback): exits are always *horizontal*, but
+  one room may have several exits on its east/west side — multi-storey levels connect floors via a tall
+  staircase room (two same-side exits), not via vertical exits.

@@ -71,11 +71,26 @@ VVVHHGG
 Here `V` is a 2×3 rectangle, `H` and `G` are 1×2. `V`|`H` touch and `H`|`G` touch, so those exits
 are possible.
 
-**Connections are horizontal only.** An exit can join two rooms that sit **side by side** (sharing a
-vertical wall). Two different rooms stacked one directly **above** another cannot be connected — the
-loader rejects ceiling/floor exits ("ceiling or floor exits are not supported"). A single room may
-still span several rows (like `V` above); the restriction is only on exits *between* rooms. So lay
-rooms that must connect in the same row, e.g. `PPKKYYBB` for a Pantry–Kitchen–Yard–Barn chain.
+**Exits are always horizontal.** Two rooms connect through a shared **vertical wall** — they are
+horizontally adjacent (east–west). There are **no vertical (ceiling/floor) exits**, so two rooms that
+share only a *horizontal* edge (one directly above the other) do not connect there ("ceiling or floor
+exits are not supported").
+
+**A single room may have several exits on the same side** (more than one on its east wall and/or its
+west wall). This is how **multi-storey** layouts work: a tall room — e.g. a staircase or hall spanning
+several rows — can hold one east exit to an upper-floor room and another east exit to a lower-floor
+room. For example, staircase `S` (rows 0–3) with an upper room `U` (rows 0–1) and a lower room `L`
+(rows 2–3) on its east side:
+
+```
+SU
+SU
+SL
+SL
+```
+
+`S` has two east exits (to `U` and to `L`); `U` and `L` reach each other only via `S`. A plain
+single-row chain like `PPKKYYBB` just connects Pantry–Kitchen–Yard–Barn.
 
 ## 3. `# Rooms`
 
