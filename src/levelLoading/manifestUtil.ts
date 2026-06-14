@@ -7,8 +7,7 @@ import LevelManifest from "./types/LevelManifest";
 import { getLastLevelUrl } from "@/persistence/lastLevel";
 import { assert } from "decent-portal";
 
-const GEN_LEVEL_DIR = '_gen/';            // Subdir under public/levels/ holding generator candidates.
-const GEN_INDEX_REF = '_gen-index.json';  // Dev-server endpoint listing those candidates (see vite.config.ts).
+const GEN_INDEX_REF = '_gen-index.json';  // Dev-server endpoint listing the _gen.*.md candidates (see vite.config.ts).
 const GEN_TITLE_PREFIX = '(GEN) ';        // Marker prepended to a candidate's title in the level selector.
 
 async function _loadTextFromUrl(url:string):Promise<string> {
@@ -63,7 +62,7 @@ export async function loadLevelManifestFromUrl(manifestUrl:string):Promise<Level
 }
 
 /* DEV-only: the Vite dev server (see vite.config.ts) serves the GEN_INDEX_REF endpoint listing the
-  *.md candidate levels under public/levels/_gen/. Returns manifest entries for them, each title
+  flat _gen.*.md candidate levels under public/levels/. Returns manifest entries for them, each title
   prefixed with GEN_TITLE_PREFIX. Returns empty when the endpoint is absent (production build) or a
   candidate is unreadable, so callers can append unconditionally. */
 async function _loadGenLevelEntries(manifestUrl:string):Promise<{ levelUrls:string[], levelTitles:string[] }> {
@@ -77,7 +76,7 @@ async function _loadGenLevelEntries(manifestUrl:string):Promise<{ levelUrls:stri
   }
   const levelUrls:string[] = [], levelTitles:string[] = [];
   for (const filename of filenames) {
-    const levelUrl = _resolveManifestLevelUrl(manifestUrl, `${GEN_LEVEL_DIR}${filename}`);
+    const levelUrl = _resolveManifestLevelUrl(manifestUrl, filename);
     try {
       const title = _parseLevelTitle(await _loadTextFromUrl(levelUrl), levelUrl);
       levelUrls.push(levelUrl);
@@ -87,7 +86,7 @@ async function _loadGenLevelEntries(manifestUrl:string):Promise<{ levelUrls:stri
   return { levelUrls, levelTitles };
 }
 
-/* DEV-only: returns a copy of `manifest` with any public/levels/_gen/ candidate levels appended (titles
+/* DEV-only: returns a copy of `manifest` with any public/levels/_gen.*.md candidate levels appended (titles
   prefixed "(GEN) "), recomputing the selected index so a last-selected candidate is restored. Returns
   `manifest` unchanged when there are no candidates. Callers should only invoke this when serving
   locally. */

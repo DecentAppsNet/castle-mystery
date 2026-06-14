@@ -5,8 +5,9 @@ description: >-
   validate it with the solver. A coordinator runs specialist sub-agents — story-teller (infer a world
   + backstory), game-architect (rooms/map/exits), game-scout (characters + hidden identities),
   game-itemiser (items), game-cron (itinerary of movement + dialogue) — to emit a candidate level into
-  public/levels/_gen/, then scores it with `npm run evaluate`. Use when asked to generate/author a new
-  level, "world-gen", or continue the generative level generator. WRITES only under public/levels/_gen/.
+  public/levels/ as a flat _gen.*.md file, then scores it with `npm run evaluate`. Use when asked to
+  generate/author a new level, "world-gen", or continue the generative level generator. WRITES only
+  _gen.*.md candidate files under public/levels/.
 ---
 
 # world-gen — generative level designer (Phase 1: one-shot pipeline)
@@ -17,8 +18,10 @@ This is the generator half of the generator/validator system designed in
 **`docs/design/world-gen-generative-level-design.md`** (read it for the full architecture, fitness
 model, and roadmap). The validator is the solver, consumed here via `npm run evaluate`.
 
-**This skill writes only under `public/levels/_gen/`.** It never edits existing levels, `levels.md`,
-or app code. Generated candidates are not added to `levels.md`, so the app never lists them.
+**This skill writes only `_gen.*.md` candidate files under `public/levels/`.** It never edits existing
+levels, `levels.md`, or app code. Generated candidates are not added to `levels.md`, so the app never
+lists them in normal `npm run dev`. (Candidates are **flat** files — `_gen.<slug>.md`, not a
+subdirectory — because the app's level loader only loads flat filenames directly under `/levels/`.)
 
 Phase 1 goal: produce **one loadable, solver-passing candidate** end-to-end. No optimization loop yet
 (that is Phase 3); no human steering yet (Phase 4). Keep it bounded — see Caps.
@@ -82,8 +85,9 @@ short summary of what came back).
 
 ## Assemble & validate
 
-1. Write the final candidate to `public/levels/_gen/<slug>.md` (e.g. `three_blind_mice.md`).
-2. Score it: `npm run evaluate --silent -- _gen/<slug>.md`.
+1. Write the final candidate to `public/levels/_gen.<slug>.md` (e.g. `_gen.three_blind_mice.md`) — a
+   **flat** file, NOT a subdirectory (the app loads only flat filenames under `/levels/`).
+2. Score it: `npm run evaluate --silent -- _gen.<slug>.md`.
 3. Read the fitness JSON:
    - `loaded:false` → a **format error** (the message names the offending line). Fix via the relevant
      stage and re-validate. This is the loader acting as linter.
@@ -95,7 +99,7 @@ short summary of what came back).
 ## Manual verification (optional)
 
 To eyeball a candidate in the real game UI, run **`npm run dev-gen`** (not plain `npm run dev`):
-generated `_gen/*.md` levels appear as **`(GEN) …`** tabs in the level selector, read fresh on each
+generated `_gen.*.md` levels appear as **`(GEN) …`** tabs in the level selector, read fresh on each
 browser refresh. Normal `npm run dev` and production builds exclude them.
 
 ## Caps (no runaway)

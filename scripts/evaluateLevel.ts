@@ -11,7 +11,7 @@
 
   Run via vite-node so @/ aliases and the level loader resolve exactly as in the app:
     npm run evaluate -- 01_birth_of_constantine.md
-    npm run evaluate -- _gen/candidate.md --out fitness.json */
+    npm run evaluate -- _gen.candidate.md --out fitness.json */
 
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';

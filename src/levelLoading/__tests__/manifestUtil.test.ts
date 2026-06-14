@@ -71,8 +71,8 @@ describe('manifestUtil', () => {
   it('appends _gen candidate levels with a (GEN) prefix', async () => {
     vi.spyOn(lastLevel, 'getLastLevelUrl').mockResolvedValue(null);
     const fetchMock = vi.fn(async (url:string) => {
-      if (url.endsWith('/levels/_gen-index.json')) return { ok:true, text:async () => '["three_blind_mice.md"]' };
-      if (url.endsWith('/levels/_gen/three_blind_mice.md')) return { ok:true, text:async () => '# general\n\n* title=Three Blind Mice\n' };
+      if (url.endsWith('/levels/_gen-index.json')) return { ok:true, text:async () => '["_gen.three_blind_mice.md"]' };
+      if (url.endsWith('/levels/_gen.three_blind_mice.md')) return { ok:true, text:async () => '# general\n\n* title=Three Blind Mice\n' };
       throw new Error(`unexpected url ${url}`);
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -81,7 +81,7 @@ describe('manifestUtil', () => {
     const base = { levelUrls:['/levels/doors.md'], levelTitles:['Doors'], lastLevelI:0 };
     const merged = await appendGenLevelsToManifest(base, '/levels/levels.md');
 
-    expect(merged.levelUrls).toEqual(['/levels/doors.md', '/levels/_gen/three_blind_mice.md']);
+    expect(merged.levelUrls).toEqual(['/levels/doors.md', '/levels/_gen.three_blind_mice.md']);
     expect(merged.levelTitles).toEqual(['Doors', '(GEN) Three Blind Mice']);
   });
 

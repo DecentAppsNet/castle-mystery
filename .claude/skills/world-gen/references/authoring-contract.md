@@ -7,7 +7,9 @@ practical digest. `public/levels/00_prologue.md` is the canonical minimal workin
 its structure.
 
 A level is one Markdown file. Sections are `#` headings **in this order**:
-`General`, `Map`, `Rooms`, `Characters`, `Items`, `Itinerary`, `Conclusions`.
+`General`, `Map`, `Rooms`, `Characters`, `Items`, `Itinerary`, `Conclusions`. **`General` and `Map`
+are required** — the loader fails with "missing required map section" if a `# Map` section is absent
+(or empty), so every generated level MUST include one.
 
 ---
 

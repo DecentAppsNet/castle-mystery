@@ -172,9 +172,9 @@ done**.
 2. ✅ **A candidate entry point** — [`scripts/evaluateLevel.ts`](../../scripts/evaluateLevel.ts)
    (`npm run evaluate -- <file>`) loads a level, runs the solver, and emits the **fitness
    JSON** (gates + complexity aggregates + unreachable lists) via `buildLevelFitness()`.
-   Candidates live in the scratch dir `public/levels/_gen/` so their
-   `imports=characters.md|items.md` resolve relative to `public/levels/`. *(Done 2026-06-14,
-   Phase 0.)*
+   Candidates are flat `public/levels/_gen.<slug>.md` files (so they round-trip through the app's
+   filename-based loader, and their `imports=characters.md|items.md` resolve relative to
+   `public/levels/`). *(Done 2026-06-14, Phase 0; flat-file scheme per DR-009.)*
 3. ⬜ **The semantic oracle as a structured signal.** Wrap `/play-game`'s analysis in a
    sub-agent that returns per-character `{ inferable, difficulty, gapNote }` rather than
    prose. *(Pending — Phase 2.)*
@@ -198,7 +198,8 @@ totalPairCount, reachablePairCount, unreachablePairCount, maxCost, meanCost, cos
 | `ledger.jsonl` | game-gen | Append-only memory: per iteration, the directive (prompt) → diff → metric deltas → accept/reject + reason. Doubles as the observability log. |
 
 Run artifacts live under a per-run directory (proposed: `generated/runs/<id>/`), with the
-candidate(s) under `public/levels/_gen/` so imports resolve.
+candidate(s) as flat `public/levels/_gen.*.md` files so imports resolve and they load in the app
+(DR-009).
 
 ---
 
@@ -378,7 +379,7 @@ All on the `world-gen` branch. Each phase is independently demoable.
 
 | Phase | Delivers | Demo |
 |---|---|---|
-| **0 — Contracts & scoring** | `scripts/evaluateLevel.ts` → fitness JSON; complexity aggregates; the authoring-contract doc fed to agents; JSON schemas; scratch dir `public/levels/_gen/` | `evaluateLevel` scores an existing level |
+| **0 — Contracts & scoring** | `scripts/evaluateLevel.ts` → fitness JSON; complexity aggregates; the authoring-contract doc fed to agents; JSON schemas; flat `_gen.*.md` candidates under `public/levels/` | `evaluateLevel` scores an existing level |
 | **1 — One-shot pipeline** | `/world-gen` (input hardcoded to Three Blind Mice) → story-teller → architect → scout → itemiser → cron → emit candidate | a loadable, solver-passing level; no optimization |
 | **2 — Gates + auto-repair** | loader/solver as hard gates with ≤R repair from `unreachableIds`; play-game as Identities gate feeding gaps back | candidate that passes *both* oracles |
 | **3 — Optimization loop** | game-gen strategist + beam hill-climb + ledger + plateau-stop | level measurably improves over N iters on a fixed objective |
@@ -387,7 +388,7 @@ All on the `world-gen` branch. Each phase is independently demoable.
 
 **Phase 0 status (2026-06-14):** the structural-oracle scoring spine is **done** —
 `LevelFitness` type, `buildLevelFitness()` + complexity aggregates (6 unit tests),
-`scripts/evaluateLevel.ts` (`npm run evaluate`), and the `public/levels/_gen/` scratch dir.
+`scripts/evaluateLevel.ts` (`npm run evaluate`), and the flat `public/levels/_gen.*.md` candidate scheme.
 Verified end-to-end on `01_birth_of_constantine.md` (18 chars, 8 items, all reachable;
 `maxCost 2`, `meanCost 0.88`). Remaining Phase 0: distil the authoring contract (Appendix A)
 into the form fed to agents, and define the inter-agent JSON schemas — both deferred to
@@ -506,6 +507,26 @@ than deleting.
 - **Alternatives rejected:** emitting raw `SolveResult` JSON (verbose, no aggregates);
   adding flags to the solver core (unnecessary — aggregation is a thin adapter).
 
+### DR-009 — Generated candidates are flat `_gen.*.md` files, not a `_gen/` subdirectory
+- **Date:** 2026-06-14 · **Status:** Accepted (supersedes the initial `_gen/` subdirectory)
+- **Context:** The first cut stored candidates in `public/levels/_gen/`. They scored fine via
+  `npm run evaluate` (CLI `loadLevelFromFile`, which accepts a subdir path) but **failed to load in
+  the app**: `loadLevelFromUrl` → `_levelUrlToFilename` collapses a URL to its last segment, and
+  `loadLevelTextWithSourceLineMap` rebuilds it as `/levels/<filename>` via `validateFilename`, which
+  forbids directory separators (ADR 010). So `/levels/_gen/three_blind_mice.md` was re-fetched as
+  `/levels/three_blind_mice.md` → 404 → SPA `index.html` → the misleading "missing required map
+  section".
+- **Decision:** Store candidates as **flat** `public/levels/_gen.<slug>.md` files. Flat filenames
+  round-trip through the existing filename-based loader, so the **CLI scorer and the app load the same
+  file the same way** (closing a validator/app divergence). The dev-gen index lists `_gen.*.md`;
+  `.gitignore` ignores `public/levels/_gen.*`.
+- **Consequences:** No change to core loading / `validateFilename` / ADR 010 — we conform to the
+  flat-filename invariant rather than fight it. Candidates sit alongside real levels, namespaced by
+  the `_gen.` prefix and excluded from `levels.md`.
+- **Alternatives rejected:** teaching the loader + `validateFilename` to accept a `_gen/` subdir
+  (invasive, violates ADR 010, touches all level/import loading); a dev middleware mapping a flat URL
+  to a subdir file (magic, fragile).
+
 ---
 
 ## 14. Iteration history (what worked / what didn't)
@@ -518,6 +539,7 @@ Empirical learnings from actually running the system. Append dated entries as we
 | 2026-06-14 | — | Design accepted | — |
 | 2026-06-14 | Built Phase 0 scoring; ran `evaluate` on `01_birth_of_constantine.md` | Works: 18 chars / 8 items all reachable, `maxCost 2`, `meanCost 0.88`, histogram `{0:52,1:57,2:35}`. Existing levels skew **shallow** (most clues 0–1 switches deep) | Recorded as the baseline for the complexity target band; defer setting the band until we have generated examples to compare |
 | 2026-06-14 | Phase 1 one-shot run: story-teller + builder agents → `three_blind_mice.md` | Loads & solves (`gates.ok:true`, 6 chars / 4 items reachable) but trivially **shallow**: `meanCost 0.08`, `maxCost 1` — the builder converges the whole cast in one room, so most items are cost 0. The builder needed 3 repairs and exposed 3 wrong/missing contract rules | Fixed the authoring contract (normalizeId is `trim+lowercase` only; room-grid width = map-tiles×4 by 3 rows; exits are horizontal-only; characters must be **placed** in a grid to exist). Shallow complexity confirms Phase 3 (optimization) is where depth must be engineered |
+| 2026-06-14 | Loaded the generated level in the app via the new `(GEN)` tab | **Failed**: "missing required map section" despite the level having a `# Map`. Root cause: the `_gen/` **subdirectory** doesn't round-trip through the app's filename loader (`loadLevelFromUrl` drops the subdir; `validateFilename` forbids `/`), so the app fetched the wrong path → `index.html`. `evaluate` (CLI) passed because it loads via a subdir-tolerant path — a validator/app divergence | Switched candidates to **flat** `_gen.*.md` files under `public/levels/` (DR-009); CLI scorer and app now load the identical file. Reinforced `# Map` as required in the authoring contract |
 
 Use this table for: cap tunings (B/N/R/P) and their effect; mutation classes that
 reliably help vs waste budget; prompts/schemas that produced invalid levels; solver/
@@ -539,8 +561,10 @@ fixtures.
 - **Complexity target band, not maximization.** Maximizing transfer cost can make levels
   unsolvable-feeling; we steer toward a band. The band's bounds are unknown until we have
   playtested examples — an Iteration-History question.
-- **Import resolution for candidates.** Candidates must live where `imports=` resolves
-  (`public/levels/_gen/`); confirm this doesn't pollute the level manifest / app.
+- **Import resolution for candidates.** Resolved by storing candidates as flat
+  `public/levels/_gen.*.md` files (DR-009): `imports=` resolve relative to `public/levels/`, and the
+  flat names round-trip through the app loader. Excluded from `levels.md`, so the app lists them only
+  under `npm run dev-gen`.
 - **Budget accounting across substrates.** When a round uses a Workflow, ensure its token
   spend is visible to the skill's per-session budget view.
 
@@ -606,3 +630,7 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
 - **2026-06-14** — Authoring-contract correction (user feedback): exits are always *horizontal*, but
   one room may have several exits on its east/west side — multi-storey levels connect floors via a tall
   staircase room (two same-side exits), not via vertical exits.
+- **2026-06-14** — Fixed app load of generated levels (DR-009): a `_gen/` **subdirectory** didn't
+  round-trip through the app's filename-based loader (surfaced as "missing required map section").
+  Switched candidates to **flat** `public/levels/_gen.*.md` files so the CLI scorer and app load
+  identically; updated dev-gen, manifest, skill, `.gitignore`, and the contract accordingly.

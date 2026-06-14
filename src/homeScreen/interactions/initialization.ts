@@ -17,7 +17,7 @@ export type InitResults = {
 
 export async function init():Promise<InitResults|null> {
   const baseManifest = await loadLevelManifestFromUrl('/levels/levels.md');
-  // `npm run dev-gen` only: surface in-progress generator candidates from public/levels/_gen/ as extra
+  // `npm run dev-gen` only: surface in-progress generator candidates (_gen.*.md under public/levels/) as extra
   // "(GEN) " tabs in the level selector. Normal `npm run dev` and production builds behave as before.
   const levelManifest = import.meta.env.MODE === 'dev-gen'
     ? await appendGenLevelsToManifest(baseManifest, '/levels/levels.md')
