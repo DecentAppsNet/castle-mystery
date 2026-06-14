@@ -190,6 +190,16 @@ describe('at room integration', () => {
     expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 
+  it('moves within the same room for @ 0%', () => {
+    const level = loadLevelFromText(atRoomMarkerSameRoomText.replace('@ Library.0%', '@ 0%'));
+    const king = level.characters.find(character => character.id === 'king');
+    const library = findRoom(level.rooms, 'Library');
+    const targetWaypoint = _findLeftmostMiddleFloorWaypoint(library);
+
+    expect(targetWaypoint).not.toBeNull();
+    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+  });
+
   it('routes @ Room.90% to the next-closest interior floor waypoint when the nearest interior floor waypoint is occupied', () => {
     const level = loadLevelFromText(atRoomPercentClaimedInteriorText);
     const scout = level.characters.find(character => character.id === 'scout');

@@ -21,6 +21,14 @@ function _parseAtTarget(activityText:string, context:ActivityContext):{ roomId:s
   const targetText = stripTrailingPeriod(activityText.trim().slice(1).trim());
   if (!targetText) throw new Error(`missing room id in authored activity '${activityText}'`);
 
+  const percentOnlyTarget = !targetText.includes('.') ? _parseRoomPercentTarget(targetText) : null;
+  if (percentOnlyTarget !== null) {
+    return {
+      roomId:findCurrentRoomForWaypoint(context.level, context.state.waypoint).id,
+      targetXPercent:percentOnlyTarget
+    };
+  }
+
   const targetId = normalizeId(targetText);
   const exactRoom = context.level.rooms.find(room => room.id === targetId) || null;
   if (exactRoom) return { roomId:exactRoom.id, targetXPercent:null };
