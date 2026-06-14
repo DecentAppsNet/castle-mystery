@@ -1,0 +1,551 @@
+# Design: Multi-Agent Generative Level Generator (`world-gen`)
+
+## Status
+
+**Living document.** Started 2026-06-14 on the `world-gen` branch. Design accepted;
+implementation not started (Phase 0 pending). This document is maintained continuously —
+see [How to use & maintain](#0-how-to-use--maintain-this-document).
+
+## 0. How to use & maintain this document
+
+This is the single source of truth for the generative level generator's design *and* its
+evolution. It has three kinds of content:
+
+- **The design** (sections 1–12): what we are building and how. Keep this describing the
+  *current* design — edit in place as the design changes.
+- **The [Decision Log](#13-decision-log)** (section 13): dated, ADR-style records of each
+  significant choice (and the alternatives rejected). Append; don't rewrite history.
+- **The [Iteration History](#14-iteration-history-what-worked--what-didnt)** (section 14):
+  dated, empirical learnings from running the system — what produced good levels, what
+  failed, which caps/weights we tuned and why.
+
+Two of the sections are deliberately written to be **portable** — section 2 (the pattern)
+and section 9 (steering/observability/capping) describe a reusable approach to
+*generator/validator AI content generation* that should transfer to other projects (other
+games, other generated artifacts) by swapping section 3's project bindings. Keep the
+portable parts free of repo-specific detail.
+
+> **When you touch this system, update this file in the same change.** A decision made and
+> not recorded here is a decision we will re-litigate later.
+
+---
+
+## 1. Vision
+
+A Claude skill takes a short, high-level **player prompt** describing a level and produces
+a fully playable **narrative level** for this game — a self-contained story told within a
+single level's context boundary, like the authored examples under
+`public/levels/xx_level.md`. A level comprises rooms, characters with hidden identities,
+items, a timeline of movement and dialogue, and conclusions for the player to infer. The
+system then **iteratively improves it** under human steering until it hits the player's
+desired complexity / playability / solvability.
+
+The narrative need not be a murder mystery (the game's overall framing): a level tells
+*whatever* bounded story the player prompt implies — see the Three Blind Mice fixture
+below.
+
+For all development work, the player prompt is hardcoded to a fixture (see below), with a
+single seam (`getPlayerInput()`) to swap in real player input later.
+
+**Development fixture — "Three Blind Mice":**
+
+```
+Three blind mice, three blind mice,
+See how they run, see how they run,
+They all ran after the farmer's wife,
+Who cut off their tails with a carving knife,
+Did you ever see such a thing in your life,
+As three blind mice?
+```
+
+The system should infer a world from this (a farm; a farmer's wife; three mice; a carving
+knife), write a backstory, and build a level around it.
+
+---
+
+## 2. The portable pattern (reusable)
+
+> This section is intentionally project-agnostic. It is the reusable core: a recipe for
+> **AI-generated content steered by a generator/validator loop**. Section 3 binds it to
+> this repo.
+
+**Generate → evaluate → accept/reject, around a single artifact, judged by two oracles,
+steered by a human, capped at every level.**
+
+1. **One evolving artifact as the single source of truth.** The thing being generated is
+   kept in its *native, runnable form* (here: a level Markdown file), not a bespoke
+   intermediate representation. Specialist agents patch it. This means the *real*
+   validators run on the *real* artifact, and the artifact's own loader/parser doubles as
+   a syntax linter (a malformed patch fails to load, which is itself a repair signal).
+
+2. **Two complementary oracles.** Quality is judged by:
+   - a **structural oracle** — deterministic, mechanical, cheap; answers *is it valid /
+     reachable / how complex* with booleans and integers; and
+   - a **semantic oracle** — model-judgment, expensive; answers *is it good / inferable /
+     well-pitched for a human*.
+
+   Neither alone is sufficient: content can be structurally valid but semantically dull,
+   or semantically promising but structurally broken. The optimizer trades them off.
+
+3. **LLM-guided local search.** A *strategist* proposes small mutations aimed at an
+   objective, a *builder* realizes each mutation via specialist agents, the oracles score
+   the results, and the strategist accepts improvements / rejects regressions — a
+   hill-climb (optionally a beam, later simulated annealing or a genetic pool). A
+   persistent **ledger** records every mutation and its score delta, giving the optimizer
+   memory ("what helped before") and giving humans an audit trail.
+
+4. **Human-gated, capped rounds.** The human sets the *objective* for each round (a
+   direction, not a fixed scalar), approves between rounds, and every loop is bounded
+   (beam width, iteration cap, repair cap, plateau-stop, optional token budget) so there
+   is no runaway spend.
+
+5. **Total observability.** Every prompt sent, every oracle output, and every
+   accept/reject rationale is logged and surfaced. The strategist's reasoning is a
+   first-class, schema-forced field, not hidden.
+
+To port this pattern: keep 1–5; replace the artifact, the two oracles, and the specialist
+roster (section 3).
+
+---
+
+## 3. Project bindings (this repo)
+
+| Pattern role | This repo |
+|---|---|
+| The artifact | A level `.md` file (the format the game already authors in `public/levels/`). |
+| Structural oracle | The **solver** — `solveLevel()` ([src/solver/solverUtil.ts](../../src/solver/solverUtil.ts)); see [adr-solver.md](../adr-solver.md). |
+| Semantic oracle | The **`/play-game` skill** ([.claude/skills/play-game/SKILL.md](../../.claude/skills/play-game/SKILL.md)). |
+| Artifact loader / linter | `loadLevelFromText()` and the loaders under [src/levelLoading/](../../src/levelLoading/) — throw `LoadLevelException` with the offending source line. |
+
+Both oracles already consume a level file, so the candidate is a *real* level — the
+validators are the game's actual validators, not proxies.
+
+### Why these two oracles are the right split
+
+- The **solver** is the *structural* oracle (deterministic): can the player physically
+  reach every clue by following and switching between co-present characters, and how many
+  switches deep is each clue (complexity)? See adr-solver §6, §6a, §6b.
+- **`/play-game`** is the *semantic* oracle (model judgment): *given* a clue is reachable,
+  could a disciplined player actually *infer* the answer from witnessable evidence, and is
+  it pitched right (too easy / too hard / unsolvable gap)?
+
+A clue can pass one and fail the other (reachable but uninferable; inferable in principle
+but unreachable). Both gates are required.
+
+---
+
+## 4. Current capabilities vs gaps
+
+The two merged tools already provide most of what the loop needs. The solver in
+particular already exposes machine-readable booleans and integer complexity — the
+anticipated "tweak the solver to return booleans/ints via flags" is largely **already
+done**.
+
+**Already in place:**
+
+- `solveLevel()` returns `SolveResult` ([src/solver/types/SolveResult.ts](../../src/solver/types/SolveResult.ts))
+  with the verdict booleans we need directly:
+  - `ok` (combined verdict), `reachability.ok` (all characters reachable),
+    `itemReachability.ok` (all items witnessed by a reachable character);
+  - the *why*: `reachability.unreachableIds[]`
+    ([src/solver/types/ReachabilityResult.ts](../../src/solver/types/ReachabilityResult.ts))
+    and `itemReachability.unreachableItemIds[]`
+    ([src/solver/types/ItemReachabilityResult.ts](../../src/solver/types/ItemReachabilityResult.ts)).
+- Integer complexity already exists in `transferCostTable`
+  ([src/solver/types/TransferCostTable.ts](../../src/solver/types/TransferCostTable.ts)):
+  per `(character → item)` the `cost` (fewest time-respecting character-switches) and the
+  switch chain. This *is* the "chain switches to reach a clue" metric.
+- `scripts/solve.ts` already accepts **filenames as args** and supports `--json` /
+  `--out=<file>`, exits 0/1. No input path is hardcoded.
+- The **Identities** puzzle is nearly free to author: an empty `## Identities` subsection
+  auto-generates one blank per *interactive* character
+  ([src/levelLoading/levelConclusionsLoader.ts](../../src/levelLoading/levelConclusionsLoader.ts)),
+  and characters default to `isTitleKnown=false` (hidden). game-scout mainly needs to make
+  characters interactive (description / face image / room placement) and drop an empty
+  `## Identities`.
+
+**Gaps to build (small adapters, not core surgery):**
+
+1. **Complexity aggregates.** `transferCostTable` is per-pair only; we need
+   `max / mean / histogram` of `cost` across reachable pairs. Compute in an adapter — no
+   solver-core change.
+2. **A candidate entry point.** `scripts/evaluateLevel.ts` taking an arbitrary candidate
+   path and emitting one **fitness JSON** (gates + complexity aggregates + unreachable
+   lists). Wrinkle: a candidate uses `imports=characters.md|items.md`, which resolve
+   relative to `public/levels/`, so candidates live in a scratch dir
+   (`public/levels/_gen/`) for imports to resolve.
+3. **The semantic oracle as a structured signal.** Wrap `/play-game`'s analysis in a
+   sub-agent that returns per-character `{ inferable, difficulty, gapNote }` rather than
+   prose.
+
+---
+
+## 5. Shared state (what flows between agents)
+
+| Artifact | Owner / writer | Role |
+|---|---|---|
+| `story.md` | story-teller | Prose backstory inferred from the player prompt. Conditions every downstream agent. Stable within a generation; revised only on request. |
+| `level.md` (candidate) | the specialists patch it | **The single source of truth.** A real level file. |
+| `evaluation.json` | evaluateLevel + play-game | Latest fitness vector for a candidate. |
+| `ledger.jsonl` | game-gen | Append-only memory: per iteration, the directive (prompt) → diff → metric deltas → accept/reject + reason. Doubles as the observability log. |
+
+Run artifacts live under a per-run directory (proposed: `generated/runs/<id>/`), with the
+candidate(s) under `public/levels/_gen/` so imports resolve.
+
+---
+
+## 6. Agent topology
+
+```
+                         ┌─────────────┐
+   player prompt ──────► │  /world-gen │  skill, main loop (outer)
+   (Three Blind Mice)    │ outer loop  │◄──── human steering (AskUserQuestion)
+                         └──────┬──────┘
+                                │ one capped round at a time
+                                ▼
+                       ┌──────────────────┐
+                       │   game-gen       │  strategist / optimizer
+                       │ propose→eval→    │  reads ledger + metrics,
+                       │ accept (capped)  │  emits a rationale
+                       └───┬──────────┬───┘
+              directives   │          ▲  scored candidates
+                           ▼          │
+                     ┌───────────┐    │
+                     │coordinator│    │  builder: realizes ONE mutation
+                     └─────┬─────┘    │
+        ┌──────────┬──────┼──────┬────────────┐
+        ▼          ▼      ▼      ▼            ▼
+   story-teller architect scout itemiser   game-cron     specialist generators
+     (story)   (rooms+   (chars+ (items)  (itinerary/      each patches level.md,
+                exits)   identities)        movement)       returns a diff + rationale
+                                  │
+                                  ▼
+                        ┌──────────────────────┐
+        candidate ────► │ VALIDATORS (oracles)  │
+        level.md        │ • solver  (structural)│ booleans + transfer-cost ints
+                        │ • play-game (semantic)│ per-char inferable + difficulty
+                        └──────────┬───────────┘
+                                   ▼  fitness vector + gates → back to game-gen
+```
+
+Two distinct controllers — keep them separate:
+
+- **coordinator = builder.** Stateless w.r.t. optimization; given a directive, it invokes
+  the right specialist(s) to *realize* one change.
+- **game-gen = strategist.** Decides *what to try next*, reads metrics + ledger,
+  accepts/rejects, and decides when to consult the human. It *calls* the coordinator.
+
+| Agent | Input | Output / patches | Oracle? |
+|---|---|---|---|
+| story-teller | player prompt | `story.md` | — |
+| game-architect | story | `# Map`, `# Rooms` (grid, exits/doors, start rooms) | — |
+| game-scout | story | `# Characters` + hidden identities + empty `## Identities` | — |
+| game-itemiser | story, rooms | `# Items` + placement in room grids | — |
+| game-cron | story, rooms, chars, items | `# Itinerary` (movement / speech / encounters) | — |
+| clue-author *(Phase 5)* | story, a conclusion type | one story-consistent clue (itinerary / item / description) | — |
+| **solver** (validator) | candidate | gates + complexity ints | structural |
+| **play-game** (validator) | candidate | per-char inferable + difficulty + gaps | semantic |
+
+Authoring-format reference for the specialists (the contract they are fed) is distilled in
+[Appendix A](#appendix-a-level-authoring-contract-summary).
+
+---
+
+## 7. Fitness model
+
+**Hard gates** (binary — failure rejects the candidate, or triggers a bounded repair):
+
+| Gate | Source |
+|---|---|
+| G1 `loads` — parses, no `LoadLevelException` | loader |
+| G2 `reachability.ok` — all characters reachable | solver |
+| G3 `itemReachability.ok` — all items witnessed by a reachable character | solver |
+| G4 `identitiesInferable` — no `⚠️ none` gaps *(configurable)* | play-game |
+
+**Soft score** (continuous, normalized 0–1, weighted — the thing we hill-climb):
+
+| Signal | Derived from | Steered toward |
+|---|---|---|
+| Clue-chain **depth/complexity** | `transferCostTable` mean/max `cost` | a *target band* (deep enough to be interesting, not unsolvable) |
+| **Difficulty balance** | play-game ratio of just-right vs too-easy vs too-hard | mostly just-right; zero gaps |
+| **Breadth** | #rooms / #chars / #items / #conclusions | human target |
+| **Exploration spread** | co-presence graph + room-layer occupancy | interactions distributed; doors used |
+| **Story fidelity** | a story-critic agent's judgment | stays recognizably on-theme |
+
+The objective is **not fixed** — the human sets a *direction/target* each round ("make
+identities harder", "add a room", "deepen the cook's clue chain"), which reconfigures the
+weights/targets. Each round therefore has a concrete `f(candidate)` the optimizer
+maximizes *subject to the gates*.
+
+---
+
+## 8. Optimization loop (one round)
+
+LLM-guided local search (hill-climb with a beam); oracle = solver + play-game:
+
+```
+input: best level L0, objective f (from human), iteration cap N, beam width B
+repeat up to N times:
+  1. game-gen proposes B mutation directives aimed at f,
+     informed by the ledger (what helped before) + latest metrics
+       e.g. "item 'carving knife' has cost 0 from active char → too shallow;
+             move its witness two switches deeper"
+  2. coordinator → specialists realize each directive → B patched candidates  (PARALLEL)
+  3. evaluate each: loader gate → solver (cheap, deterministic) →
+     play-game (model judge; survivors only / every few iters) → f + gates
+  4. drop gate failures (or 1 bounded auto-repair using unreachableIds);
+     among survivors pick argmax f
+       if improved → accept (L0 ← best), append to ledger with deltas
+       else        → record rejection, switch mutation class (anneal)
+  5. stop early if target met, or no improvement for P iters, or budget hit
+return best candidate + metric trajectory + ledger + human-readable diff & rationale
+```
+
+This is generator/validator with memory. It upgrades cleanly to simulated annealing
+(accept some early regressions) or a genetic/beam pool — but hill-climb-with-beam is the
+right start.
+
+---
+
+## 9. Human-in-the-loop, observability, capping
+
+> Portable: this section, like section 2, is meant to transfer to other generator projects.
+
+- **Rounds, not a runaway.** The human gates *between* rounds via `AskUserQuestion` ("more
+  rooms? more characters? deeper clue chains? harder identities? add a *favourite-colour*
+  conclusion?"). Their answer becomes the next round's objective. Total spend = rounds ×
+  (B × N) evaluations, every round human-approved.
+- **Hard caps everywhere** (see the [Caps registry](#10-caps--parameters-registry)).
+- **Full transparency.** Every directive (the prompt), every solver JSON (booleans +
+  costs), every play-game report, the f-score, the delta, and the accept/reject reason are
+  written to `ledger.jsonl` and shown as a per-round digest. The strategist's "cognitive
+  process" is a **schema-forced rationale field** on every decision, surfaced verbatim. In
+  the Workflow substrate, `/workflows` additionally shows the live agent tree.
+
+---
+
+## 10. Caps & parameters registry
+
+All tunable bounds in one place, so capping is explicit and auditable. **Values below are
+initial proposals, not yet validated** — record changes in the Iteration History with the
+reason.
+
+| Cap | Symbol | Initial | Purpose |
+|---|---|---|---|
+| Beam width | B | 3 | candidate mutations evaluated per iteration |
+| Iteration cap / round | N | 5 | max accept/reject iterations before returning to human |
+| Repair cap | R | 2 | bounded auto-repair attempts on a gate failure |
+| Plateau stop | P | 2 | stop a round after P iterations with no improvement |
+| play-game cadence | — | survivors-only, ≤ every 2 iters | controls cost of the expensive semantic oracle |
+| Rounds / session | — | human-gated (no fixed cap) | the human approves each round |
+| Token budget | — | optional (`budget.total`) | hard ceiling when a token target is set |
+
+---
+
+## 11. Implementation substrate — **hybrid** (accepted)
+
+The chosen substrate is **hybrid** (DR-004). The deciding constraint: **Workflow scripts
+are sandboxed — no filesystem or shell** — so the deterministic solver CLI cannot run
+*inside* a Workflow script.
+
+- **Outer loop = the `/world-gen` skill in the main conversation.** Owns human rounds
+  (`AskUserQuestion`), the digest, the caps, and runs the **solver via Bash**
+  (deterministic, cheap, kept out of LLM hands).
+- **Inner beam = an optional Workflow per round** for the parallel fan-out (B specialist
+  mutations + play-game evals via `parallel()` / `pipeline()`, `schema`-forced structured
+  returns, `budget` caps, live `/workflows` view). The skill then scores returned
+  candidates with the solver and consults the human.
+- **Specialists & play-game = agent calls** with the authoring contract + current level,
+  schema-forced to return a diff + rationale. The play-game validator reuses the merged
+  `SKILL.md` instructions.
+
+No new infrastructure — the two tools + Agent/Workflow/Bash primitives + the small
+adapters in section 4.
+
+---
+
+## 12. Phased build plan
+
+All on the `world-gen` branch. Each phase is independently demoable.
+
+| Phase | Delivers | Demo |
+|---|---|---|
+| **0 — Contracts & scoring** | `scripts/evaluateLevel.ts` → fitness JSON; complexity aggregates; the authoring-contract doc fed to agents; JSON schemas; scratch dir `public/levels/_gen/` | `evaluateLevel` scores an existing level |
+| **1 — One-shot pipeline** | `/world-gen` (input hardcoded to Three Blind Mice) → story-teller → architect → scout → itemiser → cron → emit candidate | a loadable, solver-passing level; no optimization |
+| **2 — Gates + auto-repair** | loader/solver as hard gates with ≤R repair from `unreachableIds`; play-game as Identities gate feeding gaps back | candidate that passes *both* oracles |
+| **3 — Optimization loop** | game-gen strategist + beam hill-climb + ledger + plateau-stop | level measurably improves over N iters on a fixed objective |
+| **4 — Human steering** | per-round `AskUserQuestion` → objective; full digest | you direct "harder identities / +1 room" and watch metrics move |
+| **5 — Multi-conclusion clues** | clue-author agents for role/age/colour; play-game extended; new fitness dimensions | richer levels with several conclusion types |
+
+---
+
+## 13. Decision Log
+
+ADR-style records of significant choices. Append new entries; mark superseded ones rather
+than deleting.
+
+### DR-001 — Build on a combined `world-gen` branch via merge (preserve commit identity)
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Context:** The two tools live on separate feature branches (`timeline-debugger`,
+  `player-debugger`) awaiting merge to `main`. We need both available now, on a branch
+  that won't conflict when those branches later merge to `main` while `world-gen` is in
+  active development.
+- **Decision:** Create `world-gen` from `timeline-debugger`'s tip and `git merge --no-ff
+  player-debugger`. Both branches had already merged the current `origin/main` (`9ace389`)
+  into themselves (their merge-base), so the merge was clean. Merging *preserves commit
+  SHAs*, so the feature commits remain shared ancestors; a later `git merge origin/main`
+  will recognize them and re-apply nothing. The same merge approach was then reused to
+  bring in `death-to-the-orient`'s documentation cleanup (SHAs preserved; only `CLAUDE.md`
+  conflicted, resolved in favour of `world-gen`'s newer version).
+- **Consequences / caveat:** This holds **only if the PRs land on `main` preserving SHAs**
+  (a merge commit or fast-forward). If they are **squash-merged or rebase-merged**, `main`
+  gets new SHAs with identical content; `world-gen` then carries duplicate history and may
+  conflict in regions it has since edited. Mitigation: ask the maintainer to merge those
+  two PRs as merge commits (not squash/rebase); if squashed, recover later by rebasing
+  *only* `world-gen`'s own dev commits onto the new `main` and dropping the redundant
+  feature commits.
+- **Alternatives rejected:** cherry-pick / rebase the branches together (creates new SHAs
+  → guaranteed future conflict when the originals merge).
+
+### DR-002 — Dual-oracle generator/validator architecture
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Context:** Need an automatic measure of level quality to drive iteration.
+- **Decision:** Use two oracles — the solver as a deterministic *structural* oracle, and
+  `/play-game` as a model-judgment *semantic* oracle — and require both. The optimizer
+  trades them off.
+- **Consequences:** Quality is measured along orthogonal axes (reachable & complex vs
+  inferable & well-pitched). Cost asymmetry: the structural oracle is cheap and run every
+  candidate; the semantic oracle is expensive and rate-limited (caps registry).
+- **Alternatives rejected:** a single LLM "is this a good level?" judge (no structural
+  guarantee, non-reproducible); a single solver score (can't judge human inferability).
+
+### DR-003 — The level `.md` is the single source of truth; the loader is the linter
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Decision:** Specialists patch a real level file rather than a bespoke IR. The game's
+  own `loadLevelFromText()` validates syntax; a malformed patch throws `LoadLevelException`
+  with the offending line, which becomes a repair signal.
+- **Consequences:** The real validators run on the real artifact; no IR↔level translation
+  layer to keep in sync. Risk: free-form Markdown editing can break format — mitigated by
+  feeding agents the authoring contract (Appendix A) and using the loader as a gate.
+- **Alternatives rejected:** a structured intermediate representation compiled to a level
+  (adds a translation layer and a second source of truth).
+
+### DR-004 — Hybrid orchestration substrate
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Context:** Workflow scripts are sandboxed (no fs/shell), but the solver is a
+  deterministic CLI and human-in-the-loop steering is central.
+- **Decision:** Outer loop + human rounds + deterministic solver scoring live in the
+  `/world-gen` skill (main loop, via Bash); the optional inner parallel beam runs as a
+  Workflow per round.
+- **Consequences:** Determinism where it matters (solver scoring, caps, human gating);
+  parallelism + structured output + live `/workflows` view where it helps (the beam).
+- **Alternatives rejected:** *pure Workflow* (can't run the solver CLI; awkward mid-run
+  human steering); *pure skill* (loses deterministic capping + easy parallel fan-out).
+
+### DR-005 — Separate `coordinator` (builder) from `game-gen` (strategist)
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Decision:** The coordinator only *realizes* a mutation via specialists; the game-gen
+  strategist owns search strategy, the ledger, accept/reject, and human consultation.
+- **Consequences:** Search policy is testable/tunable in one place; builders stay simple
+  and stateless.
+
+### DR-006 — Reuse the solver's existing structured outputs; add only adapters
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Context:** Expected to need solver flags for booleans/ints; found `SolveResult` already
+  exposes them and `solve.ts` already emits JSON.
+- **Decision:** Don't modify the solver core. Add (a) complexity aggregates in an adapter
+  and (b) a candidate-path `evaluateLevel` entry point emitting one fitness JSON.
+- **Consequences:** Keeps the solver (and adr-solver) stable; the generator depends on a
+  thin, well-defined contract.
+
+### DR-007 — Phased delivery with a hardcoded fixture
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Decision:** Deliver in phases 0–5 (section 12); hardcode the "Three Blind Mice" player
+  prompt in Phase 1 behind a `getPlayerInput()` seam.
+- **Consequences:** Each phase is demoable; real player input is a later, isolated change.
+
+---
+
+## 14. Iteration history (what worked / what didn't)
+
+Empirical learnings from actually running the system. Append dated entries as we go. (Seed
+— nothing run yet.)
+
+| Date | What we tried | Result | What we changed |
+|---|---|---|---|
+| 2026-06-14 | — | Design accepted; no runs yet | — |
+
+Use this table for: cap tunings (B/N/R/P) and their effect; mutation classes that
+reliably help vs waste budget; prompts/schemas that produced invalid levels; solver/
+play-game disagreements and how we resolved them; generative successes worth keeping as
+fixtures.
+
+---
+
+## 15. Risks & open questions
+
+- **PR merge style (DR-001 caveat).** If the upstream PRs are squash/rebase-merged,
+  `world-gen` needs a reconciliation pass. Track until the PRs land.
+- **Format breakage.** Free-form Markdown patches may produce unloadable levels; relying
+  on the loader as linter + bounded repair. Watch the repair-success rate (Iteration
+  History).
+- **Semantic-oracle non-determinism.** `/play-game` is model judgment; scores will vary
+  run-to-run. Consider seeding / caching per candidate hash, and treating its output as a
+  band, not a point.
+- **Complexity target band, not maximization.** Maximizing transfer cost can make levels
+  unsolvable-feeling; we steer toward a band. The band's bounds are unknown until we have
+  playtested examples — an Iteration-History question.
+- **Import resolution for candidates.** Candidates must live where `imports=` resolves
+  (`public/levels/_gen/`); confirm this doesn't pollute the level manifest / app.
+- **Budget accounting across substrates.** When a round uses a Workflow, ensure its token
+  spend is visible to the skill's per-session budget view.
+
+---
+
+## Appendix A. Level authoring contract (summary)
+
+The concise format reference the specialist agents are fed. Source of truth is the loader
+code; this is a digest. Sections of a level file (split by `#` headings):
+
+- **General** — `* name=value` bullets: `title` (required), `activeCharacter`,
+  `startTime`/`time` + optional `endTime` (may wrap midnight), `background=<file>.png`,
+  `imports=items.md | characters.md`, `winSynopsis`, optional `discoverable*Count`.
+  ([levelUtil.ts](../../src/levelLoading/levelUtil.ts))
+- **Map** — one fenced code block grid; `.` empty; every other char defined in a `* C=Room
+  Title` legend; rooms must be rectangular.
+  ([levelRoomLayoutLoader.ts](../../src/levelLoading/levelRoomLayoutLoader.ts))
+- **Rooms** — `## Room` subsections with an optional 3-row grid (`* C=Entity | Entity`) and
+  `* exits=Room | Room (modifier)`; exit modifiers: `open|closed|locked|unlocked|lockable|
+  unlockable`, plus `lockable with <Item>`.
+- **Characters** — `## Name` → ID (normalized); `* title=`, `description`, `faceImage=<file>.png`,
+  `facing=left|right`, `orientation=standing|sitting|laying`, `items=A | B`, `alive=`,
+  `isTitleKnown=` (default `false` → identity hidden).
+  ([levelRoomPopulationLoader.ts](../../src/levelLoading/levelRoomPopulationLoader.ts)).
+  For dev, assume `<charactername>.png` exists per character.
+- **Items** — `## Name` → ID; `* title=`, `description`, `image=<file>.png`, `drawOffset{X,Y,Z}`.
+- **Itinerary** — `HH:MM:SS` (or `HH:MM`) absolute, or `:` relative (after prior activity
+  completes) lines: `@ Room[.PERCENT%]`, `says "…"`, `interrupts "…"`, `thinks "…"`,
+  `faces left|right`, `stands|sits|lays`, `takes/gives/drops <Item>`, `dies`, `(narrator
+  note)`. A `:`-prefixed line applies to the most recently named character. `says` errors
+  on audible overlap; use `interrupts` for intentional overlap.
+  ([itineraryActivityParseUtil.ts](../../src/levelLoading/itineraryLoading/itineraryActivityParseUtil.ts))
+- **Conclusions** — top-level `* category=opt1|opt2` option lists (`rooms`/`items`/
+  `characters` auto-populated); `## Conclusion` subsections with `* conclusion=` cloze text
+  using `[Category]` or `[ans1|ans2]` blanks, plus `unlockConclusions=` /
+  `revealRooms=`. **Identities:** an empty `## Identities` subsection auto-generates one
+  blank per interactive character.
+  ([levelConclusionsLoader.ts](../../src/levelLoading/levelConclusionsLoader.ts))
+
+Validation must-respect: unique normalized IDs; referenced IDs must exist; no overlapping
+speech for a single character; rectangular rooms; consistent exit modifiers.
+
+---
+
+## Changelog
+
+- **2026-06-14** — Document created. Design accepted (DR-001…DR-007). Hybrid substrate
+  chosen. Phase 0 pending. No runs yet.
+- **2026-06-14** — Merged `death-to-the-orient` doc cleanup into `world-gen` (DR-001).
+  Reframed terminology: a generated level is a **narrative level** (a self-contained story
+  within a level's context boundary, per `public/levels/xx_level.md`), not specifically a
+  "murder-mystery" — that is the game's overall framing, not a per-level constraint.
