@@ -7,6 +7,7 @@ import WalkEvent from "./types/itineraryEvents/WalkEvent";
 import DieEvent from "./types/itineraryEvents/DieEvent";
 import RoomEntryEvent from "./types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
+import EmitEvent from "./types/itineraryEvents/EmitEvent";
 import ThoughtEvent from "./types/itineraryEvents/ThoughtEvent";
 import CharacterEncounterEvent from "./types/itineraryEvents/CharacterEncounterEvent";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
@@ -98,6 +99,16 @@ export function createSpeechEvent(startTime:number, speech:string):SpeechEvent {
   };
 }
 
+export function createEmitEvent(startTime:number, itemId:string, emitText:string):EmitEvent {
+  return {
+    type:ItineraryEventType.EMIT,
+    startTime,
+    itemId,
+    emitText,
+    duration:_calcSpeechDuration(emitText)
+  };
+}
+
 export function createDieEvent(startTime:number):DieEvent {
   return {
     type:ItineraryEventType.DIE,
@@ -186,6 +197,7 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
     case ItineraryEventType.FACE:
     case ItineraryEventType.BODY_ORIENTATION:
     case ItineraryEventType.SPEECH:
+    case ItineraryEventType.EMIT:
     case ItineraryEventType.THOUGHT:
     case ItineraryEventType.CHARACTER_ENCOUNTER:
     case ItineraryEventType.TAKE_ITEM:

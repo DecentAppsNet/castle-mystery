@@ -3,6 +3,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
+import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 
@@ -18,6 +19,7 @@ export function calcBlockingDurationForScheduling(event:ItineraryEvent, timestam
     case ItineraryEventType.WALK:
       return event.duration;
     case ItineraryEventType.SPEECH:
+    case ItineraryEventType.EMIT:
       return timestampType === 'after-previous-activity' ? event.duration : 0;
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
@@ -42,7 +44,7 @@ export function ensureTimestampIsAvailable(state:CharacterActivityState, timesta
   }
 }
 
-export function scheduleEventsToEndAtTime(events:ItineraryEvent[], timestamp:number, earliestStartTime:number):ItineraryEvent[] {
+export function scheduleEventsToEndAtTime(events:ItineraryEvent[], timestamp:number, earliestStartTime:number, onUnavailableArrival?:(earliestArrivalTime:number) => string):ItineraryEvent[] {
   if (!events.length) {
     if (timestamp < earliestStartTime) throw new Error(`activity at ${timestamp} overlaps a previous itinerary activity`);
     return [];
@@ -52,7 +54,8 @@ export function scheduleEventsToEndAtTime(events:ItineraryEvent[], timestamp:num
   const totalDuration = lastEvent.startTime + lastEvent.duration;
   const scheduledStartTime = timestamp - totalDuration;
   if (scheduledStartTime < earliestStartTime) {
-    throw new Error(`unable to arrive by itinerary timestamp ${timestamp}`);
+    throw new Error(onUnavailableArrival?.(earliestStartTime + totalDuration)
+      || `unable to arrive by itinerary timestamp ${formatMsecsAsTimestamp(timestamp)}`);
   }
   return _shiftEventTimes(events, scheduledStartTime);
 }

@@ -1,22 +1,15 @@
 # General
 
 * title=House of Rocks
-* activeCharacter=Pietro
+* activeCharacter=Niccolo
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md
 
-
 Things that should happen:
-The foreman yells at people for spending too long eating breakfast. Get to work!
-Pietro calls out to Heinrich, "your friend is here". 11-year-old Fred is on the street with his falcon. End of scene.
+Maria flirts weirdly with Stefan.
 
 Don't overdo it with story events. Have a bunch of people that just work and don't say/do much.
-
-
-
-
-
 
 # Map
 
@@ -96,10 +89,11 @@ SSMM/HH\YYYYTT
 ```
 .Iw.....
 ........
-........
+....S...
 ```
 
 * I=Giorgios
+* S=Stefan
 * w=Big Wineskin
 * exits=Stairwell (unlocked, lockable)
 
@@ -129,27 +123,28 @@ SSMM/HH\YYYYTT
 ## Workshop Yard
 
 ```
-................
-.....Y.G.A....S.
+.............u..
+...A.Y.G........
 ................
 ```
 
+* u=Uncut Limestone
 * A=Andreas
 * G=Giovanni
 * Y=Yusuf
-* S=Stefan
 * exits=Stone Store (unlocked, lockable) | Accounts Room (unlocked, lockable)
 * outside=true
 
 ## Accounts Room
 
 ```
-...c
+..mc
 ..S.
 ....
 ```
 
 * c=Yard Workers
+* m=Monthly Wages
 * S=Salomone
 
 # Characters
@@ -179,7 +174,22 @@ SSMM/HH\YYYYTT
 
 ## Maria
 
+## King Frederick
+
+* items=Furia Perched
+
+## Salomone
+
+* items=abacus
+
 # Items
+
+## Uncut Limestone
+
+* image=uncutLimestone.png
+* description=Raw limestone waiting to be cut.
+* drawOffsetX=1
+* drawOffsetZ=.07
 
 ## Owner's Key
 
@@ -187,7 +197,13 @@ SSMM/HH\YYYYTT
 * image=codex.png
 * description=Ahmad - Foreman | Heinrich - Apprentice | Giovanni - Journeyman Mason | Niccoló - Stone Cutter | Giorgios - Master carver | Andreas - Apprentice Carver | Yusuf - Builder and surveyor | Stefan - Quarry laborer
 
+## Monthly Wages
+* image=codex.png
+* description=Apprentice - 1 denari|Servant (non-family) - 5 denari|Quarry Laborer - 15 denari|Cook/House Manager - 30 denari|Stone Cutter - 2 tari|Journeyman Mason - 3 tari|Journeyman Carver - 4 tari|Foreman - 4 tari|Master Carver - 5 tari|Master Mason - 4 tari|Builder and surveyor - 6 tari|Clerk/accountant - 6 tari
+
 # Itinerary
+
+7:30:00 King Frederick takes Furia Perched in right hand
 
 7:30:00 Pietro @ Master's Hall
 7:30:03 Ahmad @ Master's Hall.80%
@@ -210,9 +226,16 @@ SSMM/HH\YYYYTT
 : says, "the work goes twice as fast!"
 : Pietro says, "Okay, then think about masonry contracts."
 : says, "But do it somewhere else."
-(Anna leaves)
+(Anna leaves for family quarters)
+7:30:40 Pietro faces left
 
-7:30:44 Anna @ Family Quarters
+7:30:06 Stefan @ Common Kitchen
+: Maria faces Stefan
+: says, "Good morning, my strong young man from Ragusa."
+: Stefan faces left
+: Stefan says, "Good morning."
+: Maria says, "You remind me so much of my dead husband Tommaso."
+7:30:20 Stefan @ Workshop Yard
 
 7:30:18 Ahmad @ Apprentices' Chamber
 : says "Get up!"
@@ -252,6 +275,7 @@ SSMM/HH\YYYYTT
 : stands
 : takes Big Wineskin in right hand
 : says, "And my hands are steady for carving."
+(Giorgios leaves for Workshop Yard)
 
 7:30:37 Heinrich @ Common Kitchen.80%
 : Maria says, "There's still breakfast left for you."
@@ -264,6 +288,8 @@ SSMM/HH\YYYYTT
 : Heinrich says, "Thank you, ma'am."
 : takes bread roll into inventory
 
+7:30:44 Anna @ Family Quarters
+
 7:31:00 Ahmad @ Common Kitchen
 : says, "Did they linger today?"
 : Maria says, "Linger, sir?"
@@ -273,12 +299,12 @@ SSMM/HH\YYYYTT
 : Maria says, "Even for you?"
 : Ahmad says, "I am not lingering!"
 
-
 7:31:19 Yusuf @ Master's Hall
 7:31:20 Salomone @ Master's Hall
+: Pietro faces left
 7:31:21 Pietro says, "What?"
 : Yusuf says, "The clerk lists me with the yard workers."
-: says, "But I go to the churches and bridges and castles."
+: says, "But I go to churches and bridges and castles."
 : says, "My work is there - not in the yard."
 : Pietro says, "Then we shall make a new list."
 : Yusuf says, "Good."
@@ -288,11 +314,36 @@ SSMM/HH\YYYYTT
 : Yusuf says, "Oh no no no, sir."
 : says, "I only wanted your records to be in order."
 : Pietro says, "Get back to work."
-(Yusuf and Salomone leave)
+(Yusuf leaves for tool store)
+7:31:54 Salomone says, "Master, I must share some numbers with you."
+: Pietro faces Salomone
+: Pietro says, "Always with the numbers."
+: Salomone says, "Just two numbers."
+: says, "The first is 58 tari."
+: says, "The second is 0."
+: Pietro says "The first number is our income?"
+: Salomone says, "No, that is the second number. The first number-"
+: Pietro says "Our expenses."
+: Salomone says, "Yes."
+: Pietro says "Don't worry! More jobs are coming."
+: Salomone says, "May we all prosper, sir."
+(Salomone leaves for accounts room)
+7:32:22 Pietro @ Master's Hall.60%
+: faces left
 
-7:30:40 Niccolo @ Workshop Yard
+7:30:40 Niccolo @ Workshop Yard.90%
+: waits
+: @ Workshop Yard.80%
+: waits 2
+: @ Workshop Yard.90%
+: waits
+: faces left
+: waits
+: @ Workshop Yard.70%
+: waits 3
+: @ Workshop Yard.90%
 
-7:30:55 Heinrich @ Workshop Yard
+7:30:56 Heinrich @ Workshop Yard
 : Giovanni faces Heinrich
 : says, "Apprentice, you're finally here."
 : says, "Oil my tool!"
@@ -301,7 +352,13 @@ SSMM/HH\YYYYTT
 : takes chisel in right hand
 : gives chisel to Heinrich
 
-7:31:06 Giorgios @ Workshop Yard
+7:31:06 Giorgios @ Workshop Yard.20%
+: says, "Ah, apprentice, your carves are fair."
+: Andreas faces Giorgios
+: Giorgios says, "But bring the blade toward your body"
+: says, "with a rapid jerking motion."
+: says, "It is safer."
+: says, "Also, do you want some wine?"
 
 7:31:08 Heinrich @ Tool Store.30%
 7:31:10 Giovanni @ Tool Store.60%
@@ -311,7 +368,75 @@ SSMM/HH\YYYYTT
 : says "But a good rock?" 
 : says "It will never let you down!"
 : says "Set your mind on rocks."
-
-
+: Heinrich says, "Thank you for your guidance, sir."
+(Giovanni leaves for workshop yard)
 
 7:31:23 Ahmad @ Workshop Yard
+
+7:31:28 Giovanni @ Workshop Yard
+
+7:32:08 Yusuf @ Tool Store.60%
+: @ Tool Store.80%
+: @ Tool Store.40%
+: @ Tool Store.60%
+: faces Heinrich
+: Yusuf says "Have you seen my abacus?"
+: Heinrich says "Not in here."
+: Yusuf says "Don't you understand I need it?"
+: Heinrich says "Pardon, sir. I will look for it."
+: Yusuf says "Sorry. I'm just in a bad mood."
+: says "It's that Salomone."
+: says "He always acts superior to me."
+: says "Yet we are paid exactly the same!"
+: Heinrich says "I will look for the abacus."
+(Heinrich leaves for the Accounts Room)
+(Yusuf leaves for the Family Quarters)
+
+7:32:25 King Frederick @ Master's Hall.10%
+: Pietro kneels
+: says, "Your Majesty. Such an honor to receive you!"
+: King Frederick says, "Please rise, Master Mason."
+: Pietro stands
+: King Frederick says, "Is Heinrich here?"
+: Pietro says, "Of course. Shall I fetch him for you?"
+: King Frederick says, "Yes, I thought we'd go falconing."
+: Pietro says, "Majesty, did I ever show you my stones?"
+: King Frederick says, "I've seen many stones. They are all the same."
+: Pietro says, "Oh, no, Majesty. My stones are quite special."
+: says, "I would love to show them to you."
+: King Frederick says, "I shall ask my falcon."
+: says, "Furia, do you wish to see this man's special stones?"
+: Furia Perched emits "(squawk)"
+: King Frederick says, "She prefers to fly in the air and hunt."
+: Pietro says "I shall return with Heinrich shortly, my King."
+
+7:32:35 Yusuf @ Apprentices' Chamber
+: @ Family Quarters
+: Anna says, "You cannot be here!"
+: Yusuf says, "I needed to be near you."
+: Anna faces Yusuf.
+: Anna says, "I am spurning you, do you understand?"
+: says, "Spurn, spurn, spurn!"
+: Yusuf says, "But I'm having a really bad day."
+: Anna says, "You have been spurned."
+: Yusuf says, "But can I just-"
+: Anna says, "No! Get out!"
+: says, "I'm busy helping my father think!"
+: thinks, "(thinking)"
+: thinks, "(thinking very hard)"
+
+7:32:39 Heinrich @ Accounts Room.90%
+7:32:42 Salomone @ Accounts Room
+: says, "What are you doing here?"
+: Heinrich faces Salomone
+: Heinrich says, "Looking for the abacus, sir."
+: Salomone says, "Does the surveyor need it again?"
+: Heinrich says, "Yes."
+: Salomone gives abacus to Heinrich
+: says, "There you have it."
+: Heinrich says, "Thank you, sir."
+
+7:32:59 Heinrich @ Workshop Yard
+
+7:33:06 Yusuf @ Stairwell
+: says, "She is insane!"

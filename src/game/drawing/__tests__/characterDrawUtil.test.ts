@@ -24,7 +24,7 @@ describe('characterDrawUtil', () => {
     it('disables sway for dead characters in every body orientation', () => {
       const time = CHARACTER_SWAY_INTERVAL_TEST_TIME;
 
-      (['standing', 'sitting', 'laying'] as const).forEach(bodyOrientation => {
+      (['standing', 'sitting', 'kneeling', 'laying'] as const).forEach(bodyOrientation => {
         const aliveCharacter = {
           ...createDefaultCharacter(),
           x:10,

@@ -11,6 +11,7 @@ import lockNonadjacentRoomText from './fixtures/lock-nonadjacent-room.md?raw';
 import lockNonlockableExitText from './fixtures/lock-nonlockable-exit.md?raw';
 import unlockWrongSideText from './fixtures/unlock-wrong-side.md?raw';
 import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
+import impossibleAtRoomArrivalText from './fixtures/impossible-at-room-arrival.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
 import invalidMapLegendTileText from './fixtures/invalid-map-legend-tile.md?raw';
 import invalidRoomGridDimensionsText from './fixtures/invalid-room-grid-dimensions.md?raw';
@@ -29,6 +30,7 @@ import invalidFaceImageText from './fixtures/invalid-face-image.md?raw';
 import invalidItemImageText from './fixtures/invalid-item-image.md?raw';
 import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
+import itemEmitsActivityText from './fixtures/item-emits-activity.md?raw';
 import itemDrawOffsetText from './fixtures/item-draw-offset.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
 import outsideRoomBelowGroundFloorText from './fixtures/outside-room-below-ground-floor.md?raw';
@@ -69,6 +71,8 @@ import duplicateConclusionCategoryGroupNamesText from './fixtures/duplicate-conc
 import duplicateConclusionPropertyText from './fixtures/duplicate-conclusion-property.md?raw';
 import duplicateConclusionSubsectionsCaseText from './fixtures/duplicate-conclusion-subsections-case.md?raw';
 import loadLevelFromUrlWithImportsCharactersText from './fixtures/load-level-from-url-with-imports-characters.md?raw';
+import loadLevelFromUrlWithImportsSalomoneCharactersText from './fixtures/load-level-from-url-with-imports-salomone-characters.md?raw';
+import loadLevelFromUrlWithImportsSalomoneText from './fixtures/load-level-from-url-with-imports-salomone.md?raw';
 import loadLevelFromUrlImportedDuplicateCharacterPropertySourceText from './fixtures/load-level-from-url-imported-duplicate-character-property-source.md?raw';
 import loadLevelFromUrlImportedDuplicateCharacterPropertyText from './fixtures/load-level-from-url-imported-duplicate-character-property.md?raw';
 import loadLevelFromUrlImportedDuplicateConclusionPropertySourceText from './fixtures/load-level-from-url-imported-duplicate-conclusion-property-source.md?raw';
@@ -255,7 +259,7 @@ describe('levelUtil itinerary loading', () => {
     expect(() => loadLevelFromText(initiallyDeadCharacterActivityText, 'initially-dead-character-activity.md')).toThrow(/dead character king cannot perform itinerary activity/i);
   });
 
-  it('parses standing, sitting, and laying activities and resets body orientation to standing on walks', () => {
+  it('parses standing, sitting, kneeling, and laying activities and resets body orientation to standing on walks', () => {
     const level = loadLevelFromText(bodyOrientationActivityText);
     const king = level.characters.find(character => character.id === 'king');
     if (!king) expect.fail('expected king character to exist');
@@ -265,10 +269,11 @@ describe('levelUtil itinerary loading', () => {
     expect(king.itinerary.some(event => event.type === ItineraryEventType.BODY_ORIENTATION)).toBe(true);
     expect(findCharacterPose(king, 4_999).bodyOrientation).toBe('standing');
     expect(findCharacterPose(king, 5_000).bodyOrientation).toBe('sitting');
-    expect(findCharacterPose(king, 6_000).bodyOrientation).toBe('laying');
+    expect(findCharacterPose(king, 6_000).bodyOrientation).toBe('kneeling');
+    expect(findCharacterPose(king, 7_000).bodyOrientation).toBe('laying');
     expect(findCharacterPose(king, walkEvent.startTime - 1).bodyOrientation).toBe('laying');
     expect(findCharacterPose(king, walkEvent.startTime).bodyOrientation).toBe('standing');
-    expect(findCharacterPose(king, 8_000).bodyOrientation).toBe('standing');
+    expect(findCharacterPose(king, 9_000).bodyOrientation).toBe('standing');
   });
 
   it('parses outside room metadata and defaults omitted outside flags to false', () => {
@@ -872,6 +877,16 @@ describe('levelUtil itinerary loading', () => {
     expect(queen?.items.map(item => item.id)).toContain('book');
   });
 
+  it('loads emits activities for carried items that are not visible in hand', () => {
+    const level = loadLevelFromText(itemEmitsActivityText);
+    const hero = level.characters.find(character => character.id === 'hero');
+    if (!hero) expect.fail('expected hero character to exist');
+    const emitEvent = hero.itinerary.find(event => event.type === ItineraryEventType.EMIT);
+    if (!emitEvent) expect.fail('expected emit event to exist');
+
+    expect(emitEvent).toMatchObject({ itemId:'bell', emitText:'(clang)', startTime:5_000 });
+  });
+
   it('loads lock and unlock activities with stable exit ids', () => {
     const level = loadLevelFromText(lockUnlockActivityText);
     const keeper = level.characters.find(character => character.id === 'keeper');
@@ -1119,6 +1134,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-at-room-destination.md:41');
       expect((error as LoadLevelException).message).toContain(`unknown room id 'West Hall'`);
+    }
+  });
+
+  it('suggests the earliest possible arrival time for impossible absolute @ room timestamps', () => {
+    try {
+      loadLevelFromText(impossibleAtRoomArrivalText, 'impossible-at-room-arrival.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('impossible-at-room-arrival.md:45');
+      expect((error as LoadLevelException).message).toContain('Unable to arrive to Tool Store by 0:00:00. The earliest possible arrival is ');
     }
   });
 
@@ -1578,6 +1604,23 @@ describe('levelUtil url loading', () => {
 
     expect(level.characters.find(character => character.id === 'hero')?.faceImageUrl).toBe('/assets/faces/heroFace.png');
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('combines imported and local character subsection fields when loading from a level url', async () => {
+    _stubLevelUrlFetch({
+      '/levels/load-level-from-url-with-imports-salomone.md':loadLevelFromUrlWithImportsSalomoneText,
+      '/levels/load-level-from-url-with-imports-salomone-characters.md':loadLevelFromUrlWithImportsSalomoneCharactersText
+    });
+
+    const level = await loadLevelFromUrl('/levels/load-level-from-url-with-imports-salomone.md');
+    const salomone = level.characters.find(character => character.id === 'salomone');
+
+    expect(salomone).toMatchObject({
+      title:'Salomone ben David di Palermo',
+      description:'Thoughtful eyes, slim build. This middle-aged man seems well-suited to mental work.',
+      faceImageUrl:'/assets/faces/salamone.png'
+    });
+    expect(salomone?.items.map(item => item.id)).toEqual(['abacus']);
   });
 
   it('reports root-file validation errors using the original root source line', async () => {

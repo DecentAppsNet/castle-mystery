@@ -9,6 +9,10 @@ import dedupCText from './fixtures/levelImportDedup/c.md?raw';
 import recursiveCharactersText from './fixtures/levelImportRecursive/characters.md?raw';
 import recursiveItemsText from './fixtures/levelImportRecursive/items.md?raw';
 import recursiveSourceText from './fixtures/levelImportRecursive/source.md?raw';
+import characterMergeCharactersText from './fixtures/levelImportCharacterMerge/characters.md?raw';
+import characterMergeSourceText from './fixtures/levelImportCharacterMerge/source.md?raw';
+import commentMergeImportText from './fixtures/levelImportCommentMerge/import.md?raw';
+import commentMergeLevelText from './fixtures/levelImportCommentMerge/level.md?raw';
 import cycleAText from './fixtures/levelImportCycle/a.md?raw';
 import cycleBText from './fixtures/levelImportCycle/b.md?raw';
 import selfImportAText from './fixtures/levelImportSelf/a.md?raw';
@@ -162,6 +166,38 @@ describe('levelImportUtil', () => {
     expect(loadedText).toContain('## Side Table');
     expect(loadedText).toContain('* description=Nested item import');
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('merges imported character subsection fields with local character subsection fields', () => {
+    const mergedText = createLevelTextWithImportTexts([characterMergeCharactersText], characterMergeSourceText);
+
+    expect(mergedText).toContain('## Salomone');
+    expect(mergedText).toContain('* items=abacus');
+    expect(mergedText).toContain('* title=Salomone ben David di Palermo');
+    expect(mergedText).toContain('* description=Thoughtful eyes, slim build. This middle-aged man seems well-suited to mental work.');
+    expect(mergedText).toContain('* faceImage=salamone.png');
+    expect(mergedText).toContain('age=49');
+    expect(mergedText).toContain('occupation=Clerk and accountant');
+  });
+
+  it('ignores comment lines while merging name-value lines, fenced code blocks, and itinerary timestamps', () => {
+    const mergedText = createLevelTextWithImportTexts([commentMergeImportText], commentMergeLevelText);
+
+    expect(mergedText).toContain('Local room note.');
+    expect(mergedText).not.toContain('Imported room note.');
+    expect(mergedText).toContain('....\n.L..\n....');
+    expect(mergedText).not.toContain('....\n.I..\n....');
+    expect(mergedText).toContain('* title=Main Hall');
+    expect(mergedText).toContain('* exits=Street');
+    expect(mergedText).toContain('Local character note.');
+    expect(mergedText).not.toContain('Imported character note.');
+    expect(mergedText).toContain('* items=abacus');
+    expect(mergedText).toContain('* title=Salomone ben David di Palermo');
+    expect(mergedText).toContain('age=49');
+    expect(mergedText).toContain('Local itinerary note.');
+    expect(mergedText).not.toContain('Imported itinerary note.');
+    expect(mergedText).toContain(': Salomone says, "Good morning."');
+    expect(mergedText).toContain('7:30:00 Salomone @ Hall');
   });
 
   it('preserves nested import provenance in the SourceLineMap', async () => {

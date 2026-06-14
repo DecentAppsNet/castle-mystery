@@ -1,4 +1,4 @@
-/* This module groups character pose-layout helpers, including standing, sitting, and laying skeleton geometry.
+/* This module groups character pose-layout helpers, including standing, sitting, kneeling, and laying skeleton geometry.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import Character from "@/game/types/Character";
@@ -168,6 +168,16 @@ function _createSittingCharacterLayout(backboneX:number, centerY:number, charact
   );
 }
 
+function _createKneelingCharacterLayout(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
+  facingDirection:Character['facingDirection']):CharacterLayout {
+  const layout = _createSittingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
+  const facingSign = facingDirection === 'right' ? 1 : -1;
+  return _createLayoutWithHands(layout.head, layout.segments.map((segment, index) => {
+    if (index < 4) return segment;
+    return { ...segment, toX:backboneX - facingSign * Math.abs(segment.toX - backboneX) };
+  }), layout.leftHand, layout.rightHand);
+}
+
 function _rotatePointQuarterTurn(x:number, y:number, pivotX:number, pivotY:number, direction:'clockwise'|'counterclockwise') {
   const relativeX = x - pivotX;
   const relativeY = y - pivotY;
@@ -208,6 +218,7 @@ function _createLayingCharacterLayout(backboneX:number, centerY:number, characte
 export function createCharacterLayout(backboneX:number, centerY:number, characterWidth:number, characterHeight:number,
   facingDirection:Character['facingDirection'], bodyOrientation:Character['bodyOrientation']):CharacterLayout {
   if (bodyOrientation === 'laying') return _createLayingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
+  if (bodyOrientation === 'kneeling') return _createKneelingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
   if (bodyOrientation === 'sitting') return _createSittingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
   return _createStandingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
 }

@@ -17,6 +17,7 @@ import Level from "./types/Level";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
+import EmitEvent from "./types/itineraryEvents/EmitEvent";
 import ThoughtEvent from "./types/itineraryEvents/ThoughtEvent";
 import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera, syncCameraTargetToActiveRoom, updateCamera } from "./cameraUtil";
@@ -28,6 +29,7 @@ import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameState
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
+import { createEmitBubbleEffect } from "./effects/emitBubbleEffectUtil";
 import { createThinkingEffect, THINKING_LOOK_UP_DURATION_MSECS } from "./effects/thinkingEffectUtil";
 import { createTalkingEffect } from "./effects/talkingEffectUtil";
 import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
@@ -36,6 +38,8 @@ import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion"
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
 import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
+import { getOwnedItems } from "./itemOwnershipUtil";
+import Item from "./types/Item";
 import { MAX_ACTIVE_EFFECTS } from "./effects/effectUtil";
 import EffectType from "./effects/types/EffectType";
 import {
@@ -128,6 +132,32 @@ function _findThinkingEvent(character:Character, time:number):ThoughtEvent|null 
   return thinkingEvent;
 }
 
+function _findActiveEmitEvent(character:Character, time:number):EmitEvent|null {
+  let activeEmitEvent:EmitEvent|null = null;
+  for (const event of character.itinerary) {
+    if (event.startTime > time) break;
+    if (event.type !== ItineraryEventType.EMIT) continue;
+    const emitEvent = event as EmitEvent;
+    activeEmitEvent = time < emitEvent.startTime + emitEvent.duration ? emitEvent : null;
+  }
+  return activeEmitEvent;
+}
+
+function _findEmitItemState(gameState:GameState, itemId:string):{ item:Item, room:Room, ownerCharacter:Character|null }|null {
+  for (const room of gameState.rooms) {
+    const item = room.items.find(candidate => candidate.id === itemId) || null;
+    if (item) return { item, room, ownerCharacter:null };
+  }
+  for (const character of gameState.characters) {
+    const item = getOwnedItems(character).find(candidate => candidate.id === itemId) || null;
+    if (!item) continue;
+    const room = findRoomAtPosition(gameState.rooms, character.position.x, character.position.y);
+    if (!room) continue;
+    return { item, room, ownerCharacter:character };
+  }
+  return null;
+}
+
 function _compareCharactersForCycleOrder(character1:Character, character2:Character) {
   return character1.position.z - character2.position.z || character1.position.x - character2.position.x;
 }
@@ -211,6 +241,28 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
     const speech = findCharacterPose(character, gameState.time).speech;
     if (!speech) return;
     gameState.activeEffects.push(createSpeechBubbleEffect(character, speech, gameState.scalingFactors, gameState.time));
+  });
+}
+
+function _syncEmitBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
+  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.EMIT_BUBBLE);
+
+  if (!gameState.isPlaying && !isScrubbing) return;
+
+  const audibleRoomIds = new Set(_findSpeechEffectRooms(gameState).map(room => room.id));
+  gameState.characters.forEach(character => {
+    const activeEmitEvent = _findActiveEmitEvent(character, gameState.time);
+    if (!activeEmitEvent) return;
+    const emitItemState = _findEmitItemState(gameState, activeEmitEvent.itemId);
+    if (!emitItemState || !audibleRoomIds.has(emitItemState.room.id)) return;
+    gameState.activeEffects.push(createEmitBubbleEffect(
+      emitItemState.room,
+      emitItemState.item,
+      emitItemState.ownerCharacter,
+      activeEmitEvent.emitText,
+      gameState.scalingFactors,
+      gameState.time
+    ));
   });
 }
 
@@ -332,6 +384,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 
   updateScalingFactorsAsNeeded(gameState, context);
   _syncSpeechBubbleEffects(gameState, isScrubbing);
+  _syncEmitBubbleEffects(gameState, isScrubbing);
   _syncTalkingEffects(gameState, isScrubbing);
   _syncThoughtBubbleEffects(gameState, isScrubbing);
   _syncThinkingEffects(gameState, isScrubbing);

@@ -1,6 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
+import { findCharacterPose } from '@/game/itineraryUtil';
 import baseLevelText from '@/game/__tests__/fixtures/timeline-start-time-field.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { parseItineraryActivities } from '../itineraryLoading/itineraryActivityParseUtil';
@@ -35,6 +36,92 @@ describe('levelItineraryLoader', () => {
       const options = { isCrossMidnight:false, explicitEndTime:null };
       expect(parseItineraryActivities('0:00:05 says "Who am I?"', 'implicit-first.md', 1, options, 0, 'hero').map(a => a.characterId)).toEqual(['hero']);
       expect(parseItineraryActivities(['0:00:03 Steve @ Bakery', '0:00:05 faces right', '0:00:07 says "Boy, does it smell delicious in here!"', '0:00:06 Baker faces left'].join('\n'), 'implicit-followup.md', 1, options, 0, 'hero').map(a => a.characterId)).toEqual(['steve', 'steve', 'steve', 'baker']);
+    });
+
+    it('parses emits activities with an item subject while preserving the current scheduling character', () => {
+      const options = { isCrossMidnight:false, explicitEndTime:null };
+      const [activity] = parseItineraryActivities(['0:00:03 Niccollo @ Aviary', ': Furia Perched emits "(squawk)"'].join('\n'), 'item-emits.md', 1, options, 0, 'hero');
+      const [, emitsActivity] = parseItineraryActivities(['0:00:03 Niccollo @ Aviary', ': Furia Perched emits "(squawk)"'].join('\n'), 'item-emits.md', 1, options, 0, 'hero');
+
+      expect(activity.subjectKind).toBe('character');
+      expect(activity.subjectId).toBe('niccollo');
+      expect(emitsActivity.characterId).toBe('niccollo');
+      expect(emitsActivity.subjectKind).toBe('item');
+      expect(emitsActivity.subjectId).toBe('furia perched');
+      expect(emitsActivity.activityText).toBe('emits "(squawk)"');
+    });
+
+    it('parses waits activities with explicit and default durations', () => {
+      const options = { isCrossMidnight:false, explicitEndTime:null };
+      const [explicitWaitActivity, defaultWaitActivity] = parseItineraryActivities([
+        '0:00:03 Stefan waits 3',
+        ': Stefan waits'
+      ].join('\n'), 'waits.md', 1, options, 0, 'hero');
+
+      expect(explicitWaitActivity.activityText).toBe('waits 3');
+      expect(explicitWaitActivity.waitDurationMsecs).toBe(3_000);
+      expect(defaultWaitActivity.activityText).toBe('waits');
+      expect(defaultWaitActivity.waitDurationMsecs).toBe(1_000);
+    });
+
+    it('rejects invalid waits durations', () => {
+      const options = { isCrossMidnight:false, explicitEndTime:null };
+
+      expect(() => parseItineraryActivities('0:00:03 Stefan waits later', 'waits-invalid.md', 1, options, 0, 'hero'))
+        .toThrow("waits-invalid.md:1: invalid waits duration 'later'");
+    });
+
+    it('delays later relative activities by an explicit waits duration', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const result = loadItineraries(level, [
+        '0:00:00 Hero waits 3',
+        ': Hero faces left'
+      ].join('\n'), 'waits-resolution.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
+
+      expect(hero).toBeTruthy();
+      expect(findCharacterPose(hero!, 2_999).facingDirection).toBe('right');
+      expect(findCharacterPose(hero!, 3_000).facingDirection).toBe('left');
+    });
+
+    it('defaults waits to one second for later relative activities', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const result = loadItineraries(level, [
+        '0:00:00 Hero waits',
+        ': Hero faces left'
+      ].join('\n'), 'waits-default-resolution.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
+
+      expect(hero).toBeTruthy();
+      expect(findCharacterPose(hero!, 999).facingDirection).toBe('right');
+      expect(findCharacterPose(hero!, 1_000).facingDirection).toBe('left');
+    });
+
+    it('applies waits after its own relative timestamp resolves', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const result = loadItineraries(level, [
+        '0:00:00 Hero faces right',
+        ': Hero waits 3',
+        ': Hero faces left'
+      ].join('\n'), 'waits-relative-resolution.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
+
+      expect(hero).toBeTruthy();
+      expect(findCharacterPose(hero!, 2_999).facingDirection).toBe('right');
+      expect(findCharacterPose(hero!, 3_000).facingDirection).toBe('left');
+    });
+
+    it('does not delay a later activity with an absolute timestamp', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const result = loadItineraries(level, [
+        '0:00:00 Hero waits 3',
+        '0:00:01 Hero faces left'
+      ].join('\n'), 'waits-absolute-override.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
+
+      expect(hero).toBeTruthy();
+      expect(findCharacterPose(hero!, 999).facingDirection).toBe('right');
+      expect(findCharacterPose(hero!, 1_000).facingDirection).toBe('left');
     });
   });
 });

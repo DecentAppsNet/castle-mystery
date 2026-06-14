@@ -79,8 +79,8 @@ function _parseOptionalFacingDirectionOrThrow(value:string|undefined, characterI
 function _parseOptionalBodyOrientationOrThrow(value:string|undefined, characterId:string):BodyOrientation {
 	if (value === undefined) return 'standing';
 	const normalizedValue = value.trim().toLowerCase();
-	if (normalizedValue === 'standing' || normalizedValue === 'sitting' || normalizedValue === 'laying') return normalizedValue;
-	throw new Error(`character ${characterId} orientation must be standing, sitting, or laying`);
+	if (normalizedValue === 'standing' || normalizedValue === 'sitting' || normalizedValue === 'kneeling' || normalizedValue === 'laying') return normalizedValue;
+	throw new Error(`character ${characterId} orientation must be standing, sitting, kneeling, or laying`);
 }
 
 function _parseOptionalNumberOrThrow(value:string|undefined, propertyName:string, itemId:string):number {
