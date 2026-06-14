@@ -104,21 +104,76 @@ Story = {
 
 ---
 
-## synthesiser  (SOLE WRITER — DR-012)
+## synthesiser  (a.k.a. the **file-writer** — SOLE WRITER — DR-012)
 - **IN** `{ currentLevelMd: string | null,   // null on the first call → creates the file
+  targetFile: string,                          // canonical _gen.<slug>.md, OR a scratch _gen.<slug>.try.md
   subagentIdentifier: "story-teller" | "game-architect" | "game-scout" | "game-itemiser" |
                       "game-cron" | "game-conclusions",
   subagentReturn: <that agent's OUT, including its prompt> }`
-- **OUT** `{ levelMd: string }`  **and writes** `public/levels/_gen.<slug>.md`.
+- **OUT** `{ levelMd: string }`  **and writes** `targetFile`.
 - Applies exactly one subagent's return per call, following its `prompt`, **resolving cross-references**
-  against the current md (owner→character id, activeCharacter→id, cloze answer→title). Writes the file
-  every call so each transitional state is testable via `npm run dev-gen`.
+  against the current md (owner→character id, activeCharacter→id, cloze answer→title). It is the **only**
+  agent that writes any md — the **canonical** candidate AND the validator's throwaway **scratch**
+  candidate (DR-017). Writes the file every call so each transitional canonical state is testable via
+  `npm run dev-gen`.
 
-## validator-coordinator  (sub-hub — DR-014)
-- **IN** `{ levelFilename: string, story: Story, maxIterations: number }`
-- **OUT** `{ status: "pass" | "needs-human" | "exhausted", fitness, playGameFindings,
+## play-game  (semantic oracle subagent — read-only · wraps the `/play-game` skill)
+- **IN** `{ levelFilename: string }`  (reads the candidate + its imports; **never writes**)
+- **OUT** `{
+  perCharacter: [{ name, identityInferable: "direct" | "combined" | "none", note }],   // Identities
+  perConclusion: [{ name, blanks: [{ value, pool, inferable: "direct"|"combined"|"none", note }],
+                   difficulty: "too-easy" | "just-right" | "too-hard" | "unsolvable" }],
+  conflicts: [{ description }],          // ambiguous / contradictory solutions a careful player hits
+  summary: string }`
+- The **semantic oracle**: it returns the `/play-game` analysis as **structured data** (not prose) so the
+  validator-coordinator can compare two candidates and route fixes. Read-only, like the skill itself.
+
+## validator-coordinator  (sub-hub — DR-014 / DR-017)
+- **IN** `{ levelFilename: string, story: Story, currentLevelMd: string, maxIterations: number,
+  direction?: string }`   // `direction` = the human's optional steer for this round
+- **OUT** `{ status: "pass" | "needs-human" | "exhausted",
+  finalFitness,            // combined solver + play-game score of the best candidate reached
+  playGameFindings,        // the structured play-game OUT for that candidate
+  improvements: [{ agent, summary, beforeFitness, afterFitness, subagentReturn }],  // the accepted ledger
+  recommendedApplyOrder: string[],   // order to replay `improvements` onto the canonical md
   humanQuestion?: string }`
-- Runs the solver (`npm run evaluate`) and the play-game semantic check; within `maxIterations`, calls
-  the relevant **wave subagents** for targeted fixes and routes their returns through the
-  **synthesiser** (which writes each transition). Surfaces `humanQuestion` up to the main coordinator
-  when it needs user input; never writes files itself.
+- **It never writes the canonical level md.** It runs a bounded **dual-oracle, accept-if-better
+  improvement loop** and returns the *accepted improvements* for the **coordinator** to apply via the
+  **file-writer** (DR-017). Per iteration (≤ `maxIterations`):
+  1. **Score both oracles.** `npm run evaluate --silent -- <file>` → `LevelFitness` (gates
+     `charactersReachable` / `itemsReachable` / `noAnachronisms`, complexity ints) **and** the
+     **play-game** subagent → per-character/per-conclusion findings. Combine into one **combined
+     fitness** (failing gates dominate; then a soft score — complexity in the target band + play-game
+     difficulty balance + breadth + story coherence).
+  2. **Diagnose → route** each failing gate / weak signal to the agent that owns that area (table below)
+     and request a **targeted delta** (a pure subagent return).
+  3. **Test on a scratch candidate.** The **file-writer** applies the delta to `_gen.<slug>.try.md`
+     (NOT the canonical file); re-run **both** oracles on it.
+  4. **Accept-if-better.** Keep the delta **only if** the combined fitness strictly improves **and no
+     gate regresses**; else discard and try a different fix/agent. Accepted deltas accumulate in the
+     **ledger** and carry forward as the new working base.
+  5. **Iterate**, each round attacking the highest-value failing gate, then the weakest soft signal —
+     iteratively building the best story / layout / timeline / items it can. Stop when gates pass and the
+     soft score plateaus (no improving move for a few tries) or the cap hits.
+- **Routing — which agent owns which fault/opportunity:**
+
+  | Signal (solver / play-game) | Route to | Targeted directive |
+  |---|---|---|
+  | `loaded:false` (line named); *"missing conclusion answer phrases"* | **game-conclusions** (or the named section's agent) | fix the named line / make every cloze answer a category member |
+  | `charactersReachable:false`, `unreachable.characterIds` | **game-cron** (± game-architect adjacency, game-scout start room) | bring the stranded character into a shared scene |
+  | `itemsReachable:false`, `unreachable.itemIds` | **game-cron** (± game-itemiser placement) | route a reachable character to witness the item |
+  | `noAnachronisms:false`, `anachronisms[]` | **game-cron** | fix the itinerary timestamps (an absolute arrival back-planned over earlier speech) |
+  | play-game Identities `none` | **game-scout** (± game-cron) | add a witnessable tell for that identity |
+  | play-game `too-easy` | **game-scout** / **game-conclusions** / **game-cron** | add distractors / soften direct tells / harder cloze / more indirection |
+  | play-game `too-hard` / `unsolvable` | **game-scout** / **game-cron** | add a supporting clue or a clue-revealing scene |
+  | play-game conflict / ambiguous | **game-scout** / **game-conclusions** | disambiguate the clashing identities/answers |
+  | complexity below band (`meanCost` low) | **game-cron** (± architect / itemiser) | deepen transfer chains (more indirection) |
+  | complexity above band | **game-cron** / **game-architect** | shorten the chains |
+  | story thin / incoherent (downstream signals) | **story-teller** (last resort — expensive) | re-deepen the story thread |
+- **Escalates** by setting `humanQuestion` (and `status:"needs-human"`) when it cannot decide —
+  conflicting objectives, repeated failure to move a gate, or an ambiguous `direction`. The main
+  coordinator asks the user and may re-invoke with the answer as `direction`.
+- **After it returns:** the **coordinator** applies the accepted `improvements` (in
+  `recommendedApplyOrder`) to the **canonical** `_gen.<slug>.md` via the **file-writer** (one call per
+  improvement, each written so the user can live-test via `npm run dev-gen`). If `humanQuestion` is set
+  (or the return is otherwise ambiguous), the coordinator asks the user **before** applying.

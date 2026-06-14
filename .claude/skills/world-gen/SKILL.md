@@ -7,8 +7,9 @@ description: >-
   game-scout, game-itemiser, game-cron, game-conclusions —
   in parallel where independent; each returns data + an apply-prompt, and a single SYNTHESISER agent
   is the only writer of the level md (one return per call, writing every transition). A
-  validator-coordinator runs the capped solver/play-game tweak loop, with human-in-the-loop until the
-  user confirms. Use when asked to generate/author a new level, "world-gen", or continue the
+  validator-coordinator runs a capped dual-oracle (solver + play-game) accept-if-better loop and
+  returns the accepted improvements for the coordinator to write via the synthesiser; human-in-the-loop
+  until the user confirms. Use when asked to generate/author a new level, "world-gen", or continue the
   generative level generator. WRITES only _gen.*.md candidate files under public/levels/ (via the
   synthesiser).
 ---
@@ -75,29 +76,54 @@ resolves): each call = `current md + that return + its id`, and writes the file.
   room/item **titles** or an author-defined category).
 Then call the **synthesiser once per return** (cron → conclusions), writing each.
 
-## Validate & tweak — validator-coordinator
+## Validate & improve — validator-coordinator (dual-oracle, accept-if-better)
 
-Spawn the **validator-coordinator** (IN: level filename, `story`, `maxIterations`). It:
-1. Runs `npm run evaluate --silent -- _gen.<slug>.md` (structural) and the play-game semantic check.
-2. Acts on the output within `maxIterations`: for a fix, calls the relevant **wave subagent** for a
-   targeted delta and routes it through the **synthesiser** (which writes). Reads:
-   - `loaded:false` → format error (message names the line). *"missing conclusion answer phrases…"* →
-     game-conclusions (a cloze answer not in any category — usually a title/heading mix-up).
-   - `gates.ok:false` → solvability: `unreachable.*` → game-cron/scout (fix co-presence / placement).
-   - play-game gaps / too-easy / conflicts → game-scout (clues) / game-conclusions / game-cron.
-3. Surfaces a **`humanQuestion`** up to you when it needs user input; you ask via `AskUserQuestion` and
-   pass the answer back down.
-4. Returns status + fitness + play-game findings.
+Spawn the **validator-coordinator** (IN: level filename, `story`, current md, `maxIterations`,
+optional `direction`). It runs a bounded **improvement loop** over **both oracles** and returns the
+*accepted improvements* for you (the coordinator) to write — **it never writes the canonical md itself**
+(DR-017). Each iteration (≤ `maxIterations`):
 
-(Until the validator-coordinator is built, run steps 1–2 inline as the coordinator, capped the same
-way — but file writes still go only through the synthesiser.)
+1. **Score both oracles.** `npm run evaluate --silent -- _gen.<slug>.md` (the **solver** — gates
+   `charactersReachable` / `itemsReachable` / `noAnachronisms` + complexity) **and** the **play-game**
+   subagent (the **semantic** oracle — structured per-character Identities inferability, per-conclusion
+   difficulty, conflicts). Combine into one **combined fitness** (failing gates dominate; then a soft
+   score: complexity in the target band + play-game difficulty balance + breadth + story coherence).
+2. **Diagnose → route.** Map each failing gate / weak signal to the agent that owns that area and ask it
+   for a **targeted delta** (a pure return). Routing:
+   - `loaded:false` (line named) / *"missing conclusion answer phrases…"* → **game-conclusions** (cloze
+     answer not a category member — usually a title/heading mix-up) or the named section's agent.
+   - `unreachable.characterIds` → **game-cron** (co-presence) ± game-architect (adjacency) / game-scout
+     (start room). `unreachable.itemIds` → **game-cron** (route a witness) ± game-itemiser (placement).
+   - `noAnachronisms:false` / `anachronisms[]` → **game-cron** (fix itinerary timestamps — an absolute
+     arrival back-planned over earlier speech).
+   - play-game Identities `none` → **game-scout** (clue) ± game-cron (clue scene); `too-easy` →
+     game-scout / game-conclusions / game-cron; `too-hard`/`unsolvable` → game-scout / game-cron;
+     conflict → game-scout / game-conclusions. Complexity off-band → game-cron (± architect/itemiser).
+3. **Test on a scratch candidate.** The **file-writer** applies the delta to `_gen.<slug>.try.md` (NOT
+   the canonical file); re-run **both** oracles on it.
+4. **Accept-if-better.** Keep the delta **only if** combined fitness strictly improves **and no gate
+   regresses**; else discard and try a different fix/agent. Accepted deltas accumulate in a **ledger**
+   and carry forward. Keep iterating — best-effort — to build the best story/layout/timeline/items.
+5. **Return** `{ status, finalFitness, playGameFindings, improvements (ledger), recommendedApplyOrder,
+   humanQuestion? }`. It sets `humanQuestion` (status `needs-human`) when it can't decide (conflicting
+   objectives, a gate it can't move, ambiguous `direction`).
+
+**Then you (coordinator) write it.** If `humanQuestion` is set — or the return is otherwise ambiguous on
+how to proceed — **ask the user** via `AskUserQuestion` first (optionally re-invoking the validator with
+the answer as `direction`). Otherwise apply each accepted improvement (in `recommendedApplyOrder`) to the
+**canonical** `_gen.<slug>.md` via the **file-writer** (one call per improvement, each written so the
+user can live-test). The validator proposes; you decide and write.
+
+(Until a separate validator-coordinator agent is spawned, run this loop inline as the coordinator, capped
+the same way — but all md writes, scratch and canonical, still go only through the file-writer.)
 
 ## Human-in-the-loop (ends the run)
 
 Present the playable level and invite the user to test it (`npm run dev-gen` → the `(GEN) …` tab).
-On a **change request**, route it through the validator-coordinator / the relevant wave subagent →
-synthesiser (each transition written, so the user re-tests live). **The run ends only when the user
-confirms they're happy** ("it's ok").
+On a **change request**, hand it to the validator-coordinator as a `direction`; it runs the same
+accept-if-better loop and returns improvements, which you write via the **file-writer** (each transition
+written, so the user re-tests live). **The run ends only when the user confirms they're happy**
+("it's ok").
 
 ## Caps (no runaway)
 

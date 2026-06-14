@@ -256,8 +256,8 @@ Two distinct controllers — keep them separate:
 | clue-author *(Phase 5)* | story, a conclusion type | one story-consistent clue extending **game-conclusions** (itinerary / item / description) | — |
 | **solver** (validator) | candidate | gates + complexity ints | structural |
 | **play-game** (validator) | candidate | per-char inferable + difficulty + gaps | semantic |
-| **synthesiser** | current md + one subagent return + id | the **sole writer** of the level md — applies that return per its `prompt`, writes the file | — |
-| **validator-coordinator** | level + story + maxIterations | runs solver + play-game; capped tweak loop via wave subagents → synthesiser; routes human questions up | — |
+| **synthesiser** (file-writer) | current md + one subagent return + id + target file | the **sole writer** of any md (canonical + the validator's scratch) — applies that return per its `prompt`, writes the file | — |
+| **validator-coordinator** | level + story + current md + maxIterations + direction? | dual-oracle **accept-if-better** loop (solver + play-game): routes faults to wave subagents, tests each delta on a scratch candidate, keeps only improvements; **returns the accepted-improvement ledger** to the coordinator (never writes canonical); routes human questions up (DR-017) | — |
 
 Authoring-format reference for the specialists (the contract they are fed) is distilled in
 [Appendix A](#appendix-a-level-authoring-contract-summary). The concrete **agentic call graph** (who
@@ -269,8 +269,9 @@ subagents (minimal custom inputs; each returns data + an apply-`prompt`); a sing
 the *only* writer of the level md (one return per call, writing every transition so a run is testable
 live via `npm run dev-gen`); truly-independent subagents run in **parallel** (wave 2 =
 architect/scout/itemiser on the `story`; wave 3 = cron/conclusions on the `story` + current md); and a
-**validator-coordinator** sub-hub owns the capped solver/play-game tweak loop with human-in-the-loop
-termination. Per-agent IO:
+**validator-coordinator** sub-hub runs the capped dual-oracle improvement loop (**refined by DR-017**:
+accept-if-better on solver + play-game, returning accepted improvements for the coordinator to write via
+the file-writer; human-in-the-loop termination). Per-agent IO:
 [`agent-contracts.md`](../../.claude/skills/world-gen/references/agent-contracts.md).
 
 ---
@@ -302,11 +303,22 @@ identities harder", "add a room", "deepen the cook's clue chain"), which reconfi
 weights/targets. Each round therefore has a concrete `f(candidate)` the optimizer
 maximizes *subject to the gates*.
 
+**Acceptance rule (DR-017).** The validator-coordinator scores a candidate with **both** oracles into one
+**combined fitness** and keeps a change only if it is **strictly better**: candidate B beats A iff B
+**fixes ≥1 failing gate without breaking another**, or — gates equal — B's **soft score is strictly
+higher**. Each proposed delta is materialized on a **scratch** candidate and re-scored by both oracles
+*before* it is kept; rejected deltas are discarded. So no change reaches the canonical md unless both
+oracles agree it helped (or at least did not regress a gate).
+
 ---
 
 ## 8. Optimization loop (one round)
 
-LLM-guided local search (hill-climb with a beam); oracle = solver + play-game:
+Realized by the **validator-coordinator** (DR-017): it *is* the strategist+validator, **accept-if-better**
+on the **combined** (solver + play-game) fitness is the acceptance rule, the **ledger** is the memory,
+and each candidate is tested on a **scratch** file (`_gen.<slug>.try.md`) before any canonical write. The
+validator returns the accepted-improvement ledger; the **coordinator** writes the canonical md via the
+**file-writer** and owns the human gate. The generic algorithm (a hill-climb with an optional beam):
 
 ```
 input: best level L0, objective f (from human), iteration cap N, beam width B
@@ -622,6 +634,10 @@ than deleting.
   validate/steer (validator-coordinator) are cleanly separated; the user reviews real, on-disk states.
 - **Alternatives rejected:** the main coordinator validating inline (mixes concerns — the earlier ≤3
   inline repair was a stopgap); auto-terminating on `gates.ok` (skips human judgement of playability).
+- **Status update (2026-06-14):** Refined by **DR-017**. The validator-coordinator no longer writes the
+  canonical md or routes fixes straight through the synthesiser — it runs a **dual-oracle accept-if-better**
+  loop, evaluates each delta on a **scratch** candidate, and **returns the accepted-improvement ledger**
+  to the coordinator, which writes the canonical md via the file-writer and owns the human gate.
 
 ### DR-015 — story-critic: the story-teller's internal quality gate (first vertical sub-delegation)
 - **Date:** 2026-06-14 · **Status:** Accepted
@@ -666,6 +682,47 @@ than deleting.
   correct, not the artifact); cross-channel overlap detection (false-flags legitimate talking while
   walking); fixing the loader's blocking check instead (changes scheduling semantics broadly — riskier
   than a read-only solver check, and the solver is where the user wanted the signal surfaced).
+
+### DR-017 — Validator-coordinator: a dual-oracle, accept-if-better improvement engine
+- **Date:** 2026-06-14 · **Status:** Accepted (supersedes the inline-repair part of DR-014; makes the
+  game-gen strategist of §6/§8 concrete)
+- **Context:** DR-014 sketched the validator-coordinator as a capped solver/play-game *repair* loop that
+  routed fixes straight through the synthesiser. We want more than repair: the validator should **use
+  both oracles to drive iterative improvement**, keep a change **only when it measurably helps**, and
+  leave the **canonical write + the human gate to the main coordinator**.
+- **Decision:** The validator-coordinator runs a bounded loop and **returns accepted improvements; it
+  never writes the canonical md.**
+  1. **Score with both oracles** — the **solver** (`evaluate` → gates + complexity) and the **play-game**
+     subagent (structured Identities inferability / per-conclusion difficulty / conflicts) — into one
+     **combined fitness**. Comparator: candidate B beats A iff B fixes ≥1 failing gate without breaking
+     another, or (gates equal) B's soft score is strictly higher (soft = complexity in the target band +
+     play-game difficulty balance + breadth + story coherence).
+  2. **Diagnose → route.** A fixed **fault/opportunity → agent** table (failing gate or weak signal →
+     the wave subagent that owns that area) — full table in
+     [`agent-contracts.md`](../../.claude/skills/world-gen/references/agent-contracts.md) under
+     *validator-coordinator*. E.g. `noAnachronisms:false`/co-presence → **game-cron**; Identities `none`
+     → **game-scout**; `too-easy` → game-scout/game-conclusions; `unreachable.itemIds` → game-cron/
+     game-itemiser; `loaded:false` → game-conclusions/named section.
+  3. **Test on a scratch candidate.** The **file-writer** applies the proposed delta to a throwaway
+     `_gen.<slug>.try.md`; **both** oracles re-run on it.
+  4. **Accept-if-better.** Keep the delta only if combined fitness strictly improves and **no gate
+     regresses**; else discard and try another fix/agent. Accepted deltas accumulate in a **ledger**.
+  5. **Aggregate & return** `{ status, finalFitness, playGameFindings, improvements (ledger),
+     recommendedApplyOrder, humanQuestion? }` to the **coordinator**.
+- **Coordinator writes; coordinator asks.** The coordinator applies the accepted `improvements` (in
+  `recommendedApplyOrder`) to the **canonical** `_gen.<slug>.md` via the **file-writer** (the synthesiser
+  — one call per improvement, each written for live testing). If the validator returns a `humanQuestion`
+  (or its data is ambiguous on how to proceed), the coordinator **asks the user** (`AskUserQuestion`)
+  first, optionally re-invoking the validator with the answer as `direction`.
+- **Invariant preserved.** The **file-writer is the sole writer of any md** — the validator's scratch
+  candidate *and* the coordinator's canonical write both go through it; the validator only orchestrates +
+  scores. This is the §8 hill-climb made concrete: the validator-coordinator is the strategist+validator,
+  accept-if-better is the acceptance rule, the ledger is the memory.
+- **Consequences:** Changes that don't help are never written; both structural *and* semantic quality
+  improve each round; the human stays in control of the canonical artifact and of ambiguous calls.
+- **Alternatives rejected:** validator writes the canonical md directly (removes the coordinator's write
+  + user gate the user asked for); accept-any-change (drifts/regresses without the better-than test);
+  solver-only (misses semantic gaps play-game catches, and vice-versa).
 
 ---
 
@@ -812,3 +869,12 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   JSON) and `evaluate` (gate `G3b` `noAnachronisms` + `anachronisms` detail). The three authored levels
   pass with zero anachronisms (talking-while-walking in `02_house_of_rocks` validated the channel
   split). New unit tests; adr-solver + CLAUDE.md updated.
+- **2026-06-14** — Validator-coordinator made concrete (DR-017): a **dual-oracle accept-if-better**
+  improvement loop. It scores each candidate with **both** the solver and the **play-game** subagent
+  (now a structured semantic oracle), routes faults/opportunities to the owning wave subagent via a
+  fixed table, tests each delta on a **scratch** candidate, and keeps it only if combined fitness
+  strictly improves with no gate regression. It **returns the accepted-improvement ledger** to the
+  coordinator (never writes the canonical md); the **coordinator** writes via the **file-writer** and
+  **asks the user** when the validator returns a `humanQuestion` or ambiguous data. Updated
+  agent-contracts (validator-coordinator + new play-game oracle contract), SKILL, topology, §7 fitness
+  (acceptance rule), §8 loop.

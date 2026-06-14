@@ -125,35 +125,44 @@ sequenceDiagram
     WG->>SY: md + conclusions return + id
     SY-->>WG: md (written)
 
-    WG->>VC: validate-and-tweak (levelFilename, story, maxIterations)
+    WG->>VC: validate-and-improve (levelFilename, story, md, maxIterations, direction?)
     rect rgb(240, 250, 240)
-        Note over VC,SY2: Repeats until pass or maxIterations (PLANNED)
+        Note over VC,SY2: Accept-if-better loop — repeats until gates pass and the score plateaus, or maxIterations (PLANNED)
         VC->>EV: npm run evaluate (solver)
-        EV-->>VC: fitness JSON — gates incl. noAnachronisms
-        VC->>PG: semantic check
-        PG-->>VC: per-character inferability + gaps
-        Note over VC,VR: When a fix is needed — an anachronism or co-presence gap routes to game-cron
-        VC->>VR: targeted re-gen (any wave subagent)
+        EV-->>VC: fitness — gates incl. noAnachronisms + complexity
+        VC->>PG: play-game (semantic oracle)
+        PG-->>VC: per-character inferability + per-conclusion difficulty + conflicts
+        Note over VC,VR: Route the weakest signal to its owner (e.g. anachronism / co-presence to game-cron)
+        VC->>VR: targeted delta (any wave subagent)
         VR-->>VC: delta data + apply-prompt
-        VC->>SY2: md + delta + id
-        SY2-->>VC: md (written)
+        VC->>SY2: write SCRATCH candidate (_gen.slug.try.md)
+        SY2-->>VC: scratch md (written)
+        VC->>EV: re-check scratch (solver)
+        EV-->>VC: fitness
+        VC->>PG: re-check scratch (play-game)
+        PG-->>VC: findings
+        Note over VC,VR: Keep the delta only if combined fitness improved and no gate regressed
     end
+    VC-->>WG: aggregated improvements (ledger) + finalFitness + findings (+ humanQuestion?)
+
     rect rgb(255, 250, 235)
-        Note over User,VC: When user input is needed — escalate up to the hub (PLANNED)
-        VC-->>WG: humanQuestion
+        Note over User,VC: When the data is ambiguous or humanQuestion is set — coordinator asks the user (PLANNED)
         WG-->>User: AskUserQuestion
-        User->>WG: answer
-        WG-->>VC: answer
+        User->>WG: answer (may re-invoke the validator with it as direction)
     end
-    VC-->>WG: status + fitness + play-game findings
+    rect rgb(235, 245, 255)
+        Note over WG,SY: Coordinator writes the canonical md — one accepted improvement per call
+        WG->>SY: md + accepted improvement + id
+        SY-->>WG: canonical md (written)
+    end
 
     rect rgb(255, 250, 235)
         Note over User,VC: Repeats until the user says it is ok (PLANNED)
         WG-->>User: present the playable level (test via dev-gen)
         User->>WG: change request or it is ok
-        Note over WG,VC: On a change request
-        WG->>VC: apply the requested change
-        VC-->>WG: updated (synthesiser wrote each transition)
+        Note over WG,VC: On a change request — hand it to the validator as a direction
+        WG->>VC: improve (direction = the change request)
+        VC-->>WG: improvements ledger
     end
     Note over User,WG: the user confirming ends the agentic interaction
 ```
@@ -182,24 +191,26 @@ flowchart LR
 
     WG --> AR & SC & IT
     WG --> CR & CN
-    WG -->|"md + one return + id"| SY["synthesiser — SOLE WRITER"]:::writer
-    SY -->|"writes every transition"| FILE["the level md on disk"]
+    WG -->|"one return + id · generation & canonical writes"| SY["synthesiser / file-writer — SOLE WRITER"]:::writer
+    SY -->|"writes every transition"| FILE["canonical _gen.slug.md"]
     SY -.->|"updated md"| WG
 
     WG -->|"when generation is done"| VC["validator-coordinator — sub-hub"]
 
     subgraph vfan["validator-coordinator's calls — replicated to its right"]
         direction TB
-        EV["solver · deterministic"]
-        PG["play-game"]
-        VR["wave subagent — re-gen"]
-        SY2["synthesiser — validator writes"]:::writer
+        EV["solver · evaluate (+ re-check)"]
+        PG["play-game · semantic oracle (+ re-check)"]
+        VR["wave subagent — targeted delta"]
+        SY2["file-writer — scratch candidate"]:::writer
     end
 
-    VC -->|"npm run evaluate"| EV
-    VC -->|"semantic check"| PG
-    VC -->|"targeted re-gen · anachronism/co-presence to game-cron"| VR
-    VC -->|"delta + id"| SY2
+    VC -->|"score + re-check both oracles"| EV
+    VC -->|"score + re-check both oracles"| PG
+    VC -->|"fault → owning agent (e.g. co-presence/anachronism → game-cron)"| VR
+    VC -->|"write scratch try.md"| SY2
+    SY2 -.->|"throwaway"| TRY["scratch _gen.slug.try.md"]
+    VC -.->|"aggregated improvements (ledger)"| WG
     VC -.->|"escalate human question"| WG
 
     classDef writer fill:#efe,stroke:#2a2;
@@ -222,13 +233,14 @@ flowchart LR
 | 7 | coordinator | game-cron | subagent | `story` + level md | itinerary data + prompt | **In Parallel (wave 3)** | LIVE |
 | 8 | coordinator | game-conclusions | subagent | `story` + level md | conclusions data + prompt | **In Parallel (wave 3)** | LIVE |
 | 9 | coordinator | synthesiser | synthesiser | md + one subagent return + id | level md (writes file) | once per return (serialized) | LIVE |
-| 10 | coordinator | validator-coordinator | subagent (sub-hub) | levelFilename + story + maxIterations | status + fitness + findings (+ humanQuestion) | — | PLANNED |
-| 11 | validator-coordinator | `npm run evaluate` | deterministic | candidate file | fitness JSON (gates incl. `noAnachronisms` + `anachronisms` detail) | — | PLANNED |
-| 12 | validator-coordinator | play-game | subagent | candidate file | per-character inferability + gaps | — | PLANNED |
-| 13 | validator-coordinator | any wave subagent | subagent | targeted directive (custom IN; anachronism / co-presence → game-cron) | delta data + prompt | as applicable | PLANNED |
-| 14 | validator-coordinator | synthesiser | synthesiser | md + delta + id | level md (writes file) | serialized | PLANNED |
-| 15 | validator-coordinator | coordinator | up-call | `humanQuestion` | user's answer | — | PLANNED |
-| 16 | coordinator | Human | `AskUserQuestion` | question / level to review | answer / "it's ok" (ends run) | — | PLANNED |
+| 10 | coordinator | validator-coordinator | subagent (sub-hub) | levelFilename + story + current md + maxIterations + direction? | improvements ledger + finalFitness + play-game findings (+ humanQuestion) | — | PLANNED |
+| 11 | validator-coordinator | `npm run evaluate` | deterministic | candidate file (canonical or scratch) | fitness JSON (gates incl. `noAnachronisms` + complexity) | per iteration — baseline & re-check | PLANNED |
+| 12 | validator-coordinator | play-game | subagent (semantic oracle) | candidate file | structured per-character inferability + per-conclusion difficulty + conflicts | per iteration — baseline & re-check | PLANNED |
+| 13 | validator-coordinator | any wave subagent | subagent | targeted directive (fault → owning agent; e.g. co-presence / anachronism → game-cron) | delta data + prompt | as applicable | PLANNED |
+| 14 | validator-coordinator | file-writer (synthesiser) | synthesiser | md + delta + **scratch** target | scratch md (writes `_gen.slug.try.md`) | serialized | PLANNED |
+| 15 | validator-coordinator | coordinator | up-call | `humanQuestion` / aggregated improvements | user's answer / proceed | — | PLANNED |
+| 16 | coordinator | Human | `AskUserQuestion` | question (on `humanQuestion` / ambiguity) | answer / "it's ok" (ends run) | — | PLANNED |
+| 17 | coordinator | file-writer (synthesiser) | synthesiser | **canonical** md + one accepted improvement + id | canonical md (writes `_gen.slug.md`, each transition) | once per improvement | PLANNED |
 
 ---
 
@@ -244,9 +256,16 @@ flowchart LR
 - **Parallel groups.** Wave 2 = {architect, scout, itemiser} (all take only the `story`); wave 3 =
   {cron, conclusions} (both take `story` + the integrated md, neither depends on the other). story-
   teller is solo (root). The synthesiser is inherently **serialized** (one return per call).
-- **Validator-coordinator is PLANNED.** Today the main coordinator runs the solver/play-game inline
-  and repairs (≤3). The dedicated validator-coordinator sub-hub (caps + human-question up-calls) is the
-  next build (Phase 2–4).
+- **Validator-coordinator is PLANNED (dual-oracle, accept-if-better — DR-017).** It scores each
+  candidate with **both** oracles (solver + the **play-game** semantic oracle subagent), routes each
+  failing gate / weak signal to the **agent that owns that area** (table in the call section / contracts),
+  tests every proposed delta on a **scratch** `_gen.slug.try.md` (written by the file-writer), and
+  **keeps it only if combined fitness improves with no gate regression**. It **returns the aggregated
+  accepted-improvement ledger** to the main coordinator and **never writes the canonical md**. The
+  **coordinator** then writes the canonical file via the **file-writer** (one accepted improvement per
+  call) and **asks the user** when the validator returns a `humanQuestion` or ambiguous data. Today the
+  main coordinator runs this loop inline (≤ maxIterations); a separately-spawned validator-coordinator
+  agent is the next build (Phase 2–4).
 - **Exercise status.** The revised model has been exercised **through waves 1–3** (Sing a Song of
   Sixpence, 2026-06-14): the story-teller→story-critic loop, the **In-Parallel** waves 2 and 3, pure
   subagent returns, and the synthesiser all ran; the level loads with the full Identities + cloze
@@ -299,3 +318,10 @@ flowchart LR
   **shaded `rect` regions with a full-English label** ("In Parallel …", "Repeats until …", "When a fix is
   needed …"). Solid arrow = forward request (always rightward); dashed = return / escalation / human
   prompt. (Supersedes the prior "the `par` keyword stays" note.)
+- **2026-06-14** — **Validator-coordinator wired as a dual-oracle accept-if-better loop (DR-017).** Both
+  diagrams now show the validator scoring with the **solver and the play-game semantic oracle**, routing
+  a fault to its owning agent for a **targeted delta**, writing a **scratch** `_gen.slug.try.md` via the
+  file-writer, **re-checking with both oracles**, and keeping the delta only if it improves with no gate
+  regression. It **returns the aggregated improvement ledger** to the coordinator (no canonical write);
+  the **coordinator asks the user** on `humanQuestion`/ambiguity, then **writes the canonical md via the
+  file-writer** (one accepted improvement per call). Call table rows 10–17 + the validator note updated.
