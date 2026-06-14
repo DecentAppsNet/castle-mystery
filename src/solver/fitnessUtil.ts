@@ -5,6 +5,7 @@
   into the stable contract emitted by scripts/evaluateLevel.ts. See
   docs/design/world-gen-generative-level-design.md and docs/adr-solver.md. */
 
+import { anachronismsToJsonObject } from "./anachronismSerializeUtil";
 import SolveResult from "./types/SolveResult";
 import TransferCostTable from "./types/TransferCostTable";
 import LevelFitness, { ComplexityMetrics } from "./types/LevelFitness";
@@ -36,12 +37,13 @@ function _computeComplexityMetrics(table:TransferCostTable):ComplexityMetrics {
 }
 
 export function buildLevelFitness(solveResult:SolveResult):LevelFitness {
-  const { reachability, itemReachability, transferCostTable } = solveResult;
+  const { reachability, itemReachability, transferCostTable, anachronisms } = solveResult;
   return {
     levelName: solveResult.levelName,
     gates: {
       charactersReachable: reachability.ok,
       itemsReachable: itemReachability.ok,
+      noAnachronisms: anachronisms.length === 0,
       ok: solveResult.ok
     },
     counts: {
@@ -52,6 +54,7 @@ export function buildLevelFitness(solveResult:SolveResult):LevelFitness {
       characterIds: reachability.unreachableIds,
       itemIds: itemReachability.unreachableItemIds
     },
+    anachronisms: anachronismsToJsonObject(anachronisms, solveResult.levelName).anachronisms,
     complexity: _computeComplexityMetrics(transferCostTable)
   };
 }

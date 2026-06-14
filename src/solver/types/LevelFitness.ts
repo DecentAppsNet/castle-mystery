@@ -8,7 +8,20 @@
 type FitnessGates = Readonly<{
   charactersReachable:boolean, // Every character reachable from the active character (reachability.ok).
   itemsReachable:boolean,      // Every placed item witnessed by a reachable character (itemReachability.ok).
-  ok:boolean                   // Both of the above (SolveResult.ok). The structural pass/fail verdict.
+  noAnachronisms:boolean,      // No character is scheduled to do two things at once (see TimelineAnachronism).
+  ok:boolean                   // All of the above (SolveResult.ok). The structural pass/fail verdict.
+}>
+
+type AnachronismDetail = Readonly<{
+  characterId:string,
+  characterTitle:string,
+  occupyingType:string,
+  occupyingStartTime:number,
+  occupyingEndTime:number,
+  conflictingType:string,
+  conflictingStartTime:number,
+  conflictingEndTime:number,
+  overlapMsecs:number
 }>
 
 type ComplexityMetrics = Readonly<{
@@ -25,8 +38,9 @@ type LevelFitness = Readonly<{
   gates:FitnessGates,
   counts:Readonly<{ characters:number, items:number }>,
   unreachable:Readonly<{ characterIds:string[], itemIds:string[] }>,
+  anachronisms:AnachronismDetail[],
   complexity:ComplexityMetrics
 }>
 
-export type { FitnessGates, ComplexityMetrics };
+export type { FitnessGates, AnachronismDetail, ComplexityMetrics };
 export default LevelFitness;

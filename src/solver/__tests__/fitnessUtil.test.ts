@@ -39,6 +39,7 @@ function _solveResult(args:{
     itemReachability:args.itemReachability,
     transferCostTable:args.transferCostTable,
     roomLayers:{ rooms:[], characterLabels:[], itemLabels:[] },
+    anachronisms:[],
     analysisAscii:'', roomLayerAscii:'', asciiArt:'',
     ok:args.reachability.ok && args.itemReachability.ok
   };
@@ -52,7 +53,8 @@ describe('fitnessUtil', () => {
         itemReachability:_itemReachability([]),
         transferCostTable:_table(['knife', 'goblet'], [_row('alice', [0, 1]), _row('bob', [1, 2])])
       }));
-      expect(fitness.gates).toEqual({ charactersReachable:true, itemsReachable:true, ok:true });
+      expect(fitness.gates).toEqual({ charactersReachable:true, itemsReachable:true, noAnachronisms:true, ok:true });
+      expect(fitness.anachronisms).toEqual([]);
       expect(fitness.counts).toEqual({ characters:2, items:2 });
       expect(fitness.complexity).toEqual({
         totalPairCount:4,

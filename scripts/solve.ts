@@ -2,9 +2,10 @@
 
 /* CLI for the level solver (see docs/adr-solver.md). For each requested level (or every level in
   levels.md when none are given) it prints the ASCII character co-presence graph + item-reachability
-  graph + room-interaction cube, and exits non-zero if any level has unreachable characters or
-  unreachable items — so it can back a pre-commit hook. Pass --json to also print the machine-readable
-  payload, or --out <file> to write it for a future validator.
+  graph + timeline-anachronism check + room-interaction cube, and exits non-zero if any level has
+  unreachable characters, unreachable items, or timeline anachronisms — so it can back a pre-commit
+  hook. Pass --json to also print the machine-readable payload, or --out <file> to write it for a
+  future validator.
 
   The adjacency + item matrices always print inline (they carry the PASS/FAIL verdict). The room cube,
   which can be far wider than a terminal, is written to a temp file instead — with only its path
@@ -19,6 +20,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { setSeed } from '@/common/randUtil';
+import { anachronismsToJsonObject } from '@/solver/anachronismSerializeUtil';
 import { characterGraphToJsonObject } from '@/solver/graphSerializeUtil';
 import { itemGraphToJsonObject } from '@/solver/itemGraphSerializeUtil';
 import { roomLayerViewToJsonObject } from '@/solver/roomLayerSerializeUtil';
@@ -74,7 +76,7 @@ async function _run():Promise<void> {
   const { filenames, json, outPath } = _parseArgs(process.argv.slice(2));
   const targets = filenames.length ? filenames : await loadLevelManifestFilenames();
 
-  const jsonResults:Array<(ReturnType<typeof characterGraphToJsonObject> & { items:ReturnType<typeof itemGraphToJsonObject>, transferCost:ReturnType<typeof transferCostTableToJsonObject>, roomLayers:ReturnType<typeof roomLayerViewToJsonObject> }) | { level:string, error:string }> = [];
+  const jsonResults:Array<(ReturnType<typeof characterGraphToJsonObject> & { items:ReturnType<typeof itemGraphToJsonObject>, anachronisms:ReturnType<typeof anachronismsToJsonObject>, transferCost:ReturnType<typeof transferCostTableToJsonObject>, roomLayers:ReturnType<typeof roomLayerViewToJsonObject> }) | { level:string, error:string }> = [];
   let failedCount = 0;
   for (const filename of targets) {
     try {
@@ -87,6 +89,7 @@ async function _run():Promise<void> {
       jsonResults.push({
         ...characterGraphToJsonObject(result.graph, result.levelName, result.reachability),
         items:itemGraphToJsonObject(result.itemGraph, result.levelName, result.itemReachability),
+        anachronisms:anachronismsToJsonObject(result.anachronisms, result.levelName),
         transferCost:transferCostTableToJsonObject(result.transferCostTable, result.levelName),
         roomLayers:roomLayerViewToJsonObject(result.roomLayers, result.levelName)
       });
@@ -106,7 +109,7 @@ async function _run():Promise<void> {
   }
 
   if (failedCount > 0) {
-    process.stdout.write(`\n${failedCount} of ${targets.length} level(s) failed (unreachable characters or items, or load error).\n`);
+    process.stdout.write(`\n${failedCount} of ${targets.length} level(s) failed (unreachable characters or items, timeline anachronisms, or load error).\n`);
     process.exitCode = 1;
   }
 }

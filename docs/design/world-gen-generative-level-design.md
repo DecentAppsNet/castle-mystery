@@ -180,11 +180,11 @@ done**.
    prose. *(Pending — Phase 2.)*
 
 **Fitness JSON contract** (one entry per scored level, emitted by `evaluateLevel`):
-`{ loaded:true, levelName, gates:{ charactersReachable, itemsReachable, ok },
-counts:{ characters, items }, unreachable:{ characterIds[], itemIds[] }, complexity:{
-totalPairCount, reachablePairCount, unreachablePairCount, maxCost, meanCost, costHistogram } }`
-— or `{ loaded:false, levelName, error }` when the level fails to load (the G1 gate). See
-[`src/solver/types/LevelFitness.ts`](../../src/solver/types/LevelFitness.ts).
+`{ loaded:true, levelName, gates:{ charactersReachable, itemsReachable, noAnachronisms, ok },
+counts:{ characters, items }, unreachable:{ characterIds[], itemIds[] }, anachronisms:[…],
+complexity:{ totalPairCount, reachablePairCount, unreachablePairCount, maxCost, meanCost,
+costHistogram } }` — or `{ loaded:false, levelName, error }` when the level fails to load (the G1
+gate). See [`src/solver/types/LevelFitness.ts`](../../src/solver/types/LevelFitness.ts).
 
 ---
 
@@ -284,6 +284,7 @@ termination. Per-agent IO:
 | G1 `loads` — parses + every cloze answer is in a conclusion category (`validateUnlockPhrases`), no `LoadLevelException` | loader |
 | G2 `reachability.ok` — all characters reachable | solver |
 | G3 `itemReachability.ok` — all items witnessed by a reachable character | solver |
+| G3b `noAnachronisms` — no character scheduled into two overlapping same-channel activities (e.g. an absolute arrival back-planned over an earlier one) | solver |
 | G4 `identitiesInferable` — no `⚠️ none` gaps *(configurable)* | play-game |
 
 **Soft score** (continuous, normalized 0–1, weighted — the thing we hill-climb):
@@ -499,6 +500,9 @@ than deleting.
   and (b) a candidate-path `evaluateLevel` entry point emitting one fitness JSON.
 - **Consequences:** Keeps the solver (and adr-solver) stable; the generator depends on a
   thin, well-defined contract.
+- **Status update (2026-06-14):** Qualified by **DR-016** — when a *validation correctness* gap was
+  found (a tour's final room unsampled; absolute-timestamp anachronisms undetected), the solver core
+  *was* extended. The "adapter-only" stance holds for *derived metrics*, not for missing verdicts.
 
 ### DR-007 — Phased delivery with a hardcoded fixture
 - **Date:** 2026-06-14 · **Status:** Accepted
@@ -513,13 +517,13 @@ than deleting.
   aggregated contract.
 - **Decision:** Define `LevelFitness`
   ([src/solver/types/LevelFitness.ts](../../src/solver/types/LevelFitness.ts)) = `gates`
-  (charactersReachable / itemsReachable / ok) + `counts` + `unreachable` lists +
-  `complexity` aggregates (total/reachable/unreachable pair counts, max/mean cost, cost
-  histogram). `buildLevelFitness(SolveResult)` is pure and unit-tested;
+  (charactersReachable / itemsReachable / noAnachronisms / ok) + `counts` + `unreachable` lists +
+  `anachronisms` detail + `complexity` aggregates (total/reachable/unreachable pair counts,
+  max/mean cost, cost histogram). `buildLevelFitness(SolveResult)` is pure and unit-tested;
   `scripts/evaluateLevel.ts` is the I/O shell that adds the `loaded` / `error` envelope.
-- **Consequences:** Gives the verdict booleans + integer complexity without any solver-core
-  change (DR-006). The G1 `loads` gate is represented by the CLI envelope (`loaded:false` +
-  `error`), not inside the pure function. Mean cost is rounded to 2 dp for stable JSON.
+- **Consequences:** Gives the verdict booleans + integer complexity. The `noAnachronisms` gate +
+  `anachronisms` detail were added by DR-016. The G1 `loads` gate is represented by the CLI envelope
+  (`loaded:false` + `error`), not inside the pure function. Mean cost is rounded to 2 dp for stable JSON.
 - **Alternatives rejected:** emitting raw `SolveResult` JSON (verbose, no aggregates);
   adding flags to the solver core (unnecessary — aggregation is a thin adapter).
 
@@ -635,6 +639,33 @@ than deleting.
 - **Alternatives rejected:** the coordinator critiquing the story (mixes concerns — the critic is the
   story-teller's own tool); no critic at all (thin stories degrade the whole pipeline — the recurring
   too-easy / too-shallow results trace back to under-developed stories).
+
+### DR-016 — Extend the solver core: timeline-end co-presence sample + anachronism gate
+- **Date:** 2026-06-14 · **Status:** Accepted (qualifies DR-006)
+- **Context:** Two validation-correctness gaps surfaced while generating. (a) A generated maid touring
+  four rooms by **absolute** timestamps was reported to strand the two characters in her **last** room.
+  Root cause was in the solver, not the level: co-presence sampled at each `ROOM_ENTRY`'s `startTime`,
+  but `findCharacterPose` at that instant resolves to the room being *left*, so a tour's final room is
+  never observed. (b) The loader can silently mis-schedule an **absolute** activity *before* a
+  relative-`:`-speech-drifted clock (its blocking check scores speech as non-blocking for absolute
+  timestamps), leaving a character "in two places at once" with no load error — an anachronism the user
+  asked the solver to detect via both `solve` and `evaluate`.
+- **Decision:** Extend the solver core (not just an adapter): (1) add a **timeline-end sample**
+  (`findTimelineEndTime`, [timelineUtil.ts](../../src/solver/timelineUtil.ts)) to both the co-presence
+  and room-occupancy samplers — the final settled state where every character rests in the room they
+  last entered; (2) add **anachronism detection** ([anachronismUtil.ts](../../src/solver/anachronismUtil.ts))
+  — per character, two **same-channel** activities (movement / speech / emit / hands) whose spans
+  overlap; talking while walking is allowed (different channels), two overlapping walks is a fault.
+  `SolveResult.ok` now also requires `noAnachronisms`; both `solve` (ASCII block + JSON) and `evaluate`
+  (gate `G3b` + `anachronisms` detail) surface it.
+- **Consequences:** The maid's last room now registers (the gen level went 4/6 → 6/6 reachable, all
+  items reachable); the three authored levels still pass with zero anachronisms (talking-while-walking
+  in `02_house_of_rocks` validated the channel split). Qualifies DR-006: adapter-only holds for derived
+  *metrics*, but a missing *verdict* justifies a core change. See adr-solver §2, §6a, §6c.
+- **Alternatives rejected:** hand-patching the gen level (it is gitignored scratch — the system must be
+  correct, not the artifact); cross-channel overlap detection (false-flags legitimate talking while
+  walking); fixing the loader's blocking check instead (changes scheduling semantics broadly — riskier
+  than a read-only solver check, and the solver is where the user wanted the signal surfaced).
 
 ---
 
@@ -773,3 +804,11 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   loop (plot / flow / intrigue / accuracy / characters / denouement) and returns only a critic-accepted
   story — the first realized vertical sub-delegation (DR-011). Updated contracts, HLD, skill, topology,
   fitness, and caps.
+- **2026-06-14** — Solver core extended (DR-016): (1) **timeline-end co-presence sample**
+  (`timelineUtil.findTimelineEndTime`) closes a final-room blind spot — a maid touring four rooms by
+  absolute timestamps never registered in her last room (the gen `_gen.sing_a_song_of_sixpence.md` went
+  4/6 → **6/6** characters + 8/8 items reachable, `meanCost` 0.38 → 0.60); (2) **timeline-anachronism
+  detection** (`anachronismUtil`, same-channel overlap) added to `SolveResult.ok`, `solve` (ASCII +
+  JSON) and `evaluate` (gate `G3b` `noAnachronisms` + `anachronisms` detail). The three authored levels
+  pass with zero anachronisms (talking-while-walking in `02_house_of_rocks` validated the channel
+  split). New unit tests; adr-solver + CLAUDE.md updated.

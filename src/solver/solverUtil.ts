@@ -6,6 +6,8 @@
   programmatic caller share this single path. */
 
 import Level from "@/game/types/Level";
+import { findTimelineAnachronisms } from "./anachronismUtil";
+import { renderAnachronismsAscii } from "./anachronismSerializeUtil";
 import { buildCharacterGraphForLevel } from "./characterGraphUtil";
 import { renderCharacterGraphAscii } from "./graphSerializeUtil";
 import { buildItemGraphForLevel } from "./itemGraphUtil";
@@ -23,14 +25,15 @@ export function solveLevel(level:Level, levelName:string|null = null):SolveResul
   const reachability = evaluateReachability(graph, level.activeCharacterId);
   const itemGraph = buildItemGraphForLevel(level, graph, reachability);
   const itemReachability = evaluateItemReachability(itemGraph);
+  const anachronisms = findTimelineAnachronisms(level.characters);
   const transferCostTable = buildTransferCostTable(graph, itemGraph);
   const roomLayers = buildRoomLayerView(level, graph, itemGraph);
-  // analysisAscii is the always-shown analysis — the adjacency + item matrices (which carry the
-  // PASS/FAIL verdict) followed by the item-access-cost table (level complexity). roomLayerAscii is
-  // the wide, "nice to have" diagnostic cube, kept separate so a caller can place/divert it on its
-  // own. asciiArt is their combined convenience render, in display order.
-  const analysisAscii = `${renderCharacterGraphAscii(graph, reachability, levelName)}\n${renderItemGraphAscii(itemGraph, itemReachability, levelName)}\n${renderTransferCostTableAscii(transferCostTable, levelName)}`;
+  // analysisAscii is the always-shown analysis — the adjacency + item matrices and the anachronism
+  // check (which carry the PASS/FAIL verdict) followed by the item-access-cost table (level
+  // complexity). roomLayerAscii is the wide, "nice to have" diagnostic cube, kept separate so a caller
+  // can place/divert it on its own. asciiArt is their combined convenience render, in display order.
+  const analysisAscii = `${renderCharacterGraphAscii(graph, reachability, levelName)}\n${renderItemGraphAscii(itemGraph, itemReachability, levelName)}\n${renderAnachronismsAscii(anachronisms, levelName)}\n${renderTransferCostTableAscii(transferCostTable, levelName)}`;
   const roomLayerAscii = renderRoomLayerCubeAscii(roomLayers, levelName);
   const asciiArt = `${analysisAscii}\n${roomLayerAscii}`;
-  return { levelName, graph, reachability, itemGraph, itemReachability, transferCostTable, roomLayers, analysisAscii, roomLayerAscii, asciiArt, ok:reachability.ok && itemReachability.ok };
+  return { levelName, graph, reachability, itemGraph, itemReachability, transferCostTable, roomLayers, anachronisms, analysisAscii, roomLayerAscii, asciiArt, ok:reachability.ok && itemReachability.ok && anachronisms.length === 0 };
 }
