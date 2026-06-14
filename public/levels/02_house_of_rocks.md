@@ -471,7 +471,7 @@ SSMM/HH\YYYYTT
 : takes Big Wineskin in right hand
 : Big Wineskin emits "(glug, glug)"
 (Giorgios leaves for Workers dorm)
-7:32:25 Ahmad says, "(sigh)"
+7:32:25 Ahmad thinks, "That worthless drunk is paid 1 tari more than I!"
 : faces right
 : waits 20
 : @ 30%
