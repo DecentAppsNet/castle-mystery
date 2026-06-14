@@ -80,7 +80,7 @@ sequenceDiagram
     WG->>SY: create file — story-teller return + id
     SY-->>WG: level md (file written)
 
-    par wave 2 — input is the story
+    par In Parallel — wave 2 (input = the story)
         WG->>AR: story
         AR-->>WG: rooms-map data + apply-prompt
     and
@@ -98,7 +98,7 @@ sequenceDiagram
     WG->>SY: md + itemiser return + id
     SY-->>WG: md (written)
 
-    par wave 3 — input is story + current md
+    par In Parallel — wave 3 (input = story + current md)
         WG->>CR: story + level md
         CR-->>WG: itinerary data + apply-prompt
     and
@@ -149,12 +149,12 @@ flowchart TD
     WG -->|"playerPrompt"| ST["story-teller"]
     ST -.->|"private critic loop (capped)"| SK["story-critic"]:::child
 
-    subgraph wave2["wave 2 — parallel · input = story"]
+    subgraph wave2["wave 2 — In Parallel · input = story"]
         AR["game-architect"]
         SC["game-scout"]
         IT["game-itemiser"]
     end
-    subgraph wave3["wave 3 — parallel · input = story + level md"]
+    subgraph wave3["wave 3 — In Parallel · input = story + level md"]
         CR["game-cron"]
         CN["game-conclusions"]
     end
@@ -186,11 +186,11 @@ flowchart TD
 | 2 | coordinator | story-teller | subagent | `playerPrompt` | `story` + apply-prompt | solo (wave 1) | LIVE |
 | 2a | story-teller | story-critic | subagent (**private child**) | `playerPrompt` + draft story | verdict + scores + reasons + improvements | looped (capped) | LIVE |
 | 3 | coordinator | synthesiser | synthesiser | md(null) + story-teller return + id | level md (writes file) | serialized | LIVE |
-| 4 | coordinator | game-architect | subagent | `story` | rooms/map data + prompt | **∥ wave 2** | LIVE |
-| 5 | coordinator | game-scout | subagent | `story` | characters/faces data + prompt | **∥ wave 2** | LIVE |
-| 6 | coordinator | game-itemiser | subagent | `story` | items data + prompt | **∥ wave 2** | LIVE |
-| 7 | coordinator | game-cron | subagent | `story` + level md | itinerary data + prompt | **∥ wave 3** | LIVE |
-| 8 | coordinator | game-conclusions | subagent | `story` + level md | conclusions data + prompt | **∥ wave 3** | LIVE |
+| 4 | coordinator | game-architect | subagent | `story` | rooms/map data + prompt | **In Parallel (wave 2)** | LIVE |
+| 5 | coordinator | game-scout | subagent | `story` | characters/faces data + prompt | **In Parallel (wave 2)** | LIVE |
+| 6 | coordinator | game-itemiser | subagent | `story` | items data + prompt | **In Parallel (wave 2)** | LIVE |
+| 7 | coordinator | game-cron | subagent | `story` + level md | itinerary data + prompt | **In Parallel (wave 3)** | LIVE |
+| 8 | coordinator | game-conclusions | subagent | `story` + level md | conclusions data + prompt | **In Parallel (wave 3)** | LIVE |
 | 9 | coordinator | synthesiser | synthesiser | md + one subagent return + id | level md (writes file) | once per return (serialized) | LIVE |
 | 10 | coordinator | validator-coordinator | subagent (sub-hub) | levelFilename + story + maxIterations | status + fitness + findings (+ humanQuestion) | — | PLANNED |
 | 11 | validator-coordinator | `npm run evaluate` | deterministic | candidate file | fitness JSON | — | PLANNED |
@@ -217,12 +217,13 @@ flowchart TD
 - **Validator-coordinator is PLANNED.** Today the main coordinator runs the solver/play-game inline
   and repairs (≤3). The dedicated validator-coordinator sub-hub (caps + human-question up-calls) is the
   next build (Phase 2–4).
-- **Exercise status.** The revised model has been exercised **through waves 1–2** (Sing a Song of
-  Sixpence, 2026-06-14): the story-teller→story-critic loop, the **parallel** wave 2, and pure-subagent
-  data+`prompt` returns all ran, and the synthesiser-applied wave-2 state **loaded**. **Not yet
-  exercised:** wave 3 (cron/conclusions), the validator-coordinator loop, and the human-in-the-loop.
-  The earlier *full* runs (Three Blind Mice, Tinker Tailor Soldier Spy) predate this architecture and
-  used the prior whole-md model.
+- **Exercise status.** The revised model has been exercised **through waves 1–3** (Sing a Song of
+  Sixpence, 2026-06-14): the story-teller→story-critic loop, the **In-Parallel** waves 2 and 3, pure
+  subagent returns, and the synthesiser all ran; the level loads with the full Identities + cloze
+  puzzle, and movement-based co-presence works (absolute-timestamp tour → depth `meanCost 0.38`). One
+  far-room link is an open solver finding (see the design doc's Iteration History). **Not yet
+  exercised:** the dedicated validator-coordinator loop and the human-in-the-loop. The earlier *full*
+  runs (Three Blind Mice, Tinker Tailor Soldier Spy) predate this architecture (prior whole-md model).
 - **Synthesiser is currently fulfilled inline.** In runs so far the **coordinator performs the
   synthesiser role itself** (writing the file as it applies each return); a *dedicated synthesiser
   agent* is the target — same status as the validator-coordinator (designed, not yet a separately
@@ -247,3 +248,8 @@ flowchart TD
   story-critic loop, parallel wave 2, and pure returns all worked; the synthesiser-applied wave-2 state
   loads. Recorded that the **synthesiser is currently fulfilled inline by the coordinator** (dedicated
   agent still pending), and that wave 3 / validator-coordinator / human-loop remain un-exercised.
+- **2026-06-14** — Exercised **wave 3** (cron ∥ conclusions): the level loads with the full puzzle and
+  movement-based co-presence works (depth 0.38); a far-room link is an open solver finding. Updated
+  exercise status to **waves 1–3** (no un-exercised waves remain). Relabelled the parallel blocks
+  explicitly **"In Parallel"** (the bare Mermaid `par` keyword stays — it's required syntax — but every
+  grouping's visible label now reads "In Parallel").
