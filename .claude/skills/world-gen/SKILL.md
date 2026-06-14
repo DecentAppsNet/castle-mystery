@@ -6,13 +6,14 @@ description: >-
   subagents — story-teller (gated by its own private story-critic quality loop), game-architect,
   game-scout, game-itemiser, game-cron, game-conclusions —
   in parallel where independent; each returns data + an apply-prompt, and a single SYNTHESISER agent
-  is the only writer of the level md (one return per call, writing every transition). A
-  validator-coordinator runs a capped dual-oracle (solver + play-game) accept-if-better loop and
-  returns the accepted improvements for the coordinator to write via the synthesiser; human-in-the-loop
-  until the user confirms. Pass --verbose (--debug / -v) for a full agentic trace — every agent call and
-  return, the validator's reasoning over the solver + play-game outputs, and the coordinator's
-  delegations. Use when asked to generate/author a new level, "world-gen", or continue the generative
-  level generator. WRITES only _gen.*.md candidate files under public/levels/ (via the synthesiser).
+  is the only writer of the level md (one return per call, writing every transition). The separate
+  read-only world-fix skill (solver + play-game) is the DECIDER — it returns a prioritised fix TODO + a
+  READY/NEEDS-WORK verdict; world-gen loops implementing world-fix's recommendations via the wave agents
+  until READY (just as the story-critic gates the story-teller); human-in-the-loop until the user
+  confirms. Pass --verbose (--debug / -v) for a full agentic trace — every agent call and return,
+  world-fix's reasoning over the solver + play-game outputs, and the coordinator's delegations. Use when
+  asked to generate/author a new level, "world-gen", or continue the generative level generator. WRITES
+  only _gen.*.md candidate files under public/levels/ (via the synthesiser).
 ---
 
 # world-gen — generative level designer
@@ -38,8 +39,10 @@ is the generator half of the generator/validator system designed in
   modified md) are spawned concurrently; the synthesiser still applies their returns one at a time.
 - **Hub-and-spoke, no lateral calls.** Subagents never call each other; everything routes through a
   coordinator. A subagent may spawn its *own* private child (vertical sub-delegation — e.g.
-  **story-teller → story-critic**) but never a sibling. The validator-coordinator is a sub-hub you
-  spawn; it may call the wave subagents + the synthesiser, and routes human questions back up to you.
+  **story-teller → story-critic**) but never a sibling. **world-fix** is a read-only sub-hub you spawn:
+  it calls the solver + play-game and returns advice (a fix TODO + verdict) — it **never writes and never
+  calls the wave agents**. You (coordinator) implement its recommendations via the wave agents +
+  file-writer, looping until world-fix returns `READY`.
 
 ## Input
 
@@ -57,7 +60,7 @@ Read `references/authoring-contract.md` (the level format the synthesiser must p
 
 Narrate each step for observability (the call made + a short summary of the return). **When `--verbose`
 is set, emit the full trace defined in [Verbose / debug mode](#verbose--debug-mode) for every step
-below** — each call, each return, the validator's reasoning, and each coordinator delegation.
+below** — each call, each return, world-fix's reasoning, and each coordinator delegation.
 
 **Wave 1 — story-teller** (solo). IN `playerPrompt` → OUT `story` (+ apply-prompt). **Internally the
 story-teller runs its own private `story-critic` loop** (vertical sub-delegation): it drafts the story,
@@ -81,54 +84,45 @@ resolves): each call = `current md + that return + its id`, and writes the file.
   room/item **titles** or an author-defined category).
 Then call the **synthesiser once per return** (cron → conclusions), writing each.
 
-## Validate & improve — validator-coordinator (dual-oracle, accept-if-better)
+## Validate & fix — the world-fix loop (the decider)
 
-Spawn the **validator-coordinator** (IN: level filename, `story`, current md, `maxIterations`,
-optional `direction`). It runs a bounded **improvement loop** over **both oracles** and returns the
-*accepted improvements* for you (the coordinator) to write — **it never writes the canonical md itself**
-(DR-017). Each iteration (≤ `maxIterations`):
+Validation + the decision of "is this level done?" live in a **separate skill, `world-fix`**
+(`.claude/skills/world-fix/SKILL.md`). `world-fix` is **read-only**: it runs the **solver** and the
+**play-game** (player) check on a level and returns a **prioritised TODO list** of fixes
+(BLOCKER/MAJOR/MINOR, each tagged with the **owning area/agent**) plus a **verdict** `READY` |
+`NEEDS-WORK`. It never edits anything. `world-gen` is the **implementer**: it loops against `world-fix`
+exactly as the story-teller loops against the story-critic — **keep implementing the recommended changes
+until `world-fix` returns `READY` (no must-fix items)**, capped by `maxIterations`.
 
-1. **Score both oracles.** `npm run evaluate --silent -- _gen.<slug>.md` (the **solver** — gates
-   `charactersReachable` / `itemsReachable` / `noAnachronisms` + complexity) **and** the **play-game**
-   subagent (the **semantic** oracle — structured per-character Identities inferability, per-conclusion
-   difficulty, conflicts). Combine into one **combined fitness** (failing gates dominate; then a soft
-   score: complexity in the target band + play-game difficulty balance + breadth + story coherence).
-2. **Diagnose → route.** Map each failing gate / weak signal to the agent that owns that area and ask it
-   for a **targeted delta** (a pure return). Routing:
-   - `loaded:false` (line named) / *"missing conclusion answer phrases…"* → **game-conclusions** (cloze
-     answer not a category member — usually a title/heading mix-up) or the named section's agent.
-   - `unreachable.characterIds` → **game-cron** (co-presence) ± game-architect (adjacency) / game-scout
-     (start room). `unreachable.itemIds` → **game-cron** (route a witness) ± game-itemiser (placement).
-   - `noAnachronisms:false` / `anachronisms[]` → **game-cron** (fix itinerary timestamps — an absolute
-     arrival back-planned over earlier speech).
-   - play-game Identities `none` → **game-scout** (clue) ± game-cron (clue scene); `too-easy` →
-     game-scout / game-conclusions / game-cron; `too-hard`/`unsolvable` → game-scout / game-cron;
-     conflict → game-scout / game-conclusions. Complexity off-band → game-cron (± architect/itemiser).
-3. **Test on a scratch candidate.** The **file-writer** applies the delta to `_gen.<slug>.try.md` (NOT
-   the canonical file); re-run **both** oracles on it.
-4. **Accept-if-better.** Keep the delta **only if** combined fitness strictly improves **and no gate
-   regresses**; else discard and try a different fix/agent. Accepted deltas accumulate in a **ledger**
-   and carry forward. Keep iterating — best-effort — to build the best story/layout/timeline/items.
-5. **Return** `{ status, finalFitness, playGameFindings, improvements (ledger), recommendedApplyOrder,
-   humanQuestion? }`. It sets `humanQuestion` (status `needs-human`) when it can't decide (conflicting
-   objectives, a gate it can't move, ambiguous `direction`).
+The loop (you, the coordinator):
 
-**Then you (coordinator) write it.** If `humanQuestion` is set — or the return is otherwise ambiguous on
-how to proceed — **ask the user** via `AskUserQuestion` first (optionally re-invoking the validator with
-the answer as `direction`). Otherwise apply each accepted improvement (in `recommendedApplyOrder`) to the
-**canonical** `_gen.<slug>.md` via the **file-writer** (one call per improvement, each written so the
-user can live-test). The validator proposes; you decide and write.
+1. **Call `world-fix`** on the candidate (spawn it as a subagent — IN: `levelFile`; it runs solver +
+   play-game itself). It returns `{ verdict, ready, items:[{severity, area, issue, fix, evidence}],
+   solver, playGame }`.
+2. **If `READY`** (no BLOCKER/MAJOR items) → stop the loop; go to human-in-the-loop. Otherwise:
+3. **Implement each BLOCKER, then each MAJOR** item: for each, call the **owning wave agent** named in
+   the item's `area` (game-cron / game-scout / game-itemiser / game-architect / game-conclusions; or
+   story-teller as a last resort) for a targeted **delta**, and write it to the **canonical**
+   `_gen.<slug>.md` via the **file-writer** (one write per change, each live-testable). Address MINOR /
+   POLISH items best-effort within the cap.
+4. **Re-run `world-fix`** and repeat from (2). The loop self-corrects: if a change introduces a new
+   problem, the next `world-fix` pass flags it. Stop when `world-fix` says `READY` or `maxIterations`
+   (default 3) is hit (then surface the remaining list to the user).
+5. **Ambiguity / can't-fix → ask the user.** If `world-fix`'s recommendation is genuinely ambiguous, or
+   a must-fix item resists repair within the cap, **ask the user** via `AskUserQuestion`, then continue
+   with their steer.
 
-(Until a separate validator-coordinator agent is spawned, run this loop inline as the coordinator, capped
-the same way — but all md writes, scratch and canonical, still go only through the file-writer.)
+Key point: `world-fix` **decides and advises**; `world-gen` **implements** (via the wave agents) and
+**writes** (via the file-writer). The same `world-fix` skill is usable standalone — a game architect runs
+`/world-fix <level>` to get the tailored TODO list and implements it themselves.
 
 ## Human-in-the-loop (ends the run)
 
 Present the playable level and invite the user to test it (`npm run dev-gen` → the `(GEN) …` tab).
-On a **change request**, hand it to the validator-coordinator as a `direction`; it runs the same
-accept-if-better loop and returns improvements, which you write via the **file-writer** (each transition
-written, so the user re-tests live). **The run ends only when the user confirms they're happy**
-("it's ok").
+On a **change request**, treat it as another `world-fix` pass with the user's ask folded in: implement
+via the owning wave agent → **file-writer**, then re-run `world-fix` to confirm still `READY` (each
+transition written, so the user re-tests live). **The run ends only when the user confirms they're
+happy** ("it's ok").
 
 ## Verbose / debug mode
 
@@ -138,7 +132,7 @@ This is a developer aid — **completeness over brevity, and ZERO truncation.**
 ### The line format — uniform across EVERY agent (enforced)
 
 Every agent (the `COORDINATOR`, every subagent — story-teller, story-critic, game-architect, game-scout,
-game-itemiser, game-cron, game-conclusions — the `file-writer`, the `validator-coordinator`, the
+game-itemiser, game-cron, game-conclusions — the `file-writer`, the `world-fix` decider, the
 `play-game` oracle, and the `solver`) emits these exact lines, identified by its own name:
 
 ```
@@ -151,7 +145,7 @@ game-itemiser, game-cron, game-conclusions — the `file-writer`, the `validator
 - `[<AGENT>|CALL] <callee>` — emitted **immediately before** it calls another agent; the value is the
   **callee's name** (the called agent then emits its own `|IN` … `|OUT`). One `|CALL` line per call.
 - `[<AGENT>|OUT]` — emitted **just before returning**, with the complete output.
-- Free-form reasoning uses the bare prefix: `[<AGENT>] <note>` (e.g. the validator's think-aloud, or
+- Free-form reasoning uses the bare prefix: `[<AGENT>] <note>` (e.g. world-fix's think-aloud, or
   `[COORDINATOR] slug → _gen.x.md`). Use `[AGENT_NAME]` (uppercase the role) consistently.
 
 ### NO TRUNCATION (hard rule)
@@ -176,8 +170,8 @@ depend on the subagent alone. The rule:
   per call, the **full nested trace** of its callees, and `[SELF|OUT]` — and **return it verbatim**.
   This is how *nested* calls become visible: the coordinator cannot print a grandchild's lines itself,
   so the parent returns them and the coordinator relays them inline. E.g. the story-teller returns the
-  embedded `[story-critic|IN]`/`[story-critic|OUT]` of each round; the validator returns the embedded
-  `[solver|…]`, `[play-game|…]`, `[game-cron|…]`, `[file-writer|…]` lines of every iteration.
+  embedded `[story-critic|IN]`/`[story-critic|OUT]` of each round; **world-fix** returns the embedded
+  `[solver|…]` and `[play-game|…]` lines of its analysis.
 - Net effect: the coordinator drives a single, ordered, full trace in the main console — its own
   `|IN`/`|CALL`/`|OUT` for direct calls, plus the relayed nested traces — so **every agent adheres to
   the contract and the user sees them all while the skill runs**.
@@ -187,39 +181,33 @@ depend on the subagent alone. The rule:
 Mark a parallel wave with a free-form line, then the members' full traces (which may interleave):
 `[COORDINATOR] ‖ IN PARALLEL — wave 2 {game-architect, game-scout, game-itemiser}`.
 
-### The validator-coordinator's reasoning (its think-aloud)
+### world-fix's reasoning + the coordinator's fix loop (the think-aloud)
 
-In addition to its `|IN`/`|CALL`/`|OUT` lines, the validator emits `[VALIDATOR] …` reasoning lines each
-iteration so a developer sees *why* it decides what it returns:
-
-```
-[VALIDATOR] iteration N
-[VALIDATOR] solver result: <full fitness JSON>
-[VALIDATOR] play-game result: <full findings JSON>
-[VALIDATOR] combined fitness = <value>  (failing gate dominates; else soft = band + difficulty balance + breadth + coherence)
-[VALIDATOR] diagnose: <signal> → route <agent>  because <reason>
-[VALIDATOR] plan: attack <X> first  because <a failing gate dominates | weakest soft signal>
-[VALIDATOR|CALL] game-cron            … then the game-cron |IN/|OUT …
-[VALIDATOR|CALL] file-writer          … writes scratch _gen.<slug>.try.md, file-writer |IN/|OUT …
-[VALIDATOR] recheck combined fitness' = <value'>
-[VALIDATOR] decision: ACCEPT (Δ +<x>, no gate regressed) → ledger += <delta>  |  REJECT (<why>) → discard, try <next>
-[VALIDATOR|OUT] { status, finalFitness, playGameFindings, improvements:[…], recommendedApplyOrder:[…], humanQuestion }
-```
-
-Then the coordinator's delegation on that return:
+`world-fix` (read-only) emits its `|IN`/`|CALL`/`|OUT` plus `[world-fix] …` reasoning that turns the two
+oracle results into the prioritised TODO; the **coordinator** then implements and re-runs it. Per loop:
 
 ```
-[COORDINATOR] received validator return — decision: <apply improvements | AskUserQuestion "…">
-[COORDINATOR|CALL] file-writer        … write CANONICAL improvement 1/<n>, file-writer |IN/|OUT …
+[COORDINATOR|CALL] world-fix
+[world-fix|IN] {"levelFile":"_gen.<slug>.md"}
+[world-fix|CALL] solver            … then [solver|IN]/[solver|OUT] (full fitness JSON) …
+[world-fix|CALL] play-game         … then [play-game|IN]/[play-game|OUT] (full findings JSON) …
+[world-fix] diagnose: <signal> → area <agent>  because <reason>   (one line per finding)
+[world-fix] verdict: NEEDS-WORK (B blockers, M major)  |  READY (no must-fix)
+[world-fix|OUT] {"verdict":"…","ready":<bool>,"items":[{"severity","area","issue","fix","evidence"}],"solver":{…},"playGame":{…}}
+[COORDINATOR] received world-fix TODO — implement BLOCKER then MAJOR (READY → stop)
+[COORDINATOR|CALL] game-cron       … the owning agent for an item, its |IN/|OUT (the delta) …
+[COORDINATOR|CALL] file-writer     … write CANONICAL _gen.<slug>.md, file-writer |IN/|OUT …
+[COORDINATOR] re-run world-fix … loop until READY or maxIterations
 ```
 
-Keep the trace **truthful**: a skipped call, a rejected delta, a cap hit, or a fix re-routed to a
-different agent must appear in the trace. Verbose mode **never changes behaviour — it only exposes it**.
+Keep the trace **truthful**: a skipped item, a fix re-routed to a different agent, a cap hit, or a
+must-fix that resisted repair (→ AskUserQuestion) must appear. Verbose mode **never changes behaviour —
+it only exposes it**.
 
 ## Caps (no runaway)
 
 - story-teller's internal **story-critic** loop: **≤ 3** critic rounds before it returns its best draft.
-- Validator-coordinator improvement loop: **≤ `maxIterations`** (default 3) before it returns/asks the human.
+- world-fix fix loop: world-gen implements world-fix's recommendations for **≤ `maxIterations`** (default 3) world-fix passes before it stops / asks the human (even if world-fix isn't yet `READY`).
 - One candidate per run. The human-in-the-loop is user-gated, not automatic.
 
 ## Report

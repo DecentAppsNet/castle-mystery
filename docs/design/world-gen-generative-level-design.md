@@ -256,8 +256,8 @@ Two distinct controllers — keep them separate:
 | clue-author *(Phase 5)* | story, a conclusion type | one story-consistent clue extending **game-conclusions** (itinerary / item / description) | — |
 | **solver** (validator) | candidate | gates + complexity ints | structural |
 | **play-game** (validator) | candidate | per-char inferable + difficulty + gaps | semantic |
-| **synthesiser** (file-writer) | current md + one subagent return + id + target file | the **sole writer** of any md (canonical + the validator's scratch) — applies that return per its `prompt`, writes the file | — |
-| **validator-coordinator** | level + story + current md + maxIterations + direction? | dual-oracle **accept-if-better** loop (solver + play-game): routes faults to wave subagents, tests each delta on a scratch candidate, keeps only improvements; **returns the accepted-improvement ledger** to the coordinator (never writes canonical); routes human questions up (DR-017) | — |
+| **synthesiser** (file-writer) | current md + one subagent return + id + target file | the **sole writer** of any md — applies that return per its `prompt`, writes the file | — |
+| **world-fix** (decider — its own skill) | a level file | runs solver + play-game; returns a **prioritised fix TODO** (`items:[{severity, area, issue, fix, evidence}]`) + verdict `READY`/`NEEDS-WORK`. **Read-only — never writes, never calls wave agents.** world-gen loops implementing its must-fix items until `READY` (DR-019); usable standalone | structural + semantic |
 
 Authoring-format reference for the specialists (the contract they are fed) is distilled in
 [Appendix A](#appendix-a-level-authoring-contract-summary). The concrete **agentic call graph** (who
@@ -314,11 +314,13 @@ oracles agree it helped (or at least did not regress a gate).
 
 ## 8. Optimization loop (one round)
 
-Realized by the **validator-coordinator** (DR-017): it *is* the strategist+validator, **accept-if-better**
-on the **combined** (solver + play-game) fitness is the acceptance rule, the **ledger** is the memory,
-and each candidate is tested on a **scratch** file (`_gen.<slug>.try.md`) before any canonical write. The
-validator returns the accepted-improvement ledger; the **coordinator** writes the canonical md via the
-**file-writer** and owns the human gate. The generic algorithm (a hill-climb with an optional beam):
+Realized as a **gate-until-READY loop** (DR-019): the read-only **`world-fix`** decider scores the
+candidate (solver + play-game) and returns a prioritised fix TODO + a `READY`/`NEEDS-WORK` verdict; the
+**coordinator** implements each must-fix via the owning wave agent, writes the canonical md via the
+**file-writer**, and re-runs `world-fix` — repeating until `READY` (or the cap). world-fix decides;
+world-gen implements; the file-writer is the sole writer; the human gate is the coordinator's. The loop
+self-corrects (a regression is flagged on the next world-fix pass), so it needs no separate
+accept-if-better/scratch step. The earlier generic hill-climb framing (below) is the conceptual ancestor:
 
 ```
 input: best level L0, objective f (from human), iteration cap N, beam width B
@@ -730,6 +732,10 @@ than deleting.
 - **Alternatives rejected:** validator writes the canonical md directly (removes the coordinator's write
   + user gate the user asked for); accept-any-change (drifts/regresses without the better-than test);
   solver-only (misses semantic gaps play-game catches, and vice-versa).
+- **Status update (2026-06-14):** Restructured by **DR-019**. The dual-oracle analysis + routing table
+  live on in the standalone **`world-fix`** decider, but the *implementing* half (scratch writes,
+  accept-if-better ledger) is replaced by world-gen's **gate-until-READY** loop. world-fix decides;
+  world-gen implements.
 
 ### DR-018 — Verbose / debug mode: stream the full agentic trace
 - **Date:** 2026-06-14 · **Status:** Accepted
@@ -750,6 +756,32 @@ than deleting.
   exposes it (a skipped call, rejected delta, or re-routed fix must appear in the trace).
 - **Alternatives rejected:** always-verbose (noise for normal use); a separate post-hoc log file only
   (the user wants it inline, live, while the run happens).
+
+### DR-019 — Extract the validator into a standalone `world-fix` skill (read-only decider)
+- **Date:** 2026-06-14 · **Status:** Accepted (supersedes the *implementing* role of DR-017's
+  validator-coordinator; keeps DR-017's dual-oracle + routing as world-fix's analysis)
+- **Context:** DR-017's validator-coordinator both *analysed* (solver + play-game) and *implemented*
+  (scratch writes, accept-if-better, returned a ledger). Conflating decide + implement made it heavy and
+  un-reusable. We want the validator usable **on its own** — a game architect should be able to point it
+  at any level and get a tailored fix list — and we want generation to gate on it the way the
+  story-teller gates on the story-critic.
+- **Decision:** Split them. **`world-fix`** is a separate, **read-only** skill (`/world-fix <levelFile>`,
+  file arg mandatory): it runs the **solver** and the **play-game** (player) check and returns a
+  **prioritised TODO** (`items:[{severity, area, issue, fix, evidence}]`) + a **verdict**
+  `READY`/`NEEDS-WORK`. It **never edits anything and never calls the wave agents** — it only decides and
+  advises (the structural+semantic analogue of the story-critic). **`world-gen`** becomes the sole
+  implementer: it loops `world-fix → implement each must-fix via the owning wave agent → file-writer
+  (canonical) → re-run world-fix` until `READY` (or `maxIterations`). The accept-if-better/scratch
+  machinery of DR-017 is dropped in favour of this **gate-until-READY** loop (the loop self-corrects — a
+  regression is just flagged on the next pass), mirroring story-teller↔story-critic.
+- **Consequences:** Clean separation of *decide* (world-fix) from *implement* (world-gen); world-fix is
+  independently useful (architects, CI triage, a pre-commit check); the sole-writer invariant is
+  untouched (world-fix writes nothing; the file-writer still writes). `READY` is the single "is this
+  level done?" verdict. play-game's structured-oracle contract (DR-017) is reused as world-fix's semantic
+  half. Caps move to the **caller** (world-gen owns the iteration cap).
+- **Alternatives rejected:** keeping analyse+implement fused (not reusable, heavy); world-fix that also
+  edits (breaks the sole-writer invariant and the standalone advisory use the user asked for);
+  keeping the scratch/accept-if-better hill-climb (more machinery than the gate-until-READY loop needs).
 
 ---
 
@@ -924,3 +956,11 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   of play (7→6 items); both fixed accept-if-better on a scratch candidate before the canonical write.
   Lessons logged in Iteration History: **write full files atomically (appends can be clobbered)**, the
   two oracles are complementary, and game-cron still needs grammar-constraining (invalid verbs a 3rd run).
+- **2026-06-14** — Extracted the validator into a standalone **`world-fix`** skill (DR-019). world-fix is
+  **read-only** (`/world-fix <levelFile>`, mandatory): it runs the solver + play-game and returns a
+  prioritised fix TODO + a `READY`/`NEEDS-WORK` verdict — it never edits and never calls the wave agents.
+  **world-gen** now loops `world-fix → implement each must-fix via the owning wave agent → file-writer →
+  re-run world-fix` until `READY` (the story-critic pattern, applied to playability), replacing DR-017's
+  scratch/accept-if-better machinery. Lets a game architect run world-fix independently for a tailored
+  fix list. Created `.claude/skills/world-fix/SKILL.md`; updated world-gen SKILL, agent-contracts
+  (validator-coordinator contract → world-fix), topology, §8 loop, and DR-017's status. HLD updated.
