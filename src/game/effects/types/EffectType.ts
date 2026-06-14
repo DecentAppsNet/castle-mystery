@@ -5,6 +5,7 @@ const EffectType = {
   TALKING:"Talking",
   THINKING:"Thinking",
   SPEECH_BUBBLE:"SpeechBubble",
+  EMIT_BUBBLE:"EmitBubble",
   THOUGHT_BUBBLE:"ThoughtBubble",
   TAKE_ITEM:"TakeItem",
   DROP_ITEM:"DropItem",

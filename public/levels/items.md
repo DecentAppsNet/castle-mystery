@@ -1,5 +1,9 @@
 # items
 
+## Abacus
+* image=abacus.png
+* description=A device for counting. Slightly better than using your fingers.
+
 ## Big Wineskin
 * image=bigWineskin.png
 * description=A massive skin filled with gallons of wine.
@@ -17,6 +21,10 @@
 
 ## Coffer
 * image=coffer.png
+
+## Furia Perched
+* description=A beautiful falcon, perched and hooded.
+* image=furiaPerched.png
 
 ## Holy Binky
 * description=A device roughly carved from wood.

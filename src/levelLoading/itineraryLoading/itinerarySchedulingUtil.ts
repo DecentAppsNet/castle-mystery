@@ -16,6 +16,7 @@ import { tryCreateAtActivity } from "../activities/atActivityUtil";
 import { tryCreateBodyOrientationActivity } from "../activities/bodyOrientationActivityUtil";
 import { tryCreateDieActivity } from "../activities/dieActivityUtil";
 import { tryCreateDropActivity } from "../activities/dropActivityUtil";
+import { tryCreateEmitActivity } from "../activities/emitActivityUtil";
 import { tryCreateFaceActivity } from "../activities/facesActivityUtil";
 import { tryCreateGiveActivity } from "../activities/giveActivityUtil.ts";
 import { tryCreateLockActivity, tryCreateUnlockActivity } from "../activities/lockActivityUtil";
@@ -43,13 +44,15 @@ type ScheduleActivitiesResult = {
 };
 
 function _createActivityContext(level:Level, character:Character, timestamp:number, timestampType:LeadingTimestampKind,
-  activitySourceIndex:number, roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
+  activitySourceIndex:number, subjectKind:ParsedItineraryActivity['subjectKind'], subjectId:string, roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
   characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>, poseOverridesByCharacterId:Map<string, Position>):ActivityContext {
   const state = characterStatesById.get(character.id);
   assertNonNullable(state, `missing itinerary state for ${character.id}`);
   return {
     level,
     character,
+    subjectKind,
+    subjectId,
     activitySourceIndex,
     state,
     roomItemsByRoomId,
@@ -70,15 +73,22 @@ function _calcActivityCompletionTime(activityStartTime:number, events:ItineraryE
   return events.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), activityStartTime);
 }
 
+function _calcParsedActivityCompletionTime(activity:ParsedItineraryActivity, activityStartTime:number, events:ItineraryEvent[]):number {
+  const eventCompletionTime = _calcActivityCompletionTime(activityStartTime, events);
+  if (activity.waitDurationMsecs === null) return eventCompletionTime;
+  return Math.max(eventCompletionTime, activityStartTime + activity.waitDurationMsecs);
+}
+
 function _createEventsForActivity(activityText:string, context:ActivityContext):ItineraryEvent[] {
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  if (!findStatePoseAtTime(context.character, context.state, activityStartTime).isAlive) {
+  if (context.subjectKind === 'character' && !findStatePoseAtTime(context.character, context.state, activityStartTime).isAlive) {
     throw new Error(`dead character ${context.character.id} cannot perform itinerary activity '${activityText}'`);
   }
 
   const activityFactories = [
     tryCreateAtActivity,
     tryCreateSayActivity,
+    tryCreateEmitActivity,
     tryCreateThinkActivity,
     tryCreateFaceActivity,
     tryCreateDieActivity,
@@ -116,8 +126,8 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
       const previewCharacterStatesById = new Map(characterStatesById);
       previewCharacterStatesById.set(activity.characterId, previewState);
       const previewRoomItemsByRoomId = duplicateRoomItemsByRoomId(roomItemsByRoomId);
-      const previewContext = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, previewRoomItemsByRoomId,
-        charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
+      const previewContext = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, activity.subjectKind, activity.subjectId,
+        previewRoomItemsByRoomId, charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
       const events = _createEventsForActivity(activity.activityText, previewContext);
       appendEventsToCharacterState(level, character, previewState, events);
       poseOverridesByCharacterId.set(activity.characterId,
@@ -161,13 +171,14 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
       if (!readyToScheduleBySourceIndex.get(activity.sourceIndex)) return;
       const character = charactersById.get(activity.characterId);
       assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
-      const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, roomItemsByRoomId, charactersById,
-        characterStatesById, poseOverridesByCharacterId);
+      const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, activity.subjectKind, activity.subjectId,
+        roomItemsByRoomId, charactersById, characterStatesById, poseOverridesByCharacterId);
       const activityStartTime = calcActivityStartTime(context.state, activity.resolvedTime, activity.timestampType);
-      const events = _createEventsForActivity(activity.activityText, context);
+      const events = activity.waitDurationMsecs === null ? _createEventsForActivity(activity.activityText, context) : [];
       appendEventsToCharacterState(level, character, context.state, events);
-      if (!events.length) context.state.time = Math.max(context.state.time, activityStartTime);
-      completionTimesBySourceIndex.set(activity.sourceIndex, _calcActivityCompletionTime(activityStartTime, events));
+      const activityCompletionTime = _calcParsedActivityCompletionTime(activity, activityStartTime, events);
+      if (!events.length) context.state.time = Math.max(context.state.time, activityCompletionTime);
+      completionTimesBySourceIndex.set(activity.sourceIndex, activityCompletionTime);
     }, activity.resolvedTime);
   };
 

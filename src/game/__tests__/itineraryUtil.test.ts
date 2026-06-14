@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { createBodyOrientationEvent, createDieEvent, createFaceEvent, createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
+import { createBodyOrientationEvent, createDieEvent, createEmitEvent, createFaceEvent, createItineraryIndex, createWalkEvent, findCharacterPose, findPreviousRoomEntryTime } from '../itineraryUtil';
 import { ROOM_BACK_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
 import Character, { createDefaultCharacter } from '../types/Character';
@@ -131,13 +131,34 @@ describe('itineraryUtil', () => {
       const walkEvent = createWalkEvent(room, 2_000, 0, 0, 10, 0);
       expect(walkEvent).not.toBeNull();
 
-      const character = _createCharacter([createBodyOrientationEvent(1_000, 'sitting'), walkEvent!]);
+      const character = _createCharacter([createBodyOrientationEvent(1_000, 'kneeling'), walkEvent!]);
 
       expect(findCharacterPose(character, 999).bodyOrientation).toBe('standing');
-      expect(findCharacterPose(character, 1_000).bodyOrientation).toBe('sitting');
-      expect(findCharacterPose(character, 1_999).bodyOrientation).toBe('sitting');
+      expect(findCharacterPose(character, 1_000).bodyOrientation).toBe('kneeling');
+      expect(findCharacterPose(character, 1_999).bodyOrientation).toBe('kneeling');
       expect(findCharacterPose(character, 2_000).bodyOrientation).toBe('standing');
       expect(findCharacterPose(character, 2_500).bodyOrientation).toBe('standing');
+    });
+
+    it('ignores emit events when reconstructing character pose', () => {
+      const character = _createCharacter([createEmitEvent(1_000, 'bell', '(clang)')]);
+
+      expect(findCharacterPose(character, 999)).toMatchObject({
+        position:{ x:0, y:0, z:MIDDLE_ROW_DEPTH },
+        facingDirection:'right',
+        bodyOrientation:'standing',
+        isAlive:true,
+        speech:null,
+        thought:null
+      });
+      expect(findCharacterPose(character, 1_500)).toMatchObject({
+        position:{ x:0, y:0, z:MIDDLE_ROW_DEPTH },
+        facingDirection:'right',
+        bodyOrientation:'standing',
+        isAlive:true,
+        speech:null,
+        thought:null
+      });
     });
 
     it('applies death events immediately and keeps characters dead afterwards', () => {
