@@ -18,6 +18,10 @@ public/.vite
 adhocTests
 scripts/templateImages/lastGen.png
 
+# Generated level candidates (world-gen scratch). Keep the dir (.gitkeep), ignore candidates.
+public/levels/_gen/*
+!public/levels/_gen/.gitkeep
+
 # Be careful about deleting this line below. Very easy to accidentally expose some secrets used in environment variables by committing the .env file.
 .env
 

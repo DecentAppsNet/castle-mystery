@@ -601,3 +601,5 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   skill + authoring-contract reference; a real story-teller→builder run produced a loadable,
   solver-passing Three Blind Mice level (`_gen/three_blind_mice.md`, `meanCost 0.08`). Corrected the
   authoring contract from run learnings (grid width, horizontal-only exits, `normalizeId`, placement).
+- **2026-06-14** — `.gitignore`d `public/levels/_gen/` (kept `.gitkeep`; untracked the demo
+  `three_blind_mice.md`) — generated level candidates are scratch, not committed.
