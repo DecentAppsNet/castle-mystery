@@ -1,15 +1,10 @@
 # General
 
 * title=House of Rocks
-* activeCharacter=Niccolo
+* activeCharacter=Pietro
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md
-
-Things that should happen:
-Maria flirts weirdly with Stefan.
-
-Don't overdo it with story events. Have a bunch of people that just work and don't say/do much.
 
 # Map
 
@@ -123,12 +118,14 @@ SSMM/HH\YYYYTT
 ## Workshop Yard
 
 ```
-.............u..
+...s...c.....u..
 ...A.Y.G........
 ................
 ```
 
-* u=Uncut Limestone
+* u=Cutting Station
+* c=Masonry Station
+* s=Carving Station
 * A=Andreas
 * G=Giovanni
 * Y=Yusuf
@@ -184,11 +181,26 @@ SSMM/HH\YYYYTT
 
 # Items
 
-## Uncut Limestone
+## Masonry Station
+
+* image=cutLimestone.png
+* description=Rough chunks of limestone are shaped into construction-ready blocks here.
+* drawOffsetX=1
+* drawOffsetZ=.07
+
+## Cutting Station
 
 * image=uncutLimestone.png
-* description=Raw limestone waiting to be cut.
+* description=Raw limestone that will be cut into chunks.
 * drawOffsetX=1
+* drawOffsetZ=.07
+
+## Carving Station
+
+* image=carvingStation.png
+* description=Details are applied to ornamental stonework here.
+* drawOffsetX=1
+* drawOffsetY=.8
 * drawOffsetZ=.07
 
 ## Owner's Key
@@ -235,7 +247,7 @@ SSMM/HH\YYYYTT
 : Stefan faces left
 : Stefan says, "Good morning."
 : Maria says, "You remind me so much of my dead husband Tommaso."
-7:30:20 Stefan @ Workshop Yard
+(Stefan leaves for workshop yard)
 
 7:30:18 Ahmad @ Apprentices' Chamber
 : says "Get up!"
@@ -243,6 +255,30 @@ SSMM/HH\YYYYTT
 : Ahmad says, "I don't care about your royal friend."
 : says, "In the House of Rocks, I am your King."
 : says, "And the King says, 'get to the yard'!"
+
+7:30:20 Stefan @ Workshop Yard.80%
+7:30:36 faces left
+7:30:39 @ Stone Store
+: thinks, "I really don't want to talk that guy."
+: thinks, "He's going to complain about cracks again."
+: waits 10
+: @ Stone Store.30%
+: waits 20
+: @ Stone Store.70%
+: faces left
+: waits 10
+: @ Stone Store.50%
+: waits 20
+: @ Stone Store.20%
+: waits 15
+: @ Stone Store.80%
+: waits 20
+: @ Stone Store.60%
+
+7:30:20 Giovanni @ Workshop Yard.40%
+: waits 20
+: kneels
+(continues working until Heinrich arrives below)
 
 7:30:20 Maria @ Common Kitchen
 : faces left
@@ -310,7 +346,7 @@ SSMM/HH\YYYYTT
 : Yusuf says, "Good."
 : Pietro says, "And only your name will be on it."
 : Yusuf says, "Very good. What is this list?"
-: Pietro says, "A list of people who complain."
+: Pietro says, "A list of People Who Complain."
 : Yusuf says, "Oh no no no, sir."
 : says, "I only wanted your records to be in order."
 : Pietro says, "Get back to work."
@@ -332,16 +368,29 @@ SSMM/HH\YYYYTT
 : faces left
 
 7:30:40 Niccolo @ Workshop Yard.90%
-: waits
+: waits 10
 : @ Workshop Yard.80%
-: waits 2
+: waits 20
 : @ Workshop Yard.90%
-: waits
+: waits 10
 : faces left
-: waits
-: @ Workshop Yard.70%
 : waits 3
+: @ Workshop Yard.70%
+: waits 10
 : @ Workshop Yard.90%
+: faces left
+: kneels
+: waits 20
+: thinks, "(thinking dark thoughts)"
+: stands
+: @ Workshop Yard.80%
+: waits 10
+: @ Workshop Yard.90%
+: faces left
+: kneels
+: waits 20
+: @ Workshop Yard.70%
+(leaves cutting station for stone store)
 
 7:30:56 Heinrich @ Workshop Yard
 : Giovanni faces Heinrich
@@ -351,14 +400,50 @@ SSMM/HH\YYYYTT
 : Giovanni says, "Oh, shut up."
 : takes chisel in right hand
 : gives chisel to Heinrich
+(Giovanni follows Heinrich to the Tool Store)
 
 7:31:06 Giorgios @ Workshop Yard.20%
-: says, "Ah, apprentice, your carves are fair."
+: says, "Boy, your carves are fair."
 : Andreas faces Giorgios
 : Giorgios says, "But bring the blade toward your body"
-: says, "with a rapid jerking motion."
+: says, "with a fast jerking motion."
 : says, "It is safer."
 : says, "Also, do you want some wine?"
+: Andreas says, "I am thirsty. Do you have water?"
+: Giorgios says, "The wine has some water in it."
+: Andreas says, "No, thank you, sir."
+: Giorgios @ 10%
+: drops Big Wineskin (0, .5, 0)
+: @ 30%
+: faces left
+: waits 10
+: takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+: drops Big Wineskin (0, .5, 0)
+: @ 30%
+: faces left
+: waits 10
+: takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+: drops Big Wineskin (0, .5, 0)
+: @ 30%
+: faces left
+: sits
+: says, "Yer doon... sho good!"
+: Andreas faces Giorgios
+: says, "Sorry, sir?"
+: Giorgios says, "I shed..."
+: Giorgios says, "Yer doon sho good!"
+: Andreas faces left
+: says, "Thank you, sir."
+: Giorgios takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+: drops Big Wineskin (0, .5, 0)
+: @ 30%
+: lays
+: waits
+: says, "Ish a byooty full..."
+: says, "Byooty full day!"
 
 7:31:08 Heinrich @ Tool Store.30%
 7:31:10 Giovanni @ Tool Store.60%
@@ -372,8 +457,41 @@ SSMM/HH\YYYYTT
 (Giovanni leaves for workshop yard)
 
 7:31:23 Ahmad @ Workshop Yard
+: waits 20
+: @ 80%
+: waits 20
+@ 50%
+: waits 5
+: Ahmad @ 40%
+: faces Giorgios
+: says, "Take yourself and "
+: says, "your ridiculously large wineskin out of my yard!"
+: says, "No pay for today."
+: Giorgios waits
+: takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+(Giorgios leaves for Workers dorm)
+7:32:25 Ahmad says, "(sigh)"
+: faces right
+: waits 20
+: @ 30%
+7:32:52 Ahmad faces right
 
 7:31:28 Giovanni @ Workshop Yard
+: waits 20
+: @ 40%
+: kneels
+: faces right
+: thinks, "(thinks about rocks)"
+: waits 20
+: @ 55%
+: waits 10
+: @ 40%
+: kneels
+: faces right
+: waits 30
+: @ 60%
+: thinks, "(thinks about rocks some more)"
 
 7:32:08 Yusuf @ Tool Store.60%
 : @ Tool Store.80%
@@ -425,6 +543,10 @@ SSMM/HH\YYYYTT
 : thinks, "(thinking)"
 : thinks, "(thinking very hard)"
 
+7:32:35 Giorgios @ Workers' Dormitory.10%
+: drops Big Wineskin
+: lays
+
 7:32:39 Heinrich @ Accounts Room.90%
 7:32:42 Salomone @ Accounts Room
 : says, "What are you doing here?"
@@ -435,6 +557,21 @@ SSMM/HH\YYYYTT
 : Salomone gives abacus to Heinrich
 : says, "There you have it."
 : Heinrich says, "Thank you, sir."
+
+7:32:53 Niccolo @ Stone Store
+: Niccolo says, "What kind of garbage limestone is this?"
+: Stefan faces Niccolo
+: Stefan says, "What? It's fine."
+: Niccolo says, "It's full of cracks."
+: Stefan says, "So use them. Easier to cut, right?"
+: Niccolo says, "I'll be lucky to cut three blocks out of it."
+: Stefan says, "Look, Pietro bought from Monte Pellegrino."
+: Niccolo says, "The worst quarry in Palermo."
+: says, "Even the most simple things"
+: says, "are done cheaply and poorly now."
+: says, "There is no love of craft!"
+: Stefan says, "I..."
+: Stefan says, "would like to stop talking to you now."
 
 7:32:59 Heinrich @ Workshop Yard
 
