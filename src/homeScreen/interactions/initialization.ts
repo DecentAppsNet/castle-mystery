@@ -5,7 +5,7 @@ import { msecsToMinutes } from "./gameplay";
 import { createGameState } from "@/game/gameUtil";
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
 import { loadLevelFromUrl } from "@/levelLoading/levelUtil";
-import { loadLevelManifestFromUrl } from "@/levelLoading/manifestUtil";
+import { appendGenLevelsToManifest, loadLevelManifestFromUrl } from "@/levelLoading/manifestUtil";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import GameState from "@/game/types/GameState";
 
@@ -16,7 +16,12 @@ export type InitResults = {
 }
 
 export async function init():Promise<InitResults|null> {
-  const levelManifest = await loadLevelManifestFromUrl('/levels/levels.md');
+  const baseManifest = await loadLevelManifestFromUrl('/levels/levels.md');
+  // `npm run dev-gen` only: surface in-progress generator candidates from public/levels/_gen/ as extra
+  // "(GEN) " tabs in the level selector. Normal `npm run dev` and production builds behave as before.
+  const levelManifest = import.meta.env.MODE === 'dev-gen'
+    ? await appendGenLevelsToManifest(baseManifest, '/levels/levels.md')
+    : baseManifest;
   const initialLevelUrl = levelManifest.levelUrls[levelManifest.lastLevelI] || levelManifest.levelUrls[0] || '/levels/doors.md';
   const level = await loadLevelFromUrl(initialLevelUrl);
   const imageSet = await createImageSetFromLevel(level);

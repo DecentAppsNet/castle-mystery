@@ -92,6 +92,12 @@ short summary of what came back).
      and re-validate.
    - `gates.ok:true` → success. Report the fitness (counts + complexity) and the path.
 
+## Manual verification (optional)
+
+To eyeball a candidate in the real game UI, run **`npm run dev-gen`** (not plain `npm run dev`):
+generated `_gen/*.md` levels appear as **`(GEN) …`** tabs in the level selector, read fresh on each
+browser refresh. Normal `npm run dev` and production builds exclude them.
+
 ## Caps (no runaway)
 
 - **Repair attempts: ≤ 3** total across load + gate failures. If still failing, stop and report the
