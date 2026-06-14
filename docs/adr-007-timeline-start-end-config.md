@@ -8,7 +8,7 @@ Superseded by ADR 009
 
 Levels currently only specify a `time=` field in the `# general` section, which sets the level's wall-clock start time (e.g. `time=0:00`). The level's duration is implicitly derived from the latest event emitted by the itinerary loader.
 
-This works fine for same-day timelines but breaks down when the narrative crosses midnight. The Murder on the Orient Express level, for example, runs from 19:30 (dinner) on day one to 07:00 (discovery) on day two. With only `time=19:30` set, the itinerary parser has no way to know whether an authored timestamp like `00:15:00` means:
+This works fine for same-day timelines but breaks down when the narrative crosses midnight. A cross-midnight murder-mystery, for example, might run from 19:30 (dinner) on day one to 07:00 (discovery) on day two. With only `time=19:30` set, the itinerary parser has no way to know whether an authored timestamp like `00:15:00` means:
 
 - "00:15 today" — which is *before* the level even starts, or
 - "00:15 tomorrow" — the next morning.
@@ -61,7 +61,7 @@ When `endTime` is not specified, the loader continues the legacy behaviour: the 
 
 Wall-clock authoring stays natural for cross-midnight scenarios. Validation catches mistakes at load time. The two-field model (`startTime` + `endTime`) cleanly separates "when does this level begin" from "when does it end", which removes a class of latent assumptions in the loader where `duration` was always trailing the itinerary's emergent shape.
 
-Keeping `time` as a legacy alias preserves the existing `public/levels/kingacide.md` unchanged.
+Keeping `time` as a legacy alias preserves existing levels that use it (e.g. `public/levels/00_prologue.md`) unchanged.
 
 ## Consequences
 
@@ -69,7 +69,7 @@ Keeping `time` as a legacy alias preserves the existing `public/levels/kingacide
 
 - Cross-midnight levels can use conventional `HH:MM:SS` notation throughout the itinerary.
 - Explicit `endTime` enables window validation, surfacing authoring errors at load time.
-- The Murder on the Orient Express level (planned WP6+) can shed the 24+ hour timestamp workaround.
+- Overnight (dinner-to-morning) levels can shed the 24+ hour timestamp workaround.
 - `Level.endTime` gives downstream consumers a wall-clock end that pairs naturally with `startTime`.
 
 ### Negative
@@ -80,9 +80,9 @@ Keeping `time` as a legacy alias preserves the existing `public/levels/kingacide
 
 ### Migration
 
-- `public/levels/kingacide.md` uses `time=0:00` and is unchanged.
+- `public/levels/00_prologue.md` uses `time=11:00:00` and is unchanged.
 - New levels should prefer `startTime=` (and add `endTime=` when the narrative has a clear end).
-- The Murder on the Orient Express level can switch from `time=19:30` (currently in plan) to `startTime=19:30` + `endTime=07:00` once it's ready to host cross-midnight itinerary entries.
+- A cross-midnight level can use `startTime=19:30` + `endTime=07:00` instead of `time=19:30` to host overnight itinerary entries.
 
 ## Implementation
 
