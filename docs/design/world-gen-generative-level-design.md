@@ -255,11 +255,22 @@ Two distinct controllers — keep them separate:
 | clue-author *(Phase 5)* | story, a conclusion type | one story-consistent clue extending **game-conclusions** (itinerary / item / description) | — |
 | **solver** (validator) | candidate | gates + complexity ints | structural |
 | **play-game** (validator) | candidate | per-char inferable + difficulty + gaps | semantic |
+| **synthesiser** | current md + one subagent return + id | the **sole writer** of the level md — applies that return per its `prompt`, writes the file | — |
+| **validator-coordinator** | level + story + maxIterations | runs solver + play-game; capped tweak loop via wave subagents → synthesiser; routes human questions up | — |
 
 Authoring-format reference for the specialists (the contract they are fed) is distilled in
 [Appendix A](#appendix-a-level-authoring-contract-summary). The concrete **agentic call graph** (who
 calls whom, payloads, LIVE vs PLANNED) is maintained as a sibling HLD —
 [world-gen-agentic-hld.md](world-gen-agentic-hld.md) — kept current as inter/intra-agent calls change.
+
+**Revised generation/synthesis architecture (DR-012/013/014):** the generators are now **pure**
+subagents (minimal custom inputs; each returns data + an apply-`prompt`); a single **synthesiser** is
+the *only* writer of the level md (one return per call, writing every transition so a run is testable
+live via `npm run dev-gen`); truly-independent subagents run in **parallel** (wave 2 =
+architect/scout/itemiser on the `story`; wave 3 = cron/conclusions on the `story` + current md); and a
+**validator-coordinator** sub-hub owns the capped solver/play-game tweak loop with human-in-the-loop
+termination. Per-agent IO:
+[`agent-contracts.md`](../../.claude/skills/world-gen/references/agent-contracts.md).
 
 ---
 
@@ -564,6 +575,48 @@ than deleting.
 - **Alternatives rejected:** peer-to-peer specialist messaging (opaque mesh, hard to observe/cap);
   forbidding all sub-delegation (would stop a specialist internally decomposing a hard task).
 
+### DR-012 — Pure subagents + a single synthesiser as the sole writer (prompt-based application)
+- **Date:** 2026-06-14 · **Status:** Accepted (supersedes the initial whole-md hand-off model)
+- **Context:** Initially each specialist returned the *full* updated level md and the coordinator wrote
+  once at the end. That entangled domain reasoning with file format, hid transitional states, and
+  caused regressions when partial md was handed between agents (the Tinker run's game-cron echoed an
+  abbreviated `# Items`).
+- **Decision:** Subagents are **pure** — minimal custom inputs, and a custom return ending in a
+  **`prompt`** field telling a dedicated **synthesiser** how to apply it. The synthesiser is the
+  **only** writer of the level md: the coordinator passes it `current md + one subagent return + an
+  identifier`; it applies that return and **writes the file**, returning the updated md; repeat per
+  return. Per-agent IO is in
+  [`agent-contracts.md`](../../.claude/skills/world-gen/references/agent-contracts.md).
+- **Consequences:** Every transition is on disk → testable live (`npm run dev-gen`) as the loop runs;
+  domain agents never touch file format — the synthesiser resolves cross-references (owner→character
+  id, `activeCharacter`→id, cloze answer→title); partial-md hand-off regressions disappear.
+- **Alternatives rejected:** each agent writes its own section (multiple writers → races / format
+  drift); coordinator writes only at the end (no live testing; hand-off regressions).
+
+### DR-013 — Parallelise truly-independent subagents
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Decision:** Subagents needing the *same* input (and not a prior modified md) are spawned
+  concurrently. Identified groups: **wave 2** = {architect, scout, itemiser} (input = `story`);
+  **wave 3** = {cron, conclusions} (input = `story` + the integrated md). story-teller is the solo
+  root. The synthesiser stays serialized (one return per call).
+- **Consequences:** Wall-clock savings, and it *forces* minimal-input contracts — an agent that needs
+  a sibling's output can't be in the same wave. Judgment call: itemiser parallels scout because the
+  `story` already names item↔character associations (the synthesiser resolves owners at apply time).
+- **Alternatives rejected:** a strictly sequential pipeline (slower; tempts over-broad inputs).
+
+### DR-014 — Validator-coordinator sub-hub + human-in-the-loop termination
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Decision:** A dedicated **validator-coordinator** (spawned by the main coordinator — the DR-011
+  vertical sub-delegation pattern) solely runs the solver + play-game and owns the **capped** tweak
+  loop, calling wave subagents → synthesiser for fixes. It routes human-input requests **up** to the
+  main coordinator (the single human interface), which asks via `AskUserQuestion` and passes the answer
+  down. The run terminates only when the **human confirms** satisfaction; every transitional state is
+  written for live testing.
+- **Consequences:** Validation/tweak logic + the iteration cap live in one place; generate (waves) and
+  validate/steer (validator-coordinator) are cleanly separated; the user reviews real, on-disk states.
+- **Alternatives rejected:** the main coordinator validating inline (mixes concerns — the earlier ≤3
+  inline repair was a stopgap); auto-terminating on `gates.ok` (skips human judgement of playability).
+
 ---
 
 ## 14. Iteration history (what worked / what didn't)
@@ -689,3 +742,9 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   sequential `:` itinerary to avoid `says` overlap; **relative `:` movements didn't register solver
   co-presence** — anchored solvability on level-start co-presence (cast co-present in the Taproom,
   items carried).
+- **2026-06-14** — Revised the generation architecture (DR-012/013/014): **pure** subagents (minimal
+  custom inputs; return data + an apply-`prompt`); a single **synthesiser** as the sole writer of the
+  level md (one return per call, writing every transition for live testing); **parallel** independent
+  subagents (wave 2 = architect/scout/itemiser; wave 3 = cron/conclusions); a **validator-coordinator**
+  sub-hub owning the capped solver/play-game tweak loop with human-in-the-loop termination. Rewrote the
+  HLD + skill; added `references/agent-contracts.md` (per-agent IO).

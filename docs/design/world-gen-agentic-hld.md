@@ -1,185 +1,224 @@
-# HLD: world-gen Agentic Call Graph (current state)
+# HLD: world-gen Agentic Call Graph
 
 ## Status
 
-**Living document.** Started 2026-06-14 on the `world-gen` branch. Tracks the **current-state**
-agentic request/delegation flow of the `/world-gen` generative level generator — who calls whom, what
-is passed and returned, and which calls are LLM sub-agents vs deterministic steps. The *why* (design,
-fitness model, roadmap) lives in the sibling [world-gen-generative-level-design.md](world-gen-generative-level-design.md);
-this document is the *how-it-calls* view.
+**Living document.** Started 2026-06-14 on the `world-gen` branch. Tracks the agentic
+request/delegation flow of the `/world-gen` generative level generator — who calls whom, what is
+passed and returned, which calls are LLM subagents vs deterministic steps, and which run in parallel.
+The *why* (design, fitness model, roadmap) lives in the sibling
+[world-gen-generative-level-design.md](world-gen-generative-level-design.md); the exact per-agent
+input/output structures live in
+[../../.claude/skills/world-gen/references/agent-contracts.md](../../.claude/skills/world-gen/references/agent-contracts.md).
+This document is the *how-it-calls* view.
 
 ## How to use & maintain
 
-This HLD must always reflect the **calls that actually happen now**. **Whenever an agent call changes —
-a new sub-agent, a removed/merged stage, a changed payload, a new inter- or intra-agent delegation, or
-a call promoted from PLANNED to LIVE — update the diagrams, the [call table](#call-table), and the
-[Changelog](#changelog) in the same change.** Keep PLANNED items visibly separated from LIVE ones so a
-reader can trust the diagram as the present reality, not the aspiration.
+Keep this reflecting the **calls that actually happen**. **Whenever an agent call changes — a new/
+removed/merged agent, a changed payload, a new delegation, a changed parallel grouping, or a call
+promoted PLANNED→LIVE — update the diagrams, the [call table](#call-table), and the
+[Changelog](#changelog) in the same change.** Keep PLANNED visibly separate from LIVE.
 
 ## Legend
 
-- **agent** — an LLM sub-agent spawned via the Agent tool (its own context; returns text/structured
-  output).
-- **deterministic** — a non-LLM step the coordinator runs directly (a Bash/CLI call); no model.
-- **coordinator** — the main-loop Claude executing the `/world-gen` skill. It is not a spawned agent;
-  it *is* the agent the user talks to, and it does all delegation.
-- **LIVE** = wired today. **PLANNED** = specified in the design doc, not yet wired.
+- **subagent** — a *pure* LLM agent: minimal custom input, returns a custom structure ending in a
+  `prompt` field, and **never writes files**.
+- **synthesiser** — the **only** agent that creates/updates the level md (applies one subagent return
+  per call, writing the file each time).
+- **coordinator / validator-coordinator** — the two hubs (see invariants).
+- **deterministic** — a non-LLM step (a Bash/CLI call, e.g. the solver); no model.
+- **LIVE** = wired in the skill today. **PLANNED** = designed, not yet wired.
 
 ---
 
 ## Communication rules (invariants)
 
-These are **architectural invariants**, not just the present wiring:
-
-1. **Hub-and-spoke — the coordinator is the only hub.** Every specialist subagent is invoked by, and
-   returns to, the coordinator. **No specialist ever calls a sibling specialist** — there are *no
-   lateral / peer / subagent↔subagent calls*. All cross-specialist coordination, sequencing, and shared
-   state (the story, the candidate Markdown, validation results) flow **through the coordinator**. This
-   is what "no intra-agent calls" means here.
-2. **Vertical sub-delegation is allowed.** A specialist *may* spawn its own deeper, more-specialised
-   subagents to complete the specific task the coordinator assigned it. Such children are **private to
-   that parent specialist** — they serve and report back only to it, and their results roll up into the
-   parent's single return to the coordinator. They must **not** reach across to other specialists, to
-   the coordinator's other concerns, or to shared validation.
-3. **Why:** one hub keeps the call graph a **tree** (no peer mesh), makes every cross-cutting decision
-   observable in one place (the coordinator's transcript + ledger), and lets a specialist be improved
-   or internally decomposed without any other specialist depending on its internals.
-
-So the graph is a **tree rooted at the coordinator**: coordinator → specialists (LIVE), and optionally
-specialist → its own private helper subagents (ALLOWED; none today). Sibling↔sibling edges never exist.
+1. **Hub-and-spoke; no lateral calls.** Subagents are invoked by, and return to, a coordinator. **No
+   subagent calls a sibling subagent** — no peer/`subagent↔subagent` edges. All cross-cutting
+   coordination flows through a coordinator. The graph stays a **tree**.
+2. **Two coordinators (vertical sub-delegation, now used).** The **main coordinator** is the top hub.
+   The **validator-coordinator** is a sub-hub it spawns (the DR-011 "vertical sub-delegation" pattern,
+   now actively used): it delegates to the same wave subagents + the synthesiser, and routes any
+   human-input request **up** to the main coordinator (which asks the user and passes the answer back
+   down). A subagent's own private deeper helpers are still allowed (none today).
+3. **The synthesiser is the sole writer (DR-012).** Subagents are *pure* — they return data + an apply
+   `prompt`; only the synthesiser creates/updates `public/levels/_gen.<slug>.md`. It applies **one**
+   subagent return per call and **writes the file every call**, so every transitional state is
+   testable live via `npm run dev-gen`.
+4. **Independent subagents run in parallel (DR-013).** Subagents that need the *same* input (and not a
+   prior modified md) are spawned concurrently; the synthesiser then applies their returns **one at a
+   time** (serialized writes).
+5. **Human-in-the-loop terminates the run (DR-014).** The validator-coordinator caps the automated
+   tweak loop; final termination is the human's: the user tests each written state and the interaction
+   ends only when they confirm ("it's ok").
 
 ---
 
-## Request flow (current state)
-
-The user invokes `/world-gen`; the coordinator runs the Phase-1 one-shot pipeline, spawning each
-specialist in sequence (each receives the story + the candidate-so-far + the authoring contract and
-returns the full updated candidate), then validates deterministically.
+## Request flow
 
 ```mermaid
 sequenceDiagram
     actor User
-    participant WG as /world-gen (coordinator · main loop)
-    participant ST as story-teller (agent)
-    participant AR as game-architect (agent)
-    participant SC as game-scout (agent)
-    participant IT as game-itemiser (agent)
-    participant CR as game-cron (agent)
-    participant CN as game-conclusions (agent)
-    participant EV as npm run evaluate (deterministic · solver)
+    participant WG as coordinator (/world-gen)
+    participant ST as story-teller
+    participant AR as game-architect
+    participant SC as game-scout
+    participant IT as game-itemiser
+    participant CR as game-cron
+    participant CN as game-conclusions
+    participant SY as synthesiser (sole writer)
+    participant VC as validator-coordinator
 
-    User->>WG: /world-gen [prompt]  (dev: hardcoded "Three Blind Mice")
-    WG->>ST: player prompt
-    ST-->>WG: story (prose)
-    WG->>AR: story + contract
-    AR-->>WG: candidate (+ General / Map / Rooms)
-    WG->>SC: candidate + story + contract
-    SC-->>WG: candidate (+ Characters, distinct real faces, placement)
-    WG->>IT: candidate + story + contract
-    IT-->>WG: candidate (+ Items)
-    WG->>CR: candidate + story + contract
-    CR-->>WG: candidate (+ Itinerary, makes it solve)
-    WG->>CN: candidate + story + contract
-    CN-->>WG: candidate (+ Conclusions, explicit Identities)
-    WG->>EV: write the candidate file, then npm run evaluate
-    EV-->>WG: fitness JSON (gates + complexity)
-    opt repair, capped at 3 (loaded:false or gates.ok:false)
-        WG->>CN: repair directive + the error (route to responsible stage)
-        CN-->>WG: revised candidate
-        WG->>EV: re-evaluate
-        EV-->>WG: fitness JSON
+    User->>WG: /world-gen prompt
+    WG->>ST: playerPrompt
+    ST-->>WG: story + apply-prompt
+    WG->>SY: create file — story-teller return + id
+    SY-->>WG: level md (file written)
+
+    par wave 2 — input is the story
+        WG->>AR: story
+        AR-->>WG: rooms-map data + apply-prompt
+    and
+        WG->>SC: story
+        SC-->>WG: characters + faces data + apply-prompt
+    and
+        WG->>IT: story
+        IT-->>WG: items data + apply-prompt
     end
-    WG-->>User: report (story, candidate path, fitness, verdict)
+    Note over WG,SY: synthesiser applies ONE return per call — each call writes the file
+    WG->>SY: md + architect return + id
+    SY-->>WG: md (written)
+    WG->>SY: md + scout return + id
+    SY-->>WG: md (written)
+    WG->>SY: md + itemiser return + id
+    SY-->>WG: md (written)
 
-    Note over WG,EV: PLANNED — not yet wired:
-    Note over WG,EV: • /play-game (agent) semantic validation each round (Phase 2)
-    Note over WG,EV: • game-gen optimizer loop: propose→eval→accept (Phase 3)
-    Note over WG,EV: • human steering via AskUserQuestion between rounds (Phase 4)
+    par wave 3 — input is story + current md
+        WG->>CR: story + level md
+        CR-->>WG: itinerary data + apply-prompt
+    and
+        WG->>CN: story + level md
+        CN-->>WG: conclusions data + apply-prompt
+    end
+    WG->>SY: md + cron return + id
+    SY-->>WG: md (written)
+    WG->>SY: md + conclusions return + id
+    SY-->>WG: md (written)
+
+    WG->>VC: validate-and-tweak (levelFilename, story, maxIterations)
+    loop until pass or maxIterations (PLANNED)
+        VC->>VC: npm run evaluate (solver) and play-game
+        opt a fix is needed
+            VC->>SC: targeted re-gen (any wave subagent)
+            SC-->>VC: delta data + apply-prompt
+            VC->>SY: md + delta + id
+            SY-->>VC: md (written)
+        end
+        opt needs user input
+            VC-->>WG: humanQuestion
+            WG->>User: AskUserQuestion
+            User-->>WG: answer
+            WG-->>VC: answer
+        end
+    end
+    VC-->>WG: status + fitness + play-game findings
+
+    loop human-in-the-loop until the user says it is ok (PLANNED)
+        WG->>User: present the playable level (test via dev-gen)
+        User-->>WG: change request or it is ok
+        opt change request
+            WG->>VC: apply the requested change
+            VC-->>WG: updated (synthesiser wrote each transition)
+        end
+    end
+    Note over User,WG: the user confirming ends the agentic interaction
 ```
 
-## Delegation graph (current state)
+## Delegation graph
 
 ```mermaid
 flowchart TD
-    U([User]) -->|/world-gen| WG["coordinator · /world-gen skill"]
+    U([User]) -->|"/world-gen"| WG["main coordinator"]
+    WG -.->|"report · ask · confirm"| U
 
-    subgraph specialists["specialist generators · LLM agents · LIVE"]
-        ST[story-teller]
-        AR[game-architect]
-        SC[game-scout]
-        IT[game-itemiser]
-        CR[game-cron]
-        CN[game-conclusions]
+    WG -->|"playerPrompt"| ST["story-teller"]
+
+    subgraph wave2["wave 2 — parallel · input = story"]
+        AR["game-architect"]
+        SC["game-scout"]
+        IT["game-itemiser"]
+    end
+    subgraph wave3["wave 3 — parallel · input = story + level md"]
+        CR["game-cron"]
+        CN["game-conclusions"]
     end
 
-    WG --> ST & AR & SC & IT & CR & CN
-    WG -->|Bash · deterministic| EV[/npm run evaluate · solver/]
-    EV -->|fitness JSON| WG
-    WG -->|report| U
+    WG --> AR & SC & IT
+    WG --> CR & CN
+    WG -->|"md + one return + id"| SY["synthesiser — SOLE WRITER"]:::writer
+    SY -->|"writes every transition"| FILE["the level md on disk"]
+    SY -->|"updated md"| WG
 
-    PG["play-game · semantic validator agent"]:::planned
-    GG["game-gen · optimizer/strategist"]:::planned
-    HU([human steering · AskUserQuestion]):::planned
-    WG -. PLANNED Phase 2 .-> PG
-    GG -. PLANNED Phase 3 .-> WG
-    HU -. PLANNED Phase 4 .-> WG
+    WG -->|"when generation is done"| VC["validator-coordinator — sub-hub"]
+    VC -->|"npm run evaluate"| EV["solver · deterministic"]
+    VC -->|"semantic check"| PG["play-game"]
+    VC -->|"targeted re-gen"| AR & SC & IT & CR & CN
+    VC -->|"delta + id"| SY
+    VC -.->|"human question"| WG
 
-    SC -. "ALLOWED: own private helper (none today)" .-> H([deeper specialised helper subagent]):::allowed
-    NF[" ❌ sibling ↔ sibling calls are forbidden — no lateral specialist-to-specialist — all coordination via the coordinator "]:::forbid
-
-    classDef planned stroke-dasharray:4 3,opacity:0.7;
-    classDef allowed stroke-dasharray:3 2,stroke:#2a2;
-    classDef forbid fill:#fee,stroke:#c33,color:#900;
+    classDef writer fill:#efe,stroke:#2a2;
 ```
 
 ---
 
 ## Call table
 
-| # | Caller | Callee | Kind | Sends | Returns | Sync | Status |
+| # | Caller | Callee | Kind | Sends | Returns | Parallel? | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | User | `/world-gen` (coordinator) | invocation | player prompt (dev: hardcoded) | final report | sync | **LIVE** |
-| 2 | coordinator | story-teller | agent | player prompt | `story` (prose) | await | **LIVE** |
-| 3 | coordinator | game-architect | agent | story + contract | candidate (+ General/Map/Rooms) | await | **LIVE** |
-| 4 | coordinator | game-scout | agent | candidate + story + contract | candidate (+ Characters, faces) | await | **LIVE** |
-| 5 | coordinator | game-itemiser | agent | candidate + story + contract | candidate (+ Items) | await | **LIVE** |
-| 6 | coordinator | game-cron | agent | candidate + story + contract | candidate (+ Itinerary) | await | **LIVE** |
-| 7 | coordinator | game-conclusions | agent | candidate + story + contract | candidate (+ Conclusions) | await | **LIVE** |
-| 8 | coordinator | `npm run evaluate` | deterministic (Bash) | candidate file path | fitness JSON | sync | **LIVE** |
-| 9 | coordinator | responsible stage (often game-conclusions / game-cron) | agent | repair directive + error | revised candidate | await | **LIVE** (≤3) |
-| 10 | coordinator | `/play-game` | agent | candidate | per-character inferability + difficulty + gaps | await | PLANNED (Phase 2) |
-| 11 | game-gen (optimizer) | coordinator | agent | mutation directives | scored candidate | await | PLANNED (Phase 3) |
-| 12 | coordinator | Human | `AskUserQuestion` | round objective options | chosen objective | sync | PLANNED (Phase 4) |
+| 1 | User | main coordinator | invocation | player prompt | report / confirm prompt | — | LIVE |
+| 2 | coordinator | story-teller | subagent | `playerPrompt` | `story` + apply-prompt | solo (wave 1) | LIVE |
+| 3 | coordinator | synthesiser | synthesiser | md(null) + story-teller return + id | level md (writes file) | serialized | LIVE |
+| 4 | coordinator | game-architect | subagent | `story` | rooms/map data + prompt | **∥ wave 2** | LIVE |
+| 5 | coordinator | game-scout | subagent | `story` | characters/faces data + prompt | **∥ wave 2** | LIVE |
+| 6 | coordinator | game-itemiser | subagent | `story` | items data + prompt | **∥ wave 2** | LIVE |
+| 7 | coordinator | game-cron | subagent | `story` + level md | itinerary data + prompt | **∥ wave 3** | LIVE |
+| 8 | coordinator | game-conclusions | subagent | `story` + level md | conclusions data + prompt | **∥ wave 3** | LIVE |
+| 9 | coordinator | synthesiser | synthesiser | md + one subagent return + id | level md (writes file) | once per return (serialized) | LIVE |
+| 10 | coordinator | validator-coordinator | subagent (sub-hub) | levelFilename + story + maxIterations | status + fitness + findings (+ humanQuestion) | — | PLANNED |
+| 11 | validator-coordinator | `npm run evaluate` | deterministic | candidate file | fitness JSON | — | PLANNED |
+| 12 | validator-coordinator | play-game | subagent | candidate file | per-character inferability + gaps | — | PLANNED |
+| 13 | validator-coordinator | any wave subagent | subagent | targeted directive (custom IN) | delta data + prompt | as applicable | PLANNED |
+| 14 | validator-coordinator | synthesiser | synthesiser | md + delta + id | level md (writes file) | serialized | PLANNED |
+| 15 | validator-coordinator | coordinator | up-call | `humanQuestion` | user's answer | — | PLANNED |
+| 16 | coordinator | Human | `AskUserQuestion` | question / level to review | answer / "it's ok" (ends run) | — | PLANNED |
 
 ---
 
 ## Current-state notes
 
-- **No lateral calls — ever (invariant).** A specialist never calls a sibling specialist; all
-  cross-specialist communication routes through the coordinator (see
-  [Communication rules](#communication-rules-invariants)). This is a permanent rule, not a "not yet".
-- **Vertical sub-delegation is allowed but currently unused.** A specialist *may* spawn its own private
-  deeper subagents for its task; today none do — every specialist (calls #2–#7) is a leaf. If a
-  specialist starts using private helpers, add that sub-tree here (it still returns only through the
-  coordinator, and never reaches a sibling).
-- **Validation is deterministic, not an agent.** Call #8 (`npm run evaluate`) is a CLI/solver step, so
-  the structural verdict is reproducible and model-free. The *semantic* validator (`/play-game`, #10)
-  is an agent and is still PLANNED.
-- **Bring-up caveat.** The only end-to-end run to date (the Three Blind Mice demo) used story-teller +
-  a single **combined builder** agent rather than the four separate architect/scout/itemiser/cron
-  calls, for first-pass coherence (see the design doc's Iteration History). The 6-stage decomposition
-  above is the skill's defined current pipeline; expect it to be exercised as full runs happen, and
-  update this HLD if the realized topology differs.
-- **Payload shape.** Specialists currently exchange the **whole candidate Markdown** (not diffs) for
-  simple assembly; the coordinator persists it to `public/levels/_gen.<slug>.md` between the build and
-  the validate calls.
+- **Only the synthesiser writes.** Every other agent is pure (data + apply-`prompt`); the synthesiser
+  resolves cross-references (owner→character id, `activeCharacter`→id, cloze answer→title) as it
+  applies each return, and writes the file each call. See
+  [agent-contracts.md](../../.claude/skills/world-gen/references/agent-contracts.md).
+- **Parallel groups.** Wave 2 = {architect, scout, itemiser} (all take only the `story`); wave 3 =
+  {cron, conclusions} (both take `story` + the integrated md, neither depends on the other). story-
+  teller is solo (root). The synthesiser is inherently **serialized** (one return per call).
+- **Validator-coordinator is PLANNED.** Today the main coordinator runs the solver/play-game inline
+  and repairs (≤3). The dedicated validator-coordinator sub-hub (caps + human-question up-calls) is the
+  next build (Phase 2–4).
+- **Implementation status of the synthesiser model.** This pure-subagent + synthesiser + parallel-wave
+  model is the **current design**; the very first end-to-end runs (Three Blind Mice, Tinker Tailor
+  Soldier Spy) used the *prior* model (subagents returned whole-md; the coordinator wrote at the end).
+  The skill now specifies the synthesiser model; expect the next run to exercise it.
 
 ## Changelog
 
-- **2026-06-14** — Document created. Captures the Phase-1 LIVE call graph (coordinator → story-teller,
-  game-architect, game-scout, game-itemiser, game-cron, game-conclusions → deterministic `evaluate`,
-  with ≤3 repair calls) and the PLANNED play-game / game-gen / human-steering calls.
-- **2026-06-14** — Made the communication invariant explicit: hub-and-spoke, **no lateral
-  subagent↔subagent calls** (all coordination via the coordinator); **vertical sub-delegation** (a
-  specialist's own private deeper subagents) is allowed but currently unused. Added a Communication
-  rules section and the allowed/forbidden patterns to the delegation graph.
+- **2026-06-14** — Document created (Phase-1 LIVE call graph + PLANNED play-game/optimizer/human calls).
+- **2026-06-14** — Made the hub-and-spoke invariant explicit (no lateral calls; vertical sub-delegation
+  allowed).
+- **2026-06-14** — **Revised architecture:** subagents are now *pure* (minimal custom inputs; return
+  data + an apply-`prompt`); a **synthesiser** is the sole writer of the level md (one return per call,
+  writes every transition); independent subagents run in **parallel** (wave 2 = architect/scout/
+  itemiser; wave 3 = cron/conclusions); a **validator-coordinator** sub-hub owns the capped solver/
+  play-game tweak loop and routes human-input up to the main coordinator; the run ends on human
+  confirmation. Diagrams, call table, and invariants rewritten; per-agent IO moved to
+  `agent-contracts.md`. (Design doc DR-012/013/014.)

@@ -1,147 +1,109 @@
 ---
 name: world-gen
 description: >-
-  Generate a new Castle Mystery level from a short player prompt using a multi-agent pipeline, then
-  validate it with the solver. A coordinator runs specialist sub-agents — story-teller (infer a world
-  + backstory), game-architect (rooms/map/exits), game-scout (characters + hidden identities),
-  game-itemiser (items), game-cron (itinerary of movement + dialogue) — to emit a candidate level into
-  public/levels/ as a flat _gen.*.md file, then scores it with `npm run evaluate`. Use when asked to
-  generate/author a new level, "world-gen", or continue the generative level generator. WRITES only
-  _gen.*.md candidate files under public/levels/.
+  Generate a new Castle Mystery level from a short player prompt with a multi-agent pipeline, then
+  validate it with the solver and the play-game semantic check. A coordinator runs PURE specialist
+  subagents — story-teller, game-architect, game-scout, game-itemiser, game-cron, game-conclusions —
+  in parallel where independent; each returns data + an apply-prompt, and a single SYNTHESISER agent
+  is the only writer of the level md (one return per call, writing every transition). A
+  validator-coordinator runs the capped solver/play-game tweak loop, with human-in-the-loop until the
+  user confirms. Use when asked to generate/author a new level, "world-gen", or continue the
+  generative level generator. WRITES only _gen.*.md candidate files under public/levels/ (via the
+  synthesiser).
 ---
 
-# world-gen — generative level designer (Phase 1: one-shot pipeline)
+# world-gen — generative level designer
 
-Turn a short, high-level **player prompt** into a fully playable **narrative level** — a self-contained
-story within a level's context boundary, like the authored examples under `public/levels/xx_level.md`.
-This is the generator half of the generator/validator system designed in
-**`docs/design/world-gen-generative-level-design.md`** (read it for the full architecture, fitness
-model, and roadmap). The validator is the solver, consumed here via `npm run evaluate`.
+Turn a short **player prompt** into a fully playable **narrative level** — a self-contained story
+within a level's context boundary, like the authored examples under `public/levels/xx_level.md`. This
+is the generator half of the generator/validator system designed in
+**`docs/design/world-gen-generative-level-design.md`**; the agentic call graph is in
+**`docs/design/world-gen-agentic-hld.md`**; the per-agent IO structures are in
+**`references/agent-contracts.md`** (next to this file).
 
-**This skill writes only `_gen.*.md` candidate files under `public/levels/`.** It never edits existing
-levels, `levels.md`, or app code. Generated candidates are not added to `levels.md`, so the app never
-lists them in normal `npm run dev`. (Candidates are **flat** files — `_gen.<slug>.md`, not a
-subdirectory — because the app's level loader only loads flat filenames directly under `/levels/`.)
+## Architecture invariants (follow exactly)
 
-Phase 1 goal: produce **one loadable, solver-passing candidate** end-to-end. No optimization loop yet
-(that is Phase 3); no human steering yet (Phase 4). Keep it bounded — see Caps.
+- **Subagents are pure.** Each takes only the input it needs (see agent-contracts.md) and returns a
+  custom structure ending in a **`prompt`** field that tells the synthesiser how to apply it. **A
+  subagent never writes a file.**
+- **The synthesiser is the sole writer.** Only the synthesiser creates/updates
+  `public/levels/_gen.<slug>.md`. You (coordinator) call it with **the current md + exactly one
+  subagent's return + that subagent's identifier**; it applies that return and writes the file, then
+  returns the updated md. Repeat per return. Writing every transition lets the user test live with
+  `npm run dev-gen`.
+- **Run independent subagents in parallel.** Subagents that need the *same* input (and not a prior
+  modified md) are spawned concurrently; the synthesiser still applies their returns one at a time.
+- **Hub-and-spoke, no lateral calls.** Subagents never call each other; everything routes through a
+  coordinator. The validator-coordinator is a sub-hub you spawn; it may call the wave subagents + the
+  synthesiser, and routes human questions back up to you.
 
 ## Input
 
-`/world-gen [prompt]`
-
-- **For development the prompt is hardcoded** to the "Three Blind Mice" fixture below (this is the
-  `getPlayerInput()` seam the design calls for — swap real input in later):
-
-  ```
-  Three blind mice, three blind mice,
-  See how they run, see how they run,
-  They all ran after the farmer's wife,
-  Who cut off their tails with a carving knife,
-  Did you ever see such a thing in your life,
-  As three blind mice?
-  ```
-
-- If a prompt argument is given, use it instead.
+`/world-gen [prompt]` — if a prompt arg is given, use it. For development, the hardcoded fixture is the
+"Three Blind Mice" rhyme (the `getPlayerInput()` seam).
 
 ## Before you start
 
-Read **`.claude/skills/world-gen/references/authoring-contract.md`** — the exact level format the
-agents must follow — and skim `public/levels/00_prologue.md` (the canonical minimal working level).
-Every sub-agent you spawn must be given the authoring contract in its prompt.
+Read `references/authoring-contract.md` (the level format the synthesiser must produce) and
+`references/agent-contracts.md` (each subagent's IO). Skim `public/levels/00_prologue.md`.
 
-## Pipeline (the coordinator = you, the main loop)
+## Pipeline (coordinator = you, the main loop)
 
-Run these stages in order, spawning each as a sub-agent (Agent tool). Each stage receives the
-**current candidate** (the level Markdown so far) plus the story and the authoring contract, and
-returns the **full updated candidate** (return the whole file, not a patch — simplest to assemble).
-Stamp every stage's headline output back to the user so the run is observable (the prompt sent, and a
-short summary of what came back).
+Narrate each step for observability (the call made + a short summary of the return).
 
-1. **story-teller** — input: the player prompt. Output: a `story` (prose): the inferred world and
-   backstory. *E.g. Three Blind Mice → a farmhouse on a working farm; a sharp-tempered farmer's wife;
-   three near-blind mice; a missing wheel of cheese; a carving knife.* Define WHO the characters are
-   (their hidden identities), WHERE (the rooms), and WHAT happened — enough for the builders to work
-   from. Keep it to a tight few paragraphs.
+**Wave 1 — story-teller** (solo). IN `playerPrompt` → OUT `story` (+ apply-prompt). Then call the
+**synthesiser** (md=none, id=`story-teller`) to create the file (General title/winSynopsis). The full
+`story` is **context** you pass to later waves — it is not otherwise written to the md.
 
-2. **game-architect** — input: story + contract. Output: `# General`, `# Map`, `# Rooms` (rooms,
-   rectangular map blocks, 3-row room grids, exits between adjacent rooms, the active character
-   chosen). Lay out 3–5 rooms that fit the story.
+**Wave 2 — architect ∥ scout ∥ itemiser** (spawn all three in parallel; each IN = `story`).
+- game-architect → rooms/map data; game-scout → characters + distinct real faces from
+  `public/assets/faces/`; game-itemiser → items.
+Then call the **synthesiser once per return**, in the order architect → scout → itemiser (so placement
+resolves): each call = `current md + that return + its id`, and writes the file.
 
-3. **game-scout** — input: current candidate + story + contract. Output: adds `# Characters` and
-   places each in a room grid. Each character's `* title=` is the **hidden identity the player
-   deduces** (the conclusion answer); its `* description=` carries the *witnessable clue* to that
-   identity. Give each a `* faceImage=` chosen from `public/assets/faces/` — **list that directory and
-   assign a distinct real file to every character** (pick at random; ~37 available, enough for large
-   casts) so the level renders for playtesting. Pick the `activeCharacter` and ensure everyone can
-   become connected to them. (game-scout only creates the cast — Conclusions are stage 6.)
+**Wave 3 — cron ∥ conclusions** (spawn both in parallel; each IN = `story` + the current md).
+- game-cron → itinerary (its `coPresencePlan` must make it solve — **anchor on level-start
+  co-presence**; relative `:` movements do not register solver co-presence). game-conclusions →
+  `# Conclusions` (explicit `## Identities` + cloze; every cloze answer a category member — character/
+  room/item **titles** or an author-defined category).
+Then call the **synthesiser once per return** (cron → conclusions), writing each.
 
-4. **game-itemiser** — input: current candidate + story + contract. Output: adds `# Items` and places
-   them in room grids (or characters' inventories). Phase 1: items are story-flavour; just ensure each
-   placed item will be witnessed by a reachable character.
+## Validate & tweak — validator-coordinator
 
-5. **game-cron** — input: current candidate + story + contract. Output: writes the `# Itinerary` — a
-   timeline of movement and dialogue that **(a)** transitively connects every character to the active
-   character via shared-room co-presence and **(b)** brings reachable characters into the rooms where
-   items sit. This is the stage that makes the level *solve*. (Conclusions are the next stage.)
+Spawn the **validator-coordinator** (IN: level filename, `story`, `maxIterations`). It:
+1. Runs `npm run evaluate --silent -- _gen.<slug>.md` (structural) and the play-game semantic check.
+2. Acts on the output within `maxIterations`: for a fix, calls the relevant **wave subagent** for a
+   targeted delta and routes it through the **synthesiser** (which writes). Reads:
+   - `loaded:false` → format error (message names the line). *"missing conclusion answer phrases…"* →
+     game-conclusions (a cloze answer not in any category — usually a title/heading mix-up).
+   - `gates.ok:false` → solvability: `unreachable.*` → game-cron/scout (fix co-presence / placement).
+   - play-game gaps / too-easy / conflicts → game-scout (clues) / game-conclusions / game-cron.
+3. Surfaces a **`humanQuestion`** up to you when it needs user input; you ask via `AskUserQuestion` and
+   pass the answer back down.
+4. Returns status + fitness + play-game findings.
 
-6. **game-conclusions** — input: current candidate + story + contract. Output: writes the
-   `# Conclusions` section, grounded in the story:
-   - **Always an explicit `## Identities`** subsection (even if it only carries `* unlockConclusions=`)
-     — the loader fills it with one name blank per interactive character. Making it explicit lets this
-     agent focus on the *other* conclusions.
-   - One or more **cloze** conclusions for "what happened" (later also: role / age / favourite colour).
-   - The author-defined **answer categories** (`* verbs=…`, `* withObjects=…`, …) the blanks draw from.
-   - **Hard rule (load-blocking):** every cloze answer must be a member of a category, matched
-     case-insensitively, or the level fails to load with *"missing conclusion answer phrases from
-     conclusion categories: X"*. Character/room/item blanks must use the **title**
-     (`[The Farmer's Wife]`, not `[Dame Hartwell]`); any other answer must be listed in an
-     author-defined category. `npm run evaluate` enforces this (same as the app).
-   The **`/play-game` semantic validator** (Phase 2) then checks whether each conclusion's answers are
-   actually *inferable* from witnessable clues, and flags conflicting / ambiguous solutions.
+(Until the validator-coordinator is built, run steps 1–2 inline as the coordinator, capped the same
+way — but file writes still go only through the synthesiser.)
 
-## Assemble & validate
+## Human-in-the-loop (ends the run)
 
-1. Write the final candidate to `public/levels/_gen.<slug>.md` (e.g. `_gen.three_blind_mice.md`) — a
-   **flat** file, NOT a subdirectory (the app loads only flat filenames under `/levels/`).
-2. Score it: `npm run evaluate --silent -- _gen.<slug>.md`.
-3. Read the fitness JSON:
-   - `loaded:false` → a **format error** (the message names the offending line). Route it to the
-     responsible stage and re-validate — this is the loader acting as linter. A *"missing conclusion
-     answer phrases from conclusion categories: X"* message is a **game-conclusions** bug (a cloze
-     answer `X` isn't in any category — usually a character/room/item blank that used a heading/id
-     instead of the title, or an answer with no author-defined category).
-   - `gates.ok:false` → a **solvability error**. `unreachable.characterIds` / `unreachable.itemIds`
-     name what's stranded. Send those back to **game-cron** (usually) to add co-presence / move items,
-     and re-validate.
-   - `gates.ok:true` → success. Report the fitness (counts + complexity) and the path.
-
-## Manual verification (optional)
-
-To eyeball a candidate in the real game UI, run **`npm run dev-gen`** (not plain `npm run dev`):
-generated `_gen.*.md` levels appear as **`(GEN) …`** tabs in the level selector, read fresh on each
-browser refresh. Normal `npm run dev` and production builds exclude them.
+Present the playable level and invite the user to test it (`npm run dev-gen` → the `(GEN) …` tab).
+On a **change request**, route it through the validator-coordinator / the relevant wave subagent →
+synthesiser (each transition written, so the user re-tests live). **The run ends only when the user
+confirms they're happy** ("it's ok").
 
 ## Caps (no runaway)
 
-- **Repair attempts: ≤ 3** total across load + gate failures. If still failing, stop and report the
-  last fitness JSON + the remaining problem (a legitimate result that motivates Phase 2's dedicated
-  gate/repair loop). Do not loop indefinitely.
-- One candidate per run (no beam/optimization in Phase 1).
+- Validator-coordinator tweak loop: **≤ `maxIterations`** (default 3) before it returns/asks the human.
+- One candidate per run. The human-in-the-loop is user-gated, not automatic.
 
 ## Report
 
-Show: the story (brief), the final candidate path, the `evaluate` fitness JSON, and a one-line verdict
-(`✅ loadable & solver-passing` / `⚠️ loadable, N unreachable` / `❌ failed to load after repairs`).
+The story (brief), the candidate path, the latest `evaluate` fitness JSON + play-game summary, and a
+one-line verdict.
 
-## After a successful run — maintain the design doc
+## After meaningful changes — maintain the docs
 
-Per the maintenance convention, append a dated row to the **Iteration History** in
-`docs/design/world-gen-generative-level-design.md` recording what was generated and its fitness
-(what worked / what didn't), and bump its Changelog.
-
-## Not in Phase 1 (see the design doc)
-
-- The optimization loop (game-gen strategist, beam hill-climb, ledger) — **Phase 3**.
-- Human-in-the-loop steering between rounds — **Phase 4**.
-- The `/play-game` semantic gate and extra conclusion types (role/age/colour) — **Phase 2 / 5**.
+Append a dated row to the **Iteration History** in `world-gen-generative-level-design.md` (what was
+generated + fitness + what worked/didn't) and bump its Changelog. **If any agent call changed** (new/
+removed agent, payload, parallel grouping, LIVE↔PLANNED), update `world-gen-agentic-hld.md` too.
