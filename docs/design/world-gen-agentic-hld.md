@@ -217,10 +217,16 @@ flowchart TD
 - **Validator-coordinator is PLANNED.** Today the main coordinator runs the solver/play-game inline
   and repairs (≤3). The dedicated validator-coordinator sub-hub (caps + human-question up-calls) is the
   next build (Phase 2–4).
-- **Implementation status of the synthesiser model.** This pure-subagent + synthesiser + parallel-wave
-  model is the **current design**; the very first end-to-end runs (Three Blind Mice, Tinker Tailor
-  Soldier Spy) used the *prior* model (subagents returned whole-md; the coordinator wrote at the end).
-  The skill now specifies the synthesiser model; expect the next run to exercise it.
+- **Exercise status.** The revised model has been exercised **through waves 1–2** (Sing a Song of
+  Sixpence, 2026-06-14): the story-teller→story-critic loop, the **parallel** wave 2, and pure-subagent
+  data+`prompt` returns all ran, and the synthesiser-applied wave-2 state **loaded**. **Not yet
+  exercised:** wave 3 (cron/conclusions), the validator-coordinator loop, and the human-in-the-loop.
+  The earlier *full* runs (Three Blind Mice, Tinker Tailor Soldier Spy) predate this architecture and
+  used the prior whole-md model.
+- **Synthesiser is currently fulfilled inline.** In runs so far the **coordinator performs the
+  synthesiser role itself** (writing the file as it applies each return); a *dedicated synthesiser
+  agent* is the target — same status as the validator-coordinator (designed, not yet a separately
+  spawned agent). The sole-writer invariant still holds: nothing but the synthesiser role writes the md.
 
 ## Changelog
 
@@ -237,3 +243,7 @@ flowchart TD
 - **2026-06-14** — Added the **story-critic** (story-teller's private child): the story-teller now runs
   a capped critic loop and returns only a critic-accepted story — the first realized **vertical
   sub-delegation**. (Design doc DR-015.)
+- **2026-06-14** — Exercised the revised model through **waves 1–2** (Sing a Song of Sixpence): the
+  story-critic loop, parallel wave 2, and pure returns all worked; the synthesiser-applied wave-2 state
+  loads. Recorded that the **synthesiser is currently fulfilled inline by the coordinator** (dedicated
+  agent still pending), and that wave 3 / validator-coordinator / human-loop remain un-exercised.
