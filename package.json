@@ -8,6 +8,7 @@
     "solve": "vite-node scripts/solve.ts",
     "evaluate": "vite-node scripts/evaluateLevel.ts",
     "dev": "vite",
+    "dev-gen": "vite --mode dev-gen",
     "copyViteManifestForDev": "cp -r dist/.vite public",
     "build": "tsc && vite build && npm run copyViteManifestForDev",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
