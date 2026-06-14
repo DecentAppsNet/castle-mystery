@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "cmgen": "node --experimental-strip-types scripts/cmgen.ts",
+    "solve": "vite-node scripts/solve.ts",
     "dev": "vite",
     "copyViteManifestForDev": "cp -r dist/.vite public",
     "build": "tsc && vite build && npm run copyViteManifestForDev",
