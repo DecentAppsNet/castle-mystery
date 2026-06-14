@@ -3,6 +3,7 @@
 
 import { parseLeadingTimestampOrThrowOnInvalid } from "@/levelLoading/timestampUtil";
 import { MSECS_IN_DAY } from "@/common/timeUtil";
+import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { normalizeId } from "@/game/idUtil";
 
 import { runWithItineraryLineContext } from "./itineraryLoadErrorUtil";
@@ -111,6 +112,11 @@ function _normalizeDropActivityText(activityText:string):string {
   return itemRef ? `drops ${itemRef}` : 'drops';
 }
 
+function _normalizeWaitActivityText(activityText:string):string {
+  const waitDurationText = _normalizeActivityArgument(activityText.slice('waits'.length), new Set(['.']));
+  return waitDurationText ? `waits ${waitDurationText}` : 'waits';
+}
+
 function _normalizeRoomTargetActivityText(activityText:string, verb:'locks'|'unlocks'):string {
   const roomRef = _normalizeActivityArgument(activityText.slice(verb.length), new Set(['.', '\'', '-']));
   return roomRef ? `${verb} ${roomRef}` : verb;
@@ -137,6 +143,7 @@ function _normalizeParsedActivityText(activityText:string):string {
   if (trimmedActivityText.startsWith('unlocks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'unlocks');
   if (trimmedActivityText.startsWith('locks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'locks');
   if (trimmedActivityText.startsWith('drops')) return _normalizeDropActivityText(trimmedActivityText);
+  if (trimmedActivityText.startsWith('waits')) return _normalizeWaitActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('takes')) {
     const itemRef = _normalizeActivityArgument(trimmedActivityText.slice('takes'.length), new Set(['.', '\'', '-']));
     return itemRef ? `takes ${itemRef}` : 'takes';
@@ -144,15 +151,26 @@ function _normalizeParsedActivityText(activityText:string):string {
   return trimmedActivityText;
 }
 
+function _parseWaitDurationMsecs(activityText:string):number|null {
+  if (!activityText.startsWith('waits')) return null;
+  const trimmedWaitText = activityText.trim();
+  if (trimmedWaitText === 'waits') return MSECS_IN_SECOND;
+  const waitDurationText = trimmedWaitText.slice('waits'.length).trim();
+  if (!waitDurationText.length) return MSECS_IN_SECOND;
+  const parsedSeconds = Number(waitDurationText);
+  if (!Number.isFinite(parsedSeconds) || parsedSeconds < 0) throw new Error(`invalid waits duration '${waitDurationText}'`);
+  return parsedSeconds * MSECS_IN_SECOND;
+}
+
 function _parseActivityLine(activityLine:string, impliedCharacterId:string):{ characterId:string, subjectKind:'character'|'item', subjectId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '(', ')', '.', '%', '"', '\'', '-']));
-  if (['@', 'says ', 'interrupts ', 'thinks ', 'faces ', 'dies', 'stands', 'sits', 'kneels', 'lays', 'gives ', 'drops ', 'takes ', 'locks ', 'unlocks ']
+  if (['@', 'says ', 'interrupts ', 'thinks ', 'faces ', 'dies', 'stands', 'sits', 'kneels', 'lays', 'gives ', 'drops ', 'takes ', 'waits', 'locks ', 'unlocks ']
     .some(marker => normalizedLine.startsWith(marker))) {
     const activityText = _normalizeParsedActivityText(normalizedLine);
     if (!impliedCharacterId || !activityText) throw new Error(`unable to infer character for itinerary activity line '${activityLine}'`);
     return { characterId:impliedCharacterId, subjectKind:'character', subjectId:impliedCharacterId, activityText };
   }
-  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' emits ', ' faces ', ' dies', ' stands', ' sits', ' kneels', ' lays', ' gives ', ' drops ', ' takes ', ' locks ', ' unlocks '];
+  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' emits ', ' faces ', ' dies', ' stands', ' sits', ' kneels', ' lays', ' gives ', ' drops ', ' takes ', ' waits', ' locks ', ' unlocks '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
@@ -201,7 +219,8 @@ export function parseItineraryActivities(itinerarySection:string, levelFilename:
           characterId,
           subjectKind,
           subjectId,
-          activityText
+          activityText,
+          waitDurationMsecs:_parseWaitDurationMsecs(activityText)
         }];
       });
     })

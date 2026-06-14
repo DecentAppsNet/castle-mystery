@@ -12,7 +12,8 @@ type ParsedItineraryActivity = {
   characterId:string,
   subjectKind:ItineraryActivitySubjectKind,
   subjectId:string,
-  activityText:string
+  activityText:string,
+  waitDurationMsecs:number|null
 };
 
 export default ParsedItineraryActivity;

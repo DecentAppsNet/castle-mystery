@@ -49,5 +49,25 @@ describe('levelItineraryLoader', () => {
       expect(emitsActivity.subjectId).toBe('furia perched');
       expect(emitsActivity.activityText).toBe('emits "(squawk)"');
     });
+
+    it('parses waits activities with explicit and default durations', () => {
+      const options = { isCrossMidnight:false, explicitEndTime:null };
+      const [explicitWaitActivity, defaultWaitActivity] = parseItineraryActivities([
+        '0:00:03 Stefan waits 3',
+        ': Stefan waits'
+      ].join('\n'), 'waits.md', 1, options, 0, 'hero');
+
+      expect(explicitWaitActivity.activityText).toBe('waits 3');
+      expect(explicitWaitActivity.waitDurationMsecs).toBe(3_000);
+      expect(defaultWaitActivity.activityText).toBe('waits');
+      expect(defaultWaitActivity.waitDurationMsecs).toBe(1_000);
+    });
+
+    it('rejects invalid waits durations', () => {
+      const options = { isCrossMidnight:false, explicitEndTime:null };
+
+      expect(() => parseItineraryActivities('0:00:03 Stefan waits later', 'waits-invalid.md', 1, options, 0, 'hero'))
+        .toThrow("waits-invalid.md:1: invalid waits duration 'later'");
+    });
   });
 });

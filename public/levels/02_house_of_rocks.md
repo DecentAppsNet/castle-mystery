@@ -1,7 +1,7 @@
 # General
 
 * title=House of Rocks
-* activeCharacter=Giorgios
+* activeCharacter=Niccolo
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md
@@ -123,11 +123,12 @@ SSMM/HH\YYYYTT
 ## Workshop Yard
 
 ```
-................
+.............u..
 ...A.Y.G........
 ................
 ```
 
+* u=Uncut Limestone
 * A=Andreas
 * G=Giovanni
 * Y=Yusuf
@@ -182,6 +183,13 @@ SSMM/HH\YYYYTT
 * items=abacus
 
 # Items
+
+## Uncut Limestone
+
+* image=uncutLimestone.png
+* description=Raw limestone waiting to be cut.
+* drawOffsetX=1
+* drawOffsetZ=.07
 
 ## Owner's Key
 
@@ -323,7 +331,7 @@ SSMM/HH\YYYYTT
 7:32:22 Pietro @ Master's Hall.60%
 : faces left
 
-7:30:40 Niccolo @ Workshop Yard
+7:30:40 Niccolo @ Workshop Yard.90%
 
 7:30:56 Heinrich @ Workshop Yard
 : Giovanni faces Heinrich
@@ -371,9 +379,8 @@ SSMM/HH\YYYYTT
 : says "He always acts superior to me."
 : says "Yet we are paid exactly the same!"
 : Heinrich says "I will look for the abacus."
-(Heinrich leaves)
-
-7:32:39 Heinrich @ Accounts Room
+(Heinrich leaves for the Accounts Room)
+(Yusuf leaves for the Family Quarters)
 
 7:32:25 King Frederick @ Master's Hall.10%
 : Pietro kneels
@@ -393,4 +400,33 @@ SSMM/HH\YYYYTT
 : King Frederick says, "She prefers to fly in the air and hunt."
 : Pietro says "I shall return with Heinrich shortly, my King."
 
-07:32:42 Salomone @ Accounts Room
+7:32:35 Yusuf @ Apprentices' Chamber
+: @ Family Quarters
+: Anna says, "You cannot be here!"
+: Yusuf says, "I needed to be near you."
+: Anna faces Yusuf.
+: Anna says, "I am spurning you, do you understand?"
+: says, "Spurn, spurn, spurn!"
+: Yusuf says, "But I'm having a really bad day."
+: Anna says, "You have been spurned."
+: Yusuf says, "But can I just-"
+: Anna says, "No! Get out!"
+: says, "I'm busy helping my father think!"
+: thinks, "(thinking)"
+: thinks, "(thinking very hard)"
+
+7:32:39 Heinrich @ Accounts Room.90%
+7:32:42 Salomone @ Accounts Room
+: says, "What are you doing here?"
+: Heinrich faces Salomone
+: Heinrich says, "Looking for the abacus, sir."
+: Salomone says, "Does the surveyor need it again?"
+: Heinrich says, "Yes."
+: Salomone gives abacus to Heinrich
+: says, "There you have it."
+: Heinrich says, "Thank you, sir."
+
+7:32:59 Heinrich @ Workshop Yard
+
+7:33:06 Yusuf @ Stairwell
+: says, "She is insane!"
