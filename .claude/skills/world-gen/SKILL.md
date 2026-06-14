@@ -2,16 +2,16 @@
 name: world-gen
 description: >-
   Generate a new Castle Mystery level from a short player prompt with a multi-agent pipeline, then
-  validate it with the solver and the play-game semantic check. A coordinator runs PURE specialist
+  validate it with the solver and the world-test semantic check. A coordinator runs PURE specialist
   subagents — story-teller (gated by its own private story-critic quality loop), game-architect,
   game-scout, game-itemiser, game-cron, game-conclusions —
   in parallel where independent; each returns data + an apply-prompt, and a single SYNTHESISER agent
   is the only writer of the level md (one return per call, writing every transition). The separate
-  read-only world-fix skill (solver + play-game) is the DECIDER — it returns a prioritised fix TODO + a
+  read-only world-fix skill (solver + world-test) is the DECIDER — it returns a prioritised fix TODO + a
   READY/NEEDS-WORK verdict; world-gen loops implementing world-fix's recommendations via the wave agents
   until READY (just as the story-critic gates the story-teller); human-in-the-loop until the user
   confirms. Pass --verbose (--debug / -v) for a full agentic trace — every agent call and return,
-  world-fix's reasoning over the solver + play-game outputs, and the coordinator's delegations. Use when
+  world-fix's reasoning over the solver + world-test outputs, and the coordinator's delegations. Use when
   asked to generate/author a new level, "world-gen", or continue the generative level generator. WRITES
   only _gen.*.md candidate files under public/levels/ (via the synthesiser).
 ---
@@ -40,7 +40,7 @@ is the generator half of the generator/validator system designed in
 - **Hub-and-spoke, no lateral calls.** Subagents never call each other; everything routes through a
   coordinator. A subagent may spawn its *own* private child (vertical sub-delegation — e.g.
   **story-teller → story-critic**) but never a sibling. **world-fix** is a read-only sub-hub you spawn:
-  it calls the solver + play-game and returns advice (a fix TODO + verdict) — it **never writes and never
+  it calls the solver + world-test and returns advice (a fix TODO + verdict) — it **never writes and never
   calls the wave agents**. You (coordinator) implement its recommendations via the wave agents +
   file-writer, looping until world-fix returns `READY`.
 
@@ -88,7 +88,7 @@ Then call the **synthesiser once per return** (cron → conclusions), writing ea
 
 Validation + the decision of "is this level done?" live in a **separate skill, `world-fix`**
 (`.claude/skills/world-fix/SKILL.md`). `world-fix` is **read-only**: it runs the **solver** and the
-**play-game** (player) check on a level and returns a **prioritised TODO list** of fixes
+**world-test** (player) check on a level and returns a **prioritised TODO list** of fixes
 (BLOCKER/MAJOR/MINOR, each tagged with the **owning area/agent**) plus a **verdict** `READY` |
 `NEEDS-WORK`. It never edits anything. `world-gen` is the **implementer**: it loops against `world-fix`
 exactly as the story-teller loops against the story-critic — **keep implementing the recommended changes
@@ -97,8 +97,8 @@ until `world-fix` returns `READY` (no must-fix items)**, capped by `maxIteration
 The loop (you, the coordinator):
 
 1. **Call `world-fix`** on the candidate (spawn it as a subagent — IN: `levelFile`; it runs solver +
-   play-game itself). It returns `{ verdict, ready, items:[{severity, area, issue, fix, evidence}],
-   solver, playGame }`.
+   world-test itself). It returns `{ verdict, ready, items:[{severity, area, issue, fix, evidence}],
+   solver, worldTest }`.
 2. **If `READY`** (no BLOCKER/MAJOR items) → stop the loop; go to human-in-the-loop. Otherwise:
 3. **Implement each BLOCKER, then each MAJOR** item: for each, call the **owning wave agent** named in
    the item's `area` (game-cron / game-scout / game-itemiser / game-architect / game-conclusions; or
@@ -133,7 +133,7 @@ This is a developer aid — **completeness over brevity, and ZERO truncation.**
 
 Every agent (the `COORDINATOR`, every subagent — story-teller, story-critic, game-architect, game-scout,
 game-itemiser, game-cron, game-conclusions — the `file-writer`, the `world-fix` decider, the
-`play-game` oracle, and the `solver`) emits these exact lines, identified by its own name:
+`world-test` oracle, and the `solver`) emits these exact lines, identified by its own name:
 
 ```
 [<AGENT_NAME>|IN]   <the agent's full input, as JSON>
@@ -171,7 +171,7 @@ depend on the subagent alone. The rule:
   This is how *nested* calls become visible: the coordinator cannot print a grandchild's lines itself,
   so the parent returns them and the coordinator relays them inline. E.g. the story-teller returns the
   embedded `[story-critic|IN]`/`[story-critic|OUT]` of each round; **world-fix** returns the embedded
-  `[solver|…]` and `[play-game|…]` lines of its analysis.
+  `[solver|…]` and `[world-test|…]` lines of its analysis.
 - Net effect: the coordinator drives a single, ordered, full trace in the main console — its own
   `|IN`/`|CALL`/`|OUT` for direct calls, plus the relayed nested traces — so **every agent adheres to
   the contract and the user sees them all while the skill runs**.
@@ -190,10 +190,10 @@ oracle results into the prioritised TODO; the **coordinator** then implements an
 [COORDINATOR|CALL] world-fix
 [world-fix|IN] {"levelFile":"_gen.<slug>.md"}
 [world-fix|CALL] solver            … then [solver|IN]/[solver|OUT] (full fitness JSON) …
-[world-fix|CALL] play-game         … then [play-game|IN]/[play-game|OUT] (full findings JSON) …
+[world-fix|CALL] world-test         … then [world-test|IN]/[world-test|OUT] (full findings JSON) …
 [world-fix] diagnose: <signal> → area <agent>  because <reason>   (one line per finding)
 [world-fix] verdict: NEEDS-WORK (B blockers, M major)  |  READY (no must-fix)
-[world-fix|OUT] {"verdict":"…","ready":<bool>,"items":[{"severity","area","issue","fix","evidence"}],"solver":{…},"playGame":{…}}
+[world-fix|OUT] {"verdict":"…","ready":<bool>,"items":[{"severity","area","issue","fix","evidence"}],"solver":{…},"worldTest":{…}}
 [COORDINATOR] received world-fix TODO — implement BLOCKER then MAJOR (READY → stop)
 [COORDINATOR|CALL] game-cron       … the owning agent for an item, its |IN/|OUT (the delta) …
 [COORDINATOR|CALL] file-writer     … write CANONICAL _gen.<slug>.md, file-writer |IN/|OUT …
@@ -212,7 +212,7 @@ it only exposes it**.
 
 ## Report
 
-The story (brief), the candidate path, the latest `evaluate` fitness JSON + play-game summary, and a
+The story (brief), the candidate path, the latest `evaluate` fitness JSON + world-test summary, and a
 one-line verdict.
 
 ## After meaningful changes — maintain the docs

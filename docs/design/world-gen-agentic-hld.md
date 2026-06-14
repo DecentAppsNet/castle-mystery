@@ -10,7 +10,7 @@ parallel:
 - **`/world-gen`** — the generative level *generator*: story → rooms/cast/items → itinerary/conclusions,
   then a fix loop that gates on world-fix until the level is `READY`. (It is the implementer + sole
   writer.)
-- **`/world-fix`** — the read-only level *validator/decider*: runs the solver + play-game on one level
+- **`/world-fix`** — the read-only level *validator/decider*: runs the solver + world-test on one level
   and returns a prioritised fix TODO + a `READY`/`NEEDS-WORK` verdict. Used **standalone** by a game
   architect, and **as the gate** world-gen loops against. (It writes nothing.)
 
@@ -34,14 +34,14 @@ or a call promoted PLANNED→LIVE — update the affected skill's diagrams, its 
 - **synthesiser** — the **only** agent that creates/updates the level md (applies one subagent return
   per call, writing the file each time).
 - **coordinator** — the single hub (main loop). **world-fix** — a read-only *decider* sub-hub it spawns
-  (calls solver + play-game, returns advice; never writes, never calls wave agents). See invariants.
+  (calls solver + world-test, returns advice; never writes, never calls wave agents). See invariants.
 - **deterministic** — a non-LLM step (a Bash/CLI call, e.g. the solver); no model.
 - **LIVE** = wired in the skill today. **PLANNED** = designed, not yet wired.
 
 **Layout convention.** The diagrams read **left → right**: a caller is always to the **left** of its
 callee, so a **solid arrow is a forward request and always points rightward**. A hub's callees are
 drawn to its right — and because **world-fix** is itself a (read-only) hub that calls the solver and
-play-game, **its oracle callees are drawn to its right** (distinct nodes from the coordinator's). The
+world-test, **its oracle callees are drawn to its right** (distinct nodes from the coordinator's). The
 coordinator implements world-fix's TODO by re-calling the **wave agents + file-writer** (already on its
 right) and re-running world-fix. **Dashed arrows** are returns, escalations, or human-facing prompts
 back toward a hub/the user (rightward replies are the hub passing data down). Parallel groups and loops
@@ -57,11 +57,11 @@ are shown as **shaded regions with a full-English label** — no bare Mermaid ke
    coordination flows through a coordinator. The graph stays a **tree**.
 2. **One hub + read-only decider sub-hub (DR-019).** The **main coordinator** is the only hub — it spawns
    subagents and is the sole implementer (it calls the wave agents and the file-writer). **world-fix** is
-   a sub-hub it spawns, but a **read-only decider**: world-fix calls only the solver + play-game and
+   a sub-hub it spawns, but a **read-only decider**: world-fix calls only the solver + world-test and
    returns a fix TODO + verdict — it **never writes and never calls the wave agents**. The coordinator
    then implements world-fix's TODO and re-runs it (gate-until-`READY`). Subagents may also have their
    own private deeper helpers — the **story-teller → story-critic** loop (below) and **world-fix →
-   play-game** are the realized cases of vertical sub-delegation (DR-011).
+   world-test** are the realized cases of vertical sub-delegation (DR-011).
 3. **The synthesiser is the sole writer (DR-012).** Subagents are *pure* — they return data + an apply
    `prompt`; only the synthesiser creates/updates `public/levels/_gen.<slug>.md`. It applies **one**
    subagent return per call and **writes the file every call**, so every transitional state is
@@ -83,7 +83,7 @@ as the decider the coordinator calls; its own internals are detailed in the **wo
 ```mermaid
 sequenceDiagram
     %% Left to right: solid arrow = forward request (always points right); dashed = return / escalation /
-    %% human prompt. world-fix (read-only decider) is to the right; its callees solver+play-game further right.
+    %% human prompt. world-fix (read-only decider) is to the right; its callees solver+world-test further right.
     actor User
     participant WG as coordinator (/world-gen)
     participant ST as story-teller
@@ -96,7 +96,7 @@ sequenceDiagram
     participant SY as synthesiser (file-writer, sole writer)
     participant WF as world-fix (decider, read-only)
     participant EV as solver (npm run evaluate)
-    participant PG as play-game
+    participant PG as world-test
 
     User->>WG: /world-gen prompt
     WG->>ST: playerPrompt
@@ -143,7 +143,7 @@ sequenceDiagram
         WG->>WF: world-fix (levelFile)
         WF->>EV: npm run evaluate (solver)
         EV-->>WF: fitness — gates incl. noAnachronisms + complexity
-        WF->>PG: play-game (semantic oracle)
+        WF->>PG: world-test (semantic oracle)
         PG-->>WF: per-character inferability + per-conclusion difficulty + conflicts
         WF-->>WG: TODO (items: severity · area · fix) + verdict READY/NEEDS-WORK
         Note over WG,SY: If NEEDS-WORK — implement each must-fix via its owning wave agent, then re-loop
@@ -203,11 +203,11 @@ flowchart LR
     subgraph wffan["world-fix's oracles — read-only, to its right"]
         direction TB
         EV["solver · evaluate"]
-        PG["play-game · semantic oracle"]
+        PG["world-test · semantic oracle"]
     end
 
     WF -->|"npm run evaluate"| EV
-    WF -->|"play-game check"| PG
+    WF -->|"world-test check"| PG
     WF -.->|"TODO (severity · area · fix) + verdict READY/NEEDS-WORK"| WG
     WG -->|"implement must-fix → owning wave agent (e.g. game-cron)"| CR
     WG -->|"write canonical fix"| SY
@@ -234,9 +234,9 @@ flowchart LR
 | 7 | coordinator | game-cron | subagent | `story` + level md | itinerary data + prompt | **In Parallel (wave 3)** | LIVE |
 | 8 | coordinator | game-conclusions | subagent | `story` + level md | conclusions data + prompt | **In Parallel (wave 3)** | LIVE |
 | 9 | coordinator | synthesiser | synthesiser | md + one subagent return + id | level md (writes file) | once per return (serialized) | LIVE |
-| 10 | coordinator | **world-fix** (decider — own skill) | subagent (read-only) | `levelFile` | TODO `items:[{severity, area, issue, fix, evidence}]` + verdict `READY`/`NEEDS-WORK` + raw solver/play-game | per fix-loop pass | PLANNED |
+| 10 | coordinator | **world-fix** (decider — own skill) | subagent (read-only) | `levelFile` | TODO `items:[{severity, area, issue, fix, evidence}]` + verdict `READY`/`NEEDS-WORK` + raw solver/world-test | per fix-loop pass | PLANNED |
 | 11 | world-fix | `npm run evaluate` (solver) | deterministic | candidate file | fitness JSON (gates incl. `noAnachronisms` + complexity) | — | PLANNED |
-| 12 | world-fix | play-game | subagent (semantic oracle) | candidate file | structured per-character inferability + per-conclusion difficulty + conflicts | — | PLANNED |
+| 12 | world-fix | world-test | subagent (semantic oracle) | candidate file | structured per-character inferability + per-conclusion difficulty + conflicts | — | PLANNED |
 | 13 | coordinator | owning wave subagent (per item `area`) | subagent | the TODO item's directive (e.g. co-presence / anachronism → game-cron) | delta data + prompt | per must-fix item | PLANNED |
 | 14 | coordinator | file-writer (synthesiser) | synthesiser | **canonical** md + delta + id | canonical md (writes `_gen.slug.md`, each transition) | once per fix | PLANNED |
 | 15 | coordinator | world-fix | subagent (read-only) | `levelFile` (re-check) | TODO + verdict — loop until `READY` or maxIterations | per pass | PLANNED |
@@ -248,7 +248,7 @@ flowchart LR
 
 `world-fix` is the **read-only decider**, invoked the **same way** whether a game architect runs it
 standalone (`/world-fix <level>`) or the world-gen coordinator calls it as its gate. It calls only the
-solver and play-game and returns advice — it **never writes and never calls the wave agents**.
+solver and world-test and returns advice — it **never writes and never calls the wave agents**.
 
 ```mermaid
 sequenceDiagram
@@ -257,7 +257,7 @@ sequenceDiagram
     actor Caller as User / world-gen coordinator
     participant WF as world-fix (decider, read-only)
     participant EV as solver (npm run evaluate)
-    participant PG as play-game (player oracle, private child)
+    participant PG as world-test (player oracle, private child)
 
     Caller->>WF: world-fix (levelFile)
     rect rgb(235, 245, 255)
@@ -278,7 +278,7 @@ sequenceDiagram
 flowchart LR
     C(["User · or world-gen coordinator"]) -->|"world-fix (levelFile)"| WF["world-fix — decider · READ-ONLY"]:::ro
     WF -->|"npm run evaluate"| EV["solver · deterministic"]
-    WF -->|"player analysis"| PG["play-game · semantic oracle"]
+    WF -->|"player analysis"| PG["world-test · semantic oracle"]
     EV -.->|"fitness"| WF
     PG -.->|"findings"| WF
     WF -.->|"TODO (severity · area · fix) + verdict READY/NEEDS-WORK"| C
@@ -290,9 +290,9 @@ flowchart LR
 
 | # | Caller | Callee | Kind | Sends | Returns | Status |
 |---|---|---|---|---|---|---|
-| F1 | User (standalone) · or world-gen coordinator | world-fix | skill / subagent (**read-only**) | `levelFile` (mandatory) | TODO `items:[severity, area, issue, fix, evidence]` + verdict `READY`/`NEEDS-WORK` + raw solver/play-game | LIVE (standalone skill) |
+| F1 | User (standalone) · or world-gen coordinator | world-fix | skill / subagent (**read-only**) | `levelFile` (mandatory) | TODO `items:[severity, area, issue, fix, evidence]` + verdict `READY`/`NEEDS-WORK` + raw solver/world-test | LIVE (standalone skill) |
 | F2 | world-fix | `npm run evaluate` (solver) | deterministic | the level file | fitness JSON (gates + complexity + anachronisms) | LIVE |
-| F3 | world-fix | play-game | subagent (**private child** — vertical sub-delegation) | the level file | structured per-character inferability + per-conclusion difficulty + conflicts | LIVE |
+| F3 | world-fix | world-test | subagent (**private child** — vertical sub-delegation) | the level file | structured per-character inferability + per-conclusion difficulty + conflicts | LIVE |
 
 These same three calls appear inside the **world-gen** call table (rows 10–12) when world-gen uses
 world-fix as its gate; there they are `PLANNED` because world-gen runs the whole loop inline today. As a
@@ -313,7 +313,7 @@ world-fix as its gate; there they are `PLANNED` because world-gen runs the whole
   {cron, conclusions} (both take `story` + the integrated md, neither depends on the other). story-
   teller is solo (root). The synthesiser is inherently **serialized** (one return per call).
 - **world-fix is the decider — its own read-only skill (DR-019, supersedes the validator-coordinator).**
-  `world-fix` scores a level with **both** oracles (solver + the **play-game** semantic subagent) and
+  `world-fix` scores a level with **both** oracles (solver + the **world-test** semantic subagent) and
   returns a **prioritised fix TODO** (`items:[{severity, area, issue, fix, evidence}]`) + a verdict
   `READY`/`NEEDS-WORK`. It **never writes and never calls the wave agents** — it only decides and advises
   (the structural+semantic analogue of the story-critic). **world-gen** is the implementer: it loops
@@ -337,7 +337,7 @@ world-fix as its gate; there they are `PLANNED` because world-gen runs the whole
   `area: game-cron` and world-gen routes the fix there (the itinerary owner). See DR-016 + adr-solver §6c.
 - **Verbose mode mirrors this graph (DR-018).** `/world-gen --verbose` streams a **live instance of this
   call graph**: each edge here becomes a `[CALLER|CALL]` + callee `[…|IN]`/`[…|OUT]` line (indented by
-  depth, parallel waves marked), plus **world-fix's reasoning** (its solver + play-game reads → diagnosis
+  depth, parallel waves marked), plus **world-fix's reasoning** (its solver + world-test reads → diagnosis
   → the prioritised TODO + verdict) and the **coordinator's** fix loop (implement each must-fix via the
   owning wave agent + file-writer, then re-run world-fix). Off by default; exposes behaviour without
   changing it. Trace format: the skill's *Verbose / debug mode* section.
@@ -348,14 +348,14 @@ world-fix as its gate; there they are `PLANNED` because world-gen runs the whole
 
 ## Changelog
 
-- **2026-06-14** — Document created (Phase-1 LIVE call graph + PLANNED play-game/optimizer/human calls).
+- **2026-06-14** — Document created (Phase-1 LIVE call graph + PLANNED world-test/optimizer/human calls).
 - **2026-06-14** — Made the hub-and-spoke invariant explicit (no lateral calls; vertical sub-delegation
   allowed).
 - **2026-06-14** — **Revised architecture:** subagents are now *pure* (minimal custom inputs; return
   data + an apply-`prompt`); a **synthesiser** is the sole writer of the level md (one return per call,
   writes every transition); independent subagents run in **parallel** (wave 2 = architect/scout/
   itemiser; wave 3 = cron/conclusions); a **validator-coordinator** sub-hub owns the capped solver/
-  play-game tweak loop and routes human-input up to the main coordinator; the run ends on human
+  world-test tweak loop and routes human-input up to the main coordinator; the run ends on human
   confirmation. Diagrams, call table, and invariants rewritten; per-agent IO moved to
   `agent-contracts.md`. (Design doc DR-012/013/014.)
 - **2026-06-14** — Added the **story-critic** (story-teller's private child): the story-teller now runs
@@ -382,7 +382,7 @@ world-fix as its gate; there they are `PLANNED` because world-gen runs the whole
   needed …"). Solid arrow = forward request (always rightward); dashed = return / escalation / human
   prompt. (Supersedes the prior "the `par` keyword stays" note.)
 - **2026-06-14** — **Validator-coordinator wired as a dual-oracle accept-if-better loop (DR-017).** Both
-  diagrams now show the validator scoring with the **solver and the play-game semantic oracle**, routing
+  diagrams now show the validator scoring with the **solver and the world-test semantic oracle**, routing
   a fault to its owning agent for a **targeted delta**, writing a **scratch** `_gen.slug.try.md` via the
   file-writer, **re-checking with both oracles**, and keeping the delta only if it improves with no gate
   regression. It **returns the aggregated improvement ledger** to the coordinator (no canonical write);
@@ -392,7 +392,7 @@ world-fix as its gate; there they are `PLANNED` because world-gen runs the whole
   this call graph (every `→ CALL` / `← RET`, the validator's per-iteration reasoning, the coordinator's
   delegations). Added a current-state note; trace format lives in the skill.
 - **2026-06-14** — **Validator extracted into the standalone `world-fix` skill (DR-019).** Both diagrams
-  now show `world-fix` (read-only decider) calling only the **solver + play-game** and returning a fix
+  now show `world-fix` (read-only decider) calling only the **solver + world-test** and returning a fix
   **TODO + verdict** (`READY`/`NEEDS-WORK`); the **coordinator** implements each must-fix via the owning
   wave agent + file-writer and **re-runs world-fix until `READY`** (gate-until-READY, replacing DR-017's
   scratch/accept-if-better). Removed the validator-side `VR`/`SY2` scratch nodes. Call table rows 10–16,
@@ -401,5 +401,9 @@ world-fix as its gate; there they are `PLANNED` because world-gen runs the whole
   the existing diagrams are now the **world-gen** section, and a dedicated **world-fix** section was added
   with its own request-flow sequence, delegation flowchart, and call table (F1–F3) — showing world-fix
   invoked identically standalone (a game architect) or as world-gen's gate, calling only solver +
-  play-game (read-only). Noted the status nuance: world-fix is `LIVE` standalone but appears `PLANNED`
+  world-test (read-only). Noted the status nuance: world-fix is `LIVE` standalone but appears `PLANNED`
   inside world-gen's inline loop.
+- **2026-06-14** — Renamed the **`play-game` skill → `world-test`** (the player/semantic oracle) for a
+  consistent **world-gen · world-fix · world-test** family. Both diagrams + call tables now show
+  `world-test` (id `PG`) as the semantic oracle world-fix calls; all prose references updated. Pure
+  rename — no call-graph change.

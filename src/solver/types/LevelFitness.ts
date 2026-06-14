@@ -2,7 +2,7 @@
   integer complexity aggregates the generative level designer optimizes against. Built from a
   SolveResult by buildLevelFitness() (see ../fitnessUtil.ts) and emitted as JSON by
   scripts/evaluateLevel.ts. This is the structural-oracle contract the multi-agent generator consumes —
-  see docs/design/world-gen-generative-level-design.md. The semantic oracle (/play-game) contributes a
+  see docs/design/world-gen-generative-level-design.md. The semantic oracle (/world-test) contributes a
   separate per-character signal that is merged in by a later phase. */
 
 type FitnessGates = Readonly<{

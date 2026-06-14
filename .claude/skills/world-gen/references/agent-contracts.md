@@ -117,7 +117,7 @@ Story = {
   candidate (DR-017). Writes the file every call so each transitional canonical state is testable via
   `npm run dev-gen`.
 
-## play-game  (semantic oracle subagent — read-only · wraps the `/play-game` skill)
+## world-test  (semantic oracle subagent — read-only · wraps the `/world-test` skill)
 - **IN** `{ levelFilename: string }`  (reads the candidate + its imports; **never writes**)
 - **OUT** `{
   perCharacter: [{ name, identityInferable: "direct" | "combined" | "none", note }],   // Identities
@@ -125,7 +125,7 @@ Story = {
                    difficulty: "too-easy" | "just-right" | "too-hard" | "unsolvable" }],
   conflicts: [{ description }],          // ambiguous / contradictory solutions a careful player hits
   summary: string }`
-- The **semantic oracle**: it returns the `/play-game` analysis as **structured data** (not prose) so
+- The **semantic oracle**: it returns the `/world-test` analysis as **structured data** (not prose) so
   **world-fix** can turn it into fix recommendations. Read-only, like the skill itself.
 
 ## world-fix  (the DECIDER — its own skill, read-only — DR-019)
@@ -136,24 +136,24 @@ Story = {
             "game-itemiser" | "game-architect" | "game-conclusions" | "story-teller",
             issue: string, fix: string, evidence: string }],   // the prioritised TODO
   solver,                  // the raw LevelFitness JSON
-  playGame }`              // the structured play-game OUT
+  worldTest }`              // the structured world-test OUT
 - **It NEVER writes any file** — it runs the **solver** (`npm run evaluate` / `solve`) and the
-  **play-game** subagent (its own vertical sub-delegation), then synthesises the prioritised TODO and a
+  **world-test** subagent (its own vertical sub-delegation), then synthesises the prioritised TODO and a
   verdict. It does **not** call the wave agents and does **not** implement anything (that is world-gen's
   job). It is the validator/decider, the structural+semantic analogue of the story-critic. Defined fully
   in [`.claude/skills/world-fix/SKILL.md`](../../world-fix/SKILL.md), including the **severity → owning
   area** routing table reproduced below:
 
-  | Signal (solver / play-game) | severity | area (owning agent) | fix |
+  | Signal (solver / world-test) | severity | area (owning agent) | fix |
   |---|---|---|---|
   | `loaded:false` (line named); *"missing conclusion answer phrases"* | blocker | **game-conclusions** (or named section) | fix the named line / every cloze answer a category member |
   | `charactersReachable:false`, `unreachable.characterIds` | blocker | **game-cron** (± architect/scout) | bring the stranded character into a shared scene |
   | `itemsReachable:false`, `unreachable.itemIds`, fewer placed items than defined | blocker/major | **game-cron** (± game-itemiser) | route a reachable character to witness it / fix placement or drop coordinate |
   | `noAnachronisms:false`, `anachronisms[]` | blocker | **game-cron** | fix the itinerary timestamps (absolute arrival over earlier speech) |
-  | play-game Identities `none` | major | **game-scout** (± game-cron) | add a witnessable tell |
+  | world-test Identities `none` | major | **game-scout** (± game-cron) | add a witnessable tell |
   | conclusion missing / unsolvable | major | **game-conclusions** | author the cloze(s); ensure each blank is witnessable |
-  | play-game `too-easy` / conflict | minor | **game-scout** / **game-conclusions** | move a tell to items-only / add distractors / disambiguate |
-  | play-game `too-hard` | minor | **game-scout** / **game-cron** | add a supporting clue |
+  | world-test `too-easy` / conflict | minor | **game-scout** / **game-conclusions** | move a tell to items-only / add distractors / disambiguate |
+  | world-test `too-hard` | minor | **game-scout** / **game-cron** | add a supporting clue |
   | complexity below/above band | minor | **game-cron** (± architect / itemiser) | deepen / shorten transfer chains |
   | story thin / incoherent (pervasive) | major | **story-teller** (last resort) | re-deepen the story thread |
 - **How world-gen uses it (the gate loop).** The coordinator spawns `world-fix` on the candidate; for

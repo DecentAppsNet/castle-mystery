@@ -20,7 +20,7 @@ The README's top half is a template placeholder — the real product is a murder
 
 ## Skills
 
-- `/play-game [level]` — analysis-only Claude skill ([.claude/skills/play-game/SKILL.md](.claude/skills/play-game/SKILL.md)) that "plays" a level the way a player would and reports whether each character's **Identities** are inferable from witnessable clues (their description, conversations, object/item text, behaviour). Output is per-level and per-conclusion: each character mapped to its clue chain, with too-easy / too-hard / unsolvable-gap authoring feedback. Skips levels with no Identities conclusion; reads `public/levels/*` only and never edits them. Identities is the only conclusion analysed for now.
+- `/world-test [level]` — analysis-only Claude skill ([.claude/skills/world-test/SKILL.md](.claude/skills/world-test/SKILL.md)) that "plays" a level the way a player would and reports whether each character's **Identities** are inferable from witnessable clues (their description, conversations, object/item text, behaviour). Output is per-level and per-conclusion: each character mapped to its clue chain, with too-easy / too-hard / unsolvable-gap authoring feedback. Skips levels with no Identities conclusion; reads `public/levels/*` only and never edits them. Identities is the only conclusion analysed for now.
 
 ## Architecture
 

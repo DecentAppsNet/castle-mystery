@@ -114,7 +114,7 @@ roster (section 3).
 |---|---|
 | The artifact | A level `.md` file (the format the game already authors in `public/levels/`). |
 | Structural oracle | The **solver** — `solveLevel()` ([src/solver/solverUtil.ts](../../src/solver/solverUtil.ts)); see [adr-solver.md](../adr-solver.md). |
-| Semantic oracle | The **`/play-game` skill** ([.claude/skills/play-game/SKILL.md](../../.claude/skills/play-game/SKILL.md)). |
+| Semantic oracle | The **`/world-test` skill** ([.claude/skills/world-test/SKILL.md](../../.claude/skills/world-test/SKILL.md)). |
 | Artifact loader / linter | `loadLevelFromText()` and the loaders under [src/levelLoading/](../../src/levelLoading/) — throw `LoadLevelException` with the offending source line. |
 
 Both oracles already consume a level file, so the candidate is a *real* level — the
@@ -125,7 +125,7 @@ validators are the game's actual validators, not proxies.
 - The **solver** is the *structural* oracle (deterministic): can the player physically
   reach every clue by following and switching between co-present characters, and how many
   switches deep is each clue (complexity)? See adr-solver §6, §6a, §6b.
-- **`/play-game`** is the *semantic* oracle (model judgment): *given* a clue is reachable,
+- **`/world-test`** is the *semantic* oracle (model judgment): *given* a clue is reachable,
   could a disciplined player actually *infer* the answer from witnessable evidence, and is
   it pitched right (too easy / too hard / unsolvable gap)?
 
@@ -175,7 +175,7 @@ done**.
    Candidates are flat `public/levels/_gen.<slug>.md` files (so they round-trip through the app's
    filename-based loader, and their `imports=characters.md|items.md` resolve relative to
    `public/levels/`). *(Done 2026-06-14, Phase 0; flat-file scheme per DR-009.)*
-3. ⬜ **The semantic oracle as a structured signal.** Wrap `/play-game`'s analysis in a
+3. ⬜ **The semantic oracle as a structured signal.** Wrap `/world-test`'s analysis in a
    sub-agent that returns per-character `{ inferable, difficulty, gapNote }` rather than
    prose. *(Pending — Phase 2.)*
 
@@ -194,7 +194,7 @@ gate). See [`src/solver/types/LevelFitness.ts`](../../src/solver/types/LevelFitn
 |---|---|---|
 | `story.md` | story-teller | Prose backstory inferred from the player prompt. Conditions every downstream agent. Stable within a generation; revised only on request. |
 | `level.md` (candidate) | the specialists patch it | **The single source of truth.** A real level file. |
-| `evaluation.json` | evaluateLevel + play-game | Latest fitness vector for a candidate. |
+| `evaluation.json` | evaluateLevel + world-test | Latest fitness vector for a candidate. |
 | `ledger.jsonl` | game-gen | Append-only memory: per iteration, the directive (prompt) → diff → metric deltas → accept/reject + reason. Doubles as the observability log. |
 
 Run artifacts live under a per-run directory (proposed: `generated/runs/<id>/`), with the
@@ -232,7 +232,7 @@ candidate(s) as flat `public/levels/_gen.*.md` files so imports resolve and they
                         ┌──────────────────────┐
         candidate ────► │ VALIDATORS (oracles)  │
         level.md        │ • solver  (structural)│ booleans + transfer-cost ints
-                        │ • play-game (semantic)│ per-char inferable + difficulty
+                        │ • world-test (semantic)│ per-char inferable + difficulty
                         └──────────┬───────────┘
                                    ▼  fitness vector + gates → back to game-gen
 ```
@@ -255,9 +255,9 @@ Two distinct controllers — keep them separate:
 | game-conclusions | story, level | `# Conclusions`: explicit `## Identities` + cloze conclusions + author-defined answer categories (every cloze answer a category member; character/room/item blanks use the **title**) | — |
 | clue-author *(Phase 5)* | story, a conclusion type | one story-consistent clue extending **game-conclusions** (itinerary / item / description) | — |
 | **solver** (validator) | candidate | gates + complexity ints | structural |
-| **play-game** (validator) | candidate | per-char inferable + difficulty + gaps | semantic |
+| **world-test** (validator) | candidate | per-char inferable + difficulty + gaps | semantic |
 | **synthesiser** (file-writer) | current md + one subagent return + id + target file | the **sole writer** of any md — applies that return per its `prompt`, writes the file | — |
-| **world-fix** (decider — its own skill) | a level file | runs solver + play-game; returns a **prioritised fix TODO** (`items:[{severity, area, issue, fix, evidence}]`) + verdict `READY`/`NEEDS-WORK`. **Read-only — never writes, never calls wave agents.** world-gen loops implementing its must-fix items until `READY` (DR-019); usable standalone | structural + semantic |
+| **world-fix** (decider — its own skill) | a level file | runs solver + world-test; returns a **prioritised fix TODO** (`items:[{severity, area, issue, fix, evidence}]`) + verdict `READY`/`NEEDS-WORK`. **Read-only — never writes, never calls wave agents.** world-gen loops implementing its must-fix items until `READY` (DR-019); usable standalone | structural + semantic |
 
 Authoring-format reference for the specialists (the contract they are fed) is distilled in
 [Appendix A](#appendix-a-level-authoring-contract-summary). The concrete **agentic call graph** (who
@@ -270,7 +270,7 @@ the *only* writer of the level md (one return per call, writing every transition
 live via `npm run dev-gen`); truly-independent subagents run in **parallel** (wave 2 =
 architect/scout/itemiser on the `story`; wave 3 = cron/conclusions on the `story` + current md); and a
 **validator-coordinator** sub-hub runs the capped dual-oracle improvement loop (**refined by DR-017**:
-accept-if-better on solver + play-game, returning accepted improvements for the coordinator to write via
+accept-if-better on solver + world-test, returning accepted improvements for the coordinator to write via
 the file-writer; human-in-the-loop termination). Per-agent IO:
 [`agent-contracts.md`](../../.claude/skills/world-gen/references/agent-contracts.md).
 
@@ -286,14 +286,14 @@ the file-writer; human-in-the-loop termination). Per-agent IO:
 | G2 `reachability.ok` — all characters reachable | solver |
 | G3 `itemReachability.ok` — all items witnessed by a reachable character | solver |
 | G3b `noAnachronisms` — no character scheduled into two overlapping same-channel activities (e.g. an absolute arrival back-planned over an earlier one) | solver |
-| G4 `identitiesInferable` — no `⚠️ none` gaps *(configurable)* | play-game |
+| G4 `identitiesInferable` — no `⚠️ none` gaps *(configurable)* | world-test |
 
 **Soft score** (continuous, normalized 0–1, weighted — the thing we hill-climb):
 
 | Signal | Derived from | Steered toward |
 |---|---|---|
 | Clue-chain **depth/complexity** | `transferCostTable` mean/max `cost` | a *target band* (deep enough to be interesting, not unsolvable) |
-| **Difficulty balance** | play-game ratio of just-right vs too-easy vs too-hard | mostly just-right; zero gaps |
+| **Difficulty balance** | world-test ratio of just-right vs too-easy vs too-hard | mostly just-right; zero gaps |
 | **Breadth** | #rooms / #chars / #items / #conclusions | human target |
 | **Exploration spread** | co-presence graph + room-layer occupancy | interactions distributed; doors used |
 | **Story quality** | the **story-critic** (story-teller's internal gate: plot / flow / intrigue / accuracy / denouement) | a publisher-grade story up front; stays on-theme |
@@ -315,7 +315,7 @@ oracles agree it helped (or at least did not regress a gate).
 ## 8. Optimization loop (one round)
 
 Realized as a **gate-until-READY loop** (DR-019): the read-only **`world-fix`** decider scores the
-candidate (solver + play-game) and returns a prioritised fix TODO + a `READY`/`NEEDS-WORK` verdict; the
+candidate (solver + world-test) and returns a prioritised fix TODO + a `READY`/`NEEDS-WORK` verdict; the
 **coordinator** implements each must-fix via the owning wave agent, writes the canonical md via the
 **file-writer**, and re-runs `world-fix` — repeating until `READY` (or the cap). world-fix decides;
 world-gen implements; the file-writer is the sole writer; the human gate is the coordinator's. The loop
@@ -331,7 +331,7 @@ repeat up to N times:
              move its witness two switches deeper"
   2. coordinator → specialists realize each directive → B patched candidates  (PARALLEL)
   3. evaluate each: loader gate → solver (cheap, deterministic) →
-     play-game (model judge; survivors only / every few iters) → f + gates
+     world-test (model judge; survivors only / every few iters) → f + gates
   4. drop gate failures (or 1 bounded auto-repair using unreachableIds);
      among survivors pick argmax f
        if improved → accept (L0 ← best), append to ledger with deltas
@@ -356,14 +356,14 @@ right start.
   (B × N) evaluations, every round human-approved.
 - **Hard caps everywhere** (see the [Caps registry](#10-caps--parameters-registry)).
 - **Full transparency.** Every directive (the prompt), every solver JSON (booleans +
-  costs), every play-game report, the f-score, the delta, and the accept/reject reason are
+  costs), every world-test report, the f-score, the delta, and the accept/reject reason are
   written to `ledger.jsonl` and shown as a per-round digest. The strategist's "cognitive
   process" is a **schema-forced rationale field** on every decision, surfaced verbatim. In
   the Workflow substrate, `/workflows` additionally shows the live agent tree.
 - **Verbose mode (`--verbose` / `--debug`) — DR-018.** A developer flag on `/world-gen` that streams the
   **whole agentic trace** to the user: every **agent → agent call** with its input, every **return** with
   its value (paired and indented by call depth; parallel waves marked), the **validator-coordinator's
-  per-iteration reasoning** over the solver + play-game outputs (diagnosis → routing → the delta →
+  per-iteration reasoning** over the solver + world-test outputs (diagnosis → routing → the delta →
   scratch re-check → the accept/reject decision and *why*), and the **coordinator's delegation** of each
   accepted improvement to the file-writer (and any `AskUserQuestion`). Off by default (headlines only);
   it exposes behaviour without changing it. Trace format in the skill's *Verbose / debug mode* section.
@@ -383,7 +383,7 @@ reason.
 | Repair cap | R | 2 | bounded auto-repair attempts on a gate failure |
 | Plateau stop | P | 2 | stop a round after P iterations with no improvement |
 | story-critic loop | — | ≤ 3 | story-teller's private critic rounds before it returns its best draft |
-| play-game cadence | — | survivors-only, ≤ every 2 iters | controls cost of the expensive semantic oracle |
+| world-test cadence | — | survivors-only, ≤ every 2 iters | controls cost of the expensive semantic oracle |
 | Rounds / session | — | human-gated (no fixed cap) | the human approves each round |
 | Token budget | — | optional (`budget.total`) | hard ceiling when a token target is set |
 
@@ -399,11 +399,11 @@ are sandboxed — no filesystem or shell** — so the deterministic solver CLI c
   (`AskUserQuestion`), the digest, the caps, and runs the **solver via Bash**
   (deterministic, cheap, kept out of LLM hands).
 - **Inner beam = an optional Workflow per round** for the parallel fan-out (B specialist
-  mutations + play-game evals via `parallel()` / `pipeline()`, `schema`-forced structured
+  mutations + world-test evals via `parallel()` / `pipeline()`, `schema`-forced structured
   returns, `budget` caps, live `/workflows` view). The skill then scores returned
   candidates with the solver and consults the human.
-- **Specialists & play-game = agent calls** with the authoring contract + current level,
-  schema-forced to return a diff + rationale. The play-game validator reuses the merged
+- **Specialists & world-test = agent calls** with the authoring contract + current level,
+  schema-forced to return a diff + rationale. The world-test validator reuses the merged
   `SKILL.md` instructions.
 
 No new infrastructure — the two tools + Agent/Workflow/Bash primitives + the small
@@ -419,10 +419,10 @@ All on the `world-gen` branch. Each phase is independently demoable.
 |---|---|---|
 | **0 — Contracts & scoring** | `scripts/evaluateLevel.ts` → fitness JSON; complexity aggregates; the authoring-contract doc fed to agents; JSON schemas; flat `_gen.*.md` candidates under `public/levels/` | `evaluateLevel` scores an existing level |
 | **1 — One-shot pipeline** | `/world-gen` (input hardcoded to Three Blind Mice) → story-teller → architect → scout → itemiser → cron → emit candidate | a loadable, solver-passing level; no optimization |
-| **2 — Gates + auto-repair** | loader/solver as hard gates with ≤R repair from `unreachableIds`; play-game as Identities gate feeding gaps back | candidate that passes *both* oracles |
+| **2 — Gates + auto-repair** | loader/solver as hard gates with ≤R repair from `unreachableIds`; world-test as Identities gate feeding gaps back | candidate that passes *both* oracles |
 | **3 — Optimization loop** | game-gen strategist + beam hill-climb + ledger + plateau-stop | level measurably improves over N iters on a fixed objective |
 | **4 — Human steering** | per-round `AskUserQuestion` → objective; full digest | you direct "harder identities / +1 room" and watch metrics move |
-| **5 — Multi-conclusion clues** | clue-author agents for role/age/colour; play-game extended; new fitness dimensions | richer levels with several conclusion types |
+| **5 — Multi-conclusion clues** | clue-author agents for role/age/colour; world-test extended; new fitness dimensions | richer levels with several conclusion types |
 
 **Phase 0 status (2026-06-14):** the structural-oracle scoring spine is **done** —
 `LevelFitness` type, `buildLevelFitness()` + complexity aggregates (6 unit tests),
@@ -475,7 +475,7 @@ than deleting.
 - **Date:** 2026-06-14 · **Status:** Accepted
 - **Context:** Need an automatic measure of level quality to drive iteration.
 - **Decision:** Use two oracles — the solver as a deterministic *structural* oracle, and
-  `/play-game` as a model-judgment *semantic* oracle — and require both. The optimizer
+  `/world-test` as a model-judgment *semantic* oracle — and require both. The optimizer
   trades them off.
 - **Consequences:** Quality is measured along orthogonal axes (reachable & complex vs
   inferable & well-pitched). Cost asymmetry: the structural oracle is cheap and run every
@@ -580,7 +580,7 @@ than deleting.
   dedicated **game-conclusions** specialist (pipeline stage 6) that owns the `# Conclusions` section: an
   **explicit `## Identities`** plus cloze conclusions and their answer categories, grounded in the
   story, with every cloze answer a category member (character/room/item blanks use the **title**). The
-  `/play-game` semantic validator (Phase 2) then judges inferability and flags conflicting / ambiguous
+  `/world-test` semantic validator (Phase 2) then judges inferability and flags conflicting / ambiguous
   solutions.
 - **Consequences:** Conclusion authoring is a focused, separately-validated stage; Identities is always
   present so other conclusions can be layered on. CLI/app load parity removes another class of "passes
@@ -634,7 +634,7 @@ than deleting.
 ### DR-014 — Validator-coordinator sub-hub + human-in-the-loop termination
 - **Date:** 2026-06-14 · **Status:** Accepted
 - **Decision:** A dedicated **validator-coordinator** (spawned by the main coordinator — the DR-011
-  vertical sub-delegation pattern) solely runs the solver + play-game and owns the **capped** tweak
+  vertical sub-delegation pattern) solely runs the solver + world-test and owns the **capped** tweak
   loop, calling wave subagents → synthesiser for fixes. It routes human-input requests **up** to the
   main coordinator (the single human interface), which asks via `AskUserQuestion` and passes the answer
   down. The run terminates only when the **human confirms** satisfaction; every transitional state is
@@ -695,17 +695,17 @@ than deleting.
 ### DR-017 — Validator-coordinator: a dual-oracle, accept-if-better improvement engine
 - **Date:** 2026-06-14 · **Status:** Accepted (supersedes the inline-repair part of DR-014; makes the
   game-gen strategist of §6/§8 concrete)
-- **Context:** DR-014 sketched the validator-coordinator as a capped solver/play-game *repair* loop that
+- **Context:** DR-014 sketched the validator-coordinator as a capped solver/world-test *repair* loop that
   routed fixes straight through the synthesiser. We want more than repair: the validator should **use
   both oracles to drive iterative improvement**, keep a change **only when it measurably helps**, and
   leave the **canonical write + the human gate to the main coordinator**.
 - **Decision:** The validator-coordinator runs a bounded loop and **returns accepted improvements; it
   never writes the canonical md.**
-  1. **Score with both oracles** — the **solver** (`evaluate` → gates + complexity) and the **play-game**
+  1. **Score with both oracles** — the **solver** (`evaluate` → gates + complexity) and the **world-test**
      subagent (structured Identities inferability / per-conclusion difficulty / conflicts) — into one
      **combined fitness**. Comparator: candidate B beats A iff B fixes ≥1 failing gate without breaking
      another, or (gates equal) B's soft score is strictly higher (soft = complexity in the target band +
-     play-game difficulty balance + breadth + story coherence).
+     world-test difficulty balance + breadth + story coherence).
   2. **Diagnose → route.** A fixed **fault/opportunity → agent** table (failing gate or weak signal →
      the wave subagent that owns that area) — full table in
      [`agent-contracts.md`](../../.claude/skills/world-gen/references/agent-contracts.md) under
@@ -716,7 +716,7 @@ than deleting.
      `_gen.<slug>.try.md`; **both** oracles re-run on it.
   4. **Accept-if-better.** Keep the delta only if combined fitness strictly improves and **no gate
      regresses**; else discard and try another fix/agent. Accepted deltas accumulate in a **ledger**.
-  5. **Aggregate & return** `{ status, finalFitness, playGameFindings, improvements (ledger),
+  5. **Aggregate & return** `{ status, finalFitness, worldTestFindings, improvements (ledger),
      recommendedApplyOrder, humanQuestion? }` to the **coordinator**.
 - **Coordinator writes; coordinator asks.** The coordinator applies the accepted `improvements` (in
   `recommendedApplyOrder`) to the **canonical** `_gen.<slug>.md` via the **file-writer** (the synthesiser
@@ -731,7 +731,7 @@ than deleting.
   improve each round; the human stays in control of the canonical artifact and of ambiguous calls.
 - **Alternatives rejected:** validator writes the canonical md directly (removes the coordinator's write
   + user gate the user asked for); accept-any-change (drifts/regresses without the better-than test);
-  solver-only (misses semantic gaps play-game catches, and vice-versa).
+  solver-only (misses semantic gaps world-test catches, and vice-versa).
 - **Status update (2026-06-14):** Restructured by **DR-019**. The dual-oracle analysis + routing table
   live on in the standalone **`world-fix`** decider, but the *implementing* half (scratch writes,
   accept-if-better ledger) is replaced by world-gen's **gate-until-READY** loop. world-fix decides;
@@ -742,11 +742,11 @@ than deleting.
 - **Context:** The pipeline is many nested agent calls (waves, the story-critic loop, the
   validator-coordinator's per-iteration accept-if-better loop). Default narration shows headlines only;
   a developer debugging *why* a level came out as it did needs to see every call, every return, and —
-  above all — the **validator's reasoning** over the solver + play-game outputs.
+  above all — the **validator's reasoning** over the solver + world-test outputs.
 - **Decision:** Add a `--verbose` (`--debug` / `-v`) flag to `/world-gen`. When set, the coordinator
   streams: (1) every **agent → agent call** with its input; (2) every **return** with its value (paired,
   indented by call depth, parallel waves marked, long free-text abbreviated-with-length not dropped);
-  (3) the **validator-coordinator's per-iteration think-aloud** — solver result, play-game result,
+  (3) the **validator-coordinator's per-iteration think-aloud** — solver result, world-test result,
   combined fitness, diagnosis → routing (with the *reason*), the proposed delta, the scratch re-check,
   and the ACCEPT/REJECT decision and why; (4) the **coordinator's delegation** of each accepted
   improvement to the file-writer + any `AskUserQuestion`. Off by default. Trace format lives in the
@@ -760,13 +760,13 @@ than deleting.
 ### DR-019 — Extract the validator into a standalone `world-fix` skill (read-only decider)
 - **Date:** 2026-06-14 · **Status:** Accepted (supersedes the *implementing* role of DR-017's
   validator-coordinator; keeps DR-017's dual-oracle + routing as world-fix's analysis)
-- **Context:** DR-017's validator-coordinator both *analysed* (solver + play-game) and *implemented*
+- **Context:** DR-017's validator-coordinator both *analysed* (solver + world-test) and *implemented*
   (scratch writes, accept-if-better, returned a ledger). Conflating decide + implement made it heavy and
   un-reusable. We want the validator usable **on its own** — a game architect should be able to point it
   at any level and get a tailored fix list — and we want generation to gate on it the way the
   story-teller gates on the story-critic.
 - **Decision:** Split them. **`world-fix`** is a separate, **read-only** skill (`/world-fix <levelFile>`,
-  file arg mandatory): it runs the **solver** and the **play-game** (player) check and returns a
+  file arg mandatory): it runs the **solver** and the **world-test** (player) check and returns a
   **prioritised TODO** (`items:[{severity, area, issue, fix, evidence}]`) + a **verdict**
   `READY`/`NEEDS-WORK`. It **never edits anything and never calls the wave agents** — it only decides and
   advises (the structural+semantic analogue of the story-critic). **`world-gen`** becomes the sole
@@ -777,7 +777,7 @@ than deleting.
 - **Consequences:** Clean separation of *decide* (world-fix) from *implement* (world-gen); world-fix is
   independently useful (architects, CI triage, a pre-commit check); the sole-writer invariant is
   untouched (world-fix writes nothing; the file-writer still writes). `READY` is the single "is this
-  level done?" verdict. play-game's structured-oracle contract (DR-017) is reused as world-fix's semantic
+  level done?" verdict. world-test's structured-oracle contract (DR-017) is reused as world-fix's semantic
   half. Caps move to the **caller** (world-gen owns the iteration cap).
 - **Alternatives rejected:** keeping analyse+implement fused (not reusable, heavy); world-fix that also
   edits (breaks the sole-writer invariant and the standalone advisory use the user asked for);
@@ -800,11 +800,11 @@ Empirical learnings from actually running the system. Append dated entries as we
 | 2026-06-14 | First full **6-stage** `/world-gen` run on a new prompt — "Tinker, Tailor, Soldier, Spy" → `_gen.tinker_tailor_soldier_spy.md` ("The Brazen Thimble", 6 chars / 6 items) | Loads & solves (`gates.ok:true`, all reachable) after 2 coordinator repairs. Findings: (a) handing a stage an *abbreviated* candidate made game-cron echo a stub `# Items` — the coordinator must carry the FULL candidate between stages; (b) mixing absolute + relative itinerary timestamps caused a `says` overlap (a long line ran past the next absolute beat); (c) **relative `:` movements did not register solver co-presence** — Tinker→Kitchen and Spy→Taproom never linked, leaving them unreachable | Coordinator reassembles the full candidate (never abbreviate on hand-off); made the itinerary strictly sequential (`:`) to kill `says` overlap; anchored connectivity on **level-start co-presence** (whole cast co-present in the Taproom + every item carried) → `meanCost 0` (trivially shallow). **TODO:** investigate why relative-movement co-presence isn't sampled, or have game-cron rely on level-start / absolute-timestamp co-presence |
 | 2026-06-14 | First run of the **revised architecture**, waves 1–2 only — "Sing a Song of Sixpence" → `_gen.sing_a_song_of_sixpence.md` (Tudor treasury-theft, 6 chars / 8 items) | The story-teller's **story-critic loop worked for real** (it spawned the critic via the Agent tool; 2 rounds revise→accept, scores ≈8–9). Wave 2 (architect ∥ scout ∥ itemiser) ran **in parallel**, each returning **pure data + an apply-`prompt`** (no file writes); the synthesiser applied them and the wave-2 state **loads** (distinct real faces). As designed, `gates.ok:false` at wave 2 (no `# Itinerary` yet → only the active char's room is co-present) | Confirms the new **story-critic / pure-subagent / parallel-wave / synthesiser** mechanics work end-to-end through wave 2. Wave 3 (cron ∥ conclusions) is what connects the cast + adds the puzzle. (Vertical sub-delegation DR-015 + DR-012/013 validated in practice) |
 | 2026-06-14 | Wave 3 on Sing a Song of Sixpence (cron ∥ conclusions) — Margery's investigative **movement tour** Garden→Parlour→Kitchen→Counting House | **Movement co-presence WORKS with absolute timestamps** (resolves the Tinker open question): the tour linked the Blackbird, Queen and Baker → `meanCost 0.38`, `maxCost 1` — *real depth* vs the trivial `0`. The level loads with the full Identities + cloze puzzle. **But the final/far room (Counting House: King, Steward) never registers** Margery's visit — reproduced identically (26/48) across a trailing move, 3-min spacing, AND a hyphen→space room rename. Also: game-cron emitted invalid activity verbs (`startles`/`glances`/`paces`) + character-parentheticals the synthesiser had to conform | Absolute-timestamp tours create depth — adopt them over the trivial all-in-one-room. **Open finding (TODO):** the active char's tour doesn't link its *last/far* room; needs a dedicated solver-sampling investigation, not a gen fix. **Constrain game-cron** to the itinerary activity grammar. Left at 4/6 reachable pending that investigation or a level-start-co-presence fallback |
-| 2026-06-14 | First **`--verbose`** end-to-end run (DR-018) + first **dual-oracle accept-if-better** validator loop (DR-017) — "Inception" prompt → `_gen.inception.md` ("Inception: One Idea Deep", 7 chars / 7 items; descent Airliner→Hotel→Vault) | Generation passed the solver first try (Dom's descent links all 7 via absolute arrivals — DR-016 final-room fix held). The **validator earned its keep**: the play-game oracle caught that the **`# Conclusions` append had been silently clobbered** by an external linter write between two Edits (solver couldn't see it — Identities is implicit), and the solver caught **7→6 items** because game-cron dropped Dom's **Spinning Top Totem** at `(0,0,0)` (outside any room). Accept-if-better fixed both on a scratch candidate (items 6→7, +2 solvable clozes, gates held, `meanCost 0.57→0.49`) before the coordinator wrote canonical. play-game also flagged Identities **too-easy** (every role spelled out in description AND speech AND item) — logged, deferred to human steering. game-cron **again** emitted invalid verbs (`taps his watch`, `thumbs the pinwheel`) the file-writer had to conform | **Lesson: never trust an append survived — write the full file atomically** (the clobbered `# Conclusions` only resurfaced via play-game; a full Write persisted where the Edit didn't). The dual-oracle pairing is load-bearing: the solver missed the clobbered conclusions (implicit Identities still passed) and play-game missed nothing — each caught what the other couldn't. **Still TODO: constrain game-cron to the activity grammar** (now 3 runs in a row it emitted invalid verbs) and add a difficulty knob so identities aren't triple-redundant by default |
+| 2026-06-14 | First **`--verbose`** end-to-end run (DR-018) + first **dual-oracle accept-if-better** validator loop (DR-017) — "Inception" prompt → `_gen.inception.md` ("Inception: One Idea Deep", 7 chars / 7 items; descent Airliner→Hotel→Vault) | Generation passed the solver first try (Dom's descent links all 7 via absolute arrivals — DR-016 final-room fix held). The **validator earned its keep**: the world-test oracle caught that the **`# Conclusions` append had been silently clobbered** by an external linter write between two Edits (solver couldn't see it — Identities is implicit), and the solver caught **7→6 items** because game-cron dropped Dom's **Spinning Top Totem** at `(0,0,0)` (outside any room). Accept-if-better fixed both on a scratch candidate (items 6→7, +2 solvable clozes, gates held, `meanCost 0.57→0.49`) before the coordinator wrote canonical. world-test also flagged Identities **too-easy** (every role spelled out in description AND speech AND item) — logged, deferred to human steering. game-cron **again** emitted invalid verbs (`taps his watch`, `thumbs the pinwheel`) the file-writer had to conform | **Lesson: never trust an append survived — write the full file atomically** (the clobbered `# Conclusions` only resurfaced via world-test; a full Write persisted where the Edit didn't). The dual-oracle pairing is load-bearing: the solver missed the clobbered conclusions (implicit Identities still passed) and world-test missed nothing — each caught what the other couldn't. **Still TODO: constrain game-cron to the activity grammar** (now 3 runs in a row it emitted invalid verbs) and add a difficulty knob so identities aren't triple-redundant by default |
 
 Use this table for: cap tunings (B/N/R/P) and their effect; mutation classes that
 reliably help vs waste budget; prompts/schemas that produced invalid levels; solver/
-play-game disagreements and how we resolved them; generative successes worth keeping as
+world-test disagreements and how we resolved them; generative successes worth keeping as
 fixtures.
 
 ---
@@ -816,7 +816,7 @@ fixtures.
 - **Format breakage.** Free-form Markdown patches may produce unloadable levels; relying
   on the loader as linter + bounded repair. Watch the repair-success rate (Iteration
   History).
-- **Semantic-oracle non-determinism.** `/play-game` is model judgment; scores will vary
+- **Semantic-oracle non-determinism.** `/world-test` is model judgment; scores will vary
   run-to-run. Consider seeding / caching per candidate hash, and treating its output as a
   band, not a point.
 - **Complexity target band, not maximization.** Maximizing transfer cost can make levels
@@ -915,7 +915,7 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   custom inputs; return data + an apply-`prompt`); a single **synthesiser** as the sole writer of the
   level md (one return per call, writing every transition for live testing); **parallel** independent
   subagents (wave 2 = architect/scout/itemiser; wave 3 = cron/conclusions); a **validator-coordinator**
-  sub-hub owning the capped solver/play-game tweak loop with human-in-the-loop termination. Rewrote the
+  sub-hub owning the capped solver/world-test tweak loop with human-in-the-loop termination. Rewrote the
   HLD + skill; added `references/agent-contracts.md` (per-agent IO).
 - **2026-06-14** — Added **story-critic** (DR-015): the story-teller now runs a private, capped critic
   loop (plot / flow / intrigue / accuracy / characters / denouement) and returns only a critic-accepted
@@ -930,17 +930,17 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   pass with zero anachronisms (talking-while-walking in `02_house_of_rocks` validated the channel
   split). New unit tests; adr-solver + CLAUDE.md updated.
 - **2026-06-14** — Validator-coordinator made concrete (DR-017): a **dual-oracle accept-if-better**
-  improvement loop. It scores each candidate with **both** the solver and the **play-game** subagent
+  improvement loop. It scores each candidate with **both** the solver and the **world-test** subagent
   (now a structured semantic oracle), routes faults/opportunities to the owning wave subagent via a
   fixed table, tests each delta on a **scratch** candidate, and keeps it only if combined fitness
   strictly improves with no gate regression. It **returns the accepted-improvement ledger** to the
   coordinator (never writes the canonical md); the **coordinator** writes via the **file-writer** and
   **asks the user** when the validator returns a `humanQuestion` or ambiguous data. Updated
-  agent-contracts (validator-coordinator + new play-game oracle contract), SKILL, topology, §7 fitness
+  agent-contracts (validator-coordinator + new world-test oracle contract), SKILL, topology, §7 fitness
   (acceptance rule), §8 loop.
 - **2026-06-14** — Added **verbose / debug mode** (DR-018): `/world-gen --verbose` streams the full
   agentic trace — every agent call + return (indented by depth, parallel waves marked), the
-  validator-coordinator's per-iteration reasoning over the solver + play-game outputs (diagnosis →
+  validator-coordinator's per-iteration reasoning over the solver + world-test outputs (diagnosis →
   routing → delta → scratch re-check → accept/reject + why), and the coordinator's delegation of each
   accepted improvement. Off by default; never changes behaviour. SKILL gains a *Verbose / debug mode*
   section; §9 observability + HLD note updated.
@@ -951,16 +951,22 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
 - **2026-06-14** — First `--verbose` end-to-end run + first dual-oracle accept-if-better loop, on the
   "Inception" prompt → `_gen.inception.md` (7 chars / 7 items, descent Airliner→Hotel→Vault, `gates.ok`,
   `meanCost 0.49`). The validator caught two real defects the **solver alone would have missed**: a
-  `# Conclusions` append silently clobbered by an external linter write (only play-game saw the cloze
+  `# Conclusions` append silently clobbered by an external linter write (only world-test saw the cloze
   layer was gone — Identities is implicit), and Dom's Spinning Top Totem dropped at `(0,0,0)` falling out
   of play (7→6 items); both fixed accept-if-better on a scratch candidate before the canonical write.
   Lessons logged in Iteration History: **write full files atomically (appends can be clobbered)**, the
   two oracles are complementary, and game-cron still needs grammar-constraining (invalid verbs a 3rd run).
 - **2026-06-14** — Extracted the validator into a standalone **`world-fix`** skill (DR-019). world-fix is
-  **read-only** (`/world-fix <levelFile>`, mandatory): it runs the solver + play-game and returns a
+  **read-only** (`/world-fix <levelFile>`, mandatory): it runs the solver + world-test and returns a
   prioritised fix TODO + a `READY`/`NEEDS-WORK` verdict — it never edits and never calls the wave agents.
   **world-gen** now loops `world-fix → implement each must-fix via the owning wave agent → file-writer →
   re-run world-fix` until `READY` (the story-critic pattern, applied to playability), replacing DR-017's
   scratch/accept-if-better machinery. Lets a game architect run world-fix independently for a tailored
   fix list. Created `.claude/skills/world-fix/SKILL.md`; updated world-gen SKILL, agent-contracts
   (validator-coordinator contract → world-fix), topology, §8 loop, and DR-017's status. HLD updated.
+- **2026-06-14** — Renamed the **`play-game` skill → `world-test`** (the semantic/player oracle), so the
+  trio reads as one family: **world-gen** (generate) · **world-fix** (decide) · **world-test** (play).
+  `git mv` of `.claude/skills/play-game` → `world-test`; all references updated across both design docs,
+  all three skills, `agent-contracts.md`, `CLAUDE.md`, `docs/design/README.md`, and the
+  `LevelFitness.ts` / `evaluateLevel.ts` comments (the `playGame` JSON field → `worldTest`). No
+  behaviour change — pure rename.

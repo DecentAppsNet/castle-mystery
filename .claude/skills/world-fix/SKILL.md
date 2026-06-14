@@ -3,7 +3,7 @@ name: world-fix
 description: >-
   Analyse one Castle Mystery level and return a prioritised TODO synopsis of fixes/improvements to make
   it solvable and free of playability issues. It is the read-only DECIDER: it runs the solver
-  (`npm run evaluate`) and the play-game (player) check, then reports — it NEVER edits the level. Run it
+  (`npm run evaluate`) and the world-test (player) check, then reports — it NEVER edits the level. Run it
   standalone as a game architect to get a tailored list of things to fix/consider (a level file
   argument is MANDATORY), or let `world-gen` use it as the gate it loops against while building a level
   (analogous to how the story-critic gates the story-teller). Use when asked to "world-fix", validate /
@@ -20,7 +20,7 @@ be used **independently** of generation.
 **This skill is READ-ONLY. It never edits the level or any file.** It runs two oracles and reports:
 - the **solver** (`npm run evaluate` / `npm run solve`) — structural: does it load, is every character
   reachable, every item reachable, no timeline anachronisms, and how deep is it.
-- the **play-game** (player) skill — semantic: can a player actually *deduce* each identity and each
+- the **world-test** (player) skill — semantic: can a player actually *deduce* each identity and each
   conclusion from witnessable clues, or is something too-easy / too-hard / unsolvable / contradictory.
 
 It turns those into **implementable actions** tagged with the area that owns them, so the reader (a human
@@ -47,7 +47,7 @@ levels". Optional `--verbose` (`--debug` / `-v`) streams the full agentic trace 
    - `gates.noAnachronisms:false` / `anachronisms[]` — a character scheduled in two places at once.
    - `counts` vs the authored level — e.g. **fewer placed items than defined** (an item dropped out of
      play, like a totem dropped at an off-room coordinate). `complexity.maxCost/meanCost` — depth.
-3. **Player oracle.** Run the **play-game** analysis on the same file (spawn it as a subagent in verbose
+3. **Player oracle.** Run the **world-test** analysis on the same file (spawn it as a subagent in verbose
    mode, or apply its method): per-character Identities inferability (`direct`/`combined`/`none`),
    per-conclusion difficulty (`too-easy`/`just-right`/`too-hard`/`unsolvable`), conflicts/ambiguities,
    and **whether the `# Conclusions` section even exists / its clozes are solvable**.
@@ -86,11 +86,11 @@ world-fix — <levelFile> — VERDICT: READY | NEEDS-WORK   (B blockers · M maj
 [MAJOR]   <area> — <issue>  → <fix>   (evidence: …)
 [MINOR]   <area> — <issue>  → <fix>   (evidence: …)
 solver: gates {charactersReachable, itemsReachable, noAnachronisms} · counts · meanCost
-play-game: identities <x>/<n> (<direct/combined/none breakdown>) · conclusions <…>
+world-test: identities <x>/<n> (<direct/combined/none breakdown>) · conclusions <…>
 
 todo (JSON): {"levelFile":"…","verdict":"READY|NEEDS-WORK","ready":<bool>,
   "items":[{"severity":"blocker|major|minor","area":"game-cron|game-scout|…","issue":"…","fix":"…","evidence":"…"}],
-  "solver":{…fitness…}, "playGame":{…findings…}}
+  "solver":{…fitness…}, "worldTest":{…findings…}}
 ```
 
 `READY` with an empty `items` (or only advisory MINOR) means: solvable, no playability issues — done.
@@ -107,7 +107,7 @@ fixes themselves.
 ## Caps & invariants
 
 - **Read-only**: never edit the level, `levels.md`, or app code. The only side-effects are running the
-  read-only `npm run evaluate` / `npm run solve` and the read-only play-game analysis.
+  read-only `npm run evaluate` / `npm run solve` and the read-only world-test analysis.
 - One level per run. When invoked by `world-gen`, the **caller** owns the iteration cap, not this skill.
 
 ## Verbose / debug mode
@@ -115,6 +115,6 @@ fixes themselves.
 When `--verbose` (`--debug` / `-v`) is set, follow the **same trace contract as world-gen** (see
 `.claude/skills/world-gen/SKILL.md` *Verbose / debug mode*): emit `[world-fix|IN]` (the input), a
 `[world-fix|CALL] <callee>` before each oracle call with the callee's full `[solver|IN]/[OUT]` and
-`[play-game|IN]/[OUT]` (full JSON, **no truncation**), the `[world-fix]` reasoning that turns the two
+`[world-test|IN]/[OUT]` (full JSON, **no truncation**), the `[world-fix]` reasoning that turns the two
 oracle results into the prioritised TODO, and `[world-fix|OUT]` with the full todo JSON. The caller
 (world-gen) echoes `[world-fix|IN]` before calling and relays this trace.

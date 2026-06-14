@@ -4,7 +4,7 @@
   docs/design/world-gen-generative-level-design.md). For each requested level (or every level in
   levels.md when none are given) it loads the level, runs the solver, and prints the machine-readable
   LevelFitness JSON — the structural gate booleans plus integer complexity aggregates. This is the
-  structural oracle the multi-agent generator consumes; the semantic oracle (/play-game) is separate.
+  structural oracle the multi-agent generator consumes; the semantic oracle (/world-test) is separate.
 
   Pass --out <file> to also write the JSON. Exits non-zero if any level fails to load or fails the
   structural gates, so it can back a pre-commit hook.

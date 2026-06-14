@@ -14,7 +14,7 @@ design's *evolution* is captured alongside its current state.
   self-contained story within a level's context boundary, like the examples in
   `public/levels/` — then iteratively improves it under human steering. Built on the two
   tools merged into the
-  `world-gen` branch: the **solver** (structural oracle) and the **`/play-game` skill**
+  `world-gen` branch: the **solver** (structural oracle) and the **`/world-test` skill**
   (semantic oracle).
 - [world-gen-agentic-hld.md](world-gen-agentic-hld.md) — **HLD: the current-state agentic call
   graph** for `/world-gen` (user → coordinator → sub-agents → validators), as Mermaid sequence +
