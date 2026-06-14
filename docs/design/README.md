@@ -16,6 +16,10 @@ design's *evolution* is captured alongside its current state.
   tools merged into the
   `world-gen` branch: the **solver** (structural oracle) and the **`/play-game` skill**
   (semantic oracle).
+- [world-gen-agentic-hld.md](world-gen-agentic-hld.md) — **HLD: the current-state agentic call
+  graph** for `/world-gen` (user → coordinator → sub-agents → validators), as Mermaid sequence +
+  delegation diagrams plus a call table. Living companion to the design doc; update it whenever an
+  inter- or intra-agent call changes (new/removed/merged sub-agent, changed payload, LIVE↔PLANNED).
 
 ## Maintenance convention
 

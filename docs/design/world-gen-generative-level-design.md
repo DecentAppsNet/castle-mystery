@@ -257,7 +257,9 @@ Two distinct controllers — keep them separate:
 | **play-game** (validator) | candidate | per-char inferable + difficulty + gaps | semantic |
 
 Authoring-format reference for the specialists (the contract they are fed) is distilled in
-[Appendix A](#appendix-a-level-authoring-contract-summary).
+[Appendix A](#appendix-a-level-authoring-contract-summary). The concrete **agentic call graph** (who
+calls whom, payloads, LIVE vs PLANNED) is maintained as a sibling HLD —
+[world-gen-agentic-hld.md](world-gen-agentic-hld.md) — kept current as inter/intra-agent calls change.
 
 ---
 
@@ -548,6 +550,20 @@ than deleting.
 - **Alternatives rejected:** leaving conclusions to game-scout/game-cron (diffuse, under-validated);
   keeping `evaluate` lenient (defeats the purpose of a structural validator).
 
+### DR-011 — Hub-and-spoke agents: no lateral subagent calls; vertical sub-delegation allowed
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Decision:** The coordinator is the only hub. **No specialist subagent calls a sibling specialist**
+  (no lateral / peer / subagent↔subagent communication); all cross-specialist coordination and shared
+  state flow through the coordinator. A specialist **may** spawn its own deeper, more-specialised
+  subagents to complete the task it was given — those children are **private** to that parent, serve and
+  report only to it, and roll up into its single return to the coordinator.
+- **Consequences:** The call graph stays a **tree rooted at the coordinator** (no peer mesh); every
+  cross-cutting decision is observable in one place; a specialist can be internally decomposed without
+  other specialists depending on its internals. Tracked concretely in
+  [world-gen-agentic-hld.md](world-gen-agentic-hld.md).
+- **Alternatives rejected:** peer-to-peer specialist messaging (opaque mesh, hard to observe/cap);
+  forbidding all sub-delegation (would stop a specialist internally decomposing a hard task).
+
 ---
 
 ## 14. Iteration history (what worked / what didn't)
@@ -663,3 +679,6 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   always an explicit `## Identities`).
 - **2026-06-14** — Generated characters now use a **distinct real face** from `public/assets/faces/`
   (~37 available) so levels render for playtesting (game-scout + authoring contract).
+- **2026-06-14** — Agentic communication invariant (DR-011): hub-and-spoke — no lateral
+  subagent↔subagent calls (all coordination via the coordinator); vertical sub-delegation (a
+  specialist's own private deeper subagents) is allowed. Documented in the agentic HLD.
