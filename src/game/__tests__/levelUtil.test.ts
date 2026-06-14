@@ -1126,6 +1126,19 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
+  it('wraps empty @ targets with filename and line number', () => {
+    const missingTargetText = atRoomMarkerText.replace('@ Library.0%', '@');
+
+    try {
+      loadLevelFromText(missingTargetText, 'at-room-marker.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('at-room-marker.md:48');
+      expect((error as LoadLevelException).message).toContain("missing room id in authored activity '@'");
+    }
+  });
+
   it('wraps unknown @ room destinations with filename and line number', () => {
     try {
       loadLevelFromText(invalidAtRoomDestinationText, 'invalid-at-room-destination.md');
