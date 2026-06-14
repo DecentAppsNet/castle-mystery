@@ -1,6 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
+import { findCharacterPose } from '@/game/itineraryUtil';
 import baseLevelText from '@/game/__tests__/fixtures/timeline-start-time-field.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { parseItineraryActivities } from '../itineraryLoading/itineraryActivityParseUtil';
@@ -68,6 +69,59 @@ describe('levelItineraryLoader', () => {
 
       expect(() => parseItineraryActivities('0:00:03 Stefan waits later', 'waits-invalid.md', 1, options, 0, 'hero'))
         .toThrow("waits-invalid.md:1: invalid waits duration 'later'");
+    });
+
+    it('delays later relative activities by an explicit waits duration', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const result = loadItineraries(level, [
+        '0:00:00 Hero waits 3',
+        ': Hero faces left'
+      ].join('\n'), 'waits-resolution.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
+
+      expect(hero).toBeTruthy();
+      expect(findCharacterPose(hero!, 2_999).facingDirection).toBe('right');
+      expect(findCharacterPose(hero!, 3_000).facingDirection).toBe('left');
+    });
+
+    it('defaults waits to one second for later relative activities', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const result = loadItineraries(level, [
+        '0:00:00 Hero waits',
+        ': Hero faces left'
+      ].join('\n'), 'waits-default-resolution.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
+
+      expect(hero).toBeTruthy();
+      expect(findCharacterPose(hero!, 999).facingDirection).toBe('right');
+      expect(findCharacterPose(hero!, 1_000).facingDirection).toBe('left');
+    });
+
+    it('applies waits after its own relative timestamp resolves', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const result = loadItineraries(level, [
+        '0:00:00 Hero faces right',
+        ': Hero waits 3',
+        ': Hero faces left'
+      ].join('\n'), 'waits-relative-resolution.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
+
+      expect(hero).toBeTruthy();
+      expect(findCharacterPose(hero!, 2_999).facingDirection).toBe('right');
+      expect(findCharacterPose(hero!, 3_000).facingDirection).toBe('left');
+    });
+
+    it('does not delay a later activity with an absolute timestamp', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const result = loadItineraries(level, [
+        '0:00:00 Hero waits 3',
+        '0:00:01 Hero faces left'
+      ].join('\n'), 'waits-absolute-override.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
+
+      expect(hero).toBeTruthy();
+      expect(findCharacterPose(hero!, 999).facingDirection).toBe('right');
+      expect(findCharacterPose(hero!, 1_000).facingDirection).toBe('left');
     });
   });
 });

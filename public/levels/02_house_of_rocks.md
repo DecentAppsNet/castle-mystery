@@ -332,6 +332,16 @@ SSMM/HH\YYYYTT
 : faces left
 
 7:30:40 Niccolo @ Workshop Yard.90%
+: waits
+: @ Workshop Yard.80%
+: waits 2
+: @ Workshop Yard.90%
+: waits
+: faces left
+: waits
+: @ Workshop Yard.70%
+: waits 3
+: @ Workshop Yard.90%
 
 7:30:56 Heinrich @ Workshop Yard
 : Giovanni faces Heinrich
