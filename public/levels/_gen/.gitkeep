@@ -1,0 +1,3 @@
+# Scratch dir for generator candidate levels (world-gen multi-agent level generator).
+# Candidates live here so their `imports=characters.md|items.md` resolve against public/levels/.
+# Not indexed by levels.md, so the app never lists them. See docs/design/.

@@ -166,17 +166,25 @@ done**.
 
 **Gaps to build (small adapters, not core surgery):**
 
-1. **Complexity aggregates.** `transferCostTable` is per-pair only; we need
-   `max / mean / histogram` of `cost` across reachable pairs. Compute in an adapter — no
-   solver-core change.
-2. **A candidate entry point.** `scripts/evaluateLevel.ts` taking an arbitrary candidate
-   path and emitting one **fitness JSON** (gates + complexity aggregates + unreachable
-   lists). Wrinkle: a candidate uses `imports=characters.md|items.md`, which resolve
-   relative to `public/levels/`, so candidates live in a scratch dir
-   (`public/levels/_gen/`) for imports to resolve.
-3. **The semantic oracle as a structured signal.** Wrap `/play-game`'s analysis in a
+1. ✅ **Complexity aggregates** — `max / mean / histogram` of `cost` across reachable pairs,
+   computed in [`src/solver/fitnessUtil.ts`](../../src/solver/fitnessUtil.ts)
+   (`_computeComplexityMetrics`). No solver-core change. *(Done 2026-06-14, Phase 0.)*
+2. ✅ **A candidate entry point** — [`scripts/evaluateLevel.ts`](../../scripts/evaluateLevel.ts)
+   (`npm run evaluate -- <file>`) loads a level, runs the solver, and emits the **fitness
+   JSON** (gates + complexity aggregates + unreachable lists) via `buildLevelFitness()`.
+   Candidates live in the scratch dir `public/levels/_gen/` so their
+   `imports=characters.md|items.md` resolve relative to `public/levels/`. *(Done 2026-06-14,
+   Phase 0.)*
+3. ⬜ **The semantic oracle as a structured signal.** Wrap `/play-game`'s analysis in a
    sub-agent that returns per-character `{ inferable, difficulty, gapNote }` rather than
-   prose.
+   prose. *(Pending — Phase 2.)*
+
+**Fitness JSON contract** (one entry per scored level, emitted by `evaluateLevel`):
+`{ loaded:true, levelName, gates:{ charactersReachable, itemsReachable, ok },
+counts:{ characters, items }, unreachable:{ characterIds[], itemIds[] }, complexity:{
+totalPairCount, reachablePairCount, unreachablePairCount, maxCost, meanCost, costHistogram } }`
+— or `{ loaded:false, levelName, error }` when the level fails to load (the G1 gate). See
+[`src/solver/types/LevelFitness.ts`](../../src/solver/types/LevelFitness.ts).
 
 ---
 
@@ -377,6 +385,14 @@ All on the `world-gen` branch. Each phase is independently demoable.
 | **4 — Human steering** | per-round `AskUserQuestion` → objective; full digest | you direct "harder identities / +1 room" and watch metrics move |
 | **5 — Multi-conclusion clues** | clue-author agents for role/age/colour; play-game extended; new fitness dimensions | richer levels with several conclusion types |
 
+**Phase 0 status (2026-06-14):** the structural-oracle scoring spine is **done** —
+`LevelFitness` type, `buildLevelFitness()` + complexity aggregates (6 unit tests),
+`scripts/evaluateLevel.ts` (`npm run evaluate`), and the `public/levels/_gen/` scratch dir.
+Verified end-to-end on `01_birth_of_constantine.md` (18 chars, 8 items, all reachable;
+`maxCost 2`, `meanCost 0.88`). Remaining Phase 0: distil the authoring contract (Appendix A)
+into the form fed to agents, and define the inter-agent JSON schemas — both deferred to
+Phase 1, where the agents that use them are built.
+
 ---
 
 ## 13. Decision Log
@@ -464,6 +480,23 @@ than deleting.
   prompt in Phase 1 behind a `getPlayerInput()` seam.
 - **Consequences:** Each phase is demoable; real player input is a later, isolated change.
 
+### DR-008 — `LevelFitness` is the structural-oracle JSON contract
+- **Date:** 2026-06-14 · **Status:** Accepted
+- **Context:** The generator needs one stable, machine-readable score per candidate; the
+  solver exposes the pieces (per-check booleans, per-pair transfer costs) but not an
+  aggregated contract.
+- **Decision:** Define `LevelFitness`
+  ([src/solver/types/LevelFitness.ts](../../src/solver/types/LevelFitness.ts)) = `gates`
+  (charactersReachable / itemsReachable / ok) + `counts` + `unreachable` lists +
+  `complexity` aggregates (total/reachable/unreachable pair counts, max/mean cost, cost
+  histogram). `buildLevelFitness(SolveResult)` is pure and unit-tested;
+  `scripts/evaluateLevel.ts` is the I/O shell that adds the `loaded` / `error` envelope.
+- **Consequences:** Gives the verdict booleans + integer complexity without any solver-core
+  change (DR-006). The G1 `loads` gate is represented by the CLI envelope (`loaded:false` +
+  `error`), not inside the pure function. Mean cost is rounded to 2 dp for stable JSON.
+- **Alternatives rejected:** emitting raw `SolveResult` JSON (verbose, no aggregates);
+  adding flags to the solver core (unnecessary — aggregation is a thin adapter).
+
 ---
 
 ## 14. Iteration history (what worked / what didn't)
@@ -473,7 +506,8 @@ Empirical learnings from actually running the system. Append dated entries as we
 
 | Date | What we tried | Result | What we changed |
 |---|---|---|---|
-| 2026-06-14 | — | Design accepted; no runs yet | — |
+| 2026-06-14 | — | Design accepted | — |
+| 2026-06-14 | Built Phase 0 scoring; ran `evaluate` on `01_birth_of_constantine.md` | Works: 18 chars / 8 items all reachable, `maxCost 2`, `meanCost 0.88`, histogram `{0:52,1:57,2:35}`. Existing levels skew **shallow** (most clues 0–1 switches deep) | Recorded as the baseline for the complexity target band; defer setting the band until we have generated examples to compare |
 
 Use this table for: cap tunings (B/N/R/P) and their effect; mutation classes that
 reliably help vs waste budget; prompts/schemas that produced invalid levels; solver/
@@ -549,3 +583,7 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   Reframed terminology: a generated level is a **narrative level** (a self-contained story
   within a level's context boundary, per `public/levels/xx_level.md`), not specifically a
   "murder-mystery" — that is the game's overall framing, not a per-level constraint.
+- **2026-06-14** — Phase 0 (structural-oracle scoring) implemented: `LevelFitness` +
+  `buildLevelFitness` + complexity aggregates + `scripts/evaluateLevel.ts`
+  (`npm run evaluate`) + `public/levels/_gen/` scratch dir (DR-008). Typecheck clean, 53
+  solver tests pass, verified on a real level.
