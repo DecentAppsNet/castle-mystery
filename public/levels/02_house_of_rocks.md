@@ -268,7 +268,7 @@ SSMM/HH\YYYYTT
 7:30:20 Stefan @ Workshop Yard.80%
 7:30:36 faces left
 7:30:39 @ Stone Store
-: thinks, "I really don't want to talk that guy."
+: thinks, "I really don't want to talk Niccoló."
 : thinks, "He's going to complain about cracks again."
 : waits 10
 : @ Stone Store.30%
@@ -355,8 +355,9 @@ SSMM/HH\YYYYTT
 : @ Workshop Yard.90%
 : faces left
 : kneels
-: waits 20
+: waits 10
 : @ Workshop Yard.70%
+: Niccolo thinks, "This is Stefan's fault."
 (leaves cutting station for stone store)
 
 7:30:44 Anna @ Family Quarters
@@ -573,7 +574,7 @@ SSMM/HH\YYYYTT
 : says, "There you have it."
 : Heinrich says, "Thank you, sir."
 
-7:32:53 Niccolo @ Stone Store
+7:32:38 Niccolo @ Stone Store
 : Niccolo says, "What kind of garbage limestone is this?"
 : Stefan faces Niccolo
 : Stefan says, "What? It's fine."
