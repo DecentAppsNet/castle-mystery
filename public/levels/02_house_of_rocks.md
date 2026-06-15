@@ -1,7 +1,7 @@
 # General
 
 * title=House of Rocks
-* activeCharacter=Maria
+* activeCharacter=Pietro
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md
@@ -216,7 +216,7 @@ SSMM/HH\YYYYTT
 
 ## Painting
 * image=mariaPainting.png
-* description=A rough drawing with the enscription, "Maria, my forever love -Tommaso"
+* description=A rough drawing with the inscription, "Maria, my forever love -Tommaso"
 * drawOffsetZ=-.5
 * drawOffsetY=-3
 
