@@ -970,3 +970,21 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   all three skills, `agent-contracts.md`, `CLAUDE.md`, `docs/design/README.md`, and the
   `LevelFitness.ts` / `evaluateLevel.ts` comments (the `playGame` JSON field → `worldTest`). No
   behaviour change — pure rename.
+- **2026-06-15** — `/world-gen --verbose` run on the "Paws & Pistons" prompt (animal heist on a 1926
+  luxury train) → `_gen.paws-and-pistons.md` (8 chars / 6 items, 5 linear train cars, `gates.ok`,
+  `meanCost 0.63`, world-test 8/8 identities + both clozes just-right). **New, important co-presence
+  learning** that cost 3 wasted fix loops before reading `characterGraphUtil.ts`: when the **active
+  character is the *only* mover** (all NPCs stationary, doing dialogue-only itineraries), the solver's
+  co-presence sample ticks are *all* the active character's own `ROOM_ENTRY` times — and at a
+  `ROOM_ENTRY` instant `findCharacterPose` resolves the mover to the room being **left**, never the one
+  being entered. So an absolute arrival `Pip @ LocomotiveCab` does **not** register the mover in that
+  cab; and a stationary NPC alone in a room is therefore caught **only** by the **timeline-end** sample
+  (the room the active character *last entered*) or by **level-start** co-presence. Fix that finally
+  worked: make the touring active character **END the tour inside the otherwise-isolated NPC's room**
+  (Pip's finale at the Locomotive throttle) so `findTimelineEndTime` samples them together. The earlier
+  tour stops (Parlor/Observation/Baggage) solved fine because each NPC's room *also* happened to be the
+  "room being left" at the next absolute arrival — the **last** room of a one-mover tour is the only one
+  that needs the timeline-end anchor. Rule added to the game-cron contract. Also re-confirmed: dialogue
+  must be `:`-sequenced (an absolute-timestamped back-and-forth tripped the audible-`says`-overlap load
+  error on the first pass), and the `: Name activity` speaker-switch syntax (colon first) is a recurring
+  synthesiser reconciliation.

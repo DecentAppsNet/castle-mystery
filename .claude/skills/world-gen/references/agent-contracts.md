@@ -90,6 +90,15 @@ Story = {
   - `coPresencePlan` states how the timeline satisfies solvability (e.g. "whole cast co-present in the
     Taproom at level start; items carried"). **Level-start co-presence is the reliable anchor** —
     relative `:` movements do not register solver co-presence (see Iteration History).
+  - **One-mover caveat (2026-06-15):** if the active character is the *only* one who moves (NPCs run
+    dialogue-only itineraries), the solver's co-presence ticks are all the active character's own
+    `ROOM_ENTRY` times, and at each the mover resolves to the room being **left**. So an absolute
+    `Active @ NpcRoom` arrival does **not** by itself put the active character in that room — a
+    stationary NPC alone in a room is caught only by **level-start** co-presence or the **timeline-end**
+    sample. Either start the NPC co-present with the cast, or have the active character **END the tour in
+    that NPC's room** (so `findTimelineEndTime` samples them together). The *last* room of a one-mover
+    tour is the one that needs this; earlier stops are caught as "the room being left" at the next
+    absolute arrival.
 - `prompt` → synthesiser: *write `# Itinerary` from these lines (first line absolute `HH:MM:SS`, rest
   `:` relative to avoid `says` overlap).*
 
