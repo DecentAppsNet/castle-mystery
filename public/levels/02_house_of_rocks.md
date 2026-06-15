@@ -1,7 +1,7 @@
 # General
 
 * title=House of Rocks
-* activeCharacter=Pietro
+* activeCharacter=Maria
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md
@@ -95,7 +95,7 @@ SSMM/HH\YYYYTT
 ## Common Kitchen
 
 ```
-..b..N..
+..b..N.p
 ...M...A
 ........
 ```
@@ -104,6 +104,7 @@ SSMM/HH\YYYYTT
 * A=Anna
 * N=Niccolo
 * b=bread roll
+* p=painting
 * exits=Stairwell | Stairwell 2
 
 ## Stairwell 2
@@ -213,6 +214,12 @@ SSMM/HH\YYYYTT
 * image=codex.png
 * description=Apprentice - 1 denari|Servant (non-family) - 5 denari|Quarry Laborer - 15 denari|Cook/House Manager - 30 denari|Stone Cutter - 2 tari|Journeyman Mason - 3 tari|Journeyman Carver - 4 tari|Foreman - 4 tari|Master Carver - 5 tari|Master Mason - 4 tari|Builder and surveyor - 6 tari|Clerk/accountant - 6 tari
 
+## Painting
+* image=mariaPainting.png
+* description=A rough drawing with the enscription, "Maria, my forever love -Tommaso"
+* drawOffsetZ=-.5
+* drawOffsetY=-3
+
 # Itinerary
 
 7:30:00 King Frederick takes Furia Perched in right hand
@@ -240,6 +247,8 @@ SSMM/HH\YYYYTT
 : says, "But do it somewhere else."
 (Anna leaves for family quarters)
 7:30:40 Pietro faces left
+
+7:30:05 Yusuf thinks, "I must see Anna today."
 
 7:30:06 Stefan @ Common Kitchen
 : Maria faces Stefan
@@ -324,6 +333,32 @@ SSMM/HH\YYYYTT
 : Heinrich says, "Thank you, ma'am."
 : takes bread roll into inventory
 
+7:30:40 Niccolo @ Workshop Yard.90%
+(Niccolo is always in front of the cutting station, working, while he is in the yard.)
+: waits 10
+: @ Workshop Yard.80%
+: waits 20
+: @ Workshop Yard.90%
+: waits 10
+: faces left
+: waits 3
+: @ Workshop Yard.70%
+: waits 10
+: @ Workshop Yard.90%
+: faces left
+: kneels
+: waits 20
+: thinks, "(thinking dark thoughts)"
+: stands
+: @ Workshop Yard.80%
+: waits 10
+: @ Workshop Yard.90%
+: faces left
+: kneels
+: waits 20
+: @ Workshop Yard.70%
+(leaves cutting station for stone store)
+
 7:30:44 Anna @ Family Quarters
 
 7:31:00 Ahmad @ Common Kitchen
@@ -334,6 +369,7 @@ SSMM/HH\YYYYTT
 : Ahmad says, "No lingering after sun up!"
 : Maria says, "Even for you?"
 : Ahmad says, "I am not lingering!"
+(Ahmad leaves for Workshop Yard)
 
 7:31:19 Yusuf @ Master's Hall
 7:31:20 Salomone @ Master's Hall
@@ -367,32 +403,8 @@ SSMM/HH\YYYYTT
 7:32:22 Pietro @ Master's Hall.60%
 : faces left
 
-7:30:40 Niccolo @ Workshop Yard.90%
-: waits 10
-: @ Workshop Yard.80%
-: waits 20
-: @ Workshop Yard.90%
-: waits 10
-: faces left
-: waits 3
-: @ Workshop Yard.70%
-: waits 10
-: @ Workshop Yard.90%
-: faces left
-: kneels
-: waits 20
-: thinks, "(thinking dark thoughts)"
-: stands
-: @ Workshop Yard.80%
-: waits 10
-: @ Workshop Yard.90%
-: faces left
-: kneels
-: waits 20
-: @ Workshop Yard.70%
-(leaves cutting station for stone store)
-
 7:30:56 Heinrich @ Workshop Yard
+(Giovanni is always in front of the masonry station, working, while he is in the yard.)
 : Giovanni faces Heinrich
 : says, "Apprentice, you're finally here."
 : says, "Oil my tool!"
@@ -403,6 +415,7 @@ SSMM/HH\YYYYTT
 (Giovanni follows Heinrich to the Tool Store)
 
 7:31:06 Giorgios @ Workshop Yard.20%
+(Giorgios is always in front of the carving station, while he is in the yard. Andreas is there as well.)
 : says, "Boy, your carves are fair."
 : Andreas faces Giorgios
 : Giorgios says, "But bring the blade toward your body"
@@ -457,6 +470,7 @@ SSMM/HH\YYYYTT
 (Giovanni leaves for workshop yard)
 
 7:31:23 Ahmad @ Workshop Yard
+(Ahmad paces to different positions in the Workshop Yard, sometimes near each of three stations.)
 : waits 20
 : @ 80%
 : waits 20
@@ -478,6 +492,7 @@ SSMM/HH\YYYYTT
 7:32:52 Ahmad faces right
 
 7:31:28 Giovanni @ Workshop Yard
+(Giovanni has returned to his position in front of the masonry station.)
 : waits 20
 : @ 40%
 : kneels
