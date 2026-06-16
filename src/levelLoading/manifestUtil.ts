@@ -7,6 +7,9 @@ import LevelManifest from "./types/LevelManifest";
 import { getLastLevelUrl } from "@/persistence/lastLevel";
 import { assert } from "decent-portal";
 
+const GEN_INDEX_REF = '_gen-index.json';  // Dev-server endpoint listing the _gen.*.md candidates (see vite.config.ts).
+const GEN_TITLE_PREFIX = '(GEN) ';        // Marker prepended to a candidate's title in the level selector.
+
 async function _loadTextFromUrl(url:string):Promise<string> {
   return fetch(baseUrl(url)).then(async response => {
     if (!response.ok) throw new Error(`unable to load ${url}`);
@@ -56,4 +59,42 @@ export async function loadLevelManifestFromUrl(manifestUrl:string):Promise<Level
   const lastLevelUrl = await getLastLevelUrl() ?? '';
   const lastLevelI = _levelUrlToI(levelUrls, lastLevelUrl);
   return { levelUrls, levelTitles, lastLevelI };
+}
+
+/* DEV-only: the Vite dev server (see vite.config.ts) serves the GEN_INDEX_REF endpoint listing the
+  flat _gen.*.md candidate levels under public/levels/. Returns manifest entries for them, each title
+  prefixed with GEN_TITLE_PREFIX. Returns empty when the endpoint is absent (production build) or a
+  candidate is unreadable, so callers can append unconditionally. */
+async function _loadGenLevelEntries(manifestUrl:string):Promise<{ levelUrls:string[], levelTitles:string[] }> {
+  let filenames:string[] = [];
+  try {
+    const indexText = await _loadTextFromUrl(_resolveManifestLevelUrl(manifestUrl, GEN_INDEX_REF));
+    const parsed:unknown = JSON.parse(indexText);
+    if (Array.isArray(parsed)) filenames = parsed.filter((name):name is string => typeof name === 'string');
+  } catch {
+    return { levelUrls:[], levelTitles:[] }; // No dev endpoint (production) or unreadable index — no gen levels.
+  }
+  const levelUrls:string[] = [], levelTitles:string[] = [];
+  for (const filename of filenames) {
+    const levelUrl = _resolveManifestLevelUrl(manifestUrl, filename);
+    try {
+      const title = _parseLevelTitle(await _loadTextFromUrl(levelUrl), levelUrl);
+      levelUrls.push(levelUrl);
+      levelTitles.push(`${GEN_TITLE_PREFIX}${title}`);
+    } catch { /* Skip an in-progress candidate that doesn't load yet, keeping the rest usable. */ }
+  }
+  return { levelUrls, levelTitles };
+}
+
+/* DEV-only: returns a copy of `manifest` with any public/levels/_gen.*.md candidate levels appended (titles
+  prefixed "(GEN) "), recomputing the selected index so a last-selected candidate is restored. Returns
+  `manifest` unchanged when there are no candidates. Callers should only invoke this when serving
+  locally. */
+export async function appendGenLevelsToManifest(manifest:LevelManifest, manifestUrl:string):Promise<LevelManifest> {
+  const gen = await _loadGenLevelEntries(manifestUrl);
+  if (!gen.levelUrls.length) return manifest;
+  const levelUrls = [...manifest.levelUrls, ...gen.levelUrls];
+  const levelTitles = [...manifest.levelTitles, ...gen.levelTitles];
+  const lastLevelUrl = await getLastLevelUrl() ?? '';
+  return { levelUrls, levelTitles, lastLevelI:_levelUrlToI(levelUrls, lastLevelUrl) };
 }

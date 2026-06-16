@@ -7,13 +7,17 @@
     position; an item's room is the room it sits in, or the room of the character holding it.
   - collectRoomOccupancyChangeTimes(level): the sample times at which that occupancy can change — the
     level start, plus every ROOM_ENTRY (a character changes room) and every TAKE/DROP/GIVE (an item
-    changes room). Sampling at these times captures every room-occupancy configuration. */
+    changes room), plus the timeline end (findTimelineEndTime), the final settled configuration. The
+    end sample is what captures the final room of a tour: a character's last ROOM_ENTRY tick resolves
+    to the room being left, so without it an item witnessed only in that final room looks unreachable
+    (mirrors the co-presence sampler in characterGraphUtil). */
 
 import { getOwnedItems } from "@/game/itemOwnershipUtil";
 import { findRoomAtPosition } from "@/game/roomUtil";
 import GameState from "@/game/types/GameState";
 import Level from "@/game/types/Level";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
+import { findTimelineEndTime } from "./timelineUtil";
 
 export type RoomOccupancy = { characterIds:string[], itemIds:string[] };
 
@@ -46,7 +50,7 @@ export function createRoomOccupancyByRoomId(gameState:Pick<GameState, 'character
 }
 
 export function collectRoomOccupancyChangeTimes(level:Pick<Level, 'startTime' | 'characters'>):number[] {
-  const times = new Set<number>([level.startTime]);
+  const times = new Set<number>([level.startTime, findTimelineEndTime(level.characters, level.startTime)]);
   level.characters.forEach(character => character.itinerary.forEach(event => {
     switch (event.type) {
       case ItineraryEventType.ROOM_ENTRY:

@@ -31,10 +31,20 @@ edge source — it would miss pairs who begin a scene together. The solver inste
 co-presence directly using the same primitives (`findCharacterPose`, `findRoomAtPosition`).
 
 A character's room only changes at `ROOM_ENTRY` events, so co-presence is constant between
-consecutive room entries. We therefore sample co-presence at **the level start time plus every
-`ROOM_ENTRY` timestamp across all characters**, which captures every room-occupancy configuration.
-Each edge records its `(time, roomId)` co-presences — free edge weight and a seed for later
-temporal/inference analysis.
+consecutive room entries. We therefore sample co-presence at **the level start time, every
+`ROOM_ENTRY` timestamp across all characters, and the timeline end** (`findTimelineEndTime` in
+[timelineUtil.ts](../src/solver/timelineUtil.ts)). Each edge records its `(time, roomId)` co-presences
+— free edge weight and a seed for later temporal/inference analysis.
+
+The **timeline-end sample is load-bearing, not a nicety**: a `ROOM_ENTRY`'s `startTime` is the
+instant the cross-room move *begins*, and `findCharacterPose` at exactly that instant still resolves
+the character to the room they are *leaving*. Each room a touring character visits is therefore
+credited at the *next* entry's tick — which works for every room except the **final** one of a tour,
+which has no later tick. Without the end sample, the last room of a tour is never observed and whoever
+waits there looks unreachable (the real bug that motivated this: a maid touring four rooms never
+registered in the last, stranding the two characters there). Sampling the timeline end — where every
+character rests in the room they last entered — closes that blind spot. The same end sample is added
+to the room-occupancy change-times (§6a/§8) for the same reason.
 
 ### 3. The edge model is future-proofed for directed edges
 
@@ -70,8 +80,8 @@ rather than guessing.
 Reaching every character is necessary but not sufficient — the player must also be able to *find*
 the items. We add an item-reachability graph rendered below the character graph (same node-legend +
 matrix + reachability + `RESULT` style), and `solveLevel()` returns a combined `ok`: the level
-passes only when **both** every character and every placed item are reachable. The CLI exits
-non-zero if either check fails.
+passes only when **every** character is reachable, **every** placed item is reachable, and there are
+**no timeline anachronisms** (§6c). The CLI exits non-zero if any check fails.
 
 - **Nodes are placed items.** An item is a node when it is actually placed in the level (in a room
   or held by a character), enumerated via `createItemsById(level.rooms, level.characters)`.
@@ -81,8 +91,9 @@ non-zero if either check fails.
 - **Witnesses come from co-presence, resolved through the real game runtime.** Items move during the
   timeline (characters take/drop/give them), so item→room is dynamic. Rather than re-derive item
   locations, the builder constructs a `GameState` and replays it with `rebuildDynamicStateForTime()`
-  at each sample time (level start plus every `ROOM_ENTRY` and item-movement tick — the only times a
-  character's or item's room can change). At each sample, every item records the characters sharing
+  at each sample time (level start, every `ROOM_ENTRY` and item-movement tick, and the timeline end —
+  the times a character's or item's room can change, plus the final settled state per §2). At each
+  sample, every item records the characters sharing
   its room as "witnesses". This reuses the single source of truth for item movement instead of
   duplicating take/drop/give semantics.
 - **An item is reachable iff a *reachable* character witnesses it.** There is no item-to-item
@@ -120,6 +131,33 @@ rendered by [transferCostSerializeUtil.ts](../src/solver/transferCostSerializeUt
 - **Placement.** This is validation/complexity, so it prints in the always-inline `analysisAscii`
   (after the two graphs, before the cube). The cube stays last as a "nice to have" the architect can
   visualise; it never gates correctness or complexity.
+
+### 6c. Third validation: timeline anachronisms (no character doing the same thing twice at once)
+
+Reachability assumes the timeline is *coherent*. It can silently fail to be: the loader serializes a
+character's blocking activities, but `ensureTimestampIsAvailable` /
+`findEarliestAbsoluteActivityStartTime`
+([activitySchedulingUtil.ts](../src/levelLoading/activities/activity/activitySchedulingUtil.ts)) score
+`SPEECH`/`EMIT` as **non-blocking for absolute timestamps**. So a run of relative `:` speeches can
+advance a character's clock, and a later **absolute** arrival can then back-plan *before* an earlier
+arrival completes — with no load error — leaving the character scheduled to be in two places at once.
+`solveLevel()` detects this ([anachronismUtil.ts](../src/solver/anachronismUtil.ts)) and folds it into
+`ok`; the analysis renders a third verdict-bearing block
+([anachronismSerializeUtil.ts](../src/solver/anachronismSerializeUtil.ts)) and the fitness contract
+gains a `noAnachronisms` gate + an `anachronisms` detail list (so `npm run solve` and `npm run evaluate`
+both surface it).
+
+- **Per-channel overlap, not any overlap.** Overlap is checked **within an activity channel**, never
+  across channels, because a character may legitimately speak (or emit a sound) *while* walking —
+  authored levels do exactly this. An anachronism is two events of the **same** channel whose spans
+  overlap. Channels: `movement` (`WALK`), `speech` (`SPEECH`), `emit` (`EMIT`), `hands`
+  (`TAKE_ITEM`/`DROP_ITEM`/`GIVE_ITEM`). Zero-duration markers (`FACE`/`BODY_ORIENTATION`/`ROOM_ENTRY`/
+  `DIE`), the silent `THOUGHT`, and the derived `CHARACTER_ENCOUNTER` span occupy no channel and are
+  excluded. The canonical fault — an absolute arrival back-planned before the previous arrival
+  finishes — surfaces as two overlapping `WALK`s (the character in two places at once); talking while
+  walking does not, by design.
+- **Placement.** Like reachability, it carries a verdict, so it prints in the always-inline
+  `analysisAscii` (after the two graphs, before the cost table) and never depends on the diagnostic cube.
 
 ### 7. CLI runs via `vite-node`, seeded for determinism
 

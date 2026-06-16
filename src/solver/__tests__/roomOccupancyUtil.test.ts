@@ -61,13 +61,15 @@ describe('roomOccupancyUtil', () => {
       expect(collectRoomOccupancyChangeTimes(level)).toEqual([0, 1_000, 3_000]);
     });
 
-    it('ignores event types that cannot change room occupancy', () => {
+    it('adds no mid-timeline tick for a walk, but still samples the timeline end (the final settled state)', () => {
       const itinerary:Itinerary = [
         { type:ItineraryEventType.WALK, startTime:2_000, duration:1_000, fromPosition:{ x:0, y:0, z:0 }, toPosition:{ x:1, y:0, z:0 } },
       ];
       const level = { startTime:500, characters:[_createCharacter('alice', 10, null, itinerary)] } as Pick<Level, 'startTime' | 'characters'>;
 
-      expect(collectRoomOccupancyChangeTimes(level)).toEqual([500]);
+      // The walk itself adds no room-occupancy-change tick; 3_000 is the timeline end (walk completion),
+      // sampled so a character's final room is captured.
+      expect(collectRoomOccupancyChangeTimes(level)).toEqual([500, 3_000]);
     });
   });
 });

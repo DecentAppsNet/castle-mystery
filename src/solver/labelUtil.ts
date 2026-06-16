@@ -15,3 +15,14 @@ export function formatHoursMinutes(msecs:number):string {
   const minutes = totalMinutes % 60;
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
+
+// Seconds-precision HH:MM:SS, for renderings where sub-minute differences matter (e.g. anachronism
+// overlaps, which can be a second or two). formatHoursMinutes() above stays the default for the wider
+// matrix/cube cells, where the extra columns would not fit.
+export function formatHoursMinutesSeconds(msecs:number):string {
+  const totalSeconds = Math.floor(msecs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}

@@ -20,6 +20,9 @@ tempTests/*
 !tempTests/.gitkeep
 scripts/templateImages/lastGen.png
 
+# Generated level candidates (world-gen scratch): flat _gen.*.md files under public/levels/.
+public/levels/_gen.*
+
 # Be careful about deleting this line below. Very easy to accidentally expose some secrets used in environment variables by committing the .env file.
 .env
 

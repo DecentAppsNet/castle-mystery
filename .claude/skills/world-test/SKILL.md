@@ -1,5 +1,5 @@
 ---
-name: play-game
+name: world-test
 description: >-
   Play a Castle Mystery level as a player would and report whether each CONCLUSION is solvable from
   witnessable evidence — without being told the answers. Covers the Identities conclusion (work out
@@ -10,7 +10,7 @@ description: >-
   or clues, or get design feedback. ANALYSIS ONLY — never edits level files.
 ---
 
-# play-game — conclusion solvability analysis
+# world-test — conclusion solvability analysis
 
 You are simulating a **player** of a Castle Mystery level. During play a character is just an unnamed
 figure (the player sees their sprite, not their name) doing and saying things; the player does **not**
@@ -24,7 +24,7 @@ This skill is **read-only**. Never edit `public/levels/*` or any level content.
 
 ## Input
 
-`/play-game [levelFilename]`
+`/world-test [levelFilename]`
 
 - With a filename (e.g. `01_birth_of_constantine.md`): analyse just that level.
 - With no argument: read `public/levels/levels.md` and analyse every level it lists (currently

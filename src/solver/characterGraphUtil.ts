@@ -5,7 +5,10 @@
   characters who are already together at the start of the level (they only mark *new* encounters).
 
   A character's room only changes at ROOM_ENTRY events, so sampling co-presence at the level start
-  time plus every ROOM_ENTRY tick captures every room-occupancy configuration. */
+  time plus every ROOM_ENTRY tick captures every room-occupancy configuration — except the final room
+  of a tour, whose entry tick resolves to the room being left (findCharacterPose at a ROOM_ENTRY's
+  exact start instant returns the prior room), so we also sample the timeline end (findTimelineEndTime),
+  where every character rests in the room they last entered. */
 
 import { findCharacterPose } from "@/game/itineraryUtil";
 import { findRoomAtPosition } from "@/game/roomUtil";
@@ -14,6 +17,7 @@ import Level from "@/game/types/Level";
 import Room from "@/game/types/Room";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import CharacterGraph, { CharacterGraphEdge, CharacterGraphNode } from "./types/CharacterGraph";
+import { findTimelineEndTime } from "./timelineUtil";
 
 function _compareIds(id1:string, id2:string):number {
   return id1.localeCompare(id2);
@@ -25,7 +29,7 @@ function _createEdgeKey(sourceId:string, targetId:string):string {
 }
 
 function _collectSampleTimes(characters:Character[], startTime:number):number[] {
-  const times = new Set<number>([startTime]);
+  const times = new Set<number>([startTime, findTimelineEndTime(characters, startTime)]);
   characters.forEach(character => {
     character.itinerary.forEach(event => {
       if (event.type === ItineraryEventType.ROOM_ENTRY) times.add(event.startTime);
