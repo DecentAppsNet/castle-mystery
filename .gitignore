@@ -16,6 +16,8 @@ workAssets
 coverage
 public/.vite
 adhocTests
+tempTests/*
+!tempTests/.gitkeep
 scripts/templateImages/lastGen.png
 
 # Be careful about deleting this line below. Very easy to accidentally expose some secrets used in environment variables by committing the .env file.
