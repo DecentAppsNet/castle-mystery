@@ -41,12 +41,15 @@ The `general` section contains top-level name/value settings for the level.
 * `startTime` (optional) - the earliest time that the level uses when describing when events occur. Default: derived from `time` or the itinerary when possible, otherwise `0:00`.
 * `time` (optional) - the time shown on the slider when the player first begins the level. Default: `startTime`.
 * `endTime` (optional) - the latest time that the level uses when describing when events occur. Default: derived from the itinerary when possible, otherwise the resolved `startTime`.
+* `groundFloorRoom` (optional) - identifies which room should define the level's ground-floor Y baseline. Accepts either room id or room title text. Default: the bottom edge of the full room bounds.
 * `winSynopsis` (optional) - the text shown when the player completes the level. Default: `You completed the level.`
 
 In practice, an author can think of these three fields as answering three questions:
 * When does my story start? Use `startTime`.
 * Where should the player begin on the slider? Use `time`.
 * When does my story end? Use `endTime`.
+
+`groundFloorRoom` is mainly useful for multi-level maps where vertical room placement matters. If provided, it must match an existing room (by id or title), otherwise level loading fails.
 
 If a level crosses midnight, write the times the way a person normally would. For example, `startTime=19:30` and `endTime=07:00` means the level starts in the evening and ends the next morning.
 
@@ -379,9 +382,30 @@ In that example, the `:05` and `:07` lines both still refer to Steve, because St
 
 ## Activities
 
+The itinerary loader currently supports these activity verbs and forms:
+* `@ Room` / `@ Room.50%` / `@ 50%`
+* `says ...`
+* `interrupts ...`
+* `thinks ...`
+* `Item emits ...`
+* `faces left|right|Target`
+* `stands`
+* `sits`
+* `kneels`
+* `lays`
+* `dies`
+* `takes Item ...`
+* `drops Item ...`
+* `gives Item to Character`
+* `locks Room`
+* `unlocks Room`
+* `waits` / `waits seconds`
+
 ### @
 
 `@ Room` means the character goes to a room. You can also target a floor waypoint by percentage with `@ Room.50%`.
+
+`@ 50%` (without a room name) means "move within the current room" to the closest floor waypoint near that horizontal percentage.
 
 `Room.50%` means: look at the room's floor waypoints, ignore any that are currently claimed by other characters if possible, and choose the one whose `x` position is closest to 50% of the room width. Any whole number from `0` through `100` is allowed.
 
@@ -414,6 +438,48 @@ Example: `0:15:04 Mary interrupts "Wait."`
 Example: `0:15:03 John thinks "This does not look right."`
 
 Thoughts are private. They do not need to respect audible speech in the room, but one character still cannot overlap their own thought lines.
+
+### Emits
+
+`Item emits "..."` emits text from an item instead of from a character.
+
+Examples:
+* `0:15:03 Bell emits "GONG"`
+* `0:15:03 Master Key emits "clink"`
+
+The emitted item can be on the floor or carried by a character.
+
+### Faces
+
+`faces ...` sets a character's facing direction.
+
+Examples:
+* `0:15:03 John faces left`
+* `0:15:03 John faces right`
+* `0:15:03 John faces Mary`
+* `0:15:03 John faces Master Key`
+
+When the target is a character or item, the facing direction is inferred from that target's position at that time.
+
+### Body Orientation
+
+These verbs set a character's body pose at the activity time:
+* `stands`
+* `sits`
+* `kneels`
+* `lays`
+
+Examples:
+* `0:15:03 John stands`
+* `0:15:03 John sits`
+* `0:15:03 John kneels`
+* `0:15:03 John lays`
+
+### Dies
+
+`dies` marks the character as dead at that time.
+
+Example: `0:15:03 John dies`
 
 ### Locks
 
@@ -470,13 +536,16 @@ Example: `0:15:03 John gives Note to Mary`
 
 If the two characters are too far apart, the loader adds the short walk needed to get close enough first.
 
-### Wanders
+### Waits
 
-`wanders` makes the character take one small step to a nearby waypoint in their current room.
+`waits` delays that activity chain without creating a movement/speech/thought event.
 
-Example: `0:15:03 John wanders`
+Examples:
+* `0:15:03 John waits`
+* `0:15:03 John waits 2`
+* `0:15:03 John waits 0.5`
 
-This is useful for background motion when you do not care about the exact destination.
+If no duration is provided, `waits` defaults to 1 second. This only has an effect if the next activity line in the file has a relative timestamp (`:`). If the next activity line has an absolute timestamp (`0:00:00`), the wait activity will be ignored in favor of the timestamp.
 
 # "Conclusions" Section
 

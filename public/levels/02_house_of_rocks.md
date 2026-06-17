@@ -5,6 +5,7 @@
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md
+* winSynopsis=Heinrich and the young King Frederick enjoyed an afternoon of friendship and falconing. Master Mason Pietro tolerated the apprentice leaving work, hoping for a future royal construction project. The seed of conspiracy was planted in a corner of the workshop yard.
 
 # Map
 

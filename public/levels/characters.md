@@ -148,8 +148,9 @@ ethnicityBackground=Calabrian Italian
 * description=A large man in his fifties that seems no stranger to hard work. Yet his belly tells of good meals, and his hands are free of callouses.
 * faceImage=pietro.png
 
-## Pope Innocent III
+## Pope
 
+* title=Pope Innocent III
 * description=A clergyman with a strong whiff of perfume about him.
 * faceImage=pope.png
 
