@@ -90,6 +90,7 @@ function _createLevelItemsById(level:Level, itemDefinitions:Map<string, { title:
       displayChar:itemDefinition.displayChar,
       imageUrl:itemDefinition.imageUrl,
       randomSalt:rand(),
+      isVisible:true,
       position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
       drawOffset:{ ...itemDefinition.drawOffset },
       description:itemDefinition.description,

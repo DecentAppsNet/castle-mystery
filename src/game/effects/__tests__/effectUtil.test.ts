@@ -18,6 +18,7 @@ function _createItem(id:string, z:number) {
     displayChar:id.charAt(0).toUpperCase(),
     imageUrl:null,
     randomSalt:0,
+    isVisible:true,
     position:{ x:1, y:2, z },
     drawOffset:{ x:0, y:0, z:0 },
     description:'',

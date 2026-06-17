@@ -6,10 +6,26 @@ type Item = {
   readonly displayChar:string,
   readonly imageUrl:string|null,
   readonly randomSalt:number,
+  isVisible:boolean,
   position:Position,
   drawOffset:Position,
   description:string,
   isDiscovered:boolean
+}
+
+export function createDefaultItem():Item {
+  return {
+    id:'item',
+    title:'Item',
+    displayChar:'?',
+    imageUrl:null,
+    randomSalt:0,
+    isVisible:true,
+    position:{ x:0, y:0, z:0 },
+    drawOffset:{ x:0, y:0, z:0 },
+    description:'',
+    isDiscovered:false
+  };
 }
 
 export function duplicateItem(from:Item):Item {
@@ -19,6 +35,7 @@ export function duplicateItem(from:Item):Item {
     displayChar:from.displayChar,
     imageUrl:from.imageUrl,
     randomSalt:from.randomSalt,
+    isVisible:from.isVisible,
     position:duplicatePosition(from.position),
     drawOffset:duplicatePosition(from.drawOffset),
     description:from.description,

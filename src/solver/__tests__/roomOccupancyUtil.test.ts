@@ -5,7 +5,7 @@ import { createItineraryIndex } from '@/game/itineraryUtil';
 import { ROOM_MIDDLE_ROW_CENTER_Z } from '@/game/roomSpaceConstants';
 import Character, { createDefaultCharacter } from '@/game/types/Character';
 import GameState from '@/game/types/GameState';
-import Item from '@/game/types/Item';
+import Item, { createDefaultItem } from '@/game/types/Item';
 import Itinerary from '@/game/types/Itinerary';
 import Level from '@/game/types/Level';
 import Room, { createDefaultRoom } from '@/game/types/Room';
@@ -13,7 +13,7 @@ import ItineraryEventType from '@/game/types/itineraryEvents/ItineraryEventType'
 import { collectRoomOccupancyChangeTimes, createRoomOccupancyByRoomId } from '../roomOccupancyUtil';
 
 function _createItem(id:string):Item {
-  return { id, title:id, displayChar:id[0], imageUrl:null, randomSalt:0, position:{ x:0, y:0, z:0 }, drawOffset:{ x:0, y:0, z:0 }, description:id, isDiscovered:false };
+  return { ...createDefaultItem(), id, title:id, displayChar:id[0], description:id };
 }
 
 function _createRoom(id:string, x:number, items:Item[] = []):Room {
