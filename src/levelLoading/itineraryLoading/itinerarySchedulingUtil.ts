@@ -69,6 +69,10 @@ function _activityAffectsPoseAtTimestamp(activity:ParsedItineraryActivity):boole
   return activity.activityText.startsWith('@ ') || activity.activityText.startsWith('takes ');
 }
 
+function _activityNeedsRoomItemsDuringPosePreview(activity:ParsedItineraryActivity):boolean {
+  return activity.activityText.startsWith('takes ');
+}
+
 function _calcActivityCompletionTime(activityStartTime:number, events:ItineraryEvent[]):number {
   return events.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), activityStartTime);
 }
@@ -125,7 +129,9 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
       const previewState = duplicateCharacterActivityState(state);
       const previewCharacterStatesById = new Map(characterStatesById);
       previewCharacterStatesById.set(activity.characterId, previewState);
-      const previewRoomItemsByRoomId = duplicateRoomItemsByRoomId(roomItemsByRoomId);
+      const previewRoomItemsByRoomId = _activityNeedsRoomItemsDuringPosePreview(activity)
+        ? duplicateRoomItemsByRoomId(roomItemsByRoomId)
+        : roomItemsByRoomId;
       const previewContext = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, activity.subjectKind, activity.subjectId,
         previewRoomItemsByRoomId, charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
       const events = _createEventsForActivity(activity.activityText, previewContext);
