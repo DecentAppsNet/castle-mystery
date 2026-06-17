@@ -3,6 +3,7 @@
 
 import { baseUrl } from "@/common/urlUtil";
 import { parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
+import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
 import LevelManifest from "./types/LevelManifest";
 import { getLastLevelUrl } from "@/persistence/lastLevel";
 import { assert } from "decent-portal";
@@ -52,13 +53,19 @@ function _levelUrlToI(levelUrls:string[], levelUrl:string):number {
 }
 
 export async function loadLevelManifestFromUrl(manifestUrl:string):Promise<LevelManifest> {
-  const manifestText = await _loadTextFromUrl(manifestUrl);
-  const levelUrls = _parseLevelUrls(manifestText, manifestUrl);
-  if (!levelUrls.length) throw Error('No URLs for levels in levels.md.');
-  const levelTitles = await Promise.all(levelUrls.map(async levelUrl => _parseLevelTitle(await _loadTextFromUrl(levelUrl), levelUrl)));
-  const lastLevelUrl = await getLastLevelUrl() ?? '';
-  const lastLevelI = _levelUrlToI(levelUrls, lastLevelUrl);
-  return { levelUrls, levelTitles, lastLevelI };
+  const manifestTiming = `manifest parsing (${manifestUrl})`;
+  startTiming(manifestTiming);
+  try {
+    const manifestText = await _loadTextFromUrl(manifestUrl);
+    const levelUrls = _parseLevelUrls(manifestText, manifestUrl);
+    if (!levelUrls.length) throw Error('No URLs for levels in levels.md.');
+    const levelTitles = await Promise.all(levelUrls.map(async levelUrl => _parseLevelTitle(await _loadTextFromUrl(levelUrl), levelUrl)));
+    const lastLevelUrl = await getLastLevelUrl() ?? '';
+    const lastLevelI = _levelUrlToI(levelUrls, lastLevelUrl);
+    return { levelUrls, levelTitles, lastLevelI };
+  } finally {
+    endTiming(manifestTiming);
+  }
 }
 
 /* DEV-only: the Vite dev server (see vite.config.ts) serves the GEN_INDEX_REF endpoint listing the

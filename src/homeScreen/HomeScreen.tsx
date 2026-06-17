@@ -71,18 +71,22 @@ function HomeScreen() {
   
   useEffect(() => {
     if (gameState) return;
+    let isCancelled = false;
     init().then((initResults) => {
-      if (initResults) {
-        setMinutes(initResults.minutes);
-        setGameState(initResults.gameState);
-        setLevelManifest(initResults.levelManifest);
-        setWinSynopsis(initResults.gameState.winSynopsis);
-        setConclusions(initResults.gameState.conclusions);
-        setDiscoveries(createDiscoveries(initResults.gameState));
-        setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
-        if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
-      }
+      if (!initResults || isCancelled) return;
+      setMinutes(initResults.minutes);
+      setGameState(initResults.gameState);
+      setLevelManifest(initResults.levelManifest);
+      setWinSynopsis(initResults.gameState.winSynopsis);
+      setConclusions(initResults.gameState.conclusions);
+      setDiscoveries(createDiscoveries(initResults.gameState));
+      setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
+      if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
     });
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   function _handleConclusionsChanged(nextConclusions:Conclusion[]) {

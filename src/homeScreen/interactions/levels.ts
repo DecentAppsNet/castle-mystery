@@ -12,6 +12,7 @@ import Conclusion from "@/game/conclusions/types/Conclusion";
 import { loadLevelFromUrl } from "@/levelLoading/levelUtil";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
+import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
 import { msecsToMinutes } from "./gameplay";
 import WinLevelDialog from "../dialogs/WinLevelDialog";
 
@@ -49,23 +50,32 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>, setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
   setIsScrubbing:Dispatch<SetStateAction<boolean>>, setModalDialogName:Dispatch<SetStateAction<string|null>>):Promise<void> {
-  const level = await loadLevelFromUrl(levelUrl);
-  const imageSet = await createImageSetFromLevel(level);
-  const gameState = createGameState(level, imageSet);
+  const levelChangeTiming = `change level (${levelUrl})`;
+  startTiming(levelChangeTiming);
+  try {
+    const level = await loadLevelFromUrl(levelUrl);
+    const imageSet = await createImageSetFromLevel(level);
+    const gameStateTiming = `game state creation (${levelUrl})`;
+    startTiming(gameStateTiming);
+    const gameState = createGameState(level, imageSet);
+    endTiming(gameStateTiming);
 
-  setGameState(gameState);
-  setLevelManifest(_createLevelManifestWithSelectedLevel(levelManifest, levelUrl));
-  setIsPlaying(false);
-  setMinutes(msecsToMinutes(gameState.time));
-  setWinSynopsis(gameState.winSynopsis);
-  setConclusions(gameState.conclusions);
-  setDiscoveries(createDiscoveries(gameState));
-  setConclusionClaimCooldowns({});
-  setActiveCharacterId(gameState.characters[gameState.activeCharacterI]?.id || "");
-  setIsScrubbing(false);
-  setModalDialogName(gameState.isLevelComplete ? WinLevelDialog.name : null);
+    setGameState(gameState);
+    setLevelManifest(_createLevelManifestWithSelectedLevel(levelManifest, levelUrl));
+    setIsPlaying(false);
+    setMinutes(msecsToMinutes(gameState.time));
+    setWinSynopsis(gameState.winSynopsis);
+    setConclusions(gameState.conclusions);
+    setDiscoveries(createDiscoveries(gameState));
+    setConclusionClaimCooldowns({});
+    setActiveCharacterId(gameState.characters[gameState.activeCharacterI]?.id || "");
+    setIsScrubbing(false);
+    setModalDialogName(gameState.isLevelComplete ? WinLevelDialog.name : null);
 
-  await setLastLevelUrl(levelUrl);
+    await setLastLevelUrl(levelUrl);
+  } finally {
+    endTiming(levelChangeTiming);
+  }
 }
 
 export async function changeLevel({

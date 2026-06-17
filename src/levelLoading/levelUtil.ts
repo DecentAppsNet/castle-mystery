@@ -11,6 +11,7 @@ import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { rand } from "@/common/randUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import { MarkdownLineError, normalizeMarkdownName, parseSectionEntriesWithLines, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
+import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
 import { formatMsecsAsTimestamp, parseTimestampToMsecs } from "@/levelLoading/timestampUtil";
 import { loadLevelTextWithSourceLineMap, type SourceLineMap } from "./levelImportUtil";
 import { loadItineraries } from "./levelItineraryLoader";
@@ -504,9 +505,22 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
 }
 
 export async function loadLevelFromUrl(levelFileUrl:string):Promise<Level> {
-  const sourceMappedText = await loadLevelTextWithSourceLineMap(_levelUrlToFilename(levelFileUrl));
-  return loadLevelFromText(sourceMappedText.text, levelFileUrl, {
-    validateUnlockPhrases:true,
-    sourceLineMap:sourceMappedText.sourceLineMap
-  });
+  const levelLoadTiming = `level loading (${levelFileUrl})`;
+  const levelSourceTiming = `level source fetch+merge (${levelFileUrl})`;
+  const levelParseTiming = `level parse+build (${levelFileUrl})`;
+  startTiming(levelLoadTiming);
+  try {
+    startTiming(levelSourceTiming);
+    const sourceMappedText = await loadLevelTextWithSourceLineMap(_levelUrlToFilename(levelFileUrl));
+    endTiming(levelSourceTiming);
+    startTiming(levelParseTiming);
+    const level = loadLevelFromText(sourceMappedText.text, levelFileUrl, {
+      validateUnlockPhrases:true,
+      sourceLineMap:sourceMappedText.sourceLineMap
+    });
+    endTiming(levelParseTiming);
+    return level;
+  } finally {
+    endTiming(levelLoadTiming);
+  }
 }
