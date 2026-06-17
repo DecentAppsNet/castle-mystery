@@ -31,7 +31,7 @@ AABBCCDDE.
 ........
 ```
 
-* P=Pope Innocent III
+* P=Pope
 * U=Ugolino di Conti
 * n=Side Table|Letter
 * c=Coffer
@@ -108,7 +108,7 @@ A.......
 * orientation=laying
 * items=newborn baby
 
-## Pope Innocent III
+## Pope
 
 * items=Holy Binky
 
@@ -169,7 +169,7 @@ A.......
 : takes infant in right hand.
 9:00:07 @ East Square.10%
 
-9:00:00 Pope Innocent III takes Holy Binky in right hand
+9:00:00 Pope takes Holy Binky in right hand
 : says "Behold the Holy Binky!"
 : faces left.
 : says "Carved by Joseph. Given to the baby Jesus."
@@ -178,16 +178,16 @@ A.......
 9:00:19 Ugolino di Conti @ Cathedral.30%
 : faces right.
 
-9:00:20 Pope Innocent III @ Birthing Tent.20%
+9:00:20 Pope @ Birthing Tent.20%
 : Sofia the Midwife says, "My lady, his Holiness has arrived."
 : Constance I says, "I know! He reeks of frankincense."
-: Pope Innocent III says, "Oh, beloved daughter, Queen of Sicily."
+: Pope says, "Oh, beloved daughter, Queen of Sicily."
 : Constance I says, "(huff) (huff)"
-: Pope Innocent III says, "I bestow to your newborn a gift most-"
+: Pope says, "I bestow to your newborn a gift most-"
 : Constance I says, "Just leave it on the pile."
-: Pope Innocent III says, "But-"
+: Pope says, "But-"
 : Constance I says, "Thank you! You can go."
-: Pope Innocent III @ Birthing Tent.80%
+: Pope @ Birthing Tent.80%
 : drops Holy Binky
 : Constance I says, "(huff) (huff)"
 
@@ -229,17 +229,17 @@ A.......
 : Sofia the Midwife says, "Majesty, what shall you name him?"
 : Constance I says, "Constantine. After myself, of course."
 
-9:00:48 Pope Innocent III @ Cathedral
+9:00:48 Pope @ Cathedral
 : Ugolino di Conti says, "Your Holiness has returned."
-: Pope Innocent III says, "That is apparent. Why say it?"
+: Pope says, "That is apparent. Why say it?"
 : Ugolino di Conti says, "I... uh... "
 : says "...wanted to acknowledge your presence respectfully."
-: Pope Innocent III says, "A simple bow suffices, Archbishop."
+: Pope says, "A simple bow suffices, Archbishop."
 9:01:02 faces right.
 : says, "What a drab little church."
 : says, "Not a single flying buttress!"
 : Ugolino di Conti says, "I shall tell the parish priest of your dissatisfaction."
-: Pope Innocent III says, "Good."
+: Pope says, "Good."
 
 9:00:00 Constance I says "Aiiieeee!"
 : says "(huff) (huff) (huff)"
