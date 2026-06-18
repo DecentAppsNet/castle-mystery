@@ -211,7 +211,6 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
     const itinerary = [...state.events];
     return {
       ...character,
-      isVisible:state.isVisible,
       itinerary,
       itineraryIndex: createItineraryIndex(itinerary, character.position),
       items: state.items.map(duplicateItem),

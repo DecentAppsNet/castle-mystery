@@ -53,7 +53,6 @@ export function createCharacterActivityState(character:Character):CharacterActiv
   return {
     events:[],
     time:0,
-    isVisible:character.isVisible,
     position:duplicatePosition(character.position),
     waypoint:character.waypoint,
     items:character.items.map(duplicateItem),
@@ -70,7 +69,6 @@ export function duplicateCharacterActivityState(state:CharacterActivityState):Ch
   return {
     events:state.events.map(duplicateItineraryEvent),
     time:state.time,
-    isVisible:state.isVisible,
     position:duplicatePosition(state.position),
     waypoint:state.waypoint,
     items:state.items.map(duplicateItem),

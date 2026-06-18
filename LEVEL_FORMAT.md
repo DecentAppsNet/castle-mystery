@@ -235,6 +235,7 @@ Write one subsection per character. The subsection name is the character's name.
 * `facing` (optional) - which way the character initially faces. Must be `left` or `right`. Default: `right`.
 * `orientation` (optional) - the character's initial body pose. Must be `standing`, `sitting`, or `laying`. Default: `standing`.
 * `isTitleKnown` (optional) - `true` if the player should already know this character's identity when the level begins. Default: `false`.
+* `visible` (optional) - whether the character is drawn at the start of the level. Must be `true` or `false`. Default: `true`. Use `show` and `hide` in the itinerary to change visibility over time.
 
 This section defines the character, but it does not place them on the map. Character placement belongs in the `rooms` section.
 
@@ -280,6 +281,7 @@ Write one subsection per item. The subsection name is the item's name.
 * `title` (optional) - the display name shown to the player. Default: the subsection name.
 * `description` (optional) - a short description of the item. Default: empty.
 * `displayChar` (optional) - the single character used to draw the item in the UI. Default: the first character of the subsection name, or `?` if there is none.
+* `visible` (optional) - whether the item is drawn at the start of the level. Must be `true` or `false`. Default: `true`. Use `show` and `hide` in the itinerary to change visibility over time.
 
 In practice, an author can think of this section as answering three questions:
 * What is this object called? Use the subsection name and, if needed, `title`.
@@ -399,6 +401,8 @@ The itinerary loader currently supports these activity verbs and forms:
 * `gives Item to Character`
 * `locks Room`
 * `unlocks Room`
+* `show Character|Item`
+* `hide Character|Item`
 * `waits` / `waits seconds`
 
 ### @
@@ -546,6 +550,26 @@ Examples:
 * `0:15:03 John waits 0.5`
 
 If no duration is provided, `waits` defaults to 1 second. This only has an effect if the next activity line in the file has a relative timestamp (`:`). If the next activity line has an absolute timestamp (`0:00:00`), the wait activity will be ignored in favor of the timestamp.
+
+### Show
+
+`show Character|Item` makes a character or item visible at that time.
+
+Examples:
+* `0:15:03 John show Bookcase`
+* `0:15:03 John show Mary`
+
+The target can be an item or a character, referenced by name or id. The change takes effect at the given timestamp and is reflected when the player scrubs to that time.
+
+### Hide
+
+`hide Character|Item` makes a character or item invisible at that time.
+
+Examples:
+* `0:15:03 John hide Bookcase`
+* `0:15:03 John hide Mary`
+
+Like `show`, the target can be an item or a character. An invisible character or item is completely excluded from drawing. Use `visible=false` in the `characters` or `items` section if you want a character or item to start invisible before the timeline has a chance to show it.
 
 # "Conclusions" Section
 

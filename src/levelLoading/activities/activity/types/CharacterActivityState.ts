@@ -6,7 +6,6 @@ import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 type CharacterActivityState = {
   events:ItineraryEvent[],
   time:number,
-  isVisible:boolean,
   position:Position,
   waypoint:Waypoint,
   items:Item[],
