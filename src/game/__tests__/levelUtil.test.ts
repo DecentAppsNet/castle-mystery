@@ -144,6 +144,9 @@ import deadCharacterActivityText from './fixtures/dead-character-activity.md?raw
 import initiallyDeadCharacterActivityText from './fixtures/initially-dead-character-activity.md?raw';
 import initialCharacterPoseText from './fixtures/initial-character-pose.md?raw';
 import bodyOrientationActivityText from './fixtures/body-orientation-activity.md?raw';
+import visibleFlagsText from './fixtures/visible-flags.md?raw';
+import invalidCharacterVisibleText from './fixtures/invalid-character-visible.md?raw';
+import invalidItemVisibleText from './fixtures/invalid-item-visible.md?raw';
 import { getClozeImageCandidateUrls, getItemImageAssetUrl } from '../imageUrlUtil';
 import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
@@ -249,6 +252,36 @@ describe('levelUtil itinerary loading', () => {
     expect(king.bodyOrientation).toBe('sitting');
     expect(findCharacterPose(king, 0).facingDirection).toBe('left');
     expect(findCharacterPose(king, 0).bodyOrientation).toBe('sitting');
+  });
+
+  it('parses visible flags for character and item sections and defaults unspecified visible to true', () => {
+    const level = loadLevelFromText(visibleFlagsText, 'visible-flags.md');
+
+    const king = level.characters.find(character => character.id === 'king');
+    if (!king) expect.fail('expected king character to exist');
+    expect(king.isVisible).toBe(false);
+
+    const guard = level.characters.find(character => character.id === 'guard');
+    if (!guard) expect.fail('expected guard character to exist');
+    expect(guard.isVisible).toBe(true);
+
+    const hiddenGem = level.itemsById.get('hidden gem');
+    if (!hiddenGem) expect.fail('expected hidden gem item to exist');
+    expect(hiddenGem.isVisible).toBe(false);
+
+    const coin = level.itemsById.get('coin');
+    if (!coin) expect.fail('expected coin item to exist');
+    expect(coin.isVisible).toBe(true);
+  });
+
+  it('throws for invalid character visible values', () => {
+    expect(() => loadLevelFromText(invalidCharacterVisibleText, 'invalid-character-visible.md'))
+      .toThrow(/character king visible must be true or false/);
+  });
+
+  it('throws for invalid item visible values', () => {
+    expect(() => loadLevelFromText(invalidItemVisibleText, 'invalid-item-visible.md'))
+      .toThrow(/item coin visible must be true or false/);
   });
 
   it('throws when a dead character has a later itinerary activity after dying', () => {

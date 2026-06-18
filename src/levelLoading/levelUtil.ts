@@ -80,7 +80,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
   };
 }
 
-function _createLevelItemsById(level:Level, itemDefinitions:Map<string, { title:string, description:string, displayChar:string, imageUrl:string|null, drawOffset:{ x:number, y:number, z:number } }>):Map<string, Item> {
+function _createLevelItemsById(level:Level, itemDefinitions:Map<string, { title:string, description:string, displayChar:string, imageUrl:string|null, isVisible:boolean, drawOffset:{ x:number, y:number, z:number } }>):Map<string, Item> {
   const itemsById = createItemsById(level.rooms, level.characters);
   itemDefinitions.forEach((itemDefinition, itemId) => {
     if (itemsById.has(itemId)) return;
@@ -90,7 +90,7 @@ function _createLevelItemsById(level:Level, itemDefinitions:Map<string, { title:
       displayChar:itemDefinition.displayChar,
       imageUrl:itemDefinition.imageUrl,
       randomSalt:rand(),
-      isVisible:true,
+      isVisible:itemDefinition.isVisible,
       position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
       drawOffset:{ ...itemDefinition.drawOffset },
       description:itemDefinition.description,

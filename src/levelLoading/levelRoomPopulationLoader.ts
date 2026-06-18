@@ -23,6 +23,7 @@ type CharacterDefinition = {
 	description:string,
 	inventoryItems:Array<{ id:string, title:string }>,
 	faceImageUrl:string|null,
+	isVisible:boolean,
 	isAlive:boolean,
 	facingDirection:FacingDirection,
 	bodyOrientation:BodyOrientation,
@@ -34,6 +35,7 @@ type ItemDefinition = {
 	description:string,
 	displayChar:string,
 	imageUrl:string|null,
+	isVisible:boolean,
 	drawOffset:Position
 };
 
@@ -67,6 +69,22 @@ function _parseOptionalIsAliveOrThrow(value:string|undefined, characterId:string
 	if (normalizedValue === 'true') return true;
 	if (normalizedValue === 'false') return false;
 	throw new Error(`character ${characterId} alive must be true or false`);
+}
+
+function _parseOptionalIsCharacterVisibleOrThrow(value:string|undefined, characterId:string):boolean {
+	if (value === undefined) return true;
+	const normalizedValue = value.trim().toLowerCase();
+	if (normalizedValue === 'true') return true;
+	if (normalizedValue === 'false') return false;
+	throw new Error(`character ${characterId} visible must be true or false`);
+}
+
+function _parseOptionalIsItemVisibleOrThrow(value:string|undefined, itemId:string):boolean {
+	if (value === undefined) return true;
+	const normalizedValue = value.trim().toLowerCase();
+	if (normalizedValue === 'true') return true;
+	if (normalizedValue === 'false') return false;
+	throw new Error(`item ${itemId} visible must be true or false`);
 }
 
 function _parseOptionalFacingDirectionOrThrow(value:string|undefined, characterId:string):FacingDirection {
@@ -123,6 +141,7 @@ export function parseCharacterDefinitions(charactersSection:string, firstLineNo:
 			description:nameValues.description || "",
 			inventoryItems,
 			faceImageUrl:nameValues.faceImage ? getFaceImageAssetUrl(nameValues.faceImage.trim()) : null,
+			isVisible:_parseOptionalIsCharacterVisibleOrThrow(nameValues.visible, characterId),
 			isAlive:_parseOptionalIsAliveOrThrow(nameValues.alive, characterId),
 			facingDirection:_parseOptionalFacingDirectionOrThrow(nameValues.facing, characterId),
 			bodyOrientation:_parseOptionalBodyOrientationOrThrow(nameValues.orientation, characterId),
@@ -144,6 +163,7 @@ export function parseItemDefinitions(itemsSection:string, firstLineNo:number = 1
 			description:nameValues.description || "",
 			displayChar:nameValues.displayChar || authoredItemName.charAt(0) || "?",
 			imageUrl:nameValues.image ? getItemImageAssetUrl(nameValues.image.trim()) : null,
+			isVisible:_parseOptionalIsItemVisibleOrThrow(nameValues.visible, itemId),
 			drawOffset:{
 				x:_parseOptionalNumberOrThrow(nameValues.drawOffsetX, 'drawOffsetX', itemId),
 				y:_parseOptionalNumberOrThrow(nameValues.drawOffsetY, 'drawOffsetY', itemId),
@@ -246,7 +266,7 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 		displayChar:itemDefinition?.displayChar || defaultTitleText.charAt(0) || "?",
 		imageUrl:itemDefinition?.imageUrl || null,
 		randomSalt:rand(),
-		isVisible:true,
+		isVisible:itemDefinition?.isVisible ?? true,
 		position:{ ...position, z:depth },
 		drawOffset:itemDefinition?.drawOffset || { x:0, y:0, z:0 },
 		description:itemDefinition?.description || "",
@@ -255,7 +275,7 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 }
 
 function _addCharacter(level:Level, room:Room, characterId:string, title:string, description:string,
-	faceImageUrl:string|null, isAlive:boolean, facingDirection:FacingDirection, bodyOrientation:BodyOrientation,
+	faceImageUrl:string|null, isVisible:boolean, isAlive:boolean, facingDirection:FacingDirection, bodyOrientation:BodyOrientation,
 	isTitleKnown:boolean, x:number, y:number, depth:number) {
 	const claimedWaypoints = new Set(level.characters.map(character => `${character.waypoint.position.x},${character.waypoint.position.y},${character.waypoint.position.z}`));
 	const waypoint = findNearestWaypointToPosition(room, { x, y, z:depth });
@@ -268,7 +288,7 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 		title,
 		faceImageUrl,
 		randomSalt:rand(),
-		isVisible:true,
+		isVisible,
 		isAlive,
 		facingDirection,
 		bodyOrientation,
@@ -312,7 +332,7 @@ function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, author
 		if (characterDefinition) {
 			_assertCharacterIdIsUnique(level, entryId, roomId, row, col);
 			_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description,
-				characterDefinition.faceImageUrl, characterDefinition.isAlive, characterDefinition.facingDirection,
+				characterDefinition.faceImageUrl, characterDefinition.isVisible, characterDefinition.isAlive, characterDefinition.facingDirection,
 				characterDefinition.bodyOrientation, characterDefinition.isTitleKnown, x, characterY, characterDepth);
 			return;
 		}
