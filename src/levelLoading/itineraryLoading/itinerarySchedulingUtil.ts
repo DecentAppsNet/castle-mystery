@@ -44,6 +44,8 @@ type ScheduleActivitiesResult = {
   completionTimesBySourceIndex:Map<number, number>
 };
 
+const MIN_RELATIVE_ACTIVITY_GAP_MSECS = 1;
+
 function _createActivityContext(level:Level, character:Character, timestamp:number, timestampType:LeadingTimestampKind,
   activitySourceIndex:number, subjectKind:ParsedItineraryActivity['subjectKind'], subjectId:string, roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
   characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>, poseOverridesByCharacterId:Map<string, Position>):ActivityContext {
@@ -82,6 +84,13 @@ function _calcParsedActivityCompletionTime(activity:ParsedItineraryActivity, act
   const eventCompletionTime = _calcActivityCompletionTime(activityStartTime, events);
   if (activity.waitDurationMsecs === null) return eventCompletionTime;
   return Math.max(eventCompletionTime, activityStartTime + activity.waitDurationMsecs);
+}
+
+function _calcCompletionTimeForRelativeResolution(activity:ParsedItineraryActivity, activityStartTime:number, events:ItineraryEvent[]):number {
+  const activityCompletionTime = _calcParsedActivityCompletionTime(activity, activityStartTime, events);
+  if (activity.waitDurationMsecs !== null) return activityCompletionTime;
+  if (!events.length || events.some(event => event.duration > 0)) return activityCompletionTime;
+  return activityCompletionTime + MIN_RELATIVE_ACTIVITY_GAP_MSECS;
 }
 
 function _createEventsForActivity(activityText:string, context:ActivityContext):ItineraryEvent[] {
@@ -184,7 +193,7 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
       const activityStartTime = calcActivityStartTime(context.state, activity.resolvedTime, activity.timestampType);
       const events = activity.waitDurationMsecs === null ? _createEventsForActivity(activity.activityText, context) : [];
       appendEventsToCharacterState(level, character, context.state, events);
-      const activityCompletionTime = _calcParsedActivityCompletionTime(activity, activityStartTime, events);
+      const activityCompletionTime = _calcCompletionTimeForRelativeResolution(activity, activityStartTime, events);
       if (!events.length) context.state.time = Math.max(context.state.time, activityCompletionTime);
       completionTimesBySourceIndex.set(activity.sourceIndex, activityCompletionTime);
     }, activity.resolvedTime);

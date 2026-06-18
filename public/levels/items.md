@@ -12,6 +12,10 @@
 * image=breadRoll.png
 * description=A rustic bit of bready goodness from fresh ground flour.
 
+## Brass Key
+* image=brassKey.png
+* description=A brass key. It must fit in some lock somewhere. Or maybe not.
+
 ## Codex
 * image=codex.png
 

@@ -125,6 +125,7 @@ import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import atRoomMarkerText from '../integration-tests/fixtures/at-room-marker.md?raw';
 import dropItemText from '../integration-tests/fixtures/drop-item.md?raw';
 import giveItemNearText from '../integration-tests/fixtures/give-item-near.md?raw';
+import giveItemRelativeTakeText from '../integration-tests/fixtures/give-item-relative-take.md?raw';
 import wanderingTrappedText from '../integration-tests/fixtures/wandering-trapped.md?raw';
 import conclusionsImageSeparatorText from './fixtures/conclusions-image-separator.md?raw';
 import timelineStartTimeFieldText from './fixtures/timeline-start-time-field.md?raw';
@@ -964,6 +965,20 @@ describe('levelUtil itinerary loading', () => {
     expect(giveEvent).toEqual({ type:ItineraryEventType.GIVE_ITEM, startTime:5_000, duration:0, itemId:'book', recipientCharacterId:'queen' });
     expect(king?.items.map(item => item.id)).not.toContain('book');
     expect(queen?.items.map(item => item.id)).toContain('book');
+  });
+
+  it('resolves a relative take after a zero-duration give using authored order', () => {
+    const level = loadLevelFromText(giveItemRelativeTakeText, 'give-item-relative-take.md');
+    const king = level.characters.find(character => character.id === 'king');
+    const queen = level.characters.find(character => character.id === 'queen');
+    const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
+    const takeEvent = queen?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM) as { startTime:number, duration:number } | undefined;
+
+    expect(giveEvent?.startTime).toBe(5_000);
+    expect(takeEvent?.startTime).toBe(5_001);
+    expect(takeEvent?.duration).toBe(ITEM_EFFECT_DURATION);
+    expect(queen?.rightHandItem?.id).toBe('book');
+    expect(queen?.items.map(item => item.id)).not.toContain('book');
   });
 
   it('loads emits activities for carried items that are not visible in hand', () => {

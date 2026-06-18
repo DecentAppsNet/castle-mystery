@@ -107,8 +107,8 @@ describe('levelItineraryLoader', () => {
       const hero = result.characters.find(character => character.id === 'hero');
 
       expect(hero).toBeTruthy();
-      expect(findCharacterPose(hero!, 2_999).facingDirection).toBe('right');
-      expect(findCharacterPose(hero!, 3_000).facingDirection).toBe('left');
+      expect(findCharacterPose(hero!, 3_000).facingDirection).toBe('right');
+      expect(findCharacterPose(hero!, 3_001).facingDirection).toBe('left');
     });
 
     it('does not delay a later activity with an absolute timestamp', () => {
