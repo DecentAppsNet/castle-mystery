@@ -21,6 +21,7 @@ import { tryCreateFaceActivity } from "../activities/facesActivityUtil";
 import { tryCreateGiveActivity } from "../activities/giveActivityUtil.ts";
 import { tryCreateLockActivity, tryCreateUnlockActivity } from "../activities/lockActivityUtil";
 import { tryCreateSayActivity } from "../activities/sayActivityUtil";
+import { tryCreateShowHideActivity } from "../activities/showHideActivityUtil";
 import { tryCreateTakeActivity } from "../activities/takeActivityUtil";
 import { tryCreateThinkActivity } from "../activities/thinkActivityUtil";
 import {
@@ -100,6 +101,7 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
     tryCreateGiveActivity,
     tryCreateDropActivity,
     tryCreateTakeActivity,
+    tryCreateShowHideActivity,
     tryCreateLockActivity,
     tryCreateUnlockActivity
   ];
@@ -209,6 +211,7 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
     const itinerary = [...state.events];
     return {
       ...character,
+      isVisible:state.isVisible,
       itinerary,
       itineraryIndex: createItineraryIndex(itinerary, character.position),
       items: state.items.map(duplicateItem),

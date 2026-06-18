@@ -147,6 +147,8 @@ import bodyOrientationActivityText from './fixtures/body-orientation-activity.md
 import visibleFlagsText from './fixtures/visible-flags.md?raw';
 import invalidCharacterVisibleText from './fixtures/invalid-character-visible.md?raw';
 import invalidItemVisibleText from './fixtures/invalid-item-visible.md?raw';
+import showHideActivityText from './fixtures/show-hide-activity.md?raw';
+import unknownVisibilityTargetActivityText from './fixtures/unknown-visibility-target-activity.md?raw';
 import { getClozeImageCandidateUrls, getItemImageAssetUrl } from '../imageUrlUtil';
 import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
@@ -282,6 +284,26 @@ describe('levelUtil itinerary loading', () => {
   it('throws for invalid item visible values', () => {
     expect(() => loadLevelFromText(invalidItemVisibleText, 'invalid-item-visible.md'))
       .toThrow(/item coin visible must be true or false/);
+  });
+
+  it('parses show/hide activities for character and item targets', () => {
+    const level = loadLevelFromText(showHideActivityText, 'show-hide-activity.md');
+    const king = level.characters.find(character => character.id === 'king');
+    const guard = level.characters.find(character => character.id === 'guard');
+    const hiddenGem = level.itemsById.get('hidden gem');
+
+    if (!king) expect.fail('expected king character to exist');
+    if (!guard) expect.fail('expected guard character to exist');
+    if (!hiddenGem) expect.fail('expected hidden gem item to exist');
+
+    expect(king.isVisible).toBe(true);
+    expect(guard.isVisible).toBe(true);
+    expect(hiddenGem.isVisible).toBe(false);
+  });
+
+  it('throws for show/hide activities with unknown targets', () => {
+    expect(() => loadLevelFromText(unknownVisibilityTargetActivityText, 'unknown-visibility-target-activity.md'))
+      .toThrow(/unknown visibility target 'Ghost' in authored activity 'hide Ghost'/);
   });
 
   it('throws when a dead character has a later itinerary activity after dying', () => {
