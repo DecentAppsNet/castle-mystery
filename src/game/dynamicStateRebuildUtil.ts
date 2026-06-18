@@ -20,6 +20,7 @@ import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
 import LockEvent from "./types/itineraryEvents/LockEvent";
 import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
+import VisibilityEvent from "./types/itineraryEvents/VisibilityEvent";
 import ExitStatus from "./types/ExitStatus";
 
 type AppliedInventoryEvent = {
@@ -34,6 +35,12 @@ type AppliedExitStateEvent = {
   eventIndex:number,
   startPosition:Position,
   event:LockEvent|UnlockEvent
+}
+
+type AppliedVisibilityEvent = {
+  characterId:string,
+  eventIndex:number,
+  event:VisibilityEvent
 }
 
 type PendingRoomEffect = {
@@ -114,13 +121,34 @@ function _collectAppliedExitStateEvents(gameState:GameState, time:number):Applie
           {
             const startPosition = character.itineraryIndex.eventStartPositions[eventIndex];
             assertNonNullable(startPosition);
+            appliedEvents.push({
+              characterId:character.id,
+              eventIndex,
+              startPosition:duplicatePosition(startPosition),
+              event:event as LockEvent|UnlockEvent
+            });
+          }
+        break;
+      }
+    });
+  });
+  appliedEvents.sort((a, b) => a.event.startTime - b.event.startTime || a.characterId.localeCompare(b.characterId) || a.eventIndex - b.eventIndex);
+  return appliedEvents;
+}
+
+function _collectAppliedVisibilityEvents(gameState:GameState, time:number):AppliedVisibilityEvent[] {
+  const appliedEvents:AppliedVisibilityEvent[] = [];
+  gameState.characters.forEach(character => {
+    character.itinerary.forEach((event, eventIndex) => {
+      if (event.startTime > time) return;
+      switch(event.type) {
+        case ItineraryEventType.SHOW:
+        case ItineraryEventType.HIDE:
           appliedEvents.push({
             characterId:character.id,
             eventIndex,
-            startPosition:duplicatePosition(startPosition),
-            event:event as LockEvent|UnlockEvent
+            event:event as VisibilityEvent
           });
-          }
         break;
       }
     });
@@ -140,6 +168,18 @@ function _findCharacter(gameState:GameState, characterId:string):Character {
   const character = gameState.characters.find(currentCharacter => currentCharacter.id === characterId);
   assertNonNullable(character, `character with id ${characterId} not found`);
   return character;
+}
+
+function _applyVisibility(gameState:GameState, targetId:string, isVisible:boolean) {
+  const character = gameState.characters.find(candidate => candidate.id === targetId) || null;
+  if (character) {
+    character.isVisible = isVisible;
+    return;
+  }
+
+  const item = gameState.itemsById.get(targetId) || null;
+  assertNonNullable(item, `visibility event target ${targetId} was not found`);
+  item.isVisible = isVisible;
 }
 
 function _setMatchingExitStatus(gameState:GameState, roomExitId:string, exitStatus:ExitStatus) {
@@ -243,6 +283,18 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
         if (room && roomExit && previousTime !== undefined && event.startTime > previousTime && event.startTime <= time && !room.isObscured) {
           pendingRoomEffects.push({ roomId:room.id, create:() => gameState.activeEffects.push(createUnlockEffect(room, roomExit, Date.now(), gameState.scalingFactors, gameState.imageSet)) });
         }
+      break;
+    }
+  });
+
+  _collectAppliedVisibilityEvents(gameState, time).forEach(({ event }) => {
+    switch(event.type) {
+      case ItineraryEventType.SHOW:
+        _applyVisibility(gameState, event.targetId, true);
+      break;
+
+      case ItineraryEventType.HIDE:
+        _applyVisibility(gameState, event.targetId, false);
       break;
     }
   });

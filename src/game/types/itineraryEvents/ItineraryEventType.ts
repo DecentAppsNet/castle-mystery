@@ -11,6 +11,8 @@ const ItineraryEventType = {
   TAKE_ITEM:"TakeItem",
   DROP_ITEM:"DropItem",
   GIVE_ITEM:"GiveItem",
+  SHOW:"Show",
+  HIDE:"Hide",
   LOCK:"Lock",
   UNLOCK:"Unlock"
 } as const;

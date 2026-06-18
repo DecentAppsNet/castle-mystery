@@ -273,7 +273,7 @@ function _createDrawableContents(room:Room, charactersInRoom:Character[], effect
     stairPart
   }));
   const sortedNonStairContents = [
-    ...charactersInRoom.map(character => ({ type:'character' as const, depth:character.position.z, x:character.position.x, sortId:character.id, character })),
+    ...charactersInRoom.filter(character => character.isVisible).map(character => ({ type:'character' as const, depth:character.position.z, x:character.position.x, sortId:character.id, character })),
     ...findVisibleRoomItemsInDrawOrder(room, effects, includeUndiscoveredItems)
       .map(item => ({ type:'item' as const, depth:item.position.z, x:item.position.x, sortId:item.id, item }))
   ].sort(compareNonStairDrawableContents);

@@ -289,16 +289,50 @@ describe('levelUtil itinerary loading', () => {
   it('parses show/hide activities for character and item targets', () => {
     const level = loadLevelFromText(showHideActivityText, 'show-hide-activity.md');
     const king = level.characters.find(character => character.id === 'king');
-    const guard = level.characters.find(character => character.id === 'guard');
-    const hiddenGem = level.itemsById.get('hidden gem');
 
     if (!king) expect.fail('expected king character to exist');
-    if (!guard) expect.fail('expected guard character to exist');
-    if (!hiddenGem) expect.fail('expected hidden gem item to exist');
 
-    expect(king.isVisible).toBe(true);
-    expect(guard.isVisible).toBe(true);
-    expect(hiddenGem.isVisible).toBe(false);
+    const visibilityEvents = king.itinerary.filter(event => event.type === ItineraryEventType.SHOW || event.type === ItineraryEventType.HIDE);
+    expect(visibilityEvents).toEqual([
+      { type:ItineraryEventType.HIDE, startTime:1_000, duration:0, targetId:'guard' },
+      { type:ItineraryEventType.HIDE, startTime:2_000, duration:0, targetId:'hidden gem' },
+      { type:ItineraryEventType.SHOW, startTime:3_000, duration:0, targetId:'guard' }
+    ]);
+  });
+
+  it('rebuilds character and item visibility from show/hide events when scrubbing time', () => {
+    const level = loadLevelFromText(showHideActivityText, 'show-hide-activity.md');
+    const gameState = createGameState(level);
+
+    rebuildDynamicStateForTime(gameState, 500);
+    let guard = gameState.characters.find(character => character.id === 'guard') || null;
+    let hiddenGem = gameState.itemsById.get('hidden gem') || null;
+    expect(guard?.isVisible).toBe(true);
+    expect(hiddenGem?.isVisible).toBe(true);
+
+    rebuildDynamicStateForTime(gameState, 1_500);
+    guard = gameState.characters.find(character => character.id === 'guard') || null;
+    hiddenGem = gameState.itemsById.get('hidden gem') || null;
+    expect(guard?.isVisible).toBe(false);
+    expect(hiddenGem?.isVisible).toBe(true);
+
+    rebuildDynamicStateForTime(gameState, 2_500);
+    guard = gameState.characters.find(character => character.id === 'guard') || null;
+    hiddenGem = gameState.itemsById.get('hidden gem') || null;
+    expect(guard?.isVisible).toBe(false);
+    expect(hiddenGem?.isVisible).toBe(false);
+
+    rebuildDynamicStateForTime(gameState, 3_500);
+    guard = gameState.characters.find(character => character.id === 'guard') || null;
+    hiddenGem = gameState.itemsById.get('hidden gem') || null;
+    expect(guard?.isVisible).toBe(true);
+    expect(hiddenGem?.isVisible).toBe(false);
+
+    rebuildDynamicStateForTime(gameState, 500);
+    guard = gameState.characters.find(character => character.id === 'guard') || null;
+    hiddenGem = gameState.itemsById.get('hidden gem') || null;
+    expect(guard?.isVisible).toBe(true);
+    expect(hiddenGem?.isVisible).toBe(true);
   });
 
   it('throws for show/hide activities with unknown targets', () => {

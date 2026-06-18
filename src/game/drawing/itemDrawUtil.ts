@@ -387,7 +387,7 @@ export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:
 
 function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
   return room.items
-    .filter(item => (includeUndiscovered || item.isDiscovered) && !_isItemSuppressedByEffect(item, effects))
+    .filter(item => item.isVisible && (includeUndiscovered || item.isDiscovered) && !_isItemSuppressedByEffect(item, effects))
     .sort((item1, item2) => item1.position.z - item2.position.z
       || item2.position.x - item1.position.x
       || item2.position.y - item1.position.y

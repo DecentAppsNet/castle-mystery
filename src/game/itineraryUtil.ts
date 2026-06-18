@@ -15,6 +15,7 @@ import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
 import LockEvent from "./types/itineraryEvents/LockEvent";
 import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
+import VisibilityEvent from "./types/itineraryEvents/VisibilityEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import ItineraryEvent from "./types/itineraryEvents/ItineraryEvent";
 import Position, { duplicatePosition } from "./types/Position";
@@ -180,6 +181,14 @@ export function createUnlockEvent(startTime:number, roomExitId:string):UnlockEve
   return { type:ItineraryEventType.UNLOCK, startTime, duration:0, roomExitId };
 }
 
+export function createShowEvent(startTime:number, targetId:string):VisibilityEvent {
+  return { type:ItineraryEventType.SHOW, startTime, duration:0, targetId };
+}
+
+export function createHideEvent(startTime:number, targetId:string):VisibilityEvent {
+  return { type:ItineraryEventType.HIDE, startTime, duration:0, targetId };
+}
+
 export function createRoomEntryEvent(startTime:number, roomId:string):RoomEntryEvent {
   return { type:ItineraryEventType.ROOM_ENTRY, startTime, duration:0, roomId };
 }
@@ -203,6 +212,8 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
     case ItineraryEventType.GIVE_ITEM:
+    case ItineraryEventType.SHOW:
+    case ItineraryEventType.HIDE:
     case ItineraryEventType.LOCK:
     case ItineraryEventType.UNLOCK:
       return duplicatePosition(eventStartPosition);
