@@ -100,7 +100,7 @@ export function createSpeechEvent(startTime:number, speech:string):SpeechEvent {
   };
 }
 
-export function createEmitEvent(startTime:number, itemId:string, emitText:string):EmitEvent {
+export function createEmitEvent(startTime:number, itemId:string|null, emitText:string):EmitEvent {
   return {
     type:ItineraryEventType.EMIT,
     startTime,

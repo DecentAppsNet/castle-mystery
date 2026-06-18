@@ -6,7 +6,7 @@ import EffectBase from "./EffectBase";
 
 type EmitBubbleEffect = EffectBase & {
   room:Room,
-  item:Item,
+  item:Item|null,
   ownerCharacter:Character|null,
   scalingFactors:ScalingFactors,
   gameTime:number,

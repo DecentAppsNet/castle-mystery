@@ -253,6 +253,19 @@ function _syncEmitBubbleEffects(gameState:GameState, isScrubbing:boolean = false
   gameState.characters.forEach(character => {
     const activeEmitEvent = _findActiveEmitEvent(character, gameState.time);
     if (!activeEmitEvent) return;
+    if (!activeEmitEvent.itemId) {
+      const room = findRoomAtPosition(gameState.rooms, character.position.x, character.position.y);
+      if (!room || !audibleRoomIds.has(room.id)) return;
+      gameState.activeEffects.push(createEmitBubbleEffect(
+        room,
+        null,
+        null,
+        activeEmitEvent.emitText,
+        gameState.scalingFactors,
+        gameState.time
+      ));
+      return;
+    }
     const emitItemState = _findEmitItemState(gameState, activeEmitEvent.itemId);
     if (!emitItemState || !audibleRoomIds.has(emitItemState.room.id)) return;
     gameState.activeEffects.push(createEmitBubbleEffect(

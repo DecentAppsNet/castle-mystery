@@ -51,6 +51,17 @@ describe('levelItineraryLoader', () => {
       expect(emitsActivity.activityText).toBe('emits "(squawk)"');
     });
 
+    it('parses bare emits activities as implied-character activities', () => {
+      const options = { isCrossMidnight:false, explicitEndTime:null };
+      const [atActivity, emitsActivity] = parseItineraryActivities(['0:00:03 Niccollo @ Aviary', ': emits "(massive boom)"'].join('\n'), 'room-emits.md', 1, options, 0, 'hero');
+
+      expect(atActivity.subjectKind).toBe('character');
+      expect(emitsActivity.characterId).toBe('niccollo');
+      expect(emitsActivity.subjectKind).toBe('character');
+      expect(emitsActivity.subjectId).toBe('niccollo');
+      expect(emitsActivity.activityText).toBe('emits "(massive boom)"');
+    });
+
     it('parses waits activities with explicit and default durations', () => {
       const options = { isCrossMidnight:false, explicitEndTime:null };
       const [explicitWaitActivity, defaultWaitActivity] = parseItineraryActivities([

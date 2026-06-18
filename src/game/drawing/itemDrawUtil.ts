@@ -395,7 +395,7 @@ function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], includeUndisco
 }
 
 function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
-  return effects.some(effect => effect.type === EffectType.DROP_ITEM && "item" in effect && effect.item.id === item.id);
+  return effects.some(effect => effect.type === EffectType.DROP_ITEM && "item" in effect && effect.item?.id === item.id);
 }
 
 export function findVisibleRoomItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {

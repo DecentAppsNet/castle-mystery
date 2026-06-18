@@ -1,7 +1,7 @@
 import ItineraryEventBase from "./ItineraryEventBase";
 
 type EmitEvent = Readonly<ItineraryEventBase & {
-  itemId:string,
+  itemId:string|null,
   emitText:string
 }>
 
