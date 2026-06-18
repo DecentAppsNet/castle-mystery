@@ -90,6 +90,26 @@ ethnicityBackground=Greek Sicilian
 * description=An 11-year-old boy.
 * faceImage=heinrich.png
 
+## Helena
+
+* title=Helena of Gaeta
+* description=Suspicious of others and suspicious herself.
+* faceImage=helena.png
+
+Occupation: Keeper of Textiles (Textile Store L)
+Age: 29
+Ethnicity: Greek-Italian
+
+## Hugo
+
+* title=Hugo of Speyer
+* description=A man who believes in the practical applications of violence.
+* faceImage=hugo.png
+
+Occupation: Guard Sergeant (Guard Chamber E)
+Age: 44
+Ethnicity: German
+
 ## Male Peasant
 
 * faceImage=malePeasant.png
@@ -115,6 +135,16 @@ ethnicityBackground=Greek Sicilian
 age=47
 occupation=Cook and house manager
 ethnicityBackground=Latin Sicilian
+
+## Matteo
+
+* title=Matteo il Toro
+* faceImage=mattero.png
+* description=A powerful brute. His two moods are angry and sleeping.
+
+Occupation: Cellarer and laborer (Wine Cellar K)
+Age: 38
+Ethnicity: Umbrian Italian
 
 ## Niccolo
 
@@ -153,6 +183,16 @@ ethnicityBackground=Calabrian Italian
 * title=Pope Innocent III
 * description=A clergyman with a strong whiff of perfume about him.
 * faceImage=pope.png
+
+## Raniero
+
+* title=Raniero de Stefano
+* description=What does he do? Nobody cares. And he likes it that way.
+* faceImage=raniero.png
+
+Occupation: Steward (Steward's Office P)
+Age: 52
+Ethnicity: Roman Italian
 
 ## Salomone
 

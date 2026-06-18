@@ -1,7 +1,7 @@
 # General
 
 * title=The Black Brick
-* activeCharacter=King Frederick
+* activeCharacter=Hugo
 * time=11:58:00
 * background=daySky.png
 * imports=items.md | characters.md
@@ -70,6 +70,14 @@ AABBCCDFGGHHH.
 
 * exits=Central Stairwell (closed)
 
+```
+....
+..H.
+....
+```
+
+* H=Hugo
+
 ## Portcullis Chamber
 
 * exits=Central Stairwell (closed) | Courtyard (closed)
@@ -126,7 +134,7 @@ AABBCCDFGGHHH.
 ........
 ```
 
-* S=Steward
+* S=Raniero
 
 ## Lower Passage
 
@@ -136,16 +144,16 @@ AABBCCDFGGHHH.
 
 # Characters
 
+## Hugo
+
+* items=Black Brick
+
 ## Pope
 
 * facing=left
-* items=Black Brick
 
-TODO--black brick won't start with Pope.
+## Raniero
 
-## Steward
-
-* description=What does he do? Nobody really cares. And he likes it that way.
 * items=Steward's Key
 
 # Items
@@ -180,6 +188,9 @@ TODO--black brick won't start with Pope.
 : King Frederick says, "It's more a collection of buildings than a palace."
 : Pope says, "Hrmph."
 
+(11:58 Hugo is in the guard chamber)
+11:59:00 Hugo @ East Hall
+
 11:58:20 Pope @ Lawn
 11:58:21 King Frederick @ Lawn
 : Pope says, "Since your poor mother, Constance, passed,"
@@ -206,6 +217,7 @@ TODO--black brick won't start with Pope.
 : Pope says, "Wait here one moment, my King."
 
 11:59:22 Pope @ East Hall
+: Hugo gives black brick to Pope
 
 11:59:26 Pope @ Central Stairwell
 : Pope says, "Let us continue with a briskness."
@@ -248,10 +260,6 @@ TODO--black brick won't start with Pope.
 : King Frederick says, "No, not that."
 : King Frederick says, "It was a really good tower!"
 
-(11:57 Steward is in his office)
-11:57:30 Steward @ West Stairwell
-: @ Textile Store
-: @ Grain Store
-: @ Lower Passage
+(11:57 Raniero is in his office)
 
 # Conclusions
