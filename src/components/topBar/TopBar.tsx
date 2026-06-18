@@ -8,7 +8,7 @@ const appLinks = [
 
 // It's a nice thing if you replace "undefined" below with your name as a string, but you don't have to.
 // Don't be shy about claiming credit for your work. The DecentBar wants to see you shine!
-const contributorText = undefined;
+const contributorText = 'Erik Hermansen, Peter Turner';
 
 // The app display name is configured in app-metadata.json, but you can override it here with `appName` prop if you want.
 function TopBar() {
