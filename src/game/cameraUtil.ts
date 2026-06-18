@@ -4,7 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 
 import { findRoomAtPosition } from "./roomUtil";
-import { calcRoomRoofBounds, calcRoomsBoundingRectWithRoofs } from "./roomRoofUtil";
+import { calcRenderedRoomBounds, calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import Camera from "./types/Camera";
 import Character from "./types/Character";
 import Rect from "./types/Rect";
@@ -99,11 +99,11 @@ export function createCamera(initialRect:Rect):Camera {
 }
 
 export function calcRoomCameraRect(room:Room, rooms:ReadonlyArray<Room>, aspectRatio:number, groundFloorY:number = Infinity):Rect {
-  return _expandRectFromCenter(_fitRectToAspectRatio(calcRoomRoofBounds(room, rooms, groundFloorY), aspectRatio), CAMERA_MARGIN_RATIO);
+  return _expandRectFromCenter(_fitRectToAspectRatio(calcRenderedRoomBounds(room, rooms, groundFloorY), aspectRatio), CAMERA_MARGIN_RATIO);
 }
 
 export function calcLevelCameraRect(rooms:Room[], aspectRatio:number, groundFloorY:number = Infinity):Rect {
-  return _fitRectToAspectRatio(calcRoomsBoundingRectWithRoofs(rooms, groundFloorY), aspectRatio);
+  return _fitRectToAspectRatio(calcRenderedRoomsBoundingRect(rooms, groundFloorY), aspectRatio);
 }
 
 function _findTargetCameraRect(rooms:Room[], activeCharacter:Character|null, aspectRatio:number,

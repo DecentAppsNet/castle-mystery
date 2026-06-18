@@ -53,7 +53,7 @@ import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from "./co
 import { syncDiscoveries } from "./discoveriesUtil";
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { normalizeId } from "./idUtil";
-import { calcRoomsBoundingRectWithRoofs } from "./roomRoofUtil";
+import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import { clamp } from "@/common/numberUtil";
 import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 
@@ -415,7 +415,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     initialItemsById,
     initialCharacters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById)),
     initialRooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById)),
-    camera:createCamera(calcRoomsBoundingRectWithRoofs(level.rooms, level.groundFloorY)),
+    camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
     activeEffects:[],
     hoveredItemId:null,
     hoveredCharacterId:null,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { MAP_TILE_SIZE } from '../roomGridUtil';
-import { calcRoomRoofBounds, calcRoomsBoundingRectWithRoofs, findRoofTiles } from '../roomRoofUtil';
+import { calcRenderedRoomBounds, calcRenderedRoomsBoundingRect, calcRoomRoofBounds, calcRoomsBoundingRectWithRoofs, findRoofTiles } from '../roomRoofUtil';
 import Rect from '../types/Rect';
 import Room, { createDefaultRoom } from '../types/Room';
 
@@ -101,6 +101,23 @@ describe('roomRoofUtil', () => {
       const undergroundRoom = _createRoom('underground', { x:0, y:80, width:MAP_TILE_SIZE, height:40 });
 
       expect(calcRoomsBoundingRectWithRoofs([upperRoom, undergroundRoom], 80)).toEqual({ x:0, y:56, width:MAP_TILE_SIZE, height:64 });
+    });
+  });
+
+  describe('calcRenderedRoomBounds()', () => {
+    it('extends the room roof bounds to include rendered right wall and floor panels', () => {
+      const room = _createRoom('room', { x:0, y:80, width:MAP_TILE_SIZE, height:40 });
+
+      expect(calcRenderedRoomBounds(room, [room])).toEqual({ x:0, y:76, width:21.76, height:44.88 });
+    });
+  });
+
+  describe('calcRenderedRoomsBoundingRect()', () => {
+    it('extends the combined roof bounds to include rendered right wall and floor panels', () => {
+      const leftRoom = _createRoom('left', { x:0, y:80, width:MAP_TILE_SIZE, height:40 });
+      const rightRoom = _createRoom('right', { x:40, y:100, width:MAP_TILE_SIZE, height:20 });
+
+      expect(calcRenderedRoomsBoundingRect([leftRoom, rightRoom])).toEqual({ x:0, y:76, width:61.76, height:44.88 });
     });
   });
 });

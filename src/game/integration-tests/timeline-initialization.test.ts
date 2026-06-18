@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import timelineBothTimeAndStartTimeText from '@/game/__tests__/fixtures/timeline-both-time-and-start-time.md?raw';
-import { calcRoomsBoundingRectWithRoofs } from '@/game/roomRoofUtil';
+import { calcRenderedRoomsBoundingRect } from '@/game/roomRoofUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
 
@@ -27,8 +27,8 @@ describe('timeline initialization integration', () => {
     const level = loadLevelFromText(timelineBothTimeAndStartTimeText, 'timeline-both.md');
     const gameState = createGameState(level);
 
-    expect(gameState.camera.currentRect).toEqual(calcRoomsBoundingRectWithRoofs(level.rooms, level.groundFloorY));
-    expect(gameState.camera.targetRect).toEqual(calcRoomsBoundingRectWithRoofs(level.rooms, level.groundFloorY));
+    expect(gameState.camera.currentRect).toEqual(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY));
+    expect(gameState.camera.targetRect).toEqual(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY));
     expect(gameState.camera.isMoving).toBe(false);
   });
 });

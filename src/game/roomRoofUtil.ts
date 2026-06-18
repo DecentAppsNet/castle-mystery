@@ -8,6 +8,8 @@ import { MAP_TILE_SIZE } from "./roomGridUtil";
 
 export const ROOF_APEX_Z = 0.5;
 export const ROOF_PEAK_HEIGHT_RATIO = 0.2;
+const RENDERED_PANEL_RIGHT_OVERHANG_HEIGHT_RATIO = 0.04;
+const RENDERED_PANEL_BOTTOM_OVERHANG_HEIGHT_RATIO = 0.02;
 
 export type RoofTile = Readonly<{
   leftX:number,
@@ -63,4 +65,34 @@ export function calcRoomsBoundingRectWithRoofs(rooms:ReadonlyArray<Room>, ground
   }
 
   return boundingRect;
+}
+
+function _calcRenderedPanelOverhang(baseBounds:Rect):{ right:number, bottom:number } {
+  return {
+    right:baseBounds.height * RENDERED_PANEL_RIGHT_OVERHANG_HEIGHT_RATIO,
+    bottom:baseBounds.height * RENDERED_PANEL_BOTTOM_OVERHANG_HEIGHT_RATIO
+  };
+}
+
+export function calcRenderedRoomBounds(room:Room, rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):Rect {
+  const roofBounds = calcRoomRoofBounds(room, rooms, groundFloorY);
+  const levelRoofBounds = calcRoomsBoundingRectWithRoofs(rooms, groundFloorY);
+  const panelOverhang = _calcRenderedPanelOverhang(levelRoofBounds);
+  return {
+    x:roofBounds.x,
+    y:roofBounds.y,
+    width:roofBounds.width + panelOverhang.right,
+    height:roofBounds.height + panelOverhang.bottom
+  };
+}
+
+export function calcRenderedRoomsBoundingRect(rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):Rect {
+  const roofBounds = calcRoomsBoundingRectWithRoofs(rooms, groundFloorY);
+  const panelOverhang = _calcRenderedPanelOverhang(roofBounds);
+  return {
+    x:roofBounds.x,
+    y:roofBounds.y,
+    width:roofBounds.width + panelOverhang.right,
+    height:roofBounds.height + panelOverhang.bottom
+  };
 }
