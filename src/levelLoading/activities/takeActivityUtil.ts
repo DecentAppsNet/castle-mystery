@@ -40,6 +40,18 @@ type TakeSource = {
   item:Item
 };
 
+function _throwIfHandDestinationIsOccupied(destination:ItemHoldLocation, context:ActivityContext, item:Item) {
+  if (destination === 'inventory') return;
+
+  const existingItem = destination === 'left-hand'
+    ? context.state.leftHandItem
+    : context.state.rightHandItem;
+  if (!existingItem || existingItem.id === item.id) return;
+
+  const handLabel = destination === 'left-hand' ? 'left hand' : 'right hand';
+  throw new Error(`${context.character.title} can't take ${item.title} in ${handLabel} because already holding ${existingItem.title}`);
+}
+
 function _isExitWaypoint(room:ReturnType<typeof findCurrentRoom>, waypoint:Waypoint):boolean {
   return waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z
     && room.exits.some(exit => exit.x === waypoint.position.x && exit.y === waypoint.position.y);
@@ -177,6 +189,7 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
 	})()
 	: removeStateOwnedItem(context.state, itemRef);
   assertNonNullable(item, `expected item ${itemRef} to be movable`);
+  _throwIfHandDestinationIsOccupied(destination, context, item);
   addStateOwnedItem(context.state, item, destination);
   return [...scheduledWalkEvents, createTakeItemEvent(takeEventTime, item.id, destination)];
 }

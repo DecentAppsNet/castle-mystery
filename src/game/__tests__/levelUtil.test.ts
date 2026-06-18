@@ -139,6 +139,7 @@ import timelineDerivedBoundsText from './fixtures/timeline-derived-bounds.md?raw
 import timelineRelativeOnlyText from './fixtures/timeline-relative-only.md?raw';
 import timelineInitialTimeOutsideBoundsText from './fixtures/timeline-initial-time-outside-bounds.md?raw';
 import timelineStartAfterItineraryText from './fixtures/timeline-start-after-itinerary.md?raw';
+import takeOccupiedLeftHandText from './fixtures/take-occupied-left-hand.md?raw';
 import birthOfConstantineRegressionText from './fixtures/birth-of-constantine-regression.md?raw';
 import escapeStairwellRegressionText from './fixtures/escape-stairwell-regression.md?raw';
 import facesActivityText from './fixtures/faces-activity.md?raw';
@@ -965,6 +966,11 @@ describe('levelUtil itinerary loading', () => {
 
     expect(takeEvent?.duration).toBe(ITEM_EFFECT_DURATION);
     expect(thoughtEvent?.startTime).toBe(takeEvent!.startTime + takeEvent!.duration);
+  });
+
+  it('throws when taking an item into an already occupied hand', () => {
+    expect(() => loadLevelFromText(takeOccupiedLeftHandText, 'take-occupied-left-hand.md'))
+      .toThrow("Hugo can't take Black Paint Jar in left hand because already holding Brass Key");
   });
 
   it('loads give activities without movement when the recipient is already nearby', () => {
