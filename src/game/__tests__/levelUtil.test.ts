@@ -65,6 +65,7 @@ import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsecti
 import doorsArrivalTimestampText from './fixtures/doors-arrival-timestamp.md?raw';
 import invalidLockableExitItemText from './fixtures/invalid-lockable-exit-item.md?raw';
 import invalidCeilingFloorExitText from './fixtures/invalid-ceiling-floor-exit.md?raw';
+import lockRequiredItemInHandText from './fixtures/lock-required-item-in-hand.md?raw';
 import lockRequiredItemMissingText from './fixtures/lock-required-item-missing.md?raw';
 import unlockRequiredItemMissingText from './fixtures/unlock-required-item-missing.md?raw';
 import duplicateConclusionCategoryGroupNamesText from './fixtures/duplicate-conclusion-category-group-names.md?raw';
@@ -84,6 +85,7 @@ import loadLevelFromUrlImportedItineraryText from './fixtures/load-level-from-ur
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
 import identitiesAuthoredMetadataText from './fixtures/identities-authored-metadata.md?raw';
 import identitiesExcludesNoninteractiveCharactersText from './fixtures/identities-excludes-noninteractive-characters.md?raw';
+import handItemDefaultCategoryText from './fixtures/hand-item-default-category.md?raw';
 import inventoryItemDefaultCategoryText from './fixtures/inventory-item-default-category.md?raw';
 import inventoryItemTitleCasingText from './fixtures/inventory-item-title-casing.md?raw';
 import alphabetizedCharacterDefaultCategoryText from './fixtures/alphabetized-character-default-category.md?raw';
@@ -426,6 +428,16 @@ describe('levelUtil itinerary loading', () => {
 
   it('includes character inventory item titles in default conclusion item categories', () => {
     const level = loadLevelFromText(inventoryItemDefaultCategoryText);
+    const conclusion = level.conclusions.find(candidate => candidate.id === 'missing item') || null;
+    if (!conclusion) expect.fail('expected Missing Item conclusion to exist');
+    const firstBlank = conclusion.parts[0] as ClozeBlank;
+
+    expect(firstBlank.availableAnswers).toEqual(['Book', 'Crown']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([0]);
+  });
+
+  it('includes character hand-held item titles in default conclusion item categories', () => {
+    const level = loadLevelFromText(handItemDefaultCategoryText);
     const conclusion = level.conclusions.find(candidate => candidate.id === 'missing item') || null;
     if (!conclusion) expect.fail('expected Missing Item conclusion to exist');
     const firstBlank = conclusion.parts[0] as ClozeBlank;
@@ -1005,6 +1017,14 @@ describe('levelUtil itinerary loading', () => {
     expect(unlockEvent?.roomExitId).toBe(exit?.id);
   });
 
+  it('allows lock activities when the required item is carried in hand', () => {
+    const level = loadLevelFromText(lockRequiredItemInHandText, 'lock-required-item-in-hand.md');
+    const keeper = level.characters.find(character => character.id === 'keeper');
+
+    expect(keeper?.rightHandItem?.id).toBe('red key');
+    expect(keeper?.itinerary.some(event => event.type === ItineraryEventType.LOCK)).toBe(true);
+  });
+
   it('parses itinerary lines with extra punctuation and whitespace outside quotes', () => {
     const level = loadLevelFromText(itineraryExtraPunctuationText);
     const king = level.characters.find(character => character.id === 'king');
@@ -1130,7 +1150,7 @@ describe('levelUtil itinerary loading', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('lock-required-item-missing.md:52');
-      expect((error as LoadLevelException).message).toContain('exit to Second Cell requires item red key in inventory for itinerary activity');
+      expect((error as LoadLevelException).message).toContain('exit to Second Cell requires item red key to be carried for itinerary activity');
     }
   });
 
@@ -1141,7 +1161,7 @@ describe('levelUtil itinerary loading', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('unlock-required-item-missing.md:52');
-      expect((error as LoadLevelException).message).toContain('exit to Second Cell requires item red key in inventory for itinerary activity');
+      expect((error as LoadLevelException).message).toContain('exit to Second Cell requires item red key to be carried for itinerary activity');
     }
   });
 

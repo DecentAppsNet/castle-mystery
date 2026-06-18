@@ -1,6 +1,7 @@
 /* This module groups lock and unlock activity parsing with exit-target movement planning during itinerary loading.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import { getOwnedItems } from "@/game/itemOwnershipUtil";
 import ExitType from "@/game/types/ExitType";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
@@ -41,8 +42,8 @@ function _findLockableRequirementForRoom(exit:RoomExit, room:Room):string|null {
 function _throwIfRequiredLockItemIsMissing(exit:RoomExit, currentRoom:Room, context:ActivityContext, targetRoomRef:string) {
   const lockableRequirement = _findLockableRequirementForRoom(exit, currentRoom);
   if (lockableRequirement === null || lockableRequirement === LOCKABLE_WITHOUT_INV_CHECK) return;
-  if (context.state.items.some(item => item.id === lockableRequirement)) return;
-  throw new Error(`exit to ${targetRoomRef} requires item ${lockableRequirement} in inventory for itinerary activity`);
+  if (getOwnedItems(context.state).some(item => item.id === lockableRequirement)) return;
+  throw new Error(`exit to ${targetRoomRef} requires item ${lockableRequirement} to be carried for itinerary activity`);
 }
 
 function _findCurrentRoomExit(currentRoom:Room, targetRoomRef:string, context:ActivityContext):RoomExit {

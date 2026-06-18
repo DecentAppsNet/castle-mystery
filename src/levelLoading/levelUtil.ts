@@ -52,7 +52,7 @@ function _createDefaultConclusionCategoryOptions(level:Level):Map<string, string
     ['rooms', level.rooms.map(room => room.title)],
     ['items', _sortGeneratedConclusionOptions([
       ...level.rooms.flatMap(room => room.items),
-      ...level.characters.flatMap(character => character.items)
+      ...level.characters.flatMap(character => getOwnedItems(character))
     ].filter(isItemInteractive).map(item => item.title))],
     ['characters', _sortGeneratedConclusionOptions(level.characters.filter(isCharacterInteractive).map(character => character.title))]
   ]);
