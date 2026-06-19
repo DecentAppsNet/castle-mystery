@@ -280,13 +280,11 @@ Write one subsection per item. The subsection name is the item's name.
 
 * `title` (optional) - the display name shown to the player. Default: the subsection name.
 * `description` (optional) - a short description of the item. Default: empty.
-* `displayChar` (optional) - the single character used to draw the item in the UI. Default: the first character of the subsection name, or `?` if there is none.
 * `visible` (optional) - whether the item is drawn at the start of the level. Must be `true` or `false`. Default: `true`. Use `show` and `hide` in the itinerary to change visibility over time.
 
 In practice, an author can think of this section as answering three questions:
 * What is this object called? Use the subsection name and, if needed, `title`.
 * What should the player learn when examining it? Use `description`.
-* What should represent it visually in the UI? Use `displayChar`.
 
 This section defines the item, but it does not place the item anywhere. Item placement belongs in the `rooms` section, and starting carried items belong in the `characters` section.
 
