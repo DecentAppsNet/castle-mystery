@@ -70,6 +70,11 @@
 * description=A small hourglass capable of measuring about half a minute's time.
 * image=smallHourglass.png
 
+## Time of Day Plaque
+* description=Useful for any Roman that forgets what the times of day are.
+* image=timeOfDayPlaque.png
+* drawOffsetZ=-.5
+
 ## Walnut Table
 * description=A sturdy table made of walnut wood.
 * image=walnutTable.png

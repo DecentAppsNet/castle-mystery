@@ -160,11 +160,12 @@ AABBCCDFGGHHH.
 * exits=East Stairwell (locked, unlockable with Steward's Key)
 
 ```
-........
+.......t
 ..Sw....
 ........
 ```
 
+* t=Time of Day Plaque
 * w=Walnut Table|Staff List
 * S=Raniero
 
@@ -223,7 +224,7 @@ AABBCCDFGGHHH.
 
 ## Black Brick
 * image=blackBrick.png
-* description=A limestone brick, painted black, inscribed with careful lettering, "Constantine, May 3rd, 1195, Noon".
+* description=A limestone brick, painted black, inscribed with careful lettering, "Constantine, 3 May 1195, Sext".
 
 ## Oat Bin
 * drawOffsetY=.5

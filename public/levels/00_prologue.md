@@ -24,12 +24,13 @@ VVVHHGG
 ## Exhibit Room
 
 ```
-.....s...v..
+..t..s...v..
 ..M....L....
 ............
 ```
 
 * s=Sarcophagus | Sarcophagus Lid
+* t=Time of Day Plaque
 * exits=hallway
 * v=Pedestal | Vase 
 * L=Lorenzo
@@ -88,6 +89,9 @@ VVVHHGG
 * image=sarcophagusLid.png
 * drawOffsetX=1
 * drawOffsetY=.3
+
+## Time of Day Plaque
+* drawOffsetY=-1
 
 ## Vase
 
