@@ -498,7 +498,7 @@ describe('levelUtil itinerary loading', () => {
     expect((conclusion.parts[4] as { imageUrl:string[] }).imageUrl).toEqual(getClozeImageCandidateUrls('queenFace.png'));
   });
 
-  it('defaults titles from ids and generates identities for all characters', () => {
+  it('defaults titles from ids and generates identities only for characters whose titles are not already known', () => {
     const level = loadLevelFromText(titleDefaultsAndGeneratedIdentityText);
     const hall = findRoom(level.rooms, 'Hall');
     const king = level.characters.find(character => character.id === 'king');
@@ -515,11 +515,9 @@ describe('levelUtil itinerary loading', () => {
     expect(crown?.title).toBe('Crown');
     expect(identities?.title).toBe('Identities');
     expect(identities?.isLocked).toBe(false);
-    expect(identityBlanks).toHaveLength(2);
-    expect(identityBlanks[0].availableAnswers).toEqual(['His Majesty', 'Queen']);
+    expect(identityBlanks).toHaveLength(1);
+    expect(identityBlanks[0].availableAnswers).toEqual(['Queen']);
     expect(identityBlanks[0].correctAnswerIndexes).toEqual([0]);
-    expect(identityBlanks[1].availableAnswers).toEqual(['His Majesty', 'Queen']);
-    expect(identityBlanks[1].correctAnswerIndexes).toEqual([1]);
   });
 
   it('excludes noninteractive characters from auto-generated cloze answer lists', () => {
@@ -542,13 +540,11 @@ describe('levelUtil itinerary loading', () => {
     expect(firstBlank.correctAnswerIndexes).toEqual([0]);
   });
 
-  it('marks identities complete when all character titles are already known', () => {
+  it('omits auto-generated identities when all character titles are already known', () => {
     const level = loadLevelFromText(identitiesAllTitlesKnownText);
     const identities = level.conclusions.find(conclusion => conclusion.id === 'identities') || null;
 
-    expect(identities).not.toBeNull();
-    expect(identities?.isLocked).toBe(false);
-    expect(identities?.isComplete).toBe(true);
+    expect(identities).toBeNull();
   });
 
   it('uses the generated identities conclusion as the default when an identities subsection only authors metadata', () => {
