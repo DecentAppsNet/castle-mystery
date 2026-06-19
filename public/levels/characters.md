@@ -136,10 +136,10 @@ age=47
 occupation=Cook and house manager
 ethnicityBackground=Latin Sicilian
 
-## Matteo
+## Toro
 
 * title=Matteo il Toro
-* faceImage=mattero.png
+* faceImage=matteo.png
 * description=A powerful brute. His two moods are angry and sleeping.
 
 Occupation: Cellarer and laborer (Wine Cellar K)

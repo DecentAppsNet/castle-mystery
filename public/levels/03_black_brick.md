@@ -1,7 +1,7 @@
 # General
 
 * title=The Black Brick
-* activeCharacter=Helena
+* activeCharacter=Hugo
 * time=11:58:00
 * background=daySky.png
 * imports=items.md | characters.md
@@ -37,7 +37,7 @@ Hugo came in to the textile store and took the brick, then went to the west hall
 
 Hugo waited in the west hall until Pope came and then gave the Pope the black brick. The pope gave Hugo an hourglass.
 
-Meanwhile, Helena takes a jar of black paint from lower passage avoiding the Steward's office and hides it in the grain store.
+Meanwhile, Helena takes a jar of black paint from liturgical vault avoiding the Steward's office and hides it in the grain store.
 
 Hugo goads Matteo into pushing down pillar. He holds hourglass visibly in one hand.
 
@@ -50,7 +50,8 @@ The Steward remains unaware of the conspiracy.
 ....CCDE..HHH.
 AABBCCDFGGHHH.
 ...QIIDJJMKKKL
-...QOOOPPMN...
+...QOOOPPMNNN.
+...QRRRRRM....
 ```
 
 * A=Lawn West
@@ -68,8 +69,9 @@ AABBCCDFGGHHH.
 * M=East Stairwell
 * N=Grain Store
 * P=Steward's Office
-* O=Lower Passage
+* O=Liturgical Vault
 * Q=West Stairwell
+* R=Lower Passage
 
 # Rooms
 
@@ -149,14 +151,16 @@ AABBCCDFGGHHH.
 
 ## Wine Cellar
 
+* exits=East Stairwell (closed) | Textile Store (unlocked, unlockable with Steward's Key)
+
 ```
 ............
-.........H..
-............
+....T....H..
+........p...
 ```
 * H=Helena
-
-* exits=East Stairwell (closed) | Textile Store (unlocked, unlockable with Steward's Key)
+* T=Toro
+* p=Pillar|Rubble
 
 ## Textile Store
 
@@ -176,9 +180,19 @@ AABBCCDFGGHHH.
 
 * exits=East Stairwell (locked)
 
+```
+............
+.....b.o.w..
+............
+```
+
+* b=Barley Bin
+* o=Oat Bin
+* w=Wheat Bin
+
 ## Steward's Office
 
-* exits=East Stairwell (locked, unlockable with Steward's Key) | Lower Passage (locked, unlockable with Steward's Key)
+* exits=East Stairwell (locked, unlockable with Steward's Key)
 
 ```
 ........
@@ -188,22 +202,33 @@ AABBCCDFGGHHH.
 
 * S=Raniero
 
-## Lower Passage
+## Liturgical Vault
 
-* exits=Steward's Office (unlockable with Steward's Key)
+* exits=West Stairwell (closed)
+
+```
+...p........
+............
+............
+```
+
+* p=Black Paint Jar
 
 ## West Stairwell
+
+## Lower Passage
+
+* exits=West Stairwell (closed) | East Stairwell (closed)
 
 # Characters
 
 ## Hugo
+* items=Small Hourglass
 
 ## Pope
-
 * facing=left
 
 ## Raniero
-
 * items=Steward's Key
 
 ## Helena
@@ -216,20 +241,34 @@ AABBCCDFGGHHH.
 * description=Maybe a century old, structurally sound.
 
 ## Arabic Tower Collapsed
-
 * image=arabicTowerCollapsed.png
 * description=It's seen better days - yesterday, for example.
 * visible=false
 
-## Steward's Key
+## Barley Bin
+* drawOffsetY=.5
 
+## Black Brick
+* image=blackBrick.png
+* description=A limestone brick, painted black, inscribed with careful lettering, "Constantine, May 3rd, 1195, Noon".
+
+## Oat Bin
+* drawOffsetY=.5
+
+## Pillar
+* description=A pillar. Maybe load-bearing. Or maybe just ornamental.
+
+## Rubble
+* visible=false
+* drawOffsetX=-1
+* drawOffsetY=1.5
+
+## Steward's Key
 * description=An ordinary key. It probably unlocks some things.
 * image=brassKey.png
 
-## Black Brick
-
-* image=blackBrick.png
-* description=A limestone brick, painted black, inscribed with careful lettering, "Constantine, May 3rd, 1195, Noon".
+## Wheat Bin
+* drawOffsetY=.5
 
 # Itinerary
 
@@ -241,14 +280,19 @@ AABBCCDFGGHHH.
 : King Frederick says, "It's more a collection of buildings than a palace."
 : Pope says, "Hrmph."
 
-(11:58 Hugo is in the guard chamber)
-11:59:00 Hugo @ East Hall
-
 (11:58 Helena at right end of wine cellar)
 11:58:03 Helena @ Textile Store
-: waits
 : thinks, "Huh. Who left this here?"
+: waits
 (Helena was referring to the black brick. She leaves for Steward's Office.)
+11:58:08 Toro faces left
+
+(11:58 Hugo is in the guard chamber)
+11:58:17 Toro faces right
+11:58:19 Hugo @ Textile Store
+: takes Black Brick
+: Hugo @ East Hall.40%
+11:58:24 Toro faces left
 
 11:58:14 Helena @ Steward's Office
 : Helena says, "I need to lock up the textile store."
@@ -280,19 +324,72 @@ AABBCCDFGGHHH.
 : says, "But danger is everywhere!"
 : King Frederick says, "Hmm."
 
+(Helena walks by Toro in the Wine Cellar)
+11:58:30 Toro says, "Key!"
+11:58:32 faces right
+
 11:58:33 Helena @ Wine Cellar.90%
 : locks Textile Store
+11:58:36 Toro says, "Door!"
+: Helena says, "That's right. I have a key."
+: says, "I used it to lock the door."
+: Toro says, "Door."
+: Helena says, "You want to try an adjective today?"
+: Toro says, "Adjective."
+: Helena says, "(sigh)"
+(Helena leaves for the Liturgical Vault)
+11:58:53 Toro faces left.
+
+
+11:59:00 Helena @ West Hall
+: @ Liturgical Vault.10%
+: Helena takes Black Paint Jar in left hand
+: @ Lower Passage
+11:59:32 @ Grain Store.40%
+: drops Black Paint Jar
+: thinks "I'll hide it deep in the grain."
+: hide Black Paint Jar
+11:59:38 Raniero @ Grain Store.20%
+: Raniero says, "What are you doing in here?"
+: Helena faces Raniero
+: Helena says, "I have a confession!"
+: Raniero says, "Yes?"
+: Helena says, "I..."
+: says, "I love to get inside the bins and..."
+: says, "step on the little grains with my bare feet!"
+: Raniero says, "Me too!"
+: says, "It has been my secret pleasure."
+: says, "But now we can do it together!"
+: Helena thinks, "Great."
+12:00:00 emits "(massive boom)"
+: Raniero faces left
+: says, "What was that?"
+(Raniero and Helena leave for the Wine Cellar)
 
 11:59:18 Pope @ Central Stairwell
 11:59:19 King Frederick @ Central Stairwell
 : Pope says, "Wait here one moment, my King."
 
-11:59:22 Pope @ East Hall
-//: Hugo gives black brick to Pope
+11:59:22 Pope @ East Hall.20%
+: Hugo gives black brick to Pope
+: Hugo takes small hourglass in right hand
+(Hugo leaves for cellar)
 
 11:59:26 Pope @ Central Stairwell
 : Pope says, "Let us continue with a briskness."
 : Pope says, "Ha ha! It is fun to walk fast!"
+
+11:59:38 Hugo @ Wine Cellar.30%
+: says, "They say you are strong..."
+: says, "Like a bull!"
+: Toro says, "Truth."
+: Hugo says, "Are you strong?"
+: Toro says, "Toro! Strength!"
+: Hugo says, "But Helena said you are weak."
+: Toro says, "Lies!"
+: Hugo says, "Show me. Smash that pillar!"
+: Toro faces right.
+: Toro says, "Toro! Toro! Toro!"
 
 11:59:39 Pope @ Courtyard East.10%
 11:59:40 King Frederick @ Courtyard East.20%
@@ -315,12 +412,12 @@ AABBCCDFGGHHH.
 : says, "I am okay."
 : Pope @ 40%
 : Pope says, "Just as I suspected!"
-//: takes black brick into left hand.
+: takes black brick into left hand.
 : says, "a black brick!"
 : @ 20%
 : faces King Frederick
 : King Frederick faces Pope
-//: Pope drops black brick
+: Pope drops black brick
 : King Frederick says, "What is this madness?"
 : Pope says, "The Freemasons, my King."
 : says, "They built this tower with a black brick!"
@@ -331,6 +428,13 @@ AABBCCDFGGHHH.
 : King Frederick says, "No, not that."
 : King Frederick says, "It was a really good tower!"
 
-(11:57 Raniero is in his office)
+11:59:55 Toro @ 75%
+11:59:56 Hugo says, "Do it now!"
+: Toro says, "Arrrrrrgh!"
+: Toro says, "RAWWWWWRRRHGH!"
+12:00:00 hide Pillar
+: show Rubble
+: Toro lays
+: rubble emits "(crash)"
 
 # Conclusions
