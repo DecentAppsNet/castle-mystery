@@ -161,10 +161,11 @@ AABBCCDFGGHHH.
 
 ```
 ........
-..S.....
+..Sw....
 ........
 ```
 
+* w=Walnut Table|Staff List
 * S=Raniero
 
 ## Liturgical Vault
@@ -239,6 +240,16 @@ AABBCCDFGGHHH.
 * description=An ordinary key. It probably unlocks some things.
 * image=brassKey.png
 
+## Walnut Table
+* description=An unusually high desk.
+
+## Staff List
+* description=Helena of Gaeta - Keeper of Textiles | Matteo il Toro - Cellarer | Hugo of Speyer - Guard Sargeant | Raniero de Stefano - Steward
+* image=codex.png
+* drawOffsetY=-2.5
+* drawOffsetZ=-.1
+* drawOffsetX=1
+
 ## Wheat Bin
 * drawOffsetY=.5
 
@@ -251,6 +262,12 @@ AABBCCDFGGHHH.
 : Pope says, "You stand at the very heart of Christendom!"
 : King Frederick says, "It's more a collection of buildings than a palace."
 : Pope says, "Hrmph."
+
+(11:58 Raniero is in the Steward's Office standing behind a desk that comes up to his eyes.)
+11:58:02 Raniero thinks, "My desk is the perfect height."
+: thinks, "If I stand instead of sitting..."
+: thinks, "My abdomen will form the shape of six!"
+: thinks, "Rather than the shape of one."
 
 (11:58 Helena at right end of wine cellar)
 11:58:03 Helena @ Textile Store
@@ -267,13 +284,14 @@ AABBCCDFGGHHH.
 : Hugo @ Central Stairwell
 11:58:24 Toro faces left
 
-11:58:14 Helena @ Steward's Office
+11:58:14 Helena @ Steward's Office.60%
 : Helena says, "I need to lock up the textile store."
 : Raniero says, "Take my key then, but bring it back!"
 : Raniero says, "It's-"
 : Helena says, "It's the only one. I know, sir."
 : Raniero gives Steward's Key to Helena
 : Helena takes Steward's Key in right hand
+: Raniero @ 30%
 (Helena leaves for Wine Cellar)
 
 11:58:20 Pope @ Lawn
@@ -316,6 +334,13 @@ AABBCCDFGGHHH.
 (Helena leaves for the Liturgical Vault)
 11:58:53 Toro faces left.
 
+(Raniero remains in his office)
+11:58:35 Raniero thinks, "As soon as she returns with my key..."
+: says, "I shall be free to frolic in the bins."
+
+11:58:52 Raniero thinks, "It is hard to stand so much."
+: thinks, "What if I got a tall chair?"
+: thinks, "I would sit only when very tired."
 
 11:59:00 Helena @ West Hall
 : @ Liturgical Vault.10%
@@ -342,6 +367,13 @@ AABBCCDFGGHHH.
 : says, "What was that?"
 (Raniero and Helena leave for the Wine Cellar)
 
+11:59:06 Raniero faces right
+: thinks, "She is taking forever!"
+: thinks, "I shall go find her."
+: @ Wine Cellar.90%
+: thinks, "Locked. And she's not here."
+11:59:17 Toro faces Raniero
+
 11:59:18 Pope @ Central Stairwell
 11:59:19 King Frederick @ Central Stairwell
 : Pope says, "Wait here one moment, my King."
@@ -350,11 +382,19 @@ AABBCCDFGGHHH.
 11:59:22 Pope @ East Hall.20%
 : Hugo gives black brick to Pope
 : Hugo takes small hourglass in right hand
+: Pope says, "Good, you will need the hourglass."
 (Hugo leaves for cellar)
+
+(Helena is in the lower passage, holding the black paint jar)
+11:59:19 Helena thinks, "Why did he have me paint a brick?"
+: thinks "No crime in itself."
+: thinks "But what dark plan am I a part of?"
 
 11:59:26 Pope @ Central Stairwell
 : Pope says, "Let us continue with a briskness."
 : Pope says, "Ha ha! It is fun to walk fast!"
+
+11:59:32 Toro faces left
 
 11:59:38 Hugo @ Wine Cellar.30%
 : says, "They say you are strong..."
@@ -381,6 +421,7 @@ AABBCCDFGGHHH.
 11:59:59 Arabic Tower emits, "(rumble)"
 12:00:00 hide Arabic Tower
 12:00:00 show Arabic Tower Collapsed
+(The Arabic tower collapses in the direction of King Frederick. It nearly hits the King, and would have if he were still standing close to it.)
 : King Frederick lays
 : Arabic Tower Collapsed emits "(crash)"
 : Pope says, "My King!"
@@ -412,6 +453,7 @@ AABBCCDFGGHHH.
 : Toro says, "RAWWWWWRRRHGH!"
 12:00:00 hide Pillar
 : show Rubble
+(The pillar collapsed from Toro's pushing, and rubble from the ceiling fell down and buried Toro beneath it. Toro's body, barely visible, is moving slightly beneath the rubble.)
 : Toro lays
 : rubble emits "(crash)"
 : Hugo waits
@@ -445,7 +487,7 @@ AABBCCDFGGHHH.
 * aftermathVerbs=fall|hide|disappear|succeed|speak|initiate|deceive|murder
 * popeActions=discovered|cremated|painted|planted|rebuked|salvaged
 * numbers=one|two|three|four|five|six
-TODO - make an items list that excludes Arabic Tower Aftermath.
+* items=Arabic Tower | Barley Bin | Black Brick | Black Paint Jar | Oat Bin | Pillar | Rubble | Small Hourglass | Staff List | Steward's Key | Walnut Table | Wheat Bin
 
 ## identities
 
@@ -458,4 +500,4 @@ TODO - make an items list that excludes Arabic Tower Aftermath.
 
 ## Chain of Custody
 
-* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [Pope Innocent III] [planted] it in the [rubble|Arabic Tower], attempting to [deceive] [King Frederick].---The remaining [two] characters did not see the brick in this scene.
+* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [Pope Innocent III] [planted] it in the [rubble|Arabic Tower], attempting to [deceive] [King Frederick].

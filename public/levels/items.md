@@ -70,6 +70,10 @@
 * description=A small hourglass capable of measuring about half a minute's time.
 * image=smallHourglass.png
 
+## Walnut Table
+* description=A sturdy table made of walnut wood.
+* image=walnutTable.png
+
 ## Wineskin
 * image=wineskin.png
 * description=A skin filled with wine.
