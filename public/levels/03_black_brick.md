@@ -1,48 +1,11 @@
 # General
 
 * title=The Black Brick
-* activeCharacter=Hugo
+* activeCharacter=King Frederick
 * time=11:58:00
 * background=daySky.png
 * imports=items.md | characters.md
 * groundFloorRoom=Lawn
-
-
-Things that need to happen
-
-Pope takes Black Brick from Hugo and gives an hourglass matching his own to Hugo in the East Hall.
-
-Hugo tells Matteo to push down the pillar the moment the hourglass elapses. "How strong are you?" Matteo only knows a few words and is really stupid.
-
-Helena asks for the key from the Raneiro. She takes the black paint to the Grain store and hides it in the grain, locking the door behind her.
-
-Matteo pushes support pillar down at noon.
-
-The Steward is oblivious to the plot.
-
-Oooh... start the time at 11:58, but there is an obscured room to the west where Pope and Fred enter from. This allows the time to go further back into the past.
-
-Ideally, we can see the painted brick early, and we watch it travel from room to room. It's a key thing to understand who has the brick when.
-
-Steward - only person with key to Grain store, Textile Store, Steward's Office
-
-
-Black brick starts in Textile Store, laying on ground. Helena comes in room and wonders "who left this here?" Which is ambiguous as to whether she was involved.
-
-She leaves for the Steward's Office and asks Raniero for the key so she can lock up the Textile Store. Raniero gives it to her reminding to bring it back since IT IS THE ONLY KEY.
-
-She locks up the Textile Store from the Cellar. Player doesn't know if the black brick is still inside, unless they see...
-
-Hugo came in to the textile store and took the brick, then went to the west hall (obscured).
-
-Hugo waited in the west hall until Pope came and then gave the Pope the black brick. The pope gave Hugo an hourglass.
-
-Meanwhile, Helena takes a jar of black paint from liturgical vault avoiding the Steward's office and hides it in the grain store.
-
-Hugo goads Matteo into pushing down pillar. He holds hourglass visibly in one hand.
-
-The Steward remains unaware of the conspiracy.
-
 
 # Map
 
@@ -110,11 +73,12 @@ AABBCCDFGGHHH.
 * exits=Central Stairwell (closed)
 
 ```
-....
+..h.
 ..H.
 ....
 ```
 
+* h=Small Hourglass
 * H=Hugo
 
 ## Portcullis Chamber
@@ -223,10 +187,15 @@ AABBCCDFGGHHH.
 # Characters
 
 ## Hugo
-* items=Small Hourglass
+
+## King Frederick
+* description=His friends still call him "Constantine".
+* isTitleKnown=true
 
 ## Pope
+* description=If a man names himself "Innocent", just how innocent will he be?
 * facing=left
+* isTitleKnown=true
 
 ## Raniero
 * items=Steward's Key
@@ -288,10 +257,11 @@ AABBCCDFGGHHH.
 11:58:08 Toro faces left
 
 (11:58 Hugo is in the guard chamber)
+11:58:02 Hugo takes Small Hourglass
 11:58:17 Toro faces right
 11:58:19 Hugo @ Textile Store
 : takes Black Brick
-: Hugo @ East Hall.40%
+: Hugo @ Central Stairwell
 11:58:24 Toro faces left
 
 11:58:14 Helena @ Steward's Office
@@ -316,6 +286,9 @@ AABBCCDFGGHHH.
 : Pope says, "The barons, the merceneries,"
 : says, "German princes, Otto, and of course..."
 : says, "the Freemasons - most insidious of all!"
+
+11:58:41 Hugo thinks, "His schemes are always so complicated."
+
 11:58:52 Pope @ Lawn East
 11:58:53 King Frederick @ Lawn East
 : King Frederick says, "You say I am threatened..." 
@@ -370,6 +343,7 @@ AABBCCDFGGHHH.
 11:59:19 King Frederick @ Central Stairwell
 : Pope says, "Wait here one moment, my King."
 
+11:59:18 Hugo @ East Hall.40%
 11:59:22 Pope @ East Hall.20%
 : Hugo gives black brick to Pope
 : Hugo takes small hourglass in right hand
@@ -427,6 +401,7 @@ AABBCCDFGGHHH.
 : Pope says, "Of course! Those devils meant to kill you."
 : King Frederick says, "No, not that."
 : King Frederick says, "It was a really good tower!"
+: faces right
 
 11:59:55 Toro @ 75%
 11:59:56 Hugo says, "Do it now!"
@@ -436,5 +411,27 @@ AABBCCDFGGHHH.
 : show Rubble
 : Toro lays
 : rubble emits "(crash)"
+: Hugo waits
+: says, "Thank you, my strong, stupid bull."
+: says, "You've brought us victory."
+
+12:00:10 Raniero @ Wine Cellar.20%
+12:00:11 Helena @ Wine Cellar.20%
+: Raniero says, "What happened?"
+: Hugo says, "Toro pushed the pillar down."
+: Toro says, "Pain!"
+: Helena says, "He's still alive!"
+: Hugo says, "Oh, good."
+: Helena @ 50%
+: Raniero @ 50%
+: says, "But why would he do that?"
+: Toro says, "Hugo!"
+: Hugo says, "I am here, old friend!"
+: Toro says, "Conspiracy!"
+: Hugo says, "You were involved in a conspiracy?"
+: Toro says, "Hugo! Guilt!"
+: Hugo says, "You feel guilty about conspiring?"
+: Raniero says, "It is so hard to understand him."
+: says, "He can only speak in nouns."
 
 # Conclusions
