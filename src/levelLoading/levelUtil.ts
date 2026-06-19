@@ -49,7 +49,7 @@ function _sortGeneratedConclusionOptions(options:string[]):string[] {
 
 function _createDefaultConclusionCategoryOptions(level:Level):Map<string, string[]> {
   return new Map([
-    ['rooms', level.rooms.map(room => room.title)],
+    ['rooms', _sortGeneratedConclusionOptions(level.rooms.map(room => room.title).filter(title => title.trim().length > 0))],
     ['items', _sortGeneratedConclusionOptions([
       ...level.rooms.flatMap(room => room.items),
       ...level.characters.flatMap(character => getOwnedItems(character))

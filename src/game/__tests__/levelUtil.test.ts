@@ -385,6 +385,16 @@ describe('levelUtil itinerary loading', () => {
     expect(level.rooms[0]?.title).toBe('');
   });
 
+  it('excludes rooms with empty titles from auto-generated conclusion room categories', () => {
+    const level = loadLevelFromText(`${emptyRoomTitleText}\n\n# conclusions\n\n## Mystery\n\n* conclusion=[Hall] was empty.`, 'empty-room-title.md');
+    const conclusion = level.conclusions.find(candidate => candidate.id === 'mystery') || null;
+    if (!conclusion) expect.fail('expected Mystery conclusion to exist');
+    const firstBlank = conclusion.parts[0] as ClozeBlank;
+
+    expect(firstBlank.availableAnswers).toEqual(['Hall']);
+    expect(firstBlank.correctAnswerIndexes).toEqual([0]);
+  });
+
   it('loads a minified kingacide snapshot with conclusions and file-relative itinerary activity', () => {
     const level = loadLevelFromText(kingacideMinifiedSnapshotText, 'kingacide-minified-snapshot.md');
 

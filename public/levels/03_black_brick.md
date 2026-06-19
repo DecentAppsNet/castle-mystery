@@ -6,6 +6,7 @@
 * background=daySky.png
 * imports=items.md | characters.md
 * groundFloorRoom=Lawn
+* winSynopsis=The Pope's convoluted caper was executed flawlessly. He aimed to scare young King Frederick. But who knows what effect the collapsed tower had on the boy?
 
 # Map
 
@@ -179,6 +180,8 @@ AABBCCDFGGHHH.
 * p=Black Paint Jar
 
 ## West Stairwell
+
+* title=
 
 ## Lower Passage
 
@@ -412,6 +415,7 @@ AABBCCDFGGHHH.
 : Toro lays
 : rubble emits "(crash)"
 : Hugo waits
+: takes Small Hourglass into inventory
 : says, "Thank you, my strong, stupid bull."
 : says, "You've brought us victory."
 
@@ -435,3 +439,23 @@ AABBCCDFGGHHH.
 : says, "He can only speak in nouns."
 
 # Conclusions
+
+* suspects=Pope Innocent III|the Freemasons|Helena|Raniero|Toro|Hugo|King Frederick|Nobody|The wind
+* knockedVerbs=paid|amused|seduced|blackmailed|goaded|murdered
+* aftermathVerbs=fall|hide|disappear|succeed|speak|initiate|deceive|murder
+* popeActions=discovered|cremated|painted|planted|rebuked|salvaged
+* numbers=one|two|three|four|five|six
+TODO - make an items list that excludes Arabic Tower Aftermath.
+
+## identities
+
+* unlockConclusions=Collapse of a Tower
+
+## Collapse of a Tower
+* conclusion=[Toro] pushed down the [pillar], because [Hugo] [goaded] him. This caused the [Arabic Tower] to [fall].
+
+* unlockConclusions=Chain of Custody
+
+## Chain of Custody
+
+* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [Pope Innocent III] [planted] it in the [rubble|Arabic Tower], attempting to [deceive] [King Frederick].---The remaining [two] characters did not see the brick in this scene.
