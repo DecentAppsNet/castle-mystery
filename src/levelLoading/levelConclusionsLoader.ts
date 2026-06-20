@@ -31,6 +31,10 @@ function _resolveUnlockConclusionIds(unlockConclusionsText:string|undefined, con
   return parseOptions(unlockConclusionsText).map(conclusionRef => _findConclusionByIdOrTitle(conclusions, conclusionRef).id);
 }
 
+function _isConclusionReference(candidate:Conclusion|null):candidate is Conclusion {
+  return candidate !== null;
+}
+
 function _isGeneratedIdentitiesSubsection(authoredTitle:string, clozeTemplate:string):boolean {
   return normalizeId(authoredTitle) === 'identities' && !clozeTemplate.trim();
 }
@@ -273,7 +277,8 @@ export function loadConclusionsFromSection(conclusionsSection:string, rooms:Read
   const authoredConclusions = parsedConclusions.flatMap((parsedConclusion, index) => {
     const preliminaryConclusion = preliminaryConclusions[index];
     if (!preliminaryConclusion) return [];
-    const unlockConclusionIds = _resolveUnlockConclusionIds(parsedConclusion.unlockConclusionsText, preliminaryConclusions);
+    const resolvedPreliminaryConclusions:Pick<Conclusion, 'id' | 'title'>[] = preliminaryConclusions.filter(_isConclusionReference);
+    const unlockConclusionIds = _resolveUnlockConclusionIds(parsedConclusion.unlockConclusionsText, resolvedPreliminaryConclusions);
     unlockConclusionIds.forEach(conclusionId => incomingUnlockedConclusionIds.add(conclusionId));
 
     return [{
