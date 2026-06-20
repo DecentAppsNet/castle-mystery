@@ -89,7 +89,9 @@ function _calcParsedActivityCompletionTime(activity:ParsedItineraryActivity, act
 function _calcCompletionTimeForRelativeResolution(activity:ParsedItineraryActivity, activityStartTime:number, events:ItineraryEvent[]):number {
   const activityCompletionTime = _calcParsedActivityCompletionTime(activity, activityStartTime, events);
   if (activity.waitDurationMsecs !== null) return activityCompletionTime;
-  if (!events.length || events.some(event => event.duration > 0)) return activityCompletionTime;
+  if (!events.length) return activityCompletionTime + MIN_RELATIVE_ACTIVITY_GAP_MSECS;
+  const hasZeroDurationTerminalEvent = events.some(event => event.duration === 0 && event.startTime === activityCompletionTime);
+  if (!hasZeroDurationTerminalEvent) return activityCompletionTime;
   return activityCompletionTime + MIN_RELATIVE_ACTIVITY_GAP_MSECS;
 }
 

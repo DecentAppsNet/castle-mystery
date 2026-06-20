@@ -8,6 +8,9 @@ import { findCharacterPose } from '../itineraryUtil';
 import { WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import giveItemLeftHandText from './fixtures/give-item-left-hand.md?raw';
+import giveItemThenTakeRightHandSameTimestampNearNoApostropheText from './fixtures/give-item-then-take-right-hand-same-timestamp-near-no-apostrophe.md?raw';
+import giveItemThenTakeRightHandSameTimestampNoApostropheText from './fixtures/give-item-then-take-right-hand-same-timestamp-no-apostrophe.md?raw';
+import giveItemThenTakeRightHandSameTimestampText from './fixtures/give-item-then-take-right-hand-same-timestamp.md?raw';
 import giveItemRightHandText from './fixtures/give-item-right-hand.md?raw';
 import giveItemWalkText from './fixtures/give-item-walk.md?raw';
 
@@ -91,5 +94,57 @@ describe('give item integration', () => {
     expect(atGiveKing.leftHandItem).toBeNull();
     expect(atGiveKing.items).toEqual([]);
     expect(atGiveQueen.items.map(item => item.id)).toContain('book');
+  });
+
+  it('places a just-given item into the recipient right hand when a same-timestamp take follows', () => {
+    const level = loadLevelFromText(giveItemThenTakeRightHandSameTimestampText);
+    const helena = level.characters.find(character => character.id === 'helena');
+    const raniero = level.characters.find(character => character.id === 'raniero');
+    const takeEvent = helena?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM) as { startTime:number } | undefined;
+    const giveEvent = raniero?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
+    const atTakeState = createGameState({ ...level, initialTime:takeEvent!.startTime });
+    const atTakeHelena = findCharacter(atTakeState, 'Helena');
+
+    expect(takeEvent).toBeDefined();
+    expect(giveEvent).toBeDefined();
+    expect(takeEvent?.startTime).toBe(giveEvent!.startTime + 1);
+    expect(atTakeHelena.rightHandItem?.id).toBe('steward\'s key');
+    expect(atTakeHelena.leftHandItem).toBeNull();
+    expect(atTakeHelena.items).toEqual([]);
+  });
+
+  it('also places the item in hand without an apostrophe in the item name', () => {
+    const level = loadLevelFromText(giveItemThenTakeRightHandSameTimestampNoApostropheText);
+    const helena = level.characters.find(character => character.id === 'helena');
+    const raniero = level.characters.find(character => character.id === 'raniero');
+    const takeEvent = helena?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM) as { startTime:number } | undefined;
+    const giveEvent = raniero?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
+    const atTakeState = createGameState({ ...level, initialTime:takeEvent!.startTime });
+    const atTakeHelena = findCharacter(atTakeState, 'Helena');
+
+    expect(takeEvent).toBeDefined();
+    expect(giveEvent).toBeDefined();
+    expect(takeEvent?.startTime).toBe(giveEvent!.startTime + 1);
+    expect(atTakeHelena.rightHandItem?.id).toBe('book');
+    expect(atTakeHelena.leftHandItem).toBeNull();
+    expect(atTakeHelena.items).toEqual([]);
+  });
+
+  it('works when the same Raniero/Helena give-then-take sequence starts nearby', () => {
+    const level = loadLevelFromText(giveItemThenTakeRightHandSameTimestampNearNoApostropheText);
+    const helena = level.characters.find(character => character.id === 'helena');
+    const raniero = level.characters.find(character => character.id === 'raniero');
+    const takeEvent = helena?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM) as { startTime:number } | undefined;
+    const giveEvent = raniero?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
+    const atTakeState = createGameState({ ...level, initialTime:takeEvent!.startTime });
+    const atTakeHelena = findCharacter(atTakeState, 'Helena');
+
+    expect(takeEvent).toBeDefined();
+    expect(giveEvent).toBeDefined();
+    expect(takeEvent?.startTime).toBe(5_001);
+    expect(giveEvent?.startTime).toBe(5_000);
+    expect(atTakeHelena.rightHandItem?.id).toBe('book');
+    expect(atTakeHelena.leftHandItem).toBeNull();
+    expect(atTakeHelena.items).toEqual([]);
   });
 });

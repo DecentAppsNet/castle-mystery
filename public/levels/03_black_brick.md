@@ -241,6 +241,9 @@ AABBCCDFGGHHH.
 * description=An ordinary key. It probably unlocks some things.
 * image=brassKey.png
 
+## Time of Day Plaque
+* description=Not a clock. Not a calendar. It tells you what the key moments are in any given day.
+
 ## Walnut Table
 * description=An unusually high desk.
 

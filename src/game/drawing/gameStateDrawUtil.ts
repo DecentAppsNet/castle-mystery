@@ -49,6 +49,7 @@ function _calcRoomSilhouetteCacheKey(gameState:GameState, context:CanvasRenderin
 }
 
 function _createRoomSilhouetteCanvas(width:number, height:number):HTMLCanvasElement|OffscreenCanvas|null {
+  if (width <= 0 || height <= 0) return null;
   if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(width, height);
   if (typeof document === 'undefined') return null;
   const canvas = document.createElement('canvas');
@@ -89,6 +90,7 @@ function _findRoomSilhouetteCanvas(gameState:GameState, context:CanvasRenderingC
 }
 
 function _drawRoomSilhouette(gameState:GameState, context:CanvasRenderingContext2D) {
+  if (context.canvas.width <= 0 || context.canvas.height <= 0) return;
   const silhouetteCanvas = _findRoomSilhouetteCanvas(gameState, context);
   if (!silhouetteCanvas) return;
   context.drawImage(silhouetteCanvas, 0, 0);
