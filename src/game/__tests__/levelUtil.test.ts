@@ -65,6 +65,7 @@ import duplicateRoomSubsectionsCaseText from './fixtures/duplicate-room-subsecti
 import doorsArrivalTimestampText from './fixtures/doors-arrival-timestamp.md?raw';
 import invalidLockableExitItemText from './fixtures/invalid-lockable-exit-item.md?raw';
 import invalidCeilingFloorExitText from './fixtures/invalid-ceiling-floor-exit.md?raw';
+import invalidNonadjacentExitText from './fixtures/invalid-nonadjacent-exit.md?raw';
 import lockRequiredItemInHandText from './fixtures/lock-required-item-in-hand.md?raw';
 import lockRequiredItemMissingText from './fixtures/lock-required-item-missing.md?raw';
 import unlockRequiredItemMissingText from './fixtures/unlock-required-item-missing.md?raw';
@@ -747,6 +748,19 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('outside-room-below-ground-floor.md:3');
       expect((error as LoadLevelException).message).toContain("outside room 'Courtyard' is below general groundFloorRoom 'Upper Hallway'");
+    }
+  });
+
+  it('throws on the exits line when a room specifies a non-adjacent exit room', () => {
+    try {
+      loadLevelFromText(invalidNonadjacentExitText, 'invalid-nonadjacent-exit.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('invalid-nonadjacent-exit.md');
+      expect((error as LoadLevelException).errorLineNo).toBe(20);
+      expect((error as LoadLevelException).message).toContain('invalid-nonadjacent-exit.md:20');
+      expect((error as LoadLevelException).message).toContain('Kitchen, specified as an exit in Antechamber, is not adjacent.');
     }
   });
 

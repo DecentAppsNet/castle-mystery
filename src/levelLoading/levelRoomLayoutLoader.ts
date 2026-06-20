@@ -15,7 +15,7 @@ import Room from "../game/types/Room";
 import ExitStatus from "../game/types/ExitStatus";
 import ExitType from "../game/types/ExitType";
 import RoomExit, { createRoomExitId, LOCKABLE_WITHOUT_INV_CHECK } from "../game/types/RoomExit";
-import { MarkdownLineError, parseFirstFencedCodeBlockLines, parseOptions, parseSectionEntriesWithLines, parseUniqueNameValueLines } from "@/common/markdownUtil";
+import { MarkdownLineError, parseFirstFencedCodeBlockLines, parseNameValueLineEntriesWithLines, parseOptions, parseSectionEntriesWithLines, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { normalizeId } from "../game/idUtil";
 import { tryResolveItemId } from "./levelRoomPopulationLoader";
 import { areRoomsWellOrdered, sortRoomsForDrawingOrder } from "./roomOrderingUtil";
@@ -38,7 +38,8 @@ type PendingExit = {
   room1Modifiers:Set<string>,
   room2Modifiers:Set<string>,
   room1LockableWith:string|null,
-  room2LockableWith:string|null
+  room2LockableWith:string|null,
+  sourceReferences:{ fromRoomId:string, toRoomId:string, lineNo:number }[]
 };
 
 const VALID_EXIT_MODIFIERS = new Set(['lockable', 'unlockable', 'closed', 'open', 'locked', 'unlocked']);
@@ -369,6 +370,8 @@ function _createPendingExits(roomsSection:string, itemDefinitions:Map<string, { 
   Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
     const roomSection = roomSectionEntry.value;
     const nameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`, false, roomSectionEntry.lineNo + 1);
+    const exitsLineNo = parseNameValueLineEntriesWithLines(roomSection, false, roomSectionEntry.lineNo + 1)
+      .find(entry => entry.name === 'exits')?.lineNo ?? roomSectionEntry.lineNo;
     parseOptions(nameValues.exits || '').forEach(exitText => {
       const parsedExit = _parseExitReference(exitText, itemDefinitions);
       const [room1Id, room2Id] = [roomId, parsedExit.connectedRoomId].sort();
@@ -379,11 +382,13 @@ function _createPendingExits(roomsSection:string, itemDefinitions:Map<string, { 
         room1Modifiers:new Set<string>(),
         room2Modifiers:new Set<string>(),
         room1LockableWith:null,
-        room2LockableWith:null
+        room2LockableWith:null,
+        sourceReferences:[]
       };
       const isRoom1Side = pendingExit.room1Id === roomId;
       const sideModifiers = isRoom1Side ? pendingExit.room1Modifiers : pendingExit.room2Modifiers;
       parsedExit.modifiers.forEach(modifier => sideModifiers.add(modifier));
+      pendingExit.sourceReferences.push({ fromRoomId:roomId, toRoomId:parsedExit.connectedRoomId, lineNo:exitsLineNo });
       if (parsedExit.lockableWith !== null) {
         if (isRoom1Side) pendingExit.room1LockableWith = _mergeLockableWith(pendingExit.room1LockableWith, parsedExit.lockableWith, exitText);
         else pendingExit.room2LockableWith = _mergeLockableWith(pendingExit.room2LockableWith, parsedExit.lockableWith, exitText);
@@ -400,7 +405,13 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
   const room1 = findRoom(level.rooms, room1Id);
   const room2 = findRoom(level.rooms, room2Id);
   const sharedWallSection = _findSharedWallSectionBetweenRooms(room1, room2);
-  assertNonNullable(sharedWallSection, 'rooms must be adjacent');
+  if (sharedWallSection === null) {
+    const sourceReference = pendingExit.sourceReferences[0];
+    const sourceRoom = findRoom(level.rooms, sourceReference.fromRoomId);
+    const exitRoom = findRoom(level.rooms, sourceReference.toRoomId);
+    throw new MarkdownLineError(sourceReference.lineNo,
+      `${exitRoom.title}, specified as an exit in ${sourceRoom.title}, is not adjacent.`);
+  }
   _throwIfSharedWallSectionIsHorizontal(sharedWallSection, pendingExit);
   const [x, sharedY] = _findExitPositionFromSharedWallSection(sharedWallSection);
   const room1FloorY = room1.rect.y + room1.rect.height;
