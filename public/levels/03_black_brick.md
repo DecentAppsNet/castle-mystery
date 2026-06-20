@@ -233,6 +233,7 @@ AABBCCDFGGHHH.
 * description=A pillar. Maybe load-bearing. Or maybe just ornamental.
 
 ## Rubble
+* description=A massive pile of rubble, fallen from a new hole in the ceiling.
 * visible=false
 * drawOffsetX=-1
 * drawOffsetY=1.5
