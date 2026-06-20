@@ -155,8 +155,8 @@ function _calcStairPartSortX(stairPart:StairPart):number {
 
 export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
   groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
-  layoutPlanner:CanvasLayoutPlanner|null = null) {
-  if (!room.isDiscovered) return;
+  layoutPlanner:CanvasLayoutPlanner|null = null, includeUndiscovered:boolean = false) {
+  if (!includeUndiscovered && !room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
   const scaledBottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);

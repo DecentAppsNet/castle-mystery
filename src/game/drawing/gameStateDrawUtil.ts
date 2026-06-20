@@ -15,7 +15,7 @@ import ScalingFactors from "../types/ScalingFactors";
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
-import { COLOR_BLACK } from "./drawConstants";
+import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawConstants";
 import { drawExitPopover } from "./exitDrawUtil";
 import { drawRoomCharactersAndEffects, drawRoomShell, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
 import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";
@@ -26,6 +26,73 @@ import { getGroundImageAssetUrl } from "../imageUrlUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
+
+type CachedRoomSilhouette = {
+  key:string,
+  canvas:CanvasImageSource
+};
+
+const _cachedRoomSilhouettesByGameState = new WeakMap<GameState, CachedRoomSilhouette>();
+
+function _calcRoomSilhouetteCacheKey(gameState:GameState, context:CanvasRenderingContext2D):string {
+  const cameraRect = gameState.camera.currentRect;
+  const scalingFactors = gameState.scalingFactors;
+  return [
+    context.canvas.width,
+    context.canvas.height,
+    cameraRect.x,
+    cameraRect.y,
+    cameraRect.width,
+    cameraRect.height,
+    scalingFactors.roomLineWidth
+  ].join('|');
+}
+
+function _createRoomSilhouetteCanvas(width:number, height:number):HTMLCanvasElement|OffscreenCanvas|null {
+  if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(width, height);
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  return canvas;
+}
+
+function _renderRoomSilhouetteCanvas(gameState:GameState, context:CanvasRenderingContext2D):CanvasImageSource|null {
+  const silhouetteCanvas = _createRoomSilhouetteCanvas(context.canvas.width, context.canvas.height);
+  if (!silhouetteCanvas) return null;
+  const silhouetteContext = silhouetteCanvas.getContext('2d');
+  if (!silhouetteContext) return null;
+
+  silhouetteContext.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  const drawnExitIds = new Set<string>();
+  for (const room of gameState.rooms) {
+    drawRoomShell(room, gameState.rooms, false, gameState.characters, drawnExitIds,
+      gameState.groundFloorY, gameState.scalingFactors, silhouetteContext as unknown as CanvasRenderingContext2D,
+      true, null, true);
+  }
+  silhouetteContext.globalCompositeOperation = 'source-in';
+  silhouetteContext.fillStyle = COLOR_DARK_GRAY;
+  silhouetteContext.fillRect(0, 0, context.canvas.width, context.canvas.height);
+  silhouetteContext.globalCompositeOperation = 'source-over';
+  return silhouetteCanvas;
+}
+
+function _findRoomSilhouetteCanvas(gameState:GameState, context:CanvasRenderingContext2D):CanvasImageSource|null {
+  const cacheKey = _calcRoomSilhouetteCacheKey(gameState, context);
+  const cachedSilhouette = _cachedRoomSilhouettesByGameState.get(gameState);
+  if (cachedSilhouette?.key === cacheKey) return cachedSilhouette.canvas;
+
+  const silhouetteCanvas = _renderRoomSilhouetteCanvas(gameState, context);
+  if (!silhouetteCanvas) return null;
+  _cachedRoomSilhouettesByGameState.set(gameState, { key:cacheKey, canvas:silhouetteCanvas });
+  return silhouetteCanvas;
+}
+
+function _drawRoomSilhouette(gameState:GameState, context:CanvasRenderingContext2D) {
+  const silhouetteCanvas = _findRoomSilhouetteCanvas(gameState, context);
+  if (!silhouetteCanvas) return;
+  context.drawImage(silhouetteCanvas, 0, 0);
+}
 
 function _drawReservedRects(layoutPlanner:CanvasLayoutPlanner, context:CanvasRenderingContext2D) {
   if (!DRAW_RESERVED_RECTS) return;
@@ -145,6 +212,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   const drawnExitIds = new Set<string>();
   const layoutPlanner = new CanvasLayoutPlanner(context.canvas.width, context.canvas.height);
   _drawGround(gameState, context);
+  _drawRoomSilhouette(gameState, context);
   const roomRenderStates = gameState.rooms.map(room => {
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
