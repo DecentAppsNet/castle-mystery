@@ -200,6 +200,27 @@ function _createNonInteractiveHeldItemCharacterPopoverTestLevel():Level {
   };
 }
 
+function _createHeldAndHiddenItemCharacterPopoverTestLevel():Level {
+  const level = _createTestLevel();
+  const bookItem = level.itemsById.get('book');
+  const noteItem = level.itemsById.get('note');
+  expect(bookItem).toBeDefined();
+  expect(noteItem).toBeDefined();
+
+  return {
+    ...level,
+    rooms:level.rooms.map(room => room.id === 'hall'
+      ? { ...room, items:[] }
+      : room),
+    initialCharacters:level.initialCharacters.map(character => character.id === 'hero'
+      ? { ...character, rightHandItem:bookItem!, items:[noteItem!] }
+      : character),
+    characters:level.characters.map(character => character.id === 'hero'
+      ? { ...character, rightHandItem:bookItem!, items:[noteItem!] }
+      : character)
+  };
+}
+
 function _setTestScalingFactors(gameState:ReturnType<typeof createGameState>) {
   gameState.scalingFactors = {
     sourceX:0,
@@ -362,7 +383,8 @@ describe('conclusion unlock integration', () => {
 
   it('discovers a hovered visible item only when its popover is drawn, preserving discovery across time rebuilds', () => {
     const gameState = createGameState(_createTestLevel());
-    const context = _createMockContext();
+    const drawnTexts:string[] = [];
+    const context = _createMockContext(drawnTexts);
     _setTestScalingFactors(gameState);
 
     const itemBeforeHover = gameState.rooms[0].items[0];
@@ -376,6 +398,8 @@ describe('conclusion unlock integration', () => {
 
     updateAndDraw(gameState, context, () => {});
 
+    expect(drawnTexts).toContain('Book');
+    expect(drawnTexts).toContain('A test book.');
     expect(gameState.rooms[0].items[0]?.isDiscovered).toBe(true);
     expect(gameState.discoveredItemIds).toEqual(['book']);
 
@@ -412,7 +436,6 @@ describe('conclusion unlock integration', () => {
     updateAndDraw(gameState, context, () => {});
 
     expect(drawnTexts).toContain('Test hero.');
-    expect(drawnTexts).toContain('Carrying 1 item (in hand).');
     expect(drawnTexts).toContain('Book (right hand)');
     expect(drawnTexts).toContain('A test book.');
     expect(gameState.discoveredCharacterIds).toEqual(['hero']);
@@ -428,13 +451,26 @@ describe('conclusion unlock integration', () => {
 
     updateAndDraw(gameState, context, () => {});
 
-    expect(drawnTexts).toContain('Carrying 2 items (in hand).');
     expect(drawnTexts).toContain('Book (right hand)');
     expect(drawnTexts).toContain('A test book.');
     expect(drawnTexts).toContain('Note (left hand)');
     expect(drawnTexts).toContain('A hidden note.');
     expect(gameState.discoveredCharacterIds).toEqual(['hero']);
     expect(gameState.discoveredItemIds).toEqual(['book', 'note']);
+  });
+
+  it('shows hidden inventory summary after in-hand rows when other hidden items remain', () => {
+    const gameState = createGameState(_createHeldAndHiddenItemCharacterPopoverTestLevel());
+    const drawnTexts:string[] = [];
+    const context = _createMockContext(drawnTexts);
+    _setTestScalingFactors(gameState);
+    _hoverHero(gameState);
+
+    updateAndDraw(gameState, context, () => {});
+
+    expect(drawnTexts).toContain('Book (right hand)');
+    expect(drawnTexts).toContain('A test book.');
+    expect(drawnTexts).toContain('Carrying 1 other hidden item.');
   });
 
   it('does not discover a non-interactive held item from a shown character popover', () => {

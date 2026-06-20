@@ -1,6 +1,7 @@
 import styles from './DiscoveriesView.module.css';
 import Discoveries from '@/game/types/Discoveries';
 import DiscoveryItem from './DiscoveryItem';
+import { ROOM_DISCOVERY_ICON_URL, UNKNOWN_CHARACTER_ICON_URL, UNKNOWN_ITEM_ICON_URL } from '@/game/discoveryIconUrlUtil';
 
 type Props = {
   discoveries:Discoveries
@@ -14,10 +15,6 @@ type DiscoveryRow = {
   singularLabel:string,
   pluralLabel:string
 };
-
-const ROOM_DISCOVERY_ICON_URL = '/assets/ui/roomCount.png';
-const UNKNOWN_ITEM_ICON_URL = '/assets/ui/unknownItem.png';
-const UNKNOWN_CHARACTER_ICON_URL = '/assets/ui/unknownCharacter.png';
 
 function _replaceMissingIconUrls(urls:readonly string[], placeholderUrl:string):string[] {
   return urls.map(url => url.trim() ? url : placeholderUrl);

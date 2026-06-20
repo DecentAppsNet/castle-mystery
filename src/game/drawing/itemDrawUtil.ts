@@ -17,9 +17,10 @@ import ScalingFactors from "../types/ScalingFactors";
 import ImageSet from "../types/ImageSet";
 import Effect from "../effects/types/Effect";
 import EffectType from "../effects/types/EffectType";
-import { drawTextPopover } from "./popoverDrawUtil";
+import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";
+import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 
 const ITEM_CUBOID_DEPTH_RATIO = 0.7;
 const ITEM_CUBOID_LINE_WIDTH_RATIO = 0.25;
@@ -419,6 +420,13 @@ export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scal
 export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!isItemInteractive(item)) return;
-  drawTextPopover({ targetRect:getItemCanvasRectInRoom(room, item, scalingFactors, imageSet), title:item.title,
-    bodyTexts:[item.description], scalingFactors, context, layoutPlanner });
+  drawPopover({
+    targetRect:getItemCanvasRectInRoom(room, item, scalingFactors, imageSet),
+    title:item.title,
+    bodyEntries:[{ type:'imageTextRow', imageUrl:item.imageUrl || UNKNOWN_ITEM_ICON_URL, text:item.description, isDescriptionOnly:true }],
+    scalingFactors,
+    context,
+    imageSet,
+    layoutPlanner
+  });
 }

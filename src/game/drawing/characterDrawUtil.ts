@@ -18,12 +18,14 @@ import Rect from "../types/Rect";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import ImageSet from "../types/ImageSet";
+import Item from "../types/Item";
 import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK } from "./drawConstants";
-import { drawTextPopover } from "./popoverDrawUtil";
+import { drawPopover, PopoverBodyEntry } from "./popoverDrawUtil";
 import { createCharacterLayout, strokeCharacterBody } from "./characters/characterLayoutUtil";
 import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from "./characters/characterHeldItemDrawUtil";
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
+import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 
 export { drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "./characters/characterBubbleDrawUtil";
 
@@ -57,32 +59,42 @@ function _countInHandItems(character:Character):number {
   return (character.leftHandItem ? 1 : 0) + (character.rightHandItem ? 1 : 0);
 }
 
-function _countCarriedItems(character:Character):number {
-  return character.items.length + _countInHandItems(character);
-}
-
-function _getCharacterCarryText(character:Character):string {
-  const itemCount = _countCarriedItems(character);
+function _createHiddenCarryText(character:Character):string|null {
+  const hiddenItemCount = character.items.length;
   const inHandItemCount = _countInHandItems(character);
-  const inHandText = inHandItemCount > 0 
-    ? (itemCount === inHandItemCount) 
-      ? ` (in hand)`
-      : ` (${inHandItemCount} in hand)` 
-    : ``;
-  if (itemCount === 0) return "Carrying nothing.";
-  if (itemCount === 1) return `Carrying 1 item${inHandText}.`;
-  return `Carrying ${itemCount} items${inHandText}.`;
+  if (inHandItemCount === 0) {
+    if (hiddenItemCount === 0) return "Carrying nothing.";
+    if (hiddenItemCount === 1) return "Carrying 1 hidden item.";
+    return `Carrying ${hiddenItemCount} hidden items.`;
+  }
+  if (hiddenItemCount === 0) return null;
+  if (hiddenItemCount === 1) return "Carrying 1 other hidden item.";
+  return `Carrying ${hiddenItemCount} other hidden items.`;
 }
 
-function _createCharacterPopoverBodyTexts(character:Character):string[] {
-  const bodyTexts = [character.description, _getCharacterCarryText(character)];
-  if (character.rightHandItem) {
-    bodyTexts.push(`${character.rightHandItem.title} (right hand)|${character.rightHandItem.description}`);
+function _createHeldItemPopoverEntry(item:Item, handLabel:'left hand'|'right hand'):PopoverBodyEntry {
+  return {
+    type:'imageTextRow',
+    imageUrl:item.imageUrl || UNKNOWN_ITEM_ICON_URL,
+    text:`${item.title} (${handLabel})|${item.description}`
+  };
+}
+
+function _createCharacterPopoverBodyEntries(character:Character):PopoverBodyEntry[] {
+  const bodyEntries:PopoverBodyEntry[] = [{ type:'text', text:character.description }];
+  const heldItemEntries:PopoverBodyEntry[] = [];
+  if (character.rightHandItem) heldItemEntries.push(_createHeldItemPopoverEntry(character.rightHandItem, 'right hand'));
+  if (character.leftHandItem) heldItemEntries.push(_createHeldItemPopoverEntry(character.leftHandItem, 'left hand'));
+  const hiddenCarryText = _createHiddenCarryText(character);
+  if (heldItemEntries.length) {
+    bodyEntries.push({ type:'separator' });
+    bodyEntries.push(...heldItemEntries);
   }
-  if (character.leftHandItem) {
-    bodyTexts.push(`${character.leftHandItem.title} (left hand)|${character.leftHandItem.description}`);
+  if (hiddenCarryText) {
+    bodyEntries.push({ type:'separator' });
+    bodyEntries.push({ type:'text', text:hiddenCarryText });
   }
-  return bodyTexts;
+  return bodyEntries;
 }
 
 function _createCharacterCanvasLayout(character:Character, scalingFactors:ScalingFactors, time:number) {
@@ -271,6 +283,6 @@ export function drawCharacterPopover(character:Character, scalingFactors:Scaling
   imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!isCharacterInteractive(character)) return;
   const title = character.isTitleKnown ? _getCharacterDisplayName(character) : "";
-  drawTextPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time, imageSet), title,
-    bodyTexts:_createCharacterPopoverBodyTexts(character), scalingFactors, context, layoutPlanner });
+  drawPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time, imageSet), title,
+    bodyEntries:_createCharacterPopoverBodyEntries(character), scalingFactors, context, imageSet, layoutPlanner });
 }

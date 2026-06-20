@@ -4,6 +4,7 @@
 import { baseUrl } from "@/common/urlUtil";
 import { getGroundImageAssetUrl, isCandidateUrls } from "./imageUrlUtil";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
+import { UNKNOWN_ITEM_ICON_URL } from "./discoveryIconUrlUtil";
 import ClozeImage from "./conclusions/types/ClozeImage";
 import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
@@ -15,7 +16,7 @@ export function createEmptyImageSet():ImageSet {
 }
 
 function _findDirectReferencedImageUrls(level:Level):string[] {
-  const imageUrls = new Set<string>([KEY_IMAGE_URL, getGroundImageAssetUrl()]);
+  const imageUrls = new Set<string>([KEY_IMAGE_URL, getGroundImageAssetUrl(), UNKNOWN_ITEM_ICON_URL]);
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
   level.rooms.forEach(room => room.items.forEach(item => {
     if (item.imageUrl) imageUrls.add(item.imageUrl);
