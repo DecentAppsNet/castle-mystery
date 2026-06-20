@@ -23,6 +23,7 @@ import { drawItemPopover } from "./itemDrawUtil";
 import { calcLevelCameraRect } from "../cameraUtil";
 import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { getGroundImageAssetUrl } from "../imageUrlUtil";
+import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
@@ -138,7 +139,7 @@ function _findHoveredItem(gameState:GameState) {
     ? gameState.rooms.filter(room => room.isDiscovered)
     : gameState.rooms;
   for (const room of candidateRooms) {
-    const hoveredItem = room.items.find(item => item.id === gameState.hoveredItemId && (gameState.isLevelComplete || item.isDiscovered)) || null;
+    const hoveredItem = room.items.find(item => item.id === gameState.hoveredItemId) || null;
     if (hoveredItem) return { room, item:hoveredItem };
   }
   return null;
@@ -236,11 +237,15 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(gameState);
     if (hoveredItem && isItemInteractive(hoveredItem.item)) {
+      markItemDiscovered(gameState, hoveredItem.item);
       drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context, gameState.imageSet, layoutPlanner);
     }
   } else if (canShowHoverPopovers && gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter && isCharacterInteractive(hoveredCharacter)) {
+      markCharacterDiscovered(gameState, hoveredCharacter);
+      if (hoveredCharacter.rightHandItem) markItemDiscovered(gameState, hoveredCharacter.rightHandItem);
+      if (hoveredCharacter.leftHandItem) markItemDiscovered(gameState, hoveredCharacter.leftHandItem);
       drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time, gameState.imageSet, layoutPlanner);
     }
   } else if (canShowHoverPopovers && gameState.hoveredExitKey) {

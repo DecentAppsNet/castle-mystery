@@ -2,6 +2,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
+import { getCharacterCanvasRect } from '../drawing/characterDrawUtil';
+import { canvasToGamePosition } from '../drawing/drawUtil';
 import EffectType from '../effects/types/EffectType';
 import { createGameState, updateAndDraw } from '../gameUtil';
 import { updateGameStateForMouseMove } from '../hoverStateUtil';
@@ -139,6 +141,96 @@ function _createTestLevel():Level {
   };
 }
 
+function _createHeldItemCharacterPopoverTestLevel():Level {
+  const level = _createTestLevel();
+  const bookItem = level.itemsById.get('book');
+  expect(bookItem).toBeDefined();
+
+  return {
+    ...level,
+    rooms:level.rooms.map(room => room.id === 'hall'
+      ? { ...room, items:[] }
+      : room),
+    initialCharacters:level.initialCharacters.map(character => character.id === 'hero'
+      ? { ...character, rightHandItem:bookItem!, items:[] }
+      : character),
+    characters:level.characters.map(character => character.id === 'hero'
+      ? { ...character, rightHandItem:bookItem!, items:[] }
+      : character)
+  };
+}
+
+function _createBothHandsCharacterPopoverTestLevel():Level {
+  const level = _createTestLevel();
+  const bookItem = level.itemsById.get('book');
+  const noteItem = level.itemsById.get('note');
+  expect(bookItem).toBeDefined();
+  expect(noteItem).toBeDefined();
+
+  return {
+    ...level,
+    rooms:level.rooms.map(room => ({ ...room, items:[] })),
+    initialCharacters:level.initialCharacters.map(character => character.id === 'hero'
+      ? { ...character, leftHandItem:noteItem!, rightHandItem:bookItem!, items:[] }
+      : character),
+    characters:level.characters.map(character => character.id === 'hero'
+      ? { ...character, leftHandItem:noteItem!, rightHandItem:bookItem!, items:[] }
+      : character)
+  };
+}
+
+function _createNonInteractiveHeldItemCharacterPopoverTestLevel():Level {
+  const level = _createTestLevel();
+  const bookItem = level.itemsById.get('book');
+  expect(bookItem).toBeDefined();
+  const nonInteractiveBook = { ...bookItem!, description:'' };
+
+  return {
+    ...level,
+    rooms:level.rooms.map(room => room.id === 'hall'
+      ? { ...room, items:[] }
+      : room),
+    itemsById:new Map([['book', nonInteractiveBook], ...Array.from(level.itemsById.entries()).filter(([id]) => id !== 'book')]),
+    initialCharacters:level.initialCharacters.map(character => character.id === 'hero'
+      ? { ...character, rightHandItem:nonInteractiveBook, items:[] }
+      : character),
+    characters:level.characters.map(character => character.id === 'hero'
+      ? { ...character, rightHandItem:nonInteractiveBook, items:[] }
+      : character)
+  };
+}
+
+function _setTestScalingFactors(gameState:ReturnType<typeof createGameState>) {
+  gameState.scalingFactors = {
+    sourceX:0,
+    sourceY:0,
+    sourceWidth:10,
+    sourceHeight:10,
+    scaleX:10,
+    translateX:0,
+    scaleY:10,
+    translateY:0,
+    roomFontHeight:20,
+    roomLineWidth:2,
+    destWidth:100,
+    destHeight:100
+  };
+}
+
+function _hoverHero(gameState:ReturnType<typeof createGameState>) {
+  const hero = gameState.characters.find(character => character.id === 'hero');
+  expect(hero).toBeDefined();
+  const heroRect = getCharacterCanvasRect(hero!, gameState.scalingFactors, gameState.time, gameState.imageSet);
+  const [left, top] = canvasToGamePosition(heroRect.x, heroRect.y, gameState.scalingFactors);
+  const [right, bottom] = canvasToGamePosition(heroRect.x + heroRect.width, heroRect.y + heroRect.height, gameState.scalingFactors);
+
+  updateGameStateForMouseMove(gameState, {
+    type:PlayerEventType.MOUSEMOVE,
+    x:(left + right) / 2,
+    y:(top + bottom) / 2
+  });
+}
+
 describe('conclusion unlock integration', () => {
   it('preserves authored outgoing unlock edges and initial locked targets in the game state', () => {
     const gameState = createGameState(_createTestLevel());
@@ -260,36 +352,103 @@ describe('conclusion unlock integration', () => {
     expect(gameState.activeEffects.some(effect => effect.type === EffectType.THINKING && effect.character?.id === 'witness')).toBe(true);
   });
 
-  it('records hovered visible items, preserving discovery across time rebuilds', () => {
+  it('does not auto-discover visible characters or items before a popover is shown', () => {
     const gameState = createGameState(_createTestLevel());
-    gameState.scalingFactors = {
-      sourceX:0,
-      sourceY:0,
-      sourceWidth:10,
-      sourceHeight:10,
-      scaleX:10,
-      translateX:0,
-      scaleY:10,
-      translateY:0,
-      roomFontHeight:20,
-      roomLineWidth:2,
-      destWidth:100,
-      destHeight:100
-    };
+
+    expect(gameState.discoveredCharacterIds).toEqual([]);
+    expect(gameState.discoveredItemIds).toEqual([]);
+    expect(gameState.rooms[0].items[0]?.isDiscovered).toBe(false);
+  });
+
+  it('discovers a hovered visible item only when its popover is drawn, preserving discovery across time rebuilds', () => {
+    const gameState = createGameState(_createTestLevel());
+    const context = _createMockContext();
+    _setTestScalingFactors(gameState);
 
     const itemBeforeHover = gameState.rooms[0].items[0];
-    expect(itemBeforeHover.isDiscovered).toBe(true);
+    expect(itemBeforeHover.isDiscovered).toBe(false);
 
     updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:7, y:5 });
 
     const itemAfterHover = gameState.rooms[0].items[0];
-    expect(itemAfterHover.isDiscovered).toBe(true);
+    expect(itemAfterHover.isDiscovered).toBe(false);
     expect(gameState.viewedItemIds.has('Book')).toBe(true);
+
+    updateAndDraw(gameState, context, () => {});
+
+    expect(gameState.rooms[0].items[0]?.isDiscovered).toBe(true);
+    expect(gameState.discoveredItemIds).toEqual(['book']);
 
     rebuildDynamicStateForTime(gameState, 1_000, 0);
 
     const itemAfterRebuild = gameState.rooms[0].items[0];
     expect(itemAfterRebuild.isDiscovered).toBe(true);
+  });
+
+  it('discovers a hovered visible character only when its popover is drawn', () => {
+    const gameState = createGameState(_createTestLevel());
+    const context = _createMockContext();
+    _setTestScalingFactors(gameState);
+    _hoverHero(gameState);
+
+    expect(gameState.hoveredCharacterId).toBe('hero');
+    expect(gameState.discoveredCharacterIds).toEqual([]);
+
+    updateAndDraw(gameState, context, () => {});
+
+    expect(gameState.discoveredCharacterIds).toEqual(['hero']);
+  });
+
+  it('includes held-item text in a character popover and discovers the held item when shown', () => {
+    const gameState = createGameState(_createHeldItemCharacterPopoverTestLevel());
+    const drawnTexts:string[] = [];
+    const context = _createMockContext(drawnTexts);
+    _setTestScalingFactors(gameState);
+    _hoverHero(gameState);
+
+    expect(gameState.discoveredCharacterIds).toEqual([]);
+    expect(gameState.discoveredItemIds).toEqual([]);
+
+    updateAndDraw(gameState, context, () => {});
+
+    expect(drawnTexts).toContain('Test hero.');
+    expect(drawnTexts).toContain('Carrying 1 item (in hand).');
+    expect(drawnTexts).toContain('Book (right hand)');
+    expect(drawnTexts).toContain('A test book.');
+    expect(gameState.discoveredCharacterIds).toEqual(['hero']);
+    expect(gameState.discoveredItemIds).toEqual(['book']);
+  });
+
+  it('includes both held items in a character popover and discovers both when shown', () => {
+    const gameState = createGameState(_createBothHandsCharacterPopoverTestLevel());
+    const drawnTexts:string[] = [];
+    const context = _createMockContext(drawnTexts);
+    _setTestScalingFactors(gameState);
+    _hoverHero(gameState);
+
+    updateAndDraw(gameState, context, () => {});
+
+    expect(drawnTexts).toContain('Carrying 2 items (in hand).');
+    expect(drawnTexts).toContain('Book (right hand)');
+    expect(drawnTexts).toContain('A test book.');
+    expect(drawnTexts).toContain('Note (left hand)');
+    expect(drawnTexts).toContain('A hidden note.');
+    expect(gameState.discoveredCharacterIds).toEqual(['hero']);
+    expect(gameState.discoveredItemIds).toEqual(['book', 'note']);
+  });
+
+  it('does not discover a non-interactive held item from a shown character popover', () => {
+    const gameState = createGameState(_createNonInteractiveHeldItemCharacterPopoverTestLevel());
+    const drawnTexts:string[] = [];
+    const context = _createMockContext(drawnTexts);
+    _setTestScalingFactors(gameState);
+    _hoverHero(gameState);
+
+    updateAndDraw(gameState, context, () => {});
+
+    expect(drawnTexts).toContain('Book (right hand)');
+    expect(gameState.discoveredCharacterIds).toEqual(['hero']);
+    expect(gameState.discoveredItemIds).toEqual([]);
   });
 });
 

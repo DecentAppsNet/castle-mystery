@@ -74,6 +74,17 @@ function _getCharacterCarryText(character:Character):string {
   return `Carrying ${itemCount} items${inHandText}.`;
 }
 
+function _createCharacterPopoverBodyTexts(character:Character):string[] {
+  const bodyTexts = [character.description, _getCharacterCarryText(character)];
+  if (character.rightHandItem) {
+    bodyTexts.push(`${character.rightHandItem.title} (right hand)|${character.rightHandItem.description}`);
+  }
+  if (character.leftHandItem) {
+    bodyTexts.push(`${character.leftHandItem.title} (left hand)|${character.leftHandItem.description}`);
+  }
+  return bodyTexts;
+}
+
 function _createCharacterCanvasLayout(character:Character, scalingFactors:ScalingFactors, time:number) {
   const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
@@ -260,7 +271,6 @@ export function drawCharacterPopover(character:Character, scalingFactors:Scaling
   imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!isCharacterInteractive(character)) return;
   const title = character.isTitleKnown ? _getCharacterDisplayName(character) : "";
-  const carryText = _getCharacterCarryText(character);
   drawTextPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time, imageSet), title,
-    bodyTexts:[character.description, carryText], scalingFactors, context, layoutPlanner });
+    bodyTexts:_createCharacterPopoverBodyTexts(character), scalingFactors, context, layoutPlanner });
 }

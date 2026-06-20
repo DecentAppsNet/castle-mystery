@@ -434,7 +434,7 @@ AABBCCDFGGHHH.
 : King Frederick stands
 : says, "I am okay."
 : Pope @ 40%
-: Pope says, "Just as I suspected!"
+: Pope says, "Just as I suspected! Here in the rubble..."
 : takes black brick into left hand.
 : says, "a black brick!"
 : @ 20%
