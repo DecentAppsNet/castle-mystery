@@ -380,10 +380,10 @@ AABBCCDFGGHHH.
 : Pope says, "Wait here one moment, my King."
 
 11:59:18 Hugo @ East Hall.40%
-11:59:22 Pope @ East Hall.20%
+11:59:21 Pope @ East Hall.20%
 : Hugo gives black brick to Pope
 : Hugo takes small hourglass in right hand
-: Pope says, "Good, you will need the hourglass."
+: Pope says, "Use the hourglass."
 (Hugo leaves for cellar)
 
 (Helena is in the lower passage, holding the black paint jar)
