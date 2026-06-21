@@ -1,3 +1,5 @@
+import { PERFORMANCE_LOGGING_ENABLED } from "@/developer/config";
+
 const _startTimesByActivityName = new Map<string, number>();
 
 function _findNow():number {
@@ -6,6 +8,7 @@ function _findNow():number {
 }
 
 export function startTiming(activityName:string):void {
+  if (!PERFORMANCE_LOGGING_ENABLED) return;
   if (_startTimesByActivityName.has(activityName)) {
     console.warn(`${activityName} timing already started; overwriting previous start time`);
   }
@@ -13,6 +16,7 @@ export function startTiming(activityName:string):void {
 }
 
 export function endTiming(activityName:string):void {
+  if (!PERFORMANCE_LOGGING_ENABLED) return;
   const startTime = _startTimesByActivityName.get(activityName);
   if (startTime === undefined) {
     console.log(`${activityName} timing ended without a matching startTiming`);
