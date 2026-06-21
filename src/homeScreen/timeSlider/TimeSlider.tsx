@@ -21,6 +21,7 @@ type Props = {
   step?: number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
   itinerary:Itinerary|null;
   rooms:Room[];
+  roomsRevision?:number;
   initialRoomId:string|null;
   labels:TimeLabel[];
   isPlaying:boolean;
@@ -94,6 +95,7 @@ function TimeSlider(props:Props) {
     step = NO_QUANTIZING,
     itinerary,
     rooms,
+    roomsRevision = 0,
     initialRoomId,
     labels,
     isPlaying,
@@ -107,7 +109,10 @@ function TimeSlider(props:Props) {
   const [timeLabelPositions, setTimeLabelPositions] = useState<TimeLabelPositions|null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const percent = minutesToPercent(minutes, fromMinutes, toMinutes);
-  const itineraryMarkers = useMemo(() => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, itinerary, rooms, initialRoomId), [sliderWidth, fromMinutes, toMinutes, itinerary, rooms, initialRoomId]);
+  const itineraryMarkers = useMemo(
+    () => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, itinerary, rooms, initialRoomId),
+    [sliderWidth, fromMinutes, toMinutes, itinerary, rooms, roomsRevision, initialRoomId]
+  );
 
   function _onSliderUpdate(nextValue:number) {
     const nextMinutes = percentToMinutes(nextValue, fromMinutes, toMinutes, step);
