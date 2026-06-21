@@ -79,6 +79,10 @@
 * description=A sturdy table made of walnut wood.
 * image=walnutTable.png
 
+## Wax Tablet
+* description=Can be used to make temporary writings and drawings.
+* image=waxTablet.png
+
 ## Wineskin
 * image=wineskin.png
 * description=A skin filled with wine.

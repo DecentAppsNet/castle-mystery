@@ -24,6 +24,15 @@ ethnicityBackground=Sicilian Muslim
 occupation=Apprentice carver
 ethnicityBackground=Greek Sicilian
 
+## Andronikos
+* title=Andronikos of Monreale
+* description=A man very practiced in speaking with upset people.
+* faceImage=andronikos.png
+
+ETHNICITY: Sicilian Greek
+AGE: 35
+OCCUPATION: Usher
+
 ## Anna
 
 * title=Anna di Pietro
@@ -135,6 +144,18 @@ Ethnicity: German
 age=47
 occupation=Cook and house manager
 ethnicityBackground=Latin Sicilian
+
+## Guard 1
+* faceImage=guard1.png
+
+## Guard 2
+* faceImage=guard2.png
+
+## Guard 3
+* faceImage=guard3.png
+
+## Guard 4
+* faceImage=guard4.png
 
 ## Toro
 
