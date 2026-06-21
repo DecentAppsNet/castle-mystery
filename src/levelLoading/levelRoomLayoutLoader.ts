@@ -1,8 +1,6 @@
 /* This module groups room geometry, room-grid parsing, and room navigation layout initialization during level load.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assertNonNullable } from "decent-portal";
-
 import { MAP_TILE_SIZE } from "../game/roomGridUtil";
 import { findRoom } from "../game/roomUtil";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "../game/waypointUtil";

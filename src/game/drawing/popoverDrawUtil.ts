@@ -147,6 +147,12 @@ function _createImageTextRowLines(bodyText:string, maxTextWidth:number,
   return { titleLines, descriptionLines };
 }
 
+function _createDescriptionOnlyImageTextRowLines(bodyText:string, maxTextWidth:number,
+  itemDescriptionFont:string, context:CanvasRenderingContext2D):string[] {
+  return _splitPopoverBodyTextIntoAuthoredLines(bodyText)
+    .flatMap(line => _wrapText(context, line, maxTextWidth, itemDescriptionFont));
+}
+
 function _findImageAspectRatio(imageUrl:string, imageSet:ImageSet|undefined, fallbackAspectRatio:number):number {
   const image = imageSet?.get(imageUrl) || null;
   if (!image || image.width <= 0 || image.height <= 0) return fallbackAspectRatio;
@@ -185,7 +191,12 @@ function _createWrappedPopoverRows(bodyEntries:PopoverBodyEntry[], typographyAnd
         context
       ).titleLines;
     const descriptionLines = entry.isDescriptionOnly
-      ? _wrapText(context, entry.text, textWidth, typographyAndSpacing.itemDescriptionFont)
+      ? _createDescriptionOnlyImageTextRowLines(
+        entry.text,
+        textWidth,
+        typographyAndSpacing.itemDescriptionFont,
+        context
+      )
       : _createImageTextRowLines(
         entry.text,
         textWidth,

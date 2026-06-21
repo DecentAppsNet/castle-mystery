@@ -5,6 +5,7 @@ import backgroundImageText from './fixtures/background-image.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
+import { UNKNOWN_ITEM_ICON_URL } from '../discoveryIconUrlUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
 import { getBackgroundImageAssetUrl, getClozeImageCandidateUrls, getFaceImageAssetUrl, getGroundImageAssetUrl, getItemImageAssetUrl } from '../imageUrlUtil';
 
@@ -26,9 +27,10 @@ describe('imageSetUtil.ts', () => {
     const level = loadLevelFromText(imageSetReferencedImagesText);
     const imageSet = await createImageSetFromLevel(level);
 
-    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(fetchMock).toHaveBeenCalledTimes(6);
     expect(imageSet.has(getGroundImageAssetUrl())).toBe(true);
     expect(imageSet.has('/assets/sprites/key.png')).toBe(true);
+    expect(imageSet.has(UNKNOWN_ITEM_ICON_URL)).toBe(true);
     expect(imageSet.has(getFaceImageAssetUrl('kingFace.png'))).toBe(true);
     expect(imageSet.has(getFaceImageAssetUrl('queenFace.png'))).toBe(true);
     expect(imageSet.has(getClozeImageCandidateUrls('queenFace.png')[0])).toBe(false);

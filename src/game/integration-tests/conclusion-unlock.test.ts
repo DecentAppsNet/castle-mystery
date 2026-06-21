@@ -386,6 +386,7 @@ describe('conclusion unlock integration', () => {
     const drawnTexts:string[] = [];
     const context = _createMockContext(drawnTexts);
     _setTestScalingFactors(gameState);
+    gameState.rooms[0].items[0].description = 'A test book.|Second line.';
 
     const itemBeforeHover = gameState.rooms[0].items[0];
     expect(itemBeforeHover.isDiscovered).toBe(false);
@@ -400,6 +401,7 @@ describe('conclusion unlock integration', () => {
 
     expect(drawnTexts).toContain('Book');
     expect(drawnTexts).toContain('A test book.');
+    expect(drawnTexts).toContain('Second line.');
     expect(gameState.rooms[0].items[0]?.isDiscovered).toBe(true);
     expect(gameState.discoveredItemIds).toEqual(['book']);
 
@@ -428,6 +430,7 @@ describe('conclusion unlock integration', () => {
     const drawnTexts:string[] = [];
     const context = _createMockContext(drawnTexts);
     _setTestScalingFactors(gameState);
+    gameState.characters[0].rightHandItem!.description = 'A test book.|Second line.';
     _hoverHero(gameState);
 
     expect(gameState.discoveredCharacterIds).toEqual([]);
@@ -438,6 +441,7 @@ describe('conclusion unlock integration', () => {
     expect(drawnTexts).toContain('Test hero.');
     expect(drawnTexts).toContain('Book (right hand)');
     expect(drawnTexts).toContain('A test book.');
+    expect(drawnTexts).toContain('Second line.');
     expect(gameState.discoveredCharacterIds).toEqual(['hero']);
     expect(gameState.discoveredItemIds).toEqual(['book']);
   });
