@@ -2,9 +2,33 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
+import { findNearestWaypointToPosition } from "@/game/waypointUtil";
 import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoomForWaypoint, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 import { normalizeId } from "@/game/idUtil";
 import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
+
+function _createWaypointKey(position:{ x:number, y:number, z:number }):string {
+  return `${position.x},${position.y},${position.z}`;
+}
+
+function _createClaimedWaypointKeysForTargetRoom(targetRoomId:string, context:ActivityContext):Set<string> {
+  const claimedWaypointKeys = new Set<string>();
+  const targetRoom = context.level.rooms.find(room => room.id === targetRoomId) || null;
+  if (!targetRoom) return claimedWaypointKeys;
+
+  Array.from(context.characterStatesById.entries())
+    .filter(([characterId]) => characterId !== context.character.id)
+    .filter(([, state]) => state.isVisible)
+    .filter(([, state]) => findCurrentRoomForWaypoint(context.level, state.waypoint).id === targetRoomId)
+    .forEach(([, state]) => claimedWaypointKeys.add(_createWaypointKey(state.waypoint.position)));
+
+  const roomItems = context.roomItemsByRoomId.get(targetRoomId) || [];
+  roomItems
+    .filter(item => item.isVisible)
+    .forEach(item => claimedWaypointKeys.add(_createWaypointKey(findNearestWaypointToPosition(targetRoom, item.position).position)));
+
+  return claimedWaypointKeys;
+}
 
 function _parseRoomPercentTarget(targetText:string):number|null {
   if (!targetText.endsWith('%')) return null;
@@ -54,10 +78,7 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   const { roomId:targetRoomId, targetXPercent } = _parseAtTarget(trimmedActivityText, context);
   if (findCurrentRoomForWaypoint(context.level, context.state.waypoint).id === targetRoomId && targetXPercent === null) return [];
-  const occupiedWaypointKeys = new Set(Array.from(context.characterStatesById.entries())
-    .filter(([characterId]) => characterId !== context.character.id)
-    .filter(([, state]) => findCurrentRoomForWaypoint(context.level, state.waypoint).id === targetRoomId)
-    .map(([, state]) => `${state.waypoint.position.x},${state.waypoint.position.y},${state.waypoint.position.z}`));
+  const occupiedWaypointKeys = _createClaimedWaypointKeysForTargetRoom(targetRoomId, context);
   const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, null, targetXPercent);
   const targetRoomTitle = context.level.rooms.find(room => room.id === targetRoomId)?.title || targetRoomId;
   const scheduledEvents = context.timestampType === 'absolute'

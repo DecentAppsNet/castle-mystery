@@ -49,6 +49,36 @@ function _resolveVisibilityTargetIdOrThrow(context:ActivityContext, targetRef:st
   throw new Error(`unknown visibility target '${targetRef}' in authored activity '${activityText}'`);
 }
 
+function _applyVisibilityToCharacterState(context:ActivityContext, targetId:string, isVisible:boolean):boolean {
+  const state = context.characterStatesById.get(targetId) || null;
+  if (!state) return false;
+  state.isVisible = isVisible;
+  return true;
+}
+
+function _applyVisibilityToRoomItem(context:ActivityContext, targetId:string, isVisible:boolean):boolean {
+  const roomItemLocation = findRoomItemById(context.roomItemsByRoomId, context.level, targetId);
+  if (!roomItemLocation) return false;
+  roomItemLocation.item.isVisible = isVisible;
+  return true;
+}
+
+function _applyVisibilityToOwnedItem(context:ActivityContext, targetId:string, isVisible:boolean):boolean {
+  for (const state of context.characterStatesById.values()) {
+    const item = findStateOwnedItem(state, targetId);
+    if (!item) continue;
+    item.isVisible = isVisible;
+    return true;
+  }
+  return false;
+}
+
+function _applyVisibilityToTarget(context:ActivityContext, targetId:string, isVisible:boolean) {
+  if (_applyVisibilityToCharacterState(context, targetId, isVisible)) return;
+  if (_applyVisibilityToRoomItem(context, targetId, isVisible)) return;
+  _applyVisibilityToOwnedItem(context, targetId, isVisible);
+}
+
 export function tryCreateShowHideActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   const visibilityVerb = findSentenceStyleActivityVerb(activityText, ['show', 'hide'] as const) as VisibilityVerb | null;
   if (!visibilityVerb) return null;
@@ -57,5 +87,6 @@ export function tryCreateShowHideActivity(activityText:string, context:ActivityC
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   const targetRef = parseSentenceStyleActivityText(activityText, visibilityVerb, 'visibility target');
   const targetId = _resolveVisibilityTargetIdOrThrow(context, targetRef, activityText);
+  _applyVisibilityToTarget(context, targetId, visibilityVerb === 'show');
   return [visibilityVerb === 'show' ? createShowEvent(activityStartTime, targetId) : createHideEvent(activityStartTime, targetId)];
 }

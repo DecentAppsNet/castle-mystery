@@ -16,6 +16,8 @@ import atRoomMarkerSameRoomText from './fixtures/at-room-marker-same-room.md?raw
 import atRoomMarkerText from './fixtures/at-room-marker.md?raw';
 import atRoomMiddleRowVisitText from './fixtures/at-room-middle-row-visit.md?raw';
 import atRoomPercentClaimedInteriorText from './fixtures/at-room-percent-claimed-interior.md?raw';
+import atRoomPercentClaimedVisibleItemText from './fixtures/at-room-percent-claimed-visible-item.md?raw';
+import atRoomPercentHiddenCharacterText from './fixtures/at-room-percent-hidden-character.md?raw';
 import atLibraryViaFoyerText from './fixtures/at-library-via-foyer.md?raw';
 
 function _positionsEqual(position1:{ x:number, y:number }, position2:{ x:number, y:number }) {
@@ -217,6 +219,33 @@ describe('at room integration', () => {
     expect(lastWalkEvent).toBeDefined();
     expect(lastWalkEvent!.toPosition).not.toEqual(targetExitWaypoint.position);
     expect(lastWalkEvent!.toPosition).toEqual(interiorWaypoints[1].position);
+  });
+
+  it('routes @ Room.90% to the next-closest interior floor waypoint when the nearest interior floor waypoint has a visible item', () => {
+    const level = loadLevelFromText(atRoomPercentClaimedVisibleItemText);
+    const scout = level.characters.find(character => character.id === 'scout');
+    const target = findRoom(level.rooms, 'Target');
+    const interiorWaypoints = _findInteriorMiddleFloorWaypointsByDescendingX(target);
+    const lastWalkEvent = _findLastWalkEvent(scout!.itinerary);
+
+    expect(scout).not.toBeNull();
+    expect(interiorWaypoints.length).toBeGreaterThanOrEqual(2);
+    expect(lastWalkEvent).toBeDefined();
+    expect(lastWalkEvent!.toPosition).toEqual(interiorWaypoints[1].position);
+  });
+
+  it('allows @ Room.90% to reuse a waypoint occupied by a hidden character', () => {
+    const level = loadLevelFromText(atRoomPercentHiddenCharacterText);
+    const scout = level.characters.find(character => character.id === 'scout');
+    const guard = level.characters.find(character => character.id === 'guard');
+    const guardLastWalkEvent = _findLastWalkEvent(guard!.itinerary);
+    const scoutLastWalkEvent = _findLastWalkEvent(scout!.itinerary);
+
+    expect(scout).not.toBeNull();
+    expect(guard).not.toBeNull();
+    expect(guardLastWalkEvent).toBeDefined();
+    expect(scoutLastWalkEvent).toBeDefined();
+    expect(scoutLastWalkEvent!.toPosition).toEqual(guardLastWalkEvent!.toPosition);
   });
 
   it('prefers a middle-row floor waypoint for default @ Room movement in a stair room', () => {

@@ -51,6 +51,8 @@ function _createClaimedWaypointKeys(room:ReturnType<typeof findCurrentRoom>, act
   const claimedWaypointKeys = new Set<string>();
 
   for (const characterId of context.charactersById.keys()) {
+    const state = context.characterStatesById.get(characterId) || null;
+    if (!state?.isVisible) continue;
     const position = findTargetPositionAtTime(characterId, activityStartTime,
       context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
     if (!position) continue;
@@ -59,6 +61,11 @@ function _createClaimedWaypointKeys(room:ReturnType<typeof findCurrentRoom>, act
     const waypoint = findNearestWaypointToPosition(room, position);
     claimedWaypointKeys.add(_createWaypointKey(waypoint));
   }
+
+  const roomItems = context.roomItemsByRoomId.get(room.id) || [];
+  roomItems
+    .filter(item => item.isVisible)
+    .forEach(item => claimedWaypointKeys.add(_createWaypointKey(findNearestWaypointToPosition(room, item.position))));
 
   return claimedWaypointKeys;
 }
