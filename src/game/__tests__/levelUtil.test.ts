@@ -95,6 +95,7 @@ import closedDoorExitText from './fixtures/closed-door-exit.md?raw';
 import lockableExitOneSidedText from './fixtures/lockable-exit-one-sided.md?raw';
 import lockableExitTwoSidedText from './fixtures/lockable-exit-two-sided.md?raw';
 import lockableExitWithItemText from './fixtures/lockable-exit-with-item.md?raw';
+import commaSeparatedExitsWithModifiersText from './fixtures/comma-separated-exits-with-modifiers.md?raw';
 import lowercaseTitleDefaultsText from './fixtures/lowercase-title-defaults.md?raw';
 import mapLegendRoomTitleDefaultText from './fixtures/map-legend-room-title-default.md?raw';
 import missingConclusionPhraseText from './fixtures/missing-conclusion-phrase.md?raw';
@@ -836,7 +837,7 @@ describe('levelUtil itinerary loading', () => {
       expect.fail('expected level loading to throw');
     } catch (error) {
       expect(error).toBeInstanceOf(LoadLevelException);
-      expect((error as LoadLevelException).message).toContain('invalid-lockable-exit-item.md:12');
+      expect((error as LoadLevelException).message).toContain('invalid-lockable-exit-item.md:15');
       expect((error as LoadLevelException).message).toContain(`unknown item 'Missing Key' in 'Hallway (lockable with Missing Key)'`);
     }
   });
@@ -849,6 +850,19 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-ceiling-floor-exit.md:18');
       expect((error as LoadLevelException).message).toContain('ceiling or floor exits are not supported');
+    }
+  });
+
+  it('throws on the exits line with guidance when multiple exits are comma-separated', () => {
+    try {
+      loadLevelFromText(commaSeparatedExitsWithModifiersText, 'comma-separated-exits-with-modifiers.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('comma-separated-exits-with-modifiers.md');
+      expect((error as LoadLevelException).errorLineNo).toBe(16);
+      expect((error as LoadLevelException).message).toContain('comma-separated-exits-with-modifiers.md:16');
+      expect((error as LoadLevelException).message).toContain("multiple exits must be separated by '|'");
     }
   });
 

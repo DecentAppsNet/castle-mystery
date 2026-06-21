@@ -67,6 +67,13 @@ function _mergeLockableWith(existing:string|null, next:string|null, trimmedExitT
   throw new Error(`conflicting lockable item requirements in '${trimmedExitText}'`);
 }
 
+function _createInvalidExitModifierMessage(modifier:string, trimmedExitText:string):string {
+  if (modifier.includes('(') || modifier.includes(')')) {
+    return `invalid exit modifier '${modifier}' in '${trimmedExitText}': multiple exits must be separated by '|' and commas are only valid inside one exit's modifier list`;
+  }
+  return `invalid exit modifier '${modifier}' in '${trimmedExitText}'; valid modifiers are lockable, unlockable, closed, open, locked, and unlocked`;
+}
+
 function _validateMapSectionIsPresent(mapSection:string) {
   if (mapSection.trim().length > 0) return;
   throw new Error('missing required map section');
@@ -317,7 +324,7 @@ function _parseExitReference(exitText:string, itemDefinitions:Map<string, { titl
   });
 
   Array.from(modifiers).forEach(modifier => {
-    if (!VALID_EXIT_MODIFIERS.has(modifier)) throw new Error(`invalid exit modifier '${modifier}' in '${trimmedExitText}'`);
+    if (!VALID_EXIT_MODIFIERS.has(modifier)) throw new Error(_createInvalidExitModifierMessage(modifier, trimmedExitText));
   });
 
   if (lockableWith !== null && !modifiers.has('lockable') && !modifiers.has('unlockable')) {
@@ -371,7 +378,13 @@ function _createPendingExits(roomsSection:string, itemDefinitions:Map<string, { 
     const exitsLineNo = parseNameValueLineEntriesWithLines(roomSection, false, roomSectionEntry.lineNo + 1)
       .find(entry => entry.name === 'exits')?.lineNo ?? roomSectionEntry.lineNo;
     parseOptions(nameValues.exits || '').forEach(exitText => {
-      const parsedExit = _parseExitReference(exitText, itemDefinitions);
+      let parsedExit:ParsedExitReference;
+      try {
+        parsedExit = _parseExitReference(exitText, itemDefinitions);
+      } catch (error) {
+        if (error instanceof MarkdownLineError) throw error;
+        throw new MarkdownLineError(exitsLineNo, error instanceof Error ? error.message : String(error));
+      }
       const [room1Id, room2Id] = [roomId, parsedExit.connectedRoomId].sort();
       const pairKey = `${room1Id}|${room2Id}`;
       const pendingExit = pendingExitsByPairKey.get(pairKey) || {
