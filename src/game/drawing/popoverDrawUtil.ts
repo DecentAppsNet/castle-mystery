@@ -42,6 +42,7 @@ type PopoverTypographyAndSpacing = {
   itemDescriptionFont:string,
   padding:number,
   lineGap:number,
+  titleBodyGap:number,
   maxTextWidth:number,
   imageColumnGap:number,
   imageColumnWidthRatio:number,
@@ -54,16 +55,28 @@ type PopoverBoxLayout = {
   top:number,
   boxWidth:number,
   boxHeight:number,
-  titleSectionHeight:number
+  titleSectionHeight:number,
+  contentWidth:number
 }
 
 type WrappedPopoverRow =
   | { type:'text', lines:string[] }
   | { type:'separator', rowHeight:number, lineWidth:number }
-  | { type:'imageTextRow', titleLines:string[], descriptionLines:string[], imageUrl:string, imageWidth:number, imageHeight:number, rowHeight:number };
+  | { type:'imageTextRow', titleLines:string[], descriptionLines:string[], imageUrl:string, imageWidth:number, imageHeight:number, textWidth:number, rowHeight:number };
+
+type VisibleImageSourceRect = {
+  sx:number,
+  sy:number,
+  sw:number,
+  sh:number,
+  aspectRatio:number
+};
 
 const SEPARATOR_WIDTH_RATIO = 0.25;
 const ITEM_DESCRIPTION_FONT_SIZE_RATIO = 0.75;
+const IMAGE_ALPHA_THRESHOLD = 16;
+
+const _visibleImageSourceRectCache = new WeakMap<ImageBitmap, VisibleImageSourceRect>();
 
 function _drawPopoverConnectorLine(targetRect:Rect, boxLayout:PopoverBoxLayout,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
@@ -93,6 +106,7 @@ function _createPopoverTypographyAndSpacing(scalingFactors:ScalingFactors, canva
   const titleFontSize = Math.max(20, Math.round(scalingFactors.roomFontHeight * 1.4));
   const bodyFontSize = Math.max(16, Math.round(scalingFactors.roomFontHeight * 1.0));
   const itemDescriptionFontSize = Math.max(12, Math.round(bodyFontSize * ITEM_DESCRIPTION_FONT_SIZE_RATIO));
+  const lineGap = 3;
   return {
     titleFontSize,
     bodyFontSize,
@@ -101,7 +115,8 @@ function _createPopoverTypographyAndSpacing(scalingFactors:ScalingFactors, canva
     bodyFont:`${bodyFontSize}px Jellee`,
     itemDescriptionFont:`${itemDescriptionFontSize}px Jellee`,
     padding:Math.max(6, scalingFactors.roomLineWidth * 2),
-    lineGap:Math.max(3, scalingFactors.roomLineWidth),
+    lineGap,
+    titleBodyGap:Math.max(8, bodyFontSize * 0.35),
     maxTextWidth:Math.min(320, Math.max(140, canvasWidth * 0.35)),
     imageColumnGap:Math.max(6, scalingFactors.roomLineWidth * 2),
     imageColumnWidthRatio:0.2,
@@ -156,16 +171,65 @@ function _createDescriptionOnlyImageTextRowLines(bodyText:string, maxTextWidth:n
 function _findImageAspectRatio(imageUrl:string, imageSet:ImageSet|undefined, fallbackAspectRatio:number):number {
   const image = imageSet?.get(imageUrl) || null;
   if (!image || image.width <= 0 || image.height <= 0) return fallbackAspectRatio;
-  return image.height / image.width;
+  return _findVisibleImageSourceRect(image)?.aspectRatio ?? image.height / image.width;
+}
+
+function _createImageAnalysisCanvas(image:ImageBitmap):HTMLCanvasElement|null {
+  if (typeof document === 'undefined' || image.width <= 0 || image.height <= 0) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  return canvas;
+}
+
+function _findVisibleImageSourceRect(image:ImageBitmap):VisibleImageSourceRect|null {
+  const cachedRect = _visibleImageSourceRectCache.get(image) || null;
+  if (cachedRect) return cachedRect;
+
+  const canvas = _createImageAnalysisCanvas(image);
+  if (!canvas) return null;
+  const context = canvas.getContext('2d', { willReadFrequently:true });
+  if (!context) return null;
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < height; ++y) {
+    for (let x = 0; x < width; ++x) {
+      const alpha = data[(y * width + x) * 4 + 3];
+      if (alpha < IMAGE_ALPHA_THRESHOLD) continue;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  if (maxX < minX || maxY < minY) return null;
+
+  const visibleRect = {
+    sx:minX,
+    sy:minY,
+    sw:maxX - minX + 1,
+    sh:maxY - minY + 1,
+    aspectRatio:(maxY - minY + 1) / (maxX - minX + 1)
+  };
+  _visibleImageSourceRectCache.set(image, visibleRect);
+  return visibleRect;
 }
 
 function _createWrappedPopoverRows(bodyEntries:PopoverBodyEntry[], typographyAndSpacing:PopoverTypographyAndSpacing,
-  context:CanvasRenderingContext2D, imageSet:ImageSet|undefined):WrappedPopoverRow[] {
+  context:CanvasRenderingContext2D, imageSet:ImageSet|undefined, contentWidth:number = typographyAndSpacing.maxTextWidth):WrappedPopoverRow[] {
   return bodyEntries.map(entry => {
     if (entry.type === 'text') {
       return {
         type:'text',
-        lines:_createTextRowLines(entry.text, typographyAndSpacing.maxTextWidth, typographyAndSpacing.bodyFont, context)
+        lines:_createTextRowLines(entry.text, contentWidth, typographyAndSpacing.bodyFont, context)
       };
     }
     if (entry.type === 'separator') {
@@ -179,8 +243,8 @@ function _createWrappedPopoverRows(bodyEntries:PopoverBodyEntry[], typographyAnd
       };
     }
 
-    const imageWidth = typographyAndSpacing.maxTextWidth * typographyAndSpacing.imageColumnWidthRatio;
-    const textWidth = typographyAndSpacing.maxTextWidth - imageWidth - typographyAndSpacing.imageColumnGap;
+  const imageWidth = contentWidth * typographyAndSpacing.imageColumnWidthRatio;
+  const textWidth = contentWidth - imageWidth - typographyAndSpacing.imageColumnGap;
     const titleLines = entry.isDescriptionOnly
       ? []
       : _createImageTextRowLines(
@@ -217,6 +281,7 @@ function _createWrappedPopoverRows(bodyEntries:PopoverBodyEntry[], typographyAnd
       imageUrl:entry.imageUrl,
       imageWidth,
       imageHeight,
+      textWidth,
       rowHeight:Math.max(imageHeight, textHeight)
     };
   });
@@ -225,7 +290,7 @@ function _createWrappedPopoverRows(bodyEntries:PopoverBodyEntry[], typographyAnd
 function _measurePopoverBox(title:string, bodyRows:WrappedPopoverRow[], targetRect:Rect,
   typographyAndSpacing:PopoverTypographyAndSpacing, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, layoutPlanner:CanvasLayoutPlanner|null = null):PopoverBoxLayout {
-  const { titleFontSize, titleFont, bodyFont, padding, lineGap, imageColumnGap } = typographyAndSpacing;
+  const { titleFontSize, titleFont, bodyFont, padding, lineGap, titleBodyGap, imageColumnGap } = typographyAndSpacing;
 
   context.font = bodyFont;
   const bodyWidth = bodyRows.reduce((maxWidth, row) => {
@@ -237,14 +302,15 @@ function _measurePopoverBox(title:string, bodyRows:WrappedPopoverRow[], targetRe
     const titleWidth = Math.max(...row.titleLines.map(line => context.measureText(line).width), 0);
     context.font = typographyAndSpacing.itemDescriptionFont;
     const descriptionWidth = Math.max(...row.descriptionLines.map(line => context.measureText(line).width), 0);
-    const textWidth = Math.max(titleWidth, descriptionWidth);
-    return Math.max(maxWidth, row.imageWidth + imageColumnGap + textWidth);
+    const measuredTextWidth = Math.max(titleWidth, descriptionWidth);
+    const reservedRowWidth = row.imageWidth + imageColumnGap + row.textWidth;
+    return Math.max(maxWidth, reservedRowWidth, row.imageWidth + imageColumnGap + measuredTextWidth);
   }, 0);
   context.font = titleFont;
   const titleWidth = title ? context.measureText(title).width : 0;
   const boxWidth = Math.max(titleWidth, bodyWidth) + padding * 2;
   const titleHeight = title ? titleFontSize : 0;
-  const titleSectionHeight = title ? titleHeight + lineGap : 0;
+  const titleSectionHeight = title ? titleHeight + titleBodyGap : 0;
   const bodyHeight = bodyRows.reduce((height, row, index) => {
     const rowHeight = row.type === 'text'
       ? row.lines.length * typographyAndSpacing.bodyFontSize + Math.max(0, row.lines.length - 1) * lineGap
@@ -267,7 +333,8 @@ function _measurePopoverBox(title:string, bodyRows:WrappedPopoverRow[], targetRe
     top,
     boxWidth,
     boxHeight,
-    titleSectionHeight
+    titleSectionHeight,
+    contentWidth:boxWidth - padding * 2
   };
 }
 
@@ -285,12 +352,18 @@ export function drawTextPopover({ targetRect, title = "", bodyTexts, scalingFact
 export function drawPopover({ targetRect, title = "", bodyEntries, scalingFactors, context, imageSet, layoutPlanner = null }:DrawPopoverOptions) {
   const typographyAndSpacing = _createPopoverTypographyAndSpacing(scalingFactors, context.canvas.width);
   const { bodyFontSize, itemDescriptionFontSize, titleFont, bodyFont, itemDescriptionFont, padding, lineGap } = typographyAndSpacing;
-  const bodyRows = _createWrappedPopoverRows(bodyEntries, typographyAndSpacing, context, imageSet);
   context.save();
   context.textAlign = "left";
   context.textBaseline = "top";
-  const boxLayout = _measurePopoverBox(
-    title, bodyRows, targetRect, typographyAndSpacing, scalingFactors, context, layoutPlanner);
+  const initialBodyRows = _createWrappedPopoverRows(bodyEntries, typographyAndSpacing, context, imageSet);
+  const initialBoxLayout = _measurePopoverBox(
+    title, initialBodyRows, targetRect, typographyAndSpacing, scalingFactors, context, layoutPlanner);
+  const bodyRows = initialBoxLayout.contentWidth > typographyAndSpacing.maxTextWidth
+    ? _createWrappedPopoverRows(bodyEntries, typographyAndSpacing, context, imageSet, initialBoxLayout.contentWidth)
+    : initialBodyRows;
+  const boxLayout = bodyRows === initialBodyRows
+    ? initialBoxLayout
+    : _measurePopoverBox(title, bodyRows, targetRect, typographyAndSpacing, scalingFactors, context, layoutPlanner);
   const { left, top, boxWidth, boxHeight, titleSectionHeight } = boxLayout;
   _drawPopoverConnectorLine(targetRect, boxLayout, scalingFactors, context);
   context.fillStyle = COLOR_POPOVER_FILL;
@@ -334,7 +407,16 @@ export function drawPopover({ targetRect, title = "", bodyEntries, scalingFactor
     const imageLeft = left + padding;
     const imageTop = rowTop;
     const textLeft = imageLeft + row.imageWidth + typographyAndSpacing.imageColumnGap;
-    if (image) context.drawImage(image, imageLeft, imageTop, row.imageWidth, row.imageHeight);
+    if (image) {
+      const sourceRect = _findVisibleImageSourceRect(image);
+      if (sourceRect) {
+        context.drawImage(image,
+          sourceRect.sx, sourceRect.sy, sourceRect.sw, sourceRect.sh,
+          imageLeft, imageTop, row.imageWidth, row.imageHeight);
+      } else {
+        context.drawImage(image, imageLeft, imageTop, row.imageWidth, row.imageHeight);
+      }
+    }
     let lineTop = rowTop;
     context.font = bodyFont;
     row.titleLines.forEach(line => {
