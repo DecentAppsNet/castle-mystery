@@ -132,6 +132,9 @@ For authored placement, the column chooses horizontal position. The row chooses 
 In the room legend:
 * a known character name places that character in the room
 * a known item name places that item in the room
+* multiple known item names separated by `|` stack those items on one tile
+* a stacked entry may end with one known character name, such as `Chair|Cushion|Hero`, which will result in the character being stacked on top of the items visually.
+* a stacked entry may include at most one character, and if present it must be the final `|`-separated entry
 * any other legend entry is an error
 
 Example for a 1-tile-wide room:

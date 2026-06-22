@@ -10,8 +10,9 @@ age=35
 occupation=Labor foreman
 ethnicityBackground=Sicilian Muslim
 
-## Amos of Jesi
+## Amos
 
+* title=Amos of Jesi
 * description=He'd rather not beat people up, but he certainly will.
 * faceImage=amosTheGuard.png
 
@@ -250,8 +251,9 @@ ethnicityBackground=Dalmatian
 * description=A young woman, in her twenties. She just looks sticky for some reason.
 * faceImage=stickyAgatha.png
 
-## Ugolino di Conti
+## Ugolino
 
+* title=Ugolino di Conti
 * faceImage=ugolino.png
 * description=Crafty, calm, biding his time.
 

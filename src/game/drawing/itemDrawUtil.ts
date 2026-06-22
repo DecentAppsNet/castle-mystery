@@ -21,6 +21,7 @@ import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { compareItemsForDrawOrder } from "./roomContentDrawOrderUtil";
 
 const ITEM_CUBOID_DEPTH_RATIO = 0.7;
 const ITEM_CUBOID_LINE_WIDTH_RATIO = 0.25;
@@ -389,10 +390,7 @@ export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:
 function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
   return room.items
     .filter(item => item.isVisible && (includeUndiscovered || item.isDiscovered) && !_isItemSuppressedByEffect(item, effects))
-    .sort((item1, item2) => item1.position.z - item2.position.z
-      || item2.position.x - item1.position.x
-      || item2.position.y - item1.position.y
-      || item1.id.localeCompare(item2.id));
+    .sort(compareItemsForDrawOrder);
 }
 
 function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {

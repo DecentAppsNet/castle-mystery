@@ -108,6 +108,7 @@ import conclusionRevealRoomsText from './fixtures/conclusion-reveal-rooms.md?raw
 import conclusionUnlockConclusionsText from './fixtures/conclusion-unlock-conclusions.md?raw';
 import shortDurationLabelsText from './fixtures/short-duration-labels.md?raw';
 import stackedRoomItemsText from './fixtures/stacked-room-items.md?raw';
+import invalidStackedMultipleCharactersText from './fixtures/invalid-stacked-multiple-characters.md?raw';
 import conclusionsTwoSubsectionsText from './fixtures/conclusions-two-subsections.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
 import winSynopsisText from './fixtures/win-synopsis.md?raw';
@@ -921,6 +922,53 @@ describe('levelUtil itinerary loading', () => {
     expect(vase?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
     expect(table?.position.y).toBe(floorY);
     expect(vase?.position.y).toBe(floorY - calcItemCuboidHeightGame(hall));
+  });
+
+  it('loads stacked room items with a trailing character while keeping the character on the floor waypoint', () => {
+    const stackedCharacterText = stackedRoomItemsText
+      .replace('Y.X.', '...X')
+      .replace('* X=Table|Vase', '* X=Table|Vase|Hero')
+      .replace('* Y=Hero\n', '');
+    const level = loadLevelFromText(stackedCharacterText, 'stacked-room-items-character.md');
+    const hall = findRoom(level.rooms, 'Hall');
+    const table = hall.items.find(item => item.id === 'table') || null;
+    const vase = hall.items.find(item => item.id === 'vase') || null;
+    const hero = level.characters.find(character => character.id === 'hero') || null;
+    const floorY = hall.rect.y + hall.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+
+    expect(hall.items.map(item => item.id)).toEqual(['table', 'vase']);
+    expect(table?.position.y).toBe(floorY);
+    expect(vase?.position.y).toBe(floorY - calcItemCuboidHeightGame(hall));
+    expect(hero?.position.x).toBe(table?.position.x);
+    expect(hero?.position.y).toBe(floorY);
+    expect(hero?.position.z).toBe(ROOM_BACK_ROW_CENTER_Z);
+  });
+
+  it('rejects stacked room entries that place a character before items', () => {
+    const invalidStackOrderText = stackedRoomItemsText
+      .replace('Y.X.', '...X')
+      .replace('* X=Table|Vase', '* X=Hero|Table')
+      .replace('* Y=Hero\n', '');
+
+    try {
+      loadLevelFromText(invalidStackOrderText, 'invalid-stacked-character-order.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('invalid-stacked-character-order.md:11');
+      expect((error as LoadLevelException).message).toContain("must place any character last");
+    }
+  });
+
+  it('rejects stacked room entries that place more than one character on a tile', () => {
+    try {
+      loadLevelFromText(invalidStackedMultipleCharactersText, 'invalid-stacked-multiple-characters.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+        expect((error as LoadLevelException).message).toContain('invalid-stacked-multiple-characters.md:11');
+      expect((error as LoadLevelException).message).toContain("may include at most one character");
+    }
   });
 
   it('uses item floor position scoring to choose the take waypoint before taking a stacked item', () => {

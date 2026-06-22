@@ -32,7 +32,7 @@ AABBCCDDE.
 ```
 
 * P=Pope
-* U=Ugolino di Conti
+* U=Ugolino
 * n=Side Table|Letter
 * c=Coffer
 * exits=West Square
@@ -77,7 +77,7 @@ A.......
 ...MNI..
 ```
 
-* A=Amos of Jesi
+* A=Amos
 * v=Vase
 * M=male peasant 2
 * F=female peasant 2
@@ -173,9 +173,9 @@ A.......
 : says "Behold the Holy Binky!"
 : faces left.
 : says "Carved by Joseph. Given to the baby Jesus."
-: Ugolino di Conti says "A fitting gift for the new mother."
+: Ugolino says "A fitting gift for the new mother."
 
-9:00:19 Ugolino di Conti @ Cathedral.30%
+9:00:19 Ugolino @ Cathedral.30%
 : faces right.
 
 9:00:20 Pope @ Birthing Tent.20%
@@ -191,20 +191,20 @@ A.......
 : drops Holy Binky
 : Constance I says, "(huff) (huff)"
 
-9:00:43 Amos of Jesi @ Birthing Tent.90%
-: Amos of Jesi says, "Your Majesty, shall I bring them in?"
+9:00:43 Amos @ Birthing Tent.90%
+: Amos says, "Your Majesty, shall I bring them in?"
 : Constance I says, "Yes! As many as possible."
 : Constance I says, "All must see!"
 
-9:00:52 Amos of Jesi @ East Square
+9:00:52 Amos @ East Square
 : faces left.
 : says, "You there."
 : Sticky Agatha faces right.
 : says, "Me?"
-: Amos of Jesi says, "Yes. Go inside the tent."
-9:00:59 Amos of Jesi takes vase in right hand.
+: Amos says, "Yes. Go inside the tent."
+9:00:59 Amos takes vase in right hand.
 : @ Guard Quarters
-: Amos of Jesi drops vase.
+: Amos drops vase.
 : thinks, "Best to keep it here."
 : @ East Square.10%
 
@@ -230,15 +230,15 @@ A.......
 : Constance I says, "Constantine. After myself, of course."
 
 9:00:48 Pope @ Cathedral
-: Ugolino di Conti says, "Your Holiness has returned."
+: Ugolino says, "Your Holiness has returned."
 : Pope says, "That is apparent. Why say it?"
-: Ugolino di Conti says, "I... uh... "
+: Ugolino says, "I... uh... "
 : says "...wanted to acknowledge your presence respectfully."
 : Pope says, "A simple bow suffices, Archbishop."
 9:01:02 faces right.
 : says, "What a drab little church."
 : says, "Not a single flying buttress!"
-: Ugolino di Conti says, "I shall tell the parish priest of your dissatisfaction."
+: Ugolino says, "I shall tell the parish priest of your dissatisfaction."
 : Pope says, "Good."
 
 9:00:00 Constance I says "Aiiieeee!"
@@ -248,12 +248,13 @@ A.......
 : Sofia the Midwife says "As you wish."
 9:00:15 Constance I says "(huff) (huff)"
 
-9:01:27 Amos of Jesi says, "Next!"
-: says, "Get in there and witness."
+9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
 
 9:01:25 Sticky Agatha @ Living Space
 
-9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
+9:01:28 Amos says, "Next!"
+: says, "Get in there and witness."
+
 9:00:57 Male Peasant 4 thinks, "She brings a baby into the tent?"
 : Old Female Peasant 2 thinks, "What fraud is this? We are not blind."
 

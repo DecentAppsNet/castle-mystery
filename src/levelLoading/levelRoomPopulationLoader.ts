@@ -257,6 +257,16 @@ function _createRoomItemPosition(room:Room, targetX:number, depth:number, stackI
 	};
 }
 
+function _createRoomCharacterPosition(room:Room, targetX:number, depth:number) {
+	const floorY = _createCharacterFloorY(room);
+	const waypoint = findNearestWaypointToPosition(room, { x:targetX, y:floorY, z:depth });
+	return {
+		x:waypoint.position.x,
+		y:waypoint.position.y,
+		z:waypoint.position.z
+	};
+}
+
 function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemDefinitions:Map<string, ItemDefinition>,
 	position:{x:number, y:number}, depth:number, isDiscovered:boolean):Item {
 	const itemDefinition = itemDefinitions.get(itemId);
@@ -322,7 +332,6 @@ function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, author
 	gridWidth:number, gridHeight:number, characterDefinitions:Map<string, CharacterDefinition>, itemDefinitions:Map<string, ItemDefinition>) {
 	const legendEntries = _parseRoomLegendPopulationEntries(authoredEntryText);
 	const [x] = calcScaledRoomGridPosition(room, row, col, gridWidth, gridHeight);
-	const characterY = _createCharacterFloorY(room);
 	const characterDepth = _getCharacterDepthForGridRow(row);
 	const itemDepth = _getItemDepthForGridRow(row);
 
@@ -330,10 +339,12 @@ function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, author
 		const [{ entryId, entryText }] = legendEntries;
 		const characterDefinition = characterDefinitions.get(entryId);
 		if (characterDefinition) {
+			const characterPosition = _createRoomCharacterPosition(room, x, characterDepth);
 			_assertCharacterIdIsUnique(level, entryId, roomId, row, col);
 			_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description,
 				characterDefinition.faceImageUrl, characterDefinition.isVisible, characterDefinition.isAlive, characterDefinition.facingDirection,
-				characterDefinition.bodyOrientation, characterDefinition.isTitleKnown, x, characterY, characterDepth);
+				characterDefinition.bodyOrientation, characterDefinition.isTitleKnown,
+				characterPosition.x, characterPosition.y, characterPosition.z);
 			return;
 		}
 		if (itemDefinitions.has(entryId)) {
@@ -345,16 +356,34 @@ function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, author
 		return;
 	}
 
-	legendEntries.forEach(({ entryId, entryText }, stackIndex) => {
-		if (characterDefinitions.has(entryId)) {
-			throw new Error(`room legend entry '${authoredEntryText}' at row ${row + 1}, col ${col + 1} in room ${roomId} may only stack items`);
-		}
+	const stackedCharacterEntries = legendEntries.filter(({ entryId }) => characterDefinitions.has(entryId));
+	if (stackedCharacterEntries.length > 1) {
+		throw new Error(`room legend entry '${authoredEntryText}' at row ${row + 1}, col ${col + 1} in room ${roomId} may include at most one character`);
+	}
+	const stackedCharacterEntry = stackedCharacterEntries[0] || null;
+	if (stackedCharacterEntry && legendEntries[legendEntries.length - 1].entryId !== stackedCharacterEntry.entryId) {
+		throw new Error(`room legend entry '${authoredEntryText}' at row ${row + 1}, col ${col + 1} in room ${roomId} must place any character last`);
+	}
+
+	const stackedItemEntries = stackedCharacterEntry ? legendEntries.slice(0, -1) : legendEntries;
+	stackedItemEntries.forEach(({ entryId, entryText }, stackIndex) => {
 		if (!itemDefinitions.has(entryId)) return;
 		_assertItemIdIsUnique(level, entryId, `at row ${row + 1}, col ${col + 1} in room ${roomId}`);
 		const itemPosition = _createRoomItemPosition(room, x, itemDepth, stackIndex);
 		_addItemToRoom(level, roomId, _createItemFromDefinition(entryId, entryText, itemDefinitions,
 			{ x:itemPosition.x, y:itemPosition.y }, itemPosition.z, false));
 	});
+
+	if (!stackedCharacterEntry) return;
+	const characterDefinition = characterDefinitions.get(stackedCharacterEntry.entryId);
+	assertNonNullable(characterDefinition);
+	const anchorItemPosition = _createRoomItemPosition(room, x, itemDepth, 0);
+	const characterPosition = _createRoomCharacterPosition(room, anchorItemPosition.x, characterDepth);
+	_assertCharacterIdIsUnique(level, stackedCharacterEntry.entryId, roomId, row, col);
+	_addCharacter(level, room, stackedCharacterEntry.entryId, characterDefinition.title, characterDefinition.description,
+		characterDefinition.faceImageUrl, characterDefinition.isVisible, characterDefinition.isAlive, characterDefinition.facingDirection,
+		characterDefinition.bodyOrientation, characterDefinition.isTitleKnown,
+		characterPosition.x, characterPosition.y, characterPosition.z);
 }
 
 function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string,

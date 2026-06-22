@@ -35,16 +35,18 @@ export type ItemDrawableContent = {
 export type RoomDrawableContent = StairDrawableContent | CharacterDrawableContent | ItemDrawableContent;
 type NonStairDrawableContent = CharacterDrawableContent | ItemDrawableContent;
 
-function _compareSameColumnItems(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
-  if (content1.type !== 'item' || content2.type !== 'item') return 0;
-  return content2.item.position.y - content1.item.position.y;
+export function compareItemsForDrawOrder(item1:Pick<Item, 'position' | 'id'>, item2:Pick<Item, 'position' | 'id'>):number {
+  return item1.position.z - item2.position.z
+    || item2.position.y - item1.position.y
+    || item2.position.x - item1.position.x
+    || item1.id.localeCompare(item2.id);
 }
 
 export function compareNonStairDrawableContents(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
+  if (content1.type === 'item' && content2.type === 'item') return compareItemsForDrawOrder(content1.item, content2.item);
   return content1.depth - content2.depth
-    || content1.y - content2.y
+    || content2.y - content1.y
     || content2.x - content1.x
-    || _compareSameColumnItems(content1, content2)
     || content1.sortId.localeCompare(content2.sortId);
 }
 
