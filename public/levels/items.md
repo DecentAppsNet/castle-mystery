@@ -12,9 +12,13 @@
 * image=bigWineskin.png
 * description=A massive skin filled with gallons of wine.
 
+## Black Brick
+* image=blackBrick.png
+* description=A limestone brick, painted black, inscribed with careful lettering, "Constantine, 3 May 1195, Sext".
+
 ## Black Paint Jar
 * image=blackPaintJar.png
-* description=A clay jar with a paintbrush and some black paint inside of it.
+* description=A clay jar with a paintbrush and some black paint inside of it. There is a key-shaped symbol impressed on its surface.
 
 ## Bread Roll
 * image=breadRoll.png
@@ -69,6 +73,9 @@
 ## Small Hourglass
 * description=A small hourglass capable of measuring about half a minute's time.
 * image=smallHourglass.png
+
+## Small Rug
+* image=smallRug.png
 
 ## Throne
 * image=throneLeft.png

@@ -1,7 +1,7 @@
 # General
 
 * title=The Inefficient Court
-* activeCharacter=Toro
+* activeCharacter=King Frederick
 * time=8:00:00
 * background=daySky.png
 * imports=items.md | characters.md
@@ -12,7 +12,7 @@
 .GGGG..........
 JGGGGFCCCBBB...
 JIIIIFEDHBBBAAA
-JMMNNFLDKKKKAAA
+MMMNNFLDKKKKAAA
 ```
 
 * A=East Gate
@@ -97,22 +97,31 @@ JMMNNFLDKKKKAAA
 ## West Stairwell
 
 * title=
-* obscured=true
+// * obscured=true
+
+```
+....
+.A..
+....
+```
+
+* A=Sticky Agatha
 
 ## Throne Room
 
 * exits=West Stairwell
-* obscured=true
 
 ```
-...A.........U..
+...H.....A..G...
 ..............t.
-................
+............U...
 ```
 
 * t=Throne|King Frederick
 * U=Ugolino
+* G=Gualtiero
 * A=Amos
+* H=Small Rug|Harold
 
 ## Usher's Office
 
@@ -129,7 +138,7 @@ CR..
 
 ## Antechamber
 
-* obscured=true
+//* obscured=true
 * exits=West Stairwell | East Stairwell
 
 ```
@@ -162,11 +171,19 @@ N1234567890ABCD.
 ## Deep Archives
 * exits=Lower Stairwell (locked)
 
+```
+..............b.
+................
+................
+```
+
+* b=Black Brick
+
 ## Tapestry Store
 * exits=Lower Stairwell (locked)
 
 ## Withdrawal Chamber
-* exits=West Stairwell (closed)
+* exits=Robing Chamber (closed)
 
 ## Robing Chamber
 * exits=East Stairwell (closed)
@@ -266,7 +283,6 @@ N1234567890ABCD.
 
 ## Sticky Agatha
 * isTitleKnown=true
-* facing=left
 
 ## Toro
 * description=Toro has a bad limp and a bad mood.
@@ -274,7 +290,12 @@ N1234567890ABCD.
 * items=Black Paint Jar
 
 ## Ugolino
+* description=The Archbishop in the court of King Frederick, far from the Lateran Palace.
 * isTitleKnown=true
+* facing=left
+
+## Gualtiero
+* facing=left
 
 # Items
 
@@ -320,7 +341,7 @@ N1234567890ABCD.
 : Andronikos says, "Concerning?"
 : Toro says, "TREACHERY!"
 : Andronikos says, "Calm yourself."
-: Toro says, "Treachery! (whispers loudly)"
+: Toro says, "(whispers loudly) Treachery!"
 : Andronikos says, "Just go up the stairs and wait."
 : Toro says, "Gratitude."
 (Toro leaves for Central Hall)
@@ -330,6 +351,36 @@ N1234567890ABCD.
 : faces Guard 3
 : says "He is the size of two men at least."
 : says "So we'll admit no more for now."
+
+(Sticky Agatha begins in West Stairwell. The West Stairwell is connected to the Antechamber where a line of people are.)
+8:00:05 Sticky Agatha @ Throne Room.20%
+: Harold faces Sticky Agatha
+: says, "(whispers) What is your name?"
+: Sticky Agatha says, "Sticky Agatha."
+: Harold faces King Frederick
+: says, "Agatha of Stickiness, seeking audience with His Majesty."
+: waits
+: says, "Approach and speak."
+: Sticky Agatha @ 50%
+: says "Your Highness,"
+: says "I am the mother of your friend, Heinrich."
+: says "I wish to open a business in Palermo, washing clothes."
+: Gualtiero says, "No permission from this court is required."
+: says, "Merely register and pay your taxes."
+: Sticky Agatha says, "I offer the King an opportunity..."
+: says, "To invest!"
+: Gualtiero says, "Oh, you want money!"
+: says "So you came here like a street beggar."
+: Sticky Agatha says, "I thought perhaps the King's friendship with my son-"
+: King Frederick says, "If Heinrich needs for anything, he may ask me himself."
+: King Frederick says, "But your request is denied." 
+: Gualtiero says, "And why are you so sticky?"
+: says, "No sticky woman should clean clothing!"
+: Sticky Agatha says, "(weeps)"
+: King Frederick says, "Chamberlain, your comments lack grace."
+: Gualtiero says, "Forgive my excesses, your Majesty."
+: Sticky Agatha @ East Gate.95%
+: hide Sticky Agatha
 
 8:00:30 Toro @ Central Hall.90%
 : waits 8
@@ -437,16 +488,13 @@ N1234567890ABCD.
 : P24 says "(coughing)"
 : P22 says "Ghastly!"
 : P18 says "I can come back tomorrow."
-(As the crowd clears out, Toro presses forward in line.)
-8:01:34 Toro @ 10%
-8:01:43 Toro @ 10%
 : P21 thinks "It is more than I can endure."
-8:01:56 Toro @ 10%
+8:01:56 Toro @ 30%
 : Guard 4 says, "You have thoroughly befouled this place."
 : says, "But I don't mind less people in here."
 
 8:02:03 P1 @ Antechamber.95%
-: P1 says, "Has some animal died here?"
+: P1 says, "Has some animal died?"
 : Guard 4 says, "You may wait for audience in this room."
 : P1 says, "I... uh..."
 : Guard 4 says, "Or you may return to the central hall."
@@ -457,6 +505,41 @@ N1234567890ABCD.
 : P1 says, "I do not know."
 : says "But I want no part of it."
 : faces left
+
+8:01:12 Harold @ West Stairwell
+: says "Next!"
+: @ Throne Room.10%
+: stands on Small Rug
+
+8:01:18 Niccolo @ Throne Room.20%
+: Harold faces Niccolo
+: says, "(whispers) Your name?"
+: Niccolo says, "Niccolò il Calabrese."
+: Harold faces King Frederick
+: says, "Niccolò il Calabrese, seeking audience with His Majesty."
+: waits
+: says, "Approach and speak."
+: Niccolo @ 50%
+: says, "Many quarries sell cheap rocks."
+: says, "Bad rocks filled with moisture and cracks."
+: says, "If the Kingdom is to have strong structures,"
+: says, "We must demand quality in our supplies."
+: King Frederick says, "Then demand it. How is this my matter?"
+: Niccolo says, "Jobs are given to whoever bids lowest."
+: says, "But if we had some agreed standard--"
+: King Frederick says, "I am familiar with the threat of shoddy masonry."
+: says, "And also how a promise of protection..."
+: says, "may come from the instigator himself."
+: says, "I will not be involved with your scheme."
+: waits
+: Niccolo @ East Gate.95%
+: hide Niccolo
+8:02:12 Gualtiero faces King Frederick
+: says, "I share your outrage, Highness!"
+: King Frederick says, "You need not provide your every opinion."
+: Gualtiero says, "Ah, I share your opinion of my opinions, Highness."
+: King Frederick says, "(sighs)"
+: Gualtiero faces left.
 
 (Andronikos is in the Entrance Hall, a stream of petitioners are exiting)
 8:01:29 Andronikos faces left
@@ -523,16 +606,84 @@ N1234567890ABCD.
 8:02:13 @ 95%
 : hide P21
 
-8:02:24 Andronikos @ Antechamber.90%
+8:02:23 Harold @ West Stairwell
+: interrupts "Next... hey!"
+: @ Throne Room.10%
+: stands on Small Rug
+
+8:02:25 Andronikos @ Antechamber.90%
 : Andronikos says, "Ohhhh."
 : waits
 (Andronikos returns to Entrance Hall)
 
-8:02:35 Andronikos @ Entrance Hall.50%
+8:02:24 Toro @ Throne Room.20%
+: Toro interrupts, "Toro."
+: King Frederick says, "Approach and speak, Toro."
+: Harold thinks, "It's like they don't even need a herald!"
+: Toro @ 50%
+: says, "Pillar. Tower. Palace. Pope."
+: says, "Treachery. Brick. Lies!"
+: Gualtiero says, "Speak clearly, imbecile!"
+: King Frederick says, "Toro, the matter interests me."
+: says, "But I do not yet understand."
+: Toro takes Black Paint Jar in right hand.
+: King Frederick @ 55%
+: Toro says "Paint."
+: Toro gives Black Paint Jar to King Frederick
+: King Frederick takes Black Paint Jar in right hand.
+: @ 70%
+: says, "Interesting."
+: faces Harold
+: says, "Herald, fetch the Black Brick."
+: Harold says, "Right away, your Majesty."
+(Harold leaves for Deep Archives)
+: King Frederick waits
+: faces right
+: says, "While we wait, I will speak on another matter."
+: says, "Our petitioning process is a failure."
+: Gualtiero says, "Most certainly it is!"
+: King Frederick says, "In what exact way, Chamberlain?"
+: Gualtiero says, "Oh, uh... I..."
+: says, "Hope to hear your thoughts on the subject first."
+: King Frederick says, "Nearly all of them seek some gift or mercy from me."
+: says, "The World has more complaints than I can hear!"
+: Ugolino says, "The Church can hear them, Majesty."
+: King Frederick says, "Yes, let God receive their prayers - not I."
+: Gualtiero says, "Such insight, Majesty."
+: King Frederick faces left
+
+8:02:36 Andronikos @ Entrance Hall.50%
 : faces Guard 3
 : says, "People complain about drafty castles."
 : says, "But today, I wish for ours to be draftier."
 : faces right
+
+8:03:15 Harold @ Deep Archives.95%
+: takes Black Brick in right hand
+: thinks "Heralding is what I do - not fetching!"
+: thinks "My mother named me for this destiny."
+
+
+8:03:46 Harold @ Throne Room.65%
+: King Frederick faces left
+: Harold gives Black Brick to King Frederick
+: King Frederick takes Black Brick in left hand
+: Harold stands on small rug
+: King Frederick says "Hmm."
+: says, "The paint matches."
+: Ugolino says, "The jar is from the Lateran Palace."
+: says, "Our jar mold bestows this symbol."
+: Gualtiero says, "But what does it prove?"
+: King Frederick says, "A better question perhaps is..."
+: says, "What does it disprove?"
+: says, "Toro, you have done a service to the Crown."
+: says, "Is there anything you want?"
+: Toro says, "Job."
+: King Frederick says, "What job can you do?"
+: Toro says, "Herald."
+: Harold faces right.
+: says, "What?"
+: King Frederick says, "Granted. You are my new herald."
 
 # Conclusions
 

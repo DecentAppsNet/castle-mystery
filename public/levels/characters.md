@@ -94,11 +94,28 @@ ethnicityBackground=Greek Sicilian
 * description=A man in his 30s, with extremely strong arms and less-impressive legs.
 * faceImage=giovanni.png
 
-## Heinrich
+## Gualtiero
+* title=Gualtiero of Masala
+* description=He seems like the sort of person that whispers in ears a lot. And winks - definitely a winker.
+* faceImage=gualtiero.png
 
+ETHNICITY: Norman-Sicilian
+OCCUPATION: Chamberlain and Royal Advisor
+AGE=58
+
+## Heinrich
 * title=Heinrich Sohn des Konrad
 * description=An 11-year-old boy.
 * faceImage=heinrich.png
+
+## Harold
+* title=Harold of Norwich
+* description=His garb indicates some lower court function.
+* faceImage=harold.png
+
+ETHNICITY: English
+OCCUPATION: Herald
+AGE: 45
 
 ## Helena
 
