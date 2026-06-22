@@ -391,7 +391,7 @@ describe('conclusion unlock integration', () => {
     const itemBeforeHover = gameState.rooms[0].items[0];
     expect(itemBeforeHover.isDiscovered).toBe(false);
 
-    updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:7, y:5 });
+    updateGameStateForMouseMove(gameState, { type:PlayerEventType.MOUSEMOVE, x:0, y:0 });
 
     const itemAfterHover = gameState.rooms[0].items[0];
     expect(itemAfterHover.isDiscovered).toBe(false);

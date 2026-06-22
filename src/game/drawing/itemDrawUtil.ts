@@ -9,8 +9,7 @@ import { isItemInteractive } from "@/game/interactivityUtil";
 import { roomWidthToColumnCount } from "../waypointUtil";
 import Rect from "../types/Rect";
 import { canvasToGamePosition } from "./drawUtil";
-import { COLOR_BLACK, COLOR_ITEM_POPOVER_HIGHLIGHT } from "./drawConstants";
-import { interpolateColor } from "./colorUtil";
+import { COLOR_ITEM_POPOVER_HIGHLIGHT } from "./drawConstants";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
@@ -19,18 +18,12 @@ import Effect from "../effects/types/Effect";
 import EffectType from "../effects/types/EffectType";
 import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
-import { drawProjectedCuboid } from "./cuboidDrawUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { compareItemsForDrawOrder } from "./roomContentDrawOrderUtil";
+import { assertNonNullable } from "decent-portal";
 
 const ITEM_CUBOID_DEPTH_RATIO = 0.7;
 const ITEM_CUBOID_LINE_WIDTH_RATIO = 0.25;
-const ITEM_LIGHT_BROWN = "#d6a06a";
-const ITEM_DARK_BROWN = "#8b5a2b";
-const ITEM_LIGHT_TOP_BROWN = "#e3b785";
-const ITEM_DARK_TOP_BROWN = "#9f7242";
-const ITEM_LIGHT_SIDE_BROWN = "#bd8650";
-const ITEM_DARK_SIDE_BROWN = "#72461f";
 const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.08;
 const ITEM_IMAGE_HIGHLIGHT_ALPHA_THRESHOLD = 16;
@@ -48,16 +41,6 @@ type ItemDrawMetrics = {
   imageTopOffsetPixels:number,
   imageWidthPixels:number,
   imageHeightPixels:number
-}
-
-type ItemCuboidPoints = {
-  backTopLeft:[number, number],
-  backTopRight:[number, number],
-  backBottomLeft:[number, number],
-  frontTopLeft:[number, number],
-  frontTopRight:[number, number],
-  frontBottomLeft:[number, number],
-  frontBottomRight:[number, number]
 }
 
 type RoomItemVisibilityOptions = {
@@ -161,21 +144,22 @@ export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:Sca
 }
 
 function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
+  const image = _findItemImage(item, imageSet);
+  if (!image) return {x:0, y:0, width:0, height:0}; // Headless call.
   const metrics = calcItemDrawMetrics(room, scalingFactors);
   const [x, y] = _getRoomItemGamePosition(room, item, scalingFactors);
-  const image = _findItemImage(item, imageSet);
-  const imageRect = image ? _calcItemImageRect(metrics, image) : null;
+  const imageRect = _calcItemImageRect(metrics, image);
   return {
-    x: x + (imageRect?.leftOffsetPixels ?? metrics.imageLeftOffsetPixels) / scalingFactors.scaleX,
-    y: y + (imageRect?.topOffsetPixels ?? metrics.imageTopOffsetPixels) / scalingFactors.scaleY,
-    width: (imageRect?.widthPixels ?? metrics.imageWidthPixels) / scalingFactors.scaleX,
-    height: (imageRect?.heightPixels ?? metrics.imageHeightPixels) / scalingFactors.scaleY
+    x: x + (imageRect.leftOffsetPixels ?? metrics.imageLeftOffsetPixels) / scalingFactors.scaleX,
+    y: y + (imageRect.topOffsetPixels ?? metrics.imageTopOffsetPixels) / scalingFactors.scaleY,
+    width: (imageRect.widthPixels ?? metrics.imageWidthPixels) / scalingFactors.scaleX,
+    height: (imageRect.heightPixels ?? metrics.imageHeightPixels) / scalingFactors.scaleY
   };
 }
 
 function _findItemImage(item:Item, imageSet:ImageSet):ImageBitmap|null {
-  if (!item.imageUrl) return null;
-  return imageSet.get(item.imageUrl) || null;
+  const imageUrl = item.imageUrl ?? UNKNOWN_ITEM_ICON_URL;
+  return imageSet.get(imageUrl) || null;
 }
 
 function _drawItemImage(image:ImageBitmap, x:number, y:number, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
@@ -244,56 +228,6 @@ function _findItemImageHighlightSilhouetteCanvas(image:ImageBitmap, imageRect:It
   return silhouetteCanvas;
 }
 
-function _createItemCuboidPoints(x:number, y:number, metrics:ItemDrawMetrics):ItemCuboidPoints {
-  const frontBottomLeft:[number, number] = [x - metrics.cuboidWidthPixels / 2, y];
-  const frontBottomRight:[number, number] = [x + metrics.cuboidWidthPixels / 2, y];
-  const frontTopLeft:[number, number] = [frontBottomLeft[0], y - metrics.cuboidHeightPixels];
-  const frontTopRight:[number, number] = [frontBottomRight[0], y - metrics.cuboidHeightPixels];
-  const backBottomLeft:[number, number] = [frontBottomLeft[0] - metrics.cuboidDepthXPixels, y - metrics.cuboidDepthYPixels];
-  const backTopLeft:[number, number] = [backBottomLeft[0], backBottomLeft[1] - metrics.cuboidHeightPixels];
-  const backTopRight:[number, number] = [frontTopRight[0] - metrics.cuboidDepthXPixels, frontTopRight[1] - metrics.cuboidDepthYPixels];
-  return {
-    backTopLeft,
-    backTopRight,
-    backBottomLeft,
-    frontTopLeft,
-    frontTopRight,
-    frontBottomLeft,
-    frontBottomRight
-  };
-}
-
-function _traceItemSilhouettePath(points:ItemCuboidPoints, context:CanvasRenderingContext2D) {
-  context.beginPath();
-  context.moveTo(...points.backTopLeft);
-  context.lineTo(...points.backTopRight);
-  context.lineTo(...points.frontTopRight);
-  context.lineTo(...points.frontBottomRight);
-  context.lineTo(...points.frontBottomLeft);
-  context.lineTo(...points.backBottomLeft);
-  context.closePath();
-}
-
-function _drawItemCuboidHighlight(points:ItemCuboidPoints, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D, time:number) {
-  const { glowWidth, glowBlur } = _calcItemHighlightGlowMetrics(metrics, time);
-
-  context.save();
-  context.strokeStyle = COLOR_ITEM_POPOVER_HIGHLIGHT;
-  context.shadowColor = COLOR_ITEM_POPOVER_HIGHLIGHT;
-  context.shadowBlur = glowBlur;
-  context.lineJoin = 'round';
-  context.lineCap = 'round';
-  context.lineWidth = glowWidth;
-  _traceItemSilhouettePath(points, context);
-  context.stroke();
-
-  context.shadowBlur = 0;
-  context.lineWidth = Math.max(1.5, glowWidth * 0.55);
-  _traceItemSilhouettePath(points, context);
-  context.stroke();
-  context.restore();
-}
-
 function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, metrics:ItemDrawMetrics,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
   if (!image.width || !image.height) return;
@@ -332,20 +266,13 @@ function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, metrics:
 
 function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet, isHighlighted:boolean = false, time:number = 0) {
+  const image = _findItemImage(item, imageSet);
+  if (!image) return; // Headless/test code call - no drawing needed.
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
   const metrics = calcItemDrawMetrics(room, scalingFactors);
-  const cuboidPoints = _createItemCuboidPoints(x, y, metrics);
-  const image = _findItemImage(item, imageSet);
   context.save();
-  if (isHighlighted) {
-    if (image) _drawItemImageHighlight(image, x, y, metrics, scalingFactors, context, time);
-    else _drawItemCuboidHighlight(cuboidPoints, metrics, context, time);
-  }
-  if (image) {
-    _drawItemImage(image, x, y, metrics, context);
-  } else {
-    _drawItemCuboid(item, cuboidPoints, metrics, context);
-  }
+  if (isHighlighted) _drawItemImageHighlight(image, x, y, metrics, scalingFactors, context, time);
+  _drawItemImage(image, x, y, metrics, context);
   context.restore();
 }
 
@@ -354,36 +281,13 @@ export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors
   drawItem(room, item, scalingFactors, context, imageSet, isHighlighted, time);
 }
 
-function _drawItemCuboid(item:Item, points:ItemCuboidPoints, metrics:ItemDrawMetrics, context:CanvasRenderingContext2D) {
-  const topFillStyle = interpolateColor(ITEM_LIGHT_TOP_BROWN, ITEM_DARK_TOP_BROWN, item.randomSalt);
-  const sideFillStyle = interpolateColor(ITEM_LIGHT_SIDE_BROWN, ITEM_DARK_SIDE_BROWN, item.randomSalt);
-  const frontFillStyle = interpolateColor(ITEM_LIGHT_BROWN, ITEM_DARK_BROWN, item.randomSalt);
-  drawProjectedCuboid({
-    backTopLeft:points.backTopLeft,
-    backTopRight:points.backTopRight,
-    backBottomLeft:points.backBottomLeft,
-    frontTopLeft:points.frontTopLeft,
-    frontTopRight:points.frontTopRight,
-    frontBottomLeft:points.frontBottomLeft,
-    frontBottomRight:points.frontBottomRight
-  }, {
-    topFillStyle,
-    sideFillStyle,
-    frontFillStyle,
-    lineWidth:metrics.cuboidLineWidthPixels,
-    strokeStyle:COLOR_BLACK
-  }, context);
-}
-
 export function drawItemAtCanvasPosition(item:Item, x:number, y:number, metrics:ItemDrawMetrics,
   context:CanvasRenderingContext2D, imageSet:ImageSet) {
-  context.save();
   const image = _findItemImage(item, imageSet);
-  if (image) {
-    _drawItemImage(image, x, y, metrics, context);
-  } else {
-    _drawItemCuboid(item, _createItemCuboidPoints(x, y, metrics), metrics, context);
-  }
+    if (!image) return; // Headless/test code call - no drawing needed.
+  context.save();
+  assertNonNullable(image);
+  _drawItemImage(image, x, y, metrics, context);
   context.restore();
 }
 
