@@ -23,7 +23,6 @@ import { compareItemsForDrawOrder } from "./roomContentDrawOrderUtil";
 import { assertNonNullable } from "decent-portal";
 
 const ITEM_CUBOID_DEPTH_RATIO = 0.7;
-const ITEM_CUBOID_LINE_WIDTH_RATIO = 0.25;
 const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.08;
 const ITEM_IMAGE_HIGHLIGHT_ALPHA_THRESHOLD = 16;
@@ -32,11 +31,11 @@ const ITEM_IMAGE_HIGHLIGHT_OUTSET_LINE_WIDTHS = .5;
 const _itemImageHighlightSilhouetteCanvasCache = new WeakMap<ImageBitmap, Map<string, HTMLCanvasElement>>();
 
 type ItemDrawMetrics = {
-  cuboidWidthPixels:number,
-  cuboidHeightPixels:number,
-  cuboidDepthXPixels:number,
-  cuboidDepthYPixels:number,
-  cuboidLineWidthPixels:number,
+  //cuboidWidthPixels:number,
+  //cuboidHeightPixels:number,
+  //cuboidDepthXPixels:number,
+  //cuboidDepthYPixels:number,
+  //cuboidLineWidthPixels:number,
   imageLeftOffsetPixels:number,
   imageTopOffsetPixels:number,
   imageWidthPixels:number,
@@ -103,11 +102,11 @@ export function calcItemDrawMetrics(room:Room, scalingFactors:ScalingFactors):It
   const imageLeftOffsetPixels = -(cuboidWidthPixels / 2 + cuboidDepthXPixels);
   const imageTopOffsetPixels = -(cuboidHeightPixels + cuboidDepthYPixels);
   return {
-    cuboidWidthPixels,
-    cuboidHeightPixels,
-    cuboidDepthXPixels,
-    cuboidDepthYPixels,
-    cuboidLineWidthPixels:Math.max(0.5, scalingFactors.roomLineWidth * ITEM_CUBOID_LINE_WIDTH_RATIO),
+    //cuboidWidthPixels,
+    //cuboidHeightPixels,
+    //cuboidDepthXPixels,
+    //cuboidDepthYPixels,
+    //cuboidLineWidthPixels:Math.max(0.5, scalingFactors.roomLineWidth * ITEM_CUBOID_LINE_WIDTH_RATIO),
     imageLeftOffsetPixels,
     imageTopOffsetPixels,
     imageWidthPixels:cuboidWidthPixels + cuboidDepthXPixels,
@@ -174,11 +173,11 @@ function _drawItemImage(image:ImageBitmap, x:number, y:number, metrics:ItemDrawM
   );
 }
 
-function _calcItemHighlightGlowMetrics(metrics:ItemDrawMetrics, time:number):ItemHighlightGlowMetrics {
+function _calcItemHighlightGlowMetrics(roomLineWidth:number, time:number):ItemHighlightGlowMetrics {
   const phase = (time % PULSE_CADENCE_MS) / PULSE_CADENCE_MS;
   const pulse = phase <= 0.5 ? phase * 2 : 2 * (1 - phase);
   const glowScale = 1 + (PULSE_SCALE_PEAK - 1) * pulse;
-  const glowWidth = Math.max(2, metrics.cuboidLineWidthPixels * 6 * glowScale);
+  const glowWidth = Math.max(2, roomLineWidth * glowScale);
   return {
     glowWidth,
     glowBlur:glowWidth * 1.2
@@ -234,7 +233,7 @@ function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, metrics:
   const imageRect = _calcItemImageRect(metrics, image);
   const silhouetteCanvas = _findItemImageHighlightSilhouetteCanvas(image, imageRect);
   if (!silhouetteCanvas) return;
-  const { glowWidth, glowBlur } = _calcItemHighlightGlowMetrics(metrics, time);
+  const { glowWidth, glowBlur } = _calcItemHighlightGlowMetrics(scalingFactors.roomLineWidth, time);
   const outsetPixels = scalingFactors.roomLineWidth * ITEM_IMAGE_HIGHLIGHT_OUTSET_LINE_WIDTHS;
   const highlightLeft = x + imageRect.leftOffsetPixels - outsetPixels;
   const highlightTop = y + imageRect.topOffsetPixels - outsetPixels;
