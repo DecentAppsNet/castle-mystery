@@ -151,6 +151,7 @@ import deadCharacterActivityText from './fixtures/dead-character-activity.md?raw
 import initiallyDeadCharacterActivityText from './fixtures/initially-dead-character-activity.md?raw';
 import initialCharacterPoseText from './fixtures/initial-character-pose.md?raw';
 import bodyOrientationActivityText from './fixtures/body-orientation-activity.md?raw';
+import bodyOrientationOnItemActivityText from './fixtures/body-orientation-on-item-activity.md?raw';
 import visibleFlagsText from './fixtures/visible-flags.md?raw';
 import invalidCharacterVisibleText from './fixtures/invalid-character-visible.md?raw';
 import invalidItemVisibleText from './fixtures/invalid-item-visible.md?raw';
@@ -370,6 +371,32 @@ describe('levelUtil itinerary loading', () => {
     expect(findCharacterPose(king, walkEvent.startTime - 1).bodyOrientation).toBe('laying');
     expect(findCharacterPose(king, walkEvent.startTime).bodyOrientation).toBe('standing');
     expect(findCharacterPose(king, 9_000).bodyOrientation).toBe('standing');
+  });
+
+  it('moves to a stacked room item floor square before applying a body orientation on that item', () => {
+    const level = loadLevelFromText(bodyOrientationOnItemActivityText, 'body-orientation-on-item-activity.md');
+    const hall = findRoom(level.rooms, 'Hall');
+    const king = level.characters.find(character => character.id === 'king');
+    const chair = hall.items.find(item => item.id === 'chair') || null;
+    const cushion = hall.items.find(item => item.id === 'cushion') || null;
+    if (!king) expect.fail('expected king character to exist');
+    const walkEvents = king.itinerary.filter(event => event.type === ItineraryEventType.WALK) as Array<{ startTime:number, duration:number }>;
+    const sitEvent = king.itinerary.find(event => event.type === ItineraryEventType.BODY_ORIENTATION) as { startTime:number, bodyOrientation:typeof king.bodyOrientation } | undefined;
+    const lastWalkEvent = walkEvents[walkEvents.length - 1];
+    const targetWaypoint = hall.waypoints.find(waypoint => waypoint.position.x === chair?.position.x
+      && waypoint.position.y === chair?.position.y
+      && waypoint.position.z === chair?.position.z) || null;
+
+    expect(chair).not.toBeNull();
+    expect(cushion).not.toBeNull();
+    expect(cushion!.position.y).toBeLessThan(chair!.position.y);
+    expect(walkEvents.length).toBeGreaterThan(0);
+    expect(sitEvent).toBeDefined();
+    expect(sitEvent?.bodyOrientation).toBe('sitting');
+    expect(sitEvent?.startTime).toBe(lastWalkEvent.startTime + lastWalkEvent.duration);
+    expect(targetWaypoint).not.toBeNull();
+    expect(findCharacterPose(king, sitEvent!.startTime).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPose(king, sitEvent!.startTime).position.y).toBe(chair!.position.y);
   });
 
   it('parses outside room metadata and defaults omitted outside flags to false', () => {

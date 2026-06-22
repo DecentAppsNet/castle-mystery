@@ -4,15 +4,30 @@
 import type { BodyOrientation } from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { createBodyOrientationEvent } from "@/game/itineraryUtil";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findSentenceStyleActivityVerb } from "./activityUtil";
+import Item from "@/game/types/Item";
+import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
+import { findNearestWaypointToPosition } from "@/game/waypointUtil";
+import {
+  ActivityContext,
+  calcActivityStartTime,
+  ensureTimestampIsAvailable,
+  findCurrentRoom,
+  findEarliestAbsoluteActivityStartTime,
+  findRoomItemById,
+  findSentenceStyleActivityVerb,
+  planMovementWithinRoom,
+  scheduleEventsToStartAtTime,
+  stripTrailingPeriod
+} from "./activityUtil";
 
 type BodyOrientationVerb = 'stands' | 'sits' | 'kneels' | 'lays';
 
-function _parseBodyOrientation(activityText:string, verb:BodyOrientationVerb):BodyOrientation {
-  const trimmedActivityText = activityText.trim();
-  if (trimmedActivityText !== verb && trimmedActivityText !== `${verb}.`) {
-    throw new Error(`unexpected extra text in authored activity '${activityText}'`);
-  }
+type ParsedBodyOrientationParts = {
+  bodyOrientation:BodyOrientation,
+  itemRef:string|null
+};
+
+function _findBodyOrientation(verb:BodyOrientationVerb):BodyOrientation {
   switch (verb) {
     case 'stands': return 'standing';
     case 'sits': return 'sitting';
@@ -21,11 +36,56 @@ function _parseBodyOrientation(activityText:string, verb:BodyOrientationVerb):Bo
   }
 }
 
+function _parseBodyOrientationParts(activityText:string, verb:BodyOrientationVerb):ParsedBodyOrientationParts {
+  const trimmedActivityText = stripTrailingPeriod(activityText.trim());
+  if (trimmedActivityText === verb) return { bodyOrientation:_findBodyOrientation(verb), itemRef:null };
+
+  const contentText = trimmedActivityText.slice(verb.length).trim();
+  if (!contentText.startsWith('on ')) throw new Error(`unexpected extra text in authored activity '${activityText}'`);
+
+  const itemRef = contentText.slice('on '.length).trim();
+  if (!itemRef.length) throw new Error(`missing item id in authored activity '${activityText}'`);
+  return { bodyOrientation:_findBodyOrientation(verb), itemRef };
+}
+
+function _findItemFloorPosition(roomItems:Item[], item:Item):Item['position'] {
+  const stackedItems = roomItems.filter(candidate => candidate.position.x === item.position.x && candidate.position.z === item.position.z);
+  const floorY = stackedItems.reduce((currentFloorY, candidate) => Math.max(currentFloorY, candidate.position.y), item.position.y);
+  return {
+    x:item.position.x,
+    y:floorY,
+    z:item.position.z
+  };
+}
+
 export function tryCreateBodyOrientationActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   const verb = findSentenceStyleActivityVerb(activityText, ['stands', 'sits', 'kneels', 'lays'] as const);
   if (!verb) return null;
 
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  return [createBodyOrientationEvent(activityStartTime, _parseBodyOrientation(activityText, verb))];
+  const { bodyOrientation, itemRef } = _parseBodyOrientationParts(activityText, verb);
+  if (!itemRef) return [createBodyOrientationEvent(activityStartTime, bodyOrientation)];
+
+  const currentRoom = findCurrentRoom(context.level, context.state.position);
+  const roomItemLocation = findRoomItemById(context.roomItemsByRoomId, context.level, itemRef);
+  if (!roomItemLocation || roomItemLocation.room.id !== currentRoom.id) {
+    throw new Error(`item ${itemRef} is not available for body orientation activity`);
+  }
+
+  const roomItems = context.roomItemsByRoomId.get(currentRoom.id) || [];
+  const targetPosition = _findItemFloorPosition(roomItems, roomItemLocation.item);
+  const targetWaypoint = findNearestWaypointToPosition(currentRoom, targetPosition);
+  const unscheduledMovementEvents = targetWaypoint === context.state.waypoint
+    ? []
+    : planMovementWithinRoom(currentRoom, context.state.waypoint, targetWaypoint);
+  const scheduledWalkEvents = scheduleEventsToStartAtTime(unscheduledMovementEvents, activityStartTime,
+    context.timestampType === 'absolute' ? findEarliestAbsoluteActivityStartTime(context.state) : context.state.time);
+  const bodyOrientationEventTime = scheduledWalkEvents.length
+    ? (() => {
+      const lastWalkEvent = scheduledWalkEvents[scheduledWalkEvents.length - 1] as WalkEvent;
+      return lastWalkEvent.startTime + lastWalkEvent.duration;
+    })()
+    : activityStartTime;
+  return [...scheduledWalkEvents, createBodyOrientationEvent(bodyOrientationEventTime, bodyOrientation)];
 }
