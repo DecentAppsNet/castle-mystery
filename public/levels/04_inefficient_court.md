@@ -85,6 +85,7 @@ JMMNNFLDKKKKAAA
 
 ## Lower Stairwell
 
+* title=
 * exits=Deep Archives (locked, unlockable) | Tapestry Store (locked, unlockable)
 * obscured=true
 
@@ -95,6 +96,7 @@ JMMNNFLDKKKKAAA
 
 ## West Stairwell
 
+* title=
 * obscured=true
 
 ## Throne Room
@@ -154,7 +156,7 @@ N1234567890ABCD.
 * G=Guard 4
 
 ## East Stairwell
-
+* title=
 * obscured=true
 
 ## Deep Archives
