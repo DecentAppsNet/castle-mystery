@@ -51,6 +51,7 @@ function _createCharacterContent(x:number, y:number):Exclude<RoomDrawableContent
     type:'character',
     depth:BACK_ROW_CHARACTER_DEPTH,
     x,
+    y,
     sortId:'character',
     character:{
       ...createDefaultCharacter(),

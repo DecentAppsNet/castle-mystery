@@ -26,6 +26,7 @@ import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from ".
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUtil";
 
 export { drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "./characters/characterBubbleDrawUtil";
 
@@ -44,10 +45,11 @@ function _getCharacterSizePixels(scalingFactors:ScalingFactors):{ characterWidth
   };
 }
 
-function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:ScalingFactors):[number, number] {
-  const [baseX, baseY] = gameToCanvasPosition(character.position.x, character.position.y, scalingFactors);
+function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:ScalingFactors, room:Room|null = null):[number, number] {
+  const displayPosition = findCharacterDisplayPosition(character, room);
+  const [baseX, baseY] = gameToCanvasPosition(displayPosition.x, displayPosition.y, scalingFactors);
   const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
-  const depth = clamp(character.position.z, 0, 1);
+  const depth = clamp(displayPosition.z, 0, 1);
   return [baseX + offsetX * depth, baseY + offsetY * depth];
 }
 
@@ -97,8 +99,8 @@ function _createCharacterPopoverBodyEntries(character:Character):PopoverBodyEntr
   return bodyEntries;
 }
 
-function _createCharacterCanvasLayout(character:Character, scalingFactors:ScalingFactors, time:number) {
-  const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
+function _createCharacterCanvasLayout(character:Character, scalingFactors:ScalingFactors, time:number, room:Room|null = null) {
+  const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time, room);
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
   return { layout, characterWidth, characterHeight };
 }
@@ -116,20 +118,20 @@ function _getFaceImageDrawSize(faceImage:ImageBitmap, headRadius:number):{ drawW
   };
 }
 
-function _getCharacterBodyCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number):Rect {
-  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time);
+function _getCharacterBodyCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number, room:Room|null = null):Rect {
+  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time, room);
   const segmentXs = layout.segments.flatMap(segment => [segment.fromX, segment.toX]);
   const leftX = Math.min(layout.head.centerX - layout.head.radius, ...segmentXs);
   const rightX = Math.max(layout.head.centerX + layout.head.radius, ...segmentXs);
   return createRect(leftX, layout.topY, rightX - leftX, layout.bottomY - layout.topY);
 }
 
-function _getCharacterFaceCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet):Rect|null {
+function _getCharacterFaceCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet, room:Room|null = null):Rect|null {
   if (!character.faceImageUrl) return null;
   const faceImage = imageSet.get(character.faceImageUrl) || null;
   if (!faceImage) return null;
 
-  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time);
+  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time, room);
   const faceImageDrawSize = _getFaceImageDrawSize(faceImage, layout.head.radius);
   if (!faceImageDrawSize) return null;
 
@@ -138,22 +140,23 @@ function _getCharacterFaceCanvasRect(character:Character, scalingFactors:Scaling
   return createRect(layout.head.centerX - drawWidth / 2, layout.head.centerY - drawHeight / 2, drawWidth, drawHeight);
 }
 
-export function getCharacterCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet|null = null):Rect {
-  const bodyRect = _getCharacterBodyCanvasRect(character, scalingFactors, time);
+export function getCharacterCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number,
+  imageSet:ImageSet|null = null, room:Room|null = null):Rect {
+  const bodyRect = _getCharacterBodyCanvasRect(character, scalingFactors, time, room);
   if (!imageSet) return bodyRect;
-  const faceRect = _getCharacterFaceCanvasRect(character, scalingFactors, time, imageSet);
+  const faceRect = _getCharacterFaceCanvasRect(character, scalingFactors, time, imageSet, room);
   return faceRect ? extendRectToContainRect(bodyRect, faceRect) : bodyRect;
 }
 
-export function getCharacterHoverRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet):Rect {
-  const canvasRect = getCharacterCanvasRect(character, scalingFactors, time, imageSet);
+export function getCharacterHoverRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet, room:Room|null = null):Rect {
+  const canvasRect = getCharacterCanvasRect(character, scalingFactors, time, imageSet, room);
   const [left, top] = canvasToGamePosition(canvasRect.x, canvasRect.y, scalingFactors);
   const [right, bottom] = canvasToGamePosition(canvasRect.x + canvasRect.width, canvasRect.y + canvasRect.height, scalingFactors);
   return createRect(left, top, right - left, bottom - top);
 }
 
-export function getCharacterBodyCenterCanvasPosition(character:Character, scalingFactors:ScalingFactors, time:number):{ x:number, y:number } {
-  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time);
+export function getCharacterBodyCenterCanvasPosition(character:Character, scalingFactors:ScalingFactors, time:number, room:Room|null = null):{ x:number, y:number } {
+  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time, room);
   const bodySegment = layout.segments[0];
   return {
     x:(bodySegment.fromX + bodySegment.toX) / 2,
@@ -161,8 +164,8 @@ export function getCharacterBodyCenterCanvasPosition(character:Character, scalin
   };
 }
 
-export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number) {
-  const [centerX, bottomY] = _getCharacterCanvasBottomPosition(character, scalingFactors);
+export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number, room:Room|null = null) {
+  const [centerX, bottomY] = _getCharacterCanvasBottomPosition(character, scalingFactors, room);
   const { characterWidth, characterHeight } = _getCharacterSizePixels(scalingFactors);
   const provisionalLayout = createCharacterLayout(0, 0, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
   const centerY = Math.round(bottomY - provisionalLayout.bottomY);
@@ -219,8 +222,8 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
 }
 
 export function drawCharacter(character:Character, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, effects:Effect[], isHighlighted:boolean) {
-  const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time);
+  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, effects:Effect[], isHighlighted:boolean, room:Room|null = null) {
+  const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time, room);
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
   const talkingEffect = faceImage
     ? effects.find(effect => effect.type === EffectType.TALKING && effect.character?.id === character.id) as TalkingEffect|undefined
@@ -280,9 +283,9 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,
-  imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null) {
+  imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null, room:Room|null = null) {
   if (!isCharacterInteractive(character)) return;
   const title = character.isTitleKnown ? _getCharacterDisplayName(character) : "";
-  drawPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time, imageSet), title,
+  drawPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time, imageSet, room), title,
     bodyEntries:_createCharacterPopoverBodyEntries(character), scalingFactors, context, imageSet, layoutPlanner });
 }

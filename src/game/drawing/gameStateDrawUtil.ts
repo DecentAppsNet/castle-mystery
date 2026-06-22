@@ -243,10 +243,11 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   } else if (canShowHoverPopovers && gameState.hoveredCharacterId) {
     const hoveredCharacter = gameState.characters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter && isCharacterInteractive(hoveredCharacter)) {
+      const hoveredCharacterRoom = findRoomAtPosition(gameState.rooms, hoveredCharacter.position.x, hoveredCharacter.position.y);
       markCharacterDiscovered(gameState, hoveredCharacter);
       if (hoveredCharacter.rightHandItem) markItemDiscovered(gameState, hoveredCharacter.rightHandItem);
       if (hoveredCharacter.leftHandItem) markItemDiscovered(gameState, hoveredCharacter.leftHandItem);
-      drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time, gameState.imageSet, layoutPlanner);
+      drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time, gameState.imageSet, layoutPlanner, hoveredCharacterRoom);
     }
   } else if (canShowHoverPopovers && gameState.hoveredExitKey) {
     const hoveredExit = _findHoveredExit(gameState);

@@ -38,6 +38,7 @@ import ImageSet from "../types/ImageSet";
 import ExitType from "../types/ExitType";
 import StairPart, { StairPartType } from "../types/StairPart";
 import { processAfterCharacterEffects, processBeforeCharacterEffects } from "../effects/effectUtil";
+import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUtil";
 import { findRoom } from "../roomUtil";
 import { getCharacterCanvasRect } from "./characterDrawUtil";
 import { getItemCanvasRectInRoom } from "./itemDrawUtil";
@@ -273,9 +274,19 @@ function _createDrawableContents(room:Room, charactersInRoom:Character[], effect
     stairPart
   }));
   const sortedNonStairContents = [
-    ...charactersInRoom.filter(character => character.isVisible).map(character => ({ type:'character' as const, depth:character.position.z, x:character.position.x, sortId:character.id, character })),
+    ...charactersInRoom.filter(character => character.isVisible).map(character => {
+      const displayPosition = findCharacterDisplayPosition(character, room);
+      return {
+        type:'character' as const,
+        depth:displayPosition.z,
+        x:displayPosition.x,
+        y:displayPosition.y,
+        sortId:character.id,
+        character
+      };
+    }),
     ...findVisibleRoomItemsInDrawOrder(room, effects, includeUndiscoveredItems)
-      .map(item => ({ type:'item' as const, depth:item.position.z, x:item.position.x, sortId:item.id, item }))
+      .map(item => ({ type:'item' as const, depth:item.position.z, x:item.position.x, y:item.position.y, sortId:item.id, item }))
   ].sort(compareNonStairDrawableContents);
 
   return mergeStairsWithSortedContents(stairContents, sortedNonStairContents);
@@ -295,10 +306,10 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
         drawRoomItem(room, content.item, scalingFactors, context, imageSet, content.item.id === hoveredItemId, time);
         return;
       case 'character':
-        if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, time, imageSet));
+        if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, time, imageSet, room));
         processBeforeCharacterEffects(content.character, effects, context, scalingFactors, imageSet);
         drawCharacter(content.character, scalingFactors, context, time, imageSet, effects,
-          content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId);
+          content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId, room);
         processAfterCharacterEffects(content.character, effects, context, scalingFactors, imageSet);
         return;
     }

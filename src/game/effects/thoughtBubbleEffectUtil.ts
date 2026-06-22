@@ -3,6 +3,7 @@
 
 import { drawThoughtBubble, getCharacterSpeechAnchor } from "../drawing/characterDrawUtil";
 import Character from "../types/Character";
+import Position from "../types/Position";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectType from "./types/EffectType";
@@ -11,7 +12,7 @@ import ThoughtBubbleEffect from "./types/ThoughtBubbleEffect";
 function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):boolean {
   const thoughtBubbleEffect = effect as ThoughtBubbleEffect;
   const { anchorX, anchorTopY } = getCharacterSpeechAnchor(
-    thoughtBubbleEffect.character,
+    { ...thoughtBubbleEffect.character, position:thoughtBubbleEffect.displayPosition },
     thoughtBubbleEffect.scalingFactors,
     thoughtBubbleEffect.gameTime
   );
@@ -19,10 +20,11 @@ function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):
   return false;
 }
 
-export function createThoughtBubbleEffect(character:Character, thought:string, scalingFactors:ScalingFactors, gameTime:number):ThoughtBubbleEffect {
+export function createThoughtBubbleEffect(character:Character, displayPosition:Position, thought:string, scalingFactors:ScalingFactors, gameTime:number):ThoughtBubbleEffect {
   return {
     type:EffectType.THOUGHT_BUBBLE,
     character,
+    displayPosition:{ ...displayPosition },
     thought,
     scalingFactors,
     gameTime,

@@ -5,6 +5,7 @@ import { clamp } from "@/common/numberUtil";
 import { COLOR_CHARACTER_SELECT_EFFECT } from "../drawing/drawConstants";
 import { projectRoomPointWithDepth } from "../drawing/roomPanelProjectionUtil";
 import Character from "../types/Character";
+import Position from "../types/Position";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import CharacterSelectEffect from "./types/CharacterSelectEffect";
@@ -24,9 +25,9 @@ function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):
   const elapsed = Date.now() - characterSelectEffect.startTime;
   const progress = clamp(elapsed / CHARACTER_SELECT_EFFECT_DURATION, 0, 1);
   const [centerX, bottomY] = projectRoomPointWithDepth(
-    characterSelectEffect.character.position.x,
-    characterSelectEffect.character.position.y,
-    characterSelectEffect.character.position.z,
+    characterSelectEffect.displayPosition.x,
+    characterSelectEffect.displayPosition.y,
+    characterSelectEffect.displayPosition.z,
     characterSelectEffect.scalingFactors
   );
   const centerY = bottomY - characterSelectEffect.centerYOffsetPixels;
@@ -52,11 +53,12 @@ function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):
   return elapsed < CHARACTER_SELECT_EFFECT_DURATION;
 }
 
-export function createCharacterSelectEffect(character:Character, time:number, scalingFactors:ScalingFactors):CharacterSelectEffect {
+export function createCharacterSelectEffect(character:Character, displayPosition:Position, time:number, scalingFactors:ScalingFactors):CharacterSelectEffect {
   const characterHeight = scalingFactors.roomLineWidth * 10;
   return {
     type:EffectType.CHARACTER_SELECT,
     character,
+    displayPosition:{ ...displayPosition },
     scalingFactors,
     startTime:time,
     startRadiusPixels:Math.max(8, scalingFactors.roomLineWidth * 1.2),

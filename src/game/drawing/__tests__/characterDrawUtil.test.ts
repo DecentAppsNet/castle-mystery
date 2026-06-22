@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
+import { createDefaultItem } from '@/game/types/Item';
+import { createDefaultRoom } from '@/game/types/Room';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 
 const SCALING_FACTORS:ScalingFactors = {
@@ -58,6 +60,27 @@ describe('characterDrawUtil', () => {
       expect(rectWithFaceImage.y).toBeLessThan(rectWithoutFaceImage.y);
       expect(rectWithFaceImage.height).toBeGreaterThan(rectWithoutFaceImage.height);
       expect(rectWithFaceImage.width).toBeGreaterThan(rectWithoutFaceImage.width);
+    });
+
+    it('raises the rendered rect when a room item stack shares the character square', () => {
+      const room = {
+        ...createDefaultRoom(),
+        rect:{ x:0, y:0, width:40, height:30 },
+        items:[
+          { ...createDefaultItem(), id:'crate', position:{ x:10, y:29.999, z:0.5 } },
+          { ...createDefaultItem(), id:'box', position:{ x:10, y:26.82, z:0.5 } }
+        ]
+      };
+      const character = {
+        ...createDefaultCharacter(),
+        position:{ x:10, y:29.999, z:0.5 }
+      };
+
+      const floorRect = getCharacterCanvasRect(character, SCALING_FACTORS, 0);
+      const stackedRect = getCharacterCanvasRect(character, SCALING_FACTORS, 0, null, room);
+
+      expect(stackedRect.y).toBeLessThan(floorRect.y);
+      expect(stackedRect.height).toBe(floorRect.height);
     });
   });
 });

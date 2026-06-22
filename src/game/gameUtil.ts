@@ -33,6 +33,7 @@ import { createEmitBubbleEffect } from "./effects/emitBubbleEffectUtil";
 import { createThinkingEffect, THINKING_LOOK_UP_DURATION_MSECS } from "./effects/thinkingEffectUtil";
 import { createTalkingEffect } from "./effects/talkingEffectUtil";
 import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
+import { findCharacterDisplayPosition } from "./characterDisplayPositionUtil";
 import { isCharacterInteractive } from "./interactivityUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import ImageSet from "./types/ImageSet";
@@ -196,7 +197,8 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   const nextCharacter = charactersInRoom[(activeCharacterIndex + 1) % charactersInRoom.length];
   if (nextCharacter.id === activeCharacter.id) return;
   gameState.activeCharacterI = gameState.characters.indexOf(nextCharacter);
-  gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter, Date.now(), gameState.scalingFactors));
+  gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter,
+    findCharacterDisplayPosition(nextCharacter, activeRoom), Date.now(), gameState.scalingFactors));
 }
 
 function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEvent) {
@@ -237,10 +239,13 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
 
   if (!gameState.isPlaying && !isScrubbing) return;
 
-  _findSpeechEffectRooms(gameState).flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
-    const speech = findCharacterPose(character, gameState.time).speech;
-    if (!speech) return;
-    gameState.activeEffects.push(createSpeechBubbleEffect(character, speech, gameState.scalingFactors, gameState.time));
+  _findSpeechEffectRooms(gameState).forEach(room => {
+    findCharactersInRoom(room, gameState.characters).forEach(character => {
+      const speech = findCharacterPose(character, gameState.time).speech;
+      if (!speech) return;
+      gameState.activeEffects.push(createSpeechBubbleEffect(character,
+        findCharacterDisplayPosition(character, room), speech, gameState.scalingFactors, gameState.time));
+    });
   });
 }
 
@@ -301,10 +306,13 @@ function _syncThoughtBubbleEffects(gameState:GameState, isScrubbing:boolean = fa
 
   if (!gameState.isLevelComplete && !gameState.isPlaying && !isScrubbing) return;
 
-  _findVisibleRooms(gameState).flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
-    const thought = findCharacterPose(character, gameState.time).thought;
-    if (!thought) return;
-    gameState.activeEffects.push(createThoughtBubbleEffect(character, thought, gameState.scalingFactors, gameState.time));
+  _findVisibleRooms(gameState).forEach(room => {
+    findCharactersInRoom(room, gameState.characters).forEach(character => {
+      const thought = findCharacterPose(character, gameState.time).thought;
+      if (!thought) return;
+      gameState.activeEffects.push(createThoughtBubbleEffect(character,
+        findCharacterDisplayPosition(character, room), thought, gameState.scalingFactors, gameState.time));
+    });
   });
 }
 

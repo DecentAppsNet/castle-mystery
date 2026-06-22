@@ -18,6 +18,7 @@ export type CharacterDrawableContent = {
   type:'character',
   depth:number,
   x:number,
+  y:number,
   sortId:string,
   character:Character
 };
@@ -26,6 +27,7 @@ export type ItemDrawableContent = {
   type:'item',
   depth:number,
   x:number,
+  y:number,
   sortId:string,
   item:Item
 };
@@ -40,6 +42,7 @@ function _compareSameColumnItems(content1:NonStairDrawableContent, content2:NonS
 
 export function compareNonStairDrawableContents(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
   return content1.depth - content2.depth
+    || content1.y - content2.y
     || content2.x - content1.x
     || _compareSameColumnItems(content1, content2)
     || content1.sortId.localeCompare(content2.sortId);
