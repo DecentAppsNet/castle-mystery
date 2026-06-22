@@ -46,5 +46,3 @@ export function findRightWallPanelSpans(room:Room, rooms:ReadonlyArray<Room>):Ri
   if (activeSpan) spans.push(activeSpan);
   return spans;
 }
-
-export default RightWallPanelSpan;

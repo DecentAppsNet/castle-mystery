@@ -7,7 +7,7 @@ import { extendRectToContainRect } from "./rectUtil";
 import { MAP_TILE_SIZE } from "./roomGridUtil";
 
 export const ROOF_APEX_Z = 0.5;
-export const ROOF_PEAK_HEIGHT_RATIO = 0.2;
+const ROOF_PEAK_HEIGHT_RATIO = 0.2;
 const RENDERED_PANEL_RIGHT_OVERHANG_HEIGHT_RATIO = 0.04;
 const RENDERED_PANEL_BOTTOM_OVERHANG_HEIGHT_RATIO = 0.02;
 

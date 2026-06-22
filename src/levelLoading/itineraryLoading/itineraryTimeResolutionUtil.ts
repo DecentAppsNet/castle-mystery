@@ -34,12 +34,12 @@ export function sortActivitiesByResolvedTime(activities:ParsedItineraryActivity[
     .sort((a, b) => a.resolvedTime - b.resolvedTime || a.characterId.localeCompare(b.characterId) || a.lineNo - b.lineNo);
 }
 
-export function calcItineraryDuration(itinerary:ItineraryEvent[]):number {
+function _calcItineraryDuration(itinerary:ItineraryEvent[]):number {
   return itinerary.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), 0);
 }
 
 export function calcCharactersItineraryDuration(characters:Character[]):number {
-  return Math.max(0, ...characters.map(character => calcItineraryDuration(character.itinerary)));
+  return Math.max(0, ...characters.map(character => _calcItineraryDuration(character.itinerary)));
 }
 
 function _findLatestResolvedEventEndTime(characters:Character[]):number|null {

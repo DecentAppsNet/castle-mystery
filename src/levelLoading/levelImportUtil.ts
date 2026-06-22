@@ -8,7 +8,7 @@ import { normalizeId } from "@/game/idUtil";
 import { parseNameValueLineEntries } from "@/common/markdownUtil";
 import { lineBeginsWithTimestamp } from "./timestampUtil";
 
-export type SourceLine = {
+type SourceLine = {
   filename:string,
   lineNo:number
 };

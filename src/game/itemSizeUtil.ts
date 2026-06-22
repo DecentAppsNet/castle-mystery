@@ -4,8 +4,8 @@
 import Room from "./types/Room";
 import { roomWidthToColumnCount } from "./waypointUtil";
 
-export const ITEM_CUBOID_WIDTH_RATIO = 0.68;
-export const ITEM_CUBOID_HEIGHT_RATIO = 0.55;
+const ITEM_CUBOID_WIDTH_RATIO = 0.68;
+const ITEM_CUBOID_HEIGHT_RATIO = 0.55;
 
 function _calcItemColumnWidthGame(room:Room):number {
   return room.rect.width / roomWidthToColumnCount(room.rect.width);

@@ -8,5 +8,4 @@ export const ROOM_FRONT_ROW_MIN_Z = 0.6667;
 export const ROOM_BACK_ROW_CENTER_Z = 0.1667;
 export const ROOM_MIDDLE_ROW_CENTER_Z = 0.5;
 export const ROOM_FRONT_ROW_CENTER_Z = 0.8333;
-export const ROOM_CHARACTER_FRONT_ROW_CENTER_Z = 0.8334;
 export const ROOM_FULL_DEPTH = 1;

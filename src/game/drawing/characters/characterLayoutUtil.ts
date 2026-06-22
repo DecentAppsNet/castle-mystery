@@ -24,7 +24,7 @@ type StrokeSegment = {
   toY:number
 }
 
-export type Point = {
+type Point = {
   x:number,
   y:number
 }

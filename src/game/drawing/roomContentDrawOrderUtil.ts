@@ -14,7 +14,7 @@ export type StairDrawableContent = {
   stairPart:StairPart
 };
 
-export type CharacterDrawableContent = {
+type CharacterDrawableContent = {
   type:'character',
   depth:number,
   x:number,
@@ -23,7 +23,7 @@ export type CharacterDrawableContent = {
   character:Character
 };
 
-export type ItemDrawableContent = {
+type ItemDrawableContent = {
   type:'item',
   depth:number,
   x:number,

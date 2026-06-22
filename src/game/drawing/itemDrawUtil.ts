@@ -31,11 +31,6 @@ const ITEM_IMAGE_HIGHLIGHT_OUTSET_LINE_WIDTHS = .5;
 const _itemImageHighlightSilhouetteCanvasCache = new WeakMap<ImageBitmap, Map<string, HTMLCanvasElement>>();
 
 type ItemDrawMetrics = {
-  //cuboidWidthPixels:number,
-  //cuboidHeightPixels:number,
-  //cuboidDepthXPixels:number,
-  //cuboidDepthYPixels:number,
-  //cuboidLineWidthPixels:number,
   imageLeftOffsetPixels:number,
   imageTopOffsetPixels:number,
   imageWidthPixels:number,
@@ -102,11 +97,6 @@ export function calcItemDrawMetrics(room:Room, scalingFactors:ScalingFactors):It
   const imageLeftOffsetPixels = -(cuboidWidthPixels / 2 + cuboidDepthXPixels);
   const imageTopOffsetPixels = -(cuboidHeightPixels + cuboidDepthYPixels);
   return {
-    //cuboidWidthPixels,
-    //cuboidHeightPixels,
-    //cuboidDepthXPixels,
-    //cuboidDepthYPixels,
-    //cuboidLineWidthPixels:Math.max(0.5, scalingFactors.roomLineWidth * ITEM_CUBOID_LINE_WIDTH_RATIO),
     imageLeftOffsetPixels,
     imageTopOffsetPixels,
     imageWidthPixels:cuboidWidthPixels + cuboidDepthXPixels,
@@ -130,15 +120,16 @@ export function getItemCanvasPositionInRoom(_room:Room, item:Item, scalingFactor
 }
 
 export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
+  const image = _findItemImage(item, imageSet);
+  if (!image) return { x:0, y:0, width:0, height:0 }; // Headless.
   const metrics = calcItemDrawMetrics(room, scalingFactors);
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
-  const image = _findItemImage(item, imageSet);
-  const imageRect = image ? _calcItemImageRect(metrics, image) : null;
+  const imageRect = _calcItemImageRect(metrics, image);
   return {
-    x:x + (imageRect?.leftOffsetPixels ?? metrics.imageLeftOffsetPixels),
-    y:y + (imageRect?.topOffsetPixels ?? metrics.imageTopOffsetPixels),
-    width:imageRect?.widthPixels ?? metrics.imageWidthPixels,
-    height:imageRect?.heightPixels ?? metrics.imageHeightPixels
+    x:x + imageRect.leftOffsetPixels,
+    y:y + imageRect.topOffsetPixels,
+    width:imageRect.widthPixels,
+    height:imageRect.heightPixels
   };
 }
 
