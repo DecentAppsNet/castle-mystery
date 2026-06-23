@@ -2,8 +2,6 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 export type { default as ActivityContext } from "./activity/types/ActivityContext";
-export type { default as ActivityTimestampType } from "./activity/types/ActivityTimestampType";
-export type { default as CharacterActivityState } from "./activity/types/CharacterActivityState";
 export {
   addStateOwnedItem,
   appendEventsToCharacterState,

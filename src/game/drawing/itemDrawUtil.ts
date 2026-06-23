@@ -20,9 +20,8 @@ import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { compareItemsForDrawOrder } from "./roomContentDrawOrderUtil";
-import { assertNonNullable } from "decent-portal";
 
-const ITEM_CUBOID_DEPTH_RATIO = 0.7;
+const ITEM_SIZING_RATIO = 0.21;
 const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.08;
 const ITEM_IMAGE_HIGHLIGHT_ALPHA_THRESHOLD = 16;
@@ -47,31 +46,19 @@ type ItemHighlightGlowMetrics = {
   glowBlur:number
 }
 
-/* Item images imply the number of columns that will be used to render them by their image width.
-   In case some image is not exactly aligned with the pixel count per column, round up or down to nearest 
-   column count. */
-const IMAGE_PIXELS_PER_COLUMN = 256;
-function _calcItemImageColumnCount(image:ImageBitmap):number {
-  return Math.max(1, Math.round(image.width / IMAGE_PIXELS_PER_COLUMN));
-}
-
-// Expands the base item draw width when an image encodes multiple horizontal panels.
-function _calcItemImageDrawWidthPixels(imageRect:ItemImageRect, image:ImageBitmap):number {
-  return imageRect.widthPixels * _calcItemImageColumnCount(image);
-}
-
-// Re-centers wider multi-panel item images around the item's projected anchor point.
-function _calcItemImageLeftOffsetPixels(imageRect:ItemImageRect, image:ImageBitmap):number {
-  const drawWidthPixels = _calcItemImageDrawWidthPixels(imageRect, image);
-  return imageRect.leftOffsetPixels - (drawWidthPixels - imageRect.widthPixels) / 2;
-}
-
 // Converts shared image layout metrics into the final rectangle for one decoded image.
-function _calcItemImageRect(imageRect:ItemImageRect, image:ImageBitmap):ItemImageRect {
-  const widthPixels = _calcItemImageDrawWidthPixels(imageRect, image);
+const IMAGE_PIXELS_PER_COLUMN = 256;
+function _calcItemImageRect(itemDrawRect:ItemImageRect, image:ImageBitmap):ItemImageRect {
+  /* Item images imply the number of columns that will be used to render them by their image width.
+    In case some image is not exactly aligned with the pixel count per column, round up or down to nearest 
+    column count. */
+  const imageColumnCount = Math.max(1, Math.round(image.width / IMAGE_PIXELS_PER_COLUMN));
+
+  const widthPixels = itemDrawRect.widthPixels * imageColumnCount; // Quantized to nearest column-aligned width.
+  const leftOffsetPixels = itemDrawRect.leftOffsetPixels - (widthPixels - itemDrawRect.widthPixels) / 2;
   const heightPixels = widthPixels * image.height / image.width;
   return {
-    leftOffsetPixels:_calcItemImageLeftOffsetPixels(imageRect, image),
+    leftOffsetPixels,
     topOffsetPixels:-heightPixels,
     widthPixels,
     heightPixels
@@ -87,22 +74,21 @@ function _getItemDrawPosition(item:Item) {
   };
 }
 
-// Builds the base image layout metrics used to place and size item images in a room.
 export function calcItemDrawRect(room:Room, scalingFactors:ScalingFactors):ItemImageRect {
   const columnWidthGame = room.rect.width / roomWidthToColumnCount(room.rect.width);
   const columnWidthPixels = columnWidthGame * scalingFactors.scaleX;
+  const baseWidthPixels = calcItemCuboidWidthPixels(columnWidthPixels);
+  const baseHeightPixels = calcItemCuboidHeightPixels(baseWidthPixels);
+
   const [panelOffsetX, panelOffsetY] = calcPanelOffset(scalingFactors);
-  const cuboidDepthXPixels = Math.max(2, panelOffsetX / 3 * ITEM_CUBOID_DEPTH_RATIO);
-  const cuboidDepthYPixels = Math.max(1, panelOffsetY / 3 * ITEM_CUBOID_DEPTH_RATIO);
-  const cuboidWidthPixels = calcItemCuboidWidthPixels(columnWidthPixels);
-  const cuboidHeightPixels = calcItemCuboidHeightPixels(cuboidWidthPixels);
-  const leftOffsetPixels = -(cuboidWidthPixels / 2 + cuboidDepthXPixels);
-  const topOffsetPixels = -(cuboidHeightPixels + cuboidDepthYPixels);
+  const projectionOutsetXPixels = panelOffsetX * ITEM_SIZING_RATIO;
+  const projectionOutsetYPixels = panelOffsetY * ITEM_SIZING_RATIO;
+
   return {
-    leftOffsetPixels,
-    topOffsetPixels,
-    widthPixels:cuboidWidthPixels + cuboidDepthXPixels,
-    heightPixels:cuboidHeightPixels + cuboidDepthYPixels
+    leftOffsetPixels: -(baseWidthPixels / 2 + projectionOutsetXPixels),
+    topOffsetPixels: -(baseHeightPixels + projectionOutsetYPixels),
+    widthPixels: baseWidthPixels + projectionOutsetXPixels,
+    heightPixels: baseHeightPixels + projectionOutsetYPixels
   };
 }
 
@@ -273,7 +259,7 @@ function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, itemDraw
 function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet, isHighlighted:boolean = false, time:number = 0) {
   const image = _findItemImage(item, imageSet);
-  if (!image) return; // Headless/test code call - no drawing needed.
+  if (!image) return; // Headless - no drawing needed.
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
   const itemDrawRect = calcItemDrawRect(room, scalingFactors);
   context.save();
@@ -292,9 +278,8 @@ export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors
 export function drawItemAtCanvasPosition(item:Item, x:number, y:number, itemDrawRect:ItemImageRect,
   context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const image = _findItemImage(item, imageSet);
-    if (!image) return; // Headless/test code call - no drawing needed.
+  if (!image) return; // Headless/test code call - no drawing needed.
   context.save();
-  assertNonNullable(image);
   _drawItemImage(image, x, y, itemDrawRect, context);
   context.restore();
 }
