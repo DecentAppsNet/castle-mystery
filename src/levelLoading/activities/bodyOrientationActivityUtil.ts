@@ -7,18 +7,12 @@ import { createBodyOrientationEvent } from "@/game/itineraryUtil";
 import Item from "@/game/types/Item";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import { findNearestWaypointToPosition } from "@/game/waypointUtil";
-import {
-  ActivityContext,
-  calcActivityStartTime,
-  ensureTimestampIsAvailable,
-  findCurrentRoom,
-  findEarliestAbsoluteActivityStartTime,
-  findRoomItemById,
-  findSentenceStyleActivityVerb,
-  planMovementWithinRoom,
-  scheduleEventsToStartAtTime,
-  stripTrailingPeriod
-} from "./activityUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { findCurrentRoom } from "./activity/activityStateUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsoluteActivityStartTime, scheduleEventsToStartAtTime } from "./activity/activitySchedulingUtil";
+import { planMovementWithinRoom } from "./activity/activityMovementUtil";
+import { findRoomItemById } from "./activity/activityTargetingUtil";
+import { findSentenceStyleActivityVerb, stripTrailingPeriod } from "./activity/activityTextParseUtil";
 
 type BodyOrientationVerb = 'stands' | 'sits' | 'kneels' | 'lays';
 

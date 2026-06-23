@@ -6,13 +6,9 @@ import { createThoughtEvent } from "@/game/itineraryUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import ThoughtEvent from "@/game/types/itineraryEvents/ThoughtEvent";
-import {
-  ActivityContext,
-  calcActivityStartTime,
-  ensureTimestampIsAvailable,
-  findSentenceStyleActivityVerb,
-  parseSentenceStyleActivityText
-} from "./activityUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
+import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText } from "./activity/activityTextParseUtil";
 
 function _parseThoughtText(activityText:string):string {
   return parseSentenceStyleActivityText(activityText, 'thinks', 'thought');

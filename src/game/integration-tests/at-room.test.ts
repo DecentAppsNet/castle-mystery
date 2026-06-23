@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearSeed, setSeed } from '@/common/randUtil';
-import { planMovementToRoom } from '@/levelLoading/activities/activityUtil';
+import { planMovementToRoom } from '@/levelLoading/activities/activity/activityMovementUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';

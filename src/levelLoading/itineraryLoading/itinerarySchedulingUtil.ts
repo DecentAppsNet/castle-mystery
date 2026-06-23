@@ -24,16 +24,16 @@ import { tryCreateSayActivity } from "../activities/sayActivityUtil";
 import { tryCreateShowHideActivity } from "../activities/showHideActivityUtil";
 import { tryCreateTakeActivity } from "../activities/takeActivityUtil";
 import { tryCreateThinkActivity } from "../activities/thinkActivityUtil";
+import type ActivityContext from "../activities/activity/types/ActivityContext";
 import {
   appendEventsToCharacterState,
-  ActivityContext,
-  calcActivityStartTime,
   createCharacterActivityState,
   createInitialRoomItemsByRoomId,
   duplicateCharacterActivityState,
   duplicateRoomItemsByRoomId,
   findStatePoseAtTime
-} from "../activities/activityUtil";
+} from "../activities/activity/activityStateUtil";
+import { calcActivityStartTime } from "../activities/activity/activitySchedulingUtil";
 import { runWithItineraryLineContext } from "./itineraryLoadErrorUtil";
 import { calcCharactersItineraryDuration, sortActivitiesByResolvedTime } from "./itineraryTimeResolutionUtil";
 import ParsedItineraryActivity from "./types/ParsedItineraryActivity";

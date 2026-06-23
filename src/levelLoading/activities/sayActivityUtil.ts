@@ -6,17 +6,12 @@ import Character from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import SpeechEvent from "@/game/types/itineraryEvents/SpeechEvent";
-import {
-  ActivityContext,
-  calcActivityStartTime,
-  ensureTimestampIsAvailable,
-  findCurrentRoom,
-  findSentenceStyleActivityVerb,
-  findStatePoseAtTime,
-  parseSentenceStyleActivityText
-} from "./activityUtil";
 import { isActiveAudibleRoom } from "@/game/roomUtil";
 import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { findCurrentRoom, findStatePoseAtTime } from "./activity/activityStateUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
+import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText } from "./activity/activityTextParseUtil";
 
 type SpeechVerb = 'says' | 'interrupts';
 

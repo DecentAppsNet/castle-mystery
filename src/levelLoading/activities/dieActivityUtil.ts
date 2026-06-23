@@ -3,7 +3,9 @@
 
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { createDieEvent } from "@/game/itineraryUtil";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findSentenceStyleActivityVerb } from "./activityUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
+import { findSentenceStyleActivityVerb } from "./activity/activityTextParseUtil";
 
 function _assertNoTrailingDeathText(activityText:string) {
   const trimmedActivityText = activityText.trim();

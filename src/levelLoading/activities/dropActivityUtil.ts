@@ -7,7 +7,11 @@ import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { createDropItemEvent } from "@/game/itineraryUtil";
 import { calcItemCuboidHeightGame } from "@/game/itemSizeUtil";
 import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoom, findTargetPositionAtTime, removeStateOwnedItem, stripTrailingPeriod } from "./activityUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { findCurrentRoom, removeStateOwnedItem } from "./activity/activityStateUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
+import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
+import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
 
 type ParsedDropParts = {
   itemRef:string,

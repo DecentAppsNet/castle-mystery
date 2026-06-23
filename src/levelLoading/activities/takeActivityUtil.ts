@@ -10,21 +10,12 @@ import Waypoint from "@/game/types/Waypoint";
 import { FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
-import {
-  ActivityContext,
-  addStateOwnedItem,
-  calcActivityStartTime,
-  ensureTimestampIsAvailable,
-  findCurrentRoom,
-  findEarliestAbsoluteActivityStartTime,
-  findRoomItemById,
-  findStateOwnedItem,
-  findWaypointPath,
-  planMovementWithinRoom,
-  removeStateOwnedItem,
-  scheduleEventsToStartAtTime,
-  stripTrailingPeriod
-} from "./activityUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { addStateOwnedItem, findCurrentRoom, findStateOwnedItem, removeStateOwnedItem } from "./activity/activityStateUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsoluteActivityStartTime, scheduleEventsToStartAtTime } from "./activity/activitySchedulingUtil";
+import { findWaypointPath, planMovementWithinRoom } from "./activity/activityMovementUtil";
+import { findRoomItemById } from "./activity/activityTargetingUtil";
+import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
 
 type ParsedTakeParts = {
   itemRef:string,

@@ -3,9 +3,13 @@
 
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { findNearestWaypointToPosition } from "@/game/waypointUtil";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findCurrentRoomForWaypoint, findEarliestAbsoluteActivityStartTime, planMovementToRoom, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime, stripTrailingPeriod } from "./activityUtil";
 import { normalizeId } from "@/game/idUtil";
 import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { findCurrentRoomForWaypoint } from "./activity/activityStateUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsoluteActivityStartTime, scheduleEventsToEndAtTime, scheduleEventsToStartAtTime } from "./activity/activitySchedulingUtil";
+import { planMovementToRoom } from "./activity/activityMovementUtil";
+import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
 
 function _createWaypointKey(position:{ x:number, y:number, z:number }):string {
   return `${position.x},${position.y},${position.z}`;

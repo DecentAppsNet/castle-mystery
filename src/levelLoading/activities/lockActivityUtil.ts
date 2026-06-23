@@ -10,16 +10,11 @@ import RoomExit, { LOCKABLE_WITHOUT_INV_CHECK } from "@/game/types/RoomExit";
 import { createLockEvent, createUnlockEvent } from "@/game/itineraryUtil";
 import { findRoom } from "@/game/roomUtil";
 import { findExitWaypoint } from "@/game/waypointUtil";
-import {
-  ActivityContext,
-  calcActivityStartTime,
-  ensureTimestampIsAvailable,
-  findCurrentRoom,
-  findEarliestAbsoluteActivityStartTime,
-  planMovementWithinRoom,
-  scheduleEventsToStartAtTime,
-  stripTrailingPeriod
-} from "./activityUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { findCurrentRoom } from "./activity/activityStateUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsoluteActivityStartTime, scheduleEventsToStartAtTime } from "./activity/activitySchedulingUtil";
+import { planMovementWithinRoom } from "./activity/activityMovementUtil";
+import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
 
 const LOCK_EXIT_NEARBY_DISTANCE = 8;
 

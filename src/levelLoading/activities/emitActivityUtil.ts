@@ -3,14 +3,10 @@
 
 import { createEmitEvent } from "@/game/itineraryUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
-import {
-  ActivityContext,
-  calcActivityStartTime,
-  ensureTimestampIsAvailable,
-  findSentenceStyleActivityVerb,
-  findTargetPositionAtTime,
-  parseSentenceStyleActivityText
-} from "./activityUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
+import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
+import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText } from "./activity/activityTextParseUtil";
 
 function _parseEmitText(activityText:string):string {
   return parseSentenceStyleActivityText(activityText, 'emits', 'emit');

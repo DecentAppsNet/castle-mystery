@@ -4,7 +4,11 @@
 import type { FacingDirection } from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { createFaceEvent } from "@/game/itineraryUtil";
-import { ActivityContext, calcActivityStartTime, ensureTimestampIsAvailable, findSentenceStyleActivityVerb, findStatePoseAtTime, findTargetPositionAtTime, stripTrailingPeriod } from "./activityUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { findStatePoseAtTime } from "./activity/activityStateUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
+import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
+import { findSentenceStyleActivityVerb, stripTrailingPeriod } from "./activity/activityTextParseUtil";
 
 function _parseFacingDirection(activityText:string, context:ActivityContext, activityStartTime:number):FacingDirection {
   const directionText = stripTrailingPeriod(activityText.trim().slice('faces'.length).trim()).toLowerCase();

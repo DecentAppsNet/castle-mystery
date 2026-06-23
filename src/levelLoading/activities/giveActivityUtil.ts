@@ -7,21 +7,13 @@ import { createGiveItemEvent } from "@/game/itineraryUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
-import {
-  ActivityContext,
-  addStateOwnedItem,
-  calcActivityStartTime,
-  ensureTimestampIsAvailable,
-  findEarliestAbsoluteActivityStartTime,
-  findCurrentRoom,
-  findTargetPositionAtTime,
-  findWaypointPath,
-  planMovementWithinRoom,
-  removeStateOwnedItem,
-  scheduleEventsToStartAtTime,
-  stripTrailingPeriod
-} from "./activityUtil";
 import { normalizeId } from "@/game/idUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { addStateOwnedItem, findCurrentRoom, removeStateOwnedItem } from "./activity/activityStateUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsoluteActivityStartTime, scheduleEventsToStartAtTime } from "./activity/activitySchedulingUtil";
+import { findWaypointPath, planMovementWithinRoom } from "./activity/activityMovementUtil";
+import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
+import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
 
 const GIVE_ITEM_NEARBY_DISTANCE = 8;
 

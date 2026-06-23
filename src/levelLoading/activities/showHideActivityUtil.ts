@@ -5,15 +5,11 @@ import { normalizeId } from "@/game/idUtil";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { createHideEvent, createShowEvent } from "@/game/itineraryUtil";
 
-import {
-  ActivityContext,
-  calcActivityStartTime,
-  ensureTimestampIsAvailable,
-  findRoomItemById,
-  findSentenceStyleActivityVerb,
-  findStateOwnedItem,
-  parseSentenceStyleActivityText,
-} from "./activityUtil";
+import type ActivityContext from "./activity/types/ActivityContext";
+import { findStateOwnedItem } from "./activity/activityStateUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
+import { findRoomItemById } from "./activity/activityTargetingUtil";
+import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText } from "./activity/activityTextParseUtil";
 
 type VisibilityVerb = 'show' | 'hide';
 
