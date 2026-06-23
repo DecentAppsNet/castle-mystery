@@ -15,6 +15,11 @@ import Waypoint from "@/game/types/Waypoint";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import RoomEntryEvent from "@/game/types/itineraryEvents/RoomEntryEvent";
+import FaceEvent from "@/game/types/itineraryEvents/FaceEvent";
+import BodyOrientationEvent from "@/game/types/itineraryEvents/BodyOrientationEvent";
+import SpeechEvent from "@/game/types/itineraryEvents/SpeechEvent";
+import ThoughtEvent from "@/game/types/itineraryEvents/ThoughtEvent";
+import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import { findRoom } from "@/game/roomUtil";
 import { findNearestWaypointToPosition } from "@/game/waypointUtil";
 import {
@@ -34,6 +39,55 @@ function _createCharacterSnapshot(character:Character, state:CharacterActivitySt
     itinerary:[...state.events],
     itineraryIndex:createItineraryIndex(state.events, character.position)
   };
+}
+
+function _updateStatePoseFromEvent(state:CharacterActivityState, event:ItineraryEvent, settledTime:number) {
+  if (event.startTime > settledTime) return;
+
+  switch (event.type) {
+    case ItineraryEventType.WALK: {
+      const walkEvent = event as WalkEvent;
+      const endTime = walkEvent.startTime + walkEvent.duration;
+      if (settledTime < endTime) return;
+      state.position = duplicatePosition(walkEvent.toPosition);
+      if (walkEvent.toPosition.x > walkEvent.fromPosition.x) state.facingDirection = 'right';
+      else if (walkEvent.toPosition.x < walkEvent.fromPosition.x) state.facingDirection = 'left';
+      state.bodyOrientation = 'standing';
+      return;
+    }
+    case ItineraryEventType.DIE:
+      state.isAlive = false;
+      return;
+    case ItineraryEventType.FACE:
+      state.facingDirection = (event as FaceEvent).facingDirection;
+      return;
+    case ItineraryEventType.BODY_ORIENTATION:
+      state.bodyOrientation = (event as BodyOrientationEvent).bodyOrientation;
+      return;
+    case ItineraryEventType.SPEECH: {
+      const speechEvent = event as SpeechEvent;
+      state.speech = settledTime < speechEvent.startTime + speechEvent.duration ? speechEvent.speech : null;
+      return;
+    }
+    case ItineraryEventType.THOUGHT: {
+      const thoughtEvent = event as ThoughtEvent;
+      state.thought = settledTime < thoughtEvent.startTime + thoughtEvent.duration ? thoughtEvent.thought : null;
+      return;
+    }
+    case ItineraryEventType.EMIT:
+    case ItineraryEventType.CHARACTER_ENCOUNTER:
+    case ItineraryEventType.TAKE_ITEM:
+    case ItineraryEventType.DROP_ITEM:
+    case ItineraryEventType.GIVE_ITEM:
+    case ItineraryEventType.LOCK:
+    case ItineraryEventType.UNLOCK:
+    case ItineraryEventType.SHOW:
+    case ItineraryEventType.HIDE:
+    case ItineraryEventType.ROOM_ENTRY:
+      return;
+    default:
+      return;
+  }
 }
 
 function _findWaypointOwningRoom(level:Level, waypoint:Waypoint):Room|null {
@@ -58,7 +112,12 @@ export function createCharacterActivityState(character:Character):CharacterActiv
     waypoint:character.waypoint,
     items:character.items.map(duplicateItem),
     leftHandItem:character.leftHandItem ? duplicateItem(character.leftHandItem) : null,
-    rightHandItem:character.rightHandItem ? duplicateItem(character.rightHandItem) : null
+    rightHandItem:character.rightHandItem ? duplicateItem(character.rightHandItem) : null,
+    isAlive:character.isAlive,
+    facingDirection:character.facingDirection,
+    bodyOrientation:character.bodyOrientation,
+    speech:null,
+    thought:null
   };
 }
 
@@ -75,7 +134,12 @@ export function duplicateCharacterActivityState(state:CharacterActivityState):Ch
     waypoint:state.waypoint,
     items:state.items.map(duplicateItem),
     leftHandItem:state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
-    rightHandItem:state.rightHandItem ? duplicateItem(state.rightHandItem) : null
+    rightHandItem:state.rightHandItem ? duplicateItem(state.rightHandItem) : null,
+    isAlive:state.isAlive,
+    facingDirection:state.facingDirection,
+    bodyOrientation:state.bodyOrientation,
+    speech:state.speech,
+    thought:state.thought
   };
 }
 
@@ -108,10 +172,20 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
       thought:null
     };
   }
+  if (time === state.time) {
+    return {
+      position:duplicatePosition(state.position),
+      isAlive:state.isAlive,
+      facingDirection:state.facingDirection,
+      bodyOrientation:state.bodyOrientation,
+      speech:state.speech,
+      thought:state.thought
+    };
+  }
   return findCharacterPose(_createCharacterSnapshot(character, state), time);
 }
 
-export function appendEventsToCharacterState(level:Level, character:Character, state:CharacterActivityState, events:ItineraryEvent[]) {
+export function appendEventsToCharacterState(level:Level, _character:Character, state:CharacterActivityState, events:ItineraryEvent[]) {
   if (!events.length) return;
   state.events.push(...events);
   const lastEvent = events[events.length - 1];
@@ -121,8 +195,11 @@ export function appendEventsToCharacterState(level:Level, character:Character, s
     blockingTime = Math.max(blockingTime, event.startTime + calcBlockingDurationForScheduling(event, 'after-previous-activity'));
   }
   state.time = blockingTime;
-  const pose = findStatePoseAtTime(character, state, state.time);
-  state.position = duplicatePosition(pose.position);
+  state.speech = null;
+  state.thought = null;
+  for (const event of events) {
+    _updateStatePoseFromEvent(state, event, state.time);
+  }
   const room = _findRoomForStateWaypointUpdate(level, state.waypoint, events);
   state.waypoint = findNearestWaypointToPosition(room, state.position);
 }

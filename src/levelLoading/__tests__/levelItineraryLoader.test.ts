@@ -2,9 +2,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { findCharacterPose } from '@/game/itineraryUtil';
+import { createBodyOrientationEvent, createFaceEvent, createWalkEvent } from '@/game/itineraryUtil';
 import baseLevelText from '@/game/__tests__/fixtures/timeline-start-time-field.md?raw';
+import { ROOM_MIDDLE_ROW_CENTER_Z } from '@/game/roomSpaceConstants';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import * as activityMovementUtil from '../activities/activity/activityMovementUtil';
+import { appendEventsToCharacterState, createCharacterActivityState, findStatePoseAtTime } from '../activities/activity/activityStateUtil';
 import { parseItineraryActivities } from '../itineraryLoading/itineraryActivityParseUtil';
 import { loadItineraries } from '../levelItineraryLoader';
 import itineraryTimelineSummaryText from './fixtures/itinerary-timeline-summary.md?raw';
@@ -144,6 +147,32 @@ describe('levelItineraryLoader', () => {
 
       expect(planMovementToRoomSpy).toHaveBeenCalledTimes(1);
       planMovementToRoomSpy.mockRestore();
+    });
+
+    it('reuses settled pose state for lookups at the current scheduling time', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const room = level.rooms[0];
+      const waypoint = room.waypoints[0];
+      const character = level.characters.find(candidate => candidate.id === 'hero');
+
+      expect(room).toBeTruthy();
+      expect(waypoint).toBeTruthy();
+      expect(character).toBeTruthy();
+
+      character!.position = { ...waypoint.position, z:ROOM_MIDDLE_ROW_CENTER_Z };
+      character!.waypoint = waypoint;
+      const state = createCharacterActivityState(character!);
+      const targetWaypoint = room.waypoints.find(candidate => candidate !== waypoint && candidate.position.x !== waypoint.position.x) || room.waypoints[1];
+      const walkEvent = createWalkEvent(room, 0, waypoint.position.x, waypoint.position.y, targetWaypoint!.position.x, targetWaypoint!.position.y,
+        { ...waypoint.position, z:ROOM_MIDDLE_ROW_CENTER_Z }, { ...targetWaypoint!.position, z:ROOM_MIDDLE_ROW_CENTER_Z });
+
+      expect(walkEvent).toBeTruthy();
+      appendEventsToCharacterState(level, character!, state, [walkEvent!, createFaceEvent(walkEvent!.duration, 'left'), createBodyOrientationEvent(walkEvent!.duration, 'kneeling')]);
+
+      const pose = findStatePoseAtTime(character!, state, state.time);
+      expect(pose.position).toEqual({ ...targetWaypoint!.position, z:ROOM_MIDDLE_ROW_CENTER_Z });
+      expect(pose.facingDirection).toBe('left');
+      expect(pose.bodyOrientation).toBe('kneeling');
     });
   });
 });
