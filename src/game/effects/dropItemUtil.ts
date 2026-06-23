@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
-import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
+import { calcItemDrawRect, drawItemAtCanvasPosition, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";
 import ImageSet from "../types/ImageSet";
 import Item from "../types/Item";
@@ -24,7 +24,7 @@ function _onProcessCharacterEffect(_character:Character, effect:Effect, context:
   const [x, endY] = getItemCanvasPositionInRoom(room, dropItemEffect.item, scalingFactors);
   const startYOffsetPixels = Math.max(18, scalingFactors.roomFontHeight * 1.5);
   const y = endY - startYOffsetPixels * (1 - progress);
-  drawItemAtCanvasPosition(dropItemEffect.item, x, y, calcItemDrawMetrics(room, scalingFactors), context, imageSet);
+  drawItemAtCanvasPosition(dropItemEffect.item, x, y, calcItemDrawRect(room, scalingFactors), context, imageSet);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 

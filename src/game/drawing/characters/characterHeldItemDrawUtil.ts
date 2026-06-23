@@ -16,7 +16,7 @@ import ScalingFactors from "@/game/types/ScalingFactors";
 import ImageSet from "@/game/types/ImageSet";
 import { CharacterLayout } from "./characterLayoutUtil";
 
-function _createHeldItemDrawMetrics(scalingFactors:ScalingFactors) {
+function _createHeldItemDrawRect(scalingFactors:ScalingFactors) {
   const [panelOffsetX, panelOffsetY] = calcPanelOffset(scalingFactors);
   const baseWidthPixels = MAP_TILE_SIZE / roomWidthToColumnCount(MAP_TILE_SIZE) * scalingFactors.scaleX;
   const cuboidWidthPixels = calcItemCuboidWidthPixels(baseWidthPixels);
@@ -24,22 +24,26 @@ function _createHeldItemDrawMetrics(scalingFactors:ScalingFactors) {
   const cuboidDepthXPixels = Math.max(2, panelOffsetX / 4);
   const cuboidDepthYPixels = Math.max(1, panelOffsetY / 4);
   return {
-    cuboidWidthPixels,
     cuboidHeightPixels,
-    cuboidDepthXPixels,
-    cuboidDepthYPixels,
-    cuboidLineWidthPixels:Math.max(0.5, scalingFactors.roomLineWidth * 0.25),
-    imageLeftOffsetPixels:-(cuboidWidthPixels / 2 + cuboidDepthXPixels),
-    imageTopOffsetPixels:-(cuboidHeightPixels + cuboidDepthYPixels),
-    imageWidthPixels:cuboidWidthPixels + cuboidDepthXPixels,
-    imageHeightPixels:cuboidHeightPixels + cuboidDepthYPixels
+    leftOffsetPixels:-(cuboidWidthPixels / 2 + cuboidDepthXPixels),
+    topOffsetPixels:-(cuboidHeightPixels + cuboidDepthYPixels),
+    widthPixels:cuboidWidthPixels + cuboidDepthXPixels,
+    heightPixels:cuboidHeightPixels + cuboidDepthYPixels
   };
+}
+
+function _calcHandYOffset(scalingFactors:ScalingFactors):number {
+  const baseWidthPixels = MAP_TILE_SIZE / roomWidthToColumnCount(MAP_TILE_SIZE) * scalingFactors.scaleX;
+  const cuboidWidthPixels = calcItemCuboidWidthPixels(baseWidthPixels);
+  const cuboidHeightPixels = calcItemCuboidHeightPixels(cuboidWidthPixels);
+  return cuboidHeightPixels;
 }
 
 function _drawHeldItem(item:Item, handX:number, handY:number, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, imageSet:ImageSet) {
-  const metrics = _createHeldItemDrawMetrics(scalingFactors);
-  drawItemAtCanvasPosition(item, handX, handY + metrics.cuboidHeightPixels * 0.35, metrics, context, imageSet);
+  const imageDrawRect = _createHeldItemDrawRect(scalingFactors);
+  const handYOffset = _calcHandYOffset(scalingFactors);
+  drawItemAtCanvasPosition(item, handX, handY + handYOffset * 0.35, imageDrawRect, context, imageSet);
 }
 
 function _hasMatchingTakeOrGiveItemEffect(character:Character, item:Item, effects:Effect[]):boolean {

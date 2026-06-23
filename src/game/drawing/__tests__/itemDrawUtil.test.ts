@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { drawRoomItem, calcItemDrawMetrics, getItemCanvasRectInRoom } from '../itemDrawUtil';
+import { drawRoomItem, calcItemDrawRect, getItemCanvasRectInRoom } from '../itemDrawUtil';
 import { createDefaultRoom } from '@/game/types/Room';
 import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
@@ -44,8 +44,8 @@ describe('itemDrawUtil', () => {
       const imageBitmap = { width:520, height:20 } as ImageBitmap;
       const imageSet = createEmptyImageSet();
       imageSet.set(imageUrl, imageBitmap);
-      const metrics = calcItemDrawMetrics(room, SCALING_FACTORS);
-      const expectedImageWidthPixels = metrics.imageWidthPixels * 2;
+      const itemDrawRect = calcItemDrawRect(room, SCALING_FACTORS);
+      const expectedImageWidthPixels = itemDrawRect.widthPixels * 2;
       const expectedImageHeightPixels = expectedImageWidthPixels * imageBitmap.height / imageBitmap.width;
       const projectedX = (item.position.x + item.drawOffset.x) * SCALING_FACTORS.scaleX
         + SCALING_FACTORS.roomLineWidth * 8 * (item.position.z + item.drawOffset.z);
@@ -53,7 +53,7 @@ describe('itemDrawUtil', () => {
         + SCALING_FACTORS.roomLineWidth * 4 * (item.position.z + item.drawOffset.z);
 
       expect(getItemCanvasRectInRoom(room, item, SCALING_FACTORS, imageSet)).toEqual({
-        x:projectedX + metrics.imageLeftOffsetPixels - metrics.imageWidthPixels / 2,
+        x:projectedX + itemDrawRect.leftOffsetPixels - itemDrawRect.widthPixels / 2,
         y:projectedY - expectedImageHeightPixels,
         width:expectedImageWidthPixels,
         height:expectedImageHeightPixels
@@ -89,8 +89,8 @@ describe('itemDrawUtil', () => {
         save:vi.fn(),
         restore:vi.fn()
       } as unknown as CanvasRenderingContext2D;
-      const metrics = calcItemDrawMetrics(room, SCALING_FACTORS);
-      const expectedImageWidthPixels = metrics.imageWidthPixels * 2;
+      const itemDrawRect = calcItemDrawRect(room, SCALING_FACTORS);
+      const expectedImageWidthPixels = itemDrawRect.widthPixels * 2;
       const expectedImageHeightPixels = expectedImageWidthPixels * imageBitmap.height / imageBitmap.width;
       const projectedX = (item.position.x + item.drawOffset.x) * SCALING_FACTORS.scaleX
         + SCALING_FACTORS.roomLineWidth * 8 * (item.position.z + item.drawOffset.z);
@@ -101,7 +101,7 @@ describe('itemDrawUtil', () => {
 
       expect(drawImage).toHaveBeenCalledWith(
         imageBitmap,
-        projectedX + metrics.imageLeftOffsetPixels - metrics.imageWidthPixels / 2,
+        projectedX + itemDrawRect.leftOffsetPixels - itemDrawRect.widthPixels / 2,
         projectedY - expectedImageHeightPixels,
         expectedImageWidthPixels,
         expectedImageHeightPixels

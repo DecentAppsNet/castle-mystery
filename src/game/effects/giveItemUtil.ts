@@ -3,7 +3,7 @@
 
 import { clamp } from "@/common/numberUtil";
 import { getCharacterBodyCenterCanvasPosition } from "../drawing/characterDrawUtil";
-import { calcItemDrawMetrics, drawItemAtCanvasPosition, getItemCanvasPosition } from "../drawing/itemDrawUtil";
+import { calcItemDrawRect, drawItemAtCanvasPosition, getItemCanvasPosition } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";
 import ImageSet from "../types/ImageSet";
 import Item from "../types/Item";
@@ -22,7 +22,7 @@ function _onProcessRoomEffect(room:Room, effect:Effect, context:CanvasRenderingC
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
   const x = giveItemEffect.startCanvasPosition.x + (giveItemEffect.endCanvasPosition.x - giveItemEffect.startCanvasPosition.x) * progress;
   const y = giveItemEffect.startCanvasPosition.y + (giveItemEffect.endCanvasPosition.y - giveItemEffect.startCanvasPosition.y) * progress;
-  drawItemAtCanvasPosition(giveItemEffect.item, x, y, calcItemDrawMetrics(room, scalingFactors), context, imageSet);
+  drawItemAtCanvasPosition(giveItemEffect.item, x, y, calcItemDrawRect(room, scalingFactors), context, imageSet);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 
