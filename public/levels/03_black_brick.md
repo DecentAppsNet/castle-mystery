@@ -222,10 +222,6 @@ AABBCCDFGGHHH.
 ## Barley Bin
 * drawOffsetY=.5
 
-## Black Brick
-* image=blackBrick.png
-* description=A limestone brick, painted black, inscribed with careful lettering, "Constantine, 3 May 1195, Sext".
-
 ## Oat Bin
 * drawOffsetY=.5
 
