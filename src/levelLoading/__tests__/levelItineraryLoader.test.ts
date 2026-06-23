@@ -1,9 +1,10 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { findCharacterPose } from '@/game/itineraryUtil';
 import baseLevelText from '@/game/__tests__/fixtures/timeline-start-time-field.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
+import * as activityMovementUtil from '../activities/activity/activityMovementUtil';
 import { parseItineraryActivities } from '../itineraryLoading/itineraryActivityParseUtil';
 import { loadItineraries } from '../levelItineraryLoader';
 import itineraryTimelineSummaryText from './fixtures/itinerary-timeline-summary.md?raw';
@@ -133,6 +134,16 @@ describe('levelItineraryLoader', () => {
       expect(hero).toBeTruthy();
       expect(findCharacterPose(hero!, 999).facingDirection).toBe('right');
       expect(findCharacterPose(hero!, 1_000).facingDirection).toBe('left');
+    });
+
+    it('reuses preview movement scheduling for absolute room-arrival activities', () => {
+      const level = loadLevelFromText(baseLevelText);
+      const planMovementToRoomSpy = vi.spyOn(activityMovementUtil, 'planMovementToRoom');
+
+      loadItineraries(level, '0:00:05 Hero @ 75%', 'preview-reuse.md', 1);
+
+      expect(planMovementToRoomSpy).toHaveBeenCalledTimes(1);
+      planMovementToRoomSpy.mockRestore();
     });
   });
 });
