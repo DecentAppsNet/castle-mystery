@@ -76,6 +76,8 @@
 
 ## Small Rug
 * image=smallRug.png
+* stackOffsetY=1.8
+* stackOffsetX=-1.5
 
 ## Throne
 * image=throneLeft.png

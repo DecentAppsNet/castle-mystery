@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { calcItemCuboidHeightGame } from "./itemSizeUtil";
+import { findStackOffsetForCharacterPosition } from "./itemDisplayPositionUtil";
 import Character from "./types/Character";
 import Position from "./types/Position";
 import Room from "./types/Room";
@@ -16,9 +17,11 @@ export function findCharacterDisplayPosition(character:Character, room:Room|null
   });
   if (topItemY === null) return { ...character.position };
 
+  const stackOffset = findStackOffsetForCharacterPosition(character.position, room);
+
   return {
-    x:character.position.x,
-    y:topItemY - calcItemCuboidHeightGame(room),
-    z:character.position.z
+    x:character.position.x + stackOffset.x,
+    y:topItemY - calcItemCuboidHeightGame(room) + stackOffset.y,
+    z:character.position.z + stackOffset.z
   };
 }

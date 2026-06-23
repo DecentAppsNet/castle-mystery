@@ -39,6 +39,7 @@ import ExitType from "../types/ExitType";
 import StairPart, { StairPartType } from "../types/StairPart";
 import { processAfterCharacterEffects, processBeforeCharacterEffects } from "../effects/effectUtil";
 import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUtil";
+import { findItemDisplayPosition } from "@/game/itemDisplayPositionUtil";
 import { findRoom } from "../roomUtil";
 import { getCharacterCanvasRect } from "./characterDrawUtil";
 import { getItemCanvasRectInRoom } from "./itemDrawUtil";
@@ -286,7 +287,17 @@ function _createDrawableContents(room:Room, charactersInRoom:Character[], effect
       };
     }),
     ...findVisibleRoomItemsInDrawOrder(room, effects, includeUndiscoveredItems)
-      .map(item => ({ type:'item' as const, depth:item.position.z, x:item.position.x, y:item.position.y, sortId:item.id, item }))
+      .map(item => {
+        const displayPosition = findItemDisplayPosition(item, room);
+        return {
+          type:'item' as const,
+          depth:displayPosition.z,
+          x:displayPosition.x,
+          y:displayPosition.y,
+          sortId:item.id,
+          item
+        };
+      })
   ].sort(compareNonStairDrawableContents);
 
   return mergeStairsWithSortedContents(stairContents, sortedNonStairContents);

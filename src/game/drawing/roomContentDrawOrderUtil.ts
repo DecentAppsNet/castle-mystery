@@ -6,6 +6,14 @@ import Character from "../types/Character";
 import Item from "../types/Item";
 import StairPart, { StairLandingType, StairPartType } from "../types/StairPart";
 
+function _comparePositionedContentForDrawOrder(depth1:number, x1:number, y1:number, sortId1:string,
+  depth2:number, x2:number, y2:number, sortId2:string):number {
+  return depth1 - depth2
+    || y2 - y1
+    || x2 - x1
+    || sortId1.localeCompare(sortId2);
+}
+
 export type StairDrawableContent = {
   type:'stair',
   depth:number,
@@ -36,18 +44,17 @@ export type RoomDrawableContent = StairDrawableContent | CharacterDrawableConten
 type NonStairDrawableContent = CharacterDrawableContent | ItemDrawableContent;
 
 export function compareItemsForDrawOrder(item1:Pick<Item, 'position' | 'id'>, item2:Pick<Item, 'position' | 'id'>):number {
-  return item1.position.z - item2.position.z
-    || item2.position.y - item1.position.y
-    || item2.position.x - item1.position.x
-    || item1.id.localeCompare(item2.id);
+  return _comparePositionedContentForDrawOrder(
+    item1.position.z, item1.position.x, item1.position.y, item1.id,
+    item2.position.z, item2.position.x, item2.position.y, item2.id
+  );
 }
 
 export function compareNonStairDrawableContents(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
-  if (content1.type === 'item' && content2.type === 'item') return compareItemsForDrawOrder(content1.item, content2.item);
-  return content1.depth - content2.depth
-    || content2.y - content1.y
-    || content2.x - content1.x
-    || content1.sortId.localeCompare(content2.sortId);
+  return _comparePositionedContentForDrawOrder(
+    content1.depth, content1.x, content1.y, content1.sortId,
+    content2.depth, content2.x, content2.y, content2.sortId
+  );
 }
 
 export function compareStairToContent(stairContent:StairDrawableContent, content:NonStairDrawableContent):number {

@@ -4,6 +4,7 @@
 
 import { clamp } from "@/common/numberUtil";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
+import { findItemDisplayPosition } from "@/game/itemDisplayPositionUtil";
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
 import { isItemInteractive } from "@/game/interactivityUtil";
 import { roomWidthToColumnCount } from "../waypointUtil";
@@ -66,12 +67,8 @@ function _calcItemImageRect(itemDrawRect:ItemImageRect, image:ImageBitmap):ItemI
 }
 
 // Applies the item's authored draw offset before any world-to-canvas projection.
-function _getItemDrawPosition(item:Item) {
-  return {
-    x:item.position.x + item.drawOffset.x,
-    y:item.position.y + item.drawOffset.y,
-    z:item.position.z + item.drawOffset.z
-  };
+function _getItemDrawPosition(item:Item, room:Room|null = null) {
+  return findItemDisplayPosition(item, room);
 }
 
 // Converts base item dimensions plus projection outsets into the canvas draw rect shape used by item images.
@@ -100,7 +97,7 @@ export function calcItemDrawRect(room:Room, scalingFactors:ScalingFactors):ItemI
 
 // Converts the item's projected canvas anchor back into game-space coordinates for hover math.
 function _getRoomItemGamePosition(_room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
-  const drawPosition = _getItemDrawPosition(item);
+  const drawPosition = _getItemDrawPosition(item, _room);
   return canvasToGamePosition(...projectRoomPointWithDepth(drawPosition.x, drawPosition.y, drawPosition.z, scalingFactors), scalingFactors);
 }
 
@@ -112,7 +109,7 @@ export function getItemCanvasPosition(item:Item, scalingFactors:ScalingFactors):
 
 // Projects an item to its anchor point on the room canvas using its authored room depth.
 export function getItemCanvasPositionInRoom(_room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
-  const drawPosition = _getItemDrawPosition(item);
+  const drawPosition = _getItemDrawPosition(item, _room);
   return projectRoomPointWithDepth(drawPosition.x, drawPosition.y, drawPosition.z, scalingFactors);
 }
 

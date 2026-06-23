@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { drawRoomItem, calcItemDrawRect, getItemCanvasRectInRoom } from '../itemDrawUtil';
+import { drawRoomItem, calcItemDrawRect, getItemCanvasPositionInRoom, getItemCanvasRectInRoom } from '../itemDrawUtil';
 import { createDefaultRoom } from '@/game/types/Room';
+import { createDefaultItem } from '@/game/types/Item';
 import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { createEmptyImageSet } from '@/game/imageSetUtil';
@@ -58,6 +59,24 @@ describe('itemDrawUtil', () => {
         width:expectedImageWidthPixels,
         height:expectedImageHeightPixels
       });
+    });
+
+    it('applies cumulative supporting stack offsets to a stacked item canvas position', () => {
+      const room = {
+        ...createDefaultRoom(),
+        rect:{ x:0, y:0, width:10, height:10 },
+        items:[
+          { ...createDefaultItem(), id:'pedestal', position:{ x:5, y:8, z:0.5 }, stackOffset:{ x:1.5, y:-0.25, z:0.1 } },
+          { ...createDefaultItem(), id:'tray', position:{ x:5, y:6, z:0.5 }, stackOffset:{ x:-0.5, y:-0.75, z:-0.05 } },
+          { ...createDefaultItem(), id:'crown', position:{ x:5, y:4, z:0.5 }, drawOffset:{ x:0.25, y:-0.5, z:0.2 } }
+        ]
+      };
+      const crown = room.items[2];
+
+      expect(getItemCanvasPositionInRoom(room, crown, SCALING_FACTORS)).toEqual([
+        (5 + 1.5 - 0.5 + 0.25) * SCALING_FACTORS.scaleX + SCALING_FACTORS.roomLineWidth * 8 * (0.5 + 0.1 - 0.05 + 0.2),
+        (4 - 0.25 - 0.75 - 0.5) * SCALING_FACTORS.scaleY + SCALING_FACTORS.roomLineWidth * 4 * (0.5 + 0.1 - 0.05 + 0.2)
+      ]);
     });
   });
 
