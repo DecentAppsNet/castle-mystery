@@ -84,18 +84,15 @@ SW...
 ## Sceptre
 
 * description=A finely-crafted token of power, grimy, and scratched.
-* displayChar=⚚
 
 ## Dagger
 
 * description=An obligatory attempt at self-defense.
-* displayChar=†
 
 ## Romance Novel
 
 * title=Book
 * description=A novel about shipwrecked lovers stranded on an island.
-* displayChar=⌸
 
 # itinerary
 

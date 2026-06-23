@@ -299,13 +299,11 @@ This section defines the item, but it does not place the item anywhere. Item pla
 ## Master Key
 
 * description=A heavy brass key that opens the servant passages.
-* displayChar=⚷
 
 ## Torn Letter
 
 * title=Half-Burned Letter
 * description=A singed page with only a few lines still readable.
-* displayChar=✉
 ```
 
 # "Itinerary Section"

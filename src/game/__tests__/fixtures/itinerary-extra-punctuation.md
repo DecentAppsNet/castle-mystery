@@ -55,7 +55,6 @@ HL
 
 * title=Book
 * description=A misplaced novel.
-* displayChar=B
 
 # itinerary
 

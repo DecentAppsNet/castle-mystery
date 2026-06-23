@@ -16,6 +16,7 @@ import { createDefaultConclusion } from '../conclusions/types/Conclusion';
 import Itinerary from '../types/Itinerary';
 import Level, { createDefaultLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
+import { createDefaultItem } from '../types/Item';
 import { createDefaultRoom } from '../types/Room';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
 import { changeConclusions } from '../playerEventUtil';
@@ -31,28 +32,18 @@ function _createTestLevel():Level {
     createThoughtEvent(0, 'Should I tell them?')
   ];
   const bookItem = {
+    ...createDefaultItem(),
     id:'book',
     title:'Book',
-    displayChar:'B',
-    imageUrl:null,
-    randomSalt:0,
-    isVisible:true,
     position:{ x:6, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z },
-    drawOffset:{ x:0, y:0, z:0 },
-    description:'A test book.',
-    isDiscovered:false
+    description:'A test book.'
   };
   const noteItem = {
+    ...createDefaultItem(),
     id:'note',
     title:'Note',
-    displayChar:'N',
-    imageUrl:null,
-    randomSalt:0,
-    isVisible:true,
     position:{ x:16, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z },
-    drawOffset:{ x:0, y:0, z:0 },
-    description:'A hidden note.',
-    isDiscovered:false
+    description:'A hidden note.'
   };
 
   return {

@@ -41,7 +41,6 @@ R..H
 
 * title=Steward's Key
 * description=A well-loved key.
-* displayChar=K
 
 # itinerary
 

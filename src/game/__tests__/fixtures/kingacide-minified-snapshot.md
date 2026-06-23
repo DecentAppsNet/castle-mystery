@@ -61,7 +61,6 @@ HL
 
 * title=Book
 * description=A misplaced book.
-* displayChar=⌸
 
 # itinerary
 

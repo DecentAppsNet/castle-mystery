@@ -32,12 +32,12 @@ describe('itemDrawUtil', () => {
       const item:Item = {
         id:'crown',
         title:'Crown',
-        displayChar:'C',
         imageUrl,
         randomSalt:0,
         isVisible:true,
         position:{ x:5, y:8, z:0.5 },
         drawOffset:{ x:1.5, y:-0.25, z:0.1 },
+        stackOffset:{ x:0, y:0, z:0 },
         description:'A crown.',
         isDiscovered:true
       };
@@ -71,12 +71,12 @@ describe('itemDrawUtil', () => {
       const item:Item = {
         id:'crown',
         title:'Crown',
-        displayChar:'C',
         imageUrl,
         randomSalt:0,
         isVisible:true,
         position:{ x:5, y:8, z:0.5 },
         drawOffset:{ x:1.5, y:-0.25, z:0.1 },
+        stackOffset:{ x:0, y:0, z:0 },
         description:'A crown.',
         isDiscovered:true
       };

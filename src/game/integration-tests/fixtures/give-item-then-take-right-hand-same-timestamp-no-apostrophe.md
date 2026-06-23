@@ -41,7 +41,6 @@ R..H
 
 * title=Book
 * description=A well-loved book.
-* displayChar=B
 
 # itinerary
 

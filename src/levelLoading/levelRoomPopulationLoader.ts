@@ -33,10 +33,10 @@ type CharacterDefinition = {
 type ItemDefinition = {
 	title:string,
 	description:string,
-	displayChar:string,
 	imageUrl:string|null,
 	isVisible:boolean,
-	drawOffset:Position
+	drawOffset:Position,
+	stackOffset:Position
 };
 
 export type RoomPopulationDefinitions = {
@@ -161,13 +161,17 @@ export function parseItemDefinitions(itemsSection:string, firstLineNo:number = 1
 		itemDefinitions.set(itemId, {
 			title:nameValues.title || authoredItemName.trim(),
 			description:nameValues.description || "",
-			displayChar:nameValues.displayChar || authoredItemName.charAt(0) || "?",
 			imageUrl:nameValues.image ? getItemImageAssetUrl(nameValues.image.trim()) : null,
 			isVisible:_parseOptionalIsItemVisibleOrThrow(nameValues.visible, itemId),
 			drawOffset:{
 				x:_parseOptionalNumberOrThrow(nameValues.drawOffsetX, 'drawOffsetX', itemId),
 				y:_parseOptionalNumberOrThrow(nameValues.drawOffsetY, 'drawOffsetY', itemId),
 				z:_parseOptionalNumberOrThrow(nameValues.drawOffsetZ, 'drawOffsetZ', itemId)
+			},
+			stackOffset:{
+				x:_parseOptionalNumberOrThrow(nameValues.stackOffsetX, 'stackOffsetX', itemId),
+				y:_parseOptionalNumberOrThrow(nameValues.stackOffsetY, 'stackOffsetY', itemId),
+				z:_parseOptionalNumberOrThrow(nameValues.stackOffsetZ, 'stackOffsetZ', itemId)
 			}
 		});
 	});
@@ -273,12 +277,12 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 	return {
 		id:itemId,
 		title:itemDefinition?.title || defaultTitleText,
-		displayChar:itemDefinition?.displayChar || defaultTitleText.charAt(0) || "?",
 		imageUrl:itemDefinition?.imageUrl || null,
 		randomSalt:rand(),
 		isVisible:itemDefinition?.isVisible ?? true,
 		position:{ ...position, z:depth },
 		drawOffset:itemDefinition?.drawOffset || { x:0, y:0, z:0 },
+		stackOffset:itemDefinition?.stackOffset || { x:0, y:0, z:0 },
 		description:itemDefinition?.description || "",
 		isDiscovered
 	};

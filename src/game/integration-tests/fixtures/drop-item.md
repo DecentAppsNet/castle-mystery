@@ -36,7 +36,6 @@ H
 
 * title=Book
 * description=A worn ledger.
-* displayChar=B
 
 # itinerary
 

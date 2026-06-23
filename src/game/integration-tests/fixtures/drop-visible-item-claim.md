@@ -37,13 +37,11 @@ H
 
 * title=Book
 * description=A worn ledger.
-* displayChar=B
 
 ## Blocker
 
 * title=Blocker
 * description=A visible blocker.
-* displayChar=X
 * visible=true
 
 # itinerary

@@ -40,12 +40,12 @@ describe('exitUtil', () => {
       const itemsById = new Map<string, Item>([['red key', {
         id:'red key',
         title:'Iron Key',
-        displayChar:'I',
         imageUrl:null,
         randomSalt:0,
         isVisible:true,
         position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
         drawOffset:{ x:0, y:0, z:0 },
+        stackOffset:{ x:0, y:0, z:0 },
         description:'Opens the bedroom.',
         isDiscovered:false
       }]]);

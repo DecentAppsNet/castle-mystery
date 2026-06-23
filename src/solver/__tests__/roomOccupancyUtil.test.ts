@@ -13,7 +13,7 @@ import ItineraryEventType from '@/game/types/itineraryEvents/ItineraryEventType'
 import { collectRoomOccupancyChangeTimes, createRoomOccupancyByRoomId } from '../roomOccupancyUtil';
 
 function _createItem(id:string):Item {
-  return { ...createDefaultItem(), id, title:id, displayChar:id[0], description:id };
+  return { ...createDefaultItem(), id, title:id, description:id };
 }
 
 function _createRoom(id:string, x:number, items:Item[] = []):Room {

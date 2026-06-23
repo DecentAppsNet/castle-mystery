@@ -32,6 +32,7 @@ import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?
 import itemImageText from './fixtures/item-image.md?raw';
 import itemEmitsActivityText from './fixtures/item-emits-activity.md?raw';
 import itemDrawOffsetText from './fixtures/item-draw-offset.md?raw';
+import itemStackOffsetText from './fixtures/item-stack-offset.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
 import outsideRoomBelowGroundFloorText from './fixtures/outside-room-below-ground-floor.md?raw';
 import conclusionsCaseInsensitiveCategoriesText from './fixtures/conclusions-case-insensitive-categories.md?raw';
@@ -726,6 +727,16 @@ describe('levelUtil itinerary loading', () => {
 
     expect(crown?.drawOffset).toEqual({ x:1.5, y:-0.25, z:0.1 });
     expect(level.itemsById.get('crown')?.drawOffset).toEqual({ x:1.5, y:-0.25, z:0.1 });
+    expect(crown?.stackOffset).toEqual({ x:0, y:0, z:0 });
+    expect(level.itemsById.get('crown')?.stackOffset).toEqual({ x:0, y:0, z:0 });
+  });
+
+  it('loads item stack offsets from item subsections into placed items and the item index', () => {
+    const level = loadLevelFromText(itemStackOffsetText, 'item-stack-offset.md');
+    const crown = level.rooms[0].items.find(item => item.id === 'crown') || null;
+
+    expect(crown?.stackOffset).toEqual({ x:1.5, y:-0.25, z:0.1 });
+    expect(level.itemsById.get('crown')?.stackOffset).toEqual({ x:1.5, y:-0.25, z:0.1 });
   });
 
   it('throws when item image is authored as a path instead of a filename', () => {

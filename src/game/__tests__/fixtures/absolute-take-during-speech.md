@@ -36,7 +36,6 @@ H...B
 
 * title=Book
 * description=A reachable book.
-* displayChar=B
 
 # itinerary
 
