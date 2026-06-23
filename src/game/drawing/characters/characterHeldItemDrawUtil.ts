@@ -9,7 +9,7 @@ import TakeItemEffect from "@/game/effects/types/TakeItemEffect";
 import { MAP_TILE_SIZE } from "@/game/roomGridUtil";
 import { roomWidthToColumnCount } from "@/game/waypointUtil";
 import { calcPanelOffset } from "../roomPanelProjectionUtil";
-import { drawItemAtCanvasPosition } from "../itemDrawUtil";
+import { createItemDrawRect, drawItemAtCanvasPosition } from "../itemDrawUtil";
 import Character from "@/game/types/Character";
 import Item from "@/game/types/Item";
 import ScalingFactors from "@/game/types/ScalingFactors";
@@ -25,10 +25,7 @@ function _createHeldItemDrawRect(scalingFactors:ScalingFactors) {
   const cuboidDepthYPixels = Math.max(1, panelOffsetY / 4);
   return {
     cuboidHeightPixels,
-    leftOffsetPixels:-(cuboidWidthPixels / 2 + cuboidDepthXPixels),
-    topOffsetPixels:-(cuboidHeightPixels + cuboidDepthYPixels),
-    widthPixels:cuboidWidthPixels + cuboidDepthXPixels,
-    heightPixels:cuboidHeightPixels + cuboidDepthYPixels
+    ...createItemDrawRect(cuboidWidthPixels, cuboidHeightPixels, cuboidDepthXPixels, cuboidDepthYPixels)
   };
 }
 

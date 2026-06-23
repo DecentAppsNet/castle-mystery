@@ -74,6 +74,17 @@ function _getItemDrawPosition(item:Item) {
   };
 }
 
+// Converts base item dimensions plus projection outsets into the canvas draw rect shape used by item images.
+export function createItemDrawRect(baseWidthPixels:number, baseHeightPixels:number,
+  projectionOutsetXPixels:number, projectionOutsetYPixels:number):ItemImageRect {
+  return {
+    leftOffsetPixels: -(baseWidthPixels / 2 + projectionOutsetXPixels),
+    topOffsetPixels: -(baseHeightPixels + projectionOutsetYPixels),
+    widthPixels: baseWidthPixels + projectionOutsetXPixels,
+    heightPixels: baseHeightPixels + projectionOutsetYPixels
+  };
+}
+
 export function calcItemDrawRect(room:Room, scalingFactors:ScalingFactors):ItemImageRect {
   const columnWidthGame = room.rect.width / roomWidthToColumnCount(room.rect.width);
   const columnWidthPixels = columnWidthGame * scalingFactors.scaleX;
@@ -84,12 +95,7 @@ export function calcItemDrawRect(room:Room, scalingFactors:ScalingFactors):ItemI
   const projectionOutsetXPixels = panelOffsetX * ITEM_SIZING_RATIO;
   const projectionOutsetYPixels = panelOffsetY * ITEM_SIZING_RATIO;
 
-  return {
-    leftOffsetPixels: -(baseWidthPixels / 2 + projectionOutsetXPixels),
-    topOffsetPixels: -(baseHeightPixels + projectionOutsetYPixels),
-    widthPixels: baseWidthPixels + projectionOutsetXPixels,
-    heightPixels: baseHeightPixels + projectionOutsetYPixels
-  };
+  return createItemDrawRect(baseWidthPixels, baseHeightPixels, projectionOutsetXPixels, projectionOutsetYPixels);
 }
 
 // Converts the item's projected canvas anchor back into game-space coordinates for hover math.
@@ -282,6 +288,12 @@ export function drawItemAtCanvasPosition(item:Item, x:number, y:number, itemDraw
   context.save();
   _drawItemImage(image, x, y, itemDrawRect, context);
   context.restore();
+}
+
+// Draws an item at a caller-supplied canvas anchor using room-derived draw metrics.
+export function drawItemAtCanvasPositionInRoom(item:Item, room:Room, x:number, y:number, scalingFactors:ScalingFactors,
+  context:CanvasRenderingContext2D, imageSet:ImageSet) {
+  drawItemAtCanvasPosition(item, x, y, calcItemDrawRect(room, scalingFactors), context, imageSet);
 }
 
 // Filters and sorts the room's visible items into draw order.

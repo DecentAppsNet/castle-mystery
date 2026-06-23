@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
-import { calcItemDrawRect, drawItemAtCanvasPosition, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
+import { drawItemAtCanvasPositionInRoom, getItemCanvasPositionInRoom } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";
 import ImageSet from "../types/ImageSet";
 import Item from "../types/Item";
@@ -18,7 +18,7 @@ function _drawAnimatedItem(room:Room, takeItemEffect:TakeItemEffect, context:Can
   const [x, baseY] = getItemCanvasPositionInRoom(room, takeItemEffect.item, scalingFactors);
   const riseDistancePixels = Math.max(18, scalingFactors.roomFontHeight * 1.5);
   const y = baseY - progress * riseDistancePixels;
-  drawItemAtCanvasPosition(takeItemEffect.item, x, y, calcItemDrawRect(room, scalingFactors), context, imageSet);
+  drawItemAtCanvasPositionInRoom(takeItemEffect.item, room, x, y, scalingFactors, context, imageSet);
 }
 
 function _onProcessCharacterEffect(_character:Character, effect:Effect, context:CanvasRenderingContext2D,
