@@ -371,9 +371,9 @@ N1234567890ABCD.
 : says, "To invest!"
 : Gualtiero says, "Oh, you want money!"
 : says "So you came here like a street beggar."
-: Sticky Agatha says, "I thought perhaps the King's friendship with my son-"
-: King Frederick says, "If Heinrich needs for anything, he may ask me himself."
-: King Frederick says, "But your request is denied." 
+: Sticky Agatha says, "I thought the King's friendship with my son-"
+: King Frederick says, "If Heinrich needs something, he may ask me himself."
+: King Frederick says, "Your request is denied." 
 : Gualtiero says, "And why are you so sticky?"
 : says, "No sticky woman should clean clothing!"
 : Sticky Agatha says, "(weeps)"
@@ -689,7 +689,7 @@ N1234567890ABCD.
 
 * numbers=1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32
 
-## How Many Petitioner?
+## How Many Petitioners?
 
 * conclusion=After Toro joined them, [27] petitioners waited for an audience with the King.
 * revealRooms=Central Hall|East Stairwell
