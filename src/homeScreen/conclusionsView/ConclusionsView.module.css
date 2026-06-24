@@ -28,5 +28,6 @@
 	flex-direction: column;
 	gap: 0.6vh;
 	overflow-y: auto;
+	overflow-x: hidden;
 	min-height: 0;
 }
