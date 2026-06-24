@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
+import { drawCharacter, getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultItem } from '@/game/types/Item';
 import { createDefaultRoom } from '@/game/types/Room';
+import type Effect from '@/game/effects/types/Effect';
+import type ImageSet from '@/game/types/ImageSet';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 
 const SCALING_FACTORS:ScalingFactors = {
@@ -83,6 +85,62 @@ describe('characterDrawUtil', () => {
       expect(stackedRect.height).toBe(floorRect.height);
     });
   });
+
+  describe('drawCharacter()', () => {
+    it('keeps the laying head upright for both facing directions by mirroring only the left-facing pose', () => {
+      const imageSet:ImageSet = new Map<string, ImageBitmap>([['/assets/faces/test.png', { width:120, height:120 } as ImageBitmap]]);
+      const effects:Effect[] = [];
+
+      const rightTransforms = _drawAndCaptureHeadTransforms({
+        ...createDefaultCharacter(),
+        faceImageUrl:'/assets/faces/test.png',
+        bodyOrientation:'laying',
+        facingDirection:'right'
+      }, imageSet, effects);
+      const leftTransforms = _drawAndCaptureHeadTransforms({
+        ...createDefaultCharacter(),
+        faceImageUrl:'/assets/faces/test.png',
+        bodyOrientation:'laying',
+        facingDirection:'left'
+      }, imageSet, effects);
+
+      expect(rightTransforms.rotations).toContain(-Math.PI / 2);
+      expect(rightTransforms.scales).not.toContainEqual([-1, 1]);
+      expect(leftTransforms.rotations).toContain(Math.PI / 2);
+      expect(leftTransforms.scales).toContainEqual([-1, 1]);
+    });
+  });
 });
+
+function _drawAndCaptureHeadTransforms(character:ReturnType<typeof createDefaultCharacter>, imageSet:ImageSet, effects:Effect[]):{ rotations:number[], scales:[number, number][] } {
+  const rotations:number[] = [];
+  const scales:[number, number][] = [];
+  const context = {
+    save() {},
+    restore() {},
+    translate() {},
+    rotate(angle:number) { rotations.push(angle); },
+    scale(x:number, y:number) { scales.push([x, y]); },
+    drawImage() {},
+    beginPath() {},
+    moveTo() {},
+    lineTo() {},
+    arc() {},
+    stroke() {},
+    fill() {},
+    strokeText() {},
+    fillText() {},
+    lineWidth:0,
+    strokeStyle:'',
+    fillStyle:'',
+    textAlign:'left',
+    textBaseline:'alphabetic',
+    lineJoin:'miter',
+    font:''
+  } as unknown as CanvasRenderingContext2D;
+
+  drawCharacter(character, SCALING_FACTORS, context, 0, imageSet, effects, false, null);
+  return { rotations, scales };
+}
 
 const CHARACTER_SWAY_INTERVAL_TEST_TIME = 375;

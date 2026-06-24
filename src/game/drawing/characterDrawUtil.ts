@@ -288,6 +288,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context.save();
   context.translate(layout.head.centerX, layout.head.centerY);
   context.rotate((character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2) + talkingAngleOffsetRadians);
+  if (character.facingDirection === 'left') context.scale(-1, 1);
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
   drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
