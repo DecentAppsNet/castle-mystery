@@ -92,5 +92,21 @@ describe('itineraryMarkerUtil', () => {
         { startTime:2_100, endTime:2_500 }
       ]);
     });
+
+    it('filters encounter markers down to interactive encountered characters', () => {
+      const itinerary:Itinerary = [
+        { type:ItineraryEventType.CHARACTER_ENCOUNTER, startTime:1_000, duration:0, encounteredCharacterIds:['guide', 'statue'] },
+        { type:ItineraryEventType.CHARACTER_ENCOUNTER, startTime:2_000, duration:0, encounteredCharacterIds:['statue'] }
+      ];
+
+      const markerModel = createItineraryMarkerModel(itinerary, [], null, 3_000, [
+        { id:'guide', description:'Helpful and talkative.' },
+        { id:'statue', description:'' }
+      ]);
+
+      expect(markerModel.encounterMarkers).toEqual([
+        { startTime:1_000, encounteredCharacterIds:['guide'] }
+      ]);
+    });
   });
 });

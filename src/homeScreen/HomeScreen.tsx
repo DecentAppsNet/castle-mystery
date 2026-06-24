@@ -168,6 +168,7 @@ function HomeScreen() {
           toMinutes={toMinutes}
           minutes={minutes}
           itinerary={activeItinerary}
+          characters={gameState.initialCharacters}
           rooms={gameState.initialRooms}
           roomsRevision={gameState.conclusionsRevision}
           initialRoomId={activeInitialRoomId}

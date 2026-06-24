@@ -2,6 +2,8 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
+import { isCharacterInteractive } from "@/game/interactivityUtil";
+import Character from "@/game/types/Character";
 import Itinerary from "@/game/types/Itinerary";
 import Room from "@/game/types/Room";
 import CharacterEncounterEvent from "@/game/types/itineraryEvents/CharacterEncounterEvent";
@@ -118,7 +120,8 @@ function _mergeSpeechRanges(speechRanges:SpeechMarkerRange[], obscuredRanges:Obs
   }, []);
 }
 
-export function createItineraryMarkerModel(itinerary:Itinerary|null, rooms:Room[] = [], initialRoomId:string|null = null, durationMsecs:number = 0):ItineraryMarkerModel {
+export function createItineraryMarkerModel(itinerary:Itinerary|null, rooms:Room[] = [], initialRoomId:string|null = null,
+  durationMsecs:number = 0, characters:Pick<Character, 'id' | 'description'>[] = []):ItineraryMarkerModel {
   if (!itinerary) {
     return {
       roomEntryTimes:[],
@@ -128,6 +131,7 @@ export function createItineraryMarkerModel(itinerary:Itinerary|null, rooms:Room[
     };
   }
 
+  const interactiveCharacterIds = new Set(characters.filter(isCharacterInteractive).map(character => character.id));
   const obscuredRanges = _createObscuredRanges(itinerary, rooms, initialRoomId, durationMsecs);
   const visibleSpeechRanges = _mergeSpeechRanges(_createSpeechRanges(itinerary)
     .flatMap(range => _subtractObscuredRangesFromSpeechRange(range, obscuredRanges)), obscuredRanges);
@@ -137,9 +141,10 @@ export function createItineraryMarkerModel(itinerary:Itinerary|null, rooms:Room[
       const encounterEvent = event as CharacterEncounterEvent;
       return {
         startTime:encounterEvent.startTime,
-        encounteredCharacterIds:[...encounterEvent.encounteredCharacterIds]
+        encounteredCharacterIds:encounterEvent.encounteredCharacterIds.filter(characterId => interactiveCharacterIds.has(characterId))
       };
     })
+    .filter(marker => marker.encounteredCharacterIds.length > 0)
     .filter(marker => !obscuredRanges.some(range => _isTimeInsideRange(marker.startTime, range)));
 
   return {
