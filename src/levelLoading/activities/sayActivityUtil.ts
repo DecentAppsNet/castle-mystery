@@ -1,8 +1,9 @@
 /* This module groups speech-activity parsing and overlap validation during itinerary loading.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { createSpeechEvent } from "@/game/itineraryUtil";
+import { createFaceEvent, createSpeechEvent } from "@/game/itineraryUtil";
 import Character from "@/game/types/Character";
+import type { FacingDirection } from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import SpeechEvent from "@/game/types/itineraryEvents/SpeechEvent";
@@ -11,12 +12,48 @@ import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
 import type ActivityContext from "./activity/types/ActivityContext";
 import { findCurrentRoom, findStatePoseAtTime } from "./activity/activityStateUtil";
 import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
-import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText } from "./activity/activityTextParseUtil";
+import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
+import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText, stripTrailingPeriod } from "./activity/activityTextParseUtil";
+import { normalizeId } from "@/game/idUtil";
 
 type SpeechVerb = 'says' | 'interrupts';
 
-function _parseSpeechText(activityText:string, speechVerb:SpeechVerb):string {
-  return parseSentenceStyleActivityText(activityText, speechVerb, 'speech');
+type ParsedSpeechActivity = {
+  speech:string;
+  recipientId:string|null;
+  recipientText:string|null;
+};
+
+function _parseSpeechActivityText(activityText:string, speechVerb:SpeechVerb):ParsedSpeechActivity {
+  const contentText = activityText.trim().slice(speechVerb.length).trim();
+  if (!contentText.length) throw new Error(`missing speech text in authored activity '${activityText}'`);
+  if (!contentText.startsWith('"')) {
+    return {
+      speech:parseSentenceStyleActivityText(activityText, speechVerb, 'speech'),
+      recipientId:null,
+      recipientText:null
+    };
+  }
+
+  const closingQuoteIndex = contentText.lastIndexOf('"');
+  if (closingQuoteIndex <= 0) throw new Error(`unterminated speech text in authored activity '${activityText}'`);
+  const trailingText = contentText.slice(closingQuoteIndex + 1).trim();
+  if (!trailingText.length) {
+    return {
+      speech:contentText.slice(1, closingQuoteIndex),
+      recipientId:null,
+      recipientText:null
+    };
+  }
+  if (!trailingText.startsWith('to ')) throw new Error(`invalid trailing speech text '${trailingText}' in authored activity '${activityText}'`);
+
+  const recipientText = stripTrailingPeriod(trailingText.slice('to '.length).trim());
+  if (!recipientText.length) throw new Error(`missing speech recipient in authored activity '${activityText}'`);
+  return {
+    speech:contentText.slice(1, closingQuoteIndex),
+    recipientId:normalizeId(recipientText),
+    recipientText
+  };
 }
 
 function _findOverlappingSpeechEvent(events:ItineraryEvent[], speechEvent:SpeechEvent):SpeechEvent|null {
@@ -46,6 +83,19 @@ function _findCharacterRoomAtTime(context:ActivityContext, character:Character, 
   if (!state) return null;
   const pose = findStatePoseAtTime(character, state, time);
   return findCurrentRoom(context.level, pose.position);
+}
+
+function _findSpeechRecipientFacingDirection(context:ActivityContext, activityText:string,
+  activityStartTime:number, recipientId:string, recipientText:string):FacingDirection {
+  const recipient = context.charactersById.get(recipientId) || null;
+  if (!recipient) throw new Error(`unknown speech recipient '${recipientText}' in authored activity '${activityText}'`);
+
+  const targetPosition = findTargetPositionAtTime(recipientId, activityStartTime,
+    context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
+  if (!targetPosition) throw new Error(`unable to locate speech recipient '${recipientText}' in authored activity '${activityText}'`);
+
+  const speakerPosition = findStatePoseAtTime(context.character, context.state, activityStartTime).position;
+  return targetPosition.x < speakerPosition.x ? 'left' : 'right';
 }
 
 function _createAudibleSpeechOverlapMessage(otherCharacter:Character, otherSpeechEvent:SpeechEvent, speakerRoomTitle:string, speechEvent:SpeechEvent):string {
@@ -78,9 +128,12 @@ export function tryCreateSayActivity(activityText:string, context:ActivityContex
   if (!speechVerb) return null;
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  const speechEvent = createSpeechEvent(activityStartTime, _parseSpeechText(activityText.trim(), speechVerb));
+  const { speech, recipientId, recipientText } = _parseSpeechActivityText(activityText.trim(), speechVerb);
+  const speechEvent = createSpeechEvent(activityStartTime, speech);
   const overlappingSpeechEvent = _findOverlappingSpeechEvent(context.state.events, speechEvent);
   if (overlappingSpeechEvent) throw new Error(_createOverlappingSpeechMessage(overlappingSpeechEvent, speechEvent, context.timestampType));
   if (speechVerb === 'says') _throwOnAudibleSpeechOverlap(context, speechEvent);
-  return [speechEvent];
+
+  if (!recipientId || !recipientText) return [speechEvent];
+  return [createFaceEvent(activityStartTime, _findSpeechRecipientFacingDirection(context, activityText, activityStartTime, recipientId, recipientText)), speechEvent];
 }

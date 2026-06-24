@@ -235,6 +235,36 @@ describe('levelUtil itinerary loading', () => {
     expect(findCharacterPose(niccollo, 5_000).facingDirection).toBe('left');
   });
 
+  it('parses says activities directed to another character', () => {
+    const level = loadLevelFromText(
+      facesCharacterTargetText.replace('0:00:05 Niccollo faces Heinrich.', '0:00:05 Niccollo says "Hello!" to Heinrich.'),
+      'speech-character-target.md');
+    const niccollo = level.characters.find(character => character.id === 'niccollo');
+    if (!niccollo) expect.fail('expected niccollo character to exist');
+
+    expect(findCharacterPose(niccollo, 4_999).facingDirection).toBe('right');
+    expect(findCharacterPose(niccollo, 5_000).facingDirection).toBe('left');
+    expect(niccollo.itinerary.filter(event => event.startTime === 5_000).map(event => event.type)).toEqual([
+      ItineraryEventType.FACE,
+      ItineraryEventType.SPEECH
+    ]);
+  });
+
+  it('parses interrupts activities directed to another character', () => {
+    const level = loadLevelFromText(
+      facesCharacterTargetText.replace('0:00:05 Niccollo faces Heinrich.', '0:00:05 Niccollo interrupts "Hello!" to Heinrich.'),
+      'interrupts-character-target.md');
+    const niccollo = level.characters.find(character => character.id === 'niccollo');
+    if (!niccollo) expect.fail('expected niccollo character to exist');
+
+    expect(findCharacterPose(niccollo, 4_999).facingDirection).toBe('right');
+    expect(findCharacterPose(niccollo, 5_000).facingDirection).toBe('left');
+    expect(niccollo.itinerary.filter(event => event.startTime === 5_000).map(event => event.type)).toEqual([
+      ItineraryEventType.FACE,
+      ItineraryEventType.SPEECH
+    ]);
+  });
+
   it('parses dies activities and defaults unspecified alive to true', () => {
     const level = loadLevelFromText(diesActivityText);
     const king = level.characters.find(character => character.id === 'king');
