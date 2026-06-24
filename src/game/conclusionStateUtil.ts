@@ -63,13 +63,21 @@ function _applyLevelCompleteReveal(gameState:GameState) {
     item.isDiscovered = true;
     discoveredItemIds.add(item.id);
   };
+  const discoverableInitialItems = new Set([
+    ...gameState.initialRooms.flatMap(room => room.items),
+    ...gameState.initialCharacters.flatMap(character => getOwnedItems(character))
+  ]);
 
-  gameState.itemsById.forEach(markItemDiscovered);
-  gameState.initialItemsById.forEach(markItemDiscovered);
-  gameState.rooms.forEach(room => room.items.forEach(markItemDiscovered));
-  gameState.initialRooms.forEach(room => room.items.forEach(markItemDiscovered));
-  gameState.characters.forEach(character => getOwnedItems(character).forEach(markItemDiscovered));
-  gameState.initialCharacters.forEach(character => getOwnedItems(character).forEach(markItemDiscovered));
+  discoverableInitialItems.forEach(markItemDiscovered);
+  gameState.itemsById.forEach(item => {
+    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
+  });
+  gameState.rooms.forEach(room => room.items.forEach(item => {
+    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
+  }));
+  gameState.characters.forEach(character => getOwnedItems(character).forEach(item => {
+    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
+  }));
   gameState.discoveredItemIds = [...discoveredItemIds];
 }
 
