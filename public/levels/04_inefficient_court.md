@@ -1,7 +1,7 @@
 # General
 
 * title=The Inefficient Court
-* activeCharacter=King Frederick
+* activeCharacter=Toro
 * time=8:00:00
 * background=daySky.png
 * imports=items.md | characters.md
@@ -9,7 +9,7 @@
 # Map
 
 ```
-.GGGG..........
+.GGGGFOO.......
 JGGGGFCCCBBB...
 JIIIIFEDHBBBAAA
 MMMNNFLDKKKKAAA
@@ -29,6 +29,7 @@ MMMNNFLDKKKKAAA
 * L=Tapestry Store
 * M=Withdrawal Chamber
 * N=Robing Chamber
+* O=Chamberlain's Office
 
 # Rooms
 
@@ -87,7 +88,6 @@ MMMNNFLDKKKKAAA
 
 * title=
 * exits=Deep Archives (locked, unlockable) | Tapestry Store (locked, unlockable)
-* obscured=true
 
 ## Record Room
 
@@ -97,7 +97,7 @@ MMMNNFLDKKKKAAA
 ## West Stairwell
 
 * title=
-// * obscured=true
+* obscured=true
 
 ```
 ....
@@ -110,6 +110,7 @@ MMMNNFLDKKKKAAA
 ## Throne Room
 
 * exits=West Stairwell
+* obscured=true
 
 ```
 ...H.....A..G...
@@ -122,6 +123,18 @@ MMMNNFLDKKKKAAA
 * G=Gualtiero
 * A=Amos
 * H=Small Rug|Harold
+
+## Chamberlain's Office
+
+* exits=East Stairwell (unlocked, lockable)
+
+```
+..c.....
+........
+........
+```
+
+* c=Chamberlain's Coffer
 
 ## Usher's Office
 
@@ -138,7 +151,7 @@ CR..
 
 ## Antechamber
 
-//* obscured=true
+* obscured=true
 * exits=West Stairwell | East Stairwell
 
 ```
@@ -167,6 +180,7 @@ N1234567890ABCD.
 ## East Stairwell
 * title=
 * obscured=true
+* exits=Chamberlain's Office (lockable)
 
 ## Deep Archives
 * exits=Lower Stairwell (locked)
@@ -187,6 +201,15 @@ N1234567890ABCD.
 
 ## Robing Chamber
 * exits=East Stairwell (closed)
+* obscured=true
+
+```
+..t.....
+........
+........
+```
+
+* t=Royal Tunic
 
 # Characters
 
@@ -299,12 +322,14 @@ N1234567890ABCD.
 
 # Items
 
-## Wax Tablet
+## Chamberlain's Coffer
+* image=coffer.png
+* description=A note inside reads,|"Gualti, take your mother's advice. Kings must be praised at every moment. Speak of all others with contempt. By these means, you shall secure a privileged position in court.|-Love, Momiavelli"
 
+## Wax Tablet
 * description=Greek numbering of "κϛ" is scratched into the wax.
 
 ## Wax Tablet Updated
-
 * image=waxTablet.png
 * description=Greek numbering of "κζ" is scratched into the wax.
 
@@ -379,8 +404,8 @@ N1234567890ABCD.
 : Sticky Agatha says, "(weeps)"
 : King Frederick says, "Chamberlain, your comments lack grace."
 : Gualtiero says, "Forgive my excesses, your Majesty."
-: Sticky Agatha @ East Gate.95%
-: hide Sticky Agatha
+(Sticky Agatha leaves for Robing Chamber)
+
 
 8:00:30 Toro @ Central Hall.90%
 : waits 8
@@ -541,6 +566,12 @@ N1234567890ABCD.
 : King Frederick says, "(sighs)"
 : Gualtiero faces left.
 
+8:01:23 Sticky Agatha @ Robing Chamber
+: takes Royal Tunic
+: thinks, "This will do."
+: @ East Gate.95%
+: hide Sticky Agatha
+
 (Andronikos is in the Entrance Hall, a stream of petitioners are exiting)
 8:01:29 Andronikos faces left
 : says "Is there some commotion?"
@@ -636,7 +667,7 @@ N1234567890ABCD.
 : faces Harold
 : says, "Herald, fetch the Black Brick."
 : Harold says, "Right away, your Majesty."
-(Harold leaves for Deep Archives)
+(Harold leaves for Chamberlain's Office)
 : King Frederick waits
 : faces right
 : says, "While we wait, I will speak on another matter."
@@ -658,13 +689,14 @@ N1234567890ABCD.
 : says, "But today, I wish for ours to be draftier."
 : faces right
 
-8:03:15 Harold @ Deep Archives.95%
+8:03:12 Harold @ Chamberlain's Office
+: thinks, "No, it is not here."
+: Harold @ Deep Archives.95%
 : takes Black Brick in right hand
 : thinks "Heralding is what I do - not fetching!"
 : thinks "My mother named me for this destiny."
 
-
-8:03:46 Harold @ Throne Room.65%
+8:03:58 Harold @ Throne Room.65%
 : King Frederick faces left
 : Harold gives Black Brick to King Frederick
 : King Frederick takes Black Brick in left hand
@@ -693,4 +725,9 @@ N1234567890ABCD.
 
 * conclusion=After Toro joined them, [27] petitioners waited for an audience with the King.
 * revealRooms=Central Hall|East Stairwell
+* unlockConclusions=Something Amiss
 
+## Something Amiss
+
+* conclusion=After petitioning, [Sticky Agatha] took something from the [Robing Chamber].
+* revealRooms=Antechamber | West Stairwell

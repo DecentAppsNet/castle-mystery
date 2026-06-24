@@ -63,6 +63,11 @@
 ## Pillar
 * image=pillar.png
 
+## Royal Tunic
+
+* image=royalTunic.png
+* description=A fine silk tunic, fit for a king.
+
 ## Rubble
 * image=rubble.png
 * description=A pile of rubble.

@@ -26,7 +26,7 @@ occupation=Apprentice carver
 ethnicityBackground=Greek Sicilian
 
 ## Andronikos
-* title=Andronikos of Monreale
+* title=Andronikos of Thessalonica
 * description=A man very practiced in speaking with upset people.
 * faceImage=andronikos.png
 
