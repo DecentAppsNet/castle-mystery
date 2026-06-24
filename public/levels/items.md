@@ -31,6 +31,9 @@
 ## Codex
 * image=codex.png
 
+## Chair Left
+* image=chairLeft.png
+
 ## Chisel
 * image=chisel.png
 * description=A simple chisel by modern standards. But a small treasure here.
@@ -93,7 +96,6 @@
 * drawOffsetZ=-.5
 
 ## Walnut Table
-* description=A sturdy table made of walnut wood.
 * image=walnutTable.png
 
 ## Wax Tablet

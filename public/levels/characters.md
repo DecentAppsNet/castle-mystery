@@ -49,12 +49,6 @@ ethnicityBackground=Greek Sicilian
 * description=A middle-aged woman wearing a gown of expensive fabric.
 * faceImage=constanceI.png
 
-## King Frederick
-
-* title=King Frederick
-* description=A boy wearing fine clothing.
-* faceImage=kingFred.png
-
 ## Emperor Frederick
 
 * title=Emperor Frederick
@@ -136,6 +130,12 @@ Ethnicity: Greek-Italian
 Occupation: Guard Sergeant (Guard Chamber E)
 Age: 44
 Ethnicity: German
+
+## King Frederick
+
+* title=King Frederick
+* description=A boy wearing fine clothing.
+* faceImage=kingFred.png
 
 ## Male Peasant
 

@@ -130,11 +130,13 @@ MMMNNFLDKKKKAAA
 
 ```
 ..c.....
-........
+......th
 ........
 ```
 
 * c=Chamberlain's Coffer
+* h=Chair Left
+* t=Walnut Table | Letter about Freemasons
 
 ## Usher's Office
 
@@ -347,6 +349,11 @@ N1234567890ABCD.
 * image=codex.png
 * drawOffsetY=2
 
+## Letter about Freemasons
+* image=letter.png
+* drawOffsetY=-2.5
+* description=You will hear aspersions toward a group named the "Freemasons". Do they even exist? I have doubts and suspect some deceit from the Lateran Palace. There is opportunity for favorable change in our futures. But we must act with discretion.|-U d C||P.S. Do not leave this letter laying on your desk!
+
 # Itinerary
 
 8:00:00 Toro @ East Gate
@@ -383,7 +390,7 @@ N1234567890ABCD.
 : says, "(whispers) What is your name?"
 : Sticky Agatha says, "Sticky Agatha."
 : Harold faces King Frederick
-: says, "Agatha of Stickiness, seeking audience with His Majesty."
+: says, "Agatha of Stickiness, seeking audience with His Majesty!"
 : waits
 : says, "Approach and speak."
 : Sticky Agatha @ 50%
@@ -513,7 +520,7 @@ N1234567890ABCD.
 : P24 says "(coughing)"
 : P22 says "Ghastly!"
 : P18 says "I can come back tomorrow."
-: P21 thinks "It is more than I can endure."
+: P21 thinks "I shall endure it."
 8:01:56 Toro @ 30%
 : Guard 4 says, "You have thoroughly befouled this place."
 : says, "But I don't mind less people in here."
@@ -541,7 +548,7 @@ N1234567890ABCD.
 : says, "(whispers) Your name?"
 : Niccolo says, "Niccolò il Calabrese."
 : Harold faces King Frederick
-: says, "Niccolò il Calabrese, seeking audience with His Majesty."
+: says, "Niccolò il Calabrese, seeking audience with His Majesty!"
 : waits
 : says, "Approach and speak."
 : Niccolo @ 50%
@@ -556,9 +563,7 @@ N1234567890ABCD.
 : says, "And also how a promise of protection..."
 : says, "may come from the instigator himself."
 : says, "I will not be involved with your scheme."
-: waits
-: Niccolo @ East Gate.95%
-: hide Niccolo
+(Niccolo leaves for East Gate)
 8:02:12 Gualtiero faces King Frederick
 : says, "I share your outrage, Highness!"
 : King Frederick says, "You need not provide your every opinion."
@@ -569,12 +574,14 @@ N1234567890ABCD.
 8:01:23 Sticky Agatha @ Robing Chamber
 : takes Royal Tunic
 : thinks, "This will do."
-: @ East Gate.95%
-: hide Sticky Agatha
+: @ East Gate.80%
+: faces left
+: thinks "He was just behind me in line."
+: thinks "I will wait for him."
 
 (Andronikos is in the Entrance Hall, a stream of petitioners are exiting)
 8:01:29 Andronikos faces left
-: says "Is there some commotion?"
+: says "What is this commotion?"
 8:01:36 P22 @ Entrance Hall.60%
 : Andronikos faces P22
 : says "Peasant!"
@@ -592,6 +599,7 @@ N1234567890ABCD.
 : Guard 3 says, "Of course, sir."
 (Andronikos leaves for the antechamber)
 
+8:01:52 P21 thinks, "It is unendurable."
 8:01:34 P23 @ East Gate.95%
 : hide P23
 8:01:37 P24 @ East Gate.95%
@@ -676,10 +684,11 @@ N1234567890ABCD.
 : King Frederick says, "In what exact way, Chamberlain?"
 : Gualtiero says, "Oh, uh... I..."
 : says, "Hope to hear your thoughts on the subject first."
-: King Frederick says, "Nearly all of them seek some gift or mercy from me."
+: King Frederick says, "These people come seeking some gift or mercy from me."
 : says, "The World has more complaints than I can hear!"
 : Ugolino says, "The Church can hear them, Majesty."
 : King Frederick says, "Yes, let God receive their prayers - not I."
+: says, "It's more efficient that way."
 : Gualtiero says, "Such insight, Majesty."
 : King Frederick faces left
 
@@ -688,6 +697,37 @@ N1234567890ABCD.
 : says, "People complain about drafty castles."
 : says, "But today, I wish for ours to be draftier."
 : faces right
+: Guard 3 thinks, "What is he even talking about?"
+: Andronikos says, "I shall deposit the Terce records."
+: Guard 3 thinks, "I don't care."
+: Andronikos @ Usher's Office
+: takes Petitioner Registry Updated
+: @ Record Room
+: drops Petitioner Registry Updated
+: thinks, "Let us see if they've withdrawn."
+: @ Withdrawal Chamber
+: thinks, "No surprise."
+: thinks, "Common petitions rarely warrant further discussion."
+: @ Tapestry Store
+: faces right
+: lays
+: thinks, "Nobody ever comes to this room."
+: thinks, "The perfect place for a little nap."
+
+8:02:36 Niccolo @ East Gate.85%
+: Sticky Agatha says "Niccoló!" to Niccolo
+: Niccolo faces Sticky Agatha
+: Sticky Agatha says, "How does Heinrich fare in Master Pietro's House?"
+: Niccolo says, "Fair."
+: Sticky Agatha says, "He fares fairly?"
+: Niccolo says, "Yes."
+: Sticky Agatha says, "You seem troubled."
+: Niccolo says, "The King gives no support for my mission."
+: Sticky Agatha says, "Let us talk elsewhere."
+: @ 95%
+: hide Niccolo
+: Sticky Agatha @ 95%
+: hide Sticky Agatha
 
 8:03:12 Harold @ Chamberlain's Office
 : thinks, "No, it is not here."
@@ -708,7 +748,7 @@ N1234567890ABCD.
 : Gualtiero says, "But what does it prove?"
 : King Frederick says, "A better question perhaps is..."
 : says, "What does it disprove?"
-: says, "Toro, you have done a service to the Crown."
+: says, "Toro, you have done a service for the Crown."
 : says, "Is there anything you want?"
 : Toro says, "Job."
 : King Frederick says, "What job can you do?"
@@ -720,6 +760,7 @@ N1234567890ABCD.
 # Conclusions
 
 * numbers=1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32
+* petitioners=Andronikos of Thessalonica|Gualtiero of Masala|King Frederick|Harold of Norwich|Matteo il Toro|Niccolò il Calabrese|Sticky Agatha|Ugolino di Conti
 
 ## How Many Petitioners?
 
@@ -730,4 +771,10 @@ N1234567890ABCD.
 ## Something Amiss
 
 * conclusion=After petitioning, [Sticky Agatha] took something from the [Robing Chamber].
-* revealRooms=Antechamber | West Stairwell
+* revealRooms=Antechamber | West Stairwell | Robing Chamber
+* unlockConclusions=Audience Granted
+
+## Audience Granted
+
+* conclusion=List petitioners in order of their appearance before the King.---1. [Sticky Agatha]---2. [Niccolò il Calabrese]---3. [Matteo il Toro]
+* revealRooms=Throne Room|Record Room|Withdrawal Chamber
