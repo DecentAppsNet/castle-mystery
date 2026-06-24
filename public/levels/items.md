@@ -87,6 +87,10 @@
 * stackOffsetY=1.8
 * stackOffsetX=-1.5
 
+## Tapestry Stack
+* image=tapestryStack.png
+* stackOffsetY=-1
+
 ## Throne
 * image=throneLeft.png
 

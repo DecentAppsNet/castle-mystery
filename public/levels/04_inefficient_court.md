@@ -5,6 +5,7 @@
 * time=8:00:00
 * background=daySky.png
 * imports=items.md | characters.md
+* winSynopsis=The King's decisions planted seeds of discontent among two petitioners. Toro's luck changed for the better with a new job. King Frederick resolved to reform administrative procedures to isolate him from his subjects. The Pope became an untrustworthy figure in his eyes.
 
 # Map
 
@@ -93,6 +94,14 @@ MMMNNFLDKKKKAAA
 
 * exits=Lower Stairwell | East Stairwell (locked,unlockable)
 * obscured=true
+
+```
+..f.
+....
+....
+```
+
+* f=Furnishing Requests
 
 ## West Stairwell
 
@@ -198,8 +207,24 @@ N1234567890ABCD.
 ## Tapestry Store
 * exits=Lower Stairwell (locked)
 
+```
+..t.
+....
+....
+```
+
+* t=Tapestry Stack
+
 ## Withdrawal Chamber
 * exits=Robing Chamber (closed)
+
+```
+..t.........
+............
+............
+```
+
+* t=Time of Day Plaque
 
 ## Robing Chamber
 * exits=East Stairwell (closed)
@@ -225,6 +250,7 @@ N1234567890ABCD.
 (There is only one wax tablet in the story, but the two versions represent a change from one state to another.)
 
 ## King Frederick
+* description=The young king seems ill at ease.
 * facing=left
 * orientation=sitting
 * isTitleKnown=true
@@ -326,12 +352,17 @@ N1234567890ABCD.
 
 ## Chamberlain's Coffer
 * image=coffer.png
-* description=A note inside reads,|"Gualti, take your mother's advice. Kings must be praised at every moment. Speak of all others with contempt. By these means, you shall secure a privileged position in court.|-Love, Momiavelli"
+* description=A note inside reads:|"Gualti, take your mother's advice. Kings must be praised at every moment. Speak of all others with contempt. By these means, you shall secure a privileged position in court.||-Love, Momiavelli"
+
+## Furnishing Requests
+* image=codex.png
+* description=The topmost page of the codex reads:|"The table provided to my office is unsuitable. When sat upon my chair, I can scarcely peer over its top. I shall not be perceived by my guests as some child awaiting porridge!|-Gualtiero of Masala"
 
 ## Wax Tablet
 * description=Greek numbering of "κϛ" is scratched into the wax.
 
 ## Wax Tablet Updated
+* title=Wax Tablet (Updated)
 * image=waxTablet.png
 * description=Greek numbering of "κζ" is scratched into the wax.
 
@@ -344,6 +375,7 @@ N1234567890ABCD.
 * image=codex.png
 
 ## Petitioner Registry Updated
+* title=Petitioner Registry (Updated)
 * description=17 JULY 1195, TERCE|Konrad of Augsburg - tax relief|Faraj ibn Sa'id al-Balarmi - property dispute|Tancredi of Cefalù - property dispute|Salvatori of Trapani - tax relief|Toro - treachery
 * visible=false
 * image=codex.png
@@ -353,6 +385,9 @@ N1234567890ABCD.
 * image=letter.png
 * drawOffsetY=-2.5
 * description=You will hear aspersions toward a group named the "Freemasons". Do they even exist? I have doubts and suspect some deceit from the Lateran Palace. There is opportunity for favorable change in our futures. But we must act with discretion.|-U d C||P.S. Do not leave this letter laying on your desk!
+
+## Time of Day Plaque
+* description=Apparently, quite a few of these plaques were mass-produced.
 
 # Itinerary
 
@@ -567,7 +602,7 @@ N1234567890ABCD.
 8:02:12 Gualtiero faces King Frederick
 : says, "I share your outrage, Highness!"
 : King Frederick says, "You need not provide your every opinion."
-: Gualtiero says, "Ah, I share your opinion of my opinions, Highness."
+: Gualtiero says, "Ah, I share your opinion of my opinions, Highness!"
 : King Frederick says, "(sighs)"
 : Gualtiero faces left.
 
@@ -670,7 +705,7 @@ N1234567890ABCD.
 : Toro says "Paint."
 : Toro gives Black Paint Jar to King Frederick
 : King Frederick takes Black Paint Jar in right hand.
-: @ 70%
+: @ 65%
 : says, "Interesting."
 : faces Harold
 : says, "Herald, fetch the Black Brick."
@@ -708,9 +743,10 @@ N1234567890ABCD.
 : @ Withdrawal Chamber
 : thinks, "No surprise."
 : thinks, "Common petitions rarely warrant further discussion."
-: @ Tapestry Store
+: @ Tapestry Store.90%
+: drops Wax Tablet Updated
+: lays on Tapestry Stack
 : faces right
-: lays
 : thinks, "Nobody ever comes to this room."
 : thinks, "The perfect place for a little nap."
 
@@ -743,7 +779,7 @@ N1234567890ABCD.
 : Harold stands on small rug
 : King Frederick says "Hmm."
 : says, "The paint matches."
-: Ugolino says, "The jar is from the Lateran Palace."
+: Ugolino says, "This jar is from the Lateran Palace."
 : says, "Our jar mold bestows this symbol."
 : Gualtiero says, "But what does it prove?"
 : King Frederick says, "A better question perhaps is..."
@@ -761,6 +797,9 @@ N1234567890ABCD.
 
 * numbers=1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32
 * petitioners=Andronikos of Thessalonica|Gualtiero of Masala|King Frederick|Harold of Norwich|Matteo il Toro|Niccolò il Calabrese|Sticky Agatha|Ugolino di Conti
+* verbs=thrown|revealed|painted|planted|destroyed|hidden|murdered|poisoned
+* marks=King|Freemasons|Lateran Palace|Antichrist|Chamberlain|House of Pietro|Holy Roman Empire
+* items=Black Brick|Black Paint Jar|Chamberlain's Coffer|Petitioner Registry|Royal Tunic|Wax Tablet
 
 ## How Many Petitioners?
 
@@ -778,3 +817,8 @@ N1234567890ABCD.
 
 * conclusion=List petitioners in order of their appearance before the King.---1. [Sticky Agatha]---2. [Niccolò il Calabrese]---3. [Matteo il Toro]
 * revealRooms=Throne Room|Record Room|Withdrawal Chamber
+* unlockConclusions=Disproof
+
+## Disproof
+
+* conclusion=Pope Innocent III claimed the fallen Arabic tower was constructed by Freemasons using the [Black Brick]. However, it was [painted] using the [Black Paint Jar], which bore a mark of the [Lateran Palace]. This cast doubt on the Pope's claim in the mind of [King Frederick].

@@ -90,7 +90,7 @@ ethnicityBackground=Greek Sicilian
 
 ## Gualtiero
 * title=Gualtiero of Masala
-* description=He seems like the sort of person that whispers in ears a lot. And winks - definitely a winker.
+* description=He seems like the sort of person that whispers in ears a lot.
 * faceImage=gualtiero.png
 
 ETHNICITY: Norman-Sicilian
