@@ -11,6 +11,7 @@ function _appendIdOnce(ids:string[], id:string) {
 
 export function markCharacterDiscovered(gameState:GameState, character:Character) {
   if (!isCharacterInteractive(character)) return;
+  if (!character.isDiscovered) character.isDiscovered = true;
   _appendIdOnce(gameState.discoveredCharacterIds, character.id);
 }
 

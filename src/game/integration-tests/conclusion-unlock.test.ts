@@ -369,6 +369,7 @@ describe('conclusion unlock integration', () => {
 
     expect(gameState.discoveredCharacterIds).toEqual([]);
     expect(gameState.discoveredItemIds).toEqual([]);
+    expect(gameState.characters[0]?.isDiscovered).toBe(false);
     expect(gameState.rooms[0].items[0]?.isDiscovered).toBe(false);
   });
 
@@ -409,10 +410,25 @@ describe('conclusion unlock integration', () => {
     _hoverHero(gameState);
 
     expect(gameState.hoveredCharacterId).toBe('hero');
+    expect(gameState.characters[0]?.isDiscovered).toBe(false);
     expect(gameState.discoveredCharacterIds).toEqual([]);
 
     updateAndDraw(gameState, context, () => {});
 
+    expect(gameState.characters[0]?.isDiscovered).toBe(true);
+    expect(gameState.discoveredCharacterIds).toEqual(['hero']);
+  });
+
+  it('preserves discovered character state across time rebuilds', () => {
+    const gameState = createGameState(_createTestLevel());
+    const context = _createMockContext();
+    _setTestScalingFactors(gameState);
+    _hoverHero(gameState);
+
+    updateAndDraw(gameState, context, () => {});
+    rebuildDynamicStateForTime(gameState, 1_000, 0);
+
+    expect(gameState.characters[0]?.isDiscovered).toBe(true);
     expect(gameState.discoveredCharacterIds).toEqual(['hero']);
   });
 

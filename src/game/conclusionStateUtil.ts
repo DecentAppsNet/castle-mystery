@@ -50,6 +50,12 @@ function _applyLevelCompleteReveal(gameState:GameState) {
   gameState.discoveredCharacterIds = gameState.initialCharacters
     .filter(isCharacterInteractive)
     .map(character => character.id);
+  gameState.characters.forEach(character => {
+    if (isCharacterInteractive(character)) character.isDiscovered = true;
+  });
+  gameState.initialCharacters.forEach(character => {
+    if (isCharacterInteractive(character)) character.isDiscovered = true;
+  });
 
   const discoveredItemIds = new Set<string>();
   const markItemDiscovered = (item:{ id:string, description:string, isDiscovered:boolean }) => {

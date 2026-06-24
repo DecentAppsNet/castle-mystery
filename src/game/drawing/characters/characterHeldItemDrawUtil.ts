@@ -6,6 +6,7 @@ import Effect from "@/game/effects/types/Effect";
 import EffectType from "@/game/effects/types/EffectType";
 import GiveItemEffect from "@/game/effects/types/GiveItemEffect";
 import TakeItemEffect from "@/game/effects/types/TakeItemEffect";
+import { isItemInteractive } from "@/game/interactivityUtil";
 import { MAP_TILE_SIZE } from "@/game/roomGridUtil";
 import { roomWidthToColumnCount } from "@/game/waypointUtil";
 import { calcPanelOffset } from "../roomPanelProjectionUtil";
@@ -69,11 +70,20 @@ function _findFrontHandItem(character:Character):Item|null {
   return character.leftHandItem;
 }
 
+function _isHeldItemDrawn(character:Character, item:Item, effects:Effect[]):boolean {
+  return !_hasMatchingTakeOrGiveItemEffect(character, item, effects);
+}
+
+export function hasDrawnUndiscoveredHeldItem(character:Character, effects:Effect[]):boolean {
+  return [character.leftHandItem, character.rightHandItem]
+    .some(item => !!item && _isHeldItemDrawn(character, item, effects) && isItemInteractive(item) && !item.isDiscovered);
+}
+
 export function drawHeldItemsBehindCharacter(character:Character, layout:CharacterLayout,
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const backHandItem = _findBackHandItem(character);
   if (!backHandItem) return;
-  if (_hasMatchingTakeOrGiveItemEffect(character, backHandItem, effects)) return;
+  if (!_isHeldItemDrawn(character, backHandItem, effects)) return;
   const handPosition = character.facingDirection === 'right' ? layout.leftHand : layout.rightHand;
   _drawHeldItem(backHandItem, handPosition.x, handPosition.y, scalingFactors, context, imageSet);
 }
@@ -82,7 +92,7 @@ export function drawHeldItemsInFrontOfCharacter(character:Character, layout:Char
   effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const frontHandItem = _findFrontHandItem(character);
   if (!frontHandItem) return;
-  if (_hasMatchingTakeOrGiveItemEffect(character, frontHandItem, effects)) return;
+  if (!_isHeldItemDrawn(character, frontHandItem, effects)) return;
   const handPosition = character.facingDirection === 'right' ? layout.rightHand : layout.leftHand;
   _drawHeldItem(frontHandItem, handPosition.x, handPosition.y, scalingFactors, context, imageSet);
 }
