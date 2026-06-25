@@ -456,6 +456,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     roomTitleWrapScalingFactors:ZERO_SCALING_FACTORS,
     roomTitleWrapsByRoomId:new Map<string, string[]>(),
     roomShellCacheByRoomId:createEmptyRoomShellCache(),
+    roomShellCacheKey:'',
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN,
     lastActiveCharacterChangedValue:"",

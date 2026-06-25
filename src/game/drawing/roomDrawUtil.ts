@@ -196,9 +196,9 @@ function _calcStairPartSortX(stairPart:StairPart):number {
 export function drawCacheableRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean,
   groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   showFullContents:boolean = false, includeUndiscovered:boolean = false, imageSet:ImageSet|null = null,
-  includeRoof:boolean = true) {
+  includeRoof:boolean = true, renderObscuredState:boolean = true) {
   if (!includeUndiscovered && !room.isDiscovered) return;
-  const isRoomObscured = room.isObscured && !showFullContents;
+  const isRoomObscured = renderObscuredState && room.isObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
   const scaledBottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   const scaledWidth = scaledBottomRight[0] - scaledTopLeft[0];

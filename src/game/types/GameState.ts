@@ -45,6 +45,7 @@ type GameState = {
   roomTitleWrapScalingFactors:ScalingFactors,
   roomTitleWrapsByRoomId:Map<string, string[]>,
   roomShellCacheByRoomId:RoomShellCache,
+  roomShellCacheKey:string,
   lastMinutesChangedCallRealTime:number,
   lastMinutesChangedValue:number,
   lastActiveCharacterChangedValue:string,

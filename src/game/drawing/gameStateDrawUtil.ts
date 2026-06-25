@@ -7,21 +7,24 @@ import { DRAW_RESERVED_RECTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { processLevelEffects } from "../effects/effectUtil";
 import { isCharacterInteractive, isItemInteractive } from "../interactivityUtil";
+import { calcRenderedRoomBounds } from "../roomRoofUtil";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
 import Position, { duplicatePosition } from "../types/Position";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
+import Room from "../types/Room";
+import { createEmptyRoomShellVariantImages } from "../types/RoomShellCache";
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawColorConstants";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { drawExitPopover } from "./exitDrawUtil";
-import { drawRoomCharactersAndEffects, drawRoomShell, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
+import { drawCacheableRoomShell, drawRoomCharactersAndEffects, drawRoomShell, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
 import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
-import { calcLevelCameraRect } from "../cameraUtil";
+import { calcLevelCameraRect, calcRoomCameraRect } from "../cameraUtil";
 import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { getGroundImageAssetUrl } from "../imageUrlUtil";
 import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
@@ -174,6 +177,75 @@ function _findHighlightedWaypointPosition(gameState:GameState):Position|null {
   return latestDestination;
 }
 
+function _calcRoomShellCacheKey(destWidth:number, destHeight:number):string {
+  return [destWidth, destHeight].join('|');
+}
+
+function _calcRoomShellScalingFactors(room:Room, gameState:GameState, destWidth:number, destHeight:number):ScalingFactors {
+  const aspectRatio = destHeight > 0 ? destWidth / destHeight : 1;
+  const roomCameraRect = calcRoomCameraRect(room, gameState.rooms, aspectRatio, gameState.groundFloorY);
+  const levelCameraRect = calcLevelCameraRect(gameState.rooms, aspectRatio, gameState.groundFloorY);
+  const scalingFactors = calcScalingFactorsForRect(roomCameraRect, destWidth, destHeight);
+  return {
+    ...scalingFactors,
+    roomLineWidth:Math.max(1, scalingFactors.roomLineWidth * (levelCameraRect.height / roomCameraRect.height))
+  };
+}
+
+function _createRoomShellCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number,
+  isActive:boolean):CanvasImageSource|null {
+  const shellScalingFactors = _calcRoomShellScalingFactors(room, gameState, destWidth, destHeight);
+  const renderedBounds = calcRenderedRoomBounds(room, gameState.rooms, gameState.groundFloorY);
+  const [leftX, topY] = gameToCanvasPosition(renderedBounds.x, renderedBounds.y, shellScalingFactors);
+  const [rightX, bottomY] = gameToCanvasPosition(
+    renderedBounds.x + renderedBounds.width,
+    renderedBounds.y + renderedBounds.height,
+    shellScalingFactors
+  );
+  const padding = Math.max(2, Math.ceil(shellScalingFactors.roomLineWidth));
+  const canvasWidth = Math.max(1, Math.ceil(rightX - leftX) + padding * 2);
+  const canvasHeight = Math.max(1, Math.ceil(bottomY - topY) + padding * 2);
+  const shellCanvas = createScratchCanvas(canvasWidth, canvasHeight);
+  if (!shellCanvas) return null;
+  const shellContext = shellCanvas.getContext('2d');
+  if (!shellContext) return null;
+
+  const localScalingFactors = {
+    ...shellScalingFactors,
+    translateX:shellScalingFactors.translateX - leftX + padding,
+    translateY:shellScalingFactors.translateY - topY + padding,
+    destWidth:canvasWidth,
+    destHeight:canvasHeight
+  };
+
+  shellContext.clearRect(0, 0, canvasWidth, canvasHeight);
+  drawCacheableRoomShell(room, gameState.rooms, isActive, gameState.groundFloorY,
+    localScalingFactors, shellContext as unknown as CanvasRenderingContext2D,
+    false, true, gameState.imageSet, true, false);
+  return shellCanvas;
+}
+
+function _ensureRoomShellCaches(gameState:GameState, context:CanvasRenderingContext2D) {
+  const destWidth = context.canvas.width;
+  const destHeight = context.canvas.height;
+  if (destWidth <= 0 || destHeight <= 0) return;
+
+  const cacheKey = _calcRoomShellCacheKey(destWidth, destHeight);
+  if (gameState.roomShellCacheKey !== cacheKey) {
+    gameState.roomShellCacheKey = cacheKey;
+    gameState.roomShellCacheByRoomId.clear();
+  }
+
+  for (const room of gameState.rooms) {
+    if (gameState.roomShellCacheByRoomId.has(room.id)) continue;
+    gameState.roomShellCacheByRoomId.set(room.id, {
+      ...createEmptyRoomShellVariantImages(),
+      active:_createRoomShellCanvas(room, gameState, destWidth, destHeight, true),
+      inactive:_createRoomShellCanvas(room, gameState, destWidth, destHeight, false)
+    });
+  }
+}
+
 export function updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRenderingContext2D):ScalingFactors {
   const destW = context.canvas.width;
   const destH = context.canvas.height;
@@ -197,6 +269,7 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
 }
 
 export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
+  _ensureRoomShellCaches(gameState, context);
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const highlightedWaypointPosition = _findHighlightedWaypointPosition(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
