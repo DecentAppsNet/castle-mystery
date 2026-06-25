@@ -161,6 +161,7 @@ import unknownVisibilityTargetActivityText from './fixtures/unknown-visibility-t
 import { getClozeImageCandidateUrls, getItemImageAssetUrl, getRoomTextureAssetUrl } from '../imageUrlUtil';
 import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import roomBackWallTextureText from './fixtures/room-back-wall-texture.md?raw';
+import roomBackWallTextureDefaultCountsText from './fixtures/room-back-wall-texture-default-counts.md?raw';
 import roomFloorTextureText from './fixtures/room-floor-texture.md?raw';
 import roomRightWallTextureText from './fixtures/room-right-wall-texture.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
@@ -756,6 +757,17 @@ describe('levelUtil itinerary loading', () => {
 
   it('loads back wall textures from room metadata', () => {
     const level = loadLevelFromText(roomBackWallTextureText, 'room-back-wall-texture.md');
+    const hall = level.rooms[0];
+
+    expect(hall.backWallTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+      horizontalCount:4,
+      verticalCount:4
+    });
+  });
+
+  it('defaults omitted room texture counts to 4 by 4', () => {
+    const level = loadLevelFromText(roomBackWallTextureDefaultCountsText, 'room-back-wall-texture-default-counts.md');
     const hall = level.rooms[0];
 
     expect(hall.backWallTexture).toEqual({

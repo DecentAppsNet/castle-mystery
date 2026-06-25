@@ -152,19 +152,26 @@ function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
   const trimmedValue = value.trim();
   const openParenIndex = trimmedValue.lastIndexOf('(');
   const closeParenIndex = trimmedValue.lastIndexOf(')');
+  if (openParenIndex < 0 && closeParenIndex < 0) {
+    return {
+      imageUrl:getRoomTextureAssetUrl(trimmedValue, `room ${textureFieldName}`),
+      horizontalCount:4,
+      verticalCount:4
+    };
+  }
   if (openParenIndex <= 0 || closeParenIndex <= openParenIndex) {
-    throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})'`);
+    throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})' or 'filename.png'`);
   }
 
   const filename = trimmedValue.slice(0, openParenIndex).trim();
   const countsText = trimmedValue.slice(openParenIndex + 1, closeParenIndex).trim();
   const trailingText = trimmedValue.slice(closeParenIndex + 1).trim();
   if (!filename || !countsText || trailingText) {
-    throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})'`);
+    throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})' or 'filename.png'`);
   }
 
   const countParts = countsText.split(',');
-  if (countParts.length !== 2) throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})'`);
+  if (countParts.length !== 2) throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})' or 'filename.png'`);
   return {
     imageUrl:getRoomTextureAssetUrl(filename, `room ${textureFieldName}`),
     horizontalCount:_parsePositiveTextureSpanOrThrow(countParts[0], 'horizontal', textureFieldName, roomId),
