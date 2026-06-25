@@ -230,8 +230,14 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
   if (!includeUndiscovered && !room.isDiscovered) return;
   drawCacheableRoomShell(room, rooms, isActive, groundFloorY, scalingFactors, context,
     showFullContents, includeUndiscovered, imageSet, false);
-  room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds, layoutPlanner));
+  drawRoomShellExits(room, rooms, characters, drawnExitIds, scalingFactors, context, showFullContents, layoutPlanner);
   drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
+}
+
+export function drawRoomShellExits(room:Room, rooms:ReadonlyArray<Room>, characters:Character[], drawnExitIds:Set<string>,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
+  layoutPlanner:CanvasLayoutPlanner|null = null) {
+  room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds, layoutPlanner));
 }
 
 function _calcRoomTitleMaxWidth(room:Room, scalingFactors:ScalingFactors):number {

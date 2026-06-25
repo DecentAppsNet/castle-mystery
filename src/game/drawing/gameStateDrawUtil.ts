@@ -7,27 +7,28 @@ import { DRAW_RESERVED_RECTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { processLevelEffects } from "../effects/effectUtil";
 import { isCharacterInteractive, isItemInteractive } from "../interactivityUtil";
-import { calcRenderedRoomBounds } from "../roomRoofUtil";
+import { calcRoomRoofBounds, calcRenderedRoomBounds } from "../roomRoofUtil";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
 import Position, { duplicatePosition } from "../types/Position";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
 import Room from "../types/Room";
-import { createEmptyRoomShellVariantImages } from "../types/RoomShellCache";
+import { createEmptyRoomShellVariantImages, RoomShellVariantImage } from "../types/RoomShellCache";
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawColorConstants";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { drawExitPopover } from "./exitDrawUtil";
-import { drawCacheableRoomShell, drawRoomCharactersAndEffects, drawRoomShell, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
+import { drawCacheableRoomShell, drawRoomCharactersAndEffects, drawRoomShell, drawRoomShellExits, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
 import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
 import { calcLevelCameraRect, calcRoomCameraRect } from "../cameraUtil";
 import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { getGroundImageAssetUrl } from "../imageUrlUtil";
 import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
+import { calcPanelOffset } from "./roomPanelProjectionUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
@@ -192,28 +193,42 @@ function _calcRoomShellScalingFactors(room:Room, gameState:GameState, destWidth:
   };
 }
 
-function _createRoomShellCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number,
-  isActive:boolean):CanvasImageSource|null {
-  const shellScalingFactors = _calcRoomShellScalingFactors(room, gameState, destWidth, destHeight);
-  const renderedBounds = calcRenderedRoomBounds(room, gameState.rooms, gameState.groundFloorY);
-  const [leftX, topY] = gameToCanvasPosition(renderedBounds.x, renderedBounds.y, shellScalingFactors);
-  const [rightX, bottomY] = gameToCanvasPosition(
-    renderedBounds.x + renderedBounds.width,
-    renderedBounds.y + renderedBounds.height,
-    shellScalingFactors
+function _calcProjectedRoomShellBounds(room:Room, rooms:ReadonlyArray<Room>, groundFloorY:number,
+  scalingFactors:ScalingFactors):{ leftX:number, topY:number, width:number, height:number } {
+  const roofBounds = calcRoomRoofBounds(room, rooms, groundFloorY);
+  const [leftX, topY] = gameToCanvasPosition(roofBounds.x, roofBounds.y, scalingFactors);
+  const [roomRightX, roomBottomY] = gameToCanvasPosition(
+    room.rect.x + room.rect.width,
+    room.rect.y + room.rect.height,
+    scalingFactors
   );
+  const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
+  const rightX = roomRightX + offsetX;
+  const bottomY = roomBottomY + offsetY;
+  return {
+    leftX,
+    topY,
+    width:rightX - leftX,
+    height:bottomY - topY
+  };
+}
+
+function _createRoomShellCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number,
+  isActive:boolean):RoomShellVariantImage {
+  const shellScalingFactors = _calcRoomShellScalingFactors(room, gameState, destWidth, destHeight);
+  const shellBounds = _calcProjectedRoomShellBounds(room, gameState.rooms, gameState.groundFloorY, shellScalingFactors);
   const padding = Math.max(2, Math.ceil(shellScalingFactors.roomLineWidth));
-  const canvasWidth = Math.max(1, Math.ceil(rightX - leftX) + padding * 2);
-  const canvasHeight = Math.max(1, Math.ceil(bottomY - topY) + padding * 2);
+  const canvasWidth = Math.max(1, Math.ceil(shellBounds.width) + padding * 2);
+  const canvasHeight = Math.max(1, Math.ceil(shellBounds.height) + padding * 2);
   const shellCanvas = createScratchCanvas(canvasWidth, canvasHeight);
-  if (!shellCanvas) return null;
+  if (!shellCanvas) return { image:null, width:0, height:0, padding:0 };
   const shellContext = shellCanvas.getContext('2d');
-  if (!shellContext) return null;
+  if (!shellContext) return { image:null, width:0, height:0, padding:0 };
 
   const localScalingFactors = {
     ...shellScalingFactors,
-    translateX:shellScalingFactors.translateX - leftX + padding,
-    translateY:shellScalingFactors.translateY - topY + padding,
+    translateX:shellScalingFactors.translateX - shellBounds.leftX + padding,
+    translateY:shellScalingFactors.translateY - shellBounds.topY + padding,
     destWidth:canvasWidth,
     destHeight:canvasHeight
   };
@@ -222,7 +237,12 @@ function _createRoomShellCanvas(room:Room, gameState:GameState, destWidth:number
   drawCacheableRoomShell(room, gameState.rooms, isActive, gameState.groundFloorY,
     localScalingFactors, shellContext as unknown as CanvasRenderingContext2D,
     false, true, gameState.imageSet, true, false);
-  return shellCanvas;
+  return {
+    image:shellCanvas,
+    width:canvasWidth,
+    height:canvasHeight,
+    padding
+  };
 }
 
 function _ensureRoomShellCaches(gameState:GameState, context:CanvasRenderingContext2D) {
@@ -244,6 +264,29 @@ function _ensureRoomShellCaches(gameState:GameState, context:CanvasRenderingCont
       inactive:_createRoomShellCanvas(room, gameState, destWidth, destHeight, false)
     });
   }
+}
+
+function _drawCachedRoomShell(room:Room, gameState:GameState, isActive:boolean, context:CanvasRenderingContext2D):boolean {
+  if (!room.isDiscovered) return false;
+  if (room.isObscured && !gameState.isLevelComplete) return false;
+
+  const roomShellVariants = gameState.roomShellCacheByRoomId.get(room.id);
+  const cachedVariant = roomShellVariants ? (isActive ? roomShellVariants.active : roomShellVariants.inactive) : null;
+  if (!cachedVariant?.image || cachedVariant.width <= 0 || cachedVariant.height <= 0) return false;
+
+  const shellBounds = _calcProjectedRoomShellBounds(room, gameState.rooms, gameState.groundFloorY, gameState.scalingFactors);
+  const logicalDestWidth = Math.max(1, shellBounds.width);
+  const logicalDestHeight = Math.max(1, shellBounds.height);
+  const logicalSourceWidth = Math.max(1, cachedVariant.width - cachedVariant.padding * 2);
+  const logicalSourceHeight = Math.max(1, cachedVariant.height - cachedVariant.padding * 2);
+  const horizontalPaddingRatio = cachedVariant.padding / logicalSourceWidth;
+  const verticalPaddingRatio = cachedVariant.padding / logicalSourceHeight;
+  const destX = shellBounds.leftX - logicalDestWidth * horizontalPaddingRatio;
+  const destY = shellBounds.topY - logicalDestHeight * verticalPaddingRatio;
+  const destWidth = logicalDestWidth * (cachedVariant.width / logicalSourceWidth);
+  const destHeight = logicalDestHeight * (cachedVariant.height / logicalSourceHeight);
+  context.drawImage(cachedVariant.image, destX, destY, destWidth, destHeight);
+  return true;
 }
 
 export function updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRenderingContext2D):ScalingFactors {
@@ -286,8 +329,14 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     return { room, charactersInRoom, isActive };
   });
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
-    drawRoomShell(room, gameState.rooms, isActive, gameState.characters, drawnExitIds,
-      gameState.groundFloorY, gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner, false, gameState.imageSet);
+    const drewCachedRoomShell = _drawCachedRoomShell(room, gameState, isActive, context);
+    if (drewCachedRoomShell) {
+      drawRoomShellExits(room, gameState.rooms, gameState.characters, drawnExitIds,
+        gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner);
+    } else {
+      drawRoomShell(room, gameState.rooms, isActive, gameState.characters, drawnExitIds,
+        gameState.groundFloorY, gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner, false, gameState.imageSet);
+    }
     if (!room.isDiscovered) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
       hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,

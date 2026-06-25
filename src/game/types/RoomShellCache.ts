@@ -1,8 +1,15 @@
 type RoomShellVariant = 'active'|'inactive';
 
+type RoomShellVariantImage = Readonly<{
+  image:CanvasImageSource|null,
+  width:number,
+  height:number,
+  padding:number
+}>;
+
 type RoomShellVariantImages = Readonly<{
-  active:CanvasImageSource|null,
-  inactive:CanvasImageSource|null
+  active:RoomShellVariantImage,
+  inactive:RoomShellVariantImage
 }>;
 
 type RoomShellCache = Map<string, RoomShellVariantImages>;
@@ -13,10 +20,10 @@ export function createEmptyRoomShellCache():RoomShellCache {
 
 export function createEmptyRoomShellVariantImages():RoomShellVariantImages {
   return {
-    active:null,
-    inactive:null
+    active:{ image:null, width:0, height:0, padding:0 },
+    inactive:{ image:null, width:0, height:0, padding:0 }
   };
 }
 
 export default RoomShellCache;
-export type { RoomShellVariant, RoomShellVariantImages };
+export type { RoomShellVariant, RoomShellVariantImage, RoomShellVariantImages };
