@@ -5,6 +5,7 @@ import backgroundImageText from './fixtures/background-image.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
 import roomBackWallTextureText from './fixtures/room-back-wall-texture.md?raw';
+import roomFloorTextureText from './fixtures/room-floor-texture.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { UNKNOWN_ITEM_ICON_URL } from '../discoveryIconUrlUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
@@ -125,5 +126,19 @@ describe('imageSetUtil.ts', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/room/greyBricks.png');
     expect(imageSet.has(getRoomTextureAssetUrl('greyBricks.png'))).toBe(true);
+  });
+
+  it('loads referenced room floor textures from the room directory', async () => {
+    const fetchMock = vi.fn(async () => ({ ok:true, blob:async () => new Blob(['fake']) }));
+    const createImageBitmapMock = vi.fn(async () => ({ width:64, height:64 } as ImageBitmap));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createImageBitmapMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = loadLevelFromText(roomFloorTextureText, 'room-floor-texture.md');
+    const imageSet = await createImageSetFromLevel(level);
+
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/room/floorBricks.png');
+    expect(imageSet.has(getRoomTextureAssetUrl('floorBricks.png'))).toBe(true);
   });
 });

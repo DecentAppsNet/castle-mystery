@@ -20,6 +20,7 @@ function _findDirectReferencedImageUrls(level:Level):string[] {
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
   level.rooms.forEach(room => {
     if (room.backWallTexture?.imageUrl) imageUrls.add(room.backWallTexture.imageUrl);
+    if (room.floorTexture?.imageUrl) imageUrls.add(room.floorTexture.imageUrl);
   });
   level.rooms.forEach(room => room.items.forEach(item => {
     if (item.imageUrl) imageUrls.add(item.imageUrl);

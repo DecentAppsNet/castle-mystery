@@ -205,7 +205,7 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
   context.fillStyle = isRoomObscured
     ? COLOR_BLACK
     : (showFullContents || isActive ? COLOR_ACTIVE_FLOOR_FILL : COLOR_INACTIVE_FLOOR_FILL);
-  drawFloorPanel(room, scalingFactors, context);
+  drawFloorPanel(room, scalingFactors, context, isRoomObscured ? null : imageSet);
   context.fillStyle = isRoomObscured
     ? COLOR_BLACK
     : (showFullContents || isActive ? COLOR_ACTIVE_RIGHT_WALL_FILL : COLOR_INACTIVE_RIGHT_WALL_FILL);

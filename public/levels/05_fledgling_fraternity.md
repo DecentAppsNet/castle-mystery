@@ -108,7 +108,8 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 
 ## Nave
 
-* backWallTexture=greyBricks.png (1,1)
+* backWallTexture=greyBricks.png (2,2)
+* floorTexture=greyBricks.png (2,2)
 
 ```
 ............

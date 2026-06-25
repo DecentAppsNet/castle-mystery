@@ -140,34 +140,35 @@ function _findLegendEntryTextOrThrow(tileChar:string, legend:Record<string, stri
   throw new Error(`unknown ${contextLabel} legend tile '${tileChar}' at row ${row + 1}, col ${col + 1}`);
 }
 
-function _parsePositiveTextureSpanOrThrow(valueText:string, axisLabel:'horizontal'|'vertical', roomId:string):number {
+function _parsePositiveTextureSpanOrThrow(valueText:string, axisLabel:'horizontal'|'vertical', textureFieldName:string, roomId:string):number {
   const value = Number(valueText.trim());
-  if (!Number.isInteger(value) || value <= 0) throw new Error(`room ${roomId} ${axisLabel} in backWallTexture must be a positive integer`);
+  if (!Number.isInteger(value) || value <= 0) throw new Error(`room ${roomId} ${axisLabel} in ${textureFieldName} must be a positive integer`);
   return value;
 }
 
-function _parseOptionalBackWallTexture(value:string|undefined, roomId:string):Texture|null {
+function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
+  textureFieldName:'backWallTexture'|'floorTexture', verticalUnitLabel:'layers'|'rows'):Texture|null {
   if (!value?.trim()) return null;
   const trimmedValue = value.trim();
   const openParenIndex = trimmedValue.lastIndexOf('(');
   const closeParenIndex = trimmedValue.lastIndexOf(')');
   if (openParenIndex <= 0 || closeParenIndex <= openParenIndex) {
-    throw new Error(`room ${roomId} backWallTexture must be in the form 'filename.png (columns,layers)'`);
+    throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})'`);
   }
 
   const filename = trimmedValue.slice(0, openParenIndex).trim();
   const countsText = trimmedValue.slice(openParenIndex + 1, closeParenIndex).trim();
   const trailingText = trimmedValue.slice(closeParenIndex + 1).trim();
   if (!filename || !countsText || trailingText) {
-    throw new Error(`room ${roomId} backWallTexture must be in the form 'filename.png (columns,layers)'`);
+    throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})'`);
   }
 
   const countParts = countsText.split(',');
-  if (countParts.length !== 2) throw new Error(`room ${roomId} backWallTexture must be in the form 'filename.png (columns,layers)'`);
+  if (countParts.length !== 2) throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})'`);
   return {
-    imageUrl:getRoomTextureAssetUrl(filename, 'room backWallTexture'),
-    horizontalCount:_parsePositiveTextureSpanOrThrow(countParts[0], 'horizontal', roomId),
-    verticalCount:_parsePositiveTextureSpanOrThrow(countParts[1], 'vertical', roomId)
+    imageUrl:getRoomTextureAssetUrl(filename, `room ${textureFieldName}`),
+    horizontalCount:_parsePositiveTextureSpanOrThrow(countParts[0], 'horizontal', textureFieldName, roomId),
+    verticalCount:_parsePositiveTextureSpanOrThrow(countParts[1], 'vertical', textureFieldName, roomId)
   };
 }
 
@@ -236,6 +237,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, firstL
       },
       isOutside: false,
       backWallTexture:null,
+      floorTexture:null,
       isObscured: false,
       items: [],
       exits: [],
@@ -272,7 +274,8 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string, 
       ...room,
       title,
       isOutside: (roomNameValues.outside || '').toLowerCase() === 'true',
-      backWallTexture:_parseOptionalBackWallTexture(roomNameValues.backWallTexture, room.id),
+      backWallTexture:_parseOptionalRoomTexture(roomNameValues.backWallTexture, room.id, 'backWallTexture', 'layers'),
+      floorTexture:_parseOptionalRoomTexture(roomNameValues.floorTexture, room.id, 'floorTexture', 'rows'),
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };
   });
@@ -289,7 +292,7 @@ export function validateRoomGridLegendEntries(level:Level, roomsSection:string, 
 
     const roomNameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`, false, roomSectionEntry.lineNo + 1);
     const roomLegend = Object.fromEntries(
-      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside' && name !== 'backWallTexture')
+      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside' && name !== 'backWallTexture' && name !== 'floorTexture')
     );
 
     findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:entryText, row, col }) => {
