@@ -4,20 +4,16 @@ import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { findRightWallPanelSpans } from '../rightWallPanelUtil';
 import { MAP_TILE_SIZE } from '../roomGridUtil';
 import Rect from '../types/Rect';
-import Room from '../types/Room';
+import Room, { createDefaultRoom } from '../types/Room';
 import rightWallPanelStablesShapeText from './fixtures/right-wall-panel-stables-shape.md?raw';
 
 function _createRoom(id:string, rect:Rect, isOutside:boolean):Room {
   return {
+    ...createDefaultRoom(),
     id,
     title:id,
     rect,
     isOutside,
-    isObscured:false,
-    items:[],
-    exits:[],
-    stairParts:[],
-    waypoints:[],
     isDiscovered:true
   };
 }

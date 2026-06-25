@@ -3,19 +3,15 @@ import { describe, expect, it } from 'vitest';
 
 import { createItineraryMarkerModel, SPEECH_CLUSTER_GAP_MSECS } from '../itineraryMarkerUtil';
 import Itinerary from '@/game/types/Itinerary';
-import Room from '@/game/types/Room';
+import Room, { createDefaultRoom } from '@/game/types/Room';
 import ItineraryEventType from '@/game/types/itineraryEvents/ItineraryEventType';
 
 function _createRoom(id:string, isObscured:boolean):Room {
   return {
+    ...createDefaultRoom(),
     id,
     title:id,
     rect:{ x:0, y:0, width:100, height:100 },
-    isOutside:false,
-    items:[],
-    exits:[],
-    stairParts:[],
-    waypoints:[],
     isDiscovered:false,
     isObscured
   };

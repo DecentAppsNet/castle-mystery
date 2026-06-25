@@ -57,6 +57,7 @@ import { normalizeId } from "./idUtil";
 import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import { clamp } from "@/common/numberUtil";
 import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
+import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -454,6 +455,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     scalingFactors:ZERO_SCALING_FACTORS,
     roomTitleWrapScalingFactors:ZERO_SCALING_FACTORS,
     roomTitleWrapsByRoomId:new Map<string, string[]>(),
+    roomShellCacheByRoomId:createEmptyRoomShellCache(),
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN,
     lastActiveCharacterChangedValue:"",

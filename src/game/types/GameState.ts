@@ -7,6 +7,7 @@ import Room from "./Room";
 import ScalingFactors from "./ScalingFactors";
 import Effect from "../effects/types/Effect";
 import Conclusion from "../conclusions/types/Conclusion";
+import RoomShellCache from "./RoomShellCache";
 
 type GameState = {
   characters:Character[],
@@ -43,6 +44,7 @@ type GameState = {
   scalingFactors: ScalingFactors,
   roomTitleWrapScalingFactors:ScalingFactors,
   roomTitleWrapsByRoomId:Map<string, string[]>,
+  roomShellCacheByRoomId:RoomShellCache,
   lastMinutesChangedCallRealTime:number,
   lastMinutesChangedValue:number,
   lastActiveCharacterChangedValue:string,

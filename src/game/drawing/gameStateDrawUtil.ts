@@ -16,6 +16,7 @@ import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawColorConstants";
+import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { drawExitPopover } from "./exitDrawUtil";
 import { drawRoomCharactersAndEffects, drawRoomShell, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
 import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";
@@ -49,18 +50,8 @@ function _calcRoomSilhouetteCacheKey(gameState:GameState, context:CanvasRenderin
   ].join('|');
 }
 
-function _createRoomSilhouetteCanvas(width:number, height:number):HTMLCanvasElement|OffscreenCanvas|null {
-  if (width <= 0 || height <= 0) return null;
-  if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(width, height);
-  if (typeof document === 'undefined') return null;
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  return canvas;
-}
-
 function _renderRoomSilhouetteCanvas(gameState:GameState, context:CanvasRenderingContext2D):CanvasImageSource|null {
-  const silhouetteCanvas = _createRoomSilhouetteCanvas(context.canvas.width, context.canvas.height);
+  const silhouetteCanvas = createScratchCanvas(context.canvas.width, context.canvas.height);
   if (!silhouetteCanvas) return null;
   const silhouetteContext = silhouetteCanvas.getContext('2d');
   if (!silhouetteContext) return null;

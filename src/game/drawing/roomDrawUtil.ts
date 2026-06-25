@@ -193,9 +193,10 @@ function _calcStairPartSortX(stairPart:StairPart):number {
   }
 }
 
-export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
-  groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
-  layoutPlanner:CanvasLayoutPlanner|null = null, includeUndiscovered:boolean = false, imageSet:ImageSet|null = null) {
+export function drawCacheableRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean,
+  groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+  showFullContents:boolean = false, includeUndiscovered:boolean = false, imageSet:ImageSet|null = null,
+  includeRoof:boolean = true) {
   if (!includeUndiscovered && !room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
@@ -220,6 +221,15 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
     ? COLOR_BLACK
     : (showFullContents || isActive ? COLOR_ACTIVE_RIGHT_WALL_FILL : COLOR_INACTIVE_RIGHT_WALL_FILL);
   drawRightWallPanel(room, rooms, scalingFactors, context, isRoomObscured ? null : imageSet, rightWallTextureLightness);
+  if (includeRoof) drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
+}
+
+export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
+  groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
+  layoutPlanner:CanvasLayoutPlanner|null = null, includeUndiscovered:boolean = false, imageSet:ImageSet|null = null) {
+  if (!includeUndiscovered && !room.isDiscovered) return;
+  drawCacheableRoomShell(room, rooms, isActive, groundFloorY, scalingFactors, context,
+    showFullContents, includeUndiscovered, imageSet, false);
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds, layoutPlanner));
   drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
 }

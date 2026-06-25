@@ -7,7 +7,7 @@ import { generateStairParts } from '../stairPartUtil';
 import { generateStairFlights } from '../stairFlightUtil';
 import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
 import Rect from '../types/Rect';
-import Room from '../types/Room';
+import Room, { createDefaultRoom } from '../types/Room';
 import ExitStatus from '../types/ExitStatus';
 import ExitType from '../types/ExitType';
 import RoomExit, { createRoomExitId } from '../types/RoomExit';
@@ -37,16 +37,12 @@ function _createExit(room2Id:string, x:number, y:number):RoomExit {
 
 function _createRoom(rect:Rect, exits:RoomExit[], waypoints?:Waypoint[]):Room {
   return {
+    ...createDefaultRoom(),
     id:ROOM_ID,
     title:ROOM_ID,
     rect,
-    isOutside:false,
-    items:[],
     exits,
-    stairParts:[],
     waypoints:waypoints || generateWaypoints(ROOM_ID, rect, exits),
-    isDiscovered:false,
-    isObscured:false
   };
 }
 
