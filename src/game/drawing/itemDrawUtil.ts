@@ -10,7 +10,7 @@ import { isItemInteractive } from "@/game/interactivityUtil";
 import { roomWidthToColumnCount } from "../roomGridUtil";
 import Rect from "../types/Rect";
 import { canvasToGamePosition } from "./drawUtil";
-import { COLOR_ITEM_POPOVER_HIGHLIGHT } from "./drawConstants";
+import { COLOR_ITEM_POPOVER_HIGHLIGHT } from "./drawColorConstants";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";

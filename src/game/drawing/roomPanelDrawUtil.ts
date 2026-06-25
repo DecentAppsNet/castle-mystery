@@ -9,7 +9,7 @@ import { ROOM_DEPTH_ROW_COUNT } from "../roomSpaceConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset, createProjectedRightWallDoorOutlinePoints, getRightWallDoorHeightPixels } from "./roomPanelProjectionUtil";
 import { findRightWallPanelSpans } from "../rightWallPanelUtil";
-import { roomWidthToColumnCount } from "../roomGridUtil";
+import { roomHeightToLayerCount, roomWidthToColumnCount } from "../roomGridUtil";
 
 function _fillPanel(points:Array<[number, number]>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   context.lineWidth = scalingFactors.roomLineWidth;
@@ -17,9 +17,13 @@ function _fillPanel(points:Array<[number, number]>, scalingFactors:ScalingFactor
   context.fill();
 }
 
+function _createTextureLightnessFilter(textureLightness:number):string {
+  return textureLightness === 1 ? "none" : `brightness(${textureLightness})`;
+}
+
 function _drawShearedTiledPanel(image:ImageBitmap, origin:[number, number], horizontalVector:[number, number],
   depthVector:[number, number], totalHorizontalCount:number, horizontalSpanCount:number, totalDepthCount:number, depthSpanCount:number,
-  points:Array<[number, number]>, context:CanvasRenderingContext2D) {
+  points:Array<[number, number]>, context:CanvasRenderingContext2D, cutoutPoints:Array<Array<[number, number]>> = [], textureLightness:number = 1) {
   const tileHorizontalVector:[number, number] = [
     horizontalVector[0] * (horizontalSpanCount / totalHorizontalCount),
     horizontalVector[1] * (horizontalSpanCount / totalHorizontalCount)
@@ -33,8 +37,21 @@ function _drawShearedTiledPanel(image:ImageBitmap, origin:[number, number], hori
   if ((tileHorizontalVector[0] === 0 && tileHorizontalVector[1] === 0) || (tileDepthVector[0] === 0 && tileDepthVector[1] === 0)) return;
 
   context.save();
-  _traceClosedPolygon(points, context);
-  context.clip();
+  context.beginPath();
+  context.moveTo(...points[0]);
+  for (let pointIndex = 1; pointIndex < points.length; ++pointIndex) {
+    context.lineTo(...points[pointIndex]);
+  }
+  context.closePath();
+  cutoutPoints.forEach(cutout => {
+    context.moveTo(...cutout[0]);
+    for (let pointIndex = 1; pointIndex < cutout.length; ++pointIndex) {
+      context.lineTo(...cutout[pointIndex]);
+    }
+    context.closePath();
+  });
+  context.clip("evenodd");
+  context.filter = _createTextureLightnessFilter(textureLightness);
   for (let depthTileIndex = 0; depthTileIndex < depthTileCount; ++depthTileIndex) {
     for (let horizontalTileIndex = 0; horizontalTileIndex < horizontalTileCount; ++horizontalTileIndex) {
       const tileOriginX = origin[0] + tileHorizontalVector[0] * horizontalTileIndex + tileDepthVector[0] * depthTileIndex;
@@ -91,7 +108,8 @@ function _strokePanelSegment(fromPoint:[number, number], toPoint:[number, number
   context.stroke();
 }
 
-function _drawRightWallPanelSpan(room:Room, topY:number, height:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+function _drawRightWallPanelSpan(room:Room, topY:number, height:number, scalingFactors:ScalingFactors,
+  context:CanvasRenderingContext2D, imageSet:ImageSet|null = null, textureLightness:number = 1) {
   const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
   const rightWallX = room.rect.x + room.rect.width;
   const doorHeight = getRightWallDoorHeightPixels(scalingFactors) / scalingFactors.scaleY;
@@ -107,8 +125,25 @@ function _drawRightWallPanelSpan(room:Room, topY:number, height:number, scalingF
   ];
   const cutoutPoints = _findRightWallPanelSpanExits(room, topY, height)
     .map(exit => createProjectedRightWallDoorOutlinePoints(rightWallX, exit.y, doorHeight, scalingFactors));
+  const rightWallTexture = room.rightWallTexture;
+  const rightWallImage = rightWallTexture ? imageSet?.get(rightWallTexture.imageUrl) || null : null;
 
-  if (cutoutPoints.length === 0) {
+  if (rightWallTexture && rightWallImage && rightWallImage.width > 0 && rightWallImage.height > 0) {
+    _drawShearedTiledPanel(
+      rightWallImage,
+      topRight,
+      [outerTopRight[0] - topRight[0], outerTopRight[1] - topRight[1]],
+      [bottomRight[0] - topRight[0], bottomRight[1] - topRight[1]],
+      ROOM_DEPTH_ROW_COUNT,
+      rightWallTexture.horizontalCount,
+      roomHeightToLayerCount(room.rect.height),
+      rightWallTexture.verticalCount,
+      panelPoints,
+      context,
+      cutoutPoints,
+      textureLightness
+    );
+  } else if (cutoutPoints.length === 0) {
     _fillPanel(panelPoints, scalingFactors, context);
   } else {
     _fillPanelWithCutouts(panelPoints, cutoutPoints, scalingFactors, context);
@@ -130,7 +165,8 @@ function _findRightWallPanelSpanExits(room:Room, topY:number, height:number):Roo
     .sort((exit1, exit2) => exit1.y - exit2.y);
 }
 
-export function drawFloorPanel(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet|null = null) {
+export function drawFloorPanel(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+  imageSet:ImageSet|null = null, textureLightness:number = 1) {
   const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
   const bottomLeft = gameToCanvasPosition(room.rect.x, room.rect.y + room.rect.height, scalingFactors);
   const bottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
@@ -155,7 +191,9 @@ export function drawFloorPanel(room:Room, scalingFactors:ScalingFactors, context
       ROOM_DEPTH_ROW_COUNT,
       floorTexture.verticalCount,
       panelPoints,
-      context
+      context,
+      [],
+      textureLightness
     );
   } else {
     _fillPanel(panelPoints, scalingFactors, context);
@@ -165,6 +203,8 @@ export function drawFloorPanel(room:Room, scalingFactors:ScalingFactors, context
   _strokePanelSegment(outerBottomLeft, bottomLeft, scalingFactors, context);
 }
 
-export function drawRightWallPanel(room:Room, rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  findRightWallPanelSpans(room, rooms).forEach(span => _drawRightWallPanelSpan(room, span.topY, span.height, scalingFactors, context));
+export function drawRightWallPanel(room:Room, rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors,
+  context:CanvasRenderingContext2D, imageSet:ImageSet|null = null, textureLightness:number = 1) {
+  findRightWallPanelSpans(room, rooms).forEach(span =>
+    _drawRightWallPanelSpan(room, span.topY, span.height, scalingFactors, context, imageSet, textureLightness));
 }

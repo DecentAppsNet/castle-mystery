@@ -8,16 +8,22 @@ import { roomHeightToLayerCount, roomWidthToColumnCount } from "@/game/roomGridU
 import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import {
+  ACTIVE_BACK_WALL_TEXTURE_LIGHTNESS,
+  ACTIVE_FLOOR_TEXTURE_LIGHTNESS,
+  ACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS,
   COLOR_ACTIVE_FLOOR_FILL,
   COLOR_ACTIVE_RIGHT_WALL_FILL,
   COLOR_ACTIVE_ROOM_FILL,
   COLOR_BLACK,
   COLOR_DARK_GRAY,
+  INACTIVE_BACK_WALL_TEXTURE_LIGHTNESS,
+  INACTIVE_FLOOR_TEXTURE_LIGHTNESS,
+  INACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS,
   COLOR_INACTIVE_FLOOR_FILL,
   COLOR_INACTIVE_RIGHT_WALL_FILL,
   COLOR_INACTIVE_ROOM_FILL,
   COLOR_ROOM_TITLE_TEXT
-} from "./drawConstants";
+} from "./drawColorConstants";
 import { interpolateColor } from "./colorUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect, getProjectedExitCanvasRect } from "./exitDrawUtil";
@@ -55,7 +61,7 @@ const WAYPOINT_HIGHLIGHT_START_COLOR = "#8fd8ff";
 const WAYPOINT_HIGHLIGHT_END_COLOR = "#003d99";
 
 function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[number, number], scaledWidth:number,
-  scaledHeight:number, context:CanvasRenderingContext2D) {
+  scaledHeight:number, context:CanvasRenderingContext2D, textureLightness:number) {
   const backWallTexture = room.backWallTexture;
   const backWallImage = backWallTexture ? imageSet?.get(backWallTexture.imageUrl) || null : null;
   if (!backWallTexture || !backWallImage || backWallImage.width <= 0 || backWallImage.height <= 0) {
@@ -76,6 +82,7 @@ function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[num
   context.beginPath();
   context.rect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.clip();
+  context.filter = textureLightness === 1 ? "none" : `brightness(${textureLightness})`;
   for (let drawY = scaledTopLeft[1]; drawY < scaledTopLeft[1] + scaledHeight; drawY += tileHeight) {
     for (let drawX = scaledTopLeft[0]; drawX < scaledTopLeft[0] + scaledWidth; drawX += tileWidth) {
       context.drawImage(backWallImage, drawX, drawY, tileWidth, tileHeight);
@@ -195,21 +202,24 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
   const scaledBottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   const scaledWidth = scaledBottomRight[0] - scaledTopLeft[0];
   const scaledHeight = scaledBottomRight[1] - scaledTopLeft[1];
+  const backWallTextureLightness = showFullContents || isActive ? ACTIVE_BACK_WALL_TEXTURE_LIGHTNESS : INACTIVE_BACK_WALL_TEXTURE_LIGHTNESS;
+  const floorTextureLightness = showFullContents || isActive ? ACTIVE_FLOOR_TEXTURE_LIGHTNESS : INACTIVE_FLOOR_TEXTURE_LIGHTNESS;
+  const rightWallTextureLightness = showFullContents || isActive ? ACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS : INACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS;
   context.lineWidth = scalingFactors.roomLineWidth;
   context.fillStyle = isRoomObscured ? COLOR_BLACK : (showFullContents || isActive ? COLOR_ACTIVE_ROOM_FILL : COLOR_INACTIVE_ROOM_FILL);
   context.strokeStyle = COLOR_DARK_GRAY;
   if (!room.isOutside) {
-    _drawRoomBackWall(room, isRoomObscured ? null : imageSet, scaledTopLeft, scaledWidth, scaledHeight, context);
+    _drawRoomBackWall(room, isRoomObscured ? null : imageSet, scaledTopLeft, scaledWidth, scaledHeight, context, backWallTextureLightness);
     context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   }
   context.fillStyle = isRoomObscured
     ? COLOR_BLACK
     : (showFullContents || isActive ? COLOR_ACTIVE_FLOOR_FILL : COLOR_INACTIVE_FLOOR_FILL);
-  drawFloorPanel(room, scalingFactors, context, isRoomObscured ? null : imageSet);
+  drawFloorPanel(room, scalingFactors, context, isRoomObscured ? null : imageSet, floorTextureLightness);
   context.fillStyle = isRoomObscured
     ? COLOR_BLACK
     : (showFullContents || isActive ? COLOR_ACTIVE_RIGHT_WALL_FILL : COLOR_INACTIVE_RIGHT_WALL_FILL);
-  drawRightWallPanel(room, rooms, scalingFactors, context);
+  drawRightWallPanel(room, rooms, scalingFactors, context, isRoomObscured ? null : imageSet, rightWallTextureLightness);
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds, layoutPlanner));
   drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
 }

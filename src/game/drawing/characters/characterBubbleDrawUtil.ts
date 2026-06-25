@@ -3,7 +3,7 @@
 
 import { clamp } from "@/common/numberUtil";
 import ScalingFactors from "@/game/types/ScalingFactors";
-import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_SPEECH_BUBBLE_FILL } from "../drawConstants";
+import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_SPEECH_BUBBLE_FILL } from "../drawColorConstants";
 
 function _drawSpeechBubbleOutline(left:number, top:number, width:number, height:number,
   tailTipX:number, tailTipY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {

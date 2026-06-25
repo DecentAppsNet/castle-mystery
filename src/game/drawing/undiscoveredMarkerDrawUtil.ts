@@ -3,7 +3,7 @@
 
 import ScalingFactors from "@/game/types/ScalingFactors";
 
-import { COLOR_BLACK } from "./drawConstants";
+import { COLOR_BLACK } from "./drawColorConstants";
 
 export const UNDISCOVERED_MARKER_CYCLE_MSECS = 3000;
 

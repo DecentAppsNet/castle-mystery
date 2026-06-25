@@ -3,7 +3,7 @@
 
 import { assert } from "decent-portal";
 
-import { COLOR_BLACK, COLOR_STAIR_FRONT_FILL, COLOR_STAIR_SIDE_FILL, COLOR_STAIR_TOP_FILL } from "./drawConstants";
+import { COLOR_BLACK, COLOR_STAIR_FRONT_FILL, COLOR_STAIR_SIDE_FILL, COLOR_STAIR_TOP_FILL } from "./drawColorConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "../waypointUtil";
 import { STAIR_POSITION_TOLERANCE } from "../stairUtil";

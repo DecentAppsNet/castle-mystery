@@ -15,7 +15,7 @@ import ScalingFactors from "../types/ScalingFactors";
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
-import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawConstants";
+import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawColorConstants";
 import { drawExitPopover } from "./exitDrawUtil";
 import { drawRoomCharactersAndEffects, drawRoomShell, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
 import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";

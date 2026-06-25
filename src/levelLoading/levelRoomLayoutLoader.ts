@@ -147,7 +147,7 @@ function _parsePositiveTextureSpanOrThrow(valueText:string, axisLabel:'horizonta
 }
 
 function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
-  textureFieldName:'backWallTexture'|'floorTexture', verticalUnitLabel:'layers'|'rows'):Texture|null {
+  textureFieldName:'backWallTexture'|'floorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):Texture|null {
   if (!value?.trim()) return null;
   const trimmedValue = value.trim();
   const openParenIndex = trimmedValue.lastIndexOf('(');
@@ -238,6 +238,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, firstL
       isOutside: false,
       backWallTexture:null,
       floorTexture:null,
+      rightWallTexture:null,
       isObscured: false,
       items: [],
       exits: [],
@@ -276,6 +277,7 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string, 
       isOutside: (roomNameValues.outside || '').toLowerCase() === 'true',
       backWallTexture:_parseOptionalRoomTexture(roomNameValues.backWallTexture, room.id, 'backWallTexture', 'layers'),
       floorTexture:_parseOptionalRoomTexture(roomNameValues.floorTexture, room.id, 'floorTexture', 'rows'),
+      rightWallTexture:_parseOptionalRoomTexture(roomNameValues.rightWallTexture, room.id, 'rightWallTexture', 'layers'),
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };
   });
@@ -292,7 +294,7 @@ export function validateRoomGridLegendEntries(level:Level, roomsSection:string, 
 
     const roomNameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`, false, roomSectionEntry.lineNo + 1);
     const roomLegend = Object.fromEntries(
-      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside' && name !== 'backWallTexture' && name !== 'floorTexture')
+      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside' && name !== 'backWallTexture' && name !== 'floorTexture' && name !== 'rightWallTexture')
     );
 
     findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:entryText, row, col }) => {

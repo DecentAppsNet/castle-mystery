@@ -19,7 +19,7 @@ import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import ImageSet from "../types/ImageSet";
 import Item from "../types/Item";
-import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK } from "./drawConstants";
+import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK } from "./drawColorConstants";
 import { drawPopover, PopoverBodyEntry } from "./popoverDrawUtil";
 import { createCharacterLayout, strokeCharacterBody } from "./characters/characterLayoutUtil";
 import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter, hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";

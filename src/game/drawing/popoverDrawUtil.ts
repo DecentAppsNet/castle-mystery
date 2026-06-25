@@ -7,7 +7,7 @@ import { choosePopoverBoxRect } from "@/game/popoverLayoutUtil";
 import ImageSet from "../types/ImageSet";
 import Rect from "../types/Rect";
 import ScalingFactors from "../types/ScalingFactors";
-import { COLOR_BLACK, COLOR_POPOVER_FILL } from "./drawConstants";
+import { COLOR_BLACK, COLOR_POPOVER_FILL } from "./drawColorConstants";
 
 export type PopoverBodyEntry =
   | { type:'text', text:string }

@@ -11,7 +11,7 @@ import Itinerary from "@/game/types/Itinerary";
 import Character from "@/game/types/Character";
 import Room from "@/game/types/Room";
 import { createItineraryMarkerModel } from "./itineraryMarkerUtil";
-import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawing/drawConstants";
+import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawing/drawColorConstants";
 
 const NO_QUANTIZING = -1;
 

@@ -9,7 +9,7 @@ import Rect from "../types/Rect";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
-import { COLOR_BLACK } from "./drawConstants";
+import { COLOR_BLACK } from "./drawColorConstants";
 import { canvasToGamePosition, gameToCanvasPosition } from "./drawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";
 import {

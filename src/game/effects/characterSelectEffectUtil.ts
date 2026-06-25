@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
-import { COLOR_CHARACTER_SELECT_EFFECT } from "../drawing/drawConstants";
+import { COLOR_CHARACTER_SELECT_EFFECT } from "../drawing/drawColorConstants";
 import { projectRoomPointWithDepth } from "../drawing/roomPanelProjectionUtil";
 import Character from "../types/Character";
 import Position from "../types/Position";

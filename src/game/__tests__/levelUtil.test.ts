@@ -162,6 +162,7 @@ import { getClozeImageCandidateUrls, getItemImageAssetUrl, getRoomTextureAssetUr
 import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import roomBackWallTextureText from './fixtures/room-back-wall-texture.md?raw';
 import roomFloorTextureText from './fixtures/room-floor-texture.md?raw';
+import roomRightWallTextureText from './fixtures/room-right-wall-texture.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
 
 describe('levelUtil itinerary loading', () => {
@@ -770,6 +771,17 @@ describe('levelUtil itinerary loading', () => {
 
     expect(hall.floorTexture).toEqual({
       imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
+      horizontalCount:2,
+      verticalCount:2
+    });
+  });
+
+  it('loads right wall textures from room metadata', () => {
+    const level = loadLevelFromText(roomRightWallTextureText, 'room-right-wall-texture.md');
+    const hall = level.rooms[0];
+
+    expect(hall.rightWallTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('wallBricks.png'),
       horizontalCount:2,
       verticalCount:2
     });

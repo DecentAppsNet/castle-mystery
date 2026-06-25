@@ -98,11 +98,12 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 
 ```
 ..AAA...
-..AAA...
+..AAABB.
 ........
 ```
 
 * A=Nave
+* B=Hall
 
 # Rooms
 
@@ -110,6 +111,8 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 
 * backWallTexture=greyBricks.png (2,2)
 * floorTexture=greyBricks.png (2,2)
+* rightWallTexture=greyBricks.png (2,2)
+* exits=Hall
 
 ```
 ............
@@ -118,3 +121,13 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 ```
 
 * N=Niccolo
+
+## Hall
+
+* backWallTexture=greyBricks.png (2,2)
+* floorTexture=greyBricks.png (2,2)
+* rightWallTexture=greyBricks.png (2,2)
+
+# Itinerary
+
+23:00:02 Niccolo @ Hall
