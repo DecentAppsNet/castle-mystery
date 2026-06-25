@@ -158,8 +158,9 @@ import invalidCharacterVisibleText from './fixtures/invalid-character-visible.md
 import invalidItemVisibleText from './fixtures/invalid-item-visible.md?raw';
 import showHideActivityText from './fixtures/show-hide-activity.md?raw';
 import unknownVisibilityTargetActivityText from './fixtures/unknown-visibility-target-activity.md?raw';
-import { getClozeImageCandidateUrls, getItemImageAssetUrl } from '../imageUrlUtil';
+import { getClozeImageCandidateUrls, getItemImageAssetUrl, getRoomTextureAssetUrl } from '../imageUrlUtil';
 import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
+import roomBackWallTextureText from './fixtures/room-back-wall-texture.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
 
 describe('levelUtil itinerary loading', () => {
@@ -749,6 +750,17 @@ describe('levelUtil itinerary loading', () => {
 
     expect(crown?.imageUrl).toBe(getItemImageAssetUrl('crown.png'));
     expect(level.itemsById.get('crown')?.imageUrl).toBe(getItemImageAssetUrl('crown.png'));
+  });
+
+  it('loads back wall textures from room metadata', () => {
+    const level = loadLevelFromText(roomBackWallTextureText, 'room-back-wall-texture.md');
+    const hall = level.rooms[0];
+
+    expect(hall.backWallTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+      horizontalCount:4,
+      verticalCount:4
+    });
   });
 
   it('loads item draw offsets from item subsections into placed items and the item index', () => {

@@ -12,7 +12,8 @@ import {
 } from '../roomUtil';
 import { generateWaypoints } from '@/levelLoading/waypointGenerationUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
-import { COLUMNS_PER_MAP_TILE, findExitWaypoint, findNearestWaypoint, FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
+import { COLUMNS_PER_MAP_TILE, roomWidthToColumnCount } from '../roomGridUtil';
+import { findExitWaypoint, findNearestWaypoint, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import { generateStairFlights } from '../stairFlightUtil';
 import Character, { createDefaultCharacter } from '../types/Character';
 import Rect from '../types/Rect';

@@ -356,7 +356,7 @@ N1234567890ABCD.
 
 ## Furnishing Requests
 * image=codex.png
-* description=The topmost page of the codex reads:|"The table provided to my office is unsuitable. When sat upon my chair, I can scarcely peer over its top. I shall not be perceived by my guests as some child awaiting porridge!|-Gualtiero of Masala"
+* description=The topmost page of the codex reads:|"The table provided to my office is unsuitable. When sat upon my chair, I can scarcely peer over the tabletop. I shall not be perceived by my guests as some child awaiting porridge!|-Gualtiero of Masala"
 
 ## Wax Tablet
 * description=Greek numbering of "κϛ" is scratched into the wax.

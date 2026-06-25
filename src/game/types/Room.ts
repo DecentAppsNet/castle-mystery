@@ -2,6 +2,7 @@ import Rect from "./Rect"
 import Item, { duplicateItem } from "./Item"
 import RoomExit, { duplicateRoomExit } from "./RoomExit"
 import StairPart, { duplicateStairPart } from "./StairPart"
+import Texture, { duplicateTexture } from "./Texture"
 import Waypoint, { duplicateWaypoint } from "./Waypoint"
 
 type Room = {
@@ -9,6 +10,7 @@ type Room = {
   readonly title:string,
   readonly rect:Rect,
   readonly isOutside:boolean,
+  readonly backWallTexture:Texture|null,
   isObscured:boolean,
   items:Item[],
   readonly exits:RoomExit[],
@@ -23,6 +25,7 @@ export function createDefaultRoom():Room {
     title:'Room',
     rect:{ x:0, y:0, width:10, height:10 },
     isOutside:false,
+    backWallTexture:null,
     isObscured:false,
     items:[],
     exits:[],
@@ -38,6 +41,7 @@ export function duplicateRoom(from:Room):Room {
     title:from.title,
     rect:from.rect,
     isOutside:from.isOutside,
+    backWallTexture:from.backWallTexture ? duplicateTexture(from.backWallTexture) : null,
     isObscured:from.isObscured,
     items:from.items.map(duplicateItem),
     exits:from.exits.map(duplicateRoomExit),

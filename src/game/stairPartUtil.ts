@@ -1,7 +1,8 @@
 /* This module groups stair-part generation helpers that expand stair flights into drawable room stair geometry.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./waypointUtil";
+import { roomWidthToColumnCount } from "./roomGridUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET } from "./waypointUtil";
 import { doesStairFlightEndAtPosition, findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "./stairUtil";
 import Position from "./types/Position";
 import Room from "./types/Room";

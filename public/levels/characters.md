@@ -79,7 +79,7 @@ ethnicityBackground=Greek Sicilian
 ## Giorgios
 
 * title=Giorgios tou Nikolaou
-* description=A man in his 40s, wiry form, discerning eyes.
+* description=A man in his 40s, wiry form, unfocused eyes.
 * faceImage=giorgios.png
 
 ## Giovanni

@@ -4,6 +4,7 @@
 import { DRAW_WAYPOINTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
+import { roomHeightToLayerCount, roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import {
@@ -52,6 +53,36 @@ const WAYPOINT_BACKGROUND_START_COLOR = "#ffb3c1";
 const WAYPOINT_BACKGROUND_END_COLOR = "#880000";
 const WAYPOINT_HIGHLIGHT_START_COLOR = "#8fd8ff";
 const WAYPOINT_HIGHLIGHT_END_COLOR = "#003d99";
+
+function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[number, number], scaledWidth:number,
+  scaledHeight:number, context:CanvasRenderingContext2D) {
+  const backWallTexture = room.backWallTexture;
+  const backWallImage = backWallTexture ? imageSet?.get(backWallTexture.imageUrl) || null : null;
+  if (!backWallTexture || !backWallImage || backWallImage.width <= 0 || backWallImage.height <= 0) {
+    context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
+    return;
+  }
+
+  const roomColumnCount = roomWidthToColumnCount(room.rect.width);
+  const roomLayerCount = roomHeightToLayerCount(room.rect.height);
+  const tileWidth = scaledWidth * (backWallTexture.horizontalCount / roomColumnCount);
+  const tileHeight = scaledHeight * (backWallTexture.verticalCount / roomLayerCount);
+  if (tileWidth <= 0 || tileHeight <= 0) {
+    context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
+    return;
+  }
+
+  context.save();
+  context.beginPath();
+  context.rect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
+  context.clip();
+  for (let drawY = scaledTopLeft[1]; drawY < scaledTopLeft[1] + scaledHeight; drawY += tileHeight) {
+    for (let drawX = scaledTopLeft[0]; drawX < scaledTopLeft[0] + scaledWidth; drawX += tileWidth) {
+      context.drawImage(backWallImage, drawX, drawY, tileWidth, tileHeight);
+    }
+  }
+  context.restore();
+}
 
 function _getWaypointCanvasPosition(x:number, y:number, z:number, scalingFactors:ScalingFactors):[number, number] {
   const [canvasX, canvasY] = gameToCanvasPosition(x, y, scalingFactors);
@@ -157,7 +188,7 @@ function _calcStairPartSortX(stairPart:StairPart):number {
 
 export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
   groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
-  layoutPlanner:CanvasLayoutPlanner|null = null, includeUndiscovered:boolean = false) {
+  layoutPlanner:CanvasLayoutPlanner|null = null, includeUndiscovered:boolean = false, imageSet:ImageSet|null = null) {
   if (!includeUndiscovered && !room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
@@ -168,7 +199,7 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
   context.fillStyle = isRoomObscured ? COLOR_BLACK : (showFullContents || isActive ? COLOR_ACTIVE_ROOM_FILL : COLOR_INACTIVE_ROOM_FILL);
   context.strokeStyle = COLOR_DARK_GRAY;
   if (!room.isOutside) {
-    context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
+    _drawRoomBackWall(room, isRoomObscured ? null : imageSet, scaledTopLeft, scaledWidth, scaledHeight, context);
     context.strokeRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   }
   context.fillStyle = isRoomObscured

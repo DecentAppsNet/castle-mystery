@@ -7,7 +7,7 @@ import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { findItemDisplayPosition } from "@/game/itemDisplayPositionUtil";
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
 import { isItemInteractive } from "@/game/interactivityUtil";
-import { roomWidthToColumnCount } from "../waypointUtil";
+import { roomWidthToColumnCount } from "../roomGridUtil";
 import Rect from "../types/Rect";
 import { canvasToGamePosition } from "./drawUtil";
 import { COLOR_ITEM_POPOVER_HIGHLIGHT } from "./drawConstants";

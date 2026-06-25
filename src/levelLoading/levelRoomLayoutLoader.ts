@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { MAP_TILE_SIZE } from "../game/roomGridUtil";
+import { getRoomTextureAssetUrl } from "../game/imageUrlUtil";
 import { findRoom } from "../game/roomUtil";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "../game/waypointUtil";
 import { generateStairFlights } from "../game/stairFlightUtil";
@@ -10,6 +11,7 @@ import { generateWaypoints } from "./waypointGenerationUtil";
 import Level from "../game/types/Level";
 import Rect from "../game/types/Rect";
 import Room from "../game/types/Room";
+import Texture from "../game/types/Texture";
 import ExitStatus from "../game/types/ExitStatus";
 import ExitType from "../game/types/ExitType";
 import RoomExit, { createRoomExitId, LOCKABLE_WITHOUT_INV_CHECK } from "../game/types/RoomExit";
@@ -138,6 +140,37 @@ function _findLegendEntryTextOrThrow(tileChar:string, legend:Record<string, stri
   throw new Error(`unknown ${contextLabel} legend tile '${tileChar}' at row ${row + 1}, col ${col + 1}`);
 }
 
+function _parsePositiveTextureSpanOrThrow(valueText:string, axisLabel:'horizontal'|'vertical', roomId:string):number {
+  const value = Number(valueText.trim());
+  if (!Number.isInteger(value) || value <= 0) throw new Error(`room ${roomId} ${axisLabel} in backWallTexture must be a positive integer`);
+  return value;
+}
+
+function _parseOptionalBackWallTexture(value:string|undefined, roomId:string):Texture|null {
+  if (!value?.trim()) return null;
+  const trimmedValue = value.trim();
+  const openParenIndex = trimmedValue.lastIndexOf('(');
+  const closeParenIndex = trimmedValue.lastIndexOf(')');
+  if (openParenIndex <= 0 || closeParenIndex <= openParenIndex) {
+    throw new Error(`room ${roomId} backWallTexture must be in the form 'filename.png (columns,layers)'`);
+  }
+
+  const filename = trimmedValue.slice(0, openParenIndex).trim();
+  const countsText = trimmedValue.slice(openParenIndex + 1, closeParenIndex).trim();
+  const trailingText = trimmedValue.slice(closeParenIndex + 1).trim();
+  if (!filename || !countsText || trailingText) {
+    throw new Error(`room ${roomId} backWallTexture must be in the form 'filename.png (columns,layers)'`);
+  }
+
+  const countParts = countsText.split(',');
+  if (countParts.length !== 2) throw new Error(`room ${roomId} backWallTexture must be in the form 'filename.png (columns,layers)'`);
+  return {
+    imageUrl:getRoomTextureAssetUrl(filename, 'room backWallTexture'),
+    horizontalCount:_parsePositiveTextureSpanOrThrow(countParts[0], 'horizontal', roomId),
+    verticalCount:_parsePositiveTextureSpanOrThrow(countParts[1], 'vertical', roomId)
+  };
+}
+
 export function findLegendTilesInGrid(gridLines:string[], legend:Record<string, string>):LegendTile[] {
   const legendTiles:LegendTile[] = [];
   gridLines.forEach((line, row) => {
@@ -202,6 +235,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, firstL
         height: (bounds.maxRow - bounds.minRow + 1) * MAP_TILE_SIZE
       },
       isOutside: false,
+      backWallTexture:null,
       isObscured: false,
       items: [],
       exits: [],
@@ -238,6 +272,7 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string, 
       ...room,
       title,
       isOutside: (roomNameValues.outside || '').toLowerCase() === 'true',
+      backWallTexture:_parseOptionalBackWallTexture(roomNameValues.backWallTexture, room.id),
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };
   });
@@ -254,7 +289,7 @@ export function validateRoomGridLegendEntries(level:Level, roomsSection:string, 
 
     const roomNameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`, false, roomSectionEntry.lineNo + 1);
     const roomLegend = Object.fromEntries(
-      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside')
+      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside' && name !== 'backWallTexture')
     );
 
     findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:entryText, row, col }) => {

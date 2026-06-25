@@ -3,8 +3,8 @@
 
 import { assert, assertNonNullable } from "decent-portal";
 
-import { MAP_TILE_SIZE } from "./roomGridUtil";
-import { FLOOR_WAYPOINT_Y_OFFSET, roomWidthToColumnCount } from "./waypointUtil";
+import { MAP_TILE_SIZE, roomWidthToColumnCount } from "./roomGridUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET } from "./waypointUtil";
 import Position from "./types/Position";
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";

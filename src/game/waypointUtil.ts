@@ -5,17 +5,12 @@ import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import Waypoint from "./types/Waypoint";
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "./roomSpaceConstants";
-import { MAP_TILE_SIZE } from "./roomGridUtil";
+import { roomWidthToColumnCount } from "./roomGridUtil";
 
-export const COLUMNS_PER_MAP_TILE = 4;
 export const FLOOR_WAYPOINT_Y_OFFSET = 0.001;
 export const WAYPOINT_BACK_ROW_Z = ROOM_BACK_ROW_CENTER_Z;
 export const WAYPOINT_MIDDLE_ROW_Z = ROOM_MIDDLE_ROW_CENTER_Z;
 export const WAYPOINT_FRONT_ROW_Z = ROOM_FRONT_ROW_CENTER_Z;
-
-export function roomWidthToColumnCount(roomWidth:number):number {
-  return Math.round(roomWidth / MAP_TILE_SIZE) * COLUMNS_PER_MAP_TILE;
-}
 
 export function findExitWaypoint(roomId:string, roomRect:Room['rect'], exit:RoomExit, waypoints:Waypoint[]):Waypoint {
   _assertExitPositionIsSupported(roomId, roomRect, exit);

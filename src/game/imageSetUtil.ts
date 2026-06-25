@@ -18,6 +18,9 @@ export function createEmptyImageSet():ImageSet {
 function _findDirectReferencedImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>([KEY_IMAGE_URL, getGroundImageAssetUrl(), UNKNOWN_ITEM_ICON_URL]);
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
+  level.rooms.forEach(room => {
+    if (room.backWallTexture?.imageUrl) imageUrls.add(room.backWallTexture.imageUrl);
+  });
   level.rooms.forEach(room => room.items.forEach(item => {
     if (item.imageUrl) imageUrls.add(item.imageUrl);
   }));

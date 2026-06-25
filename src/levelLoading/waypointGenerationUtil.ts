@@ -7,11 +7,11 @@ import Rect from "@/game/types/Rect";
 import RoomExit from "@/game/types/RoomExit";
 import StairFlight from "@/game/types/StairFlight";
 import Waypoint from "@/game/types/Waypoint";
+import { roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "@/game/stairUtil";
 import {
   FLOOR_WAYPOINT_Y_OFFSET,
   findExitWaypoint,
-  roomWidthToColumnCount,
   WAYPOINT_BACK_ROW_Z,
   WAYPOINT_FRONT_ROW_Z,
   WAYPOINT_MIDDLE_ROW_Z,

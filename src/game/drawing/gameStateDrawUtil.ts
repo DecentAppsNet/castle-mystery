@@ -70,7 +70,7 @@ function _renderRoomSilhouetteCanvas(gameState:GameState, context:CanvasRenderin
   for (const room of gameState.rooms) {
     drawRoomShell(room, gameState.rooms, false, gameState.characters, drawnExitIds,
       gameState.groundFloorY, gameState.scalingFactors, silhouetteContext as unknown as CanvasRenderingContext2D,
-      true, null, true);
+      true, null, true, null);
   }
   silhouetteContext.globalCompositeOperation = 'source-in';
   silhouetteContext.fillStyle = COLOR_DARK_GRAY;
@@ -223,7 +223,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   });
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
     drawRoomShell(room, gameState.rooms, isActive, gameState.characters, drawnExitIds,
-      gameState.groundFloorY, gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner);
+      gameState.groundFloorY, gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner, false, gameState.imageSet);
     if (!room.isDiscovered) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
       hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,

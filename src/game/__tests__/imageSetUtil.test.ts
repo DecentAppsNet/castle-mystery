@@ -4,10 +4,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import backgroundImageText from './fixtures/background-image.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
+import roomBackWallTextureText from './fixtures/room-back-wall-texture.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { UNKNOWN_ITEM_ICON_URL } from '../discoveryIconUrlUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
-import { getBackgroundImageAssetUrl, getClozeImageCandidateUrls, getFaceImageAssetUrl, getGroundImageAssetUrl, getItemImageAssetUrl } from '../imageUrlUtil';
+import { getBackgroundImageAssetUrl, getClozeImageCandidateUrls, getFaceImageAssetUrl, getGroundImageAssetUrl, getItemImageAssetUrl, getRoomTextureAssetUrl } from '../imageUrlUtil';
 
 describe('imageSetUtil.ts', () => {
   afterEach(() => {
@@ -110,5 +111,19 @@ describe('imageSetUtil.ts', () => {
     expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/ground.png');
     expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/items/crown.png');
     expect(imageSet.has(getItemImageAssetUrl('crown.png'))).toBe(true);
+  });
+
+  it('loads referenced room back wall textures from the room directory', async () => {
+    const fetchMock = vi.fn(async () => ({ ok:true, blob:async () => new Blob(['fake']) }));
+    const createImageBitmapMock = vi.fn(async () => ({ width:64, height:64 } as ImageBitmap));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createImageBitmapMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = loadLevelFromText(roomBackWallTextureText, 'room-texture-image.md');
+    const imageSet = await createImageSetFromLevel(level);
+
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/room/greyBricks.png');
+    expect(imageSet.has(getRoomTextureAssetUrl('greyBricks.png'))).toBe(true);
   });
 });
