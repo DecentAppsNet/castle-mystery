@@ -113,6 +113,7 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 * floorTexture=greyBricks2.png
 * rightWallTexture=greyBricks2.png
 * exits=Hall
+* obscured=true
 
 ```
 ............

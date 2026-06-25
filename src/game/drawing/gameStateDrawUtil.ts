@@ -18,9 +18,10 @@ import { createEmptyRoomShellVariantImages, RoomShellVariantImage } from "../typ
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
-import { COLOR_BLACK, COLOR_DARK_GRAY, OBSCURED_ROOM_CACHE_LIGHTNESS } from "./drawColorConstants";
+import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawColorConstants";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { drawExitPopover } from "./exitDrawUtil";
+import { drawObscuredRoom } from "./obscureDrawUtil";
 import { drawCacheableRoomShell, drawRoomCharactersAndEffects, drawRoomShell, drawRoomShellExits, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
 import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
@@ -284,12 +285,7 @@ function _drawCachedRoomShell(room:Room, gameState:GameState, isActive:boolean, 
   const destY = shellBounds.topY - logicalDestHeight * verticalPaddingRatio;
   const destWidth = logicalDestWidth * (cachedVariant.width / logicalSourceWidth);
   const destHeight = logicalDestHeight * (cachedVariant.height / logicalSourceHeight);
-  context.save();
-  context.filter = room.isObscured && !gameState.isLevelComplete
-    ? `brightness(${OBSCURED_ROOM_CACHE_LIGHTNESS})`
-    : 'none';
   context.drawImage(cachedVariant.image, destX, destY, destWidth, destHeight);
-  context.restore();
   return true;
 }
 
@@ -335,6 +331,9 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
     const drewCachedRoomShell = _drawCachedRoomShell(room, gameState, isActive, context);
     if (drewCachedRoomShell) {
+      if (room.isObscured && !gameState.isLevelComplete && room.isDiscovered) {
+        drawObscuredRoom(room, gameState.scalingFactors, context);
+      }
       drawRoomShellExits(room, gameState.rooms, gameState.characters, drawnExitIds,
         gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner);
     } else {
