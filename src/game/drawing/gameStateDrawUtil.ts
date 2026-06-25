@@ -7,7 +7,7 @@ import { DRAW_RESERVED_RECTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { processLevelEffects } from "../effects/effectUtil";
 import { isCharacterInteractive, isItemInteractive } from "../interactivityUtil";
-import { calcRoomRoofBounds, calcRenderedRoomBounds } from "../roomRoofUtil";
+import { calcRoomRoofBounds } from "../roomRoofUtil";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
 import Position, { duplicatePosition } from "../types/Position";
@@ -18,7 +18,7 @@ import { createEmptyRoomShellVariantImages, RoomShellVariantImage } from "../typ
 import ItineraryEventType from "../types/itineraryEvents/ItineraryEventType";
 import WalkEvent from "../types/itineraryEvents/WalkEvent";
 import { drawCharacterPopover } from "./characterDrawUtil";
-import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawColorConstants";
+import { COLOR_BLACK, COLOR_DARK_GRAY, OBSCURED_ROOM_CACHE_LIGHTNESS } from "./drawColorConstants";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { drawExitPopover } from "./exitDrawUtil";
 import { drawCacheableRoomShell, drawRoomCharactersAndEffects, drawRoomShell, drawRoomShellExits, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
@@ -268,7 +268,6 @@ function _ensureRoomShellCaches(gameState:GameState, context:CanvasRenderingCont
 
 function _drawCachedRoomShell(room:Room, gameState:GameState, isActive:boolean, context:CanvasRenderingContext2D):boolean {
   if (!room.isDiscovered) return false;
-  if (room.isObscured && !gameState.isLevelComplete) return false;
 
   const roomShellVariants = gameState.roomShellCacheByRoomId.get(room.id);
   const cachedVariant = roomShellVariants ? (isActive ? roomShellVariants.active : roomShellVariants.inactive) : null;
@@ -285,7 +284,12 @@ function _drawCachedRoomShell(room:Room, gameState:GameState, isActive:boolean, 
   const destY = shellBounds.topY - logicalDestHeight * verticalPaddingRatio;
   const destWidth = logicalDestWidth * (cachedVariant.width / logicalSourceWidth);
   const destHeight = logicalDestHeight * (cachedVariant.height / logicalSourceHeight);
+  context.save();
+  context.filter = room.isObscured && !gameState.isLevelComplete
+    ? `brightness(${OBSCURED_ROOM_CACHE_LIGHTNESS})`
+    : 'none';
   context.drawImage(cachedVariant.image, destX, destY, destWidth, destHeight);
+  context.restore();
   return true;
 }
 
