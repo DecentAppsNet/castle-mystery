@@ -83,7 +83,7 @@ function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
     const position = timeLabelPositions.positions[index];
     if (position < 0) return null;
     return <span
-      key={`${labelMinutes}-${label}`}
+      key={`${index}-${labelMinutes}-${label}`}
       className={styles.timeLabel}
       style={{left: `${position}px`}}
     >{label}</span>;
