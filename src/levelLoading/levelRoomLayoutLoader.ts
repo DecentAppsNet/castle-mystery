@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { MAP_TILE_SIZE } from "../game/roomGridUtil";
+import { findImageFilterId } from "../game/imageFilters/imageFilterUtil";
 import { getRoomTextureAssetUrl } from "../game/imageUrlUtil";
 import { findRoom } from "../game/roomUtil";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "../game/waypointUtil";
@@ -12,6 +13,7 @@ import Level from "../game/types/Level";
 import Rect from "../game/types/Rect";
 import Room from "../game/types/Room";
 import Texture from "../game/types/Texture";
+import TextureModifier from "../game/types/TextureModifier";
 import ExitStatus from "../game/types/ExitStatus";
 import ExitType from "../game/types/ExitType";
 import RoomExit, { createRoomExitId, LOCKABLE_WITHOUT_INV_CHECK } from "../game/types/RoomExit";
@@ -146,9 +148,13 @@ function _parsePositiveTextureSpanOrThrow(valueText:string, axisLabel:'horizonta
   return value;
 }
 
-function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
-  textureFieldName:'backWallTexture'|'floorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):Texture|null {
-  if (!value?.trim()) return null;
+function _buildRoomTextureSyntaxDescription(verticalUnitLabel:'layers'|'rows'):string {
+  return `'filename.png (columns,${verticalUnitLabel})' or 'filename.png', optionally followed by '| aged stone'`;
+}
+
+function _parseRoomTextureBaseSegmentOrThrow(value:string, roomId:string,
+  textureFieldName:'backWallTexture'|'floorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):
+  Pick<Texture, 'imageUrl'|'horizontalCount'|'verticalCount'> {
   const trimmedValue = value.trim();
   const openParenIndex = trimmedValue.lastIndexOf('(');
   const closeParenIndex = trimmedValue.lastIndexOf(')');
@@ -160,22 +166,44 @@ function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
     };
   }
   if (openParenIndex <= 0 || closeParenIndex <= openParenIndex) {
-    throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})' or 'filename.png'`);
+    throw new Error(`room ${roomId} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
   }
 
   const filename = trimmedValue.slice(0, openParenIndex).trim();
   const countsText = trimmedValue.slice(openParenIndex + 1, closeParenIndex).trim();
   const trailingText = trimmedValue.slice(closeParenIndex + 1).trim();
   if (!filename || !countsText || trailingText) {
-    throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})' or 'filename.png'`);
+    throw new Error(`room ${roomId} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
   }
 
   const countParts = countsText.split(',');
-  if (countParts.length !== 2) throw new Error(`room ${roomId} ${textureFieldName} must be in the form 'filename.png (columns,${verticalUnitLabel})' or 'filename.png'`);
+  if (countParts.length !== 2) throw new Error(`room ${roomId} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
   return {
     imageUrl:getRoomTextureAssetUrl(filename, `room ${textureFieldName}`),
     horizontalCount:_parsePositiveTextureSpanOrThrow(countParts[0], 'horizontal', textureFieldName, roomId),
     verticalCount:_parsePositiveTextureSpanOrThrow(countParts[1], 'vertical', textureFieldName, roomId)
+  };
+}
+
+function _parseRoomTextureModifierOrThrow(value:string, roomId:string,
+  textureFieldName:'backWallTexture'|'floorTexture'|'rightWallTexture'):TextureModifier {
+  const imageFilterId = findImageFilterId(value);
+  if (imageFilterId) return { type:'imageFilter', imageFilterId };
+  throw new Error(`room ${roomId} ${textureFieldName} has unknown texture modifier '${value.trim()}'`);
+}
+
+function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
+  textureFieldName:'backWallTexture'|'floorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):Texture|null {
+  if (!value?.trim()) return null;
+  const segments = value.split('|').map(segment => segment.trim());
+  if (segments.some(segment => !segment)) {
+    throw new Error(`room ${roomId} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
+  }
+
+  const textureBase = _parseRoomTextureBaseSegmentOrThrow(segments[0], roomId, textureFieldName, verticalUnitLabel);
+  return {
+    ...textureBase,
+    modifiers:segments.slice(1).map(segment => _parseRoomTextureModifierOrThrow(segment, roomId, textureFieldName))
   };
 }
 

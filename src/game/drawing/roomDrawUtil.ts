@@ -34,6 +34,7 @@ import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
+import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
 import Character from "../types/Character";
 import GameState from "../types/GameState";
 import Position from "../types/Position";
@@ -71,9 +72,15 @@ function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[num
 
   const roomColumnCount = roomWidthToColumnCount(room.rect.width);
   const roomLayerCount = roomHeightToLayerCount(room.rect.height);
-  const tileWidth = scaledWidth * (backWallTexture.horizontalCount / roomColumnCount);
-  const tileHeight = scaledHeight * (backWallTexture.verticalCount / roomLayerCount);
-  if (tileWidth <= 0 || tileHeight <= 0) {
+  const faceImage = createTiledTextureFaceCanvas(
+    backWallImage,
+    backWallTexture,
+    roomColumnCount,
+    roomLayerCount,
+    textureLightness,
+    `${room.id}|backWallTexture`
+  );
+  if (!faceImage) {
     context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
     return;
   }
@@ -82,12 +89,7 @@ function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[num
   context.beginPath();
   context.rect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.clip();
-  context.filter = textureLightness === 1 ? "none" : `brightness(${textureLightness})`;
-  for (let drawY = scaledTopLeft[1]; drawY < scaledTopLeft[1] + scaledHeight; drawY += tileHeight) {
-    for (let drawX = scaledTopLeft[0]; drawX < scaledTopLeft[0] + scaledWidth; drawX += tileWidth) {
-      context.drawImage(backWallImage, drawX, drawY, tileWidth, tileHeight);
-    }
-  }
+  context.drawImage(faceImage.image, scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.restore();
 }
 

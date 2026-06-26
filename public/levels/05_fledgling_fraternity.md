@@ -109,11 +109,10 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 
 ## Nave
 
-* backWallTexture=greyBricks2.png
-* floorTexture=greyBricks2.png
-* rightWallTexture=greyBricks2.png
+* backWallTexture=greyBricks2.png | aged stone
+* floorTexture=greyBricks2.png | aged stone
+* rightWallTexture=greyBricks2.png | aged stone
 * exits=Hall
-* obscured=true
 
 ```
 ............
@@ -125,9 +124,9 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 
 ## Hall
 
-* backWallTexture=greyBricks.png (4,4)
-* floorTexture=greyBricks.png (4,4)
-* rightWallTexture=greyBricks.png (4,4)
+* backWallTexture=greyBricks2.png | aged stone
+* floorTexture=greyBricks2.png | aged stone
+* rightWallTexture=greyBricks2.png | aged stone
 
 # Itinerary
 

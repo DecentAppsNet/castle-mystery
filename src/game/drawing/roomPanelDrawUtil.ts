@@ -1,6 +1,7 @@
 /* This module groups room-panel drawing helpers for wall panels, floors, and room-side surfaces.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import Texture from "../types/Texture";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
@@ -10,6 +11,7 @@ import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset, createProjectedRightWallDoorOutlinePoints, getRightWallDoorHeightPixels } from "./roomPanelProjectionUtil";
 import { findRightWallPanelSpans } from "../rightWallPanelUtil";
 import { roomHeightToLayerCount, roomWidthToColumnCount } from "../roomGridUtil";
+import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
 
 function _fillPanel(points:Array<[number, number]>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   context.lineWidth = scalingFactors.roomLineWidth;
@@ -17,23 +19,63 @@ function _fillPanel(points:Array<[number, number]>, scalingFactors:ScalingFactor
   context.fill();
 }
 
-function _createTextureLightnessFilter(textureLightness:number):string {
-  return textureLightness === 1 ? "none" : `brightness(${textureLightness})`;
+function _drawShearedTextureFace(faceWidth:number, faceHeight:number, faceImage:CanvasImageSource, origin:[number, number],
+  horizontalVector:[number, number], depthVector:[number, number], points:Array<[number, number]>,
+  context:CanvasRenderingContext2D, cutoutPoints:Array<Array<[number, number]>> = []) {
+  context.save();
+  context.beginPath();
+  context.moveTo(...points[0]);
+  for (let pointIndex = 1; pointIndex < points.length; ++pointIndex) {
+    context.lineTo(...points[pointIndex]);
+  }
+  context.closePath();
+  cutoutPoints.forEach(cutout => {
+    context.moveTo(...cutout[0]);
+    for (let pointIndex = 1; pointIndex < cutout.length; ++pointIndex) {
+      context.lineTo(...cutout[pointIndex]);
+    }
+    context.closePath();
+  });
+  context.clip("evenodd");
+  context.transform(
+    horizontalVector[0] / faceWidth,
+    horizontalVector[1] / faceWidth,
+    depthVector[0] / faceHeight,
+    depthVector[1] / faceHeight,
+    origin[0],
+    origin[1]
+  );
+  context.drawImage(faceImage, 0, 0);
+  context.restore();
 }
 
-function _drawShearedTiledPanel(image:ImageBitmap, origin:[number, number], horizontalVector:[number, number],
-  depthVector:[number, number], totalHorizontalCount:number, horizontalSpanCount:number, totalDepthCount:number, depthSpanCount:number,
-  points:Array<[number, number]>, context:CanvasRenderingContext2D, cutoutPoints:Array<Array<[number, number]>> = [], textureLightness:number = 1) {
+function _drawShearedTiledPanel(image:ImageBitmap, texture:Texture, origin:[number, number], horizontalVector:[number, number],
+  depthVector:[number, number], totalHorizontalCount:number, totalDepthCount:number,
+  points:Array<[number, number]>, context:CanvasRenderingContext2D, cutoutPoints:Array<Array<[number, number]>> = [],
+  textureLightness:number = 1, seedText:string) {
+  const faceImage = createTiledTextureFaceCanvas(
+    image,
+    texture,
+    totalHorizontalCount,
+    totalDepthCount,
+    textureLightness,
+    seedText
+  );
+  if (faceImage) {
+    _drawShearedTextureFace(faceImage.width, faceImage.height, faceImage.image, origin, horizontalVector, depthVector, points, context, cutoutPoints);
+    return;
+  }
+
   const tileHorizontalVector:[number, number] = [
-    horizontalVector[0] * (horizontalSpanCount / totalHorizontalCount),
-    horizontalVector[1] * (horizontalSpanCount / totalHorizontalCount)
+    horizontalVector[0] * (texture.horizontalCount / totalHorizontalCount),
+    horizontalVector[1] * (texture.horizontalCount / totalHorizontalCount)
   ];
   const tileDepthVector:[number, number] = [
-    depthVector[0] * (depthSpanCount / totalDepthCount),
-    depthVector[1] * (depthSpanCount / totalDepthCount)
+    depthVector[0] * (texture.verticalCount / totalDepthCount),
+    depthVector[1] * (texture.verticalCount / totalDepthCount)
   ];
-  const horizontalTileCount = Math.ceil(totalHorizontalCount / horizontalSpanCount);
-  const depthTileCount = Math.ceil(totalDepthCount / depthSpanCount);
+  const horizontalTileCount = Math.ceil(totalHorizontalCount / texture.horizontalCount);
+  const depthTileCount = Math.ceil(totalDepthCount / texture.verticalCount);
   if ((tileHorizontalVector[0] === 0 && tileHorizontalVector[1] === 0) || (tileDepthVector[0] === 0 && tileDepthVector[1] === 0)) return;
 
   context.save();
@@ -51,7 +93,7 @@ function _drawShearedTiledPanel(image:ImageBitmap, origin:[number, number], hori
     context.closePath();
   });
   context.clip("evenodd");
-  context.filter = _createTextureLightnessFilter(textureLightness);
+  context.filter = textureLightness === 1 ? "none" : `brightness(${textureLightness})`;
   for (let depthTileIndex = 0; depthTileIndex < depthTileCount; ++depthTileIndex) {
     for (let horizontalTileIndex = 0; horizontalTileIndex < horizontalTileCount; ++horizontalTileIndex) {
       const tileOriginX = origin[0] + tileHorizontalVector[0] * horizontalTileIndex + tileDepthVector[0] * depthTileIndex;
@@ -131,17 +173,17 @@ function _drawRightWallPanelSpan(room:Room, topY:number, height:number, scalingF
   if (rightWallTexture && rightWallImage && rightWallImage.width > 0 && rightWallImage.height > 0) {
     _drawShearedTiledPanel(
       rightWallImage,
+      rightWallTexture,
       topRight,
       [outerTopRight[0] - topRight[0], outerTopRight[1] - topRight[1]],
       [bottomRight[0] - topRight[0], bottomRight[1] - topRight[1]],
       ROOM_DEPTH_ROW_COUNT,
-      rightWallTexture.horizontalCount,
       roomHeightToLayerCount(room.rect.height),
-      rightWallTexture.verticalCount,
       panelPoints,
       context,
       cutoutPoints,
-      textureLightness
+      textureLightness,
+      `${room.id}|rightWallTexture|${topY}|${height}`
     );
   } else if (cutoutPoints.length === 0) {
     _fillPanel(panelPoints, scalingFactors, context);
@@ -183,17 +225,17 @@ export function drawFloorPanel(room:Room, scalingFactors:ScalingFactors, context
   if (floorTexture && floorImage && floorImage.width > 0 && floorImage.height > 0) {
     _drawShearedTiledPanel(
       floorImage,
+      floorTexture,
       bottomLeft,
       [bottomRight[0] - bottomLeft[0], bottomRight[1] - bottomLeft[1]],
       [outerBottomLeft[0] - bottomLeft[0], outerBottomLeft[1] - bottomLeft[1]],
       roomWidthToColumnCount(room.rect.width),
-      floorTexture.horizontalCount,
       ROOM_DEPTH_ROW_COUNT,
-      floorTexture.verticalCount,
       panelPoints,
       context,
       [],
-      textureLightness
+      textureLightness,
+      `${room.id}|floorTexture`
     );
   } else {
     _fillPanel(panelPoints, scalingFactors, context);
