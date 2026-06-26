@@ -2,6 +2,20 @@ import { createScratchCanvas } from "@/game/drawing/canvasSurfaceUtil";
 
 import { ImageFilterArgs } from "./imageFilterUtil";
 
+type StoneOverlaySpec = Readonly<{
+  coarseColumns:number,
+  coarseRows:number,
+  detailColumns:number,
+  detailRows:number,
+  coarseSeed:number,
+  detailSeed:number,
+  splotchThreshold:number,
+  splotchRange:number,
+  splotchDarkness:number,
+  edgeGrimeDarkness:number,
+  bottomGrimeDarkness:number
+}>;
+
 function _clamp01(value:number):number {
   return Math.max(0, Math.min(1, value));
 }
@@ -52,7 +66,7 @@ function _sampleSmoothNoise(grid:number[][], x:number, y:number, width:number, h
   return _lerp(topValue, bottomValue, ty);
 }
 
-export function applyAgedStoneImageFilter({ context, width, height, seed }:ImageFilterArgs) {
+function _applyStoneOverlayImageFilter({ context, width, height, seed }:ImageFilterArgs, spec:StoneOverlaySpec) {
   const overlayCanvas = createScratchCanvas(width, height);
   if (!overlayCanvas) return;
   const overlayContext = overlayCanvas.getContext('2d');
@@ -60,8 +74,8 @@ export function applyAgedStoneImageFilter({ context, width, height, seed }:Image
 
   const imageData = overlayContext.createImageData(width, height);
   const pixels = imageData.data;
-  const coarseNoise = _createNoiseGrid(9, 7, seed ^ 0x51a7ed57);
-  const detailNoise = _createNoiseGrid(21, 16, seed ^ 0x0badcafe);
+  const coarseNoise = _createNoiseGrid(spec.coarseColumns, spec.coarseRows, seed ^ spec.coarseSeed);
+  const detailNoise = _createNoiseGrid(spec.detailColumns, spec.detailRows, seed ^ spec.detailSeed);
 
   for (let y = 0; y < height; ++y) {
     for (let x = 0; x < width; ++x) {
@@ -70,11 +84,15 @@ export function applyAgedStoneImageFilter({ context, width, height, seed }:Image
       const coarse = _sampleSmoothNoise(coarseNoise, x, y, width, height);
       const detail = _sampleSmoothNoise(detailNoise, x, y, width, height);
       const blendedNoise = coarse * 0.8 + detail * 0.2;
-      const splotch = _smoothstep01((blendedNoise - 0.42) / 0.4);
+      const splotch = _smoothstep01((blendedNoise - spec.splotchThreshold) / spec.splotchRange);
       const edgeDistance = Math.min(nx, 1 - nx, ny, 1 - ny);
       const edgeGrime = _smoothstep01((0.22 - edgeDistance) / 0.22);
       const bottomGrime = _smoothstep01((ny - 0.58) / 0.42);
-      const darkness = _clamp01(splotch * 0.18 + edgeGrime * 0.09 + bottomGrime * 0.06);
+      const darkness = _clamp01(
+        splotch * spec.splotchDarkness
+        + edgeGrime * spec.edgeGrimeDarkness
+        + bottomGrime * spec.bottomGrimeDarkness
+      );
       const alpha = Math.round(darkness * 255);
       const pixelI = (y * width + x) * 4;
       pixels[pixelI] = 0;
@@ -89,4 +107,40 @@ export function applyAgedStoneImageFilter({ context, width, height, seed }:Image
   context.globalCompositeOperation = 'multiply';
   context.drawImage(overlayCanvas, 0, 0);
   context.restore();
+}
+
+const AGED_STONE_SPEC:StoneOverlaySpec = {
+  coarseColumns:9,
+  coarseRows:7,
+  detailColumns:21,
+  detailRows:16,
+  coarseSeed:0x51a7ed57,
+  detailSeed:0x0badcafe,
+  splotchThreshold:0.42,
+  splotchRange:0.4,
+  splotchDarkness:0.18,
+  edgeGrimeDarkness:0.09,
+  bottomGrimeDarkness:0.06
+};
+
+const PLASTER_SPEC:StoneOverlaySpec = {
+  coarseColumns:6,
+  coarseRows:5,
+  detailColumns:16,
+  detailRows:12,
+  coarseSeed:0x6a11f537,
+  detailSeed:0x1a57e2d1,
+  splotchThreshold:0.86,
+  splotchRange:0.48,
+  splotchDarkness:0.11,
+  edgeGrimeDarkness:0.09,
+  bottomGrimeDarkness:0.06
+};
+
+export function applyAgedStoneImageFilter(args:ImageFilterArgs) {
+  _applyStoneOverlayImageFilter(args, AGED_STONE_SPEC);
+}
+
+export function applyPlasterImageFilter(args:ImageFilterArgs) {
+  _applyStoneOverlayImageFilter(args, PLASTER_SPEC);
 }

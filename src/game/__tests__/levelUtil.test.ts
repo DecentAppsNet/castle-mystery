@@ -163,6 +163,7 @@ import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import roomBackWallTextureText from './fixtures/room-back-wall-texture.md?raw';
 import roomBackWallTextureDefaultCountsText from './fixtures/room-back-wall-texture-default-counts.md?raw';
 import roomBackWallTextureFilterText from './fixtures/room-back-wall-texture-filter.md?raw';
+import roomBackWallTexturePlasterFilterText from './fixtures/room-back-wall-texture-plaster-filter.md?raw';
 import roomStyleTextureText from './fixtures/room-style-texture.md?raw';
 import roomFloorTextureText from './fixtures/room-floor-texture.md?raw';
 import roomRightWallTextureText from './fixtures/room-right-wall-texture.md?raw';
@@ -790,6 +791,18 @@ describe('levelUtil itinerary loading', () => {
       horizontalCount:4,
       verticalCount:4,
       modifiers:[{ type:'imageFilter', imageFilterId:'aged stone' }]
+    });
+  });
+
+  it('loads plaster back wall texture image filters from room metadata', () => {
+    const level = loadLevelFromText(roomBackWallTexturePlasterFilterText, 'room-back-wall-texture-plaster-filter.md');
+    const hall = level.rooms[0];
+
+    expect(hall.backWallTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+      horizontalCount:4,
+      verticalCount:4,
+      modifiers:[{ type:'imageFilter', imageFilterId:'plaster' }]
     });
   });
 

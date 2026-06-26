@@ -4,16 +4,16 @@
 * activeCharacter=Niccolo
 * time=23:00:00
 * background=nightSky.png
-* imports=items.md | characters.md
+* imports=items.md | characters.md | roomStyles.md
 
 
-* Niccolo
-* Harold the ex-Herald
-* Sticky Agatha
-* Giorgios - master carver, there for the booze
-* Giovanni - journeyman mason
-* Yusuf - builder and surveyor
-* Hugo - spying on them. Pretending to be a Master Mason. He's very unconvincing.
+Niccolo
+Harold the ex-Herald
+Sticky Agatha
+Giorgios - master carver, there for the booze
+Giovanni - journeyman mason
+Yusuf - builder and surveyor
+Hugo - spying on them. Pretending to be a Master Mason. He's very unconvincing.
 
 Niccolo, Agatha stand outside the cathedral. Agatha reminds Niccolo to put on his mask. She says she will keep watch from outside the cathedral.
 
@@ -105,19 +105,11 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 * A=Nave
 * B=Hall
 
-# Room Styles
-
-## Inside Cathedral
-
-* backWallTexture=greyBricks2.png | aged stone
-* floorTexture=greyBricks.png | aged stone
-* rightWallTexture=greyBricks2.png | aged stone
-
 # Rooms
 
 ## Nave
 
-* style=Inside Cathedral
+* style=Finished
 * exits=Hall
 
 ```
@@ -130,7 +122,7 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 
 ## Hall
 
-* style=Inside Cathedral
+* style=Old Castle
 
 # Itinerary
 

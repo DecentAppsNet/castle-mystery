@@ -1,6 +1,6 @@
 import TextureModifier from "@/game/types/TextureModifier";
 
-import { applyAgedStoneImageFilter } from "./agedStoneImageFilter";
+import { applyAgedStoneImageFilter, applyPlasterImageFilter } from "./agedStoneImageFilter";
 import { ImageFilterId } from "./imageFilterTypes";
 
 export type ImageFilterArgs = Readonly<{
@@ -19,6 +19,7 @@ function _normalizeImageFilterId(text:string):string {
 function _findImageFilter(imageFilterId:ImageFilterId):ImageFilter {
   switch(imageFilterId) {
     case 'aged stone': return applyAgedStoneImageFilter;
+    case 'plaster': return applyPlasterImageFilter;
   }
 }
 
@@ -45,6 +46,7 @@ function _applyImageFilterModifier(context:CanvasRenderingContext2D, width:numbe
 export function findImageFilterId(text:string):ImageFilterId|null {
   const normalizedText = _normalizeImageFilterId(text);
   if (normalizedText === 'aged stone') return 'aged stone';
+  if (normalizedText === 'plaster') return 'plaster';
   return null;
 }
 

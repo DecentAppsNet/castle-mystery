@@ -67,7 +67,7 @@ export function drawObscuredRoom(room:Room, scalingFactors:ScalingFactors, conte
   _polygonPath(points, context);
   context.clip();
 
-  context.fillStyle = "rgba(2, 2, 2, 0.90)";
+  context.fillStyle = "rgba(2, 2, 2, 0.80)";
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
 
   const baseGlow = context.createRadialGradient(

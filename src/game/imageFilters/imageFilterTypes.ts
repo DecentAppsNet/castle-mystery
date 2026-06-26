@@ -1,1 +1,1 @@
-export type ImageFilterId = 'aged stone';
+export type ImageFilterId = 'aged stone' | 'plaster';

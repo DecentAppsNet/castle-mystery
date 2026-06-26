@@ -4,7 +4,7 @@
 * activeCharacter=Toro
 * time=8:00:00
 * background=daySky.png
-* imports=items.md | characters.md
+* imports=items.md | characters.md | roomStyles.md
 * winSynopsis=The King's decisions planted seeds of discontent among two petitioners. Toro's luck changed for the better with a new job. King Frederick resolved to reform administrative procedures to isolate him from his subjects. The Pope became an untrustworthy figure in his eyes.
 
 # Map
@@ -38,6 +38,7 @@ MMMNNFLDKKKKAAA
 
 * outside=true
 * exits=Entrance Hall (closed)
+* style=Town Street
 
 ```
 .....G......
@@ -52,6 +53,7 @@ MMMNNFLDKKKKAAA
 ## Entrance Hall
 
 * exits=Usher's Office (unlocked, unlockable) | Central Hall 
+* style=Finished
 
 
 ```
@@ -82,6 +84,7 @@ MMMNNFLDKKKKAAA
 ............
 ```
 
+* style=Finished
 * obscured=true
 * exits=East Stairwell
 
@@ -89,11 +92,13 @@ MMMNNFLDKKKKAAA
 
 * title=
 * exits=Deep Archives (locked, unlockable) | Tapestry Store (locked, unlockable)
+* style=Old Castle
 
 ## Record Room
 
 * exits=Lower Stairwell | East Stairwell (locked,unlockable)
 * obscured=true
+* style=Old Castle
 
 ```
 ..f.
@@ -107,6 +112,7 @@ MMMNNFLDKKKKAAA
 
 * title=
 * obscured=true
+* style=Old Castle
 
 ```
 ....
@@ -120,6 +126,7 @@ MMMNNFLDKKKKAAA
 
 * exits=West Stairwell
 * obscured=true
+* style=Finished
 
 ```
 ...H.....A..G...
@@ -136,6 +143,7 @@ MMMNNFLDKKKKAAA
 ## Chamberlain's Office
 
 * exits=East Stairwell (unlocked, lockable)
+* style=Finished
 
 ```
 ..c.....
@@ -150,6 +158,7 @@ MMMNNFLDKKKKAAA
 ## Usher's Office
 
 * exits=Entrance Hall (unlockable)
+* style=Old Castle
 
 ```
 CR..
@@ -164,6 +173,7 @@ CR..
 
 * obscured=true
 * exits=West Stairwell | East Stairwell
+* style=Finished
 
 ```
 ................
@@ -192,9 +202,11 @@ N1234567890ABCD.
 * title=
 * obscured=true
 * exits=Chamberlain's Office (lockable)
+* style=Old Castle
 
 ## Deep Archives
 * exits=Lower Stairwell (locked)
+* style=Old Castle
 
 ```
 ..............b.
@@ -206,6 +218,7 @@ N1234567890ABCD.
 
 ## Tapestry Store
 * exits=Lower Stairwell (locked)
+* style=Old Castle
 
 ```
 ..t.
@@ -217,6 +230,7 @@ N1234567890ABCD.
 
 ## Withdrawal Chamber
 * exits=Robing Chamber (closed)
+* style=Finished
 
 ```
 ..t.........
@@ -229,6 +243,7 @@ N1234567890ABCD.
 ## Robing Chamber
 * exits=East Stairwell (closed)
 * obscured=true
+* style=Finished
 
 ```
 ..t.....

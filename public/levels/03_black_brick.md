@@ -4,7 +4,7 @@
 * activeCharacter=King Frederick
 * time=11:58:00
 * background=daySky.png
-* imports=items.md | characters.md
+* imports=items.md | characters.md | roomStyles.md
 * groundFloorRoom=Lawn
 * winSynopsis=The Pope's convoluted caper was executed flawlessly. He aimed to scare young King Frederick. But who knows what effect the collapsed tower had on the boy?
 
@@ -44,6 +44,7 @@ AABBCCDFGGHHH.
 * title=
 * outside=true
 * exits=Lawn
+* style=Palace Garden
 
 ```
 ........
@@ -58,20 +59,24 @@ AABBCCDFGGHHH.
 
 * outside=true
 * exits=Lawn East
+* style=Palace Garden
 
 ## Lawn East
 
 * title=
 * outside=true
 * exits=Central Stairwell (closed)
+* style=Palace Garden
 
 ## Central Stairwell
 
 * title=
+* style=Old Castle
 
 ## Guard Chamber
 
 * exits=Central Stairwell (closed)
+* style=Old Castle
 
 ```
 ..h.
@@ -85,16 +90,19 @@ AABBCCDFGGHHH.
 ## Portcullis Chamber
 
 * exits=Central Stairwell (closed) | Courtyard (closed)
+* style=Old Castle
 
 ## Courtyard
 
 * outside=true
 * exits=Courtyard East
+* style=Palace Garden
 
 ## Courtyard East
 
 * title=
 * outside=true
+* style=Palace Garden
 
 ```
 ............
@@ -108,15 +116,18 @@ AABBCCDFGGHHH.
 ## West Hall
 
 * exits=Central Stairwell (closed) | West Stairwell (closed)
+* style=Old Castle
 
 ## East Hall
 
 * obscured=true
 * exits=Central Stairwell (closed) | East Stairwell (closed)
+* style=Old Castle
 
 ## Wine Cellar
 
 * exits=East Stairwell (closed) | Textile Store (unlocked, unlockable with Steward's Key)
+* style=Old Castle
 
 ```
 ............
@@ -136,14 +147,17 @@ AABBCCDFGGHHH.
 ```
 
 * b=Black Brick
+* style=Old Castle
 
 ## East Stairwell
 
 * exits=Grain Store (locked, unlockable with Steward's Key) | Steward's Office (unlockable with Steward's Key)
+* style=Old Castle
 
 ## Grain Store
 
 * exits=East Stairwell (locked)
+* style=Old Castle
 
 ```
 ............
@@ -158,6 +172,7 @@ AABBCCDFGGHHH.
 ## Steward's Office
 
 * exits=East Stairwell (locked, unlockable with Steward's Key)
+* style=Old Castle
 
 ```
 .......t
@@ -172,6 +187,7 @@ AABBCCDFGGHHH.
 ## Liturgical Vault
 
 * exits=West Stairwell (closed)
+* style=Old Castle
 
 ```
 ...p........
@@ -184,10 +200,12 @@ AABBCCDFGGHHH.
 ## West Stairwell
 
 * title=
+* style=Old Castle
 
 ## Lower Passage
 
 * exits=West Stairwell (closed) | East Stairwell (closed)
+* style=Old Castle
 
 # Characters
 
@@ -248,7 +266,6 @@ AABBCCDFGGHHH.
 * description=Helena of Gaeta - Keeper of Textiles | Matteo il Toro - Cellarer | Hugo of Speyer - Guard Sargeant | Raniero de Stefano - Steward
 * image=codex.png
 * drawOffsetY=-2.5
-* drawOffsetZ=-.1
 * drawOffsetX=1
 
 ## Wheat Bin
