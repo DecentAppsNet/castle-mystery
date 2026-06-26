@@ -109,7 +109,7 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 
 ## Nave
 
-* style=Finished
+* style=Old Castle
 * exits=Hall
 
 ```
