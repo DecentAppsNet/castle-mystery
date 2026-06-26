@@ -374,9 +374,6 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
       gameState.time, gameState.imageSet, gameState.isLevelComplete, layoutPlanner);
     drawRoomWaypointsWithHighlight(room, gameState.scalingFactors, context,
       highlightedWaypointPosition, gameState.isLevelComplete);
-  }
-  for (const { room } of roomRenderStates) {
-    if (!room.isDiscovered) continue;
     if (!_drawCachedRoomRoof(room, gameState, context)) {
       drawRoomRoofs(room, gameState.rooms, gameState.groundFloorY, gameState.scalingFactors, context);
     }
