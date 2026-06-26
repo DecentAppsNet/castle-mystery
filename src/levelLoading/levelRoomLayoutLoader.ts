@@ -126,6 +126,43 @@ function _createNormalizedRoomSectionIds(roomsSection:string, firstLineNo:number
   return new Set(Array.from(_createNormalizedSectionEntryMap(roomsSection, 2, firstLineNo).keys()));
 }
 
+type RoomStyleMetadata = Readonly<{
+  backWallTexture:Texture|null,
+  floorTexture:Texture|null,
+  rightWallTexture:Texture|null
+}>;
+
+function _createRoomStyleMetadata(roomStyleSection:string, roomStyleId:string, lineNo:number):RoomStyleMetadata {
+  const roomStyleNameValues = parseUniqueNameValueLines(roomStyleSection, `room style ${roomStyleId}`, false, lineNo + 1);
+  return {
+    backWallTexture:_parseOptionalRoomTexture(roomStyleNameValues.backWallTexture, roomStyleId, 'backWallTexture', 'layers'),
+    floorTexture:_parseOptionalRoomTexture(roomStyleNameValues.floorTexture, roomStyleId, 'floorTexture', 'rows'),
+    rightWallTexture:_parseOptionalRoomTexture(roomStyleNameValues.rightWallTexture, roomStyleId, 'rightWallTexture', 'layers')
+  };
+}
+
+function _createRoomStyleMetadataById(roomStylesSection:string, firstLineNo:number):Map<string, RoomStyleMetadata> {
+  const roomStyleEntriesById = _createNormalizedSectionEntryMap(roomStylesSection, 2, firstLineNo);
+  const roomStyleMetadataById = new Map<string, RoomStyleMetadata>();
+  roomStyleEntriesById.forEach((roomStyleEntry, roomStyleId) => {
+    roomStyleMetadataById.set(roomStyleId, _createRoomStyleMetadata(roomStyleEntry.value, roomStyleId, roomStyleEntry.lineNo));
+  });
+  return roomStyleMetadataById;
+}
+
+function _findRoomStyleMetadataOrThrow(roomStyleText:string, roomId:string, roomStyleMetadataById:Map<string, RoomStyleMetadata>):RoomStyleMetadata {
+  const roomStyleId = normalizeId(roomStyleText);
+  const roomStyleMetadata = roomStyleMetadataById.get(roomStyleId) || null;
+  if (roomStyleMetadata) return roomStyleMetadata;
+  throw new Error(`room ${roomId} references unknown style '${roomStyleText}'`);
+}
+
+function _resolveRoomTextureOverride(roomNameValues:Record<string, string>, propertyName:'backWallTexture'|'floorTexture'|'rightWallTexture',
+  roomId:string, verticalUnitLabel:'layers'|'rows', inheritedTexture:Texture|null):Texture|null {
+  if (!Object.hasOwn(roomNameValues, propertyName)) return inheritedTexture;
+  return _parseOptionalRoomTexture(roomNameValues[propertyName], roomId, propertyName, verticalUnitLabel);
+}
+
 function _validateMapLegendRoomsExistInRoomsSection(legend:Record<string, string>, roomsSection:string, roomsFirstLineNo:number) {
   const roomSectionIds = _createNormalizedRoomSectionIds(roomsSection, roomsFirstLineNo);
   Object.values(legend).forEach(roomName => {
@@ -297,12 +334,17 @@ export function validateMapLegendRoomsAgainstRoomsSection(mapSection:string, roo
   _validateMapLegendRoomsExistInRoomsSection(legend, roomsSection, roomsFirstLineNo);
 }
 
-export function applyRoomMetadataFromSections(level:Level, roomsSection:string, firstLineNo:number = 1) {
+export function applyRoomMetadataFromSections(level:Level, roomsSection:string, firstLineNo:number = 1,
+  roomStylesSection:string = '', roomStylesFirstLineNo:number = 1) {
   const roomSectionsById = _createNormalizedSectionEntryMap(roomsSection, 2, firstLineNo);
+  const roomStyleMetadataById = _createRoomStyleMetadataById(roomStylesSection, roomStylesFirstLineNo);
   level.rooms.forEach((room, index) => {
     const roomSectionEntry = roomSectionsById.get(room.id) || null;
     if (!roomSectionEntry) return;
     const roomNameValues = parseUniqueNameValueLines(roomSectionEntry.value, `room ${room.id}`, false, roomSectionEntry.lineNo + 1);
+    const inheritedRoomStyle = roomNameValues.style
+      ? _findRoomStyleMetadataOrThrow(roomNameValues.style, room.id, roomStyleMetadataById)
+      : null;
     const title = Object.hasOwn(roomNameValues, 'title')
       ? roomNameValues.title
       : roomSectionEntry.authoredName.trim();
@@ -310,9 +352,9 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string, 
       ...room,
       title,
       isOutside: (roomNameValues.outside || '').toLowerCase() === 'true',
-      backWallTexture:_parseOptionalRoomTexture(roomNameValues.backWallTexture, room.id, 'backWallTexture', 'layers'),
-      floorTexture:_parseOptionalRoomTexture(roomNameValues.floorTexture, room.id, 'floorTexture', 'rows'),
-      rightWallTexture:_parseOptionalRoomTexture(roomNameValues.rightWallTexture, room.id, 'rightWallTexture', 'layers'),
+      backWallTexture:_resolveRoomTextureOverride(roomNameValues, 'backWallTexture', room.id, 'layers', inheritedRoomStyle?.backWallTexture || null),
+      floorTexture:_resolveRoomTextureOverride(roomNameValues, 'floorTexture', room.id, 'rows', inheritedRoomStyle?.floorTexture || null),
+      rightWallTexture:_resolveRoomTextureOverride(roomNameValues, 'rightWallTexture', room.id, 'layers', inheritedRoomStyle?.rightWallTexture || null),
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };
   });
@@ -329,7 +371,7 @@ export function validateRoomGridLegendEntries(level:Level, roomsSection:string, 
 
     const roomNameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`, false, roomSectionEntry.lineNo + 1);
     const roomLegend = Object.fromEntries(
-      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside' && name !== 'backWallTexture' && name !== 'floorTexture' && name !== 'rightWallTexture')
+      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside' && name !== 'style' && name !== 'backWallTexture' && name !== 'floorTexture' && name !== 'rightWallTexture')
     );
 
     findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:entryText, row, col }) => {

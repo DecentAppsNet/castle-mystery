@@ -41,7 +41,7 @@ import { calcRoomsBoundingRect, findRoomByIdOrTitle } from "../game/roomUtil";
 import { getBackgroundImageAssetUrl } from "../game/imageUrlUtil";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
-const KNOWN_TOP_LEVEL_SECTION_NAMES = new Set(['general', 'map', 'rooms', 'characters', 'items', 'itinerary', 'conclusions']);
+const KNOWN_TOP_LEVEL_SECTION_NAMES = new Set(['general', 'map', 'roomStyles', 'rooms', 'characters', 'items', 'itinerary', 'conclusions']);
 
 function _sortGeneratedConclusionOptions(options:string[]):string[] {
   return [...options].sort((option1, option2) => option1.localeCompare(option2, undefined, { sensitivity:'base' }));
@@ -379,6 +379,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       () => parseSections(text, 1, true));
     const generalFirstLineNo = _findSectionFirstContentLineNo(text, 'general') || 1;
     const mapFirstLineNo = _findSectionFirstContentLineNo(text, 'map') || 1;
+    const roomStylesFirstLineNo = _findSectionFirstContentLineNo(text, 'room styles') || 1;
     const roomsFirstLineNo = _findSectionFirstContentLineNo(text, 'rooms') || 1;
     const charactersFirstLineNo = _findSectionFirstContentLineNo(text, 'characters') || 1;
     const itemsFirstLineNo = _findSectionFirstContentLineNo(text, 'items') || 1;
@@ -409,7 +410,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
       () => validateMapLegendRoomsAgainstRoomsSection(sections.map || "", sections.rooms || "", mapFirstLineNo, roomsFirstLineNo));
     _runWithLoadLevelSectionContext(levelFilename, roomsFirstLineNo,
-      () => applyRoomMetadataFromSections(level, sections.rooms || "", roomsFirstLineNo));
+      () => applyRoomMetadataFromSections(level, sections.rooms || "", roomsFirstLineNo, sections.roomStyles || "", roomStylesFirstLineNo));
     _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
       () => _validateGroundFloorRoomReference(level, generalSection.groundFloorRoomRef));
     const groundFloorY = _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,

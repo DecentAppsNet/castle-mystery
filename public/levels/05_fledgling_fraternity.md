@@ -105,13 +105,19 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 * A=Nave
 * B=Hall
 
+# Room Styles
+
+## Inside Cathedral
+
+* backWallTexture=greyBricks2.png | aged stone
+* floorTexture=greyBricks.png | aged stone
+* rightWallTexture=greyBricks2.png | aged stone
+
 # Rooms
 
 ## Nave
 
-* backWallTexture=greyBricks2.png | aged stone
-* floorTexture=greyBricks2.png | aged stone
-* rightWallTexture=greyBricks2.png | aged stone
+* style=Inside Cathedral
 * exits=Hall
 
 ```
@@ -124,9 +130,7 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 
 ## Hall
 
-* backWallTexture=greyBricks2.png | aged stone
-* floorTexture=greyBricks2.png | aged stone
-* rightWallTexture=greyBricks2.png | aged stone
+* style=Inside Cathedral
 
 # Itinerary
 

@@ -163,6 +163,7 @@ import roomGridDepthText from './fixtures/room-grid-depth.md?raw';
 import roomBackWallTextureText from './fixtures/room-back-wall-texture.md?raw';
 import roomBackWallTextureDefaultCountsText from './fixtures/room-back-wall-texture-default-counts.md?raw';
 import roomBackWallTextureFilterText from './fixtures/room-back-wall-texture-filter.md?raw';
+import roomStyleTextureText from './fixtures/room-style-texture.md?raw';
 import roomFloorTextureText from './fixtures/room-floor-texture.md?raw';
 import roomRightWallTextureText from './fixtures/room-right-wall-texture.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
@@ -812,6 +813,40 @@ describe('levelUtil itinerary loading', () => {
       imageUrl:getRoomTextureAssetUrl('wallBricks.png'),
       horizontalCount:2,
       verticalCount:2,
+      modifiers:[]
+    });
+  });
+
+  it('loads room textures from styles and lets room metadata override individual style textures', () => {
+    const level = loadLevelFromText(roomStyleTextureText, 'room-style-texture.md');
+    const nave = level.rooms.find(room => room.id === 'nave');
+    const hall = level.rooms.find(room => room.id === 'hall');
+
+    expect(nave?.backWallTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+      horizontalCount:4,
+      verticalCount:4,
+      modifiers:[{ type:'imageFilter', imageFilterId:'aged stone' }]
+    });
+    expect(nave?.floorTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
+      horizontalCount:2,
+      verticalCount:2,
+      modifiers:[]
+    });
+    expect(nave?.rightWallTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('wallBricks.png'),
+      horizontalCount:2,
+      verticalCount:2,
+      modifiers:[]
+    });
+
+    expect(hall?.backWallTexture).toEqual(nave?.backWallTexture);
+    expect(hall?.rightWallTexture).toEqual(nave?.rightWallTexture);
+    expect(hall?.floorTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+      horizontalCount:4,
+      verticalCount:4,
       modifiers:[]
     });
   });
