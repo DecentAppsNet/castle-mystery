@@ -237,6 +237,7 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
 export function drawRoomShellExits(room:Room, rooms:ReadonlyArray<Room>, characters:Character[], drawnExitIds:Set<string>,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
   layoutPlanner:CanvasLayoutPlanner|null = null) {
+  if (!room.isDiscovered) return;
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds, layoutPlanner));
 }
 

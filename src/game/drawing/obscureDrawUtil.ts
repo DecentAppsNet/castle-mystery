@@ -41,7 +41,6 @@ function _faceBounds(points:ReadonlyArray<CanvasPoint>) {
 
 function _createObscuredRoomPoints(room:Room, scalingFactors:ScalingFactors):CanvasPoint[] {
   const [topLeftBackX, topLeftBackY] = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
-  const [topLeftFrontX, topLeftFrontY] = projectRoomPointWithDepth(room.rect.x, room.rect.y, 1, scalingFactors);
   const [topRightFrontX, topRightFrontY] = projectRoomPointWithDepth(room.rect.x + room.rect.width, room.rect.y, 1, scalingFactors);
   const [topRightBackX, topRightBackY] = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y, scalingFactors);
   const [bottomRightFrontX, bottomRightFrontY] = projectRoomPointWithDepth(room.rect.x + room.rect.width, room.rect.y + room.rect.height, 1, scalingFactors);
