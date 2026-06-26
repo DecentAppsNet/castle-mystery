@@ -13,7 +13,7 @@ type CanvasPoint = Readonly<{
 
 const OBSCURE_ALPHA = 1;
 const OBSCURE_PHASE = .3;
-const OBSCURE_DENSITY = 0.3;
+const OBSCURE_DENSITY = 1;
 const OBSCURE_BRIGHTNESS = 1;
 
 function _polygonPath(points:ReadonlyArray<CanvasPoint>, context:CanvasRenderingContext2D) {
@@ -96,7 +96,7 @@ export function drawObscuredRoom(room:Room, scalingFactors:ScalingFactors, conte
     const y = center.y
       + Math.cos(seed * 1.13 + rollA * 1.7) * (bounds.maxY - bounds.minY) * 0.42
       + Math.cos(seed * 0.51 + rollB * 2.8) * 16;
-    const radius = 22 + 18 * (0.5 + 0.5 * Math.sin(seed * 0.91 + time * 0.0008));
+    const radius = 82 + 18 * (0.5 + 0.5 * Math.sin(seed * 0.91 + time * 0.0008));
     const opacity = (0.055 + 0.07 * (0.5 + 0.5 * Math.sin(seed + time * 0.0013))) * OBSCURE_ALPHA * OBSCURE_BRIGHTNESS;
 
     const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
@@ -122,7 +122,7 @@ export function drawObscuredRoom(room:Room, scalingFactors:ScalingFactors, conte
     const y = center.y
       + Math.cos(seed * 0.69 + time * 0.00038) * (bounds.maxY - bounds.minY) * 0.46
       + Math.cos(seed * 1.2 + time * 0.0011) * 10;
-    const radius = 7 + 9 * (0.5 + 0.5 * Math.sin(seed + time * 0.0018 + orbit));
+    const radius = 70 + 9 * (0.5 + 0.5 * Math.sin(seed + time * 0.0018 + orbit));
     const opacity = (0.035 + 0.06 * Math.max(0, orbit)) * OBSCURE_ALPHA * OBSCURE_BRIGHTNESS;
 
     const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
@@ -144,7 +144,7 @@ export function drawObscuredRoom(room:Room, scalingFactors:ScalingFactors, conte
     const opacity = (0.035 + 0.05 * (0.5 + 0.5 * Math.sin(time * 0.002 + seed))) * OBSCURE_ALPHA * OBSCURE_BRIGHTNESS;
 
     context.strokeStyle = `rgba(190, 190, 190, ${opacity})`;
-    context.lineWidth = 1.8 + 1.2 * Math.sin(seed + time * 0.001);
+    context.lineWidth = 3.8 + 1.2 * Math.sin(seed + time * 0.001);
     context.beginPath();
 
     for (let x = bounds.minX - 30; x <= bounds.maxX + 30; x += 8) {
