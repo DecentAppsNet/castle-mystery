@@ -1185,26 +1185,6 @@ describe('levelUtil itinerary loading', () => {
     expect(dropEvent?.position).not.toEqual(dropStartPose);
   });
 
-  it('loads drop drawOffset modifiers into both the drop event and the rebuilt dropped item state', () => {
-    const dropOffsetText = dropItemText.replace('0:00:05 Hero drops Book', '0:00:05 Hero drops Book (1.5, -0.25, 0.1)');
-    const level = loadLevelFromText(dropOffsetText, 'drop-item-draw-offset.md');
-    const hero = level.characters.find(character => character.id === 'hero');
-    const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as {
-      startTime:number,
-      itemId:string,
-      drawOffset:{ x:number, y:number, z:number }
-    } | undefined;
-    const gameState = createGameState(level);
-
-    rebuildDynamicStateForTime(gameState, dropEvent!.startTime, dropEvent!.startTime - 1);
-
-    const droppedBook = gameState.rooms[0].items.find(item => item.id === 'book') || null;
-
-    expect(dropEvent?.itemId).toBe('book');
-    expect(dropEvent?.drawOffset).toEqual({ x:1.5, y:-0.25, z:0.1 });
-    expect(droppedBook?.drawOffset).toEqual({ x:1.5, y:-0.25, z:0.1 });
-  });
-
   it('adds a short blocking pause after drop activities before after-previous events', () => {
     const dropPauseText = `${dropItemText}\n: Hero thinks "Done."`;
     const level = loadLevelFromText(dropPauseText, 'drop-pause.md');

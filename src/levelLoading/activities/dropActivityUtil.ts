@@ -14,11 +14,6 @@ import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/ac
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
 
-type ParsedDropParts = {
-  itemRef:string,
-  drawOffset:Item['drawOffset']
-}
-
 function _createWaypointKey(waypoint:Waypoint):string {
   return `${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`;
 }
@@ -123,48 +118,10 @@ function _createDroppedItemPosition(room:ReturnType<typeof findCurrentRoom>, dro
   };
 }
 
-function _createZeroDrawOffset():Item['drawOffset'] {
-  return { x:0, y:0, z:0 };
-}
-
-function _findParenthesizedTrailingTupleText(text:string):string|null {
-  if (!text.endsWith(')')) return null;
-  const openParenIndex = text.lastIndexOf('(');
-  if (openParenIndex === -1) return null;
-  return text.slice(openParenIndex + 1, -1);
-}
-
-function _parseDrawOffsetNumber(text:string, activityText:string):number {
-  const value = Number(text.trim());
-  if (Number.isNaN(value)) throw new Error(`invalid drop drawOffset number '${text.trim()}' in itinerary activity '${activityText}'`);
-  return value;
-}
-
-function _splitParenthesizedTupleNumbers(tupleText:string):string[] {
-  if (tupleText.includes(',')) return tupleText.split(',').map(text => text.trim()).filter(Boolean);
-  return tupleText.trim().split(/\s+/).filter(Boolean);
-}
-
-function _parseDropParts(activityText:string):ParsedDropParts {
+function _parseDropItemRef(activityText:string):string {
   const dropText = stripTrailingPeriod(activityText.trim().slice('drops'.length).trim());
   if (!dropText.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
-  const trailingTupleText = _findParenthesizedTrailingTupleText(dropText);
-  if (!trailingTupleText) return { itemRef:dropText, drawOffset:_createZeroDrawOffset() };
-
-  const openParenIndex = dropText.lastIndexOf('(');
-  const itemRef = dropText.slice(0, openParenIndex).trim();
-  if (!itemRef.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
-  const numberTexts = _splitParenthesizedTupleNumbers(trailingTupleText);
-  if (numberTexts.length !== 3) throw new Error(`drop drawOffset must be in the form '(x, y, z)' in itinerary activity '${activityText}'`);
-
-  return {
-    itemRef,
-    drawOffset:{
-      x:_parseDrawOffsetNumber(numberTexts[0], activityText),
-      y:_parseDrawOffsetNumber(numberTexts[1], activityText),
-      z:_parseDrawOffsetNumber(numberTexts[2], activityText)
-    }
-  };
+  return dropText;
 }
 
 export function tryCreateDropActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
@@ -173,7 +130,7 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
 
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  const { itemRef, drawOffset } = _parseDropParts(trimmedActivityText);
+  const itemRef = _parseDropItemRef(trimmedActivityText);
 
   const item = removeStateOwnedItem(context.state, itemRef);
   if (!item) throw new Error(`item ${itemRef} is not carried for drop activity`);
@@ -184,8 +141,7 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
   const dropWaypoint = _chooseBestDropWaypoint(room, context.state.waypoint, activityStartTime, context);
   const droppedItem = {
     ...item,
-    position:_createDroppedItemPosition(room, dropWaypoint, roomItems),
-    drawOffset
+    position:_createDroppedItemPosition(room, dropWaypoint, roomItems)
   };
   roomItems.push(droppedItem);
 
