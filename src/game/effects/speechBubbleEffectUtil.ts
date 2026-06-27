@@ -16,11 +16,12 @@ function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):
     speechBubbleEffect.scalingFactors,
     speechBubbleEffect.gameTime
   );
-  drawSpeechBubble(speechBubbleEffect.speech, anchorX, anchorTopY, speechBubbleEffect.scalingFactors, context);
-  return false;
+  drawSpeechBubble(speechBubbleEffect.speech, anchorX, anchorTopY, speechBubbleEffect.scalingFactors, context, speechBubbleEffect.startTime);
+  return true;
 }
 
-export function createSpeechBubbleEffect(character:Character, displayPosition:Position, speech:string, scalingFactors:ScalingFactors, gameTime:number):SpeechBubbleEffect {
+export function createSpeechBubbleEffect(character:Character, displayPosition:Position, speech:string,
+  scalingFactors:ScalingFactors, gameTime:number, startTime:number = Date.now()):SpeechBubbleEffect {
   return {
     type:EffectType.SPEECH_BUBBLE,
     character,
@@ -28,7 +29,7 @@ export function createSpeechBubbleEffect(character:Character, displayPosition:Po
     speech,
     scalingFactors,
     gameTime,
-    startTime:Date.now(),
+    startTime,
     onProcessLevelEffect:_onProcessLevelEffect
   };
 }

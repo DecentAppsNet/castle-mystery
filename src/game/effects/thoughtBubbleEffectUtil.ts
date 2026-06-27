@@ -16,11 +16,12 @@ function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):
     thoughtBubbleEffect.scalingFactors,
     thoughtBubbleEffect.gameTime
   );
-  drawThoughtBubble(thoughtBubbleEffect.thought, anchorX, anchorTopY, thoughtBubbleEffect.scalingFactors, context);
-  return false;
+  drawThoughtBubble(thoughtBubbleEffect.thought, anchorX, anchorTopY, thoughtBubbleEffect.scalingFactors, context, thoughtBubbleEffect.startTime);
+  return true;
 }
 
-export function createThoughtBubbleEffect(character:Character, displayPosition:Position, thought:string, scalingFactors:ScalingFactors, gameTime:number):ThoughtBubbleEffect {
+export function createThoughtBubbleEffect(character:Character, displayPosition:Position, thought:string,
+  scalingFactors:ScalingFactors, gameTime:number, startTime:number = Date.now()):ThoughtBubbleEffect {
   return {
     type:EffectType.THOUGHT_BUBBLE,
     character,
@@ -28,7 +29,7 @@ export function createThoughtBubbleEffect(character:Character, displayPosition:P
     thought,
     scalingFactors,
     gameTime,
-    startTime:Date.now(),
+    startTime,
     onProcessLevelEffect:_onProcessLevelEffect
   };
 }

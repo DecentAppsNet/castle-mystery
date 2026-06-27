@@ -236,6 +236,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number,
 }
 
 function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
+  const existingSpeechBubbleEffects = gameState.activeEffects.filter(effect => effect.type === EffectType.SPEECH_BUBBLE);
   gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.SPEECH_BUBBLE);
 
   if (!gameState.isPlaying && !isScrubbing) return;
@@ -244,13 +245,19 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
     findCharactersInRoom(room, gameState.characters).forEach(character => {
       const speech = findCharacterPose(character, gameState.time).speech;
       if (!speech) return;
+      const existingSpeechBubbleEffect = existingSpeechBubbleEffects.find(effect => {
+        const speechBubbleEffect = effect as ReturnType<typeof createSpeechBubbleEffect>;
+        return speechBubbleEffect.character.id === character.id && speechBubbleEffect.speech === speech;
+      });
       gameState.activeEffects.push(createSpeechBubbleEffect(character,
-        findCharacterDisplayPosition(character, room), speech, gameState.scalingFactors, gameState.time));
+        findCharacterDisplayPosition(character, room), speech, gameState.scalingFactors, gameState.time,
+        existingSpeechBubbleEffect?.startTime));
     });
   });
 }
 
 function _syncEmitBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
+  const existingEmitBubbleEffects = gameState.activeEffects.filter(effect => effect.type === EffectType.EMIT_BUBBLE);
   gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.EMIT_BUBBLE);
 
   if (!gameState.isPlaying && !isScrubbing) return;
@@ -262,25 +269,41 @@ function _syncEmitBubbleEffects(gameState:GameState, isScrubbing:boolean = false
     if (!activeEmitEvent.itemId) {
       const room = findRoomAtPosition(gameState.rooms, character.position.x, character.position.y);
       if (!room || !audibleRoomIds.has(room.id)) return;
+      const existingEmitBubbleEffect = existingEmitBubbleEffects.find(effect => {
+        const emitBubbleEffect = effect as ReturnType<typeof createEmitBubbleEffect>;
+        return emitBubbleEffect.room.id === room.id
+          && emitBubbleEffect.item === null
+          && emitBubbleEffect.ownerCharacter === null
+          && emitBubbleEffect.emitText === activeEmitEvent.emitText;
+      });
       gameState.activeEffects.push(createEmitBubbleEffect(
         room,
         null,
         null,
         activeEmitEvent.emitText,
         gameState.scalingFactors,
-        gameState.time
+        gameState.time,
+        existingEmitBubbleEffect?.startTime
       ));
       return;
     }
     const emitItemState = _findEmitItemState(gameState, activeEmitEvent.itemId);
     if (!emitItemState || !audibleRoomIds.has(emitItemState.room.id)) return;
+    const existingEmitBubbleEffect = existingEmitBubbleEffects.find(effect => {
+      const emitBubbleEffect = effect as ReturnType<typeof createEmitBubbleEffect>;
+      return emitBubbleEffect.room.id === emitItemState.room.id
+        && emitBubbleEffect.item?.id === emitItemState.item.id
+        && emitBubbleEffect.ownerCharacter?.id === emitItemState.ownerCharacter?.id
+        && emitBubbleEffect.emitText === activeEmitEvent.emitText;
+    });
     gameState.activeEffects.push(createEmitBubbleEffect(
       emitItemState.room,
       emitItemState.item,
       emitItemState.ownerCharacter,
       activeEmitEvent.emitText,
       gameState.scalingFactors,
-      gameState.time
+      gameState.time,
+      existingEmitBubbleEffect?.startTime
     ));
   });
 }
@@ -303,6 +326,7 @@ function _syncTalkingEffects(gameState:GameState, isScrubbing:boolean = false) {
 }
 
 function _syncThoughtBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
+  const existingThoughtBubbleEffects = gameState.activeEffects.filter(effect => effect.type === EffectType.THOUGHT_BUBBLE);
   gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.THOUGHT_BUBBLE);
 
   if (!gameState.isLevelComplete && !gameState.isPlaying && !isScrubbing) return;
@@ -311,8 +335,13 @@ function _syncThoughtBubbleEffects(gameState:GameState, isScrubbing:boolean = fa
     findCharactersInRoom(room, gameState.characters).forEach(character => {
       const thought = findCharacterPose(character, gameState.time).thought;
       if (!thought) return;
+      const existingThoughtBubbleEffect = existingThoughtBubbleEffects.find(effect => {
+        const thoughtBubbleEffect = effect as ReturnType<typeof createThoughtBubbleEffect>;
+        return thoughtBubbleEffect.character.id === character.id && thoughtBubbleEffect.thought === thought;
+      });
       gameState.activeEffects.push(createThoughtBubbleEffect(character,
-        findCharacterDisplayPosition(character, room), thought, gameState.scalingFactors, gameState.time));
+        findCharacterDisplayPosition(character, room), thought, gameState.scalingFactors, gameState.time,
+        existingThoughtBubbleEffect?.startTime));
     });
   });
 }

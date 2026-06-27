@@ -49,12 +49,12 @@ function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRendering
   _canDrawEffect:boolean, imageSet:ImageSet):boolean {
   const emitBubbleEffect = effect as EmitBubbleEffect;
   const { anchorX, anchorTopY } = _findEmitBubbleAnchor(emitBubbleEffect, imageSet);
-  drawEmitBubble(emitBubbleEffect.emitText, anchorX, anchorTopY, emitBubbleEffect.scalingFactors, context);
-  return false;
+  drawEmitBubble(emitBubbleEffect.emitText, anchorX, anchorTopY, emitBubbleEffect.scalingFactors, context, emitBubbleEffect.startTime);
+  return true;
 }
 
 export function createEmitBubbleEffect(room:Room, item:Item|null, ownerCharacter:Character|null,
-  emitText:string, scalingFactors:ScalingFactors, gameTime:number):EmitBubbleEffect {
+  emitText:string, scalingFactors:ScalingFactors, gameTime:number, startTime:number = Date.now()):EmitBubbleEffect {
   return {
     type:EffectType.EMIT_BUBBLE,
     room,
@@ -63,7 +63,7 @@ export function createEmitBubbleEffect(room:Room, item:Item|null, ownerCharacter
     emitText,
     scalingFactors,
     gameTime,
-    startTime:Date.now(),
+    startTime,
     onProcessRoomEffect:_onProcessRoomEffect
   };
 }

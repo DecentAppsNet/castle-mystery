@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { drawCharacter, getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
+import { drawCharacter, drawEmitBubble, getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultItem } from '@/game/types/Item';
 import { createDefaultRoom } from '@/game/types/Room';
@@ -108,6 +108,45 @@ describe('characterDrawUtil', () => {
       expect(rightTransforms.scales).not.toContainEqual([-1, 1]);
       expect(leftTransforms.rotations).toContain(Math.PI / 2);
       expect(leftTransforms.scales).toContainEqual([-1, 1]);
+    });
+  });
+
+  describe('drawEmitBubble()', () => {
+    it('keeps the text layout fixed while the bubble chrome shrinks to normal size', () => {
+      const originalDateNow = Date.now;
+      const fillTextCalls:{ text:string, x:number, y:number }[] = [];
+      const rectCalls:{ left:number, top:number, width:number, height:number }[] = [];
+      const context = {
+        save() {},
+        restore() {},
+        beginPath() {},
+        fill() {},
+        stroke() {},
+        measureText(text:string) { return { width:text.length * 6 }; },
+        fillText(text:string, x:number, y:number) { fillTextCalls.push({ text, x, y }); },
+        rect(left:number, top:number, width:number, height:number) { rectCalls.push({ left, top, width, height }); },
+        canvas:{ width:200, height:200 },
+        lineWidth:0,
+        strokeStyle:'',
+        fillStyle:'',
+        textAlign:'left',
+        textBaseline:'alphabetic',
+        font:''
+      } as unknown as CanvasRenderingContext2D;
+
+      try {
+        Date.now = () => 1_000;
+        drawEmitBubble('Hello', 100, 80, SCALING_FACTORS, context, 1_000);
+        Date.now = () => 1_300;
+        drawEmitBubble('Hello', 100, 80, SCALING_FACTORS, context, 1_000);
+      } finally {
+        Date.now = originalDateNow;
+      }
+
+      expect(fillTextCalls[0]).toEqual(fillTextCalls[1]);
+      expect(fillTextCalls[0]).toEqual({ text:'Hello', x:100, y:40 });
+      expect(rectCalls[0].width).toBeGreaterThan(rectCalls[1].width);
+      expect(rectCalls[0].height).toBeGreaterThan(rectCalls[1].height);
     });
   });
 });
