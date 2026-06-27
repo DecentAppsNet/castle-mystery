@@ -3,7 +3,7 @@
 
 import { clamp } from "@/common/numberUtil";
 import { getCharacterBodyCenterCanvasPosition } from "../drawing/characterDrawUtil";
-import { drawItemAtCanvasPositionInRoom, getItemCanvasPosition } from "../drawing/itemDrawUtil";
+import { drawItemAtCanvasPositionInRoom } from "../drawing/itemDrawUtil";
 import Character from "../types/Character";
 import ImageSet from "../types/ImageSet";
 import Item from "../types/Item";
@@ -14,6 +14,8 @@ import EffectType from "./types/EffectType";
 import GiveItemEffect from "./types/GiveItemEffect";
 import { ITEM_EFFECT_DURATION } from "./dropItemUtil";
 
+const GIVE_ITEM_ARC_HEIGHT_WORLD = 2;
+
 function _onProcessRoomEffect(room:Room, effect:Effect, context:CanvasRenderingContext2D,
   scalingFactors:ScalingFactors, canDrawEffect:boolean, imageSet:ImageSet, metaTime:number):boolean {
   const giveItemEffect = effect as GiveItemEffect;
@@ -21,24 +23,25 @@ function _onProcessRoomEffect(room:Room, effect:Effect, context:CanvasRenderingC
   if (!canDrawEffect) return elapsed < ITEM_EFFECT_DURATION;
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
   const x = giveItemEffect.startCanvasPosition.x + (giveItemEffect.endCanvasPosition.x - giveItemEffect.startCanvasPosition.x) * progress;
-  const y = giveItemEffect.startCanvasPosition.y + (giveItemEffect.endCanvasPosition.y - giveItemEffect.startCanvasPosition.y) * progress;
+  const arcOffsetY = Math.sin(progress * Math.PI) * GIVE_ITEM_ARC_HEIGHT_WORLD * scalingFactors.scaleY;
+  const y = giveItemEffect.startCanvasPosition.y + (giveItemEffect.endCanvasPosition.y - giveItemEffect.startCanvasPosition.y) * progress - arcOffsetY;
   drawItemAtCanvasPositionInRoom(giveItemEffect.item, room, x, y, scalingFactors, context, imageSet);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 
 export function createGiveItemEffect(item:Item, room:Room, giver:Character, recipient:Character, time:number, scalingFactors:ScalingFactors):GiveItemEffect {
-  const [startCanvasX, startCanvasY] = getItemCanvasPosition({
-    ...item,
-    position:{ ...giver.position }
-  }, scalingFactors);
-  const recipientBodyCenter = getCharacterBodyCenterCanvasPosition(recipient, scalingFactors, 0);
+  const giverBodyCenter = getCharacterBodyCenterCanvasPosition(giver, scalingFactors, 0, room);
+  const recipientBodyCenter = getCharacterBodyCenterCanvasPosition(recipient, scalingFactors, 0, room);
   return {
     type:EffectType.GIVE_ITEM,
     room,
     character:recipient,
     item:{ ...item, position:{ ...item.position } },
     startTime:time,
-    startCanvasPosition:{ x:startCanvasX, y:startCanvasY },
+    startCanvasPosition:{
+      x:giverBodyCenter.x,
+      y:giverBodyCenter.y
+    },
     endCanvasPosition:{
       x:recipientBodyCenter.x,
       y:recipientBodyCenter.y

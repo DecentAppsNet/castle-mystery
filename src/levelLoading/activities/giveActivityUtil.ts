@@ -15,7 +15,7 @@ import { findWaypointPath, planMovementWithinRoom } from "./activity/activityMov
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
 
-const GIVE_ITEM_NEARBY_DISTANCE = 8;
+const GIVE_ITEM_NEARBY_DISTANCE = 16;
 
 function _calcFloorDistance(fromX:number, fromZ:number, toX:number, toZ:number):number {
   return Math.hypot(toX - fromX, toZ - fromZ);
