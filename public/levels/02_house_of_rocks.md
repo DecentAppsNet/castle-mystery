@@ -300,7 +300,7 @@ SSMM/HH\YYYYTT
 7:30:20 Stefan @ Workshop Yard.80%
 7:30:36 faces left
 7:30:39 @ Stone Store
-: thinks, "I really don't want to talk Niccoló."
+: thinks, "I really don't want to talk to Niccoló."
 : thinks, "He's going to complain about cracks again."
 : waits 10
 : @ Stone Store.30%
