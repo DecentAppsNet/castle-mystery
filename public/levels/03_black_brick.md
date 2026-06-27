@@ -96,13 +96,13 @@ AABBCCDFGGHHH.
 
 * outside=true
 * exits=Courtyard East
-* style=Palace Garden
+* style=Courtyard
 
 ## Courtyard East
 
 * title=
 * outside=true
-* style=Palace Garden
+* style=Courtyard
 
 ```
 ............

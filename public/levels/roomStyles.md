@@ -9,7 +9,13 @@
 ## Palace Garden
 
 * backWallTexture=greyBricks2.png | aged stone
-* floorTexture=gardenTile.png | aged stone
+* floorTexture=gardenPath.png (3,3)
+* rightWallTexture=greyBricks2.png | aged stone
+
+## Courtyard
+
+* backWallTexture=greyBricks2.png | aged stone
+* floorTexture=courtyardTile.png (3,3)
 * rightWallTexture=greyBricks2.png | aged stone
 
 ## Finished
