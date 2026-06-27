@@ -4,7 +4,7 @@
 * activeCharacter=Constance I
 * time=9:00
 * background=countryside.png
-* imports=items.md | characters.md
+* imports=items.md | characters.md | roomStyles.md
 
 # Map
 
@@ -25,6 +25,9 @@ AABBCCDDE.
 
 ## Cathedral
 
+* style=Old Castle
+* exits=West Square
+
 ```
 .n.c....
 ....U.P.
@@ -35,9 +38,13 @@ AABBCCDDE.
 * U=Ugolino
 * n=Side Table|Letter
 * c=Coffer
-* exits=West Square
 
 ## West Square
+
+* title=
+* outside=true
+* exits=Birthing Tent
+* style=Town Street Day
 
 ```
 ..NMFGHI
@@ -51,11 +58,12 @@ AABBCCDDE.
 * G=female peasant 3
 * H=old male peasant
 * I=old female peasant
-* title=
-* outside=true
-* exits=Birthing Tent
 
 ## Birthing Tent
+
+* outside=true
+* exits=East Square
+* style=Town Street Day
 
 ```
 ....C.p.
@@ -66,10 +74,14 @@ AABBCCDDE.
 * p=Pile of Presents
 * C=Constance I
 * M=Sofia the Midwife
-* outside=true
-* exits=East Square
 
 ## East Square
+
+* outside=true
+* style=Town Street Day
+* title=
+* exits=Guard Quarters|Living Space
+
 
 ```
 v.F..GH.
@@ -85,13 +97,14 @@ A.......
 * G=female peasant 4
 * H=old male peasant 2
 * I=old female peasant 2
-* title=
-* outside=true
-* exits=Guard Quarters|Living Space
 
 ## Guard Quarters
 
+* style=Old Castle
+
 ## Living Space
+
+* style=Old Castle
 
 ```
 .I..
