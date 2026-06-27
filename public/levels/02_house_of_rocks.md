@@ -4,7 +4,7 @@
 * activeCharacter=Pietro
 * time=7:30
 * background=countryside.png
-* imports=items.md | characters.md
+* imports=items.md | characters.md | roomStyles.md
 * winSynopsis=Heinrich and the young King Frederick enjoyed an afternoon of friendship and falconing. Master Mason Pietro tolerated the apprentice leaving work, hoping for a future royal construction project. The seed of conspiracy was planted in a corner of the workshop yard.
 
 # Map
@@ -32,6 +32,10 @@ SSMM/HH\YYYYTT
 
 ## Street
 
+* outside=true
+* exits=Master's Hall (unlocked, lockable)
+* style=Town Street Day
+
 ```
 ........
 .F......
@@ -39,10 +43,12 @@ SSMM/HH\YYYYTT
 ```
 
 * F=King Frederick
-* outside=true
-* exits=Master's Hall (unlocked, lockable)
 
 ## Master's Hall
+
+* exits=Street (lockable) | Stairwell (closed)
+* style=Old Castle
+
 
 ```
 ........
@@ -51,9 +57,13 @@ SSMM/HH\YYYYTT
 ```
 
 * P=Pietro
-* exits=Street (lockable) | Stairwell (closed)
 
 ## Stairwell
+
+* style=Old Castle
+* title=
+* exits=Workers' Dormitory (unlocked, lockable)
+
 
 ```
 ....
@@ -62,14 +72,16 @@ SSMM/HH\YYYYTT
 ```
 
 * A=Ahmad
-* title=
-* exits=Workers' Dormitory (unlocked, lockable)
 
 ## Family Quarters
 
+* style=Old Castle
 * exits=Stairwell (lockable, locked)
 
 ## Apprentices' Chamber
+
+* exits=Stairwell (closed) | Stairwell 2 (closed)
+* style=Old Castle
 
 ```
 ........
@@ -78,9 +90,12 @@ SSMM/HH\YYYYTT
 ```
 
 * H=Heinrich
-* exits=Stairwell (closed) | Stairwell 2 (closed)
 
 ## Workers' Dormitory
+
+* style=Old Castle
+* exits=Stairwell (unlocked, lockable)
+
 
 ```
 .Iw.....
@@ -91,9 +106,12 @@ SSMM/HH\YYYYTT
 * I=Giorgios
 * S=Stefan
 * w=Big Wineskin
-* exits=Stairwell (unlocked, lockable)
 
 ## Common Kitchen
+
+* exits=Stairwell | Stairwell 2
+* style=Old Castle
+
 
 ```
 ..b..N.p
@@ -106,21 +124,30 @@ SSMM/HH\YYYYTT
 * N=Niccolo
 * b=bread roll
 * p=painting
-* exits=Stairwell | Stairwell 2
 
 ## Stairwell 2
 
 * title=
+* style=Old Castle
 * exits=Tool Store (locked, lockable) | Workshop Yard
 
 ## Tool Store
 
+* style=Old Castle
+
 ## Stone Store
+
+* style=Old Castle
 
 ## Workshop Yard
 
+* style=Yard
+* exits=Stone Store (unlocked, lockable) | Accounts Room (unlocked, lockable)
+* outside=true
+
+
 ```
-...s...c.....u..
+.p.s...c.....u..
 ...A.Y.G........
 ................
 ```
@@ -128,13 +155,14 @@ SSMM/HH\YYYYTT
 * u=Cutting Station
 * c=Masonry Station
 * s=Carving Station
+* p=Pedestal
 * A=Andreas
 * G=Giovanni
 * Y=Yusuf
-* exits=Stone Store (unlocked, lockable) | Accounts Room (unlocked, lockable)
-* outside=true
 
 ## Accounts Room
+
+* style=Old Castle
 
 ```
 ..mc
@@ -189,6 +217,9 @@ SSMM/HH\YYYYTT
 * description=Rough chunks of limestone are shaped into construction-ready blocks here.
 * drawOffsetX=1
 * drawOffsetZ=.07
+
+## Pedestal
+* drawOffsetX=2
 
 ## Cutting Station
 
@@ -428,19 +459,19 @@ SSMM/HH\YYYYTT
 : Giorgios says, "The wine has some water in it."
 : Andreas says, "No, thank you, sir."
 : Giorgios @ 10%
-: drops Big Wineskin (0, .5, 0)
+: drops Big Wineskin on Pedestal
 : @ 30%
 : faces left
 : waits 10
 : takes Big Wineskin in right hand
 : Big Wineskin emits "(glug, glug)"
-: drops Big Wineskin (0, .5, 0)
+: drops Big Wineskin on Pedestal
 : @ 30%
 : faces left
 : waits 10
 : takes Big Wineskin in right hand
 : Big Wineskin emits "(glug, glug)"
-: drops Big Wineskin (0, .5, 0)
+: drops Big Wineskin on Pedestal
 : @ 30%
 : faces left
 : sits
@@ -453,7 +484,7 @@ SSMM/HH\YYYYTT
 : says, "Thank you, sir."
 : Giorgios takes Big Wineskin in right hand
 : Big Wineskin emits "(glug, glug)"
-: drops Big Wineskin (0, .5, 0)
+: drops Big Wineskin on Pedestal
 : @ 30%
 : lays
 : waits

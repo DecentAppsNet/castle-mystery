@@ -11,6 +11,8 @@
 ## Big Wineskin
 * image=bigWineskin.png
 * description=A massive skin filled with gallons of wine.
+* drawOffsetX=.5
+* drawOffsetY=-.2
 
 ## Black Brick
 * image=blackBrick.png

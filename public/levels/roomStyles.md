@@ -40,3 +40,9 @@
 * backWallTexture=greyBricks2.png | aged stone
 * floorTexture=cobblestoneNight.png | aged stone
 * rightWallTexture=greyBricks2.png | aged stone
+
+## Yard
+
+* backWallTexture=greyBricks2.png | aged stone
+* floorTexture=dirt.png | aged stone
+* rightWallTexture=greyBricks2.png | aged stone
