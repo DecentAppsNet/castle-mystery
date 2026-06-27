@@ -3,5 +3,6 @@
 
 export const DRAW_WAYPOINTS = false;
 export const DRAW_RESERVED_RECTS = false;
+export const DRAW_FPS_COUNTER = true;
 export const SHOW_REVEAL_LEVEL_BUTTON = true;
 export const PERFORMANCE_LOGGING_ENABLED = false;

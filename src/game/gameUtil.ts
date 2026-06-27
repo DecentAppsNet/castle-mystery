@@ -58,6 +58,8 @@ import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import { clamp } from "@/common/numberUtil";
 import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
+import { DRAW_FPS_COUNTER } from "@/developer/config";
+import { updateAndDrawFps } from "@/developer/fpsUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -449,6 +451,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
   if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
   drawGameState(gameState, context, metaTime);
+  if (DRAW_FPS_COUNTER) updateAndDrawFps(metaTime, context);
 }
 
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
