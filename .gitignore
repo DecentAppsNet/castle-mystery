@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 *.png~
+*.kra
 workAssets
 coverage
 public/.vite
