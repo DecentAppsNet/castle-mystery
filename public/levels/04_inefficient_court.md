@@ -38,7 +38,7 @@ MMMNNFLDKKKKAAA
 
 * outside=true
 * exits=Entrance Hall (closed)
-* style=Town Street
+* style=Town Street Day
 
 ```
 .....G......

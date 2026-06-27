@@ -61,7 +61,9 @@
 * image=pedestal.png
 * drawOffsetX=-.45
 * drawOffsetY=.15
-* drawOffsetZ=.07
+* drawOffsetZ=0
+* stackOffsetX=-.3
+* stackOffsetY=-.2
 
 ## Pillar
 * image=pillar.png

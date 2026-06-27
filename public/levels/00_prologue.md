@@ -4,7 +4,7 @@
 * activeCharacter=Marty
 * time=11:00:00
 * background=daySky.png
-* imports=items.md | characters.md
+* imports=items.md | characters.md | roomStyles.md
 * winSynopsis=Storywise, nothing important happened in this level - it was just a tutorial to get you warmed up. We'll let you figure out the rest of the game on your own. The real story begins next!
 
 # Map
@@ -23,6 +23,9 @@ VVVHHGG
 
 ## Exhibit Room
 
+* style=Museum
+* exits=hallway
+
 ```
 ..t..s...v..
 ..M....L....
@@ -31,12 +34,13 @@ VVVHHGG
 
 * s=Sarcophagus | Sarcophagus Lid
 * t=Time of Day Plaque
-* exits=hallway
 * v=Pedestal | Vase 
 * L=Lorenzo
 * M=Marty
 
 ## Hallway
+
+* style=Museum
 
 ```
 ........
@@ -48,6 +52,8 @@ VVVHHGG
 * exits=Gift Shop
 
 ## Gift Shop
+
+* style=Museum
 
 ```
 ..1.2.3.
@@ -106,6 +112,8 @@ VVVHHGG
 
 ## Shelf 3
 * image=giftShopShelf3.png
+* stackOffsetX=.8
+* stackOffsetY=-.8
 
 # itinerary
 
@@ -130,7 +138,7 @@ VVVHHGG
 : Lorenzo faces right.
 : says, "Put that down!"
 11:00:45 Larry @ Gift Shop.80%
-: drops Vase (.5,-.8,0)
+: drops Vase on Shelf 3
 : @ Gift Shop.30%
 11:00:46 Lorenzo @ Gift Shop.10%
 : says, "Where is it?"
@@ -141,6 +149,8 @@ VVVHHGG
 : @ Gift Shop.80%
 : @ Gift Shop.60%
 : @ Gift Shop.70%
+
+11:00:04 Larry thinks, "What is Marty doing?"
 
 11:00:48 Marty takes Sarcophagus Lid in left hand
 : @ Exhibit Room.30%
