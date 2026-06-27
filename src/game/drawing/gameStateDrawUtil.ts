@@ -303,7 +303,9 @@ function _drawCachedRoomVariant(cachedVariant:RoomShellVariantImage|null, room:R
 
 function _drawCachedRoomShell(room:Room, gameState:GameState, isActive:boolean, context:CanvasRenderingContext2D):boolean {
   const roomShellVariants = gameState.roomShellCacheByRoomId.get(room.id);
-  const cachedVariant = roomShellVariants ? (isActive ? roomShellVariants.active : roomShellVariants.inactive) : null;
+  const cachedVariant = roomShellVariants
+    ? ((gameState.isLevelComplete || isActive) ? roomShellVariants.active : roomShellVariants.inactive)
+    : null;
   return _drawCachedRoomVariant(cachedVariant, room, gameState, context);
 }
 
