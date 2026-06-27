@@ -23,7 +23,7 @@ export function findSupportingItemStackOffset(item:Pick<Item, 'id' | 'position'>
 
   return _findItemsSharingStack(room, item.position.x, item.position.z)
     .filter(candidate => candidate.id !== item.id && candidate.position.y > item.position.y)
-    .reduce((offset, candidate) => _addPositions(offset, candidate.stackOffset), _createZeroPosition());
+    .reduce((offset, candidate) => _addPositions(offset, _addPositions(candidate.stackOffset, candidate.drawOffset)), _createZeroPosition());
 }
 
 export function findStackOffsetForCharacterPosition(position:Pick<Position, 'x' | 'z'>, room:Room|null):Position {

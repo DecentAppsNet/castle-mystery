@@ -66,7 +66,7 @@ describe('itemDrawUtil', () => {
         ...createDefaultRoom(),
         rect:{ x:0, y:0, width:10, height:10 },
         items:[
-          { ...createDefaultItem(), id:'pedestal', position:{ x:5, y:8, z:0.5 }, stackOffset:{ x:1.5, y:-0.25, z:0.1 } },
+          { ...createDefaultItem(), id:'pedestal', position:{ x:5, y:8, z:0.5 }, drawOffset:{ x:2, y:0, z:0 }, stackOffset:{ x:1.5, y:-0.25, z:0.1 } },
           { ...createDefaultItem(), id:'tray', position:{ x:5, y:6, z:0.5 }, stackOffset:{ x:-0.5, y:-0.75, z:-0.05 } },
           { ...createDefaultItem(), id:'crown', position:{ x:5, y:4, z:0.5 }, drawOffset:{ x:0.25, y:-0.5, z:0.2 } }
         ]
@@ -74,7 +74,7 @@ describe('itemDrawUtil', () => {
       const crown = room.items[2];
 
       expect(getItemCanvasPositionInRoom(room, crown, SCALING_FACTORS)).toEqual([
-        (5 + 1.5 - 0.5 + 0.25) * SCALING_FACTORS.scaleX + SCALING_FACTORS.roomLineWidth * 8 * (0.5 + 0.1 - 0.05 + 0.2),
+        (5 + 2 + 1.5 - 0.5 + 0.25) * SCALING_FACTORS.scaleX + SCALING_FACTORS.roomLineWidth * 8 * (0.5 + 0.1 - 0.05 + 0.2),
         (4 - 0.25 - 0.75 - 0.5) * SCALING_FACTORS.scaleY + SCALING_FACTORS.roomLineWidth * 4 * (0.5 + 0.1 - 0.05 + 0.2)
       ]);
     });
