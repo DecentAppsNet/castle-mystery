@@ -305,9 +305,9 @@ AABBCCDFGGHHH.
 11:58:14 Helena @ Steward's Office.60%
 : Helena says, "I need to lock up the textile store."
 : Raniero says, "Take my key then, but bring it back!"
+: Raniero gives Steward's Key to Helena
 : Raniero says, "It's-"
 : Helena says, "It's the only one. I know, sir."
-: Raniero gives Steward's Key to Helena
 : Helena takes Steward's Key in right hand
 : Raniero @ 30%
 (Helena leaves for Wine Cellar)
@@ -404,9 +404,8 @@ AABBCCDFGGHHH.
 (Hugo leaves for cellar)
 
 (Helena is in the lower passage, holding the black paint jar)
-11:59:19 Helena thinks, "Why did he have me paint a brick?"
-: thinks "No crime in itself."
-: thinks "But what dark plan am I a part of?"
+11:59:19 Helena thinks, "Why did he have me paint that brick?"
+: thinks "Whatever his plan, I must remain blameless!"
 
 11:59:26 Pope @ Central Stairwell
 : Pope says, "Let us continue with a briskness."
@@ -505,7 +504,7 @@ AABBCCDFGGHHH.
 * aftermathVerbs=fall|hide|disappear|succeed|speak|initiate|deceive|murder
 * popeActions=discovered|cremated|painted|planted|rebuked|salvaged
 * numbers=one|two|three|four|five|six
-* items=Arabic Tower | Barley Bin | Black Brick | Black Paint Jar | Oat Bin | Pillar | Rubble | Small Hourglass | Staff List | Steward's Key | Walnut Table | Wheat Bin
+* items=Arabic Tower | Barley Bin | Black Brick | Black Paint Jar | Oat Bin | Pillar | Small Hourglass | Staff List | Steward's Key | Walnut Table | Wheat Bin
 
 ## identities
 
@@ -518,4 +517,4 @@ AABBCCDFGGHHH.
 
 ## Chain of Custody
 
-* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [Pope Innocent III] [planted] it in the [rubble|Arabic Tower], attempting to [deceive] [King Frederick].
+* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [Pope Innocent III] [planted] it in the [Arabic Tower], attempting to [deceive] [King Frederick].
