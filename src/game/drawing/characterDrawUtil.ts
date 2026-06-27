@@ -260,7 +260,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, metaTime);
+    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(centerX, centerY, character.randomSalt, scalingFactors, context, metaTime);
     return;
   }
 
@@ -270,7 +270,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, metaTime);
+    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(centerX, centerY, character.randomSalt, scalingFactors, context, metaTime);
     return;
   }
   const { drawWidth, drawHeight } = faceImageDrawSize;
@@ -282,7 +282,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
     context.restore();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, metaTime);
+    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(centerX, centerY, character.randomSalt, scalingFactors, context, metaTime);
     return;
   }
 
@@ -293,7 +293,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
   drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-  if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, metaTime);
+  if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(centerX, centerY, character.randomSalt, scalingFactors, context, metaTime);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,

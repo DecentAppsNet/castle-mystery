@@ -5,13 +5,13 @@ import ScalingFactors from "@/game/types/ScalingFactors";
 
 import { COLOR_BLACK } from "./drawColorConstants";
 
-export const UNDISCOVERED_MARKER_CYCLE_MSECS = 3000;
+export const UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS = 1000;
 
 const UNDISCOVERED_MARKER_TEXT = "?";
 const UNDISCOVERED_MARKER_WORLD_WIDTH = 2;
 const UNDISCOVERED_MARKER_WORLD_HEIGHT = 2;
-const UNDISCOVERED_MARKER_GAP_SCALE = 0.15;
 const UNDISCOVERED_MARKER_BOB_SCALE = 0.22;
+const UNDISCOVERED_MARKER_COLORS = ["#ffd40080", "#ff3b3080", "#34c75980", "#007aff80", "#ff950080", "#af52de80"] as const;
 
 function _normalizeSaltPhase(randomSalt:number):number {
   const saltFloor = Math.floor(randomSalt);
@@ -26,9 +26,18 @@ function _calcMarkerBoxPixels(scalingFactors:ScalingFactors):{ widthPixels:numbe
   };
 }
 
+export function calcUndiscoveredMarkerHeightPixels(scalingFactors:ScalingFactors):number {
+  return _calcMarkerBoxPixels(scalingFactors).heightPixels;
+}
+
 function _calcMarkerBobOffsetPixels(time:number, randomSalt:number, markerHeightPixels:number):number {
-  const phase = ((time + _normalizeSaltPhase(randomSalt) * UNDISCOVERED_MARKER_CYCLE_MSECS) % UNDISCOVERED_MARKER_CYCLE_MSECS) / UNDISCOVERED_MARKER_CYCLE_MSECS;
-  return (Math.sin(phase * Math.PI * 2) * 0.5 + 0.5) * markerHeightPixels * UNDISCOVERED_MARKER_BOB_SCALE;
+  const phase = ((time + _normalizeSaltPhase(randomSalt) * UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS) % UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS) / UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS;
+  return Math.sin(phase * Math.PI * 2) * markerHeightPixels * UNDISCOVERED_MARKER_BOB_SCALE;
+}
+
+function _findMarkerFillColor(metaTime:number):string {
+  const colorIndex = Math.floor(Math.max(0, metaTime) / UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS) % UNDISCOVERED_MARKER_COLORS.length;
+  return UNDISCOVERED_MARKER_COLORS[colorIndex];
 }
 
 function _calcMarkerScale(context:CanvasRenderingContext2D, markerWidthPixels:number, markerHeightPixels:number,
@@ -42,10 +51,9 @@ function _calcMarkerScale(context:CanvasRenderingContext2D, markerWidthPixels:nu
   };
 }
 
-export function drawUndiscoveredMarker(centerX:number, topY:number, randomSalt:number,
+export function drawUndiscoveredMarker(centerX:number, centerY:number, randomSalt:number,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, metaTime:number) {
   const { widthPixels, heightPixels } = _calcMarkerBoxPixels(scalingFactors);
-  const gapPixels = heightPixels * UNDISCOVERED_MARKER_GAP_SCALE;
   const bobOffsetPixels = _calcMarkerBobOffsetPixels(metaTime, randomSalt, heightPixels);
   const baseFontSize = Math.max(1, heightPixels);
 
@@ -57,8 +65,8 @@ export function drawUndiscoveredMarker(centerX:number, topY:number, randomSalt:n
   const { scaleX, scaleY } = _calcMarkerScale(context, widthPixels, heightPixels, baseFontSize);
   context.lineWidth = Math.max(1.5, scalingFactors.roomLineWidth * 0.2) / Math.max(scaleX, scaleY, 1);
   context.strokeStyle = COLOR_BLACK;
-  context.fillStyle = "#fff";
-  const markerY = topY - gapPixels - bobOffsetPixels;
+  context.fillStyle = _findMarkerFillColor(metaTime);
+  const markerY = centerY - bobOffsetPixels;
   context.translate(centerX, markerY);
   context.scale(scaleX, scaleY);
   context.strokeText(UNDISCOVERED_MARKER_TEXT, 0, 0);
