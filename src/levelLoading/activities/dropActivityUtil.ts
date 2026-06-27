@@ -5,6 +5,7 @@ import Item from "@/game/types/Item";
 import Waypoint from "@/game/types/Waypoint";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import { createDropItemEvent } from "@/game/itineraryUtil";
+import { normalizeId } from "@/game/idUtil";
 import { calcItemCuboidHeightGame } from "@/game/itemSizeUtil";
 import { roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
@@ -13,6 +14,11 @@ import { findCurrentRoom, removeStateOwnedItem } from "./activity/activityStateU
 import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
+
+type ParsedDropParts = {
+  itemRef:string,
+  targetRef:string|null
+};
 
 function _createWaypointKey(waypoint:Waypoint):string {
   return `${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`;
@@ -118,10 +124,32 @@ function _createDroppedItemPosition(room:ReturnType<typeof findCurrentRoom>, dro
   };
 }
 
-function _parseDropItemRef(activityText:string):string {
+function _parseDropParts(activityText:string):ParsedDropParts {
   const dropText = stripTrailingPeriod(activityText.trim().slice('drops'.length).trim());
   if (!dropText.length) throw new Error(`missing item id in itinerary activity '${activityText}'`);
-  return dropText;
+  const separatorIndex = dropText.lastIndexOf(' on ');
+  if (separatorIndex === -1 && /\s+on$/i.test(dropText)) {
+    throw new Error(`missing item or target in itinerary activity '${activityText}'`);
+  }
+  if (separatorIndex === -1) return { itemRef:dropText, targetRef:null };
+  if (separatorIndex <= 0 || separatorIndex >= dropText.length - ' on '.length) {
+    throw new Error(`missing item or target in itinerary activity '${activityText}'`);
+  }
+
+  const itemRef = stripTrailingPeriod(dropText.slice(0, separatorIndex).trim());
+  const targetRef = stripTrailingPeriod(dropText.slice(separatorIndex + ' on '.length).trim());
+  if (!itemRef || !targetRef) throw new Error(`missing item or target in itinerary activity '${activityText}'`);
+  return { itemRef, targetRef };
+}
+
+function _findDropTargetWaypoint(room:ReturnType<typeof findCurrentRoom>, activityStartTime:number,
+  targetRef:string, context:ActivityContext, activityText:string):Waypoint {
+  const targetPosition = findTargetPositionAtTime(normalizeId(targetRef), activityStartTime,
+    context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
+  if (!targetPosition) throw new Error(`unknown drop target '${targetRef}' in itinerary activity '${activityText}'`);
+  const targetRoom = findCurrentRoom(context.level, targetPosition);
+  if (targetRoom.id !== room.id) throw new Error(`drop target ${targetRef} is not in the same room for drop activity`);
+  return findNearestWaypointToPosition(room, targetPosition);
 }
 
 export function tryCreateDropActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
@@ -130,7 +158,7 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
 
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  const itemRef = _parseDropItemRef(trimmedActivityText);
+  const { itemRef, targetRef } = _parseDropParts(trimmedActivityText);
 
   const item = removeStateOwnedItem(context.state, itemRef);
   if (!item) throw new Error(`item ${itemRef} is not carried for drop activity`);
@@ -138,7 +166,9 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
   const room = findCurrentRoom(context.level, context.state.position);
   const roomItems = context.roomItemsByRoomId.get(room.id) || null;
   if (!roomItems) throw new Error(`missing room items for drop activity '${activityText}'`);
-  const dropWaypoint = _chooseBestDropWaypoint(room, context.state.waypoint, activityStartTime, context);
+  const dropWaypoint = targetRef
+    ? _findDropTargetWaypoint(room, activityStartTime, targetRef, context, activityText)
+    : _chooseBestDropWaypoint(room, context.state.waypoint, activityStartTime, context);
   const droppedItem = {
     ...item,
     position:_createDroppedItemPosition(room, dropWaypoint, roomItems)

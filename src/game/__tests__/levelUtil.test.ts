@@ -1185,6 +1185,53 @@ describe('levelUtil itinerary loading', () => {
     expect(dropEvent?.position).not.toEqual(dropStartPose);
   });
 
+  it('drops an item on a room item by using that target location at the drop timestamp', () => {
+    const dropOnItemText = dropItemText
+      .replace('....\n.H..\n....', '..D.\n.H..\n....')
+      .replace('* H=Hero', '* H=Hero\n* D=Desk')
+      .replace('# items\n\n## Book', '# items\n\n## Desk\n* description=A desk.\n\n## Book')
+      .replace('0:00:05 Hero drops Book', '0:00:05 Hero drops Book on Desk');
+    const level = loadLevelFromText(dropOnItemText, 'drop-on-item.md');
+    const hero = level.characters.find(character => character.id === 'hero');
+    const room = level.rooms[0];
+    const desk = room.items.find(item => item.id === 'desk') || null;
+    const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { position:{ x:number, y:number, z:number } } | undefined;
+
+    expect(desk).not.toBeNull();
+    expect(dropEvent?.position.x).toBe(desk!.position.x);
+    expect(dropEvent?.position.z).toBe(desk!.position.z);
+    expect(dropEvent?.position.y).toBeLessThan(desk!.position.y);
+  });
+
+  it('drops an item on a character by using that target location at the drop timestamp', () => {
+    const dropOnCharacterText = dropItemText
+      .replace('....\n.H..\n....', '....\n.HQ.\n....')
+      .replace('* H=Hero', '* H=Hero\n* Q=Queen')
+      .replace('# characters\n\n## Hero', '# characters\n\n## Queen\n* description=A queen.\n\n## Hero')
+      .replace('0:00:05 Hero drops Book', '0:00:05 Hero drops Book on Queen');
+    const level = loadLevelFromText(dropOnCharacterText, 'drop-on-character.md');
+    const hero = level.characters.find(character => character.id === 'hero');
+    const queen = level.characters.find(character => character.id === 'queen') || null;
+    const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, position:{ x:number, y:number, z:number } } | undefined;
+    const queenDropPose = queen && dropEvent ? findCharacterPose(queen, dropEvent.startTime).position : null;
+
+    expect(queenDropPose).not.toBeNull();
+    expect(dropEvent?.position.x).toBe(queenDropPose!.x);
+    expect(dropEvent?.position.z).toBe(queenDropPose!.z);
+  });
+
+  it('throws for an unknown on-target in a drop activity', () => {
+    const badDropTargetText = dropItemText.replace('0:00:05 Hero drops Book', '0:00:05 Hero drops Book on Missing Thing');
+    expect(() => loadLevelFromText(badDropTargetText, 'drop-on-missing-target.md'))
+      .toThrow("unknown drop target 'Missing Thing'");
+  });
+
+  it('throws when a drop activity has an on clause without a target', () => {
+    const missingDropTargetText = dropItemText.replace('0:00:05 Hero drops Book', '0:00:05 Hero drops Book on');
+    expect(() => loadLevelFromText(missingDropTargetText, 'drop-on-missing-object.md'))
+      .toThrow('missing item or target');
+  });
+
   it('adds a short blocking pause after drop activities before after-previous events', () => {
     const dropPauseText = `${dropItemText}\n: Hero thinks "Done."`;
     const level = loadLevelFromText(dropPauseText, 'drop-pause.md');
