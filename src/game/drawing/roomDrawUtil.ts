@@ -399,7 +399,7 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
   const isRoomObscured = room.isObscured && !showFullContents;
   const canDrawEffect = showFullContents || isActive;
   if (isRoomObscured) {
-    if (isActive && activeCharacter) drawObscuredActiveCharacter(room, scalingFactors, context);
+    if (isActive && activeCharacter) drawObscuredActiveCharacter(room, activeCharacter, scalingFactors, context, imageSet);
     return;
   }
   if (showFullContents || (isActive && activeCharacter)) {

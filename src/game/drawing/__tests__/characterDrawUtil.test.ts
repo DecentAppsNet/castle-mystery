@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { drawCharacter, drawEmitBubble, getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
+import { drawCharacter, drawEmitBubble, drawObscuredActiveCharacter, getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultItem } from '@/game/types/Item';
 import { createDefaultRoom } from '@/game/types/Room';
@@ -111,6 +111,27 @@ describe('characterDrawUtil', () => {
     });
   });
 
+  describe('drawObscuredActiveCharacter()', () => {
+    it('mirrors the obscured head silhouette only for left-facing characters', () => {
+      const room = { ...createDefaultRoom(), rect:{ x:0, y:0, width:20, height:20 }, title:'Test Room' };
+      const imageSet:ImageSet = new Map<string, ImageBitmap>([['/assets/faces/test.png', { width:120, height:120 } as ImageBitmap]]);
+
+      const rightFacingScales = _drawObscuredAndCaptureScales({
+        ...createDefaultCharacter(),
+        faceImageUrl:'/assets/faces/test.png',
+        facingDirection:'right'
+      }, room, imageSet);
+      const leftFacingScales = _drawObscuredAndCaptureScales({
+        ...createDefaultCharacter(),
+        faceImageUrl:'/assets/faces/test.png',
+        facingDirection:'left'
+      }, room, imageSet);
+
+      expect(rightFacingScales).not.toContainEqual([-1, 1]);
+      expect(leftFacingScales).toContainEqual([-1, 1]);
+    });
+  });
+
   describe('drawEmitBubble()', () => {
     it('keeps the text layout fixed while the bubble chrome shrinks to normal size', () => {
       const fillTextCalls:{ text:string, x:number, y:number }[] = [];
@@ -173,6 +194,30 @@ function _drawAndCaptureHeadTransforms(character:ReturnType<typeof createDefault
 
   drawCharacter(character, SCALING_FACTORS, context, 0, imageSet, effects, false, null, 0);
   return { rotations, scales };
+}
+
+function _drawObscuredAndCaptureScales(character:ReturnType<typeof createDefaultCharacter>, room:ReturnType<typeof createDefaultRoom>, imageSet:ImageSet):[number, number][] {
+  const scales:[number, number][] = [];
+  const context = {
+    save() {},
+    restore() {},
+    translate() {},
+    scale(x:number, y:number) { scales.push([x, y]); },
+    drawImage() {},
+    beginPath() {},
+    ellipse() {},
+    fill() {},
+    measureText(text:string) { return { width:text.length * 6 }; },
+    lineWidth:0,
+    strokeStyle:'',
+    fillStyle:'',
+    textAlign:'left',
+    textBaseline:'alphabetic',
+    font:''
+  } as unknown as CanvasRenderingContext2D;
+
+  drawObscuredActiveCharacter(room, character, SCALING_FACTORS, context, imageSet);
+  return scales;
 }
 
 const CHARACTER_SWAY_INTERVAL_TEST_TIME = 375;

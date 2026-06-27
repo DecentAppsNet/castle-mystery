@@ -28,6 +28,9 @@ import { canvasToGamePosition } from "./drawUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUtil";
 import { drawUndiscoveredMarker } from "./undiscoveredMarkerDrawUtil";
+import { createScratchCanvas } from "./canvasSurfaceUtil";
+import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
+import { wrapRoomTitle } from "./roomTitleLayoutUtil";
 
 export { drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "./characters/characterBubbleDrawUtil";
 
@@ -37,6 +40,14 @@ const CHARACTER_SWAY_INTERVAL = 1500;
 const CHARACTER_SWAY_AMOUNT = 1;
 const CHARACTER_HEIGHT_STORY_RATIO = 0.4;
 const CHARACTER_WIDTH_HEIGHT_RATIO = 0.5;
+const OBSCURED_ACTIVE_HEAD_WORLD_WIDTH = 3;
+const OBSCURED_ACTIVE_HEAD_WORLD_HEIGHT = 3;
+const OBSCURED_ACTIVE_HEAD_TITLE_GAP_RATIO = 0.5;
+const ROOM_TITLE_MARGIN = 2;
+
+type ScratchCanvas = OffscreenCanvas|HTMLCanvasElement;
+
+const _obscuredActiveHeadSilhouetteCanvasCache = new WeakMap<ImageBitmap, Map<string, ScratchCanvas>>();
 
 function _getCharacterSizePixels(scalingFactors:ScalingFactors):{ characterWidth:number, characterHeight:number } {
   const characterHeight = MAP_TILE_SIZE * CHARACTER_HEIGHT_STORY_RATIO * scalingFactors.scaleY;
@@ -44,6 +55,37 @@ function _getCharacterSizePixels(scalingFactors:ScalingFactors):{ characterWidth
     characterWidth:characterHeight * CHARACTER_WIDTH_HEIGHT_RATIO,
     characterHeight
   };
+}
+
+function _calcObscuredActiveHeadCacheKey(widthPixels:number, heightPixels:number):string {
+  return `${Math.max(1, Math.round(widthPixels))}|${Math.max(1, Math.round(heightPixels))}`;
+}
+
+function _renderObscuredActiveHeadSilhouetteCanvas(faceImage:ImageBitmap, silhouetteCanvas:ScratchCanvas) {
+  const context = silhouetteCanvas.getContext("2d", { willReadFrequently:false });
+  if (!context) return;
+
+  context.clearRect(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
+  context.drawImage(faceImage, 0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
+  context.globalCompositeOperation = 'source-in';
+  context.fillStyle = '#fff';
+  context.fillRect(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
+  context.globalCompositeOperation = 'source-over';
+}
+
+function _findObscuredActiveHeadSilhouetteCanvas(faceImage:ImageBitmap, widthPixels:number, heightPixels:number):ScratchCanvas|null {
+  const cacheKey = _calcObscuredActiveHeadCacheKey(widthPixels, heightPixels);
+  const cachedCanvasesBySize = _obscuredActiveHeadSilhouetteCanvasCache.get(faceImage) ?? new Map<string, ScratchCanvas>();
+  const cachedCanvas = cachedCanvasesBySize.get(cacheKey) || null;
+  if (cachedCanvas) return cachedCanvas;
+
+  const silhouetteCanvas = createScratchCanvas(Math.max(1, Math.round(widthPixels)), Math.max(1, Math.round(heightPixels)));
+  if (!silhouetteCanvas) return null;
+
+  _renderObscuredActiveHeadSilhouetteCanvas(faceImage, silhouetteCanvas);
+  cachedCanvasesBySize.set(cacheKey, silhouetteCanvas);
+  _obscuredActiveHeadSilhouetteCanvasCache.set(faceImage, cachedCanvasesBySize);
+  return silhouetteCanvas;
 }
 
 function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:ScalingFactors, room:Room|null = null):[number, number] {
@@ -56,6 +98,60 @@ function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:S
 
 function _getCharacterDisplayName(character:Character):string {
   return character.title;
+}
+
+function _calcRoomTitleMaxWidth(room:Room, scalingFactors:ScalingFactors):number {
+  const titleMargin = Math.min(ROOM_TITLE_MARGIN, room.rect.width / 2);
+
+  const [leftX] = projectRoomPointWithDepth(room.rect.x + titleMargin, room.rect.y + room.rect.height / 2, 1, scalingFactors);
+  const [rightX] = projectRoomPointWithDepth(room.rect.x + room.rect.width - titleMargin, room.rect.y + room.rect.height / 2, 1, scalingFactors);
+  return Math.max(0, rightX - leftX);
+}
+
+function _measureWrappedRoomTitleLines(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D):string[] {
+  const font = `${scalingFactors.roomFontHeight}px Jellee`;
+  return wrapRoomTitle(room.title, _calcRoomTitleMaxWidth(room, scalingFactors), titleText => {
+    context.save();
+    context.font = font;
+    const measuredWidth = context.measureText(titleText).width;
+    context.restore();
+    return measuredWidth;
+  });
+}
+
+function _getObscuredActiveHeadAnchor(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D):{ centerX:number, centerY:number } {
+  const [centerX, titleCenterY] = projectRoomPointWithDepth(
+    room.rect.x + room.rect.width / 2,
+    room.rect.y + room.rect.height / 2,
+    1,
+    scalingFactors
+  );
+  const titleLines = _measureWrappedRoomTitleLines(room, scalingFactors, context);
+  const titleHeight = titleLines.length * scalingFactors.roomFontHeight;
+  const titleBottomY = titleCenterY + titleHeight / 2;
+  const headHeightPixels = OBSCURED_ACTIVE_HEAD_WORLD_HEIGHT * scalingFactors.scaleY;
+  const gapPixels = scalingFactors.roomFontHeight * OBSCURED_ACTIVE_HEAD_TITLE_GAP_RATIO;
+  return {
+    centerX,
+    centerY:titleBottomY + gapPixels + headHeightPixels / 2
+  };
+}
+
+function _getObscuredActiveHeadSizePixels(scalingFactors:ScalingFactors):{ widthPixels:number, heightPixels:number } {
+  return {
+    widthPixels:OBSCURED_ACTIVE_HEAD_WORLD_WIDTH * scalingFactors.scaleX,
+    heightPixels:OBSCURED_ACTIVE_HEAD_WORLD_HEIGHT * scalingFactors.scaleY
+  };
+}
+
+function _drawObscuredActiveHeadFallback(centerX:number, centerY:number, widthPixels:number, heightPixels:number,
+  context:CanvasRenderingContext2D) {
+  context.save();
+  context.fillStyle = '#fff';
+  context.beginPath();
+  context.ellipse(centerX, centerY, widthPixels / 2, heightPixels / 2, 0, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
 }
 
 function _countInHandItems(character:Character):number {
@@ -196,35 +292,30 @@ function _shouldDrawUndiscoveredCharacterMarker(character:Character, effects:Eff
 }
 
 
-export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
-  const [roomLeft] = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
-  const [roomRight, roomBottom] = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
-  const centerX = roomLeft + (roomRight - roomLeft) / 2;
-  const { characterWidth, characterHeight } = _getCharacterSizePixels(scalingFactors);
-  const headRadius = Math.min(characterWidth, characterHeight) / 4;
-  const bottomY = roomBottom - scalingFactors.roomLineWidth;
-  const centerY = bottomY - characterHeight / 2;
-  const backboneX = centerX;
+export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character, scalingFactors:ScalingFactors,
+  context:CanvasRenderingContext2D, imageSet:ImageSet) {
+  const { centerX, centerY } = _getObscuredActiveHeadAnchor(room, scalingFactors, context);
+  const { widthPixels, heightPixels } = _getObscuredActiveHeadSizePixels(scalingFactors);
+  const faceImage = activeCharacter.faceImageUrl ? imageSet.get(activeCharacter.faceImageUrl) || null : null;
 
   context.save();
-  context.lineWidth = scalingFactors.roomLineWidth;
-  context.strokeStyle = "#fff";
-  context.fillStyle = "#fff";
-  context.beginPath();
-  context.moveTo(backboneX, centerY - characterHeight / 4 + headRadius);
-  context.lineTo(backboneX, centerY + characterHeight / 4);
-  context.moveTo(backboneX, centerY);
-  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 8);
-  context.moveTo(backboneX, centerY);
-  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 8);
-  context.moveTo(backboneX, centerY + characterHeight / 4);
-  context.lineTo(centerX - characterWidth / 2, centerY + characterHeight / 2);
-  context.moveTo(backboneX, centerY + characterHeight / 4);
-  context.lineTo(centerX + characterWidth / 2, centerY + characterHeight / 2);
-  context.stroke();
-  context.beginPath();
-  context.arc(backboneX, centerY - characterHeight / 4, headRadius, 0, Math.PI * 2);
-  context.fill();
+  context.translate(centerX, centerY);
+  if (activeCharacter.facingDirection === 'left') context.scale(-1, 1);
+
+  if (!faceImage) {
+    _drawObscuredActiveHeadFallback(0, 0, widthPixels, heightPixels, context);
+    context.restore();
+    return;
+  }
+
+  const silhouetteCanvas = _findObscuredActiveHeadSilhouetteCanvas(faceImage, widthPixels, heightPixels);
+  if (!silhouetteCanvas) {
+    _drawObscuredActiveHeadFallback(0, 0, widthPixels, heightPixels, context);
+    context.restore();
+    return;
+  }
+
+  context.drawImage(silhouetteCanvas, -widthPixels / 2, -heightPixels / 2, widthPixels, heightPixels);
   context.restore();
 }
 
