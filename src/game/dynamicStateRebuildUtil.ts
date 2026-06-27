@@ -203,7 +203,7 @@ function _findRoomExitById(room:GameState['rooms'][number], roomExitId:string) {
   return room.exits.find(candidate => candidate.id === roomExitId) || null;
 }
 
-export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime?:number, metaTime:number = 0) {
+export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime:number|undefined, metaTime:number) {
   const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
   const characterDiscoveredRoomIds = _getCharacterDiscoveredRoomIds(gameState);
   const discoveredCharacterIds = _getDiscoveredCharacterIds(gameState);

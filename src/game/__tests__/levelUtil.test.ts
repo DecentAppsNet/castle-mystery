@@ -350,31 +350,31 @@ describe('levelUtil itinerary loading', () => {
     const level = loadLevelFromText(showHideActivityText, 'show-hide-activity.md');
     const gameState = createGameState(level);
 
-    rebuildDynamicStateForTime(gameState, 500);
+    rebuildDynamicStateForTime(gameState, 500, undefined, 0);
     let guard = gameState.characters.find(character => character.id === 'guard') || null;
     let hiddenGem = gameState.itemsById.get('hidden gem') || null;
     expect(guard?.isVisible).toBe(true);
     expect(hiddenGem?.isVisible).toBe(true);
 
-    rebuildDynamicStateForTime(gameState, 1_500);
+    rebuildDynamicStateForTime(gameState, 1_500, undefined, 0);
     guard = gameState.characters.find(character => character.id === 'guard') || null;
     hiddenGem = gameState.itemsById.get('hidden gem') || null;
     expect(guard?.isVisible).toBe(false);
     expect(hiddenGem?.isVisible).toBe(true);
 
-    rebuildDynamicStateForTime(gameState, 2_500);
+    rebuildDynamicStateForTime(gameState, 2_500, undefined, 0);
     guard = gameState.characters.find(character => character.id === 'guard') || null;
     hiddenGem = gameState.itemsById.get('hidden gem') || null;
     expect(guard?.isVisible).toBe(false);
     expect(hiddenGem?.isVisible).toBe(false);
 
-    rebuildDynamicStateForTime(gameState, 3_500);
+    rebuildDynamicStateForTime(gameState, 3_500, undefined, 0);
     guard = gameState.characters.find(character => character.id === 'guard') || null;
     hiddenGem = gameState.itemsById.get('hidden gem') || null;
     expect(guard?.isVisible).toBe(true);
     expect(hiddenGem?.isVisible).toBe(false);
 
-    rebuildDynamicStateForTime(gameState, 500);
+    rebuildDynamicStateForTime(gameState, 500, undefined, 0);
     guard = gameState.characters.find(character => character.id === 'guard') || null;
     hiddenGem = gameState.itemsById.get('hidden gem') || null;
     expect(guard?.isVisible).toBe(true);

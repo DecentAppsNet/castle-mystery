@@ -230,7 +230,7 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
 
 export function drawCharacter(character:Character, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, gameTime:number, imageSet:ImageSet, effects:Effect[], isHighlighted:boolean,
-  room:Room|null = null, metaTime:number = 0) {
+  room:Room|null, metaTime:number) {
   const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, gameTime, room);
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
   const talkingEffect = faceImage

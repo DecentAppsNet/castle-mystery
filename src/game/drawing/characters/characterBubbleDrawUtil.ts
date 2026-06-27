@@ -71,7 +71,7 @@ function _drawRoundedBubbleOutline(left:number, top:number, width:number, height
 }
 
 export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number = 0, metaTime:number = 0) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, metaTime:number) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
@@ -125,7 +125,7 @@ export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:numb
 }
 
 export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number = 0, metaTime:number = 0) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, metaTime:number) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
@@ -158,7 +158,7 @@ export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:numbe
 }
 
 export function drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number = 0, metaTime:number = 0) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, metaTime:number) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;

@@ -76,13 +76,13 @@ describe('lock unlock integration', () => {
     expect(unlockEvent?.roomExitId).toBe(initialExit.id);
     expect(initialExit.exitStatus).toBe(ExitStatus.unlocked);
 
-    rebuildDynamicStateForTime(gameState, lockEvent!.startTime - 1);
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime - 1, undefined, 0);
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.unlocked);
 
-    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, lockEvent!.startTime - 1);
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, lockEvent!.startTime - 1, 0);
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.locked);
 
-    rebuildDynamicStateForTime(gameState, unlockEvent!.startTime, lockEvent!.startTime);
+    rebuildDynamicStateForTime(gameState, unlockEvent!.startTime, lockEvent!.startTime, 0);
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.unlocked);
   });
 
@@ -97,16 +97,16 @@ describe('lock unlock integration', () => {
     expect(unlockEvent).toBeDefined();
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.unlocked);
 
-    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, 0);
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, 0, 0);
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.locked);
 
-    rebuildDynamicStateForTime(gameState, unlockEvent!.startTime, lockEvent!.startTime);
+    rebuildDynamicStateForTime(gameState, unlockEvent!.startTime, lockEvent!.startTime, 0);
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.unlocked);
 
-    rebuildDynamicStateForTime(gameState, lockEvent!.startTime - 1, unlockEvent!.startTime);
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime - 1, unlockEvent!.startTime, 0);
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.unlocked);
 
-    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, lockEvent!.startTime - 1);
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, lockEvent!.startTime - 1, 0);
     expect(_findCellExit(gameState).exitStatus).toBe(ExitStatus.locked);
   });
 
@@ -116,10 +116,10 @@ describe('lock unlock integration', () => {
     const keeper = gameState.characters.find(character => character.id === 'keeper');
     const lockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.LOCK) as { startTime:number } | undefined;
 
-    rebuildDynamicStateForTime(gameState, lockEvent!.startTime);
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, undefined, 0);
     expect(gameState.activeEffects.some(effect => effect.type === EffectType.LOCK || effect.type === EffectType.UNLOCK)).toBe(false);
 
-    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, lockEvent!.startTime - 1);
+    rebuildDynamicStateForTime(gameState, lockEvent!.startTime, lockEvent!.startTime - 1, 0);
     expect(gameState.activeEffects.some(effect => effect.type === EffectType.LOCK)).toBe(true);
   });
 
@@ -136,7 +136,7 @@ describe('lock unlock integration', () => {
     expect(unlockStartPosition).toBeDefined();
     expect(expectedRoom).not.toBeNull();
 
-    rebuildDynamicStateForTime(gameState, unlockEvent!.startTime, unlockEvent!.startTime - 1);
+    rebuildDynamicStateForTime(gameState, unlockEvent!.startTime, unlockEvent!.startTime - 1, 0);
     const unlockEffect = gameState.activeEffects.find(effect => effect.type === EffectType.UNLOCK) as LockChangeEffect | undefined;
 
     expect(unlockEffect).toBeDefined();

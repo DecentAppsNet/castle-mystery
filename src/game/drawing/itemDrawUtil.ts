@@ -278,7 +278,7 @@ function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:C
 
 // Public room-item draw entry point used by room rendering.
 export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  imageSet:ImageSet, isHighlighted:boolean = false, metaTime:number = 0) {
+  imageSet:ImageSet, isHighlighted:boolean, metaTime:number) {
   drawItem(room, item, scalingFactors, context, imageSet, isHighlighted, metaTime);
 }
 

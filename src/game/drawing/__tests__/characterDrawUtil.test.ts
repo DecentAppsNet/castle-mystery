@@ -171,7 +171,7 @@ function _drawAndCaptureHeadTransforms(character:ReturnType<typeof createDefault
     font:''
   } as unknown as CanvasRenderingContext2D;
 
-  drawCharacter(character, SCALING_FACTORS, context, 0, imageSet, effects, false, null);
+  drawCharacter(character, SCALING_FACTORS, context, 0, imageSet, effects, false, null, 0);
   return { rotations, scales };
 }
 

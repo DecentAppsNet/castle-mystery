@@ -42,7 +42,7 @@ function _accumulateOccupancy(level:Level, characterIndexById:Map<string, number
   const accumulatorsByRoomId = _createAccumulatorsByRoomId(level);
   const gameState = createGameState(level);
   collectRoomOccupancyChangeTimes(level).forEach(time => {
-    rebuildDynamicStateForTime(gameState, time);
+    rebuildDynamicStateForTime(gameState, time, undefined, 0);
     createRoomOccupancyByRoomId(gameState).forEach((occupancy, roomId) => {
       const accumulator = accumulatorsByRoomId.get(roomId);
       if (!accumulator) return; // A room not declared in level.rooms; shouldn't happen.

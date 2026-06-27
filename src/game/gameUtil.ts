@@ -498,7 +498,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     lastNotifiedConclusionsRevision:0,
     lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries())
   }
-  rebuildDynamicStateForTime(gameState, level.initialTime);
+  rebuildDynamicStateForTime(gameState, level.initialTime, undefined, 0);
   _setActiveRoomDiscovered(gameState);
   syncDiscoveries(gameState);
   syncConclusionUnlocks(gameState);

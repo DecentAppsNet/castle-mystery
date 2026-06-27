@@ -289,7 +289,7 @@ describe('conclusion unlock integration', () => {
     expect(gameState.rooms.find(room => room.id === 'study')?.isObscured).toBe(false);
     expect(gameState.initialRooms.find(room => room.id === 'study')?.isObscured).toBe(false);
 
-    rebuildDynamicStateForTime(gameState, 1_000, 0);
+    rebuildDynamicStateForTime(gameState, 1_000, 0, 0);
 
     expect(gameState.rooms.find(room => room.id === 'study')?.isObscured).toBe(false);
   });
@@ -312,7 +312,7 @@ describe('conclusion unlock integration', () => {
     expect(gameState.rooms.flatMap(room => room.items).every(item => item.isDiscovered)).toBe(true);
     expect(Array.from(gameState.initialItemsById.values()).every(item => item.isDiscovered)).toBe(true);
 
-    rebuildDynamicStateForTime(gameState, 1_000, 0);
+    rebuildDynamicStateForTime(gameState, 1_000, 0, 0);
 
     expect(gameState.rooms.every(room => room.isDiscovered && !room.isObscured)).toBe(true);
     expect(gameState.discoveredCharacterIds).toEqual(['hero', 'witness']);
@@ -397,7 +397,7 @@ describe('conclusion unlock integration', () => {
     expect(gameState.rooms[0].items[0]?.isDiscovered).toBe(true);
     expect(gameState.discoveredItemIds).toEqual(['book']);
 
-    rebuildDynamicStateForTime(gameState, 1_000, 0);
+    rebuildDynamicStateForTime(gameState, 1_000, 0, 0);
 
     const itemAfterRebuild = gameState.rooms[0].items[0];
     expect(itemAfterRebuild.isDiscovered).toBe(true);
@@ -426,7 +426,7 @@ describe('conclusion unlock integration', () => {
     _hoverHero(gameState);
 
     updateAndDraw(gameState, context, () => {});
-    rebuildDynamicStateForTime(gameState, 1_000, 0);
+    rebuildDynamicStateForTime(gameState, 1_000, 0, 0);
 
     expect(gameState.characters[0]?.isDiscovered).toBe(true);
     expect(gameState.discoveredCharacterIds).toEqual(['hero']);

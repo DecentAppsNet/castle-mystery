@@ -154,7 +154,7 @@ describe('room navigation integration', () => {
     _setScalingFactors(gameState);
     gameState.rooms[1].isDiscovered = true;
     gameState.characters[1].discoveredRoomIds = ['library'];
-    rebuildDynamicStateForTime(gameState, gameState.time);
+    rebuildDynamicStateForTime(gameState, gameState.time, undefined, 0);
 
     updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 }, 0);
 
@@ -170,7 +170,7 @@ describe('room navigation integration', () => {
     gameState.isLevelComplete = false;
     gameState.characters[1].discoveredRoomIds = ['library'];
 
-    rebuildDynamicStateForTime(gameState, 1_000, 0);
+    rebuildDynamicStateForTime(gameState, 1_000, 0, 0);
 
     expect(gameState.characters.find(character => character.id === 'guide')?.discoveredRoomIds).toContain('library');
   });

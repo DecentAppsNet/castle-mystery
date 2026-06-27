@@ -116,7 +116,7 @@ describe('itemDrawUtil', () => {
       const projectedY = (item.position.y + item.drawOffset.y) * SCALING_FACTORS.scaleY
         + SCALING_FACTORS.roomLineWidth * 4 * (item.position.z + item.drawOffset.z);
 
-      drawRoomItem(room, item, SCALING_FACTORS, context, imageSet);
+      drawRoomItem(room, item, SCALING_FACTORS, context, imageSet, false, 0);
 
       expect(drawImage).toHaveBeenCalledWith(
         imageBitmap,

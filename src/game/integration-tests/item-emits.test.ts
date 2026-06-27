@@ -16,7 +16,7 @@ describe('item emits integration', () => {
       const drawnTexts:string[] = [];
       const context = _createMockContext(drawnTexts);
 
-      rebuildDynamicStateForTime(gameState, 5_000, 0);
+      rebuildDynamicStateForTime(gameState, 5_000, 0, 0);
       updateAndDraw(gameState, context, () => {}, undefined, undefined, undefined, true);
 
       expect(drawnTexts).toContain('(clang)');
@@ -29,7 +29,7 @@ describe('item emits integration', () => {
       const context = _createMockContext(drawnTexts);
 
       gameState.rooms.forEach(room => { room.isDiscovered = true; });
-      rebuildDynamicStateForTime(gameState, 1_000, 0);
+      rebuildDynamicStateForTime(gameState, 1_000, 0, 0);
       updateAndDraw(gameState, context, () => {}, undefined, undefined, undefined, true);
 
       expect(drawnTexts).toContain('(ring)');
@@ -41,7 +41,7 @@ describe('item emits integration', () => {
       const drawnTexts:{ text:string, x:number, y:number }[] = [];
       const context = _createMockContext(undefined, drawnTexts);
 
-      rebuildDynamicStateForTime(gameState, 5_000, 0);
+      rebuildDynamicStateForTime(gameState, 5_000, 0, 0);
       updateAndDraw(gameState, context, () => {}, undefined, undefined, undefined, true);
 
       const hall = gameState.rooms.find(room => room.id === 'hall');

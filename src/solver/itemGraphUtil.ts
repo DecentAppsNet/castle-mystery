@@ -45,7 +45,7 @@ function _collectWitnessesByItemId(level:Level, placedItems:Item[]):Map<string, 
 
   const gameState = createGameState(level);
   collectRoomOccupancyChangeTimes(level).forEach(time => {
-    rebuildDynamicStateForTime(gameState, time);
+    rebuildDynamicStateForTime(gameState, time, undefined, 0);
     _addWitnessesAtTime(gameState, witnessesByItemId);
   });
   return witnessesByItemId;
