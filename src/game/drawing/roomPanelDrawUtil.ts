@@ -10,6 +10,7 @@ import { ROOM_DEPTH_ROW_COUNT } from "../roomSpaceConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset, createProjectedRightWallDoorOutlinePoints, getRightWallDoorHeightPixels } from "./roomPanelProjectionUtil";
 import { findRightWallPanelSpans } from "../rightWallPanelUtil";
+import { shouldDrawFloorPanelLeftEdge, shouldDrawFloorPanelRightEdge } from "../floorPanelUtil";
 import { roomHeightToLayerCount, roomWidthToColumnCount } from "../roomGridUtil";
 import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
 
@@ -207,7 +208,7 @@ function _findRightWallPanelSpanExits(room:Room, topY:number, height:number):Roo
     .sort((exit1, exit2) => exit1.y - exit2.y);
 }
 
-export function drawFloorPanel(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+export function drawFloorPanel(room:Room, rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet|null = null, textureLightness:number = 1) {
   const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
   const bottomLeft = gameToCanvasPosition(room.rect.x, room.rect.y + room.rect.height, scalingFactors);
@@ -240,9 +241,10 @@ export function drawFloorPanel(room:Room, scalingFactors:ScalingFactors, context
   } else {
     _fillPanel(panelPoints, scalingFactors, context);
   }
-  _strokePanelSegment(bottomRight, outerBottomRight, scalingFactors, context);
+  _strokePanelSegment(bottomLeft, bottomRight, scalingFactors, context);
+  if (shouldDrawFloorPanelRightEdge(room, rooms)) _strokePanelSegment(bottomRight, outerBottomRight, scalingFactors, context);
   _strokePanelSegment(outerBottomRight, outerBottomLeft, scalingFactors, context);
-  _strokePanelSegment(outerBottomLeft, bottomLeft, scalingFactors, context);
+  if (shouldDrawFloorPanelLeftEdge(room, rooms)) _strokePanelSegment(outerBottomLeft, bottomLeft, scalingFactors, context);
 }
 
 export function drawRightWallPanel(room:Room, rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors,

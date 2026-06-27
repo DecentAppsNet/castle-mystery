@@ -218,7 +218,7 @@ export function drawCacheableRoomShell(room:Room, rooms:ReadonlyArray<Room>, isA
   context.fillStyle = isRoomObscured
     ? COLOR_BLACK
     : (showFullContents || isActive ? COLOR_ACTIVE_FLOOR_FILL : COLOR_INACTIVE_FLOOR_FILL);
-  drawFloorPanel(room, scalingFactors, context, isRoomObscured ? null : imageSet, floorTextureLightness);
+  drawFloorPanel(room, rooms, scalingFactors, context, isRoomObscured ? null : imageSet, floorTextureLightness);
   context.fillStyle = isRoomObscured
     ? COLOR_BLACK
     : (showFullContents || isActive ? COLOR_ACTIVE_RIGHT_WALL_FILL : COLOR_INACTIVE_RIGHT_WALL_FILL);

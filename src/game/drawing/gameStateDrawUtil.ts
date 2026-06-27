@@ -345,7 +345,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   const drawnExitIds = new Set<string>();
   const layoutPlanner = new CanvasLayoutPlanner(context.canvas.width, context.canvas.height);
   _drawGround(gameState, context);
-  _drawRoomSilhouette(gameState, context);
+    // Temporarily disabled for silhouette troubleshooting.
+    // _drawRoomSilhouette(gameState, context);
   const roomRenderStates = gameState.rooms.map(room => {
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
