@@ -123,6 +123,7 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 ## Hall
 
 * style=Old Castle
+* obscured=true
 
 # Itinerary
 

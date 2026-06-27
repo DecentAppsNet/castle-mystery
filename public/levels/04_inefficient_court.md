@@ -348,6 +348,7 @@ N1234567890ABCD.
 * facing=left
 
 ## Sticky Agatha
+* description=A woman in her thirties. Oddly sticky.
 * isTitleKnown=true
 
 ## Toro
