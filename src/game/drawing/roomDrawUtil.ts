@@ -326,7 +326,7 @@ export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, 
   });
 }
 
-function _createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[], includeUndiscoveredItems:boolean):RoomDrawableContent[] {
+export function createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[], includeUndiscoveredItems:boolean):RoomDrawableContent[] {
   const stairContents = room.stairParts.map((stairPart, stairIndex) => ({
     type:'stair' as const,
     depth:_calcStairPartSortDepth(stairPart),
@@ -367,7 +367,7 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
   hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
   layoutPlanner:CanvasLayoutPlanner|null = null) {
-  _createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems).forEach(content => {
+  createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems).forEach(content => {
     switch(content.type) {
       case 'stair':
         drawStairPart(content.stairPart, scalingFactors, context);

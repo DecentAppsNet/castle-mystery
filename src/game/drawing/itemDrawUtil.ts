@@ -130,7 +130,7 @@ export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:Sca
 }
 
 // Returns the game-space hover rectangle for item hit-testing.
-function _getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
+export function getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
   const image = _findItemImage(item, imageSet);
   if (!image) return {x:0, y:0, width:0, height:0}; // Headless call.
   const itemDrawRect = calcItemDrawRect(room, scalingFactors);
@@ -331,7 +331,7 @@ export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scal
   const itemsInDrawOrder = _getVisibleItemsInDrawOrder(room, [], includeUndiscovered);
   for (let i = itemsInDrawOrder.length - 1; i >= 0; --i) {
     const item = itemsInDrawOrder[i];
-    const rect = _getItemHoverRect(room, item, scalingFactors, imageSet);
+    const rect = getItemHoverRect(room, item, scalingFactors, imageSet);
     const isInside = x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
     if (isInside) return item;
   }
