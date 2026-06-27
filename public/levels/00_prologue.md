@@ -93,7 +93,7 @@ VVVHHGG
 
 ## Sarcophagus Lid
 * image=sarcophagusLid.png
-* drawOffsetX=1
+* drawOffsetX=0
 * drawOffsetY=.3
 
 ## Time of Day Plaque
@@ -103,6 +103,7 @@ VVVHHGG
 
 * description=An ancient clay vase with faded symbols on it.
 * image=amosVase.png
+* drawOffsetX=.5
 
 ## Shelf 1
 * image=giftShopShelf1.png
