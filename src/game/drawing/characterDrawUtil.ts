@@ -178,9 +178,9 @@ export function getCharacterSpeechAnchor(character:Character, scalingFactors:Sca
 }
 
 function _drawActiveCharacterHighlight(centerX:number, centerY:number, characterWidth:number, characterHeight:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, metaTime:number) {
   const baseRadius = Math.hypot(characterWidth / 2, characterHeight / 2) / 2 + scalingFactors.roomLineWidth;
-  const phase = (time % PULSE_CADENCE_MS) / PULSE_CADENCE_MS;
+  const phase = (metaTime % PULSE_CADENCE_MS) / PULSE_CADENCE_MS;
   const pulse = phase <= 0.5 ? phase * 2 : 2 * (1 - phase);
   const radius = baseRadius * (1 + (PULSE_SCALE_PEAK - 1) * pulse);
   context.fillStyle = COLOR_ACTIVE_CHARACTER_HIGHLIGHT;
@@ -229,8 +229,9 @@ export function drawObscuredActiveCharacter(room:Room, scalingFactors:ScalingFac
 }
 
 export function drawCharacter(character:Character, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, effects:Effect[], isHighlighted:boolean, room:Room|null = null) {
-  const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time, room);
+  context:CanvasRenderingContext2D, gameTime:number, imageSet:ImageSet, effects:Effect[], isHighlighted:boolean,
+  room:Room|null = null, metaTime:number = 0) {
+  const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, gameTime, room);
   const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
   const talkingEffect = faceImage
     ? effects.find(effect => effect.type === EffectType.TALKING && effect.character?.id === character.id) as TalkingEffect|undefined
@@ -239,13 +240,13 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     ? effects.find(effect => effect.type === EffectType.THINKING && effect.character?.id === character.id) as ThinkingEffect|undefined
     : null;
   const talkingAngleOffsetRadians = talkingEffect
-    ? calcTalkingAngleOffsetRadians(talkingEffect, time) * (character.facingDirection === 'right' ? 1 : -1)
+    ? calcTalkingAngleOffsetRadians(talkingEffect, gameTime) * (character.facingDirection === 'right' ? 1 : -1)
     : 0;
   const thinkingAngleOffsetRadians = thinkingEffect && character.bodyOrientation !== 'laying'
-    ? calcThinkingAngleOffsetRadians(thinkingEffect, time) * (character.facingDirection === 'right' ? 1 : -1)
+    ? calcThinkingAngleOffsetRadians(thinkingEffect, gameTime) * (character.facingDirection === 'right' ? 1 : -1)
     : 0;
   const faceAngleOffsetRadians = talkingAngleOffsetRadians + thinkingAngleOffsetRadians;
-  if (isHighlighted) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, time);
+  if (isHighlighted) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, metaTime);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
@@ -259,7 +260,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, time);
+    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, metaTime);
     return;
   }
 
@@ -269,7 +270,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, time);
+    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, metaTime);
     return;
   }
   const { drawWidth, drawHeight } = faceImageDrawSize;
@@ -281,7 +282,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
     context.restore();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, time);
+    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, metaTime);
     return;
   }
 
@@ -292,7 +293,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
   drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-  if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, time);
+  if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(layout.head.centerX, layout.topY, character.randomSalt, scalingFactors, context, metaTime);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,

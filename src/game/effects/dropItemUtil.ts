@@ -15,9 +15,9 @@ import EffectType from "./types/EffectType";
 export const ITEM_EFFECT_DURATION = 500;
 
 function _onProcessCharacterEffect(_character:Character, effect:Effect, context:CanvasRenderingContext2D,
-  scalingFactors:ScalingFactors, imageSet:ImageSet):boolean {
+  scalingFactors:ScalingFactors, imageSet:ImageSet, metaTime:number):boolean {
   const dropItemEffect = effect as DropItemEffect;
-  const elapsed = Date.now() - dropItemEffect.startTime;
+  const elapsed = metaTime - dropItemEffect.startTime;
   const room = dropItemEffect.room;
   if (!room) return false;
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);

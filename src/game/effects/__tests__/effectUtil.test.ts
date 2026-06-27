@@ -59,8 +59,8 @@ describe('effectUtil', () => {
       ];
       const imageSet = createEmptyImageSet();
 
-      processBeforeCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS, imageSet);
-      processAfterCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS, imageSet);
+      processBeforeCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS, imageSet, 0);
+      processAfterCharacterEffects(character, effects, {} as CanvasRenderingContext2D, ZERO_SCALING_FACTORS, imageSet, 0);
 
       expect(calls).toEqual(['before', 'after']);
     });

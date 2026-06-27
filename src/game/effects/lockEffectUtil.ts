@@ -15,9 +15,9 @@ export const KEY_IMAGE_URL = '/assets/sprites/key.png';
 const LOCK_EFFECT_DURATION = 500;
 
 function _onProcessRoomEffect(_room:Room, effect:Effect, context:CanvasRenderingContext2D,
-  scalingFactors:ScalingFactors, canDrawEffect:boolean, _imageSet:ImageSet):boolean {
+  scalingFactors:ScalingFactors, canDrawEffect:boolean, _imageSet:ImageSet, metaTime:number):boolean {
   const lockEffect = effect as LockChangeEffect;
-  const elapsed = Date.now() - lockEffect.startTime;
+  const elapsed = metaTime - lockEffect.startTime;
   if (!canDrawEffect) return elapsed < LOCK_EFFECT_DURATION;
   const progress = clamp(elapsed / LOCK_EFFECT_DURATION, 0, 1);
   const sizePixels = Math.max(12, scalingFactors.roomLineWidth * 4);

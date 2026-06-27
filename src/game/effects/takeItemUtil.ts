@@ -22,9 +22,9 @@ function _drawAnimatedItem(room:Room, takeItemEffect:TakeItemEffect, context:Can
 }
 
 function _onProcessCharacterEffect(_character:Character, effect:Effect, context:CanvasRenderingContext2D,
-  scalingFactors:ScalingFactors, imageSet:ImageSet):boolean {
+  scalingFactors:ScalingFactors, imageSet:ImageSet, metaTime:number):boolean {
   const takeItemEffect = effect as TakeItemEffect;
-  const elapsed = Date.now() - takeItemEffect.startTime;
+  const elapsed = metaTime - takeItemEffect.startTime;
   const room = takeItemEffect.room;
   if (!room) return false;
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);

@@ -20,9 +20,9 @@ function _drawParticle(context:CanvasRenderingContext2D, x:number, y:number, rad
   context.fill();
 }
 
-function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):boolean {
+function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D, metaTime:number):boolean {
   const characterSelectEffect = effect as CharacterSelectEffect;
-  const elapsed = Date.now() - characterSelectEffect.startTime;
+  const elapsed = metaTime - characterSelectEffect.startTime;
   const progress = clamp(elapsed / CHARACTER_SELECT_EFFECT_DURATION, 0, 1);
   const [centerX, bottomY] = projectRoomPointWithDepth(
     characterSelectEffect.displayPosition.x,

@@ -15,9 +15,9 @@ import GiveItemEffect from "./types/GiveItemEffect";
 import { ITEM_EFFECT_DURATION } from "./dropItemUtil";
 
 function _onProcessRoomEffect(room:Room, effect:Effect, context:CanvasRenderingContext2D,
-  scalingFactors:ScalingFactors, canDrawEffect:boolean, imageSet:ImageSet):boolean {
+  scalingFactors:ScalingFactors, canDrawEffect:boolean, imageSet:ImageSet, metaTime:number):boolean {
   const giveItemEffect = effect as GiveItemEffect;
-  const elapsed = Date.now() - giveItemEffect.startTime;
+  const elapsed = metaTime - giveItemEffect.startTime;
   if (!canDrawEffect) return elapsed < ITEM_EFFECT_DURATION;
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
   const x = giveItemEffect.startCanvasPosition.x + (giveItemEffect.endCanvasPosition.x - giveItemEffect.startCanvasPosition.x) * progress;

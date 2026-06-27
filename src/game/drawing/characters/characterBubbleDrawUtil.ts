@@ -15,14 +15,14 @@ type BubbleBox = Readonly<{
   height:number
 }>;
 
-function _findBubbleIntroScale(startTime:number):number {
-  const elapsed = Math.max(0, Date.now() - startTime);
+function _findBubbleIntroScale(startTime:number, metaTime:number):number {
+  const elapsed = Math.max(0, metaTime - startTime);
   const progress = clamp(elapsed / BUBBLE_INTRO_DURATION_MSECS, 0, 1);
   return 1 + (BUBBLE_INTRO_START_SCALE - 1) * (1 - progress);
 }
 
-function _createScaledBubbleBox(left:number, top:number, width:number, height:number, startTime:number):BubbleBox {
-  const scale = _findBubbleIntroScale(startTime);
+function _createScaledBubbleBox(left:number, top:number, width:number, height:number, startTime:number, metaTime:number):BubbleBox {
+  const scale = _findBubbleIntroScale(startTime, metaTime);
   const scaledWidth = width * scale;
   const scaledHeight = height * scale;
   return {
@@ -71,7 +71,7 @@ function _drawRoundedBubbleOutline(left:number, top:number, width:number, height
 }
 
 export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number = 0) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number = 0, metaTime:number = 0) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
@@ -92,7 +92,7 @@ export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:numb
   const unclampedTop = anchorTopY - boxHeight - extraBottomSpace - scalingFactors.roomLineWidth * 2;
   const left = Math.round(clamp(unclampedLeft, 0, context.canvas.width - boxWidth));
   const top = Math.round(clamp(unclampedTop, 0, context.canvas.height - boxHeight - extraBottomSpace));
-  const bubbleBox = _createScaledBubbleBox(left, top, boxWidth, boxHeight, startTime);
+  const bubbleBox = _createScaledBubbleBox(left, top, boxWidth, boxHeight, startTime, metaTime);
   const thoughtTrailCenterX = Math.round(clamp(anchorX, left + thoughtTrailRadius, left + boxWidth - thoughtTrailRadius));
   const thoughtTrailCenterY = top + boxHeight + thoughtTrailGap + thoughtTrailRadius;
   const smallerThoughtTrailCenterX = Math.round(clamp(anchorX, 0, context.canvas.width));
@@ -125,7 +125,7 @@ export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:numb
 }
 
 export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number = 0) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number = 0, metaTime:number = 0) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
@@ -141,7 +141,7 @@ export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:numbe
   const unclampedTop = anchorTopY - boxHeight - tailHeight - scalingFactors.roomLineWidth * 2;
   const left = Math.round(clamp(unclampedLeft, 0, context.canvas.width - boxWidth));
   const top = Math.round(clamp(unclampedTop, 0, context.canvas.height - boxHeight - tailHeight));
-  const bubbleBox = _createScaledBubbleBox(left, top, boxWidth, boxHeight, startTime);
+  const bubbleBox = _createScaledBubbleBox(left, top, boxWidth, boxHeight, startTime, metaTime);
   const tailTipX = Math.round(clamp(anchorX, 0, context.canvas.width));
   const tailTipY = bubbleBox.top + bubbleBox.height + tailHeight;
 
@@ -158,7 +158,7 @@ export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:numbe
 }
 
 export function drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number = 0) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number = 0, metaTime:number = 0) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
@@ -173,7 +173,7 @@ export function drawEmitBubble(emitText:string, anchorX:number, anchorTopY:numbe
   const unclampedTop = anchorTopY - boxHeight - scalingFactors.roomLineWidth * 2;
   const left = Math.round(clamp(unclampedLeft, 0, context.canvas.width - boxWidth));
   const top = Math.round(clamp(unclampedTop, 0, context.canvas.height - boxHeight));
-  const bubbleBox = _createScaledBubbleBox(left, top, boxWidth, boxHeight, startTime);
+  const bubbleBox = _createScaledBubbleBox(left, top, boxWidth, boxHeight, startTime, metaTime);
 
   context.fillStyle = COLOR_SPEECH_BUBBLE_FILL;
   context.strokeStyle = COLOR_DARK_GRAY;

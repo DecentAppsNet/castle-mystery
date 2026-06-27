@@ -334,7 +334,7 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
   return scalingFactors;
 }
 
-export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D) {
+export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D, metaTime:number) {
   _ensureRoomShellCaches(gameState, context);
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   const highlightedWaypointPosition = _findHighlightedWaypointPosition(gameState);
@@ -355,7 +355,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     const drewCachedRoomShell = _drawCachedRoomShell(room, gameState, isActive, context);
     if (drewCachedRoomShell) {
       if (room.isObscured && !gameState.isLevelComplete && room.isDiscovered) {
-        drawObscuredRoom(room, gameState.scalingFactors, context);
+        drawObscuredRoom(room, gameState.scalingFactors, context, metaTime);
       }
       drawRoomShellExits(room, gameState.rooms, gameState.characters, drawnExitIds,
         gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner);
@@ -363,7 +363,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
       drawCacheableRoomShell(room, gameState.rooms, isActive, gameState.groundFloorY, gameState.scalingFactors,
         context, gameState.isLevelComplete, false, gameState.imageSet, false, false);
       if (room.isObscured && !gameState.isLevelComplete && room.isDiscovered) {
-        drawObscuredRoom(room, gameState.scalingFactors, context);
+        drawObscuredRoom(room, gameState.scalingFactors, context, metaTime);
       }
       drawRoomShellExits(room, gameState.rooms, gameState.characters, drawnExitIds,
         gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner);
@@ -371,7 +371,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     if (!room.isDiscovered) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
       hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,
-      gameState.time, gameState.imageSet, gameState.isLevelComplete, layoutPlanner);
+      gameState.time, metaTime, gameState.imageSet, gameState.isLevelComplete, layoutPlanner);
     drawRoomWaypointsWithHighlight(room, gameState.scalingFactors, context,
       highlightedWaypointPosition, gameState.isLevelComplete);
     if (!_drawCachedRoomRoof(room, gameState, context)) {
@@ -404,5 +404,5 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     }
   }
   _drawReservedRects(layoutPlanner, context);
-  processLevelEffects(gameState.activeEffects, context);
+  processLevelEffects(gameState.activeEffects, context, metaTime);
 }

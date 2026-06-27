@@ -61,6 +61,10 @@ import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
+function _findMetaTimeNow():number {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now();
+}
+
 export function findCharacter(gameState:GameState, characterRef:string):Character {
   const characterId = normalizeId(characterRef);
   const character = gameState.characters.find((c) => c.id === characterId);
@@ -81,16 +85,16 @@ function _setActiveRoomDiscovered(gameState:GameState) {
   }
 }
 
-function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent) {
+function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
   const wasPlaying = gameState.isPlaying;
   gameState.activeEffects.length = 0;
-  rebuildDynamicStateForTime(gameState, event.time);
+  rebuildDynamicStateForTime(gameState, event.time, undefined, metaTime);
   gameState.isPlaying = false;
   gameState.realTimeToGameTimeOffset = 0;
-  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
+  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
 }
 
-function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent) {
+function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent, metaTime:number) {
   const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = event.isPlaying;
   if (event.isPlaying) {
@@ -100,16 +104,16 @@ function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent)
   }
   if (wasPlaying !== event.isPlaying) {
     gameState.activeEffects.push(event.isPlaying
-      ? createPlayEffect(Date.now(), gameState.scalingFactors.roomLineWidth)
-      : createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
+      ? createPlayEffect(metaTime, gameState.scalingFactors.roomLineWidth)
+      : createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
   }
 }
 
-function _pauseGameState(gameState:GameState) {
+function _pauseGameState(gameState:GameState, metaTime:number) {
   const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = false;
   gameState.realTimeToGameTimeOffset = 0;
-  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
+  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
 }
 
 function _findActiveSpeechEvent(character:Character, time:number):SpeechEvent|null {
@@ -183,7 +187,7 @@ function _findSpeechEffectRooms(gameState:GameState):Room[] {
   return activeRoom ? gameState.rooms.filter(room => isActiveAudibleRoom(room, activeRoom)) : [];
 }
 
-function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharacterEvent) {
+function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharacterEvent, metaTime:number) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   if (!activeCharacter) return;
   const activeRoom = _findActiveVisibleRoom(gameState);
@@ -199,7 +203,7 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   if (nextCharacter.id === activeCharacter.id) return;
   gameState.activeCharacterI = gameState.characters.indexOf(nextCharacter);
   gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter,
-    findCharacterDisplayPosition(nextCharacter, activeRoom), Date.now(), gameState.scalingFactors));
+    findCharacterDisplayPosition(nextCharacter, activeRoom), metaTime, gameState.scalingFactors));
 }
 
 function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEvent) {
@@ -209,14 +213,14 @@ function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEven
   gameState.camera.zoomAmount = clamp(gameState.camera.zoomAmount + zoomDirection * CAMERA_ZOOM_STEP, 0, 1);
 }
 
-function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number, cameraAspectRatio:number) {
+function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number, metaTime:number, cameraAspectRatio:number) {
   events.forEach(event => {
     switch(event.type) {
-      case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent); break;
+      case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent, metaTime); break;
       case PlayerEventType.CHANGE_CONCLUSIONS: updateGameStateForChangeConclusions(gameState, event as ChangeConclusionsEvent); break;
-      case PlayerEventType.NEXT_CHARACTER: _updateGameStateForNextCharacter(gameState, event as NextCharacterEvent); break;
-      case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent); break;
-      case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, event as MouseDownEvent); break;
+      case PlayerEventType.NEXT_CHARACTER: _updateGameStateForNextCharacter(gameState, event as NextCharacterEvent, metaTime); break;
+      case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent, metaTime); break;
+      case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, event as MouseDownEvent, metaTime); break;
       case PlayerEventType.MOUSEMOVE: updateGameStateForMouseMove(gameState, event as MouseMoveEvent); break;
       case PlayerEventType.MOUSEWHEEL: _updateGameStateForMouseWheel(gameState, event as MouseWheelEvent); break;
       default: botch();
@@ -226,8 +230,8 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number,
     const previousTime = gameState.time;
     const endTime = gameState.startTime + gameState.duration;
     const nextTime = Math.min(endTime, now + gameState.realTimeToGameTimeOffset);
-    rebuildDynamicStateForTime(gameState, nextTime, previousTime);
-    if (nextTime >= endTime) _pauseGameState(gameState);
+    rebuildDynamicStateForTime(gameState, nextTime, previousTime, metaTime);
+    if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
   syncCameraTargetToActiveRoom(gameState.camera, gameState.rooms, gameState.characters[gameState.activeCharacterI] || null,
     cameraAspectRatio, now, gameState.groundFloorY);
@@ -235,7 +239,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number,
   _setActiveRoomDiscovered(gameState);
 }
 
-function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
+function _syncSpeechBubbleEffects(gameState:GameState, metaTime:number, isScrubbing:boolean = false) {
   const existingSpeechBubbleEffects = gameState.activeEffects.filter(effect => effect.type === EffectType.SPEECH_BUBBLE);
   gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.SPEECH_BUBBLE);
 
@@ -251,12 +255,12 @@ function _syncSpeechBubbleEffects(gameState:GameState, isScrubbing:boolean = fal
       });
       gameState.activeEffects.push(createSpeechBubbleEffect(character,
         findCharacterDisplayPosition(character, room), speech, gameState.scalingFactors, gameState.time,
-        existingSpeechBubbleEffect?.startTime));
+        existingSpeechBubbleEffect?.startTime ?? metaTime));
     });
   });
 }
 
-function _syncEmitBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
+function _syncEmitBubbleEffects(gameState:GameState, metaTime:number, isScrubbing:boolean = false) {
   const existingEmitBubbleEffects = gameState.activeEffects.filter(effect => effect.type === EffectType.EMIT_BUBBLE);
   gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.EMIT_BUBBLE);
 
@@ -283,7 +287,7 @@ function _syncEmitBubbleEffects(gameState:GameState, isScrubbing:boolean = false
         activeEmitEvent.emitText,
         gameState.scalingFactors,
         gameState.time,
-        existingEmitBubbleEffect?.startTime
+        existingEmitBubbleEffect?.startTime ?? metaTime
       ));
       return;
     }
@@ -303,7 +307,7 @@ function _syncEmitBubbleEffects(gameState:GameState, isScrubbing:boolean = false
       activeEmitEvent.emitText,
       gameState.scalingFactors,
       gameState.time,
-      existingEmitBubbleEffect?.startTime
+      existingEmitBubbleEffect?.startTime ?? metaTime
     ));
   });
 }
@@ -325,7 +329,7 @@ function _syncTalkingEffects(gameState:GameState, isScrubbing:boolean = false) {
   });
 }
 
-function _syncThoughtBubbleEffects(gameState:GameState, isScrubbing:boolean = false) {
+function _syncThoughtBubbleEffects(gameState:GameState, metaTime:number, isScrubbing:boolean = false) {
   const existingThoughtBubbleEffects = gameState.activeEffects.filter(effect => effect.type === EffectType.THOUGHT_BUBBLE);
   gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.THOUGHT_BUBBLE);
 
@@ -341,7 +345,7 @@ function _syncThoughtBubbleEffects(gameState:GameState, isScrubbing:boolean = fa
       });
       gameState.activeEffects.push(createThoughtBubbleEffect(character,
         findCharacterDisplayPosition(character, room), thought, gameState.scalingFactors, gameState.time,
-        existingThoughtBubbleEffect?.startTime));
+        existingThoughtBubbleEffect?.startTime ?? metaTime));
     });
   });
 }
@@ -420,9 +424,10 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   }
 
   const now = Date.now();
+  const metaTime = _findMetaTimeNow();
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
-  _updateGameState(gameState, events, now, calcCanvasAspectRatio(context));
+  _updateGameState(gameState, events, now, metaTime, calcCanvasAspectRatio(context));
   syncConclusionUnlocks(gameState);
   syncDiscoveries(gameState);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
@@ -434,16 +439,16 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     : gameState.hoveredRoomId ? "pointer" : "default";
 
   updateScalingFactorsAsNeeded(gameState, context);
-  _syncSpeechBubbleEffects(gameState, isScrubbing);
-  _syncEmitBubbleEffects(gameState, isScrubbing);
+  _syncSpeechBubbleEffects(gameState, metaTime, isScrubbing);
+  _syncEmitBubbleEffects(gameState, metaTime, isScrubbing);
   _syncTalkingEffects(gameState, isScrubbing);
-  _syncThoughtBubbleEffects(gameState, isScrubbing);
+  _syncThoughtBubbleEffects(gameState, metaTime, isScrubbing);
   _syncThinkingEffects(gameState, isScrubbing);
   assert(gameState.activeEffects.length <= MAX_ACTIVE_EFFECTS,
     `active effect count ${gameState.activeEffects.length} exceeds MAX_ACTIVE_EFFECTS ${MAX_ACTIVE_EFFECTS}; an effect callback may not be returning false to remove itself`);
   if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
   if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
-  drawGameState(gameState, context);
+  drawGameState(gameState, context, metaTime);
 }
 
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {

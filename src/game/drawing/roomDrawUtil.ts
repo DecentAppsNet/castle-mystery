@@ -365,7 +365,7 @@ function _createDrawableContents(room:Room, charactersInRoom:Character[], effect
 
 function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharacter:Character|null, effects:Effect[],
   hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
+  context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
   layoutPlanner:CanvasLayoutPlanner|null = null) {
   _createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems).forEach(content => {
     switch(content.type) {
@@ -374,14 +374,14 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
         return;
       case 'item':
         if (layoutPlanner && isItemInteractive(content.item)) layoutPlanner.reserveRect(getItemCanvasRectInRoom(room, content.item, scalingFactors, imageSet));
-        drawRoomItem(room, content.item, scalingFactors, context, imageSet, content.item.id === hoveredItemId, time);
+        drawRoomItem(room, content.item, scalingFactors, context, imageSet, content.item.id === hoveredItemId, metaTime);
         return;
       case 'character':
-        if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, time, imageSet, room));
-        processBeforeCharacterEffects(content.character, effects, context, scalingFactors, imageSet);
-        drawCharacter(content.character, scalingFactors, context, time, imageSet, effects,
-          content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId, room);
-        processAfterCharacterEffects(content.character, effects, context, scalingFactors, imageSet);
+        if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, gameTime, imageSet, room));
+        processBeforeCharacterEffects(content.character, effects, context, scalingFactors, imageSet, metaTime);
+        drawCharacter(content.character, scalingFactors, context, gameTime, imageSet, effects,
+          content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId, room, metaTime);
+        processAfterCharacterEffects(content.character, effects, context, scalingFactors, imageSet, metaTime);
         return;
     }
   });
@@ -393,7 +393,7 @@ function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:C
 
 export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
   effects:Effect[], hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, time:number, imageSet:ImageSet,
+  context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet,
   showFullContents:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!room.isDiscovered) return;
   const isRoomObscured = room.isObscured && !showFullContents;
@@ -404,11 +404,11 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
   }
   if (showFullContents || (isActive && activeCharacter)) {
     _drawRoomContents(room, charactersInRoom, activeCharacter, effects, hoveredCharacterId, hoveredItemId,
-      scalingFactors, context, time, imageSet, true, layoutPlanner);
+      scalingFactors, context, gameTime, metaTime, imageSet, true, layoutPlanner);
   } else {
     _drawRoomStairsOnly(room, scalingFactors, context);
   }
-  processRoomEffects(room, effects, context, scalingFactors, canDrawEffect, imageSet);
+  processRoomEffects(room, effects, context, scalingFactors, canDrawEffect, imageSet, metaTime);
 }
 
 export function drawRoomWaypoints(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {

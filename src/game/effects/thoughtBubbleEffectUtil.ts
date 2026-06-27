@@ -9,19 +9,20 @@ import Effect from "./types/Effect";
 import EffectType from "./types/EffectType";
 import ThoughtBubbleEffect from "./types/ThoughtBubbleEffect";
 
-function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):boolean {
+function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D, metaTime:number):boolean {
   const thoughtBubbleEffect = effect as ThoughtBubbleEffect;
   const { anchorX, anchorTopY } = getCharacterSpeechAnchor(
     { ...thoughtBubbleEffect.character, position:thoughtBubbleEffect.displayPosition },
     thoughtBubbleEffect.scalingFactors,
     thoughtBubbleEffect.gameTime
   );
-  drawThoughtBubble(thoughtBubbleEffect.thought, anchorX, anchorTopY, thoughtBubbleEffect.scalingFactors, context, thoughtBubbleEffect.startTime);
+  drawThoughtBubble(thoughtBubbleEffect.thought, anchorX, anchorTopY, thoughtBubbleEffect.scalingFactors, context,
+    thoughtBubbleEffect.startTime, metaTime);
   return true;
 }
 
 export function createThoughtBubbleEffect(character:Character, displayPosition:Position, thought:string,
-  scalingFactors:ScalingFactors, gameTime:number, startTime:number = Date.now()):ThoughtBubbleEffect {
+  scalingFactors:ScalingFactors, gameTime:number, startTime:number):ThoughtBubbleEffect {
   return {
     type:EffectType.THOUGHT_BUBBLE,
     character,

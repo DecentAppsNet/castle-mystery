@@ -43,10 +43,10 @@ function _calcMarkerScale(context:CanvasRenderingContext2D, markerWidthPixels:nu
 }
 
 export function drawUndiscoveredMarker(centerX:number, topY:number, randomSalt:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, metaTime:number) {
   const { widthPixels, heightPixels } = _calcMarkerBoxPixels(scalingFactors);
   const gapPixels = heightPixels * UNDISCOVERED_MARKER_GAP_SCALE;
-  const bobOffsetPixels = _calcMarkerBobOffsetPixels(time, randomSalt, heightPixels);
+  const bobOffsetPixels = _calcMarkerBobOffsetPixels(metaTime, randomSalt, heightPixels);
   const baseFontSize = Math.max(1, heightPixels);
 
   context.save();

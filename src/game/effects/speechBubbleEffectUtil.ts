@@ -9,19 +9,20 @@ import Position from "../types/Position";
 import ScalingFactors from "../types/ScalingFactors";
 import { drawSpeechBubble, getCharacterSpeechAnchor } from "../drawing/characterDrawUtil";
 
-function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):boolean {
+function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D, metaTime:number):boolean {
   const speechBubbleEffect = effect as SpeechBubbleEffect;
   const { anchorX, anchorTopY } = getCharacterSpeechAnchor(
     { ...speechBubbleEffect.character, position:speechBubbleEffect.displayPosition },
     speechBubbleEffect.scalingFactors,
     speechBubbleEffect.gameTime
   );
-  drawSpeechBubble(speechBubbleEffect.speech, anchorX, anchorTopY, speechBubbleEffect.scalingFactors, context, speechBubbleEffect.startTime);
+  drawSpeechBubble(speechBubbleEffect.speech, anchorX, anchorTopY, speechBubbleEffect.scalingFactors, context,
+    speechBubbleEffect.startTime, metaTime);
   return true;
 }
 
 export function createSpeechBubbleEffect(character:Character, displayPosition:Position, speech:string,
-  scalingFactors:ScalingFactors, gameTime:number, startTime:number = Date.now()):SpeechBubbleEffect {
+  scalingFactors:ScalingFactors, gameTime:number, startTime:number):SpeechBubbleEffect {
   return {
     type:EffectType.SPEECH_BUBBLE,
     character,

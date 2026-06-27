@@ -203,7 +203,7 @@ function _findRoomExitById(room:GameState['rooms'][number], roomExitId:string) {
   return room.exits.find(candidate => candidate.id === roomExitId) || null;
 }
 
-export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime?:number) {
+export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime?:number, metaTime:number = 0) {
   const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
   const characterDiscoveredRoomIds = _getCharacterDiscoveredRoomIds(gameState);
   const discoveredCharacterIds = _getDiscoveredCharacterIds(gameState);
@@ -226,7 +226,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           if (itemFromRoom && room && !room.isObscured && previousTime !== undefined && takeEvent.startTime > previousTime && takeEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:room.id,
-              create:() => gameState.activeEffects.push(createTakeItemEffect(item, actor, room, Date.now(), startPosition.z))
+              create:() => gameState.activeEffects.push(createTakeItemEffect(item, actor, room, metaTime, startPosition.z))
             });
           }
           addOwnedItem(actor, item, takeEvent.destination);
@@ -246,7 +246,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           if (!dropRoom.isObscured && previousTime !== undefined && dropEvent.startTime > previousTime && dropEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:dropRoom.id,
-              create:() => gameState.activeEffects.push(createDropItemEffect(item, actor, dropRoom, Date.now(), startPosition.z))
+              create:() => gameState.activeEffects.push(createDropItemEffect(item, actor, dropRoom, metaTime, startPosition.z))
             });
           }
           dropRoom.items.push(item);
@@ -264,7 +264,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           if (!actorRoom?.isObscured && previousTime !== undefined && giveEvent.startTime > previousTime && giveEvent.startTime <= time && actorRoom) {
             pendingRoomEffects.push({
               roomId:actorRoom.id,
-              create:() => gameState.activeEffects.push(createGiveItemEffect(item, actorRoom, actor, recipient, Date.now(), gameState.scalingFactors))
+              create:() => gameState.activeEffects.push(createGiveItemEffect(item, actorRoom, actor, recipient, metaTime, gameState.scalingFactors))
             });
           }
           addOwnedItem(recipient, item, 'inventory');
@@ -280,14 +280,14 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
       case ItineraryEventType.LOCK:
         _setMatchingExitStatus(gameState, event.roomExitId, ExitStatus.locked);
         if (room && roomExit && previousTime !== undefined && event.startTime > previousTime && event.startTime <= time && !room.isObscured) {
-          pendingRoomEffects.push({ roomId:room.id, create:() => gameState.activeEffects.push(createLockEffect(room, roomExit, Date.now(), gameState.scalingFactors, gameState.imageSet)) });
+          pendingRoomEffects.push({ roomId:room.id, create:() => gameState.activeEffects.push(createLockEffect(room, roomExit, metaTime, gameState.scalingFactors, gameState.imageSet)) });
         }
       break;
 
       case ItineraryEventType.UNLOCK:
         _setMatchingExitStatus(gameState, event.roomExitId, ExitStatus.unlocked);
         if (room && roomExit && previousTime !== undefined && event.startTime > previousTime && event.startTime <= time && !room.isObscured) {
-          pendingRoomEffects.push({ roomId:room.id, create:() => gameState.activeEffects.push(createUnlockEffect(room, roomExit, Date.now(), gameState.scalingFactors, gameState.imageSet)) });
+          pendingRoomEffects.push({ roomId:room.id, create:() => gameState.activeEffects.push(createUnlockEffect(room, roomExit, metaTime, gameState.scalingFactors, gameState.imageSet)) });
         }
       break;
     }

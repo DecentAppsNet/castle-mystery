@@ -22,7 +22,7 @@ export function createThinkingEffect(character:Character, thoughtStartTime:numbe
     thoughtStartTime,
     thoughtEndTime,
     gameTime,
-    startTime:Date.now(),
+    startTime:gameTime,
     onProcessLevelEffect:_onProcessLevelEffect
   };
 }

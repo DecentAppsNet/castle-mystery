@@ -13,9 +13,9 @@ const PLAY_PAUSE_EFFECT_DURATION = 260;
 const START_SCALE = 0.92;
 const END_SCALE = 1.08;
 
-function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D):boolean {
+function _onProcessLevelEffect(effect:Effect, context:CanvasRenderingContext2D, metaTime:number):boolean {
   const overlayEffect = effect as PlayEffect|PauseEffect;
-  const elapsed = Date.now() - overlayEffect.startTime;
+  const elapsed = metaTime - overlayEffect.startTime;
   const progress = clamp(elapsed / PLAY_PAUSE_EFFECT_DURATION, 0, 1);
   const scale = START_SCALE + (END_SCALE - START_SCALE) * progress;
   const alpha = 1 - progress;

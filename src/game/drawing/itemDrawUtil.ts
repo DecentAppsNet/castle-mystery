@@ -224,12 +224,12 @@ function _findItemImageHighlightSilhouetteCanvas(image:ImageBitmap, imageRect:It
 
 // Draws the pulsing hover highlight around an item image.
 function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, itemDrawRect:ItemImageRect,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, metaTime:number) {
   if (!image.width || !image.height) return;
   const imageRect = _calcItemImageRect(itemDrawRect, image);
   const silhouetteCanvas = _findItemImageHighlightSilhouetteCanvas(image, imageRect);
   if (!silhouetteCanvas) return;
-  const { glowWidth, glowBlur } = _calcItemHighlightGlowMetrics(scalingFactors.roomLineWidth, time);
+  const { glowWidth, glowBlur } = _calcItemHighlightGlowMetrics(scalingFactors.roomLineWidth, metaTime);
   const outsetPixels = scalingFactors.roomLineWidth * ITEM_IMAGE_HIGHLIGHT_OUTSET_LINE_WIDTHS;
   const highlightLeft = x + imageRect.leftOffsetPixels - outsetPixels;
   const highlightTop = y + imageRect.topOffsetPixels - outsetPixels;
@@ -261,25 +261,25 @@ function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, itemDraw
 
 // Draws one room item, including its optional highlight effect.
 function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  imageSet:ImageSet, isHighlighted:boolean = false, time:number = 0) {
+  imageSet:ImageSet, isHighlighted:boolean = false, metaTime:number = 0) {
   const image = _findItemImage(item, imageSet);
   if (!image) return; // Headless - no drawing needed.
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
   const itemDrawRect = calcItemDrawRect(room, scalingFactors);
   const imageRect = _calcItemImageRect(itemDrawRect, image);
   context.save();
-  if (isHighlighted) _drawItemImageHighlight(image, x, y, itemDrawRect, scalingFactors, context, time);
+  if (isHighlighted) _drawItemImageHighlight(image, x, y, itemDrawRect, scalingFactors, context, metaTime);
   _drawItemImage(image, x, y, itemDrawRect, context);
   if (isItemInteractive(item) && !item.isDiscovered) {
-    drawUndiscoveredMarker(x, y + imageRect.topOffsetPixels, item.randomSalt, scalingFactors, context, time);
+    drawUndiscoveredMarker(x, y + imageRect.topOffsetPixels, item.randomSalt, scalingFactors, context, metaTime);
   }
   context.restore();
 }
 
 // Public room-item draw entry point used by room rendering.
 export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  imageSet:ImageSet, isHighlighted:boolean = false, time:number = 0) {
-  drawItem(room, item, scalingFactors, context, imageSet, isHighlighted, time);
+  imageSet:ImageSet, isHighlighted:boolean = false, metaTime:number = 0) {
+  drawItem(room, item, scalingFactors, context, imageSet, isHighlighted, metaTime);
 }
 
 // Draws an item at a caller-supplied canvas anchor using precomputed metrics.

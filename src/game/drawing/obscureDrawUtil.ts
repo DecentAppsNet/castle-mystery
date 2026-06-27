@@ -57,9 +57,9 @@ function _createObscuredRoomPoints(room:Room, scalingFactors:ScalingFactors):Can
   ];
 }
 
-export function drawObscuredRoom(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+export function drawObscuredRoom(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, metaTime:number) {
   const points = _createObscuredRoomPoints(room, scalingFactors);
-  const time = Date.now();
+  const time = metaTime;
   const center = _faceCenter(points);
   const bounds = _faceBounds(points);
 

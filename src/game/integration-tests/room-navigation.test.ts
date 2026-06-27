@@ -112,7 +112,7 @@ describe('room navigation integration', () => {
 
     expect(gameState.hoveredRoomId).toBe(null);
 
-    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:5, y:5 });
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:5, y:5 }, 0);
 
     expect(gameState.time).toBe(750);
   });
@@ -126,7 +126,7 @@ describe('room navigation integration', () => {
     gameState.characters[0].discoveredRoomIds = ['foyer', 'library'];
     gameState.time = 2_600;
 
-    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 }, 0);
 
     expect(gameState.time).toBeGreaterThan(3_000);
     expect(gameState.time).toBeLessThanOrEqual(5_000);
@@ -141,7 +141,7 @@ describe('room navigation integration', () => {
     gameState.characters[0].discoveredRoomIds = ['foyer', 'library'];
     gameState.time = 4_900;
 
-    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 }, 0);
 
     expect(gameState.time).toBe(5_000);
   });
@@ -156,7 +156,7 @@ describe('room navigation integration', () => {
     gameState.characters[1].discoveredRoomIds = ['library'];
     rebuildDynamicStateForTime(gameState, gameState.time);
 
-    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 }, 0);
 
     expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('guide');
     expect(gameState.time).toBeGreaterThan(2_000);
@@ -187,7 +187,7 @@ describe('room navigation integration', () => {
 
     expect(gameState.hoveredCharacterId).toBe(null);
 
-    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 });
+    updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 }, 0);
 
     expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('hero');
   });

@@ -63,7 +63,7 @@ export function createTalkingEffect(character:Character, speechStartTime:number,
     speechEndTime,
     gameTime,
     dips:_createTalkingDips(character, speechStartTime, speechEndTime),
-    startTime:Date.now(),
+    startTime:gameTime,
     onProcessLevelEffect:_onProcessLevelEffect
   };
 }

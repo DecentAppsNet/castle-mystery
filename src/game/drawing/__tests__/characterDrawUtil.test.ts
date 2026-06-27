@@ -113,7 +113,6 @@ describe('characterDrawUtil', () => {
 
   describe('drawEmitBubble()', () => {
     it('keeps the text layout fixed while the bubble chrome shrinks to normal size', () => {
-      const originalDateNow = Date.now;
       const fillTextCalls:{ text:string, x:number, y:number }[] = [];
       const rectCalls:{ left:number, top:number, width:number, height:number }[] = [];
       const context = {
@@ -134,14 +133,8 @@ describe('characterDrawUtil', () => {
         font:''
       } as unknown as CanvasRenderingContext2D;
 
-      try {
-        Date.now = () => 1_000;
-        drawEmitBubble('Hello', 100, 80, SCALING_FACTORS, context, 1_000);
-        Date.now = () => 1_300;
-        drawEmitBubble('Hello', 100, 80, SCALING_FACTORS, context, 1_000);
-      } finally {
-        Date.now = originalDateNow;
-      }
+      drawEmitBubble('Hello', 100, 80, SCALING_FACTORS, context, 1_000, 1_000);
+      drawEmitBubble('Hello', 100, 80, SCALING_FACTORS, context, 1_000, 1_300);
 
       expect(fillTextCalls[0]).toEqual(fillTextCalls[1]);
       expect(fillTextCalls[0]).toEqual({ text:'Hello', x:100, y:40 });

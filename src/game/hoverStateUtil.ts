@@ -120,7 +120,7 @@ function _adjustRoomNavigationTime(gameState:GameState, time:number):number {
   return Math.min(levelEndTime, time + ROOM_NAVIGATION_TIME_OFFSET); // Adding the offset lets the character arrive in the room instead of being on the door - looks better.
 }
 
-function _jumpToRoomTime(gameState:GameState, roomId:string) {
+function _jumpToRoomTime(gameState:GameState, roomId:string, metaTime:number) {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   let targetCharacter = activeCharacter;
   let targetTime = activeCharacter ? _findClosestRoomEntryTime(gameState, activeCharacter, roomId) : null;
@@ -147,7 +147,7 @@ function _jumpToRoomTime(gameState:GameState, roomId:string) {
   const targetCharacterId = targetCharacter?.id || null;
   if (targetCharacterId) gameState.activeCharacterI = gameState.characters.findIndex(character => character.id === targetCharacterId);
   gameState.activeEffects.length = 0;
-  rebuildDynamicStateForTime(gameState, targetTime);
+  rebuildDynamicStateForTime(gameState, targetTime, undefined, metaTime);
   gameState.isPlaying = false;
   gameState.realTimeToGameTimeOffset = 0;
   const rebuiltTargetCharacter = targetCharacterId
@@ -157,9 +157,9 @@ function _jumpToRoomTime(gameState:GameState, roomId:string) {
   if (rebuiltTargetCharacter) {
     const rebuiltTargetRoom = findRoomAtPosition(gameState.rooms, rebuiltTargetCharacter.position.x, rebuiltTargetCharacter.position.y);
     gameState.activeEffects.push(createCharacterSelectEffect(rebuiltTargetCharacter,
-      findCharacterDisplayPosition(rebuiltTargetCharacter, rebuiltTargetRoom), Date.now(), gameState.scalingFactors));
+      findCharacterDisplayPosition(rebuiltTargetCharacter, rebuiltTargetRoom), metaTime, gameState.scalingFactors));
   }
-  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(Date.now(), gameState.scalingFactors.roomLineWidth));
+  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
 }
 
 function _findInteractiveCharacterAtPosition(gameState:GameState, x:number, y:number):Character|null {
@@ -197,18 +197,18 @@ function _findHoveredItemInInteractionRoom(gameState:GameState, room:Room, x:num
     { includeUndiscovered:true, ignoreRoomObscured:gameState.isLevelComplete });
 }
 
-export function updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent) {
+export function updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent, metaTime:number) {
   const character = _findInteractiveCharacterAtPosition(gameState, event.x, event.y);
   if (character) {
     const characterI = gameState.characters.indexOf(character);
     gameState.activeCharacterI = characterI;
     const characterRoom = findRoomAtPosition(gameState.rooms, character.position.x, character.position.y);
     gameState.activeEffects.push(createCharacterSelectEffect(character,
-      findCharacterDisplayPosition(character, characterRoom), Date.now(), gameState.scalingFactors));
+      findCharacterDisplayPosition(character, characterRoom), metaTime, gameState.scalingFactors));
     return;
   }
   const room = _findNavigableRoomAtPosition(gameState, event.x, event.y);
-  if (room) _jumpToRoomTime(gameState, room.id);
+  if (room) _jumpToRoomTime(gameState, room.id, metaTime);
 }
 
 export function updateGameStateForMouseMove(gameState:GameState, event:MouseMoveEvent) {
