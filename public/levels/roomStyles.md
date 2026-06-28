@@ -31,7 +31,7 @@
 * backWallTexture=greyBricks2.png | aged stone
 * floorTexture=greyBricks.png | aged stone
 * rightWallTexture=greyBricks2.png | aged stone
-* stairTexture=greyBricks2.png
+* stairTexture=greyBricks2.png | aged stone
 
 ## Town Street Day
 

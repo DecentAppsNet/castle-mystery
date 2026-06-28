@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { COLOR_BLACK } from "./drawColorConstants";
+import type { TextureFaceImage } from "./textureFaceDrawUtil";
 
 type CanvasPoint = [number, number];
 
@@ -19,6 +20,9 @@ type DrawProjectedCuboidOptions = {
   topFillStyle:string,
   sideFillStyle:string,
   frontFillStyle:string,
+  topFaceImage?:TextureFaceImage|null,
+  sideFaceImage?:TextureFaceImage|null,
+  frontFaceImage?:TextureFaceImage|null,
   lineWidth:number,
   strokeStyle?:string
 }
@@ -31,14 +35,65 @@ function _fillFace(points:CanvasPoint[], context:CanvasRenderingContext2D) {
   context.fill();
 }
 
+function _drawFaceImage(faceImage:TextureFaceImage, origin:CanvasPoint, horizontalVector:CanvasPoint,
+  verticalVector:CanvasPoint, points:CanvasPoint[], context:CanvasRenderingContext2D) {
+  context.save();
+  context.beginPath();
+  context.moveTo(...points[0]);
+  for (let i = 1; i < points.length; i++) context.lineTo(...points[i]);
+  context.closePath();
+  context.clip();
+  context.transform(
+    horizontalVector[0] / faceImage.width,
+    horizontalVector[1] / faceImage.width,
+    verticalVector[0] / faceImage.height,
+    verticalVector[1] / faceImage.height,
+    origin[0],
+    origin[1]
+  );
+  context.drawImage(faceImage.image, 0, 0);
+  context.restore();
+}
+
+function _drawFace(points:CanvasPoint[], fillStyle:string, faceImage:TextureFaceImage|null|undefined,
+  origin:CanvasPoint, horizontalVector:CanvasPoint, verticalVector:CanvasPoint, context:CanvasRenderingContext2D) {
+  if (faceImage) {
+    _drawFaceImage(faceImage, origin, horizontalVector, verticalVector, points, context);
+    return;
+  }
+  context.fillStyle = fillStyle;
+  _fillFace(points, context);
+}
+
 export function drawProjectedCuboid(cuboid:ProjectedCuboid, options:DrawProjectedCuboidOptions, context:CanvasRenderingContext2D) {
   context.save();
-  context.fillStyle = options.topFillStyle;
-  _fillFace([cuboid.backTopLeft, cuboid.backTopRight, cuboid.frontTopRight, cuboid.frontTopLeft], context);
-  context.fillStyle = options.sideFillStyle;
-  _fillFace([cuboid.backTopLeft, cuboid.backBottomLeft, cuboid.frontBottomLeft, cuboid.frontTopLeft], context);
-  context.fillStyle = options.frontFillStyle;
-  _fillFace([cuboid.frontTopLeft, cuboid.frontTopRight, cuboid.frontBottomRight, cuboid.frontBottomLeft], context);
+  _drawFace(
+    [cuboid.backTopLeft, cuboid.backTopRight, cuboid.frontTopRight, cuboid.frontTopLeft],
+    options.topFillStyle,
+    options.topFaceImage,
+    cuboid.backTopLeft,
+    [cuboid.backTopRight[0] - cuboid.backTopLeft[0], cuboid.backTopRight[1] - cuboid.backTopLeft[1]],
+    [cuboid.frontTopLeft[0] - cuboid.backTopLeft[0], cuboid.frontTopLeft[1] - cuboid.backTopLeft[1]],
+    context
+  );
+  _drawFace(
+    [cuboid.backTopLeft, cuboid.backBottomLeft, cuboid.frontBottomLeft, cuboid.frontTopLeft],
+    options.sideFillStyle,
+    options.sideFaceImage,
+    cuboid.backTopLeft,
+    [cuboid.frontTopLeft[0] - cuboid.backTopLeft[0], cuboid.frontTopLeft[1] - cuboid.backTopLeft[1]],
+    [cuboid.backBottomLeft[0] - cuboid.backTopLeft[0], cuboid.backBottomLeft[1] - cuboid.backTopLeft[1]],
+    context
+  );
+  _drawFace(
+    [cuboid.frontTopLeft, cuboid.frontTopRight, cuboid.frontBottomRight, cuboid.frontBottomLeft],
+    options.frontFillStyle,
+    options.frontFaceImage,
+    cuboid.frontTopLeft,
+    [cuboid.frontTopRight[0] - cuboid.frontTopLeft[0], cuboid.frontTopRight[1] - cuboid.frontTopLeft[1]],
+    [cuboid.frontBottomLeft[0] - cuboid.frontTopLeft[0], cuboid.frontBottomLeft[1] - cuboid.frontTopLeft[1]],
+    context
+  );
 
   context.strokeStyle = options.strokeStyle ?? COLOR_BLACK;
   context.lineWidth = options.lineWidth;
