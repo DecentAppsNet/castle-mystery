@@ -1,3 +1,3 @@
-type TextureAlphaMode = 'composite';
+type TextureAlphaMode = 'composite' | 'punch';
 
 export default TextureAlphaMode;

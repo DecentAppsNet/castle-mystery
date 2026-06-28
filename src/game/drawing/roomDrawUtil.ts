@@ -69,8 +69,7 @@ function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[num
   scaledHeight:number, context:CanvasRenderingContext2D, textureLightness:number) {
   const backWallTexture = room.backWallTexture;
   const backWallTextureImageOperation = backWallTexture ? findTexturePrimaryImageOperation(backWallTexture) : null;
-  const backWallImage = backWallTextureImageOperation ? imageSet?.get(backWallTextureImageOperation.imageUrl) || null : null;
-  if (!backWallTexture || !backWallImage || backWallImage.width <= 0 || backWallImage.height <= 0) {
+  if (!backWallTexture || !backWallTextureImageOperation || !imageSet) {
     context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
     return;
   }
@@ -78,7 +77,7 @@ function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[num
   const roomColumnCount = roomWidthToColumnCount(room.rect.width);
   const roomLayerCount = roomHeightToLayerCount(room.rect.height);
   const faceImage = createTiledTextureFaceCanvas(
-    backWallImage,
+    imageSet,
     backWallTexture,
     roomColumnCount,
     roomLayerCount,

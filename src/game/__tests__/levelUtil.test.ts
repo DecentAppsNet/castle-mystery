@@ -111,6 +111,7 @@ import shortDurationLabelsText from './fixtures/short-duration-labels.md?raw';
 import stackedRoomItemsText from './fixtures/stacked-room-items.md?raw';
 import invalidStackedMultipleCharactersText from './fixtures/invalid-stacked-multiple-characters.md?raw';
 import conclusionsTwoSubsectionsText from './fixtures/conclusions-two-subsections.md?raw';
+import textureStretchTestText from './fixtures/texture-stretch-test.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
 import winSynopsisText from './fixtures/win-synopsis.md?raw';
 import { clearSeed, setSeed } from '@/common/randUtil';
@@ -805,6 +806,40 @@ describe('levelUtil itinerary loading', () => {
         },
         { type:'imageFilter', imageFilterId:'aged stone' }
       ]
+    });
+  });
+
+  it('resolves one-axis texture stretch counts independently and preserves authored operation order', () => {
+    const level = loadLevelFromText(textureStretchTestText, 'texture-stretch-test.md');
+    const hall = level.rooms[0];
+
+    expect(hall.backWallTexture).toEqual({
+      operations:[
+        {
+          type:'image',
+          imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+          horizontalCount:4,
+          verticalCount:4,
+          alphaMode:'composite'
+        },
+        {
+          type:'image',
+          imageUrl:getRoomTextureAssetUrl('threeArchedWindows.png'),
+          horizontalCount:4,
+          verticalCount:4,
+          alphaMode:'punch'
+        },
+        { type:'imageFilter', imageFilterId:'plaster' }
+      ]
+    });
+    expect(hall.floorTexture).toEqual({
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
+        horizontalCount:8,
+        verticalCount:2,
+        alphaMode:'composite'
+      }]
     });
   });
 

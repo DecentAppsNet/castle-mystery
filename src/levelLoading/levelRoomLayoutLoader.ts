@@ -1,10 +1,11 @@
 /* This module groups room geometry, room-grid parsing, and room navigation layout initialization during level load.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { MAP_TILE_SIZE } from "../game/roomGridUtil";
+import { MAP_TILE_SIZE, roomHeightToLayerCount, roomWidthToColumnCount } from "../game/roomGridUtil";
 import { findImageFilterId } from "../game/imageFilters/imageFilterUtil";
 import { getRoomTextureAssetUrl } from "../game/imageUrlUtil";
 import { findRoom } from "../game/roomUtil";
+import { ROOM_DEPTH_ROW_COUNT } from "../game/roomSpaceConstants";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "../game/waypointUtil";
 import { generateStairFlights } from "../game/stairFlightUtil";
 import { generateStairParts } from "../game/stairPartUtil";
@@ -15,7 +16,6 @@ import Room from "../game/types/Room";
 import Texture from "../game/types/Texture";
 import TextureFilterOperation from "../game/types/TextureFilterOperation";
 import TextureImageOperation from "../game/types/TextureImageOperation";
-import TextureModifier from "../game/types/TextureModifier";
 import ExitStatus from "../game/types/ExitStatus";
 import ExitType from "../game/types/ExitType";
 import RoomExit, { createRoomExitId, LOCKABLE_WITHOUT_INV_CHECK } from "../game/types/RoomExit";
@@ -129,21 +129,21 @@ function _createNormalizedRoomSectionIds(roomsSection:string, firstLineNo:number
 }
 
 type RoomStyleMetadata = Readonly<{
-  backWallTexture:Texture|null,
-  floorTexture:Texture|null,
-  stairTexture:Texture|null,
-  doorTexture:Texture|null,
-  rightWallTexture:Texture|null
+  backWallTexture:string|undefined,
+  floorTexture:string|undefined,
+  stairTexture:string|undefined,
+  doorTexture:string|undefined,
+  rightWallTexture:string|undefined
 }>;
 
 function _createRoomStyleMetadata(roomStyleSection:string, roomStyleId:string, lineNo:number):RoomStyleMetadata {
   const roomStyleNameValues = parseUniqueNameValueLines(roomStyleSection, `room style ${roomStyleId}`, false, lineNo + 1);
   return {
-    backWallTexture:_parseOptionalRoomTexture(roomStyleNameValues.backWallTexture, roomStyleId, 'backWallTexture', 'layers'),
-    floorTexture:_parseOptionalRoomTexture(roomStyleNameValues.floorTexture, roomStyleId, 'floorTexture', 'rows'),
-    stairTexture:_parseOptionalRoomTexture(roomStyleNameValues.stairTexture, roomStyleId, 'stairTexture', 'layers'),
-    doorTexture:_parseOptionalRoomTexture(roomStyleNameValues.doorTexture, roomStyleId, 'doorTexture', 'layers'),
-    rightWallTexture:_parseOptionalRoomTexture(roomStyleNameValues.rightWallTexture, roomStyleId, 'rightWallTexture', 'layers')
+    backWallTexture:roomStyleNameValues.backWallTexture,
+    floorTexture:roomStyleNameValues.floorTexture,
+    stairTexture:roomStyleNameValues.stairTexture,
+    doorTexture:roomStyleNameValues.doorTexture,
+    rightWallTexture:roomStyleNameValues.rightWallTexture
   };
 }
 
@@ -164,9 +164,11 @@ function _findRoomStyleMetadataOrThrow(roomStyleText:string, roomId:string, room
 }
 
 function _resolveRoomTextureOverride(roomNameValues:Record<string, string>, propertyName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture',
-  roomId:string, verticalUnitLabel:'layers'|'rows', inheritedTexture:Texture|null):Texture|null {
-  if (!Object.hasOwn(roomNameValues, propertyName)) return inheritedTexture;
-  return _parseOptionalRoomTexture(roomNameValues[propertyName], roomId, propertyName, verticalUnitLabel);
+  room:Room, verticalUnitLabel:'layers'|'rows', inheritedTextureValue:string|undefined):Texture|null {
+  const textureValue = Object.hasOwn(roomNameValues, propertyName)
+    ? roomNameValues[propertyName]
+    : inheritedTextureValue;
+  return _parseOptionalRoomTexture(textureValue, room, propertyName, verticalUnitLabel);
 }
 
 function _validateMapLegendRoomsExistInRoomsSection(legend:Record<string, string>, roomsSection:string, roomsFirstLineNo:number) {
@@ -192,71 +194,107 @@ function _parsePositiveTextureSpanOrThrow(valueText:string, axisLabel:'horizonta
 }
 
 function _buildRoomTextureSyntaxDescription(verticalUnitLabel:'layers'|'rows'):string {
-  return `'filename.png (columns,${verticalUnitLabel})' or 'filename.png', optionally followed by '| aged stone'`;
+  return `'filename.png (columns,${verticalUnitLabel})', 'filename.png (*,*)', or 'filename.png', with any number of '| aged stone' or additional image segments such as '| overlay.png (*,* punch)'`;
 }
 
-function _parseRoomTextureBaseSegmentOrThrow(value:string, roomId:string,
-  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):
-  Pick<TextureImageOperation, 'imageUrl'|'horizontalCount'|'verticalCount'> {
+function _findTextureStretchCounts(room:Room, textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture'):
+  { horizontalCount:number, verticalCount:number } {
+  switch(textureFieldName) {
+    case 'backWallTexture': return {
+      horizontalCount:roomWidthToColumnCount(room.rect.width),
+      verticalCount:roomHeightToLayerCount(room.rect.height)
+    };
+    case 'floorTexture': return {
+      horizontalCount:roomWidthToColumnCount(room.rect.width),
+      verticalCount:ROOM_DEPTH_ROW_COUNT
+    };
+    case 'rightWallTexture': return {
+      horizontalCount:ROOM_DEPTH_ROW_COUNT,
+      verticalCount:roomHeightToLayerCount(room.rect.height)
+    };
+    case 'stairTexture': return {
+      horizontalCount:4,
+      verticalCount:4
+    };
+    case 'doorTexture': return {
+      horizontalCount:1,
+      verticalCount:2
+    };
+  }
+}
+
+function _parseTextureSpanOrThrow(valueText:string, stretchCount:number,
+  axisLabel:'horizontal'|'vertical', textureFieldName:string, roomId:string):number {
+  if (valueText.trim() === '*') return stretchCount;
+  return _parsePositiveTextureSpanOrThrow(valueText, axisLabel, textureFieldName, roomId);
+}
+
+function _parseTextureAlphaModeOrThrow(valueText:string, roomId:string,
+  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture'):'composite'|'punch' {
+  if (!valueText.length || valueText === 'composite') return 'composite';
+  if (valueText === 'punch') return 'punch';
+  throw new Error(`room ${roomId} ${textureFieldName} has unknown texture alpha mode '${valueText}'`);
+}
+
+function _parseRoomTextureImageOperationOrThrow(value:string, room:Room,
+  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):TextureImageOperation {
   const trimmedValue = value.trim();
   const openParenIndex = trimmedValue.lastIndexOf('(');
   const closeParenIndex = trimmedValue.lastIndexOf(')');
+  const stretchCounts = _findTextureStretchCounts(room, textureFieldName);
   if (openParenIndex < 0 && closeParenIndex < 0) {
     return {
       imageUrl:getRoomTextureAssetUrl(trimmedValue, `room ${textureFieldName}`),
       horizontalCount:4,
-      verticalCount:4
+      verticalCount:4,
+      type:'image',
+      alphaMode:'composite'
     };
   }
   if (openParenIndex <= 0 || closeParenIndex <= openParenIndex) {
-    throw new Error(`room ${roomId} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
+    throw new Error(`room ${room.id} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
   }
 
   const filename = trimmedValue.slice(0, openParenIndex).trim();
-  const countsText = trimmedValue.slice(openParenIndex + 1, closeParenIndex).trim();
+  const countsAndModeText = trimmedValue.slice(openParenIndex + 1, closeParenIndex).trim();
   const trailingText = trimmedValue.slice(closeParenIndex + 1).trim();
-  if (!filename || !countsText || trailingText) {
-    throw new Error(`room ${roomId} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
+  if (!filename || !countsAndModeText || trailingText) {
+    throw new Error(`room ${room.id} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
   }
 
+  const lastSpaceIndex = countsAndModeText.lastIndexOf(' ');
+  const countsText = lastSpaceIndex >= 0 ? countsAndModeText.slice(0, lastSpaceIndex).trim() : countsAndModeText;
+  const alphaModeText = lastSpaceIndex >= 0 ? countsAndModeText.slice(lastSpaceIndex + 1).trim().toLowerCase() : '';
+
   const countParts = countsText.split(',');
-  if (countParts.length !== 2) throw new Error(`room ${roomId} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
+  if (countParts.length !== 2) throw new Error(`room ${room.id} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
   return {
     imageUrl:getRoomTextureAssetUrl(filename, `room ${textureFieldName}`),
-    horizontalCount:_parsePositiveTextureSpanOrThrow(countParts[0], 'horizontal', textureFieldName, roomId),
-    verticalCount:_parsePositiveTextureSpanOrThrow(countParts[1], 'vertical', textureFieldName, roomId)
+    horizontalCount:_parseTextureSpanOrThrow(countParts[0], stretchCounts.horizontalCount, 'horizontal', textureFieldName, room.id),
+    verticalCount:_parseTextureSpanOrThrow(countParts[1], stretchCounts.verticalCount, 'vertical', textureFieldName, room.id),
+    type:'image',
+    alphaMode:_parseTextureAlphaModeOrThrow(alphaModeText, room.id, textureFieldName)
   };
 }
 
-function _parseRoomTextureModifierOrThrow(value:string, roomId:string,
-  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture'):TextureModifier {
+function _parseRoomTextureOperationOrThrow(value:string, room:Room,
+  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):
+  TextureImageOperation|TextureFilterOperation {
   const imageFilterId = findImageFilterId(value);
   if (imageFilterId) return { type:'imageFilter', imageFilterId };
-  throw new Error(`room ${roomId} ${textureFieldName} has unknown texture modifier '${value.trim()}'`);
+  return _parseRoomTextureImageOperationOrThrow(value, room, textureFieldName, verticalUnitLabel);
 }
 
-function _createTextureImageOperation(textureBase:Pick<TextureImageOperation, 'imageUrl'|'horizontalCount'|'verticalCount'>):TextureImageOperation {
-  return {
-    ...textureBase,
-    type:'image',
-    alphaMode:'composite'
-  };
-}
-
-function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
+function _parseOptionalRoomTexture(value:string|undefined, room:Room,
   textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):Texture|null {
   if (!value?.trim()) return null;
   const segments = value.split('|').map(segment => segment.trim());
   if (segments.some(segment => !segment)) {
-    throw new Error(`room ${roomId} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
+    throw new Error(`room ${room.id} ${textureFieldName} must be in the form ${_buildRoomTextureSyntaxDescription(verticalUnitLabel)}`);
   }
 
-  const textureBase = _parseRoomTextureBaseSegmentOrThrow(segments[0], roomId, textureFieldName, verticalUnitLabel);
   return {
-    operations:[
-      _createTextureImageOperation(textureBase),
-      ...segments.slice(1).map(segment => _parseRoomTextureModifierOrThrow(segment, roomId, textureFieldName) as TextureFilterOperation)
-    ]
+    operations:segments.map(segment => _parseRoomTextureOperationOrThrow(segment, room, textureFieldName, verticalUnitLabel))
   };
 }
 
@@ -370,11 +408,11 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string, 
       ...room,
       title,
       isOutside: (roomNameValues.outside || '').toLowerCase() === 'true',
-      backWallTexture:_resolveRoomTextureOverride(roomNameValues, 'backWallTexture', room.id, 'layers', inheritedRoomStyle?.backWallTexture || null),
-      floorTexture:_resolveRoomTextureOverride(roomNameValues, 'floorTexture', room.id, 'rows', inheritedRoomStyle?.floorTexture || null),
-      stairTexture:_resolveRoomTextureOverride(roomNameValues, 'stairTexture', room.id, 'layers', inheritedRoomStyle?.stairTexture || null),
-      doorTexture:_resolveRoomTextureOverride(roomNameValues, 'doorTexture', room.id, 'layers', inheritedRoomStyle?.doorTexture || null),
-      rightWallTexture:_resolveRoomTextureOverride(roomNameValues, 'rightWallTexture', room.id, 'layers', inheritedRoomStyle?.rightWallTexture || null),
+      backWallTexture:_resolveRoomTextureOverride(roomNameValues, 'backWallTexture', room, 'layers', inheritedRoomStyle?.backWallTexture),
+      floorTexture:_resolveRoomTextureOverride(roomNameValues, 'floorTexture', room, 'rows', inheritedRoomStyle?.floorTexture),
+      stairTexture:_resolveRoomTextureOverride(roomNameValues, 'stairTexture', room, 'layers', inheritedRoomStyle?.stairTexture),
+      doorTexture:_resolveRoomTextureOverride(roomNameValues, 'doorTexture', room, 'layers', inheritedRoomStyle?.doorTexture),
+      rightWallTexture:_resolveRoomTextureOverride(roomNameValues, 'rightWallTexture', room, 'layers', inheritedRoomStyle?.rightWallTexture),
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };
   });

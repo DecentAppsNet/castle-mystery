@@ -21,14 +21,16 @@ function _fillPanel(points:Array<[number, number]>, scalingFactors:ScalingFactor
   context.fill();
 }
 
-function _drawShearedTiledPanel(image:ImageBitmap, texture:Texture, origin:[number, number], horizontalVector:[number, number],
+  function _drawShearedTiledPanel(imageSet:ImageSet, texture:Texture, origin:[number, number], horizontalVector:[number, number],
   depthVector:[number, number], totalHorizontalCount:number, totalDepthCount:number,
   points:Array<[number, number]>, context:CanvasRenderingContext2D, cutoutPoints:Array<Array<[number, number]>> = [],
   textureLightness:number = 1, seedText:string) {
   const textureImageOperation = findTexturePrimaryImageOperation(texture);
   if (!textureImageOperation) return;
+    const image = imageSet.get(textureImageOperation.imageUrl) || null;
+    if (!image || image.width <= 0 || image.height <= 0) return;
   const faceImage = createTiledTextureFaceCanvas(
-    image,
+      imageSet,
     texture,
     totalHorizontalCount,
     totalDepthCount,
@@ -40,16 +42,19 @@ function _drawShearedTiledPanel(image:ImageBitmap, texture:Texture, origin:[numb
     return;
   }
 
+    const resolvedHorizontalCount = textureImageOperation.horizontalCount;
+    const resolvedDepthCount = textureImageOperation.verticalCount;
+
   const tileHorizontalVector:[number, number] = [
-    horizontalVector[0] * (textureImageOperation.horizontalCount / totalHorizontalCount),
-    horizontalVector[1] * (textureImageOperation.horizontalCount / totalHorizontalCount)
+      horizontalVector[0] * (resolvedHorizontalCount / totalHorizontalCount),
+      horizontalVector[1] * (resolvedHorizontalCount / totalHorizontalCount)
   ];
   const tileDepthVector:[number, number] = [
-    depthVector[0] * (textureImageOperation.verticalCount / totalDepthCount),
-    depthVector[1] * (textureImageOperation.verticalCount / totalDepthCount)
+      depthVector[0] * (resolvedDepthCount / totalDepthCount),
+      depthVector[1] * (resolvedDepthCount / totalDepthCount)
   ];
-  const horizontalTileCount = Math.ceil(totalHorizontalCount / textureImageOperation.horizontalCount);
-  const depthTileCount = Math.ceil(totalDepthCount / textureImageOperation.verticalCount);
+    const horizontalTileCount = Math.ceil(totalHorizontalCount / resolvedHorizontalCount);
+    const depthTileCount = Math.ceil(totalDepthCount / resolvedDepthCount);
   if ((tileHorizontalVector[0] === 0 && tileHorizontalVector[1] === 0) || (tileDepthVector[0] === 0 && tileDepthVector[1] === 0)) return;
 
   context.save();
@@ -142,12 +147,9 @@ function _drawRightWallPanelSpan(room:Room, topY:number, height:number, scalingF
   const cutoutPoints = _findRightWallPanelSpanExits(room, topY, height)
     .map(exit => createProjectedRightWallDoorOutlinePoints(rightWallX, exit.y, doorHeight, scalingFactors));
   const rightWallTexture = room.rightWallTexture;
-  const rightWallTextureImageOperation = rightWallTexture ? findTexturePrimaryImageOperation(rightWallTexture) : null;
-  const rightWallImage = rightWallTextureImageOperation ? imageSet?.get(rightWallTextureImageOperation.imageUrl) || null : null;
-
-  if (rightWallTexture && rightWallImage && rightWallImage.width > 0 && rightWallImage.height > 0) {
+  if (rightWallTexture && imageSet) {
     _drawShearedTiledPanel(
-      rightWallImage,
+      imageSet,
       rightWallTexture,
       topRight,
       [outerTopRight[0] - topRight[0], outerTopRight[1] - topRight[1]],
@@ -196,11 +198,9 @@ export function drawFloorPanel(room:Room, rooms:ReadonlyArray<Room>, scalingFact
     outerBottomLeft
   ];
   const floorTexture = room.floorTexture;
-  const floorTextureImageOperation = floorTexture ? findTexturePrimaryImageOperation(floorTexture) : null;
-  const floorImage = floorTextureImageOperation ? imageSet?.get(floorTextureImageOperation.imageUrl) || null : null;
-  if (floorTexture && floorImage && floorImage.width > 0 && floorImage.height > 0) {
+  if (floorTexture && imageSet) {
     _drawShearedTiledPanel(
-      floorImage,
+      imageSet,
       floorTexture,
       bottomLeft,
       [bottomRight[0] - bottomLeft[0], bottomRight[1] - bottomLeft[1]],
