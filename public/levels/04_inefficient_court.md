@@ -161,7 +161,7 @@ MMMNNFLDKKKKAAA
 * style=Old Castle
 
 ```
-CR..
+..CR
 ....
 ....
 ```
