@@ -36,6 +36,7 @@ import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectio
 import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
+import { findTexturePrimaryImageOperation } from "@/game/textureUtil";
 import { hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
 import Character from "../types/Character";
 import GameState from "../types/GameState";
@@ -67,7 +68,8 @@ const WAYPOINT_HIGHLIGHT_END_COLOR = "#003d99";
 function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[number, number], scaledWidth:number,
   scaledHeight:number, context:CanvasRenderingContext2D, textureLightness:number) {
   const backWallTexture = room.backWallTexture;
-  const backWallImage = backWallTexture ? imageSet?.get(backWallTexture.imageUrl) || null : null;
+  const backWallTextureImageOperation = backWallTexture ? findTexturePrimaryImageOperation(backWallTexture) : null;
+  const backWallImage = backWallTextureImageOperation ? imageSet?.get(backWallTextureImageOperation.imageUrl) || null : null;
   if (!backWallTexture || !backWallImage || backWallImage.width <= 0 || backWallImage.height <= 0) {
     context.fillRect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
     return;

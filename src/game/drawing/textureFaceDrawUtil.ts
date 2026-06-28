@@ -1,4 +1,5 @@
 import { applyTextureModifiers } from "@/game/imageFilters/imageFilterUtil";
+import { findTextureFilterOperations, findTexturePrimaryImageOperation } from "@/game/textureUtil";
 
 import Texture from "../types/Texture";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
@@ -48,16 +49,19 @@ function _calcFaceAxisPixelSize(imageAxisPixelSize:number, totalSpanCount:number
 export function createTiledTextureFaceCanvas(image:ImageBitmap, texture:Texture, totalHorizontalCount:number,
   totalVerticalCount:number, textureLightness:number, seedText:string):TextureFaceImage|null {
   if (totalHorizontalCount <= 0 || totalVerticalCount <= 0) return null;
+  const textureImageOperation = findTexturePrimaryImageOperation(texture);
+  if (!textureImageOperation) return null;
+  const textureFilterOperations = findTextureFilterOperations(texture);
 
-  const faceWidth = _calcFaceAxisPixelSize(image.width, totalHorizontalCount, texture.horizontalCount);
-  const faceHeight = _calcFaceAxisPixelSize(image.height, totalVerticalCount, texture.verticalCount);
+  const faceWidth = _calcFaceAxisPixelSize(image.width, totalHorizontalCount, textureImageOperation.horizontalCount);
+  const faceHeight = _calcFaceAxisPixelSize(image.height, totalVerticalCount, textureImageOperation.verticalCount);
   const faceCanvas = createScratchCanvas(faceWidth, faceHeight);
   if (!faceCanvas) return null;
   const faceContext = faceCanvas.getContext('2d');
   if (!faceContext) return null;
 
-  const tileWidth = faceWidth * (texture.horizontalCount / totalHorizontalCount);
-  const tileHeight = faceHeight * (texture.verticalCount / totalVerticalCount);
+  const tileWidth = faceWidth * (textureImageOperation.horizontalCount / totalHorizontalCount);
+  const tileHeight = faceHeight * (textureImageOperation.verticalCount / totalVerticalCount);
   if (tileWidth <= 0 || tileHeight <= 0) return null;
 
   faceContext.save();
@@ -69,8 +73,8 @@ export function createTiledTextureFaceCanvas(image:ImageBitmap, texture:Texture,
   }
   faceContext.restore();
 
-  if (texture.modifiers.length > 0) {
-    applyTextureModifiers(faceContext as unknown as CanvasRenderingContext2D, faceWidth, faceHeight, texture.modifiers, seedText);
+  if (textureFilterOperations.length > 0) {
+    applyTextureModifiers(faceContext as unknown as CanvasRenderingContext2D, faceWidth, faceHeight, textureFilterOperations, seedText);
   }
 
   return {

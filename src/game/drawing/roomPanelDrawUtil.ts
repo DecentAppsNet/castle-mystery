@@ -1,6 +1,7 @@
 /* This module groups room-panel drawing helpers for wall panels, floors, and room-side surfaces.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import { findTexturePrimaryImageOperation } from "@/game/textureUtil";
 import Texture from "../types/Texture";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
@@ -24,6 +25,8 @@ function _drawShearedTiledPanel(image:ImageBitmap, texture:Texture, origin:[numb
   depthVector:[number, number], totalHorizontalCount:number, totalDepthCount:number,
   points:Array<[number, number]>, context:CanvasRenderingContext2D, cutoutPoints:Array<Array<[number, number]>> = [],
   textureLightness:number = 1, seedText:string) {
+  const textureImageOperation = findTexturePrimaryImageOperation(texture);
+  if (!textureImageOperation) return;
   const faceImage = createTiledTextureFaceCanvas(
     image,
     texture,
@@ -38,15 +41,15 @@ function _drawShearedTiledPanel(image:ImageBitmap, texture:Texture, origin:[numb
   }
 
   const tileHorizontalVector:[number, number] = [
-    horizontalVector[0] * (texture.horizontalCount / totalHorizontalCount),
-    horizontalVector[1] * (texture.horizontalCount / totalHorizontalCount)
+    horizontalVector[0] * (textureImageOperation.horizontalCount / totalHorizontalCount),
+    horizontalVector[1] * (textureImageOperation.horizontalCount / totalHorizontalCount)
   ];
   const tileDepthVector:[number, number] = [
-    depthVector[0] * (texture.verticalCount / totalDepthCount),
-    depthVector[1] * (texture.verticalCount / totalDepthCount)
+    depthVector[0] * (textureImageOperation.verticalCount / totalDepthCount),
+    depthVector[1] * (textureImageOperation.verticalCount / totalDepthCount)
   ];
-  const horizontalTileCount = Math.ceil(totalHorizontalCount / texture.horizontalCount);
-  const depthTileCount = Math.ceil(totalDepthCount / texture.verticalCount);
+  const horizontalTileCount = Math.ceil(totalHorizontalCount / textureImageOperation.horizontalCount);
+  const depthTileCount = Math.ceil(totalDepthCount / textureImageOperation.verticalCount);
   if ((tileHorizontalVector[0] === 0 && tileHorizontalVector[1] === 0) || (tileDepthVector[0] === 0 && tileDepthVector[1] === 0)) return;
 
   context.save();
@@ -139,7 +142,8 @@ function _drawRightWallPanelSpan(room:Room, topY:number, height:number, scalingF
   const cutoutPoints = _findRightWallPanelSpanExits(room, topY, height)
     .map(exit => createProjectedRightWallDoorOutlinePoints(rightWallX, exit.y, doorHeight, scalingFactors));
   const rightWallTexture = room.rightWallTexture;
-  const rightWallImage = rightWallTexture ? imageSet?.get(rightWallTexture.imageUrl) || null : null;
+  const rightWallTextureImageOperation = rightWallTexture ? findTexturePrimaryImageOperation(rightWallTexture) : null;
+  const rightWallImage = rightWallTextureImageOperation ? imageSet?.get(rightWallTextureImageOperation.imageUrl) || null : null;
 
   if (rightWallTexture && rightWallImage && rightWallImage.width > 0 && rightWallImage.height > 0) {
     _drawShearedTiledPanel(
@@ -192,7 +196,8 @@ export function drawFloorPanel(room:Room, rooms:ReadonlyArray<Room>, scalingFact
     outerBottomLeft
   ];
   const floorTexture = room.floorTexture;
-  const floorImage = floorTexture ? imageSet?.get(floorTexture.imageUrl) || null : null;
+  const floorTextureImageOperation = floorTexture ? findTexturePrimaryImageOperation(floorTexture) : null;
+  const floorImage = floorTextureImageOperation ? imageSet?.get(floorTextureImageOperation.imageUrl) || null : null;
   if (floorTexture && floorImage && floorImage.width > 0 && floorImage.height > 0) {
     _drawShearedTiledPanel(
       floorImage,

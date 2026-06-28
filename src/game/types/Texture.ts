@@ -1,18 +1,16 @@
-import TextureModifier, { duplicateTextureModifier } from "./TextureModifier"
+import TextureOperation from "./TextureOperation";
 
 type Texture = Readonly<{
-  imageUrl:string,
-  horizontalCount:number, // Count of world-space units that source image spans horizontally when tiling.
-  verticalCount:number, // Count of world-space units that source image spans vertically when tiling.
-  modifiers:Readonly<TextureModifier>[]
+  operations:Readonly<TextureOperation>[]
 }>;
+
+function _duplicateTextureOperation(from:TextureOperation):TextureOperation {
+  return { ...from };
+}
 
 export function duplicateTexture(from:Texture):Texture {
   return {
-    imageUrl:from.imageUrl,
-    horizontalCount:from.horizontalCount,
-    verticalCount:from.verticalCount,
-    modifiers:from.modifiers.map(duplicateTextureModifier)
+    operations:from.operations.map(_duplicateTextureOperation)
   };
 }
 

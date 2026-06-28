@@ -15,6 +15,7 @@ import { COLOR_BLACK } from "./drawColorConstants";
 import { canvasToGamePosition, gameToCanvasPosition } from "./drawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";
 import { createTiledTextureFaceCanvas, drawClippedTransformedTextureFace, TextureFaceImage } from "./textureFaceDrawUtil";
+import { findTextureFilterOperations, findTexturePrimaryImageOperation } from "@/game/textureUtil";
 import {
   createProjectedRightWallDoorOutlinePoints,
   getRightWallDoorHeightPixels,
@@ -84,20 +85,23 @@ function _calcDoorHeightTextureCount(doorHeight:number):number {
 function _findDoorTextureFaceImage(room:Room, imageSet:ImageSet|null, doorHeight:number, textureLightness:number):TextureFaceImage|null {
   const doorTexture = room.doorTexture;
   if (!doorTexture || !imageSet) return null;
-  const image = imageSet.get(doorTexture.imageUrl) || null;
+  const doorTextureImageOperation = findTexturePrimaryImageOperation(doorTexture);
+  if (!doorTextureImageOperation) return null;
+  const image = imageSet.get(doorTextureImageOperation.imageUrl) || null;
   if (!image || image.width <= 0 || image.height <= 0) return null;
 
   const horizontalCount = _calcDoorDepthTextureCount();
   const verticalCount = _calcDoorHeightTextureCount(doorHeight);
   const cacheKey = [
     room.id,
-    doorTexture.imageUrl,
+    doorTextureImageOperation.imageUrl,
     horizontalCount,
     verticalCount,
     textureLightness,
-    doorTexture.horizontalCount,
-    doorTexture.verticalCount,
-    doorTexture.modifiers.map(modifier => JSON.stringify(modifier)).join('|')
+    doorTextureImageOperation.horizontalCount,
+    doorTextureImageOperation.verticalCount,
+    doorTextureImageOperation.alphaMode,
+    findTextureFilterOperations(doorTexture).map(modifier => JSON.stringify(modifier)).join('|')
   ].join('|');
   if (_doorTextureFaceImageCache.has(cacheKey)) return _doorTextureFaceImageCache.get(cacheKey) || null;
 

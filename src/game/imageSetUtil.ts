@@ -5,6 +5,7 @@ import { baseUrl } from "@/common/urlUtil";
 import { getGroundImageAssetUrl, isCandidateUrls } from "./imageUrlUtil";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "./discoveryIconUrlUtil";
+import { findTextureImageUrls } from "./textureUtil";
 import ClozeImage from "./conclusions/types/ClozeImage";
 import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
@@ -19,11 +20,11 @@ function _findDirectReferencedImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>([KEY_IMAGE_URL, getGroundImageAssetUrl(), UNKNOWN_ITEM_ICON_URL]);
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
   level.rooms.forEach(room => {
-    if (room.backWallTexture?.imageUrl) imageUrls.add(room.backWallTexture.imageUrl);
-    if (room.floorTexture?.imageUrl) imageUrls.add(room.floorTexture.imageUrl);
-    if (room.stairTexture?.imageUrl) imageUrls.add(room.stairTexture.imageUrl);
-    if (room.doorTexture?.imageUrl) imageUrls.add(room.doorTexture.imageUrl);
-    if (room.rightWallTexture?.imageUrl) imageUrls.add(room.rightWallTexture.imageUrl);
+    room.backWallTexture && findTextureImageUrls(room.backWallTexture).forEach(imageUrl => imageUrls.add(imageUrl));
+    room.floorTexture && findTextureImageUrls(room.floorTexture).forEach(imageUrl => imageUrls.add(imageUrl));
+    room.stairTexture && findTextureImageUrls(room.stairTexture).forEach(imageUrl => imageUrls.add(imageUrl));
+    room.doorTexture && findTextureImageUrls(room.doorTexture).forEach(imageUrl => imageUrls.add(imageUrl));
+    room.rightWallTexture && findTextureImageUrls(room.rightWallTexture).forEach(imageUrl => imageUrls.add(imageUrl));
   });
   level.rooms.forEach(room => room.items.forEach(item => {
     if (item.imageUrl) imageUrls.add(item.imageUrl);

@@ -13,6 +13,8 @@ import Level from "../game/types/Level";
 import Rect from "../game/types/Rect";
 import Room from "../game/types/Room";
 import Texture from "../game/types/Texture";
+import TextureFilterOperation from "../game/types/TextureFilterOperation";
+import TextureImageOperation from "../game/types/TextureImageOperation";
 import TextureModifier from "../game/types/TextureModifier";
 import ExitStatus from "../game/types/ExitStatus";
 import ExitType from "../game/types/ExitType";
@@ -195,7 +197,7 @@ function _buildRoomTextureSyntaxDescription(verticalUnitLabel:'layers'|'rows'):s
 
 function _parseRoomTextureBaseSegmentOrThrow(value:string, roomId:string,
   textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):
-  Pick<Texture, 'imageUrl'|'horizontalCount'|'verticalCount'> {
+  Pick<TextureImageOperation, 'imageUrl'|'horizontalCount'|'verticalCount'> {
   const trimmedValue = value.trim();
   const openParenIndex = trimmedValue.lastIndexOf('(');
   const closeParenIndex = trimmedValue.lastIndexOf(')');
@@ -233,6 +235,14 @@ function _parseRoomTextureModifierOrThrow(value:string, roomId:string,
   throw new Error(`room ${roomId} ${textureFieldName} has unknown texture modifier '${value.trim()}'`);
 }
 
+function _createTextureImageOperation(textureBase:Pick<TextureImageOperation, 'imageUrl'|'horizontalCount'|'verticalCount'>):TextureImageOperation {
+  return {
+    ...textureBase,
+    type:'image',
+    alphaMode:'composite'
+  };
+}
+
 function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
   textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):Texture|null {
   if (!value?.trim()) return null;
@@ -243,8 +253,10 @@ function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
 
   const textureBase = _parseRoomTextureBaseSegmentOrThrow(segments[0], roomId, textureFieldName, verticalUnitLabel);
   return {
-    ...textureBase,
-    modifiers:segments.slice(1).map(segment => _parseRoomTextureModifierOrThrow(segment, roomId, textureFieldName))
+    operations:[
+      _createTextureImageOperation(textureBase),
+      ...segments.slice(1).map(segment => _parseRoomTextureModifierOrThrow(segment, roomId, textureFieldName) as TextureFilterOperation)
+    ]
   };
 }
 

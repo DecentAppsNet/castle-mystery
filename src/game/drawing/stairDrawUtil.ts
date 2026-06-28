@@ -17,6 +17,7 @@ import StairPart, { StairPartType } from "../types/StairPart";
 import ImageSet from "../types/ImageSet";
 import { COLUMNS_PER_MAP_TILE, LAYERS_PER_MAP_TILE, MAP_TILE_SIZE } from "../roomGridUtil";
 import { ROOM_FULL_DEPTH, ROOM_ROW_DEPTH, ROOM_DEPTH_ROW_COUNT } from "../roomSpaceConstants";
+import { findTextureFilterOperations, findTexturePrimaryImageOperation } from "@/game/textureUtil";
 
 const PREFERRED_STEP_RISE_RUN = 1;
 const STAIR_ANGLE_TOLERANCE = FLOOR_WAYPOINT_Y_OFFSET + STAIR_POSITION_TOLERANCE;
@@ -55,19 +56,22 @@ function _findStairTextureFaceImage(room:Room, imageSet:ImageSet|null, faceName:
   horizontalCount:number, verticalCount:number, textureLightness:number):TextureFaceImage|null {
   const stairTexture = room.stairTexture;
   if (!stairTexture || !imageSet) return null;
-  const image = imageSet.get(stairTexture.imageUrl) || null;
+  const stairTextureImageOperation = findTexturePrimaryImageOperation(stairTexture);
+  if (!stairTextureImageOperation) return null;
+  const image = imageSet.get(stairTextureImageOperation.imageUrl) || null;
   if (!image || image.width <= 0 || image.height <= 0) return null;
 
   const cacheKey = [
     room.id,
     faceName,
-    stairTexture.imageUrl,
+    stairTextureImageOperation.imageUrl,
     horizontalCount,
     verticalCount,
     textureLightness,
-    stairTexture.horizontalCount,
-    stairTexture.verticalCount,
-    stairTexture.modifiers.map(modifier => JSON.stringify(modifier)).join('|')
+    stairTextureImageOperation.horizontalCount,
+    stairTextureImageOperation.verticalCount,
+    stairTextureImageOperation.alphaMode,
+    findTextureFilterOperations(stairTexture).map(modifier => JSON.stringify(modifier)).join('|')
   ].join('|');
   if (_stairTextureFaceImageCache.has(cacheKey)) return _stairTextureFaceImageCache.get(cacheKey) || null;
 

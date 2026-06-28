@@ -1,9 +1,6 @@
-import { ImageFilterId } from "@/game/imageFilters/imageFilterTypes";
+import TextureFilterOperation from "./TextureFilterOperation";
 
-type TextureModifier = Readonly<{
-  type:'imageFilter',
-  imageFilterId:ImageFilterId
-}>;
+type TextureModifier = TextureFilterOperation;
 
 export function duplicateTextureModifier(from:TextureModifier):TextureModifier {
   return { ...from };

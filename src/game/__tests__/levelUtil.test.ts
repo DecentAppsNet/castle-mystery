@@ -765,10 +765,13 @@ describe('levelUtil itinerary loading', () => {
     const hall = level.rooms[0];
 
     expect(hall.backWallTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
-      horizontalCount:4,
-      verticalCount:4,
-      modifiers:[]
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+        horizontalCount:4,
+        verticalCount:4,
+        alphaMode:'composite'
+      }]
     });
   });
 
@@ -777,10 +780,13 @@ describe('levelUtil itinerary loading', () => {
     const hall = level.rooms[0];
 
     expect(hall.backWallTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
-      horizontalCount:4,
-      verticalCount:4,
-      modifiers:[]
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+        horizontalCount:4,
+        verticalCount:4,
+        alphaMode:'composite'
+      }]
     });
   });
 
@@ -789,10 +795,16 @@ describe('levelUtil itinerary loading', () => {
     const hall = level.rooms[0];
 
     expect(hall.backWallTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
-      horizontalCount:4,
-      verticalCount:4,
-      modifiers:[{ type:'imageFilter', imageFilterId:'aged stone' }]
+      operations:[
+        {
+          type:'image',
+          imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+          horizontalCount:4,
+          verticalCount:4,
+          alphaMode:'composite'
+        },
+        { type:'imageFilter', imageFilterId:'aged stone' }
+      ]
     });
   });
 
@@ -801,10 +813,16 @@ describe('levelUtil itinerary loading', () => {
     const hall = level.rooms[0];
 
     expect(hall.backWallTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
-      horizontalCount:4,
-      verticalCount:4,
-      modifiers:[{ type:'imageFilter', imageFilterId:'plaster' }]
+      operations:[
+        {
+          type:'image',
+          imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+          horizontalCount:4,
+          verticalCount:4,
+          alphaMode:'composite'
+        },
+        { type:'imageFilter', imageFilterId:'plaster' }
+      ]
     });
   });
 
@@ -813,10 +831,13 @@ describe('levelUtil itinerary loading', () => {
     const hall = level.rooms[0];
 
     expect(hall.floorTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
-      horizontalCount:2,
-      verticalCount:2,
-      modifiers:[]
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
+        horizontalCount:2,
+        verticalCount:2,
+        alphaMode:'composite'
+      }]
     });
   });
 
@@ -825,10 +846,13 @@ describe('levelUtil itinerary loading', () => {
     const hall = level.rooms[0];
 
     expect(hall.rightWallTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('wallBricks.png'),
-      horizontalCount:2,
-      verticalCount:2,
-      modifiers:[]
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('wallBricks.png'),
+        horizontalCount:2,
+        verticalCount:2,
+        alphaMode:'composite'
+      }]
     });
   });
 
@@ -838,31 +862,46 @@ describe('levelUtil itinerary loading', () => {
     const hall = level.rooms.find(room => room.id === 'hall');
 
     expect(nave?.backWallTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
-      horizontalCount:4,
-      verticalCount:4,
-      modifiers:[{ type:'imageFilter', imageFilterId:'aged stone' }]
+      operations:[
+        {
+          type:'image',
+          imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+          horizontalCount:4,
+          verticalCount:4,
+          alphaMode:'composite'
+        },
+        { type:'imageFilter', imageFilterId:'aged stone' }
+      ]
     });
     expect(nave?.floorTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
-      horizontalCount:2,
-      verticalCount:2,
-      modifiers:[]
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
+        horizontalCount:2,
+        verticalCount:2,
+        alphaMode:'composite'
+      }]
     });
     expect(nave?.rightWallTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('wallBricks.png'),
-      horizontalCount:2,
-      verticalCount:2,
-      modifiers:[]
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('wallBricks.png'),
+        horizontalCount:2,
+        verticalCount:2,
+        alphaMode:'composite'
+      }]
     });
 
     expect(hall?.backWallTexture).toEqual(nave?.backWallTexture);
     expect(hall?.rightWallTexture).toEqual(nave?.rightWallTexture);
     expect(hall?.floorTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
-      horizontalCount:4,
-      verticalCount:4,
-      modifiers:[]
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+        horizontalCount:4,
+        verticalCount:4,
+        alphaMode:'composite'
+      }]
     });
   });
 
@@ -872,16 +911,25 @@ describe('levelUtil itinerary loading', () => {
     const hall = level.rooms.find(room => room.id === 'hall');
 
     expect(nave?.stairTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
-      horizontalCount:4,
-      verticalCount:4,
-      modifiers:[{ type:'imageFilter', imageFilterId:'aged stone' }]
+      operations:[
+        {
+          type:'image',
+          imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+          horizontalCount:4,
+          verticalCount:4,
+          alphaMode:'composite'
+        },
+        { type:'imageFilter', imageFilterId:'aged stone' }
+      ]
     });
     expect(hall?.stairTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
-      horizontalCount:2,
-      verticalCount:2,
-      modifiers:[]
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
+        horizontalCount:2,
+        verticalCount:2,
+        alphaMode:'composite'
+      }]
     });
   });
 
@@ -891,16 +939,25 @@ describe('levelUtil itinerary loading', () => {
     const hall = level.rooms.find(room => room.id === 'hall');
 
     expect(nave?.doorTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
-      horizontalCount:4,
-      verticalCount:4,
-      modifiers:[{ type:'imageFilter', imageFilterId:'aged stone' }]
+      operations:[
+        {
+          type:'image',
+          imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+          horizontalCount:4,
+          verticalCount:4,
+          alphaMode:'composite'
+        },
+        { type:'imageFilter', imageFilterId:'aged stone' }
+      ]
     });
     expect(hall?.doorTexture).toEqual({
-      imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
-      horizontalCount:2,
-      verticalCount:2,
-      modifiers:[]
+      operations:[{
+        type:'image',
+        imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
+        horizontalCount:2,
+        verticalCount:2,
+        alphaMode:'composite'
+      }]
     });
   });
 

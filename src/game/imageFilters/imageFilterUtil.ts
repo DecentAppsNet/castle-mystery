@@ -1,4 +1,4 @@
-import TextureModifier from "@/game/types/TextureModifier";
+import type TextureFilterOperation from "@/game/types/TextureFilterOperation";
 
 import { applyAgedStoneImageFilter, applyPlasterImageFilter } from "./agedStoneImageFilter";
 import { ImageFilterId } from "./imageFilterTypes";
@@ -33,7 +33,7 @@ function _hashText(text:string):number {
 }
 
 function _applyImageFilterModifier(context:CanvasRenderingContext2D, width:number, height:number,
-  modifier:TextureModifier, seedText:string) {
+  modifier:TextureFilterOperation, seedText:string) {
   const imageFilter = _findImageFilter(modifier.imageFilterId);
   imageFilter({
     context,
@@ -51,6 +51,6 @@ export function findImageFilterId(text:string):ImageFilterId|null {
 }
 
 export function applyTextureModifiers(context:CanvasRenderingContext2D, width:number, height:number,
-  modifiers:Readonly<TextureModifier>[], seedText:string) {
+  modifiers:Readonly<TextureFilterOperation>[], seedText:string) {
   modifiers.forEach(modifier => _applyImageFilterModifier(context, width, height, modifier, seedText));
 }
