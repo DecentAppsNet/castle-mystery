@@ -4,6 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import { gameToCanvasPosition } from "../drawing/drawUtil";
 import ImageSet from "../types/ImageSet";
+import { findImageBitmap } from "@/game/imageAssetUtil";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
@@ -45,7 +46,7 @@ function _calcKeyDrawDimensions(sizePixels:number, image:ImageBitmap|null) {
 
 function _createLockChangeEffect(type:typeof EffectType.LOCK|typeof EffectType.UNLOCK, room:Room, exit:RoomExit,
   time:number, _scalingFactors:ScalingFactors, imageSet:ImageSet, travelYPixels:number):LockChangeEffect {
-  const image = imageSet.get(KEY_IMAGE_URL) || null;
+  const image = findImageBitmap(imageSet, KEY_IMAGE_URL);
   return {
     type,
     room,

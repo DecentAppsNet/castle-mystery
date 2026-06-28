@@ -3,6 +3,7 @@
 
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { choosePopoverBoxRect } from "@/game/popoverLayoutUtil";
+import { findImageBitmap } from "@/game/imageAssetUtil";
 
 import ImageSet from "../types/ImageSet";
 import Rect from "../types/Rect";
@@ -169,7 +170,7 @@ function _createDescriptionOnlyImageTextRowLines(bodyText:string, maxTextWidth:n
 }
 
 function _findImageAspectRatio(imageUrl:string, imageSet:ImageSet|undefined, fallbackAspectRatio:number):number {
-  const image = imageSet?.get(imageUrl) || null;
+  const image = imageSet ? findImageBitmap(imageSet, imageUrl) : null;
   if (!image || image.width <= 0 || image.height <= 0) return fallbackAspectRatio;
   return _findVisibleImageSourceRect(image)?.aspectRatio ?? image.height / image.width;
 }
@@ -403,7 +404,7 @@ export function drawPopover({ targetRect, title = "", bodyEntries, scalingFactor
       return;
     }
 
-    const image = imageSet?.get(row.imageUrl) || null;
+    const image = imageSet ? findImageBitmap(imageSet, row.imageUrl) : null;
     const imageLeft = left + padding;
     const imageTop = rowTop;
     const textLeft = imageLeft + row.imageWidth + typographyAndSpacing.imageColumnGap;

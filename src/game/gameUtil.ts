@@ -33,6 +33,7 @@ import { createEmitBubbleEffect } from "./effects/emitBubbleEffectUtil";
 import { createThinkingEffect, THINKING_LOOK_UP_DURATION_MSECS } from "./effects/thinkingEffectUtil";
 import { createTalkingEffect } from "./effects/talkingEffectUtil";
 import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
+import { findImageBitmap } from "./imageAssetUtil";
 import { findCharacterDisplayPosition } from "./characterDisplayPositionUtil";
 import { isCharacterInteractive } from "./interactivityUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
@@ -406,7 +407,7 @@ function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D
     return;
   }
 
-  const backgroundImage = gameState.imageSet.get(gameState.backgroundImageUrl) || null;
+  const backgroundImage = findImageBitmap(gameState.imageSet, gameState.backgroundImageUrl);
   if (!backgroundImage) {
     _fillCanvasBlack(context);
     return;

@@ -1,3 +1,5 @@
-type ImageSet = Map<string, ImageBitmap>;
+import ImageAsset from "./ImageAsset";
+
+type ImageSet = Map<string, ImageAsset>;
 
 export default ImageSet;

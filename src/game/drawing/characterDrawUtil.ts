@@ -26,6 +26,7 @@ import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from ".
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { findImageBitmap } from "@/game/imageAssetUtil";
 import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUtil";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
@@ -224,7 +225,7 @@ function _getCharacterBodyCanvasRect(character:Character, scalingFactors:Scaling
 
 function _getCharacterFaceCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet, room:Room|null = null):Rect|null {
   if (!character.faceImageUrl) return null;
-  const faceImage = imageSet.get(character.faceImageUrl) || null;
+  const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
   if (!faceImage) return null;
 
   const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time, room);
@@ -288,7 +289,7 @@ export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character
   context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const { centerX, centerY } = _getObscuredActiveHeadAnchor(room, scalingFactors, context);
   const { widthPixels, heightPixels } = _getObscuredActiveHeadSizePixels(scalingFactors);
-  const faceImage = activeCharacter.faceImageUrl ? imageSet.get(activeCharacter.faceImageUrl) || null : null;
+  const faceImage = findImageBitmap(imageSet, activeCharacter.faceImageUrl);
 
   context.save();
   context.translate(centerX, centerY);
@@ -315,7 +316,7 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context:CanvasRenderingContext2D, gameTime:number, imageSet:ImageSet, effects:Effect[], isHighlighted:boolean,
   room:Room|null, metaTime:number) {
   const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, gameTime, room);
-  const faceImage = character.faceImageUrl ? imageSet.get(character.faceImageUrl) || null : null;
+  const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
   const talkingEffect = faceImage
     ? effects.find(effect => effect.type === EffectType.TALKING && effect.character?.id === character.id) as TalkingEffect|undefined
     : null;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { drawCharacter, drawEmitBubble, drawObscuredActiveCharacter, getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
+import { createImageAsset } from '@/game/imageAssetUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultItem } from '@/game/types/Item';
 import { createDefaultRoom } from '@/game/types/Room';
@@ -54,7 +55,9 @@ describe('characterDrawUtil', () => {
         ...createDefaultCharacter(),
         faceImageUrl:'/assets/faces/test.png'
       };
-      const imageSet = new Map<string, ImageBitmap>([['/assets/faces/test.png', { width:120, height:120 } as ImageBitmap]]);
+      const imageSet:ImageSet = new Map([
+        ['/assets/faces/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
+      ]);
 
       const rectWithoutFaceImage = getCharacterCanvasRect({ ...character, faceImageUrl:null }, SCALING_FACTORS, 0, imageSet);
       const rectWithFaceImage = getCharacterCanvasRect(character, SCALING_FACTORS, 0, imageSet);
@@ -88,7 +91,9 @@ describe('characterDrawUtil', () => {
 
   describe('drawCharacter()', () => {
     it('keeps the laying head upright for both facing directions by mirroring only the left-facing pose', () => {
-      const imageSet:ImageSet = new Map<string, ImageBitmap>([['/assets/faces/test.png', { width:120, height:120 } as ImageBitmap]]);
+      const imageSet:ImageSet = new Map([
+        ['/assets/faces/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
+      ]);
       const effects:Effect[] = [];
 
       const rightTransforms = _drawAndCaptureHeadTransforms({
@@ -114,7 +119,9 @@ describe('characterDrawUtil', () => {
   describe('drawObscuredActiveCharacter()', () => {
     it('mirrors the obscured head silhouette only for left-facing characters', () => {
       const room = { ...createDefaultRoom(), rect:{ x:0, y:0, width:20, height:20 }, title:'Test Room' };
-      const imageSet:ImageSet = new Map<string, ImageBitmap>([['/assets/faces/test.png', { width:120, height:120 } as ImageBitmap]]);
+      const imageSet:ImageSet = new Map([
+        ['/assets/faces/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
+      ]);
 
       const rightFacingScales = _drawObscuredAndCaptureScales({
         ...createDefaultCharacter(),

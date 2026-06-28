@@ -33,7 +33,6 @@ describe('imageSetUtil.ts', () => {
     const level = loadLevelFromText(imageSetReferencedImagesText);
     const imageSet = await createImageSetFromLevel(level);
 
-    expect(fetchMock).toHaveBeenCalledTimes(6);
     expect(imageSet.has(getGroundImageAssetUrl())).toBe(true);
     expect(imageSet.has('/assets/sprites/key.png')).toBe(true);
     expect(imageSet.has(UNKNOWN_ITEM_ICON_URL)).toBe(true);
@@ -41,6 +40,60 @@ describe('imageSetUtil.ts', () => {
     expect(imageSet.has(getFaceImageAssetUrl('queenFace.png'))).toBe(true);
     expect(imageSet.has(getClozeImageCandidateUrls('queenFace.png')[0])).toBe(false);
     expect((level.conclusions[0].parts[0] as { imageUrl:string }).imageUrl).toBe(getFaceImageAssetUrl('queenFace.png'));
+  });
+
+  it('loads an optional .punch.png sidecar into the image asset when present', async () => {
+    const baseImageBitmap = { width:64, height:64 } as ImageBitmap;
+    const punchMaskImageBitmap = { width:64, height:64 } as ImageBitmap;
+    const fetchMock = vi.fn(async (url:string) => url.endsWith('.punch.png')
+      ? {
+        ok:true,
+        headers:{ get:() => 'image/png' },
+        blob:async () => new Blob(['mask'])
+      }
+      : {
+        ok:true,
+        headers:{ get:() => 'image/png' },
+        blob:async () => new Blob(['fake'])
+      });
+    const createImageBitmapMock = vi.fn(async (_blob:Blob) => createImageBitmapMock.mock.calls.length === 1
+      ? baseImageBitmap
+      : punchMaskImageBitmap);
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createImageBitmapMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = loadLevelFromText(roomBackWallTextureText, 'room-texture-image.md');
+    const imageSet = await createImageSetFromLevel(level);
+    const imageAsset = imageSet.get(getRoomTextureAssetUrl('greyBricks.png')) || null;
+
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/room/greyBricks.punch.png');
+    expect(imageAsset?.punchMaskImage).toBe(punchMaskImageBitmap);
+  });
+
+  it('treats a missing .punch.png sidecar as absent without blocking the main image load', async () => {
+    const fetchMock = vi.fn(async (url:string) => url.endsWith('.punch.png')
+      ? {
+        ok:false,
+        headers:{ get:() => null },
+        blob:async () => new Blob([])
+      }
+      : {
+        ok:true,
+        headers:{ get:() => 'image/png' },
+        blob:async () => new Blob(['fake'])
+      });
+    const createImageBitmapMock = vi.fn(async () => ({ width:64, height:64 } as ImageBitmap));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createImageBitmapMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = loadLevelFromText(roomBackWallTextureText, 'room-texture-image.md');
+    const imageSet = await createImageSetFromLevel(level);
+    const imageAsset = imageSet.get(getRoomTextureAssetUrl('greyBricks.png')) || null;
+
+    expect(imageAsset?.image).toEqual({ width:64, height:64 });
+    expect(imageAsset?.punchMaskImage).toBeNull();
   });
 
   it('omits image URLs whose fetch returns a non-OK response', async () => {

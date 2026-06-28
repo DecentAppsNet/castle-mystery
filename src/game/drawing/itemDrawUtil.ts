@@ -20,6 +20,7 @@ import EffectType from "../effects/types/EffectType";
 import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { findImageBitmap } from "@/game/imageAssetUtil";
 import { compareItemsForDrawOrder } from "./roomContentDrawOrderUtil";
 
 const ITEM_SIZING_RATIO = 0.21;
@@ -146,7 +147,7 @@ export function getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFac
 // Resolves the image to draw for an item, falling back to the unknown-item asset.
 function _findItemImage(item:Item, imageSet:ImageSet):ImageBitmap|null {
   const imageUrl = item.imageUrl ?? UNKNOWN_ITEM_ICON_URL;
-  return imageSet.get(imageUrl) || null;
+  return findImageBitmap(imageSet, imageUrl);
 }
 
 // Draws an item image at the supplied projected anchor point.

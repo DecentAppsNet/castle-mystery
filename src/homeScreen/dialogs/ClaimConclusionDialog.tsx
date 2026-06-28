@@ -11,6 +11,7 @@ import ClozePartType from "@/game/conclusions/types/ClozePartType";
 import { duplicateConclusion } from "@/game/conclusions/types/Conclusion";
 import { isConclusionMissingAnswers } from "@/game/conclusions/conclusionUtil";
 import ImageSet from "@/game/types/ImageSet";
+import { findImageBitmap } from "@/game/imageAssetUtil";
 import { isCandidateUrls } from "@/game/imageUrlUtil";
 
 import styles from './ClaimConclusionDialog.module.css';
@@ -109,11 +110,11 @@ function _createClozeLines(conclusion:Conclusion):ClozeLine[] {
 
 function _findClozeImageBitmap(imagePart:ClozeImage, imageSet:ImageSet):ImageBitmap|null {
   if (!isCandidateUrls(imagePart.imageUrl)) {
-    return imageSet.get(imagePart.imageUrl) || null;
+    return findImageBitmap(imageSet, imagePart.imageUrl);
   }
 
   for (const candidateUrl of imagePart.imageUrl) {
-    const imageBitmap = imageSet.get(candidateUrl) || null;
+    const imageBitmap = findImageBitmap(imageSet, candidateUrl);
     if (imageBitmap) return imageBitmap;
   }
 

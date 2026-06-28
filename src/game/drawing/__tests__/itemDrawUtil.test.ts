@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { drawRoomItem, calcItemDrawRect, getItemCanvasPositionInRoom, getItemCanvasRectInRoom } from '../itemDrawUtil';
 import { createDefaultRoom } from '@/game/types/Room';
 import { createDefaultItem } from '@/game/types/Item';
+import { createImageAsset } from '@/game/imageAssetUtil';
 import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { createEmptyImageSet } from '@/game/imageSetUtil';
@@ -44,7 +45,7 @@ describe('itemDrawUtil', () => {
       };
       const imageBitmap = { width:520, height:20 } as ImageBitmap;
       const imageSet = createEmptyImageSet();
-      imageSet.set(imageUrl, imageBitmap);
+      imageSet.set(imageUrl, createImageAsset(imageBitmap));
       const itemDrawRect = calcItemDrawRect(room, SCALING_FACTORS);
       const expectedImageWidthPixels = itemDrawRect.widthPixels * 2;
       const expectedImageHeightPixels = expectedImageWidthPixels * imageBitmap.height / imageBitmap.width;
@@ -101,7 +102,7 @@ describe('itemDrawUtil', () => {
       };
       const imageBitmap = { width:520, height:20 } as ImageBitmap;
       const imageSet = createEmptyImageSet();
-      imageSet.set(imageUrl, imageBitmap);
+      imageSet.set(imageUrl, createImageAsset(imageBitmap));
       const drawImage = vi.fn();
       const context = {
         drawImage,

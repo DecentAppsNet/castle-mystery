@@ -5,6 +5,7 @@ import { baseUrl } from "@/common/urlUtil";
 import { getGroundImageAssetUrl, isCandidateUrls } from "./imageUrlUtil";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "./discoveryIconUrlUtil";
+import { createImageAsset } from "./imageAssetUtil";
 import { findTextureImageUrls } from "./textureUtil";
 import ClozeImage from "./conclusions/types/ClozeImage";
 import ClozePartType from "./conclusions/types/ClozePartType";
@@ -13,7 +14,12 @@ import ImageSet from "./types/ImageSet";
 import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
 
 export function createEmptyImageSet():ImageSet {
-  return new Map<string, ImageBitmap>();
+  return new Map();
+}
+
+function _findPunchMaskImageUrl(imageUrl:string):string|null {
+  if (!imageUrl.toLowerCase().endsWith('.png')) return null;
+  return imageUrl.slice(0, -4) + '.punch.png';
 }
 
 function _findDirectReferencedImageUrls(level:Level):string[] {
@@ -65,6 +71,21 @@ async function _loadImageBitmap(imageUrl:string):Promise<ImageBitmap|null> {
   }
 }
 
+async function _loadOptionalPunchMaskImageBitmap(imageUrl:string):Promise<ImageBitmap|null> {
+  if (typeof createImageBitmap !== 'function') return null;
+  const punchMaskImageUrl = _findPunchMaskImageUrl(imageUrl);
+  if (!punchMaskImageUrl) return null;
+  try {
+    const response = await fetch(baseUrl(punchMaskImageUrl));
+    if (!response.ok) return null;
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.toLowerCase().startsWith('image/')) return null;
+    return await createImageBitmap(await response.blob());
+  } catch {
+    return null;
+  }
+}
+
 function _createLoadImageBitmapCache() {
   const imageBitmapPromisesByUrl = new Map<string, Promise<ImageBitmap|null>>();
   return (imageUrl:string) => {
@@ -76,23 +97,41 @@ function _createLoadImageBitmapCache() {
   };
 }
 
-async function _loadDirectReferencedImages(level:Level, imageSet:ImageSet, loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>):Promise<void> {
+function _createLoadPunchMaskImageBitmapCache() {
+  const imageBitmapPromisesByUrl = new Map<string, Promise<ImageBitmap|null>>();
+  return (imageUrl:string) => {
+    const existingPromise = imageBitmapPromisesByUrl.get(imageUrl);
+    if (existingPromise) return existingPromise;
+    const imageBitmapPromise = _loadOptionalPunchMaskImageBitmap(imageUrl);
+    imageBitmapPromisesByUrl.set(imageUrl, imageBitmapPromise);
+    return imageBitmapPromise;
+  };
+}
+
+async function _loadDirectReferencedImages(level:Level, imageSet:ImageSet,
+  loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>,
+  loadPunchMaskImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>):Promise<void> {
   const imageUrls = _findDirectReferencedImageUrls(level);
-  const imageEntries = await Promise.all(imageUrls.map(async imageUrl => [imageUrl, await loadImageBitmap(imageUrl)] as const));
-  imageEntries.forEach(([imageUrl, imageBitmap]) => {
-    if (imageBitmap) imageSet.set(imageUrl, imageBitmap);
+  const imageEntries = await Promise.all(imageUrls.map(async imageUrl => {
+    const imageBitmap = await loadImageBitmap(imageUrl);
+    const punchMaskImage = imageBitmap ? await loadPunchMaskImageBitmap(imageUrl) : null;
+    return [imageUrl, imageBitmap, punchMaskImage] as const;
+  }));
+  imageEntries.forEach(([imageUrl, imageBitmap, punchMaskImage]) => {
+    if (imageBitmap) imageSet.set(imageUrl, createImageAsset(imageBitmap, punchMaskImage));
   });
 }
 
 async function _resolveCandidateUrl(candidateUrls:string[], imageSet:ImageSet,
-  loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>):Promise<string|null> {
+  loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>,
+  loadPunchMaskImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>):Promise<string|null> {
   const resolvedImageUrl = _findResolvedCandidateUrl(candidateUrls, imageSet);
   if (resolvedImageUrl) return resolvedImageUrl;
 
   for (const candidateUrl of candidateUrls) {
     const imageBitmap = await loadImageBitmap(candidateUrl);
     if (!imageBitmap) continue;
-    imageSet.set(candidateUrl, imageBitmap);
+    imageSet.set(candidateUrl, createImageAsset(imageBitmap, await loadPunchMaskImageBitmap(candidateUrl)));
     return candidateUrl;
   }
 
@@ -100,13 +139,14 @@ async function _resolveCandidateUrl(candidateUrls:string[], imageSet:ImageSet,
 }
 
 async function _resolveLevelConclusionImageUrls(level:Level, imageSet:ImageSet,
-  loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>) {
+  loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>,
+  loadPunchMaskImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>) {
   for (const conclusion of level.conclusions) {
     for (const [partIndex, part] of conclusion.parts.entries()) {
       if (part.type !== ClozePartType.image) continue;
       const imagePart = part as ClozeImage;
       if (!isCandidateUrls(imagePart.imageUrl)) continue;
-      const resolvedImageUrl = await _resolveCandidateUrl(imagePart.imageUrl, imageSet, loadImageBitmap);
+      const resolvedImageUrl = await _resolveCandidateUrl(imagePart.imageUrl, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
       if (!resolvedImageUrl) continue;
       conclusion.parts[partIndex] = {
         ...imagePart,
@@ -123,12 +163,13 @@ export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
   startTiming(imageLoadTiming);
   const imageSet = createEmptyImageSet();
   const loadImageBitmap = _createLoadImageBitmapCache();
+  const loadPunchMaskImageBitmap = _createLoadPunchMaskImageBitmapCache();
   try {
     startTiming(directImageTiming);
-    await _loadDirectReferencedImages(level, imageSet, loadImageBitmap);
+    await _loadDirectReferencedImages(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
     endTiming(directImageTiming);
     startTiming(candidateImageTiming);
-    await _resolveLevelConclusionImageUrls(level, imageSet, loadImageBitmap);
+    await _resolveLevelConclusionImageUrls(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
     endTiming(candidateImageTiming);
     return imageSet;
   } finally {
