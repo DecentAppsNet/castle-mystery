@@ -168,6 +168,7 @@ import roomStyleTextureText from './fixtures/room-style-texture.md?raw';
 import roomFloorTextureText from './fixtures/room-floor-texture.md?raw';
 import roomRightWallTextureText from './fixtures/room-right-wall-texture.md?raw';
 import roomStairTextureText from './fixtures/room-stair-texture.md?raw';
+import roomDoorTextureText from './fixtures/room-door-texture.md?raw';
 import { MSECS_IN_DAY } from '@/common/timeUtil';
 
 describe('levelUtil itinerary loading', () => {
@@ -877,6 +878,25 @@ describe('levelUtil itinerary loading', () => {
       modifiers:[{ type:'imageFilter', imageFilterId:'aged stone' }]
     });
     expect(hall?.stairTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
+      horizontalCount:2,
+      verticalCount:2,
+      modifiers:[]
+    });
+  });
+
+  it('loads door textures from styles and lets room metadata override them', () => {
+    const level = loadLevelFromText(roomDoorTextureText, 'room-door-texture.md');
+    const nave = level.rooms.find(room => room.id === 'nave');
+    const hall = level.rooms.find(room => room.id === 'hall');
+
+    expect(nave?.doorTexture).toEqual({
+      imageUrl:getRoomTextureAssetUrl('greyBricks.png'),
+      horizontalCount:4,
+      verticalCount:4,
+      modifiers:[{ type:'imageFilter', imageFilterId:'aged stone' }]
+    });
+    expect(hall?.doorTexture).toEqual({
       imageUrl:getRoomTextureAssetUrl('floorBricks.png'),
       horizontalCount:2,
       verticalCount:2,

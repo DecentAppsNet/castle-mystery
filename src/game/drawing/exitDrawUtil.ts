@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
+import { LAYERS_PER_MAP_TILE, MAP_TILE_SIZE } from "@/game/roomGridUtil";
 import { describeExit } from "../exitUtil";
 import Item from "../types/Item";
 import ExitType from "../types/ExitType";
@@ -9,9 +10,11 @@ import Rect from "../types/Rect";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
+import ImageSet from "../types/ImageSet";
 import { COLOR_BLACK } from "./drawColorConstants";
 import { canvasToGamePosition, gameToCanvasPosition } from "./drawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";
+import { createTiledTextureFaceCanvas, drawClippedTransformedTextureFace, TextureFaceImage } from "./textureFaceDrawUtil";
 import {
   createProjectedRightWallDoorOutlinePoints,
   getRightWallDoorHeightPixels,
@@ -19,6 +22,7 @@ import {
   RIGHT_WALL_DOOR_LEFT_Z,
   RIGHT_WALL_DOOR_RIGHT_Z
 } from "./roomPanelProjectionUtil";
+import { ROOM_DEPTH_ROW_COUNT, ROOM_FULL_DEPTH } from "../roomSpaceConstants";
 
 const DOOR_WIDTH_HEIGHT_RATIO = 313 / 548;
 const DOOR_FILL_BROWN = "#766850";
@@ -26,6 +30,7 @@ const KEYHOLE_TOP_HEIGHT_RATIO = 0.18;
 const KEYHOLE_STEM_HEIGHT_RATIO = 0.2;
 const KEYHOLE_WIDTH_RATIO = 0.26;
 const KEYHOLE_STEM_WIDTH_RATIO = 0.1;
+const _doorTextureFaceImageCache = new Map<string, TextureFaceImage|null>();
 
 function _getExitDrawHeightPixels(scalingFactors:ScalingFactors):number {
   return getRightWallDoorHeightPixels(scalingFactors);
@@ -66,6 +71,46 @@ export function getProjectedExitCanvasRect(exit:Pick<RoomExit, 'x' | 'y'>, scali
 
 function _findDoorFillColor(exitType:ExitType):string {
   return exitType === ExitType.doorway ? "#fff" : DOOR_FILL_BROWN;
+}
+
+function _calcDoorDepthTextureCount():number {
+  return (RIGHT_WALL_DOOR_RIGHT_Z - RIGHT_WALL_DOOR_LEFT_Z) * (ROOM_DEPTH_ROW_COUNT / ROOM_FULL_DEPTH);
+}
+
+function _calcDoorHeightTextureCount(doorHeight:number):number {
+  return doorHeight * (LAYERS_PER_MAP_TILE / MAP_TILE_SIZE);
+}
+
+function _findDoorTextureFaceImage(room:Room, imageSet:ImageSet|null, doorHeight:number, textureLightness:number):TextureFaceImage|null {
+  const doorTexture = room.doorTexture;
+  if (!doorTexture || !imageSet) return null;
+  const image = imageSet.get(doorTexture.imageUrl) || null;
+  if (!image || image.width <= 0 || image.height <= 0) return null;
+
+  const horizontalCount = _calcDoorDepthTextureCount();
+  const verticalCount = _calcDoorHeightTextureCount(doorHeight);
+  const cacheKey = [
+    room.id,
+    doorTexture.imageUrl,
+    horizontalCount,
+    verticalCount,
+    textureLightness,
+    doorTexture.horizontalCount,
+    doorTexture.verticalCount,
+    doorTexture.modifiers.map(modifier => JSON.stringify(modifier)).join('|')
+  ].join('|');
+  if (_doorTextureFaceImageCache.has(cacheKey)) return _doorTextureFaceImageCache.get(cacheKey) || null;
+
+  const faceImage = createTiledTextureFaceCanvas(
+    image,
+    doorTexture,
+    horizontalCount,
+    verticalCount,
+    textureLightness,
+    `${room.id}|doorTexture|${horizontalCount}|${verticalCount}`
+  );
+  _doorTextureFaceImageCache.set(cacheKey, faceImage);
+  return faceImage;
 }
 
 function _drawProjectedLockableDoorKeyhole(rightWallX:number, doorBottomY:number, doorHeight:number,
@@ -109,24 +154,41 @@ function _drawProjectedLockableDoorKeyhole(rightWallX:number, doorBottomY:number
 }
 
 export function drawTemporaryRightWallDoorVectorOverlay(room:Room, exit:RoomExit, displayedExitType:ExitType, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, doorHeightPixels:number = _getExitDrawHeightPixels(scalingFactors)) {
+  context:CanvasRenderingContext2D, doorHeightPixels:number = _getExitDrawHeightPixels(scalingFactors),
+  imageSet:ImageSet|null = null, textureLightness:number = 1) {
   const doorHeight = doorHeightPixels / scalingFactors.scaleY;
   const rightWallX = room.rect.x + room.rect.width;
   const doorBottomY = exit.y;
+  const doorTopY = doorBottomY - doorHeight;
   const [bottomLeft, bottomRight, shoulderRight, ...remainingOutlinePoints] = createProjectedRightWallDoorOutlinePoints(
     rightWallX, doorBottomY, doorHeight, scalingFactors);
   const shoulderLeft = remainingOutlinePoints[remainingOutlinePoints.length - 1];
+  const doorPoints = [bottomLeft, bottomRight, shoulderRight, ...remainingOutlinePoints, shoulderLeft];
 
   if (displayedExitType !== ExitType.doorway) {
-    context.fillStyle = _findDoorFillColor(displayedExitType);
-    context.beginPath();
-    context.moveTo(...bottomLeft);
-    context.lineTo(...bottomRight);
-    context.lineTo(...shoulderRight);
-    remainingOutlinePoints.forEach(point => context.lineTo(...point));
-    context.lineTo(...shoulderLeft);
-    context.closePath();
-    context.fill();
+    const doorTextureFaceImage = _findDoorTextureFaceImage(room, imageSet, doorHeight, textureLightness);
+    if (doorTextureFaceImage) {
+      const topLeft = projectRoomPointWithDepth(rightWallX, doorTopY, RIGHT_WALL_DOOR_LEFT_Z, scalingFactors);
+      const topRight = projectRoomPointWithDepth(rightWallX, doorTopY, RIGHT_WALL_DOOR_RIGHT_Z, scalingFactors);
+      drawClippedTransformedTextureFace(
+        doorTextureFaceImage,
+        topLeft,
+        [topRight[0] - topLeft[0], topRight[1] - topLeft[1]],
+        [bottomLeft[0] - topLeft[0], bottomLeft[1] - topLeft[1]],
+        doorPoints,
+        context
+      );
+    } else {
+      context.fillStyle = _findDoorFillColor(displayedExitType);
+      context.beginPath();
+      context.moveTo(...bottomLeft);
+      context.lineTo(...bottomRight);
+      context.lineTo(...shoulderRight);
+      remainingOutlinePoints.forEach(point => context.lineTo(...point));
+      context.lineTo(...shoulderLeft);
+      context.closePath();
+      context.fill();
+    }
   }
 
   context.strokeStyle = COLOR_BLACK;

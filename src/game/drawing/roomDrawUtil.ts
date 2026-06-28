@@ -173,7 +173,7 @@ function _shouldRoomDrawExit(room:Room, exit:RoomExit):boolean {
 
 function _drawRoomExit(room:Room, exit:RoomExit, characters:Character[], showFullContents:boolean,
   rooms:ReadonlyArray<Room>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, drawnExitIds:Set<string>,
-  layoutPlanner:CanvasLayoutPlanner|null = null) {
+  isActive:boolean, imageSet:ImageSet|null = null, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!_shouldRoomDrawExit(room, exit)) return;
   if (drawnExitIds.has(exit.id)) return;
   drawnExitIds.add(exit.id);
@@ -181,7 +181,8 @@ function _drawRoomExit(room:Room, exit:RoomExit, characters:Character[], showFul
   if (layoutPlanner) layoutPlanner.reserveRect(getProjectedExitCanvasRect(exit, scalingFactors));
   const displayedExitType = _findDisplayedExitType(exit, characters, showFullContents);
   const { height } = getExitCanvasRect(exit, scalingFactors);
-  drawTemporaryRightWallDoorVectorOverlay(room, exit, displayedExitType, scalingFactors, context, height);
+  const rightWallTextureLightness = showFullContents || isActive ? ACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS : INACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS;
+  drawTemporaryRightWallDoorVectorOverlay(room, exit, displayedExitType, scalingFactors, context, height, imageSet, rightWallTextureLightness);
 }
 
 function _calcStairPartSortDepth(stairPart:StairPart):number {
@@ -235,15 +236,15 @@ export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boo
   if (!includeUndiscovered && !room.isDiscovered) return;
   drawCacheableRoomShell(room, rooms, isActive, groundFloorY, scalingFactors, context,
     showFullContents, includeUndiscovered, imageSet, false);
-  drawRoomShellExits(room, rooms, characters, drawnExitIds, scalingFactors, context, showFullContents, layoutPlanner);
+  drawRoomShellExits(room, rooms, characters, drawnExitIds, scalingFactors, context, showFullContents, isActive, layoutPlanner, imageSet);
   drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
 }
 
 export function drawRoomShellExits(room:Room, rooms:ReadonlyArray<Room>, characters:Character[], drawnExitIds:Set<string>,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
-  layoutPlanner:CanvasLayoutPlanner|null = null) {
+  isActive:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null, imageSet:ImageSet|null = null) {
   if (!room.isDiscovered) return;
-  room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds, layoutPlanner));
+  room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds, isActive, imageSet, layoutPlanner));
 }
 
 function _calcRoomTitleMaxWidth(room:Room, scalingFactors:ScalingFactors):number {

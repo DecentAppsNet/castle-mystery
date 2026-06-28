@@ -360,7 +360,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
         drawObscuredRoom(room, gameState.scalingFactors, context, metaTime);
       }
       drawRoomShellExits(room, gameState.rooms, gameState.characters, drawnExitIds,
-        gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner);
+        gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet);
     } else {
       drawCacheableRoomShell(room, gameState.rooms, isActive, gameState.groundFloorY, gameState.scalingFactors,
         context, gameState.isLevelComplete, false, gameState.imageSet, false, false);
@@ -368,7 +368,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
         drawObscuredRoom(room, gameState.scalingFactors, context, metaTime);
       }
       drawRoomShellExits(room, gameState.rooms, gameState.characters, drawnExitIds,
-        gameState.scalingFactors, context, gameState.isLevelComplete, layoutPlanner);
+        gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet);
     }
     if (!room.isDiscovered) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,

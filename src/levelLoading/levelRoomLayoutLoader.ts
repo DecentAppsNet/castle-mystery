@@ -130,6 +130,7 @@ type RoomStyleMetadata = Readonly<{
   backWallTexture:Texture|null,
   floorTexture:Texture|null,
   stairTexture:Texture|null,
+  doorTexture:Texture|null,
   rightWallTexture:Texture|null
 }>;
 
@@ -139,6 +140,7 @@ function _createRoomStyleMetadata(roomStyleSection:string, roomStyleId:string, l
     backWallTexture:_parseOptionalRoomTexture(roomStyleNameValues.backWallTexture, roomStyleId, 'backWallTexture', 'layers'),
     floorTexture:_parseOptionalRoomTexture(roomStyleNameValues.floorTexture, roomStyleId, 'floorTexture', 'rows'),
     stairTexture:_parseOptionalRoomTexture(roomStyleNameValues.stairTexture, roomStyleId, 'stairTexture', 'layers'),
+    doorTexture:_parseOptionalRoomTexture(roomStyleNameValues.doorTexture, roomStyleId, 'doorTexture', 'layers'),
     rightWallTexture:_parseOptionalRoomTexture(roomStyleNameValues.rightWallTexture, roomStyleId, 'rightWallTexture', 'layers')
   };
 }
@@ -159,7 +161,7 @@ function _findRoomStyleMetadataOrThrow(roomStyleText:string, roomId:string, room
   throw new Error(`room ${roomId} references unknown style '${roomStyleText}'`);
 }
 
-function _resolveRoomTextureOverride(roomNameValues:Record<string, string>, propertyName:'backWallTexture'|'floorTexture'|'stairTexture'|'rightWallTexture',
+function _resolveRoomTextureOverride(roomNameValues:Record<string, string>, propertyName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture',
   roomId:string, verticalUnitLabel:'layers'|'rows', inheritedTexture:Texture|null):Texture|null {
   if (!Object.hasOwn(roomNameValues, propertyName)) return inheritedTexture;
   return _parseOptionalRoomTexture(roomNameValues[propertyName], roomId, propertyName, verticalUnitLabel);
@@ -192,7 +194,7 @@ function _buildRoomTextureSyntaxDescription(verticalUnitLabel:'layers'|'rows'):s
 }
 
 function _parseRoomTextureBaseSegmentOrThrow(value:string, roomId:string,
-  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):
+  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):
   Pick<Texture, 'imageUrl'|'horizontalCount'|'verticalCount'> {
   const trimmedValue = value.trim();
   const openParenIndex = trimmedValue.lastIndexOf('(');
@@ -225,14 +227,14 @@ function _parseRoomTextureBaseSegmentOrThrow(value:string, roomId:string,
 }
 
 function _parseRoomTextureModifierOrThrow(value:string, roomId:string,
-  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'rightWallTexture'):TextureModifier {
+  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture'):TextureModifier {
   const imageFilterId = findImageFilterId(value);
   if (imageFilterId) return { type:'imageFilter', imageFilterId };
   throw new Error(`room ${roomId} ${textureFieldName} has unknown texture modifier '${value.trim()}'`);
 }
 
 function _parseOptionalRoomTexture(value:string|undefined, roomId:string,
-  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):Texture|null {
+  textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture', verticalUnitLabel:'layers'|'rows'):Texture|null {
   if (!value?.trim()) return null;
   const segments = value.split('|').map(segment => segment.trim());
   if (segments.some(segment => !segment)) {
@@ -313,6 +315,7 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, firstL
       backWallTexture:null,
       floorTexture:null,
       stairTexture:null,
+      doorTexture:null,
       rightWallTexture:null,
       isObscured: false,
       items: [],
@@ -358,6 +361,7 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string, 
       backWallTexture:_resolveRoomTextureOverride(roomNameValues, 'backWallTexture', room.id, 'layers', inheritedRoomStyle?.backWallTexture || null),
       floorTexture:_resolveRoomTextureOverride(roomNameValues, 'floorTexture', room.id, 'rows', inheritedRoomStyle?.floorTexture || null),
       stairTexture:_resolveRoomTextureOverride(roomNameValues, 'stairTexture', room.id, 'layers', inheritedRoomStyle?.stairTexture || null),
+      doorTexture:_resolveRoomTextureOverride(roomNameValues, 'doorTexture', room.id, 'layers', inheritedRoomStyle?.doorTexture || null),
       rightWallTexture:_resolveRoomTextureOverride(roomNameValues, 'rightWallTexture', room.id, 'layers', inheritedRoomStyle?.rightWallTexture || null),
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };
@@ -375,7 +379,7 @@ export function validateRoomGridLegendEntries(level:Level, roomsSection:string, 
 
     const roomNameValues = parseUniqueNameValueLines(roomSection, `room ${roomId}`, false, roomSectionEntry.lineNo + 1);
     const roomLegend = Object.fromEntries(
-      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside' && name !== 'style' && name !== 'backWallTexture' && name !== 'floorTexture' && name !== 'stairTexture' && name !== 'rightWallTexture')
+      Object.entries(roomNameValues).filter(([name]) => name !== 'exits' && name !== 'obscured' && name !== 'outside' && name !== 'style' && name !== 'backWallTexture' && name !== 'floorTexture' && name !== 'stairTexture' && name !== 'doorTexture' && name !== 'rightWallTexture')
     );
 
     findLegendTilesInGrid(gridLines, roomLegend).forEach(({ entryId:entryText, row, col }) => {
