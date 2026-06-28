@@ -21,7 +21,6 @@ import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { compareItemsForDrawOrder } from "./roomContentDrawOrderUtil";
-import { calcUndiscoveredMarkerHeightPixels, drawUndiscoveredMarker } from "./undiscoveredMarkerDrawUtil";
 
 const ITEM_SIZING_RATIO = 0.21;
 const PULSE_CADENCE_MS = 1000;
@@ -266,21 +265,9 @@ function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:C
   if (!image) return; // Headless - no drawing needed.
   const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
   const itemDrawRect = calcItemDrawRect(room, scalingFactors);
-  const imageRect = _calcItemImageRect(itemDrawRect, image);
   context.save();
   if (isHighlighted) _drawItemImageHighlight(image, x, y, itemDrawRect, scalingFactors, context, metaTime);
   _drawItemImage(image, x, y, itemDrawRect, context);
-  if (isItemInteractive(item) && !item.isDiscovered) {
-    const markerHeightPixels = calcUndiscoveredMarkerHeightPixels(scalingFactors);
-    drawUndiscoveredMarker(
-      x + imageRect.leftOffsetPixels + imageRect.widthPixels / 2,
-      y + imageRect.topOffsetPixels + imageRect.heightPixels / 2 + markerHeightPixels / 2,
-      item.randomSalt,
-      scalingFactors,
-      context,
-      metaTime
-    );
-  }
   context.restore();
 }
 

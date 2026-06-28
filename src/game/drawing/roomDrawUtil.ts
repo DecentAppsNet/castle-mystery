@@ -6,6 +6,7 @@ import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 import { roomHeightToLayerCount, roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
+import { getCharacterSpeechAnchor } from "./characterDrawUtil";
 import { processRoomEffects } from "../effects/effectUtil";
 import {
   ACTIVE_BACK_WALL_TEXTURE_LIGHTNESS,
@@ -35,6 +36,7 @@ import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectio
 import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
+import { hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
 import Character from "../types/Character";
 import GameState from "../types/GameState";
 import Position from "../types/Position";
@@ -51,6 +53,7 @@ import { findItemDisplayPosition } from "@/game/itemDisplayPositionUtil";
 import { findRoom } from "../roomUtil";
 import { getCharacterCanvasRect } from "./characterDrawUtil";
 import { getItemCanvasRectInRoom } from "./itemDrawUtil";
+import { calcUndiscoveredMarkerHeightPixels, drawUndiscoveredMarker } from "./undiscoveredMarkerDrawUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -367,7 +370,8 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
   hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
   layoutPlanner:CanvasLayoutPlanner|null = null) {
-  createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems).forEach(content => {
+  const contents = createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems);
+  contents.forEach(content => {
     switch(content.type) {
       case 'stair':
         drawStairPart(content.stairPart, scalingFactors, context);
@@ -383,6 +387,16 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
           content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId, room, metaTime);
         processAfterCharacterEffects(content.character, effects, context, scalingFactors, imageSet, metaTime);
         return;
+    }
+  });
+  contents.forEach(content => {
+    if (content.type === 'item' && isItemInteractive(content.item) && !content.item.isDiscovered) {
+      const rect = getItemCanvasRectInRoom(room, content.item, scalingFactors, imageSet);
+      drawUndiscoveredMarker(rect.x + rect.width / 2, rect.y + rect.height / 2 + calcUndiscoveredMarkerHeightPixels(scalingFactors) / 2, content.item.randomSalt, scalingFactors, context, metaTime);
+    }
+    if (content.type === 'character' && isCharacterInteractive(content.character) && (!content.character.isDiscovered || hasDrawnUndiscoveredHeldItem(content.character, effects))) {
+      const { centerX, centerY } = getCharacterSpeechAnchor(content.character, scalingFactors, gameTime, room);
+      drawUndiscoveredMarker(centerX, centerY, content.character.randomSalt, scalingFactors, context, metaTime);
     }
   });
 }

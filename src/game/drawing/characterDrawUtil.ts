@@ -22,12 +22,11 @@ import Item from "../types/Item";
 import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK } from "./drawColorConstants";
 import { drawPopover, PopoverBodyEntry } from "./popoverDrawUtil";
 import { createCharacterLayout, strokeCharacterBody } from "./characters/characterLayoutUtil";
-import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter, hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
+import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from "./characters/characterHeldItemDrawUtil";
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUtil";
-import { drawUndiscoveredMarker } from "./undiscoveredMarkerDrawUtil";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
@@ -62,7 +61,7 @@ function _calcObscuredActiveHeadCacheKey(widthPixels:number, heightPixels:number
 }
 
 function _renderObscuredActiveHeadSilhouetteCanvas(faceImage:ImageBitmap, silhouetteCanvas:ScratchCanvas) {
-  const context = silhouetteCanvas.getContext("2d", { willReadFrequently:false });
+  const context = silhouetteCanvas.getContext("2d", { willReadFrequently:false }) as CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D|null;
   if (!context) return;
 
   context.clearRect(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
@@ -285,13 +284,6 @@ function _drawActiveCharacterHighlight(centerX:number, centerY:number, character
   context.fill();
 }
 
-function _shouldDrawUndiscoveredCharacterMarker(character:Character, effects:Effect[]):boolean {
-  if (!isCharacterInteractive(character)) return false;
-  if (!character.isDiscovered) return true;
-  return hasDrawnUndiscoveredHeldItem(character, effects);
-}
-
-
 export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const { centerX, centerY } = _getObscuredActiveHeadAnchor(room, scalingFactors, context);
@@ -341,7 +333,6 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
-  const shouldDrawUndiscoveredMarker = _shouldDrawUndiscoveredCharacterMarker(character, effects);
   drawHeldItemsBehindCharacter(character, layout, effects, scalingFactors, context, imageSet);
   strokeCharacterBody(layout, context);
   const headRadius = layout.head.radius;
@@ -351,7 +342,6 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(centerX, centerY, character.randomSalt, scalingFactors, context, metaTime);
     return;
   }
 
@@ -361,7 +351,6 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(centerX, centerY, character.randomSalt, scalingFactors, context, metaTime);
     return;
   }
   const { drawWidth, drawHeight } = faceImageDrawSize;
@@ -373,7 +362,6 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
     context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
     context.restore();
     drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-    if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(centerX, centerY, character.randomSalt, scalingFactors, context, metaTime);
     return;
   }
 
@@ -384,7 +372,6 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
   drawHeldItemsInFrontOfCharacter(character, layout, effects, scalingFactors, context, imageSet);
-  if (shouldDrawUndiscoveredMarker) drawUndiscoveredMarker(centerX, centerY, character.randomSalt, scalingFactors, context, metaTime);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,
