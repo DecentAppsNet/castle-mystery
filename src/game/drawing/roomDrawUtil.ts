@@ -369,7 +369,7 @@ export function createDrawableContents(room:Room, charactersInRoom:Character[], 
 function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharacter:Character|null, effects:Effect[],
   hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
-  stairTextureLightness:number,
+  stairTextureLightness:{ top:number, side:number, front:number },
   layoutPlanner:CanvasLayoutPlanner|null = null) {
   const contents = createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems);
   contents.forEach(content => {
@@ -403,7 +403,7 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
 }
 
 function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  imageSet:ImageSet, stairTextureLightness:number) {
+  imageSet:ImageSet, stairTextureLightness:{ top:number, side:number, front:number }) {
   room.stairParts.forEach(stairPart => drawStairPart(stairPart, room, scalingFactors, context, imageSet, stairTextureLightness));
 }
 
@@ -418,7 +418,9 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
     if (isActive && activeCharacter) drawObscuredActiveCharacter(room, activeCharacter, scalingFactors, context, imageSet);
     return;
   }
-  const stairTextureLightness = showFullContents || isActive ? ACTIVE_FLOOR_TEXTURE_LIGHTNESS : INACTIVE_FLOOR_TEXTURE_LIGHTNESS;
+  const stairTextureLightness = showFullContents || isActive
+    ? { top:ACTIVE_FLOOR_TEXTURE_LIGHTNESS, side:ACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS, front:ACTIVE_BACK_WALL_TEXTURE_LIGHTNESS }
+    : { top:INACTIVE_FLOOR_TEXTURE_LIGHTNESS, side:INACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS, front:INACTIVE_BACK_WALL_TEXTURE_LIGHTNESS };
   if (showFullContents || (isActive && activeCharacter)) {
     _drawRoomContents(room, charactersInRoom, activeCharacter, effects, hoveredCharacterId, hoveredItemId,
       scalingFactors, context, gameTime, metaTime, imageSet, true, stairTextureLightness, layoutPlanner);

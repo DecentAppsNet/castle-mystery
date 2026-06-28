@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { COLOR_BLACK } from "./drawColorConstants";
-import type { TextureFaceImage } from "./textureFaceDrawUtil";
+import { drawClippedTransformedTextureFace, type TextureFaceImage } from "./textureFaceDrawUtil";
 
 type CanvasPoint = [number, number];
 
@@ -35,30 +35,10 @@ function _fillFace(points:CanvasPoint[], context:CanvasRenderingContext2D) {
   context.fill();
 }
 
-function _drawFaceImage(faceImage:TextureFaceImage, origin:CanvasPoint, horizontalVector:CanvasPoint,
-  verticalVector:CanvasPoint, points:CanvasPoint[], context:CanvasRenderingContext2D) {
-  context.save();
-  context.beginPath();
-  context.moveTo(...points[0]);
-  for (let i = 1; i < points.length; i++) context.lineTo(...points[i]);
-  context.closePath();
-  context.clip();
-  context.transform(
-    horizontalVector[0] / faceImage.width,
-    horizontalVector[1] / faceImage.width,
-    verticalVector[0] / faceImage.height,
-    verticalVector[1] / faceImage.height,
-    origin[0],
-    origin[1]
-  );
-  context.drawImage(faceImage.image, 0, 0);
-  context.restore();
-}
-
 function _drawFace(points:CanvasPoint[], fillStyle:string, faceImage:TextureFaceImage|null|undefined,
   origin:CanvasPoint, horizontalVector:CanvasPoint, verticalVector:CanvasPoint, context:CanvasRenderingContext2D) {
   if (faceImage) {
-    _drawFaceImage(faceImage, origin, horizontalVector, verticalVector, points, context);
+    drawClippedTransformedTextureFace(faceImage, origin, horizontalVector, verticalVector, points, context);
     return;
   }
   context.fillStyle = fillStyle;

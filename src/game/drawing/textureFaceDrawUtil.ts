@@ -9,6 +9,34 @@ export type TextureFaceImage = Readonly<{
   height:number
 }>;
 
+function _traceClosedPolygon(points:Array<[number, number]>, context:CanvasRenderingContext2D) {
+  context.moveTo(...points[0]);
+  for (let pointIndex = 1; pointIndex < points.length; ++pointIndex) {
+    context.lineTo(...points[pointIndex]);
+  }
+  context.closePath();
+}
+
+export function drawClippedTransformedTextureFace(faceImage:TextureFaceImage, origin:[number, number],
+  horizontalVector:[number, number], verticalVector:[number, number], points:Array<[number, number]>,
+  context:CanvasRenderingContext2D, cutoutPoints:Array<Array<[number, number]>> = []) {
+  context.save();
+  context.beginPath();
+  _traceClosedPolygon(points, context);
+  cutoutPoints.forEach(cutout => _traceClosedPolygon(cutout, context));
+  context.clip(cutoutPoints.length ? 'evenodd' : 'nonzero');
+  context.transform(
+    horizontalVector[0] / faceImage.width,
+    horizontalVector[1] / faceImage.width,
+    verticalVector[0] / faceImage.height,
+    verticalVector[1] / faceImage.height,
+    origin[0],
+    origin[1]
+  );
+  context.drawImage(faceImage.image, 0, 0);
+  context.restore();
+}
+
 function _createTextureLightnessFilter(textureLightness:number):string {
   return textureLightness === 1 ? 'none' : `brightness(${textureLightness})`;
 }

@@ -12,42 +12,12 @@ import { calcPanelOffset, createProjectedRightWallDoorOutlinePoints, getRightWal
 import { findRightWallPanelSpans } from "../rightWallPanelUtil";
 import { shouldDrawFloorPanelLeftEdge, shouldDrawFloorPanelRightEdge } from "../floorPanelUtil";
 import { roomHeightToLayerCount, roomWidthToColumnCount } from "../roomGridUtil";
-import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
+import { createTiledTextureFaceCanvas, drawClippedTransformedTextureFace } from "./textureFaceDrawUtil";
 
 function _fillPanel(points:Array<[number, number]>, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   context.lineWidth = scalingFactors.roomLineWidth;
   _traceClosedPolygon(points, context);
   context.fill();
-}
-
-function _drawShearedTextureFace(faceWidth:number, faceHeight:number, faceImage:CanvasImageSource, origin:[number, number],
-  horizontalVector:[number, number], depthVector:[number, number], points:Array<[number, number]>,
-  context:CanvasRenderingContext2D, cutoutPoints:Array<Array<[number, number]>> = []) {
-  context.save();
-  context.beginPath();
-  context.moveTo(...points[0]);
-  for (let pointIndex = 1; pointIndex < points.length; ++pointIndex) {
-    context.lineTo(...points[pointIndex]);
-  }
-  context.closePath();
-  cutoutPoints.forEach(cutout => {
-    context.moveTo(...cutout[0]);
-    for (let pointIndex = 1; pointIndex < cutout.length; ++pointIndex) {
-      context.lineTo(...cutout[pointIndex]);
-    }
-    context.closePath();
-  });
-  context.clip("evenodd");
-  context.transform(
-    horizontalVector[0] / faceWidth,
-    horizontalVector[1] / faceWidth,
-    depthVector[0] / faceHeight,
-    depthVector[1] / faceHeight,
-    origin[0],
-    origin[1]
-  );
-  context.drawImage(faceImage, 0, 0);
-  context.restore();
 }
 
 function _drawShearedTiledPanel(image:ImageBitmap, texture:Texture, origin:[number, number], horizontalVector:[number, number],
@@ -63,7 +33,7 @@ function _drawShearedTiledPanel(image:ImageBitmap, texture:Texture, origin:[numb
     seedText
   );
   if (faceImage) {
-    _drawShearedTextureFace(faceImage.width, faceImage.height, faceImage.image, origin, horizontalVector, depthVector, points, context, cutoutPoints);
+    drawClippedTransformedTextureFace(faceImage, origin, horizontalVector, depthVector, points, context, cutoutPoints);
     return;
   }
 

@@ -23,6 +23,12 @@ const STAIR_ANGLE_TOLERANCE = FLOOR_WAYPOINT_Y_OFFSET + STAIR_POSITION_TOLERANCE
 const STAIR_CUBOID_DEPTH = ROOM_ROW_DEPTH;
 const _stairTextureFaceImageCache = new Map<string, TextureFaceImage|null>();
 
+type StairTextureLightness = Readonly<{
+  top:number,
+  side:number,
+  front:number
+}>;
+
 function _calcStairStepCount(totalDistance:number):number {
   return Math.max(1, Math.round(totalDistance / PREFERRED_STEP_RISE_RUN));
 }
@@ -78,7 +84,7 @@ function _findStairTextureFaceImage(room:Room, imageSet:ImageSet|null, faceName:
 }
 
 function _drawStairCuboid(leftX:number, topY:number, width:number, height:number, z:number, depth:number,
-  room:Room, imageSet:ImageSet|null, textureLightness:number,
+  room:Room, imageSet:ImageSet|null, textureLightness:StairTextureLightness,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const rightX = leftX + width;
   const bottomY = topY + height;
@@ -89,9 +95,9 @@ function _drawStairCuboid(leftX:number, topY:number, width:number, height:number
   const frontTopRight = _projectRoomPointWithDepth(rightX, topY, z + depth, scalingFactors);
   const frontBottomLeft = _projectRoomPointWithDepth(leftX, bottomY, z + depth, scalingFactors);
   const frontBottomRight = _projectRoomPointWithDepth(rightX, bottomY, z + depth, scalingFactors);
-  const topFaceImage = _findStairTextureFaceImage(room, imageSet, 'top', _calcHorizontalTextureCount(width), _calcDepthTextureCount(depth), textureLightness);
-  const sideFaceImage = _findStairTextureFaceImage(room, imageSet, 'side', _calcDepthTextureCount(depth), _calcVerticalTextureCount(height), textureLightness);
-  const frontFaceImage = _findStairTextureFaceImage(room, imageSet, 'front', _calcHorizontalTextureCount(width), _calcVerticalTextureCount(height), textureLightness);
+  const topFaceImage = _findStairTextureFaceImage(room, imageSet, 'top', _calcHorizontalTextureCount(width), _calcDepthTextureCount(depth), textureLightness.top);
+  const sideFaceImage = _findStairTextureFaceImage(room, imageSet, 'side', _calcDepthTextureCount(depth), _calcVerticalTextureCount(height), textureLightness.side);
+  const frontFaceImage = _findStairTextureFaceImage(room, imageSet, 'front', _calcHorizontalTextureCount(width), _calcVerticalTextureCount(height), textureLightness.front);
   drawProjectedCuboid({
     backTopLeft,
     backTopRight,
@@ -129,7 +135,7 @@ function _snapFlightTo45DegreesForDrawing(fromPosition:Position, toPosition:Posi
 }
 
 function _drawStairsAtRow(fromPosition:Position, toPosition:Position, z:number, room:Room, imageSet:ImageSet|null,
-  textureLightness:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  textureLightness:StairTextureLightness, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const snappedFlight = _snapFlightTo45DegreesForDrawing(fromPosition, toPosition);
   const totalRise = snappedFlight.toPosition.y - snappedFlight.fromPosition.y;
   const totalRun = snappedFlight.toPosition.x - snappedFlight.fromPosition.x;
@@ -151,7 +157,8 @@ function _drawStairsAtRow(fromPosition:Position, toPosition:Position, z:number, 
 }
 
 export function drawStairPart(stairPart:StairPart, room:Room, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, imageSet:ImageSet|null = null, textureLightness:number = 1) {
+  context:CanvasRenderingContext2D, imageSet:ImageSet|null = null,
+  textureLightness:StairTextureLightness = { top:1, side:1, front:1 }) {
   switch(stairPart.type) {
     case StairPartType.flight:
       _drawStairsAtRow(stairPart.startPosition, stairPart.endPosition, stairPart.z, room, imageSet, textureLightness, scalingFactors, context);
