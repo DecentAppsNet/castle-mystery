@@ -5,11 +5,11 @@ import ScalingFactors from "@/game/types/ScalingFactors";
 
 import { COLOR_BLACK } from "./drawColorConstants";
 
-export const UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS = 1000;
-
+const UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS = 200;
 const UNDISCOVERED_MARKER_TEXT = "?";
 const UNDISCOVERED_MARKER_WORLD_WIDTH = 2;
 const UNDISCOVERED_MARKER_WORLD_HEIGHT = 2;
+const UNDISCOVERED_MARKER_BOB_DURATION = 1000;
 const UNDISCOVERED_MARKER_BOB_SCALE = 0.22;
 const UNDISCOVERED_MARKER_COLORS = ["#ffd40080", "#ff3b3080", "#34c75980", "#007aff80", "#ff950080", "#af52de80"] as const;
 
@@ -31,7 +31,7 @@ export function calcUndiscoveredMarkerHeightPixels(scalingFactors:ScalingFactors
 }
 
 function _calcMarkerBobOffsetPixels(time:number, randomSalt:number, markerHeightPixels:number):number {
-  const phase = ((time + _normalizeSaltPhase(randomSalt) * UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS) % UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS) / UNDISCOVERED_MARKER_COLOR_CYCLE_MSECS;
+  const phase = ((time + _normalizeSaltPhase(randomSalt) * UNDISCOVERED_MARKER_BOB_DURATION) % UNDISCOVERED_MARKER_BOB_DURATION) / UNDISCOVERED_MARKER_BOB_DURATION;
   return Math.sin(phase * Math.PI * 2) * markerHeightPixels * UNDISCOVERED_MARKER_BOB_SCALE;
 }
 
