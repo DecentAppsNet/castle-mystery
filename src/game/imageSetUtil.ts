@@ -61,7 +61,6 @@ function _findResolvedCandidateUrl(candidateUrls:string[], imageSet:ImageSet):st
 }
 
 async function _loadImageBitmap(imageUrl:string):Promise<ImageBitmap|null> {
-  if (typeof createImageBitmap !== 'function') return null;
   try {
     const response = await fetch(baseUrl(imageUrl));
     if (!response.ok) return null;
@@ -72,7 +71,6 @@ async function _loadImageBitmap(imageUrl:string):Promise<ImageBitmap|null> {
 }
 
 async function _loadOptionalPunchMaskImageBitmap(imageUrl:string):Promise<ImageBitmap|null> {
-  if (typeof createImageBitmap !== 'function') return null;
   const punchMaskImageUrl = _findPunchMaskImageUrl(imageUrl);
   if (!punchMaskImageUrl) return null;
   try {

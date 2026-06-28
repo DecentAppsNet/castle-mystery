@@ -62,6 +62,23 @@ function _applyPunchMaskAlpha(targetPixels:Pick<ImageData, 'data'>, punchMaskPix
   }
 }
 
+function _drawRepeatedImage(targetContext:CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
+  image:CanvasImageSource, faceWidth:number, faceHeight:number, tileWidth:number, tileHeight:number) {
+  for (let drawY = 0; drawY < faceHeight; drawY += tileHeight) {
+    for (let drawX = 0; drawX < faceWidth; drawX += tileWidth) {
+      targetContext.drawImage(image, drawX, drawY, tileWidth, tileHeight);
+    }
+  }
+}
+
+function _punchFaceUnderlay(faceContext:CanvasRenderingContext2D, faceWidth:number, faceHeight:number,
+  punchMaskContext:CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D) {
+  const targetImageData = faceContext.getImageData(0, 0, faceWidth, faceHeight);
+  const punchMaskImageData = punchMaskContext.getImageData(0, 0, faceWidth, faceHeight);
+  _applyPunchMaskAlpha(targetImageData, punchMaskImageData);
+  faceContext.putImageData(targetImageData, 0, 0);
+}
+
 function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWidth:number, faceHeight:number,
   image:ImageBitmap, punchMaskImage:ImageBitmap|null, textureImageOperation:TextureImageOperation,
   totalHorizontalCount:number, totalVerticalCount:number,
@@ -75,12 +92,26 @@ function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWi
   if (textureImageOperation.alphaMode !== 'punch' && !punchMaskImage) {
     faceContext.save();
     faceContext.filter = _createTextureLightnessFilter(textureLightness);
-    for (let drawY = 0; drawY < faceHeight; drawY += tileHeight) {
-      for (let drawX = 0; drawX < faceWidth; drawX += tileWidth) {
-        faceContext.drawImage(image, drawX, drawY, tileWidth, tileHeight);
-      }
-    }
+    _drawRepeatedImage(faceContext, image, faceWidth, faceHeight, tileWidth, tileHeight);
     faceContext.restore();
+    return;
+  }
+
+  if (punchMaskImage) {
+    const punchMaskCanvas = createScratchCanvas(faceWidth, faceHeight);
+    if (!punchMaskCanvas) return;
+    const punchMaskContext = punchMaskCanvas.getContext('2d');
+    if (!punchMaskContext) return;
+
+    _drawRepeatedImage(punchMaskContext, punchMaskImage, faceWidth, faceHeight, tileWidth, tileHeight);
+    _punchFaceUnderlay(faceContext, faceWidth, faceHeight, punchMaskContext);
+
+    faceContext.save();
+    faceContext.filter = _createTextureLightnessFilter(textureLightness);
+    _drawRepeatedImage(faceContext, image, faceWidth, faceHeight, tileWidth, tileHeight);
+    faceContext.restore();
+
+    _punchFaceUnderlay(faceContext, faceWidth, faceHeight, punchMaskContext);
     return;
   }
 
@@ -88,34 +119,17 @@ function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWi
   if (!operationCanvas) return;
   const operationContext = operationCanvas.getContext('2d');
   if (!operationContext) return;
-  let punchMaskContext:CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D|null = null;
-  if (punchMaskImage) {
-    const punchMaskCanvas = createScratchCanvas(faceWidth, faceHeight);
-    if (!punchMaskCanvas) return;
-    punchMaskContext = punchMaskCanvas.getContext('2d');
-    if (!punchMaskContext) return;
-  }
 
   operationContext.save();
   operationContext.filter = _createTextureLightnessFilter(textureLightness);
-  for (let drawY = 0; drawY < faceHeight; drawY += tileHeight) {
-    for (let drawX = 0; drawX < faceWidth; drawX += tileWidth) {
-      operationContext.drawImage(image, drawX, drawY, tileWidth, tileHeight);
-      if (punchMaskContext && punchMaskImage) punchMaskContext.drawImage(punchMaskImage, drawX, drawY, tileWidth, tileHeight);
-    }
-  }
+  _drawRepeatedImage(operationContext, image, faceWidth, faceHeight, tileWidth, tileHeight);
   operationContext.restore();
 
   faceContext.drawImage(operationCanvas as CanvasImageSource, 0, 0);
 
   const targetImageData = faceContext.getImageData(0, 0, faceWidth, faceHeight);
-  if (punchMaskContext) {
-    const punchMaskImageData = punchMaskContext.getImageData(0, 0, faceWidth, faceHeight);
-    _applyPunchMaskAlpha(targetImageData, punchMaskImageData);
-  } else {
-    const sourceImageData = operationContext.getImageData(0, 0, faceWidth, faceHeight);
-    applyPunchThroughAlpha(targetImageData, sourceImageData);
-  }
+  const sourceImageData = operationContext.getImageData(0, 0, faceWidth, faceHeight);
+  applyPunchThroughAlpha(targetImageData, sourceImageData);
   faceContext.putImageData(targetImageData, 0, 0);
 }
 

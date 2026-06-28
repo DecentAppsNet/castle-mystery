@@ -47,6 +47,7 @@ function _shouldOpenWinLevelDialog(previousConclusions:ReadonlyArray<Conclusion>
 function HomeScreen() {
   const [gameState, setGameState] = useState<GameState|null>(null);
   const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
+  const [initErrorMessage, setInitErrorMessage] = useState<string|null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
   const [winSynopsis, setWinSynopsis] = useState<string>("");
@@ -82,6 +83,9 @@ function HomeScreen() {
       setDiscoveries(createDiscoveries(initResults.gameState));
       setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
       if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
+    }).catch((error:unknown) => {
+      if (isCancelled) return;
+      setInitErrorMessage(error instanceof Error ? error.message : 'Failed to initialize the app.');
     });
 
     return () => {
@@ -135,6 +139,17 @@ function HomeScreen() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [gameState, isPlaying, isPlayPauseDisabled]);
+
+  if (initErrorMessage) {
+    return (
+      <div className={styles.initErrorContainer}>
+        <div className={styles.initErrorCard}>
+          <h1>Unsupported Browser</h1>
+          <p>{initErrorMessage}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!gameState || !levelManifest) return null;
 

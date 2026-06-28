@@ -18,11 +18,22 @@ export type InitResults = {
 
 let _initPromise:Promise<InitResults|null>|null = null;
 
+function _checkRequiredBrowserApisSupported() {
+  const missingApis:string[] = [];
+  if (typeof fetch !== 'function') missingApis.push('fetch()');
+  if (typeof createImageBitmap !== 'function') missingApis.push('createImageBitmap()');
+  if (typeof document === 'undefined') missingApis.push('document');
+  if (typeof HTMLCanvasElement === 'undefined') missingApis.push('HTMLCanvasElement');
+  if (missingApis.length <= 0) return;
+  throw new Error(`This browser is not supported. Missing required web APIs: ${missingApis.join(', ')}.`);
+}
+
 async function _runInit():Promise<InitResults|null> {
   const initTiming = 'app init';
   const manifestTiming = 'level manifest load';
   startTiming(initTiming);
   try {
+    _checkRequiredBrowserApisSupported();
     startTiming(manifestTiming);
     const baseManifest = await loadLevelManifestFromUrl('/levels/levels.md');
     endTiming(manifestTiming);
