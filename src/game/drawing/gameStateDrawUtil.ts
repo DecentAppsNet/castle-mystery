@@ -22,7 +22,7 @@ import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawColorConstants";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { drawExitPopover } from "./exitDrawUtil";
 import { drawObscuredRoom } from "./obscureDrawUtil";
-import { drawCacheableRoomShell, drawRoomCharactersAndEffects, drawRoomShell, drawRoomShellExits, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
+import { drawCacheableRoomShell, drawRoomCharactersAndEffects, drawRoomShellExits, drawRoomTitle, drawRoomWaypointsWithHighlight } from "./roomDrawUtil";
 import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
@@ -35,65 +35,6 @@ import { calcPanelOffset } from "./roomPanelProjectionUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
-
-type CachedRoomSilhouette = {
-  key:string,
-  canvas:CanvasImageSource
-};
-
-const _cachedRoomSilhouettesByGameState = new WeakMap<GameState, CachedRoomSilhouette>();
-
-function _calcRoomSilhouetteCacheKey(gameState:GameState, context:CanvasRenderingContext2D):string {
-  const cameraRect = gameState.camera.currentRect;
-  const scalingFactors = gameState.scalingFactors;
-  return [
-    context.canvas.width,
-    context.canvas.height,
-    cameraRect.x,
-    cameraRect.y,
-    cameraRect.width,
-    cameraRect.height,
-    scalingFactors.roomLineWidth
-  ].join('|');
-}
-
-function _renderRoomSilhouetteCanvas(gameState:GameState, context:CanvasRenderingContext2D):CanvasImageSource|null {
-  const silhouetteCanvas = createScratchCanvas(context.canvas.width, context.canvas.height);
-  if (!silhouetteCanvas) return null;
-  const silhouetteContext = silhouetteCanvas.getContext('2d');
-  if (!silhouetteContext) return null;
-
-  silhouetteContext.clearRect(0, 0, context.canvas.width, context.canvas.height);
-  const drawnExitIds = new Set<string>();
-  for (const room of gameState.rooms) {
-    drawRoomShell(room, gameState.rooms, false, gameState.characters, drawnExitIds,
-      gameState.groundFloorY, gameState.scalingFactors, silhouetteContext as unknown as CanvasRenderingContext2D,
-      true, null, true, null);
-  }
-  silhouetteContext.globalCompositeOperation = 'source-in';
-  silhouetteContext.fillStyle = COLOR_DARK_GRAY;
-  silhouetteContext.fillRect(0, 0, context.canvas.width, context.canvas.height);
-  silhouetteContext.globalCompositeOperation = 'source-over';
-  return silhouetteCanvas;
-}
-
-function _findRoomSilhouetteCanvas(gameState:GameState, context:CanvasRenderingContext2D):CanvasImageSource|null {
-  const cacheKey = _calcRoomSilhouetteCacheKey(gameState, context);
-  const cachedSilhouette = _cachedRoomSilhouettesByGameState.get(gameState);
-  if (cachedSilhouette?.key === cacheKey) return cachedSilhouette.canvas;
-
-  const silhouetteCanvas = _renderRoomSilhouetteCanvas(gameState, context);
-  if (!silhouetteCanvas) return null;
-  _cachedRoomSilhouettesByGameState.set(gameState, { key:cacheKey, canvas:silhouetteCanvas });
-  return silhouetteCanvas;
-}
-
-function _drawRoomSilhouette(gameState:GameState, context:CanvasRenderingContext2D) {
-  if (context.canvas.width <= 0 || context.canvas.height <= 0) return;
-  const silhouetteCanvas = _findRoomSilhouetteCanvas(gameState, context);
-  if (!silhouetteCanvas) return;
-  context.drawImage(silhouetteCanvas, 0, 0);
-}
 
 function _drawReservedRects(layoutPlanner:CanvasLayoutPlanner, context:CanvasRenderingContext2D) {
   if (!DRAW_RESERVED_RECTS) return;
@@ -254,6 +195,17 @@ function _createRoomShellCanvas(room:Room, gameState:GameState, destWidth:number
   });
 }
 
+function _createRoomSilhouetteCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number):RoomShellVariantImage {
+  return _createRoomVisualCanvas(room, gameState, destWidth, destHeight, (scalingFactors, context) => {
+    drawCacheableRoomShell(room, gameState.rooms, false, gameState.groundFloorY,
+      scalingFactors, context, false, true, null, true, false);
+    context.globalCompositeOperation = 'source-in';
+    context.fillStyle = COLOR_DARK_GRAY;
+    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+    context.globalCompositeOperation = 'source-over';
+  });
+}
+
 function _createRoomRoofCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number):RoomShellVariantImage {
   return _createRoomVisualCanvas(room, gameState, destWidth, destHeight, (scalingFactors, context) => {
     drawRoomRoofs(room, gameState.rooms, gameState.groundFloorY, scalingFactors, context);
@@ -277,14 +229,15 @@ function _ensureRoomShellCaches(gameState:GameState, context:CanvasRenderingCont
       ...createEmptyRoomShellVariantImages(),
       active:_createRoomShellCanvas(room, gameState, destWidth, destHeight, true),
       inactive:_createRoomShellCanvas(room, gameState, destWidth, destHeight, false),
+      silhouette:_createRoomSilhouetteCanvas(room, gameState, destWidth, destHeight),
       roof:_createRoomRoofCanvas(room, gameState, destWidth, destHeight)
     });
   }
 }
 
 function _drawCachedRoomVariant(cachedVariant:RoomShellVariantImage|null, room:Room, gameState:GameState,
-  context:CanvasRenderingContext2D):boolean {
-  if (!room.isDiscovered) return false;
+  context:CanvasRenderingContext2D, includeUndiscovered:boolean = false):boolean {
+  if (!includeUndiscovered && !room.isDiscovered) return false;
   if (!cachedVariant?.image || cachedVariant.width <= 0 || cachedVariant.height <= 0) return false;
 
   const shellBounds = _calcProjectedRoomShellBounds(room, gameState.rooms, gameState.groundFloorY, gameState.scalingFactors);
@@ -313,6 +266,14 @@ function _drawCachedRoomShell(room:Room, gameState:GameState, isActive:boolean, 
 function _drawCachedRoomRoof(room:Room, gameState:GameState, context:CanvasRenderingContext2D):boolean {
   const roomShellVariants = gameState.roomShellCacheByRoomId.get(room.id) || null;
   return _drawCachedRoomVariant(roomShellVariants?.roof || null, room, gameState, context);
+}
+
+function _drawRoomSilhouettes(gameState:GameState, context:CanvasRenderingContext2D) {
+  for (const room of gameState.rooms) {
+    if (room.isDiscovered) continue;
+    const roomShellVariants = gameState.roomShellCacheByRoomId.get(room.id) || null;
+    _drawCachedRoomVariant(roomShellVariants?.silhouette || null, room, gameState, context, true);
+  }
 }
 
 export function updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRenderingContext2D):ScalingFactors {
@@ -348,7 +309,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   const drawnExitIds = new Set<string>();
   const layoutPlanner = new CanvasLayoutPlanner(context.canvas.width, context.canvas.height);
   _drawGround(gameState, context);
-  _drawRoomSilhouette(gameState, context);
+  _drawRoomSilhouettes(gameState, context);
   const roomRenderStates = gameState.rooms.map(room => {
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
     const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;

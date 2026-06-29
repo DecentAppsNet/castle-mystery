@@ -10,6 +10,7 @@ type RoomShellVariantImage = Readonly<{
 type RoomShellVariantImages = Readonly<{
   active:RoomShellVariantImage,
   inactive:RoomShellVariantImage,
+  silhouette:RoomShellVariantImage,
   roof:RoomShellVariantImage
 }>;
 
@@ -23,6 +24,7 @@ export function createEmptyRoomShellVariantImages():RoomShellVariantImages {
   return {
     active:{ image:null, width:0, height:0, padding:0 },
     inactive:{ image:null, width:0, height:0, padding:0 },
+    silhouette:{ image:null, width:0, height:0, padding:0 },
     roof:{ image:null, width:0, height:0, padding:0 }
   };
 }
