@@ -10,6 +10,8 @@ import * as activityMovementUtil from '../activities/activity/activityMovementUt
 import { appendEventsToCharacterState, createCharacterActivityState, findStatePoseAtTime } from '../activities/activity/activityStateUtil';
 import { parseItineraryActivities } from '../itineraryLoading/itineraryActivityParseUtil';
 import { loadItineraries } from '../levelItineraryLoader';
+import itemBecomesLevelText from './fixtures/item-becomes-level.md?raw';
+import itemBecomesTargetPlacedLevelText from './fixtures/item-becomes-target-placed.md?raw';
 import itineraryTimelineSummaryText from './fixtures/itinerary-timeline-summary.md?raw';
 
 describe('levelItineraryLoader', () => {
@@ -77,6 +79,20 @@ describe('levelItineraryLoader', () => {
       expect(explicitWaitActivity.waitDurationMsecs).toBe(3_000);
       expect(defaultWaitActivity.activityText).toBe('waits');
       expect(defaultWaitActivity.waitDurationMsecs).toBe(1_000);
+    });
+
+    it('parses item becomes activities with an item subject while preserving the current scheduling character', () => {
+      const options = { isCrossMidnight:false, explicitEndTime:null };
+      const [atActivity, becomesActivity] = parseItineraryActivities([
+        '0:00:03 Hero @ Hall',
+        ': Vase becomes Broken Vase'
+      ].join('\n'), 'item-becomes.md', 1, options, 0, 'hero');
+
+      expect(atActivity.subjectKind).toBe('character');
+      expect(becomesActivity.characterId).toBe('hero');
+      expect(becomesActivity.subjectKind).toBe('item');
+      expect(becomesActivity.subjectId).toBe('vase');
+      expect(becomesActivity.activityText).toBe('becomes Broken Vase');
     });
 
     it('rejects invalid waits durations', () => {
@@ -147,6 +163,35 @@ describe('levelItineraryLoader', () => {
 
       expect(planMovementToRoomSpy).toHaveBeenCalledTimes(1);
       planMovementToRoomSpy.mockRestore();
+    });
+
+    it('accepts valid item becomes activities during itinerary loading', () => {
+      const level = loadLevelFromText(itemBecomesLevelText, 'item-becomes-level.md');
+
+      expect(() => loadItineraries(level, [
+        '0:00:03 Hero @ Hall',
+        ': Vase becomes Broken Vase'
+      ].join('\n'), 'item-becomes-itinerary.md', 1)).not.toThrow();
+    });
+
+    it('rejects item becomes activities whose replacement target starts placed', () => {
+      const level = loadLevelFromText(itemBecomesTargetPlacedLevelText, 'item-becomes-target-placed.md');
+
+      expect(() => loadItineraries(level, [
+        '0:00:03 Hero @ Hall',
+        ': Vase becomes Broken Vase'
+      ].join('\n'), 'item-becomes-itinerary.md', 1))
+        .toThrow(/item replacement target 'Broken Vase' must start unplaced/);
+    });
+
+    it('rejects item becomes activities whose replacement target does not exist', () => {
+      const level = loadLevelFromText(itemBecomesLevelText, 'item-becomes-missing-target.md');
+
+      expect(() => loadItineraries(level, [
+        '0:00:03 Hero @ Hall',
+        ': Vase becomes Missing Vase'
+      ].join('\n'), 'item-becomes-itinerary.md', 1))
+        .toThrow(/unknown item replacement target 'Missing Vase'/);
     });
 
     it('reuses settled pose state for lookups at the current scheduling time', () => {

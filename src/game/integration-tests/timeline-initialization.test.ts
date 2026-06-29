@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import timelineBothTimeAndStartTimeText from '@/game/__tests__/fixtures/timeline-both-time-and-start-time.md?raw';
+import unplacedItemsInitializationText from './fixtures/unplaced-items-initialization.md?raw';
 import { calcRenderedRoomsBoundingRect } from '@/game/roomRoofUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
@@ -30,5 +31,21 @@ describe('timeline initialization integration', () => {
     expect(gameState.camera.currentRect).toEqual(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY));
     expect(gameState.camera.targetRect).toEqual(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY));
     expect(gameState.camera.isMoving).toBe(false);
+  });
+
+  it('separates declared but unplaced items from initially placed items', () => {
+    const level = loadLevelFromText(unplacedItemsInitializationText, 'unplaced-items-initialization.md');
+    const gameState = createGameState(level);
+
+    expect(gameState.itemsById.has('room vase')).toBe(true);
+    expect(gameState.itemsById.has('pocket coin')).toBe(true);
+    expect(gameState.itemsById.has('broken vase')).toBe(true);
+
+    expect(gameState.rooms[0]?.items.map(item => item.id)).toEqual(['room vase']);
+    expect(gameState.characters[0]?.items.map(item => item.id)).toEqual(['pocket coin']);
+
+    expect(Array.from(gameState.unplacedItemsById.keys())).toEqual(['broken vase']);
+    expect(Array.from(gameState.initialUnplacedItemsById.keys())).toEqual(['broken vase']);
+    expect(gameState.unplacedItemsById.get('broken vase')).toBe(gameState.itemsById.get('broken vase'));
   });
 });

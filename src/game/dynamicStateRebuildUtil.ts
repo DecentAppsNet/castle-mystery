@@ -13,6 +13,7 @@ import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import { duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
+import { createUnplacedItemsById } from "./itemUtil";
 import { findRoomAtPosition } from "./roomUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
@@ -212,6 +213,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
   gameState.itemsById = duplicateItemsById(gameState.initialItemsById);
   gameState.characters = gameState.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, gameState.itemsById));
   gameState.rooms = gameState.initialRooms.map(room => duplicateRoomUsingItemIndex(room, gameState.itemsById));
+  gameState.unplacedItemsById = createUnplacedItemsById(gameState.itemsById, gameState.rooms, gameState.characters);
 
   _collectAppliedInventoryEvents(gameState, time).forEach(({ characterId, startPosition, event }) => {
     const actor = _findCharacter(gameState, characterId);

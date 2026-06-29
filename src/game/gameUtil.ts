@@ -39,7 +39,7 @@ import { isCharacterInteractive } from "./interactivityUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
-import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
+import { createItemsById, createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import { getOwnedItems } from "./itemOwnershipUtil";
 import Item from "./types/Item";
 import { MAX_ACTIVE_EFFECTS } from "./effects/effectUtil";
@@ -457,11 +457,17 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
   const initialItemsById = createItemsById(level.rooms, level.initialCharacters, duplicateItemsById(level.itemsById));
+  const initialCharacters = level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById));
+  const initialRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById));
+  const initialUnplacedItemsById = createUnplacedItemsById(initialItemsById, initialRooms, initialCharacters);
   const itemsById = duplicateItemsById(initialItemsById);
+  const characters = level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById));
+  const rooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById));
   const gameState:GameState = {
-    characters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById)),
-    rooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById)),
+    characters,
+    rooms,
     itemsById,
+    unplacedItemsById:createUnplacedItemsById(itemsById, rooms, characters),
     discoveredCharacterIds:[],
     discoveredItemIds:[],
     discoverableCharacterCount:level.discoverableCharacterCount,
@@ -473,8 +479,9 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     groundFloorY:level.groundFloorY,
     imageSet,
     initialItemsById,
-    initialCharacters:level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById)),
-    initialRooms:level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById)),
+    initialUnplacedItemsById,
+    initialCharacters,
+    initialRooms,
     camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
     activeEffects:[],
     hoveredItemId:null,

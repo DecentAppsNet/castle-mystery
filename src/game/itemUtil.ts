@@ -11,6 +11,18 @@ function _findIndexedItem(itemsById:ReadonlyMap<string, Item>, itemId:string):It
 	return item;
 }
 
+function _createPlacedItemIds(rooms:ReadonlyArray<Pick<Room, 'items'>>,
+	characters:ReadonlyArray<Pick<Character, 'items' | 'leftHandItem' | 'rightHandItem'>>):Set<string> {
+	const placedItemIds = new Set<string>();
+	rooms.forEach(room => room.items.forEach(item => placedItemIds.add(item.id)));
+	characters.forEach(character => {
+		character.items.forEach(item => placedItemIds.add(item.id));
+		if (character.leftHandItem) placedItemIds.add(character.leftHandItem.id);
+		if (character.rightHandItem) placedItemIds.add(character.rightHandItem.id);
+	});
+	return placedItemIds;
+}
+
 export function createItemsById(rooms:ReadonlyArray<Pick<Room, 'items'>>,
 	characters:ReadonlyArray<Pick<Character, 'items' | 'leftHandItem' | 'rightHandItem'>>,
 	fallbackItemsById:ReadonlyMap<string, Item> = new Map()):Map<string, Item> {
@@ -26,6 +38,12 @@ export function createItemsById(rooms:ReadonlyArray<Pick<Room, 'items'>>,
 
 export function duplicateItemsById(itemsById:ReadonlyMap<string, Item>):Map<string, Item> {
 	return new Map(Array.from(itemsById.entries()).map(([itemId, item]) => [itemId, duplicateItem(item)]));
+}
+
+export function createUnplacedItemsById(itemsById:ReadonlyMap<string, Item>, rooms:ReadonlyArray<Pick<Room, 'items'>>,
+	characters:ReadonlyArray<Pick<Character, 'items' | 'leftHandItem' | 'rightHandItem'>>):Map<string, Item> {
+	const placedItemIds = _createPlacedItemIds(rooms, characters);
+	return new Map(Array.from(itemsById.entries()).filter(([itemId]) => !placedItemIds.has(itemId)));
 }
 
 export function duplicateCharacterUsingItemIndex(from:Character, itemsById:ReadonlyMap<string, Item>):Character {

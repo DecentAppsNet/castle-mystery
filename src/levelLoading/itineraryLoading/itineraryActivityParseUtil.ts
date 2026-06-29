@@ -127,6 +127,11 @@ function _normalizeVisibilityTargetActivityText(activityText:string, verb:'show'
   return targetRef ? `${verb} ${targetRef}` : verb;
 }
 
+function _normalizeBecomesActivityText(activityText:string):string {
+  const targetRef = _normalizeActivityArgument(activityText.slice('becomes'.length), new Set(['.', '\'', '-']));
+  return targetRef ? `becomes ${targetRef}` : 'becomes';
+}
+
 function _normalizeParsedActivityText(activityText:string):string {
   const trimmedActivityText = activityText.trim();
 
@@ -149,6 +154,7 @@ function _normalizeParsedActivityText(activityText:string):string {
   if (trimmedActivityText.startsWith('locks')) return _normalizeRoomTargetActivityText(trimmedActivityText, 'locks');
   if (trimmedActivityText.startsWith('show')) return _normalizeVisibilityTargetActivityText(trimmedActivityText, 'show');
   if (trimmedActivityText.startsWith('hide')) return _normalizeVisibilityTargetActivityText(trimmedActivityText, 'hide');
+  if (trimmedActivityText.startsWith('becomes')) return _normalizeBecomesActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('drops')) return _normalizeDropActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('waits')) return _normalizeWaitActivityText(trimmedActivityText);
   if (trimmedActivityText.startsWith('takes')) {
@@ -177,7 +183,7 @@ function _parseActivityLine(activityLine:string, impliedCharacterId:string):{ ch
     if (!impliedCharacterId || !activityText) throw new Error(`unable to infer character for itinerary activity line '${activityLine}'`);
     return { characterId:impliedCharacterId, subjectKind:'character', subjectId:impliedCharacterId, activityText };
   }
-  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' emits ', ' faces ', ' dies', ' stands', ' sits', ' kneels', ' lays', ' gives ', ' drops ', ' takes ', ' waits', ' locks ', ' unlocks ', ' show ', ' hide '];
+  const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' emits ', ' faces ', ' dies', ' stands', ' sits', ' kneels', ' lays', ' gives ', ' drops ', ' takes ', ' waits', ' locks ', ' unlocks ', ' show ', ' hide ', ' becomes '];
   let splitIndex = -1;
 
   activityMarkers.forEach(marker => {
@@ -191,6 +197,7 @@ function _parseActivityLine(activityLine:string, impliedCharacterId:string):{ ch
   const activityText = _normalizeParsedActivityText(normalizedLine.slice(splitIndex + 1));
   if (!subjectText || !activityText) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
   if (activityText.startsWith('emits')) return { characterId:impliedCharacterId, subjectKind:'item', subjectId:normalizeId(subjectText), activityText };
+  if (activityText.startsWith('becomes')) return { characterId:impliedCharacterId, subjectKind:'item', subjectId:normalizeId(subjectText), activityText };
   const characterId = normalizeId(subjectText);
   return { characterId, subjectKind:'character', subjectId:characterId, activityText };
 }

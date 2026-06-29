@@ -14,6 +14,7 @@ import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 
 import { tryCreateAtActivity } from "../activities/atActivityUtil";
 import { tryCreateBodyOrientationActivity } from "../activities/bodyOrientationActivityUtil";
+import { tryCreateBecomesItemActivity } from "../activities/becomesItemActivityUtil";
 import { tryCreateDieActivity } from "../activities/dieActivityUtil";
 import { tryCreateDropActivity } from "../activities/dropActivityUtil";
 import { tryCreateEmitActivity } from "../activities/emitActivityUtil";
@@ -119,6 +120,7 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
     tryCreateFaceActivity,
     tryCreateDieActivity,
     tryCreateBodyOrientationActivity,
+    tryCreateBecomesItemActivity,
     tryCreateGiveActivity,
     tryCreateDropActivity,
     tryCreateTakeActivity,
