@@ -8,6 +8,13 @@
 * stairTexture=wood.png | aged stone
 * doorTexture=wood.png | aged stone
 
+## Woods Night
+* floorTexture=rockyDirt.png
+* rightWallTexture=greyBricks2.png | aged stone
+* stairTexture=greyBricks2.png | aged stone
+* doorTexture=wood.png | aged stone
+
+
 ## Palace Garden
 
 * backWallTexture=greyBricks2.png | aged stone

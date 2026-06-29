@@ -2,7 +2,7 @@
 
 * title=The Fledgling Fraternity
 * activeCharacter=Niccolo
-* time=23:00:00
+* time:22:59:30
 * background=nightSky.png
 * imports=items.md | characters.md | roomStyles.md
 
@@ -97,25 +97,48 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 # Map
 
 ```
-..AAA...
-..AAABB.
-........
+..CCAAA...
+DDCCAAABB.
+..........
 ```
 
 * A=Nave
 * B=Hall
+* C=Entrance
+* D=Forest
 
 # Rooms
+
+## Entrance
+
+* style=Palace Garden
+* exits=Nave (unlocked, lockable) | Forest
+* outside=true
+
+## Forest
+
+* style=Woods Night
+* outside=true
+
+```
+........
+..ANO...
+........
+```
+
+* A=Sticky Agatha
+* N=Niccolo
+* O=Niccolo Masked
 
 ## Nave
 
 * style=Old Castle
-* backWallTexture=greyBricks2.png | naveWindows.png (*,*)
-* exits=Hall
+* backWallTexture=greyBricks2.png | aged stone | naveWindows.png (*,*)
+* exits=Hall | Entrance (lockable)
 
 ```
 ............
-.....N......
+............
 ............
 ```
 
@@ -126,6 +149,29 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 * style=Old Castle
 * obscured=true
 
+# Characters
+
+## Sticky Agatha
+* isTitleKnown=true
+
+## Niccolo
+* isTitleKnown=true
+* description=A man holding dark thoughts on a dark night.
+
+## Niccolo Masked
+* faceImage=pigMask.png
+* title=Niccolò il Calabrese
+* visible=false
+* description=The same person we saw earlier - just with a mask on.
+
+## 
+
 # Itinerary
 
-23:00:02 Niccolo @ Hall
+22:59:30 Sticky Agatha says "Put on your mask!" to Niccolo.
+: Niccolo says, "Oh, right."
+: show Niccolo Masked
+: hide Niccolo
+: Sticky Agatha says, "I'll stay here and keep watch."
+
+23:00:00 Niccolo Masked @ Hall

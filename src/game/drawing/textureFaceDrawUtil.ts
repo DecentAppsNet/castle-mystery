@@ -6,7 +6,7 @@ import ImageSet from "../types/ImageSet";
 import Texture from "../types/Texture";
 import TextureImageOperation from "../types/TextureImageOperation";
 import { calcTextureFaceSize } from "../textureSizingUtil";
-import { createScratchCanvas } from "./canvasSurfaceUtil";
+import { createScratchCanvas, getScratchCanvasContext2d } from "./canvasSurfaceUtil";
 
 export type TextureFaceImage = Readonly<{
   image:CanvasImageSource,
@@ -100,7 +100,7 @@ function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWi
   if (punchMaskImage) {
     const punchMaskCanvas = createScratchCanvas(faceWidth, faceHeight);
     if (!punchMaskCanvas) return;
-    const punchMaskContext = punchMaskCanvas.getContext('2d');
+    const punchMaskContext = getScratchCanvasContext2d(punchMaskCanvas, true);
     if (!punchMaskContext) return;
 
     _drawRepeatedImage(punchMaskContext, punchMaskImage, faceWidth, faceHeight, tileWidth, tileHeight);
@@ -117,7 +117,7 @@ function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWi
 
   const operationCanvas = createScratchCanvas(faceWidth, faceHeight);
   if (!operationCanvas) return;
-  const operationContext = operationCanvas.getContext('2d');
+  const operationContext = getScratchCanvasContext2d(operationCanvas, true);
   if (!operationContext) return;
 
   operationContext.save();
@@ -152,7 +152,7 @@ export function createTiledTextureFaceCanvas(imageSet:ImageSet, texture:Texture,
   );
   const faceCanvas = createScratchCanvas(faceWidth, faceHeight);
   if (!faceCanvas) return null;
-  const faceContext = faceCanvas.getContext('2d');
+  const faceContext = getScratchCanvasContext2d(faceCanvas, true);
   if (!faceContext) return null;
 
   texture.operations.forEach((operation, operationIndex) => {
