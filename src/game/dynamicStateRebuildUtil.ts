@@ -71,6 +71,9 @@ function _getDiscoveredItemIds(gameState:GameState):Set<string> {
   gameState.characters.forEach(character => getOwnedItems(character).forEach(item => {
     if (item.isDiscovered) discoveredItemIds.add(item.id);
   }));
+  gameState.unplacedItemsById.forEach(item => {
+    if (item.isDiscovered) discoveredItemIds.add(item.id);
+  });
   return discoveredItemIds;
 }
 
@@ -85,6 +88,9 @@ function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<strin
   gameState.characters.forEach(character => getOwnedItems(character).forEach(item => {
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
   }));
+  gameState.unplacedItemsById.forEach(item => {
+    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
+  });
   gameState.characters.forEach(character => {
     if (discoveredCharacterIds.has(character.id)) character.isDiscovered = true;
     character.discoveredRoomIds = [...(characterDiscoveredRoomIds.get(character.id) || [])];
@@ -176,10 +182,11 @@ function _removeItemById(items:GameState['rooms'][number]['items'], itemId:strin
 function _copyReplacementStateOntoTarget(sourceItem:GameState['rooms'][number]['items'][number], targetItem:GameState['rooms'][number]['items'][number]) {
   targetItem.position = duplicatePosition(sourceItem.position);
   targetItem.drawOffset = duplicatePosition(sourceItem.drawOffset);
-  targetItem.stackOffset = duplicatePosition(sourceItem.stackOffset);
-  targetItem.isVisible = sourceItem.isVisible;
-  targetItem.isDiscovered = sourceItem.isDiscovered;
   return targetItem;
+}
+
+function _storeUnplacedReplacementSource(gameState:GameState, sourceItem:GameState['rooms'][number]['items'][number]) {
+  gameState.unplacedItemsById.set(sourceItem.id, sourceItem);
 }
 
 function _replaceRoomItem(gameState:GameState, sourceItemId:string, targetItemId:string):boolean {
@@ -189,6 +196,7 @@ function _replaceRoomItem(gameState:GameState, sourceItemId:string, targetItemId
     const targetItem = gameState.unplacedItemsById.get(targetItemId) || null;
     assertNonNullable(targetItem, `unplaced replacement target ${targetItemId} was not found`);
     gameState.unplacedItemsById.delete(targetItemId);
+    _storeUnplacedReplacementSource(gameState, sourceItem);
     room.items.push(_copyReplacementStateOntoTarget(sourceItem, targetItem));
     return true;
   }
@@ -209,6 +217,7 @@ function _replaceOwnedItem(gameState:GameState, sourceItemId:string, targetItemI
     const targetItem = gameState.unplacedItemsById.get(targetItemId) || null;
     assertNonNullable(targetItem, `unplaced replacement target ${targetItemId} was not found`);
     gameState.unplacedItemsById.delete(targetItemId);
+    _storeUnplacedReplacementSource(gameState, sourceItem);
     const replacementItem = _copyReplacementStateOntoTarget(sourceItem, targetItem);
     addOwnedItem(character, replacementItem, location);
     return true;

@@ -378,7 +378,9 @@ describe('conclusion unlock integration', () => {
     const drawnTexts:string[] = [];
     const context = _createMockContext(drawnTexts);
     _setTestScalingFactors(gameState);
-    gameState.rooms[0].items[0].description = 'A test book.|Second line.';
+    const roomItem = gameState.rooms[0].items[0];
+    gameState.rooms[0].items[0] = { ...roomItem, description:'A test book.|Second line.' };
+    gameState.itemsById.set(roomItem.id, gameState.rooms[0].items[0]);
 
     const itemBeforeHover = gameState.rooms[0].items[0];
     expect(itemBeforeHover.isDiscovered).toBe(false);
@@ -437,7 +439,10 @@ describe('conclusion unlock integration', () => {
     const drawnTexts:string[] = [];
     const context = _createMockContext(drawnTexts);
     _setTestScalingFactors(gameState);
-    gameState.characters[0].rightHandItem!.description = 'A test book.|Second line.';
+    const rightHandItem = gameState.characters[0].rightHandItem;
+    if (!rightHandItem) expect.fail('expected hero to hold a right-hand item');
+    gameState.characters[0].rightHandItem = { ...rightHandItem, description:'A test book.|Second line.' };
+    gameState.itemsById.set(rightHandItem.id, gameState.characters[0].rightHandItem);
     _hoverHero(gameState);
 
     expect(gameState.discoveredCharacterIds).toEqual([]);

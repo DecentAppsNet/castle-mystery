@@ -5,11 +5,11 @@ type Item = {
   readonly title:string,
   readonly imageUrl:string|null,
   readonly randomSalt:number,
+  readonly description:string,
+  readonly stackOffset:Position,
   isVisible:boolean,
   position:Position,
   drawOffset:Position,
-  stackOffset:Position,
-  description:string,
   isDiscovered:boolean
 }
 

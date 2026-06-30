@@ -16,19 +16,19 @@ H
 ## Hall
 
 ```
-V...
+....
 .H..
 ....
 ```
 
 * H=Hero
-* V=Vase
 
 # characters
 
 ## Hero
 
 * title=Hero
+* items=Vase
 
 # items
 
@@ -47,3 +47,4 @@ V...
 ## Hero
 
 0:00:05 Vase becomes Broken Vase
+0:00:06 Broken Vase becomes Vase

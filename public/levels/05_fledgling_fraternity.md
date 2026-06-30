@@ -180,13 +180,13 @@ DDCCAAABB.
 : Chisel becomes Brass Key
 : says "Brass Key" 
 : Brass Key becomes Chisel
-//: says "Chisel again!"
-//: takes Chisel into inventory
-//: says "Chisel in my pocket?"
-//: Chisel becomes Brass Key
-//: takes Brass Key into right hand
-//: says "Naw! It's the key."
-//: drops Brass Key
-//: says "Did I drop the brass key?"
-//: Brass Key becomes Chisel
-//: says "Look again. Chisel!"
+: says "Chisel again!"
+: takes Chisel into inventory
+: says "Chisel in my pocket?"
+: Chisel becomes Brass Key
+: takes Brass Key into right hand
+: says "Naw! It's the key."
+: drops Brass Key
+: says "Did I drop the brass key?"
+: Brass Key becomes Chisel
+: says "Look again. Chisel!"
