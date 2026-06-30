@@ -9,6 +9,7 @@ import { createLockEffect, createUnlockEffect } from "./effects/lockEffectUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
 import { findCharacterPose } from "./itineraryUtil";
 import { addOwnedItem, getOwnedItems, removeOwnedItemById } from "./itemOwnershipUtil";
+import ItemHoldLocation from "./types/ItemHoldLocation";
 import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
@@ -19,6 +20,7 @@ import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
+import BecomesItemEvent from "./types/itineraryEvents/BecomesItemEvent";
 import LockEvent from "./types/itineraryEvents/LockEvent";
 import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
 import VisibilityEvent from "./types/itineraryEvents/VisibilityEvent";
@@ -28,7 +30,7 @@ type AppliedInventoryEvent = {
   characterId:string,
   eventIndex:number,
   startPosition:Position,
-  event:TakeItemEvent|DropItemEvent|GiveItemEvent
+  event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent
 }
 
 type AppliedExitStateEvent = {
@@ -98,6 +100,7 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
         case ItineraryEventType.TAKE_ITEM:
         case ItineraryEventType.DROP_ITEM:
         case ItineraryEventType.GIVE_ITEM:
+        case ItineraryEventType.BECOMES_ITEM:
           {
             const startPosition = character.itineraryIndex.eventStartPositions[eventIndex];
             assertNonNullable(startPosition);
@@ -105,7 +108,7 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
               characterId:character.id,
               eventIndex,
               startPosition:duplicatePosition(startPosition),
-              event:event as TakeItemEvent|DropItemEvent|GiveItemEvent
+              event:event as TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent
             });
           }
         break;
@@ -168,6 +171,55 @@ function _removeItemById(items:GameState['rooms'][number]['items'], itemId:strin
   if (itemIndex === -1) return null;
   const [item] = items.splice(itemIndex, 1);
   return item ?? null;
+}
+
+function _copyReplacementStateOntoTarget(sourceItem:GameState['rooms'][number]['items'][number], targetItem:GameState['rooms'][number]['items'][number]) {
+  targetItem.position = duplicatePosition(sourceItem.position);
+  targetItem.drawOffset = duplicatePosition(sourceItem.drawOffset);
+  targetItem.stackOffset = duplicatePosition(sourceItem.stackOffset);
+  targetItem.isVisible = sourceItem.isVisible;
+  targetItem.isDiscovered = sourceItem.isDiscovered;
+  return targetItem;
+}
+
+function _replaceRoomItem(gameState:GameState, sourceItemId:string, targetItemId:string):boolean {
+  for (const room of gameState.rooms) {
+    const sourceItem = _removeItemById(room.items, sourceItemId);
+    if (!sourceItem) continue;
+    const targetItem = gameState.unplacedItemsById.get(targetItemId) || null;
+    assertNonNullable(targetItem, `unplaced replacement target ${targetItemId} was not found`);
+    gameState.unplacedItemsById.delete(targetItemId);
+    room.items.push(_copyReplacementStateOntoTarget(sourceItem, targetItem));
+    return true;
+  }
+  return false;
+}
+
+function _findOwnedItemLocation(character:Character, itemId:string):ItemHoldLocation {
+  if (character.leftHandItem?.id === itemId) return 'left-hand';
+  if (character.rightHandItem?.id === itemId) return 'right-hand';
+  return 'inventory';
+}
+
+function _replaceOwnedItem(gameState:GameState, sourceItemId:string, targetItemId:string):boolean {
+  for (const character of gameState.characters) {
+    const location = _findOwnedItemLocation(character, sourceItemId);
+    const sourceItem = removeOwnedItemById(character, sourceItemId);
+    if (!sourceItem) continue;
+    const targetItem = gameState.unplacedItemsById.get(targetItemId) || null;
+    assertNonNullable(targetItem, `unplaced replacement target ${targetItemId} was not found`);
+    gameState.unplacedItemsById.delete(targetItemId);
+    const replacementItem = _copyReplacementStateOntoTarget(sourceItem, targetItem);
+    addOwnedItem(character, replacementItem, location);
+    return true;
+  }
+  return false;
+}
+
+function _applyItemReplacement(gameState:GameState, sourceItemId:string, targetItemId:string) {
+  if (_replaceRoomItem(gameState, sourceItemId, targetItemId)) return;
+  if (_replaceOwnedItem(gameState, sourceItemId, targetItemId)) return;
+  throw new Error(`replacement source ${sourceItemId} was not found in runtime state`);
 }
 
 function _findCharacter(gameState:GameState, characterId:string):Character {
@@ -272,8 +324,16 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           addOwnedItem(recipient, item, 'inventory');
         }
       break;
+
+      case ItineraryEventType.BECOMES_ITEM:
+        {
+          const becomesItemEvent = event as BecomesItemEvent;
+          _applyItemReplacement(gameState, becomesItemEvent.sourceItemId, becomesItemEvent.targetItemId);
+        }
+      break;
     }
   });
+  gameState.unplacedItemsById = createUnplacedItemsById(gameState.itemsById, gameState.rooms, gameState.characters);
 
   _collectAppliedExitStateEvents(gameState, time).forEach(({ startPosition, event }) => {
     const room = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);

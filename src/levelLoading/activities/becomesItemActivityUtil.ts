@@ -3,10 +3,15 @@
 
 import { assertNonNullable } from "decent-portal";
 
+import { createBecomesItemEvent } from "@/game/itineraryUtil";
+import { addOwnedItem, removeOwnedItemById } from "@/game/itemOwnershipUtil";
+import Item, { duplicateItem } from "@/game/types/Item";
+import ItemHoldLocation from "@/game/types/ItemHoldLocation";
 import { matchesItemReference } from "./activity/activityItemRefUtil";
 import type ActivityContext from "./activity/types/ActivityContext";
 import { findStateOwnedItem } from "./activity/activityStateUtil";
 import { findRoomItemById } from "./activity/activityTargetingUtil";
+import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
 import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText } from "./activity/activityTextParseUtil";
 
 function _findLevelItemId(context:ActivityContext, itemRef:string):string|null {
@@ -39,14 +44,59 @@ function _resolveBecomesTargetItemIdOrThrow(context:ActivityContext, targetRef:s
   return targetItemId;
 }
 
+function _createReplacementItem(sourceItem:Item, targetItem:Item):Item {
+  return {
+    ...duplicateItem(targetItem),
+    position:{ ...sourceItem.position },
+    drawOffset:{ ...sourceItem.drawOffset },
+    stackOffset:{ ...sourceItem.stackOffset },
+    isVisible:sourceItem.isVisible,
+    isDiscovered:sourceItem.isDiscovered
+  };
+}
+
+function _findStateOwnedItemLocationOrThrow(context:ActivityContext, activityText:string):ItemHoldLocation {
+  if (context.state.leftHandItem?.id === context.subjectId) return 'left-hand';
+  if (context.state.rightHandItem?.id === context.subjectId) return 'right-hand';
+  if (context.state.items.some(item => item.id === context.subjectId)) return 'inventory';
+  throw new Error(`unknown item replacement source '${context.subjectId}' in authored activity '${activityText}'`);
+}
+
+function _applyRoomReplacement(context:ActivityContext, sourceItemId:string, targetItem:Item) {
+  const roomMatch = findRoomItemById(context.roomItemsByRoomId, context.level, sourceItemId);
+  if (!roomMatch) return false;
+  const roomItems = context.roomItemsByRoomId.get(roomMatch.room.id);
+  assertNonNullable(roomItems, `missing room items for room ${roomMatch.room.id}`);
+  const itemIndex = roomItems.findIndex(item => item.id === roomMatch.item.id);
+  assertNonNullable(itemIndex === -1 ? null : roomItems[itemIndex], `missing room item ${roomMatch.item.id}`);
+  roomItems.splice(itemIndex, 1, _createReplacementItem(roomMatch.item, targetItem));
+  return true;
+}
+
+function _applyOwnedReplacement(context:ActivityContext, sourceItemId:string, targetItem:Item, activityText:string) {
+  const sourceItem = findStateOwnedItem(context.state, sourceItemId);
+  if (!sourceItem) return false;
+  const location = _findStateOwnedItemLocationOrThrow(context, activityText);
+  removeOwnedItemById(context.state, sourceItem.id);
+  addOwnedItem(context.state, _createReplacementItem(sourceItem, targetItem), location);
+  return true;
+}
+
 export function tryCreateBecomesItemActivity(activityText:string, context:ActivityContext) {
   const becomesVerb = findSentenceStyleActivityVerb(activityText, ['becomes'] as const);
   if (!becomesVerb) return null;
   if (context.subjectKind !== 'item') return null;
 
+  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
+  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   assertNonNullable(context.level.itemsById.get(context.subjectId), `unknown item '${context.subjectId}' in level itemsById`);
   _assertBecomesSourceItemIsPlaced(context, activityText);
   const targetRef = parseSentenceStyleActivityText(activityText, becomesVerb, 'replacement target');
-  _resolveBecomesTargetItemIdOrThrow(context, targetRef, activityText);
-  return [];
+  const targetItemId = _resolveBecomesTargetItemIdOrThrow(context, targetRef, activityText);
+  const targetItem = context.level.itemsById.get(targetItemId) || null;
+  assertNonNullable(targetItem, `unknown replacement target item '${targetItemId}' in level itemsById`);
+  const didReplace = _applyRoomReplacement(context, context.subjectId, targetItem)
+    || _applyOwnedReplacement(context, context.subjectId, targetItem, activityText);
+  assertNonNullable(didReplace ? targetItemId : null, `failed to apply item replacement for '${activityText}'`);
+  return [createBecomesItemEvent(activityStartTime, context.subjectId, targetItemId)];
 }

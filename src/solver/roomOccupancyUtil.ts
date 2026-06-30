@@ -6,7 +6,7 @@
     time, which characters and which items occupy each room. A character's room is resolved from its
     position; an item's room is the room it sits in, or the room of the character holding it.
   - collectRoomOccupancyChangeTimes(level): the sample times at which that occupancy can change — the
-    level start, plus every ROOM_ENTRY (a character changes room) and every TAKE/DROP/GIVE (an item
+    level start, plus every ROOM_ENTRY (a character changes room) and every TAKE/DROP/GIVE/BECOMES_ITEM (an item
     changes room), plus the timeline end (findTimelineEndTime), the final settled configuration. The
     end sample is what captures the final room of a tour: a character's last ROOM_ENTRY tick resolves
     to the room being left, so without it an item witnessed only in that final room looks unreachable
@@ -57,6 +57,7 @@ export function collectRoomOccupancyChangeTimes(level:Pick<Level, 'startTime' | 
       case ItineraryEventType.TAKE_ITEM:
       case ItineraryEventType.DROP_ITEM:
       case ItineraryEventType.GIVE_ITEM:
+      case ItineraryEventType.BECOMES_ITEM:
         times.add(event.startTime);
         break;
     }

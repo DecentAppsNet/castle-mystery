@@ -12,6 +12,8 @@ import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
 import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
+import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
+import BecomesItemEvent from "./types/itineraryEvents/BecomesItemEvent";
 
 export function createEmptyImageSet():ImageSet {
   return new Map();
@@ -20,6 +22,17 @@ export function createEmptyImageSet():ImageSet {
 function _findPunchMaskImageUrl(imageUrl:string):string|null {
   if (!imageUrl.toLowerCase().endsWith('.png')) return null;
   return imageUrl.slice(0, -4) + '.punch.png';
+}
+
+function _findBecomesTargetImageUrls(level:Level):string[] {
+  const imageUrls = new Set<string>();
+  const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
+  sourceCharacters.forEach(character => character.itinerary.forEach(event => {
+    if (event.type !== ItineraryEventType.BECOMES_ITEM) return;
+    const targetItem = level.itemsById.get((event as BecomesItemEvent).targetItemId) || null;
+    if (targetItem?.imageUrl) imageUrls.add(targetItem.imageUrl);
+  }));
+  return [...imageUrls];
 }
 
 function _findDirectReferencedImageUrls(level:Level):string[] {
@@ -35,6 +48,7 @@ function _findDirectReferencedImageUrls(level:Level):string[] {
   level.rooms.forEach(room => room.items.forEach(item => {
     if (item.imageUrl) imageUrls.add(item.imageUrl);
   }));
+  _findBecomesTargetImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
   const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
   sourceCharacters.forEach(character => {
     if (character.faceImageUrl) imageUrls.add(character.faceImageUrl);

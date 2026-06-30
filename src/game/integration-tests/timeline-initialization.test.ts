@@ -48,4 +48,11 @@ describe('timeline initialization integration', () => {
     expect(Array.from(gameState.initialUnplacedItemsById.keys())).toEqual(['broken vase']);
     expect(gameState.unplacedItemsById.get('broken vase')).toBe(gameState.itemsById.get('broken vase'));
   });
+
+  it('keeps the runtime unplaced pool aligned with rebuild state', () => {
+    const level = loadLevelFromText(unplacedItemsInitializationText, 'unplaced-items-initialization.md');
+    const gameState = createGameState(level);
+
+    expect(Array.from(gameState.unplacedItemsById.keys())).toEqual(Array.from(gameState.initialUnplacedItemsById.keys()));
+  });
 });

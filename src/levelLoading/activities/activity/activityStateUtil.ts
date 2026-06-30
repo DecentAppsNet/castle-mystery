@@ -79,6 +79,7 @@ function _updateStatePoseFromEvent(state:CharacterActivityState, event:Itinerary
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
     case ItineraryEventType.GIVE_ITEM:
+    case ItineraryEventType.BECOMES_ITEM:
     case ItineraryEventType.LOCK:
     case ItineraryEventType.UNLOCK:
     case ItineraryEventType.SHOW:

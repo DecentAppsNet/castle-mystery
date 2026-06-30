@@ -13,6 +13,7 @@ import CharacterEncounterEvent from "./types/itineraryEvents/CharacterEncounterE
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
+import BecomesItemEvent from "./types/itineraryEvents/BecomesItemEvent";
 import LockEvent from "./types/itineraryEvents/LockEvent";
 import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
 import VisibilityEvent from "./types/itineraryEvents/VisibilityEvent";
@@ -174,6 +175,10 @@ export function createGiveItemEvent(startTime:number, itemId:string, recipientCh
   return { type:ItineraryEventType.GIVE_ITEM, startTime, duration:0, itemId, recipientCharacterId };
 }
 
+export function createBecomesItemEvent(startTime:number, sourceItemId:string, targetItemId:string):BecomesItemEvent {
+  return { type:ItineraryEventType.BECOMES_ITEM, startTime, duration:0, sourceItemId, targetItemId };
+}
+
 export function createLockEvent(startTime:number, roomExitId:string):LockEvent {
   return { type:ItineraryEventType.LOCK, startTime, duration:0, roomExitId };
 }
@@ -246,6 +251,7 @@ function _findItineraryPose(character:Character, time:number):CharacterPose {
       case ItineraryEventType.TAKE_ITEM:
       case ItineraryEventType.DROP_ITEM:
       case ItineraryEventType.GIVE_ITEM:
+      case ItineraryEventType.BECOMES_ITEM:
       case ItineraryEventType.SHOW:
       case ItineraryEventType.HIDE:
       case ItineraryEventType.LOCK:
@@ -282,6 +288,7 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
     case ItineraryEventType.GIVE_ITEM:
+    case ItineraryEventType.BECOMES_ITEM:
     case ItineraryEventType.SHOW:
     case ItineraryEventType.HIDE:
     case ItineraryEventType.LOCK:

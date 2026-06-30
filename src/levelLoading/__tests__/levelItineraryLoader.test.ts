@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { findCharacterPose } from '@/game/itineraryUtil';
 import { createBodyOrientationEvent, createFaceEvent, createWalkEvent } from '@/game/itineraryUtil';
+import ItineraryEventType from '@/game/types/itineraryEvents/ItineraryEventType';
 import baseLevelText from '@/game/__tests__/fixtures/timeline-start-time-field.md?raw';
 import { ROOM_MIDDLE_ROW_CENTER_Z } from '@/game/roomSpaceConstants';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
@@ -172,6 +173,29 @@ describe('levelItineraryLoader', () => {
         '0:00:03 Hero @ Hall',
         ': Vase becomes Broken Vase'
       ].join('\n'), 'item-becomes-itinerary.md', 1)).not.toThrow();
+    });
+
+    it('emits a becomes-item event during itinerary loading', () => {
+      const level = loadLevelFromText(itemBecomesLevelText, 'item-becomes-level.md');
+      const result = loadItineraries(level, [
+        '0:00:03 Hero @ Hall',
+        ': Vase becomes Broken Vase'
+      ].join('\n'), 'item-becomes-itinerary.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
+      const becomesEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_ITEM) as {
+        startTime:number,
+        duration:number,
+        sourceItemId:string,
+        targetItemId:string
+      } | undefined;
+
+      expect(becomesEvent).toEqual({
+        type:ItineraryEventType.BECOMES_ITEM,
+        startTime:3_001,
+        duration:0,
+        sourceItemId:'vase',
+        targetItemId:'broken vase'
+      });
     });
 
     it('rejects item becomes activities whose replacement target starts placed', () => {

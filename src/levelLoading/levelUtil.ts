@@ -451,7 +451,8 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       discoverableItemCount,
       discoverableRoomCount,
       conclusions:generatedIdentityConclusion ? [generatedIdentityConclusion, ...authoredConclusions] : authoredConclusions,
-      initialCharacters:level.characters.map(duplicateCharacter)
+      initialCharacters:level.characters.map(duplicateCharacter),
+      itemsById:_createLevelItemsById(level, itemDefinitions)
     };
     const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo, {
       isCrossMidnight: generalSection.isCrossMidnight,

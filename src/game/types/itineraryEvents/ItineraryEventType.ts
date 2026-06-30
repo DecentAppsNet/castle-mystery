@@ -11,6 +11,7 @@ const ItineraryEventType = {
   TAKE_ITEM:"TakeItem",
   DROP_ITEM:"DropItem",
   GIVE_ITEM:"GiveItem",
+  BECOMES_ITEM:"BecomesItem",
   SHOW:"Show",
   HIDE:"Hide",
   LOCK:"Lock",

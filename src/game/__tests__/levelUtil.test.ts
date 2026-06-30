@@ -31,6 +31,7 @@ import invalidItemImageText from './fixtures/invalid-item-image.md?raw';
 import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
 import itemEmitsActivityText from './fixtures/item-emits-activity.md?raw';
+import becomesItemText from '../integration-tests/fixtures/becomes-item.md?raw';
 import itemDrawOffsetText from './fixtures/item-draw-offset.md?raw';
 import itemStackOffsetText from './fixtures/item-stack-offset.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
@@ -1419,6 +1420,24 @@ describe('levelUtil itinerary loading', () => {
     expect(takeEvent?.duration).toBe(ITEM_EFFECT_DURATION);
     expect(queen?.rightHandItem?.id).toBe('book');
     expect(queen?.items.map(item => item.id)).not.toContain('book');
+  });
+
+  it('loads becomes-item activities into the scheduled character itinerary', () => {
+    const level = loadLevelFromText(becomesItemText, 'becomes-item.md');
+    const hero = level.characters.find(character => character.id === 'hero');
+    const becomesEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_ITEM) as {
+      type:ItineraryEventType,
+      startTime:number,
+      duration:number,
+      sourceItemId:string,
+      targetItemId:string
+    } | undefined;
+
+    expect(becomesEvent?.type).toBe(ItineraryEventType.BECOMES_ITEM);
+    expect(becomesEvent?.startTime).toBe(5_000);
+    expect(becomesEvent?.duration).toBe(0);
+    expect(becomesEvent?.sourceItemId).toBe('vase');
+    expect(becomesEvent?.targetItemId).toBe('broken vase');
   });
 
   it('loads emits activities for carried items that are not visible in hand', () => {

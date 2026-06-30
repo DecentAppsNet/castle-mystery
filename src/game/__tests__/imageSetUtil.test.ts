@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import backgroundImageText from './fixtures/background-image.md?raw';
+import becomesItemText from '../integration-tests/fixtures/becomes-item.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
 import roomBackWallTextureText from './fixtures/room-back-wall-texture.md?raw';
@@ -169,6 +170,22 @@ describe('imageSetUtil.ts', () => {
     expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/ground.png');
     expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/items/crown.png');
     expect(imageSet.has(getItemImageAssetUrl('crown.png'))).toBe(true);
+  });
+
+  it('loads images for unplaced items referenced only as becomes targets', async () => {
+    const fetchMock = vi.fn(async () => ({ ok:true, blob:async () => new Blob(['fake']) }));
+    const createImageBitmapMock = vi.fn(async () => ({ width:64, height:32 } as ImageBitmap));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createImageBitmapMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = loadLevelFromText(becomesItemText, 'becomes-item.md');
+    const imageSet = await createImageSetFromLevel(level);
+
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/items/chisel.png');
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/items/brassKey.png');
+    expect(imageSet.has(getItemImageAssetUrl('chisel.png'))).toBe(true);
+    expect(imageSet.has(getItemImageAssetUrl('brassKey.png'))).toBe(true);
   });
 
   it('loads referenced room back wall textures from the room directory', async () => {

@@ -162,9 +162,8 @@ DDCCAAABB.
 * faceImage=pigMask.png
 * title=Niccolò il Calabrese
 * visible=false
+* items=Chisel
 * description=The same person we saw earlier - just with a mask on.
-
-## 
 
 # Itinerary
 
@@ -175,3 +174,19 @@ DDCCAAABB.
 : Sticky Agatha says, "I'll stay here and keep watch."
 
 23:00:00 Niccolo Masked @ Hall
+: @ Nave
+: takes Chisel in left hand
+: says "Chisel"
+: Chisel becomes Brass Key
+: says "Brass Key" 
+: Brass Key becomes Chisel
+//: says "Chisel again!"
+//: takes Chisel into inventory
+//: says "Chisel in my pocket?"
+//: Chisel becomes Brass Key
+//: takes Brass Key into right hand
+//: says "Naw! It's the key."
+//: drops Brass Key
+//: says "Did I drop the brass key?"
+//: Brass Key becomes Chisel
+//: says "Look again. Chisel!"
