@@ -56,7 +56,7 @@ function Canvas(props:IProps) {
     if (container) _updateCanvasDimensions(container, setContainerDimensions, setFullScreenCanvasStyle);
 
     const render = () => {
-      onDraw(context);
+      if (context.canvas.width && context.canvas.height) onDraw(context);
       if (isAnimated) animationFrameId = window.requestAnimationFrame(render);
     };
     render();
@@ -68,7 +68,7 @@ function Canvas(props:IProps) {
 
   useEffect(() => { // Handle redrawing after canvas dimensions are updated.
     const context = canvasRef.current?.getContext('2d');
-    if (!context) return;
+    if (!context || !context.canvas.width || !context.canvas.height) return;
     onDraw(context);
   }, [onDraw, containerDimensions]);
 
