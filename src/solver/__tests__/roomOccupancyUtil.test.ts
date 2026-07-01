@@ -52,9 +52,9 @@ describe('roomOccupancyUtil', () => {
   describe('collectRoomOccupancyChangeTimes()', () => {
     it('samples the start time plus every room-entry and item-movement tick, sorted and deduped', () => {
       const itinerary:Itinerary = [
-        { type:ItineraryEventType.ROOM_ENTRY, startTime:3_000, duration:0, roomId:'b' },
         { type:ItineraryEventType.TAKE_ITEM, startTime:1_000, duration:0, itemId:'knife', destination:'left-hand' },
         { type:ItineraryEventType.DROP_ITEM, startTime:1_000, duration:0, itemId:'knife', position:{ x:0, y:0, z:0 }, drawOffset:{ x:0, y:0, z:0 } }, // Duplicate tick collapses.
+        { type:ItineraryEventType.ROOM_ENTRY, startTime:3_000, duration:0, roomId:'b' },
       ];
       const level = { startTime:0, characters:[_createCharacter('alice', 10, null, itinerary)] } as Pick<Level, 'startTime' | 'characters'>;
 

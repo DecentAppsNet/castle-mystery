@@ -266,6 +266,31 @@ describe('levelItineraryLoader', () => {
       });
     });
 
+    it('lets the replacement target schedule later activities after becomes', () => {
+      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const result = loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked',
+        ': Niccolo Masked says, "Now I speak as the masked one."'
+      ].join('\n'), 'character-becomes-followup.md', 1);
+      const maskedCharacter = result.allCharactersById.get('niccolo masked');
+      const speechEvent = maskedCharacter?.itinerary.find(event => event.type === ItineraryEventType.SPEECH) as {
+        speech:string
+      } | undefined;
+
+      expect(speechEvent?.speech).toBe('Now I speak as the masked one.');
+    });
+
+    it('lets the replacement target schedule a later absolute room activity after becomes', () => {
+      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+
+      expect(() => loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked',
+        '0:00:10 Niccolo Masked @ Hall'
+      ].join('\n'), 'character-becomes-later-absolute.md', 1)).not.toThrow();
+    });
+
     it('rejects character becomes activities whose replacement target starts placed', () => {
       const level = loadLevelFromText(characterBecomesTargetPlacedLevelText, 'character-becomes-target-placed.md');
 

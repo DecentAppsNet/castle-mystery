@@ -417,18 +417,6 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
     }
   });
 
-  _collectAppliedVisibilityEvents(gameState, time).forEach(({ event }) => {
-    switch(event.type) {
-      case ItineraryEventType.SHOW:
-        _applyVisibility(gameState, event.targetId, true);
-      break;
-
-      case ItineraryEventType.HIDE:
-        _applyVisibility(gameState, event.targetId, false);
-      break;
-    }
-  });
-
   gameState.characters.forEach(character => {
     const pose = findCharacterPose(character, time);
     character.position = { ...pose.position };
@@ -436,13 +424,13 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
     character.facingDirection = pose.facingDirection;
     character.bodyOrientation = pose.bodyOrientation;
   });
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  if (activeRoom) {
-    pendingRoomEffects
-      .filter(effect => effect.roomId === activeRoom.id)
-      .forEach(effect => effect.create());
-  }
+  const activeCharacter = gameState.characters[gameState.activeCharacterI];
+  assertNonNullable(activeCharacter);
+  const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y);
+  assertNonNullable(activeRoom);
+  pendingRoomEffects
+    .filter(effect => effect.roomId === activeRoom.id)
+    .forEach(effect => effect.create());
   _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds, discoveredCharacterIds, characterDiscoveredRoomIds);
   gameState.time = time;
 }

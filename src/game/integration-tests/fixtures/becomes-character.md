@@ -66,3 +66,4 @@ LR..
 0:00:05 Niccolo takes Right Twig in right hand
 0:00:06 hide Niccolo
 0:00:07 becomes Niccolo Masked
+0:00:08 Niccolo Masked says, "Now I speak as the masked one."

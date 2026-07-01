@@ -2,6 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from "decent-portal";
+import { normalizeId } from "@/game/idUtil";
 
 import { LeadingTimestampKind } from "@/levelLoading/timestampUtil";
 import { addCharacterEncounterEvents } from "@/game/characterEncounterUtil";
@@ -11,6 +12,8 @@ import Item, { duplicateItem } from "@/game/types/Item";
 import Level from "@/game/types/Level";
 import Position from "@/game/types/Position";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
+import BecomesCharacterEvent from "@/game/types/itineraryEvents/BecomesCharacterEvent";
+import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 
 import { tryCreateAtActivity } from "../activities/atActivityUtil";
 import { tryCreateBecomesCharacterActivity } from "../activities/becomesCharacterActivityUtil";
@@ -42,6 +45,7 @@ import ParsedItineraryActivity from "./types/ParsedItineraryActivity";
 
 type ScheduleActivitiesResult = {
   characters:Character[],
+  allCharactersById:Map<string, Character>,
   duration:number,
   completionTimesBySourceIndex:Map<number, number>
 };
@@ -105,6 +109,40 @@ function _calcCompletionTimeForRelativeResolution(activity:ParsedItineraryActivi
   const hasZeroDurationTerminalEvent = events.some(event => event.duration === 0 && event.startTime === activityCompletionTime);
   if (!hasZeroDurationTerminalEvent) return activityCompletionTime;
   return activityCompletionTime + MIN_RELATIVE_ACTIVITY_GAP_MSECS;
+}
+
+function _createScheduledCharacter(character:Character, state:ReturnType<typeof createCharacterActivityState>):Character {
+  const itinerary = [...state.events];
+  return {
+    ...character,
+    itinerary,
+    itineraryIndex: createItineraryIndex(itinerary, character.position),
+    items: state.items.map(duplicateItem),
+    leftHandItem: state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
+    rightHandItem: state.rightHandItem ? duplicateItem(state.rightHandItem) : null
+  };
+}
+
+function _applyCharacterReplacementToSchedulingState(charactersById:Map<string, Character>,
+  activeCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+  finalCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+  sourceCharacterId:string, targetCharacterId:string) {
+  const sourceCharacter = charactersById.get(sourceCharacterId);
+  const targetCharacter = charactersById.get(targetCharacterId);
+  const sourceState = activeCharacterStatesById.get(sourceCharacterId);
+  assertNonNullable(sourceCharacter, `missing replacement source character ${sourceCharacterId}`);
+  assertNonNullable(targetCharacter, `missing replacement target character ${targetCharacterId}`);
+  assertNonNullable(sourceState, `missing replacement source state ${sourceCharacterId}`);
+
+  const targetState = duplicateCharacterActivityState(sourceState);
+  activeCharacterStatesById.delete(sourceCharacterId);
+  activeCharacterStatesById.set(targetCharacterId, targetState);
+  finalCharacterStatesById.set(targetCharacterId, targetState);
+  charactersById.set(targetCharacterId, {
+    ...targetCharacter,
+    position:{ ...sourceCharacter.position },
+    waypoint:sourceCharacter.waypoint
+  });
 }
 
 function _createEventsForActivity(activityText:string, context:ActivityContext):ItineraryEvent[] {
@@ -175,14 +213,27 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
   return { poseOverridesByCharacterId, reusableEventsBySourceIndex };
 }
 
-function _createReadyToScheduleBySourceIndex(activities:ParsedItineraryActivity[]):Map<number, boolean> {
+function _findBecomesTargetCharacterId(level:Level, activity:ParsedItineraryActivity):string|null {
+  if (activity.subjectKind !== 'character' || !activity.activityText.startsWith('becomes ')) return null;
+  const targetRef = normalizeId(activity.activityText.slice('becomes '.length).trim());
+  for (const character of level.allCharactersById.values()) {
+    if (character.id === targetRef || normalizeId(character.title) === targetRef) return character.id;
+  }
+  return null;
+}
+
+function _createReadyToScheduleBySourceIndex(level:Level, activities:ParsedItineraryActivity[]):Map<number, boolean> {
   const readyBySourceIndex = new Map<number, boolean>();
   const charactersWithUnresolvedEarlierActivities = new Set<string>();
 
   activities.forEach(activity => {
     const isReady = activity.isTimeResolved && !charactersWithUnresolvedEarlierActivities.has(activity.characterId);
     readyBySourceIndex.set(activity.sourceIndex, isReady);
-    if (!activity.isTimeResolved) charactersWithUnresolvedEarlierActivities.add(activity.characterId);
+    if (!activity.isTimeResolved) {
+      charactersWithUnresolvedEarlierActivities.add(activity.characterId);
+      const becomesTargetCharacterId = _findBecomesTargetCharacterId(level, activity);
+      if (becomesTargetCharacterId) charactersWithUnresolvedEarlierActivities.add(becomesTargetCharacterId);
+    }
   });
 
   return readyBySourceIndex;
@@ -190,18 +241,21 @@ function _createReadyToScheduleBySourceIndex(activities:ParsedItineraryActivity[
 
 export function scheduleActivities(level:Level, activities:ParsedItineraryActivity[], levelFilename:string):ScheduleActivitiesResult {
   if (!activities.length) {
+    const allCharacters:Character[] = [...level.allCharactersById.values()];
     return {
       characters: level.characters,
-      duration:calcCharactersItineraryDuration(level.characters),
+      allCharactersById:level.allCharactersById,
+      duration:calcCharactersItineraryDuration(allCharacters),
       completionTimesBySourceIndex:new Map()
     };
   }
 
-  const charactersById = new Map(level.characters.map(character => [character.id, character]));
+  const charactersById = new Map(level.allCharactersById);
   const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
+  const finalCharacterStatesById = new Map(characterStatesById);
   const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
   const completionTimesBySourceIndex = new Map<number, number>();
-  const readyToScheduleBySourceIndex = _createReadyToScheduleBySourceIndex(activities);
+  const readyToScheduleBySourceIndex = _createReadyToScheduleBySourceIndex(level, activities);
 
   const _processActivity = (activity:ParsedItineraryActivity, previewSchedulingResult:PreviewSchedulingResult) => {
     runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
@@ -216,6 +270,13 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
         ? (previewEvents || _createEventsForActivity(activity.activityText, context))
         : [];
       appendEventsToCharacterState(level, character, context.state, events);
+      const becomesCharacterEvent = events.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as BecomesCharacterEvent | undefined;
+      if (becomesCharacterEvent) {
+        _applyCharacterReplacementToSchedulingState(charactersById, characterStatesById, finalCharacterStatesById,
+          becomesCharacterEvent.sourceCharacterId, becomesCharacterEvent.targetCharacterId);
+      } else {
+        finalCharacterStatesById.set(character.id, context.state);
+      }
       const activityCompletionTime = _calcCompletionTimeForRelativeResolution(activity, activityStartTime, events);
       if (!events.length) context.state.time = Math.max(context.state.time, activityCompletionTime);
       completionTimesBySourceIndex.set(activity.sourceIndex, activityCompletionTime);
@@ -238,22 +299,20 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
   }
 
   const characters = level.characters.map(character => {
-    const state = characterStatesById.get(character.id);
+    const state = finalCharacterStatesById.get(character.id);
     assertNonNullable(state, `missing final itinerary state for ${character.id}`);
-    const itinerary = [...state.events];
-    return {
-      ...character,
-      itinerary,
-      itineraryIndex: createItineraryIndex(itinerary, character.position),
-      items: state.items.map(duplicateItem),
-      leftHandItem: state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
-      rightHandItem: state.rightHandItem ? duplicateItem(state.rightHandItem) : null
-    };
+    return _createScheduledCharacter(character, state);
   });
+  const allCharactersById = new Map(Array.from(level.allCharactersById.entries()).map(([characterId, character]) => {
+    const state = finalCharacterStatesById.get(characterId) || null;
+    return [characterId, state ? _createScheduledCharacter(charactersById.get(characterId) || character, state) : character] as const;
+  }));
+  const allCharacters:Character[] = [...allCharactersById.values()];
 
   return {
     characters:addCharacterEncounterEvents(characters, level.rooms),
-    duration:calcCharactersItineraryDuration(characters),
+    allCharactersById,
+    duration:calcCharactersItineraryDuration(allCharacters),
     completionTimesBySourceIndex
   };
 }

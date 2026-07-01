@@ -4,6 +4,7 @@ import ResolvedItineraryTimeline from "./ResolvedItineraryTimeline";
 
 type LoadItinerariesResult = {
   characters:Character[],
+  allCharactersById:Map<string, Character>,
   duration:number,
   resolvedTimeline:ResolvedItineraryTimeline
 };

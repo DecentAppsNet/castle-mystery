@@ -331,7 +331,15 @@ export function findCharacterPose(character:Character, time:number):CharacterPos
   return _findItineraryPose(character, time);
 }
 
+export function areItineraryEventsInOrder(events:ReadonlyArray<ItineraryEvent>):boolean {
+  for (let i = 1; i < events.length; ++i) {
+    if (events[i - 1].startTime > events[i].startTime) return false;
+  }
+  return true;
+}
+
 export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:Position):ItineraryIndex {
+  assert(areItineraryEventsInOrder(events), 'itinerary events must be ordered by startTime');
   if (!events.length) {
     return { eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[0] };
   }

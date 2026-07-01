@@ -39,7 +39,11 @@ function _calcItineraryDuration(itinerary:ItineraryEvent[]):number {
 }
 
 export function calcCharactersItineraryDuration(characters:Character[]):number {
-  return Math.max(0, ...characters.map(character => _calcItineraryDuration(character.itinerary)));
+  let maxDuration = 0;
+  for (const character of characters) {
+    maxDuration = Math.max(maxDuration, _calcItineraryDuration(character.itinerary));
+  }
+  return maxDuration;
 }
 
 function _findLatestResolvedEventEndTime(characters:Character[]):number|null {

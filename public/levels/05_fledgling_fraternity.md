@@ -135,14 +135,6 @@ DDCCAAABB.
 * backWallTexture=greyBricks2.png | aged stone | naveWindows.png (*,*)
 * exits=Hall | Entrance (lockable)
 
-```
-............
-............
-............
-```
-
-* N=Niccolo
-
 ## Hall
 
 * style=Old Castle

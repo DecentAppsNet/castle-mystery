@@ -22,6 +22,12 @@ import { createDiscoveries } from "@/game/discoveriesUtil";
 
 const ARROW_STEP_MSECS = 200;
 
+function _findActiveInitialCharacter(gameState:GameState, activeCharacterId:string) {
+  return gameState.initialCharacters.find(character => character.id === activeCharacterId)
+    || gameState.initialUnplacedCharactersById.get(activeCharacterId)
+    || null;
+}
+
 function _findShiftArrowTargetTime(gameState:GameState, direction:number):number|null {
   const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
   if (!activeCharacter) return null;
@@ -62,7 +68,7 @@ function HomeScreen() {
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
   const activeInitialCharacter = !gameState
     ? null
-    : gameState.initialCharacters.find(character => character.id === activeCharacterId) || null;
+    : _findActiveInitialCharacter(gameState, activeCharacterId);
   const activeItinerary:Itinerary|null = !gameState
     ? null
     : activeInitialCharacter?.itinerary || null;

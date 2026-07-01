@@ -111,6 +111,16 @@ Guidelines:
 * If splitting a mixed module is impractical, put the low-test-value code into a designated coverage-ignore section within the module.
 * If logic can be refactored out of a low-test-value file into a testable module without making the original file harder to understand, do that. The low-test-value file can then remain excluded from coverage, while the extracted logic should still be covered by tests.
 
+# Assertions
+
+* Assertions are for debug-only invariant checking: conditions that should always be true if the code is valid.
+* Use assertions to catch debug errors that should be investigated and fixed, not to handle expected error conditions.
+* Do not use assertions for normal validation of user input, authored content, network responses, or other failure modes that are expected to happen sometimes and should produce a real error path.
+* Code inside an assertion must never modify state or produce side effects. Assertion expressions and helper functions should be pure checks only.
+* Write assertion-related code with the assumption that assertions will compile out of production builds later. Do not rely on assertion code to preserve behavior needed at runtime.
+* Do not use the verb `assert` in helper-function names. Prefer names that describe the predicate being checked, such as `areItineraryEventsInOrder()`.
+* Import assertion functions from `decent-portal`.
+
 # Fetching at Run-Time
 
 * No fetches to services outside of the host domain are allowed.

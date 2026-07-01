@@ -31,6 +31,7 @@ import invalidItemImageText from './fixtures/invalid-item-image.md?raw';
 import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
 import itemEmitsActivityText from './fixtures/item-emits-activity.md?raw';
+import becomesCharacterFraternityLikeText from '../integration-tests/fixtures/becomes-character-fraternity-like.md?raw';
 import becomesItemText from '../integration-tests/fixtures/becomes-item.md?raw';
 import itemDrawOffsetText from './fixtures/item-draw-offset.md?raw';
 import itemStackOffsetText from './fixtures/item-stack-offset.md?raw';
@@ -1499,6 +1500,13 @@ describe('levelUtil itinerary loading', () => {
   it('sets level duration from the longest character itinerary', () => {
     const level = loadLevelFromText(kingacideItineraryText);
     expect(level.duration).toEqual(44_000);
+  });
+
+  it('includes replacement-target late itinerary events when deriving level endTime and duration', () => {
+    const level = loadLevelFromText(becomesCharacterFraternityLikeText, 'becomes-character-fraternity-like.md');
+
+    expect(level.endTime).toBe(23 * 60 * 60 * 1000);
+    expect(level.duration).toBe(30_000);
   });
 
   it('keeps both start and end time labels for short levels', () => {

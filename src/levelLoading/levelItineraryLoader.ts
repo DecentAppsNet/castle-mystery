@@ -1,6 +1,7 @@
 /* This module orchestrates itinerary parsing, relative timestamp resolution, and activity scheduling during level load.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import Character from "../game/types/Character";
 import Level from "../game/types/Level";
 
 import { parseItineraryActivities } from "./itineraryLoading/itineraryActivityParseUtil";
@@ -30,10 +31,12 @@ export function loadItineraries(level:Level, itinerarySection:string, levelFilen
     validateActivitiesWithinWindow(activities, level.startTime, options.explicitEndTime, levelFilename);
   }
   if (!activities.length) {
+    const allCharacters:Character[] = [...level.allCharactersById.values()];
     return {
       characters: level.characters,
-      duration:calcCharactersItineraryDuration(level.characters),
-      resolvedTimeline:createEmptyResolvedItineraryTimeline(level.characters)
+      allCharactersById:level.allCharactersById,
+      duration:calcCharactersItineraryDuration(allCharacters),
+      resolvedTimeline:createEmptyResolvedItineraryTimeline(allCharacters)
     };
   }
   let resolvedActivities = resolveItineraryActivityTimes(activities);
@@ -45,10 +48,12 @@ export function loadItineraries(level:Level, itinerarySection:string, levelFilen
       activity.resolvedTime === resolvedActivities[index].resolvedTime
       && activity.isTimeResolved === resolvedActivities[index].isTimeResolved);
     if (didStabilize) {
+      const allScheduledCharacters:Character[] = [...scheduleResult.allCharactersById.values()];
       return {
         characters:scheduleResult.characters,
+        allCharactersById:scheduleResult.allCharactersById,
         duration:scheduleResult.duration,
-        resolvedTimeline:createResolvedItineraryTimeline(resolvedActivities, scheduleResult.completionTimesBySourceIndex, scheduleResult.characters)
+        resolvedTimeline:createResolvedItineraryTimeline(resolvedActivities, scheduleResult.completionTimesBySourceIndex, allScheduledCharacters)
       };
     }
     resolvedActivities = nextResolvedActivities;

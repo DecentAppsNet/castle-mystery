@@ -2,10 +2,14 @@
 import { describe, expect, it } from 'vitest';
 
 import becomesCharacterText from './fixtures/becomes-character.md?raw';
+import becomesCharacterLaterAbsoluteText from './fixtures/becomes-character-later-absolute.md?raw';
+import becomesCharacterFraternityLikeText from './fixtures/becomes-character-fraternity-like.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
+import { findCharacterPose } from '../itineraryUtil';
 import { createGameState } from '../gameUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
+import { findRoomAtPosition } from '../roomUtil';
 
 describe('becomes character integration', () => {
   it('replaces a character with its declared unplaced target and preserves parked discovery', () => {
@@ -38,7 +42,29 @@ describe('becomes character integration', () => {
     rebuildDynamicStateForTime(afterState, becomesEvent!.startTime, afterState.time, 0);
 
     expect(afterState.unplacedCharactersById.get('niccolo')?.isDiscovered).toBe(true);
-    expect(afterState.characters.find(character => character.id === 'niccolo masked')?.leftHandItem?.id).toBe('left pebble');
-    expect(afterState.characters.find(character => character.id === 'niccolo masked')?.rightHandItem?.id).toBe('right twig');
+    const rebuiltMaskedCharacter = afterState.characters.find(character => character.id === 'niccolo masked');
+    expect(rebuiltMaskedCharacter?.leftHandItem?.id).toBe('left pebble');
+    expect(rebuiltMaskedCharacter?.rightHandItem?.id).toBe('right twig');
+    expect(findCharacterPose(rebuiltMaskedCharacter!, 8_000).speech).toBe('Now I speak as the masked one.');
+  });
+
+  it('applies later absolute room-arrival activities authored for the replacement target', () => {
+    const level = loadLevelFromText(becomesCharacterLaterAbsoluteText, 'becomes-character-later-absolute.md');
+    const gameState = createGameState({ ...level, initialTime:10_000 });
+    const maskedCharacter = gameState.characters.find(character => character.id === 'niccolo masked');
+
+    expect(maskedCharacter).toBeDefined();
+    if (!maskedCharacter) expect.fail('expected Niccolo Masked to replace Niccolo by 0:00:10');
+    expect(findRoomAtPosition(gameState.rooms, maskedCharacter.position.x, maskedCharacter.position.y)?.id).toBe('hall');
+  });
+
+  it('moves Niccolo Masked into Hall in a fraternity-like multi-room level by 23:00:00', () => {
+    const level = loadLevelFromText(becomesCharacterFraternityLikeText, 'becomes-character-fraternity-like.md');
+    const gameState = createGameState({ ...level, initialTime:23 * 60 * 60 * 1000 });
+    const maskedCharacter = gameState.characters.find(character => character.id === 'niccolo masked');
+
+    expect(maskedCharacter).toBeDefined();
+    if (!maskedCharacter) expect.fail('expected Niccolo Masked to replace Niccolo by 23:00:00');
+    expect(findRoomAtPosition(gameState.rooms, maskedCharacter.position.x, maskedCharacter.position.y)?.id).toBe('hall');
   });
 });

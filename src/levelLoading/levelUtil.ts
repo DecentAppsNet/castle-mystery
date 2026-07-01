@@ -504,7 +504,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
         () => _validateInitialTimeWithinTimeline(resolvedInitialTime, resolvedStartTime, resolvedEndTime));
     }
     const initialCharacters = level.initialCharacters.map(initialCharacter => {
-      const scheduledCharacter = itineraryData.characters.find(character => character.id === initialCharacter.id) || null;
+      const scheduledCharacter = itineraryData.allCharactersById.get(initialCharacter.id) || null;
       return scheduledCharacter ? {
         ...duplicateCharacter(initialCharacter),
         itinerary:scheduledCharacter.itinerary,
@@ -517,7 +517,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       initialCharacters,
       activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
       characters: itineraryData.characters,
-      allCharactersById: _createLevelAllCharactersById({ ...level, characters:itineraryData.characters }, characterDefinitions),
+      allCharactersById: itineraryData.allCharactersById,
       itemsById: _createLevelItemsById({ ...level, characters:itineraryData.characters }, itemDefinitions),
       startTime: resolvedStartTime,
       initialTime: resolvedInitialTime,
