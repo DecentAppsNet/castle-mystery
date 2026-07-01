@@ -29,7 +29,7 @@ function _isItemCurrentlyPlaced(context:ActivityContext, itemId:string):boolean 
   return false;
 }
 
-function _assertBecomesSourceItemIsPlaced(context:ActivityContext, activityText:string) {
+function _checkBecomesSourceItemIsPlaced(context:ActivityContext, activityText:string) {
   if (_isItemCurrentlyPlaced(context, context.subjectId)) return;
   throw new Error(`unknown item replacement source '${context.subjectId}' in authored activity '${activityText}'`);
 }
@@ -89,8 +89,10 @@ export function tryCreateBecomesItemActivity(activityText:string, context:Activi
 
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  assertNonNullable(context.level.itemsById.get(context.subjectId), `unknown item '${context.subjectId}' in level itemsById`);
-  _assertBecomesSourceItemIsPlaced(context, activityText);
+  if (!context.level.itemsById.get(context.subjectId)) {
+    throw new Error(`unknown item replacement source '${context.subjectId}' in authored activity '${activityText}'`);
+  }
+  _checkBecomesSourceItemIsPlaced(context, activityText);
   const targetRef = parseSentenceStyleActivityText(activityText, becomesVerb, 'replacement target');
   const targetItemId = _resolveBecomesTargetItemIdOrThrow(context, targetRef, activityText);
   const targetItem = context.level.itemsById.get(targetItemId) || null;

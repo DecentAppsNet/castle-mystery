@@ -4,7 +4,7 @@
 import Level from "../game/types/Level";
 import Item from "../game/types/Item";
 import TimeLabel from "../game/types/TimeLabel";
-import { duplicateCharacter } from "../game/types/Character";
+import { createDefaultCharacter, duplicateCharacter } from "../game/types/Character";
 import { getOwnedItems } from "../game/itemOwnershipUtil";
 import { createItemsById } from "../game/itemUtil";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
@@ -63,6 +63,7 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     rooms: [],
     initialCharacters: [],
     characters: [],
+    allCharactersById: new Map(),
     itemsById: new Map<string, Item>(),
     discoverableCharacterCount: 0,
     discoverableItemCount: 0,
@@ -78,6 +79,32 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
     duration,
     labels: _createTimeLabels(0, duration)
   };
+}
+
+function _createLevelAllCharactersById(level:Level,
+  characterDefinitions:Map<string, { title:string, description:string, faceImageUrl:string|null, isVisible:boolean, isAlive:boolean,
+    facingDirection:import("../game/types/Character").FacingDirection, bodyOrientation:import("../game/types/Character").BodyOrientation,
+    isTitleKnown:boolean }>):Map<string, import("../game/types/Character").default> {
+  const allCharactersById = new Map(level.characters.map(character => [character.id, character]));
+  characterDefinitions.forEach((characterDefinition, characterId) => {
+    if (allCharactersById.has(characterId)) return;
+    const character = createDefaultCharacter();
+    allCharactersById.set(characterId, {
+      ...character,
+      id:characterId,
+      title:characterDefinition.title,
+      faceImageUrl:characterDefinition.faceImageUrl,
+      randomSalt:rand(),
+      isVisible:characterDefinition.isVisible,
+      isAlive:characterDefinition.isAlive,
+      facingDirection:characterDefinition.facingDirection,
+      bodyOrientation:characterDefinition.bodyOrientation,
+      isTitleKnown:characterDefinition.isTitleKnown,
+      description:characterDefinition.description,
+      position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z }
+    });
+  });
+  return allCharactersById;
 }
 
 function _createLevelItemsById(level:Level, itemDefinitions:Map<string, { title:string, description:string, imageUrl:string|null, isVisible:boolean, drawOffset:{ x:number, y:number, z:number }, stackOffset:{ x:number, y:number, z:number } }>):Map<string, Item> {
@@ -452,6 +479,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       discoverableRoomCount,
       conclusions:generatedIdentityConclusion ? [generatedIdentityConclusion, ...authoredConclusions] : authoredConclusions,
       initialCharacters:level.characters.map(duplicateCharacter),
+      allCharactersById:_createLevelAllCharactersById(level, characterDefinitions),
       itemsById:_createLevelItemsById(level, itemDefinitions)
     };
     const itineraryData = loadItineraries(level, itinerarySection, levelFilename, itineraryFirstLineNo, {
@@ -489,6 +517,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       initialCharacters,
       activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
       characters: itineraryData.characters,
+      allCharactersById: _createLevelAllCharactersById({ ...level, characters:itineraryData.characters }, characterDefinitions),
       itemsById: _createLevelItemsById({ ...level, characters:itineraryData.characters }, itemDefinitions),
       startTime: resolvedStartTime,
       initialTime: resolvedInitialTime,

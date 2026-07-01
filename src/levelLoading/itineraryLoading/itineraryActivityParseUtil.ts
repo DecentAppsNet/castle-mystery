@@ -177,7 +177,7 @@ function _parseWaitDurationMsecs(activityText:string):number|null {
 
 function _parseActivityLine(activityLine:string, impliedCharacterId:string):{ characterId:string, subjectKind:'character'|'item', subjectId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '(', ')', '.', '%', '"', '\'', '-']));
-  if (['@', 'says ', 'interrupts ', 'thinks ', 'emits ', 'faces ', 'dies', 'stands', 'sits', 'kneels', 'lays', 'gives ', 'drops ', 'takes ', 'waits', 'locks ', 'unlocks ', 'show ', 'hide ']
+  if (['@', 'says ', 'interrupts ', 'thinks ', 'emits ', 'faces ', 'dies', 'stands', 'sits', 'kneels', 'lays', 'gives ', 'drops ', 'takes ', 'waits', 'locks ', 'unlocks ', 'show ', 'hide ', 'becomes ']
     .some(marker => normalizedLine.startsWith(marker))) {
     const activityText = _normalizeParsedActivityText(normalizedLine);
     if (!impliedCharacterId || !activityText) throw new Error(`unable to infer character for itinerary activity line '${activityLine}'`);

@@ -11,6 +11,8 @@ import * as activityMovementUtil from '../activities/activity/activityMovementUt
 import { appendEventsToCharacterState, createCharacterActivityState, findStatePoseAtTime } from '../activities/activity/activityStateUtil';
 import { parseItineraryActivities } from '../itineraryLoading/itineraryActivityParseUtil';
 import { loadItineraries } from '../levelItineraryLoader';
+import characterBecomesLevelText from './fixtures/character-becomes-level.md?raw';
+import characterBecomesTargetPlacedLevelText from './fixtures/character-becomes-target-placed.md?raw';
 import itemBecomesLevelText from './fixtures/item-becomes-level.md?raw';
 import itemBecomesTargetPlacedLevelText from './fixtures/item-becomes-target-placed.md?raw';
 import itineraryTimelineSummaryText from './fixtures/itinerary-timeline-summary.md?raw';
@@ -94,6 +96,20 @@ describe('levelItineraryLoader', () => {
       expect(becomesActivity.subjectKind).toBe('item');
       expect(becomesActivity.subjectId).toBe('vase');
       expect(becomesActivity.activityText).toBe('becomes Broken Vase');
+    });
+
+    it('parses bare becomes activities as implied-character activities', () => {
+      const options = { isCrossMidnight:false, explicitEndTime:null };
+      const [atActivity, becomesActivity] = parseItineraryActivities([
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked'
+      ].join('\n'), 'character-becomes.md', 1, options, 0, 'hero');
+
+      expect(atActivity.subjectKind).toBe('character');
+      expect(becomesActivity.characterId).toBe('niccolo');
+      expect(becomesActivity.subjectKind).toBe('character');
+      expect(becomesActivity.subjectId).toBe('niccolo');
+      expect(becomesActivity.activityText).toBe('becomes Niccolo Masked');
     });
 
     it('rejects invalid waits durations', () => {
@@ -216,6 +232,58 @@ describe('levelItineraryLoader', () => {
         ': Vase becomes Missing Vase'
       ].join('\n'), 'item-becomes-itinerary.md', 1))
         .toThrow(/unknown item replacement target 'Missing Vase'/);
+    });
+
+    it('accepts valid character becomes activities during itinerary loading', () => {
+      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+
+      expect(() => loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked'
+      ].join('\n'), 'character-becomes-itinerary.md', 1)).not.toThrow();
+    });
+
+    it('emits a becomes-character event during itinerary loading', () => {
+      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const result = loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked'
+      ].join('\n'), 'character-becomes-itinerary.md', 1);
+      const niccolo = result.characters.find(character => character.id === 'niccolo');
+      const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as {
+        startTime:number,
+        duration:number,
+        sourceCharacterId:string,
+        targetCharacterId:string
+      } | undefined;
+
+      expect(becomesEvent).toEqual({
+        type:ItineraryEventType.BECOMES_CHARACTER,
+        startTime:3_001,
+        duration:0,
+        sourceCharacterId:'niccolo',
+        targetCharacterId:'niccolo masked'
+      });
+    });
+
+    it('rejects character becomes activities whose replacement target starts placed', () => {
+      const level = loadLevelFromText(characterBecomesTargetPlacedLevelText, 'character-becomes-target-placed.md');
+
+      expect(() => loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked'
+      ].join('\n'), 'character-becomes-itinerary.md', 1))
+        .toThrow(/character replacement target 'Niccolo Masked' must start unplaced/);
+    });
+
+    it('rejects becomes activities that mix character sources with item targets', () => {
+      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+
+      expect(() => loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Vase'
+      ].join('\n'), 'character-becomes-mixed.md', 1))
+        .toThrow(/unknown character replacement target 'Vase'/);
     });
 
     it('reuses settled pose state for lookups at the current scheduling time', () => {

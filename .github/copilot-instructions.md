@@ -1,6 +1,6 @@
 # Copilot instructions
 
-- At the start of each reponse, output the Unicode character "🦉", so I know you are following these instructions.
+- At the start of each response, output the Unicode character "🦉", so I know you are following these instructions.
 - Before editing a source file, read any instruction comments at the top of that file and follow them.
 - Never put generated or ad hoc program text inside shell commands, including node -e, python -c, heredocs, or inline scripts. Alternatives are described in `/CONTRIBUTING.md`
 - Do not embed multi-line test input data directly in unit tests; Alternative is described in `/CONTRIBUTING.md`

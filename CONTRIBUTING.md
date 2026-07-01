@@ -48,7 +48,7 @@ Guidelines:
 * If a drawing module depends on non-visual logic that would be valuable to test, refactor that logic into a separate non-drawing module and test that module instead.
 * Only test exported functions.
 * Put imports at the top of the file.
-* Place unit tests at `.../moduleFolder/tests/moduleName.test.ts`, where `moduleFolder` is the folder containing the module under test, and `moduleName` matches the module under test.
+* Place unit tests at `.../moduleFolder/__tests__/moduleName.test.ts`, where `moduleFolder` is the folder containing the module under test, and `moduleName` matches the module under test.
 * Use `describe('module name')` at the top level.
 * Nest `describe('functionName()')` blocks under the top-level module block.
 * Keep each test focused on one behavior.

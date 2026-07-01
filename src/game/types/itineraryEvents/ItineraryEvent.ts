@@ -12,12 +12,13 @@ import CharacterEncounterEvent, { duplicateCharacterEncounterEvent } from "./Cha
 import TakeItemEvent, { duplicateTakeItemEvent } from "./TakeItemEvent";
 import DropItemEvent, { duplicateDropItemEvent } from "./DropItemEvent";
 import GiveItemEvent, { duplicateGiveItemEvent } from "./GiveItemEvent";
+import BecomesCharacterEvent, { duplicateBecomesCharacterEvent } from "./BecomesCharacterEvent";
 import BecomesItemEvent, { duplicateBecomesItemEvent } from "./BecomesItemEvent";
 import LockEvent, { duplicateLockEvent } from "./LockEvent";
 import UnlockEvent, { duplicateUnlockEvent } from "./UnlockEvent";
 import VisibilityEvent, { duplicateVisibilityEvent } from "./VisibilityEvent";
 
-type ItineraryEvent = WalkEvent | DieEvent | FaceEvent | BodyOrientationEvent | RoomEntryEvent | SpeechEvent | EmitEvent | ThoughtEvent | CharacterEncounterEvent | TakeItemEvent | DropItemEvent | GiveItemEvent | BecomesItemEvent | VisibilityEvent | LockEvent | UnlockEvent;
+type ItineraryEvent = WalkEvent | DieEvent | FaceEvent | BodyOrientationEvent | RoomEntryEvent | SpeechEvent | EmitEvent | ThoughtEvent | CharacterEncounterEvent | TakeItemEvent | DropItemEvent | GiveItemEvent | BecomesCharacterEvent | BecomesItemEvent | VisibilityEvent | LockEvent | UnlockEvent;
 export function duplicateItineraryEvent(from:ItineraryEvent):ItineraryEvent {
   switch(from.type) {
     case ItineraryEventType.WALK: return duplicateWalkEvent(from as WalkEvent);
@@ -32,6 +33,7 @@ export function duplicateItineraryEvent(from:ItineraryEvent):ItineraryEvent {
     case ItineraryEventType.TAKE_ITEM: return duplicateTakeItemEvent(from as TakeItemEvent);
     case ItineraryEventType.DROP_ITEM: return duplicateDropItemEvent(from as DropItemEvent);
     case ItineraryEventType.GIVE_ITEM: return duplicateGiveItemEvent(from as GiveItemEvent);
+    case ItineraryEventType.BECOMES_CHARACTER: return duplicateBecomesCharacterEvent(from as BecomesCharacterEvent);
     case ItineraryEventType.BECOMES_ITEM: return duplicateBecomesItemEvent(from as BecomesItemEvent);
     case ItineraryEventType.SHOW:
     case ItineraryEventType.HIDE:

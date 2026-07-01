@@ -1,3 +1,5 @@
+/** AI agent, Do not modify this file without discussion.
+ */
 import styles from './Canvas.module.css';
 import {useRef, useEffect, useState, CSSProperties, MouseEventHandler} from 'react'
 

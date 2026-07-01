@@ -13,6 +13,7 @@ import CharacterEncounterEvent from "./types/itineraryEvents/CharacterEncounterE
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
+import BecomesCharacterEvent from "./types/itineraryEvents/BecomesCharacterEvent";
 import BecomesItemEvent from "./types/itineraryEvents/BecomesItemEvent";
 import LockEvent from "./types/itineraryEvents/LockEvent";
 import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
@@ -175,6 +176,10 @@ export function createGiveItemEvent(startTime:number, itemId:string, recipientCh
   return { type:ItineraryEventType.GIVE_ITEM, startTime, duration:0, itemId, recipientCharacterId };
 }
 
+export function createBecomesCharacterEvent(startTime:number, sourceCharacterId:string, targetCharacterId:string):BecomesCharacterEvent {
+  return { type:ItineraryEventType.BECOMES_CHARACTER, startTime, duration:0, sourceCharacterId, targetCharacterId };
+}
+
 export function createBecomesItemEvent(startTime:number, sourceItemId:string, targetItemId:string):BecomesItemEvent {
   return { type:ItineraryEventType.BECOMES_ITEM, startTime, duration:0, sourceItemId, targetItemId };
 }
@@ -251,6 +256,7 @@ function _findItineraryPose(character:Character, time:number):CharacterPose {
       case ItineraryEventType.TAKE_ITEM:
       case ItineraryEventType.DROP_ITEM:
       case ItineraryEventType.GIVE_ITEM:
+      case ItineraryEventType.BECOMES_CHARACTER:
       case ItineraryEventType.BECOMES_ITEM:
       case ItineraryEventType.SHOW:
       case ItineraryEventType.HIDE:
@@ -288,6 +294,7 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position)
     case ItineraryEventType.TAKE_ITEM:
     case ItineraryEventType.DROP_ITEM:
     case ItineraryEventType.GIVE_ITEM:
+    case ItineraryEventType.BECOMES_CHARACTER:
     case ItineraryEventType.BECOMES_ITEM:
     case ItineraryEventType.SHOW:
     case ItineraryEventType.HIDE:
