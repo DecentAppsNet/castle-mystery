@@ -12,6 +12,7 @@ import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
 import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
+import BecomesCharacterEvent from "./types/itineraryEvents/BecomesCharacterEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import BecomesItemEvent from "./types/itineraryEvents/BecomesItemEvent";
 
@@ -35,6 +36,17 @@ function _findBecomesTargetImageUrls(level:Level):string[] {
   return [...imageUrls];
 }
 
+function _findBecomesTargetCharacterFaceImageUrls(level:Level):string[] {
+  const imageUrls = new Set<string>();
+  const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
+  sourceCharacters.forEach(character => character.itinerary.forEach(event => {
+    if (event.type !== ItineraryEventType.BECOMES_CHARACTER) return;
+    const targetCharacter = level.allCharactersById.get((event as BecomesCharacterEvent).targetCharacterId) || null;
+    if (targetCharacter?.faceImageUrl) imageUrls.add(targetCharacter.faceImageUrl);
+  }));
+  return [...imageUrls];
+}
+
 function _findDirectReferencedImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>([KEY_IMAGE_URL, getGroundImageAssetUrl(), UNKNOWN_ITEM_ICON_URL]);
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
@@ -49,6 +61,7 @@ function _findDirectReferencedImageUrls(level:Level):string[] {
     if (item.imageUrl) imageUrls.add(item.imageUrl);
   }));
   _findBecomesTargetImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
+  _findBecomesTargetCharacterFaceImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
   const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
   sourceCharacters.forEach(character => {
     if (character.faceImageUrl) imageUrls.add(character.faceImageUrl);

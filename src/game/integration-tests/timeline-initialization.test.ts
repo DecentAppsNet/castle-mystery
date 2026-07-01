@@ -1,6 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
+import becomesCharacterText from './fixtures/becomes-character.md?raw';
 import timelineBothTimeAndStartTimeText from '@/game/__tests__/fixtures/timeline-both-time-and-start-time.md?raw';
 import unplacedItemsInitializationText from './fixtures/unplaced-items-initialization.md?raw';
 import { calcRenderedRoomsBoundingRect } from '@/game/roomRoofUtil';
@@ -54,5 +55,14 @@ describe('timeline initialization integration', () => {
     const gameState = createGameState(level);
 
     expect(Array.from(gameState.unplacedItemsById.keys())).toEqual(Array.from(gameState.initialUnplacedItemsById.keys()));
+  });
+
+  it('separates character replacement targets from initially placed characters', () => {
+    const level = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
+    const gameState = createGameState(level);
+
+    expect(gameState.characters.map(character => character.id)).toEqual(['niccolo']);
+    expect(Array.from(gameState.unplacedCharactersById.keys())).toEqual(['niccolo masked']);
+    expect(Array.from(gameState.initialUnplacedCharactersById.keys())).toEqual(['niccolo masked']);
   });
 });

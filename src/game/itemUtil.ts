@@ -23,6 +23,10 @@ function _createPlacedItemIds(rooms:ReadonlyArray<Pick<Room, 'items'>>,
 	return placedItemIds;
 }
 
+function _createPlacedCharacterIds(characters:ReadonlyArray<Pick<Character, 'id'>>):Set<string> {
+	return new Set(characters.map(character => character.id));
+}
+
 export function createItemsById(rooms:ReadonlyArray<Pick<Room, 'items'>>,
 	characters:ReadonlyArray<Pick<Character, 'items' | 'leftHandItem' | 'rightHandItem'>>,
 	fallbackItemsById:ReadonlyMap<string, Item> = new Map()):Map<string, Item> {
@@ -44,6 +48,17 @@ export function createUnplacedItemsById(itemsById:ReadonlyMap<string, Item>, roo
 	characters:ReadonlyArray<Pick<Character, 'items' | 'leftHandItem' | 'rightHandItem'>>):Map<string, Item> {
 	const placedItemIds = _createPlacedItemIds(rooms, characters);
 	return new Map(Array.from(itemsById.entries()).filter(([itemId]) => !placedItemIds.has(itemId)));
+}
+
+export function createUnplacedCharactersById(allCharactersById:ReadonlyMap<string, Character>,
+	placedCharacters:ReadonlyArray<Pick<Character, 'id'>>, targetCharacterIds:ReadonlySet<string>):Map<string, Character> {
+	const placedCharacterIds = _createPlacedCharacterIds(placedCharacters);
+	return new Map(Array.from(allCharactersById.entries()).filter(([characterId]) =>
+		targetCharacterIds.has(characterId) && !placedCharacterIds.has(characterId)));
+}
+
+export function duplicateCharactersByIdUsingItemIndex(charactersById:ReadonlyMap<string, Character>, itemsById:ReadonlyMap<string, Item>):Map<string, Character> {
+	return new Map(Array.from(charactersById.entries()).map(([characterId, character]) => [characterId, duplicateCharacterUsingItemIndex(character, itemsById)]));
 }
 
 export function duplicateCharacterUsingItemIndex(from:Character, itemsById:ReadonlyMap<string, Item>):Character {

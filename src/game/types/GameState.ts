@@ -11,6 +11,7 @@ import RoomShellCache from "./RoomShellCache";
 
 type GameState = {
   characters:Character[],
+  unplacedCharactersById:Map<string, Character>,
   rooms:Room[],
   itemsById:Map<string, Item>,
   unplacedItemsById:Map<string, Item>,
@@ -27,6 +28,7 @@ type GameState = {
   readonly initialItemsById:Map<string, Item>,
   readonly initialUnplacedItemsById:Map<string, Item>,
   readonly initialCharacters:Character[],
+  readonly initialUnplacedCharactersById:Map<string, Character>,
   readonly initialRooms:Room[],
   camera:Camera,
   activeEffects:Effect[],

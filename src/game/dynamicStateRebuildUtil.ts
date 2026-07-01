@@ -13,9 +13,9 @@ import ItemHoldLocation from "./types/ItemHoldLocation";
 import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
-import { duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
-import { createUnplacedItemsById } from "./itemUtil";
+import { createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateCharactersByIdUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import { findRoomAtPosition } from "./roomUtil";
+import BecomesCharacterEvent from "./types/itineraryEvents/BecomesCharacterEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
@@ -30,7 +30,7 @@ type AppliedInventoryEvent = {
   characterId:string,
   eventIndex:number,
   startPosition:Position,
-  event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent
+  event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent
 }
 
 type AppliedExitStateEvent = {
@@ -56,11 +56,18 @@ function _getDiscoveredRoomIds(gameState:GameState):Set<string> {
 }
 
 function _getCharacterDiscoveredRoomIds(gameState:GameState):Map<string, string[]> {
-  return new Map(gameState.characters.map(character => [character.id, [...character.discoveredRoomIds]]));
+  const discoveredRoomIdsByCharacterId = new Map<string, string[]>();
+  gameState.characters.forEach(character => discoveredRoomIdsByCharacterId.set(character.id, [...character.discoveredRoomIds]));
+  gameState.unplacedCharactersById.forEach(character => discoveredRoomIdsByCharacterId.set(character.id, [...character.discoveredRoomIds]));
+  return discoveredRoomIdsByCharacterId;
 }
 
 function _getDiscoveredCharacterIds(gameState:GameState):Set<string> {
-  return new Set(gameState.discoveredCharacterIds);
+  return new Set([
+    ...gameState.discoveredCharacterIds,
+    ...gameState.characters.filter(character => character.isDiscovered).map(character => character.id),
+    ...Array.from(gameState.unplacedCharactersById.values()).filter(character => character.isDiscovered).map(character => character.id)
+  ]);
 }
 
 function _getDiscoveredItemIds(gameState:GameState):Set<string> {
@@ -91,7 +98,7 @@ function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<strin
   gameState.unplacedItemsById.forEach(item => {
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
   });
-  gameState.characters.forEach(character => {
+  [...gameState.characters, ...gameState.unplacedCharactersById.values()].forEach(character => {
     if (discoveredCharacterIds.has(character.id)) character.isDiscovered = true;
     character.discoveredRoomIds = [...(characterDiscoveredRoomIds.get(character.id) || [])];
   });
@@ -107,6 +114,7 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
         case ItineraryEventType.DROP_ITEM:
         case ItineraryEventType.GIVE_ITEM:
         case ItineraryEventType.BECOMES_ITEM:
+        case ItineraryEventType.BECOMES_CHARACTER:
           {
             const startPosition = character.itineraryIndex.eventStartPositions[eventIndex];
             assertNonNullable(startPosition);
@@ -114,7 +122,7 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
               characterId:character.id,
               eventIndex,
               startPosition:duplicatePosition(startPosition),
-              event:event as TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent
+              event:event as TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent
             });
           }
         break;
@@ -231,6 +239,30 @@ function _applyItemReplacement(gameState:GameState, sourceItemId:string, targetI
   throw new Error(`replacement source ${sourceItemId} was not found in runtime state`);
 }
 
+function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:string, targetCharacterId:string) {
+  const sourceCharacterIndex = gameState.characters.findIndex(character => character.id === sourceCharacterId);
+  if (sourceCharacterIndex === -1) throw new Error(`replacement source character ${sourceCharacterId} was not found in runtime state`);
+  const sourceCharacter = gameState.characters[sourceCharacterIndex];
+  const targetCharacter = gameState.unplacedCharactersById.get(targetCharacterId) || null;
+  assertNonNullable(targetCharacter, `unplaced replacement target character ${targetCharacterId} was not found`);
+  gameState.unplacedCharactersById.delete(targetCharacterId);
+
+  targetCharacter.position = duplicatePosition(sourceCharacter.position);
+  targetCharacter.waypoint = sourceCharacter.waypoint;
+  targetCharacter.facingDirection = sourceCharacter.facingDirection;
+  targetCharacter.bodyOrientation = sourceCharacter.bodyOrientation;
+  targetCharacter.isVisible = sourceCharacter.isVisible;
+  targetCharacter.items = sourceCharacter.items;
+  targetCharacter.leftHandItem = sourceCharacter.leftHandItem;
+  targetCharacter.rightHandItem = sourceCharacter.rightHandItem;
+
+  sourceCharacter.items = [];
+  sourceCharacter.leftHandItem = null;
+  sourceCharacter.rightHandItem = null;
+  gameState.unplacedCharactersById.set(sourceCharacter.id, sourceCharacter);
+  gameState.characters.splice(sourceCharacterIndex, 1, targetCharacter);
+}
+
 function _findCharacter(gameState:GameState, characterId:string):Character {
   const character = gameState.characters.find(currentCharacter => currentCharacter.id === characterId);
   assertNonNullable(character, `character with id ${characterId} not found`);
@@ -274,7 +306,20 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
   gameState.itemsById = duplicateItemsById(gameState.initialItemsById);
   gameState.characters = gameState.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, gameState.itemsById));
   gameState.rooms = gameState.initialRooms.map(room => duplicateRoomUsingItemIndex(room, gameState.itemsById));
+  gameState.unplacedCharactersById = duplicateCharactersByIdUsingItemIndex(gameState.initialUnplacedCharactersById, gameState.itemsById);
   gameState.unplacedItemsById = createUnplacedItemsById(gameState.itemsById, gameState.rooms, gameState.characters);
+
+  _collectAppliedVisibilityEvents(gameState, time).forEach(({ event }) => {
+    switch(event.type) {
+      case ItineraryEventType.SHOW:
+        _applyVisibility(gameState, event.targetId, true);
+      break;
+
+      case ItineraryEventType.HIDE:
+        _applyVisibility(gameState, event.targetId, false);
+      break;
+    }
+  });
 
   _collectAppliedInventoryEvents(gameState, time).forEach(({ characterId, startPosition, event }) => {
     const actor = _findCharacter(gameState, characterId);
@@ -338,6 +383,13 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
         {
           const becomesItemEvent = event as BecomesItemEvent;
           _applyItemReplacement(gameState, becomesItemEvent.sourceItemId, becomesItemEvent.targetItemId);
+        }
+      break;
+
+      case ItineraryEventType.BECOMES_CHARACTER:
+        {
+          const becomesCharacterEvent = event as BecomesCharacterEvent;
+          _applyCharacterReplacement(gameState, becomesCharacterEvent.sourceCharacterId, becomesCharacterEvent.targetCharacterId);
         }
       break;
     }

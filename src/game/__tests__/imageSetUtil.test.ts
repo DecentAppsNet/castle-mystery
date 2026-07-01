@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import backgroundImageText from './fixtures/background-image.md?raw';
+import becomesCharacterText from '../integration-tests/fixtures/becomes-character.md?raw';
 import becomesItemText from '../integration-tests/fixtures/becomes-item.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
@@ -41,6 +42,21 @@ describe('imageSetUtil.ts', () => {
     expect(imageSet.has(getFaceImageAssetUrl('queenFace.png'))).toBe(true);
     expect(imageSet.has(getClozeImageCandidateUrls('queenFace.png')[0])).toBe(false);
     expect((level.conclusions[0].parts[0] as { imageUrl:string }).imageUrl).toBe(getFaceImageAssetUrl('queenFace.png'));
+  });
+
+  it('loads face images for character replacement targets without loading every declared imported character', async () => {
+    const fetchMock = vi.fn(async () => ({ ok:true, blob:async () => new Blob(['fake']) }));
+    const createImageBitmapMock = vi.fn(async () => ({ width:32, height:32 } as ImageBitmap));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createImageBitmapMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
+    const imageSet = await createImageSetFromLevel(level);
+
+    expect(imageSet.has(getFaceImageAssetUrl('niccoloFace.png'))).toBe(true);
+    expect(imageSet.has(getFaceImageAssetUrl('niccoloMaskedFace.png'))).toBe(true);
+    expect(imageSet.has(getFaceImageAssetUrl('bystanderFace.png'))).toBe(false);
   });
 
   it('loads an optional .punch.png sidecar into the image asset when present', async () => {

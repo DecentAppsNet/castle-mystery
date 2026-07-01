@@ -19,6 +19,7 @@ import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
 import EmitEvent from "./types/itineraryEvents/EmitEvent";
 import ThoughtEvent from "./types/itineraryEvents/ThoughtEvent";
+import BecomesCharacterEvent from "./types/itineraryEvents/BecomesCharacterEvent";
 import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera, syncCameraTargetToActiveRoom, updateCamera } from "./cameraUtil";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
@@ -39,7 +40,7 @@ import { isCharacterInteractive } from "./interactivityUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
-import { createItemsById, createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
+import { createItemsById, createUnplacedCharactersById, createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateCharactersByIdUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import { getOwnedItems } from "./itemOwnershipUtil";
 import Item from "./types/Item";
 import { MAX_ACTIVE_EFFECTS } from "./effects/effectUtil";
@@ -66,6 +67,16 @@ const CAMERA_ZOOM_STEP = 0.1;
 
 function _findMetaTimeNow():number {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
+}
+
+function _findBecomesTargetCharacterIds(level:Level):Set<string> {
+  const targetCharacterIds = new Set<string>();
+  const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
+  sourceCharacters.forEach(character => character.itinerary.forEach(event => {
+    if (event.type !== ItineraryEventType.BECOMES_CHARACTER) return;
+    targetCharacterIds.add((event as BecomesCharacterEvent).targetCharacterId);
+  }));
+  return targetCharacterIds;
 }
 
 export function findCharacter(gameState:GameState, characterRef:string):Character {
@@ -459,12 +470,17 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
   const initialItemsById = createItemsById(level.rooms, level.initialCharacters, duplicateItemsById(level.itemsById));
   const initialCharacters = level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById));
   const initialRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById));
+  const becomesTargetCharacterIds = _findBecomesTargetCharacterIds(level);
+  const initialAllCharactersById = duplicateCharactersByIdUsingItemIndex(level.allCharactersById, initialItemsById);
   const initialUnplacedItemsById = createUnplacedItemsById(initialItemsById, initialRooms, initialCharacters);
+  const initialUnplacedCharactersById = createUnplacedCharactersById(initialAllCharactersById, initialCharacters, becomesTargetCharacterIds);
   const itemsById = duplicateItemsById(initialItemsById);
   const characters = level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById));
   const rooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById));
+  const allCharactersById = duplicateCharactersByIdUsingItemIndex(level.allCharactersById, itemsById);
   const gameState:GameState = {
     characters,
+    unplacedCharactersById:createUnplacedCharactersById(allCharactersById, characters, becomesTargetCharacterIds),
     rooms,
     itemsById,
     unplacedItemsById:createUnplacedItemsById(itemsById, rooms, characters),
@@ -481,6 +497,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     initialItemsById,
     initialUnplacedItemsById,
     initialCharacters,
+    initialUnplacedCharactersById,
     initialRooms,
     camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
     activeEffects:[],
