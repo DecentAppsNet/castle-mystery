@@ -203,6 +203,7 @@ export function loadRoomPopulationFromRoomsSection(level:Level, roomsSection:str
 
 export function loadCharacterInventoryItems(level:Level, definitions:RoomPopulationDefinitions) {
 	_validateCharacterInventoryItems(definitions.characterDefinitions, definitions.itemDefinitions);
+	_validateUnplacedCharactersDoNotStartWithInventoryItems(level, definitions.characterDefinitions);
 	_addInventoryItemsToCharacters(level, definitions.characterDefinitions, definitions.itemDefinitions);
 }
 
@@ -423,6 +424,14 @@ function _validateCharacterInventoryItems(characterDefinitions:Map<string, Chara
 			if (itemDefinitions.has(item.id)) return;
 			throw new Error(`character ${characterId} inventory item '${item.title}' does not match any item in the items section`);
 		});
+	});
+}
+
+function _validateUnplacedCharactersDoNotStartWithInventoryItems(level:Level, characterDefinitions:Map<string, CharacterDefinition>) {
+	const placedCharacterIds = new Set(level.characters.map(character => character.id));
+	Array.from(characterDefinitions.entries()).forEach(([characterId, characterDefinition]) => {
+		if (placedCharacterIds.has(characterId) || characterDefinition.inventoryItems.length === 0) return;
+		throw new Error(`unplaced character ${characterId} may not start with inventory items`);
 	});
 }
 

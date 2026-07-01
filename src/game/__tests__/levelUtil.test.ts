@@ -52,6 +52,7 @@ import duplicateGeneralSectionText from './fixtures/duplicate-general-section.md
 import invalidActiveCharacterText from './fixtures/invalid-active-character.md?raw';
 import invalidCharacterInventoryItemText from './fixtures/invalid-character-inventory-item.md?raw';
 import invalidIsTitleKnownText from './fixtures/invalid-is-title-known.md?raw';
+import unplacedCharacterInventoryText from './fixtures/unplaced-character-inventory.md?raw';
 import missingMapSectionText from './fixtures/missing-map-section.md?raw';
 import mapMissingGridText from './fixtures/map-missing-grid.md?raw';
 import mapUnusedLegendEntryText from './fixtures/map-unused-legend-entry.md?raw';
@@ -1868,6 +1869,17 @@ describe('levelUtil itinerary loading', () => {
       expect(error).toBeInstanceOf(LoadLevelException);
       expect((error as LoadLevelException).message).toContain('invalid-character-inventory-item.md:33');
       expect((error as LoadLevelException).message).toContain(`character hero inventory item 'Missing Book' does not match any item in the items section`);
+    }
+  });
+
+  it('wraps unplaced characters starting with inventory items with filename and line number', () => {
+    try {
+      loadLevelFromText(unplacedCharacterInventoryText, 'unplaced-character-inventory.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).message).toContain('unplaced-character-inventory.md:33');
+      expect((error as LoadLevelException).message).toContain('unplaced character niccolo masked may not start with inventory items');
     }
   });
 
