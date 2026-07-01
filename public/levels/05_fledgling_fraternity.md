@@ -170,7 +170,7 @@ DDCCAAABB.
 : becomes Niccolo Masked
 : Sticky Agatha says, "I'll stay here and keep watch."
 
-// 23:00:00 Niccolo Masked @ Hall
+23:00:00 Niccolo Masked @ Hall
 // : @ Nave
 // : takes Chisel in left hand
 // : says "Chisel"

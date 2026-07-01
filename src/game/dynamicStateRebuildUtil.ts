@@ -1,7 +1,7 @@
 /* This module groups time-based dynamic-state rebuilding, recreating mutable room and inventory state from the authored level timeline.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 
 import { createDropItemEffect } from "./effects/dropItemUtil";
 import { createGiveItemEffect } from "./effects/giveItemUtil";
@@ -261,6 +261,7 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   sourceCharacter.rightHandItem = null;
   gameState.unplacedCharactersById.set(sourceCharacter.id, sourceCharacter);
   gameState.characters.splice(sourceCharacterIndex, 1, targetCharacter);
+  assert(gameState.characters[gameState.activeCharacterI] === targetCharacter);
 }
 
 function _findCharacter(gameState:GameState, characterId:string):Character {
