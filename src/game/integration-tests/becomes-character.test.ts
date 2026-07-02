@@ -14,7 +14,7 @@ import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import { findRoomAtPosition } from '../roomUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
 import { findImageBitmap } from '../imageAssetUtil';
-import { findActiveCharacter, setActiveCharacterId } from '../activeCharacterUtil';
+import { findActiveCharacter } from '../activeCharacterUtil';
 
 describe('becomes character integration', () => {
   afterEach(() => {
@@ -35,7 +35,7 @@ describe('becomes character integration', () => {
     const maskedCharacter = afterState.characters.find(character => character.id === 'niccolo masked');
     expect(maskedCharacter).toBeDefined();
     expect(afterState.activeCharacterId).toBe('niccolo');
-    expect(afterState.activeCharacterI).toBe(-1);
+    expect(findActiveCharacter(afterState)?.id).toBe('niccolo');
     expect(maskedCharacter?.items.map(item => item.id)).toEqual(['inventory note']);
     expect(maskedCharacter?.leftHandItem?.id).toBe('left pebble');
     expect(maskedCharacter?.rightHandItem?.id).toBe('right twig');
@@ -65,11 +65,11 @@ describe('becomes character integration', () => {
     const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
     const gameState = createGameState({ ...level, initialTime:becomesEvent!.startTime });
 
-    setActiveCharacterId(gameState, 'niccolo');
+    gameState.activeCharacterId = 'niccolo';
     rebuildDynamicStateForTime(gameState, becomesEvent!.startTime, gameState.time, 0);
 
     expect(gameState.activeCharacterId).toBe('niccolo');
-    expect(gameState.activeCharacterI).toBe(-1);
+    expect(findActiveCharacter(gameState)?.id).toBe('niccolo');
     expect(gameState.unplacedCharactersById.get('niccolo')).toBeDefined();
     expect(findRoomAtPosition(gameState.rooms,
       gameState.unplacedCharactersById.get('niccolo')!.position.x,
@@ -83,7 +83,6 @@ describe('becomes character integration', () => {
     const gameState = createGameState({ ...level, initialTime:becomesEvent!.startTime });
 
     expect(gameState.activeCharacterId).toBe('niccolo masked');
-    expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('niccolo masked');
     expect(findActiveCharacter(gameState)?.id).toBe('niccolo masked');
   });
 
@@ -114,7 +113,6 @@ describe('becomes character integration', () => {
     const maskedCharacter = gameState.characters.find(character => character.id === 'niccolo masked');
 
     expect(gameState.activeCharacterId).toBe('niccolo');
-    expect(gameState.activeCharacterI).toBe(-1);
     expect(activeCharacter).toBe(gameState.unplacedCharactersById.get('niccolo'));
     expect(findRoomAtPosition(gameState.rooms, activeCharacter!.position.x, activeCharacter!.position.y)?.id).toBe('hall');
     expect(maskedCharacter).toBeDefined();

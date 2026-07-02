@@ -167,7 +167,6 @@ describe('room navigation integration', () => {
 
     updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 }, 0);
 
-    expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('guide');
     expect(gameState.activeCharacterId).toBe('guide');
     expect(gameState.time).toBeGreaterThan(2_000);
     expect(gameState.time).toBeLessThanOrEqual(5_000);
@@ -199,7 +198,7 @@ describe('room navigation integration', () => {
 
     updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 }, 0);
 
-    expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('hero');
+    expect(gameState.activeCharacterId).toBe('hero');
   });
 
   it('uses the projected character bounds for hover hit testing', () => {
@@ -268,6 +267,6 @@ describe('room navigation integration', () => {
     nextCharacter();
     updateAndDraw(gameState, context, () => {});
 
-    expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('hero');
+    expect(gameState.activeCharacterId).toBe('hero');
   });
 });
