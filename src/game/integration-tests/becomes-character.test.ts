@@ -1,7 +1,8 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import becomesCharacterText from './fixtures/becomes-character.md?raw';
+import becomesCharacterInventoryFollowupText from './fixtures/becomes-character-inventory-followup.md?raw';
 import becomesCharacterLaterAbsoluteText from './fixtures/becomes-character-later-absolute.md?raw';
 import becomesCharacterFraternityLikeText from './fixtures/becomes-character-fraternity-like.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
@@ -10,8 +11,15 @@ import { createGameState } from '../gameUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import { findRoomAtPosition } from '../roomUtil';
+import { createImageSetFromLevel } from '../imageSetUtil';
+import { findImageBitmap } from '../imageAssetUtil';
 
 describe('becomes character integration', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
   it('replaces a character with its declared unplaced target and preserves parked discovery', () => {
     const level = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
     const niccolo = level.characters.find(character => character.id === 'niccolo');
@@ -24,6 +32,7 @@ describe('becomes character integration', () => {
 
     const maskedCharacter = afterState.characters.find(character => character.id === 'niccolo masked');
     expect(maskedCharacter).toBeDefined();
+    expect(afterState.activeCharacterId).toBe('niccolo masked');
     expect(afterState.characters[afterState.activeCharacterI]?.id).toBe('niccolo masked');
     expect(maskedCharacter?.items.map(item => item.id)).toEqual(['inventory note']);
     expect(maskedCharacter?.leftHandItem?.id).toBe('left pebble');
@@ -66,5 +75,57 @@ describe('becomes character integration', () => {
     expect(maskedCharacter).toBeDefined();
     if (!maskedCharacter) expect.fail('expected Niccolo Masked to replace Niccolo by 23:00:00');
     expect(findRoomAtPosition(gameState.rooms, maskedCharacter.position.x, maskedCharacter.position.y)?.id).toBe('hall');
+  });
+
+  it('applies take and drop follow-up inventory events authored for the replacement target', () => {
+    const level = loadLevelFromText(becomesCharacterInventoryFollowupText, 'becomes-character-inventory-followup.md');
+    const maskedCharacter = level.allCharactersById.get('niccolo masked');
+    const takeEvents = maskedCharacter?.itinerary.filter(event => event.type === ItineraryEventType.TAKE_ITEM) || [];
+    const dropEvent = maskedCharacter?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM);
+
+    expect(takeEvents).toHaveLength(3);
+    expect(takeEvents[0]).toMatchObject({ itemId:'chisel', destination:'left-hand' });
+    expect(takeEvents[1]).toMatchObject({ itemId:'chisel', destination:'inventory' });
+    expect(takeEvents[2]).toMatchObject({ itemId:'chisel', destination:'right-hand' });
+    expect(dropEvent).toBeDefined();
+
+    const leftHandState = createGameState({ ...level, initialTime:takeEvents[0]!.startTime });
+    const inventoryState = createGameState({ ...level, initialTime:takeEvents[1]!.startTime });
+    const rightHandState = createGameState({ ...level, initialTime:takeEvents[2]!.startTime });
+    const droppedState = createGameState({ ...level, initialTime:dropEvent!.startTime });
+
+    const leftHandCharacter = leftHandState.characters.find(character => character.id === 'niccolo masked');
+    const inventoryCharacter = inventoryState.characters.find(character => character.id === 'niccolo masked');
+    const rightHandCharacter = rightHandState.characters.find(character => character.id === 'niccolo masked');
+    const droppedCharacter = droppedState.characters.find(character => character.id === 'niccolo masked');
+
+    expect(leftHandCharacter?.leftHandItem?.id).toBe('chisel');
+    expect(leftHandCharacter?.items).toEqual([]);
+    expect(inventoryCharacter?.leftHandItem).toBeNull();
+    expect(inventoryCharacter?.items.map(item => item.id)).toEqual(['chisel']);
+    expect(rightHandCharacter?.rightHandItem?.id).toBe('chisel');
+    expect(rightHandCharacter?.items).toEqual([]);
+    expect(droppedCharacter?.leftHandItem).toBeNull();
+    expect(droppedCharacter?.rightHandItem).toBeNull();
+    expect(droppedCharacter?.items).toEqual([]);
+    expect(droppedState.rooms[0]?.items.map(item => item.id)).toContain('chisel');
+  });
+
+  it('loads runtime images for becomes-item targets authored on the replacement target itinerary', async () => {
+    const fetchMock = vi.fn(async () => ({ ok:true, blob:async () => new Blob(['fake']) }));
+    const createImageBitmapMock = vi.fn(async () => ({ width:64, height:32 } as ImageBitmap));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createImageBitmapMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = loadLevelFromText(becomesCharacterInventoryFollowupText, 'becomes-character-inventory-followup.md');
+    const maskedCharacter = level.allCharactersById.get('niccolo masked');
+    const becomesEvent = maskedCharacter?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_ITEM);
+    const imageSet = await createImageSetFromLevel(level);
+    const gameState = createGameState({ ...level, initialTime:becomesEvent!.startTime }, imageSet);
+    const runtimeMaskedCharacter = gameState.characters.find(character => character.id === 'niccolo masked');
+
+    expect(runtimeMaskedCharacter?.leftHandItem?.id).toBe('brass key');
+    expect(findImageBitmap(gameState.imageSet, runtimeMaskedCharacter?.leftHandItem?.imageUrl)).not.toBeNull();
   });
 });

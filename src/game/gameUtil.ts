@@ -62,6 +62,7 @@ import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
+import { findActiveCharacter, findActivePlacedCharacter, findCharacterById, setActiveCharacterId } from "./activeCharacterUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -81,13 +82,13 @@ function _findBecomesTargetCharacterIds(level:Level):Set<string> {
 
 export function findCharacter(gameState:GameState, characterRef:string):Character {
   const characterId = normalizeId(characterRef);
-  const character = gameState.characters.find((c) => c.id === characterId);
+  const character = findCharacterById(gameState, characterId);
   assertNonNullable(character, `character with id ${characterRef} not found`);
   return character;
 }
 
 function _setActiveRoomDiscovered(gameState:GameState) {
-  const activeCharacter = gameState.characters[gameState.activeCharacterI];
+  const activeCharacter = findActivePlacedCharacter(gameState);
   if (activeCharacter) {
     const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y);
     if (activeRoom) {
@@ -183,7 +184,7 @@ function _compareCharactersForCycleOrder(character1:Character, character2:Charac
 }
 
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeCharacter = findActiveCharacter(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (!activeRoom || (!gameState.isLevelComplete && activeRoom.isObscured)) return null;
   return activeRoom;
@@ -202,7 +203,7 @@ function _findSpeechEffectRooms(gameState:GameState):Room[] {
 }
 
 function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharacterEvent, metaTime:number) {
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeCharacter = findActivePlacedCharacter(gameState);
   if (!activeCharacter) return;
   const activeRoom = _findActiveVisibleRoom(gameState);
   if (!activeRoom) return;
@@ -215,7 +216,7 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   if (activeCharacterIndex === -1) return;
   const nextCharacter = charactersInRoom[(activeCharacterIndex + 1) % charactersInRoom.length];
   if (nextCharacter.id === activeCharacter.id) return;
-  gameState.activeCharacterI = gameState.characters.indexOf(nextCharacter);
+  setActiveCharacterId(gameState, nextCharacter.id);
   gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter,
     findCharacterDisplayPosition(nextCharacter, activeRoom), metaTime, gameState.scalingFactors));
 }
@@ -247,7 +248,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number,
     rebuildDynamicStateForTime(gameState, nextTime, previousTime, metaTime);
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
-  syncCameraTargetToActiveRoom(gameState.camera, gameState.rooms, gameState.characters[gameState.activeCharacterI] || null,
+  syncCameraTargetToActiveRoom(gameState.camera, gameState.rooms, findActiveCharacter(gameState),
     cameraAspectRatio, now, gameState.groundFloorY);
   updateCamera(gameState.camera, now);
   _setActiveRoomDiscovered(gameState);
@@ -448,7 +449,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
   if (onActiveCharacterChanged) callOnActiveCharacterChangedAsNeeded(gameState, onActiveCharacterChanged);
   const activeVisibleRoom = _findActiveVisibleRoom(gameState);
-  context.canvas.style.cursor = activeVisibleRoom && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.characters[gameState.activeCharacterI]?.id
+  context.canvas.style.cursor = activeVisibleRoom && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.activeCharacterId
     ? "pointer"
     : gameState.hoveredRoomId ? "pointer" : "default";
 
@@ -506,6 +507,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     hoveredExitKey:null,
     hoveredRoomId:null,
     viewedItemIds:new Set<string>(),
+    activeCharacterId:level.activeCharacterId,
     activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isLevelComplete:false,
     isPlaying:false,

@@ -25,6 +25,7 @@ import LockEvent from "./types/itineraryEvents/LockEvent";
 import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
 import VisibilityEvent from "./types/itineraryEvents/VisibilityEvent";
 import ExitStatus from "./types/ExitStatus";
+import { setActiveCharacterId } from "./activeCharacterUtil";
 
 type AppliedInventoryEvent = {
   characterId:string,
@@ -104,9 +105,33 @@ function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<strin
   });
 }
 
+function _findReplayCharacters(gameState:GameState):Character[] {
+  return [...gameState.characters, ...gameState.unplacedCharactersById.values()];
+}
+
+function _findCharacterReplacementStartTime(character:Character):number|null {
+  const replacementEvent = character.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER
+    && (event as BecomesCharacterEvent).targetCharacterId === character.id) as BecomesCharacterEvent | undefined;
+  return replacementEvent?.startTime ?? null;
+}
+
+function _isReplayEventActiveForCharacter(gameState:GameState, character:Character, eventStartTime:number):boolean {
+  if (!gameState.initialUnplacedCharactersById.has(character.id)) return true;
+  const replacementStartTime = _findCharacterReplacementStartTime(character);
+  if (replacementStartTime === null) return true;
+  return eventStartTime >= replacementStartTime;
+}
+
+function _shouldCollectInventoryEvent(gameState:GameState, character:Character,
+  event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent):boolean {
+  if (!_isReplayEventActiveForCharacter(gameState, character, event.startTime)) return false;
+  if (event.type !== ItineraryEventType.BECOMES_CHARACTER) return true;
+  return (event as BecomesCharacterEvent).sourceCharacterId === character.id;
+}
+
 function _collectAppliedInventoryEvents(gameState:GameState, time:number):AppliedInventoryEvent[] {
   const appliedEvents:AppliedInventoryEvent[] = [];
-  gameState.characters.forEach(character => {
+  _findReplayCharacters(gameState).forEach(character => {
     character.itinerary.forEach((event, eventIndex) => {
       if (event.startTime > time) return;
       switch(event.type) {
@@ -116,13 +141,15 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
         case ItineraryEventType.BECOMES_ITEM:
         case ItineraryEventType.BECOMES_CHARACTER:
           {
+            const inventoryEvent = event as TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent;
+            if (!_shouldCollectInventoryEvent(gameState, character, inventoryEvent)) break;
             const startPosition = character.itineraryIndex.eventStartPositions[eventIndex];
             assertNonNullable(startPosition);
             appliedEvents.push({
               characterId:character.id,
               eventIndex,
               startPosition:duplicatePosition(startPosition),
-              event:event as TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent
+              event:inventoryEvent
             });
           }
         break;
@@ -135,9 +162,10 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
 
 function _collectAppliedExitStateEvents(gameState:GameState, time:number):AppliedExitStateEvent[] {
   const appliedEvents:AppliedExitStateEvent[] = [];
-  gameState.characters.forEach(character => {
+  _findReplayCharacters(gameState).forEach(character => {
     character.itinerary.forEach((event, eventIndex) => {
       if (event.startTime > time) return;
+      if (!_isReplayEventActiveForCharacter(gameState, character, event.startTime)) return;
       switch(event.type) {
         case ItineraryEventType.LOCK:
         case ItineraryEventType.UNLOCK:
@@ -161,9 +189,10 @@ function _collectAppliedExitStateEvents(gameState:GameState, time:number):Applie
 
 function _collectAppliedVisibilityEvents(gameState:GameState, time:number):AppliedVisibilityEvent[] {
   const appliedEvents:AppliedVisibilityEvent[] = [];
-  gameState.characters.forEach(character => {
+  _findReplayCharacters(gameState).forEach(character => {
     character.itinerary.forEach((event, eventIndex) => {
       if (event.startTime > time) return;
+      if (!_isReplayEventActiveForCharacter(gameState, character, event.startTime)) return;
       switch(event.type) {
         case ItineraryEventType.SHOW:
         case ItineraryEventType.HIDE:
@@ -261,7 +290,8 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   sourceCharacter.rightHandItem = null;
   gameState.unplacedCharactersById.set(sourceCharacter.id, sourceCharacter);
   gameState.characters.splice(sourceCharacterIndex, 1, targetCharacter);
-  assert(gameState.characters[gameState.activeCharacterI] === targetCharacter);
+  if (gameState.activeCharacterId === sourceCharacterId) setActiveCharacterId(gameState, targetCharacterId);
+  assert(gameState.activeCharacterId !== sourceCharacterId);
 }
 
 function _findCharacter(gameState:GameState, characterId:string):Character {
@@ -331,7 +361,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           const room = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
           const itemFromRoom = room ? _removeItemById(room.items, takeEvent.itemId) : null;
           const item = itemFromRoom || removeOwnedItemById(actor, takeEvent.itemId);
-          if (!item) break;
+          assertNonNullable(item, `unable to replay take item ${takeEvent.itemId} for ${actor.id}`);
           if (itemFromRoom && room && !room.isObscured && previousTime !== undefined && takeEvent.startTime > previousTime && takeEvent.startTime <= time) {
             pendingRoomEffects.push({
               roomId:room.id,
@@ -347,9 +377,11 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           const dropEvent = event as DropItemEvent;
           const actorRoom = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
           const dropRoom = findRoomAtPosition(gameState.rooms, dropEvent.position.x, dropEvent.position.y);
-          if (!actorRoom || !dropRoom || actorRoom.id !== dropRoom.id) break;
+          assertNonNullable(actorRoom, `unable to find actor room when replaying drop item ${dropEvent.itemId} for ${actor.id}`);
+          assertNonNullable(dropRoom, `unable to find drop room when replaying drop item ${dropEvent.itemId} for ${actor.id}`);
+          assert(actorRoom.id === dropRoom.id, `drop item ${dropEvent.itemId} for ${actor.id} changed rooms during replay`);
           const item = removeOwnedItemById(actor, dropEvent.itemId);
-          if (!item) break;
+          assertNonNullable(item, `unable to replay drop item ${dropEvent.itemId} for ${actor.id}`);
           item.position = duplicatePosition(dropEvent.position);
           item.drawOffset = duplicatePosition(dropEvent.drawOffset);
           if (!dropRoom.isObscured && previousTime !== undefined && dropEvent.startTime > previousTime && dropEvent.startTime <= time) {
@@ -366,9 +398,9 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
         {
           const giveEvent = event as GiveItemEvent;
           const recipient = gameState.characters.find(character => character.id === giveEvent.recipientCharacterId) || null;
-          if (!recipient) break;
+          assertNonNullable(recipient, `unable to replay give item recipient ${giveEvent.recipientCharacterId}`);
           const item = removeOwnedItemById(actor, giveEvent.itemId);
-          if (!item) break;
+          assertNonNullable(item, `unable to replay give item ${giveEvent.itemId} for ${actor.id}`);
           const actorRoom = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
           if (!actorRoom?.isObscured && previousTime !== undefined && giveEvent.startTime > previousTime && giveEvent.startTime <= time && actorRoom) {
             pendingRoomEffects.push({

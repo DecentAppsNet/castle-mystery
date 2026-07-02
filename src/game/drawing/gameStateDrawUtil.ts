@@ -32,6 +32,7 @@ import { findImageBitmap } from "@/game/imageAssetUtil";
 import { getGroundImageAssetUrl } from "../imageUrlUtil";
 import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
+import { findActiveCharacter } from "../activeCharacterUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
@@ -108,7 +109,7 @@ function _findHoveredItemHighlightId(gameState:GameState, canShowHoverPopovers:b
 }
 
 function _findHighlightedWaypointPosition(gameState:GameState):Position|null {
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeCharacter = findActiveCharacter(gameState);
   if (!activeCharacter) return null;
 
   let latestDestination:Position|null = activeCharacter.waypoint ? duplicatePosition(activeCharacter.waypoint.position) : null;
@@ -300,7 +301,7 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
 
 export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D, metaTime:number) {
   _ensureRoomShellCaches(gameState, context);
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeCharacter = findActiveCharacter(gameState);
   const highlightedWaypointPosition = _findHighlightedWaypointPosition(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;

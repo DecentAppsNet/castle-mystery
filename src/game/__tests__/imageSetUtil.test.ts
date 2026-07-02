@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import backgroundImageText from './fixtures/background-image.md?raw';
 import becomesCharacterText from '../integration-tests/fixtures/becomes-character.md?raw';
+import becomesCharacterInventoryFollowupText from '../integration-tests/fixtures/becomes-character-inventory-followup.md?raw';
 import becomesItemText from '../integration-tests/fixtures/becomes-item.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
@@ -196,6 +197,22 @@ describe('imageSetUtil.ts', () => {
     vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
 
     const level = loadLevelFromText(becomesItemText, 'becomes-item.md');
+    const imageSet = await createImageSetFromLevel(level);
+
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/items/chisel.png');
+    expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/items/brassKey.png');
+    expect(imageSet.has(getItemImageAssetUrl('chisel.png'))).toBe(true);
+    expect(imageSet.has(getItemImageAssetUrl('brassKey.png'))).toBe(true);
+  });
+
+  it('loads becomes-target item images authored only on a replacement target itinerary', async () => {
+    const fetchMock = vi.fn(async () => ({ ok:true, blob:async () => new Blob(['fake']) }));
+    const createImageBitmapMock = vi.fn(async () => ({ width:64, height:32 } as ImageBitmap));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createImageBitmapMock);
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+
+    const level = loadLevelFromText(becomesCharacterInventoryFollowupText, 'becomes-character-inventory-followup.md');
     const imageSet = await createImageSetFromLevel(level);
 
     expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/items/chisel.png');

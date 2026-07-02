@@ -68,7 +68,7 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
     setConclusions(gameState.conclusions);
     setDiscoveries(createDiscoveries(gameState));
     setConclusionClaimCooldowns({});
-    setActiveCharacterId(gameState.characters[gameState.activeCharacterI]?.id || "");
+    setActiveCharacterId(gameState.activeCharacterId);
     setIsScrubbing(false);
     setModalDialogName(gameState.isLevelComplete ? WinLevelDialog.name : null);
 

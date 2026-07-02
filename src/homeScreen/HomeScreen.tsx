@@ -29,7 +29,9 @@ function _findActiveInitialCharacter(gameState:GameState, activeCharacterId:stri
 }
 
 function _findShiftArrowTargetTime(gameState:GameState, direction:number):number|null {
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeCharacter = gameState.characters.find(character => character.id === gameState.activeCharacterId)
+    || gameState.unplacedCharactersById.get(gameState.activeCharacterId)
+    || null;
   if (!activeCharacter) return null;
   return direction > 0
     ? findNextRoomEntryTime(activeCharacter, gameState.time)
@@ -87,7 +89,7 @@ function HomeScreen() {
       setWinSynopsis(initResults.gameState.winSynopsis);
       setConclusions(initResults.gameState.conclusions);
       setDiscoveries(createDiscoveries(initResults.gameState));
-      setActiveCharacterId(initResults.gameState.characters[initResults.gameState.activeCharacterI]?.id || "");
+      setActiveCharacterId(initResults.gameState.activeCharacterId);
       if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
     }).catch((error:unknown) => {
       if (isCancelled) return;

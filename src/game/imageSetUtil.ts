@@ -27,8 +27,7 @@ function _findPunchMaskImageUrl(imageUrl:string):string|null {
 
 function _findBecomesTargetImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>();
-  const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
-  sourceCharacters.forEach(character => character.itinerary.forEach(event => {
+  level.allCharactersById.forEach(character => character.itinerary.forEach(event => {
     if (event.type !== ItineraryEventType.BECOMES_ITEM) return;
     const targetItem = level.itemsById.get((event as BecomesItemEvent).targetItemId) || null;
     if (targetItem?.imageUrl) imageUrls.add(targetItem.imageUrl);

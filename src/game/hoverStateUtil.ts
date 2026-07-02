@@ -20,6 +20,7 @@ import ExitType from "./types/ExitType";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "./roomUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import { findCharacterDisplayPosition } from "./characterDisplayPositionUtil";
+import { findActiveCharacter, setActiveCharacterId } from "./activeCharacterUtil";
 
 const ROOM_NAVIGATION_TIME_OFFSET = 100;
 
@@ -67,7 +68,7 @@ function _findClosestRoomEntryTime(gameState:GameState, character:Character, roo
 }
 
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeCharacter = findActiveCharacter(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (!activeRoom || (!gameState.isLevelComplete && activeRoom.isObscured)) return null;
   return activeRoom;
@@ -83,7 +84,7 @@ function _findNavigableRoomAtPosition(gameState:GameState, x:number, y:number):R
   const hoveredRoom = _findVisibleHoveredRoom(gameState, x, y);
   if (!hoveredRoom) return null;
   if (_findHoveredRoomContent(gameState, hoveredRoom, x, y)) return null;
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeCharacter = findActiveCharacter(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (activeRoom?.id === hoveredRoom.id) return null;
   return _findExitAtPosition(hoveredRoom, x, y, gameState) ? null : hoveredRoom;
@@ -95,7 +96,7 @@ function _adjustRoomNavigationTime(gameState:GameState, time:number):number {
 }
 
 function _jumpToRoomTime(gameState:GameState, roomId:string, metaTime:number) {
-  const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+  const activeCharacter = findActiveCharacter(gameState);
   let targetCharacter = activeCharacter;
   let targetTime = activeCharacter ? _findClosestRoomEntryTime(gameState, activeCharacter, roomId) : null;
   if (targetTime === null) {
@@ -119,7 +120,7 @@ function _jumpToRoomTime(gameState:GameState, roomId:string, metaTime:number) {
 
   const wasPlaying = gameState.isPlaying;
   const targetCharacterId = targetCharacter?.id || null;
-  if (targetCharacterId) gameState.activeCharacterI = gameState.characters.findIndex(character => character.id === targetCharacterId);
+  if (targetCharacterId) setActiveCharacterId(gameState, targetCharacterId);
   gameState.activeEffects.length = 0;
   rebuildDynamicStateForTime(gameState, targetTime, undefined, metaTime);
   gameState.isPlaying = false;
@@ -127,7 +128,7 @@ function _jumpToRoomTime(gameState:GameState, roomId:string, metaTime:number) {
   const rebuiltTargetCharacter = targetCharacterId
     ? gameState.characters.find(character => character.id === targetCharacterId) || null
     : null;
-  if (rebuiltTargetCharacter) gameState.activeCharacterI = gameState.characters.indexOf(rebuiltTargetCharacter);
+  if (rebuiltTargetCharacter) setActiveCharacterId(gameState, rebuiltTargetCharacter.id);
   if (rebuiltTargetCharacter) {
     const rebuiltTargetRoom = findRoomAtPosition(gameState.rooms, rebuiltTargetCharacter.position.x, rebuiltTargetCharacter.position.y);
     gameState.activeEffects.push(createCharacterSelectEffect(rebuiltTargetCharacter,
@@ -141,7 +142,7 @@ function _findInteractiveCharacterAtPosition(gameState:GameState, x:number, y:nu
     ? _findVisibleHoveredRoom(gameState, x, y)
     : _findActiveVisibleRoom(gameState);
   if (!interactionRoom && !gameState.isLevelComplete) {
-    const activeCharacter = gameState.characters[gameState.activeCharacterI] || null;
+    const activeCharacter = findActiveCharacter(gameState);
     const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
     if (activeRoom?.isObscured) return null;
   }
@@ -165,8 +166,7 @@ function _findHoverInteractionRoom(gameState:GameState, x:number, y:number):Room
 export function updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent, metaTime:number) {
   const character = _findInteractiveCharacterAtPosition(gameState, event.x, event.y);
   if (character) {
-    const characterI = gameState.characters.indexOf(character);
-    gameState.activeCharacterI = characterI;
+    setActiveCharacterId(gameState, character.id);
     const characterRoom = findRoomAtPosition(gameState.rooms, character.position.x, character.position.y);
     gameState.activeEffects.push(createCharacterSelectEffect(character,
       findCharacterDisplayPosition(character, characterRoom), metaTime, gameState.scalingFactors));

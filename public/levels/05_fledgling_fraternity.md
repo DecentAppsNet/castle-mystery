@@ -163,19 +163,19 @@ DDCCAAABB.
 : Sticky Agatha says, "I'll stay here and keep watch."
 
 23:00:00 Niccolo Masked @ Hall
-// : @ Nave
-// : takes Chisel in left hand
-// : says "Chisel"
-// : Chisel becomes Brass Key
-// : says "Brass Key" 
-// : Brass Key becomes Chisel
-// : says "Chisel again!"
-// : takes Chisel into inventory
-// : says "Chisel in my pocket?"
-// : Chisel becomes Brass Key
-// : takes Brass Key into right hand
-// : says "Naw! It's the key."
-// : drops Brass Key
-// : says "Did I drop the brass key?"
-// : Brass Key becomes Chisel
-// : says "Look again. Chisel!"
+: @ Nave
+: takes Chisel in left hand
+: says "Chisel"
+: Chisel becomes Brass Key
+: says "Brass Key" 
+: Brass Key becomes Chisel
+: says "Chisel again!"
+: takes Chisel into inventory
+: says "Chisel in my pocket?"
+: Chisel becomes Brass Key
+: takes Brass Key into right hand
+: says "Naw! It's the key."
+: drops Brass Key
+: says "Did I drop the brass key?"
+: Brass Key becomes Chisel
+: says "Look again. Chisel!"

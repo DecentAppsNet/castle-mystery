@@ -37,6 +37,7 @@ type GameState = {
   hoveredExitKey:string|null,
   hoveredRoomId:string|null,
   viewedItemIds:Set<string>,
+  activeCharacterId:string,
   activeCharacterI:number,
   isLevelComplete:boolean,
   isPlaying:boolean,

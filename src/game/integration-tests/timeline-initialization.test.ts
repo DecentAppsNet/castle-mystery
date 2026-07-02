@@ -20,6 +20,7 @@ describe('timeline initialization integration', () => {
     expect(gameState.startTime).toBe(level.startTime);
     expect(gameState.duration).toBe(level.duration);
     expect(gameState.time).toBe(level.initialTime);
+    expect(gameState.activeCharacterId).toBe(level.activeCharacterId);
     expect(gameState.groundFloorY).toBe(level.groundFloorY);
     expect(gameState.labels[0]?.minutes).toBe(10 * 60);
     expect(gameState.labels[gameState.labels.length - 1]?.minutes).toBe(12 * 60);

@@ -159,6 +159,7 @@ describe('room navigation integration', () => {
     updateGameStateForMouseDown(gameState, { type:PlayerEventType.MOUSEDOWN, x:25, y:5 }, 0);
 
     expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('guide');
+    expect(gameState.activeCharacterId).toBe('guide');
     expect(gameState.time).toBeGreaterThan(2_000);
     expect(gameState.time).toBeLessThanOrEqual(5_000);
   });

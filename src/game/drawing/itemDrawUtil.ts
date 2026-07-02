@@ -2,6 +2,8 @@
 /* This module groups item-focused drawing helpers, including item hit-testing and item popovers.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import { assertNonNullable } from "decent-portal";
+
 import { clamp } from "@/common/numberUtil";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { findItemDisplayPosition } from "@/game/itemDisplayPositionUtil";
@@ -146,8 +148,12 @@ export function getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFac
 
 // Resolves the image to draw for an item, falling back to the unknown-item asset.
 function _findItemImage(item:Item, imageSet:ImageSet):ImageBitmap|null {
-  const imageUrl = item.imageUrl ?? UNKNOWN_ITEM_ICON_URL;
-  return findImageBitmap(imageSet, imageUrl);
+  if (!item.imageUrl) return findImageBitmap(imageSet, UNKNOWN_ITEM_ICON_URL);
+  const image = findImageBitmap(imageSet, item.imageUrl);
+  if (imageSet.size > 0) {
+    assertNonNullable(image, `missing loaded image asset for item ${item.id} (${item.imageUrl})`);
+  }
+  return image;
 }
 
 // Draws an item image at the supplied projected anchor point.

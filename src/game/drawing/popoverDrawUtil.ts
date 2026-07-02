@@ -1,6 +1,8 @@
 /* This module groups shared popover drawing helpers for room, character, and exit overlays.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import { assertNonNullable } from "decent-portal";
+
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { choosePopoverBoxRect } from "@/game/popoverLayoutUtil";
 import { findImageBitmap } from "@/game/imageAssetUtil";
@@ -405,6 +407,9 @@ export function drawPopover({ targetRect, title = "", bodyEntries, scalingFactor
     }
 
     const image = imageSet ? findImageBitmap(imageSet, row.imageUrl) : null;
+    if (imageSet && imageSet.size > 0) {
+      assertNonNullable(image, `missing loaded popover image asset ${row.imageUrl}`);
+    }
     const imageLeft = left + padding;
     const imageTop = rowTop;
     const textLeft = imageLeft + row.imageWidth + typographyAndSpacing.imageColumnGap;
