@@ -1,5 +1,5 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import itemEmitsActivityText from '../__tests__/fixtures/item-emits-activity.md?raw';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
@@ -7,8 +7,17 @@ import { createGameState, updateAndDraw } from '../gameUtil';
 import { loadLevelFromText } from '../../levelLoading/levelUtil';
 import itemEmitsAdjacentRoomText from './fixtures/item-emits-adjacent-room.md?raw';
 import { gameToCanvasPosition } from '../drawing/drawUtil';
+import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
 
 describe('item emits integration', () => {
+  beforeEach(() => {
+    stubOffscreenCanvas();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   describe('updateAndDraw()', () => {
     it('draws emit bubbles for carried items that are not visible in hand', () => {
       const level = loadLevelFromText(itemEmitsActivityText);

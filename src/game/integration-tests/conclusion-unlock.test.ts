@@ -1,5 +1,5 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { getCharacterCanvasRect } from '../drawing/characterDrawUtil';
@@ -20,6 +20,7 @@ import { createDefaultItem } from '../types/Item';
 import { createDefaultRoom } from '../types/Room';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
 import { changeConclusions } from '../playerEventUtil';
+import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
 
 function _createTestLevel():Level {
   const initialPosition = { x:5, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z };
@@ -244,6 +245,14 @@ function _hoverHero(gameState:ReturnType<typeof createGameState>) {
 }
 
 describe('conclusion unlock integration', () => {
+  beforeEach(() => {
+    stubOffscreenCanvas();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('preserves authored outgoing unlock edges and initial locked targets in the game state', () => {
     const gameState = createGameState(_createTestLevel());
 

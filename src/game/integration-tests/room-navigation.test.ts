@@ -1,5 +1,5 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createItineraryIndex, createRoomEntryEvent } from '../itineraryUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
@@ -13,6 +13,7 @@ import Level, { createDefaultLevel } from '../types/Level';
 import Character, { createDefaultCharacter } from '../types/Character';
 import Room, { createDefaultRoom } from '../types/Room';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
+import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
 
 const BACK_ROW_Z = ROOM_BACK_Z;
 const DEFAULT_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
@@ -88,6 +89,14 @@ function _createMockContext():CanvasRenderingContext2D {
 }
 
 describe('room navigation integration', () => {
+  beforeEach(() => {
+    stubOffscreenCanvas();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('shows a navigable hovered room when the mouse is over a discovered room without another popover target', () => {
     const hero = _createCharacter('hero', 5, [createRoomEntryEvent(1_000, 'library')]);
     const gameState = createGameState(_createLevel([hero]));

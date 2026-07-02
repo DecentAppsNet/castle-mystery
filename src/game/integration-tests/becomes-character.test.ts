@@ -5,6 +5,7 @@ import becomesCharacterText from './fixtures/becomes-character.md?raw';
 import becomesCharacterInventoryFollowupText from './fixtures/becomes-character-inventory-followup.md?raw';
 import becomesCharacterLaterAbsoluteText from './fixtures/becomes-character-later-absolute.md?raw';
 import becomesCharacterFraternityLikeText from './fixtures/becomes-character-fraternity-like.md?raw';
+import becomesCharacterObscuredTransitionText from './fixtures/becomes-character-obscured-transition.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { createGameState } from '../gameUtil';
@@ -13,6 +14,7 @@ import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import { findRoomAtPosition } from '../roomUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
 import { findImageBitmap } from '../imageAssetUtil';
+import { findActiveCharacter, setActiveCharacterId } from '../activeCharacterUtil';
 
 describe('becomes character integration', () => {
   afterEach(() => {
@@ -32,8 +34,8 @@ describe('becomes character integration', () => {
 
     const maskedCharacter = afterState.characters.find(character => character.id === 'niccolo masked');
     expect(maskedCharacter).toBeDefined();
-    expect(afterState.activeCharacterId).toBe('niccolo masked');
-    expect(afterState.characters[afterState.activeCharacterI]?.id).toBe('niccolo masked');
+    expect(afterState.activeCharacterId).toBe('niccolo');
+    expect(afterState.activeCharacterI).toBe(-1);
     expect(maskedCharacter?.items.map(item => item.id)).toEqual(['inventory note']);
     expect(maskedCharacter?.leftHandItem?.id).toBe('left pebble');
     expect(maskedCharacter?.rightHandItem?.id).toBe('right twig');
@@ -57,6 +59,34 @@ describe('becomes character integration', () => {
     expect(findCharacterPose(rebuiltMaskedCharacter!, 8_000).speech).toBe('Now I speak as the masked one.');
   });
 
+  it('can rebuild while the active focus is an unplaced source character after replacement', () => {
+    const level = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
+    const niccolo = level.characters.find(character => character.id === 'niccolo');
+    const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
+    const gameState = createGameState({ ...level, initialTime:becomesEvent!.startTime });
+
+    setActiveCharacterId(gameState, 'niccolo');
+    rebuildDynamicStateForTime(gameState, becomesEvent!.startTime, gameState.time, 0);
+
+    expect(gameState.activeCharacterId).toBe('niccolo');
+    expect(gameState.activeCharacterI).toBe(-1);
+    expect(gameState.unplacedCharactersById.get('niccolo')).toBeDefined();
+    expect(findRoomAtPosition(gameState.rooms,
+      gameState.unplacedCharactersById.get('niccolo')!.position.x,
+      gameState.unplacedCharactersById.get('niccolo')!.position.y)?.id).toBe('hall');
+  });
+
+  it('switches focus to the replacement target when the active source is visible in an unobscured room', () => {
+    const level = loadLevelFromText(becomesCharacterFraternityLikeText, 'becomes-character-fraternity-like.md');
+    const niccolo = level.characters.find(character => character.id === 'niccolo');
+    const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
+    const gameState = createGameState({ ...level, initialTime:becomesEvent!.startTime });
+
+    expect(gameState.activeCharacterId).toBe('niccolo masked');
+    expect(gameState.characters[gameState.activeCharacterI]?.id).toBe('niccolo masked');
+    expect(findActiveCharacter(gameState)?.id).toBe('niccolo masked');
+  });
+
   it('applies later absolute room-arrival activities authored for the replacement target', () => {
     const level = loadLevelFromText(becomesCharacterLaterAbsoluteText, 'becomes-character-later-absolute.md');
     const gameState = createGameState({ ...level, initialTime:10_000 });
@@ -75,6 +105,21 @@ describe('becomes character integration', () => {
     expect(maskedCharacter).toBeDefined();
     if (!maskedCharacter) expect.fail('expected Niccolo Masked to replace Niccolo by 23:00:00');
     expect(findRoomAtPosition(gameState.rooms, maskedCharacter.position.x, maskedCharacter.position.y)?.id).toBe('hall');
+  });
+
+  it('keeps focus on the unplaced source after an obscured-room replacement while the target continues later placed movement', () => {
+    const level = loadLevelFromText(becomesCharacterObscuredTransitionText, 'becomes-character-obscured-transition.md');
+    const gameState = createGameState({ ...level, initialTime:8_000 });
+    const activeCharacter = findActiveCharacter(gameState);
+    const maskedCharacter = gameState.characters.find(character => character.id === 'niccolo masked');
+
+    expect(gameState.activeCharacterId).toBe('niccolo');
+    expect(gameState.activeCharacterI).toBe(-1);
+    expect(activeCharacter).toBe(gameState.unplacedCharactersById.get('niccolo'));
+    expect(findRoomAtPosition(gameState.rooms, activeCharacter!.position.x, activeCharacter!.position.y)?.id).toBe('hall');
+    expect(maskedCharacter).toBeDefined();
+    if (!maskedCharacter) expect.fail('expected Niccolo Masked to be placed after the obscured-room replacement');
+    expect(findRoomAtPosition(gameState.rooms, maskedCharacter.position.x, maskedCharacter.position.y)?.id).toBe('nave');
   });
 
   it('applies take and drop follow-up inventory events authored for the replacement target', () => {

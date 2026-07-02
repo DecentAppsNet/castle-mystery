@@ -130,7 +130,7 @@ describe('lock unlock integration', () => {
     const unlockEventIndex = keeper?.itinerary.findIndex(event => event.type === ItineraryEventType.UNLOCK) ?? -1;
     const unlockStartPosition = unlockEventIndex >= 0 ? keeper?.itineraryIndex.eventStartPositions[unlockEventIndex] : null;
     const expectedRoom = unlockStartPosition ? findRoomAtPosition(level.rooms, unlockStartPosition.x, unlockStartPosition.y) : null;
-    const gameState = createGameState({ ...level, activeCharacterId:'Keeper' });
+    const gameState = createGameState({ ...level, activeCharacterId:'keeper' });
 
     expect(unlockEvent).toBeDefined();
     expect(unlockStartPosition).toBeDefined();

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { drawCharacter, drawEmitBubble, drawObscuredActiveCharacter, getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
 import { createImageAsset } from '@/game/imageAssetUtil';
@@ -8,6 +8,7 @@ import { createDefaultRoom } from '@/game/types/Room';
 import type Effect from '@/game/effects/types/Effect';
 import type ImageSet from '@/game/types/ImageSet';
 import type ScalingFactors from '@/game/types/ScalingFactors';
+import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
 
 const SCALING_FACTORS:ScalingFactors = {
   sourceX:0,
@@ -25,6 +26,14 @@ const SCALING_FACTORS:ScalingFactors = {
 };
 
 describe('characterDrawUtil', () => {
+  beforeEach(() => {
+    stubOffscreenCanvas();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   describe('getCharacterSpeechAnchor()', () => {
     it('disables sway for dead characters in every body orientation', () => {
       const time = CHARACTER_SWAY_INTERVAL_TEST_TIME;

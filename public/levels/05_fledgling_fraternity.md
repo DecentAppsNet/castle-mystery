@@ -159,11 +159,11 @@ DDCCAAABB.
 
 22:59:30 Sticky Agatha says "Put on your mask!" to Niccolo.
 : Niccolo says, "Oh, right."
-: becomes Niccolo Masked
 : Sticky Agatha says, "I'll stay here and keep watch."
 
-23:00:00 Niccolo Masked @ Hall
-: @ Nave
+23:00:00 Niccolo @ Hall
+: becomes Niccolo Masked
+23:00:05 Niccolo Masked @ Nave
 : takes Chisel in left hand
 : says "Chisel"
 : Chisel becomes Brass Key
@@ -179,3 +179,9 @@ DDCCAAABB.
 : says "Did I drop the brass key?"
 : Brass Key becomes Chisel
 : says "Look again. Chisel!"
+
+# Conclusions
+
+## Costumes
+
+* conclusion=[Niccolò il Calabrese] disguised themself as a pig.

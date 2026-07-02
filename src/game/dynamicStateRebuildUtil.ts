@@ -25,7 +25,7 @@ import LockEvent from "./types/itineraryEvents/LockEvent";
 import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
 import VisibilityEvent from "./types/itineraryEvents/VisibilityEvent";
 import ExitStatus from "./types/ExitStatus";
-import { setActiveCharacterId } from "./activeCharacterUtil";
+import { findActiveCharacter, setActiveCharacterId, syncActiveCharacterIndex } from "./activeCharacterUtil";
 
 type AppliedInventoryEvent = {
   characterId:string,
@@ -268,6 +268,13 @@ function _applyItemReplacement(gameState:GameState, sourceItemId:string, targetI
   throw new Error(`replacement source ${sourceItemId} was not found in runtime state`);
 }
 
+function _isCharacterReplacementSeamless(gameState:GameState, sourceCharacter:Character):boolean {
+  if (gameState.activeCharacterId !== sourceCharacter.id) return false;
+  if (!sourceCharacter.isVisible) return false;
+  const sourceRoom = findRoomAtPosition(gameState.rooms, sourceCharacter.position.x, sourceCharacter.position.y);
+  return !!sourceRoom && !sourceRoom.isObscured;
+}
+
 function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:string, targetCharacterId:string) {
   const sourceCharacterIndex = gameState.characters.findIndex(character => character.id === sourceCharacterId);
   if (sourceCharacterIndex === -1) throw new Error(`replacement source character ${sourceCharacterId} was not found in runtime state`);
@@ -290,8 +297,13 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   sourceCharacter.rightHandItem = null;
   gameState.unplacedCharactersById.set(sourceCharacter.id, sourceCharacter);
   gameState.characters.splice(sourceCharacterIndex, 1, targetCharacter);
-  if (gameState.activeCharacterId === sourceCharacterId) setActiveCharacterId(gameState, targetCharacterId);
-  assert(gameState.activeCharacterId !== sourceCharacterId);
+  if (_isCharacterReplacementSeamless(gameState, sourceCharacter)) {
+    setActiveCharacterId(gameState, targetCharacterId);
+    assert(gameState.activeCharacterId !== sourceCharacterId);
+    return;
+  }
+  syncActiveCharacterIndex(gameState);
+  assert(gameState.activeCharacterId === sourceCharacterId || gameState.activeCharacterId !== targetCharacterId);
 }
 
 function _findCharacter(gameState:GameState, characterId:string):Character {
@@ -456,7 +468,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
     character.facingDirection = pose.facingDirection;
     character.bodyOrientation = pose.bodyOrientation;
   });
-  const activeCharacter = gameState.characters[gameState.activeCharacterI];
+  const activeCharacter = findActiveCharacter(gameState);
   assertNonNullable(activeCharacter);
   const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y);
   assertNonNullable(activeRoom);
