@@ -138,7 +138,7 @@ DDCCAAABB.
 ## Hall
 
 * style=Old Castle
-* obscured=true
+* obscured=false
 
 # Characters
 

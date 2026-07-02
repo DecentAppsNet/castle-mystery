@@ -6,6 +6,7 @@ import becomesCharacterInventoryFollowupText from './fixtures/becomes-character-
 import becomesCharacterLaterAbsoluteText from './fixtures/becomes-character-later-absolute.md?raw';
 import becomesCharacterFraternityLikeText from './fixtures/becomes-character-fraternity-like.md?raw';
 import becomesCharacterObscuredTransitionText from './fixtures/becomes-character-obscured-transition.md?raw';
+import becomesCharacterObscuredArrivalTransitionText from './fixtures/becomes-character-obscured-arrival-transition.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { createGameState } from '../gameUtil';
@@ -86,6 +87,33 @@ describe('becomes character integration', () => {
     expect(findActiveCharacter(gameState)?.id).toBe('niccolo masked');
   });
 
+  it('keeps focus on the replacement target when a seamless becomes is rebuilt again', () => {
+    const level = loadLevelFromText(becomesCharacterFraternityLikeText, 'becomes-character-fraternity-like.md');
+    const niccolo = level.characters.find(character => character.id === 'niccolo');
+    const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
+    const gameState = createGameState({ ...level, initialTime:becomesEvent!.startTime });
+
+    rebuildDynamicStateForTime(gameState, becomesEvent!.startTime, gameState.time, 0);
+
+    expect(gameState.activeCharacterId).toBe('niccolo masked');
+    expect(findActiveCharacter(gameState)?.id).toBe('niccolo masked');
+  });
+
+  it('restores focus to the source when reversing before a seamless becomes', () => {
+    const level = loadLevelFromText(becomesCharacterFraternityLikeText, 'becomes-character-fraternity-like.md');
+    const niccolo = level.characters.find(character => character.id === 'niccolo');
+    const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
+    const gameState = createGameState({ ...level, initialTime:becomesEvent!.startTime });
+
+    rebuildDynamicStateForTime(gameState, becomesEvent!.startTime - 1, gameState.time, 0);
+
+    expect(gameState.activeCharacterId).toBe('niccolo');
+    expect(findActiveCharacter(gameState)?.id).toBe('niccolo');
+    expect(findRoomAtPosition(gameState.rooms,
+      findActiveCharacter(gameState)!.position.x,
+      findActiveCharacter(gameState)!.position.y)?.id).not.toBeNull();
+  });
+
   it('applies later absolute room-arrival activities authored for the replacement target', () => {
     const level = loadLevelFromText(becomesCharacterLaterAbsoluteText, 'becomes-character-later-absolute.md');
     const gameState = createGameState({ ...level, initialTime:10_000 });
@@ -108,6 +136,20 @@ describe('becomes character integration', () => {
 
   it('keeps focus on the unplaced source after an obscured-room replacement while the target continues later placed movement', () => {
     const level = loadLevelFromText(becomesCharacterObscuredTransitionText, 'becomes-character-obscured-transition.md');
+    const gameState = createGameState({ ...level, initialTime:8_000 });
+    const activeCharacter = findActiveCharacter(gameState);
+    const maskedCharacter = gameState.characters.find(character => character.id === 'niccolo masked');
+
+    expect(gameState.activeCharacterId).toBe('niccolo');
+    expect(activeCharacter).toBe(gameState.unplacedCharactersById.get('niccolo'));
+    expect(findRoomAtPosition(gameState.rooms, activeCharacter!.position.x, activeCharacter!.position.y)?.id).toBe('hall');
+    expect(maskedCharacter).toBeDefined();
+    if (!maskedCharacter) expect.fail('expected Niccolo Masked to be placed after the obscured-room replacement');
+    expect(findRoomAtPosition(gameState.rooms, maskedCharacter.position.x, maskedCharacter.position.y)?.id).toBe('nave');
+  });
+
+  it('keeps focus on the source when becomes happens immediately after entering an obscured room', () => {
+    const level = loadLevelFromText(becomesCharacterObscuredArrivalTransitionText, 'becomes-character-obscured-arrival-transition.md');
     const gameState = createGameState({ ...level, initialTime:8_000 });
     const activeCharacter = findActiveCharacter(gameState);
     const maskedCharacter = gameState.characters.find(character => character.id === 'niccolo masked');

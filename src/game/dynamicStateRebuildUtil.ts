@@ -115,6 +115,11 @@ function _findCharacterReplacementStartTime(character:Character):number|null {
   return replacementEvent?.startTime ?? null;
 }
 
+function _findCharacterReplacementEvent(character:Character):BecomesCharacterEvent|null {
+  return character.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER
+    && (event as BecomesCharacterEvent).targetCharacterId === character.id) as BecomesCharacterEvent | undefined || null;
+}
+
 function _isReplayEventActiveForCharacter(gameState:GameState, character:Character, eventStartTime:number):boolean {
   if (!gameState.initialUnplacedCharactersById.has(character.id)) return true;
   const replacementStartTime = _findCharacterReplacementStartTime(character);
@@ -268,14 +273,18 @@ function _applyItemReplacement(gameState:GameState, sourceItemId:string, targetI
   throw new Error(`replacement source ${sourceItemId} was not found in runtime state`);
 }
 
-function _isCharacterReplacementSeamless(gameState:GameState, sourceCharacter:Character):boolean {
-  if (gameState.activeCharacterId !== sourceCharacter.id) return false;
+function _isCharacterReplacementSeamless(gameState:GameState,
+  sourceCharacter:Character,
+  targetCharacterId:string,
+  replacementPosition:Position):boolean {
+  if (gameState.activeCharacterId !== sourceCharacter.id && gameState.activeCharacterId !== targetCharacterId) return false;
   if (!sourceCharacter.isVisible) return false;
-  const sourceRoom = findRoomAtPosition(gameState.rooms, sourceCharacter.position.x, sourceCharacter.position.y);
+  const sourceRoom = findRoomAtPosition(gameState.rooms, replacementPosition.x, replacementPosition.y);
   return !!sourceRoom && !sourceRoom.isObscured;
 }
 
-function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:string, targetCharacterId:string) {
+function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:string, targetCharacterId:string, replacementPosition:Position) {
+  assert(targetCharacterId !== sourceCharacterId);
   const sourceCharacterIndex = gameState.characters.findIndex(character => character.id === sourceCharacterId);
   if (sourceCharacterIndex === -1) throw new Error(`replacement source character ${sourceCharacterId} was not found in runtime state`);
   const sourceCharacter = gameState.characters[sourceCharacterIndex];
@@ -283,7 +292,8 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   assertNonNullable(targetCharacter, `unplaced replacement target character ${targetCharacterId} was not found`);
   gameState.unplacedCharactersById.delete(targetCharacterId);
 
-  targetCharacter.position = duplicatePosition(sourceCharacter.position);
+  sourceCharacter.position = duplicatePosition(replacementPosition);
+  targetCharacter.position = duplicatePosition(replacementPosition);
   targetCharacter.waypoint = sourceCharacter.waypoint;
   targetCharacter.facingDirection = sourceCharacter.facingDirection;
   targetCharacter.bodyOrientation = sourceCharacter.bodyOrientation;
@@ -297,10 +307,13 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   sourceCharacter.rightHandItem = null;
   gameState.unplacedCharactersById.set(sourceCharacter.id, sourceCharacter);
   gameState.characters.splice(sourceCharacterIndex, 1, targetCharacter);
-  if (_isCharacterReplacementSeamless(gameState, sourceCharacter)) {
+  if (_isCharacterReplacementSeamless(gameState, sourceCharacter, targetCharacterId, replacementPosition)) {
     gameState.activeCharacterId = targetCharacterId;
     assert(gameState.activeCharacterId !== sourceCharacterId);
     return;
+  }
+  if (gameState.activeCharacterId === targetCharacterId) {
+    gameState.activeCharacterId = sourceCharacterId;
   }
   assert(gameState.activeCharacterId === sourceCharacterId || gameState.activeCharacterId !== targetCharacterId);
 }
@@ -337,6 +350,15 @@ function _setMatchingExitStatus(gameState:GameState, roomExitId:string, exitStat
 
 function _findRoomExitById(room:GameState['rooms'][number], roomExitId:string) {
   return room.exits.find(candidate => candidate.id === roomExitId) || null;
+}
+
+function _normalizeActiveCharacterForTime(gameState:GameState, time:number) {
+  const activeCharacter = findActiveCharacter(gameState);
+  assertNonNullable(activeCharacter);
+  const replacementEvent = _findCharacterReplacementEvent(activeCharacter);
+  if (replacementEvent && time < replacementEvent.startTime) {
+    gameState.activeCharacterId = replacementEvent.sourceCharacterId;
+  }
 }
 
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime:number|undefined, metaTime:number) {
@@ -433,7 +455,10 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
       case ItineraryEventType.BECOMES_CHARACTER:
         {
           const becomesCharacterEvent = event as BecomesCharacterEvent;
-          _applyCharacterReplacement(gameState, becomesCharacterEvent.sourceCharacterId, becomesCharacterEvent.targetCharacterId);
+          _applyCharacterReplacement(gameState,
+            becomesCharacterEvent.sourceCharacterId,
+            becomesCharacterEvent.targetCharacterId,
+            startPosition);
         }
       break;
     }
@@ -467,6 +492,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
     character.facingDirection = pose.facingDirection;
     character.bodyOrientation = pose.bodyOrientation;
   });
+  _normalizeActiveCharacterForTime(gameState, time);
   const activeCharacter = findActiveCharacter(gameState);
   assertNonNullable(activeCharacter);
   const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y);
