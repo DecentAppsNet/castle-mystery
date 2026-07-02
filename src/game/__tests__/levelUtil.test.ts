@@ -1507,6 +1507,7 @@ describe('levelUtil itinerary loading', () => {
 
     expect(level.endTime).toBe(23 * 60 * 60 * 1000);
     expect(level.duration).toBe(30_000);
+    expect(level.labels[level.labels.length - 1]?.minutes).toBe(23 * 60);
   });
 
   it('keeps both start and end time labels for short levels', () => {

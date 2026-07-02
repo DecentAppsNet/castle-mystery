@@ -291,6 +291,19 @@ describe('levelItineraryLoader', () => {
       ].join('\n'), 'character-becomes-later-absolute.md', 1)).not.toThrow();
     });
 
+    it('extends the resolved timeline when a replacement target has later events', () => {
+      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const result = loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked',
+        '0:00:10 Niccolo Masked says, "Now I speak as the masked one."'
+      ].join('\n'), 'character-becomes-late-target-timeline.md', 1);
+
+      expect(result.duration).toBe(12_700);
+      expect(result.resolvedTimeline.latestResolvedActivityEndTime).toBe(12_700);
+      expect(result.resolvedTimeline.latestResolvedEventEndTime).toBe(12_700);
+    });
+
     it('rejects character becomes activities whose replacement target starts placed', () => {
       const level = loadLevelFromText(characterBecomesTargetPlacedLevelText, 'character-becomes-target-placed.md');
 
