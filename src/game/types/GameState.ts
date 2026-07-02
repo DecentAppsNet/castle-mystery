@@ -38,7 +38,6 @@ type GameState = {
   hoveredRoomId:string|null,
   viewedItemIds:Set<string>,
   activeCharacterId:string,
-  activeCharacterI:number,
   isLevelComplete:boolean,
   isPlaying:boolean,
   realTimeToGameTimeOffset:number,

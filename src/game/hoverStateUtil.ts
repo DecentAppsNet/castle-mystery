@@ -20,7 +20,7 @@ import ExitType from "./types/ExitType";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "./roomUtil";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import { findCharacterDisplayPosition } from "./characterDisplayPositionUtil";
-import { findActiveCharacter, setActiveCharacterId } from "./activeCharacterUtil";
+import { findActiveCharacter } from "./activeCharacterUtil";
 
 const ROOM_NAVIGATION_TIME_OFFSET = 100;
 
@@ -120,7 +120,7 @@ function _jumpToRoomTime(gameState:GameState, roomId:string, metaTime:number) {
 
   const wasPlaying = gameState.isPlaying;
   const targetCharacterId = targetCharacter?.id || null;
-  if (targetCharacterId) setActiveCharacterId(gameState, targetCharacterId);
+  if (targetCharacterId) gameState.activeCharacterId = targetCharacterId;
   gameState.activeEffects.length = 0;
   rebuildDynamicStateForTime(gameState, targetTime, undefined, metaTime);
   gameState.isPlaying = false;
@@ -128,7 +128,7 @@ function _jumpToRoomTime(gameState:GameState, roomId:string, metaTime:number) {
   const rebuiltTargetCharacter = targetCharacterId
     ? gameState.characters.find(character => character.id === targetCharacterId) || null
     : null;
-  if (rebuiltTargetCharacter) setActiveCharacterId(gameState, rebuiltTargetCharacter.id);
+  if (rebuiltTargetCharacter) gameState.activeCharacterId = rebuiltTargetCharacter.id;
   if (rebuiltTargetCharacter) {
     const rebuiltTargetRoom = findRoomAtPosition(gameState.rooms, rebuiltTargetCharacter.position.x, rebuiltTargetCharacter.position.y);
     gameState.activeEffects.push(createCharacterSelectEffect(rebuiltTargetCharacter,
@@ -166,7 +166,7 @@ function _findHoverInteractionRoom(gameState:GameState, x:number, y:number):Room
 export function updateGameStateForMouseDown(gameState:GameState, event:MouseDownEvent, metaTime:number) {
   const character = _findInteractiveCharacterAtPosition(gameState, event.x, event.y);
   if (character) {
-    setActiveCharacterId(gameState, character.id);
+    gameState.activeCharacterId = character.id;
     const characterRoom = findRoomAtPosition(gameState.rooms, character.position.x, character.position.y);
     gameState.activeEffects.push(createCharacterSelectEffect(character,
       findCharacterDisplayPosition(character, characterRoom), metaTime, gameState.scalingFactors));

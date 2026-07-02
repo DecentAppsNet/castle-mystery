@@ -62,7 +62,7 @@ import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
-import { findActiveCharacter, findActivePlacedCharacter, findCharacterById, setActiveCharacterId } from "./activeCharacterUtil";
+import { findActiveCharacter, findActivePlacedCharacter, findCharacterById } from "./activeCharacterUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -216,7 +216,7 @@ function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharac
   if (activeCharacterIndex === -1) return;
   const nextCharacter = charactersInRoom[(activeCharacterIndex + 1) % charactersInRoom.length];
   if (nextCharacter.id === activeCharacter.id) return;
-  setActiveCharacterId(gameState, nextCharacter.id);
+  gameState.activeCharacterId = nextCharacter.id;
   gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter,
     findCharacterDisplayPosition(nextCharacter, activeRoom), metaTime, gameState.scalingFactors));
 }
@@ -382,14 +382,6 @@ function _syncThinkingEffects(gameState:GameState, isScrubbing:boolean = false) 
   });
 }
 
-function _findCharacterI(characters:Character[], characterRef:string):number {
-  const characterId = normalizeId(characterRef);
-  for(let i = 0; i < characters.length; ++i) {
-    if (characters[i].id === characterId) return i;
-  }
-  return -1;
-}
-
 function _fillCanvasBlack(context:CanvasRenderingContext2D) {
   context.fillStyle = COLOR_BLACK;
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
@@ -508,7 +500,6 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     hoveredRoomId:null,
     viewedItemIds:new Set<string>(),
     activeCharacterId:level.activeCharacterId,
-    activeCharacterI:_findCharacterI(level.characters, level.activeCharacterId),
     isLevelComplete:false,
     isPlaying:false,
     time:level.initialTime,

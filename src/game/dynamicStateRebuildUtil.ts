@@ -25,7 +25,7 @@ import LockEvent from "./types/itineraryEvents/LockEvent";
 import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
 import VisibilityEvent from "./types/itineraryEvents/VisibilityEvent";
 import ExitStatus from "./types/ExitStatus";
-import { findActiveCharacter, setActiveCharacterId, syncActiveCharacterIndex } from "./activeCharacterUtil";
+import { findActiveCharacter } from "./activeCharacterUtil";
 
 type AppliedInventoryEvent = {
   characterId:string,
@@ -298,11 +298,10 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   gameState.unplacedCharactersById.set(sourceCharacter.id, sourceCharacter);
   gameState.characters.splice(sourceCharacterIndex, 1, targetCharacter);
   if (_isCharacterReplacementSeamless(gameState, sourceCharacter)) {
-    setActiveCharacterId(gameState, targetCharacterId);
+    gameState.activeCharacterId = targetCharacterId;
     assert(gameState.activeCharacterId !== sourceCharacterId);
     return;
   }
-  syncActiveCharacterIndex(gameState);
   assert(gameState.activeCharacterId === sourceCharacterId || gameState.activeCharacterId !== targetCharacterId);
 }
 
