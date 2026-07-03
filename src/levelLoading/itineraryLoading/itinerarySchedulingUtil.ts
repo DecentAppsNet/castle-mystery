@@ -61,6 +61,7 @@ function _createActivityContext(level:Level, character:Character, timestamp:numb
   activitySourceIndex:number, subjectKind:ParsedItineraryActivity['subjectKind'], subjectId:string, roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
   characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>, poseOverridesByCharacterId:Map<string, Position>):ActivityContext {
   const state = characterStatesById.get(character.id);
+  _throwOnUnplacedItineraryCharacter(character.id, characterStatesById);
   assertNonNullable(state, `missing itinerary state for ${character.id}`);
   return {
     level,
@@ -76,6 +77,12 @@ function _createActivityContext(level:Level, character:Character, timestamp:numb
     timestamp,
     timestampType
   };
+}
+
+function _throwOnUnplacedItineraryCharacter(characterId:string,
+  characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>) {
+  if (characterStatesById.has(characterId)) return;
+  throw new Error(`character '${characterId}' is not placed in the level, so can't be referenced in itinerary. Name may be incorrect.`);
 }
 
 function _activityAffectsPoseAtTimestamp(activity:ParsedItineraryActivity):boolean {
@@ -210,6 +217,7 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
       assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
 
       const state = characterStatesById.get(activity.characterId);
+      _throwOnUnplacedItineraryCharacter(activity.characterId, characterStatesById);
       assertNonNullable(state, `missing itinerary state for ${activity.characterId}`);
 
       const previewState = duplicateCharacterActivityState(state);
@@ -292,6 +300,7 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
       _throwOnUnplacedBecomesCharacterSource(activity, characterStatesById);
       const character = charactersById.get(activity.characterId);
       assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
+      _throwOnUnplacedItineraryCharacter(activity.characterId, characterStatesById);
       const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, activity.subjectKind, activity.subjectId,
         roomItemsByRoomId, charactersById, characterStatesById, previewSchedulingResult.poseOverridesByCharacterId);
       const activityStartTime = calcActivityStartTime(context.state, activity.resolvedTime, activity.timestampType);

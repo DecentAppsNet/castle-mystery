@@ -281,6 +281,15 @@ describe('levelItineraryLoader', () => {
       expect(speechEvent?.speech).toBe('Now I speak as the masked one.');
     });
 
+    it('reports an author-friendly error when an itinerary references a defined but unplaced character', () => {
+      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+
+      expect(() => loadItineraries(level, [
+        '0:00:03 Niccolo Masked says, "I should not start placed."'
+      ].join('\n'), 'character-unplaced-reference.md', 1))
+        .toThrow(/character 'niccolo masked' is not placed in the level, so can't be referenced in itinerary\. name may be incorrect\./i);
+    });
+
     it('lets the replacement target schedule a later absolute room activity after becomes', () => {
       const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
 
