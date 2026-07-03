@@ -130,6 +130,7 @@ function _createPairedItinerariesByCharacterId(pairedCharacterStatesById:Map<str
   pairedCharacterStatesById.forEach((state, characterId) => {
     let pairedItinerary = pairedItineraryByState.get(state) || null;
     if (!pairedItinerary) {
+      // Paired characters share the same merged history object; their own .itinerary stays separate.
       pairedItinerary = [...state.events];
       pairedItineraryByState.set(state, pairedItinerary);
     }

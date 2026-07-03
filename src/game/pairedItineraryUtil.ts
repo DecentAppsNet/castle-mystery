@@ -15,6 +15,8 @@ export function hasPairedItinerary(character:Character):boolean {
 }
 
 export function getKnownItinerary(character:Character):Itinerary {
+  assert(!character.isPairingKnown || character.pairedItinerary !== null,
+    `pairing knowledge requires a paired itinerary for ${character.id}`);
   if (character.isPairingKnown && character.pairedItinerary) return character.pairedItinerary;
   return character.itinerary;
 }
@@ -61,6 +63,10 @@ function _isPairingKnown(character:Character, allCharactersById:ReadonlyMap<stri
 export function syncPairingKnowledge(characters:Iterable<Character>, allCharactersById:ReadonlyMap<string, Character>,
   rooms:ReadonlyArray<Room>, isLevelComplete:boolean = false):void {
   for (const character of characters) {
-    character.isPairingKnown = _isPairingKnown(character, allCharactersById, rooms, isLevelComplete);
+    const nextIsPairingKnown = _isPairingKnown(character, allCharactersById, rooms, isLevelComplete);
+    assert(!character.isPairingKnown || nextIsPairingKnown,
+      `pairing knowledge cannot regress for ${character.id}`);
+    // Pairing knowledge is durable across reveals; later syncs may add knowledge but must not revoke it.
+    character.isPairingKnown = character.isPairingKnown || nextIsPairingKnown;
   }
 }

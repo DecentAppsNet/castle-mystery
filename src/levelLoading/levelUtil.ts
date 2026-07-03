@@ -7,6 +7,7 @@ import TimeLabel from "../game/types/TimeLabel";
 import { createDefaultCharacter, duplicateCharacter } from "../game/types/Character";
 import { getOwnedItems } from "../game/itemOwnershipUtil";
 import { createItemsById } from "../game/itemUtil";
+import { assert } from "decent-portal";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { rand } from "@/common/randUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
@@ -429,6 +430,22 @@ function _validateBecomesPairOnly(allCharactersById:Level['allCharactersById']) 
   });
 }
 
+function _validatePairedItinerarySymmetry(allCharactersById:Level['allCharactersById']) {
+  const charactersByPairedItinerary = new Map<NonNullable<Level['characters'][number]['pairedItinerary']>, string[]>();
+
+  allCharactersById.forEach(character => {
+    if (!character.pairedItinerary) return;
+    const characterIds = charactersByPairedItinerary.get(character.pairedItinerary) || [];
+    characterIds.push(character.id);
+    charactersByPairedItinerary.set(character.pairedItinerary, characterIds);
+  });
+
+  charactersByPairedItinerary.forEach(characterIds => {
+    assert(characterIds.length === 2,
+      `paired itinerary must be shared by exactly 2 characters, got ${characterIds.length}: ${characterIds.join(', ')}`);
+  });
+}
+
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
   try {
     _runWithLoadLevelSectionContext(levelFilename, 1,
@@ -513,6 +530,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     });
     _runWithLoadLevelSectionContext(levelFilename, itineraryFirstLineNo,
       () => _validateBecomesPairOnly(itineraryData.allCharactersById));
+    _validatePairedItinerarySymmetry(itineraryData.allCharactersById);
     const resolvedStartTime = generalSection.startTime
       ?? generalSection.initialTime
       ?? itineraryData.resolvedTimeline.earliestAbsoluteActivityTime
