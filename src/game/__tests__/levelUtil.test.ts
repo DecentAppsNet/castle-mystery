@@ -1527,6 +1527,36 @@ describe('levelUtil itinerary loading', () => {
     expect(level.labels[level.labels.length - 1]?.minutes).toBe(23 * 60);
   });
 
+  it('keeps own itineraries separate while exposing a shared paired itinerary', () => {
+    const level = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
+    const niccolo = level.allCharactersById.get('niccolo');
+    const maskedCharacter = level.allCharactersById.get('niccolo masked');
+
+    if (!niccolo) expect.fail('expected Niccolo to exist');
+    if (!maskedCharacter) expect.fail('expected Niccolo Masked to exist');
+
+    expect(niccolo.itinerary.some(event => event.type === ItineraryEventType.BECOMES_CHARACTER)).toBe(true);
+    expect(niccolo.itinerary.some(event => event.type === ItineraryEventType.SPEECH)).toBe(false);
+    expect(maskedCharacter.itinerary.map(event => event.type)).toEqual([ItineraryEventType.SPEECH]);
+    expect(niccolo.pairedItinerary).not.toBeNull();
+    expect(maskedCharacter.pairedItinerary).toBe(niccolo.pairedItinerary);
+    expect(maskedCharacter.pairedItinerary?.some(event => event.type === ItineraryEventType.BECOMES_CHARACTER)).toBe(true);
+    expect(maskedCharacter.pairedItinerary?.some(event => event.type === ItineraryEventType.SPEECH)).toBe(true);
+  });
+
+  it('keeps the same paired itinerary through repeated swaps within a pair', () => {
+    const level = loadLevelFromText(pairOnlyBecomesValidText, 'pair-only-becomes-valid.md');
+    const alpha = level.allCharactersById.get('alpha');
+    const beta = level.allCharactersById.get('beta');
+
+    if (!alpha) expect.fail('expected Alpha to exist');
+    if (!beta) expect.fail('expected Beta to exist');
+
+    expect(alpha.pairedItinerary).not.toBeNull();
+    expect(beta.pairedItinerary).toBe(alpha.pairedItinerary);
+    expect(alpha.pairedItinerary?.filter(event => event.type === ItineraryEventType.BECOMES_CHARACTER)).toHaveLength(2);
+  });
+
   it('allows repeated becomes swaps within a single pair', () => {
     expect(() => loadLevelFromText(pairOnlyBecomesValidText, 'pair-only-becomes-valid.md')).not.toThrow();
   });

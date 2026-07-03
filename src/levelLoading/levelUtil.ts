@@ -542,6 +542,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       return scheduledCharacter ? {
         ...duplicateCharacter(initialCharacter),
         itinerary:scheduledCharacter.itinerary,
+        pairedItinerary:scheduledCharacter.pairedItinerary,
         itineraryIndex:scheduledCharacter.itineraryIndex
       } : duplicateCharacter(initialCharacter);
     });

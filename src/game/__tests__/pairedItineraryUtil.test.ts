@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createDefaultCharacter } from '../types/Character';
 import Itinerary from '../types/Itinerary';
-import { getKnownItinerary, getPairedItineraryIfAvailable, hasPairedItinerary } from '../pairedItineraryUtil';
+import { getKnownItinerary, hasPairedItinerary } from '../pairedItineraryUtil';
 
 describe('paired itinerary util', () => {
   describe('hasPairedItinerary()', () => {
@@ -13,17 +13,6 @@ describe('paired itinerary util', () => {
       expect(hasPairedItinerary(character)).toBe(false);
       character.pairedItinerary = pairedItinerary;
       expect(hasPairedItinerary(character)).toBe(true);
-    });
-  });
-
-  describe('getPairedItineraryIfAvailable()', () => {
-    it('returns the paired itinerary when present and null otherwise', () => {
-      const character = createDefaultCharacter();
-      const pairedItinerary:Itinerary = [];
-
-      expect(getPairedItineraryIfAvailable(character)).toBeNull();
-      character.pairedItinerary = pairedItinerary;
-      expect(getPairedItineraryIfAvailable(character)).toBe(pairedItinerary);
     });
   });
 

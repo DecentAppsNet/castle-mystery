@@ -109,14 +109,18 @@ function _findReplayCharacters(gameState:GameState):Character[] {
   return [...gameState.characters, ...gameState.unplacedCharactersById.values()];
 }
 
+function _findReplacementSearchItinerary(character:Character) {
+  return character.pairedItinerary || character.itinerary;
+}
+
 function _findCharacterReplacementStartTime(character:Character):number|null {
-  const replacementEvent = character.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER
+  const replacementEvent = _findReplacementSearchItinerary(character).find(event => event.type === ItineraryEventType.BECOMES_CHARACTER
     && (event as BecomesCharacterEvent).targetCharacterId === character.id) as BecomesCharacterEvent | undefined;
   return replacementEvent?.startTime ?? null;
 }
 
 function _findCharacterReplacementEvent(character:Character):BecomesCharacterEvent|null {
-  return character.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER
+  return _findReplacementSearchItinerary(character).find(event => event.type === ItineraryEventType.BECOMES_CHARACTER
     && (event as BecomesCharacterEvent).targetCharacterId === character.id) as BecomesCharacterEvent | undefined || null;
 }
 

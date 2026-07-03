@@ -111,11 +111,11 @@ function _calcCompletionTimeForRelativeResolution(activity:ParsedItineraryActivi
   return activityCompletionTime + MIN_RELATIVE_ACTIVITY_GAP_MSECS;
 }
 
-function _createScheduledCharacter(character:Character, state:ReturnType<typeof createCharacterActivityState>):Character {
-  const itinerary = [...state.events];
+function _createScheduledCharacter(character:Character, state:ReturnType<typeof createCharacterActivityState>, itinerary:ItineraryEvent[], pairedItinerary:ItineraryEvent[]|null):Character {
   return {
     ...character,
     itinerary,
+    pairedItinerary,
     itineraryIndex: createItineraryIndex(itinerary, character.position),
     items: state.items.map(duplicateItem),
     leftHandItem: state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
@@ -123,9 +123,26 @@ function _createScheduledCharacter(character:Character, state:ReturnType<typeof 
   };
 }
 
+function _createPairedItinerariesByCharacterId(pairedCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>):Map<string, ItineraryEvent[]> {
+  const pairedItineraryByState = new Map<ReturnType<typeof createCharacterActivityState>, ItineraryEvent[]>();
+  const pairedItinerariesByCharacterId = new Map<string, ItineraryEvent[]>();
+
+  pairedCharacterStatesById.forEach((state, characterId) => {
+    let pairedItinerary = pairedItineraryByState.get(state) || null;
+    if (!pairedItinerary) {
+      pairedItinerary = [...state.events];
+      pairedItineraryByState.set(state, pairedItinerary);
+    }
+    pairedItinerariesByCharacterId.set(characterId, pairedItinerary);
+  });
+
+  return pairedItinerariesByCharacterId;
+}
+
 function _applyCharacterReplacementToSchedulingState(charactersById:Map<string, Character>,
   activeCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
   finalCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+  pairedCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
   sourceCharacterId:string, targetCharacterId:string) {
   const sourceCharacter = charactersById.get(sourceCharacterId);
   const targetCharacter = charactersById.get(targetCharacterId);
@@ -138,6 +155,8 @@ function _applyCharacterReplacementToSchedulingState(charactersById:Map<string, 
   activeCharacterStatesById.delete(sourceCharacterId);
   activeCharacterStatesById.set(targetCharacterId, targetState);
   finalCharacterStatesById.set(targetCharacterId, targetState);
+  pairedCharacterStatesById.set(sourceCharacterId, targetState);
+  pairedCharacterStatesById.set(targetCharacterId, targetState);
   charactersById.set(targetCharacterId, {
     ...targetCharacter,
     position:{ ...sourceCharacter.position },
@@ -260,6 +279,8 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
   const charactersById = new Map(level.allCharactersById);
   const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
   const finalCharacterStatesById = new Map(characterStatesById);
+  const pairedCharacterStatesById = new Map<string, ReturnType<typeof createCharacterActivityState>>();
+  const ownEventsByCharacterId = new Map(Array.from(level.allCharactersById.keys()).map(characterId => [characterId, [] as ItineraryEvent[]]));
   const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
   const completionTimesBySourceIndex = new Map<number, number>();
   const readyToScheduleBySourceIndex = _createReadyToScheduleBySourceIndex(level, activities);
@@ -278,9 +299,12 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
         ? (previewEvents || _createEventsForActivity(activity.activityText, context))
         : [];
       appendEventsToCharacterState(level, character, context.state, events);
+      const ownEvents = ownEventsByCharacterId.get(activity.characterId) || null;
+      assertNonNullable(ownEvents, `missing owned itinerary for ${activity.characterId}`);
+      ownEvents.push(...events);
       const becomesCharacterEvent = events.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as BecomesCharacterEvent | undefined;
       if (becomesCharacterEvent) {
-        _applyCharacterReplacementToSchedulingState(charactersById, characterStatesById, finalCharacterStatesById,
+        _applyCharacterReplacementToSchedulingState(charactersById, characterStatesById, finalCharacterStatesById, pairedCharacterStatesById,
           becomesCharacterEvent.sourceCharacterId, becomesCharacterEvent.targetCharacterId);
       } else {
         finalCharacterStatesById.set(character.id, context.state);
@@ -306,14 +330,21 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
     sameTimeActivities.forEach(activity => _processActivity(activity, previewSchedulingResult));
   }
 
+  const pairedItinerariesByCharacterId = _createPairedItinerariesByCharacterId(pairedCharacterStatesById);
   const characters = level.characters.map(character => {
     const state = finalCharacterStatesById.get(character.id);
     assertNonNullable(state, `missing final itinerary state for ${character.id}`);
-    return _createScheduledCharacter(character, state);
+    const itinerary = ownEventsByCharacterId.get(character.id) || null;
+    assertNonNullable(itinerary, `missing owned itinerary for ${character.id}`);
+    return _createScheduledCharacter(character, state, itinerary, pairedItinerariesByCharacterId.get(character.id) || null);
   });
   const allCharactersById = new Map(Array.from(level.allCharactersById.entries()).map(([characterId, character]) => {
     const state = finalCharacterStatesById.get(characterId) || null;
-    return [characterId, state ? _createScheduledCharacter(charactersById.get(characterId) || character, state) : character] as const;
+    if (!state) return [characterId, character] as const;
+    const itinerary = ownEventsByCharacterId.get(characterId) || null;
+    assertNonNullable(itinerary, `missing owned itinerary for ${characterId}`);
+    return [characterId,
+      _createScheduledCharacter(charactersById.get(characterId) || character, state, itinerary, pairedItinerariesByCharacterId.get(characterId) || null)] as const;
   }));
   const allCharacters:Character[] = [...allCharactersById.values()];
 
