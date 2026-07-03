@@ -281,6 +281,24 @@ describe('levelItineraryLoader', () => {
       expect(speechEvent?.speech).toBe('Now I speak as the masked one.');
     });
 
+    it('lets implied activities continue with the placed pair member after a reverse becomes', () => {
+      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const result = loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked',
+        ': Niccolo Masked says, "I speak as the masked one."',
+        ': becomes Niccolo',
+        ': says, "I speak after the reverse swap."'
+      ].join('\n'), 'character-becomes-implied-reverse-followup.md', 1);
+      const niccolo = result.allCharactersById.get('niccolo');
+      const maskedCharacter = result.allCharactersById.get('niccolo masked');
+      const niccoloSpeeches = niccolo?.itinerary.filter(event => event.type === ItineraryEventType.SPEECH) as { speech:string }[] | undefined;
+      const maskedSpeeches = maskedCharacter?.itinerary.filter(event => event.type === ItineraryEventType.SPEECH) as { speech:string }[] | undefined;
+
+      expect(niccoloSpeeches?.map(event => event.speech)).toContain('I speak after the reverse swap.');
+      expect(maskedSpeeches?.map(event => event.speech)).toEqual(['I speak as the masked one.']);
+    });
+
     it('reports an author-friendly error when an itinerary references a defined but unplaced character', () => {
       const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
 

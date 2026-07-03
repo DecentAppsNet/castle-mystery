@@ -85,6 +85,15 @@ function _throwOnUnplacedItineraryCharacter(characterId:string,
   throw new Error(`character '${characterId}' is not placed in the level, so can't be referenced in itinerary. Name may be incorrect.`);
 }
 
+function _resolveScheduledCharacterId(activity:ParsedItineraryActivity,
+  characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+  pairedCharacterIdByCharacterId:Map<string, string>):string {
+  if (!activity.isCharacterImplied || characterStatesById.has(activity.characterId)) return activity.characterId;
+  const pairedCharacterId = pairedCharacterIdByCharacterId.get(activity.characterId) || null;
+  if (pairedCharacterId && characterStatesById.has(pairedCharacterId)) return pairedCharacterId;
+  return activity.characterId;
+}
+
 function _activityAffectsPoseAtTimestamp(activity:ParsedItineraryActivity):boolean {
   if (activity.timestampType !== 'absolute') return false;
   return activity.activityText.startsWith('@ ') || activity.activityText.startsWith('takes ');
@@ -206,34 +215,38 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
 
 function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItineraryActivity[], roomItemsByRoomId:Map<string, Item[]>,
   charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
-  levelFilename:string):PreviewSchedulingResult {
+  pairedCharacterIdByCharacterId:Map<string, string>, levelFilename:string):PreviewSchedulingResult {
   const poseOverridesByCharacterId = new Map<string, Position>();
   const reusableEventsBySourceIndex = new Map<number, ItineraryEvent[]>();
 
   activities.forEach(activity => {
     runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
       if (!_activityAffectsPoseAtTimestamp(activity)) return;
-      const character = charactersById.get(activity.characterId);
-      assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
+      const scheduledCharacterId = _resolveScheduledCharacterId(activity, characterStatesById, pairedCharacterIdByCharacterId);
+      const character = charactersById.get(scheduledCharacterId);
+      assertNonNullable(character, `unknown character '${scheduledCharacterId}' in itinerary`);
 
-      const state = characterStatesById.get(activity.characterId);
-      _throwOnUnplacedItineraryCharacter(activity.characterId, characterStatesById);
+      const state = characterStatesById.get(scheduledCharacterId);
+      _throwOnUnplacedItineraryCharacter(scheduledCharacterId, characterStatesById);
       assertNonNullable(state, `missing itinerary state for ${activity.characterId}`);
 
       const previewState = duplicateCharacterActivityState(state);
       const previewCharacterStatesById = new Map(characterStatesById);
-      previewCharacterStatesById.set(activity.characterId, previewState);
+      previewCharacterStatesById.set(scheduledCharacterId, previewState);
       const previewRoomItemsByRoomId = _activityNeedsRoomItemsDuringPosePreview(activity)
         ? duplicateRoomItemsByRoomId(roomItemsByRoomId)
         : roomItemsByRoomId;
-      const previewContext = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, activity.subjectKind, activity.subjectId,
+      const previewSubjectId = activity.subjectKind === 'character' && activity.isCharacterImplied
+        ? scheduledCharacterId
+        : activity.subjectId;
+      const previewContext = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, activity.subjectKind, previewSubjectId,
         previewRoomItemsByRoomId, charactersById, previewCharacterStatesById, poseOverridesByCharacterId);
       const events = _createEventsForActivity(activity.activityText, previewContext);
       appendEventsToCharacterState(level, character, previewState, events);
       if (_canReusePreviewScheduledEvents(activity)) {
         reusableEventsBySourceIndex.set(activity.sourceIndex, events);
       }
-      poseOverridesByCharacterId.set(activity.characterId,
+      poseOverridesByCharacterId.set(scheduledCharacterId,
         findStatePoseAtTime(character, previewState, activity.resolvedTime).position);
     }, activity.resolvedTime);
   });
@@ -250,9 +263,24 @@ function _findBecomesTargetCharacterId(level:Level, activity:ParsedItineraryActi
   return null;
 }
 
+function _createPairedCharacterIdByCharacterId(level:Level, activities:ParsedItineraryActivity[]):Map<string, string> {
+  const pairedCharacterIdByCharacterId = new Map<string, string>();
+
+  activities.forEach(activity => {
+    const targetCharacterId = _findBecomesTargetCharacterId(level, activity);
+    if (!targetCharacterId) return;
+    pairedCharacterIdByCharacterId.set(activity.characterId, targetCharacterId);
+    pairedCharacterIdByCharacterId.set(targetCharacterId, activity.characterId);
+  });
+
+  return pairedCharacterIdByCharacterId;
+}
+
 function _throwOnUnplacedBecomesCharacterSource(activity:ParsedItineraryActivity,
-  characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>) {
+  characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+  pairedCharacterIdByCharacterId:Map<string, string>) {
   if (activity.subjectKind !== 'character' || !activity.activityText.startsWith('becomes ')) return;
+  if (_resolveScheduledCharacterId(activity, characterStatesById, pairedCharacterIdByCharacterId) !== activity.characterId) return;
   if (characterStatesById.has(activity.characterId)) return;
   throw new Error(`unknown character replacement source '${activity.characterId}' in authored activity '${activity.activityText}'`);
 }
@@ -289,6 +317,7 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
   const characterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
   const finalCharacterStatesById = new Map(characterStatesById);
   const pairedCharacterStatesById = new Map<string, ReturnType<typeof createCharacterActivityState>>();
+  const pairedCharacterIdByCharacterId = _createPairedCharacterIdByCharacterId(level, activities);
   const ownEventsByCharacterId = new Map(Array.from(level.allCharactersById.keys()).map(characterId => [characterId, [] as ItineraryEvent[]]));
   const roomItemsByRoomId = createInitialRoomItemsByRoomId(level);
   const completionTimesBySourceIndex = new Map<number, number>();
@@ -297,11 +326,15 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
   const _processActivity = (activity:ParsedItineraryActivity, previewSchedulingResult:PreviewSchedulingResult) => {
     runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
       if (!readyToScheduleBySourceIndex.get(activity.sourceIndex)) return;
-      _throwOnUnplacedBecomesCharacterSource(activity, characterStatesById);
-      const character = charactersById.get(activity.characterId);
-      assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
-      _throwOnUnplacedItineraryCharacter(activity.characterId, characterStatesById);
-      const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, activity.subjectKind, activity.subjectId,
+      _throwOnUnplacedBecomesCharacterSource(activity, characterStatesById, pairedCharacterIdByCharacterId);
+      const scheduledCharacterId = _resolveScheduledCharacterId(activity, characterStatesById, pairedCharacterIdByCharacterId);
+      const character = charactersById.get(scheduledCharacterId);
+      assertNonNullable(character, `unknown character '${scheduledCharacterId}' in itinerary`);
+      _throwOnUnplacedItineraryCharacter(scheduledCharacterId, characterStatesById);
+      const scheduledSubjectId = activity.subjectKind === 'character' && activity.isCharacterImplied
+        ? scheduledCharacterId
+        : activity.subjectId;
+      const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, activity.subjectKind, scheduledSubjectId,
         roomItemsByRoomId, charactersById, characterStatesById, previewSchedulingResult.poseOverridesByCharacterId);
       const activityStartTime = calcActivityStartTime(context.state, activity.resolvedTime, activity.timestampType);
       const previewEvents = previewSchedulingResult.reusableEventsBySourceIndex.get(activity.sourceIndex) || null;
@@ -309,8 +342,8 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
         ? (previewEvents || _createEventsForActivity(activity.activityText, context))
         : [];
       appendEventsToCharacterState(level, character, context.state, events);
-      const ownEvents = ownEventsByCharacterId.get(activity.characterId) || null;
-      assertNonNullable(ownEvents, `missing owned itinerary for ${activity.characterId}`);
+      const ownEvents = ownEventsByCharacterId.get(scheduledCharacterId) || null;
+      assertNonNullable(ownEvents, `missing owned itinerary for ${scheduledCharacterId}`);
       ownEvents.push(...events);
       const becomesCharacterEvent = events.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as BecomesCharacterEvent | undefined;
       if (becomesCharacterEvent) {
@@ -336,7 +369,7 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
 
     const readySameTimeActivities = sameTimeActivities.filter(activity => readyToScheduleBySourceIndex.get(activity.sourceIndex));
     const previewSchedulingResult = _createPoseOverridesForTimestamp(level, readySameTimeActivities,
-      roomItemsByRoomId, charactersById, characterStatesById, levelFilename);
+      roomItemsByRoomId, charactersById, characterStatesById, pairedCharacterIdByCharacterId, levelFilename);
     sameTimeActivities.forEach(activity => _processActivity(activity, previewSchedulingResult));
   }
 

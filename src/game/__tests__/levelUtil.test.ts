@@ -1596,8 +1596,10 @@ describe('levelUtil itinerary loading', () => {
   });
 
   it('rejects becomes activities whose source character is unplaced', () => {
-    expect(() => loadLevelFromText(becomesCharacterSourceUnplacedText, 'becomes-character-source-unplaced.md'))
-      .toThrow(/unknown character replacement source 'bystander'/i);
+    expect(() => loadLevelFromText(
+      becomesCharacterSourceUnplacedText.replace('0:00:05 becomes Niccolo', '0:00:05 Bystander becomes Niccolo'),
+      'becomes-character-source-unplaced.md'))
+      .toThrow(/replacement source 'bystander'/i);
   });
 
   it('rejects becomes activities that mix character sources with item targets', () => {

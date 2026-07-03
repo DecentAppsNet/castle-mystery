@@ -175,7 +175,7 @@ function _parseWaitDurationMsecs(activityText:string):number|null {
   return parsedSeconds * MSECS_IN_SECOND;
 }
 
-function _parseActivityLine(activityLine:string, impliedCharacterId:string):{ characterId:string, subjectKind:'character'|'item', subjectId:string, activityText:string } {
+function _parseActivityLine(activityLine:string, impliedCharacterId:string):{ characterId:string, isCharacterImplied:boolean, subjectKind:'character'|'item', subjectId:string, activityText:string } {
   const normalizedLine = _normalizeWhitespaceAndPunctuationOutsideQuotes(activityLine, new Set(['@', '(', ')', '.', '%', '"', '\'', '-']));
   if (['@', 'says ', 'interrupts ', 'thinks ', 'emits ', 'faces ', 'dies', 'stands', 'sits', 'kneels', 'lays', 'gives ', 'drops ', 'takes ', 'waits', 'locks ', 'unlocks ', 'show ', 'hide ', 'becomes ']
     .some(marker => normalizedLine.startsWith(marker))) {
@@ -184,7 +184,7 @@ function _parseActivityLine(activityLine:string, impliedCharacterId:string):{ ch
     if (!impliedCharacterId) {
       throw new Error(`there is no preceding character, so I don't know which character the activity '${activityLine}' specifies. Name the character explicitly, add a preceding character activity, or set general activeCharacter`);
     }
-    return { characterId:impliedCharacterId, subjectKind:'character', subjectId:impliedCharacterId, activityText };
+    return { characterId:impliedCharacterId, isCharacterImplied:true, subjectKind:'character', subjectId:impliedCharacterId, activityText };
   }
   const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' emits ', ' faces ', ' dies', ' stands', ' sits', ' kneels', ' lays', ' gives ', ' drops ', ' takes ', ' waits', ' locks ', ' unlocks ', ' show ', ' hide ', ' becomes '];
   let splitIndex = -1;
@@ -199,16 +199,22 @@ function _parseActivityLine(activityLine:string, impliedCharacterId:string):{ ch
   const subjectText = _stripBoundaryPunctuation(normalizedLine.slice(0, splitIndex));
   const activityText = _normalizeParsedActivityText(normalizedLine.slice(splitIndex + 1));
   if (!subjectText || !activityText) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
-  if (activityText.startsWith('emits')) return { characterId:impliedCharacterId, subjectKind:'item', subjectId:normalizeId(subjectText), activityText };
-  if (activityText.startsWith('becomes')) return { characterId:impliedCharacterId, subjectKind:'item', subjectId:normalizeId(subjectText), activityText };
+  if (activityText.startsWith('emits')) return { characterId:impliedCharacterId, isCharacterImplied:true, subjectKind:'item', subjectId:normalizeId(subjectText), activityText };
+  if (activityText.startsWith('becomes')) return { characterId:impliedCharacterId, isCharacterImplied:true, subjectKind:'item', subjectId:normalizeId(subjectText), activityText };
   const characterId = normalizeId(subjectText);
-  return { characterId, subjectKind:'character', subjectId:characterId, activityText };
+  return { characterId, isCharacterImplied:false, subjectKind:'character', subjectId:characterId, activityText };
 }
 
 function _resolveAbsoluteTimestamp(rawMsecs:number|null, options:LoadItinerariesOptions, startTime:number):number|null {
   if (rawMsecs === null) return null;
   if (options.isCrossMidnight && rawMsecs < startTime) return rawMsecs + MSECS_IN_DAY;
   return rawMsecs;
+}
+
+function _resolveNextImpliedCharacterId(activity:Pick<ParsedItineraryActivity, 'characterId'|'subjectKind'|'activityText'>):string {
+  if (activity.subjectKind !== 'character') return activity.characterId;
+  if (!activity.activityText.startsWith('becomes ')) return activity.characterId;
+  return normalizeId(activity.activityText.slice('becomes '.length).trim());
 }
 
 export function parseItineraryActivities(itinerarySection:string, levelFilename:string, firstLineNo:number,
@@ -221,12 +227,11 @@ export function parseItineraryActivities(itinerarySection:string, levelFilename:
         if (!timestamp) return [];
         const activityLine = timestamp.remainingText.trim();
         if (!activityLine.length) throw new Error('missing itinerary activity');
-        const { characterId, subjectKind, subjectId, activityText } = _parseActivityLine(activityLine, impliedCharacterId);
-        if (subjectKind === 'character') impliedCharacterId = characterId;
+        const { characterId, isCharacterImplied, subjectKind, subjectId, activityText } = _parseActivityLine(activityLine, impliedCharacterId);
         const resolvedTimestamp = timestamp.kind === 'absolute'
           ? _resolveAbsoluteTimestamp(timestamp.time, options, startTime)
           : timestamp.time;
-        return [{
+        const parsedActivity = {
           sourceIndex:-1,
           time:resolvedTimestamp,
           resolvedTime:resolvedTimestamp ?? 0,
@@ -234,11 +239,14 @@ export function parseItineraryActivities(itinerarySection:string, levelFilename:
           timestampType:timestamp.kind,
           lineNo,
           characterId,
+          isCharacterImplied,
           subjectKind,
           subjectId,
           activityText,
           waitDurationMsecs:_parseWaitDurationMsecs(activityText)
-        }];
+        };
+        if (subjectKind === 'character') impliedCharacterId = _resolveNextImpliedCharacterId(parsedActivity);
+        return [parsedActivity];
       });
     })
     .map((activity, sourceIndex) => ({

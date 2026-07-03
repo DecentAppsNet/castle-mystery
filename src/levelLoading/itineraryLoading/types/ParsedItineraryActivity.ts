@@ -10,6 +10,7 @@ type ParsedItineraryActivity = {
   timestampType:LeadingTimestampKind,
   lineNo:number,
   characterId:string,
+  isCharacterImplied:boolean,
   subjectKind:ItineraryActivitySubjectKind,
   subjectId:string,
   activityText:string,
