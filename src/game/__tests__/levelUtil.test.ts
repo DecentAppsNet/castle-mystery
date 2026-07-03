@@ -13,6 +13,7 @@ import unlockWrongSideText from './fixtures/unlock-wrong-side.md?raw';
 import invalidAtRoomDestinationText from './fixtures/invalid-at-room-destination.md?raw';
 import impossibleAtRoomArrivalText from './fixtures/impossible-at-room-arrival.md?raw';
 import invalidItineraryActivityText from './fixtures/invalid-itinerary-activity.md?raw';
+import impliedCharacterWithoutPrecedingCharacterText from './fixtures/implied-character-without-preceding-character.md?raw';
 import invalidMapLegendTileText from './fixtures/invalid-map-legend-tile.md?raw';
 import invalidRoomGridDimensionsText from './fixtures/invalid-room-grid-dimensions.md?raw';
 import invalidRoomGridLegendEntryText from './fixtures/invalid-room-grid-legend-entry.md?raw';
@@ -31,8 +32,12 @@ import invalidItemImageText from './fixtures/invalid-item-image.md?raw';
 import invalidGroundFloorRoomText from './fixtures/invalid-ground-floor-room.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
 import itemEmitsActivityText from './fixtures/item-emits-activity.md?raw';
+import becomesCharacterText from '../integration-tests/fixtures/becomes-character.md?raw';
 import becomesCharacterFraternityLikeText from '../integration-tests/fixtures/becomes-character-fraternity-like.md?raw';
 import becomesItemText from '../integration-tests/fixtures/becomes-item.md?raw';
+import pairOnlyBecomesValidText from './fixtures/pair-only-becomes-valid.md?raw';
+import pairOnlyBecomesInvalidText from './fixtures/pair-only-becomes-invalid.md?raw';
+import becomesCharacterSourceUnplacedText from './fixtures/becomes-character-source-unplaced.md?raw';
 import itemDrawOffsetText from './fixtures/item-draw-offset.md?raw';
 import itemStackOffsetText from './fixtures/item-stack-offset.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
@@ -1194,6 +1199,18 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
+  it('throws a meaningful error when implied character syntax appears before any character context is established', () => {
+    try {
+      loadLevelFromText(impliedCharacterWithoutPrecedingCharacterText, 'implied-character-without-preceding-character.md');
+      expect.fail('expected level loading to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(LoadLevelException);
+      expect((error as LoadLevelException).levelFilename).toBe('implied-character-without-preceding-character.md');
+      expect((error as LoadLevelException).message).toContain('implied-character-without-preceding-character.md:');
+      expect((error as LoadLevelException).message).toContain("there is no preceding character, so I don't know which character the activity 'says \"Hello.\"' specifies");
+    }
+  });
+
   it('throws when a room fenced code grid does not match the expected room dimensions', () => {
     try {
       loadLevelFromText(invalidRoomGridDimensionsText, 'invalid-room-grid-dimensions.md');
@@ -1508,6 +1525,64 @@ describe('levelUtil itinerary loading', () => {
     expect(level.endTime).toBe(23 * 60 * 60 * 1000);
     expect(level.duration).toBe(30_000);
     expect(level.labels[level.labels.length - 1]?.minutes).toBe(23 * 60);
+  });
+
+  it('allows repeated becomes swaps within a single pair', () => {
+    expect(() => loadLevelFromText(pairOnlyBecomesValidText, 'pair-only-becomes-valid.md')).not.toThrow();
+  });
+
+  it('rejects self-swap becomes activities', () => {
+    expect(() => loadLevelFromText(
+      becomesCharacterText.replace('0:00:07 becomes Niccolo Masked', '0:00:07 becomes Niccolo'),
+      'becomes-character-self-swap.md'))
+      .toThrow(/must differ from source/i);
+  });
+
+  it('rejects becomes activities that reference a missing target character', () => {
+    expect(() => loadLevelFromText(
+      becomesCharacterText.replace('0:00:07 becomes Niccolo Masked', '0:00:07 becomes Missing Character'),
+      'becomes-character-missing-target.md'))
+      .toThrow(/unknown character replacement target 'Missing Character'/i);
+  });
+
+  it('rejects becomes activities whose replacement target starts placed', () => {
+    expect(() => loadLevelFromText(
+      becomesCharacterText
+        .replace('.N..', '.NM.')
+        .replace('* N=Niccolo', '* N=Niccolo\n* M=Niccolo Masked'),
+      'becomes-character-target-placed.md'))
+      .toThrow(/character replacement target 'Niccolo Masked' must start unplaced/i);
+  });
+
+  it('rejects becomes activities whose source character is unplaced', () => {
+    expect(() => loadLevelFromText(becomesCharacterSourceUnplacedText, 'becomes-character-source-unplaced.md'))
+      .toThrow(/unknown character replacement source 'bystander'/i);
+  });
+
+  it('rejects becomes activities that mix character sources with item targets', () => {
+    expect(() => loadLevelFromText(
+      becomesCharacterText.replace('0:00:07 becomes Niccolo Masked', '0:00:07 Niccolo becomes Left Pebble'),
+      'becomes-character-item-target.md'))
+      .toThrow(/unknown item replacement source 'niccolo'/i);
+  });
+
+  it('rejects becomes activities that mix item sources with character targets', () => {
+    expect(() => loadLevelFromText(
+      becomesItemText.replace('0:00:05 Vase becomes Broken Vase', '0:00:05 Vase becomes Hero'),
+      'becomes-item-character-target.md'))
+      .toThrow(/unknown item replacement target 'Hero'/i);
+  });
+
+  it('rejects implied-character becomes activities that target items', () => {
+    expect(() => loadLevelFromText(
+      becomesCharacterText.replace('0:00:07 becomes Niccolo Masked', '0:00:07 becomes Left Pebble'),
+      'becomes-implied-character-item-target.md'))
+      .toThrow(/unknown character replacement target 'Left Pebble'/i);
+  });
+
+  it('rejects becomes swaps that involve more than one partner character', () => {
+    expect(() => loadLevelFromText(pairOnlyBecomesInvalidText, 'pair-only-becomes-invalid.md'))
+      .toThrow(/character 'beta' may only swap with 'alpha', not 'gamma'/i);
   });
 
   it('keeps both start and end time labels for short levels', () => {

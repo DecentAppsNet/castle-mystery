@@ -180,7 +180,10 @@ function _parseActivityLine(activityLine:string, impliedCharacterId:string):{ ch
   if (['@', 'says ', 'interrupts ', 'thinks ', 'emits ', 'faces ', 'dies', 'stands', 'sits', 'kneels', 'lays', 'gives ', 'drops ', 'takes ', 'waits', 'locks ', 'unlocks ', 'show ', 'hide ', 'becomes ']
     .some(marker => normalizedLine.startsWith(marker))) {
     const activityText = _normalizeParsedActivityText(normalizedLine);
-    if (!impliedCharacterId || !activityText) throw new Error(`unable to infer character for itinerary activity line '${activityLine}'`);
+    if (!activityText) throw new Error(`unable to parse itinerary activity line '${activityLine}'`);
+    if (!impliedCharacterId) {
+      throw new Error(`there is no preceding character, so I don't know which character the activity '${activityLine}' specifies. Name the character explicitly, add a preceding character activity, or set general activeCharacter`);
+    }
     return { characterId:impliedCharacterId, subjectKind:'character', subjectId:impliedCharacterId, activityText };
   }
   const activityMarkers = [' @', ' says ', ' interrupts ', ' thinks ', ' emits ', ' faces ', ' dies', ' stands', ' sits', ' kneels', ' lays', ' gives ', ' drops ', ' takes ', ' waits', ' locks ', ' unlocks ', ' show ', ' hide ', ' becomes '];

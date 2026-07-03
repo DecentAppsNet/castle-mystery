@@ -39,6 +39,8 @@ import { assertNormalizedId, normalizeOptionalId } from "../game/idUtil";
 import { isCharacterInteractive, isItemInteractive } from "../game/interactivityUtil";
 import { calcRoomsBoundingRect, findRoomByIdOrTitle } from "../game/roomUtil";
 import { getBackgroundImageAssetUrl } from "../game/imageUrlUtil";
+import ItineraryEventType from "../game/types/itineraryEvents/ItineraryEventType";
+import BecomesCharacterEvent from "../game/types/itineraryEvents/BecomesCharacterEvent";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
 const KNOWN_TOP_LEVEL_SECTION_NAMES = new Set(['general', 'map', 'roomStyles', 'rooms', 'characters', 'items', 'itinerary', 'conclusions']);
@@ -398,6 +400,36 @@ function _validateExplicitEndTimeAgainstItinerary(explicitEndTime:number|null, l
   );
 }
 
+function _recordBecomesPartnerOrThrow(partnerByCharacterId:Map<string, string>, characterId:string, partnerId:string) {
+  const existingPartnerId = partnerByCharacterId.get(characterId) || null;
+  if (existingPartnerId && existingPartnerId !== partnerId) {
+    throw new Error(`character '${characterId}' may only swap with '${existingPartnerId}', not '${partnerId}'`);
+  }
+  partnerByCharacterId.set(characterId, partnerId);
+}
+
+function _validateBecomesPairOnly(allCharactersById:Level['allCharactersById']) {
+  const partnerByCharacterId = new Map<string, string>();
+
+  allCharactersById.forEach(character => {
+    character.itinerary.forEach(event => {
+      if (event.type !== ItineraryEventType.BECOMES_CHARACTER) return;
+      const becomesEvent = event as BecomesCharacterEvent;
+      if (becomesEvent.sourceCharacterId === becomesEvent.targetCharacterId) {
+        throw new Error(`character '${becomesEvent.sourceCharacterId}' cannot swap with themself`);
+      }
+      if (!allCharactersById.has(becomesEvent.sourceCharacterId)) {
+        throw new Error(`character becomes references unknown source character '${becomesEvent.sourceCharacterId}'`);
+      }
+      if (!allCharactersById.has(becomesEvent.targetCharacterId)) {
+        throw new Error(`character becomes references unknown target character '${becomesEvent.targetCharacterId}'`);
+      }
+      _recordBecomesPartnerOrThrow(partnerByCharacterId, becomesEvent.sourceCharacterId, becomesEvent.targetCharacterId);
+      _recordBecomesPartnerOrThrow(partnerByCharacterId, becomesEvent.targetCharacterId, becomesEvent.sourceCharacterId);
+    });
+  });
+}
+
 export function loadLevelFromText(text:string, levelFilename:string = '<inline>', options:LoadLevelOptions = {}):Level {
   try {
     _runWithLoadLevelSectionContext(levelFilename, 1,
@@ -486,6 +518,8 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       isCrossMidnight: generalSection.isCrossMidnight,
       explicitEndTime: loadEndTime
     });
+    _runWithLoadLevelSectionContext(levelFilename, itineraryFirstLineNo,
+      () => _validateBecomesPairOnly(itineraryData.allCharactersById));
     const resolvedStartTime = generalSection.startTime
       ?? generalSection.initialTime
       ?? itineraryData.resolvedTimeline.earliestAbsoluteActivityTime

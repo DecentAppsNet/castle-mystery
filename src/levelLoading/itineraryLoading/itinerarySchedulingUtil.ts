@@ -222,6 +222,13 @@ function _findBecomesTargetCharacterId(level:Level, activity:ParsedItineraryActi
   return null;
 }
 
+function _throwOnUnplacedBecomesCharacterSource(activity:ParsedItineraryActivity,
+  characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>) {
+  if (activity.subjectKind !== 'character' || !activity.activityText.startsWith('becomes ')) return;
+  if (characterStatesById.has(activity.characterId)) return;
+  throw new Error(`unknown character replacement source '${activity.characterId}' in authored activity '${activity.activityText}'`);
+}
+
 function _createReadyToScheduleBySourceIndex(level:Level, activities:ParsedItineraryActivity[]):Map<number, boolean> {
   const readyBySourceIndex = new Map<number, boolean>();
   const charactersWithUnresolvedEarlierActivities = new Set<string>();
@@ -260,6 +267,7 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
   const _processActivity = (activity:ParsedItineraryActivity, previewSchedulingResult:PreviewSchedulingResult) => {
     runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
       if (!readyToScheduleBySourceIndex.get(activity.sourceIndex)) return;
+      _throwOnUnplacedBecomesCharacterSource(activity, characterStatesById);
       const character = charactersById.get(activity.characterId);
       assertNonNullable(character, `unknown character '${activity.characterId}' in itinerary`);
       const context = _createActivityContext(level, character, activity.resolvedTime, activity.timestampType, activity.sourceIndex, activity.subjectKind, activity.subjectId,
