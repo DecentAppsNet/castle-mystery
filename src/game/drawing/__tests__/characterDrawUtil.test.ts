@@ -126,7 +126,7 @@ describe('characterDrawUtil', () => {
   });
 
   describe('drawObscuredActiveCharacter()', () => {
-    it('mirrors the obscured head silhouette only for left-facing characters', () => {
+    it('keeps the obscured head silhouette fixed regardless of the active character facing direction', () => {
       const room = { ...createDefaultRoom(), rect:{ x:0, y:0, width:20, height:20 }, title:'Test Room' };
       const imageSet:ImageSet = new Map([
         ['/assets/faces/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
@@ -144,7 +144,7 @@ describe('characterDrawUtil', () => {
       }, room, imageSet);
 
       expect(rightFacingScales).not.toContainEqual([-1, 1]);
-      expect(leftFacingScales).toContainEqual([-1, 1]);
+      expect(leftFacingScales).not.toContainEqual([-1, 1]);
     });
   });
 

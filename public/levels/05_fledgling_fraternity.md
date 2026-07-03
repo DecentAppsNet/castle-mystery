@@ -138,7 +138,7 @@ DDCCAAABB.
 ## Hall
 
 * style=Old Castle
-* obscured=false
+* obscured=true
 
 # Characters
 
@@ -185,3 +185,8 @@ DDCCAAABB.
 ## Costumes
 
 * conclusion=[Niccolò il Calabrese] disguised themself as a pig.
+* revealRooms=Hall
+
+## One More
+
+* conclusion=[Sticky Agatha] donned no disguise at all.

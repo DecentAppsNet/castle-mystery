@@ -293,7 +293,6 @@ export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character
 
   context.save();
   context.translate(centerX, centerY);
-  if (activeCharacter.facingDirection === 'left') context.scale(-1, 1);
 
   if (!faceImage) {
     _drawObscuredActiveHeadFallback(0, 0, widthPixels, heightPixels, context);

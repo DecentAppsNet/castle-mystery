@@ -313,7 +313,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   _drawRoomSilhouettes(gameState, context);
   const roomRenderStates = gameState.rooms.map(room => {
     const charactersInRoom = findCharactersInRoom(room, gameState.characters);
-    const isActive = activeCharacter ? charactersInRoom.some(character => character.id === activeCharacter.id) : false;
+    const isActive = activeRoom?.id === room.id;
     return { room, charactersInRoom, isActive };
   });
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
