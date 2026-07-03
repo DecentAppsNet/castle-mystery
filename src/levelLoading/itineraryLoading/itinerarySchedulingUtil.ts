@@ -176,8 +176,8 @@ function _applyCharacterReplacementToSchedulingState(charactersById:Map<string, 
   pairedCharacterStatesById.set(targetCharacterId, targetState);
   charactersById.set(targetCharacterId, {
     ...targetCharacter,
-    position:{ ...sourceCharacter.position },
-    waypoint:sourceCharacter.waypoint
+    position:{ ...sourceState.position },
+    waypoint:sourceState.waypoint
   });
 }
 

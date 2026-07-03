@@ -77,6 +77,7 @@ Guidelines:
 * AI agents and automated tools must follow the same rule: do not introduce filesystem, shell, subprocess, or network access into tests.
 * AI agents should not put generated code into shell execution requests. If temporary generated test code is needed during development, create a diagnostic unit test under `/tempTests` instead.
 * Diagnostic tests under `/tempTests` do not need to follow the usual unit-test placement and structure rules, but they must still follow the filesystem, shell, subprocess, and network safety rules above.
+* Diagnostic tests under `/tempTests` may not inherit the same TypeScript path-alias and raw-import setup as files under `src/`. Prefer relative imports there, and if a diagnostic needs `*.md?raw` imports, add or reference a local `.d.ts` declaration in `/tempTests` rather than assuming existing project declarations will be visible.
 * Delete diagnostic tests when they are no longer needed. If the same test keeps proving useful, replace it with a permanent test that follows the normal project test rules.
 * If a test needs authored fixture content, import the fixture as text instead of loading it from the filesystem at runtime.
 * Do not use multi-line assignments to a single test value. Put substantial authored test data in fixtures and import it instead.
