@@ -4,60 +4,8 @@
 * activeCharacter=Niccolo
 * time:22:59:30
 * background=nightSky.png
+* groundFloorRoom=Forest
 * imports=items.md | characters.md | roomStyles.md
-
-
-Niccolo
-Harold the ex-Herald
-Sticky Agatha
-Giorgios - master carver, there for the booze
-Giovanni - journeyman mason
-Yusuf - builder and surveyor
-Hugo - spying on them. Pretending to be a Master Mason. He's very unconvincing.
-
-Niccolo, Agatha stand outside the cathedral. Agatha reminds Niccolo to put on his mask. She says she will keep watch from outside the cathedral.
-
-They enter the crypt. Other people in masks are there. Niccolo stands before them, a little disappointed at the low turnout.
-
-"Friends, our identities are unknown, even to each other. We are all angry about our work, our livelihoods. We come together, in secret, to solve a common problem."
-
-"That's right!", "Uh-huh."
-
-"Do you want respect and admiration?"
-(enthusiastic yesses)
-"Do you want to earn more money?"
-(roaring yesses)
-"Do you want the highest standards of craftsmanship to be upheld in your work?"
-(yeah, sure. I guess.)
-Giovanni stands and says, "Brother, your words touch my heart."
-Giovanni, "To cut a rock, to shape a rock, you must think like a rock."
-
-Niccolo, "Uh... truly, we must all know our craft. That is our strength!"
-
-Giorgios, "Carving fine details in stone is hard. Wine should flow freely throughout the day."
-
-Niccolo, "Uh... we should work in comfortable conditions. Yes, brother."
-
-Yusuf, "The right names need to be on the right lists!"
-
-Niccolo, "Uh... we need ways to verify who is one of us. Lists, perhaps, though secret handshakes and symbols are good too."
-
-Harold, "And if some massive jerk steals your job because he did one convenient thing for King Frederick, revenge is in order!"
-
-Niccolo, "Uh... jobs should be given based on ability to do them well - not as personal favors."
-
-Hugo, "We should strive to rise from our precarious status and claim wealth in proportion to what we contribute to society."
-
-Niccolo, "Well said, brother! So glad you came."
-
-Yusuf, "These masks are really uncomfortable."
-
-Giorgios, "Yeah. I already know at least half of you."
-
-Yusuf, "Can we just take off the masks?"
-
-Niccolo, "Fine. But then we have to go into the crypt to avoid being seen."
-
 
 The crypt is obscured until player guesses identities of each masked individual. They have the dropdown of Niccolo, Yusuf, Giorgios, Harold, Hugo, Giovanni, Sticky Agatha. There will be some way to confirm that Agatha did not enter the nave, which is half-constructed.
 
@@ -97,15 +45,23 @@ Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay
 # Map
 
 ```
-..CCAAA...
-DDCCAAABB.
-..........
+........H.
+........HE
+..CCAAAGFE
+DDCCAAABBE
+.........E
+.....IIIIE
 ```
 
 * A=Nave
 * B=Hall
 * C=Entrance
 * D=Forest
+* E=Stairwell
+* F=Sacristy
+* G=Sacristan's Quarters
+* H=Bell Tower
+* I=Crypt
 
 # Rooms
 
@@ -135,10 +91,48 @@ DDCCAAABB.
 * backWallTexture=greyBricks2.png | aged stone | naveWindows.png (*,*)
 * exits=Hall | Entrance (lockable)
 
-## Hall
+```
+..1.2w3.4...
+............
+..5.6.7.8...
+```
 
+* 1=Pew 1|Harold Masked
+* 2=Pew 2|Giorgios Masked
+* 3=Pew 3
+* 4=Pew 4|Yusuf Masked
+* 5=Pew 5
+* 6=Pew 6|Giovanni Masked
+* 7=Pew 7|Hugo Masked
+* 8=Pew 8
+* w=Big Wineskin
+
+## Hall
+* obscured=true
+* style=Old Castle
+* exits=Stairwell
+
+## Stairwell
+* obscured=true
+* style=Old Castle
+* title=
+
+## Bell Tower
+* style=Old Castle
+* exits=Stairwell
+
+## Sacristy
+* style=Old Castle
+* exits=Stairwell | Sacristan's Quarters (locked, lockable)
+
+## Sacristan's Quarters
+* style=Old Castle
+* exits=Sacristy (lockable)
+
+## Crypt
 * style=Old Castle
 * obscured=true
+* exits=Stairwell
 
 # Characters
 
@@ -148,37 +142,176 @@ DDCCAAABB.
 ## Niccolo
 * isTitleKnown=true
 * description=A man holding dark thoughts on a dark night.
-* items=Chisel
+* items=Pig Mask
 
 ## Niccolo Masked
 * faceImage=pigMask.png
 * title=Niccolò il Calabrese
 * description=The same person we saw earlier - just with a mask on.
 
+## Harold Masked
+* faceImage=goatMask.png
+* title=Harold of Norwich
+* description=The same person we saw much earlier - just with a mask on.
+* orientation=sitting
+* items=Goat Mask
+* facing=left
+
+## Hugo Masked
+* faceImage=horseMask.png
+* title=Hugo of Speyer
+* description=The same person we saw much earlier - just with a mask on.
+* items=Horse Mask
+* orientation=sitting
+* facing=left
+
+## Giorgios Masked
+* faceImage=bullMask.png
+* title=Giorgios tou Nikolaou
+* description=The same person we saw much earlier - just with a mask on.
+* items=Bull Mask
+* orientation=sitting
+* facing=left
+
+## Yusuf Masked
+* faceImage=rabbitMask.png
+* title=Yusuf ibn Khalaf al-Balarmi
+* description=The same person we saw much earlier - just with a mask on.
+* orientation=sitting
+* items=Rabbit Mask
+* facing=left
+
+## Giovanni Masked
+* faceImage=stagMask.png
+* title=Giovanni di Leone di Monreale
+* description=The same person we saw much earlier - just with a mask on.
+* items=Stag Mask
+* orientation=sitting
+* facing=left
+
+# Items
+
+## Pew 1
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
+
+## Pew 2
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
+
+## Pew 3
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
+
+## Pew 4
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
+
+## Pew 5
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
+
+## Pew 6
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
+
+## Pew 7
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
+
+## Pew 8
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
+
+
 # Itinerary
 
-22:59:30 Sticky Agatha says "Put on your mask!" to Niccolo.
+22:59:30 Niccolo says, "I was thinking we might get a hundred people." to Sticky Agatha
+: Sticky Agatha says, "We've got five."
+: Niccolo says, "Five hundred!"
+: Sticky Agatha says, "No. I only found five."
+: Niccolo says, "Well, we must start somewhere."
+: Sticky Agatha says "Put on your mask!"
 : Niccolo says, "Oh, right."
+: becomes Niccolo Masked
 : Sticky Agatha says, "I'll stay here and keep watch."
 
-23:00:00 Niccolo @ Hall
-: becomes Niccolo Masked
-23:00:05 Niccolo Masked @ Nave
-: takes Chisel in left hand
-: says "Chisel"
-: Chisel becomes Brass Key
-: says "Brass Key" 
-: Brass Key becomes Chisel
-: says "Chisel again!"
-: takes Chisel into inventory
-: says "Chisel in my pocket?"
-: Chisel becomes Brass Key
-: takes Brass Key into right hand
-: says "Naw! It's the key."
-: drops Brass Key
-: says "Did I drop the brass key?"
-: Brass Key becomes Chisel
-: says "Look again. Chisel!"
+22:59:50 Harold Masked faces right
+22:59:51 Giorgios Masked faces right
+: Giovanni Masked faces right
+22:59:52 Niccolo Masked @ Nave.80%
+: faces left
+: Yusuf Masked faces right
+: Hugo Masked faces right
+: Niccolo Masked says, "Friends, our identities are unknown,"
+: says, "even to each other."
+: says, "Yet we are bound together by our anger."
+: says, "We come together, in secret..."
+: says, "To solve a common problem."
+: Hugo Masked says, "That's right."
+: Harold Masked says, "Uh huh."
+: Niccolo Masked says, "Do you want respect and admiration?"
+: Yusuf Masked says, "Yes!"
+: Niccolo Masked says, "Do you want to earn more money?"
+: Giovanni Masked says, "Oh yeah!"
+: Giorgios Masked says, "Yes! Yes!"
+: Niccolo Masked says, "And do you want..."
+: says "the highest standards of craftsmanship to be upheld in your work?"
+: Yusuf Masked says, "Uh... sure."
+: Giovanni Masked says, "Brother, your words touch my heart."
+: says, "To cut a rock..."
+: says, "To shape a rock..."
+: says, "You must think like a rock!"
+: Niccolo Masked says, "Truly, we must all know our craft."
+: says, "That is our strength!"
+: Giorgios Masked says, "Carving fine details in stone is hard."
+: says, "Wine should flow freely throughout the day!"
+: Niccolo Masked says, "We should work in comfortable conditions."
+: says, "Yes, brother."
+: Yusuf Masked says, "The right names need to be on the right lists!"
+: Niccolo Masked says, "We need ways to verify who is one of us."
+: says, "Lists, perhaps, though..."
+: says, "secret handshakes and symbols are good too."
+: Harold Masked says, "And if some massive jerk takes your job..."
+: says, "because he did one convenient thing for King Frederick..."
+: says, "REVENGE IS IN ORDER!"
+: Niccolo Masked says, "Uh..."
+: says, "Jobs should be given based on ability to do them well."
+: says, "Not as personal favors."
+: Hugo Masked says, "We should strive to rise from..."
+: says "our precarious status and claim wealth..."
+: says "in proportion to what we contribute to society."
+: Niccolo Masked says, "Well said, brother! So glad you came."
+: Yusuf Masked says, "These masks are really hot and itchy."
+: Giorgios Masked says, "And I already know at least half of you."
+: Yusuf Masked says, "Can we just take off the masks?"
+: Niccolo Masked says, "Fine. But then we have to..."
+: says, "go into the crypt to avoid being seen."
+: Giorgios Masked takes Big Wineskin
+
+23:01:55 Yusuf Masked @ Hall
+: becomes Yusuf
+: drops Rabbit Mask
+23:01:56 Giovanni Masked @ Hall
+: becomes Giovanni
+: drops Stag Mask
+23:01:57 Harold Masked @ Hall
+: becomes Harold
+: drops Goat Mask
+23:01:58 Giorgios Masked @ Hall
+: becomes Giorgios
+: drops Bull Mask
+23:01:59 Hugo Masked @ Hall
+23:02:06 Niccolo Masked @ Hall
+//: becomes Niccolo
 
 # Conclusions
 

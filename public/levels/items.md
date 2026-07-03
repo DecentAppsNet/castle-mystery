@@ -30,11 +30,19 @@
 * image=brassKey.png
 * description=A brass key. It must fit in some lock somewhere. Or maybe not.
 
+## Bull Mask
+* image=bullMask.png
+
 ## Codex
 * image=codex.png
 
 ## Chair Left
 * image=chairLeft.png
+
+## Chair Right
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
 
 ## Chisel
 * image=chisel.png
@@ -47,9 +55,15 @@
 * description=A beautiful falcon, perched and hooded.
 * image=furiaPerched.png
 
+## Goat Mask
+* image=goatMask.png
+
 ## Holy Binky
 * description=A device roughly carved from wood.
 * image=holybinky.png
+
+## Horse Mask
+* image=horseMask.png
 
 ## Letter
 * description=The faded writing on the letter is ilegible.
@@ -67,11 +81,16 @@
 * stackOffsetX=-.3
 * stackOffsetY=-.2
 
+## Pig Mask
+* image=pigMask.png
+
 ## Pillar
 * image=pillar.png
 
-## Royal Tunic
+## Rabbit Mask
+* image=rabbitMask.png
 
+## Royal Tunic
 * image=royalTunic.png
 * description=A fine silk tunic, fit for a king.
 
@@ -90,6 +109,9 @@
 * image=smallRug.png
 * stackOffsetY=1.8
 * stackOffsetX=-1.5
+
+## Stag Mask
+* image=stagMask.png
 
 ## Tapestry Stack
 * image=tapestryStack.png

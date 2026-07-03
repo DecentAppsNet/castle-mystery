@@ -97,6 +97,18 @@ ETHNICITY: Norman-Sicilian
 OCCUPATION: Chamberlain and Royal Advisor
 AGE=58
 
+## Guard 1
+* faceImage=guard1.png
+
+## Guard 2
+* faceImage=guard2.png
+
+## Guard 3
+* faceImage=guard3.png
+
+## Guard 4
+* faceImage=guard4.png
+
 ## Heinrich
 * title=Heinrich Sohn des Konrad
 * description=An 11-year-old boy.
@@ -162,28 +174,6 @@ Ethnicity: German
 age=47
 occupation=Cook and house manager
 ethnicityBackground=Latin Sicilian
-
-## Guard 1
-* faceImage=guard1.png
-
-## Guard 2
-* faceImage=guard2.png
-
-## Guard 3
-* faceImage=guard3.png
-
-## Guard 4
-* faceImage=guard4.png
-
-## Toro
-
-* title=Matteo il Toro
-* faceImage=matteo.png
-* description=A powerful brute. His two moods are angry and sleeping.
-
-Occupation: Cellarer and laborer (Wine Cellar K)
-Age: 38
-Ethnicity: Umbrian Italian
 
 ## Niccolo
 
@@ -267,6 +257,16 @@ ethnicityBackground=Dalmatian
 
 * description=A young woman, in her twenties. She just looks sticky for some reason.
 * faceImage=stickyAgatha.png
+
+## Toro
+
+* title=Matteo il Toro
+* faceImage=matteo.png
+* description=A powerful brute. His two moods are angry and sleeping.
+
+Occupation: Cellarer and laborer (Wine Cellar K)
+Age: 38
+Ethnicity: Umbrian Italian
 
 ## Ugolino
 
