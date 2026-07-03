@@ -5,7 +5,10 @@ import Character from "./types/Character";
 import BecomesCharacterEvent from "./types/itineraryEvents/BecomesCharacterEvent";
 import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import Itinerary from "./types/Itinerary";
-import { assert } from "decent-portal";
+import Room from "./types/Room";
+import { assert, assertNonNullable } from "decent-portal";
+import { findCharacterPose } from "./itineraryUtil";
+import { findRoomAtPosition } from "./roomUtil";
 
 export function hasPairedItinerary(character:Character):boolean {
   return character.pairedItinerary !== null;
@@ -27,4 +30,37 @@ export function findIncomingCharacterReplacementEvent(character:Character):Becom
   }
   return character.pairedItinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER
     && (event as BecomesCharacterEvent).targetCharacterId === character.id) as BecomesCharacterEvent | undefined || null;
+}
+
+function _isCharacterVisibleAtTime(character:Character, time:number):boolean {
+  let isVisible = character.isVisible;
+  for (const event of character.itinerary) {
+    if (event.startTime > time) break;
+    if (event.type !== ItineraryEventType.SHOW && event.type !== ItineraryEventType.HIDE) continue;
+    isVisible = event.type === ItineraryEventType.SHOW;
+  }
+  return isVisible;
+}
+
+function _isReplacementWitnessable(event:BecomesCharacterEvent, allCharactersById:ReadonlyMap<string, Character>, rooms:ReadonlyArray<Room>):boolean {
+  const sourceCharacter = allCharactersById.get(event.sourceCharacterId) || null;
+  assertNonNullable(sourceCharacter, `missing replacement source character ${event.sourceCharacterId}`);
+  if (!_isCharacterVisibleAtTime(sourceCharacter, event.startTime)) return false;
+  const sourcePose = findCharacterPose(sourceCharacter, event.startTime);
+  const sourceRoom = findRoomAtPosition(rooms, sourcePose.position.x, sourcePose.position.y) || null;
+  return !!sourceRoom && !sourceRoom.isObscured;
+}
+
+function _isPairingKnown(character:Character, allCharactersById:ReadonlyMap<string, Character>, rooms:ReadonlyArray<Room>, isLevelComplete:boolean):boolean {
+  if (!character.pairedItinerary) return false;
+  if (isLevelComplete) return true;
+  return character.pairedItinerary.some(event => event.type === ItineraryEventType.BECOMES_CHARACTER
+    && _isReplacementWitnessable(event as BecomesCharacterEvent, allCharactersById, rooms));
+}
+
+export function syncPairingKnowledge(characters:Iterable<Character>, allCharactersById:ReadonlyMap<string, Character>,
+  rooms:ReadonlyArray<Room>, isLevelComplete:boolean = false):void {
+  for (const character of characters) {
+    character.isPairingKnown = _isPairingKnown(character, allCharactersById, rooms, isLevelComplete);
+  }
 }

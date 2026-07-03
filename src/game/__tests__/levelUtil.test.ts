@@ -1557,6 +1557,16 @@ describe('levelUtil itinerary loading', () => {
     expect(alpha.pairedItinerary?.filter(event => event.type === ItineraryEventType.BECOMES_CHARACTER)).toHaveLength(2);
   });
 
+  it('marks pairing knowledge at load only when the replacement is witnessable in an unobscured room', () => {
+    const obscuredLevel = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
+    const revealedLevel = loadLevelFromText(becomesCharacterFraternityLikeText, 'becomes-character-fraternity-like.md');
+
+    expect(obscuredLevel.allCharactersById.get('niccolo')?.isPairingKnown).toBe(false);
+    expect(obscuredLevel.allCharactersById.get('niccolo masked')?.isPairingKnown).toBe(false);
+    expect(revealedLevel.allCharactersById.get('niccolo')?.isPairingKnown).toBe(true);
+    expect(revealedLevel.allCharactersById.get('niccolo masked')?.isPairingKnown).toBe(true);
+  });
+
   it('allows repeated becomes swaps within a single pair', () => {
     expect(() => loadLevelFromText(pairOnlyBecomesValidText, 'pair-only-becomes-valid.md')).not.toThrow();
   });

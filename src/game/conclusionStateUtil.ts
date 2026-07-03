@@ -6,6 +6,7 @@ import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion"
 import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { isCharacterInteractive, isItemInteractive } from "./interactivityUtil";
 import { getOwnedItems } from "./itemOwnershipUtil";
+import { syncPairingKnowledge } from "./pairedItineraryUtil";
 import GameState from "./types/GameState";
 import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
 
@@ -30,11 +31,31 @@ function _isLevelComplete(conclusions:ReadonlyArray<Conclusion>):boolean {
   return conclusions.every(conclusion => !conclusion.isLocked && conclusion.isComplete);
 }
 
+function _createInitialAllCharactersById(gameState:GameState):Map<string, import("./types/Character").default> {
+  return new Map([
+    ...gameState.initialCharacters.map(character => [character.id, character] as const),
+    ...Array.from(gameState.initialUnplacedCharactersById.entries())
+  ]);
+}
+
+function _syncGameStatePairingKnowledge(gameState:GameState) {
+  const initialAllCharactersById = _createInitialAllCharactersById(gameState);
+  syncPairingKnowledge([
+    ...gameState.initialCharacters,
+    ...gameState.initialUnplacedCharactersById.values(),
+    ...gameState.characters,
+    ...gameState.unplacedCharactersById.values()
+  ], initialAllCharactersById, gameState.initialRooms, gameState.isLevelComplete);
+}
+
 function _syncLevelCompleteState(gameState:GameState):boolean {
   const nextIsLevelComplete = _isLevelComplete(gameState.conclusions);
   if (nextIsLevelComplete === gameState.isLevelComplete) return false;
   gameState.isLevelComplete = nextIsLevelComplete;
-  if (nextIsLevelComplete) _applyLevelCompleteReveal(gameState);
+  if (nextIsLevelComplete) {
+    _applyLevelCompleteReveal(gameState);
+    _syncGameStatePairingKnowledge(gameState);
+  }
   return true;
 }
 
@@ -122,6 +143,7 @@ export function updateGameStateForChangeConclusions(gameState:GameState, event:C
       character.isTitleKnown = true;
     });
   }
+  _syncGameStatePairingKnowledge(gameState);
   _syncLevelCompleteState(gameState);
   rebuildDynamicStateForTime(gameState, gameState.time, undefined, 0);
 }

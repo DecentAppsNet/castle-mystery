@@ -28,7 +28,7 @@ export function findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room {
   return room;
 }
 
-export function findRoomAtPosition(rooms:Room[], x:number, y:number):Room | null {
+export function findRoomAtPosition(rooms:readonly Room[], x:number, y:number):Room | null {
   return rooms.find((r) => isPositionInRect(x, y, r.rect)) || null;
 }
 

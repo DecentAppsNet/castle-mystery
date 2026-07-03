@@ -32,6 +32,7 @@ import {
   parseItemDefinitions
 } from "./levelRoomPopulationLoader";
 import { createGeneratedIdentityConclusion, createConclusionCategoryOptionsByName, loadConclusionsFromSection } from "./levelConclusionsLoader";
+import { syncPairingKnowledge } from "../game/pairedItineraryUtil";
 import ClozeBlank from "../game/conclusions/types/ClozeBlank";
 import ClozePartType from "../game/conclusions/types/ClozePartType";
 import Conclusion from "../game/conclusions/types/Conclusion";
@@ -560,6 +561,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       duration: resolvedDuration,
       labels: _createTimeLabels(resolvedStartTime, resolvedDuration)
     };
+    syncPairingKnowledge([...level.initialCharacters, ...level.characters, ...level.allCharactersById.values()], level.allCharactersById, level.rooms);
     if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');
     if (options.validateUnlockPhrases) _validateUnlockableConclusionPhrases(level, conclusionCategoryOptionsByName, levelFilename, conclusionsFirstLineNo);
     return level;

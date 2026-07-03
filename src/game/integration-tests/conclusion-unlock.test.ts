@@ -347,6 +347,39 @@ describe('conclusion unlock integration', () => {
     expect(activeCharacter && findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y)?.id).toBe('nave');
   });
 
+  it('updates pairing knowledge only at reveal boundaries, not from scrubbing alone', () => {
+    const level = loadLevelFromText(becomesCharacterRevealOnConclusionText, 'becomes-character-reveal-on-conclusion.md');
+    const gameState = createGameState({ ...level, initialTime:4_000 });
+
+    expect(gameState.initialCharacters[0]?.isPairingKnown).toBe(false);
+    expect(gameState.initialUnplacedCharactersById.get('niccolo masked')?.isPairingKnown).toBe(false);
+
+    rebuildDynamicStateForTime(gameState, 4_000, gameState.time, 0);
+
+    expect(gameState.initialCharacters[0]?.isPairingKnown).toBe(false);
+    expect(gameState.unplacedCharactersById.get('niccolo')?.isPairingKnown).toBe(false);
+
+    const nextConclusions = gameState.conclusions.map(conclusion => conclusion.id === 'costumes'
+      ? { ...conclusion, isComplete:true }
+      : conclusion);
+    updateGameStateForChangeConclusions(gameState, { type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions:nextConclusions });
+
+    expect(gameState.initialCharacters[0]?.isPairingKnown).toBe(true);
+    expect(gameState.initialUnplacedCharactersById.get('niccolo masked')?.isPairingKnown).toBe(true);
+  });
+
+  it('updates pairing knowledge on level complete reveal', () => {
+    const level = loadLevelFromText(becomesCharacterRevealOnConclusionText, 'becomes-character-reveal-on-conclusion.md');
+    const gameState = createGameState({ ...level, initialTime:4_000 });
+    const nextConclusions = gameState.conclusions.map(conclusion => ({ ...conclusion, isComplete:true, isLocked:false }));
+
+    updateGameStateForChangeConclusions(gameState, { type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions:nextConclusions });
+
+    expect(gameState.isLevelComplete).toBe(true);
+    expect(gameState.initialCharacters[0]?.isPairingKnown).toBe(true);
+    expect(gameState.initialUnplacedCharactersById.get('niccolo masked')?.isPairingKnown).toBe(true);
+  });
+
   it('immediately switches focus to the replacement target when level completion reveals the obscured source room', () => {
     const level = loadLevelFromText(becomesCharacterRevealOnConclusionText, 'becomes-character-reveal-on-conclusion.md');
     const gameState = createGameState({ ...level, initialTime:8_000 });
