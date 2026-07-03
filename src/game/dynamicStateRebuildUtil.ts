@@ -9,6 +9,7 @@ import { createLockEffect, createUnlockEffect } from "./effects/lockEffectUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
 import { findCharacterPose } from "./itineraryUtil";
 import { addOwnedItem, getOwnedItems, removeOwnedItemById } from "./itemOwnershipUtil";
+import { findIncomingCharacterReplacementEvent } from "./pairedItineraryUtil";
 import ItemHoldLocation from "./types/ItemHoldLocation";
 import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
@@ -109,19 +110,13 @@ function _findReplayCharacters(gameState:GameState):Character[] {
   return [...gameState.characters, ...gameState.unplacedCharactersById.values()];
 }
 
-function _findReplacementSearchItinerary(character:Character) {
-  return character.pairedItinerary || character.itinerary;
-}
-
 function _findCharacterReplacementStartTime(character:Character):number|null {
-  const replacementEvent = _findReplacementSearchItinerary(character).find(event => event.type === ItineraryEventType.BECOMES_CHARACTER
-    && (event as BecomesCharacterEvent).targetCharacterId === character.id) as BecomesCharacterEvent | undefined;
+  const replacementEvent = findIncomingCharacterReplacementEvent(character);
   return replacementEvent?.startTime ?? null;
 }
 
 function _findCharacterReplacementEvent(character:Character):BecomesCharacterEvent|null {
-  return _findReplacementSearchItinerary(character).find(event => event.type === ItineraryEventType.BECOMES_CHARACTER
-    && (event as BecomesCharacterEvent).targetCharacterId === character.id) as BecomesCharacterEvent | undefined || null;
+  return findIncomingCharacterReplacementEvent(character);
 }
 
 function _isReplayEventActiveForCharacter(gameState:GameState, character:Character, eventStartTime:number):boolean {
