@@ -33,6 +33,7 @@ import {
 } from "./levelRoomPopulationLoader";
 import { createGeneratedIdentityConclusion, createConclusionCategoryOptionsByName, loadConclusionsFromSection } from "./levelConclusionsLoader";
 import { syncPairingKnowledge } from "../game/pairedItineraryUtil";
+import { findDirectReferencedCharacterIds, findDirectReferencedItemIds } from "../game/itineraryReferenceUtil";
 import ClozeBlank from "../game/conclusions/types/ClozeBlank";
 import ClozePartType from "../game/conclusions/types/ClozePartType";
 import Conclusion from "../game/conclusions/types/Conclusion";
@@ -182,21 +183,18 @@ function _parseGeneralSection(generalSection:string):ParsedGeneralSection {
   };
 }
 
-function _countDiscoverableCharacters(level:Pick<Level, 'characters'>):number {
-  return level.characters.filter(isCharacterInteractive).length;
+function _countDiscoverableCharacters(level:Pick<Level, 'initialCharacters' | 'characters' | 'allCharactersById'>):number {
+  return Array.from(findDirectReferencedCharacterIds(level)).filter(characterId => {
+    const character = level.allCharactersById.get(characterId) || null;
+    return !!character && isCharacterInteractive(character);
+  }).length;
 }
 
-function _countDiscoverableItems(level:Pick<Level, 'rooms' | 'characters'>):number {
-  const discoverableItemIds = new Set<string>();
-  level.rooms.forEach(room => room.items.forEach(item => {
-    if (!isItemInteractive(item)) return;
-    discoverableItemIds.add(item.id);
-  }));
-  level.characters.forEach(character => getOwnedItems(character).forEach(item => {
-    if (!isItemInteractive(item)) return;
-    discoverableItemIds.add(item.id);
-  }));
-  return discoverableItemIds.size;
+function _countDiscoverableItems(level:Pick<Level, 'initialCharacters' | 'characters' | 'rooms' | 'allCharactersById' | 'itemsById'>):number {
+  return Array.from(findDirectReferencedItemIds(level)).filter(itemId => {
+    const item = level.itemsById.get(itemId) || null;
+    return !!item && isItemInteractive(item);
+  }).length;
 }
 
 function _countDiscoverableRooms(level:Pick<Level, 'rooms'>):number {
@@ -502,14 +500,8 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
     const generatedIdentityConclusion = authoredConclusions.some(conclusion => conclusion.id === 'identities')
       ? null
       : createGeneratedIdentityConclusion(level.characters, conclusionCategoryOptionsByName);
-    const discoverableCharacterCount = generalSection.discoverableCharacterCount ?? _countDiscoverableCharacters(level);
-    const discoverableItemCount = generalSection.discoverableItemCount ?? _countDiscoverableItems(level);
-    const discoverableRoomCount = generalSection.discoverableRoomCount ?? _countDiscoverableRooms(level);
     level = {
       ...level,
-      discoverableCharacterCount,
-      discoverableItemCount,
-      discoverableRoomCount,
       conclusions:generatedIdentityConclusion ? [generatedIdentityConclusion, ...authoredConclusions] : authoredConclusions,
       initialCharacters:level.characters.map(duplicateCharacter),
       allCharactersById:_createLevelAllCharactersById(level, characterDefinitions),
@@ -548,7 +540,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       } : duplicateCharacter(initialCharacter);
     });
     const resolvedDuration = resolvedEndTime - resolvedStartTime;
-    level = {
+    const finalizedLevel = {
       ...level,
       initialCharacters,
       activeCharacterId: level.activeCharacterId || level.characters[0]?.id || "",
@@ -560,6 +552,12 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       endTime: resolvedEndTime,
       duration: resolvedDuration,
       labels: _createTimeLabels(resolvedStartTime, resolvedDuration)
+    };
+    level = {
+      ...finalizedLevel,
+      discoverableCharacterCount:generalSection.discoverableCharacterCount ?? _countDiscoverableCharacters(finalizedLevel),
+      discoverableItemCount:generalSection.discoverableItemCount ?? _countDiscoverableItems(finalizedLevel),
+      discoverableRoomCount:generalSection.discoverableRoomCount ?? _countDiscoverableRooms(finalizedLevel)
     };
     syncPairingKnowledge([...level.initialCharacters, ...level.characters, ...level.allCharactersById.values()], level.allCharactersById, level.rooms);
     if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');

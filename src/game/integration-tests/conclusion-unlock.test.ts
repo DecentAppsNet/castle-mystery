@@ -10,8 +10,10 @@ import { findActiveCharacter } from '../activeCharacterUtil';
 import { updateGameStateForMouseMove } from '../hoverStateUtil';
 import { createItineraryIndex, createSpeechEvent, createThoughtEvent } from '../itineraryUtil';
 import { loadLevelFromText } from '../../levelLoading/levelUtil';
+import { getKnownItinerary } from '../pairedItineraryUtil';
 import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { findRoomAtPosition } from '../roomUtil';
+import { createItineraryMarkerModel } from '../../homeScreen/timeSlider/itineraryMarkerUtil';
 import { syncConclusionsWithUnlocks } from '../conclusions/conclusionDiscoveryUtil';
 import { updateGameStateForChangeConclusions } from '../conclusionStateUtil';
 import ClozePartType from '../conclusions/types/ClozePartType';
@@ -25,6 +27,7 @@ import PlayerEventType from '../types/playerEvents/PlayerEventType';
 import { changeConclusions } from '../playerEventUtil';
 import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
 import becomesCharacterRevealOnConclusionText from './fixtures/becomes-character-reveal-on-conclusion.md?raw';
+import becomesCharacterFraternityLikeText from './fixtures/becomes-character-fraternity-like.md?raw';
 
 function _createTestLevel():Level {
   const initialPosition = { x:5, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z };
@@ -234,6 +237,26 @@ function _setTestScalingFactors(gameState:ReturnType<typeof createGameState>) {
   };
 }
 
+function _findActiveInitialCharacter(gameState:ReturnType<typeof createGameState>) {
+  return gameState.initialCharacters.find(character => character.id === gameState.activeCharacterId)
+    || gameState.initialUnplacedCharactersById.get(gameState.activeCharacterId)
+    || null;
+}
+
+function _createActiveSliderMarkerModel(gameState:ReturnType<typeof createGameState>) {
+  const activeInitialCharacter = _findActiveInitialCharacter(gameState);
+  const initialRoomId = !activeInitialCharacter
+    ? null
+    : findRoomAtPosition(gameState.initialRooms, activeInitialCharacter.position.x, activeInitialCharacter.position.y)?.id || null;
+  return createItineraryMarkerModel(
+    activeInitialCharacter ? getKnownItinerary(activeInitialCharacter) : null,
+    gameState.initialRooms,
+    initialRoomId,
+    gameState.duration,
+    gameState.initialCharacters
+  );
+}
+
 function _hoverHero(gameState:ReturnType<typeof createGameState>) {
   const hero = gameState.characters.find(character => character.id === 'hero');
   expect(hero).toBeDefined();
@@ -347,6 +370,20 @@ describe('conclusion unlock integration', () => {
     expect(activeCharacter && findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y)?.id).toBe('nave');
   });
 
+  it('shows only own slider markers while pairing is unknown and merged markers once pairing is known', () => {
+    const unknownLevel = loadLevelFromText(becomesCharacterRevealOnConclusionText, 'becomes-character-reveal-on-conclusion.md');
+    const unknownState = createGameState({ ...unknownLevel, initialTime:4_000 });
+    const knownLevel = loadLevelFromText(becomesCharacterFraternityLikeText, 'becomes-character-fraternity-like.md');
+    const knownState = createGameState({ ...knownLevel, initialTime:23 * 60 * 60 * 1000 });
+
+    const unknownMarkers = _createActiveSliderMarkerModel(unknownState);
+    const knownMarkers = _createActiveSliderMarkerModel(knownState);
+
+    expect(unknownMarkers.roomEntryTimes).toEqual([]);
+    expect(knownMarkers.roomEntryTimes).toHaveLength(3);
+    expect(Math.max(...knownMarkers.roomEntryTimes)).toBeGreaterThan(Math.max(...unknownMarkers.roomEntryTimes));
+  });
+
   it('updates pairing knowledge only at reveal boundaries, not from scrubbing alone', () => {
     const level = loadLevelFromText(becomesCharacterRevealOnConclusionText, 'becomes-character-reveal-on-conclusion.md');
     const gameState = createGameState({ ...level, initialTime:4_000 });
@@ -366,6 +403,7 @@ describe('conclusion unlock integration', () => {
 
     expect(gameState.initialCharacters[0]?.isPairingKnown).toBe(true);
     expect(gameState.initialUnplacedCharactersById.get('niccolo masked')?.isPairingKnown).toBe(true);
+    expect(_createActiveSliderMarkerModel(gameState).roomEntryTimes).toContain(7_250);
   });
 
   it('updates pairing knowledge on level complete reveal', () => {
@@ -378,6 +416,7 @@ describe('conclusion unlock integration', () => {
     expect(gameState.isLevelComplete).toBe(true);
     expect(gameState.initialCharacters[0]?.isPairingKnown).toBe(true);
     expect(gameState.initialUnplacedCharactersById.get('niccolo masked')?.isPairingKnown).toBe(true);
+    expect(_createActiveSliderMarkerModel(gameState).roomEntryTimes).toContain(7_250);
   });
 
   it('immediately switches focus to the replacement target when level completion reveals the obscured source room', () => {

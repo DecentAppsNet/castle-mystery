@@ -12,9 +12,7 @@ import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
 import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
-import BecomesCharacterEvent from "./types/itineraryEvents/BecomesCharacterEvent";
-import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
-import BecomesItemEvent from "./types/itineraryEvents/BecomesItemEvent";
+import { findDirectReferencedCharacterIds, findDirectReferencedItemIds } from "./itineraryReferenceUtil";
 
 export function createEmptyImageSet():ImageSet {
   return new Map();
@@ -25,24 +23,21 @@ function _findPunchMaskImageUrl(imageUrl:string):string|null {
   return imageUrl.slice(0, -4) + '.punch.png';
 }
 
-function _findBecomesTargetImageUrls(level:Level):string[] {
+function _findDirectReferencedItemImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>();
-  level.allCharactersById.forEach(character => character.itinerary.forEach(event => {
-    if (event.type !== ItineraryEventType.BECOMES_ITEM) return;
-    const targetItem = level.itemsById.get((event as BecomesItemEvent).targetItemId) || null;
-    if (targetItem?.imageUrl) imageUrls.add(targetItem.imageUrl);
-  }));
+  findDirectReferencedItemIds(level).forEach(itemId => {
+    const item = level.itemsById.get(itemId) || null;
+    if (item?.imageUrl) imageUrls.add(item.imageUrl);
+  });
   return [...imageUrls];
 }
 
-function _findBecomesTargetCharacterFaceImageUrls(level:Level):string[] {
+function _findDirectReferencedCharacterFaceImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>();
-  const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
-  sourceCharacters.forEach(character => character.itinerary.forEach(event => {
-    if (event.type !== ItineraryEventType.BECOMES_CHARACTER) return;
-    const targetCharacter = level.allCharactersById.get((event as BecomesCharacterEvent).targetCharacterId) || null;
-    if (targetCharacter?.faceImageUrl) imageUrls.add(targetCharacter.faceImageUrl);
-  }));
+  findDirectReferencedCharacterIds(level).forEach(characterId => {
+    const character = level.allCharactersById.get(characterId) || null;
+    if (character?.faceImageUrl) imageUrls.add(character.faceImageUrl);
+  });
   return [...imageUrls];
 }
 
@@ -59,17 +54,8 @@ function _findDirectReferencedImageUrls(level:Level):string[] {
   level.rooms.forEach(room => room.items.forEach(item => {
     if (item.imageUrl) imageUrls.add(item.imageUrl);
   }));
-  _findBecomesTargetImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
-  _findBecomesTargetCharacterFaceImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
-  const sourceCharacters = level.initialCharacters.length ? level.initialCharacters : level.characters;
-  sourceCharacters.forEach(character => {
-    if (character.faceImageUrl) imageUrls.add(character.faceImageUrl);
-    character.items.forEach(item => {
-      if (item.imageUrl) imageUrls.add(item.imageUrl);
-    });
-    if (character.leftHandItem?.imageUrl) imageUrls.add(character.leftHandItem.imageUrl);
-    if (character.rightHandItem?.imageUrl) imageUrls.add(character.rightHandItem.imageUrl);
-  });
+  _findDirectReferencedItemImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
+  _findDirectReferencedCharacterFaceImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
   level.conclusions.forEach(conclusion => conclusion.parts.forEach(part => {
     if (part.type !== ClozePartType.image) return;
     const imageUrl = (part as ClozeImage).imageUrl;

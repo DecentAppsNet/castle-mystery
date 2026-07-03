@@ -19,6 +19,7 @@ import LevelSelector from "./levelSelector/LevelSelector";
 import { changeLevel, continueToNextLevel } from "./interactions/levels";
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
 import { createDiscoveries } from "@/game/discoveriesUtil";
+import { getKnownItinerary } from "@/game/pairedItineraryUtil";
 
 const ARROW_STEP_MSECS = 200;
 
@@ -73,7 +74,7 @@ function HomeScreen() {
     : _findActiveInitialCharacter(gameState, activeCharacterId);
   const activeItinerary:Itinerary|null = !gameState
     ? null
-    : activeInitialCharacter?.itinerary || null;
+    : activeInitialCharacter ? getKnownItinerary(activeInitialCharacter) : null;
   const activeInitialRoomId = !gameState || !activeInitialCharacter
     ? null
     : findRoomAtPosition(gameState.initialRooms, activeInitialCharacter.position.x, activeInitialCharacter.position.y)?.id || null;

@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import becomesCharacterText from './fixtures/becomes-character.md?raw';
+import discoverableBecomesTargetsText from './fixtures/discoverable-becomes-targets.md?raw';
 import timelineBothTimeAndStartTimeText from '@/game/__tests__/fixtures/timeline-both-time-and-start-time.md?raw';
 import unplacedItemsInitializationText from './fixtures/unplaced-items-initialization.md?raw';
 import { calcRenderedRoomsBoundingRect } from '@/game/roomRoofUtil';
@@ -39,6 +40,8 @@ describe('timeline initialization integration', () => {
     const level = loadLevelFromText(unplacedItemsInitializationText, 'unplaced-items-initialization.md');
     const gameState = createGameState(level);
 
+    expect(level.discoverableItemCount).toBe(2);
+    expect(gameState.discoverableItemCount).toBe(2);
     expect(gameState.itemsById.has('room vase')).toBe(true);
     expect(gameState.itemsById.has('pocket coin')).toBe(true);
     expect(gameState.itemsById.has('broken vase')).toBe(true);
@@ -62,8 +65,20 @@ describe('timeline initialization integration', () => {
     const level = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
     const gameState = createGameState(level);
 
+    expect(level.discoverableCharacterCount).toBe(0);
+    expect(gameState.discoverableCharacterCount).toBe(0);
     expect(gameState.characters.map(character => character.id)).toEqual(['niccolo']);
     expect(Array.from(gameState.unplacedCharactersById.keys())).toEqual(['niccolo masked']);
     expect(Array.from(gameState.initialUnplacedCharactersById.keys())).toEqual(['niccolo masked']);
+  });
+
+  it('counts interactive becomes targets in discoverable character and item totals', () => {
+    const level = loadLevelFromText(discoverableBecomesTargetsText, 'discoverable-becomes-targets.md');
+    const gameState = createGameState(level);
+
+    expect(level.discoverableCharacterCount).toBe(3);
+    expect(gameState.discoverableCharacterCount).toBe(3);
+    expect(level.discoverableItemCount).toBe(2);
+    expect(gameState.discoverableItemCount).toBe(2);
   });
 });

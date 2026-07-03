@@ -122,6 +122,7 @@ import conclusionsTwoSubsectionsText from './fixtures/conclusions-two-subsection
 import textureStretchTestText from './fixtures/texture-stretch-test.md?raw';
 import titleDefaultsAndGeneratedIdentityText from './fixtures/title-defaults-and-generated-identity.md?raw';
 import winSynopsisText from './fixtures/win-synopsis.md?raw';
+import { createLevelTextWithImportTexts } from '@/levelLoading/levelImportUtil';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { calcItemCuboidHeightGame } from '@/game/itemSizeUtil';
 import { ITEM_EFFECT_DURATION } from '@/game/effects/dropItemUtil';
@@ -2292,6 +2293,17 @@ describe('levelUtil itinerary loading', () => {
   describe('stairwell regression loading', () => {
     it('loads escape without stairwell route planning errors', () => {
       expect(() => loadLevelFromText(escapeStairwellRegressionText, 'escape-stairwell-regression.md')).not.toThrow();
+    });
+  });
+
+  describe('discoverable count defaults', () => {
+    it('excludes unused imported interactive characters from the default discoverable character count', () => {
+      const mergedText = createLevelTextWithImportTexts([loadLevelFromUrlWithImportsCharactersText], loadLevelFromUrlWithImportsText);
+
+      const level = loadLevelFromText(mergedText, 'load-level-from-url-with-imports.md');
+
+      expect(level.allCharactersById.has('queen')).toBe(true);
+      expect(level.discoverableCharacterCount).toBe(1);
     });
   });
 
