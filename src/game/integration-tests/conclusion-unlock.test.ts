@@ -6,9 +6,12 @@ import { getCharacterCanvasRect } from '../drawing/characterDrawUtil';
 import { canvasToGamePosition } from '../drawing/drawUtil';
 import EffectType from '../effects/types/EffectType';
 import { createGameState, updateAndDraw } from '../gameUtil';
+import { findActiveCharacter } from '../activeCharacterUtil';
 import { updateGameStateForMouseMove } from '../hoverStateUtil';
 import { createItineraryIndex, createSpeechEvent, createThoughtEvent } from '../itineraryUtil';
+import { loadLevelFromText } from '../../levelLoading/levelUtil';
 import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
+import { findRoomAtPosition } from '../roomUtil';
 import { syncConclusionsWithUnlocks } from '../conclusions/conclusionDiscoveryUtil';
 import { updateGameStateForChangeConclusions } from '../conclusionStateUtil';
 import ClozePartType from '../conclusions/types/ClozePartType';
@@ -21,6 +24,7 @@ import { createDefaultRoom } from '../types/Room';
 import PlayerEventType from '../types/playerEvents/PlayerEventType';
 import { changeConclusions } from '../playerEventUtil';
 import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
+import becomesCharacterRevealOnConclusionText from './fixtures/becomes-character-reveal-on-conclusion.md?raw';
 
 function _createTestLevel():Level {
   const initialPosition = { x:5, y:5, z:ROOM_MIDDLE_ROW_CENTER_Z };
@@ -326,6 +330,35 @@ describe('conclusion unlock integration', () => {
     expect(gameState.rooms.every(room => room.isDiscovered && !room.isObscured)).toBe(true);
     expect(gameState.discoveredCharacterIds).toEqual(['hero', 'witness']);
     expect(gameState.discoveredItemIds).toEqual(['book', 'note']);
+  });
+
+  it('immediately switches focus to the replacement target when a claimed conclusion reveals the obscured source room', () => {
+    const level = loadLevelFromText(becomesCharacterRevealOnConclusionText, 'becomes-character-reveal-on-conclusion.md');
+    const gameState = createGameState({ ...level, initialTime:8_000 });
+    const nextConclusions = gameState.conclusions.map(conclusion => conclusion.id === 'costumes'
+      ? { ...conclusion, isComplete:true }
+      : conclusion);
+
+    updateGameStateForChangeConclusions(gameState, { type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions:nextConclusions });
+
+    const activeCharacter = findActiveCharacter(gameState);
+    expect(gameState.activeCharacterId).toBe('niccolo masked');
+    expect(activeCharacter?.id).toBe('niccolo masked');
+    expect(activeCharacter && findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y)?.id).toBe('nave');
+  });
+
+  it('immediately switches focus to the replacement target when level completion reveals the obscured source room', () => {
+    const level = loadLevelFromText(becomesCharacterRevealOnConclusionText, 'becomes-character-reveal-on-conclusion.md');
+    const gameState = createGameState({ ...level, initialTime:8_000 });
+    const nextConclusions = gameState.conclusions.map(conclusion => ({ ...conclusion, isComplete:true }));
+
+    updateGameStateForChangeConclusions(gameState, { type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions:nextConclusions });
+
+    const activeCharacter = findActiveCharacter(gameState);
+    expect(gameState.isLevelComplete).toBe(true);
+    expect(gameState.activeCharacterId).toBe('niccolo masked');
+    expect(activeCharacter?.id).toBe('niccolo masked');
+    expect(activeCharacter && findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y)?.id).toBe('nave');
   });
 
   it('notifies discoveries with fully revealed counts in the same frame that level completion is processed', () => {

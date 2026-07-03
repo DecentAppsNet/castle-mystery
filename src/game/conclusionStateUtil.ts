@@ -3,6 +3,7 @@
 
 import { syncConclusionsWithUnlocks } from "./conclusions/conclusionDiscoveryUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
+import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { isCharacterInteractive, isItemInteractive } from "./interactivityUtil";
 import { getOwnedItems } from "./itemOwnershipUtil";
 import GameState from "./types/GameState";
@@ -122,4 +123,5 @@ export function updateGameStateForChangeConclusions(gameState:GameState, event:C
     });
   }
   _syncLevelCompleteState(gameState);
+  rebuildDynamicStateForTime(gameState, gameState.time, undefined, 0);
 }
