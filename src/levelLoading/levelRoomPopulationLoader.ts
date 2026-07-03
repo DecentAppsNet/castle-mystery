@@ -318,6 +318,8 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 		waypoint,
 		discoveredRoomIds:[],
 		itinerary:[],
+		pairedItinerary:null,
+		isPairingKnown:false,
 		itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
 	};
 	level.characters.push(character);

@@ -42,6 +42,8 @@ type Character = {
   waypoint:Waypoint,
   discoveredRoomIds:string[],
   itinerary:Itinerary,
+  pairedItinerary:Itinerary|null,
+  isPairingKnown:boolean,
   itineraryIndex:ItineraryIndex
 }
 
@@ -65,6 +67,8 @@ export function createDefaultCharacter():Character {
     waypoint:_createDefaultWaypoint(),
     discoveredRoomIds:[],
     itinerary:[],
+    pairedItinerary:null,
+    isPairingKnown:false,
     itineraryIndex:_createDefaultItineraryIndex()
   };
 }
@@ -89,6 +93,8 @@ export function duplicateCharacter(from:Character):Character {
     waypoint:from.waypoint,
     discoveredRoomIds:[...from.discoveredRoomIds],
     itinerary:from.itinerary,
+    pairedItinerary:from.pairedItinerary,
+    isPairingKnown:from.isPairingKnown,
     itineraryIndex:from.itineraryIndex
   };
 }
