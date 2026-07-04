@@ -1,4 +1,4 @@
-/* This module groups time-based dynamic-state rebuilding, recreating mutable room and inventory state from the authored level timeline.
+/* This module groups time-based dynamic-state rebuild coordination plus the remaining replay helpers that still live in this file.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from "decent-portal";
@@ -7,8 +7,9 @@ import { createDropItemEffect } from "./effects/dropItemUtil";
 import { createGiveItemEffect } from "./effects/giveItemUtil";
 import { createLockEffect, createUnlockEffect } from "./effects/lockEffectUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
+import { createDiscoveryStateSnapshot, restoreDiscoveryState } from "./dynamicStateRebuild/discoveryStateUtil";
 import { createItineraryIndex, findCharacterPose } from "./itineraryUtil";
-import { addOwnedItem, getOwnedItems, removeOwnedItemById } from "./itemOwnershipUtil";
+import { addOwnedItem, removeOwnedItemById } from "./itemOwnershipUtil";
 import { findIncomingCharacterReplacementEvent } from "./pairedItineraryUtil";
 import ItemHoldLocation from "./types/ItemHoldLocation";
 import Position, { duplicatePosition } from "./types/Position";
@@ -51,64 +52,6 @@ type AppliedVisibilityEvent = {
 type PendingRoomEffect = {
   roomId:string,
   create:() => void
-}
-
-// Snapshot which rooms were already discovered before the rebuild resets runtime state.
-function _getDiscoveredRoomIds(gameState:GameState):Set<string> {
-  return new Set(gameState.rooms.filter(room => room.isDiscovered).map(room => room.id));
-}
-
-// Snapshot per-character discovered rooms so rebuild can restore them afterward.
-function _getCharacterDiscoveredRoomIds(gameState:GameState):Map<string, string[]> {
-  const discoveredRoomIdsByCharacterId = new Map<string, string[]>();
-  gameState.characters.forEach(character => discoveredRoomIdsByCharacterId.set(character.id, [...character.discoveredRoomIds]));
-  gameState.unplacedCharactersById.forEach(character => discoveredRoomIdsByCharacterId.set(character.id, [...character.discoveredRoomIds]));
-  return discoveredRoomIdsByCharacterId;
-}
-
-// Collect every character already marked discovered across placed and unplaced runtime state.
-function _getDiscoveredCharacterIds(gameState:GameState):Set<string> {
-  return new Set([
-    ...gameState.discoveredCharacterIds,
-    ...gameState.characters.filter(character => character.isDiscovered).map(character => character.id),
-    ...Array.from(gameState.unplacedCharactersById.values()).filter(character => character.isDiscovered).map(character => character.id)
-  ]);
-}
-
-// Collect every item already marked discovered across rooms, inventories, and unplaced storage.
-function _getDiscoveredItemIds(gameState:GameState):Set<string> {
-  const discoveredItemIds = new Set<string>();
-  gameState.rooms.forEach(room => room.items.forEach(item => {
-    if (item.isDiscovered) discoveredItemIds.add(item.id);
-  }));
-  gameState.characters.forEach(character => getOwnedItems(character).forEach(item => {
-    if (item.isDiscovered) discoveredItemIds.add(item.id);
-  }));
-  gameState.unplacedItemsById.forEach(item => {
-    if (item.isDiscovered) discoveredItemIds.add(item.id);
-  });
-  return discoveredItemIds;
-}
-
-// Reapply discovery flags after rebuild recreates rooms, characters, and items from initial state.
-function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<string>, discoveredItemIds:Set<string>,
-  discoveredCharacterIds:Set<string>, characterDiscoveredRoomIds:Map<string, string[]>) {
-  gameState.rooms.forEach(room => {
-    if (discoveredRoomIds.has(room.id)) room.isDiscovered = true;
-    room.items.forEach(item => {
-      if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
-    });
-  });
-  gameState.characters.forEach(character => getOwnedItems(character).forEach(item => {
-    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
-  }));
-  gameState.unplacedItemsById.forEach(item => {
-    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
-  });
-  [...gameState.characters, ...gameState.unplacedCharactersById.values()].forEach(character => {
-    if (discoveredCharacterIds.has(character.id)) character.isDiscovered = true;
-    character.discoveredRoomIds = [...(characterDiscoveredRoomIds.get(character.id) || [])];
-  });
 }
 
 // Return every character whose itinerary may contribute replayed runtime events.
@@ -402,10 +345,7 @@ function _normalizeActiveCharacterForTime(gameState:GameState, time:number) {
 
 // Rebuild the mutable runtime snapshot for a target time by replaying authored timeline effects from initial state.
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime:number|undefined, metaTime:number) {
-  const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
-  const characterDiscoveredRoomIds = _getCharacterDiscoveredRoomIds(gameState);
-  const discoveredCharacterIds = _getDiscoveredCharacterIds(gameState);
-  const discoveredItemIds = _getDiscoveredItemIds(gameState);
+  const discoveryStateSnapshot = createDiscoveryStateSnapshot(gameState);
   const pendingRoomEffects:PendingRoomEffect[] = [];
   gameState.itemsById = duplicateItemsById(gameState.initialItemsById);
   gameState.characters = gameState.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, gameState.itemsById));
@@ -541,6 +481,6 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
   pendingRoomEffects
     .filter(effect => effect.roomId === activeRoom.id)
     .forEach(effect => effect.create());
-  _restoreDiscoveryState(gameState, discoveredRoomIds, discoveredItemIds, discoveredCharacterIds, characterDiscoveredRoomIds);
+  restoreDiscoveryState(gameState, discoveryStateSnapshot);
   gameState.time = time;
 }
