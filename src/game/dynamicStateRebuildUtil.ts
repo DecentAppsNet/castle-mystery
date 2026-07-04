@@ -7,9 +7,9 @@ import { assert, assertNonNullable } from "decent-portal";
 
 import { createDropItemEffect } from "./effects/dropItemUtil";
 import { createGiveItemEffect } from "./effects/giveItemUtil";
-import { createLockEffect, createUnlockEffect } from "./effects/lockEffectUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
 import { createDiscoveryStateSnapshot, restoreDiscoveryState } from "./dynamicStateRebuild/discoveryStateUtil";
+import { applyExitState, PendingRoomEffect } from "./dynamicStateRebuild/exitStateApplicationUtil";
 import { findCharacterReplacementEvent, findReplayCharacters, isReplayEventActiveForCharacter } from "./dynamicStateRebuild/replayCharacterUtil";
 import { applyVisibilityState } from "./dynamicStateRebuild/visibilityApplicationUtil";
 import { createItineraryIndex, findCharacterPose } from "./itineraryUtil";
@@ -26,9 +26,6 @@ import TakeItemEvent from "./types/itineraryEvents/TakeItemEvent";
 import DropItemEvent from "./types/itineraryEvents/DropItemEvent";
 import GiveItemEvent from "./types/itineraryEvents/GiveItemEvent";
 import BecomesItemEvent from "./types/itineraryEvents/BecomesItemEvent";
-import LockEvent from "./types/itineraryEvents/LockEvent";
-import UnlockEvent from "./types/itineraryEvents/UnlockEvent";
-import ExitStatus from "./types/ExitStatus";
 import { findActiveCharacter } from "./activeCharacterUtil";
 
 type AppliedInventoryEvent = {
@@ -36,18 +33,6 @@ type AppliedInventoryEvent = {
   eventIndex:number,
   startPosition:Position,
   event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent
-}
-
-type AppliedExitStateEvent = {
-  characterId:string,
-  eventIndex:number,
-  startPosition:Position,
-  event:LockEvent|UnlockEvent
-}
-
-type PendingRoomEffect = {
-  roomId:string,
-  create:() => void
 }
 
 // Filter replayed inventory events to the events that should be active for this character at this time.
@@ -110,34 +95,6 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
     || _getInventoryEventReplayOrder(a.event) - _getInventoryEventReplayOrder(b.event)
     || a.characterId.localeCompare(b.characterId)
     || a.eventIndex - b.eventIndex);
-  return appliedEvents;
-}
-
-// Gather and sort exit-lock state changes that should already have happened by the target time.
-function _collectAppliedExitStateEvents(gameState:GameState, time:number):AppliedExitStateEvent[] {
-  const appliedEvents:AppliedExitStateEvent[] = [];
-  findReplayCharacters(gameState).forEach(character => {
-    character.itinerary.forEach((event, eventIndex) => {
-      if (event.startTime > time) return;
-      if (!isReplayEventActiveForCharacter(gameState, character, event.startTime)) return;
-      switch(event.type) {
-        case ItineraryEventType.LOCK:
-        case ItineraryEventType.UNLOCK:
-          {
-            const startPosition = character.itineraryIndex.eventStartPositions[eventIndex];
-            assertNonNullable(startPosition);
-            appliedEvents.push({
-              characterId:character.id,
-              eventIndex,
-              startPosition:duplicatePosition(startPosition),
-              event:event as LockEvent|UnlockEvent
-            });
-          }
-        break;
-      }
-    });
-  });
-  appliedEvents.sort((a, b) => a.event.startTime - b.event.startTime || a.characterId.localeCompare(b.characterId) || a.eventIndex - b.eventIndex);
   return appliedEvents;
 }
 
@@ -250,24 +207,6 @@ function _findCharacter(gameState:GameState, characterId:string):Character {
   return character;
 }
 
-// Update every copy of an exit with the new shared status.
-function _setMatchingExitStatus(gameState:GameState, roomExitId:string, exitStatus:ExitStatus) {
-  let didFindMatch = false;
-  gameState.rooms.forEach(room => {
-    room.exits.forEach(candidate => {
-      if (candidate.id !== roomExitId) return;
-      candidate.exitStatus = exitStatus;
-      didFindMatch = true;
-    });
-  });
-  assertNonNullable(didFindMatch ? roomExitId : null, `unable to find rebuilt exit ${roomExitId}`);
-}
-
-// Find one exit instance by id within a single room snapshot.
-function _findRoomExitById(room:GameState['rooms'][number], roomExitId:string) {
-  return room.exits.find(candidate => candidate.id === roomExitId) || null;
-}
-
 // Rewind active focus to the source identity when scrubbing to before an incoming replacement.
 function _normalizeActiveCharacterForTime(gameState:GameState, time:number) {
   if (!gameState.unplacedCharactersById.has(gameState.activeCharacterId)) return;
@@ -372,25 +311,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
   });
   gameState.unplacedItemsById = createUnplacedItemsById(gameState.itemsById, gameState.rooms, gameState.characters);
 
-  _collectAppliedExitStateEvents(gameState, time).forEach(({ startPosition, event }) => {
-    const room = findRoomAtPosition(gameState.rooms, startPosition.x, startPosition.y);
-    const roomExit = room ? _findRoomExitById(room, event.roomExitId) : null;
-    switch(event.type) {
-      case ItineraryEventType.LOCK:
-        _setMatchingExitStatus(gameState, event.roomExitId, ExitStatus.locked);
-        if (room && roomExit && previousTime !== undefined && event.startTime > previousTime && event.startTime <= time && !room.isObscured) {
-          pendingRoomEffects.push({ roomId:room.id, create:() => gameState.activeEffects.push(createLockEffect(room, roomExit, metaTime, gameState.scalingFactors, gameState.imageSet)) });
-        }
-      break;
-
-      case ItineraryEventType.UNLOCK:
-        _setMatchingExitStatus(gameState, event.roomExitId, ExitStatus.unlocked);
-        if (room && roomExit && previousTime !== undefined && event.startTime > previousTime && event.startTime <= time && !room.isObscured) {
-          pendingRoomEffects.push({ roomId:room.id, create:() => gameState.activeEffects.push(createUnlockEffect(room, roomExit, metaTime, gameState.scalingFactors, gameState.imageSet)) });
-        }
-      break;
-    }
-  });
+  applyExitState(gameState, time, previousTime, metaTime, pendingRoomEffects);
 
   gameState.characters.forEach(character => {
     const pose = findCharacterPose(character, time);
