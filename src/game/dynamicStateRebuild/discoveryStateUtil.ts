@@ -1,4 +1,5 @@
-/* This module groups discovery-state snapshot and restore helpers used during dynamic-state rebuild, meaning the rebuild process that starts from initial runtime state and re-applies authored timeline events up to a target time.
+/* This module groups discovery-state snapshot and restore helpers used during dynamic-state rebuild, 
+   meaning the rebuild process that starts from initial runtime state and re-applies authored timeline events up to a target time.
    If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import GameState from "../types/GameState";
