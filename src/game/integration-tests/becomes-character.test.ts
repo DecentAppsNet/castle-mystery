@@ -22,6 +22,8 @@ import { findRoomAtPosition } from '../roomUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
 import { findImageBitmap } from '../imageAssetUtil';
 import { findActiveCharacter } from '../activeCharacterUtil';
+import { getKnownItinerary } from '../pairedItineraryUtil';
+import { createItineraryMarkerModel } from '@/homeScreen/timeSlider/itineraryMarkerUtil';
 
 describe('becomes character integration', () => {
   afterEach(() => {
@@ -159,6 +161,41 @@ describe('becomes character integration', () => {
     expect(findRoomAtPosition(commentedState.rooms,
       findActiveCharacter(commentedState)!.position.x,
       findActiveCharacter(commentedState)!.position.y)?.id).toBe('forest');
+  });
+
+  it('marks Niccolo pairing known at load and exposes merged slider markers in fledgling fraternity', () => {
+    const mergedText = createLevelTextWithImportTexts(
+      [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
+      fledglingFraternityText
+    );
+    const level = loadLevelFromText(mergedText, '05_fledgling_fraternity.md');
+    const loadedNiccolo = level.initialCharacters.find(character => character.id === 'niccolo') || null;
+    const gameState = createGameState(level);
+    const activeInitialCharacter = gameState.initialCharacters.find(character => character.id === gameState.activeCharacterId)
+      || gameState.initialUnplacedCharactersById.get(gameState.activeCharacterId)
+      || null;
+    const initialRoomId = !activeInitialCharacter
+      ? null
+      : findRoomAtPosition(gameState.initialRooms, activeInitialCharacter.position.x, activeInitialCharacter.position.y)?.id || null;
+    const ownMarkerModel = createItineraryMarkerModel(
+      activeInitialCharacter?.itinerary || null,
+      gameState.initialRooms,
+      initialRoomId,
+      gameState.duration,
+      gameState.initialCharacters
+    );
+    const markerModel = createItineraryMarkerModel(
+      activeInitialCharacter ? getKnownItinerary(activeInitialCharacter) : null,
+      gameState.initialRooms,
+      initialRoomId,
+      gameState.duration,
+      gameState.initialCharacters
+    );
+
+    expect(loadedNiccolo?.isPairingKnown).toBe(true);
+    expect(activeInitialCharacter?.id).toBe('niccolo');
+    expect(activeInitialCharacter?.isPairingKnown).toBe(true);
+    expect(markerModel.roomEntryTimes.length).toBeGreaterThan(ownMarkerModel.roomEntryTimes.length);
   });
 
   it('applies later absolute room-arrival activities authored for the replacement target', () => {

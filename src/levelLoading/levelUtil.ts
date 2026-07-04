@@ -577,7 +577,8 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       discoverableItemCount:generalSection.discoverableItemCount ?? _countDiscoverableItems(finalizedLevel),
       discoverableRoomCount:generalSection.discoverableRoomCount ?? _countDiscoverableRooms(finalizedLevel)
     };
-    syncPairingKnowledge([...level.initialCharacters, ...level.characters, ...level.allCharactersById.values()], level.allCharactersById, level.rooms);
+    const initialAllCharactersById = new Map([...level.allCharactersById.entries(), ...level.initialCharacters.map(character => [character.id, character] as const)]);
+    syncPairingKnowledge([...level.initialCharacters, ...level.characters, ...level.allCharactersById.values()], initialAllCharactersById, level.rooms);
     if (level.activeCharacterId) assertNormalizedId(level.activeCharacterId, 'character');
     if (options.validateUnlockPhrases) _validateUnlockableConclusionPhrases(level, conclusionCategoryOptionsByName, levelFilename, conclusionsFirstLineNo);
     return level;
