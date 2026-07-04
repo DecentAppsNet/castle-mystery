@@ -333,6 +333,13 @@ DDCCAAABBE
 : becomes Niccolo
 : drops Pig Mask
 
+23:02:24 Niccolo @ Crypt
+23:02:25 Giorgios @ Crypt
+23:02:26 Yusuf @ Crypt
+23:02:27 Harold @ Crypt
+23:02:28 Giovanni @ Crypt
+23:02:29 Hugo Masked @ Crypt
+
 # Conclusions
 
 * characters=Ahmad ibn Faraj al-Balarmi | Giorgios tou Nikolaou | Giovanni di Leone di Monreale | Gualtiero of Masala | Harold of Norwich | Hugo of Speyer | Matteo il Toro | Niccolò il Calabrese | Pietro di Ruggero di Palermo | Raniero de Stefano | Salomone ben David di Palermo | Stefan of Ragusa | Sticky Agatha | Ugolino di Conti | Yusuf ibn Khalaf al-Balarmi

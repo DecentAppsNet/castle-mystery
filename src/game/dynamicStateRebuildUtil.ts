@@ -53,10 +53,12 @@ type PendingRoomEffect = {
   create:() => void
 }
 
+// Snapshot which rooms were already discovered before the rebuild resets runtime state.
 function _getDiscoveredRoomIds(gameState:GameState):Set<string> {
   return new Set(gameState.rooms.filter(room => room.isDiscovered).map(room => room.id));
 }
 
+// Snapshot per-character discovered rooms so rebuild can restore them afterward.
 function _getCharacterDiscoveredRoomIds(gameState:GameState):Map<string, string[]> {
   const discoveredRoomIdsByCharacterId = new Map<string, string[]>();
   gameState.characters.forEach(character => discoveredRoomIdsByCharacterId.set(character.id, [...character.discoveredRoomIds]));
@@ -64,6 +66,7 @@ function _getCharacterDiscoveredRoomIds(gameState:GameState):Map<string, string[
   return discoveredRoomIdsByCharacterId;
 }
 
+// Collect every character already marked discovered across placed and unplaced runtime state.
 function _getDiscoveredCharacterIds(gameState:GameState):Set<string> {
   return new Set([
     ...gameState.discoveredCharacterIds,
@@ -72,6 +75,7 @@ function _getDiscoveredCharacterIds(gameState:GameState):Set<string> {
   ]);
 }
 
+// Collect every item already marked discovered across rooms, inventories, and unplaced storage.
 function _getDiscoveredItemIds(gameState:GameState):Set<string> {
   const discoveredItemIds = new Set<string>();
   gameState.rooms.forEach(room => room.items.forEach(item => {
@@ -86,6 +90,7 @@ function _getDiscoveredItemIds(gameState:GameState):Set<string> {
   return discoveredItemIds;
 }
 
+// Reapply discovery flags after rebuild recreates rooms, characters, and items from initial state.
 function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<string>, discoveredItemIds:Set<string>,
   discoveredCharacterIds:Set<string>, characterDiscoveredRoomIds:Map<string, string[]>) {
   gameState.rooms.forEach(room => {
@@ -106,19 +111,23 @@ function _restoreDiscoveryState(gameState:GameState, discoveredRoomIds:Set<strin
   });
 }
 
+// Return every character whose itinerary may contribute replayed runtime events.
 function _findReplayCharacters(gameState:GameState):Character[] {
   return [...gameState.characters, ...gameState.unplacedCharactersById.values()];
 }
 
+// Find when an initially unplaced character first becomes placed in the paired itinerary.
 function _findCharacterReplacementStartTime(character:Character):number|null {
   const replacementEvent = findIncomingCharacterReplacementEvent(character);
   return replacementEvent?.startTime ?? null;
 }
 
+// Find the replacement event that brings this character into placed runtime state.
 function _findCharacterReplacementEvent(character:Character):BecomesCharacterEvent|null {
   return findIncomingCharacterReplacementEvent(character);
 }
 
+// Gate replay so an initially unplaced character only contributes events after its incoming replacement.
 function _isReplayEventActiveForCharacter(gameState:GameState, character:Character, eventStartTime:number):boolean {
   if (!gameState.initialUnplacedCharactersById.has(character.id)) return true;
   const replacementStartTime = _findCharacterReplacementStartTime(character);
@@ -126,6 +135,7 @@ function _isReplayEventActiveForCharacter(gameState:GameState, character:Charact
   return eventStartTime >= replacementStartTime;
 }
 
+// Filter replayed inventory events to the events that should be active for this character at this time.
 function _shouldCollectInventoryEvent(gameState:GameState, character:Character,
   event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent):boolean {
   if (!_isReplayEventActiveForCharacter(gameState, character, event.startTime)) return false;
@@ -133,6 +143,7 @@ function _shouldCollectInventoryEvent(gameState:GameState, character:Character,
   return (event as BecomesCharacterEvent).sourceCharacterId === character.id;
 }
 
+// Resolve the event start position to use when replaying inventory events across replacement boundaries.
 function _findReplayInventoryEventStartPosition(gameState:GameState, character:Character,
   eventIndex:number, event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent):Position {
   const incomingReplacementEvent = !gameState.initialUnplacedCharactersById.has(character.id)
@@ -149,10 +160,12 @@ function _findReplayInventoryEventStartPosition(gameState:GameState, character:C
   return duplicatePosition(startPosition);
 }
 
+// Replay character replacements before other same-timestamp inventory events.
 function _getInventoryEventReplayOrder(event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent):number {
   return event.type === ItineraryEventType.BECOMES_CHARACTER ? 0 : 1;
 }
 
+// Gather and sort inventory-affecting events that should already have happened by the target time.
 function _collectAppliedInventoryEvents(gameState:GameState, time:number):AppliedInventoryEvent[] {
   const appliedEvents:AppliedInventoryEvent[] = [];
   _findReplayCharacters(gameState).forEach(character => {
@@ -185,6 +198,7 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
   return appliedEvents;
 }
 
+// Gather and sort exit-lock state changes that should already have happened by the target time.
 function _collectAppliedExitStateEvents(gameState:GameState, time:number):AppliedExitStateEvent[] {
   const appliedEvents:AppliedExitStateEvent[] = [];
   _findReplayCharacters(gameState).forEach(character => {
@@ -212,6 +226,7 @@ function _collectAppliedExitStateEvents(gameState:GameState, time:number):Applie
   return appliedEvents;
 }
 
+// Gather and sort show and hide events that should already have happened by the target time.
 function _collectAppliedVisibilityEvents(gameState:GameState, time:number):AppliedVisibilityEvent[] {
   const appliedEvents:AppliedVisibilityEvent[] = [];
   _findReplayCharacters(gameState).forEach(character => {
@@ -234,6 +249,7 @@ function _collectAppliedVisibilityEvents(gameState:GameState, time:number):Appli
   return appliedEvents;
 }
 
+// Remove a room item by id and return the removed instance when present.
 function _removeItemById(items:GameState['rooms'][number]['items'], itemId:string) {
   const itemIndex = items.findIndex(item => item.id === itemId);
   if (itemIndex === -1) return null;
@@ -241,16 +257,19 @@ function _removeItemById(items:GameState['rooms'][number]['items'], itemId:strin
   return item ?? null;
 }
 
+// Copy the visible runtime placement state from a replacement source item onto its target item.
 function _copyReplacementStateOntoTarget(sourceItem:GameState['rooms'][number]['items'][number], targetItem:GameState['rooms'][number]['items'][number]) {
   targetItem.position = duplicatePosition(sourceItem.position);
   targetItem.drawOffset = duplicatePosition(sourceItem.drawOffset);
   return targetItem;
 }
 
+// Preserve the removed replacement source item in unplaced storage after the swap.
 function _storeUnplacedReplacementSource(gameState:GameState, sourceItem:GameState['rooms'][number]['items'][number]) {
   gameState.unplacedItemsById.set(sourceItem.id, sourceItem);
 }
 
+// Replace a room-placed item with its unplaced target when the source is lying in a room.
 function _replaceRoomItem(gameState:GameState, sourceItemId:string, targetItemId:string):boolean {
   for (const room of gameState.rooms) {
     const sourceItem = _removeItemById(room.items, sourceItemId);
@@ -265,12 +284,14 @@ function _replaceRoomItem(gameState:GameState, sourceItemId:string, targetItemId
   return false;
 }
 
+// Report where an owned item currently sits on a character so replacement preserves that slot.
 function _findOwnedItemLocation(character:Character, itemId:string):ItemHoldLocation {
   if (character.leftHandItem?.id === itemId) return 'left-hand';
   if (character.rightHandItem?.id === itemId) return 'right-hand';
   return 'inventory';
 }
 
+// Replace an inventory or hand-held item with its unplaced target.
 function _replaceOwnedItem(gameState:GameState, sourceItemId:string, targetItemId:string):boolean {
   for (const character of gameState.characters) {
     const location = _findOwnedItemLocation(character, sourceItemId);
@@ -287,22 +308,14 @@ function _replaceOwnedItem(gameState:GameState, sourceItemId:string, targetItemI
   return false;
 }
 
+// Apply an item replacement no matter whether the source is room-placed or character-owned.
 function _applyItemReplacement(gameState:GameState, sourceItemId:string, targetItemId:string) {
   if (_replaceRoomItem(gameState, sourceItemId, targetItemId)) return;
   if (_replaceOwnedItem(gameState, sourceItemId, targetItemId)) return;
   throw new Error(`replacement source ${sourceItemId} was not found in runtime state`);
 }
 
-function _isCharacterReplacementSeamless(gameState:GameState,
-  sourceCharacter:Character,
-  targetCharacterId:string,
-  replacementPosition:Position):boolean {
-  if (gameState.activeCharacterId !== sourceCharacter.id && gameState.activeCharacterId !== targetCharacterId) return false;
-  if (!sourceCharacter.isVisible) return false;
-  const sourceRoom = findRoomAtPosition(gameState.rooms, replacementPosition.x, replacementPosition.y);
-  return !!sourceRoom && !sourceRoom.isObscured;
-}
-
+// Swap the placed source character for its unplaced target while preserving the current visible runtime state.
 function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:string, targetCharacterId:string, replacementPosition:Position,
   replacementTime:number) {
   assert(targetCharacterId !== sourceCharacterId);
@@ -329,23 +342,23 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   sourceCharacter.rightHandItem = null;
   gameState.unplacedCharactersById.set(sourceCharacter.id, sourceCharacter);
   gameState.characters.splice(sourceCharacterIndex, 1, targetCharacter);
-  if (_isCharacterReplacementSeamless(gameState, sourceCharacter, targetCharacterId, replacementPosition)) {
+  if (sourceCharacter.isPairingKnown) {
     gameState.activeCharacterId = targetCharacterId;
     assert(gameState.activeCharacterId !== sourceCharacterId);
     return;
   }
-  if (gameState.activeCharacterId === targetCharacterId) {
-    gameState.activeCharacterId = sourceCharacterId;
-  }
+  if (gameState.activeCharacterId === targetCharacterId) gameState.activeCharacterId = sourceCharacterId;
   assert(gameState.activeCharacterId === sourceCharacterId || gameState.activeCharacterId !== targetCharacterId);
 }
 
+// Find a currently placed character and fail loudly if rebuild logic expected it to exist.
 function _findCharacter(gameState:GameState, characterId:string):Character {
   const character = gameState.characters.find(currentCharacter => currentCharacter.id === characterId);
   assertNonNullable(character, `character with id ${characterId} not found`);
   return character;
 }
 
+// Apply a show or hide event to whichever runtime entity it targets.
 function _applyVisibility(gameState:GameState, targetId:string, isVisible:boolean) {
   const character = gameState.characters.find(candidate => candidate.id === targetId) || null;
   if (character) {
@@ -358,6 +371,7 @@ function _applyVisibility(gameState:GameState, targetId:string, isVisible:boolea
   item.isVisible = isVisible;
 }
 
+// Update every copy of an exit with the new shared status.
 function _setMatchingExitStatus(gameState:GameState, roomExitId:string, exitStatus:ExitStatus) {
   let didFindMatch = false;
   gameState.rooms.forEach(room => {
@@ -370,10 +384,12 @@ function _setMatchingExitStatus(gameState:GameState, roomExitId:string, exitStat
   assertNonNullable(didFindMatch ? roomExitId : null, `unable to find rebuilt exit ${roomExitId}`);
 }
 
+// Find one exit instance by id within a single room snapshot.
 function _findRoomExitById(room:GameState['rooms'][number], roomExitId:string) {
   return room.exits.find(candidate => candidate.id === roomExitId) || null;
 }
 
+// Rewind active focus to the source identity when scrubbing to before an incoming replacement.
 function _normalizeActiveCharacterForTime(gameState:GameState, time:number) {
   if (!gameState.unplacedCharactersById.has(gameState.activeCharacterId)) return;
   const activeCharacter = findActiveCharacter(gameState);
@@ -384,6 +400,7 @@ function _normalizeActiveCharacterForTime(gameState:GameState, time:number) {
   }
 }
 
+// Rebuild the mutable runtime snapshot for a target time by replaying authored timeline effects from initial state.
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime:number|undefined, metaTime:number) {
   const discoveredRoomIds = _getDiscoveredRoomIds(gameState);
   const characterDiscoveredRoomIds = _getCharacterDiscoveredRoomIds(gameState);
