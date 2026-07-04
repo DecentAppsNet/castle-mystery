@@ -511,13 +511,15 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       () => _validateHasLoadedCharacters(level));
     _runWithLoadLevelSectionContext(levelFilename, generalFirstLineNo,
       () => _validateActiveCharacterId(level.activeCharacterId, level.characters));
+    const authoredConclusionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
+      () => createConclusionCategoryOptionsByName(sections.conclusions || "", new Map(), conclusionsFirstLineNo));
     const conclusionCategoryOptionsByName = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
       () => createConclusionCategoryOptionsByName(sections.conclusions || "", _createDefaultConclusionCategoryOptions(level), conclusionsFirstLineNo));
     const authoredConclusions = _runWithLoadLevelSectionContext(levelFilename, conclusionsFirstLineNo,
       () => loadConclusionsFromSection(sections.conclusions || "", level.rooms, conclusionCategoryOptionsByName, level.characters, conclusionsFirstLineNo));
     const generatedIdentityConclusion = authoredConclusions.some(conclusion => conclusion.id === 'identities')
       ? null
-      : createGeneratedIdentityConclusion(level.characters, conclusionCategoryOptionsByName);
+      : createGeneratedIdentityConclusion(level.characters, conclusionCategoryOptionsByName, { characterOptions:authoredConclusionCategoryOptionsByName.get('characters') || null });
     level = {
       ...level,
       conclusions:generatedIdentityConclusion ? [generatedIdentityConclusion, ...authoredConclusions] : authoredConclusions,

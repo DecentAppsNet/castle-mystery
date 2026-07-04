@@ -93,6 +93,7 @@ import loadLevelFromUrlImportedDuplicateRoomLegendEntryText from './fixtures/loa
 import loadLevelFromUrlWithImportsText from './fixtures/load-level-from-url-with-imports.md?raw';
 import loadLevelFromUrlImportedItineraryText from './fixtures/load-level-from-url-imported-itinerary.md?raw';
 import identitiesAllTitlesKnownText from './fixtures/identities-all-titles-known.md?raw';
+import identitiesAuthoredCharactersOverrideText from './fixtures/identities-authored-characters-override.md?raw';
 import identitiesAuthoredMetadataText from './fixtures/identities-authored-metadata.md?raw';
 import identitiesExcludesNoninteractiveCharactersText from './fixtures/identities-excludes-noninteractive-characters.md?raw';
 import handItemDefaultCategoryText from './fixtures/hand-item-default-category.md?raw';
@@ -649,6 +650,15 @@ describe('levelUtil itinerary loading', () => {
     expect(identities?.unlockConclusionIds).toEqual(['final mystery']);
     expect(identities?.isLocked).toBe(false);
     expect(finalMystery?.isLocked).toBe(true);
+  });
+
+  it('uses an authored characters category as the identities dropdown override', () => {
+    const level = loadLevelFromText(identitiesAuthoredCharactersOverrideText);
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities') || null;
+    const identityBlank = identities?.parts.find(part => part.type === 'blank') as ClozeBlank | undefined;
+
+    expect(identityBlank?.availableAnswers).toEqual(['Queen', 'Ghost']);
+    expect(identityBlank?.correctAnswerIndexes).toEqual([0]);
   });
 
   it('excludes characters with empty descriptions from generated identities', () => {

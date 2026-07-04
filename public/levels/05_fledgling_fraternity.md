@@ -329,11 +329,13 @@ DDCCAAABBE
 : says, "this guy." to Harold.
 : Harold says, "I'm Harold."
 
-23:02:10 Niccolo Masked @ Hall
+23:02:15 Niccolo Masked @ Hall
 : becomes Niccolo
 : drops Pig Mask
 
 # Conclusions
+
+* characters=Ahmad ibn Faraj al-Balarmi | Giorgios tou Nikolaou | Giovanni di Leone di Monreale | Gualtiero of Masala | Harold of Norwich | Hugo of Speyer | Matteo il Toro | Niccolò il Calabrese | Pietro di Ruggero di Palermo | Raniero de Stefano | Salomone ben David di Palermo | Stefan of Ragusa | Sticky Agatha | Ugolino di Conti | Yusuf ibn Khalaf al-Balarmi
 
 ## Costumes
 

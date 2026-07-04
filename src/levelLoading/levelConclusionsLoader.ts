@@ -240,6 +240,7 @@ export function loadConclusionsFromSection(conclusionsSection:string, rooms:Read
   if (!section.trim()) return [];
 
   const resolvedCategoryOptionsByName = categoryOptionsByName || createConclusionCategoryOptionsByName(section, new Map(), firstLineNo);
+  const authoredCharacterOptions = createConclusionCategoryOptionsByName(section, new Map(), firstLineNo).get('characters') || null;
   const conclusionSubsections = _createNormalizedConclusionSubsectionEntries(section, firstLineNo);
 
   const parsedConclusions = conclusionSubsections.map(({ authoredName:title, value:conclusionSubsection, lineNo }) => {
@@ -259,6 +260,7 @@ export function loadConclusionsFromSection(conclusionsSection:string, rooms:Read
   const preliminaryConclusions = parsedConclusions.map(parsedConclusion => {
     if (_isGeneratedIdentitiesSubsection(parsedConclusion.authoredTitle, parsedConclusion.clozeTemplate)) {
       return createGeneratedIdentityConclusion(characters, resolvedCategoryOptionsByName, {
+        characterOptions:authoredCharacterOptions,
         title:parsedConclusion.displayTitle,
         revealRoomIds:parsedConclusion.revealRoomIds
       });
@@ -294,12 +296,12 @@ export function loadConclusionsFromSection(conclusionsSection:string, rooms:Read
 }
 
 export function createGeneratedIdentityConclusion(characters:ReadonlyArray<Character>, categoryOptionsByName:Map<string, string[]>,
-  overrides:{ title?:string|null, unlockConclusionIds?:string[], revealRoomIds?:string[] } = {}):Conclusion|null {
+  overrides:{ title?:string|null, unlockConclusionIds?:string[], revealRoomIds?:string[], characterOptions?:string[]|null } = {}):Conclusion|null {
   const interactiveCharactersWithUnknownTitles = characters.filter(character => isCharacterInteractive(character) && !character.isTitleKnown);
   if (!interactiveCharactersWithUnknownTitles.length) return null;
   const interactiveCharacterTitles = _sortGeneratedConclusionOptions(interactiveCharactersWithUnknownTitles.map(character => character.title));
   const identityCategoryOptionsByName = new Map(categoryOptionsByName);
-  identityCategoryOptionsByName.set('characters', interactiveCharacterTitles);
+  identityCategoryOptionsByName.set('characters', overrides.characterOptions || interactiveCharacterTitles);
 
   const parts:ClozePart[] = [];
   interactiveCharactersWithUnknownTitles.forEach((character, characterIndex) => {

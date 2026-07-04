@@ -109,11 +109,6 @@ AGE=58
 ## Guard 4
 * faceImage=guard4.png
 
-## Heinrich
-* title=Heinrich Sohn des Konrad
-* description=An 11-year-old boy.
-* faceImage=heinrich.png
-
 ## Harold
 * title=Harold of Norwich
 * description=His garb indicates some lower court function.
@@ -122,6 +117,11 @@ AGE=58
 ETHNICITY: English
 OCCUPATION: Herald
 AGE: 45
+
+## Heinrich
+* title=Heinrich Sohn des Konrad
+* description=An 11-year-old boy.
+* faceImage=heinrich.png
 
 ## Helena
 
