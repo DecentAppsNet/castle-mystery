@@ -101,8 +101,8 @@ DDCCAAABBE
 * 2=Pew 2|Giorgios Masked
 * 3=Pew 3
 * 4=Pew 4|Yusuf Masked
-* 5=Pew 5
-* 6=Pew 6|Giovanni Masked
+* 5=Pew 5|Giovanni Masked
+* 6=Pew 6
 * 7=Pew 7|Hugo Masked
 * 8=Pew 8
 * w=Big Wineskin
@@ -155,7 +155,7 @@ DDCCAAABBE
 * description=The same person we saw much earlier - just with a mask on.
 * orientation=sitting
 * items=Goat Mask
-* facing=left
+* facing=right
 
 ## Hugo Masked
 * faceImage=horseMask.png
@@ -163,7 +163,7 @@ DDCCAAABBE
 * description=The same person we saw much earlier - just with a mask on.
 * items=Horse Mask
 * orientation=sitting
-* facing=left
+* facing=right
 
 ## Giorgios Masked
 * faceImage=bullMask.png
@@ -171,7 +171,7 @@ DDCCAAABBE
 * description=The same person we saw much earlier - just with a mask on.
 * items=Bull Mask
 * orientation=sitting
-* facing=left
+* facing=right
 
 ## Yusuf Masked
 * faceImage=rabbitMask.png
@@ -179,7 +179,7 @@ DDCCAAABBE
 * description=The same person we saw much earlier - just with a mask on.
 * orientation=sitting
 * items=Rabbit Mask
-* facing=left
+* facing=right
 
 ## Giovanni Masked
 * faceImage=stagMask.png
@@ -187,7 +187,7 @@ DDCCAAABBE
 * description=The same person we saw much earlier - just with a mask on.
 * items=Stag Mask
 * orientation=sitting
-* facing=left
+* facing=right
 
 # Items
 
@@ -244,6 +244,13 @@ DDCCAAABBE
 : becomes Niccolo Masked
 : Sticky Agatha says, "I'll stay here and keep watch."
 
+(Niccolo enters Nave, and everybody turns to look at him)
+22:59:48 Harold Masked faces left
+: Giovanni Masked faces left
+: Hugo Masked faces left
+: Yusuf Masked faces left
+: Giorgios Masked faces left
+
 22:59:50 Harold Masked faces right
 22:59:51 Giorgios Masked faces right
 : Giovanni Masked faces right
@@ -251,20 +258,19 @@ DDCCAAABBE
 : faces left
 : Yusuf Masked faces right
 : Hugo Masked faces right
-: Niccolo Masked says, "Friends, our identities are unknown,"
-: says, "even to each other."
-: says, "Yet we are bound together by our anger."
+: Niccolo Masked says, "Friends, welcome!"
+: says, "We are bound together by our anger."
 : says, "We come together, in secret..."
 : says, "To solve a common problem."
 : Hugo Masked says, "That's right."
 : Harold Masked says, "Uh huh."
-: Niccolo Masked says, "Do you want respect and admiration?"
+: Niccolo Masked says, "Do you want dignity and respect?"
 : Yusuf Masked says, "Yes!"
-: Niccolo Masked says, "Do you want to earn more money?"
+: Niccolo Masked says, "Do you want to earn fair pay for your labor?"
 : Giovanni Masked says, "Oh yeah!"
 : Giorgios Masked says, "Yes! Yes!"
 : Niccolo Masked says, "And do you want..."
-: says "the highest standards of craftsmanship to be upheld in your work?"
+: says "the highest standards of craftsmanship to be upheld?"
 : Yusuf Masked says, "Uh... sure."
 : Giovanni Masked says, "Brother, your words touch my heart."
 : says, "To cut a rock..."
@@ -315,8 +321,17 @@ DDCCAAABBE
 : drops Bull Mask
 23:01:59 Hugo Masked @ Hall
 : stands
+: says, "I... don't want to take off my mask."
+: Yusuf says, "Why?"
+: Hugo Masked says, "I don't trust everyone here yet."
+: Yusuf says, "Understandable."
+: Yusuf says, "I work with everyone here except you and..."
+: says, "this guy." to Harold.
+: Harold says, "I'm Harold."
+
 23:02:06 Niccolo Masked @ Hall
 : becomes Niccolo
+: drops Pig Mask
 
 # Conclusions
 

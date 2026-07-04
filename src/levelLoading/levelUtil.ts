@@ -35,6 +35,7 @@ import {
 import { createGeneratedIdentityConclusion, createConclusionCategoryOptionsByName, loadConclusionsFromSection } from "./levelConclusionsLoader";
 import { syncPairingKnowledge } from "../game/pairedItineraryUtil";
 import { findDirectReferencedCharacterIds, findDirectReferencedItemIds } from "../game/itineraryReferenceUtil";
+import { createItineraryIndex } from "../game/itineraryUtil";
 import ClozeBlank from "../game/conclusions/types/ClozeBlank";
 import ClozePartType from "../game/conclusions/types/ClozePartType";
 import Conclusion from "../game/conclusions/types/Conclusion";
@@ -554,7 +555,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
         ...duplicateCharacter(initialCharacter),
         itinerary:scheduledCharacter.itinerary,
         pairedItinerary:scheduledCharacter.pairedItinerary,
-        itineraryIndex:scheduledCharacter.itineraryIndex
+        itineraryIndex:createItineraryIndex(scheduledCharacter.itinerary, initialCharacter.position)
       } : duplicateCharacter(initialCharacter);
     });
     const resolvedDuration = resolvedEndTime - resolvedStartTime;

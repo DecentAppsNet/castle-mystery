@@ -198,6 +198,23 @@ describe('becomes character integration', () => {
     expect(markerModel.roomEntryTimes.length).toBeGreaterThan(ownMarkerModel.roomEntryTimes.length);
   });
 
+  it('keeps Niccolo Masked out of Hall immediately after the first replacement in fledgling fraternity', () => {
+    const mergedText = createLevelTextWithImportTexts(
+      [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
+      fledglingFraternityText
+    );
+    const level = loadLevelFromText(mergedText, '05_fledgling_fraternity.md');
+    const niccolo = level.characters.find(character => character.id === 'niccolo');
+    const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
+    const atReplacementState = createGameState({ ...level, initialTime:becomesEvent!.startTime });
+    const oneSecondLaterState = createGameState({ ...level, initialTime:becomesEvent!.startTime + 1_000 });
+    const maskedAtReplacement = atReplacementState.characters.find(character => character.id === 'niccolo masked');
+    const maskedOneSecondLater = oneSecondLaterState.characters.find(character => character.id === 'niccolo masked');
+
+    expect(findRoomAtPosition(atReplacementState.rooms, maskedAtReplacement!.position.x, maskedAtReplacement!.position.y)?.id).not.toBe('hall');
+    expect(findRoomAtPosition(oneSecondLaterState.rooms, maskedOneSecondLater!.position.x, maskedOneSecondLater!.position.y)?.id).not.toBe('hall');
+  });
+
   it('applies later absolute room-arrival activities authored for the replacement target', () => {
     const level = loadLevelFromText(becomesCharacterLaterAbsoluteText, 'becomes-character-later-absolute.md');
     const gameState = createGameState({ ...level, initialTime:10_000 });
