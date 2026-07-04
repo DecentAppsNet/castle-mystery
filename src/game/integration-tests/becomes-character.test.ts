@@ -8,10 +8,10 @@ import becomesCharacterFraternityLikeText from './fixtures/becomes-character-fra
 import becomesCharacterBodyOrientationBeforeReplacementText from './fixtures/becomes-character-body-orientation-before-replacement.md?raw';
 import becomesCharacterObscuredTransitionText from './fixtures/becomes-character-obscured-transition.md?raw';
 import becomesCharacterObscuredArrivalTransitionText from './fixtures/becomes-character-obscured-arrival-transition.md?raw';
-import fledglingFraternityText from '../../../public/levels/05_fledgling_fraternity.md?raw';
-import sharedCharactersText from '../../../public/levels/characters.md?raw';
-import sharedItemsText from '../../../public/levels/items.md?raw';
-import sharedRoomStylesText from '../../../public/levels/roomStyles.md?raw';
+import fledglingFraternityText from './fixtures/05_fledgling_fraternity.md?raw';
+import sharedCharactersText from './fixtures/characters-public.md?raw';
+import sharedItemsText from './fixtures/items-public.md?raw';
+import sharedRoomStylesText from './fixtures/roomStyles-public.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createLevelTextWithImportTexts } from '@/levelLoading/levelImportUtil';
 import { findCharacterPose } from '../itineraryUtil';
