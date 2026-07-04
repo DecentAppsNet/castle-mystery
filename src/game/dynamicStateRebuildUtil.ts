@@ -7,7 +7,7 @@ import { createDropItemEffect } from "./effects/dropItemUtil";
 import { createGiveItemEffect } from "./effects/giveItemUtil";
 import { createLockEffect, createUnlockEffect } from "./effects/lockEffectUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
-import { findCharacterPose } from "./itineraryUtil";
+import { createItineraryIndex, findCharacterPose } from "./itineraryUtil";
 import { addOwnedItem, getOwnedItems, removeOwnedItemById } from "./itemOwnershipUtil";
 import { findIncomingCharacterReplacementEvent } from "./pairedItineraryUtil";
 import ItemHoldLocation from "./types/ItemHoldLocation";
@@ -133,6 +133,26 @@ function _shouldCollectInventoryEvent(gameState:GameState, character:Character,
   return (event as BecomesCharacterEvent).sourceCharacterId === character.id;
 }
 
+function _findReplayInventoryEventStartPosition(gameState:GameState, character:Character,
+  eventIndex:number, event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent):Position {
+  const incomingReplacementEvent = !gameState.initialUnplacedCharactersById.has(character.id)
+    ? _findCharacterReplacementEvent(character)
+    : null;
+  if (incomingReplacementEvent && event.startTime >= incomingReplacementEvent.startTime && character.pairedItinerary) {
+    const pairedEventIndex = character.pairedItinerary.indexOf(event);
+    const pairedStartPosition = createItineraryIndex(character.pairedItinerary, character.position).eventStartPositions[pairedEventIndex];
+    assertNonNullable(pairedStartPosition);
+    return duplicatePosition(pairedStartPosition);
+  }
+  const startPosition = character.itineraryIndex.eventStartPositions[eventIndex];
+  assertNonNullable(startPosition);
+  return duplicatePosition(startPosition);
+}
+
+function _getInventoryEventReplayOrder(event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent):number {
+  return event.type === ItineraryEventType.BECOMES_CHARACTER ? 0 : 1;
+}
+
 function _collectAppliedInventoryEvents(gameState:GameState, time:number):AppliedInventoryEvent[] {
   const appliedEvents:AppliedInventoryEvent[] = [];
   _findReplayCharacters(gameState).forEach(character => {
@@ -147,12 +167,10 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
           {
             const inventoryEvent = event as TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent;
             if (!_shouldCollectInventoryEvent(gameState, character, inventoryEvent)) break;
-            const startPosition = character.itineraryIndex.eventStartPositions[eventIndex];
-            assertNonNullable(startPosition);
             appliedEvents.push({
               characterId:character.id,
               eventIndex,
-              startPosition:duplicatePosition(startPosition),
+              startPosition:_findReplayInventoryEventStartPosition(gameState, character, eventIndex, inventoryEvent),
               event:inventoryEvent
             });
           }
@@ -160,7 +178,10 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
       }
     });
   });
-  appliedEvents.sort((a, b) => a.event.startTime - b.event.startTime || a.characterId.localeCompare(b.characterId) || a.eventIndex - b.eventIndex);
+  appliedEvents.sort((a, b) => a.event.startTime - b.event.startTime
+    || _getInventoryEventReplayOrder(a.event) - _getInventoryEventReplayOrder(b.event)
+    || a.characterId.localeCompare(b.characterId)
+    || a.eventIndex - b.eventIndex);
   return appliedEvents;
 }
 
