@@ -1,5 +1,7 @@
-/* This module groups time-based dynamic-state rebuild coordination plus the remaining replay helpers that still live in this file.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This module groups time-based dynamic-state rebuild coordination plus the remaining replay 
+   helpers that still live in this file. 
+   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section 
+   in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from "decent-portal";
 
@@ -8,9 +10,9 @@ import { createGiveItemEffect } from "./effects/giveItemUtil";
 import { createLockEffect, createUnlockEffect } from "./effects/lockEffectUtil";
 import { createTakeItemEffect } from "./effects/takeItemUtil";
 import { createDiscoveryStateSnapshot, restoreDiscoveryState } from "./dynamicStateRebuild/discoveryStateUtil";
+import { findCharacterReplacementEvent, findReplayCharacters, isReplayEventActiveForCharacter } from "./dynamicStateRebuild/replayCharacterUtil";
 import { createItineraryIndex, findCharacterPose } from "./itineraryUtil";
 import { addOwnedItem, removeOwnedItemById } from "./itemOwnershipUtil";
-import { findIncomingCharacterReplacementEvent } from "./pairedItineraryUtil";
 import ItemHoldLocation from "./types/ItemHoldLocation";
 import Position, { duplicatePosition } from "./types/Position";
 import Character from "./types/Character";
@@ -54,34 +56,10 @@ type PendingRoomEffect = {
   create:() => void
 }
 
-// Return every character whose itinerary may contribute replayed runtime events.
-function _findReplayCharacters(gameState:GameState):Character[] {
-  return [...gameState.characters, ...gameState.unplacedCharactersById.values()];
-}
-
-// Find when an initially unplaced character first becomes placed in the paired itinerary.
-function _findCharacterReplacementStartTime(character:Character):number|null {
-  const replacementEvent = findIncomingCharacterReplacementEvent(character);
-  return replacementEvent?.startTime ?? null;
-}
-
-// Find the replacement event that brings this character into placed runtime state.
-function _findCharacterReplacementEvent(character:Character):BecomesCharacterEvent|null {
-  return findIncomingCharacterReplacementEvent(character);
-}
-
-// Gate replay so an initially unplaced character only contributes events after its incoming replacement.
-function _isReplayEventActiveForCharacter(gameState:GameState, character:Character, eventStartTime:number):boolean {
-  if (!gameState.initialUnplacedCharactersById.has(character.id)) return true;
-  const replacementStartTime = _findCharacterReplacementStartTime(character);
-  if (replacementStartTime === null) return true;
-  return eventStartTime >= replacementStartTime;
-}
-
 // Filter replayed inventory events to the events that should be active for this character at this time.
 function _shouldCollectInventoryEvent(gameState:GameState, character:Character,
   event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent):boolean {
-  if (!_isReplayEventActiveForCharacter(gameState, character, event.startTime)) return false;
+  if (!isReplayEventActiveForCharacter(gameState, character, event.startTime)) return false;
   if (event.type !== ItineraryEventType.BECOMES_CHARACTER) return true;
   return (event as BecomesCharacterEvent).sourceCharacterId === character.id;
 }
@@ -90,7 +68,7 @@ function _shouldCollectInventoryEvent(gameState:GameState, character:Character,
 function _findReplayInventoryEventStartPosition(gameState:GameState, character:Character,
   eventIndex:number, event:TakeItemEvent|DropItemEvent|GiveItemEvent|BecomesItemEvent|BecomesCharacterEvent):Position {
   const incomingReplacementEvent = !gameState.initialUnplacedCharactersById.has(character.id)
-    ? _findCharacterReplacementEvent(character)
+    ? findCharacterReplacementEvent(character)
     : null;
   if (incomingReplacementEvent && event.startTime >= incomingReplacementEvent.startTime && character.pairedItinerary) {
     const pairedEventIndex = character.pairedItinerary.indexOf(event);
@@ -111,7 +89,7 @@ function _getInventoryEventReplayOrder(event:TakeItemEvent|DropItemEvent|GiveIte
 // Gather and sort inventory-affecting events that should already have happened by the target time.
 function _collectAppliedInventoryEvents(gameState:GameState, time:number):AppliedInventoryEvent[] {
   const appliedEvents:AppliedInventoryEvent[] = [];
-  _findReplayCharacters(gameState).forEach(character => {
+  findReplayCharacters(gameState).forEach(character => {
     character.itinerary.forEach((event, eventIndex) => {
       if (event.startTime > time) return;
       switch(event.type) {
@@ -144,10 +122,10 @@ function _collectAppliedInventoryEvents(gameState:GameState, time:number):Applie
 // Gather and sort exit-lock state changes that should already have happened by the target time.
 function _collectAppliedExitStateEvents(gameState:GameState, time:number):AppliedExitStateEvent[] {
   const appliedEvents:AppliedExitStateEvent[] = [];
-  _findReplayCharacters(gameState).forEach(character => {
+  findReplayCharacters(gameState).forEach(character => {
     character.itinerary.forEach((event, eventIndex) => {
       if (event.startTime > time) return;
-      if (!_isReplayEventActiveForCharacter(gameState, character, event.startTime)) return;
+      if (!isReplayEventActiveForCharacter(gameState, character, event.startTime)) return;
       switch(event.type) {
         case ItineraryEventType.LOCK:
         case ItineraryEventType.UNLOCK:
@@ -172,10 +150,10 @@ function _collectAppliedExitStateEvents(gameState:GameState, time:number):Applie
 // Gather and sort show and hide events that should already have happened by the target time.
 function _collectAppliedVisibilityEvents(gameState:GameState, time:number):AppliedVisibilityEvent[] {
   const appliedEvents:AppliedVisibilityEvent[] = [];
-  _findReplayCharacters(gameState).forEach(character => {
+  findReplayCharacters(gameState).forEach(character => {
     character.itinerary.forEach((event, eventIndex) => {
       if (event.startTime > time) return;
-      if (!_isReplayEventActiveForCharacter(gameState, character, event.startTime)) return;
+      if (!isReplayEventActiveForCharacter(gameState, character, event.startTime)) return;
       switch(event.type) {
         case ItineraryEventType.SHOW:
         case ItineraryEventType.HIDE:
@@ -337,7 +315,7 @@ function _normalizeActiveCharacterForTime(gameState:GameState, time:number) {
   if (!gameState.unplacedCharactersById.has(gameState.activeCharacterId)) return;
   const activeCharacter = findActiveCharacter(gameState);
   assertNonNullable(activeCharacter);
-  const replacementEvent = _findCharacterReplacementEvent(activeCharacter);
+  const replacementEvent = findCharacterReplacementEvent(activeCharacter);
   if (replacementEvent && time < replacementEvent.startTime) {
     gameState.activeCharacterId = replacementEvent.sourceCharacterId;
   }
