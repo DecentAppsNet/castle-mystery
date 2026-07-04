@@ -6,6 +6,7 @@ import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { createGameState, updateAndDraw } from '../gameUtil';
 import { loadLevelFromText } from '../../levelLoading/levelUtil';
 import itemEmitsAdjacentRoomText from './fixtures/item-emits-adjacent-room.md?raw';
+import speechBubbleObscuredAdjacentRoomText from './fixtures/speech-bubble-obscured-adjacent-room.md?raw';
 import { gameToCanvasPosition } from '../drawing/drawUtil';
 import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
 
@@ -42,6 +43,18 @@ describe('item emits integration', () => {
       updateAndDraw(gameState, context, () => {}, undefined, undefined, undefined, true);
 
       expect(drawnTexts).toContain('(ring)');
+    });
+
+    it('draws speech bubbles for adjacent obscured-room speech', () => {
+      const level = loadLevelFromText(speechBubbleObscuredAdjacentRoomText);
+      const gameState = createGameState(level);
+      const drawnTexts:string[] = [];
+      const context = _createMockContext(drawnTexts);
+
+      rebuildDynamicStateForTime(gameState, 1_000, 0, 0);
+      updateAndDraw(gameState, context, () => {}, undefined, undefined, undefined, true);
+
+      expect(drawnTexts).toContain('Hello from the store.');
     });
 
     it('centers bare emits bubbles in the room', () => {

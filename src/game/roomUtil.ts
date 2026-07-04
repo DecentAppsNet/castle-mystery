@@ -59,7 +59,6 @@ export function findCharactersInRoom(room:Room, characters:Character[]):Characte
 
 export function isActiveAudibleRoom(room:Room, activeRoom:Room):boolean {
   if (room.id === activeRoom.id) return true;
-  if (room.isObscured) return false;
   return room.exits.some(exit =>
     exit.exitStatus === ExitStatus.open
     && (exit.room1Id === activeRoom.id || exit.room2Id === activeRoom.id));
