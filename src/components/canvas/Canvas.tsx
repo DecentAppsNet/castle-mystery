@@ -6,7 +6,7 @@ import {useRef, useEffect, useState, CSSProperties, MouseEventHandler} from 'rea
 const NO_ANIMATION_IN_PROGRESS = -1;
 let animationFrameId = NO_ANIMATION_IN_PROGRESS;
 
-export interface IDrawCallback {
+type DrawCallback = {
   (context:CanvasRenderingContext2D):void;
 }
 
@@ -14,7 +14,7 @@ interface IProps {
   isAnimated:boolean,
   isFullScreen?:boolean,
   onClick?:MouseEventHandler<HTMLCanvasElement>,
-  onDraw:IDrawCallback,
+  onDraw:DrawCallback,
   onExitFullScreen?:() => void,
   exitFullScreenText?:string,
   onMouseMove?:MouseEventHandler<HTMLCanvasElement>,

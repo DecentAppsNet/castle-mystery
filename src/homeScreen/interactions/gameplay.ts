@@ -10,7 +10,7 @@ export function msecsToMinutes(msecs:number):number {
   return msecs / MSECS_IN_MINUTE;
 }
 
-export function minutesToMsecs(minutes:number):number {
+function _minutesToMsecs(minutes:number):number {
   return minutes * MSECS_IN_MINUTE;
 }
 
@@ -20,7 +20,7 @@ export function updatePlayPause(isPlaying:boolean, setIsPlaying:(isPlaying:boole
 }
 
 export function updateTime(minutes:number, setIsPlaying:(isPlaying:boolean) => void) {
-  changeTime(minutesToMsecs(minutes));
+  changeTime(_minutesToMsecs(minutes));
   setIsPlaying(false);
 }
 

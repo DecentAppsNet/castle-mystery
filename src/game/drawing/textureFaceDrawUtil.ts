@@ -46,7 +46,7 @@ function _createTextureLightnessFilter(textureLightness:number):string {
   return textureLightness === 1 ? 'none' : `brightness(${textureLightness})`;
 }
 
-export function applyPunchThroughAlpha(targetPixels:Pick<ImageData, 'data'>, sourcePixels:Pick<ImageData, 'data'>) {
+function _applyPunchThroughAlpha(targetPixels:Pick<ImageData, 'data'>, sourcePixels:Pick<ImageData, 'data'>) {
   for (let pixelIndex = 0; pixelIndex < targetPixels.data.length; pixelIndex += 4) {
     const sourceAlpha = sourcePixels.data[pixelIndex + 3];
     if (sourceAlpha >= 255) continue;
@@ -129,7 +129,7 @@ function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWi
 
   const targetImageData = faceContext.getImageData(0, 0, faceWidth, faceHeight);
   const sourceImageData = operationContext.getImageData(0, 0, faceWidth, faceHeight);
-  applyPunchThroughAlpha(targetImageData, sourceImageData);
+  _applyPunchThroughAlpha(targetImageData, sourceImageData);
   faceContext.putImageData(targetImageData, 0, 0);
 }
 

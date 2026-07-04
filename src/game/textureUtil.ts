@@ -15,10 +15,6 @@ export function findTexturePrimaryImageOperation(texture:Texture):TextureImageOp
   return texture.operations.find(isTextureImageOperation) || null;
 }
 
-export function findTextureFilterOperations(texture:Texture):TextureFilterOperation[] {
-  return texture.operations.filter(isTextureFilterOperation);
-}
-
 export function findTextureImageUrls(texture:Texture):string[] {
   return texture.operations.filter(isTextureImageOperation).map(operation => operation.imageUrl);
 }

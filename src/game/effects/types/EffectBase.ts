@@ -5,8 +5,8 @@ import ScalingFactors from "@/game/types/ScalingFactors";
 import EffectType from "./EffectType";
 import type Effect from "./Effect";
 
-export type ProcessLevelEffectCallback = (effect:Effect, context:CanvasRenderingContext2D, metaTime:number) => boolean;
-export type ProcessRoomEffectCallback = (room:Room, effect:Effect, context:CanvasRenderingContext2D,
+type ProcessLevelEffectCallback = (effect:Effect, context:CanvasRenderingContext2D, metaTime:number) => boolean;
+type ProcessRoomEffectCallback = (room:Room, effect:Effect, context:CanvasRenderingContext2D,
   scalingFactors:ScalingFactors, canDrawEffect:boolean, imageSet:ImageSet, metaTime:number) => boolean;
 export type ProcessCharacterEffectCallback = (character:Character, effect:Effect, context:CanvasRenderingContext2D,
   scalingFactors:ScalingFactors, imageSet:ImageSet, metaTime:number) => boolean;

@@ -18,7 +18,7 @@ function _findItemsSharingStack(room:Room, x:number, z:number):Item[] {
   return room.items.filter(item => item.position.x === x && item.position.z === z);
 }
 
-export function findSupportingItemStackOffset(item:Pick<Item, 'id' | 'position'>, room:Room|null):Position {
+function _findSupportingItemStackOffset(item:Pick<Item, 'id' | 'position'>, room:Room|null):Position {
   if (!room) return _createZeroPosition();
 
   return _findItemsSharingStack(room, item.position.x, item.position.z)
@@ -34,7 +34,7 @@ export function findStackOffsetForCharacterPosition(position:Pick<Position, 'x' 
 }
 
 export function findItemDisplayPosition(item:Item, room:Room|null):Position {
-  const supportingStackOffset = findSupportingItemStackOffset(item, room);
+  const supportingStackOffset = _findSupportingItemStackOffset(item, room);
   return {
     x:item.position.x + supportingStackOffset.x + item.drawOffset.x,
     y:item.position.y + supportingStackOffset.y + item.drawOffset.y,

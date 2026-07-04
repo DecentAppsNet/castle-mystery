@@ -4,7 +4,6 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { clamp } from "@/common/numberUtil";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { findItemDisplayPosition } from "@/game/itemDisplayPositionUtil";
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
@@ -32,11 +31,6 @@ const ITEM_IMAGE_HIGHLIGHT_ALPHA_THRESHOLD = 16;
 const ITEM_IMAGE_HIGHLIGHT_OUTSET_LINE_WIDTHS = .5;
 
 const _itemImageHighlightSilhouetteCanvasCache = new WeakMap<ImageBitmap, Map<string, HTMLCanvasElement>>();
-
-type RoomItemVisibilityOptions = {
-  includeUndiscovered?:boolean,
-  ignoreRoomObscured?:boolean
-}
 
 type ItemImageRect = {
   leftOffsetPixels:number,
@@ -102,12 +96,6 @@ export function calcItemDrawRect(room:Room, scalingFactors:ScalingFactors):ItemI
 function _getRoomItemGamePosition(_room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
   const drawPosition = _getItemDrawPosition(item, _room);
   return canvasToGamePosition(...projectRoomPointWithDepth(drawPosition.x, drawPosition.y, drawPosition.z, scalingFactors), scalingFactors);
-}
-
-// Projects an item using clamped depth for effect drawing outside a specific room context.
-export function getItemCanvasPosition(item:Item, scalingFactors:ScalingFactors):[number, number] {
-  const drawPosition = _getItemDrawPosition(item);
-  return projectRoomPointWithDepth(drawPosition.x, drawPosition.y, clamp(drawPosition.z, 0, 1), scalingFactors);
 }
 
 // Projects an item to its anchor point on the room canvas using its authored room depth.
@@ -315,21 +303,6 @@ function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
 // Exposes the room's visible items in the same order they should be drawn.
 export function findVisibleRoomItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
   return _getVisibleItemsInDrawOrder(room, effects, includeUndiscovered);
-}
-
-// Finds the topmost discovered item under the pointer within one room.
-export function findDiscoveredItemAtPosition(room:Room, x:number, y:number, scalingFactors:ScalingFactors,
-  imageSet:ImageSet, options:RoomItemVisibilityOptions = {}):Item|null {
-  const { includeUndiscovered = false, ignoreRoomObscured = false } = options;
-  if (room.isObscured && !ignoreRoomObscured) return null;
-  const itemsInDrawOrder = _getVisibleItemsInDrawOrder(room, [], includeUndiscovered);
-  for (let i = itemsInDrawOrder.length - 1; i >= 0; --i) {
-    const item = itemsInDrawOrder[i];
-    const rect = getItemHoverRect(room, item, scalingFactors, imageSet);
-    const isInside = x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
-    if (isInside) return item;
-  }
-  return null;
 }
 
 // Draws the item popover anchored to the item's current image rectangle.

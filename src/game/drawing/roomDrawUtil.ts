@@ -231,16 +231,6 @@ export function drawCacheableRoomShell(room:Room, rooms:ReadonlyArray<Room>, isA
   if (includeRoof) drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
 }
 
-export function drawRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean, characters:Character[], drawnExitIds:Set<string>,
-  groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
-  layoutPlanner:CanvasLayoutPlanner|null = null, includeUndiscovered:boolean = false, imageSet:ImageSet|null = null) {
-  if (!includeUndiscovered && !room.isDiscovered) return;
-  drawCacheableRoomShell(room, rooms, isActive, groundFloorY, scalingFactors, context,
-    showFullContents, includeUndiscovered, imageSet, false);
-  drawRoomShellExits(room, rooms, characters, drawnExitIds, scalingFactors, context, showFullContents, isActive, layoutPlanner, imageSet);
-  drawRoomRoofs(room, rooms, groundFloorY, scalingFactors, context);
-}
-
 export function drawRoomShellExits(room:Room, rooms:ReadonlyArray<Room>, characters:Character[], drawnExitIds:Set<string>,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
   isActive:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null, imageSet:ImageSet|null = null) {
@@ -430,12 +420,6 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
     _drawRoomStairsOnly(room, scalingFactors, context, imageSet, stairTextureLightness);
   }
   processRoomEffects(room, effects, context, scalingFactors, canDrawEffect, imageSet, metaTime);
-}
-
-export function drawRoomWaypoints(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false) {
-  if (!DRAW_WAYPOINTS || !room.isDiscovered) return;
-  if (room.isObscured && !showFullContents) return;
-  _drawWaypointCrosshairs(room, scalingFactors, context);
 }
 
 export function drawRoomWaypointsWithHighlight(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,

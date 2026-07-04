@@ -4,18 +4,18 @@
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 
-export function findPlacedCharacterById(gameState:GameState, characterId:string):Character|null {
+function _findPlacedCharacterById(gameState:GameState, characterId:string):Character|null {
   return gameState.characters.find(character => character.id === characterId) || null;
 }
 
 export function findCharacterById(gameState:GameState, characterId:string):Character|null {
-  return findPlacedCharacterById(gameState, characterId)
+  return _findPlacedCharacterById(gameState, characterId)
     || gameState.unplacedCharactersById.get(characterId)
     || null;
 }
 
 export function findActivePlacedCharacter(gameState:GameState):Character|null {
-  return findPlacedCharacterById(gameState, gameState.activeCharacterId);
+  return _findPlacedCharacterById(gameState, gameState.activeCharacterId);
 }
 
 export function findActiveCharacter(gameState:GameState):Character|null {

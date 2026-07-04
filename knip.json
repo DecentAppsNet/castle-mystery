@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignore": [
+    "public/**",
+    "src/components/modalDialogs/OkayDialog.tsx",
+    "src/components/progressBar/ProgressBar.tsx",
+    "src/components/waitingEllipsis/WaitingEllipsis.tsx",
+    "src/persistence/**",
+    "src/solver/**"
+  ]
+}
