@@ -282,7 +282,8 @@ function _isCharacterReplacementSeamless(gameState:GameState,
   return !!sourceRoom && !sourceRoom.isObscured;
 }
 
-function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:string, targetCharacterId:string, replacementPosition:Position) {
+function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:string, targetCharacterId:string, replacementPosition:Position,
+  replacementTime:number) {
   assert(targetCharacterId !== sourceCharacterId);
   const sourceCharacterIndex = gameState.characters.findIndex(character => character.id === sourceCharacterId);
   if (sourceCharacterIndex === -1) throw new Error(`replacement source character ${sourceCharacterId} was not found in runtime state`);
@@ -290,12 +291,13 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   const targetCharacter = gameState.unplacedCharactersById.get(targetCharacterId) || null;
   assertNonNullable(targetCharacter, `unplaced replacement target character ${targetCharacterId} was not found`);
   gameState.unplacedCharactersById.delete(targetCharacterId);
+  const sourcePose = findCharacterPose(sourceCharacter, replacementTime);
 
   sourceCharacter.position = duplicatePosition(replacementPosition);
   targetCharacter.position = duplicatePosition(replacementPosition);
   targetCharacter.waypoint = sourceCharacter.waypoint;
-  targetCharacter.facingDirection = sourceCharacter.facingDirection;
-  targetCharacter.bodyOrientation = sourceCharacter.bodyOrientation;
+  targetCharacter.facingDirection = sourcePose.facingDirection;
+  targetCharacter.bodyOrientation = sourcePose.bodyOrientation;
   targetCharacter.isVisible = sourceCharacter.isVisible;
   targetCharacter.items = sourceCharacter.items;
   targetCharacter.leftHandItem = sourceCharacter.leftHandItem;
@@ -352,6 +354,7 @@ function _findRoomExitById(room:GameState['rooms'][number], roomExitId:string) {
 }
 
 function _normalizeActiveCharacterForTime(gameState:GameState, time:number) {
+  if (!gameState.unplacedCharactersById.has(gameState.activeCharacterId)) return;
   const activeCharacter = findActiveCharacter(gameState);
   assertNonNullable(activeCharacter);
   const replacementEvent = _findCharacterReplacementEvent(activeCharacter);
@@ -457,7 +460,8 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
           _applyCharacterReplacement(gameState,
             becomesCharacterEvent.sourceCharacterId,
             becomesCharacterEvent.targetCharacterId,
-            startPosition);
+            startPosition,
+            becomesCharacterEvent.startTime);
         }
       break;
     }

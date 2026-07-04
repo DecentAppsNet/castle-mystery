@@ -299,19 +299,24 @@ DDCCAAABBE
 
 23:01:55 Yusuf Masked @ Hall
 : becomes Yusuf
+: stands
 : drops Rabbit Mask
 23:01:56 Giovanni Masked @ Hall
 : becomes Giovanni
+: stands
 : drops Stag Mask
 23:01:57 Harold Masked @ Hall
 : becomes Harold
+: stands
 : drops Goat Mask
 23:01:58 Giorgios Masked @ Hall
 : becomes Giorgios
+: stands
 : drops Bull Mask
 23:01:59 Hugo Masked @ Hall
+: stands
 23:02:06 Niccolo Masked @ Hall
-//: becomes Niccolo
+: becomes Niccolo
 
 # Conclusions
 

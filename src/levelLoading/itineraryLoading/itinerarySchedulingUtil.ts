@@ -86,8 +86,8 @@ function _throwOnUnplacedItineraryCharacter(characterId:string,
 }
 
 function _resolveScheduledCharacterId(activity:ParsedItineraryActivity,
-  characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
-  pairedCharacterIdByCharacterId:Map<string, string>):string {
+    characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+    pairedCharacterIdByCharacterId:Map<string, string>):string {
   if (!activity.isCharacterImplied || characterStatesById.has(activity.characterId)) return activity.characterId;
   const pairedCharacterId = pairedCharacterIdByCharacterId.get(activity.characterId) || null;
   if (pairedCharacterId && characterStatesById.has(pairedCharacterId)) return pairedCharacterId;

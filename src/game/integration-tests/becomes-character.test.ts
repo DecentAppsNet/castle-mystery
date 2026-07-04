@@ -5,9 +5,15 @@ import becomesCharacterText from './fixtures/becomes-character.md?raw';
 import becomesCharacterInventoryFollowupText from './fixtures/becomes-character-inventory-followup.md?raw';
 import becomesCharacterLaterAbsoluteText from './fixtures/becomes-character-later-absolute.md?raw';
 import becomesCharacterFraternityLikeText from './fixtures/becomes-character-fraternity-like.md?raw';
+import becomesCharacterBodyOrientationBeforeReplacementText from './fixtures/becomes-character-body-orientation-before-replacement.md?raw';
 import becomesCharacterObscuredTransitionText from './fixtures/becomes-character-obscured-transition.md?raw';
 import becomesCharacterObscuredArrivalTransitionText from './fixtures/becomes-character-obscured-arrival-transition.md?raw';
+import fledglingFraternityText from '../../../public/levels/05_fledgling_fraternity.md?raw';
+import sharedCharactersText from '../../../public/levels/characters.md?raw';
+import sharedItemsText from '../../../public/levels/items.md?raw';
+import sharedRoomStylesText from '../../../public/levels/roomStyles.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
+import { createLevelTextWithImportTexts } from '@/levelLoading/levelImportUtil';
 import { findCharacterPose } from '../itineraryUtil';
 import { createGameState } from '../gameUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
@@ -112,6 +118,47 @@ describe('becomes character integration', () => {
     expect(findRoomAtPosition(gameState.rooms,
       findActiveCharacter(gameState)!.position.x,
       findActiveCharacter(gameState)!.position.y)?.id).not.toBeNull();
+  });
+
+  it('keeps a standing body orientation when the source stands before becoming the target', () => {
+    const level = loadLevelFromText(becomesCharacterBodyOrientationBeforeReplacementText,
+      'becomes-character-body-orientation-before-replacement.md');
+    const yusufMasked = level.characters.find(character => character.id === 'yusuf masked');
+    const becomesEvent = yusufMasked?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
+    const gameState = createGameState({ ...level, initialTime:becomesEvent!.startTime });
+    const yusuf = gameState.characters.find(character => character.id === 'yusuf');
+
+    expect(yusuf).toBeDefined();
+    expect(yusuf?.bodyOrientation).toBe('standing');
+  });
+
+  it('keeps focus on the initial source before a one-way replacement starts', () => {
+    const level = loadLevelFromText(becomesCharacterFraternityLikeText, 'becomes-character-fraternity-like.md');
+    const gameState = createGameState(level);
+
+    expect(gameState.activeCharacterId).toBe('niccolo');
+    expect(findActiveCharacter(gameState)?.id).toBe('niccolo');
+    expect(findRoomAtPosition(gameState.rooms, findActiveCharacter(gameState)!.position.x, findActiveCharacter(gameState)!.position.y)?.id).toBe('forest');
+  });
+
+  it('keeps the same initial focus when Niccolo\'s late revert is commented out in fledgling fraternity', () => {
+    const mergedCommentedText = createLevelTextWithImportTexts(
+      [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
+      fledglingFraternityText
+    );
+    const mergedUncommentedText = createLevelTextWithImportTexts(
+      [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
+      fledglingFraternityText.replace('//: becomes Niccolo', ': becomes Niccolo')
+    );
+
+    const commentedState = createGameState(loadLevelFromText(mergedCommentedText, '05_fledgling_fraternity.md'));
+    const uncommentedState = createGameState(loadLevelFromText(mergedUncommentedText, '05_fledgling_fraternity.md'));
+
+    expect(commentedState.activeCharacterId).toBe(uncommentedState.activeCharacterId);
+    expect(findActiveCharacter(commentedState)?.id).toBe(findActiveCharacter(uncommentedState)?.id);
+    expect(findRoomAtPosition(commentedState.rooms,
+      findActiveCharacter(commentedState)!.position.x,
+      findActiveCharacter(commentedState)!.position.y)?.id).toBe('forest');
   });
 
   it('applies later absolute room-arrival activities authored for the replacement target', () => {
