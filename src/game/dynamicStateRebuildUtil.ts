@@ -1,4 +1,4 @@
-/* This module groups time-based dynamic-state rebuild coordination plus the remaining pose and focus helpers that still live in this file.
+/* This module groups time-based dynamic-state rebuild coordination plus the remaining active-room effect filtering and finalization helpers that still live in this file.
    If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section 
    in CONTRIBUTING.md before making changes. */
 
@@ -7,24 +7,12 @@ import { assertNonNullable } from "decent-portal";
 import { createDiscoveryStateSnapshot, restoreDiscoveryState } from "./dynamicStateRebuild/discoveryStateUtil";
 import { applyExitState, PendingRoomEffect } from "./dynamicStateRebuild/exitStateApplicationUtil";
 import { applyInventoryState } from "./dynamicStateRebuild/inventoryApplicationUtil";
-import { findCharacterReplacementEvent } from "./dynamicStateRebuild/replayCharacterUtil";
+import { resolveCharacterPosesAndActiveFocus } from "./dynamicStateRebuild/poseResolutionUtil";
 import { applyVisibilityState } from "./dynamicStateRebuild/visibilityApplicationUtil";
-import { findCharacterPose } from "./itineraryUtil";
 import GameState from "./types/GameState";
 import { createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateCharactersByIdUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import { findRoomAtPosition } from "./roomUtil";
 import { findActiveCharacter } from "./activeCharacterUtil";
-
-// Rewind active focus to the source identity when scrubbing to before an incoming replacement.
-function _normalizeActiveCharacterForTime(gameState:GameState, time:number) {
-  if (!gameState.unplacedCharactersById.has(gameState.activeCharacterId)) return;
-  const activeCharacter = findActiveCharacter(gameState);
-  assertNonNullable(activeCharacter);
-  const replacementEvent = findCharacterReplacementEvent(activeCharacter);
-  if (replacementEvent && time < replacementEvent.startTime) {
-    gameState.activeCharacterId = replacementEvent.sourceCharacterId;
-  }
-}
 
 // Rebuild the mutable runtime snapshot for a target time by replaying authored timeline effects from initial state.
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime:number|undefined, metaTime:number) {
@@ -41,14 +29,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
 
   applyExitState(gameState, time, previousTime, metaTime, pendingRoomEffects);
 
-  gameState.characters.forEach(character => {
-    const pose = findCharacterPose(character, time);
-    character.position = { ...pose.position };
-    character.isAlive = pose.isAlive;
-    character.facingDirection = pose.facingDirection;
-    character.bodyOrientation = pose.bodyOrientation;
-  });
-  _normalizeActiveCharacterForTime(gameState, time);
+  resolveCharacterPosesAndActiveFocus(gameState, time);
   const activeCharacter = findActiveCharacter(gameState);
   assertNonNullable(activeCharacter);
   const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y);
