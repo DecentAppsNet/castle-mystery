@@ -6,11 +6,11 @@
 
   A character's room only changes at ROOM_ENTRY events, so sampling co-presence at the level start
   time plus every ROOM_ENTRY tick captures every room-occupancy configuration — except the final room
-  of a tour, whose entry tick resolves to the room being left (findCharacterPose at a ROOM_ENTRY's
+  of a tour, whose entry tick resolves to the room being left (findCharacterPoseWithoutPairHistory( at a ROOM_ENTRY's
   exact start instant returns the prior room), so we also sample the timeline end (findTimelineEndTime),
   where every character rests in the room they last entered. */
 
-import { findCharacterPose } from "@/game/itineraryUtil";
+import { findCharacterPoseWithoutPairHistory } from "@/game/itineraryUtil";
 import { findRoomAtPosition } from "@/game/roomUtil";
 import Character from "@/game/types/Character";
 import Level from "@/game/types/Level";
@@ -39,7 +39,7 @@ function _collectSampleTimes(characters:Character[], startTime:number):number[] 
 }
 
 function _roomIdAtTime(character:Character, rooms:Room[], time:number):string|null {
-  const pose = findCharacterPose(character, time);
+  const pose = findCharacterPoseWithoutPairHistory(character, time);
   const room = findRoomAtPosition(rooms, pose.position.x, pose.position.y);
   return room ? room.id : null;
 }

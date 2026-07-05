@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState, findCharacter } from '../gameUtil';
-import { findCharacterPose } from '../itineraryUtil';
+import { findCharacterPoseWithoutPairHistory } from '../itineraryUtil';
 import { WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import giveItemLeftHandText from './fixtures/give-item-left-hand.md?raw';
@@ -51,7 +51,7 @@ describe('give item integration', () => {
     expect(giveEvent).toBeDefined();
     expect(lastWalkEvent?.toWaypointPosition).toBeDefined();
     expect(lastWalkEvent?.toWaypointPosition?.z).toBe(WAYPOINT_MIDDLE_ROW_Z);
-    expect(lastWalkEvent?.toWaypointPosition).not.toEqual(findCharacterPose(queen!, giveEvent!.startTime).position);
+    expect(lastWalkEvent?.toWaypointPosition).not.toEqual(findCharacterPoseWithoutPairHistory(queen!, giveEvent!.startTime).position);
   });
 
   it('allows giving an item from the left hand', () => {

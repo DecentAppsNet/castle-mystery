@@ -4,7 +4,7 @@
   level's final settled configuration, where every character rests in the room they last entered. The
   co-presence sampler (characterGraphUtil) and the room-occupancy sampler (roomOccupancyUtil) both
   include this time so a *touring* character's final room is observed: a character's last ROOM_ENTRY
-  tick resolves (via findCharacterPose at that exact instant) to the room they are leaving, not the one
+  tick resolves (via findCharacterPoseWithoutPairHistory( at that exact instant) to the room they are leaving, not the one
   they are entering, so without an end-of-timeline sample the final room of a tour is never sampled and
   whoever waits there looks unreachable. */
 

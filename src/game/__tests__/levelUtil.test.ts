@@ -131,7 +131,7 @@ import LoadLevelException from '@/levelLoading/LoadLevelException';
 import { loadLevelFromText, loadLevelFromUrl } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
-import { findCharacterPose } from '../itineraryUtil';
+import { findCharacterPoseWithoutPairHistory } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
 import { FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import ClozeBlank from '../conclusions/types/ClozeBlank';
@@ -195,7 +195,9 @@ describe('levelUtil itinerary loading', () => {
     const level = loadLevelFromText(itinerarySortingText);
 
     const hero = level.characters.find(character => character.id === 'hero');
-    expect(hero?.itinerary.map(event => event.startTime)).toEqual([1_000, 2_000]);
+    expect(hero?.itinerary
+      .filter(event => event.type !== ItineraryEventType.INITIAL_POSE)
+      .map(event => event.startTime)).toEqual([1_000, 2_000]);
   });
 
   it('starts the first colon-timestamped activity at time zero', () => {
@@ -242,8 +244,8 @@ describe('levelUtil itinerary loading', () => {
     if (!king) expect.fail('expected king character to exist');
 
     expect(king.itinerary.some(event => event.type === ItineraryEventType.FACE)).toBe(true);
-    expect(findCharacterPose(king, 4_999).facingDirection).toBe('right');
-    expect(findCharacterPose(king, 5_000).facingDirection).toBe('left');
+    expect(findCharacterPoseWithoutPairHistory(king, 4_999).facingDirection).toBe('right');
+    expect(findCharacterPoseWithoutPairHistory(king, 5_000).facingDirection).toBe('left');
   });
 
   it('parses faces activities that target another character', () => {
@@ -251,8 +253,8 @@ describe('levelUtil itinerary loading', () => {
     const niccollo = level.characters.find(character => character.id === 'niccollo');
     if (!niccollo) expect.fail('expected niccollo character to exist');
 
-    expect(findCharacterPose(niccollo, 4_999).facingDirection).toBe('right');
-    expect(findCharacterPose(niccollo, 5_000).facingDirection).toBe('left');
+    expect(findCharacterPoseWithoutPairHistory(niccollo, 4_999).facingDirection).toBe('right');
+    expect(findCharacterPoseWithoutPairHistory(niccollo, 5_000).facingDirection).toBe('left');
   });
 
   it('parses says activities directed to another character', () => {
@@ -262,9 +264,12 @@ describe('levelUtil itinerary loading', () => {
     const niccollo = level.characters.find(character => character.id === 'niccollo');
     if (!niccollo) expect.fail('expected niccollo character to exist');
 
-    expect(findCharacterPose(niccollo, 4_999).facingDirection).toBe('right');
-    expect(findCharacterPose(niccollo, 5_000).facingDirection).toBe('left');
-    expect(niccollo.itinerary.filter(event => event.startTime === 5_000).map(event => event.type)).toEqual([
+    expect(findCharacterPoseWithoutPairHistory(niccollo, 4_999).facingDirection).toBe('right');
+    expect(findCharacterPoseWithoutPairHistory(niccollo, 5_000).facingDirection).toBe('left');
+    expect(niccollo.itinerary
+      .filter(event => event.type !== ItineraryEventType.INITIAL_POSE)
+      .filter(event => event.startTime === 5_000)
+      .map(event => event.type)).toEqual([
       ItineraryEventType.FACE,
       ItineraryEventType.SPEECH
     ]);
@@ -277,9 +282,12 @@ describe('levelUtil itinerary loading', () => {
     const niccollo = level.characters.find(character => character.id === 'niccollo');
     if (!niccollo) expect.fail('expected niccollo character to exist');
 
-    expect(findCharacterPose(niccollo, 4_999).facingDirection).toBe('right');
-    expect(findCharacterPose(niccollo, 5_000).facingDirection).toBe('left');
-    expect(niccollo.itinerary.filter(event => event.startTime === 5_000).map(event => event.type)).toEqual([
+    expect(findCharacterPoseWithoutPairHistory(niccollo, 4_999).facingDirection).toBe('right');
+    expect(findCharacterPoseWithoutPairHistory(niccollo, 5_000).facingDirection).toBe('left');
+    expect(niccollo.itinerary
+      .filter(event => event.type !== ItineraryEventType.INITIAL_POSE)
+      .filter(event => event.startTime === 5_000)
+      .map(event => event.type)).toEqual([
       ItineraryEventType.FACE,
       ItineraryEventType.SPEECH
     ]);
@@ -292,8 +300,8 @@ describe('levelUtil itinerary loading', () => {
 
     expect(king.isAlive).toBe(true);
     expect(king.itinerary.some(event => event.type === ItineraryEventType.DIE)).toBe(true);
-    expect(findCharacterPose(king, 4_999).isAlive).toBe(true);
-    expect(findCharacterPose(king, 5_000).isAlive).toBe(false);
+    expect(findCharacterPoseWithoutPairHistory(king, 4_999).isAlive).toBe(true);
+    expect(findCharacterPoseWithoutPairHistory(king, 5_000).isAlive).toBe(false);
   });
 
   it('parses alive=false in character sections', () => {
@@ -311,8 +319,8 @@ describe('levelUtil itinerary loading', () => {
 
     expect(king.facingDirection).toBe('left');
     expect(king.bodyOrientation).toBe('sitting');
-    expect(findCharacterPose(king, 0).facingDirection).toBe('left');
-    expect(findCharacterPose(king, 0).bodyOrientation).toBe('sitting');
+    expect(findCharacterPoseWithoutPairHistory(king, 0).facingDirection).toBe('left');
+    expect(findCharacterPoseWithoutPairHistory(king, 0).bodyOrientation).toBe('sitting');
   });
 
   it('parses visible flags for character and item sections and defaults unspecified visible to true', () => {
@@ -415,13 +423,13 @@ describe('levelUtil itinerary loading', () => {
     if (!walkEvent) expect.fail('expected posture test fixture to generate a walk event');
 
     expect(king.itinerary.some(event => event.type === ItineraryEventType.BODY_ORIENTATION)).toBe(true);
-    expect(findCharacterPose(king, 4_999).bodyOrientation).toBe('standing');
-    expect(findCharacterPose(king, 5_000).bodyOrientation).toBe('sitting');
-    expect(findCharacterPose(king, 6_000).bodyOrientation).toBe('kneeling');
-    expect(findCharacterPose(king, 7_000).bodyOrientation).toBe('laying');
-    expect(findCharacterPose(king, walkEvent.startTime - 1).bodyOrientation).toBe('laying');
-    expect(findCharacterPose(king, walkEvent.startTime).bodyOrientation).toBe('standing');
-    expect(findCharacterPose(king, 9_000).bodyOrientation).toBe('standing');
+    expect(findCharacterPoseWithoutPairHistory(king, 4_999).bodyOrientation).toBe('standing');
+    expect(findCharacterPoseWithoutPairHistory(king, 5_000).bodyOrientation).toBe('sitting');
+    expect(findCharacterPoseWithoutPairHistory(king, 6_000).bodyOrientation).toBe('kneeling');
+    expect(findCharacterPoseWithoutPairHistory(king, 7_000).bodyOrientation).toBe('laying');
+    expect(findCharacterPoseWithoutPairHistory(king, walkEvent.startTime - 1).bodyOrientation).toBe('laying');
+    expect(findCharacterPoseWithoutPairHistory(king, walkEvent.startTime).bodyOrientation).toBe('standing');
+    expect(findCharacterPoseWithoutPairHistory(king, 9_000).bodyOrientation).toBe('standing');
   });
 
   it('moves to a stacked room item floor square before applying a body orientation on that item', () => {
@@ -446,8 +454,8 @@ describe('levelUtil itinerary loading', () => {
     expect(sitEvent?.bodyOrientation).toBe('sitting');
     expect(sitEvent?.startTime).toBe(lastWalkEvent.startTime + lastWalkEvent.duration);
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(king, sitEvent!.startTime).position).toEqual(targetWaypoint!.position);
-    expect(findCharacterPose(king, sitEvent!.startTime).position.y).toBe(chair!.position.y);
+    expect(findCharacterPoseWithoutPairHistory(king, sitEvent!.startTime).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPoseWithoutPairHistory(king, sitEvent!.startTime).position.y).toBe(chair!.position.y);
   });
 
   it('parses outside room metadata and defaults omitted outside flags to false', () => {
@@ -1330,14 +1338,14 @@ describe('levelUtil itinerary loading', () => {
     expect(table).not.toBeNull();
     expect(takeEvent).toBeDefined();
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(hero!, takeEvent!.startTime).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPoseWithoutPairHistory(hero!, takeEvent!.startTime).position).toEqual(targetWaypoint!.position);
   });
 
   it('loads drop activities and removes dropped items from final carried inventory', () => {
     const level = loadLevelFromText(dropItemText);
     const hero = level.characters.find(character => character.id === 'hero');
     const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, itemId:string, position:{ x:number, y:number, z:number } } | undefined;
-    const dropStartPose = hero && dropEvent ? findCharacterPose(hero, dropEvent.startTime).position : null;
+    const dropStartPose = hero && dropEvent ? findCharacterPoseWithoutPairHistory(hero, dropEvent.startTime).position : null;
 
     expect(dropEvent?.itemId).toBe('book');
     expect(hero?.items.map(item => item.id)).not.toContain('book');
@@ -1376,7 +1384,7 @@ describe('levelUtil itinerary loading', () => {
     const hero = level.characters.find(character => character.id === 'hero');
     const queen = level.characters.find(character => character.id === 'queen') || null;
     const dropEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, position:{ x:number, y:number, z:number } } | undefined;
-    const queenDropPose = queen && dropEvent ? findCharacterPose(queen, dropEvent.startTime).position : null;
+    const queenDropPose = queen && dropEvent ? findCharacterPoseWithoutPairHistory(queen, dropEvent.startTime).position : null;
 
     expect(queenDropPose).not.toBeNull();
     expect(dropEvent?.position.x).toBe(queenDropPose!.x);
@@ -1508,7 +1516,7 @@ describe('levelUtil itinerary loading', () => {
     const queen = level.characters.find(character => character.id === 'queen');
     const library = findRoom(level.rooms, 'Library');
     const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-    const queenPose = findCharacterPose(queen!, 6_000).position;
+    const queenPose = findCharacterPoseWithoutPairHistory(queen!, 6_000).position;
     const targetWaypoint = library.waypoints.reduce((rightmostUnclaimedFloorWaypoint, waypoint) => {
       if (waypoint.position.y !== floorY
         || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return rightmostUnclaimedFloorWaypoint;
@@ -1521,7 +1529,7 @@ describe('levelUtil itinerary loading', () => {
     expect(king?.itinerary.some(event => event.type === ItineraryEventType.WALK)).toBe(true);
     expect(queen?.items.map(item => item.id)).toContain('book');
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(king!, 6_000).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPoseWithoutPairHistory(king!, 6_000).position).toEqual(targetWaypoint!.position);
     expect(speechEvent?.speech).toBe('Hello, dear.');
   });
 
@@ -1548,7 +1556,7 @@ describe('levelUtil itinerary loading', () => {
 
     expect(niccolo.itinerary.some(event => event.type === ItineraryEventType.BECOMES_CHARACTER)).toBe(true);
     expect(niccolo.itinerary.some(event => event.type === ItineraryEventType.SPEECH)).toBe(false);
-    expect(maskedCharacter.itinerary.map(event => event.type)).toEqual([ItineraryEventType.SPEECH]);
+    expect(maskedCharacter.itinerary.map(event => event.type)).toEqual([ItineraryEventType.INITIAL_POSE, ItineraryEventType.SPEECH]);
     expect(niccolo.pairedItinerary).not.toBeNull();
     expect(maskedCharacter.pairedItinerary).toBe(niccolo.pairedItinerary);
     expect(maskedCharacter.pairedItinerary?.some(event => event.type === ItineraryEventType.BECOMES_CHARACTER)).toBe(true);
@@ -1785,16 +1793,16 @@ describe('levelUtil itinerary loading', () => {
     }
   });
 
-  it('findCharacterPose returns active thoughts separately from speech', () => {
+  it('findCharacterPoseWithoutPairHistory returns active thoughts separately from speech', () => {
     const thinkingCharacterText = shortDurationLabelsText
       .replace('0:00:10 Hero says, "Done."', '0:00:10 Hero thinks, "Done."');
     const level = loadLevelFromText(thinkingCharacterText, 'thinking-character.md');
     const hero = level.characters.find(character => character.id === 'hero');
 
     expect(hero).toBeTruthy();
-    expect(hero?.itinerary[0]?.type).toBe(ItineraryEventType.THOUGHT);
-    expect(findCharacterPose(hero!, 10_000).speech).toBeNull();
-    expect(findCharacterPose(hero!, 10_000).thought).toBe('Done.');
+    expect(hero?.itinerary[1]?.type).toBe(ItineraryEventType.THOUGHT);
+    expect(findCharacterPoseWithoutPairHistory(hero!, 10_000).speech).toBeNull();
+    expect(findCharacterPoseWithoutPairHistory(hero!, 10_000).thought).toBe('Done.');
   });
 
 
@@ -2309,7 +2317,7 @@ describe('levelUtil itinerary loading', () => {
   });
 
   describe('discoverable count defaults', () => {
-    it('excludes unused imported interactive characters from the default discoverable character count', () => {
+    it('retains unused imported interactive characters without changing the default discoverable character count', () => {
       const mergedText = createLevelTextWithImportTexts([loadLevelFromUrlWithImportsCharactersText], loadLevelFromUrlWithImportsText);
 
       const level = loadLevelFromText(mergedText, 'load-level-from-url-with-imports.md');

@@ -557,7 +557,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
         ...duplicateCharacter(initialCharacter),
         itinerary:scheduledCharacter.itinerary,
         pairedItinerary:scheduledCharacter.pairedItinerary,
-        itineraryIndex:createItineraryIndex(scheduledCharacter.itinerary, initialCharacter.position)
+        itineraryIndex:createItineraryIndex(scheduledCharacter.itinerary, initialCharacter.position, scheduledCharacter.id)
       } : duplicateCharacter(initialCharacter);
     });
     const resolvedDuration = resolvedEndTime - resolvedStartTime;

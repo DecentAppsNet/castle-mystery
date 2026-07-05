@@ -8,7 +8,7 @@ import Room from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
 import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
-import { findCharacterPose } from "./itineraryUtil";
+import { findCharacterPoseWithoutPairHistory } from "./itineraryUtil";
 import { findCharactersInRoom, findRoomAtPosition, isActiveAudibleRoom } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
@@ -252,7 +252,7 @@ function _syncSpeechBubbleEffects(gameState:GameState, metaTime:number, isScrubb
 
   _findSpeechEffectRooms(gameState).forEach(room => {
     findCharactersInRoom(room, gameState.characters).forEach(character => {
-      const speech = findCharacterPose(character, gameState.time).speech;
+      const speech = findCharacterPoseWithoutPairHistory(character, gameState.time).speech;
       if (!speech) return;
       const existingSpeechBubbleEffect = existingSpeechBubbleEffects.find(effect => {
         const speechBubbleEffect = effect as ReturnType<typeof createSpeechBubbleEffect>;
@@ -342,7 +342,7 @@ function _syncThoughtBubbleEffects(gameState:GameState, metaTime:number, isScrub
 
   _findVisibleRooms(gameState).forEach(room => {
     findCharactersInRoom(room, gameState.characters).forEach(character => {
-      const thought = findCharacterPose(character, gameState.time).thought;
+      const thought = findCharacterPoseWithoutPairHistory(character, gameState.time).thought;
       if (!thought) return;
       const existingThoughtBubbleEffect = existingThoughtBubbleEffects.find(effect => {
         const thoughtBubbleEffect = effect as ReturnType<typeof createThoughtBubbleEffect>;

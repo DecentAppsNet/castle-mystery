@@ -670,7 +670,7 @@ than deleting.
 - **Context:** Two validation-correctness gaps surfaced while generating. (a) A generated maid touring
   four rooms by **absolute** timestamps was reported to strand the two characters in her **last** room.
   Root cause was in the solver, not the level: co-presence sampled at each `ROOM_ENTRY`'s `startTime`,
-  but `findCharacterPose` at that instant resolves to the room being *left*, so a tour's final room is
+  but `findCharacterPoseWithoutPairHistory(` at that instant resolves to the room being *left*, so a tour's final room is
   never observed. (b) The loader can silently mis-schedule an **absolute** activity *before* a
   relative-`:`-speech-drifted clock (its blocking check scores speech as non-blocking for absolute
   timestamps), leaving a character "in two places at once" with no load error — an anachronism the user
@@ -976,7 +976,7 @@ speech for a single character; rectangular rooms; consistent exit modifiers.
   learning** that cost 3 wasted fix loops before reading `characterGraphUtil.ts`: when the **active
   character is the *only* mover** (all NPCs stationary, doing dialogue-only itineraries), the solver's
   co-presence sample ticks are *all* the active character's own `ROOM_ENTRY` times — and at a
-  `ROOM_ENTRY` instant `findCharacterPose` resolves the mover to the room being **left**, never the one
+  `ROOM_ENTRY` instant `findCharacterPoseWithoutPairHistory(` resolves the mover to the room being **left**, never the one
   being entered. So an absolute arrival `Pip @ LocomotiveCab` does **not** register the mover in that
   cab; and a stationary NPC alone in a room is therefore caught **only** by the **timeline-end** sample
   (the room the active character *last entered*) or by **level-start** co-presence. Fix that finally

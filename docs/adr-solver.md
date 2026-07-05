@@ -28,7 +28,7 @@ room, the player can switch freely between them.
 `addCharacterEncounterEvents` (used for the timeline) deliberately reports only *new* encounters and
 diffs out characters already co-present at the level's start. That makes it unsuitable as the sole
 edge source — it would miss pairs who begin a scene together. The solver instead recomputes
-co-presence directly using the same primitives (`findCharacterPose`, `findRoomAtPosition`).
+co-presence directly using the same primitives (`findCharacterPoseWithoutPairHistory(`, `findRoomAtPosition`).
 
 A character's room only changes at `ROOM_ENTRY` events, so co-presence is constant between
 consecutive room entries. We therefore sample co-presence at **the level start time, every
@@ -37,7 +37,7 @@ consecutive room entries. We therefore sample co-presence at **the level start t
 — free edge weight and a seed for later temporal/inference analysis.
 
 The **timeline-end sample is load-bearing, not a nicety**: a `ROOM_ENTRY`'s `startTime` is the
-instant the cross-room move *begins*, and `findCharacterPose` at exactly that instant still resolves
+instant the cross-room move *begins*, and `findCharacterPoseWithoutPairHistory(` at exactly that instant still resolves
 the character to the room they are *leaving*. Each room a touring character visits is therefore
 credited at the *next* entry's tick — which works for every room except the **final** one of a tour,
 which has no later tick. Without the end sample, the last room of a tour is never observed and whoever

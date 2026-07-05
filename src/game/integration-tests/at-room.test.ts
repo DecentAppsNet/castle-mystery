@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { planMovementToRoom } from '@/levelLoading/activities/activity/activityMovementUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
-import { findCharacterPose } from '../itineraryUtil';
+import { findCharacterPoseWithoutPairHistory } from '../itineraryUtil';
 import { findRoom } from '../roomUtil';
 import { findExitWaypoint, findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from '../waypointUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
@@ -179,7 +179,7 @@ describe('at room integration', () => {
 
     expect(king).not.toBeNull();
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPoseWithoutPairHistory(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 
   it('moves within the same room for @ Room.0%', () => {
@@ -189,7 +189,7 @@ describe('at room integration', () => {
     const targetWaypoint = _findLeftmostMiddleFloorWaypoint(library);
 
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPoseWithoutPairHistory(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 
   it('moves within the same room for @ 0%', () => {
@@ -199,7 +199,7 @@ describe('at room integration', () => {
     const targetWaypoint = _findLeftmostMiddleFloorWaypoint(library);
 
     expect(targetWaypoint).not.toBeNull();
-    expect(findCharacterPose(king!, 10_000).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPoseWithoutPairHistory(king!, 10_000).position).toEqual(targetWaypoint!.position);
   });
 
   it('routes @ Room.90% to the next-closest interior floor waypoint when the nearest interior floor waypoint is occupied', () => {
@@ -268,7 +268,7 @@ describe('at room integration', () => {
     expect(greatHallFromSanctumLastWalkEvent).toBeDefined();
     expect(directLastWalkEvent!.toPosition).toEqual(targetWaypoint!.position);
     expect(greatHallFromSanctumLastWalkEvent!.toPosition).toEqual(targetWaypoint!.position);
-    expect(findCharacterPose(simon!, 100_000).position).toEqual(targetWaypoint!.position);
+    expect(findCharacterPoseWithoutPairHistory(simon!, 100_000).position).toEqual(targetWaypoint!.position);
   });
 
   it('keeps Great Hall room-visit floor movement on the middle row', () => {

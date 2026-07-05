@@ -31,10 +31,11 @@ export function loadItineraries(level:Level, itinerarySection:string, levelFilen
     validateActivitiesWithinWindow(activities, level.startTime, options.explicitEndTime, levelFilename);
   }
   if (!activities.length) {
-    const allCharacters:Character[] = [...level.allCharactersById.values()];
+    const scheduleResult = scheduleActivities(level, activities, levelFilename);
+    const allCharacters:Character[] = [...scheduleResult.allCharactersById.values()];
     return {
-      characters: level.characters,
-      allCharactersById:level.allCharactersById,
+      characters: scheduleResult.characters,
+      allCharactersById:scheduleResult.allCharactersById,
       duration:calcCharactersItineraryDuration(allCharacters),
       resolvedTimeline:createEmptyResolvedItineraryTimeline(allCharacters)
     };

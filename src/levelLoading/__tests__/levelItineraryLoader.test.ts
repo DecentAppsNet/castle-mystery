@@ -1,9 +1,11 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it, vi } from 'vitest';
 
-import { findCharacterPose } from '@/game/itineraryUtil';
+import { findCharacterPoseWithoutPairHistory } from '@/game/itineraryUtil';
 import { createBodyOrientationEvent, createFaceEvent, createWalkEvent } from '@/game/itineraryUtil';
 import ItineraryEventType from '@/game/types/itineraryEvents/ItineraryEventType';
+import InitialPoseEvent from '@/game/types/itineraryEvents/InitialPoseEvent';
+import { createDefaultCharacter } from '@/game/types/Character';
 import baseLevelText from '@/game/__tests__/fixtures/timeline-start-time-field.md?raw';
 import { ROOM_MIDDLE_ROW_CENTER_Z } from '@/game/roomSpaceConstants';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
@@ -16,6 +18,18 @@ import characterBecomesTargetPlacedLevelText from './fixtures/character-becomes-
 import itemBecomesLevelText from './fixtures/item-becomes-level.md?raw';
 import itemBecomesTargetPlacedLevelText from './fixtures/item-becomes-target-placed.md?raw';
 import itineraryTimelineSummaryText from './fixtures/itinerary-timeline-summary.md?raw';
+
+function _loadCharacterBecomesBaseLevel() {
+  const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+  if (level.allCharactersById.has('niccolo masked')) return level;
+  level.allCharactersById.set('niccolo masked', {
+    ...createDefaultCharacter(),
+    id:'niccolo masked',
+    title:'Niccolo Masked',
+    position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z }
+  });
+  return level;
+}
 
 describe('levelItineraryLoader', () => {
   describe('loadItineraries()', () => {
@@ -128,8 +142,8 @@ describe('levelItineraryLoader', () => {
       const hero = result.characters.find(character => character.id === 'hero');
 
       expect(hero).toBeTruthy();
-      expect(findCharacterPose(hero!, 2_999).facingDirection).toBe('right');
-      expect(findCharacterPose(hero!, 3_000).facingDirection).toBe('left');
+      expect(findCharacterPoseWithoutPairHistory(hero!, 2_999).facingDirection).toBe('right');
+      expect(findCharacterPoseWithoutPairHistory(hero!, 3_000).facingDirection).toBe('left');
     });
 
     it('defaults waits to one second for later relative activities', () => {
@@ -141,8 +155,8 @@ describe('levelItineraryLoader', () => {
       const hero = result.characters.find(character => character.id === 'hero');
 
       expect(hero).toBeTruthy();
-      expect(findCharacterPose(hero!, 999).facingDirection).toBe('right');
-      expect(findCharacterPose(hero!, 1_000).facingDirection).toBe('left');
+      expect(findCharacterPoseWithoutPairHistory(hero!, 999).facingDirection).toBe('right');
+      expect(findCharacterPoseWithoutPairHistory(hero!, 1_000).facingDirection).toBe('left');
     });
 
     it('applies waits after its own relative timestamp resolves', () => {
@@ -155,8 +169,8 @@ describe('levelItineraryLoader', () => {
       const hero = result.characters.find(character => character.id === 'hero');
 
       expect(hero).toBeTruthy();
-      expect(findCharacterPose(hero!, 3_000).facingDirection).toBe('right');
-      expect(findCharacterPose(hero!, 3_001).facingDirection).toBe('left');
+      expect(findCharacterPoseWithoutPairHistory(hero!, 3_000).facingDirection).toBe('right');
+      expect(findCharacterPoseWithoutPairHistory(hero!, 3_001).facingDirection).toBe('left');
     });
 
     it('does not delay a later activity with an absolute timestamp', () => {
@@ -168,8 +182,8 @@ describe('levelItineraryLoader', () => {
       const hero = result.characters.find(character => character.id === 'hero');
 
       expect(hero).toBeTruthy();
-      expect(findCharacterPose(hero!, 999).facingDirection).toBe('right');
-      expect(findCharacterPose(hero!, 1_000).facingDirection).toBe('left');
+      expect(findCharacterPoseWithoutPairHistory(hero!, 999).facingDirection).toBe('right');
+      expect(findCharacterPoseWithoutPairHistory(hero!, 1_000).facingDirection).toBe('left');
     });
 
     it('reuses preview movement scheduling for absolute room-arrival activities', () => {
@@ -235,7 +249,7 @@ describe('levelItineraryLoader', () => {
     });
 
     it('accepts valid character becomes activities during itinerary loading', () => {
-      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const level = _loadCharacterBecomesBaseLevel();
 
       expect(() => loadItineraries(level, [
         '0:00:03 Niccolo @ Hall',
@@ -244,7 +258,7 @@ describe('levelItineraryLoader', () => {
     });
 
     it('emits a becomes-character event during itinerary loading', () => {
-      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const level = _loadCharacterBecomesBaseLevel();
       const result = loadItineraries(level, [
         '0:00:03 Niccolo @ Hall',
         ': becomes Niccolo Masked'
@@ -267,7 +281,7 @@ describe('levelItineraryLoader', () => {
     });
 
     it('lets the replacement target schedule later activities after becomes', () => {
-      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const level = _loadCharacterBecomesBaseLevel();
       const result = loadItineraries(level, [
         '0:00:03 Niccolo @ Hall',
         ': becomes Niccolo Masked',
@@ -281,8 +295,38 @@ describe('levelItineraryLoader', () => {
       expect(speechEvent?.speech).toBe('Now I speak as the masked one.');
     });
 
+    it('prepends an absolute initial pose event to paired own and shared itineraries', () => {
+      const level = _loadCharacterBecomesBaseLevel();
+      const result = loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked',
+        ': Niccolo Masked says, "Now I speak as the masked one."'
+      ].join('\n'), 'character-becomes-initial-pose.md', 1);
+      const niccolo = result.allCharactersById.get('niccolo');
+      const maskedCharacter = result.allCharactersById.get('niccolo masked');
+      const niccoloInitialPoseEvent = niccolo?.itinerary[0] as InitialPoseEvent | undefined;
+      const maskedInitialPoseEvent = maskedCharacter?.itinerary[0] as InitialPoseEvent | undefined;
+
+      expect(niccoloInitialPoseEvent?.type).toBe(ItineraryEventType.INITIAL_POSE);
+      expect(maskedInitialPoseEvent?.type).toBe(ItineraryEventType.INITIAL_POSE);
+      expect(maskedCharacter?.pairedItinerary?.[0]?.type).toBe(ItineraryEventType.INITIAL_POSE);
+      expect(niccoloInitialPoseEvent?.firstCharacterId).toBe('niccolo');
+      expect(niccoloInitialPoseEvent?.secondCharacterId).toBe('niccolo masked');
+      expect(maskedInitialPoseEvent).toEqual(niccoloInitialPoseEvent);
+    });
+
+    it('keeps unrelated loaded character entries intact', () => {
+      const level = _loadCharacterBecomesBaseLevel();
+      const result = loadItineraries(level, [
+        '0:00:03 Niccolo @ Hall',
+        ': becomes Niccolo Masked'
+      ].join('\n'), 'character-unplaced-prune.md', 1);
+
+      expect(result.allCharactersById.has('niccolo masked')).toBe(true);
+    });
+
     it('lets implied activities continue with the placed pair member after a reverse becomes', () => {
-      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const level = _loadCharacterBecomesBaseLevel();
       const result = loadItineraries(level, [
         '0:00:03 Niccolo @ Hall',
         ': becomes Niccolo Masked',
@@ -300,7 +344,7 @@ describe('levelItineraryLoader', () => {
     });
 
     it('reports an author-friendly error when an itinerary references a defined but unplaced character', () => {
-      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const level = _loadCharacterBecomesBaseLevel();
 
       expect(() => loadItineraries(level, [
         '0:00:03 Niccolo Masked says, "I should not start placed."'
@@ -309,7 +353,7 @@ describe('levelItineraryLoader', () => {
     });
 
     it('lets the replacement target schedule a later absolute room activity after becomes', () => {
-      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const level = _loadCharacterBecomesBaseLevel();
 
       expect(() => loadItineraries(level, [
         '0:00:03 Niccolo @ Hall',
@@ -319,7 +363,7 @@ describe('levelItineraryLoader', () => {
     });
 
     it('extends the resolved timeline when a replacement target has later events', () => {
-      const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
+      const level = _loadCharacterBecomesBaseLevel();
       const result = loadItineraries(level, [
         '0:00:03 Niccolo @ Hall',
         ': becomes Niccolo Masked',

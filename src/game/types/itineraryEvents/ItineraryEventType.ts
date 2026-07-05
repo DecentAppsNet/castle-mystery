@@ -1,4 +1,5 @@
 const ItineraryEventType = {
+  INITIAL_POSE:"InitialPose",
   WALK:"Walk",
   DIE:"Die",
   FACE:"Face",

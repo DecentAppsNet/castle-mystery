@@ -34,23 +34,40 @@ import ItineraryIndex from "./types/ItineraryIndex";
 import { ITEM_EFFECT_DURATION } from "./effects/dropItemUtil";
 import FaceEvent from "./types/itineraryEvents/FaceEvent";
 import BodyOrientationEvent from "./types/itineraryEvents/BodyOrientationEvent";
+import Itinerary from "./types/Itinerary";
+import CharacterPose, { duplicateCharacterPose } from "./types/CharacterPose";
+import InitialPoseEvent from "./types/itineraryEvents/InitialPoseEvent";
 
 const WALK_MSECS_PER_PIXEL = 60;
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
 const SPEECH_MSECS_PER_CHARACTER = 90;
 const WAYPOINT_DEPTH_ROW_COUNT = 3;
 
-type CharacterPose = {
-  position:Position,
-  isAlive:boolean,
-  facingDirection:FacingDirection,
-  bodyOrientation:BodyOrientation,
-  speech:string|null,
-  thought:string|null
-}
-
 function _calcSpeechDuration(speech:string):number {
   return clamp(speech.length * SPEECH_MSECS_PER_CHARACTER, MIN_SPEECH_TIME, Number.POSITIVE_INFINITY);
+}
+
+function _createCharacterPose(character:Character):CharacterPose {
+  return {
+    position:duplicatePosition(character.position),
+    isAlive:character.isAlive,
+    facingDirection:character.facingDirection,
+    bodyOrientation:character.bodyOrientation,
+    speech:null,
+    thought:null
+  };
+}
+
+function _findInitialPoseEventCharacterPose(event:InitialPoseEvent, characterId:string):CharacterPose {
+  if (event.firstCharacterId === characterId) return duplicateCharacterPose(event.firstCharacterPose);
+  if (event.secondCharacterId === characterId && event.secondCharacterPose) return duplicateCharacterPose(event.secondCharacterPose);
+  return duplicateCharacterPose(event.firstCharacterPose);
+}
+
+function _findInitialPoseEventPosition(event:InitialPoseEvent, characterId:string|null):Position {
+  if (characterId) return duplicatePosition(_findInitialPoseEventCharacterPose(event, characterId).position);
+  assert(event.secondCharacterId === null, 'missing character ID for paired initial-pose event');
+  return duplicatePosition(event.firstCharacterPose.position);
 }
 
 function _calcWalkDuration(room:Room, fromPosition:Position, toPosition:Position):number {
@@ -204,59 +221,111 @@ export function createRoomEntryEvent(startTime:number, roomId:string):RoomEntryE
   return { type:ItineraryEventType.ROOM_ENTRY, startTime, duration:0, roomId };
 }
 
+export function createInitialPoseEvent(startTime:number, firstCharacterId:string, firstCharacterPose:CharacterPose,
+  secondCharacterId:string|null, secondCharacterPose:CharacterPose|null):InitialPoseEvent {
+  return {
+    type:ItineraryEventType.INITIAL_POSE,
+    startTime,
+    duration:0,
+    firstCharacterId,
+    firstCharacterPose:duplicateCharacterPose(firstCharacterPose),
+    secondCharacterId,
+    secondCharacterPose:secondCharacterPose ? duplicateCharacterPose(secondCharacterPose) : null
+  };
+}
+
 export function findRoomAtPositionOrNearest(rooms:Room[], x:number, y:number):Room {
   return _findRoomAtPosition(rooms, x, y);
 }
 
-function _findItineraryPose(character:Character, time:number):CharacterPose {
-  let position = duplicatePosition(character.position);
-  let isAlive = character.isAlive;
-  let facingDirection = character.facingDirection;
-  let bodyOrientation = character.bodyOrientation;
-  let speech:string|null = null;
-  let thought:string|null = null;
+function _doesItineraryStartWithCharacter(itinerary:Itinerary, character:Character):boolean {
+  const becomesEvent:ItineraryEvent|undefined = itinerary.find(event => event.type === 'BecomesCharacter');
+  if (!becomesEvent) return true;
+  return (becomesEvent as BecomesCharacterEvent).sourceCharacterId === character.id;
+}
 
-  for (const event of character.itinerary) {
+function _findItineraryPose(character:Character, itinerary:Itinerary, time:number, usePairHistory:boolean):CharacterPose {
+  let characterPose:CharacterPose = _createCharacterPose(character);
+
+  if (!itinerary.length) return characterPose;
+
+  let pairedCharacterPose:CharacterPose = _createCharacterPose(character);
+  let isPairedCharacter = usePairHistory && !_doesItineraryStartWithCharacter(itinerary, character);
+
+  for (const event of itinerary) {
     if (event.startTime > time) break;
 
+    const pose = isPairedCharacter ? pairedCharacterPose : characterPose;
     switch (event.type) {
+      case ItineraryEventType.INITIAL_POSE: {
+        const initialPoseEvent = event as InitialPoseEvent;
+        characterPose = _findInitialPoseEventCharacterPose(initialPoseEvent, character.id);
+        if (!usePairHistory) {
+          pairedCharacterPose = duplicateCharacterPose(characterPose);
+          isPairedCharacter = false;
+        } else if (initialPoseEvent.secondCharacterId && initialPoseEvent.secondCharacterPose) {
+          if (initialPoseEvent.firstCharacterId === character.id) {
+            pairedCharacterPose = duplicateCharacterPose(initialPoseEvent.secondCharacterPose);
+            isPairedCharacter = false;
+          } else if (initialPoseEvent.secondCharacterId === character.id) {
+            pairedCharacterPose = duplicateCharacterPose(initialPoseEvent.firstCharacterPose);
+            isPairedCharacter = true;
+          } else {
+            pairedCharacterPose = duplicateCharacterPose(initialPoseEvent.secondCharacterPose);
+          }
+        } else {
+          pairedCharacterPose = duplicateCharacterPose(characterPose);
+          isPairedCharacter = false;
+        }
+        break;
+      }
       case ItineraryEventType.WALK: {
         const walkEvent = event as WalkEvent;
-        if (walkEvent.toPosition.x > walkEvent.fromPosition.x) facingDirection = 'right';
-        else if (walkEvent.toPosition.x < walkEvent.fromPosition.x) facingDirection = 'left';
-        bodyOrientation = 'standing';
+        if (walkEvent.toPosition.x > walkEvent.fromPosition.x) pose.facingDirection = 'right';
+        else if (walkEvent.toPosition.x < walkEvent.fromPosition.x) pose.facingDirection = 'left';
+        pose.bodyOrientation = 'standing';
 
         const endTime = walkEvent.startTime + walkEvent.duration;
-        position = time < endTime
+        pose.position = time < endTime
           ? _interpolatePosition(walkEvent.fromPosition, walkEvent.toPosition, clamp((time - walkEvent.startTime) / walkEvent.duration, 0, 1))
           : duplicatePosition(walkEvent.toPosition);
         break;
       }
       case ItineraryEventType.DIE:
-        isAlive = false;
+        pose.isAlive = false;
         break;
       case ItineraryEventType.FACE:
-        facingDirection = (event as FaceEvent).facingDirection;
+        pose.facingDirection = (event as FaceEvent).facingDirection;
         break;
       case ItineraryEventType.BODY_ORIENTATION:
-        bodyOrientation = (event as BodyOrientationEvent).bodyOrientation;
+        pose.bodyOrientation = (event as BodyOrientationEvent).bodyOrientation;
         break;
       case ItineraryEventType.SPEECH: {
         const speechEvent = event as SpeechEvent;
-        speech = time < speechEvent.startTime + speechEvent.duration ? speechEvent.speech : null;
+        pose.speech = time < speechEvent.startTime + speechEvent.duration ? speechEvent.speech : null;
         break;
       }
       case ItineraryEventType.THOUGHT: {
         const thoughtEvent = event as ThoughtEvent;
-        thought = time < thoughtEvent.startTime + thoughtEvent.duration ? thoughtEvent.thought : null;
+        pose.thought = time < thoughtEvent.startTime + thoughtEvent.duration ? thoughtEvent.thought : null;
         break;
       }
+      case ItineraryEventType.BECOMES_CHARACTER: {
+        const becomesEvent = event as BecomesCharacterEvent;
+        isPairedCharacter = becomesEvent.targetCharacterId !== character.id;
+        if (isPairedCharacter) {
+          pairedCharacterPose = {...characterPose};
+        } else {
+          characterPose = {...pairedCharacterPose};
+        }
+        break;
+      }
+
       case ItineraryEventType.EMIT:
       case ItineraryEventType.CHARACTER_ENCOUNTER:
       case ItineraryEventType.TAKE_ITEM:
       case ItineraryEventType.DROP_ITEM:
       case ItineraryEventType.GIVE_ITEM:
-      case ItineraryEventType.BECOMES_CHARACTER:
       case ItineraryEventType.BECOMES_ITEM:
       case ItineraryEventType.SHOW:
       case ItineraryEventType.HIDE:
@@ -269,18 +338,13 @@ function _findItineraryPose(character:Character, time:number):CharacterPose {
     }
   }
 
-  return {
-    position,
-    isAlive,
-    facingDirection,
-    bodyOrientation,
-    speech,
-    thought
-  };
+  return characterPose;
 }
 
-function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position):Position {
+function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position, characterId:string|null):Position {
   switch(event.type) {
+    case ItineraryEventType.INITIAL_POSE:
+      return _findInitialPoseEventPosition(event as InitialPoseEvent, characterId);
     case ItineraryEventType.WALK:
       return duplicatePosition((event as WalkEvent).toPosition);
     case ItineraryEventType.DIE:
@@ -317,18 +381,13 @@ function _interpolatePosition(fromPosition:Position, toPosition:Position, interp
   }
 }
 
+export function findCharacterPoseWithoutPairHistory(character:Character, time:number):CharacterPose {
+  return _findItineraryPose(character, character.itinerary, time, false);
+}
+
 export function findCharacterPose(character:Character, time:number):CharacterPose {
-  if (!character.itinerary.length || !character.itineraryIndex.eventStartTimes.length) {
-    return {
-      position:duplicatePosition(character.position),
-      isAlive:character.isAlive,
-      facingDirection:character.facingDirection,
-      bodyOrientation:character.bodyOrientation,
-      speech:null,
-      thought:null
-    };
-  }
-  return _findItineraryPose(character, time);
+  const itinerary = character.pairedItinerary ?? character.itinerary;
+  return _findItineraryPose(character, itinerary, time, itinerary === character.pairedItinerary);
 }
 
 function _areItineraryEventsInOrder(events:ReadonlyArray<ItineraryEvent>):boolean {
@@ -338,7 +397,7 @@ function _areItineraryEventsInOrder(events:ReadonlyArray<ItineraryEvent>):boolea
   return true;
 }
 
-export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:Position):ItineraryIndex {
+export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:Position, characterId:string|null = null):ItineraryIndex {
   assert(_areItineraryEventsInOrder(events), 'itinerary events must be ordered by startTime');
   if (!events.length) {
     return { eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[0] };
@@ -353,7 +412,7 @@ export function createItineraryIndex(events:ItineraryEvent[], initialPosition?:P
     assertNonNullable(event);
     assertNonNullable(currentPosition);
     eventStartPositions.push(duplicatePosition(currentPosition));
-    currentPosition = _getEventEndPosition(event, currentPosition);
+    currentPosition = _getEventEndPosition(event, currentPosition, characterId);
   }
 
   const roomEntryStartTimes = events

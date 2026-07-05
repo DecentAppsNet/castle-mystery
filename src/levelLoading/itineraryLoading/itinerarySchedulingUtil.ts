@@ -6,8 +6,9 @@ import { normalizeId } from "@/game/idUtil";
 
 import { LeadingTimestampKind } from "@/levelLoading/timestampUtil";
 import { addCharacterEncounterEvents } from "@/game/characterEncounterUtil";
-import { createItineraryIndex } from "@/game/itineraryUtil";
+import { createInitialPoseEvent, createItineraryIndex } from "@/game/itineraryUtil";
 import Character from "@/game/types/Character";
+import CharacterPose from "@/game/types/CharacterPose";
 import Item, { duplicateItem } from "@/game/types/Item";
 import Level from "@/game/types/Level";
 import Position from "@/game/types/Position";
@@ -127,12 +128,124 @@ function _calcCompletionTimeForRelativeResolution(activity:ParsedItineraryActivi
   return activityCompletionTime + MIN_RELATIVE_ACTIVITY_GAP_MSECS;
 }
 
+function _createInitialCharacterPose(character:Character):CharacterPose {
+  return {
+    position:{ ...character.position },
+    isAlive:character.isAlive,
+    facingDirection:character.facingDirection,
+    bodyOrientation:character.bodyOrientation,
+    speech:null,
+    thought:null
+  };
+}
+
+function _findInitialPoseStartTime(level:Level, itinerary:ItineraryEvent[]):number {
+  return itinerary[0]?.startTime ?? level.startTime;
+}
+
+function _createSeededUnpairedItinerary(level:Level, character:Character, itinerary:ItineraryEvent[]):ItineraryEvent[] {
+  return [createInitialPoseEvent(
+    _findInitialPoseStartTime(level, itinerary),
+    character.id,
+    _createInitialCharacterPose(character),
+    null,
+    null
+  ), ...itinerary];
+}
+
+function _findFirstPairedCharacterId(characterIds:string[], ownEventsByCharacterId:Map<string, ItineraryEvent[]>):string {
+  let firstCharacterId = characterIds[0];
+  let firstStartTime = Number.POSITIVE_INFINITY;
+
+  characterIds.forEach(characterId => {
+    const startTime = ownEventsByCharacterId.get(characterId)?.[0]?.startTime ?? Number.POSITIVE_INFINITY;
+    if (startTime < firstStartTime) {
+      firstStartTime = startTime;
+      firstCharacterId = characterId;
+    }
+  });
+
+  return firstCharacterId;
+}
+
+function _createSeededPairedItinerariesByCharacterId(level:Level, charactersById:Map<string, Character>,
+  ownEventsByCharacterId:Map<string, ItineraryEvent[]>, pairedItinerariesByCharacterId:Map<string, ItineraryEvent[]>) {
+  const seededOwnItinerariesByCharacterId = new Map<string, ItineraryEvent[]>();
+  const seededPairedItinerariesByCharacterId = new Map<string, ItineraryEvent[]>();
+  const characterIdsByPairedItinerary = new Map<ItineraryEvent[], string[]>();
+
+  pairedItinerariesByCharacterId.forEach((pairedItinerary, characterId) => {
+    const characterIds = characterIdsByPairedItinerary.get(pairedItinerary) || [];
+    characterIds.push(characterId);
+    characterIdsByPairedItinerary.set(pairedItinerary, characterIds);
+  });
+
+  characterIdsByPairedItinerary.forEach((characterIds, pairedItinerary) => {
+    if (characterIds.length !== 2) return;
+    const firstCharacterId = _findFirstPairedCharacterId(characterIds, ownEventsByCharacterId);
+    const secondCharacterId = characterIds.find(characterId => characterId !== firstCharacterId) || null;
+    assertNonNullable(secondCharacterId, `missing paired initial-pose second character for ${firstCharacterId}`);
+    const firstCharacter = charactersById.get(firstCharacterId) || null;
+    const secondCharacter = charactersById.get(secondCharacterId) || null;
+    assertNonNullable(firstCharacter, `missing paired initial-pose character ${firstCharacterId}`);
+    assertNonNullable(secondCharacter, `missing paired initial-pose character ${secondCharacterId}`);
+
+    const initialPoseEvent = createInitialPoseEvent(
+      Math.min(
+        _findInitialPoseStartTime(level, pairedItinerary),
+        _findInitialPoseStartTime(level, ownEventsByCharacterId.get(firstCharacterId) || []),
+        _findInitialPoseStartTime(level, ownEventsByCharacterId.get(secondCharacterId) || [])
+      ),
+      firstCharacterId,
+      _createInitialCharacterPose(firstCharacter),
+      secondCharacterId,
+      _createInitialCharacterPose(secondCharacter)
+    );
+    const seededPairedItinerary = [initialPoseEvent, ...pairedItinerary];
+    characterIds.forEach(characterId => {
+      seededPairedItinerariesByCharacterId.set(characterId, seededPairedItinerary);
+      seededOwnItinerariesByCharacterId.set(characterId, [initialPoseEvent, ...(ownEventsByCharacterId.get(characterId) || [])]);
+    });
+  });
+
+  return { seededOwnItinerariesByCharacterId, seededPairedItinerariesByCharacterId };
+}
+
+function _createRetainedLoadedCharacters(level:Level, charactersById:Map<string, Character>,
+  finalCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+  ownEventsByCharacterId:Map<string, ItineraryEvent[]>, pairedItinerariesByCharacterId:Map<string, ItineraryEvent[]>) {
+  const { seededOwnItinerariesByCharacterId, seededPairedItinerariesByCharacterId } = _createSeededPairedItinerariesByCharacterId(
+    level,
+    charactersById,
+    ownEventsByCharacterId,
+    pairedItinerariesByCharacterId
+  );
+  const characters = level.characters.map(character => {
+    const state = finalCharacterStatesById.get(character.id);
+    assertNonNullable(state, `missing final itinerary state for ${character.id}`);
+    const baseCharacter = charactersById.get(character.id) || character;
+    const seededItinerary = seededOwnItinerariesByCharacterId.get(character.id)
+      || _createSeededUnpairedItinerary(level, baseCharacter, ownEventsByCharacterId.get(character.id) || []);
+    return _createScheduledCharacter(baseCharacter, state, seededItinerary, seededPairedItinerariesByCharacterId.get(character.id) || null);
+  });
+  const allCharactersById = new Map(Array.from(level.allCharactersById.entries()).flatMap(([characterId, character]) => {
+    const baseCharacter = charactersById.get(characterId) || character;
+    const state = finalCharacterStatesById.get(characterId) || createCharacterActivityState(baseCharacter);
+    const seededItinerary = seededOwnItinerariesByCharacterId.get(characterId)
+      || _createSeededUnpairedItinerary(level, baseCharacter, ownEventsByCharacterId.get(characterId) || []);
+    return [[characterId,
+      _createScheduledCharacter(baseCharacter, state, seededItinerary, seededPairedItinerariesByCharacterId.get(characterId) || null)] as const];
+  }));
+
+  return { characters, allCharactersById };
+}
+
 function _createScheduledCharacter(character:Character, state:ReturnType<typeof createCharacterActivityState>, itinerary:ItineraryEvent[], pairedItinerary:ItineraryEvent[]|null):Character {
   return {
     ...character,
     itinerary,
     pairedItinerary,
-    itineraryIndex: createItineraryIndex(itinerary, character.position),
+    itineraryIndex: createItineraryIndex(itinerary, character.position, character.id),
     items: state.items.map(duplicateItem),
     leftHandItem: state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
     rightHandItem: state.rightHandItem ? duplicateItem(state.rightHandItem) : null
@@ -304,10 +417,16 @@ function _createReadyToScheduleBySourceIndex(level:Level, activities:ParsedItine
 
 export function scheduleActivities(level:Level, activities:ParsedItineraryActivity[], levelFilename:string):ScheduleActivitiesResult {
   if (!activities.length) {
-    const allCharacters:Character[] = [...level.allCharactersById.values()];
+    const charactersById = new Map(level.allCharactersById);
+    const finalCharacterStatesById = new Map(level.characters.map(character => [character.id, createCharacterActivityState(character)]));
+    const ownEventsByCharacterId = new Map(Array.from(level.allCharactersById.keys()).map(characterId => [characterId, [] as ItineraryEvent[]]));
+    const pairedItinerariesByCharacterId = new Map<string, ItineraryEvent[]>();
+    const finalizedCharacters = _createRetainedLoadedCharacters(level, charactersById, finalCharacterStatesById, 
+      ownEventsByCharacterId, pairedItinerariesByCharacterId);
+    const allCharacters:Character[] = [...finalizedCharacters.allCharactersById.values()];
     return {
-      characters: level.characters,
-      allCharactersById:level.allCharactersById,
+      characters: finalizedCharacters.characters,
+      allCharactersById:finalizedCharacters.allCharactersById,
       duration:calcCharactersItineraryDuration(allCharacters),
       completionTimesBySourceIndex:new Map()
     };
@@ -374,21 +493,10 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
   }
 
   const pairedItinerariesByCharacterId = _createPairedItinerariesByCharacterId(pairedCharacterStatesById);
-  const characters = level.characters.map(character => {
-    const state = finalCharacterStatesById.get(character.id);
-    assertNonNullable(state, `missing final itinerary state for ${character.id}`);
-    const itinerary = ownEventsByCharacterId.get(character.id) || null;
-    assertNonNullable(itinerary, `missing owned itinerary for ${character.id}`);
-    return _createScheduledCharacter(character, state, itinerary, pairedItinerariesByCharacterId.get(character.id) || null);
-  });
-  const allCharactersById = new Map(Array.from(level.allCharactersById.entries()).map(([characterId, character]) => {
-    const state = finalCharacterStatesById.get(characterId) || null;
-    if (!state) return [characterId, character] as const;
-    const itinerary = ownEventsByCharacterId.get(characterId) || null;
-    assertNonNullable(itinerary, `missing owned itinerary for ${characterId}`);
-    return [characterId,
-      _createScheduledCharacter(charactersById.get(characterId) || character, state, itinerary, pairedItinerariesByCharacterId.get(characterId) || null)] as const;
-  }));
+  const finalizedCharacters = _createRetainedLoadedCharacters(level, charactersById, finalCharacterStatesById,
+    ownEventsByCharacterId, pairedItinerariesByCharacterId);
+  const characters = finalizedCharacters.characters;
+  const allCharactersById = finalizedCharacters.allCharactersById;
   const allCharacters:Character[] = [...allCharactersById.values()];
 
   return {

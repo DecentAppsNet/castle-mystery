@@ -6,7 +6,7 @@ import { assert, assertNonNullable } from "decent-portal";
 import { createDropItemEffect } from "../effects/dropItemUtil";
 import { createGiveItemEffect } from "../effects/giveItemUtil";
 import { createTakeItemEffect } from "../effects/takeItemUtil";
-import { createItineraryIndex, findCharacterPose } from "../itineraryUtil";
+import { createItineraryIndex, findCharacterPoseWithoutPairHistory } from "../itineraryUtil";
 import { addOwnedItem, removeOwnedItemById } from "../itemOwnershipUtil";
 import { createUnplacedItemsById } from "../itemUtil";
 import { findRoomAtPosition } from "../roomUtil";
@@ -46,7 +46,7 @@ function _findReplayInventoryEventStartPosition(gameState:GameState, character:C
     : null;
   if (incomingReplacementEvent && event.startTime >= incomingReplacementEvent.startTime && character.pairedItinerary) {
     const pairedEventIndex = character.pairedItinerary.indexOf(event);
-    const pairedStartPosition = createItineraryIndex(character.pairedItinerary, character.position).eventStartPositions[pairedEventIndex];
+    const pairedStartPosition = createItineraryIndex(character.pairedItinerary, character.position, character.id).eventStartPositions[pairedEventIndex];
     assertNonNullable(pairedStartPosition);
     return duplicatePosition(pairedStartPosition);
   }
@@ -169,7 +169,7 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   const targetCharacter = gameState.unplacedCharactersById.get(targetCharacterId) || null;
   assertNonNullable(targetCharacter, `unplaced replacement target character ${targetCharacterId} was not found`);
   gameState.unplacedCharactersById.delete(targetCharacterId);
-  const sourcePose = findCharacterPose(sourceCharacter, replacementTime);
+  const sourcePose = findCharacterPoseWithoutPairHistory(sourceCharacter, replacementTime);
 
   sourceCharacter.position = duplicatePosition(replacementPosition);
   targetCharacter.position = duplicatePosition(replacementPosition);

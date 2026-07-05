@@ -24,7 +24,7 @@ import { findRoom } from "@/game/roomUtil";
 import { findNearestWaypointToPosition } from "@/game/waypointUtil";
 import {
   createItineraryIndex,
-  findCharacterPose,
+  findCharacterPoseWithoutPairHistory,
   findRoomAtPositionOrNearest,
 } from "@/game/itineraryUtil";
 
@@ -37,7 +37,7 @@ function _createCharacterSnapshot(character:Character, state:CharacterActivitySt
     ...character,
     waypoint:state.waypoint,
     itinerary:[...state.events],
-    itineraryIndex:createItineraryIndex(state.events, character.position)
+    itineraryIndex:createItineraryIndex(state.events, character.position, character.id)
   };
 }
 
@@ -183,7 +183,7 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
       thought:state.thought
     };
   }
-  return findCharacterPose(_createCharacterSnapshot(character, state), time);
+  return findCharacterPoseWithoutPairHistory(_createCharacterSnapshot(character, state), time);
 }
 
 export function appendEventsToCharacterState(level:Level, _character:Character, state:CharacterActivityState, events:ItineraryEvent[]) {

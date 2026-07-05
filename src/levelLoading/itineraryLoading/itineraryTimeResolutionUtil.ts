@@ -3,6 +3,7 @@
 
 import Character from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
+import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 
 import { throwWithItineraryLineContext } from "./itineraryLoadErrorUtil";
 import ParsedItineraryActivity from "./types/ParsedItineraryActivity";
@@ -35,7 +36,9 @@ export function sortActivitiesByResolvedTime(activities:ParsedItineraryActivity[
 }
 
 function _calcItineraryDuration(itinerary:ItineraryEvent[]):number {
-  return itinerary.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), 0);
+  return itinerary.reduce((maxEndTime, event) => event.type === ItineraryEventType.INITIAL_POSE
+    ? maxEndTime
+    : Math.max(maxEndTime, event.startTime + event.duration), 0);
 }
 
 export function calcCharactersItineraryDuration(characters:Character[]):number {

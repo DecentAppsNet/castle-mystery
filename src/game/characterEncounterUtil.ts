@@ -1,7 +1,7 @@
 /* This module groups character-encounter detection helpers that derive encounter itinerary events from room co-presence.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { createCharacterEncounterEvent, createItineraryIndex, findCharacterPose } from "./itineraryUtil";
+import { createCharacterEncounterEvent, createItineraryIndex, findCharacterPoseWithoutPairHistory } from "./itineraryUtil";
 import Character from "./types/Character";
 import Room from "./types/Room";
 import { findRoomAtPosition } from "./roomUtil";
@@ -13,14 +13,14 @@ function _compareIds(id1:string, id2:string):number {
 }
 
 function _createOtherCharacterIdsInSameRoom(character:Character, characters:Character[], rooms:Room[], time:number):string[] {
-  const characterPose = findCharacterPose(character, time);
+  const characterPose = findCharacterPoseWithoutPairHistory(character, time);
   const room = findRoomAtPosition(rooms, characterPose.position.x, characterPose.position.y) || null;
   if (!room) return [];
 
   return characters
     .filter(otherCharacter => otherCharacter.id !== character.id)
     .filter(otherCharacter => {
-      const otherPose = findCharacterPose(otherCharacter, time);
+      const otherPose = findCharacterPoseWithoutPairHistory(otherCharacter, time);
       const otherRoom = findRoomAtPosition(rooms, otherPose.position.x, otherPose.position.y) || null;
       return otherRoom?.id === room.id;
     })
@@ -63,7 +63,7 @@ export function addCharacterEncounterEvents(characters:Character[], rooms:Room[]
     return {
       ...character,
       itinerary,
-      itineraryIndex:createItineraryIndex(itinerary, character.position)
+      itineraryIndex:createItineraryIndex(itinerary, character.position, character.id)
     };
   });
 }

@@ -7,7 +7,7 @@ import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
 import Itinerary from "./types/Itinerary";
 import Room from "./types/Room";
 import { assert, assertNonNullable } from "decent-portal";
-import { findCharacterPose } from "./itineraryUtil";
+import { findCharacterPoseWithoutPairHistory } from "./itineraryUtil";
 import { findRoomAtPosition } from "./roomUtil";
 
 export function hasPairedItinerary(character:Character):boolean {
@@ -48,7 +48,7 @@ function _isReplacementWitnessable(event:BecomesCharacterEvent, allCharactersByI
   const sourceCharacter = allCharactersById.get(event.sourceCharacterId) || null;
   assertNonNullable(sourceCharacter, `missing replacement source character ${event.sourceCharacterId}`);
   if (!_isCharacterVisibleAtTime(sourceCharacter, event.startTime)) return false;
-  const sourcePose = findCharacterPose(sourceCharacter, event.startTime);
+  const sourcePose = findCharacterPoseWithoutPairHistory(sourceCharacter, event.startTime);
   const sourceRoom = findRoomAtPosition(rooms, sourcePose.position.x, sourcePose.position.y) || null;
   return !!sourceRoom && !sourceRoom.isObscured;
 }

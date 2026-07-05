@@ -14,13 +14,15 @@ import DropItemEvent, { duplicateDropItemEvent } from "./DropItemEvent";
 import GiveItemEvent, { duplicateGiveItemEvent } from "./GiveItemEvent";
 import BecomesCharacterEvent, { duplicateBecomesCharacterEvent } from "./BecomesCharacterEvent";
 import BecomesItemEvent, { duplicateBecomesItemEvent } from "./BecomesItemEvent";
+import InitialPoseEvent, { duplicateInitialPoseEvent } from "./InitialPoseEvent";
 import LockEvent, { duplicateLockEvent } from "./LockEvent";
 import UnlockEvent, { duplicateUnlockEvent } from "./UnlockEvent";
 import VisibilityEvent, { duplicateVisibilityEvent } from "./VisibilityEvent";
 
-type ItineraryEvent = WalkEvent | DieEvent | FaceEvent | BodyOrientationEvent | RoomEntryEvent | SpeechEvent | EmitEvent | ThoughtEvent | CharacterEncounterEvent | TakeItemEvent | DropItemEvent | GiveItemEvent | BecomesCharacterEvent | BecomesItemEvent | VisibilityEvent | LockEvent | UnlockEvent;
+type ItineraryEvent = InitialPoseEvent | WalkEvent | DieEvent | FaceEvent | BodyOrientationEvent | RoomEntryEvent | SpeechEvent | EmitEvent | ThoughtEvent | CharacterEncounterEvent | TakeItemEvent | DropItemEvent | GiveItemEvent | BecomesCharacterEvent | BecomesItemEvent | VisibilityEvent | LockEvent | UnlockEvent;
 export function duplicateItineraryEvent(from:ItineraryEvent):ItineraryEvent {
   switch(from.type) {
+    case ItineraryEventType.INITIAL_POSE: return duplicateInitialPoseEvent(from as InitialPoseEvent);
     case ItineraryEventType.WALK: return duplicateWalkEvent(from as WalkEvent);
     case ItineraryEventType.DIE: return duplicateDieEvent(from as DieEvent);
     case ItineraryEventType.FACE: return duplicateFaceEvent(from as FaceEvent);
