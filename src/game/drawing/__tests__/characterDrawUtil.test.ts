@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { drawCharacter, drawEmitBubble, drawObscuredActiveCharacter, getCharacterCanvasRect, getCharacterSpeechAnchor } from '../characterDrawUtil';
+import { drawCharacter, drawEmitBubble, drawObscuredActiveCharacter, getCharacterCanvasRect } from '../characterDrawUtil';
 import { createImageAsset } from '@/game/imageAssetUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultItem } from '@/game/types/Item';
@@ -32,30 +32,6 @@ describe('characterDrawUtil', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-  });
-
-  describe('getCharacterSpeechAnchor()', () => {
-    it('disables sway for dead characters in every body orientation', () => {
-      const time = CHARACTER_SWAY_INTERVAL_TEST_TIME;
-
-      (['standing', 'sitting', 'kneeling', 'laying'] as const).forEach(bodyOrientation => {
-        const aliveCharacter = {
-          ...createDefaultCharacter(),
-          x:10,
-          y:20,
-          randomSalt:0,
-          bodyOrientation,
-          isAlive:true
-        };
-        const deadCharacter = { ...aliveCharacter, isAlive:false };
-
-        const aliveAnchor = getCharacterSpeechAnchor(aliveCharacter, SCALING_FACTORS, time);
-        const deadAnchor = getCharacterSpeechAnchor(deadCharacter, SCALING_FACTORS, time);
-
-        expect(aliveAnchor.anchorX).not.toBe(aliveAnchor.centerX);
-        expect(deadAnchor.anchorX).toBe(deadAnchor.centerX);
-      });
-    });
   });
 
   describe('getCharacterCanvasRect()', () => {
@@ -235,5 +211,3 @@ function _drawObscuredAndCaptureScales(character:ReturnType<typeof createDefault
   drawObscuredActiveCharacter(room, character, SCALING_FACTORS, context, imageSet);
   return scales;
 }
-
-const CHARACTER_SWAY_INTERVAL_TEST_TIME = 375;

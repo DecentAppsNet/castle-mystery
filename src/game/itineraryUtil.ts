@@ -4,7 +4,6 @@
 import { assert, assertNonNullable } from "decent-portal";
 import Room from "./types/Room";
 import WalkEvent from "./types/itineraryEvents/WalkEvent";
-import DieEvent from "./types/itineraryEvents/DieEvent";
 import RoomEntryEvent from "./types/itineraryEvents/RoomEntryEvent";
 import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
 import EmitEvent from "./types/itineraryEvents/EmitEvent";
@@ -85,7 +84,6 @@ function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
 
 function _createPoseFromCharacter(character:Character):CharacterPose {
   return {
-    isAlive:character.isAlive,
     bodyOrientation:character.bodyOrientation,
     facingDirection:character.facingDirection,
     position:character.position,
@@ -127,14 +125,6 @@ export function createEmitEvent(startTime:number, itemId:string|null, emitText:s
     itemId,
     emitText,
     duration:_calcSpeechDuration(emitText)
-  };
-}
-
-export function createDieEvent(startTime:number):DieEvent {
-  return {
-    type:ItineraryEventType.DIE,
-    startTime,
-    duration:0
   };
 }
 
@@ -287,9 +277,6 @@ function _findItineraryPose(characterId:string, itinerary:Itinerary, time:number
           : duplicatePosition(walkEvent.toPosition);
         break;
       }
-      case ItineraryEventType.DIE:
-        pose.isAlive = false;
-        break;
       case ItineraryEventType.FACE:
         pose.facingDirection = (event as FaceEvent).facingDirection;
         break;

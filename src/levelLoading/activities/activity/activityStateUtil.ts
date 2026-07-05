@@ -61,9 +61,6 @@ function _updateStatePoseFromEvent(state:CharacterActivityState, event:Itinerary
       state.bodyOrientation = 'standing';
       return;
     }
-    case ItineraryEventType.DIE:
-      state.isAlive = false;
-      return;
     case ItineraryEventType.FACE:
       state.facingDirection = (event as FaceEvent).facingDirection;
       return;
@@ -120,7 +117,6 @@ export function createCharacterActivityState(character:Character):CharacterActiv
     items:character.items.map(duplicateItem),
     leftHandItem:character.leftHandItem ? duplicateItem(character.leftHandItem) : null,
     rightHandItem:character.rightHandItem ? duplicateItem(character.rightHandItem) : null,
-    isAlive:character.isAlive,
     facingDirection:character.facingDirection,
     bodyOrientation:character.bodyOrientation,
     speech:null,
@@ -143,7 +139,6 @@ export function duplicateCharacterActivityState(state:CharacterActivityState):Ch
     items:state.items.map(duplicateItem),
     leftHandItem:state.leftHandItem ? duplicateItem(state.leftHandItem) : null,
     rightHandItem:state.rightHandItem ? duplicateItem(state.rightHandItem) : null,
-    isAlive:state.isAlive,
     facingDirection:state.facingDirection,
     bodyOrientation:state.bodyOrientation,
     speech:state.speech,
@@ -173,7 +168,6 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
   if (!state.events.length) {
     return {
       position:duplicatePosition(character.position),
-      isAlive:character.isAlive,
       facingDirection:character.facingDirection,
       bodyOrientation:character.bodyOrientation,
       speech:null,
@@ -184,7 +178,6 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
   if (time === state.time) {
     return {
       position:duplicatePosition(state.position),
-      isAlive:state.isAlive,
       facingDirection:state.facingDirection,
       bodyOrientation:state.bodyOrientation,
       speech:state.speech,

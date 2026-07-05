@@ -13,7 +13,6 @@ type CharacterActivityState = {
   items:Item[],
   leftHandItem:Item|null,
   rightHandItem:Item|null,
-  isAlive:boolean,
   facingDirection:FacingDirection,
   bodyOrientation:BodyOrientation,
   speech:string|null,

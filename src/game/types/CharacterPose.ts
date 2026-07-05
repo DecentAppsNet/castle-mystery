@@ -3,7 +3,6 @@ import Position, { duplicatePosition } from "./Position"
 
 type CharacterPose = {
   position:Position,
-  isAlive:boolean,
   facingDirection:FacingDirection,
   bodyOrientation:BodyOrientation,
   speech:string|null,
@@ -13,7 +12,6 @@ type CharacterPose = {
 export function duplicateCharacterPose(from:CharacterPose):CharacterPose {
   return {
     position:duplicatePosition(from.position),
-    isAlive:from.isAlive,
     facingDirection:from.facingDirection,
     bodyOrientation:from.bodyOrientation,
     speech:from.speech,
@@ -24,7 +22,6 @@ export function duplicateCharacterPose(from:CharacterPose):CharacterPose {
 export function createDefaultCharacterPose():CharacterPose {
   return {
     position:{x:0, y:0, z:0},
-    isAlive:true,
     facingDirection:'right',
     bodyOrientation:'standing',
     speech:null,

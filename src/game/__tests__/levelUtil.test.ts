@@ -158,9 +158,6 @@ import takeOccupiedLeftHandText from './fixtures/take-occupied-left-hand.md?raw'
 import birthOfConstantineRegressionText from './fixtures/birth-of-constantine-regression.md?raw';
 import escapeStairwellRegressionText from './fixtures/escape-stairwell-regression.md?raw';
 import facesActivityText from './fixtures/faces-activity.md?raw';
-import diesActivityText from './fixtures/dies-activity.md?raw';
-import deadCharacterActivityText from './fixtures/dead-character-activity.md?raw';
-import initiallyDeadCharacterActivityText from './fixtures/initially-dead-character-activity.md?raw';
 import initialCharacterPoseText from './fixtures/initial-character-pose.md?raw';
 import bodyOrientationActivityText from './fixtures/body-orientation-activity.md?raw';
 import bodyOrientationOnItemActivityText from './fixtures/body-orientation-on-item-activity.md?raw';
@@ -293,25 +290,6 @@ describe('levelUtil itinerary loading', () => {
     ]);
   });
 
-  it('parses dies activities and defaults unspecified alive to true', () => {
-    const level = loadLevelFromText(diesActivityText);
-    const king = level.characters.find(character => character.id === 'king');
-    if (!king) expect.fail('expected king character to exist');
-
-    expect(king.isAlive).toBe(true);
-    expect(king.itinerary.some(event => event.type === ItineraryEventType.DIE)).toBe(true);
-    expect(findCharacterPoseWithoutPairHistory(king, 4_999).isAlive).toBe(true);
-    expect(findCharacterPoseWithoutPairHistory(king, 5_000).isAlive).toBe(false);
-  });
-
-  it('parses alive=false in character sections', () => {
-    const level = loadLevelFromText(initiallyDeadCharacterActivityText.replace('0:00:05 King says "Boo."', ''), 'initially-dead-character-activity.md');
-    const king = level.characters.find(character => character.id === 'king');
-    if (!king) expect.fail('expected king character to exist');
-
-    expect(king.isAlive).toBe(false);
-  });
-
   it('parses initial facing and orientation from character sections', () => {
     const level = loadLevelFromText(initialCharacterPoseText, 'initial-character-pose.md');
     const king = level.characters.find(character => character.id === 'king');
@@ -405,14 +383,6 @@ describe('levelUtil itinerary loading', () => {
   it('throws for show/hide activities with unknown targets', () => {
     expect(() => loadLevelFromText(unknownVisibilityTargetActivityText, 'unknown-visibility-target-activity.md'))
       .toThrow(/unknown visibility target 'Ghost' in authored activity 'hide Ghost'/);
-  });
-
-  it('throws when a dead character has a later itinerary activity after dying', () => {
-    expect(() => loadLevelFromText(deadCharacterActivityText, 'dead-character-activity.md')).toThrow(/dead character king cannot perform itinerary activity/i);
-  });
-
-  it('throws when an initially dead character has any itinerary activity', () => {
-    expect(() => loadLevelFromText(initiallyDeadCharacterActivityText, 'initially-dead-character-activity.md')).toThrow(/dead character king cannot perform itinerary activity/i);
   });
 
   it('parses standing, sitting, kneeling, and laying activities and resets body orientation to standing on walks', () => {

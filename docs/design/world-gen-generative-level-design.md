@@ -854,7 +854,7 @@ code; this is a digest. Sections of a level file (split by `#` headings):
 - **Items** — `## Name` → ID; `* title=`, `description`, `image=<file>.png`, `drawOffset{X,Y,Z}`.
 - **Itinerary** — `HH:MM:SS` (or `HH:MM`) absolute, or `:` relative (after prior activity
   completes) lines: `@ Room[.PERCENT%]`, `says "…"`, `interrupts "…"`, `thinks "…"`,
-  `faces left|right`, `stands|sits|lays`, `takes/gives/drops <Item>`, `dies`, `(narrator
+  `faces left|right`, `stands|sits|lays`, `takes/gives/drops <Item>`, `(narrator
   note)`. A `:`-prefixed line applies to the most recently named character. `says` errors
   on audible overlap; use `interrupts` for intentional overlap.
   ([itineraryActivityParseUtil.ts](../../src/levelLoading/itineraryLoading/itineraryActivityParseUtil.ts))

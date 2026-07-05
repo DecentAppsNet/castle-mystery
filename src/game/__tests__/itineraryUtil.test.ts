@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { createBodyOrientationEvent, createDieEvent, createEmitEvent, createFaceEvent, createInitialPoseEvent, createInitialPoseEventFromUnpairedCharacter, createItineraryIndex, createWalkEvent, findCharacterPoseWithoutPairHistory, findPreviousRoomEntryTime } from '../itineraryUtil';
+import { createBodyOrientationEvent, createEmitEvent, createFaceEvent, createInitialPoseEvent, createInitialPoseEventFromUnpairedCharacter, createItineraryIndex, createWalkEvent, findCharacterPoseWithoutPairHistory, findPreviousRoomEntryTime } from '../itineraryUtil';
 import { ROOM_BACK_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
 import Character, { createDefaultCharacter } from '../types/Character';
@@ -63,9 +63,9 @@ describe('itineraryUtil', () => {
         createInitialPoseEvent(
           1_000,
           'alpha',
-          { position:{ x:1, y:2, z:3 }, isAlive:true, facingDirection:'right', bodyOrientation:'standing', speech:null, thought:null },
+          { position:{ x:1, y:2, z:3 }, facingDirection:'right', bodyOrientation:'standing', speech:null, thought:null },
           'beta',
-          { position:{ x:10, y:20, z:30 }, isAlive:true, facingDirection:'left', bodyOrientation:'kneeling', speech:null, thought:null }
+          { position:{ x:10, y:20, z:30 }, facingDirection:'left', bodyOrientation:'kneeling', speech:null, thought:null }
         ),
         { type:ItineraryEventType.ROOM_ENTRY, startTime:2_000, duration:0, roomId:'Library' }
       ], { x:0, y:0, z:MIDDLE_ROW_DEPTH }, 'beta');
@@ -168,7 +168,6 @@ describe('itineraryUtil', () => {
         position:{ x:0, y:0, z:MIDDLE_ROW_DEPTH },
         facingDirection:'right',
         bodyOrientation:'standing',
-        isAlive:true,
         speech:null,
         thought:null
       });
@@ -176,18 +175,9 @@ describe('itineraryUtil', () => {
         position:{ x:0, y:0, z:MIDDLE_ROW_DEPTH },
         facingDirection:'right',
         bodyOrientation:'standing',
-        isAlive:true,
         speech:null,
         thought:null
       });
-    });
-
-    it('applies death events immediately and keeps characters dead afterwards', () => {
-      const character = _createCharacter([createDieEvent(1_000)]);
-
-      expect(findCharacterPoseWithoutPairHistory(character, 999).isAlive).toBe(true);
-      expect(findCharacterPoseWithoutPairHistory(character, 1_000).isAlive).toBe(false);
-      expect(findCharacterPoseWithoutPairHistory(character, 1_500).isAlive).toBe(false);
     });
   });
 });

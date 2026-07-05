@@ -269,7 +269,7 @@ Examples:
 * `* facing=left`
 * `* orientation=sitting`
 
-These values control only the starting state. Later itinerary lines such as `faces left`, `sits`, `stands`, `lays`, or `dies` can change them over time.
+These values control only the starting state. Later itinerary lines such as `faces left`, `sits`, `stands`, or `lays` can change them over time.
 
 # "Items" Section
 
@@ -394,7 +394,6 @@ The itinerary loader currently supports these activity verbs and forms:
 * `sits`
 * `kneels`
 * `lays`
-* `dies`
 * `takes Item ...`
 * `drops Item ...`
 * `gives Item to Character`
@@ -477,12 +476,6 @@ Examples:
 * `0:15:03 John sits`
 * `0:15:03 John kneels`
 * `0:15:03 John lays`
-
-### Dies
-
-`dies` marks the character as dead at that time.
-
-Example: `0:15:03 John dies`
 
 ### Locks
 

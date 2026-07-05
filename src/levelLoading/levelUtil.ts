@@ -4,7 +4,7 @@
 import Level from "../game/types/Level";
 import Item from "../game/types/Item";
 import TimeLabel from "../game/types/TimeLabel";
-import { createDefaultCharacter, duplicateCharacter } from "../game/types/Character";
+import Character, { createDefaultCharacter, duplicateCharacter } from "../game/types/Character";
 import { getOwnedItems } from "../game/itemOwnershipUtil";
 import { createItemsById } from "../game/itemUtil";
 import { assert, assertNonNullable } from "decent-portal";
@@ -88,20 +88,19 @@ function _createEmptyLevel(duration:number = MSECS_IN_DAY):Level {
 }
 
 function _createLevelAllCharactersById(level:Level,
-  characterDefinitions:Map<string, { title:string, description:string, faceImageUrl:string|null, isVisible:boolean, isAlive:boolean,
+  characterDefinitions:Map<string, { title:string, description:string, faceImageUrl:string|null, isVisible:boolean,
     facingDirection:import("../game/types/Character").FacingDirection, bodyOrientation:import("../game/types/Character").BodyOrientation,
     isTitleKnown:boolean }>):Map<string, import("../game/types/Character").default> {
   const allCharactersById = new Map(level.characters.map(character => [character.id, character]));
   characterDefinitions.forEach((characterDefinition, characterId) => {
     if (allCharactersById.has(characterId)) return;
-    const character = { 
+    const character:Character = { 
       ...createDefaultCharacter(),
       id:characterId,
       title:characterDefinition.title,
       faceImageUrl:characterDefinition.faceImageUrl,
       randomSalt:rand(),
       isVisible:characterDefinition.isVisible,
-      isAlive:characterDefinition.isAlive,
       facingDirection:characterDefinition.facingDirection,
       bodyOrientation:characterDefinition.bodyOrientation,
       isTitleKnown:characterDefinition.isTitleKnown,

@@ -27,7 +27,6 @@ type CharacterDefinition = {
 	inventoryItems:Array<{ id:string, title:string }>,
 	faceImageUrl:string|null,
 	isVisible:boolean,
-	isAlive:boolean,
 	facingDirection:FacingDirection,
 	bodyOrientation:BodyOrientation,
 	isTitleKnown:boolean
@@ -64,14 +63,6 @@ function _parseOptionalIsTitleKnownOrThrow(value:string|undefined, characterId:s
 	if (normalizedValue === 'true') return true;
 	if (normalizedValue === 'false') return false;
 	throw new Error(`character ${characterId} isTitleKnown must be true or false`);
-}
-
-function _parseOptionalIsAliveOrThrow(value:string|undefined, characterId:string):boolean {
-	if (value === undefined) return true;
-	const normalizedValue = value.trim().toLowerCase();
-	if (normalizedValue === 'true') return true;
-	if (normalizedValue === 'false') return false;
-	throw new Error(`character ${characterId} alive must be true or false`);
 }
 
 function _parseOptionalIsCharacterVisibleOrThrow(value:string|undefined, characterId:string):boolean {
@@ -145,7 +136,6 @@ export function parseCharacterDefinitions(charactersSection:string, firstLineNo:
 			inventoryItems,
 			faceImageUrl:nameValues.faceImage ? getFaceImageAssetUrl(nameValues.faceImage.trim()) : null,
 			isVisible:_parseOptionalIsCharacterVisibleOrThrow(nameValues.visible, characterId),
-			isAlive:_parseOptionalIsAliveOrThrow(nameValues.alive, characterId),
 			facingDirection:_parseOptionalFacingDirectionOrThrow(nameValues.facing, characterId),
 			bodyOrientation:_parseOptionalBodyOrientationOrThrow(nameValues.orientation, characterId),
 			isTitleKnown:_parseOptionalIsTitleKnownOrThrow(nameValues.isTitleKnown, characterId)
@@ -293,7 +283,7 @@ function _createItemFromDefinition(itemId:string, defaultTitleText:string, itemD
 }
 
 function _addCharacter(level:Level, room:Room, characterId:string, title:string, description:string,
-	faceImageUrl:string|null, isVisible:boolean, isAlive:boolean, facingDirection:FacingDirection, bodyOrientation:BodyOrientation,
+	faceImageUrl:string|null, isVisible:boolean, facingDirection:FacingDirection, bodyOrientation:BodyOrientation,
 	isTitleKnown:boolean, x:number, y:number, depth:number) {
 	const claimedWaypoints = new Set(level.characters.map(character => `${character.waypoint.position.x},${character.waypoint.position.y},${character.waypoint.position.z}`));
 	const waypoint = findNearestWaypointToPosition(room, { x, y, z:depth });
@@ -308,7 +298,6 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 		randomSalt:rand(),
 		isDiscovered:false,
 		isVisible,
-		isAlive,
 		facingDirection,
 		bodyOrientation,
 		isTitleKnown,
@@ -355,7 +344,7 @@ function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, author
 			const characterPosition = _createRoomCharacterPosition(room, x, characterDepth);
 			_assertCharacterIdIsUnique(level, entryId, roomId, row, col);
 			_addCharacter(level, room, entryId, characterDefinition.title, characterDefinition.description,
-				characterDefinition.faceImageUrl, characterDefinition.isVisible, characterDefinition.isAlive, characterDefinition.facingDirection,
+				characterDefinition.faceImageUrl, characterDefinition.isVisible, characterDefinition.facingDirection,
 				characterDefinition.bodyOrientation, characterDefinition.isTitleKnown,
 				characterPosition.x, characterPosition.y, characterPosition.z);
 			return;
@@ -394,7 +383,7 @@ function _addLegendEntryPopulation(level:Level, room:Room, roomId:string, author
 	const characterPosition = _createRoomCharacterPosition(room, anchorItemPosition.x, characterDepth);
 	_assertCharacterIdIsUnique(level, stackedCharacterEntry.entryId, roomId, row, col);
 	_addCharacter(level, room, stackedCharacterEntry.entryId, characterDefinition.title, characterDefinition.description,
-		characterDefinition.faceImageUrl, characterDefinition.isVisible, characterDefinition.isAlive, characterDefinition.facingDirection,
+		characterDefinition.faceImageUrl, characterDefinition.isVisible, characterDefinition.facingDirection,
 		characterDefinition.bodyOrientation, characterDefinition.isTitleKnown,
 		characterPosition.x, characterPosition.y, characterPosition.z);
 }

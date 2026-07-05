@@ -56,7 +56,6 @@ export function resolveCharacterPosesAndActiveFocus(gameState:GameState, time:nu
   gameState.characters.forEach(character => {
     const pose = findCharacterPose(character, time);
     character.position = { ...pose.position };
-    character.isAlive = pose.isAlive;
     character.facingDirection = pose.facingDirection;
     character.bodyOrientation = pose.bodyOrientation;
   });

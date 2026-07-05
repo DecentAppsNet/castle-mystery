@@ -20,7 +20,6 @@ import { tryCreateAtActivity } from "../activities/atActivityUtil";
 import { tryCreateBecomesCharacterActivity } from "../activities/becomesCharacterActivityUtil";
 import { tryCreateBodyOrientationActivity } from "../activities/bodyOrientationActivityUtil";
 import { tryCreateBecomesItemActivity } from "../activities/becomesItemActivityUtil";
-import { tryCreateDieActivity } from "../activities/dieActivityUtil";
 import { tryCreateDropActivity } from "../activities/dropActivityUtil";
 import { tryCreateEmitActivity } from "../activities/emitActivityUtil";
 import { tryCreateFaceActivity } from "../activities/facesActivityUtil";
@@ -152,7 +151,6 @@ function _calcCompletionTimeForRelativeResolution(activity:ParsedItineraryActivi
 function _createInitialCharacterPose(character:Character):CharacterPose {
   return {
     position:{ ...character.position },
-    isAlive:character.isAlive,
     facingDirection:character.facingDirection,
     bodyOrientation:character.bodyOrientation,
     speech:null,
@@ -348,19 +346,12 @@ function _applyCharacterReplacementToSchedulingState(charactersById:Map<string, 
 // Dispatches one authored activity line to the first parser that understands it, after verifying the subject
 // character is alive at the authored start time.
 function _createEventsForActivity(activityText:string, context:ActivityContext):ItineraryEvent[] {
-  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  assert(doesItineraryBeginWithInitialPoseEvent(context.character.itinerary), `I can't learn alive state for "${context.character.id}" without an initial pose event.`);
-  if (context.subjectKind === 'character' && !findStatePoseAtTime(context.character, context.state, activityStartTime).isAlive) {
-    throw new Error(`dead character ${context.character.id} cannot perform itinerary activity '${activityText}'`);
-  }
-
   const activityFactories = [
     tryCreateAtActivity,
     tryCreateSayActivity,
     tryCreateEmitActivity,
     tryCreateThinkActivity,
     tryCreateFaceActivity,
-    tryCreateDieActivity,
     tryCreateBodyOrientationActivity,
     tryCreateBecomesCharacterActivity,
     tryCreateBecomesItemActivity,

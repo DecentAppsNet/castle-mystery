@@ -195,7 +195,6 @@ Activities:
 - `says, "…"` (audible) / `interrupts "…"` (intentional overlap) / `thinks, "…"` (silent).
 - `faces left|right`, `stands|sits|lays`.
 - `takes <Item> in left|right hand`, `drops <Item> (x,y,z)`, `gives <Item> to <Character>`.
-- `dies`. `(free narrator note)`.
 
 Rules: a single character may not have two **overlapping** `says` (load fails) — sequence speech
 with `:` or use `interrupts`. Items must exist before being taken/dropped.
