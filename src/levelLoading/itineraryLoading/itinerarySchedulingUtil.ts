@@ -1,12 +1,12 @@
 /* This module groups itinerary activity scheduling and state-application helpers used during level load.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 import { normalizeId } from "@/game/idUtil";
 
 import { LeadingTimestampKind } from "@/levelLoading/timestampUtil";
 import { addCharacterEncounterEvents } from "@/game/characterEncounterUtil";
-import { createInitialPoseEvent, createItineraryIndex } from "@/game/itineraryUtil";
+import { createInitialPoseEvent, createItineraryIndex, doesItineraryBeginWithInitialPoseEvent } from "@/game/itineraryUtil";
 import Character from "@/game/types/Character";
 import CharacterPose from "@/game/types/CharacterPose";
 import Item, { duplicateItem } from "@/game/types/Item";
@@ -58,6 +58,8 @@ type PreviewSchedulingResult = {
 
 const MIN_RELATIVE_ACTIVITY_GAP_MSECS = 1;
 
+// Packages the mutable scheduling state and lookup tables that activity parsers need in order to turn
+// one authored itinerary line into concrete runtime events.
 function _createActivityContext(level:Level, character:Character, timestamp:number, timestampType:LeadingTimestampKind,
   activitySourceIndex:number, subjectKind:ParsedItineraryActivity['subjectKind'], subjectId:string, roomItemsByRoomId:Map<string, Item[]>, charactersById:Map<string, Character>,
   characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>, poseOverridesByCharacterId:Map<string, Position>):ActivityContext {
@@ -80,12 +82,16 @@ function _createActivityContext(level:Level, character:Character, timestamp:numb
   };
 }
 
+// Fails when an itinerary line refers to a character who is declared in the level but not currently placed,
+// because scheduling logic only knows how to operate on characters with an active mutable state.
 function _throwOnUnplacedItineraryCharacter(characterId:string,
   characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>) {
   if (characterStatesById.has(characterId)) return;
   throw new Error(`character '${characterId}' is not placed in the level, so can't be referenced in itinerary. Name may be incorrect.`);
 }
 
+// Resolves which placed identity should receive an authored activity when file-order shorthand still refers
+// to the pre-swap name after a becomes-character pair has traded which identity is currently placed.
 function _resolveScheduledCharacterId(activity:ParsedItineraryActivity,
     characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
     pairedCharacterIdByCharacterId:Map<string, string>):string {
@@ -95,30 +101,41 @@ function _resolveScheduledCharacterId(activity:ParsedItineraryActivity,
   return activity.characterId;
 }
 
+// Identifies authored lines whose effects can change where a character is considered to be at that exact
+// absolute timestamp, which matters when other same-time activities need to target the updated pose.
 function _activityAffectsPoseAtTimestamp(activity:ParsedItineraryActivity):boolean {
   if (activity.timestampType !== 'absolute') return false;
   return activity.activityText.startsWith('@ ') || activity.activityText.startsWith('takes ');
 }
 
+// Some previews must simulate room-item movement as well as character pose, because taking an item changes
+// which floor square is occupied by an item during later same-timestamp targeting.
 function _activityNeedsRoomItemsDuringPosePreview(activity:ParsedItineraryActivity):boolean {
   return activity.activityText.startsWith('takes ');
 }
 
+// Preview-scheduled events can be reused during the real scheduling pass only when they depend solely on pose,
+// not on mutable room-item state that may differ between preview and execution.
 function _canReusePreviewScheduledEvents(activity:ParsedItineraryActivity):boolean {
   return _activityAffectsPoseAtTimestamp(activity)
     && !_activityNeedsRoomItemsDuringPosePreview(activity);
 }
 
+// Finds when the concrete emitted events from one authored activity have fully finished.
 function _calcActivityCompletionTime(activityStartTime:number, events:ItineraryEvent[]):number {
   return events.reduce((maxEndTime, event) => Math.max(maxEndTime, event.startTime + event.duration), activityStartTime);
 }
 
+// Combines event completion with an explicit waits duration, because waits extend the authored activity chain
+// even though they do not emit their own itinerary event.
 function _calcParsedActivityCompletionTime(activity:ParsedItineraryActivity, activityStartTime:number, events:ItineraryEvent[]):number {
   const eventCompletionTime = _calcActivityCompletionTime(activityStartTime, events);
   if (activity.waitDurationMsecs === null) return eventCompletionTime;
   return Math.max(eventCompletionTime, activityStartTime + activity.waitDurationMsecs);
 }
 
+// Calculates when a later ':' line is allowed to begin, including the tiny gap needed after zero-duration
+// terminal events so two relative activities do not collapse onto the exact same authored instant.
 function _calcCompletionTimeForRelativeResolution(activity:ParsedItineraryActivity, activityStartTime:number, events:ItineraryEvent[]):number {
   const activityCompletionTime = _calcParsedActivityCompletionTime(activity, activityStartTime, events);
   if (activity.waitDurationMsecs !== null) return activityCompletionTime;
@@ -128,6 +145,8 @@ function _calcCompletionTimeForRelativeResolution(activity:ParsedItineraryActivi
   return activityCompletionTime + MIN_RELATIVE_ACTIVITY_GAP_MSECS;
 }
 
+// Captures the non-transient visual pose that a character starts with before any speech, thought, or itinerary
+// events have had a chance to modify them.
 function _createInitialCharacterPose(character:Character):CharacterPose {
   return {
     position:{ ...character.position },
@@ -139,10 +158,13 @@ function _createInitialCharacterPose(character:Character):CharacterPose {
   };
 }
 
+// Chooses the timestamp for the seeded InitialPoseEvent so replay starts no later than the first real event,
+// falling back to the level start when a character never performs an activity.
 function _findInitialPoseStartTime(level:Level, itinerary:ItineraryEvent[]):number {
   return itinerary[0]?.startTime ?? level.startTime;
 }
 
+// Adds the replay seed for a character who never shares a merged becomes-character history with another identity.
 function _createSeededUnpairedItinerary(level:Level, character:Character, itinerary:ItineraryEvent[]):ItineraryEvent[] {
   return [createInitialPoseEvent(
     _findInitialPoseStartTime(level, itinerary),
@@ -153,6 +175,8 @@ function _createSeededUnpairedItinerary(level:Level, character:Character, itiner
   ), ...itinerary];
 }
 
+// Picks the identity whose first authored event happens earliest so the paired InitialPoseEvent has a stable
+// "first" and "second" character ordering for indexing and replay.
 function _findFirstPairedCharacterId(characterIds:string[], ownEventsByCharacterId:Map<string, ItineraryEvent[]>):string {
   let firstCharacterId = characterIds[0];
   let firstStartTime = Number.POSITIVE_INFINITY;
@@ -168,12 +192,16 @@ function _findFirstPairedCharacterId(characterIds:string[], ownEventsByCharacter
   return firstCharacterId;
 }
 
+// Builds the final InitialPoseEvent for a becomes-character pair and prepends it both to the shared paired
+// history and to each identity's own itinerary so every replay entry point starts from explicit state.
 function _createSeededPairedItinerariesByCharacterId(level:Level, charactersById:Map<string, Character>,
   ownEventsByCharacterId:Map<string, ItineraryEvent[]>, pairedItinerariesByCharacterId:Map<string, ItineraryEvent[]>) {
   const seededOwnItinerariesByCharacterId = new Map<string, ItineraryEvent[]>();
   const seededPairedItinerariesByCharacterId = new Map<string, ItineraryEvent[]>();
   const characterIdsByPairedItinerary = new Map<ItineraryEvent[], string[]>();
 
+  // The paired-itinerary map is keyed by character id, but two ids can share the same merged history object.
+  // Group by that shared object so we can seed each pair exactly once.
   pairedItinerariesByCharacterId.forEach((pairedItinerary, characterId) => {
     const characterIds = characterIdsByPairedItinerary.get(pairedItinerary) || [];
     characterIds.push(characterId);
@@ -190,6 +218,8 @@ function _createSeededPairedItinerariesByCharacterId(level:Level, charactersById
     assertNonNullable(firstCharacter, `missing paired initial-pose character ${firstCharacterId}`);
     assertNonNullable(secondCharacter, `missing paired initial-pose character ${secondCharacterId}`);
 
+    // Use the earliest relevant timestamp from either own or shared history so the seeded event is visible
+    // to any replay that asks about time before the pair's first authored transition.
     const initialPoseEvent = createInitialPoseEvent(
       Math.min(
         _findInitialPoseStartTime(level, pairedItinerary),
@@ -211,6 +241,8 @@ function _createSeededPairedItinerariesByCharacterId(level:Level, charactersById
   return { seededOwnItinerariesByCharacterId, seededPairedItinerariesByCharacterId };
 }
 
+// Rebuilds the loader's final Character objects from mutable scheduling state, preserving every declared
+// identity in allCharactersById and attaching the seeded replayable itineraries they ended up with.
 function _createRetainedLoadedCharacters(level:Level, charactersById:Map<string, Character>,
   finalCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
   ownEventsByCharacterId:Map<string, ItineraryEvent[]>, pairedItinerariesByCharacterId:Map<string, ItineraryEvent[]>) {
@@ -220,6 +252,8 @@ function _createRetainedLoadedCharacters(level:Level, charactersById:Map<string,
     ownEventsByCharacterId,
     pairedItinerariesByCharacterId
   );
+
+  // level.characters contains only identities that begin placed, so this array becomes the runtime placed cast.
   const characters = level.characters.map(character => {
     const state = finalCharacterStatesById.get(character.id);
     assertNonNullable(state, `missing final itinerary state for ${character.id}`);
@@ -228,6 +262,9 @@ function _createRetainedLoadedCharacters(level:Level, charactersById:Map<string,
       || _createSeededUnpairedItinerary(level, baseCharacter, ownEventsByCharacterId.get(character.id) || []);
     return _createScheduledCharacter(baseCharacter, state, seededItinerary, seededPairedItinerariesByCharacterId.get(character.id) || null);
   });
+
+  // allCharactersById must remain a superset containing placed and unplaced identities, including becomes targets
+  // that may never have been actively scheduled but still need a replayable seeded history.
   const allCharactersById = new Map(Array.from(level.allCharactersById.entries()).flatMap(([characterId, character]) => {
     const baseCharacter = charactersById.get(characterId) || character;
     const state = finalCharacterStatesById.get(characterId) || createCharacterActivityState(baseCharacter);
@@ -240,7 +277,10 @@ function _createRetainedLoadedCharacters(level:Level, charactersById:Map<string,
   return { characters, allCharactersById };
 }
 
+// Converts mutable activity state back into an immutable Character object while asserting that its event history
+// has already been made replayable by seeding an InitialPoseEvent.
 function _createScheduledCharacter(character:Character, state:ReturnType<typeof createCharacterActivityState>, itinerary:ItineraryEvent[], pairedItinerary:ItineraryEvent[]|null):Character {
+  assert(doesItineraryBeginWithInitialPoseEvent(state.events), `Can't create scheduled character with invalid events - missing initial pose event.`);
   return {
     ...character,
     itinerary,
@@ -252,6 +292,8 @@ function _createScheduledCharacter(character:Character, state:ReturnType<typeof 
   };
 }
 
+// Turns the paired-character mutable states into shared merged histories, where "paired itinerary" means the
+// combined timeline seen when two identities swap which one is currently placed via becomes-character.
 function _createPairedItinerariesByCharacterId(pairedCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>):Map<string, ItineraryEvent[]> {
   const pairedItineraryByState = new Map<ReturnType<typeof createCharacterActivityState>, ItineraryEvent[]>();
   const pairedItinerariesByCharacterId = new Map<string, ItineraryEvent[]>();
@@ -269,6 +311,8 @@ function _createPairedItinerariesByCharacterId(pairedCharacterStatesById:Map<str
   return pairedItinerariesByCharacterId;
 }
 
+// When one identity becomes another, scheduling continues on a cloned mutable state owned by the target id so
+// later activities treat the replacement as the currently placed character while preserving shared pair history.
 function _applyCharacterReplacementToSchedulingState(charactersById:Map<string, Character>,
   activeCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
   finalCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
@@ -294,8 +338,11 @@ function _applyCharacterReplacementToSchedulingState(charactersById:Map<string, 
   });
 }
 
+// Dispatches one authored activity line to the first parser that understands it, after verifying the subject
+// character is alive at the authored start time.
 function _createEventsForActivity(activityText:string, context:ActivityContext):ItineraryEvent[] {
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
+  assert(doesItineraryBeginWithInitialPoseEvent(context.character.itinerary), `I can't learn alive state without an initial pose event.`);
   if (context.subjectKind === 'character' && !findStatePoseAtTime(context.character, context.state, activityStartTime).isAlive) {
     throw new Error(`dead character ${context.character.id} cannot perform itinerary activity '${activityText}'`);
   }
@@ -326,6 +373,8 @@ function _createEventsForActivity(activityText:string, context:ActivityContext):
   throw new Error(`unsupported itinerary activity '${activityText}'`);
 }
 
+// Pre-schedules the subset of same-timestamp activities whose results can affect where characters are located,
+// so later same-time targeting can ask "where is this character right now?" using the previewed pose.
 function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItineraryActivity[], roomItemsByRoomId:Map<string, Item[]>,
   charactersById:Map<string, Character>, characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
   pairedCharacterIdByCharacterId:Map<string, string>, levelFilename:string):PreviewSchedulingResult {
@@ -343,6 +392,8 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
       _throwOnUnplacedItineraryCharacter(scheduledCharacterId, characterStatesById);
       assertNonNullable(state, `missing itinerary state for ${activity.characterId}`);
 
+      // Preview work happens on cloned mutable state so same-timestamp targeting can see the future pose
+      // without committing those changes to the real scheduling pass yet.
       const previewState = duplicateCharacterActivityState(state);
       const previewCharacterStatesById = new Map(characterStatesById);
       previewCharacterStatesById.set(scheduledCharacterId, previewState);
@@ -367,6 +418,7 @@ function _createPoseOverridesForTimestamp(level:Level, activities:ParsedItinerar
   return { poseOverridesByCharacterId, reusableEventsBySourceIndex };
 }
 
+// Recognizes authored becomes-character lines and resolves the target reference to the canonical character id.
 function _findBecomesTargetCharacterId(level:Level, activity:ParsedItineraryActivity):string|null {
   if (activity.subjectKind !== 'character' || !activity.activityText.startsWith('becomes ')) return null;
   const targetRef = normalizeId(activity.activityText.slice('becomes '.length).trim());
@@ -376,6 +428,7 @@ function _findBecomesTargetCharacterId(level:Level, activity:ParsedItineraryActi
   return null;
 }
 
+// Builds the symmetric lookup that says which two identities belong to one becomes-character pair.
 function _createPairedCharacterIdByCharacterId(level:Level, activities:ParsedItineraryActivity[]):Map<string, string> {
   const pairedCharacterIdByCharacterId = new Map<string, string>();
 
@@ -389,6 +442,8 @@ function _createPairedCharacterIdByCharacterId(level:Level, activities:ParsedIti
   return pairedCharacterIdByCharacterId;
 }
 
+// Produces a clearer error for the specific case where an authored becomes-character source was never placed,
+// instead of letting later generic scheduling lookups fail in a less understandable way.
 function _throwOnUnplacedBecomesCharacterSource(activity:ParsedItineraryActivity,
   characterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
   pairedCharacterIdByCharacterId:Map<string, string>) {
@@ -398,6 +453,8 @@ function _throwOnUnplacedBecomesCharacterSource(activity:ParsedItineraryActivity
   throw new Error(`unknown character replacement source '${activity.characterId}' in authored activity '${activity.activityText}'`);
 }
 
+// Marks which authored lines are safe to schedule now; an activity is "ready" only after its timestamp has been
+// resolved and there is no earlier unresolved file-ordered activity for the same identity or its becomes target.
 function _createReadyToScheduleBySourceIndex(level:Level, activities:ParsedItineraryActivity[]):Map<number, boolean> {
   const readyBySourceIndex = new Map<number, boolean>();
   const charactersWithUnresolvedEarlierActivities = new Set<string>();
@@ -415,6 +472,8 @@ function _createReadyToScheduleBySourceIndex(level:Level, activities:ParsedItine
   return readyBySourceIndex;
 }
 
+// Orchestrates the full level-load scheduling pass: create mutable state, preview same-timestamp pose changes,
+// schedule real events, apply becomes-character swaps, then rebuild the final replayable Character objects.
 export function scheduleActivities(level:Level, activities:ParsedItineraryActivity[], levelFilename:string):ScheduleActivitiesResult {
   if (!activities.length) {
     const charactersById = new Map(level.allCharactersById);
@@ -442,6 +501,8 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
   const completionTimesBySourceIndex = new Map<number, number>();
   const readyToScheduleBySourceIndex = _createReadyToScheduleBySourceIndex(level, activities);
 
+  // Runs one activity against the real mutable scheduling state after the preview pass has already computed
+  // any same-timestamp pose overrides needed for targeting and event reuse.
   const _processActivity = (activity:ParsedItineraryActivity, previewSchedulingResult:PreviewSchedulingResult) => {
     runWithItineraryLineContext(levelFilename, activity.lineNo, () => {
       if (!readyToScheduleBySourceIndex.get(activity.sourceIndex)) return;
@@ -477,6 +538,8 @@ export function scheduleActivities(level:Level, activities:ParsedItineraryActivi
     }, activity.resolvedTime);
   };
 
+  // Activities with the same resolved timestamp are handled as a batch so pose previews can answer questions
+  // about "where someone is at this instant" before the real scheduling pass commits the state updates.
   const sortedActivities = sortActivitiesByResolvedTime(activities);
   for (let i = 0; i < sortedActivities.length;) {
     const timestamp = sortedActivities[i].resolvedTime;

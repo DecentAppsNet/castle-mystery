@@ -2,8 +2,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import backgroundImageText from './fixtures/background-image.md?raw';
-import becomesCharacterText from '../integration-tests/fixtures/becomes-character.md?raw';
-import becomesCharacterInventoryFollowupText from '../integration-tests/fixtures/becomes-character-inventory-followup.md?raw';
 import becomesItemText from '../integration-tests/fixtures/becomes-item.md?raw';
 import imageSetReferencedImagesText from './fixtures/image-set-referenced-images.md?raw';
 import itemImageText from './fixtures/item-image.md?raw';
@@ -14,9 +12,98 @@ import roomStairTextureText from './fixtures/room-stair-texture.md?raw';
 import roomDoorTextureText from './fixtures/room-door-texture.md?raw';
 import multiImageRoomTextureText from './fixtures/multi-image-room-texture.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
+import { createBecomesCharacterEvent, createBecomesItemEvent, createInitialPoseEventFromUnpairedCharacter, createItineraryIndex } from '../itineraryUtil';
 import { UNKNOWN_ITEM_ICON_URL } from '../discoveryIconUrlUtil';
 import { createImageSetFromLevel } from '../imageSetUtil';
 import { getBackgroundImageAssetUrl, getClozeImageCandidateUrls, getFaceImageAssetUrl, getGroundImageAssetUrl, getItemImageAssetUrl, getRoomTextureAssetUrl } from '../imageUrlUtil';
+import Character, { createDefaultCharacter } from '../types/Character';
+import { createDefaultLevel } from '../types/Level';
+import { createDefaultItem } from '../types/Item';
+
+function _createCharacterWithSeededItinerary(baseCharacter:Character, itinerary:Character['itinerary']):Character {
+  const seededItinerary = [createInitialPoseEventFromUnpairedCharacter(baseCharacter), ...itinerary];
+  return {
+    ...baseCharacter,
+    itinerary:seededItinerary,
+    itineraryIndex:createItineraryIndex(seededItinerary, baseCharacter.position, baseCharacter.id)
+  };
+}
+
+function _createReplacementTargetItemImageLevel() {
+  const chisel = {
+    ...createDefaultItem(),
+    id:'chisel',
+    title:'Chisel',
+    imageUrl:'/assets/items/chisel.png'
+  };
+  const brassKey = {
+    ...createDefaultItem(),
+    id:'brass key',
+    title:'Brass Key',
+    imageUrl:'/assets/items/brassKey.png'
+  };
+  const niccoloBase = {
+    ...createDefaultCharacter(),
+    id:'niccolo',
+    title:'Niccolo',
+    items:[chisel]
+  };
+  const niccolo = _createCharacterWithSeededItinerary(niccoloBase, [createBecomesCharacterEvent(1_000, 'niccolo', 'niccolo masked')]);
+  const niccoloMaskedBase = {
+    ...createDefaultCharacter(),
+    id:'niccolo masked',
+    title:'Niccolo Masked'
+  };
+  const niccoloMasked = _createCharacterWithSeededItinerary(niccoloMaskedBase, [createBecomesItemEvent(1_001, 'chisel', 'brass key')]);
+
+  return {
+    ...createDefaultLevel(),
+    activeCharacterId:'niccolo',
+    initialCharacters:[niccolo],
+    characters:[niccolo],
+    allCharactersById:new Map([
+      ['niccolo', niccolo],
+      ['niccolo masked', niccoloMasked]
+    ]),
+    itemsById:new Map([
+      ['chisel', chisel],
+      ['brass key', brassKey]
+    ])
+  };
+}
+
+function _createReplacementTargetFaceImageLevel() {
+  const niccolo = _createCharacterWithSeededItinerary({
+    ...createDefaultCharacter(),
+    id:'niccolo',
+    title:'Niccolo',
+    faceImageUrl:'/assets/faces/niccoloFace.png'
+  }, [createBecomesCharacterEvent(7_000, 'niccolo', 'niccolo masked')]);
+  const niccoloMasked = _createCharacterWithSeededItinerary({
+    ...createDefaultCharacter(),
+    id:'niccolo masked',
+    title:'Niccolo Masked',
+    faceImageUrl:'/assets/faces/niccoloMaskedFace.png'
+  }, []);
+  const bystander = _createCharacterWithSeededItinerary({
+    ...createDefaultCharacter(),
+    id:'bystander',
+    title:'Bystander',
+    faceImageUrl:'/assets/faces/bystanderFace.png'
+  }, []);
+
+  return {
+    ...createDefaultLevel(),
+    activeCharacterId:'niccolo',
+    initialCharacters:[niccolo],
+    characters:[niccolo],
+    allCharactersById:new Map([
+      ['niccolo', niccolo],
+      ['niccolo masked', niccoloMasked],
+      ['bystander', bystander]
+    ])
+  };
+}
 
 describe('imageSetUtil.ts', () => {
   afterEach(() => {
@@ -52,7 +139,7 @@ describe('imageSetUtil.ts', () => {
     vi.stubGlobal('createImageBitmap', createImageBitmapMock);
     vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
 
-    const level = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
+    const level = _createReplacementTargetFaceImageLevel();
     const imageSet = await createImageSetFromLevel(level);
 
     expect(imageSet.has(getFaceImageAssetUrl('niccoloFace.png'))).toBe(true);
@@ -212,7 +299,7 @@ describe('imageSetUtil.ts', () => {
     vi.stubGlobal('createImageBitmap', createImageBitmapMock);
     vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
 
-    const level = loadLevelFromText(becomesCharacterInventoryFollowupText, 'becomes-character-inventory-followup.md');
+    const level = _createReplacementTargetItemImageLevel();
     const imageSet = await createImageSetFromLevel(level);
 
     expect(fetchMock).toHaveBeenCalledWith('/castle-mystery/assets/items/chisel.png');

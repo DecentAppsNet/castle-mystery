@@ -3,6 +3,7 @@ import ItineraryIndex from "./ItineraryIndex";
 import Item, { duplicateItem } from "./Item";
 import Position, { duplicatePosition } from "./Position";
 import Waypoint from "./Waypoint";
+import { createDefaultCharacterPose } from "./CharacterPose";
 
 export type FacingDirection = 'left' | 'right';
 export type BodyOrientation = 'standing' | 'sitting' | 'kneeling' | 'laying';
@@ -23,6 +24,10 @@ function _createDefaultItineraryIndex():ItineraryIndex {
   };
 }
 
+/* If adding new members to Character, consider if these should also be part of CharacterPose.
+   And if you decide to add them to CharacterPose, then make updates to createDefaultCharacter() to
+   populate members from createDefaultCharacterPose() following the pattern. In this way, we will
+   keep consistency in dynamic state rebuilding. */
 type Character = {
   readonly id:string,
   readonly title:string,
@@ -48,6 +53,7 @@ type Character = {
 }
 
 export function createDefaultCharacter():Character {
+  const defaultPose = createDefaultCharacterPose();
   return {
     id:'character',
     title:'Character',
@@ -55,15 +61,15 @@ export function createDefaultCharacter():Character {
     randomSalt:0,
     isDiscovered:false,
     isVisible:true,
-    isAlive:true,
-    facingDirection:'right',
-    bodyOrientation:'standing',
+    isAlive:defaultPose.isAlive,
+    facingDirection:defaultPose.facingDirection,
+    bodyOrientation:defaultPose.bodyOrientation,
     isTitleKnown:true,
     description:'',
     items:[],
     leftHandItem:null,
     rightHandItem:null,
-    position:{ x:0, y:0, z:0 },
+    position:defaultPose.position,
     waypoint:_createDefaultWaypoint(),
     discoveredRoomIds:[],
     itinerary:[],

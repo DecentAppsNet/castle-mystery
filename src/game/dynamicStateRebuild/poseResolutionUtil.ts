@@ -4,7 +4,7 @@
 import { assertNonNullable } from "decent-portal";
 
 import { findActiveCharacter } from "../activeCharacterUtil";
-import { findCharacterPoseWithoutPairHistory } from "../itineraryUtil";
+import { findCharacterPose } from "../itineraryUtil";
 import GameState from "../types/GameState";
 import Itinerary from "../types/Itinerary";
 import BecomesCharacterEvent from "../types/itineraryEvents/BecomesCharacterEvent";
@@ -54,7 +54,7 @@ function _findActiveCharacterIdAtTime(gameState:GameState, time:number):string {
 // Resolve placed-character poses and then normalize active focus for the target time.
 export function resolveCharacterPosesAndActiveFocus(gameState:GameState, time:number) {
   gameState.characters.forEach(character => {
-    const pose = findCharacterPoseWithoutPairHistory(character, time);
+    const pose = findCharacterPose(character, time);
     character.position = { ...pose.position };
     character.isAlive = pose.isAlive;
     character.facingDirection = pose.facingDirection;

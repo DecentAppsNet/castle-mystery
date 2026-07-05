@@ -6,4 +6,8 @@ type ItineraryIndex = Readonly<{
   roomEntryStartTimes:ReadonlyArray<number>
 }>
 
+export function createDefaultItineraryIndex() {
+  return { eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
+}
+
 export default ItineraryIndex;

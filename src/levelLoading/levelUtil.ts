@@ -7,7 +7,7 @@ import TimeLabel from "../game/types/TimeLabel";
 import { createDefaultCharacter, duplicateCharacter } from "../game/types/Character";
 import { getOwnedItems } from "../game/itemOwnershipUtil";
 import { createItemsById } from "../game/itemUtil";
-import { assert } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { rand } from "@/common/randUtil";
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
@@ -35,7 +35,7 @@ import {
 import { createGeneratedIdentityConclusion, createConclusionCategoryOptionsByName, loadConclusionsFromSection } from "./levelConclusionsLoader";
 import { syncPairingKnowledge } from "../game/pairedItineraryUtil";
 import { findDirectReferencedCharacterIds, findDirectReferencedItemIds } from "../game/itineraryReferenceUtil";
-import { createItineraryIndex } from "../game/itineraryUtil";
+import { createItineraryIndex, doesItineraryBeginWithInitialPoseEvent } from "../game/itineraryUtil";
 import ClozeBlank from "../game/conclusions/types/ClozeBlank";
 import ClozePartType from "../game/conclusions/types/ClozePartType";
 import Conclusion from "../game/conclusions/types/Conclusion";
@@ -552,13 +552,16 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
         () => _validateInitialTimeWithinTimeline(resolvedInitialTime, resolvedStartTime, resolvedEndTime));
     }
     const initialCharacters = level.initialCharacters.map(initialCharacter => {
-      const scheduledCharacter = itineraryData.allCharactersById.get(initialCharacter.id) || null;
-      return scheduledCharacter ? {
+      const scheduledCharacter = itineraryData.allCharactersById.get(initialCharacter.id);
+      assertNonNullable(scheduledCharacter, 'allCharactersById should always be a superset containing initial characters');
+      assert(doesItineraryBeginWithInitialPoseEvent(scheduledCharacter.itinerary), 'Scheduled character itinerary must begin with initial pose event.');
+      assert(!scheduledCharacter.pairedItinerary || doesItineraryBeginWithInitialPoseEvent(scheduledCharacter.pairedItinerary), 'If paired itinerary specified for scheduled character, it must begin with initial pose event.');
+      return {
         ...duplicateCharacter(initialCharacter),
         itinerary:scheduledCharacter.itinerary,
         pairedItinerary:scheduledCharacter.pairedItinerary,
         itineraryIndex:createItineraryIndex(scheduledCharacter.itinerary, initialCharacter.position, scheduledCharacter.id)
-      } : duplicateCharacter(initialCharacter);
+      }
     });
     const resolvedDuration = resolvedEndTime - resolvedStartTime;
     const finalizedLevel = {

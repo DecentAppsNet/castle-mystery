@@ -1,13 +1,54 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import becomesCharacterText from './fixtures/becomes-character.md?raw';
 import discoverableBecomesTargetsText from './fixtures/discoverable-becomes-targets.md?raw';
 import timelineBothTimeAndStartTimeText from '@/game/__tests__/fixtures/timeline-both-time-and-start-time.md?raw';
 import unplacedItemsInitializationText from './fixtures/unplaced-items-initialization.md?raw';
 import { calcRenderedRoomsBoundingRect } from '@/game/roomRoofUtil';
+import { createBecomesCharacterEvent, createInitialPoseEventFromUnpairedCharacter, createItineraryIndex } from '@/game/itineraryUtil';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createGameState } from '../gameUtil';
+import { createDefaultCharacter } from '../types/Character';
+import { createDefaultLevel } from '../types/Level';
+import { createDefaultRoom } from '../types/Room';
+
+const discoverableBecomesTargetsWithoutReplacementMoveText = discoverableBecomesTargetsText
+  .replace('\n0:00:03 Niccolo Masked @ Hall', '');
+
+function _createCharacterWithSeededItinerary(characterId:string, title:string, itinerary:ReturnType<typeof createDefaultCharacter>['itinerary']) {
+  const baseCharacter = {
+    ...createDefaultCharacter(),
+    id:characterId,
+    title
+  };
+  const seededItinerary = [createInitialPoseEventFromUnpairedCharacter(baseCharacter), ...itinerary];
+  return {
+    ...baseCharacter,
+    itinerary:seededItinerary,
+    itineraryIndex:createItineraryIndex(seededItinerary, baseCharacter.position, baseCharacter.id)
+  };
+}
+
+function _createBecomesCharacterInitializationLevel() {
+  const niccolo = _createCharacterWithSeededItinerary('niccolo', 'Niccolo', [createBecomesCharacterEvent(7_000, 'niccolo', 'niccolo masked')]);
+  const niccoloMasked = _createCharacterWithSeededItinerary('niccolo masked', 'Niccolo Masked', []);
+  const hall = {
+    ...createDefaultRoom(),
+    id:'hall',
+    title:'Hall'
+  };
+  return {
+    ...createDefaultLevel(),
+    rooms:[hall],
+    activeCharacterId:'niccolo',
+    initialCharacters:[niccolo],
+    characters:[niccolo],
+    allCharactersById:new Map([
+      ['niccolo', niccolo],
+      ['niccolo masked', niccoloMasked]
+    ])
+  };
+}
 
 describe('timeline initialization integration', () => {
   it('starts the game state at time while preserving authored slider bounds from startTime and endTime', () => {
@@ -62,7 +103,7 @@ describe('timeline initialization integration', () => {
   });
 
   it('separates character replacement targets from initially placed characters', () => {
-    const level = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
+    const level = _createBecomesCharacterInitializationLevel();
     const gameState = createGameState(level);
 
     expect(level.discoverableCharacterCount).toBe(0);
@@ -73,7 +114,7 @@ describe('timeline initialization integration', () => {
   });
 
   it('counts interactive becomes targets in discoverable character and item totals', () => {
-    const level = loadLevelFromText(discoverableBecomesTargetsText, 'discoverable-becomes-targets.md');
+    const level = loadLevelFromText(discoverableBecomesTargetsWithoutReplacementMoveText, 'discoverable-becomes-targets.md');
     const gameState = createGameState(level);
 
     expect(level.discoverableCharacterCount).toBe(3);

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { addCharacterEncounterEvents } from '../characterEncounterUtil';
-import { createItineraryIndex } from '../itineraryUtil';
+import { createInitialPoseEventFromUnpairedCharacter, createItineraryIndex } from '../itineraryUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import Character, { createDefaultCharacter } from '../types/Character';
 import Itinerary from '../types/Itinerary';
@@ -28,15 +28,21 @@ function _createRoom(id:string, x:number):Room {
 }
 
 function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = []):Character {
-  return {
+  const character = {
     ...createDefaultCharacter(),
     id,
     title:id,
     description:id,
     position:{ x, y, z:DEFAULT_CHARACTER_DEPTH },
     waypoint:_createWaypoint(x, y),
-    itinerary,
-    itineraryIndex:createItineraryIndex(itinerary, { x, y, z:DEFAULT_CHARACTER_DEPTH })
+    itinerary:[],
+    itineraryIndex:createItineraryIndex([], { x, y, z:DEFAULT_CHARACTER_DEPTH })
+  };
+  const seededItinerary = [createInitialPoseEventFromUnpairedCharacter(character), ...itinerary];
+  return {
+    ...character,
+    itinerary:seededItinerary,
+    itineraryIndex:createItineraryIndex(seededItinerary, { x, y, z:DEFAULT_CHARACTER_DEPTH }, character.id)
   };
 }
 

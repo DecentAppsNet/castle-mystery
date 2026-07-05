@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { createBodyOrientationEvent, createDieEvent, createEmitEvent, createFaceEvent, createInitialPoseEvent, createItineraryIndex, createWalkEvent, findCharacterPoseWithoutPairHistory, findPreviousRoomEntryTime } from '../itineraryUtil';
+import { createBodyOrientationEvent, createDieEvent, createEmitEvent, createFaceEvent, createInitialPoseEvent, createInitialPoseEventFromUnpairedCharacter, createItineraryIndex, createWalkEvent, findCharacterPoseWithoutPairHistory, findPreviousRoomEntryTime } from '../itineraryUtil';
 import { ROOM_BACK_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import { FLOOR_WAYPOINT_Y_OFFSET } from '../waypointUtil';
 import Character, { createDefaultCharacter } from '../types/Character';
@@ -30,15 +30,21 @@ function _createRoom() {
 
 function _createCharacter(itinerary:ItineraryEvent[]):Character {
   const waypoint = _createWaypoint(0, 0);
-  return {
+  const character = {
     ...createDefaultCharacter(),
     id:'Hero',
     title:'Hero',
     description:'Hero',
     position:{ x:0, y:0, z:MIDDLE_ROW_DEPTH },
     waypoint,
-    itinerary,
-    itineraryIndex:createItineraryIndex(itinerary, { x:0, y:0, z:MIDDLE_ROW_DEPTH })
+    itinerary:[],
+    itineraryIndex:createItineraryIndex([], { x:0, y:0, z:MIDDLE_ROW_DEPTH })
+  };
+  const seededItinerary = [createInitialPoseEventFromUnpairedCharacter(character), ...itinerary];
+  return {
+    ...character,
+    itinerary:seededItinerary,
+    itineraryIndex:createItineraryIndex(seededItinerary, { x:0, y:0, z:MIDDLE_ROW_DEPTH }, character.id)
   };
 }
 

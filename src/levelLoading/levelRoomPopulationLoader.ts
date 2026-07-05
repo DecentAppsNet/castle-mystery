@@ -18,6 +18,8 @@ import Position from "../game/types/Position";
 import Room from "../game/types/Room";
 import { assertNormalizedId, normalizeId } from "../game/idUtil";
 import { getFaceImageAssetUrl, getItemImageAssetUrl } from "../game/imageUrlUtil";
+import { createInitialPoseEventFromUnpairedCharacter, createItineraryIndex } from "@/game/itineraryUtil";
+import { createDefaultItineraryIndex } from "@/game/types/ItineraryIndex";
 
 type CharacterDefinition = {
 	title:string,
@@ -320,8 +322,10 @@ function _addCharacter(level:Level, room:Room, characterId:string, title:string,
 		itinerary:[],
 		pairedItinerary:null,
 		isPairingKnown:false,
-		itineraryIndex:{ eventStartTimes:[], eventStartPositions:[], roomEntryStartTimes:[] }
+		itineraryIndex:createDefaultItineraryIndex(),
 	};
+	character.itinerary = [createInitialPoseEventFromUnpairedCharacter(character)];
+	character.itineraryIndex = createItineraryIndex(character.itinerary, character.position);
 	level.characters.push(character);
 }
 

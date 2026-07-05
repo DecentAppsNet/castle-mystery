@@ -47,12 +47,15 @@ describe('levelItineraryLoader', () => {
     it('reports no resolved activity bounds when the itinerary is empty', () => {
       const level = loadLevelFromText(baseLevelText);
       const result = loadItineraries(level, '', 'empty-itinerary.md', 1);
+      const hero = result.characters.find(character => character.id === 'hero');
 
       expect(result.resolvedTimeline.earliestAbsoluteActivityTime).toBe(null);
       expect(result.resolvedTimeline.earliestResolvedActivityTime).toBe(null);
       expect(result.resolvedTimeline.latestResolvedActivityEndTime).toBe(null);
       expect(result.resolvedTimeline.latestResolvedEventEndTime).toBe(null);
       expect(result.duration).toBe(0);
+      expect(hero?.itinerary).toHaveLength(1);
+      expect(hero?.itinerary[0]?.type).toBe(ItineraryEventType.INITIAL_POSE);
     });
 
     it('reuses the last file-ordered character and falls back to activeCharacter first', () => {

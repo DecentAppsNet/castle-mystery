@@ -20,23 +20,24 @@ SRT
 * exits=Target
 
 ```
-SG..
+S...
 ....
 ....
 ```
 
 * S=Scout
-* G=Guard
 
 ## Target
 
 * exits=Source|Tail
 
 ```
-....
+...G
 ....
 ....
 ```
+
+* G=Guard
 
 ## Tail
 
@@ -54,8 +55,8 @@ SG..
 
 ## Guard
 
+* visible=false
+
 # itinerary
 
-0:00:10 Guard @ Target.95%
-0:00:11 hide Guard
 0:00:12 Scout @ Target.95%

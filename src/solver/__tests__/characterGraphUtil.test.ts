@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildCharacterGraph } from '../characterGraphUtil';
-import { createItineraryIndex } from '@/game/itineraryUtil';
+import { createInitialPoseEventFromUnpairedCharacter, createItineraryIndex } from '@/game/itineraryUtil';
 import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '@/game/roomSpaceConstants';
 import Character, { createDefaultCharacter } from '@/game/types/Character';
 import Itinerary from '@/game/types/Itinerary';
@@ -18,7 +18,7 @@ function _createRoom(id:string, x:number):Room {
 
 function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = []):Character {
   const position = { x, y, z:DEFAULT_CHARACTER_DEPTH };
-  return {
+  const character:Character = {
     ...createDefaultCharacter(),
     id,
     title:id,
@@ -27,6 +27,9 @@ function _createCharacter(id:string, x:number, y:number, itinerary:Itinerary = [
     itinerary,
     itineraryIndex:createItineraryIndex(itinerary, position)
   };
+  const initialPoseEvent = createInitialPoseEventFromUnpairedCharacter(character);
+  character.itinerary = [initialPoseEvent, ...itinerary];
+  return character;
 }
 
 describe('characterGraphUtil', () => {

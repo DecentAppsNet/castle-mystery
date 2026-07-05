@@ -238,14 +238,12 @@ describe('at room integration', () => {
     const level = loadLevelFromText(atRoomPercentHiddenCharacterText);
     const scout = level.characters.find(character => character.id === 'scout');
     const guard = level.characters.find(character => character.id === 'guard');
-    const guardLastWalkEvent = _findLastWalkEvent(guard!.itinerary);
     const scoutLastWalkEvent = _findLastWalkEvent(scout!.itinerary);
 
     expect(scout).not.toBeNull();
     expect(guard).not.toBeNull();
-    expect(guardLastWalkEvent).toBeDefined();
     expect(scoutLastWalkEvent).toBeDefined();
-    expect(scoutLastWalkEvent!.toPosition).toEqual(guardLastWalkEvent!.toPosition);
+    expect(_positionsEqual(scoutLastWalkEvent!.toPosition, guard!.waypoint.position)).toBe(true);
   });
 
   it('prefers a middle-row floor waypoint for default @ Room movement in a stair room', () => {

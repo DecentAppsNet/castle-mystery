@@ -21,4 +21,15 @@ export function duplicateCharacterPose(from:CharacterPose):CharacterPose {
   };
 }
 
+export function createDefaultCharacterPose():CharacterPose {
+  return {
+    position:{x:0, y:0, z:0},
+    isAlive:true,
+    facingDirection:'right',
+    bodyOrientation:'standing',
+    speech:null,
+    thought:null
+  }
+}
+
 export default CharacterPose;

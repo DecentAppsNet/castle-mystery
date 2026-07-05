@@ -8,7 +8,7 @@ import EffectType from '../effects/types/EffectType';
 import { createGameState, updateAndDraw } from '../gameUtil';
 import { findActiveCharacter } from '../activeCharacterUtil';
 import { updateGameStateForMouseMove } from '../hoverStateUtil';
-import { createItineraryIndex, createSpeechEvent, createThoughtEvent } from '../itineraryUtil';
+import { createInitialPoseEventFromUnpairedCharacter, createItineraryIndex, createSpeechEvent, createThoughtEvent } from '../itineraryUtil';
 import { loadLevelFromText } from '../../levelLoading/levelUtil';
 import { getKnownItinerary } from '../pairedItineraryUtil';
 import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
@@ -54,6 +54,39 @@ function _createTestLevel():Level {
     description:'A hidden note.'
   };
 
+  const baseHero = {
+    ...createDefaultCharacter(),
+    id:'hero',
+    title:'Hero',
+    description:'Test hero.',
+    position:{ ...initialPosition },
+    waypoint,
+    itinerary:[],
+    itineraryIndex:createItineraryIndex([], initialPosition)
+  };
+  const baseWitness = {
+    ...createDefaultCharacter(),
+    id:'witness',
+    title:'Witness',
+    description:'Hidden witness.',
+    position:{ ...studyPosition },
+    waypoint:studyWaypoint,
+    itinerary:[],
+    itineraryIndex:createItineraryIndex([], studyPosition)
+  };
+  const seededHeroItinerary = [createInitialPoseEventFromUnpairedCharacter(baseHero), ...heroItinerary];
+  const seededWitnessItinerary = [createInitialPoseEventFromUnpairedCharacter(baseWitness), ...witnessItinerary];
+  const heroCharacter = {
+    ...baseHero,
+    itinerary:seededHeroItinerary,
+    itineraryIndex:createItineraryIndex(seededHeroItinerary, initialPosition, baseHero.id)
+  };
+  const witnessCharacter = {
+    ...baseWitness,
+    itinerary:seededWitnessItinerary,
+    itineraryIndex:createItineraryIndex(seededWitnessItinerary, studyPosition, baseWitness.id)
+  };
+
   return {
     ...createDefaultLevel(),
     rooms:[{
@@ -71,44 +104,8 @@ function _createTestLevel():Level {
       items:[noteItem],
       waypoints:[studyWaypoint]
     }],
-    initialCharacters:[{
-      ...createDefaultCharacter(),
-      id:'hero',
-      title:'Hero',
-      description:'Test hero.',
-      position:{ ...initialPosition },
-      waypoint,
-      itinerary:heroItinerary,
-      itineraryIndex:createItineraryIndex(heroItinerary, initialPosition)
-    }, {
-      ...createDefaultCharacter(),
-      id:'witness',
-      title:'Witness',
-      description:'Hidden witness.',
-      position:{ ...studyPosition },
-      waypoint:studyWaypoint,
-      itinerary:witnessItinerary,
-      itineraryIndex:createItineraryIndex(witnessItinerary, studyPosition)
-    }],
-    characters:[{
-      ...createDefaultCharacter(),
-      id:'hero',
-      title:'Hero',
-      description:'Test hero.',
-      position:{ ...initialPosition },
-      waypoint,
-      itinerary:heroItinerary,
-      itineraryIndex:createItineraryIndex(heroItinerary, initialPosition)
-    }, {
-      ...createDefaultCharacter(),
-      id:'witness',
-      title:'Witness',
-      description:'Hidden witness.',
-      position:{ ...studyPosition },
-      waypoint:studyWaypoint,
-      itinerary:witnessItinerary,
-      itineraryIndex:createItineraryIndex(witnessItinerary, studyPosition)
-    }],
+    initialCharacters:[heroCharacter, witnessCharacter],
+    characters:[heroCharacter, witnessCharacter],
     itemsById:new Map([['book', bookItem], ['note', noteItem]]),
     discoverableCharacterCount:2,
     discoverableItemCount:2,

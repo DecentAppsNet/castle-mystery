@@ -1,7 +1,7 @@
 /* This module groups mutable activity-state helpers, including state duplication, pose replay, and room lookup.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 
 import Character from "@/game/types/Character";
 import { addOwnedItem, getOwnedItems, removeOwnedItemById } from "@/game/itemOwnershipUtil";
@@ -23,7 +23,9 @@ import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import { findRoom } from "@/game/roomUtil";
 import { findNearestWaypointToPosition } from "@/game/waypointUtil";
 import {
+  createInitialPoseEventFromUnpairedCharacter,
   createItineraryIndex,
+  doesItineraryBeginWithInitialPoseEvent,
   findCharacterPoseWithoutPairHistory,
   findRoomAtPositionOrNearest,
 } from "@/game/itineraryUtil";
@@ -33,6 +35,7 @@ import { calcBlockingDurationForScheduling } from "./activitySchedulingUtil";
 import type CharacterActivityState from "./types/CharacterActivityState";
 
 function _createCharacterSnapshot(character:Character, state:CharacterActivityState):Character {
+  assert(doesItineraryBeginWithInitialPoseEvent(state.events), `Can't create character snapshot with invalid events - missing initial pose event.`);
   return {
     ...character,
     waypoint:state.waypoint,
@@ -106,7 +109,7 @@ function _findRoomForStateWaypointUpdate(level:Level, waypoint:Waypoint, events:
 
 export function createCharacterActivityState(character:Character):CharacterActivityState {
   return {
-    events:[],
+    events:[createInitialPoseEventFromUnpairedCharacter(character)],
     time:0,
     isVisible:character.isVisible,
     position:duplicatePosition(character.position),
@@ -127,6 +130,7 @@ export function createInitialRoomItemsByRoomId(level:Level):Map<string, Item[]> 
 }
 
 export function duplicateCharacterActivityState(state:CharacterActivityState):CharacterActivityState {
+  assert(doesItineraryBeginWithInitialPoseEvent(state.events), `State.events is missing an initial pose event.`);
   return {
     events:state.events.map(duplicateItineraryEvent),
     time:state.time,
@@ -173,6 +177,7 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
       thought:null
     };
   }
+  assert(doesItineraryBeginWithInitialPoseEvent(state.events), `state.events is missing initial pose event.`);
   if (time === state.time) {
     return {
       position:duplicatePosition(state.position),

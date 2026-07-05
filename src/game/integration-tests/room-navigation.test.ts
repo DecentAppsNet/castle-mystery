@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createItineraryIndex, createRoomEntryEvent } from '../itineraryUtil';
+import { createInitialPoseEventFromUnpairedCharacter, createItineraryIndex, createRoomEntryEvent } from '../itineraryUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from '../hoverStateUtil';
 import { createGameState, updateAndDraw } from '../gameUtil';
@@ -28,15 +28,21 @@ function _createRoom(id:string, x:number):Room {
 }
 
 function _createCharacter(id:string, x:number, itinerary:Character['itinerary']):Character {
-  return {
+  const character = {
     ...createDefaultCharacter(),
     id,
     title:id,
     description:id,
     position:{ x, y:5, z:DEFAULT_CHARACTER_DEPTH },
     waypoint:{ position:{ x, y:5, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} },
-    itinerary,
-    itineraryIndex:createItineraryIndex(itinerary, { x, y:5, z:DEFAULT_CHARACTER_DEPTH })
+    itinerary:[],
+    itineraryIndex:createItineraryIndex([], { x, y:5, z:DEFAULT_CHARACTER_DEPTH })
+  };
+  const seededItinerary = [createInitialPoseEventFromUnpairedCharacter(character), ...itinerary];
+  return {
+    ...character,
+    itinerary:seededItinerary,
+    itineraryIndex:createItineraryIndex(seededItinerary, { x, y:5, z:DEFAULT_CHARACTER_DEPTH }, character.id)
   };
 }
 
