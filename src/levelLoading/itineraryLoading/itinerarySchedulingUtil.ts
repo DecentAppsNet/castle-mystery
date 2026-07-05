@@ -43,6 +43,8 @@ import { calcActivityStartTime } from "../activities/activity/activityScheduling
 import { runWithItineraryLineContext } from "./itineraryLoadErrorUtil";
 import { calcCharactersItineraryDuration, sortActivitiesByResolvedTime } from "./itineraryTimeResolutionUtil";
 import ParsedItineraryActivity from "./types/ParsedItineraryActivity";
+import InitialPoseEvent from "@/game/types/itineraryEvents/InitialPoseEvent.ts";
+import Itinerary from "@/game/types/Itinerary.ts";
 
 type ScheduleActivitiesResult = {
   characters:Character[],
@@ -166,13 +168,9 @@ function _findInitialPoseStartTime(level:Level, itinerary:ItineraryEvent[]):numb
 
 // Adds the replay seed for a character who never shares a merged becomes-character history with another identity.
 function _createSeededUnpairedItinerary(level:Level, character:Character, itinerary:ItineraryEvent[]):ItineraryEvent[] {
-  return [createInitialPoseEvent(
-    _findInitialPoseStartTime(level, itinerary),
-    character.id,
-    _createInitialCharacterPose(character),
-    null,
-    null
-  ), ...itinerary];
+  const startTime = _findInitialPoseStartTime(level, itinerary)
+  const initialPoseEvent = createInitialPoseEvent(startTime, character.id, _createInitialCharacterPose(character), null, null);
+  return _addInitialPoseEventToItinerary(itinerary, initialPoseEvent);
 }
 
 // Picks the identity whose first authored event happens earliest so the paired InitialPoseEvent has a stable
@@ -190,6 +188,13 @@ function _findFirstPairedCharacterId(characterIds:string[], ownEventsByCharacter
   });
 
   return firstCharacterId;
+}
+
+function _addInitialPoseEventToItinerary(itinerary:Itinerary, initialPoseEvent:InitialPoseEvent):Itinerary {
+  const nextItinerary = [...itinerary];
+  if (doesItineraryBeginWithInitialPoseEvent(nextItinerary)) nextItinerary.shift();
+  nextItinerary.unshift(initialPoseEvent);
+  return nextItinerary;
 }
 
 // Builds the final InitialPoseEvent for a becomes-character pair and prepends it both to the shared paired
@@ -231,10 +236,12 @@ function _createSeededPairedItinerariesByCharacterId(level:Level, charactersById
       secondCharacterId,
       _createInitialCharacterPose(secondCharacter)
     );
-    const seededPairedItinerary = [initialPoseEvent, ...pairedItinerary];
+    const seededPairedItinerary = _addInitialPoseEventToItinerary(pairedItinerary, initialPoseEvent);
     characterIds.forEach(characterId => {
       seededPairedItinerariesByCharacterId.set(characterId, seededPairedItinerary);
-      seededOwnItinerariesByCharacterId.set(characterId, [initialPoseEvent, ...(ownEventsByCharacterId.get(characterId) || [])]);
+      const itinerary = ownEventsByCharacterId.get(characterId);
+      assertNonNullable(itinerary);
+      seededOwnItinerariesByCharacterId.set(characterId, _addInitialPoseEventToItinerary(itinerary, initialPoseEvent));
     });
   });
 
