@@ -1,5 +1,5 @@
 import Itinerary from "./Itinerary";
-import ItineraryIndex from "./ItineraryIndex";
+import ItineraryIndex, { createDefaultItineraryIndex } from "./ItineraryIndex";
 import Item, { duplicateItem } from "./Item";
 import Position, { duplicatePosition } from "./Position";
 import Waypoint from "./Waypoint";
@@ -13,14 +13,6 @@ function _createDefaultWaypoint():Waypoint {
     position:{ x:0, y:0, z:0 },
     adjacentWaypoints:[],
     exitDirections:{}
-  };
-}
-
-function _createDefaultItineraryIndex():ItineraryIndex {
-  return {
-    eventStartTimes:[],
-    eventStartPositions:[],
-    roomEntryStartTimes:[]
   };
 }
 
@@ -75,7 +67,7 @@ export function createDefaultCharacter():Character {
     itinerary:[],
     pairedItinerary:null,
     isPairingKnown:false,
-    itineraryIndex:_createDefaultItineraryIndex()
+    itineraryIndex:createDefaultItineraryIndex()
   };
 }
 

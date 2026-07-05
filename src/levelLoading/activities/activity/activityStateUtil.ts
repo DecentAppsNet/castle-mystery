@@ -33,9 +33,12 @@ import {
 import { matchesItemReference } from "./activityItemRefUtil";
 import { calcBlockingDurationForScheduling } from "./activitySchedulingUtil";
 import type CharacterActivityState from "./types/CharacterActivityState";
+import InitialPoseEvent from "@/game/types/itineraryEvents/InitialPoseEvent";
 
 function _createCharacterSnapshot(character:Character, state:CharacterActivityState):Character {
   assert(doesItineraryBeginWithInitialPoseEvent(state.events), `Can't create character snapshot with invalid events - missing initial pose event.`);
+  const stateInitialPoseCharacterId = (state.events[0] as InitialPoseEvent).firstCharacterId;
+  assert(stateInitialPoseCharacterId === character.id, `state.events has an initial pose for "${stateInitialPoseCharacterId}", but we are making a snapshot for "${character.id}".`);
   return {
     ...character,
     waypoint:state.waypoint,

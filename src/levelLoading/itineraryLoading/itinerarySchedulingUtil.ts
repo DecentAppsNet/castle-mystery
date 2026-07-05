@@ -321,10 +321,10 @@ function _createPairedItinerariesByCharacterId(pairedCharacterStatesById:Map<str
 // When one identity becomes another, scheduling continues on a cloned mutable state owned by the target id so
 // later activities treat the replacement as the currently placed character while preserving shared pair history.
 function _applyCharacterReplacementToSchedulingState(charactersById:Map<string, Character>,
-  activeCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
-  finalCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
-  pairedCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
-  sourceCharacterId:string, targetCharacterId:string) {
+    activeCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+    finalCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+    pairedCharacterStatesById:Map<string, ReturnType<typeof createCharacterActivityState>>,
+    sourceCharacterId:string, targetCharacterId:string) {
   const sourceCharacter = charactersById.get(sourceCharacterId);
   const targetCharacter = charactersById.get(targetCharacterId);
   const sourceState = activeCharacterStatesById.get(sourceCharacterId);
@@ -349,7 +349,7 @@ function _applyCharacterReplacementToSchedulingState(charactersById:Map<string, 
 // character is alive at the authored start time.
 function _createEventsForActivity(activityText:string, context:ActivityContext):ItineraryEvent[] {
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  assert(doesItineraryBeginWithInitialPoseEvent(context.character.itinerary), `I can't learn alive state without an initial pose event.`);
+  assert(doesItineraryBeginWithInitialPoseEvent(context.character.itinerary), `I can't learn alive state for "${context.character.id}" without an initial pose event.`);
   if (context.subjectKind === 'character' && !findStatePoseAtTime(context.character, context.state, activityStartTime).isAlive) {
     throw new Error(`dead character ${context.character.id} cannot perform itinerary activity '${activityText}'`);
   }

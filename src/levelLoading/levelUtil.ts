@@ -35,7 +35,7 @@ import {
 import { createGeneratedIdentityConclusion, createConclusionCategoryOptionsByName, loadConclusionsFromSection } from "./levelConclusionsLoader";
 import { syncPairingKnowledge } from "../game/pairedItineraryUtil";
 import { findDirectReferencedCharacterIds, findDirectReferencedItemIds } from "../game/itineraryReferenceUtil";
-import { createItineraryIndex, doesItineraryBeginWithInitialPoseEvent } from "../game/itineraryUtil";
+import { createInitialPoseEventFromUnpairedCharacter, createItineraryIndex, doesItineraryBeginWithInitialPoseEvent } from "../game/itineraryUtil";
 import ClozeBlank from "../game/conclusions/types/ClozeBlank";
 import ClozePartType from "../game/conclusions/types/ClozePartType";
 import Conclusion from "../game/conclusions/types/Conclusion";
@@ -94,9 +94,8 @@ function _createLevelAllCharactersById(level:Level,
   const allCharactersById = new Map(level.characters.map(character => [character.id, character]));
   characterDefinitions.forEach((characterDefinition, characterId) => {
     if (allCharactersById.has(characterId)) return;
-    const character = createDefaultCharacter();
-    allCharactersById.set(characterId, {
-      ...character,
+    const character = { 
+      ...createDefaultCharacter(),
       id:characterId,
       title:characterDefinition.title,
       faceImageUrl:characterDefinition.faceImageUrl,
@@ -108,7 +107,9 @@ function _createLevelAllCharactersById(level:Level,
       isTitleKnown:characterDefinition.isTitleKnown,
       description:characterDefinition.description,
       position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z }
-    });
+    };
+    character.itinerary = [createInitialPoseEventFromUnpairedCharacter(character)];
+    allCharactersById.set(characterId, character);
   });
   return allCharactersById;
 }

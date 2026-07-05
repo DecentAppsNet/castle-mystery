@@ -251,7 +251,7 @@ function _doesItineraryStartWithCharacter(initialPoseEvent:InitialPoseEvent, cha
 const DEFAULT_CHARACTER_POSE:CharacterPose = createDefaultCharacterPose();
 
 function _getPosesFromInitialPoseEvent(event:InitialPoseEvent, characterId:string):{characterPose:CharacterPose, pairedCharacterPose:CharacterPose} {
-  assert(characterId === event.firstCharacterId || characterId == event.secondCharacterId, `Initial pose event doesn't seem to be for this character.`);
+  assert(characterId === event.firstCharacterId || characterId == event.secondCharacterId, `Initial pose event doesn't seem to be for "${characterId}" character.`);
   
   // To avoid a lot of null checks in calling code, use a non-null empty pose if second pose is null.
   const secondCharacterPose = event.secondCharacterPose ?? DEFAULT_CHARACTER_POSE;
