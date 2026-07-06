@@ -242,13 +242,13 @@ const DEFAULT_CHARACTER_POSE:CharacterPose = createDefaultCharacterPose();
 
 function _getPosesFromInitialPoseEvent(event:InitialPoseEvent, characterId:string):{characterPose:CharacterPose, pairedCharacterPose:CharacterPose} {
   assert(characterId === event.firstCharacterId || characterId == event.secondCharacterId, `Initial pose event doesn't seem to be for "${characterId}" character.`);
-  
-  // To avoid a lot of null checks in calling code, use a non-null empty pose if second pose is null.
-  const secondCharacterPose = event.secondCharacterPose ?? DEFAULT_CHARACTER_POSE;
+    
+  const firstCharacterPose = duplicateCharacterPose(event.firstCharacterPose);
+  const secondCharacterPose = duplicateCharacterPose(event.secondCharacterPose ?? DEFAULT_CHARACTER_POSE); // To avoid a lot of null checks in calling code, use a non-null empty pose if second pose is null.
 
   return (characterId === event.firstCharacterId) 
-    ? { characterPose:event.firstCharacterPose, pairedCharacterPose:secondCharacterPose }
-    : { characterPose:secondCharacterPose, pairedCharacterPose:event.firstCharacterPose }
+    ? { characterPose:firstCharacterPose, pairedCharacterPose:secondCharacterPose }
+    : { characterPose:secondCharacterPose, pairedCharacterPose:firstCharacterPose }
 }
 
 function _findItineraryPose(characterId:string, itinerary:Itinerary, time:number):CharacterPose {
