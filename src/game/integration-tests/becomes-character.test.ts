@@ -17,7 +17,7 @@ import sharedItemsText from './fixtures/items-public.md?raw';
 import sharedRoomStylesText from './fixtures/roomStyles-public.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createLevelTextWithImportTexts } from '@/levelLoading/levelImportUtil';
-import { findCharacterPoseWithoutPairHistory } from '../itineraryUtil';
+import { findCharacterPose, findCharacterPoseWithoutPairHistory } from '../itineraryUtil';
 import { createGameState } from '../gameUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
@@ -77,7 +77,7 @@ describe('becomes character integration', () => {
     const rebuiltMaskedCharacter = afterState.characters.find(character => character.id === 'niccolo masked');
     expect(rebuiltMaskedCharacter?.leftHandItem?.id).toBe('left pebble');
     expect(rebuiltMaskedCharacter?.rightHandItem?.id).toBe('right twig');
-    expect(findCharacterPoseWithoutPairHistory(rebuiltMaskedCharacter!, 8_000).speech).toBe('Now I speak as the masked one.');
+    expect(findCharacterPose(rebuiltMaskedCharacter!, 8_000).speech).toBe('Now I speak as the masked one.');
   });
 
   it.skip('can rebuild while the active focus is an unplaced source character after replacement', () => {

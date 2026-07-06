@@ -75,10 +75,7 @@ function _calcWalkDuration(room:Room, fromPosition:Position, toPosition:Position
 function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
   let room = findRoomAtPosition(rooms, x, y);
   if (!room) room = findRoomAtPositionOrTouchingBoundary(rooms, x, y);
-  if (!room) {
-    console.warn(`Position (${x}, ${y}) is not in a room.`);
-    room = findRoomNearestToPosition(rooms, x, y); // Don't know what happened, but try to be robust.
-  }
+  assertNonNullable(room, `Position (${x}, ${y}) is not in a room.`);
   return room;
 }
 
