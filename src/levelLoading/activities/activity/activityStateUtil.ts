@@ -34,6 +34,7 @@ import { matchesItemReference } from "./activityItemRefUtil";
 import { calcBlockingDurationForScheduling } from "./activitySchedulingUtil";
 import type CharacterActivityState from "./types/CharacterActivityState";
 import InitialPoseEvent from "@/game/types/itineraryEvents/InitialPoseEvent";
+import CharacterPose from "@/game/types/CharacterPose";
 
 function _createCharacterSnapshot(character:Character, state:CharacterActivityState):Character {
   assert(doesItineraryBeginWithInitialPoseEvent(state.events), `Can't create character snapshot with invalid events - missing initial pose event.`);
@@ -164,7 +165,7 @@ export function duplicateRoomItemsByRoomId(roomItemsByRoomId:Map<string, Item[]>
   return new Map(Array.from(roomItemsByRoomId.entries()).map(([roomId, items]) => [roomId, items.map(duplicateItem)]));
 }
 
-export function findStatePoseAtTime(character:Character, state:CharacterActivityState, time:number) {
+export function findStatePoseAtTime(character:Character, state:CharacterActivityState, time:number):CharacterPose {
   if (!state.events.length) {
     return {
       position:duplicatePosition(character.position),
@@ -175,6 +176,15 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
     };
   }
   assert(doesItineraryBeginWithInitialPoseEvent(state.events), `state.events is missing initial pose event.`);
+  { // TODO delete this hack. The best way to do it would to untangle the data structures and put clearer contracts around what they contain.
+    // But for the moment this is hiding that the InitialPoseEvent in `state` don't have a matching character ID with the character.
+    // _createCharacterSnapshot() correctly asserts for that, but this hack is more or less saying "don't worry about it for now".
+    const initialPoseEvent = state.events[0] as InitialPoseEvent;
+    if (character.id !== initialPoseEvent.firstCharacterId) {
+      state.events.shift();
+      state.events.unshift({...initialPoseEvent, firstCharacterId:character.id});
+    }
+  }
   if (time === state.time) {
     return {
       position:duplicatePosition(state.position),
@@ -184,7 +194,8 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
       thought:state.thought
     };
   }
-  return findCharacterPoseWithoutPairHistory(_createCharacterSnapshot(character, state), time);
+  const snapshot = _createCharacterSnapshot(character, state);
+  return findCharacterPoseWithoutPairHistory(snapshot, time);
 }
 
 export function appendEventsToCharacterState(level:Level, _character:Character, state:CharacterActivityState, events:ItineraryEvent[]) {
