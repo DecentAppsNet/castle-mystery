@@ -155,6 +155,7 @@ function _findDropTargetWaypoint(room:ReturnType<typeof findCurrentRoom>, activi
 export function tryCreateDropActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   const trimmedActivityText = activityText.trim();
   if (!trimmedActivityText.startsWith('drops ')) return null;
+  console.log(`${context.character.id} ${activityText}`);
 
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);

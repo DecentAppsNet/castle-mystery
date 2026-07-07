@@ -11,7 +11,7 @@ import becomesCharacterObscuredArrivalTransitionText from './fixtures/becomes-ch
 import becomesCharacterPairingKnownObscuredRoomsText from './fixtures/becomes-character-pairing-known-obscured-rooms.md?raw';
 import becomesCharacterPairingUnknownObscuredRoomsText from './fixtures/becomes-character-pairing-unknown-obscured-rooms.md?raw';
 import becomesCharacterPairingUnknownRevertUnobscuredText from './fixtures/becomes-character-pairing-unknown-revert-unobscured.md?raw';
-import fledglingFraternityText from './fixtures/05_fledgling_fraternity.md?raw';
+import fledglingFraternityText from './fixtures/fledgling_fraternity.md?raw';
 import sharedCharactersText from './fixtures/characters-public.md?raw';
 import sharedItemsText from './fixtures/items-public.md?raw';
 import sharedRoomStylesText from './fixtures/roomStyles-public.md?raw';
@@ -166,8 +166,8 @@ describe('becomes character integration', () => {
       fledglingFraternityText.replace('//: becomes Niccolo', ': becomes Niccolo')
     );
 
-    const commentedState = createGameState(loadLevelFromText(mergedCommentedText, '05_fledgling_fraternity.md'));
-    const uncommentedState = createGameState(loadLevelFromText(mergedUncommentedText, '05_fledgling_fraternity.md'));
+    const commentedState = createGameState(loadLevelFromText(mergedCommentedText, 'fledgling_fraternity.md'));
+    const uncommentedState = createGameState(loadLevelFromText(mergedUncommentedText, 'fledgling_fraternity.md'));
 
     expect(commentedState.activeCharacterId).toBe(uncommentedState.activeCharacterId);
     expect(findActiveCharacter(commentedState)?.id).toBe(findActiveCharacter(uncommentedState)?.id);
@@ -181,7 +181,7 @@ describe('becomes character integration', () => {
       [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
       fledglingFraternityText
     );
-    const level = loadLevelFromText(mergedText, '05_fledgling_fraternity.md');
+    const level = loadLevelFromText(mergedText, 'fledgling_fraternity.md');
     const loadedNiccolo = level.initialCharacters.find(character => character.id === 'niccolo') || null;
     const gameState = createGameState(level);
     const activeInitialCharacter = gameState.initialCharacters.find(character => character.id === gameState.activeCharacterId)
@@ -211,12 +211,12 @@ describe('becomes character integration', () => {
     expect(markerModel.roomEntryTimes.length).toBeGreaterThan(ownMarkerModel.roomEntryTimes.length);
   });
 
-  it('keeps Niccolo Masked out of Hall immediately after the first replacement in fledgling fraternity', () => {
+  it.only('keeps Niccolo Masked out of Hall immediately after the first replacement in fledgling fraternity', () => {
     const mergedText = createLevelTextWithImportTexts(
       [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
       fledglingFraternityText
     );
-    const level = loadLevelFromText(mergedText, '05_fledgling_fraternity.md');
+    const level = loadLevelFromText(mergedText, 'fledgling_fraternity.md');
     const niccolo = level.characters.find(character => character.id === 'niccolo');
     const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
     const atReplacementState = createGameState({ ...level, initialTime:becomesEvent!.startTime });

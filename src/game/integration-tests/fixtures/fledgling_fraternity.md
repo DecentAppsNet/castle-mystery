@@ -7,41 +7,6 @@
 * groundFloorRoom=Forest
 * imports=items.md | characters.md | roomStyles.md
 
-The crypt is obscured until player guesses identities of each masked individual. They have the dropdown of Niccolo, Yusuf, Giorgios, Harold, Hugo, Giovanni, Sticky Agatha. There will be some way to confirm that Agatha did not enter the nave, which is half-constructed.
-
-Voices heard from the crypt. One person (Hugo) says, "Oh, I prefer to keep mine on." It is allowed.
-
-Hugo says, "Fellow freemasons, what is our next plan? I am ready to do my part!"
-
-Niccolo, "Freemasons? We're not freemasons."
-
-Hugo says, "You're not? I really thought you were."
-
-Niccolo, "We haven't even picked a name yet."
-
-Hugo says, "Oh, then my apologies. I'm at the wrong meeting." Hugo leaves.
-
-Niccolo, "They've just been using that fake name to rile people up. There are no freemasons."
-
-Yusuf, "But what if... we were the freemasons?"
-
-Niccolo, "I don't understand."
-
-Yusuf, "The Pope knows freemasons aren't real. If we choose the same name for ourselves."
-
-Niccolo, "Our actions will blend in with the rumors he himself started."
-
-Yusuf, "It gives us cover!"
-
-Harold, "So I'm a freemason now?"
-
-Niccolo, "Yes! Oh, but actually... you're more a freeherald. Something like that."
-
-
-Hugo meets Ugolino nearby. "My apologies, Father. They are not freemasons."
-Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay clear about it."
-
-
 # Map
 
 ```

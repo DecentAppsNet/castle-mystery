@@ -1,4 +1,8 @@
 /* This module groups room lookup, visibility, containment, and room-to-character relationship helpers.
+  Don't reference any data types specific to Level or GameState (including those types). This module is meant to serve 
+  both level-loading and gameplay.
+  Assertions are meant for debug errors.
+  Lookup functions should return null, rather than throw.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from "decent-portal";
@@ -15,10 +19,10 @@ function _findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room|null {
   return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) || null;
 }
 
-export function findRoom(rooms:Room[], roomRef:string):Room {
+export function findRoom(rooms:Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
   const room = rooms.find((r) => r.id === roomId);
-  if (!room) throw new Error(`room with id ${roomRef} not found`);
+  //if (!room) throw new Error(`room with id ${roomRef} not found`);
   return room;
 }
 
