@@ -17,7 +17,7 @@ import sharedItemsText from './fixtures/items-public.md?raw';
 import sharedRoomStylesText from './fixtures/roomStyles-public.md?raw';
 import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { createLevelTextWithImportTexts } from '@/levelLoading/levelImportUtil';
-import { findCharacterPose, findCharacterPoseWithoutPairHistory } from '../itineraryUtil';
+import { findCharacterPose } from '../itineraryUtil';
 import { createGameState } from '../gameUtil';
 import { rebuildDynamicStateForTime } from '../dynamicStateRebuildUtil';
 import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
