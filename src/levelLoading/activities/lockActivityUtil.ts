@@ -43,6 +43,7 @@ function _throwIfRequiredLockItemIsMissing(exit:RoomExit, currentRoom:Room, cont
 
 function _findCurrentRoomExit(currentRoom:Room, targetRoomRef:string, context:ActivityContext):RoomExit {
   const targetRoom = findRoom(context.level.rooms, targetRoomRef);
+  if (!targetRoom) throw new Error(`room with id ${targetRoomRef} not found`);
   const exit = currentRoom.exits.find(candidate => candidate.room1Id === targetRoom.id || candidate.room2Id === targetRoom.id) || null;
   if (!exit) throw new Error(`room ${targetRoomRef} is not connected to ${currentRoom.title} for itinerary activity`);
   if (exit.exitType !== ExitType.lockableDoor) throw new Error(`exit to ${targetRoomRef} is not lockable for itinerary activity`);

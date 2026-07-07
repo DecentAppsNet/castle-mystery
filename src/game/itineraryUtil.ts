@@ -25,7 +25,7 @@ import ItemHoldLocation from "./types/ItemHoldLocation";
 import type { BodyOrientation, FacingDirection } from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
-import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary, findRoomNearestToPosition } from "./roomUtil";
+import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary } from "./roomUtil";
 import { roomWidthToColumnCount } from "./roomGridUtil";
 import { ROOM_BACK_Z } from "./roomSpaceConstants";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "./waypointUtil";

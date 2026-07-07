@@ -1,6 +1,8 @@
 /* This module groups room geometry, room-grid parsing, and room navigation layout initialization during level load.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import { assertNonNullable } from "decent-portal";
+
 import { MAP_TILE_SIZE, roomHeightToLayerCount, roomWidthToColumnCount } from "../game/roomGridUtil";
 import { findImageFilterId } from "../game/imageFilters/imageFilterUtil";
 import { getRoomTextureAssetUrl } from "../game/imageUrlUtil";
@@ -424,6 +426,7 @@ export function validateRoomGridLegendEntries(level:Level, roomsSection:string, 
   Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
     const roomSection = roomSectionEntry.value;
     const room = findRoom(level.rooms, roomId);
+    if (!room) throw new Error(`room with id ${roomId} not found`);
     const gridLines = parseFirstFencedCodeBlockLines(roomSection);
     if (!gridLines.length) return;
 
@@ -590,11 +593,15 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
   const { room1Id, room2Id } = pendingExit;
   const room1 = findRoom(level.rooms, room1Id);
   const room2 = findRoom(level.rooms, room2Id);
+  if (!room1) throw new Error(`room with id ${room1Id} not found`);
+  if (!room2) throw new Error(`room with id ${room2Id} not found`);
   const sharedWallSection = _findSharedWallSectionBetweenRooms(room1, room2);
   if (sharedWallSection === null) {
     const sourceReference = pendingExit.sourceReferences[0];
     const sourceRoom = findRoom(level.rooms, sourceReference.fromRoomId);
     const exitRoom = findRoom(level.rooms, sourceReference.toRoomId);
+    assertNonNullable(sourceRoom, `room ${sourceReference.fromRoomId} not found`);
+    assertNonNullable(exitRoom, `room ${sourceReference.toRoomId} not found`);
     throw new MarkdownLineError(sourceReference.lineNo,
       `${exitRoom.title}, specified as an exit in ${sourceRoom.title}, is not adjacent.`);
   }

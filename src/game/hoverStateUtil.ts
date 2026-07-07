@@ -1,6 +1,8 @@
 /* This module groups pointer-hit testing and hover-driven state updates for characters, items, and exit popovers.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import { assertNonNullable } from "decent-portal";
+
 import { getExitHoverRect } from "./drawing/exitDrawUtil";
 import { getCharacterHoverRect } from "./drawing/characterDrawUtil";
 import { getItemHoverRect } from "./drawing/itemDrawUtil";
@@ -43,9 +45,13 @@ function _findHoveredRoomContent(gameState:GameState, room:Room, x:number, y:num
 function _findExitAtPosition(room:Room, x:number, y:number, gameState:GameState):RoomExit|null {
   for (let i = room.exits.length - 1; i >= 0; --i) {
     const exit = room.exits[i];
+    const room1 = findRoom(gameState.rooms, exit.room1Id);
+    const room2 = findRoom(gameState.rooms, exit.room2Id);
+    assertNonNullable(room1, `room ${exit.room1Id} not found`);
+    assertNonNullable(room2, `room ${exit.room2Id} not found`);
     if (exit.exitType === ExitType.doorway
-      && findRoom(gameState.rooms, exit.room1Id).isOutside
-      && findRoom(gameState.rooms, exit.room2Id).isOutside) continue;
+      && room1.isOutside
+      && room2.isOutside) continue;
     const rect = getExitHoverRect(exit, gameState.scalingFactors);
     const isInside = isPositionInOrOnRect(x, y, rect);
     if (isInside) return exit;

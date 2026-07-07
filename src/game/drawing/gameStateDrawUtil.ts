@@ -364,8 +364,11 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   } else if (canShowHoverPopovers && gameState.hoveredExitKey) {
     const hoveredExit = _findHoveredExit(gameState);
     if (hoveredExit) {
-      drawExitPopover(hoveredExit, findRoom(gameState.rooms, hoveredExit.room1Id), findRoom(gameState.rooms, hoveredExit.room2Id),
-        gameState.itemsById, gameState.scalingFactors, context, layoutPlanner);
+      const room1 = findRoom(gameState.rooms, hoveredExit.room1Id);
+      const room2 = findRoom(gameState.rooms, hoveredExit.room2Id);
+      assertNonNullable(room1, `room ${hoveredExit.room1Id} not found`);
+      assertNonNullable(room2, `room ${hoveredExit.room2Id} not found`);
+      drawExitPopover(hoveredExit, room1, room2, gameState.itemsById, gameState.scalingFactors, context, layoutPlanner);
     }
   }
   _drawReservedRects(layoutPlanner, context);

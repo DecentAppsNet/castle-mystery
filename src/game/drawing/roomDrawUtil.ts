@@ -1,6 +1,8 @@
 /* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import { assertNonNullable } from "decent-portal";
+
 import { DRAW_WAYPOINTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
@@ -178,7 +180,11 @@ function _drawRoomExit(room:Room, exit:RoomExit, characters:Character[], showFul
   if (!_shouldRoomDrawExit(room, exit)) return;
   if (drawnExitIds.has(exit.id)) return;
   drawnExitIds.add(exit.id);
-  if (findRoom(rooms as Room[], exit.room1Id).isOutside && findRoom(rooms as Room[], exit.room2Id).isOutside) return;
+  const room1 = findRoom(rooms as Room[], exit.room1Id);
+  const room2 = findRoom(rooms as Room[], exit.room2Id);
+  assertNonNullable(room1, `room ${exit.room1Id} not found`);
+  assertNonNullable(room2, `room ${exit.room2Id} not found`);
+  if (room1.isOutside && room2.isOutside) return;
   if (layoutPlanner) layoutPlanner.reserveRect(getProjectedExitCanvasRect(exit, scalingFactors));
   const displayedExitType = _findDisplayedExitType(exit, characters, showFullContents);
   const { height } = getExitCanvasRect(exit, scalingFactors);

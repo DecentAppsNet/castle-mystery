@@ -395,6 +395,7 @@ function _addCharactersAndRoomItemsFromSections(level:Level, roomsSection:string
 	Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
 		const roomSection = roomSectionEntry.value;
 		const room = findRoom(level.rooms, roomId);
+		if (!room) throw new Error(`room with id ${roomId} not found`);
 		const gridLines = parseFirstFencedCodeBlockLines(roomSection);
 		if (!gridLines.length) return;
 		_assertRoomGridMatchesExpectedDimensions(roomId, room, gridLines);
@@ -443,7 +444,7 @@ function _addInventoryItemsToCharacters(level:Level, characterDefinitions:Map<st
 
 function _addItemToRoom(level:Level, roomId:string, item:Omit<Item, 'isDiscovered'>) {
 	const room = findRoom(level.rooms, roomId);
-	assertNonNullable(room);
+	if (!room) throw new Error(`room with id ${roomId} not found`);
 	const { x, y } = item.position;
 	const isInsideRoom = x >= room.rect.x && x <= room.rect.x + room.rect.width
 		&& y >= room.rect.y && y <= room.rect.y + room.rect.height;

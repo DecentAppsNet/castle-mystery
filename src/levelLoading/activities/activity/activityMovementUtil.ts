@@ -106,6 +106,7 @@ function _findRoomPath(level:Level, fromRoomId:string, targetRoomId:string):stri
   while (pending.length > 0) {
     const roomId = pending.shift()!;
     const room = findRoom(level.rooms, roomId);
+    if (!room) throw new Error(`room with id ${roomId} not found`);
     for (const exit of room.exits) {
       const neighborRoomId = exit.room1Id === roomId ? exit.room2Id : exit.room1Id;
       if (previousRoomIdByRoomId.has(neighborRoomId)) continue;
@@ -210,6 +211,7 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
   occupiedWaypointKeys:Set<string> = new Set(), targetPosition:Position|null = null, targetXPercent:number|null = null):ItineraryEvent[] {
   const currentRoom = findCurrentRoomForWaypoint(level, fromWaypoint);
   const targetRoom = findRoom(level.rooms, targetRoomId);
+  if (!targetRoom) throw new Error(`room with id ${targetRoomId} not found`);
   const targetWaypoint = _findTargetWaypointInRoom(targetRoom, targetPosition, occupiedWaypointKeys, targetXPercent);
   if (currentRoom.id === targetRoomId) {
     if (fromWaypoint === targetWaypoint) return [];
@@ -223,6 +225,8 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
   for (let i = 0; i < roomPath.length - 1; ++i) {
     const room = findRoom(level.rooms, roomPath[i]);
     const nextRoom = findRoom(level.rooms, roomPath[i + 1]);
+    if (!room) throw new Error(`room with id ${roomPath[i]} not found`);
+    if (!nextRoom) throw new Error(`room with id ${roomPath[i + 1]} not found`);
     while (currentWaypoint.exitDirections[nextRoom.id]) {
       const nextWaypoint = currentWaypoint.exitDirections[nextRoom.id]!;
       const walkEvent = createWalkEvent(room, currentTime, currentWaypoint.position.x, currentWaypoint.position.y,
@@ -249,6 +253,7 @@ export function planMovementToRoom(level:Level, fromWaypoint:Waypoint, targetRoo
   }
 
   const finalRoom = findRoom(level.rooms, targetRoomId);
+  if (!finalRoom) throw new Error(`room with id ${targetRoomId} not found`);
   const finalEvents = planMovementWithinRoom(finalRoom, currentWaypoint, targetWaypoint, currentTime);
   events.push(...finalEvents);
 

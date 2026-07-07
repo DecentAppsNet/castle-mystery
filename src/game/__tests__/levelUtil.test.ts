@@ -1,4 +1,5 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
+import { assertNonNullable } from 'decent-portal';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
@@ -405,6 +406,7 @@ describe('levelUtil itinerary loading', () => {
   it('moves to a stacked room item floor square before applying a body orientation on that item', () => {
     const level = loadLevelFromText(bodyOrientationOnItemActivityText, 'body-orientation-on-item-activity.md');
     const hall = findRoom(level.rooms, 'Hall');
+    assertNonNullable(hall);
     const king = level.characters.find(character => character.id === 'king');
     const chair = hall.items.find(item => item.id === 'chair') || null;
     const cushion = hall.items.find(item => item.id === 'cushion') || null;
@@ -570,6 +572,7 @@ describe('levelUtil itinerary loading', () => {
   it('defaults titles from ids and generates identities only for characters whose titles are not already known', () => {
     const level = loadLevelFromText(titleDefaultsAndGeneratedIdentityText);
     const hall = findRoom(level.rooms, 'Hall');
+    assertNonNullable(hall);
     const king = level.characters.find(character => character.id === 'king');
     const queen = level.characters.find(character => character.id === 'queen');
     const crown = hall.items.find(item => item.id === 'crown');
@@ -653,6 +656,7 @@ describe('levelUtil itinerary loading', () => {
   it('defaults titles by preserving authored casing from subsection names', () => {
     const level = loadLevelFromText(lowercaseTitleDefaultsText);
     const room = findRoom(level.rooms, 'MacDonald Chamber');
+    assertNonNullable(room);
     const character = level.characters.find(candidate => candidate.id === 'lady macbeth') || null;
     const item = room.items.find(candidate => candidate.id === 'royal decree') || null;
     const conclusion = level.conclusions.find(candidate => candidate.id === 'the macdonald mystery') || null;
@@ -674,6 +678,7 @@ describe('levelUtil itinerary loading', () => {
   it('defaults room titles from map legend text when there is no room subsection metadata', () => {
     const level = loadLevelFromText(mapLegendRoomTitleDefaultText);
     const room = findRoom(level.rooms, 'MacDonald Hall');
+    assertNonNullable(room);
 
     expect(room.title).toBe('MacDonald Hall');
   });
@@ -681,8 +686,12 @@ describe('levelUtil itinerary loading', () => {
   it('parses equivalent lockable locked exits from one-sided and two-sided authoring', () => {
     const oneSidedLevel = loadLevelFromText(lockableExitOneSidedText);
     const twoSidedLevel = loadLevelFromText(lockableExitTwoSidedText);
-    const oneSidedExit = findRoom(oneSidedLevel.rooms, 'Bedroom').exits[0];
-    const twoSidedExit = findRoom(twoSidedLevel.rooms, 'Bedroom').exits[0];
+    const oneSidedBedroom = findRoom(oneSidedLevel.rooms, 'Bedroom');
+    const twoSidedBedroom = findRoom(twoSidedLevel.rooms, 'Bedroom');
+    assertNonNullable(oneSidedBedroom);
+    assertNonNullable(twoSidedBedroom);
+    const oneSidedExit = oneSidedBedroom.exits[0];
+    const twoSidedExit = twoSidedBedroom.exits[0];
 
     expect(oneSidedExit.x).toBe(20);
     expect(oneSidedExit.y).toBe(20 - FLOOR_WAYPOINT_Y_OFFSET);
@@ -695,7 +704,9 @@ describe('levelUtil itinerary loading', () => {
 
   it('parses lockable-with item requirements by resolving item titles to item ids', () => {
     const level = loadLevelFromText(lockableExitWithItemText);
-    const exit = findRoom(level.rooms, 'Bedroom').exits[0];
+    const bedroom = findRoom(level.rooms, 'Bedroom');
+    assertNonNullable(bedroom);
+    const exit = bedroom.exits[0];
 
     expect(exit.exitType).toBe(ExitType.lockableDoor);
     expect(exit.exitStatus).toBe(ExitStatus.locked);
@@ -706,7 +717,9 @@ describe('levelUtil itinerary loading', () => {
 
   it('parses closed non-lockable door exits', () => {
     const level = loadLevelFromText(closedDoorExitText);
-    const exit = findRoom(level.rooms, 'Bedroom').exits[0];
+    const bedroom = findRoom(level.rooms, 'Bedroom');
+    assertNonNullable(bedroom);
+    const exit = bedroom.exits[0];
 
     expect(exit.exitType).toBe(ExitType.door);
     expect(exit.exitStatus).toBe(ExitStatus.closed);
@@ -1215,6 +1228,7 @@ describe('levelUtil itinerary loading', () => {
   it('assigns initial character and item depth from room grid rows', () => {
     const level = loadLevelFromText(roomGridDepthText);
     const hall = findRoom(level.rooms, 'Hall');
+    assertNonNullable(hall);
     const apple = hall.items.find(item => item.id === 'apple') || null;
     const coin = hall.items.find(item => item.id === 'coin') || null;
     const baron = level.characters.find(character => character.id === 'baron') || null;
@@ -1232,6 +1246,7 @@ describe('levelUtil itinerary loading', () => {
   it('loads multiple room items from one legend tile using stacked floor-based y offsets', () => {
     const level = loadLevelFromText(stackedRoomItemsText);
     const hall = findRoom(level.rooms, 'Hall');
+    assertNonNullable(hall);
     const table = hall.items.find(item => item.id === 'table') || null;
     const vase = hall.items.find(item => item.id === 'vase') || null;
     const centeredX = hall.rect.x + (2 + 0.5) * (hall.rect.width / 4);
@@ -1253,6 +1268,7 @@ describe('levelUtil itinerary loading', () => {
       .replace('* Y=Hero\n', '');
     const level = loadLevelFromText(stackedCharacterText, 'stacked-room-items-character.md');
     const hall = findRoom(level.rooms, 'Hall');
+    assertNonNullable(hall);
     const table = hall.items.find(item => item.id === 'table') || null;
     const vase = hall.items.find(item => item.id === 'vase') || null;
     const hero = level.characters.find(character => character.id === 'hero') || null;
@@ -1297,6 +1313,7 @@ describe('levelUtil itinerary loading', () => {
     const takeStackedItemText = `${stackedRoomItemsText}\n0:00:00 Hero takes Vase\n`;
     const level = loadLevelFromText(takeStackedItemText, 'take-stacked-item.md');
     const hall = findRoom(level.rooms, 'Hall');
+    assertNonNullable(hall);
     const hero = level.characters.find(character => character.id === 'hero') || null;
     const takeEvent = hero?.itinerary.find(event => event.type === ItineraryEventType.TAKE_ITEM) as { startTime:number } | undefined;
     const table = hall.items.find(item => item.id === 'table') || null;
@@ -1462,6 +1479,7 @@ describe('levelUtil itinerary loading', () => {
     const level = loadLevelFromText(lockUnlockActivityText);
     const keeper = level.characters.find(character => character.id === 'keeper');
     const cell = findRoom(level.rooms, 'Cell');
+    assertNonNullable(cell);
     const exit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell');
     const lockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.LOCK) as { startTime:number, roomExitId:string } | undefined;
     const unlockEvent = keeper?.itinerary.find(event => event.type === ItineraryEventType.UNLOCK) as { startTime:number, roomExitId:string } | undefined;
@@ -1485,6 +1503,7 @@ describe('levelUtil itinerary loading', () => {
     const king = level.characters.find(character => character.id === 'king');
     const queen = level.characters.find(character => character.id === 'queen');
     const library = findRoom(level.rooms, 'Library');
+    assertNonNullable(library);
     const floorY = library.rect.y + library.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
     const queenPose = findCharacterPoseWithoutPairHistory(queen!, 6_000).position;
     const targetWaypoint = library.waypoints.reduce((rightmostUnclaimedFloorWaypoint, waypoint) => {
@@ -1903,11 +1922,13 @@ describe('levelUtil itinerary loading', () => {
   it('loads room legend character references whose normalized ids contain spaces', () => {
     const level = loadLevelFromText(characterIdWithSpacesRoomLegendText);
     const character = level.characters.find(candidate => candidate.id === 'bob odare') || null;
+    const hall = findRoom(level.rooms, 'Hall');
+    assertNonNullable(hall);
 
     expect(character).not.toBeNull();
     expect(character?.title).toBe('Bob Odare');
     expect(level.activeCharacterId).toBe('bob odare');
-    expect(findRoom(level.rooms, 'Hall').items).toHaveLength(0);
+    expect(hall.items).toHaveLength(0);
   });
 
   it('wraps duplicate character property entries with filename and line number', () => {

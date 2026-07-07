@@ -22,8 +22,7 @@ function _findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room|null {
 export function findRoom(rooms:Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
   const room = rooms.find((r) => r.id === roomId);
-  //if (!room) throw new Error(`room with id ${roomRef} not found`);
-  return room;
+  return room ?? null;
 }
 
 export function findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room {

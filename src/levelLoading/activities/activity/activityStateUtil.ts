@@ -102,7 +102,11 @@ function _findWaypointOwningRoom(level:Level, waypoint:Waypoint):Room|null {
 function _findRoomForStateWaypointUpdate(level:Level, waypoint:Waypoint, events:ItineraryEvent[]):Room {
   for (let eventIndex = events.length - 1; eventIndex >= 0; eventIndex -= 1) {
     const event = events[eventIndex];
-    if (event.type === ItineraryEventType.ROOM_ENTRY) return findRoom(level.rooms, (event as RoomEntryEvent).roomId);
+    if (event.type === ItineraryEventType.ROOM_ENTRY) {
+      const room = findRoom(level.rooms, (event as RoomEntryEvent).roomId);
+      assertNonNullable(room, `room ${(event as RoomEntryEvent).roomId} not found`);
+      return room;
+    }
   }
 
   return _findWaypointOwningRoom(level, waypoint) || findCurrentRoom(level, waypoint.position);

@@ -130,10 +130,9 @@ describe('roomUtil', () => {
       expect(findRoom([throneRoom, library], 'Library')).toBe(library);
     });
 
-    it('throws when no room has the requested id', () => {
+    it('returns null when no room has the requested id', () => {
       const rooms = [_createRoom('Hall', ROOM_RECT)];
-
-      expect(() => findRoom(rooms, 'Kitchen')).toThrow(/room with id Kitchen not found/i);
+      expect(findRoom(rooms, 'Kitchen')).toBeNull();
     });
   });
 
