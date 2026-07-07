@@ -14,21 +14,15 @@ import ExitStatus from "./types/ExitStatus";
 import { normalizeId, normalizeOptionalId } from "./idUtil";
 import { isPositionInOrOnRect, isPositionInRect } from "./rectUtil";
 
-function _findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room|null {
-  const roomId = normalizeId(roomRef);
-  return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) || null;
-}
-
 export function findRoom(rooms:Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
   const room = rooms.find((r) => r.id === roomId);
   return room ?? null;
 }
 
-export function findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room {
-  const room = _findRoomByIdOrTitle(rooms, roomRef);
-  if (!room) throw new Error(`room with id or title ${roomRef} not found`);
-  return room;
+export function findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room|null {
+  const roomId = normalizeId(roomRef);
+  return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) || null;
 }
 
 export function findRoomAtPosition(rooms:readonly Room[], x:number, y:number):Room | null {

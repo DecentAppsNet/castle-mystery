@@ -16,7 +16,11 @@ import Room from "../game/types/Room";
 
 function _resolveRevealRoomIds(revealRoomsText:string|undefined, rooms:ReadonlyArray<Room>):string[] {
   if (!revealRoomsText) return [];
-  return parseOptions(revealRoomsText).map(roomRef => findRoomByIdOrTitle([...rooms], roomRef).id);
+  return parseOptions(revealRoomsText).map(roomRef => {
+    const room = findRoomByIdOrTitle([...rooms], roomRef);
+    if (!room) throw new Error(`room with id or title ${roomRef} not found`);
+    return room.id;
+  });
 }
 
 function _findConclusionByIdOrTitle(conclusions:ReadonlyArray<Pick<Conclusion, 'id' | 'title'>>, conclusionRef:string):Pick<Conclusion, 'id' | 'title'> {

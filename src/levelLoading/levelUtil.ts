@@ -342,16 +342,14 @@ function _findGroundFloorY(level:Level, groundFloorRoomRef:string|null):number {
   }
 
   const groundFloorRoom = findRoomByIdOrTitle(level.rooms, groundFloorRoomRef);
+  if (!groundFloorRoom) throw new Error(`general groundFloorRoom '${groundFloorRoomRef}' does not match any room in the level`);
   return groundFloorRoom.rect.y + groundFloorRoom.rect.height;
 }
 
 function _validateGroundFloorRoomReference(level:Level, groundFloorRoomRef:string|null) {
   if (!groundFloorRoomRef) return;
-  try {
-    findRoomByIdOrTitle(level.rooms, groundFloorRoomRef);
-  } catch {
-    throw new Error(`general groundFloorRoom '${groundFloorRoomRef}' does not match any room in the level`);
-  }
+  if (findRoomByIdOrTitle(level.rooms, groundFloorRoomRef)) return;
+  throw new Error(`general groundFloorRoom '${groundFloorRoomRef}' does not match any room in the level`);
 }
 
 function _validateOutsideRoomsAgainstGroundFloor(level:Level, groundFloorRoomRef:string|null, groundFloorY:number) {

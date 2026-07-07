@@ -144,10 +144,10 @@ describe('roomUtil', () => {
       expect(findRoomByIdOrTitle([hall, balcony], 'Upper Hallway')).toBe(balcony);
     });
 
-    it('throws when no room has the requested id or title', () => {
+    it('returns null when no room has the requested id or title', () => {
       const rooms = [_createRoom('Hall', ROOM_RECT)];
 
-      expect(() => findRoomByIdOrTitle(rooms, 'Kitchen')).toThrow(/room with id or title Kitchen not found/i);
+      expect(findRoomByIdOrTitle(rooms, 'Kitchen')).toBeNull();
     });
   });
 
