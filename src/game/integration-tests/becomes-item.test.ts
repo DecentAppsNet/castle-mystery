@@ -20,9 +20,9 @@ describe('becomes item integration', () => {
     const beforeState = createGameState({ ...level, initialTime:firstEvent!.startTime - 1 });
     const afterFirstState = createGameState({ ...level, initialTime:firstEvent!.startTime });
     const afterSecondState = createGameState({ ...level, initialTime:secondEvent!.startTime });
-    const beforeRoom = findRoom(beforeState.rooms, 'Hall');
-    const afterFirstRoom = findRoom(afterFirstState.rooms, 'Hall');
-    const afterSecondRoom = findRoom(afterSecondState.rooms, 'Hall');
+    const beforeRoom = findRoom(beforeState.rooms, 'Hall')!;
+    const afterFirstRoom = findRoom(afterFirstState.rooms, 'Hall')!;
+    const afterSecondRoom = findRoom(afterSecondState.rooms, 'Hall')!;
     const beforeHero = beforeState.characters.find(character => character.id === 'hero');
     const afterFirstHero = afterFirstState.characters.find(character => character.id === 'hero');
     const afterSecondHero = afterSecondState.characters.find(character => character.id === 'hero');

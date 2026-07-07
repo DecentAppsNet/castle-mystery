@@ -31,7 +31,7 @@ function _findPreviousEvent<T>(events:readonly unknown[], startIndex:number, pre
   return undefined;
 }
 
-function _findMiddleFloorWaypointNearestRoomCenter(room:ReturnType<typeof findRoom>) {
+function _findMiddleFloorWaypointNearestRoomCenter(room:NonNullable<ReturnType<typeof findRoom>>) {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   const centerX = Math.floor(room.rect.x + room.rect.width / 2);
   return room.waypoints.reduce((nearestFloorWaypoint, waypoint) => {
@@ -43,7 +43,7 @@ function _findMiddleFloorWaypointNearestRoomCenter(room:ReturnType<typeof findRo
   }, null as typeof room.waypoints[number] | null);
 }
 
-function _findLeftmostMiddleFloorWaypoint(room:ReturnType<typeof findRoom>) {
+function _findLeftmostMiddleFloorWaypoint(room:NonNullable<ReturnType<typeof findRoom>>) {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   return room.waypoints.reduce((leftmostFloorWaypoint, waypoint) => {
     if (waypoint.position.y !== floorY || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return leftmostFloorWaypoint;
@@ -52,7 +52,7 @@ function _findLeftmostMiddleFloorWaypoint(room:ReturnType<typeof findRoom>) {
   }, null as typeof room.waypoints[number] | null);
 }
 
-function _findInteriorMiddleFloorWaypointsByDescendingX(room:ReturnType<typeof findRoom>) {
+function _findInteriorMiddleFloorWaypointsByDescendingX(room:NonNullable<ReturnType<typeof findRoom>>) {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   return room.waypoints
     .filter(waypoint => waypoint.position.y === floorY
@@ -85,9 +85,9 @@ function _expectRoutesThroughPairedExitWaypoints(levelText:string) {
   const queen = level.characters.find(character => character.id === 'queen');
   expect(queen).not.toBeNull();
 
-  const westHall = findRoom(level.rooms, 'West Hall');
-  const foyer = findRoom(level.rooms, 'Foyer');
-  const library = findRoom(level.rooms, 'Library');
+  const westHall = findRoom(level.rooms, 'West Hall')!;
+  const foyer = findRoom(level.rooms, 'Foyer')!;
+  const library = findRoom(level.rooms, 'Library')!;
   const westHallToFoyerExit = westHall.exits.find(exit => exit.room1Id === 'foyer' || exit.room2Id === 'foyer');
   const foyerToLibraryExit = foyer.exits.find(exit => exit.room1Id === 'library' || exit.room2Id === 'library');
   expect(westHallToFoyerExit).not.toBeUndefined();
@@ -174,7 +174,7 @@ describe('at room integration', () => {
   it('routes @ Room.0% to the unclaimed floor waypoint nearest the authored room percent', () => {
     const level = loadLevelFromText(atRoomMarkerText);
     const king = level.characters.find(character => character.id === 'king');
-    const library = findRoom(level.rooms, 'Library');
+    const library = findRoom(level.rooms, 'Library')!;
     const targetWaypoint = _findLeftmostMiddleFloorWaypoint(library);
 
     expect(king).not.toBeNull();
@@ -185,7 +185,7 @@ describe('at room integration', () => {
   it('moves within the same room for @ Room.0%', () => {
     const level = loadLevelFromText(atRoomMarkerSameRoomText);
     const king = level.characters.find(character => character.id === 'king');
-    const library = findRoom(level.rooms, 'Library');
+    const library = findRoom(level.rooms, 'Library')!;
     const targetWaypoint = _findLeftmostMiddleFloorWaypoint(library);
 
     expect(targetWaypoint).not.toBeNull();
@@ -195,7 +195,7 @@ describe('at room integration', () => {
   it('moves within the same room for @ 0%', () => {
     const level = loadLevelFromText(atRoomMarkerSameRoomText.replace('@ Library.0%', '@ 0%'));
     const king = level.characters.find(character => character.id === 'king');
-    const library = findRoom(level.rooms, 'Library');
+    const library = findRoom(level.rooms, 'Library')!;
     const targetWaypoint = _findLeftmostMiddleFloorWaypoint(library);
 
     expect(targetWaypoint).not.toBeNull();
@@ -205,7 +205,7 @@ describe('at room integration', () => {
   it('routes @ Room.90% to the next-closest interior floor waypoint when the nearest interior floor waypoint is occupied', () => {
     const level = loadLevelFromText(atRoomPercentClaimedInteriorText);
     const scout = level.characters.find(character => character.id === 'scout');
-    const target = findRoom(level.rooms, 'Target');
+    const target = findRoom(level.rooms, 'Target')!;
     const tailExit = target.exits.find(exit => exit.room1Id === 'tail' || exit.room2Id === 'tail');
     const targetExitWaypoint = findExitWaypoint(target.id, target.rect, tailExit!, target.waypoints);
     const interiorWaypoints = _findInteriorMiddleFloorWaypointsByDescendingX(target);
@@ -224,7 +224,7 @@ describe('at room integration', () => {
   it('routes @ Room.90% to the next-closest interior floor waypoint when the nearest interior floor waypoint has a visible item', () => {
     const level = loadLevelFromText(atRoomPercentClaimedVisibleItemText);
     const scout = level.characters.find(character => character.id === 'scout');
-    const target = findRoom(level.rooms, 'Target');
+    const target = findRoom(level.rooms, 'Target')!;
     const interiorWaypoints = _findInteriorMiddleFloorWaypointsByDescendingX(target);
     const lastWalkEvent = _findLastWalkEvent(scout!.itinerary);
 
@@ -249,13 +249,13 @@ describe('at room integration', () => {
   it('prefers a middle-row floor waypoint for default @ Room movement in a stair room', () => {
     const level = loadLevelFromText(atRoomDefaultStairRoomText);
     const simon = level.characters.find(character => character.id === 'simon');
-    const greatHall = findRoom(level.rooms, 'Great Hall');
+    const greatHall = findRoom(level.rooms, 'Great Hall')!;
     const targetWaypoint = _findMiddleFloorWaypointNearestRoomCenter(greatHall);
     const directEvents = planMovementToRoom(level, simon!.waypoint, 'Great Hall');
     const directLastWalkEvent = _findLastWalkEvent(directEvents);
     const sanctumEvents = planMovementToRoom(level, simon!.waypoint, 'Sanctum');
     const sanctumLastWalkEvent = _findLastWalkEvent(sanctumEvents);
-    const sanctum = findRoom(level.rooms, 'Sanctum');
+    const sanctum = findRoom(level.rooms, 'Sanctum')!;
     const sanctumFinalWaypoint = findNearestWaypointToPosition(sanctum, sanctumLastWalkEvent!.toPosition);
     const greatHallFromSanctumEvents = planMovementToRoom(level, sanctumFinalWaypoint, 'Great Hall');
     const greatHallFromSanctumLastWalkEvent = _findLastWalkEvent(greatHallFromSanctumEvents);
@@ -272,7 +272,7 @@ describe('at room integration', () => {
   it('keeps Great Hall room-visit floor movement on the middle row', () => {
     const level = loadLevelFromText(atRoomMiddleRowVisitText);
     const simon = level.characters.find(character => character.id === 'simon');
-    const greatHall = findRoom(level.rooms, 'Great Hall');
+    const greatHall = findRoom(level.rooms, 'Great Hall')!;
     const floorY = greatHall.rect.y + greatHall.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
     const greatHallWalkEvents = _findWalkEventsForRoomVisit(simon!.itinerary as (WalkEvent | RoomEntryEvent)[], greatHall.id);
 

@@ -9,11 +9,12 @@ import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
 import { normalizeId } from "@/game/idUtil";
 import type ActivityContext from "./activity/types/ActivityContext";
-import { addStateOwnedItem, findCurrentRoom, removeStateOwnedItem } from "./activity/activityStateUtil";
+import { addStateOwnedItem, removeStateOwnedItem } from "./activity/activityStateUtil";
 import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsoluteActivityStartTime, scheduleEventsToStartAtTime } from "./activity/activitySchedulingUtil";
 import { findWaypointPath, planMovementWithinRoom } from "./activity/activityMovementUtil";
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
+import { findRoomNearestToPosition } from "@/game/roomUtil";
 
 const GIVE_ITEM_NEARBY_DISTANCE = 16;
 
@@ -54,11 +55,12 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
   const recipientState = context.characterStatesById.get(recipientId);
   assertNonNullable(recipientState, `missing itinerary state for ${recipientId}`);
 
-  const currentRoom = findCurrentRoom(context.level, context.state.position);
+  const { x, y } = context.state.position;
+  const currentRoom = findRoomNearestToPosition(context.level.rooms, x, y);
   const recipientPosition = findTargetPositionAtTime(recipientId, activityStartTime,
     context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
   assertNonNullable(recipientPosition, `unable to resolve recipient '${recipientId}' for give activity`);
-  const recipientRoom = findCurrentRoom(context.level, recipientPosition);
+  const recipientRoom = findRoomNearestToPosition(context.level.rooms, recipientPosition.x, recipientPosition.y);
   if (recipientRoom.id !== currentRoom.id) throw new Error(`recipient ${recipientId} is not in the same room for give activity`);
 
   const isNearby = _calcFloorDistance(context.state.position.x, context.state.position.z, recipientPosition.x, recipientPosition.z) <= GIVE_ITEM_NEARBY_DISTANCE;

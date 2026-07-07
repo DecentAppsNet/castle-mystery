@@ -25,7 +25,6 @@ import ItemHoldLocation from "./types/ItemHoldLocation";
 import type { BodyOrientation, FacingDirection } from "./types/Character";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import { clamp } from "@/common/numberUtil";
-import { findRoomAtPosition, findRoomAtPositionOrTouchingBoundary } from "./roomUtil";
 import { roomWidthToColumnCount } from "./roomGridUtil";
 import { ROOM_BACK_Z } from "./roomSpaceConstants";
 import { FLOOR_WAYPOINT_Y_OFFSET } from "./waypointUtil";
@@ -70,13 +69,6 @@ function _calcWalkDuration(room:Room, fromPosition:Position, toPosition:Position
   const depthDistance = isFloorMove ? 0 : (toPosition.z - fromPosition.z) * WAYPOINT_DEPTH_ROW_COUNT * columnWidth;
   const distance = Math.hypot(toPosition.x - fromPosition.x, toPosition.y - fromPosition.y, depthDistance);
   return Math.floor(distance * WALK_MSECS_PER_PIXEL);
-}
-
-function _findRoomAtPosition(rooms:Room[], x:number, y:number):Room {
-  let room = findRoomAtPosition(rooms, x, y);
-  if (!room) room = findRoomAtPositionOrTouchingBoundary(rooms, x, y);
-  assertNonNullable(room, `Position (${x}, ${y}) is not in a room.`);
-  return room;
 }
 
 function _createPoseFromCharacter(character:Character):CharacterPose {
@@ -225,10 +217,6 @@ export function createInitialPoseEventFromUnpairedCharacter(character:Character,
   assert(character.pairedItinerary === null, 'The character you passed is paired, which is unsupported');
   let firstCharacterPose = _createPoseFromCharacter(character);
   return createInitialPoseEvent(startTime, character.id, firstCharacterPose, null, null);
-}
-
-export function findRoomAtPositionOrNearest(rooms:Room[], x:number, y:number):Room {
-  return _findRoomAtPosition(rooms, x, y);
 }
 
 function _doesItineraryStartWithCharacter(initialPoseEvent:InitialPoseEvent, characterId:string):boolean {

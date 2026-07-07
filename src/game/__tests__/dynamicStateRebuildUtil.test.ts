@@ -55,7 +55,7 @@ describe('dynamicStateRebuildUtil.ts', () => {
       rebuildDynamicStateForTime(gameState, _findBecomesEventTime('floor vase'), 0, 0);
 
       const hall = findRoom(gameState.rooms, 'Hall');
-      expect(hall.items.map(item => item.id)).toEqual(['shards']);
+      expect(hall!.items.map(item => item.id)).toEqual(['shards']);
       expect(Array.from(gameState.unplacedItemsById.keys())).toContain('floor vase');
       expect(Array.from(gameState.unplacedItemsById.keys())).not.toContain('shards');
     });

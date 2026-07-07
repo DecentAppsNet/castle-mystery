@@ -24,10 +24,10 @@ describe('drop item integration', () => {
     const afterDropState = createGameState({ ...level, initialTime:5_000 });
     const beforeHero = findCharacter(beforeDropState, 'Hero');
     const afterHero = findCharacter(afterDropState, 'Hero');
-    const afterRoom = findRoom(afterDropState.rooms, 'Hall');
+    const afterRoom = findRoom(afterDropState.rooms, 'Hall')!;
 
     expect(beforeHero.items.map(item => item.id)).toContain('book');
-    expect(findRoom(beforeDropState.rooms, 'Hall').items.map(item => item.id)).not.toContain('book');
+    expect(findRoom(beforeDropState.rooms, 'Hall')!.items.map(item => item.id)).not.toContain('book');
     expect(afterHero.items.map(item => item.id)).not.toContain('book');
     const droppedItem = afterRoom.items.find(item => item.id === 'book') || null;
     expect(droppedItem).not.toBeNull();
@@ -40,7 +40,7 @@ describe('drop item integration', () => {
   it('avoids dropping onto a waypoint claimed by a visible room item', () => {
     const level = loadLevelFromText(dropVisibleItemClaimText);
     const afterDropState = createGameState({ ...level, initialTime:5_000 });
-    const afterRoom = findRoom(afterDropState.rooms, 'Hall');
+    const afterRoom = findRoom(afterDropState.rooms, 'Hall')!;
     const droppedItem = afterRoom.items.find(item => item.id === 'book') || null;
     const blockerItem = afterRoom.items.find(item => item.id === 'blocker') || null;
 

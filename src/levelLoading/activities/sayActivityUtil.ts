@@ -7,10 +7,10 @@ import type { FacingDirection } from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import SpeechEvent from "@/game/types/itineraryEvents/SpeechEvent";
-import { isActiveAudibleRoom } from "@/game/roomUtil";
+import { findRoomNearestToPosition, isActiveAudibleRoom } from "@/game/roomUtil";
 import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
 import type ActivityContext from "./activity/types/ActivityContext";
-import { findCurrentRoom, findStatePoseAtTime } from "./activity/activityStateUtil";
+import { findStatePoseAtTime } from "./activity/activityStateUtil";
 import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText, stripTrailingPeriod } from "./activity/activityTextParseUtil";
@@ -82,7 +82,7 @@ function _findCharacterRoomAtTime(context:ActivityContext, character:Character, 
   const state = context.characterStatesById.get(character.id);
   if (!state) return null;
   const pose = findStatePoseAtTime(character, state, time);
-  return findCurrentRoom(context.level, pose.position);
+  return findRoomNearestToPosition(context.level.rooms, pose.position.x, pose.position.y);
 }
 
 function _findSpeechRecipientFacingDirection(context:ActivityContext, activityText:string,

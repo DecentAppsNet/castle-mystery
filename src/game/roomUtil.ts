@@ -46,7 +46,7 @@ export function findRoomNearestToPosition(rooms:Room[], x:number, y:number):Room
       nearestDistanceSquared = distanceSquared;
     }
   }
-  assertNonNullable(nearestRoom, `unable to find nearest room for (${x}, ${y})`);
+  assertNonNullable(nearestRoom, `logic in function is wrong`); // Already checked for no rooms case at top.
   return nearestRoom;
 }
 

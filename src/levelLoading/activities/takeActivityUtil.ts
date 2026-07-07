@@ -11,11 +11,13 @@ import { FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointU
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import type ActivityContext from "./activity/types/ActivityContext";
-import { addStateOwnedItem, findCurrentRoom, findStateOwnedItem, removeStateOwnedItem } from "./activity/activityStateUtil";
+import { addStateOwnedItem, findStateOwnedItem, removeStateOwnedItem } from "./activity/activityStateUtil";
 import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsoluteActivityStartTime, scheduleEventsToStartAtTime } from "./activity/activitySchedulingUtil";
 import { findWaypointPath, planMovementWithinRoom } from "./activity/activityMovementUtil";
 import { findRoomItemById } from "./activity/activityTargetingUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
+import Room from "@/game/types/Room";
+import { findRoomNearestToPosition } from "@/game/roomUtil";
 
 type ParsedTakeParts = {
   itemRef:string,
@@ -25,7 +27,7 @@ type ParsedTakeParts = {
 type TakeSource = {
   type:'room',
   item:Item,
-  room:ReturnType<typeof findCurrentRoom>
+  room:Room
 } | {
   type:'held',
   item:Item
@@ -43,7 +45,7 @@ function _throwIfHandDestinationIsOccupied(destination:ItemHoldLocation, context
   throw new Error(`${context.character.title} can't take ${item.title} in ${handLabel} because already holding ${existingItem.title}`);
 }
 
-function _isExitWaypoint(room:ReturnType<typeof findCurrentRoom>, waypoint:Waypoint):boolean {
+function _isExitWaypoint(room:Room, waypoint:Waypoint):boolean {
   return waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z
     && room.exits.some(exit => exit.x === waypoint.position.x && exit.y === waypoint.position.y);
 }
@@ -58,13 +60,13 @@ function _calcDistance(fromX:number, fromZ:number, toX:number, toZ:number):numbe
   return Math.hypot(toX - fromX, toZ - fromZ);
 }
 
-function _findItemFloorY(roomItems:Item[], item:Item, room:ReturnType<typeof findCurrentRoom>):number {
+function _findItemFloorY(roomItems:Item[], item:Item, room:Room):number {
   const stackedItems = roomItems.filter(candidate => candidate.position.x === item.position.x && candidate.position.z === item.position.z);
   if (!stackedItems.length) return room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   return stackedItems.reduce((floorY, candidate) => Math.max(floorY, candidate.position.y), stackedItems[0].position.y);
 }
 
-function _createItemFloorPosition(roomItems:Item[], item:Item, room:ReturnType<typeof findCurrentRoom>):Item['position'] {
+function _createItemFloorPosition(roomItems:Item[], item:Item, room:Room):Item['position'] {
   return {
     x:item.position.x,
     y:_findItemFloorY(roomItems, item, room),
@@ -72,7 +74,7 @@ function _createItemFloorPosition(roomItems:Item[], item:Item, room:ReturnType<t
   };
 }
 
-function _scoreTakeWaypoint(room:ReturnType<typeof findCurrentRoom>, floorPosition:Item['position'], item:Item, waypoint:Waypoint):number|null {
+function _scoreTakeWaypoint(room:Room, floorPosition:Item['position'], item:Item, waypoint:Waypoint):number|null {
   if (Math.abs(waypoint.position.y - floorPosition.y) > FLOOR_WAYPOINT_Y_OFFSET) return null;
   if (_isExitWaypoint(room, waypoint)) return null;
 
@@ -83,7 +85,7 @@ function _scoreTakeWaypoint(room:ReturnType<typeof findCurrentRoom>, floorPositi
   return score;
 }
 
-function _chooseBestTakeWaypoint(room:ReturnType<typeof findCurrentRoom>, item:Item, roomItems:Item[], currentWaypoint:Waypoint):Waypoint {
+function _chooseBestTakeWaypoint(room:Room, item:Item, roomItems:Item[], currentWaypoint:Waypoint):Waypoint {
   const floorPosition = _createItemFloorPosition(roomItems, item, room);
   const scoredWaypoints = room.waypoints
     .map(waypoint => ({ waypoint, score:_scoreTakeWaypoint(room, floorPosition, item, waypoint) }))
@@ -130,7 +132,8 @@ function _parseTakeParts(activityText:string):ParsedTakeParts {
 }
 
 function _findTakeSource(context:ActivityContext, itemRef:string):TakeSource|null {
-  const currentRoom = findCurrentRoom(context.level, context.state.position);
+  const {x, y} = context.state.position;
+  const currentRoom = findRoomNearestToPosition(context.level.rooms, x, y);
   const roomItemLocation = findRoomItemById(context.roomItemsByRoomId, context.level, itemRef);
   if (roomItemLocation?.room.id === currentRoom.id) {
     return { type:'room', item:roomItemLocation.item, room:roomItemLocation.room };
@@ -151,7 +154,8 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
   const itemSource = _findTakeSource(context, itemRef);
   if (!itemSource) throw new Error(`item ${itemRef} is not available for take activity`);
 
-  const currentRoom = findCurrentRoom(context.level, context.state.position);
+  const { x, y } = context.state.position;
+  const currentRoom = findRoomNearestToPosition(context.level.rooms, x, y);
   const unscheduledMovementEvents = itemSource.type !== 'room' ? [] : (() => {
   const roomItems = context.roomItemsByRoomId.get(itemSource.room.id);
   assertNonNullable(roomItems, `missing room items for ${itemSource.room.id}`);

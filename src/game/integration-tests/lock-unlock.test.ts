@@ -18,7 +18,7 @@ import unlockAfterMoveText from './fixtures/unlock-after-move.md?raw';
 const LOCK_EXIT_NEARBY_DISTANCE = 8;
 
 function _findCellExit(levelLike:{ rooms:{ id:string, exits:{ room1Id:string, room2Id:string, exitStatus:ExitStatus }[] }[] }) {
-  const cell = findRoom(levelLike.rooms as Parameters<typeof findRoom>[0], 'Cell');
+  const cell = findRoom(levelLike.rooms as Parameters<typeof findRoom>[0], 'Cell')!;
   const exit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell') || null;
   expect(exit).not.toBeNull();
   return exit!;
@@ -40,7 +40,7 @@ function _expectWalkThenExitStateChange(levelText:string, eventType:typeof Itine
   const lastWalkEvent = preChangeWalkEvents?.[preChangeWalkEvents.length - 1];
   const beforeChangeState = createGameState({ ...level, initialTime:lockChangeEvent!.startTime - 1 });
   const atChangeState = createGameState({ ...level, initialTime:lockChangeEvent!.startTime });
-  const cell = findRoom(level.rooms, 'Cell');
+  const cell = findRoom(level.rooms, 'Cell')!;
   const cellExit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell');
   const exitWaypoint = findExitWaypoint(cell.id, cell.rect, cellExit!, cell.waypoints);
   const atChangeKeeper = findCharacter(atChangeState, 'Keeper');

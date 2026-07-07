@@ -9,7 +9,7 @@ import { duplicateItineraryEvent } from "@/game/types/itineraryEvents/ItineraryE
 import Item, { duplicateItem } from "@/game/types/Item";
 import ItemHoldLocation from "@/game/types/ItemHoldLocation";
 import Level from "@/game/types/Level";
-import Position, { duplicatePosition } from "@/game/types/Position";
+import { duplicatePosition } from "@/game/types/Position";
 import Room from "@/game/types/Room";
 import Waypoint from "@/game/types/Waypoint";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
@@ -20,14 +20,13 @@ import BodyOrientationEvent from "@/game/types/itineraryEvents/BodyOrientationEv
 import SpeechEvent from "@/game/types/itineraryEvents/SpeechEvent";
 import ThoughtEvent from "@/game/types/itineraryEvents/ThoughtEvent";
 import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
-import { findRoom } from "@/game/roomUtil";
+import { findRoom, findRoomNearestToPosition } from "@/game/roomUtil";
 import { findNearestWaypointToPosition } from "@/game/waypointUtil";
 import {
   createInitialPoseEventFromUnpairedCharacter,
   createItineraryIndex,
   doesItineraryBeginWithInitialPoseEvent,
   findCharacterPoseWithoutPairHistory,
-  findRoomAtPositionOrNearest,
 } from "@/game/itineraryUtil";
 
 import { matchesItemReference } from "./activityItemRefUtil";
@@ -109,7 +108,7 @@ function _findRoomForStateWaypointUpdate(level:Level, waypoint:Waypoint, events:
     }
   }
 
-  return _findWaypointOwningRoom(level, waypoint) || findCurrentRoom(level, waypoint.position);
+  return _findWaypointOwningRoom(level, waypoint) || findRoomNearestToPosition(level.rooms, waypoint.position.x, waypoint.position.y);
 }
 
 export function createCharacterActivityState(character:Character):CharacterActivityState {
@@ -221,10 +220,6 @@ export function appendEventsToCharacterState(level:Level, _character:Character, 
   state.waypoint = findNearestWaypointToPosition(room, state.position);
 }
 
-export function findCurrentRoom(level:Level, position:Position):Room {
-  return findRoomAtPositionOrNearest(level.rooms, position.x, position.y);
-}
-
 export function findCurrentRoomForWaypoint(level:Level, waypoint:Waypoint):Room {
-  return _findWaypointOwningRoom(level, waypoint) || findCurrentRoom(level, waypoint.position);
+  return _findWaypointOwningRoom(level, waypoint) || findRoomNearestToPosition(level.rooms, waypoint.position.x, waypoint.position.y);
 }

@@ -10,10 +10,12 @@ import { calcItemCuboidHeightGame } from "@/game/itemSizeUtil";
 import { roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
 import type ActivityContext from "./activity/types/ActivityContext";
-import { findCurrentRoom, removeStateOwnedItem } from "./activity/activityStateUtil";
+import { removeStateOwnedItem } from "./activity/activityStateUtil";
 import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
+import { findRoomNearestToPosition } from "@/game/roomUtil";
+import Room from "@/game/types/Room";
 
 type ParsedDropParts = {
   itemRef:string,
@@ -24,7 +26,7 @@ function _createWaypointKey(waypoint:Waypoint):string {
   return `${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`;
 }
 
-function _isExitWaypoint(room:ReturnType<typeof findCurrentRoom>, waypoint:Waypoint):boolean {
+function _isExitWaypoint(room:Room, waypoint:Waypoint):boolean {
   return waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z
     && room.exits.some(exit => exit.x === waypoint.position.x && exit.y === waypoint.position.y);
 }
@@ -34,26 +36,26 @@ function _isOrthogonalToSource(sourceWaypoint:Waypoint, candidateWaypoint:Waypoi
     !== (candidateWaypoint.position.z === sourceWaypoint.position.z);
 }
 
-function _findWaypointColumnIndex(room:ReturnType<typeof findCurrentRoom>, waypoint:Waypoint):number {
+function _findWaypointColumnIndex(room:Room, waypoint:Waypoint):number {
   const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
   return Math.floor((waypoint.position.x - room.rect.x) / columnWidth);
 }
 
-function _isCenteredRoomColumnX(room:ReturnType<typeof findCurrentRoom>, x:number):boolean {
+function _isCenteredRoomColumnX(room:Room, x:number):boolean {
   const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
   const columnIndex = Math.floor((x - room.rect.x) / columnWidth);
   const centeredX = room.rect.x + (columnIndex + 0.5) * columnWidth;
   return Math.abs(x - centeredX) <= FLOOR_WAYPOINT_Y_OFFSET;
 }
 
-function _isColRowCenteredWaypoint(room:ReturnType<typeof findCurrentRoom>, waypoint:Waypoint):boolean {
+function _isColRowCenteredWaypoint(room:Room, waypoint:Waypoint):boolean {
   const isCenteredRow = waypoint.position.z === WAYPOINT_BACK_ROW_Z
     || waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z
     || waypoint.position.z === WAYPOINT_FRONT_ROW_Z;
   return isCenteredRow && _isCenteredRoomColumnX(room, waypoint.position.x);
 }
 
-function _createClaimedWaypointKeys(room:ReturnType<typeof findCurrentRoom>, activityStartTime:number, context:ActivityContext):Set<string> {
+function _createClaimedWaypointKeys(room:Room, activityStartTime:number, context:ActivityContext):Set<string> {
   const claimedWaypointKeys = new Set<string>();
 
   for (const characterId of context.charactersById.keys()) {
@@ -62,7 +64,7 @@ function _createClaimedWaypointKeys(room:ReturnType<typeof findCurrentRoom>, act
     const position = findTargetPositionAtTime(characterId, activityStartTime,
       context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
     if (!position) continue;
-    const characterRoom = findCurrentRoom(context.level, position);
+    const characterRoom = findRoomNearestToPosition(context.level.rooms, position.x, position.y);
     if (characterRoom.id !== room.id) continue;
     const waypoint = findNearestWaypointToPosition(room, position);
     claimedWaypointKeys.add(_createWaypointKey(waypoint));
@@ -76,7 +78,7 @@ function _createClaimedWaypointKeys(room:ReturnType<typeof findCurrentRoom>, act
   return claimedWaypointKeys;
 }
 
-function _scoreDropWaypoint(room:ReturnType<typeof findCurrentRoom>, sourceWaypoint:Waypoint, candidateWaypoint:Waypoint,
+function _scoreDropWaypoint(room:Room, sourceWaypoint:Waypoint, candidateWaypoint:Waypoint,
   claimedWaypointKeys:Set<string>):number|null {
   if (Math.abs(candidateWaypoint.position.y - sourceWaypoint.position.y) > FLOOR_WAYPOINT_Y_OFFSET) return null;
   if (_isExitWaypoint(room, candidateWaypoint)) return null;
@@ -91,7 +93,7 @@ function _scoreDropWaypoint(room:ReturnType<typeof findCurrentRoom>, sourceWaypo
   return score;
 }
 
-function _chooseBestDropWaypoint(room:ReturnType<typeof findCurrentRoom>, sourceWaypoint:Waypoint,
+function _chooseBestDropWaypoint(room:Room, sourceWaypoint:Waypoint,
   activityStartTime:number, context:ActivityContext):Waypoint {
   const claimedWaypointKeys = _createClaimedWaypointKeys(room, activityStartTime, context);
   const scoredWaypoints = sourceWaypoint.adjacentWaypoints
@@ -114,7 +116,7 @@ function _chooseBestDropWaypoint(room:ReturnType<typeof findCurrentRoom>, source
   }).waypoint;
 }
 
-function _createDroppedItemPosition(room:ReturnType<typeof findCurrentRoom>, dropWaypoint:Waypoint, roomItems:Item[]) {
+function _createDroppedItemPosition(room:Room, dropWaypoint:Waypoint, roomItems:Item[]) {
   const stackedItems = roomItems.filter(item => item.position.x === dropWaypoint.position.x && item.position.z === dropWaypoint.position.z);
   const topItemY = stackedItems.reduce((topY, candidate) => Math.min(topY, candidate.position.y), dropWaypoint.position.y);
   return {
@@ -142,12 +144,12 @@ function _parseDropParts(activityText:string):ParsedDropParts {
   return { itemRef, targetRef };
 }
 
-function _findDropTargetWaypoint(room:ReturnType<typeof findCurrentRoom>, activityStartTime:number,
+function _findDropTargetWaypoint(room:Room, activityStartTime:number,
   targetRef:string, context:ActivityContext, activityText:string):Waypoint {
   const targetPosition = findTargetPositionAtTime(normalizeId(targetRef), activityStartTime,
     context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
   if (!targetPosition) throw new Error(`unknown drop target '${targetRef}' in itinerary activity '${activityText}'`);
-  const targetRoom = findCurrentRoom(context.level, targetPosition);
+  const targetRoom = findRoomNearestToPosition(context.level.rooms, targetPosition.x, targetPosition.y);
   if (targetRoom.id !== room.id) throw new Error(`drop target ${targetRef} is not in the same room for drop activity`);
   return findNearestWaypointToPosition(room, targetPosition);
 }
@@ -164,7 +166,8 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
   const item = removeStateOwnedItem(context.state, itemRef);
   if (!item) throw new Error(`item ${itemRef} is not carried for drop activity`);
 
-  const room = findCurrentRoom(context.level, context.state.position);
+  const { x, y } = context.state.position;
+  const room = findRoomNearestToPosition(context.level.rooms, x, y);
   const roomItems = context.roomItemsByRoomId.get(room.id) || null;
   if (!roomItems) throw new Error(`missing room items for drop activity '${activityText}'`);
   const dropWaypoint = targetRef
