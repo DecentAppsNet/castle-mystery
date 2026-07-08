@@ -160,8 +160,8 @@ function _applyItemReplacement(gameState:GameState, sourceItemId:string, targetI
 }
 
 // Swap the placed source character for its unplaced target while preserving the current visible runtime state.
-function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:string, targetCharacterId:string, replacementPosition:Position,
-  replacementTime:number) {
+function _applyCharacterReplacement(gameState:GameState, replayActiveCharacterId:string, sourceCharacterId:string, 
+    targetCharacterId:string, replacementPosition:Position, replacementTime:number):string {
   assert(targetCharacterId !== sourceCharacterId);
   const sourceCharacterIndex = gameState.characters.findIndex(character => character.id === sourceCharacterId);
   if (sourceCharacterIndex === -1) throw new Error(`replacement source character ${sourceCharacterId} was not found in runtime state`);
@@ -187,12 +187,13 @@ function _applyCharacterReplacement(gameState:GameState, sourceCharacterId:strin
   gameState.unplacedCharactersById.set(sourceCharacter.id, sourceCharacter);
   gameState.characters.splice(sourceCharacterIndex, 1, targetCharacter);
   if (sourceCharacter.isPairingKnown) {
-    gameState.activeCharacterId = targetCharacterId;
-    assert(gameState.activeCharacterId !== sourceCharacterId);
-    return;
+    replayActiveCharacterId = targetCharacterId;
+    assert(replayActiveCharacterId !== sourceCharacterId);
+    return replayActiveCharacterId;
   }
-  if (gameState.activeCharacterId === targetCharacterId) gameState.activeCharacterId = sourceCharacterId;
-  assert(gameState.activeCharacterId === sourceCharacterId || gameState.activeCharacterId !== targetCharacterId);
+  if (replayActiveCharacterId=== targetCharacterId) replayActiveCharacterId = sourceCharacterId;
+  assert(replayActiveCharacterId === sourceCharacterId || replayActiveCharacterId !== targetCharacterId);
+  return replayActiveCharacterId;
 }
 
 // Find a currently placed character and fail loudly if replay logic expected it to exist.
@@ -204,8 +205,11 @@ function _findCharacter(gameState:GameState, characterId:string):Character {
 
 // Replay inventory-affecting events and replacement events into runtime state and enqueue any visible room effects.
 export function applyInventoryState(gameState:GameState, time:number, previousTime:number|undefined, metaTime:number,
-  pendingRoomEffects:PendingRoomEffect[]) {
-  _collectAppliedInventoryEvents(gameState, time).forEach(({ characterId, startPosition, event }) => {
+    pendingRoomEffects:PendingRoomEffect[]) {
+  // Do not mutate gameState.activeCharacterId in this function or callees. Use replayActiveCharacterId instead.
+  let replayActiveCharacterId = gameState.activeCharacterId; 
+  const inventoryEvents = _collectAppliedInventoryEvents(gameState, time);
+  inventoryEvents.forEach(({ characterId, startPosition, event }) => {
     const actor = _findCharacter(gameState, characterId);
     switch(event.type) {
       case ItineraryEventType.TAKE_ITEM:
@@ -275,7 +279,8 @@ export function applyInventoryState(gameState:GameState, time:number, previousTi
       case ItineraryEventType.BECOMES_CHARACTER:
         {
           const becomesCharacterEvent = event as BecomesCharacterEvent;
-          _applyCharacterReplacement(gameState,
+          replayActiveCharacterId = _applyCharacterReplacement(gameState,
+            replayActiveCharacterId,
             becomesCharacterEvent.sourceCharacterId,
             becomesCharacterEvent.targetCharacterId,
             startPosition,

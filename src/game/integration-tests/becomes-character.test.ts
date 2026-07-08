@@ -80,7 +80,7 @@ describe('becomes character integration', () => {
     expect(findCharacterPose(rebuiltMaskedCharacter!, 8_000).speech).toBe('Now I speak as the masked one.');
   });
 
-  it.skip('can rebuild while the active focus is an unplaced source character after replacement', () => {
+  it('can rebuild while the active focus is an unplaced source character after replacement', () => {
     const level = loadLevelFromText(becomesCharacterText, 'becomes-character.md');
     const niccolo = level.characters.find(character => character.id === 'niccolo');
     expect(niccolo?.isPairingKnown).toBe(false);
@@ -98,7 +98,7 @@ describe('becomes character integration', () => {
       gameState.unplacedCharactersById.get('niccolo')!.position.y)?.id).toBe('hall');
   });
 
-  it.skip('switches focus to the replacement target when the active source is visible in an unobscured room', () => {
+  it('switches focus to the replacement target when the active source is visible in an unobscured room', () => {
     const level = loadLevelFromText(becomesCharacterFraternityLikeText, 'becomes-character-fraternity-like.md');
     const niccolo = level.characters.find(character => character.id === 'niccolo');
     const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
@@ -156,27 +156,7 @@ describe('becomes character integration', () => {
     expect(findRoomAtPosition(gameState.rooms, findActiveCharacter(gameState)!.position.x, findActiveCharacter(gameState)!.position.y)?.id).toBe('forest');
   });
 
-  it.skip('keeps the same initial focus when Niccolo\'s late revert is commented out in fledgling fraternity', () => {
-    const mergedCommentedText = createLevelTextWithImportTexts(
-      [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
-      fledglingFraternityText
-    );
-    const mergedUncommentedText = createLevelTextWithImportTexts(
-      [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
-      fledglingFraternityText.replace('//: becomes Niccolo', ': becomes Niccolo')
-    );
-
-    const commentedState = createGameState(loadLevelFromText(mergedCommentedText, 'fledgling_fraternity.md'));
-    const uncommentedState = createGameState(loadLevelFromText(mergedUncommentedText, 'fledgling_fraternity.md'));
-
-    expect(commentedState.activeCharacterId).toBe(uncommentedState.activeCharacterId);
-    expect(findActiveCharacter(commentedState)?.id).toBe(findActiveCharacter(uncommentedState)?.id);
-    expect(findRoomAtPosition(commentedState.rooms,
-      findActiveCharacter(commentedState)!.position.x,
-      findActiveCharacter(commentedState)!.position.y)?.id).toBe('forest');
-  });
-
-  it.skip('marks Niccolo pairing known at load and exposes merged slider markers in fledgling fraternity', () => {
+  it('marks Niccolo pairing known at load and exposes merged slider markers in fledgling fraternity', () => {
     const mergedText = createLevelTextWithImportTexts(
       [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
       fledglingFraternityText
@@ -209,23 +189,6 @@ describe('becomes character integration', () => {
     expect(activeInitialCharacter?.id).toBe('niccolo');
     expect(activeInitialCharacter?.isPairingKnown).toBe(true);
     expect(markerModel.roomEntryTimes.length).toBeGreaterThan(ownMarkerModel.roomEntryTimes.length);
-  });
-
-  it.only('keeps Niccolo Masked out of Hall immediately after the first replacement in fledgling fraternity', () => {
-    const mergedText = createLevelTextWithImportTexts(
-      [sharedItemsText, sharedCharactersText, sharedRoomStylesText],
-      fledglingFraternityText
-    );
-    const level = loadLevelFromText(mergedText, 'fledgling_fraternity.md');
-    const niccolo = level.characters.find(character => character.id === 'niccolo');
-    const becomesEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.BECOMES_CHARACTER) as { startTime:number } | undefined;
-    const atReplacementState = createGameState({ ...level, initialTime:becomesEvent!.startTime });
-    const oneSecondLaterState = createGameState({ ...level, initialTime:becomesEvent!.startTime + 1_000 });
-    const maskedAtReplacement = atReplacementState.characters.find(character => character.id === 'niccolo masked');
-    const maskedOneSecondLater = oneSecondLaterState.characters.find(character => character.id === 'niccolo masked');
-
-    expect(findRoomAtPosition(atReplacementState.rooms, maskedAtReplacement!.position.x, maskedAtReplacement!.position.y)?.id).not.toBe('hall');
-    expect(findRoomAtPosition(oneSecondLaterState.rooms, maskedOneSecondLater!.position.x, maskedOneSecondLater!.position.y)?.id).not.toBe('hall');
   });
 
   it('applies later absolute room-arrival activities authored for the replacement target', () => {
@@ -276,12 +239,12 @@ describe('becomes character integration', () => {
     expect(findRoomAtPosition(gameState.rooms, maskedCharacter.position.x, maskedCharacter.position.y)?.id).toBe('nave');
   });
 
-  it.skip('keeps a pairing-known active silhouette on the placed replacement in the first obscured room', () => {
+  it('keeps a pairing-known active silhouette on the placed replacement in the first obscured room', () => {
     _expectActiveCharacterRoom(becomesCharacterPairingKnownObscuredRoomsText,
       'becomes-character-pairing-known-obscured-rooms.md', 4_000, 'niccolo', 'hall');
   });
 
-  it.skip('keeps a pairing-known active silhouette on the placed replacement through multiple obscured rooms', () => {
+  it('keeps a pairing-known active silhouette on the placed replacement through multiple obscured rooms', () => {
     _expectActiveCharacterRoom(becomesCharacterPairingKnownObscuredRoomsText,
       'becomes-character-pairing-known-obscured-rooms.md', 6_000, 'niccolo', 'crypt');
   });
@@ -296,7 +259,7 @@ describe('becomes character integration', () => {
       'becomes-character-pairing-unknown-obscured-rooms.md', 6_000, 'niccolo', 'hall');
   });
 
-  it.skip('moves a pairing-unknown active silhouette into the unobscured room after reverting to the source', () => {
+  it('moves a pairing-unknown active silhouette into the unobscured room after reverting to the source', () => {
     _expectActiveCharacterRoom(becomesCharacterPairingUnknownRevertUnobscuredText,
       'becomes-character-pairing-unknown-revert-unobscured.md', 7_000, 'niccolo', 'nave');
   });

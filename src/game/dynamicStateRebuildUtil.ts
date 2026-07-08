@@ -10,9 +10,11 @@ import { resolveCharacterPosesAndActiveFocus } from "./dynamicStateRebuild/poseR
 import { applyVisibilityState } from "./dynamicStateRebuild/visibilityApplicationUtil";
 import GameState from "./types/GameState";
 import { createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateCharactersByIdUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
+import assert from "assert";
 
 // Rebuild the mutable runtime snapshot for a target time by replaying authored timeline effects from initial state.
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime:number|undefined, metaTime:number) {
+  const originalActiveCharacterId = gameState.activeCharacterId;
   const discoveryStateSnapshot = createDiscoveryStateSnapshot(gameState);
   const pendingRoomEffects:PendingRoomEffect[] = [];
   gameState.itemsById = duplicateItemsById(gameState.initialItemsById);
@@ -24,6 +26,7 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
   applyVisibilityState(gameState, time);
   applyInventoryState(gameState, time, previousTime, metaTime, pendingRoomEffects);
   applyExitState(gameState, time, previousTime, metaTime, pendingRoomEffects);
+  assert(gameState.activeCharacterId === originalActiveCharacterId, 'Prior to resolveCharacterPosesAndActiveFocus() call, no changes to gameState.activeCharacterId should be made.');
   resolveCharacterPosesAndActiveFocus(gameState, time);
   finalizeDynamicStateRebuild(gameState, time, pendingRoomEffects, discoveryStateSnapshot);
 }

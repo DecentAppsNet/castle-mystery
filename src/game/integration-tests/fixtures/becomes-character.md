@@ -30,12 +30,14 @@ LR..
 ## Niccolo
 
 * title=Niccolo
+* description=A guy
 * faceImage=niccoloFace.png
 * items=Inventory Note
 
 ## Niccolo Masked
 
 * title=Niccolo Masked
+* description=A guy wearing a mask
 * faceImage=niccoloMaskedFace.png
 
 ## Bystander
@@ -58,8 +60,6 @@ LR..
 * description=A twig for the right hand.
 
 # itinerary
-
-## Niccolo
 
 0:00:03 Niccolo @ Hall
 0:00:04 Niccolo takes Left Pebble in left hand

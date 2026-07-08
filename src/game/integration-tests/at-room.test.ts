@@ -19,6 +19,7 @@ import atRoomPercentClaimedInteriorText from './fixtures/at-room-percent-claimed
 import atRoomPercentClaimedVisibleItemText from './fixtures/at-room-percent-claimed-visible-item.md?raw';
 import atRoomPercentHiddenCharacterText from './fixtures/at-room-percent-hidden-character.md?raw';
 import atLibraryViaFoyerText from './fixtures/at-library-via-foyer.md?raw';
+import Room from '../types/Room';
 
 function _positionsEqual(position1:{ x:number, y:number }, position2:{ x:number, y:number }) {
   return position1.x === position2.x && position1.y === position2.y;
@@ -31,7 +32,7 @@ function _findPreviousEvent<T>(events:readonly unknown[], startIndex:number, pre
   return undefined;
 }
 
-function _findMiddleFloorWaypointNearestRoomCenter(room:NonNullable<ReturnType<typeof findRoom>>) {
+function _findMiddleFloorWaypointNearestRoomCenter(room:Room) {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   const centerX = Math.floor(room.rect.x + room.rect.width / 2);
   return room.waypoints.reduce((nearestFloorWaypoint, waypoint) => {
@@ -43,7 +44,7 @@ function _findMiddleFloorWaypointNearestRoomCenter(room:NonNullable<ReturnType<t
   }, null as typeof room.waypoints[number] | null);
 }
 
-function _findLeftmostMiddleFloorWaypoint(room:NonNullable<ReturnType<typeof findRoom>>) {
+function _findLeftmostMiddleFloorWaypoint(room:Room) {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   return room.waypoints.reduce((leftmostFloorWaypoint, waypoint) => {
     if (waypoint.position.y !== floorY || waypoint.position.z !== WAYPOINT_MIDDLE_ROW_Z) return leftmostFloorWaypoint;
@@ -52,7 +53,7 @@ function _findLeftmostMiddleFloorWaypoint(room:NonNullable<ReturnType<typeof fin
   }, null as typeof room.waypoints[number] | null);
 }
 
-function _findInteriorMiddleFloorWaypointsByDescendingX(room:NonNullable<ReturnType<typeof findRoom>>) {
+function _findInteriorMiddleFloorWaypointsByDescendingX(room:Room) {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   return room.waypoints
     .filter(waypoint => waypoint.position.y === floorY
