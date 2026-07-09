@@ -4,7 +4,7 @@ import Item from "./Item";
 import Room from "./Room"
 import Conclusion from "../conclusions/types/Conclusion";
 
-type Level = Readonly<{
+export type MutableLevel = {
   rooms:Room[],
   initialCharacters:Character[],
   characters:Character[],
@@ -23,7 +23,9 @@ type Level = Readonly<{
   endTime:number,
   duration:number,
   labels:TimeLabel[]
-}>
+}
+
+type Level = Readonly<MutableLevel>;
 
 export function createDefaultLevel():Level {
   return {

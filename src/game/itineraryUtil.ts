@@ -420,12 +420,3 @@ export function findPreviousRoomEntryTime(character:Character, time:number):numb
 export function doesItineraryBeginWithInitialPoseEvent(itinerary:Itinerary):boolean {
   return itinerary.length > 0 && itinerary[0].type === 'InitialPose';
 }
-
-export function doesItineraryContainMultipleInitialPoseEvents(itinerary:Itinerary):boolean {
-  let count = 0;
-  for(let i = 0; i < itinerary.length; ++i) {
-    if (itinerary[i].type === 'InitialPose') ++count;
-    if (count === 2) return true;
-  }
-  return false;
-}
