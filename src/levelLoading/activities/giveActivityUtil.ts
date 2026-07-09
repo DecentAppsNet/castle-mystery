@@ -14,7 +14,7 @@ import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsolute
 import { findWaypointPath, planMovementWithinRoom } from "./activity/activityMovementUtil";
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
-import { findRoomNearestToPosition } from "@/game/roomUtil";
+import { findRoomAtPosition } from "@/game/roomUtil";
 
 const GIVE_ITEM_NEARBY_DISTANCE = 16;
 
@@ -56,11 +56,13 @@ export function tryCreateGiveActivity(activityText:string, context:ActivityConte
   assertNonNullable(recipientState, `missing itinerary state for ${recipientId}`);
 
   const { x, y } = context.state.position;
-  const currentRoom = findRoomNearestToPosition(context.level.rooms, x, y);
+  const currentRoom = findRoomAtPosition(context.level.rooms, x, y);
+  assertNonNullable(currentRoom, 'recipient character should always be positioned in a room');
   const recipientPosition = findTargetPositionAtTime(recipientId, activityStartTime,
     context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
   assertNonNullable(recipientPosition, `unable to resolve recipient '${recipientId}' for give activity`);
-  const recipientRoom = findRoomNearestToPosition(context.level.rooms, recipientPosition.x, recipientPosition.y);
+  const recipientRoom = findRoomAtPosition(context.level.rooms, recipientPosition.x, recipientPosition.y);
+  assertNonNullable(recipientRoom, 'recipient character should always be positioned in a room');
   if (recipientRoom.id !== currentRoom.id) throw new Error(`recipient ${recipientId} is not in the same room for give activity`);
 
   const isNearby = _calcFloorDistance(context.state.position.x, context.state.position.z, recipientPosition.x, recipientPosition.z) <= GIVE_ITEM_NEARBY_DISTANCE;

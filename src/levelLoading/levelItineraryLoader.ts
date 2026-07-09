@@ -42,7 +42,7 @@ export function loadItineraries(level:Level, itinerarySection:string, levelFilen
   }
   let resolvedActivities = resolveItineraryActivityTimes(activities);
 
-  for (let attemptNo = 0; attemptNo < Math.max(2, activities.length + 1); ++attemptNo) {
+  for (let attemptNo = 0; attemptNo < activities.length + 1; ++attemptNo) {
     const scheduleResult = scheduleActivities(level, resolvedActivities, levelFilename);
     const nextResolvedActivities = resolveItineraryActivityTimes(activities, scheduleResult.completionTimesBySourceIndex);
     const didStabilize = nextResolvedActivities.every((activity, index) =>

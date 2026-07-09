@@ -17,7 +17,7 @@ import { findWaypointPath, planMovementWithinRoom } from "./activity/activityMov
 import { findRoomItemById } from "./activity/activityTargetingUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
 import Room from "@/game/types/Room";
-import { findRoomNearestToPosition } from "@/game/roomUtil";
+import { findRoomAtPosition } from "@/game/roomUtil";
 
 type ParsedTakeParts = {
   itemRef:string,
@@ -133,7 +133,8 @@ function _parseTakeParts(activityText:string):ParsedTakeParts {
 
 function _findTakeSource(context:ActivityContext, itemRef:string):TakeSource|null {
   const {x, y} = context.state.position;
-  const currentRoom = findRoomNearestToPosition(context.level.rooms, x, y);
+  const currentRoom = findRoomAtPosition(context.level.rooms, x, y);
+  assertNonNullable(currentRoom, 'A character should always be positioned inside of a room.');
   const roomItemLocation = findRoomItemById(context.roomItemsByRoomId, context.level, itemRef);
   if (roomItemLocation?.room.id === currentRoom.id) {
     return { type:'room', item:roomItemLocation.item, room:roomItemLocation.room };
@@ -155,7 +156,8 @@ export function tryCreateTakeActivity(activityText:string, context:ActivityConte
   if (!itemSource) throw new Error(`item ${itemRef} is not available for take activity`);
 
   const { x, y } = context.state.position;
-  const currentRoom = findRoomNearestToPosition(context.level.rooms, x, y);
+  const currentRoom = findRoomAtPosition(context.level.rooms, x, y);
+  assertNonNullable(currentRoom, 'A character should always be positioned inside of a room.');
   const unscheduledMovementEvents = itemSource.type !== 'room' ? [] : (() => {
   const roomItems = context.roomItemsByRoomId.get(itemSource.room.id);
   assertNonNullable(roomItems, `missing room items for ${itemSource.room.id}`);

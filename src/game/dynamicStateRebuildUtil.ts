@@ -10,7 +10,7 @@ import { resolveCharacterPosesAndActiveFocus } from "./dynamicStateRebuild/poseR
 import { applyVisibilityState } from "./dynamicStateRebuild/visibilityApplicationUtil";
 import GameState from "./types/GameState";
 import { createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateCharactersByIdUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
-import assert from "assert";
+import { assert } from "decent-portal";
 
 // Rebuild the mutable runtime snapshot for a target time by replaying authored timeline effects from initial state.
 export function rebuildDynamicStateForTime(gameState:GameState, time:number, previousTime:number|undefined, metaTime:number) {

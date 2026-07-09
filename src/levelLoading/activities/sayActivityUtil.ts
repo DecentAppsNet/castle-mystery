@@ -7,7 +7,7 @@ import type { FacingDirection } from "@/game/types/Character";
 import ItineraryEvent from "@/game/types/itineraryEvents/ItineraryEvent";
 import ItineraryEventType from "@/game/types/itineraryEvents/ItineraryEventType";
 import SpeechEvent from "@/game/types/itineraryEvents/SpeechEvent";
-import { findRoomNearestToPosition, isActiveAudibleRoom } from "@/game/roomUtil";
+import { findRoomAtPosition, isActiveAudibleRoom } from "@/game/roomUtil";
 import { formatMsecsAsTimestamp } from "@/levelLoading/timestampUtil";
 import type ActivityContext from "./activity/types/ActivityContext";
 import { findStatePoseAtTime } from "./activity/activityStateUtil";
@@ -15,6 +15,7 @@ import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/ac
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText, stripTrailingPeriod } from "./activity/activityTextParseUtil";
 import { normalizeId } from "@/game/idUtil";
+import { assertNonNullable } from "decent-portal";
 
 type SpeechVerb = 'says' | 'interrupts';
 
@@ -82,7 +83,9 @@ function _findCharacterRoomAtTime(context:ActivityContext, character:Character, 
   const state = context.characterStatesById.get(character.id);
   if (!state) return null;
   const pose = findStatePoseAtTime(character, state, time);
-  return findRoomNearestToPosition(context.level.rooms, pose.position.x, pose.position.y);
+  const room = findRoomAtPosition(context.level.rooms, pose.position.x, pose.position.y);
+  assertNonNullable(room, 'a character should always be positioned in a room');
+  return room;
 }
 
 function _findSpeechRecipientFacingDirection(context:ActivityContext, activityText:string,

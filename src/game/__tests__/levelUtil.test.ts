@@ -38,6 +38,7 @@ import becomesItemText from '../integration-tests/fixtures/becomes-item.md?raw';
 import pairOnlyBecomesValidText from './fixtures/pair-only-becomes-valid.md?raw';
 import pairOnlyBecomesInvalidText from './fixtures/pair-only-becomes-invalid.md?raw';
 import becomesCharacterSourceUnplacedText from './fixtures/becomes-character-source-unplaced.md?raw';
+import roomEdgePositionText from './fixtures/room-edge-position.md?raw';
 import itemDrawOffsetText from './fixtures/item-draw-offset.md?raw';
 import itemStackOffsetText from './fixtures/item-stack-offset.md?raw';
 import outsideRoomMetadataText from './fixtures/outside-room-metadata.md?raw';
@@ -612,8 +613,11 @@ describe('levelUtil itinerary loading', () => {
   it('omits auto-generated identities when all character titles are already known', () => {
     const level = loadLevelFromText(identitiesAllTitlesKnownText);
     const identities = level.conclusions.find(conclusion => conclusion.id === 'identities') || null;
-
     expect(identities).toBeNull();
+  });
+
+  it('a character positioned at edge of room can take an item in that room', () => {
+    expect(() => loadLevelFromText(roomEdgePositionText, 'prologue.md')).not.toThrow();
   });
 
   it('uses the generated identities conclusion as the default when an identities subsection only authors metadata', () => {

@@ -8,12 +8,13 @@ import WalkEvent from "@/game/types/itineraryEvents/WalkEvent";
 import Room from "@/game/types/Room";
 import RoomExit, { LOCKABLE_WITHOUT_INV_CHECK } from "@/game/types/RoomExit";
 import { createLockEvent, createUnlockEvent } from "@/game/itineraryUtil";
-import { findRoom, findRoomNearestToPosition } from "@/game/roomUtil";
+import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
 import { findExitWaypoint } from "@/game/waypointUtil";
 import type ActivityContext from "./activity/types/ActivityContext";
 import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsoluteActivityStartTime, scheduleEventsToStartAtTime } from "./activity/activitySchedulingUtil";
 import { planMovementWithinRoom } from "./activity/activityMovementUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
+import { assertNonNullable } from "decent-portal";
 
 const LOCK_EXIT_NEARBY_DISTANCE = 8;
 
@@ -63,7 +64,8 @@ function _createLockChangeActivity(activityText:string, verb:'locks'|'unlocks', 
   if (!roomRef.length) throw new Error(`missing room id in itinerary activity '${activityText}'`);
 
   const { x, y } = context.state.position;
-  const currentRoom = findRoomNearestToPosition(context.level.rooms, x, y);
+  const currentRoom = findRoomAtPosition(context.level.rooms, x, y);
+  assertNonNullable(currentRoom, 'character should always be positioned in a room');
   const exit = _findCurrentRoomExit(currentRoom, roomRef, context);
   const exitWaypoint = findExitWaypoint(currentRoom.id, currentRoom.rect, exit, currentRoom.waypoints);
   const isNearby = _calcDistance(context.state.position.x, context.state.position.y,

@@ -12,7 +12,8 @@ import { calcActivityStartTime, ensureTimestampIsAvailable, findEarliestAbsolute
 import { planMovementWithinRoom } from "./activity/activityMovementUtil";
 import { findRoomItemById } from "./activity/activityTargetingUtil";
 import { findSentenceStyleActivityVerb, stripTrailingPeriod } from "./activity/activityTextParseUtil";
-import { findRoomNearestToPosition } from "@/game/roomUtil";
+import { findRoomAtPosition } from "@/game/roomUtil";
+import { assertNonNullable } from "decent-portal";
 
 type BodyOrientationVerb = 'stands' | 'sits' | 'kneels' | 'lays';
 
@@ -61,7 +62,8 @@ export function tryCreateBodyOrientationActivity(activityText:string, context:Ac
   const { bodyOrientation, itemRef } = _parseBodyOrientationParts(activityText, verb);
   if (!itemRef) return [createBodyOrientationEvent(activityStartTime, bodyOrientation)];
 
-  const currentRoom = findRoomNearestToPosition(context.level.rooms, context.state.position.x, context.state.position.y);
+  const currentRoom = findRoomAtPosition(context.level.rooms, context.state.position.x, context.state.position.y);
+  assertNonNullable(currentRoom, 'character should always be positioned in a room');
   const roomItemLocation = findRoomItemById(context.roomItemsByRoomId, context.level, itemRef);
   if (!roomItemLocation || roomItemLocation.room.id !== currentRoom.id) {
     throw new Error(`item ${itemRef} is not available for body orientation activity`);

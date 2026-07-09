@@ -14,8 +14,9 @@ import { removeStateOwnedItem } from "./activity/activityStateUtil";
 import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/activitySchedulingUtil";
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { stripTrailingPeriod } from "./activity/activityTextParseUtil";
-import { findRoomNearestToPosition } from "@/game/roomUtil";
+import { findRoomAtPosition } from "@/game/roomUtil";
 import Room from "@/game/types/Room";
+import { assertNonNullable } from "decent-portal";
 
 type ParsedDropParts = {
   itemRef:string,
@@ -64,8 +65,8 @@ function _createClaimedWaypointKeys(room:Room, activityStartTime:number, context
     const position = findTargetPositionAtTime(characterId, activityStartTime,
       context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
     if (!position) continue;
-    const characterRoom = findRoomNearestToPosition(context.level.rooms, position.x, position.y);
-    if (characterRoom.id !== room.id) continue;
+    const characterRoom = findRoomAtPosition(context.level.rooms, position.x, position.y);
+    if (characterRoom?.id !== room.id) continue;
     const waypoint = findNearestWaypointToPosition(room, position);
     claimedWaypointKeys.add(_createWaypointKey(waypoint));
   }
@@ -149,7 +150,8 @@ function _findDropTargetWaypoint(room:Room, activityStartTime:number,
   const targetPosition = findTargetPositionAtTime(normalizeId(targetRef), activityStartTime,
     context.charactersById, context.characterStatesById, context.roomItemsByRoomId, context.poseOverridesByCharacterId);
   if (!targetPosition) throw new Error(`unknown drop target '${targetRef}' in itinerary activity '${activityText}'`);
-  const targetRoom = findRoomNearestToPosition(context.level.rooms, targetPosition.x, targetPosition.y);
+  const targetRoom = findRoomAtPosition(context.level.rooms, targetPosition.x, targetPosition.y);
+  assertNonNullable(targetRoom, 'a character should always be positioned in a room');
   if (targetRoom.id !== room.id) throw new Error(`drop target ${targetRef} is not in the same room for drop activity`);
   return findNearestWaypointToPosition(room, targetPosition);
 }
@@ -166,7 +168,8 @@ export function tryCreateDropActivity(activityText:string, context:ActivityConte
   if (!item) throw new Error(`item ${itemRef} is not carried for drop activity`);
 
   const { x, y } = context.state.position;
-  const room = findRoomNearestToPosition(context.level.rooms, x, y);
+  const room = findRoomAtPosition(context.level.rooms, x, y);
+  assertNonNullable(room, 'a character should always be positioned in a room');
   const roomItems = context.roomItemsByRoomId.get(room.id) || null;
   if (!roomItems) throw new Error(`missing room items for drop activity '${activityText}'`);
   const dropWaypoint = targetRef
