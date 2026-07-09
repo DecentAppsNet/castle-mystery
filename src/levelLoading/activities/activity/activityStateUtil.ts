@@ -26,7 +26,7 @@ import {
   createInitialPoseEventFromUnpairedCharacter,
   createItineraryIndex,
   doesItineraryBeginWithInitialPoseEvent,
-  findCharacterPoseWithoutPairHistory,
+  findCharacterPose
 } from "@/game/itineraryUtil";
 
 import { matchesItemReference } from "./activityItemRefUtil";
@@ -37,8 +37,9 @@ import CharacterPose from "@/game/types/CharacterPose";
 
 function _createCharacterSnapshot(character:Character, state:CharacterActivityState):Character {
   assert(doesItineraryBeginWithInitialPoseEvent(state.events), `Can't create character snapshot with invalid events - missing initial pose event.`);
-  const stateInitialPoseCharacterId = (state.events[0] as InitialPoseEvent).firstCharacterId;
-  assert(stateInitialPoseCharacterId === character.id, `state.events has an initial pose for "${stateInitialPoseCharacterId}", but we are making a snapshot for "${character.id}".`);
+  const initialPoseEvent = (state.events[0] as InitialPoseEvent);
+  assert(initialPoseEvent.firstCharacterId === character.id || initialPoseEvent.secondCharacterId === character.id, 
+    `state.events has an initial pose for "${initialPoseEvent.firstCharacterId}" and ""${initialPoseEvent.secondCharacterId}", but we are making a snapshot for "${character.id}".`);
   return {
     ...character,
     waypoint:state.waypoint,
@@ -198,7 +199,7 @@ export function findStatePoseAtTime(character:Character, state:CharacterActivity
     };
   }
   const snapshot = _createCharacterSnapshot(character, state);
-  return findCharacterPoseWithoutPairHistory(snapshot, time);
+  return findCharacterPose(snapshot, time);
 }
 
 export function appendEventsToCharacterState(level:Level, _character:Character, state:CharacterActivityState, events:ItineraryEvent[]) {

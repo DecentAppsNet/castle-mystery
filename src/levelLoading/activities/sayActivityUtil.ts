@@ -15,7 +15,7 @@ import { calcActivityStartTime, ensureTimestampIsAvailable } from "./activity/ac
 import { findTargetPositionAtTime } from "./activity/activityTargetingUtil";
 import { findSentenceStyleActivityVerb, parseSentenceStyleActivityText, stripTrailingPeriod } from "./activity/activityTextParseUtil";
 import { normalizeId } from "@/game/idUtil";
-import { assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 
 type SpeechVerb = 'says' | 'interrupts';
 
@@ -84,7 +84,7 @@ function _findCharacterRoomAtTime(context:ActivityContext, character:Character, 
   if (!state) return null;
   const pose = findStatePoseAtTime(character, state, time);
   const room = findRoomAtPosition(context.level.rooms, pose.position.x, pose.position.y);
-  assertNonNullable(room, 'a character should always be positioned in a room');
+  assertNonNullable(room, `Character "${character.id}" was positioned at ${pose.position.x},${pose.position.y} outside of any room.`);
   return room;
 }
 
@@ -126,9 +126,14 @@ function _findSpeechVerb(activityText:string):SpeechVerb|null {
   return findSentenceStyleActivityVerb(activityText, ['says', 'interrupts']);
 }
 
+function _isCharacterPlaced(characterId:string, context:ActivityContext):boolean {
+  return context.characterStatesById.has(characterId);
+}
+
 export function tryCreateSayActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
   const speechVerb = _findSpeechVerb(activityText);
   if (!speechVerb) return null;
+  assert(_isCharacterPlaced(context.character.id, context), `Trying to create a say activity for unplaced character "${context.character.id}".`);
   ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
   const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
   const { speech, recipientId, recipientText } = _parseSpeechActivityText(activityText.trim(), speechVerb);
