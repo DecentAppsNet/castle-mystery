@@ -25,6 +25,7 @@ import { MarkdownLineError, parseFirstFencedCodeBlockLines, parseNameValueLineEn
 import { normalizeId } from "../game/idUtil";
 import { tryResolveItemId } from "./levelRoomPopulationLoader";
 import { areRoomsWellOrdered, sortRoomsForDrawingOrder } from "./roomOrderingUtil";
+import LevelFileSection from "./types/LevelFileSection";
 
 export type LegendTile = {
   entryId:string,
@@ -321,11 +322,11 @@ export function calcScaledRoomGridPosition(room:Room, row:number, col:number, gr
   ];
 }
 
-export function createRoomsFromMapSection(level:Level, mapSection:string, firstLineNo:number = 1) {
-  _validateMapSectionIsPresent(mapSection);
-  const mapLines = parseFirstFencedCodeBlockLines(mapSection);
+export function createRoomsFromMapSection(level:Level, mapSection:LevelFileSection) {
+  _validateMapSectionIsPresent(mapSection.text);
+  const mapLines = parseFirstFencedCodeBlockLines(mapSection.text);
   _validateMapGridIsPresent(mapLines);
-  const legend = parseUniqueNameValueLines(mapSection, 'map legend', false, firstLineNo);
+  const legend = parseUniqueNameValueLines(mapSection.text, 'map legend', false, mapSection.firstLineNo);
   _validateLegendMatchesGrid(legend, _findUsedMapLegendChars(mapLines));
   const roomBoundsById = new Map<string, { authoredName:string, tileChar:string, minCol:number, maxCol:number, minRow:number, maxRow:number }>();
   const roomTileCountById = new Map<string, number>();
@@ -383,19 +384,18 @@ export function createRoomsFromMapSection(level:Level, mapSection:string, firstL
   level.rooms.push(...sortedRooms);
 }
 
-export function validateMapLegendRoomsAgainstRoomsSection(mapSection:string, roomsSection:string, mapFirstLineNo:number = 1, roomsFirstLineNo:number = 1) {
-  _validateMapSectionIsPresent(mapSection);
-  const mapLines = parseFirstFencedCodeBlockLines(mapSection);
+export function validateMapLegendRoomsAgainstRoomsSection(mapSection:LevelFileSection, roomsSection:LevelFileSection) {
+  _validateMapSectionIsPresent(mapSection.text);
+  const mapLines = parseFirstFencedCodeBlockLines(mapSection.text);
   _validateMapGridIsPresent(mapLines);
-  const legend = parseUniqueNameValueLines(mapSection, 'map legend', false, mapFirstLineNo);
+  const legend = parseUniqueNameValueLines(mapSection.text, 'map legend', false, mapSection.firstLineNo);
   _validateLegendMatchesGrid(legend, _findUsedMapLegendChars(mapLines));
-  _validateMapLegendRoomsExistInRoomsSection(legend, roomsSection, roomsFirstLineNo);
+  _validateMapLegendRoomsExistInRoomsSection(legend, roomsSection.text, roomsSection.firstLineNo);
 }
 
-export function applyRoomMetadataFromSections(level:Level, roomsSection:string, firstLineNo:number = 1,
-  roomStylesSection:string = '', roomStylesFirstLineNo:number = 1) {
-  const roomSectionsById = _createNormalizedSectionEntryMap(roomsSection, 2, firstLineNo);
-  const roomStyleMetadataById = _createRoomStyleMetadataById(roomStylesSection, roomStylesFirstLineNo);
+export function applyRoomMetadataFromSections(level:Level, roomsSection:LevelFileSection, roomStylesSection:LevelFileSection) {
+  const roomSectionsById = _createNormalizedSectionEntryMap(roomsSection.text, 2, roomsSection.firstLineNo);
+  const roomStyleMetadataById = _createRoomStyleMetadataById(roomStylesSection.text, roomStylesSection.firstLineNo);
   level.rooms.forEach((room, index) => {
     const roomSectionEntry = roomSectionsById.get(room.id) || null;
     if (!roomSectionEntry) return;
@@ -420,8 +420,8 @@ export function applyRoomMetadataFromSections(level:Level, roomsSection:string, 
   });
 }
 
-export function validateRoomGridLegendEntries(level:Level, roomsSection:string, knownPopulationEntryIds:Set<string>, firstLineNo:number = 1) {
-  const roomSectionsById = _createNormalizedSectionEntryMap(roomsSection, 2, firstLineNo);
+export function validateRoomGridLegendEntries(level:Level, roomsSection:LevelFileSection, knownPopulationEntryIds:Set<string>) {
+  const roomSectionsById = _createNormalizedSectionEntryMap(roomsSection.text, 2, roomsSection.firstLineNo);
 
   Array.from(roomSectionsById.entries()).forEach(([roomId, roomSectionEntry]) => {
     const roomSection = roomSectionEntry.value;
@@ -632,9 +632,9 @@ function _addExitBetweenRooms(level:Level, pendingExit:PendingExit) {
   room2.exits.push(exit);
 }
 
-export function addRoomExitsFromRoomsSection(level:Level, roomsSection:string, itemDefinitions:Map<string, { title:string }> = new Map(),
+export function addRoomExitsFromRoomsSection(level:Level, roomsSectionText:string, itemDefinitions:Map<string, { title:string }> = new Map(),
   firstLineNo:number = 1) {
-  _createPendingExits(roomsSection, itemDefinitions, firstLineNo).forEach(pendingExit => _addExitBetweenRooms(level, pendingExit));
+  _createPendingExits(roomsSectionText, itemDefinitions, firstLineNo).forEach(pendingExit => _addExitBetweenRooms(level, pendingExit));
 }
 
 export function generateRoomWaypointsForLevel(level:Level) {

@@ -13,6 +13,7 @@ import ClozePartType from "../game/conclusions/types/ClozePartType";
 import Conclusion from "../game/conclusions/types/Conclusion";
 import { normalizeId } from "../game/idUtil";
 import Room from "../game/types/Room";
+import LevelFileSection from "./types/LevelFileSection";
 
 function _resolveRevealRoomIds(revealRoomsText:string|undefined, rooms:ReadonlyArray<Room>):string[] {
   if (!revealRoomsText) return [];
@@ -127,10 +128,9 @@ function _createNormalizedConclusionSubsectionEntries(conclusionsSection:string,
   return Array.from(normalizedEntries.values());
 }
 
-export function createConclusionCategoryOptionsByName(conclusionsSection:string, defaultCategoryOptionsByName:Map<string, string[]> = new Map(),
-  firstLineNo:number = 1):Map<string, string[]> {
+export function createConclusionCategoryOptionsByName(conclusionsSection:LevelFileSection, defaultCategoryOptionsByName:Map<string, string[]> = new Map()):Map<string, string[]> {
   const authoredCategoryEntriesById = new Map<string, { authoredName:string, value:string }>();
-  parseNameValueLineEntriesWithLines(_parseConclusionCategoryText(conclusionsSection), false, firstLineNo).forEach(categoryEntry => {
+  parseNameValueLineEntriesWithLines(_parseConclusionCategoryText(conclusionsSection.text), false, conclusionsSection.firstLineNo).forEach(categoryEntry => {
     const normalizedCategoryId = normalizeId(categoryEntry.name);
     const existingEntry = authoredCategoryEntriesById.get(normalizedCategoryId) || null;
     if (existingEntry) throw new MarkdownLineError(categoryEntry.lineNo,
@@ -238,14 +238,15 @@ function _parseClozeTemplateToParts(clozeTemplate:string, categoryOptionsByName:
   return parts;
 }
 
-export function loadConclusionsFromSection(conclusionsSection:string, rooms:ReadonlyArray<Room>, categoryOptionsByName?:Map<string, string[]>,
-  characters:ReadonlyArray<Character> = [], firstLineNo:number = 1):Conclusion[] {
-  const section = conclusionsSection || "";
-  if (!section.trim()) return [];
+export function loadConclusionsFromSection(conclusionsSection:LevelFileSection, rooms:ReadonlyArray<Room>, categoryOptionsByName?:Map<string, string[]>,
+  characters:ReadonlyArray<Character> = []):Conclusion[] {
+  const sectionText = conclusionsSection.text || "";
+  const firstLineNo = conclusionsSection.firstLineNo;
+  if (!sectionText.trim()) return [];
 
-  const resolvedCategoryOptionsByName = categoryOptionsByName || createConclusionCategoryOptionsByName(section, new Map(), firstLineNo);
-  const authoredCharacterOptions = createConclusionCategoryOptionsByName(section, new Map(), firstLineNo).get('characters') || null;
-  const conclusionSubsections = _createNormalizedConclusionSubsectionEntries(section, firstLineNo);
+  const resolvedCategoryOptionsByName = categoryOptionsByName || createConclusionCategoryOptionsByName(conclusionsSection, new Map());
+  const authoredCharacterOptions = createConclusionCategoryOptionsByName(conclusionsSection, new Map()).get('characters') || null;
+  const conclusionSubsections = _createNormalizedConclusionSubsectionEntries(sectionText, firstLineNo);
 
   const parsedConclusions = conclusionSubsections.map(({ authoredName:title, value:conclusionSubsection, lineNo }) => {
     const nameValues = parseUniqueNameValueLines(conclusionSubsection, `conclusion ${normalizeId(title)}`, false, lineNo + 1);
@@ -300,7 +301,7 @@ export function loadConclusionsFromSection(conclusionsSection:string, rooms:Read
 }
 
 export function createGeneratedIdentityConclusion(characters:ReadonlyArray<Character>, categoryOptionsByName:Map<string, string[]>,
-  overrides:{ title?:string|null, unlockConclusionIds?:string[], revealRoomIds?:string[], characterOptions?:string[]|null } = {}):Conclusion|null {
+  overrides:{ title?:string|null, unlockConclusionIds?:string[], revealRoomIds?:string[], characterOptions?:string[]|null } = {}):Conclusion {
   const interactiveCharactersWithUnknownTitles = characters.filter(character => isCharacterInteractive(character) && !character.isTitleKnown);
   if (!interactiveCharactersWithUnknownTitles.length) return null;
   const interactiveCharacterTitles = _sortGeneratedConclusionOptions(interactiveCharactersWithUnknownTitles.map(character => character.title));

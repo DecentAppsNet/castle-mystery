@@ -15,6 +15,7 @@ import {
 import { scheduleActivities } from "./itineraryLoading/itinerarySchedulingUtil";
 import LoadItinerariesOptions from "./itineraryLoading/types/LoadItinerariesOptions";
 import LoadItinerariesResult from "./itineraryLoading/types/LoadItinerariesResult";
+import LevelFileSection from "./types/LevelFileSection";
 
 export type { default as LoadItinerariesOptions } from "./itineraryLoading/types/LoadItinerariesOptions";
 export type { default as LoadItinerariesResult } from "./itineraryLoading/types/LoadItinerariesResult";
@@ -24,9 +25,9 @@ const DEFAULT_LOAD_ITINERARIES_OPTIONS:LoadItinerariesOptions = {
   explicitEndTime: null
 };
 
-export function loadItineraries(level:Level, itinerarySection:string, levelFilename:string, firstLineNo:number,
+export function loadItineraries(level:Level, itinerarySection:LevelFileSection, levelFilename:string, 
   options:LoadItinerariesOptions = DEFAULT_LOAD_ITINERARIES_OPTIONS):LoadItinerariesResult {
-  const activities = parseItineraryActivities(itinerarySection, levelFilename, firstLineNo, options, level.startTime, level.activeCharacterId);
+  const activities = parseItineraryActivities(itinerarySection.text, levelFilename, itinerarySection.firstLineNo, options, level.startTime, level.activeCharacterId);
   if (options.explicitEndTime !== null) {
     validateActivitiesWithinWindow(activities, level.startTime, options.explicitEndTime, levelFilename);
   }

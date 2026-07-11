@@ -123,14 +123,31 @@ function _parseSectionArrays(markdownText:string, indentLevel:number = 1, useCam
   };
 }
 
-// Parse the heading sections of a markdown text. The header of each section is the sectionName key, and the content of each section is the value.
-export function parseSections(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Sections {
+function _normalizeIncludedSectionIds(includedSectionIds:ReadonlyArray<string>, useCamelCase:boolean):Set<string> {
+  return new Set(includedSectionIds.map(sectionId => useCamelCase ? normalizeMarkdownName(sectionId) : sectionId));
+}
+
+function _createSectionsObject(sectionNames:string[], sectionContents:string[], includedSectionIds:Set<string>|null = null):Sections {
   const sections:Sections = {};
-  const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
   for (let i = 0; i < sectionNames.length; ++i) {
-    sections[sectionNames[i]] = sectionContents[i];
+    const sectionName = sectionNames[i];
+    if (includedSectionIds && !includedSectionIds.has(sectionName)) continue;
+    sections[sectionName] = sectionContents[i];
   }
   return sections;
+}
+
+// Parse the heading sections of a markdown text. The header of each section is the sectionName key, and the content of each section is the value.
+export function parseSections(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Sections {
+  const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
+  return _createSectionsObject(sectionNames, sectionContents);
+}
+
+export function parseIncludedSections(markdownText:string, includedSectionIds:ReadonlyArray<string>, indentLevel:number = 1,
+  useCamelCase:boolean = false):Sections {
+  const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
+  const normalizedIncludedSectionIds = _normalizeIncludedSectionIds(includedSectionIds, useCamelCase);
+  return _createSectionsObject(sectionNames, sectionContents, normalizedIncludedSectionIds);
 }
 
 export function parseSectionEntries(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Array<readonly [string, string]> {

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   normalizeMarkdownName,
   parseFirstFencedCodeBlockLines,
+  parseIncludedSections,
   parseNameValueLineEntries,
   parseOptions,
   parseSectionEntries,
@@ -75,6 +76,47 @@ describe('markdownUtil', () => {
         '# GENERAL',
         '* activeCharacter=Guide'
       ].join('\n'), 1, true)).toThrow(`duplicate section 'general'`);
+    });
+  });
+
+  describe('parseIncludedSections()', () => {
+    it('returns no sections when includedSectionIds is empty', () => {
+      const sections = parseIncludedSections([
+        '# General',
+        '* activeCharacter=Hero',
+        '# Rooms',
+        '* ignored=true'
+      ].join('\n'), [], 1, true);
+
+      expect(sections).toEqual({});
+    });
+
+    it('returns only the included subset of sections', () => {
+      const sections = parseIncludedSections([
+        '# General',
+        '* activeCharacter=Hero',
+        '# Map',
+        '* A=Hall',
+        '# Rooms',
+        '* title=Hall'
+      ].join('\n'), ['general', 'rooms'], 1, true);
+
+      expect(Object.keys(sections)).toEqual(['general', 'rooms']);
+      expect(sections.general).toContain('* activeCharacter=Hero');
+      expect(sections.rooms).toContain('* title=Hall');
+    });
+
+    it('ignores includedSectionIds that do not match any parsed section', () => {
+      const sections = parseIncludedSections([
+        '# General',
+        '* activeCharacter=Hero',
+        '# Rooms',
+        '* title=Hall'
+      ].join('\n'), ['general', 'items', 'conclusions'], 1, true);
+
+      expect(sections).toEqual({
+        general:'* activeCharacter=Hero'
+      });
     });
   });
 

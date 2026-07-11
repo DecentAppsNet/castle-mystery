@@ -20,6 +20,7 @@ import { assertNormalizedId, normalizeId } from "../game/idUtil";
 import { getFaceImageAssetUrl, getItemImageAssetUrl } from "../game/imageUrlUtil";
 import { createInitialPoseEventFromUnpairedCharacter, createItineraryIndex } from "@/game/itineraryUtil";
 import { createDefaultItineraryIndex } from "@/game/types/ItineraryIndex";
+import LevelFileSection from "./types/LevelFileSection";
 
 type CharacterDefinition = {
 	title:string,
@@ -118,10 +119,9 @@ function _createNormalizedSectionEntryMap(markdownText:string, indentLevel:numbe
 	return normalizedEntries;
 }
 
-
-export function parseCharacterDefinitions(charactersSection:string, firstLineNo:number = 1):Map<string, CharacterDefinition> {
+export function parseCharacterDefinitions(charactersSection:LevelFileSection):Map<string, CharacterDefinition> {
 	const characterDefinitions = new Map<string, CharacterDefinition>();
-	const characterSectionsById = _createNormalizedSectionEntryMap(charactersSection, 2, firstLineNo);
+	const characterSectionsById = _createNormalizedSectionEntryMap(charactersSection.text, 2, charactersSection.firstLineNo);
 	Array.from(characterSectionsById.entries()).forEach(([characterId, characterSectionEntry]) => {
 		const authoredCharacterName = characterSectionEntry.authoredName;
 		const characterSection = characterSectionEntry.value;
@@ -144,9 +144,9 @@ export function parseCharacterDefinitions(charactersSection:string, firstLineNo:
 	return characterDefinitions;
 }
 
-export function parseItemDefinitions(itemsSection:string, firstLineNo:number = 1):Map<string, ItemDefinition> {
+export function parseItemDefinitions(itemsSection:LevelFileSection):Map<string, ItemDefinition> {
 	const itemDefinitions = new Map<string, ItemDefinition>();
-	const itemSectionsById = _createNormalizedSectionEntryMap(itemsSection, 2, firstLineNo);
+	const itemSectionsById = _createNormalizedSectionEntryMap(itemsSection.text, 2, itemsSection.firstLineNo);
 	Array.from(itemSectionsById.entries()).forEach(([itemId, itemSectionEntry]) => {
 		const authoredItemName = itemSectionEntry.authoredName;
 		const itemSection = itemSectionEntry.value;
@@ -188,9 +188,9 @@ export function createKnownPopulationEntryIds(definitions:RoomPopulationDefiniti
 	]);
 }
 
-export function loadRoomPopulationFromRoomsSection(level:Level, roomsSection:string, definitions:RoomPopulationDefinitions,
+export function loadRoomPopulationFromRoomsSection(level:Level, roomsSectionText:string, definitions:RoomPopulationDefinitions,
 	firstLineNo:number = 1) {
-	_addCharactersAndRoomItemsFromSections(level, roomsSection, definitions.characterDefinitions, definitions.itemDefinitions, firstLineNo);
+	_addCharactersAndRoomItemsFromSections(level, roomsSectionText, definitions.characterDefinitions, definitions.itemDefinitions, firstLineNo);
 }
 
 export function loadCharacterInventoryItems(level:Level, definitions:RoomPopulationDefinitions) {
