@@ -12,12 +12,22 @@ import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import * as activityMovementUtil from '../activities/activity/activityMovementUtil';
 import { appendEventsToCharacterState, createCharacterActivityState, findStatePoseAtTime } from '../activities/activity/activityStateUtil';
 import { parseItineraryActivities } from '../itineraryLoading/itineraryActivityParseUtil';
-import { loadItineraries } from '../levelItineraryLoader';
+import { loadItineraries as loadItinerariesInternal } from '../levelItineraryLoader';
 import characterBecomesLevelText from './fixtures/character-becomes-level.md?raw';
 import characterBecomesTargetPlacedLevelText from './fixtures/character-becomes-target-placed.md?raw';
 import itemBecomesLevelText from './fixtures/item-becomes-level.md?raw';
 import itemBecomesTargetPlacedLevelText from './fixtures/item-becomes-target-placed.md?raw';
 import itineraryTimelineSummaryText from './fixtures/itinerary-timeline-summary.md?raw';
+
+function loadItineraries(level:Parameters<typeof loadItinerariesInternal>[0], itineraryText:string, levelFilename:string, firstLineNo:number) {
+  return loadItinerariesInternal(level, {
+    id:'itinerary',
+    text:itineraryText,
+    levelFilename,
+    firstLineNo,
+    runWithContext: (callback:Function) => callback()
+  }, levelFilename);
+}
 
 function _loadCharacterBecomesBaseLevel() {
   const level = loadLevelFromText(characterBecomesLevelText, 'character-becomes-level.md');
