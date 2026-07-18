@@ -1,3 +1,6 @@
+/* This module groups activity-text normalization, tokenization, and recursive parse helpers for levelLoading2 activity parsing.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assert, assertNonNullable, botch } from "decent-portal";
 import ActivityParsingRules, { AllowedValuesByIdentifierId } from "./types/ActivityParsingRules";
 import ParseFormat from "./types/ParseFormat";
@@ -56,7 +59,7 @@ function _hasVerbInActivityLine(verb:string, activityText:string):boolean {
   return false; // Activity line didn't contain the verb.
 }
 
-const ALLOWED_PUNCTUATION_REGEX = /[.!?,-]/g;
+const ALLOWED_PUNCTUATION_REGEX = /[.!?,-]/g; // Allowed exception to regex-helper best practices for code simplicity.
 function _removeAllowedPunctuationOutsideOfQuotes(activityText:string):string {
   let filteredText = '';
   let seekPos = 0;
@@ -78,7 +81,7 @@ function _removeAllowedPunctuationOutsideOfQuotes(activityText:string):string {
 }
 
 // Purposefully, this normalizes whitespace inside and outside of quotes.
-const WHITESPACE_REGEX = /\s+/g;
+const WHITESPACE_REGEX = /\s+/g; // Allowed exception to regex-helper best practices for code simplicity.
 function _normalizeWhiteSpace(activityText:string):string {
   activityText = activityText.trim();
   return activityText.replaceAll(WHITESPACE_REGEX, ' ');

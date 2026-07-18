@@ -42,6 +42,7 @@ export function createBecomesParseFormat():ParseFormat {
 export function createDropsParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const drops = makeVerb('drops');
+  const itemId = makeIdentifier('itemId', 'ItemId');
   const preposition = makeOptions([
     makeLiteral('at'),
     makeLiteral('on'),
@@ -53,7 +54,7 @@ export function createDropsParseFormat():ParseFormat {
     makeIdentifier('toCharacterId', 'CharacterId'),
   ]);
   const target = makeSequence([preposition, targetOptions], true);
-  const rootParseStep = makeSequence([characterId, drops, target]);
+  const rootParseStep = makeSequence([characterId, drops, itemId, target]);
   return createParseFormat(rootParseStep);
 }
 
@@ -75,7 +76,8 @@ export function createFacesParseFormat():ParseFormat {
   const direction = makeOptions([
     makeLiteral('left'),
     makeLiteral('right'),
-    makeLiteralOptions(['toItemId, toCharacterId']),
+    makeIdentifier('toCharacterId', 'CharacterId'),
+    makeIdentifier('toItemId', 'ItemId')
   ]);
   const rootParseStep = makeSequence([characterId, faces, direction]);
   return createParseFormat(rootParseStep);
