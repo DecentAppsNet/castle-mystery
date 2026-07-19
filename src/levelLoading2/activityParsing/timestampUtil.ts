@@ -29,3 +29,11 @@ export function tryParseAbsoluteTimestamp(text:string):number|null {
   if (minutes >= SECS_IN_MINUTE || seconds >= SECS_IN_MINUTE) return null;
   return (((hours * SECS_IN_MINUTE) + minutes) * SECS_IN_MINUTE + seconds) * MSECS_IN_SECOND;
 }
+
+export function beginsWithTimestamp(text:String):boolean {
+  text = text.trim();
+  const firstSpacePos = text.indexOf(' ');
+  const endPos = firstSpacePos === -1 ? text.length : firstSpacePos;
+  const candidate = text.substring(0, endPos);
+  return isRelativeTimestamp(candidate) || tryParseAbsoluteTimestamp(candidate) !== null;
+}
