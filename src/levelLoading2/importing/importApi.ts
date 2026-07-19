@@ -4,25 +4,17 @@
 import { baseUrl } from "@/common/urlUtil";
 import { parseOptions, parseSections } from "@/common/markdownUtil";
 import { validateFilename } from "@/common/filenameValidationUtil";
-import { normalizeId } from "@/game/idUtil";
 import { parseNameValueLineEntries } from "@/common/markdownUtil";
 import { mergeSectionBody, trimBodyLines } from "./importBodyTokenUtil";
+import { createSection, createSourceLine, parseSectionTree } from "./importSectionTreeUtil";
 import ImportedLine from "./types/ImportedLine";
+import ImportedSection from "./types/ImportedSection";
 import SourceMappedText from "./types/SourceMappedText";
 import SourceLine from "./types/SourceLine";
 import SourceLineMap from "./types/SourceLineMap";
 
 type LoadImportsContext = {
   cache:Map<string, Promise<SourceMappedText>>
-};
-
-type ImportedSection = {
-  headingText:string,
-  normalizedHeading:string,
-  depth:number,
-  headingSourceLine:SourceLine,
-  bodyLines:ImportedLine[],
-  children:ImportedSection[]
 };
 
 function _levelFilenameToUrl(filename:string):string {
@@ -46,69 +38,6 @@ function _findImportedFilenames(levelText:string):string[] {
   return parseOptions(importEntry[1]);
 }
 
-function _findMarkdownHeadingLine(line:string):{ depth:number, headingText:string }|null {
-  let index = 0;
-  while (index < line.length && (line[index] === ' ' || line[index] === '\t')) ++index;
-
-  const headingStartIndex = index;
-  while (index < line.length && line[index] === '#') ++index;
-  if (index === headingStartIndex) return null;
-  const depth = index - headingStartIndex;
-
-  const whitespaceStartIndex = index;
-  while (index < line.length && (line[index] === ' ' || line[index] === '\t')) ++index;
-  if (index === whitespaceStartIndex) return null;
-
-  const headingText = line.slice(index).trim();
-  if (!headingText.length) return null;
-  return { depth, headingText };
-}
-
-function _createSection(headingText:string):ImportedSection {
-  return {
-    headingText,
-    normalizedHeading:normalizeId(headingText),
-    depth:1,
-    headingSourceLine:{ filename:'<unknown>', lineNo:1 },
-    bodyLines:[],
-    children:[]
-  };
-}
-
-function _createSourceLine(filename:string, lineNo:number):SourceLine {
-  return { filename, lineNo };
-}
-
-function _parseSectionTree(sourceMappedText:SourceMappedText):ImportedSection[] {
-  const roots:ImportedSection[] = [];
-  const stack:Array<{ depth:number, section:ImportedSection }> = [];
-
-  const lines = sourceMappedText.text.split('\n');
-  lines.forEach((line, index) => {
-    const sourceLine = sourceMappedText.sourceLineMap[index] || _createSourceLine('<unknown>', index + 1);
-    const heading = _findMarkdownHeadingLine(line);
-    if (heading) {
-      while (stack.length > 0 && stack[stack.length - 1].depth >= heading.depth) stack.pop();
-      const section = {
-        ..._createSection(heading.headingText),
-        depth:heading.depth,
-        headingSourceLine:sourceLine
-      };
-      const parentSection = stack[stack.length - 1]?.section || null;
-      if (parentSection) parentSection.children.push(section);
-      else roots.push(section);
-      stack.push({ depth:heading.depth, section });
-      return;
-    }
-
-    const currentSection = stack[stack.length - 1]?.section || null;
-    if (!currentSection) return;
-    currentSection.bodyLines.push({ text:line, sourceLine });
-  });
-
-  return roots;
-}
-
 function _mergeSectionTrees(levelSections:ImportedSection[], importSections:ImportedSection[]):ImportedSection[] {
   const levelSectionsByName = new Map(levelSections.map(section => [section.normalizedHeading, section]));
   const mergedSections:ImportedSection[] = [];
@@ -126,7 +55,7 @@ function _mergeSectionTrees(levelSections:ImportedSection[], importSections:Impo
 }
 
 function _mergeSectionNodes(levelSection:ImportedSection|null, importSection:ImportedSection):ImportedSection {
-  const mergedLevelSection = levelSection || _createSection(importSection.headingText);
+  const mergedLevelSection = levelSection || createSection(importSection.headingText);
   return {
     headingText:mergedLevelSection.headingText,
     normalizedHeading:mergedLevelSection.normalizedHeading,
@@ -144,7 +73,7 @@ function _createSourceMappedText(text:string, sourceLineMap:SourceLineMap):Sourc
 }
 
 function _createRawSourceMappedText(text:string, filename:string):SourceMappedText {
-  return _createSourceMappedText(text, text.split('\n').map((_, index) => _createSourceLine(filename, index + 1)));
+  return _createSourceMappedText(text, text.split('\n').map((_, index) => createSourceLine(filename, index + 1)));
 }
 
 function _createBlankLine(sourceLine:SourceLine):ImportedLine {
@@ -186,8 +115,8 @@ function _serializeSourceMappedSections(sections:ImportedSection[]):SourceMapped
 }
 
 function _mergeImportIntoLevelSource(levelSource:SourceMappedText, importSource:SourceMappedText):SourceMappedText {
-  const levelSections = _parseSectionTree(levelSource);
-  const importSections = _parseSectionTree(importSource);
+  const levelSections = parseSectionTree(levelSource);
+  const importSections = parseSectionTree(importSource);
   if (!levelSections.length) return {
     text:importSource.text.trim(),
     sourceLineMap:importSource.sourceLineMap.slice(0, importSource.text.trim().split('\n').length)
