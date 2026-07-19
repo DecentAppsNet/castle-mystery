@@ -67,10 +67,6 @@ export function makeVariableLiteral(variableId:string, text:string, isOptional =
   return {kind:'literal', text, variableId, isOptional} 
 }
 
-export function makeVariableLiteralOptions(variableId:string, texts:string[], isOptional = false):ParseOptions { 
-  return makeVariableOptions(variableId, texts.map(t => makeLiteral(t, false)), isOptional);
-}
-
 export function makeIdentifier(variableId:string, identifierKind:string, isOptional = false):ParseIdentifier { 
   return  {kind:'identifier', variableId, identifierKind, isOptional}; 
 }

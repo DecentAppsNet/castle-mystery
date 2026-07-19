@@ -96,7 +96,7 @@ function _serializeBodyEntry(entry:BodyEntry):ImportedLine {
   };
 }
 
-export function flattenBodyTokens(tokens:BodyToken[]):ImportedLine[] {
+function _flattenBodyTokens(tokens:BodyToken[]):ImportedLine[] {
   return tokens.flatMap(token => {
     switch(token.type) {
       case 'comment': return token.lines;
@@ -135,7 +135,7 @@ function _mergeStructuredBody(levelBodyLines:ImportedLine[], importBodyLines:Imp
     }
   });
 
-  return flattenBodyTokens(mergedTokens);
+  return _flattenBodyTokens(mergedTokens);
 }
 
 export function mergeSectionBody(levelBodyLines:ImportedLine[], importBodyLines:ImportedLine[]):ImportedLine[] {

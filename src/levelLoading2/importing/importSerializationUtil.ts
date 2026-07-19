@@ -42,15 +42,15 @@ function _serializeSectionTree(sections:ImportedSection[]):ImportedLine[] {
   return lines;
 }
 
-export function serializeSourceMappedSections(sections:ImportedSection[]):SourceMappedText {
-  const lines = _serializeSectionTree(sections);
-  return createSourceMappedText(lines.map(line => line.text).join('\n'), lines.map(line => line.sourceLine));
-}
-
-export function createSourceMappedText(text:string, sourceLineMap:SourceLineMap):SourceMappedText {
+function _createSourceMappedText(text:string, sourceLineMap:SourceLineMap):SourceMappedText {
   return { text, sourceLineMap };
 }
 
+export function serializeSourceMappedSections(sections:ImportedSection[]):SourceMappedText {
+  const lines = _serializeSectionTree(sections);
+  return _createSourceMappedText(lines.map(line => line.text).join('\n'), lines.map(line => line.sourceLine));
+}
+
 export function createRawSourceMappedText(text:string, filename:string):SourceMappedText {
-  return createSourceMappedText(text, text.split('\n').map((_, index) => createSourceLine(filename, index + 1)));
+  return _createSourceMappedText(text, text.split('\n').map((_, index) => createSourceLine(filename, index + 1)));
 }
