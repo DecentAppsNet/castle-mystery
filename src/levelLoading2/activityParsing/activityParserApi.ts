@@ -2,8 +2,6 @@
   folder should generally only call functions from this module.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import Activity from "../types/Activity";
-import ActivityParsingRules from "./types/ActivityParsingRules";
 import ParseFormat from "./types/ParseFormat";
 import ParseIdentifier from "./types/ParseIdentifier";
 import ParseLiteral from "./types/ParseLiteral";
@@ -14,36 +12,7 @@ import ParseStep from "./types/ParseStep";
 import ParseSequence from "./types/ParseSequence";
 import { findVerbText, throwIfParseStepsInvalid } from "./parseFormatUtil";
 import { assertNonNullable } from "decent-portal";
-import { findVerbInActivityText, splitActivityLineToTimestampAndActivityText, tryParseActivityTextAgainstFormat } from "./parseUtil";
-import { isRelativeTimestamp, tryParseAbsoluteTimestamp } from "./timestampUtil";
-
-export function tryParseActivity(activityLine:string, rules:ActivityParsingRules):Activity|string {
-  const splitResult = splitActivityLineToTimestampAndActivityText(activityLine); // This also covers case of an empty string being passed.
-  if (!splitResult) return 'Itinerary line did not have timestamp followed by activity text.';
-  const { timestampText, activityText } = splitResult;
-  
-  let startTime = null;
-  if (!isRelativeTimestamp(timestampText)) {
-    startTime = tryParseAbsoluteTimestamp(timestampText);
-    if (!startTime) return `Itinerary line started with "${timestampText}" which does not follow expected timestamp format.`;
-  }
-
-  const verb = findVerbInActivityText(activityText, rules);
-  if (!verb) return `Itinerary line didn't include a known verb.`;
-
-  const parseFormat = rules.parseFormatsByVerb[verb];
-  assertNonNullable(parseFormat, `Earlier successful call to findVerbInActivityText() should guarantee a parse format for the verb exists.`);
-  const parseResult = tryParseActivityTextAgainstFormat(activityText, parseFormat, rules);
-  if (typeof parseResult === 'string') return parseResult;
-
-  const activity:Activity = {
-    verb,
-    startTime,
-    duration:null,
-    parts:parseResult
-  }
-  return activity;
-}
+export { tryParseActivity } from "./parseUtil";
 
 export function createParseFormat(rootParseStep:ParseStep):ParseFormat {
   throwIfParseStepsInvalid(rootParseStep);
