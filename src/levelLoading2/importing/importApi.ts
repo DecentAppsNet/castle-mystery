@@ -5,10 +5,8 @@ import { baseUrl } from "@/common/urlUtil";
 import { parseOptions, parseSections } from "@/common/markdownUtil";
 import { validateFilename } from "@/common/filenameValidationUtil";
 import { parseNameValueLineEntries } from "@/common/markdownUtil";
-import { mergeSectionBody } from "./importBodyTokenUtil";
-import { createRawSourceMappedText, serializeSourceMappedSections } from "./importSerializationUtil";
-import { createSection, parseSectionTree } from "./importSectionTreeUtil";
-import ImportedSection from "./types/ImportedSection";
+import { createRawSourceMappedText } from "./importSerializationUtil";
+import { mergeImportIntoLevelSource } from "./importSectionMergeUtil";
 import SourceMappedText from "./types/SourceMappedText";
 
 type LoadImportsContext = {
@@ -36,50 +34,6 @@ function _findImportedFilenames(levelText:string):string[] {
   return parseOptions(importEntry[1]);
 }
 
-function _mergeSectionTrees(levelSections:ImportedSection[], importSections:ImportedSection[]):ImportedSection[] {
-  const levelSectionsByName = new Map(levelSections.map(section => [section.normalizedHeading, section]));
-  const mergedSections:ImportedSection[] = [];
-
-  levelSections.forEach(levelSection => {
-    const importSection = importSections.find(candidate => candidate.normalizedHeading === levelSection.normalizedHeading) || null;
-    mergedSections.push(importSection ? _mergeSectionNodes(levelSection, importSection) : levelSection);
-  });
-  importSections.forEach(importSection => {
-    if (levelSectionsByName.has(importSection.normalizedHeading)) return;
-    mergedSections.push(importSection);
-  });
-
-  return mergedSections;
-}
-
-function _mergeSectionNodes(levelSection:ImportedSection|null, importSection:ImportedSection):ImportedSection {
-  const mergedLevelSection = levelSection || createSection(importSection.headingText);
-  return {
-    headingText:mergedLevelSection.headingText,
-    normalizedHeading:mergedLevelSection.normalizedHeading,
-    depth:mergedLevelSection.depth,
-    headingSourceLine:mergedLevelSection.headingSourceLine.filename === '<unknown>'
-      ? importSection.headingSourceLine
-      : mergedLevelSection.headingSourceLine,
-    bodyLines:mergeSectionBody(mergedLevelSection.bodyLines, importSection.bodyLines),
-    children:_mergeSectionTrees(mergedLevelSection.children, importSection.children)
-  };
-}
-
-function _mergeImportIntoLevelSource(levelSource:SourceMappedText, importSource:SourceMappedText):SourceMappedText {
-  const levelSections = parseSectionTree(levelSource);
-  const importSections = parseSectionTree(importSource);
-  if (!levelSections.length) return {
-    text:importSource.text.trim(),
-    sourceLineMap:importSource.sourceLineMap.slice(0, importSource.text.trim().split('\n').length)
-  };
-  if (!importSections.length) return {
-    text:levelSource.text.trim(),
-    sourceLineMap:levelSource.sourceLineMap.slice(0, levelSource.text.trim().split('\n').length)
-  };
-  return serializeSourceMappedSections(_mergeSectionTrees(levelSections, importSections));
-}
-
 function _throwOnDirectSelfImport(filename:string, importFilename:string):void {
   if (importFilename !== filename) return;
   throw new Error(`A level file can't import itself.`);
@@ -103,7 +57,7 @@ async function _loadLevelTextWithSourceLineMap(filename:string, context:LoadImpo
     }));
   let mergedSource = createRawSourceMappedText(sourceText, filename);
   for (let i = 0; i < importSources.length; ++i) {
-    mergedSource = _mergeImportIntoLevelSource(mergedSource, importSources[i]);
+    mergedSource = mergeImportIntoLevelSource(mergedSource, importSources[i]);
   }
   return mergedSource;
   })();
@@ -129,7 +83,7 @@ export function createLevelTextWithImportTextsAndSourceLineMap(importSources:Arr
   levelSource:{ filename:string, text:string }):SourceMappedText {
   let mergedSource = createRawSourceMappedText(levelSource.text, levelSource.filename);
   for (let i = 0; i < importSources.length; ++i) {
-    mergedSource = _mergeImportIntoLevelSource(mergedSource, createRawSourceMappedText(importSources[i].text, importSources[i].filename));
+    mergedSource = mergeImportIntoLevelSource(mergedSource, createRawSourceMappedText(importSources[i].text, importSources[i].filename));
   }
   return mergedSource;
 }
