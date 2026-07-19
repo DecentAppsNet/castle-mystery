@@ -5,13 +5,11 @@ import { baseUrl } from "@/common/urlUtil";
 import { parseOptions, parseSections } from "@/common/markdownUtil";
 import { validateFilename } from "@/common/filenameValidationUtil";
 import { parseNameValueLineEntries } from "@/common/markdownUtil";
-import { mergeSectionBody, trimBodyLines } from "./importBodyTokenUtil";
-import { createSection, createSourceLine, parseSectionTree } from "./importSectionTreeUtil";
-import ImportedLine from "./types/ImportedLine";
+import { mergeSectionBody } from "./importBodyTokenUtil";
+import { createRawSourceMappedText, serializeSourceMappedSections } from "./importSerializationUtil";
+import { createSection, parseSectionTree } from "./importSectionTreeUtil";
 import ImportedSection from "./types/ImportedSection";
 import SourceMappedText from "./types/SourceMappedText";
-import SourceLine from "./types/SourceLine";
-import SourceLineMap from "./types/SourceLineMap";
 
 type LoadImportsContext = {
   cache:Map<string, Promise<SourceMappedText>>
@@ -68,52 +66,6 @@ function _mergeSectionNodes(levelSection:ImportedSection|null, importSection:Imp
   };
 }
 
-function _createSourceMappedText(text:string, sourceLineMap:SourceLineMap):SourceMappedText {
-  return { text, sourceLineMap };
-}
-
-function _createRawSourceMappedText(text:string, filename:string):SourceMappedText {
-  return _createSourceMappedText(text, text.split('\n').map((_, index) => createSourceLine(filename, index + 1)));
-}
-
-function _createBlankLine(sourceLine:SourceLine):ImportedLine {
-  return { text:'', sourceLine };
-}
-
-function _serializeSectionNode(section:ImportedSection):ImportedLine[] {
-  const lines:ImportedLine[] = [{
-    text:`${'#'.repeat(section.depth)} ${section.headingText}`,
-    sourceLine:section.headingSourceLine
-  }];
-  const bodyLines = trimBodyLines(section.bodyLines);
-  if (bodyLines.length) {
-    lines.push(_createBlankLine(section.headingSourceLine));
-    lines.push(...bodyLines);
-  }
-  const childLines = _serializeSectionTree(section.children);
-  if (childLines.length) {
-    lines.push(_createBlankLine(bodyLines[bodyLines.length - 1]?.sourceLine || section.headingSourceLine));
-    lines.push(...childLines);
-  }
-  return lines;
-}
-
-function _serializeSectionTree(sections:ImportedSection[]):ImportedLine[] {
-  const lines:ImportedLine[] = [];
-  sections.forEach(section => {
-    const sectionLines = _serializeSectionNode(section);
-    if (!sectionLines.length) return;
-    if (lines.length) lines.push(_createBlankLine(lines[lines.length - 1].sourceLine));
-    lines.push(...sectionLines);
-  });
-  return lines;
-}
-
-function _serializeSourceMappedSections(sections:ImportedSection[]):SourceMappedText {
-  const lines = _serializeSectionTree(sections);
-  return _createSourceMappedText(lines.map(line => line.text).join('\n'), lines.map(line => line.sourceLine));
-}
-
 function _mergeImportIntoLevelSource(levelSource:SourceMappedText, importSource:SourceMappedText):SourceMappedText {
   const levelSections = parseSectionTree(levelSource);
   const importSections = parseSectionTree(importSource);
@@ -125,7 +77,7 @@ function _mergeImportIntoLevelSource(levelSource:SourceMappedText, importSource:
     text:levelSource.text.trim(),
     sourceLineMap:levelSource.sourceLineMap.slice(0, levelSource.text.trim().split('\n').length)
   };
-  return _serializeSourceMappedSections(_mergeSectionTrees(levelSections, importSections));
+  return serializeSourceMappedSections(_mergeSectionTrees(levelSections, importSections));
 }
 
 function _throwOnDirectSelfImport(filename:string, importFilename:string):void {
@@ -142,14 +94,14 @@ async function _loadLevelTextWithSourceLineMap(filename:string, context:LoadImpo
   const levelUrl = _levelFilenameToUrl(filename);
   const sourceText = await _fetchTextFromUrl(levelUrl);
   const importFilenames = _findImportedFilenames(sourceText);
-  if (!importFilenames.length) return _createRawSourceMappedText(sourceText, filename);
+  if (!importFilenames.length) return createRawSourceMappedText(sourceText, filename);
 
     const importSources = await Promise.all(importFilenames.flatMap(importFilename => {
       _throwOnDirectSelfImport(filename, importFilename);
       if (loadingStack.includes(importFilename)) return [];
       return [_loadLevelTextWithSourceLineMap(importFilename, context, [...loadingStack, importFilename])];
     }));
-  let mergedSource = _createRawSourceMappedText(sourceText, filename);
+  let mergedSource = createRawSourceMappedText(sourceText, filename);
   for (let i = 0; i < importSources.length; ++i) {
     mergedSource = _mergeImportIntoLevelSource(mergedSource, importSources[i]);
   }
@@ -175,9 +127,9 @@ export async function loadLevelTextWithImports(filename:string):Promise<string> 
 
 export function createLevelTextWithImportTextsAndSourceLineMap(importSources:Array<{ filename:string, text:string }>,
   levelSource:{ filename:string, text:string }):SourceMappedText {
-  let mergedSource = _createRawSourceMappedText(levelSource.text, levelSource.filename);
+  let mergedSource = createRawSourceMappedText(levelSource.text, levelSource.filename);
   for (let i = 0; i < importSources.length; ++i) {
-    mergedSource = _mergeImportIntoLevelSource(mergedSource, _createRawSourceMappedText(importSources[i].text, importSources[i].filename));
+    mergedSource = _mergeImportIntoLevelSource(mergedSource, createRawSourceMappedText(importSources[i].text, importSources[i].filename));
   }
   return mergedSource;
 }
