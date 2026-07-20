@@ -13,10 +13,10 @@ import ParseNumber from "./types/ParseNumber";
 import ParseText from "./types/ParseText";
 import ParseIdentifier from "./types/ParseIdentifier";
 import ParseLiteral from "./types/ParseLiteral";
-import { isNormalizedId, normalizeId } from "../idUtil";
 import { isRelativeTimestamp, tryParseAbsoluteTimestamp } from "./timestampUtil";
 import { describeParseFormat } from "./parseFormatUtil";
 import { throwIfActivityParsingRulesAreInvalid } from "./parsingRulesUtil";
+import { isNormalizedId, normalizeId } from "@/game/idUtil";
 
 
 const SYMBOL_CHARS:string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_1234567890'
@@ -333,7 +333,7 @@ function _tryParseActivityTextAgainstFormat(activityText:string, parseFormat:Par
 
 export function tryParseActivity(activityLine:string, rules:ActivityParsingRules):Activity|string {
   throwIfActivityParsingRulesAreInvalid(rules);
-  
+
   const splitResult = _splitActivityLineToTimestampAndActivityText(activityLine);
   if (!splitResult) return 'Itinerary line did not have timestamp followed by activity text.';
   const { timestampText, activityText } = splitResult;

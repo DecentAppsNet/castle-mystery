@@ -37,3 +37,20 @@ export function beginsWithTimestamp(text:String):boolean {
   const candidate = text.substring(0, endPos);
   return isRelativeTimestamp(candidate) || tryParseAbsoluteTimestamp(candidate) !== null;
 }
+
+export function parseTimestampToMsecs(text:string):number {
+  const trimmedText = text.trim();
+  const parts = trimmedText.split(':');
+  if (parts.length !== 2 && parts.length !== 3) throw new Error(`invalid timestamp: ${text}`);
+  const [hoursText, minutesText, secondsText] = parts;
+  if (!_isValidTimestampPart(hoursText, null) || !_isValidTimestampPart(minutesText, 2)
+    || (secondsText !== undefined && !_isValidTimestampPart(secondsText, 2))) {
+    throw new Error(`invalid timestamp: ${text}`);
+  }
+
+  const hours = Number(hoursText);
+  const minutes = Number(minutesText);
+  const seconds = secondsText === undefined ? 0 : Number(secondsText);
+  if (minutes >= SECS_IN_MINUTE || seconds >= SECS_IN_MINUTE) throw new Error(`invalid timestamp: ${text}`);
+  return (((hours * SECS_IN_MINUTE) + minutes) * SECS_IN_MINUTE + seconds) * MSECS_IN_SECOND;
+}

@@ -5,7 +5,8 @@ export type ParseFormatsByVerb = {[verb:string] : ParseFormat};
 
 type ActivityParsingRules = Readonly<{
   parseFormatsByVerb:ParseFormatsByVerb,
-  allowedValuesByIdentifierId:AllowedValuesByIdentifierId
+  allowedValuesByIdentifierId:AllowedValuesByIdentifierId,
+  reservedWords:Set<string>
 }>
 
 export default ActivityParsingRules;

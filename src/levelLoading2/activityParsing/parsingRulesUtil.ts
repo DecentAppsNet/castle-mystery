@@ -1,4 +1,4 @@
-import { assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable, botch } from "decent-portal";
 import ActivityParsingRules, { AllowedValuesByIdentifierId, ParseFormatsByVerb } from "./types/ActivityParsingRules";
 import {
   createAppearsParseFormat,
@@ -22,6 +22,7 @@ import {
   createWaitsParseFormat,
 } from "./activityParseFormats";
 import ParseFormat from "./types/ParseFormat";
+import ParseStep from "./types/ParseStep";
 
 function _countWords(text:string):number {
   return text.split(' ').length;
@@ -50,6 +51,40 @@ export function throwIfActivityParsingRulesAreInvalid(rules:ActivityParsingRules
     assertNonNullable(allowedValues);
     if (!_areValuesSortedByWordCount(allowedValues)) throw Error(`Allowed values for ${identifierId} aren't sorted with higher word counts earlier.`);
   });
+}
+
+function _normalizeKeyword(text:string) { return text.trim().toLowerCase(); }
+
+function _findReservedWordsInParseStepRecursively(step:ParseStep, reservedWords:Set<string>) {
+  switch(step.kind) {
+    case 'identifier': return;
+    case 'literal': {
+      const keyword = _normalizeKeyword(step.text);
+      reservedWords.add(keyword);
+      return;
+    }
+    case 'number': return;
+    case 'text': return;
+    case 'options': case 'sequence': {
+      step.children.forEach(child => _findReservedWordsInParseStepRecursively(child, reservedWords));
+      return;
+    }
+    
+    default:
+      botch(`unhandled step.kind`);
+  }
+}
+
+function _findReservedWordsInParseFormats(pf:ParseFormatsByVerb):Set<string> {
+  const reservedWords:Set<string> = new Set<string>();
+  Object.keys(pf).forEach(verb => {
+    const parseFormat = pf[verb];
+    assertNonNullable(parseFormat);
+    assert(parseFormat.activityVerb === verb);
+    reservedWords.add(_normalizeKeyword(verb));
+    _findReservedWordsInParseStepRecursively(parseFormat.rootParseStep, reservedWords);
+  });
+  return reservedWords;
 }
 
 export function createActivityParsingRules(characterIds:string[], roomIds:string[], itemIds:string[], 
@@ -85,5 +120,9 @@ export function createActivityParsingRules(characterIds:string[], roomIds:string
     pf['waits'] = createWaitsParseFormat();
   }
 
-  return {allowedValuesByIdentifierId:av, parseFormatsByVerb:pf};
+  // I could check here for IDs that are using reserved words, but to keep a separation of concerns,
+  // let other code handle that. This module will just populate reserved words.
+  const reservedWords = _findReservedWordsInParseFormats(pf);
+
+  return {allowedValuesByIdentifierId:av, parseFormatsByVerb:pf, reservedWords};
 }

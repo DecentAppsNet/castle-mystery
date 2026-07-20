@@ -28,6 +28,7 @@ export type NameValueEntryWithLine = { name:string, value:string, lineNo:number 
 export class MarkdownLineError extends Error {
   readonly lineNo:number;
 
+  // Store the markdown line number that triggered this parsing error.
   constructor(lineNo:number, message:string) {
     super(message);
     this.name = 'MarkdownLineError';
@@ -35,7 +36,7 @@ export class MarkdownLineError extends Error {
   }
 }
 
-// E.g., "hello world" -> "helloWorld".
+// Convert a markdown-style label into a normalized camelCase key.
 export function normalizeMarkdownName(text:string):string {
   const words = text.trim().split(' ').filter(word => word.trim() !== '');
   if (words.length === 0) return '';
@@ -51,6 +52,7 @@ export function normalizeMarkdownName(text:string):string {
     .join('');
 }
 
+// Return the heading text for a line when it matches the requested heading depth.
 function _findHeadingText(line:string, indentLevel:number):string|null {
   const trimmedLeftLine = line.trimStart();
   const prefix = '#'.repeat(indentLevel);
@@ -61,16 +63,19 @@ function _findHeadingText(line:string, indentLevel:number):string|null {
   return trimmedLeftLine.slice(prefix.length).trim();
 }
 
+// Return the content of a bulleted line without the leading bullet marker.
 function _findBulletedLineText(line:string):string|null {
   const trimmedLeftLine = line.trimStart();
   if (!trimmedLeftLine.startsWith('*')) return null;
   return trimmedLeftLine.slice(1).trim();
 }
 
+// Remove the trailing newline added while accumulating section content.
 function _trimStoredSectionContent(sectionContent:string):string {
   return sectionContent.endsWith('\n') ? sectionContent.slice(0, -1) : sectionContent;
 }
 
+// Parse heading sections and keep each section's starting line number.
 function _parseSectionEntriesWithLines(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false,
   firstLineNo:number = 1):SectionEntryWithLine[] {
   const lines = markdownText.split('\n');
@@ -114,7 +119,7 @@ function _parseSectionEntriesWithLines(markdownText:string, indentLevel:number =
   return sectionEntries;
 }
 
-// Parse the heading sections of a markdown text. The header of each section is the section name, and the content of each section is the value for the section.
+// Parse heading sections into parallel arrays of section names and contents.
 function _parseSectionArrays(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):{sectionNames:string[], sectionContents:string[]} {
   const sectionEntries = _parseSectionEntriesWithLines(markdownText, indentLevel, useCamelCase);
   return {
@@ -123,10 +128,12 @@ function _parseSectionArrays(markdownText:string, indentLevel:number = 1, useCam
   };
 }
 
+// Normalize the requested section ids into the same naming form as parsed sections.
 function _normalizeIncludedSectionIds(includedSectionIds:ReadonlyArray<string>, useCamelCase:boolean):Set<string> {
   return new Set(includedSectionIds.map(sectionId => useCamelCase ? normalizeMarkdownName(sectionId) : sectionId));
 }
 
+// Build a section lookup object, optionally filtering to a specific set of section ids.
 function _createSectionsObject(sectionNames:string[], sectionContents:string[], includedSectionIds:Set<string>|null = null):Sections {
   const sections:Sections = {};
   for (let i = 0; i < sectionNames.length; ++i) {
@@ -137,12 +144,13 @@ function _createSectionsObject(sectionNames:string[], sectionContents:string[], 
   return sections;
 }
 
-// Parse the heading sections of a markdown text. The header of each section is the sectionName key, and the content of each section is the value.
+// Parse markdown headings into a section-name-to-content map.
 export function parseSections(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Sections {
   const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
   return _createSectionsObject(sectionNames, sectionContents);
 }
 
+// Parse only the requested heading sections into a section-name-to-content map.
 export function parseIncludedSections(markdownText:string, includedSectionIds:ReadonlyArray<string>, indentLevel:number = 1,
   useCamelCase:boolean = false):Sections {
   const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
@@ -150,26 +158,29 @@ export function parseIncludedSections(markdownText:string, includedSectionIds:Re
   return _createSectionsObject(sectionNames, sectionContents, normalizedIncludedSectionIds);
 }
 
+// Parse heading sections into ordered name/content entry tuples.
 export function parseSectionEntries(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Array<readonly [string, string]> {
   const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
   return sectionNames.map((sectionName, index) => [sectionName, sectionContents[index]] as const);
 }
 
+// Parse heading sections into entries that include each section's starting line number.
 export function parseSectionEntriesWithLines(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false,
   firstLineNo:number = 1):SectionEntryWithLine[] {
   return _parseSectionEntriesWithLines(markdownText, indentLevel, useCamelCase, firstLineNo);
 }
 
-// Parse the lines of a markdown text. Remove any extra whitespace or bullet points.
+// Split markdown into trimmed lines for line-oriented parsing helpers.
 function _parseLines(markdownText:string):string[] {
   return markdownText.split('\n').map(line => line.trim());
 }
 
-// Parse the value portion of markdown text and replace any supported escaping, e.g. "\n".
+// Replace supported escape sequences in parsed markdown values.
 function _unescapeValue(text:string):string {
   return text.split('\\n').join('\n');
 }
 
+// Parse bulleted name/value lines and keep the source line for each entry.
 function _parseNameValueEntriesWithLines(markdownText:string, useCamelCase:boolean = false,
   firstLineNo:number = 1):NameValueEntryWithLine[] {
   const entries:NameValueEntryWithLine[] = [];
@@ -188,10 +199,12 @@ function _parseNameValueEntriesWithLines(markdownText:string, useCamelCase:boole
   return entries;
 }
 
+// Parse bulleted name/value lines into ordered name/value entry tuples.
 function _parseNameValueEntries(markdownText:string, useCamelCase:boolean = false):Array<readonly [string, string]> {
   return _parseNameValueEntriesWithLines(markdownText, useCamelCase).map(({ name, value }) => [name, value] as const);
 }
 
+// Parse unique bulleted name/value lines into a lookup object.
 export function parseUniqueNameValueLines(markdownText:string, contextLabel:string, useCamelCase:boolean = false,
   firstLineNo:number = 1):NameValues {
   const nameValues:NameValues = {};
@@ -202,19 +215,31 @@ export function parseUniqueNameValueLines(markdownText:string, contextLabel:stri
   return nameValues;
 }
 
+// Find the line number of a parsed bulleted name/value property within a section.
+export function findNameValueLineNo(sectionText:string, propertyName:string):number {
+  const matchingEntry = _parseNameValueEntriesWithLines(sectionText).find(entry => {
+    return entry.name === propertyName || normalizeMarkdownName(entry.name) === propertyName;
+  }) || null;
+  return matchingEntry === null ? -1 : matchingEntry.lineNo;
+}
+
+// Parse bulleted name/value lines into ordered name/value entry tuples.
 export function parseNameValueLineEntries(markdownText:string, useCamelCase:boolean = false):Array<readonly [string, string]> {
   return _parseNameValueEntries(markdownText, useCamelCase);
 }
 
+// Parse bulleted name/value lines into entries that include source line numbers.
 export function parseNameValueLineEntriesWithLines(markdownText:string, useCamelCase:boolean = false,
   firstLineNo:number = 1):NameValueEntryWithLine[] {
   return _parseNameValueEntriesWithLines(markdownText, useCamelCase, firstLineNo);
 }
 
+// Split a pipe-delimited option list into trimmed non-empty values.
 export function parseOptions(optionText:string):string[] {
   return optionText.split('|').map(t => t.trim()).filter(t => t.length > 0);
 }
 
+// Return the non-empty lines from the first fenced code block in the markdown text.
 export function parseFirstFencedCodeBlockLines(markdownText:string):string[] {
   const lines = markdownText.split('\n');
   const fenceStartIndex = lines.findIndex(line => line.trim().startsWith('```'));

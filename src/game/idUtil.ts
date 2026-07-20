@@ -7,6 +7,10 @@ export function normalizeId(text:string):string {
   return text.trim().toLowerCase();
 }
 
+export function isNormalizedId(text:string):boolean {
+  return text === normalizeId(text);
+}
+
 export function normalizeOptionalId(text:string|null|undefined):string|null {
   if (!text) return null;
   const normalizedText = normalizeId(text);
