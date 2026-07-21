@@ -87,13 +87,18 @@ function _findReservedWordsInParseFormats(pf:ParseFormatsByVerb):Set<string> {
   return reservedWords;
 }
 
+function _sortByWordCountDescending(elements:string[]):string[] {
+  if (elements.length < 2) return elements;
+  return [...elements].sort(_wordCountComparator);
+}
+
 export function createActivityParsingRules(characterIds:string[], roomIds:string[], itemIds:string[], 
     appearanceIds:string[], parseFormatOverride:ParseFormat|null = null):ActivityParsingRules {
   const av:AllowedValuesByIdentifierId = {};
-  av['CharacterId'] = [...characterIds].sort(_wordCountComparator);
-  av['RoomId'] = [...roomIds].sort(_wordCountComparator);
-  av['AppearanceId'] = [...appearanceIds].sort(_wordCountComparator);
-  av['ItemId'] = [...itemIds].sort(_wordCountComparator);
+  av['CharacterId'] = _sortByWordCountDescending(characterIds);
+  av['RoomId'] = _sortByWordCountDescending(roomIds);
+  av['AppearanceId'] = _sortByWordCountDescending(appearanceIds);
+  av['ItemId'] = _sortByWordCountDescending(itemIds);
 
   const pf:ParseFormatsByVerb = {};
   if (parseFormatOverride) {

@@ -17,7 +17,7 @@ function _areKnownTopLevelSections(text:string, errors:ErrorCollector):boolean {
     errors.addParseErrorAtLine('UNKSEC', 'a known section ID', `"${sectionId}"`, 'Check spelling.', 
       sectionEntry.lineNo, 2, 2+sectionId.length, null);
   }
-  return errors.hasNewErrors();
+  return !errors.hasNewErrors();
 }
 
 function _findSectionFirstContentLineNo(markdownText:string, sectionName:string, indentLevel:number = 1):number|null {

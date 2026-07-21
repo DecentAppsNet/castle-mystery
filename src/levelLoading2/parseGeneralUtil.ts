@@ -60,7 +60,7 @@ function _createAllowedValuesByIdentifier(sections:LevelFileSections, errors:Err
   av['RoomId'] = _getAllowedValuesFromSubSectionIds(sections, 'rooms', errors);
   av['CharacterId'] = _getAllowedValuesFromSubSectionIds(sections, 'characters', errors);
   av['ItemId'] = _getAllowedValuesFromSubSectionIds(sections, 'items', errors);
-  av['AppearanceId'] = _getAppearanceIdAllowedValues(sections.character.text, errors);
+  av['AppearanceId'] = _getAppearanceIdAllowedValues(sections.characters.text, errors);
   return av;
 }
 

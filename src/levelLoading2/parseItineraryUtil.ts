@@ -4,7 +4,7 @@ import ActivityParsingRules, { AllowedValuesByIdentifierId } from "./activityPar
 export function initActivityParsingRules(allowedValuesByIdentifierId:AllowedValuesByIdentifierId):ActivityParsingRules {
   const roomIds = allowedValuesByIdentifierId['RoomId'];
   const characterIds = allowedValuesByIdentifierId['CharacterId'];
-  const itemIds = allowedValuesByIdentifierId['ITemId'];
+  const itemIds = allowedValuesByIdentifierId['ItemId'];
   const appearanceIds = allowedValuesByIdentifierId['AppearanceId'];
   const rules = createActivityParsingRules(characterIds, roomIds, itemIds, appearanceIds);
   return rules;
