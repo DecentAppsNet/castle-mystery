@@ -13,6 +13,7 @@ import ParseSequence from "./types/ParseSequence";
 import { findVerbText, throwIfParseStepsInvalid } from "./parseFormatUtil";
 import { assertNonNullable } from "decent-portal";
 export { tryParseActivity } from "./parseUtil";
+export { initActivityParsingRules } from "./parseItineraryUtil";
 
 export function createParseFormat(rootParseStep:ParseStep):ParseFormat {
   throwIfParseStepsInvalid(rootParseStep);

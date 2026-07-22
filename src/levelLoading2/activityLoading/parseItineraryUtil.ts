@@ -1,5 +1,5 @@
-import { createActivityParsingRules } from "./activityParsing/parsingRulesUtil";
-import ActivityParsingRules, { AllowedValuesByIdentifierId } from "./activityParsing/types/ActivityParsingRules";
+import { createActivityParsingRules } from "./parsingRulesUtil";
+import ActivityParsingRules, { AllowedValuesByIdentifierId } from "./types/ActivityParsingRules";
 
 export function initActivityParsingRules(allowedValuesByIdentifierId:AllowedValuesByIdentifierId):ActivityParsingRules {
   const roomIds = allowedValuesByIdentifierId['RoomId'];

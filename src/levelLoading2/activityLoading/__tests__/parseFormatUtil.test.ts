@@ -11,7 +11,7 @@ import {
 	makeText,
 	makeVariableLiteral,
 	makeVerb,
-} from '../activityParserApi';
+} from '../activityLoadingApi';
 import {
 	describeParseFormat,
 	findVerbText,

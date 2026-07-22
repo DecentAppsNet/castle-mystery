@@ -1,8 +1,8 @@
 import Level from "@/game/types/Level";
 import ErrorCollector from "./errorCollection/ErrorCollector";
 import { loadLevelSections } from "./levelFileSectionUtil";
-import { initMutableLevelAndLoadingContext } from "./parseGeneralUtil";
-import { assertNonNullable } from "decent-portal";
+import { initMutableLevelAndLoadingContext } from "./generalLoading/generalLoadingApi";
+import { addRoomsForMapLayoutToLevel } from "./roomLayoutLoading/roomLayoutLoadingApi";
 
 /** 
  * Error handling design:
@@ -25,9 +25,9 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   const initResult = initMutableLevelAndLoadingContext(sections, errors);
   if (!initResult) return null;
   const { level, loadingContext } = initResult;
-  assertNonNullable(loadingContext);
 
   // Build the static room layout and validate room-level metadata.
+  if (!addRoomsForMapLayoutToLevel(sections, loadingContext, level, errors)) return null;
 
   // Populate the rooms with exits, waypoints, characters, items, and inventories.
 

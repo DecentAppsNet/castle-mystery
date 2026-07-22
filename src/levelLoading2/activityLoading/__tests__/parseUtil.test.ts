@@ -15,7 +15,7 @@ import {
   makeVariableOptions,
   makeVerb,
   tryParseActivity,
-} from '../activityParserApi';
+} from '../activityLoadingApi';
 import ActivityParsingRules from '../types/ActivityParsingRules';
 
 const APPEARANCE_IDS = ['guard uniform', 'royal robes', 'tiara'];

@@ -27,7 +27,7 @@ function _findSectionStartLineNo(lines:string[], sectionId:string):number {
 function _createSectionOffsets(text:string):SectionIdToLineOffset {
   const lines = text.split('\n');
   const s:SectionIdToLineOffset = {};
-  ['general', 'characters', 'rooms', 'items', 'conclusions', 'room styles', 'itinerary'].forEach(sectionId => {
+  ['general', 'map', 'characters', 'rooms', 'items', 'conclusions', 'room styles', 'itinerary'].forEach(sectionId => {
     s[sectionId] = _findSectionStartLineNo(lines, sectionId);
   });
   return s;

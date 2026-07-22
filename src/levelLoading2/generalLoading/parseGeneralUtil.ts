@@ -2,16 +2,17 @@ import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil
 import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
 import TimeLabel from "@/game/types/TimeLabel";
-import LevelFileSections from "./types/LevelFileSections";
-import ErrorCollector from "./errorCollection/ErrorCollector";
-import { findNameValueLineNo, MarkdownLineError, parseSections, parseUniqueNameValueLines } from "@/common/markdownUtil";
-import { normalizeId, normalizeOptionalId } from "@/game/idUtil";
-import { parseTimestampToMsecs } from "./activityParsing/timestampUtil";
-import { assert } from "decent-portal";
+import LevelFileSections from "../types/LevelFileSections";
+import ErrorCollector from "../errorCollection/ErrorCollector";
+import { findNameValueLineNo, parseUniqueNameValueLines } from "@/common/markdownUtil";
+import { normalizeOptionalId } from "@/game/idUtil";
+import { parseTimestampToMsecs } from "../activityLoading/timestampUtil";
+import { assert, assertNonNullable } from "decent-portal";
 import { getBackgroundImageAssetUrl } from "@/game/imageUrlUtil";
-import { AllowedValuesByIdentifierId } from "./activityParsing/types/ActivityParsingRules";
-import LevelLoadingContext from "./types/LevelLoadingContext";
-import { initActivityParsingRules } from "./parseItineraryUtil";
+import { AllowedValuesByIdentifierId } from "../activityLoading/types/ActivityParsingRules";
+import LevelLoadingContext from "../types/LevelLoadingContext";
+import { initActivityParsingRules } from "../activityLoading/parseItineraryUtil";
+import { getSectionIdsFromSectionText, isSectionRequired } from "../levelFileSectionUtil";
 
 const DEFAULT_WIN_SYNOPSIS = 'You won the level!';
 
@@ -27,32 +28,14 @@ function _parseOptionalDiscoverableCount(value:string|undefined, propertyName:st
   return parsedValue;
 }
 
-function _getSectionIdsFromSectionText(sectionText:string, indentLevel:number, errors:ErrorCollector):string[] {
-  try {
-    const subSections = parseSections(sectionText, indentLevel, false);
-    return Object.keys(subSections).map(normalizeId);
-  } catch(err:any) {
-    if (err?.name === 'MarkdownLineError') {
-      const markdownLineError:MarkdownLineError = err;
-      if (markdownLineError.message.indexOf('duplicate section') !== -1) {
-        errors.addParseErrorAtLine('DUPEID', 'a unique section ID', 'a duplicate section', markdownLineError.message, 
-          markdownLineError.lineNo, 0, 0, null);
-        return [];
-      }
-    }
-    // Add handling above if it corresponds to an expected error.
-    throw err;
-  }
-}
-
 function _getAllowedValuesFromSubSectionIds(sections:LevelFileSections, sectionId:string, errors:ErrorCollector):string[] {
   const section = sections[sectionId];
   if (!section) return [];
-  return _getSectionIdsFromSectionText(section.text, 2, errors);
+  return getSectionIdsFromSectionText(section.text, 2, sectionId, errors);
 }
 
 function _getAppearanceIdAllowedValues(charactersSectionText:string, errors:ErrorCollector):string[] {
-  return _getSectionIdsFromSectionText(charactersSectionText, 3, errors);
+  return getSectionIdsFromSectionText(charactersSectionText, 3, 'characters', errors);
 }
 
 function _createAllowedValuesByIdentifier(sections:LevelFileSections, errors:ErrorCollector):AllowedValuesByIdentifierId {
@@ -129,7 +112,6 @@ function _createTimeLabels(startTime:number, duration:number):TimeLabel[] {
 }
 
 function _createEmptyMutableLevel():MutableLevel {
-  const duration = MSECS_IN_DAY;
   return {
     rooms: [],
     initialCharacters: [],
@@ -146,17 +128,18 @@ function _createEmptyMutableLevel():MutableLevel {
     activeCharacterId: "",
     startTime: 0,
     initialTime: 0,
-    endTime: duration,
-    duration,
-    labels: _createTimeLabels(0, duration)
+    endTime: 0,
+    duration: 0,
+    labels: _createTimeLabels(0, 0)
   };
 }
 
 export function initMutableLevelAndLoadingContext(sections:LevelFileSections, errors:ErrorCollector):{level:MutableLevel, loadingContext:LevelLoadingContext}|null {
-  errors.resetNewErrors();
   const level = _createEmptyMutableLevel();
+  assert(isSectionRequired('general'));
+  assertNonNullable(sections.general, 'missing required section should have failed level load earlier.');
   const loadingContext = _parseGeneralSection(sections.general.text, level, errors);
   const allowedValuesByIdentifier = _createAllowedValuesByIdentifier(sections, errors);
   loadingContext.activityParsingRules = initActivityParsingRules(allowedValuesByIdentifier);
-  return errors.hasNewErrors() ? null : { level, loadingContext };
+  return errors.hasErrors ? null : { level, loadingContext };
 }
