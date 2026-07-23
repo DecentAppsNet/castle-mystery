@@ -4,6 +4,7 @@ import ErrorCollector from "./errorCollection/ErrorCollector";
 import LevelFileSections from "./types/LevelFileSections";
 import { assert } from "decent-portal";
 import { normalizeId } from "@/game/idUtil";
+import SectionEntryMap from "./types/SectionEntryMap";
 
 const KNOWN_TOP_LEVEL_SECTION_IDS = ['general', 'map', 'room styles', 'rooms', 'characters', 'items', 'itinerary', 'conclusions'];
 const REQUIRED_TOP_LEVEL_SECTION_IDS = ['general', 'map', 'rooms', 'characters'];
@@ -101,8 +102,9 @@ export function getSectionIdsFromSectionText(sectionText:string, indentLevel:num
   }
 }
 
-export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:number, sectionId:string, errors:ErrorCollector):Map<string, { authoredName:string, value:string, lineNo:number }> {
-  const normalizedEntries = new Map<string, { authoredName:string, value:string, lineNo:number }>();
+export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:number, sectionId:string, 
+    errors:ErrorCollector):SectionEntryMap {
+  const normalizedEntries = new Map<string, SectionEntryWithLine>();
 
   // First, get the section entries. It's possible that the non-normalized entries will throw a duplicate section
   // exception which is an expected condition to handle.
@@ -130,7 +132,7 @@ export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:
         'Make sure all section IDs are case-insensitive unique.', 0, 0, 0, sectionId);
     }
     normalizedEntries.set(normalizedName, {
-      authoredName:sectionEntry.name,
+      name:sectionEntry.name,
       value:sectionEntry.value,
       lineNo:sectionEntry.lineNo
     });
@@ -141,4 +143,32 @@ export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:
 
 export function isSectionRequired(sectionId:string):boolean {
   return REQUIRED_TOP_LEVEL_SECTION_IDS.includes(sectionId);
+}
+
+const TRUE_VALUES = ['true','t','yes','y','on'];
+const FALSE_VALUES = ['false', 'f', 'no', 'n', 'off'];
+export function parseBoolean(value:string, errors:ErrorCollector):boolean {
+  value = value.trim().toLowerCase();
+  if (TRUE_VALUES.includes(value)) return true;
+  if (FALSE_VALUES.includes(value)) return false;
+  errors.addParseError('BADVALUE', '"true" or "false"', `"${value}"`, `Fix to valid value.`, 0, 0);
+  return false;
+}
+
+export function parseNumber(value:string, errors:ErrorCollector):number {
+  const numberValue = Number.parseFloat(value);
+  if (!isNaN(numberValue)) return numberValue;
+  errors.addParseError('BADVALUE', 'numeric value', `"${value}"`, `Fix to valid value.`, 0, 0);
+  return numberValue;
+}
+
+export function describeAllowedValues(options:string[]):string {
+  if (options.length === 0) return '';
+  if (options.length === 1) return options[0];
+  if (options.length === 2) return `"${options[0]}" or "${options[1]}"`;
+  let concat = options[0];
+  for(let i = 1; i < options.length; ++i) {
+    concat += (i === options.length - 1) ? `, or ${options[i]}` : `, ${options[i]}`
+  }
+  return concat;
 }

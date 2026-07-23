@@ -6,7 +6,11 @@ import Waypoint from "./Waypoint";
 import { createDefaultCharacterPose } from "./CharacterPose";
 
 export type FacingDirection = 'left' | 'right';
+export const VALID_FACING_DIRECTIONS:FacingDirection[] = ['left', 'right'];
+export const DEFAULT_FACING_DIRECTION:FacingDirection = 'right';
 export type BodyOrientation = 'standing' | 'sitting' | 'kneeling' | 'laying';
+export const VALID_BODY_ORIENTATIONS:BodyOrientation[] = ['standing', 'sitting', 'kneeling', 'laying'];
+export const DEFAULT_BODY_ORIENTATION:BodyOrientation = 'standing';
 
 function _createDefaultWaypoint():Waypoint {
   return {

@@ -1,0 +1,63 @@
+import Character, { BodyOrientation, createDefaultCharacter, DEFAULT_BODY_ORIENTATION, DEFAULT_FACING_DIRECTION, FacingDirection, VALID_BODY_ORIENTATIONS, VALID_FACING_DIRECTIONS } from "@/game/types/Character";
+import { ErrorCollector } from "../errorCollection/errorCollectionApi";
+import SectionEntryMap from "../types/SectionEntryMap";
+import { createNormalizedSectionEntryMap, describeAllowedValues, parseBoolean } from "../levelFileSectionUtil";
+import { assertNonNullable } from "decent-portal";
+import { parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
+import { getFaceImageAssetUrl } from "@/game/imageUrlUtil";
+import { rand } from "@/common/randUtil";
+import { parseItem, parseItems } from "../itemLoading/itemLoadingApi";
+import { normalizeId } from "@/game/idUtil";
+
+function _parseFacingDirection(text:string, errors:ErrorCollector):FacingDirection {
+  text = text.trim().toLowerCase();
+  if (VALID_FACING_DIRECTIONS.some(fd => fd === text)) return text as FacingDirection;
+  errors.addParseError('BADVALUE', describeAllowedValues(VALID_FACING_DIRECTIONS), `"${text}"`, `Fix to valid value.`, 0, 0);
+  return DEFAULT_FACING_DIRECTION;
+}
+
+function _parseBodyOrientation(text:string, errors:ErrorCollector):BodyOrientation {
+  text = text.trim().toLowerCase();
+  if (VALID_BODY_ORIENTATIONS.some(bo => bo === text)) return text as BodyOrientation;
+  errors.addParseError('BADVALUE', describeAllowedValues(VALID_BODY_ORIENTATIONS), `"${text}"`, `Fix to valid value.`, 0, 0);
+  return DEFAULT_BODY_ORIENTATION;
+}
+
+function _parseCharacter(characterId:string, characterSectionEntry:SectionEntryWithLine, errors:ErrorCollector):Character {
+  errors.setLine(characterSectionEntry.lineNo, 'characters');
+  const nameValues = parseUniqueNameValueLines(characterSectionEntry.value, `character ${characterId}`, false, characterSectionEntry.lineNo);
+  const authoredCharacterName = characterSectionEntry.name.trim();
+  const title = nameValues.title ?? authoredCharacterName;
+  const description = nameValues.description ?? '';
+  const faceImageUrl = nameValues.faceImage ? getFaceImageAssetUrl(nameValues.faceImage.trim()) : null;
+  const isVisible = parseBoolean(nameValues.visible ?? 'true', errors);
+  const facingDirection = _parseFacingDirection(nameValues.facingDirection ?? DEFAULT_FACING_DIRECTION, errors);
+  const bodyOrientation = _parseBodyOrientation(nameValues.bodyOrientation ?? 'standing', errors);
+  const isTitleKnown = parseBoolean(nameValues.isTitleKnown ?? 'false', errors);
+  const items = parseItems(nameValues.items ?? '');
+  const leftHandItem = parseItem(nameValues.leftHand ?? '');
+  const rightHandItem = parseItem(nameValues.rightHand ?? '');
+  const character:Character = {
+    ...createDefaultCharacter(),
+    id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
+    bodyOrientation, isTitleKnown, items, leftHandItem, rightHandItem
+  }
+  return character;
+}
+
+export function loadCharactersPartially(charactersSectionText:string, errors:ErrorCollector):Character[]|null {
+  const originalErroCount = errors.errorCount;
+
+  if (!charactersSectionText) return [];
+
+  const characterSectionsById:SectionEntryMap = createNormalizedSectionEntryMap(charactersSectionText, 2, 'characters', errors);
+  const characterSectionNames:string[] = Object.keys(characterSectionsById);
+  const characters = characterSectionNames.map(sectionName => {
+    const sectionEntry = characterSectionsById.get(sectionName);
+    assertNonNullable(sectionEntry);
+    const characterId = normalizeId(sectionName);
+    return _parseCharacter(characterId, sectionEntry, errors)
+  });
+  
+  return errors.errorCount <= originalErroCount ? characters : null;
+}

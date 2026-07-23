@@ -2,7 +2,9 @@ import Level from "@/game/types/Level";
 import ErrorCollector from "./errorCollection/ErrorCollector";
 import { loadLevelSections } from "./levelFileSectionUtil";
 import { initMutableLevelAndLoadingContext } from "./generalLoading/generalLoadingApi";
-import { addRoomsForMapLayoutToLevel } from "./roomLayoutLoading/roomLayoutLoadingApi";
+import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading/roomLoadingApi";
+import { loadItemsPartially } from "./itemLoading/itemLoadingApi";
+import { loadCharactersPartially } from "./characterLoading/characterLoadingApi";
 
 /** 
  * Error handling design:
@@ -26,14 +28,20 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!initResult) return null;
   const { level, loadingContext } = initResult;
 
-  // Build the static room layout and validate room-level metadata.
-  if (!addRoomsForMapLayoutToLevel(sections, loadingContext, level, errors)) return null;
+  // Partially load items, characters, and rooms, avoiding loading of any dependencies.
+  const items = loadItemsPartially(sections.items?.text ?? '', errors); // Items are still missing positions.
+  const characters = loadCharactersPartially(sections.characters.text, errors); // Characters still missing positions, inventory.
+  const rooms = loadRoomsPartially(sections, errors); // Rooms still missing inventory.
+  if (!items || !characters || !rooms) return null;
 
-  // Populate the rooms with exits, waypoints, characters, items, and inventories.
-
+  // Add items, characters, and rooms to level, resolving dependencies.
+  if (!addRoomsToLevel(rooms, items, loadingContext.groundFloorRoomRef, level, errors)) return null;
+  //if (!addCharactersToLevel(characters, items, level, errors)) return null;  
+  
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
+  //level.conclusions = loadConclusions(sections.conclusions, characters, items, rooms, errors);
 
-  // Schedule itinerary activities into replayable itinerary.
+  // Schedule activities into replayable itinerary.
 
   // Reconcile general-section time settings against the scheduled itinerary.
 

@@ -233,6 +233,8 @@ Write one subsection per character. The subsection name is the character's name.
 * `title` (optional) - the display name shown to the player. Default: the subsection name.
 * `description` (optional) - a short description of the character. Default: empty.
 * `items` (optional) - items the character begins with, separated by `|`. Default: no starting items.
+* `leftHand` (optional) - item character begins with in left hand. Default: no starting item.
+* `rightHand` (optional) - item character begins with in right hand. Default: no starting item.
 * `faceImage` (optional) - the image used for the character's face in the UI. Default: no face image.
 * `alive` (optional) - whether the character begins alive. Must be `true` or `false`. Default: `true`.
 * `facing` (optional) - which way the character initially faces. Must be `left` or `right`. Default: `right`.
