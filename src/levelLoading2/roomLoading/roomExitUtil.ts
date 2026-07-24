@@ -23,22 +23,24 @@ function _splitExitOption(exitOptionText:string, errors:ErrorCollector):{roomId:
   const leftParenPos = exitOptionText.indexOf('(');
   const rightParenPos = exitOptionText.indexOf(')');
 
+  errors.matchNextLine(['rooms', roomId], '* exits=', '');
+
   if (leftParenPos === -1 && rightParenPos === -1) { // No parentheses found, so no modifier.
     return { roomId:normalizeId(exitOptionText), modifierTokens };
   }
   
   if (leftParenPos !== -1 && rightParenPos !== -1) { // Both parentheses found.
     if (leftParenPos >= rightParenPos) {
-      errors.addParseError('BADVALUE', 'Matched "(" and ")" for modifier', '")" preceding "(" with no matched "("', 'Fix parentheses.',
-        0, 0);
+      errors.setNextCharRange(rightParenPos, leftParenPos+1);
+      errors.add('")" preceding "(" with no matched "(". Fix parentheses.');
     } else {
       const modifiersText = exitOptionText.substring(leftParenPos + 1, rightParenPos);
       modifierTokens = _modifierTextToTokens(modifiersText);
     }
     const roomIdText = exitOptionText.substring(0, leftParenPos).trim();
     if (!roomIdText) {
-       errors.addParseError('BADVALUE', 'Room ID value', 'modifier for room exit', 'Add a room ID before the modifier.',
-        0, 0);
+      errors.setNextCharRange(leftParenPos, leftParenPos+1);
+      errors.add('Expected a room ID.');
     }
     roomId = normalizeId(roomIdText);
     return { roomId, modifierTokens };
@@ -47,11 +49,13 @@ function _splitExitOption(exitOptionText:string, errors:ErrorCollector):{roomId:
   // One of two parentheses found.
   if (leftParenPos !== -1) {
     assert(rightParenPos === -1);
-    errors.addParseError('BADVALUE', 'Matched "(" and ")" for modifier', 'Missing ")"', 'Fix parentheses.', 0, 0);
+    errors.setNextCharRange(leftParenPos, leftParenPos+1);
+    errors.add('Missing ")" to enclose modifier.');
   } else {
     assert(leftParenPos === -1);
     assert(rightParenPos !== -1);
-    errors.addParseError('BADVALUE', 'Matched "(" and ")" for modifier', 'Missing "("', 'Fix parentheses.', 0, 0);
+    errors.setNextCharRange(rightParenPos, rightParenPos+1);
+    errors.add('Missing "(" to enclose modifier.');
   }
   return { roomId, modifierTokens };
 }
@@ -216,7 +220,7 @@ function _addExitToRoomAsNeeded(exitOptionText:string, room:Room, rooms:Room[], 
   const {roomId:otherRoomId, modifierTokens} = _splitExitOption(exitOptionText, errors);
   const otherRoom = findRoom(rooms, otherRoomId);
   if (!otherRoom) {
-    errors.addParseError('BADREF', 'valid room ID', `"${otherRoomId}"`, 'Room ID must match a defined room.', 0, 0);
+    errors.addAt(`"${otherRoomId}" room ID must match a defined room.`, ['rooms', room.id], '* exits=', otherRoomId);
     return;
   }
   const existingExit = _findExistingExitBetweenRooms(rooms, room.id, otherRoomId);
@@ -226,8 +230,8 @@ function _addExitToRoomAsNeeded(exitOptionText:string, room:Room, rooms:Room[], 
   } else {
     const newExit = _createNewExit(room, otherRoom, modifierTokens);
     if (!newExit) {
-      errors.addParseError('NONADJEXIT', `"${room.id}" and "${otherRoom.id}" rooms to be horizontally adjacent`, `not horizontally adjacent`,
-        `Fix exits to only specify rooms that are horizontally adjacent.`, 0, 0);      
+      errors.addAt(`"${room.id}" and "${otherRoom.id}" are not horizontally adjacent.`, 
+        ['rooms', room.id], '* exits=', otherRoomId);      
       return;
     }
     _addRoomPairExit(newExit, room, otherRoom);
@@ -235,23 +239,23 @@ function _addExitToRoomAsNeeded(exitOptionText:string, room:Room, rooms:Room[], 
 }
 
 function _addExitsToRoom(roomEntry:SectionEntryWithLine, room:Room, rooms:Room[], errors:ErrorCollector):boolean {
-  const originalErrorCount = errors.errorCount;
+  const originalErrorCount = errors.count;
   const nameValues = parseUniqueNameValueLines(roomEntry.value, `room "${room.id}"`, true, roomEntry.lineNo);
   const exitsText = nameValues['exits'];
   if (exitsText) {
     const exitOptionTexts = parseOptions(exitsText);
     exitOptionTexts.forEach(t => _addExitToRoomAsNeeded(t, room, rooms, errors));
   }
-  return errors.errorCount <= originalErrorCount;
+  return errors.count <= originalErrorCount;
 }
 
 export function addExitsToRooms(roomsSectionText:string, rooms:Room[], errors:ErrorCollector):boolean {
-  const originalErrorCount = errors.errorCount;
+  const originalErrorCount = errors.count;
   const roomEntries = createNormalizedSectionEntryMap(roomsSectionText, 2, 'rooms', errors); 
   rooms.forEach(room => {
     const roomEntry = roomEntries.get(room.id);
     assertNonNullable(roomEntry);
     _addExitsToRoom(roomEntry, room, rooms, errors);
   });
-  return errors.errorCount <= originalErrorCount;
+  return errors.count <= originalErrorCount;
 }

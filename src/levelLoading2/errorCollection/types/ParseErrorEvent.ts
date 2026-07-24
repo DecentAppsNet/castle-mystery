@@ -3,10 +3,7 @@ type ParseErrorEvent = {
   sourceLineNo:number,
   fromCharNo:number,
   toCharNo:number,
-  errorCode:string,
-  expectedText:string,
-  foundText:string,
-  note:string
+  message:string
 }
 
 export default ParseErrorEvent;

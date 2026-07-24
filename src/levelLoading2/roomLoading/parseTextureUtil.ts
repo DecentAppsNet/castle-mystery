@@ -16,26 +16,24 @@ function _parseTextureAlphaMode(valueText:string, roomId:string,
     textureFieldName:TextureFieldName, errors:ErrorCollector):AlphaMode|null {
   if (!valueText.length || valueText === 'composite') return 'composite';
   if (valueText === 'punch') return 'punch';
-  errors.addParseError('BADALPHAMODE', `room ${roomId} ${textureFieldName} to equal "composite" or "punch"`, `"${valueText}"`,
-    'Fix to valid alpha mode value.', 0, 0);
+  errors.addAt(`"${valueText}" did not equal "composite" or "punch"`, ['rooms', roomId], `* ${textureFieldName}=`, valueText);
   return null;
 }
 
-function _parsePositiveTextureSpan(valueText:string, axisLabel:'horizontal'|'vertical', textureFieldName:string, roomId:string, 
+function _parsePositiveTextureSpan(valueText:string, textureFieldName:string, roomId:string, 
     errors:ErrorCollector):number|null {
   const value = Number(valueText.trim());
   if (!Number.isInteger(value) || value <= 0) {
-    errors.addParseError('BADTEXTSPAN', `a positive integer for ${roomId} ${axisLabel} in ${textureFieldName}`, `"${value}"`,
-      "Fix value to be a positive integer.", 0, 0);
+    errors.addAt(`"${valueText}" is not a positive integer.`, ['rooms', roomId], `* ${textureFieldName}=`, valueText);
     return null;
   }
   return value;
 }
 
 function _parseTextureSpan(valueText:string, stretchCount:number,
-    axisLabel:'horizontal'|'vertical', textureFieldName:string, roomId:string, errors:ErrorCollector):number|null {
+    textureFieldName:string, roomId:string, errors:ErrorCollector):number|null {
   if (valueText.trim() === '*') return stretchCount;
-  return _parsePositiveTextureSpan(valueText, axisLabel, textureFieldName, roomId, errors);
+  return _parsePositiveTextureSpan(valueText, textureFieldName, roomId, errors);
 }
 
 function _findTextureStretchCounts(room:Room, textureFieldName:TextureFieldName):
@@ -64,12 +62,10 @@ function _findTextureStretchCounts(room:Room, textureFieldName:TextureFieldName)
   }
 }
 
-function _addBadTextureFormatError(textureFieldName:TextureFieldName, verticalUnitLabel:VerticalUnit, errors:ErrorCollector) {
+function _addBadTextureFormatError(textureFieldName:TextureFieldName, verticalUnitLabel:VerticalUnit, errors:ErrorCollector, roomId:string) {
   const preferedSyntaxDescription = `'filename.png (columns,${verticalUnitLabel})', 'filename.png (*,*)', or 'filename.png', with any number of '| aged stone' or additional image segments such as '| overlay.png (*,* punch)'`;
-  errors.addParseError(
-    'BADTEXTURE', 
-    `${textureFieldName} must be in the form ${preferedSyntaxDescription}`,
-    'an invalid texture format', 'Correct syntax problems.', 0, 0
+  errors.addAt(`${textureFieldName} must be in the form ${preferedSyntaxDescription}.`, 
+    ['rooms', roomId], `* ${textureFieldName}=`
   );
 }
 
@@ -90,7 +86,7 @@ function _parseRoomTextureImageOperation(value:string, room:Room,
     };
   }
   if (openParenIndex <= 0 || closeParenIndex <= openParenIndex) {
-    _addBadTextureFormatError(textureFieldName, verticalUnitLabel, errors);
+    _addBadTextureFormatError(textureFieldName, verticalUnitLabel, errors, room.id);
     return null;
   }
 
@@ -98,7 +94,7 @@ function _parseRoomTextureImageOperation(value:string, room:Room,
   const countsAndModeText = trimmedValue.slice(openParenIndex + 1, closeParenIndex).trim();
   const trailingText = trimmedValue.slice(closeParenIndex + 1).trim();
   if (!filename || !countsAndModeText || trailingText) {
-    _addBadTextureFormatError(textureFieldName, verticalUnitLabel, errors);
+    _addBadTextureFormatError(textureFieldName, verticalUnitLabel, errors, room.id);
     return null;
   }
 
@@ -108,12 +104,12 @@ function _parseRoomTextureImageOperation(value:string, room:Room,
 
   const countParts = countsText.split(',');
   if (countParts.length !== 2) {
-    _addBadTextureFormatError(textureFieldName, verticalUnitLabel, errors);
+    _addBadTextureFormatError(textureFieldName, verticalUnitLabel, errors, room.id);
     return null;
   }
 
-  const horizontalCount = _parseTextureSpan(countParts[0], stretchCounts.horizontalCount, 'horizontal', textureFieldName, room.id, errors);
-  const verticalCount = _parseTextureSpan(countParts[1], stretchCounts.verticalCount, 'vertical', textureFieldName, room.id, errors);
+  const horizontalCount = _parseTextureSpan(countParts[0], stretchCounts.horizontalCount, textureFieldName, room.id, errors);
+  const verticalCount = _parseTextureSpan(countParts[1], stretchCounts.verticalCount, textureFieldName, room.id, errors);
   const alphaMode = _parseTextureAlphaMode(alphaModeText, room.id, textureFieldName, errors);
   if (!horizontalCount || !verticalCount || !alphaMode) return null;
   return {
@@ -138,7 +134,7 @@ export function parseRoomTexture(value:string|undefined, room:Room,
     verticalUnitLabel:'layers'|'rows', errors:ErrorCollector):Texture|null {
   if (!value?.trim()) return null;
   const segments = value.split('|').map(segment => segment.trim());
-  if (segments.some(segment => !segment)) _addBadTextureFormatError(textureFieldName, verticalUnitLabel, errors);
+  if (segments.some(segment => !segment)) _addBadTextureFormatError(textureFieldName, verticalUnitLabel, errors, room.id);
 
   const operations = segments
     .map(segment => _parseRoomTextureOperation(segment, room, textureFieldName, verticalUnitLabel, errors))

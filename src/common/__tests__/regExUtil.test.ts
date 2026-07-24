@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { createNonGlobalRegex, escapeRegexCharacters, findSquareBracketEnclosedTextSegments, findWordLikeTextSegments } from '../regExUtil';
+import { collapseWhitespace, createNonGlobalRegex, escapeRegexCharacters, findSquareBracketEnclosedTextSegments, findWordLikeTextSegments } from '../regExUtil';
 
 describe('regExUtil', () => {
   describe('findWordLikeTextSegments()', () => {
@@ -56,6 +56,16 @@ describe('regExUtil.ts', () => {
     it('returns the original regex when it is already non-global', () => {
       const regex = /abc/i;
       expect(createNonGlobalRegex(regex)).toBe(regex);
+    });
+  });
+
+  describe('collapseWhitespace()', () => {
+    it('trims leading and trailing whitespace', () => {
+      expect(collapseWhitespace('  hello world  ')).toBe('hello world');
+    });
+
+    it('collapses internal whitespace sequences to single spaces', () => {
+      expect(collapseWhitespace('hello\t\tthere\nfriend   again')).toBe('hello there friend again');
     });
   });
 });

@@ -64,7 +64,7 @@ function _resolveRoomTextureOverride(roomNameValues:Record<string, string>,
 
 function _createItemsForRoom(room:Room, itemsText:string, roomSectionText:string, errors:ErrorCollector):Item[] {
   const items:Item[] = parseItems(itemsText);
-  const roomLegendGrid = parseLegendGrid(roomSectionText, errors);
+  const roomLegendGrid = parseLegendGrid(roomSectionText, errors, ['rooms', room.id]);
   if (!roomLegendGrid) return [];
   setRoomItemPositions(room, roomLegendGrid);
   return items;
@@ -98,8 +98,8 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
 }
 
 export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:ErrorCollector):Room[] {
-  errors.setLine(0, 'map'); // Default location for all error messages - top of the map section.
-  const originalErrorCount = errors.errorCount;
+  errors.matchNextLine('map', '```', '```'); // Default location for all error messages.
+  const originalErrorCount = errors.count;
 
   if (!mapLegendGrid) return [];
   const roomBoundsById = new Map<string, { authoredName:string, minCol:number, maxCol:number, minRow:number, maxRow:number }>();
@@ -123,10 +123,7 @@ export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:Error
   const rooms = Array.from(roomBoundsById.entries()).map(([roomId, bounds]) => {
     const expectedTileCount = (bounds.maxCol - bounds.minCol + 1) * (bounds.maxRow - bounds.minRow + 1);
     const actualTileCount = roomTileCountById.get(roomId) || 0;
-    if (actualTileCount !== expectedTileCount) {
-      errors.addParseError('NONRECTROOM', 'map tiles for ${roomId} to cover a rectangular area', 'covered a non-rect area', 
-        'Make all tiles for each room adjacent and filling a rectangular area.', 0, 0);
-    }
+    if (actualTileCount !== expectedTileCount) errors.add('Map tiles for ${roomId} cover a non-rect area.');
     return {
       ...createDefaultRoom(),
       id: roomId,
@@ -143,17 +140,17 @@ export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:Error
   const sortedRooms = sortRoomsForDrawingOrder(rooms);
   assert(areRoomsWellOrdered(sortedRooms), 'rooms could not be ordered for drawing');
   
-  return errors.errorCount <= originalErrorCount ? sortedRooms : [];
+  return errors.count <= originalErrorCount ? sortedRooms : [];
 }
 
 export function validateMapLegendRoomsExistInRoomsSection(mapLegendGrid:LegendGrid, roomsSection:string, errors:ErrorCollector):boolean {
-  const orginalErrorCount =  errors.errorCount;
+  const orginalErrorCount =  errors.count;
   const roomIds = getUniqueIdsFromLegendGrid(mapLegendGrid);
   const roomSectionIds = _createNormalizedRoomSectionIds(roomsSection, errors);
   Object.values(roomIds).forEach(roomId => {
     if (roomSectionIds.has(roomId)) return;
-    errors.addParseErrorAtLine('NOLEGROOM', 'map legend room "${roomName}" to have corresponding definition in "rooms" section', 
-      'no room definition for "${roomName}"', 'Check for naming mistake or add room definition.', 0, 0, 0, 'map');
+    errors.addAt(`Map legend room "${roomId}" does not have corresponding definition in "rooms" section`, 
+      'map', '```', '```');
   });
-  return errors.errorCount <= orginalErrorCount;
+  return errors.count <= orginalErrorCount;
 }

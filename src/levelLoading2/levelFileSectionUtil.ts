@@ -2,25 +2,24 @@ import { MarkdownLineError, normalizeMarkdownName, parseIncludedSections, parseS
 import LevelFileSection from "./types/LevelFileSection";
 import ErrorCollector from "./errorCollection/ErrorCollector";
 import LevelFileSections from "./types/LevelFileSections";
-import { assert } from "decent-portal";
 import { normalizeId } from "@/game/idUtil";
 import SectionEntryMap from "./types/SectionEntryMap";
+import { ROOT_LEVEL } from "./errorCollection/sourceLocationUtil";
 
 const KNOWN_TOP_LEVEL_SECTION_IDS = ['general', 'map', 'room styles', 'rooms', 'characters', 'items', 'itinerary', 'conclusions'];
 const REQUIRED_TOP_LEVEL_SECTION_IDS = ['general', 'map', 'rooms', 'characters'];
 const TRIM_LEADING_BLANK_LINES_SECTION_IDS = ['itinerary'];
 
 function _areKnownTopLevelSections(text:string, errors:ErrorCollector):boolean {
-  const orginalErrorCount = errors.errorCount;
+  const orginalErrorCount = errors.count;
   const sectionEntries:SectionEntryWithLine[] = parseSectionEntriesWithLines(text, 1, true);
   for(let i = 0; i < sectionEntries.length; ++i) {
     const sectionEntry = sectionEntries[i];
     if (KNOWN_TOP_LEVEL_SECTION_IDS.includes(sectionEntry.name)) continue;
-    const sectionId = sectionEntry.name;
-    errors.addParseErrorAtLine('UNKSEC', 'a known section ID', `"${sectionId}"`, 'Check spelling.', 
-      sectionEntry.lineNo, 2, 2+sectionId.length, null);
+    const sectionName = sectionEntry.name;
+    errors.addAt(`"${sectionName}" is not a known top-level section name.`, ROOT_LEVEL, `# ${sectionName}`);
   }
-  return errors.errorCount <= orginalErrorCount;
+  return errors.count <= orginalErrorCount;
 }
 
 function _findSectionFirstContentLineNo(markdownText:string, sectionName:string, indentLevel:number = 1):number|null {
@@ -53,35 +52,27 @@ function _trimLeadingBlankLines(text:string):string {
 }
 
 export function loadLevelSections(levelText:string, errors:ErrorCollector):LevelFileSections|null {
-  const originalErrorCount = errors.errorCount;
+  const originalErrorCount = errors.count;
   
   const sections:Record<string, LevelFileSection> = {};
   if (!_areKnownTopLevelSections(levelText, errors)) return null;
   const parsedSections = parseIncludedSections(levelText, KNOWN_TOP_LEVEL_SECTION_IDS, 1, true);
-
-  errors.setLine(0); // First line will always be owned by main level file.
-  const levelFilename = errors.sourceFilename;
-  assert(typeof levelFilename === 'string');
   
   KNOWN_TOP_LEVEL_SECTION_IDS.forEach(sectionId => {
     const sectionText = parsedSections[sectionId];
     if (!sectionText) return;
     const startLineNo = _findSectionFirstContentLineNo(levelText, sectionId) || 1;
     const text = TRIM_LEADING_BLANK_LINES_SECTION_IDS.includes(sectionId) ? _trimLeadingBlankLines(sectionText) : sectionText;
-    const section:LevelFileSection = { id:sectionId, text, levelFilename, startLineNo }
+    const section:LevelFileSection = { id:sectionId, text, startLineNo }
     sections[sectionId] = section;
   });
 
   // Fail early with missing sections rather than have all the later loading code check for required sections.
   REQUIRED_TOP_LEVEL_SECTION_IDS.forEach(sectionId => {
-    if (!sections[sectionId]) {
-      errors.addParseErrorAtLine('NOSECTION', 
-        `"${sectionId}" section in level file`, `none found`, `Add the required "# ${sectionId}" section at top level.`,
-        0, 0, 0, null);
-    }
+    if (!sections[sectionId]) errors.addAt(`Missing required "${sectionId}" section in level file.`, ROOT_LEVEL);
   });
 
-  return errors.errorCount <= originalErrorCount ? sections : null;
+  return errors.count <= originalErrorCount ? sections : null;
 }
 
 export function getSectionIdsFromSectionText(sectionText:string, indentLevel:number, sectionId:string, errors:ErrorCollector):string[] {
@@ -92,8 +83,7 @@ export function getSectionIdsFromSectionText(sectionText:string, indentLevel:num
     if (err.name === 'MarkdownLineError') {
       const markdownLineError:MarkdownLineError = err;
       if (markdownLineError.message.includes('duplicate section')) {
-        errors.addParseErrorAtLine('DUPEID', 'a unique section ID', 'a duplicate section', markdownLineError.message, 
-          markdownLineError.lineNo, 0, 0, sectionId);
+        errors.addAt(markdownLineError.message, sectionId);
         return [];
       }
     }
@@ -110,13 +100,12 @@ export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:
   // exception which is an expected condition to handle.
   let sectionEntries;
   try {
-    sectionEntries = parseSectionEntriesWithLines(sectionText, indentLevel, false, errors.getSectionFirstLineNo(sectionId));
+    sectionEntries = parseSectionEntriesWithLines(sectionText, indentLevel, false);
     if (!sectionEntries.length) return normalizedEntries; // No sub-sections.
   } catch (err:any) {
     const markdownLineError:MarkdownLineError = err;
     if (markdownLineError.message.includes('duplicate section')) {
-      errors.addParseErrorAtLine('DUPEID', 'a unique section ID', 'a duplicate section', markdownLineError.message, 
-        markdownLineError.lineNo, 0, 0, sectionId);
+      errors.addAt(markdownLineError.message, sectionId);
       return normalizedEntries;
     }
     // Add handling above if it corresponds to an expected error.
@@ -128,8 +117,9 @@ export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:
     const normalizedName = normalizeId(sectionEntry.name);
     const existingEntry = normalizedEntries.get(normalizedName) || null;
     if (existingEntry) {
-      errors.addParseErrorAtLine('DUPEID', 'a unique section ID', `"${sectionEntry.name}" which matches an existing section`, 
-        'Make sure all section IDs are case-insensitive unique.', 0, 0, 0, sectionId);
+      errors.addAt(`After normalization, 
+        "${sectionEntry.name}" has same name as another. Make sure all section anmes are case-insensitive unique.`, 
+        sectionId);
     }
     normalizedEntries.set(normalizedName, {
       name:sectionEntry.name,
@@ -147,18 +137,18 @@ export function isSectionRequired(sectionId:string):boolean {
 
 const TRUE_VALUES = ['true','t','yes','y','on'];
 const FALSE_VALUES = ['false', 'f', 'no', 'n', 'off'];
-export function parseBoolean(value:string, errors:ErrorCollector):boolean {
+export function parseBoolean(value:string, errors:ErrorCollector, sectionNames:string[], variableName:string):boolean {
   value = value.trim().toLowerCase();
   if (TRUE_VALUES.includes(value)) return true;
   if (FALSE_VALUES.includes(value)) return false;
-  errors.addParseError('BADVALUE', '"true" or "false"', `"${value}"`, `Fix to valid value.`, 0, 0);
+  errors.addAt(`Expected "${value}" to be "true" or "false"`, sectionNames, `* ${variableName}=`, value);
   return false;
 }
 
-export function parseNumber(value:string, errors:ErrorCollector):number {
+export function parseNumber(value:string, errors:ErrorCollector, sectionNames:string[], variableName:string):number {
   const numberValue = Number.parseFloat(value);
   if (!isNaN(numberValue)) return numberValue;
-  errors.addParseError('BADVALUE', 'numeric value', `"${value}"`, `Fix to valid value.`, 0, 0);
+  errors.addAt(`Expected "${value}" to be a numberValue.`, sectionNames, `* ${variableName}=`, '' + value);
   return numberValue;
 }
 

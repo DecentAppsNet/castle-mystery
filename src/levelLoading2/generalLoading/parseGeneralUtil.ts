@@ -22,8 +22,7 @@ function _parseOptionalDiscoverableCount(value:string|undefined, propertyName:st
   if (!Number.isInteger(parsedValue) || parsedValue < 0) {
     const lineNo = findNameValueLineNo(generalSectionText, propertyName);
     assert(lineNo !== -1);
-    errors.addParseErrorAtLine(`BADINT`, `a valid integer`, `"${parsedValue}"`, 
-      'Fix the value after "=" to be an integer.', lineNo, 0, 0, 'general');
+    errors.addAt(`"${parsedValue}" is not an integer.`, 'general', `* ${propertyName}=`, value);
   }
   return parsedValue;
 }

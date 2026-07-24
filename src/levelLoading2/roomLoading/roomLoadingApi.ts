@@ -15,9 +15,9 @@ import { parseLegendGrid } from './legendGridUtil';
 // Returns rooms with everything loaded from level file except dependencies, e.g. items. The exception is room styles, which are applied,
 // because nothing else uses room styles besides rooms.
 export function loadRoomsPartially(sections:LevelFileSections, errors:ErrorCollector):Room[] | null {
-  const originalErrorCount = errors.errorCount;
+  const originalErrorCount = errors.count;
 
-  const mapLegendGrid = parseLegendGrid(sections.map.text, errors);
+  const mapLegendGrid = parseLegendGrid(sections.map.text, errors, ['map']);
   if (!mapLegendGrid) return null;
   const rooms:Room[] = createRoomsFromMapSection(mapLegendGrid, errors);
   validateMapLegendRoomsExistInRoomsSection(mapLegendGrid, sections.rooms.text, errors);
@@ -32,7 +32,7 @@ export function loadRoomsPartially(sections:LevelFileSections, errors:ErrorColle
     room.waypoints.push(...waypoints);
   });
 
-  return errors.errorCount <= originalErrorCount ? rooms : null;
+  return errors.count <= originalErrorCount ? rooms : null;
 }
 
 export function addRoomsToLevel(rooms:Room[], items:Item[], groundFloorRoomId:string|null, level:MutableLevel, errors:ErrorCollector):boolean {

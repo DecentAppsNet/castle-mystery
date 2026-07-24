@@ -36,20 +36,19 @@ function _parseItem(itemId:string, itemSectionEntry:SectionEntryWithLine, errors
   const itemSection = itemSectionEntry.value;
   const nameValues = parseUniqueNameValueLines(itemSection, `item ${itemId}`, false, itemSectionEntry.lineNo);
 
-  errors.setLine(itemSectionEntry.lineNo, 'items');
   const title = nameValues.title ?? authoredItemName;
   const description = nameValues.description ?? '';
   const imageUrl = nameValues.image ? getItemImageAssetUrl(nameValues.image.trim()) : null;
-  const isVisible = parseBoolean(nameValues.visible ?? 'true', errors);
+  const isVisible = parseBoolean(nameValues.visible ?? 'true', errors, ['items', itemId], 'visible');
   const drawOffset = {
-    x:parseNumber(nameValues.drawOffsetX ?? '0', errors),
-    y:parseNumber(nameValues.drawOffsetY ?? '0', errors),
-    z:parseNumber(nameValues.drawOffsetZ ?? '0', errors)
+    x:parseNumber(nameValues.drawOffsetX ?? '0', errors, ['items', itemId], 'drawOffsetX'),
+    y:parseNumber(nameValues.drawOffsetY ?? '0', errors, ['items', itemId], 'drawOffsetY'),
+    z:parseNumber(nameValues.drawOffsetZ ?? '0', errors, ['items', itemId], 'drawOffsetZ')
   };
   const stackOffset = {
-    x:parseNumber(nameValues.stackOffsetX ?? '0', errors),
-    y:parseNumber(nameValues.stackOffsetY ?? '0', errors),
-    z:parseNumber(nameValues.stackOffsetZ ?? '0', errors)
+    x:parseNumber(nameValues.stackOffsetX ?? '0', errors, ['items', itemId], 'stackOffsetX'),
+    y:parseNumber(nameValues.stackOffsetY ?? '0', errors, ['items', itemId], 'stackOffsetY'),
+    z:parseNumber(nameValues.stackOffsetZ ?? '0', errors, ['items', itemId], 'stackOffsetZ')
   }
   const position = {x:0, y:0, z:0}; // Set later based on room legends.
 
@@ -82,7 +81,7 @@ export function setRoomItemPositions(room:Room, roomLegendGrid:LegendGrid) {
 }
 
 export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollector):Item[]|null {
-  const originalErroCount = errors.errorCount;
+  const originalErroCount = errors.count;
 
   if (!itemsSectionText) return [];
 
@@ -94,5 +93,5 @@ export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollecto
     return _parseItem(itemId, sectionEntry, errors)
   });
   
-  return errors.errorCount <= originalErroCount ? items : null;
+  return errors.count <= originalErroCount ? items : null;
 }

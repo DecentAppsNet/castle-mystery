@@ -50,8 +50,7 @@ function _connectWaypoints(waypoint1:Waypoint, waypoint2:Waypoint) {
 }
 
 function _findNearestWaypointByX(waypoints:Waypoint[], x:number):Waypoint {
-  if (!waypoints.length) throw new Error('unable to find nearest waypoint in empty collection');
-
+  assert(waypoints.length > 0);
   let nearestWaypoint = waypoints[0];
   let nearestDistance = Math.abs(waypoints[0].position.x - x);
   for (let i = 1; i < waypoints.length; i++) {
@@ -88,8 +87,7 @@ function _connectWaypointGridNeighbors(waypointsByRow:Waypoint[][], rowIndex:num
 }
 
 function _findAllNearestWaypointsByX(waypoints:Waypoint[], x:number):Waypoint[] {
-  if (!waypoints.length) throw new Error('unable to find nearest waypoint in empty collection');
-
+  assert(waypoints.length > 0);
   let nearestDistance = Infinity;
   const nearestWaypoints:Waypoint[] = [];
   for (const waypoint of waypoints) {
@@ -106,8 +104,7 @@ function _findAllNearestWaypointsByX(waypoints:Waypoint[], x:number):Waypoint[] 
 }
 
 function _findNearestWaypointByY(waypoints:Waypoint[], y:number):Waypoint {
-  if (!waypoints.length) throw new Error('unable to find nearest waypoint in empty collection');
-
+  assert(waypoints.length > 0);
   let nearestWaypoint = waypoints[0];
   let nearestDistance = Math.abs(waypoints[0].position.y - y);
   for (let i = 1; i < waypoints.length; i++) {
@@ -171,7 +168,7 @@ function _pruneIsolatedNonExitWaypoints(exits:RoomExit[], waypoints:Waypoint[]):
   const exitWaypointKeys = new Set(exits.map(exit => _createWaypointKey(exit.x, exit.y, WAYPOINT_MIDDLE_ROW_Z)));
   const remainingWaypoints = waypoints.filter(waypoint =>
     waypoint.adjacentWaypoints.length > 0 || exitWaypointKeys.has(_createWaypointKey(waypoint.position.x, waypoint.position.y, waypoint.position.z)));
-  if (!remainingWaypoints.length) throw new Error('room has no connected waypoints');
+  assert(remainingWaypoints.length > 0);
   return remainingWaypoints;
 }
 
@@ -328,9 +325,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
 
   exits.forEach(exit => {
     const exitWaypoint = findExitWaypoint(roomId, roomRect, exit, waypoints);
-    if (!exitWaypoint.adjacentWaypoints.length) {
-      throw new Error(`exit waypoint for room ${roomId} at (${exitWaypoint.position.x}, ${exitWaypoint.position.y}) has no connected waypoint`);
-    }
+    assert(exitWaypoint.adjacentWaypoints.length > 0);
   });
 
   return waypoints;

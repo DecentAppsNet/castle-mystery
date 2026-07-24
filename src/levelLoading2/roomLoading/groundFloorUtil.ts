@@ -11,8 +11,7 @@ export function findGroundFloorY(rooms:Room[], groundFloorRoomRef:string|null, e
   if (!groundFloorRoomRef) return _calcDefaultGroundFloorY(rooms);
   const groundFloorRoom = findRoomByIdOrTitle(rooms, groundFloorRoomRef);
   if (!groundFloorRoom) {
-    errors.addParseErrorAtLine('BADROOMREF', `general groundFloorRoom "${groundFloorRoomRef}" matches a defined room`, 'did not match', 
-      'Fix to match one of the rooms in "rooms" section.', 0, 0, 0, 'general');
+    errors.addAt(`"${groundFloorRoomRef}" does not match a defined room.`, 'general', '* groundFloorRoom=', groundFloorRoomRef);
      return _calcDefaultGroundFloorY(rooms);
   }
   return groundFloorRoom.rect.y + groundFloorRoom.rect.height;
@@ -22,8 +21,7 @@ export function validateOutsideRoomsAgainstGroundFloor(rooms:Room[], groundFloor
   if (!groundFloorRoomRef) return true;
   const undergroundOutsideRoom = rooms.find(room => room.isOutside && room.rect.y >= groundFloorY) || null;
   if (!undergroundOutsideRoom) return true;
-  errors.addParseError('OUTSIDEUNDER', 'all outside rooms to be at or above ground floor',
-    `outside room '${undergroundOutsideRoom.title || undergroundOutsideRoom.id}' is below general groundFloorRoom '${groundFloorRoomRef}'`,
-    `You can move the room, make it an inside room (underground), or lower the ground floor to match this room.`, 0, 0);
+  const roomName = undergroundOutsideRoom.title || undergroundOutsideRoom.id;
+  errors.addAt(`outside room "${roomName}" is below the ground floor room.`, 'general', '* groundFloorRoom=', groundFloorRoomRef);
   return false;
 }

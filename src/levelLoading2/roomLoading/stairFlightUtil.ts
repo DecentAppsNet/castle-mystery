@@ -1,14 +1,13 @@
 /* This module groups stair-flight generation helpers that derive traversable stair segments from room geometry.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+import { assert, assertNonNullable } from "decent-portal";
 
 import { MAP_TILE_SIZE, roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { ROOM_BACK_Z } from "@/game/roomSpaceConstants";
 import Position from "@/game/types/Position";
 import Room from "@/game/types/Room";
 import RoomExit from "@/game/types/RoomExit";
-
 import { FLOOR_WAYPOINT_Y_OFFSET } from "@/game/waypointUtil";
-import { assert, assertNonNullable } from "decent-portal";
 import StairFlight, { duplicateStairFlight } from "./types/StairFlight";
 
 const MIN_DIRECT_STAIR_COLUMNS = 5;
@@ -37,8 +36,8 @@ function _calcDirectFlightForExit(room:Room, exit:RoomExit, floorY:number):Stair
   const columnWidth = room.rect.width / roomWidthToColumnCount(room.rect.width);
   if (height + columnWidth >= room.rect.width) return null;
   if (exit.x === room.rect.x) return _createStairFlight({ x:exit.x + height + columnWidth, y:floorY, z:BACK_ROW_Z }, { x:exit.x + columnWidth, y:exit.y, z:BACK_ROW_Z });
-  if (exit.x === room.rect.x + room.rect.width) return _createStairFlight({ x:exit.x - height - columnWidth, y:floorY, z:BACK_ROW_Z }, { x:exit.x - columnWidth, y:exit.y, z:BACK_ROW_Z });
-  throw new Error(`exit for room ${room.id} at (${exit.x}, ${exit.y}) is not on a supported wall`);
+  assert(exit.x === room.rect.x + room.rect.width);
+  return _createStairFlight({ x:exit.x - height - columnWidth, y:floorY, z:BACK_ROW_Z }, { x:exit.x - columnWidth, y:exit.y, z:BACK_ROW_Z });
 }
 
 function _calcOrientation(position1:Position, position2:Position, position3:Position):number {
