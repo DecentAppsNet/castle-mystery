@@ -23,7 +23,7 @@ export function mergeCharacterItems(characters:Character[], items:Item[], errors
     const leftHandItem = character.leftHandItem;
     if (leftHandItem) character.leftHandItem = _findItemById(items, leftHandItem.id, errors, character.id, 'leftHandItem');
     const rightHandItem = character.rightHandItem;
-    if (rightHandItem) character.leftHandItem = _findItemById(items, rightHandItem.id, errors, character.id, 'rightHandItem');
+    if (rightHandItem) character.rightHandItem = _findItemById(items, rightHandItem.id, errors, character.id, 'rightHandItem');
   });
   return errors.count <= originalErrorCount;
 }
