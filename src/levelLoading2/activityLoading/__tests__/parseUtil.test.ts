@@ -14,7 +14,7 @@ import {
   makeVariableLiteral,
   makeVariableOptions,
   makeVerb,
-} from '../activityLoadingApi';
+} from '../parseFormatUtil';
 import { tryParseActivity } from '../parseUtil';
 import ActivityParsingRules from '../types/ActivityParsingRules';
 

@@ -11,8 +11,6 @@ import {
 	makeText,
 	makeVariableLiteral,
 	makeVerb,
-} from '../activityLoadingApi';
-import {
 	describeParseFormat,
 	findVerbText,
 	throwIfParseFormatInvalid,

@@ -11,7 +11,7 @@ import {
   makeText,
   makeVariableLiteral,
   makeVerb,
-} from "./activityLoadingApi";
+} from "./parseFormatUtil";
 import ParseFormat from "./types/ParseFormat";
 
 export function createAtActivityParseFormat():ParseFormat {
