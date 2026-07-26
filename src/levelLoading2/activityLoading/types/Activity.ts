@@ -4,7 +4,8 @@ type Activity = {
   verb:string;
   startTime:number|null,
   duration:number|null,
-  parts:ActivityParts
+  parts:ActivityParts,
+  prevActivity:Activity|null
 }
 
 export default Activity;

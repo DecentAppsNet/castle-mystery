@@ -2,10 +2,10 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable, botch } from "decent-portal";
-import Activity from "../types/Activity";
+import Activity from "./types/Activity";
 import ActivityParsingRules, { AllowedValuesByIdentifierId } from "./types/ActivityParsingRules";
 import ParseFormat from "./types/ParseFormat";
-import ActivityParts from "../types/ActivityParts";
+import ActivityParts from "./types/ActivityParts";
 import ParseStep from "./types/ParseStep";
 import ParseSequence from "./types/ParseSequence";
 import ParseOptions from "./types/ParseOptions";
@@ -352,10 +352,12 @@ export function tryParseActivity(activityLine:string, rules:ActivityParsingRules
   const parseResult = _tryParseActivityTextAgainstFormat(activityText, parseFormat, rules);
   if (typeof parseResult === 'string') return parseResult;
 
-  return {
+  const activity:Activity = {
     verb,
     startTime,
     duration:null,
     parts:parseResult,
+    prevActivity:null
   };
+  return activity;
 }

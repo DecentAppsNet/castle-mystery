@@ -2,6 +2,8 @@
   folder should generally only call functions from this module.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+  import { assertNonNullable } from "decent-portal";
+
 import ParseFormat from "./types/ParseFormat";
 import ParseIdentifier from "./types/ParseIdentifier";
 import ParseLiteral from "./types/ParseLiteral";
@@ -11,8 +13,6 @@ import ParseOptions from "./types/ParseOptions";
 import ParseStep from "./types/ParseStep";
 import ParseSequence from "./types/ParseSequence";
 import { findVerbText, throwIfParseStepsInvalid } from "./parseFormatUtil";
-import { assertNonNullable } from "decent-portal";
-export { tryParseActivity } from "./parseUtil";
 export { initActivityParsingRules } from "./parseItineraryUtil";
 
 export function createParseFormat(rootParseStep:ParseStep):ParseFormat {

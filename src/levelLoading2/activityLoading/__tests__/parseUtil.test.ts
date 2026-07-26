@@ -14,8 +14,8 @@ import {
   makeVariableLiteral,
   makeVariableOptions,
   makeVerb,
-  tryParseActivity,
 } from '../activityLoadingApi';
+import { tryParseActivity } from '../parseUtil';
 import ActivityParsingRules from '../types/ActivityParsingRules';
 
 const APPEARANCE_IDS = ['guard uniform', 'royal robes', 'tiara'];
@@ -283,7 +283,7 @@ describe('parseUtil', () => {
 
     describe('@ activity parsing', () => {
       it('parses multi-word identifiers and an absolute timestamp', () => {
-        expect(tryParseActivity('1:02:03 lady beatrice @ master bedroom', sharedRules)).toEqual({
+        expect(tryParseActivity('1:02:03 lady beatrice @ master bedroom', sharedRules)).toMatchObject({
           duration: null,
           parts: {
             characterId: 'lady beatrice',
