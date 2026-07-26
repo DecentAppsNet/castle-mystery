@@ -1,4 +1,4 @@
-import { MarkdownLineError, normalizeMarkdownName, parseNameValueLineEntries, parseSectionEntriesWithLines, parseSections, SectionEntryWithLine, Sections } from "@/common/markdownUtil";
+import { MarkdownLineError, parseNameValueLineEntries, parseSectionEntriesWithLines, parseSections, SectionEntryWithLine, Sections } from "@/common/markdownUtil";
 import LevelFileSection from "./types/LevelFileSection";
 import ErrorCollector from "./errorCollection/ErrorCollector";
 import LevelFileSections from "./types/LevelFileSections";
@@ -22,29 +22,6 @@ function _areKnownTopLevelSections(text:string, errors:ErrorCollector):boolean {
     errors.addAt(`"${sectionName}" is not a known top-level section name.`, ROOT_LEVEL, `# ${sectionName}`);
   }
   return errors.count <= orginalErrorCount;
-}
-
-function _findSectionFirstContentLineNo(markdownText:string, sectionName:string, indentLevel:number = 1):number|null {
-  const lines = markdownText.split('\n');
-  const normalizedSectionName = normalizeMarkdownName(sectionName);
-  const headingIndex = lines.findIndex(line => {
-    const trimmedLeftLine = line.trimStart();
-    const prefix = '#'.repeat(indentLevel);
-    if (!trimmedLeftLine.startsWith(prefix)) return false;
-    if (trimmedLeftLine.length === prefix.length) return false;
-    const nextChar = trimmedLeftLine[prefix.length];
-    if (nextChar !== ' ' && nextChar !== '\t') return false;
-    return normalizeMarkdownName(trimmedLeftLine.slice(prefix.length).trim()) === normalizedSectionName;
-  });
-  if (headingIndex === -1) return null;
-
-  for (let i = headingIndex + 1; i < lines.length; ++i) {
-    const trimmedLine = lines[i].trim();
-    if (trimmedLine.startsWith('#'.repeat(indentLevel) + ' ')) return null;
-    if (trimmedLine.length > 0) return i + 1;
-  }
-
-  return null;
 }
 
 function _trimLeadingBlankLines(text:string):string {
@@ -92,9 +69,8 @@ export function loadLevelSections(levelText:string, errors:ErrorCollector):Level
   KNOWN_TOP_LEVEL_SECTION_IDS.forEach(sectionId => {
     const sectionText = parsedSections[sectionId];
     if (!sectionText) return;
-    const startLineNo = _findSectionFirstContentLineNo(levelText, sectionId) || 1;
     const text = TRIM_LEADING_BLANK_LINES_SECTION_IDS.includes(sectionId) ? _trimLeadingBlankLines(sectionText) : sectionText;
-    const section:LevelFileSection = { id:sectionId, text, startLineNo }
+    const section:LevelFileSection = { id:sectionId, text }
     sections[sectionId] = section;
   });
 

@@ -1,7 +1,6 @@
 type LevelFileSection = Readonly<{
   id:string,
-  text:string,
-  startLineNo:number
+  text:string
 }>
 
 export default LevelFileSection;
