@@ -7,10 +7,6 @@ import Item, { createDefaultItem } from "@/game/types/Item";
 import { getItemImageAssetUrl } from "@/game/imageUrlUtil";
 import { rand } from "@/common/randUtil";
 import { normalizeId } from "@/game/idUtil";
-import Room from "@/game/types/Room";
-import { ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
-import { COLUMN_WIDTH } from "@/game/roomGridUtil";
-import LegendGrid from "../roomLoading/types/LegendGrid";
 
 function _createStubItem(itemId:string):Item {
   return {...createDefaultItem(), id:itemId, description:'Stub Item'};
@@ -66,18 +62,6 @@ function _parseItem(itemId:string, itemSectionEntry:SectionEntryWithLine, errors
   }
 
   return item;
-}
-
-export function setRoomItemPositions(room:Room, roomLegendGrid:LegendGrid) {
-  roomLegendGrid.entries.forEach(entry => { 
-    const { col, row, id } = entry;
-    const x = room.rect.x + col * COLUMN_WIDTH;
-    const y = room.rect.y + room.rect.height;
-    const z = row * ROOM_ROW_DEPTH;
-    const item = room.items.find(i => i.id === id);
-    if (!item) return;
-    item.position = {x, y, z};
-  });
 }
 
 export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollector):Item[]|null {

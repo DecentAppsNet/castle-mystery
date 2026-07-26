@@ -9,10 +9,9 @@ import { createNormalizedSectionEntryMap } from "../levelFileSectionUtil";
 import Room, { createDefaultRoom } from "@/game/types/Room";
 import Texture from "@/game/types/Texture";
 import { parseRoomTexture } from "./parseTextureUtil";
-import { parseLegendGrid } from "./legendGridUtil";
 import LegendGrid from "./types/LegendGrid";
-import { parseItems, setRoomItemPositions } from "../itemLoading/itemLoadingApi";
 import Item from "@/game/types/Item";
+import { createItemsForRoom } from "./roomItemUtil";
 
 type RoomStyle = Readonly<{
   backWallTexture:string|undefined,
@@ -57,16 +56,8 @@ function _resolveRoomTextureOverride(roomNameValues:Record<string, string>,
   return parseRoomTexture(textureValue, room, propertyName, verticalUnitLabel, errors);
 }
 
-function _createItemsForRoom(room:Room, itemsText:string, roomSectionText:string, errors:ErrorCollector):Item[] {
-  const items:Item[] = parseItems(itemsText);
-  const roomLegendGrid = parseLegendGrid(roomSectionText, errors, ['rooms', room.id]);
-  if (!roomLegendGrid) return [];
-  setRoomItemPositions(room, roomLegendGrid);
-  return items;
-}
-
 export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStylesSectionText:string, rooms:Room[], 
-      errors:ErrorCollector):boolean {
+      availableItems:Item[], availableCharacterIds:string[], errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
   const roomSectionsById = createNormalizedSectionEntryMap(roomsSectionText, 2, 'rooms', errors);
   const roomStyleMetadataById = _createRoomStyleById(roomStylesSectionText, errors);
@@ -82,7 +73,7 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
       ? _findRoomStyle(roomNameValues.style, roomStyleMetadataById)
       : null;
     const title = Object.hasOwn(roomNameValues, 'title') ? roomNameValues.title : roomSectionEntry.name.trim();
-    const items = _createItemsForRoom(room, roomNameValues.items, roomSectionEntry.value, errors);
+    const items = createItemsForRoom(room, availableItems, availableCharacterIds, roomSectionEntry.value, errors);
     rooms[roomI] = {
       ...room,
       title,

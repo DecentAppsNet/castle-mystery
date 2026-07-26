@@ -20,16 +20,16 @@ HC
 * title=Great Hall
 * style=Stone
 * obscured=true
-* items=Brass Key
 * exits=Closet (locked, lockable with *)
 
 ```
 ....
 ..S.
-....
+.K..
 ```
 
 * S=Sam
+* K=Brass Key
 
 ## Closet
 * outside=true

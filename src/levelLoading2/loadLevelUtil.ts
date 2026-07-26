@@ -32,13 +32,13 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Partially load items, characters, and rooms, avoiding loading of any dependencies.
   const items = loadItemsPartially(sections.items?.text ?? '', errors); // Items are still missing positions.
   if (!items) return null;
-  const rooms = loadRoomsPartially(sections, errors); // Rooms still missing inventory.
+  const rooms = loadRoomsPartially(sections, items, errors); // Rooms still missing inventory. Side effect - items receive positions.
   if (!rooms) return null;
   const characters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
   if (!characters) return null;
 
   // Add items, characters, and rooms to level, resolving dependencies.
-  if (!addRoomsToLevel(rooms, items, loadingContext.groundFloorRoomRef, level, errors)) return null;
+  if (!addRoomsToLevel(rooms, loadingContext.groundFloorRoomRef, level, errors)) return null;
   if (!addCharactersToLevel(characters, items, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.

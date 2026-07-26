@@ -4,10 +4,10 @@
 # map
 
 ```
-A
+H
 ```
 
-* A=Hall
+* H=Hall
 
 # rooms
 ## Hall
@@ -15,17 +15,18 @@ A
 ```
 ....
 ..S.
-.K..
+....
 ```
 
 * S=Sam
-* K=Key
 
 # characters
 ## Sam
 ### Default
 
 # items
+## Brass Key
+* drawOffsetY=nope
 
 # itinerary
 

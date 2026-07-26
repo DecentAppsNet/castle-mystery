@@ -176,7 +176,7 @@ describe('loading levels - rooms', () => {
 		const { level, errors } = _loadLevel(roomItemMissingDefinitionText, 'rooms-room-item-missing-definition.md');
 
 		expect(level).toBeNull();
-		expect(errors.describeErrors()).toContain('Could not find item in Items section matching "key".');
+		expect(errors.describeErrors()).toContain('"key" referenced in legend for "hall" room does not have a definition');
 	});
 
 	it('fails if an exit contains a right parenthesis before a left parenthesis', () => {
