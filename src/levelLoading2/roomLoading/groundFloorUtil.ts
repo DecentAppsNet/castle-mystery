@@ -12,7 +12,7 @@ export function findGroundFloorY(rooms:Room[], groundFloorRoomRef:string|null, e
   const groundFloorRoom = findRoomByIdOrTitle(rooms, groundFloorRoomRef);
   if (!groundFloorRoom) {
     errors.addAt(`"${groundFloorRoomRef}" does not match a defined room.`, 'general', '* groundFloorRoom=', groundFloorRoomRef);
-     return _calcDefaultGroundFloorY(rooms);
+    return _calcDefaultGroundFloorY(rooms);
   }
   return groundFloorRoom.rect.y + groundFloorRoom.rect.height;
 }

@@ -8,3 +8,4 @@
 - Do not convert debug errors into silent runtime branches just to make code ‘robust.’ When a value should be valid by contract, assert it; only add guard handling for conditions that are genuinely expected in normal runtime behavior. Assertion best practices are described in `/CONTRIBUTING.md`.
 - Follow established patterns in the surrounding codebase unless there is a clear reason to deviate.
 - Generally, no change from a prompt should go over 100 lines of code unless specified in the prompt otherwise.
+- For targeted Vitest runs, prefer `npm run test:file -- path/to/test.ts`; it writes machine-readable results to `tempTests/vitest-results.json` and avoids relying on noisy terminal diffs.

@@ -44,7 +44,10 @@ export function parseLegendGrid(sectionText:string, errors:ErrorCollector, secti
     Array.from(line).forEach((tileChar, col) => {
       if (_isIgnoredGridTileChar(tileChar)) return;
       const authoredName = legend[tileChar];
-      if (!authoredName) errors.addAt(`legend tile "${tileChar}" doesn't have corresponding legend entry`, sectionNames, '```');
+      if (!authoredName) {
+        errors.addAt(`legend tile "${tileChar}" doesn't have corresponding legend entry`, sectionNames, '```');
+        return;
+      }
       usedLegendEntries.add(tileChar);
       const ids:string[] = _authoredNameToIds(authoredName); // Authored name might be `x` or `x | y | z`.
       ids.forEach(id => entries.push({col, row, id, authoredName}));

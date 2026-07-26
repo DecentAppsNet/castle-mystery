@@ -1,4 +1,4 @@
-import { assert, assertNonNullable } from "decent-portal";
+import { assert } from "decent-portal";
 
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { parseUniqueNameValueLines } from "@/common/markdownUtil";
@@ -9,7 +9,7 @@ import { createNormalizedSectionEntryMap } from "../levelFileSectionUtil";
 import Room, { createDefaultRoom } from "@/game/types/Room";
 import Texture from "@/game/types/Texture";
 import { parseRoomTexture } from "./parseTextureUtil";
-import { getUniqueIdsFromLegendGrid, parseLegendGrid } from "./legendGridUtil";
+import { parseLegendGrid } from "./legendGridUtil";
 import LegendGrid from "./types/LegendGrid";
 import { parseItems, setRoomItemPositions } from "../itemLoading/itemLoadingApi";
 import Item from "@/game/types/Item";
@@ -21,11 +21,6 @@ type RoomStyle = Readonly<{
   doorTexture:string|undefined,
   rightWallTexture:string|undefined
 }>;
-
-function _createNormalizedRoomSectionIds(roomsSectionText:string, errors:ErrorCollector):Set<string> {
-  const entries = createNormalizedSectionEntryMap(roomsSectionText, 2, 'rooms', errors);
-  return new Set(Array.from(entries.keys()));
-}
 
 function _findRoomStyle(roomStyleText:string, roomStyleById:Map<string, RoomStyle>):RoomStyle|null {
   const roomStyleId = normalizeId(roomStyleText);
@@ -70,12 +65,18 @@ function _createItemsForRoom(room:Room, itemsText:string, roomSectionText:string
   return items;
 }
 
-export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStylesSectionText:string, rooms:Room[], errors:ErrorCollector) {
+export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStylesSectionText:string, rooms:Room[], 
+      errors:ErrorCollector):boolean {
+  const originalErrorCount = errors.count;
   const roomSectionsById = createNormalizedSectionEntryMap(roomsSectionText, 2, 'rooms', errors);
   const roomStyleMetadataById = _createRoomStyleById(roomStylesSectionText, errors);
   rooms.forEach((room, roomI) => {
     const roomSectionEntry = roomSectionsById.get(room.id);
-    assertNonNullable(roomSectionEntry);
+    if (!roomSectionEntry) {
+      errors.addAt(`Map legend room "${room.id}" does not have corresponding definition in "rooms" section`, 
+        'map', '```', '```');
+      return;
+    }
     const roomNameValues = parseUniqueNameValueLines(roomSectionEntry.value, `room ${room.id}`, false, roomSectionEntry.lineNo + 1);
     const inheritedRoomStyle = roomNameValues.style
       ? _findRoomStyle(roomNameValues.style, roomStyleMetadataById)
@@ -95,6 +96,7 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
       isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
     };
   });
+  return errors.count <= originalErrorCount;
 }
 
 export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:ErrorCollector):Room[] {
@@ -141,16 +143,4 @@ export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:Error
   assert(areRoomsWellOrdered(sortedRooms), 'rooms could not be ordered for drawing');
   
   return errors.count <= originalErrorCount ? sortedRooms : [];
-}
-
-export function validateMapLegendRoomsExistInRoomsSection(mapLegendGrid:LegendGrid, roomsSection:string, errors:ErrorCollector):boolean {
-  const orginalErrorCount =  errors.count;
-  const roomIds = getUniqueIdsFromLegendGrid(mapLegendGrid);
-  const roomSectionIds = _createNormalizedRoomSectionIds(roomsSection, errors);
-  Object.values(roomIds).forEach(roomId => {
-    if (roomSectionIds.has(roomId)) return;
-    errors.addAt(`Map legend room "${roomId}" does not have corresponding definition in "rooms" section`, 
-      'map', '```', '```');
-  });
-  return errors.count <= orginalErrorCount;
 }

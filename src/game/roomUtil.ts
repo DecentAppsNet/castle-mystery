@@ -20,7 +20,7 @@ export function findRoom(rooms:Room[], roomRef:string):Room|null {
   return room ?? null;
 }
 
-export function findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room|null {
+export function findRoomByIdOrTitle(rooms:readonly Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
   return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) || null;
 }

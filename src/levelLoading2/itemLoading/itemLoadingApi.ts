@@ -81,17 +81,17 @@ export function setRoomItemPositions(room:Room, roomLegendGrid:LegendGrid) {
 }
 
 export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollector):Item[]|null {
-  const originalErroCount = errors.count;
+  const originalErrorCount = errors.count;
 
   if (!itemsSectionText) return [];
 
   const itemSectionsById:SectionEntryMap = createNormalizedSectionEntryMap(itemsSectionText, 2, 'items', errors);
-  const itemIds:string[] = Object.keys(itemSectionsById);
+  const itemIds:string[] = [...itemSectionsById.keys()];
   const items = itemIds.map(itemId => {
     const sectionEntry = itemSectionsById.get(itemId);
     assertNonNullable(sectionEntry);
     return _parseItem(itemId, sectionEntry, errors)
   });
   
-  return errors.count <= originalErroCount ? items : null;
+  return errors.count <= originalErrorCount ? items : null;
 }

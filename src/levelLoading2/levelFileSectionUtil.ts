@@ -1,10 +1,11 @@
-import { MarkdownLineError, normalizeMarkdownName, parseIncludedSections, parseSectionEntriesWithLines, parseSections, SectionEntryWithLine } from "@/common/markdownUtil";
+import { MarkdownLineError, normalizeMarkdownName, parseNameValueLineEntries, parseSectionEntriesWithLines, parseSections, SectionEntryWithLine, Sections } from "@/common/markdownUtil";
 import LevelFileSection from "./types/LevelFileSection";
 import ErrorCollector from "./errorCollection/ErrorCollector";
 import LevelFileSections from "./types/LevelFileSections";
 import { normalizeId } from "@/game/idUtil";
 import SectionEntryMap from "./types/SectionEntryMap";
 import { ROOT_LEVEL } from "./errorCollection/sourceLocationUtil";
+import SectionVariables from "./types/SectionVariables";
 
 const KNOWN_TOP_LEVEL_SECTION_IDS = ['general', 'map', 'room styles', 'rooms', 'characters', 'items', 'itinerary', 'conclusions'];
 const REQUIRED_TOP_LEVEL_SECTION_IDS = ['general', 'map', 'rooms', 'characters'];
@@ -12,10 +13,11 @@ const TRIM_LEADING_BLANK_LINES_SECTION_IDS = ['itinerary'];
 
 function _areKnownTopLevelSections(text:string, errors:ErrorCollector):boolean {
   const orginalErrorCount = errors.count;
-  const sectionEntries:SectionEntryWithLine[] = parseSectionEntriesWithLines(text, 1, true);
+  const sectionEntries:SectionEntryWithLine[] = parseSectionEntriesWithLines(text, 1, false);
   for(let i = 0; i < sectionEntries.length; ++i) {
     const sectionEntry = sectionEntries[i];
-    if (KNOWN_TOP_LEVEL_SECTION_IDS.includes(sectionEntry.name)) continue;
+    const sectionId = normalizeId(sectionEntry.name);
+    if (KNOWN_TOP_LEVEL_SECTION_IDS.includes(sectionId)) continue;
     const sectionName = sectionEntry.name;
     errors.addAt(`"${sectionName}" is not a known top-level section name.`, ROOT_LEVEL, `# ${sectionName}`);
   }
@@ -51,12 +53,41 @@ function _trimLeadingBlankLines(text:string):string {
   return lines.join('\n');
 }
 
+function _isDuplicateError(err:any, errors:ErrorCollector, sectionNames:string[]|string):boolean {
+  if (err?.name === 'MarkdownLineError') {
+    const markdownLineError:MarkdownLineError = err;
+    if (markdownLineError.message.includes('duplicate')) {
+      errors.addAt(markdownLineError.message, sectionNames);
+      return true;
+    }
+  }
+  return false;
+}
+
+function _getTopLevelSections(levelText:string, errors:ErrorCollector):Sections|null {
+  if (!_areKnownTopLevelSections(levelText, errors)) return null;
+  try {
+    const parsedSections = parseSections(levelText, 1, false);
+    const sectionNames = Object.keys(parsedSections);
+    sectionNames.forEach(sectionName => {
+      const sectionId = normalizeId(sectionName);
+      if (sectionId === sectionName) return;
+      parsedSections[sectionId] = parsedSections[sectionName];
+      delete parsedSections[sectionName];
+    });
+    return parsedSections;
+  } catch(err) {
+    if (_isDuplicateError(err, errors, ROOT_LEVEL)) return null;
+    throw err;
+  }
+}
+
 export function loadLevelSections(levelText:string, errors:ErrorCollector):LevelFileSections|null {
   const originalErrorCount = errors.count;
   
   const sections:Record<string, LevelFileSection> = {};
-  if (!_areKnownTopLevelSections(levelText, errors)) return null;
-  const parsedSections = parseIncludedSections(levelText, KNOWN_TOP_LEVEL_SECTION_IDS, 1, true);
+  const parsedSections = _getTopLevelSections(levelText, errors);
+  if (!parsedSections) return null;
   
   KNOWN_TOP_LEVEL_SECTION_IDS.forEach(sectionId => {
     const sectionText = parsedSections[sectionId];
@@ -80,19 +111,24 @@ export function getSectionIdsFromSectionText(sectionText:string, indentLevel:num
     const subSections = parseSections(sectionText, indentLevel, false);
     return Object.keys(subSections).map(normalizeId);
   } catch(err:any) {
-    if (err.name === 'MarkdownLineError') {
-      const markdownLineError:MarkdownLineError = err;
-      if (markdownLineError.message.includes('duplicate section')) {
-        errors.addAt(markdownLineError.message, sectionId);
-        return [];
-      }
-    }
-    // Add handling above if it corresponds to an expected error.
+    if (_isDuplicateError(err, errors, sectionId)) return [];
     throw err;
   }
 }
 
-export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:number, sectionId:string, 
+export function createSectionVariables(sectionText:string, sectionsNames:string[]|string, errors:ErrorCollector):SectionVariables {
+  const variables:SectionVariables = {};
+  const entries:Array<readonly [string, string]> = parseNameValueLineEntries(sectionText);
+  for(let i = 0; i < entries.length; ++i) {
+    const [authoredName, value] = entries[i];
+    const id = normalizeId(authoredName);
+    if (variables[id] !== undefined) errors.addAt(`"${authoredName}" variable appears more than once in section.`, sectionsNames, `* ${name}=`);
+    variables[id] = { id, authoredName, value };
+  }
+  return variables;
+}
+
+export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:number, sectionNames:string[]|string, 
     errors:ErrorCollector):SectionEntryMap {
   const normalizedEntries = new Map<string, SectionEntryWithLine>();
 
@@ -103,12 +139,7 @@ export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:
     sectionEntries = parseSectionEntriesWithLines(sectionText, indentLevel, false);
     if (!sectionEntries.length) return normalizedEntries; // No sub-sections.
   } catch (err:any) {
-    const markdownLineError:MarkdownLineError = err;
-    if (markdownLineError.message.includes('duplicate section')) {
-      errors.addAt(markdownLineError.message, sectionId);
-      return normalizedEntries;
-    }
-    // Add handling above if it corresponds to an expected error.
+    if (_isDuplicateError(err, errors, sectionNames)) return normalizedEntries;
     throw err;
   }
 
@@ -119,7 +150,7 @@ export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:
     if (existingEntry) {
       errors.addAt(`After normalization, 
         "${sectionEntry.name}" has same name as another. Make sure all section anmes are case-insensitive unique.`, 
-        sectionId);
+        sectionNames);
     }
     normalizedEntries.set(normalizedName, {
       name:sectionEntry.name,

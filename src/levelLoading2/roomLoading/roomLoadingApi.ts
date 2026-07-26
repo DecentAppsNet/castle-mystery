@@ -2,15 +2,19 @@ import Room from '@/game/types/Room';
 import ErrorCollector from '../errorCollection/ErrorCollector';
 import Item from '@/game/types/Item';
 import { MutableLevel } from '@/game/types/Level';
-import { applyRoomMetaDataFromSections, createRoomsFromMapSection, validateMapLegendRoomsExistInRoomsSection } from './roomLayoutUtil';
+import { applyRoomMetaDataFromSections, createRoomsFromMapSection } from './roomLayoutUtil';
 import { addExitsToRooms } from './roomExitUtil';
 import { generateStairFlights } from './stairFlightUtil';
 import { generateStairParts } from './stairPartUtil';
-import { generateWaypoints } from './waypointGenerationUtil';
+import { calcFloorPositionInRoom, generateWaypoints } from './waypointGenerationUtil';
 import LevelFileSections from '../types/LevelFileSections';
 import { mergeRoomItems } from './roomItemUtil';
 import { findGroundFloorY, validateOutsideRoomsAgainstGroundFloor } from './groundFloorUtil';
 import { parseLegendGrid } from './legendGridUtil';
+import { parseSections } from '@/common/markdownUtil';
+import Position from '@/game/types/Position';
+import { normalizeId } from '@/game/idUtil';
+import { assertNonNullable } from 'decent-portal';
 
 // Returns rooms with everything loaded from level file except dependencies, e.g. items. The exception is room styles, which are applied,
 // because nothing else uses room styles besides rooms.
@@ -20,8 +24,7 @@ export function loadRoomsPartially(sections:LevelFileSections, errors:ErrorColle
   const mapLegendGrid = parseLegendGrid(sections.map.text, errors, ['map']);
   if (!mapLegendGrid) return null;
   const rooms:Room[] = createRoomsFromMapSection(mapLegendGrid, errors);
-  validateMapLegendRoomsExistInRoomsSection(mapLegendGrid, sections.rooms.text, errors);
-  applyRoomMetaDataFromSections(sections.rooms.text, sections.roomStyles?.text ?? '', rooms, errors);
+  if (!applyRoomMetaDataFromSections(sections.rooms.text, sections['room styles']?.text ?? '', rooms, errors)) return null;
   addExitsToRooms(sections.rooms.text, rooms, errors);
   
   rooms.forEach(room => {
@@ -35,11 +38,34 @@ export function loadRoomsPartially(sections:LevelFileSections, errors:ErrorColle
   return errors.count <= originalErrorCount ? rooms : null;
 }
 
-export function addRoomsToLevel(rooms:Room[], items:Item[], groundFloorRoomId:string|null, level:MutableLevel, errors:ErrorCollector):boolean {
+export function addRoomsToLevel(rooms:Room[], items:Item[], groundFloorRoomRef:string|null, level:MutableLevel, errors:ErrorCollector):boolean {
+  const originalErrorCount = errors.count;
   if (!mergeRoomItems(rooms, items, errors)) return false;
-  const groundFloorY = findGroundFloorY(rooms, groundFloorRoomId, errors);
-  if (!validateOutsideRoomsAgainstGroundFloor(rooms, groundFloorRoomId, groundFloorY, errors)) return false;
+  const groundFloorY = findGroundFloorY(rooms, groundFloorRoomRef, errors);
+  if (!validateOutsideRoomsAgainstGroundFloor(rooms, groundFloorRoomRef, groundFloorY, errors)) return false;
   level.rooms = rooms;
   level.groundFloorY = groundFloorY;
-  return true;
+  return errors.count <= originalErrorCount;
+}
+
+type CharacterIdToPosition = Record<string, Position>;
+
+export function findAllCharacterPositions(rooms:Room[], characterIds:string[], roomsSectionText:string, errors:ErrorCollector):CharacterIdToPosition {
+  const roomSections = parseSections(roomsSectionText, 2, false);
+  const characterIdToPosition:CharacterIdToPosition = {};
+  const roomSectionNames = Object.keys(roomSections);
+  roomSectionNames.forEach(roomSectionName => {
+    const roomId = normalizeId(roomSectionName);
+    const roomLegendGrid = parseLegendGrid(roomSections[roomSectionName], errors, ['rooms', roomSectionName]);
+    if (!roomLegendGrid) return; // If a room section doesn't have a legend grid, then no characters are there.
+    roomLegendGrid.entries.forEach(entry => {
+      if (characterIds.includes(entry.id)) {
+        const room = rooms.find(r => r.id === roomId);
+        assertNonNullable(room);
+        const position = calcFloorPositionInRoom(room, entry.col, entry.row);
+        characterIdToPosition[entry.id] = position;
+      }
+    });
+  });
+  return characterIdToPosition;
 }

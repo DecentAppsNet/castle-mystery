@@ -4,7 +4,8 @@ import { loadLevelSections } from "./levelFileSectionUtil";
 import { initMutableLevelAndLoadingContext } from "./generalLoading/generalLoadingApi";
 import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading/roomLoadingApi";
 import { loadItemsPartially } from "./itemLoading/itemLoadingApi";
-import { loadCharactersPartially } from "./characterLoading/characterLoadingApi";
+import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/characterLoadingApi";
+import { loadConclusions } from "./conclusionLoading/conclusionLoadingApi";
 
 /** 
  * Error handling design:
@@ -30,16 +31,18 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
 
   // Partially load items, characters, and rooms, avoiding loading of any dependencies.
   const items = loadItemsPartially(sections.items?.text ?? '', errors); // Items are still missing positions.
-  const characters = loadCharactersPartially(sections.characters.text, errors); // Characters still missing positions, inventory.
+  if (!items) return null;
   const rooms = loadRoomsPartially(sections, errors); // Rooms still missing inventory.
-  if (!items || !characters || !rooms) return null;
+  if (!rooms) return null;
+  const characters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
+  if (!characters) return null;
 
   // Add items, characters, and rooms to level, resolving dependencies.
   if (!addRoomsToLevel(rooms, items, loadingContext.groundFloorRoomRef, level, errors)) return null;
-  //if (!addCharactersToLevel(characters, items, level, errors)) return null;  
+  if (!addCharactersToLevel(characters, items, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
-  //level.conclusions = loadConclusions(sections.conclusions, characters, items, rooms, errors);
+  level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms, errors);
 
   // Schedule activities into replayable itinerary.
 

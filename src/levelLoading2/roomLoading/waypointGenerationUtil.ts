@@ -7,7 +7,7 @@ import Rect from "@/game/types/Rect";
 import RoomExit from "@/game/types/RoomExit";
 import StairFlight from "./types/StairFlight";
 import Waypoint from "@/game/types/Waypoint";
-import { roomWidthToColumnCount } from "@/game/roomGridUtil";
+import { COLUMN_WIDTH, roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "@/game/stairUtil";
 import {
   FLOOR_WAYPOINT_Y_OFFSET,
@@ -16,6 +16,9 @@ import {
   WAYPOINT_FRONT_ROW_Z,
   WAYPOINT_MIDDLE_ROW_Z,
 } from "@/game/waypointUtil";
+import { ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
+import Room from "@/game/types/Room";
+import Position from "@/game/types/Position";
 
 const FLOOR_ROW_ZS = [WAYPOINT_BACK_ROW_Z, WAYPOINT_MIDDLE_ROW_Z, WAYPOINT_FRONT_ROW_Z] as const;
 
@@ -329,4 +332,11 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
   });
 
   return waypoints;
+}
+
+export function calcFloorPositionInRoom(room:Room, col:number, row:number):Position {
+  const x = room.rect.x + col * COLUMN_WIDTH;
+  const y = room.rect.y + room.rect.height;
+  const z = row * ROOM_ROW_DEPTH;
+  return {x, y, z};
 }
