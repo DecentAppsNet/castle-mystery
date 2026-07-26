@@ -98,7 +98,7 @@ export function createSectionVariables(sectionText:string, sectionsNames:string[
   for(let i = 0; i < entries.length; ++i) {
     const [authoredName, value] = entries[i];
     const id = normalizeId(authoredName);
-    if (variables[id] !== undefined) errors.addAt(`"${authoredName}" variable appears more than once in section.`, sectionsNames, `* ${name}=`);
+    if (variables[id] !== undefined) errors.addAt(`"${authoredName}" variable appears more than once in section.`, sectionsNames, `* ${authoredName}=`);
     variables[id] = { id, authoredName, value };
   }
   return variables;

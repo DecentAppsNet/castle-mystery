@@ -16,6 +16,7 @@ import { loadConclusions } from "./conclusionLoading/conclusionLoadingApi";
  * exceptions and logs via `.errors`.
 */
 export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null {
+  const originalErrorCount = errors.count;
   
   // Load sections from authored level file.
   const sections = loadLevelSections(text, errors);
@@ -52,5 +53,5 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Apply final cross-character derived state and optional validation passes.
   // TODO - what is actrually needed?
 
-  return level;
+  return errors.count <= originalErrorCount ? level : null;
 }

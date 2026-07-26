@@ -63,6 +63,18 @@ function _findHeadingText(line:string, indentLevel:number):string|null {
   return trimmedLeftLine.slice(prefix.length).trim();
 }
 
+function _isHeadingLine(line:string):boolean {
+  line = line.trim();
+  let endPos = line.indexOf(' ');
+  if (endPos === -1) endPos = line.length;
+  let foundPound = false;
+  for(let i = 0; i < endPos; ++i) {
+    if (line[i] !== '#') return false;
+    foundPound = true;
+  }
+  return foundPound;
+}
+
 // Return the content of a bulleted line without the leading bullet marker.
 function _findBulletedLineText(line:string):string|null {
   const trimmedLeftLine = line.trimStart();
@@ -187,6 +199,7 @@ function _parseNameValueEntriesWithLines(markdownText:string, useCamelCase:boole
   const lines = _parseLines(markdownText);
   for (let i = 0; i < lines.length; ++i) {
     const line = lines[i];
+    if (_isHeadingLine(line)) return entries; // Only want to include name/values for this section.
     const bulletText = _findBulletedLineText(line);
     if (bulletText === null) continue;
     const hyphenPos = bulletText.indexOf('=');

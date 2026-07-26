@@ -133,23 +133,28 @@ function _parseClozeTemplateToParts(clozeTemplate:string, clozeCategories:Record
 }
 
 function _parseConclusion(conclusionName:string, sectionText:string, rooms:ReadonlyArray<Room>, conclusionIds:string[], 
-    clozeCategories:Record<string, ClozeCategory>, errors:ErrorCollector):Conclusion {
+    clozeCategories:Record<string, ClozeCategory>, errors:ErrorCollector):Conclusion|null {
+  const originalErrorCount = errors.count;
   const variables = createSectionVariables(sectionText, ['conclusions', conclusionName], errors);
   const clozeTemplate = variables.conclusion?.value;
   if (!clozeTemplate) {
-    errors.addAt(`Missing "conclusion=" line for "${conclusionName}" conclusion.`, ['conclusions', conclusionName]);
+    if (normalizeId(conclusionName) !== 'identities') {
+      errors.addAt(`Missing "conclusion=" line for "${conclusionName}" conclusion.`, ['conclusions', conclusionName]);
+    }
+    return null;
   }
   const id = normalizeId(conclusionName);
   const title = conclusionName.trim();
   const parts = _parseClozeTemplateToParts(clozeTemplate, clozeCategories);
-  const revealRoomIds = resolveRevealRoomIds(conclusionName, variables.revealRooms?.value ?? '', rooms, errors);
-  const unlockConclusionIds = resolveUnlockConclusionIds(conclusionName, variables.unlockConclusions?.value ?? '', conclusionIds, errors);
+  const revealRoomIds = resolveRevealRoomIds(conclusionName, variables.revealrooms?.value ?? '', rooms, errors);
+  const unlockConclusionIds = resolveUnlockConclusionIds(conclusionName, variables.unlockconclusions?.value ?? '', conclusionIds, errors);
   const isComplete = false;
   const isLocked = false;
-  return { id, title, parts, isComplete, isLocked, unlockConclusionIds, revealRoomIds }
+  return errors.count > originalErrorCount ? 
+    null : { id, title, parts, isComplete, isLocked, unlockConclusionIds, revealRoomIds }
 }
 
-function _lockConclusionsAsNeeded(conclusions:Conclusion[]) {
+export function lockConclusionsAsNeeded(conclusions:Conclusion[]) {
   const idsToLock = new Set<string>;
   for(let i = 0; i < conclusions.length; ++i) {
     const { unlockConclusionIds } = conclusions[i];
@@ -162,19 +167,21 @@ function _lockConclusionsAsNeeded(conclusions:Conclusion[]) {
 }
 
 export function parseAuthoredConclusions(conclusionsSectionText:string, rooms:ReadonlyArray<Room>, 
-      clozeCategories:Record<string, ClozeCategory>, errors:ErrorCollector):Conclusion[] {
+      clozeCategories:Record<string, ClozeCategory>, errors:ErrorCollector):Conclusion[]|null {
   if (!conclusionsSectionText.trim()) return [];
+  const originalErrorCount = errors.count;
 
   const conclusionSections = createNormalizedSectionEntryMap(conclusionsSectionText, 2, 'conclusions', errors);
-  const conclusionNames = Object.keys(conclusionSections);
+  const conclusionNames = [...conclusionSections.keys()];
   const conclusionIds = conclusionNames.map(normalizeId);
 
-  const conclusions = conclusionNames.map(conclusionName => {
+  const conclusions:Conclusion[] = [];
+  for(let i = 0; i < conclusionNames.length; ++i) {
+    const conclusionName = conclusionNames[i];
     const entry = conclusionSections.get(conclusionName);
     assertNonNullable(entry);
-    return _parseConclusion(entry.name, entry.value, rooms, conclusionIds, clozeCategories, errors);
-  });
-  _lockConclusionsAsNeeded(conclusions);
-
-  return conclusions;
+    const conclusion = _parseConclusion(entry.name, entry.value, rooms, conclusionIds, clozeCategories, errors);
+    if (conclusion) conclusions.push(conclusion);
+  }
+  return errors.count > originalErrorCount ? null : conclusions;
 }

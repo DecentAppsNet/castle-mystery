@@ -9,7 +9,9 @@ import Item from "@/game/types/Item";
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 
 function _parseAuthoredClozeCategories(conclusionsSectionText:string, errors:ErrorCollector):Record<string, ClozeCategory> {
+  const originalErrorCount = errors.count;
   const variables = createSectionVariables(conclusionsSectionText, 'conclusions', errors);
+  if (errors.count > originalErrorCount) return {};
   const clozeCategories:Record<string, ClozeCategory> = {};
   const categoryIds:string[] = Object.keys(variables);
   categoryIds.forEach(id => {
@@ -22,15 +24,18 @@ function _parseAuthoredClozeCategories(conclusionsSectionText:string, errors:Err
 }
 
 function _roomsToCategory(rooms:Room[]):ClozeCategory {
-  return { id:'rooms', authoredName:'rooms', allowedValues:rooms.map(r => r.title) }
+  const allowedValues = rooms.map(r => r.title).sort();
+  return { id:'rooms', authoredName:'rooms', allowedValues }
 }
 
 function _charactersToCategory(characters:Character[]):ClozeCategory {
-  return { id:'characters', authoredName:'characters', allowedValues:characters.filter(isCharacterInteractive).map(c => c.title) }
+  const allowedValues = characters.filter(isCharacterInteractive).map(c => c.title).sort();
+  return { id:'characters', authoredName:'characters', allowedValues};
 }
 
 function _itemsToCategory(items:Item[]):ClozeCategory {
-  return { id:'items', authoredName:'items', allowedValues:items.filter(isItemInteractive).map(c => c.title) }
+  const allowedValues = items.filter(isItemInteractive).map(c => c.title).sort();
+  return { id:'items', authoredName:'items', allowedValues }
 }
 
 export function createClozeCategories(conclusionsSectionText:string, rooms:Room[], characters:Character[], items:Item[], 

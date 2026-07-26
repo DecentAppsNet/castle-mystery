@@ -48,14 +48,14 @@ function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Ro
   const identitiesSectionText = normalizedSections.get('identities')?.value;
   if (identitiesSectionText) {
     const identitiesVariables = createSectionVariables(identitiesSectionText, ['conclusions', 'identities'], errors);
-    title = identitiesVariables.title.value ?? null;
-    const unlockConclusionsText = identitiesVariables.unlockConclusions?.value;
+    title = identitiesVariables.title?.value ?? null;
+    const unlockConclusionsText = identitiesVariables.unlockconclusions?.value;
     if (unlockConclusionsText) {
       unlockConclusionIds = resolveUnlockConclusionIds('identities', unlockConclusionsText, conclusionIds, errors)
     }
-    const reveralRoomsText = identitiesVariables.revealRooms?.value;
-    if (reveralRoomsText) {
-      revealRoomIds = resolveRevealRoomIds('identities', reveralRoomsText, rooms, errors);
+    const revealRoomsText = identitiesVariables.revealrooms?.value;
+    if (revealRoomsText) {
+      revealRoomIds = resolveRevealRoomIds('identities', revealRoomsText, rooms, errors);
     }
   }
   return { title, unlockConclusionIds, revealRoomIds, characterOptions };
@@ -93,7 +93,7 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
     rooms:readonly Room[], errors:ErrorCollector):Conclusion|null {
   const overrides = _findAuthoredOverrides(conclusionsSectionText, rooms, errors);
   
-  const { conclusionCharacters, characterOptions } = _generateConclusionOptions(overrides.characterOptions, characters, errors);
+  const { conclusionCharacters, characterOptions} = _generateConclusionOptions(overrides.characterOptions, characters, errors);
   if (!characterOptions.length) return null;
     
   const parts:ClozePart[] = [];
@@ -107,10 +107,10 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
 
   const conclusion:Conclusion = {
     id:'identities',
-    title:'Identities',
+    title:overrides.title ?? 'Identities',
     parts,
-    unlockConclusionIds:[], // TODO
-    revealRoomIds:[], // TODO
+    unlockConclusionIds:overrides.unlockConclusionIds ?? [],
+    revealRoomIds:overrides.revealRoomIds ?? [],
     isComplete:false,
     isLocked:false
   }
