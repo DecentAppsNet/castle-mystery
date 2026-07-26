@@ -13,8 +13,12 @@ A
 ## Hall
 
 ```
-A
+....
+..S.
+.K..
 ```
+
+* S=Sam
 
 # characters
 ## Sam

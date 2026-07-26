@@ -13,6 +13,14 @@ A
 ## Hall
 * backWallTexture=stone.png (4)
 
+```
+....
+..S.
+....
+```
+
+* S=Sam
+
 # characters
 ## Sam
 ### Default

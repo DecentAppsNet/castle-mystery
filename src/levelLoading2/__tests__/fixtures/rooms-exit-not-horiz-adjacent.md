@@ -14,6 +14,13 @@ B
 # rooms
 ## Hall
 * exits=Closet
+```
+....
+..S.
+....
+```
+
+* S=Sam
 
 ## Closet
 

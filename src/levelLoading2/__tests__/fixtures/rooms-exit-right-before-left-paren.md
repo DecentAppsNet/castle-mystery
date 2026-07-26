@@ -14,6 +14,14 @@ AB
 ## Hall
 * exits=Closet) (
 
+```
+....
+..S.
+....
+```
+
+* S=Sam
+
 ## Closet
 
 # characters

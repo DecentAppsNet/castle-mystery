@@ -12,6 +12,14 @@ A
 # rooms
 ## Closet
 
+```
+....
+..S.
+....
+```
+
+* S=Sam
+
 # characters
 ## Sam
 ### Default

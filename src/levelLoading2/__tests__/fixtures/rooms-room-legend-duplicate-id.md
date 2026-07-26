@@ -14,11 +14,12 @@ A
 * items=Key
 
 ```
-AB
+ABS
 ```
 
 * A=Key
 * B=Key
+* S=Sam
 
 # characters
 ## Sam

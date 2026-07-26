@@ -12,6 +12,14 @@ H
 # ROOMS
 ## HALL
 
+```
+...S
+....
+....
+```
+
+* S=SAM
+
 # CHARACTERS
 ## SAM
 ### DEFAULT

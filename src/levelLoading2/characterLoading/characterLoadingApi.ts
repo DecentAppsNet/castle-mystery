@@ -61,14 +61,14 @@ export function loadCharactersPartially(charactersSectionText:string, roomsSecti
   const characterIdToPosition = findAllCharacterPositions(rooms, characterIds, roomsSectionText, errors);
 
   const characterSectionsById:SectionEntryMap = createNormalizedSectionEntryMap(charactersSectionText, 2, 'characters', errors);
-  const characterSectionNames:string[] = Object.keys(characterSectionsById);
+  const characterSectionNames:string[] = [...characterSectionsById.keys()];
   const characters = characterSectionNames.map(sectionName => {
     const sectionEntry = characterSectionsById.get(sectionName);
     assertNonNullable(sectionEntry);
     const characterId = normalizeId(sectionName);
     const position = characterIdToPosition[characterId];
-    assertNonNullable(position);
-    return _parseCharacter(characterId, position, sectionEntry, errors);
+    if (!position) errors.addAt(`"${characterId}" character does not have a position defined in a room grid.`, 'rooms');
+    return _parseCharacter(characterId, position ?? {x:0,y:0,z:0}, sectionEntry, errors);
   });
   
   return errors.count <= originalErroCount ? characters : null;

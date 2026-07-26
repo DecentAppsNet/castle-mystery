@@ -57,7 +57,7 @@ export function findAllCharacterPositions(rooms:Room[], characterIds:string[], r
   roomSectionNames.forEach(roomSectionName => {
     const roomId = normalizeId(roomSectionName);
     const roomLegendGrid = parseLegendGrid(roomSections[roomSectionName], errors, ['rooms', roomSectionName]);
-    if (!roomLegendGrid) return; // If a room section doesn't have a legend grid, then no characters are there.
+    if (!roomLegendGrid || roomLegendGrid.entries.length === 0) return; // If a room section doesn't have a legend grid, then no characters are there.
     roomLegendGrid.entries.forEach(entry => {
       if (characterIds.includes(entry.id)) {
         const room = rooms.find(r => r.id === roomId);

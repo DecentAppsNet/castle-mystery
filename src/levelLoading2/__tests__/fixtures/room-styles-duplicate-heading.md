@@ -17,6 +17,13 @@ A
 # rooms
 ## Hall
 * style=Stone
+```
+....
+..S.
+....
+```
+
+* S=Sam
 
 # characters
 ## Sam

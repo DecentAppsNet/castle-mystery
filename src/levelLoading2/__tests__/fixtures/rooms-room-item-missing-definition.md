@@ -12,6 +12,13 @@ A
 # rooms
 ## Hall
 * items=Key
+```
+....
+..S.
+....
+```
+
+* S=Sam
 
 # characters
 ## Sam

@@ -13,6 +13,13 @@ AB
 # rooms
 ## Hall
 * exits=(closed)
+```
+....
+..S.
+....
+```
+
+* S=Sam
 
 ## Closet
 

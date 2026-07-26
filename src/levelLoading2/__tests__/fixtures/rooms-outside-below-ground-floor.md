@@ -15,6 +15,14 @@ B
 # rooms
 ## Hall
 
+```
+....
+..S.
+....
+```
+
+* S=Sam
+
 ## Courtyard
 * outside=true
 

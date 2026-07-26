@@ -162,14 +162,14 @@ describe('loading levels - rooms', () => {
 		const { level, errors } = _loadLevel(roomLegendMissingEntryText, 'rooms-room-legend-missing-entry.md');
 
 		expect(level).toBeNull();
-		expect(errors.describeErrors()).toContain('legend tile "A" doesn\'t have corresponding legend entry');
+		expect(errors.describeErrors()).toContain('legend tile "K" doesn\'t have corresponding legend entry');
 	});
 
 	it('fails if a room legend contains an entry that is not used in the room grid', () => {
 		const { level, errors } = _loadLevel(roomLegendUnusedEntryText, 'rooms-room-legend-unused-entry.md');
 
 		expect(level).toBeNull();
-		expect(errors.describeErrors()).toContain('Legend tile "A" is not present in grid.');
+		expect(errors.describeErrors()).toContain('Legend tile "K" is not present in grid.');
 	});
 
 	it('fails if a room references an item that is not defined in the items section', () => {

@@ -14,6 +14,14 @@ AB
 ## Hall
 * exits=Attic
 
+```
+....
+..S.
+....
+```
+
+* S=Sam
+
 ## Closet
 
 # characters

@@ -11,7 +11,15 @@ A
 
 # rooms
 ## Hall
-* A=Key
+
+```
+....
+..S.
+....
+```
+
+* S=Sam
+* K=Key
 
 # characters
 ## Sam

@@ -13,6 +13,13 @@ AB
 
 # rooms
 ## Hall
+```
+....
+..S.
+....
+```
+
+* S=Sam
 
 ## Closet
 

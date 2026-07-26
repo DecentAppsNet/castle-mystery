@@ -23,6 +23,14 @@ HC
 * items=Brass Key
 * exits=Closet (locked, lockable with *)
 
+```
+....
+..S.
+....
+```
+
+* S=Sam
+
 ## Closet
 * outside=true
 

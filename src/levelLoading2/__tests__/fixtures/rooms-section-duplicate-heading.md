@@ -12,6 +12,14 @@ A
 # rooms
 ## Hall
 
+```
+....
+..S.
+....
+```
+
+* S=Sam
+
 ## Hall
 
 # characters

@@ -22,6 +22,13 @@ C
 
 # rooms
 ## Hall
+```
+....
+..S.
+....
+```
+
+* S=Sam
 
 ## Cellar
 
