@@ -14,6 +14,9 @@ import { findAllCharacterPositions } from "../roomLoading/roomLoadingApi";
 import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
+import { findNearestWaypointToPosition } from "@/game/waypointUtil";
+import { findRoomAtPositionOrTouchingBoundary } from "@/game/roomUtil";
+import Waypoint, { createDefaultWaypoint } from "@/game/types/Waypoint";
 
 function _parseFacingDirection(text:string, errors:ErrorCollector, characterId:string):FacingDirection {
   text = text.trim().toLowerCase();
@@ -31,7 +34,7 @@ function _parseBodyOrientation(text:string, errors:ErrorCollector, characterId:s
   return DEFAULT_BODY_ORIENTATION;
 }
 
-function _parseCharacter(characterId:string, position:Position, characterSectionEntry:SectionEntryWithLine, errors:ErrorCollector):Character {
+function _parseCharacter(characterId:string, waypoint:Waypoint, characterSectionEntry:SectionEntryWithLine, errors:ErrorCollector):Character {
   const nameValues = parseUniqueNameValueLines(characterSectionEntry.value, `character ${characterId}`, false, characterSectionEntry.lineNo);
   const authoredCharacterName = characterSectionEntry.name.trim();
   const title = nameValues.title ?? authoredCharacterName;
@@ -47,9 +50,15 @@ function _parseCharacter(characterId:string, position:Position, characterSection
   const character:Character = {
     ...createDefaultCharacter(),
     id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
-    bodyOrientation, isTitleKnown, items, leftHandItem, rightHandItem, position
+    bodyOrientation, isTitleKnown, items, leftHandItem, rightHandItem, position:waypoint.position, waypoint,
   }
   return character;
+}
+
+function _findCharacterWaypoint(fromPosition:Position, rooms:readonly Room[]):Waypoint {
+  const room = findRoomAtPositionOrTouchingBoundary(rooms, fromPosition.x, fromPosition.y);
+  assertNonNullable(room);
+  return findNearestWaypointToPosition(room, fromPosition);
 }
 
 export function loadCharactersPartially(charactersSectionText:string, roomsSectionText:string, rooms:Room[], errors:ErrorCollector):Character[]|null {
@@ -66,9 +75,10 @@ export function loadCharactersPartially(charactersSectionText:string, roomsSecti
     const sectionEntry = characterSectionsById.get(sectionName);
     assertNonNullable(sectionEntry);
     const characterId = normalizeId(sectionName);
-    const position = characterIdToPosition[characterId];
-    if (!position) errors.addAt(`"${characterId}" character does not have a position defined in a room grid.`, 'rooms');
-    return _parseCharacter(characterId, position ?? {x:0,y:0,z:0}, sectionEntry, errors);
+    const fromPosition = characterIdToPosition[characterId] ?? null;
+    if (!fromPosition) errors.addAt(`"${characterId}" character does not have a position defined in a room grid.`, 'rooms');
+    const waypoint = fromPosition ? _findCharacterWaypoint(fromPosition, rooms) : createDefaultWaypoint();
+    return _parseCharacter(characterId, waypoint, sectionEntry, errors);
   });
   
   return errors.count <= originalErroCount ? characters : null;

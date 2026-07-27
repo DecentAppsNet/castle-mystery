@@ -18,7 +18,6 @@ import {
 } from '../parseFormatUtil';
 import {
 	createAppearsParseFormat,
-	createAtActivityParseFormat,
 	createBecomesParseFormat,
 	createDropsParseFormat,
 	createEmitsParseFormat,
@@ -37,6 +36,7 @@ import {
 	createUnlocksParseFormat,
 	createWaitsParseFormat,
 } from '../activityParseFormats';
+import { createAtActivityParseFormat } from '../activityHandlers/atHandler'
 
 import ParseFormat from '../types/ParseFormat';
 import ParseStep from '../types/ParseStep';

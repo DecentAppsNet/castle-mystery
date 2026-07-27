@@ -14,14 +14,6 @@ import {
 } from "./parseFormatUtil";
 import ParseFormat from "./types/ParseFormat";
 
-export function createAtActivityParseFormat():ParseFormat {
-  const characterId = makeIdentifier('characterId', 'CharacterId', true);
-  const at = makeVerb('@');
-  const roomId = makeIdentifier('roomId', 'RoomId');
-  const rootParseStep = makeSequence([characterId, at, roomId]);
-  return createParseFormat(rootParseStep);
-}
-
 export function createAppearsParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const appears = makeVerb('appears');

@@ -3,3 +3,4 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 export { initActivityParsingRules } from "./parseItineraryUtil";
+export { loadActivities, findAllCharactersAndItemsInActivities } from './activitiesUtil';

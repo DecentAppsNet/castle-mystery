@@ -15,7 +15,7 @@ type LevelLoadingContext = {
   discoverableRoomCount:number|null, // Needs parsed itinerary for validation.
   isCrossMidnight:boolean, // Used later.
   groundFloorRoomRef:string|null, // Needs room ID allowed values.
-  activityParsingRules:ActivityParsingRules|null // Used later.
+  activityParsingRules:ActivityParsingRules // Used later.
 }
 
 export default LevelLoadingContext;

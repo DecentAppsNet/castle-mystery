@@ -1,3 +1,5 @@
+import { assertNonNullable } from "decent-portal";
+
 import Level from "@/game/types/Level";
 import ErrorCollector from "./errorCollection/ErrorCollector";
 import { loadLevelSections } from "./levelFileSectionUtil";
@@ -6,6 +8,7 @@ import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading/roomLoadingAp
 import { loadItemsPartially } from "./itemLoading/itemLoadingApi";
 import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/characterLoadingApi";
 import { loadConclusions } from "./conclusionLoading/conclusionLoadingApi";
+import { loadActivities } from "./activityLoading/activityLoadingApi";
 
 /** 
  * Error handling design:
@@ -46,12 +49,15 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms, errors);
 
   // Schedule activities into replayable itinerary.
+  const activities = loadActivities(sections.itinerary?.text ?? '', loadingContext.activityParsingRules, 
+      loadingContext.activeCharacterId, errors);
+  assertNonNullable(activities); // TODO delete.
 
   // Reconcile general-section time settings against the scheduled itinerary.
 
   // Rebuild initial characters from the scheduled timelines and finalize runtime-facing level fields.
   // Apply final cross-character derived state and optional validation passes.
-  // TODO - what is actrually needed?
+  // TODO - what is actually needed?
 
   return errors.count <= originalErrorCount ? level : null;
 }

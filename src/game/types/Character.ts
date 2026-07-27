@@ -2,7 +2,7 @@ import Itinerary from "./Itinerary";
 import ItineraryIndex, { createDefaultItineraryIndex } from "./ItineraryIndex";
 import Item, { duplicateItem } from "./Item";
 import Position, { duplicatePosition } from "./Position";
-import Waypoint from "./Waypoint";
+import Waypoint, { createDefaultWaypoint } from "./Waypoint";
 import { createDefaultCharacterPose } from "./CharacterPose";
 
 export type FacingDirection = 'left' | 'right';
@@ -11,14 +11,6 @@ export const DEFAULT_FACING_DIRECTION:FacingDirection = 'right';
 export type BodyOrientation = 'standing' | 'sitting' | 'kneeling' | 'laying';
 export const VALID_BODY_ORIENTATIONS:BodyOrientation[] = ['standing', 'sitting', 'kneeling', 'laying'];
 export const DEFAULT_BODY_ORIENTATION:BodyOrientation = 'standing';
-
-function _createDefaultWaypoint():Waypoint {
-  return {
-    position:{ x:0, y:0, z:0 },
-    adjacentWaypoints:[],
-    exitDirections:{}
-  };
-}
 
 /* If adding new members to Character, consider if these should also be part of CharacterPose.
    And if you decide to add them to CharacterPose, then make updates to createDefaultCharacter() to
@@ -64,7 +56,7 @@ export function createDefaultCharacter():Character {
     leftHandItem:null,
     rightHandItem:null,
     position:defaultPose.position,
-    waypoint:_createDefaultWaypoint(),
+    waypoint:createDefaultWaypoint(),
     discoveredRoomIds:[],
     itinerary:[],
     pairedItinerary:null,

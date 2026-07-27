@@ -9,7 +9,7 @@ import { normalizeOptionalId } from "@/game/idUtil";
 import { parseTimestampToMsecs } from "../activityLoading/timestampUtil";
 import { assert, assertNonNullable } from "decent-portal";
 import { getBackgroundImageAssetUrl } from "@/game/imageUrlUtil";
-import { AllowedValuesByIdentifierId } from "../activityLoading/types/ActivityParsingRules";
+import ActivityParsingRules, { AllowedValuesByIdentifierId } from "../activityLoading/types/ActivityParsingRules";
 import LevelLoadingContext from "../types/LevelLoadingContext";
 import { initActivityParsingRules } from "../activityLoading/parseItineraryUtil";
 import { getSectionIdsFromSectionText, isSectionRequired } from "../levelFileSectionUtil";
@@ -67,6 +67,7 @@ function _parseGeneralSection(generalSectionText:string, level:MutableLevel, err
   level.winSynopsis = generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS;
   level.backgroundImageUrl = generalNameValues.background ? getBackgroundImageAssetUrl(generalNameValues.background) : null;
 
+  const activityParsingRules:ActivityParsingRules = {} as ActivityParsingRules;
   return {
     activeCharacterId: normalizeOptionalId(generalNameValues.activeCharacter) || "",
     startTime,
@@ -77,7 +78,7 @@ function _parseGeneralSection(generalSectionText:string, level:MutableLevel, err
     discoverableRoomCount,
     isCrossMidnight,
     groundFloorRoomRef: generalNameValues.groundFloorRoom || null,
-    activityParsingRules:null
+    activityParsingRules // Placeholder assignment to be overwritten by caller.
   };
 }
 
@@ -139,6 +140,6 @@ export function initMutableLevelAndLoadingContext(sections:LevelFileSections, er
   assertNonNullable(sections.general, 'missing required section should have failed level load earlier.');
   const loadingContext = _parseGeneralSection(sections.general.text, level, errors);
   const allowedValuesByIdentifier = _createAllowedValuesByIdentifier(sections, errors);
-  loadingContext.activityParsingRules = initActivityParsingRules(allowedValuesByIdentifier);
+  loadingContext.activityParsingRules = initActivityParsingRules(allowedValuesByIdentifier); // Fixes the placeholder.
   return errors.hasErrors ? null : { level, loadingContext };
 }
