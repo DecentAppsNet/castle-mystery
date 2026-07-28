@@ -61,6 +61,9 @@ function _generateNextKeyframe(previousKeyframe:ItineraryKeyframe, keyframes:Edi
   return nextKeyframe;
 }
 
+// If this gets to be a bottleneck, you can use an algoritm like:
+// 1. Receive a fromI param that is set to the earliest known change in frame keying.
+// 2. Update existing frames from fromI until a frame is unchanged from its original value. (Signals end of affected keyframes).
 function generateKeyframes(editableKeyframes:EditableItineraryKeyframe[]):ItineraryKeyframe[] {
   // Replay every editable (partial) keyframe to generate resolved keyframes.
   assert(editableKeyframes.length >= 1);
@@ -141,7 +144,7 @@ function _createEditableKeyframeFromCharacterKeyframe(characterKeyframe:Partial<
 }
 
 function _addRoomKeyframeToItineraryKeyframe(roomKeyframe:Partial<RoomKeyframe>, roomI:number, toKeyframe:EditableItineraryKeyframe) {
-  const toRoomKeyframe:Partial<RoomKeyframe> = toKeyframe.characters[roomI];
+  const toRoomKeyframe:Partial<RoomKeyframe> = toKeyframe.rooms[roomI];
   assertNonNullable(toRoomKeyframe);
   ROOM_KEYFRAME_KEYS.forEach(key => {
     const keyValue = (roomKeyframe as any)[key];
@@ -169,9 +172,13 @@ function _getCharacterAndRoomCount(editableItinerary:EditableItinerary):{charact
   };
 }
 
+function _insertEditableKeyframeAfter(array:EditableItineraryKeyframe[], insertAfterI:number, insertElement:EditableItineraryKeyframe):void {
+  array.splice(insertAfterI+1, 0, insertElement);
+}
+
 export function addKeyframe(editableKeyframe:EditableItineraryKeyframe, itinerary:EditableItinerary) {
   const insertAfterI = _findInsertAfterI(editableKeyframe.time, itinerary.keyframes);
-  itinerary.editableKeyframes = itinerary.editableKeyframes.splice(insertAfterI, 0, editableKeyframe);
+  _insertEditableKeyframeAfter(itinerary.editableKeyframes, insertAfterI, editableKeyframe);
   itinerary.keyframes = generateKeyframes(itinerary.editableKeyframes);
 }
 

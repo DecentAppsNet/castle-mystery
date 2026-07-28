@@ -258,7 +258,7 @@ function _findItineraryPose(characterId:string, itinerary:Itinerary, time:number
 
         const endTime = walkEvent.startTime + walkEvent.duration;
         pose.position = time < endTime
-          ? _interpolatePosition(walkEvent.fromPosition, walkEvent.toPosition, clamp((time - walkEvent.startTime) / walkEvent.duration, 0, 1))
+          ? interpolatePosition(walkEvent.fromPosition, walkEvent.toPosition, clamp((time - walkEvent.startTime) / walkEvent.duration, 0, 1))
           : duplicatePosition(walkEvent.toPosition);
         break;
       }
@@ -339,15 +339,17 @@ function _getEventEndPosition(event:ItineraryEvent, eventStartPosition:Position,
   }
 }
 
-function _interpolatePosition(fromPosition:Position, toPosition:Position, interpolateAmount:number):Position {
-  assert(interpolateAmount >= 0);
-  assert(interpolateAmount <= 2);
-  const vector = {x:toPosition.x - fromPosition.x, y:toPosition.y - fromPosition.y};
+export function interpolatePosition(fromPosition:Position, toPosition:Position, interpolateAmount:number):Position {
+  if (interpolateAmount <= 0) return {...fromPosition};
+  if (interpolateAmount >= 1) return {...toPosition};
+  const dx = toPosition.x - fromPosition.x;
+  const dy = toPosition.y - fromPosition.y;
+  const dz = toPosition.z - fromPosition.z;
   return {
-    x:fromPosition.x + (interpolateAmount * vector.x),
-    y:fromPosition.y + (interpolateAmount * vector.y),
-    z:fromPosition.z + (interpolateAmount * (toPosition.z - fromPosition.z))
-  }
+    x:fromPosition.x + (interpolateAmount * dx),
+    y:fromPosition.y + (interpolateAmount * dy),
+    z:fromPosition.z + (interpolateAmount * dz)
+  };
 }
 
 export function findCharacterPoseWithoutPairHistory(character:Character, time:number):CharacterPose {
