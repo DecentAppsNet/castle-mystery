@@ -1,4 +1,4 @@
-import { assert } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 import ItineraryKeyframe, { duplicateItineraryKeyframe } from "./types/ItineraryKeyframe";
 import EditableItineraryKeyframe from "./types/EditableItineraryKeyframe";
 import CharacterKeyframe, { CHARACTER_KEYFRAME_KEYS } from "./types/CharacterKeyframe";
@@ -120,10 +120,83 @@ function _createFirstKeyframe(characters:Character[], rooms:Room[], time:number)
   return { time, characters:characterKeyframes, rooms:roomKeyFrames };
 }
 
+function _addCharacterKeyframeToItineraryKeyframe(characterKeyframe:Partial<CharacterKeyframe>, characterI:number, toKeyframe:EditableItineraryKeyframe) {
+  const toCharacterKeyframe:Partial<CharacterKeyframe> = toKeyframe.characters[characterI];
+  assertNonNullable(toCharacterKeyframe);
+  CHARACTER_KEYFRAME_KEYS.forEach(key => {
+    const keyValue = (characterKeyframe as any)[key];
+    if (keyValue !== undefined) (toCharacterKeyframe as any)[key] = keyValue;
+  });
+}
+
+function _createEditableKeyframeFromCharacterKeyframe(characterKeyframe:Partial<CharacterKeyframe>, characterI:number, time:number, characterCount:number, roomCount:number):EditableItineraryKeyframe {
+  const characters:Partial<CharacterKeyframe>[] = [];
+  for(let i = 0; i < characterCount; ++i) {
+    characters[i] = (i === characterI) ? characterKeyframe : {};
+  }
+  const rooms:Partial<RoomKeyframe>[] = [];
+  for(let i = 0; i < roomCount; ++i) { rooms[i] = {}; }
+  const keyframe:EditableItineraryKeyframe = { time, characters, rooms };
+  return keyframe;
+}
+
+function _addRoomKeyframeToItineraryKeyframe(roomKeyframe:Partial<RoomKeyframe>, roomI:number, toKeyframe:EditableItineraryKeyframe) {
+  const toRoomKeyframe:Partial<RoomKeyframe> = toKeyframe.characters[roomI];
+  assertNonNullable(toRoomKeyframe);
+  ROOM_KEYFRAME_KEYS.forEach(key => {
+    const keyValue = (roomKeyframe as any)[key];
+    if (keyValue !== undefined) (toRoomKeyframe as any)[key] = keyValue;
+  });
+}
+
+function _createEditableKeyframeFromRoomKeyframe(roomKeyframe:Partial<CharacterKeyframe>, roomI:number, time:number, characterCount:number, roomCount:number):EditableItineraryKeyframe {
+  const characters:Partial<CharacterKeyframe>[] = [];
+  for(let i = 0; i < characterCount; ++i) { characters[i] = {}; }
+  const rooms:Partial<RoomKeyframe>[] = [];
+  for(let i = 0; i < roomCount; ++i) { 
+    rooms[i] = (i === roomI) ? roomKeyframe : {};
+  }
+  const keyframe:EditableItineraryKeyframe = { time, characters, rooms };
+  return keyframe;
+}
+
+function _getCharacterAndRoomCount(editableItinerary:EditableItinerary):{characterCount:number, roomCount:number} {
+  const firstKeyframe = editableItinerary.keyframes[0];
+  assertNonNullable(firstKeyframe);
+  return { 
+    characterCount:firstKeyframe.characters.length,
+    roomCount:firstKeyframe.rooms.length
+  };
+}
+
 export function addKeyframe(editableKeyframe:EditableItineraryKeyframe, itinerary:EditableItinerary) {
   const insertAfterI = _findInsertAfterI(editableKeyframe.time, itinerary.keyframes);
   itinerary.editableKeyframes = itinerary.editableKeyframes.splice(insertAfterI, 0, editableKeyframe);
   itinerary.keyframes = generateKeyframes(itinerary.editableKeyframes);
+}
+
+export function addCharacterKeyframe(characterKeyframe:Partial<CharacterKeyframe>, characterI:number, time:number, itinerary:EditableItinerary) {
+  const { characterCount, roomCount } = _getCharacterAndRoomCount(itinerary);
+  const existingFrame = itinerary.editableKeyframes.find(kf => kf.time === time);
+  if (existingFrame) {
+    _addCharacterKeyframeToItineraryKeyframe(characterKeyframe, characterI, existingFrame);
+    itinerary.keyframes = generateKeyframes(itinerary.editableKeyframes);
+  } else {
+    const keyframe = _createEditableKeyframeFromCharacterKeyframe(characterKeyframe, characterI, time, characterCount, roomCount);
+    addKeyframe(keyframe, itinerary);
+  }
+}
+
+export function addRoomKeyframe(roomKeyframe:Partial<RoomKeyframe>, roomI:number, time:number, itinerary:EditableItinerary) {
+  const { characterCount, roomCount } = _getCharacterAndRoomCount(itinerary);
+  const existingFrame = itinerary.editableKeyframes.find(kf => kf.time === time);
+  if (existingFrame) {
+    _addRoomKeyframeToItineraryKeyframe(roomKeyframe, roomI, existingFrame);
+    itinerary.keyframes = generateKeyframes(itinerary.editableKeyframes);
+  } else {
+    const keyframe = _createEditableKeyframeFromRoomKeyframe(roomKeyframe, roomI, time, characterCount, roomCount);
+    addKeyframe(keyframe, itinerary);
+  }
 }
 
 export function createEditableItinerary(characters:Character[], rooms:Room[], startTime:number):EditableItinerary {

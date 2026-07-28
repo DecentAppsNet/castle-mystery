@@ -6,14 +6,14 @@ import CharacterKeyframe, { duplicateCharacterKeyframe } from "./types/Character
 
 function _findKeyframeBeforeTimeRecursively(keyframes:ItineraryKeyframe[], fromI:number, toI:number, time:number):number {
   assert(toI > fromI);
-  const middleI = fromI + Math.floor(toI - fromI / 2);
+  const middleI = fromI + Math.floor((toI - fromI) / 2);
   const delta = keyframes[middleI].time - time;
   if (delta === 0) return middleI;
   if (delta < 0) { // middle time is smaller than sought time
     if (middleI === keyframes.length - 1 || keyframes[middleI+1].time > time) return middleI; 
-    return _findKeyframeBeforeTimeRecursively(keyframes, fromI, middleI, time);
+    return _findKeyframeBeforeTimeRecursively(keyframes, middleI+1, toI, time);
   }
-  return _findKeyframeBeforeTimeRecursively(keyframes, middleI+1, toI, time);
+  return _findKeyframeBeforeTimeRecursively(keyframes, fromI, middleI, time);
 }
 
 function _findKeyframesBeforeAndAfterTime(keyframes:ItineraryKeyframe[], time:number):
