@@ -11,7 +11,7 @@ export function findInterpolatedCharacterPosition(fromKeyframe:ItineraryKeyframe
   assertNonNullable(toPosition, 'toKeyframe must have .position defined');
   const fromTime = fromKeyframe.time;
   const toTime = toKeyframe.time;
-  if (fromTime === toTime) return fromPosition;
+  if (fromTime === toTime) return {...fromPosition};
   assert(fromTime <= time && toTime >= time);
   assert(fromTime !== toTime);
   const elapsedRatio = (time - fromTime) / (toTime - fromTime);

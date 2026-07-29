@@ -14,11 +14,13 @@ import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import WalkEvent from '../types/itineraryEvents/WalkEvent';
 import lockUnlockActivityText from '../__tests__/fixtures/lock-unlock-activity.md?raw';
 import unlockAfterMoveText from './fixtures/unlock-after-move.md?raw';
+import Room from '../types/Room';
 
 const LOCK_EXIT_NEARBY_DISTANCE = 8;
 
 function _findCellExit(levelLike:{ rooms:{ id:string, exits:{ room1Id:string, room2Id:string, exitStatus:ExitStatus }[] }[] }) {
-  const cell = findRoom(levelLike.rooms as Parameters<typeof findRoom>[0], 'Cell')!;
+  const rooms = (levelLike.rooms as any) as readonly Room[];
+  const cell = findRoom(rooms, 'Cell')!;
   const exit = cell.exits.find(candidate => candidate.room1Id === 'second cell' || candidate.room2Id === 'second cell') || null;
   expect(exit).not.toBeNull();
   return exit!;

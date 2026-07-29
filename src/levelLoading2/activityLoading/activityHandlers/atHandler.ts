@@ -26,15 +26,16 @@ import Level from "@/game/types/Level";
 import ParseFormat from "../types/ParseFormat";
 import { createParseFormat, makeIdentifier, makeSequence, makeVerb } from "../parseFormatUtil";
 import { assert, assertNonNullable } from "decent-portal";
-import { findRoom } from "@/game/roomUtil";
+import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
 import EditableItinerary from "@/levelLoading2/itineraryLoading/types/EditableItinerary";
-import { createSnapshotAtTime } from "@/levelLoading2/itineraryLoading/retrievalUtil";
+import { createSnapshotAtTime, findLatestKeyFrameForCharacter } from "@/levelLoading2/itineraryLoading/retrievalUtil";
 import ItineraryKeyframe from "@/levelLoading2/itineraryLoading/types/ItineraryKeyframe";
 import Room from "@/game/types/Room";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import Waypoint from "@/game/types/Waypoint";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { clamp } from "@/common/numberUtil";
+import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
 
 function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:ItineraryKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
@@ -85,8 +86,8 @@ function _findTargetPosition(snapshot:ItineraryKeyframe, targetRoom:Room, target
   return bestWaypoint.position;
 }
 
-export function generateAtActivityKeyframes(level:Level, 
-    activity:Activity, editableItinerary:EditableItinerary, _errors:ErrorCollector):boolean {
+export function scheduleAtActivity(level:Level, 
+    activity:Activity, editableItinerary:EditableItinerary, errors:ErrorCollector):boolean {
   const { characterId, roomId } = activity.parts;
   assertNonNullable(characterId, 'implied subjects should have been resolved');
   assert(typeof roomId === 'string');
@@ -95,17 +96,28 @@ export function generateAtActivityKeyframes(level:Level,
   assertNonNullable(character);
   assertNonNullable(toRoom);
 
-  if (activity.startTime === null) return false; // Need a starting time to learn starting position. A previous activity needs to be scheduled.
-
   const characterI = editableItinerary.characterIdToI[characterId];
-  const fromSnapshot = createSnapshotAtTime(editableItinerary.keyframes, activity.startTime);
-  const fromPos = fromSnapshot.characters[characterI].position;
-  const toPos = _findTargetPosition(fromSnapshot, toRoom);
+  const isRelativeTimestamp = activity.startTime === null;
+  
+  const fromKeyframe = findLatestKeyFrameForCharacter(editableItinerary, characterI);
+  const fromPos = fromKeyframe.characters[characterI].position;
+  const fromTime = fromKeyframe.time;
+  const fromRoom = findRoomAtPosition(level.rooms, fromPos.x, fromPos.y);
+  assertNonNullable(fromRoom);
+  
+  const toKeyframe = isRelativeTimestamp 
+    ? fromKeyframe
+    : createSnapshotAtTime(editableItinerary.keyframes, activity.startTime!);
+  const toPos = _findTargetPosition(toKeyframe, toRoom);
+  const toTime = toKeyframe.time;
 
-  // TODO find the route, find the duration, start time - check for conflicts.
-  assertNonNullable(fromPos ?? toPos); // To fix build errs. TODO delete.
-
-  return true;
+  const errorMessage = isRelativeTimestamp 
+    ? scheduleCharacterMovementToRoom(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableItinerary)
+    : scheduleCharacterMovementToRoomAtTime(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableItinerary)
+  if (!errorMessage) return true;
+  
+  errors.addAt(errorMessage, 'itinerary'); // TODO need line# from activity.
+  return false;
 }
 
 export function createAtActivityParseFormat():ParseFormat {

@@ -1,8 +1,10 @@
-import { assert } from "decent-portal";
+import { assert, botch } from "decent-portal";
 import ItineraryKeyframe, { duplicateItineraryKeyframe } from "./types/ItineraryKeyframe";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import { findInterpolatedCharacterPosition } from "./interpolationUtil";
 import CharacterKeyframe, { duplicateCharacterKeyframe } from "./types/CharacterKeyframe";
+import EditableItinerary from "./types/EditableItinerary";
+import RoomKeyframe from "./types/RoomKeyframe";
 
 function _findKeyframeBeforeTimeRecursively(keyframes:ItineraryKeyframe[], fromI:number, toI:number, time:number):number {
   assert(toI > fromI);
@@ -74,4 +76,21 @@ export function findCharacterPositionAtTime(keyframes:ItineraryKeyframe[], chara
 export function findKeyframeForTime(keyframes:ItineraryKeyframe[], time:number):ItineraryKeyframe {
   const { beforeKeyframe } = _findKeyframesBeforeAndAfterTime(keyframes, time);
   return beforeKeyframe;
+}
+
+function _isEmptyKeyframe(keyframe:Partial<CharacterKeyframe>|Partial<RoomKeyframe>):boolean {
+  for (const key in keyframe) {
+    if (Object.hasOwn(keyframe, key)) return false;
+  }
+  return true;
+}
+
+export function findLatestKeyFrameForCharacter(itinerary:EditableItinerary, characterRef:string|number):ItineraryKeyframe {
+  const characterI:number = typeof characterRef === 'string' ? itinerary.characterIdToI[characterRef] : characterRef;
+  assert(itinerary.keyframes.length === itinerary.editableKeyframes.length);
+  for(let i = itinerary.editableKeyframes.length - 1; i >= 0; --i) {
+    if (!_isEmptyKeyframe(itinerary.editableKeyframes[i].characters[characterI])) 
+      return itinerary.keyframes[i];
+  }
+  botch('There should at least be a first editable keyframe that includes all keys.');
 }

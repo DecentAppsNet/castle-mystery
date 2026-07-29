@@ -1,2 +1,8 @@
-export { createEditableItinerary, addKeyframe, addCharacterKeyframe, addRoomKeyframe } from './editingUtil';
+export { 
+  addKeyframe, 
+  addCharacterKeyframe, 
+  addRoomKeyframe, 
+  createEditableItinerary, 
+  scheduleActivities 
+} from './editingUtil';
 export { createSnapshotAtTime, createCharacterSnapshotAtTime, findCharacterPositionAtTime } from './retrievalUtil';

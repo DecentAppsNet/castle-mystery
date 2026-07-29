@@ -9,6 +9,12 @@ import Room from "@/game/types/Room";
 import Item, { duplicateItem } from "@/game/types/Item";
 import { duplicatePosition } from "@/game/types/Position";
 import EditableItinerary, { createDefaultEditableItinerary } from "./types/EditableItinerary";
+import Activity from "../activityLoading/types/Activity";
+import Level from "@/game/types/Level";
+import ErrorCollector from "../errorCollection/ErrorCollector";
+import { scheduleAtActivity } from "../activityLoading/activityHandlers/atHandler";
+import Itinerary from "./types/Itinerary";
+import { findFirstActivityStartTime } from "../activityLoading/levelTimeUtil";
 
 function _findInsertAfterI(time:number, keyframes:ItineraryKeyframe[]):number {
   assert(keyframes.length > 0);
@@ -19,7 +25,7 @@ function _findInsertAfterI(time:number, keyframes:ItineraryKeyframe[]):number {
   return keyframes.length - 1;
 }
 
-function _findNextKeyframeWithDefinedCharacterPosition(keyframes:EditableItineraryKeyframe[], 
+function _findNextKeyframeWithDefinedCharacterPosition(keyframes:readonly EditableItineraryKeyframe[], 
     fromKeyframeI:number, characterI:number):EditableItineraryKeyframe|null {
   for(let keyframeI = fromKeyframeI; keyframeI < keyframes.length; ++keyframeI) {
     const keyframe = keyframes[keyframeI];
@@ -28,8 +34,8 @@ function _findNextKeyframeWithDefinedCharacterPosition(keyframes:EditableItinera
   return null;
 }
 
-function _generateNextKeyframe(previousKeyframe:ItineraryKeyframe, keyframes:EditableItineraryKeyframe[], 
-    keyframeI:number):ItineraryKeyframe {
+function _generateNextKeyframe(previousKeyframe:Readonly<ItineraryKeyframe>, 
+    keyframes:readonly EditableItineraryKeyframe[], keyframeI:number):ItineraryKeyframe {
   const keyframe = keyframes[keyframeI];
   const nextKeyframe = duplicateItineraryKeyframe(previousKeyframe);
   nextKeyframe.time = keyframe.time;
@@ -64,7 +70,7 @@ function _generateNextKeyframe(previousKeyframe:ItineraryKeyframe, keyframes:Edi
 // If this gets to be a bottleneck, you can use an algoritm like:
 // 1. Receive a fromI param that is set to the earliest known change in frame keying.
 // 2. Update existing frames from fromI until a frame is unchanged from its original value. (Signals end of affected keyframes).
-function generateKeyframes(editableKeyframes:EditableItineraryKeyframe[]):ItineraryKeyframe[] {
+function generateKeyframes(editableKeyframes:readonly EditableItineraryKeyframe[]):ItineraryKeyframe[] {
   // Replay every editable (partial) keyframe to generate resolved keyframes.
   assert(editableKeyframes.length >= 1);
   const keyframes:ItineraryKeyframe[] = [];
@@ -76,7 +82,7 @@ function generateKeyframes(editableKeyframes:EditableItineraryKeyframe[]):Itiner
   return keyframes;
 }
 
-function _createCharacterIdToI(characters:Character[]):{[characterId:string]:number} {
+function _createCharacterIdToI(characters:readonly Character[]):{[characterId:string]:number} {
   const characterIdToI:{[characterId:string]:number} = {};
   characters.forEach((character, characterI) => {
     characterIdToI[character.id] = characterI;
@@ -84,7 +90,7 @@ function _createCharacterIdToI(characters:Character[]):{[characterId:string]:num
   return characterIdToI;
 }
 
-function _createRoomIdToI(rooms:Room[]):{[roomId:string]:number} {
+function _createRoomIdToI(rooms:readonly Room[]):{[roomId:string]:number} {
   const roomIdToI:{[roomId:string]:number} = {};
   rooms.forEach((room, roomI) => {
     roomIdToI[room.id] = roomI;
@@ -92,11 +98,11 @@ function _createRoomIdToI(rooms:Room[]):{[roomId:string]:number} {
   return roomIdToI;
 }
 
-function _duplicateOptionalItem(item:Item|null):Item|null {
+function _duplicateOptionalItem(item:Readonly<Item>|null):Item|null {
   return item === null ? null : duplicateItem(item);
 }
 
-function _createFirstCharacterKeyframe(character:Character):CharacterKeyframe {
+function _createFirstCharacterKeyframe(character:Readonly<Character>):CharacterKeyframe {
   const keyframe:CharacterKeyframe = {
     appearanceId: '', // TODO - add to Character
     isVisible:character.isVisible,
@@ -110,20 +116,21 @@ function _createFirstCharacterKeyframe(character:Character):CharacterKeyframe {
   return keyframe;
 }
 
-function _createFirstRoomKeyframe(room:Room):RoomKeyframe {
+function _createFirstRoomKeyframe(room:Readonly<Room>):RoomKeyframe {
   const keyframe:RoomKeyframe = {
     items:[...room.items.map(duplicateItem)]
   }
   return keyframe;
 }
 
-function _createFirstKeyframe(characters:Character[], rooms:Room[], time:number):ItineraryKeyframe {
+function _createFirstKeyframe(characters:readonly Character[], rooms:readonly Room[], time:number):ItineraryKeyframe {
   const characterKeyframes = characters.map(c => _createFirstCharacterKeyframe(c));
   const roomKeyFrames = rooms.map(r => _createFirstRoomKeyframe(r));
   return { time, characters:characterKeyframes, rooms:roomKeyFrames };
 }
 
-function _addCharacterKeyframeToItineraryKeyframe(characterKeyframe:Partial<CharacterKeyframe>, characterI:number, toKeyframe:EditableItineraryKeyframe) {
+function _addCharacterKeyframeToItineraryKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
+    characterI:number, toKeyframe:EditableItineraryKeyframe) {
   const toCharacterKeyframe:Partial<CharacterKeyframe> = toKeyframe.characters[characterI];
   assertNonNullable(toCharacterKeyframe);
   CHARACTER_KEYFRAME_KEYS.forEach(key => {
@@ -132,7 +139,8 @@ function _addCharacterKeyframeToItineraryKeyframe(characterKeyframe:Partial<Char
   });
 }
 
-function _createEditableKeyframeFromCharacterKeyframe(characterKeyframe:Partial<CharacterKeyframe>, characterI:number, time:number, characterCount:number, roomCount:number):EditableItineraryKeyframe {
+function _createEditableKeyframeFromCharacterKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
+    characterI:number, time:number, characterCount:number, roomCount:number):EditableItineraryKeyframe {
   const characters:Partial<CharacterKeyframe>[] = [];
   for(let i = 0; i < characterCount; ++i) {
     characters[i] = (i === characterI) ? characterKeyframe : {};
@@ -143,7 +151,8 @@ function _createEditableKeyframeFromCharacterKeyframe(characterKeyframe:Partial<
   return keyframe;
 }
 
-function _addRoomKeyframeToItineraryKeyframe(roomKeyframe:Partial<RoomKeyframe>, roomI:number, toKeyframe:EditableItineraryKeyframe) {
+function _addRoomKeyframeToItineraryKeyframe(roomKeyframe:Readonly<Partial<RoomKeyframe>>, roomI:number, 
+    toKeyframe:EditableItineraryKeyframe) {
   const toRoomKeyframe:Partial<RoomKeyframe> = toKeyframe.rooms[roomI];
   assertNonNullable(toRoomKeyframe);
   ROOM_KEYFRAME_KEYS.forEach(key => {
@@ -152,7 +161,8 @@ function _addRoomKeyframeToItineraryKeyframe(roomKeyframe:Partial<RoomKeyframe>,
   });
 }
 
-function _createEditableKeyframeFromRoomKeyframe(roomKeyframe:Partial<CharacterKeyframe>, roomI:number, time:number, characterCount:number, roomCount:number):EditableItineraryKeyframe {
+function _createEditableKeyframeFromRoomKeyframe(roomKeyframe:Readonly<Partial<CharacterKeyframe>>, roomI:number, 
+    time:number, characterCount:number, roomCount:number):EditableItineraryKeyframe {
   const characters:Partial<CharacterKeyframe>[] = [];
   for(let i = 0; i < characterCount; ++i) { characters[i] = {}; }
   const rooms:Partial<RoomKeyframe>[] = [];
@@ -163,7 +173,8 @@ function _createEditableKeyframeFromRoomKeyframe(roomKeyframe:Partial<CharacterK
   return keyframe;
 }
 
-function _getCharacterAndRoomCount(editableItinerary:EditableItinerary):{characterCount:number, roomCount:number} {
+function _getCharacterAndRoomCount(editableItinerary:Readonly<EditableItinerary>)
+    :{characterCount:number, roomCount:number} {
   const firstKeyframe = editableItinerary.keyframes[0];
   assertNonNullable(firstKeyframe);
   return { 
@@ -176,13 +187,51 @@ function _insertEditableKeyframeAfter(array:EditableItineraryKeyframe[], insertA
   array.splice(insertAfterI+1, 0, insertElement);
 }
 
-export function addKeyframe(editableKeyframe:EditableItineraryKeyframe, itinerary:EditableItinerary) {
+function _areActivitiesWellOrdered(activities:readonly Activity[], startTime:number):boolean {
+  let time = startTime;
+  for(let i = 0; i < activities.length; ++i) {
+    const activity = activities[i];
+    if (activity.startTime !== null) {
+      if (activity.startTime < time) return false;
+      time = activity.startTime;
+    }
+  }
+  return true;
+}
+
+function _doesActivityUseCompletionTimestamp(verb:string) {
+  return verb === 'at';
+}
+
+function _findNextActivityStartTime(prevActivity:Readonly<Activity>|null):number|null {
+  if (!prevActivity || !prevActivity.startTime || !prevActivity.duration) return null;
+  return prevActivity.startTime + prevActivity.duration;
+}
+
+function _resolveRelativeTimestampAsNeeded(activity:Activity) {
+  if (activity.startTime !== null || _doesActivityUseCompletionTimestamp(activity.verb)) return;
+  activity.startTime = _findNextActivityStartTime(activity.prevActivity);
+}
+
+type ScheduleActivityCallback = (level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector) => boolean;
+const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCallback}> = {
+  'at': scheduleAtActivity
+}
+
+function _scheduleActivity(level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector):boolean {
+  const scheduleActivityFunc = VERB_TO_SCHEDULE_ACTIVITY_FUNC[activity.verb];
+  assertNonNullable(scheduleActivities, `Add handler for "${activity.verb}"`);
+  return scheduleActivityFunc(level, activity, itinerary, errors);
+}
+
+export function addKeyframe(editableKeyframe:Readonly<EditableItineraryKeyframe>, itinerary:EditableItinerary) {
   const insertAfterI = _findInsertAfterI(editableKeyframe.time, itinerary.keyframes);
   _insertEditableKeyframeAfter(itinerary.editableKeyframes, insertAfterI, editableKeyframe);
   itinerary.keyframes = generateKeyframes(itinerary.editableKeyframes);
 }
 
-export function addCharacterKeyframe(characterKeyframe:Partial<CharacterKeyframe>, characterI:number, time:number, itinerary:EditableItinerary) {
+export function addCharacterKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
+    characterI:number, time:number, itinerary:EditableItinerary) {
   const { characterCount, roomCount } = _getCharacterAndRoomCount(itinerary);
   const existingFrame = itinerary.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
@@ -194,7 +243,8 @@ export function addCharacterKeyframe(characterKeyframe:Partial<CharacterKeyframe
   }
 }
 
-export function addRoomKeyframe(roomKeyframe:Partial<RoomKeyframe>, roomI:number, time:number, itinerary:EditableItinerary) {
+export function addRoomKeyframe(roomKeyframe:Readonly<Partial<RoomKeyframe>>, roomI:number, 
+    time:number, itinerary:EditableItinerary) {
   const { characterCount, roomCount } = _getCharacterAndRoomCount(itinerary);
   const existingFrame = itinerary.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
@@ -206,7 +256,7 @@ export function addRoomKeyframe(roomKeyframe:Partial<RoomKeyframe>, roomI:number
   }
 }
 
-export function createEditableItinerary(characters:Character[], rooms:Room[], startTime:number):EditableItinerary {
+export function createEditableItinerary(characters:readonly Character[], rooms:readonly Room[], startTime:number):EditableItinerary {
   const itinerary = createDefaultEditableItinerary();
   itinerary.characterIdToI = _createCharacterIdToI(characters);
   itinerary.roomIdToI = _createRoomIdToI(rooms);
@@ -214,4 +264,31 @@ export function createEditableItinerary(characters:Character[], rooms:Room[], st
   itinerary.keyframes.push(firstKeyframe);
   itinerary.editableKeyframes.push(firstKeyframe); // First keyframe always guaranteed to be fully resolved.
   return itinerary;
+}
+
+function _editableItineraryToItinerary(editableItinerary:Readonly<EditableItinerary>):Itinerary {
+  const { keyframes, roomIdToI, characterIdToI } = editableItinerary;
+  return { keyframes, roomIdToI, characterIdToI };
+}
+
+function _createEmptyItinerary(characters:readonly Character[], rooms:readonly Room[]):Itinerary {
+  const editable = createEditableItinerary(characters, rooms, 0);
+  return _editableItineraryToItinerary(editable);
+}
+
+export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Itinerary {
+  if (!activities.length) return _createEmptyItinerary(level.characters, level.rooms);
+  const startTime = findFirstActivityStartTime(activities);
+  assertNonNullable(startTime);
+  assert(_areActivitiesWellOrdered(activities, startTime));
+  const itinerary:EditableItinerary = createEditableItinerary(level.characters, level.rooms, startTime);
+  const toBeScheduled = [...activities];
+  for(let attemptI = 0; attemptI < activities.length; ++attemptI) {
+    const nextActivity = toBeScheduled[0];
+    _resolveRelativeTimestampAsNeeded(nextActivity);
+    if (_scheduleActivity(level, toBeScheduled[0], itinerary, errors)) {
+      toBeScheduled.shift();
+    }
+  }
+  return _editableItineraryToItinerary(itinerary);
 }

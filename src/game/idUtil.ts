@@ -17,6 +17,6 @@ export function normalizeOptionalId(text:string|null|undefined):string|null {
   return normalizedText.length ? normalizedText : null;
 }
 
-export function assertNormalizedId(value:string, label:string):void {
+export function assertNormalizedId(value:string, label:string):void { // TODO - delete
   assert(value === normalizeId(value), `expected normalized ${label} id: ${value}`);
 }

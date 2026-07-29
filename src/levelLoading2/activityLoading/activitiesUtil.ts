@@ -23,6 +23,34 @@ function _addIfSet(value:string|number|null|undefined, idSet:Set<string>) {
   if (typeof value === 'string') idSet.add(value);
 }
 
+type ActivityGroup = {
+  startTime:number,
+  activities:Activity[]
+}
+
+function _groupActivities(activities:readonly Activity[]):ActivityGroup[] {
+  const groups:ActivityGroup[] = [];
+  let group:ActivityGroup = { startTime:activities[0].startTime!, activities:[activities[0]] };
+  for(let activityI = 1; activityI < activities.length; ++activityI) {
+    const activity = activities[activityI];
+    if (activity.startTime === null) {
+      group.activities.push(activity);
+    } else {
+      groups.push(group);
+      group = { startTime:activity.startTime, activities:[activity] };
+    }
+  }
+  groups.push(group);
+  return groups.sort((a, b) => a.startTime - b.startTime); 
+}
+
+function _sortActivities(activities:readonly Activity[]):Activity[] {
+  const groups = _groupActivities(activities);
+  let sortedActivities:Activity[] = [];
+  groups.forEach(group => { sortedActivities = sortedActivities.concat(group.activities); });
+  return sortedActivities;
+}
+
 export function findAllCharactersAndItemsInActivities(activities:Activity[]):
     {characterIds:string[], itemIds:string[]} {
   const characterIdSet = new Set<string>();
@@ -40,7 +68,7 @@ export function findAllCharactersAndItemsInActivities(activities:Activity[]):
 }
 
 export function loadActivities(itinerarySectionText:string, rules:ActivityParsingRules, 
-      activeCharacterId:string, errors:ErrorCollector):Activity[]|null {
+    authoredStartTime:number|null, activeCharacterId:string, errors:ErrorCollector):Activity[]|null {
   const originalErrorCount = errors.count;
 
   if (!itinerarySectionText.trim()) return [];
@@ -56,11 +84,13 @@ export function loadActivities(itinerarySectionText:string, rules:ActivityParsin
       errors.addAt(parseResult, 'itinerary', lines[lineI]);
       continue;
     }
+    if (parseResult.startTime === null) parseResult.startTime = authoredStartTime ?? 0;
     parseResult.prevActivity = prevActivity;
     activities.push(parseResult);
     prevActivity = parseResult;
   }
   _resolveImpliedSubjects(activities, activeCharacterId);
 
-  return errors.count > originalErrorCount ? null : activities;
+  const sortedActivities = _sortActivities(activities);
+  return errors.count > originalErrorCount ? null : sortedActivities;
 }

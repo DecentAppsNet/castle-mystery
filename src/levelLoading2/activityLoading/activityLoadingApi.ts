@@ -4,3 +4,4 @@
 
 export { initActivityParsingRules } from "./parseItineraryUtil";
 export { loadActivities, findAllCharactersAndItemsInActivities } from './activitiesUtil';
+export { findStartTime, findFirstActivityStartTime } from './levelTimeUtil';

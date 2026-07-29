@@ -9,6 +9,7 @@ import { loadItemsPartially } from "./itemLoading/itemLoadingApi";
 import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/characterLoadingApi";
 import { loadConclusions } from "./conclusionLoading/conclusionLoadingApi";
 import { loadActivities } from "./activityLoading/activityLoadingApi";
+import { scheduleActivities } from "./itineraryLoading/editingUtil";
 
 /** 
  * Error handling design:
@@ -50,8 +51,10 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
 
   // Schedule activities into replayable itinerary.
   const activities = loadActivities(sections.itinerary?.text ?? '', loadingContext.activityParsingRules, 
-      loadingContext.activeCharacterId, errors);
-  assertNonNullable(activities); // TODO delete.
+      loadingContext.startTime, loadingContext.activeCharacterId, errors);
+  if (!activities) return null;
+  const itinerary = scheduleActivities(level, activities, errors);
+  assertNonNullable(itinerary); // TODO delete.
 
   // Reconcile general-section time settings against the scheduled itinerary.
 
