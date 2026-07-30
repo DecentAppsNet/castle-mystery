@@ -33,6 +33,13 @@
 * All created sub-modules should contain the module summary comment.
 * The module from which sub-modules were created should have its module summary comment updated.
 
+## Encapsulated Modules
+
+* If a folder contains an `index.ts` file, that folder is an encapsulated module.
+* Code inside the encapsulated module, including code in its subfolders, may call functions in the module's files without going through the API exported from `index.ts`.
+* Code outside the encapsulated module may only access the module's functionality through functions exported from `index.ts`.
+* Exception: any type definitions or helper functions exported from files in a `types` subfolder may be imported directly.
+
 # Testing
 
 This project uses two test categories.

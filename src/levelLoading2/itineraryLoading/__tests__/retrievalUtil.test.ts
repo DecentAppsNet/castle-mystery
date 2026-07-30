@@ -38,7 +38,7 @@ describe('retrievalUtil', () => {
 
 			const snapshot = createSnapshotAtTime(keyframes, 5000);
 
-			expect(snapshot).toBe(lastKeyframe);
+			expect(snapshot).toEqual({...lastKeyframe, time:5000});
 		});
 
 		it('returns the last keyframe when the requested time is on the last keyframe', () => {
@@ -48,7 +48,7 @@ describe('retrievalUtil', () => {
 
 			const snapshot = createSnapshotAtTime(keyframes, 2000);
 
-			expect(snapshot).toBe(lastKeyframe);
+			expect(snapshot).toEqual(lastKeyframe);
 		});
 
 		it('interpolates only the characters that moved when the requested time falls between keyframes', () => {
@@ -73,7 +73,7 @@ describe('retrievalUtil', () => {
 
 			const snapshot = createSnapshotAtTime(keyframes, 1500);
 
-			expect(snapshot).toBe(keyframes[0]);
+			expect(snapshot).toEqual({...keyframes[0], time:1500});
 			expect(snapshot.characters[0]?.position).toEqual({ x:3, y:4, z:5 });
 			expect(snapshot.characters[1]?.position).toEqual({ x:0, y:0, z:10 });
 		});

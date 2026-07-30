@@ -22,15 +22,15 @@ export function findRoom(rooms:readonly Room[], roomRef:string):Room|null {
 
 export function findRoomByIdOrTitle(rooms:readonly Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
-  return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) || null;
+  return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) ?? null;
 }
 
 export function findRoomAtPosition(rooms:readonly Room[], x:number, y:number):Room | null {
-  return rooms.find((r) => isPositionInRect(x, y, r.rect)) || null;
+  return rooms.find((r) => isPositionInRect(x, y, r.rect)) ?? null;
 }
 
 export function findRoomAtPositionOrTouchingBoundary(rooms:readonly Room[], x:number, y:number):Room | null {
-  return rooms.find((room) => isPositionInOrOnRect(x, y, room.rect)) || null;
+  return rooms.find((room) => isPositionInOrOnRect(x, y, room.rect)) ?? null;
 }
 
 export function findRoomNearestToPosition(rooms:readonly Room[], x:number, y:number):Room {

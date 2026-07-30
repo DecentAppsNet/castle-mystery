@@ -37,7 +37,7 @@ function _areCharacterKeyframePositionsEqual(fromKeyframe:ItineraryKeyframe, toK
 
 export function createSnapshotAtTime(keyframes:ItineraryKeyframe[], time:number):Readonly<ItineraryKeyframe> {
   const {beforeKeyframe, afterKeyframe} = _findKeyframesBeforeAndAfterTime(keyframes, time);
-  if (!afterKeyframe) return beforeKeyframe;
+  if (!afterKeyframe) return { ...beforeKeyframe, time };
 
   // Look for characters between the two keyframes that need an interpolated position.
   let betweenKeyframe:ItineraryKeyframe|null = null;
@@ -49,7 +49,7 @@ export function createSnapshotAtTime(keyframes:ItineraryKeyframe[], time:number)
   }
 
   // Return a keyframe with interpolated positions if it was needed.
-  return betweenKeyframe ?? beforeKeyframe;
+  return betweenKeyframe ?? { ...beforeKeyframe, time};
 }
 
 export function createCharacterSnapshotAtTime(keyframes:ItineraryKeyframe[], characterI:number, 

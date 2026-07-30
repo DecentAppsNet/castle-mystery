@@ -1,24 +1,26 @@
-import { assertNonNullable } from "decent-portal";
 import Activity from "./types/Activity";
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { formatMsecsAsTimestamp } from "./timestampUtil";
+import { findFirstAtActivityStartTime } from "./activityHandlers/atHandler";
+import Level from "@/game/types/Level";
 
-export function findFirstActivityStartTime(activities:readonly Activity[]):number|null {
+export function findFirstActivityStartTime(level:Level, activities:readonly Activity[]):number|null|string {
   if (activities.length <= 0) return null;
-  assertNonNullable(activities[0].startTime);
-  return activities[0].startTime;
+  const firstActivity = activities[0];
+  if (firstActivity.startTime === null) return null;
+  if (firstActivity.verb !== '@') return firstActivity.startTime;
+  return findFirstAtActivityStartTime(level, firstActivity);
 }
 
-export function findStartTime(authoredStartTime:number|null, activities:readonly Activity[], errors:ErrorCollector):number {
-  const firstStartTime = findFirstActivityStartTime(activities);
-  if (authoredStartTime !== null && firstStartTime !== null) {
-    if (firstStartTime < authoredStartTime) {
-      const firstStartTimestamp = formatMsecsAsTimestamp(firstStartTime);
+export function findStartTime(authoredStartTime:number|null, firstActivityStartTime:number|null, errors:ErrorCollector):number {
+  if (authoredStartTime !== null && firstActivityStartTime !== null) {
+    if (firstActivityStartTime < authoredStartTime) {
+      const firstStartTimestamp = formatMsecsAsTimestamp(firstActivityStartTime);
       const authoredStartTimestamp = formatMsecsAsTimestamp(authoredStartTime);
-      errors.addAt(`First itinerary activity at ${firstStartTimestamp} precedes specified start time of ${authoredStartTime}.`,
+      errors.addAt(`First itinerary activity at ${firstStartTimestamp} precedes specified start time of ${authoredStartTimestamp}.`,
           'general', `* startTime=`, authoredStartTimestamp);
-      return firstStartTime;
+      return firstActivityStartTime;
     }
   }
-  return authoredStartTime ?? firstStartTime ?? 0;
+  return authoredStartTime ?? firstActivityStartTime ?? 0;
 }

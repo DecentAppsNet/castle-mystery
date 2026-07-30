@@ -35,10 +35,6 @@ describe('loading levels - general section', () => {
     expect(level?.backgroundImageUrl).toBeNull();
     expect(level?.groundFloorY).toBe(20);
     expect(level?.activeCharacterId).toBe('');
-    expect(level?.startTime).toBe(0);
-    expect(level?.initialTime).toBe(0);
-    expect(level?.endTime).toBe(0);
-    expect(level?.duration).toBe(0);
     expect(level?.labels).toEqual([
       { minutes:0, label:'midnight' },
       { minutes:0, label:'midnight' }

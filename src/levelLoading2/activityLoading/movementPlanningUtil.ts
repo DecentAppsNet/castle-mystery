@@ -86,7 +86,7 @@ function _sortAdjacentWaypointsForPathTraversal(room:Room, targetWaypoint:Waypoi
 }
 
 function _findWaypointPath(room:Room, fromWaypoint:Waypoint, toWaypoint:Waypoint):Waypoint[] {
-  if (fromWaypoint === toWaypoint) return [fromWaypoint];
+  if (fromWaypoint === toWaypoint || arePositionsEqual(fromWaypoint.position, toWaypoint.position)) return [fromWaypoint];
   const pending:Waypoint[] = [fromWaypoint];
   const previousByKey = new Map<string, Waypoint|null>([[_createWaypointKey(fromWaypoint), null]]);
 
@@ -112,6 +112,13 @@ function _findWaypointPath(room:Room, fromWaypoint:Waypoint, toWaypoint:Waypoint
   botch('A path should always be possible');
 }
 
+function _joinWaypointPaths(a:Waypoint[], b:Waypoint[]):Waypoint[] {
+  if (!b.length) return a;
+  if (!a.length) return b;
+  if (arePositionsEqual(a[a.length-1].position, b[0].position)) b = b.splice(1); // Omit redundant waypoint.
+  return a.concat(b);
+}
+
 function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Position, toPosition:Position):Waypoint[] {
   if (!roomPath.length) return [];
   const waypoints:Waypoint[] = [];
@@ -119,7 +126,7 @@ function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Po
   let waypoint = findNearestWaypointToPosition(roomPath[0], fromPosition);
   assert(roomPath[0].waypoints.includes(waypoint));
   waypoints.push(waypoint);
-  for(let i = 1; i < roomPath.length - 1; ++i) {
+  for(let i = 1; i < roomPath.length; ++i) {
     let iterationCount = 0;
     while(iterationCount <= roomPath[i].waypoints.length) { // A debug-error exit, but could prevent browser hang.
       const nextRoomId = roomPath[i].id;
@@ -136,8 +143,7 @@ function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Po
   const toRoom = roomPath[roomPath.length-1];
   const toWaypoint = findNearestWaypointToPosition(toRoom, toPosition);
   const finalRoomWaypoints = _findWaypointPath(toRoom, waypoint, toWaypoint);
-
-  return waypoints.concat(finalRoomWaypoints);
+  return _joinWaypointPaths(waypoints, finalRoomWaypoints);
 }
 
 function _calcWalkDurationBetweenPositions(fromPosition:Position, toPosition:Position):number {
@@ -196,6 +202,13 @@ function _scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, 
   return null;
 }
 
+function _calcWalkDurationWithinRoom(room:Room, fromPosition:Position, toPosition:Position):number {
+  const fromWaypoint = findNearestWaypointToPosition(room, fromPosition);
+  const toWaypoint = findNearestWaypointToPosition(room, toPosition);
+  const waypointPath = _findWaypointPath(room, fromWaypoint, toWaypoint);
+  return _calcWalkDurationForWaypointPath(waypointPath);
+}
+
 export function scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
     characterI:number, itinerary:EditableItinerary):string|null {
   return _scheduleCharacterMovementWithinRoom(room, fromPosition, fromTime, toPosition, null, 
@@ -244,4 +257,17 @@ export function scheduleCharacterMovementToRoom(rooms:readonly Room[], fromRoom:
     fromTime:number, toRoom:Room, toPosition:Position, characterI:number, itinerary:EditableItinerary):string|null {
   return _scheduleCharacterMovementToRoomAtTime(rooms, fromRoom, fromPosition, fromTime, toRoom, toPosition,
       null, characterI, itinerary);
+}
+
+export function calcWalkDurationToRoom(rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
+    toRoom:Room, toPosition:Position):number|string {
+  if (arePositionsEqual(fromPosition, toPosition)) return 0; // Character already at destination.
+  
+  if (fromRoom.id === toRoom.id) return _calcWalkDurationWithinRoom(fromRoom, fromPosition, toPosition);
+  
+  const roomPath = _findRoomPath(rooms, fromRoom.id, toRoom.id);
+  if (!roomPath) return `Could not find path from "${fromRoom.id}" room to "${toRoom.id}" room.`;
+
+  const waypointPath = _findWaypointPathThroughRooms(roomPath, fromPosition, toPosition);
+  return _calcWalkDurationForWaypointPath(waypointPath);
 }

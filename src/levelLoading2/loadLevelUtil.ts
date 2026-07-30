@@ -1,5 +1,3 @@
-import { assertNonNullable } from "decent-portal";
-
 import Level from "@/game/types/Level";
 import { ErrorCollector } from "./errorCollection";
 import { loadLevelSections } from "./levelFileSectionUtil";
@@ -8,7 +6,7 @@ import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading/";
 import { loadItemsPartially } from "./itemLoading/";
 import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/";
 import { loadConclusions } from "./conclusionLoading/";
-import { loadActivities } from "./activityLoading/";
+import { findStartTime, loadActivitiesPartially } from "./activityLoading/";
 import { scheduleActivities } from "./itineraryLoading/";
 
 /** 
@@ -41,22 +39,24 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!rooms) return null;
   const characters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
   if (!characters) return null;
+  const activities = loadActivitiesPartially(sections.itinerary?.text ?? '', loadingContext.activityParsingRules, 
+      loadingContext.startTime, loadingContext.activeCharacterId, errors); // TODO--need midnight crossover handling. Can probably just add 24 hours to timestamp number.
+  if (!activities) return null;
 
   // Add items, characters, and rooms to level, resolving dependencies.
   if (!addRoomsToLevel(rooms, loadingContext.groundFloorRoomRef, level, errors)) return null;
-  if (!addCharactersToLevel(characters, items, level, errors)) return null;
+  if (!addCharactersToLevel(characters, items, activities, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
   level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms, errors);
 
   // Schedule activities into replayable itinerary.
-  const activities = loadActivities(sections.itinerary?.text ?? '', loadingContext.activityParsingRules, 
-      loadingContext.startTime, loadingContext.activeCharacterId, errors);
-  if (!activities) return null;
   const itinerary = scheduleActivities(level, activities, errors);
-  assertNonNullable(itinerary); // TODO delete.
+  if (!itinerary) return null;
 
   // Reconcile general-section time settings against the scheduled itinerary.
+  const firstActivityStartTime = activities.length > 0 ? itinerary.keyframes[0]?.time ?? null : null;
+  level.startTime = findStartTime(loadingContext.startTime, firstActivityStartTime, errors);
 
   // Rebuild initial characters from the scheduled timelines and finalize runtime-facing level fields.
   // Apply final cross-character derived state and optional validation passes.

@@ -1,25 +1,3 @@
-
-
-/*
-export function tryCreateAtActivity(activityText:string, context:ActivityContext):ItineraryEvent[]|null {
-  const trimmedActivityText = activityText.trim();
-  if (!trimmedActivityText.startsWith('@')) return null;
-
-  ensureTimestampIsAvailable(context.state, context.timestamp, activityText, context.timestampType);
-  const activityStartTime = calcActivityStartTime(context.state, context.timestamp, context.timestampType);
-  const { roomId:targetRoomId, targetXPercent } = _parseAtTarget(trimmedActivityText, context);
-  if (findCurrentRoomForWaypoint(context.level, context.state.waypoint).id === targetRoomId && targetXPercent === null) return [];
-  const occupiedWaypointKeys = _createClaimedWaypointKeysForTargetRoom(targetRoomId, context);
-  const unscheduledEvents = planMovementToRoom(context.level, context.state.waypoint, targetRoomId, occupiedWaypointKeys, null, targetXPercent);
-  const targetRoomTitle = context.level.rooms.find(room => room.id === targetRoomId)?.title || targetRoomId;
-  const scheduledEvents = context.timestampType === 'absolute'
-    ? scheduleEventsToEndAtTime(unscheduledEvents, context.timestamp, findEarliestAbsoluteActivityStartTime(context.state), earliestArrivalTime =>
-      `Unable to arrive to ${targetRoomTitle} by ${formatMsecsAsTimestamp(context.timestamp)}. The earliest possible arrival is ${formatMsecsAsTimestamp(earliestArrivalTime)}.`)
-    : scheduleEventsToStartAtTime(unscheduledEvents, activityStartTime, context.state.time);
-  return scheduledEvents;
-}
-*/
-
 import Activity from "../types/Activity";
 import { ErrorCollector } from "@/levelLoading2/errorCollection";
 import Level from "@/game/types/Level";
@@ -35,7 +13,8 @@ import Position, { arePositionsEqual } from "@/game/types/Position";
 import Waypoint from "@/game/types/Waypoint";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { clamp } from "@/common/numberUtil";
-import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
+import { calcWalkDurationToRoom, scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
+import Character from "@/game/types/Character";
 
 function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:ItineraryKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
@@ -78,6 +57,14 @@ function _findBestTargetWaypoint(waypoints:Waypoint[], claimedWaypoints:Waypoint
 
   assertNonNullable(bestWaypoint);
   return bestWaypoint;
+}
+
+
+function _findCharacterIFromId(characters:readonly Character[], characterId:string):number|null {
+  for(let i = 0; i < characters.length; ++i) {
+    if (characters[i].id === characterId) return i;
+  }
+  return null;
 }
 
 function _findTargetPosition(snapshot:ItineraryKeyframe, targetRoom:Room, targetXPercent:number = .5):Position {
@@ -126,4 +113,31 @@ export function createAtActivityParseFormat():ParseFormat {
   const roomId = makeIdentifier('roomId', 'RoomId');
   const rootParseStep = makeSequence([characterId, at, roomId]);
   return createParseFormat(rootParseStep);
+}
+
+// This solves a catch-22 problem where the first activity in level itinerary is an "@" activity
+// and I need to know what the startTime of the level is to create the editable itinerary object.
+// Because this is the very first activity in the level, it isn't necessary to have the editable itinerary
+// to check against waypoint claims.
+export function findFirstAtActivityStartTime(level:Level, activity:Activity):number|string {
+  const { characterId, roomId } = activity.parts;
+  assert(typeof characterId === 'string', 'implied subjects should have been resolved');
+  assert(typeof roomId === 'string');
+  const characterI = _findCharacterIFromId(level.characters, characterId);
+  const toRoom = findRoom(level.rooms, roomId);
+  assertNonNullable(characterI);
+  assertNonNullable(toRoom);
+  assertNonNullable(activity.startTime, 'Caller should check for this');
+  
+  const fromPos = level.characters[characterI].position;
+  const fromRoom = findRoomAtPosition(level.rooms, fromPos.x, fromPos.y);
+  assertNonNullable(fromRoom);
+
+  const targetXPercent = .5; // TODO get from activity.
+  const bestWaypoint = _findBestTargetWaypoint(toRoom.waypoints, [], toRoom, targetXPercent);
+  const toPos = bestWaypoint.position;
+
+  const walkDuration = calcWalkDurationToRoom(level.rooms, fromRoom, fromPos, toRoom, toPos);
+  if (typeof walkDuration === 'string') return walkDuration;
+  return activity.startTime - walkDuration;
 }

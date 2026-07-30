@@ -67,7 +67,7 @@ export function findAllCharactersAndItemsInActivities(activities:Activity[]):
   return {characterIds, itemIds};
 }
 
-export function loadActivities(itinerarySectionText:string, rules:ActivityParsingRules, 
+export function loadActivitiesPartially(itinerarySectionText:string, rules:ActivityParsingRules, 
     authoredStartTime:number|null, activeCharacterId:string, errors:ErrorCollector):Activity[]|null {
   const originalErrorCount = errors.count;
 

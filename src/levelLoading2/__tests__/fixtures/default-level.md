@@ -4,13 +4,16 @@
 # map
 
 ```
-H
+HC
 ```
 
 * H=Hall
+* C=Closet
 
 # rooms
 ## Hall
+
+* exits=Closet
 
 ```
 ....
@@ -20,6 +23,8 @@ H
 
 * S=Sam
 
+## Closet
+
 # characters
 ## Sam
 ### Default
@@ -27,5 +32,7 @@ H
 # items
 
 # itinerary
+
+0:00:03 Sam @ Closet
 
 # conclusions

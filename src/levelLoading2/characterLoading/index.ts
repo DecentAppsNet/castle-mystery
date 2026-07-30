@@ -17,6 +17,8 @@ import { MutableLevel } from "@/game/types/Level";
 import { findNearestWaypointToPosition } from "@/game/waypointUtil";
 import { findRoomAtPositionOrTouchingBoundary } from "@/game/roomUtil";
 import Waypoint, { createDefaultWaypoint } from "@/game/types/Waypoint";
+import { findAllCharactersAndItemsInActivities } from "../activityLoading";
+import Activity from "../activityLoading/types/Activity";
 
 function _parseFacingDirection(text:string, errors:ErrorCollector, characterId:string):FacingDirection {
   text = text.trim().toLowerCase();
@@ -90,11 +92,17 @@ function _createAllCharactersById(characters:Character[]):Map<string, Character>
   return allCharactersById;
 }
 
-export function addCharactersToLevel(characters:Character[], items:Item[], level:MutableLevel, errors:ErrorCollector):boolean {
+export function addCharactersToLevel(characters:Character[], items:Item[], activities:Activity[], level:MutableLevel, errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
 
   mergeCharacterItems(characters, items, errors);
   level.allCharactersById = _createAllCharactersById(characters);
 
+  const { characterIds } = findAllCharactersAndItemsInActivities(activities);
+  level.characters = characterIds.map(characterId => {
+    const character = level.allCharactersById.get(characterId);
+    assertNonNullable(character);
+    return character;
+  });
   return errors.count <= originalErrorCount;
 }

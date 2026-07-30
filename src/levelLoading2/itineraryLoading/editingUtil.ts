@@ -215,7 +215,7 @@ function _resolveRelativeTimestampAsNeeded(activity:Activity) {
 
 type ScheduleActivityCallback = (level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector) => boolean;
 const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCallback}> = {
-  'at': scheduleAtActivity
+  '@': scheduleAtActivity
 }
 
 function _scheduleActivity(level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector):boolean {
@@ -276,12 +276,20 @@ function _createEmptyItinerary(characters:readonly Character[], rooms:readonly R
   return _editableItineraryToItinerary(editable);
 }
 
-export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Itinerary {
+export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Itinerary|null {
   if (!activities.length) return _createEmptyItinerary(level.characters, level.rooms);
-  const startTime = findFirstActivityStartTime(activities);
-  assertNonNullable(startTime);
-  assert(_areActivitiesWellOrdered(activities, startTime));
-  const itinerary:EditableItinerary = createEditableItinerary(level.characters, level.rooms, startTime);
+  const startTimeResult = findFirstActivityStartTime(level, activities);
+  if (typeof startTimeResult === 'string') {
+    errors.addAt(startTimeResult, 'itinerary', activities[0].verb);
+    return null;
+  }
+  if (startTimeResult === null) {
+    errors.addAt('First activity in itinerary did not specify an absolute timestamp.', 'itinerary', activities[0].verb);
+    return null;
+  }
+  const firstActivityStartTime:number = startTimeResult;
+  assert(_areActivitiesWellOrdered(activities, firstActivityStartTime));
+  const itinerary:EditableItinerary = createEditableItinerary(level.characters, level.rooms, firstActivityStartTime);
   const toBeScheduled = [...activities];
   for(let attemptI = 0; attemptI < activities.length; ++attemptI) {
     const nextActivity = toBeScheduled[0];
