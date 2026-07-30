@@ -1,6 +1,6 @@
 import { assert } from "decent-portal";
 
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import { parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { normalizeId } from "@/game/idUtil";
 import { MAP_TILE_SIZE } from "@/game/roomGridUtil";

@@ -1,5 +1,5 @@
 import { parseOptions, parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import RoomExit, { createRoomExitId } from "@/game/types/RoomExit";
 import { normalizeId } from "@/game/idUtil";
 import { assert, assertNonNullable } from "decent-portal";

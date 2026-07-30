@@ -1,5 +1,5 @@
 import Room from '@/game/types/Room';
-import ErrorCollector from '../errorCollection/ErrorCollector';
+import { ErrorCollector } from '../errorCollection';
 import Item from '@/game/types/Item';
 import { MutableLevel } from '@/game/types/Level';
 import { applyRoomMetaDataFromSections, createRoomsFromMapSection } from './roomLayoutUtil';

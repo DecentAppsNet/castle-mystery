@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { ErrorCollector } from '../errorCollectionApi';
+import { ErrorCollector } from '..';
 
 describe('errorCollectionApi', () => {
   describe('ErrorCollector', () => {

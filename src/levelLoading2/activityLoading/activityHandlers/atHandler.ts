@@ -21,14 +21,14 @@ export function tryCreateAtActivity(activityText:string, context:ActivityContext
 */
 
 import Activity from "../types/Activity";
-import ErrorCollector from "@/levelLoading2/errorCollection/ErrorCollector";
+import { ErrorCollector } from "@/levelLoading2/errorCollection";
 import Level from "@/game/types/Level";
 import ParseFormat from "../types/ParseFormat";
 import { createParseFormat, makeIdentifier, makeSequence, makeVerb } from "../parseFormatUtil";
 import { assert, assertNonNullable } from "decent-portal";
 import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
 import EditableItinerary from "@/levelLoading2/itineraryLoading/types/EditableItinerary";
-import { createSnapshotAtTime, findLatestKeyFrameForCharacter } from "@/levelLoading2/itineraryLoading/retrievalUtil";
+import { createSnapshotAtTime, findLatestKeyFrameForCharacter } from "@/levelLoading2/itineraryLoading/";
 import ItineraryKeyframe from "@/levelLoading2/itineraryLoading/types/ItineraryKeyframe";
 import Room from "@/game/types/Room";
 import Position, { arePositionsEqual } from "@/game/types/Position";

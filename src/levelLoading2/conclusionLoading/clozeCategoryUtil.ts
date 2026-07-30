@@ -1,5 +1,5 @@
 import { parseOptions } from "@/common/markdownUtil";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import ClozeCategory from "./types/ClozeCategory";
 import { createSectionVariables } from "../levelFileSectionUtil";
 import { assert } from "decent-portal";

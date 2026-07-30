@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
-import { createEditableItinerary, createSnapshotAtTime, findCharacterPositionAtTime, addKeyframe, addCharacterKeyframe, addRoomKeyframe } from "../itineraryLoadingApi";
+import { createEditableItinerary, createSnapshotAtTime, findCharacterPositionAtTime, addKeyframe, 
+    addCharacterKeyframe, addRoomKeyframe } from "../";
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultRoom } from '@/game/types/Room';
 import { createDefaultItem } from '@/game/types/Item';

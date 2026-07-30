@@ -4,7 +4,7 @@ import Conclusion from "@/game/conclusions/types/Conclusion";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
 import Character from "@/game/types/Character";
 import ClozeCategory from "./types/ClozeCategory";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import { UNKNOWN_CHARACTER_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { createClozeBlankFromTemplateText } from "./parseConclusionUtil";
 import ClozeBlank from "@/game/conclusions/types/ClozeBlank";

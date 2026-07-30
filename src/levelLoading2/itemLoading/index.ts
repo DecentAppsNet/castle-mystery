@@ -1,5 +1,5 @@
 import { parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import { createNormalizedSectionEntryMap, parseBoolean, parseNumber } from "../levelFileSectionUtil";
 import { assertNonNullable } from "decent-portal";
 import SectionEntryMap from "../types/SectionEntryMap";

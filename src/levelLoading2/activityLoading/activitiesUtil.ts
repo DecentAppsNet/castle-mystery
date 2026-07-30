@@ -1,7 +1,7 @@
 import { assert } from "decent-portal";
 import Activity from "./types/Activity";
 import ActivityParsingRules from "./types/ActivityParsingRules";
-import { ErrorCollector } from "../errorCollection/errorCollectionApi";
+import { ErrorCollector } from "../errorCollection";
 import { tryParseActivity } from "./parseUtil";
 
 // activities param must be in authored order.

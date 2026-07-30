@@ -3,7 +3,7 @@ import { normalizeId } from "@/game/idUtil";
 import Room from "@/game/types/Room";
 import ClozeCategory from "./types/ClozeCategory";
 import { createNormalizedSectionEntryMap, createSectionVariables } from "../levelFileSectionUtil";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import { assertNonNullable } from "decent-portal";
 import ClozePartType from "@/game/conclusions/types/ClozePartType";
 import ClozePart from "@/game/conclusions/types/ClozePart";

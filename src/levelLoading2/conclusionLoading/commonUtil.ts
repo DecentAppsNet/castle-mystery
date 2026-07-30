@@ -2,7 +2,7 @@ import { parseOptions } from "@/common/markdownUtil";
 import { normalizeId } from "@/game/idUtil";
 import { findRoomByIdOrTitle } from "@/game/roomUtil";
 import Room from "@/game/types/Room";
-import { ErrorCollector } from "../errorCollection/errorCollectionApi";
+import { ErrorCollector } from "../errorCollection";
 
 
 export function normalizeCategoryPhrase(phrase:string):string {

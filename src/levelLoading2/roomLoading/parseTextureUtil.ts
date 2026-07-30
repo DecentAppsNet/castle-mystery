@@ -1,5 +1,5 @@
 import Room from "@/game/types/Room";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import Texture from "@/game/types/Texture";
 import { findImageFilterId } from "@/game/imageFilters/imageFilterUtil";
 import TextureImageOperation from "@/game/types/TextureImageOperation";

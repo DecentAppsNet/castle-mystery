@@ -1,6 +1,6 @@
 import Item from "@/game/types/Item";
 import Room from "@/game/types/Room";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import { COLUMN_WIDTH } from "@/game/roomGridUtil";
 import { ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
 import { getUniqueIdsFromLegendGrid, parseLegendGrid } from "./legendGridUtil";

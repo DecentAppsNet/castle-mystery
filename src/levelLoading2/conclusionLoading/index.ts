@@ -1,5 +1,5 @@
 import Conclusion from "@/game/conclusions/types/Conclusion";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import Character from "@/game/types/Character";
 import Item from "@/game/types/Item";
 import Room from "@/game/types/Room";

@@ -1,6 +1,6 @@
 import { calcRoomsBoundingRect, findRoomByIdOrTitle } from "@/game/roomUtil";
 import Room from "@/game/types/Room";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 
 function _calcDefaultGroundFloorY(rooms:Room[]) {
   const roomBounds = calcRoomsBoundingRect(rooms);

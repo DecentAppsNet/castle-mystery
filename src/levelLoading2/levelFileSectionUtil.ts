@@ -1,10 +1,9 @@
 import { MarkdownLineError, parseNameValueLineEntries, parseSectionEntriesWithLines, parseSections, SectionEntryWithLine, Sections } from "@/common/markdownUtil";
 import LevelFileSection from "./types/LevelFileSection";
-import ErrorCollector from "./errorCollection/ErrorCollector";
+import { ErrorCollector, ROOT_LEVEL } from "./errorCollection";
 import LevelFileSections from "./types/LevelFileSections";
 import { normalizeId } from "@/game/idUtil";
 import SectionEntryMap from "./types/SectionEntryMap";
-import { ROOT_LEVEL } from "./errorCollection/sourceLocationUtil";
 import SectionVariables from "./types/SectionVariables";
 
 const KNOWN_TOP_LEVEL_SECTION_IDS = ['general', 'map', 'room styles', 'rooms', 'characters', 'items', 'itinerary', 'conclusions'];

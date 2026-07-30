@@ -1,5 +1,5 @@
 import Item from "@/game/types/Item";
-import { ErrorCollector } from "../errorCollection/errorCollectionApi";
+import { ErrorCollector } from "../errorCollection";
 import Character from "@/game/types/Character";
 
 function _findItemById(items:Item[], itemId:string, errors:ErrorCollector, characterId:string, variableName:String):Item|null {

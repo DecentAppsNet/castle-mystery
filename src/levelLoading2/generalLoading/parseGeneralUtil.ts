@@ -3,15 +3,14 @@ import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
 import TimeLabel from "@/game/types/TimeLabel";
 import LevelFileSections from "../types/LevelFileSections";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import { findNameValueLineNo, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { normalizeOptionalId } from "@/game/idUtil";
-import { parseTimestampToMsecs } from "../activityLoading/timestampUtil";
+import { initActivityParsingRules, parseTimestampToMsecs } from "../activityLoading/";
 import { assert, assertNonNullable } from "decent-portal";
 import { getBackgroundImageAssetUrl } from "@/game/imageUrlUtil";
 import ActivityParsingRules, { AllowedValuesByIdentifierId } from "../activityLoading/types/ActivityParsingRules";
 import LevelLoadingContext from "../types/LevelLoadingContext";
-import { initActivityParsingRules } from "../activityLoading/parseItineraryUtil";
 import { getSectionIdsFromSectionText, isSectionRequired } from "../levelFileSectionUtil";
 
 const DEFAULT_WIN_SYNOPSIS = 'You won the level!';

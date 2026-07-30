@@ -1,5 +1,5 @@
 import { parseFirstFencedCodeBlockLines, parseOptions, parseUniqueNameValueLines } from "@/common/markdownUtil";
-import ErrorCollector from "../errorCollection/ErrorCollector";
+import { ErrorCollector } from "../errorCollection";
 import LegendGrid from "./types/LegendGrid";
 import LegendGridEntry from "./types/LegendGridEntry";
 import { assertNonNullable } from "decent-portal";

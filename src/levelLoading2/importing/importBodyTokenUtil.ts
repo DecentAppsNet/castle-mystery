@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { normalizeId } from "@/game/idUtil";
-import { beginsWithTimestamp } from "../activityLoading/timestampUtil";
+import { beginsWithTimestamp } from "../activityLoading/";
 import ImportedLine from "./types/ImportedLine";
 import SourceLine from "./types/SourceLine";
 

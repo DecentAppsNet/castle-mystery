@@ -1,15 +1,15 @@
 import { assertNonNullable } from "decent-portal";
 
 import Level from "@/game/types/Level";
-import ErrorCollector from "./errorCollection/ErrorCollector";
+import { ErrorCollector } from "./errorCollection";
 import { loadLevelSections } from "./levelFileSectionUtil";
-import { initMutableLevelAndLoadingContext } from "./generalLoading/generalLoadingApi";
-import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading/roomLoadingApi";
-import { loadItemsPartially } from "./itemLoading/itemLoadingApi";
-import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/characterLoadingApi";
-import { loadConclusions } from "./conclusionLoading/conclusionLoadingApi";
-import { loadActivities } from "./activityLoading/activityLoadingApi";
-import { scheduleActivities } from "./itineraryLoading/editingUtil";
+import { initMutableLevelAndLoadingContext } from "./generalLoading/";
+import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading/";
+import { loadItemsPartially } from "./itemLoading/";
+import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/";
+import { loadConclusions } from "./conclusionLoading/";
+import { loadActivities } from "./activityLoading/";
+import { scheduleActivities } from "./itineraryLoading/";
 
 /** 
  * Error handling design:
