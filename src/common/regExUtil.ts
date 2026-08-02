@@ -44,3 +44,8 @@ export function createNonGlobalRegex(regex:RegExp):RegExp {
   const flags = regex.flags.replace('g', '');
   return new RegExp(regex, flags);
 }
+
+// Trims leading/trailing whitespace and replaces any internal whitespace sequences with a single space character.
+export function collapseWhitespace(text:string):string {
+  return text.trim().replace(/\s+/g, ' ');
+}

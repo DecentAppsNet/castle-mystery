@@ -301,7 +301,7 @@ export function loadConclusionsFromSection(conclusionsSection:LevelFileSection, 
 }
 
 export function createGeneratedIdentityConclusion(characters:ReadonlyArray<Character>, categoryOptionsByName:Map<string, string[]>,
-  overrides:{ title?:string|null, unlockConclusionIds?:string[], revealRoomIds?:string[], characterOptions?:string[]|null } = {}):Conclusion {
+    overrides:{ title?:string|null, unlockConclusionIds?:string[], revealRoomIds?:string[], characterOptions?:string[]|null } = {}):Conclusion|null {
   const interactiveCharactersWithUnknownTitles = characters.filter(character => isCharacterInteractive(character) && !character.isTitleKnown);
   if (!interactiveCharactersWithUnknownTitles.length) return null;
   const interactiveCharacterTitles = _sortGeneratedConclusionOptions(interactiveCharactersWithUnknownTitles.map(character => character.title));

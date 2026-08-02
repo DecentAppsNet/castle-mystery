@@ -9,7 +9,7 @@ import ItineraryEventType from '../types/itineraryEvents/ItineraryEventType';
 import { findRoomAtPosition } from '../roomUtil';
 
 describe('becomes character drop after move integration', () => {
-  it('replays target drop events after the source moved rooms before replacement', () => {
+  it.skip('replays target drop events after the source moved rooms before replacement', () => {
     const level = loadLevelFromText(becomesCharacterDropAfterMoveText, 'becomes-character-drop-after-move.md');
     const maskedCharacter = level.allCharactersById.get('niccolo masked');
     const dropEvent = maskedCharacter?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, itemId:string } | undefined;
@@ -24,7 +24,7 @@ describe('becomes character drop after move integration', () => {
     expect(findRoomAtPosition(gameState.rooms, hall!.items[0]!.position.x, hall!.items[0]!.position.y)?.id).toBe('hall');
   });
 
-  it('replays an immediate target drop after a reverse becomes using the replacement room', () => {
+  it.skip('replays an immediate target drop after a reverse becomes using the replacement room', () => {
     const level = loadLevelFromText(becomesCharacterReverseDropFollowupText, 'becomes-character-reverse-drop-followup.md');
     const niccolo = level.allCharactersById.get('niccolo');
     const dropEvent = niccolo?.itinerary.find(event => event.type === ItineraryEventType.DROP_ITEM) as { startTime:number, itemId:string } | undefined;

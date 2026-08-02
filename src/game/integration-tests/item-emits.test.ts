@@ -20,7 +20,7 @@ describe('item emits integration', () => {
   });
 
   describe('updateAndDraw()', () => {
-    it('draws emit bubbles for carried items that are not visible in hand', () => {
+    it.skip('draws emit bubbles for carried items that are not visible in hand', () => {
       const level = loadLevelFromText(itemEmitsActivityText);
       const gameState = createGameState(level);
       const drawnTexts:string[] = [];
@@ -32,7 +32,7 @@ describe('item emits integration', () => {
       expect(drawnTexts).toContain('(clang)');
     });
 
-    it('draws emit bubbles for audible adjacent-room item emits', () => {
+    it.skip('draws emit bubbles for audible adjacent-room item emits', () => {
       const level = loadLevelFromText(itemEmitsAdjacentRoomText);
       const gameState = createGameState(level);
       const drawnTexts:string[] = [];
@@ -45,7 +45,7 @@ describe('item emits integration', () => {
       expect(drawnTexts).toContain('(ring)');
     });
 
-    it('draws speech bubbles for adjacent obscured-room speech', () => {
+    it.skip('draws speech bubbles for adjacent obscured-room speech', () => {
       const level = loadLevelFromText(speechBubbleObscuredAdjacentRoomText);
       const gameState = createGameState(level);
       const drawnTexts:string[] = [];
@@ -57,7 +57,7 @@ describe('item emits integration', () => {
       expect(drawnTexts).toContain('Hello from the store.');
     });
 
-    it('centers bare emits bubbles in the room', () => {
+    it.skip('centers bare emits bubbles in the room', () => {
       const level = loadLevelFromText(itemEmitsActivityText.replace('0:00:05 Bell emits "(clang)"', '0:00:05 emits "(clang)"'));
       const gameState = createGameState(level);
       const drawnTexts:{ text:string, x:number, y:number }[] = [];

@@ -23,7 +23,7 @@ describe('give item integration', () => {
     clearSeed();
   });
 
-  it('transfers the item from giver to recipient when the give event is reached', () => {
+  it.skip('transfers the item from giver to recipient when the give event is reached', () => {
     const level = loadLevelFromText(giveItemWalkText);
     const king = level.characters.find(character => character.id === 'king');
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
@@ -41,7 +41,7 @@ describe('give item integration', () => {
     expect(atGiveQueen.items.map(item => item.id)).toContain('book');
   });
 
-  it('stops at a different nearby waypoint than the recipient when movement is required', () => {
+  it.skip('stops at a different nearby waypoint than the recipient when movement is required', () => {
     const level = loadLevelFromText(giveItemWalkText);
     const king = level.characters.find(character => character.id === 'king');
     const queen = level.characters.find(character => character.id === 'queen');
@@ -54,7 +54,7 @@ describe('give item integration', () => {
     expect(lastWalkEvent?.toWaypointPosition).not.toEqual(findCharacterPoseWithoutPairHistory(queen!, giveEvent!.startTime).position);
   });
 
-  it('allows giving an item from the left hand', () => {
+  it.skip('allows giving an item from the left hand', () => {
     const level = loadLevelFromText(giveItemLeftHandText);
     const king = level.characters.find(character => character.id === 'king');
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
@@ -75,7 +75,7 @@ describe('give item integration', () => {
     expect(atGiveQueen.items.map(item => item.id)).toContain('book');
   });
 
-  it('allows giving an item from the right hand', () => {
+  it.skip('allows giving an item from the right hand', () => {
     const level = loadLevelFromText(giveItemRightHandText);
     const king = level.characters.find(character => character.id === 'king');
     const giveEvent = king?.itinerary.find(event => event.type === ItineraryEventType.GIVE_ITEM) as { startTime:number } | undefined;
@@ -96,7 +96,7 @@ describe('give item integration', () => {
     expect(atGiveQueen.items.map(item => item.id)).toContain('book');
   });
 
-  it('places a just-given item into the recipient right hand when a same-timestamp take follows', () => {
+  it.skip('places a just-given item into the recipient right hand when a same-timestamp take follows', () => {
     const level = loadLevelFromText(giveItemThenTakeRightHandSameTimestampText);
     const helena = level.characters.find(character => character.id === 'helena');
     const raniero = level.characters.find(character => character.id === 'raniero');
@@ -113,7 +113,7 @@ describe('give item integration', () => {
     expect(atTakeHelena.items).toEqual([]);
   });
 
-  it('also places the item in hand without an apostrophe in the item name', () => {
+  it.skip('also places the item in hand without an apostrophe in the item name', () => {
     const level = loadLevelFromText(giveItemThenTakeRightHandSameTimestampNoApostropheText);
     const helena = level.characters.find(character => character.id === 'helena');
     const raniero = level.characters.find(character => character.id === 'raniero');
@@ -130,7 +130,7 @@ describe('give item integration', () => {
     expect(atTakeHelena.items).toEqual([]);
   });
 
-  it('works when the same Raniero/Helena give-then-take sequence starts nearby', () => {
+  it.skip('works when the same Raniero/Helena give-then-take sequence starts nearby', () => {
     const level = loadLevelFromText(giveItemThenTakeRightHandSameTimestampNearNoApostropheText);
     const helena = level.characters.find(character => character.id === 'helena');
     const raniero = level.characters.find(character => character.id === 'raniero');

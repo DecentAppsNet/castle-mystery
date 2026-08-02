@@ -14,26 +14,26 @@ import ExitStatus from "./types/ExitStatus";
 import { normalizeId, normalizeOptionalId } from "./idUtil";
 import { isPositionInOrOnRect, isPositionInRect } from "./rectUtil";
 
-export function findRoom(rooms:Room[], roomRef:string):Room|null {
+export function findRoom(rooms:readonly Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
   const room = rooms.find((r) => r.id === roomId);
   return room ?? null;
 }
 
-export function findRoomByIdOrTitle(rooms:Room[], roomRef:string):Room|null {
+export function findRoomByIdOrTitle(rooms:readonly Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
-  return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) || null;
+  return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) ?? null;
 }
 
 export function findRoomAtPosition(rooms:readonly Room[], x:number, y:number):Room | null {
-  return rooms.find((r) => isPositionInRect(x, y, r.rect)) || null;
+  return rooms.find((r) => isPositionInRect(x, y, r.rect)) ?? null;
 }
 
-export function findRoomAtPositionOrTouchingBoundary(rooms:Room[], x:number, y:number):Room | null {
-  return rooms.find((room) => isPositionInOrOnRect(x, y, room.rect)) || null;
+export function findRoomAtPositionOrTouchingBoundary(rooms:readonly Room[], x:number, y:number):Room | null {
+  return rooms.find((room) => isPositionInOrOnRect(x, y, room.rect)) ?? null;
 }
 
-export function findRoomNearestToPosition(rooms:Room[], x:number, y:number):Room {
+export function findRoomNearestToPosition(rooms:readonly Room[], x:number, y:number):Room {
   if (!rooms.length) throw new Error('there should be at least one room in the level');
   let nearestRoom:Room|null = null;
   let nearestDistanceSquared = Infinity;

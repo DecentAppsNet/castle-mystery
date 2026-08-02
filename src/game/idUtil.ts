@@ -7,12 +7,16 @@ export function normalizeId(text:string):string {
   return text.trim().toLowerCase();
 }
 
+export function isNormalizedId(text:string):boolean {
+  return text === normalizeId(text);
+}
+
 export function normalizeOptionalId(text:string|null|undefined):string|null {
   if (!text) return null;
   const normalizedText = normalizeId(text);
   return normalizedText.length ? normalizedText : null;
 }
 
-export function assertNormalizedId(value:string, label:string):void {
+export function assertNormalizedId(value:string, label:string):void { // TODO - delete
   assert(value === normalizeId(value), `expected normalized ${label} id: ${value}`);
 }

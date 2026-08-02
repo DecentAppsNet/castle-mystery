@@ -454,7 +454,7 @@ export function loadLevelFromText(text:string, levelFilename:string = '<inline>'
       } else {
         const overrides = { characterOptions:authoredConclusionCategoryOptionsByName.get('characters') || null };
         const identitiesConclusion = createGeneratedIdentityConclusion(level.characters, conclusionCategoryOptionsByName, overrides);
-        level.conclusions = [identitiesConclusion, ...authoredConclusions]
+        level.conclusions = identitiesConclusion ? [identitiesConclusion, ...authoredConclusions] : authoredConclusions;  
       }
     });
 
