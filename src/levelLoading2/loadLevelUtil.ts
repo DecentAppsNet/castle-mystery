@@ -27,7 +27,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Create the initial level shell and loading context. Level will be partially populated
   // based on general section values, but not all available values are assigned. General rule is
   // to completely validate a value before assigning it to level. So some "waiting" values 
-  // are stored in loadingContext now that will be set in level later.
+  // are stored in loadingContext now that will be used to set members in level later.
   const initResult = initMutableLevelAndLoadingContext(sections, errors);
   if (!initResult) return null;
   const { level, loadingContext } = initResult;
@@ -50,7 +50,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
   level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms, errors);
 
-  // Schedule activities into replayable itinerary.
+  // Schedule activities into itinerary data structure.
   const itinerary = scheduleActivities(level, activities, errors);
   if (!itinerary) return null;
 

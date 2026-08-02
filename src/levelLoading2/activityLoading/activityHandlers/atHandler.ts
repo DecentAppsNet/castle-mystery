@@ -26,11 +26,11 @@ function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:ItineraryKeyframe)
   return claimedWaypoints;
 }
 
-function _isMiddleRowWaypoint(waypoint:Waypoint):boolean {
+function _isMiddleRowWaypoint(waypoint:Waypoint):boolean { // TODO needs that half offset stuff.
   return waypoint.position.z === ROOM_MIDDLE_ROW_CENTER_Z
 }
 
-function _isGroundFloorWaypoint(waypoint:Waypoint, room:Room):boolean {
+function _isGroundFloorWaypoint(waypoint:Waypoint, room:Room):boolean { // TODO needs to use the offset.
   return waypoint.position.y === room.rect.y + room.rect.height;
 }
 
@@ -47,9 +47,9 @@ function _findBestTargetWaypoint(waypoints:Waypoint[], claimedWaypoints:Waypoint
     if (_isGroundFloorWaypoint(waypoint, targetRoom)) score += 100000;
     if (!claimedWaypoints.includes(waypoint)) score += 10000;
     if (_isMiddleRowWaypoint(waypoint)) score += 1000;
-    score += clamp(Math.abs(waypoint.position.x - targetX), 0, 100);
+    score += 100 - clamp(Math.abs(waypoint.position.x - targetX), 0, 100);
 
-    if (!bestWaypoint || score > bestScore) {
+    if (score > bestScore) {
       bestWaypoint = waypoint;
       bestScore = score;
     }
