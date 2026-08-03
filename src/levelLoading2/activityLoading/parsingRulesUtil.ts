@@ -1,26 +1,24 @@
 import { assert, assertNonNullable, botch } from "decent-portal";
 import ActivityParsingRules, { AllowedValuesByIdentifierId, ParseFormatsByVerb } from "./types/ActivityParsingRules";
-import {
-  createAppearsParseFormat,
-  createBecomesParseFormat,
-  createDropsParseFormat,
-  createEmitsParseFormat,
-  createFacesParseFormat,
-  createGivesParseFormat,
-  createHideParseFormat,
-  createInterruptsParseFormat,
-  createKneelsParseFormat,
-  createLaysParseFormat,
-  createLocksParseFormat,
-  createSaysParseFormat,
-  createShowParseFormat,
-  createSitsParseFormat,
-  createStandsParseFormat,
-  createUnlocksParseFormat,
-  createWaitsParseFormat,
-} from "./activityParseFormats";
 import { createAtActivityParseFormat } from "./activityHandlers/atHandler";
+import { createAppearsParseFormat } from "./activityHandlers/appearsHandler";
+import { createBecomesParseFormat } from "./activityHandlers/becomesHandler";
+import { createDropsParseFormat } from './activityHandlers/dropsHandler';
+import { createEmitsParseFormat } from "./activityHandlers/emitsHandler";
+import { createFacesParseFormat } from "./activityHandlers/facesHandler";
+import { createGivesParseFormat } from "./activityHandlers/givesHandler";
+import { createHideParseFormat } from "./activityHandlers/hideHandler";
+import { createInterruptsParseFormat } from "./activityHandlers/interruptsHandler";
+import { createKneelsParseFormat } from "./activityHandlers/kneelsHandler";
+import { createLaysParseFormat } from "./activityHandlers/laysHandler";
+import { createLocksParseFormat } from "./activityHandlers/locksHandler";
+import { createSaysParseFormat } from "./activityHandlers/saysHandler";
+import { createShowParseFormat } from "./activityHandlers/showHandler";
+import { createSitsParseFormat } from "./activityHandlers/sitsHandler";
+import { createStandsParseFormat } from "./activityHandlers/standsHandler";
 import { createTakesParseFormat } from './activityHandlers/takesHandler';
+import { createUnlocksParseFormat } from "./activityHandlers/unlocksHandler";
+import { createWaitsParseFormat } from "./activityHandlers/waitsHandler";
 import ParseFormat from "./types/ParseFormat";
 import ParseStep from "./types/ParseStep";
 

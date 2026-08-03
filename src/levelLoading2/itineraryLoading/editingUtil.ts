@@ -16,6 +16,23 @@ import { scheduleAtActivity } from "../activityLoading/activityHandlers/atHandle
 import Itinerary from "./types/Itinerary";
 import { doesActivityUseEndTimestamp } from "../activityLoading/parseUtil";
 import { scheduleTakesActivity } from "../activityLoading/activityHandlers/takesHandler";
+import { scheduleDropsActivity } from "../activityLoading/activityHandlers/dropsHandler";
+import { scheduleAppearsActivity } from "../activityLoading/activityHandlers/appearsHandler";
+import { scheduleBecomesActivity } from "../activityLoading/activityHandlers/becomesHandler";
+import { scheduleEmitsActivity } from "../activityLoading/activityHandlers/emitsHandler";
+import { scheduleFacesActivity } from "../activityLoading/activityHandlers/facesHandler";
+import { scheduleGivesActivity } from "../activityLoading/activityHandlers/givesHandler";
+import { scheduleHideActivity } from "../activityLoading/activityHandlers/hideHandler";
+import { scheduleInterruptsActivity } from "../activityLoading/activityHandlers/interruptsHandler";
+import { scheduleKneelsActivity } from "../activityLoading/activityHandlers/kneelsHandler";
+import { scheduleLaysActivity } from "../activityLoading/activityHandlers/laysHandler";
+import { scheduleLocksActivity } from "../activityLoading/activityHandlers/locksHandler";
+import { scheduleSaysActivity } from "../activityLoading/activityHandlers/saysHandler";
+import { scheduleShowActivity } from "../activityLoading/activityHandlers/showHandler";
+import { scheduleSitsActivity } from "../activityLoading/activityHandlers/sitsHandler";
+import { scheduleStandsActivity } from "../activityLoading/activityHandlers/standsHandler";
+import { scheduleUnlocksActivity } from "../activityLoading/activityHandlers/unlocksHandler";
+import { scheduleWaitsActivity } from "../activityLoading/activityHandlers/waitsHandler";
 
 function _findInsertAfterI(time:number, keyframes:ItineraryKeyframe[]):number {
   assert(keyframes.length > 0);
@@ -213,7 +230,24 @@ function _resolveRelativeTimestampAsNeeded(activity:Activity) {
 type ScheduleActivityCallback = (level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector) => boolean;
 const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCallback}> = {
   '@': scheduleAtActivity,
-  'takes': scheduleTakesActivity
+  'appears': scheduleAppearsActivity,
+  'becomes': scheduleBecomesActivity,
+  'takes': scheduleTakesActivity,
+  'drops': scheduleDropsActivity,
+  'emits': scheduleEmitsActivity,
+  'faces': scheduleFacesActivity,
+  'gives': scheduleGivesActivity,
+  'hide': scheduleHideActivity,
+  'interrupts': scheduleInterruptsActivity,
+  'kneels': scheduleKneelsActivity,
+  'lays': scheduleLaysActivity,
+  'locks': scheduleLocksActivity,
+  'says': scheduleSaysActivity,
+  'show': scheduleShowActivity,
+  'sits': scheduleSitsActivity,
+  'stands': scheduleStandsActivity,
+  'unlocks': scheduleUnlocksActivity,
+  'waits': scheduleWaitsActivity
 }
 
 function _scheduleActivity(level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector):boolean {
