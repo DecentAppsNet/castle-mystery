@@ -3,6 +3,7 @@ import Activity from "./types/Activity";
 import ActivityParsingRules from "./types/ActivityParsingRules";
 import { ErrorCollector } from "../errorCollection";
 import { tryParseActivity } from "./parseUtil";
+import { MSECS_IN_DAY } from "@/common/timeUtil";
 
 // activities param must be in authored order.
 function _resolveImpliedSubjects(activities:Activity[], activeCharacterId:string) {
@@ -68,10 +69,12 @@ export function findAllCharactersAndItemsInActivities(activities:Activity[]):
 }
 
 export function loadActivitiesPartially(itinerarySectionText:string, rules:ActivityParsingRules, 
-    authoredStartTime:number|null, activeCharacterId:string, errors:ErrorCollector):Activity[]|null {
+    authoredStartTime:number|null, authoredEndTime:number|null, activeCharacterId:string, errors:ErrorCollector):Activity[]|null {
   const originalErrorCount = errors.count;
 
   if (!itinerarySectionText.trim()) return [];
+
+  const crossesMidnight = authoredEndTime !== null && authoredStartTime !== null && authoredEndTime < authoredStartTime;
 
   const activities:Activity[] = [];
   const lines = itinerarySectionText.split('\n');
@@ -84,8 +87,10 @@ export function loadActivitiesPartially(itinerarySectionText:string, rules:Activ
       errors.addAt(parseResult, 'itinerary', lines[lineI]);
       continue;
     }
-    if (parseResult.startTime === null) parseResult.startTime = authoredStartTime ?? 0;
+    if (lineI === 0 && parseResult.startTime === null) parseResult.startTime = authoredStartTime ?? 0;
+    if (crossesMidnight && parseResult.startTime !== null && parseResult.startTime < authoredStartTime) parseResult.startTime += MSECS_IN_DAY;
     parseResult.prevActivity = prevActivity;
+
     activities.push(parseResult);
     prevActivity = parseResult;
   }

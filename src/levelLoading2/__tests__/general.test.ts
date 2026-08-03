@@ -24,7 +24,7 @@ function _loadLevel(text:string, filename:string) {
 
 describe('loading levels - general section', () => {
   it('loads default general-derived values into the returned level when optional properties are omitted', () => {
-    const { level, errors } = _loadLevel(defaultLevelText, 'default-level.md');
+    const { level, errors } = _loadLevel(defaultLevelText, 'default-level.md'); // TODO - why is it using my .md file? Make a copy and remove the @ itinerary.
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();

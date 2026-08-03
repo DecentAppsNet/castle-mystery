@@ -14,7 +14,6 @@ import Level from "@/game/types/Level";
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { scheduleAtActivity } from "../activityLoading/activityHandlers/atHandler";
 import Itinerary from "./types/Itinerary";
-import { findFirstActivityStartTime } from "../activityLoading/levelTimeUtil";
 
 function _findInsertAfterI(time:number, keyframes:ItineraryKeyframe[]):number {
   assert(keyframes.length > 0);
@@ -278,18 +277,8 @@ function _createEmptyItinerary(characters:readonly Character[], rooms:readonly R
 
 export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Itinerary|null {
   if (!activities.length) return _createEmptyItinerary(level.characters, level.rooms);
-  const startTimeResult = findFirstActivityStartTime(level, activities);
-  if (typeof startTimeResult === 'string') {
-    errors.addAt(startTimeResult, 'itinerary', activities[0].verb);
-    return null;
-  }
-  if (startTimeResult === null) {
-    errors.addAt('First activity in itinerary did not specify an absolute timestamp.', 'itinerary', activities[0].verb);
-    return null;
-  }
-  const firstActivityStartTime:number = startTimeResult;
-  assert(_areActivitiesWellOrdered(activities, firstActivityStartTime));
-  const itinerary:EditableItinerary = createEditableItinerary(level.characters, level.rooms, firstActivityStartTime);
+  assert(_areActivitiesWellOrdered(activities, level.startTime));
+  const itinerary:EditableItinerary = createEditableItinerary(level.characters, level.rooms, level.startTime);
   const toBeScheduled = [...activities];
   for(let attemptI = 0; attemptI < activities.length; ++attemptI) {
     const nextActivity = toBeScheduled[0];

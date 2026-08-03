@@ -4,5 +4,5 @@
 
 export { initActivityParsingRules } from "./parseItineraryUtil";
 export { loadActivitiesPartially, findAllCharactersAndItemsInActivities } from './activitiesUtil';
-export { findStartTime, findFirstActivityStartTime } from './levelTimeUtil';
+export { parseFirstActivityTimeAndCharacter, findLastActivityEndTime } from './levelTimeUtil';
 export { beginsWithTimestamp, parseTimestampToMsecs } from './timestampUtil';

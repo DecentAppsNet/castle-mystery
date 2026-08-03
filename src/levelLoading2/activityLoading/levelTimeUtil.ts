@@ -1,26 +1,28 @@
-import Activity from "./types/Activity";
+import { assert } from 'decent-portal';
 import ErrorCollector from "../errorCollection/ErrorCollector";
-import { formatMsecsAsTimestamp } from "./timestampUtil";
-import { findFirstAtActivityStartTime } from "./activityHandlers/atHandler";
-import Level from "@/game/types/Level";
+import { tryParseActivity } from "./parseUtil";
+import ActivityParsingRules from "./types/ActivityParsingRules";
+import Activity from './types/Activity';
 
-export function findFirstActivityStartTime(level:Level, activities:readonly Activity[]):number|null|string {
-  if (activities.length <= 0) return null;
-  const firstActivity = activities[0];
-  if (firstActivity.startTime === null) return null;
-  if (firstActivity.verb !== '@') return firstActivity.startTime;
-  return findFirstAtActivityStartTime(level, firstActivity);
+export function parseFirstActivityTimeAndCharacter(itinerarySectionText:string, rules:ActivityParsingRules, errors:ErrorCollector):{startTime:number|null, characterId:string|null} {
+  const firstLineEndPos = itinerarySectionText.indexOf('\n');
+  const lineText = itinerarySectionText.substring(0, firstLineEndPos === -1 ? itinerarySectionText.length : firstLineEndPos).trim();
+  const parseResult = tryParseActivity(lineText, rules);
+  if (typeof parseResult === 'string') {
+    errors.addAt(parseResult, 'itinerary', lineText);
+    return { startTime:null, characterId:null }
+  }
+  const characterId:string|null = parseResult.parts.characterId as string|null ?? null;
+  return { startTime:parseResult.startTime, characterId };
 }
 
-export function findStartTime(authoredStartTime:number|null, firstActivityStartTime:number|null, errors:ErrorCollector):number {
-  if (authoredStartTime !== null && firstActivityStartTime !== null) {
-    if (firstActivityStartTime < authoredStartTime) {
-      const firstStartTimestamp = formatMsecsAsTimestamp(firstActivityStartTime);
-      const authoredStartTimestamp = formatMsecsAsTimestamp(authoredStartTime);
-      errors.addAt(`First itinerary activity at ${firstStartTimestamp} precedes specified start time of ${authoredStartTimestamp}.`,
-          'general', `* startTime=`, authoredStartTimestamp);
-      return firstActivityStartTime;
-    }
+export function findLastActivityEndTime(activities:Activity[]):number {
+  assert(activities.length > 0);
+  let latestEndTime = -Infinity;
+  for(let i = activities.length - 1; i >= 0; --i) {
+    const activity = activities[i];
+    const endTime = (activity.startTime ?? 0) + (activity.duration ?? 0);
+    if (endTime > latestEndTime) latestEndTime = endTime;
   }
-  return authoredStartTime ?? firstActivityStartTime ?? 0;
+  return latestEndTime;
 }

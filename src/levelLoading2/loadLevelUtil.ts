@@ -6,7 +6,7 @@ import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading/";
 import { loadItemsPartially } from "./itemLoading/";
 import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/";
 import { loadConclusions } from "./conclusionLoading/";
-import { findStartTime, loadActivitiesPartially } from "./activityLoading/";
+import { findLastActivityEndTime, loadActivitiesPartially } from "./activityLoading/";
 import { scheduleActivities } from "./itineraryLoading/";
 
 /** 
@@ -40,8 +40,10 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   const characters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
   if (!characters) return null;
   const activities = loadActivitiesPartially(sections.itinerary?.text ?? '', loadingContext.activityParsingRules, 
-      loadingContext.startTime, loadingContext.activeCharacterId, errors); // TODO--need midnight crossover handling. Can probably just add 24 hours to timestamp number.
+      loadingContext.startTime, loadingContext.endTime, loadingContext.activeCharacterId, errors);
   if (!activities) return null;
+  if (level.endTime === null) level.endTime = findLastActivityEndTime(activities);
+  if (level.initialTime === null) level.initialTime = level.startTime;
 
   // Add items, characters, and rooms to level, resolving dependencies.
   if (!addRoomsToLevel(rooms, loadingContext.groundFloorRoomRef, level, errors)) return null;
@@ -54,13 +56,8 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   const itinerary = scheduleActivities(level, activities, errors);
   if (!itinerary) return null;
 
-  // Reconcile general-section time settings against the scheduled itinerary.
-  const firstActivityStartTime = activities.length > 0 ? itinerary.keyframes[0]?.time ?? null : null;
-  level.startTime = findStartTime(loadingContext.startTime, firstActivityStartTime, errors);
-
-  // Rebuild initial characters from the scheduled timelines and finalize runtime-facing level fields.
-  // Apply final cross-character derived state and optional validation passes.
-  // TODO - what is actually needed?
+  // Set counts of discoverable room, items, and characters.
+  // TODO
 
   return errors.count <= originalErrorCount ? level : null;
 }

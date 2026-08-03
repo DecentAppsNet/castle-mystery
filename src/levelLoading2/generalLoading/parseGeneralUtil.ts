@@ -6,7 +6,7 @@ import LevelFileSections from "../types/LevelFileSections";
 import { ErrorCollector } from "../errorCollection";
 import { findNameValueLineNo, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { normalizeOptionalId } from "@/game/idUtil";
-import { initActivityParsingRules, parseTimestampToMsecs } from "../activityLoading/";
+import { initActivityParsingRules, parseFirstActivityTimeAndCharacter, parseTimestampToMsecs } from "../activityLoading/";
 import { assert, assertNonNullable } from "decent-portal";
 import { getBackgroundImageAssetUrl } from "@/game/imageUrlUtil";
 import ActivityParsingRules, { AllowedValuesByIdentifierId } from "../activityLoading/types/ActivityParsingRules";
@@ -133,6 +133,36 @@ function _createEmptyMutableLevel():MutableLevel {
   };
 }
 
+// There is some catch-22 to get past - we need active character ID and start time to load the activities. But we need the
+// activities (at least the first one) to resolve character ID and start time when they are unspecified. This function gets the
+// missing values without doing a full activity load.
+function _resolveUnspecifiedValuesFromItinerary(itinerarySectionText:string, loadingContext:LevelLoadingContext, errors:ErrorCollector):boolean {
+  const originalErrorCount = errors.count;
+
+  if (loadingContext.activeCharacterId && loadingContext.startTime) return true; // Already set.
+  if (!itinerarySectionText.trim()) {
+    if (!loadingContext.startTime) loadingContext.startTime = 0;
+    if (!loadingContext.activeCharacterId) errors.addAt('Either specify "activeCharacter" in "General" section or specify a character for first activity in itinerary.', 'general');
+    return errors.count <= originalErrorCount;
+  }
+  const { startTime, characterId } = parseFirstActivityTimeAndCharacter(itinerarySectionText, loadingContext.activityParsingRules, errors);
+  if (!loadingContext.startTime) {
+    if (!startTime) {
+      errors.addAt('First activity in itinerary must have an absolute timestamp.', 'itinerary');
+      return false;
+    }
+    loadingContext.startTime = startTime;
+  }
+  if (!loadingContext.activeCharacterId) {
+    if (!characterId) {
+      errors.addAt('Either specify "activeCharacter" in "General" section or specify a character for first activity in itinerary.', 'general');
+      return false;
+    }
+    loadingContext.activeCharacterId = characterId;
+  }
+  return errors.count <= originalErrorCount;
+}
+
 export function initMutableLevelAndLoadingContext(sections:LevelFileSections, errors:ErrorCollector):{level:MutableLevel, loadingContext:LevelLoadingContext}|null {
   const level = _createEmptyMutableLevel();
   assert(isSectionRequired('general'));
@@ -140,5 +170,8 @@ export function initMutableLevelAndLoadingContext(sections:LevelFileSections, er
   const loadingContext = _parseGeneralSection(sections.general.text, level, errors);
   const allowedValuesByIdentifier = _createAllowedValuesByIdentifier(sections, errors);
   loadingContext.activityParsingRules = initActivityParsingRules(allowedValuesByIdentifier); // Fixes the placeholder.
+  if (!_resolveUnspecifiedValuesFromItinerary(sections.itinerary?.text ?? '', loadingContext, errors)) return null;
+  level.startTime = loadingContext.startTime ?? 0;
+  level.activeCharacterId = loadingContext.activeCharacterId;
   return errors.hasErrors ? null : { level, loadingContext };
 }
