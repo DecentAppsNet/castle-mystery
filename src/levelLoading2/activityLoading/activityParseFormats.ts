@@ -4,7 +4,6 @@ import {
   createParseFormat,
   makeIdentifier,
   makeLiteral,
-  makeLiteralOptions,
   makeNumber,
   makeOptions,
   makeSequence,
@@ -166,17 +165,6 @@ export function createStandsParseFormat():ParseFormat {
     makeIdentifier('characterId', 'CharacterId', true),
     makeVerb('stands'),
   ]);
-  return createParseFormat(rootParseStep);
-}
-
-export function createTakesParseFormat():ParseFormat {
-  const characterId = makeIdentifier('characterId', 'CharacterId', true);
-  const takes = makeVerb('takes');
-  const itemId = makeIdentifier('itemId', 'ItemId');
-  const preposition = makeLiteralOptions(['in', 'into']);
-  const target = makeLiteralOptions(['left hand', 'right hand', 'inventory']);
-  const targetSequence = makeSequence([preposition, target], true);
-  const rootParseStep = makeSequence([characterId, takes, itemId, targetSequence]);
   return createParseFormat(rootParseStep);
 }
 

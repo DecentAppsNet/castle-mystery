@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import ErrorCollector from '../errorCollection/ErrorCollector';
 import SourceLineMap from '../importing/types/SourceLineMap';
 import { loadLevelFromText } from '../loadLevelUtil';
-import defaultLevelText from './fixtures/default-level.md?raw';
+import minimalMissingValuesGeneralText from './fixtures/general-minimal-missing-values.md?raw';
 import duplicateAppearanceSectionsText from './fixtures/general-duplicate-appearance-sections.md?raw';
 import duplicateCharacterSectionsText from './fixtures/general-duplicate-character-sections.md?raw';
 import duplicateItemSectionsText from './fixtures/general-duplicate-item-sections.md?raw';
@@ -24,17 +24,14 @@ function _loadLevel(text:string, filename:string) {
 
 describe('loading levels - general section', () => {
   it('loads default general-derived values into the returned level when optional properties are omitted', () => {
-    const { level, errors } = _loadLevel(defaultLevelText, 'default-level.md'); // TODO - why is it using my .md file? Make a copy and remove the @ itinerary.
+    const { level, errors } = _loadLevel(minimalMissingValuesGeneralText, 'general-minimal-missing-values.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableCharacterCount).toBe(0);
-    expect(level?.discoverableItemCount).toBe(0);
-    expect(level?.discoverableRoomCount).toBe(0);
     expect(level?.winSynopsis).toBe('You won the level!');
     expect(level?.backgroundImageUrl).toBeNull();
     expect(level?.groundFloorY).toBe(20);
-    expect(level?.activeCharacterId).toBe('');
+    expect(level?.activeCharacterId).toBe('sam');
     expect(level?.labels).toEqual([
       { minutes:0, label:'midnight' },
       { minutes:0, label:'midnight' }
@@ -46,9 +43,6 @@ describe('loading levels - general section', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableCharacterCount).toBe(0);
-    expect(level?.discoverableItemCount).toBe(0);
-    expect(level?.discoverableRoomCount).toBe(0);
     expect(level?.winSynopsis).toBe('Case closed.');
     expect(level?.backgroundImageUrl).toBe('/assets/backgrounds/castle.png');
     expect(level?.groundFloorY).toBe(20);

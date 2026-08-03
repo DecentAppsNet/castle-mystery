@@ -16,11 +16,11 @@ import {
   createShowParseFormat,
   createSitsParseFormat,
   createStandsParseFormat,
-  createTakesParseFormat,
   createUnlocksParseFormat,
   createWaitsParseFormat,
 } from "./activityParseFormats";
 import { createAtActivityParseFormat } from "./activityHandlers/atHandler";
+import { createTakesParseFormat } from './activityHandlers/takesHandler';
 import ParseFormat from "./types/ParseFormat";
 import ParseStep from "./types/ParseStep";
 

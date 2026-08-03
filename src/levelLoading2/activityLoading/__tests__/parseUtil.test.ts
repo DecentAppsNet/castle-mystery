@@ -284,13 +284,12 @@ describe('parseUtil', () => {
     describe('@ activity parsing', () => {
       it('parses multi-word identifiers and an absolute timestamp', () => {
         expect(tryParseActivity('1:02:03 lady beatrice @ master bedroom', sharedRules)).toMatchObject({
-          duration: null,
           parts: {
             characterId: 'lady beatrice',
             roomId: 'master bedroom',
             verb: '@',
           },
-          startTime: 3723000,
+          endTime: 3723000,
           verb: '@',
         });
       });

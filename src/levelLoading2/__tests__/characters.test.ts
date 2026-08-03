@@ -93,11 +93,12 @@ describe('loading levels - characters', () => {
     expect(errors.describeErrors()).toContain('After normalization');
   });
 
-  it('fails if a character does not have a position defined in a room grid', () => {
+  it('loads level despite a character not having a position defined in a room grid', () => {
     const { level, errors } = _loadLevel(missingPositionText, 'characters-missing-position.md');
 
-    expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character does not have a position defined in a room grid.');
+    expect(level).not.toBeNull();
+    expect(errors.count).toEqual(0);
+    expect(level?.allCharactersById.get('sam')).not.toBeNull();
   });
 
   it('fails if a character visible value is not boolean-like', () => {

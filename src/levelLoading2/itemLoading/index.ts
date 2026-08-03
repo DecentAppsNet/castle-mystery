@@ -7,6 +7,7 @@ import Item, { createDefaultItem } from "@/game/types/Item";
 import { getItemImageAssetUrl } from "@/game/imageUrlUtil";
 import { rand } from "@/common/randUtil";
 import { normalizeId } from "@/game/idUtil";
+import { createDefaultPosition } from "@/game/types/Position";
 
 function _createStubItem(itemId:string):Item {
   return {...createDefaultItem(), id:itemId, description:'Stub Item'};
@@ -46,7 +47,7 @@ function _parseItem(itemId:string, itemSectionEntry:SectionEntryWithLine, errors
     y:parseNumber(nameValues.stackOffsetY ?? '0', errors, ['items', itemId], 'stackOffsetY'),
     z:parseNumber(nameValues.stackOffsetZ ?? '0', errors, ['items', itemId], 'stackOffsetZ')
   }
-  const position = {x:0, y:0, z:0}; // Set later based on room legends.
+  const position = createDefaultPosition(); // Set later based on room legends.
 
   const item:Item = {
     id:itemId,

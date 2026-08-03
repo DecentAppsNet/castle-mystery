@@ -1,7 +1,7 @@
 /* This module groups timestamp parsing and formatting helpers for authored itinerary and timeline text.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { MSECS_IN_SECOND, SECS_IN_MINUTE } from "@/common/timeUtil";
+import { MSECS_IN_DAY, MSECS_IN_SECOND, SECS_IN_MINUTE } from "@/common/timeUtil";
 
 function _isDigit(char:string):boolean { return char >= '0' && char <= '9'; }
 
@@ -56,6 +56,7 @@ export function parseTimestampToMsecs(text:string):number {
 }
 
 export function formatMsecsAsTimestamp(milliseconds:number):string {
+  milliseconds %= MSECS_IN_DAY; // Confine the time to be between midnight and midnight.
   const totalSeconds = Math.floor(milliseconds / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);

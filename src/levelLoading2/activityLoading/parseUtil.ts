@@ -331,21 +331,34 @@ function _tryParseActivityTextAgainstFormat(activityText:string, parseFormat:Par
   return parts;
 }
 
+function _getStartAndEndTimes(activityTime:number|null, verb:string):{startTime:number|null, endTime:number|null} {
+  let startTime = null, endTime = null;
+  if (doesActivityUseEndTimestamp(verb)) {
+    endTime = activityTime;
+  } else {
+    startTime = activityTime;
+  }
+  return {startTime, endTime};
+}
+
+export function doesActivityUseEndTimestamp(verb:string) { return verb === '@'; }
+
 export function tryParseActivity(activityLine:string, rules:ActivityParsingRules):Activity|string {
   throwIfActivityParsingRulesAreInvalid(rules);
 
   const splitResult = _splitActivityLineToTimestampAndActivityText(activityLine);
   if (!splitResult) return 'Itinerary line did not have timestamp followed by activity text.';
   const { timestampText, activityText } = splitResult;
-
-  let startTime = null;
+  let activityTime = null;
   if (!isRelativeTimestamp(timestampText)) {
-    startTime = tryParseAbsoluteTimestamp(timestampText);
-    if (!startTime) return `Itinerary line started with "${timestampText}" which does not follow expected timestamp format.`;
+    activityTime = tryParseAbsoluteTimestamp(timestampText);
+    if (activityTime === null) return `Itinerary line started with "${timestampText}" which does not follow expected timestamp format.`;
   }
-
+  
   const verb = _findVerbInActivityText(activityText, rules);
   if (!verb) return `Itinerary line didn't include a known verb.`;
+
+  const { startTime, endTime } = _getStartAndEndTimes(activityTime, verb);
 
   const parseFormat = rules.parseFormatsByVerb[verb];
   assertNonNullable(parseFormat, 'Earlier successful call to _findVerbInActivityText() should guarantee a parse format for the verb exists.');
@@ -355,7 +368,7 @@ export function tryParseActivity(activityLine:string, rules:ActivityParsingRules
   const activity:Activity = {
     verb,
     startTime,
-    duration:null,
+    endTime,
     parts:parseResult,
     prevActivity:null
   };

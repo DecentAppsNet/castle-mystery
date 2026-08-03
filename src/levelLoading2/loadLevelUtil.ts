@@ -1,13 +1,14 @@
 import Level from "@/game/types/Level";
-import { ErrorCollector } from "./errorCollection";
+import { ErrorCollector } from "./errorCollection/";
 import { loadLevelSections } from "./levelFileSectionUtil";
 import { initMutableLevelAndLoadingContext } from "./generalLoading/";
 import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading/";
 import { loadItemsPartially } from "./itemLoading/";
 import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/";
 import { loadConclusions } from "./conclusionLoading/";
-import { findLastActivityEndTime, loadActivitiesPartially } from "./activityLoading/";
+import { findLastActivityEndTime, findStartTimeFromItinerary, loadActivitiesPartially } from "./activityLoading/";
 import { scheduleActivities } from "./itineraryLoading/";
+import { findDiscoverableCounts } from "./discoverability";
 
 /** 
  * Error handling design:
@@ -39,15 +40,17 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!rooms) return null;
   const characters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
   if (!characters) return null;
+  if (loadingContext.startTime === null) level.startTime = findStartTimeFromItinerary(sections.itinerary?.text ?? '', 
+      rooms, characters, loadingContext.activeCharacterId, loadingContext.activityParsingRules, errors) ?? 0;
   const activities = loadActivitiesPartially(sections.itinerary?.text ?? '', loadingContext.activityParsingRules, 
-      loadingContext.startTime, loadingContext.endTime, loadingContext.activeCharacterId, errors);
+      level.startTime, loadingContext.isCrossMidnight, loadingContext.activeCharacterId, errors);
   if (!activities) return null;
-  if (level.endTime === null) level.endTime = findLastActivityEndTime(activities);
-  if (level.initialTime === null) level.initialTime = level.startTime;
+  if (loadingContext.endTime === null) level.endTime = findLastActivityEndTime(activities) ?? level.startTime;
+  if (loadingContext.initialTime === null) level.initialTime = level.startTime;
 
   // Add items, characters, and rooms to level, resolving dependencies.
   if (!addRoomsToLevel(rooms, loadingContext.groundFloorRoomRef, level, errors)) return null;
-  if (!addCharactersToLevel(characters, items, activities, level, errors)) return null;
+  if (!addCharactersToLevel(characters, items, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
   level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms, errors);
@@ -57,7 +60,10 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!itinerary) return null;
 
   // Set counts of discoverable room, items, and characters.
-  // TODO
+  const counts = findDiscoverableCounts(level, activities);
+  level.discoverableCharacterCount = loadingContext.discoverableCharacterCount ?? counts.discoverableCharacterCount;
+  level.discoverableItemCount = loadingContext.discoverableItemCount ?? counts.discoverableItemCount;
+  level.discoverableRoomCount = loadingContext.discoverableRoomCount ?? counts.discoverableRoomCount;
 
   return errors.count <= originalErrorCount ? level : null;
 }

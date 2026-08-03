@@ -84,7 +84,7 @@ export function scheduleAtActivity(level:Level,
   assertNonNullable(toRoom);
 
   const characterI = editableItinerary.characterIdToI[characterId];
-  const isRelativeTimestamp = activity.startTime === null;
+  const isRelativeTimestamp = activity.endTime === null;
   
   const fromKeyframe = findLatestKeyFrameForCharacter(editableItinerary, characterI);
   const fromPos = fromKeyframe.characters[characterI].position;
@@ -94,7 +94,7 @@ export function scheduleAtActivity(level:Level,
   
   const toKeyframe = isRelativeTimestamp 
     ? fromKeyframe
-    : createSnapshotAtTime(editableItinerary.keyframes, activity.startTime!);
+    : createSnapshotAtTime(editableItinerary.keyframes, activity.endTime!);
   const toPos = _findTargetPosition(toKeyframe, toRoom);
   const toTime = toKeyframe.time;
 
@@ -119,25 +119,25 @@ export function createAtActivityParseFormat():ParseFormat {
 // and I need to know what the startTime of the level is to create the editable itinerary object.
 // Because this is the very first activity in the level, it isn't necessary to have the editable itinerary
 // to check against waypoint claims.
-export function findFirstAtActivityStartTime(level:Level, activity:Activity):number|string {
-  const { characterId, roomId } = activity.parts;
-  assert(typeof characterId === 'string', 'implied subjects should have been resolved');
+export function findFirstAtActivityStartTime(rooms:readonly Room[], characters:readonly Character[], activeCharacterId:string, activity:Activity):number|string {
+  let { characterId, roomId } = activity.parts;
+  if (typeof characterId !== 'string') characterId = activeCharacterId;
   assert(typeof roomId === 'string');
-  const characterI = _findCharacterIFromId(level.characters, characterId);
-  const toRoom = findRoom(level.rooms, roomId);
+  const characterI = _findCharacterIFromId(characters, characterId);
+  const toRoom = findRoom(rooms, roomId);
   assertNonNullable(characterI);
   assertNonNullable(toRoom);
-  assertNonNullable(activity.startTime, 'Caller should check for this');
+  assertNonNullable(activity.endTime);
   
-  const fromPos = level.characters[characterI].position;
-  const fromRoom = findRoomAtPosition(level.rooms, fromPos.x, fromPos.y);
+  const fromPos = characters[characterI].position;
+  const fromRoom = findRoomAtPosition(rooms, fromPos.x, fromPos.y);
   assertNonNullable(fromRoom);
 
   const targetXPercent = .5; // TODO get from activity.
   const bestWaypoint = _findBestTargetWaypoint(toRoom.waypoints, [], toRoom, targetXPercent);
   const toPos = bestWaypoint.position;
 
-  const walkDuration = calcWalkDurationToRoom(level.rooms, fromRoom, fromPos, toRoom, toPos);
+  const walkDuration = calcWalkDurationToRoom(rooms, fromRoom, fromPos, toRoom, toPos);
   if (typeof walkDuration === 'string') return walkDuration;
-  return activity.startTime - walkDuration;
+  return activity.endTime - walkDuration;
 }

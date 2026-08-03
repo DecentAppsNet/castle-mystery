@@ -1,5 +1,5 @@
 import { BodyOrientation, FacingDirection } from "./Character"
-import Position, { duplicatePosition } from "./Position"
+import Position, { createDefaultPosition, duplicatePosition } from "./Position"
 
 type CharacterPose = {
   position:Position,
@@ -21,7 +21,7 @@ export function duplicateCharacterPose(from:CharacterPose):CharacterPose {
 
 export function createDefaultCharacterPose():CharacterPose {
   return {
-    position:{x:0, y:0, z:0},
+    position:createDefaultPosition(),
     facingDirection:'right',
     bodyOrientation:'standing',
     speech:null,

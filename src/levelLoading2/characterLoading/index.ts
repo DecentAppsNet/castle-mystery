@@ -9,7 +9,7 @@ import { rand } from "@/common/randUtil";
 import { parseItem, parseItems } from "../itemLoading/";
 import { normalizeId } from "@/game/idUtil";
 import Room from "@/game/types/Room";
-import Position from "@/game/types/Position";
+import Position, { arePositionsEqual, createDefaultPosition } from "@/game/types/Position";
 import { findAllCharacterPositions } from "../roomLoading/";
 import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
@@ -17,8 +17,6 @@ import { MutableLevel } from "@/game/types/Level";
 import { findNearestWaypointToPosition } from "@/game/waypointUtil";
 import { findRoomAtPositionOrTouchingBoundary } from "@/game/roomUtil";
 import Waypoint, { createDefaultWaypoint } from "@/game/types/Waypoint";
-import { findAllCharactersAndItemsInActivities } from "../activityLoading";
-import Activity from "../activityLoading/types/Activity";
 
 function _parseFacingDirection(text:string, errors:ErrorCollector, characterId:string):FacingDirection {
   text = text.trim().toLowerCase();
@@ -77,8 +75,7 @@ export function loadCharactersPartially(charactersSectionText:string, roomsSecti
     const sectionEntry = characterSectionsById.get(sectionName);
     assertNonNullable(sectionEntry);
     const characterId = normalizeId(sectionName);
-    const fromPosition = characterIdToPosition[characterId] ?? null;
-    if (!fromPosition) errors.addAt(`"${characterId}" character does not have a position defined in a room grid.`, 'rooms');
+    const fromPosition = characterIdToPosition[characterId] ?? null; // Due to importing, its possible to have unplaced characters.
     const waypoint = fromPosition ? _findCharacterWaypoint(fromPosition, rooms) : createDefaultWaypoint();
     return _parseCharacter(characterId, waypoint, sectionEntry, errors);
   });
@@ -92,17 +89,19 @@ function _createAllCharactersById(characters:Character[]):Map<string, Character>
   return allCharactersById;
 }
 
-export function addCharactersToLevel(characters:Character[], items:Item[], activities:Activity[], level:MutableLevel, errors:ErrorCollector):boolean {
+function _findAllPlacedCharacters(characters:Character[]):Character[] {
+  const unplacedPosition = createDefaultPosition();
+  return characters.filter(c => !arePositionsEqual(c.position, unplacedPosition));
+}
+
+export function addCharactersToLevel(characters:Character[], items:Item[], level:MutableLevel, errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
+  assertNonNullable(level.activeCharacterId);
 
   mergeCharacterItems(characters, items, errors);
   level.allCharactersById = _createAllCharactersById(characters);
 
-  const { characterIds } = findAllCharactersAndItemsInActivities(activities);
-  level.characters = characterIds.map(characterId => {
-    const character = level.allCharactersById.get(characterId);
-    assertNonNullable(character);
-    return character;
-  });
+  level.characters = _findAllPlacedCharacters(characters);
+  
   return errors.count <= originalErrorCount;
 }

@@ -14,6 +14,8 @@ import Level from "@/game/types/Level";
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { scheduleAtActivity } from "../activityLoading/activityHandlers/atHandler";
 import Itinerary from "./types/Itinerary";
+import { doesActivityUseEndTimestamp } from "../activityLoading/parseUtil";
+import { scheduleTakesActivity } from "../activityLoading/activityHandlers/takesHandler";
 
 function _findInsertAfterI(time:number, keyframes:ItineraryKeyframe[]):number {
   assert(keyframes.length > 0);
@@ -198,28 +200,26 @@ function _areActivitiesWellOrdered(activities:readonly Activity[], startTime:num
   return true;
 }
 
-function _doesActivityUseCompletionTimestamp(verb:string) {
-  return verb === 'at';
-}
-
 function _findNextActivityStartTime(prevActivity:Readonly<Activity>|null):number|null {
-  if (!prevActivity || !prevActivity.startTime || !prevActivity.duration) return null;
-  return prevActivity.startTime + prevActivity.duration;
+  if (!prevActivity || !prevActivity.endTime) return null;
+  return prevActivity.endTime;
 }
 
 function _resolveRelativeTimestampAsNeeded(activity:Activity) {
-  if (activity.startTime !== null || _doesActivityUseCompletionTimestamp(activity.verb)) return;
+  if (activity.startTime !== null || doesActivityUseEndTimestamp(activity.verb)) return;
   activity.startTime = _findNextActivityStartTime(activity.prevActivity);
 }
 
 type ScheduleActivityCallback = (level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector) => boolean;
 const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCallback}> = {
-  '@': scheduleAtActivity
+  '@': scheduleAtActivity,
+  'takes': scheduleTakesActivity
 }
 
 function _scheduleActivity(level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector):boolean {
   const scheduleActivityFunc = VERB_TO_SCHEDULE_ACTIVITY_FUNC[activity.verb];
   assertNonNullable(scheduleActivities, `Add handler for "${activity.verb}"`);
+  if (!doesActivityUseEndTimestamp(activity.verb) && activity.startTime === null) return false; // A preceding activity must be scheduled first.
   return scheduleActivityFunc(level, activity, itinerary, errors);
 }
 
