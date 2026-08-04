@@ -2,7 +2,7 @@ export {
   addKeyframe, 
   addCharacterKeyframe, 
   addRoomKeyframe, 
-  createEditableItinerary, 
+  createEditableTimeline,
   scheduleActivities 
 } from './editingUtil';
 export { 

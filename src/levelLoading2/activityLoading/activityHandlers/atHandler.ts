@@ -5,9 +5,9 @@ import ParseFormat from "../types/ParseFormat";
 import { createParseFormat, makeIdentifier, makeSequence, makeVerb } from "../parseFormatUtil";
 import { assert, assertNonNullable } from "decent-portal";
 import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
-import EditableItinerary from "@/levelLoading2/itineraryLoading/types/EditableItinerary";
-import { createSnapshotAtTime, findLatestKeyFrameForCharacter } from "@/levelLoading2/itineraryLoading/";
-import ItineraryKeyframe from "@/levelLoading2/itineraryLoading/types/ItineraryKeyframe";
+import EditableTimeline from "@/levelLoading2/timelineLoading/types/EditableTimeline";
+import { createSnapshotAtTime, findLatestKeyFrameForCharacter } from "@/levelLoading2/timelineLoading/";
+import TimelineKeyframe from "@/levelLoading2/timelineLoading/types/TimelineKeyframe";
 import Room from "@/game/types/Room";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import Waypoint from "@/game/types/Waypoint";
@@ -16,7 +16,7 @@ import { clamp } from "@/common/numberUtil";
 import { calcWalkDurationToRoom, scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
 import Character from "@/game/types/Character";
 
-function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:ItineraryKeyframe):Waypoint[] {
+function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
   for(let characterI = 0; characterI < snapshot.characters.length; ++characterI) {
     const characterPosition = snapshot.characters[characterI].position;
@@ -67,14 +67,14 @@ function _findCharacterIFromId(characters:readonly Character[], characterId:stri
   return null;
 }
 
-function _findTargetPosition(snapshot:ItineraryKeyframe, targetRoom:Room, targetXPercent:number = .5):Position {
+function _findTargetPosition(snapshot:TimelineKeyframe, targetRoom:Room, targetXPercent:number = .5):Position {
   const claimedWaypoints = _findClaimedWaypoints(targetRoom.waypoints, snapshot);
   const bestWaypoint = _findBestTargetWaypoint(targetRoom.waypoints, claimedWaypoints, targetRoom, targetXPercent);
   return bestWaypoint.position;
 }
 
 export function scheduleAtActivity(level:Level, 
-    activity:Activity, editableItinerary:EditableItinerary, errors:ErrorCollector):boolean {
+  activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   const { characterId, roomId } = activity.parts;
   assertNonNullable(characterId, 'implied subjects should have been resolved');
   assert(typeof roomId === 'string');
@@ -83,10 +83,10 @@ export function scheduleAtActivity(level:Level,
   assertNonNullable(character);
   assertNonNullable(toRoom);
 
-  const characterI = editableItinerary.characterIdToI[characterId];
+  const characterI = editableTimeline.characterIdToI[characterId];
   const isRelativeTimestamp = activity.endTime === null;
   
-  const fromKeyframe = findLatestKeyFrameForCharacter(editableItinerary, characterI);
+  const fromKeyframe = findLatestKeyFrameForCharacter(editableTimeline, characterI);
   const fromPos = fromKeyframe.characters[characterI].position;
   const fromTime = fromKeyframe.time;
   const fromRoom = findRoomAtPosition(level.rooms, fromPos.x, fromPos.y);
@@ -94,13 +94,13 @@ export function scheduleAtActivity(level:Level,
   
   const toKeyframe = isRelativeTimestamp 
     ? fromKeyframe
-    : createSnapshotAtTime(editableItinerary.keyframes, activity.endTime!);
+    : createSnapshotAtTime(editableTimeline.keyframes, activity.endTime!);
   const toPos = _findTargetPosition(toKeyframe, toRoom);
   const toTime = toKeyframe.time;
 
   const errorMessage = isRelativeTimestamp 
-    ? scheduleCharacterMovementToRoom(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableItinerary)
-    : scheduleCharacterMovementToRoomAtTime(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableItinerary)
+    ? scheduleCharacterMovementToRoom(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableTimeline)
+    : scheduleCharacterMovementToRoomAtTime(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableTimeline)
   if (!errorMessage) return true;
   
   errors.addAt(errorMessage, 'itinerary'); // TODO need line# from activity.
@@ -116,8 +116,8 @@ export function createAtActivityParseFormat():ParseFormat {
 }
 
 // This solves a catch-22 problem where the first activity in level itinerary is an "@" activity
-// and I need to know what the startTime of the level is to create the editable itinerary object.
-// Because this is the very first activity in the level, it isn't necessary to have the editable itinerary
+// and I need to know what the startTime of the level is to create the editable timeline object.
+// Because this is the very first activity in the level, it isn't necessary to have the editable timeline
 // to check against waypoint claims.
 export function findFirstAtActivityStartTime(rooms:readonly Room[], characters:readonly Character[], activeCharacterId:string, activity:Activity):number|string {
   let { characterId, roomId } = activity.parts;

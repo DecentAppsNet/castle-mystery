@@ -2,7 +2,7 @@ import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeSequence, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
-import EditableItinerary from "@/levelLoading2/itineraryLoading/types/EditableItinerary";
+import EditableTimeline from "@/levelLoading2/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading2/errorCollection";
 
 export function createBecomesParseFormat():ParseFormat {
@@ -14,7 +14,7 @@ export function createBecomesParseFormat():ParseFormat {
 }
 
 export function scheduleBecomesActivity(_level:Level,
-    _activity:Activity, _editableItinerary:EditableItinerary, _errors:ErrorCollector):boolean {
+    _activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
 
   // TODO
   return true;

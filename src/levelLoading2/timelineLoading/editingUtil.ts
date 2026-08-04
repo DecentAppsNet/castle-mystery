@@ -1,6 +1,6 @@
 import { assert, assertNonNullable } from "decent-portal";
-import ItineraryKeyframe, { duplicateItineraryKeyframe } from "./types/ItineraryKeyframe";
-import EditableItineraryKeyframe from "./types/EditableItineraryKeyframe";
+import TimelineKeyframe, { duplicateTimelineKeyframe } from "./types/TimelineKeyframe";
+import EditableTimelineKeyframe from "./types/EditableTimelineKeyframe";
 import CharacterKeyframe, { CHARACTER_KEYFRAME_KEYS } from "./types/CharacterKeyframe";
 import { findInterpolatedCharacterPosition } from "./interpolationUtil";
 import RoomKeyframe, { ROOM_KEYFRAME_KEYS } from "./types/RoomKeyframe";
@@ -8,12 +8,12 @@ import Character from "@/game/types/Character";
 import Room from "@/game/types/Room";
 import Item, { duplicateItem } from "@/game/types/Item";
 import { duplicatePosition } from "@/game/types/Position";
-import EditableItinerary, { createDefaultEditableItinerary } from "./types/EditableItinerary";
+import EditableTimeline, { createDefaultEditableTimeline } from "./types/EditableTimeline";
 import Activity from "../activityLoading/types/Activity";
 import Level from "@/game/types/Level";
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { scheduleAtActivity } from "../activityLoading/activityHandlers/atHandler";
-import Itinerary from "./types/Itinerary";
+import Timeline from "./types/Timeline";
 import { doesActivityUseEndTimestamp } from "../activityLoading/parseUtil";
 import { scheduleTakesActivity } from "../activityLoading/activityHandlers/takesHandler";
 import { scheduleDropsActivity } from "../activityLoading/activityHandlers/dropsHandler";
@@ -34,7 +34,7 @@ import { scheduleStandsActivity } from "../activityLoading/activityHandlers/stan
 import { scheduleUnlocksActivity } from "../activityLoading/activityHandlers/unlocksHandler";
 import { scheduleWaitsActivity } from "../activityLoading/activityHandlers/waitsHandler";
 
-function _findInsertAfterI(time:number, keyframes:ItineraryKeyframe[]):number {
+function _findInsertAfterI(time:number, keyframes:TimelineKeyframe[]):number {
   assert(keyframes.length > 0);
   assert(keyframes[0].time <= time, 'Existing first keyframe expected to be the earliest.');
   for(let i = 0; i < keyframes.length; ++i) {
@@ -43,8 +43,8 @@ function _findInsertAfterI(time:number, keyframes:ItineraryKeyframe[]):number {
   return keyframes.length - 1;
 }
 
-function _findNextKeyframeWithDefinedCharacterPosition(keyframes:readonly EditableItineraryKeyframe[], 
-    fromKeyframeI:number, characterI:number):EditableItineraryKeyframe|null {
+function _findNextKeyframeWithDefinedCharacterPosition(keyframes:readonly EditableTimelineKeyframe[], 
+    fromKeyframeI:number, characterI:number):EditableTimelineKeyframe|null {
   for(let keyframeI = fromKeyframeI; keyframeI < keyframes.length; ++keyframeI) {
     const keyframe = keyframes[keyframeI];
     if (keyframe.characters[characterI].position !== undefined) return keyframe;
@@ -52,10 +52,10 @@ function _findNextKeyframeWithDefinedCharacterPosition(keyframes:readonly Editab
   return null;
 }
 
-function _generateNextKeyframe(previousKeyframe:Readonly<ItineraryKeyframe>, 
-    keyframes:readonly EditableItineraryKeyframe[], keyframeI:number):ItineraryKeyframe {
+function _generateNextKeyframe(previousKeyframe:Readonly<TimelineKeyframe>, 
+    keyframes:readonly EditableTimelineKeyframe[], keyframeI:number):TimelineKeyframe {
   const keyframe = keyframes[keyframeI];
-  const nextKeyframe = duplicateItineraryKeyframe(previousKeyframe);
+  const nextKeyframe = duplicateTimelineKeyframe(previousKeyframe);
   nextKeyframe.time = keyframe.time;
   for(let characterI = 0; characterI < nextKeyframe.characters.length; ++characterI) {
     const characterKeyframe:any = keyframe.characters[characterI];
@@ -88,11 +88,11 @@ function _generateNextKeyframe(previousKeyframe:Readonly<ItineraryKeyframe>,
 // If this gets to be a bottleneck, you can use an algoritm like:
 // 1. Receive a fromI param that is set to the earliest known change in frame keying.
 // 2. Update existing frames from fromI until a frame is unchanged from its original value. (Signals end of affected keyframes).
-function generateKeyframes(editableKeyframes:readonly EditableItineraryKeyframe[]):ItineraryKeyframe[] {
+function generateKeyframes(editableKeyframes:readonly EditableTimelineKeyframe[]):TimelineKeyframe[] {
   // Replay every editable (partial) keyframe to generate resolved keyframes.
   assert(editableKeyframes.length >= 1);
-  const keyframes:ItineraryKeyframe[] = [];
-  let currentKeyframe:ItineraryKeyframe = editableKeyframes[0] as ItineraryKeyframe; // First frame always guaranteed to be resolved.
+  const keyframes:TimelineKeyframe[] = [];
+  let currentKeyframe:TimelineKeyframe = editableKeyframes[0] as TimelineKeyframe; // First frame always guaranteed to be resolved.
   for(let i = 0; i < editableKeyframes.length; ++i) {
     if (i > 0) currentKeyframe = _generateNextKeyframe(currentKeyframe, editableKeyframes, i);
     keyframes.push(currentKeyframe);
@@ -141,14 +141,14 @@ function _createFirstRoomKeyframe(room:Readonly<Room>):RoomKeyframe {
   return keyframe;
 }
 
-function _createFirstKeyframe(characters:readonly Character[], rooms:readonly Room[], time:number):ItineraryKeyframe {
+function _createFirstKeyframe(characters:readonly Character[], rooms:readonly Room[], time:number):TimelineKeyframe {
   const characterKeyframes = characters.map(c => _createFirstCharacterKeyframe(c));
   const roomKeyFrames = rooms.map(r => _createFirstRoomKeyframe(r));
   return { time, characters:characterKeyframes, rooms:roomKeyFrames };
 }
 
-function _addCharacterKeyframeToItineraryKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
-    characterI:number, toKeyframe:EditableItineraryKeyframe) {
+function _addCharacterKeyframeToTimelineKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
+    characterI:number, toKeyframe:EditableTimelineKeyframe) {
   const toCharacterKeyframe:Partial<CharacterKeyframe> = toKeyframe.characters[characterI];
   assertNonNullable(toCharacterKeyframe);
   CHARACTER_KEYFRAME_KEYS.forEach(key => {
@@ -158,19 +158,19 @@ function _addCharacterKeyframeToItineraryKeyframe(characterKeyframe:Readonly<Par
 }
 
 function _createEditableKeyframeFromCharacterKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
-    characterI:number, time:number, characterCount:number, roomCount:number):EditableItineraryKeyframe {
+    characterI:number, time:number, characterCount:number, roomCount:number):EditableTimelineKeyframe {
   const characters:Partial<CharacterKeyframe>[] = [];
   for(let i = 0; i < characterCount; ++i) {
     characters[i] = (i === characterI) ? characterKeyframe : {};
   }
   const rooms:Partial<RoomKeyframe>[] = [];
   for(let i = 0; i < roomCount; ++i) { rooms[i] = {}; }
-  const keyframe:EditableItineraryKeyframe = { time, characters, rooms };
+  const keyframe:EditableTimelineKeyframe = { time, characters, rooms };
   return keyframe;
 }
 
-function _addRoomKeyframeToItineraryKeyframe(roomKeyframe:Readonly<Partial<RoomKeyframe>>, roomI:number, 
-    toKeyframe:EditableItineraryKeyframe) {
+function _addRoomKeyframeToTimelineKeyframe(roomKeyframe:Readonly<Partial<RoomKeyframe>>, roomI:number, 
+    toKeyframe:EditableTimelineKeyframe) {
   const toRoomKeyframe:Partial<RoomKeyframe> = toKeyframe.rooms[roomI];
   assertNonNullable(toRoomKeyframe);
   ROOM_KEYFRAME_KEYS.forEach(key => {
@@ -180,20 +180,20 @@ function _addRoomKeyframeToItineraryKeyframe(roomKeyframe:Readonly<Partial<RoomK
 }
 
 function _createEditableKeyframeFromRoomKeyframe(roomKeyframe:Readonly<Partial<CharacterKeyframe>>, roomI:number, 
-    time:number, characterCount:number, roomCount:number):EditableItineraryKeyframe {
+    time:number, characterCount:number, roomCount:number):EditableTimelineKeyframe {
   const characters:Partial<CharacterKeyframe>[] = [];
   for(let i = 0; i < characterCount; ++i) { characters[i] = {}; }
   const rooms:Partial<RoomKeyframe>[] = [];
   for(let i = 0; i < roomCount; ++i) { 
     rooms[i] = (i === roomI) ? roomKeyframe : {};
   }
-  const keyframe:EditableItineraryKeyframe = { time, characters, rooms };
+  const keyframe:EditableTimelineKeyframe = { time, characters, rooms };
   return keyframe;
 }
 
-function _getCharacterAndRoomCount(editableItinerary:Readonly<EditableItinerary>)
+function _getCharacterAndRoomCount(editableTimeline:Readonly<EditableTimeline>)
     :{characterCount:number, roomCount:number} {
-  const firstKeyframe = editableItinerary.keyframes[0];
+  const firstKeyframe = editableTimeline.keyframes[0];
   assertNonNullable(firstKeyframe);
   return { 
     characterCount:firstKeyframe.characters.length,
@@ -201,7 +201,7 @@ function _getCharacterAndRoomCount(editableItinerary:Readonly<EditableItinerary>
   };
 }
 
-function _insertEditableKeyframeAfter(array:EditableItineraryKeyframe[], insertAfterI:number, insertElement:EditableItineraryKeyframe):void {
+function _insertEditableKeyframeAfter(array:EditableTimelineKeyframe[], insertAfterI:number, insertElement:EditableTimelineKeyframe):void {
   array.splice(insertAfterI+1, 0, insertElement);
 }
 
@@ -227,7 +227,7 @@ function _resolveRelativeTimestampAsNeeded(activity:Activity) {
   activity.startTime = _findNextActivityStartTime(activity.prevActivity);
 }
 
-type ScheduleActivityCallback = (level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector) => boolean;
+type ScheduleActivityCallback = (level:Level, activity:Activity, timeline:EditableTimeline, errors:ErrorCollector) => boolean;
 const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCallback}> = {
   '@': scheduleAtActivity,
   'appears': scheduleAppearsActivity,
@@ -250,76 +250,76 @@ const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCal
   'waits': scheduleWaitsActivity
 }
 
-function _scheduleActivity(level:Level, activity:Activity, itinerary:EditableItinerary, errors:ErrorCollector):boolean {
+function _scheduleActivity(level:Level, activity:Activity, timeline:EditableTimeline, errors:ErrorCollector):boolean {
   const scheduleActivityFunc = VERB_TO_SCHEDULE_ACTIVITY_FUNC[activity.verb];
   assertNonNullable(scheduleActivities, `Add handler for "${activity.verb}"`);
   if (!doesActivityUseEndTimestamp(activity.verb) && activity.startTime === null) return false; // A preceding activity must be scheduled first.
-  return scheduleActivityFunc(level, activity, itinerary, errors);
+  return scheduleActivityFunc(level, activity, timeline, errors);
 }
 
-export function addKeyframe(editableKeyframe:Readonly<EditableItineraryKeyframe>, itinerary:EditableItinerary) {
-  const insertAfterI = _findInsertAfterI(editableKeyframe.time, itinerary.keyframes);
-  _insertEditableKeyframeAfter(itinerary.editableKeyframes, insertAfterI, editableKeyframe);
-  itinerary.keyframes = generateKeyframes(itinerary.editableKeyframes);
+export function addKeyframe(editableKeyframe:Readonly<EditableTimelineKeyframe>, timeline:EditableTimeline) {
+  const insertAfterI = _findInsertAfterI(editableKeyframe.time, timeline.keyframes);
+  _insertEditableKeyframeAfter(timeline.editableKeyframes, insertAfterI, editableKeyframe);
+  timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
 }
 
 export function addCharacterKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
-    characterI:number, time:number, itinerary:EditableItinerary) {
-  const { characterCount, roomCount } = _getCharacterAndRoomCount(itinerary);
-  const existingFrame = itinerary.editableKeyframes.find(kf => kf.time === time);
+    characterI:number, time:number, timeline:EditableTimeline) {
+  const { characterCount, roomCount } = _getCharacterAndRoomCount(timeline);
+  const existingFrame = timeline.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
-    _addCharacterKeyframeToItineraryKeyframe(characterKeyframe, characterI, existingFrame);
-    itinerary.keyframes = generateKeyframes(itinerary.editableKeyframes);
+    _addCharacterKeyframeToTimelineKeyframe(characterKeyframe, characterI, existingFrame);
+    timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
   } else {
     const keyframe = _createEditableKeyframeFromCharacterKeyframe(characterKeyframe, characterI, time, characterCount, roomCount);
-    addKeyframe(keyframe, itinerary);
+    addKeyframe(keyframe, timeline);
   }
 }
 
 export function addRoomKeyframe(roomKeyframe:Readonly<Partial<RoomKeyframe>>, roomI:number, 
-    time:number, itinerary:EditableItinerary) {
-  const { characterCount, roomCount } = _getCharacterAndRoomCount(itinerary);
-  const existingFrame = itinerary.editableKeyframes.find(kf => kf.time === time);
+    time:number, timeline:EditableTimeline) {
+  const { characterCount, roomCount } = _getCharacterAndRoomCount(timeline);
+  const existingFrame = timeline.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
-    _addRoomKeyframeToItineraryKeyframe(roomKeyframe, roomI, existingFrame);
-    itinerary.keyframes = generateKeyframes(itinerary.editableKeyframes);
+    _addRoomKeyframeToTimelineKeyframe(roomKeyframe, roomI, existingFrame);
+    timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
   } else {
     const keyframe = _createEditableKeyframeFromRoomKeyframe(roomKeyframe, roomI, time, characterCount, roomCount);
-    addKeyframe(keyframe, itinerary);
+    addKeyframe(keyframe, timeline);
   }
 }
 
-export function createEditableItinerary(characters:readonly Character[], rooms:readonly Room[], startTime:number):EditableItinerary {
-  const itinerary = createDefaultEditableItinerary();
-  itinerary.characterIdToI = _createCharacterIdToI(characters);
-  itinerary.roomIdToI = _createRoomIdToI(rooms);
+export function createEditableTimeline(characters:readonly Character[], rooms:readonly Room[], startTime:number):EditableTimeline {
+  const timeline = createDefaultEditableTimeline();
+  timeline.characterIdToI = _createCharacterIdToI(characters);
+  timeline.roomIdToI = _createRoomIdToI(rooms);
   const firstKeyframe = _createFirstKeyframe(characters, rooms, startTime);
-  itinerary.keyframes.push(firstKeyframe);
-  itinerary.editableKeyframes.push(firstKeyframe); // First keyframe always guaranteed to be fully resolved.
-  return itinerary;
+  timeline.keyframes.push(firstKeyframe);
+  timeline.editableKeyframes.push(firstKeyframe); // First keyframe always guaranteed to be fully resolved.
+  return timeline;
 }
 
-function _editableItineraryToItinerary(editableItinerary:Readonly<EditableItinerary>):Itinerary {
-  const { keyframes, roomIdToI, characterIdToI } = editableItinerary;
+function _editableTimelineToTimeline(editableTimeline:Readonly<EditableTimeline>):Timeline {
+  const { keyframes, roomIdToI, characterIdToI } = editableTimeline;
   return { keyframes, roomIdToI, characterIdToI };
 }
 
-function _createEmptyItinerary(characters:readonly Character[], rooms:readonly Room[]):Itinerary {
-  const editable = createEditableItinerary(characters, rooms, 0);
-  return _editableItineraryToItinerary(editable);
+function _createEmptyTimeline(characters:readonly Character[], rooms:readonly Room[]):Timeline {
+  const editable = createEditableTimeline(characters, rooms, 0);
+  return _editableTimelineToTimeline(editable);
 }
 
-export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Itinerary|null {
-  if (!activities.length) return _createEmptyItinerary(level.characters, level.rooms);
+export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Timeline|null {
+  if (!activities.length) return _createEmptyTimeline(level.characters, level.rooms);
   assert(_areActivitiesWellOrdered(activities, level.startTime));
-  const itinerary:EditableItinerary = createEditableItinerary(level.characters, level.rooms, level.startTime);
+  const timeline:EditableTimeline = createEditableTimeline(level.characters, level.rooms, level.startTime);
   const toBeScheduled = [...activities];
   for(let attemptI = 0; attemptI < activities.length; ++attemptI) {
     const nextActivity = toBeScheduled[0];
     _resolveRelativeTimestampAsNeeded(nextActivity);
-    if (_scheduleActivity(level, toBeScheduled[0], itinerary, errors)) {
+    if (_scheduleActivity(level, toBeScheduled[0], timeline, errors)) {
       toBeScheduled.shift();
     }
   }
-  return _editableItineraryToItinerary(itinerary);
+  return _editableTimelineToTimeline(timeline);
 }

@@ -1,10 +1,10 @@
 import Position from "@/game/types/Position";
-import EditableItineraryKeyframe from "./types/EditableItineraryKeyframe";
-import ItineraryKeyframe from "./types/ItineraryKeyframe";
+import EditableTimelineKeyframe from "./types/EditableTimelineKeyframe";
+import TimelineKeyframe from "./types/TimelineKeyframe";
 import { assert, assertNonNullable } from "decent-portal";
 import { interpolatePosition } from "@/game/itineraryUtil";
 
-export function findInterpolatedCharacterPosition(fromKeyframe:ItineraryKeyframe, toKeyframe:EditableItineraryKeyframe, 
+export function findInterpolatedCharacterPosition(fromKeyframe:TimelineKeyframe, toKeyframe:EditableTimelineKeyframe, 
     time:number, characterI:number):Position {
   const fromPosition:Position = fromKeyframe.characters[characterI].position;
   const toPosition:Position = toKeyframe.characters[characterI].position!;

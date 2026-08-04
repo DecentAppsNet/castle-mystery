@@ -4,10 +4,10 @@ import { isNormalizedId } from "@/game/idUtil";
 import { findRoom } from "@/game/roomUtil";
 import Room from "@/game/types/Room";
 import Waypoint from "@/game/types/Waypoint";
-import EditableItinerary from "../itineraryLoading/types/EditableItinerary";
+import EditableTimeline from "../timelineLoading/types/EditableTimeline";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
-import { addCharacterKeyframe } from "../itineraryLoading/editingUtil";
+import { addCharacterKeyframe } from "../timelineLoading/editingUtil";
 import { formatMsecsAsTimestamp } from "./timestampUtil";
 import { isPositionInOrOnRect } from "@/game/rectUtil";
 
@@ -166,20 +166,20 @@ function _getSecondsText(msecs:number):string {
   return `${msecs} milliseconds`;
 }
 
-function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, characterI:number, itinerary:EditableItinerary):number {
+function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, characterI:number, timeline:EditableTimeline):number {
   let time = fromTime;
   for (let i = 1; i < waypointPath.length; ++i) {
     const fromPosition = waypointPath[i-1].position;
     const toPosition = waypointPath[i].position;
     const walkDuration = _calcWalkDurationBetweenPositions(fromPosition, toPosition);
-    addCharacterKeyframe({ position:toPosition }, characterI, time + walkDuration, itinerary);
+    addCharacterKeyframe({ position:toPosition }, characterI, time + walkDuration, timeline);
     time += walkDuration;
   }
   return time;
 }
 
 function _scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
-    toTime:number|null, characterI:number, itinerary:EditableItinerary):string|null {
+    toTime:number|null, characterI:number, timeline:EditableTimeline):string|null {
   assert(toTime === null || toTime >= fromTime);
   const fromWaypoint = findNearestWaypointToPosition(room, fromPosition);
   const toWaypoint = findNearestWaypointToPosition(room, toPosition);
@@ -197,7 +197,7 @@ function _scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, 
     }
   }
 
-  let scheduledEndTime = _scheduleWaypointPath(waypointPath, fromTime + extraTime, characterI, itinerary);  
+  let scheduledEndTime = _scheduleWaypointPath(waypointPath, fromTime + extraTime, characterI, timeline);  
   assert(toTime === null || scheduledEndTime === toTime);
   return null;
 }
@@ -210,18 +210,18 @@ function _calcWalkDurationWithinRoom(room:Room, fromPosition:Position, toPositio
 }
 
 export function scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
-    characterI:number, itinerary:EditableItinerary):string|null {
+    characterI:number, timeline:EditableTimeline):string|null {
   return _scheduleCharacterMovementWithinRoom(room, fromPosition, fromTime, toPosition, null, 
-      characterI, itinerary);
+      characterI, timeline);
 }
 
 export function _scheduleCharacterMovementToRoomAtTime(rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
-    fromTime:number, toRoom:Room, toPosition:Position, toTime:number|null, characterI:number, itinerary:EditableItinerary):string|null {
+    fromTime:number, toRoom:Room, toPosition:Position, toTime:number|null, characterI:number, timeline:EditableTimeline):string|null {
   if (arePositionsEqual(fromPosition, toPosition)) return null; // Character already at destination.
   
   if (fromRoom.id === toRoom.id) {
     return _scheduleCharacterMovementWithinRoom(fromRoom, fromPosition, fromTime, toPosition, 
-        toTime, characterI, itinerary);
+        toTime, characterI, timeline);
   }
   
   const roomPath = _findRoomPath(rooms, fromRoom.id, toRoom.id);
@@ -241,22 +241,22 @@ export function _scheduleCharacterMovementToRoomAtTime(rooms:readonly Room[], fr
     }
   }
 
-  let scheduledEndTime = _scheduleWaypointPath(waypointPath, fromTime + extraTime, characterI, itinerary);  
+  let scheduledEndTime = _scheduleWaypointPath(waypointPath, fromTime + extraTime, characterI, timeline);  
   assert(toTime === null || scheduledEndTime === toTime);
   
   return null;
 }
 
 export function scheduleCharacterMovementToRoomAtTime(rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
-    fromTime:number, toRoom:Room, toPosition:Position, toTime:number, characterI:number, itinerary:EditableItinerary):string|null {
+    fromTime:number, toRoom:Room, toPosition:Position, toTime:number, characterI:number, timeline:EditableTimeline):string|null {
   return _scheduleCharacterMovementToRoomAtTime(rooms, fromRoom, fromPosition, fromTime, toRoom, toPosition,
-      toTime, characterI, itinerary);
+      toTime, characterI, timeline);
 }
 
 export function scheduleCharacterMovementToRoom(rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
-    fromTime:number, toRoom:Room, toPosition:Position, characterI:number, itinerary:EditableItinerary):string|null {
+    fromTime:number, toRoom:Room, toPosition:Position, characterI:number, timeline:EditableTimeline):string|null {
   return _scheduleCharacterMovementToRoomAtTime(rooms, fromRoom, fromPosition, fromTime, toRoom, toPosition,
-      null, characterI, itinerary);
+      null, characterI, timeline);
 }
 
 export function calcWalkDurationToRoom(rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 

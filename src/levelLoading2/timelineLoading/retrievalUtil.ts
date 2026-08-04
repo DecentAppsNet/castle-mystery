@@ -1,12 +1,12 @@
 import { assert, botch } from "decent-portal";
-import ItineraryKeyframe, { duplicateItineraryKeyframe } from "./types/ItineraryKeyframe";
+import TimelineKeyframe, { duplicateTimelineKeyframe } from "./types/TimelineKeyframe";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import { findInterpolatedCharacterPosition } from "./interpolationUtil";
 import CharacterKeyframe, { duplicateCharacterKeyframe } from "./types/CharacterKeyframe";
-import EditableItinerary from "./types/EditableItinerary";
+import EditableTimeline from "./types/EditableTimeline";
 import RoomKeyframe from "./types/RoomKeyframe";
 
-function _findKeyframeBeforeTimeRecursively(keyframes:ItineraryKeyframe[], fromI:number, toI:number, time:number):number {
+function _findKeyframeBeforeTimeRecursively(keyframes:TimelineKeyframe[], fromI:number, toI:number, time:number):number {
   assert(toI > fromI);
   const middleI = fromI + Math.floor((toI - fromI) / 2);
   const delta = keyframes[middleI].time - time;
@@ -18,8 +18,8 @@ function _findKeyframeBeforeTimeRecursively(keyframes:ItineraryKeyframe[], fromI
   return _findKeyframeBeforeTimeRecursively(keyframes, fromI, middleI, time);
 }
 
-function _findKeyframesBeforeAndAfterTime(keyframes:ItineraryKeyframe[], time:number):
-    {beforeKeyframe:ItineraryKeyframe, afterKeyframe:ItineraryKeyframe|null} {
+function _findKeyframesBeforeAndAfterTime(keyframes:TimelineKeyframe[], time:number):
+    {beforeKeyframe:TimelineKeyframe, afterKeyframe:TimelineKeyframe|null} {
   assert(keyframes[0].time <= time);
   const beforeI = _findKeyframeBeforeTimeRecursively(keyframes, 0, keyframes.length, time);
   assert(beforeI >= 0 && beforeI < keyframes.length);
@@ -31,19 +31,19 @@ function _findKeyframesBeforeAndAfterTime(keyframes:ItineraryKeyframe[], time:nu
   return {beforeKeyframe, afterKeyframe};
 }
 
-function _areCharacterKeyframePositionsEqual(fromKeyframe:ItineraryKeyframe, toKeyframe:ItineraryKeyframe, characterI:number):boolean {
+function _areCharacterKeyframePositionsEqual(fromKeyframe:TimelineKeyframe, toKeyframe:TimelineKeyframe, characterI:number):boolean {
   return arePositionsEqual(fromKeyframe.characters[characterI].position, toKeyframe.characters[characterI].position);
 }
 
-export function createSnapshotAtTime(keyframes:ItineraryKeyframe[], time:number):Readonly<ItineraryKeyframe> {
+export function createSnapshotAtTime(keyframes:TimelineKeyframe[], time:number):Readonly<TimelineKeyframe> {
   const {beforeKeyframe, afterKeyframe} = _findKeyframesBeforeAndAfterTime(keyframes, time);
   if (!afterKeyframe) return { ...beforeKeyframe, time };
 
   // Look for characters between the two keyframes that need an interpolated position.
-  let betweenKeyframe:ItineraryKeyframe|null = null;
+  let betweenKeyframe:TimelineKeyframe|null = null;
   for(let characterI = 0; characterI < beforeKeyframe.characters.length; ++characterI) {
     if (_areCharacterKeyframePositionsEqual(beforeKeyframe, afterKeyframe, characterI)) continue;
-    if (!betweenKeyframe) betweenKeyframe = duplicateItineraryKeyframe(beforeKeyframe);
+    if (!betweenKeyframe) betweenKeyframe = duplicateTimelineKeyframe(beforeKeyframe);
     const interpolatedPosition = findInterpolatedCharacterPosition(beforeKeyframe, afterKeyframe, time, characterI);
     betweenKeyframe.characters[characterI].position = interpolatedPosition;
   }
@@ -52,7 +52,7 @@ export function createSnapshotAtTime(keyframes:ItineraryKeyframe[], time:number)
   return betweenKeyframe ?? { ...beforeKeyframe, time};
 }
 
-export function createCharacterSnapshotAtTime(keyframes:ItineraryKeyframe[], characterI:number, 
+export function createCharacterSnapshotAtTime(keyframes:TimelineKeyframe[], characterI:number, 
     time:number):Readonly<CharacterKeyframe> {
   const {beforeKeyframe, afterKeyframe} = _findKeyframesBeforeAndAfterTime(keyframes, time);
   if (!afterKeyframe) return beforeKeyframe.characters[characterI];
@@ -63,7 +63,7 @@ export function createCharacterSnapshotAtTime(keyframes:ItineraryKeyframe[], cha
   return betweenCharacterKeyframe;
 }
 
-export function findCharacterPositionAtTime(keyframes:ItineraryKeyframe[], characterI:number, time:number):Readonly<Position> {
+export function findCharacterPositionAtTime(keyframes:TimelineKeyframe[], characterI:number, time:number):Readonly<Position> {
   const {beforeKeyframe, afterKeyframe} = _findKeyframesBeforeAndAfterTime(keyframes, time);
   const beforePosition = beforeKeyframe.characters[characterI].position;
   return afterKeyframe && !_areCharacterKeyframePositionsEqual(beforeKeyframe, afterKeyframe, characterI)
@@ -73,7 +73,7 @@ export function findCharacterPositionAtTime(keyframes:ItineraryKeyframe[], chara
 
 // Unlike the create*Snapshot() functions, this won't interpolate any values. Use this faster function if
 // interpolated values aren't needed.
-export function findKeyframeForTime(keyframes:ItineraryKeyframe[], time:number):ItineraryKeyframe {
+export function findKeyframeForTime(keyframes:TimelineKeyframe[], time:number):TimelineKeyframe {
   const { beforeKeyframe } = _findKeyframesBeforeAndAfterTime(keyframes, time);
   return beforeKeyframe;
 }
@@ -85,12 +85,12 @@ function _isEmptyKeyframe(keyframe:Partial<CharacterKeyframe>|Partial<RoomKeyfra
   return true;
 }
 
-export function findLatestKeyFrameForCharacter(itinerary:EditableItinerary, characterRef:string|number):ItineraryKeyframe {
-  const characterI:number = typeof characterRef === 'string' ? itinerary.characterIdToI[characterRef] : characterRef;
-  assert(itinerary.keyframes.length === itinerary.editableKeyframes.length);
-  for(let i = itinerary.editableKeyframes.length - 1; i >= 0; --i) {
-    if (!_isEmptyKeyframe(itinerary.editableKeyframes[i].characters[characterI])) 
-      return itinerary.keyframes[i];
+export function findLatestKeyFrameForCharacter(timeline:EditableTimeline, characterRef:string|number):TimelineKeyframe {
+  const characterI:number = typeof characterRef === 'string' ? timeline.characterIdToI[characterRef] : characterRef;
+  assert(timeline.keyframes.length === timeline.editableKeyframes.length);
+  for(let i = timeline.editableKeyframes.length - 1; i >= 0; --i) {
+    if (!_isEmptyKeyframe(timeline.editableKeyframes[i].characters[characterI])) 
+      return timeline.keyframes[i];
   }
   botch('There should at least be a first editable keyframe that includes all keys.');
 }

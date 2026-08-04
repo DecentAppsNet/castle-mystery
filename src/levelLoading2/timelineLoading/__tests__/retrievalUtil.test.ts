@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { createCharacterSnapshotAtTime, createSnapshotAtTime, findCharacterPositionAtTime, findKeyframeForTime } from '../retrievalUtil';
 import { createDefaultCharacterKeyframe } from '../types/CharacterKeyframe';
 import { createDefaultRoomKeyframe } from '../types/RoomKeyframe';
-import ItineraryKeyframe from '../types/ItineraryKeyframe';
+import TimelineKeyframe from '../types/TimelineKeyframe';
 
-function _createKeyframe(time:number, positions:Array<{ x:number, y:number, z:number }>):ItineraryKeyframe {
+function _createKeyframe(time:number, positions:Array<{ x:number, y:number, z:number }>):TimelineKeyframe {
 	return {
 		time,
 		characters:positions.map(position => ({
@@ -189,7 +189,7 @@ describe('retrievalUtil', () => {
 			expect(keyframe).toBe(firstKeyframe);
 		});
 
-		it('returns the only keyframe when the itinerary has a single keyframe', () => {
+		it('returns the only keyframe when the timeline has a single keyframe', () => {
 			const onlyKeyframe = _createKeyframe(1000, [{ x:1, y:2, z:3 }]);
 
 			const keyframe = findKeyframeForTime([onlyKeyframe], 1000);
@@ -229,7 +229,7 @@ describe('retrievalUtil', () => {
 			expect(keyframe).toBe(thirdKeyframe);
 		});
 
-		it('returns the nearest earlier keyframe when the requested time falls between later keyframes in a longer itinerary', () => {
+		it('returns the nearest earlier keyframe when the requested time falls between later keyframes in a longer timeline', () => {
 			const keyframes = [
 				_createKeyframe(1000, [{ x:0, y:0, z:0 }]),
 				_createKeyframe(2000, [{ x:10, y:10, z:10 }]),

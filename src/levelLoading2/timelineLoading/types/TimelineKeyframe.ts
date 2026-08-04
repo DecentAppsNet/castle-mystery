@@ -1,7 +1,7 @@
 import CharacterKeyframe, { duplicateCharacterKeyframe } from "./CharacterKeyframe";
 import RoomKeyframe, { duplicateRoomKeyframe } from "./RoomKeyframe";
 
-type ItineraryKeyframe<
+type TimelineKeyframe<
   TCharacter = CharacterKeyframe,
   TRoom = RoomKeyframe,
 > = {
@@ -10,7 +10,7 @@ type ItineraryKeyframe<
   rooms: TRoom[];
 };
 
-export function duplicateItineraryKeyframe(from:ItineraryKeyframe):ItineraryKeyframe {
+export function duplicateTimelineKeyframe(from:TimelineKeyframe):TimelineKeyframe {
   return {
     time:from.time,
     characters:from.characters.map(duplicateCharacterKeyframe),
@@ -18,5 +18,5 @@ export function duplicateItineraryKeyframe(from:ItineraryKeyframe):ItineraryKeyf
   }
 }
 
-export default ItineraryKeyframe;
+export default TimelineKeyframe;
 

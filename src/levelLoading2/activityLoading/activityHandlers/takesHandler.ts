@@ -2,8 +2,9 @@ import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteralOptions, makeSequence, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
-import EditableItinerary from "@/levelLoading2/itineraryLoading/types/EditableItinerary";
+import EditableTimeline from "@/levelLoading2/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading2/errorCollection";
+import { assertNonNullable } from "decent-portal";
 //import { assert, assertNonNullable } from "decent-portal";
 
 export function createTakesParseFormat():ParseFormat {
@@ -18,8 +19,8 @@ export function createTakesParseFormat():ParseFormat {
 }
 
 export function scheduleTakesActivity(_level:Level, 
-    activity:Activity, _editableItinerary:EditableItinerary, _errors:ErrorCollector):boolean {
-  if (activity.startTime === null) return false; // Can't be scheduled yet. TODO - move to calling code.
+    activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+  assertNonNullable(activity.startTime);
   
   /* const { characterId, itemId, _target } = activity.parts;
 
@@ -30,7 +31,7 @@ export function scheduleTakesActivity(_level:Level,
   assertNonNullable(character);
   assertNonNullable(item); */
 
-  // const characterI = editableItinerary.characterIdToI[characterId];
+  // const characterI = editableTimeline.characterIdToI[characterId];
   
   // TODO
   return true;

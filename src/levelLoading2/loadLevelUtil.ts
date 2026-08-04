@@ -7,7 +7,7 @@ import { loadItemsPartially } from "./itemLoading/";
 import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/";
 import { loadConclusions } from "./conclusionLoading/";
 import { findLastActivityEndTime, findStartTimeFromItinerary, loadActivitiesPartially } from "./activityLoading/";
-import { scheduleActivities } from "./itineraryLoading/";
+import { scheduleActivities } from "./timelineLoading/";
 import { findDiscoverableCounts } from "./discoverability";
 
 /** 
@@ -55,9 +55,9 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
   level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms, errors);
 
-  // Schedule activities into itinerary data structure.
-  const itinerary = scheduleActivities(level, activities, errors);
-  if (!itinerary) return null;
+  // Schedule activities into timeline data structure.
+  const timeline = scheduleActivities(level, activities, errors);
+  if (!timeline) return null;
 
   // Set counts of discoverable room, items, and characters.
   const counts = findDiscoverableCounts(level, activities);

@@ -1,10 +1,10 @@
 import CharacterKeyframe from "./CharacterKeyframe";
-import ItineraryKeyframe from "./ItineraryKeyframe";
+import TimelineKeyframe from "./TimelineKeyframe";
 import RoomKeyframe from "./RoomKeyframe";
 
-type EditableItineraryKeyframe = ItineraryKeyframe<
+type EditableTimelineKeyframe = TimelineKeyframe<
   Partial<CharacterKeyframe>,
   Partial<RoomKeyframe>
 >;
 
-export default EditableItineraryKeyframe;
+export default EditableTimelineKeyframe;
