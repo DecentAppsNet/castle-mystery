@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { createCharacterSnapshotAtTime, createSnapshotAtTime, findCharacterPositionAtTime, findKeyframeForTime } from '../retrievalUtil';
-import { createDefaultCharacterKeyframe } from '../types/CharacterKeyframe';
-import { createDefaultRoomKeyframe } from '../types/RoomKeyframe';
-import TimelineKeyframe from '../types/TimelineKeyframe';
+import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
+import { createDefaultRoomKeyframe } from '@/game/types/RoomKeyframe';
+import TimelineKeyframe from '@/game/types/TimelineKeyframe';
 
 function _createKeyframe(time:number, positions:Array<{ x:number, y:number, z:number }>):TimelineKeyframe {
 	return {

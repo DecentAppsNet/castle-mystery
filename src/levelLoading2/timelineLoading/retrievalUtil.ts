@@ -1,10 +1,10 @@
 import { assert, botch } from "decent-portal";
-import TimelineKeyframe, { duplicateTimelineKeyframe } from "./types/TimelineKeyframe";
+import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import { findInterpolatedCharacterPosition } from "./interpolationUtil";
-import CharacterKeyframe, { duplicateCharacterKeyframe } from "./types/CharacterKeyframe";
+import CharacterKeyframe, { duplicateCharacterKeyframe } from "@/game/types/CharacterKeyframe";
 import EditableTimeline from "./types/EditableTimeline";
-import RoomKeyframe from "./types/RoomKeyframe";
+import RoomKeyframe from "@/game/types/RoomKeyframe";
 
 function _findKeyframeBeforeTimeRecursively(keyframes:TimelineKeyframe[], fromI:number, toI:number, time:number):number {
   assert(toI > fromI);

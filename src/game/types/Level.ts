@@ -3,6 +3,7 @@ import Character from "./Character";
 import Item from "./Item";
 import Room from "./Room"
 import Conclusion from "../conclusions/types/Conclusion";
+import Timeline, { createDefaultTimeline } from "./Timeline";
 
 export type MutableLevel = {
   rooms:Room[],
@@ -22,12 +23,13 @@ export type MutableLevel = {
   initialTime:number,
   endTime:number,
   duration:number,
-  labels:TimeLabel[]
+  labels:TimeLabel[],
+  timeline:Timeline
 }
 
 type Level = Readonly<MutableLevel>;
 
-export function createDefaultLevel():Level {
+export function createDefaultMutableLevel():MutableLevel {
   return {
     rooms:[],
     initialCharacters:[],
@@ -46,8 +48,13 @@ export function createDefaultLevel():Level {
     initialTime:0,
     endTime:0,
     duration:0,
-    labels:[]
+    labels:[],
+    timeline:createDefaultTimeline()
   };
+}
+
+export function createDefaultLevel():Level {
+  return createDefaultMutableLevel();
 }
 
 export default Level;

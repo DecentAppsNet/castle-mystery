@@ -46,6 +46,7 @@ import { getBackgroundImageAssetUrl } from "../game/imageUrlUtil";
 import ItineraryEventType from "../game/types/itineraryEvents/ItineraryEventType";
 import BecomesCharacterEvent from "../game/types/itineraryEvents/BecomesCharacterEvent";
 import { loadLevelSections } from "./levelFileSectionUtil";
+import { createDefaultTimeline } from "@/game/types/Timeline";
 
 const DEFAULT_WIN_SYNOPSIS = "You completed the level.";
 
@@ -83,7 +84,8 @@ function _createEmptyMutableLevel(duration:number = MSECS_IN_DAY):MutableLevel {
     initialTime: 0,
     endTime: duration,
     duration,
-    labels: _createTimeLabels(0, duration)
+    labels: _createTimeLabels(0, duration),
+    timeline:createDefaultTimeline() // A levelLoading2 add so things compile.
   };
 }
 

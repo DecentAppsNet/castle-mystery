@@ -1,5 +1,5 @@
-import CharacterKeyframe, { duplicateCharacterKeyframe } from "./CharacterKeyframe";
-import RoomKeyframe, { duplicateRoomKeyframe } from "./RoomKeyframe";
+import CharacterKeyframe, { duplicateCharacterKeyframe } from "@/game/types/CharacterKeyframe";
+import RoomKeyframe, { duplicateRoomKeyframe } from "@/game/types/RoomKeyframe";
 
 type TimelineKeyframe<
   TCharacter = CharacterKeyframe,

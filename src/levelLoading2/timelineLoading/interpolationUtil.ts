@@ -1,6 +1,6 @@
 import Position from "@/game/types/Position";
 import EditableTimelineKeyframe from "./types/EditableTimelineKeyframe";
-import TimelineKeyframe from "./types/TimelineKeyframe";
+import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { assert, assertNonNullable } from "decent-portal";
 import { interpolatePosition } from "@/game/itineraryUtil";
 

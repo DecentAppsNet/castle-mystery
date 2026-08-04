@@ -7,7 +7,7 @@ import { assert, assertNonNullable } from "decent-portal";
 import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
 import EditableTimeline from "@/levelLoading2/timelineLoading/types/EditableTimeline";
 import { createSnapshotAtTime, findLatestKeyFrameForCharacter } from "@/levelLoading2/timelineLoading/";
-import TimelineKeyframe from "@/levelLoading2/timelineLoading/types/TimelineKeyframe";
+import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import Room from "@/game/types/Room";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import Waypoint from "@/game/types/Waypoint";

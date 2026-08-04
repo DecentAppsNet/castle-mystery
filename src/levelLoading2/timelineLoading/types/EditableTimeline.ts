@@ -1,5 +1,5 @@
 import EditableTimelineKeyframe from "./EditableTimelineKeyframe";
-import TimelineKeyframe from "./TimelineKeyframe";
+import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 
 type EditableTimeline = {
   editableKeyframes: EditableTimelineKeyframe[];

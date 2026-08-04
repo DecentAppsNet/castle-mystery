@@ -1,6 +1,5 @@
 import { MINUTES_IN_DAY, MSECS_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
-import Item from "@/game/types/Item";
-import { MutableLevel } from "@/game/types/Level";
+import { createDefaultMutableLevel, MutableLevel } from "@/game/types/Level";
 import TimeLabel from "@/game/types/TimeLabel";
 import LevelFileSections from "../types/LevelFileSections";
 import { ErrorCollector } from "../errorCollection";
@@ -111,31 +110,10 @@ function _createTimeLabels(startTime:number, duration:number):TimeLabel[] {
   });
 }
 
-function _createEmptyMutableLevel():MutableLevel {
-  return {
-    rooms: [],
-    initialCharacters: [],
-    characters: [],
-    allCharactersById: new Map(),
-    itemsById: new Map<string, Item>(),
-    discoverableCharacterCount: 0,
-    discoverableItemCount: 0,
-    discoverableRoomCount: 0,
-    conclusions: [],
-    winSynopsis: DEFAULT_WIN_SYNOPSIS,
-    backgroundImageUrl: null,
-    groundFloorY: 0,
-    activeCharacterId: "",
-    startTime: 0,
-    initialTime: 0,
-    endTime: 0,
-    duration: 0,
-    labels: _createTimeLabels(0, 0)
-  };
-}
-
 export function initMutableLevelAndLoadingContext(sections:LevelFileSections, errors:ErrorCollector):{level:MutableLevel, loadingContext:LevelLoadingContext}|null {
-  const level = _createEmptyMutableLevel();
+  const level = createDefaultMutableLevel();
+  level.winSynopsis = DEFAULT_WIN_SYNOPSIS;
+  level.labels = _createTimeLabels(0, 0);
   assert(isSectionRequired('general'));
   assertNonNullable(sections.general, 'missing required section should have failed level load earlier.');
   const loadingContext = _parseGeneralSection(sections.general.text, level, errors);

@@ -58,6 +58,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Schedule activities into timeline data structure.
   const timeline = scheduleActivities(level, activities, errors);
   if (!timeline) return null;
+  level.timeline = timeline;
 
   // Set counts of discoverable room, items, and characters.
   const counts = findDiscoverableCounts(level, activities);
