@@ -1,7 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import ErrorCollector from '../errorCollection/ErrorCollector';
-import SourceLineMap from '../importing/types/SourceLineMap';
-import { loadLevelFromText } from '../loadLevelUtil';
 import minimalMissingValuesGeneralText from './fixtures/general-minimal-missing-values.md?raw';
 import duplicateAppearanceSectionsText from './fixtures/general-duplicate-appearance-sections.md?raw';
 import duplicateCharacterSectionsText from './fixtures/general-duplicate-character-sections.md?raw';
@@ -11,20 +8,11 @@ import invalidDiscoverableCharacterCountText from './fixtures/general-invalid-di
 import invalidDiscoverableItemCountText from './fixtures/general-invalid-discoverable-item-count.md?raw';
 import invalidDiscoverableRoomCountText from './fixtures/general-invalid-discoverable-room-count.md?raw';
 import populatedGeneralText from './fixtures/general-success-populated.md?raw';
-
-function _createSourceLineMap(text:string, filename:string):SourceLineMap {
-  return text.split('\n').map((_, index) => ({ filename, lineNo:index + 1 }));
-}
-
-function _loadLevel(text:string, filename:string) {
-  const errors = new ErrorCollector(text, _createSourceLineMap(text, filename));
-  const level = loadLevelFromText(text, errors);
-  return { level, errors };
-}
+import { loadLevelForTest } from './testLevelUtil';
 
 describe('loading levels - general section', () => {
   it('loads default general-derived values into the returned level when optional properties are omitted', () => {
-    const { level, errors } = _loadLevel(minimalMissingValuesGeneralText, 'general-minimal-missing-values.md');
+    const { level, errors } = loadLevelForTest(minimalMissingValuesGeneralText, 'general-minimal-missing-values.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -39,7 +27,7 @@ describe('loading levels - general section', () => {
   });
 
   it('loads the general values that are currently projected onto the returned level', () => {
-    const { level, errors } = _loadLevel(populatedGeneralText, 'general-success-populated.md');
+    const { level, errors } = loadLevelForTest(populatedGeneralText, 'general-success-populated.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -49,49 +37,49 @@ describe('loading levels - general section', () => {
   });
 
   it('fails if discoverableCharacterCount is specified and contains a non-integer value', () => {
-    const { level, errors } = _loadLevel(invalidDiscoverableCharacterCountText, 'general-invalid-discoverable-character-count.md');
+    const { level, errors } = loadLevelForTest(invalidDiscoverableCharacterCountText, 'general-invalid-discoverable-character-count.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('"1.5" is not an integer.');
   });
 
   it('fails if discoverableItemCount is specified and contains a negative value', () => {
-    const { level, errors } = _loadLevel(invalidDiscoverableItemCountText, 'general-invalid-discoverable-item-count.md');
+    const { level, errors } = loadLevelForTest(invalidDiscoverableItemCountText, 'general-invalid-discoverable-item-count.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('"-1" is not an integer.');
   });
 
   it('fails if discoverableRoomCount is specified and contains a non-numeric value', () => {
-    const { level, errors } = _loadLevel(invalidDiscoverableRoomCountText, 'general-invalid-discoverable-room-count.md');
+    const { level, errors } = loadLevelForTest(invalidDiscoverableRoomCountText, 'general-invalid-discoverable-room-count.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('"NaN" is not an integer.');
   });
 
   it('fails if the rooms section contains duplicate room subsections with the same heading text', () => {
-    const { level, errors } = _loadLevel(duplicateRoomSectionsText, 'general-duplicate-room-sections.md');
+    const { level, errors } = loadLevelForTest(duplicateRoomSectionsText, 'general-duplicate-room-sections.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain("duplicate section 'Hall'");
   });
 
   it('fails if the characters section contains duplicate character subsections with the same heading text', () => {
-    const { level, errors } = _loadLevel(duplicateCharacterSectionsText, 'general-duplicate-character-sections.md');
+    const { level, errors } = loadLevelForTest(duplicateCharacterSectionsText, 'general-duplicate-character-sections.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain("duplicate section 'Sam'");
   });
 
   it('fails if the items section contains duplicate item subsections with the same heading text', () => {
-    const { level, errors } = _loadLevel(duplicateItemSectionsText, 'general-duplicate-item-sections.md');
+    const { level, errors } = loadLevelForTest(duplicateItemSectionsText, 'general-duplicate-item-sections.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain("duplicate section 'Key'");
   });
 
   it('fails if the characters section contains duplicate appearance subsections with the same heading text', () => {
-    const { level, errors } = _loadLevel(duplicateAppearanceSectionsText, 'general-duplicate-appearance-sections.md');
+    const { level, errors } = loadLevelForTest(duplicateAppearanceSectionsText, 'general-duplicate-appearance-sections.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain("duplicate section 'Default'");

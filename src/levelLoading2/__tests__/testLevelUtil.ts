@@ -1,0 +1,38 @@
+/* This module provides shared helpers for loading and making small changes to level text in tests.
+   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
+import { parseSectionEntriesWithLines } from '@/common/markdownUtil';
+import ErrorCollector from '../errorCollection/ErrorCollector';
+import SourceLineMap from '../importing/types/SourceLineMap';
+import { loadLevelFromText } from '../loadLevelUtil';
+
+function _createSourceLineMap(text:string, filename:string):SourceLineMap {
+  return text.split('\n').map((_, index) => ({ filename, lineNo:index + 1 }));
+}
+
+export function replaceSection(text:string, sectionName:string, replacementLines:readonly string[]):string {
+  const lines = text.split('\n');
+  const sections = parseSectionEntriesWithLines(text);
+  const sectionIndex = sections.findIndex(section => section.name === sectionName);
+  if (sectionIndex < 0) throw new Error(`section '${sectionName}' not found`);
+
+  const bodyStartIndex = sections[sectionIndex].lineNo;
+  const nextSection = sections[sectionIndex + 1];
+  const bodyEndIndex = nextSection ? nextSection.lineNo - 1 : lines.length;
+  lines.splice(bodyStartIndex, bodyEndIndex - bodyStartIndex, '', ...replacementLines, '');
+  return lines.join('\n');
+}
+
+export function loadLevelForTest(text:string, filename:string = 'test-level.md') {
+  const errors = new ErrorCollector(text, _createSourceLineMap(text, filename));
+  const level = loadLevelFromText(text, errors);
+  return { level, errors };
+}
+
+export function loadValidLevelForTest(text:string, filename:string = 'test-level.md') {
+  const { level, errors } = loadLevelForTest(text, filename);
+  if (!level || errors.hasErrors) {
+    throw new Error(errors.describeErrors() || `${filename}: level loading returned no level`);
+  }
+  return level;
+}

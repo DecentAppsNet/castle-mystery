@@ -1,7 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import ErrorCollector from '../errorCollection/ErrorCollector';
-import SourceLineMap from '../importing/types/SourceLineMap';
-import { loadLevelFromText } from '../loadLevelUtil';
 import duplicateHeadingText from './fixtures/conclusions-duplicate-heading.md?raw';
 import duplicateVariableText from './fixtures/conclusions-duplicate-variable.md?raw';
 import missingConclusionLineText from './fixtures/conclusions-missing-conclusion-line.md?raw';
@@ -14,19 +11,10 @@ import successIdentitiesMetadataOnlyText from './fixtures/conclusions-success-id
 import unlockSelfText from './fixtures/conclusions-unlock-self.md?raw';
 import unlockUnknownText from './fixtures/conclusions-unlock-unknown.md?raw';
 import unknownCharacterOptionText from './fixtures/conclusions-unknown-character-option.md?raw';
-
-function _createSourceLineMap(text:string, filename:string):SourceLineMap {
-  return text.split('\n').map((_, index) => ({ filename, lineNo:index + 1 }));
-}
-
-function _loadLevel(text:string, filename:string) {
-  const errors = new ErrorCollector(text, _createSourceLineMap(text, filename));
-  const level = loadLevelFromText(text, errors);
-  return { level, errors };
-}
+import { loadLevelForTest } from './testLevelUtil';
 
 function _expectFailure(text:string, filename:string, expectedMessage:string) {
-  const { level, errors } = _loadLevel(text, filename);
+  const { level, errors } = loadLevelForTest(text, filename);
 
   expect(level).toBeNull();
   expect(errors.describeErrors()).toContain(expectedMessage);
@@ -34,7 +22,7 @@ function _expectFailure(text:string, filename:string, expectedMessage:string) {
 
 describe('loading levels - conclusions', () => {
   it('loads an authored conclusion and a generated identities conclusion into level.conclusions', () => {
-    const { level, errors } = _loadLevel(successAuthoredGeneratedText, 'conclusions-success-authored-generated.md');
+    const { level, errors } = loadLevelForTest(successAuthoredGeneratedText, 'conclusions-success-authored-generated.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -82,7 +70,7 @@ describe('loading levels - conclusions', () => {
   });
 
   it('loads multiple authored conclusions and locks conclusions targeted by unlockConclusions', () => {
-    const { level, errors } = _loadLevel(successAuthoredLockingText, 'conclusions-success-authored-locking.md');
+    const { level, errors } = loadLevelForTest(successAuthoredLockingText, 'conclusions-success-authored-locking.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -98,7 +86,7 @@ describe('loading levels - conclusions', () => {
   });
 
   it('treats an identities subsection with only metadata as overrides for the generated identities conclusion', () => {
-    const { level, errors } = _loadLevel(successIdentitiesMetadataOnlyText, 'conclusions-success-identities-metadata-only.md');
+    const { level, errors } = loadLevelForTest(successIdentitiesMetadataOnlyText, 'conclusions-success-identities-metadata-only.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();

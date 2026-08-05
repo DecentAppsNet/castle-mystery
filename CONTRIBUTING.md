@@ -87,7 +87,8 @@ Guidelines:
 * Diagnostic tests under `/tempTests` may not inherit the same TypeScript path-alias and raw-import setup as files under `src/`. Prefer relative imports there, and if a diagnostic needs `*.md?raw` imports, add or reference a local `.d.ts` declaration in `/tempTests` rather than assuming existing project declarations will be visible.
 * Delete diagnostic tests when they are no longer needed. If the same test keeps proving useful, replace it with a permanent test that follows the normal project test rules.
 * If a test needs authored fixture content, import the fixture as text instead of loading it from the filesystem at runtime.
-* Do not use multi-line assignments to a single test value. Put substantial authored test data in fixtures and import it instead.
+* Import complete authored documents from fixtures. Tests may make small, localized inline replacements to a base fixture when the replacement is the behavior under test.
+* Put substantial authored content, malformed document structures, and changes spanning multiple sections in dedicated fixtures.
 * If code under test would otherwise perform filesystem, shell, subprocess, or network I/O, mock that boundary rather than performing the real operation.
 
 ## Code Coverage
