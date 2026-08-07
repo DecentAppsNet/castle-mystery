@@ -1,6 +1,10 @@
 /* This module groups waypoint constants and lookup helpers used by room navigation and authored placement logic.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+/*
+The two exported functions in this module are only used by level loading code. It is deprecated.
+*/
+
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import Waypoint from "./types/Waypoint";
@@ -18,23 +22,6 @@ function _isExitPositionSupported(roomRect:Room['rect'], exit:RoomExit):boolean 
   if (exit.x === roomRect.x || exit.x === roomRect.x + roomRect.width) return true;
   if (_isAtFloorY(exit.y, roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET)) return true;
   return false;
-}
-
-export function findExitWaypoint(roomId:string, roomRect:Room['rect'], exit:RoomExit, waypoints:Waypoint[]):Waypoint {
-  assert(_isExitPositionSupported(roomRect, exit), `exit for room ${roomId} at (${exit.x}, ${exit.y}) is not on a supported boundary`);
-  const waypoint = waypoints.find(candidate =>
-    candidate.position.x === exit.x && candidate.position.y === exit.y && candidate.position.z === WAYPOINT_MIDDLE_ROW_Z);
-  assertNonNullable(waypoint, `missing exit waypoint for room ${roomId} at (${exit.x}, ${exit.y})`);
-  return waypoint;
-}
-
-export function findNearestWaypoint(room:Room, x:number, y:number, predicate?:(waypoint:Waypoint) => boolean):Waypoint {
-  return _findNearestWaypoint(room, x, y, WAYPOINT_MIDDLE_ROW_Z, predicate);
-}
-
-export function findNearestWaypointToPosition(room:Room, position:Position,
-  predicate?:(waypoint:Waypoint) => boolean):Waypoint {
-  return _findNearestWaypoint(room, position.x, position.y, position.z, predicate);
 }
 
 function _isAtFloorY(y:number, floorY:number):boolean {
@@ -60,4 +47,21 @@ function _findNearestWaypoint(room:Room, x:number, y:number, z:number,
   });
   if (!nearestWaypoint) throw new Error(`unable to find waypoint in room ${room.id}`);
   return nearestWaypoint;
+}
+
+export function findExitWaypoint(roomId:string, roomRect:Room['rect'], exit:RoomExit, waypoints:Waypoint[]):Waypoint {
+  assert(_isExitPositionSupported(roomRect, exit), `exit for room ${roomId} at (${exit.x}, ${exit.y}) is not on a supported boundary`);
+  const waypoint = waypoints.find(candidate =>
+    candidate.position.x === exit.x && candidate.position.y === exit.y && candidate.position.z === WAYPOINT_MIDDLE_ROW_Z);
+  assertNonNullable(waypoint, `missing exit waypoint for room ${roomId} at (${exit.x}, ${exit.y})`);
+  return waypoint;
+}
+
+export function findNearestWaypoint(room:Room, x:number, y:number, predicate?:(waypoint:Waypoint) => boolean):Waypoint {
+  return _findNearestWaypoint(room, x, y, WAYPOINT_MIDDLE_ROW_Z, predicate);
+}
+
+export function findNearestWaypointToPosition(room:Room, position:Position,
+    predicate?:(waypoint:Waypoint) => boolean):Waypoint {
+  return _findNearestWaypoint(room, position.x, position.y, position.z, predicate);
 }

@@ -15,7 +15,7 @@ import {
   WAYPOINT_BACK_ROW_Z,
   WAYPOINT_FRONT_ROW_Z,
   WAYPOINT_MIDDLE_ROW_Z,
-} from "@/game/waypointUtil";
+} from "@/levelLoading2/activityLoading/waypointFindingUtil";
 import { ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
 import Room from "@/game/types/Room";
 import Position from "@/game/types/Position";

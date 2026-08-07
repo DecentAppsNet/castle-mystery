@@ -10,6 +10,7 @@ import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE
 import { addCharacterKeyframe } from "../timelineLoading/editingUtil";
 import { formatMsecsAsTimestamp } from "./timestampUtil";
 import { isPositionInOrOnRect } from "@/game/rectUtil";
+import { findWaypointAtPosition } from "./waypointFindingUtil";
 
 const WALK_MSECS_PER_PIXEL = 60;
 
@@ -142,7 +143,9 @@ function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Po
   // Last part of path is to specific position in final room.
   const toRoom = roomPath[roomPath.length-1];
   const toWaypoint = findNearestWaypointToPosition(toRoom, toPosition);
-  const finalRoomWaypoints = _findWaypointPath(toRoom, waypoint, toWaypoint);
+  const fromWaypoint = findWaypointAtPosition(toRoom, waypoint.position); // Need waypoint in the destination room.
+  assertNonNullable(fromWaypoint);
+  const finalRoomWaypoints = _findWaypointPath(toRoom, fromWaypoint, toWaypoint);
   return _joinWaypointPaths(waypoints, finalRoomWaypoints);
 }
 

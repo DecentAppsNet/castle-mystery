@@ -217,14 +217,10 @@ function _areActivitiesWellOrdered(activities:readonly Activity[], startTime:num
   return true;
 }
 
-function _findNextActivityStartTime(prevActivity:Readonly<Activity>|null):number|null {
-  if (!prevActivity || !prevActivity.endTime) return null;
-  return prevActivity.endTime;
-}
-
 function _resolveRelativeTimestampAsNeeded(activity:Activity) {
   if (activity.startTime !== null || doesActivityUseEndTimestamp(activity.verb)) return;
-  activity.startTime = _findNextActivityStartTime(activity.prevActivity);
+  const { prevActivity } = activity;
+  activity.startTime = (prevActivity && prevActivity.endTime !== null) ? prevActivity.endTime : null;
 }
 
 type ScheduleActivityCallback = (level:Level, activity:Activity, timeline:EditableTimeline, errors:ErrorCollector) => boolean;

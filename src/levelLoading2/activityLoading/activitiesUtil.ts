@@ -1,4 +1,3 @@
-import { assert } from "decent-portal";
 import Activity from "./types/Activity";
 import ActivityParsingRules from "./types/ActivityParsingRules";
 import { ErrorCollector } from "../errorCollection";
@@ -11,11 +10,10 @@ function _resolveImpliedSubjects(activities:Activity[], activeCharacterId:string
   for(let i = 0; i < activities.length; ++i) {
     const activity = activities[i];
     const characterId = activity.parts.characterId;
-    assert(typeof characterId === 'string');
-    if (characterId === null) {
-      activity.parts.characterId = lastCharacterId;
-    } else {
+    if (typeof characterId === 'string') {
       lastCharacterId = characterId;
+    } else {
+      activity.parts.characterId = lastCharacterId;
     }
   }
 }

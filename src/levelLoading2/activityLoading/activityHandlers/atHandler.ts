@@ -12,9 +12,9 @@ import Room from "@/game/types/Room";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import Waypoint from "@/game/types/Waypoint";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
-import { clamp } from "@/common/numberUtil";
 import { calcWalkDurationToRoom, scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
 import Character from "@/game/types/Character";
+import { findNearestFloorWaypointToPosition } from "../waypointFindingUtil";
 
 function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
@@ -26,39 +26,18 @@ function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:TimelineKeyframe):
   return claimedWaypoints;
 }
 
-function _isMiddleRowWaypoint(waypoint:Waypoint):boolean { // TODO needs that half offset stuff.
-  return waypoint.position.z === ROOM_MIDDLE_ROW_CENTER_Z
-}
-
-function _isGroundFloorWaypoint(waypoint:Waypoint, room:Room):boolean { // TODO needs to use the offset.
-  return waypoint.position.y === room.rect.y + room.rect.height;
-}
-
 function _findBestTargetWaypoint(waypoints:Waypoint[], claimedWaypoints:Waypoint[], targetRoom:Room, targetXPercent:number):Waypoint {
-  const targetX = targetRoom.rect.x + (targetXPercent * targetRoom.rect.width);
+  const x = targetRoom.rect.x + (targetXPercent * targetRoom.rect.width);
 
   assert(waypoints.length > 0);
 
-  let bestScore = -Infinity;
-  let bestWaypoint = null;
-  for(let waypointI = 0; waypointI < waypoints.length; ++waypointI) {
-    const waypoint = waypoints[waypointI];
-    let score = 0;
-    if (_isGroundFloorWaypoint(waypoint, targetRoom)) score += 100000;
-    if (!claimedWaypoints.includes(waypoint)) score += 10000;
-    if (_isMiddleRowWaypoint(waypoint)) score += 1000;
-    score += 100 - clamp(Math.abs(waypoint.position.x - targetX), 0, 100);
-
-    if (score > bestScore) {
-      bestWaypoint = waypoint;
-      bestScore = score;
-    }
-  }
-
-  assertNonNullable(bestWaypoint);
-  return bestWaypoint;
+  const targetPosition = {x, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z};
+  let waypoint = findNearestFloorWaypointToPosition(targetRoom, targetPosition, claimedWaypoints); 
+  if (waypoint) return waypoint;
+  waypoint = findNearestFloorWaypointToPosition(targetRoom, targetPosition); // A crowded room. Just share a square with somebody else.
+  assertNonNullable(waypoint, 'How can there be no available waypoints in the room?');
+  return waypoint;
 }
-
 
 function _findCharacterIFromId(characters:readonly Character[], characterId:string):number|null {
   for(let i = 0; i < characters.length; ++i) {
