@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 - `npm run dev` — start Vite dev server (port 3000).
-- `npm run build` — `tsc` typecheck, Vite build, then copy `dist/.vite` into `public/` (needed so dev server can serve the manifest).
+- `npm run build` — `tsc` typecheck followed by the Vite production build.
 - `npm run lint` — ESLint over `.ts`/`.tsx`; warnings fail (`--max-warnings 0`).
 - `npm run check:unused-exports` — `knip` for unused exports.
 - `npm test` — Vitest single-run over `src/` (app code only).

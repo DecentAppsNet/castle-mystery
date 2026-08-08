@@ -15,7 +15,6 @@ dist-ssr
 *.kra
 workAssets
 coverage
-public/.vite
 adhocTests
 tempTests/*
 !tempTests/.gitkeep

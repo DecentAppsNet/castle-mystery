@@ -6,7 +6,6 @@ import { createDiscoveryStateSnapshot } from "./dynamicStateRebuild/discoverySta
 import { applyExitState, PendingRoomEffect } from "./dynamicStateRebuild/exitStateApplicationUtil";
 import { finalizeDynamicStateRebuild } from "./dynamicStateRebuild/finalizationUtil";
 import { applyInventoryState } from "./dynamicStateRebuild/inventoryApplicationUtil";
-import { resolveCharacterPosesAndActiveFocus } from "./dynamicStateRebuild/poseResolutionUtil";
 import { applyVisibilityState } from "./dynamicStateRebuild/visibilityApplicationUtil";
 import GameState from "./types/GameState";
 import { createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateCharactersByIdUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
@@ -27,6 +26,6 @@ export function rebuildDynamicStateForTime(gameState:GameState, time:number, pre
   applyInventoryState(gameState, time, previousTime, metaTime, pendingRoomEffects);
   applyExitState(gameState, time, previousTime, metaTime, pendingRoomEffects);
   assert(gameState.activeCharacterId === originalActiveCharacterId, 'Prior to resolveCharacterPosesAndActiveFocus() call, no changes to gameState.activeCharacterId should be made.');
-  resolveCharacterPosesAndActiveFocus(gameState, time);
+  // resolveCharacterPosesAndActiveFocus(gameState, time); TODO There are no itineraries. Need to move to using timeline.
   finalizeDynamicStateRebuild(gameState, time, pendingRoomEffects, discoveryStateSnapshot);
 }

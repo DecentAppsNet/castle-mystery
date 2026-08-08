@@ -71,6 +71,6 @@ async function _loadLevelTextWithSourceLineMap(filename:string, context:LoadImpo
   }
 }
 
-export async function loadLevelTextWithSourceLineMap(filename:string):Promise<SourceMappedText> {
+export async function loadLevelWithImportsAndSourceLineMap(filename:string):Promise<SourceMappedText> {
   return _loadLevelTextWithSourceLineMap(filename, { cache:new Map() }, [filename]);
 }

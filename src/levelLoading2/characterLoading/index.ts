@@ -62,7 +62,7 @@ function _findCharacterWaypoint(fromPosition:Position, rooms:readonly Room[]):Wa
 }
 
 export function loadCharactersPartially(charactersSectionText:string, roomsSectionText:string, rooms:Room[], errors:ErrorCollector):Character[]|null {
-  const originalErroCount = errors.count;
+  const originalErrorCount = errors.count;
 
   if (!charactersSectionText) return [];
 
@@ -80,7 +80,7 @@ export function loadCharactersPartially(charactersSectionText:string, roomsSecti
     return _parseCharacter(characterId, waypoint, sectionEntry, errors);
   });
   
-  return errors.count <= originalErroCount ? characters : null;
+  return errors.count <= originalErrorCount ? characters : null;
 }
 
 function _createAllCharactersById(characters:Character[]):Map<string, Character> {
@@ -102,6 +102,7 @@ export function addCharactersToLevel(characters:Character[], items:Item[], level
   level.allCharactersById = _createAllCharactersById(characters);
 
   level.characters = _findAllPlacedCharacters(characters);
+  level.initialCharacters = level.characters; // TODO - see if you can remove this member from Level and GameState.
   
   return errors.count <= originalErrorCount;
 }

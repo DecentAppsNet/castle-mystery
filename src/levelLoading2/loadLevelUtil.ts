@@ -9,6 +9,12 @@ import { loadConclusions } from "./conclusionLoading/";
 import { findLastActivityEndTime, findStartTimeFromItinerary, loadActivitiesPartially } from "./activityLoading/";
 import { scheduleActivities } from "./timelineLoading/";
 import { findDiscoverableCounts } from "./discoverability";
+import { loadLevelWithImportsAndSourceLineMap } from "./importing";
+
+function _levelUrlToFilename(levelUrl:string):string {
+  const urlSegments = levelUrl.split('/').filter(segment => segment.length > 0);
+  return urlSegments[urlSegments.length - 1] || levelUrl;
+}
 
 /** 
  * Error handling design:
@@ -68,4 +74,12 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   level.discoverableRoomCount = loadingContext.discoverableRoomCount ?? counts.discoverableRoomCount;
 
   return errors.count <= originalErrorCount ? level : null;
+}
+
+export async function loadLevelFromUrl(levelFileUrl:string):Promise<{level:Level|null, errors:ErrorCollector}> {
+  const filename = _levelUrlToFilename(levelFileUrl); // For security, any extra path information is stripped. Level files will be retrieved from a fixed location later.
+  const sourceMappedText = await loadLevelWithImportsAndSourceLineMap(filename);
+  const errors = new ErrorCollector(sourceMappedText.text, sourceMappedText.sourceLineMap);
+  const level = loadLevelFromText(sourceMappedText.text, errors);
+  return { level, errors };
 }

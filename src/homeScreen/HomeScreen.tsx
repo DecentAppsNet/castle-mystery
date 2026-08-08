@@ -153,7 +153,7 @@ function HomeScreen() {
     return (
       <div className={styles.initErrorContainer}>
         <div className={styles.initErrorCard}>
-          <h1>Unsupported Browser</h1>
+          <h1>Error</h1>
           <p>{initErrorMessage}</p>
         </div>
       </div>

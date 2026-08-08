@@ -61,10 +61,6 @@ The template isn't a framework. It's just a reasonable starting point for a cert
 
 Following this sensibility, things like the LLM wrapper, widgets, and persistence functionality are in-lined into the project rather than kept as dependencies in packages. This practice is sometimes called "vendoring". The basic rationale is that sometimes it's a better to spend time understanding and writing code rather than maintaining the sprawl of a thousand or more packages. These decisions have tradeoffs, but I prefer to set the balance towards low-dependency development.
 
-## PWA Support
-
-You'll see a little bit of extra code for PWA support - the service worker registration and a manifest.json file. If this is unwelcome complexity, feel free to delete it. But it does give you and your users an ability to install the web app locally as an app that can run fully offline.
-
 ## Changing LLM Models
 
 You can configure the supported models in `/public/app-manifest.json` to the models you would like your app to support. It's reasonable to only support one model, since your prompts and other behavior may be coupled to a single model. But adding more models can give your users options for varied device capabilities.

@@ -41,7 +41,6 @@ export default defineConfig(({mode}) => {
     },
     build: { 
       sourcemap: true, 
-      manifest: true,
       chunkSizeWarningLimit: 7000,
     },
     test: {

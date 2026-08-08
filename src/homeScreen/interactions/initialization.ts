@@ -4,11 +4,10 @@
 import { msecsToMinutes } from "./gameplay";
 import { createGameState } from "@/game/gameUtil";
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
-import { loadLevelFromUrl } from "@/levelLoading/levelUtil";
-import { appendGenLevelsToManifest, loadLevelManifestFromUrl } from "@/levelLoading/manifestUtil";
+import { loadLevelFromUrl } from "@/levelLoading2";
+import { loadLevelManifestFromUrl } from "@/levelLoading/manifestUtil";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
-import GameState from "@/game/types/GameState";
-import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
+import GameState from "@/game/types/GameState"; 
 
 export type InitResults = {
   gameState:GameState,
@@ -29,35 +28,22 @@ function _checkRequiredBrowserApisSupported() {
 }
 
 async function _runInit():Promise<InitResults|null> {
-  const initTiming = 'app init';
-  const manifestTiming = 'level manifest load';
-  startTiming(initTiming);
-  try {
-    _checkRequiredBrowserApisSupported();
-    startTiming(manifestTiming);
-    const baseManifest = await loadLevelManifestFromUrl('/levels/levels.md');
-    endTiming(manifestTiming);
-    // `npm run dev-gen` only: surface in-progress generator candidates (_gen.*.md under public/levels/) as extra
-    // "(GEN) " tabs in the level selector. Normal `npm run dev` and production builds behave as before.
-    const levelManifest = import.meta.env.MODE === 'dev-gen'
-      ? await appendGenLevelsToManifest(baseManifest, '/levels/levels.md')
-      : baseManifest;
-    const initialLevelUrl = levelManifest.levelUrls[levelManifest.lastLevelI] || levelManifest.levelUrls[0] || '/levels/doors.md';
-    const level = await loadLevelFromUrl(initialLevelUrl);
-    const imageSet = await createImageSetFromLevel(level);
-    const gameStateTiming = `game state creation (${initialLevelUrl})`;
-    startTiming(gameStateTiming);
-    const gameState = createGameState(level, imageSet);
-    endTiming(gameStateTiming);
-    const minutes = msecsToMinutes(gameState.time);
-    return {
-      gameState,
-      minutes,
-      levelManifest
-    };
-  } finally {
-    endTiming(initTiming);
+  _checkRequiredBrowserApisSupported();
+  const levelManifest = await loadLevelManifestFromUrl('/levels/levels.md');
+  const initialLevelUrl = levelManifest.levelUrls[levelManifest.lastLevelI] ?? levelManifest.levelUrls[0];
+  const { level, errors } = await loadLevelFromUrl(initialLevelUrl);
+  if (!level) {
+    console.error(errors.describeErrors());
+    throw new Error('Level could not be loaded due to errors. See console for details.');
   }
+  const imageSet = await createImageSetFromLevel(level);
+  const gameState = createGameState(level, imageSet);
+  const minutes = msecsToMinutes(gameState.time);
+  return {
+    gameState,
+    minutes,
+    levelManifest
+  };
 }
 
 export function init():Promise<InitResults|null> {
