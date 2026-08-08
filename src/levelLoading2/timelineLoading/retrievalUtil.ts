@@ -78,6 +78,11 @@ export function findKeyframeForTime(keyframes:TimelineKeyframe[], time:number):T
   return beforeKeyframe;
 }
 
+export function findRoomKeyframeForTime(keyframes:TimelineKeyframe[], roomI:number, time:number):RoomKeyframe {
+  const { beforeKeyframe } = _findKeyframesBeforeAndAfterTime(keyframes, time);
+  return beforeKeyframe.rooms[roomI];
+}
+
 function _isEmptyKeyframe(keyframe:Partial<CharacterKeyframe>|Partial<RoomKeyframe>):boolean {
   for (const key in keyframe) {
     if (Object.hasOwn(keyframe, key)) return false;

@@ -28,7 +28,7 @@ describe('loading levels - items', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.itemsById.size).toBe(0);
+    expect(level?.itemsById.size).toBe(1);
     expect(level?.rooms).toHaveLength(1);
     expect(level?.rooms[0]?.items).toHaveLength(1);
     expect(level?.rooms[0]?.items[0]).toEqual({

@@ -3,7 +3,7 @@ import { ErrorCollector } from "./errorCollection/";
 import { loadLevelSections } from "./levelFileSectionUtil";
 import { initMutableLevelAndLoadingContext } from "./generalLoading/";
 import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading/";
-import { loadItemsPartially } from "./itemLoading/";
+import { addItemsToLevel, loadItemsPartially } from "./itemLoading/";
 import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading/";
 import { loadConclusions } from "./conclusionLoading/";
 import { findLastActivityEndTime, findStartTimeFromItinerary, loadActivitiesPartially } from "./activityLoading/";
@@ -51,6 +51,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Add items, characters, and rooms to level, resolving dependencies.
   if (!addRoomsToLevel(rooms, loadingContext.groundFloorRoomRef, level, errors)) return null;
   if (!addCharactersToLevel(characters, items, level, errors)) return null;
+  if (!addItemsToLevel(items, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
   level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms, errors);

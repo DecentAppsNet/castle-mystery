@@ -8,6 +8,7 @@ import { getItemImageAssetUrl } from "@/game/imageUrlUtil";
 import { rand } from "@/common/randUtil";
 import { normalizeId } from "@/game/idUtil";
 import { createDefaultPosition } from "@/game/types/Position";
+import { MutableLevel } from "@/game/types/Level";
 
 function _createStubItem(itemId:string):Item {
   return {...createDefaultItem(), id:itemId, description:'Stub Item'};
@@ -79,4 +80,9 @@ export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollecto
   });
   
   return errors.count <= originalErrorCount ? items : null;
+}
+
+export function addItemsToLevel(items:Item[], level:MutableLevel, _errors:ErrorCollector):boolean {
+  items.forEach(item => level.itemsById.set(item.id, item));
+  return true;
 }
