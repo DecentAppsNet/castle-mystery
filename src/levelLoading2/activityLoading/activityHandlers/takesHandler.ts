@@ -11,8 +11,14 @@ import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 import Item from "@/game/types/Item";
 import { findRoomKeyframeForTime } from "@/levelLoading2/timelineLoading/retrievalUtil";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
+import Waypoint from "@/game/types/Waypoint";
+import { findNearestFloorWaypointToPosition, isExitWaypoint, isFloorWaypoint } from "../waypointFindingUtil";
+import { arePositionsOrthogonal } from "@/game/types/Position";
+import Room from "@/game/types/Room";
+import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 
 const LEFT_HAND = 'left hand', RIGHT_HAND = 'right hand', INVENTORY = 'inventory', ROOM = 'room';
+const TAKE_EFFECT_TIME = 1000;
 
 function _getItemPlacement(characterKeyframe:CharacterKeyframe, itemId:string):string {
   if (characterKeyframe.leftHandItem?.id === itemId) return LEFT_HAND;
@@ -80,7 +86,27 @@ export function createTakesParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
-const TAKE_EFFECT_TIME = 1000;
+function _scoreTakeWaypoint(item:Item, waypoint:Waypoint):number {
+  let score = 0;
+  if (arePositionsOrthogonal(item.position, waypoint.position)) score += 1000;
+  if (waypoint.position.z > item.position.z) score += 500;
+  score += 100 - Math.hypot(item.position.x - waypoint.position.x, item.position.z - waypoint.position.z);
+  return score;
+}
+
+function _findBestTakeWaypoint(room:Room, characterWaypoint:Waypoint, item:Item):Waypoint {
+  let bestScore = -Infinity;
+  let bestWaypoint:Waypoint = characterWaypoint;
+  room.waypoints.forEach(waypoint => {
+    if (waypoint === characterWaypoint || isExitWaypoint(room, waypoint) || !isFloorWaypoint(room, waypoint)) return;
+    const score = _scoreTakeWaypoint(item, waypoint);
+    if (score > bestScore) {
+      bestWaypoint = waypoint;
+      bestScore = score;
+    }
+  });
+  return bestWaypoint;
+}
 
 export function scheduleTakesActivity(level:Level, 
     activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
@@ -97,11 +123,10 @@ export function scheduleTakesActivity(level:Level,
   const item = level.itemsById.get(itemId);
   assertNonNullable(item);
 
-  activity.endTime = activity.startTime + TAKE_EFFECT_TIME;
-
   const itemPlacement = _getItemPlacement(character, itemId);
   if (itemPlacement !== ROOM) { // Handle movement of item from one place on the character to another.
     _scheduleCharacterItemMovement(character, item, itemPlacement, target, characterI, activity.startTime, editableTimeline);
+    activity.endTime = activity.startTime;
     return true;
   }
 
@@ -114,16 +139,30 @@ export function scheduleTakesActivity(level:Level,
 
   const roomI = editableTimeline.roomIdToI[characterRoom.id];
   assertNonNullable(roomI);
-  const room = findRoomKeyframeForTime(editableTimeline.keyframes, roomI, activity.startTime);
-  if (!_isItemInRoom(room, itemId)) {
+  const roomKeyframe = findRoomKeyframeForTime(editableTimeline.keyframes, roomI, activity.startTime);
+  if (!_isItemInRoom(roomKeyframe, itemId)) {
     errors.addAt(`"${itemId}" item is not in "${characterRoom.id}" room with "${characterId}" character, so can't be taken.`, 'itinerary');
     return false;
   }
-  
-  _scheduleRemoveItemFromRoom(room, itemId, roomI, activity.startTime, editableTimeline);
-  _scheduleCharacterItemMovement(character, item, itemPlacement, target, characterI, activity.startTime, editableTimeline);
+
+  // Move character close to item to take it.
+  let scheduleTime = activity.startTime;
+  const characterWaypoint = findNearestFloorWaypointToPosition(characterRoom, character.position);
+  assertNonNullable(characterWaypoint);
+  const takeWaypoint = _findBestTakeWaypoint(characterRoom, characterWaypoint, item);
+  const scheduleResult = scheduleCharacterMovementWithinRoom(characterRoom, character.position, scheduleTime, takeWaypoint.position,
+    characterI, editableTimeline);
+  if (typeof scheduleResult === 'string') {
+    errors.addAt(scheduleResult, 'itinerary');
+    return false;
+  }
+  scheduleTime = scheduleResult;
+
+  _scheduleRemoveItemFromRoom(roomKeyframe, itemId, roomI, scheduleTime, editableTimeline);
+  _scheduleCharacterItemMovement(character, item, itemPlacement, target, characterI, scheduleTime, editableTimeline);
 
   // TODO - add effect to timeline. (Needs some design.)
+  activity.endTime = scheduleTime + TAKE_EFFECT_TIME;
 
   return true;
 }

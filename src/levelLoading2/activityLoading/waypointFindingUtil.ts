@@ -53,3 +53,13 @@ export function findNearestFloorWaypointToPosition(room:Room, position:Position,
 export function findWaypointAtPosition(room:Room, position:Position):Waypoint|null {
   return room.waypoints.find(w => arePositionsEqual(w.position, position)) ?? null;
 }
+
+export function isFloorWaypoint(room:Room, waypoint:Waypoint):boolean {
+  const floorY = room.rect.y + room.rect.height;
+  return _isAtFloorY(waypoint.position.y, floorY);
+}
+
+export function isExitWaypoint(room:Room, waypoint:Waypoint):boolean {
+  return waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z
+    && room.exits.some(exit => exit.x === waypoint.position.x && exit.y === waypoint.position.y);
+}

@@ -77,13 +77,15 @@ export function scheduleAtActivity(level:Level,
   const toPos = _findTargetPosition(toKeyframe, toRoom);
   const toTime = toKeyframe.time;
 
-  const errorMessage = isRelativeTimestamp 
+  const scheduleResult = isRelativeTimestamp 
     ? scheduleCharacterMovementToRoom(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableTimeline)
     : scheduleCharacterMovementToRoomAtTime(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableTimeline)
-  if (!errorMessage) return true;
-  
-  errors.addAt(errorMessage, 'itinerary'); // TODO need line# from activity.
-  return false;
+  if (typeof scheduleResult === 'string') {
+    errors.addAt(scheduleResult, 'itinerary'); // TODO need line# from activity.
+    return false;
+  }
+  assert(toTime === null || toTime === scheduleResult);
+  return true;
 }
 
 export function createAtActivityParseFormat():ParseFormat {

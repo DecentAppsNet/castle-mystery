@@ -1,2 +1,2 @@
-export { loadLevelFromText, loadLevelFromUrl } from './loadLevelUtil';
+export { loadLevelFromUrl } from './loadLevelUtil';
 export { loadLevelManifestFromUrl } from './manifestUtil';

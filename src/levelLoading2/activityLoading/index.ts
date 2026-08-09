@@ -3,6 +3,6 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 export { initActivityParsingRules } from "./parseItineraryUtil";
-export { loadActivitiesPartially, findAllCharactersAndItemsInActivities } from './activitiesUtil';
+export { loadActivitiesPartially } from './activitiesUtil';
 export { findActiveCharacterFromItinerary, findStartTimeFromItinerary, findLastActivityEndTime } from './levelTimeUtil';
 export { beginsWithTimestamp, parseTimestampToMsecs } from './timestampUtil';

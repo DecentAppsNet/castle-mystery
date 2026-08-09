@@ -32,10 +32,8 @@ export function findLastActivityEndTime(activities:Activity[]):number|null {
 export function findStartTimeFromItinerary(itinerarySectionText:string, rooms:readonly Room[], characters:readonly Character[], activeCharacterId:string, rules:ActivityParsingRules, errors:ErrorCollector):number|null {
   if (!itinerarySectionText.trim()) return null;
   const parseResult = _parseFirstActivity(itinerarySectionText, rules, errors);
-   if (typeof parseResult === 'string') {
-    errors.addAt(parseResult, 'itinerary');
-    return null;
-  }
+  if (!parseResult) return null;
+  
   assertNonNullable(parseResult);
   if (parseResult.startTime !== null) return parseResult.startTime;
   if (parseResult.verb === '@') {

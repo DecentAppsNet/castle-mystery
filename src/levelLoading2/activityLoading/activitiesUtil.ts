@@ -18,10 +18,6 @@ function _resolveImpliedSubjects(activities:Activity[], activeCharacterId:string
   }
 }
 
-function _addIfSet(value:string|number|null|undefined, idSet:Set<string>) {
-  if (typeof value === 'string') idSet.add(value);
-}
-
 type ActivityGroup = {
   startTime:number,
   activities:Activity[]
@@ -44,26 +40,11 @@ function _groupActivities(activities:readonly Activity[]):ActivityGroup[] {
 }
 
 function _sortActivities(activities:readonly Activity[]):Activity[] {
+  if (activities.length < 2) return [...activities];
   const groups = _groupActivities(activities);
   let sortedActivities:Activity[] = [];
   groups.forEach(group => { sortedActivities = sortedActivities.concat(group.activities); });
   return sortedActivities;
-}
-
-export function findAllCharactersAndItemsInActivities(activities:Activity[]):
-    {characterIds:string[], itemIds:string[]} {
-  const characterIdSet = new Set<string>();
-  const itemIdSet = new Set<string>();
-  for(let i = 0; i < activities.length; ++i) {
-    const activity = activities[i];
-    _addIfSet(activity.parts.characterId, characterIdSet);
-    _addIfSet(activity.parts.toCharacterId, characterIdSet);
-    _addIfSet(activity.parts.itemId, itemIdSet);
-    _addIfSet(activity.parts.toItemId, itemIdSet);
-  }
-  const characterIds = [...characterIdSet];
-  const itemIds = [...itemIdSet];
-  return {characterIds, itemIds};
 }
 
 export function loadActivitiesPartially(itinerarySectionText:string, rules:ActivityParsingRules, 

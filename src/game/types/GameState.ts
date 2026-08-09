@@ -8,6 +8,7 @@ import ScalingFactors from "./ScalingFactors";
 import Effect from "../effects/types/Effect";
 import Conclusion from "../conclusions/types/Conclusion";
 import RoomShellCache from "./RoomShellCache";
+import Timeline from "./Timeline";
 
 type GameState = {
   characters:Character[],
@@ -17,6 +18,7 @@ type GameState = {
   unplacedItemsById:Map<string, Item>,
   discoveredCharacterIds:string[],
   discoveredItemIds:string[],
+  readonly timeline:Timeline;
   readonly discoverableCharacterCount:number,
   readonly discoverableItemCount:number,
   readonly discoverableRoomCount:number,

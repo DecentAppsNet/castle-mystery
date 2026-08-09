@@ -11,7 +11,7 @@ import { getBackgroundImageAssetUrl } from "@/game/imageUrlUtil";
 import ActivityParsingRules, { AllowedValuesByIdentifierId } from "../activityLoading/types/ActivityParsingRules";
 import LevelLoadingContext from "../types/LevelLoadingContext";
 import { getSectionIdsFromSectionText, isSectionRequired } from "../levelFileSectionUtil";
-import { findActiveCharacterFromItinerary } from "../activityLoading/levelTimeUtil";
+import { findActiveCharacterFromItinerary } from "../activityLoading";
 
 const DEFAULT_WIN_SYNOPSIS = 'You won the level!';
 
