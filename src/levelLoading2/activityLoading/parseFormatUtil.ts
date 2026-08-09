@@ -37,6 +37,11 @@ export function makeLiteralOptions(texts:string[], isOptional = false):ParseOpti
   return {kind:'options', variableId:null, children, isOptional}; 
 }
 
+export function makeVariableLiteralOptions(variableId:string, texts:string[], isOptional = false):ParseOptions {
+  const children:ParseStep[] = texts.map((t) => makeLiteral(t,false));
+  return {kind:'options', variableId, children, isOptional};
+}
+
 export function makeNumber(variableId:string, isOptional = false):ParseNumber { 
   return{kind:'number', variableId, isOptional}; 
 }

@@ -33,6 +33,7 @@ import { scheduleSitsActivity } from "../activityLoading/activityHandlers/sitsHa
 import { scheduleStandsActivity } from "../activityLoading/activityHandlers/standsHandler";
 import { scheduleUnlocksActivity } from "../activityLoading/activityHandlers/unlocksHandler";
 import { scheduleWaitsActivity } from "../activityLoading/activityHandlers/waitsHandler";
+import EffectCue from "@/game/types/effectCues/EffectCue";
 
 function _findInsertAfterI(time:number, keyframes:TimelineKeyframe[]):number {
   assert(keyframes.length > 0);
@@ -129,7 +130,8 @@ function _createFirstCharacterKeyframe(character:Readonly<Character>):CharacterK
     items:[...character.items.map(duplicateItem)],
     leftHandItem: _duplicateOptionalItem(character.leftHandItem),
     rightHandItem: _duplicateOptionalItem(character.rightHandItem),
-    position: duplicatePosition(character.position)
+    position: duplicatePosition(character.position),
+    effectCues:[]
   };
   return keyframe;
 }
@@ -147,13 +149,23 @@ function _createFirstKeyframe(characters:readonly Character[], rooms:readonly Ro
   return { time, characters:characterKeyframes, rooms:roomKeyFrames };
 }
 
+function _combineEffectCues(toCharacterKeyframe:Partial<CharacterKeyframe>, effectCues:EffectCue[]):EffectCue[] {
+  const toEffectCues:EffectCue[] = toCharacterKeyframe.effectCues ?? [];
+  return [...toEffectCues, ...effectCues];
+}
+
 function _addCharacterKeyframeToTimelineKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
     characterI:number, toKeyframe:EditableTimelineKeyframe) {
   const toCharacterKeyframe:Partial<CharacterKeyframe> = toKeyframe.characters[characterI];
   assertNonNullable(toCharacterKeyframe);
   CHARACTER_KEYFRAME_KEYS.forEach(key => {
     const keyValue = (characterKeyframe as any)[key];
-    if (keyValue !== undefined) (toCharacterKeyframe as any)[key] = keyValue;
+    if (keyValue === undefined) return;
+    if (key !== 'effectCues') {
+      (toCharacterKeyframe as any)[key] = keyValue;
+      return;
+    }
+    toCharacterKeyframe.effectCues = _combineEffectCues(toCharacterKeyframe, keyValue as EffectCue[]);
   });
 }
 

@@ -34,7 +34,7 @@ describe('level loading - takes activities', () => {
     expect(snapshot.characters[level!.timeline.characterIdToI.sam].items.map(item => item.id)).toContain('key');
   });
 
-  it.only('errors when character attempts to take an item that is not in the level', () => {
+  it('errors when character attempts to take an item that is not in the level', () => {
     const text = replaceSection(defaultLevelText, 'itinerary', ['0:00:00 Sam takes Spoon']);
     const { level, errors } = loadLevelForTest(text, 'takes-undefined-item.md');
 

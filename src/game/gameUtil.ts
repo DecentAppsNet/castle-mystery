@@ -507,7 +507,8 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     lastActiveCharacterChangedValue:"",
     conclusionsRevision:0,
     lastNotifiedConclusionsRevision:0,
-    lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries())
+    lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries()),
+    timeline:level.timeline // Timeline is immutable - no harm in sharing instance.
   }
   rebuildDynamicStateForTime(gameState, level.initialTime, undefined, 0);
   _setActiveRoomDiscovered(gameState);

@@ -1,5 +1,5 @@
 import Level from "@/game/types/Level";
-import { createParseFormat, makeIdentifier, makeLiteralOptions, makeSequence, makeVerb } from "../parseFormatUtil";
+import { createParseFormat, makeIdentifier, makeLiteralOptions, makeSequence, makeVariableLiteralOptions, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading2/timelineLoading/types/EditableTimeline";
@@ -16,9 +16,9 @@ import { findNearestFloorWaypointToPosition, isExitWaypoint, isFloorWaypoint } f
 import { arePositionsOrthogonal } from "@/game/types/Position";
 import Room from "@/game/types/Room";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
+import TakeCue, { INVENTORY, LEFT_HAND, RIGHT_HAND, TAKE_EFFECT_TIME } from "@/game/types/effectCues/TakeCue";
 
-const LEFT_HAND = 'left hand', RIGHT_HAND = 'right hand', INVENTORY = 'inventory', ROOM = 'room';
-const TAKE_EFFECT_TIME = 1000;
+const ROOM = 'room';
 
 function _getItemPlacement(characterKeyframe:CharacterKeyframe, itemId:string):string {
   if (characterKeyframe.leftHandItem?.id === itemId) return LEFT_HAND;
@@ -57,10 +57,12 @@ function _scheduleCharacterItemMovement(keyframe:CharacterKeyframe, item:Item, i
     break;
 
     case INVENTORY:
-      nextKeyframe.items = keyframe.items.filter(i => i.id !== item.id);
+      const sourceItems = nextKeyframe.items ?? keyframe.items; // If previous code put something into inventory, retain that addition.
+      nextKeyframe.items = sourceItems.filter(i => i.id !== item.id);
     break;
 
-    // ROOM placement isn't handled here.
+    default:
+      assert(itemPlacement === ROOM); // removal from room handled elsewhere.
   }
 
   addCharacterKeyframe(nextKeyframe, characterI, time, editableTimeline);
@@ -80,7 +82,7 @@ export function createTakesParseFormat():ParseFormat {
   const takes = makeVerb('takes');
   const itemId = makeIdentifier('itemId', 'ItemId');
   const preposition = makeLiteralOptions(['in', 'into']);
-  const target = makeLiteralOptions([LEFT_HAND, RIGHT_HAND, INVENTORY]);
+  const target = makeVariableLiteralOptions('target', [LEFT_HAND, RIGHT_HAND, INVENTORY]);
   const targetSequence = makeSequence([preposition, target], true);
   const rootParseStep = makeSequence([characterId, takes, itemId, targetSequence]);
   return createParseFormat(rootParseStep);
@@ -114,6 +116,7 @@ export function scheduleTakesActivity(level:Level,
   
   const { characterId, itemId } = activity.parts;
   const target:string = typeof activity.parts.target === 'string' ? activity.parts.target : INVENTORY;
+  assert(target === LEFT_HAND || target === RIGHT_HAND || target === INVENTORY);
 
   assertNonNullable(characterId, 'implied subjects should have been resolved');
   assert(typeof itemId === 'string');
@@ -161,7 +164,8 @@ export function scheduleTakesActivity(level:Level,
   _scheduleRemoveItemFromRoom(roomKeyframe, itemId, roomI, scheduleTime, editableTimeline);
   _scheduleCharacterItemMovement(character, item, itemPlacement, target, characterI, scheduleTime, editableTimeline);
 
-  // TODO - add effect to timeline. (Needs some design.)
+  const takeCue:TakeCue = { kind:'takeItem', itemId, target };
+  addCharacterKeyframe({ effectCues:[takeCue] }, characterI, scheduleTime, editableTimeline);
   activity.endTime = scheduleTime + TAKE_EFFECT_TIME;
 
   return true;

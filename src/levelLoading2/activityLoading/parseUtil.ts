@@ -253,6 +253,11 @@ function _getLastToken(tokens:string[], tokenI:number):string {
   return tokenI > 0 ? tokens[tokenI-1] : 'Timestamp';
 }
 
+function _countWords(text:string):number {
+  const words = text.split(' ');
+  return words.length;
+}
+
 function _tryParseIdentifier(tokens:string[], fromI:number, step:ParseIdentifier, parts:ActivityParts, allowedValuesByIdentifierId:AllowedValuesByIdentifierId):string|number {
   const allowedValues = allowedValuesByIdentifierId[step.identifierKind];
   assertNonNullable(allowedValues, 'allowed values for an indentifier kind should be provided for all identifier parse steps');
@@ -260,14 +265,10 @@ function _tryParseIdentifier(tokens:string[], fromI:number, step:ParseIdentifier
   for(let valueI = 0; valueI < allowedValues.length; ++valueI) {
     const value = allowedValues[valueI];
     assert(isNormalizedId(value), `"${value} is not a normalized ID.`);
-    const valueWords = value.split(' ');
-    const wordCount = valueWords.length;
+    const wordCount = _countWords(value);
     let tokenCandidate = tokens[fromI];
-    let wordI = 0;
-    if (wordCount > 1) {
-      for(wordI = 1; wordI < wordCount && fromI + wordI < tokens.length; ++wordI) {
-        tokenCandidate += ` ${tokens[fromI + wordI]}`;
-      }
+    for(let wordI = 1; wordI < wordCount && fromI + wordI < tokens.length; ++wordI) {
+      tokenCandidate += ` ${tokens[fromI + wordI]}`;
     }
     tokenCandidate = normalizeId(tokenCandidate);
     if (value === tokenCandidate) {
@@ -281,15 +282,11 @@ function _tryParseIdentifier(tokens:string[], fromI:number, step:ParseIdentifier
 }
 
 function _tryParseLiteral(tokens:string[], fromTokenI:number, step:ParseLiteral, parts:ActivityParts):string|number {
-  const words = step.text.split(' ');
-  const wordCount = words.length;
+  const wordCount = _countWords(step.text);
   let candidateText = tokens[fromTokenI];
-  if (wordCount) {
-    for(let wordI = 1; wordI < wordCount; ++wordI) {
-      candidateText += ` ${tokens[fromTokenI+wordI]}`;
-    }
+  for(let wordI = 1; wordI < wordCount; ++wordI) {
+    candidateText += ` ${tokens[fromTokenI+wordI]}`;
   }
-
   if (step.text !== candidateText) return _concatExpectedMessage(`"${step.text}"`, _getLastToken(tokens, fromTokenI));
   if (step.variableId) _addPartValue(parts, step.variableId, candidateText);
   return fromTokenI + wordCount;;
