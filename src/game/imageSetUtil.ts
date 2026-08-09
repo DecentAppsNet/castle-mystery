@@ -12,10 +12,31 @@ import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
 import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
-import { findDirectReferencedCharacterIds, findDirectReferencedItemIds } from "./itineraryReferenceUtil";
+import Timeline from "./types/Timeline";
 
 export function createEmptyImageSet():ImageSet {
   return new Map();
+}
+
+// TODO - is this needed? Level should be returned with some data structure that has this. And I don't think there is any need for it to have every possible ID from imports.
+function _findDirectReferencedItemIds(timeline:Timeline):string[] {
+  const itemIds = new Set<string>();
+  timeline.keyframes.forEach(kf => {
+    kf.rooms.forEach(r => {
+      r.items.forEach(i => itemIds.add(i.id));
+    });
+    kf.characters.forEach(c => {
+      if (c.leftHandItem) itemIds.add(c.leftHandItem.id);
+      if (c.rightHandItem) itemIds.add(c.rightHandItem.id);
+      c.items.forEach(i => itemIds.add(i.id));
+    });
+  });
+  return [...itemIds];
+}
+
+// TODO - is this needed? Level should be returned with some data structure that has this.
+function _findDirectReferencedCharacterIds(timeline:Timeline):string[] {
+  return Object.keys(timeline.characterIdToI);
 }
 
 function _findPunchMaskImageUrl(imageUrl:string):string|null {
@@ -25,7 +46,7 @@ function _findPunchMaskImageUrl(imageUrl:string):string|null {
 
 function _findDirectReferencedItemImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>();
-  findDirectReferencedItemIds(level).forEach(itemId => {
+  _findDirectReferencedItemIds(level.timeline).forEach(itemId => {
     const item = level.itemsById.get(itemId) || null;
     if (item?.imageUrl) imageUrls.add(item.imageUrl);
   });
@@ -34,7 +55,7 @@ function _findDirectReferencedItemImageUrls(level:Level):string[] {
 
 function _findDirectReferencedCharacterFaceImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>();
-  findDirectReferencedCharacterIds(level).forEach(characterId => {
+  _findDirectReferencedCharacterIds(level.timeline).forEach(characterId => {
     const character = level.allCharactersById.get(characterId) || null;
     if (character?.faceImageUrl) imageUrls.add(character.faceImageUrl);
   });

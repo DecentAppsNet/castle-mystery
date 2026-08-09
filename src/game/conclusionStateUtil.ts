@@ -3,10 +3,8 @@
 
 import { syncConclusionsWithUnlocks } from "./conclusions/conclusionDiscoveryUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
-import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { isCharacterInteractive, isItemInteractive } from "./interactivityUtil";
 import { getOwnedItems } from "./itemOwnershipUtil";
-import { syncPairingKnowledge } from "./pairedItineraryUtil";
 import GameState from "./types/GameState";
 import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
 
@@ -31,36 +29,16 @@ function _isLevelComplete(conclusions:ReadonlyArray<Conclusion>):boolean {
   return conclusions.every(conclusion => !conclusion.isLocked && conclusion.isComplete);
 }
 
-function _createInitialAllCharactersById(gameState:GameState):Map<string, import("./types/Character").default> {
-  return new Map([
-    ...gameState.initialCharacters.map(character => [character.id, character] as const),
-    ...Array.from(gameState.initialUnplacedCharactersById.entries())
-  ]);
-}
-
-function _syncGameStatePairingKnowledge(gameState:GameState) {
-  const initialAllCharactersById = _createInitialAllCharactersById(gameState);
-  syncPairingKnowledge([
-    ...gameState.initialCharacters,
-    ...gameState.initialUnplacedCharactersById.values(),
-    ...gameState.characters,
-    ...gameState.unplacedCharactersById.values()
-  ], initialAllCharactersById, gameState.initialRooms, gameState.isLevelComplete);
-}
-
 function _syncLevelCompleteState(gameState:GameState):boolean {
   const nextIsLevelComplete = _isLevelComplete(gameState.conclusions);
   if (nextIsLevelComplete === gameState.isLevelComplete) return false;
   gameState.isLevelComplete = nextIsLevelComplete;
-  if (nextIsLevelComplete) {
-    _applyLevelCompleteReveal(gameState);
-    _syncGameStatePairingKnowledge(gameState);
-  }
+  if (nextIsLevelComplete) { _applyLevelCompleteReveal(gameState); }
   return true;
 }
 
 function _applyLevelCompleteReveal(gameState:GameState) {
-  gameState.rooms.forEach(room => {
+  gameState.initialRooms.forEach(room => {
     room.isDiscovered = true;
     room.isObscured = false;
   });
@@ -72,9 +50,6 @@ function _applyLevelCompleteReveal(gameState:GameState) {
   gameState.discoveredCharacterIds = gameState.initialCharacters
     .filter(isCharacterInteractive)
     .map(character => character.id);
-  gameState.characters.forEach(character => {
-    if (isCharacterInteractive(character)) character.isDiscovered = true;
-  });
   gameState.initialCharacters.forEach(character => {
     if (isCharacterInteractive(character)) character.isDiscovered = true;
   });
@@ -94,10 +69,10 @@ function _applyLevelCompleteReveal(gameState:GameState) {
   gameState.itemsById.forEach(item => {
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
   });
-  gameState.rooms.forEach(room => room.items.forEach(item => {
+  gameState.initialRooms.forEach(room => room.items.forEach(item => {
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
   }));
-  gameState.characters.forEach(character => getOwnedItems(character).forEach(item => {
+  gameState.initialCharacters.forEach(character => getOwnedItems(character).forEach(item => {
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
   }));
   gameState.discoveredItemIds = [...discoveredItemIds];
@@ -108,7 +83,7 @@ function _applyCompletedConclusionRoomReveals(gameState:GameState) {
     .filter(conclusion => conclusion.isComplete)
     .flatMap(conclusion => conclusion.revealRoomIds));
   if (!revealedRoomIds.size) return;
-  gameState.rooms.forEach(room => {
+  gameState.initialRooms.forEach(room => {
     if (revealedRoomIds.has(room.id)) room.isObscured = false;
   });
   gameState.initialRooms.forEach(room => {
@@ -136,14 +111,9 @@ export function updateGameStateForChangeConclusions(gameState:GameState, event:C
   _applyCompletedConclusionRoomReveals(gameState);
   const identitiesConclusion = gameState.conclusions.find(conclusion => conclusion.id === "identities") || null;
   if (identitiesConclusion?.isComplete) {
-    gameState.characters.forEach(character => {
-      character.isTitleKnown = true;
-    });
     gameState.initialCharacters.forEach(character => {
       character.isTitleKnown = true;
     });
   }
-  _syncGameStatePairingKnowledge(gameState);
   _syncLevelCompleteState(gameState);
-  rebuildDynamicStateForTime(gameState, gameState.time, undefined, 0);
 }

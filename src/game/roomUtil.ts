@@ -46,12 +46,12 @@ export function findRoomNearestToPosition(rooms:readonly Room[], x:number, y:num
       nearestDistanceSquared = distanceSquared;
     }
   }
-  assertNonNullable(nearestRoom, `logic in function is wrong`); // Already checked for no rooms case at top.
+  assertNonNullable(nearestRoom); // Already checked for no rooms case at top.
   return nearestRoom;
 }
 
-export function findCharactersInRoom(room:Room, characters:Character[]):Character[] {
-  return characters.filter(character => isPositionInRect(character.position.x, character.position.y, room.rect));
+export function findCharactersInRoom(room:Room, characters:readonly Character[]):Character[] {
+  return characters.filter(c => isPositionInRect(c.position.x, c.position.y, room.rect));
 }
 
 export function isActiveAudibleRoom(room:Room, activeRoom:Room):boolean {

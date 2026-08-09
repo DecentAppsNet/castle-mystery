@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { loadLevelFromText } from '@/levelLoading/levelUtil';
 import { findRightWallPanelSpans } from '../rightWallPanelUtil';
 import { MAP_TILE_SIZE } from '../roomGridUtil';
 import Rect from '../types/Rect';
 import Room, { createDefaultRoom } from '../types/Room';
-import rightWallPanelStablesShapeText from './fixtures/right-wall-panel-stables-shape.md?raw';
 
 function _createRoom(id:string, rect:Rect, isOutside:boolean):Room {
   return {
@@ -58,16 +56,6 @@ describe('rightWallPanelUtil', () => {
 
       expect(findRightWallPanelSpans(room, [room])).toEqual([
         { topY:0, height:MAP_TILE_SIZE * 3 }
-      ]);
-    });
-
-    it.skip('does not draw an upper-story panel when only the lower story has an inside room to the right', () => {
-      const level = loadLevelFromText(rightWallPanelStablesShapeText, 'right-wall-panel-stables-shape.md');
-      const stables = level.rooms.find(room => room.id === 'stables');
-
-      expect(stables).toBeDefined();
-      expect(findRightWallPanelSpans(stables!, level.rooms)).toEqual([
-        { topY:MAP_TILE_SIZE, height:MAP_TILE_SIZE }
       ]);
     });
   });

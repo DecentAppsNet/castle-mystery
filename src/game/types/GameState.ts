@@ -9,11 +9,10 @@ import Effect from "../effects/types/Effect";
 import Conclusion from "../conclusions/types/Conclusion";
 import RoomShellCache from "./RoomShellCache";
 import Timeline from "./Timeline";
+import TimelineKeyframe from "./TimelineKeyframe";
 
 type GameState = {
-  characters:Character[],
-  unplacedCharactersById:Map<string, Character>,
-  rooms:Room[],
+  timelineSnapshot:TimelineKeyframe,
   itemsById:Map<string, Item>,
   unplacedItemsById:Map<string, Item>,
   discoveredCharacterIds:string[],
@@ -30,7 +29,6 @@ type GameState = {
   readonly initialItemsById:Map<string, Item>,
   readonly initialUnplacedItemsById:Map<string, Item>,
   readonly initialCharacters:Character[],
-  readonly initialUnplacedCharactersById:Map<string, Character>,
   readonly initialRooms:Room[],
   camera:Camera,
   activeEffects:Effect[],

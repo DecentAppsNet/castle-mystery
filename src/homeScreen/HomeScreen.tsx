@@ -4,40 +4,17 @@ import styles from './HomeScreen.module.css';
 import { init } from "./interactions/initialization";
 import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/homeScreen/levelView/LevelView";
-import TimeSlider from "@/homeScreen/timeSlider/TimeSlider";
-import { updateNextCharacter, updatePlayPause, updateConclusions, updateTime, updateTimeMsecs } from "./interactions/gameplay";
+import { updateNextCharacter, updatePlayPause, updateConclusions } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
-import { findNextRoomEntryTime, findPreviousRoomEntryTime } from "@/game/itineraryUtil";
-import { findRoomAtPosition } from "@/game/roomUtil";
 import ConclusionsView from "./conclusionsView/ConclusionsView";
 import DiscoveriesView from "./discoveriesView/DiscoveriesView";
 import Conclusion from "@/game/conclusions/types/Conclusion";
-import Itinerary from "@/game/types/Itinerary";
 import WinLevelDialog from "./dialogs/WinLevelDialog";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import LevelSelector from "./levelSelector/LevelSelector";
 import { changeLevel, continueToNextLevel } from "./interactions/levels";
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
 import { createDiscoveries } from "@/game/discoveriesUtil";
-import { getKnownItinerary } from "@/game/pairedItineraryUtil";
-
-const ARROW_STEP_MSECS = 200;
-
-function _findActiveInitialCharacter(gameState:GameState, activeCharacterId:string) {
-  return gameState.initialCharacters.find(character => character.id === activeCharacterId)
-    || gameState.initialUnplacedCharactersById.get(activeCharacterId)
-    || null;
-}
-
-function _findShiftArrowTargetTime(gameState:GameState, direction:number):number|null {
-  const activeCharacter = gameState.characters.find(character => character.id === gameState.activeCharacterId)
-    || gameState.unplacedCharactersById.get(gameState.activeCharacterId)
-    || null;
-  if (!activeCharacter) return null;
-  return direction > 0
-    ? findNextRoomEntryTime(activeCharacter, gameState.time)
-    : findPreviousRoomEntryTime(activeCharacter, gameState.time);
-}
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -63,21 +40,12 @@ function HomeScreen() {
   const [conclusions, setConclusions] = useState<Conclusion[]>([]);
   const [discoveries, setDiscoveries] = useState<Discoveries>(createEmptyDiscoveries());
   const [conclusionClaimCooldowns, setConclusionClaimCooldowns] = useState<Record<string, number>>({});
-  const [activeCharacterId, setActiveCharacterId] = useState<string>("");
+  const [, setActiveCharacterId] = useState<string>(""); // TODO pass activeCharacterId to TimeSlider when it is added back in.
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
-  const activeInitialCharacter = !gameState
-    ? null
-    : _findActiveInitialCharacter(gameState, activeCharacterId);
-  const activeItinerary:Itinerary|null = !gameState
-    ? null
-    : activeInitialCharacter ? getKnownItinerary(activeInitialCharacter) : null;
-  const activeInitialRoomId = !gameState || !activeInitialCharacter
-    ? null
-    : findRoomAtPosition(gameState.initialRooms, activeInitialCharacter.position.x, activeInitialCharacter.position.y)?.id || null;
   
   useEffect(() => {
     if (gameState) return;
@@ -133,16 +101,6 @@ function HomeScreen() {
         updateNextCharacter();
         return;
       }
-
-      if (event.code !== "ArrowLeft" && event.code !== "ArrowRight") return;
-      event.preventDefault();
-      const direction = event.code === "ArrowRight" ? 1 : -1;
-      if (event.shiftKey) {
-        const targetTime = _findShiftArrowTargetTime(gameState, direction);
-        if (targetTime !== null) updateTimeMsecs(targetTime, gameState.startTime, gameState.duration, setIsPlaying);
-        return;
-      }
-      updateTimeMsecs(gameState.time + direction * ARROW_STEP_MSECS, gameState.startTime, gameState.duration, setIsPlaying);
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -187,22 +145,6 @@ function HomeScreen() {
           }}
         />
         <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onConclusionsChanged={_handleConclusionsChanged} onDiscoveriesChanged={setDiscoveries} isScrubbing={isScrubbing} />
-        <TimeSlider
-          fromMinutes={fromMinutes}
-          toMinutes={toMinutes}
-          minutes={minutes}
-          itinerary={activeItinerary}
-          characters={gameState.initialCharacters}
-          rooms={gameState.initialRooms}
-          roomsRevision={gameState.conclusionsRevision}
-          initialRoomId={activeInitialRoomId}
-          labels={gameState.labels}
-          isPlaying={isPlaying}
-          isPlayPauseDisabled={isPlayPauseDisabled}
-          onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
-          onPlayPauseChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
-          onScrubbingChange={setIsScrubbing}
-        />
       </div>
       <div className={styles.sidePane}>
         <div className={styles.conclusionsPane}>

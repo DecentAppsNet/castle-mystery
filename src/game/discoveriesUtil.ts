@@ -26,13 +26,12 @@ export function syncDiscoveries(_gameState:GameState) {
 
 export function createDiscoveries(gameState:GameState):Discoveries {
   return {
-    discoveredCharacterIconUrls:gameState.discoveredCharacterIds.map(characterId => gameState.initialCharacters.find(character => character.id === characterId)?.faceImageUrl
-      || gameState.initialUnplacedCharactersById.get(characterId)?.faceImageUrl
-      || ""),
+    discoveredCharacterIconUrls:gameState.discoveredCharacterIds.map(characterId => 
+      gameState.initialCharacters.find(character => character.id === characterId)?.faceImageUrl ?? ""),
     characterCount:gameState.discoverableCharacterCount,
     discoveredItemIconUrls:gameState.discoveredItemIds.map(itemId => gameState.initialItemsById.get(itemId)?.imageUrl || ""),
     itemCount:gameState.discoverableItemCount,
-    discoveredRoomCount:gameState.rooms.filter(room => room.isDiscovered).length,
+    discoveredRoomCount:gameState.initialRooms.filter(room => room.isDiscovered).length,
     roomCount:gameState.discoverableRoomCount
   };
 }

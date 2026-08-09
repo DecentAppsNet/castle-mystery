@@ -7,18 +7,12 @@ import GameState from "./types/GameState";
 import Room from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
-import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
-import { findCharacterPoseWithoutPairHistory } from "./itineraryUtil";
-import { findCharactersInRoom, findRoomAtPosition, isActiveAudibleRoom } from "./roomUtil";
+import { findRoomAtPosition } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
 import Level from "./types/Level";
 import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
-import ItineraryEventType from "./types/itineraryEvents/ItineraryEventType";
-import SpeechEvent from "./types/itineraryEvents/SpeechEvent";
-import EmitEvent from "./types/itineraryEvents/EmitEvent";
-import ThoughtEvent from "./types/itineraryEvents/ThoughtEvent";
 import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera, syncCameraTargetToActiveRoom, updateCamera } from "./cameraUtil";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
@@ -27,23 +21,12 @@ import MouseWheelEvent from "./types/playerEvents/MouseWheelEvent";
 import { COLOR_BLACK } from "./drawing/drawColorConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
-import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
-import { createSpeechBubbleEffect } from "./effects/speechBubbleEffectUtil";
-import { createEmitBubbleEffect } from "./effects/emitBubbleEffectUtil";
-import { createThinkingEffect, THINKING_LOOK_UP_DURATION_MSECS } from "./effects/thinkingEffectUtil";
-import { createTalkingEffect } from "./effects/talkingEffectUtil";
-import { createThoughtBubbleEffect } from "./effects/thoughtBubbleEffectUtil";
 import { findImageBitmap } from "./imageAssetUtil";
-import { findCharacterDisplayPosition } from "./characterDisplayPositionUtil";
-import { isCharacterInteractive } from "./interactivityUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
-import { createItemsById, createUnplacedCharactersById, createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateCharactersByIdUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
-import { getOwnedItems } from "./itemOwnershipUtil";
-import Item from "./types/Item";
+import { createItemsById, createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import { MAX_ACTIVE_EFFECTS } from "./effects/effectUtil";
-import EffectType from "./effects/types/EffectType";
 import {
   callOnActiveCharacterChangedAsNeeded,
   callOnDiscoveriesChangedAsNeeded,
@@ -53,7 +36,6 @@ import {
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hoverStateUtil";
 import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from "./conclusionStateUtil";
 import { syncDiscoveries } from "./discoveriesUtil";
-import { rebuildDynamicStateForTime } from "./dynamicStateRebuildUtil";
 import { normalizeId } from "./idUtil";
 import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import { clamp } from "@/common/numberUtil";
@@ -61,8 +43,10 @@ import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
-import { findActiveCharacter, findActivePlacedCharacter, findCharacterById } from "./activeCharacterUtil";
-import { findBecomesTargetCharacterIds } from "./itineraryReferenceUtil";
+import { findActiveCharacter, findCharacterById } from "./activeCharacterUtil";
+import { createSnapshotAtTime } from "@/levelLoading2/timelineLoading";
+import { findKeyframeForTime } from "@/levelLoading2/timelineLoading/retrievalUtil";
+import { createSnapshotCharactersAndRooms } from "./timelineSnapshotUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -78,9 +62,9 @@ export function findCharacter(gameState:GameState, characterRef:string):Characte
 }
 
 function _setActiveRoomDiscovered(gameState:GameState) {
-  const activeCharacter = findActivePlacedCharacter(gameState);
+  const activeCharacter = findActiveCharacter(gameState);
   if (activeCharacter) {
-    const activeRoom = findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y);
+    const activeRoom = findRoomAtPosition(gameState.initialRooms, activeCharacter.position.x, activeCharacter.position.y);
     if (activeRoom) {
       if (!activeRoom.isDiscovered) activeRoom.isDiscovered = true;
       if (!activeCharacter.discoveredRoomIds.includes(activeRoom.id)) {
@@ -93,7 +77,7 @@ function _setActiveRoomDiscovered(gameState:GameState) {
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
   const wasPlaying = gameState.isPlaying;
   gameState.activeEffects.length = 0;
-  rebuildDynamicStateForTime(gameState, event.time, undefined, metaTime);
+  gameState.timelineSnapshot = createSnapshotAtTime(gameState.timeline.keyframes, event.time);
   gameState.isPlaying = false;
   gameState.realTimeToGameTimeOffset = 0;
   if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
@@ -121,94 +105,11 @@ function _pauseGameState(gameState:GameState, metaTime:number) {
   if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
 }
 
-function _findActiveSpeechEvent(character:Character, time:number):SpeechEvent|null {
-  let activeSpeechEvent:SpeechEvent|null = null;
-  for (const event of character.itinerary) {
-    if (event.startTime > time) break;
-    if (event.type !== ItineraryEventType.SPEECH) continue;
-    const speechEvent = event as SpeechEvent;
-    activeSpeechEvent = time < speechEvent.startTime + speechEvent.duration ? speechEvent : null;
-  }
-  return activeSpeechEvent;
-}
-
-function _findThinkingEvent(character:Character, time:number):ThoughtEvent|null {
-  let thinkingEvent:ThoughtEvent|null = null;
-  for (const event of character.itinerary) {
-    if (event.startTime > time) break;
-    if (event.type !== ItineraryEventType.THOUGHT) continue;
-    const thoughtEvent = event as ThoughtEvent;
-    thinkingEvent = time < thoughtEvent.startTime + thoughtEvent.duration + THINKING_LOOK_UP_DURATION_MSECS ? thoughtEvent : null;
-  }
-  return thinkingEvent;
-}
-
-function _findActiveEmitEvent(character:Character, time:number):EmitEvent|null {
-  let activeEmitEvent:EmitEvent|null = null;
-  for (const event of character.itinerary) {
-    if (event.startTime > time) break;
-    if (event.type !== ItineraryEventType.EMIT) continue;
-    const emitEvent = event as EmitEvent;
-    activeEmitEvent = time < emitEvent.startTime + emitEvent.duration ? emitEvent : null;
-  }
-  return activeEmitEvent;
-}
-
-function _findEmitItemState(gameState:GameState, itemId:string):{ item:Item, room:Room, ownerCharacter:Character|null }|null {
-  for (const room of gameState.rooms) {
-    const item = room.items.find(candidate => candidate.id === itemId) || null;
-    if (item) return { item, room, ownerCharacter:null };
-  }
-  for (const character of gameState.characters) {
-    const item = getOwnedItems(character).find(candidate => candidate.id === itemId) || null;
-    if (!item) continue;
-    const room = findRoomAtPosition(gameState.rooms, character.position.x, character.position.y);
-    if (!room) continue;
-    return { item, room, ownerCharacter:character };
-  }
-  return null;
-}
-
-function _compareCharactersForCycleOrder(character1:Character, character2:Character) {
-  return character1.position.z - character2.position.z || character1.position.x - character2.position.x;
-}
-
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
   const activeCharacter = findActiveCharacter(gameState);
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.initialRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (!activeRoom || (!gameState.isLevelComplete && activeRoom.isObscured)) return null;
   return activeRoom;
-}
-
-function _findVisibleRooms(gameState:GameState):Room[] {
-  if (gameState.isLevelComplete) return gameState.rooms.filter(room => room.isDiscovered);
-  const activeRoom = _findActiveVisibleRoom(gameState);
-  return activeRoom ? [activeRoom] : [];
-}
-
-function _findSpeechEffectRooms(gameState:GameState):Room[] {
-  if (gameState.isLevelComplete) return _findVisibleRooms(gameState);
-  const activeRoom = _findActiveVisibleRoom(gameState);
-  return activeRoom ? gameState.rooms.filter(room => isActiveAudibleRoom(room, activeRoom)) : [];
-}
-
-function _updateGameStateForNextCharacter(gameState:GameState, _event:NextCharacterEvent, metaTime:number) {
-  const activeCharacter = findActivePlacedCharacter(gameState);
-  if (!activeCharacter) return;
-  const activeRoom = _findActiveVisibleRoom(gameState);
-  if (!activeRoom) return;
-  const charactersInRoom = findCharactersInRoom(activeRoom, gameState.characters)
-    .filter(isCharacterInteractive)
-    .sort(_compareCharactersForCycleOrder);
-  if (charactersInRoom.length <= 1) return;
-
-  const activeCharacterIndex = charactersInRoom.findIndex(character => character.id === activeCharacter.id);
-  if (activeCharacterIndex === -1) return;
-  const nextCharacter = charactersInRoom[(activeCharacterIndex + 1) % charactersInRoom.length];
-  if (nextCharacter.id === activeCharacter.id) return;
-  gameState.activeCharacterId = nextCharacter.id;
-  gameState.activeEffects.push(createCharacterSelectEffect(nextCharacter,
-    findCharacterDisplayPosition(nextCharacter, activeRoom), metaTime, gameState.scalingFactors));
 }
 
 function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEvent) {
@@ -218,158 +119,29 @@ function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEven
   gameState.camera.zoomAmount = clamp(gameState.camera.zoomAmount + zoomDirection * CAMERA_ZOOM_STEP, 0, 1);
 }
 
-function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number, metaTime:number, cameraAspectRatio:number) {
+function _updateGameState(gameState:GameState, snapshotCharacters:Character[], events:PlayerEvent[], now:number, metaTime:number, cameraAspectRatio:number) {
   events.forEach(event => {
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent, metaTime); break;
       case PlayerEventType.CHANGE_CONCLUSIONS: updateGameStateForChangeConclusions(gameState, event as ChangeConclusionsEvent); break;
-      case PlayerEventType.NEXT_CHARACTER: _updateGameStateForNextCharacter(gameState, event as NextCharacterEvent, metaTime); break;
+      case PlayerEventType.NEXT_CHARACTER: break;
       case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent, metaTime); break;
-      case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, event as MouseDownEvent, metaTime); break;
-      case PlayerEventType.MOUSEMOVE: updateGameStateForMouseMove(gameState, event as MouseMoveEvent); break;
+      case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, snapshotCharacters, event as MouseDownEvent, metaTime); break;
+      case PlayerEventType.MOUSEMOVE: updateGameStateForMouseMove(gameState, snapshotCharacters, event as MouseMoveEvent); break;
       case PlayerEventType.MOUSEWHEEL: _updateGameStateForMouseWheel(gameState, event as MouseWheelEvent); break;
       default: botch();
     }
   });
   if (gameState.isPlaying) {
-    const previousTime = gameState.time;
     const endTime = gameState.startTime + gameState.duration;
     const nextTime = Math.min(endTime, now + gameState.realTimeToGameTimeOffset);
-    rebuildDynamicStateForTime(gameState, nextTime, previousTime, metaTime);
+    gameState.timelineSnapshot = createSnapshotAtTime(gameState.timeline.keyframes, nextTime);
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
-  syncCameraTargetToActiveRoom(gameState.camera, gameState.rooms, findActiveCharacter(gameState),
+  syncCameraTargetToActiveRoom(gameState.camera, gameState.initialRooms, findActiveCharacter(gameState),
     cameraAspectRatio, now, gameState.groundFloorY);
   updateCamera(gameState.camera, now);
   _setActiveRoomDiscovered(gameState);
-}
-
-function _syncSpeechBubbleEffects(gameState:GameState, metaTime:number, isScrubbing:boolean = false) {
-  const existingSpeechBubbleEffects = gameState.activeEffects.filter(effect => effect.type === EffectType.SPEECH_BUBBLE);
-  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.SPEECH_BUBBLE);
-
-  if (!gameState.isPlaying && !isScrubbing) return;
-
-  _findSpeechEffectRooms(gameState).forEach(room => {
-    findCharactersInRoom(room, gameState.characters).forEach(character => {
-      const speech = findCharacterPoseWithoutPairHistory(character, gameState.time).speech;
-      if (!speech) return;
-      const existingSpeechBubbleEffect = existingSpeechBubbleEffects.find(effect => {
-        const speechBubbleEffect = effect as ReturnType<typeof createSpeechBubbleEffect>;
-        return speechBubbleEffect.character.id === character.id && speechBubbleEffect.speech === speech;
-      });
-      gameState.activeEffects.push(createSpeechBubbleEffect(character,
-        findCharacterDisplayPosition(character, room), speech, gameState.scalingFactors, gameState.time,
-        existingSpeechBubbleEffect?.startTime ?? metaTime));
-    });
-  });
-}
-
-function _syncEmitBubbleEffects(gameState:GameState, metaTime:number, isScrubbing:boolean = false) {
-  const existingEmitBubbleEffects = gameState.activeEffects.filter(effect => effect.type === EffectType.EMIT_BUBBLE);
-  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.EMIT_BUBBLE);
-
-  if (!gameState.isPlaying && !isScrubbing) return;
-
-  const audibleRoomIds = new Set(_findSpeechEffectRooms(gameState).map(room => room.id));
-  gameState.characters.forEach(character => {
-    const activeEmitEvent = _findActiveEmitEvent(character, gameState.time);
-    if (!activeEmitEvent) return;
-    if (!activeEmitEvent.itemId) {
-      const room = findRoomAtPosition(gameState.rooms, character.position.x, character.position.y);
-      if (!room || !audibleRoomIds.has(room.id)) return;
-      const existingEmitBubbleEffect = existingEmitBubbleEffects.find(effect => {
-        const emitBubbleEffect = effect as ReturnType<typeof createEmitBubbleEffect>;
-        return emitBubbleEffect.room.id === room.id
-          && emitBubbleEffect.item === null
-          && emitBubbleEffect.ownerCharacter === null
-          && emitBubbleEffect.emitText === activeEmitEvent.emitText;
-      });
-      gameState.activeEffects.push(createEmitBubbleEffect(
-        room,
-        null,
-        null,
-        activeEmitEvent.emitText,
-        gameState.scalingFactors,
-        gameState.time,
-        existingEmitBubbleEffect?.startTime ?? metaTime
-      ));
-      return;
-    }
-    const emitItemState = _findEmitItemState(gameState, activeEmitEvent.itemId);
-    if (!emitItemState || !audibleRoomIds.has(emitItemState.room.id)) return;
-    const existingEmitBubbleEffect = existingEmitBubbleEffects.find(effect => {
-      const emitBubbleEffect = effect as ReturnType<typeof createEmitBubbleEffect>;
-      return emitBubbleEffect.room.id === emitItemState.room.id
-        && emitBubbleEffect.item?.id === emitItemState.item.id
-        && emitBubbleEffect.ownerCharacter?.id === emitItemState.ownerCharacter?.id
-        && emitBubbleEffect.emitText === activeEmitEvent.emitText;
-    });
-    gameState.activeEffects.push(createEmitBubbleEffect(
-      emitItemState.room,
-      emitItemState.item,
-      emitItemState.ownerCharacter,
-      activeEmitEvent.emitText,
-      gameState.scalingFactors,
-      gameState.time,
-      existingEmitBubbleEffect?.startTime ?? metaTime
-    ));
-  });
-}
-
-function _syncTalkingEffects(gameState:GameState, isScrubbing:boolean = false) {
-  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.TALKING);
-
-  if (!gameState.isPlaying || isScrubbing) return;
-
-  _findSpeechEffectRooms(gameState).flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
-    const activeSpeechEvent = _findActiveSpeechEvent(character, gameState.time);
-    if (!activeSpeechEvent) return;
-    gameState.activeEffects.push(createTalkingEffect(
-      character,
-      activeSpeechEvent.startTime,
-      activeSpeechEvent.startTime + activeSpeechEvent.duration,
-      gameState.time
-    ));
-  });
-}
-
-function _syncThoughtBubbleEffects(gameState:GameState, metaTime:number, isScrubbing:boolean = false) {
-  const existingThoughtBubbleEffects = gameState.activeEffects.filter(effect => effect.type === EffectType.THOUGHT_BUBBLE);
-  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.THOUGHT_BUBBLE);
-
-  if (!gameState.isLevelComplete && !gameState.isPlaying && !isScrubbing) return;
-
-  _findVisibleRooms(gameState).forEach(room => {
-    findCharactersInRoom(room, gameState.characters).forEach(character => {
-      const thought = findCharacterPoseWithoutPairHistory(character, gameState.time).thought;
-      if (!thought) return;
-      const existingThoughtBubbleEffect = existingThoughtBubbleEffects.find(effect => {
-        const thoughtBubbleEffect = effect as ReturnType<typeof createThoughtBubbleEffect>;
-        return thoughtBubbleEffect.character.id === character.id && thoughtBubbleEffect.thought === thought;
-      });
-      gameState.activeEffects.push(createThoughtBubbleEffect(character,
-        findCharacterDisplayPosition(character, room), thought, gameState.scalingFactors, gameState.time,
-        existingThoughtBubbleEffect?.startTime ?? metaTime));
-    });
-  });
-}
-
-function _syncThinkingEffects(gameState:GameState, isScrubbing:boolean = false) {
-  gameState.activeEffects = gameState.activeEffects.filter(effect => effect.type !== EffectType.THINKING);
-
-  if (isScrubbing) return;
-
-  _findVisibleRooms(gameState).flatMap(room => findCharactersInRoom(room, gameState.characters)).forEach(character => {
-    const thinkingEvent = _findThinkingEvent(character, gameState.time);
-    if (!thinkingEvent) return;
-    gameState.activeEffects.push(createThinkingEffect(
-      character,
-      thinkingEvent.startTime,
-      thinkingEvent.startTime + thinkingEvent.duration,
-      gameState.time
-    ));
-  });
 }
 
 function _fillCanvasBlack(context:CanvasRenderingContext2D) {
@@ -411,20 +183,21 @@ function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D
 }
 
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
-  onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
-  onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
-  isScrubbing:boolean = false, onDiscoveriesChanged?:(discoveries:Discoveries) => void) {
+    onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
+    onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
+    _isScrubbing:boolean = false, onDiscoveriesChanged?:(discoveries:Discoveries) => void) {
   _clearCanvas(gameState, context);
   if (!gameState) {
     context.canvas.style.cursor = "default";
     return;
   }
 
+  const { snapshotCharacters, snapshotRooms } = createSnapshotCharactersAndRooms(gameState);
   const now = Date.now();
   const metaTime = _findMetaTimeNow();
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
-  _updateGameState(gameState, events, now, metaTime, calcCanvasAspectRatio(context));
+  _updateGameState(gameState, snapshotCharacters, events, now, metaTime, calcCanvasAspectRatio(context));
   syncConclusionUnlocks(gameState);
   syncDiscoveries(gameState);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
@@ -436,16 +209,11 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     : gameState.hoveredRoomId ? "pointer" : "default";
 
   updateScalingFactorsAsNeeded(gameState, context);
-  _syncSpeechBubbleEffects(gameState, metaTime, isScrubbing);
-  _syncEmitBubbleEffects(gameState, metaTime, isScrubbing);
-  _syncTalkingEffects(gameState, isScrubbing);
-  _syncThoughtBubbleEffects(gameState, metaTime, isScrubbing);
-  _syncThinkingEffects(gameState, isScrubbing);
   assert(gameState.activeEffects.length <= MAX_ACTIVE_EFFECTS,
     `active effect count ${gameState.activeEffects.length} exceeds MAX_ACTIVE_EFFECTS ${MAX_ACTIVE_EFFECTS}; an effect callback may not be returning false to remove itself`);
   if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
   if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
-  drawGameState(gameState, context, metaTime);
+  drawGameState(gameState, snapshotRooms, snapshotCharacters, context, metaTime);
   if (DRAW_FPS_COUNTER) updateAndDrawFps(metaTime, context);
 }
 
@@ -453,18 +221,11 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
   const initialItemsById = createItemsById(level.rooms, level.initialCharacters, duplicateItemsById(level.itemsById));
   const initialCharacters = level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById));
   const initialRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById));
-  const becomesTargetCharacterIds = findBecomesTargetCharacterIds(level);
-  const initialAllCharactersById = duplicateCharactersByIdUsingItemIndex(level.allCharactersById, initialItemsById);
   const initialUnplacedItemsById = createUnplacedItemsById(initialItemsById, initialRooms, initialCharacters);
-  const initialUnplacedCharactersById = createUnplacedCharactersById(initialAllCharactersById, initialCharacters, becomesTargetCharacterIds);
   const itemsById = duplicateItemsById(initialItemsById);
   const characters = level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById));
   const rooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById));
-  const allCharactersById = duplicateCharactersByIdUsingItemIndex(level.allCharactersById, itemsById);
   const gameState:GameState = {
-    characters,
-    unplacedCharactersById:createUnplacedCharactersById(allCharactersById, characters, becomesTargetCharacterIds),
-    rooms,
     itemsById,
     unplacedItemsById:createUnplacedItemsById(itemsById, rooms, characters),
     discoveredCharacterIds:[],
@@ -480,7 +241,6 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     initialItemsById,
     initialUnplacedItemsById,
     initialCharacters,
-    initialUnplacedCharactersById,
     initialRooms,
     camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
     activeEffects:[],
@@ -508,9 +268,9 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     conclusionsRevision:0,
     lastNotifiedConclusionsRevision:0,
     lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries()),
-    timeline:level.timeline // Timeline is immutable - no harm in sharing instance.
+    timeline:level.timeline, // Timeline is immutable - no harm in sharing instance.
+    timelineSnapshot:findKeyframeForTime(level.timeline.keyframes, level.initialTime)
   }
-  rebuildDynamicStateForTime(gameState, level.initialTime, undefined, 0);
   _setActiveRoomDiscovered(gameState);
   syncDiscoveries(gameState);
   syncConclusionUnlocks(gameState);

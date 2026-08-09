@@ -84,7 +84,7 @@ export function scheduleAtActivity(level:Level,
     errors.addAt(scheduleResult, 'itinerary'); // TODO need line# from activity.
     return false;
   }
-  assert(toTime === null || toTime === scheduleResult);
+  assert(isRelativeTimestamp || toTime === scheduleResult);
   return true;
 }
 

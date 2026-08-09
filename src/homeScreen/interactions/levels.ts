@@ -9,7 +9,7 @@ import { createImageSetFromLevel } from "@/game/imageSetUtil";
 import Discoveries from "@/game/types/Discoveries";
 import GameState from "@/game/types/GameState";
 import Conclusion from "@/game/conclusions/types/Conclusion";
-import { loadLevelFromUrl } from "@/levelLoading/levelUtil";
+import { loadLevelFromUrl } from "@/levelLoading2";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
 import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
@@ -53,7 +53,11 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   const levelChangeTiming = `change level (${levelUrl})`;
   startTiming(levelChangeTiming);
   try {
-    const level = await loadLevelFromUrl(levelUrl);
+    const { level, errors } = await loadLevelFromUrl(levelUrl);
+    if (!level) {
+      console.error(errors.describeErrors);
+      throw new Error('Failed to load level. See console for details.');
+    }
     const imageSet = await createImageSetFromLevel(level);
     const gameStateTiming = `game state creation (${levelUrl})`;
     startTiming(gameStateTiming);

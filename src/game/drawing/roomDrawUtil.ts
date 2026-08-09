@@ -3,7 +3,6 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { DRAW_WAYPOINTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 import { roomHeightToLayerCount, roomWidthToColumnCount } from "@/game/roomGridUtil";
@@ -27,14 +26,13 @@ import {
   COLOR_INACTIVE_ROOM_FILL,
   COLOR_ROOM_TITLE_TEXT
 } from "./drawColorConstants";
-import { interpolateColor } from "./colorUtil";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect, getProjectedExitCanvasRect } from "./exitDrawUtil";
 import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
 import { compareNonStairDrawableContents, mergeStairsWithSortedContents, RoomDrawableContent } from "./roomContentDrawOrderUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
 import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
-import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
+import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
@@ -42,7 +40,6 @@ import { findTexturePrimaryImageOperation } from "@/game/textureUtil";
 import { hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
 import Character from "../types/Character";
 import GameState from "../types/GameState";
-import Position from "../types/Position";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
@@ -61,11 +58,6 @@ import { calcUndiscoveredMarkerHeightPixels, drawUndiscoveredMarker } from "./un
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
 const ROOM_TITLE_OUTLINE_WIDTH_RATIO = 0.15;
-const WAYPOINT_HIGHLIGHT_TOLERANCE = 0.01;
-const WAYPOINT_BACKGROUND_START_COLOR = "#ffb3c1";
-const WAYPOINT_BACKGROUND_END_COLOR = "#880000";
-const WAYPOINT_HIGHLIGHT_START_COLOR = "#8fd8ff";
-const WAYPOINT_HIGHLIGHT_END_COLOR = "#003d99";
 
 function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[number, number], scaledWidth:number,
   scaledHeight:number, context:CanvasRenderingContext2D, textureLightness:number) {
@@ -96,65 +88,6 @@ function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[num
   context.rect(scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
   context.clip();
   context.drawImage(faceImage.image, scaledTopLeft[0], scaledTopLeft[1], scaledWidth, scaledHeight);
-  context.restore();
-}
-
-function _getWaypointCanvasPosition(x:number, y:number, z:number, scalingFactors:ScalingFactors):[number, number] {
-  const [canvasX, canvasY] = gameToCanvasPosition(x, y, scalingFactors);
-  const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
-  const depth = Math.max(0, Math.min(1, z));
-  return [canvasX + offsetX * depth, canvasY + offsetY * depth];
-}
-
-function _isCloseTo(value1:number, value2:number):boolean {
-  return Math.abs(value1 - value2) <= WAYPOINT_HIGHLIGHT_TOLERANCE;
-}
-
-function _isSameWaypointPosition(highlightedPosition:Position|null, waypoint:Character['waypoint']):boolean {
-  if (!highlightedPosition) return false;
-  return _isCloseTo(highlightedPosition.x, waypoint.position.x)
-    && _isCloseTo(highlightedPosition.y, waypoint.position.y)
-    && _isCloseTo(highlightedPosition.z, waypoint.position.z);
-}
-
-function _isSameWaypointXY(highlightedPosition:Position|null, waypoint:Character['waypoint']):boolean {
-  if (!highlightedPosition) return false;
-  return _isCloseTo(highlightedPosition.x, waypoint.position.x)
-    && _isCloseTo(highlightedPosition.y, waypoint.position.y);
-}
-
-function _calcWaypointColor(z:number):string {
-  return interpolateColor(WAYPOINT_BACKGROUND_START_COLOR, WAYPOINT_BACKGROUND_END_COLOR, z);
-}
-
-function _calcHighlightedWaypointColor(z:number):string {
-  return interpolateColor(WAYPOINT_HIGHLIGHT_START_COLOR, WAYPOINT_HIGHLIGHT_END_COLOR, z);
-}
-
-function _drawWaypointCrosshairs(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, highlightedPosition:Position|null = null) {
-  const crosshairSize = Math.max(1, Math.round(scalingFactors.roomLineWidth * .5));
-
-  context.save();
-  context.strokeStyle = "#c00";
-  context.lineWidth = Math.max(0.2, scalingFactors.roomLineWidth * 0.2);
-
-  const hasExactHighlightedWaypoint = highlightedPosition !== null
-    && room.waypoints.some(waypoint => _isSameWaypointPosition(highlightedPosition, waypoint));
-
-  room.waypoints.forEach(waypoint => {
-    const isHighlighted = hasExactHighlightedWaypoint
-      ? _isSameWaypointPosition(highlightedPosition, waypoint)
-      : _isSameWaypointXY(highlightedPosition, waypoint);
-    const [canvasX, canvasY] = _getWaypointCanvasPosition(waypoint.position.x, waypoint.position.y, waypoint.position.z, scalingFactors);
-    context.strokeStyle = isHighlighted ? _calcHighlightedWaypointColor(waypoint.position.z) : _calcWaypointColor(waypoint.position.z);
-    context.beginPath();
-    context.moveTo(canvasX - crosshairSize, canvasY);
-    context.lineTo(canvasX + crosshairSize, canvasY);
-    context.moveTo(canvasX, canvasY - crosshairSize);
-    context.lineTo(canvasX, canvasY + crosshairSize);
-    context.stroke();
-  });
-
   context.restore();
 }
 
@@ -426,11 +359,4 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
     _drawRoomStairsOnly(room, scalingFactors, context, imageSet, stairTextureLightness);
   }
   processRoomEffects(room, effects, context, scalingFactors, canDrawEffect, imageSet, metaTime);
-}
-
-export function drawRoomWaypointsWithHighlight(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  highlightedPosition:Position|null = null, showFullContents:boolean = false) {
-  if (!DRAW_WAYPOINTS || !room.isDiscovered) return;
-  if (room.isObscured && !showFullContents) return;
-  _drawWaypointCrosshairs(room, scalingFactors, context, highlightedPosition);
 }

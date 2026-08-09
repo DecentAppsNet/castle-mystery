@@ -1,9 +1,6 @@
-import Itinerary from "./Itinerary";
-import ItineraryIndex, { createDefaultItineraryIndex } from "./ItineraryIndex";
 import Item, { duplicateItem } from "./Item";
-import Position, { duplicatePosition } from "./Position";
+import Position, { createDefaultPosition, duplicatePosition } from "./Position";
 import Waypoint, { createDefaultWaypoint } from "./Waypoint";
-import { createDefaultCharacterPose } from "./CharacterPose";
 
 export type FacingDirection = 'left' | 'right';
 export const VALID_FACING_DIRECTIONS:FacingDirection[] = ['left', 'right'];
@@ -33,14 +30,9 @@ type Character = {
   position:Position,
   waypoint:Waypoint,
   discoveredRoomIds:string[],
-  itinerary:Itinerary,
-  pairedItinerary:Itinerary|null,
-  isPairingKnown:boolean,
-  itineraryIndex:ItineraryIndex
 }
 
 export function createDefaultCharacter():Character {
-  const defaultPose = createDefaultCharacterPose();
   return {
     id:'character',
     title:'Character',
@@ -48,20 +40,16 @@ export function createDefaultCharacter():Character {
     randomSalt:0,
     isDiscovered:false,
     isVisible:true,
-    facingDirection:defaultPose.facingDirection,
-    bodyOrientation:defaultPose.bodyOrientation,
+    facingDirection:DEFAULT_FACING_DIRECTION,
+    bodyOrientation:DEFAULT_BODY_ORIENTATION,
     isTitleKnown:true,
     description:'',
     items:[],
     leftHandItem:null,
     rightHandItem:null,
-    position:defaultPose.position,
+    position:createDefaultPosition(),
     waypoint:createDefaultWaypoint(),
-    discoveredRoomIds:[],
-    itinerary:[],
-    pairedItinerary:null,
-    isPairingKnown:false,
-    itineraryIndex:createDefaultItineraryIndex()
+    discoveredRoomIds:[]
   };
 }
 
@@ -83,10 +71,6 @@ export function duplicateCharacter(from:Character):Character {
     position:duplicatePosition(from.position),
     waypoint:from.waypoint,
     discoveredRoomIds:[...from.discoveredRoomIds],
-    itinerary:from.itinerary,
-    pairedItinerary:from.pairedItinerary,
-    isPairingKnown:from.isPairingKnown,
-    itineraryIndex:from.itineraryIndex
   };
 }
 

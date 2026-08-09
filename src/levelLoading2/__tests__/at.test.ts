@@ -33,7 +33,7 @@ describe('level loading - @ activities', () => {
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('closet');
   });
 
-  it.only('@ activity with implied subject will default to active character', () => {
+  it('@ activity with implied subject will default to active character', () => {
     const text = replaceSection(defaultLevelText, 'itinerary', [
       '0:00:03 @ closet'
     ]);
