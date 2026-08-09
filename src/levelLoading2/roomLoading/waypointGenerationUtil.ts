@@ -5,20 +5,14 @@ import { assert, assertNonNullable } from "decent-portal";
 
 import Rect from "@/game/types/Rect";
 import RoomExit from "@/game/types/RoomExit";
-import StairFlight from "./types/StairFlight";
 import Waypoint from "@/game/types/Waypoint";
 import { COLUMN_WIDTH, roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "@/game/stairUtil";
-import {
-  FLOOR_WAYPOINT_Y_OFFSET,
-  findExitWaypoint,
-  WAYPOINT_BACK_ROW_Z,
-  WAYPOINT_FRONT_ROW_Z,
-  WAYPOINT_MIDDLE_ROW_Z,
-} from "@/levelLoading2/activityLoading/waypointFindingUtil";
-import { ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
+import { findExitWaypoint, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from "@/levelLoading2/activityLoading/waypointFindingUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET, ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
 import Room from "@/game/types/Room";
 import Position from "@/game/types/Position";
+import StairFlight from "@/game/types/StairFlight";
 
 const FLOOR_ROW_ZS = [WAYPOINT_BACK_ROW_Z, WAYPOINT_MIDDLE_ROW_Z, WAYPOINT_FRONT_ROW_Z] as const;
 

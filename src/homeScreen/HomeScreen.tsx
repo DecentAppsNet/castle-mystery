@@ -10,7 +10,7 @@ import ConclusionsView from "./conclusionsView/ConclusionsView";
 import DiscoveriesView from "./discoveriesView/DiscoveriesView";
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import WinLevelDialog from "./dialogs/WinLevelDialog";
-import LevelManifest from "@/levelLoading/types/LevelManifest";
+import LevelManifest from "@/levelLoading2/types/LevelManifest";
 import LevelSelector from "./levelSelector/LevelSelector";
 import { changeLevel, continueToNextLevel } from "./interactions/levels";
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";

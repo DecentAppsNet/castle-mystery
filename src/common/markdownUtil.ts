@@ -23,7 +23,7 @@ If this module grows beyond 500 lines of code, read the "Refactoring Large Modul
 export type Sections = { [sectionName:string]:string };
 export type NameValues = { [name:string]:string };
 export type SectionEntryWithLine = { name:string, value:string, lineNo:number };
-export type NameValueEntryWithLine = { name:string, value:string, lineNo:number };
+type NameValueEntryWithLine = { name:string, value:string, lineNo:number };
 
 export class MarkdownLineError extends Error {
   readonly lineNo:number;
@@ -239,12 +239,6 @@ export function findNameValueLineNo(sectionText:string, propertyName:string):num
 // Parse bulleted name/value lines into ordered name/value entry tuples.
 export function parseNameValueLineEntries(markdownText:string, useCamelCase:boolean = false):Array<readonly [string, string]> {
   return _parseNameValueEntries(markdownText, useCamelCase);
-}
-
-// Parse bulleted name/value lines into entries that include source line numbers.
-export function parseNameValueLineEntriesWithLines(markdownText:string, useCamelCase:boolean = false,
-  firstLineNo:number = 1):NameValueEntryWithLine[] {
-  return _parseNameValueEntriesWithLines(markdownText, useCamelCase, firstLineNo);
 }
 
 // Split a pipe-delimited option list into trimmed non-empty values.

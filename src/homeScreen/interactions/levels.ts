@@ -10,7 +10,7 @@ import Discoveries from "@/game/types/Discoveries";
 import GameState from "@/game/types/GameState";
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import { loadLevelFromUrl } from "@/levelLoading2";
-import LevelManifest from "@/levelLoading/types/LevelManifest";
+import LevelManifest from "@/levelLoading2/types/LevelManifest";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
 import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
 import { msecsToMinutes } from "./gameplay";

@@ -14,7 +14,7 @@ import Waypoint from "@/game/types/Waypoint";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { calcWalkDurationToRoom, scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
 import Character from "@/game/types/Character";
-import { findNearestFloorWaypointToPosition } from "../waypointFindingUtil";
+import { findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition } from "../waypointFindingUtil";
 
 function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
@@ -32,7 +32,7 @@ function _findBestTargetWaypoint(waypoints:Waypoint[], claimedWaypoints:Waypoint
   assert(waypoints.length > 0);
 
   const targetPosition = {x, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z};
-  let waypoint = findNearestFloorWaypointToPosition(targetRoom, targetPosition, claimedWaypoints); 
+  let waypoint = findNearestIncludedFloorWaypointToPosition(targetRoom, targetPosition, claimedWaypoints); 
   if (waypoint) return waypoint;
   waypoint = findNearestFloorWaypointToPosition(targetRoom, targetPosition); // A crowded room. Just share a square with somebody else.
   assertNonNullable(waypoint, 'How can there be no available waypoints in the room?');

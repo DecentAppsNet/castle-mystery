@@ -6,11 +6,12 @@ import Room from "@/game/types/Room";
 import Waypoint from "@/game/types/Waypoint";
 import EditableTimeline from "../timelineLoading/types/EditableTimeline";
 import Position, { arePositionsEqual } from "@/game/types/Position";
-import { findNearestWaypointToPosition, FLOOR_WAYPOINT_Y_OFFSET, WAYPOINT_MIDDLE_ROW_Z } from "@/game/waypointUtil";
+import { findNearestFloorWaypointToPosition, WAYPOINT_MIDDLE_ROW_Z } from "./waypointFindingUtil";
 import { addCharacterKeyframe } from "../timelineLoading/editingUtil";
 import { formatMsecsAsTimestamp } from "./timestampUtil";
 import { isPositionInOrOnRect } from "@/game/rectUtil";
 import { findWaypointAtPosition } from "./waypointFindingUtil";
+import { FLOOR_WAYPOINT_Y_OFFSET } from "@/game/roomSpaceConstants";
 
 const WALK_MSECS_PER_PIXEL = 60;
 
@@ -124,14 +125,14 @@ function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Po
   if (!roomPath.length) return [];
   const waypoints:Waypoint[] = [];
   assert(isPositionInOrOnRect(fromPosition.x, fromPosition.y, roomPath[0].rect));
-  let waypoint = findNearestWaypointToPosition(roomPath[0], fromPosition);
+  let waypoint = findNearestFloorWaypointToPosition(roomPath[0], fromPosition);
   assert(roomPath[0].waypoints.includes(waypoint));
   waypoints.push(waypoint);
   for(let i = 1; i < roomPath.length; ++i) {
     let iterationCount = 0;
     while(iterationCount <= roomPath[i].waypoints.length) { // A debug-error exit, but could prevent browser hang.
       const nextRoomId = roomPath[i].id;
-      const nextWaypoint = waypoint.exitDirections[nextRoomId];
+      const nextWaypoint:Waypoint|undefined = waypoint.exitDirections[nextRoomId];
       if (nextWaypoint === undefined) break; // Reached room exit.
       waypoints.push(nextWaypoint);
       waypoint = nextWaypoint;
@@ -142,7 +143,7 @@ function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Po
 
   // Last part of path is to specific position in final room.
   const toRoom = roomPath[roomPath.length-1];
-  const toWaypoint = findNearestWaypointToPosition(toRoom, toPosition);
+  const toWaypoint = findNearestFloorWaypointToPosition(toRoom, toPosition);
   const fromWaypoint = findWaypointAtPosition(toRoom, waypoint.position); // Need waypoint in the destination room.
   assertNonNullable(fromWaypoint);
   const finalRoomWaypoints = _findWaypointPath(toRoom, fromWaypoint, toWaypoint);
@@ -184,8 +185,8 @@ function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, charact
 function _scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
     toTime:number|null, characterI:number, timeline:EditableTimeline):string|number {
   assert(toTime === null || toTime >= fromTime);
-  const fromWaypoint = findNearestWaypointToPosition(room, fromPosition);
-  const toWaypoint = findNearestWaypointToPosition(room, toPosition);
+  const fromWaypoint = findNearestFloorWaypointToPosition(room, fromPosition);
+  const toWaypoint = findNearestFloorWaypointToPosition(room, toPosition);
   const waypointPath = _findWaypointPath(room, fromWaypoint, toWaypoint);
   const pathWalkDuration = _calcWalkDurationForWaypointPath(waypointPath);
 
@@ -206,8 +207,8 @@ function _scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, 
 }
 
 function _calcWalkDurationWithinRoom(room:Room, fromPosition:Position, toPosition:Position):number {
-  const fromWaypoint = findNearestWaypointToPosition(room, fromPosition);
-  const toWaypoint = findNearestWaypointToPosition(room, toPosition);
+  const fromWaypoint = findNearestFloorWaypointToPosition(room, fromPosition);
+  const toWaypoint = findNearestFloorWaypointToPosition(room, toPosition);
   const waypointPath = _findWaypointPath(room, fromWaypoint, toWaypoint);
   return _calcWalkDurationForWaypointPath(waypointPath);
 }

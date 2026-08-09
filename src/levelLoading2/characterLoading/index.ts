@@ -14,7 +14,7 @@ import { findAllCharacterPositions } from "../roomLoading/";
 import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
-import { findNearestWaypointToPosition } from "@/game/waypointUtil";
+import { findNearestFloorWaypointToPosition } from '../activityLoading';
 import { findRoomAtPositionOrTouchingBoundary } from "@/game/roomUtil";
 import Waypoint, { createDefaultWaypoint } from "@/game/types/Waypoint";
 
@@ -58,7 +58,7 @@ function _parseCharacter(characterId:string, waypoint:Waypoint, characterSection
 function _findCharacterWaypoint(fromPosition:Position, rooms:readonly Room[]):Waypoint {
   const room = findRoomAtPositionOrTouchingBoundary(rooms, fromPosition.x, fromPosition.y);
   assertNonNullable(room);
-  return findNearestWaypointToPosition(room, fromPosition);
+  return findNearestFloorWaypointToPosition(room, fromPosition);
 }
 
 export function loadCharactersPartially(charactersSectionText:string, roomsSectionText:string, rooms:Room[], errors:ErrorCollector):Character[]|null {

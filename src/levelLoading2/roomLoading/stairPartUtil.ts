@@ -1,14 +1,13 @@
 /* This module groups stair-part generation helpers that expand stair flights into drawable room stair geometry.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { FLOOR_WAYPOINT_Y_OFFSET } from "@/game/waypointUtil";
 import Position from "@/game/types/Position";
 import Room from "@/game/types/Room";
 import RoomExit from "@/game/types/RoomExit";
 import StairFlight from "@/game/types/StairFlight";
 import StairPart, { StairLandingType, StairPartType } from "@/game/types/StairPart";
 import { roomWidthToColumnCount } from "@/game/roomGridUtil";
-import { ROOM_BACK_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_FULL_DEPTH, ROOM_MIDDLE_ROW_MIN_Z, ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
+import { FLOOR_WAYPOINT_Y_OFFSET, ROOM_BACK_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_FULL_DEPTH, ROOM_MIDDLE_ROW_MIN_Z, ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
 import { doesStairFlightEndAtPosition, findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "@/game/stairUtil";
 
 const BACK_ROW_Z = ROOM_BACK_Z;

@@ -3,12 +3,11 @@
 import { assert, assertNonNullable } from "decent-portal";
 
 import { MAP_TILE_SIZE, roomWidthToColumnCount } from "@/game/roomGridUtil";
-import { ROOM_BACK_Z } from "@/game/roomSpaceConstants";
+import { FLOOR_WAYPOINT_Y_OFFSET, ROOM_BACK_Z } from "@/game/roomSpaceConstants";
 import Position from "@/game/types/Position";
 import Room from "@/game/types/Room";
 import RoomExit from "@/game/types/RoomExit";
-import { FLOOR_WAYPOINT_Y_OFFSET } from "@/game/waypointUtil";
-import StairFlight, { duplicateStairFlight } from "./types/StairFlight";
+import StairFlight, { duplicateStairFlight } from "@/game/types/StairFlight";
 
 const MIN_DIRECT_STAIR_COLUMNS = 5;
 const MIN_STAIR_COLUMNS = 4;

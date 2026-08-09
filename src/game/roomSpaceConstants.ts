@@ -10,3 +10,4 @@ export const ROOM_MIDDLE_ROW_CENTER_Z = 0.5;
 export const ROOM_FRONT_ROW_CENTER_Z = 0.8333;
 export const ROOM_FULL_DEPTH = 1;
 export const ROOM_DEPTH_ROW_COUNT = 3;
+export const FLOOR_WAYPOINT_Y_OFFSET = 0.001;

@@ -1,7 +1,7 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assert, assertNonNullable, botch } from "decent-portal";
+import { assert, botch } from "decent-portal";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import Room from "./types/Room";
@@ -36,14 +36,13 @@ import {
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hoverStateUtil";
 import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from "./conclusionStateUtil";
 import { syncDiscoveries } from "./discoveriesUtil";
-import { normalizeId } from "./idUtil";
 import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import { clamp } from "@/common/numberUtil";
 import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
-import { findActiveCharacter, findCharacterById } from "./activeCharacterUtil";
+import { findActiveCharacter } from "./activeCharacterUtil";
 import { createSnapshotAtTime } from "@/levelLoading2/timelineLoading";
 import { findKeyframeForTime } from "@/levelLoading2/timelineLoading/retrievalUtil";
 import { createSnapshotCharactersAndRooms } from "./timelineSnapshotUtil";
@@ -52,13 +51,6 @@ const CAMERA_ZOOM_STEP = 0.1;
 
 function _findMetaTimeNow():number {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
-}
-
-export function findCharacter(gameState:GameState, characterRef:string):Character {
-  const characterId = normalizeId(characterRef);
-  const character = findCharacterById(gameState, characterId);
-  assertNonNullable(character, `character with id ${characterRef} not found`);
-  return character;
 }
 
 function _setActiveRoomDiscovered(gameState:GameState) {

@@ -5,7 +5,6 @@ import { assert } from "decent-portal";
 
 import { COLOR_BLACK, COLOR_STAIR_FRONT_FILL, COLOR_STAIR_SIDE_FILL, COLOR_STAIR_TOP_FILL } from "./drawColorConstants";
 import { gameToCanvasPosition } from "./drawUtil";
-import { FLOOR_WAYPOINT_Y_OFFSET } from "../waypointUtil";
 import { STAIR_POSITION_TOLERANCE } from "../stairUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import { drawProjectedCuboid } from "./cuboidDrawUtil";
@@ -16,7 +15,7 @@ import ScalingFactors from "../types/ScalingFactors";
 import StairPart, { StairPartType } from "../types/StairPart";
 import ImageSet from "../types/ImageSet";
 import { COLUMNS_PER_MAP_TILE, LAYERS_PER_MAP_TILE, MAP_TILE_SIZE } from "../roomGridUtil";
-import { ROOM_FULL_DEPTH, ROOM_ROW_DEPTH, ROOM_DEPTH_ROW_COUNT } from "../roomSpaceConstants";
+import { ROOM_FULL_DEPTH, ROOM_ROW_DEPTH, ROOM_DEPTH_ROW_COUNT, FLOOR_WAYPOINT_Y_OFFSET } from "../roomSpaceConstants";
 import { findTexturePrimaryImageOperation } from "@/game/textureUtil";
 
 const PREFERRED_STEP_RISE_RUN = 1;

@@ -3,12 +3,11 @@
 
 import Room from "@/game/types/Room";
 import Waypoint from "@/game/types/Waypoint";
-import { ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
+import { FLOOR_WAYPOINT_Y_OFFSET, ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import { assert, assertNonNullable } from "decent-portal";
 import RoomExit from "@/game/types/RoomExit";
 
-export const FLOOR_WAYPOINT_Y_OFFSET = 0.001;
 export const WAYPOINT_BACK_ROW_Z = ROOM_BACK_ROW_CENTER_Z;
 export const WAYPOINT_MIDDLE_ROW_Z = ROOM_MIDDLE_ROW_CENTER_Z;
 export const WAYPOINT_FRONT_ROW_Z = ROOM_FRONT_ROW_CENTER_Z;
@@ -45,7 +44,14 @@ export function findExitWaypoint(roomId:string, roomRect:Room['rect'], exit:Room
   return waypoint;
 }
 
-export function findNearestFloorWaypointToPosition(room:Room, position:Position, excludedWaypoints:Waypoint[] = []):Waypoint|null {
+export function findNearestFloorWaypointToPosition(room:Room, position:Position):Waypoint {
+  const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
+  const waypoint = _findNearestXZWaypoint(room.waypoints, position.x, floorY, position.z, []);
+  assertNonNullable(waypoint);
+  return waypoint;
+}
+
+export function findNearestIncludedFloorWaypointToPosition(room:Room, position:Position, excludedWaypoints:Waypoint[]):Waypoint|null {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   return _findNearestXZWaypoint(room.waypoints, position.x, floorY, position.z, excludedWaypoints);
 }

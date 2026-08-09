@@ -5,7 +5,7 @@ import TimelineKeyframe from "./types/TimelineKeyframe";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 
-export function createSnapshotRooms(initialRooms:Room[], timeline:Timeline, snapshot:TimelineKeyframe):Room[] {
+function _createSnapshotRooms(initialRooms:Room[], timeline:Timeline, snapshot:TimelineKeyframe):Room[] {
   return initialRooms.map(room => {
     const roomI = timeline.roomIdToI[room.id];
     assertNonNullable(roomI);
@@ -14,7 +14,7 @@ export function createSnapshotRooms(initialRooms:Room[], timeline:Timeline, snap
   });
 }
 
-export function createSnapshotCharacters(initialCharacters:Character[], timeline:Timeline, snapshot:TimelineKeyframe):Character[] {
+function _createSnapshotCharacters(initialCharacters:Character[], timeline:Timeline, snapshot:TimelineKeyframe):Character[] {
   return initialCharacters.map(character => {
     const characterI = timeline.characterIdToI[character.id];
     assertNonNullable(characterI);
@@ -23,7 +23,7 @@ export function createSnapshotCharacters(initialCharacters:Character[], timeline
 }
 
 export function createSnapshotCharactersAndRooms(gameState:GameState):{snapshotRooms:Room[], snapshotCharacters:Character[]} {
-  const snapshotRooms = createSnapshotRooms(gameState.initialRooms, gameState.timeline, gameState.timelineSnapshot);
-  const snapshotCharacters = createSnapshotCharacters(gameState.initialCharacters, gameState.timeline, gameState.timelineSnapshot);
+  const snapshotRooms = _createSnapshotRooms(gameState.initialRooms, gameState.timeline, gameState.timelineSnapshot);
+  const snapshotCharacters = _createSnapshotCharacters(gameState.initialCharacters, gameState.timeline, gameState.timelineSnapshot);
   return { snapshotRooms, snapshotCharacters };
 }
