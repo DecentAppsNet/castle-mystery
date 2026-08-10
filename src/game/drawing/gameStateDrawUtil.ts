@@ -30,7 +30,6 @@ import { getGroundImageAssetUrl } from "../imageUrlUtil";
 import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import { findActiveCharacter } from "../activeCharacterUtil";
-import Character from "../types/Character";
 import Item from "../types/Item";
 
 const GROUND_HEIGHT_STORIES = 4;
@@ -283,20 +282,20 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
   return scalingFactors;
 }
 
-export function drawGameState(gameState:GameState, snapshotRooms:Room[], snapshotCharacters:Character[], 
-    context:CanvasRenderingContext2D, metaTime:number) {
+export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D, metaTime:number) {
   _ensureRoomShellCaches(gameState, context);
+  const { characters, rooms } = gameState.timelineSnapshot;
   const activeCharacter = findActiveCharacter(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   const hoveredCharacterHighlightId = _findHoveredCharacterHighlightId(gameState, canShowHoverPopovers);
-  const hoveredItemHighlightId = _findHoveredItemHighlightId(snapshotRooms, gameState, canShowHoverPopovers);
+  const hoveredItemHighlightId = _findHoveredItemHighlightId(rooms, gameState, canShowHoverPopovers);
   const drawnExitIds = new Set<string>();
   const layoutPlanner = new CanvasLayoutPlanner(context.canvas.width, context.canvas.height);
   _drawGround(gameState, context);
   _drawRoomSilhouettes(gameState, context);
-  const roomRenderStates = snapshotRooms.map(room => {
-    const charactersInRoom = findCharactersInRoom(room, snapshotCharacters);
+  const roomRenderStates = rooms.map(room => {
+    const charactersInRoom = findCharactersInRoom(room, characters);
     const isActive = activeRoom?.id === room.id;
     return { room, charactersInRoom, isActive };
   });
@@ -306,15 +305,15 @@ export function drawGameState(gameState:GameState, snapshotRooms:Room[], snapsho
       if (room.isObscured && !gameState.isLevelComplete && room.isDiscovered) {
         drawObscuredRoom(room, gameState.scalingFactors, context, metaTime);
       }
-      drawRoomShellExits(room, snapshotRooms, snapshotCharacters, drawnExitIds,
+      drawRoomShellExits(room, rooms, characters, drawnExitIds,
         gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet);
     } else {
-      drawCacheableRoomShell(room, snapshotRooms, isActive, gameState.groundFloorY, gameState.scalingFactors,
+      drawCacheableRoomShell(room, rooms, isActive, gameState.groundFloorY, gameState.scalingFactors,
         context, gameState.isLevelComplete, false, gameState.imageSet, false, false);
       if (room.isObscured && !gameState.isLevelComplete && room.isDiscovered) {
         drawObscuredRoom(room, gameState.scalingFactors, context, metaTime);
       }
-      drawRoomShellExits(room, snapshotRooms, snapshotCharacters, drawnExitIds,
+      drawRoomShellExits(room, rooms, characters, drawnExitIds,
         gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet);
     }
     if (!room.isDiscovered) continue;
@@ -329,13 +328,13 @@ export function drawGameState(gameState:GameState, snapshotRooms:Room[], snapsho
     drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
   }
   if (canShowHoverPopovers && gameState.hoveredItemId) {
-    const hoveredItem = _findHoveredItem(snapshotRooms, gameState);
+    const hoveredItem = _findHoveredItem(rooms, gameState);
     if (hoveredItem && isItemInteractive(hoveredItem.item)) {
       markItemDiscovered(gameState, hoveredItem.item);
       drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context, gameState.imageSet, layoutPlanner);
     }
   } else if (canShowHoverPopovers && gameState.hoveredCharacterId) {
-    const hoveredCharacter = snapshotCharacters.find(character => character.id === gameState.hoveredCharacterId) || null;
+    const hoveredCharacter = characters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter && isCharacterInteractive(hoveredCharacter)) {
       const hoveredCharacterRoom = findRoomAtPosition(gameState.baseRooms, hoveredCharacter.position.x, hoveredCharacter.position.y);
       markCharacterDiscovered(gameState, hoveredCharacter);

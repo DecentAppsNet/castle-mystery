@@ -2,7 +2,6 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assert, botch } from "decent-portal";
-import Character from "./types/Character";
 import GameState from "./types/GameState";
 import Room from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
@@ -43,7 +42,7 @@ import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
 import { findActiveCharacter } from "./activeCharacterUtil";
-import { createKeyframeAtTime, findKeyframeForTime, createSnapshotCharactersAndRooms } from "./timeline";
+import { createTimelineSnapshot, createInitialTimelineSnapshot } from "./timeline";
 import { MSECS_IN_DAY } from "@/common/timeUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
@@ -68,7 +67,7 @@ function _setActiveRoomDiscovered(gameState:GameState) {
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
   const wasPlaying = gameState.isPlaying;
   gameState.activeEffects.length = 0;
-  gameState.timelineSnapshot = createKeyframeAtTime(gameState.timeline.keyframes, event.time);
+  gameState.timelineSnapshot = createTimelineSnapshot(gameState, event.time);
   gameState.isPlaying = false;
   gameState.realTimeToGameTimeOffset = 0;
   if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
@@ -110,7 +109,8 @@ function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEven
   gameState.camera.zoomAmount = clamp(gameState.camera.zoomAmount + zoomDirection * CAMERA_ZOOM_STEP, 0, 1);
 }
 
-function _updateGameState(gameState:GameState, snapshotCharacters:Character[], events:PlayerEvent[], now:number, metaTime:number, cameraAspectRatio:number) {
+function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number, metaTime:number, cameraAspectRatio:number) {
+  const snapshotCharacters = gameState.timelineSnapshot.characters;
   events.forEach(event => {
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent, metaTime); break;
@@ -126,7 +126,7 @@ function _updateGameState(gameState:GameState, snapshotCharacters:Character[], e
   if (gameState.isPlaying) {
     const endTime = gameState.startTime + gameState.duration;
     const nextTime = Math.min(endTime, now + gameState.realTimeToGameTimeOffset);
-    gameState.timelineSnapshot = createKeyframeAtTime(gameState.timeline.keyframes, nextTime);
+    gameState.timelineSnapshot = createTimelineSnapshot(gameState, nextTime);
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
   syncCameraTargetToActiveRoom(gameState.camera, gameState.baseRooms, findActiveCharacter(gameState),
@@ -189,12 +189,11 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     return;
   }
 
-  const { snapshotCharacters, snapshotRooms } = createSnapshotCharactersAndRooms(gameState);
   const now = Date.now();
   const metaTime = _findMetaTimeNow();
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
-  _updateGameState(gameState, snapshotCharacters, events, now, metaTime, calcCanvasAspectRatio(context));
+  _updateGameState(gameState, events, now, metaTime, calcCanvasAspectRatio(context));
   syncConclusionUnlocks(gameState);
   syncDiscoveries(gameState);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
@@ -210,7 +209,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     `active effect count ${gameState.activeEffects.length} exceeds MAX_ACTIVE_EFFECTS ${MAX_ACTIVE_EFFECTS}; an effect callback may not be returning false to remove itself`);
   if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
   if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
-  drawGameState(gameState, snapshotRooms, snapshotCharacters, context, metaTime);
+  drawGameState(gameState, context, metaTime);
   if (DRAW_FPS_COUNTER) updateAndDrawFps(metaTime, context);
 }
 
@@ -267,7 +266,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     lastNotifiedConclusionsRevision:0,
     lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries()),
     timeline:level.timeline, // Timeline is immutable - no harm in sharing instance.
-    timelineSnapshot:findKeyframeForTime(level.timeline.keyframes, level.initialTime)
+    timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms)
   }
   _setActiveRoomDiscovered(gameState);
   syncDiscoveries(gameState);

@@ -1,4 +1,4 @@
-export { createSnapshotCharactersAndRooms } from './snapshotUtil';
+export { createTimelineSnapshot, createInitialTimelineSnapshot } from './snapshotUtil';
 export { 
   createKeyframeAtTime, 
   createCharacterKeyframeAtTime, 

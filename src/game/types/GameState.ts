@@ -9,10 +9,10 @@ import Effect from "../effects/types/Effect";
 import Conclusion from "../conclusions/types/Conclusion";
 import RoomShellCache from "./RoomShellCache";
 import Timeline from "./Timeline";
-import TimelineKeyframe from "./TimelineKeyframe";
+import TimelineSnapshot from "./TimelineSnapshot";
 
 type GameState = {
-  timelineSnapshot:TimelineKeyframe,
+  timelineSnapshot:TimelineSnapshot,
   itemsById:Map<string, Item>,
   unplacedItemsById:Map<string, Item>,
   discoveredCharacterIds:string[],
