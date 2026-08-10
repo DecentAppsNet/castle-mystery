@@ -210,12 +210,12 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 }
 
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
-  const initialItemsById = createItemsById(level.rooms, level.initialCharacters, duplicateItemsById(level.itemsById));
-  const initialCharacters = level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById));
+  const initialItemsById = createItemsById(level.rooms, level.characters, duplicateItemsById(level.itemsById));
+  const initialCharacters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById));
   const initialRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById));
   const initialUnplacedItemsById = createUnplacedItemsById(initialItemsById, initialRooms, initialCharacters);
   const itemsById = duplicateItemsById(initialItemsById);
-  const characters = level.initialCharacters.map(character => duplicateCharacterUsingItemIndex(character, itemsById));
+  const characters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, itemsById));
   const rooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById));
   const gameState:GameState = {
     itemsById,

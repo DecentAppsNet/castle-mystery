@@ -7,9 +7,7 @@ import Timeline, { createDefaultTimeline } from "./Timeline";
 
 export type MutableLevel = {
   rooms:Room[],
-  initialCharacters:Character[],
   characters:Character[],
-  allCharactersById:Map<string, Character>,
   itemsById:Map<string, Item>,
   discoverableCharacterCount:number,
   discoverableItemCount:number,
@@ -32,9 +30,7 @@ type Level = Readonly<MutableLevel>;
 export function createDefaultMutableLevel():MutableLevel {
   return {
     rooms:[],
-    initialCharacters:[],
     characters:[],
-    allCharactersById:new Map<string, Character>(),
     itemsById:new Map<string, Item>(),
     discoverableCharacterCount:0,
     discoverableItemCount:0,

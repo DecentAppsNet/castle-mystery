@@ -9,7 +9,7 @@ import { rand } from "@/common/randUtil";
 import { parseItem, parseItems } from "../itemLoading/";
 import { normalizeId } from "@/game/idUtil";
 import Room from "@/game/types/Room";
-import Position, { arePositionsEqual, createDefaultPosition } from "@/game/types/Position";
+import Position from "@/game/types/Position";
 import { findAllCharacterPositions } from "../roomLoading/";
 import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
@@ -52,39 +52,29 @@ function _parseCharacter(characterId:string, position:Position, characterSection
   return character;
 }
 
-// TODO - probably just return placed characters.
 export function loadCharactersPartially(charactersSectionText:string, roomsSectionText:string, rooms:Room[], errors:ErrorCollector):Character[]|null {
   const originalErrorCount = errors.count;
 
   if (!charactersSectionText) return [];
-
-  const unplacedPosition = createDefaultPosition();
 
   const characterIds = getSectionIdsFromSectionText(charactersSectionText, 2, 'characters', errors);
   const characterIdToPosition = findAllCharacterPositions(rooms, characterIds, roomsSectionText, errors);
 
   const characterSectionsById:SectionEntryMap = createNormalizedSectionEntryMap(charactersSectionText, 2, 'characters', errors);
   const characterSectionNames:string[] = [...characterSectionsById.keys()];
-  const characters = characterSectionNames.map(sectionName => {
+  const characters:Character[] = [];
+  characterSectionNames.forEach(sectionName => {
     const sectionEntry = characterSectionsById.get(sectionName);
     assertNonNullable(sectionEntry);
     const characterId = normalizeId(sectionName);
-    const fromPosition = characterIdToPosition[characterId] ?? unplacedPosition; // Due to importing, its possible to have unplaced characters.
-    return _parseCharacter(characterId, fromPosition, sectionEntry, errors);
+    const fromPosition = characterIdToPosition[characterId] ?? null; // Due to importing, its possible to have unplaced characters.
+    if (fromPosition) {
+      const character = _parseCharacter(characterId, fromPosition, sectionEntry, errors);
+      characters.push(character);
+    }
   });
   
   return errors.count <= originalErrorCount ? characters : null;
-}
-
-function _createAllCharactersById(characters:Character[]):Map<string, Character> {
-  const allCharactersById = new Map<string, Character>();
-  characters.forEach(character => allCharactersById.set(character.id, character));
-  return allCharactersById;
-}
-
-function _findAllPlacedCharacters(characters:Character[]):Character[] {
-  const unplacedPosition = createDefaultPosition();
-  return characters.filter(c => !arePositionsEqual(c.position, unplacedPosition));
 }
 
 export function addCharactersToLevel(characters:Character[], items:Item[], level:MutableLevel, errors:ErrorCollector):boolean {
@@ -92,10 +82,7 @@ export function addCharactersToLevel(characters:Character[], items:Item[], level
   assertNonNullable(level.activeCharacterId);
 
   mergeCharacterItems(characters, items, errors);
-  level.allCharactersById = _createAllCharactersById(characters);
-
-  level.characters = _findAllPlacedCharacters(characters);
-  level.initialCharacters = level.characters; // TODO - see if you can remove this member from Level and GameState.
+  level.characters = characters;
   
   return errors.count <= originalErrorCount;
 }

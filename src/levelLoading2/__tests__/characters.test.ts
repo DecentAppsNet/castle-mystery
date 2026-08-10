@@ -19,8 +19,9 @@ describe('loading levels - characters', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.allCharactersById.size).toBe(1);
-    expect(level?.allCharactersById.get('sam')).toMatchObject({
+    expect(level!.characters.length).toBe(1);
+    const sam = level?.characters.find(c => c.id === 'sam');
+    expect(sam).toMatchObject({
       id:'sam',
       title:'Sam',
       faceImageUrl:null,
@@ -40,8 +41,9 @@ describe('loading levels - characters', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.allCharactersById.size).toBe(1);
-    expect(level?.allCharactersById.get('sam')).toMatchObject({
+     expect(level!.characters.length).toBe(1);
+    const sam = level?.characters.find(c => c.id === 'sam');
+    expect(sam).toMatchObject({
       id:'sam',
       title:'Detective Sam',
       faceImageUrl:'/assets/faces/sam.png',
@@ -86,7 +88,7 @@ describe('loading levels - characters', () => {
 
     expect(level).not.toBeNull();
     expect(errors.count).toEqual(0);
-    expect(level?.allCharactersById.get('sam')).not.toBeNull();
+    expect(level!.characters.find(c => c.id === 'sam')).not.toBeNull();
   });
 
   it('fails if a character visible value is not boolean-like', () => {

@@ -34,11 +34,6 @@ function _findDirectReferencedItemIds(timeline:Timeline):string[] {
   return [...itemIds];
 }
 
-// TODO - is this needed? Level should be returned with some data structure that has this.
-function _findDirectReferencedCharacterIds(timeline:Timeline):string[] {
-  return Object.keys(timeline.characterIdToI);
-}
-
 function _findPunchMaskImageUrl(imageUrl:string):string|null {
   if (!imageUrl.toLowerCase().endsWith('.png')) return null;
   return imageUrl.slice(0, -4) + '.punch.png';
@@ -53,16 +48,11 @@ function _findDirectReferencedItemImageUrls(level:Level):string[] {
   return [...imageUrls];
 }
 
-function _findDirectReferencedCharacterFaceImageUrls(level:Level):string[] {
-  const imageUrls = new Set<string>();
-  _findDirectReferencedCharacterIds(level.timeline).forEach(characterId => {
-    const character = level.allCharactersById.get(characterId) || null;
-    if (character?.faceImageUrl) imageUrls.add(character.faceImageUrl);
-  });
-  return [...imageUrls];
+function _findCharacterFaceImageUrls(level:Level):string[] {
+  return level.characters.map(c => c.faceImageUrl).filter(imageUrl => imageUrl !== null);
 }
 
-function _findDirectReferencedImageUrls(level:Level):string[] {
+function _findImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>([KEY_IMAGE_URL, getGroundImageAssetUrl(), UNKNOWN_ITEM_ICON_URL]);
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
   level.rooms.forEach(room => {
@@ -76,7 +66,7 @@ function _findDirectReferencedImageUrls(level:Level):string[] {
     if (item.imageUrl) imageUrls.add(item.imageUrl);
   }));
   _findDirectReferencedItemImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
-  _findDirectReferencedCharacterFaceImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
+  _findCharacterFaceImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
   level.conclusions.forEach(conclusion => conclusion.parts.forEach(part => {
     if (part.type !== ClozePartType.image) return;
     const imageUrl = (part as ClozeImage).imageUrl;
@@ -142,7 +132,7 @@ function _createLoadPunchMaskImageBitmapCache() {
 async function _loadDirectReferencedImages(level:Level, imageSet:ImageSet,
   loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>,
   loadPunchMaskImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>):Promise<void> {
-  const imageUrls = _findDirectReferencedImageUrls(level);
+  const imageUrls = _findImageUrls(level);
   const imageEntries = await Promise.all(imageUrls.map(async imageUrl => {
     const imageBitmap = await loadImageBitmap(imageUrl);
     const punchMaskImage = imageBitmap ? await loadPunchMaskImageBitmap(imageUrl) : null;
