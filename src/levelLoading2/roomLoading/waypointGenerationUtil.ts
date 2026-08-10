@@ -204,10 +204,10 @@ function _calcRoomFloorY(roomRect:Rect):number {
   return roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
 }
 
-export function calcFloorPositionInRoom(room:Room, col:number, row:number):Position {
+function _calcFloorPositionInRoomRect(rect:Rect, col:number, row:number):Position {
   assert(row >= 0 && row < FLOOR_ROW_ZS.length);
-  const x = room.rect.x + (col + 0.5) * COLUMN_WIDTH;
-  const y = _calcRoomFloorY(room.rect);
+  const x = rect.x + (col + 0.5) * COLUMN_WIDTH;
+  const y = _calcRoomFloorY(rect);
   const z = FLOOR_ROW_ZS[row];
   return {x, y, z};
 }
@@ -237,8 +237,8 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
 
   for (let rowIndex = 0; rowIndex < FLOOR_ROW_ZS.length; rowIndex++) {
     for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-      const x = roomRect.x + (columnIndex + 0.5) * COLUMN_WIDTH;
-      floorWaypointsByRow[rowIndex].push(_getOrCreateWaypoint(x, floorY, FLOOR_ROW_ZS[rowIndex]));
+      const {x, y, z} = _calcFloorPositionInRoomRect(roomRect, columnIndex, rowIndex);
+      floorWaypointsByRow[rowIndex].push(_getOrCreateWaypoint(x, y, z));
     }
   }
 
@@ -337,4 +337,8 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
   });
 
   return waypoints;
+}
+
+export function calcFloorPositionInRoom(room:Room, col:number, row:number):Position {
+  return _calcFloorPositionInRoomRect(room.rect, col, row);
 }
