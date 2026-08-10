@@ -5,5 +5,5 @@ import Character from "./types/Character";
 import GameState from "./types/GameState";
 
 export function findActiveCharacter(gameState:GameState):Character|null {
-  return gameState.initialCharacters.find(character => character.id === gameState.activeCharacterId) || null;
+  return gameState.baseCharacters.find(character => character.id === gameState.activeCharacterId) || null;
 }

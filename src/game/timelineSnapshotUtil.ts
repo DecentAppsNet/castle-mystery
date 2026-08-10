@@ -23,7 +23,7 @@ function _createSnapshotCharacters(initialCharacters:Character[], timeline:Timel
 }
 
 export function createSnapshotCharactersAndRooms(gameState:GameState):{snapshotRooms:Room[], snapshotCharacters:Character[]} {
-  const snapshotRooms = _createSnapshotRooms(gameState.initialRooms, gameState.timeline, gameState.timelineSnapshot);
-  const snapshotCharacters = _createSnapshotCharacters(gameState.initialCharacters, gameState.timeline, gameState.timelineSnapshot);
+  const snapshotRooms = _createSnapshotRooms(gameState.baseRooms, gameState.timeline, gameState.timelineSnapshot);
+  const snapshotCharacters = _createSnapshotCharacters(gameState.baseCharacters, gameState.timeline, gameState.timelineSnapshot);
   return { snapshotRooms, snapshotCharacters };
 }

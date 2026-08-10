@@ -28,8 +28,8 @@ type GameState = {
   readonly imageSet:ImageSet,
   readonly initialItemsById:Map<string, Item>,
   readonly initialUnplacedItemsById:Map<string, Item>,
-  readonly initialCharacters:Character[],
-  readonly initialRooms:Room[],
+  baseCharacters:Character[], // Tracks initial state of characters along with discovered status.
+  baseRooms:Room[], // Tracks initial state of rooms along with discovered status.
   camera:Camera,
   activeEffects:Effect[],
   hoveredItemId:string|null,

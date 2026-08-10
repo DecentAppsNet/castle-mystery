@@ -86,7 +86,7 @@ function _findHoveredItem(rooms:Room[], gameState:GameState):{room:Room, item:It
 
 function _findHoveredExit(gameState:GameState):RoomExit|null {
   if (!gameState.hoveredExitKey) return null;
-  for (const room of gameState.initialRooms) {
+  for (const room of gameState.baseRooms) {
     const hoveredExit = room.exits.find(exit => exit.id === gameState.hoveredExitKey) || null;
     if (hoveredExit) return hoveredExit;
   }
@@ -95,7 +95,7 @@ function _findHoveredExit(gameState:GameState):RoomExit|null {
 
 function _findHoveredCharacterHighlightId(gameState:GameState, canShowHoverPopovers:boolean):string|null {
   if (!canShowHoverPopovers || !gameState.hoveredCharacterId) return null;
-  const hoveredCharacter = gameState.initialCharacters.find(character => character.id === gameState.hoveredCharacterId) || null;
+  const hoveredCharacter = gameState.baseCharacters.find(character => character.id === gameState.hoveredCharacterId) || null;
   if (!hoveredCharacter || !isCharacterInteractive(hoveredCharacter)) return null;
   return hoveredCharacter.id;
 }
@@ -113,8 +113,8 @@ function _calcRoomShellCacheKey(destWidth:number, destHeight:number):string {
 
 function _calcRoomShellScalingFactors(room:Room, gameState:GameState, destWidth:number, destHeight:number):ScalingFactors {
   const aspectRatio = destHeight > 0 ? destWidth / destHeight : 1;
-  const roomCameraRect = calcRoomCameraRect(room, gameState.initialRooms, aspectRatio, gameState.groundFloorY);
-  const levelCameraRect = calcLevelCameraRect(gameState.initialRooms, aspectRatio, gameState.groundFloorY);
+  const roomCameraRect = calcRoomCameraRect(room, gameState.baseRooms, aspectRatio, gameState.groundFloorY);
+  const levelCameraRect = calcLevelCameraRect(gameState.baseRooms, aspectRatio, gameState.groundFloorY);
   const scalingFactors = calcScalingFactorsForRect(roomCameraRect, destWidth, destHeight);
   return {
     ...scalingFactors,
@@ -145,7 +145,7 @@ function _calcProjectedRoomShellBounds(room:Room, rooms:ReadonlyArray<Room>, gro
 function _createRoomVisualCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number,
   draw:(scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) => void):RoomShellVariantImage {
   const visualScalingFactors = _calcRoomShellScalingFactors(room, gameState, destWidth, destHeight);
-  const visualBounds = _calcProjectedRoomShellBounds(room, gameState.initialRooms, gameState.groundFloorY, visualScalingFactors);
+  const visualBounds = _calcProjectedRoomShellBounds(room, gameState.baseRooms, gameState.groundFloorY, visualScalingFactors);
   const padding = Math.max(2, Math.ceil(visualScalingFactors.roomLineWidth));
   const canvasWidth = Math.max(1, Math.ceil(visualBounds.width) + padding * 2);
   const canvasHeight = Math.max(1, Math.ceil(visualBounds.height) + padding * 2);
@@ -175,14 +175,14 @@ function _createRoomVisualCanvas(room:Room, gameState:GameState, destWidth:numbe
 function _createRoomShellCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number,
   isActive:boolean):RoomShellVariantImage {
   return _createRoomVisualCanvas(room, gameState, destWidth, destHeight, (scalingFactors, context) => {
-    drawCacheableRoomShell(room, gameState.initialRooms, isActive, gameState.groundFloorY,
+    drawCacheableRoomShell(room, gameState.baseRooms, isActive, gameState.groundFloorY,
       scalingFactors, context, false, true, gameState.imageSet, false, false);
   });
 }
 
 function _createRoomSilhouetteCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number):RoomShellVariantImage {
   return _createRoomVisualCanvas(room, gameState, destWidth, destHeight, (scalingFactors, context) => {
-    drawCacheableRoomShell(room, gameState.initialRooms, false, gameState.groundFloorY,
+    drawCacheableRoomShell(room, gameState.baseRooms, false, gameState.groundFloorY,
       scalingFactors, context, false, true, null, true, false);
     context.globalCompositeOperation = 'source-in';
     context.fillStyle = COLOR_DARK_GRAY;
@@ -193,7 +193,7 @@ function _createRoomSilhouetteCanvas(room:Room, gameState:GameState, destWidth:n
 
 function _createRoomRoofCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number):RoomShellVariantImage {
   return _createRoomVisualCanvas(room, gameState, destWidth, destHeight, (scalingFactors, context) => {
-    drawRoomRoofs(room, gameState.initialRooms, gameState.groundFloorY, scalingFactors, context);
+    drawRoomRoofs(room, gameState.baseRooms, gameState.groundFloorY, scalingFactors, context);
   });
 }
 
@@ -208,7 +208,7 @@ function _ensureRoomShellCaches(gameState:GameState, context:CanvasRenderingCont
     gameState.roomShellCacheByRoomId.clear();
   }
 
-  for (const room of gameState.initialRooms) {
+  for (const room of gameState.baseRooms) {
     if (gameState.roomShellCacheByRoomId.has(room.id)) continue;
     gameState.roomShellCacheByRoomId.set(room.id, {
       ...createEmptyRoomShellVariantImages(),
@@ -225,7 +225,7 @@ function _drawCachedRoomVariant(cachedVariant:RoomShellVariantImage|null, room:R
   if (!includeUndiscovered && !room.isDiscovered) return false;
   if (!cachedVariant?.image || cachedVariant.width <= 0 || cachedVariant.height <= 0) return false;
 
-  const shellBounds = _calcProjectedRoomShellBounds(room, gameState.initialRooms, gameState.groundFloorY, gameState.scalingFactors);
+  const shellBounds = _calcProjectedRoomShellBounds(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors);
   const logicalDestWidth = Math.max(1, shellBounds.width);
   const logicalDestHeight = Math.max(1, shellBounds.height);
   const logicalSourceWidth = Math.max(1, cachedVariant.width - cachedVariant.padding * 2);
@@ -254,7 +254,7 @@ function _drawCachedRoomRoof(room:Room, gameState:GameState, context:CanvasRende
 }
 
 function _drawRoomSilhouettes(gameState:GameState, context:CanvasRenderingContext2D) {
-  for (const room of gameState.initialRooms) {
+  for (const room of gameState.baseRooms) {
     if (room.isDiscovered) continue;
     const roomShellVariants = gameState.roomShellCacheByRoomId.get(room.id) || null;
     _drawCachedRoomVariant(roomShellVariants?.silhouette || null, room, gameState, context, true);
@@ -271,7 +271,7 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
     || scalingFactors.sourceX !== gameState.camera.currentRect.x || scalingFactors.sourceY !== gameState.camera.currentRect.y
     || scalingFactors.sourceWidth !== gameState.camera.currentRect.width || scalingFactors.sourceHeight !== gameState.camera.currentRect.height) {
     scalingFactors = calcScalingFactorsForRect(gameState.camera.currentRect, destW, destH);
-    const levelCameraRect = calcLevelCameraRect(gameState.initialRooms, destW / destH, gameState.groundFloorY);
+    const levelCameraRect = calcLevelCameraRect(gameState.baseRooms, destW / destH, gameState.groundFloorY);
     gameState.roomTitleWrapScalingFactors = calcScalingFactorsForRect(levelCameraRect, destW, destH);
     if (destSizeChanged) gameState.roomTitleWrapsByRoomId.clear();
     scalingFactors = {
@@ -287,7 +287,7 @@ export function drawGameState(gameState:GameState, snapshotRooms:Room[], snapsho
     context:CanvasRenderingContext2D, metaTime:number) {
   _ensureRoomShellCaches(gameState, context);
   const activeCharacter = findActiveCharacter(gameState);
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.initialRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
   const hoveredCharacterHighlightId = _findHoveredCharacterHighlightId(gameState, canShowHoverPopovers);
   const hoveredItemHighlightId = _findHoveredItemHighlightId(snapshotRooms, gameState, canShowHoverPopovers);
@@ -322,7 +322,7 @@ export function drawGameState(gameState:GameState, snapshotRooms:Room[], snapsho
       hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,
       gameState.time, metaTime, gameState.imageSet, gameState.isLevelComplete, layoutPlanner);
     if (!_drawCachedRoomRoof(room, gameState, context)) {
-      drawRoomRoofs(room, gameState.initialRooms, gameState.groundFloorY, gameState.scalingFactors, context);
+      drawRoomRoofs(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors, context);
     }
   }
   for (const { room, isActive } of roomRenderStates) {
@@ -337,7 +337,7 @@ export function drawGameState(gameState:GameState, snapshotRooms:Room[], snapsho
   } else if (canShowHoverPopovers && gameState.hoveredCharacterId) {
     const hoveredCharacter = snapshotCharacters.find(character => character.id === gameState.hoveredCharacterId) || null;
     if (hoveredCharacter && isCharacterInteractive(hoveredCharacter)) {
-      const hoveredCharacterRoom = findRoomAtPosition(gameState.initialRooms, hoveredCharacter.position.x, hoveredCharacter.position.y);
+      const hoveredCharacterRoom = findRoomAtPosition(gameState.baseRooms, hoveredCharacter.position.x, hoveredCharacter.position.y);
       markCharacterDiscovered(gameState, hoveredCharacter);
       if (hoveredCharacter.rightHandItem) markItemDiscovered(gameState, hoveredCharacter.rightHandItem);
       if (hoveredCharacter.leftHandItem) markItemDiscovered(gameState, hoveredCharacter.leftHandItem);
@@ -346,8 +346,8 @@ export function drawGameState(gameState:GameState, snapshotRooms:Room[], snapsho
   } else if (canShowHoverPopovers && gameState.hoveredExitKey) {
     const hoveredExit = _findHoveredExit(gameState);
     if (hoveredExit) {
-      const room1 = findRoom(gameState.initialRooms, hoveredExit.room1Id);
-      const room2 = findRoom(gameState.initialRooms, hoveredExit.room2Id);
+      const room1 = findRoom(gameState.baseRooms, hoveredExit.room1Id);
+      const room2 = findRoom(gameState.baseRooms, hoveredExit.room2Id);
       assertNonNullable(room1, `room ${hoveredExit.room1Id} not found`);
       assertNonNullable(room2, `room ${hoveredExit.room2Id} not found`);
       drawExitPopover(hoveredExit, room1, room2, gameState.itemsById, gameState.scalingFactors, context, layoutPlanner);

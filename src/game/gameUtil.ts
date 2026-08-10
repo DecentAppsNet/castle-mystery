@@ -56,7 +56,7 @@ function _findMetaTimeNow():number {
 function _setActiveRoomDiscovered(gameState:GameState) {
   const activeCharacter = findActiveCharacter(gameState);
   if (activeCharacter) {
-    const activeRoom = findRoomAtPosition(gameState.initialRooms, activeCharacter.position.x, activeCharacter.position.y);
+    const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
     if (activeRoom) {
       if (!activeRoom.isDiscovered) activeRoom.isDiscovered = true;
       if (!activeCharacter.discoveredRoomIds.includes(activeRoom.id)) {
@@ -99,7 +99,7 @@ function _pauseGameState(gameState:GameState, metaTime:number) {
 
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
   const activeCharacter = findActiveCharacter(gameState);
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.initialRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
+  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
   if (!activeRoom || (!gameState.isLevelComplete && activeRoom.isObscured)) return null;
   return activeRoom;
 }
@@ -130,7 +130,7 @@ function _updateGameState(gameState:GameState, snapshotCharacters:Character[], e
     gameState.timelineSnapshot = createSnapshotAtTime(gameState.timeline.keyframes, nextTime);
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
-  syncCameraTargetToActiveRoom(gameState.camera, gameState.initialRooms, findActiveCharacter(gameState),
+  syncCameraTargetToActiveRoom(gameState.camera, gameState.baseRooms, findActiveCharacter(gameState),
     cameraAspectRatio, now, gameState.groundFloorY);
   updateCamera(gameState.camera, now);
   _setActiveRoomDiscovered(gameState);
@@ -211,9 +211,9 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
   const initialItemsById = createItemsById(level.rooms, level.characters, duplicateItemsById(level.itemsById));
-  const initialCharacters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById));
-  const initialRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById));
-  const initialUnplacedItemsById = createUnplacedItemsById(initialItemsById, initialRooms, initialCharacters);
+  const baseCharacters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById));
+  const baseRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById));
+  const initialUnplacedItemsById = createUnplacedItemsById(initialItemsById, baseRooms, baseCharacters);
   const itemsById = duplicateItemsById(initialItemsById);
   const characters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, itemsById));
   const rooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById));
@@ -232,8 +232,8 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     imageSet,
     initialItemsById,
     initialUnplacedItemsById,
-    initialCharacters,
-    initialRooms,
+    baseCharacters,
+    baseRooms,
     camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
     activeEffects:[],
     hoveredItemId:null,
