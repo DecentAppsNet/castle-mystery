@@ -43,9 +43,7 @@ import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
 import { findActiveCharacter } from "./activeCharacterUtil";
-import { createSnapshotAtTime } from "@/levelLoading/timelineLoading";
-import { findKeyframeForTime } from "@/levelLoading/timelineLoading/retrievalUtil";
-import { createSnapshotCharactersAndRooms } from "./timelineSnapshotUtil";
+import { createKeyframeAtTime, findKeyframeForTime, createSnapshotCharactersAndRooms } from "./timeline";
 import { MSECS_IN_DAY } from "@/common/timeUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
@@ -70,7 +68,7 @@ function _setActiveRoomDiscovered(gameState:GameState) {
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
   const wasPlaying = gameState.isPlaying;
   gameState.activeEffects.length = 0;
-  gameState.timelineSnapshot = createSnapshotAtTime(gameState.timeline.keyframes, event.time);
+  gameState.timelineSnapshot = createKeyframeAtTime(gameState.timeline.keyframes, event.time);
   gameState.isPlaying = false;
   gameState.realTimeToGameTimeOffset = 0;
   if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
@@ -128,7 +126,7 @@ function _updateGameState(gameState:GameState, snapshotCharacters:Character[], e
   if (gameState.isPlaying) {
     const endTime = gameState.startTime + gameState.duration;
     const nextTime = Math.min(endTime, now + gameState.realTimeToGameTimeOffset);
-    gameState.timelineSnapshot = createSnapshotAtTime(gameState.timeline.keyframes, nextTime);
+    gameState.timelineSnapshot = createKeyframeAtTime(gameState.timeline.keyframes, nextTime);
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
   syncCameraTargetToActiveRoom(gameState.camera, gameState.baseRooms, findActiveCharacter(gameState),

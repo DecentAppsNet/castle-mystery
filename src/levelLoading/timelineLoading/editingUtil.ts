@@ -1,8 +1,8 @@
-import { assert, assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable, botch } from "decent-portal";
 import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
 import EditableTimelineKeyframe from "./types/EditableTimelineKeyframe";
 import CharacterKeyframe, { CHARACTER_KEYFRAME_KEYS } from "@/game/types/CharacterKeyframe";
-import { findInterpolatedCharacterPosition } from "./interpolationUtil";
+import { findInterpolatedCharacterPosition } from "@/game/timeline";
 import RoomKeyframe, { ROOM_KEYFRAME_KEYS } from "@/game/types/RoomKeyframe";
 import Character from "@/game/types/Character";
 import Room from "@/game/types/Room";
@@ -317,6 +317,13 @@ function _createEmptyTimeline(characters:readonly Character[], rooms:readonly Ro
   return _editableTimelineToTimeline(editable);
 }
 
+function _isEmptyKeyframe(keyframe:Partial<CharacterKeyframe>|Partial<RoomKeyframe>):boolean {
+  for (const key in keyframe) {
+    if (Object.hasOwn(keyframe, key)) return false;
+  }
+  return true;
+}
+
 export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Timeline|null {
   if (!activities.length) return _createEmptyTimeline(level.characters, level.rooms);
   assert(_areActivitiesWellOrdered(activities, level.startTime));
@@ -330,4 +337,14 @@ export function scheduleActivities(level:Level, activities:Activity[], errors:Er
     }
   }
   return _editableTimelineToTimeline(timeline);
+}
+
+export function findLatestKeyFrameForCharacter(timeline:EditableTimeline, characterRef:string|number):TimelineKeyframe {
+  const characterI:number = typeof characterRef === 'string' ? timeline.characterIdToI[characterRef] : characterRef;
+  assert(timeline.keyframes.length === timeline.editableKeyframes.length);
+  for(let i = timeline.editableKeyframes.length - 1; i >= 0; --i) {
+    if (!_isEmptyKeyframe(timeline.editableKeyframes[i].characters[characterI])) 
+      return timeline.keyframes[i];
+  }
+  botch('There should at least be a first editable keyframe that includes all keys.');
 }

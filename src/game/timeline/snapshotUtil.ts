@@ -1,9 +1,9 @@
 import { assertNonNullable } from "decent-portal";
-import Room from "./types/Room";
-import Timeline from "./types/Timeline";
-import TimelineKeyframe from "./types/TimelineKeyframe";
-import Character from "./types/Character";
-import GameState from "./types/GameState";
+import Room from "../types/Room";
+import Timeline from "../types/Timeline";
+import TimelineKeyframe from "../types/TimelineKeyframe";
+import Character from "../types/Character";
+import GameState from "../types/GameState";
 
 function _createSnapshotRooms(initialRooms:Room[], timeline:Timeline, snapshot:TimelineKeyframe):Room[] {
   return initialRooms.map(room => {

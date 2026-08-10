@@ -1,6 +1,6 @@
-import Position from "@/game/types/Position";
-import EditableTimelineKeyframe from "./types/EditableTimelineKeyframe";
+import Position, { arePositionsEqual } from "@/game/types/Position";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
+import EditableTimelineKeyframe from "@/levelLoading/timelineLoading/types/EditableTimelineKeyframe";
 import { assert, assertNonNullable } from "decent-portal";
 
 function _interpolatePosition(fromPosition:Position, toPosition:Position, interpolateAmount:number):Position {
@@ -16,10 +16,11 @@ function _interpolatePosition(fromPosition:Position, toPosition:Position, interp
   };
 }
 
-export function findInterpolatedCharacterPosition(fromKeyframe:TimelineKeyframe, toKeyframe:EditableTimelineKeyframe, 
+export function findInterpolatedCharacterPosition(fromKeyframe:TimelineKeyframe, toKeyframe:TimelineKeyframe|EditableTimelineKeyframe, 
     time:number, characterI:number):Position {
   const fromPosition:Position = fromKeyframe.characters[characterI].position;
-  const toPosition:Position = toKeyframe.characters[characterI].position!;
+  const toPosition:Position|null = toKeyframe.characters[characterI].position ?? null;
+  if (toPosition === null || arePositionsEqual(fromPosition, toPosition)) return {...fromPosition};
   assertNonNullable(toPosition, 'toKeyframe must have .position defined');
   const fromTime = fromKeyframe.time;
   const toTime = toKeyframe.time;

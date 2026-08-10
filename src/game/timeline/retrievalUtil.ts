@@ -1,9 +1,9 @@
-import { assert, botch } from "decent-portal";
+import { assert } from "decent-portal";
+
 import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import { findInterpolatedCharacterPosition } from "./interpolationUtil";
 import CharacterKeyframe, { duplicateCharacterKeyframe } from "@/game/types/CharacterKeyframe";
-import EditableTimeline from "./types/EditableTimeline";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 
 function _findKeyframeBeforeTimeRecursively(keyframes:TimelineKeyframe[], fromI:number, toI:number, time:number):number {
@@ -35,7 +35,7 @@ function _areCharacterKeyframePositionsEqual(fromKeyframe:TimelineKeyframe, toKe
   return arePositionsEqual(fromKeyframe.characters[characterI].position, toKeyframe.characters[characterI].position);
 }
 
-export function createSnapshotAtTime(keyframes:TimelineKeyframe[], time:number):Readonly<TimelineKeyframe> {
+export function createKeyframeAtTime(keyframes:TimelineKeyframe[], time:number):Readonly<TimelineKeyframe> {
   const {beforeKeyframe, afterKeyframe} = _findKeyframesBeforeAndAfterTime(keyframes, time);
   if (!afterKeyframe) return { ...beforeKeyframe, time };
 
@@ -52,7 +52,7 @@ export function createSnapshotAtTime(keyframes:TimelineKeyframe[], time:number):
   return betweenKeyframe ?? { ...beforeKeyframe, time};
 }
 
-export function createCharacterSnapshotAtTime(keyframes:TimelineKeyframe[], characterI:number, 
+export function createCharacterKeyframeAtTime(keyframes:TimelineKeyframe[], characterI:number, 
     time:number):Readonly<CharacterKeyframe> {
   const {beforeKeyframe, afterKeyframe} = _findKeyframesBeforeAndAfterTime(keyframes, time);
   if (!afterKeyframe) return beforeKeyframe.characters[characterI];
@@ -71,7 +71,7 @@ export function findCharacterPositionAtTime(keyframes:TimelineKeyframe[], charac
     : beforePosition;
 }
 
-// Unlike the create*Snapshot() functions, this won't interpolate any values. Use this faster function if
+// Unlike the create*Keyframe() functions, this won't interpolate any values. Use this faster function if
 // interpolated values aren't needed.
 export function findKeyframeForTime(keyframes:TimelineKeyframe[], time:number):TimelineKeyframe {
   const { beforeKeyframe } = _findKeyframesBeforeAndAfterTime(keyframes, time);
@@ -83,19 +83,3 @@ export function findRoomKeyframeForTime(keyframes:TimelineKeyframe[], roomI:numb
   return beforeKeyframe.rooms[roomI];
 }
 
-function _isEmptyKeyframe(keyframe:Partial<CharacterKeyframe>|Partial<RoomKeyframe>):boolean {
-  for (const key in keyframe) {
-    if (Object.hasOwn(keyframe, key)) return false;
-  }
-  return true;
-}
-
-export function findLatestKeyFrameForCharacter(timeline:EditableTimeline, characterRef:string|number):TimelineKeyframe {
-  const characterI:number = typeof characterRef === 'string' ? timeline.characterIdToI[characterRef] : characterRef;
-  assert(timeline.keyframes.length === timeline.editableKeyframes.length);
-  for(let i = timeline.editableKeyframes.length - 1; i >= 0; --i) {
-    if (!_isEmptyKeyframe(timeline.editableKeyframes[i].characters[characterI])) 
-      return timeline.keyframes[i];
-  }
-  botch('There should at least be a first editable keyframe that includes all keys.');
-}

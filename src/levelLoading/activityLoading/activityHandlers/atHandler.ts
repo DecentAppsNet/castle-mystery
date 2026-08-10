@@ -6,7 +6,6 @@ import { createParseFormat, makeIdentifier, makeSequence, makeVerb } from "../pa
 import { assert, assertNonNullable } from "decent-portal";
 import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
-import { createSnapshotAtTime, findLatestKeyFrameForCharacter } from "@/levelLoading/timelineLoading";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import Room from "@/game/types/Room";
 import Position, { arePositionsEqual } from "@/game/types/Position";
@@ -15,6 +14,8 @@ import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { calcWalkDurationToRoom, scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
 import Character from "@/game/types/Character";
 import { findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition } from "../waypointFindingUtil";
+import { createKeyframeAtTime } from "@/game/timeline";
+import { findLatestKeyFrameForCharacter } from "@/levelLoading/timelineLoading/editingUtil";
 
 function _findClaimedWaypointsFromSnapshot(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
@@ -83,7 +84,7 @@ export function scheduleAtActivity(level:Level,
   
   const toKeyframe = isRelativeTimestamp 
     ? fromKeyframe
-    : createSnapshotAtTime(editableTimeline.keyframes, activity.endTime!);
+    : createKeyframeAtTime(editableTimeline.keyframes, activity.endTime!);
   const toPos = _findTargetPosition(toKeyframe, toRoom);
   const toTime = toKeyframe.time;
 

@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
 import { findRoomAtPosition } from '@/game/roomUtil';
-import { findCharacterPositionAtTime } from '../timelineLoading';
+
 import defaultLevelText from './fixtures/at-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
+import { findCharacterPositionAtTime } from '@/game/timeline';
 
 describe('level loading - @ activities', () => {
   it('loads level with absolute timestamp @ activity', () => {

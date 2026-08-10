@@ -6,10 +6,9 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { assert, assertNonNullable } from "decent-portal";
 import { findRoomAtPosition } from "@/game/roomUtil";
-import { addCharacterKeyframe, addRoomKeyframe, createCharacterSnapshotAtTime } from "@/levelLoading/timelineLoading";
+import { createCharacterKeyframeAtTime, findRoomKeyframeForTime } from "@/game/timeline";
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 import Item from "@/game/types/Item";
-import { findRoomKeyframeForTime } from "@/levelLoading/timelineLoading/retrievalUtil";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 import Waypoint from "@/game/types/Waypoint";
 import { findNearestFloorWaypointToPosition, isExitWaypoint, isFloorWaypoint } from "../waypointFindingUtil";
@@ -17,6 +16,7 @@ import { arePositionsOrthogonal } from "@/game/types/Position";
 import Room from "@/game/types/Room";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import TakeCue, { INVENTORY, LEFT_HAND, RIGHT_HAND, TAKE_EFFECT_TIME } from "@/game/types/effectCues/TakeCue";
+import { addCharacterKeyframe, addRoomKeyframe } from "@/levelLoading/timelineLoading";
 
 const ROOM = 'room';
 
@@ -121,7 +121,7 @@ export function scheduleTakesActivity(level:Level,
   assertNonNullable(characterId, 'implied subjects should have been resolved');
   assert(typeof itemId === 'string');
   const characterI = editableTimeline.characterIdToI[characterId];
-  const character = createCharacterSnapshotAtTime(editableTimeline.keyframes, characterI, activity.startTime);
+  const character = createCharacterKeyframeAtTime(editableTimeline.keyframes, characterI, activity.startTime);
   assertNonNullable(character);
   const item = level.itemsById.get(itemId);
   assertNonNullable(item);

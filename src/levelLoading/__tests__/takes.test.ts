@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import { findRoomAtPosition } from '@/game/roomUtil';
 import Level from '@/game/types/Level';
-import { createCharacterSnapshotAtTime, createSnapshotAtTime, findCharacterPositionAtTime } from '../timelineLoading';
+import { createCharacterKeyframeAtTime, createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
 import defaultLevelText from './fixtures/takes-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
@@ -14,7 +14,7 @@ function _loadTakesActivity(activityText:string) {
 }
 
 function _findSamAfterActivity(level:Level) {
-  return createCharacterSnapshotAtTime(level.timeline.keyframes,
+  return createCharacterKeyframeAtTime(level.timeline.keyframes,
     level.timeline.characterIdToI.sam, AFTER_ACTIVITY_TIME);
 }
 
@@ -26,7 +26,7 @@ describe('level loading - takes activities', () => {
     expect(level).not.toBeNull();
     const samPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
       level!.timeline.characterIdToI.sam, AFTER_ACTIVITY_TIME);
-    const snapshot = createSnapshotAtTime(level!.timeline.keyframes, AFTER_ACTIVITY_TIME);
+    const snapshot = createKeyframeAtTime(level!.timeline.keyframes, AFTER_ACTIVITY_TIME);
     const hall = snapshot.rooms[level!.timeline.roomIdToI.hall];
 
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('hall');

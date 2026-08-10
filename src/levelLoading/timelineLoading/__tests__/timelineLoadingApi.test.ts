@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
-import { createEditableTimeline, createSnapshotAtTime, findCharacterPositionAtTime, addKeyframe, 
-    addCharacterKeyframe, addRoomKeyframe } from "..";
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultRoom } from '@/game/types/Room';
 import { createDefaultItem } from '@/game/types/Item';
+import { addCharacterKeyframe, addKeyframe, addRoomKeyframe, createEditableTimeline } from '../editingUtil';
+import { createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
 
 function _position(x:number, y = 0, z = 0) {
   return { x, y, z };
@@ -87,7 +87,7 @@ describe('timelineLoadingApi', () => {
       };
 
       const timeline = createEditableTimeline([], [hall], 5000);
-      const snapshot = createSnapshotAtTime(timeline.keyframes, 5000);
+      const snapshot = createKeyframeAtTime(timeline.keyframes, 5000);
 
       expect(timeline.roomIdToI).toEqual({ hall:0 });
       expect(snapshot.rooms[0]?.items).toHaveLength(1);
@@ -107,7 +107,7 @@ describe('timelineLoadingApi', () => {
       addCharacterKeyframe({ isVisible:false }, 0, 1000, timeline);
       addCharacterKeyframe({ appearanceId:'guard' }, 0, 1000, timeline);
 
-      const snapshot = createSnapshotAtTime(timeline.keyframes, 1000);
+      const snapshot = createKeyframeAtTime(timeline.keyframes, 1000);
 
       expect(timeline.keyframes).toHaveLength(1);
       expect(snapshot.characters[0]).toMatchObject({
@@ -122,7 +122,7 @@ describe('timelineLoadingApi', () => {
       addCharacterKeyframe({ isVisible:false }, 0, 2000, timeline);
       addCharacterKeyframe({ position:_position(30) }, 0, 4000, timeline);
 
-      const snapshot = createSnapshotAtTime(timeline.keyframes, 2000);
+      const snapshot = createKeyframeAtTime(timeline.keyframes, 2000);
 
       expect(snapshot.characters[0]).toMatchObject({
         isVisible:false,
@@ -138,8 +138,8 @@ describe('timelineLoadingApi', () => {
 
       addRoomKeyframe({ items:laterItems }, 0, 2000, timeline);
 
-      const startSnapshot = createSnapshotAtTime(timeline.keyframes, 1000);
-      const laterSnapshot = createSnapshotAtTime(timeline.keyframes, 2000);
+      const startSnapshot = createKeyframeAtTime(timeline.keyframes, 1000);
+      const laterSnapshot = createKeyframeAtTime(timeline.keyframes, 2000);
 
       expect(timeline.keyframes).toHaveLength(2);
       expect(startSnapshot.rooms[0]?.items[0]).toMatchObject({ id:'crown', position:_position(1) });
@@ -153,7 +153,7 @@ describe('timelineLoadingApi', () => {
       addCharacterKeyframe({ isVisible:false }, 0, 1000, timeline);
       addRoomKeyframe({ items:laterItems }, 0, 1000, timeline);
 
-      const snapshot = createSnapshotAtTime(timeline.keyframes, 1000);
+      const snapshot = createKeyframeAtTime(timeline.keyframes, 1000);
 
       expect(timeline.keyframes).toHaveLength(1);
       expect(snapshot.characters[0]?.isVisible).toBe(false);
@@ -191,7 +191,7 @@ describe('timelineLoadingApi', () => {
         rooms:[]
       }, timeline);
 
-      const snapshot = createSnapshotAtTime(timeline.keyframes, 2000);
+      const snapshot = createKeyframeAtTime(timeline.keyframes, 2000);
 
       expect(timeline.keyframes.map(keyframe => keyframe.time)).toEqual([1000, 2000, 3000]);
       expect(snapshot.characters[0]).toMatchObject({
