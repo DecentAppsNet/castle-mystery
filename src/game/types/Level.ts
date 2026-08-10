@@ -20,7 +20,6 @@ export type MutableLevel = {
   startTime:number,
   initialTime:number,
   endTime:number,
-  duration:number,
   labels:TimeLabel[],
   timeline:Timeline
 }
@@ -43,7 +42,6 @@ export function createDefaultMutableLevel():MutableLevel {
     startTime:0,
     initialTime:0,
     endTime:0,
-    duration:0,
     labels:[],
     timeline:createDefaultTimeline()
   };

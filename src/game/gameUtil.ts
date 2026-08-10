@@ -46,6 +46,7 @@ import { findActiveCharacter } from "./activeCharacterUtil";
 import { createSnapshotAtTime } from "@/levelLoading/timelineLoading";
 import { findKeyframeForTime } from "@/levelLoading/timelineLoading/retrievalUtil";
 import { createSnapshotCharactersAndRooms } from "./timelineSnapshotUtil";
+import { MSECS_IN_DAY } from "@/common/timeUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -174,6 +175,12 @@ function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D
   _drawBackgroundImageToCanvas(backgroundImage, context);
 }
 
+function _calcLevelDuration(startTime:number, endTime:number):number {
+  return (startTime < endTime) 
+    ? endTime - startTime
+    : (endTime + MSECS_IN_DAY) - startTime; // Crossing midnight.
+}
+
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
     onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
     onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
@@ -217,6 +224,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
   const itemsById = duplicateItemsById(initialItemsById);
   const characters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, itemsById));
   const rooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById));
+  const duration = _calcLevelDuration(level.startTime, level.endTime);
   const gameState:GameState = {
     itemsById,
     unplacedItemsById:createUnplacedItemsById(itemsById, rooms, characters),
@@ -246,7 +254,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     isPlaying:false,
     time:level.initialTime,
     startTime:level.startTime,
-    duration:level.duration,
+    duration,
     realTimeToGameTimeOffset:0,
     labels:level.labels.map(label => ({...label})),
     scalingFactors:ZERO_SCALING_FACTORS,
