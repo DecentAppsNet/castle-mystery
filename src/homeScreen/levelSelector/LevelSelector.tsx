@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { assertNonNullable } from 'decent-portal';
 
 import Selector from "@/components/selector/Selector";
-import LevelManifest from "@/levelLoading2/types/LevelManifest";
+import LevelManifest from "@/levelLoading/types/LevelManifest";
 
 type Props = {
   levelManifest:LevelManifest|null

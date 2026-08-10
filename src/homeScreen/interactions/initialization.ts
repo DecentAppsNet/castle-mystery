@@ -4,8 +4,8 @@
 import { msecsToMinutes } from "./gameplay";
 import { createGameState } from "@/game/gameUtil";
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
-import { loadLevelFromUrl, loadLevelManifestFromUrl } from "@/levelLoading2";
-import LevelManifest from "@/levelLoading2/types/LevelManifest";
+import { loadLevelFromUrl, loadLevelManifestFromUrl } from "@/levelLoading";
+import LevelManifest from "@/levelLoading/types/LevelManifest";
 import GameState from "@/game/types/GameState";
 
 export type InitResults = {

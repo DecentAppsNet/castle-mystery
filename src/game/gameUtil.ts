@@ -43,8 +43,8 @@ import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
 import { findActiveCharacter } from "./activeCharacterUtil";
-import { createSnapshotAtTime } from "@/levelLoading2/timelineLoading";
-import { findKeyframeForTime } from "@/levelLoading2/timelineLoading/retrievalUtil";
+import { createSnapshotAtTime } from "@/levelLoading/timelineLoading";
+import { findKeyframeForTime } from "@/levelLoading/timelineLoading/retrievalUtil";
 import { createSnapshotCharactersAndRooms } from "./timelineSnapshotUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
