@@ -14,9 +14,6 @@ import { findAllCharacterPositions } from "../roomLoading/";
 import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
-import { findNearestFloorWaypointToPosition } from '../activityLoading';
-import { findRoomAtPositionOrTouchingBoundary } from "@/game/roomUtil";
-import Waypoint, { createDefaultWaypoint } from "@/game/types/Waypoint";
 
 function _parseFacingDirection(text:string, errors:ErrorCollector, characterId:string):FacingDirection {
   text = text.trim().toLowerCase();
@@ -34,7 +31,7 @@ function _parseBodyOrientation(text:string, errors:ErrorCollector, characterId:s
   return DEFAULT_BODY_ORIENTATION;
 }
 
-function _parseCharacter(characterId:string, waypoint:Waypoint, characterSectionEntry:SectionEntryWithLine, errors:ErrorCollector):Character {
+function _parseCharacter(characterId:string, position:Position, characterSectionEntry:SectionEntryWithLine, errors:ErrorCollector):Character {
   const nameValues = parseUniqueNameValueLines(characterSectionEntry.value, `character ${characterId}`, false, characterSectionEntry.lineNo);
   const authoredCharacterName = characterSectionEntry.name.trim();
   const title = nameValues.title ?? authoredCharacterName;
@@ -50,21 +47,18 @@ function _parseCharacter(characterId:string, waypoint:Waypoint, characterSection
   const character:Character = {
     ...createDefaultCharacter(),
     id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
-    bodyOrientation, isTitleKnown, items, leftHandItem, rightHandItem, position:waypoint.position, waypoint,
+    bodyOrientation, isTitleKnown, items, leftHandItem, rightHandItem, position
   }
   return character;
 }
 
-function _findCharacterWaypoint(fromPosition:Position, rooms:readonly Room[]):Waypoint {
-  const room = findRoomAtPositionOrTouchingBoundary(rooms, fromPosition.x, fromPosition.y);
-  assertNonNullable(room);
-  return findNearestFloorWaypointToPosition(room, fromPosition);
-}
-
+// TODO - probably just return placed characters.
 export function loadCharactersPartially(charactersSectionText:string, roomsSectionText:string, rooms:Room[], errors:ErrorCollector):Character[]|null {
   const originalErrorCount = errors.count;
 
   if (!charactersSectionText) return [];
+
+  const unplacedPosition = createDefaultPosition();
 
   const characterIds = getSectionIdsFromSectionText(charactersSectionText, 2, 'characters', errors);
   const characterIdToPosition = findAllCharacterPositions(rooms, characterIds, roomsSectionText, errors);
@@ -75,9 +69,8 @@ export function loadCharactersPartially(charactersSectionText:string, roomsSecti
     const sectionEntry = characterSectionsById.get(sectionName);
     assertNonNullable(sectionEntry);
     const characterId = normalizeId(sectionName);
-    const fromPosition = characterIdToPosition[characterId] ?? null; // Due to importing, its possible to have unplaced characters.
-    const waypoint = fromPosition ? _findCharacterWaypoint(fromPosition, rooms) : createDefaultWaypoint();
-    return _parseCharacter(characterId, waypoint, sectionEntry, errors);
+    const fromPosition = characterIdToPosition[characterId] ?? unplacedPosition; // Due to importing, its possible to have unplaced characters.
+    return _parseCharacter(characterId, fromPosition, sectionEntry, errors);
   });
   
   return errors.count <= originalErrorCount ? characters : null;

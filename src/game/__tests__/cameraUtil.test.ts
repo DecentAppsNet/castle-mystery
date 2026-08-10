@@ -3,14 +3,12 @@ import { describe, expect, it } from 'vitest';
 
 import { calcRoomCameraRect, createCamera, syncCameraTargetToActiveRoom, updateCamera } from '../cameraUtil';
 import { calcRenderedRoomBounds, calcRenderedRoomsBoundingRect } from '../roomRoofUtil';
-import { ROOM_BACK_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
+import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 import Character, { createDefaultCharacter } from '../types/Character';
 import Rect from '../types/Rect';
 import Room, { createDefaultRoom } from '../types/Room';
-import Waypoint from '../types/Waypoint';
 
 const FLOAT_EPSILON = 0.000001;
-const BACK_ROW_Z = ROOM_BACK_Z;
 const DEFAULT_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
 
 function _createRoom(rect:Room['rect']):Room {
@@ -21,14 +19,12 @@ function _createRoom(rect:Room['rect']):Room {
 }
 
 function _createCharacter(x:number, y:number):Character {
-  const waypoint:Waypoint = { position:{ x, y, z:BACK_ROW_Z }, adjacentWaypoints:[], exitDirections:{} };
   return {
     ...createDefaultCharacter(),
     id:'hero',
     title:'Hero',
     description:'Hero',
-    position:{ x, y, z:DEFAULT_CHARACTER_DEPTH },
-    waypoint
+    position:{ x, y, z:DEFAULT_CHARACTER_DEPTH }
   };
 }
 

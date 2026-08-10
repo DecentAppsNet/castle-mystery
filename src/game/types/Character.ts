@@ -1,6 +1,5 @@
 import Item, { duplicateItem } from "./Item";
 import Position, { createDefaultPosition, duplicatePosition } from "./Position";
-import Waypoint, { createDefaultWaypoint } from "./Waypoint";
 
 export type FacingDirection = 'left' | 'right';
 export const VALID_FACING_DIRECTIONS:FacingDirection[] = ['left', 'right'];
@@ -28,7 +27,6 @@ type Character = {
   leftHandItem:Item|null,
   rightHandItem:Item|null,
   position:Position,
-  waypoint:Waypoint,
   discoveredRoomIds:string[],
 }
 
@@ -48,7 +46,6 @@ export function createDefaultCharacter():Character {
     leftHandItem:null,
     rightHandItem:null,
     position:createDefaultPosition(),
-    waypoint:createDefaultWaypoint(),
     discoveredRoomIds:[]
   };
 }
@@ -69,7 +66,6 @@ export function duplicateCharacter(from:Character):Character {
     leftHandItem:from.leftHandItem ? duplicateItem(from.leftHandItem) : null,
     rightHandItem:from.rightHandItem ? duplicateItem(from.rightHandItem) : null,
     position:duplicatePosition(from.position),
-    waypoint:from.waypoint,
     discoveredRoomIds:[...from.discoveredRoomIds],
   };
 }

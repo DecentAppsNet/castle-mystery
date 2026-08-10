@@ -9,7 +9,7 @@ import Waypoint from "@/game/types/Waypoint";
 import { COLUMN_WIDTH, roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "@/game/stairUtil";
 import { findExitWaypoint, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from "@/levelLoading2/activityLoading/waypointFindingUtil";
-import { FLOOR_WAYPOINT_Y_OFFSET, ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
+import { FLOOR_WAYPOINT_Y_OFFSET } from "@/game/roomSpaceConstants";
 import Room from "@/game/types/Room";
 import Position from "@/game/types/Position";
 import StairFlight from "@/game/types/StairFlight";
@@ -200,6 +200,18 @@ function _populateExitDirectionsForRoom(roomId:string, roomRect:Rect, exits:Room
   });
 }
 
+function _calcRoomFloorY(roomRect:Rect):number {
+  return roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
+}
+
+export function calcFloorPositionInRoom(room:Room, col:number, row:number):Position {
+  assert(row >= 0 && row < FLOOR_ROW_ZS.length);
+  const x = room.rect.x + (col + 0.5) * COLUMN_WIDTH;
+  const y = _calcRoomFloorY(room.rect);
+  const z = FLOOR_ROW_ZS[row];
+  return {x, y, z};
+}
+
 export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[], stairs:ReadonlyArray<StairFlight>|null = null):Waypoint[] {
   const waypointsByKey = new Map<string, Waypoint>();
   const _getOrCreateWaypoint = (x:number, y:number, z:number) => {
@@ -216,17 +228,16 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
   };
 
   exits.forEach(exit => _assertExitIsNotOnCeiling(roomId, roomRect, exit));
-  const floorY = roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
+  const floorY = _calcRoomFloorY(roomRect);
   const floorExits = exits.filter(exit => _isAtFloorY(exit.y, floorY));
   const nonFloorExits = exits.filter(exit => !_isAtFloorY(exit.y, floorY));
 
   const columnCount = roomWidthToColumnCount(roomRect.width);
-  const columnWidth = roomRect.width / columnCount;
   const floorWaypointsByRow = FLOOR_ROW_ZS.map(() => [] as Waypoint[]);
 
   for (let rowIndex = 0; rowIndex < FLOOR_ROW_ZS.length; rowIndex++) {
     for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-      const x = roomRect.x + (columnIndex + 0.5) * columnWidth;
+      const x = roomRect.x + (columnIndex + 0.5) * COLUMN_WIDTH;
       floorWaypointsByRow[rowIndex].push(_getOrCreateWaypoint(x, floorY, FLOOR_ROW_ZS[rowIndex]));
     }
   }
@@ -326,11 +337,4 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
   });
 
   return waypoints;
-}
-
-export function calcFloorPositionInRoom(room:Room, col:number, row:number):Position {
-  const x = room.rect.x + col * COLUMN_WIDTH;
-  const y = room.rect.y + room.rect.height;
-  const z = row * ROOM_ROW_DEPTH;
-  return {x, y, z};
 }

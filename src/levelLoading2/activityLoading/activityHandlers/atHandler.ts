@@ -16,10 +16,20 @@ import { calcWalkDurationToRoom, scheduleCharacterMovementToRoom, scheduleCharac
 import Character from "@/game/types/Character";
 import { findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition } from "../waypointFindingUtil";
 
-function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
+function _findClaimedWaypointsFromSnapshot(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
   for(let characterI = 0; characterI < snapshot.characters.length; ++characterI) {
     const characterPosition = snapshot.characters[characterI].position;
+    const claimedWaypoint = waypoints.find(waypoint => arePositionsEqual(waypoint.position, characterPosition));
+    if (claimedWaypoint) claimedWaypoints.push(claimedWaypoint);
+  }
+  return claimedWaypoints;
+}
+
+function _findClaimedWaypointsFromCharacters(waypoints:Waypoint[], characters:readonly Character[]):Waypoint[] {
+  const claimedWaypoints:Waypoint[] = [];
+  for(let characterI = 0; characterI < characters.length; ++characterI) {
+    const characterPosition = characters[characterI].position;
     const claimedWaypoint = waypoints.find(waypoint => arePositionsEqual(waypoint.position, characterPosition));
     if (claimedWaypoint) claimedWaypoints.push(claimedWaypoint);
   }
@@ -47,7 +57,7 @@ function _findCharacterIFromId(characters:readonly Character[], characterId:stri
 }
 
 function _findTargetPosition(snapshot:TimelineKeyframe, targetRoom:Room, targetXPercent:number = .5):Position {
-  const claimedWaypoints = _findClaimedWaypoints(targetRoom.waypoints, snapshot);
+  const claimedWaypoints = _findClaimedWaypointsFromSnapshot(targetRoom.waypoints, snapshot);
   const bestWaypoint = _findBestTargetWaypoint(targetRoom.waypoints, claimedWaypoints, targetRoom, targetXPercent);
   return bestWaypoint.position;
 }
@@ -115,7 +125,8 @@ export function findFirstAtActivityStartTime(rooms:readonly Room[], characters:r
   assertNonNullable(fromRoom);
 
   const targetXPercent = .5; // TODO get from activity.
-  const bestWaypoint = _findBestTargetWaypoint(toRoom.waypoints, [], toRoom, targetXPercent);
+  const claimedWaypoints = _findClaimedWaypointsFromCharacters(toRoom.waypoints, characters);
+  const bestWaypoint = _findBestTargetWaypoint(toRoom.waypoints, claimedWaypoints, toRoom, targetXPercent);
   const toPos = bestWaypoint.position;
 
   const walkDuration = calcWalkDurationToRoom(rooms, fromRoom, fromPos, toRoom, toPos);

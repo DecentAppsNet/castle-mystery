@@ -89,9 +89,9 @@ function _sortAdjacentWaypointsForPathTraversal(room:Room, targetWaypoint:Waypoi
 
 function _findWaypointPath(room:Room, fromWaypoint:Waypoint, toWaypoint:Waypoint):Waypoint[] {
   if (fromWaypoint === toWaypoint || arePositionsEqual(fromWaypoint.position, toWaypoint.position)) return [fromWaypoint];
+  
   const pending:Waypoint[] = [fromWaypoint];
   const previousByKey = new Map<string, Waypoint|null>([[_createWaypointKey(fromWaypoint), null]]);
-
   while (pending.length > 0) {
     const waypoint = pending.shift()!;
     for (const adjacentWaypoint of _sortAdjacentWaypointsForPathTraversal(room, toWaypoint, waypoint.adjacentWaypoints)) {
