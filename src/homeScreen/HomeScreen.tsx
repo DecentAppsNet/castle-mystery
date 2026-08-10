@@ -4,7 +4,7 @@ import styles from './HomeScreen.module.css';
 import { init } from "./interactions/initialization";
 import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/homeScreen/levelView/LevelView";
-import { updateNextCharacter, updatePlayPause, updateConclusions } from "./interactions/gameplay";
+import { updateNextCharacter, updatePlayPause, updateConclusions, updateTime } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
 import ConclusionsView from "./conclusionsView/ConclusionsView";
 import DiscoveriesView from "./discoveriesView/DiscoveriesView";
@@ -15,6 +15,10 @@ import LevelSelector from "./levelSelector/LevelSelector";
 import { changeLevel, continueToNextLevel } from "./interactions/levels";
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
 import { createDiscoveries } from "@/game/discoveriesUtil";
+import Timeline from "@/game/types/Timeline";
+import { findRoomAtPosition } from "@/game/roomUtil";
+import TimeSlider from "./timeSlider/TimeSlider";
+import { assertNonNullable } from "decent-portal";
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -30,6 +34,15 @@ function _shouldOpenWinLevelDialog(previousConclusions:ReadonlyArray<Conclusion>
   return _isLevelComplete(nextConclusions) && !_isLevelComplete(previousConclusions);
 }
 
+function _findActiveRoomId(gameState:GameState|null, activeCharacterId:string):string|null {
+  if (!gameState || !activeCharacterId) return null;
+  const activeCharacter = gameState.timelineSnapshot.characters.find(c => c.id === activeCharacterId);
+  assertNonNullable(activeCharacter);
+  const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
+  assertNonNullable(activeRoom);
+  return activeRoom.id;
+}
+
 function HomeScreen() {
   const [gameState, setGameState] = useState<GameState|null>(null);
   const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
@@ -40,7 +53,8 @@ function HomeScreen() {
   const [conclusions, setConclusions] = useState<Conclusion[]>([]);
   const [discoveries, setDiscoveries] = useState<Discoveries>(createEmptyDiscoveries());
   const [conclusionClaimCooldowns, setConclusionClaimCooldowns] = useState<Record<string, number>>({});
-  const [, setActiveCharacterId] = useState<string>(""); // TODO pass activeCharacterId to TimeSlider when it is added back in.
+  const [activeCharacterId, setActiveCharacterId] = useState<string>("");
+  const [timeline, setTimeline] = useState<Timeline|null>(null);
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
@@ -59,6 +73,7 @@ function HomeScreen() {
       setConclusions(initResults.gameState.conclusions);
       setDiscoveries(createDiscoveries(initResults.gameState));
       setActiveCharacterId(initResults.gameState.activeCharacterId);
+      setTimeline(initResults.gameState.timeline);
       if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
     }).catch((error:unknown) => {
       if (isCancelled) return;
@@ -144,8 +159,33 @@ function HomeScreen() {
             });
           }}
         />
-        <LevelView gameState={gameState} onMinutesChanged={setMinutes} onIsPlayingChanged={setIsPlaying} onActiveCharacterChanged={setActiveCharacterId} onConclusionsChanged={_handleConclusionsChanged} onDiscoveriesChanged={setDiscoveries} isScrubbing={isScrubbing} />
+        <LevelView 
+          gameState={gameState} 
+          onMinutesChanged={setMinutes} 
+          onIsPlayingChanged={setIsPlaying} 
+          onActiveCharacterChanged={setActiveCharacterId} 
+          onConclusionsChanged={_handleConclusionsChanged} 
+          onDiscoveriesChanged={setDiscoveries} 
+          isScrubbing={isScrubbing} 
+        />
+        <TimeSlider
+          fromMinutes={fromMinutes}
+          toMinutes={toMinutes}
+          minutes={minutes}
+          timeline={timeline}
+          characters={gameState.baseCharacters}
+          rooms={gameState.baseRooms}
+          roomsRevision={gameState.conclusionsRevision}
+          activeRoomId={_findActiveRoomId(gameState, activeCharacterId)}
+          labels={gameState.labels}
+          isPlaying={isPlaying}
+          isPlayPauseDisabled={isPlayPauseDisabled}
+          onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
+          onPlayPauseChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
+          onScrubbingChange={setIsScrubbing}
+        />
       </div>
+
       <div className={styles.sidePane}>
         <div className={styles.conclusionsPane}>
           <ConclusionsView 

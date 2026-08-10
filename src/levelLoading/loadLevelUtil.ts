@@ -10,6 +10,7 @@ import { findLastActivityEndTime, findStartTimeFromItinerary, loadActivitiesPart
 import { scheduleActivities } from "./timelineLoading";
 import { findDiscoverableCounts } from "./discoverability";
 import { loadLevelWithImportsAndSourceLineMap } from "./importing";
+import { createTimeLabels } from "./timeLabels";
 
 function _levelUrlToFilename(levelUrl:string):string {
   const urlSegments = levelUrl.split('/').filter(segment => segment.length > 0);
@@ -72,6 +73,8 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   level.discoverableCharacterCount = loadingContext.discoverableCharacterCount ?? counts.discoverableCharacterCount;
   level.discoverableItemCount = loadingContext.discoverableItemCount ?? counts.discoverableItemCount;
   level.discoverableRoomCount = loadingContext.discoverableRoomCount ?? counts.discoverableRoomCount;
+
+  level.labels = createTimeLabels(level.startTime, level.endTime);
 
   return errors.count <= originalErrorCount ? level : null;
 }

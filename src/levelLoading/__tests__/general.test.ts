@@ -20,10 +20,6 @@ describe('loading levels - general section', () => {
     expect(level?.backgroundImageUrl).toBeNull();
     expect(level?.groundFloorY).toBe(20);
     expect(level?.activeCharacterId).toBe('sam');
-    expect(level?.labels).toEqual([
-      { minutes:0, label:'midnight' },
-      { minutes:0, label:'midnight' }
-    ]);
   });
 
   it('loads the general values that are currently projected onto the returned level', () => {

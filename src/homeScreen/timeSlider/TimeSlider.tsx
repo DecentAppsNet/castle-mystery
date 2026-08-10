@@ -18,13 +18,13 @@ const NO_QUANTIZING = -1;
 type Props = {
   fromMinutes:number; // Minimum value in minutes for when slider thumb is at leftmost position.
   toMinutes:number; // Maximum value in minutes for when slider thumb is at rightmost position.
-  minutes: number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
-  step?: number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
+  minutes:number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
+  step?:number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
   timeline:Timeline|null,
   characters:Character[];
   rooms:Room[];
   roomsRevision?:number;
-  initialRoomId:string|null;
+  activeRoomId:string|null;
   labels:TimeLabel[];
   isPlaying:boolean;
   isPlayPauseDisabled?:boolean;
@@ -91,8 +91,8 @@ function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
 }
 
 function TimeSlider(props:Props) {
-  const { fromMinutes, toMinutes, minutes, step = NO_QUANTIZING, timeline, characters, rooms,
-    roomsRevision = 0, initialRoomId, labels, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
+  const { fromMinutes, toMinutes, minutes, timeline, characters, rooms,
+    roomsRevision = 0, activeRoomId, labels, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
   } = props;
   const [displayMinutes, setDisplayMinutes] = useState(minutes);
   const [sliderWidth, setSliderWidth] = useState(0);
@@ -100,12 +100,12 @@ function TimeSlider(props:Props) {
   const sliderRef = useRef<HTMLDivElement>(null);
   const percent = minutesToPercent(minutes, fromMinutes, toMinutes);
   const itineraryMarkers = useMemo(
-    () => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, timeline, characters, rooms, initialRoomId),
-      [sliderWidth, fromMinutes, toMinutes, timeline, characters, rooms, roomsRevision, initialRoomId]
+    () => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, timeline, characters, rooms, activeRoomId),
+      [sliderWidth, fromMinutes, toMinutes, timeline, characters, rooms, roomsRevision, activeRoomId]
   );
 
   function _onSliderUpdate(nextValue:number) {
-    const nextMinutes = percentToMinutes(nextValue, fromMinutes, toMinutes, step);
+    const nextMinutes = percentToMinutes(nextValue, fromMinutes, toMinutes, NO_QUANTIZING);
     setDisplayMinutes(nextMinutes);
     onChange(nextMinutes);
   }
