@@ -9,6 +9,8 @@ import { rand } from "@/common/randUtil";
 import { normalizeId } from "@/game/idUtil";
 import { createDefaultPosition } from "@/game/types/Position";
 import { MutableLevel } from "@/game/types/Level";
+import Room from "@/game/types/Room";
+import Activity from "../activityLoading/types/Activity";
 
 function _createStubItem(itemId:string):Item {
   return {...createDefaultItem(), id:itemId, description:'Stub Item'};
@@ -82,7 +84,28 @@ export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollecto
   return errors.count <= originalErrorCount ? items : null;
 }
 
-export function addItemsToLevel(items:Item[], level:MutableLevel, _errors:ErrorCollector):boolean {
-  items.forEach(item => level.itemsById.set(item.id, item));
+// An item is considered used by the level if it is initially placed somewhere besides character inventory or
+// an activity references the item.
+function _findUsedItemIds(activities:readonly Activity[], rooms:readonly Room[], level:MutableLevel):Set<string> {
+  const itemIds = new Set<string>();
+  rooms.forEach(room => room.items.forEach(item => itemIds.add(item.id)));
+  level.characters.forEach(character => {
+    if (character.leftHandItem) itemIds.add(character.leftHandItem.id);
+    if (character.rightHandItem) itemIds.add(character.rightHandItem.id);
+  });
+  activities.forEach(activity => {
+    const { itemId, toItemId } = activity.parts;
+    if (typeof itemId === 'string') itemIds.add(itemId);
+    if (typeof toItemId === 'string') itemIds.add(toItemId);
+  });
+  return itemIds;
+}
+
+export function addItemsToLevel(items:Item[], activities:readonly Activity[], rooms:readonly Room[],
+    level:MutableLevel, _errors:ErrorCollector):boolean {
+  const usedItemIds = _findUsedItemIds(activities, rooms, level);
+  items
+    .filter(item => usedItemIds.has(item.id))
+    .forEach(item => level.itemsById.set(item.id, item));
   return true;
 }

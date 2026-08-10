@@ -12,26 +12,10 @@ import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
 import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
-import Timeline from "./types/Timeline";
+import { assertNonNullable } from "decent-portal";
 
 export function createEmptyImageSet():ImageSet {
   return new Map();
-}
-
-// TODO - is this needed? Level should be returned with some data structure that has this. And I don't think there is any need for it to have every possible ID from imports.
-function _findDirectReferencedItemIds(timeline:Timeline):string[] {
-  const itemIds = new Set<string>();
-  timeline.keyframes.forEach(kf => {
-    kf.rooms.forEach(r => {
-      r.items.forEach(i => itemIds.add(i.id));
-    });
-    kf.characters.forEach(c => {
-      if (c.leftHandItem) itemIds.add(c.leftHandItem.id);
-      if (c.rightHandItem) itemIds.add(c.rightHandItem.id);
-      c.items.forEach(i => itemIds.add(i.id));
-    });
-  });
-  return [...itemIds];
 }
 
 function _findPunchMaskImageUrl(imageUrl:string):string|null {
@@ -39,11 +23,13 @@ function _findPunchMaskImageUrl(imageUrl:string):string|null {
   return imageUrl.slice(0, -4) + '.punch.png';
 }
 
-function _findDirectReferencedItemImageUrls(level:Level):string[] {
+function _findItemImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>();
-  _findDirectReferencedItemIds(level.timeline).forEach(itemId => {
-    const item = level.itemsById.get(itemId) || null;
-    if (item?.imageUrl) imageUrls.add(item.imageUrl);
+  const itemIds = level.itemsById.keys();
+  itemIds.forEach(itemId => {
+    const item = level.itemsById.get(itemId);
+    assertNonNullable(item);
+    if (item.imageUrl) imageUrls.add(item.imageUrl);
   });
   return [...imageUrls];
 }
@@ -65,7 +51,7 @@ function _findImageUrls(level:Level):string[] {
   level.rooms.forEach(room => room.items.forEach(item => {
     if (item.imageUrl) imageUrls.add(item.imageUrl);
   }));
-  _findDirectReferencedItemImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
+  _findItemImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
   _findCharacterFaceImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
   level.conclusions.forEach(conclusion => conclusion.parts.forEach(part => {
     if (part.type !== ClozePartType.image) return;

@@ -10,7 +10,8 @@ import invalidVisibleText from './fixtures/items-invalid-visible.md?raw';
 import normalizationDuplicateText from './fixtures/items-normalization-duplicate.md?raw';
 import successMinimalText from './fixtures/items-success-minimal.md?raw';
 import successPopulatedText from './fixtures/items-success-populated.md?raw';
-import { loadLevelForTest } from './testLevelUtil';
+import itemPlacementText from './fixtures/takes-base.md?raw';
+import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 describe('loading levels - items', () => {
   it('loads a level with no items section entries and leaves item collections empty on the returned level', () => {
@@ -43,6 +44,32 @@ describe('loading levels - items', () => {
       isDiscovered:false,
       randomSalt:expect.any(Number)
     });
+  });
+
+  it('indexes room and hand items but excludes an inventory-only item', () => {
+    const { level, errors } = loadLevelForTest(itemPlacementText, 'items-placement.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect([...level!.itemsById.keys()]).toEqual(['key', 'vase', 'eraser', 'paper']);
+  });
+
+  it('indexes an inventory item referenced by activity itemId', () => {
+    const text = replaceSection(itemPlacementText, 'itinerary', ['0:00:00 Sam takes Pencil into inventory']);
+    const { level, errors } = loadLevelForTest(text, 'items-activity-item.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(level!.itemsById.has('pencil')).toBe(true);
+  });
+
+  it('indexes an inventory item referenced by activity toItemId', () => {
+    const text = replaceSection(itemPlacementText, 'itinerary', ['0:00:00 Key becomes Pencil']);
+    const { level, errors } = loadLevelForTest(text, 'items-activity-to-item.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(level!.itemsById.has('pencil')).toBe(true);
   });
 
   it('fails if the items section contains duplicate subsections with the same heading text', () => {
