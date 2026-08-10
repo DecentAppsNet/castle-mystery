@@ -8,10 +8,6 @@ export type BodyOrientation = 'standing' | 'sitting' | 'kneeling' | 'laying';
 export const VALID_BODY_ORIENTATIONS:BodyOrientation[] = ['standing', 'sitting', 'kneeling', 'laying'];
 export const DEFAULT_BODY_ORIENTATION:BodyOrientation = 'standing';
 
-/* If adding new members to Character, consider if these should also be part of CharacterPose.
-   And if you decide to add them to CharacterPose, then make updates to createDefaultCharacter() to
-   populate members from createDefaultCharacterPose() following the pattern. In this way, we will
-   keep consistency in dynamic state rebuilding. */
 type Character = {
   readonly id:string,
   readonly title:string,
@@ -26,8 +22,7 @@ type Character = {
   items:Item[],
   leftHandItem:Item|null,
   rightHandItem:Item|null,
-  position:Position,
-  discoveredRoomIds:string[],
+  position:Position
 }
 
 export function createDefaultCharacter():Character {
@@ -46,7 +41,6 @@ export function createDefaultCharacter():Character {
     leftHandItem:null,
     rightHandItem:null,
     position:createDefaultPosition(),
-    discoveredRoomIds:[]
   };
 }
 
@@ -65,8 +59,7 @@ export function duplicateCharacter(from:Character):Character {
     items:from.items.map(duplicateItem),
     leftHandItem:from.leftHandItem ? duplicateItem(from.leftHandItem) : null,
     rightHandItem:from.rightHandItem ? duplicateItem(from.rightHandItem) : null,
-    position:duplicatePosition(from.position),
-    discoveredRoomIds:[...from.discoveredRoomIds],
+    position:duplicatePosition(from.position)
   };
 }
 

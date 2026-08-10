@@ -1,7 +1,7 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assert, botch } from "decent-portal";
+import { assert, assertNonNullable, botch } from "decent-portal";
 import GameState from "./types/GameState";
 import Room from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
@@ -56,9 +56,10 @@ function _setActiveRoomDiscovered(gameState:GameState) {
   if (activeCharacter) {
     const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
     if (activeRoom) {
-      if (!activeRoom.isDiscovered) activeRoom.isDiscovered = true;
-      if (!activeCharacter.discoveredRoomIds.includes(activeRoom.id)) {
-        activeCharacter.discoveredRoomIds = [...activeCharacter.discoveredRoomIds, activeRoom.id];
+      if (!activeRoom.isDiscovered) {
+        const snapshotRoom = gameState.timelineSnapshot.rooms.find(r => r.id === activeRoom.id);
+        assertNonNullable(snapshotRoom);
+        snapshotRoom.isDiscovered = activeRoom.isDiscovered = true;
       }
     }
   }
