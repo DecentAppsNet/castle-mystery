@@ -262,7 +262,18 @@ function _scheduleActivity(level:Level, activity:Activity, timeline:EditableTime
   const scheduleActivityFunc = VERB_TO_SCHEDULE_ACTIVITY_FUNC[activity.verb];
   assertNonNullable(scheduleActivities, `Add handler for "${activity.verb}"`);
   if (!doesActivityUseEndTimestamp(activity.verb) && activity.startTime === null) return false; // A preceding activity must be scheduled first.
-  return scheduleActivityFunc(level, activity, timeline, errors);
+
+  if (!scheduleActivityFunc(level, activity, timeline, errors)) return false;
+  
+  // Successful scheduling should assign values to startTime and endTime.
+  assert(!Number.isNaN(activity.startTime) && !Number.isNaN(activity.endTime));
+  assertNonNullable(activity.startTime);
+  assertNonNullable(activity.endTime);
+  assert(activity.startTime <= activity.endTime);
+  assert(activity.startTime >= level.startTime);
+  // Level.endTime is still not known because it requires all scheduling to be completed.
+
+  return true;
 }
 
 export function addKeyframe(editableKeyframe:Readonly<EditableTimelineKeyframe>, timeline:EditableTimeline) {
@@ -326,6 +337,8 @@ function _isEmptyKeyframe(keyframe:Partial<CharacterKeyframe>|Partial<RoomKeyfra
 
 export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Timeline|null {
   if (!activities.length) return _createEmptyTimeline(level.characters, level.rooms);
+  const originalErrorCount = errors.count;
+
   assert(_areActivitiesWellOrdered(activities, level.startTime));
   const timeline:EditableTimeline = createEditableTimeline(level.characters, level.rooms, level.startTime);
   const toBeScheduled = [...activities];
@@ -336,7 +349,7 @@ export function scheduleActivities(level:Level, activities:Activity[], errors:Er
       toBeScheduled.shift();
     }
   }
-  return _editableTimelineToTimeline(timeline);
+  return errors.count > originalErrorCount ? null : _editableTimelineToTimeline(timeline);
 }
 
 export function findLatestKeyFrameForCharacter(timeline:EditableTimeline, characterRef:string|number):TimelineKeyframe {

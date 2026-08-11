@@ -43,7 +43,6 @@ import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
 import { findActiveCharacter } from "./activeCharacterUtil";
 import { createTimelineSnapshot, createInitialTimelineSnapshot } from "./timeline";
-import { calc24HourTimeDuration } from "@/common/timeUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -216,7 +215,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
   const itemsById = duplicateItemsById(initialItemsById);
   const characters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, itemsById));
   const rooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById));
-  const duration = calc24HourTimeDuration(level.startTime, level.endTime);
+  const duration = level.endTime - level.startTime;
   const gameState:GameState = {
     itemsById,
     unplacedItemsById:createUnplacedItemsById(itemsById, rooms, characters),

@@ -33,7 +33,6 @@ HC
 
 # itinerary
 
-0:00:00 Sam sits
-0:00:03 Sam @ Closet
+0:00:03 Sam sits
 
 # conclusions

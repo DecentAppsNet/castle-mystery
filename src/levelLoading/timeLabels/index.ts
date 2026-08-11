@@ -1,4 +1,6 @@
-import { calc24HourTimeDuration, MINUTES_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
+import { assert } from "decent-portal";
+
+import { MINUTES_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
 import TimeLabel from "@/game/types/TimeLabel";
 
 function _formatMinutesAsTimeLabel(minutes:number):string {
@@ -15,7 +17,8 @@ function _formatMinutesAsTimeLabel(minutes:number):string {
 }
 
 export function createTimeLabels(startTime:number, endTime:number):TimeLabel[] {
-  const duration = calc24HourTimeDuration(startTime, endTime);
+  assert(endTime >= startTime);
+  const duration = endTime - startTime;
   const startMinutes = startTime / MSECS_IN_MINUTE;
   const durationMinutes = duration / MSECS_IN_MINUTE;
   const labels = [0, .25, .5, .75, 1].map(ratio => {

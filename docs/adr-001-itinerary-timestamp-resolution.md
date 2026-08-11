@@ -4,6 +4,8 @@
 
 Accepted
 
+> **ADR 011 clarification:** [ADR 011](adr-011-itinerary-derived-timeline-bounds.md) preserves the arrival-by and back-planning semantics in this ADR during activity scheduling, but overrules their use when deriving the level start. For start-time derivation, an absolute `@` activity contributes its authored timestamp directly; its implied movement start is not calculated.
+
 ## Context
 
 Level-authored itineraries contain activities that occur at authored timestamps, for example:

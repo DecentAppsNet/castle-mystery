@@ -11,8 +11,7 @@ import Room from "@/game/types/Room";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import Waypoint from "@/game/types/Waypoint";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
-import { calcWalkDurationToRoom, scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
-import Character from "@/game/types/Character";
+import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
 import { findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition } from "../waypointFindingUtil";
 import { createKeyframeAtTime } from "@/game/timeline";
 import { findLatestKeyFrameForCharacter } from "@/levelLoading/timelineLoading/editingUtil";
@@ -21,16 +20,6 @@ function _findClaimedWaypointsFromSnapshot(waypoints:Waypoint[], snapshot:Timeli
   const claimedWaypoints:Waypoint[] = [];
   for(let characterI = 0; characterI < snapshot.characters.length; ++characterI) {
     const characterPosition = snapshot.characters[characterI].position;
-    const claimedWaypoint = waypoints.find(waypoint => arePositionsEqual(waypoint.position, characterPosition));
-    if (claimedWaypoint) claimedWaypoints.push(claimedWaypoint);
-  }
-  return claimedWaypoints;
-}
-
-function _findClaimedWaypointsFromCharacters(waypoints:Waypoint[], characters:readonly Character[]):Waypoint[] {
-  const claimedWaypoints:Waypoint[] = [];
-  for(let characterI = 0; characterI < characters.length; ++characterI) {
-    const characterPosition = characters[characterI].position;
     const claimedWaypoint = waypoints.find(waypoint => arePositionsEqual(waypoint.position, characterPosition));
     if (claimedWaypoint) claimedWaypoints.push(claimedWaypoint);
   }
@@ -50,13 +39,6 @@ function _findBestTargetWaypoint(waypoints:Waypoint[], claimedWaypoints:Waypoint
   return waypoint;
 }
 
-function _findCharacterIFromId(characters:readonly Character[], characterId:string):number|null {
-  for(let i = 0; i < characters.length; ++i) {
-    if (characters[i].id === characterId) return i;
-  }
-  return null;
-}
-
 function _findTargetPosition(snapshot:TimelineKeyframe, targetRoom:Room, targetXPercent:number = .5):Position {
   const claimedWaypoints = _findClaimedWaypointsFromSnapshot(targetRoom.waypoints, snapshot);
   const bestWaypoint = _findBestTargetWaypoint(targetRoom.waypoints, claimedWaypoints, targetRoom, targetXPercent);
@@ -64,7 +46,7 @@ function _findTargetPosition(snapshot:TimelineKeyframe, targetRoom:Room, targetX
 }
 
 export function scheduleAtActivity(level:Level, 
-  activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   const { characterId, roomId } = activity.parts;
   assertNonNullable(characterId, 'implied subjects should have been resolved');
   assert(typeof roomId === 'string');
@@ -78,10 +60,17 @@ export function scheduleAtActivity(level:Level,
   
   const fromKeyframe = findLatestKeyFrameForCharacter(editableTimeline, characterI);
   const fromPos = fromKeyframe.characters[characterI].position;
-  const fromTime = fromKeyframe.time;
+  const fromTime = fromKeyframe.time; // The very earliest that the character can begin moving toward destination.
   const fromRoom = findRoomAtPosition(level.rooms, fromPos.x, fromPos.y);
   assertNonNullable(fromRoom);
+
+  if (fromRoom.id === toRoom.id) { // Already at room. TODO - extra handling for `@ Room.20%` and `@ 20%`-style activities that mean the character must still move within the room.
+    const endTime = isRelativeTimestamp ? fromTime : activity.endTime; // Use activity end time if available, because that can affect the timing of following activities.
+    activity.startTime = activity.endTime = endTime;
+    return true;
+  }
   
+  assert(activity.endTime === null || activity.endTime >= level.startTime);
   const toKeyframe = isRelativeTimestamp 
     ? fromKeyframe
     : createKeyframeAtTime(editableTimeline.keyframes, activity.endTime!);
@@ -95,7 +84,10 @@ export function scheduleAtActivity(level:Level,
     errors.addAt(scheduleResult, 'itinerary'); // TODO need line# from activity.
     return false;
   }
-  assert(isRelativeTimestamp || toTime === scheduleResult);
+
+  assert(scheduleResult >= 0); // scheduleResult is the amount of time delayed before beginning movement toward destination.
+  activity.startTime = fromTime + scheduleResult;
+  activity.endTime = toTime;
   return true;
 }
 
@@ -105,32 +97,4 @@ export function createAtActivityParseFormat():ParseFormat {
   const roomId = makeIdentifier('roomId', 'RoomId');
   const rootParseStep = makeSequence([characterId, at, roomId]);
   return createParseFormat(rootParseStep);
-}
-
-// This solves a catch-22 problem where the first activity in level itinerary is an "@" activity
-// and I need to know what the startTime of the level is to create the editable timeline object.
-// Because this is the very first activity in the level, it isn't necessary to have the editable timeline
-// to check against waypoint claims.
-export function findFirstAtActivityStartTime(rooms:readonly Room[], characters:readonly Character[], activeCharacterId:string, activity:Activity):number|string {
-  let { characterId, roomId } = activity.parts;
-  if (typeof characterId !== 'string') characterId = activeCharacterId;
-  assert(typeof roomId === 'string');
-  const characterI = _findCharacterIFromId(characters, characterId);
-  const toRoom = findRoom(rooms, roomId);
-  assertNonNullable(characterI);
-  assertNonNullable(toRoom);
-  assertNonNullable(activity.endTime);
-  
-  const fromPos = characters[characterI].position;
-  const fromRoom = findRoomAtPosition(rooms, fromPos.x, fromPos.y);
-  assertNonNullable(fromRoom);
-
-  const targetXPercent = .5; // TODO get from activity.
-  const claimedWaypoints = _findClaimedWaypointsFromCharacters(toRoom.waypoints, characters);
-  const bestWaypoint = _findBestTargetWaypoint(toRoom.waypoints, claimedWaypoints, toRoom, targetXPercent);
-  const toPos = bestWaypoint.position;
-
-  const walkDuration = calcWalkDurationToRoom(rooms, fromRoom, fromPos, toRoom, toPos);
-  if (typeof walkDuration === 'string') return walkDuration;
-  return activity.endTime - walkDuration;
 }

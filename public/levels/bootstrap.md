@@ -36,6 +36,7 @@ HC
 
 # itinerary
 
+0:00:00 Sam @ Hall
 0:00:03 Sam @ Closet
 
 # conclusions

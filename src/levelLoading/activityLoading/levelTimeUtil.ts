@@ -1,11 +1,9 @@
-import { assertNonNullable } from 'decent-portal';
+import { assert } from 'decent-portal';
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { tryParseActivity } from "./parseUtil";
 import ActivityParsingRules from "./types/ActivityParsingRules";
 import Activity from './types/Activity';
-import { findFirstAtActivityStartTime } from './activityHandlers/atHandler';
-import Room from '@/game/types/Room';
-import Character from '@/game/types/Character';
+import { tryParseAbsoluteTimestamp } from './timestampUtil';
 
 function _parseFirstActivity(itinerarySectionText:string, rules:ActivityParsingRules, errors:ErrorCollector):Activity|null {
   const firstLineEndPos = itinerarySectionText.indexOf('\n');
@@ -29,20 +27,29 @@ export function findLastActivityEndTime(activities:Activity[]):number|null {
   return latestEndTime;
 }
 
-export function findStartTimeFromItinerary(itinerarySectionText:string, rooms:readonly Room[], characters:readonly Character[], activeCharacterId:string, rules:ActivityParsingRules, errors:ErrorCollector):number|null {
-  if (!itinerarySectionText.trim()) return null;
-  const parseResult = _parseFirstActivity(itinerarySectionText, rules, errors);
-  if (!parseResult) return null;
-  
-  assertNonNullable(parseResult);
-  if (parseResult.startTime !== null) return parseResult.startTime;
-  if (parseResult.verb === '@') {
-    const atParseResult = findFirstAtActivityStartTime(rooms, characters, activeCharacterId, parseResult);
-    if (typeof atParseResult === 'number') return atParseResult; 
-    errors.addAt(atParseResult, 'itinerary');
-    return null;
+export function findStartTimeFromItinerary(itinerarySectionText:string):number|null {
+  if (!itinerarySectionText.trim()) return 0;
+  const lines = itinerarySectionText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  let earliestTime = Infinity;
+  lines.forEach(line => {
+    const timestampPart = line.split(' ')[0];
+    const time = tryParseAbsoluteTimestamp(timestampPart);
+    if (time !== null && time < earliestTime) earliestTime = time;
+  });
+  return earliestTime === Infinity ? 0 : earliestTime;
+}
+
+export function isFirstActivityTimestampValid(itinerarySectionText:string, errors:ErrorCollector):boolean {
+  assert(itinerarySectionText.trim().length > 0); // Don't call for an empty itinerary.
+  const firstLineEndPos = itinerarySectionText.indexOf('\n');
+  const lineText = itinerarySectionText.substring(0, firstLineEndPos === -1 ? itinerarySectionText.length : firstLineEndPos).trim();
+  const timestampPart = lineText.split(' ')[0];
+  const time = tryParseAbsoluteTimestamp(timestampPart);
+  if (time === null) {
+    errors.addAt(`First line in itinerary began with "${timestampPart}". Expecting an absolute timestamp.`, 'itinerary');
+    return false;
   }
-  return null;
+  return true;
 }
 
 export function findActiveCharacterFromItinerary(itinerarySectionText:string, rules:ActivityParsingRules, errors:ErrorCollector):string|null {

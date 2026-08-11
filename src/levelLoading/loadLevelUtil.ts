@@ -11,10 +11,18 @@ import { scheduleActivities } from "./timelineLoading";
 import { findDiscoverableCounts } from "./discoverability";
 import { loadLevelWithImportsAndSourceLineMap } from "./importing";
 import { createTimeLabels } from "./timeLabels";
+import { assert } from "decent-portal";
+import { clamp } from "@/common/numberUtil";
 
 function _levelUrlToFilename(levelUrl:string):string {
   const urlSegments = levelUrl.split('/').filter(segment => segment.length > 0);
   return urlSegments[urlSegments.length - 1] || levelUrl;
+}
+
+function _getInitialTimeValue(authoredInitialTime:number|null, levelStartTime:number, levelEndTime:number):number {
+  assert(levelStartTime <= levelEndTime);
+  if (authoredInitialTime === null) return levelStartTime;
+  return clamp(authoredInitialTime, levelStartTime, levelEndTime);
 }
 
 /** 
@@ -47,12 +55,11 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!rooms) return null;
   const characters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
   if (!characters) return null;
-  if (loadingContext.startTime === null) level.startTime = findStartTimeFromItinerary(sections.itinerary?.text ?? '', 
-      rooms, characters, loadingContext.activeCharacterId, loadingContext.activityParsingRules, errors) ?? 0;
+  level.startTime = findStartTimeFromItinerary(sections.itinerary?.text ?? '') ?? 0;
   const activities = loadActivitiesPartially(sections.itinerary?.text ?? '', loadingContext.activityParsingRules, 
-      level.startTime, loadingContext.isCrossMidnight, loadingContext.activeCharacterId, errors);
+      level.startTime, loadingContext.activeCharacterId, errors);
   if (!activities) return null;
-  if (loadingContext.endTime === null) level.endTime = findLastActivityEndTime(activities) ?? level.startTime;
+
   if (loadingContext.initialTime === null) level.initialTime = level.startTime;
 
   // Add items, characters, and rooms to level, resolving dependencies.
@@ -67,6 +74,8 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   const timeline = scheduleActivities(level, activities, errors);
   if (!timeline) return null;
   level.timeline = timeline;
+  level.endTime = findLastActivityEndTime(activities) ?? level.startTime;
+  level.initialTime = _getInitialTimeValue(loadingContext.initialTime, level.startTime, level.endTime);
 
   // Set counts of discoverable room, items, and characters.
   const counts = findDiscoverableCounts(level, activities);

@@ -2,7 +2,9 @@
 
 ## Status
 
-Superseded by ADR 009
+Superseded by ADRs 009 and 011
+
+> **ADR 011 supersession:** [ADR 011](adr-011-itinerary-derived-timeline-bounds.md) removes authored `startTime` and `endTime` from the general section. It also overrules this ADR's automatic cross-midnight wrapping: authors now use extended hours such as `24:00:01`, and timeline bounds are derived from the itinerary. The `time` field remains only as the initial playhead position.
 
 ## Context
 

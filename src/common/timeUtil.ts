@@ -10,9 +10,3 @@ export const SECS_IN_DAY = SECS_IN_HOUR * HOURS_IN_DAY;
 export const MSECS_IN_SECOND = 1000;
 export const MSECS_IN_MINUTE = SECS_IN_MINUTE * MSECS_IN_SECOND;
 export const MSECS_IN_DAY = MINUTES_IN_DAY * MSECS_IN_MINUTE;
-
-export function calc24HourTimeDuration(startTime:number, endTime:number):number {
-  return (startTime < endTime) 
-    ? endTime - startTime
-    : (endTime + MSECS_IN_DAY) - startTime; // Crossing midnight.
-}

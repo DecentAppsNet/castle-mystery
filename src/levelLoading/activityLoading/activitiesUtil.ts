@@ -2,7 +2,8 @@ import Activity from "./types/Activity";
 import ActivityParsingRules from "./types/ActivityParsingRules";
 import { ErrorCollector } from "../errorCollection";
 import { tryParseActivity } from "./parseUtil";
-import { MSECS_IN_DAY } from "@/common/timeUtil";
+import { isFirstActivityTimestampValid } from "./levelTimeUtil";
+import { assert } from "decent-portal";
 
 // activities param must be in authored order.
 function _resolveImpliedSubjects(activities:Activity[], activeCharacterId:string) {
@@ -48,10 +49,10 @@ function _sortActivities(activities:readonly Activity[]):Activity[] {
 }
 
 export function loadActivitiesPartially(itinerarySectionText:string, rules:ActivityParsingRules, 
-    startTime:number, isCrossMidnight:boolean, activeCharacterId:string, errors:ErrorCollector):Activity[]|null {
+    startTime:number, activeCharacterId:string, errors:ErrorCollector):Activity[]|null {
   const originalErrorCount = errors.count;
 
-  if (!itinerarySectionText.trim()) return [];
+  if (!itinerarySectionText.trim() || !isFirstActivityTimestampValid(itinerarySectionText, errors)) return [];
 
   const activities:Activity[] = [];
   const lines = itinerarySectionText.split('\n');
@@ -64,8 +65,8 @@ export function loadActivitiesPartially(itinerarySectionText:string, rules:Activ
       errors.addAt(parseResult, 'itinerary', lines[lineI]);
       continue;
     }
+    assert(parseResult.startTime === null || parseResult.startTime >= startTime); // Expecting that the previously-found startTime already looked at activity timestamps to set it.
     if (lineI === 0 && parseResult.startTime === null) parseResult.startTime = startTime ?? 0;
-    if (isCrossMidnight && parseResult.startTime !== null && parseResult.startTime < startTime) parseResult.startTime += MSECS_IN_DAY;
     parseResult.prevActivity = prevActivity;
 
     activities.push(parseResult);

@@ -4,6 +4,8 @@
 
 Accepted
 
+> **ADR 011 clarification:** [ADR 011](adr-011-itinerary-derived-timeline-bounds.md) preserves the absolute and relative `@` scheduling semantics in this ADR, but overrules any implication that back-planned movement determines the level start. The level start uses the earliest authored absolute timestamp directly, including when that timestamp belongs to an `@` activity. ADR 011 also requires the first itinerary activity to be absolute, so a relative `:` activity cannot be first.
+
 ## Context
 
 The itinerary format supports a leading `:` timestamp form, for example:

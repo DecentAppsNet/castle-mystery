@@ -213,6 +213,7 @@ function _calcWalkDurationWithinRoom(room:Room, fromPosition:Position, toPositio
   return _calcWalkDurationForWaypointPath(waypointPath);
 }
 
+// If successful, returns the amount of delay from fromTime that was used in scheduling. If unsuccessful return error message.
 function _scheduleCharacterMovementToRoomAtTime(rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
     fromTime:number, toRoom:Room, toPosition:Position, toTime:number|null, characterI:number, timeline:EditableTimeline):string|number {
   if (arePositionsEqual(fromPosition, toPosition)) return fromTime; // Character already at destination.
@@ -235,14 +236,14 @@ function _scheduleCharacterMovementToRoomAtTime(rooms:readonly Room[], fromRoom:
     if (extraTime < 0) {
       const secondsNeeded = _getSecondsText(pathWalkDuration - maxWalkDuration);
       const toTimestamp = formatMsecsAsTimestamp(toTime);
-      return `Can't arrive at destination in "${fromRoom.id}" room by ${toTimestamp}}. Need another ${secondsNeeded}.`;
+      return `Can't arrive at destination in "${fromRoom.id}" room by ${toTimestamp}. Need another ${secondsNeeded}.`;
     }
   }
 
-  let scheduledEndTime = _scheduleWaypointPath(waypointPath, fromTime + extraTime, characterI, timeline);  
+  const scheduledEndTime = _scheduleWaypointPath(waypointPath, fromTime + extraTime, characterI, timeline);  
   assert(toTime === null || scheduledEndTime === toTime);
   
-  return scheduledEndTime;
+  return extraTime;
 }
 
 export function scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 

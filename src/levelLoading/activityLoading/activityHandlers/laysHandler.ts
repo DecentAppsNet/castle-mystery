@@ -4,6 +4,8 @@ import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
+import { assert, assertNonNullable } from "decent-portal";
+import { addCharacterKeyframe } from "@/levelLoading/timelineLoading";
 
 export function createLaysParseFormat():ParseFormat {
   const rootParseStep = makeSequence([
@@ -14,8 +16,17 @@ export function createLaysParseFormat():ParseFormat {
 }
 
 export function scheduleLaysActivity(_level:Level,
-    _activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+    activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+  const { characterId } = activity.parts;
+  assert(typeof characterId === 'string');
+  assertNonNullable(activity.startTime);
 
-  // TODO
+  const characterI = editableTimeline.characterIdToI[characterId];
+  assertNonNullable(characterI);
+  
+  addCharacterKeyframe({ bodyOrientation:'laying'}, characterI, activity.startTime, editableTimeline);
+
+  activity.endTime = activity.startTime;
+  
   return true;
 }

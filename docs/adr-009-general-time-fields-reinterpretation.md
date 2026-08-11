@@ -2,7 +2,9 @@
 
 ## Status
 
-Proposed
+Superseded in part by ADR 011
+
+> **ADR 011 supersession:** [ADR 011](adr-011-itinerary-derived-timeline-bounds.md) overrules this ADR's decisions that `startTime` and `endTime` are author-facing general-section fields and that cross-midnight times receive inferred day offsets. Those bounds are now derived exclusively from itinerary activities, and authors use extended hours such as `24:00:01`. This ADR's interpretation of `time` as the initial playhead position remains in effect; when omitted, it defaults to the itinerary-derived start.
 
 ## Supersedes
 

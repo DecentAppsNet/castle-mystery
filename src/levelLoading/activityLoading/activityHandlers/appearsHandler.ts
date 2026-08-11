@@ -15,8 +15,9 @@ export function createAppearsParseFormat():ParseFormat {
 }
 
 export function scheduleAppearsActivity(_level:Level,
-    _activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+    activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
 
   // TODO
+  activity.endTime = activity.startTime;
   return true;
 }

@@ -16,8 +16,9 @@ export function createGivesParseFormat():ParseFormat {
 }
 
 export function scheduleGivesActivity(_level:Level,
-    _activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+    activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
 
   // TODO
+  activity.endTime = activity.startTime;
   return true;
 }

@@ -78,6 +78,11 @@ export function findKeyframeForTime(keyframes:TimelineKeyframe[], time:number):T
   return beforeKeyframe;
 }
 
+export function findCharacterKeyframeForTime(keyframes:TimelineKeyframe[], characterI:number, time:number):CharacterKeyframe {
+  const { beforeKeyframe } = _findKeyframesBeforeAndAfterTime(keyframes, time);
+  return beforeKeyframe.characters[characterI];
+}
+
 export function findRoomKeyframeForTime(keyframes:TimelineKeyframe[], roomI:number, time:number):RoomKeyframe {
   const { beforeKeyframe } = _findKeyframesBeforeAndAfterTime(keyframes, time);
   return beforeKeyframe.rooms[roomI];
