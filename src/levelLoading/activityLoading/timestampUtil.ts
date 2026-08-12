@@ -17,15 +17,15 @@ export function isRelativeTimestamp(text:string):boolean {
 
 export function tryParseAbsoluteTimestamp(text:string):number|null {
   const parts = text.trim().split(':');
-  if (parts.length !== 2 && parts.length !== 3) return null;
+  if (parts.length !== 3) return null;
   const [hoursText, minutesText, secondsText] = parts;
   if (!_isValidTimestampPart(hoursText, null) || !_isValidTimestampPart(minutesText, 2)
-      || (secondsText !== undefined && !_isValidTimestampPart(secondsText, 2))) {
+      || !_isValidTimestampPart(secondsText, 2)) {
     return null;
   }
   const hours = Number(hoursText);
   const minutes = Number(minutesText);
-  const seconds = secondsText === undefined ? 0 : Number(secondsText);
+  const seconds = Number(secondsText);
   if (minutes >= SECS_IN_MINUTE || seconds >= SECS_IN_MINUTE) return null;
   return (((hours * SECS_IN_MINUTE) + minutes) * SECS_IN_MINUTE + seconds) * MSECS_IN_SECOND;
 }

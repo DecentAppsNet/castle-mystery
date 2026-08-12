@@ -32,6 +32,6 @@ H
 * description=Contains important clues.
 
 # itinerary
-0:00 Sam takes Notebook
+0:00:00 Sam takes Notebook
 
 # conclusions
