@@ -114,6 +114,35 @@ function _findWaypointPath(room:Room, fromWaypoint:Waypoint, toWaypoint:Waypoint
   botch('A path should always be possible');
 }
 
+// Removes waypoints from path that aren't needed, returning an equivalent path for movement. The
+// removal of a waypoint requires evaluation of 3 consecutive waypoint positions (A, B, C) where the
+// angle of movement from A to B is equal to the angle of movement from B to C. When this condition is
+// met, waypoint B can be removed, since the movement from A to C would be equivalent.
+function _simplifyWaypointPath(waypoints:Waypoint[]):Waypoint[] {
+  const simplifiedWaypoints:Waypoint[] = [];
+  for (const waypoint of waypoints) {
+    simplifiedWaypoints.push(waypoint);
+    while (simplifiedWaypoints.length >= 3) {
+      const a = simplifiedWaypoints[simplifiedWaypoints.length - 3].position;
+      const b = simplifiedWaypoints[simplifiedWaypoints.length - 2].position;
+      const c = simplifiedWaypoints[simplifiedWaypoints.length - 1].position;
+      const ab = { x:b.x - a.x, y:b.y - a.y, z:b.z - a.z };
+      const bc = { x:c.x - b.x, y:c.y - b.y, z:c.z - b.z };
+      if (ab.y <= FLOOR_WAYPOINT_Y_OFFSET) ab.y = 0;
+      if (bc.y <= FLOOR_WAYPOINT_Y_OFFSET) bc.y = 0;
+      const hasZeroLengthSegment = (ab.x === 0 && ab.y === 0 && ab.z === 0)
+        || (bc.x === 0 && bc.y === 0 && bc.z === 0);
+      const hasSameMovementAngle = ab.y * bc.z === ab.z * bc.y
+        && ab.z * bc.x === ab.x * bc.z
+        && ab.x * bc.y === ab.y * bc.x
+        && ab.x * bc.x + ab.y * bc.y + ab.z * bc.z > 0;
+      if (!hasZeroLengthSegment && !hasSameMovementAngle) break;
+      simplifiedWaypoints.splice(simplifiedWaypoints.length - 2, 1);
+    }
+  }
+  return simplifiedWaypoints;
+}
+
 function _joinWaypointPaths(a:Waypoint[], b:Waypoint[]):Waypoint[] {
   if (!b.length) return a;
   if (!a.length) return b;
@@ -147,7 +176,7 @@ function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Po
   const fromWaypoint = findWaypointAtPosition(toRoom, waypoint.position); // Need waypoint in the destination room.
   assertNonNullable(fromWaypoint);
   const finalRoomWaypoints = _findWaypointPath(toRoom, fromWaypoint, toWaypoint);
-  return _joinWaypointPaths(waypoints, finalRoomWaypoints);
+  return _simplifyWaypointPath(_joinWaypointPaths(waypoints, finalRoomWaypoints));
 }
 
 function _calcWalkDurationBetweenPositions(fromPosition:Position, toPosition:Position):number {
@@ -187,7 +216,7 @@ function _scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, 
   assert(toTime === null || toTime >= fromTime);
   const fromWaypoint = findNearestFloorWaypointToPosition(room, fromPosition);
   const toWaypoint = findNearestFloorWaypointToPosition(room, toPosition);
-  const waypointPath = _findWaypointPath(room, fromWaypoint, toWaypoint);
+  const waypointPath = _simplifyWaypointPath(_findWaypointPath(room, fromWaypoint, toWaypoint));
   const pathWalkDuration = _calcWalkDurationForWaypointPath(waypointPath);
 
   let extraTime = 0;
