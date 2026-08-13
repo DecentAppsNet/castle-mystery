@@ -6,12 +6,11 @@ import Room from "@/game/types/Room";
 import Waypoint from "@/game/types/Waypoint";
 import EditableTimeline from "../timelineLoading/types/EditableTimeline";
 import Position, { arePositionsEqual } from "@/game/types/Position";
-import { findNearestFloorWaypointToPosition, WAYPOINT_MIDDLE_ROW_Z } from "./waypointFindingUtil";
+import { findNearestFloorWaypointToPosition, isFloorWaypoint, WAYPOINT_MIDDLE_ROW_Z } from "./waypointFindingUtil";
 import { addCharacterKeyframe } from "../timelineLoading/editingUtil";
 import { formatMsecsAsTimestamp } from "./timestampUtil";
 import { isPositionInOrOnRect } from "@/game/rectUtil";
 import { findWaypointAtPosition } from "./waypointFindingUtil";
-import { FLOOR_WAYPOINT_Y_OFFSET } from "@/game/roomSpaceConstants";
 
 const WALK_MSECS_PER_PIXEL = 60;
 
@@ -56,9 +55,7 @@ function _findRoomPath(rooms:readonly Room[], fromRoomId:string, targetRoomId:st
 }
 
 function _isMiddleRowFloorWaypoint(room:Room, waypoint:Waypoint):boolean {
-  const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-  return Math.abs(waypoint.position.y - floorY) <= FLOOR_WAYPOINT_Y_OFFSET
-    && waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z;
+  return isFloorWaypoint(room, waypoint) && waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z;
 }
 
 function _sortAdjacentWaypointsForPathTraversal(room:Room, targetWaypoint:Waypoint, 
@@ -128,8 +125,6 @@ function _simplifyWaypointPath(waypoints:Waypoint[]):Waypoint[] {
       const c = simplifiedWaypoints[simplifiedWaypoints.length - 1].position;
       const ab = { x:b.x - a.x, y:b.y - a.y, z:b.z - a.z };
       const bc = { x:c.x - b.x, y:c.y - b.y, z:c.z - b.z };
-      if (ab.y <= FLOOR_WAYPOINT_Y_OFFSET) ab.y = 0;
-      if (bc.y <= FLOOR_WAYPOINT_Y_OFFSET) bc.y = 0;
       const hasZeroLengthSegment = (ab.x === 0 && ab.y === 0 && ab.z === 0)
         || (bc.x === 0 && bc.y === 0 && bc.z === 0);
       const hasSameMovementAngle = ab.y * bc.z === ab.z * bc.y

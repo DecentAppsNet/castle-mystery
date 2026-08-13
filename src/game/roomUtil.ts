@@ -26,10 +26,6 @@ export function findRoomAtPosition(rooms:readonly Room[], x:number, y:number):Ro
   return rooms.find((r) => isPositionInRect(x, y, r.rect)) ?? null;
 }
 
-export function findRoomAtPositionOrTouchingBoundary(rooms:readonly Room[], x:number, y:number):Room | null {
-  return rooms.find((room) => isPositionInOrOnRect(x, y, room.rect)) ?? null;
-}
-
 export function findCharactersInRoom(room:Room, characters:readonly Character[]):Character[] {
   return characters.filter(c => isPositionInRect(c.position.x, c.position.y, room.rect));
 }
