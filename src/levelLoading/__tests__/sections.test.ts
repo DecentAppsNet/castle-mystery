@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import allCapsText from './fixtures/sections-all-caps.md?raw';
-import minimalOptionalMissingText from './fixtures/sections-minimal-optional-missing.md?raw';
-import missingCharactersText from './fixtures/sections-missing-characters.md?raw';
-import missingGeneralText from './fixtures/sections-missing-general.md?raw';
-import missingMapText from './fixtures/sections-missing-map.md?raw';
-import missingRoomsText from './fixtures/sections-missing-rooms.md?raw';
-import unknownTopLevelText from './fixtures/sections-unknown-top-level.md?raw';
+import allCapsText from './fixtures/sections/sections-all-caps.md?raw';
+import minimalOptionalMissingText from './fixtures/sections/sections-minimal-optional-missing.md?raw';
+import missingCharactersText from './fixtures/sections/sections-missing-characters.md?raw';
+import missingGeneralText from './fixtures/sections/sections-missing-general.md?raw';
+import missingMapText from './fixtures/sections/sections-missing-map.md?raw';
+import missingRoomsText from './fixtures/sections/sections-missing-rooms.md?raw';
+import unknownTopLevelText from './fixtures/sections/sections-unknown-top-level.md?raw';
 import { loadLevelForTest } from './testLevelUtil';
 
 describe('loading levels - sections', () => {

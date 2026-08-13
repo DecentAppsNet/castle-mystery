@@ -1,17 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import duplicateHeadingText from './fixtures/conclusions-duplicate-heading.md?raw';
-import duplicateVariableText from './fixtures/conclusions-duplicate-variable.md?raw';
-import missingConclusionLineText from './fixtures/conclusions-missing-conclusion-line.md?raw';
-import normalizationDuplicateText from './fixtures/conclusions-normalization-duplicate.md?raw';
-import revealRoomNotObscuredText from './fixtures/conclusions-reveal-room-not-obscured.md?raw';
-import revealRoomUnknownText from './fixtures/conclusions-reveal-room-unknown.md?raw';
-import successAuthoredGeneratedText from './fixtures/conclusions-success-authored-generated.md?raw';
-import successAuthoredLockingText from './fixtures/conclusions-success-authored-locking.md?raw';
-import successIdentitiesMetadataOnlyText from './fixtures/conclusions-success-identities-metadata-only.md?raw';
-import unlockSelfText from './fixtures/conclusions-unlock-self.md?raw';
-import unlockUnknownText from './fixtures/conclusions-unlock-unknown.md?raw';
-import unknownCharacterOptionText from './fixtures/conclusions-unknown-character-option.md?raw';
-import { loadLevelForTest } from './testLevelUtil';
+import defaultLevelText from './fixtures/conclusions-base.md?raw';
+import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 function _expectFailure(text:string, filename:string, expectedMessage:string) {
   const { level, errors } = loadLevelForTest(text, filename);
@@ -22,7 +11,20 @@ function _expectFailure(text:string, filename:string, expectedMessage:string) {
 
 describe('loading levels - conclusions', () => {
   it('loads an authored conclusion and a generated identities conclusion into level.conclusions', () => {
-    const { level, errors } = loadLevelForTest(successAuthoredGeneratedText, 'conclusions-success-authored-generated.md');
+    let text = replaceSection(defaultLevelText, 'characters', [
+      '## Sam',
+      '* title=Detective Sam',
+      '* description=Lead investigator.',
+      '* faceImage=sam.png',
+      '',
+      '### Default'
+    ]);
+    text = replaceSection(text, 'conclusions', [
+      '## Missing Book',
+      '* conclusion=(book.png)[Study]---[Detective Sam]',
+      '* revealRooms=Study'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'conclusions-success-authored-generated.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -70,7 +72,15 @@ describe('loading levels - conclusions', () => {
   });
 
   it('loads multiple authored conclusions and locks conclusions targeted by unlockConclusions', () => {
-    const { level, errors } = loadLevelForTest(successAuthoredLockingText, 'conclusions-success-authored-locking.md');
+    const text = replaceSection(defaultLevelText, 'conclusions', [
+      '## First Clue',
+      '* conclusion=[Hall]',
+      '* unlockConclusions=Second Clue',
+      '',
+      '## Second Clue',
+      '* conclusion=[Study]'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'conclusions-success-authored-locking.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -86,7 +96,15 @@ describe('loading levels - conclusions', () => {
   });
 
   it('treats an identities subsection with only metadata as overrides for the generated identities conclusion', () => {
-    const { level, errors } = loadLevelForTest(successIdentitiesMetadataOnlyText, 'conclusions-success-identities-metadata-only.md');
+    const text = replaceSection(defaultLevelText, 'conclusions', [
+      '## Final Mystery',
+      '* conclusion=[Hall]',
+      '',
+      '## Identities',
+      '* revealRooms=Study',
+      '* unlockConclusions=Final Mystery'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'conclusions-success-identities-metadata-only.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -105,38 +123,69 @@ describe('loading levels - conclusions', () => {
   });
 
   it('fails if the conclusions section contains duplicate subsections with the same heading text', () => {
-    _expectFailure(duplicateHeadingText, 'conclusions-duplicate-heading.md', "duplicate section 'Mystery'");
+    const text = replaceSection(defaultLevelText, 'conclusions', ['## Mystery', '', '## Mystery']);
+    _expectFailure(text, 'conclusions-duplicate-heading.md', "duplicate section 'Mystery'");
   });
 
   it('fails if the conclusions section contains different headings that normalize to the same conclusion ID', () => {
-    _expectFailure(normalizationDuplicateText, 'conclusions-normalization-duplicate.md', 'After normalization');
+    const text = replaceSection(defaultLevelText, 'conclusions', ['## Mystery Note', '', '## mystery note']);
+    _expectFailure(text, 'conclusions-normalization-duplicate.md', 'After normalization');
   });
 
   it('fails if a non-identities conclusion subsection omits the conclusion line', () => {
-    _expectFailure(missingConclusionLineText, 'conclusions-missing-conclusion-line.md', 'Missing "conclusion=" line for "Mystery" conclusion.');
+    const text = replaceSection(defaultLevelText, 'conclusions', ['## Mystery', '* revealRooms=Study']);
+    _expectFailure(text, 'conclusions-missing-conclusion-line.md', 'Missing "conclusion=" line for "Mystery" conclusion.');
   });
 
   it('fails if revealRooms references a room that does not exist', () => {
-    _expectFailure(revealRoomUnknownText, 'conclusions-reveal-room-unknown.md', '"Tower" doesn\'t match a defined room.');
+    const text = replaceSection(defaultLevelText, 'conclusions', [
+      '## Mystery',
+      '* conclusion=[Hall]',
+      '* revealRooms=Tower'
+    ]);
+    _expectFailure(text, 'conclusions-reveal-room-unknown.md', '"Tower" doesn\'t match a defined room.');
   });
 
   it('fails if revealRooms references a room that is not obscured', () => {
-    _expectFailure(revealRoomNotObscuredText, 'conclusions-reveal-room-not-obscured.md', '"Hall" is not obscured, so conclusion can\'t reveal it.');
+    const text = replaceSection(defaultLevelText, 'conclusions', [
+      '## Mystery',
+      '* conclusion=[Hall]',
+      '* revealRooms=Hall'
+    ]);
+    _expectFailure(text, 'conclusions-reveal-room-not-obscured.md', '"Hall" is not obscured, so conclusion can\'t reveal it.');
   });
 
   it('fails if unlockConclusions makes a conclusion unlock itself', () => {
-    _expectFailure(unlockSelfText, 'conclusions-unlock-self.md', 'Conclusion can\'t unlock itself.');
+    const text = replaceSection(defaultLevelText, 'conclusions', [
+      '## Mystery',
+      '* conclusion=[Hall]',
+      '* unlockConclusions=Mystery'
+    ]);
+    _expectFailure(text, 'conclusions-unlock-self.md', 'Conclusion can\'t unlock itself.');
   });
 
   it('fails if unlockConclusions references a conclusion that is not defined', () => {
-    _expectFailure(unlockUnknownText, 'conclusions-unlock-unknown.md', '"Aftermath" doesn\'t match a defined conclusion.');
+    const text = replaceSection(defaultLevelText, 'conclusions', [
+      '## Mystery',
+      '* conclusion=[Hall]',
+      '* unlockConclusions=Aftermath'
+    ]);
+    _expectFailure(text, 'conclusions-unlock-unknown.md', '"Aftermath" doesn\'t match a defined conclusion.');
   });
 
   it('fails if an authored identities character option does not match a defined character', () => {
-    _expectFailure(unknownCharacterOptionText, 'conclusions-unknown-character-option.md', 'Could not find character matching "Ghost".');
+    const text = replaceSection(defaultLevelText, 'conclusions', ['* characters=Ghost']);
+    _expectFailure(text, 'conclusions-unknown-character-option.md', 'Could not find character matching "Ghost".');
   });
 
   it('fails if the conclusions section repeats a top-level variable', () => {
-    _expectFailure(duplicateVariableText, 'conclusions-duplicate-variable.md', 'variable appears more than once in section.');
+    const text = replaceSection(defaultLevelText, 'conclusions', [
+      '* characters=Detective Sam',
+      '* CHARACTERS=Ghost',
+      '',
+      '## Mystery',
+      '* conclusion=[Hall]'
+    ]);
+    _expectFailure(text, 'conclusions-duplicate-variable.md', 'variable appears more than once in section.');
   });
 });

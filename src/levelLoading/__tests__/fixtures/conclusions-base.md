@@ -4,10 +4,11 @@
 # map
 
 ```
-H
+HS
 ```
 
 * H=Hall
+* S=Study
 
 # rooms
 ## Hall
@@ -20,8 +21,12 @@ H
 
 * S=Sam
 
+## Study
+* obscured=true
+
 # characters
 ## Sam
+* title=Detective Sam
 * description=Lead investigator.
 
 ### Default
@@ -31,6 +36,3 @@ H
 # itinerary
 
 # conclusions
-## Mystery
-* conclusion=[Hall]
-* revealRooms=Tower

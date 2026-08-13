@@ -1,19 +1,19 @@
 import { describe, it, expect } from 'vitest';
 
-import inventoryInteractiveReferencedText from './fixtures/discoverability-inventory-interactive-referenced.md?raw';
-import inventoryInteractiveText from './fixtures/discoverability-inventory-interactive.md?raw';
-import inventoryNonInteractiveReferencedText from './fixtures/discoverability-inventory-non-interactive-referenced.md?raw';
-import leftHandInteractiveText from './fixtures/discoverability-left-hand-interactive.md?raw';
-import leftHandNonInteractiveText from './fixtures/discoverability-left-hand-non-interactive.md?raw';
-import minimalText from './fixtures/discoverability-minimal.md?raw';
-import nonInteractiveCharacterText from './fixtures/discoverability-non-interactive-character.md?raw';
-import rightHandInteractiveText from './fixtures/discoverability-right-hand-interactive.md?raw';
-import rightHandNonInteractiveText from './fixtures/discoverability-right-hand-non-interactive.md?raw';
-import roomItemsText from './fixtures/discoverability-room-items.md?raw';
-import twoInteractiveCharactersText from './fixtures/discoverability-two-interactive-characters.md?raw';
-import twoRoomsText from './fixtures/discoverability-two-rooms.md?raw';
-import unplacedCharacterText from './fixtures/discoverability-unplaced-character.md?raw';
-import authoredCountsText from './fixtures/general-success-populated.md?raw';
+import inventoryInteractiveReferencedText from './fixtures/discoverability/discoverability-inventory-interactive-referenced.md?raw';
+import inventoryInteractiveText from './fixtures/discoverability/discoverability-inventory-interactive.md?raw';
+import inventoryNonInteractiveReferencedText from './fixtures/discoverability/discoverability-inventory-non-interactive-referenced.md?raw';
+import leftHandInteractiveText from './fixtures/discoverability/discoverability-left-hand-interactive.md?raw';
+import leftHandNonInteractiveText from './fixtures/discoverability/discoverability-left-hand-non-interactive.md?raw';
+import minimalText from './fixtures/discoverability/discoverability-minimal.md?raw';
+import nonInteractiveCharacterText from './fixtures/discoverability/discoverability-non-interactive-character.md?raw';
+import rightHandInteractiveText from './fixtures/discoverability/discoverability-right-hand-interactive.md?raw';
+import rightHandNonInteractiveText from './fixtures/discoverability/discoverability-right-hand-non-interactive.md?raw';
+import roomItemsText from './fixtures/discoverability/discoverability-room-items.md?raw';
+import twoInteractiveCharactersText from './fixtures/discoverability/discoverability-two-interactive-characters.md?raw';
+import twoRoomsText from './fixtures/discoverability/discoverability-two-rooms.md?raw';
+import unplacedCharacterText from './fixtures/discoverability/discoverability-unplaced-character.md?raw';
+import authoredCountsText from './fixtures/discoverability/discoverability-authored-counts.md?raw';
 import { loadLevelForTest } from './testLevelUtil';
 
 describe('loading levels - discoverability', () => {

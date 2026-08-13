@@ -1,21 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import duplicateHeadingText from './fixtures/characters-duplicate-heading.md?raw';
-import invalidBodyOrientationText from './fixtures/characters-invalid-body-orientation.md?raw';
-import invalidFacingDirectionText from './fixtures/characters-invalid-facing-direction.md?raw';
-import invalidIsTitleKnownText from './fixtures/characters-invalid-is-title-known.md?raw';
-import invalidVisibleText from './fixtures/characters-invalid-visible.md?raw';
-import itemMissingDefinitionText from './fixtures/characters-item-missing-definition.md?raw';
-import leftHandMissingDefinitionText from './fixtures/characters-left-hand-missing-definition.md?raw';
-import missingPositionText from './fixtures/characters-missing-position.md?raw';
-import normalizationDuplicateText from './fixtures/characters-normalization-duplicate.md?raw';
-import rightHandMissingDefinitionText from './fixtures/characters-right-hand-missing-definition.md?raw';
-import successMinimalText from './fixtures/characters-success-minimal.md?raw';
-import successPopulatedText from './fixtures/characters-success-populated.md?raw';
-import { loadLevelForTest } from './testLevelUtil';
+import defaultLevelText from './fixtures/characters-base.md?raw';
+import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 describe('loading levels - characters', () => {
   it('loads a minimal character into allCharactersById on the returned level', () => {
-    const { level, errors } = loadLevelForTest(successMinimalText, 'characters-success-minimal.md');
+    const { level, errors } = loadLevelForTest(defaultLevelText, 'characters-success-minimal.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -37,7 +26,34 @@ describe('loading levels - characters', () => {
   });
 
   it('loads character metadata and merges held items into allCharactersById on the returned level', () => {
-    const { level, errors } = loadLevelForTest(successPopulatedText, 'characters-success-populated.md');
+    let text = replaceSection(defaultLevelText, 'characters', [
+      '## Sam',
+      '* title=Detective Sam',
+      '* description=The lead investigator.',
+      '* faceImage=sam.png',
+      '* visible=false',
+      '* facingDirection=left',
+      '* bodyOrientation=sitting',
+      '* isTitleKnown=false',
+      '* items=Notebook',
+      '* leftHand=Lantern',
+      '* rightHand=Brass Key',
+      '',
+      '### Default'
+    ]);
+    text = replaceSection(text, 'items', [
+      '## Notebook',
+      '* title=Case Notebook',
+      '* description=Filled with notes.',
+      '* image=notebook.png',
+      '',
+      '## Lantern',
+      '* title=Oil Lantern',
+      '',
+      '## Brass Key',
+      '* title=Vault Key'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'characters-success-populated.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -70,21 +86,32 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if the characters section contains duplicate subsections with the same heading text', () => {
-    const { level, errors } = loadLevelForTest(duplicateHeadingText, 'characters-duplicate-heading.md');
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '', '## Sam']);
+    const { level, errors } = loadLevelForTest(text, 'characters-duplicate-heading.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain("duplicate section 'Sam'");
   });
 
   it('fails if the characters section contains different headings that normalize to the same character ID', () => {
-    const { level, errors } = loadLevelForTest(normalizationDuplicateText, 'characters-normalization-duplicate.md');
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '', '## sam']);
+    const { level, errors } = loadLevelForTest(text, 'characters-normalization-duplicate.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('After normalization');
   });
 
   it('loads level despite a character not having a position defined in a room grid', () => {
-    const { level, errors } = loadLevelForTest(missingPositionText, 'characters-missing-position.md');
+    const text = replaceSection(defaultLevelText, 'rooms', [
+      '## Hall',
+      '',
+      '```',
+      '....',
+      '....',
+      '....',
+      '```'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'characters-missing-position.md');
 
     expect(level).not.toBeNull();
     expect(errors.count).toEqual(0);
@@ -92,49 +119,56 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if a character visible value is not boolean-like', () => {
-    const { level, errors } = loadLevelForTest(invalidVisibleText, 'characters-invalid-visible.md');
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* visible=maybe', '### Default']);
+    const { level, errors } = loadLevelForTest(text, 'characters-invalid-visible.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('Expected "maybe" to be "true" or "false"');
   });
 
   it('fails if a character facingDirection is not an allowed value', () => {
-    const { level, errors } = loadLevelForTest(invalidFacingDirectionText, 'characters-invalid-facing-direction.md');
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* facingDirection=up', '### Default']);
+    const { level, errors } = loadLevelForTest(text, 'characters-invalid-facing-direction.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('"up" was not an expected value');
   });
 
   it('fails if a character bodyOrientation is not an allowed value', () => {
-    const { level, errors } = loadLevelForTest(invalidBodyOrientationText, 'characters-invalid-body-orientation.md');
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* bodyOrientation=floating', '### Default']);
+    const { level, errors } = loadLevelForTest(text, 'characters-invalid-body-orientation.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('"floating" was not an expected valoue');
   });
 
   it('fails if a character isTitleKnown value is not boolean-like', () => {
-    const { level, errors } = loadLevelForTest(invalidIsTitleKnownText, 'characters-invalid-is-title-known.md');
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* isTitleKnown=maybe', '### Default']);
+    const { level, errors } = loadLevelForTest(text, 'characters-invalid-is-title-known.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('Expected "maybe" to be "true" or "false"');
   });
 
   it('fails if a character inventory item is not defined in the items section', () => {
-    const { level, errors } = loadLevelForTest(itemMissingDefinitionText, 'characters-item-missing-definition.md');
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* items=Notebook', '### Default']);
+    const { level, errors } = loadLevelForTest(text, 'characters-item-missing-definition.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('Could not find item in Items section matching "notebook".');
   });
 
   it('fails if a character leftHand item is not defined in the items section', () => {
-    const { level, errors } = loadLevelForTest(leftHandMissingDefinitionText, 'characters-left-hand-missing-definition.md');
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* leftHand=Lantern', '### Default']);
+    const { level, errors } = loadLevelForTest(text, 'characters-left-hand-missing-definition.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('Could not find item in Items section matching "lantern".');
   });
 
   it('fails if a character rightHand item is not defined in the items section', () => {
-    const { level, errors } = loadLevelForTest(rightHandMissingDefinitionText, 'characters-right-hand-missing-definition.md');
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* rightHand=Brass Key', '### Default']);
+    const { level, errors } = loadLevelForTest(text, 'characters-right-hand-missing-definition.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('Could not find item in Items section matching "brass key".');
