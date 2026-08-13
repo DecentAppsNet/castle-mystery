@@ -10,4 +10,8 @@ export const ROOM_MIDDLE_ROW_CENTER_Z = 0.5;
 export const ROOM_FRONT_ROW_CENTER_Z = 0.8333;
 export const ROOM_FULL_DEPTH = 1;
 export const ROOM_DEPTH_ROW_COUNT = 3;
+
+// This offset is applied to Y value of all waypoints that are aligned with floors. It allows a
+// simpler check for character positions within rooms, where room rect y + height is exclusive,
+// avoiding ambiguity for which room a character is in when they are at y + height.
 export const FLOOR_WAYPOINT_Y_OFFSET = 0.001;
