@@ -1,5 +1,4 @@
 export { 
-  addKeyframe, 
   addCharacterKeyframe, 
   addRoomKeyframe
 } from './editingUtil';

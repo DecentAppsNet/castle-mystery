@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultRoom } from '@/game/types/Room';
 import { createDefaultItem } from '@/game/types/Item';
-import { addCharacterKeyframe, addKeyframe, addRoomKeyframe, createEditableTimeline } from '../editingUtil';
+import { addCharacterKeyframe, addRoomKeyframe, createEditableTimeline } from '../editingUtil';
 import { createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
 
 function _position(x:number, y = 0, z = 0) {
@@ -158,46 +158,6 @@ describe('timelineLoadingApi', () => {
       expect(timeline.keyframes).toHaveLength(1);
       expect(snapshot.characters[0]?.isVisible).toBe(false);
       expect(snapshot.rooms[0]?.items[0]).toMatchObject({ id:'relic', position:_position(9) });
-    });
-  });
-
-  describe('addKeyframe()', () => {
-    it('appends a later partial keyframe and resolves its values into the timeline', () => {
-      const timeline = createEditableTimeline([_character('alpha', 0)], [], 1000);
-
-      addKeyframe({
-        time:3000,
-        characters:[{ position:_position(30) }],
-        rooms:[]
-      }, timeline);
-
-      const position = findCharacterPositionAtTime(timeline.keyframes, 0, 3000);
-
-      expect(timeline.keyframes).toHaveLength(2);
-      expect(position).toEqual(_position(30));
-    });
-
-    it('inserts a keyframe before a later one and resolves interpolated values at that time', () => {
-      const timeline = createEditableTimeline([_character('alpha', 0)], [], 1000);
-
-      addKeyframe({
-        time:3000,
-        characters:[{ position:_position(30) }],
-        rooms:[]
-      }, timeline);
-      addKeyframe({
-        time:2000,
-        characters:[{ isVisible:false }],
-        rooms:[]
-      }, timeline);
-
-      const snapshot = createKeyframeAtTime(timeline.keyframes, 2000);
-
-      expect(timeline.keyframes.map(keyframe => keyframe.time)).toEqual([1000, 2000, 3000]);
-      expect(snapshot.characters[0]).toMatchObject({
-        isVisible:false,
-        position:_position(15)
-      });
     });
   });
 });

@@ -196,7 +196,7 @@ function _insertEditableKeyframeAfter(array:EditableTimelineKeyframe[], insertAf
   array.splice(insertAfterI+1, 0, insertElement);
 }
 
-export function addKeyframe(editableKeyframe:Readonly<EditableTimelineKeyframe>, timeline:EditableTimeline) {
+function _addKeyframe(editableKeyframe:Readonly<EditableTimelineKeyframe>, timeline:EditableTimeline) {
   const insertAfterI = _findInsertAfterI(editableKeyframe.time, timeline.keyframes);
   _insertEditableKeyframeAfter(timeline.editableKeyframes, insertAfterI, editableKeyframe);
   timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
@@ -211,7 +211,7 @@ export function addCharacterKeyframe(characterKeyframe:Readonly<Partial<Characte
     timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
   } else {
     const keyframe = _createEditableKeyframeFromCharacterKeyframe(characterKeyframe, characterI, time, characterCount, roomCount);
-    addKeyframe(keyframe, timeline);
+    _addKeyframe(keyframe, timeline);
   }
 }
 
@@ -224,7 +224,7 @@ export function addRoomKeyframe(roomKeyframe:Readonly<Partial<RoomKeyframe>>, ro
     timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
   } else {
     const keyframe = _createEditableKeyframeFromRoomKeyframe(roomKeyframe, roomI, time, characterCount, roomCount);
-    addKeyframe(keyframe, timeline);
+    _addKeyframe(keyframe, timeline);
   }
 }
 
