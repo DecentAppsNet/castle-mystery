@@ -374,7 +374,8 @@ export function tryParseActivity(activityLine:string, rules:ActivityParsingRules
     startTime,
     endTime,
     parts:parseResult,
-    prevActivity:null
+    prevActivity:null,
+    nextActivity:null
   };
   return activity;
 }

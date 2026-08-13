@@ -6,8 +6,8 @@ import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
-import { findCharacterKeyframeForTime } from "@/game/timeline/retrievalUtil";
 import { addCharacterKeyframe } from "@/levelLoading/timelineLoading";
+import { MSECS_IN_SECOND } from "@/common/timeUtil";
 
 const DEFAULT_WAIT_MSECS = 1_000;
 
@@ -26,15 +26,14 @@ export function scheduleWaitsActivity(_level:Level,
   assert(typeof characterId === 'string');
   assertNonNullable(activity.startTime);
   
-  const duration = typeof seconds === 'number' ? seconds : DEFAULT_WAIT_MSECS;
+  const duration = typeof seconds === 'number' ? seconds * MSECS_IN_SECOND : DEFAULT_WAIT_MSECS;
   activity.endTime = activity.startTime + duration;
   
-  // Add a key value at the end time to capture waiting in the timeline. Any key value would work.
+  // Add empty keyframe (no changed keys) as a spacer in the timeline. The "@" activity and 
+  // maybe others will rely on it to determine when the latest activity for a character completed.
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);
-  const keyframe = findCharacterKeyframeForTime(editableTimeline.keyframes, characterI, activity.startTime);
-  const bodyOrientation = keyframe.bodyOrientation;
-  addCharacterKeyframe({ bodyOrientation }, characterI, activity.endTime, editableTimeline);
+  addCharacterKeyframe({}, characterI, activity.endTime, editableTimeline);
   
   return true;
 }

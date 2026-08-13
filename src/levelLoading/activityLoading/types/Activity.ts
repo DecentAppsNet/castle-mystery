@@ -5,7 +5,8 @@ type Activity = {
   startTime:number|null,
   endTime:number|null,
   parts:ActivityParts,
-  prevActivity:Activity|null
+  prevActivity:Activity|null,
+  nextActivity:Activity|null
 }
 
 export default Activity;

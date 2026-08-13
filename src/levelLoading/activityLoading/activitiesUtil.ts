@@ -1,9 +1,13 @@
+/* This module parses itinerary activities and prepares their authored relationships for scheduling.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Activity from "./types/Activity";
 import ActivityParsingRules from "./types/ActivityParsingRules";
 import { ErrorCollector } from "../errorCollection";
 import { tryParseActivity } from "./parseUtil";
 import { isFirstActivityTimestampValid } from "./levelTimeUtil";
 import { assert } from "decent-portal";
+import { sortActivities } from "./activitySortingUtil";
 
 // activities param must be in authored order.
 function _resolveImpliedSubjects(activities:Activity[], activeCharacterId:string) {
@@ -17,35 +21,6 @@ function _resolveImpliedSubjects(activities:Activity[], activeCharacterId:string
       activity.parts.characterId = lastCharacterId;
     }
   }
-}
-
-type ActivityGroup = {
-  startTime:number,
-  activities:Activity[]
-}
-
-function _groupActivities(activities:readonly Activity[]):ActivityGroup[] {
-  const groups:ActivityGroup[] = [];
-  let group:ActivityGroup = { startTime:activities[0].startTime!, activities:[activities[0]] };
-  for(let activityI = 1; activityI < activities.length; ++activityI) {
-    const activity = activities[activityI];
-    if (activity.startTime === null) {
-      group.activities.push(activity);
-    } else {
-      groups.push(group);
-      group = { startTime:activity.startTime, activities:[activity] };
-    }
-  }
-  groups.push(group);
-  return groups.sort((a, b) => a.startTime - b.startTime); 
-}
-
-function _sortActivities(activities:readonly Activity[]):Activity[] {
-  if (activities.length < 2) return [...activities];
-  const groups = _groupActivities(activities);
-  let sortedActivities:Activity[] = [];
-  groups.forEach(group => { sortedActivities = sortedActivities.concat(group.activities); });
-  return sortedActivities;
 }
 
 export function loadActivitiesPartially(itinerarySectionText:string, rules:ActivityParsingRules, 
@@ -68,12 +43,13 @@ export function loadActivitiesPartially(itinerarySectionText:string, rules:Activ
     assert(parseResult.startTime === null || parseResult.startTime >= startTime); // Expecting that the previously-found startTime already looked at activity timestamps to set it.
     if (lineI === 0 && parseResult.startTime === null) parseResult.startTime = startTime ?? 0;
     parseResult.prevActivity = prevActivity;
+    if (prevActivity) prevActivity.nextActivity = parseResult;
 
     activities.push(parseResult);
     prevActivity = parseResult;
   }
   _resolveImpliedSubjects(activities, activeCharacterId);
 
-  const sortedActivities = _sortActivities(activities);
+  const sortedActivities = sortActivities(activities, startTime);
   return errors.count > originalErrorCount ? null : sortedActivities;
 }

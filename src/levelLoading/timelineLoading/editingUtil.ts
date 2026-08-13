@@ -1,3 +1,6 @@
+/* This module creates and edits partial and resolved timeline keyframes.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assert, assertNonNullable, botch } from "decent-portal";
 import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
 import EditableTimelineKeyframe from "./types/EditableTimelineKeyframe";
@@ -9,30 +12,6 @@ import Room from "@/game/types/Room";
 import Item, { duplicateItem } from "@/game/types/Item";
 import { duplicatePosition } from "@/game/types/Position";
 import EditableTimeline, { createDefaultEditableTimeline } from "./types/EditableTimeline";
-import Activity from "../activityLoading/types/Activity";
-import Level from "@/game/types/Level";
-import ErrorCollector from "../errorCollection/ErrorCollector";
-import { scheduleAtActivity } from "../activityLoading/activityHandlers/atHandler";
-import Timeline from "@/game/types/Timeline";
-import { doesActivityUseEndTimestamp } from "../activityLoading/parseUtil";
-import { scheduleTakesActivity } from "../activityLoading/activityHandlers/takesHandler";
-import { scheduleDropsActivity } from "../activityLoading/activityHandlers/dropsHandler";
-import { scheduleAppearsActivity } from "../activityLoading/activityHandlers/appearsHandler";
-import { scheduleBecomesActivity } from "../activityLoading/activityHandlers/becomesHandler";
-import { scheduleEmitsActivity } from "../activityLoading/activityHandlers/emitsHandler";
-import { scheduleFacesActivity } from "../activityLoading/activityHandlers/facesHandler";
-import { scheduleGivesActivity } from "../activityLoading/activityHandlers/givesHandler";
-import { scheduleHideActivity } from "../activityLoading/activityHandlers/hideHandler";
-import { scheduleInterruptsActivity } from "../activityLoading/activityHandlers/interruptsHandler";
-import { scheduleKneelsActivity } from "../activityLoading/activityHandlers/kneelsHandler";
-import { scheduleLaysActivity } from "../activityLoading/activityHandlers/laysHandler";
-import { scheduleLocksActivity } from "../activityLoading/activityHandlers/locksHandler";
-import { scheduleSaysActivity } from "../activityLoading/activityHandlers/saysHandler";
-import { scheduleShowActivity } from "../activityLoading/activityHandlers/showHandler";
-import { scheduleSitsActivity } from "../activityLoading/activityHandlers/sitsHandler";
-import { scheduleStandsActivity } from "../activityLoading/activityHandlers/standsHandler";
-import { scheduleUnlocksActivity } from "../activityLoading/activityHandlers/unlocksHandler";
-import { scheduleWaitsActivity } from "../activityLoading/activityHandlers/waitsHandler";
 import EffectCue from "@/game/types/effectCues/EffectCue";
 
 function _findInsertAfterI(time:number, keyframes:TimelineKeyframe[]):number {
@@ -217,65 +196,6 @@ function _insertEditableKeyframeAfter(array:EditableTimelineKeyframe[], insertAf
   array.splice(insertAfterI+1, 0, insertElement);
 }
 
-function _areActivitiesWellOrdered(activities:readonly Activity[], startTime:number):boolean {
-  let time = startTime;
-  for(let i = 0; i < activities.length; ++i) {
-    const activity = activities[i];
-    if (activity.startTime !== null) {
-      if (activity.startTime < time) return false;
-      time = activity.startTime;
-    }
-  }
-  return true;
-}
-
-function _resolveRelativeTimestampAsNeeded(activity:Activity) {
-  if (activity.startTime !== null || doesActivityUseEndTimestamp(activity.verb)) return;
-  const { prevActivity } = activity;
-  activity.startTime = (prevActivity && prevActivity.endTime !== null) ? prevActivity.endTime : null;
-}
-
-type ScheduleActivityCallback = (level:Level, activity:Activity, timeline:EditableTimeline, errors:ErrorCollector) => boolean;
-const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCallback}> = {
-  '@': scheduleAtActivity,
-  'appears': scheduleAppearsActivity,
-  'becomes': scheduleBecomesActivity,
-  'takes': scheduleTakesActivity,
-  'drops': scheduleDropsActivity,
-  'emits': scheduleEmitsActivity,
-  'faces': scheduleFacesActivity,
-  'gives': scheduleGivesActivity,
-  'hide': scheduleHideActivity,
-  'interrupts': scheduleInterruptsActivity,
-  'kneels': scheduleKneelsActivity,
-  'lays': scheduleLaysActivity,
-  'locks': scheduleLocksActivity,
-  'says': scheduleSaysActivity,
-  'show': scheduleShowActivity,
-  'sits': scheduleSitsActivity,
-  'stands': scheduleStandsActivity,
-  'unlocks': scheduleUnlocksActivity,
-  'waits': scheduleWaitsActivity
-}
-
-function _scheduleActivity(level:Level, activity:Activity, timeline:EditableTimeline, errors:ErrorCollector):boolean {
-  const scheduleActivityFunc = VERB_TO_SCHEDULE_ACTIVITY_FUNC[activity.verb];
-  assertNonNullable(scheduleActivities, `Add handler for "${activity.verb}"`);
-  if (!doesActivityUseEndTimestamp(activity.verb) && activity.startTime === null) return false; // A preceding activity must be scheduled first.
-
-  if (!scheduleActivityFunc(level, activity, timeline, errors)) return false;
-  
-  // Successful scheduling should assign values to startTime and endTime.
-  assert(!Number.isNaN(activity.startTime) && !Number.isNaN(activity.endTime));
-  assertNonNullable(activity.startTime);
-  assertNonNullable(activity.endTime);
-  assert(activity.startTime <= activity.endTime);
-  assert(activity.startTime >= level.startTime);
-  // Level.endTime is still not known because it requires all scheduling to be completed.
-
-  return true;
-}
-
 export function addKeyframe(editableKeyframe:Readonly<EditableTimelineKeyframe>, timeline:EditableTimeline) {
   const insertAfterI = _findInsertAfterI(editableKeyframe.time, timeline.keyframes);
   _insertEditableKeyframeAfter(timeline.editableKeyframes, insertAfterI, editableKeyframe);
@@ -318,38 +238,11 @@ export function createEditableTimeline(characters:readonly Character[], rooms:re
   return timeline;
 }
 
-function _editableTimelineToTimeline(editableTimeline:Readonly<EditableTimeline>):Timeline {
-  const { keyframes, roomIdToI, characterIdToI } = editableTimeline;
-  return { keyframes, roomIdToI, characterIdToI };
-}
-
-function _createEmptyTimeline(characters:readonly Character[], rooms:readonly Room[]):Timeline {
-  const editable = createEditableTimeline(characters, rooms, 0);
-  return _editableTimelineToTimeline(editable);
-}
-
 function _isEmptyKeyframe(keyframe:Partial<CharacterKeyframe>|Partial<RoomKeyframe>):boolean {
   for (const key in keyframe) {
     if (Object.hasOwn(keyframe, key)) return false;
   }
   return true;
-}
-
-export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Timeline|null {
-  if (!activities.length) return _createEmptyTimeline(level.characters, level.rooms);
-  const originalErrorCount = errors.count;
-
-  assert(_areActivitiesWellOrdered(activities, level.startTime));
-  const timeline:EditableTimeline = createEditableTimeline(level.characters, level.rooms, level.startTime);
-  const toBeScheduled = [...activities];
-  for(let attemptI = 0; attemptI < activities.length; ++attemptI) {
-    const nextActivity = toBeScheduled[0];
-    _resolveRelativeTimestampAsNeeded(nextActivity);
-    if (_scheduleActivity(level, toBeScheduled[0], timeline, errors)) {
-      toBeScheduled.shift();
-    }
-  }
-  return errors.count > originalErrorCount ? null : _editableTimelineToTimeline(timeline);
 }
 
 export function findLatestKeyFrameForCharacter(timeline:EditableTimeline, characterRef:string|number):TimelineKeyframe {
@@ -359,5 +252,5 @@ export function findLatestKeyFrameForCharacter(timeline:EditableTimeline, charac
     if (!_isEmptyKeyframe(timeline.editableKeyframes[i].characters[characterI])) 
       return timeline.keyframes[i];
   }
-  botch('There should at least be a first editable keyframe that includes all keys.');
+  botch(); // There should at least be a first editable keyframe that includes all keys.
 }

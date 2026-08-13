@@ -1,6 +1,6 @@
 export { 
   addKeyframe, 
   addCharacterKeyframe, 
-  addRoomKeyframe, 
-  scheduleActivities 
+  addRoomKeyframe
 } from './editingUtil';
+export { scheduleActivities } from './schedulingUtil';

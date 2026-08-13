@@ -7,3 +7,4 @@ export { loadActivitiesPartially } from './activitiesUtil';
 export { findActiveCharacterFromItinerary, findStartTimeFromItinerary, findLastActivityEndTime } from './levelTimeUtil';
 export { beginsWithTimestamp, parseTimestampToMsecs } from './timestampUtil';
 export { findNearestFloorWaypointToPosition } from './waypointFindingUtil';
+export { sortActivitiesAfterStartTimeAssignment } from './activitySortingUtil';
