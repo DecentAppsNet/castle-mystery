@@ -9,7 +9,7 @@ import Rect from "./types/Rect";
 import Room from "./types/Room";
 import Character from "./types/Character";
 import { normalizeId, normalizeOptionalId } from "./idUtil";
-import { isPositionInOrOnRect, isPositionInRect } from "./rectUtil";
+import { isPositionInRect } from "./rectUtil";
 
 export function findRoom(rooms:readonly Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);

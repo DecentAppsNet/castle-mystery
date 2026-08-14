@@ -66,7 +66,7 @@ function _applyLevelCompleteReveal(gameState:GameState) {
   ]);
 
   discoverableInitialItems.forEach(markItemDiscovered);
-  gameState.itemsById.forEach(item => {
+  gameState.baseItemsById.forEach(item => {
     if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
   });
   gameState.baseRooms.forEach(room => room.items.forEach(item => {

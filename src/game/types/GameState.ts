@@ -11,51 +11,49 @@ import RoomShellCache from "./RoomShellCache";
 import Timeline from "./Timeline";
 import TimelineSnapshot from "./TimelineSnapshot";
 
+// Unless otherwise noted, "readonly" is intended deeply despite shallow Typescript checks.
 type GameState = {
-  timelineSnapshot:TimelineSnapshot,
-  itemsById:Map<string, Item>,
-  unplacedItemsById:Map<string, Item>,
+  activeCharacterId:string,
+  activeEffects:Effect[],
+  camera:Camera,
+  conclusions:Conclusion[],
+  conclusionsRevision:number,
   discoveredCharacterIds:string[],
   discoveredItemIds:string[],
-  readonly timeline:Timeline;
+  hoveredCharacterId:string|null,
+  hoveredExitKey:string|null,
+  hoveredItemId:string|null,
+  hoveredRoomId:string|null,
+  isLevelComplete:boolean,
+  isPlaying:boolean,
+  labels:TimeLabel[],
+  lastActiveCharacterChangedValue:string,
+  lastMinutesChangedCallRealTime:number,
+  lastMinutesChangedValue:number,
+  lastNotifiedConclusionsRevision:number,
+  lastNotifiedDiscoveriesKey:string
+  readonly backgroundImageUrl:string|null,
+  readonly baseCharacters:Character[], // Individual elements mutated with updates to discovery status.
+  readonly baseItemsById:Map<string, Item>, // Individual elements mutated with updates to discovery status.
+  readonly baseRooms:Room[], // Individual elements mutated with updates to discovery status.
   readonly discoverableCharacterCount:number,
   readonly discoverableItemCount:number,
   readonly discoverableRoomCount:number,
-  conclusions:Conclusion[],
-  readonly winSynopsis:string,
-  readonly backgroundImageUrl:string|null,
+  readonly duration:number,
   readonly groundFloorY:number,
   readonly imageSet:ImageSet,
-  readonly initialItemsById:Map<string, Item>,
-  readonly initialUnplacedItemsById:Map<string, Item>,
-  baseCharacters:Character[], // Tracks initial state of characters along with discovered status.
-  baseRooms:Room[], // Tracks initial state of rooms along with discovered status.
-  camera:Camera,
-  activeEffects:Effect[],
-  hoveredItemId:string|null,
-  hoveredCharacterId:string|null,
-  hoveredExitKey:string|null,
-  hoveredRoomId:string|null,
-  viewedItemIds:Set<string>,
-  activeCharacterId:string,
-  isLevelComplete:boolean,
-  isPlaying:boolean,
-  realTimeToGameTimeOffset:number,
-  time:number,
   readonly startTime:number,
-  readonly duration:number,
-  labels:TimeLabel[],
-  scalingFactors: ScalingFactors,
-  roomTitleWrapScalingFactors:ScalingFactors,
-  roomTitleWrapsByRoomId:Map<string, string[]>,
+  readonly timeline:Timeline;
+  readonly winSynopsis:string,
+  realTimeToGameTimeOffset:number,
   roomShellCacheByRoomId:RoomShellCache,
   roomShellCacheKey:string,
-  lastMinutesChangedCallRealTime:number,
-  lastMinutesChangedValue:number,
-  lastActiveCharacterChangedValue:string,
-  conclusionsRevision:number,
-  lastNotifiedConclusionsRevision:number,
-  lastNotifiedDiscoveriesKey:string
+  roomTitleWrapsByRoomId:Map<string, string[]>,
+  roomTitleWrapScalingFactors:ScalingFactors,
+  scalingFactors: ScalingFactors,
+  time:number,
+  timelineSnapshot:TimelineSnapshot,
+  viewedItemIds:Set<string>,
 }
 
 export default GameState;

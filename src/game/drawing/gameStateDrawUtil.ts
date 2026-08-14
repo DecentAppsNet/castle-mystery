@@ -349,7 +349,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
       const room2 = findRoom(gameState.baseRooms, hoveredExit.room2Id);
       assertNonNullable(room1, `room ${hoveredExit.room1Id} not found`);
       assertNonNullable(room2, `room ${hoveredExit.room2Id} not found`);
-      drawExitPopover(hoveredExit, room1, room2, gameState.itemsById, gameState.scalingFactors, context, layoutPlanner);
+      drawExitPopover(hoveredExit, room1, room2, gameState.baseItemsById, gameState.scalingFactors, context, layoutPlanner);
     }
   }
   _drawReservedRects(layoutPlanner, context);

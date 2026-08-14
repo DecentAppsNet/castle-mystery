@@ -24,7 +24,7 @@ import { findImageBitmap } from "./imageAssetUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
-import { createItemsById, createUnplacedItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
+import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import { MAX_ACTIVE_EFFECTS } from "./effects/effectUtil";
 import {
   callOnActiveCharacterChangedAsNeeded,
@@ -34,7 +34,6 @@ import {
 } from "./gameStateNotificationUtil";
 import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hoverStateUtil";
 import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from "./conclusionStateUtil";
-import { syncDiscoveries } from "./discoveriesUtil";
 import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import { clamp } from "@/common/numberUtil";
 import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
@@ -189,7 +188,6 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   const events:PlayerEvent[] = popPlayerEvents();
   _updateGameState(gameState, events, now, metaTime, calcCanvasAspectRatio(context));
   syncConclusionUnlocks(gameState);
-  syncDiscoveries(gameState);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
   if (onActiveCharacterChanged) callOnActiveCharacterChangedAsNeeded(gameState, onActiveCharacterChanged);
@@ -208,62 +206,54 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 }
 
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
-  const initialItemsById = createItemsById(level.rooms, level.characters, duplicateItemsById(level.itemsById));
-  const baseCharacters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, initialItemsById));
-  const baseRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, initialItemsById));
-  const initialUnplacedItemsById = createUnplacedItemsById(initialItemsById, baseRooms, baseCharacters);
-  const itemsById = duplicateItemsById(initialItemsById);
-  const characters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, itemsById));
-  const rooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, itemsById));
+  const baseItemsById = createItemsById(level.rooms, level.characters, duplicateItemsById(level.itemsById));
+  const baseCharacters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, baseItemsById));
+  const baseRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, baseItemsById));
   const duration = level.endTime - level.startTime;
   const gameState:GameState = {
-    itemsById,
-    unplacedItemsById:createUnplacedItemsById(itemsById, rooms, characters),
-    discoveredCharacterIds:[],
-    discoveredItemIds:[],
+    activeCharacterId:level.activeCharacterId,
+    activeEffects:[],
+    backgroundImageUrl:level.backgroundImageUrl,
+    baseCharacters,
+    baseItemsById,
+    baseRooms,
+    camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
+    conclusions:level.conclusions.map(duplicateConclusion),
+    conclusionsRevision:0,
     discoverableCharacterCount:level.discoverableCharacterCount,
     discoverableItemCount:level.discoverableItemCount,
     discoverableRoomCount:level.discoverableRoomCount,
-    conclusions:level.conclusions.map(duplicateConclusion),
-    winSynopsis:level.winSynopsis,
-    backgroundImageUrl:level.backgroundImageUrl,
+    discoveredCharacterIds:[],
+    discoveredItemIds:[],
+    duration,
     groundFloorY:level.groundFloorY,
-    imageSet,
-    initialItemsById,
-    initialUnplacedItemsById,
-    baseCharacters,
-    baseRooms,
-    camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
-    activeEffects:[],
-    hoveredItemId:null,
     hoveredCharacterId:null,
     hoveredExitKey:null,
+    hoveredItemId:null,
     hoveredRoomId:null,
-    viewedItemIds:new Set<string>(),
-    activeCharacterId:level.activeCharacterId,
+    imageSet,
     isLevelComplete:false,
     isPlaying:false,
-    time:level.initialTime,
-    startTime:level.startTime,
-    duration,
-    realTimeToGameTimeOffset:0,
     labels:level.labels.map(label => ({...label})),
-    scalingFactors:ZERO_SCALING_FACTORS,
-    roomTitleWrapScalingFactors:ZERO_SCALING_FACTORS,
-    roomTitleWrapsByRoomId:new Map<string, string[]>(),
-    roomShellCacheByRoomId:createEmptyRoomShellCache(),
-    roomShellCacheKey:'',
+    lastActiveCharacterChangedValue:"",
     lastMinutesChangedCallRealTime:0,
     lastMinutesChangedValue:NaN,
-    lastActiveCharacterChangedValue:"",
-    conclusionsRevision:0,
     lastNotifiedConclusionsRevision:0,
     lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries()),
+    realTimeToGameTimeOffset:0,
+    roomShellCacheByRoomId:createEmptyRoomShellCache(),
+    roomShellCacheKey:'',
+    roomTitleWrapsByRoomId:new Map<string, string[]>(),
+    roomTitleWrapScalingFactors:ZERO_SCALING_FACTORS,
+    scalingFactors:ZERO_SCALING_FACTORS,
+    startTime:level.startTime,
+    time:level.initialTime,
     timeline:level.timeline, // Timeline is immutable - no harm in sharing instance.
-    timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms)
+    timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms),
+    viewedItemIds:new Set<string>(),
+    winSynopsis:level.winSynopsis,
   }
   _setActiveRoomDiscovered(gameState);
-  syncDiscoveries(gameState);
   syncConclusionUnlocks(gameState);
   return gameState;
 }
