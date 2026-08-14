@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { updateGameStateForChangeConclusions } from '@/game/conclusionStateUtil';
 import { createDiscoveries, markCharacterDiscovered, markItemDiscovered } from '@/game/discoveriesUtil';
 import { createGameState } from '@/game/gameUtil';
-import { createTimelineSnapshot } from '@/game/timeline';
+import { createKeyframeAtTime, createTimelineSnapshot } from '@/game/timeline';
 import PlayerEventType from '@/game/types/playerEvents/PlayerEventType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import discoveryStateLevelText from './fixtures/discovery-state.md?raw';
@@ -75,6 +75,18 @@ describe('discovery state integration', () => {
     expect(gameState.discoveryState.discoveredRoomIds).toEqual(new Set(['hall', 'study']));
     expect(gameState.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam', 'pat']));
     expect(gameState.discoveryState.obscuredRoomIds).toEqual(new Set());
+  });
+
+  it('shares temporal item instances when combining a keyframe with base content', () => {
+    const gameState = _createGameState();
+    const keyframe = createKeyframeAtTime(gameState.timeline.keyframes, gameState.startTime);
+    const snapshot = createTimelineSnapshot(gameState, gameState.startTime);
+    const hallI = gameState.timeline.roomIdToI.hall;
+    const samI = gameState.timeline.characterIdToI.sam;
+
+    expect(snapshot.rooms[hallI].items).toBe(keyframe.rooms[hallI].items);
+    expect(snapshot.rooms[hallI].items[0]).toBe(keyframe.rooms[hallI].items[0]);
+    expect(snapshot.characters[samI].items).toBe(keyframe.characters[samI].items);
   });
 
   it('applies conclusion room reveals, identity title reveals, and level-complete discovery only to discovery state', () => {

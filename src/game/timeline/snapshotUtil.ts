@@ -6,15 +6,9 @@ import Character, { duplicateCharacter } from "../types/Character";
 import GameState from "../types/GameState";
 import TimelineSnapshot from "../types/TimelineSnapshot";
 import { createKeyframeAtTime } from "./retrievalUtil";
-import Item from "../types/Item";
 import CharacterKeyframe from "../types/CharacterKeyframe";
 
-function _combineItemWithBase(item:Item, baseItemsById:Map<string,Item>):Item {
-  assertNonNullable(baseItemsById.get(item.id));
-  return item;
-}
-
-function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character, baseItemsById:Map<string,Item>):Character {
+function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character):Character {
   return {
     // Any members from the keyframe are used.
     isVisible:character.isVisible,
@@ -29,27 +23,27 @@ function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Ch
     faceImageUrl:baseCharacter.faceImageUrl,
     randomSalt:baseCharacter.randomSalt,
     
-    // Items are a combined value from keyframe and base item.
-    items:character.items.map(i => _combineItemWithBase(i, baseItemsById)),
-    leftHandItem:character.leftHandItem ? _combineItemWithBase(character.leftHandItem, baseItemsById) : null,
-    rightHandItem:character.rightHandItem ? _combineItemWithBase(character.rightHandItem, baseItemsById) : null,
+    // Temporal item instances can be shared directly from the keyframe.
+    items:character.items,
+    leftHandItem:character.leftHandItem,
+    rightHandItem:character.rightHandItem,
   }
 }
 
-function _createSnapshotRooms(baseRooms:Room[], baseItemsById:Map<string,Item>, timeline:Timeline, keyframe:TimelineKeyframe):Room[] {
+function _createSnapshotRooms(baseRooms:Room[], timeline:Timeline, keyframe:TimelineKeyframe):Room[] {
   return baseRooms.map(room => {
     const roomI = timeline.roomIdToI[room.id];
     assertNonNullable(roomI);
-    const items = keyframe.rooms[roomI].items.map(i => _combineItemWithBase(i, baseItemsById));
+    const items = keyframe.rooms[roomI].items;
     return {...room, items};
   });
 }
 
-function _createSnapshotCharacters(baseCharacters:Character[], baseItemsById:Map<string,Item>, timeline:Timeline, keyframe:TimelineKeyframe):Character[] {
+function _createSnapshotCharacters(baseCharacters:Character[], timeline:Timeline, keyframe:TimelineKeyframe):Character[] {
   return baseCharacters.map(character => {
     const characterI = timeline.characterIdToI[character.id];
     assertNonNullable(characterI);
-    return _combineCharacterWithBase(keyframe.characters[characterI], character, baseItemsById);
+    return _combineCharacterWithBase(keyframe.characters[characterI], character);
   });
 }
 
@@ -57,8 +51,8 @@ function _createSnapshotCharacters(baseCharacters:Character[], baseItemsById:Map
 // preferable to use if a full snapshot isn't needed. Ideally, one snapshot is created per game loop frame and passed in to whatever needs it.
 export function createTimelineSnapshot(gameState:GameState, time:number):TimelineSnapshot {
   const keyframe = createKeyframeAtTime(gameState.timeline.keyframes, time);
-  const characters = _createSnapshotCharacters(gameState.baseCharacters, gameState.baseItemsById, gameState.timeline, keyframe);
-  const rooms = _createSnapshotRooms(gameState.baseRooms, gameState.baseItemsById, gameState.timeline, keyframe);
+  const characters = _createSnapshotCharacters(gameState.baseCharacters, gameState.timeline, keyframe);
+  const rooms = _createSnapshotRooms(gameState.baseRooms, gameState.timeline, keyframe);
   return { characters, rooms };
 }
 
