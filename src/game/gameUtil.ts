@@ -42,12 +42,9 @@ import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
 import { findActiveCharacter } from "./activeCharacterUtil";
 import { createTimelineSnapshot, createInitialTimelineSnapshot } from "./timeline";
+import { findMetaTimeNow } from "./metaTimeUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
-
-function _findMetaTimeNow():number {
-  return typeof performance !== 'undefined' ? performance.now() : Date.now();
-}
 
 function _setActiveRoomDiscovered(gameState:GameState) {
   const activeCharacter = findActiveCharacter(gameState);
@@ -60,9 +57,10 @@ function _setActiveRoomDiscovered(gameState:GameState) {
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
   const wasPlaying = gameState.isPlaying;
   gameState.activeEffects.length = 0;
+  gameState.time = event.time;
   gameState.timelineSnapshot = createTimelineSnapshot(gameState, event.time);
   gameState.isPlaying = false;
-  gameState.realTimeToGameTimeOffset = 0;
+  gameState.metaTimeToGameTimeOffset = 0;
   if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
 }
 
@@ -70,9 +68,9 @@ function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent,
   const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = event.isPlaying;
   if (event.isPlaying) {
-    gameState.realTimeToGameTimeOffset = gameState.time - Date.now();
+    gameState.metaTimeToGameTimeOffset = gameState.time - metaTime;
   } else {
-    gameState.realTimeToGameTimeOffset = 0; // To find errors if code incorrectly assumes the value to be set.
+    gameState.metaTimeToGameTimeOffset = 0; // To find errors if code incorrectly assumes the value to be set.
   }
   if (wasPlaying !== event.isPlaying) {
     gameState.activeEffects.push(event.isPlaying
@@ -84,7 +82,7 @@ function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent,
 function _pauseGameState(gameState:GameState, metaTime:number) {
   const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = false;
-  gameState.realTimeToGameTimeOffset = 0;
+  gameState.metaTimeToGameTimeOffset = 0;
   if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
 }
 
@@ -102,7 +100,7 @@ function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEven
   gameState.camera.zoomAmount = clamp(gameState.camera.zoomAmount + zoomDirection * CAMERA_ZOOM_STEP, 0, 1);
 }
 
-function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number, metaTime:number, cameraAspectRatio:number) {
+function _updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:number, cameraAspectRatio:number) {
   const snapshotCharacters = gameState.timelineSnapshot.characters;
   events.forEach(event => {
     switch(event.type) {
@@ -118,13 +116,14 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], now:number,
   });
   if (gameState.isPlaying) {
     const endTime = gameState.startTime + gameState.duration;
-    const nextTime = Math.min(endTime, now + gameState.realTimeToGameTimeOffset);
+    const nextTime = Math.min(endTime, metaTime + gameState.metaTimeToGameTimeOffset);
+    gameState.time = nextTime;
     gameState.timelineSnapshot = createTimelineSnapshot(gameState, nextTime);
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
   syncCameraTargetToActiveRoom(gameState.camera, gameState.baseRooms, findActiveCharacter(gameState),
-    cameraAspectRatio, now, gameState.groundFloorY);
-  updateCamera(gameState.camera, now);
+    cameraAspectRatio, metaTime, gameState.groundFloorY);
+  updateCamera(gameState.camera, metaTime);
   _setActiveRoomDiscovered(gameState);
 }
 
@@ -170,20 +169,21 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
     onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
     _isScrubbing:boolean = false, onDiscoveriesChanged?:(discoveries:Discoveries) => void) {
-  _clearCanvas(gameState, context);
+  
   if (!gameState) {
     context.canvas.style.cursor = "default";
     return;
   }
 
-  const now = Date.now();
-  const metaTime = _findMetaTimeNow();
+  _clearCanvas(gameState, context);
+
+  const metaTime = findMetaTimeNow();
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
-  _updateGameState(gameState, events, now, metaTime, calcCanvasAspectRatio(context));
+  _updateGameState(gameState, events, metaTime, calcCanvasAspectRatio(context));
   syncConclusionUnlocks(gameState);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
-  callOnMinutesChangedAsNeeded(gameState, onMinutesChanged);
+  callOnMinutesChangedAsNeeded(gameState, onMinutesChanged, metaTime);
   if (onActiveCharacterChanged) callOnActiveCharacterChangedAsNeeded(gameState, onActiveCharacterChanged);
   const activeVisibleRoom = _findActiveVisibleRoom(gameState);
   context.canvas.style.cursor = activeVisibleRoom && gameState.hoveredCharacterId && gameState.hoveredCharacterId !== gameState.activeCharacterId
@@ -235,11 +235,11 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     isPlaying:false,
     labels:level.labels.map(label => ({...label})),
     lastActiveCharacterChangedValue:"",
-    lastMinutesChangedCallRealTime:0,
+    lastMinutesChangedCallMetaTime:Number.NEGATIVE_INFINITY,
     lastMinutesChangedValue:NaN,
     lastNotifiedConclusionsRevision:0,
     lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries()),
-    realTimeToGameTimeOffset:0,
+    metaTimeToGameTimeOffset:0,
     roomShellCacheByRoomId:createEmptyRoomShellCache(),
     roomShellCacheKey:'',
     roomTitleWrapsByRoomId:new Map<string, string[]>(),
@@ -247,7 +247,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     scalingFactors:ZERO_SCALING_FACTORS,
     startTime:level.startTime,
     time:level.initialTime,
-    timeline:level.timeline, // Timeline is immutable - no harm in sharing instance.
+    timeline:level.timeline, // Timeline is immutable and it is a large data structure - no harm in sharing instance.
     timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms),
     viewedItemIds:new Set<string>(),
     winSynopsis:level.winSynopsis,

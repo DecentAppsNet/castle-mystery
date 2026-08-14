@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { updateGameStateForChangeConclusions } from '@/game/conclusionStateUtil';
 import { createDiscoveries, markCharacterDiscovered, markItemDiscovered } from '@/game/discoveriesUtil';
 import { createGameState } from '@/game/gameUtil';
+import { callOnMinutesChangedAsNeeded } from '@/game/gameStateNotificationUtil';
 import { createKeyframeAtTime, createTimelineSnapshot } from '@/game/timeline';
 import PlayerEventType from '@/game/types/playerEvents/PlayerEventType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
@@ -87,6 +88,19 @@ describe('discovery state integration', () => {
     expect(snapshot.rooms[hallI].items).toBe(keyframe.rooms[hallI].items);
     expect(snapshot.rooms[hallI].items[0]).toBe(keyframe.rooms[hallI].items[0]);
     expect(snapshot.characters[samI].items).toBe(keyframe.characters[samI].items);
+  });
+
+  it('throttles timeline notifications using monotonic meta time', () => {
+    const gameState = _createGameState();
+    const notifiedMinutes:number[] = [];
+    const onMinutesChanged = (minutes:number) => notifiedMinutes.push(minutes);
+
+    callOnMinutesChangedAsNeeded(gameState, onMinutesChanged, 10);
+    gameState.time += 60_000;
+    callOnMinutesChangedAsNeeded(gameState, onMinutesChanged, 100);
+    callOnMinutesChangedAsNeeded(gameState, onMinutesChanged, 210);
+
+    expect(notifiedMinutes).toEqual([0, 1]);
   });
 
   it('applies conclusion room reveals, identity title reveals, and level-complete discovery only to discovery state', () => {

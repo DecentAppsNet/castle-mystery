@@ -11,7 +11,6 @@ import ClozeImage from "./conclusions/types/ClozeImage";
 import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
-import { endTiming, startTiming } from "@/common/timingPerformanceUtil";
 import { assertNonNullable } from "decent-portal";
 
 export function createEmptyImageSet():ImageSet {
@@ -164,22 +163,10 @@ async function _resolveLevelConclusionImageUrls(level:Level, imageSet:ImageSet,
 }
 
 export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
-  const imageLoadTiming = `image loading (${level.activeCharacterId}, ${level.rooms.length} rooms)`;
-  const directImageTiming = `image loading direct references (${level.activeCharacterId}, ${level.rooms.length} rooms)`;
-  const candidateImageTiming = `image loading candidate resolution (${level.activeCharacterId}, ${level.rooms.length} rooms)`;
-  startTiming(imageLoadTiming);
   const imageSet = createEmptyImageSet();
   const loadImageBitmap = _createLoadImageBitmapCache();
   const loadPunchMaskImageBitmap = _createLoadPunchMaskImageBitmapCache();
-  try {
-    startTiming(directImageTiming);
-    await _loadDirectReferencedImages(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
-    endTiming(directImageTiming);
-    startTiming(candidateImageTiming);
-    await _resolveLevelConclusionImageUrls(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
-    endTiming(candidateImageTiming);
-    return imageSet;
-  } finally {
-    endTiming(imageLoadTiming);
-  }
+  await _loadDirectReferencedImages(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
+  await _resolveLevelConclusionImageUrls(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
+  return imageSet;
 }

@@ -28,7 +28,7 @@ type GameState = {
   isPlaying:boolean,
   labels:TimeLabel[],
   lastActiveCharacterChangedValue:string,
-  lastMinutesChangedCallRealTime:number,
+  lastMinutesChangedCallMetaTime:number,
   lastMinutesChangedValue:number,
   lastNotifiedConclusionsRevision:number,
   lastNotifiedDiscoveriesKey:string
@@ -42,7 +42,7 @@ type GameState = {
   readonly startTime:number,
   readonly timeline:Timeline;
   readonly winSynopsis:string,
-  realTimeToGameTimeOffset:number,
+  metaTimeToGameTimeOffset:number,
   roomShellCacheByRoomId:RoomShellCache,
   roomShellCacheKey:string,
   roomTitleWrapsByRoomId:Map<string, string[]>,

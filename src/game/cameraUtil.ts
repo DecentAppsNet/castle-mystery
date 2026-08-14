@@ -118,7 +118,7 @@ function _findTargetCameraRect(rooms:Room[], activeCharacter:Character|null, asp
 }
 
 export function syncCameraTargetToActiveRoom(camera:Camera, rooms:Room[], activeCharacter:Character|null,
-  aspectRatio:number, now:number, groundFloorY:number = Infinity) {
+  aspectRatio:number, metaTime:number, groundFloorY:number = Infinity) {
   const target = _findTargetCameraRect(rooms, activeCharacter, aspectRatio, camera.zoomAmount, groundFloorY);
   if (camera.trackedRoomId === target.roomId
     && Math.abs(camera.aspectRatio - aspectRatio) <= CAMERA_EPSILON
@@ -129,7 +129,7 @@ export function syncCameraTargetToActiveRoom(camera:Camera, rooms:Room[], active
   camera.targetRect = _duplicateRect(target.rect);
   camera.trackedRoomId = target.roomId;
   camera.aspectRatio = aspectRatio;
-  camera.moveStartTime = now;
+  camera.moveStartTime = metaTime;
   camera.moveDuration = CAMERA_MOVE_DURATION_MSECS;
   camera.isMoving = !_rectsMatch(camera.currentRect, camera.targetRect);
   if (!camera.isMoving) {
@@ -138,9 +138,9 @@ export function syncCameraTargetToActiveRoom(camera:Camera, rooms:Room[], active
   }
 }
 
-export function updateCamera(camera:Camera, now:number) {
+export function updateCamera(camera:Camera, metaTime:number) {
   if (!camera.isMoving) return;
-  if (camera.moveDuration <= 0 || now >= camera.moveStartTime + camera.moveDuration) {
+  if (camera.moveDuration <= 0 || metaTime >= camera.moveStartTime + camera.moveDuration) {
     camera.currentRect = _duplicateRect(camera.targetRect);
     camera.startRect = _duplicateRect(camera.targetRect);
     camera.currentZoomAmount = camera.zoomAmount;
@@ -149,7 +149,7 @@ export function updateCamera(camera:Camera, now:number) {
     return;
   }
 
-  const amount = clamp((now - camera.moveStartTime) / camera.moveDuration, 0, 1);
+  const amount = clamp((metaTime - camera.moveStartTime) / camera.moveDuration, 0, 1);
   const easedAmount = _easeInOutCubic(amount);
   camera.currentRect = _interpolateRect(camera.startRect, camera.targetRect, easedAmount);
   camera.currentZoomAmount = _interpolate(camera.startZoomAmount, camera.zoomAmount, easedAmount);

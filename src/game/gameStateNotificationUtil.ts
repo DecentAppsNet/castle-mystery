@@ -8,15 +8,15 @@ import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion"
 import Discoveries from "./types/Discoveries";
 import GameState from "./types/GameState";
 
-const UPDATE_MINUTES_REAL_TIME_INTERVAL = 200;
+const UPDATE_MINUTES_META_TIME_INTERVAL = 200;
 
-export function callOnMinutesChangedAsNeeded(gameState:GameState, onMinutesChanged:(minutes:number) => void) {
+export function callOnMinutesChangedAsNeeded(gameState:GameState, onMinutesChanged:(minutes:number) => void,
+    metaTime:number) {
   const nextMinutes = msecsToMinutes(gameState.time);
-  const now = Date.now();
   const isSameMinutesValue = nextMinutes === gameState.lastMinutesChangedValue;
-  const isThrottleIntervalElapsed = now - gameState.lastMinutesChangedCallRealTime >= UPDATE_MINUTES_REAL_TIME_INTERVAL;
+  const isThrottleIntervalElapsed = metaTime - gameState.lastMinutesChangedCallMetaTime >= UPDATE_MINUTES_META_TIME_INTERVAL;
   if (isSameMinutesValue || !isThrottleIntervalElapsed) return;
-  gameState.lastMinutesChangedCallRealTime = now;
+  gameState.lastMinutesChangedCallMetaTime = metaTime;
   gameState.lastMinutesChangedValue = nextMinutes;
   onMinutesChanged(nextMinutes);
 }
