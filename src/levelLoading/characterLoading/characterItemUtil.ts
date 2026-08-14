@@ -1,6 +1,6 @@
 import Item from "@/game/types/Item";
 import { ErrorCollector } from "../errorCollection";
-import Character from "@/game/types/Character";
+import { MutableCharacter } from "@/game/types/Character";
 
 function _findItemById(items:Item[], itemId:string, errors:ErrorCollector, characterId:string, variableName:String):Item|null {
   const item = items.find(i => i.id === itemId) ?? null;
@@ -11,7 +11,7 @@ function _findItemById(items:Item[], itemId:string, errors:ErrorCollector, chara
   return item;
 }
 
-export function mergeCharacterItems(characters:Character[], items:Item[], errors:ErrorCollector):boolean {
+export function mergeCharacterItems(characters:MutableCharacter[], items:Item[], errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
   characters.forEach(character => {
     for(let itemI = 0; itemI < character.items.length; ++itemI) {

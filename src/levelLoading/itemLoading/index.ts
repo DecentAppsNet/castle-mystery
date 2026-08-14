@@ -3,7 +3,7 @@ import { ErrorCollector } from "../errorCollection";
 import { createNormalizedSectionEntryMap, parseBoolean, parseNumber } from "../levelFileSectionUtil";
 import { assertNonNullable } from "decent-portal";
 import SectionEntryMap from "../types/SectionEntryMap";
-import Item, { createDefaultItem } from "@/game/types/Item";
+import Item, { createDefaultItem, MutableItem } from "@/game/types/Item";
 import { getItemImageAssetUrl } from "@/game/imageUrlUtil";
 import { rand } from "@/common/randUtil";
 import { normalizeId } from "@/game/idUtil";
@@ -31,7 +31,7 @@ export function parseItem(itemText:string):Item|null {
   return _createStubItem(itemId);
 }
 
-function _parseItem(itemId:string, itemSectionEntry:SectionEntryWithLine, errors:ErrorCollector):Item {
+function _parseItem(itemId:string, itemSectionEntry:SectionEntryWithLine, errors:ErrorCollector):MutableItem {
   const authoredItemName = itemSectionEntry.name;
   const itemSection = itemSectionEntry.value;
   const nameValues = parseUniqueNameValueLines(itemSection, `item ${itemId}`, false, itemSectionEntry.lineNo);
@@ -67,7 +67,7 @@ function _parseItem(itemId:string, itemSectionEntry:SectionEntryWithLine, errors
   return item;
 }
 
-export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollector):Item[]|null {
+export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollector):MutableItem[]|null {
   const originalErrorCount = errors.count;
 
   if (!itemsSectionText) return [];

@@ -1,4 +1,4 @@
-import Item from "@/game/types/Item";
+import Item, { MutableItem } from "@/game/types/Item";
 import Room from "@/game/types/Room";
 import { ErrorCollector } from "../errorCollection";
 import { COLUMN_WIDTH } from "@/game/roomGridUtil";
@@ -7,7 +7,7 @@ import { getUniqueIdsFromLegendGrid, parseLegendGrid } from "./legendGridUtil";
 import Position from "@/game/types/Position";
 import LegendGrid from "./types/LegendGrid";
 
-function _findItemById(items:Item[], itemId:string):Item|null {
+function _findItemById(items:MutableItem[], itemId:string):MutableItem|null {
   return items.find(i => i.id === itemId) ?? null;
 }
 
@@ -31,7 +31,7 @@ function _areAllLegendIdsValidReferences(roomLegendGrid:LegendGrid, availableIte
   return errors.count <= originalErrorCount;
 }
 
-export function createItemsForRoom(room:Room, items:Item[], availableCharacterIds:string[], roomSectionText:string, errors:ErrorCollector):Item[] {
+export function createItemsForRoom(room:Room, items:MutableItem[], availableCharacterIds:string[], roomSectionText:string, errors:ErrorCollector):Item[] {
   const itemsResult:Item[] = [];
   const roomLegendGrid = parseLegendGrid(roomSectionText, errors, ['rooms', room.id]);
   if (!roomLegendGrid || !roomLegendGrid.entries.length) return [];

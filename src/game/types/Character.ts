@@ -8,7 +8,7 @@ export type BodyOrientation = 'standing' | 'sitting' | 'kneeling' | 'laying';
 export const VALID_BODY_ORIENTATIONS:BodyOrientation[] = ['standing', 'sitting', 'kneeling', 'laying'];
 export const DEFAULT_BODY_ORIENTATION:BodyOrientation = 'standing';
 
-type Character = {
+export type MutableCharacter = {
   readonly id:string,
   readonly title:string,
   readonly faceImageUrl:string|null,
@@ -22,6 +22,8 @@ type Character = {
   rightHandItem:Item|null,
   position:Position
 }
+
+type Character = Readonly<MutableCharacter>;
 
 export function createDefaultCharacter():Character {
   return {

@@ -29,15 +29,18 @@ export function duplicateItemsById(itemsById:ReadonlyMap<string, Item>):Map<stri
 }
 
 export function duplicateCharacterUsingItemIndex(from:Character, itemsById:ReadonlyMap<string, Item>):Character {
-	const character = duplicateCharacter(from);
-	character.items = from.items.map(item => _findIndexedItem(itemsById, item.id));
-	character.leftHandItem = from.leftHandItem ? _findIndexedItem(itemsById, from.leftHandItem.id) : null;
-	character.rightHandItem = from.rightHandItem ? _findIndexedItem(itemsById, from.rightHandItem.id) : null;
+	const character = {
+		...duplicateCharacter(from),
+	  items: from.items.map(item => _findIndexedItem(itemsById, item.id)),
+	  leftHandItem: from.leftHandItem ? _findIndexedItem(itemsById, from.leftHandItem.id) : null,
+		rightHandItem: from.rightHandItem ? _findIndexedItem(itemsById, from.rightHandItem.id) : null
+	};
 	return character;
 }
 
 export function duplicateRoomUsingItemIndex(from:Room, itemsById:ReadonlyMap<string, Item>):Room {
-	const room = duplicateRoom(from);
-	room.items = from.items.map(item => _findIndexedItem(itemsById, item.id));
-	return room;
+	return { 
+		...duplicateRoom(from),
+		items:from.items.map(item => _findIndexedItem(itemsById, item.id))
+	};
 }

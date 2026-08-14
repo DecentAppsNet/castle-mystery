@@ -1,6 +1,6 @@
 import Position, { duplicatePosition } from "./Position";
 
-type Item = {
+export type MutableItem = {
   readonly id:string,
   readonly title:string,
   readonly imageUrl:string|null,
@@ -10,7 +10,9 @@ type Item = {
   isVisible:boolean,
   position:Position,
   drawOffset:Position
-}
+};
+
+type Item = Readonly<MutableItem>;
 
 export function createDefaultItem():Item {
   return {

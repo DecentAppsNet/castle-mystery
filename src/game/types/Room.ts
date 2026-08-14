@@ -5,7 +5,7 @@ import StairPart, { duplicateStairPart } from "./StairPart"
 import Texture, { duplicateTexture } from "./Texture"
 import Waypoint, { duplicateWaypoint } from "./Waypoint"
 
-type Room = {
+export type MutableRoom = {
   readonly id:string,
   readonly title:string,
   readonly rect:Rect,
@@ -20,6 +20,8 @@ type Room = {
   readonly stairParts:StairPart[],
   readonly waypoints:Waypoint[]
 }
+
+type Room = Readonly<MutableRoom>;
 
 export function createDefaultRoom():Room {
   return {

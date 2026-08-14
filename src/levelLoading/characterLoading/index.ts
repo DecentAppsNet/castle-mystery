@@ -1,4 +1,4 @@
-import Character, { BodyOrientation, createDefaultCharacter, DEFAULT_BODY_ORIENTATION, DEFAULT_FACING_DIRECTION, FacingDirection, VALID_BODY_ORIENTATIONS, VALID_FACING_DIRECTIONS } from "@/game/types/Character";
+import Character, { BodyOrientation, createDefaultCharacter, DEFAULT_BODY_ORIENTATION, DEFAULT_FACING_DIRECTION, FacingDirection, MutableCharacter, VALID_BODY_ORIENTATIONS, VALID_FACING_DIRECTIONS } from "@/game/types/Character";
 import { ErrorCollector } from "../errorCollection";
 import SectionEntryMap from "../types/SectionEntryMap";
 import { createNormalizedSectionEntryMap, describeAllowedValues, getSectionIdsFromSectionText, parseBoolean } from "../levelFileSectionUtil";
@@ -16,7 +16,7 @@ import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
 
 type PartiallyLoadedCharacters = {
-  characters:Character[],
+  characters:MutableCharacter[],
   initiallyKnownTitleCharacterIds:ReadonlySet<string>
 }
 
@@ -50,7 +50,7 @@ function _parseCharacter(characterId:string, position:Position, characterSection
   const items = parseItems(nameValues.items ?? '');
   const leftHandItem = parseItem(nameValues.leftHand ?? '');
   const rightHandItem = parseItem(nameValues.rightHand ?? '');
-  const character:Character = {
+  const character:MutableCharacter = {
     ...createDefaultCharacter(),
     id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
     bodyOrientation, items, leftHandItem, rightHandItem, position
@@ -86,7 +86,7 @@ export function loadCharactersPartially(charactersSectionText:string, roomsSecti
   return errors.count <= originalErrorCount ? { characters, initiallyKnownTitleCharacterIds } : null;
 }
 
-export function addCharactersToLevel(characters:Character[], items:Item[], level:MutableLevel, errors:ErrorCollector):boolean {
+export function addCharactersToLevel(characters:MutableCharacter[], items:Item[], level:MutableLevel, errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
   assertNonNullable(level.activeCharacterId);
 

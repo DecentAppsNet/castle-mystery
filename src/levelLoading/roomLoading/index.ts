@@ -1,6 +1,6 @@
-import Room from '@/game/types/Room';
+import Room, { MutableRoom } from '@/game/types/Room';
 import { ErrorCollector } from '../errorCollection';
-import Item from '@/game/types/Item';
+import { MutableItem } from '@/game/types/Item';
 import { MutableLevel } from '@/game/types/Level';
 import { applyRoomMetaDataFromSections, createRoomsFromMapSection } from './roomLayoutUtil';
 import { addExitsToRooms } from './roomExitUtil';
@@ -17,13 +17,13 @@ import { assertNonNullable } from 'decent-portal';
 import { getSectionIdsFromSectionText } from '../levelFileSectionUtil';
 
 type PartiallyLoadedRooms = {
-  rooms:Room[],
+  rooms:MutableRoom[],
   initiallyObscuredRoomIds:ReadonlySet<string>
 }
 
 // Returns rooms with everything loaded from level file except dependencies, e.g. items. The exception is room styles, which are applied,
 // because nothing else uses room styles besides rooms.
-export function loadRoomsPartially(sections:LevelFileSections, availableItems:Item[], errors:ErrorCollector):PartiallyLoadedRooms|null {
+export function loadRoomsPartially(sections:LevelFileSections, availableItems:MutableItem[], errors:ErrorCollector):PartiallyLoadedRooms|null {
   const originalErrorCount = errors.count;
 
   const availableCharacterIds = getSectionIdsFromSectionText(sections.characters.text, 2, 'characters', errors);

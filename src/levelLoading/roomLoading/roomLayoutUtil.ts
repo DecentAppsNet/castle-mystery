@@ -10,7 +10,7 @@ import Room, { createDefaultRoom } from "@/game/types/Room";
 import Texture from "@/game/types/Texture";
 import { parseRoomTexture } from "./parseTextureUtil";
 import LegendGrid from "./types/LegendGrid";
-import Item from "@/game/types/Item";
+import { MutableItem } from "@/game/types/Item";
 import { createItemsForRoom } from "./roomItemUtil";
 
 type RoomStyle = Readonly<{
@@ -57,7 +57,7 @@ function _resolveRoomTextureOverride(roomNameValues:Record<string, string>,
 }
 
 export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStylesSectionText:string, rooms:Room[], 
-      availableItems:Item[], availableCharacterIds:string[], errors:ErrorCollector):ReadonlySet<string>|null {
+      availableItems:MutableItem[], availableCharacterIds:string[], errors:ErrorCollector):ReadonlySet<string>|null {
   const originalErrorCount = errors.count;
   const roomSectionsById = createNormalizedSectionEntryMap(roomsSectionText, 2, 'rooms', errors);
   const roomStyleMetadataById = _createRoomStyleById(roomStylesSectionText, errors);
