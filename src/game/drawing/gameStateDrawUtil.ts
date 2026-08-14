@@ -74,7 +74,7 @@ function _drawGround(gameState:GameState, context:CanvasRenderingContext2D) {
 function _findHoveredItem(rooms:Room[], gameState:GameState):{room:Room, item:Item}|null {
   if (!gameState.hoveredItemId) return null;
   const candidateRooms = gameState.isLevelComplete
-    ? rooms.filter(r => r.isDiscovered)
+    ? rooms.filter(room => gameState.discoveryState.discoveredRoomIds.has(room.id))
     : rooms;
   for (const room of candidateRooms) {
     const hoveredItem = room.items.find(item => item.id === gameState.hoveredItemId) || null;
@@ -175,14 +175,14 @@ function _createRoomShellCanvas(room:Room, gameState:GameState, destWidth:number
   isActive:boolean):RoomShellVariantImage {
   return _createRoomVisualCanvas(room, gameState, destWidth, destHeight, (scalingFactors, context) => {
     drawCacheableRoomShell(room, gameState.baseRooms, isActive, gameState.groundFloorY,
-      scalingFactors, context, false, true, gameState.imageSet, false, false);
+      scalingFactors, context, false, true, gameState.imageSet, false, false, false);
   });
 }
 
 function _createRoomSilhouetteCanvas(room:Room, gameState:GameState, destWidth:number, destHeight:number):RoomShellVariantImage {
   return _createRoomVisualCanvas(room, gameState, destWidth, destHeight, (scalingFactors, context) => {
     drawCacheableRoomShell(room, gameState.baseRooms, false, gameState.groundFloorY,
-      scalingFactors, context, false, true, null, true, false);
+      scalingFactors, context, false, true, null, true, false, false);
     context.globalCompositeOperation = 'source-in';
     context.fillStyle = COLOR_DARK_GRAY;
     context.fillRect(0, 0, context.canvas.width, context.canvas.height);
@@ -221,7 +221,7 @@ function _ensureRoomShellCaches(gameState:GameState, context:CanvasRenderingCont
 
 function _drawCachedRoomVariant(cachedVariant:RoomShellVariantImage|null, room:Room, gameState:GameState,
   context:CanvasRenderingContext2D, includeUndiscovered:boolean = false):boolean {
-  if (!includeUndiscovered && !room.isDiscovered) return false;
+  if (!includeUndiscovered && !gameState.discoveryState.discoveredRoomIds.has(room.id)) return false;
   if (!cachedVariant?.image || cachedVariant.width <= 0 || cachedVariant.height <= 0) return false;
 
   const shellBounds = _calcProjectedRoomShellBounds(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors);
@@ -254,7 +254,7 @@ function _drawCachedRoomRoof(room:Room, gameState:GameState, context:CanvasRende
 
 function _drawRoomSilhouettes(gameState:GameState, context:CanvasRenderingContext2D) {
   for (const room of gameState.baseRooms) {
-    if (room.isDiscovered) continue;
+    if (gameState.discoveryState.discoveredRoomIds.has(room.id)) continue;
     const roomShellVariants = gameState.roomShellCacheByRoomId.get(room.id) || null;
     _drawCachedRoomVariant(roomShellVariants?.silhouette || null, room, gameState, context, true);
   }
@@ -287,7 +287,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   const { characters, rooms } = gameState.timelineSnapshot;
   const activeCharacter = findActiveCharacter(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  const canShowHoverPopovers = gameState.isLevelComplete || !activeRoom?.isObscured;
+  const canShowHoverPopovers = gameState.isLevelComplete
+    || !activeRoom || !gameState.discoveryState.obscuredRoomIds.has(activeRoom.id);
   const hoveredCharacterHighlightId = _findHoveredCharacterHighlightId(gameState, canShowHoverPopovers);
   const hoveredItemHighlightId = _findHoveredItemHighlightId(rooms, gameState, canShowHoverPopovers);
   const drawnExitIds = new Set<string>();
@@ -302,24 +303,29 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
     const drewCachedRoomShell = _drawCachedRoomShell(room, gameState, isActive, context);
     if (drewCachedRoomShell) {
-      if (room.isObscured && !gameState.isLevelComplete && room.isDiscovered) {
+      if (gameState.discoveryState.obscuredRoomIds.has(room.id) && !gameState.isLevelComplete
+        && gameState.discoveryState.discoveredRoomIds.has(room.id)) {
         drawObscuredRoom(room, gameState.scalingFactors, context, metaTime);
       }
       drawRoomShellExits(room, rooms, characters, drawnExitIds,
-        gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet);
+        gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet,
+        gameState.discoveryState.discoveredRoomIds.has(room.id));
     } else {
       drawCacheableRoomShell(room, rooms, isActive, gameState.groundFloorY, gameState.scalingFactors,
-        context, gameState.isLevelComplete, false, gameState.imageSet, false, false);
-      if (room.isObscured && !gameState.isLevelComplete && room.isDiscovered) {
+        context, gameState.isLevelComplete, false, gameState.imageSet, false,
+        gameState.discoveryState.discoveredRoomIds.has(room.id), gameState.discoveryState.obscuredRoomIds.has(room.id));
+      if (gameState.discoveryState.obscuredRoomIds.has(room.id) && !gameState.isLevelComplete
+        && gameState.discoveryState.discoveredRoomIds.has(room.id)) {
         drawObscuredRoom(room, gameState.scalingFactors, context, metaTime);
       }
       drawRoomShellExits(room, rooms, characters, drawnExitIds,
-        gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet);
+        gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet,
+        gameState.discoveryState.discoveredRoomIds.has(room.id));
     }
-    if (!room.isDiscovered) continue;
+    if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
       hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,
-      gameState.time, metaTime, gameState.imageSet, gameState.isLevelComplete, layoutPlanner);
+      gameState.time, metaTime, gameState.imageSet, gameState.discoveryState, gameState.isLevelComplete, layoutPlanner);
     if (!_drawCachedRoomRoof(room, gameState, context)) {
       drawRoomRoofs(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors, context);
     }
@@ -340,7 +346,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
       markCharacterDiscovered(gameState, hoveredCharacter);
       if (hoveredCharacter.rightHandItem) markItemDiscovered(gameState, hoveredCharacter.rightHandItem);
       if (hoveredCharacter.leftHandItem) markItemDiscovered(gameState, hoveredCharacter.leftHandItem);
-      drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time, gameState.imageSet, layoutPlanner, hoveredCharacterRoom);
+      drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time, gameState.imageSet,
+        gameState.discoveryState.titleKnownCharacterIds.has(hoveredCharacter.id), layoutPlanner, hoveredCharacterRoom);
     }
   } else if (canShowHoverPopovers && gameState.hoveredExitKey) {
     const hoveredExit = _findHoveredExit(gameState);
@@ -349,7 +356,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
       const room2 = findRoom(gameState.baseRooms, hoveredExit.room2Id);
       assertNonNullable(room1, `room ${hoveredExit.room1Id} not found`);
       assertNonNullable(room2, `room ${hoveredExit.room2Id} not found`);
-      drawExitPopover(hoveredExit, room1, room2, gameState.baseItemsById, gameState.scalingFactors, context, layoutPlanner);
+      drawExitPopover(hoveredExit, room1, room2, gameState.baseItemsById, gameState.discoveryState.discoveredRoomIds,
+        gameState.scalingFactors, context, layoutPlanner);
     }
   }
   _drawReservedRects(layoutPlanner, context);

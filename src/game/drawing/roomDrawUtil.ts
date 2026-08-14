@@ -54,6 +54,7 @@ import { findRoom } from "../roomUtil";
 import { getCharacterCanvasRect } from "./characterDrawUtil";
 import { getItemCanvasRectInRoom } from "./itemDrawUtil";
 import { calcUndiscoveredMarkerHeightPixels, drawUndiscoveredMarker } from "./undiscoveredMarkerDrawUtil";
+import DiscoveryState from "../types/DiscoveryState";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -142,9 +143,9 @@ function _calcStairPartSortX(stairPart:StairPart):number {
 export function drawCacheableRoomShell(room:Room, rooms:ReadonlyArray<Room>, isActive:boolean,
   groundFloorY:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   showFullContents:boolean = false, includeUndiscovered:boolean = false, imageSet:ImageSet|null = null,
-  includeRoof:boolean = true, renderObscuredState:boolean = true) {
-  if (!includeUndiscovered && !room.isDiscovered) return;
-  const isRoomObscured = renderObscuredState && room.isObscured && !showFullContents;
+  includeRoof:boolean = true, isRoomDiscovered:boolean = false, isRoomObscured:boolean = false) {
+  if (!includeUndiscovered && !isRoomDiscovered) return;
+  isRoomObscured = isRoomObscured && !showFullContents;
   const scaledTopLeft = gameToCanvasPosition(room.rect.x, room.rect.y, scalingFactors);
   const scaledBottomRight = gameToCanvasPosition(room.rect.x + room.rect.width, room.rect.y + room.rect.height, scalingFactors);
   const scaledWidth = scaledBottomRight[0] - scaledTopLeft[0];
@@ -172,8 +173,9 @@ export function drawCacheableRoomShell(room:Room, rooms:ReadonlyArray<Room>, isA
 
 export function drawRoomShellExits(room:Room, rooms:ReadonlyArray<Room>, characters:Character[], drawnExitIds:Set<string>,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, showFullContents:boolean = false,
-  isActive:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null, imageSet:ImageSet|null = null) {
-  if (!room.isDiscovered) return;
+  isActive:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null, imageSet:ImageSet|null = null,
+  isRoomDiscovered:boolean = false) {
+  if (!isRoomDiscovered) return;
   room.exits.forEach(exit => _drawRoomExit(room, exit, characters, showFullContents, rooms, scalingFactors, context, drawnExitIds, isActive, imageSet, layoutPlanner));
 }
 
@@ -226,7 +228,7 @@ function _getRoomTitleCanvasRect(room:Room, gameState:GameState, context:CanvasR
 
 export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, context:CanvasRenderingContext2D,
   layoutPlanner:CanvasLayoutPlanner|null = null) {
-  if (!room.isDiscovered) return;
+  if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) return;
   if (room.title.length === 0) return;
 
   if (layoutPlanner) layoutPlanner.reserveRect(_getRoomTitleCanvasRect(room, gameState, context));
@@ -260,7 +262,8 @@ export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, 
   });
 }
 
-export function createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[], includeUndiscoveredItems:boolean):RoomDrawableContent[] {
+export function createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[],
+  discoveredItemIds:ReadonlySet<string>, includeUndiscoveredItems:boolean):RoomDrawableContent[] {
   const stairContents = room.stairParts.map((stairPart, stairIndex) => ({
     type:'stair' as const,
     depth:_calcStairPartSortDepth(stairPart),
@@ -280,7 +283,7 @@ export function createDrawableContents(room:Room, charactersInRoom:Character[], 
         character
       };
     }),
-    ...findVisibleRoomItemsInDrawOrder(room, effects, includeUndiscoveredItems)
+    ...findVisibleRoomItemsInDrawOrder(room, effects, discoveredItemIds, includeUndiscoveredItems)
       .map(item => {
         const displayPosition = findItemDisplayPosition(item, room);
         return {
@@ -300,9 +303,9 @@ export function createDrawableContents(room:Room, charactersInRoom:Character[], 
 function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharacter:Character|null, effects:Effect[],
   hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
-  stairTextureLightness:{ top:number, side:number, front:number },
+  stairTextureLightness:{ top:number, side:number, front:number }, discoveryState:DiscoveryState,
   layoutPlanner:CanvasLayoutPlanner|null = null) {
-  const contents = createDrawableContents(room, charactersInRoom, effects, includeUndiscoveredItems);
+  const contents = createDrawableContents(room, charactersInRoom, effects, discoveryState.discoveredItemIds, includeUndiscoveredItems);
   contents.forEach(content => {
     switch(content.type) {
       case 'stair':
@@ -322,11 +325,13 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
     }
   });
   contents.forEach(content => {
-    if (content.type === 'item' && isItemInteractive(content.item) && !content.item.isDiscovered) {
+    if (content.type === 'item' && isItemInteractive(content.item) && !discoveryState.discoveredItemIds.has(content.item.id)) {
       const rect = getItemCanvasRectInRoom(room, content.item, scalingFactors, imageSet);
       drawUndiscoveredMarker(rect.x + rect.width / 2, rect.y + rect.height / 2 + calcUndiscoveredMarkerHeightPixels(scalingFactors) / 2, content.item.randomSalt, scalingFactors, context, metaTime);
     }
-    if (content.type === 'character' && isCharacterInteractive(content.character) && (!content.character.isDiscovered || hasDrawnUndiscoveredHeldItem(content.character, effects))) {
+    if (content.type === 'character' && isCharacterInteractive(content.character)
+      && (!discoveryState.discoveredCharacterIds.has(content.character.id)
+        || hasDrawnUndiscoveredHeldItem(content.character, effects, discoveryState.discoveredItemIds))) {
       const { centerX, centerY } = getCharacterSpeechAnchor(content.character, scalingFactors, gameTime, room);
       drawUndiscoveredMarker(centerX, centerY, content.character.randomSalt, scalingFactors, context, metaTime);
     }
@@ -341,9 +346,9 @@ function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:C
 export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
   effects:Effect[], hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet,
-  showFullContents:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null) {
-  if (!room.isDiscovered) return;
-  const isRoomObscured = room.isObscured && !showFullContents;
+  discoveryState:DiscoveryState, showFullContents:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null) {
+  if (!discoveryState.discoveredRoomIds.has(room.id)) return;
+  const isRoomObscured = discoveryState.obscuredRoomIds.has(room.id) && !showFullContents;
   const canDrawEffect = showFullContents || isActive;
   if (isRoomObscured) {
     if (isActive && activeCharacter) drawObscuredActiveCharacter(room, activeCharacter, scalingFactors, context, imageSet);
@@ -354,9 +359,9 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
     : { top:INACTIVE_FLOOR_TEXTURE_LIGHTNESS, side:INACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS, front:INACTIVE_BACK_WALL_TEXTURE_LIGHTNESS };
   if (showFullContents || (isActive && activeCharacter)) {
     _drawRoomContents(room, charactersInRoom, activeCharacter, effects, hoveredCharacterId, hoveredItemId,
-      scalingFactors, context, gameTime, metaTime, imageSet, true, stairTextureLightness, layoutPlanner);
+      scalingFactors, context, gameTime, metaTime, imageSet, true, stairTextureLightness, discoveryState, layoutPlanner);
   } else {
     _drawRoomStairsOnly(room, scalingFactors, context, imageSet, stairTextureLightness);
   }
-  processRoomEffects(room, effects, context, scalingFactors, canDrawEffect, imageSet, metaTime);
+  processRoomEffects(room, effects, context, scalingFactors, canDrawEffect, isRoomObscured, imageSet, metaTime);
 }

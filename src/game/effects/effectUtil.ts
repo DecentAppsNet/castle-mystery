@@ -18,11 +18,11 @@ export function processLevelEffects(effects:Effect[], context:CanvasRenderingCon
 }
 
 export function processRoomEffects(room:Room, effects:Effect[], context:CanvasRenderingContext2D,
-  scalingFactors:ScalingFactors, canDrawEffect:boolean, imageSet:ImageSet, metaTime:number) {
+  scalingFactors:ScalingFactors, canDrawEffect:boolean, isRoomObscured:boolean, imageSet:ImageSet, metaTime:number) {
   for (let i = effects.length - 1; i >= 0; --i) {
     const effect = effects[i];
     if (!effect.onProcessRoomEffect || !effect.room || effect.room.id !== room.id) continue;
-    if (room.isObscured) {
+    if (isRoomObscured) {
       effects.splice(i, 1);
       continue;
     }

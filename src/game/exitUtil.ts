@@ -19,8 +19,8 @@ function _hasNamedRoomTitle(room:Room):boolean {
   return room.title.trim().length > 0;
 }
 
-function _describeRoomReference(exit:RoomExit, room:Room):string {
-  return room.isDiscovered && _hasNamedRoomTitle(room)
+function _describeRoomReference(exit:RoomExit, room:Room, discoveredRoomIds:ReadonlySet<string>):string {
+  return discoveredRoomIds.has(room.id) && _hasNamedRoomTitle(room)
     ? room.title
     : _findUndiscoveredRoomSideLabel(exit, room);
 }
@@ -43,9 +43,10 @@ function _formatLockabilitySuffix(lockableWith:string|null, itemsById:ReadonlyMa
   return unlockItem ? ` with ${unlockItem}` : '';
 }
 
-function _describeLockedLockableDoor(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>):string {
-  const room1Reference = _describeRoomReference(exit, room1);
-  const room2Reference = _describeRoomReference(exit, room2);
+function _describeLockedLockableDoor(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>,
+  discoveredRoomIds:ReadonlySet<string>):string {
+  const room1Reference = _describeRoomReference(exit, room1, discoveredRoomIds);
+  const room2Reference = _describeRoomReference(exit, room2, discoveredRoomIds);
   if (_isLockableFromRoom1(exit) && _isLockableFromRoom2(exit)) {
     return `This locked door can be unlocked from either side${_formatLockabilitySuffix(exit.lockableFromRoom1With, itemsById)}.`;
   }
@@ -54,9 +55,10 @@ function _describeLockedLockableDoor(exit:RoomExit, room1:Room, room2:Room, item
   return `This locked door can't be unlocked. Weird.`;
 }
 
-function _describeUnlockedLockableDoor(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>):string {
-  const room1Reference = _describeRoomReference(exit, room1);
-  const room2Reference = _describeRoomReference(exit, room2);
+function _describeUnlockedLockableDoor(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>,
+  discoveredRoomIds:ReadonlySet<string>):string {
+  const room1Reference = _describeRoomReference(exit, room1, discoveredRoomIds);
+  const room2Reference = _describeRoomReference(exit, room2, discoveredRoomIds);
   if (_isLockableFromRoom1(exit) && _isLockableFromRoom2(exit)) {
     return `This unlocked door can be locked from either side${_formatLockabilitySuffix(exit.lockableFromRoom1With, itemsById)}.`;
   }
@@ -65,7 +67,8 @@ function _describeUnlockedLockableDoor(exit:RoomExit, room1:Room, room2:Room, it
   return `This unlocked door can't be locked. Weird.`;
 }
 
-export function describeExit(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>):string {
+export function describeExit(exit:RoomExit, room1:Room, room2:Room, itemsById:ReadonlyMap<string, Item>,
+  discoveredRoomIds:ReadonlySet<string>):string {
   switch (exit.exitType) {
     case ExitType.doorway:
       return 'This doorway always remains open.';
@@ -73,7 +76,7 @@ export function describeExit(exit:RoomExit, room1:Room, room2:Room, itemsById:Re
       return "This door can't be locked but gives some privacy.";
     case ExitType.lockableDoor:
       return exit.exitStatus === ExitStatus.locked
-        ? _describeLockedLockableDoor(exit, room1, room2, itemsById)
-        : _describeUnlockedLockableDoor(exit, room1, room2, itemsById);
+        ? _describeLockedLockableDoor(exit, room1, room2, itemsById, discoveredRoomIds)
+        : _describeUnlockedLockableDoor(exit, room1, room2, itemsById, discoveredRoomIds);
   }
 }

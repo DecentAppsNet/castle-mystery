@@ -27,7 +27,8 @@ function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }
 }
 
 function _findHoveredRoomContent(gameState:GameState, room:Room, characters:Character[], x:number, y:number) {
-  const contents = createDrawableContents(room, findCharactersInRoom(room, characters), gameState.activeEffects, true);
+  const contents = createDrawableContents(room, findCharactersInRoom(room, characters), gameState.activeEffects,
+    gameState.discoveryState.discoveredItemIds, true);
   for (let i = contents.length - 1; i >= 0; --i) {
     const content = contents[i];
     if (content.type === 'item' && isPositionInOrOnRect(x, y, getItemHoverRect(room, content.item, gameState.scalingFactors, gameState.imageSet))) return content;
@@ -57,13 +58,14 @@ function _findExitAtPosition(room:Room, x:number, y:number, gameState:GameState)
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
   const activeCharacter = findActiveCharacter(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  if (!activeRoom || (!gameState.isLevelComplete && activeRoom.isObscured)) return null;
+  if (!activeRoom || (!gameState.isLevelComplete && gameState.discoveryState.obscuredRoomIds.has(activeRoom.id))) return null;
   return activeRoom;
 }
 
 function _findVisibleHoveredRoom(gameState:GameState, x:number, y:number):Room|null {
   const hoveredRoom = findRoomAtPosition(gameState.baseRooms, x, y);
-  if (!hoveredRoom?.isDiscovered || (!gameState.isLevelComplete && hoveredRoom.isObscured)) return null;
+  if (!hoveredRoom || !gameState.discoveryState.discoveredRoomIds.has(hoveredRoom.id)
+    || (!gameState.isLevelComplete && gameState.discoveryState.obscuredRoomIds.has(hoveredRoom.id))) return null;
   return hoveredRoom;
 }
 
@@ -84,7 +86,7 @@ function _findInteractiveCharacterAtPosition(gameState:GameState, characters:Cha
   if (!interactionRoom && !gameState.isLevelComplete) {
     const activeCharacter = findActiveCharacter(gameState);
     const activeRoom = activeCharacter ? findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-    if (activeRoom?.isObscured) return null;
+    if (activeRoom && gameState.discoveryState.obscuredRoomIds.has(activeRoom.id)) return null;
   }
   const hoveredContent = interactionRoom ? _findHoveredRoomContent(gameState, interactionRoom, characters, x, y) : null;
   return hoveredContent?.type === 'character' ? hoveredContent.character : null;

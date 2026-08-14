@@ -375,9 +375,9 @@ export function drawCharacter(character:Character, scalingFactors:ScalingFactors
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,
-  imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null, room:Room|null = null) {
+  imageSet:ImageSet, isTitleKnown:boolean, layoutPlanner:CanvasLayoutPlanner|null = null, room:Room|null = null) {
   if (!isCharacterInteractive(character)) return;
-  const title = character.isTitleKnown ? _getCharacterDisplayName(character) : "";
+  const title = isTitleKnown ? _getCharacterDisplayName(character) : "";
   drawPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time, imageSet, room), title,
     bodyEntries:_createCharacterPopoverBodyEntries(character), scalingFactors, context, imageSet, layoutPlanner });
 }

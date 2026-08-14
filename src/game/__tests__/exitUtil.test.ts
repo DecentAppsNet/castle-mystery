@@ -50,14 +50,16 @@ describe('exitUtil', () => {
         isDiscovered:false
       }]]);
 
-      expect(describeExit(_createExit('red key'), room1, room2, itemsById)).toBe('This locked door can be unlocked from Bedroom with Iron Key.');
+      expect(describeExit(_createExit('red key'), room1, room2, itemsById, new Set(['bedroom', 'hallway'])))
+        .toBe('This locked door can be unlocked from Bedroom with Iron Key.');
     });
 
     it('keeps generic key wording when no specific item is required', () => {
       const room1 = _createRoom('bedroom', 'Bedroom');
       const room2 = _createRoom('hallway', 'Hallway');
 
-      expect(describeExit(_createExit(LOCKABLE_WITHOUT_INV_CHECK), room1, room2, new Map())).toBe('This locked door can be unlocked from Bedroom.');
+      expect(describeExit(_createExit(LOCKABLE_WITHOUT_INV_CHECK), room1, room2, new Map(), new Set(['bedroom', 'hallway'])))
+        .toBe('This locked door can be unlocked from Bedroom.');
     });
 
     it('falls back to side-based wording when the discovered room title is empty', () => {
@@ -70,7 +72,8 @@ describe('exitUtil', () => {
         rect:{ x:5, y:0, width:5, height:5 }
       };
 
-      expect(describeExit(_createExit(LOCKABLE_WITHOUT_INV_CHECK), room1, room2, new Map())).toBe('This locked door can be unlocked from the left side.');
+      expect(describeExit(_createExit(LOCKABLE_WITHOUT_INV_CHECK), room1, room2, new Map(), new Set(['bedroom', 'hallway'])))
+        .toBe('This locked door can be unlocked from the left side.');
     });
   });
 });

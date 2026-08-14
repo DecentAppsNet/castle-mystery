@@ -10,6 +10,7 @@ import Conclusion from "../conclusions/types/Conclusion";
 import RoomShellCache from "./RoomShellCache";
 import Timeline from "./Timeline";
 import TimelineSnapshot from "./TimelineSnapshot";
+import DiscoveryState from "./DiscoveryState";
 
 // Unless otherwise noted, "readonly" is intended deeply despite shallow Typescript checks.
 type GameState = {
@@ -18,8 +19,7 @@ type GameState = {
   camera:Camera,
   conclusions:Conclusion[],
   conclusionsRevision:number,
-  discoveredCharacterIds:string[],
-  discoveredItemIds:string[],
+  readonly discoveryState:DiscoveryState,
   hoveredCharacterId:string|null,
   hoveredExitKey:string|null,
   hoveredItemId:string|null,
@@ -33,12 +33,9 @@ type GameState = {
   lastNotifiedConclusionsRevision:number,
   lastNotifiedDiscoveriesKey:string
   readonly backgroundImageUrl:string|null,
-  readonly baseCharacters:Character[], // Individual elements mutated with updates to discovery status.
-  readonly baseItemsById:Map<string, Item>, // Individual elements mutated with updates to discovery status.
-  readonly baseRooms:Room[], // Individual elements mutated with updates to discovery status.
-  readonly discoverableCharacterCount:number,
-  readonly discoverableItemCount:number,
-  readonly discoverableRoomCount:number,
+  readonly baseCharacters:Character[],
+  readonly baseItemsById:Map<string, Item>,
+  readonly baseRooms:Room[],
   readonly duration:number,
   readonly groundFloorY:number,
   readonly imageSet:ImageSet,

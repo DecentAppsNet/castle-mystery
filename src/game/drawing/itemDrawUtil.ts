@@ -289,9 +289,9 @@ export function drawItemAtCanvasPositionInRoom(item:Item, room:Room, x:number, y
 }
 
 // Filters and sorts the room's visible items into draw order.
-function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
+function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
   return room.items
-    .filter(item => item.isVisible && (includeUndiscovered || item.isDiscovered) && !_isItemSuppressedByEffect(item, effects))
+    .filter(item => item.isVisible && (includeUndiscovered || discoveredItemIds.has(item.id)) && !_isItemSuppressedByEffect(item, effects))
     .sort(compareItemsForDrawOrder);
 }
 
@@ -301,8 +301,8 @@ function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
 }
 
 // Exposes the room's visible items in the same order they should be drawn.
-export function findVisibleRoomItemsInDrawOrder(room:Room, effects:Effect[], includeUndiscovered:boolean):Item[] {
-  return _getVisibleItemsInDrawOrder(room, effects, includeUndiscovered);
+export function findVisibleRoomItemsInDrawOrder(room:Room, effects:Effect[], discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
+  return _getVisibleItemsInDrawOrder(room, effects, discoveredItemIds, includeUndiscovered);
 }
 
 // Draws the item popover anchored to the item's current image rectangle.

@@ -1,7 +1,7 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assert, assertNonNullable, botch } from "decent-portal";
+import { assert, botch } from "decent-portal";
 import GameState from "./types/GameState";
 import Room from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
@@ -53,13 +53,7 @@ function _setActiveRoomDiscovered(gameState:GameState) {
   const activeCharacter = findActiveCharacter(gameState);
   if (activeCharacter) {
     const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
-    if (activeRoom) {
-      if (!activeRoom.isDiscovered) {
-        const snapshotRoom = gameState.timelineSnapshot.rooms.find(r => r.id === activeRoom.id);
-        assertNonNullable(snapshotRoom);
-        snapshotRoom.isDiscovered = activeRoom.isDiscovered = true;
-      }
-    }
+    if (activeRoom) gameState.discoveryState.discoveredRoomIds.add(activeRoom.id);
   }
 }
 
@@ -97,7 +91,7 @@ function _pauseGameState(gameState:GameState, metaTime:number) {
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
   const activeCharacter = findActiveCharacter(gameState);
   const activeRoom = activeCharacter ? findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  if (!activeRoom || (!gameState.isLevelComplete && activeRoom.isObscured)) return null;
+  if (!activeRoom || (!gameState.isLevelComplete && gameState.discoveryState.obscuredRoomIds.has(activeRoom.id))) return null;
   return activeRoom;
 }
 
@@ -220,11 +214,16 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
     conclusions:level.conclusions.map(duplicateConclusion),
     conclusionsRevision:0,
-    discoverableCharacterCount:level.discoverableCharacterCount,
-    discoverableItemCount:level.discoverableItemCount,
-    discoverableRoomCount:level.discoverableRoomCount,
-    discoveredCharacterIds:[],
-    discoveredItemIds:[],
+    discoveryState:{
+      discoveredCharacterIds:new Set<string>(),
+      discoveredItemIds:new Set<string>(),
+      discoveredRoomIds:new Set<string>(),
+      titleKnownCharacterIds:new Set(level.characters.filter(character => character.isTitleKnown).map(character => character.id)),
+      obscuredRoomIds:new Set(level.rooms.filter(room => room.isObscured).map(room => room.id)),
+      discoverableCharacterCount:level.discoverableCharacterCount,
+      discoverableItemCount:level.discoverableItemCount,
+      discoverableRoomCount:level.discoverableRoomCount
+    },
     duration,
     groundFloorY:level.groundFloorY,
     hoveredCharacterId:null,

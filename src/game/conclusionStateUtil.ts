@@ -38,27 +38,19 @@ function _syncLevelCompleteState(gameState:GameState):boolean {
 }
 
 function _applyLevelCompleteReveal(gameState:GameState) {
+  const { discoveryState } = gameState;
   gameState.baseRooms.forEach(room => {
-    room.isDiscovered = true;
-    room.isObscured = false;
-  });
-  gameState.baseRooms.forEach(room => {
-    room.isDiscovered = true;
-    room.isObscured = false;
+    discoveryState.discoveredRoomIds.add(room.id);
+    discoveryState.obscuredRoomIds.delete(room.id);
   });
 
-  gameState.discoveredCharacterIds = gameState.baseCharacters
+  gameState.baseCharacters
     .filter(isCharacterInteractive)
-    .map(character => character.id);
-  gameState.baseCharacters.forEach(character => {
-    if (isCharacterInteractive(character)) character.isDiscovered = true;
-  });
+    .forEach(character => discoveryState.discoveredCharacterIds.add(character.id));
 
-  const discoveredItemIds = new Set<string>();
-  const markItemDiscovered = (item:{ id:string, description:string, isDiscovered:boolean }) => {
+  const markItemDiscovered = (item:{ id:string, description:string }) => {
     if (!isItemInteractive(item)) return;
-    item.isDiscovered = true;
-    discoveredItemIds.add(item.id);
+    discoveryState.discoveredItemIds.add(item.id);
   };
   const discoverableInitialItems = new Set([
     ...gameState.baseRooms.flatMap(room => room.items),
@@ -66,16 +58,6 @@ function _applyLevelCompleteReveal(gameState:GameState) {
   ]);
 
   discoverableInitialItems.forEach(markItemDiscovered);
-  gameState.baseItemsById.forEach(item => {
-    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
-  });
-  gameState.baseRooms.forEach(room => room.items.forEach(item => {
-    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
-  }));
-  gameState.baseCharacters.forEach(character => getOwnedItems(character).forEach(item => {
-    if (discoveredItemIds.has(item.id)) item.isDiscovered = true;
-  }));
-  gameState.discoveredItemIds = [...discoveredItemIds];
 }
 
 function _applyCompletedConclusionRoomReveals(gameState:GameState) {
@@ -83,12 +65,7 @@ function _applyCompletedConclusionRoomReveals(gameState:GameState) {
     .filter(conclusion => conclusion.isComplete)
     .flatMap(conclusion => conclusion.revealRoomIds));
   if (!revealedRoomIds.size) return;
-  gameState.baseRooms.forEach(room => {
-    if (revealedRoomIds.has(room.id)) room.isObscured = false;
-  });
-  gameState.baseRooms.forEach(room => {
-    if (revealedRoomIds.has(room.id)) room.isObscured = false;
-  });
+  revealedRoomIds.forEach(roomId => gameState.discoveryState.obscuredRoomIds.delete(roomId));
 }
 
 export function syncConclusionUnlocks(gameState:GameState):boolean {
@@ -111,9 +88,7 @@ export function updateGameStateForChangeConclusions(gameState:GameState, event:C
   _applyCompletedConclusionRoomReveals(gameState);
   const identitiesConclusion = gameState.conclusions.find(conclusion => conclusion.id === "identities") || null;
   if (identitiesConclusion?.isComplete) {
-    gameState.baseCharacters.forEach(character => {
-      character.isTitleKnown = true;
-    });
+    gameState.baseCharacters.forEach(character => gameState.discoveryState.titleKnownCharacterIds.add(character.id));
   }
   _syncLevelCompleteState(gameState);
 }

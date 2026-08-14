@@ -73,9 +73,9 @@ function _isHeldItemDrawn(character:Character, item:Item, effects:Effect[]):bool
   return !_hasMatchingTakeOrGiveItemEffect(character, item, effects);
 }
 
-export function hasDrawnUndiscoveredHeldItem(character:Character, effects:Effect[]):boolean {
+export function hasDrawnUndiscoveredHeldItem(character:Character, effects:Effect[], discoveredItemIds:ReadonlySet<string>):boolean {
   return [character.leftHandItem, character.rightHandItem]
-    .some(item => !!item && _isHeldItemDrawn(character, item, effects) && isItemInteractive(item) && !item.isDiscovered);
+    .some(item => !!item && _isHeldItemDrawn(character, item, effects) && isItemInteractive(item) && !discoveredItemIds.has(item.id));
 }
 
 export function drawHeldItemsBehindCharacter(character:Character, layout:CharacterLayout,
