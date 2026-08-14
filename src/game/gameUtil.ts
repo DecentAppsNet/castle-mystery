@@ -218,11 +218,11 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
       discoveredCharacterIds:new Set<string>(),
       discoveredItemIds:new Set<string>(),
       discoveredRoomIds:new Set<string>(),
-      titleKnownCharacterIds:new Set(level.characters.filter(character => character.isTitleKnown).map(character => character.id)),
-      obscuredRoomIds:new Set(level.rooms.filter(room => room.isObscured).map(room => room.id)),
-      discoverableCharacterCount:level.discoverableCharacterCount,
-      discoverableItemCount:level.discoverableItemCount,
-      discoverableRoomCount:level.discoverableRoomCount
+      titleKnownCharacterIds:new Set(level.discoveryConfig.initiallyKnownTitleCharacterIds),
+      obscuredRoomIds:new Set(level.discoveryConfig.initiallyObscuredRoomIds),
+      discoverableCharacterCount:level.discoveryConfig.discoverableCharacterCount,
+      discoverableItemCount:level.discoveryConfig.discoverableItemCount,
+      discoverableRoomCount:level.discoveryConfig.discoverableRoomCount
     },
     duration,
     groundFloorY:level.groundFloorY,

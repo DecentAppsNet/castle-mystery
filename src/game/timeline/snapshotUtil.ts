@@ -10,10 +10,8 @@ import Item from "../types/Item";
 import CharacterKeyframe from "../types/CharacterKeyframe";
 
 function _combineItemWithBase(item:Item, baseItemsById:Map<string,Item>):Item {
-  const baseItem = baseItemsById.get(item.id);
-  assertNonNullable(baseItem);
-  const { isDiscovered } = baseItem;
-  return isDiscovered ? {...item, isDiscovered} : item;
+  assertNonNullable(baseItemsById.get(item.id));
+  return item;
 }
 
 function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character, baseItemsById:Map<string,Item>):Character {
@@ -30,10 +28,6 @@ function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Ch
     description:baseCharacter.description,
     faceImageUrl:baseCharacter.faceImageUrl,
     randomSalt:baseCharacter.randomSalt,
-
-    // These members can mutate permanently to true, independent of game time.
-    isDiscovered:baseCharacter.isDiscovered,
-    isTitleKnown:baseCharacter.isTitleKnown,
     
     // Items are a combined value from keyframe and base item.
     items:character.items.map(i => _combineItemWithBase(i, baseItemsById)),

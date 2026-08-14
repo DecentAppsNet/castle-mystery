@@ -16,17 +16,23 @@ import { normalizeId } from '@/game/idUtil';
 import { assertNonNullable } from 'decent-portal';
 import { getSectionIdsFromSectionText } from '../levelFileSectionUtil';
 
+type PartiallyLoadedRooms = {
+  rooms:Room[],
+  initiallyObscuredRoomIds:ReadonlySet<string>
+}
+
 // Returns rooms with everything loaded from level file except dependencies, e.g. items. The exception is room styles, which are applied,
 // because nothing else uses room styles besides rooms.
-export function loadRoomsPartially(sections:LevelFileSections, availableItems:Item[], errors:ErrorCollector):Room[] | null {
+export function loadRoomsPartially(sections:LevelFileSections, availableItems:Item[], errors:ErrorCollector):PartiallyLoadedRooms|null {
   const originalErrorCount = errors.count;
 
   const availableCharacterIds = getSectionIdsFromSectionText(sections.characters.text, 2, 'characters', errors);
   const mapLegendGrid = parseLegendGrid(sections.map.text, errors, ['map']);
   if (!mapLegendGrid) return null;
   const rooms:Room[] = createRoomsFromMapSection(mapLegendGrid, errors);
-  if (!applyRoomMetaDataFromSections(sections.rooms.text, sections['room styles']?.text ?? '', 
-    rooms, availableItems, availableCharacterIds, errors)) return null;
+  const initiallyObscuredRoomIds = applyRoomMetaDataFromSections(sections.rooms.text, sections['room styles']?.text ?? '',
+    rooms, availableItems, availableCharacterIds, errors);
+  if (!initiallyObscuredRoomIds) return null;
   addExitsToRooms(sections.rooms.text, rooms, errors);
   
   rooms.forEach(room => {
@@ -37,7 +43,7 @@ export function loadRoomsPartially(sections:LevelFileSections, availableItems:It
     room.waypoints.push(...waypoints);
   });
 
-  return errors.count <= originalErrorCount ? rooms : null;
+  return errors.count <= originalErrorCount ? { rooms, initiallyObscuredRoomIds } : null;
 }
 
 export function addRoomsToLevel(rooms:Room[], groundFloorRoomRef:string|null, level:MutableLevel, errors:ErrorCollector):boolean {

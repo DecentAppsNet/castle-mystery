@@ -11,7 +11,6 @@ function _createRoom(id:string, rect:Rect):Room {
     id,
     title:id,
     rect,
-    isDiscovered:true
   };
 }
 

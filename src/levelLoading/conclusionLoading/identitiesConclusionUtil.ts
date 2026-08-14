@@ -14,8 +14,10 @@ import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionI
 import Room from "@/game/types/Room";
 import { normalizeId } from "@/game/idUtil";
 
-function _findCharactersForConclusionOptions(characters:readonly Character[]):Character[] {
-  const conclusionCharacters:Character[] = characters.filter(c => isCharacterInteractive(c) && !c.isTitleKnown);
+function _findCharactersForConclusionOptions(characters:readonly Character[],
+  initiallyKnownTitleCharacterIds:ReadonlySet<string>):Character[] {
+  const conclusionCharacters:Character[] = characters.filter(character =>
+    isCharacterInteractive(character) && !initiallyKnownTitleCharacterIds.has(character.id));
   const sorted = conclusionCharacters.sort((a, b) => a.title.localeCompare(b.title, undefined, {sensitivity:'base'}));
   return sorted;
 }
@@ -31,7 +33,8 @@ function _createClozeBlankFromCorrectAnswer(correctAnswer:string, conclusionOpti
   return createClozeBlankFromTemplateText(correctAnswer, clozeCategories);
 }
 
-function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Room[], errors:ErrorCollector):{
+function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Room[],
+  initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):{
   title:string|null,
   unlockConclusionIds:string[]|null,
   revealRoomIds:string[]|null,
@@ -55,7 +58,7 @@ function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Ro
     }
     const revealRoomsText = identitiesVariables.revealrooms?.value;
     if (revealRoomsText) {
-      revealRoomIds = resolveRevealRoomIds('identities', revealRoomsText, rooms, errors);
+      revealRoomIds = resolveRevealRoomIds('identities', revealRoomsText, rooms, initiallyObscuredRoomIds, errors);
     }
   }
   return { title, unlockConclusionIds, revealRoomIds, characterOptions };
@@ -79,31 +82,37 @@ function _findCharactersForOptions(characterOptions:string[], characters:readonl
 }
 
 function _generateConclusionOptions(authoredCharacterOptions:string[]|null, characters:readonly Character[], 
-    errors:ErrorCollector):{characterOptions:string[], conclusionCharacters:readonly Character[]} {
+    initiallyKnownTitleCharacterIds:ReadonlySet<string>, errors:ErrorCollector):{
+      characterOptions:string[], conclusionCharacters:readonly Character[]
+    } {
   if (authoredCharacterOptions) {
     const conclusionCharacters = _findCharactersForOptions(authoredCharacterOptions, characters, errors);
     return { characterOptions:authoredCharacterOptions, conclusionCharacters };
   }
-  const conclusionCharacters = _findCharactersForConclusionOptions(characters);
-  if (!conclusionCharacters.length) return  { characterOptions:[], conclusionCharacters:[] }; // Not an error - a level can have only characters with .isTitleKnown.
+  const conclusionCharacters = _findCharactersForConclusionOptions(characters, initiallyKnownTitleCharacterIds);
+  if (!conclusionCharacters.length) return  { characterOptions:[], conclusionCharacters:[] }; // Not an error - every character title can be initially known.
   return {characterOptions:conclusionCharacters.map(c => c.title), conclusionCharacters };
 }
 
 export function createGeneratedIdentityConclusion(conclusionsSectionText:string, characters:readonly Character[], 
-    rooms:readonly Room[], errors:ErrorCollector):Conclusion|null {
-  const overrides = _findAuthoredOverrides(conclusionsSectionText, rooms, errors);
+    rooms:readonly Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>,
+    initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):Conclusion|null {
+  const overrides = _findAuthoredOverrides(conclusionsSectionText, rooms, initiallyObscuredRoomIds, errors);
   
-  const { conclusionCharacters, characterOptions} = _generateConclusionOptions(overrides.characterOptions, characters, errors);
+  const { conclusionCharacters, characterOptions} = _generateConclusionOptions(overrides.characterOptions, characters,
+    initiallyKnownTitleCharacterIds, errors);
   if (!characterOptions.length) return null;
     
   const parts:ClozePart[] = [];
-  conclusionCharacters.forEach((character, characterI) => {
-    if (character.isTitleKnown) return;
-    if (characterI > 0) parts.push({ type:ClozePartType.separator });
-    parts.push({ type:ClozePartType.image, imageUrl:_getCharacterFaceImageUrl(character) });
-    parts.push({ type:ClozePartType.text, text:' = ' });
-    parts.push(_createClozeBlankFromCorrectAnswer(character.title, characterOptions));
-  });
+  conclusionCharacters
+    .filter(character => !initiallyKnownTitleCharacterIds.has(character.id))
+    .forEach((character, characterI) => {
+      if (characterI > 0) parts.push({ type:ClozePartType.separator });
+      parts.push({ type:ClozePartType.image, imageUrl:_getCharacterFaceImageUrl(character) });
+      parts.push({ type:ClozePartType.text, text:' = ' });
+      parts.push(_createClozeBlankFromCorrectAnswer(character.title, characterOptions));
+    });
+  if (!parts.length) return null;
 
   const conclusion:Conclusion = {
     id:'identities',

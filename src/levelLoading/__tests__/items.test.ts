@@ -56,7 +56,6 @@ describe('loading levels - items', () => {
       position:{ x:0, y:20, z:0 },
       drawOffset:{ x:1.5, y:2, z:3 },
       stackOffset:{ x:4, y:5.25, z:6 },
-      isDiscovered:false,
       randomSalt:expect.any(Number)
     });
   });

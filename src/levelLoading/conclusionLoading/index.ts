@@ -8,12 +8,14 @@ import { lockConclusionsAsNeeded, parseAuthoredConclusions } from "./parseConclu
 import { createGeneratedIdentityConclusion, hasIdentitiesConclusion } from "./identitiesConclusionUtil";
 
 export function loadConclusions(conclusionsSectionText:string, characters:Character[], items:Item[], 
-    rooms:Room[], errors:ErrorCollector):Conclusion[] {
+  rooms:Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>, initiallyObscuredRoomIds:ReadonlySet<string>,
+  errors:ErrorCollector):Conclusion[] {
   const originalErrorCount = errors.count;
   const categories = createClozeCategories(conclusionsSectionText, rooms, characters, items, errors);
-  const conclusions = parseAuthoredConclusions(conclusionsSectionText, rooms, categories, errors) ?? [];
+  const conclusions = parseAuthoredConclusions(conclusionsSectionText, rooms, categories, initiallyObscuredRoomIds, errors) ?? [];
   if (!hasIdentitiesConclusion(conclusions)) {
-    const identitiesConclusion = createGeneratedIdentityConclusion(conclusionsSectionText, characters, rooms, errors);
+    const identitiesConclusion = createGeneratedIdentityConclusion(conclusionsSectionText, characters, rooms,
+      initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
     if (identitiesConclusion) conclusions.unshift(identitiesConclusion);
   }
   lockConclusionsAsNeeded(conclusions);

@@ -61,8 +61,7 @@ function _parseItem(itemId:string, itemSectionEntry:SectionEntryWithLine, errors
     isVisible,
     position,
     drawOffset,
-    stackOffset,
-    isDiscovered:false
+    stackOffset
   }
 
   return item;

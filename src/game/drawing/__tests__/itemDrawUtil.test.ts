@@ -40,8 +40,7 @@ describe('itemDrawUtil', () => {
         position:{ x:5, y:8, z:0.5 },
         drawOffset:{ x:1.5, y:-0.25, z:0.1 },
         stackOffset:{ x:0, y:0, z:0 },
-        description:'A crown.',
-        isDiscovered:true
+        description:'A crown.'
       };
       const imageBitmap = { width:520, height:20 } as ImageBitmap;
       const imageSet = createEmptyImageSet();
@@ -97,8 +96,7 @@ describe('itemDrawUtil', () => {
         position:{ x:5, y:8, z:0.5 },
         drawOffset:{ x:1.5, y:-0.25, z:0.1 },
         stackOffset:{ x:0, y:0, z:0 },
-        description:'A crown.',
-        isDiscovered:true
+        description:'A crown.'
       };
       const imageBitmap = { width:520, height:20 } as ImageBitmap;
       const imageSet = createEmptyImageSet();
@@ -142,8 +140,7 @@ describe('itemDrawUtil', () => {
         position:{ x:5, y:8, z:0.5 },
         drawOffset:{ x:0, y:0, z:0 },
         stackOffset:{ x:0, y:0, z:0 },
-        description:'A crown.',
-        isDiscovered:true
+        description:'A crown.'
       };
       const imageSet = createEmptyImageSet();
       imageSet.set('/assets/items/other.png', createImageAsset({ width:32, height:32 } as ImageBitmap));

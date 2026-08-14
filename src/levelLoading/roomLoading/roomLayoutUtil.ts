@@ -57,10 +57,11 @@ function _resolveRoomTextureOverride(roomNameValues:Record<string, string>,
 }
 
 export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStylesSectionText:string, rooms:Room[], 
-      availableItems:Item[], availableCharacterIds:string[], errors:ErrorCollector):boolean {
+      availableItems:Item[], availableCharacterIds:string[], errors:ErrorCollector):ReadonlySet<string>|null {
   const originalErrorCount = errors.count;
   const roomSectionsById = createNormalizedSectionEntryMap(roomsSectionText, 2, 'rooms', errors);
   const roomStyleMetadataById = _createRoomStyleById(roomStylesSectionText, errors);
+  const initiallyObscuredRoomIds = new Set<string>();
   rooms.forEach((room, roomI) => {
     const roomSectionEntry = roomSectionsById.get(room.id);
     if (!roomSectionEntry) {
@@ -74,6 +75,7 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
       : null;
     const title = Object.hasOwn(roomNameValues, 'title') ? roomNameValues.title : roomSectionEntry.name.trim();
     const items = createItemsForRoom(room, availableItems, availableCharacterIds, roomSectionEntry.value, errors);
+    if ((roomNameValues.obscured || '').toLowerCase() === 'true') initiallyObscuredRoomIds.add(room.id);
     rooms[roomI] = {
       ...room,
       title,
@@ -83,11 +85,10 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
       floorTexture:_resolveRoomTextureOverride(roomNameValues, 'floorTexture', room, 'rows', inheritedRoomStyle?.floorTexture, errors),
       stairTexture:_resolveRoomTextureOverride(roomNameValues, 'stairTexture', room, 'layers', inheritedRoomStyle?.stairTexture, errors),
       doorTexture:_resolveRoomTextureOverride(roomNameValues, 'doorTexture', room, 'layers', inheritedRoomStyle?.doorTexture, errors),
-      rightWallTexture:_resolveRoomTextureOverride(roomNameValues, 'rightWallTexture', room, 'layers', inheritedRoomStyle?.rightWallTexture, errors),
-      isObscured: (roomNameValues.obscured || '').toLowerCase() === 'true'
+      rightWallTexture:_resolveRoomTextureOverride(roomNameValues, 'rightWallTexture', room, 'layers', inheritedRoomStyle?.rightWallTexture, errors)
     };
   });
-  return errors.count <= originalErrorCount;
+  return errors.count <= originalErrorCount ? initiallyObscuredRoomIds : null;
 }
 
 export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:ErrorCollector):Room[] {

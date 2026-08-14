@@ -10,13 +10,13 @@ export function normalizeCategoryPhrase(phrase:string):string {
 }
 
 export function resolveRevealRoomIds(conclusionName:string, revealRoomsText:string|undefined, 
-    rooms:ReadonlyArray<Room>, errors:ErrorCollector):string[] {
+  rooms:ReadonlyArray<Room>, initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):string[] {
   if (!revealRoomsText) return [];
   const roomIds:string[] = [];
   parseOptions(revealRoomsText).forEach(roomRef => {
     const room = findRoomByIdOrTitle(rooms, roomRef);
     if (room) {
-      if (!room.isObscured) {
+      if (!initiallyObscuredRoomIds.has(room.id)) {
         errors.addAt(`"${roomRef}" is not obscured, so conclusion can't reveal it.`, 
         ['conclusions', conclusionName], `* revealRooms=`, roomRef);
       }

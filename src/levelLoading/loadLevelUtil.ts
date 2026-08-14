@@ -51,10 +51,12 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Partially load items, characters, and rooms, avoiding loading of any dependencies.
   const items = loadItemsPartially(sections.items?.text ?? '', errors); // Items are still missing positions.
   if (!items) return null;
-  const rooms = loadRoomsPartially(sections, items, errors); // Rooms still missing inventory. Side effect - items receive positions.
-  if (!rooms) return null;
-  const characters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
-  if (!characters) return null;
+  const partiallyLoadedRooms = loadRoomsPartially(sections, items, errors); // Rooms still missing inventory. Side effect - items receive positions.
+  if (!partiallyLoadedRooms) return null;
+  const { rooms, initiallyObscuredRoomIds } = partiallyLoadedRooms;
+  const partiallyLoadedCharacters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
+  if (!partiallyLoadedCharacters) return null;
+  const { characters, initiallyKnownTitleCharacterIds } = partiallyLoadedCharacters;
   level.startTime = findStartTimeFromItinerary(sections.itinerary?.text ?? '') ?? 0;
   const activities = loadActivitiesPartially(sections.itinerary?.text ?? '', loadingContext.activityParsingRules, 
       level.startTime, loadingContext.activeCharacterId, errors);
@@ -68,7 +70,8 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!addItemsToLevel(items, activities, rooms, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
-  level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms, errors);
+  level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms,
+    initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
 
   // Schedule activities into timeline data structure.
   const timeline = scheduleActivities(level, activities, errors);
@@ -79,9 +82,13 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
 
   // Set counts of discoverable room, items, and characters.
   const counts = findDiscoverableCounts(level, activities);
-  level.discoverableCharacterCount = loadingContext.discoverableCharacterCount ?? counts.discoverableCharacterCount;
-  level.discoverableItemCount = loadingContext.discoverableItemCount ?? counts.discoverableItemCount;
-  level.discoverableRoomCount = loadingContext.discoverableRoomCount ?? counts.discoverableRoomCount;
+  level.discoveryConfig = {
+    initiallyKnownTitleCharacterIds,
+    initiallyObscuredRoomIds,
+    discoverableCharacterCount:loadingContext.discoverableCharacterCount ?? counts.discoverableCharacterCount,
+    discoverableItemCount:loadingContext.discoverableItemCount ?? counts.discoverableItemCount,
+    discoverableRoomCount:loadingContext.discoverableRoomCount ?? counts.discoverableRoomCount
+  };
 
   level.labels = createTimeLabels(level.startTime, level.endTime);
 

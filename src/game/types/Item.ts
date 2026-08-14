@@ -9,8 +9,7 @@ type Item = {
   readonly stackOffset:Position,
   isVisible:boolean,
   position:Position,
-  drawOffset:Position,
-  isDiscovered:boolean
+  drawOffset:Position
 }
 
 export function createDefaultItem():Item {
@@ -23,8 +22,7 @@ export function createDefaultItem():Item {
     position:{ x:0, y:0, z:0 },
     drawOffset:{ x:0, y:0, z:0 },
     stackOffset:{ x:0, y:0, z:0 },
-    description:'',
-    isDiscovered:false
+    description:''
   };
 }
 
@@ -38,8 +36,7 @@ export function duplicateItem(from:Item):Item {
     position:duplicatePosition(from.position),
     drawOffset:duplicatePosition(from.drawOffset),
     stackOffset:duplicatePosition(from.stackOffset),
-    description:from.description,
-    isDiscovered:from.isDiscovered
+    description:from.description
   };
 }
 

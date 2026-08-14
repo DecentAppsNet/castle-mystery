@@ -56,22 +56,21 @@ function _subtractObscuredRangesFromSpeechRange(range:SpeechMarkerRange, obscure
 } */
 
 /* TODO with timeline
-function _createObscuredRanges(itinerary:Itinerary, rooms:Room[], initialRoomId:string|null, durationMsecs:number):ObscuredMarkerRange[] {
-  const roomById = new Map(rooms.map(room => [room.id, room]));
+function _createObscuredRanges(itinerary:Itinerary, initiallyObscuredRoomIds:ReadonlySet<string>, initialRoomId:string|null, durationMsecs:number):ObscuredMarkerRange[] {
   const roomEntryEvents = itinerary
     .filter(event => event.type === ItineraryEventType.ROOM_ENTRY)
     .map(event => event as RoomEntryEvent)
     .sort((event1, event2) => event1.startTime - event2.startTime);
   const obscuredRanges:ObscuredMarkerRange[] = [];
   let currentRoomId = initialRoomId;
-  let obscuredStartTime = currentRoomId && roomById.get(currentRoomId)?.isObscured ? 0 : null;
+  let obscuredStartTime = currentRoomId && initiallyObscuredRoomIds.has(currentRoomId) ? 0 : null;
 
   roomEntryEvents.forEach(roomEntryEvent => {
     if (obscuredStartTime !== null) {
       obscuredRanges.push({ startTime:obscuredStartTime, endTime:roomEntryEvent.startTime });
     }
     currentRoomId = roomEntryEvent.roomId;
-    obscuredStartTime = roomById.get(currentRoomId)?.isObscured ? roomEntryEvent.startTime : null;
+    obscuredStartTime = initiallyObscuredRoomIds.has(currentRoomId) ? roomEntryEvent.startTime : null;
   });
 
   if (obscuredStartTime !== null && durationMsecs > obscuredStartTime) {

@@ -58,9 +58,6 @@ function _parseGeneralSection(generalSectionText:string, level:MutableLevel, err
   level.backgroundImageUrl = generalNameValues.background ? getBackgroundImageAssetUrl(generalNameValues.background) : null;
   
   if (initialTime !== null) level.initialTime = initialTime;
-  if (discoverableCharacterCount !== null) level.discoverableCharacterCount = discoverableCharacterCount;
-  if (discoverableItemCount !== null) level.discoverableItemCount = discoverableItemCount;
-  if (discoverableRoomCount !== null) level.discoverableRoomCount = discoverableRoomCount;
 
   const activityParsingRules:ActivityParsingRules = {} as ActivityParsingRules;
   return {

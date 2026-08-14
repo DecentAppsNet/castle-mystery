@@ -57,7 +57,7 @@ describe('loading levels - rooms', () => {
 
 		expect(level?.rooms[1]?.id).toBe('hall');
 		expect(level?.rooms[1]?.title).toBe('Great Hall');
-		expect(level?.rooms[1]?.isObscured).toBe(true);
+		expect(level?.discoveryConfig.initiallyObscuredRoomIds).toContain('hall');
 		expect(level?.rooms[1]?.items).toHaveLength(1);
 		expect(level?.rooms[1]?.items[0]?.id).toBe('brass key');
 		expect(level?.rooms[1]?.items[0]?.title).toBe('Master Key');

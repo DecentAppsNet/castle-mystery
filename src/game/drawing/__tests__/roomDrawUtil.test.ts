@@ -27,7 +27,6 @@ describe('roomDrawUtil', () => {
       const room = {
         ...createDefaultRoom(),
         id:'room-a',
-        isDiscovered:false,
         exits:[{
           id:'room-a|room-b|10|5',
           x:10,
@@ -44,7 +43,6 @@ describe('roomDrawUtil', () => {
       const adjacentRoom = {
         ...createDefaultRoom(),
         id:'room-b',
-        isDiscovered:true,
         rect:{ x:10, y:0, width:10, height:10 }
       };
       const drawnExitIds = new Set<string>();

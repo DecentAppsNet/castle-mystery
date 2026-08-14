@@ -133,7 +133,8 @@ function _parseClozeTemplateToParts(clozeTemplate:string, clozeCategories:Record
 }
 
 function _parseConclusion(conclusionName:string, sectionText:string, rooms:ReadonlyArray<Room>, conclusionIds:string[], 
-    clozeCategories:Record<string, ClozeCategory>, errors:ErrorCollector):Conclusion|null {
+  clozeCategories:Record<string, ClozeCategory>, initiallyObscuredRoomIds:ReadonlySet<string>,
+  errors:ErrorCollector):Conclusion|null {
   const originalErrorCount = errors.count;
   const variables = createSectionVariables(sectionText, ['conclusions', conclusionName], errors);
   const clozeTemplate = variables.conclusion?.value;
@@ -146,7 +147,8 @@ function _parseConclusion(conclusionName:string, sectionText:string, rooms:Reado
   const id = normalizeId(conclusionName);
   const title = conclusionName.trim();
   const parts = _parseClozeTemplateToParts(clozeTemplate, clozeCategories);
-  const revealRoomIds = resolveRevealRoomIds(conclusionName, variables.revealrooms?.value ?? '', rooms, errors);
+  const revealRoomIds = resolveRevealRoomIds(conclusionName, variables.revealrooms?.value ?? '', rooms,
+    initiallyObscuredRoomIds, errors);
   const unlockConclusionIds = resolveUnlockConclusionIds(conclusionName, variables.unlockconclusions?.value ?? '', conclusionIds, errors);
   const isComplete = false;
   const isLocked = false;
@@ -167,7 +169,8 @@ export function lockConclusionsAsNeeded(conclusions:Conclusion[]) {
 }
 
 export function parseAuthoredConclusions(conclusionsSectionText:string, rooms:ReadonlyArray<Room>, 
-      clozeCategories:Record<string, ClozeCategory>, errors:ErrorCollector):Conclusion[]|null {
+  clozeCategories:Record<string, ClozeCategory>, initiallyObscuredRoomIds:ReadonlySet<string>,
+  errors:ErrorCollector):Conclusion[]|null {
   if (!conclusionsSectionText.trim()) return [];
   const originalErrorCount = errors.count;
 
@@ -180,7 +183,8 @@ export function parseAuthoredConclusions(conclusionsSectionText:string, rooms:Re
     const conclusionName = conclusionNames[i];
     const entry = conclusionSections.get(conclusionName);
     assertNonNullable(entry);
-    const conclusion = _parseConclusion(entry.name, entry.value, rooms, conclusionIds, clozeCategories, errors);
+    const conclusion = _parseConclusion(entry.name, entry.value, rooms, conclusionIds, clozeCategories,
+      initiallyObscuredRoomIds, errors);
     if (conclusion) conclusions.push(conclusion);
   }
   return errors.count > originalErrorCount ? null : conclusions;

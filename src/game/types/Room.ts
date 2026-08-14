@@ -15,12 +15,10 @@ type Room = {
   readonly stairTexture:Texture|null,
   readonly doorTexture:Texture|null,
   readonly rightWallTexture:Texture|null,
-  isObscured:boolean,
   items:Item[],
   readonly exits:RoomExit[],
   readonly stairParts:StairPart[],
-  readonly waypoints:Waypoint[],
-  isDiscovered:boolean
+  readonly waypoints:Waypoint[]
 }
 
 export function createDefaultRoom():Room {
@@ -34,12 +32,10 @@ export function createDefaultRoom():Room {
     stairTexture:null,
     doorTexture:null,
     rightWallTexture:null,
-    isObscured:false,
     items:[],
     exits:[],
     stairParts:[],
-    waypoints:[],
-    isDiscovered:false
+    waypoints:[]
   };
 }
 
@@ -54,12 +50,10 @@ export function duplicateRoom(from:Room):Room {
     stairTexture:from.stairTexture ? duplicateTexture(from.stairTexture) : null,
     doorTexture:from.doorTexture ? duplicateTexture(from.doorTexture) : null,
     rightWallTexture:from.rightWallTexture ? duplicateTexture(from.rightWallTexture) : null,
-    isObscured:from.isObscured,
     items:from.items.map(duplicateItem),
     exits:from.exits.map(duplicateRoomExit),
     stairParts:from.stairParts.map(duplicateStairPart),
-    waypoints:from.waypoints.map(duplicateWaypoint),
-    isDiscovered:from.isDiscovered
+    waypoints:from.waypoints.map(duplicateWaypoint)
   }
 }
 

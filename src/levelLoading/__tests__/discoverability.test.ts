@@ -22,8 +22,8 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableCharacterCount).toBe(1);
-    expect(level?.discoverableRoomCount).toBe(1);
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(1);
+    expect(level?.discoveryConfig.discoverableRoomCount).toBe(1);
   });
 
   it('loads two discoverable placed interactive characters', () => {
@@ -31,7 +31,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableCharacterCount).toBe(2);
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(2);
   });
 
   it('excludes an unplaced interactive character from discoverable characters', () => {
@@ -39,7 +39,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableCharacterCount).toBe(1);
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(1);
   });
 
   it('excludes a placed non-interactive character from discoverable characters', () => {
@@ -47,7 +47,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableCharacterCount).toBe(1);
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(1);
   });
 
   it('includes an interactive item placed in a room', () => {
@@ -55,7 +55,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(1);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(1);
   });
 
   it('excludes a non-interactive item placed in a room', () => {
@@ -63,7 +63,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(1);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(1);
   });
 
   it('excludes an interactive inventory item not referenced in the itinerary', () => {
@@ -71,7 +71,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(0);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(0);
   });
 
   it('includes an interactive inventory item referenced in the itinerary', () => {
@@ -79,7 +79,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(1);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(1);
   });
 
   it('excludes a non-interactive inventory item referenced in the itinerary', () => {
@@ -87,7 +87,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(0);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(0);
   });
 
   it('includes an interactive item held in a character left hand', () => {
@@ -95,7 +95,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(1);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(1);
   });
 
   it('excludes a non-interactive item held in a character left hand', () => {
@@ -103,7 +103,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(0);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(0);
   });
 
   it('includes an interactive item held in a character right hand', () => {
@@ -111,7 +111,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(1);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(1);
   });
 
   it('excludes a non-interactive item held in a character right hand', () => {
@@ -119,7 +119,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(0);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(0);
   });
 
   it('loads two discoverable rooms', () => {
@@ -127,7 +127,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableRoomCount).toBe(2);
+    expect(level?.discoveryConfig.discoverableRoomCount).toBe(2);
   });
 
   it('uses the authored discoverable room count instead of the calculated count', () => {
@@ -135,7 +135,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableRoomCount).toBe(5);
+    expect(level?.discoveryConfig.discoverableRoomCount).toBe(5);
   });
 
   it('uses the authored discoverable character count instead of the calculated count', () => {
@@ -143,7 +143,7 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableCharacterCount).toBe(3);
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(3);
   });
 
   it('uses the authored discoverable item count instead of the calculated count', () => {
@@ -151,6 +151,6 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoverableItemCount).toBe(4);
+    expect(level?.discoveryConfig.discoverableItemCount).toBe(4);
   });
 });

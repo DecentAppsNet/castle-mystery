@@ -4,14 +4,13 @@ import Item from "./Item";
 import Room from "./Room"
 import Conclusion from "../conclusions/types/Conclusion";
 import Timeline, { createDefaultTimeline } from "./Timeline";
+import DiscoveryConfig from "./DiscoveryConfig";
 
 export type MutableLevel = {
   rooms:Room[],
   characters:Character[],
   itemsById:Map<string, Item>,
-  discoverableCharacterCount:number,
-  discoverableItemCount:number,
-  discoverableRoomCount:number,
+  discoveryConfig:DiscoveryConfig,
   conclusions:Conclusion[],
   winSynopsis:string,
   backgroundImageUrl:string|null,
@@ -31,9 +30,13 @@ export function createDefaultMutableLevel():MutableLevel {
     rooms:[],
     characters:[],
     itemsById:new Map<string, Item>(),
-    discoverableCharacterCount:0,
-    discoverableItemCount:0,
-    discoverableRoomCount:0,
+    discoveryConfig:{
+      initiallyKnownTitleCharacterIds:new Set<string>(),
+      initiallyObscuredRoomIds:new Set<string>(),
+      discoverableCharacterCount:0,
+      discoverableItemCount:0,
+      discoverableRoomCount:0
+    },
     conclusions:[],
     winSynopsis:'',
     backgroundImageUrl:null,

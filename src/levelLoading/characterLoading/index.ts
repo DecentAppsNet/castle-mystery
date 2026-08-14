@@ -15,6 +15,11 @@ import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
 
+type PartiallyLoadedCharacters = {
+  characters:Character[],
+  initiallyKnownTitleCharacterIds:ReadonlySet<string>
+}
+
 function _parseFacingDirection(text:string, errors:ErrorCollector, characterId:string):FacingDirection {
   text = text.trim().toLowerCase();
   if (VALID_FACING_DIRECTIONS.some(fd => fd === text)) return text as FacingDirection;
@@ -31,7 +36,8 @@ function _parseBodyOrientation(text:string, errors:ErrorCollector, characterId:s
   return DEFAULT_BODY_ORIENTATION;
 }
 
-function _parseCharacter(characterId:string, position:Position, characterSectionEntry:SectionEntryWithLine, errors:ErrorCollector):Character {
+function _parseCharacter(characterId:string, position:Position, characterSectionEntry:SectionEntryWithLine,
+  errors:ErrorCollector):{character:Character, isTitleKnown:boolean} {
   const nameValues = parseUniqueNameValueLines(characterSectionEntry.value, `character ${characterId}`, false, characterSectionEntry.lineNo);
   const authoredCharacterName = characterSectionEntry.name.trim();
   const title = nameValues.title ?? authoredCharacterName;
@@ -47,15 +53,16 @@ function _parseCharacter(characterId:string, position:Position, characterSection
   const character:Character = {
     ...createDefaultCharacter(),
     id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
-    bodyOrientation, isTitleKnown, items, leftHandItem, rightHandItem, position
+    bodyOrientation, items, leftHandItem, rightHandItem, position
   }
-  return character;
+  return { character, isTitleKnown };
 }
 
-export function loadCharactersPartially(charactersSectionText:string, roomsSectionText:string, rooms:Room[], errors:ErrorCollector):Character[]|null {
+export function loadCharactersPartially(charactersSectionText:string, roomsSectionText:string, rooms:Room[],
+  errors:ErrorCollector):PartiallyLoadedCharacters|null {
   const originalErrorCount = errors.count;
 
-  if (!charactersSectionText) return [];
+  if (!charactersSectionText) return { characters:[], initiallyKnownTitleCharacterIds:new Set<string>() };
 
   const characterIds = getSectionIdsFromSectionText(charactersSectionText, 2, 'characters', errors);
   const characterIdToPosition = findAllCharacterPositions(rooms, characterIds, roomsSectionText, errors);
@@ -63,18 +70,20 @@ export function loadCharactersPartially(charactersSectionText:string, roomsSecti
   const characterSectionsById:SectionEntryMap = createNormalizedSectionEntryMap(charactersSectionText, 2, 'characters', errors);
   const characterSectionNames:string[] = [...characterSectionsById.keys()];
   const characters:Character[] = [];
+  const initiallyKnownTitleCharacterIds = new Set<string>();
   characterSectionNames.forEach(sectionName => {
     const sectionEntry = characterSectionsById.get(sectionName);
     assertNonNullable(sectionEntry);
     const characterId = normalizeId(sectionName);
     const fromPosition = characterIdToPosition[characterId] ?? null; // Due to importing, its possible to have unplaced characters.
     if (fromPosition) {
-      const character = _parseCharacter(characterId, fromPosition, sectionEntry, errors);
+      const { character, isTitleKnown } = _parseCharacter(characterId, fromPosition, sectionEntry, errors);
       characters.push(character);
+      if (isTitleKnown) initiallyKnownTitleCharacterIds.add(character.id);
     }
   });
   
-  return errors.count <= originalErrorCount ? characters : null;
+  return errors.count <= originalErrorCount ? { characters, initiallyKnownTitleCharacterIds } : null;
 }
 
 export function addCharactersToLevel(characters:Character[], items:Item[], level:MutableLevel, errors:ErrorCollector):boolean {

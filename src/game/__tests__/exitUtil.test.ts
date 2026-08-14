@@ -13,8 +13,7 @@ function _createRoom(id:string, title:string):Room {
   return {
     ...createDefaultRoom(),
     id,
-    title,
-    isDiscovered:true
+    title
   };
 }
 
@@ -46,8 +45,7 @@ describe('exitUtil', () => {
         position:{ x:0, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z },
         drawOffset:{ x:0, y:0, z:0 },
         stackOffset:{ x:0, y:0, z:0 },
-        description:'Opens the bedroom.',
-        isDiscovered:false
+        description:'Opens the bedroom.'
       }]]);
 
       expect(describeExit(_createExit('red key'), room1, room2, itemsById, new Set(['bedroom', 'hallway'])))

@@ -21,8 +21,7 @@ function _createItem(id:string, z:number) {
     position:{ x:1, y:2, z },
     drawOffset:{ x:0, y:0, z:0 },
     stackOffset:{ x:0, y:0, z:0 },
-    description:'',
-    isDiscovered:true
+    description:''
   };
 }
 

@@ -8,15 +8,22 @@ import PlayerEventType from '@/game/types/playerEvents/PlayerEventType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import discoveryStateLevelText from './fixtures/discovery-state.md?raw';
 
+function _loadLevel() {
+  return loadValidLevelForTest(discoveryStateLevelText, 'discovery-state.md');
+}
+
 function _createGameState() {
-  return createGameState(loadValidLevelForTest(discoveryStateLevelText, 'discovery-state.md'));
+  return createGameState(_loadLevel());
 }
 
 describe('discovery state integration', () => {
   it('initializes independent discovery state from authored level values and discovers the active room', () => {
-    const gameState1 = _createGameState();
-    const gameState2 = _createGameState();
+    const level = _loadLevel();
+    const gameState1 = createGameState(level);
+    const gameState2 = createGameState(level);
 
+    expect(level.discoveryConfig.initiallyKnownTitleCharacterIds).toEqual(new Set(['sam']));
+    expect(level.discoveryConfig.initiallyObscuredRoomIds).toEqual(new Set(['study']));
     expect(gameState1.discoveryState.discoveredCharacterIds).toEqual(new Set());
     expect(gameState1.discoveryState.discoveredItemIds).toEqual(new Set());
     expect(gameState1.discoveryState.discoveredRoomIds).toEqual(new Set(['hall']));
@@ -24,6 +31,12 @@ describe('discovery state integration', () => {
     expect(gameState1.discoveryState.obscuredRoomIds).toEqual(new Set(['study']));
     expect(gameState1.discoveryState).not.toBe(gameState2.discoveryState);
     expect(gameState1.discoveryState.discoveredRoomIds).not.toBe(gameState2.discoveryState.discoveredRoomIds);
+    gameState1.discoveryState.titleKnownCharacterIds.add('pat');
+    gameState1.discoveryState.obscuredRoomIds.delete('study');
+    expect(level.discoveryConfig.initiallyKnownTitleCharacterIds).toEqual(new Set(['sam']));
+    expect(level.discoveryConfig.initiallyObscuredRoomIds).toEqual(new Set(['study']));
+    expect(gameState2.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam']));
+    expect(gameState2.discoveryState.obscuredRoomIds).toEqual(new Set(['study']));
   });
 
   it('records item and character discovery in insertion order without mutating world-object flags', () => {
@@ -36,8 +49,8 @@ describe('discovery state integration', () => {
 
     expect(gameState.discoveryState.discoveredItemIds).toEqual(new Set(['brass key']));
     expect(gameState.discoveryState.discoveredCharacterIds).toEqual(new Set(['pat']));
-    expect(brassKey.isDiscovered).toBe(false);
-    expect(pat.isDiscovered).toBe(false);
+    expect(brassKey).not.toHaveProperty('isDiscovered');
+    expect(pat).not.toHaveProperty('isDiscovered');
     expect(createDiscoveries(gameState)).toMatchObject({
       discoveredItemIconUrls:['/assets/items/brass-key.png'],
       discoveredCharacterIconUrls:[''],
@@ -78,7 +91,7 @@ describe('discovery state integration', () => {
     });
 
     expect(gameState.discoveryState.obscuredRoomIds).not.toContain('study');
-    expect(gameState.baseRooms.find(room => room.id === 'study')?.isObscured).toBe(true);
+    expect(gameState.baseRooms.find(room => room.id === 'study')).not.toHaveProperty('isObscured');
     expect(gameState.isLevelComplete).toBe(false);
 
     updateGameStateForChangeConclusions(gameState, {
@@ -94,7 +107,7 @@ describe('discovery state integration', () => {
     expect(gameState.discoveryState.discoveredItemIds).toEqual(new Set(['brass key']));
     expect(gameState.discoveryState.discoveredRoomIds).toEqual(new Set(['hall', 'study']));
     expect(gameState.isLevelComplete).toBe(true);
-    expect(gameState.baseCharacters.find(character => character.id === 'pat')?.isTitleKnown).toBe(false);
-    expect(gameState.baseRooms.every(room => !room.isDiscovered)).toBe(true);
+    expect(gameState.baseCharacters.find(character => character.id === 'pat')).not.toHaveProperty('isTitleKnown');
+    expect(gameState.baseRooms.every(room => !Object.hasOwn(room, 'isDiscovered'))).toBe(true);
   });
 });

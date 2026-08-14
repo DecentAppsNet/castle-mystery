@@ -17,7 +17,6 @@ describe('loading levels - characters', () => {
       isVisible:true,
       facingDirection:'right',
       bodyOrientation:'standing',
-      isTitleKnown:false,
       description:'',
       items:[],
       leftHandItem:null,
@@ -34,7 +33,7 @@ describe('loading levels - characters', () => {
       '* visible=false',
       '* facingDirection=left',
       '* bodyOrientation=sitting',
-      '* isTitleKnown=false',
+      '* isTitleKnown=true',
       '* items=Notebook',
       '* leftHand=Lantern',
       '* rightHand=Brass Key',
@@ -66,7 +65,6 @@ describe('loading levels - characters', () => {
       isVisible:false,
       facingDirection:'left',
       bodyOrientation:'sitting',
-      isTitleKnown:false,
       description:'The lead investigator.',
       items:[{
         id:'notebook',
@@ -83,6 +81,7 @@ describe('loading levels - characters', () => {
         title:'Vault Key'
       }
     });
+    expect(level?.discoveryConfig.initiallyKnownTitleCharacterIds).toEqual(new Set(['sam']));
   });
 
   it('fails if the characters section contains duplicate subsections with the same heading text', () => {
