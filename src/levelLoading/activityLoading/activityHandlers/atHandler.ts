@@ -9,12 +9,13 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import Room from "@/game/types/Room";
 import Position, { arePositionsEqual } from "@/game/types/Position";
-import Waypoint from "@/game/types/Waypoint";
+import Waypoint from "@/levelLoading/types/Waypoint";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
-import { findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition } from "../waypointFindingUtil";
+import { findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findWaypointsForRoom } from "../waypointFindingUtil";
 import { createKeyframeAtTime } from "@/game/timeline";
 import { findLatestKeyFrameForCharacter } from "@/levelLoading/timelineLoading/editingUtil";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 function _findClaimedWaypointsFromSnapshot(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
@@ -26,27 +27,29 @@ function _findClaimedWaypointsFromSnapshot(waypoints:Waypoint[], snapshot:Timeli
   return claimedWaypoints;
 }
 
-function _findBestTargetWaypoint(waypoints:Waypoint[], claimedWaypoints:Waypoint[], targetRoom:Room, targetXPercent:number):Waypoint {
+function _findBestTargetWaypoint(context:WaypointGenerationContext, waypoints:Waypoint[], claimedWaypoints:Waypoint[],
+  targetRoom:Room, targetXPercent:number):Waypoint {
   const x = targetRoom.rect.x + (targetXPercent * targetRoom.rect.width);
 
   assert(waypoints.length > 0);
 
   const targetPosition = {x, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z};
-  let waypoint = findNearestIncludedFloorWaypointToPosition(targetRoom, targetPosition, claimedWaypoints); 
+  let waypoint = findNearestIncludedFloorWaypointToPosition(context, targetRoom, targetPosition, claimedWaypoints); 
   if (waypoint) return waypoint;
-  waypoint = findNearestFloorWaypointToPosition(targetRoom, targetPosition); // A crowded room. Just share a square with somebody else.
+  waypoint = findNearestFloorWaypointToPosition(context, targetRoom, targetPosition); // A crowded room. Just share a square with somebody else.
   assertNonNullable(waypoint, 'How can there be no available waypoints in the room?');
   return waypoint;
 }
 
-function _findTargetPosition(snapshot:TimelineKeyframe, targetRoom:Room, targetXPercent:number = .5):Position {
-  const claimedWaypoints = _findClaimedWaypointsFromSnapshot(targetRoom.waypoints, snapshot);
-  const bestWaypoint = _findBestTargetWaypoint(targetRoom.waypoints, claimedWaypoints, targetRoom, targetXPercent);
+function _findTargetPosition(context:WaypointGenerationContext, snapshot:TimelineKeyframe, targetRoom:Room, targetXPercent:number = .5):Position {
+  const waypoints = findWaypointsForRoom(context, targetRoom.id);
+  const claimedWaypoints = _findClaimedWaypointsFromSnapshot(waypoints, snapshot);
+  const bestWaypoint = _findBestTargetWaypoint(context, waypoints, claimedWaypoints, targetRoom, targetXPercent);
   return bestWaypoint.position;
 }
 
-export function scheduleAtActivity(level:Level, 
-    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerationContext,
+  activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   const { characterId, roomId } = activity.parts;
   assertNonNullable(characterId, 'implied subjects should have been resolved');
   assert(typeof roomId === 'string');
@@ -74,12 +77,12 @@ export function scheduleAtActivity(level:Level,
   const toKeyframe = isRelativeTimestamp 
     ? fromKeyframe
     : createKeyframeAtTime(editableTimeline.keyframes, activity.endTime!);
-  const toPos = _findTargetPosition(toKeyframe, toRoom);
+  const toPos = _findTargetPosition(waypointContext, toKeyframe, toRoom);
   const toTime = toKeyframe.time;
 
   const scheduleResult = isRelativeTimestamp 
-    ? scheduleCharacterMovementToRoom(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableTimeline)
-    : scheduleCharacterMovementToRoomAtTime(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableTimeline)
+    ? scheduleCharacterMovementToRoom(waypointContext, level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableTimeline)
+    : scheduleCharacterMovementToRoomAtTime(waypointContext, level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableTimeline)
   if (typeof scheduleResult === 'string') {
     errors.addAtLine(scheduleResult, activity.lineI);
     return false;

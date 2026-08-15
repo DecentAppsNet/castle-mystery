@@ -1,4 +1,4 @@
-import Waypoint from '@/game/types/Waypoint';
+import Waypoint from './Waypoint';
 
 type WaypointGenerationContext = {
   readonly waypoints:Waypoint[],

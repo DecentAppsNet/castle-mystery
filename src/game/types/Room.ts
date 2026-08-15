@@ -3,7 +3,6 @@ import Item, { duplicateItem } from "./Item"
 import RoomExit, { duplicateRoomExit } from "./RoomExit"
 import StairPart, { duplicateStairPart } from "./StairPart"
 import Texture, { duplicateTexture } from "./Texture"
-import Waypoint, { duplicateWaypoint } from "./Waypoint"
 
 export type MutableRoom = {
   readonly id:string,
@@ -17,8 +16,7 @@ export type MutableRoom = {
   readonly rightWallTexture:Texture|null,
   items:Item[],
   readonly exits:RoomExit[],
-  readonly stairParts:StairPart[],
-  readonly waypoints:Waypoint[]
+  readonly stairParts:StairPart[]
 }
 
 type Room = Readonly<MutableRoom>;
@@ -36,8 +34,7 @@ export function createDefaultRoom():Room {
     rightWallTexture:null,
     items:[],
     exits:[],
-    stairParts:[],
-    waypoints:[]
+    stairParts:[]
   };
 }
 
@@ -54,8 +51,7 @@ export function duplicateRoom(from:Room):Room {
     rightWallTexture:from.rightWallTexture ? duplicateTexture(from.rightWallTexture) : null,
     items:from.items.map(duplicateItem),
     exits:from.exits.map(duplicateRoomExit),
-    stairParts:from.stairParts.map(duplicateStairPart),
-    waypoints:from.waypoints.map(duplicateWaypoint)
+    stairParts:from.stairParts.map(duplicateStairPart)
   }
 }
 

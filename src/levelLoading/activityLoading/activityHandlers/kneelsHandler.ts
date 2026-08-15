@@ -6,6 +6,7 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { assert, assertNonNullable } from "decent-portal";
 import { addCharacterKeyframe } from "@/levelLoading/timelineLoading";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 export function createKneelsParseFormat():ParseFormat {
   const rootParseStep = makeSequence([
@@ -16,6 +17,7 @@ export function createKneelsParseFormat():ParseFormat {
 }
 
 export function scheduleKneelsActivity(_level:Level,
+  _waypointContext:WaypointGenerationContext,
     activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
   const { characterId } = activity.parts;
   assert(typeof characterId === 'string');

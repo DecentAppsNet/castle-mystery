@@ -6,6 +6,7 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { assert, assertNonNullable } from "decent-portal";
 import { addCharacterKeyframe } from "@/levelLoading/timelineLoading";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 export function createStandsParseFormat():ParseFormat {
   const rootParseStep = makeSequence([
@@ -16,6 +17,7 @@ export function createStandsParseFormat():ParseFormat {
 }
 
 export function scheduleStandsActivity(_level:Level,
+  _waypointContext:WaypointGenerationContext,
     activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
   const { characterId } = activity.parts;
   assert(typeof characterId === 'string');

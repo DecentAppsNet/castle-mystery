@@ -4,6 +4,7 @@ import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 export function createLocksParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
@@ -14,6 +15,7 @@ export function createLocksParseFormat():ParseFormat {
 }
 
 export function scheduleLocksActivity(_level:Level,
+  _waypointContext:WaypointGenerationContext,
     activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
 
   // TODO

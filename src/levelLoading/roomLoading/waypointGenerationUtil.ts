@@ -5,7 +5,7 @@ import { assert, assertNonNullable } from "decent-portal";
 
 import Rect from "@/game/types/Rect";
 import RoomExit from "@/game/types/RoomExit";
-import Waypoint from "@/game/types/Waypoint";
+import Waypoint from "../types/Waypoint";
 import { COLUMN_WIDTH, roomWidthToColumnCount } from "@/game/roomGridUtil";
 import { findStairFlightIntersectionAtY, STAIR_POSITION_TOLERANCE } from "@/game/stairUtil";
 import { calcExitWaypointY, calcLandingWaypointY, findExitWaypoint, WAYPOINT_BACK_ROW_Z, WAYPOINT_FRONT_ROW_Z, WAYPOINT_MIDDLE_ROW_Z } from "@/levelLoading/activityLoading/waypointFindingUtil";

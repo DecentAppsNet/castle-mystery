@@ -8,6 +8,7 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { addCharacterKeyframe } from "@/levelLoading/timelineLoading";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 const DEFAULT_WAIT_MSECS = 1_000;
 
@@ -20,6 +21,7 @@ export function createWaitsParseFormat():ParseFormat {
 }
 
 export function scheduleWaitsActivity(_level:Level,
+  _waypointContext:WaypointGenerationContext,
      activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
   const { characterId, seconds } = activity.parts;
 

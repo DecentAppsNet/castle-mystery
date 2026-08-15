@@ -53,7 +53,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!items) return null;
   const partiallyLoadedRooms = loadRoomsPartially(sections, items, errors); // Rooms still missing inventory. Side effect - items receive positions.
   if (!partiallyLoadedRooms) return null;
-  const { rooms, initiallyObscuredRoomIds } = partiallyLoadedRooms;
+  const { rooms, waypointGenerationContext, initiallyObscuredRoomIds } = partiallyLoadedRooms;
   const partiallyLoadedCharacters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
   if (!partiallyLoadedCharacters) return null;
   const { characters, initiallyKnownTitleCharacterIds } = partiallyLoadedCharacters;
@@ -75,7 +75,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
     initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
 
   // Schedule activities into timeline data structure.
-  const timeline = scheduleActivities(level, activities, errors);
+  const timeline = scheduleActivities(level, activities, waypointGenerationContext, errors);
   if (!timeline) return null;
   level.timeline = timeline;
   level.endTime = findLastActivityEndTime(activities) ?? level.startTime;

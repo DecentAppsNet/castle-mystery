@@ -12,7 +12,7 @@ import { findGroundFloorY, validateOutsideRoomsAgainstGroundFloor } from './grou
 import { parseLegendGrid } from './legendGridUtil';
 import { parseSections } from '@/common/markdownUtil';
 import Position from '@/game/types/Position';
-import Waypoint from '@/game/types/Waypoint';
+import Waypoint from '../types/Waypoint';
 import { normalizeId } from '@/game/idUtil';
 import { assert, assertNonNullable } from 'decent-portal';
 import { getSectionIdsFromSectionText } from '../levelFileSectionUtil';
@@ -63,7 +63,6 @@ export function loadRoomsPartially(sections:LevelFileSections, availableItems:Mu
     const stairParts = generateStairParts(room, flights);
     room.stairParts.push(...stairParts);
     const waypoints = generateWaypoints(room.id, room.rect, room.exits, flights);
-    room.waypoints.push(...waypoints);
     waypointGenerationContext.waypoints.push(...waypoints);
     waypointsByRoomId.set(room.id, waypoints);
   });

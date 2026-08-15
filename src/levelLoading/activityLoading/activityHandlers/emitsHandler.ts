@@ -4,6 +4,7 @@ import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 export function createEmitsParseFormat():ParseFormat {
   const subject = makeOptions([
@@ -18,6 +19,7 @@ export function createEmitsParseFormat():ParseFormat {
 }
 
 export function scheduleEmitsActivity(_level:Level,
+  _waypointContext:WaypointGenerationContext,
     activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
 
   // TODO

@@ -4,6 +4,7 @@ import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 export function createShowParseFormat():ParseFormat {
   const show = makeVerb('show');
@@ -16,6 +17,7 @@ export function createShowParseFormat():ParseFormat {
 }
 
 export function scheduleShowActivity(_level:Level,
+  _waypointContext:WaypointGenerationContext,
     activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
 
   // TODO

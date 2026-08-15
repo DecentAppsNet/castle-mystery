@@ -4,6 +4,7 @@ import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 export function createBecomesParseFormat():ParseFormat {
   const itemId = makeIdentifier('itemId', 'ItemId');
@@ -14,6 +15,7 @@ export function createBecomesParseFormat():ParseFormat {
 }
 
 export function scheduleBecomesActivity(_level:Level,
+  _waypointContext:WaypointGenerationContext,
     activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
   // TODO
   activity.endTime = activity.startTime;

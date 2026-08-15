@@ -2,11 +2,12 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import Room from "@/game/types/Room";
-import Waypoint from "@/game/types/Waypoint";
+import Waypoint from "../types/Waypoint";
 import { FLOOR_WAYPOINT_Y_OFFSET, ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import Position, { arePositionsEqual } from "@/game/types/Position";
 import { assert, assertNonNullable } from "decent-portal";
 import RoomExit from "@/game/types/RoomExit";
+import WaypointGenerationContext from "../types/WaypointGenerationContext";
 
 export const WAYPOINT_BACK_ROW_Z = ROOM_BACK_ROW_CENTER_Z;
 export const WAYPOINT_MIDDLE_ROW_Z = ROOM_MIDDLE_ROW_CENTER_Z;
@@ -47,20 +48,27 @@ export function findExitWaypoint(roomId:string, roomRect:Room['rect'], exit:Room
   return waypoint;
 }
 
-export function findNearestFloorWaypointToPosition(room:Room, position:Position):Waypoint {
+export function findWaypointsForRoom(context:WaypointGenerationContext, roomId:string):Waypoint[] {
+  const waypoints = context.waypointsByRoomId.get(roomId);
+  assertNonNullable(waypoints, `missing waypoints for room ${roomId}`);
+  return waypoints;
+}
+
+export function findNearestFloorWaypointToPosition(context:WaypointGenerationContext, room:Room, position:Position):Waypoint {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-  const waypoint = _findNearestXZWaypoint(room.waypoints, position.x, floorY, position.z, []);
+  const waypoint = _findNearestXZWaypoint(findWaypointsForRoom(context, room.id), position.x, floorY, position.z, []);
   assertNonNullable(waypoint);
   return waypoint;
 }
 
-export function findNearestIncludedFloorWaypointToPosition(room:Room, position:Position, excludedWaypoints:Waypoint[]):Waypoint|null {
+export function findNearestIncludedFloorWaypointToPosition(context:WaypointGenerationContext, room:Room, position:Position,
+    excludedWaypoints:Waypoint[]):Waypoint|null {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
-  return _findNearestXZWaypoint(room.waypoints, position.x, floorY, position.z, excludedWaypoints);
+  return _findNearestXZWaypoint(findWaypointsForRoom(context, room.id), position.x, floorY, position.z, excludedWaypoints);
 }
 
-export function findWaypointAtPosition(room:Room, position:Position):Waypoint|null {
-  return room.waypoints.find(w => arePositionsEqual(w.position, position)) ?? null;
+export function findWaypointAtPosition(context:WaypointGenerationContext, roomId:string, position:Position):Waypoint|null {
+  return findWaypointsForRoom(context, roomId).find(w => arePositionsEqual(w.position, position)) ?? null;
 }
 
 export function isFloorWaypoint(room:Room, waypoint:Waypoint):boolean {

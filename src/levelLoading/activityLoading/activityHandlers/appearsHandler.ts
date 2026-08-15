@@ -4,6 +4,7 @@ import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 export function createAppearsParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
@@ -15,6 +16,7 @@ export function createAppearsParseFormat():ParseFormat {
 }
 
 export function scheduleAppearsActivity(_level:Level,
+  _waypointContext:WaypointGenerationContext,
     activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
 
   // TODO

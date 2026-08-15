@@ -10,6 +10,7 @@ import { FacingDirection } from "@/game/types/Character";
 import { createKeyframeAtTime } from "@/game/timeline";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import Position from "@/game/types/Position";
+import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 function _findCharacterFacingDirection(characterId:string, toCharacterId:string, editableTimeline:EditableTimeline, time:number):FacingDirection {
   const keyframe = createKeyframeAtTime(editableTimeline.keyframes, time);
@@ -65,6 +66,7 @@ export function createFacesParseFormat():ParseFormat {
 }
 
 export function scheduleFacesActivity(_level:Level,
+  _waypointContext:WaypointGenerationContext,
     activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
   const { characterId, target, toCharacterId, toItemId } = activity.parts;
   assert(typeof characterId === 'string');

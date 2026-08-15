@@ -3,14 +3,15 @@ import { assert, assertNonNullable, botch } from "decent-portal";
 import { isNormalizedId } from "@/game/idUtil";
 import { findRoom } from "@/game/roomUtil";
 import Room from "@/game/types/Room";
-import Waypoint from "@/game/types/Waypoint";
+import Waypoint from "../types/Waypoint";
 import EditableTimeline from "../timelineLoading/types/EditableTimeline";
 import Position, { arePositionsEqual } from "@/game/types/Position";
-import { findNearestFloorWaypointToPosition, isFloorWaypoint, WAYPOINT_MIDDLE_ROW_Z } from "./waypointFindingUtil";
+import { findNearestFloorWaypointToPosition, findWaypointsForRoom, isFloorWaypoint, WAYPOINT_MIDDLE_ROW_Z } from "./waypointFindingUtil";
 import { addCharacterKeyframe } from "../timelineLoading/editingUtil";
 import { formatMsecsAsTimestamp } from "./timestampUtil";
 import { isPositionInOrOnRect } from "@/game/rectUtil";
 import { findWaypointAtPosition } from "./waypointFindingUtil";
+import WaypointGenerationContext from "../types/WaypointGenerationContext";
 
 const WALK_MSECS_PER_PIXEL = 60;
 
@@ -145,16 +146,18 @@ function _joinWaypointPaths(a:Waypoint[], b:Waypoint[]):Waypoint[] {
   return a.concat(b);
 }
 
-function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Position, toPosition:Position):Waypoint[] {
+function _findWaypointPathThroughRooms(context:WaypointGenerationContext, roomPath:readonly Room[], fromPosition:Position,
+    toPosition:Position):Waypoint[] {
   if (!roomPath.length) return [];
   const waypoints:Waypoint[] = [];
   assert(isPositionInOrOnRect(fromPosition.x, fromPosition.y, roomPath[0].rect));
-  let waypoint = findNearestFloorWaypointToPosition(roomPath[0], fromPosition);
-  assert(roomPath[0].waypoints.includes(waypoint));
+  let waypoint = findNearestFloorWaypointToPosition(context, roomPath[0], fromPosition);
+  assert(findWaypointsForRoom(context, roomPath[0].id).includes(waypoint));
   waypoints.push(waypoint);
   for(let i = 1; i < roomPath.length; ++i) {
     let iterationCount = 0;
-    while(iterationCount <= roomPath[i].waypoints.length) { // A debug-error exit, but could prevent browser hang.
+    const roomWaypoints = findWaypointsForRoom(context, roomPath[i].id);
+    while(iterationCount <= roomWaypoints.length) { // A debug-error exit, but could prevent browser hang.
       const nextRoomId = roomPath[i].id;
       const nextWaypoint:Waypoint|undefined = waypoint.exitDirections[nextRoomId];
       if (nextWaypoint === undefined) break; // Reached room exit.
@@ -162,13 +165,13 @@ function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Po
       waypoint = nextWaypoint;
       ++iterationCount;
     }
-    assert(iterationCount <= roomPath[i].waypoints.length);
+    assert(iterationCount <= roomWaypoints.length);
   }
 
   // Last part of path is to specific position in final room.
   const toRoom = roomPath[roomPath.length-1];
-  const toWaypoint = findNearestFloorWaypointToPosition(toRoom, toPosition);
-  const fromWaypoint = findWaypointAtPosition(toRoom, waypoint.position); // Need waypoint in the destination room.
+  const toWaypoint = findNearestFloorWaypointToPosition(context, toRoom, toPosition);
+  const fromWaypoint = findWaypointAtPosition(context, toRoom.id, waypoint.position); // Need waypoint in the destination room.
   assertNonNullable(fromWaypoint);
   const finalRoomWaypoints = _findWaypointPath(toRoom, fromWaypoint, toWaypoint);
   return _simplifyWaypointPath(_joinWaypointPaths(waypoints, finalRoomWaypoints));
@@ -206,11 +209,11 @@ function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, charact
   return time;
 }
 
-function _scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
+function _scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
     toTime:number|null, characterI:number, timeline:EditableTimeline):string|number {
   assert(toTime === null || toTime >= fromTime);
-  const fromWaypoint = findNearestFloorWaypointToPosition(room, fromPosition);
-  const toWaypoint = findNearestFloorWaypointToPosition(room, toPosition);
+  const fromWaypoint = findNearestFloorWaypointToPosition(context, room, fromPosition);
+  const toWaypoint = findNearestFloorWaypointToPosition(context, room, toPosition);
   const waypointPath = _simplifyWaypointPath(_findWaypointPath(room, fromWaypoint, toWaypoint));
   const pathWalkDuration = _calcWalkDurationForWaypointPath(waypointPath);
 
@@ -231,19 +234,19 @@ function _scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, 
 }
 
 // If successful, returns the amount of delay from fromTime that was used in scheduling. If unsuccessful return error message.
-function _scheduleCharacterMovementToRoomAtTime(rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
+function _scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContext, rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
     fromTime:number, toRoom:Room, toPosition:Position, toTime:number|null, characterI:number, timeline:EditableTimeline):string|number {
   if (arePositionsEqual(fromPosition, toPosition)) return fromTime; // Character already at destination.
   
   if (fromRoom.id === toRoom.id) {
-    return _scheduleCharacterMovementWithinRoom(fromRoom, fromPosition, fromTime, toPosition, 
+    return _scheduleCharacterMovementWithinRoom(context, fromRoom, fromPosition, fromTime, toPosition, 
         toTime, characterI, timeline);
   }
   
   const roomPath = _findRoomPath(rooms, fromRoom.id, toRoom.id);
   if (!roomPath) return `Could not find path from "${fromRoom.id}" room to "${toRoom.id}" room.`;
 
-  const waypointPath = _findWaypointPathThroughRooms(roomPath, fromPosition, toPosition);
+  const waypointPath = _findWaypointPathThroughRooms(context, roomPath, fromPosition, toPosition);
 
   let extraTime = 0;
   if (toTime !== null) {
@@ -263,20 +266,20 @@ function _scheduleCharacterMovementToRoomAtTime(rooms:readonly Room[], fromRoom:
   return extraTime;
 }
 
-export function scheduleCharacterMovementWithinRoom(room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
+export function scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
     characterI:number, timeline:EditableTimeline):string|number {
-  return _scheduleCharacterMovementWithinRoom(room, fromPosition, fromTime, toPosition, null, 
+  return _scheduleCharacterMovementWithinRoom(context, room, fromPosition, fromTime, toPosition, null, 
       characterI, timeline);
 }
 
-export function scheduleCharacterMovementToRoomAtTime(rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
+export function scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContext, rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
     fromTime:number, toRoom:Room, toPosition:Position, toTime:number, characterI:number, timeline:EditableTimeline):string|number {
-  return _scheduleCharacterMovementToRoomAtTime(rooms, fromRoom, fromPosition, fromTime, toRoom, toPosition,
+  return _scheduleCharacterMovementToRoomAtTime(context, rooms, fromRoom, fromPosition, fromTime, toRoom, toPosition,
       toTime, characterI, timeline);
 }
 
-export function scheduleCharacterMovementToRoom(rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
+export function scheduleCharacterMovementToRoom(context:WaypointGenerationContext, rooms:readonly Room[], fromRoom:Room, fromPosition:Position, 
     fromTime:number, toRoom:Room, toPosition:Position, characterI:number, timeline:EditableTimeline):string|number {
-  return _scheduleCharacterMovementToRoomAtTime(rooms, fromRoom, fromPosition, fromTime, toRoom, toPosition,
+  return _scheduleCharacterMovementToRoomAtTime(context, rooms, fromRoom, fromPosition, fromTime, toRoom, toPosition,
       null, characterI, timeline);
 }

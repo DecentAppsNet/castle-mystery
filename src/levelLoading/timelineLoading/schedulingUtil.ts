@@ -30,8 +30,10 @@ import Activity from "../activityLoading/types/Activity";
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { createEditableTimeline } from "./editingUtil";
 import EditableTimeline from "./types/EditableTimeline";
+import WaypointGenerationContext from "../types/WaypointGenerationContext";
 
-type ScheduleActivityCallback = (level:Level, activity:Activity, timeline:EditableTimeline, errors:ErrorCollector) => boolean;
+type ScheduleActivityCallback = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
+  timeline:EditableTimeline, errors:ErrorCollector) => boolean;
 const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCallback}> = {
   '@': scheduleAtActivity,
   'appears': scheduleAppearsActivity,
@@ -54,12 +56,13 @@ const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCal
   'waits': scheduleWaitsActivity
 }
 
-function _scheduleActivity(level:Level, activity:Activity, timeline:EditableTimeline, errors:ErrorCollector):boolean {
+function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
+  timeline:EditableTimeline, errors:ErrorCollector):boolean {
   const scheduleActivityFunc = VERB_TO_SCHEDULE_ACTIVITY_FUNC[activity.verb];
   assertNonNullable(scheduleActivityFunc, `Add handler for "${activity.verb}"`);
   if (!doesActivityUseEndTimestamp(activity.verb) && activity.startTime === null) return false; // A preceding activity must be scheduled first.
 
-  if (!scheduleActivityFunc(level, activity, timeline, errors)) return false;
+  if (!scheduleActivityFunc(level, waypointContext, activity, timeline, errors)) return false;
 
   // Successful scheduling should assign values to startTime and endTime.
   assert(Number.isFinite(activity.startTime) && Number.isFinite(activity.endTime));
@@ -82,7 +85,8 @@ function _createEmptyTimeline(level:Readonly<Level>):Timeline {
   return _editableTimelineToTimeline(editable);
 }
 
-export function scheduleActivities(level:Level, activities:Activity[], errors:ErrorCollector):Timeline|null {
+export function scheduleActivities(level:Level, activities:Activity[], waypointContext:WaypointGenerationContext,
+  errors:ErrorCollector):Timeline|null {
   if (!activities.length) return _createEmptyTimeline(level);
   const originalErrorCount = errors.count;
 
@@ -91,7 +95,7 @@ export function scheduleActivities(level:Level, activities:Activity[], errors:Er
   for(let attemptI = 0; attemptI < activities.length; ++attemptI) {
     assert(toBeScheduled.length > 0);
     const activity = toBeScheduled[0];
-    if (!_scheduleActivity(level, activity, timeline, errors)) return null;
+    if (!_scheduleActivity(level, waypointContext, activity, timeline, errors)) return null;
     toBeScheduled.shift();
     const nextActivity = activity.nextActivity;
     if (nextActivity && nextActivity.startTime === null && !doesActivityUseEndTimestamp(nextActivity.verb)) {

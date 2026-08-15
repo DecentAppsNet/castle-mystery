@@ -62,7 +62,7 @@ describe('level loading - @ activities', () => {
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('closet');
   });
 
-  it.skip('character moves across three rooms by the arrival time', () => { // TODO - reenable after new waypoint generation and pathfinding supports this case.
+  it('character moves across three rooms by the arrival time', () => {
     const { level, errors } = loadLevelForTest(threeRoomLevelText, 'at-three-rooms.md');
 
     expect(errors.describeErrors()).toBe('');
