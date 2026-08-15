@@ -31,7 +31,6 @@ describe('activitiesUtil', () => {
       const firstAuthoredActivity = activities?.find(activity => activity.lineI === firstActivityLineI);
       const secondAuthoredActivity = activities?.find(activity => activity.lineI === secondActivityLineI);
       expect(firstAuthoredActivity?.nextActivity).toBe(secondAuthoredActivity);
-      expect(secondAuthoredActivity?.prevActivity).toBe(firstAuthoredActivity);
     });
   });
 });

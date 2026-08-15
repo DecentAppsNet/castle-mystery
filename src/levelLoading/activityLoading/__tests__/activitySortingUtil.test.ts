@@ -12,7 +12,6 @@ function _activity(verb:string, startTime:number|null, lineI:number = 0):Activit
     startTime,
     endTime:null,
     parts:{},
-    prevActivity:null,
     nextActivity:null
   };
 }
