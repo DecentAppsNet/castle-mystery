@@ -10,6 +10,7 @@ import levelTimesBaseText from './fixtures/level-times-base.md?raw';
 import { loadLevelForTest } from './testLevelUtil';
 import { loadLevelSections } from '../levelFileSectionUtil';
 import { ErrorCollector } from '../errorCollection';
+import { assertNonNullable } from 'decent-portal';
 
 describe('loading levels - sections', () => {
   it('fails if required "general" section is missing', () => {
@@ -69,5 +70,23 @@ describe('loading levels - sections', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(sections?.itinerary.text).toBe('\n0:00:03 Sam sits\n');
+  });
+
+  it('locates raw section bodies by zero-based combined line index', () => {
+    const lines = levelTimesBaseText.split('\n');
+    const itineraryHeadingI = lines.findIndex(line => line === '# itinerary');
+    const conclusionsHeadingI = lines.findIndex(line => line === '# conclusions');
+    const sourceLineMap = lines.map((_, lineI) => ({
+      filename:lineI > itineraryHeadingI && lineI < conclusionsHeadingI ? 'itinerary.md' : 'level-times-base.md',
+      lineNo:lineI + 1
+    }));
+    const errors = new ErrorCollector(levelTimesBaseText, sourceLineMap);
+
+    const sections = loadLevelSections(levelTimesBaseText, errors);
+
+    expect(errors.describeErrors()).toBe('');
+    assertNonNullable(sections);
+    expect(sections.itinerary.lineI).toBe(itineraryHeadingI + 1);
+    expect(sections.itinerary.text).toBe(lines.slice(sections.itinerary.lineI, conclusionsHeadingI).join('\n'));
   });
 });

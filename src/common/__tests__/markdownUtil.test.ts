@@ -8,6 +8,7 @@ import {
   parseNameValueLineEntries,
   parseOptions,
   parseSectionEntries,
+  parseSectionEntriesWithLines,
   parseSections,
   parseUniqueNameValueLines
 } from '../markdownUtil';
@@ -144,6 +145,24 @@ describe('markdownUtil', () => {
       ].join('\n'), 1, true);
 
       expect(entries.map(([name]) => name)).toEqual(['general', 'winSynopsis']);
+    });
+  });
+
+  describe('parseSectionEntriesWithLines()', () => {
+    it('returns one-based heading line numbers and zero-based body start indexes', () => {
+      const entries = parseSectionEntriesWithLines([
+        '',
+        '# General',
+        '',
+        '* activeCharacter=Hero',
+        '# Rooms',
+        '## Hall'
+      ].join('\n'));
+
+      expect(entries.map(entry => ({ lineNo:entry.lineNo, bodyStartLineI:entry.bodyStartLineI }))).toEqual([
+        { lineNo:2, bodyStartLineI:2 },
+        { lineNo:5, bodyStartLineI:5 }
+      ]);
     });
   });
 

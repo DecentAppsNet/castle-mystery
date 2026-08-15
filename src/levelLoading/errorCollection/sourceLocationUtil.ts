@@ -9,13 +9,13 @@ export const FIRST_SECTION_LINE = '';
 export const ROOT_LEVEL = '';
 
 function _findSectionRecursively(text:string, indentLevel:number, sectionNames:string[], firstLineI = 0):{sectionText:string, lineIOffset:number}|null {
-  const sections = parseSectionEntriesWithLines(text, indentLevel, false, firstLineI);
+  const sections = parseSectionEntriesWithLines(text, indentLevel, false, firstLineI + 1);
   const sectionId:string = normalizeId(sectionNames[0]);
   const section = sections.find(entry => normalizeId(entry.name) === sectionId) ?? null;
   if (!section) return null;
 
   sectionNames = sectionNames.slice(1);
-  const sectionBodyStartI = section.lineNo + 1;
+  const sectionBodyStartI = section.bodyStartLineI;
   if (!sectionNames.length) return {sectionText:section.value, lineIOffset:sectionBodyStartI};
 
   return _findSectionRecursively(section.value, indentLevel+1, sectionNames, sectionBodyStartI);

@@ -16,9 +16,9 @@ export function replaceSection(text:string, sectionName:string, replacementLines
   const sectionI = sections.findIndex(section => section.name === sectionName);
   if (sectionI < 0) throw new Error(`section '${sectionName}' not found`);
 
-  const bodyStartI = sections[sectionI].lineNo;
+  const bodyStartI = sections[sectionI].bodyStartLineI;
   const nextSection = sections[sectionI + 1];
-  const bodyEndI = nextSection ? nextSection.lineNo - 1 : lines.length;
+  const bodyEndI = nextSection ? nextSection.bodyStartLineI - 1 : lines.length;
   lines.splice(bodyStartI, bodyEndI - bodyStartI, '', ...replacementLines, '');
   return lines.join('\n');
 }

@@ -57,11 +57,14 @@ export function loadLevelSections(levelText:string, errors:ErrorCollector):Level
   const sections:Record<string, LevelFileSection> = {};
   const parsedSections = _getTopLevelSections(levelText, errors);
   if (!parsedSections) return null;
+  const sectionEntries = parseSectionEntriesWithLines(levelText, 1, false);
   
   KNOWN_TOP_LEVEL_SECTION_IDS.forEach(sectionId => {
     const sectionText = parsedSections[sectionId];
     if (!sectionText) return;
-    const section:LevelFileSection = { id:sectionId, text:sectionText }
+    const sectionEntry = sectionEntries.find(entry => normalizeId(entry.name) === sectionId);
+    if (!sectionEntry) return;
+    const section:LevelFileSection = { id:sectionId, lineI:sectionEntry.bodyStartLineI, text:sectionText }
     sections[sectionId] = section;
   });
 
@@ -122,7 +125,8 @@ export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:
     normalizedEntries.set(normalizedName, {
       name:sectionEntry.name,
       value:sectionEntry.value,
-      lineNo:sectionEntry.lineNo
+      lineNo:sectionEntry.lineNo,
+      bodyStartLineI:sectionEntry.bodyStartLineI
     });
   });
 
