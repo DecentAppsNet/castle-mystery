@@ -79,7 +79,7 @@ export function initMutableLevelAndLoadingContext(sections:LevelFileSections, er
   const loadingContext = _parseGeneralSection(sections.general.text, level, errors);
   const allowedValuesByIdentifier = _createAllowedValuesByIdentifier(sections, errors);
   loadingContext.activityParsingRules = initActivityParsingRules(allowedValuesByIdentifier); // Fixes the placeholder.
-  level.activeCharacterId = loadingContext.activeCharacterId ?? findActiveCharacterFromItinerary(sections.itinerary?.text, 
+  level.activeCharacterId = loadingContext.activeCharacterId ?? findActiveCharacterFromItinerary(sections.itinerary,
     loadingContext.activityParsingRules, errors);
   return errors.hasErrors ? null : { level, loadingContext };
 }

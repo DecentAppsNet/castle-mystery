@@ -16,10 +16,10 @@ export function replaceSection(text:string, sectionName:string, replacementLines
   const sectionI = sections.findIndex(section => section.name === sectionName);
   if (sectionI < 0) throw new Error(`section '${sectionName}' not found`);
 
-  const bodyStartI = sections[sectionI].bodyStartLineI;
+  const bodyStartLineI = sections[sectionI].bodyStartLineI;
   const nextSection = sections[sectionI + 1];
-  const bodyEndI = nextSection ? nextSection.bodyStartLineI - 1 : lines.length;
-  lines.splice(bodyStartI, bodyEndI - bodyStartI, '', ...replacementLines, '');
+  const bodyEndLineI = nextSection ? nextSection.bodyStartLineI - 1 : lines.length;
+  lines.splice(bodyStartLineI, bodyEndLineI - bodyStartLineI, '', ...replacementLines, '');
   return lines.join('\n');
 }
 

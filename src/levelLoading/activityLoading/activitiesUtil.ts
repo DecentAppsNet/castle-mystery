@@ -30,7 +30,7 @@ export function loadActivitiesPartially(itinerarySection:LevelFileSection|undefi
 
   if (!itinerarySection) return [];
   const itinerarySectionText = itinerarySection.text;
-  if (!itinerarySectionText.trim() || !isFirstActivityTimestampValid(itinerarySectionText, errors)) return [];
+  if (!itinerarySectionText.trim() || !isFirstActivityTimestampValid(itinerarySection, errors)) return [];
 
   const activities:Activity[] = [];
   const lines = itinerarySectionText.split('\n');
@@ -40,7 +40,7 @@ export function loadActivitiesPartially(itinerarySection:LevelFileSection|undefi
     if (!lineText.trim()) continue;
     const parseResult = tryParseActivity(lineText, rules);
     if (typeof parseResult === 'string') {
-      errors.addAt(parseResult, 'itinerary', lineText);
+      errors.addAtLine(parseResult, itinerarySection.lineI + sectionLineI);
       continue;
     }
     const activity:Activity = { ...parseResult, lineI:itinerarySection.lineI + sectionLineI };

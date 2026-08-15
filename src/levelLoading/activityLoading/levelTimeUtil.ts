@@ -4,16 +4,19 @@ import { tryParseActivity } from "./parseUtil";
 import ActivityParsingRules from "./types/ActivityParsingRules";
 import Activity, { ParsedActivity } from './types/Activity';
 import { tryParseAbsoluteTimestamp } from './timestampUtil';
+import LevelFileSection from '../types/LevelFileSection';
 
-function _findFirstActivityLineText(itinerarySectionText:string):string {
-  return itinerarySectionText.split('\n').find(lineText => lineText.trim().length > 0)?.trim() ?? '';
+function _findFirstActivityLine(itinerarySection:LevelFileSection):{lineText:string, sectionLineI:number} {
+  const lines = itinerarySection.text.split('\n');
+  const sectionLineI = lines.findIndex(lineText => lineText.trim().length > 0);
+  return { lineText:sectionLineI < 0 ? '' : lines[sectionLineI].trim(), sectionLineI };
 }
 
-function _parseFirstActivity(itinerarySectionText:string, rules:ActivityParsingRules, errors:ErrorCollector):ParsedActivity|null {
-  const lineText = _findFirstActivityLineText(itinerarySectionText);
+function _parseFirstActivity(itinerarySection:LevelFileSection, rules:ActivityParsingRules, errors:ErrorCollector):ParsedActivity|null {
+  const { lineText, sectionLineI } = _findFirstActivityLine(itinerarySection);
   const parseResult = tryParseActivity(lineText, rules);
   if (typeof parseResult === 'string') {
-    errors.addAt(parseResult, 'itinerary', lineText);
+    errors.addAtLine(parseResult, itinerarySection.lineI + sectionLineI);
     return null;
   }
   return parseResult;
@@ -42,21 +45,23 @@ export function findStartTimeFromItinerary(itinerarySectionText:string):number|n
   return earliestTime === Infinity ? 0 : earliestTime;
 }
 
-export function isFirstActivityTimestampValid(itinerarySectionText:string, errors:ErrorCollector):boolean {
-  assert(itinerarySectionText.trim().length > 0); // Don't call for an empty itinerary.
-  const lineText = _findFirstActivityLineText(itinerarySectionText);
+export function isFirstActivityTimestampValid(itinerarySection:LevelFileSection, errors:ErrorCollector):boolean {
+  assert(itinerarySection.text.trim().length > 0); // Don't call for an empty itinerary.
+  const { lineText, sectionLineI } = _findFirstActivityLine(itinerarySection);
   const timestampPart = lineText.split(' ')[0];
   const time = tryParseAbsoluteTimestamp(timestampPart);
   if (time === null) {
-    errors.addAt(`First line in itinerary began with "${timestampPart}". Expecting an absolute timestamp.`, 'itinerary');
+    errors.addAtLine(`First line in itinerary began with "${timestampPart}". Expecting an absolute timestamp.`,
+      itinerarySection.lineI + sectionLineI);
     return false;
   }
   return true;
 }
 
-export function findActiveCharacterFromItinerary(itinerarySectionText:string, rules:ActivityParsingRules, errors:ErrorCollector):string|null {
-  if (!itinerarySectionText.trim()) return null;
-  const activity = _parseFirstActivity(itinerarySectionText, rules, errors);
+export function findActiveCharacterFromItinerary(itinerarySection:LevelFileSection|undefined, rules:ActivityParsingRules,
+    errors:ErrorCollector):string|null {
+  if (!itinerarySection?.text.trim()) return null;
+  const activity = _parseFirstActivity(itinerarySection, rules, errors);
   if (!activity) return null;
   const characterId = activity.parts.characterId;
   return (typeof characterId === 'string') ? characterId : null;

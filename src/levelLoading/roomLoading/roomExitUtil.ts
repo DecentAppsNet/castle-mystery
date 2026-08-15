@@ -16,14 +16,13 @@ function _modifierTextToTokens(text:string):string[] {
     .filter(t => t.length > 0);
 }
 
-function _splitExitOption(exitOptionText:string, errors:ErrorCollector):{roomId:string, modifierTokens:string[]} {
+function _splitExitOption(exitOptionText:string, sourceRoomId:string,
+  errors:ErrorCollector):{roomId:string, modifierTokens:string[]} {
   let modifierTokens:string[] = [];
   let roomId = '';
 
   const leftParenPos = exitOptionText.indexOf('(');
   const rightParenPos = exitOptionText.indexOf(')');
-
-  errors.matchNextLine(['rooms', roomId], '* exits=', '');
 
   if (leftParenPos === -1 && rightParenPos === -1) { // No parentheses found, so no modifier.
     return { roomId:normalizeId(exitOptionText), modifierTokens };
@@ -31,16 +30,15 @@ function _splitExitOption(exitOptionText:string, errors:ErrorCollector):{roomId:
   
   if (leftParenPos !== -1 && rightParenPos !== -1) { // Both parentheses found.
     if (leftParenPos >= rightParenPos) {
-      errors.setNextCharRange(rightParenPos, leftParenPos+1);
-      errors.add('")" preceding "(" with no matched "(". Fix parentheses.');
+      errors.addAtCharRange('")" preceding "(" with no matched "(". Fix parentheses.',
+        ['rooms', sourceRoomId], '* exits=', rightParenPos, leftParenPos+1);
     } else {
       const modifiersText = exitOptionText.substring(leftParenPos + 1, rightParenPos);
       modifierTokens = _modifierTextToTokens(modifiersText);
     }
     const roomIdText = exitOptionText.substring(0, leftParenPos).trim();
     if (!roomIdText) {
-      errors.setNextCharRange(leftParenPos, leftParenPos+1);
-      errors.add('Expected a room ID.');
+      errors.addAtCharRange('Expected a room ID.', ['rooms', sourceRoomId], '* exits=', leftParenPos, leftParenPos+1);
     }
     roomId = normalizeId(roomIdText);
     return { roomId, modifierTokens };
@@ -49,13 +47,13 @@ function _splitExitOption(exitOptionText:string, errors:ErrorCollector):{roomId:
   // One of two parentheses found.
   if (leftParenPos !== -1) {
     assert(rightParenPos === -1);
-    errors.setNextCharRange(leftParenPos, leftParenPos+1);
-    errors.add('Missing ")" to enclose modifier.');
+    errors.addAtCharRange('Missing ")" to enclose modifier.',
+      ['rooms', sourceRoomId], '* exits=', leftParenPos, leftParenPos+1);
   } else {
     assert(leftParenPos === -1);
     assert(rightParenPos !== -1);
-    errors.setNextCharRange(rightParenPos, rightParenPos+1);
-    errors.add('Missing "(" to enclose modifier.');
+    errors.addAtCharRange('Missing "(" to enclose modifier.',
+      ['rooms', sourceRoomId], '* exits=', rightParenPos, rightParenPos+1);
   }
   return { roomId, modifierTokens };
 }
@@ -217,7 +215,7 @@ function _createNewExit(room:Room, otherRoom:Room, modifierTokens:string[]):Room
 }
 
 function _addExitToRoomAsNeeded(exitOptionText:string, room:Room, rooms:Room[], errors:ErrorCollector):void {
-  const {roomId:otherRoomId, modifierTokens} = _splitExitOption(exitOptionText, errors);
+  const {roomId:otherRoomId, modifierTokens} = _splitExitOption(exitOptionText, room.id, errors);
   const otherRoom = findRoom(rooms, otherRoomId);
   if (!otherRoom) {
     errors.addAt(`"${otherRoomId}" room ID must match a defined room.`, ['rooms', room.id], '* exits=', otherRoomId);

@@ -15,10 +15,10 @@ function _findSectionRecursively(text:string, indentLevel:number, sectionNames:s
   if (!section) return null;
 
   sectionNames = sectionNames.slice(1);
-  const sectionBodyStartI = section.bodyStartLineI;
-  if (!sectionNames.length) return {sectionText:section.value, lineIOffset:sectionBodyStartI};
+  const sectionBodyStartLineI = section.bodyStartLineI;
+  if (!sectionNames.length) return {sectionText:section.value, lineIOffset:sectionBodyStartLineI};
 
-  return _findSectionRecursively(section.value, indentLevel+1, sectionNames, sectionBodyStartI);
+  return _findSectionRecursively(section.value, indentLevel+1, sectionNames, sectionBodyStartLineI);
 }
 
 function _matchCharRange(line:string, charRangeCriteria:string):{fromCharNo:number, toCharNo:number} {

@@ -25,6 +25,34 @@ describe('level loading - times and labels', () => {
     expect(level?.endTime).toBe(3_000);
   });
 
+  it('reports an invalid first timestamp at the first activity line', () => {
+    const activityText = ': Sam stands';
+    const text = replaceSection(levelTimesBaseText, 'itinerary', ['', '', activityText]);
+    const activityLineNo = text.split('\n').findIndex(line => line === activityText) + 1;
+
+    const { level, errors } = loadLevelForTest(text, 'times-relative-first.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toBe(
+      `times-relative-first.md:${activityLineNo}:0: First line in itinerary began with ":". Expecting an absolute timestamp.`
+    );
+  });
+
+  it('reports an invalid activity at its exact line', () => {
+    const activityText = '0:00:04 Sam dances';
+    const text = replaceSection(levelTimesBaseText, 'itinerary', [
+      '0:00:03 Sam sits',
+      '',
+      activityText
+    ]);
+    const activityLineNo = text.split('\n').findIndex(line => line === activityText) + 1;
+
+    const { level, errors } = loadLevelForTest(text, 'times-invalid-activity.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors().startsWith(`times-invalid-activity.md:${activityLineNo}:0:`)).toBe(true);
+  });
+
   it('sets start time to 0 when itinerary is unavailable', () => {
     const text = replaceSection(levelTimesBaseText, 'itinerary', []);
     const { level, errors } = loadLevelForTest(text, 'times-default-start.md');

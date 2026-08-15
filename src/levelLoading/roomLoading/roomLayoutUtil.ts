@@ -92,7 +92,6 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
 }
 
 export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:ErrorCollector):Room[] {
-  errors.matchNextLine('map', '```', '```'); // Default location for all error messages.
   const originalErrorCount = errors.count;
 
   if (!mapLegendGrid) return [];
@@ -117,7 +116,9 @@ export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:Error
   const rooms = Array.from(roomBoundsById.entries()).map(([roomId, bounds]) => {
     const expectedTileCount = (bounds.maxCol - bounds.minCol + 1) * (bounds.maxRow - bounds.minRow + 1);
     const actualTileCount = roomTileCountById.get(roomId) || 0;
-    if (actualTileCount !== expectedTileCount) errors.add('Map tiles for ${roomId} cover a non-rect area.');
+    if (actualTileCount !== expectedTileCount) {
+      errors.addAt(`Map tiles for ${roomId} cover a non-rect area.`, 'map', '```', '```');
+    }
     return {
       ...createDefaultRoom(),
       id: roomId,

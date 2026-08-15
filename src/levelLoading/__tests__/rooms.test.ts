@@ -101,7 +101,7 @@ describe('loading levels - rooms', () => {
 		const { level, errors } = loadLevelForTest(mapNonRectRoomText, 'rooms-map-non-rect-room.md');
 
 		expect(level).toBeNull();
-		expect(errors.describeErrors()).toContain('Map tiles for ${roomId} cover a non-rect area.');
+		expect(errors.describeErrors()).toContain('Map tiles for hall cover a non-rect area.');
 	});
 
 	it('fails if a map legend room does not have a matching rooms section definition', () => {
