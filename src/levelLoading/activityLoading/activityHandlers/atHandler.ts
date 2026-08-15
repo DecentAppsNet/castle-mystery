@@ -81,7 +81,7 @@ export function scheduleAtActivity(level:Level,
     ? scheduleCharacterMovementToRoom(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableTimeline)
     : scheduleCharacterMovementToRoomAtTime(level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableTimeline)
   if (typeof scheduleResult === 'string') {
-    errors.addAt(scheduleResult, 'itinerary'); // TODO need line# from activity.
+    errors.addAtLine(scheduleResult, activity.lineI);
     return false;
   }
 

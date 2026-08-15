@@ -43,11 +43,19 @@ describe('level loading - takes activities', () => {
   });
 
   it('errors when character attempts to take an item from a different room', () => {
-    const text = replaceSection(defaultLevelText, 'itinerary', ['0:00:00 Sam takes Vase']);
+    const activityText = '0:00:01 Sam takes Vase';
+    const text = replaceSection(defaultLevelText, 'itinerary', [
+      '0:00:00 Sam waits',
+      '',
+      activityText
+    ]);
+    const activityLineNo = text.split('\n').findIndex(line => line === activityText) + 1;
     const { level, errors } = loadLevelForTest(text, 'takes-different-room.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"vase" item is not in "hall" room with "sam" character, so can\'t be taken.');
+    expect(errors.describeErrors()).toBe(
+      `takes-different-room.md:${activityLineNo}:0: "vase" item is not in "hall" room with "sam" character, so can't be taken.`
+    );
   });
 
   it('character takes an item from room into left hand', () => {

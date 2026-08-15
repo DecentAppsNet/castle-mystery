@@ -136,7 +136,7 @@ export function scheduleTakesActivity(level:Level,
   // Item isn't on character, so find it in room.
   const characterRoom = findRoomAtPosition(level.rooms, character.position.x, character.position.y);
   if (!characterRoom) {
-    errors.addAt(`"${characterId}" character is not placed in a room, so can't take "${itemId}" item.`, 'itinerary');
+    errors.addAtLine(`"${characterId}" character is not placed in a room, so can't take "${itemId}" item.`, activity.lineI);
     return false;
   }
 
@@ -144,7 +144,7 @@ export function scheduleTakesActivity(level:Level,
   assertNonNullable(roomI);
   const roomKeyframe = findRoomKeyframeForTime(editableTimeline.keyframes, roomI, activity.startTime);
   if (!_isItemInRoom(roomKeyframe, itemId)) {
-    errors.addAt(`"${itemId}" item is not in "${characterRoom.id}" room with "${characterId}" character, so can't be taken.`, 'itinerary');
+    errors.addAtLine(`"${itemId}" item is not in "${characterRoom.id}" room with "${characterId}" character, so can't be taken.`, activity.lineI);
     return false;
   }
 
@@ -156,7 +156,7 @@ export function scheduleTakesActivity(level:Level,
   const scheduleResult = scheduleCharacterMovementWithinRoom(characterRoom, character.position, scheduleTime, takeWaypoint.position,
     characterI, editableTimeline);
   if (typeof scheduleResult === 'string') {
-    errors.addAt(scheduleResult, 'itinerary');
+    errors.addAtLine(scheduleResult, activity.lineI);
     return false;
   }
   scheduleTime = scheduleResult;

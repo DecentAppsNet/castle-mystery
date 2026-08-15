@@ -87,4 +87,19 @@ describe('level loading - @ activities', () => {
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('closet');
     expect(findRoomAtPosition(level!.rooms, bennyPosition.x, bennyPosition.y)?.id).toBe('hall');
   });
+
+  it('reports an unschedulable @ activity at its exact source line', () => {
+    const activityText = '0:00:00 Sam @ Closet';
+    const text = replaceSection(defaultLevelText, 'itinerary', [
+      '0:00:00 Sam stands',
+      '',
+      activityText
+    ]);
+    const activityLineNo = text.split('\n').findIndex(line => line === activityText) + 1;
+
+    const { level, errors } = loadLevelForTest(text, 'at-too-soon.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain(`at-too-soon.md:${activityLineNo}:0: Can't arrive at destination`);
+  });
 });
