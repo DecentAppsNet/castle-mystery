@@ -62,7 +62,7 @@ function _scheduleActivity(level:Level, activity:Activity, timeline:EditableTime
   if (!scheduleActivityFunc(level, activity, timeline, errors)) return false;
 
   // Successful scheduling should assign values to startTime and endTime.
-  assert(!Number.isNaN(activity.startTime) && !Number.isNaN(activity.endTime));
+  assert(Number.isFinite(activity.startTime) && Number.isFinite(activity.endTime));
   assertNonNullable(activity.startTime);
   assertNonNullable(activity.endTime);
   assert(activity.startTime <= activity.endTime);
@@ -92,11 +92,9 @@ export function scheduleActivities(level:Level, activities:Activity[], errors:Er
     assert(toBeScheduled.length > 0);
     const activity = toBeScheduled[0];
     if (!_scheduleActivity(level, activity, timeline, errors)) return null;
-    assertNonNullable(activity.startTime);
-    assertNonNullable(activity.endTime);
     toBeScheduled.shift();
     const nextActivity = activity.nextActivity;
-    if (nextActivity && nextActivity.startTime === null) {
+    if (nextActivity && nextActivity.startTime === null && !doesActivityUseEndTimestamp(nextActivity.verb)) {
       nextActivity.startTime = activity.endTime;
       const nextActivityI = toBeScheduled.indexOf(nextActivity);
       toBeScheduled = sortActivitiesAfterStartTimeAssignment(toBeScheduled, nextActivityI, level.startTime);
