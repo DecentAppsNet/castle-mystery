@@ -57,8 +57,9 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   const partiallyLoadedCharacters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
   if (!partiallyLoadedCharacters) return null;
   const { characters, initiallyKnownTitleCharacterIds } = partiallyLoadedCharacters;
-  level.startTime = findStartTimeFromItinerary(sections.itinerary?.text ?? '') ?? 0;
-  const activities = loadActivitiesPartially(sections.itinerary?.text ?? '', loadingContext.activityParsingRules, 
+  const itinerarySection = sections.itinerary;
+  level.startTime = findStartTimeFromItinerary(itinerarySection?.text ?? '') ?? 0;
+  const activities = loadActivitiesPartially(itinerarySection, loadingContext.activityParsingRules, 
       level.startTime, loadingContext.activeCharacterId, errors);
   if (!activities) return null;
 

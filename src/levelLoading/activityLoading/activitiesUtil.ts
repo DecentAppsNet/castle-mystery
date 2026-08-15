@@ -8,6 +8,7 @@ import { tryParseActivity } from "./parseUtil";
 import { isFirstActivityTimestampValid } from "./levelTimeUtil";
 import { assert } from "decent-portal";
 import { sortActivities } from "./activitySortingUtil";
+import LevelFileSection from "../types/LevelFileSection";
 
 // activities param must be in authored order.
 function _resolveImpliedSubjects(activities:Activity[], activeCharacterId:string) {
@@ -23,10 +24,12 @@ function _resolveImpliedSubjects(activities:Activity[], activeCharacterId:string
   }
 }
 
-export function loadActivitiesPartially(itinerarySectionText:string, rules:ActivityParsingRules, 
+export function loadActivitiesPartially(itinerarySection:LevelFileSection|undefined, rules:ActivityParsingRules, 
     startTime:number, activeCharacterId:string, errors:ErrorCollector):Activity[]|null {
   const originalErrorCount = errors.count;
 
+  if (!itinerarySection) return [];
+  const itinerarySectionText = itinerarySection.text;
   if (!itinerarySectionText.trim() || !isFirstActivityTimestampValid(itinerarySectionText, errors)) return [];
 
   const activities:Activity[] = [];
@@ -40,13 +43,14 @@ export function loadActivitiesPartially(itinerarySectionText:string, rules:Activ
       errors.addAt(parseResult, 'itinerary', lineText);
       continue;
     }
-    assert(parseResult.startTime === null || parseResult.startTime >= startTime); // Expecting that the previously-found startTime already looked at activity timestamps to set it.
-    if (!prevActivity && parseResult.startTime === null) parseResult.startTime = startTime ?? 0;
-    parseResult.prevActivity = prevActivity;
-    if (prevActivity) prevActivity.nextActivity = parseResult;
+    const activity:Activity = { ...parseResult, lineI:itinerarySection.lineI + sectionLineI };
+    assert(activity.startTime === null || activity.startTime >= startTime); // Expecting that the previously-found startTime already looked at activity timestamps to set it.
+    if (!prevActivity && activity.startTime === null) activity.startTime = startTime ?? 0;
+    activity.prevActivity = prevActivity;
+    if (prevActivity) prevActivity.nextActivity = activity;
 
-    activities.push(parseResult);
-    prevActivity = parseResult;
+    activities.push(activity);
+    prevActivity = activity;
   }
   _resolveImpliedSubjects(activities, activeCharacterId);
 

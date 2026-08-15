@@ -2,14 +2,14 @@ import { assert } from 'decent-portal';
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { tryParseActivity } from "./parseUtil";
 import ActivityParsingRules from "./types/ActivityParsingRules";
-import Activity from './types/Activity';
+import Activity, { ParsedActivity } from './types/Activity';
 import { tryParseAbsoluteTimestamp } from './timestampUtil';
 
 function _findFirstActivityLineText(itinerarySectionText:string):string {
   return itinerarySectionText.split('\n').find(lineText => lineText.trim().length > 0)?.trim() ?? '';
 }
 
-function _parseFirstActivity(itinerarySectionText:string, rules:ActivityParsingRules, errors:ErrorCollector):Activity|null {
+function _parseFirstActivity(itinerarySectionText:string, rules:ActivityParsingRules, errors:ErrorCollector):ParsedActivity|null {
   const lineText = _findFirstActivityLineText(itinerarySectionText);
   const parseResult = tryParseActivity(lineText, rules);
   if (typeof parseResult === 'string') {

@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable, botch } from "decent-portal";
-import Activity from "./types/Activity";
+import { ParsedActivity } from "./types/Activity";
 import ActivityParsingRules, { AllowedValuesByIdentifierId } from "./types/ActivityParsingRules";
 import ParseFormat from "./types/ParseFormat";
 import ActivityParts from "./types/ActivityParts";
@@ -347,7 +347,7 @@ function _getStartAndEndTimes(activityTime:number|null, verb:string):{startTime:
 
 export function doesActivityUseEndTimestamp(verb:string) { return verb === '@'; }
 
-export function tryParseActivity(activityLine:string, rules:ActivityParsingRules):Activity|string {
+export function tryParseActivity(activityLine:string, rules:ActivityParsingRules):ParsedActivity|string {
   throwIfActivityParsingRulesAreInvalid(rules);
 
   const splitResult = _splitActivityLineToTimestampAndActivityText(activityLine);
@@ -369,7 +369,7 @@ export function tryParseActivity(activityLine:string, rules:ActivityParsingRules
   const parseResult = _tryParseActivityTextAgainstFormat(activityText, parseFormat, rules);
   if (typeof parseResult === 'string') return parseResult;
 
-  const activity:Activity = {
+  const activity:ParsedActivity = {
     verb,
     startTime,
     endTime,

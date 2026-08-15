@@ -5,8 +5,9 @@ import { describe, expect, it } from 'vitest';
 import { sortActivities, sortActivitiesAfterStartTimeAssignment } from '../activitySortingUtil';
 import Activity from '../types/Activity';
 
-function _activity(verb:string, startTime:number|null):Activity {
+function _activity(verb:string, startTime:number|null, lineI:number = 0):Activity {
   return {
+    lineI,
     verb,
     startTime,
     endTime:null,
