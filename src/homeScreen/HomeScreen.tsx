@@ -16,9 +16,7 @@ import { changeLevel, continueToNextLevel } from "./interactions/levels";
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
 import { createDiscoveries } from "@/game/discoveriesUtil";
 import Timeline from "@/game/types/Timeline";
-import { findRoomAtPosition } from "@/game/roomUtil";
 import TimeSlider from "./timeSlider/TimeSlider";
-import { assertNonNullable } from "decent-portal";
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -34,15 +32,6 @@ function _shouldOpenWinLevelDialog(previousConclusions:ReadonlyArray<Conclusion>
   return _isLevelComplete(nextConclusions) && !_isLevelComplete(previousConclusions);
 }
 
-function _findActiveRoomId(gameState:GameState|null, activeCharacterId:string):string|null {
-  if (!gameState || !activeCharacterId) return null;
-  const activeCharacter = gameState.timelineSnapshot.characters.find(c => c.id === activeCharacterId);
-  assertNonNullable(activeCharacter);
-  const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
-  assertNonNullable(activeRoom);
-  return activeRoom.id;
-}
-
 function HomeScreen() {
   const [gameState, setGameState] = useState<GameState|null>(null);
   const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
@@ -53,7 +42,7 @@ function HomeScreen() {
   const [conclusions, setConclusions] = useState<Conclusion[]>([]);
   const [discoveries, setDiscoveries] = useState<Discoveries>(createEmptyDiscoveries());
   const [conclusionClaimCooldowns, setConclusionClaimCooldowns] = useState<Record<string, number>>({});
-  const [activeCharacterId, setActiveCharacterId] = useState<string>("");
+  const [, setActiveCharacterId] = useState<string>("");
   const [timeline, setTimeline] = useState<Timeline|null>(null);
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
@@ -176,7 +165,7 @@ function HomeScreen() {
           characters={gameState.baseCharacters}
           rooms={gameState.baseRooms}
           roomsRevision={gameState.conclusionsRevision}
-          activeRoomId={_findActiveRoomId(gameState, activeCharacterId)}
+          activeRoomId={gameState.timelineSnapshot.activeRoom.id}
           labels={gameState.labels}
           isPlaying={isPlaying}
           isPlayPauseDisabled={isPlayPauseDisabled}

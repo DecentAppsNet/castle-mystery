@@ -3,28 +3,15 @@ import { describe, expect, it } from 'vitest';
 
 import { calcRoomCameraRect, createCamera, syncCameraTargetToActiveRoom, updateCamera } from '../cameraUtil';
 import { calcRenderedRoomBounds, calcRenderedRoomsBoundingRect } from '../roomRoofUtil';
-import { ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
-import Character, { createDefaultCharacter } from '../types/Character';
 import Rect from '../types/Rect';
 import Room, { createDefaultRoom } from '../types/Room';
 
 const FLOAT_EPSILON = 0.000001;
-const DEFAULT_CHARACTER_DEPTH = ROOM_MIDDLE_ROW_CENTER_Z;
 
 function _createRoom(rect:Room['rect']):Room {
   return {
     ...createDefaultRoom(),
     rect
-  };
-}
-
-function _createCharacter(x:number, y:number):Character {
-  return {
-    ...createDefaultCharacter(),
-    id:'hero',
-    title:'Hero',
-    description:'Hero',
-    position:{ x, y, z:DEFAULT_CHARACTER_DEPTH }
   };
 }
 
@@ -80,7 +67,7 @@ describe('cameraUtil', () => {
       camera.zoomAmount = 1;
       const originalRect = { ...camera.currentRect };
 
-      syncCameraTargetToActiveRoom(camera, [room], _createCharacter(20, 30), 1, 1_000);
+      syncCameraTargetToActiveRoom(camera, [room], room, 1, 1_000);
 
       expect(camera.trackedRoomId).toBe('room');
       expect(camera.aspectRatio).toBe(1);
@@ -99,11 +86,11 @@ describe('cameraUtil', () => {
       const camera = createCamera({ x:0, y:0, width:100, height:100 });
 
       camera.zoomAmount = 0;
-      syncCameraTargetToActiveRoom(camera, rooms, _createCharacter(20, 30), 1, 1_000);
+      syncCameraTargetToActiveRoom(camera, rooms, room, 1, 1_000);
       const zoomedOutRect = { ...camera.targetRect };
 
       camera.zoomAmount = 1;
-      syncCameraTargetToActiveRoom(camera, rooms, _createCharacter(20, 30), 1, 1_001);
+      syncCameraTargetToActiveRoom(camera, rooms, room, 1, 1_001);
       const zoomedInRect = { ...camera.targetRect };
 
       _expectRectToContainRect(zoomedOutRect, calcRenderedRoomsBoundingRect(rooms));
@@ -118,7 +105,7 @@ describe('cameraUtil', () => {
       const room = _createRoom({ x:10, y:20, width:40, height:20 });
       const camera = createCamera({ x:0, y:0, width:100, height:100 });
       camera.zoomAmount = 1;
-      syncCameraTargetToActiveRoom(camera, [room], _createCharacter(20, 30), 1, 1_000);
+      syncCameraTargetToActiveRoom(camera, [room], room, 1, 1_000);
       const startRect = { ...camera.currentRect };
       const halfwayTime = camera.moveStartTime + camera.moveDuration / 2;
 

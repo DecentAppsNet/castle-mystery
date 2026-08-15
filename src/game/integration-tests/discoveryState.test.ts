@@ -4,7 +4,7 @@ import { updateGameStateForChangeConclusions } from '@/game/conclusionStateUtil'
 import { createDiscoveries, markCharacterDiscovered, markItemDiscovered } from '@/game/discoveriesUtil';
 import { createGameState } from '@/game/gameUtil';
 import { callOnMinutesChangedAsNeeded } from '@/game/gameStateNotificationUtil';
-import { createKeyframeAtTime, createTimelineSnapshot } from '@/game/timeline';
+import { createKeyframeAtTime, createTimelineSnapshot, updateTimelineSnapshotActiveContext } from '@/game/timeline';
 import PlayerEventType from '@/game/types/playerEvents/PlayerEventType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import discoveryStateLevelText from './fixtures/discovery-state.md?raw';
@@ -30,6 +30,8 @@ describe('discovery state integration', () => {
     expect(gameState1.discoveryState.discoveredRoomIds).toEqual(new Set(['hall']));
     expect(gameState1.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam']));
     expect(gameState1.discoveryState.obscuredRoomIds).toEqual(new Set(['study']));
+    expect(gameState1.timelineSnapshot.activeCharacter.id).toBe('sam');
+    expect(gameState1.timelineSnapshot.activeRoom.id).toBe('hall');
     expect(gameState1.discoveryState).not.toBe(gameState2.discoveryState);
     expect(gameState1.discoveryState.discoveredRoomIds).not.toBe(gameState2.discoveryState.discoveredRoomIds);
     gameState1.discoveryState.titleKnownCharacterIds.add('pat');
@@ -88,6 +90,24 @@ describe('discovery state integration', () => {
     expect(snapshot.rooms[hallI].items).toBe(keyframe.rooms[hallI].items);
     expect(snapshot.rooms[hallI].items[0]).toBe(keyframe.rooms[hallI].items[0]);
     expect(snapshot.characters[samI].items).toBe(keyframe.characters[samI].items);
+  });
+
+  it('updates active context without rebuilding the timeline snapshot', () => {
+    const gameState = _createGameState();
+    const snapshot = gameState.timelineSnapshot;
+    const characters = snapshot.characters;
+    const rooms = snapshot.rooms;
+
+    gameState.activeCharacterId = 'pat';
+    updateTimelineSnapshotActiveContext(snapshot, gameState.activeCharacterId);
+
+    expect(gameState.timelineSnapshot).toBe(snapshot);
+    expect(snapshot.characters).toBe(characters);
+    expect(snapshot.rooms).toBe(rooms);
+    expect(snapshot.activeCharacter.id).toBe('pat');
+    expect(snapshot.activeRoom.id).toBe('study');
+    expect(snapshot.activeCharacter).toBe(snapshot.characters.find(character => character.id === 'pat'));
+    expect(snapshot.activeRoom).toBe(snapshot.rooms.find(room => room.id === 'study'));
   });
 
   it('throttles timeline notifications using monotonic meta time', () => {

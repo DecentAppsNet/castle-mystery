@@ -29,7 +29,6 @@ import { findImageBitmap } from "@/game/imageAssetUtil";
 import { getGroundImageAssetUrl } from "../imageUrlUtil";
 import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
-import { findActiveCharacter } from "../activeCharacterUtil";
 import Item from "../types/Item";
 
 const GROUND_HEIGHT_STORIES = 4;
@@ -284,11 +283,9 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
 
 export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D, metaTime:number) {
   _ensureRoomShellCaches(gameState, context);
-  const { characters, rooms } = gameState.timelineSnapshot;
-  const activeCharacter = findActiveCharacter(gameState);
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
+  const { activeCharacter, activeRoom, characters, rooms } = gameState.timelineSnapshot;
   const canShowHoverPopovers = gameState.isLevelComplete
-    || !activeRoom || !gameState.discoveryState.obscuredRoomIds.has(activeRoom.id);
+    || !gameState.discoveryState.obscuredRoomIds.has(activeRoom.id);
   const hoveredCharacterHighlightId = _findHoveredCharacterHighlightId(gameState, canShowHoverPopovers);
   const hoveredItemHighlightId = _findHoveredItemHighlightId(rooms, gameState, canShowHoverPopovers);
   const drawnExitIds = new Set<string>();
@@ -297,7 +294,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   _drawRoomSilhouettes(gameState, context);
   const roomRenderStates = rooms.map(room => {
     const charactersInRoom = findCharactersInRoom(room, characters);
-    const isActive = activeRoom?.id === room.id;
+    const isActive = activeRoom.id === room.id;
     return { room, charactersInRoom, isActive };
   });
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {

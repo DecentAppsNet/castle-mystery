@@ -7,6 +7,23 @@ import GameState from "../types/GameState";
 import TimelineSnapshot from "../types/TimelineSnapshot";
 import { createKeyframeAtTime } from "./retrievalUtil";
 import CharacterKeyframe from "../types/CharacterKeyframe";
+import { findRoomAtPosition } from "../roomUtil";
+
+function _findActiveContext(characters:Character[], rooms:Room[], activeCharacterId:string):{
+  activeCharacter:Character,
+  activeRoom:Room
+} {
+  const activeCharacter = characters.find(character => character.id === activeCharacterId);
+  assertNonNullable(activeCharacter);
+  const activeRoom = findRoomAtPosition(rooms, activeCharacter.position.x, activeCharacter.position.y);
+  assertNonNullable(activeRoom);
+  return { activeCharacter, activeRoom };
+}
+
+function _createSnapshot(characters:Character[], rooms:Room[], activeCharacterId:string):TimelineSnapshot {
+  const { activeCharacter, activeRoom } = _findActiveContext(characters, rooms, activeCharacterId);
+  return { activeCharacter, activeRoom, characters, rooms };
+}
 
 function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character):Character {
   return {
@@ -53,11 +70,18 @@ export function createTimelineSnapshot(gameState:GameState, time:number):Timelin
   const keyframe = createKeyframeAtTime(gameState.timeline.keyframes, time);
   const characters = _createSnapshotCharacters(gameState.baseCharacters, gameState.timeline, keyframe);
   const rooms = _createSnapshotRooms(gameState.baseRooms, gameState.timeline, keyframe);
-  return { characters, rooms };
+  return _createSnapshot(characters, rooms, gameState.activeCharacterId);
 }
 
-export function createInitialTimelineSnapshot(baseCharacters:Character[], baseRooms:Room[]):TimelineSnapshot {
+export function createInitialTimelineSnapshot(baseCharacters:Character[], baseRooms:Room[],
+  activeCharacterId:string):TimelineSnapshot {
   const characters = baseCharacters.map(duplicateCharacter);
   const rooms = baseRooms.map(duplicateRoom);
-  return { characters, rooms };
+  return _createSnapshot(characters, rooms, activeCharacterId);
+}
+
+export function updateTimelineSnapshotActiveContext(snapshot:TimelineSnapshot, activeCharacterId:string) {
+  const { activeCharacter, activeRoom } = _findActiveContext(snapshot.characters, snapshot.rooms, activeCharacterId);
+  snapshot.activeCharacter = activeCharacter;
+  snapshot.activeRoom = activeRoom;
 }

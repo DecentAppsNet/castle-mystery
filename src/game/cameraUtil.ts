@@ -3,10 +3,8 @@
 
 import { clamp } from "@/common/numberUtil";
 
-import { findRoomAtPosition } from "./roomUtil";
 import { calcRenderedRoomBounds, calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import Camera from "./types/Camera";
-import Character from "./types/Character";
 import Rect from "./types/Rect";
 import Room from "./types/Room";
 
@@ -106,20 +104,19 @@ export function calcLevelCameraRect(rooms:Room[], aspectRatio:number, groundFloo
   return _fitRectToAspectRatio(calcRenderedRoomsBoundingRect(rooms, groundFloorY), aspectRatio);
 }
 
-function _findTargetCameraRect(rooms:Room[], activeCharacter:Character|null, aspectRatio:number,
-  zoomAmount:number, groundFloorY:number):{ roomId:string|null, rect:Rect } {
+function _findTargetCameraRect(rooms:Room[], activeRoom:Room, aspectRatio:number,
+  zoomAmount:number, groundFloorY:number):{ roomId:string, rect:Rect } {
   const levelCameraRect = calcLevelCameraRect(rooms, aspectRatio, groundFloorY);
-  const activeRoom = activeCharacter ? findRoomAtPosition(rooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  const focusedRect = activeRoom ? calcRoomCameraRect(activeRoom, rooms, aspectRatio, groundFloorY) : levelCameraRect;
+  const focusedRect = calcRoomCameraRect(activeRoom, rooms, aspectRatio, groundFloorY);
   return {
-    roomId:activeRoom?.id || null,
+    roomId:activeRoom.id,
     rect:_interpolateRect(levelCameraRect, focusedRect, clamp(zoomAmount, 0, 1))
   };
 }
 
-export function syncCameraTargetToActiveRoom(camera:Camera, rooms:Room[], activeCharacter:Character|null,
+export function syncCameraTargetToActiveRoom(camera:Camera, rooms:Room[], activeRoom:Room,
   aspectRatio:number, metaTime:number, groundFloorY:number = Infinity) {
-  const target = _findTargetCameraRect(rooms, activeCharacter, aspectRatio, camera.zoomAmount, groundFloorY);
+  const target = _findTargetCameraRect(rooms, activeRoom, aspectRatio, camera.zoomAmount, groundFloorY);
   if (camera.trackedRoomId === target.roomId
     && Math.abs(camera.aspectRatio - aspectRatio) <= CAMERA_EPSILON
     && _rectsMatch(camera.targetRect, target.rect)) return;

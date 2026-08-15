@@ -1,4 +1,4 @@
-export { createTimelineSnapshot, createInitialTimelineSnapshot } from './snapshotUtil';
+export { createTimelineSnapshot, createInitialTimelineSnapshot, updateTimelineSnapshotActiveContext } from './snapshotUtil';
 export { 
   createKeyframeAtTime, 
   createCharacterKeyframeAtTime, 

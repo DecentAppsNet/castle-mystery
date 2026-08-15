@@ -227,7 +227,7 @@ function _getRoomTitleCanvasRect(room:Room, gameState:GameState, context:CanvasR
 }
 
 export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, context:CanvasRenderingContext2D,
-  layoutPlanner:CanvasLayoutPlanner|null = null) {
+    layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) return;
   if (room.title.length === 0) return;
 
@@ -263,7 +263,7 @@ export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, 
 }
 
 export function createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[],
-  discoveredItemIds:ReadonlySet<string>, includeUndiscoveredItems:boolean):RoomDrawableContent[] {
+    discoveredItemIds:ReadonlySet<string>, includeUndiscoveredItems:boolean):RoomDrawableContent[] {
   const stairContents = room.stairParts.map((stairPart, stairIndex) => ({
     type:'stair' as const,
     depth:_calcStairPartSortDepth(stairPart),
@@ -300,11 +300,11 @@ export function createDrawableContents(room:Room, charactersInRoom:Character[], 
   return mergeStairsWithSortedContents(stairContents, sortedNonStairContents);
 }
 
-function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharacter:Character|null, effects:Effect[],
-  hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
-  stairTextureLightness:{ top:number, side:number, front:number }, discoveryState:DiscoveryState,
-  layoutPlanner:CanvasLayoutPlanner|null = null) {
+function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharacter:Character, effects:Effect[],
+    hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
+    context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
+    stairTextureLightness:{ top:number, side:number, front:number }, discoveryState:DiscoveryState,
+    layoutPlanner:CanvasLayoutPlanner|null = null) {
   const contents = createDrawableContents(room, charactersInRoom, effects, discoveryState.discoveredItemIds, includeUndiscoveredItems);
   contents.forEach(content => {
     switch(content.type) {
@@ -319,7 +319,7 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
         if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, gameTime, imageSet, room));
         processBeforeCharacterEffects(content.character, effects, context, scalingFactors, imageSet, metaTime);
         drawCharacter(content.character, scalingFactors, context, gameTime, imageSet, effects,
-          content.character.id === activeCharacter?.id || content.character.id === hoveredCharacterId, room, metaTime);
+          content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId, room, metaTime);
         processAfterCharacterEffects(content.character, effects, context, scalingFactors, imageSet, metaTime);
         return;
     }
@@ -339,14 +339,14 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
 }
 
 function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  imageSet:ImageSet, stairTextureLightness:{ top:number, side:number, front:number }) {
+    imageSet:ImageSet, stairTextureLightness:{ top:number, side:number, front:number }) {
   room.stairParts.forEach(stairPart => drawStairPart(stairPart, room, scalingFactors, context, imageSet, stairTextureLightness));
 }
 
-export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character|null,
-  effects:Effect[], hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet,
-  discoveryState:DiscoveryState, showFullContents:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null) {
+export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Character[], isActive:boolean, activeCharacter:Character,
+    effects:Effect[], hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
+    context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet,
+    discoveryState:DiscoveryState, showFullContents:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!discoveryState.discoveredRoomIds.has(room.id)) return;
   const isRoomObscured = discoveryState.obscuredRoomIds.has(room.id) && !showFullContents;
   const canDrawEffect = showFullContents || isActive;

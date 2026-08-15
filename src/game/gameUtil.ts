@@ -1,12 +1,11 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assert, assertNonNullable, botch } from "decent-portal";
+import { assert, botch } from "decent-portal";
 import GameState from "./types/GameState";
 import Room from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
 import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
-import { findRoomAtPosition } from "./roomUtil";
 import PlayerEvent from "./types/playerEvents/PlayerEvent";
 import PlayerEventType from "./types/playerEvents/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
@@ -40,16 +39,13 @@ import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
-import { findActiveCharacter } from "./activeCharacterUtil";
 import { createTimelineSnapshot, createInitialTimelineSnapshot } from "./timeline";
 import { findMetaTimeNow } from "./metaTimeUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
 function _setActiveRoomDiscovered(gameState:GameState) {
-  const activeCharacter = findActiveCharacter(gameState);
-  const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
-  if (activeRoom) gameState.discoveryState.discoveredRoomIds.add(activeRoom.id);
+  gameState.discoveryState.discoveredRoomIds.add(gameState.timelineSnapshot.activeRoom.id);
 }
 
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
@@ -85,9 +81,7 @@ function _pauseGameState(gameState:GameState, metaTime:number) {
 }
 
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
-  const activeCharacter = findActiveCharacter(gameState);
-  const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
-  assertNonNullable(activeRoom);
+  const activeRoom = gameState.timelineSnapshot.activeRoom;
   if (!gameState.isLevelComplete && gameState.discoveryState.obscuredRoomIds.has(activeRoom.id)) return null;
   return activeRoom;
 }
@@ -120,7 +114,7 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:nu
     gameState.timelineSnapshot = createTimelineSnapshot(gameState, nextTime);
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
-  syncCameraTargetToActiveRoom(gameState.camera, gameState.baseRooms, findActiveCharacter(gameState),
+  syncCameraTargetToActiveRoom(gameState.camera, gameState.baseRooms, gameState.timelineSnapshot.activeRoom,
     cameraAspectRatio, metaTime, gameState.groundFloorY);
   updateCamera(gameState.camera, metaTime);
   _setActiveRoomDiscovered(gameState);
@@ -247,7 +241,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     startTime:level.startTime,
     time:level.initialTime,
     timeline:level.timeline, // Timeline is immutable and it is a large data structure - no harm in sharing instance.
-    timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms),
+    timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms, level.activeCharacterId),
     viewedItemIds:new Set<string>(),
     winSynopsis:level.winSynopsis,
   }
