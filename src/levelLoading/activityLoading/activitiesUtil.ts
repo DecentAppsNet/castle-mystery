@@ -32,16 +32,16 @@ export function loadActivitiesPartially(itinerarySectionText:string, rules:Activ
   const activities:Activity[] = [];
   const lines = itinerarySectionText.split('\n');
   let prevActivity:Activity|null = null;
-  for(let lineI = 0; lineI < lines.length; ++lineI) {
-    const lineText = lines[lineI];
+  for(let sectionLineI = 0; sectionLineI < lines.length; ++sectionLineI) {
+    const lineText = lines[sectionLineI];
     if (!lineText.trim()) continue;
-    const parseResult = tryParseActivity(lines[lineI], rules);
+    const parseResult = tryParseActivity(lineText, rules);
     if (typeof parseResult === 'string') {
-      errors.addAt(parseResult, 'itinerary', lines[lineI]);
+      errors.addAt(parseResult, 'itinerary', lineText);
       continue;
     }
     assert(parseResult.startTime === null || parseResult.startTime >= startTime); // Expecting that the previously-found startTime already looked at activity timestamps to set it.
-    if (lineI === 0 && parseResult.startTime === null) parseResult.startTime = startTime ?? 0;
+    if (!prevActivity && parseResult.startTime === null) parseResult.startTime = startTime ?? 0;
     parseResult.prevActivity = prevActivity;
     if (prevActivity) prevActivity.nextActivity = parseResult;
 

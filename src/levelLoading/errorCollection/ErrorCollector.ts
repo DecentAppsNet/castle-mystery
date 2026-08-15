@@ -35,12 +35,12 @@ class ErrorCollector {
     this._nextToCharNo = toCharNo;
   }
 
-  public setNextLine(lineNo:number, fromCharNo:number = -1, toCharNo:number = -1) {
-    const { filename, lineNo:sourceLineNo } = this._sourceLineMap[lineNo];
+  public setNextLine(lineI:number, fromCharNo:number = -1, toCharNo:number = -1) {
+    const { filename, lineNo:sourceLineNo } = this._sourceLineMap[lineI];
     this._nextSourceFilename = filename;
     this._nextSourceLineNo = sourceLineNo;
     this._nextFromCharNo = fromCharNo < 0 ? 0 : fromCharNo;
-    this._nextToCharNo = toCharNo < 0 ? findLineLength(this._sourceText, lineNo) : toCharNo;
+    this._nextToCharNo = toCharNo < 0 ? findLineLength(this._sourceText, lineI) : toCharNo;
   }
 
   public setNextCharRange(fromCharNo:number, toCharNo:number) {

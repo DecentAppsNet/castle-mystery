@@ -13,13 +13,13 @@ function _createSourceLineMap(text:string, filename:string):SourceLineMap {
 export function replaceSection(text:string, sectionName:string, replacementLines:readonly string[]):string {
   const lines = text.split('\n');
   const sections = parseSectionEntriesWithLines(text);
-  const sectionIndex = sections.findIndex(section => section.name === sectionName);
-  if (sectionIndex < 0) throw new Error(`section '${sectionName}' not found`);
+  const sectionI = sections.findIndex(section => section.name === sectionName);
+  if (sectionI < 0) throw new Error(`section '${sectionName}' not found`);
 
-  const bodyStartIndex = sections[sectionIndex].lineNo;
-  const nextSection = sections[sectionIndex + 1];
-  const bodyEndIndex = nextSection ? nextSection.lineNo - 1 : lines.length;
-  lines.splice(bodyStartIndex, bodyEndIndex - bodyStartIndex, '', ...replacementLines, '');
+  const bodyStartI = sections[sectionI].lineNo;
+  const nextSection = sections[sectionI + 1];
+  const bodyEndI = nextSection ? nextSection.lineNo - 1 : lines.length;
+  lines.splice(bodyStartI, bodyEndI - bodyStartI, '', ...replacementLines, '');
   return lines.join('\n');
 }
 

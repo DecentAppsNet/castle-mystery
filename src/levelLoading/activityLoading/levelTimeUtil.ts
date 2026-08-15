@@ -5,9 +5,12 @@ import ActivityParsingRules from "./types/ActivityParsingRules";
 import Activity from './types/Activity';
 import { tryParseAbsoluteTimestamp } from './timestampUtil';
 
+function _findFirstActivityLineText(itinerarySectionText:string):string {
+  return itinerarySectionText.split('\n').find(lineText => lineText.trim().length > 0)?.trim() ?? '';
+}
+
 function _parseFirstActivity(itinerarySectionText:string, rules:ActivityParsingRules, errors:ErrorCollector):Activity|null {
-  const firstLineEndPos = itinerarySectionText.indexOf('\n');
-  const lineText = itinerarySectionText.substring(0, firstLineEndPos === -1 ? itinerarySectionText.length : firstLineEndPos).trim();
+  const lineText = _findFirstActivityLineText(itinerarySectionText);
   const parseResult = tryParseActivity(lineText, rules);
   if (typeof parseResult === 'string') {
     errors.addAt(parseResult, 'itinerary', lineText);
@@ -41,8 +44,7 @@ export function findStartTimeFromItinerary(itinerarySectionText:string):number|n
 
 export function isFirstActivityTimestampValid(itinerarySectionText:string, errors:ErrorCollector):boolean {
   assert(itinerarySectionText.trim().length > 0); // Don't call for an empty itinerary.
-  const firstLineEndPos = itinerarySectionText.indexOf('\n');
-  const lineText = itinerarySectionText.substring(0, firstLineEndPos === -1 ? itinerarySectionText.length : firstLineEndPos).trim();
+  const lineText = _findFirstActivityLineText(itinerarySectionText);
   const timestampPart = lineText.split(' ')[0];
   const time = tryParseAbsoluteTimestamp(timestampPart);
   if (time === null) {

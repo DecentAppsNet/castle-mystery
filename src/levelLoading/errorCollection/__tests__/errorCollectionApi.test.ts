@@ -17,16 +17,16 @@ describe('errorCollectionApi', () => {
       expect(() => collector.add('Problem.')).toThrow('Call setLine() first.');
     });
 
-    it('adds an error with setNextLine() and add()', () => {
+    it('maps a combined line index to the correct source filename and line number with setNextLine()', () => {
       const collector = new ErrorCollector('alpha\nbeta', [
         { filename: 'level.md', lineNo: 17 },
-        { filename: 'level.md', lineNo: 18 },
+        { filename: 'imported.md', lineNo: 42 },
       ]);
 
       collector.setNextLine(1, 2, 4);
       collector.add('Problem.');
 
-      expect(collector.describeErrors()).toBe('level.md:18:2: Problem.');
+      expect(collector.describeErrors()).toBe('imported.md:42:2: Problem.');
     });
 
     it('adds an error with addAt()', () => {
@@ -37,13 +37,13 @@ describe('errorCollectionApi', () => {
           { filename: 'level.md', lineNo: 11 },
           { filename: 'level.md', lineNo: 12 },
           { filename: 'level.md', lineNo: 13 },
-          { filename: 'level.md', lineNo: 14 },
+          { filename: 'rooms.md', lineNo: 73 },
         ]
       );
 
       collector.addAt('Problem.', ['rooms', 'Kitchen'], '* exits', 'Hall');
 
-      expect(collector.describeErrors()).toBe('level.md:12:8: Problem.');
+      expect(collector.describeErrors()).toBe('rooms.md:73:8: Problem.');
     });
   });
 });

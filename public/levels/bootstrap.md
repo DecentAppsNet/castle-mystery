@@ -6,16 +6,18 @@
 # map
 
 ```
-HC
+CS
+HS
 ```
 
 * H=Hall
 * C=Closet
+* S=Stairwell
 
 # rooms
 ## Hall
 
-* exits=Closet
+* exits=Stairwell
 
 ```
 ....
@@ -27,6 +29,10 @@ HC
 
 ## Closet
 
+* exits=Stairwell
+
+## Stairwell
+
 # characters
 ## Sam
 * faceImage=guard1.png
@@ -37,6 +43,6 @@ HC
 # itinerary
 
 0:00:00 Sam @ Hall
-0:00:03 Sam @ Closet
+0:00:05 Sam @ Closet
 
 # conclusions

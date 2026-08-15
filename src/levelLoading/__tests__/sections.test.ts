@@ -6,7 +6,10 @@ import missingGeneralText from './fixtures/sections/sections-missing-general.md?
 import missingMapText from './fixtures/sections/sections-missing-map.md?raw';
 import missingRoomsText from './fixtures/sections/sections-missing-rooms.md?raw';
 import unknownTopLevelText from './fixtures/sections/sections-unknown-top-level.md?raw';
+import levelTimesBaseText from './fixtures/level-times-base.md?raw';
 import { loadLevelForTest } from './testLevelUtil';
+import { loadLevelSections } from '../levelFileSectionUtil';
+import { ErrorCollector } from '../errorCollection';
 
 describe('loading levels - sections', () => {
   it('fails if required "general" section is missing', () => {
@@ -56,5 +59,15 @@ describe('loading levels - sections', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
+  });
+
+  it('preserves top-level section text without trimming leading blank lines', () => {
+    const sourceLineMap = levelTimesBaseText.split('\n').map((_, lineI) => ({ filename:'level-times-base.md', lineNo:lineI + 1 }));
+    const errors = new ErrorCollector(levelTimesBaseText, sourceLineMap);
+
+    const sections = loadLevelSections(levelTimesBaseText, errors);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(sections?.itinerary.text).toBe('\n0:00:03 Sam sits\n');
   });
 });

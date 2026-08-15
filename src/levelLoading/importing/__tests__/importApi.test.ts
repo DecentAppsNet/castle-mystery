@@ -14,9 +14,9 @@ import selfImportAText from './fixtures/levelImportSelf/a.md?raw';
 import { loadLevelWithImportsAndSourceLineMap } from '../importSourceLoader.ts';
 
 function _findMergedLineNo(text:string, needle:string):number {
-  const lineIndex = text.split('\n').findIndex(line => line === needle);
-  expect(lineIndex).toBeGreaterThanOrEqual(0);
-  return lineIndex + 1;
+  const lineI = text.split('\n').findIndex(line => line === needle);
+  expect(lineI).toBeGreaterThanOrEqual(0);
+  return lineI + 1;
 }
 
 function _countExactLineOccurrences(text:string, needle:string):number {

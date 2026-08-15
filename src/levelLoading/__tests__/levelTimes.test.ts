@@ -13,6 +13,18 @@ describe('level loading - times and labels', () => {
     expect(level?.startTime).toBe(3_723_000);
   });
 
+  it('ignores leading and interstitial blank itinerary lines', () => {
+    const text = replaceSection(levelTimesBaseText, 'itinerary', [
+      '', '', '0:00:03 Sam sits', '', ': Sam stands'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'times-blank-lines.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(level?.startTime).toBe(3_000);
+    expect(level?.endTime).toBe(3_000);
+  });
+
   it('sets start time to 0 when itinerary is unavailable', () => {
     const text = replaceSection(levelTimesBaseText, 'itinerary', []);
     const { level, errors } = loadLevelForTest(text, 'times-default-start.md');

@@ -8,7 +8,6 @@ import SectionVariables from "./types/SectionVariables";
 
 const KNOWN_TOP_LEVEL_SECTION_IDS = ['general', 'map', 'room styles', 'rooms', 'characters', 'items', 'itinerary', 'conclusions'];
 const REQUIRED_TOP_LEVEL_SECTION_IDS = ['general', 'map', 'rooms', 'characters'];
-const TRIM_LEADING_BLANK_LINES_SECTION_IDS = ['itinerary'];
 
 function _areKnownTopLevelSections(text:string, errors:ErrorCollector):boolean {
   const orginalErrorCount = errors.count;
@@ -21,12 +20,6 @@ function _areKnownTopLevelSections(text:string, errors:ErrorCollector):boolean {
     errors.addAt(`"${sectionName}" is not a known top-level section name.`, ROOT_LEVEL, `# ${sectionName}`);
   }
   return errors.count <= orginalErrorCount;
-}
-
-function _trimLeadingBlankLines(text:string):string {
-  const lines = text.split('\n');
-  while (lines.length > 0 && lines[0].trim() === '') lines.shift();
-  return lines.join('\n');
 }
 
 function _isDuplicateError(err:any, errors:ErrorCollector, sectionNames:string[]|string):boolean {
@@ -68,8 +61,7 @@ export function loadLevelSections(levelText:string, errors:ErrorCollector):Level
   KNOWN_TOP_LEVEL_SECTION_IDS.forEach(sectionId => {
     const sectionText = parsedSections[sectionId];
     if (!sectionText) return;
-    const text = TRIM_LEADING_BLANK_LINES_SECTION_IDS.includes(sectionId) ? _trimLeadingBlankLines(sectionText) : sectionText;
-    const section:LevelFileSection = { id:sectionId, text }
+    const section:LevelFileSection = { id:sectionId, text:sectionText }
     sections[sectionId] = section;
   });
 
