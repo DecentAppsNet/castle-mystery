@@ -1,7 +1,7 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assert, botch } from "decent-portal";
+import { assert, assertNonNullable, botch } from "decent-portal";
 import GameState from "./types/GameState";
 import Room from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
@@ -48,10 +48,8 @@ const CAMERA_ZOOM_STEP = 0.1;
 
 function _setActiveRoomDiscovered(gameState:GameState) {
   const activeCharacter = findActiveCharacter(gameState);
-  if (activeCharacter) {
-    const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
-    if (activeRoom) gameState.discoveryState.discoveredRoomIds.add(activeRoom.id);
-  }
+  const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
+  if (activeRoom) gameState.discoveryState.discoveredRoomIds.add(activeRoom.id);
 }
 
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
@@ -88,8 +86,9 @@ function _pauseGameState(gameState:GameState, metaTime:number) {
 
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
   const activeCharacter = findActiveCharacter(gameState);
-  const activeRoom = activeCharacter ? findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y) : null;
-  if (!activeRoom || (!gameState.isLevelComplete && gameState.discoveryState.obscuredRoomIds.has(activeRoom.id))) return null;
+  const activeRoom = findRoomAtPosition(gameState.baseRooms, activeCharacter.position.x, activeCharacter.position.y);
+  assertNonNullable(activeRoom);
+  if (!gameState.isLevelComplete && gameState.discoveryState.obscuredRoomIds.has(activeRoom.id)) return null;
   return activeRoom;
 }
 
