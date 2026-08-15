@@ -63,6 +63,11 @@ class ErrorCollector {
     this.add(message);
   }
 
+  public addAtLine(message:string, lineI:number, fromCharNo:number = -1, toCharNo:number = -1) {
+    this.setNextLine(lineI, fromCharNo, toCharNo);
+    this.add(message);
+  }
+
   public describeErrors():string {
     if (!this._parseErrorEvents.length) return '';
     const messages = this._parseErrorEvents.map(describeParseError);
