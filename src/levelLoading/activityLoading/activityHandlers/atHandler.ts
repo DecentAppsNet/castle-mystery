@@ -81,8 +81,8 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
   const toTime = toKeyframe.time;
 
   const scheduleResult = isRelativeTimestamp 
-    ? scheduleCharacterMovementToRoom(waypointContext, level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableTimeline)
-    : scheduleCharacterMovementToRoomAtTime(waypointContext, level.rooms, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableTimeline)
+    ? scheduleCharacterMovementToRoom(waypointContext, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableTimeline)
+    : scheduleCharacterMovementToRoomAtTime(waypointContext, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableTimeline)
   if (typeof scheduleResult === 'string') {
     errors.addAtLine(scheduleResult, activity.lineI);
     return false;

@@ -20,10 +20,6 @@ function _isFloorExit(exit:RoomExit, floorY:number):boolean {
   return calcExitWaypointY(exit) === floorY;
 }
 
-function _findAdjacentRoomId(roomId:string, exit:RoomExit):string {
-  return exit.room1Id === roomId ? exit.room2Id : exit.room1Id;
-}
-
 function _createWaypointKey(x:number, y:number, z:number):string {
   return `${x},${y},${z}`;
 }
@@ -171,37 +167,6 @@ function _pruneIsolatedNonExitWaypoints(exits:RoomExit[], waypoints:Waypoint[]):
   return remainingWaypoints;
 }
 
-function _sortWaypointsForExitTraversal(waypoints:ReadonlyArray<Waypoint>):Waypoint[] {
-  return [...waypoints].sort((waypoint1, waypoint2) => {
-    const middleRowDistance1 = Math.abs(waypoint1.position.z - WAYPOINT_MIDDLE_ROW_Z);
-    const middleRowDistance2 = Math.abs(waypoint2.position.z - WAYPOINT_MIDDLE_ROW_Z);
-    if (middleRowDistance1 !== middleRowDistance2) return middleRowDistance1 - middleRowDistance2;
-    if (waypoint1.position.y !== waypoint2.position.y) return waypoint2.position.y - waypoint1.position.y;
-    if (waypoint1.position.x !== waypoint2.position.x) return waypoint2.position.x - waypoint1.position.x;
-    return waypoint1.position.z - waypoint2.position.z;
-  });
-}
-
-function _populateExitDirectionsForRoom(roomId:string, roomRect:Rect, exits:RoomExit[], waypoints:Waypoint[]) {
-  exits.forEach(exit => {
-    const adjacentRoomId = _findAdjacentRoomId(roomId, exit);
-    const exitWaypoint = findExitWaypoint(roomId, roomRect, exit, waypoints);
-    const visited = new Set<string>([_createWaypointKey(exitWaypoint.position.x, exitWaypoint.position.y, exitWaypoint.position.z)]);
-    const pending:Waypoint[] = [exitWaypoint];
-
-    while (pending.length > 0) {
-      const currentWaypoint = pending.shift()!;
-      _sortWaypointsForExitTraversal(currentWaypoint.adjacentWaypoints).forEach(adjacentWaypoint => {
-        const key = _createWaypointKey(adjacentWaypoint.position.x, adjacentWaypoint.position.y, adjacentWaypoint.position.z);
-        if (visited.has(key)) return;
-        visited.add(key);
-        adjacentWaypoint.exitDirections[adjacentRoomId] = currentWaypoint;
-        pending.push(adjacentWaypoint);
-      });
-    }
-  });
-}
-
 function _calcRoomFloorY(roomRect:Rect):number {
   return roomRect.y + roomRect.height - FLOOR_WAYPOINT_Y_OFFSET;
 }
@@ -223,8 +188,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
     const waypoint:Waypoint = {
       roomId,
       position: { x, y, z },
-      adjacentWaypoints: [] as Readonly<Waypoint>[],
-      exitDirections: {}
+      adjacentWaypoints: [] as Readonly<Waypoint>[]
     };
     waypointsByKey.set(key, waypoint);
     return waypoint;
@@ -333,7 +297,6 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
 
   waypoints = Array.from(waypointsByKey.values());
   waypoints = _pruneIsolatedNonExitWaypoints(exits, waypoints);
-  _populateExitDirectionsForRoom(roomId, roomRect, exits, waypoints);
 
   exits.forEach(exit => {
     const exitWaypoint = findExitWaypoint(roomId, roomRect, exit, waypoints);
