@@ -154,11 +154,8 @@ function _findWaypointPathThroughRooms(roomPath:readonly Room[], fromPosition:Po
   waypoints.push(waypoint);
   for(let i = 1; i < roomPath.length; ++i) {
     let iterationCount = 0;
-    const nextRoomId = roomPath[i].id;
-    const nextRoomStartWaypoint = findWaypointAtPosition(roomPath[i], waypoint.position); // Need waypoint in next room at same position as exit from previous room.
-    assertNonNullable(nextRoomStartWaypoint);
-    waypoint = nextRoomStartWaypoint;
     while(iterationCount <= roomPath[i].waypoints.length) { // A debug-error exit, but could prevent browser hang.
+      const nextRoomId = roomPath[i].id;
       const nextWaypoint:Waypoint|undefined = waypoint.exitDirections[nextRoomId];
       if (nextWaypoint === undefined) break; // Reached room exit.
       waypoints.push(nextWaypoint);

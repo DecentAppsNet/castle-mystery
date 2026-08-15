@@ -3,6 +3,8 @@ import { describe, it, expect } from 'vitest';
 import { findRoomAtPosition } from '@/game/roomUtil';
 
 import defaultLevelText from './fixtures/at-base.md?raw';
+import threeRoomLevelText from './fixtures/at-three-rooms.md?raw';
+import stairwellLevelText from './fixtures/at-through-stairwell.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 import { findCharacterPositionAtTime } from '@/game/timeline';
 
@@ -58,6 +60,28 @@ describe('level loading - @ activities', () => {
     const samPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
       level!.timeline.characterIdToI.sam, 5_000);
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('closet');
+  });
+
+  it.skip('character moves across three rooms by the arrival time', () => { // TODO - reenable after new waypoint generation and pathfinding supports this case.
+    const { level, errors } = loadLevelForTest(threeRoomLevelText, 'at-three-rooms.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(level?.endTime).toBe(10_000);
+    const samPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
+      level!.timeline.characterIdToI.sam, 10_000);
+    expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('library');
+  });
+
+  it('character moves through a stairwell to a non-floor exit by the arrival time', () => {
+    const { level, errors } = loadLevelForTest(stairwellLevelText, 'at-through-stairwell.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(level?.endTime).toBe(10_000);
+    const samPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
+      level!.timeline.characterIdToI.sam, 10_000);
+    expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('gallery');
   });
 
   it('character does nothing when already in the @-specified room', () => {
