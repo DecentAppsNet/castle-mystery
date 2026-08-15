@@ -40,7 +40,7 @@ function _assertExitIsNotOnCeiling(roomId:string, roomRect:Rect, exit:RoomExit):
   );
 }
 
-function _connectWaypoints(waypoint1:Waypoint, waypoint2:Waypoint) {
+export function connectWaypoints(waypoint1:Waypoint, waypoint2:Waypoint) {
   if (waypoint1 === waypoint2) return;
   if (!waypoint1.adjacentWaypoints.includes(waypoint2)) waypoint1.adjacentWaypoints.push(waypoint2);
   if (!waypoint2.adjacentWaypoints.includes(waypoint1)) waypoint2.adjacentWaypoints.push(waypoint1);
@@ -78,7 +78,7 @@ function _connectWaypointGridNeighbors(waypointsByRow:Waypoint[][], rowIndex:num
       const neighborColumnIndex = columnIndex + columnOffset;
       if (neighborRowIndex < 0 || neighborRowIndex >= waypointsByRow.length) continue;
       if (neighborColumnIndex < 0 || neighborColumnIndex >= waypointsByRow[neighborRowIndex].length) continue;
-      _connectWaypoints(waypointsByRow[rowIndex][columnIndex], waypointsByRow[neighborRowIndex][neighborColumnIndex]);
+      connectWaypoints(waypointsByRow[rowIndex][columnIndex], waypointsByRow[neighborRowIndex][neighborColumnIndex]);
     }
   }
 }
@@ -151,12 +151,12 @@ function _connectWindingStoryWaypoints(roomRect:Rect, bottomLandingY:number, fir
   const topFrontWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, secondFlight.endPosition.x), topLandingY, WAYPOINT_FRONT_ROW_Z);
   const topMiddleWaypoint = getOrCreateWaypoint(_calcWindingWaypointX(roomRect, secondFlight.endPosition.x), topLandingY, WAYPOINT_MIDDLE_ROW_Z);
 
-  _connectWaypoints(bottomBackWaypoint, bottomBackEdgeWaypoint);
-  _connectWaypoints(bottomBackEdgeWaypoint, midBackEdgeWaypoint);
-  _connectWaypoints(midBackEdgeWaypoint, midFrontEdgeWaypoint);
-  _connectWaypoints(midFrontEdgeWaypoint, topFrontEdgeWaypoint);
-  _connectWaypoints(topFrontEdgeWaypoint, topFrontWaypoint);
-  _connectWaypoints(topFrontWaypoint, topMiddleWaypoint);
+  connectWaypoints(bottomBackWaypoint, bottomBackEdgeWaypoint);
+  connectWaypoints(bottomBackEdgeWaypoint, midBackEdgeWaypoint);
+  connectWaypoints(midBackEdgeWaypoint, midFrontEdgeWaypoint);
+  connectWaypoints(midFrontEdgeWaypoint, topFrontEdgeWaypoint);
+  connectWaypoints(topFrontEdgeWaypoint, topFrontWaypoint);
+  connectWaypoints(topFrontWaypoint, topMiddleWaypoint);
 
   return { topLandingWaypoint:topFrontWaypoint, topMiddleWaypoint };
 }
@@ -221,6 +221,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
     const existingWaypoint = waypointsByKey.get(key);
     if (existingWaypoint) return existingWaypoint;
     const waypoint:Waypoint = {
+      roomId,
       position: { x, y, z },
       adjacentWaypoints: [] as Readonly<Waypoint>[],
       exitDirections: {}
@@ -255,7 +256,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
   floorExits.forEach(exit => {
     const exitWaypoint = _getOrCreateWaypoint(exit.x, calcExitWaypointY(exit), WAYPOINT_MIDDLE_ROW_Z);
     const nearestFloorWaypoint = _findNearestWaypointByX(middleRowFloorWaypoints, exit.x);
-    _connectWaypoints(exitWaypoint, nearestFloorWaypoint);
+    connectWaypoints(exitWaypoint, nearestFloorWaypoint);
   });
 
   if (stairs !== null) {
@@ -264,8 +265,8 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
         const stairStartWaypoint = _getOrCreateWaypoint(flight.startPosition.x, flight.startPosition.y, WAYPOINT_BACK_ROW_Z);
         const landingWaypoint = _getOrCreateWaypoint(flight.endPosition.x, calcLandingWaypointY(flight.endPosition.y), WAYPOINT_BACK_ROW_Z);
         _findAllNearestWaypointsByX(backRowFloorWaypoints, flight.startPosition.x)
-          .forEach(nearestFloorWaypoint => _connectWaypoints(stairStartWaypoint, nearestFloorWaypoint));
-        _connectWaypoints(stairStartWaypoint, landingWaypoint);
+          .forEach(nearestFloorWaypoint => connectWaypoints(stairStartWaypoint, nearestFloorWaypoint));
+        connectWaypoints(stairStartWaypoint, landingWaypoint);
       });
 
       nonFloorExits.forEach(exit => {
@@ -273,7 +274,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
         const stairIntersection = _findNearestStairIntersectionAtExit(stairs, exit);
         assertNonNullable(stairIntersection, `missing stair intersection for room ${roomId} exit at (${exit.x}, ${exit.y})`);
         const landingWaypoint = _getOrCreateWaypoint(stairIntersection.x, calcExitWaypointY(exit), WAYPOINT_BACK_ROW_Z);
-        _connectWaypoints(landingWaypoint, exitWaypoint);
+        connectWaypoints(landingWaypoint, exitWaypoint);
       });
     } else {
       let previousTopMiddleWaypoint:Waypoint|null = null;
@@ -290,10 +291,10 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
         topMiddleWaypoints.push(topMiddleWaypoint);
 
         if (previousTopMiddleWaypoint !== null) {
-          _connectWaypoints(previousTopMiddleWaypoint, currentBottomBackWaypoint);
+          connectWaypoints(previousTopMiddleWaypoint, currentBottomBackWaypoint);
         } else if (firstFlight.startPosition.y === floorY) {
           _findAllNearestWaypointsByX(backRowFloorWaypoints, firstFlight.startPosition.x)
-            .forEach(nearestFloorWaypoint => _connectWaypoints(currentBottomBackWaypoint, nearestFloorWaypoint));
+            .forEach(nearestFloorWaypoint => connectWaypoints(currentBottomBackWaypoint, nearestFloorWaypoint));
         }
 
         previousTopMiddleWaypoint = topMiddleWaypoint;
@@ -303,7 +304,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
         const exitWaypoint = _getOrCreateWaypoint(exit.x, calcExitWaypointY(exit), WAYPOINT_MIDDLE_ROW_Z);
         const topMiddleWaypoint = topMiddleWaypoints.length > 0 ? _findNearestWaypointByY(topMiddleWaypoints, calcExitWaypointY(exit)) : null;
         assertNonNullable(topMiddleWaypoint, `missing winding top middle waypoint for room ${roomId} exit at (${exit.x}, ${exit.y})`);
-        _connectWaypoints(topMiddleWaypoint, exitWaypoint);
+        connectWaypoints(topMiddleWaypoint, exitWaypoint);
       });
     }
   } else if (nonFloorExits.length > 0) {
@@ -314,19 +315,19 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
       .map(y => _getOrCreateWaypoint(spineX, y, WAYPOINT_MIDDLE_ROW_Z));
 
     for (let i = 0; i < spineWaypoints.length - 1; i++) {
-      _connectWaypoints(spineWaypoints[i], spineWaypoints[i + 1]);
+      connectWaypoints(spineWaypoints[i], spineWaypoints[i + 1]);
     }
 
     const floorSpineWaypoint = middleRowFloorWaypoints.find(waypoint => waypoint.position.x === spineX);
     assertNonNullable(floorSpineWaypoint, `floor waypoint at spine X ${spineX} not found`);
     const lowestSpineWaypoint = spineWaypoints[spineWaypoints.length - 1];
-    _connectWaypoints(lowestSpineWaypoint, floorSpineWaypoint);
+    connectWaypoints(lowestSpineWaypoint, floorSpineWaypoint);
 
     nonFloorExits.forEach(exit => {
       const exitWaypoint = _getOrCreateWaypoint(exit.x, calcExitWaypointY(exit), WAYPOINT_MIDDLE_ROW_Z);
       const spineWaypoint = spineWaypoints.find(waypoint => waypoint.position.y === calcExitWaypointY(exit));
       assertNonNullable(spineWaypoint, `spine waypoint at Y ${exit.y} not found for exit`);
-      _connectWaypoints(spineWaypoint, exitWaypoint);
+      connectWaypoints(spineWaypoint, exitWaypoint);
     });
   }
 

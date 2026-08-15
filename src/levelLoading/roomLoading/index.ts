@@ -6,19 +6,40 @@ import { applyRoomMetaDataFromSections, createRoomsFromMapSection } from './room
 import { addExitsToRooms } from './roomExitUtil';
 import { generateStairFlights } from './stairFlightUtil';
 import { generateStairParts } from './stairPartUtil';
-import { calcFloorPositionInRoom, generateWaypoints } from './waypointGenerationUtil';
+import { calcFloorPositionInRoom, connectWaypoints, generateWaypoints } from './waypointGenerationUtil';
 import LevelFileSections from '../types/LevelFileSections';
 import { findGroundFloorY, validateOutsideRoomsAgainstGroundFloor } from './groundFloorUtil';
 import { parseLegendGrid } from './legendGridUtil';
 import { parseSections } from '@/common/markdownUtil';
 import Position from '@/game/types/Position';
+import Waypoint from '@/game/types/Waypoint';
 import { normalizeId } from '@/game/idUtil';
-import { assertNonNullable } from 'decent-portal';
+import { assert, assertNonNullable } from 'decent-portal';
 import { getSectionIdsFromSectionText } from '../levelFileSectionUtil';
+import WaypointGenerationContext from '../types/WaypointGenerationContext';
+import { findExitWaypoint } from '../activityLoading/waypointFindingUtil';
 
 type PartiallyLoadedRooms = {
   rooms:MutableRoom[],
+  waypointGenerationContext:WaypointGenerationContext,
   initiallyObscuredRoomIds:ReadonlySet<string>
+}
+
+function _connectSharedExitWaypoints(rooms:Room[], context:WaypointGenerationContext):void {
+  rooms.forEach(room1 => room1.exits.forEach(exit => {
+    if (exit.room1Id !== room1.id) return;
+    const room2 = rooms.find(room => room.id === exit.room2Id);
+    assertNonNullable(room2);
+    const room1Waypoints = context.waypointsByRoomId.get(room1.id);
+    const room2Waypoints = context.waypointsByRoomId.get(room2.id);
+    assertNonNullable(room1Waypoints);
+    assertNonNullable(room2Waypoints);
+    const waypoint1 = findExitWaypoint(room1.id, room1.rect, exit, room1Waypoints);
+    const waypoint2 = findExitWaypoint(room2.id, room2.rect, exit, room2Waypoints);
+    assert(waypoint1 !== waypoint2);
+    assert(waypoint1.roomId === room1.id && waypoint2.roomId === room2.id);
+    connectWaypoints(waypoint1, waypoint2);
+  }));
 }
 
 // Returns rooms with everything loaded from level file except dependencies, e.g. items. The exception is room styles, which are applied,
@@ -34,16 +55,21 @@ export function loadRoomsPartially(sections:LevelFileSections, availableItems:Mu
     rooms, availableItems, availableCharacterIds, errors);
   if (!initiallyObscuredRoomIds) return null;
   addExitsToRooms(sections.rooms.text, rooms, errors);
-  
+
+  const waypointsByRoomId = new Map<string, Waypoint[]>();
+  const waypointGenerationContext:WaypointGenerationContext = { waypoints:[], waypointsByRoomId };
   rooms.forEach(room => {
     const flights = generateStairFlights(room);
     const stairParts = generateStairParts(room, flights);
     room.stairParts.push(...stairParts);
     const waypoints = generateWaypoints(room.id, room.rect, room.exits, flights);
     room.waypoints.push(...waypoints);
+    waypointGenerationContext.waypoints.push(...waypoints);
+    waypointsByRoomId.set(room.id, waypoints);
   });
+  _connectSharedExitWaypoints(rooms, waypointGenerationContext);
 
-  return errors.count <= originalErrorCount ? { rooms, initiallyObscuredRoomIds } : null;
+  return errors.count <= originalErrorCount ? { rooms, waypointGenerationContext, initiallyObscuredRoomIds } : null;
 }
 
 export function addRoomsToLevel(rooms:Room[], groundFloorRoomRef:string|null, level:MutableLevel, errors:ErrorCollector):boolean {
