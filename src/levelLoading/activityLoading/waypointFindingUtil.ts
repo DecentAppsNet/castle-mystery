@@ -4,7 +4,7 @@
 import Room from "@/game/types/Room";
 import Waypoint from "../types/Waypoint";
 import { FLOOR_WAYPOINT_Y_OFFSET, ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
-import Position, { arePositionsEqual } from "@/game/types/Position";
+import Position from "@/game/types/Position";
 import { assert, assertNonNullable } from "decent-portal";
 import RoomExit from "@/game/types/RoomExit";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";
@@ -65,10 +65,6 @@ export function findNearestIncludedFloorWaypointToPosition(context:WaypointGener
     excludedWaypoints:Waypoint[]):Waypoint|null {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   return _findNearestXZWaypoint(findWaypointsForRoom(context, room.id), position.x, floorY, position.z, excludedWaypoints);
-}
-
-export function findWaypointAtPosition(context:WaypointGenerationContext, roomId:string, position:Position):Waypoint|null {
-  return findWaypointsForRoom(context, roomId).find(w => arePositionsEqual(w.position, position)) ?? null;
 }
 
 export function isFloorWaypoint(room:Room, waypoint:Waypoint):boolean {

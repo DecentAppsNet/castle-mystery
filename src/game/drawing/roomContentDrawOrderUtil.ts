@@ -57,7 +57,7 @@ export function compareNonStairDrawableContents(content1:NonStairDrawableContent
   );
 }
 
-export function compareStairToContent(stairContent:StairDrawableContent, content:NonStairDrawableContent):number {
+function _compareStairToContent(stairContent:StairDrawableContent, content:NonStairDrawableContent):number {
   if (content.type === 'character') {
     const stairComparison = compareCharacterToStairPartRows(
       content.character.position.x,
@@ -78,7 +78,7 @@ function _hasLaterFullStoryLandingBeforeCharacter(stairContents:StairDrawableCon
   for (let stairIndex = startIndex + 1; stairIndex < stairContents.length; stairIndex += 1) {
     const stairPart = stairContents[stairIndex].stairPart;
     if (stairPart.type !== StairPartType.landing || stairPart.landingType !== StairLandingType.fullStory) continue;
-    if (compareStairToContent(stairContents[stairIndex], content) <= 0) return true;
+    if (_compareStairToContent(stairContents[stairIndex], content) <= 0) return true;
   }
 
   return false;
@@ -91,7 +91,7 @@ export function mergeStairsWithSortedContents(stairContents:StairDrawableContent
 
   sortedContents.forEach(content => {
     while (stairIndex < stairContents.length) {
-      if (compareStairToContent(stairContents[stairIndex], content) <= 0) {
+      if (_compareStairToContent(stairContents[stairIndex], content) <= 0) {
         mergedContents.push(stairContents[stairIndex]);
         stairIndex += 1;
         continue;

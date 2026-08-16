@@ -1,4 +1,4 @@
-# ADR 003: Waypoint-Based Room Navigation
+# ADR 003: Temporary Connected Waypoint Navigation
 
 ## Status
 
@@ -6,17 +6,19 @@ Accepted
 
 ## Context
 
-The movement system is being migrated toward waypoint-based navigation to support several goals:
+The movement system uses waypoint-based navigation to support several goals:
 
 - simpler wandering by choosing among adjacent waypoint destinations
 - reliable movement toward room exits
 - one-character-per-waypoint occupancy rules for clearer character placement
 
-At the same time, the design does not need to support all theoretically traversable maze-like layouts, and level-authored room obstructions are static after level load.
+Waypoints are needed while level loading schedules itinerary movement, but are not needed by the runtime game after scheduling. Keeping them in runtime `Room` or `Level` data would also introduce cyclic adjacency into data intended for later JSON serialization and caching.
+
+The earlier version of this ADR chose room-local graphs, explicit room transitions, and precomputed `Waypoint.exitDirections`. That design duplicated pathfinding state for every exit.
 
 ## Decision
 
-We adopt waypoint-based room navigation with room-local exit handling.
+We adopt one temporary connected waypoint graph spanning all rooms during level loading.
 
 ### 1. Characters are always on a waypoint or traveling to a waypoint
 
@@ -27,61 +29,54 @@ The intended steady-state invariant is:
 - a character rests on a waypoint
 - movement events travel from one waypoint to another waypoint
 
-### 2. Each room gets its own inset exit waypoint for each connected exit
+### 2. Every waypoint has room ownership
 
-For a room exit shared by two rooms, each room receives its own exit-associated waypoint inset from the exit center by a fixed spacing.
+Every waypoint has a normalized `roomId`. Waypoint identity includes its owning room as well as its canonical `(x,y,z)` position.
 
-Example:
+Generation still uses a room-local `(x,y,z)` map to deduplicate nodes within one room. Nodes are never globally deduplicated by position.
 
-- shared exit center at `(40, 50)` on a vertical wall
-- inset spacing `3`
-- Room A gets waypoint `(37, 50)`
-- Room B gets waypoint `(43, 50)`
+### 3. Each room gets its own waypoint for every shared exit
+
+For an exit shared by two rooms, each room receives its own exit-associated waypoint. The two nodes remain distinct objects with different `roomId` values even when their canonical positions are equal.
 
 No waypoint member is added to `RoomExit` itself.
 
-### 3. Exit traversal remains explicit, not graph-adjacent across rooms
+### 4. Shared exits connect the graph across rooms
 
-The two inset exit waypoints on opposite sides of a shared exit are **not** treated as directly adjacent in the waypoint graph for now.
+After all room-local graphs are generated, the two room-specific nodes for every shared exit receive a bidirectional adjacency edge. Generation asserts that both nodes exist, are distinct objects, and belong to the expected rooms.
 
-Cross-room traversal is handled explicitly by movement logic.
+The cross-room edge may have zero geometric length when both sides use the same canonical exit position. Such an edge changes graph ownership without creating a duplicate-time walk keyframe.
 
-This preserves clear room-transition semantics and avoids folding room-entry behavior into a single generic graph edge too early.
+### 5. Cross-room routes use unweighted breadth-first search
 
-### 4. `Waypoint.adjacentExits` is removed
+Movement between rooms runs one breadth-first search over waypoint adjacency, starting at the nearest valid waypoint in the source room and ending at the nearest valid waypoint in the destination room. Every graph edge has equal search cost.
 
-Room-local navigation is expressed only through waypoint-to-waypoint adjacency.
+Visited nodes and predecessor links use waypoint object identity. They must not use position alone because opposite sides of an exit can coincide.
 
-Exit-associated waypoints are part of the room's waypoint set, and normal adjacency among waypoints is used inside the room.
+Neighbor traversal is deterministic. After search reaches any waypoint in the destination room, it does not enqueue neighbors outside that room; all waypoints within a room are expected to be mutually reachable.
 
-### 5. `Waypoint.exitDirections` is precomputed for adjacent room ids only
+After selecting a path, existing path simplification and geometric walk-duration calculations apply. Therefore BFS minimizes edge count, not physical travel time, and may occasionally choose a geometrically slower route.
 
-Each waypoint stores a mapping from adjacent room id to the next adjacent waypoint that most efficiently progresses toward that exit.
+### 6. Waypoints have a temporary loading lifetime
 
-The type should be a plain object form such as:
+`WaypointGenerationContext` owns the global waypoint list and a room-indexed waypoint map. Room loading creates the context, activity scheduling consumes it, and `loadLevelFromText()` discards it before returning the finished `Level`.
 
-- `Partial<Record<string, Waypoint>>`
+Neither runtime `Room` nor runtime `Level` retains waypoints. `StairFlight` data has the same loading-only lifetime: each room generates its flights once and uses them to generate both runtime `StairPart` data and temporary waypoints. Only `StairPart` remains on `Room`.
 
-For now, keys are limited to **adjacent room ids**, not arbitrary destination rooms elsewhere in the level.
+### 7. Canonical coordinates remain required
 
-### 6. Exit direction data is populated by flood fill from exit waypoints
-
-For each room, a flood fill / breadth-first traversal from each inset exit waypoint is used to determine the preferred next step toward that exit for every reachable waypoint in the room.
-
-### 7. Coincident waypoint positions should be reused rather than duplicated
-
-If an inset exit waypoint lands on the same coordinates as an already generated room waypoint, the existing waypoint should be reused instead of creating a duplicate waypoint object at the same position.
+Waypoint identity and local deduplication use exact canonical `(x,y,z)` coordinates. Floor, exit, and stair-landing Y coordinates continue to follow ADR 012.
 
 ## Rationale
 
-This design keeps room-local navigation simple while avoiding premature complexity in cross-room graph semantics:
+This design keeps pathfinding simple while making multi-room routing reliable:
 
 - wandering can choose adjacent waypoints directly
 - occupancy is easier to reason about when characters rest only on waypoints
-- exit routing can be precomputed locally within each room
-- room transitions remain explicit and compatible with existing room-entry behavior
-
-Restricting `exitDirections` to adjacent room ids keeps the initial model focused and avoids mixing local room routing with full multi-room pathfinding concerns.
+- one graph search handles adjacent and multi-room movement uniformly
+- no per-exit flood-fill state is generated or retained
+- temporary cyclic graph data does not complicate runtime serialization
+- unweighted BFS is predictable and sufficient despite not minimizing geometric distance
 
 ## Consequences
 
@@ -90,36 +85,41 @@ Restricting `exitDirections` to adjacent room ids keeps the initial model focuse
 - Simpler room-local wandering logic
 - Stronger basis for one-character-per-waypoint occupancy rules
 - Clearer movement invariants than arbitrary point-in-room targets
-- Precomputed local routing toward exits
+- Reliable traversal across chains of rooms
+- Less generated routing state
+- Runtime `Room` and `Level` remain free of waypoint graph data
 
 ### Negative
 
-- Cross-room movement still requires explicit transition logic
+- BFS can choose a geometrically slower route with fewer or equally many edges
 - Some geometrically possible paths may still be unavailable in complex obstruction layouts
-- More work remains to migrate all movement producers onto waypoint semantics
+- The graph must be regenerated whenever a level is loaded rather than restored from runtime `Level` data
 
 ## Implementation Notes
 
 Implementation should proceed roughly as follows:
 
-1. Generate grid waypoints for each room.
-2. Add or reuse inset exit waypoints for each connected exit on each room side.
-3. Build room-local waypoint adjacency.
-4. Remove `adjacentExits` from waypoint data.
-5. Compute `exitDirections` by flood fill from inset exit waypoints.
-6. Update movement-producing code such as `wanders` and `at` to operate on waypoints.
+1. Generate stair flights once per room.
+2. Generate each room's local waypoint graph and runtime stair parts from those flights.
+3. Add waypoints to `WaypointGenerationContext` and index them by `roomId`.
+4. Connect the two distinct nodes at every shared exit.
+5. Pass the context through itinerary activity scheduling.
+6. Use room-indexed lookups for local movement and global BFS for cross-room movement.
+7. Discard the context before returning the runtime `Level`.
 
 ## Not Chosen
 
-### Cross-room waypoint adjacency
+### Precomputed `Waypoint.exitDirections`
 
-Not chosen initially.
+Superseded because it duplicates a flood fill for every exit and does not reliably compose into routes through multiple rooms.
 
-Reason:
+### Weighted shortest-path search
 
-- it blurs room-transition semantics
-- it makes `RoomEntryEvent` handling less explicit
-- explicit exit traversal is easier to reason about during migration
+Not chosen. Dijkstra or A* could optimize geometric travel time, but the additional complexity is not currently justified. Geometric distance still determines movement duration after BFS selects a route.
+
+### Retaining waypoints on `Room` or `Level`
+
+Not chosen because waypoints are scheduling-only data and cyclic adjacency would interfere with JSON serialization and caching.
 
 ### `RoomExit.waypoint`
 
@@ -127,6 +127,6 @@ Not chosen.
 
 Reason:
 
-- each shared exit needs a distinct inset waypoint per room side
+- each shared exit needs a distinct room-owned waypoint per side
 - a single waypoint on `RoomExit` would be ambiguous
 - side-specific waypoint generation belongs to room navigation, not the exit record itself
