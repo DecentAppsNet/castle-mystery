@@ -155,7 +155,7 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   assertNonNullable(characterWaypoint);
   const takeWaypoint = _findBestTakeWaypoint(waypointContext, characterRoom, characterWaypoint, item);
   const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, characterRoom, character.position, scheduleTime, takeWaypoint.position,
-    characterI, editableTimeline);
+    characterI, character.facingDirection, editableTimeline);
   if (typeof scheduleResult === 'string') {
     errors.addAtLine(scheduleResult, activity.lineI);
     return false;

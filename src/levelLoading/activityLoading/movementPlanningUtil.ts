@@ -150,31 +150,47 @@ function _getSecondsText(msecs:number):string {
   return `${msecs} milliseconds`;
 }
 
-function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, characterI:number, timeline:EditableTimeline):number {
+function _getTravelDirection(fromPosition:Position, toPosition:Position):FacingDirection|null {
+  return (fromPosition.x === toPosition.x) 
+    ? null
+    : toPosition.x > fromPosition.x ? 'right' : 'left';
+}
+
+function _scheduleFacingChangeAsNeeded(lastFacingDirection:FacingDirection|null, fromPosition:Position, fromTime:number, 
+    toPosition:Position, characterI:number, timeline:EditableTimeline):FacingDirection|null {
+  const facingDirection:FacingDirection|null = _getTravelDirection(fromPosition, toPosition);
+  if (!facingDirection || facingDirection === lastFacingDirection) return lastFacingDirection;
+
+  addCharacterKeyframe({ facingDirection }, characterI, fromTime, timeline);
+  return facingDirection;
+}
+
+function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):number {
   let time = fromTime;
-  let lastDirection:FacingDirection|null = null;
+  let lastDirection:FacingDirection|null = initialFacingDirection;
   for (let i = 1; i < waypointPath.length; ++i) {
     const fromPosition = waypointPath[i-1].position;
     const toPosition = waypointPath[i].position;
-    const travelDirection:FacingDirection = toPosition.x > fromPosition.x ? 'right' : 'left';
-    const facingDirection = travelDirection === lastDirection ? undefined : travelDirection;
-    lastDirection = travelDirection;
     const walkDuration = _calcWalkDurationBetweenPositions(fromPosition, toPosition);
-    if (walkDuration > 0) addCharacterKeyframe({ position:toPosition, facingDirection }, characterI, time + walkDuration, timeline);
-    time += walkDuration;
+    if (walkDuration > 0) {
+      lastDirection = _scheduleFacingChangeAsNeeded(lastDirection, fromPosition, time, toPosition, characterI, timeline);
+      addCharacterKeyframe({ position:toPosition }, characterI, time + walkDuration, timeline);
+      time += walkDuration;
+    }
+    assert(walkDuration > 0); // Unneeded waypoints are being generated somewhere.
   }
   return time;
 }
 
 function _scheduleWaypointPathAfterDelay(waypointPath:Waypoint[], fromTime:number, delay:number,
-    characterI:number, timeline:EditableTimeline):number {
+    characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):number {
   const walkStartTime = fromTime + delay;
   if (delay > 0) addCharacterKeyframe({ position:waypointPath[0].position, bodyOrientation:'standing' }, characterI, walkStartTime, timeline);
-  return _scheduleWaypointPath(waypointPath, walkStartTime, characterI, timeline);
+  return _scheduleWaypointPath(waypointPath, walkStartTime, characterI, initialFacingDirection, timeline);
 }
 
 function _scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
-    toTime:number|null, characterI:number, timeline:EditableTimeline):string|number {
+    toTime:number|null, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):string|number {
   assert(toTime === null || toTime >= fromTime);
   const fromWaypoint = findNearestFloorWaypointToPosition(context, room, fromPosition);
   const toWaypoint = findNearestFloorWaypointToPosition(context, room, toPosition);
@@ -192,19 +208,20 @@ function _scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext,
     }
   }
 
-  const scheduledEndTime = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, extraTime, characterI, timeline);
+  const scheduledEndTime = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, extraTime, characterI, initialFacingDirection, timeline);
   assert(toTime === null || scheduledEndTime === toTime);
   return scheduledEndTime;
 }
 
 // If successful, returns the amount of delay from fromTime that was used in scheduling. If unsuccessful return error message.
 function _scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContext, fromRoom:Room, fromPosition:Position, 
-    fromTime:number, toRoom:Room, toPosition:Position, toTime:number|null, characterI:number, timeline:EditableTimeline):string|number {
+    fromTime:number, toRoom:Room, toPosition:Position, toTime:number|null, characterI:number, initialFacingDirection:FacingDirection,
+    timeline:EditableTimeline):string|number {
   if (arePositionsEqual(fromPosition, toPosition)) return fromTime; // Character already at destination.
   
   if (fromRoom.id === toRoom.id) {
     return _scheduleCharacterMovementWithinRoom(context, fromRoom, fromPosition, fromTime, toPosition, 
-        toTime, characterI, timeline);
+        toTime, characterI, initialFacingDirection, timeline);
   }
   
   const waypointPath = _findWaypointPathThroughRooms(context, fromRoom, toRoom, fromPosition, toPosition);
@@ -221,26 +238,27 @@ function _scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContex
     }
   }
 
-  const scheduledEndTime = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, extraTime, characterI, timeline);
+  const scheduledEndTime = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, extraTime, characterI, initialFacingDirection, timeline);
   assert(toTime === null || scheduledEndTime === toTime);
   
   return extraTime;
 }
 
 export function scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
-    characterI:number, timeline:EditableTimeline):string|number {
+    characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):string|number {
   return _scheduleCharacterMovementWithinRoom(context, room, fromPosition, fromTime, toPosition, null, 
-      characterI, timeline);
+      characterI, initialFacingDirection, timeline);
 }
 
 export function scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContext, fromRoom:Room, fromPosition:Position, 
-    fromTime:number, toRoom:Room, toPosition:Position, toTime:number, characterI:number, timeline:EditableTimeline):string|number {
+    fromTime:number, toRoom:Room, toPosition:Position, toTime:number, characterI:number, initialFacingDirection:FacingDirection,
+    timeline:EditableTimeline):string|number {
   return _scheduleCharacterMovementToRoomAtTime(context, fromRoom, fromPosition, fromTime, toRoom, toPosition,
-      toTime, characterI, timeline);
+      toTime, characterI, initialFacingDirection, timeline);
 }
 
 export function scheduleCharacterMovementToRoom(context:WaypointGenerationContext, fromRoom:Room, fromPosition:Position, 
-    fromTime:number, toRoom:Room, toPosition:Position, characterI:number, timeline:EditableTimeline):string|number {
+    fromTime:number, toRoom:Room, toPosition:Position, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):string|number {
   return _scheduleCharacterMovementToRoomAtTime(context, fromRoom, fromPosition, fromTime, toRoom, toPosition,
-      null, characterI, timeline);
+      null, characterI, initialFacingDirection, timeline);
 }

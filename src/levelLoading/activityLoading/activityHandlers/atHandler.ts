@@ -64,6 +64,7 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
   const fromKeyframe = findLatestKeyFrameForCharacter(editableTimeline, characterI);
   const fromPos = fromKeyframe.characters[characterI].position;
   const fromTime = fromKeyframe.time; // The very earliest that the character can begin moving toward destination.
+  const fromFacingDirection = fromKeyframe.characters[characterI].facingDirection;
   const fromRoom = findRoomAtPosition(level.rooms, fromPos.x, fromPos.y);
   assertNonNullable(fromRoom);
 
@@ -81,8 +82,8 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
   const toTime = toKeyframe.time;
 
   const scheduleResult = isRelativeTimestamp 
-    ? scheduleCharacterMovementToRoom(waypointContext, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, editableTimeline)
-    : scheduleCharacterMovementToRoomAtTime(waypointContext, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, editableTimeline)
+    ? scheduleCharacterMovementToRoom(waypointContext, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, fromFacingDirection, editableTimeline)
+    : scheduleCharacterMovementToRoomAtTime(waypointContext, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, fromFacingDirection, editableTimeline)
   if (typeof scheduleResult === 'string') {
     errors.addAtLine(scheduleResult, activity.lineI);
     return false;
