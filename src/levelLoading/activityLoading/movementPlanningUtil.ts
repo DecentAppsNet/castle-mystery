@@ -8,6 +8,7 @@ import { findNearestFloorWaypointToPosition, isFloorWaypoint, WAYPOINT_MIDDLE_RO
 import { addCharacterKeyframe } from "../timelineLoading/editingUtil";
 import { formatMsecsAsTimestamp } from "./timestampUtil";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";
+import { FacingDirection } from "@/game/types/Character";
 
 const WALK_MSECS_PER_PIXEL = 60;
 
@@ -151,11 +152,15 @@ function _getSecondsText(msecs:number):string {
 
 function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, characterI:number, timeline:EditableTimeline):number {
   let time = fromTime;
+  let lastDirection:FacingDirection|null = null;
   for (let i = 1; i < waypointPath.length; ++i) {
     const fromPosition = waypointPath[i-1].position;
     const toPosition = waypointPath[i].position;
+    const travelDirection:FacingDirection = toPosition.x > fromPosition.x ? 'right' : 'left';
+    const facingDirection = travelDirection === lastDirection ? undefined : travelDirection;
+    lastDirection = travelDirection;
     const walkDuration = _calcWalkDurationBetweenPositions(fromPosition, toPosition);
-    if (walkDuration > 0) addCharacterKeyframe({ position:toPosition }, characterI, time + walkDuration, timeline);
+    if (walkDuration > 0) addCharacterKeyframe({ position:toPosition, facingDirection }, characterI, time + walkDuration, timeline);
     time += walkDuration;
   }
   return time;
@@ -164,7 +169,7 @@ function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, charact
 function _scheduleWaypointPathAfterDelay(waypointPath:Waypoint[], fromTime:number, delay:number,
     characterI:number, timeline:EditableTimeline):number {
   const walkStartTime = fromTime + delay;
-  if (delay > 0) addCharacterKeyframe({ position:waypointPath[0].position }, characterI, walkStartTime, timeline);
+  if (delay > 0) addCharacterKeyframe({ position:waypointPath[0].position, bodyOrientation:'standing' }, characterI, walkStartTime, timeline);
   return _scheduleWaypointPath(waypointPath, walkStartTime, characterI, timeline);
 }
 

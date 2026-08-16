@@ -37,6 +37,7 @@ HS
 ## Sam
 * faceImage=guard1.png
 * description=It's just a guy.
+* bodyOrientation=sitting
 
 # items
 
