@@ -5,6 +5,7 @@ import { findRoomAtPosition } from '@/game/roomUtil';
 import defaultLevelText from './fixtures/at-base.md?raw';
 import threeRoomLevelText from './fixtures/at-three-rooms.md?raw';
 import stairwellLevelText from './fixtures/at-through-stairwell.md?raw';
+import delayedStairwellLevelText from './fixtures/at-delayed-stairwell.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 import { findCharacterPositionAtTime } from '@/game/timeline';
 
@@ -82,6 +83,17 @@ describe('level loading - @ activities', () => {
     const samPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
       level!.timeline.characterIdToI.sam, 10_000);
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('gallery');
+  });
+
+  it('waits in place before fixed-arrival movement begins', () => {
+    const { level, errors } = loadLevelForTest(delayedStairwellLevelText, 'at-delayed-stairwell.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const characterI = level!.timeline.characterIdToI.sam;
+    const startPosition = findCharacterPositionAtTime(level!.timeline.keyframes, characterI, 0);
+    const positionAfterOneSecond = findCharacterPositionAtTime(level!.timeline.keyframes, characterI, 1_000);
+    expect(positionAfterOneSecond).toEqual(startPosition);
   });
 
   it('character does nothing when already in the @-specified room', () => {

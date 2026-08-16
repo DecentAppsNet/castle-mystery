@@ -161,6 +161,13 @@ function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, charact
   return time;
 }
 
+function _scheduleWaypointPathAfterDelay(waypointPath:Waypoint[], fromTime:number, delay:number,
+    characterI:number, timeline:EditableTimeline):number {
+  const walkStartTime = fromTime + delay;
+  if (delay > 0) addCharacterKeyframe({ position:waypointPath[0].position }, characterI, walkStartTime, timeline);
+  return _scheduleWaypointPath(waypointPath, walkStartTime, characterI, timeline);
+}
+
 function _scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
     toTime:number|null, characterI:number, timeline:EditableTimeline):string|number {
   assert(toTime === null || toTime >= fromTime);
@@ -180,7 +187,7 @@ function _scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext,
     }
   }
 
-  let scheduledEndTime = _scheduleWaypointPath(waypointPath, fromTime + extraTime, characterI, timeline);  
+  const scheduledEndTime = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, extraTime, characterI, timeline);
   assert(toTime === null || scheduledEndTime === toTime);
   return scheduledEndTime;
 }
@@ -209,7 +216,7 @@ function _scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContex
     }
   }
 
-  const scheduledEndTime = _scheduleWaypointPath(waypointPath, fromTime + extraTime, characterI, timeline);  
+  const scheduledEndTime = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, extraTime, characterI, timeline);
   assert(toTime === null || scheduledEndTime === toTime);
   
   return extraTime;
