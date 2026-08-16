@@ -105,6 +105,10 @@ describe('stairDrawOrderUtil', () => {
     it('draws unrelated flights before the character instead of letting them decide same-row left/right ordering', () => {
       expect(compareCharacterToStairPartRows(20, 15, MIDDLE_ROW_DEPTH, _createFlight(4, 8, MIDDLE_ROW_Z))).toBeGreaterThan(0);
     });
+
+    it('draws an unrelated front-row flight after a back-row character', () => {
+      expect(compareCharacterToStairPartRows(20, 15, BACK_ROW_CHARACTER_DEPTH, _createFlight(4, 8, FRONT_ROW_Z))).toBeLessThan(0);
+    });
   });
 
   describe('calcStairPartDrawPhase()', () => {

@@ -109,7 +109,8 @@ export function compareCharacterToStairPartRows(characterX:number, characterY:nu
   if (_isBackRowCharacterWithinWindingStoryLanding(characterY, characterDepth, stairPart)) return 1;
   if (_isBackRowCharacterWithinMiddleRowCatwalk(characterY, characterDepth, stairPart)) return 1;
   if (_isCharacterAtFlightLandingY(characterY, stairPart)) return 1;
-  if (stairPart.type === StairPartType.flight && !_isCharacterOnFlight(characterX, characterY, stairPart)) return 1;
+  if (stairPart.type === StairPartType.flight && !_isCharacterOnFlight(characterX, characterY, stairPart)
+    && quantizeDepthToDrawRow(characterDepth) === calcStairPartDrawRow(stairPart)) return 1;
 
   const characterRow = quantizeDepthToDrawRow(characterDepth);
   const stairRow = calcStairPartDrawRow(stairPart);
