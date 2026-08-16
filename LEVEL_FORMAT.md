@@ -51,7 +51,7 @@ In practice, an author can think of these three fields as answering three questi
 
 `groundFloorRoom` is mainly useful for multi-level maps where vertical room placement matters. If provided, it must match an existing room (by id or title), otherwise level loading fails.
 
-If a level crosses midnight, write the times the way a person normally would. For example, `startTime=19:30` and `endTime=07:00` means the level starts in the evening and ends the next morning.
+If a level crosses midnight, write the times with 24+ hours. For example, `startTime=19:30` and `endTime=31:00` means the level starts in the evening and ends the next morning.
 
 
 ## Example
@@ -354,16 +354,6 @@ Relative timestamps are useful when you want one action to wait for the previous
 Absolute-timestamp lines do not have to be written in time order. The loader reorders them correctly by time when the level loads.
 
 This is useful when you want to group together a set of activities that happen at the same moment but involve different characters. In practice, that often makes the itinerary easier to read and edit.
-
-## Crossing Midnight
-
-If the level crosses midnight, write the itinerary times the way a person normally would.
-
-For example, in a level with `startTime=19:30`, an itinerary line such as `0:15:00 Butler says "The house is quiet."` is treated as the next day, not earlier that same evening.
-
-In other words, absolute itinerary times earlier than the level's `startTime` are understood as after midnight when the level timeline crosses over into the next day.
-
-Note that the itinerary can't be longer than 24 hours. Or rather, you have no way of specifying a time outside the range of 0:00:00 to 23:59:59. So even if you intend an activity to occur outside of one 24-hour period, the level loader will always interpret your times inside of one 24-hour period.
 
 ## File Order And Time Order
 
