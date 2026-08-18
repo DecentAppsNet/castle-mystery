@@ -8,14 +8,14 @@ The main difference is that level files contain information that a player would 
 
 The second difference is that we'll have more graph traversal puzzles involving doors, movements between rooms, and disguises. While high-end frontier models do a reasonable job of analyzing these, deterministic code that models graphs for room state will do a better job.
 
-We've also got Castle Mystery to a more mature place where very few if any new features to level mechanics need be added or revised.
+We've also got Castle Mystery to a more mature place where very few, if any, new features to level mechanics need be added or revised.
 
 ## Goals
 
 * Decouple the solver from CM implementation by providing an API.
 * Give the solver just what information is known to the player at different points in level progression.
-* Filter out cosmetic and solution-irrelevant information that don't contribute toward solving.
-* Allow the solver to guess conclusions without knowing answers beforehand, to avoid its guesses or intermediate logic being biased to the correct answer.
+* Filter out cosmetic and solution-irrelevant information that doesn't contribute toward solving.
+* Allow the solver to guess conclusions without knowing answers beforehand. This prevents its guesses or intermediate logic from being biased with knowledge of the correct answer.
 * Allow the solver to progress to states in the same level where more is known based on claiming correct conclusions.
 
 ## Design
