@@ -6,18 +6,18 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { assert, assertNonNullable } from "decent-portal";
 import { findRoomAtPosition } from "@/game/roomUtil";
-import { createCharacterKeyframeAtTime, findRoomKeyframeForTime } from "@/game/timeline";
+import { createKeyframeAtTime } from "@/game/timeline";
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 import Item from "@/game/types/Item";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 import Waypoint from "@/levelLoading/types/Waypoint";
-import { findNearestFloorWaypointToPosition, findWaypointsForRoom, isExitWaypoint, isFloorWaypoint } from "../waypointFindingUtil";
-import { arePositionsOrthogonal } from "@/game/types/Position";
+import { findClaimedWaypointsFromKeyframe, findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findRoomWaypointAtPosition } from "../waypointFindingUtil";
 import Room from "@/game/types/Room";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import TakeCue, { INVENTORY, LEFT_HAND, RIGHT_HAND, TAKE_EFFECT_TIME } from "@/game/types/effectCues/TakeCue";
 import { addCharacterKeyframe, addRoomKeyframe } from "@/levelLoading/timelineLoading";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
+import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 
 const ROOM = 'room';
 
@@ -89,25 +89,12 @@ export function createTakesParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
-function _scoreTakeWaypoint(item:Item, waypoint:Waypoint):number {
-  let score = 0;
-  if (arePositionsOrthogonal(item.position, waypoint.position)) score += 1000;
-  if (waypoint.position.z > item.position.z) score += 500;
-  score += 100 - Math.hypot(item.position.x - waypoint.position.x, item.position.z - waypoint.position.z);
-  return score;
-}
-
-function _findBestTakeWaypoint(context:WaypointGenerationContext, room:Room, characterWaypoint:Waypoint, item:Item):Waypoint {
-  let bestScore = -Infinity;
-  let bestWaypoint:Waypoint = characterWaypoint;
-  findWaypointsForRoom(context, room.id).forEach(waypoint => {
-    if (waypoint === characterWaypoint || isExitWaypoint(room, waypoint) || !isFloorWaypoint(room, waypoint)) return;
-    const score = _scoreTakeWaypoint(item, waypoint);
-    if (score > bestScore) {
-      bestWaypoint = waypoint;
-      bestScore = score;
-    }
-  });
+function _findBestTakeWaypoint(context:WaypointGenerationContext, keyframe:TimelineKeyframe, room:Room, roomI:number, item:Item):Waypoint {
+  const claimedWaypoints = findClaimedWaypointsFromKeyframe(room, roomI, keyframe, context);
+  
+  const bestWaypoint = findNearestIncludedFloorWaypointToPosition(context, room, item.position, claimedWaypoints) ??
+    findRoomWaypointAtPosition(context, room.id, item.position);
+  assertNonNullable(bestWaypoint);
   return bestWaypoint;
 }
 
@@ -121,29 +108,29 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
 
   assertNonNullable(characterId, 'implied subjects should have been resolved');
   assert(typeof itemId === 'string');
+  const keyframe = createKeyframeAtTime(editableTimeline.keyframes, activity.startTime);
   const characterI = editableTimeline.characterIdToI[characterId];
-  const character = createCharacterKeyframeAtTime(editableTimeline.keyframes, characterI, activity.startTime);
-  assertNonNullable(character);
+  const characterKeyframe = keyframe.characters[characterI];
+  assertNonNullable(characterKeyframe);
   const item = level.itemsById.get(itemId);
   assertNonNullable(item);
 
-  const itemPlacement = _getItemPlacement(character, itemId);
+  const itemPlacement = _getItemPlacement(characterKeyframe, itemId);
   if (itemPlacement !== ROOM) { // Handle movement of item from one place on the character to another.
-    _scheduleCharacterItemMovement(character, item, itemPlacement, target, characterI, activity.startTime, editableTimeline);
+    _scheduleCharacterItemMovement(characterKeyframe, item, itemPlacement, target, characterI, activity.startTime, editableTimeline);
     activity.endTime = activity.startTime;
     return true;
   }
 
   // Item isn't on character, so find it in room.
-  const characterRoom = findRoomAtPosition(level.rooms, character.position.x, character.position.y);
+  const characterRoom = findRoomAtPosition(level.rooms, characterKeyframe.position.x, characterKeyframe.position.y);
   if (!characterRoom) {
     errors.addAtLine(`"${characterId}" character is not placed in a room, so can't take "${itemId}" item.`, activity.lineI);
     return false;
   }
-
   const roomI = editableTimeline.roomIdToI[characterRoom.id];
-  assertNonNullable(roomI);
-  const roomKeyframe = findRoomKeyframeForTime(editableTimeline.keyframes, roomI, activity.startTime);
+  const roomKeyframe = keyframe.rooms[roomI];
+  assertNonNullable(roomKeyframe);
   if (!_isItemInRoom(roomKeyframe, itemId)) {
     errors.addAtLine(`"${itemId}" item is not in "${characterRoom.id}" room with "${characterId}" character, so can't be taken.`, activity.lineI);
     return false;
@@ -151,11 +138,11 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
 
   // Move character close to item to take it.
   let scheduleTime = activity.startTime;
-  const characterWaypoint = findNearestFloorWaypointToPosition(waypointContext, characterRoom, character.position);
+  const characterWaypoint = findNearestFloorWaypointToPosition(waypointContext, characterRoom, characterKeyframe.position);
   assertNonNullable(characterWaypoint);
-  const takeWaypoint = _findBestTakeWaypoint(waypointContext, characterRoom, characterWaypoint, item);
-  const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, characterRoom, character.position, scheduleTime, takeWaypoint.position,
-    characterI, character.facingDirection, editableTimeline);
+  const takeWaypoint = _findBestTakeWaypoint(waypointContext, keyframe, characterRoom, roomI, item);
+  const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, characterRoom, characterKeyframe.position, scheduleTime, takeWaypoint.position,
+    characterI, characterKeyframe.facingDirection, editableTimeline);
   if (typeof scheduleResult === 'string') {
     errors.addAtLine(scheduleResult, activity.lineI);
     return false;
@@ -163,7 +150,7 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   scheduleTime = scheduleResult;
 
   _scheduleRemoveItemFromRoom(roomKeyframe, itemId, roomI, scheduleTime, editableTimeline);
-  _scheduleCharacterItemMovement(character, item, itemPlacement, target, characterI, scheduleTime, editableTimeline);
+  _scheduleCharacterItemMovement(characterKeyframe, item, itemPlacement, target, characterI, scheduleTime, editableTimeline);
 
   const takeCue:TakeCue = { kind:'takeItem', itemId, target };
   addCharacterKeyframe({ effectCues:[takeCue] }, characterI, scheduleTime, editableTimeline);

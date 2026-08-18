@@ -241,7 +241,8 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     startTime:level.startTime,
     time:level.initialTime,
     timeline:level.timeline, // Timeline is immutable and it is a large data structure - no harm in sharing instance.
-    timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms, level.activeCharacterId),
+    timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms, level.timeline,
+      level.activeCharacterId, level.initialTime),
     viewedItemIds:new Set<string>(),
     winSynopsis:level.winSynopsis,
   }

@@ -1,7 +1,8 @@
 import { assert } from "decent-portal";
 
 import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
-import Position, { arePositionsEqual } from "@/game/types/Position";
+import Position from "@/game/types/Position";
+import { arePositionsEqual } from "@/game/positionUtil";
 import { findInterpolatedCharacterPosition } from "./interpolationUtil";
 import CharacterKeyframe, { duplicateCharacterKeyframe } from "@/game/types/CharacterKeyframe";
 import RoomKeyframe from "@/game/types/RoomKeyframe";

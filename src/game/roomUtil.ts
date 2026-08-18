@@ -22,8 +22,13 @@ export function findRoomByIdOrTitle(rooms:readonly Room[], roomRef:string):Room|
   return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) ?? null;
 }
 
-export function findRoomAtPosition(rooms:readonly Room[], x:number, y:number):Room | null {
+export function findRoomAtPosition(rooms:readonly Room[], x:number, y:number):Room|null {
   return rooms.find((r) => isPositionInRect(x, y, r.rect)) ?? null;
+}
+
+export function findRoomIdAtPosition(rooms:readonly Room[], x:number, y:number):string|null {
+  const room = findRoomAtPosition(rooms, x, y);
+  return room?.id ?? null;
 }
 
 export function findCharactersInRoom(room:Room, characters:readonly Character[]):Character[] {

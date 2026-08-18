@@ -1,9 +1,13 @@
+/* This module plans character movement along room waypoints and adds the resulting keyframes to editable timelines.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { assert, botch } from "decent-portal";
 
 import Room from "@/game/types/Room";
 import Waypoint from "../types/Waypoint";
 import EditableTimeline from "../timelineLoading/types/EditableTimeline";
-import Position, { arePositionsEqual } from "@/game/types/Position";
+import Position from "@/game/types/Position";
+import { arePositionsEqual } from "@/game/positionUtil";
 import { findNearestFloorWaypointToPosition, isFloorWaypoint, WAYPOINT_MIDDLE_ROW_Z } from "./waypointFindingUtil";
 import { addCharacterKeyframe } from "../timelineLoading/editingUtil";
 import { formatMsecsAsTimestamp } from "./timestampUtil";
@@ -185,7 +189,7 @@ function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, charact
 function _scheduleWaypointPathAfterDelay(waypointPath:Waypoint[], fromTime:number, delay:number,
     characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):number {
   const walkStartTime = fromTime + delay;
-  if (delay > 0) addCharacterKeyframe({ position:waypointPath[0].position, bodyOrientation:'standing' }, characterI, walkStartTime, timeline);
+  addCharacterKeyframe({ position:waypointPath[0].position, bodyOrientation:'standing' }, characterI, walkStartTime, timeline);
   return _scheduleWaypointPath(waypointPath, walkStartTime, characterI, initialFacingDirection, timeline);
 }
 

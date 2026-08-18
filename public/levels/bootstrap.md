@@ -20,12 +20,13 @@ HS
 * exits=Stairwell
 
 ```
-....
+.v..
 ..S.
 ....
 ```
 
 * S=Sam
+* v=Vase
 
 ## Closet
 
@@ -41,9 +42,14 @@ HS
 
 # items
 
+## Vase
+
 # itinerary
 
 0:00:00 Sam @ Hall
-0:00:05 Sam @ Closet
+: waits .1
+: Sam takes Vase in right hand
+0:00:06 Sam @ Closet
+: drops Vase
 
 # conclusions

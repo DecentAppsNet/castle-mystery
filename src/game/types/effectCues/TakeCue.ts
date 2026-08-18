@@ -4,7 +4,7 @@ export const LEFT_HAND = 'left hand';
 export const RIGHT_HAND = 'right hand';
 export const INVENTORY = 'inventory';
 
-export const TAKE_EFFECT_TIME = 1000;
+export const TAKE_EFFECT_TIME = 500;
 
 type TakeCue = EffectCueBase & {
   itemId:string,

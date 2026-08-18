@@ -1,8 +1,8 @@
 import { assertNonNullable } from "decent-portal";
-import Room, { duplicateRoom } from "../types/Room";
+import Room from "../types/Room";
 import Timeline from "../types/Timeline";
 import TimelineKeyframe from "../types/TimelineKeyframe";
-import Character, { duplicateCharacter } from "../types/Character";
+import Character from "../types/Character";
 import GameState from "../types/GameState";
 import TimelineSnapshot from "../types/TimelineSnapshot";
 import { createKeyframeAtTime } from "./retrievalUtil";
@@ -73,10 +73,11 @@ export function createTimelineSnapshot(gameState:GameState, time:number):Timelin
   return _createSnapshot(characters, rooms, gameState.activeCharacterId);
 }
 
-export function createInitialTimelineSnapshot(baseCharacters:Character[], baseRooms:Room[],
-  activeCharacterId:string):TimelineSnapshot {
-  const characters = baseCharacters.map(duplicateCharacter);
-  const rooms = baseRooms.map(duplicateRoom);
+export function createInitialTimelineSnapshot(baseCharacters:Character[], baseRooms:Room[], timeline:Timeline,
+    activeCharacterId:string, initialTime:number):TimelineSnapshot {
+  const keyframe = createKeyframeAtTime(timeline.keyframes, initialTime);
+  const characters = _createSnapshotCharacters(baseCharacters, timeline, keyframe);
+  const rooms = _createSnapshotRooms(baseRooms, timeline, keyframe);
   return _createSnapshot(characters, rooms, activeCharacterId);
 }
 

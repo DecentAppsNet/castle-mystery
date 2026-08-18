@@ -5,6 +5,7 @@ export const MAP_TILE_SIZE = 20;
 export const COLUMNS_PER_MAP_TILE = 4;
 export const LAYERS_PER_MAP_TILE = 4;
 export const COLUMN_WIDTH = MAP_TILE_SIZE / COLUMNS_PER_MAP_TILE;
+export const LAYER_HEIGHT = MAP_TILE_SIZE / LAYERS_PER_MAP_TILE;
 
 export function roomWidthToColumnCount(roomWidth:number):number {
 	return Math.round(roomWidth / MAP_TILE_SIZE) * COLUMNS_PER_MAP_TILE;

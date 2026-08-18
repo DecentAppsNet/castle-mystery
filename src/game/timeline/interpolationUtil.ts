@@ -1,4 +1,5 @@
-import Position, { arePositionsEqual } from "@/game/types/Position";
+import Position from "@/game/types/Position";
+import { arePositionsEqual } from "@/game/positionUtil";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import EditableTimelineKeyframe from "@/levelLoading/timelineLoading/types/EditableTimelineKeyframe";
 import { assert, assertNonNullable } from "decent-portal";
