@@ -1,6 +1,5 @@
 # general
 
-* title=Bootstrap
 * activeCharacter=Sam
 
 # map
@@ -38,21 +37,20 @@ HS
 ....
 ```
 
-* t=Table
+* t=Table|Book
 
 ## Stairwell
 
 # characters
 ## Sam
-* faceImage=guard1.png
-* description=It's just a guy.
-* bodyOrientation=sitting
 
 # items
 
 ## Vase
 
 ## Table
+
+## Book
 
 # itinerary
 

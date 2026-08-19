@@ -1,3 +1,6 @@
+/* This module parses and schedules item-drop activities, including room placement and stacking.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteral, makeOptions, makeSequence, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
@@ -23,6 +26,7 @@ import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import { addCharacterKeyframe, addRoomKeyframe } from "@/levelLoading/timelineLoading";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 import DropCue, { DROP_EFFECT_TIME } from "@/game/types/effectCues/DropCue";
+import { findNextItemStackPosition } from "@/game/itemStackPositionUtil";
 
 // Coupled to parse format. Used for casting parts to expected types.
 type PartsShape = {
@@ -146,11 +150,12 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
     errors.addAtLine(dropPositionResult, activity.lineI);
     return false;
   }
+  const dropPosition = findNextItemStackPosition(baseRoom, dropPositionResult, roomKeyframe.items);
 
   // Schedule moving the character closer to the drop position if needed.
   let scheduleTime = activity.startTime;
-  if (!arePositionsAdjacent(dropPositionResult, characterKeyframe.position)) {
-    const dropAdjacentPosition = _findDropAdjacentPosition(baseRoom, claimedWaypoints, waypointContext, dropPositionResult);
+  if (!arePositionsAdjacent(dropPosition, characterKeyframe.position)) {
+    const dropAdjacentPosition = _findDropAdjacentPosition(baseRoom, claimedWaypoints, waypointContext, dropPosition);
     const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, baseRoom, characterKeyframe.position, scheduleTime, 
         dropAdjacentPosition, characterI, characterKeyframe.facingDirection, editableTimeline);
     if (typeof scheduleResult === 'string') {
@@ -162,10 +167,10 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   
   // Schedule removal of item from character and adding it to the room in its target position.
   _scheduleRemoveItemFromCharacter(characterKeyframe, characterI, scheduleTime, itemId, editableTimeline);
-  _scheduleAddItemToRoom(item, dropPositionResult, roomKeyframe, roomI, scheduleTime, editableTimeline);
+  _scheduleAddItemToRoom(item, dropPosition, roomKeyframe, roomI, scheduleTime, editableTimeline);
 
   // Add cue for dropping effect.
-  const dropCue:DropCue = { kind:'dropItem', itemId, targetPosition:dropPositionResult };
+  const dropCue:DropCue = { kind:'dropItem', itemId, targetPosition:dropPosition };
   addCharacterKeyframe({ effectCues:[dropCue] }, characterI, scheduleTime, editableTimeline);
   activity.endTime = scheduleTime + DROP_EFFECT_TIME;
 
