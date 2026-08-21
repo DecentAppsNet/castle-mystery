@@ -23,7 +23,7 @@ import Room from "@/game/types/Room";
 import Waypoint from "@/levelLoading/types/Waypoint";
 import { arePositionsAdjacent } from "@/game/positionUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
-import { addCharacterKeyframe, addRoomKeyframe } from "@/levelLoading/timelineLoading";
+import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 import DropCue, { DROP_EFFECT_TIME } from "@/game/types/effectCues/DropCue";
 
@@ -103,14 +103,14 @@ function _scheduleRemoveItemFromCharacter(characterKeyframe:CharacterKeyframe, c
   if (characterKeyframe.rightHandItem?.id === itemId) keyChanges.rightHandItem = null;
   const items = characterKeyframe.items.filter(i => i.id !== itemId);
   if (items.length !== characterKeyframe.items.length) keyChanges.items = items;
-  addCharacterKeyframe(keyChanges, characterI, time, editableTimeline);
+  addCharacterKeyChanges(keyChanges, characterI, time, editableTimeline);
 }
 
 function _scheduleAddItemToRoom(dropItem:Item, dropPosition:Position, roomKeyframe:RoomKeyframe, roomI:number, time:number, editableTimeline:EditableTimeline) {
   assert(!roomKeyframe.items.find(i => i.id === dropItem.id));
   const item:Item = { ...duplicateItem(dropItem), position:dropPosition };
   const items = [ ...roomKeyframe.items, item ];
-  addRoomKeyframe({ items }, roomI, time, editableTimeline);
+  addRoomKeyChanges({ items }, roomI, time, editableTimeline);
 }
 
 export function scheduleDropsActivity(level:Level, waypointContext:WaypointGenerationContext,
@@ -169,7 +169,7 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
 
   // Add cue for dropping effect.
   const dropCue:DropCue = { kind:'dropItem', itemId, targetPosition:dropFloorPosition };
-  addCharacterKeyframe({ effectCues:[dropCue] }, characterI, scheduleTime, editableTimeline);
+  addCharacterKeyChanges({ effectCues:[dropCue] }, characterI, scheduleTime, editableTimeline);
   activity.endTime = scheduleTime + DROP_EFFECT_TIME;
 
   return true;

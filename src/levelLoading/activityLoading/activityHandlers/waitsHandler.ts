@@ -6,7 +6,7 @@ import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
-import { addCharacterKeyframe } from "@/levelLoading/timelineLoading";
+import { addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
@@ -35,7 +35,7 @@ export function scheduleWaitsActivity(_level:Level,
   // maybe others will rely on it to determine when the latest activity for a character completed.
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);
-  addCharacterKeyframe({}, characterI, activity.endTime, editableTimeline);
+  addCharacterKeyChanges({}, characterI, activity.endTime, editableTimeline);
   
   return true;
 }

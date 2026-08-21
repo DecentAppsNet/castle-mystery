@@ -5,7 +5,7 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { assert, assertNonNullable } from "decent-portal";
-import { addCharacterKeyframe } from "@/levelLoading/timelineLoading";
+import { addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
 export function createStandsParseFormat():ParseFormat {
@@ -26,7 +26,7 @@ export function scheduleStandsActivity(_level:Level,
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);
   
-  addCharacterKeyframe({ bodyOrientation:'standing'}, characterI, activity.startTime, editableTimeline);
+  addCharacterKeyChanges({ bodyOrientation:'standing'}, characterI, activity.startTime, editableTimeline);
 
   activity.endTime = activity.startTime;
   

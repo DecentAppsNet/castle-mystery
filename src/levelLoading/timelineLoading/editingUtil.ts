@@ -202,28 +202,28 @@ function _addKeyframe(editableKeyframe:Readonly<EditableTimelineKeyframe>, timel
   timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
 }
 
-export function addCharacterKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
+export function addCharacterKeyChanges(characterKeyChanges:Readonly<Partial<CharacterKeyframe>>, 
     characterI:number, time:number, timeline:EditableTimeline) {
   const { characterCount, roomCount } = _getCharacterAndRoomCount(timeline);
   const existingFrame = timeline.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
-    _addCharacterKeyframeToTimelineKeyframe(characterKeyframe, characterI, existingFrame);
+    _addCharacterKeyframeToTimelineKeyframe(characterKeyChanges, characterI, existingFrame);
     timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
   } else {
-    const keyframe = _createEditableKeyframeFromCharacterKeyframe(characterKeyframe, characterI, time, characterCount, roomCount);
+    const keyframe = _createEditableKeyframeFromCharacterKeyframe(characterKeyChanges, characterI, time, characterCount, roomCount);
     _addKeyframe(keyframe, timeline);
   }
 }
 
-export function addRoomKeyframe(roomKeyframe:Readonly<Partial<RoomKeyframe>>, roomI:number, 
+export function addRoomKeyChanges(roomKeyChanges:Readonly<Partial<RoomKeyframe>>, roomI:number, 
     time:number, timeline:EditableTimeline) {
   const { characterCount, roomCount } = _getCharacterAndRoomCount(timeline);
   const existingFrame = timeline.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
-    _addRoomKeyframeToTimelineKeyframe(roomKeyframe, roomI, existingFrame);
+    _addRoomKeyframeToTimelineKeyframe(roomKeyChanges, roomI, existingFrame);
     timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
   } else {
-    const keyframe = _createEditableKeyframeFromRoomKeyframe(roomKeyframe, roomI, time, characterCount, roomCount);
+    const keyframe = _createEditableKeyframeFromRoomKeyframe(roomKeyChanges, roomI, time, characterCount, roomCount);
     _addKeyframe(keyframe, timeline);
   }
 }

@@ -15,7 +15,7 @@ import { findClaimedWaypointsFromKeyframe, findNearestFloorWaypointToPosition, f
 import Room from "@/game/types/Room";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import TakeCue, { INVENTORY, LEFT_HAND, RIGHT_HAND, TAKE_EFFECT_TIME } from "@/game/types/effectCues/TakeCue";
-import { addCharacterKeyframe, addRoomKeyframe } from "@/levelLoading/timelineLoading";
+import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 
@@ -66,7 +66,7 @@ function _scheduleCharacterItemMovement(keyframe:CharacterKeyframe, item:Item, i
       assert(itemPlacement === ROOM); // removal from room handled elsewhere.
   }
 
-  addCharacterKeyframe(nextKeyframe, characterI, time, editableTimeline);
+  addCharacterKeyChanges(nextKeyframe, characterI, time, editableTimeline);
 }
 
 function _isItemInRoom(roomKeyframe:RoomKeyframe, itemId:string):boolean {
@@ -75,7 +75,7 @@ function _isItemInRoom(roomKeyframe:RoomKeyframe, itemId:string):boolean {
 
 function _scheduleRemoveItemFromRoom(room:RoomKeyframe, itemId:string, roomI:number, time:number, editableTimeline:EditableTimeline) {
   const items = room.items.filter(i => i.id !== itemId);
-  addRoomKeyframe({ items }, roomI, time, editableTimeline);
+  addRoomKeyChanges({ items }, roomI, time, editableTimeline);
 }
 
 export function createTakesParseFormat():ParseFormat {
@@ -153,7 +153,7 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   _scheduleCharacterItemMovement(characterKeyframe, item, itemPlacement, target, characterI, scheduleTime, editableTimeline);
 
   const takeCue:TakeCue = { kind:'takeItem', itemId, target };
-  addCharacterKeyframe({ effectCues:[takeCue] }, characterI, scheduleTime, editableTimeline);
+  addCharacterKeyChanges({ effectCues:[takeCue] }, characterI, scheduleTime, editableTimeline);
   activity.endTime = scheduleTime + TAKE_EFFECT_TIME;
 
   return true;

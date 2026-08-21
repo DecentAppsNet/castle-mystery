@@ -5,7 +5,7 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { assert, assertNonNullable, botch } from "decent-portal";
-import { addCharacterKeyframe } from "@/levelLoading/timelineLoading";
+import { addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import { FacingDirection } from "@/game/types/Character";
 import { createKeyframeAtTime } from "@/game/timeline";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
@@ -77,7 +77,7 @@ export function scheduleFacesActivity(_level:Level,
 
   const facingDirection = _findFacingDirection(characterId, target, toCharacterId, toItemId, editableTimeline, activity.startTime);
   
-  addCharacterKeyframe({ facingDirection }, characterI, activity.startTime, editableTimeline);
+  addCharacterKeyChanges({ facingDirection }, characterI, activity.startTime, editableTimeline);
 
   activity.endTime = activity.startTime;
   
