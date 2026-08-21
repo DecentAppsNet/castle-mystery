@@ -20,6 +20,7 @@ import ExitType from "./types/ExitType";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "./roomUtil";
 import { findCharacterDisplayPosition } from "./characterDisplayPositionUtil";
 import { updateTimelineSnapshotActiveContext } from "./timeline";
+import { createRoomContentDisplayLayout } from "./roomContentDisplayPositionUtil";
 
 function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }) {
   gameState.viewedItemIds.add(item.id);
@@ -105,8 +106,9 @@ export function updateGameStateForMouseDown(gameState:GameState, characters:Char
   if (character) {
     gameState.activeCharacterId = character.id;
     updateTimelineSnapshotActiveContext(gameState.timelineSnapshot, character.id);
+    const displayLayout = createRoomContentDisplayLayout(gameState.timelineSnapshot.activeRoom, [character]);
     gameState.activeEffects.push(createCharacterSelectEffect(character,
-      findCharacterDisplayPosition(character, gameState.timelineSnapshot.activeRoom), metaTime, gameState.scalingFactors));
+      findCharacterDisplayPosition(character, displayLayout), metaTime, gameState.scalingFactors));
     return;
   }
 }

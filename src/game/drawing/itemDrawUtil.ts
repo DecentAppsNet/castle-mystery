@@ -23,6 +23,7 @@ import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectio
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { findImageBitmap } from "@/game/imageAssetUtil";
 import { compareItemsForDrawOrder } from "./roomContentDrawOrderUtil";
+import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
 
 const ITEM_SIZING_RATIO = 0.21;
 const PULSE_CADENCE_MS = 1000;
@@ -65,7 +66,8 @@ function _calcItemImageRect(itemDrawRect:ItemImageRect, image:ImageBitmap):ItemI
 
 // Applies the item's authored draw offset before any world-to-canvas projection.
 function _getItemDrawPosition(item:Item, room:Room|null = null) {
-  return findItemDisplayPosition(item, room);
+  const displayLayout = room ? createRoomContentDisplayLayout(room, []) : null;
+  return findItemDisplayPosition(item, displayLayout);
 }
 
 // Converts base item dimensions plus projection outsets into the canvas draw rect shape used by item images.

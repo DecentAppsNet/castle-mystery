@@ -57,13 +57,13 @@ describe('characterDrawUtil', () => {
         ...createDefaultRoom(),
         rect:{ x:0, y:0, width:40, height:30 },
         items:[
-          { ...createDefaultItem(), id:'crate', position:{ x:10, y:29.999, z:0.5 } },
-          { ...createDefaultItem(), id:'box', position:{ x:10, y:26.82, z:0.5 } }
+          { ...createDefaultItem(), id:'crate', position:{ x:12.5, y:29.999, z:0.5 } },
+          { ...createDefaultItem(), id:'box', position:{ x:12.5, y:29.999, z:0.5 } }
         ]
       };
       const character = {
         ...createDefaultCharacter(),
-        position:{ x:10, y:29.999, z:0.5 }
+        position:{ x:12.5, y:29.999, z:0.5 }
       };
 
       const floorRect = getCharacterCanvasRect(character, SCALING_FACTORS, 0);

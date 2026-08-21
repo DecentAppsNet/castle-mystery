@@ -7,6 +7,7 @@ import { createImageAsset } from '@/game/imageAssetUtil';
 import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { createEmptyImageSet } from '@/game/imageSetUtil';
+import { calcItemCuboidHeightGame } from '@/game/itemSizeUtil';
 
 const SCALING_FACTORS:ScalingFactors = {
   sourceX:0,
@@ -66,17 +67,22 @@ describe('itemDrawUtil', () => {
         ...createDefaultRoom(),
         rect:{ x:0, y:0, width:10, height:10 },
         items:[
-          { ...createDefaultItem(), id:'pedestal', position:{ x:5, y:8, z:0.5 }, drawOffset:{ x:2, y:0, z:0 }, stackOffset:{ x:1.5, y:-0.25, z:0.1 } },
-          { ...createDefaultItem(), id:'tray', position:{ x:5, y:6, z:0.5 }, stackOffset:{ x:-0.5, y:-0.75, z:-0.05 } },
-          { ...createDefaultItem(), id:'crown', position:{ x:5, y:4, z:0.5 }, drawOffset:{ x:0.25, y:-0.5, z:0.2 } }
+          { ...createDefaultItem(), id:'pedestal', position:{ x:2.5, y:9.999, z:0.5 }, drawOffset:{ x:2, y:0, z:0 }, stackOffset:{ x:1.5, y:-0.25, z:0.1 } },
+          { ...createDefaultItem(), id:'tray', position:{ x:2.5, y:9.999, z:0.5 }, stackOffset:{ x:-0.5, y:-0.75, z:-0.05 } },
+          { ...createDefaultItem(), id:'crown', position:{ x:2.5, y:9.999, z:0.5 }, drawOffset:{ x:0.25, y:-0.5, z:0.2 } }
         ]
       };
       const crown = room.items[2];
+      const itemHeight = calcItemCuboidHeightGame(room);
 
-      expect(getItemCanvasPositionInRoom(room, crown, SCALING_FACTORS)).toEqual([
-        (5 + 2 + 1.5 - 0.5 + 0.25) * SCALING_FACTORS.scaleX + SCALING_FACTORS.roomLineWidth * 8 * (0.5 + 0.1 - 0.05 + 0.2),
-        (4 - 0.25 - 0.75 - 0.5) * SCALING_FACTORS.scaleY + SCALING_FACTORS.roomLineWidth * 4 * (0.5 + 0.1 - 0.05 + 0.2)
-      ]);
+      const [canvasX, canvasY] = getItemCanvasPositionInRoom(room, crown, SCALING_FACTORS);
+      expect(canvasX).toBeCloseTo(
+        (2.5 + 2 + 1.5 - 0.5 + 0.25) * SCALING_FACTORS.scaleX + SCALING_FACTORS.roomLineWidth * 8 * (0.5 + 0.1 - 0.05 + 0.2)
+      );
+      expect(canvasY).toBeCloseTo(
+        (9.999 - 0.25 - itemHeight - 0.75 - itemHeight - 0.5) * SCALING_FACTORS.scaleY
+          + SCALING_FACTORS.roomLineWidth * 4 * (0.5 + 0.1 - 0.05 + 0.2)
+      );
     });
   });
 

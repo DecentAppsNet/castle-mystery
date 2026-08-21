@@ -31,6 +31,7 @@ import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUti
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
+import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
 
 export { drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "./characters/characterBubbleDrawUtil";
 
@@ -89,7 +90,8 @@ function _findObscuredActiveHeadSilhouetteCanvas(faceImage:ImageBitmap, widthPix
 }
 
 function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:ScalingFactors, room:Room|null = null):[number, number] {
-  const displayPosition = findCharacterDisplayPosition(character, room);
+  const displayLayout = room ? createRoomContentDisplayLayout(room, [character]) : null;
+  const displayPosition = findCharacterDisplayPosition(character, displayLayout);
   const [baseX, baseY] = gameToCanvasPosition(displayPosition.x, displayPosition.y, scalingFactors);
   const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
   const depth = clamp(displayPosition.z, 0, 1);

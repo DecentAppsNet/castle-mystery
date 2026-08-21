@@ -55,6 +55,7 @@ import { getCharacterCanvasRect } from "./characterDrawUtil";
 import { getItemCanvasRectInRoom } from "./itemDrawUtil";
 import { calcUndiscoveredMarkerHeightPixels, drawUndiscoveredMarker } from "./undiscoveredMarkerDrawUtil";
 import DiscoveryState from "../types/DiscoveryState";
+import { createRoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -264,6 +265,7 @@ export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, 
 
 export function createDrawableContents(room:Room, charactersInRoom:Character[], effects:Effect[],
     discoveredItemIds:ReadonlySet<string>, includeUndiscoveredItems:boolean):RoomDrawableContent[] {
+  const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom);
   const stairContents = room.stairParts.map((stairPart, stairIndex) => ({
     type:'stair' as const,
     depth:_calcStairPartSortDepth(stairPart),
@@ -273,7 +275,7 @@ export function createDrawableContents(room:Room, charactersInRoom:Character[], 
   }));
   const sortedNonStairContents = [
     ...charactersInRoom.filter(character => character.isVisible).map(character => {
-      const displayPosition = findCharacterDisplayPosition(character, room);
+      const displayPosition = findCharacterDisplayPosition(character, displayLayout);
       return {
         type:'character' as const,
         depth:displayPosition.z,
@@ -285,7 +287,7 @@ export function createDrawableContents(room:Room, charactersInRoom:Character[], 
     }),
     ...findVisibleRoomItemsInDrawOrder(room, effects, discoveredItemIds, includeUndiscoveredItems)
       .map(item => {
-        const displayPosition = findItemDisplayPosition(item, room);
+        const displayPosition = findItemDisplayPosition(item, displayLayout);
         return {
           type:'item' as const,
           depth:displayPosition.z,

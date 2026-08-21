@@ -5,6 +5,7 @@ import { calcItemCuboidHeightGame } from '../itemSizeUtil';
 import { createDefaultCharacter } from '../types/Character';
 import { createDefaultItem } from '../types/Item';
 import { createDefaultRoom } from '../types/Room';
+import { createRoomContentDisplayLayout } from '../roomContentDisplayPositionUtil';
 
 describe('characterDisplayPositionUtil', () => {
   describe('findCharacterDisplayPosition()', () => {
@@ -13,20 +14,20 @@ describe('characterDisplayPositionUtil', () => {
         ...createDefaultRoom(),
         rect:{ x:0, y:0, width:40, height:30 },
         items:[
-          { ...createDefaultItem(), id:'crate', position:{ x:10, y:29.999, z:0.5 }, stackOffset:{ x:1.5, y:-0.25, z:0.1 } },
-          { ...createDefaultItem(), id:'box', position:{ x:10, y:26.82, z:0.5 }, stackOffset:{ x:-0.5, y:-0.75, z:-0.05 } }
+          { ...createDefaultItem(), id:'crate', position:{ x:12.5, y:29.999, z:0.5 }, stackOffset:{ x:1.5, y:-0.25, z:0.1 } },
+          { ...createDefaultItem(), id:'box', position:{ x:12.5, y:29.999, z:0.5 }, stackOffset:{ x:-0.5, y:-0.75, z:-0.05 } }
         ]
       };
       const character = {
         ...createDefaultCharacter(),
-        position:{ x:10, y:29.999, z:0.5 }
+        position:{ x:12.5, y:29.999, z:0.5 }
       };
 
-      expect(findCharacterDisplayPosition(character, room)).toEqual({
-        x:11,
-        y:26.82 - calcItemCuboidHeightGame(room) - 1,
-        z:0.55
-      });
+      const displayLayout = createRoomContentDisplayLayout(room, [character]);
+      const displayPosition = findCharacterDisplayPosition(character, displayLayout);
+      expect(displayPosition.x).toBeCloseTo(13.5);
+      expect(displayPosition.y).toBeCloseTo(29.999 - calcItemCuboidHeightGame(room) * 2 - 1);
+      expect(displayPosition.z).toBeCloseTo(0.55);
     });
   });
 });
