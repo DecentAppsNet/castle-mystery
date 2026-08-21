@@ -51,13 +51,6 @@ type ItemDrawableContent = {
 export type RoomDrawableContent = StairDrawableContent | CharacterDrawableContent | ItemDrawableContent;
 type NonStairDrawableContent = CharacterDrawableContent | ItemDrawableContent;
 
-export function compareItemsForDrawOrder(item1:Pick<Item, 'position' | 'id'>, item2:Pick<Item, 'position' | 'id'>):number {
-  return _comparePositionedContentForDrawOrder(
-    item1.position.z, item1.position.x, item1.position.y, item1.id,
-    item2.position.z, item2.position.x, item2.position.y, item2.id
-  );
-}
-
 function _getSnappedPosition(content:NonStairDrawableContent):Position {
   return content.type === 'item' ? content.item.position : content.snappedPosition;
 }

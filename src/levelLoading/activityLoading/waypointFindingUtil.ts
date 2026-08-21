@@ -83,6 +83,10 @@ function _findBackRowFloorWaypoints(room:Room, waypointContext:WaypointGeneratio
   return roomWaypoints.filter(w => w.position.z === WAYPOINT_BACK_ROW_Z && isFloorWaypoint(room, w)); // Back row criteria already excludes room exits.
 }
 
+function _findWaypointAtPosition(waypoints:Waypoint[], position:Position):Waypoint|null {
+  return waypoints.find(w => arePositionsEqual(position, w.position)) ?? null;
+}
+
 export function findExitWaypoint(roomId:string, roomRect:Room['rect'], exit:RoomExit, waypoints:Waypoint[]):Waypoint {
   assert(_isExitPositionSupported(roomRect, exit), `exit for room ${roomId} at (${exit.x}, ${exit.y}) is not on a supported boundary`);
   const waypoint = waypoints.find(candidate =>
@@ -117,14 +121,10 @@ export function findNearestIncludedFloorBackRowWaypointToPosition(context:Waypoi
   return _findNearestXZWaypoint(waypoints, position.x, floorY, position.z, excludedWaypoints);
 }
 
-export function findWaypointAtPosition(waypoints:Waypoint[], position:Position):Waypoint|null {
-  return waypoints.find(w => arePositionsEqual(position, w.position)) ?? null;
-}
-
 export function findRoomWaypointAtPosition(waypointContext:WaypointGenerationContext, roomId:string, position:Position):Waypoint|null {
   const waypoints = waypointContext.waypointsByRoomId.get(roomId);
   assertNonNullable(waypoints);
-  return findWaypointAtPosition(waypoints, position);
+  return _findWaypointAtPosition(waypoints, position);
 }
 
 // Returns an array of unclaimed waypoints in a specified room. Unclaimed means no visible character or item

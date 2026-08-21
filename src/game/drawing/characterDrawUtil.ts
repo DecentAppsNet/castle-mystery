@@ -28,7 +28,6 @@ import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { findImageBitmap } from "@/game/imageAssetUtil";
-import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUtil";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
@@ -257,16 +256,6 @@ export function getCharacterHoverRect(character:Character, displayPosition:Posit
   return createRect(left, top, right - left, bottom - top);
 }
 
-export function getCharacterBodyCenterCanvasPosition(character:Character, displayPosition:Position,
-  scalingFactors:ScalingFactors, time:number):{ x:number, y:number } {
-  const { layout } = _createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
-  const bodySegment = layout.segments[0];
-  return {
-    x:(bodySegment.fromX + bodySegment.toX) / 2,
-    y:(bodySegment.fromY + bodySegment.toY) / 2
-  };
-}
-
 export function getCharacterSpeechAnchor(character:Character, displayPosition:Position,
   scalingFactors:ScalingFactors, time:number) {
   const [centerX, bottomY] = _getCharacterCanvasBottomPosition(displayPosition, scalingFactors);
@@ -387,7 +376,7 @@ export function drawCharacterPopover(character:Character, scalingFactors:Scaling
   if (!isCharacterInteractive(character)) return;
   const title = isTitleKnown ? _getCharacterDisplayName(character) : "";
   const displayLayout = room ? createRoomContentDisplayLayout(room, [character]) : null;
-  const displayPosition = findCharacterDisplayPosition(character, displayLayout);
+  const displayPosition = displayLayout?.characterLayoutById.get(character.id)?.displayPosition ?? character.position;
   drawPopover({ targetRect:getCharacterCanvasRect(character, displayPosition, scalingFactors, time, imageSet), title,
     bodyEntries:_createCharacterPopoverBodyEntries(character), scalingFactors, context, imageSet, layoutPlanner });
 }

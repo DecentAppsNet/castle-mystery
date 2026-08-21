@@ -5,7 +5,6 @@
 import { assertNonNullable } from "decent-portal";
 
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
-import { findItemDisplayPosition } from "@/game/itemDisplayPositionUtil";
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
 import { isItemInteractive } from "@/game/interactivityUtil";
 import { roomWidthToColumnCount } from "../roomGridUtil";
@@ -65,7 +64,11 @@ function _calcItemImageRect(itemDrawRect:ItemImageRect, image:ImageBitmap):ItemI
 }
 
 function _getItemBaseDisplayPosition(item:Item):Position {
-  return findItemDisplayPosition(item, null);
+  return {
+    x:item.position.x + item.drawOffset.x,
+    y:item.position.y + item.drawOffset.y,
+    z:item.position.z + item.drawOffset.z
+  };
 }
 
 // Converts base item dimensions plus projection outsets into the canvas draw rect shape used by item images.
@@ -310,9 +313,10 @@ export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFact
   imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!isItemInteractive(item)) return;
   const displayLayout = createRoomContentDisplayLayout(room, []);
-  const displayPosition = findItemDisplayPosition(item, displayLayout);
+  const layoutEntry = displayLayout.itemLayoutById.get(item.id);
+  assertNonNullable(layoutEntry);
   drawPopover({
-    targetRect:getItemCanvasRectInRoom(room, item, displayPosition, scalingFactors, imageSet),
+    targetRect:getItemCanvasRectInRoom(room, item, layoutEntry.displayPosition, scalingFactors, imageSet),
     title:item.title,
     bodyEntries:[{ type:'imageTextRow', imageUrl:item.imageUrl || UNKNOWN_ITEM_ICON_URL, text:item.description, isDescriptionOnly:true }],
     scalingFactors,

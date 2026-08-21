@@ -7,7 +7,7 @@ import Character from "./types/Character";
 import Position from "./types/Position";
 import Room from "./types/Room";
 
-export type RoomContentDisplayLayoutEntry = {
+type RoomContentDisplayLayoutEntry = {
   displayPosition:Position,
   squarePosition:Position,
   painterOrderAnchor:Position,

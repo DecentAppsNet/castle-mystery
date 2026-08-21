@@ -9,7 +9,7 @@ import EditableTimeline from "../timelineLoading/types/EditableTimeline";
 import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/positionUtil";
 import { findNearestFloorWaypointToPosition, isFloorWaypoint, WAYPOINT_MIDDLE_ROW_Z } from "./waypointFindingUtil";
-import { addCharacterKeyframe } from "../timelineLoading/editingUtil";
+import { addCharacterKeyChanges } from "../timelineLoading/editingUtil";
 import { formatMsecsAsTimestamp } from "./timestampUtil";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";
 import { FacingDirection } from "@/game/types/Character";
@@ -165,7 +165,7 @@ function _scheduleFacingChangeAsNeeded(lastFacingDirection:FacingDirection|null,
   const facingDirection:FacingDirection|null = _getTravelDirection(fromPosition, toPosition);
   if (!facingDirection || facingDirection === lastFacingDirection) return lastFacingDirection;
 
-  addCharacterKeyframe({ facingDirection }, characterI, fromTime, timeline);
+  addCharacterKeyChanges({ facingDirection }, characterI, fromTime, timeline);
   return facingDirection;
 }
 
@@ -178,7 +178,7 @@ function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, charact
     const walkDuration = _calcWalkDurationBetweenPositions(fromPosition, toPosition);
     if (walkDuration > 0) {
       lastDirection = _scheduleFacingChangeAsNeeded(lastDirection, fromPosition, time, toPosition, characterI, timeline);
-      addCharacterKeyframe({ position:toPosition }, characterI, time + walkDuration, timeline);
+      addCharacterKeyChanges({ position:toPosition }, characterI, time + walkDuration, timeline);
       time += walkDuration;
     }
     assert(walkDuration > 0); // Unneeded waypoints are being generated somewhere.
@@ -189,7 +189,7 @@ function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, charact
 function _scheduleWaypointPathAfterDelay(waypointPath:Waypoint[], fromTime:number, delay:number,
     characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):number {
   const walkStartTime = fromTime + delay;
-  addCharacterKeyframe({ position:waypointPath[0].position, bodyOrientation:'standing' }, characterI, walkStartTime, timeline);
+  addCharacterKeyChanges({ position:waypointPath[0].position, bodyOrientation:'standing' }, characterI, walkStartTime, timeline);
   return _scheduleWaypointPath(waypointPath, walkStartTime, characterI, initialFacingDirection, timeline);
 }
 
