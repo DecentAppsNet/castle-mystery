@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultRoom } from '@/game/types/Room';
 import { createDefaultItem } from '@/game/types/Item';
-import { addCharacterKeyframe, addRoomKeyframe, createEditableTimeline } from '../editingUtil';
+import { addCharacterKeyChanges, addRoomKeyChanges, createEditableTimeline } from '../editingUtil';
 import { createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
 
 function _position(x:number, y = 0, z = 0) {
@@ -100,12 +100,12 @@ describe('timelineLoadingApi', () => {
     });
   });
 
-  describe('addCharacterKeyframe()', () => {
+  describe('addCharacterKeyChanges()', () => {
     it('merges multiple character updates at the same time into one resulting keyframe', () => {
       const timeline = createEditableTimeline([_character('alpha', 0)], [], 1000);
 
-      addCharacterKeyframe({ isVisible:false }, 0, 1000, timeline);
-      addCharacterKeyframe({ appearanceId:'guard' }, 0, 1000, timeline);
+      addCharacterKeyChanges({ isVisible:false }, 0, 1000, timeline);
+      addCharacterKeyChanges({ appearanceId:'guard' }, 0, 1000, timeline);
 
       const snapshot = createKeyframeAtTime(timeline.keyframes, 1000);
 
@@ -119,8 +119,8 @@ describe('timelineLoadingApi', () => {
     it('interpolates position at a new keyframe when a later position is authored separately', () => {
       const timeline = createEditableTimeline([_character('alpha', 0)], [], 1000);
 
-      addCharacterKeyframe({ isVisible:false }, 0, 2000, timeline);
-      addCharacterKeyframe({ position:_position(30) }, 0, 4000, timeline);
+      addCharacterKeyChanges({ isVisible:false }, 0, 2000, timeline);
+      addCharacterKeyChanges({ position:_position(30) }, 0, 4000, timeline);
 
       const snapshot = createKeyframeAtTime(timeline.keyframes, 2000);
 
@@ -131,12 +131,12 @@ describe('timelineLoadingApi', () => {
     });
   });
 
-  describe('addRoomKeyframe()', () => {
+  describe('addRoomKeyChanges()', () => {
     it('adds room changes at a new time without changing earlier room state', () => {
       const timeline = createEditableTimeline([], [_room('hall')], 1000);
       const laterItems = [_item('relic', 9)];
 
-      addRoomKeyframe({ items:laterItems }, 0, 2000, timeline);
+      addRoomKeyChanges({ items:laterItems }, 0, 2000, timeline);
 
       const startSnapshot = createKeyframeAtTime(timeline.keyframes, 1000);
       const laterSnapshot = createKeyframeAtTime(timeline.keyframes, 2000);
@@ -150,8 +150,8 @@ describe('timelineLoadingApi', () => {
       const timeline = createEditableTimeline([_character('alpha', 0)], [_room('hall')], 1000);
       const laterItems = [_item('relic', 9)];
 
-      addCharacterKeyframe({ isVisible:false }, 0, 1000, timeline);
-      addRoomKeyframe({ items:laterItems }, 0, 1000, timeline);
+      addCharacterKeyChanges({ isVisible:false }, 0, 1000, timeline);
+      addRoomKeyChanges({ items:laterItems }, 0, 1000, timeline);
 
       const snapshot = createKeyframeAtTime(timeline.keyframes, 1000);
 
