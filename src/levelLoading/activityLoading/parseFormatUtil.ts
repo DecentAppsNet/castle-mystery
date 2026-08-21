@@ -12,6 +12,10 @@ import ParseNumber from "./types/ParseNumber";
 import ParseText from "./types/ParseText";
 import ParseIdentifier from "./types/ParseIdentifier";
 
+function _initialUpper(text:string):string {
+  return text.substring(0,1).toUpperCase() + text.substring(1);
+}
+
 export function makeOptions(options:ParseStep[], isOptional = false):ParseOptions { 
   return {kind:'options', variableId:null, children:options, isOptional}; 
 }
@@ -94,21 +98,22 @@ function _describeParseStep(step:ParseStep, isRoot = false):string {
       description = step.identifierKind;
       break;
     case 'literal':
-      description = `"${step.text}"`;
+      description = '`' + step.text + '`';
       break;
     case 'number':
-      description = 'Number';
+      description = step.variableId ? _initialUpper(step.variableId) : 'Number';
       break;
     case 'options':
-      description = `{${step.children.map(child => _describeParseStep(child)).join('|')}}`;
+      const childDescriptions = step.children.map(child => _describeParseStep(child)).join('|');
+      description = step.isOptional ? childDescriptions : `{${childDescriptions}}`; // Optional grouping chars ("[" + "]") can group inner text instead of "{" + "}".
       break;
     case 'sequence': {
       const childDescriptions = step.children.map(child => _describeParseStep(child)).join(' ');
-      description = isRoot ? childDescriptions : `{${childDescriptions}}`;
+      description = (isRoot || step.isOptional) ? childDescriptions : `{${childDescriptions}}`;
       break;
     }
     case 'text':
-      description = '"Text"';
+      description = step.variableId ? `"${_initialUpper(step.variableId)}"` : '"Text"';
       break;
     default:
       assert(false, `Unhandled ParseStep kind in _describeParseStep(): ${(step as { kind?: unknown }).kind}`);

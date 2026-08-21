@@ -4,22 +4,12 @@
 import Item, { MutableItem } from "@/game/types/Item";
 import Room from "@/game/types/Room";
 import { ErrorCollector } from "../errorCollection";
-import { COLUMN_WIDTH } from "@/game/roomGridUtil";
-import { ROOM_ROW_DEPTH } from "@/game/roomSpaceConstants";
 import { getUniqueIdsFromLegendGrid, parseLegendGrid } from "./legendGridUtil";
-import Position from "@/game/types/Position";
 import LegendGrid from "./types/LegendGrid";
-import { findNextItemStackPosition } from "@/game/itemStackPositionUtil";
+import { calcFloorSquareCenter } from "@/game/squareUtil";
 
 function _findItemById(items:MutableItem[], itemId:string):MutableItem|null {
   return items.find(i => i.id === itemId) ?? null;
-}
-
-function _getRoomItemPosition(room:Room, col:number, row:number):Position {
-  const x = room.rect.x + col * COLUMN_WIDTH;
-  const y = room.rect.y + room.rect.height;
-  const z = row * ROOM_ROW_DEPTH;
-  return {x, y, z};
 }
 
 function _areAllLegendIdsValidReferences(roomLegendGrid:LegendGrid, availableItemIds:string[], 
@@ -45,7 +35,7 @@ export function createItemsForRoom(room:Room, items:MutableItem[], availableChar
     const { col, row, id } = entry;
     const itemToUse = _findItemById(items, id);
     if (!itemToUse) return;
-    itemToUse.position = findNextItemStackPosition(room, _getRoomItemPosition(room, col, row), itemsResult); // Intentional side effect.
+    itemToUse.position = calcFloorSquareCenter(room.rect, col, row); // Intentional side effect.
     itemsResult.push(itemToUse); // Intentional reuse of same instance.
   });
   return itemsResult;

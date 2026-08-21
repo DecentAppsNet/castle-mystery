@@ -53,7 +53,7 @@ describe('loading levels - items', () => {
       description:'Opens the tower lock.',
       imageUrl:'/assets/items/brass-key.png',
       isVisible:false,
-      position:{ x:0, y:20, z:0 },
+      position:{ x:2.5, y:19.999, z:0.1667 },
       drawOffset:{ x:1.5, y:2, z:3 },
       stackOffset:{ x:4, y:5.25, z:6 },
       randomSalt:expect.any(Number)

@@ -48,6 +48,7 @@ async function _runInit():Promise<InitResults|null> {
 export function init():Promise<InitResults|null> {
   if (_initPromise) return _initPromise;
   _initPromise = _runInit().catch(error => {
+    console.error(error);
     _initPromise = null;
     throw error;
   });

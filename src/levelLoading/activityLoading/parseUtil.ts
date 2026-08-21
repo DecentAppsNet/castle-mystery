@@ -40,6 +40,18 @@ function _isPositionInsideQuotes(text:string, position:number):boolean {
   return insideQuotes;
 }
 
+function _isPositionInsideParentheses(text:string, position:number):boolean {
+  let parenthesesDepth = 0;
+  let insideQuotes = false;
+  for (let seekPos = 0; seekPos < position; ++seekPos) {
+    if (text[seekPos] === '"') insideQuotes = !insideQuotes;
+    if (insideQuotes) continue;
+    if (text[seekPos] === '(') ++parenthesesDepth;
+    if (text[seekPos] === ')') --parenthesesDepth;
+  }
+  return parenthesesDepth > 0;
+}
+
 function _isPositionAtDecimalPoint(text:string, position:number):boolean {
   return (text[position] === '.' && _isNumericChar(text[position-1]) && _isNumericChar(text[position+1]));
 }
@@ -86,7 +98,8 @@ function _removeAllowedPunctuation(activityText:string):string {
   for (const match of activityText.matchAll(ALLOWED_PUNCTUATION_REGEX)) {
     const punctuationPos = match.index;
     assertNonNullable(punctuationPos, 'matchAll() should populate match.index.');
-    if (_isPositionInsideQuotes(activityText, punctuationPos) 
+    if (_isPositionInsideQuotes(activityText, punctuationPos)
+      || _isPositionInsideParentheses(activityText, punctuationPos)
       || _isPositionAtDecimalPoint(activityText, punctuationPos) 
       || _isPositionAtNegativeSign(activityText, punctuationPos) 
     ) continue;
@@ -118,21 +131,59 @@ function _isNormalizedActivityText(activityText:string):boolean {
   return _normalizeActivityText(activityText) === activityText;
 }
 
-/** Parses a normalized activity text to individual string tokens based on single space delimeters, where each space character is
- *  outside of quotes. 
+function _getParentheticalCharacterGroup(character:string):string {
+  if (character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z') return 'alpha';
+  if (_isNumericChar(character)) return 'numeric';
+  return 'other';
+}
+
+/** Parses normalized activity text to tokens. Outside parentheses, tokens are delimited by single spaces outside quotes.
+ *  Inside parentheses, whitespace and changes between alpha, numeric, and other characters delimit tokens.
  */
 function _parseActivityTextToTokens(activityText:string):string[] {
   assert(_isNormalizedActivityText(activityText));
   if (!activityText) return [];
   const tokens:string[] = [];
-  let tokenStartPos = 0;
+  let token = '';
+  let parenthesesDepth = 0;
+  let insideQuotes = false;
   for (let pos = 0; pos < activityText.length; ++pos) {
-    if (activityText[pos] !== ' ') continue;
-    if (_isPositionInsideQuotes(activityText, pos)) continue;
-    tokens.push(activityText.substring(tokenStartPos, pos));
-    tokenStartPos = pos + 1;
+    const character = activityText[pos];
+    if (character === '"' && parenthesesDepth === 0) insideQuotes = !insideQuotes;
+
+    if (character === '(' && (parenthesesDepth > 0 || !insideQuotes)) {
+      if (token) tokens.push(token);
+      tokens.push(character);
+      token = '';
+      ++parenthesesDepth;
+      continue;
+    }
+    if (parenthesesDepth > 0 && character === ')') {
+      if (token) tokens.push(token);
+      tokens.push(character);
+      token = '';
+      --parenthesesDepth;
+      continue;
+    }
+    if (parenthesesDepth === 0 && character === ' ' && !insideQuotes) {
+      if (token) tokens.push(token);
+      token = '';
+      continue;
+    }
+    if (parenthesesDepth > 0 && character === ' ') {
+      if (token) tokens.push(token);
+      token = '';
+      continue;
+    }
+
+    const previousCharacter = token[token.length - 1];
+    if (parenthesesDepth > 0 && token && _getParentheticalCharacterGroup(previousCharacter) !== _getParentheticalCharacterGroup(character)) {
+      tokens.push(token);
+      token = '';
+    }
+    token += character;
   }
-  tokens.push(activityText.substring(tokenStartPos));
+  if (token) tokens.push(token);
   return tokens;
 }
 

@@ -8,7 +8,7 @@ import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationCo
 
 export function createEmitsParseFormat():ParseFormat {
   const subject = makeOptions([
-    makeIdentifier('characterId', 'CharacterId', true),
+    makeIdentifier('characterId', 'CharacterId'),
     makeIdentifier('itemId', 'ItemId'),
   ], true);
   const emits = makeVerb('emits');

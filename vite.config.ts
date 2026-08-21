@@ -1,3 +1,6 @@
+/* This module configures Vite development, builds, and Vitest execution.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import fs from 'node:fs';
@@ -44,6 +47,7 @@ export default defineConfig(({mode}) => {
       chunkSizeWarningLimit: 7000,
     },
     test: {
+      include: ['src/**/*.test.ts'],
       environment: 'node',
       globals: true,
       coverage: {

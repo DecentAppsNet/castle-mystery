@@ -2,7 +2,7 @@ import Activity from "../types/Activity";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import Level from "@/game/types/Level";
 import ParseFormat from "../types/ParseFormat";
-import { createParseFormat, makeIdentifier, makeSequence, makeVerb } from "../parseFormatUtil";
+import { createParseFormat, makeIdentifier, makeLiteral, makeNumber, makeSequence, makeVerb } from "../parseFormatUtil";
 import { assert, assertNonNullable } from "decent-portal";
 import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
@@ -49,15 +49,24 @@ function _findTargetPosition(context:WaypointGenerationContext, snapshot:Timelin
   return bestWaypoint.position;
 }
 
+type PartsShape = {
+  characterId:string,
+  roomId?:string,
+  horizontalTarget?:number
+}
+
+const DEFAULT_HORIZONTAL_TARGET = .5;
 export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerationContext,
   activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
-  const { characterId, roomId } = activity.parts;
+  const { characterId, roomId, horizontalTarget } = activity.parts as PartsShape;
   assertNonNullable(characterId, 'implied subjects should have been resolved');
-  assert(typeof roomId === 'string');
   const character = level.characters.find(c => c.id === characterId);
-  const toRoom = findRoom(level.rooms, roomId);
   assertNonNullable(character);
-  assertNonNullable(toRoom);
+  
+  if (!roomId && !horizontalTarget) {
+    errors.addAtLine(`The @ activity needs room ID, horizontal target %, or both specified.`, activity.lineI);
+    return false;
+  }
 
   const characterI = editableTimeline.characterIdToI[characterId];
   const isRelativeTimestamp = activity.endTime === null;
@@ -69,17 +78,25 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
   const fromRoom = findRoomAtPosition(level.rooms, fromPos.x, fromPos.y);
   assertNonNullable(fromRoom);
 
-  if (fromRoom.id === toRoom.id) { // Already at room. TODO - extra handling for `@ Room.20%` and `@ 20%`-style activities that mean the character must still move within the room.
+  const toRoom = roomId === undefined ? fromRoom : findRoom(level.rooms, roomId);
+  const horizontalPercent = horizontalTarget === undefined ? DEFAULT_HORIZONTAL_TARGET : horizontalTarget / 100;
+  assertNonNullable(toRoom);
+
+  const toKeyframe = isRelativeTimestamp 
+    ? fromKeyframe
+    : createKeyframeAtTime(editableTimeline.keyframes, activity.endTime!);
+  const toPos = _findTargetPosition(waypointContext, toKeyframe, toRoom, horizontalPercent);
+
+  // If character is already in the room and no horizontal target was specified, then no movement needed. In this case, the activity 
+  // is being used like an assertion or self-documentation in the level file, e.g."Sam @ Hall" means "I think Sam should already be in the Hall".
+  // If a horizontal target was specified when character is already in the room, then I check for them to be at that specified position already.
+  if (fromRoom.id === toRoom.id && (horizontalTarget === undefined || !arePositionsEqual(fromPos, toPos))) { // No movement needed.
     const endTime = isRelativeTimestamp ? fromTime : activity.endTime; // Use activity end time if available, because that can affect the timing of following activities.
     activity.startTime = activity.endTime = endTime;
     return true;
   }
   
   assert(activity.endTime === null || activity.endTime >= level.startTime);
-  const toKeyframe = isRelativeTimestamp 
-    ? fromKeyframe
-    : createKeyframeAtTime(editableTimeline.keyframes, activity.endTime!);
-  const toPos = _findTargetPosition(waypointContext, toKeyframe, toRoom);
   const toTime = toKeyframe.time;
 
   const scheduleResult = isRelativeTimestamp 
@@ -99,7 +116,12 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
 export function createAtActivityParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const at = makeVerb('@');
-  const roomId = makeIdentifier('roomId', 'RoomId');
-  const rootParseStep = makeSequence([characterId, at, roomId]);
+  const roomId = makeIdentifier('roomId', 'RoomId', true);
+  const leftParen = makeLiteral('(');
+  const horizontalTarget = makeNumber('horizontalTarget');
+  const percent = makeLiteral('%');
+  const rightParen = makeLiteral(')');
+  const positionSequence = makeSequence([leftParen, horizontalTarget, percent, rightParen], true);
+  const rootParseStep = makeSequence([characterId, at, roomId, positionSequence]);
   return createParseFormat(rootParseStep);
 }

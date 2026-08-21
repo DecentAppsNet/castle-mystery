@@ -151,7 +151,7 @@ describe('parseFormatUtil', () => {
 		it('describes a root verb literal', () => {
 			const parseFormat = _expected(makeVerb('@'));
 
-			expect(describeParseFormat(parseFormat)).toBe('Timestamp "@"');
+			expect(describeParseFormat(parseFormat)).toBe('Timestamp `@`');
 		});
 
 		it('describes an identifier step', () => {
@@ -160,7 +160,7 @@ describe('parseFormatUtil', () => {
 				makeVerb('appears'),
 			]));
 
-			expect(describeParseFormat(parseFormat)).toBe('Timestamp [CharacterId] "appears"');
+			expect(describeParseFormat(parseFormat)).toBe('Timestamp [CharacterId] `appears`');
 		});
 
 		it('describes a literal step', () => {
@@ -169,7 +169,7 @@ describe('parseFormatUtil', () => {
 				makeLiteral('to'),
 			]));
 
-			expect(describeParseFormat(parseFormat)).toBe('Timestamp "gives" "to"');
+			expect(describeParseFormat(parseFormat)).toBe('Timestamp `gives` `to`');
 		});
 
 		it('describes a number step', () => {
@@ -178,7 +178,7 @@ describe('parseFormatUtil', () => {
 				makeNumber('seconds', true),
 			]));
 
-			expect(describeParseFormat(parseFormat)).toBe('Timestamp "waits" [Number]');
+			expect(describeParseFormat(parseFormat)).toBe('Timestamp `waits` [Seconds]');
 		});
 
 		it('describes an options step', () => {
@@ -187,7 +187,7 @@ describe('parseFormatUtil', () => {
 				makeOptions([makeLiteral('left'), makeLiteral('right')], true),
 			]));
 
-			expect(describeParseFormat(parseFormat)).toBe('Timestamp "faces" [{"left"|"right"}]');
+			expect(describeParseFormat(parseFormat)).toBe('Timestamp `faces` [`left`|`right`]');
 		});
 
 		it('describes a sequence step', () => {
@@ -196,7 +196,7 @@ describe('parseFormatUtil', () => {
 				makeSequence([makeLiteral('to'), makeIdentifier('toCharacterId', 'CharacterId')], true),
 			]));
 
-			expect(describeParseFormat(parseFormat)).toBe('Timestamp "says" [{"to" CharacterId}]');
+			expect(describeParseFormat(parseFormat)).toBe('Timestamp `says` [`to` CharacterId]');
 		});
 
 		it('describes a text step', () => {
@@ -205,84 +205,88 @@ describe('parseFormatUtil', () => {
 				makeText(),
 			]));
 
-			expect(describeParseFormat(parseFormat)).toBe('Timestamp "emits" "Text"');
+			expect(describeParseFormat(parseFormat)).toBe('Timestamp `emits` "Text"');
 		});
 
 		describe('activity parse formats', () => {
 			it('describes the @ activity parse format', () => {
-				expect(describeParseFormat(createAtActivityParseFormat())).toBe('Timestamp [CharacterId] "@" RoomId');
+				expect(describeParseFormat(createAtActivityParseFormat())).toBe('Timestamp [CharacterId] `@` [RoomId] [`(` HorizontalTarget `%` `)`]');
+				//expect(describeParseFormat(createAtActivityParseFormat())).toBe('Timestamp [CharacterId] `@` [RoomId] [{`(` HorizontalTarget `%` `)`}]');
 			});
 
 			it('describes the appears activity parse format', () => {
-				expect(describeParseFormat(createAppearsParseFormat())).toBe('Timestamp [CharacterId] "appears" ["as"] AppearanceId');
+				expect(describeParseFormat(createAppearsParseFormat())).toBe('Timestamp [CharacterId] `appears` [`as`] AppearanceId');
 			});
 
 			it('describes the becomes activity parse format', () => {
-				expect(describeParseFormat(createBecomesParseFormat())).toBe('Timestamp ItemId "becomes" ItemId');
+				expect(describeParseFormat(createBecomesParseFormat())).toBe('Timestamp ItemId `becomes` ItemId');
 			});
 
 			it('describes the drops activity parse format', () => {
-				expect(describeParseFormat(createDropsParseFormat())).toBe('Timestamp [CharacterId] "drops" ItemId [{{"at"|"on"|"onto"|"to"} {ItemId|CharacterId}}]');
+				expect(describeParseFormat(createDropsParseFormat())).toBe('Timestamp [CharacterId] `drops` ItemId [{`at`|`on`|`onto`|`to`} {ItemId|CharacterId}]');
+				// expect(describeParseFormat(createDropsParseFormat())).toBe('Timestamp [CharacterId] `drops` ItemId [{{`at`|`on`|`onto`|`to`} {ItemId|CharacterId}}]');
 			});
 
 			it('describes the emits activity parse format', () => {
-				expect(describeParseFormat(createEmitsParseFormat())).toBe('Timestamp [{[CharacterId]|ItemId}] "emits" "Text" ["loudly"]');
+				expect(describeParseFormat(createEmitsParseFormat())).toBe('Timestamp [CharacterId|ItemId] `emits` "Text" [`loudly`]');
+				// expect(describeParseFormat(createEmitsParseFormat())).toBe('Timestamp [{CharacterId|ItemId}] `emits` "Text" [`loudly`]');
 			});
 
 			it('describes the faces activity parse format', () => {
-				expect(describeParseFormat(createFacesParseFormat())).toBe('Timestamp [CharacterId] "faces" {"left"|"right"|CharacterId|ItemId}');
+				expect(describeParseFormat(createFacesParseFormat())).toBe('Timestamp [CharacterId] `faces` {`left`|`right`|CharacterId|ItemId}');
 			});
 
 			it('describes the gives activity parse format', () => {
-				expect(describeParseFormat(createGivesParseFormat())).toBe('Timestamp [CharacterId] "gives" ItemId "to" CharacterId');
+				expect(describeParseFormat(createGivesParseFormat())).toBe('Timestamp [CharacterId] `gives` ItemId `to` CharacterId');
 			});
 
 			it('describes the hide activity parse format', () => {
-				expect(describeParseFormat(createHideParseFormat())).toBe('Timestamp "hide" {CharacterId|ItemId}');
+				expect(describeParseFormat(createHideParseFormat())).toBe('Timestamp `hide` {CharacterId|ItemId}');
 			});
 
 			it('describes the interrupts activity parse format', () => {
-				expect(describeParseFormat(createInterruptsParseFormat())).toBe('Timestamp [CharacterId] "interrupts" "Text" [{"to" CharacterId}]');
+				expect(describeParseFormat(createInterruptsParseFormat())).toBe('Timestamp [CharacterId] `interrupts` "Text" [`to` CharacterId]');
+				//expect(describeParseFormat(createInterruptsParseFormat())).toBe('Timestamp [CharacterId] `interrupts` "Text" [{`to` CharacterId}]');
 			});
 
 			it('describes the kneels activity parse format', () => {
-				expect(describeParseFormat(createKneelsParseFormat())).toBe('Timestamp [CharacterId] "kneels"');
+				expect(describeParseFormat(createKneelsParseFormat())).toBe('Timestamp [CharacterId] `kneels`');
 			});
 
 			it('describes the lays activity parse format', () => {
-				expect(describeParseFormat(createLaysParseFormat())).toBe('Timestamp [CharacterId] "lays"');
+				expect(describeParseFormat(createLaysParseFormat())).toBe('Timestamp [CharacterId] `lays`');
 			});
 
 			it('describes the locks activity parse format', () => {
-				expect(describeParseFormat(createLocksParseFormat())).toBe('Timestamp [CharacterId] "locks" RoomId');
+				expect(describeParseFormat(createLocksParseFormat())).toBe('Timestamp [CharacterId] `locks` RoomId');
 			});
 
 			it('describes the says activity parse format', () => {
-				expect(describeParseFormat(createSaysParseFormat())).toBe('Timestamp [CharacterId] "says" "Text" [{"to" CharacterId}]');
+				expect(describeParseFormat(createSaysParseFormat())).toBe('Timestamp [CharacterId] `says` "Text" [`to` CharacterId]');
 			});
 
 			it('describes the show activity parse format', () => {
-				expect(describeParseFormat(createShowParseFormat())).toBe('Timestamp "show" {CharacterId|ItemId}');
+				expect(describeParseFormat(createShowParseFormat())).toBe('Timestamp `show` {CharacterId|ItemId}');
 			});
 
 			it('describes the sits activity parse format', () => {
-				expect(describeParseFormat(createSitsParseFormat())).toBe('Timestamp [CharacterId] "sits"');
+				expect(describeParseFormat(createSitsParseFormat())).toBe('Timestamp [CharacterId] `sits`');
 			});
 
 			it('describes the stands activity parse format', () => {
-				expect(describeParseFormat(createStandsParseFormat())).toBe('Timestamp [CharacterId] "stands"');
+				expect(describeParseFormat(createStandsParseFormat())).toBe('Timestamp [CharacterId] `stands`');
 			});
 
 			it('describes the takes activity parse format', () => {
-				expect(describeParseFormat(createTakesParseFormat())).toBe('Timestamp [CharacterId] "takes" ItemId [{{"in"|"into"} {"left hand"|"right hand"|"inventory"}}]');
+				expect(describeParseFormat(createTakesParseFormat())).toBe('Timestamp [CharacterId] `takes` ItemId [{`in`|`into`} {`left hand`|`right hand`|`inventory`}]');
 			});
 
 			it('describes the unlocks activity parse format', () => {
-				expect(describeParseFormat(createUnlocksParseFormat())).toBe('Timestamp [CharacterId] "unlocks" RoomId');
+				expect(describeParseFormat(createUnlocksParseFormat())).toBe('Timestamp [CharacterId] `unlocks` RoomId');
 			});
 
 			it('describes the waits activity parse format', () => {
-				expect(describeParseFormat(createWaitsParseFormat())).toBe('Timestamp [CharacterId] "waits" [Number]');
+				expect(describeParseFormat(createWaitsParseFormat())).toBe('Timestamp [CharacterId] `waits` [Seconds]');
 			});
 		});
 	});

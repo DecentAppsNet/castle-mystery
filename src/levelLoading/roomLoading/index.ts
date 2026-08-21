@@ -6,7 +6,7 @@ import { applyRoomMetaDataFromSections, createRoomsFromMapSection } from './room
 import { addExitsToRooms } from './roomExitUtil';
 import { generateStairFlights } from './stairFlightUtil';
 import { generateStairParts } from './stairPartUtil';
-import { calcFloorPositionInRoom, connectWaypoints, generateWaypoints } from './waypointGenerationUtil';
+import { connectWaypoints, generateWaypoints } from './waypointGenerationUtil';
 import LevelFileSections from '../types/LevelFileSections';
 import { findGroundFloorY, validateOutsideRoomsAgainstGroundFloor } from './groundFloorUtil';
 import { parseLegendGrid } from './legendGridUtil';
@@ -18,6 +18,7 @@ import { assert, assertNonNullable } from 'decent-portal';
 import { getSectionIdsFromSectionText } from '../levelFileSectionUtil';
 import WaypointGenerationContext from '../types/WaypointGenerationContext';
 import { findExitWaypoint } from '../activityLoading/waypointFindingUtil';
+import { calcFloorSquareCenter } from '@/game/squareUtil';
 
 type PartiallyLoadedRooms = {
   rooms:MutableRoom[],
@@ -94,7 +95,7 @@ export function findAllCharacterPositions(rooms:Room[], characterIds:string[], r
       if (characterIds.includes(entry.id)) {
         const room = rooms.find(r => r.id === roomId);
         assertNonNullable(room);
-        const position = calcFloorPositionInRoom(room, entry.col, entry.row);
+        const position = calcFloorSquareCenter(room.rect, entry.col, entry.row);
         characterIdToPosition[entry.id] = position;
       }
     });

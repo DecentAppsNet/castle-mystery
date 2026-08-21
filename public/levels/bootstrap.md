@@ -59,7 +59,10 @@ HS
 0:00:00 Sam @ Hall
 : waits .1
 : Sam takes Vase in right hand
-0:00:06 Sam @ Closet
+0:00:06 Sam @ Closet (60%)
+: kneels
+: waits
 : drops Vase on Table
+: @ (90%)
 
 # conclusions

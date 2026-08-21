@@ -1,8 +1,15 @@
+/* This module interpolates character positions between timeline keyframes.
+  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+
 import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/positionUtil";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
-import EditableTimelineKeyframe from "@/levelLoading/timelineLoading/types/EditableTimelineKeyframe";
 import { assert, assertNonNullable } from "decent-portal";
+
+type CharacterPositionKeyframe = {
+  time:number,
+  characters:ReadonlyArray<{ position?:Position }>
+}
 
 function _interpolatePosition(fromPosition:Position, toPosition:Position, interpolateAmount:number):Position {
   if (interpolateAmount <= 0) return {...fromPosition};
@@ -17,7 +24,7 @@ function _interpolatePosition(fromPosition:Position, toPosition:Position, interp
   };
 }
 
-export function findInterpolatedCharacterPosition(fromKeyframe:TimelineKeyframe, toKeyframe:TimelineKeyframe|EditableTimelineKeyframe, 
+export function findInterpolatedCharacterPosition(fromKeyframe:TimelineKeyframe, toKeyframe:CharacterPositionKeyframe,
     time:number, characterI:number):Position {
   const fromPosition:Position = fromKeyframe.characters[characterI].position;
   const toPosition:Position|null = toKeyframe.characters[characterI].position ?? null;
