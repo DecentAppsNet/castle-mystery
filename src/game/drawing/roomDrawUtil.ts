@@ -28,7 +28,7 @@ import {
 } from "./drawColorConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { drawTemporaryRightWallDoorVectorOverlay, getExitCanvasRect, getProjectedExitCanvasRect } from "./exitDrawUtil";
-import { drawRoomItem, findVisibleRoomItemsInDrawOrder } from "./itemDrawUtil";
+import { drawRoomItem, findVisibleRoomItems } from "./itemDrawUtil";
 import { compareNonStairDrawableContents, mergeStairsWithSortedContents, RoomDrawableContent } from "./roomContentDrawOrderUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
 import { drawFloorPanel, drawRightWallPanel } from "./roomPanelDrawUtil";
@@ -49,7 +49,6 @@ import ExitType from "../types/ExitType";
 import StairPart, { StairPartType } from "../types/StairPart";
 import { processAfterCharacterEffects, processBeforeCharacterEffects } from "../effects/effectUtil";
 import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUtil";
-import { findItemDisplayPosition } from "@/game/itemDisplayPositionUtil";
 import { findRoom } from "../roomUtil";
 import { getCharacterCanvasRect } from "./characterDrawUtil";
 import { getItemCanvasRectInRoom } from "./itemDrawUtil";
@@ -285,16 +284,21 @@ export function createDrawableContents(room:Room, charactersInRoom:Character[], 
         character
       };
     }),
-    ...findVisibleRoomItemsInDrawOrder(room, effects, discoveredItemIds, includeUndiscoveredItems)
+    ...findVisibleRoomItems(room, effects, discoveredItemIds, includeUndiscoveredItems)
       .map(item => {
-        const displayPosition = findItemDisplayPosition(item, displayLayout);
+        const layoutEntry = displayLayout.itemLayoutById.get(item.id);
+        assertNonNullable(layoutEntry);
+        const { displayPosition, painterOrderAnchor, stackMemberI } = layoutEntry;
         return {
           type:'item' as const,
           depth:displayPosition.z,
           x:displayPosition.x,
           y:displayPosition.y,
           sortId:item.id,
-          item
+          item,
+          displayPosition,
+          painterOrderAnchor,
+          stackMemberI
         };
       })
   ].sort(compareNonStairDrawableContents);
@@ -314,8 +318,11 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
         drawStairPart(content.stairPart, room, scalingFactors, context, imageSet, stairTextureLightness);
         return;
       case 'item':
-        if (layoutPlanner && isItemInteractive(content.item)) layoutPlanner.reserveRect(getItemCanvasRectInRoom(room, content.item, scalingFactors, imageSet));
-        drawRoomItem(room, content.item, scalingFactors, context, imageSet, content.item.id === hoveredItemId, metaTime);
+        if (layoutPlanner && isItemInteractive(content.item)) {
+          layoutPlanner.reserveRect(getItemCanvasRectInRoom(room, content.item, content.displayPosition, scalingFactors, imageSet));
+        }
+        drawRoomItem(room, content.item, content.displayPosition, scalingFactors, context, imageSet,
+          content.item.id === hoveredItemId, metaTime);
         return;
       case 'character':
         if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, gameTime, imageSet, room));
@@ -328,7 +335,7 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
   });
   contents.forEach(content => {
     if (content.type === 'item' && isItemInteractive(content.item) && !discoveryState.discoveredItemIds.has(content.item.id)) {
-      const rect = getItemCanvasRectInRoom(room, content.item, scalingFactors, imageSet);
+      const rect = getItemCanvasRectInRoom(room, content.item, content.displayPosition, scalingFactors, imageSet);
       drawUndiscoveredMarker(rect.x + rect.width / 2, rect.y + rect.height / 2 + calcUndiscoveredMarkerHeightPixels(scalingFactors) / 2, content.item.randomSalt, scalingFactors, context, metaTime);
     }
     if (content.type === 'character' && isCharacterInteractive(content.character)

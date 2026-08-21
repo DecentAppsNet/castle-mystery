@@ -4,6 +4,7 @@
 import { compareCharacterToStairPartRows } from "../stairDrawOrderUtil";
 import Character from "../types/Character";
 import Item from "../types/Item";
+import Position from "../types/Position";
 import StairPart, { StairLandingType, StairPartType } from "../types/StairPart";
 
 function _comparePositionedContentForDrawOrder(depth1:number, x1:number, y1:number, sortId1:string,
@@ -37,7 +38,10 @@ type ItemDrawableContent = {
   x:number,
   y:number,
   sortId:string,
-  item:Item
+  item:Item,
+  displayPosition:Position,
+  painterOrderAnchor:Position,
+  stackMemberI:number
 };
 
 export type RoomDrawableContent = StairDrawableContent | CharacterDrawableContent | ItemDrawableContent;

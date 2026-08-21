@@ -22,8 +22,8 @@ import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { findImageBitmap } from "@/game/imageAssetUtil";
-import { compareItemsForDrawOrder } from "./roomContentDrawOrderUtil";
 import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
+import Position from "../types/Position";
 
 const ITEM_SIZING_RATIO = 0.21;
 const PULSE_CADENCE_MS = 1000;
@@ -64,10 +64,8 @@ function _calcItemImageRect(itemDrawRect:ItemImageRect, image:ImageBitmap):ItemI
   };
 }
 
-// Applies the item's authored draw offset before any world-to-canvas projection.
-function _getItemDrawPosition(item:Item, room:Room|null = null) {
-  const displayLayout = room ? createRoomContentDisplayLayout(room, []) : null;
-  return findItemDisplayPosition(item, displayLayout);
+function _getItemBaseDisplayPosition(item:Item):Position {
+  return findItemDisplayPosition(item, null);
 }
 
 // Converts base item dimensions plus projection outsets into the canvas draw rect shape used by item images.
@@ -95,23 +93,25 @@ export function calcItemDrawRect(room:Room, scalingFactors:ScalingFactors):ItemI
 }
 
 // Converts the item's projected canvas anchor back into game-space coordinates for hover math.
-function _getRoomItemGamePosition(_room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
-  const drawPosition = _getItemDrawPosition(item, _room);
-  return canvasToGamePosition(...projectRoomPointWithDepth(drawPosition.x, drawPosition.y, drawPosition.z, scalingFactors), scalingFactors);
+function _getRoomItemGamePosition(displayPosition:Position, scalingFactors:ScalingFactors):[number, number] {
+  return canvasToGamePosition(...getItemCanvasPositionInRoom(displayPosition, scalingFactors), scalingFactors);
 }
 
-// Projects an item to its anchor point on the room canvas using its authored room depth.
-export function getItemCanvasPositionInRoom(_room:Room, item:Item, scalingFactors:ScalingFactors):[number, number] {
-  const drawPosition = _getItemDrawPosition(item, _room);
-  return projectRoomPointWithDepth(drawPosition.x, drawPosition.y, drawPosition.z, scalingFactors);
+export function getItemCanvasPositionInRoom(displayPosition:Position, scalingFactors:ScalingFactors):[number, number] {
+  return projectRoomPointWithDepth(displayPosition.x, displayPosition.y, displayPosition.z, scalingFactors);
+}
+
+export function getItemBaseCanvasPositionInRoom(item:Item, scalingFactors:ScalingFactors):[number, number] {
+  return getItemCanvasPositionInRoom(_getItemBaseDisplayPosition(item), scalingFactors);
 }
 
 // Returns the canvas-space rectangle occupied by the item's image in a room.
-export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
+export function getItemCanvasRectInRoom(room:Room, item:Item, displayPosition:Position,
+    scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
   const image = _findItemImage(item, imageSet);
   if (!image) return { x:0, y:0, width:0, height:0 }; // Headless.
   const itemDrawRect = calcItemDrawRect(room, scalingFactors);
-  const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
+  const [x, y] = getItemCanvasPositionInRoom(displayPosition, scalingFactors);
   const imageRect = _calcItemImageRect(itemDrawRect, image);
   return {
     x:x + imageRect.leftOffsetPixels,
@@ -122,11 +122,12 @@ export function getItemCanvasRectInRoom(room:Room, item:Item, scalingFactors:Sca
 }
 
 // Returns the game-space hover rectangle for item hit-testing.
-export function getItemHoverRect(room:Room, item:Item, scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
+export function getItemHoverRect(room:Room, item:Item, displayPosition:Position,
+  scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
   const image = _findItemImage(item, imageSet);
   if (!image) return {x:0, y:0, width:0, height:0}; // Headless call.
   const itemDrawRect = calcItemDrawRect(room, scalingFactors);
-  const [x, y] = _getRoomItemGamePosition(room, item, scalingFactors);
+  const [x, y] = _getRoomItemGamePosition(displayPosition, scalingFactors);
   const imageRect = _calcItemImageRect(itemDrawRect, image);
   return {
     x: x + (imageRect.leftOffsetPixels ?? itemDrawRect.leftOffsetPixels) / scalingFactors.scaleX,
@@ -256,11 +257,11 @@ function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, itemDraw
 }
 
 // Draws one room item, including its optional highlight effect.
-function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+function drawItem(room:Room, item:Item, displayPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet, isHighlighted:boolean = false, metaTime:number = 0) {
   const image = _findItemImage(item, imageSet);
   if (!image) return; // Headless - no drawing needed.
-  const [x, y] = getItemCanvasPositionInRoom(room, item, scalingFactors);
+  const [x, y] = getItemCanvasPositionInRoom(displayPosition, scalingFactors);
   const itemDrawRect = calcItemDrawRect(room, scalingFactors);
   context.save();
   if (isHighlighted) _drawItemImageHighlight(image, x, y, itemDrawRect, scalingFactors, context, metaTime);
@@ -269,9 +270,9 @@ function drawItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:C
 }
 
 // Public room-item draw entry point used by room rendering.
-export function drawRoomItem(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+export function drawRoomItem(room:Room, item:Item, displayPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet, isHighlighted:boolean, metaTime:number) {
-  drawItem(room, item, scalingFactors, context, imageSet, isHighlighted, metaTime);
+  drawItem(room, item, displayPosition, scalingFactors, context, imageSet, isHighlighted, metaTime);
 }
 
 // Draws an item at a caller-supplied canvas anchor using precomputed metrics.
@@ -290,11 +291,9 @@ export function drawItemAtCanvasPositionInRoom(item:Item, room:Room, x:number, y
   drawItemAtCanvasPosition(item, x, y, calcItemDrawRect(room, scalingFactors), context, imageSet);
 }
 
-// Filters and sorts the room's visible items into draw order.
-function _getVisibleItemsInDrawOrder(room:Room, effects:Effect[], discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
+function _findVisibleRoomItems(room:Room, effects:Effect[], discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
   return room.items
-    .filter(item => item.isVisible && (includeUndiscovered || discoveredItemIds.has(item.id)) && !_isItemSuppressedByEffect(item, effects))
-    .sort(compareItemsForDrawOrder);
+    .filter(item => item.isVisible && (includeUndiscovered || discoveredItemIds.has(item.id)) && !_isItemSuppressedByEffect(item, effects));
 }
 
 // Hides items that are currently represented by an active drop effect.
@@ -302,17 +301,18 @@ function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
   return effects.some(effect => effect.type === EffectType.DROP_ITEM && "item" in effect && effect.item?.id === item.id);
 }
 
-// Exposes the room's visible items in the same order they should be drawn.
-export function findVisibleRoomItemsInDrawOrder(room:Room, effects:Effect[], discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
-  return _getVisibleItemsInDrawOrder(room, effects, discoveredItemIds, includeUndiscovered);
+export function findVisibleRoomItems(room:Room, effects:Effect[], discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
+  return _findVisibleRoomItems(room, effects, discoveredItemIds, includeUndiscovered);
 }
 
 // Draws the item popover anchored to the item's current image rectangle.
 export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet, layoutPlanner:CanvasLayoutPlanner|null = null) {
   if (!isItemInteractive(item)) return;
+  const displayLayout = createRoomContentDisplayLayout(room, []);
+  const displayPosition = findItemDisplayPosition(item, displayLayout);
   drawPopover({
-    targetRect:getItemCanvasRectInRoom(room, item, scalingFactors, imageSet),
+    targetRect:getItemCanvasRectInRoom(room, item, displayPosition, scalingFactors, imageSet),
     title:item.title,
     bodyEntries:[{ type:'imageTextRow', imageUrl:item.imageUrl || UNKNOWN_ITEM_ICON_URL, text:item.description, isDescriptionOnly:true }],
     scalingFactors,

@@ -8,6 +8,7 @@ import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { createEmptyImageSet } from '@/game/imageSetUtil';
 import { calcItemCuboidHeightGame } from '@/game/itemSizeUtil';
+import { createRoomContentDisplayLayout } from '@/game/roomContentDisplayPositionUtil';
 
 const SCALING_FACTORS:ScalingFactors = {
   sourceX:0,
@@ -53,8 +54,13 @@ describe('itemDrawUtil', () => {
         + SCALING_FACTORS.roomLineWidth * 8 * (item.position.z + item.drawOffset.z);
       const projectedY = (item.position.y + item.drawOffset.y) * SCALING_FACTORS.scaleY
         + SCALING_FACTORS.roomLineWidth * 4 * (item.position.z + item.drawOffset.z);
+      const displayPosition = {
+        x:item.position.x + item.drawOffset.x,
+        y:item.position.y + item.drawOffset.y,
+        z:item.position.z + item.drawOffset.z
+      };
 
-      expect(getItemCanvasRectInRoom(room, item, SCALING_FACTORS, imageSet)).toEqual({
+      expect(getItemCanvasRectInRoom(room, item, displayPosition, SCALING_FACTORS, imageSet)).toEqual({
         x:projectedX + itemDrawRect.leftOffsetPixels - itemDrawRect.widthPixels / 2,
         y:projectedY - expectedImageHeightPixels,
         width:expectedImageWidthPixels,
@@ -74,8 +80,10 @@ describe('itemDrawUtil', () => {
       };
       const crown = room.items[2];
       const itemHeight = calcItemCuboidHeightGame(room);
+      const displayLayout = createRoomContentDisplayLayout(room, []);
+      const displayPosition = displayLayout.itemLayoutById.get(crown.id)!.displayPosition;
 
-      const [canvasX, canvasY] = getItemCanvasPositionInRoom(room, crown, SCALING_FACTORS);
+      const [canvasX, canvasY] = getItemCanvasPositionInRoom(displayPosition, SCALING_FACTORS);
       expect(canvasX).toBeCloseTo(
         (2.5 + 2 + 1.5 - 0.5 + 0.25) * SCALING_FACTORS.scaleX + SCALING_FACTORS.roomLineWidth * 8 * (0.5 + 0.1 - 0.05 + 0.2)
       );
@@ -120,8 +128,13 @@ describe('itemDrawUtil', () => {
         + SCALING_FACTORS.roomLineWidth * 8 * (item.position.z + item.drawOffset.z);
       const projectedY = (item.position.y + item.drawOffset.y) * SCALING_FACTORS.scaleY
         + SCALING_FACTORS.roomLineWidth * 4 * (item.position.z + item.drawOffset.z);
+      const displayPosition = {
+        x:item.position.x + item.drawOffset.x,
+        y:item.position.y + item.drawOffset.y,
+        z:item.position.z + item.drawOffset.z
+      };
 
-      drawRoomItem(room, item, SCALING_FACTORS, context, imageSet, false, 0);
+      drawRoomItem(room, item, displayPosition, SCALING_FACTORS, context, imageSet, false, 0);
 
       expect(drawImage).toHaveBeenCalledWith(
         imageBitmap,
@@ -156,7 +169,7 @@ describe('itemDrawUtil', () => {
         restore:vi.fn()
       } as unknown as CanvasRenderingContext2D;
 
-      expect(() => drawRoomItem(room, item, SCALING_FACTORS, context, imageSet, false, 0))
+      expect(() => drawRoomItem(room, item, item.position, SCALING_FACTORS, context, imageSet, false, 0))
         .toThrow('missing loaded image asset for item crown (/assets/items/crown.png)');
     });
   });

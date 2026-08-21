@@ -32,7 +32,8 @@ function _findHoveredRoomContent(gameState:GameState, room:Room, characters:Char
     gameState.discoveryState.discoveredItemIds, true);
   for (let i = contents.length - 1; i >= 0; --i) {
     const content = contents[i];
-    if (content.type === 'item' && isPositionInOrOnRect(x, y, getItemHoverRect(room, content.item, gameState.scalingFactors, gameState.imageSet))) return content;
+    if (content.type === 'item' && isPositionInOrOnRect(x, y,
+      getItemHoverRect(room, content.item, content.displayPosition, gameState.scalingFactors, gameState.imageSet))) return content;
     if (content.type === 'character' && isCharacterInteractive(content.character)
       && isPositionInOrOnRect(x, y, getCharacterHoverRect(content.character, gameState.scalingFactors, gameState.time, gameState.imageSet, room))) return content;
   }
