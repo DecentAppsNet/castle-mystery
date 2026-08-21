@@ -9,6 +9,7 @@ import type Effect from '@/game/effects/types/Effect';
 import type ImageSet from '@/game/types/ImageSet';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
+import { createRoomContentDisplayLayout } from '@/game/roomContentDisplayPositionUtil';
 
 const SCALING_FACTORS:ScalingFactors = {
   sourceX:0,
@@ -44,8 +45,9 @@ describe('characterDrawUtil', () => {
         ['/assets/faces/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
       ]);
 
-      const rectWithoutFaceImage = getCharacterCanvasRect({ ...character, faceImageUrl:null }, SCALING_FACTORS, 0, imageSet);
-      const rectWithFaceImage = getCharacterCanvasRect(character, SCALING_FACTORS, 0, imageSet);
+      const rectWithoutFaceImage = getCharacterCanvasRect(
+        { ...character, faceImageUrl:null }, character.position, SCALING_FACTORS, 0, imageSet);
+      const rectWithFaceImage = getCharacterCanvasRect(character, character.position, SCALING_FACTORS, 0, imageSet);
 
       expect(rectWithFaceImage.y).toBeLessThan(rectWithoutFaceImage.y);
       expect(rectWithFaceImage.height).toBeGreaterThan(rectWithoutFaceImage.height);
@@ -66,8 +68,10 @@ describe('characterDrawUtil', () => {
         position:{ x:12.5, y:29.999, z:0.5 }
       };
 
-      const floorRect = getCharacterCanvasRect(character, SCALING_FACTORS, 0);
-      const stackedRect = getCharacterCanvasRect(character, SCALING_FACTORS, 0, null, room);
+      const displayPosition = createRoomContentDisplayLayout(room, [character])
+        .characterLayoutById.get(character.id)!.displayPosition;
+      const floorRect = getCharacterCanvasRect(character, character.position, SCALING_FACTORS, 0);
+      const stackedRect = getCharacterCanvasRect(character, displayPosition, SCALING_FACTORS, 0);
 
       expect(stackedRect.y).toBeLessThan(floorRect.y);
       expect(stackedRect.height).toBe(floorRect.height);
@@ -184,7 +188,7 @@ function _drawAndCaptureHeadTransforms(character:ReturnType<typeof createDefault
     font:''
   } as unknown as CanvasRenderingContext2D;
 
-  drawCharacter(character, SCALING_FACTORS, context, 0, imageSet, effects, false, null, 0);
+  drawCharacter(character, character.position, SCALING_FACTORS, context, 0, imageSet, effects, false, 0);
   return { rotations, scales };
 }
 

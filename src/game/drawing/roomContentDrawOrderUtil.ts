@@ -29,7 +29,11 @@ type CharacterDrawableContent = {
   x:number,
   y:number,
   sortId:string,
-  character:Character
+  character:Character,
+  displayPosition:Position,
+  snappedPosition:Position,
+  painterOrderAnchor:Position,
+  stackMemberI:number
 };
 
 type ItemDrawableContent = {
@@ -54,10 +58,41 @@ export function compareItemsForDrawOrder(item1:Pick<Item, 'position' | 'id'>, it
   );
 }
 
-export function compareNonStairDrawableContents(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
+function _getSnappedPosition(content:NonStairDrawableContent):Position {
+  return content.type === 'item' ? content.item.position : content.snappedPosition;
+}
+
+function _areContentsInSameStackGroup(content1:NonStairDrawableContent,
+  content2:NonStairDrawableContent):boolean {
+  const snappedPosition1 = _getSnappedPosition(content1);
+  const snappedPosition2 = _getSnappedPosition(content2);
+  return snappedPosition1.x === snappedPosition2.x && snappedPosition1.z === snappedPosition2.z;
+}
+
+function _createStackGroupSortId(content:NonStairDrawableContent):string {
+  const snappedPosition = _getSnappedPosition(content);
+  return `${snappedPosition.x},${snappedPosition.z}`;
+}
+
+function _compareSameStackGroupContents(content1:NonStairDrawableContent,
+  content2:NonStairDrawableContent):number {
+  if (content1.type === 'item' && content2.type === 'item') return content1.stackMemberI - content2.stackMemberI;
+  if (content1.type !== content2.type) return content1.type === 'item' ? -1 : 1;
   return _comparePositionedContentForDrawOrder(
     content1.depth, content1.x, content1.y, content1.sortId,
     content2.depth, content2.x, content2.y, content2.sortId
+  );
+}
+
+export function compareNonStairDrawableContents(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
+  if (_areContentsInSameStackGroup(content1, content2)) {
+    return _compareSameStackGroupContents(content1, content2);
+  }
+  return _comparePositionedContentForDrawOrder(
+    content1.painterOrderAnchor.z, content1.painterOrderAnchor.x, content1.painterOrderAnchor.y,
+    _createStackGroupSortId(content1),
+    content2.painterOrderAnchor.z, content2.painterOrderAnchor.x, content2.painterOrderAnchor.y,
+    _createStackGroupSortId(content2)
   );
 }
 

@@ -19,6 +19,7 @@ import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import ImageSet from "../types/ImageSet";
 import Item from "../types/Item";
+import Position from "../types/Position";
 import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK } from "./drawColorConstants";
 import { drawPopover, PopoverBodyEntry } from "./popoverDrawUtil";
 import { createCharacterLayout, strokeCharacterBody } from "./characters/characterLayoutUtil";
@@ -89,9 +90,7 @@ function _findObscuredActiveHeadSilhouetteCanvas(faceImage:ImageBitmap, widthPix
   return silhouetteCanvas;
 }
 
-function _getCharacterCanvasBottomPosition(character:Character, scalingFactors:ScalingFactors, room:Room|null = null):[number, number] {
-  const displayLayout = room ? createRoomContentDisplayLayout(room, [character]) : null;
-  const displayPosition = findCharacterDisplayPosition(character, displayLayout);
+function _getCharacterCanvasBottomPosition(displayPosition:Position, scalingFactors:ScalingFactors):[number, number] {
   const [baseX, baseY] = gameToCanvasPosition(displayPosition.x, displayPosition.y, scalingFactors);
   const [offsetX, offsetY] = calcPanelOffset(scalingFactors);
   const depth = clamp(displayPosition.z, 0, 1);
@@ -198,8 +197,9 @@ function _createCharacterPopoverBodyEntries(character:Character):PopoverBodyEntr
   return bodyEntries;
 }
 
-function _createCharacterCanvasLayout(character:Character, scalingFactors:ScalingFactors, time:number, room:Room|null = null) {
-  const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, time, room);
+function _createCharacterCanvasLayout(character:Character, displayPosition:Position, scalingFactors:ScalingFactors, time:number) {
+  const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(
+    character, displayPosition, scalingFactors, time);
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
   return { layout, characterWidth, characterHeight };
 }
@@ -217,20 +217,22 @@ function _getFaceImageDrawSize(faceImage:ImageBitmap, headRadius:number):{ drawW
   };
 }
 
-function _getCharacterBodyCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number, room:Room|null = null):Rect {
-  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time, room);
+function _getCharacterBodyCanvasRect(character:Character, displayPosition:Position,
+  scalingFactors:ScalingFactors, time:number):Rect {
+  const { layout } = _createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
   const segmentXs = layout.segments.flatMap(segment => [segment.fromX, segment.toX]);
   const leftX = Math.min(layout.head.centerX - layout.head.radius, ...segmentXs);
   const rightX = Math.max(layout.head.centerX + layout.head.radius, ...segmentXs);
   return createRect(leftX, layout.topY, rightX - leftX, layout.bottomY - layout.topY);
 }
 
-function _getCharacterFaceCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet, room:Room|null = null):Rect|null {
+function _getCharacterFaceCanvasRect(character:Character, displayPosition:Position,
+  scalingFactors:ScalingFactors, time:number, imageSet:ImageSet):Rect|null {
   if (!character.faceImageUrl) return null;
   const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
   if (!faceImage) return null;
 
-  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time, room);
+  const { layout } = _createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
   const faceImageDrawSize = _getFaceImageDrawSize(faceImage, layout.head.radius);
   if (!faceImageDrawSize) return null;
 
@@ -239,23 +241,25 @@ function _getCharacterFaceCanvasRect(character:Character, scalingFactors:Scaling
   return createRect(layout.head.centerX - drawWidth / 2, layout.head.centerY - drawHeight / 2, drawWidth, drawHeight);
 }
 
-export function getCharacterCanvasRect(character:Character, scalingFactors:ScalingFactors, time:number,
-  imageSet:ImageSet|null = null, room:Room|null = null):Rect {
-  const bodyRect = _getCharacterBodyCanvasRect(character, scalingFactors, time, room);
+export function getCharacterCanvasRect(character:Character, displayPosition:Position, scalingFactors:ScalingFactors,
+  time:number, imageSet:ImageSet|null = null):Rect {
+  const bodyRect = _getCharacterBodyCanvasRect(character, displayPosition, scalingFactors, time);
   if (!imageSet) return bodyRect;
-  const faceRect = _getCharacterFaceCanvasRect(character, scalingFactors, time, imageSet, room);
+  const faceRect = _getCharacterFaceCanvasRect(character, displayPosition, scalingFactors, time, imageSet);
   return faceRect ? extendRectToContainRect(bodyRect, faceRect) : bodyRect;
 }
 
-export function getCharacterHoverRect(character:Character, scalingFactors:ScalingFactors, time:number, imageSet:ImageSet, room:Room|null = null):Rect {
-  const canvasRect = getCharacterCanvasRect(character, scalingFactors, time, imageSet, room);
+export function getCharacterHoverRect(character:Character, displayPosition:Position,
+  scalingFactors:ScalingFactors, time:number, imageSet:ImageSet):Rect {
+  const canvasRect = getCharacterCanvasRect(character, displayPosition, scalingFactors, time, imageSet);
   const [left, top] = canvasToGamePosition(canvasRect.x, canvasRect.y, scalingFactors);
   const [right, bottom] = canvasToGamePosition(canvasRect.x + canvasRect.width, canvasRect.y + canvasRect.height, scalingFactors);
   return createRect(left, top, right - left, bottom - top);
 }
 
-export function getCharacterBodyCenterCanvasPosition(character:Character, scalingFactors:ScalingFactors, time:number, room:Room|null = null):{ x:number, y:number } {
-  const { layout } = _createCharacterCanvasLayout(character, scalingFactors, time, room);
+export function getCharacterBodyCenterCanvasPosition(character:Character, displayPosition:Position,
+  scalingFactors:ScalingFactors, time:number):{ x:number, y:number } {
+  const { layout } = _createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
   const bodySegment = layout.segments[0];
   return {
     x:(bodySegment.fromX + bodySegment.toX) / 2,
@@ -263,8 +267,9 @@ export function getCharacterBodyCenterCanvasPosition(character:Character, scalin
   };
 }
 
-export function getCharacterSpeechAnchor(character:Character, scalingFactors:ScalingFactors, time:number, room:Room|null = null) {
-  const [centerX, bottomY] = _getCharacterCanvasBottomPosition(character, scalingFactors, room);
+export function getCharacterSpeechAnchor(character:Character, displayPosition:Position,
+  scalingFactors:ScalingFactors, time:number) {
+  const [centerX, bottomY] = _getCharacterCanvasBottomPosition(displayPosition, scalingFactors);
   const { characterWidth, characterHeight } = _getCharacterSizePixels(scalingFactors);
   const provisionalLayout = createCharacterLayout(0, 0, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
   const centerY = Math.round(bottomY - provisionalLayout.bottomY);
@@ -313,10 +318,11 @@ export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character
   context.restore();
 }
 
-export function drawCharacter(character:Character, scalingFactors:ScalingFactors,
+export function drawCharacter(character:Character, displayPosition:Position, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, gameTime:number, imageSet:ImageSet, effects:Effect[], isHighlighted:boolean,
-  room:Room|null, metaTime:number) {
-  const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(character, scalingFactors, gameTime, room);
+  metaTime:number) {
+  const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(
+    character, displayPosition, scalingFactors, gameTime);
   const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
   const talkingEffect = faceImage
     ? effects.find(effect => effect.type === EffectType.TALKING && effect.character?.id === character.id) as TalkingEffect|undefined
@@ -380,6 +386,8 @@ export function drawCharacterPopover(character:Character, scalingFactors:Scaling
   imageSet:ImageSet, isTitleKnown:boolean, layoutPlanner:CanvasLayoutPlanner|null = null, room:Room|null = null) {
   if (!isCharacterInteractive(character)) return;
   const title = isTitleKnown ? _getCharacterDisplayName(character) : "";
-  drawPopover({ targetRect:getCharacterCanvasRect(character, scalingFactors, time, imageSet, room), title,
+  const displayLayout = room ? createRoomContentDisplayLayout(room, [character]) : null;
+  const displayPosition = findCharacterDisplayPosition(character, displayLayout);
+  drawPopover({ targetRect:getCharacterCanvasRect(character, displayPosition, scalingFactors, time, imageSet), title,
     bodyEntries:_createCharacterPopoverBodyEntries(character), scalingFactors, context, imageSet, layoutPlanner });
 }

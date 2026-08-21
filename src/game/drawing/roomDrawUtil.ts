@@ -48,7 +48,6 @@ import ImageSet from "../types/ImageSet";
 import ExitType from "../types/ExitType";
 import StairPart, { StairPartType } from "../types/StairPart";
 import { processAfterCharacterEffects, processBeforeCharacterEffects } from "../effects/effectUtil";
-import { findCharacterDisplayPosition } from "@/game/characterDisplayPositionUtil";
 import { findRoom } from "../roomUtil";
 import { getCharacterCanvasRect } from "./characterDrawUtil";
 import { getItemCanvasRectInRoom } from "./itemDrawUtil";
@@ -274,14 +273,20 @@ export function createDrawableContents(room:Room, charactersInRoom:Character[], 
   }));
   const sortedNonStairContents = [
     ...charactersInRoom.filter(character => character.isVisible).map(character => {
-      const displayPosition = findCharacterDisplayPosition(character, displayLayout);
+      const layoutEntry = displayLayout.characterLayoutById.get(character.id);
+      assertNonNullable(layoutEntry);
+      const { displayPosition, squarePosition:snappedPosition, painterOrderAnchor, stackMemberI } = layoutEntry;
       return {
         type:'character' as const,
         depth:displayPosition.z,
         x:displayPosition.x,
         y:displayPosition.y,
         sortId:character.id,
-        character
+        character,
+        displayPosition,
+        snappedPosition,
+        painterOrderAnchor,
+        stackMemberI
       };
     }),
     ...findVisibleRoomItems(room, effects, discoveredItemIds, includeUndiscoveredItems)
@@ -325,10 +330,13 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
           content.item.id === hoveredItemId, metaTime);
         return;
       case 'character':
-        if (layoutPlanner && isCharacterInteractive(content.character)) layoutPlanner.reserveRect(getCharacterCanvasRect(content.character, scalingFactors, gameTime, imageSet, room));
+        if (layoutPlanner && isCharacterInteractive(content.character)) {
+          layoutPlanner.reserveRect(getCharacterCanvasRect(
+            content.character, content.displayPosition, scalingFactors, gameTime, imageSet));
+        }
         processBeforeCharacterEffects(content.character, effects, context, scalingFactors, imageSet, metaTime);
-        drawCharacter(content.character, scalingFactors, context, gameTime, imageSet, effects,
-          content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId, room, metaTime);
+        drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet, effects,
+          content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId, metaTime);
         processAfterCharacterEffects(content.character, effects, context, scalingFactors, imageSet, metaTime);
         return;
     }
@@ -341,7 +349,8 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
     if (content.type === 'character' && isCharacterInteractive(content.character)
       && (!discoveryState.discoveredCharacterIds.has(content.character.id)
         || hasDrawnUndiscoveredHeldItem(content.character, effects, discoveryState.discoveredItemIds))) {
-      const { centerX, centerY } = getCharacterSpeechAnchor(content.character, scalingFactors, gameTime, room);
+      const { centerX, centerY } = getCharacterSpeechAnchor(
+        content.character, content.displayPosition, scalingFactors, gameTime);
       drawUndiscoveredMarker(centerX, centerY, content.character.randomSalt, scalingFactors, context, metaTime);
     }
   });

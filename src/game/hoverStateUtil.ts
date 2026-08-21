@@ -14,13 +14,12 @@ import Character from "./types/Character";
 import GameState from "./types/GameState";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
 import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
+import Position from "./types/Position";
 import Room from "./types/Room";
 import RoomExit from "./types/RoomExit";
 import ExitType from "./types/ExitType";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "./roomUtil";
-import { findCharacterDisplayPosition } from "./characterDisplayPositionUtil";
 import { updateTimelineSnapshotActiveContext } from "./timeline";
-import { createRoomContentDisplayLayout } from "./roomContentDisplayPositionUtil";
 
 function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }) {
   gameState.viewedItemIds.add(item.id);
@@ -35,7 +34,8 @@ function _findHoveredRoomContent(gameState:GameState, room:Room, characters:Char
     if (content.type === 'item' && isPositionInOrOnRect(x, y,
       getItemHoverRect(room, content.item, content.displayPosition, gameState.scalingFactors, gameState.imageSet))) return content;
     if (content.type === 'character' && isCharacterInteractive(content.character)
-      && isPositionInOrOnRect(x, y, getCharacterHoverRect(content.character, gameState.scalingFactors, gameState.time, gameState.imageSet, room))) return content;
+      && isPositionInOrOnRect(x, y, getCharacterHoverRect(
+        content.character, content.displayPosition, gameState.scalingFactors, gameState.time, gameState.imageSet))) return content;
   }
   return null;
 }
@@ -78,7 +78,8 @@ function _findNavigableRoomAtPosition(gameState:GameState, characters:Character[
   return _findExitAtPosition(hoveredRoom, x, y, gameState) ? null : hoveredRoom;
 }
 
-function _findInteractiveCharacterAtPosition(gameState:GameState, characters:Character[], x:number, y:number):Character|null {
+function _findInteractiveCharacterContentAtPosition(gameState:GameState, characters:Character[], x:number, y:number):
+  { type:'character', character:Character, displayPosition:Position }|null {
   const interactionRoom = gameState.isLevelComplete
     ? _findVisibleHoveredRoom(gameState, x, y)
     : _findActiveVisibleRoom(gameState);
@@ -86,7 +87,7 @@ function _findInteractiveCharacterAtPosition(gameState:GameState, characters:Cha
     if (gameState.discoveryState.obscuredRoomIds.has(gameState.timelineSnapshot.activeRoom.id)) return null;
   }
   const hoveredContent = interactionRoom ? _findHoveredRoomContent(gameState, interactionRoom, characters, x, y) : null;
-  return hoveredContent?.type === 'character' ? hoveredContent.character : null;
+  return hoveredContent?.type === 'character' ? hoveredContent : null;
 }
 
 function _clearHoverTargets(gameState:GameState) {
@@ -103,13 +104,13 @@ function _findHoverInteractionRoom(gameState:GameState, x:number, y:number):Room
 }
 
 export function updateGameStateForMouseDown(gameState:GameState, characters:Character[], event:MouseDownEvent, metaTime:number) {
-  const character = _findInteractiveCharacterAtPosition(gameState, characters, event.x, event.y);
-  if (character) {
+  const characterContent = _findInteractiveCharacterContentAtPosition(gameState, characters, event.x, event.y);
+  if (characterContent) {
+    const character = characterContent.character;
     gameState.activeCharacterId = character.id;
     updateTimelineSnapshotActiveContext(gameState.timelineSnapshot, character.id);
-    const displayLayout = createRoomContentDisplayLayout(gameState.timelineSnapshot.activeRoom, [character]);
     gameState.activeEffects.push(createCharacterSelectEffect(character,
-      findCharacterDisplayPosition(character, displayLayout), metaTime, gameState.scalingFactors));
+      characterContent.displayPosition, metaTime, gameState.scalingFactors));
     return;
   }
 }
