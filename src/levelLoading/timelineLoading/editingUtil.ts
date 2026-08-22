@@ -68,7 +68,7 @@ function _generateNextKeyframe(previousKeyframe:Readonly<TimelineKeyframe>,
 // If this gets to be a bottleneck, you can use an algoritm like:
 // 1. Receive a fromI param that is set to the earliest known change in frame keying.
 // 2. Update existing frames from fromI until a frame is unchanged from its original value. (Signals end of affected keyframes).
-function generateKeyframes(editableKeyframes:readonly EditableTimelineKeyframe[]):TimelineKeyframe[] {
+function _generateKeyframes(editableKeyframes:readonly EditableTimelineKeyframe[]):TimelineKeyframe[] {
   // Replay every editable (partial) keyframe to generate resolved keyframes.
   assert(editableKeyframes.length >= 1);
   const keyframes:TimelineKeyframe[] = [];
@@ -199,7 +199,7 @@ function _insertEditableKeyframeAfter(array:EditableTimelineKeyframe[], insertAf
 function _addKeyframe(editableKeyframe:Readonly<EditableTimelineKeyframe>, timeline:EditableTimeline) {
   const insertAfterI = _findInsertAfterI(editableKeyframe.time, timeline.keyframes);
   _insertEditableKeyframeAfter(timeline.editableKeyframes, insertAfterI, editableKeyframe);
-  timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
+  timeline.keyframes = _generateKeyframes(timeline.editableKeyframes);
 }
 
 export function addCharacterKeyChanges(characterKeyChanges:Readonly<Partial<CharacterKeyframe>>, 
@@ -208,7 +208,7 @@ export function addCharacterKeyChanges(characterKeyChanges:Readonly<Partial<Char
   const existingFrame = timeline.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
     _addCharacterKeyframeToTimelineKeyframe(characterKeyChanges, characterI, existingFrame);
-    timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
+    timeline.keyframes = _generateKeyframes(timeline.editableKeyframes);
   } else {
     const keyframe = _createEditableKeyframeFromCharacterKeyframe(characterKeyChanges, characterI, time, characterCount, roomCount);
     _addKeyframe(keyframe, timeline);
@@ -221,7 +221,7 @@ export function addRoomKeyChanges(roomKeyChanges:Readonly<Partial<RoomKeyframe>>
   const existingFrame = timeline.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
     _addRoomKeyframeToTimelineKeyframe(roomKeyChanges, roomI, existingFrame);
-    timeline.keyframes = generateKeyframes(timeline.editableKeyframes);
+    timeline.keyframes = _generateKeyframes(timeline.editableKeyframes);
   } else {
     const keyframe = _createEditableKeyframeFromRoomKeyframe(roomKeyChanges, roomI, time, characterCount, roomCount);
     _addKeyframe(keyframe, timeline);
