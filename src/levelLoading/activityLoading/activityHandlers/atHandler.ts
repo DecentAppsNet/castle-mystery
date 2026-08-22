@@ -87,10 +87,12 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
     : createKeyframeAtTime(editableTimeline.keyframes, activity.endTime!);
   const toPos = _findTargetPosition(waypointContext, toKeyframe, toRoom, horizontalPercent);
 
-  // If character is already in the room and no horizontal target was specified, then no movement needed. In this case, the activity 
-  // is being used like an assertion or self-documentation in the level file, e.g."Sam @ Hall" means "I think Sam should already be in the Hall".
-  // If a horizontal target was specified when character is already in the room, then I check for them to be at that specified position already.
-  if (fromRoom.id === toRoom.id && (horizontalTarget === undefined || !arePositionsEqual(fromPos, toPos))) { // No movement needed.
+  /* If character is already in the room and no horizontal target was specified, then no movement needed. This isn't handled as an error, 
+     because it can be useful for a level author to assert or self-document character position, e.g., "Sam @ Hall" means "I think Sam 
+     should already be in the Hall". */
+  if (fromRoom.id === toRoom.id && 
+      // But if horizontal target was specified, same-room movement may still be needed.
+      (horizontalTarget === undefined || arePositionsEqual(fromPos, toPos))) { // No movement needed.
     const endTime = isRelativeTimestamp ? fromTime : activity.endTime; // Use activity end time if available, because that can affect the timing of following activities.
     activity.startTime = activity.endTime = endTime;
     return true;
@@ -107,9 +109,9 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
     return false;
   }
 
-  assert(scheduleResult >= 0); // scheduleResult is the amount of time delayed before beginning movement toward destination.
-  activity.startTime = fromTime + scheduleResult;
-  activity.endTime = toTime;
+  activity.startTime = fromTime + scheduleResult.walkStartDelay;
+  activity.endTime = activity.startTime + scheduleResult.walkDuration;
+  assert(isRelativeTimestamp || toTime === activity.endTime);
   return true;
 }
 

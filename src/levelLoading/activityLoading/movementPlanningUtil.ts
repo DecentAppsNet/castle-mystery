@@ -16,6 +16,8 @@ import { FacingDirection } from "@/game/types/Character";
 
 const WALK_MSECS_PER_PIXEL = 60;
 
+type ScheduleResult = string /* error message */ |{ walkDuration:number, walkStartDelay:number };
+
 function _createWaypointKey(waypoint:Waypoint):string {
   return `${waypoint.position.x},${waypoint.position.y},${waypoint.position.z}`;
 }
@@ -169,6 +171,7 @@ function _scheduleFacingChangeAsNeeded(lastFacingDirection:FacingDirection|null,
   return facingDirection;
 }
 
+// Returns walk duration
 function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):number {
   let time = fromTime;
   let lastDirection:FacingDirection|null = initialFacingDirection;
@@ -183,9 +186,10 @@ function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, charact
     }
     assert(walkDuration > 0); // Unneeded waypoints are being generated somewhere.
   }
-  return time;
+  return time - fromTime;
 }
 
+// Returns walk duration
 function _scheduleWaypointPathAfterDelay(waypointPath:Waypoint[], fromTime:number, delay:number,
     characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):number {
   const walkStartTime = fromTime + delay;
@@ -193,76 +197,67 @@ function _scheduleWaypointPathAfterDelay(waypointPath:Waypoint[], fromTime:numbe
   return _scheduleWaypointPath(waypointPath, walkStartTime, characterI, initialFacingDirection, timeline);
 }
 
+function _calcWalkStartDelayForWaypointPath(waypointPath:Waypoint[], maxWalkDuration:number):number {
+  const walkDuration = _calcWalkDurationForWaypointPath(waypointPath);
+  return maxWalkDuration - walkDuration;
+}
+
+function _createCantArriveInTimeMessage(room:Room, msecsNeeded:number, toTime:number):string {
+  const secondsNeeded = _getSecondsText(msecsNeeded);
+  const toTimestamp = formatMsecsAsTimestamp(toTime);
+  return `Can't arrive at destination in "${room.id}" room by ${toTimestamp}}. Need another ${secondsNeeded}.`;
+}
+
 function _scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
-    toTime:number|null, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):string|number {
+    toTime:number|null, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):ScheduleResult {
   assert(toTime === null || toTime >= fromTime);
   const fromWaypoint = findNearestFloorWaypointToPosition(context, room, fromPosition);
   const toWaypoint = findNearestFloorWaypointToPosition(context, room, toPosition);
   const waypointPath = _simplifyWaypointPath(_findWaypointPath(room, fromWaypoint, toWaypoint));
-  const pathWalkDuration = _calcWalkDurationForWaypointPath(waypointPath);
 
-  let extraTime = 0;
-  if (toTime !== null) {
-    const maxWalkDuration = toTime - fromTime;
-    extraTime = maxWalkDuration - pathWalkDuration;
-    if (extraTime < 0) {
-      const secondsNeeded = _getSecondsText(pathWalkDuration - maxWalkDuration);
-      const toTimestamp = formatMsecsAsTimestamp(toTime);
-      return `Can't arrive at destination in "${room.id}" room by ${toTimestamp}}. Need another ${secondsNeeded}.`;
-    }
-  }
+  const walkStartDelay = toTime === null ? 0 : _calcWalkStartDelayForWaypointPath(waypointPath, toTime - fromTime);
+  if (walkStartDelay < 0) return _createCantArriveInTimeMessage(room, -walkStartDelay, toTime!);
 
-  const scheduledEndTime = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, extraTime, characterI, initialFacingDirection, timeline);
-  assert(toTime === null || scheduledEndTime === toTime);
-  return scheduledEndTime;
+  const walkDuration = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, walkStartDelay, characterI, initialFacingDirection, timeline);
+  assert(toTime === null || fromTime + walkStartDelay + walkDuration === toTime);
+  return { walkDuration, walkStartDelay};
 }
 
-// If successful, returns the amount of delay from fromTime that was used in scheduling. If unsuccessful return error message.
 function _scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContext, fromRoom:Room, fromPosition:Position, 
     fromTime:number, toRoom:Room, toPosition:Position, toTime:number|null, characterI:number, initialFacingDirection:FacingDirection,
-    timeline:EditableTimeline):string|number {
-  if (arePositionsEqual(fromPosition, toPosition)) return fromTime; // Character already at destination.
+    timeline:EditableTimeline):ScheduleResult {
+  if (arePositionsEqual(fromPosition, toPosition)) return { walkStartDelay:0, walkDuration:0 }; // Character already at destination.
   
   if (fromRoom.id === toRoom.id) {
     return _scheduleCharacterMovementWithinRoom(context, fromRoom, fromPosition, fromTime, toPosition, 
         toTime, characterI, initialFacingDirection, timeline);
   }
-  
   const waypointPath = _findWaypointPathThroughRooms(context, fromRoom, toRoom, fromPosition, toPosition);
 
-  let extraTime = 0;
-  if (toTime !== null) {
-    const pathWalkDuration = _calcWalkDurationForWaypointPath(waypointPath);
-    const maxWalkDuration = toTime - fromTime;
-    extraTime = maxWalkDuration - pathWalkDuration;
-    if (extraTime < 0) {
-      const secondsNeeded = _getSecondsText(pathWalkDuration - maxWalkDuration);
-      const toTimestamp = formatMsecsAsTimestamp(toTime);
-      return `Can't arrive at destination in "${fromRoom.id}" room by ${toTimestamp}. Need another ${secondsNeeded}.`;
-    }
-  }
+  const walkStartDelay = toTime === null ? 0 : _calcWalkStartDelayForWaypointPath(waypointPath, toTime - fromTime);
+  if (walkStartDelay < 0) return _createCantArriveInTimeMessage(toRoom, -walkStartDelay, toTime!);
 
-  const scheduledEndTime = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, extraTime, characterI, initialFacingDirection, timeline);
-  assert(toTime === null || scheduledEndTime === toTime);
+  const walkDuration = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, walkStartDelay, characterI, initialFacingDirection, timeline);
+  assert(toTime === null || fromTime + walkStartDelay + walkDuration === toTime);
   
-  return extraTime;
+  return { walkStartDelay, walkDuration };
 }
 
 export function scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
-    characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):string|number {
+    characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):ScheduleResult {
   return _scheduleCharacterMovementWithinRoom(context, room, fromPosition, fromTime, toPosition, null, 
       characterI, initialFacingDirection, timeline);
 }
 
 export function scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContext, fromRoom:Room, fromPosition:Position, 
     fromTime:number, toRoom:Room, toPosition:Position, toTime:number, characterI:number, initialFacingDirection:FacingDirection,
-    timeline:EditableTimeline):string|number {
+    timeline:EditableTimeline):ScheduleResult {
   return _scheduleCharacterMovementToRoomAtTime(context, fromRoom, fromPosition, fromTime, toRoom, toPosition,
       toTime, characterI, initialFacingDirection, timeline);
 }
 
 export function scheduleCharacterMovementToRoom(context:WaypointGenerationContext, fromRoom:Room, fromPosition:Position, 
-    fromTime:number, toRoom:Room, toPosition:Position, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):string|number {
+    fromTime:number, toRoom:Room, toPosition:Position, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):ScheduleResult {
   return _scheduleCharacterMovementToRoomAtTime(context, fromRoom, fromPosition, fromTime, toRoom, toPosition,
       null, characterI, initialFacingDirection, timeline);
 }

@@ -38,6 +38,17 @@ describe('level loading - @ activities', () => {
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('closet');
   });
 
+  it('loads a relative @ activity with a horizontal target in the current room', () => {
+    const text = replaceSection(defaultLevelText, 'itinerary', [
+      '0:00:00 Sam @ Hall',
+      ': Sam @ (90%)'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'at-relative-horizontal-target.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
   it('@ activity with implied subject will default to active character', () => {
     const text = replaceSection(defaultLevelText, 'itinerary', [
       '0:00:00 sits',

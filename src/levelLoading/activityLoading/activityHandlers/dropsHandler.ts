@@ -160,7 +160,8 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
       errors.addAtLine(scheduleResult, activity.lineI);
       return false;
     }
-    scheduleTime = scheduleResult;
+    assert(scheduleResult.walkStartDelay === 0);
+    scheduleTime += scheduleResult.walkDuration;
   }
   
   // Schedule removal of item from character and adding it to the room in its target position.

@@ -147,7 +147,8 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
     errors.addAtLine(scheduleResult, activity.lineI);
     return false;
   }
-  scheduleTime = scheduleResult;
+  assert(scheduleResult.walkStartDelay === 0);
+  scheduleTime += scheduleResult.walkDuration;
 
   _scheduleRemoveItemFromRoom(roomKeyframe, itemId, roomI, scheduleTime, editableTimeline);
   _scheduleCharacterItemMovement(characterKeyframe, item, itemPlacement, target, characterI, scheduleTime, editableTimeline);
