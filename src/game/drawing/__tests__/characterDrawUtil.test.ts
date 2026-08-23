@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { drawCharacter, drawEmitBubble, drawObscuredActiveCharacter, getCharacterCanvasRect } from '../characterDrawUtil';
+import { drawEmitBubble, drawObscuredActiveCharacter, getCharacterCanvasRect } from '../characterDrawUtil';
 import { createImageAsset } from '@/game/imageAssetUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultItem } from '@/game/types/Item';
 import { createDefaultRoom } from '@/game/types/Room';
-import type Effect from '@/game/effects/types/Effect';
 import type ImageSet from '@/game/types/ImageSet';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
@@ -78,33 +77,6 @@ describe('characterDrawUtil', () => {
     });
   });
 
-  describe('drawCharacter()', () => {
-    it('keeps the laying head upright for both facing directions by mirroring only the left-facing pose', () => {
-      const imageSet:ImageSet = new Map([
-        ['/assets/faces/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
-      ]);
-      const effects:Effect[] = [];
-
-      const rightTransforms = _drawAndCaptureHeadTransforms({
-        ...createDefaultCharacter(),
-        faceImageUrl:'/assets/faces/test.png',
-        bodyOrientation:'laying',
-        facingDirection:'right'
-      }, imageSet, effects);
-      const leftTransforms = _drawAndCaptureHeadTransforms({
-        ...createDefaultCharacter(),
-        faceImageUrl:'/assets/faces/test.png',
-        bodyOrientation:'laying',
-        facingDirection:'left'
-      }, imageSet, effects);
-
-      expect(rightTransforms.rotations).toContain(-Math.PI / 2);
-      expect(rightTransforms.scales).not.toContainEqual([-1, 1]);
-      expect(leftTransforms.rotations).toContain(Math.PI / 2);
-      expect(leftTransforms.scales).toContainEqual([-1, 1]);
-    });
-  });
-
   describe('drawObscuredActiveCharacter()', () => {
     it('keeps the obscured head silhouette fixed regardless of the active character facing direction', () => {
       const room = { ...createDefaultRoom(), rect:{ x:0, y:0, width:20, height:20 }, title:'Test Room' };
@@ -160,37 +132,6 @@ describe('characterDrawUtil', () => {
     });
   });
 });
-
-function _drawAndCaptureHeadTransforms(character:ReturnType<typeof createDefaultCharacter>, imageSet:ImageSet, effects:Effect[]):{ rotations:number[], scales:[number, number][] } {
-  const rotations:number[] = [];
-  const scales:[number, number][] = [];
-  const context = {
-    save() {},
-    restore() {},
-    translate() {},
-    rotate(angle:number) { rotations.push(angle); },
-    scale(x:number, y:number) { scales.push([x, y]); },
-    drawImage() {},
-    beginPath() {},
-    moveTo() {},
-    lineTo() {},
-    arc() {},
-    stroke() {},
-    fill() {},
-    strokeText() {},
-    fillText() {},
-    lineWidth:0,
-    strokeStyle:'',
-    fillStyle:'',
-    textAlign:'left',
-    textBaseline:'alphabetic',
-    lineJoin:'miter',
-    font:''
-  } as unknown as CanvasRenderingContext2D;
-
-  drawCharacter(character, character.position, SCALING_FACTORS, context, 0, imageSet, effects, false, 0);
-  return { rotations, scales };
-}
 
 function _drawObscuredAndCaptureScales(character:ReturnType<typeof createDefaultCharacter>, room:ReturnType<typeof createDefaultRoom>, imageSet:ImageSet):[number, number][] {
   const scales:[number, number][] = [];

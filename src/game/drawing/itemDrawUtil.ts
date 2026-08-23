@@ -15,8 +15,6 @@ import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import ImageSet from "../types/ImageSet";
-import Effect from "../effects/types/Effect";
-import EffectType from "../effects/types/EffectType";
 import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
@@ -293,18 +291,13 @@ export function drawItemAtCanvasPositionInRoom(item:Item, x:number, y:number, sc
   drawItemAtCanvasPosition(item, x, y, calcItemDrawRect(scalingFactors), context, imageSet);
 }
 
-function _findVisibleRoomItems(room:Room, effects:Effect[], discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
+function _findVisibleRoomItems(room:Room, discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
   return room.items
-    .filter(item => item.isVisible && (includeUndiscovered || discoveredItemIds.has(item.id)) && !_isItemSuppressedByEffect(item, effects));
+    .filter(item => item.isVisible && (includeUndiscovered || discoveredItemIds.has(item.id)));
 }
 
-// Hides items that are currently represented by an active drop effect.
-function _isItemSuppressedByEffect(item:Item, effects:Effect[]):boolean {
-  return effects.some(effect => effect.type === EffectType.DROP_ITEM && "item" in effect && effect.item?.id === item.id);
-}
-
-export function findVisibleRoomItems(room:Room, effects:Effect[], discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
-  return _findVisibleRoomItems(room, effects, discoveredItemIds, includeUndiscovered);
+export function findVisibleRoomItems(room:Room, discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
+  return _findVisibleRoomItems(room, discoveredItemIds, includeUndiscovered);
 }
 
 // Draws the item popover anchored to the item's current image rectangle.

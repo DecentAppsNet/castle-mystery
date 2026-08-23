@@ -2,10 +2,6 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
-import Effect from "@/game/effects/types/Effect";
-import EffectType from "@/game/effects/types/EffectType";
-import GiveItemEffect from "@/game/effects/types/GiveItemEffect";
-import TakeItemEffect from "@/game/effects/types/TakeItemEffect";
 import { isItemInteractive } from "@/game/interactivityUtil";
 import { COLUMN_WIDTH } from "@/game/roomGridUtil";
 import { calcPanelOffset } from "../roomPanelProjectionUtil";
@@ -43,22 +39,6 @@ function _drawHeldItem(item:Item, handX:number, handY:number, scalingFactors:Sca
   drawItemAtCanvasPosition(item, handX, handY + handYOffset * 0.35, imageDrawRect, context, imageSet);
 }
 
-function _hasMatchingTakeOrGiveItemEffect(character:Character, item:Item, effects:Effect[]):boolean {
-  return effects.some(effect => {
-    if (effect.type === EffectType.TAKE_ITEM) {
-      const takeItemEffect = effect as TakeItemEffect;
-      if (!takeItemEffect.character) return false;
-      return takeItemEffect.character.id === character.id && takeItemEffect.item.id === item.id;
-    }
-    if (effect.type === EffectType.GIVE_ITEM) {
-      const giveItemEffect = effect as GiveItemEffect;
-      if (!giveItemEffect.character) return false;
-      return giveItemEffect.character.id === character.id && giveItemEffect.item.id === item.id;
-    }
-    return false;
-  });
-}
-
 function _findBackHandItem(character:Character):Item|null {
   if (character.facingDirection === 'right') return character.leftHandItem;
   return character.rightHandItem;
@@ -69,29 +49,23 @@ function _findFrontHandItem(character:Character):Item|null {
   return character.leftHandItem;
 }
 
-function _isHeldItemDrawn(character:Character, item:Item, effects:Effect[]):boolean {
-  return !_hasMatchingTakeOrGiveItemEffect(character, item, effects);
-}
-
-export function hasDrawnUndiscoveredHeldItem(character:Character, effects:Effect[], discoveredItemIds:ReadonlySet<string>):boolean {
+export function hasDrawnUndiscoveredHeldItem(character:Character, discoveredItemIds:ReadonlySet<string>):boolean {
   return [character.leftHandItem, character.rightHandItem]
-    .some(item => !!item && _isHeldItemDrawn(character, item, effects) && isItemInteractive(item) && !discoveredItemIds.has(item.id));
+    .some(item => !!item && isItemInteractive(item) && !discoveredItemIds.has(item.id));
 }
 
 export function drawHeldItemsBehindCharacter(character:Character, layout:CharacterLayout,
-  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const backHandItem = _findBackHandItem(character);
   if (!backHandItem) return;
-  if (!_isHeldItemDrawn(character, backHandItem, effects)) return;
   const handPosition = character.facingDirection === 'right' ? layout.leftHand : layout.rightHand;
   _drawHeldItem(backHandItem, handPosition.x, handPosition.y, scalingFactors, context, imageSet);
 }
 
 export function drawHeldItemsInFrontOfCharacter(character:Character, layout:CharacterLayout,
-  effects:Effect[], scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const frontHandItem = _findFrontHandItem(character);
   if (!frontHandItem) return;
-  if (!_isHeldItemDrawn(character, frontHandItem, effects)) return;
   const handPosition = character.facingDirection === 'right' ? layout.rightHand : layout.leftHand;
   _drawHeldItem(frontHandItem, handPosition.x, handPosition.y, scalingFactors, context, imageSet);
 }

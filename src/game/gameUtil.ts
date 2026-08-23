@@ -1,7 +1,8 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assert, botch } from "decent-portal";
+import { botch } from "decent-portal";
+
 import GameState from "./types/GameState";
 import Room from "./types/Room";
 import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
@@ -18,13 +19,11 @@ import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
 import MouseWheelEvent from "./types/playerEvents/MouseWheelEvent";
 import { COLOR_BLACK } from "./drawing/drawColorConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
-import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 import { findImageBitmap } from "./imageAssetUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
 import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
-import { MAX_ACTIVE_EFFECTS } from "./effects/effectUtil";
 import {
   callOnActiveCharacterChangedAsNeeded,
   callOnDiscoveriesChangedAsNeeded,
@@ -48,36 +47,36 @@ function _setActiveRoomDiscovered(gameState:GameState) {
   gameState.discoveryState.discoveredRoomIds.add(gameState.timelineSnapshot.activeRoom.id);
 }
 
-function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
-  const wasPlaying = gameState.isPlaying;
-  gameState.activeEffects.length = 0;
+function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, _metaTime:number) {
+  // const wasPlaying = gameState.isPlaying;
   gameState.time = event.time;
   gameState.timelineSnapshot = createTimelineSnapshot(gameState, event.time);
   gameState.isPlaying = false;
   gameState.metaTimeToGameTimeOffset = 0;
-  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
+  // TODO restore - if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
 }
 
 function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent, metaTime:number) {
-  const wasPlaying = gameState.isPlaying;
+  // const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = event.isPlaying;
   if (event.isPlaying) {
     gameState.metaTimeToGameTimeOffset = gameState.time - metaTime;
   } else {
     gameState.metaTimeToGameTimeOffset = 0; // To find errors if code incorrectly assumes the value to be set.
   }
-  if (wasPlaying !== event.isPlaying) {
+  // TODO restore
+  /* if (wasPlaying !== event.isPlaying) {
     gameState.activeEffects.push(event.isPlaying
       ? createPlayEffect(metaTime, gameState.scalingFactors.roomLineWidth)
       : createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
-  }
+  } */
 }
 
-function _pauseGameState(gameState:GameState, metaTime:number) {
-  const wasPlaying = gameState.isPlaying;
+function _pauseGameState(gameState:GameState, _metaTime:number) {
+  // const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = false;
   gameState.metaTimeToGameTimeOffset = 0;
-  if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
+  // TODO restore if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
 }
 
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
@@ -184,8 +183,6 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     : gameState.hoveredRoomId ? "pointer" : "default";
 
   updateScalingFactorsAsNeeded(gameState, context);
-  assert(gameState.activeEffects.length <= MAX_ACTIVE_EFFECTS,
-    `active effect count ${gameState.activeEffects.length} exceeds MAX_ACTIVE_EFFECTS ${MAX_ACTIVE_EFFECTS}; an effect callback may not be returning false to remove itself`);
   if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
   if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
   drawGameState(gameState, context, metaTime);
@@ -199,7 +196,6 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
   const duration = level.endTime - level.startTime;
   const gameState:GameState = {
     activeCharacterId:level.activeCharacterId,
-    activeEffects:[],
     backgroundImageUrl:level.backgroundImageUrl,
     baseCharacters,
     baseItemsById,

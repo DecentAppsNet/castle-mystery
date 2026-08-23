@@ -5,7 +5,6 @@ import { assertNonNullable } from "decent-portal";
 
 import { DRAW_RESERVED_RECTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
-import { processLevelEffects } from "../effects/effectUtil";
 import { isCharacterInteractive, isItemInteractive } from "../interactivityUtil";
 import { calcRoomRoofBounds } from "../roomRoofUtil";
 import { findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
@@ -320,7 +319,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
         gameState.discoveryState.discoveredRoomIds.has(room.id));
     }
     if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) continue;
-    drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, gameState.activeEffects,
+    drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, 
       hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,
       gameState.time, metaTime, gameState.imageSet, gameState.discoveryState, gameState.isLevelComplete, layoutPlanner);
     if (!_drawCachedRoomRoof(room, gameState, context)) {
@@ -358,5 +357,4 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     }
   }
   _drawReservedRects(layoutPlanner, context);
-  processLevelEffects(gameState.activeEffects, context, metaTime);
 }

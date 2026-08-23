@@ -5,7 +5,6 @@ import ImageSet from "./ImageSet";
 import Item from "./Item";
 import Room from "./Room";
 import ScalingFactors from "./ScalingFactors";
-import Effect from "../effects/types/Effect";
 import Conclusion from "../conclusions/types/Conclusion";
 import RoomShellCache from "./RoomShellCache";
 import Timeline from "./Timeline";
@@ -15,7 +14,6 @@ import DiscoveryState from "./DiscoveryState";
 // Unless otherwise noted, "readonly" is intended deeply despite shallow Typescript checks.
 type GameState = {
   activeCharacterId:string,
-  activeEffects:Effect[],
   camera:Camera,
   conclusions:Conclusion[],
   conclusionsRevision:number,

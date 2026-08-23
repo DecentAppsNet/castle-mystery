@@ -7,7 +7,6 @@ import { getExitHoverRect } from "./drawing/exitDrawUtil";
 import { getCharacterHoverRect } from "./drawing/characterDrawUtil";
 import { getItemHoverRect } from "./drawing/itemDrawUtil";
 import { createDrawableContents } from "./drawing/roomDrawUtil";
-import { createCharacterSelectEffect } from "./effects/characterSelectEffectUtil";
 import { isCharacterInteractive } from "./interactivityUtil";
 import { isPositionInOrOnRect } from "./rectUtil";
 import Character from "./types/Character";
@@ -27,8 +26,7 @@ function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }
 }
 
 function _findHoveredRoomContent(gameState:GameState, room:Room, characters:Character[], x:number, y:number) {
-  const contents = createDrawableContents(room, findCharactersInRoom(room, characters), gameState.activeEffects,
-    gameState.discoveryState.discoveredItemIds, true);
+  const contents = createDrawableContents(room, findCharactersInRoom(room, characters), gameState.discoveryState.discoveredItemIds, true);
   for (let i = contents.length - 1; i >= 0; --i) {
     const content = contents[i];
     if (content.type === 'item' && isPositionInOrOnRect(x, y,
@@ -103,14 +101,12 @@ function _findHoverInteractionRoom(gameState:GameState, x:number, y:number):Room
     : _findActiveVisibleRoom(gameState);
 }
 
-export function updateGameStateForMouseDown(gameState:GameState, characters:Character[], event:MouseDownEvent, metaTime:number) {
+export function updateGameStateForMouseDown(gameState:GameState, characters:Character[], event:MouseDownEvent, _metaTime:number) {
   const characterContent = _findInteractiveCharacterContentAtPosition(gameState, characters, event.x, event.y);
   if (characterContent) {
     const character = characterContent.character;
     gameState.activeCharacterId = character.id;
     updateTimelineSnapshotActiveContext(gameState.timelineSnapshot, character.id);
-    gameState.activeEffects.push(createCharacterSelectEffect(character,
-      characterContent.displayPosition, metaTime, gameState.scalingFactors));
     return;
   }
 }
