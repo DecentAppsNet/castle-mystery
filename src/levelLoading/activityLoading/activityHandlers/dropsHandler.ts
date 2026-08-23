@@ -25,7 +25,7 @@ import { arePositionsAdjacent } from "@/game/positionUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import { addCharacterEffect, addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
-import DropEffect, { DROP_EFFECT_TIME } from "@/game/effects/types/DropEffect";
+import { createDropEffect } from "@/game/effects/dropEffectUtil";
 
 // Coupled to parse format. Used for casting parts to expected types.
 type PartsShape = {
@@ -168,8 +168,8 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   _scheduleRemoveItemFromCharacter(characterKeyframe, characterI, scheduleTime, itemId, editableTimeline);
   _scheduleAddItemToRoom(item, dropFloorPosition, roomKeyframe, roomI, scheduleTime, editableTimeline);
 
-  // Add drop effect.
-  const dropEffect:DropEffect = { kind:'dropItem', itemId, targetPosition:dropFloorPosition, startTime:scheduleTime, endTime:scheduleTime + DROP_EFFECT_TIME };
+  // Schedule drop effect.
+  const dropEffect = createDropEffect(itemId, dropFloorPosition, scheduleTime);
   addCharacterEffect(dropEffect, characterI, editableTimeline);
   activity.endTime = dropEffect.endTime;
 

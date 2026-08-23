@@ -9,7 +9,7 @@ import { findCharacterFacingDirection } from "./util/facingUtil";
 import { assertNonNullable } from "decent-portal";
 import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
-import SpeechEffect from "@/game/effects/types/SpeechEffect";
+import { createSpeechEffect } from "@/game/effects/speechEffectUtil";
 
 export function createSaysParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
@@ -52,8 +52,7 @@ export function scheduleSaysActivity(level:Level, _waypointContext:WaypointGener
     return false;
   }
 
-  const speechEffect:SpeechEffect = { kind:'speech', startTime:activity.startTime, endTime:activity.startTime+speechDuration, speechKind:verb, text };
+  const speechEffect = createSpeechEffect('says', text, activity.startTime, speechDuration);
   addCharacterEffect(speechEffect, characterI, editableTimeline);
-  
   return true;
 }

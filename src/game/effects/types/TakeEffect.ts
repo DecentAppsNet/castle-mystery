@@ -1,14 +1,10 @@
 import EffectBase from "./EffectBase";
 
-export const LEFT_HAND = 'left hand';
-export const RIGHT_HAND = 'right hand';
-export const INVENTORY = 'inventory';
-
-export const TAKE_EFFECT_TIME = 500;
+export type TakeTarget = 'left hand'|'right hand'|'inventory';
 
 type TakeEffect = EffectBase & {
   itemId:string,
-  target:'left hand'|'right hand'|'inventory'
+  target:TakeTarget
 }
 
 export function duplicateTakeEffect(from:TakeEffect):TakeEffect {

@@ -1,7 +1,9 @@
 import EffectBase from "./EffectBase";
 
+export type SpeechKind = 'says'|'emits'|'thinks';
+
 type SpeechEffect = EffectBase & {
-  speechKind:'says'|'emits'|'thinks',
+  speechKind:SpeechKind,
   text:string
 }
 
