@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { calcItemCuboidHeightGame } from '../itemSizeUtil';
+import { ITEM_CUBOID_HEIGHT_GAME } from '../itemSizeUtil';
 import { createRoomContentDisplayLayout } from '../roomContentDisplayPositionUtil';
 import Character, { createDefaultCharacter } from '../types/Character';
 import Item, { createDefaultItem } from '../types/Item';
@@ -47,7 +47,7 @@ describe('roomContentDisplayPositionUtil', () => {
       const top = _createItem('top');
       const room = _createRoom([bottom, middle, top]);
       const layout = createRoomContentDisplayLayout(room, []);
-      const height = calcItemCuboidHeightGame(room);
+      const height = ITEM_CUBOID_HEIGHT_GAME;
 
       _expectPosition(layout.itemLayoutById.get('middle')!.displayPosition, {
         x:LEFT_SQUARE.x + 1 + 3 - 1,
@@ -73,7 +73,7 @@ describe('roomContentDisplayPositionUtil', () => {
       expect(layout.itemLayoutById.has('hidden')).toBe(false);
       _expectPosition(layout.itemLayoutById.get('top')!.displayPosition, {
         x:LEFT_SQUARE.x + 3,
-        y:FLOOR_Y - calcItemCuboidHeightGame(room),
+        y:FLOOR_Y - ITEM_CUBOID_HEIGHT_GAME,
         z:LEFT_SQUARE.z
       });
       expect(layout.itemLayoutById.get('top')!.stackMemberI).toBe(1);
@@ -94,7 +94,7 @@ describe('roomContentDisplayPositionUtil', () => {
       const character = _createCharacter('sam');
       const room = _createRoom([bottom, top]);
       const entry = createRoomContentDisplayLayout(room, [character]).characterLayoutById.get(character.id)!;
-      const height = calcItemCuboidHeightGame(room);
+      const height = ITEM_CUBOID_HEIGHT_GAME;
 
       _expectPosition(entry.displayPosition, {
         x:LEFT_SQUARE.x + 1 + 3 - 1 + 2,
@@ -125,7 +125,7 @@ describe('roomContentDisplayPositionUtil', () => {
       const layout = createRoomContentDisplayLayout(room, [leftCharacter, rightCharacter]);
 
       _expectPosition(layout.characterLayoutById.get('left')!.displayPosition, {
-        x:14.999, y:FLOOR_Y - calcItemCuboidHeightGame(room), z:0.5
+        x:14.999, y:FLOOR_Y - ITEM_CUBOID_HEIGHT_GAME, z:0.5
       });
       expect(layout.characterLayoutById.get('right')!.displayPosition).toEqual(rightCharacter.position);
       expect(layout.characterLayoutById.get('right')!.squarePosition).toEqual(RIGHT_SQUARE);

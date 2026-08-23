@@ -7,7 +7,7 @@ import EffectType from "@/game/effects/types/EffectType";
 import GiveItemEffect from "@/game/effects/types/GiveItemEffect";
 import TakeItemEffect from "@/game/effects/types/TakeItemEffect";
 import { isItemInteractive } from "@/game/interactivityUtil";
-import { MAP_TILE_SIZE, roomWidthToColumnCount } from "@/game/roomGridUtil";
+import { COLUMN_WIDTH } from "@/game/roomGridUtil";
 import { calcPanelOffset } from "../roomPanelProjectionUtil";
 import { createItemDrawRect, drawItemAtCanvasPosition } from "../itemDrawUtil";
 import Character from "@/game/types/Character";
@@ -18,7 +18,7 @@ import { CharacterLayout } from "./characterLayoutUtil";
 
 function _createHeldItemDrawRect(scalingFactors:ScalingFactors) {
   const [panelOffsetX, panelOffsetY] = calcPanelOffset(scalingFactors);
-  const baseWidthPixels = MAP_TILE_SIZE / roomWidthToColumnCount(MAP_TILE_SIZE) * scalingFactors.scaleX;
+  const baseWidthPixels = COLUMN_WIDTH * scalingFactors.scaleX;
   const cuboidWidthPixels = calcItemCuboidWidthPixels(baseWidthPixels);
   const cuboidHeightPixels = calcItemCuboidHeightPixels(cuboidWidthPixels);
   const cuboidDepthXPixels = Math.max(2, panelOffsetX / 4);
@@ -30,7 +30,7 @@ function _createHeldItemDrawRect(scalingFactors:ScalingFactors) {
 }
 
 function _calcHandYOffset(scalingFactors:ScalingFactors):number {
-  const baseWidthPixels = MAP_TILE_SIZE / roomWidthToColumnCount(MAP_TILE_SIZE) * scalingFactors.scaleX;
+  const baseWidthPixels = COLUMN_WIDTH * scalingFactors.scaleX;
   const cuboidWidthPixels = calcItemCuboidWidthPixels(baseWidthPixels);
   const cuboidHeightPixels = calcItemCuboidHeightPixels(cuboidWidthPixels);
   return cuboidHeightPixels;

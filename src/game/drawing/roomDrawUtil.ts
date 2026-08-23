@@ -324,9 +324,9 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
         return;
       case 'item':
         if (layoutPlanner && isItemInteractive(content.item)) {
-          layoutPlanner.reserveRect(getItemCanvasRectInRoom(room, content.item, content.displayPosition, scalingFactors, imageSet));
+          layoutPlanner.reserveRect(getItemCanvasRectInRoom(content.item, content.displayPosition, scalingFactors, imageSet));
         }
-        drawRoomItem(room, content.item, content.displayPosition, scalingFactors, context, imageSet,
+        drawRoomItem(content.item, content.displayPosition, scalingFactors, context, imageSet,
           content.item.id === hoveredItemId, metaTime);
         return;
       case 'character':
@@ -343,7 +343,7 @@ function _drawRoomContents(room:Room, charactersInRoom:Character[], activeCharac
   });
   contents.forEach(content => {
     if (content.type === 'item' && isItemInteractive(content.item) && !discoveryState.discoveredItemIds.has(content.item.id)) {
-      const rect = getItemCanvasRectInRoom(room, content.item, content.displayPosition, scalingFactors, imageSet);
+      const rect = getItemCanvasRectInRoom(content.item, content.displayPosition, scalingFactors, imageSet);
       drawUndiscoveredMarker(rect.x + rect.width / 2, rect.y + rect.height / 2 + calcUndiscoveredMarkerHeightPixels(scalingFactors) / 2, content.item.randomSalt, scalingFactors, context, metaTime);
     }
     if (content.type === 'character' && isCharacterInteractive(content.character)

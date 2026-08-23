@@ -7,7 +7,7 @@ import { assertNonNullable } from "decent-portal";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
 import { isItemInteractive } from "@/game/interactivityUtil";
-import { roomWidthToColumnCount } from "../roomGridUtil";
+import { COLUMN_WIDTH } from "../roomGridUtil";
 import Rect from "../types/Rect";
 import { canvasToGamePosition } from "./drawUtil";
 import { COLOR_ITEM_POPOVER_HIGHLIGHT } from "./drawColorConstants";
@@ -82,9 +82,8 @@ export function createItemDrawRect(baseWidthPixels:number, baseHeightPixels:numb
   };
 }
 
-export function calcItemDrawRect(room:Room, scalingFactors:ScalingFactors):ItemImageRect {
-  const columnWidthGame = room.rect.width / roomWidthToColumnCount(room.rect.width);
-  const columnWidthPixels = columnWidthGame * scalingFactors.scaleX;
+export function calcItemDrawRect(scalingFactors:ScalingFactors):ItemImageRect {
+  const columnWidthPixels = COLUMN_WIDTH * scalingFactors.scaleX;
   const baseWidthPixels = calcItemCuboidWidthPixels(columnWidthPixels);
   const baseHeightPixels = calcItemCuboidHeightPixels(baseWidthPixels);
 
@@ -109,11 +108,11 @@ export function getItemBaseCanvasPositionInRoom(item:Item, scalingFactors:Scalin
 }
 
 // Returns the canvas-space rectangle occupied by the item's image in a room.
-export function getItemCanvasRectInRoom(room:Room, item:Item, displayPosition:Position,
+export function getItemCanvasRectInRoom(item:Item, displayPosition:Position,
     scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
   const image = _findItemImage(item, imageSet);
   if (!image) return { x:0, y:0, width:0, height:0 }; // Headless.
-  const itemDrawRect = calcItemDrawRect(room, scalingFactors);
+  const itemDrawRect = calcItemDrawRect(scalingFactors);
   const [x, y] = getItemCanvasPositionInRoom(displayPosition, scalingFactors);
   const imageRect = _calcItemImageRect(itemDrawRect, image);
   return {
@@ -125,11 +124,11 @@ export function getItemCanvasRectInRoom(room:Room, item:Item, displayPosition:Po
 }
 
 // Returns the game-space hover rectangle for item hit-testing.
-export function getItemHoverRect(room:Room, item:Item, displayPosition:Position,
+export function getItemHoverRect(item:Item, displayPosition:Position,
   scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
   const image = _findItemImage(item, imageSet);
   if (!image) return {x:0, y:0, width:0, height:0}; // Headless call.
-  const itemDrawRect = calcItemDrawRect(room, scalingFactors);
+  const itemDrawRect = calcItemDrawRect(scalingFactors);
   const [x, y] = _getRoomItemGamePosition(displayPosition, scalingFactors);
   const imageRect = _calcItemImageRect(itemDrawRect, image);
   return {
@@ -260,12 +259,12 @@ function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, itemDraw
 }
 
 // Draws one room item, including its optional highlight effect.
-function drawItem(room:Room, item:Item, displayPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+function drawItem(item:Item, displayPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet, isHighlighted:boolean = false, metaTime:number = 0) {
   const image = _findItemImage(item, imageSet);
   if (!image) return; // Headless - no drawing needed.
   const [x, y] = getItemCanvasPositionInRoom(displayPosition, scalingFactors);
-  const itemDrawRect = calcItemDrawRect(room, scalingFactors);
+  const itemDrawRect = calcItemDrawRect(scalingFactors);
   context.save();
   if (isHighlighted) _drawItemImageHighlight(image, x, y, itemDrawRect, scalingFactors, context, metaTime);
   _drawItemImage(image, x, y, itemDrawRect, context);
@@ -273,9 +272,9 @@ function drawItem(room:Room, item:Item, displayPosition:Position, scalingFactors
 }
 
 // Public room-item draw entry point used by room rendering.
-export function drawRoomItem(room:Room, item:Item, displayPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+export function drawRoomItem(item:Item, displayPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   imageSet:ImageSet, isHighlighted:boolean, metaTime:number) {
-  drawItem(room, item, displayPosition, scalingFactors, context, imageSet, isHighlighted, metaTime);
+  drawItem(item, displayPosition, scalingFactors, context, imageSet, isHighlighted, metaTime);
 }
 
 // Draws an item at a caller-supplied canvas anchor using precomputed metrics.
@@ -289,9 +288,9 @@ export function drawItemAtCanvasPosition(item:Item, x:number, y:number, itemDraw
 }
 
 // Draws an item at a caller-supplied canvas anchor using room-derived draw metrics.
-export function drawItemAtCanvasPositionInRoom(item:Item, room:Room, x:number, y:number, scalingFactors:ScalingFactors,
+export function drawItemAtCanvasPositionInRoom(item:Item, x:number, y:number, scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, imageSet:ImageSet) {
-  drawItemAtCanvasPosition(item, x, y, calcItemDrawRect(room, scalingFactors), context, imageSet);
+  drawItemAtCanvasPosition(item, x, y, calcItemDrawRect(scalingFactors), context, imageSet);
 }
 
 function _findVisibleRoomItems(room:Room, effects:Effect[], discoveredItemIds:ReadonlySet<string>, includeUndiscovered:boolean):Item[] {
@@ -316,7 +315,7 @@ export function drawItemPopover(room:Room, item:Item, scalingFactors:ScalingFact
   const layoutEntry = displayLayout.itemLayoutById.get(item.id);
   assertNonNullable(layoutEntry);
   drawPopover({
-    targetRect:getItemCanvasRectInRoom(room, item, layoutEntry.displayPosition, scalingFactors, imageSet),
+    targetRect:getItemCanvasRectInRoom(item, layoutEntry.displayPosition, scalingFactors, imageSet),
     title:item.title,
     bodyEntries:[{ type:'imageTextRow', imageUrl:item.imageUrl || UNKNOWN_ITEM_ICON_URL, text:item.description, isDescriptionOnly:true }],
     scalingFactors,

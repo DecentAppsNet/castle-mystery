@@ -7,7 +7,7 @@ import { createImageAsset } from '@/game/imageAssetUtil';
 import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { createEmptyImageSet } from '@/game/imageSetUtil';
-import { calcItemCuboidHeightGame } from '@/game/itemSizeUtil';
+import { ITEM_CUBOID_HEIGHT_GAME } from '@/game/itemSizeUtil';
 import { createRoomContentDisplayLayout } from '@/game/roomContentDisplayPositionUtil';
 
 const SCALING_FACTORS:ScalingFactors = {
@@ -29,10 +29,6 @@ describe('itemDrawUtil', () => {
   describe('getItemCanvasRectInRoom()', () => {
     it('matches the widened image bounds when the source image implies multiple columns', () => {
       const imageUrl = '/assets/items/crown.png';
-      const room = {
-        ...createDefaultRoom(),
-        rect:{ x:0, y:0, width:10, height:10 }
-      };
       const item:Item = {
         id:'crown',
         title:'Crown',
@@ -47,7 +43,7 @@ describe('itemDrawUtil', () => {
       const imageBitmap = { width:520, height:20 } as ImageBitmap;
       const imageSet = createEmptyImageSet();
       imageSet.set(imageUrl, createImageAsset(imageBitmap));
-      const itemDrawRect = calcItemDrawRect(room, SCALING_FACTORS);
+      const itemDrawRect = calcItemDrawRect(SCALING_FACTORS);
       const expectedImageWidthPixels = itemDrawRect.widthPixels * 2;
       const expectedImageHeightPixels = expectedImageWidthPixels * imageBitmap.height / imageBitmap.width;
       const projectedX = (item.position.x + item.drawOffset.x) * SCALING_FACTORS.scaleX
@@ -60,7 +56,7 @@ describe('itemDrawUtil', () => {
         z:item.position.z + item.drawOffset.z
       };
 
-      expect(getItemCanvasRectInRoom(room, item, displayPosition, SCALING_FACTORS, imageSet)).toEqual({
+      expect(getItemCanvasRectInRoom(item, displayPosition, SCALING_FACTORS, imageSet)).toEqual({
         x:projectedX + itemDrawRect.leftOffsetPixels - itemDrawRect.widthPixels / 2,
         y:projectedY - expectedImageHeightPixels,
         width:expectedImageWidthPixels,
@@ -79,7 +75,7 @@ describe('itemDrawUtil', () => {
         ]
       };
       const crown = room.items[2];
-      const itemHeight = calcItemCuboidHeightGame(room);
+      const itemHeight = ITEM_CUBOID_HEIGHT_GAME;
       const displayLayout = createRoomContentDisplayLayout(room, []);
       const displayPosition = displayLayout.itemLayoutById.get(crown.id)!.displayPosition;
 
@@ -97,10 +93,6 @@ describe('itemDrawUtil', () => {
   describe('drawRoomItem()', () => {
     it('scales an item image draw width by the inferred 256-pixel column count when imageUrl is present', () => {
       const imageUrl = '/assets/items/crown.png';
-      const room = {
-        ...createDefaultRoom(),
-        rect:{ x:0, y:0, width:10, height:10 }
-      };
       const item:Item = {
         id:'crown',
         title:'Crown',
@@ -121,7 +113,7 @@ describe('itemDrawUtil', () => {
         save:vi.fn(),
         restore:vi.fn()
       } as unknown as CanvasRenderingContext2D;
-      const itemDrawRect = calcItemDrawRect(room, SCALING_FACTORS);
+      const itemDrawRect = calcItemDrawRect(SCALING_FACTORS);
       const expectedImageWidthPixels = itemDrawRect.widthPixels * 2;
       const expectedImageHeightPixels = expectedImageWidthPixels * imageBitmap.height / imageBitmap.width;
       const projectedX = (item.position.x + item.drawOffset.x) * SCALING_FACTORS.scaleX
@@ -134,7 +126,7 @@ describe('itemDrawUtil', () => {
         z:item.position.z + item.drawOffset.z
       };
 
-      drawRoomItem(room, item, displayPosition, SCALING_FACTORS, context, imageSet, false, 0);
+      drawRoomItem(item, displayPosition, SCALING_FACTORS, context, imageSet, false, 0);
 
       expect(drawImage).toHaveBeenCalledWith(
         imageBitmap,
@@ -146,10 +138,6 @@ describe('itemDrawUtil', () => {
     });
 
     it('asserts when an authored item image is missing from a non-empty image set', () => {
-      const room = {
-        ...createDefaultRoom(),
-        rect:{ x:0, y:0, width:10, height:10 }
-      };
       const item:Item = {
         id:'crown',
         title:'Crown',
@@ -169,7 +157,7 @@ describe('itemDrawUtil', () => {
         restore:vi.fn()
       } as unknown as CanvasRenderingContext2D;
 
-      expect(() => drawRoomItem(room, item, item.position, SCALING_FACTORS, context, imageSet, false, 0))
+      expect(() => drawRoomItem(item, item.position, SCALING_FACTORS, context, imageSet, false, 0))
         .toThrow('missing loaded image asset for item crown (/assets/items/crown.png)');
     });
   });

@@ -24,7 +24,7 @@ function _onProcessCharacterEffect(_character:Character, effect:Effect, context:
   const [x, endY] = getItemBaseCanvasPositionInRoom(dropItemEffect.item, scalingFactors);
   const startYOffsetPixels = Math.max(18, scalingFactors.roomFontHeight * 1.5);
   const y = endY - startYOffsetPixels * (1 - progress);
-  drawItemAtCanvasPositionInRoom(dropItemEffect.item, room, x, y, scalingFactors, context, imageSet);
+  drawItemAtCanvasPositionInRoom(dropItemEffect.item, x, y, scalingFactors, context, imageSet);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 

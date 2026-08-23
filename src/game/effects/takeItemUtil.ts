@@ -13,12 +13,12 @@ import EffectType from "./types/EffectType";
 import TakeItemEffect from "./types/TakeItemEffect";
 import { ITEM_EFFECT_DURATION } from "./dropItemUtil";
 
-function _drawAnimatedItem(room:Room, takeItemEffect:TakeItemEffect, context:CanvasRenderingContext2D,
+function _drawAnimatedItem(takeItemEffect:TakeItemEffect, context:CanvasRenderingContext2D,
   scalingFactors:ScalingFactors, imageSet:ImageSet, progress:number) {
   const [x, baseY] = getItemBaseCanvasPositionInRoom(takeItemEffect.item, scalingFactors);
   const riseDistancePixels = Math.max(18, scalingFactors.roomFontHeight * 1.5);
   const y = baseY - progress * riseDistancePixels;
-  drawItemAtCanvasPositionInRoom(takeItemEffect.item, room, x, y, scalingFactors, context, imageSet);
+  drawItemAtCanvasPositionInRoom(takeItemEffect.item, x, y, scalingFactors, context, imageSet);
 }
 
 function _onProcessCharacterEffect(_character:Character, effect:Effect, context:CanvasRenderingContext2D,
@@ -28,7 +28,7 @@ function _onProcessCharacterEffect(_character:Character, effect:Effect, context:
   const room = takeItemEffect.room;
   if (!room) return false;
   const progress = clamp(elapsed / ITEM_EFFECT_DURATION, 0, 1);
-  _drawAnimatedItem(room, takeItemEffect, context, scalingFactors, imageSet, progress);
+  _drawAnimatedItem(takeItemEffect, context, scalingFactors, imageSet, progress);
   return elapsed < ITEM_EFFECT_DURATION;
 }
 

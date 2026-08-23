@@ -1,7 +1,7 @@
 /* This module calculates ephemeral item and character display positions for room floor-square stacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { calcItemCuboidHeightGame } from "./itemSizeUtil";
+import { ITEM_CUBOID_HEIGHT_GAME } from "./itemSizeUtil";
 import { findNearestFloorSquareCenter } from "./squareUtil";
 import Character from "./types/Character";
 import Position from "./types/Position";
@@ -51,7 +51,7 @@ export function createRoomContentDisplayLayout(room:Room, charactersInRoom:Reado
   const itemLayoutById = new Map<string, RoomContentDisplayLayoutEntry>();
   const characterLayoutById = new Map<string, RoomContentDisplayLayoutEntry>();
   const layoutBySquareKey = new Map<string, SquareLayout>();
-  const implicitHeight = { x:0, y:-calcItemCuboidHeightGame(room), z:0 };
+  const implicitHeight = { x:0, y:-ITEM_CUBOID_HEIGHT_GAME, z:0 };
 
   room.items.forEach(item => {
     if (!item.isVisible) return;
