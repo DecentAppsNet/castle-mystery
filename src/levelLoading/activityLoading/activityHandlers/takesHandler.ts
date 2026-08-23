@@ -14,8 +14,8 @@ import Waypoint from "@/levelLoading/types/Waypoint";
 import { findClaimedWaypointsFromKeyframe, findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findRoomWaypointAtPosition } from "../waypointFindingUtil";
 import Room from "@/game/types/Room";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
-import TakeCue, { INVENTORY, LEFT_HAND, RIGHT_HAND, TAKE_EFFECT_TIME } from "@/game/types/effectCues/TakeCue";
-import { addCharacterEffectCue, addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
+import TakeEffect, { INVENTORY, LEFT_HAND, RIGHT_HAND, TAKE_EFFECT_TIME } from "@/game/effects/types/TakeEffect";
+import { addCharacterEffect, addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 
@@ -153,9 +153,9 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   _scheduleRemoveItemFromRoom(roomKeyframe, itemId, roomI, scheduleTime, editableTimeline);
   _scheduleCharacterItemMovement(characterKeyframe, item, itemPlacement, target, characterI, scheduleTime, editableTimeline);
 
-  const takeCue:TakeCue = { kind:'takeItem', itemId, target, startTime:scheduleTime, endTime:scheduleTime + TAKE_EFFECT_TIME };
-  addCharacterEffectCue(takeCue, characterI, editableTimeline);
-  activity.endTime = takeCue.endTime;
+  const takeEffect:TakeEffect = { kind:'takeItem', itemId, target, startTime:scheduleTime, endTime:scheduleTime + TAKE_EFFECT_TIME };
+  addCharacterEffect(takeEffect, characterI, editableTimeline);
+  activity.endTime = takeEffect.endTime;
 
   return true;
 }

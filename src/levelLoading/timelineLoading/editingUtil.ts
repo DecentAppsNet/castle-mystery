@@ -12,7 +12,7 @@ import Room from "@/game/types/Room";
 import Item, { duplicateItem } from "@/game/types/Item";
 import { duplicatePosition } from "@/game/types/Position";
 import EditableTimeline, { createDefaultEditableTimeline } from "./types/EditableTimeline";
-import EffectCue from "@/game/types/effectCues/EffectCue";
+import Effect from "@/game/effects/types/Effect";
 
 function _findInsertAfterI(time:number, keyframes:TimelineKeyframe[]):number {
   assert(keyframes.length > 0);
@@ -32,15 +32,15 @@ function _findNextKeyframeWithDefinedCharacterPosition(keyframes:readonly Editab
   return null;
 }
 
-function _removeCompletedEffectCues(keyframe:TimelineKeyframe) {
+function _removeCompletedEffects(keyframe:TimelineKeyframe) {
   for(let i = 0; i < keyframe.characters.length; ++i) {
-    keyframe.characters[i].effectCues = keyframe.characters[i].effectCues.filter(ec => ec.endTime < keyframe.time); 
+    keyframe.characters[i].effects = keyframe.characters[i].effects.filter(ec => ec.endTime < keyframe.time); 
   }
 }
 
-function _combineEffectCues(toCharacterKeyframe:Partial<CharacterKeyframe>, effectCues:EffectCue[]):EffectCue[] {
-  const toEffectCues:EffectCue[] = toCharacterKeyframe.effectCues ?? [];
-  return [...toEffectCues, ...effectCues];
+function _combineEffects(toCharacterKeyframe:Partial<CharacterKeyframe>, effects:Effect[]):Effect[] {
+  const toEffects:Effect[] = toCharacterKeyframe.effects ?? [];
+  return [...toEffects, ...effects];
 }
 
 function _generateNextKeyframe(previousKeyframe:Readonly<TimelineKeyframe>, 
@@ -48,15 +48,15 @@ function _generateNextKeyframe(previousKeyframe:Readonly<TimelineKeyframe>,
   const keyframe = keyframes[keyframeI];
   const nextKeyframe = duplicateTimelineKeyframe(previousKeyframe);
   nextKeyframe.time = keyframe.time;
-  _removeCompletedEffectCues(nextKeyframe);
+  _removeCompletedEffects(nextKeyframe);
   for(let characterI = 0; characterI < nextKeyframe.characters.length; ++characterI) {
     const characterKeyframe:any = keyframe.characters[characterI];
     CHARACTER_KEYFRAME_KEYS.forEach(key => {
       const keyValue = characterKeyframe[key];
       if (keyValue !== undefined) {
         const nextCharacterKeyframe = nextKeyframe.characters[characterI];
-        if (key === 'effectCues') {
-          nextCharacterKeyframe.effectCues = _combineEffectCues(nextCharacterKeyframe, keyValue);
+        if (key === 'effects') {
+          nextCharacterKeyframe.effects = _combineEffects(nextCharacterKeyframe, keyValue);
         } else {
           (nextCharacterKeyframe as any)[key] = keyValue;
         }
@@ -127,7 +127,7 @@ function _createFirstCharacterKeyframe(character:Readonly<Character>):CharacterK
     leftHandItem: _duplicateOptionalItem(character.leftHandItem),
     rightHandItem: _duplicateOptionalItem(character.rightHandItem),
     position: duplicatePosition(character.position),
-    effectCues:[]
+    effects:[]
   };
   return keyframe;
 }
@@ -152,11 +152,11 @@ function _addCharacterKeyframeToTimelineKeyframe(characterKeyframe:Readonly<Part
   CHARACTER_KEYFRAME_KEYS.forEach(key => {
     const keyValue = (characterKeyframe as any)[key];
     if (keyValue === undefined) return;
-    if (key !== 'effectCues') {
+    if (key !== 'effects') {
       (toCharacterKeyframe as any)[key] = keyValue;
       return;
     }
-    toCharacterKeyframe.effectCues = _combineEffectCues(toCharacterKeyframe, keyValue as EffectCue[]);
+    toCharacterKeyframe.effects = _combineEffects(toCharacterKeyframe, keyValue as Effect[]);
   });
 }
 
@@ -227,8 +227,8 @@ export function addCharacterKeyChanges(characterKeyChanges:Readonly<Partial<Char
   }
 }
 
-export function addCharacterEffectCue(effectCue:EffectCue, characterI:number, timeline:EditableTimeline) {
-  return addCharacterKeyChanges({ effectCues:[ effectCue ] }, characterI, effectCue.startTime, timeline);
+export function addCharacterEffect(effect:Effect, characterI:number, timeline:EditableTimeline) {
+  return addCharacterKeyChanges({ effects:[ effect ] }, characterI, effect.startTime, timeline);
 }
 
 export function addRoomKeyChanges(roomKeyChanges:Readonly<Partial<RoomKeyframe>>, roomI:number, 

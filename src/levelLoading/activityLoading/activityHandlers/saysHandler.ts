@@ -7,9 +7,9 @@ import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { findCharacterFacingDirection } from "./util/facingUtil";
 import { assertNonNullable } from "decent-portal";
-import { addCharacterEffectCue, addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
+import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
-import SpeechCue from "@/game/types/effectCues/SpeechCue";
+import SpeechEffect from "@/game/effects/types/SpeechEffect";
 
 export function createSaysParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
@@ -52,8 +52,8 @@ export function scheduleSaysActivity(level:Level, _waypointContext:WaypointGener
     return false;
   }
 
-  const speechCue:SpeechCue = { kind:'speech', startTime:activity.startTime, endTime:activity.startTime+speechDuration, speechKind:verb, text };
-  addCharacterEffectCue(speechCue, characterI, editableTimeline);
+  const speechEffect:SpeechEffect = { kind:'speech', startTime:activity.startTime, endTime:activity.startTime+speechDuration, speechKind:verb, text };
+  addCharacterEffect(speechEffect, characterI, editableTimeline);
   
   return true;
 }

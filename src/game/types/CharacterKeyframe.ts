@@ -1,7 +1,7 @@
 import Character, { BodyOrientation, createDefaultCharacter, FacingDirection } from "@/game/types/Character";
 import Item, { duplicateItem } from "@/game/types/Item";
 import Position, { duplicatePosition } from "@/game/types/Position";
-import EffectCue, { duplicateEffectCue } from "./effectCues/EffectCue";
+import Effect, { duplicateEffect } from "../effects/types/Effect";
 
 type CharacterKeyframe = {
   appearanceId: string;
@@ -12,7 +12,7 @@ type CharacterKeyframe = {
   leftHandItem: Item | null;
   rightHandItem: Item | null;
   position: Position;
-  effectCues: EffectCue[]
+  effects: Effect[]
 };
 
 const DEFAULT_CHARACTER:Character = createDefaultCharacter();
@@ -27,7 +27,7 @@ export function createDefaultCharacterKeyframe():CharacterKeyframe {
     leftHandItem:DEFAULT_CHARACTER.leftHandItem,
     rightHandItem:DEFAULT_CHARACTER.rightHandItem,
     position:DEFAULT_CHARACTER.position,
-    effectCues:[]
+    effects:[]
   }
 }
 
@@ -38,7 +38,7 @@ export function duplicateCharacterKeyframe(from:CharacterKeyframe):CharacterKeyf
     leftHandItem:from.leftHandItem === null ? null : duplicateItem(from.leftHandItem),
     rightHandItem:from.rightHandItem === null ? null : duplicateItem(from.rightHandItem),
     position:duplicatePosition(from.position),
-    effectCues:from.effectCues.map(duplicateEffectCue)
+    effects:from.effects.map(duplicateEffect)
   }
 }
 

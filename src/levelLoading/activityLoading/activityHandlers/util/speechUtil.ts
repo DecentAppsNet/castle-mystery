@@ -1,14 +1,14 @@
 import { clamp } from "@/common/numberUtil";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
-import SpeechCue from "@/game/types/effectCues/SpeechCue";
+import SpeechEffect from "@/game/effects/types/SpeechEffect";
 import Room from "@/game/types/Room";
-import { formatMsecsAsTimestamp } from "../../timestampUtil";
+import { formatMsecsAsTimestamp } from "@/levelLoading/activityLoading";
 import { assert, assertNonNullable } from "decent-portal";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { findCharacterKeyframeInRange, findKeyframeInRange, findCharacterPositionAtTime, findKeyframeForTime } from "@/game/timeline";
 import { findRoomAtPosition } from "@/game/roomUtil";
-import EffectCue from "@/game/types/effectCues/EffectCue";
+import Effect from "@/game/effects/types/Effect";
 import Position from "@/game/types/Position";
 
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
@@ -32,22 +32,20 @@ function _findRoomsInEarshot(keyframes:TimelineKeyframe[], characterI:number, ro
 }
 
 function _findSelfInterruption(keyframes:TimelineKeyframe[], characterI:number, speechStartTime:number, speechEndTime:number):string|null {
-  // TODO - see scratch.md. This code assumes keyframes at cue start/stop boundaries. Current code only guarantees them at start boundary.
+  // TODO - see scratch.md. This code assumes keyframes at effect start/stop boundaries. Current code only guarantees them at start boundary.
   
   const keyframe:CharacterKeyframe|null = findCharacterKeyframeInRange(keyframes, characterI, speechStartTime, speechEndTime, 
-    (ckf:CharacterKeyframe) => ckf.effectCues.find(ec => ec.kind === 'speech') !== undefined);
+    (ckf:CharacterKeyframe) => ckf.effects.find(e => e.kind === 'speech') !== undefined);
   if (!keyframe) return null;
   
-  const speechCue:SpeechCue = keyframe.effectCues.find(ec => ec.kind === 'speech') as SpeechCue;
-  assertNonNullable(speechCue);
-  return `Character's speech will be interrupted by self with "${speechCue.text}" at ${formatMsecsAsTimestamp(speechCue.startTime)}.`; 
+  const speechEffect:SpeechEffect = keyframe.effects.find(e => e.kind === 'speech') as SpeechEffect;
+  assertNonNullable(speechEffect);
+  return `Character's speech will be interrupted by self with "${speechEffect.text}" at ${formatMsecsAsTimestamp(speechEffect.startTime)}.`; 
 }
 
-function _findCharacterSayingText(effectCues:EffectCue[], startTime:number):string|null {
-  const sayingCue = effectCues.find(ec => {
-    return ec.kind === 'speech' && ec.endTime > startTime && (ec as SpeechCue).speechKind === 'says'
-  });
-  return sayingCue === undefined ? null : (sayingCue as SpeechCue).text;
+function _findCharacterSayingText(effects:Effect[], startTime:number):string|null {
+  const sayingEffect = effects.find(e => e.kind === 'speech' && e.endTime > startTime && (e as SpeechEffect).speechKind === 'says');
+  return sayingEffect === undefined ? null : (sayingEffect as SpeechEffect).text;
 }
 
 function _isCharacterInEarshot(earshotRooms:Room[], characterPosition:Position):boolean {
@@ -58,7 +56,7 @@ function _findCharacterSpeechInterrupted(earshotRooms:Room[], keyframes:Timeline
   const keyframe = findKeyframeForTime(keyframes, speechStartTime);
   for(let characterI = 0; characterI < keyframe.characters.length; ++characterI) {
     const characterKeyframe = keyframe.characters[characterI];
-    const sayingText = _findCharacterSayingText(characterKeyframe.effectCues, speechStartTime);
+    const sayingText = _findCharacterSayingText(characterKeyframe.effects, speechStartTime);
     if (sayingText && _isCharacterInEarshot(earshotRooms, characterKeyframe.position)) {
       return `Character can't start speaking at ${formatMsecsAsTimestamp(speechStartTime)} because they will be interrupted by "${sayingText}".`; 
     }
@@ -74,7 +72,7 @@ function _findCharacterSpeechInterrupting(earshotRooms:Room[], keyframes:Timelin
     for(let characterI = 0; characterI < characterCount; ++characterI) {
       const characterKeyframe = keyframe.characters[characterI];
       assertNonNullable(characterKeyframe);
-      const sayingText = _findCharacterSayingText(characterKeyframe.effectCues, speechStartTime);
+      const sayingText = _findCharacterSayingText(characterKeyframe.effects, speechStartTime);
       // Note that the earshot check is needed for each character/keyframe because position can change.
       if (!sayingText || !_isCharacterInEarshot(earshotRooms, characterKeyframe.position)) continue;
       const startTimestamp = formatMsecsAsTimestamp(speechStartTime);
