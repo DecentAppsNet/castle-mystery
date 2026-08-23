@@ -5,11 +5,16 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
+import { findCharacterFacingDirection } from "./util/facingUtil";
+import { assertNonNullable } from "decent-portal";
+import { addCharacterEffectCue, addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
+import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
+import SpeechCue from "@/game/types/effectCues/SpeechCue";
 
 export function createSaysParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const says = makeVerb('says');
-  const text = makeText();
+  const text = makeText('text');
   const toSequence = makeSequence([
     makeLiteral('to'),
     makeIdentifier('toCharacterId', 'CharacterId'),
@@ -18,11 +23,37 @@ export function createSaysParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
-export function scheduleSaysActivity(_level:Level,
-  _waypointContext:WaypointGenerationContext,
-    activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+type PartsShape = {
+  characterId:string,
+  text:string,
+  toCharacterId?:string
+  verb:'says'
+}
 
-  // TODO
-  activity.endTime = activity.startTime;
+export function scheduleSaysActivity(level:Level, _waypointContext:WaypointGenerationContext,
+    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+  
+  assertNonNullable(activity.startTime);
+  const { characterId, text, toCharacterId, verb} = activity.parts as PartsShape;
+  const characterI = editableTimeline.characterIdToI[characterId];
+
+  // Face towards character if activity had "to Character".
+  if (toCharacterId) {
+    const facingDirection = findCharacterFacingDirection(characterId, toCharacterId, editableTimeline, activity.startTime);
+    addCharacterKeyChanges({ facingDirection }, characterI, activity.startTime, editableTimeline);
+  }
+
+  const speechDuration = calcSpeechDuration(text);
+  activity.endTime = activity.startTime + speechDuration;
+
+  const speechConflictResult = findSpeechConflict(verb, level.rooms, editableTimeline.keyframes, characterI, activity.startTime, activity.endTime);
+  if (speechConflictResult) {
+    errors.addAtLine(speechConflictResult, activity.lineI);
+    return false;
+  }
+
+  const speechCue:SpeechCue = { kind:'speech', startTime:activity.startTime, endTime:activity.startTime+speechDuration, speechKind:verb, text };
+  addCharacterEffectCue(speechCue, characterI, editableTimeline);
+  
   return true;
 }

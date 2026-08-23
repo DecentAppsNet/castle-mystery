@@ -23,7 +23,7 @@ import Room from "@/game/types/Room";
 import Waypoint from "@/levelLoading/types/Waypoint";
 import { arePositionsAdjacent } from "@/game/positionUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
-import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
+import { addCharacterEffectCue, addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 import DropCue, { DROP_EFFECT_TIME } from "@/game/types/effectCues/DropCue";
 
@@ -169,9 +169,9 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   _scheduleAddItemToRoom(item, dropFloorPosition, roomKeyframe, roomI, scheduleTime, editableTimeline);
 
   // Add cue for dropping effect.
-  const dropCue:DropCue = { kind:'dropItem', itemId, targetPosition:dropFloorPosition };
-  addCharacterKeyChanges({ effectCues:[dropCue] }, characterI, scheduleTime, editableTimeline);
-  activity.endTime = scheduleTime + DROP_EFFECT_TIME;
+  const dropCue:DropCue = { kind:'dropItem', itemId, targetPosition:dropFloorPosition, startTime:scheduleTime, endTime:scheduleTime + DROP_EFFECT_TIME };
+  addCharacterEffectCue(dropCue, characterI, editableTimeline);
+  activity.endTime = dropCue.endTime;
 
   return true;
 }

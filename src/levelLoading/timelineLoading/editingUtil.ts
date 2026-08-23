@@ -32,17 +32,34 @@ function _findNextKeyframeWithDefinedCharacterPosition(keyframes:readonly Editab
   return null;
 }
 
+function _removeCompletedEffectCues(keyframe:TimelineKeyframe) {
+  for(let i = 0; i < keyframe.characters.length; ++i) {
+    keyframe.characters[i].effectCues = keyframe.characters[i].effectCues.filter(ec => ec.endTime < keyframe.time); 
+  }
+}
+
+function _combineEffectCues(toCharacterKeyframe:Partial<CharacterKeyframe>, effectCues:EffectCue[]):EffectCue[] {
+  const toEffectCues:EffectCue[] = toCharacterKeyframe.effectCues ?? [];
+  return [...toEffectCues, ...effectCues];
+}
+
 function _generateNextKeyframe(previousKeyframe:Readonly<TimelineKeyframe>, 
     keyframes:readonly EditableTimelineKeyframe[], keyframeI:number):TimelineKeyframe {
   const keyframe = keyframes[keyframeI];
   const nextKeyframe = duplicateTimelineKeyframe(previousKeyframe);
   nextKeyframe.time = keyframe.time;
+  _removeCompletedEffectCues(nextKeyframe);
   for(let characterI = 0; characterI < nextKeyframe.characters.length; ++characterI) {
     const characterKeyframe:any = keyframe.characters[characterI];
     CHARACTER_KEYFRAME_KEYS.forEach(key => {
       const keyValue = characterKeyframe[key];
       if (keyValue !== undefined) {
-        (nextKeyframe.characters[characterI] as any)[key] = characterKeyframe[key];
+        const nextCharacterKeyframe = nextKeyframe.characters[characterI];
+        if (key === 'effectCues') {
+          nextCharacterKeyframe.effectCues = _combineEffectCues(nextCharacterKeyframe, keyValue);
+        } else {
+          (nextCharacterKeyframe as any)[key] = keyValue;
+        }
         return;
       }
       if (key !== 'position') return;
@@ -128,11 +145,6 @@ function _createFirstKeyframe(characters:readonly Character[], rooms:readonly Ro
   return { time, characters:characterKeyframes, rooms:roomKeyFrames };
 }
 
-function _combineEffectCues(toCharacterKeyframe:Partial<CharacterKeyframe>, effectCues:EffectCue[]):EffectCue[] {
-  const toEffectCues:EffectCue[] = toCharacterKeyframe.effectCues ?? [];
-  return [...toEffectCues, ...effectCues];
-}
-
 function _addCharacterKeyframeToTimelineKeyframe(characterKeyframe:Readonly<Partial<CharacterKeyframe>>, 
     characterI:number, toKeyframe:EditableTimelineKeyframe) {
   const toCharacterKeyframe:Partial<CharacterKeyframe> = toKeyframe.characters[characterI];
@@ -213,6 +225,10 @@ export function addCharacterKeyChanges(characterKeyChanges:Readonly<Partial<Char
     const keyframe = _createEditableKeyframeFromCharacterKeyframe(characterKeyChanges, characterI, time, characterCount, roomCount);
     _addKeyframe(keyframe, timeline);
   }
+}
+
+export function addCharacterEffectCue(effectCue:EffectCue, characterI:number, timeline:EditableTimeline) {
+  return addCharacterKeyChanges({ effectCues:[ effectCue ] }, characterI, effectCue.startTime, timeline);
 }
 
 export function addRoomKeyChanges(roomKeyChanges:Readonly<Partial<RoomKeyframe>>, roomI:number, 

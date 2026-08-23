@@ -1,7 +1,9 @@
-type EffectCueKind = 'takeItem' | 'dropItem' | 'giveItem' | 'enterRoom' | 'lockExit' | 'unlockExit';
+type EffectCueKind = 'dropItem' | 'enterRoom' | 'giveItem' | 'lockExit' | 'speech' | 'takeItem' | 'unlockExit';
 
 type EffectCueBase = {
-  kind:EffectCueKind
+  kind:EffectCueKind,
+  startTime:number,
+  endTime:number
 }
 
 export default EffectCueBase;
