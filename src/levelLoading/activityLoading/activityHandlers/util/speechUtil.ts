@@ -75,7 +75,7 @@ function _findCharacterSpeechInterrupting(earshotRooms:Room[], keyframes:Timelin
       // Note that the earshot check is needed for each character/keyframe because position can change.
       if (!sayingText || !_isCharacterInEarshot(earshotRooms, characterKeyframe.position)) continue;
       const startTimestamp = formatMsecsAsTimestamp(speechStartTime);
-      errorMessage = `Character can't start speeaking at ${startTimestamp} because they will interrupt "${sayingText}".`;
+      errorMessage = `Character can't start speaking at ${startTimestamp} because they will interrupt "${sayingText}".`;
       return true;
     }
     return false;
