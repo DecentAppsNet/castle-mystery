@@ -10,10 +10,10 @@ type TimelineKeyframe<
   rooms: TRoom[];
 };
 
-export function duplicateTimelineKeyframe(from:TimelineKeyframe):TimelineKeyframe {
+export function duplicateTimelineKeyframe(from:TimelineKeyframe, isDuplicatingEffects = true):TimelineKeyframe {
   return {
     time:from.time,
-    characters:from.characters.map(duplicateCharacterKeyframe),
+    characters:from.characters.map(ckf => duplicateCharacterKeyframe(ckf, isDuplicatingEffects)),
     rooms:from.rooms.map(duplicateRoomKeyframe)
   }
 }

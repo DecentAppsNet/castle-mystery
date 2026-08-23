@@ -31,14 +31,14 @@ export function createDefaultCharacterKeyframe():CharacterKeyframe {
   }
 }
 
-export function duplicateCharacterKeyframe(from:CharacterKeyframe):CharacterKeyframe {
+export function duplicateCharacterKeyframe(from:CharacterKeyframe, isDuplicatingEffects = true):CharacterKeyframe {
   return {
     ...from,
     items:from.items.map(duplicateItem),
     leftHandItem:from.leftHandItem === null ? null : duplicateItem(from.leftHandItem),
     rightHandItem:from.rightHandItem === null ? null : duplicateItem(from.rightHandItem),
     position:duplicatePosition(from.position),
-    effects:from.effects.map(duplicateEffect)
+    effects:isDuplicatingEffects ? from.effects.map(duplicateEffect) : [...from.effects]
   }
 }
 

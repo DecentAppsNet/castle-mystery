@@ -1,10 +1,11 @@
+import { assert, assertNonNullable } from "decent-portal";
+
 import { clamp } from "@/common/numberUtil";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 import SpeechEffect from "@/game/effects/types/SpeechEffect";
 import Room from "@/game/types/Room";
 import { formatMsecsAsTimestamp } from "@/levelLoading/activityLoading";
-import { assert, assertNonNullable } from "decent-portal";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { findCharacterKeyframeInRange, findKeyframeInRange, findCharacterPositionAtTime, findKeyframeForTime } from "@/game/timeline";
 import { findRoomAtPosition } from "@/game/roomUtil";
@@ -32,8 +33,6 @@ function _findRoomsInEarshot(keyframes:TimelineKeyframe[], characterI:number, ro
 }
 
 function _findSelfInterruption(keyframes:TimelineKeyframe[], characterI:number, speechStartTime:number, speechEndTime:number):string|null {
-  // TODO - see scratch.md. This code assumes keyframes at effect start/stop boundaries. Current code only guarantees them at start boundary.
-  
   const keyframe:CharacterKeyframe|null = findCharacterKeyframeInRange(keyframes, characterI, speechStartTime, speechEndTime, 
     (ckf:CharacterKeyframe) => ckf.effects.find(e => e.kind === 'speech') !== undefined);
   if (!keyframe) return null;

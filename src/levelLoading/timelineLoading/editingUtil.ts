@@ -13,6 +13,7 @@ import Item, { duplicateItem } from "@/game/types/Item";
 import { duplicatePosition } from "@/game/types/Position";
 import EditableTimeline, { createDefaultEditableTimeline } from "./types/EditableTimeline";
 import Effect from "@/game/effects/types/Effect";
+import { findCharacterKeyframeForTime } from "@/game/timeline/retrievalUtil";
 
 function _findInsertAfterI(time:number, keyframes:TimelineKeyframe[]):number {
   assert(keyframes.length > 0);
@@ -46,7 +47,7 @@ function _combineEffects(toCharacterKeyframe:Partial<CharacterKeyframe>, effects
 function _generateNextKeyframe(previousKeyframe:Readonly<TimelineKeyframe>, 
     keyframes:readonly EditableTimelineKeyframe[], keyframeI:number):TimelineKeyframe {
   const keyframe = keyframes[keyframeI];
-  const nextKeyframe = duplicateTimelineKeyframe(previousKeyframe);
+  const nextKeyframe = duplicateTimelineKeyframe(previousKeyframe, false);
   nextKeyframe.time = keyframe.time;
   _removeCompletedEffects(nextKeyframe);
   for(let characterI = 0; characterI < nextKeyframe.characters.length; ++characterI) {
@@ -228,7 +229,22 @@ export function addCharacterKeyChanges(characterKeyChanges:Readonly<Partial<Char
 }
 
 export function addCharacterEffect(effect:Effect, characterI:number, timeline:EditableTimeline) {
-  return addCharacterKeyChanges({ effects:[ effect ] }, characterI, effect.startTime, timeline);
+  addCharacterKeyChanges({ effects:[ effect ] }, characterI, effect.startTime, timeline);
+  
+  // Need a keyframe at the end time to represent the effect is no longer active.
+  const existingFrame = timeline.editableKeyframes.find(kf => kf.time === effect.endTime);
+  if (existingFrame) {
+    const currentEffects = existingFrame.characters[characterI].effects;
+    assertNonNullable(currentEffects);
+    existingFrame.characters[characterI].effects = currentEffects.filter(e => e !== effect);
+  } else {
+    const characterKeyframe = findCharacterKeyframeForTime(timeline.keyframes, characterI, effect.endTime);
+    const effects = characterKeyframe.effects.filter(e => e !== effect);
+    const characterKeyChanges:Partial<CharacterKeyframe> = { effects };
+    const { characterCount, roomCount } = _getCharacterAndRoomCount(timeline);
+    const keyframe = _createEditableKeyframeFromCharacterKeyframe(characterKeyChanges, characterI, effect.endTime, characterCount, roomCount);
+    _addKeyframe(keyframe, timeline);
+  }
 }
 
 export function addRoomKeyChanges(roomKeyChanges:Readonly<Partial<RoomKeyframe>>, roomI:number, 
