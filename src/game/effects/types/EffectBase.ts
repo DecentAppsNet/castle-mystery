@@ -1,9 +1,6 @@
-import Effect from "./Effect";
-import EffectDrawStage from "./EffectDrawStage";
+import EffectHandler from "./EffectHandler";
 
 type EffectKind = 'dropItem' | 'enterRoom' | 'giveItem' | 'lockExit' | 'speech' | 'takeItem' | 'unlockExit';
-
-export type EffectHandler = (drawStage:EffectDrawStage, effect:Effect, context:CanvasRenderingContext2D, time:number, metaTime:number, effectSetup:any) => void;
 
 type EffectBase = {
   kind:EffectKind,

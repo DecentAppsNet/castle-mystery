@@ -1,3 +1,6 @@
+import { assert } from "decent-portal";
+
+import CharacterWithEffects from "./CharacterWithEffects";
 import Item, { duplicateItem } from "./Item";
 import Position, { createDefaultPosition, duplicatePosition } from "./Position";
 
@@ -43,6 +46,7 @@ export function createDefaultCharacter():Character {
 }
 
 export function duplicateCharacter(from:Character):Character {
+  assert((from as CharacterWithEffects).effects === undefined, `Not expecting character with effects to be passed.`);
   return {
     id:from.id,
     title:from.title,

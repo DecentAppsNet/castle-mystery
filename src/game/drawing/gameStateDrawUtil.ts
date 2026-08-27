@@ -7,7 +7,7 @@ import { DRAW_RESERVED_RECTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive, isItemInteractive } from "../interactivityUtil";
 import { calcRoomRoofBounds } from "../roomRoofUtil";
-import { findCharactersInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
+import { findCharactersWithEffectsInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
@@ -292,7 +292,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   _drawGround(gameState, context);
   _drawRoomSilhouettes(gameState, context);
   const roomRenderStates = rooms.map(room => {
-    const charactersInRoom = findCharactersInRoom(room, characters);
+    const charactersInRoom = findCharactersWithEffectsInRoom(room, characters);
     const isActive = activeRoom.id === room.id;
     return { room, charactersInRoom, isActive };
   });
@@ -321,7 +321,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, 
       hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,
-      gameState.time, metaTime, gameState.imageSet, gameState.discoveryState, gameState.isLevelComplete, layoutPlanner);
+      gameState.time, metaTime, gameState.imageSet, gameState.discoveryState,
+      gameState.isLevelComplete, layoutPlanner);
     if (!_drawCachedRoomRoof(room, gameState, context)) {
       drawRoomRoofs(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors, context);
     }

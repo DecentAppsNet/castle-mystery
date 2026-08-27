@@ -57,7 +57,7 @@ HS
 # itinerary
 
 0:00:00 Sam @ Hall
-: waits .1
+: says "What?"
 : Sam takes Vase in right hand
 0:00:06 Sam @ Closet (60%)
 : kneels

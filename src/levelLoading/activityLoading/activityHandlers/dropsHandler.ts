@@ -23,9 +23,8 @@ import Room from "@/game/types/Room";
 import Waypoint from "@/levelLoading/types/Waypoint";
 import { arePositionsAdjacent } from "@/game/positionUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
-import { addCharacterEffect, addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
+import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
-import { createDropEffect } from "@/game/effects/dropEffectUtil";
 
 // Coupled to parse format. Used for casting parts to expected types.
 type PartsShape = {
@@ -168,10 +167,11 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   _scheduleRemoveItemFromCharacter(characterKeyframe, characterI, scheduleTime, itemId, editableTimeline);
   _scheduleAddItemToRoom(item, dropFloorPosition, roomKeyframe, roomI, scheduleTime, editableTimeline);
 
-  // Schedule drop effect.
-  const dropEffect = createDropEffect(itemId, dropFloorPosition, scheduleTime);
-  addCharacterEffect(dropEffect, characterI, editableTimeline);
-  activity.endTime = dropEffect.endTime;
+  // Schedule drop effect. TODO recreate after you've got the pattern stable.
+  // const dropEffect = createDropEffect(itemId, dropFloorPosition, scheduleTime);
+  //addCharacterEffect(dropEffect, characterI, editableTimeline);
+  // activity.endTime = dropEffect.endTime;
+  activity.endTime = scheduleTime + 500; // TODO delete
 
   return true;
 }

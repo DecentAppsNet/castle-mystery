@@ -2,7 +2,7 @@
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
 import { compareCharacterToStairPartRows } from "../stairDrawOrderUtil";
-import Character from "../types/Character";
+import CharacterWithEffects from "../types/CharacterWithEffects";
 import Item from "../types/Item";
 import Position from "../types/Position";
 import StairPart, { StairLandingType, StairPartType } from "../types/StairPart";
@@ -29,7 +29,7 @@ type CharacterDrawableContent = {
   x:number,
   y:number,
   sortId:string,
-  character:Character,
+  character:CharacterWithEffects,
   displayPosition:Position,
   snappedPosition:Position,
   painterOrderAnchor:Position,

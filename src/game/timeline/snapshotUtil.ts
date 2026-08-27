@@ -8,10 +8,10 @@ import TimelineSnapshot from "../types/TimelineSnapshot";
 import { createKeyframeAtTime } from "./retrievalUtil";
 import CharacterKeyframe from "../types/CharacterKeyframe";
 import { findRoomAtPosition } from "../roomUtil";
-import Effect from "../effects/types/Effect";
+import CharacterWithEffects from "../types/CharacterWithEffects";
 
-function _findActiveContext(characters:Character[], rooms:Room[], activeCharacterId:string):{
-  activeCharacter:Character,
+function _findActiveContext(characters:CharacterWithEffects[], rooms:Room[], activeCharacterId:string):{
+  activeCharacter:CharacterWithEffects,
   activeRoom:Room
 } {
   const activeCharacter = characters.find(character => character.id === activeCharacterId);
@@ -21,18 +21,19 @@ function _findActiveContext(characters:Character[], rooms:Room[], activeCharacte
   return { activeCharacter, activeRoom };
 }
 
-function _createSnapshot(characters:Character[], characterEffects:Effect[][], rooms:Room[], activeCharacterId:string):TimelineSnapshot {
+function _createSnapshot(characters:CharacterWithEffects[], rooms:Room[], activeCharacterId:string):TimelineSnapshot {
   const { activeCharacter, activeRoom } = _findActiveContext(characters, rooms, activeCharacterId);
-  return { activeCharacter, activeRoom, characters, characterEffects, rooms };
+  return { activeCharacter, activeRoom, characters, rooms };
 }
 
-function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character):Character {
+function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character):CharacterWithEffects {
   return {
     // Any members from the keyframe are used.
     isVisible:character.isVisible,
     facingDirection:character.facingDirection,
     bodyOrientation:character.bodyOrientation,
     position:character.position,
+    effects:character.effects,
 
     // Permanent members come from base character.
     id:baseCharacter.id,
@@ -57,32 +58,30 @@ function _createSnapshotRooms(baseRooms:Room[], timeline:Timeline, keyframe:Time
   });
 }
 
-function _createSnapshotCharacters(baseCharacters:Character[], timeline:Timeline, 
-      keyframe:TimelineKeyframe):{characters:Character[], characterEffects:Effect[][]} {
+function _createSnapshotCharacters(baseCharacters:Character[], timeline:Timeline, keyframe:TimelineKeyframe):CharacterWithEffects[] {
   const characters = baseCharacters.map(character => {
     const characterI = timeline.characterIdToI[character.id];
     assertNonNullable(characterI);
     return _combineCharacterWithBase(keyframe.characters[characterI], character);
   });
-  const characterEffects = characters.map((_c, characterI) => keyframe.characters[characterI].effects);
-  return { characters, characterEffects }
+  return characters;
 }
 
 // This function does some extra work to create fully-populated characters and rooms. The keyframe retrieval functions are more lightweight and are
 // preferable to use if a full snapshot isn't needed. Ideally, one snapshot is created per game loop frame and passed in to whatever needs it.
 export function createTimelineSnapshot(gameState:GameState, time:number):TimelineSnapshot {
   const keyframe = createKeyframeAtTime(gameState.timeline.keyframes, time);
-  const { characters, characterEffects } = _createSnapshotCharacters(gameState.baseCharacters, gameState.timeline, keyframe);
+  const characters = _createSnapshotCharacters(gameState.baseCharacters, gameState.timeline, keyframe);
   const rooms = _createSnapshotRooms(gameState.baseRooms, gameState.timeline, keyframe);
-  return _createSnapshot(characters, characterEffects, rooms, gameState.activeCharacterId);
+  return _createSnapshot(characters, rooms, gameState.activeCharacterId);
 }
 
 export function createInitialTimelineSnapshot(baseCharacters:Character[], baseRooms:Room[], timeline:Timeline,
     activeCharacterId:string, initialTime:number):TimelineSnapshot {
   const keyframe = createKeyframeAtTime(timeline.keyframes, initialTime);
-  const { characters, characterEffects } = _createSnapshotCharacters(baseCharacters, timeline, keyframe);
+  const characters = _createSnapshotCharacters(baseCharacters, timeline, keyframe);
   const rooms = _createSnapshotRooms(baseRooms, timeline, keyframe);
-  return _createSnapshot(characters, characterEffects, rooms, activeCharacterId);
+  return _createSnapshot(characters, rooms, activeCharacterId);
 }
 
 export function updateTimelineSnapshotActiveContext(snapshot:TimelineSnapshot, activeCharacterId:string) {

@@ -10,6 +10,7 @@ import Room from "./types/Room";
 import Character from "./types/Character";
 import { normalizeId, normalizeOptionalId } from "./idUtil";
 import { isPositionInRect } from "./rectUtil";
+import CharacterWithEffects from "./types/CharacterWithEffects";
 
 export function findRoom(rooms:readonly Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
@@ -33,6 +34,10 @@ export function findRoomIdAtPosition(rooms:readonly Room[], x:number, y:number):
 
 export function findCharactersInRoom(room:Room, characters:readonly Character[]):Character[] {
   return characters.filter(c => isPositionInRect(c.position.x, c.position.y, room.rect));
+}
+
+export function findCharactersWithEffectsInRoom(room:Room, characters:readonly CharacterWithEffects[]):CharacterWithEffects[] {
+  return findCharactersInRoom(room, characters) as CharacterWithEffects[];
 }
 
 export function calcRoomsBoundingRect(rooms:Room[]):Rect {

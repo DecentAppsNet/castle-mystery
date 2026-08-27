@@ -14,10 +14,10 @@ import Waypoint from "@/levelLoading/types/Waypoint";
 import { findClaimedWaypointsFromKeyframe, findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findRoomWaypointAtPosition } from "../waypointFindingUtil";
 import Room from "@/game/types/Room";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
-import { addCharacterEffect, addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
+import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
-import { createTakeEffect, INVENTORY, LEFT_HAND, RIGHT_HAND } from "@/game/effects/takeEffectUtil";
+import { INVENTORY, LEFT_HAND, RIGHT_HAND } from "@/game/effects/takeEffectUtil";
 
 const ROOM = 'room';
 
@@ -153,9 +153,10 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   _scheduleRemoveItemFromRoom(roomKeyframe, itemId, roomI, scheduleTime, editableTimeline);
   _scheduleCharacterItemMovement(characterKeyframe, item, itemPlacement, target, characterI, scheduleTime, editableTimeline);
 
-  const takeEffect = createTakeEffect(itemId, target, scheduleTime);
-  addCharacterEffect(takeEffect, characterI, editableTimeline);
-  activity.endTime = takeEffect.endTime;
+  //const takeEffect = createTakeEffect(itemId, target, scheduleTime); TODO recreate after you've got the pattern stable.
+  //addCharacterEffect(takeEffect, characterI, editableTimeline);
+  //activity.endTime = takeEffect.endTime;
+  activity.endTime = scheduleTime + 500; // TODO delete
 
   return true;
 }

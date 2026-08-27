@@ -1,12 +1,10 @@
-import Effect from "../effects/types/Effect"
-import Character from "./Character"
+import CharacterWithEffects from "./CharacterWithEffects"
 import Room from "./Room"
 
 type TimelineSnapshot = {
-  activeCharacter:Character,
+  activeCharacter:CharacterWithEffects,
   activeRoom:Room,
-  characters:Character[],
-  characterEffects:Effect[][]
+  characters:CharacterWithEffects[],
   rooms:Room[]
 }
 

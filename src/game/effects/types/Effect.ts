@@ -1,18 +1,16 @@
-import { botch } from "decent-portal";
+import EffectHandler from "./EffectHandler";
 
-import TakeEffect, { duplicateTakeEffect } from "./TakeEffect";
-import DropEffect, { duplicateDropEffect } from "./DropEffect";
-import SpeechEffect, { duplicateSpeechEffect } from "./SpeechEffect";
+type EffectKind = 'dropItem' | 'enterRoom' | 'giveItem' | 'lockExit' | 'says' | 'thinks' | 'emits' | 'takeItem' | 'unlockExit';
 
-type Effect = DropEffect|SpeechEffect|TakeEffect;
+type Effect = {
+  kind:EffectKind,
+  startTime:number,
+  endTime:number,
+  handler:EffectHandler|null
+}
 
 export function duplicateEffect(from:Effect):Effect {
-  switch(from.kind) {
-    case 'dropItem': return duplicateDropEffect(from as DropEffect);
-    case 'speech': return duplicateSpeechEffect(from as SpeechEffect);
-    case 'takeItem': return duplicateTakeEffect(from as TakeEffect);
-    default: botch();
-  }
+  return {...from}
 }
 
 export default Effect;
