@@ -52,6 +52,8 @@ import { calcUndiscoveredMarkerHeightPixels, drawUndiscoveredMarker } from "./un
 import DiscoveryState from "../types/DiscoveryState";
 import { createRoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
+import EffectDrawCall from "../effects/types/EffectDrawCall";
+import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -335,9 +337,14 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         // TODO call some function that returns consolidated sprite overrides from calls to handlers, and pass to drawCharacter().
         drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
           content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId, metaTime);
-        content.character.effects.forEach(e => { 
-          if (e.handler) e.handler('afterCharacter', scalingFactors, gameTime, metaTime, context); // TODO encapsulate
-        });
+
+        { // TODO cleanup/refactor to a function after this stabilizes.
+          const characterContext:CharacterEffectDrawContext = { anchorTopY: 100, anchorX: 200 }; // TODO get real values.
+          const afterCharacterDrawCall:EffectDrawCall = { stage:'afterCharacter', characterContext };
+          content.character.effects.forEach(e => { 
+            if (e.handler) e.handler(afterCharacterDrawCall, scalingFactors, gameTime, metaTime, context);
+          });
+        }
         return;
     }
   });

@@ -1,13 +1,6 @@
-import EffectDrawStage from "./EffectDrawStage";
 import ScalingFactors from "@/game/types/ScalingFactors";
-
-type SpriteOverride = {
-  spriteKind:'leftHandItem'|'rightHandItem'|'head',
-  transformType:'translate'|'rotate'|'scale',
-  transformX:number|null,
-  transformY:number|null,
-  transformZ:number|null
-}
+import SpriteOverride from "./SpriteOverride";
+import EffectDrawCall from "./EffectDrawCall";
 
 export type EffectHandlerResult = {
   spriteOverrides:SpriteOverride[]
@@ -16,7 +9,7 @@ export type EffectHandlerResult = {
 /**
  * The effect handler's parameters should be limited to values that can't be learned and curried at effect creation time.
  *
- * @param drawStage At what stage of drawing the effect handler is called. The handler only acts on stages relevant to it.
+ * @param drawCall Identifies drawing stage and contains values specific to that drawing stage.
  * @param scalingFactors Converts game-unit coordinates to canvas pixels and may change on any animation frame.
  * @param time Timeline time, which can be paused or rewound.
  * @param metaTime Player-experience time, which always moves forward.
@@ -27,7 +20,7 @@ export type EffectHandlerResult = {
  *          other element, this return value can be used to apply transformations or other tweaks to that drawing.
  */
 type EffectHandler = (
-    drawStage:EffectDrawStage,
+    drawCall:EffectDrawCall,
     scalingFactors:ScalingFactors,
     time:number,
     metaTime:number,

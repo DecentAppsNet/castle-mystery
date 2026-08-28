@@ -2,29 +2,23 @@ import { drawSpeechBubble } from "../drawing/characterDrawUtil";
 import Position from "../types/Position";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
-import EffectDrawStage from "./types/EffectDrawStage";
-import { EffectHandlerResult } from "./types/EffectHandler";
+import EffectDrawCall from "./types/EffectDrawCall";
+import EffectHandler, { EffectHandlerResult } from "./types/EffectHandler";
 
-function _calcAnchorForCharacterPosition(characterPosition:Position):{ anchorX:number, anchorTopY:number } {
-  // TODO - refine
-  const anchorX = characterPosition.x;
-  const anchorTopY = characterPosition.y;
-  return { anchorX, anchorTopY };
-}
+function _saysHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D,
+   text:string, startTime:number):EffectHandlerResult|null {
 
-function _saysHandler(drawStage:EffectDrawStage, scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D,
-  anchorX:number, anchorTopY:number, text:string, startTime:number):EffectHandlerResult|null {
+    if (drawCall.stage !== 'afterCharacter') return null; // TODO - head rotation
 
-    if (drawStage !== 'afterCharacter') return null; // TODO - head rotation
-
+    const { anchorX, anchorTopY } = drawCall.characterContext;
     drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
     return null;
 }
 
 export function createSaysEffect(characterPosition:Position, text:string, startTime:number, speechDuration:number):Effect {
-  const { anchorX, anchorTopY } = _calcAnchorForCharacterPosition(characterPosition);
-  const handler = (drawStage:EffectDrawStage, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
-    return _saysHandler(drawStage, scalingFactors, time, context, anchorX, anchorTopY, text, startTime);
+  console.log(characterPosition);
+  const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
+    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime);
   }
   return { kind:'says', startTime, endTime:startTime+speechDuration, handler };
 }
@@ -62,7 +56,7 @@ export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:numbe
   return spriteOverrides. As we draw the character, spriteOverrides are passed to all character-drawing code and applied to each part. Draw code
   need only support expected operations, e.g. If no effect scales a head, then don't write code to scale it.
 
-  The beforeCharacter handler call wouldn't draw anything. The second call to same handler would be made at the afterCharacter injection site.
+  The beforeCharacter handler call wouldn't draw anything. The second call to same handler would be made at the afterCharacter injection call.
   This one would draw the speech bubble over the character's head.
 
 */
