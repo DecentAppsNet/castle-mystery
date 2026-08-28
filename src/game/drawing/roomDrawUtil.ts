@@ -339,7 +339,9 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId, metaTime);
 
         { // TODO cleanup/refactor to a function after this stabilizes.
-          const characterContext:CharacterEffectDrawContext = { anchorTopY: 100, anchorX: 200 }; // TODO get real values.
+          const { anchorX, anchorTopY } = getCharacterSpeechAnchor(
+            content.character, content.displayPosition, scalingFactors, gameTime);
+          const characterContext:CharacterEffectDrawContext = { anchorX, anchorTopY };
           const afterCharacterDrawCall:EffectDrawCall = { stage:'afterCharacter', characterContext };
           content.character.effects.forEach(e => { 
             if (e.handler) e.handler(afterCharacterDrawCall, scalingFactors, gameTime, metaTime, context);
