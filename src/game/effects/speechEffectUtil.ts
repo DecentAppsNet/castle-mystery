@@ -1,12 +1,11 @@
 import { assert } from "decent-portal";
-import { drawSpeechBubble } from "../drawing/characterDrawUtil";
+import { drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
 import EffectHandler, { EffectHandlerResult } from "./types/EffectHandler";
 import { rand } from "@/common/randUtil";
 import SpriteOverride from "./types/SpriteOverride";
-import { drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
 
 export type TalkingDip = Readonly<{
   startTimeOffset:number,
@@ -79,16 +78,6 @@ function _calcSpeakingHeadRotationResult(time:number, effectStartTime:number, di
   return { spriteOverrides:[rotationOverride] };
 }
 
-function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
-    startTime: number, dipOffset: number):EffectHandlerResult|null {
-
-  if (drawCall.stage !== 'afterCharacter') return _calcSpeakingHeadRotationResult(time, startTime, dipOffset);
-
-  const { anchorX, anchorTopY } = drawCall.characterContext;
-  drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
-  return null;
-}
-
 function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, effectDuration:number):EffectHandlerResult {
   const animationDuration = THINKING_LOOK_DOWN_DURATION_MSECS + THINKING_LOOK_UP_DURATION_MSECS;
   const durationScale = Math.min(1, Math.max(0, effectDuration) / animationDuration);
@@ -108,13 +97,33 @@ function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, ef
   }] };
 }
 
+function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
+    startTime: number, dipOffset: number):EffectHandlerResult|null {
+  if (drawCall.stage === 'beforeCharacter') return _calcSpeakingHeadRotationResult(time, startTime, dipOffset);
+  if (drawCall.stage !== 'afterCharacter') return null;
+
+  // afterCharacter draw stage
+  const { anchorX, anchorTopY } = drawCall.characterContext;
+  drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+  return null;
+}
+
 function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
     startTime: number, speechDuration:number):EffectHandlerResult|null {
+  if (drawCall.stage === 'beforeCharacter') return _calcThinkingHeadRotationResult(time, startTime, speechDuration);
+  if (drawCall.stage !== 'afterCharacter') return null;
 
-  if (drawCall.stage !== 'afterCharacter') return _calcThinkingHeadRotationResult(time, startTime, speechDuration);
-
+  // afterCharacter draw stage
   const { anchorX, anchorTopY } = drawCall.characterContext;
   drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+  return null;
+}
+
+function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
+    context:CanvasRenderingContext2D, text:string, startTime:number, isLoud:boolean):EffectHandlerResult|null {
+  if (drawCall.stage !== 'afterCharacter') return null;
+  const { anchorX, anchorTopY } = drawCall.characterContext;
+  drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
   return null;
 }
 
@@ -131,4 +140,10 @@ export function createThinksEffect(text:string, startTime:number, speechDuration
     return _thinksHandler(drawCall, scalingFactors, time, context, text, startTime, speechDuration);
   }
   return { kind:'thinks', startTime, endTime:startTime+speechDuration, handler };
+}
+
+export function createEmitsEffect(text:string, startTime:number, speechDuration:number, isLoud:boolean):Effect {
+  const handler:EffectHandler = (drawCall, scalingFactors, time, _metaTime, context) =>
+    _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud);
+  return { kind:'emits', startTime, endTime:startTime+speechDuration, handler };
 }

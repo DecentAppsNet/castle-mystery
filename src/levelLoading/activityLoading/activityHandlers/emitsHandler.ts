@@ -5,6 +5,10 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
+import { assert, assertNonNullable } from "decent-portal";
+import { addCharacterEffect } from "@/levelLoading/timelineLoading";
+import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
+import { createEmitsEffect } from "@/game/effects/speechEffectUtil";
 
 export function createEmitsParseFormat():ParseFormat {
   const subject = makeOptions([
@@ -18,11 +22,35 @@ export function createEmitsParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
-export function scheduleEmitsActivity(_level:Level,
-  _waypointContext:WaypointGenerationContext,
-    activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+type PartsShape = {
+  characterId:string,
+  text:string,
+  verb:'emits',
+  isLoud:string
+}
 
-  // TODO
-  activity.endTime = activity.startTime;
+export function scheduleEmitsActivity(level:Level,
+  _waypointContext:WaypointGenerationContext,
+    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+
+  assertNonNullable(activity.startTime);
+  const { characterId, text, verb, isLoud } = activity.parts;
+  assert(typeof characterId === 'string');
+  assert(typeof text === 'string');
+  assert(verb === 'emits');
+  const characterI = editableTimeline.characterIdToI[characterId];
+
+  const speechDuration = calcSpeechDuration(text);
+  activity.endTime = activity.startTime + speechDuration;
+
+  const speechConflictResult = findSpeechConflict(verb, level.rooms, editableTimeline.keyframes,
+    characterI, activity.startTime, activity.endTime);
+  if (speechConflictResult) {
+    errors.addAtLine(speechConflictResult, activity.lineI);
+    return false;
+  }
+
+  const emitsEffect = createEmitsEffect(text, activity.startTime, speechDuration, isLoud);
+  addCharacterEffect(emitsEffect, characterI, editableTimeline);
   return true;
 }

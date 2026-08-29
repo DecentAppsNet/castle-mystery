@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { drawEmitBubble, drawObscuredActiveCharacter, getCharacterCanvasRect } from '../characterDrawUtil';
+import { drawObscuredActiveCharacter, getCharacterCanvasRect } from '../characterDrawUtil';
+import { drawEmitBubble } from '../characters/characterBubbleDrawUtil';
 import { createImageAsset } from '@/game/imageAssetUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultItem } from '@/game/types/Item';

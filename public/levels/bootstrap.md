@@ -57,7 +57,9 @@ HS
 # itinerary
 
 0:00:00 Sam @ Hall
-: thinks "What is the meaning of this?"
-: thinks "Why is my head moving?"
+: emits "(fart)"
+: says "Who farted?"
+: says "This is an outrage!"
+: thinks "Actually, I'm the only one here."
 
 # conclusions

@@ -28,8 +28,6 @@ import { wrapRoomTitle } from "./roomTitleLayoutUtil";
 import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
 import SpriteOverride from "../effects/types/SpriteOverride";
 
-export { drawEmitBubble, drawSpeechBubble } from "./characters/characterBubbleDrawUtil";
-
 const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.2;
 const CHARACTER_SWAY_INTERVAL = 1500;
