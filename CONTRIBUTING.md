@@ -8,30 +8,30 @@
 
 # Refactoring
 
-## Module Summary Comments
+## File Summary Comments
 
-* Every eligible module should have a concise comment at the top that has the following:
-  * one-sentence description of scope of functionality the module includes
-  * This statement `If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes.`
-* An "eligible" module is a Typescript module that is not: a test file, a .tsx file, a file inside a `types` folder, or a type-focused file whose primary purpose is declaring types, unions, or enum-like value sets.
-* In particular, modules inside `types` folders and subfolders such as `src/game/types/`, `src/game/types/itineraryEvents/` are not eligible for module summary comments, even if they also include small helpers such as `duplicate*()` or `createDefault*()`.
-* Here is an example of a module summary comment:
+* Every eligible file should have a concise comment at the top that has the following:
+  * one-sentence description of scope of functionality the file includes
+  * This statement `If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes.`
+* An "eligible" file is a Typescript file that is not: a test file, a .tsx file, a file inside a `types` folder, or a type-focused file whose primary purpose is declaring types, unions, or enum-like value sets.
+* In particular, files inside `types` folders and subfolders such as `src/game/types/`, `src/game/types/itineraryEvents/` are not eligible for file summary comments, even if they also include small helpers such as `duplicate*()` or `createDefault*()`.
+* Here is an example of a file summary comment:
 
 ```Javascript
-/* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents. 
-   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups room-focused drawing helpers, including room shells, exits, and in-room contents. 
+   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 ```
 
-## Refactoring Large Modules
+## Refactoring Large Files
 
-* AI agent instructions: If a module contains more than 500 lines of code, ask the user if they want to refactor that module. You don't need to interrupt a running task - just ask at the next graceful opportunity, e.g., at the end of completing a request.
-* When refactoring a large module, look for an optimal set of sub-modules and propose to the user. 
-  * A good sub-module will have a name that easily describes its scope, e.g. "levelIinteraryLoader". If it's difficult for a single module name to describe the scope, that's a sign that scope is not good for grouping.
-  * A good sub-module will encapsulate functionality as private functions within the module, so that it becomes easier to think about the module in terms of its exported functions.
-  * If there are a number of modules that could be usefully encapsulated inside of a folder, propose this in your plan. For example, say `roomDrawUtil.ts` is the exclusive caller of a set of modules like `roomRoofDrawUtil.ts` and `roomPanelDrawUtil.ts`. This set of modules could be moved to a new `/src/game/drawing/rooms/` folder.
+* AI agent instructions: If a file contains more than 500 lines of code, ask the user if they want to refactor that file. You don't need to interrupt a running task - just ask at the next graceful opportunity, e.g., at the end of completing a request.
+* When refactoring a large file, look for an optimal set of sub-files (refactored portions of original file in a new file) and propose to the user. 
+  * A good sub-file will have a name that easily describes its scope, e.g. "levelIinteraryLoader". If it's difficult for a single file name to describe the scope, that's a sign that scope is not good for grouping.
+  * A good sub-file will encapsulate functionality as private functions within the file, so that it becomes easier to think about the file in terms of its exported functions.
+  * If there are a number of files that could be usefully encapsulated inside of a folder, propose this in your plan. For example, say `roomDrawUtil.ts` is the exclusive caller of a set of files like `roomRoofDrawUtil.ts` and `roomPanelDrawUtil.ts`. This set of files could be moved to a new `/src/game/drawing/rooms/` folder.
 * Get agreement from the user before implementing the refactor.
-* All created sub-modules should contain the module summary comment.
-* The module from which sub-modules were created should have its module summary comment updated.
+* All created sub-files should contain the file summary comment.
+* The file from which sub-files were created should have its file summary comment updated.
 
 ## Encapsulated Modules
 
@@ -46,24 +46,24 @@ This project uses two test categories.
 
 ## Unit Tests
 
-Unit tests verify the contract of a module. They may mock dependency modules when useful, but should usually exercise real code paths.
+Unit tests verify the contract of a file. They may mock dependency files when useful, but should usually exercise real code paths.
 
 Guidelines:
 
 * Prefer not to mock. Only mock file I/O, network I/O, operating-system functions, or other behavior that is non-deterministic or leaves persistent side effects.
-* Do not add unit tests for drawing or rendering modules. Their results are visual, contract-based tests are usually not practical, and implementation-coupled tests are low value.
-* If a drawing module depends on non-visual logic that would be valuable to test, refactor that logic into a separate non-drawing module and test that module instead.
+* Do not add unit tests for drawing or rendering files. Their results are visual, contract-based tests are usually not practical, and implementation-coupled tests are low value.
+* If a drawing file depends on non-visual logic that would be valuable to test, refactor that logic into a separate non-drawing file and test that file instead.
 * Only test exported functions.
 * Put imports at the top of the file.
-* Place unit tests at `.../moduleFolder/__tests__/moduleName.test.ts`, where `moduleFolder` is the folder containing the module under test, and `moduleName` matches the module under test.
-* Use `describe('module name')` at the top level.
-* Nest `describe('functionName()')` blocks under the top-level module block.
+* Place unit tests at `.../fileFolder/__tests__/fileName.test.ts`, where `fileFolder` is the folder containing the file under test, and `fileName` matches the file under test.
+* Use `describe('file name')` at the top level.
+* Nest `describe('functionName()')` blocks under the top-level file block.
 * Keep each test focused on one behavior.
 * Order tests from simpler and more fundamental behavior to more complex behavior.
 
 ## Integration Tests
 
-Integration tests verify a collection of behaviors around a feature. They should use multiple modules together and should not focus on the behavior of just one module.
+Integration tests verify a collection of behaviors around a feature. They should use multiple files together and should not focus on the behavior of just one file.
 
 Guidelines:
 
@@ -98,27 +98,27 @@ Guidelines:
 * If uncovered code only guards an expected condition that should always be true in normal use, prefer replacing it with an assertion.
 * Remove code that is not needed for expected use.
 
-### Low-Test-Value Modules
+### Low-Test-Value Files
 
-Low-test-value modules are modules matching one or more of these criteria:
+Low-test-value files are files matching one or more of these criteria:
 
 * The testable contract is visual in nature, such as UI elements or canvas drawing.
-* The module is primarily glue code that integrates calls to other modules that are more properly testable elsewhere.
+* The file is primarily glue code that integrates calls to other files that are more properly testable elsewhere.
 * All files within `interactions` folders are considered low-test-value glue code.
 
 Guidelines:
 
-* Low-test-value modules should be ignored from code coverage.
-* In this project, low-test-value modules commonly include `.tsx` files and modules whose main purpose is drawing or rendering.
-* Do not add unit tests for drawing or rendering modules. Confirm those results with manual visual testing instead.
-* If a drawing or rendering module contains logic with a meaningful non-visual contract, extract that logic into a separate module and test the extracted module instead of the drawing module.
+* Low-test-value files should be ignored from code coverage.
+* In this project, low-test-value files commonly include `.tsx` files and files whose main purpose is drawing or rendering.
+* Do not add unit tests for drawing or rendering files. Confirm those results with manual visual testing instead.
+* If a drawing or rendering file contains logic with a meaningful non-visual contract, extract that logic into a separate file and test the extracted file instead of the drawing file.
 * Low-test-value files may be excluded from coverage either with an in-source coverage ignore comment or with project-level coverage configuration. Prefer project configuration when excluding a broad category such as all `.tsx` files.
 * For file-level exclusion with Vitest's V8 coverage, place a comment such as `/* v8 ignore file -- @preserve */` at the top of the file.
 * For smaller in-file exclusions with Vitest's V8 coverage, use comments such as `/* v8 ignore next -- @preserve */` or a `/* v8 ignore start -- @preserve */` / `/* v8 ignore stop -- @preserve */` pair.
 * When using an in-source coverage ignore comment, add a short explanation of why the code is being excluded.
-* If a module contains a mix of low-test-value code and other code, split it into separate modules when practical so the low-test-value module can be ignored from coverage.
-* If splitting a mixed module is impractical, put the low-test-value code into a designated coverage-ignore section within the module.
-* If logic can be refactored out of a low-test-value file into a testable module without making the original file harder to understand, do that. The low-test-value file can then remain excluded from coverage, while the extracted logic should still be covered by tests.
+* If a file contains a mix of low-test-value code and other code, split it into separate files when practical so the low-test-value file can be ignored from coverage.
+* If splitting a mixed file is impractical, put the low-test-value code into a designated coverage-ignore section within the file.
+* If logic can be refactored out of a low-test-value file into a testable file without making the original file harder to understand, do that. The low-test-value file can then remain excluded from coverage, while the extracted logic should still be covered by tests.
 
 # Assertions
 
@@ -142,7 +142,7 @@ Guidelines:
 * Function definitions should be sequenced in call order so that if function A calls function B, function B appears earlier in the file than function A.
 * If that ordering is impossible because of cyclical calls, the functions should be refactored to remove the cycle. Self-recursive functions are allowed.
 * Don't keep unused functions in the code.
-* Functions should only be exported if used outside the module they are declared in.
+* Functions should only be exported if used outside the file they are declared in.
 * Private, unexported functions are prefixed with `_`.
 
 ## ID Normalization
@@ -168,4 +168,4 @@ Guidelines:
 * If the function name would become excessively long, or still would not describe the full logic clearly, prefer non-regex code and optionally call smaller regex helper functions inside that logic.
 * All regex functions need unit tests.
 * Prefer general-purpose regex helper functions where possible and put them in `src/common/regExUtil.ts`.
-* When use-case-specific logic is needed, prefer a non-regex function in the feature module that composes shared regex helpers from `src/common/regExUtil.ts`.
+* When use-case-specific logic is needed, prefer a non-regex function in the feature file that composes shared regex helpers from `src/common/regExUtil.ts`.

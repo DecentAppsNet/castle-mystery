@@ -27,7 +27,7 @@ import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
 import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
 
-export { drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "./characters/characterBubbleDrawUtil";
+export { drawEmitBubble, drawSpeechBubble } from "./characters/characterBubbleDrawUtil";
 
 const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.2;

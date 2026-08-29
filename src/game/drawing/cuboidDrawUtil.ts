@@ -6,7 +6,7 @@ import { drawClippedTransformedTextureFace, type TextureFaceImage } from "./text
 
 type CanvasPoint = [number, number];
 
-export type ProjectedCuboid = {
+type ProjectedCuboid = {
   backTopLeft:CanvasPoint,
   backTopRight:CanvasPoint,
   backBottomLeft:CanvasPoint,
