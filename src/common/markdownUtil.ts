@@ -21,7 +21,7 @@ If this module grows beyond 500 lines of code, read the "Refactoring Large Modul
 
 // Type for associative array
 export type Sections = { [sectionName:string]:string };
-export type NameValues = { [name:string]:string };
+type NameValues = { [name:string]:string };
 export type SectionEntryWithLine = { name:string, value:string, lineNo:number, bodyStartLineI:number };
 type NameValueEntryWithLine = { name:string, value:string, lineNo:number };
 

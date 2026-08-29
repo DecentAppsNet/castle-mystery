@@ -31,6 +31,7 @@ import ErrorCollector from "../errorCollection/ErrorCollector";
 import { createEditableTimeline } from "./editingUtil";
 import EditableTimeline from "./types/EditableTimeline";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";
+import { scheduleThinksActivity } from "../activityLoading/activityHandlers/thinksHandler";
 
 type ScheduleActivityCallback = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
   timeline:EditableTimeline, errors:ErrorCollector) => boolean;
@@ -52,6 +53,7 @@ const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCal
   'show': scheduleShowActivity,
   'sits': scheduleSitsActivity,
   'stands': scheduleStandsActivity,
+  'thinks': scheduleThinksActivity,
   'unlocks': scheduleUnlocksActivity,
   'waits': scheduleWaitsActivity
 }

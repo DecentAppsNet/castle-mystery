@@ -10,7 +10,6 @@ import { assertNonNullable } from "decent-portal";
 import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
 import { createSaysEffect } from "@/game/effects/speechEffectUtil";
-import { findCharacterPositionAtTime } from "@/game/timeline";
 
 export function createSaysParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
@@ -52,9 +51,8 @@ export function scheduleSaysActivity(level:Level, _waypointContext:WaypointGener
     errors.addAtLine(speechConflictResult, activity.lineI);
     return false;
   }
-
-  const characterPosition = findCharacterPositionAtTime(editableTimeline.keyframes, characterI, activity.startTime); // TODO - call findCharacterKeyframeAtTime() once at start and reuse for facing direction.
-  const saysEffect = createSaysEffect(characterPosition, text, activity.startTime, speechDuration);
+  
+  const saysEffect = createSaysEffect(text, activity.startTime, speechDuration);
   addCharacterEffect(saysEffect, characterI, editableTimeline);
   return true;
 }

@@ -1,62 +1,134 @@
+import { assert } from "decent-portal";
 import { drawSpeechBubble } from "../drawing/characterDrawUtil";
-import Position from "../types/Position";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
 import EffectHandler, { EffectHandlerResult } from "./types/EffectHandler";
+import { rand } from "@/common/randUtil";
+import SpriteOverride from "./types/SpriteOverride";
+import { drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
 
-function _saysHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D,
-   text:string, startTime:number):EffectHandlerResult|null {
+export type TalkingDip = Readonly<{
+  startTimeOffset:number,
+  peakAngleOffsetRadians:number,
+  returnDurationMsecs:number
+}>;
 
-    if (drawCall.stage !== 'afterCharacter') return null; // TODO - head rotation
+const SMALL_DIP_ANGLE_RADIANS = Math.PI / 180;
+const LARGE_DIP_ANGLE_RADIANS = Math.PI / 90;
+const SMALL_DIP_DURATION_MSECS = 100;
+const LARGE_DIP_DURATION_MSECS = 200;
+const MIN_GAP_DURATION_MSECS = 20;
+const MAX_GAP_DURATION_MSECS = 140;
+const THINKING_ANGLE_RADIANS = Math.PI / 12;
+const THINKING_LOOK_DOWN_DURATION_MSECS = 200;
+const THINKING_LOOK_UP_DURATION_MSECS = 200;
 
-    const { anchorX, anchorTopY } = drawCall.characterContext;
-    drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
-    return null;
+let theTalkingDips:TalkingDip[]|null = null;
+const TALKING_DIPS_DURATION = 60000; // Set pretty high for less chance of animations looking similar between two characters talking at same time.
+
+function _createTalkingDips(duration:number):TalkingDip[] {
+  assert(duration > 0);
+  const dips:TalkingDip[] = [];
+  let timeOffset = 0;
+  while (timeOffset < duration) {
+    const isLargeDip = rand() < 0.35;
+    const returnDurationMsecs = isLargeDip ? LARGE_DIP_DURATION_MSECS : SMALL_DIP_DURATION_MSECS;
+    dips.push({
+      startTimeOffset:timeOffset,
+      peakAngleOffsetRadians:isLargeDip ? LARGE_DIP_ANGLE_RADIANS : SMALL_DIP_ANGLE_RADIANS,
+      returnDurationMsecs
+    });
+    const gapDuration = MIN_GAP_DURATION_MSECS + Math.floor(rand() * (MAX_GAP_DURATION_MSECS - MIN_GAP_DURATION_MSECS + 1));
+    timeOffset += returnDurationMsecs + gapDuration;
+  }
+
+  return dips;
 }
 
-export function createSaysEffect(characterPosition:Position, text:string, startTime:number, speechDuration:number):Effect {
-  console.log(characterPosition);
+// Returns populated singleton.
+function _getOrCreateTalkingDips():TalkingDip[] {
+  if (!theTalkingDips) theTalkingDips = _createTalkingDips(TALKING_DIPS_DURATION);
+  return theTalkingDips;
+}
+
+function _calcSpeakingHeadRotationResult(time:number, effectStartTime:number, dipOffset:number):EffectHandlerResult {
+  const dipPosition = ((time - effectStartTime) + dipOffset) % TALKING_DIPS_DURATION;
+  const dips = _getOrCreateTalkingDips();
+  assert(dipPosition >= 0 && dipPosition < TALKING_DIPS_DURATION);
+  assert(dips.length > 0);
+
+  let headRotationOffsetRadians = 0;
+  for (let dipI = dips.length - 1; dipI >= 0; --dipI) {
+    const dip = dips[dipI];
+    if (dipPosition < dip.startTimeOffset) continue;
+    const dipElapsedTime = dipPosition - dip.startTimeOffset;
+    if (dipElapsedTime <= dip.returnDurationMsecs) {
+      headRotationOffsetRadians = dip.peakAngleOffsetRadians * (1 - dipElapsedTime / dip.returnDurationMsecs);
+    }
+    break;
+  }
+
+  const rotationOverride:SpriteOverride = {
+    spriteKind:'head',
+    transformType:'rotate',
+    transformX:headRotationOffsetRadians,
+    transformY:0,
+    transformZ:0
+  }
+  return { spriteOverrides:[rotationOverride] };
+}
+
+function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
+    startTime: number, dipOffset: number):EffectHandlerResult|null {
+
+  if (drawCall.stage !== 'afterCharacter') return _calcSpeakingHeadRotationResult(time, startTime, dipOffset);
+
+  const { anchorX, anchorTopY } = drawCall.characterContext;
+  drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+  return null;
+}
+
+function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, effectDuration:number):EffectHandlerResult {
+  const animationDuration = THINKING_LOOK_DOWN_DURATION_MSECS + THINKING_LOOK_UP_DURATION_MSECS;
+  const durationScale = Math.min(1, Math.max(0, effectDuration) / animationDuration);
+  const lookDownDuration = THINKING_LOOK_DOWN_DURATION_MSECS * durationScale;
+  const lookUpDuration = THINKING_LOOK_UP_DURATION_MSECS * durationScale;
+  const elapsedTime = time - effectStartTime;
+  let angleOffsetRadians = 0;
+  if (lookDownDuration > 0 && elapsedTime >= 0 && elapsedTime < lookDownDuration) {
+    angleOffsetRadians = THINKING_ANGLE_RADIANS * elapsedTime / lookDownDuration;
+  } else if (lookUpDuration > 0 && elapsedTime >= effectDuration - lookUpDuration && elapsedTime < effectDuration) {
+    angleOffsetRadians = THINKING_ANGLE_RADIANS * (effectDuration - elapsedTime) / lookUpDuration;
+  } else if (elapsedTime >= lookDownDuration && elapsedTime < effectDuration - lookUpDuration) {
+    angleOffsetRadians = THINKING_ANGLE_RADIANS;
+  }
+  return { spriteOverrides:[{
+    spriteKind:'head', transformType:'rotate', transformX:angleOffsetRadians, transformY:0, transformZ:0
+  }] };
+}
+
+function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
+    startTime: number, speechDuration:number):EffectHandlerResult|null {
+
+  if (drawCall.stage !== 'afterCharacter') return _calcThinkingHeadRotationResult(time, startTime, speechDuration);
+
+  const { anchorX, anchorTopY } = drawCall.characterContext;
+  drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+  return null;
+}
+
+export function createSaysEffect(text:string, startTime:number, speechDuration:number):Effect {
+  const dipOffset = rand() * TALKING_DIPS_DURATION; // Set this randomly so that characters rarely have same head animation.
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
-    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime);
+    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, dipOffset);
   }
   return { kind:'says', startTime, endTime:startTime+speechDuration, handler };
 }
 
-/*
-
-export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, metaTime:number) {
-
-
-  // scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, metaTime:number - these are standard params of handler
-  
-  anchorX, anchorTopY - these can be determined when effect is created. And in the case of speech, they would stay constant because characters
-  don't move while speaking. (design decision, not just a functionality limitation)
-
-  head rotation is different. The character is already going to draw the head. And the head is a body part that has a draw order with other 
-  character parts before and after. So if you were to use a handler to draw it with dependency injection, you'd need an injection site at the
-  draw head point of execution and suppression of normal head drawing.
-
-  The handler could return data, e.g.
-
-  type SpriteOverride = {
-    spriteKind:'leftHandItem'|'rightHandItem'|'head'
-    transformType:'rotate'|'scale'|'translate'
-    transformX:number,
-    transformY:number,
-    transformZ:number,
+export function createThinksEffect(text:string, startTime:number, speechDuration:number):Effect {
+  const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
+    return _thinksHandler(drawCall, scalingFactors, time, context, text, startTime, speechDuration);
   }
-
-  {
-    spriteOverrides:SpriteOverride[]
-  }
-
-  So for the speech effect, we'd call the handler at beforeCharacter and afterCharacter draw stages. The beforeCharacter call would
-  return spriteOverrides. As we draw the character, spriteOverrides are passed to all character-drawing code and applied to each part. Draw code
-  need only support expected operations, e.g. If no effect scales a head, then don't write code to scale it.
-
-  The beforeCharacter handler call wouldn't draw anything. The second call to same handler would be made at the afterCharacter injection call.
-  This one would draw the speech bubble over the character's head.
-
-*/
+  return { kind:'thinks', startTime, endTime:startTime+speechDuration, handler };
+}

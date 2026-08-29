@@ -26,6 +26,7 @@ import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
 import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
+import SpriteOverride from "../effects/types/SpriteOverride";
 
 export { drawEmitBubble, drawSpeechBubble } from "./characters/characterBubbleDrawUtil";
 
@@ -301,15 +302,18 @@ export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character
   context.restore();
 }
 
+function _findHeadRotationSpriteOverride(spriteOverrides:SpriteOverride[]):number {
+  return spriteOverrides.find(spriteOverride =>
+    spriteOverride.spriteKind === 'head' && spriteOverride.transformType === 'rotate')?.transformX ?? 0;
+}
+
 export function drawCharacter(character:Character, displayPosition:Position, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, imageSet:ImageSet, isHighlighted:boolean,
-    metaTime:number) {
+    metaTime:number, spriteOverrides:SpriteOverride[]) {
   const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(
     character, displayPosition, scalingFactors, gameTime);
   const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
-  const talkingAngleOffsetRadians = 0; // See before-cleanup-2026 this file and talkingEffectUtil.ts to restore.
-  const thinkingAngleOffsetRadians = 0; // See before-cleanup-2026 this file and thinkingEffectUtil.ts to restore.
-  const faceAngleOffsetRadians = talkingAngleOffsetRadians + thinkingAngleOffsetRadians;
+  const faceAngleOffsetRadians = _findHeadRotationSpriteOverride(spriteOverrides);
   if (isHighlighted) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, metaTime);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
@@ -348,7 +352,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
 
   context.save();
   context.translate(layout.head.centerX, layout.head.centerY);
-  context.rotate((character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2) + talkingAngleOffsetRadians);
+  context.rotate((character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2) + faceAngleOffsetRadians);
   if (character.facingDirection === 'left') context.scale(-1, 1);
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();

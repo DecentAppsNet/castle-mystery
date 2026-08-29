@@ -52,8 +52,8 @@ import { calcUndiscoveredMarkerHeightPixels, drawUndiscoveredMarker } from "./un
 import DiscoveryState from "../types/DiscoveryState";
 import { createRoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
-import EffectDrawCall from "../effects/types/EffectDrawCall";
 import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
+import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -334,19 +334,13 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           layoutPlanner.reserveRect(getCharacterCanvasRect(
             content.character, content.displayPosition, scalingFactors, gameTime, imageSet));
         }
-        // TODO call some function that returns consolidated sprite overrides from calls to handlers, and pass to drawCharacter().
-        drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
-          content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId, metaTime);
-
-        { // TODO cleanup/refactor to a function after this stabilizes.
-          const { anchorX, anchorTopY } = getCharacterSpeechAnchor(
+        const { anchorX, anchorTopY } = getCharacterSpeechAnchor(
             content.character, content.displayPosition, scalingFactors, gameTime);
-          const characterContext:CharacterEffectDrawContext = { anchorX, anchorTopY };
-          const afterCharacterDrawCall:EffectDrawCall = { stage:'afterCharacter', characterContext };
-          content.character.effects.forEach(e => { 
-            if (e.handler) e.handler(afterCharacterDrawCall, scalingFactors, gameTime, metaTime, context);
-          });
-        }
+        const characterContext:CharacterEffectDrawContext = { anchorX, anchorTopY };
+        const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
+        const spriteOverrides = handleBeforeCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
+        drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet, isHighlighted, metaTime, spriteOverrides);
+        handleAfterCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
         return;
     }
   });

@@ -17,6 +17,7 @@ import { createShowParseFormat } from "./activityHandlers/showHandler";
 import { createSitsParseFormat } from "./activityHandlers/sitsHandler";
 import { createStandsParseFormat } from "./activityHandlers/standsHandler";
 import { createTakesParseFormat } from './activityHandlers/takesHandler';
+import { createThinksParseFormat } from "./activityHandlers/thinksHandler";
 import { createUnlocksParseFormat } from "./activityHandlers/unlocksHandler";
 import { createWaitsParseFormat } from "./activityHandlers/waitsHandler";
 import ParseFormat from "./types/ParseFormat";
@@ -119,6 +120,7 @@ export function createActivityParsingRules(characterIds:string[], roomIds:string
     pf['sits'] = createSitsParseFormat();
     pf['stands'] = createStandsParseFormat();
     pf['takes'] = createTakesParseFormat();
+    pf['thinks'] = createThinksParseFormat();
     pf['unlocks'] = createUnlocksParseFormat();
     pf['waits'] = createWaitsParseFormat();
   }

@@ -57,12 +57,7 @@ HS
 # itinerary
 
 0:00:00 Sam @ Hall
-: says "What?"
-: Sam takes Vase in right hand
-0:00:06 Sam @ Closet (60%)
-: kneels
-: waits
-: drops Vase on Table
-: @ (90%)
+: thinks "What is the meaning of this?"
+: thinks "Why is my head moving?"
 
 # conclusions
