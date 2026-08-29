@@ -120,7 +120,7 @@ function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors
 }
 
 function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
-    context:CanvasRenderingContext2D, text:string, startTime:number, isLoud:boolean):EffectHandlerResult|null {
+    context:CanvasRenderingContext2D, text:string, startTime:number, _isLoud:boolean):EffectHandlerResult|null {
   if (drawCall.stage !== 'afterCharacter') return null;
   const { anchorX, anchorTopY } = drawCall.characterContext;
   drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);

@@ -5,7 +5,7 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
-import { assert, assertNonNullable } from "decent-portal";
+import { assertNonNullable } from "decent-portal";
 import { addCharacterEffect } from "@/levelLoading/timelineLoading";
 import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
 import { createEmitsEffect } from "@/game/effects/speechEffectUtil";
@@ -26,7 +26,7 @@ type PartsShape = {
   characterId:string,
   text:string,
   verb:'emits',
-  isLoud:string
+  isLoud?:string
 }
 
 export function scheduleEmitsActivity(level:Level,
@@ -34,10 +34,7 @@ export function scheduleEmitsActivity(level:Level,
     activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
 
   assertNonNullable(activity.startTime);
-  const { characterId, text, verb, isLoud } = activity.parts;
-  assert(typeof characterId === 'string');
-  assert(typeof text === 'string');
-  assert(verb === 'emits');
+  const { characterId, text, verb, isLoud } = activity.parts as PartsShape;
   const characterI = editableTimeline.characterIdToI[characterId];
 
   const speechDuration = calcSpeechDuration(text);
@@ -50,7 +47,7 @@ export function scheduleEmitsActivity(level:Level,
     return false;
   }
 
-  const emitsEffect = createEmitsEffect(text, activity.startTime, speechDuration, isLoud);
+  const emitsEffect = createEmitsEffect(text, activity.startTime, speechDuration, isLoud !== undefined);
   addCharacterEffect(emitsEffect, characterI, editableTimeline);
   return true;
 }
