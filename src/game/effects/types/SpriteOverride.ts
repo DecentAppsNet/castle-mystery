@@ -1,9 +1,12 @@
- type SpriteOverride = {
-    spriteKind:'leftHandItem'|'rightHandItem'|'head'
-    transformType:'rotate'|'translate'
-    transformX:number,
-    transformY:number,
-    transformZ:number,
-  }
+type SpriteOverride = {
+  spriteKind:'head',
+  transformType:'rotate',
+  rotateRadians:number
+}|{
+  spriteKind:'leftHandItem'|'rightHandItem',
+  transformType:'translateCanvas',
+  translateCanvasX:number,
+  translateCanvasY:number
+};
 
-  export default SpriteOverride;
+export default SpriteOverride;

@@ -1,3 +1,6 @@
+/* This file creates and draws speech, thought, and emitted-text character effects.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from "decent-portal";
 import { createEmitBubbleAnchorAtTopCenter, drawEmitBubble, drawEmitBubbleNearExit, drawSpeechBubble,
   drawSpeechBubbleNearExit, drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
@@ -72,9 +75,7 @@ function _calcSpeakingHeadRotationResult(time:number, effectStartTime:number, di
   const rotationOverride:SpriteOverride = {
     spriteKind:'head',
     transformType:'rotate',
-    transformX:headRotationOffsetRadians,
-    transformY:0,
-    transformZ:0
+    rotateRadians:headRotationOffsetRadians
   }
   return { spriteOverrides:[rotationOverride] };
 }
@@ -94,7 +95,7 @@ function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, ef
     angleOffsetRadians = THINKING_ANGLE_RADIANS;
   }
   return { spriteOverrides:[{
-    spriteKind:'head', transformType:'rotate', transformX:angleOffsetRadians, transformY:0, transformZ:0
+    spriteKind:'head', transformType:'rotate', rotateRadians:angleOffsetRadians
   }] };
 }
 

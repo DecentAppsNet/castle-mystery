@@ -310,7 +310,7 @@ export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character
 
 function _findHeadRotationSpriteOverride(spriteOverrides:SpriteOverride[]):number {
   return spriteOverrides.find(spriteOverride =>
-    spriteOverride.spriteKind === 'head' && spriteOverride.transformType === 'rotate')?.transformX ?? 0;
+    spriteOverride.spriteKind === 'head')?.rotateRadians ?? 0;
 }
 
 export function drawCharacter(character:Character, displayPosition:Position, scalingFactors:ScalingFactors,
@@ -324,7 +324,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
   if (isHighlighted) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, metaTime);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
-  drawHeldItemsBehindCharacter(character, layout, scalingFactors, context, imageSet);
+  drawHeldItemsBehindCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
   strokeCharacterBody(layout, context);
   const headRadius = layout.head.radius;
   if (!faceImage) {
@@ -332,7 +332,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     context.moveTo(layout.head.centerX + headRadius, layout.head.centerY);
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
-    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet);
+    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
     return;
   }
 
@@ -341,7 +341,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     context.beginPath();
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
-    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet);
+    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
     return;
   }
   const { drawWidth, drawHeight } = faceImageDrawSize;
@@ -352,7 +352,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     if (character.facingDirection === 'left') context.scale(-1, 1);
     context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
     context.restore();
-    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet);
+    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
     return;
   }
 
@@ -362,7 +362,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
   if (character.facingDirection === 'left') context.scale(-1, 1);
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
-  drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet);
+  drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,

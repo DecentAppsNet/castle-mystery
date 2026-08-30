@@ -61,13 +61,9 @@ HS
 
 # itinerary
 
-0:00:00 Maria @ Closet
-: @ Stairwell
-: emits "(fart)" loudly
-: Sam stands
-: Sam says "Who farted?"
-: Maria says "It was you!"
-: Sam thinks "How embarrassing."
-: Sam says "I'm sorry."
+0:00:00 Sam @ Hall
+: takes vase in right hand
+: @ Closet
+: drops vase on table
 
 # conclusions
