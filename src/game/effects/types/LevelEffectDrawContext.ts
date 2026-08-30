@@ -1,5 +1,5 @@
 type LevelEffectDrawContext = {
-  isEffectCharacterInActiveRoom:boolean,
+  characterIdsInActiveRoom:ReadonlySet<string>,
   isLevelComplete:boolean,
   activeRoomTopCenterCanvasPoint:[number, number]
 }

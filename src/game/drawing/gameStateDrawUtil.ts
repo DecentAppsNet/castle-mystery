@@ -27,12 +27,16 @@ import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { findImageBitmap } from "@/game/imageAssetUtil";
 import { getGroundImageAssetUrl } from "../imageUrlUtil";
 import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
-import { calcPanelOffset } from "./roomPanelProjectionUtil";
+import { isPositionInRect } from "../rectUtil";
+import LevelEffectDrawContext from "../effects/types/LevelEffectDrawContext";
+import CharacterWithEffects from "../types/CharacterWithEffects";
+import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import Item from "../types/Item";
 import { handleAfterLevelDrawEffects } from "./levelEffectDispatchUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
+const LEVEL_EFFECT_CEILING_MARGIN_Y = 0.5;
 
 function _drawReservedRects(layoutPlanner:CanvasLayoutPlanner, context:CanvasRenderingContext2D) {
   if (!DRAW_RESERVED_RECTS) return;
@@ -259,6 +263,22 @@ function _drawRoomSilhouettes(gameState:GameState, context:CanvasRenderingContex
   }
 }
 
+function _createLevelEffectDrawContext(characters:CharacterWithEffects[], activeRoom:Room,
+    isLevelComplete:boolean, scalingFactors:ScalingFactors):LevelEffectDrawContext {
+  return {
+    characterIdsInActiveRoom:new Set(characters
+      .filter(character => isPositionInRect(character.position.x, character.position.y, activeRoom.rect))
+      .map(character => character.id)),
+    isLevelComplete,
+    activeRoomTopCenterCanvasPoint:projectRoomPointWithDepth(
+      activeRoom.rect.x + activeRoom.rect.width / 2,
+      activeRoom.rect.y + LEVEL_EFFECT_CEILING_MARGIN_Y,
+      0,
+      scalingFactors
+    )
+  };
+}
+
 export function updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRenderingContext2D):ScalingFactors {
   const destW = context.canvas.width;
   const destH = context.canvas.height;
@@ -331,8 +351,14 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   for (const { room, isActive } of roomRenderStates) {
     drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
   }
-  handleAfterLevelDrawEffects(characters, activeRoom, gameState.isLevelComplete, gameState.scalingFactors,
-    gameState.time, metaTime, context);
+  handleAfterLevelDrawEffects(
+    characters,
+    gameState.scalingFactors,
+    gameState.time,
+    _createLevelEffectDrawContext(characters, activeRoom, gameState.isLevelComplete, gameState.scalingFactors),
+    metaTime,
+    context
+  );
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(rooms, gameState);
     if (hoveredItem && isItemInteractive(hoveredItem.item)) {

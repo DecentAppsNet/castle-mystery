@@ -47,7 +47,7 @@ export function scheduleEmitsActivity(level:Level,
     return false;
   }
 
-  const emitsEffect = createEmitsEffect(text, activity.startTime, speechDuration, isLoud !== undefined);
+  const emitsEffect = createEmitsEffect(characterId, text, activity.startTime, speechDuration, isLoud !== undefined);
   addCharacterEffect(emitsEffect, characterI, editableTimeline);
   return true;
 }

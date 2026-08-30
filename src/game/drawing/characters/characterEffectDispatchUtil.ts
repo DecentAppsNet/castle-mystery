@@ -1,21 +1,3 @@
-/*
-  }
-        // TODO call some function that returns consolidated sprite overrides from calls to handlers, and pass to drawCharacter().
-        drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
-          content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId, metaTime);
-
-        { // TODO cleanup/refactor to a function after this stabilizes.
-          const { anchorX, anchorTopY } = getCharacterSpeechAnchor(
-            content.character, content.displayPosition, scalingFactors, gameTime);
-          const characterContext:CharacterEffectDrawContext = { anchorX, anchorTopY };
-          const afterCharacterDrawCall:EffectDrawCall = { stage:'afterCharacter', characterContext };
-          content.character.effects.forEach(e => { 
-            if (e.handler) e.handler(afterCharacterDrawCall, scalingFactors, gameTime, metaTime, context);
-          });
-        }
-        return;
-        */
-
 import CharacterEffectDrawContext from "@/game/effects/types/CharacterEffectDrawContext";
 import Effect from "@/game/effects/types/Effect";
 import EffectDrawCall from "@/game/effects/types/EffectDrawCall";

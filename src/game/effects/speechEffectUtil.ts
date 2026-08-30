@@ -1,5 +1,5 @@
 import { assert } from "decent-portal";
-import { drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
+import { createEmitBubbleAnchorAtTopCenter, drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
@@ -98,7 +98,7 @@ function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, ef
 }
 
 function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
-    startTime: number, dipOffset: number):EffectHandlerResult|null {
+  startTime: number, dipOffset: number):EffectHandlerResult|null {
   if (drawCall.stage === 'beforeCharacter') return _calcSpeakingHeadRotationResult(time, startTime, dipOffset);
   if (drawCall.stage !== 'afterCharacter') return null;
 
@@ -109,7 +109,7 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
 }
 
 function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
-    startTime: number, speechDuration:number):EffectHandlerResult|null {
+  startTime: number, speechDuration:number):EffectHandlerResult|null {
   if (drawCall.stage === 'beforeCharacter') return _calcThinkingHeadRotationResult(time, startTime, speechDuration);
   if (drawCall.stage !== 'afterCharacter') return null;
 
@@ -120,9 +120,19 @@ function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors
 }
 
 function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
-    context:CanvasRenderingContext2D, text:string, startTime:number, _isLoud:boolean):EffectHandlerResult|null {
-  if (drawCall.stage !== 'afterCharacter') return null;
-  const { anchorX, anchorTopY } = drawCall.characterContext;
+  context:CanvasRenderingContext2D, text:string, startTime:number, isLoud:boolean, characterId:string):EffectHandlerResult|null {
+  if (drawCall.stage === 'afterCharacter') {
+    const { anchorX, anchorTopY, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
+    if (!isLoud || isCharacterInActiveRoom || isLevelComplete) {
+      drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+    }
+    return null;
+  }
+  
+  if (drawCall.stage !== 'afterLevel' || !isLoud) return null;
+  const { characterIdsInActiveRoom, isLevelComplete, activeRoomTopCenterCanvasPoint } = drawCall.levelContext;
+  if (characterIdsInActiveRoom.has(characterId) || isLevelComplete) return null;
+  const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(activeRoomTopCenterCanvasPoint, scalingFactors);
   drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
   return null;
 }
@@ -142,8 +152,8 @@ export function createThinksEffect(text:string, startTime:number, speechDuration
   return { kind:'thinks', startTime, endTime:startTime+speechDuration, handler };
 }
 
-export function createEmitsEffect(text:string, startTime:number, speechDuration:number, isLoud:boolean):Effect {
+export function createEmitsEffect(characterId:string, text:string, startTime:number, speechDuration:number, isLoud:boolean):Effect {
   const handler:EffectHandler = (drawCall, scalingFactors, time, _metaTime, context) =>
-    _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud);
+    _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud, characterId);
   return { kind:'emits', startTime, endTime:startTime+speechDuration, handler };
 }
