@@ -3,7 +3,9 @@
 // put in this type or another type that is a member inside of this one, e.g. CharacterAnatomy.
 type CharacterEffectDrawContext = {
   anchorX:number,
-  anchorTopY:number
+  anchorTopY:number,
+  isCharacterInActiveRoom:boolean,
+  isLevelComplete:boolean
 }
 
 export default CharacterEffectDrawContext;

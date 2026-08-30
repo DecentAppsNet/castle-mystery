@@ -315,7 +315,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
     hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
     stairTextureLightness:{ top:number, side:number, front:number }, discoveryState:DiscoveryState,
-    layoutPlanner:CanvasLayoutPlanner|null = null) {
+    isCharacterInActiveRoom:boolean, isLevelComplete:boolean, layoutPlanner:CanvasLayoutPlanner|null = null) {
   const contents = createDrawableContents(room, charactersInRoom, discoveryState.discoveredItemIds, includeUndiscoveredItems);
   contents.forEach(content => {
     switch(content.type) {
@@ -336,7 +336,12 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         }
         const { anchorX, anchorTopY } = getCharacterSpeechAnchor(
             content.character, content.displayPosition, scalingFactors, gameTime);
-        const characterContext:CharacterEffectDrawContext = { anchorX, anchorTopY };
+        const characterContext:CharacterEffectDrawContext = {
+          anchorX,
+          anchorTopY,
+          isCharacterInActiveRoom,
+          isLevelComplete
+        };
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
         const spriteOverrides = handleBeforeCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
         drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet, isHighlighted, metaTime, spriteOverrides);
@@ -379,7 +384,8 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
     : { top:INACTIVE_FLOOR_TEXTURE_LIGHTNESS, side:INACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS, front:INACTIVE_BACK_WALL_TEXTURE_LIGHTNESS };
   if (showFullContents || (isActive && activeCharacter)) {
     _drawRoomContents(room, charactersInRoom, activeCharacter, hoveredCharacterId, hoveredItemId,
-      scalingFactors, context, gameTime, metaTime, imageSet, true, stairTextureLightness, discoveryState, layoutPlanner);
+      scalingFactors, context, gameTime, metaTime, imageSet, true, stairTextureLightness, discoveryState,
+      isActive, showFullContents, layoutPlanner);
   } else {
     _drawRoomStairsOnly(room, scalingFactors, context, imageSet, stairTextureLightness);
   }

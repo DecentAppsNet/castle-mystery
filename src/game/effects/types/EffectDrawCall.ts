@@ -1,4 +1,5 @@
 import CharacterEffectDrawContext from "./CharacterEffectDrawContext"
+import LevelEffectDrawContext from "./LevelEffectDrawContext"
 
 type EffectDrawCall = | {
   stage:'beforeCharacter',
@@ -6,6 +7,9 @@ type EffectDrawCall = | {
 } | {
   stage:'afterCharacter',
   characterContext:CharacterEffectDrawContext
+} | {
+  stage:'afterLevel',
+  levelContext:LevelEffectDrawContext
 }
 
 export default EffectDrawCall;
