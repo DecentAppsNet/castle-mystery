@@ -34,11 +34,12 @@ HS
 
 ```
 .t..
-....
+..M.
 ....
 ```
 
 * t=Table
+* M=Maria
 
 ## Stairwell
 
@@ -48,6 +49,10 @@ HS
 * description=It's just a guy.
 * bodyOrientation=sitting
 
+## Maria
+* faceImage=maria.png
+* description=It's just a gal.
+
 # items
 
 ## Vase
@@ -56,10 +61,13 @@ HS
 
 # itinerary
 
-0:00:00 Sam @ Hall
-: emits "(fart)"
-: says "Who farted?"
-: says "This is an outrage!"
-: thinks "Actually, I'm the only one here."
+0:00:00 Maria @ Closet
+: @ Stairwell
+: emits "(fart)" loudly
+: Sam stands
+: Sam says "Who farted?"
+: Maria says "It was you!"
+: Sam thinks "How embarrassing."
+: Sam says "I'm sorry."
 
 # conclusions

@@ -53,7 +53,7 @@ import DiscoveryState from "../types/DiscoveryState";
 import { createRoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
-import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectUtil";
+import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;

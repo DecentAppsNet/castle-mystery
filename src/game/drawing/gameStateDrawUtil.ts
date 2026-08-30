@@ -29,6 +29,7 @@ import { getGroundImageAssetUrl } from "../imageUrlUtil";
 import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Item from "../types/Item";
+import { handleAfterLevelDrawEffects } from "./levelEffectDispatchUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
@@ -330,6 +331,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   for (const { room, isActive } of roomRenderStates) {
     drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
   }
+  handleAfterLevelDrawEffects(characters, activeRoom, gameState.isLevelComplete, gameState.scalingFactors,
+    gameState.time, metaTime, context);
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(rooms, gameState);
     if (hoveredItem && isItemInteractive(hoveredItem.item)) {

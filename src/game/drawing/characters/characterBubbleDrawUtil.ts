@@ -15,6 +15,21 @@ type BubbleBox = Readonly<{
   height:number
 }>;
 
+function _getEmitBubbleMetrics(scalingFactors:ScalingFactors):{ padding:number, fontSize:number, boxHeight:number } {
+  const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
+  const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
+  return { padding, fontSize, boxHeight:fontSize + padding * 2 };
+}
+
+export function createEmitBubbleAnchorAtTopCenter(topCenterCanvasPoint:[number, number],
+    scalingFactors:ScalingFactors):{ anchorX:number, anchorTopY:number } {
+  const { boxHeight } = _getEmitBubbleMetrics(scalingFactors);
+  return {
+    anchorX:topCenterCanvasPoint[0],
+    anchorTopY:topCenterCanvasPoint[1] + boxHeight + scalingFactors.roomLineWidth * 2
+  };
+}
+
 function _findBubbleIntroScale(startTime:number, time:number):number {
   const elapsed = Math.max(0, time - startTime);
   const progress = clamp(elapsed / BUBBLE_INTRO_DURATION_MSECS, 0, 1);
@@ -159,9 +174,7 @@ export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:numbe
 
 export function drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number) {
-  const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
-  const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
-  const boxHeight = fontSize + padding * 2;
+  const { padding, fontSize, boxHeight } = _getEmitBubbleMetrics(scalingFactors);
 
   context.save();
   context.font = `${fontSize}px Jellee`;
