@@ -1,6 +1,6 @@
  type SpriteOverride = {
     spriteKind:'leftHandItem'|'rightHandItem'|'head'
-    transformType:'rotate'|'scale'|'translate'
+    transformType:'rotate'|'translate'
     transformX:number,
     transformY:number,
     transformZ:number,
