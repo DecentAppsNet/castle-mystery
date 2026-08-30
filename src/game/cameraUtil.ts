@@ -1,7 +1,7 @@
-/* This module groups camera creation, targeting, and viewport update helpers for the game scene.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups camera creation, targeting, and viewport update helpers for the game scene.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { clamp } from "@/common/numberUtil";
+import { clamp, interpolateNumber } from "@/common/numberUtil";
 
 import { calcRenderedRoomBounds, calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import Camera from "./types/Camera";
@@ -57,16 +57,12 @@ function _rectsMatch(rect1:Rect, rect2:Rect):boolean {
     && Math.abs(rect1.height - rect2.height) <= CAMERA_EPSILON;
 }
 
-function _interpolate(from:number, to:number, amount:number):number {
-  return from + (to - from) * amount;
-}
-
 function _interpolateRect(fromRect:Rect, toRect:Rect, amount:number):Rect {
   return {
-    x:_interpolate(fromRect.x, toRect.x, amount),
-    y:_interpolate(fromRect.y, toRect.y, amount),
-    width:_interpolate(fromRect.width, toRect.width, amount),
-    height:_interpolate(fromRect.height, toRect.height, amount)
+    x:interpolateNumber(fromRect.x, toRect.x, amount),
+    y:interpolateNumber(fromRect.y, toRect.y, amount),
+    width:interpolateNumber(fromRect.width, toRect.width, amount),
+    height:interpolateNumber(fromRect.height, toRect.height, amount)
   };
 }
 
@@ -149,5 +145,5 @@ export function updateCamera(camera:Camera, metaTime:number) {
   const amount = clamp((metaTime - camera.moveStartTime) / camera.moveDuration, 0, 1);
   const easedAmount = _easeInOutCubic(amount);
   camera.currentRect = _interpolateRect(camera.startRect, camera.targetRect, easedAmount);
-  camera.currentZoomAmount = _interpolate(camera.startZoomAmount, camera.zoomAmount, easedAmount);
+  camera.currentZoomAmount = interpolateNumber(camera.startZoomAmount, camera.zoomAmount, easedAmount);
 }

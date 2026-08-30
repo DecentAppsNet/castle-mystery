@@ -1,6 +1,6 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { expect, it, describe } from 'vitest';
-import { clamp } from '../numberUtil';
+import { clamp, interpolateNumber } from '../numberUtil';
 
 describe('numberUtil.ts', () => {
   describe('clamp()', () => {
@@ -12,6 +12,22 @@ describe('numberUtil.ts', () => {
     });
     it('should return value when value is between min and max', () => {
       expect(clamp(5, 1, 10)).toBe(5);
+    });
+  });
+
+  describe('interpolateNumber()', () => {
+    it('returns the value at the requested linear progress', () => {
+      expect(interpolateNumber(10, 30, 0.25)).toBe(15);
+    });
+
+    it('returns the exact target at complete progress', () => {
+      const target = Number.MAX_VALUE;
+
+      expect(interpolateNumber(-Number.MAX_VALUE, target, 1)).toBe(target);
+    });
+
+    it('does not extrapolate beyond complete progress', () => {
+      expect(interpolateNumber(10, 30, 1.5)).toBe(30);
     });
   });
 });

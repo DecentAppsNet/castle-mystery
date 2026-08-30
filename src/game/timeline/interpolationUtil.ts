@@ -1,10 +1,11 @@
-/* This module interpolates character positions between timeline keyframes.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file interpolates character positions between timeline keyframes.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
+import { assert, assertNonNullable } from "decent-portal";
 
 import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/positionUtil";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
-import { assert, assertNonNullable } from "decent-portal";
 
 type CharacterPositionKeyframe = {
   time:number,

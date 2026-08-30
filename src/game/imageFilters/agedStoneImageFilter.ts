@@ -1,3 +1,6 @@
+/* This file applies deterministic aged-stone and plaster texture overlays to images.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { createScratchCanvas } from "@/game/drawing/canvasSurfaceUtil";
 
 import { ImageFilterArgs } from "./imageFilterUtil";

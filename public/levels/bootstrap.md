@@ -63,6 +63,8 @@ HS
 
 0:00:00 Sam @ Hall
 : takes vase in right hand
+: drops vase
+: takes vase in left hand
 : @ Closet
 : drops vase on table
 
