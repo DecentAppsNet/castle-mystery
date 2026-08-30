@@ -5,7 +5,7 @@ const TAKE_EFFECT_TIME = 500;
 export const LEFT_HAND = 'left hand';
 export const RIGHT_HAND = 'right hand';
 export const INVENTORY = 'inventory';
-export type TakeTarget = 'left hand' | 'right hand' | 'inventory';
+type TakeTarget = 'left hand' | 'right hand' | 'inventory';
 
 export function createTakeEffect(_itemId:string, _target:TakeTarget, startTime:number):Effect {
   // TODO

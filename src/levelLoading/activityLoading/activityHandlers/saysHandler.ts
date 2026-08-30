@@ -52,7 +52,7 @@ export function scheduleSaysActivity(level:Level, _waypointContext:WaypointGener
     return false;
   }
   
-  const saysEffect = createSaysEffect(text, activity.startTime, speechDuration);
+  const saysEffect = createSaysEffect(characterId, text, activity.startTime, speechDuration);
   addCharacterEffect(saysEffect, characterI, editableTimeline);
   return true;
 }

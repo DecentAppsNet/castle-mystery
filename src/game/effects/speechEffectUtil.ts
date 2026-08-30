@@ -1,5 +1,6 @@
 import { assert } from "decent-portal";
-import { createEmitBubbleAnchorAtTopCenter, drawEmitBubble, drawSpeechBubble, drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
+import { createEmitBubbleAnchorAtTopCenter, drawEmitBubble, drawEmitBubbleNearExit, drawSpeechBubble,
+  drawSpeechBubbleNearExit, drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
@@ -98,13 +99,21 @@ function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, ef
 }
 
 function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
-  startTime: number, dipOffset: number):EffectHandlerResult|null {
+  startTime: number, dipOffset: number, characterId:string):EffectHandlerResult|null {
   if (drawCall.stage === 'beforeCharacter') return _calcSpeakingHeadRotationResult(time, startTime, dipOffset);
-  if (drawCall.stage !== 'afterCharacter') return null;
-
-  // afterCharacter draw stage
-  const { anchorX, anchorTopY } = drawCall.characterContext;
-  drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+  if (drawCall.stage === 'afterCharacter') {
+    const { anchorX, anchorTopY, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
+    if (isCharacterInActiveRoom || isLevelComplete) {
+      drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+    }
+    return null;
+  }
+  const { characterLocationById, isLevelComplete } = drawCall.levelContext;
+  const location = characterLocationById.get(characterId);
+  if (!isLevelComplete && location?.kind === 'adjacentOpenExit') {
+    drawSpeechBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
+      scalingFactors, context, startTime, time);
+  }
   return null;
 }
 
@@ -123,24 +132,30 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
   context:CanvasRenderingContext2D, text:string, startTime:number, isLoud:boolean, characterId:string):EffectHandlerResult|null {
   if (drawCall.stage === 'afterCharacter') {
     const { anchorX, anchorTopY, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
-    if (!isLoud || isCharacterInActiveRoom || isLevelComplete) {
+    if (isCharacterInActiveRoom || isLevelComplete) {
       drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
     }
     return null;
   }
   
-  if (drawCall.stage !== 'afterLevel' || !isLoud) return null;
+  if (drawCall.stage !== 'afterLevel') return null;
   const { characterLocationById, isLevelComplete, activeRoomTopCenterCanvasPoint } = drawCall.levelContext;
-  if (characterLocationById.get(characterId)?.kind === 'activeRoom' || isLevelComplete) return null;
-  const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(activeRoomTopCenterCanvasPoint, scalingFactors);
-  drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+  const location = characterLocationById.get(characterId);
+  if (location?.kind === 'activeRoom' || isLevelComplete) return null;
+  if (isLoud) {
+    const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(activeRoomTopCenterCanvasPoint, scalingFactors);
+    drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+  } else if (location?.kind === 'adjacentOpenExit') {
+    drawEmitBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
+      scalingFactors, context, startTime, time);
+  }
   return null;
 }
 
-export function createSaysEffect(text:string, startTime:number, speechDuration:number):Effect {
+export function createSaysEffect(characterId:string, text:string, startTime:number, speechDuration:number):Effect {
   const dipOffset = rand() * TALKING_DIPS_DURATION; // Set this randomly so that characters rarely have same head animation.
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
-    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, dipOffset);
+    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, dipOffset, characterId);
   }
   return { kind:'says', startTime, endTime:startTime+speechDuration, handler };
 }
