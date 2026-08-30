@@ -1,5 +1,5 @@
-/* This module groups character-focused drawing helpers, including visible character rendering and character popovers.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups character-focused drawing helpers, including visible character rendering and character popovers.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
@@ -189,11 +189,19 @@ function _createCharacterPopoverBodyEntries(character:Character):PopoverBodyEntr
   return bodyEntries;
 }
 
-function _createCharacterCanvasLayout(character:Character, displayPosition:Position, scalingFactors:ScalingFactors, time:number) {
-  const { anchorX:backboneX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(
+export function createCharacterCanvasLayout(character:Character, displayPosition:Position,
+    scalingFactors:ScalingFactors, time:number) {
+  const { anchorX:backboneX, anchorTopY, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(
     character, displayPosition, scalingFactors, time);
   const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
-  return { layout, characterWidth, characterHeight };
+  return {
+    layout,
+    characterWidth,
+    characterHeight,
+    characterCenterCanvasPoint:[backboneX, centerY] as [number, number],
+    highlightCenterX:centerX,
+    anchorTopY
+  };
 }
 
 function _getFaceImageDrawSize(faceImage:ImageBitmap, headRadius:number):{ drawWidth:number, drawHeight:number }|null {
@@ -211,7 +219,7 @@ function _getFaceImageDrawSize(faceImage:ImageBitmap, headRadius:number):{ drawW
 
 function _getCharacterBodyCanvasRect(character:Character, displayPosition:Position,
   scalingFactors:ScalingFactors, time:number):Rect {
-  const { layout } = _createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
+  const { layout } = createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
   const segmentXs = layout.segments.flatMap(segment => [segment.fromX, segment.toX]);
   const leftX = Math.min(layout.head.centerX - layout.head.radius, ...segmentXs);
   const rightX = Math.max(layout.head.centerX + layout.head.radius, ...segmentXs);
@@ -224,7 +232,7 @@ function _getCharacterFaceCanvasRect(character:Character, displayPosition:Positi
   const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
   if (!faceImage) return null;
 
-  const { layout } = _createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
+  const { layout } = createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
   const faceImageDrawSize = _getFaceImageDrawSize(faceImage, layout.head.radius);
   if (!faceImageDrawSize) return null;
 
@@ -307,15 +315,15 @@ function _findHeadRotationSpriteOverride(spriteOverrides:SpriteOverride[]):numbe
 
 export function drawCharacter(character:Character, displayPosition:Position, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, imageSet:ImageSet, isHighlighted:boolean,
-    metaTime:number, spriteOverrides:SpriteOverride[]) {
-  const { anchorX:backboneX, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(
-    character, displayPosition, scalingFactors, gameTime);
+    metaTime:number, spriteOverrides:SpriteOverride[],
+    characterCanvasLayout = createCharacterCanvasLayout(character, displayPosition, scalingFactors, gameTime)) {
+  const { layout, characterWidth, characterHeight, characterCenterCanvasPoint:[, centerY],
+    highlightCenterX:centerX } = characterCanvasLayout;
   const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
   const faceAngleOffsetRadians = _findHeadRotationSpriteOverride(spriteOverrides);
   if (isHighlighted) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, metaTime);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
-  const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
   drawHeldItemsBehindCharacter(character, layout, scalingFactors, context, imageSet);
   strokeCharacterBody(layout, context);
   const headRadius = layout.head.radius;

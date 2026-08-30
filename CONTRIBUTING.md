@@ -40,6 +40,10 @@
 * Code outside the encapsulated module may only access the module's functionality through functions exported from `index.ts`.
 * Exception: any type definitions or helper functions exported from files in a `types` subfolder may be imported directly.
 
+## Import Paths
+
+* If a relative import path would contain more than one `..` segment, use an `@`-alias-based path instead.
+
 # Testing
 
 This project uses two test categories.

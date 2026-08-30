@@ -6,7 +6,7 @@ import { assertNonNullable } from "decent-portal";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 import { roomHeightToLayerCount, roomWidthToColumnCount } from "@/game/roomGridUtil";
-import { drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
+import { createCharacterCanvasLayout, drawCharacter, drawObscuredActiveCharacter } from "./characterDrawUtil";
 import { getCharacterSpeechAnchor } from "./characterDrawUtil";
 import {
   ACTIVE_BACK_WALL_TEXTURE_LIGHTNESS,
@@ -36,7 +36,7 @@ import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
 import { findTexturePrimaryImageOperation } from "@/game/textureUtil";
-import { hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
+import { getHeldItemCanvasPoint, hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
 import Character from "../types/Character";
 import GameState from "../types/GameState";
 import Room from "../types/Room";
@@ -336,17 +336,26 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           layoutPlanner.reserveRect(getCharacterCanvasRect(
             content.character, content.displayPosition, scalingFactors, gameTime, imageSet));
         }
-        const { anchorX, anchorTopY } = getCharacterSpeechAnchor(
-            content.character, content.displayPosition, scalingFactors, gameTime);
+        const characterCanvasLayout = createCharacterCanvasLayout(
+          content.character, content.displayPosition, scalingFactors, gameTime);
+        const { characterCenterCanvasPoint:[anchorX], anchorTopY } = characterCanvasLayout;
         const characterContext:CharacterEffectDrawContext = {
           anchorX,
           anchorTopY,
           isCharacterInActiveRoom,
-          isLevelComplete
+          isLevelComplete,
+          itemTransfer:{
+            characterCenterCanvasPoint:characterCanvasLayout.characterCenterCanvasPoint,
+            leftHandItemCanvasPoint:getHeldItemCanvasPoint(characterCanvasLayout.layout, 'left', scalingFactors),
+            rightHandItemCanvasPoint:getHeldItemCanvasPoint(characterCanvasLayout.layout, 'right', scalingFactors),
+            roomContentDisplayLayout:displayLayout,
+            imageSet
+          }
         };
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
         const spriteOverrides = handleBeforeCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
-        drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet, isHighlighted, metaTime, spriteOverrides);
+        drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
+          isHighlighted, metaTime, spriteOverrides, characterCanvasLayout);
         handleAfterCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
         return;
     }
