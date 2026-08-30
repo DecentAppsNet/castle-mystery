@@ -35,7 +35,7 @@ function _findNextKeyframeWithDefinedCharacterPosition(keyframes:readonly Editab
 
 function _removeCompletedEffects(keyframe:TimelineKeyframe) {
   for(let i = 0; i < keyframe.characters.length; ++i) {
-    keyframe.characters[i].effects = keyframe.characters[i].effects.filter(ec => ec.endTime < keyframe.time); 
+    keyframe.characters[i].effects = keyframe.characters[i].effects.filter(ec => ec.endTime > keyframe.time); 
   }
 }
 
@@ -234,9 +234,7 @@ export function addCharacterEffect(effect:Effect, characterI:number, timeline:Ed
   // Need a keyframe at the end time to represent the effect is no longer active.
   const existingFrame = timeline.editableKeyframes.find(kf => kf.time === effect.endTime);
   if (existingFrame) {
-    const currentEffects = existingFrame.characters[characterI].effects;
-    assertNonNullable(currentEffects);
-    existingFrame.characters[characterI].effects = currentEffects.filter(e => e !== effect);
+    timeline.keyframes = _generateKeyframes(timeline.editableKeyframes);
   } else {
     const characterKeyframe = findCharacterKeyframeForTime(timeline.keyframes, characterI, effect.endTime);
     const effects = characterKeyframe.effects.filter(e => e !== effect);

@@ -21,6 +21,7 @@ import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timeli
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { CharacterOwnedItemPlacement, findCharacterOwnedItem, INVENTORY, LEFT_HAND, RIGHT_HAND } from "@/game/itemOwnershipUtil";
+import { hasActiveDropReservation } from "./util/itemTransferReservationUtil";
 
 const ROOM = 'room';
 type ItemPlacement = CharacterOwnedItemPlacement|typeof ROOM;
@@ -110,6 +111,10 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   const characterI = editableTimeline.characterIdToI[characterId];
   const characterKeyframe = keyframe.characters[characterI];
   assertNonNullable(characterKeyframe);
+  if (hasActiveDropReservation(characterKeyframe)) {
+    errors.addAtLine(`"${characterId}" character is already dropping an item.`, activity.lineI);
+    return false;
+  }
   const item = level.itemsById.get(itemId);
   assertNonNullable(item);
 

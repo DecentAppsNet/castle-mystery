@@ -23,9 +23,11 @@ import Room from "@/game/types/Room";
 import Waypoint from "@/levelLoading/types/Waypoint";
 import { arePositionsAdjacent } from "@/game/positionUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
-import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
+import { addCharacterEffect, addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 import { findCharacterOwnedItem } from "@/game/itemOwnershipUtil";
+import { createDropEffect } from "@/game/effects/dropEffectUtil";
+import { hasActiveDropReservation } from "./util/itemTransferReservationUtil";
 
 // Coupled to parse format. Used for casting parts to expected types.
 type PartsShape = {
@@ -118,6 +120,11 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   assertNonNullable(characterI);
   const characterKeyframe = fromKeyframe.characters[characterI];
 
+  if (hasActiveDropReservation(characterKeyframe)) {
+    errors.addAtLine(`"${characterId}" character is already dropping an item.`, activity.lineI);
+    return false;
+  }
+
   // Confirm character has item in inventory or hands at time of dropping.
   const ownedItem = findCharacterOwnedItem(characterKeyframe, itemId);
   if (!ownedItem) {
@@ -159,15 +166,17 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
     scheduleTime += scheduleResult.walkDuration;
   }
   
-  // Schedule removal of item from character and adding it to the room in its target position.
-  _scheduleRemoveItemFromCharacter(characterKeyframe, characterI, scheduleTime, itemId, editableTimeline);
-  _scheduleAddItemToRoom(item, dropFloorPosition, roomKeyframe, roomI, scheduleTime, editableTimeline);
+  // Schedule the visual transfer while the character retains ownership of the item.
+  const dropEffect = createDropEffect(item, ownedItem.placement, dropFloorPosition, scheduleTime);
+  addCharacterEffect(dropEffect, characterI, editableTimeline);
 
-  // Schedule drop effect. TODO recreate after you've got the pattern stable.
-  // const dropEffect = createDropEffect(itemId, dropFloorPosition, scheduleTime);
-  //addCharacterEffect(dropEffect, characterI, editableTimeline);
-  // activity.endTime = dropEffect.endTime;
-  activity.endTime = scheduleTime + 500; // TODO delete
+  // Transfer ownership to the room exactly when the visual effect ends.
+  const endKeyframe = findKeyframeForTime(editableTimeline.keyframes, dropEffect.endTime);
+  _scheduleRemoveItemFromCharacter(endKeyframe.characters[characterI], characterI,
+    dropEffect.endTime, itemId, editableTimeline);
+  _scheduleAddItemToRoom(item, dropFloorPosition, endKeyframe.rooms[roomI], roomI,
+    dropEffect.endTime, editableTimeline);
+  activity.endTime = dropEffect.endTime;
 
   return true;
 }

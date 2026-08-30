@@ -63,6 +63,7 @@ Guidelines:
 * Use `describe('file name')` at the top level.
 * Nest `describe('functionName()')` blocks under the top-level file block.
 * Keep each test focused on one behavior.
+* Prefer separate, explicit test cases over parameterized tests such as `it.each()` or loops. Some repetition is acceptable in unit tests when it improves readability and makes individual cases easier to debug.
 * Order tests from simpler and more fundamental behavior to more complex behavior.
 
 ## Integration Tests

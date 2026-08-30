@@ -17,8 +17,9 @@ function _interpolateCanvasPoint(from:[number, number], to:[number, number], pro
   return [interpolateNumber(from[0], to[0], progress), interpolateNumber(from[1], to[1], progress)];
 }
 
-function _getDestinationCanvasPoint(drawCall:Extract<EffectDrawCall, { stage:'beforeCharacter'|'afterCharacter' }>,
-  item:Item, destinationFloorPosition:Position, scalingFactors:ScalingFactors):[number, number] {
+type CharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter'|'afterCharacter' }>;
+function _getDestinationCanvasPoint(drawCall:CharacterDrawCall, item:Item, destinationFloorPosition:Position, 
+    scalingFactors:ScalingFactors):[number, number] {
   const displayPosition = drawCall.characterContext.itemTransfer.roomContentDisplayLayout
     .findProspectiveItemDisplayPosition(item, destinationFloorPosition);
   return getItemCanvasPositionInRoom(displayPosition, scalingFactors);
