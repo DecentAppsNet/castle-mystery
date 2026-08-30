@@ -11,6 +11,8 @@ import Character from "./types/Character";
 import { normalizeId, normalizeOptionalId } from "./idUtil";
 import { isPositionInRect } from "./rectUtil";
 import CharacterWithEffects from "./types/CharacterWithEffects";
+import ExitStatus from "./types/ExitStatus";
+import RoomExit from "./types/RoomExit";
 
 export function findRoom(rooms:readonly Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
@@ -38,6 +40,13 @@ export function findCharactersInRoom(room:Room, characters:readonly Character[])
 
 export function findCharactersWithEffectsInRoom(room:Room, characters:readonly CharacterWithEffects[]):CharacterWithEffects[] {
   return findCharactersInRoom(room, characters) as CharacterWithEffects[];
+}
+
+export function findOpenExitConnectingRooms(room:Room, otherRoom:Room):RoomExit|null {
+  if (room.id === otherRoom.id) return null;
+  return room.exits.find(exit => exit.exitStatus === ExitStatus.open
+    && ((exit.room1Id === room.id && exit.room2Id === otherRoom.id)
+      || (exit.room2Id === room.id && exit.room1Id === otherRoom.id))) ?? null;
 }
 
 export function calcRoomsBoundingRect(rooms:Room[]):Rect {

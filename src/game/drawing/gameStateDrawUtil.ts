@@ -7,7 +7,7 @@ import { DRAW_RESERVED_RECTS } from "@/developer/config";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive, isItemInteractive } from "../interactivityUtil";
 import { calcRoomRoofBounds } from "../roomRoofUtil";
-import { findCharactersWithEffectsInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
+import { findCharactersWithEffectsInRoom, findOpenExitConnectingRooms, findRoom, findRoomAtPosition } from "../roomUtil";
 import GameState from "../types/GameState";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
@@ -16,7 +16,7 @@ import { createEmptyRoomShellVariantImages, RoomShellVariantImage } from "../typ
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawColorConstants";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
-import { drawExitPopover } from "./exitDrawUtil";
+import { drawExitPopover, getProjectedExitCanvasRect } from "./exitDrawUtil";
 import { drawObscuredRoom } from "./obscureDrawUtil";
 import { drawCacheableRoomShell, drawRoomCharactersAndEffects, drawRoomShellExits, drawRoomTitle } from "./roomDrawUtil";
 import { drawRoomRoofs } from "./roomRoofDrawUtil";
@@ -27,8 +27,8 @@ import { MAP_TILE_SIZE } from "../roomGridUtil";
 import { findImageBitmap } from "@/game/imageAssetUtil";
 import { getGroundImageAssetUrl } from "../imageUrlUtil";
 import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
-import { isPositionInRect } from "../rectUtil";
 import LevelEffectDrawContext from "../effects/types/LevelEffectDrawContext";
+import LevelEffectCharacterLocation from "../effects/types/LevelEffectCharacterLocation";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import Item from "../types/Item";
@@ -263,12 +263,46 @@ function _drawRoomSilhouettes(gameState:GameState, context:CanvasRenderingContex
   }
 }
 
-function _createLevelEffectDrawContext(characters:CharacterWithEffects[], activeRoom:Room,
+function _createCharacterLocationById(characters:CharacterWithEffects[], rooms:Room[], activeRoom:Room,
+    scalingFactors:ScalingFactors):ReadonlyMap<string, LevelEffectCharacterLocation> {
+  const locationsByRoomId = new Map<string, LevelEffectCharacterLocation>();
+  const locationByCharacterId = new Map<string, LevelEffectCharacterLocation>();
+  const activeRoomInteriorCanvasPoint = projectRoomPointWithDepth(
+    activeRoom.rect.x + activeRoom.rect.width / 2,
+    activeRoom.rect.y + activeRoom.rect.height / 2,
+    0,
+    scalingFactors
+  );
+  characters.forEach(character => {
+    const characterRoom = findRoomAtPosition(rooms, character.position.x, character.position.y);
+    if (!characterRoom) {
+      locationByCharacterId.set(character.id, { kind:'outsideLocalAudibleRange' });
+      return;
+    }
+    let location = locationsByRoomId.get(characterRoom.id);
+    if (!location) {
+      const openExit = findOpenExitConnectingRooms(characterRoom, activeRoom);
+      const exitRect = openExit ? getProjectedExitCanvasRect(openExit, scalingFactors) : null;
+      location = characterRoom.id === activeRoom.id
+        ? { kind:'activeRoom' }
+        : exitRect
+          ? {
+              kind:'adjacentOpenExit',
+              exitTargetCanvasPoint:[exitRect.x + exitRect.width / 2, exitRect.y + exitRect.height / 2],
+              activeRoomInteriorCanvasPoint
+            }
+          : { kind:'outsideLocalAudibleRange' };
+      locationsByRoomId.set(characterRoom.id, location);
+    }
+    locationByCharacterId.set(character.id, location);
+  });
+  return locationByCharacterId;
+}
+
+function _createLevelEffectDrawContext(characters:CharacterWithEffects[], rooms:Room[], activeRoom:Room,
     isLevelComplete:boolean, scalingFactors:ScalingFactors):LevelEffectDrawContext {
   return {
-    characterIdsInActiveRoom:new Set(characters
-      .filter(character => isPositionInRect(character.position.x, character.position.y, activeRoom.rect))
-      .map(character => character.id)),
+    characterLocationById:_createCharacterLocationById(characters, rooms, activeRoom, scalingFactors),
     isLevelComplete,
     activeRoomTopCenterCanvasPoint:projectRoomPointWithDepth(
       activeRoom.rect.x + activeRoom.rect.width / 2,
@@ -355,7 +389,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     characters,
     gameState.scalingFactors,
     gameState.time,
-    _createLevelEffectDrawContext(characters, activeRoom, gameState.isLevelComplete, gameState.scalingFactors),
+    _createLevelEffectDrawContext(characters, rooms, activeRoom, gameState.isLevelComplete, gameState.scalingFactors),
     metaTime,
     context
   );

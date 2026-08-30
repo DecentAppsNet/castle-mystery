@@ -130,8 +130,8 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
   }
   
   if (drawCall.stage !== 'afterLevel' || !isLoud) return null;
-  const { characterIdsInActiveRoom, isLevelComplete, activeRoomTopCenterCanvasPoint } = drawCall.levelContext;
-  if (characterIdsInActiveRoom.has(characterId) || isLevelComplete) return null;
+  const { characterLocationById, isLevelComplete, activeRoomTopCenterCanvasPoint } = drawCall.levelContext;
+  if (characterLocationById.get(characterId)?.kind === 'activeRoom' || isLevelComplete) return null;
   const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(activeRoomTopCenterCanvasPoint, scalingFactors);
   drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
   return null;

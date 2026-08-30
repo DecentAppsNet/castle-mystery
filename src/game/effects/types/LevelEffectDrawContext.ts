@@ -1,5 +1,7 @@
+import LevelEffectCharacterLocation from "./LevelEffectCharacterLocation"
+
 type LevelEffectDrawContext = {
-  characterIdsInActiveRoom:ReadonlySet<string>,
+  characterLocationById:ReadonlyMap<string, LevelEffectCharacterLocation>,
   isLevelComplete:boolean,
   activeRoomTopCenterCanvasPoint:[number, number]
 }
