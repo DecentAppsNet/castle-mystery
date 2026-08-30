@@ -1,3 +1,6 @@
+/* This file parses and schedules item-taking activities between rooms, inventory, and hands.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteralOptions, makeSequence, makeVariableLiteralOptions, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
@@ -17,18 +20,13 @@ import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
-import { INVENTORY, LEFT_HAND, RIGHT_HAND } from "@/game/effects/takeEffectUtil";
+import { CharacterOwnedItemPlacement, findCharacterOwnedItem, INVENTORY, LEFT_HAND, RIGHT_HAND } from "@/game/itemOwnershipUtil";
 
 const ROOM = 'room';
+type ItemPlacement = CharacterOwnedItemPlacement|typeof ROOM;
 
-function _getItemPlacement(characterKeyframe:CharacterKeyframe, itemId:string):string {
-  if (characterKeyframe.leftHandItem?.id === itemId) return LEFT_HAND;
-  if (characterKeyframe.rightHandItem?.id === itemId) return RIGHT_HAND;
-  if (characterKeyframe.items.find(i => i.id === itemId) !== undefined) return INVENTORY;
-  return ROOM;
-}
-
-function _scheduleCharacterItemMovement(keyframe:CharacterKeyframe, item:Item, itemPlacement:string, target:string, characterI:number, 
+function _scheduleCharacterItemMovement(keyframe:CharacterKeyframe, item:Item, itemPlacement:ItemPlacement,
+    target:CharacterOwnedItemPlacement, characterI:number,
     time:number, editableTimeline:EditableTimeline) {
   if (target === itemPlacement) return; // Item is already where it was requested to be.
 
@@ -103,7 +101,7 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   assertNonNullable(activity.startTime);
   
   const { characterId, itemId } = activity.parts;
-  const target:string = typeof activity.parts.target === 'string' ? activity.parts.target : INVENTORY;
+  const target = typeof activity.parts.target === 'string' ? activity.parts.target : INVENTORY;
   assert(target === LEFT_HAND || target === RIGHT_HAND || target === INVENTORY);
 
   assertNonNullable(characterId, 'implied subjects should have been resolved');
@@ -115,7 +113,7 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   const item = level.itemsById.get(itemId);
   assertNonNullable(item);
 
-  const itemPlacement = _getItemPlacement(characterKeyframe, itemId);
+  const itemPlacement = findCharacterOwnedItem(characterKeyframe, itemId)?.placement ?? ROOM;
   if (itemPlacement !== ROOM) { // Handle movement of item from one place on the character to another.
     _scheduleCharacterItemMovement(characterKeyframe, item, itemPlacement, target, characterI, activity.startTime, editableTimeline);
     activity.endTime = activity.startTime;

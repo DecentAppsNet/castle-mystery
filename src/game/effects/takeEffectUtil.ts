@@ -1,13 +1,12 @@
+/* This file creates take-item timeline effects.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Effect from "./types/Effect";
+import { CharacterOwnedItemPlacement } from "../itemOwnershipUtil";
 
 const TAKE_EFFECT_TIME = 500;
 
-export const LEFT_HAND = 'left hand';
-export const RIGHT_HAND = 'right hand';
-export const INVENTORY = 'inventory';
-type TakeTarget = 'left hand' | 'right hand' | 'inventory';
-
-export function createTakeEffect(_itemId:string, _target:TakeTarget, startTime:number):Effect {
+export function createTakeEffect(_itemId:string, _target:CharacterOwnedItemPlacement, startTime:number):Effect {
   // TODO
   return {
     kind:'takeItem',

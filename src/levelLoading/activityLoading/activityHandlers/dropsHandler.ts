@@ -1,5 +1,5 @@
-/* This module parses and schedules item-drop activities, including room placement and stacking.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file parses and schedules item-drop activities, including room placement and stacking.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteral, makeOptions, makeSequence, makeVerb } from "../parseFormatUtil";
@@ -25,6 +25,7 @@ import { arePositionsAdjacent } from "@/game/positionUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
+import { findCharacterOwnedItem } from "@/game/itemOwnershipUtil";
 
 // Coupled to parse format. Used for casting parts to expected types.
 type PartsShape = {
@@ -51,12 +52,6 @@ export function createDropsParseFormat():ParseFormat {
   const target = makeSequence([preposition, targetOptions], true);
   const rootParseStep = makeSequence([characterId, drops, itemId, target]);
   return createParseFormat(rootParseStep);
-}
-
-function _findCharacterItem(characterKeyframe:CharacterKeyframe, itemId:string):Item|null {
-  if (characterKeyframe.leftHandItem?.id === itemId) return characterKeyframe.leftHandItem;
-  if (characterKeyframe.rightHandItem?.id === itemId) return characterKeyframe.rightHandItem;
-  return characterKeyframe.items.find(i => i.id === itemId) ?? null;
 }
 
 function _findItemPositionInRoom(itemId:string|undefined, roomId:string, roomItems:Item[]):Position|string|null {
@@ -124,12 +119,13 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   const characterKeyframe = fromKeyframe.characters[characterI];
 
   // Confirm character has item in inventory or hands at time of dropping.
-  const item = _findCharacterItem(characterKeyframe, itemId);
-  if (!item) {
+  const ownedItem = findCharacterOwnedItem(characterKeyframe, itemId);
+  if (!ownedItem) {
     errors.addAtLine(`"${characterId}" character does not have "${itemId}" at ${formatMsecsAsTimestamp(activity.startTime)} so can't drop it.`,
       activity.lineI);
     return false;
   }
+  const item = ownedItem.item;
 
   // Set up convenience vars for room.
   const roomId = findRoomIdAtPosition(level.rooms, characterKeyframe.position.x, characterKeyframe.position.y);

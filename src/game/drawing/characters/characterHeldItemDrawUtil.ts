@@ -1,5 +1,5 @@
-/* This module groups hand-held item drawing helpers, including per-hand layering and in-hand item metrics.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups hand-held item drawing helpers, including per-hand layering and in-hand item metrics.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { calcItemCuboidHeightPixels, calcItemCuboidWidthPixels } from "@/game/itemSizeUtil";
 import { isItemInteractive } from "@/game/interactivityUtil";
@@ -32,11 +32,17 @@ function _calcHandYOffset(scalingFactors:ScalingFactors):number {
   return cuboidHeightPixels;
 }
 
-function _drawHeldItem(item:Item, handX:number, handY:number, scalingFactors:ScalingFactors,
+export function getHeldItemCanvasPoint(layout:CharacterLayout, hand:'left'|'right',
+    scalingFactors:ScalingFactors):[number, number] {
+  const handPosition = hand === 'left' ? layout.leftHand : layout.rightHand;
+  return [handPosition.x, handPosition.y + _calcHandYOffset(scalingFactors) * 0.35];
+}
+
+function _drawHeldItem(item:Item, layout:CharacterLayout, hand:'left'|'right', scalingFactors:ScalingFactors,
   context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const imageDrawRect = _createHeldItemDrawRect(scalingFactors);
-  const handYOffset = _calcHandYOffset(scalingFactors);
-  drawItemAtCanvasPosition(item, handX, handY + handYOffset * 0.35, imageDrawRect, context, imageSet);
+  const [itemX, itemY] = getHeldItemCanvasPoint(layout, hand, scalingFactors);
+  drawItemAtCanvasPosition(item, itemX, itemY, imageDrawRect, context, imageSet);
 }
 
 function _findBackHandItem(character:Character):Item|null {
@@ -58,14 +64,13 @@ export function drawHeldItemsBehindCharacter(character:Character, layout:Charact
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const backHandItem = _findBackHandItem(character);
   if (!backHandItem) return;
-  const handPosition = character.facingDirection === 'right' ? layout.leftHand : layout.rightHand;
-  _drawHeldItem(backHandItem, handPosition.x, handPosition.y, scalingFactors, context, imageSet);
+  const hand = character.facingDirection === 'right' ? 'left' : 'right';
+  _drawHeldItem(backHandItem, layout, hand, scalingFactors, context, imageSet);
 }
 
 export function drawHeldItemsInFrontOfCharacter(character:Character, layout:CharacterLayout,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const frontHandItem = _findFrontHandItem(character);
   if (!frontHandItem) return;
-  const handPosition = character.facingDirection === 'right' ? layout.rightHand : layout.leftHand;
-  _drawHeldItem(frontHandItem, handPosition.x, handPosition.y, scalingFactors, context, imageSet);
+  _drawHeldItem(frontHandItem, layout, character.facingDirection, scalingFactors, context, imageSet);
 }

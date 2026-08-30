@@ -1,5 +1,5 @@
-/* This module groups room-focused drawing helpers, including room shells, exits, and in-room contents.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups room-focused drawing helpers, including room shells, exits, and in-room contents.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from "decent-portal";
 
@@ -50,7 +50,7 @@ import { getCharacterCanvasRect } from "./characterDrawUtil";
 import { getItemCanvasRectInRoom } from "./itemDrawUtil";
 import { calcUndiscoveredMarkerHeightPixels, drawUndiscoveredMarker } from "./undiscoveredMarkerDrawUtil";
 import DiscoveryState from "../types/DiscoveryState";
-import { createRoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
+import { createRoomContentDisplayLayout, RoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
 import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
@@ -262,8 +262,8 @@ export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, 
 }
 
 export function createDrawableContents(room:Room, charactersInRoom:CharacterWithEffects[], 
-    discoveredItemIds:ReadonlySet<string>, includeUndiscoveredItems:boolean):RoomDrawableContent[] {
-  const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom);
+  discoveredItemIds:ReadonlySet<string>, includeUndiscoveredItems:boolean,
+  displayLayout:RoomContentDisplayLayout = createRoomContentDisplayLayout(room, charactersInRoom)):RoomDrawableContent[] {
   const stairContents = room.stairParts.map((stairPart, stairIndex) => ({
     type:'stair' as const,
     depth:_calcStairPartSortDepth(stairPart),
@@ -316,7 +316,9 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
     stairTextureLightness:{ top:number, side:number, front:number }, discoveryState:DiscoveryState,
     isCharacterInActiveRoom:boolean, isLevelComplete:boolean, layoutPlanner:CanvasLayoutPlanner|null = null) {
-  const contents = createDrawableContents(room, charactersInRoom, discoveryState.discoveredItemIds, includeUndiscoveredItems);
+  const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom);
+  const contents = createDrawableContents(room, charactersInRoom, discoveryState.discoveredItemIds,
+    includeUndiscoveredItems, displayLayout);
   contents.forEach(content => {
     switch(content.type) {
       case 'stair':
