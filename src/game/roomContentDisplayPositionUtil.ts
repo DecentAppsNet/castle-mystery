@@ -1,9 +1,10 @@
-/* This module calculates ephemeral item and character display positions for room floor-square stacks.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file calculates ephemeral item and character display positions for room floor-square stacks.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { ITEM_CUBOID_HEIGHT_GAME } from "./itemSizeUtil";
 import { findNearestFloorSquareCenter } from "./squareUtil";
 import Character from "./types/Character";
+import Item from "./types/Item";
 import Position from "./types/Position";
 import Room from "./types/Room";
 
@@ -16,7 +17,8 @@ type RoomContentDisplayLayoutEntry = {
 
 export type RoomContentDisplayLayout = {
   itemLayoutById:ReadonlyMap<string, RoomContentDisplayLayoutEntry>,
-  characterLayoutById:ReadonlyMap<string, RoomContentDisplayLayoutEntry>
+  characterLayoutById:ReadonlyMap<string, RoomContentDisplayLayoutEntry>,
+  findProspectiveItemDisplayPosition:(item:Item, destinationFloorPosition:Position) => Position
 }
 
 type SquareLayout = {
@@ -80,5 +82,9 @@ export function createRoomContentDisplayLayout(room:Room, charactersInRoom:Reado
     });
   });
 
-  return { itemLayoutById, characterLayoutById };
+  const findProspectiveItemDisplayPosition = (item:Item, destinationFloorPosition:Position):Position => {
+    const squareLayout = layoutBySquareKey.get(_createSquareKey(destinationFloorPosition));
+    return _addPositions(destinationFloorPosition, squareLayout?.supportTransform ?? { x:0, y:0, z:0 }, item.drawOffset);
+  };
+  return { itemLayoutById, characterLayoutById, findProspectiveItemDisplayPosition };
 }

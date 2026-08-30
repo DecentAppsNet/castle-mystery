@@ -94,11 +94,11 @@ Using a shared primary sort key makes the comparator transitive. Individual offs
 
 Stair merging retains its existing behavior. Character-to-stair comparisons continue to use the character's stored world position rather than stack height.
 
-### 7. Item take/drop animation anchors remain separate
+### 7. Item-transfer animation queries remain ephemeral
 
-Take and drop effects continue to use an explicitly named base item position consisting of the stored position plus the item's own `drawOffset`. They do not make transient effect clones participate in static room stack layout.
+An item-transfer effect may ask an already-created room-content layout where an item would display if appended at a destination floor square. This pure prospective query uses the square's final visible support transform and the candidate item's own `drawOffset`, without applying the candidate's `stackOffset` to itself.
 
-This preserves existing animation behavior. Any animation-to-static-stack transition is a separate presentation decision.
+The query does not add the candidate to the room, layout maps, or support data. Transfer effects therefore do not make transient item clones participate in static room drawing, and no prospective display position enters persistent state.
 
 ## Rationale
 

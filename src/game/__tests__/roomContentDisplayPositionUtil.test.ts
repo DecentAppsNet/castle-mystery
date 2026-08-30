@@ -144,6 +144,60 @@ describe('roomContentDisplayPositionUtil', () => {
       expect(layout.characterLayoutById.get('unsupported')!.painterOrderAnchor).toEqual(unsupported.position);
     });
 
+    it('finds a prospective item position on an empty destination square', () => {
+      const candidate = _createItem('candidate', LEFT_SQUARE, { x:1, y:-2, z:0.25 });
+      const layout = createRoomContentDisplayLayout(_createRoom([]), []);
+
+      expect(layout.findProspectiveItemDisplayPosition(candidate, RIGHT_SQUARE))
+        .toEqual({ x:18.5, y:37.999, z:0.75 });
+    });
+
+    it('finds a prospective item position above all visible support contributions', () => {
+      const bottom = _createItem('bottom', LEFT_SQUARE, { x:1, y:-2, z:0.1 }, { x:3, y:-4, z:0.2 });
+      const top = _createItem('top', LEFT_SQUARE, { x:-1, y:-1, z:-0.1 }, { x:2, y:-3, z:0.3 });
+      const candidate = _createItem('candidate', RIGHT_SQUARE, { x:0.5, y:-0.5, z:0.05 });
+      const layout = createRoomContentDisplayLayout(_createRoom([bottom, top]), []);
+
+      _expectPosition(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE), {
+        x:LEFT_SQUARE.x + 1 + 3 - 1 + 2 + 0.5,
+        y:FLOOR_Y - 2 - 4 - ITEM_CUBOID_HEIGHT_GAME - 1 - 3 - ITEM_CUBOID_HEIGHT_GAME - 0.5,
+        z:LEFT_SQUARE.z + 0.1 + 0.2 - 0.1 + 0.3 + 0.05
+      });
+    });
+
+    it('ignores invisible supports for a prospective item position', () => {
+      const hidden = _createItem('hidden', LEFT_SQUARE, { x:20, y:20, z:20 }, { x:20, y:20, z:20 }, false);
+      const candidate = _createItem('candidate');
+      const layout = createRoomContentDisplayLayout(_createRoom([hidden]), []);
+
+      expect(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE)).toEqual(LEFT_SQUARE);
+    });
+
+    it("applies the prospective item's draw offset but not its stack offset", () => {
+      const candidate = _createItem('candidate', LEFT_SQUARE, { x:1, y:-2, z:0.25 }, { x:30, y:40, z:50 });
+      const layout = createRoomContentDisplayLayout(_createRoom([]), []);
+
+      expect(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE))
+        .toEqual({ x:13.5, y:37.999, z:0.75 });
+    });
+
+    it('does not mutate inputs or existing layout entries when finding a prospective position', () => {
+      const support = _createItem('support');
+      const candidate = _createItem('candidate', RIGHT_SQUARE, { x:1, y:-2, z:0.25 });
+      const character = _createCharacter('sam');
+      const room = _createRoom([support]);
+      const layout = createRoomContentDisplayLayout(room, [character]);
+      const itemEntry = layout.itemLayoutById.get(support.id);
+      const characterEntry = layout.characterLayoutById.get(character.id);
+      const before = JSON.stringify({ room, candidate, character, itemEntry, characterEntry });
+
+      layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE);
+
+      expect(JSON.stringify({ room, candidate, character, itemEntry, characterEntry })).toBe(before);
+      expect(layout.itemLayoutById.size).toBe(1);
+      expect(layout.characterLayoutById.size).toBe(1);
+    });
+
     it('does not mutate room items or characters', () => {
       const item = _createItem('table', LEFT_SQUARE, { x:1, y:-2, z:0.1 }, { x:3, y:-4, z:0.2 });
       const character = _createCharacter('sam', { x:14.999, y:FLOOR_Y, z:0.5 });
