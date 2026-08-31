@@ -11,3 +11,11 @@ export function interpolateNumber(from:number, to:number, progress:number):numbe
   if (progress >= 1) return to;
   return from + (to - from) * progress;
 }
+
+export function interpolateNumberPair(from:[number, number], to:[number, number], progress:number):[number, number] {
+  if (progress >= 1) return [...to];
+  return [
+    from[0] + (to[0] - from[0]) * progress,
+    from[1] + (to[1] - from[1]) * progress
+  ];
+}

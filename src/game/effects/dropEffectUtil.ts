@@ -1,7 +1,7 @@
 /* This file creates drop-item transfer effects for hand-held and inventory items.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { clamp, interpolateNumber } from "@/common/numberUtil";
+import { clamp, interpolateNumberPair } from "@/common/numberUtil";
 import { drawItemAtCanvasPositionInRoom, getItemCanvasPositionInRoom } from "@/game/drawing/itemDrawUtil";
 import { CharacterOwnedItemPlacement, INVENTORY, LEFT_HAND } from "@/game/itemOwnershipUtil";
 import Item, { duplicateItem } from "@/game/types/Item";
@@ -12,10 +12,6 @@ import EffectDrawCall from "./types/EffectDrawCall";
 import { EffectHandlerResult } from "./types/EffectHandler";
 
 const DROP_EFFECT_TIME = 500;
-
-function _interpolateCanvasPoint(from:[number, number], to:[number, number], progress:number):[number, number] {
-  return [interpolateNumber(from[0], to[0], progress), interpolateNumber(from[1], to[1], progress)];
-}
 
 type CharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter'|'afterCharacter' }>;
 function _getDestinationCanvasPoint(drawCall:CharacterDrawCall, item:Item, destinationFloorPosition:Position, 
@@ -35,7 +31,7 @@ function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:Charact
   const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
   if (sourcePlacement === INVENTORY) {
     if (drawCall.stage === 'beforeCharacter') return null;
-    const [x, y] = _interpolateCanvasPoint(itemTransfer.characterCenterCanvasPoint, destination, progress);
+    const [x, y] = interpolateNumberPair(itemTransfer.characterCenterCanvasPoint, destination, progress);
     drawItemAtCanvasPositionInRoom(item, x, y, scalingFactors, context, itemTransfer.imageSet);
     return null;
   }
@@ -43,7 +39,7 @@ function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:Charact
   const source = sourcePlacement === LEFT_HAND
     ? itemTransfer.leftHandItemCanvasPoint
     : itemTransfer.rightHandItemCanvasPoint;
-  const animated = _interpolateCanvasPoint(source, destination, progress);
+  const animated = interpolateNumberPair(source, destination, progress);
   return { spriteOverrides:[{
     spriteKind:sourcePlacement === LEFT_HAND ? 'leftHandItem' : 'rightHandItem',
     transformType:'translateCanvas',

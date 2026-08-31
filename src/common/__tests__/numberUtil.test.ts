@@ -1,6 +1,6 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { expect, it, describe } from 'vitest';
-import { clamp, interpolateNumber } from '../numberUtil';
+import { clamp, interpolateNumber, interpolateNumberPair } from '../numberUtil';
 
 describe('numberUtil.ts', () => {
   describe('clamp()', () => {
@@ -28,6 +28,22 @@ describe('numberUtil.ts', () => {
 
     it('does not extrapolate beyond complete progress', () => {
       expect(interpolateNumber(10, 30, 1.5)).toBe(30);
+    });
+  });
+
+  describe('interpolateNumberPair()', () => {
+    it('returns both values at the requested linear progress', () => {
+      expect(interpolateNumberPair([10, -10], [30, 30], 0.25)).toEqual([15, 0]);
+    });
+
+    it('returns the exact target pair at complete progress', () => {
+      const target:[number, number] = [Number.MAX_VALUE, -Number.MAX_VALUE];
+
+      expect(interpolateNumberPair([-Number.MAX_VALUE, Number.MAX_VALUE], target, 1)).toEqual(target);
+    });
+
+    it('does not extrapolate either value beyond complete progress', () => {
+      expect(interpolateNumberPair([10, -10], [30, 30], 1.5)).toEqual([30, 30]);
     });
   });
 });
