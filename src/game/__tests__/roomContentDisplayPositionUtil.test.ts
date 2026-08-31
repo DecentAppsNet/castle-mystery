@@ -152,6 +152,43 @@ describe('roomContentDisplayPositionUtil', () => {
         .toEqual({ x:18.5, y:37.999, z:0.75 });
     });
 
+    it('reconstructs a prospective item at room index zero without later support', () => {
+      const laterItem = _createItem('later', LEFT_SQUARE, { x:10, y:20, z:30 }, { x:40, y:50, z:60 });
+      const candidate = _createItem('candidate');
+      const layout = createRoomContentDisplayLayout(_createRoom([laterItem]), []);
+
+      expect(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE, 0)).toEqual(LEFT_SQUARE);
+    });
+
+    it('reconstructs a prospective item between two visible same-square items', () => {
+      const bottom = _createItem('bottom', LEFT_SQUARE, { x:1, y:-2, z:0.1 }, { x:3, y:-4, z:0.2 });
+      const top = _createItem('top', LEFT_SQUARE, { x:10, y:20, z:30 }, { x:40, y:50, z:60 });
+      const candidate = _createItem('candidate');
+      const layout = createRoomContentDisplayLayout(_createRoom([bottom, top]), []);
+
+      _expectPosition(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE, 1), {
+        x:LEFT_SQUARE.x + 1 + 3,
+        y:FLOOR_Y - 2 - 4 - ITEM_CUBOID_HEIGHT_GAME,
+        z:LEFT_SQUARE.z + 0.1 + 0.2
+      });
+    });
+
+    it('excludes preceding items on unrelated squares from insertion-index support', () => {
+      const unrelated = _createItem('unrelated', RIGHT_SQUARE, { x:10, y:20, z:30 }, { x:40, y:50, z:60 });
+      const candidate = _createItem('candidate');
+      const layout = createRoomContentDisplayLayout(_createRoom([unrelated]), []);
+
+      expect(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE, 1)).toEqual(LEFT_SQUARE);
+    });
+
+    it('excludes invisible preceding items from insertion-index support', () => {
+      const hidden = _createItem('hidden', LEFT_SQUARE, { x:10, y:20, z:30 }, { x:40, y:50, z:60 }, false);
+      const candidate = _createItem('candidate');
+      const layout = createRoomContentDisplayLayout(_createRoom([hidden]), []);
+
+      expect(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE, 1)).toEqual(LEFT_SQUARE);
+    });
+
     it('finds a prospective item position above all visible support contributions', () => {
       const bottom = _createItem('bottom', LEFT_SQUARE, { x:1, y:-2, z:0.1 }, { x:3, y:-4, z:0.2 });
       const top = _createItem('top', LEFT_SQUARE, { x:-1, y:-1, z:-0.1 }, { x:2, y:-3, z:0.3 });
@@ -173,11 +210,11 @@ describe('roomContentDisplayPositionUtil', () => {
       expect(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE)).toEqual(LEFT_SQUARE);
     });
 
-    it("applies the prospective item's draw offset but not its stack offset", () => {
+    it("applies an insertion-index candidate's draw offset but not its stack offset", () => {
       const candidate = _createItem('candidate', LEFT_SQUARE, { x:1, y:-2, z:0.25 }, { x:30, y:40, z:50 });
       const layout = createRoomContentDisplayLayout(_createRoom([]), []);
 
-      expect(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE))
+      expect(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE, 0))
         .toEqual({ x:13.5, y:37.999, z:0.75 });
     });
 
@@ -190,10 +227,12 @@ describe('roomContentDisplayPositionUtil', () => {
       const itemEntry = layout.itemLayoutById.get(support.id);
       const characterEntry = layout.characterLayoutById.get(character.id);
       const before = JSON.stringify({ room, candidate, character, itemEntry, characterEntry });
+      const appendPositionBefore = layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE);
 
-      layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE);
+      layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE, 1);
 
       expect(JSON.stringify({ room, candidate, character, itemEntry, characterEntry })).toBe(before);
+      expect(layout.findProspectiveItemDisplayPosition(candidate, LEFT_SQUARE)).toEqual(appendPositionBefore);
       expect(layout.itemLayoutById.size).toBe(1);
       expect(layout.characterLayoutById.size).toBe(1);
     });

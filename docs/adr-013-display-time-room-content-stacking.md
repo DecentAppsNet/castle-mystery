@@ -96,9 +96,13 @@ Stair merging retains its existing behavior. Character-to-stair comparisons cont
 
 ### 7. Item-transfer animation queries remain ephemeral
 
-An item-transfer effect may ask an already-created room-content layout where an item would display if appended at a destination floor square. This pure prospective query uses the square's final visible support transform and the candidate item's own `drawOffset`, without applying the candidate's `stackOffset` to itself.
+An item-transfer effect may ask an already-created room-content layout where an item would display at a floor square. With no insertion index, this pure prospective query predicts appending the item after all current visible supports. This is the destination contract used by drop effects.
 
-The query does not add the candidate to the room, layout maps, or support data. Transfer effects therefore do not make transient item clones participate in static room drawing, and no prospective display position enters persistent state.
+With a zero-based room insertion index, the query instead reconstructs where the candidate would display if inserted at that point in `room.items`. Only visible, same-square room items before the index contribute support. This allows a take effect to remove an item from the room while reconstructing its pre-removal source position from its original array index.
+
+Both forms apply each preceding support's `drawOffset`, `stackOffset`, and implicit cuboid height exactly once. They apply the candidate's own `drawOffset`, but not its own `stackOffset`, to its display position.
+
+The query does not add the candidate to the room, layout maps, or support data. Transfer effects therefore do not make transient item clones participate in static room drawing, and no prospective display position enters persistent state. Concurrent edits to the same source stack can make a previously captured insertion index less exact, but reconstruction remains deterministic; a general square reservation mechanism may be introduced later if authored timelines require stronger guarantees.
 
 ## Rationale
 
@@ -119,6 +123,7 @@ Explicit layout creation makes the calculation cost visible to callers and allow
 - Drawing, bounds, hover selection, markers, and popovers share one position contract.
 - Same-square ordering is deterministic and remains valid when offsets alter X, Y, or Z.
 - Display metadata cannot become stale in persistent state because it is never stored there.
+- Item transfers can predict append destinations or reconstruct removed source positions without persisting presentation coordinates.
 
 ### Negative
 
@@ -126,6 +131,7 @@ Explicit layout creation makes the calculation cost visible to callers and allow
 - Display geometry APIs must accept explicit positions, increasing call-site verbosity.
 - The nearest-square support transform changes discretely near a square midpoint.
 - Static stacking and take/drop animation anchors can differ until animation stacking is designed separately.
+- An insertion index captured before a transfer may become less exact if the same stack is concurrently edited.
 
 ## Implementation Notes
 

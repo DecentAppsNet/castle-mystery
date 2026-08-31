@@ -18,7 +18,8 @@ type RoomContentDisplayLayoutEntry = {
 export type RoomContentDisplayLayout = {
   itemLayoutById:ReadonlyMap<string, RoomContentDisplayLayoutEntry>,
   characterLayoutById:ReadonlyMap<string, RoomContentDisplayLayoutEntry>,
-  findProspectiveItemDisplayPosition:(item:Item, destinationFloorPosition:Position) => Position
+  findProspectiveItemDisplayPosition:(item:Item, destinationFloorPosition:Position,
+    insertionRoomItemI?:number) => Position
 }
 
 type SquareLayout = {
@@ -47,6 +48,15 @@ function _getOrCreateSquareLayout(layoutBySquareKey:Map<string, SquareLayout>, s
     layoutBySquareKey.set(squareKey, squareLayout);
   }
   return squareLayout;
+}
+
+function _findSupportTransformBeforeRoomItem(room:Room, squarePosition:Position, insertionRoomItemI:number,
+    implicitHeight:Position):Position {
+  const squareKey = _createSquareKey(squarePosition);
+  return room.items.slice(0, insertionRoomItemI).reduce((supportTransform, item) => {
+    if (!item.isVisible || _createSquareKey(item.position) !== squareKey) return supportTransform;
+    return _addPositions(supportTransform, item.drawOffset, item.stackOffset, implicitHeight);
+  }, { x:0, y:0, z:0 });
 }
 
 export function createRoomContentDisplayLayout(room:Room, charactersInRoom:ReadonlyArray<Character>):RoomContentDisplayLayout {
@@ -82,9 +92,13 @@ export function createRoomContentDisplayLayout(room:Room, charactersInRoom:Reado
     });
   });
 
-  const findProspectiveItemDisplayPosition = (item:Item, destinationFloorPosition:Position):Position => {
+  const findProspectiveItemDisplayPosition = (item:Item, destinationFloorPosition:Position,
+      insertionRoomItemI?:number):Position => {
     const squareLayout = layoutBySquareKey.get(_createSquareKey(destinationFloorPosition));
-    return _addPositions(destinationFloorPosition, squareLayout?.supportTransform ?? { x:0, y:0, z:0 }, item.drawOffset);
+    const supportTransform = insertionRoomItemI === undefined
+      ? squareLayout?.supportTransform ?? { x:0, y:0, z:0 }
+      : _findSupportTransformBeforeRoomItem(room, destinationFloorPosition, insertionRoomItemI, implicitHeight);
+    return _addPositions(destinationFloorPosition, supportTransform, item.drawOffset);
   };
   return { itemLayoutById, characterLayoutById, findProspectiveItemDisplayPosition };
 }
