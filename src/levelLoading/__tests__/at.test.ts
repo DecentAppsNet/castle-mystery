@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 
 import { findRoomAtPosition } from '@/game/roomUtil';
 
-import defaultLevelText from './fixtures/at-base.md?raw';
-import threeRoomLevelText from './fixtures/at-three-rooms.md?raw';
-import stairwellLevelText from './fixtures/at-through-stairwell.md?raw';
-import delayedStairwellLevelText from './fixtures/at-delayed-stairwell.md?raw';
+import defaultLevelText from './fixtures/at/at-base.md?raw';
+import threeRoomLevelText from './fixtures/at/at-three-rooms.md?raw';
+import stairwellLevelText from './fixtures/at/at-through-stairwell.md?raw';
+import delayedStairwellLevelText from './fixtures/at/at-delayed-stairwell.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 import { findCharacterPositionAtTime } from '@/game/timeline';
 

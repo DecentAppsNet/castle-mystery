@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import defaultLevelText from './fixtures/items-base.md?raw';
-import itemPlacementText from './fixtures/items-placement.md?raw';
+import defaultLevelText from './fixtures/items/items-base.md?raw';
+import itemPlacementText from './fixtures/items/items-placement.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 describe('loading levels - items', () => {

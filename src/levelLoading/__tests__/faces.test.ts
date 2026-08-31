@@ -4,8 +4,8 @@ import { createCharacterKeyframeAtTime } from '@/game/timeline';
 import { FacingDirection } from '@/game/types/Character';
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z } from '@/game/roomSpaceConstants';
 
-import defaultLevelText from './fixtures/faces-base.md?raw';
-import windingStairLevelText from './fixtures/faces-winding-stair.md?raw';
+import defaultLevelText from './fixtures/faces/faces-base.md?raw';
+import windingStairLevelText from './fixtures/faces/faces-winding-stair.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 function _loadSamFacingDirection(itineraryLines:readonly string[], time:number):FacingDirection {
