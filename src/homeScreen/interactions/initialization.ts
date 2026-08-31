@@ -8,7 +8,7 @@ import { loadLevelFromUrl, loadLevelManifestFromUrl } from "@/levelLoading";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import GameState from "@/game/types/GameState";
 
-export type InitResults = {
+type InitResults = {
   gameState:GameState,
   minutes:number,
   levelManifest:LevelManifest

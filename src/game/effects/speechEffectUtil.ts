@@ -11,7 +11,7 @@ import EffectHandler, { EffectHandlerResult } from "./types/EffectHandler";
 import { rand } from "@/common/randUtil";
 import SpriteOverride from "./types/SpriteOverride";
 
-export type TalkingDip = Readonly<{
+type TalkingDip = Readonly<{
   startTimeOffset:number,
   peakAngleOffsetRadians:number,
   returnDurationMsecs:number
