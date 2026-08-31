@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { findRoomAtPosition } from '@/game/roomUtil';
 import Level from '@/game/types/Level';
 import { createCharacterKeyframeAtTime, createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
+import takesAfterRoomMutationText from './fixtures/takes-after-room-mutation.md?raw';
 import defaultLevelText from './fixtures/takes-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
@@ -32,6 +33,19 @@ describe('level loading - takes activities', () => {
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('hall');
     expect(hall.items.map(item => item.id)).not.toContain('key');
     expect(snapshot.characters[level!.timeline.characterIdToI.sam].items.map(item => item.id)).toContain('key');
+  });
+
+  it('preserves an earlier-scheduled room mutation that completes during the walk to take an item', () => {
+    const { level, errors } = loadLevelForTest(takesAfterRoomMutationText, 'takes-after-room-mutation.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const snapshot = createKeyframeAtTime(level!.timeline.keyframes, AFTER_ACTIVITY_TIME);
+    const hall = snapshot.rooms[level!.timeline.roomIdToI.hall];
+    const sam = snapshot.characters[level!.timeline.characterIdToI.sam];
+
+    expect(hall.items.map(item => item.id)).toEqual(['table', 'coin']);
+    expect(sam.items.map(item => item.id)).toContain('key');
   });
 
   it('errors when character attempts to take an item that is not in the level', () => {

@@ -9,7 +9,7 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { assert, assertNonNullable } from "decent-portal";
 import { findRoomAtPosition } from "@/game/roomUtil";
-import { createKeyframeAtTime } from "@/game/timeline";
+import { createKeyframeAtTime, findKeyframeForTime } from "@/game/timeline";
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 import Item from "@/game/types/Item";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
@@ -17,11 +17,12 @@ import Waypoint from "@/levelLoading/types/Waypoint";
 import { findClaimedWaypointsFromKeyframe, findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findRoomWaypointAtPosition } from "../waypointFindingUtil";
 import Room from "@/game/types/Room";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
-import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
+import { addCharacterEffect, addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { CharacterOwnedItemPlacement, findCharacterOwnedItem, INVENTORY, LEFT_HAND, RIGHT_HAND } from "@/game/itemOwnershipUtil";
-import { hasActiveDropReservation } from "./util/itemTransferReservationUtil";
+import { hasActiveItemTransferReservation } from "./util/itemTransferReservationUtil";
+import { createTakeEffect } from "@/game/effects/takeEffectUtil";
 
 const ROOM = 'room';
 type ItemPlacement = CharacterOwnedItemPlacement|typeof ROOM;
@@ -68,10 +69,6 @@ function _scheduleCharacterItemMovement(keyframe:CharacterKeyframe, item:Item, i
   addCharacterKeyChanges(nextKeyframe, characterI, time, editableTimeline);
 }
 
-function _isItemInRoom(roomKeyframe:RoomKeyframe, itemId:string):boolean {
-  return roomKeyframe.items.find(i => i.id === itemId) !== undefined;
-}
-
 function _scheduleRemoveItemFromRoom(room:RoomKeyframe, itemId:string, roomI:number, time:number, editableTimeline:EditableTimeline) {
   const items = room.items.filter(i => i.id !== itemId);
   addRoomKeyChanges({ items }, roomI, time, editableTimeline);
@@ -111,8 +108,8 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   const characterI = editableTimeline.characterIdToI[characterId];
   const characterKeyframe = keyframe.characters[characterI];
   assertNonNullable(characterKeyframe);
-  if (hasActiveDropReservation(characterKeyframe)) {
-    errors.addAtLine(`"${characterId}" character is already dropping an item.`, activity.lineI);
+  if (hasActiveItemTransferReservation(characterKeyframe)) {
+    errors.addAtLine(`"${characterId}" character is already transferring an item.`, activity.lineI);
     return false;
   }
   const item = level.itemsById.get(itemId);
@@ -134,7 +131,8 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   const roomI = editableTimeline.roomIdToI[characterRoom.id];
   const roomKeyframe = keyframe.rooms[roomI];
   assertNonNullable(roomKeyframe);
-  if (!_isItemInRoom(roomKeyframe, itemId)) {
+  const roomItem = roomKeyframe.items.find(candidate => candidate.id === itemId);
+  if (!roomItem) {
     errors.addAtLine(`"${itemId}" item is not in "${characterRoom.id}" room with "${characterId}" character, so can't be taken.`, activity.lineI);
     return false;
   }
@@ -143,7 +141,7 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   let scheduleTime = activity.startTime;
   const characterWaypoint = findNearestFloorWaypointToPosition(waypointContext, characterRoom, characterKeyframe.position);
   assertNonNullable(characterWaypoint);
-  const takeWaypoint = _findBestTakeWaypoint(waypointContext, keyframe, characterRoom, roomI, item);
+  const takeWaypoint = _findBestTakeWaypoint(waypointContext, keyframe, characterRoom, roomI, roomItem);
   const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, characterRoom, characterKeyframe.position, scheduleTime, takeWaypoint.position,
     characterI, characterKeyframe.facingDirection, editableTimeline);
   if (typeof scheduleResult === 'string') {
@@ -153,13 +151,21 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   assert(scheduleResult.walkStartDelay === 0);
   scheduleTime += scheduleResult.walkDuration;
 
-  _scheduleRemoveItemFromRoom(roomKeyframe, itemId, roomI, scheduleTime, editableTimeline);
-  _scheduleCharacterItemMovement(characterKeyframe, item, itemPlacement, target, characterI, scheduleTime, editableTimeline);
-
-  //const takeEffect = createTakeEffect(itemId, target, scheduleTime); TODO recreate after you've got the pattern stable.
-  //addCharacterEffect(takeEffect, characterI, editableTimeline);
-  //activity.endTime = takeEffect.endTime;
-  activity.endTime = scheduleTime + 500; // TODO delete
+  const scheduleKeyframe = findKeyframeForTime(editableTimeline.keyframes, scheduleTime);
+  const scheduleRoomKeyframe = scheduleKeyframe.rooms[roomI];
+  const sourceRoomItemI = scheduleRoomKeyframe.items.findIndex(candidate => candidate.id === itemId);
+  if (sourceRoomItemI < 0) {
+    errors.addAtLine(`"${itemId}" item is no longer in "${characterRoom.id}" room, so can't be taken.`, activity.lineI);
+    return false;
+  }
+  const sourceItem = scheduleRoomKeyframe.items[sourceRoomItemI];
+  const scheduleCharacterKeyframe = scheduleKeyframe.characters[characterI];
+  const takeEffect = createTakeEffect(sourceItem, target, sourceItem.position, sourceRoomItemI, scheduleTime);
+  addCharacterEffect(takeEffect, characterI, editableTimeline);
+  _scheduleRemoveItemFromRoom(scheduleRoomKeyframe, itemId, roomI, scheduleTime, editableTimeline);
+  _scheduleCharacterItemMovement(scheduleCharacterKeyframe, sourceItem, ROOM, target,
+    characterI, scheduleTime, editableTimeline);
+  activity.endTime = takeEffect.endTime;
 
   return true;
 }

@@ -104,7 +104,7 @@ describe('level loading - drops activities', () => {
     const { level, errors } = loadLevelForTest(text, 'overlapping-drop.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character is already dropping an item.');
+    expect(errors.describeErrors()).toContain('"sam" character is already transferring an item.');
   });
 
   it('allows simultaneous drops by different characters into the same room', () => {

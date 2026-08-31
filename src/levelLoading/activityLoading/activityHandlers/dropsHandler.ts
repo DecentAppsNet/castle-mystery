@@ -27,7 +27,7 @@ import { addCharacterEffect, addCharacterKeyChanges, addRoomKeyChanges } from "@
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 import { findCharacterOwnedItem } from "@/game/itemOwnershipUtil";
 import { createDropEffect } from "@/game/effects/dropEffectUtil";
-import { hasActiveDropReservation } from "./util/itemTransferReservationUtil";
+import { hasActiveItemTransferReservation } from "./util/itemTransferReservationUtil";
 
 // Coupled to parse format. Used for casting parts to expected types.
 type PartsShape = {
@@ -120,8 +120,8 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   assertNonNullable(characterI);
   const characterKeyframe = fromKeyframe.characters[characterI];
 
-  if (hasActiveDropReservation(characterKeyframe)) {
-    errors.addAtLine(`"${characterId}" character is already dropping an item.`, activity.lineI);
+  if (hasActiveItemTransferReservation(characterKeyframe)) {
+    errors.addAtLine(`"${characterId}" character is already transferring an item.`, activity.lineI);
     return false;
   }
 

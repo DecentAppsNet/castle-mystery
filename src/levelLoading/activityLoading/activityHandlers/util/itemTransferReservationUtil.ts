@@ -3,6 +3,6 @@
 
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 
-export function hasActiveDropReservation(characterKeyframe:CharacterKeyframe):boolean {
-  return characterKeyframe.effects.some(effect => effect.kind === 'dropItem');
+export function hasActiveItemTransferReservation(characterKeyframe:CharacterKeyframe):boolean {
+  return characterKeyframe.effects.some(effect => effect.kind === 'dropItem' || effect.kind === 'takeItem');
 }
