@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mesh-deformed sprite POC</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #111;
+    }
+
+    #display {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #error {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      padding: 6px 9px;
+      color: white;
+      background: rgb(0 0 0 / 65%);
+      font: 12px/1.4 ui-monospace, monospace;
+      pointer-events: none;
+    }
+
+    #error {
+      display: none;
+      right: 12px;
+      color: #ffb3b3;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="display"></canvas>
+  <div id="error"></div>
+
+  <script>
+    "use strict";
+
+    const GRID_COLUMNS = 32;
+    const GRID_ROWS = 32;
+    const DISPLAY_COLUMNS = 4;
+    const DISPLAY_ROWS = 4;
+    const IMAGE_PAIRS = [
+      ["goatMask.png", "giorgios.png"],
+      ["bullMask.png", "andreas.png"],
+      ["horseMask.png", "anna.png"],
+      ["pigMask.png", "constanceI.png"],
+      ["rabbitMask.png", "emperorFred.png"],
+      ["stagMask.png", "giovanni.png"],
+      ["ahmad.png", "gualtiero.png"],
+      ["amosTheGuard.png", "harold.png"],
+      ["andronikos.png", "heinrich.png"],
+      ["femalePeasant.png", "helena.png"],
+      ["femalePeasant2.png", "hugo.png"],
+      ["femalePeasant3.png", "kingFred.png"],
+      ["femalePeasant4.png", "larry.png"],
+      ["guard1.png", "lorenzo.png"],
+      ["guard2.png", "maria.png"],
+      ["guard3.png", "matteo.png"]
+    ].map(([foreground, background]) => ({
+      foreground: `/assets/faces/${foreground}`,
+      background: `/assets/faces/${background}`
+    }));
+
+    const displayCanvas = document.getElementById("display");
+    const displayContext = displayCanvas.getContext("2d", { alpha: false });
+    const errorElement = document.getElementById("error");
+
+    // This canvas deliberately remains detached. Its WebGL output is copied into
+    // the visible 2D canvas, and can later be copied to many screen positions.
+    const deformationCanvas = document.createElement("canvas");
+    const gl = deformationCanvas.getContext("webgl", {
+      alpha: true,
+      antialias: false,
+      depth: false,
+      stencil: false,
+      powerPreference: "high-performance",
+      premultipliedAlpha: true,
+      preserveDrawingBuffer: false
+    });
+
+    if (!displayContext || !gl) {
+      showError("This POC requires Canvas 2D and WebGL support.");
+      throw new Error("Required canvas context is unavailable");
+    }
+
+    const vertexShaderSource = `
+      attribute vec2 a_position;
+      attribute vec2 a_texCoord;
+      varying vec2 v_texCoord;
+
+      void main() {
+        gl_Position = vec4(a_position, 0.0, 1.0);
+        v_texCoord = a_texCoord;
+      }
+    `;
+
+    const fragmentShaderSource = `
+      precision mediump float;
+      uniform sampler2D u_texture;
+      varying vec2 v_texCoord;
+
+      void main() {
+        gl_FragColor = texture2D(u_texture, v_texCoord);
+      }
+    `;
+
+    class MeshDeformer {
+      constructor(webglContext, sourceImage, columns, rows, phase) {
+        this.gl = webglContext;
+        this.columns = columns;
+        this.rows = rows;
+        this.phase = phase;
+        this.vertexCount = (columns + 1) * (rows + 1);
+        this.basePoints = new Float32Array(this.vertexCount * 2);
+        this.points = new Float32Array(this.vertexCount * 2);
+        this.textureCoordinates = new Float32Array(this.vertexCount * 2);
+        this.indices = new Uint16Array(columns * rows * 6);
+
+        this.createGrid();
+        this.program = createProgram(webglContext, vertexShaderSource, fragmentShaderSource);
+        this.positionLocation = webglContext.getAttribLocation(this.program, "a_position");
+        this.textureLocation = webglContext.getAttribLocation(this.program, "a_texCoord");
+        this.positionBuffer = webglContext.createBuffer();
+        this.textureCoordinateBuffer = webglContext.createBuffer();
+        this.indexBuffer = webglContext.createBuffer();
+        this.texture = this.createTexture(sourceImage);
+        this.uploadStaticMeshData();
+      }
+
+      createGrid() {
+        let vertexI = 0;
+        for (let rowI = 0; rowI <= this.rows; rowI += 1) {
+          const v = rowI / this.rows;
+          for (let columnI = 0; columnI <= this.columns; columnI += 1) {
+            const u = columnI / this.columns;
+            const pointI = vertexI * 2;
+            this.basePoints[pointI] = u * 2 - 1;
+            this.basePoints[pointI + 1] = 1 - v * 2;
+            this.textureCoordinates[pointI] = u;
+            this.textureCoordinates[pointI + 1] = v;
+            vertexI += 1;
+          }
+        }
+
+        let indexI = 0;
+        for (let rowI = 0; rowI < this.rows; rowI += 1) {
+          for (let columnI = 0; columnI < this.columns; columnI += 1) {
+            const topLeft = rowI * (this.columns + 1) + columnI;
+            const topRight = topLeft + 1;
+            const bottomLeft = topLeft + this.columns + 1;
+            const bottomRight = bottomLeft + 1;
+            this.indices.set([
+              topLeft, bottomLeft, topRight,
+              topRight, bottomLeft, bottomRight
+            ], indexI);
+            indexI += 6;
+          }
+        }
+      }
+
+      createTexture(sourceImage) {
+        const texture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
+        this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+        this.gl.texImage2D(
+          this.gl.TEXTURE_2D,
+          0,
+          this.gl.RGBA,
+          this.gl.RGBA,
+          this.gl.UNSIGNED_BYTE,
+          sourceImage
+        );
+        return texture;
+      }
+
+      uploadStaticMeshData() {
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordinateBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, this.textureCoordinates, this.gl.STATIC_DRAW);
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, this.indices, this.gl.STATIC_DRAW);
+      }
+
+      perturb(timeSeconds) {
+        // A pulsing radial bulge. sin(pi*u) * sin(pi*v) keeps every edge fixed,
+        // making tears, gaps, or bad triangle indices visually conspicuous.
+        const strength = 0.14 + Math.sin(timeSeconds * 1.7 + this.phase) * 0.09;
+        for (let vertexI = 0; vertexI < this.vertexCount; vertexI += 1) {
+          const pointI = vertexI * 2;
+          const x = this.basePoints[pointI];
+          const y = this.basePoints[pointI + 1];
+          const u = (x + 1) * 0.5;
+          const v = (1 - y) * 0.5;
+          const edgeEnvelope = Math.sin(Math.PI * u) * Math.sin(Math.PI * v);
+          const radiusSquared = x * x + y * y;
+          const radialEnvelope = Math.exp(-radiusSquared * 1.4) * edgeEnvelope;
+          const scale = 1 + strength * radialEnvelope;
+          this.points[pointI] = x * scale;
+          this.points[pointI + 1] = y * scale;
+        }
+      }
+
+      render() {
+        const gl = this.gl;
+        gl.viewport(0, 0, deformationCanvas.width, deformationCanvas.height);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(this.program);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, this.points, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(this.positionLocation);
+        gl.vertexAttribPointer(this.positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.textureCoordinateBuffer);
+        gl.enableVertexAttribArray(this.textureLocation);
+        gl.vertexAttribPointer(this.textureLocation, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+        gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
+      }
+    }
+
+    function createShader(webglContext, type, source) {
+      const shader = webglContext.createShader(type);
+      webglContext.shaderSource(shader, source);
+      webglContext.compileShader(shader);
+      if (!webglContext.getShaderParameter(shader, webglContext.COMPILE_STATUS)) {
+        const message = webglContext.getShaderInfoLog(shader);
+        webglContext.deleteShader(shader);
+        throw new Error(`Shader compilation failed: ${message}`);
+      }
+      return shader;
+    }
+
+    function createProgram(webglContext, vertexSource, fragmentSource) {
+      const vertexShader = createShader(webglContext, webglContext.VERTEX_SHADER, vertexSource);
+      const fragmentShader = createShader(webglContext, webglContext.FRAGMENT_SHADER, fragmentSource);
+      const program = webglContext.createProgram();
+      webglContext.attachShader(program, vertexShader);
+      webglContext.attachShader(program, fragmentShader);
+      webglContext.linkProgram(program);
+      webglContext.deleteShader(vertexShader);
+      webglContext.deleteShader(fragmentShader);
+      if (!webglContext.getProgramParameter(program, webglContext.LINK_STATUS)) {
+        const message = webglContext.getProgramInfoLog(program);
+        webglContext.deleteProgram(program);
+        throw new Error(`Shader linking failed: ${message}`);
+      }
+      return program;
+    }
+
+    function loadImage(url) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error(`Could not load image: ${url}`));
+        image.src = url;
+      });
+    }
+
+    function resizeDisplayCanvas() {
+      const pixelRatio = window.devicePixelRatio || 1;
+      const width = Math.round(window.innerWidth * pixelRatio);
+      const height = Math.round(window.innerHeight * pixelRatio);
+      if (displayCanvas.width !== width || displayCanvas.height !== height) {
+        displayCanvas.width = width;
+        displayCanvas.height = height;
+      }
+    }
+
+    function drawImageCover(context, image, rectangle) {
+      const scale = Math.max(rectangle.width / image.naturalWidth, rectangle.height / image.naturalHeight);
+      const drawWidth = image.naturalWidth * scale;
+      const drawHeight = image.naturalHeight * scale;
+      context.save();
+      context.beginPath();
+      context.rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+      context.clip();
+      context.drawImage(
+        image,
+        rectangle.x + (rectangle.width - drawWidth) / 2,
+        rectangle.y + (rectangle.height - drawHeight) / 2,
+        drawWidth,
+        drawHeight
+      );
+      context.restore();
+    }
+
+    function getCellRectangle(cellI) {
+      const columnI = cellI % DISPLAY_COLUMNS;
+      const rowI = Math.floor(cellI / DISPLAY_COLUMNS);
+      const left = Math.round(columnI * displayCanvas.width / DISPLAY_COLUMNS);
+      const top = Math.round(rowI * displayCanvas.height / DISPLAY_ROWS);
+      const right = Math.round((columnI + 1) * displayCanvas.width / DISPLAY_COLUMNS);
+      const bottom = Math.round((rowI + 1) * displayCanvas.height / DISPLAY_ROWS);
+      return { x: left, y: top, width: right - left, height: bottom - top };
+    }
+
+    function getInsetRectangle(rectangle) {
+      const inset = Math.min(rectangle.width, rectangle.height) * 0.08;
+      return {
+        x: rectangle.x + inset,
+        y: rectangle.y + inset,
+        width: rectangle.width - inset * 2,
+        height: rectangle.height - inset * 2
+      };
+    }
+
+    // Kept as a separate operation so phase 2 can call it repeatedly with
+    // different rectangles without re-running the WebGL deformation.
+    function drawDeformedForeground(context, rectangle) {
+      context.drawImage(
+        deformationCanvas,
+        rectangle.x,
+        rectangle.y,
+        rectangle.width,
+        rectangle.height
+      );
+    }
+
+    function drawFrameCounter(context, framesPerSecond) {
+      const pixelRatio = window.devicePixelRatio || 1;
+      const padding = 12 * pixelRatio;
+      context.save();
+      context.font = `${16 * pixelRatio}px ui-monospace, monospace`;
+      context.textAlign = "right";
+      context.textBaseline = "top";
+      context.lineWidth = 3 * pixelRatio;
+      context.strokeStyle = "rgb(0 0 0 / 75%)";
+      context.fillStyle = "white";
+      const text = `${Math.round(framesPerSecond)} fps`;
+      context.strokeText(text, displayCanvas.width - padding, padding);
+      context.fillText(text, displayCanvas.width - padding, padding);
+      context.restore();
+    }
+
+    function showError(message) {
+      errorElement.textContent = message;
+      errorElement.style.display = "block";
+    }
+
+    async function start() {
+      const renderings = await Promise.all(IMAGE_PAIRS.map(async (urls, renderingI) => {
+        const [foregroundImage, backgroundImage] = await Promise.all([
+          loadImage(urls.foreground),
+          loadImage(urls.background)
+        ]);
+        return {
+          backgroundImage,
+          mesh: new MeshDeformer(gl, foregroundImage, GRID_COLUMNS, GRID_ROWS, renderingI * 0.7)
+        };
+      }));
+      let framesSinceSample = 0;
+      let sampleStart = performance.now();
+      let framesPerSecond = 0;
+
+      function render(timestamp) {
+        resizeDisplayCanvas();
+        const firstCell = getCellRectangle(0);
+        if (deformationCanvas.width !== firstCell.width || deformationCanvas.height !== firstCell.height) {
+          deformationCanvas.width = firstCell.width;
+          deformationCanvas.height = firstCell.height;
+        }
+
+        for (let renderingI = 0; renderingI < renderings.length; renderingI += 1) {
+          const rendering = renderings[renderingI];
+          const cellRectangle = getCellRectangle(renderingI);
+          drawImageCover(displayContext, rendering.backgroundImage, cellRectangle);
+          rendering.mesh.perturb(timestamp / 1000);
+          rendering.mesh.render();
+          drawDeformedForeground(displayContext, getInsetRectangle(cellRectangle));
+        }
+
+        framesSinceSample += 1;
+        const sampleDuration = timestamp - sampleStart;
+        if (sampleDuration >= 500) {
+          framesPerSecond = framesSinceSample * 1000 / sampleDuration;
+          framesSinceSample = 0;
+          sampleStart = timestamp;
+        }
+        drawFrameCounter(displayContext, framesPerSecond);
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    start().catch((error) => {
+      showError(error instanceof Error ? error.message : String(error));
+      console.error(error);
+    });
+  </script>
+</body>
+</html>
