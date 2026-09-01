@@ -104,6 +104,12 @@ Both forms apply each preceding support's `drawOffset`, `stackOffset`, and impli
 
 The query does not add the candidate to the room, layout maps, or support data. Transfer effects therefore do not make transient item clones participate in static room drawing, and no prospective display position enters persistent state. Concurrent edits to the same source stack can make a previously captured insertion index less exact, but reconstruction remains deterministic; a general square reservation mechanism may be introduced later if authored timelines require stronger guarantees.
 
+### 8. Character effect anatomy remains room-local and ephemeral
+
+The room draw pass derives one current-frame canvas layout and `CharacterCanvasAnatomy` value for every drawable character, then shares those values with character effects through an ID-keyed read-only map. The owning character's anatomy is also provided directly. Give effects use this map to resolve the giver's current hand or centroid and the receiver's current centroid without callbacks or persistent presentation coordinates.
+
+The anatomy values incorporate current pose, facing direction, scaling, and stack-supported display position. They exist only for the room draw pass and are not stored on characters, items, effects, timeline keyframes, or game state. Hand-based transfers continue through ordinary held-item sprite overrides, preserving established front-hand and back-hand painter ordering.
+
 ## Rationale
 
 Stack height is presentation derived from the current visible contents of a room. Calculating it at display time keeps level loading focused on authored world structure and leaves stored positions useful for navigation and placement operations such as determining whether a floor waypoint is claimed.
@@ -124,6 +130,7 @@ Explicit layout creation makes the calculation cost visible to callers and allow
 - Same-square ordering is deterministic and remains valid when offsets alter X, Y, or Z.
 - Display metadata cannot become stale in persistent state because it is never stored there.
 - Item transfers can predict append destinations or reconstruct removed source positions without persisting presentation coordinates.
+- Character effects can resolve current room-local anatomy for multiple characters without callbacks or duplicate layout calculations.
 
 ### Negative
 
@@ -141,6 +148,7 @@ Explicit layout creation makes the calculation cost visible to callers and allow
 4. `displayPosition`, `snappedPosition`, painter anchors, and member indices remain local layout/drawable values, not fields on `Room`, `Item`, `Character`, timeline snapshots, or `GameState`.
 5. Effect-specific base-position helpers are named separately from static display-position APIs.
 6. Canvas-heavy behavior is validated with manual smoke tests in addition to pure layout tests and existing drawing tests.
+7. Character anatomy maps are recreated per room draw pass and are not general character-location or activity-reservation state.
 
 ## Not Chosen
 
