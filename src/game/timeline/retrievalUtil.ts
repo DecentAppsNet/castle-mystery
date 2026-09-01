@@ -1,4 +1,4 @@
-import { assert, assertNonNullable } from "decent-portal";
+import { assert } from "decent-portal";
 
 import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
 import Position from "@/game/types/Position";
@@ -7,7 +7,6 @@ import { findInterpolatedCharacterPosition } from "./interpolationUtil";
 import CharacterKeyframe, { duplicateCharacterKeyframe } from "@/game/types/CharacterKeyframe";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 
-type FindCharacterKeyframePredicate = (characterKeyFrame:CharacterKeyframe) => boolean;
 type FindKeyframePredicate = (keyFrame:TimelineKeyframe) => boolean;
 
 function _findKeyframeBeforeTimeRecursively(keyframes:TimelineKeyframe[], fromI:number, toI:number, time:number):number {
@@ -98,19 +97,6 @@ export function findCharacterKeyframeForTime(keyframes:TimelineKeyframe[], chara
 export function findRoomKeyframeForTime(keyframes:TimelineKeyframe[], roomI:number, time:number):RoomKeyframe {
   const { beforeKeyframe } = _findKeyframesBeforeAndAfterTime(keyframes, time);
   return beforeKeyframe.rooms[roomI];
-}
-
-export function findCharacterKeyframeInRange(keyframes:TimelineKeyframe[], characterI:number, startTime:number, 
-    endTime:number, predicate?:FindCharacterKeyframePredicate):CharacterKeyframe|null {
-  if (!keyframes.length) return null;
-  const startI = _findKeyframeIBeforeOrAtTime(keyframes, startTime);
-  const endI = _findKeyframeIBeforeOrAtTime(keyframes, endTime);
-  for(let keyframeI = startI; keyframeI < endI; ++keyframeI) {
-    const characterKeyframe = keyframes[keyframeI].characters[characterI];
-    assertNonNullable(characterKeyframe);
-    if (!predicate || predicate(characterKeyframe)) return characterKeyframe;
-  }
-  return null;
 }
 
 export function findKeyframeInRange(keyframes:TimelineKeyframe[], startTime:number, 

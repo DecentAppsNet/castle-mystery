@@ -86,6 +86,76 @@ describe('character activity conflict integration', () => {
     expect(level).not.toBeNull();
   });
 
+  it('rejects overlapping says activities by the same character', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "This sentence lasts several seconds."',
+      '0:00:01 Sam says "So does this sentence."'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('"sam" character can\'t "says" because they are busy with "says" activity');
+  });
+
+  it('rejects overlapping thinks activities by the same character', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam thinks "This thought lasts several seconds."',
+      '0:00:01 Sam thinks "So does this thought."'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('"sam" character can\'t "thinks" because they are busy with "thinks" activity');
+  });
+
+  it('makes a character-source emits activity busy', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam emits "A bell rings for several seconds."',
+      '0:00:01 Sam waits 2'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('"sam" character can\'t "waits" because they are busy with "emits" activity');
+  });
+
+  it('allows another character to think during speech', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "This sentence lasts several seconds."',
+      '0:00:01 Jo thinks "A simultaneous thought."'
+    ]);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
+  it('allows another character to emit during speech', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "This sentence lasts several seconds."',
+      '0:00:01 Jo emits "A simultaneous noise."'
+    ]);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
+  it('still rejects incompatible speech by another audible character', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "This sentence lasts several seconds."',
+      '0:00:01 Jo says "Overlapping audible speech."'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Character can\'t start speaking');
+  });
+
+  it('preserves zero-duration interrupts behavior during speech', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "This sentence lasts several seconds."',
+      '0:00:01 Jo interrupts "Excuse me."'
+    ]);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
   it('does not make a drop location target busy', () => {
     const { level, errors } = _loadActivities([
       '0:00:00 Sam drops Coin at Jo',

@@ -5,21 +5,16 @@ import { assert, assertNonNullable } from "decent-portal";
 
 import { clamp } from "@/common/numberUtil";
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
-import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 import Room from "@/game/types/Room";
 import { formatMsecsAsTimestamp } from "@/levelLoading/activityLoading";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
-import { findCharacterKeyframeInRange, findKeyframeInRange, findCharacterPositionAtTime, findKeyframeForTime } from "@/game/timeline";
+import { findKeyframeInRange, findCharacterPositionAtTime, findKeyframeForTime } from "@/game/timeline";
 import { findRoomAtPosition } from "@/game/roomUtil";
 import Effect from "@/game/effects/types/Effect";
 import Position from "@/game/types/Position";
 
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
 const SPEECH_MSECS_PER_CHARACTER = 90;
-
-function _isSpeechEffect(effect:Effect) {
-  return effect.kind === 'says' || effect.kind === 'thinks' || effect.kind === 'emits';
-}
 
 function _findRoomsInEarshot(keyframes:TimelineKeyframe[], characterI:number, rooms:Room[], speechStartTime:number):Room[] {
   const position = findCharacterPositionAtTime(keyframes, characterI, speechStartTime);
@@ -38,16 +33,6 @@ function _findRoomsInEarshot(keyframes:TimelineKeyframe[], characterI:number, ro
   return earshotRooms;
 }
 
-function _findSelfInterruption(keyframes:TimelineKeyframe[], characterI:number, speechStartTime:number, speechEndTime:number):string|null {
-  const keyframe:CharacterKeyframe|null = findCharacterKeyframeInRange(keyframes, characterI, speechStartTime, speechEndTime, 
-    (ckf:CharacterKeyframe) => ckf.effects.find(e => e.kind === 'says' || e.kind === 'thinks' || e.kind === 'emits') !== undefined);
-  if (!keyframe) return null;
-  
-  const speechEffect = keyframe.effects.find(_isSpeechEffect);
-  assertNonNullable(speechEffect);
-  return `Character's speech will be interrupted by self at ${formatMsecsAsTimestamp(speechEffect.startTime)}.`; 
-}
-
 function _isCharacterSayingAtTime(effects:Effect[], startTime:number):boolean {
   return effects.find(e => e.endTime > startTime && e.kind === 'says') !== undefined;
 }
@@ -56,9 +41,11 @@ function _isCharacterInEarshot(earshotRooms:Room[], characterPosition:Position):
   return findRoomAtPosition(earshotRooms, characterPosition.x, characterPosition.y) !== null;
 }
 
-function _findCharacterSpeechInterrupted(earshotRooms:Room[], keyframes:TimelineKeyframe[], speechStartTime:number):string|null {
+function _findCharacterSpeechInterrupted(earshotRooms:Room[], keyframes:TimelineKeyframe[],
+    currentCharacterI:number, speechStartTime:number):string|null {
   const keyframe = findKeyframeForTime(keyframes, speechStartTime);
   for(let characterI = 0; characterI < keyframe.characters.length; ++characterI) {
+    if (characterI === currentCharacterI) continue;
     const characterKeyframe = keyframe.characters[characterI];
     if (_isCharacterSayingAtTime(characterKeyframe.effects, speechStartTime) && _isCharacterInEarshot(earshotRooms, characterKeyframe.position)) {
       return `Character can't start speaking at ${formatMsecsAsTimestamp(speechStartTime)} because they will be interrupted.`; 
@@ -68,11 +55,12 @@ function _findCharacterSpeechInterrupted(earshotRooms:Room[], keyframes:Timeline
 }
 
 function _findCharacterSpeechInterrupting(earshotRooms:Room[], keyframes:TimelineKeyframe[], 
-    speechStartTime:number, speechEndTime:number):string|null {
+  currentCharacterI:number, speechStartTime:number, speechEndTime:number):string|null {
   let errorMessage = '';
   const characterCount = keyframes[0].characters.length;
   const keyframe = findKeyframeInRange(keyframes, speechStartTime, speechEndTime, (keyframe:TimelineKeyframe) => {
     for(let characterI = 0; characterI < characterCount; ++characterI) {
+      if (characterI === currentCharacterI) continue;
       const characterKeyframe = keyframe.characters[characterI];
       assertNonNullable(characterKeyframe);
       // Note that the earshot check is needed for each character/keyframe because position can change.
@@ -94,12 +82,7 @@ export function calcSpeechDuration(speech:string):number {
 /** Returns an author-facing conflict for incompatible overlapping speech, or null. */
 export function findSpeechConflict(speechKind:'says'|'interrupts'|'thinks'|'emits', rooms:Room[], 
     keyframes:TimelineKeyframe[], characterI:number, speechStartTime:number, speechEndTime:number):string|null {
-  
-  // Don't allow a character to interrupt themself. Even if there are a few cases where an author might want 
-  // to do it, they are rare, and the clutter of bubbles around one character is difficult for a player to read.
-  const selfInterruptErrorMessage = _findSelfInterruption(keyframes, characterI, speechStartTime, speechEndTime);
-  if (selfInterruptErrorMessage) return selfInterruptErrorMessage;
-  
+
   if (speechKind === 'emits' ||  // Often an author's intent to have a sound effect/noise heard while other speech is happening.
       speechKind === 'thinks') { // Likewise, an author may often intend a thought to be an immediate reaction to something said.
     return null;
@@ -108,11 +91,11 @@ export function findSpeechConflict(speechKind:'says'|'interrupts'|'thinks'|'emit
   const earshotRooms = _findRoomsInEarshot(keyframes, characterI, rooms, speechStartTime);
   if (speechKind === 'interrupts') { 
     // This character has author's permission to interrupt, but still need to check for another character interrupting.
-    return _findCharacterSpeechInterrupted(earshotRooms, keyframes, speechStartTime);
+    return _findCharacterSpeechInterrupted(earshotRooms, keyframes, characterI, speechStartTime);
   }
 
   // For "says", check for interruption because generally an author doesn't want characters speaking over each other,
   // especially for two separate conversations happening at same time due to an authoring mistake.
   assert(speechKind === 'says');
-  return _findCharacterSpeechInterrupting(earshotRooms, keyframes, speechStartTime, speechEndTime);
+  return _findCharacterSpeechInterrupting(earshotRooms, keyframes, characterI, speechStartTime, speechEndTime);
 }

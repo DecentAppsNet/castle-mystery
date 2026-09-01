@@ -2,7 +2,6 @@ export { createTimelineSnapshot, createInitialTimelineSnapshot, updateTimelineSn
 export { 
   createKeyframeAtTime, 
   createCharacterKeyframeAtTime,
-  findCharacterKeyframeInRange,
   findCharacterPositionAtTime,
   findKeyframeForTime, 
   findKeyframeInRange,
