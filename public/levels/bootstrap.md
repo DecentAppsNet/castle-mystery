@@ -66,6 +66,6 @@ HS
 : drops vase
 : takes vase in left hand
 : @ Closet
-: drops vase on table
+: gives vase to Maria
 
 # conclusions

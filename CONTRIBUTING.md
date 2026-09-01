@@ -149,6 +149,7 @@ Guidelines:
 * Don't keep unused functions in the code.
 * Functions should only be exported if used outside the file they are declared in.
 * Private, unexported functions are prefixed with `_`.
+* A function containing more than 10 lines should divide its body into logical blocks separated by blank lines. Prefix each block with a concise comment explaining that block's purpose, rather than narrating individual statements.
 
 ## ID Normalization
 
