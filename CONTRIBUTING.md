@@ -68,14 +68,9 @@ Guidelines:
 
 ## Integration Tests
 
-Integration tests verify a collection of behaviors around a feature. They should use multiple files together and should not focus on the behavior of just one file.
+Integration tests verify a collection of behaviors around a feature. Because they don't differ signifantly from file-based unit tests, we put them in the same folder with unit tests.
 
-Guidelines:
-
-* Prefer not to mock. Only mock file I/O, network I/O, operating-system functions, or other behavior that is non-deterministic or leaves persistent side effects.
-* Place integration tests under `src/functionalityName/integration-tests`, where `functionalityName` is the folder most closely associated with the feature under test.
-* Use `describe()` blocks to group by testing concept, such as `wandering integration`.
-* Arbitrary nested grouping beneath that is fine when it improves readability.
+The same guidelines for unit tests from the previous section apply to integration test. The only difference is that `describe()` suites are based on areas of functionality or testing concepts rather than filenames and functions.
 
 ## Determinism
 

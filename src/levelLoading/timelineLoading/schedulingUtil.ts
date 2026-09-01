@@ -5,7 +5,7 @@ import { assert, assertNonNullable } from "decent-portal";
 
 import Level from "@/game/types/Level";
 import Timeline from "@/game/types/Timeline";
-import { sortActivitiesAfterStartTimeAssignment } from "../activityLoading";
+import { formatMsecsAsTimestamp, sortActivitiesAfterStartTimeAssignment } from "../activityLoading";
 import { scheduleAppearsActivity } from "../activityLoading/activityHandlers/appearsHandler";
 import { scheduleAtActivity } from "../activityLoading/activityHandlers/atHandler";
 import { scheduleBecomesActivity } from "../activityLoading/activityHandlers/becomesHandler";
@@ -32,9 +32,10 @@ import { createEditableTimeline } from "./editingUtil";
 import EditableTimeline from "./types/EditableTimeline";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";
 import { scheduleThinksActivity } from "../activityLoading/activityHandlers/thinksHandler";
+import { findConflictingCharacterActivity } from "./activityConflictUtil";
 
 type ScheduleActivityCallback = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
-  timeline:EditableTimeline, errors:ErrorCollector) => boolean;
+  timeline:EditableTimeline, errors:ErrorCollector, scheduledActivities:readonly Activity[]) => boolean;
 const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCallback}> = {
   '@': scheduleAtActivity,
   'appears': scheduleAppearsActivity,
@@ -59,12 +60,12 @@ const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCal
 }
 
 function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
-  timeline:EditableTimeline, errors:ErrorCollector):boolean {
+  timeline:EditableTimeline, errors:ErrorCollector, scheduledActivities:readonly Activity[]):boolean {
   const scheduleActivityFunc = VERB_TO_SCHEDULE_ACTIVITY_FUNC[activity.verb];
   assertNonNullable(scheduleActivityFunc, `Add handler for "${activity.verb}"`);
   if (!doesActivityUseEndTimestamp(activity.verb) && activity.startTime === null) return false; // A preceding activity must be scheduled first.
 
-  if (!scheduleActivityFunc(level, waypointContext, activity, timeline, errors)) return false;
+  if (!scheduleActivityFunc(level, waypointContext, activity, timeline, errors, scheduledActivities)) return false;
 
   // Successful scheduling should assign valid timing and busy-character participation.
   assert(Number.isFinite(activity.startTime) && Number.isFinite(activity.endTime));
@@ -96,11 +97,24 @@ export function scheduleActivities(level:Level, activities:Activity[], waypointC
   const originalErrorCount = errors.count;
 
   const timeline:EditableTimeline = createEditableTimeline(level.characters, level.rooms, level.startTime);
+  // Track only activities that completed scheduling and conflict validation.
+  const scheduledActivities:Activity[] = [];
   let toBeScheduled = [...activities];
   for(let attemptI = 0; attemptI < activities.length; ++attemptI) {
     assert(toBeScheduled.length > 0);
     const activity = toBeScheduled[0];
-    if (!_scheduleActivity(level, waypointContext, activity, timeline, errors)) return null;
+    if (!_scheduleActivity(level, waypointContext, activity, timeline, errors, scheduledActivities)) return null;
+
+    // Reject authored overlap before accepting the activity as successfully scheduled.
+    const conflict = findConflictingCharacterActivity(activity, scheduledActivities);
+    if (conflict) {
+      const conflictStart = formatMsecsAsTimestamp(conflict.activity.startTime!);
+      errors.addAtLine(`"${conflict.characterId}" character can't "${activity.verb}" because they are busy with `
+        + `"${conflict.activity.verb}" activity starting at ${conflictStart}.`, activity.lineI);
+      return null;
+    }
+    scheduledActivities.push(activity);
+
     toBeScheduled.shift();
     const nextActivity = activity.nextActivity;
     if (nextActivity && nextActivity.startTime === null && !doesActivityUseEndTimestamp(nextActivity.verb)) {

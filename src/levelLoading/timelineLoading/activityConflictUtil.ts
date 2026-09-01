@@ -22,6 +22,17 @@ function _activitiesOverlap(firstStartTime:number, firstEndTime:number,
   return firstStartTime < secondEndTime && secondStartTime < firstEndTime;
 }
 
+/** Returns when a character's latest scheduled busy interval ends, if any. */
+export function findLatestBusyCharacterActivityEndTime(characterId:string,
+    scheduledActivities:readonly Activity[]):number|null {
+  let latestEndTime:number|null = null;
+  for(const activity of scheduledActivities) {
+    if (activity.endTime === null || !activity.busyCharacterIds?.includes(characterId)) continue;
+    latestEndTime = Math.max(latestEndTime ?? activity.endTime, activity.endTime);
+  }
+  return latestEndTime;
+}
+
 /** Returns the first prior overlapping activity and shared busy character. */
 export function findConflictingCharacterActivity(activity:Activity,
     scheduledActivities:readonly Activity[]):CharacterActivityConflict|null {

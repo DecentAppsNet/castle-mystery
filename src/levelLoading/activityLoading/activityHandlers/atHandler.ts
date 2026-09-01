@@ -18,8 +18,8 @@ import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
 import { findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findWaypointsForRoom } from "../waypointFindingUtil";
 import { createKeyframeAtTime } from "@/game/timeline";
-import { findLatestKeyFrameForCharacter } from "@/levelLoading/timelineLoading/editingUtil";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
+import { findLatestBusyCharacterActivityEndTime } from "@/levelLoading/timelineLoading/activityConflictUtil";
 
 function _findClaimedWaypointsFromSnapshot(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
@@ -61,7 +61,8 @@ type PartsShape = {
 const DEFAULT_HORIZONTAL_TARGET = .5;
 /** Schedules a character to be at an authored position by the activity end time. */
 export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerationContext,
-  activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+  activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector,
+  scheduledActivities:readonly Activity[]):boolean {
   const { characterId, roomId, horizontalTarget } = activity.parts as PartsShape;
   assertNonNullable(characterId, 'implied subjects should have been resolved');
   activity.busyCharacterIds = [characterId];
@@ -75,10 +76,11 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
 
   const characterI = editableTimeline.characterIdToI[characterId];
   const isRelativeTimestamp = activity.endTime === null;
-  
-  const fromKeyframe = findLatestKeyFrameForCharacter(editableTimeline, characterI);
+
+  // Derive availability from activities while reading presentation state from the timeline.
+  const fromTime = findLatestBusyCharacterActivityEndTime(characterId, scheduledActivities) ?? level.startTime;
+  const fromKeyframe = createKeyframeAtTime(editableTimeline.keyframes, fromTime);
   const fromPos = fromKeyframe.characters[characterI].position;
-  const fromTime = fromKeyframe.time; // The very earliest that the character can begin moving toward destination.
   const fromFacingDirection = fromKeyframe.characters[characterI].facingDirection;
   const fromRoom = findRoomAtPosition(level.rooms, fromPos.x, fromPos.y);
   assertNonNullable(fromRoom);

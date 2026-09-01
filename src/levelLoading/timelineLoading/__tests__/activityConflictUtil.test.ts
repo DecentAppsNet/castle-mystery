@@ -3,7 +3,10 @@
 import { describe, expect, it } from 'vitest';
 
 import Activity from '../../activityLoading/types/Activity';
-import { findConflictingCharacterActivity } from '../activityConflictUtil';
+import {
+  findConflictingCharacterActivity,
+  findLatestBusyCharacterActivityEndTime
+} from '../activityConflictUtil';
 
 function _activity(verb:string, startTime:number|null, endTime:number|null,
     busyCharacterIds:readonly string[]|null):Activity {
@@ -19,6 +22,27 @@ function _activity(verb:string, startTime:number|null, endTime:number|null,
 }
 
 describe('activityConflictUtil', () => {
+  describe('findLatestBusyCharacterActivityEndTime()', () => {
+    it('returns the latest end among activities that make the character busy', () => {
+      const activities = [
+        _activity('waits', 100, 300, ['sam']),
+        _activity('says', 200, 400, ['jo']),
+        _activity('takes', 400, 500, ['sam'])
+      ];
+
+      expect(findLatestBusyCharacterActivityEndTime('sam', activities)).toBe(500);
+    });
+
+    it('returns null when no completed activity makes the character busy', () => {
+      const activities = [
+        _activity('waits', 100, null, ['sam']),
+        _activity('says', 200, 400, ['jo'])
+      ];
+
+      expect(findLatestBusyCharacterActivityEndTime('sam', activities)).toBeNull();
+    });
+  });
+
   describe('findConflictingCharacterActivity()', () => {
     it('returns an overlapping activity sharing a busy character', () => {
       const prior = _activity('waits', 100, 300, ['sam']);
