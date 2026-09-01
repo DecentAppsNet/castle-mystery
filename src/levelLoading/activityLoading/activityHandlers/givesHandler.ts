@@ -18,6 +18,7 @@ import { arePositionsAdjacent } from "@/game/positionUtil";
 import { findClaimedWaypointsFromKeyframe, findNearestIncludedFloorWaypointToPosition } from "../waypointFindingUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import { createGiveEffect } from "@/game/effects/giveEffectUtil";
+import { findCharacterFacingDirection } from "./util/facingUtil";
 
 type PartsShape = { characterId:string, itemId:string, toCharacterId:string };
 function _scheduleRemoveOwnedItem(characterKeyframe:CharacterKeyframe, placement:CharacterOwnedItemPlacement,
@@ -122,6 +123,12 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
   if (!scheduleRoom || scheduleRoom.id !== scheduleToCharacterRoom?.id) {
     errors.addAtLine(`"${characterId}" and "${toCharacterId}" characters are no longer in the same room, so can't give "${itemId}" item.`, activity.lineI);
     return false;
+  }
+
+  // Giver turns to face recipient as needed.
+  const facingDirection = findCharacterFacingDirection(characterId, toCharacterId, editableTimeline, scheduleTime);
+  if (facingDirection !== scheduleKeyframe.characters[characterI].facingDirection) {
+    addCharacterKeyChanges({ facingDirection }, characterI, scheduleTime, editableTimeline);
   }
 
   // Animate the item on the giver while the activity reserves both participants.

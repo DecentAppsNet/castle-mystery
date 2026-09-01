@@ -142,6 +142,17 @@ describe('level loading - gives activities', () => {
     expect(endPosition).toEqual(startPosition);
   });
 
+  it('turns the giver to face the receiver before starting the give effect', () => {
+    const text = givesBaseText.replace('S..J', 'J..S');
+    const { level, errors } = loadLevelForTest(text, 'gives-facing.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const effect = _findGiveEffect(level!);
+    const effectStart = createKeyframeAtTime(level!.timeline.keyframes, effect.startTime);
+    expect(effectStart.characters[level!.timeline.characterIdToI.sam].facingDirection).toBe('left');
+  });
+
   it('rejects giving an item to the giver', () => {
     const { level, errors } = _loadGivesActivity('0:00:00 Sam gives Coin to Sam');
 
