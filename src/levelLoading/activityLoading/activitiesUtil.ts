@@ -44,7 +44,11 @@ export function loadActivitiesPartially(itinerarySection:LevelFileSection|undefi
       errors.addAtLine(parseResult, itinerarySection.lineI + sectionLineI);
       continue;
     }
-    const activity:Activity = { ...parseResult, lineI:itinerarySection.lineI + sectionLineI };
+    const activity:Activity = {
+      ...parseResult,
+      lineI:itinerarySection.lineI + sectionLineI,
+      busyCharacterIds:null
+    };
     assert(activity.startTime === null || activity.startTime >= startTime); // Expecting that the previously-found startTime already looked at activity timestamps to set it.
     if (!prevActivity && activity.startTime === null) activity.startTime = startTime ?? 0;
     if (prevActivity) prevActivity.nextActivity = activity;
