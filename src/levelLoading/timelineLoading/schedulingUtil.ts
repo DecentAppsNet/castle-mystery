@@ -6,37 +6,37 @@ import { assert, assertNonNullable } from "decent-portal";
 import Level from "@/game/types/Level";
 import Timeline from "@/game/types/Timeline";
 import { formatMsecsAsTimestamp, sortActivitiesAfterStartTimeAssignment } from "../activityLoading";
-import { scheduleAppearsActivity } from "../activityLoading/activityHandlers/appearsHandler";
-import { scheduleAtActivity } from "../activityLoading/activityHandlers/atHandler";
-import { scheduleBecomesActivity } from "../activityLoading/activityHandlers/becomesHandler";
-import { scheduleDropsActivity } from "../activityLoading/activityHandlers/dropsHandler";
-import { scheduleEmitsActivity } from "../activityLoading/activityHandlers/emitsHandler";
-import { scheduleFacesActivity } from "../activityLoading/activityHandlers/facesHandler";
-import { scheduleGivesActivity } from "../activityLoading/activityHandlers/givesHandler";
-import { scheduleHideActivity } from "../activityLoading/activityHandlers/hideHandler";
-import { scheduleInterruptsActivity } from "../activityLoading/activityHandlers/interruptsHandler";
-import { scheduleKneelsActivity } from "../activityLoading/activityHandlers/kneelsHandler";
-import { scheduleLaysActivity } from "../activityLoading/activityHandlers/laysHandler";
-import { scheduleLocksActivity } from "../activityLoading/activityHandlers/locksHandler";
-import { scheduleSaysActivity } from "../activityLoading/activityHandlers/saysHandler";
-import { scheduleShowActivity } from "../activityLoading/activityHandlers/showHandler";
-import { scheduleSitsActivity } from "../activityLoading/activityHandlers/sitsHandler";
-import { scheduleStandsActivity } from "../activityLoading/activityHandlers/standsHandler";
-import { scheduleTakesActivity } from "../activityLoading/activityHandlers/takesHandler";
-import { scheduleUnlocksActivity } from "../activityLoading/activityHandlers/unlocksHandler";
-import { scheduleWaitsActivity } from "../activityLoading/activityHandlers/waitsHandler";
+import { scheduleAppearsActivity } from "../activityLoading/activitySchedulers/appearsScheduler";
+import { scheduleAtActivity } from "../activityLoading/activitySchedulers/atScheduler";
+import { scheduleBecomesActivity } from "../activityLoading/activitySchedulers/becomesScheduler";
+import { scheduleDropsActivity } from "../activityLoading/activitySchedulers/dropsScheduler";
+import { scheduleEmitsActivity } from "../activityLoading/activitySchedulers/emitsScheduler";
+import { scheduleFacesActivity } from "../activityLoading/activitySchedulers/facesScheduler";
+import { scheduleGivesActivity } from "../activityLoading/activitySchedulers/givesScheduler";
+import { scheduleHideActivity } from "../activityLoading/activitySchedulers/hideScheduler";
+import { scheduleInterruptsActivity } from "../activityLoading/activitySchedulers/interruptsScheduler";
+import { scheduleKneelsActivity } from "../activityLoading/activitySchedulers/kneelsScheduler";
+import { scheduleLaysActivity } from "../activityLoading/activitySchedulers/laysScheduler";
+import { scheduleLocksActivity } from "../activityLoading/activitySchedulers/locksScheduler";
+import { scheduleSaysActivity } from "../activityLoading/activitySchedulers/saysScheduler";
+import { scheduleShowActivity } from "../activityLoading/activitySchedulers/showScheduler";
+import { scheduleSitsActivity } from "../activityLoading/activitySchedulers/sitsScheduler";
+import { scheduleStandsActivity } from "../activityLoading/activitySchedulers/standsScheduler";
+import { scheduleTakesActivity } from "../activityLoading/activitySchedulers/takesScheduler";
+import { scheduleUnlocksActivity } from "../activityLoading/activitySchedulers/unlocksScheduler";
+import { scheduleWaitsActivity } from "../activityLoading/activitySchedulers/waitsScheduler";
 import { doesActivityUseEndTimestamp } from "../activityLoading/parseUtil";
 import Activity from "../activityLoading/types/Activity";
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { createEditableTimeline } from "./editingUtil";
 import EditableTimeline from "./types/EditableTimeline";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";
-import { scheduleThinksActivity } from "../activityLoading/activityHandlers/thinksHandler";
+import { scheduleThinksActivity } from "../activityLoading/activitySchedulers/thinksScheduler";
 import { findConflictingCharacterActivity } from "./activityConflictUtil";
 
-type ScheduleActivityCallback = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
+type ActivityScheduler = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
   timeline:EditableTimeline, errors:ErrorCollector, scheduledActivities:readonly Activity[]) => boolean;
-const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCallback}> = {
+const VERB_TO_ACTIVITY_SCHEDULER:Readonly<{[verb:string]:ActivityScheduler}> = {
   '@': scheduleAtActivity,
   'appears': scheduleAppearsActivity,
   'becomes': scheduleBecomesActivity,
@@ -61,11 +61,11 @@ const VERB_TO_SCHEDULE_ACTIVITY_FUNC:Readonly<{[verb:string]:ScheduleActivityCal
 
 function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
   timeline:EditableTimeline, errors:ErrorCollector, scheduledActivities:readonly Activity[]):boolean {
-  const scheduleActivityFunc = VERB_TO_SCHEDULE_ACTIVITY_FUNC[activity.verb];
-  assertNonNullable(scheduleActivityFunc, `Add handler for "${activity.verb}"`);
+  const activityScheduler = VERB_TO_ACTIVITY_SCHEDULER[activity.verb];
+  assertNonNullable(activityScheduler, `Add scheduler for "${activity.verb}"`);
   if (!doesActivityUseEndTimestamp(activity.verb) && activity.startTime === null) return false; // A preceding activity must be scheduled first.
 
-  if (!scheduleActivityFunc(level, waypointContext, activity, timeline, errors, scheduledActivities)) return false;
+  if (!activityScheduler(level, waypointContext, activity, timeline, errors, scheduledActivities)) return false;
 
   // Successful scheduling should assign valid timing and busy-character participation.
   assert(Number.isFinite(activity.startTime) && Number.isFinite(activity.endTime));
