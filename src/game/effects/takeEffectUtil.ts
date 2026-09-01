@@ -24,11 +24,11 @@ function _getSourceCanvasPoint(drawCall:CharacterDrawCall, item:Item, sourceFloo
 
 function _getDestinationCanvasPoint(drawCall:CharacterDrawCall,
     destinationPlacement:CharacterOwnedItemPlacement):[number, number] {
-  const itemTransfer = drawCall.characterContext.itemTransfer;
-  if (destinationPlacement === INVENTORY) return itemTransfer.characterCenterCanvasPoint;
+  const anatomy = drawCall.characterContext.characterAnatomy;
+  if (destinationPlacement === INVENTORY) return anatomy.characterCenterCanvasPoint;
   return destinationPlacement === LEFT_HAND
-    ? itemTransfer.leftHandItemCanvasPoint
-    : itemTransfer.rightHandItemCanvasPoint;
+    ? anatomy.leftHandItemCanvasPoint
+    : anatomy.rightHandItemCanvasPoint;
 }
 
 function _handleTake(drawCall:EffectDrawCall, item:Item, destinationPlacement:CharacterOwnedItemPlacement,

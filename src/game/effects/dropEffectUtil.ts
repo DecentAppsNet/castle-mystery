@@ -27,18 +27,19 @@ function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:Charact
     context:CanvasRenderingContext2D):EffectHandlerResult|null {
   if (drawCall.stage === 'afterLevel') return null;
   const itemTransfer = drawCall.characterContext.itemTransfer;
+  const anatomy = drawCall.characterContext.characterAnatomy;
   const destination = _getDestinationCanvasPoint(drawCall, item, destinationFloorPosition, scalingFactors);
   const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
   if (sourcePlacement === INVENTORY) {
     if (drawCall.stage === 'beforeCharacter') return null;
-    const [x, y] = interpolateNumberPair(itemTransfer.characterCenterCanvasPoint, destination, progress);
+    const [x, y] = interpolateNumberPair(anatomy.characterCenterCanvasPoint, destination, progress);
     drawItemAtCanvasPositionInRoom(item, x, y, scalingFactors, context, itemTransfer.imageSet);
     return null;
   }
   if (drawCall.stage === 'afterCharacter') return null;
   const source = sourcePlacement === LEFT_HAND
-    ? itemTransfer.leftHandItemCanvasPoint
-    : itemTransfer.rightHandItemCanvasPoint;
+    ? anatomy.leftHandItemCanvasPoint
+    : anatomy.rightHandItemCanvasPoint;
   const animated = interpolateNumberPair(source, destination, progress);
   return { spriteOverrides:[{
     spriteKind:sourcePlacement === LEFT_HAND ? 'leftHandItem' : 'rightHandItem',

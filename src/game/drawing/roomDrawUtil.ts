@@ -53,6 +53,7 @@ import DiscoveryState from "../types/DiscoveryState";
 import { createRoomContentDisplayLayout, RoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
+import CharacterCanvasAnatomy from "../effects/types/CharacterCanvasAnatomy";
 import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
 
 const OPEN_DOOR_NEARNESS = 2;
@@ -316,9 +317,30 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
     stairTextureLightness:{ top:number, side:number, front:number }, discoveryState:DiscoveryState,
     isCharacterInActiveRoom:boolean, isLevelComplete:boolean, layoutPlanner:CanvasLayoutPlanner|null = null) {
+
+  // Resolve room content placement and drawing order.
   const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom);
   const contents = createDrawableContents(room, charactersInRoom, discoveryState.discoveredItemIds,
     includeUndiscoveredItems, displayLayout);
+
+  // Calculate reusable current-frame layout and anatomy for every drawable character.
+  const characterCanvasLayoutById = new Map<string, ReturnType<typeof createCharacterCanvasLayout>>();
+  const characterAnatomyById = new Map<string, CharacterCanvasAnatomy>();
+  contents.forEach(content => {
+    if (content.type !== 'character') return;
+    const canvasLayout = createCharacterCanvasLayout(
+      content.character, content.displayPosition, scalingFactors, gameTime);
+    characterCanvasLayoutById.set(content.character.id, canvasLayout);
+    characterAnatomyById.set(content.character.id, {
+      anchorX:canvasLayout.characterCenterCanvasPoint[0],
+      anchorTopY:canvasLayout.anchorTopY,
+      characterCenterCanvasPoint:canvasLayout.characterCenterCanvasPoint,
+      leftHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'left', scalingFactors),
+      rightHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'right', scalingFactors)
+    });
+  });
+
+  // Draw ordered room content and dispatch character effects around their owners.
   contents.forEach(content => {
     switch(content.type) {
       case 'stair':
@@ -336,18 +358,16 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           layoutPlanner.reserveRect(getCharacterCanvasRect(
             content.character, content.displayPosition, scalingFactors, gameTime, imageSet));
         }
-        const characterCanvasLayout = createCharacterCanvasLayout(
-          content.character, content.displayPosition, scalingFactors, gameTime);
-        const { characterCenterCanvasPoint:[anchorX], anchorTopY } = characterCanvasLayout;
+        const characterCanvasLayout = characterCanvasLayoutById.get(content.character.id);
+        const characterAnatomy = characterAnatomyById.get(content.character.id);
+        assertNonNullable(characterCanvasLayout);
+        assertNonNullable(characterAnatomy);
         const characterContext:CharacterEffectDrawContext = {
-          anchorX,
-          anchorTopY,
+          characterAnatomy,
+          characterAnatomyById,
           isCharacterInActiveRoom,
           isLevelComplete,
           itemTransfer:{
-            characterCenterCanvasPoint:characterCanvasLayout.characterCenterCanvasPoint,
-            leftHandItemCanvasPoint:getHeldItemCanvasPoint(characterCanvasLayout.layout, 'left', scalingFactors),
-            rightHandItemCanvasPoint:getHeldItemCanvasPoint(characterCanvasLayout.layout, 'right', scalingFactors),
             roomContentDisplayLayout:displayLayout,
             imageSet
           }
@@ -360,6 +380,8 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         return;
     }
   });
+
+  // Draw discovery markers above the completed room content.
   contents.forEach(content => {
     if (content.type === 'item' && isItemInteractive(content.item) && !discoveryState.discoveredItemIds.has(content.item.id)) {
       const rect = getItemCanvasRectInRoom(content.item, content.displayPosition, scalingFactors, imageSet);
