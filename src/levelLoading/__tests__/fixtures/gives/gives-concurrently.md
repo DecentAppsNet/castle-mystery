@@ -13,7 +13,7 @@ H
 ## Hall
 
 ```
-SP.J
+SJPK
 ....
 ....
 ```
@@ -21,14 +21,18 @@ SP.J
 * S=Sam
 * J=Jo
 * P=Pat
+* K=Kai
 
 # characters
 ## Sam
-* items=Coin|Vase
+* items=Coin
 
 ## Jo
 
 ## Pat
+* items=Vase
+
+## Kai
 
 # items
 ## Coin
@@ -36,7 +40,7 @@ SP.J
 
 # itinerary
 
-0:00:00 Sam drops Vase at Pat
 0:00:00 Sam gives Coin to Jo
+0:00:00 Pat gives Vase to Kai
 
 # conclusions

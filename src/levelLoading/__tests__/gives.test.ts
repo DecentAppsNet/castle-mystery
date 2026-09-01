@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
 import { findRoomAtPosition } from '@/game/roomUtil';
+import { findCharacterOwnedItem } from '@/game/itemOwnershipUtil';
 import Level from '@/game/types/Level';
 import givesBaseText from './fixtures/gives/gives-base.md?raw';
+import givesConcurrentlyText from './fixtures/gives/gives-concurrently.md?raw';
 import givesCrowdedText from './fixtures/gives/gives-crowded.md?raw';
 import givesGiverReservedText from './fixtures/gives/gives-giver-reserved.md?raw';
 import givesReceiverReservedText from './fixtures/gives/gives-receiver-reserved.md?raw';
@@ -21,12 +23,35 @@ function _findTransferTime(level:Level, itemId:string):number {
   return keyframe!.time;
 }
 
-function _findGiveEffect(level:Level) {
-  const characterI = level.timeline.characterIdToI.sam;
+function _findGiveEffect(level:Level, characterId:string = 'sam') {
+  const characterI = level.timeline.characterIdToI[characterId];
   const effect = level.timeline.keyframes.flatMap(keyframe => keyframe.characters[characterI].effects)
     .find(candidate => candidate.kind === 'giveItem' && candidate.handler !== null);
   expect(effect).toBeDefined();
   return effect!;
+}
+
+/** Verifies ownership and both participant effects immediately across a give's start and end boundaries. */
+function _expectGiveBoundaries(level:Level, itemId:string) {
+  const effect = _findGiveEffect(level);
+  const samI = level.timeline.characterIdToI.sam;
+  const joI = level.timeline.characterIdToI.jo;
+  const start = createKeyframeAtTime(level.timeline.keyframes, effect.startTime);
+  const beforeEnd = createKeyframeAtTime(level.timeline.keyframes, effect.endTime - 1);
+  const end = createKeyframeAtTime(level.timeline.keyframes, effect.endTime);
+
+  expect(findCharacterOwnedItem(start.characters[samI], itemId)).toBeDefined();
+  expect(findCharacterOwnedItem(start.characters[joI], itemId)).toBeNull();
+  expect(start.characters[samI].effects).toContain(effect);
+  expect(start.characters[joI].effects.some(candidate => candidate.kind === 'giveItem' && candidate.handler === null)).toBe(true);
+  expect(findCharacterOwnedItem(beforeEnd.characters[samI], itemId)).toBeDefined();
+  expect(findCharacterOwnedItem(beforeEnd.characters[joI], itemId)).toBeNull();
+  expect(beforeEnd.characters[samI].effects).toContain(effect);
+  expect(beforeEnd.characters[joI].effects.some(candidate => candidate.kind === 'giveItem' && candidate.handler === null)).toBe(true);
+  expect(findCharacterOwnedItem(end.characters[samI], itemId)).toBeNull();
+  expect(end.characters[joI].items.filter(item => item.id === itemId)).toHaveLength(1);
+  expect(end.characters[samI].effects.some(candidate => candidate.kind === 'giveItem')).toBe(false);
+  expect(end.characters[joI].effects.some(candidate => candidate.kind === 'giveItem')).toBe(false);
 }
 
 describe('level loading - gives activities', () => {
@@ -60,6 +85,14 @@ describe('level loading - gives activities', () => {
     expect(transfer.characters[joI].effects.some(candidate => candidate.kind === 'giveItem')).toBe(false);
   });
 
+  it('transfers an inventory item exactly at the give effect end', () => {
+    const { level, errors } = _loadGivesActivity('0:00:00 Sam gives Coin to Jo');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    _expectGiveBoundaries(level!, 'coin');
+  });
+
   it('transfers a left-hand item into receiver inventory', () => {
     const { level, errors } = _loadGivesActivity('0:00:00 Sam gives Key to Jo');
 
@@ -70,6 +103,14 @@ describe('level loading - gives activities', () => {
     expect(_findGiveEffect(level!).endTime).toBe(_findTransferTime(level!, 'key'));
   });
 
+  it('transfers a left-hand item exactly at the give effect end', () => {
+    const { level, errors } = _loadGivesActivity('0:00:00 Sam gives Key to Jo');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    _expectGiveBoundaries(level!, 'key');
+  });
+
   it('transfers a right-hand item into receiver inventory', () => {
     const { level, errors } = _loadGivesActivity('0:00:00 Sam gives Vase to Jo');
 
@@ -78,6 +119,28 @@ describe('level loading - gives activities', () => {
     expect(snapshot.characters[level!.timeline.characterIdToI.sam].rightHandItem).toBeNull();
     expect(snapshot.characters[level!.timeline.characterIdToI.jo].items.map(item => item.id)).toEqual(['book', 'vase']);
     expect(_findGiveEffect(level!).endTime).toBe(_findTransferTime(level!, 'vase'));
+  });
+
+  it('transfers a right-hand item exactly at the give effect end', () => {
+    const { level, errors } = _loadGivesActivity('0:00:00 Sam gives Vase to Jo');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    _expectGiveBoundaries(level!, 'vase');
+  });
+
+  it('completes giver movement before starting the give effect', () => {
+    const { level, errors } = _loadGivesActivity('0:00:00 Sam gives Coin to Jo');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const effect = _findGiveEffect(level!);
+    const samI = level!.timeline.characterIdToI.sam;
+    const startPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, effect.startTime);
+    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, effect.endTime);
+    expect(effect.startTime).toBeGreaterThan(level!.startTime);
+    expect(startPosition).not.toEqual(level!.timeline.keyframes[0].characters[samI].position);
+    expect(endPosition).toEqual(startPosition);
   });
 
   it('rejects giving an item to the giver', () => {
@@ -133,14 +196,71 @@ describe('level loading - gives activities', () => {
     expect(findRoomAtPosition(level!.rooms, finalPosition.x, finalPosition.y)?.id).toBe('closet');
   });
 
-  it('rejects giving while the giver has an active item-transfer reservation', () => {
+  it('allows the giver to begin another item operation at the exact give effect end', () => {
+    const text = replaceSection(givesBaseText, 'itinerary', [
+      '0:00:00 Sam gives Coin to Jo',
+      ': Sam gives Ring to Jo'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'gives-then-giver-gives.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const effects = level!.timeline.keyframes.flatMap(keyframe =>
+      keyframe.characters[level!.timeline.characterIdToI.sam].effects)
+      .filter(effect => effect.kind === 'giveItem' && effect.handler !== null);
+    expect(effects).toHaveLength(2);
+    expect(effects[1].startTime).toBe(effects[0].endTime);
+  });
+
+  it('allows the receiver to begin another item operation at the exact give effect end', () => {
+    const text = replaceSection(givesBaseText, 'itinerary', [
+      '0:00:00 Sam gives Coin to Jo',
+      ': Jo gives Book to Sam'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'gives-then-receiver-gives.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const firstEffect = _findGiveEffect(level!);
+    const secondEffect = _findGiveEffect(level!, 'jo');
+    expect(secondEffect.startTime).toBe(firstEffect.endTime);
+  });
+
+  it('allows independent character pairs to give concurrently in one room', () => {
+    const { level, errors } = loadLevelForTest(givesConcurrentlyText, 'gives-concurrently.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const samEffect = _findGiveEffect(level!, 'sam');
+    const patEffect = _findGiveEffect(level!, 'pat');
+    expect(patEffect.startTime).toBe(samEffect.startTime);
+    const end = createKeyframeAtTime(level!.timeline.keyframes, samEffect.endTime);
+    expect(end.characters[level!.timeline.characterIdToI.jo].items.map(item => item.id)).toEqual(['coin']);
+    expect(end.characters[level!.timeline.characterIdToI.kai].items.map(item => item.id)).toEqual(['vase']);
+  });
+
+  it('appends sequentially given items to receiver inventory in scheduling order', () => {
+    const text = replaceSection(givesBaseText, 'itinerary', [
+      '0:00:00 Sam gives Coin to Jo',
+      ': Sam gives Ring to Jo'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'gives-sequentially.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+    expect(end.characters[level!.timeline.characterIdToI.jo].items.map(item => item.id))
+      .toEqual(['book', 'coin', 'ring']);
+  });
+
+  it('rejects giving while the giver has an active item-transfer reservation before movement', () => {
     const { level, errors } = loadLevelForTest(givesGiverReservedText, 'gives-giver-reserved.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('"sam" character is already transferring an item');
   });
 
-  it('rejects giving while the receiver has an active item-transfer reservation', () => {
+  it('rejects giving while the receiver has an active item-transfer reservation before movement', () => {
     const { level, errors } = loadLevelForTest(givesReceiverReservedText, 'gives-receiver-reserved.md');
 
     expect(level).toBeNull();
