@@ -41,6 +41,7 @@ export function scheduleFacesActivity(_level:Level,
   const { characterId, target, toCharacterId, toItemId } = activity.parts;
   assert(typeof characterId === 'string');
   assertNonNullable(activity.startTime);
+  activity.busyCharacterIds = [characterId];
 
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);

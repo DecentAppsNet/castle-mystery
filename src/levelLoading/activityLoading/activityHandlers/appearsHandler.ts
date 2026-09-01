@@ -8,6 +8,7 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
+import { assert } from "decent-portal";
 
 /** Creates the accepted syntax for appearance activities. */
 export function createAppearsParseFormat():ParseFormat {
@@ -25,6 +26,9 @@ export function scheduleAppearsActivity(_level:Level,
     activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
 
   // TODO
+  const { characterId } = activity.parts;
+  assert(typeof characterId === 'string');
+  activity.busyCharacterIds = [characterId];
   activity.endTime = activity.startTime;
   return true;
 }

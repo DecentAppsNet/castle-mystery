@@ -32,6 +32,7 @@ export function scheduleWaitsActivity(_level:Level,
 
   assert(typeof characterId === 'string');
   assertNonNullable(activity.startTime);
+  activity.busyCharacterIds = [characterId];
   
   const duration = typeof seconds === 'number' ? seconds * MSECS_IN_SECOND : DEFAULT_WAIT_MSECS;
   activity.endTime = activity.startTime + duration;

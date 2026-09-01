@@ -23,6 +23,7 @@ export function scheduleBecomesActivity(_level:Level,
   _waypointContext:WaypointGenerationContext,
     activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
   // TODO
+  activity.busyCharacterIds = [];
   activity.endTime = activity.startTime;
   return true;
 }

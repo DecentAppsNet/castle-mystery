@@ -66,12 +66,14 @@ function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContex
 
   if (!scheduleActivityFunc(level, waypointContext, activity, timeline, errors)) return false;
 
-  // Successful scheduling should assign values to startTime and endTime.
+  // Successful scheduling should assign valid timing and busy-character participation.
   assert(Number.isFinite(activity.startTime) && Number.isFinite(activity.endTime));
   assertNonNullable(activity.startTime);
   assertNonNullable(activity.endTime);
   assert(activity.startTime <= activity.endTime);
   assert(activity.startTime >= level.startTime);
+  assertNonNullable(activity.busyCharacterIds);
+  assert(activity.busyCharacterIds.every(characterId => level.characters.some(character => character.id === characterId)));
   // Level.endTime is still not known because it requires all scheduling to be completed.
 
   return true;

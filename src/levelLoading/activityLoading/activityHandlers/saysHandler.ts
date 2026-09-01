@@ -40,6 +40,7 @@ export function scheduleSaysActivity(level:Level, _waypointContext:WaypointGener
   
   assertNonNullable(activity.startTime);
   const { characterId, text, toCharacterId, verb} = activity.parts as PartsShape;
+  activity.busyCharacterIds = [characterId];
   const characterI = editableTimeline.characterIdToI[characterId];
 
   // Face towards character if activity had "to Character".

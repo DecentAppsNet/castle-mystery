@@ -59,6 +59,7 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
   // Set up activity parts and reject giving to oneself.
   assertNonNullable(activity.startTime);
   const { characterId, itemId, toCharacterId } = activity.parts as PartsShape;
+  activity.busyCharacterIds = [characterId, toCharacterId];
   if (characterId === toCharacterId) {
     errors.addAtLine(`"${characterId}" character can't give an item to themselves.`, activity.lineI);
     return false;

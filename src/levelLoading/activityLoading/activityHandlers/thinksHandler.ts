@@ -34,6 +34,7 @@ export function scheduleThinksActivity(level:Level, _waypointContext:WaypointGen
   
   assertNonNullable(activity.startTime);
   const { characterId, text, verb} = activity.parts as PartsShape;
+  activity.busyCharacterIds = [characterId];
   const characterI = editableTimeline.characterIdToI[characterId];
 
   const speechDuration = calcSpeechDuration(text);

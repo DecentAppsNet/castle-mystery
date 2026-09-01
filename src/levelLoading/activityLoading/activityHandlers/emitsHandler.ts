@@ -40,6 +40,7 @@ export function scheduleEmitsActivity(level:Level,
 
   assertNonNullable(activity.startTime);
   const { characterId, text, verb, isLoud } = activity.parts as PartsShape;
+  activity.busyCharacterIds = typeof activity.parts.itemId === 'string' ? [] : [characterId];
   const characterI = editableTimeline.characterIdToI[characterId];
 
   const speechDuration = calcSpeechDuration(text);

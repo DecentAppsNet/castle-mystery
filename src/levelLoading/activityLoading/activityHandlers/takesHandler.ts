@@ -104,8 +104,9 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   const target = typeof activity.parts.target === 'string' ? activity.parts.target : INVENTORY;
   assert(target === LEFT_HAND || target === RIGHT_HAND || target === INVENTORY);
 
-  assertNonNullable(characterId, 'implied subjects should have been resolved');
+  assert(typeof characterId === 'string', 'implied subjects should have been resolved');
   assert(typeof itemId === 'string');
+  activity.busyCharacterIds = [characterId];
   const keyframe = createKeyframeAtTime(editableTimeline.keyframes, activity.startTime);
   const characterI = editableTimeline.characterIdToI[characterId];
   const characterKeyframe = keyframe.characters[characterI];

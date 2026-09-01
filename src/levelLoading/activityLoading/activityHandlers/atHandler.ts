@@ -64,6 +64,7 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
   activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   const { characterId, roomId, horizontalTarget } = activity.parts as PartsShape;
   assertNonNullable(characterId, 'implied subjects should have been resolved');
+  activity.busyCharacterIds = [characterId];
   const character = level.characters.find(c => c.id === characterId);
   assertNonNullable(character);
   
