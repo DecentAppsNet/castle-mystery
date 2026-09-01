@@ -96,15 +96,33 @@ describe('level loading - drops activities', () => {
     expect(endSnapshot.characters[samI].rightHandItem).toBeNull();
   });
 
-  it('rejects another item operation by a character during an active drop', () => {
+  it('rejects another item operation overlapping the same character\'s drop activity', () => {
     const text = dropsOnItemText.replace(': drops Vase on Table', [
       '0:00:06 Sam drops Vase on Table',
-      '0:00:06 Sam takes Vase into inventory'
+      '0:00:06 Sam takes Book into inventory'
     ].join('\n'));
     const { level, errors } = loadLevelForTest(text, 'overlapping-drop.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character is already transferring an item.');
+    expect(errors.describeErrors()).toContain('"sam" character can\'t "takes" because they are busy with "drops" activity');
+  });
+
+  it('allows another item operation at the exact drop effect end', () => {
+    const text = dropsOnItemText.replace(': drops Vase on Table', [
+      '0:00:06 Sam drops Vase on Table',
+      ': Sam takes Vase into inventory'
+    ].join('\n'));
+    const { level, errors } = loadLevelForTest(text, 'drop-at-effect-end.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const effects = level!.timeline.keyframes.flatMap(keyframe =>
+      keyframe.characters[level!.timeline.characterIdToI.sam].effects);
+    const dropEffect = effects.find(effect => effect.kind === 'dropItem');
+    expect(dropEffect).toBeDefined();
+    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+    expect(end.characters[level!.timeline.characterIdToI.sam].items.map(item => item.id))
+      .toContain('vase');
   });
 
   it('allows simultaneous drops by different characters into the same room', () => {

@@ -17,9 +17,7 @@ import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timel
 import { arePositionsAdjacent } from "@/game/positionUtil";
 import { findClaimedWaypointsFromKeyframe, findNearestIncludedFloorWaypointToPosition } from "../waypointFindingUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
-import { hasActiveItemTransferReservation } from "./util/itemTransferReservationUtil";
 import { createGiveEffect } from "@/game/effects/giveEffectUtil";
-import Effect from "@/game/effects/types/Effect";
 
 type PartsShape = { characterId:string, itemId:string, toCharacterId:string };
 function _scheduleRemoveOwnedItem(characterKeyframe:CharacterKeyframe, placement:CharacterOwnedItemPlacement,
@@ -65,7 +63,7 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
     return false;
   }
 
-  // Resolve both participants and reject existing item-transfer reservations.
+  // Resolve both participants at the activity start.
   const fromKeyframe = findKeyframeForTime(editableTimeline.keyframes, activity.startTime);
   const characterI = editableTimeline.characterIdToI[characterId];
   const toCharacterI = editableTimeline.characterIdToI[toCharacterId];
@@ -73,12 +71,6 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
   assertNonNullable(toCharacterI);
   const characterKeyframe = fromKeyframe.characters[characterI];
   const toCharacterKeyframe = fromKeyframe.characters[toCharacterI];
-  for (const [participantId, participantKeyframe] of [[characterId, characterKeyframe], [toCharacterId, toCharacterKeyframe]] as const) {
-    if (hasActiveItemTransferReservation(participantKeyframe)) {
-      errors.addAtLine(`"${participantId}" character is already transferring an item.`, activity.lineI);
-      return false;
-    }
-  }
 
   // Confirm the giver owns the requested item.
   const ownedItem = findCharacterOwnedItem(characterKeyframe, itemId);
@@ -132,14 +124,11 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
     return false;
   }
 
-  // Reserve both participants while the giver-owned effect animates.
+  // Animate the item on the giver while the activity reserves both participants.
   assert(!findCharacterOwnedItem(scheduleToCharacterKeyframe, itemId));
   const giveEffect = createGiveEffect(scheduleOwnedItem.item, scheduleOwnedItem.placement,
     toCharacterId, scheduleTime);
-  const receiverReservation:Effect = { kind:'giveItem', startTime:scheduleTime,
-    endTime:giveEffect.endTime, handler:null };
   addCharacterEffect(giveEffect, characterI, editableTimeline);
-  addCharacterEffect(receiverReservation, toCharacterI, editableTimeline);
 
   // Transfer ownership atomically at the visual effect end.
   const endKeyframe = findKeyframeForTime(editableTimeline.keyframes, giveEffect.endTime);

@@ -67,11 +67,11 @@ describe('level loading - takes activities', () => {
     expect(sam.items.map(item => item.id)).toContain('key');
   });
 
-  it('rejects another item operation by the same character during an active take', () => {
+  it('rejects another item operation overlapping the same character\'s take activity', () => {
     const { level, errors } = loadLevelForTest(takesDuringReservationText, 'takes-during-reservation.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character is already transferring an item.');
+    expect(errors.describeErrors()).toContain('"sam" character can\'t "drops" because they are busy with "takes" activity');
   });
 
   it('allows another item operation by the same character at the exact take effect end', () => {

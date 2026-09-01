@@ -27,7 +27,6 @@ import { addCharacterEffect, addCharacterKeyChanges, addRoomKeyChanges } from "@
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 import { findCharacterOwnedItem } from "@/game/itemOwnershipUtil";
 import { createDropEffect } from "@/game/effects/dropEffectUtil";
-import { hasActiveItemTransferReservation } from "./util/itemTransferReservationUtil";
 
 // Coupled to parse format. Used for casting parts to expected types.
 type PartsShape = {
@@ -122,11 +121,6 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);
   const characterKeyframe = fromKeyframe.characters[characterI];
-
-  if (hasActiveItemTransferReservation(characterKeyframe)) {
-    errors.addAtLine(`"${characterId}" character is already transferring an item.`, activity.lineI);
-    return false;
-  }
 
   // Confirm character has item in inventory or hands at time of dropping.
   const ownedItem = findCharacterOwnedItem(characterKeyframe, itemId);

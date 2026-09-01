@@ -21,7 +21,6 @@ import { addCharacterEffect, addCharacterKeyChanges, addRoomKeyChanges } from "@
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { CharacterOwnedItemPlacement, findCharacterOwnedItem, INVENTORY, LEFT_HAND, RIGHT_HAND } from "@/game/itemOwnershipUtil";
-import { hasActiveItemTransferReservation } from "./util/itemTransferReservationUtil";
 import { createTakeEffect } from "@/game/effects/takeEffectUtil";
 
 const ROOM = 'room';
@@ -111,10 +110,6 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   const characterI = editableTimeline.characterIdToI[characterId];
   const characterKeyframe = keyframe.characters[characterI];
   assertNonNullable(characterKeyframe);
-  if (hasActiveItemTransferReservation(characterKeyframe)) {
-    errors.addAtLine(`"${characterId}" character is already transferring an item.`, activity.lineI);
-    return false;
-  }
   const item = level.itemsById.get(itemId);
   assertNonNullable(item);
 

@@ -31,7 +31,7 @@ function _findGiveEffect(level:Level, characterId:string = 'sam') {
   return effect!;
 }
 
-/** Verifies ownership and both participant effects immediately across a give's start and end boundaries. */
+/** Verifies ownership and the drawable giver effect across a give's boundaries. */
 function _expectGiveBoundaries(level:Level, itemId:string) {
   const effect = _findGiveEffect(level);
   const samI = level.timeline.characterIdToI.sam;
@@ -43,11 +43,11 @@ function _expectGiveBoundaries(level:Level, itemId:string) {
   expect(findCharacterOwnedItem(start.characters[samI], itemId)).toBeDefined();
   expect(findCharacterOwnedItem(start.characters[joI], itemId)).toBeNull();
   expect(start.characters[samI].effects).toContain(effect);
-  expect(start.characters[joI].effects.some(candidate => candidate.kind === 'giveItem' && candidate.handler === null)).toBe(true);
+  expect(start.characters[joI].effects.some(candidate => candidate.kind === 'giveItem')).toBe(false);
   expect(findCharacterOwnedItem(beforeEnd.characters[samI], itemId)).toBeDefined();
   expect(findCharacterOwnedItem(beforeEnd.characters[joI], itemId)).toBeNull();
   expect(beforeEnd.characters[samI].effects).toContain(effect);
-  expect(beforeEnd.characters[joI].effects.some(candidate => candidate.kind === 'giveItem' && candidate.handler === null)).toBe(true);
+  expect(beforeEnd.characters[joI].effects.some(candidate => candidate.kind === 'giveItem')).toBe(false);
   expect(findCharacterOwnedItem(end.characters[samI], itemId)).toBeNull();
   expect(end.characters[joI].items.filter(item => item.id === itemId)).toHaveLength(1);
   expect(end.characters[samI].effects.some(candidate => candidate.kind === 'giveItem')).toBe(false);
@@ -70,8 +70,7 @@ describe('level loading - gives activities', () => {
     const effect = _findGiveEffect(level!);
     expect(effect.endTime).toBe(transferTime);
     expect(before.characters[samI].effects).toContain(effect);
-    expect(before.characters[joI].effects.some(candidate =>
-      candidate.kind === 'giveItem' && candidate.handler === null)).toBe(true);
+    expect(before.characters[joI].effects.some(candidate => candidate.kind === 'giveItem')).toBe(false);
     expect(before.characters[samI].items.map(item => item.id)).toEqual(['coin', 'ring']);
     expect(before.characters[joI].items.map(item => item.id)).toEqual(['book']);
     expect(transfer.characters[samI].items.map(item => item.id)).toEqual(['ring']);
@@ -179,7 +178,7 @@ describe('level loading - gives activities', () => {
     expect(_findGiveEffect(level!).endTime).toBe(transferTime);
   });
 
-  it('starts subsequent receiver movement after the give reservation ends', () => {
+  it('starts subsequent receiver movement after the give activity ends', () => {
     const text = replaceSection(givesBaseText, 'itinerary', [
       '0:00:00 Sam gives Coin to Jo',
       ': Jo @ Closet'
@@ -253,17 +252,17 @@ describe('level loading - gives activities', () => {
       .toEqual(['book', 'coin', 'ring']);
   });
 
-  it('rejects giving while the giver has an active item-transfer reservation before movement', () => {
+  it('rejects giving while the giver is busy with another item-transfer activity', () => {
     const { level, errors } = loadLevelForTest(givesGiverReservedText, 'gives-giver-reserved.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character is already transferring an item');
+    expect(errors.describeErrors()).toContain('"sam" character can\'t "gives" because they are busy with "drops" activity');
   });
 
-  it('rejects giving while the receiver has an active item-transfer reservation before movement', () => {
+  it('rejects giving while the receiver is busy with another item-transfer activity', () => {
     const { level, errors } = loadLevelForTest(givesReceiverReservedText, 'gives-receiver-reserved.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"jo" character is already transferring an item');
+    expect(errors.describeErrors()).toContain('"jo" character can\'t "gives" because they are busy with "drops" activity');
   });
 });
