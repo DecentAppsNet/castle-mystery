@@ -101,7 +101,7 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
     activity.startTime = activity.endTime = endTime;
     return true;
   }
-  
+
   assert(activity.endTime === null || activity.endTime >= level.startTime);
   const toTime = toKeyframe.time;
 

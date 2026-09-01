@@ -13,11 +13,13 @@ import { findKeyframeForTime } from "@/game/timeline";
 import { findRoomAtPosition } from "@/game/roomUtil";
 import { CharacterOwnedItemPlacement, findCharacterOwnedItem, INVENTORY, LEFT_HAND, RIGHT_HAND } from "@/game/itemOwnershipUtil";
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
-import { addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
+import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import { arePositionsAdjacent } from "@/game/positionUtil";
 import { findClaimedWaypointsFromKeyframe, findNearestIncludedFloorWaypointToPosition } from "../waypointFindingUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import { hasActiveItemTransferReservation } from "./util/itemTransferReservationUtil";
+import { createGiveEffect } from "@/game/effects/giveEffectUtil";
+import Effect from "@/game/effects/types/Effect";
 
 type PartsShape = { characterId:string, itemId:string, toCharacterId:string };
 function _scheduleRemoveOwnedItem(characterKeyframe:CharacterKeyframe, placement:CharacterOwnedItemPlacement,
@@ -129,12 +131,25 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
     return false;
   }
 
-  // Transfer ownership instantaneously and complete the activity without a visual effect.
+  // Reserve both participants while the giver-owned effect animates.
   assert(!findCharacterOwnedItem(scheduleToCharacterKeyframe, itemId));
-  _scheduleRemoveOwnedItem(scheduleCharacterKeyframe, scheduleOwnedItem.placement,
-    itemId, characterI, scheduleTime, editableTimeline);
-  addCharacterKeyChanges({ items:[...scheduleToCharacterKeyframe.items, scheduleOwnedItem.item] },
-    toCharacterI, scheduleTime, editableTimeline);
-  activity.endTime = scheduleTime;
+  const giveEffect = createGiveEffect(scheduleOwnedItem.item, scheduleOwnedItem.placement,
+    toCharacterId, scheduleTime);
+  const receiverReservation:Effect = { kind:'giveItem', startTime:scheduleTime,
+    endTime:giveEffect.endTime, handler:null };
+  addCharacterEffect(giveEffect, characterI, editableTimeline);
+  addCharacterEffect(receiverReservation, toCharacterI, editableTimeline);
+
+  // Transfer ownership atomically at the visual effect end.
+  const endKeyframe = findKeyframeForTime(editableTimeline.keyframes, giveEffect.endTime);
+  const endCharacterKeyframe = endKeyframe.characters[characterI];
+  const endToCharacterKeyframe = endKeyframe.characters[toCharacterI];
+  assert(findCharacterOwnedItem(endCharacterKeyframe, itemId)?.placement === scheduleOwnedItem.placement);
+  assert(!findCharacterOwnedItem(endToCharacterKeyframe, itemId));
+  _scheduleRemoveOwnedItem(endCharacterKeyframe, scheduleOwnedItem.placement,
+    itemId, characterI, giveEffect.endTime, editableTimeline);
+  addCharacterKeyChanges({ items:[...endToCharacterKeyframe.items, scheduleOwnedItem.item] },
+    toCharacterI, giveEffect.endTime, editableTimeline);
+  activity.endTime = giveEffect.endTime;
   return true;
 }
