@@ -1,3 +1,6 @@
+/* This file detects, configures, and generates the character-identities conclusion.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import ClozePart from "@/game/conclusions/types/ClozePart";
 import ClozePartType from "@/game/conclusions/types/ClozePartType";
 import Conclusion from "@/game/conclusions/types/Conclusion";
@@ -94,6 +97,7 @@ function _generateConclusionOptions(authoredCharacterOptions:string[]|null, char
   return {characterOptions:conclusionCharacters.map(c => c.title), conclusionCharacters };
 }
 
+/** Generates an identities conclusion unless all character titles are initially known. */
 export function createGeneratedIdentityConclusion(conclusionsSectionText:string, characters:readonly Character[], 
     rooms:readonly Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>,
     initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):Conclusion|null {
@@ -126,6 +130,7 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
   return conclusion;
 }
 
+/** Reports whether a conclusion list already contains an identities conclusion. */
 export function hasIdentitiesConclusion(conclusions:Conclusion[]):boolean {
   return conclusions.some(c => c.id === 'identities');
 }

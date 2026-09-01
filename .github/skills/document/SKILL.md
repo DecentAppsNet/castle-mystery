@@ -19,7 +19,7 @@ Take extra care never to evaluate/modify inside `/node_modules`, `/workAssets`, 
 * No modifications should be made outside the Scope of Operation. The `npm run` scripts are an exception to this constraint.
 * Evaluations (not modifications) outside the Scope of Operation can be made, but only to provide context for potential modifications to files inside the Scope of Operation.
 * Do not create or execute ad-hoc scripts for analyzing or modifying the codebase. Use normal file inspection/editing capabilities and the explicitly authorized project commands instead.
-* The final diff for any individual file may contain at most 200 added or deleted lines combined. Before making a change that would cause a file to exceed this limit, stop modifying that file and report that its documentation was only partially completed.
+* The final diff for any individual file may contain at most 50 added or deleted lines combined. Before making a change that would cause a file to exceed this limit, stop modifying that file and report that its documentation was only partially completed.
 
 # Baseline Check
 

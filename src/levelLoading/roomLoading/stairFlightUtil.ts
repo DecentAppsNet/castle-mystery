@@ -1,5 +1,5 @@
-/* This module groups stair-flight generation helpers that derive traversable stair segments from room geometry.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups stair-flight generation helpers that derive traversable stair segments from room geometry.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 import { assert, assertNonNullable } from "decent-portal";
 
 import { MAP_TILE_SIZE, roomWidthToColumnCount } from "@/game/roomGridUtil";
@@ -136,6 +136,7 @@ function _generateWindingStairFlights(room:Room, floorY:number, nonFloorExits:Ro
   return flights;
 }
 
+/** Derives direct or winding traversable stair flights between a room's stair exits. */
 export function generateStairFlights(room:Room):StairFlight[] {
   const floorY = _calcFloorY(room);
   const nonFloorExits = _findSortedNonFloorExits(room, floorY);

@@ -1,5 +1,5 @@
-/* This module groups waypoint constants and lookup helpers used by level loading.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups waypoint coordinates and lookup helpers used by level loading.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Room from "@/game/types/Room";
 import Waypoint from "../types/Waypoint";
@@ -13,14 +13,19 @@ import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import Item from "@/game/types/Item";
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 
+/** Z coordinate used for back-row waypoints. */
 export const WAYPOINT_BACK_ROW_Z = ROOM_BACK_ROW_CENTER_Z;
+/** Z coordinate used for middle-row waypoints. */
 export const WAYPOINT_MIDDLE_ROW_Z = ROOM_MIDDLE_ROW_CENTER_Z;
+/** Z coordinate used for front-row waypoints. */
 export const WAYPOINT_FRONT_ROW_Z = ROOM_FRONT_ROW_CENTER_Z;
 
+/** Converts a landing height to its walkable waypoint height. */
 export function calcLandingWaypointY(y:number):number {
   return y - FLOOR_WAYPOINT_Y_OFFSET;
 }
 
+/** Returns the walkable Y coordinate of an exit waypoint. */
 export function calcExitWaypointY(exit:RoomExit):number {
   return calcLandingWaypointY(exit.y);
 }
@@ -62,10 +67,12 @@ function _findRoomCharacterPositions(characterKeyframes:CharacterKeyframe[], roo
     .map(c => c.position);
 }
 
+/** Reports whether a waypoint lies on a room's floor plane. */
 export function isFloorWaypoint(room:Room, waypoint:Waypoint):boolean {
   return waypoint.position.y === room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
 }
 
+/** Reports whether a waypoint represents one of a room's exits. */
 export function isExitWaypoint(room:Room, waypoint:Waypoint):boolean {
   return waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z
     && room.exits.some(exit => exit.x === waypoint.position.x && calcExitWaypointY(exit) === waypoint.position.y);
@@ -87,6 +94,7 @@ function _findWaypointAtPosition(waypoints:Waypoint[], position:Position):Waypoi
   return waypoints.find(w => arePositionsEqual(position, w.position)) ?? null;
 }
 
+/** Finds the waypoint corresponding to a room exit, asserting that it exists. */
 export function findExitWaypoint(roomId:string, roomRect:Room['rect'], exit:RoomExit, waypoints:Waypoint[]):Waypoint {
   assert(_isExitPositionSupported(roomRect, exit), `exit for room ${roomId} at (${exit.x}, ${exit.y}) is not on a supported boundary`);
   const waypoint = waypoints.find(candidate =>
@@ -95,12 +103,14 @@ export function findExitWaypoint(roomId:string, roomRect:Room['rect'], exit:Room
   return waypoint;
 }
 
+/** Returns generated waypoints for a room, asserting that they exist. */
 export function findWaypointsForRoom(context:WaypointGenerationContext, roomId:string):Waypoint[] {
   const waypoints = context.waypointsByRoomId.get(roomId);
   assertNonNullable(waypoints, `missing waypoints for room ${roomId}`);
   return waypoints;
 }
 
+/** Finds the floor waypoint nearest a room-local position. */
 export function findNearestFloorWaypointToPosition(context:WaypointGenerationContext, room:Room, position:Position):Waypoint {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   const waypoint = _findNearestXZWaypoint(findWaypointsForRoom(context, room.id), position.x, floorY, position.z, []);
@@ -108,12 +118,14 @@ export function findNearestFloorWaypointToPosition(context:WaypointGenerationCon
   return waypoint;
 }
 
+/** Finds the nearest floor waypoint not excluded by the caller. */
 export function findNearestIncludedFloorWaypointToPosition(context:WaypointGenerationContext, room:Room, position:Position,
     excludedWaypoints:Waypoint[]):Waypoint|null {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   return _findNearestXZWaypoint(findWaypointsForRoom(context, room.id), position.x, floorY, position.z, excludedWaypoints);
 }
 
+/** Finds the nearest included floor waypoint on the back row. */
 export function findNearestIncludedFloorBackRowWaypointToPosition(context:WaypointGenerationContext, room:Room, position:Position,
     excludedWaypoints:Waypoint[]):Waypoint|null {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
@@ -121,6 +133,7 @@ export function findNearestIncludedFloorBackRowWaypointToPosition(context:Waypoi
   return _findNearestXZWaypoint(waypoints, position.x, floorY, position.z, excludedWaypoints);
 }
 
+/** Finds a room waypoint at an exact position, or returns null. */
 export function findRoomWaypointAtPosition(waypointContext:WaypointGenerationContext, roomId:string, position:Position):Waypoint|null {
   const waypoints = waypointContext.waypointsByRoomId.get(roomId);
   assertNonNullable(waypoints);
@@ -129,6 +142,7 @@ export function findRoomWaypointAtPosition(waypointContext:WaypointGenerationCon
 
 // Returns an array of unclaimed waypoints in a specified room. Unclaimed means no visible character or item
 // is positioned at a waypoint. Room exit and non-floor waypoints are excluded.
+/** Returns floor waypoints occupied by visible characters or room items in a keyframe. */
 export function findClaimedWaypointsFromKeyframe(room:Room, roomI:number, keyframe:TimelineKeyframe, 
     waypointContext:WaypointGenerationContext):Waypoint[] {
   const waypoints:Waypoint[] = _findRoomFloorWaypoints(room, waypointContext);

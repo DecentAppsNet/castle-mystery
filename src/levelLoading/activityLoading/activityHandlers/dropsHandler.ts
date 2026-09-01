@@ -37,6 +37,7 @@ type PartsShape = {
   toItemId?:string
 }
 
+/** Creates the accepted syntax for item-dropping activities. */
 export function createDropsParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const drops = makeVerb('drops');
@@ -109,6 +110,7 @@ function _scheduleAddItemToRoom(dropItem:Item, dropPosition:Position, roomKeyfra
   addRoomKeyChanges({ items }, roomI, time, editableTimeline);
 }
 
+/** Schedules an item drop, including placement or stacking, into an editable timeline. */
 export function scheduleDropsActivity(level:Level, waypointContext:WaypointGenerationContext,
     activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   

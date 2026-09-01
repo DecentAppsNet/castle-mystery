@@ -1,5 +1,5 @@
-/* This module validates room legends and places their referenced items, including item stacks.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file validates room legends and places their referenced items, including item stacks.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Item, { MutableItem } from "@/game/types/Item";
 import Room from "@/game/types/Room";
@@ -25,6 +25,7 @@ function _areAllLegendIdsValidReferences(roomLegendGrid:LegendGrid, availableIte
   return errors.count <= originalErrorCount;
 }
 
+/** Validates room legend references and positions the room's item definitions. */
 export function createItemsForRoom(room:Room, items:MutableItem[], availableCharacterIds:string[], roomSectionText:string, errors:ErrorCollector):Item[] {
   const itemsResult:Item[] = [];
   const roomLegendGrid = parseLegendGrid(roomSectionText, errors, ['rooms', room.id]);

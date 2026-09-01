@@ -1,9 +1,12 @@
+/* This file orchestrates loading complete levels from authored text or a level URL.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Level from "@/game/types/Level";
 import { ErrorCollector } from "./errorCollection";
 import { loadLevelSections } from "./levelFileSectionUtil";
 import { initMutableLevelAndLoadingContext } from "./generalLoading";
 import { addRoomsToLevel, loadRoomsPartially } from "./roomLoading";
-import { addItemsToLevel, loadItemsPartially } from "./itemLoading";
+import { indexUsedItemsInLevel, loadItemsPartially } from "./itemLoading";
 import { addCharactersToLevel, loadCharactersPartially } from "./characterLoading";
 import { loadConclusions } from "./conclusionLoading";
 import { findLastActivityEndTime, findStartTimeFromItinerary, loadActivitiesPartially } from "./activityLoading";
@@ -26,6 +29,8 @@ function _getInitialTimeValue(authoredInitialTime:number|null, levelStartTime:nu
 }
 
 /** 
+ * Loads and validates a complete level from authored markdown text.
+ *
  * Error handling design:
  * If an error is caused by the level file input, then this is considered an
  * an expected condition and the error should be logged with the passed-in `errors` object.
@@ -68,7 +73,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Add items, characters, and rooms to level, resolving dependencies.
   if (!addRoomsToLevel(rooms, loadingContext.groundFloorRoomRef, level, errors)) return null;
   if (!addCharactersToLevel(characters, items, level, errors)) return null;
-  if (!addItemsToLevel(items, activities, rooms, level, errors)) return null;
+  if (!indexUsedItemsInLevel(items, activities, rooms, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
   level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms,
@@ -96,6 +101,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   return errors.count <= originalErrorCount ? level : null;
 }
 
+/** Loads imported level text from a URL and returns the parsed level with collected authoring errors. */
 export async function loadLevelFromUrl(levelFileUrl:string):Promise<{level:Level|null, errors:ErrorCollector}> {
   const filename = _levelUrlToFilename(levelFileUrl); // For security, any extra path information is stripped. Level files will be retrieved from a fixed location later.
   const sourceMappedText = await loadLevelWithImportsAndSourceLineMap(filename);

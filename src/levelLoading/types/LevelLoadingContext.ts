@@ -1,10 +1,6 @@
-
-// Keeps values that will later be assigned to level or inform level loading. Values generally left unassigned to the
-// level object unless they can be fully validated, which sometimes means waiting until a needed dependency is available. If a value 
-
 import ActivityParsingRules from "../activityLoading/types/ActivityParsingRules";
 
-// can be assigned to level immediately, with no later validation needed, it shouldn't be in this type.
+/** Holds deferred values that require dependencies or later validation during level loading. */
 type LevelLoadingContext = {
   activeCharacterId:string, // Needs character ID allowed values and parsed itinerary for validation.
   initialTime:number|null, // Needs parsed itinerary for validation.

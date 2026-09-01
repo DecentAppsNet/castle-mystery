@@ -1,3 +1,6 @@
+/* This file parses and schedules character reclining activities.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeSequence, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
@@ -8,6 +11,7 @@ import { assert, assertNonNullable } from "decent-portal";
 import { addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
+/** Creates the accepted syntax for reclining activities. */
 export function createLaysParseFormat():ParseFormat {
   const rootParseStep = makeSequence([
     makeIdentifier('characterId', 'CharacterId', true),
@@ -16,6 +20,7 @@ export function createLaysParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
+/** Schedules a reclining posture into an editable timeline. */
 export function scheduleLaysActivity(_level:Level,
   _waypointContext:WaypointGenerationContext,
     activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {

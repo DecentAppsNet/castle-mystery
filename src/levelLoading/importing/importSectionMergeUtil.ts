@@ -1,5 +1,5 @@
-/* This module groups section-tree merge helpers for levelLoading2 importing.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups section-tree merge helpers for level importing.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { mergeSectionBody } from "./importBodyTokenUtil";
 import { serializeSourceMappedSections } from "./importSerializationUtil";
@@ -37,6 +37,7 @@ function _mergeSectionNodes(levelSection:ImportedSection|null, importSection:Imp
   };
 }
 
+/** Merges imported sections into level source while preserving source mappings. */
 export function mergeImportIntoLevelSource(levelSource:SourceMappedText, importSource:SourceMappedText):SourceMappedText {
   const levelSections = parseSectionTree(levelSource);
   const importSections = parseSectionTree(importSource);

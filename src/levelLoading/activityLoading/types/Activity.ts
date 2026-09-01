@@ -1,5 +1,6 @@
 import ActivityParts from "./ActivityParts";
 
+/** An authored activity with source location, timing, parsed values, and authored successor. */
 type Activity = {
   lineI:number,
   verb:string;
@@ -9,6 +10,7 @@ type Activity = {
   nextActivity:Activity|null
 }
 
+/** An activity before its combined-text source line index is assigned. */
 export type ParsedActivity = Omit<Activity, 'lineI'>;
 
 export default Activity;

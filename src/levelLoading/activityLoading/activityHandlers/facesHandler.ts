@@ -1,3 +1,6 @@
+/* This file parses and schedules character facing-direction activities.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteral, makeSequence, makeVariableOptions, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
@@ -17,6 +20,7 @@ function _findFacingDirection(characterId:string, target:any, toCharacterId:any,
   return findItemFacingDirection(characterId, toItemId, editableTimeline, time);
 }
 
+/** Creates the accepted syntax for facing activities. */
 export function createFacesParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const faces = makeVerb('faces');
@@ -30,6 +34,7 @@ export function createFacesParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
+/** Schedules a character's facing direction into an editable timeline. */
 export function scheduleFacesActivity(_level:Level,
   _waypointContext:WaypointGenerationContext,
     activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {

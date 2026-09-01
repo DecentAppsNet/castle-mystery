@@ -1,3 +1,4 @@
+/** A level parsing error with its original source and character range. */
 type ParseErrorEvent = {
   sourceFilename:string,
   sourceLineNo:number,

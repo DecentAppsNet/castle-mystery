@@ -1,5 +1,5 @@
-/* This module groups source fetching and recursive import-loading helpers for levelLoading2 importing.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups source fetching and recursive import-loading helpers for level importing.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { parseOptions, parseSections } from "@/common/markdownUtil";
 import { validateFilename } from "@/common/filenameValidationUtil";
@@ -71,6 +71,7 @@ async function _loadLevelTextWithSourceLineMap(filename:string, context:LoadImpo
   }
 }
 
+/** Loads a level with recursive imports merged while preserving original source locations. */
 export async function loadLevelWithImportsAndSourceLineMap(filename:string):Promise<SourceMappedText> {
   return _loadLevelTextWithSourceLineMap(filename, { cache:new Map() }, [filename]);
 }

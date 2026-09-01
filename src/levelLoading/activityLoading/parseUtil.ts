@@ -1,5 +1,5 @@
-/* This module groups activity-text normalization, tokenization, and recursive parse helpers for levelLoading2 activity parsing.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups activity-text normalization, tokenization, and recursive parse helpers.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable, botch } from "decent-portal";
 import { ParsedActivity } from "./types/Activity";
@@ -396,8 +396,10 @@ function _getStartAndEndTimes(activityTime:number|null, verb:string):{startTime:
   return {startTime, endTime};
 }
 
+/** Reports whether a verb interprets its authored timestamp as an end time. */
 export function doesActivityUseEndTimestamp(verb:string) { return verb === '@'; }
 
+/** Parses an activity line, returning either the activity or an author-facing error message. */
 export function tryParseActivity(activityLine:string, rules:ActivityParsingRules):ParsedActivity|string {
   throwIfActivityParsingRulesAreInvalid(rules);
 

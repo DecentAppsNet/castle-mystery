@@ -1,3 +1,6 @@
+/* This file parses character definitions and resolves their positions and item references.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Character, { BodyOrientation, createDefaultCharacter, DEFAULT_BODY_ORIENTATION, DEFAULT_FACING_DIRECTION, FacingDirection, MutableCharacter, VALID_BODY_ORIENTATIONS, VALID_FACING_DIRECTIONS } from "@/game/types/Character";
 import { ErrorCollector } from "../errorCollection";
 import SectionEntryMap from "../types/SectionEntryMap";
@@ -58,6 +61,7 @@ function _parseCharacter(characterId:string, position:Position, characterSection
   return { character, isTitleKnown };
 }
 
+/** Parses positioned characters while deferring resolution of their item references. */
 export function loadCharactersPartially(charactersSectionText:string, roomsSectionText:string, rooms:Room[],
   errors:ErrorCollector):PartiallyLoadedCharacters|null {
   const originalErrorCount = errors.count;
@@ -86,6 +90,7 @@ export function loadCharactersPartially(charactersSectionText:string, roomsSecti
   return errors.count <= originalErrorCount ? { characters, initiallyKnownTitleCharacterIds } : null;
 }
 
+/** Resolves character item references and assigns the characters to the level. */
 export function addCharactersToLevel(characters:MutableCharacter[], items:Item[], level:MutableLevel, errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
   assertNonNullable(level.activeCharacterId);

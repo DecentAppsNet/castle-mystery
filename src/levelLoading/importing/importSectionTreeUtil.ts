@@ -1,5 +1,5 @@
-/* This module groups markdown heading parsing and section-tree construction helpers for levelLoading2 importing.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups markdown heading parsing and section-tree construction helpers for level importing.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { normalizeId } from "@/game/idUtil";
 import SourceMappedText from "./types/SourceMappedText";
@@ -24,6 +24,7 @@ function _findMarkdownHeadingLine(line:string):{ depth:number, headingText:strin
   return { depth, headingText };
 }
 
+/** Creates an empty imported section for an authored heading. */
 export function createSection(headingText:string):ImportedSection {
   return {
     headingText,
@@ -35,10 +36,12 @@ export function createSection(headingText:string):ImportedSection {
   };
 }
 
+/** Creates an original-source location for a one-based line number. */
 export function createSourceLine(filename:string, lineNo:number):SourceLine {
   return { filename, lineNo };
 }
 
+/** Parses source-mapped markdown into a nested section tree. */
 export function parseSectionTree(sourceMappedText:SourceMappedText):ImportedSection[] {
   const roots:ImportedSection[] = [];
   const stack:Array<{ depth:number, section:ImportedSection }> = [];

@@ -1,5 +1,5 @@
-/* This module parses itinerary activities and prepares their authored relationships for scheduling.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file parses itinerary activities and prepares their authored relationships for scheduling.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Activity from "./types/Activity";
 import ActivityParsingRules from "./types/ActivityParsingRules";
@@ -24,6 +24,7 @@ function _resolveImpliedSubjects(activities:Activity[], activeCharacterId:string
   }
 }
 
+/** Parses, links, resolves subjects for, and chronologically orders itinerary activities. */
 export function loadActivitiesPartially(itinerarySection:LevelFileSection|undefined, rules:ActivityParsingRules, 
     startTime:number, activeCharacterId:string, errors:ErrorCollector):Activity[]|null {
   const originalErrorCount = errors.count;

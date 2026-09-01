@@ -1,3 +1,6 @@
+/* This file parses and schedules character thought activities.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeSequence, makeText, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
@@ -10,6 +13,7 @@ import { addCharacterEffect } from "@/levelLoading/timelineLoading";
 import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
 import { createThinksEffect } from "@/game/effects/speechEffectUtil";
 
+/** Creates the accepted syntax for thought activities. */
 export function createThinksParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const thinks = makeVerb('thinks');
@@ -24,6 +28,7 @@ type PartsShape = {
   verb:'thinks'
 }
 
+/** Schedules a character thought into an editable timeline. */
 export function scheduleThinksActivity(level:Level, _waypointContext:WaypointGenerationContext,
     activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   

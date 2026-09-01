@@ -1,3 +1,6 @@
+/* This file parses and validates level sections, subsection IDs, and authored scalar values.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { MarkdownLineError, parseNameValueLineEntries, parseSectionEntriesWithLines, parseSections, SectionEntryWithLine, Sections } from "@/common/markdownUtil";
 import LevelFileSection from "./types/LevelFileSection";
 import { ErrorCollector, ROOT_LEVEL } from "./errorCollection";
@@ -51,6 +54,7 @@ function _getTopLevelSections(levelText:string, errors:ErrorCollector):Sections|
   }
 }
 
+/** Parses and validates the known top-level sections in authored level text. */
 export function loadLevelSections(levelText:string, errors:ErrorCollector):LevelFileSections|null {
   const originalErrorCount = errors.count;
   
@@ -76,6 +80,7 @@ export function loadLevelSections(levelText:string, errors:ErrorCollector):Level
   return errors.count <= originalErrorCount ? sections : null;
 }
 
+/** Extracts normalized subsection IDs, reporting duplicate headings as authoring errors. */
 export function getSectionIdsFromSectionText(sectionText:string, indentLevel:number, sectionId:string, errors:ErrorCollector):string[] {
   try {
     const subSections = parseSections(sectionText, indentLevel, false);
@@ -86,6 +91,7 @@ export function getSectionIdsFromSectionText(sectionText:string, indentLevel:num
   }
 }
 
+/** Parses authored name-value entries into a map keyed by normalized variable name. */
 export function createSectionVariables(sectionText:string, sectionsNames:string[]|string, errors:ErrorCollector):SectionVariables {
   const variables:SectionVariables = {};
   const entries:Array<readonly [string, string]> = parseNameValueLineEntries(sectionText);
@@ -98,6 +104,7 @@ export function createSectionVariables(sectionText:string, sectionsNames:string[
   return variables;
 }
 
+/** Maps normalized subsection names to entries while detecting normalization collisions. */
 export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:number, sectionNames:string[]|string, 
     errors:ErrorCollector):SectionEntryMap {
   const normalizedEntries = new Map<string, SectionEntryWithLine>();
@@ -133,12 +140,14 @@ export function createNormalizedSectionEntryMap(sectionText:string, indentLevel:
   return normalizedEntries;
 }
 
+/** Reports whether a top-level section is required in every level. */
 export function isSectionRequired(sectionId:string):boolean {
   return REQUIRED_TOP_LEVEL_SECTION_IDS.includes(sectionId);
 }
 
 const TRUE_VALUES = ['true','t','yes','y','on'];
 const FALSE_VALUES = ['false', 'f', 'no', 'n', 'off'];
+/** Parses a boolean-like authored value, reporting unsupported values. */
 export function parseBoolean(value:string, errors:ErrorCollector, sectionNames:string[], variableName:string):boolean {
   value = value.trim().toLowerCase();
   if (TRUE_VALUES.includes(value)) return true;
@@ -147,6 +156,7 @@ export function parseBoolean(value:string, errors:ErrorCollector, sectionNames:s
   return false;
 }
 
+/** Parses an authored number, reporting values that are not numeric. */
 export function parseNumber(value:string, errors:ErrorCollector, sectionNames:string[], variableName:string):number {
   const numberValue = Number.parseFloat(value);
   if (!isNaN(numberValue)) return numberValue;
@@ -154,6 +164,7 @@ export function parseNumber(value:string, errors:ErrorCollector, sectionNames:st
   return numberValue;
 }
 
+/** Formats allowed values as a human-readable alternative list. */
 export function describeAllowedValues(options:string[]):string {
   if (options.length === 0) return '';
   if (options.length === 1) return options[0];

@@ -1,6 +1,5 @@
-/* This module provides APIs for activity parsing to support an encapsulated set of modules inside of this folder. Code from outside this
-  folder should generally only call functions from this module.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file exposes the activity parsing and timing APIs used outside this folder.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 export { initActivityParsingRules } from "./parseItineraryUtil";
 export { loadActivitiesPartially } from './activitiesUtil';

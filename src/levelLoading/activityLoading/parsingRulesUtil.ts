@@ -1,3 +1,6 @@
+/* This file creates and validates the formats, identifiers, and reserved words used to parse activities.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert, assertNonNullable, botch } from "decent-portal";
 import ActivityParsingRules, { AllowedValuesByIdentifierId, ParseFormatsByVerb } from "./types/ActivityParsingRules";
 import { createAtActivityParseFormat } from "./activityHandlers/atHandler";
@@ -41,6 +44,7 @@ function _wordCountComparator(a: string, b: string): number {
   return _countWords(b) - _countWords(a) || a.localeCompare(b);
 }
 
+/** Throws when parsing rules lack formats or contain incorrectly ordered identifier values. */
 export function throwIfActivityParsingRulesAreInvalid(rules:ActivityParsingRules):void {
   if (Object.keys(rules.parseFormatsByVerb).length === 0) throw Error('No parse formats');
   
@@ -91,6 +95,7 @@ function _sortByWordCountDescending(elements:string[]):string[] {
   return [...elements].sort(_wordCountComparator);
 }
 
+/** Creates validated parsing rules for all supported activity verbs and identifiers. */
 export function createActivityParsingRules(characterIds:string[], roomIds:string[], itemIds:string[], 
     appearanceIds:string[], parseFormatOverride:ParseFormat|null = null):ActivityParsingRules {
   const av:AllowedValuesByIdentifierId = {};

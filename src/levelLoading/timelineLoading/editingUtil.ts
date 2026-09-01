@@ -1,5 +1,5 @@
-/* This module creates and edits partial and resolved timeline keyframes.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file creates and edits partial and resolved timeline keyframes.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable, botch } from "decent-portal";
 import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
@@ -215,6 +215,7 @@ function _addKeyframe(editableKeyframe:Readonly<EditableTimelineKeyframe>, timel
   timeline.keyframes = _generateKeyframes(timeline.editableKeyframes);
 }
 
+/** Merges character state changes at a time and regenerates resolved keyframes. */
 export function addCharacterKeyChanges(characterKeyChanges:Readonly<Partial<CharacterKeyframe>>, 
     characterI:number, time:number, timeline:EditableTimeline) {
   const { characterCount, roomCount } = _getCharacterAndRoomCount(timeline);
@@ -228,6 +229,7 @@ export function addCharacterKeyChanges(characterKeyChanges:Readonly<Partial<Char
   }
 }
 
+/** Adds a character effect and keyframe boundaries for its active interval. */
 export function addCharacterEffect(effect:Effect, characterI:number, timeline:EditableTimeline) {
   addCharacterKeyChanges({ effects:[ effect ] }, characterI, effect.startTime, timeline);
   
@@ -245,6 +247,7 @@ export function addCharacterEffect(effect:Effect, characterI:number, timeline:Ed
   }
 }
 
+/** Merges room state changes at a time and regenerates resolved keyframes. */
 export function addRoomKeyChanges(roomKeyChanges:Readonly<Partial<RoomKeyframe>>, roomI:number, 
     time:number, timeline:EditableTimeline) {
   const { characterCount, roomCount } = _getCharacterAndRoomCount(timeline);
@@ -258,6 +261,7 @@ export function addRoomKeyChanges(roomKeyChanges:Readonly<Partial<RoomKeyframe>>
   }
 }
 
+/** Creates an editable timeline initialized with level state at the start time. */
 export function createEditableTimeline(characters:readonly Character[], rooms:readonly Room[], startTime:number):EditableTimeline {
   const timeline = createDefaultEditableTimeline();
   timeline.characterIdToI = _createCharacterIdToI(characters);
@@ -275,6 +279,7 @@ function _isEmptyKeyframe(keyframe:Partial<CharacterKeyframe>|Partial<RoomKeyfra
   return true;
 }
 
+/** Returns the latest resolved keyframe for a character ID or index. */
 export function findLatestKeyFrameForCharacter(timeline:EditableTimeline, characterRef:string|number):TimelineKeyframe {
   const characterI:number = typeof characterRef === 'string' ? timeline.characterIdToI[characterRef] : characterRef;
   assert(timeline.keyframes.length === timeline.editableKeyframes.length);

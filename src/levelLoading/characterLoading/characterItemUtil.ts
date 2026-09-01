@@ -1,3 +1,6 @@
+/* This file resolves character item stubs against complete authored item definitions.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Item from "@/game/types/Item";
 import { ErrorCollector } from "../errorCollection";
 import { MutableCharacter } from "@/game/types/Character";
@@ -11,6 +14,7 @@ function _findItemById(items:Item[], itemId:string, errors:ErrorCollector, chara
   return item;
 }
 
+/** Replaces character item stubs with matching definitions, reporting missing items. */
 export function mergeCharacterItems(characters:MutableCharacter[], items:Item[], errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
   characters.forEach(character => {

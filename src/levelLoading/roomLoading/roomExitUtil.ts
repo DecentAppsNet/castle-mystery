@@ -1,3 +1,6 @@
+/* This file parses authored room exits and installs validated reciprocal connections.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { parseOptions, parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
 import { ErrorCollector } from "../errorCollection";
 import RoomExit, { createRoomExitId } from "@/game/types/RoomExit";
@@ -247,6 +250,7 @@ function _addExitsToRoom(roomEntry:SectionEntryWithLine, room:Room, rooms:Room[]
   return errors.count <= originalErrorCount;
 }
 
+/** Parses exit declarations and adds validated reciprocal exits to rooms. */
 export function addExitsToRooms(roomsSectionText:string, rooms:Room[], errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
   const roomEntries = createNormalizedSectionEntryMap(roomsSectionText, 2, 'rooms', errors); 

@@ -1,3 +1,6 @@
+/* This file parses character-grid diagrams and their symbol legends from authored sections.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { parseFirstFencedCodeBlockLines, parseOptions, parseUniqueNameValueLines } from "@/common/markdownUtil";
 import { ErrorCollector } from "../errorCollection";
 import LegendGrid from "./types/LegendGrid";
@@ -32,6 +35,7 @@ function _authoredNameToIds(authoredName:string):string[] {
   return tokens.map(normalizeId);
 }
 
+/** Parses a grid and validates that its symbols and legend entries correspond. */
 export function parseLegendGrid(sectionText:string, errors:ErrorCollector, sectionNames:string[]):LegendGrid|null {
   const originalErrorCount = errors.count;
   const entries:LegendGridEntry[] = [];
@@ -62,6 +66,7 @@ export function parseLegendGrid(sectionText:string, errors:ErrorCollector, secti
   return errors.count <= originalErrorCount ? { entries } : null;
 }
 
+/** Returns the distinct normalized IDs referenced by a legend grid. */
 export function getUniqueIdsFromLegendGrid(legendGrid:LegendGrid):string[] {
   const ids:Set<string> = new Set<string>();
   legendGrid.entries.forEach(entry => ids.add(entry.id));

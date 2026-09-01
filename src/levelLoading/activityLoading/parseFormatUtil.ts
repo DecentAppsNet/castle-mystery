@@ -1,5 +1,5 @@
-/* This module groups validation and debug-display helpers for ParseFormat and ParseStep trees.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file creates, validates, and describes ParseFormat and ParseStep trees.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from "decent-portal";
 
@@ -16,48 +16,59 @@ function _initialUpper(text:string):string {
   return text.substring(0,1).toUpperCase() + text.substring(1);
 }
 
+/** Creates a parse step that accepts one of several alternatives. */
 export function makeOptions(options:ParseStep[], isOptional = false):ParseOptions { 
   return {kind:'options', variableId:null, children:options, isOptional}; 
 }
 
+/** Creates alternative parse steps whose selected value is captured. */
 export function makeVariableOptions(variableId:string, options:ParseStep[], isOptional = false):ParseOptions { 
   return {kind:'options', variableId, children:options, isOptional}; 
 }
 
+/** Creates a parse step that matches child steps in order. */
 export function makeSequence(steps:ParseStep[], isOptional = false):ParseSequence { 
   return {kind:'sequence', children:steps, isOptional}; 
 }
 
+/** Creates the literal step identifying an activity verb. */
 export function makeVerb(text:string):ParseLiteral { 
   return {kind:'literal', variableId:'verb', text, isOptional:false}; 
 }
 
+/** Creates a fixed-text parse step. */
 export function makeLiteral(text:string, isOptional = false):ParseLiteral { 
   return {kind:'literal', text, variableId:null, isOptional} 
 }
 
+/** Creates alternative fixed-text parse steps. */
 export function makeLiteralOptions(texts:string[], isOptional = false):ParseOptions { 
   const children:ParseStep[] = texts.map((t) => makeLiteral(t,false));
   return {kind:'options', variableId:null, children, isOptional}; 
 }
 
+/** Creates alternative literals whose selected text is captured. */
 export function makeVariableLiteralOptions(variableId:string, texts:string[], isOptional = false):ParseOptions {
   const children:ParseStep[] = texts.map((t) => makeLiteral(t,false));
   return {kind:'options', variableId, children, isOptional};
 }
 
+/** Creates a numeric parse step whose value is captured. */
 export function makeNumber(variableId:string, isOptional = false):ParseNumber { 
   return{kind:'number', variableId, isOptional}; 
 }
 
+/** Creates a quoted-text parse step whose content is captured. */
 export function makeText(variableId:string = 'text', isOptional = false):ParseText { 
   return {kind:'text', variableId, isOptional} 
 }
 
+/** Creates a fixed-text parse step whose matched text is captured. */
 export function makeVariableLiteral(variableId:string, text:string, isOptional = false):ParseLiteral { 
   return {kind:'literal', text, variableId, isOptional} 
 }
 
+/** Creates a parse step matching an allowed identifier. */
 export function makeIdentifier(variableId:string, identifierKind:string, isOptional = false):ParseIdentifier { 
   return  {kind:'identifier', variableId, identifierKind, isOptional}; 
 }
@@ -66,16 +77,19 @@ export function makeIdentifier(variableId:string, identifierKind:string, isOptio
 // For that reason, the checks here don't need to be exhaustive. This is a tool to see debug errors in the creation of 
 // parse formats earlier in code for faster fixes. So, just add checks for things that are easy to check or seem to 
 // come up in development.
+/** Throws when a parse format has an invalid root or verb. */
 export function throwIfParseFormatInvalid(parseFormat:ParseFormat):void {
   if (!parseFormat.activityVerb) throw Error('Missing activity verb.');
   throwIfParseStepsInvalid(parseFormat.rootParseStep);
 }
 
+/** Throws when a parse-step tree has an invalid root or lacks a verb. */
 export function throwIfParseStepsInvalid(rootParseStep:ParseStep):void {
   if (rootParseStep.kind !== 'literal' && rootParseStep.kind !== 'sequence') throw Error('root can only be verb or a sequence');
   if (!findVerbText(rootParseStep)) throw Error('Could not find verb');
 }
 
+/** Finds the activity verb literal within a parse-step tree. */
 export function findVerbText(rootParseStep:ParseStep):string|null {
   if (rootParseStep.kind === 'literal') { // Check for verb at root.
     const asLiteral = rootParseStep as ParseLiteral;
@@ -123,11 +137,13 @@ function _describeParseStep(step:ParseStep, isRoot = false):string {
 }
 
 // Returns display text explaining parse format syntax.
+/** Describes a parse format as concise author-facing syntax. */
 export function describeParseFormat(parseFormat:ParseFormat):string {
   throwIfParseFormatInvalid(parseFormat);
   return `Timestamp ${_describeParseStep(parseFormat.rootParseStep, true)}`;
 }
 
+/** Validates a parse-step tree and creates its verb-keyed parse format. */
 export function createParseFormat(rootParseStep:ParseStep):ParseFormat {
   throwIfParseStepsInvalid(rootParseStep);
   const activityVerb = findVerbText(rootParseStep);

@@ -1,5 +1,5 @@
-/* This module groups stair-part generation helpers that expand stair flights into drawable room stair geometry.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups stair-part generation helpers that expand stair flights into drawable room stair geometry.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Position from "@/game/types/Position";
 import Room from "@/game/types/Room";
@@ -207,6 +207,7 @@ function _createWindingStoryLandingParts(room:Room, flights:StairFlight[]):{ rig
   return { rightCatwalkParts, trailingStoryParts };
 }
 
+/** Expands stair flights into drawable flights, landings, and catwalks. */
 export function generateStairParts(room:Room, flights:StairFlight[]):StairPart[] {
   if (!flights.length) return [];
 

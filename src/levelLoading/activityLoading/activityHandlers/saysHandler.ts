@@ -1,3 +1,6 @@
+/* This file parses and schedules character speech activities.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteral, makeSequence, makeText, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
@@ -11,6 +14,7 @@ import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timel
 import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
 import { createSaysEffect } from "@/game/effects/speechEffectUtil";
 
+/** Creates the accepted syntax for speech activities. */
 export function createSaysParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const says = makeVerb('says');
@@ -30,6 +34,7 @@ type PartsShape = {
   verb:'says'
 }
 
+/** Schedules character speech and any target-facing change into an editable timeline. */
 export function scheduleSaysActivity(level:Level, _waypointContext:WaypointGenerationContext,
     activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   

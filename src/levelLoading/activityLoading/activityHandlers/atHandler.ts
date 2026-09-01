@@ -1,3 +1,6 @@
+/* This file parses and schedules timestamp-constrained character positioning activities.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Activity from "../types/Activity";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import Level from "@/game/types/Level";
@@ -56,6 +59,7 @@ type PartsShape = {
 }
 
 const DEFAULT_HORIZONTAL_TARGET = .5;
+/** Schedules a character to be at an authored position by the activity end time. */
 export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerationContext,
   activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   const { characterId, roomId, horizontalTarget } = activity.parts as PartsShape;
@@ -115,6 +119,7 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
   return true;
 }
 
+/** Creates the accepted syntax for positioning activities. */
 export function createAtActivityParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const at = makeVerb('@');

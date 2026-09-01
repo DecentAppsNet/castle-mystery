@@ -1,5 +1,5 @@
-/* This module groups room-ordering helpers that derive a stable drawing order from room adjacency and layout.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups room-ordering helpers that derive a stable drawing order from room adjacency and layout.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Room from "@/game/types/Room";
 
@@ -32,6 +32,7 @@ function _compareRoomsForInitialOrder(room1:Room, room2:Room):number {
   return room2.rect.x - room1.rect.x || room1.rect.y - room2.rect.y;
 }
 
+/** Reports whether every room follows all rooms that must draw behind it. */
 export function areRoomsWellOrdered(rooms:Room[]):boolean {
   for (let roomIndex = 0; roomIndex < rooms.length; ++roomIndex) {
     const room = rooms[roomIndex];
@@ -43,6 +44,7 @@ export function areRoomsWellOrdered(rooms:Room[]):boolean {
   return true;
 }
 
+/** Returns rooms in a stable order satisfying adjacency-based drawing constraints. */
 export function sortRoomsForDrawingOrder(rooms:Room[]):Room[] {
   const initialOrder = [...rooms].sort(_compareRoomsForInitialOrder);
   const sortedRooms = [...initialOrder];

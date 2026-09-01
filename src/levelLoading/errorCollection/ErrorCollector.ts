@@ -1,3 +1,6 @@
+/* This file defines the collector that records and formats source-mapped level authoring errors.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import SourceLineMap from "../importing/types/SourceLineMap";
 import ParseErrorEvent from "./types/ParseErrorEvent";
 import { findLineLength, FIRST_SECTION_LINE, FULL_LINE_MATCH, matchLine, ROOT_LEVEL } from "./sourceLocationUtil";
@@ -14,8 +17,10 @@ class ErrorCollector {
     this._parseErrorEvents = [];
   }
 
+  /** Number of errors collected so far. */
   public get count():number { return this._parseErrorEvents.length }
 
+  /** Whether any errors have been collected. */
   public get hasErrors():boolean { return this._parseErrorEvents.length > 0; }
 
   private _add(message:string, sourceFilename:string, sourceLineNo:number, fromCharNo:number, toCharNo:number) {
@@ -25,18 +30,21 @@ class ErrorCollector {
     this._parseErrorEvents.push(event);
   }
 
+  /** Adds an error at a location resolved from section, line, and character criteria. */
   public addAt(message:string, sectionNames:string|string[] = ROOT_LEVEL, lineCriteria:string = FIRST_SECTION_LINE, 
       charRangeCriteria:string = FULL_LINE_MATCH) {
     const location = matchLine(this._sourceText, sectionNames, this._sourceLineMap, lineCriteria, charRangeCriteria);
     this._add(message, location.sourceFilename, location.sourceLineNo, location.fromCharNo, location.toCharNo);
   }
 
+  /** Adds an error with an explicit character range on a resolved section line. */
   public addAtCharRange(message:string, sectionNames:string|string[], lineCriteria:string,
       fromCharNo:number, toCharNo:number) {
     const location = matchLine(this._sourceText, sectionNames, this._sourceLineMap, lineCriteria, FULL_LINE_MATCH);
     this._add(message, location.sourceFilename, location.sourceLineNo, fromCharNo, toCharNo);
   }
 
+  /** Adds an error at a combined-text line index and optional character range. */
   public addAtLine(message:string, lineI:number, fromCharNo:number = -1, toCharNo:number = -1) {
     const { filename, lineNo:sourceLineNo } = this._sourceLineMap[lineI];
     const resolvedFromCharNo = fromCharNo < 0 ? 0 : fromCharNo;
@@ -44,6 +52,7 @@ class ErrorCollector {
     this._add(message, filename, sourceLineNo, resolvedFromCharNo, resolvedToCharNo);
   }
 
+  /** Formats collected errors as newline-delimited source locations and messages. */
   public describeErrors():string {
     if (!this._parseErrorEvents.length) return '';
     const messages = this._parseErrorEvents.map(describeParseError);

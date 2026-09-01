@@ -1,3 +1,6 @@
+/* This file parses general level metadata and initializes deferred loading context.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { createDefaultMutableLevel, MutableLevel } from "@/game/types/Level";
 import LevelFileSections from "../types/LevelFileSections";
 import { ErrorCollector } from "../errorCollection";
@@ -71,6 +74,7 @@ function _parseGeneralSection(generalSectionText:string, level:MutableLevel, err
   };
 }
 
+/** Initializes a mutable level and the context needed to resolve dependent authored values. */
 export function initMutableLevelAndLoadingContext(sections:LevelFileSections, errors:ErrorCollector):{level:MutableLevel, loadingContext:LevelLoadingContext}|null {
   const level = createDefaultMutableLevel();
   level.winSynopsis = DEFAULT_WIN_SYNOPSIS;

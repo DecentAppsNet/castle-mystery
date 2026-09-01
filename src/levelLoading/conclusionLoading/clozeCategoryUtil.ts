@@ -1,3 +1,6 @@
+/* This file builds authored and entity-derived answer categories for cloze conclusions.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { parseOptions } from "@/common/markdownUtil";
 import { ErrorCollector } from "../errorCollection";
 import ClozeCategory from "./types/ClozeCategory";
@@ -38,6 +41,7 @@ function _itemsToCategory(items:Item[]):ClozeCategory {
   return { id:'items', authoredName:'items', allowedValues }
 }
 
+/** Builds cloze categories from authored definitions and level entities. */
 export function createClozeCategories(conclusionsSectionText:string, rooms:Room[], characters:Character[], items:Item[], 
   errors:ErrorCollector):Record<string, ClozeCategory> {
     const categories = _parseAuthoredClozeCategories(conclusionsSectionText, errors);

@@ -1,5 +1,5 @@
-/* This module orders parsed activities while preserving authored relative-timestamp relationships.
-   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file orders parsed activities while preserving authored relative-timestamp relationships.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from "decent-portal";
 
@@ -38,6 +38,7 @@ function _groupActivities(activities:readonly Activity[]):ActivityGroup[] {
   return groups.sort((a, b) => a.startTime - b.startTime);
 }
 
+/** Orders timestamped activity groups while preserving authored order within each group. */
 export function sortActivities(activities:readonly Activity[], startTime:number):Activity[] {
   let sortedActivities:Activity[] = [...activities];
   if (activities.length >= 2) {

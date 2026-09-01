@@ -1,3 +1,6 @@
+/* This file parses authored item definitions and references, then indexes items used by a loaded level.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
 import { ErrorCollector } from "../errorCollection";
 import { createNormalizedSectionEntryMap, parseBoolean, parseNumber } from "../levelFileSectionUtil";
@@ -16,6 +19,7 @@ function _createStubItem(itemId:string):Item {
   return {...createDefaultItem(), id:itemId, description:'Stub Item'};
 }
 
+/** Parses pipe-delimited item references into normalized stub items. */
 export function parseItems(itemsText:string):Item[] {
   if (!itemsText) return [];
   const items = itemsText
@@ -25,6 +29,7 @@ export function parseItems(itemsText:string):Item[] {
   return items;
 }
 
+/** Parses one item reference into a normalized stub item, or returns null for empty text. */
 export function parseItem(itemText:string):Item|null {
   if (!itemText) return null;
   const itemId = normalizeId(itemText);
@@ -67,6 +72,7 @@ function _parseItem(itemId:string, itemSectionEntry:SectionEntryWithLine, errors
   return item;
 }
 
+/** Parses item metadata while leaving positions to be assigned from room legends. */
 export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollector):MutableItem[]|null {
   const originalErrorCount = errors.count;
 
@@ -83,8 +89,7 @@ export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollecto
   return errors.count <= originalErrorCount ? items : null;
 }
 
-// An item is considered used by the level if it is initially placed somewhere besides character inventory or
-// an activity references the item.
+/** Finds items placed in rooms or character hands, or referenced by an activity. */
 function _findUsedItemIds(activities:readonly Activity[], rooms:readonly Room[], level:MutableLevel):Set<string> {
   const itemIds = new Set<string>();
   rooms.forEach(room => room.items.forEach(item => itemIds.add(item.id)));
@@ -100,7 +105,8 @@ function _findUsedItemIds(activities:readonly Activity[], rooms:readonly Room[],
   return itemIds;
 }
 
-export function addItemsToLevel(items:Item[], activities:readonly Activity[], rooms:readonly Room[],
+/** Indexes item definitions referenced by initial placement or activities. */
+export function indexUsedItemsInLevel(items:Item[], activities:readonly Activity[], rooms:readonly Room[],
     level:MutableLevel, _errors:ErrorCollector):boolean {
   const usedItemIds = _findUsedItemIds(activities, rooms, level);
   items

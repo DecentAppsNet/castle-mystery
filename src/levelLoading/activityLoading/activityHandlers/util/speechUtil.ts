@@ -1,3 +1,6 @@
+/* This file calculates speech timing and detects incompatible overlapping speech effects.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert, assertNonNullable } from "decent-portal";
 
 import { clamp } from "@/common/numberUtil";
@@ -83,10 +86,12 @@ function _findCharacterSpeechInterrupting(earshotRooms:Room[], keyframes:Timelin
   return !keyframe ? null : errorMessage;
 }
 
+/** Estimates speech duration from text length with a minimum duration. */
 export function calcSpeechDuration(speech:string):number {
   return clamp(speech.length * SPEECH_MSECS_PER_CHARACTER, MIN_SPEECH_TIME, Number.POSITIVE_INFINITY);
 }
 
+/** Returns an author-facing conflict for incompatible overlapping speech, or null. */
 export function findSpeechConflict(speechKind:'says'|'interrupts'|'thinks'|'emits', rooms:Room[], 
     keyframes:TimelineKeyframe[], characterI:number, speechStartTime:number, speechEndTime:number):string|null {
   

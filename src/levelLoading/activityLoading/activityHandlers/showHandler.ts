@@ -1,3 +1,6 @@
+/* This file parses and schedules item visibility activities.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeOptions, makeSequence, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
@@ -6,6 +9,7 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 
+/** Creates the accepted syntax for item-showing activities. */
 export function createShowParseFormat():ParseFormat {
   const show = makeVerb('show');
   const target = makeOptions([
@@ -16,6 +20,7 @@ export function createShowParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
+/** Schedules an item becoming visible into an editable timeline. */
 export function scheduleShowActivity(_level:Level,
   _waypointContext:WaypointGenerationContext,
     activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {

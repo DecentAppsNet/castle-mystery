@@ -1,5 +1,5 @@
-/* This module schedules parsed activities into resolved timeline keyframes.
-   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file schedules parsed activities into resolved timeline keyframes.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from "decent-portal";
 
@@ -87,6 +87,7 @@ function _createEmptyTimeline(level:Readonly<Level>):Timeline {
   return _editableTimelineToTimeline(editable);
 }
 
+/** Schedules all parsed activities and returns a resolved timeline, or null on error. */
 export function scheduleActivities(level:Level, activities:Activity[], waypointContext:WaypointGenerationContext,
   errors:ErrorCollector):Timeline|null {
   if (!activities.length) return _createEmptyTimeline(level);

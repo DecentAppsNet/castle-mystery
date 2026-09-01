@@ -1,11 +1,17 @@
+/* This file resolves authored section and text criteria to source-mapped line and character locations.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assertNonNullable } from "decent-portal";
 import SourceLineMap from "../importing/types/SourceLineMap";
 import { parseSectionEntriesWithLines } from "@/common/markdownUtil";
 import { normalizeId } from "@/game/idUtil";
 import { collapseWhitespace } from "@/common/regExUtil";
 
+/** Sentinel requesting a match that spans the full resolved line. */
 export const FULL_LINE_MATCH = '';
+/** Sentinel requesting the first line within a resolved section. */
 export const FIRST_SECTION_LINE = '';
+/** Sentinel identifying the complete level document rather than a section. */
 export const ROOT_LEVEL = '';
 
 function _findSectionRecursively(text:string, indentLevel:number, sectionNames:string[], firstLineI = 0):{sectionText:string, lineIOffset:number}|null {
@@ -62,6 +68,7 @@ function _findSection(sourceText:string, sectionNames:string[]|string):{sectionT
   return section ? section : { sectionText:sourceText, lineIOffset:0 };
 }
 
+/** Resolves section and text criteria to an original source line and character range. */
 export function matchLine(sourceText:string, sectionNames:string[]|string, sourceLineMap:SourceLineMap, lineCriteria:string, charRangeCriteria:string):
     {sourceFilename:string, sourceLineNo:number, fromCharNo:number, toCharNo:number} {
   // Get section text.
@@ -83,6 +90,7 @@ export function matchLine(sourceText:string, sectionNames:string[]|string, sourc
   return { sourceFilename, sourceLineNo, fromCharNo, toCharNo };
 }
 
+/** Returns the character length of a combined-text line by zero-based index. */
 export function findLineLength(sourceText:string, lineI:number):number {
   const lines = sourceText.split('\n');
   const line = lines[lineI];

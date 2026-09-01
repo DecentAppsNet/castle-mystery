@@ -1,5 +1,5 @@
-/* This module plans character movement along room waypoints and adds the resulting keyframes to editable timelines.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file plans character movement along room waypoints and adds the resulting keyframes to editable timelines.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, botch } from "decent-portal";
 
@@ -243,12 +243,14 @@ function _scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContex
   return { walkStartDelay, walkDuration };
 }
 
+/** Schedules waypoint-based movement within one room and returns its timing. */
 export function scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
     characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):ScheduleResult {
   return _scheduleCharacterMovementWithinRoom(context, room, fromPosition, fromTime, toPosition, null, 
       characterI, initialFacingDirection, timeline);
 }
 
+/** Schedules inter-room movement constrained to arrive at a specified time. */
 export function scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContext, fromRoom:Room, fromPosition:Position, 
     fromTime:number, toRoom:Room, toPosition:Position, toTime:number, characterI:number, initialFacingDirection:FacingDirection,
     timeline:EditableTimeline):ScheduleResult {
@@ -256,6 +258,7 @@ export function scheduleCharacterMovementToRoomAtTime(context:WaypointGeneration
       toTime, characterI, initialFacingDirection, timeline);
 }
 
+/** Schedules inter-room movement beginning at a specified time. */
 export function scheduleCharacterMovementToRoom(context:WaypointGenerationContext, fromRoom:Room, fromPosition:Position, 
     fromTime:number, toRoom:Room, toPosition:Position, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):ScheduleResult {
   return _scheduleCharacterMovementToRoomAtTime(context, fromRoom, fromPosition, fromTime, toRoom, toPosition,

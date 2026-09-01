@@ -74,6 +74,7 @@ function _scheduleRemoveItemFromRoom(room:RoomKeyframe, itemId:string, roomI:num
   addRoomKeyChanges({ items }, roomI, time, editableTimeline);
 }
 
+/** Creates the accepted syntax for item-taking activities. */
 export function createTakesParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const takes = makeVerb('takes');
@@ -94,6 +95,7 @@ function _findBestTakeWaypoint(context:WaypointGenerationContext, keyframe:Timel
   return bestWaypoint;
 }
 
+/** Schedules taking an item into inventory or a hand in an editable timeline. */
 export function scheduleTakesActivity(level:Level, waypointContext:WaypointGenerationContext,
   activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   assertNonNullable(activity.startTime);

@@ -1,5 +1,5 @@
-/* This module groups timestamp parsing and formatting helpers for authored itinerary and timeline text.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups timestamp parsing and formatting helpers for authored itinerary and timeline text.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { MSECS_IN_DAY, MSECS_IN_SECOND, SECS_IN_MINUTE } from "@/common/timeUtil";
 
@@ -11,10 +11,12 @@ function _isValidTimestampPart(part:string, requiredLength:number|null):boolean 
   return Array.from(part).every(_isDigit);
 }
 
+/** Reports whether text is the relative timestamp marker. */
 export function isRelativeTimestamp(text:string):boolean {
   return text.trim() === ':';
 }
 
+/** Parses a valid absolute timestamp to milliseconds, or returns null. */
 export function tryParseAbsoluteTimestamp(text:string):number|null {
   const parts = text.trim().split(':');
   if (parts.length !== 3) return null;
@@ -30,6 +32,7 @@ export function tryParseAbsoluteTimestamp(text:string):number|null {
   return (((hours * SECS_IN_MINUTE) + minutes) * SECS_IN_MINUTE + seconds) * MSECS_IN_SECOND;
 }
 
+/** Reports whether text starts with a relative or absolute timestamp. */
 export function beginsWithTimestamp(text:String):boolean {
   text = text.trim();
   const firstSpacePos = text.indexOf(' ');
@@ -38,6 +41,7 @@ export function beginsWithTimestamp(text:String):boolean {
   return isRelativeTimestamp(candidate) || tryParseAbsoluteTimestamp(candidate) !== null;
 }
 
+/** Parses an authored timestamp to milliseconds, throwing when invalid. */
 export function parseTimestampToMsecs(text:string):number {
   const trimmedText = text.trim();
   const parts = trimmedText.split(':');
@@ -55,6 +59,7 @@ export function parseTimestampToMsecs(text:string):number {
   return (((hours * SECS_IN_MINUTE) + minutes) * SECS_IN_MINUTE + seconds) * MSECS_IN_SECOND;
 }
 
+/** Formats single-day milliseconds as an authored timestamp. */
 export function formatMsecsAsTimestamp(milliseconds:number):string {
   milliseconds %= MSECS_IN_DAY; // Confine the time to be between midnight and midnight.
   const totalSeconds = Math.floor(milliseconds / 1000);

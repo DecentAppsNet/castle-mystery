@@ -1,3 +1,6 @@
+/* This file normalizes conclusion phrases and resolves room-reveal and unlock references.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { parseOptions } from "@/common/markdownUtil";
 import { normalizeId } from "@/game/idUtil";
 import { findRoomByIdOrTitle } from "@/game/roomUtil";
@@ -5,10 +8,12 @@ import Room from "@/game/types/Room";
 import { ErrorCollector } from "../errorCollection";
 
 
+/** Normalizes a category phrase for case-insensitive matching. */
 export function normalizeCategoryPhrase(phrase:string):string {
   return phrase.trim().toLowerCase();
 }
 
+/** Resolves reveal-room references and reports rooms that are unknown or initially visible. */
 export function resolveRevealRoomIds(conclusionName:string, revealRoomsText:string|undefined, 
   rooms:ReadonlyArray<Room>, initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):string[] {
   if (!revealRoomsText) return [];
@@ -29,6 +34,7 @@ export function resolveRevealRoomIds(conclusionName:string, revealRoomsText:stri
   return roomIds;
 }
 
+/** Resolves unlock references and reports unknown or self-referential conclusions. */
 export function resolveUnlockConclusionIds(conclusionName:string, unlockConclusionsText:string|undefined, 
     conclusionIds:string[], errors:ErrorCollector):string[] {
   if (!unlockConclusionsText) return [];

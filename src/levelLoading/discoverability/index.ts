@@ -1,3 +1,6 @@
+/* This file derives discoverable entity counts from loaded level content and activities.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 import Character from "@/game/types/Character";
 import Level from "@/game/types/Level";
@@ -43,6 +46,7 @@ function _countDiscoverableItems(directReferencedCharacters:readonly Character[]
   return countedItemIds.size;
 }
 
+/** Counts discoverable characters, contextually discoverable items, and rooms. */
 export function findDiscoverableCounts(level:Level, activities:readonly Activity[]):{discoverableCharacterCount:number, discoverableItemCount:number, discoverableRoomCount:number} {
   const discoverableCharacterCount = _countDiscoverableCharacters(level.characters);
   const discoverableItemCount = _countDiscoverableItems(level.characters, level.rooms, activities);

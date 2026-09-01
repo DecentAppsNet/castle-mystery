@@ -1,3 +1,6 @@
+/* This file creates rooms from map cells and applies authored room metadata and styles.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from "decent-portal";
 
 import { ErrorCollector } from "../errorCollection";
@@ -56,6 +59,7 @@ function _resolveRoomTextureOverride(roomNameValues:Record<string, string>,
   return parseRoomTexture(textureValue, room, propertyName, verticalUnitLabel, errors);
 }
 
+/** Applies room and inherited style metadata, returning initially obscured room IDs. */
 export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStylesSectionText:string, rooms:Room[], 
       availableItems:MutableItem[], availableCharacterIds:string[], errors:ErrorCollector):ReadonlySet<string>|null {
   const originalErrorCount = errors.count;
@@ -91,6 +95,7 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
   return errors.count <= originalErrorCount ? initiallyObscuredRoomIds : null;
 }
 
+/** Creates positioned rooms from map legend cells and sorts them for drawing. */
 export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:ErrorCollector):Room[] {
   const originalErrorCount = errors.count;
 

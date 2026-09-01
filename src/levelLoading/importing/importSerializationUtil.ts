@@ -1,5 +1,5 @@
-/* This module groups source-mapped text creation and section-tree serialization helpers for levelLoading2 importing.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups source-mapped text creation and section-tree serialization helpers for level importing.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { trimBodyLines } from "./importBodyTokenUtil";
 import { createSourceLine } from "./importSectionTreeUtil";
@@ -46,11 +46,13 @@ function _createSourceMappedText(text:string, sourceLineMap:SourceLineMap):Sourc
   return { text, sourceLineMap };
 }
 
+/** Serializes a section tree while retaining every line's original source. */
 export function serializeSourceMappedSections(sections:ImportedSection[]):SourceMappedText {
   const lines = _serializeSectionTree(sections);
   return _createSourceMappedText(lines.map(line => line.text).join('\n'), lines.map(line => line.sourceLine));
 }
 
+/** Associates each line of raw text with its original filename and line number. */
 export function createRawSourceMappedText(text:string, filename:string):SourceMappedText {
   return _createSourceMappedText(text, text.split('\n').map((_, index) => createSourceLine(filename, index + 1)));
 }

@@ -1,3 +1,6 @@
+/* This file coordinates room layout, metadata, contents, exits, stairs, and navigation setup.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Room, { MutableRoom } from '@/game/types/Room';
 import { ErrorCollector } from '../errorCollection';
 import { MutableItem } from '@/game/types/Item';
@@ -43,8 +46,7 @@ function _connectSharedExitWaypoints(rooms:Room[], context:WaypointGenerationCon
   }));
 }
 
-// Returns rooms with everything loaded from level file except dependencies, e.g. items. The exception is room styles, which are applied,
-// because nothing else uses room styles besides rooms.
+/** Loads rooms and navigation data while deferring level-wide room validation. */
 export function loadRoomsPartially(sections:LevelFileSections, availableItems:MutableItem[], errors:ErrorCollector):PartiallyLoadedRooms|null {
   const originalErrorCount = errors.count;
 
@@ -72,6 +74,7 @@ export function loadRoomsPartially(sections:LevelFileSections, availableItems:Mu
   return errors.count <= originalErrorCount ? { rooms, waypointGenerationContext, initiallyObscuredRoomIds } : null;
 }
 
+/** Assigns rooms and validates their placement relative to the resolved ground floor. */
 export function addRoomsToLevel(rooms:Room[], groundFloorRoomRef:string|null, level:MutableLevel, errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
   const groundFloorY = findGroundFloorY(rooms, groundFloorRoomRef, errors);
@@ -83,6 +86,7 @@ export function addRoomsToLevel(rooms:Room[], groundFloorRoomRef:string|null, le
 
 type CharacterIdToPosition = Record<string, Position>;
 
+/** Resolves character positions from room legends. */
 export function findAllCharacterPositions(rooms:Room[], characterIds:string[], roomsSectionText:string, errors:ErrorCollector):CharacterIdToPosition {
   const roomSections = parseSections(roomsSectionText, 2, false);
   const characterIdToPosition:CharacterIdToPosition = {};

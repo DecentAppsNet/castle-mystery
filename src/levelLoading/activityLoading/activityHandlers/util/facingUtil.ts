@@ -1,3 +1,6 @@
+/* This file derives character facing directions toward other characters and items.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { createKeyframeAtTime } from "@/game/timeline";
 import { FacingDirection } from "@/game/types/Character";
 import Position from "@/game/types/Position";
@@ -21,6 +24,7 @@ function _findItemPositionInKeyframe(keyframe:TimelineKeyframe, itemId:string):P
   botch(); // Because itemId was earlier checked against allowed IDs when parsing against "faces" parse format, it should be impossible for the item to not be found in a keyframe.
 }
 
+/** Returns the horizontal direction from one character toward another at a time. */
 export function findCharacterFacingDirection(characterId:string, toCharacterId:string, editableTimeline:EditableTimeline, time:number):FacingDirection {
   const keyframe = createKeyframeAtTime(editableTimeline.keyframes, time);
   const fromCharacterI = editableTimeline.characterIdToI[characterId];
@@ -30,6 +34,7 @@ export function findCharacterFacingDirection(characterId:string, toCharacterId:s
   return toPosition.x > fromPosition.x ? 'right' : 'left';
 }
 
+/** Returns the horizontal direction from a character toward an item at a time. */
 export function findItemFacingDirection(characterId:string, toItemId:string,  editableTimeline:EditableTimeline, time:number):FacingDirection {
   const keyframe = createKeyframeAtTime(editableTimeline.keyframes, time);
   const fromCharacterI = editableTimeline.characterIdToI[characterId];

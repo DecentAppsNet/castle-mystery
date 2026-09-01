@@ -1,5 +1,5 @@
-/* This module groups waypoint-generation helpers for floors, exits, and stairs during level layout setup.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups waypoint-generation helpers for floors, exits, and stairs during level layout setup.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from "decent-portal";
 
@@ -34,6 +34,7 @@ function _assertExitIsNotOnCeiling(roomId:string, roomRect:Rect, exit:RoomExit):
   );
 }
 
+/** Connects two waypoints bidirectionally without duplicating either edge. */
 export function connectWaypoints(waypoint1:Waypoint, waypoint2:Waypoint) {
   if (waypoint1 === waypoint2) return;
   if (!waypoint1.adjacentWaypoints.includes(waypoint2)) waypoint1.adjacentWaypoints.push(waypoint2);
@@ -165,6 +166,7 @@ function _pruneIsolatedNonExitWaypoints(exits:RoomExit[], waypoints:Waypoint[]):
   return remainingWaypoints;
 }
 
+/** Generates connected floor, exit, and optional stair waypoints for a room. */
 export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[], stairs:ReadonlyArray<StairFlight>|null = null):Waypoint[] {
   const waypointsByKey = new Map<string, Waypoint>();
   const _getOrCreateWaypoint = (x:number, y:number, z:number) => {

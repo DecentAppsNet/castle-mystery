@@ -3,6 +3,7 @@
 
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 
+/** Reports whether active effects reserve a character for an item transfer. */
 export function hasActiveItemTransferReservation(characterKeyframe:CharacterKeyframe):boolean {
   return characterKeyframe.effects.some(effect => effect.kind === 'dropItem' || effect.kind === 'takeItem');
 }

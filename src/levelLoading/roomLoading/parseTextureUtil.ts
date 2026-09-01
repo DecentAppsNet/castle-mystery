@@ -1,3 +1,6 @@
+/* This file parses authored room texture layers, transforms, and image filters.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Room from "@/game/types/Room";
 import { ErrorCollector } from "../errorCollection";
 import Texture from "@/game/types/Texture";
@@ -129,6 +132,7 @@ function _parseRoomTextureOperation(value:string, room:Room,
   return _parseRoomTextureImageOperation(value, room, textureFieldName, verticalUnitLabel, errors);
 }
 
+/** Parses a room texture expression, returning null when absent or invalid. */
 export function parseRoomTexture(value:string|undefined, room:Room,
     textureFieldName:'backWallTexture'|'floorTexture'|'stairTexture'|'doorTexture'|'rightWallTexture', 
     verticalUnitLabel:'layers'|'rows', errors:ErrorCollector):Texture|null {

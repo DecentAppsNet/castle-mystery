@@ -1,3 +1,6 @@
+/* This file parses authored cloze conclusions and resolves their dependencies and reveal effects.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import { normalizeId } from "@/game/idUtil";
 import Room from "@/game/types/Room";
@@ -42,6 +45,7 @@ function _createBlankAvailableAnswers(correctAnswers:string[], clozeCategories:R
   return availableAnswers;
 }
 
+/** Parses one cloze blank into its answer and available category values. */
 export function createClozeBlankFromTemplateText(blankText:string, clozeCategories:Record<string, ClozeCategory>):ClozeBlank {
   const correctAnswers = parseOptions(blankText);
   const availableAnswers = _createBlankAvailableAnswers(correctAnswers, clozeCategories);
@@ -156,6 +160,7 @@ function _parseConclusion(conclusionName:string, sectionText:string, rooms:Reado
     null : { id, title, parts, isComplete, isLocked, unlockConclusionIds, revealRoomIds }
 }
 
+/** Locks conclusions that another conclusion is configured to unlock. */
 export function lockConclusionsAsNeeded(conclusions:Conclusion[]) {
   const idsToLock = new Set<string>;
   for(let i = 0; i < conclusions.length; ++i) {
@@ -168,6 +173,7 @@ export function lockConclusionsAsNeeded(conclusions:Conclusion[]) {
   }
 }
 
+/** Parses authored conclusion sections and resolves reveal and unlock references. */
 export function parseAuthoredConclusions(conclusionsSectionText:string, rooms:ReadonlyArray<Room>, 
   clozeCategories:Record<string, ClozeCategory>, initiallyObscuredRoomIds:ReadonlySet<string>,
   errors:ErrorCollector):Conclusion[]|null {

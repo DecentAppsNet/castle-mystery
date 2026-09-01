@@ -1,3 +1,6 @@
+/* This file derives timeline bounds and the initial active character from authored itineraries.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from 'decent-portal';
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { tryParseActivity } from "./parseUtil";
@@ -22,6 +25,7 @@ function _parseFirstActivity(itinerarySection:LevelFileSection, rules:ActivityPa
   return parseResult;
 }
 
+/** Returns the latest activity end time, or null when there are no activities. */
 export function findLastActivityEndTime(activities:Activity[]):number|null {
   if (activities.length === 0) return null;
   let latestEndTime = -Infinity;
@@ -33,6 +37,7 @@ export function findLastActivityEndTime(activities:Activity[]):number|null {
   return latestEndTime;
 }
 
+/** Returns the earliest absolute itinerary timestamp, defaulting to zero when none exists. */
 export function findStartTimeFromItinerary(itinerarySectionText:string):number|null {
   if (!itinerarySectionText.trim()) return 0;
   const lines = itinerarySectionText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -45,6 +50,7 @@ export function findStartTimeFromItinerary(itinerarySectionText:string):number|n
   return earliestTime === Infinity ? 0 : earliestTime;
 }
 
+/** Validates that the first activity begins with an absolute timestamp. */
 export function isFirstActivityTimestampValid(itinerarySection:LevelFileSection, errors:ErrorCollector):boolean {
   assert(itinerarySection.text.trim().length > 0); // Don't call for an empty itinerary.
   const { lineText, sectionLineI } = _findFirstActivityLine(itinerarySection);
@@ -58,6 +64,7 @@ export function isFirstActivityTimestampValid(itinerarySection:LevelFileSection,
   return true;
 }
 
+/** Returns the explicit character from the first itinerary activity, when present. */
 export function findActiveCharacterFromItinerary(itinerarySection:LevelFileSection|undefined, rules:ActivityParsingRules,
     errors:ErrorCollector):string|null {
   if (!itinerarySection?.text.trim()) return null;

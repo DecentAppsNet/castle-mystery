@@ -1,5 +1,5 @@
-/* This module groups level-manifest loading, URL resolution, and selected-level persistence helpers.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups level-manifest loading, URL resolution, and selected-level persistence helpers.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
   import { assert } from "decent-portal";
 
@@ -49,6 +49,7 @@ function _levelUrlToI(levelUrls:string[], levelUrl:string):number {
   return i === -1 ? 0 : i;
 }
 
+/** Loads a manifest, its level titles, and the remembered selected level. */
 export async function loadLevelManifestFromUrl(manifestUrl:string):Promise<LevelManifest> {
   const manifestText = await _loadTextFromUrl(manifestUrl);
   const levelUrls = _parseLevelUrls(manifestText, manifestUrl);

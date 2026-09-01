@@ -1,3 +1,6 @@
+/* This file parses and schedules explicit character waiting activities.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert, assertNonNullable } from "decent-portal";
 
 import Level from "@/game/types/Level";
@@ -12,6 +15,7 @@ import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationCo
 
 const DEFAULT_WAIT_MSECS = 1_000;
 
+/** Creates the accepted syntax for waiting activities. */
 export function createWaitsParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const waits = makeVerb('waits');
@@ -20,6 +24,7 @@ export function createWaitsParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
+/** Schedules a character wait into an editable timeline. */
 export function scheduleWaitsActivity(_level:Level,
   _waypointContext:WaypointGenerationContext,
      activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {

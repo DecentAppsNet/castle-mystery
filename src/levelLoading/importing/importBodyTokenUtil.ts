@@ -1,5 +1,5 @@
-/* This module groups section-body tokenization and structured-body merge helpers for levelLoading2 importing.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups section-body tokenization and structured-body merge helpers for level importing.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { normalizeId } from "@/game/idUtil";
 import { beginsWithTimestamp } from "../activityLoading";
@@ -25,6 +25,7 @@ function _isBlankBodyLine(line:ImportedLine):boolean {
   return line.text.trim().length === 0;
 }
 
+/** Removes leading and trailing blank lines from an imported section body. */
 export function trimBodyLines(lines:ImportedLine[]):ImportedLine[] {
   let startIndex = 0;
   let endIndex = lines.length;
@@ -138,6 +139,7 @@ function _mergeStructuredBody(levelBodyLines:ImportedLine[], importBodyLines:Imp
   return _flattenBodyTokens(mergedTokens);
 }
 
+/** Merges imported structured body content without duplicating authored entries. */
 export function mergeSectionBody(levelBodyLines:ImportedLine[], importBodyLines:ImportedLine[]):ImportedLine[] {
   const trimmedLevelBodyLines = trimBodyLines(levelBodyLines);
   const trimmedImportBodyLines = trimBodyLines(importBodyLines);

@@ -1,3 +1,6 @@
+/* This file creates concise wall-clock labels across a level's timeline range.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from "decent-portal";
 
 import { MINUTES_IN_DAY, MSECS_IN_MINUTE } from "@/common/timeUtil";
@@ -16,6 +19,7 @@ function _formatMinutesAsTimeLabel(minutes:number):string {
   return `${hours12}:${mins.toString().padStart(2, '0')}${suffix}`;
 }
 
+/** Creates deduplicated wall-clock labels at quartile points from start through end time. */
 export function createTimeLabels(startTime:number, endTime:number):TimeLabel[] {
   assert(endTime >= startTime);
   const duration = endTime - startTime;
