@@ -181,6 +181,30 @@ describe('level loading - lockability activities', () => {
     expect(_findExit(level!, 'hall', 'closet', 0).exitStatus).toBe(ExitStatus.locked);
   });
 
+  it('allows locking through a bare lockable modifier without an item', () => {
+    const text = lockabilityBaseText
+      .replace('unlocked, lockable with Brass Key', 'unlocked, lockable')
+      .replace('* items=Brass Key\n', '')
+      .replace('## Brass Key\n', '');
+    const { level, errors } = _loadLockability(['0:00:00 Sam locks Closet'], text);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(_findExit(level!, 'hall', 'closet', 0).exitStatus).toBe(ExitStatus.locked);
+  });
+
+  it('allows unlocking through a bare unlockable modifier without an item', () => {
+    const text = lockabilityBaseText
+      .replace('unlocked, lockable with Brass Key', 'locked, unlockable')
+      .replace('* items=Brass Key\n', '')
+      .replace('## Brass Key\n', '');
+    const { level, errors } = _loadLockability(['0:00:00 Sam unlocks Closet'], text);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(_findExit(level!, 'hall', 'closet', 0).exitStatus).toBe(ExitStatus.unlocked);
+  });
+
   it('allows a one-sided exit operation from its configured side', () => {
     const { level, errors } = _loadLockability(['0:00:00 Sam locks Closet']);
 

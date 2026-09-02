@@ -11,8 +11,7 @@ import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
 import { assertNonNullable } from "decent-portal";
-
-const KEY_IMAGE_URL = '/assets/sprites/key.png'; // TODO move into effect-related file once it exists.
+import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
 
 export function createEmptyImageSet():ImageSet {
   return new Map();

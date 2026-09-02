@@ -26,6 +26,7 @@ import textureBadFormatText from './fixtures/rooms/rooms-texture-bad-format.md?r
 import textureInvalidAlphaText from './fixtures/rooms/rooms-texture-invalid-alpha.md?raw';
 import textureInvalidPositiveIntegerText from './fixtures/rooms/rooms-texture-invalid-positive-integer.md?raw';
 import { loadLevelForTest } from './testLevelUtil';
+import { LOCKABLE_WITHOUT_INV_CHECK } from '@/game/types/RoomExit';
 
 describe('loading levels - rooms', () => {
 	it('loads a minimal room layout into the returned level', () => {
@@ -72,7 +73,29 @@ describe('loading levels - rooms', () => {
 			room2Id:'closet',
 			exitType:'lockableDoor',
 			exitStatus:'locked',
-			lockableFromRoom1With:'*'
+			lockableFromRoom1With:LOCKABLE_WITHOUT_INV_CHECK
+		});
+	});
+
+	it('loads a bare lockable modifier as lockable without an inventory check', () => {
+		const fixtureText = successPopulatedText.replace('(locked, lockable with *)', '(lockable)');
+		const { level, errors } = loadLevelForTest(fixtureText, 'rooms-bare-lockable.md');
+
+		expect(errors.describeErrors()).toBe('');
+		expect(level?.rooms[1]?.exits[0]).toMatchObject({
+			exitType:'lockableDoor',
+			lockableFromRoom1With:LOCKABLE_WITHOUT_INV_CHECK
+		});
+	});
+
+	it('loads a bare unlockable modifier as unlockable without an inventory check', () => {
+		const fixtureText = successPopulatedText.replace('(locked, lockable with *)', '(unlockable)');
+		const { level, errors } = loadLevelForTest(fixtureText, 'rooms-bare-unlockable.md');
+
+		expect(errors.describeErrors()).toBe('');
+		expect(level?.rooms[1]?.exits[0]).toMatchObject({
+			exitType:'lockableDoor',
+			lockableFromRoom1With:LOCKABLE_WITHOUT_INV_CHECK
 		});
 	});
 

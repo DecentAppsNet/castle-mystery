@@ -17,7 +17,7 @@ HS
 # rooms
 ## Hall
 
-* exits=Stairwell
+* exits=Stairwell (locked, lockable)
 
 ```
 .v..
@@ -43,6 +43,8 @@ HS
 
 ## Stairwell
 
+* exits=Hall
+
 # characters
 ## Sam
 * faceImage=guard1.png
@@ -65,7 +67,10 @@ HS
 : takes vase in right hand
 : drops vase
 : takes vase in left hand
+: unlocks Stairwell
 : @ Closet
 : gives vase to Maria
+: @ Hall
+: locks Stairwell
 
 # conclusions

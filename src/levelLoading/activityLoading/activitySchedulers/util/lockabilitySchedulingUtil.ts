@@ -19,9 +19,9 @@ import { addCharacterEffect, addRoomKeyChanges } from '@/levelLoading/timelineLo
 import EditableTimeline from '@/levelLoading/timelineLoading/types/EditableTimeline';
 import { assert, assertNonNullable } from 'decent-portal';
 
-export type LockabilityAction = 'lock'|'unlock';
+type LockabilityAction = 'lock'|'unlock';
 
-export type LockabilityContext = {
+type LockabilityContext = {
   activityStartTime:number,
   characterId:string,
   targetRoomId:string,
@@ -36,7 +36,7 @@ export type LockabilityContext = {
 };
 
 type PartsShape = { characterId:string, roomId:string };
-export type LockabilityEffectFactory = (exitPosition:Position, startTime:number) => Effect;
+type LockabilityEffectFactory = (exitPosition:Position, startTime:number) => Effect;
 
 function _findRoomExit(room:RoomKeyframe, targetRoomId:string):RoomExit|null {
   return room.exits.find(exit => exit.room1Id === targetRoomId || exit.room2Id === targetRoomId) ?? null;

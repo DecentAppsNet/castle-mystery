@@ -3,7 +3,7 @@
 
 import { parseOptions, parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
 import { ErrorCollector } from "../errorCollection";
-import RoomExit, { createRoomExitId } from "@/game/types/RoomExit";
+import RoomExit, { createRoomExitId, LOCKABLE_WITHOUT_INV_CHECK } from "@/game/types/RoomExit";
 import { normalizeId } from "@/game/idUtil";
 import { assert, assertNonNullable } from "decent-portal";
 import ExitType from "@/game/types/ExitType";
@@ -135,7 +135,11 @@ const UNLOCKABLE_LENGTH = LOCKABLE_LENGTH + 2;
 function _findLockableWithForModifiers(modifierTokens:string[]):string|null {
   const withToken = modifierTokens.find(t => t.startsWith('lockable with ')) ??
       modifierTokens.find(t => t.startsWith('unlockable with '));
-  if (!withToken) return null;
+  if (!withToken) {
+    return modifierTokens.includes('lockable') || modifierTokens.includes('unlockable')
+      ? LOCKABLE_WITHOUT_INV_CHECK
+      : null;
+  }
   const roomIdPos = (withToken[0] === 'l') ? LOCKABLE_LENGTH : UNLOCKABLE_LENGTH;
   const roomId = normalizeId(withToken.substring(roomIdPos));
   return roomId;
@@ -144,7 +148,7 @@ function _findLockableWithForModifiers(modifierTokens:string[]):string|null {
 function _createModifierUpdatedExit(exit:RoomExit, otherRoomId:string, modifierTokens:string[]):RoomExit {
   const isRoom1OtherRoom = exit.room1Id === otherRoomId;
   const exitType:ExitType = _findExitTypeForModifiers(exit.exitType, modifierTokens);;
-  const exitStatus:ExitStatus = _findExitStatusForModifiers(exit.exitType, exit.exitStatus, modifierTokens);
+  const exitStatus:ExitStatus = _findExitStatusForModifiers(exitType, exit.exitStatus, modifierTokens);
   let {lockableFromRoom1With, lockableFromRoom2With} = exit;
   const lockableFromThisRoomWith = _findLockableWithForModifiers(modifierTokens);
   if (isRoom1OtherRoom) {
