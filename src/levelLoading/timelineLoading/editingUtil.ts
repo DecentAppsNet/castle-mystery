@@ -14,6 +14,7 @@ import { duplicatePosition } from "@/game/types/Position";
 import EditableTimeline, { createDefaultEditableTimeline } from "./types/EditableTimeline";
 import Effect from "@/game/effects/types/Effect";
 import { findCharacterKeyframeForTime } from "@/game/timeline/retrievalUtil";
+import { duplicateRoomExit } from "@/game/types/RoomExit";
 
 function _findInsertAfterI(time:number, keyframes:TimelineKeyframe[]):number {
   assert(keyframes.length > 0);
@@ -135,7 +136,8 @@ function _createFirstCharacterKeyframe(character:Readonly<Character>):CharacterK
 
 function _createFirstRoomKeyframe(room:Readonly<Room>):RoomKeyframe {
   const keyframe:RoomKeyframe = {
-    items:[...room.items.map(duplicateItem)]
+    items:[...room.items.map(duplicateItem)],
+    exits:[...room.exits.map(duplicateRoomExit)]
   }
   return keyframe;
 }

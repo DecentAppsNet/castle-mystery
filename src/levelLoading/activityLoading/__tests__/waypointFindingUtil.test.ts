@@ -62,7 +62,7 @@ function _createContext(waypoints:Waypoint[]):WaypointGenerationContext {
 
 function _createKeyframe(items:TimelineKeyframe['rooms'][number]['items'] = [],
     characters:TimelineKeyframe['characters'] = []):TimelineKeyframe {
-  return { time:0, rooms:[{ items }], characters };
+  return { time:0, rooms:[{ items, exits:[] }], characters };
 }
 
 describe('waypointFindingUtil', () => {
