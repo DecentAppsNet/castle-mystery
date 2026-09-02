@@ -8,7 +8,9 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
-import { assert } from "decent-portal";
+import ExitStatus from "@/game/types/ExitStatus";
+import { createUnlockEffect } from "@/game/effects/lockEffectUtil";
+import { createLockabilityContext, scheduleLockabilityChange, validateLockabilityAction } from "./util/lockabilitySchedulingUtil";
 
 /** Creates the accepted syntax for unlocking activities. */
 export function createUnlocksParseFormat():ParseFormat {
@@ -19,15 +21,16 @@ export function createUnlocksParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
-/** Schedules an exit lock-state change into an editable timeline. */
-export function scheduleUnlocksActivity(_level:Level,
+/** Schedules an exit unlocking into an editable timeline. */
+export function scheduleUnlocksActivity(level:Level,
   _waypointContext:WaypointGenerationContext,
-    activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
 
-  // TODO
-  const { characterId } = activity.parts;
-  assert(typeof characterId === 'string');
-  activity.busyCharacterIds = [characterId];
-  activity.endTime = activity.startTime;
+  const context = createLockabilityContext(level, activity, editableTimeline, errors, 'unlock');
+  if (!context) return false;
+  if (!validateLockabilityAction(context, 'unlock', ExitStatus.unlocked, errors, activity.lineI)) return false;
+
+  activity.busyCharacterIds = [context.characterId];
+  activity.endTime = scheduleLockabilityChange(context, ExitStatus.unlocked, createUnlockEffect, editableTimeline);
   return true;
 }
