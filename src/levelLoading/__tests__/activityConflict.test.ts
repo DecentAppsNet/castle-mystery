@@ -2,6 +2,8 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { createCharacterKeyframeAtTime } from '@/game/timeline';
+
 import activityConflictBaseText from './fixtures/activity-conflict-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
@@ -146,7 +148,7 @@ describe('character activity conflict integration', () => {
     expect(errors.describeErrors()).toContain('Character can\'t start speaking');
   });
 
-  it('preserves zero-duration interrupts behavior during speech', () => {
+  it('schedules an interrupt as speech while another character is speaking', () => {
     const { level, errors } = _loadActivities([
       '0:00:00 Sam says "This sentence lasts several seconds."',
       '0:00:01 Jo interrupts "Excuse me."'
@@ -154,6 +156,47 @@ describe('character activity conflict integration', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
+    const joI = level!.timeline.characterIdToI.jo;
+    const joAtInterrupt = createCharacterKeyframeAtTime(level!.timeline.keyframes, joI, 1_000);
+    expect(joAtInterrupt.effects).toMatchObject([{
+      kind:'says',
+      startTime:1_000,
+      endTime:2_000
+    }]);
+  });
+
+  it('faces an interrupting character toward their speech target', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "This sentence lasts several seconds."',
+      '0:00:01 Jo interrupts "Excuse me." to Sam'
+    ]);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const joI = level!.timeline.characterIdToI.jo;
+    const joAtInterrupt = createCharacterKeyframeAtTime(level!.timeline.keyframes, joI, 1_000);
+    expect(joAtInterrupt.facingDirection).toBe('left');
+  });
+
+  it('makes the interrupting character busy for the complete speech', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "This sentence lasts several seconds."',
+      '0:00:01 Jo interrupts "This interruption lasts several seconds."',
+      '0:00:02 Jo waits 1'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('"jo" character can\'t "waits" because they are busy with "interrupts" activity');
+  });
+
+  it('does not let ordinary speech interrupt an interrupting character', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam interrupts "This interruption lasts several seconds."',
+      '0:00:01 Jo says "Overlapping audible speech."'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Character can\'t start speaking');
   });
 
   it('does not make a drop location target busy', () => {

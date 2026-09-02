@@ -8,7 +8,7 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
-import { assert } from "decent-portal";
+import { scheduleSpokenActivity } from "./util/spokenActivitySchedulingUtil";
 
 /** Creates the accepted syntax for interruption activities. */
 export function createInterruptsParseFormat():ParseFormat {
@@ -23,15 +23,9 @@ export function createInterruptsParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
-/** Schedules interrupted speech into an editable timeline. */
-export function scheduleInterruptsActivity(_level:Level,
+/** Schedules speech that may start while another character is speaking. */
+export function scheduleInterruptsActivity(level:Level,
   _waypointContext:WaypointGenerationContext,
-    activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
-
-  // TODO
-  const { characterId } = activity.parts;
-  assert(typeof characterId === 'string');
-  activity.busyCharacterIds = [characterId];
-  activity.endTime = activity.startTime;
-  return true;
+    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+  return scheduleSpokenActivity(level, activity, editableTimeline, errors);
 }

@@ -41,35 +41,30 @@ function _isCharacterInEarshot(earshotRooms:Room[], characterPosition:Position):
   return findRoomAtPosition(earshotRooms, characterPosition.x, characterPosition.y) !== null;
 }
 
-function _findCharacterSpeechInterrupted(earshotRooms:Room[], keyframes:TimelineKeyframe[],
-    currentCharacterI:number, speechStartTime:number):string|null {
-  const keyframe = findKeyframeForTime(keyframes, speechStartTime);
+function _isOtherCharacterSayingInEarshot(keyframe:TimelineKeyframe, currentCharacterI:number,
+    earshotRooms:Room[], speechStartTime:number):boolean {
   for(let characterI = 0; characterI < keyframe.characters.length; ++characterI) {
     if (characterI === currentCharacterI) continue;
     const characterKeyframe = keyframe.characters[characterI];
-    if (_isCharacterSayingAtTime(characterKeyframe.effects, speechStartTime) && _isCharacterInEarshot(earshotRooms, characterKeyframe.position)) {
-      return `Character can't start speaking at ${formatMsecsAsTimestamp(speechStartTime)} because they will be interrupted.`; 
-    }
+    if (_isCharacterSayingAtTime(characterKeyframe.effects, speechStartTime)
+        && _isCharacterInEarshot(earshotRooms, characterKeyframe.position)) return true;
   }
-  return null;
+  return false;
 }
 
 function _findCharacterSpeechInterrupting(earshotRooms:Room[], keyframes:TimelineKeyframe[], 
   currentCharacterI:number, speechStartTime:number, speechEndTime:number):string|null {
-  let errorMessage = '';
-  const characterCount = keyframes[0].characters.length;
+  const startTimestamp = formatMsecsAsTimestamp(speechStartTime);
+  const errorMessage = `Character can't start speaking at ${startTimestamp} because they will interrupt.`;
+
+  // Detect speech already active when this speech starts, even if no later keyframe occurs in its interval.
+  const startKeyframe = findKeyframeForTime(keyframes, speechStartTime);
+  if (_isOtherCharacterSayingInEarshot(startKeyframe, currentCharacterI, earshotRooms, speechStartTime)) return errorMessage;
+
+  // Detect another character whose speech starts later in this speech interval.
   const keyframe = findKeyframeInRange(keyframes, speechStartTime, speechEndTime, (keyframe:TimelineKeyframe) => {
-    for(let characterI = 0; characterI < characterCount; ++characterI) {
-      if (characterI === currentCharacterI) continue;
-      const characterKeyframe = keyframe.characters[characterI];
-      assertNonNullable(characterKeyframe);
-      // Note that the earshot check is needed for each character/keyframe because position can change.
-      if (!_isCharacterSayingAtTime(characterKeyframe.effects, speechStartTime) || !_isCharacterInEarshot(earshotRooms, characterKeyframe.position)) continue;
-      const startTimestamp = formatMsecsAsTimestamp(speechStartTime);
-      errorMessage = `Character can't start speaking at ${startTimestamp} because they will interrupt.`;
-      return true;
-    }
-    return false;
+    // The earshot check is needed for each keyframe because character positions can change.
+    return _isOtherCharacterSayingInEarshot(keyframe, currentCharacterI, earshotRooms, speechStartTime);
   });
   return !keyframe ? null : errorMessage;
 }
@@ -83,17 +78,13 @@ export function calcSpeechDuration(speech:string):number {
 export function findSpeechConflict(speechKind:'says'|'interrupts'|'thinks'|'emits', rooms:Room[], 
     keyframes:TimelineKeyframe[], characterI:number, speechStartTime:number, speechEndTime:number):string|null {
 
-  if (speechKind === 'emits' ||  // Often an author's intent to have a sound effect/noise heard while other speech is happening.
+  if (speechKind === 'interrupts' || // The author explicitly permits this character to start over another speaker.
+      speechKind === 'emits' ||  // Often an author's intent to have a sound effect/noise heard while other speech is happening.
       speechKind === 'thinks') { // Likewise, an author may often intend a thought to be an immediate reaction to something said.
     return null;
   }
 
   const earshotRooms = _findRoomsInEarshot(keyframes, characterI, rooms, speechStartTime);
-  if (speechKind === 'interrupts') { 
-    // This character has author's permission to interrupt, but still need to check for another character interrupting.
-    return _findCharacterSpeechInterrupted(earshotRooms, keyframes, characterI, speechStartTime);
-  }
-
   // For "says", check for interruption because generally an author doesn't want characters speaking over each other,
   // especially for two separate conversations happening at same time due to an authoring mistake.
   assert(speechKind === 'says');
