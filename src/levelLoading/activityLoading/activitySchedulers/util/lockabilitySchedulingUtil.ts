@@ -1,19 +1,23 @@
-/* This file resolves shared scheduling context for room-exit lock and unlock activities.
+/* This file resolves, validates, and applies shared room-exit lock and unlock activity scheduling.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { createKeyframeAtTime } from '@/game/timeline';
 import { findRoomAtPosition } from '@/game/roomUtil';
+import Effect from '@/game/effects/types/Effect';
+import { ROOM_MIDDLE_ROW_CENTER_Z } from '@/game/roomSpaceConstants';
 import CharacterKeyframe from '@/game/types/CharacterKeyframe';
 import ExitStatus from '@/game/types/ExitStatus';
 import ExitType from '@/game/types/ExitType';
 import Level from '@/game/types/Level';
+import Position from '@/game/types/Position';
 import Room from '@/game/types/Room';
-import RoomExit, { LOCKABLE_WITHOUT_INV_CHECK } from '@/game/types/RoomExit';
+import RoomExit, { duplicateRoomExit, LOCKABLE_WITHOUT_INV_CHECK } from '@/game/types/RoomExit';
 import RoomKeyframe from '@/game/types/RoomKeyframe';
 import { ErrorCollector } from '@/levelLoading/errorCollection';
+import Activity from '@/levelLoading/activityLoading/types/Activity';
+import { addCharacterEffect, addRoomKeyChanges } from '@/levelLoading/timelineLoading';
 import EditableTimeline from '@/levelLoading/timelineLoading/types/EditableTimeline';
 import { assert, assertNonNullable } from 'decent-portal';
-import Activity from '../../types/Activity';
 
 export type LockabilityAction = 'lock'|'unlock';
 
@@ -32,6 +36,7 @@ export type LockabilityContext = {
 };
 
 type PartsShape = { characterId:string, roomId:string };
+export type LockabilityEffectFactory = (exitPosition:Position, startTime:number) => Effect;
 
 function _findRoomExit(room:RoomKeyframe, targetRoomId:string):RoomExit|null {
   return room.exits.find(exit => exit.room1Id === targetRoomId || exit.room2Id === targetRoomId) ?? null;
@@ -44,6 +49,19 @@ function _doesCharacterHaveItem(characterKeyframe:CharacterKeyframe, itemId:stri
 
 function _doesCharacterNeedItemForLockability(characterKeyframe:CharacterKeyframe, itemId:string):boolean {
   return itemId !== LOCKABLE_WITHOUT_INV_CHECK && !_doesCharacterHaveItem(characterKeyframe, itemId);
+}
+
+function _createRoomExitsWithStatus(roomExits:RoomExit[], otherRoomId:string, nextStatus:ExitStatus):RoomExit[] {
+  return roomExits.map(roomExit => {
+    const exit = duplicateRoomExit(roomExit);
+    if (exit.room1Id === otherRoomId || exit.room2Id === otherRoomId) exit.exitStatus = nextStatus;
+    return exit;
+  });
+}
+
+function _createRoomExitPosition(roomExit:RoomExit):Position {
+  const { x, y } = roomExit;
+  return { x, y, z:ROOM_MIDDLE_ROW_CENTER_Z };
 }
 
 /** Resolves lock/unlock entities and reports expected authored room-targeting errors. */
@@ -112,4 +130,22 @@ export function validateLockabilityAction(context:LockabilityContext, action:Loc
     return false;
   }
   return true;
+}
+
+/** Applies the exit state to both room snapshots and schedules its character effect. */
+export function scheduleLockabilityChange(context:LockabilityContext, nextStatus:ExitStatus,
+    createEffect:LockabilityEffectFactory, editableTimeline:EditableTimeline):number {
+  const { activityStartTime, characterI, fromRoom, fromRoomI, fromRoomKeyframe, targetRoomId,
+    targetRoomI, targetRoomKeyframe, targetRoomExit } = context;
+
+  // Independently duplicate and update each room snapshot's own exit array.
+  const targetRoomExits = _createRoomExitsWithStatus(targetRoomKeyframe.exits, fromRoom.id, nextStatus);
+  const fromRoomExits = _createRoomExitsWithStatus(fromRoomKeyframe.exits, targetRoomId, nextStatus);
+  addRoomKeyChanges({ exits:targetRoomExits }, targetRoomI, activityStartTime, editableTimeline);
+  addRoomKeyChanges({ exits:fromRoomExits }, fromRoomI, activityStartTime, editableTimeline);
+
+  // Attach the action-specific effect to the subject character.
+  const effect = createEffect(_createRoomExitPosition(targetRoomExit), activityStartTime);
+  addCharacterEffect(effect, characterI, editableTimeline);
+  return effect.endTime;
 }
