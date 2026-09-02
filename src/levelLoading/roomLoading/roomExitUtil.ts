@@ -118,7 +118,7 @@ function _findExitStatusForModifiers(exitType:ExitType, exitStatus:ExitStatus, m
 
   if (modifierTokens.includes('unlocked')) {
     assert(exitType === 'lockableDoor');
-    if (exitStatus !== 'locked') exitStatus = 'locked';
+    if (exitStatus !== 'locked') exitStatus = 'unlocked';
     return exitStatus;
   }
 
