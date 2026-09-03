@@ -8,7 +8,7 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
-import { assert } from "decent-portal";
+import { scheduleVisibilityActivity } from "./util/visibilitySchedulingUtil";
 
 /** Creates the accepted syntax for hiding activities. */
 export function createHideParseFormat():ParseFormat {
@@ -21,15 +21,8 @@ export function createHideParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
-/** Schedules a hiding activity into an editable timeline. */
-export function scheduleHideActivity(_level:Level,
-  _waypointContext:WaypointGenerationContext,
-    activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
-
-  // TODO
-  const { characterId, itemId } = activity.parts;
-  assert(typeof characterId === 'string' || typeof itemId === 'string');
-  activity.busyCharacterIds = typeof itemId === 'string' ? [] : [characterId as string];
-  activity.endTime = activity.startTime;
-  return true;
+/** Schedules an item or character becoming invisible into an editable timeline. */
+export function scheduleHideActivity(_level:Level, _waypointContext:WaypointGenerationContext,
+    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+  return scheduleVisibilityActivity(false, activity, editableTimeline, errors);
 }

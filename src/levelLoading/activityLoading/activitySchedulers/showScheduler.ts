@@ -8,7 +8,8 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
-import { assert } from "decent-portal";
+import { scheduleVisibilityActivity } from "./util/visibilitySchedulingUtil";
+
 
 /** Creates the accepted syntax for item-showing activities. */
 export function createShowParseFormat():ParseFormat {
@@ -21,15 +22,8 @@ export function createShowParseFormat():ParseFormat {
   return createParseFormat(rootParseStep);
 }
 
-/** Schedules an item becoming visible into an editable timeline. */
-export function scheduleShowActivity(_level:Level,
-  _waypointContext:WaypointGenerationContext,
-    activity:Activity, _editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
-
-  // TODO
-  const { characterId, itemId } = activity.parts;
-  assert(typeof characterId === 'string' || typeof itemId === 'string');
-  activity.busyCharacterIds = typeof itemId === 'string' ? [] : [characterId as string];
-  activity.endTime = activity.startTime;
-  return true;
+/** Schedules an item or character becoming visible into an editable timeline. */
+export function scheduleShowActivity(_level:Level, _waypointContext:WaypointGenerationContext,
+    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+  return scheduleVisibilityActivity(true, activity, editableTimeline, errors);
 }
