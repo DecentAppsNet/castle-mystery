@@ -104,7 +104,24 @@ describe('level loading - drops activities', () => {
     const { level, errors } = loadLevelForTest(text, 'overlapping-drop.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character can\'t "takes" because they are busy with "drops" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t take because they are busy with "drops" activity');
+  });
+
+  it('rejects an item emitting while another character drops it', () => {
+    const text = dropsOnItemText
+      .replace('.t..\n....\n....\n```\n\n* t=Table|Book',
+        '.t..\n....\n...J\n```\n\n* t=Table|Book\n* J=Jo')
+      .replace('## Sam\n\n# items', '## Sam\n\n## Jo\n\n# items')
+      .replace('0:00:06 Sam @ Closet\n: drops Vase on Table', [
+        '0:00:06 Sam @ Closet',
+        '0:00:06 Sam drops Vase on Table',
+        '0:00:06 Jo faces Sam',
+        '0:00:06 Vase emits "A bell rings for several seconds."'
+      ].join('\n'));
+    const { level, errors } = loadLevelForTest(text, 'drops-item-reservation.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Can\'t emit because "vase" item is busy with "drops" activity');
   });
 
   it('allows another item operation at the exact drop effect end', () => {

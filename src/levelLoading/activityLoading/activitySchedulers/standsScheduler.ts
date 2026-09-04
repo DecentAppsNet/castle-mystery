@@ -28,6 +28,7 @@ export function scheduleStandsActivity(_level:Level,
   assert(typeof characterId === 'string');
   assertNonNullable(activity.startTime);
   activity.busyCharacterIds = [characterId];
+  activity.busyItemIds = [];
 
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);

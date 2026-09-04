@@ -116,7 +116,8 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   // Get keyframe and set up convenience vars for character.
   assertNonNullable(activity.startTime);
   const { characterId, itemId, toItemId, toCharacterId } = activity.parts as PartsShape;
-  activity.busyCharacterIds = [characterId];
+  activity.busyCharacterIds = [characterId]; // toCharacterId only indicates a destination position.
+  activity.busyItemIds = [itemId]; // toItemId only indicates a destination position.
   const fromKeyframe = findKeyframeForTime(editableTimeline.keyframes, activity.startTime);
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);

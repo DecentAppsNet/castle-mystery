@@ -6,12 +6,13 @@ type Activity = {
   verb:string;
   startTime:number|null,
   endTime:number|null,
-  busyCharacterIds:readonly string[]|null,
+  busyCharacterIds:readonly string[],
+  busyItemIds:readonly string[],
   parts:ActivityParts,
   nextActivity:Activity|null
 }
 
 /** An activity before its combined-text source line index is assigned. */
-export type ParsedActivity = Omit<Activity, 'lineI'|'busyCharacterIds'>;
+export type ParsedActivity = Omit<Activity, 'lineI'|'busyCharacterIds'|'busyItemIds'>;
 
 export default Activity;

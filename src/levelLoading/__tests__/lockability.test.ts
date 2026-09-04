@@ -138,7 +138,7 @@ describe('level loading - lockability activities', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character can\'t "waits" because they are busy with "locks" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t wait because they are busy with "locks" activity');
   });
 
   it('allows an activity at the exact lock effect end', () => {

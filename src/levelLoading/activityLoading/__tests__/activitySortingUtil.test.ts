@@ -11,7 +11,8 @@ function _activity(verb:string, startTime:number|null, lineI:number = 0):Activit
     verb,
     startTime,
     endTime:null,
-    busyCharacterIds:null,
+    busyCharacterIds:[],
+    busyItemIds:[],
     parts:{},
     nextActivity:null
   };

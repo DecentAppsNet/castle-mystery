@@ -106,6 +106,7 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   assert(typeof characterId === 'string', 'implied subjects should have been resolved');
   assert(typeof itemId === 'string');
   activity.busyCharacterIds = [characterId];
+  activity.busyItemIds = [itemId];
   const keyframe = createKeyframeAtTime(editableTimeline.keyframes, activity.startTime);
   const characterI = editableTimeline.characterIdToI[characterId];
   const characterKeyframe = keyframe.characters[characterI];

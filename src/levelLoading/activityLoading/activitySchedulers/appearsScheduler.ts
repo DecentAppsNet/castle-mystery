@@ -1,6 +1,8 @@
 /* This file parses and schedules character appearance activities.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
+import { assert } from "decent-portal";
+
 import Level from "@/game/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteral, makeSequence, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
@@ -8,13 +10,12 @@ import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
-import { assert } from "decent-portal";
 
 /** Creates the accepted syntax for appearance activities. */
 export function createAppearsParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const appears = makeVerb('appears');
-  const as = makeLiteral('as', true);
+  const as = makeLiteral('as', true); // Has no meaning, just supoorting natural grammar in authoring for "Sam appears drunk" vs "Sam appears as mailman".
   const appearanceId = makeIdentifier('appearanceId', 'AppearanceId');
   const rootParseStep = makeSequence([characterId, appears, as, appearanceId]);
   return createParseFormat(rootParseStep);
@@ -29,6 +30,7 @@ export function scheduleAppearsActivity(_level:Level,
   const { characterId } = activity.parts;
   assert(typeof characterId === 'string');
   activity.busyCharacterIds = [characterId];
+  activity.busyItemIds = [];
   activity.endTime = activity.startTime;
   return true;
 }

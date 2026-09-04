@@ -59,6 +59,7 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
   assertNonNullable(activity.startTime);
   const { characterId, itemId, toCharacterId } = activity.parts as PartsShape;
   activity.busyCharacterIds = [characterId, toCharacterId];
+  activity.busyItemIds = [itemId];
   if (characterId === toCharacterId) {
     errors.addAtLine(`"${characterId}" character can't give an item to themselves.`, activity.lineI);
     return false;

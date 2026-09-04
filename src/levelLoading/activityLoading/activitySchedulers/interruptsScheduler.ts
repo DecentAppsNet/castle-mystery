@@ -24,8 +24,7 @@ export function createInterruptsParseFormat():ParseFormat {
 }
 
 /** Schedules speech that may start while another character is speaking. */
-export function scheduleInterruptsActivity(level:Level,
-  _waypointContext:WaypointGenerationContext,
-    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+export function scheduleInterruptsActivity(level:Level, _waypointContext:WaypointGenerationContext, 
+      activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   return scheduleSpokenActivity(level, activity, editableTimeline, errors);
 }

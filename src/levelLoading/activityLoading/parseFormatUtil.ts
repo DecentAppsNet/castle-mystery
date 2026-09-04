@@ -73,6 +73,13 @@ export function makeIdentifier(variableId:string, identifierKind:string, isOptio
   return  {kind:'identifier', variableId, identifierKind, isOptional}; 
 }
 
+// This is coupled to the known verbs for activities. If a new verb is added, check for needed 
+// special-casing beyond chopping off the "s". E.g. "does" -> "do" rather than "doe".
+export function verbToPlainForm(verb:string):string {
+  if (!verb.endsWith('s')) return verb;
+  return verb.substring(0, verb.length-1);
+}
+
 // Errors in the parse format are always debug errors, since they are created with source code instead of user input. 
 // For that reason, the checks here don't need to be exhaustive. This is a tool to see debug errors in the creation of 
 // parse formats earlier in code for faster fixes. So, just add checks for things that are easy to check or seem to 

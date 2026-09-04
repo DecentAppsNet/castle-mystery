@@ -71,7 +71,22 @@ describe('level loading - takes activities', () => {
     const { level, errors } = loadLevelForTest(takesDuringReservationText, 'takes-during-reservation.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character can\'t "drops" because they are busy with "takes" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t drop because they are busy with "takes" activity');
+  });
+
+  it('rejects an item emitting while another character takes it', () => {
+    const text = takesDuringReservationText
+      .replace('k..S', 'k.JS')
+      .replace('* S=Sam', '* S=Sam\n* J=Jo')
+      .replace('## Sam\n* items=Pencil', '## Sam\n* items=Pencil\n\n## Jo')
+      .replace('0:00:01 Sam drops Pencil', [
+        '0:00:00 Jo faces Sam',
+        '0:00:00 Key emits "A bell rings for several seconds."'
+      ].join('\n'));
+    const { level, errors } = loadLevelForTest(text, 'takes-item-reservation.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Can\'t emit because "key" item is busy with "takes" activity');
   });
 
   it('allows another item operation by the same character at the exact take effect end', () => {

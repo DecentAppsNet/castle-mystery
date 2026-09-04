@@ -31,6 +31,7 @@ export function scheduleUnlocksActivity(level:Level,
   if (!validateLockabilityAction(context, 'unlock', ExitStatus.unlocked, errors, activity.lineI)) return false;
 
   activity.busyCharacterIds = [context.characterId];
+  activity.busyItemIds = [];
   activity.endTime = scheduleLockabilityChange(context, ExitStatus.unlocked, createUnlockEffect, editableTimeline);
   return true;
 }

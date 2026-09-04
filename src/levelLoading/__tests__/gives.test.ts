@@ -236,6 +236,17 @@ describe('level loading - gives activities', () => {
     expect(secondEffect.startTime).toBe(firstEffect.endTime);
   });
 
+  it('rejects an item emitting while two characters transfer it', () => {
+    const text = replaceSection(givesBaseText, 'itinerary', [
+      '0:00:00 Sam gives Coin to Jo',
+      '0:00:01 Coin emits "A bell rings for several seconds."'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'gives-item-reservation.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Can\'t emit because "coin" item is busy with "gives" activity');
+  });
+
   it('allows independent character pairs to give concurrently in one room', () => {
     const { level, errors } = loadLevelForTest(givesConcurrentlyText, 'gives-concurrently.md');
 
@@ -267,13 +278,13 @@ describe('level loading - gives activities', () => {
     const { level, errors } = loadLevelForTest(givesGiverReservedText, 'gives-giver-reserved.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character can\'t "gives" because they are busy with "drops" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t give because they are busy with "drops" activity');
   });
 
   it('rejects giving while the receiver is busy with another item-transfer activity', () => {
     const { level, errors } = loadLevelForTest(givesReceiverReservedText, 'gives-receiver-reserved.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"jo" character can\'t "gives" because they are busy with "drops" activity');
+    expect(errors.describeErrors()).toContain('jo can\'t give because they are busy with "drops" activity');
   });
 });

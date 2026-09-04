@@ -4,16 +4,19 @@
 import { assert, assertNonNullable } from "decent-portal";
 
 import Activity from "../activityLoading/types/Activity";
+import { ErrorCollector } from "../errorCollection";
+import { formatMsecsAsTimestamp } from "../activityLoading";
+import { verbToPlainForm } from "../activityLoading/parseFormatUtil";
 
 /** A prior activity that overlaps the current activity through a shared busy character. */
-export type CharacterActivityConflict = {
-  characterId:string,
+export type ActivityConflict = {
+  kind:'item'|'character',
+  conflictingId:string,
   activity:Activity
 };
 
-function _findSharedCharacterId(firstCharacterIds:readonly string[],
-    secondCharacterIds:readonly string[]):string|null {
-  return firstCharacterIds.find(characterId => secondCharacterIds.includes(characterId)) ?? null;
+function _findSharedCharacterOrItemId(firstIds:readonly string[], secondIds:readonly string[]):string|null {
+  return firstIds.find(characterId => secondIds.includes(characterId)) ?? null;
 }
 
 function _activitiesOverlap(firstStartTime:number, firstEndTime:number,
@@ -33,9 +36,7 @@ export function findLatestBusyCharacterActivityEndTime(characterId:string,
   return latestEndTime;
 }
 
-/** Returns the first prior overlapping activity and shared busy character. */
-export function findConflictingCharacterActivity(activity:Activity,
-    scheduledActivities:readonly Activity[]):CharacterActivityConflict|null {
+export function doesActivityConflictWithScheduled(activity:Activity, scheduledActivities:readonly Activity[], errors:ErrorCollector):boolean {
   // Validate the current activity contract supplied by successful scheduling.
   assertNonNullable(activity.startTime);
   assertNonNullable(activity.endTime);
@@ -45,14 +46,30 @@ export function findConflictingCharacterActivity(activity:Activity,
 
   // Search complete candidates in scheduling order for a shared occupied interval.
   for(const candidate of scheduledActivities) {
-    const { startTime, endTime, busyCharacterIds } = candidate;
-    if (startTime === null || endTime === null || busyCharacterIds === null) continue;
+    const { startTime, endTime, busyCharacterIds, busyItemIds } = candidate;
+    assertNonNullable(startTime); // All scheduled activities should have .startTime and .endTime defined.
+    assertNonNullable(endTime);
+    if (busyCharacterIds.length === 0 && busyItemIds.length === 0) continue;
     assert(Number.isFinite(startTime) && Number.isFinite(endTime));
     assert(startTime <= endTime);
     if (!_activitiesOverlap(activity.startTime, activity.endTime, startTime, endTime)) continue;
 
-    const characterId = _findSharedCharacterId(activity.busyCharacterIds, busyCharacterIds);
-    if (characterId !== null) return { characterId, activity:candidate };
+    const conflictingCharacterId = _findSharedCharacterOrItemId(activity.busyCharacterIds, busyCharacterIds);
+    if (conflictingCharacterId !== null) { 
+      const conflictStart = formatMsecsAsTimestamp(candidate.startTime!);
+      errors.addAtLine(`${conflictingCharacterId} can't ${verbToPlainForm(activity.verb)} because they are busy with `
+          + `"${candidate.verb}" activity starting at ${conflictStart}.`, activity.lineI);
+      return true;
+    };
+
+    const conflictingItemId = _findSharedCharacterOrItemId(activity.busyItemIds, busyItemIds);
+    if (conflictingItemId !== null) {
+      const conflictStart = formatMsecsAsTimestamp(candidate.startTime!);
+      const message = `Can't ${verbToPlainForm(activity.verb)} because "${conflictingItemId}" item is busy with `
+          + `"${candidate.verb}" activity starting at ${conflictStart}.`;
+      errors.addAtLine(message, activity.lineI);
+      return true;
+    }
   }
-  return null;
+  return false;
 }

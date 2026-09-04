@@ -30,6 +30,7 @@ export function scheduleLocksActivity(level:Level, _waypointContext:WaypointGene
   if (!validateLockabilityAction(context, 'lock', ExitStatus.locked, errors, activity.lineI)) return false;
 
   activity.busyCharacterIds = [context.characterId];
+  activity.busyItemIds = [];
   activity.endTime = scheduleLockabilityChange(context, ExitStatus.locked, createLockEffect, editableTimeline);
   return true;
 }

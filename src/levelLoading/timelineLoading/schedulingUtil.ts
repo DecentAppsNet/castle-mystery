@@ -5,7 +5,7 @@ import { assert, assertNonNullable } from "decent-portal";
 
 import Level from "@/game/types/Level";
 import Timeline from "@/game/types/Timeline";
-import { formatMsecsAsTimestamp, sortActivitiesAfterStartTimeAssignment } from "../activityLoading";
+import { sortActivitiesAfterStartTimeAssignment } from "../activityLoading";
 import { scheduleAppearsActivity } from "../activityLoading/activitySchedulers/appearsScheduler";
 import { scheduleAtActivity } from "../activityLoading/activitySchedulers/atScheduler";
 import { scheduleBecomesActivity } from "../activityLoading/activitySchedulers/becomesScheduler";
@@ -32,7 +32,7 @@ import { createEditableTimeline } from "./editingUtil";
 import EditableTimeline from "./types/EditableTimeline";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";
 import { scheduleThinksActivity } from "../activityLoading/activitySchedulers/thinksScheduler";
-import { findConflictingCharacterActivity } from "./activityConflictUtil";
+import { doesActivityConflictWithScheduled } from "./activityConflictUtil";
 
 type ActivityScheduler = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
   timeline:EditableTimeline, errors:ErrorCollector, scheduledActivities:readonly Activity[]) => boolean;
@@ -106,13 +106,7 @@ export function scheduleActivities(level:Level, activities:Activity[], waypointC
     if (!_scheduleActivity(level, waypointContext, activity, timeline, errors, scheduledActivities)) return null;
 
     // Reject authored overlap before accepting the activity as successfully scheduled.
-    const conflict = findConflictingCharacterActivity(activity, scheduledActivities);
-    if (conflict) {
-      const conflictStart = formatMsecsAsTimestamp(conflict.activity.startTime!);
-      errors.addAtLine(`"${conflict.characterId}" character can't "${activity.verb}" because they are busy with `
-        + `"${conflict.activity.verb}" activity starting at ${conflictStart}.`, activity.lineI);
-      return null;
-    }
+    if (doesActivityConflictWithScheduled(activity, scheduledActivities, errors)) return null;
     scheduledActivities.push(activity);
 
     toBeScheduled.shift();

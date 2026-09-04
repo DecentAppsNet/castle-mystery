@@ -23,7 +23,7 @@ describe('character activity conflict integration', () => {
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain(`overlapping-activities.md:${currentLineNo}:0:`);
-    expect(errors.describeErrors()).toContain('"sam" character can\'t "says" because they are busy with "waits" activity starting at 0:00:00.');
+    expect(errors.describeErrors()).toContain('sam can\'t say because they are busy with "waits" activity starting at 0:00:00.');
   });
 
   it('rejects waiting during relative movement', () => {
@@ -34,7 +34,7 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character can\'t "waits" because they are busy with "@" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t wait because they are busy with "@" activity');
   });
 
   it('allows concurrent nonzero activities by different characters', () => {
@@ -95,7 +95,7 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character can\'t "says" because they are busy with "says" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t say because they are busy with "says" activity');
   });
 
   it('rejects overlapping thinks activities by the same character', () => {
@@ -105,7 +105,7 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character can\'t "thinks" because they are busy with "thinks" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t think because they are busy with "thinks" activity');
   });
 
   it('makes a character-source emits activity busy', () => {
@@ -115,7 +115,17 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"sam" character can\'t "waits" because they are busy with "emits" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t wait because they are busy with "emits" activity');
+  });
+
+  it('rejects giving an item while that item is emitting', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Coin emits "A bell rings for several seconds."',
+      '0:00:01 Sam gives Coin to Jo'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Can\'t give because "coin" item is busy with "emits" activity');
   });
 
   it('allows another character to think during speech', () => {
@@ -186,7 +196,7 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"jo" character can\'t "waits" because they are busy with "interrupts" activity');
+    expect(errors.describeErrors()).toContain('jo can\'t wait because they are busy with "interrupts" activity');
   });
 
   it('does not let ordinary speech interrupt an interrupting character', () => {
@@ -216,7 +226,7 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('"jo" character can\'t "waits" because they are busy with "gives" activity');
+    expect(errors.describeErrors()).toContain('jo can\'t wait because they are busy with "gives" activity');
   });
 
   it('does not make a character busy for item-only activities', () => {

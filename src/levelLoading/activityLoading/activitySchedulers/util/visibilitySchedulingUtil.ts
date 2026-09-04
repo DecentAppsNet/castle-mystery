@@ -93,6 +93,7 @@ export function scheduleVisibilityActivity(isVisible:boolean, activity:Activity,
 
   activity.endTime = activity.startTime;
   activity.busyCharacterIds = []; // Even for characters and items on characters, this shouldn't cause a busy state.
+  activity.busyItemIds = itemId ? [itemId] : [];
 
   // The characterId will always be non-null due to implied subject handling. Item must be checked first.
   assertNonNullable(characterId);
