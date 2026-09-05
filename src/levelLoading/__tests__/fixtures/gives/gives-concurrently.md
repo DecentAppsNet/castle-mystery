@@ -43,4 +43,3 @@ SJPK
 0:00:00 Sam gives Coin to Jo
 0:00:00 Pat gives Vase to Kai
 
-# conclusions

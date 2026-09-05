@@ -40,4 +40,3 @@ S.JP
 0:00:00 Jo drops Vase at Pat
 0:00:00 Sam gives Coin to Jo
 
-# conclusions

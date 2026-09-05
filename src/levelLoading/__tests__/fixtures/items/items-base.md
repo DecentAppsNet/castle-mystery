@@ -22,10 +22,8 @@ H
 
 # characters
 ## Sam
-### Default
 
 # items
 
 # itinerary
 
-# conclusions

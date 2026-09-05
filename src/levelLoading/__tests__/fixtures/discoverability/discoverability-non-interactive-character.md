@@ -25,13 +25,9 @@ H
 ## Sam
 * description=An alert detective.
 
-### Default
 
 ## Alex
-### Guest
 
 # items
 
 # itinerary
-
-# conclusions

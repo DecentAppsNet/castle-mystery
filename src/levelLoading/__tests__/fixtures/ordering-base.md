@@ -42,4 +42,3 @@ HC
 
 # itinerary
 
-# conclusions

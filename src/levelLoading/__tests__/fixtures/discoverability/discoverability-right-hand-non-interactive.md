@@ -25,11 +25,8 @@ H
 * description=An alert detective.
 * rightHand=Lantern
 
-### Default
 
 # items
 ## Lantern
 
 # itinerary
-
-# conclusions

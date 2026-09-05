@@ -27,7 +27,6 @@ HC
 
 # characters
 ## Sam
-### Default
 
 # items
 
@@ -36,3 +35,4 @@ HC
 0:00:03 Sam sits
 
 # conclusions
+

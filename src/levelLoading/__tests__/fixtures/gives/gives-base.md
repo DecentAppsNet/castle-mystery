@@ -60,4 +60,3 @@ S..J
 
 0:00:00 Sam gives Coin to Jo
 
-# conclusions

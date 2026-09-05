@@ -40,4 +40,3 @@ HPL
 0:00:00 Sam stands
 0:00:10 Sam @ Library
 
-# conclusions

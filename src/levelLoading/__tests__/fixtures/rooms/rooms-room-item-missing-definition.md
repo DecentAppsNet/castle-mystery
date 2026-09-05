@@ -23,10 +23,8 @@ A
 
 # characters
 ## Sam
-### Default
 
 # items
 
 # itinerary
 
-# conclusions

@@ -49,4 +49,3 @@ HC
 
 # itinerary
 
-# conclusions

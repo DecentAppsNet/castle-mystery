@@ -52,4 +52,3 @@ IS.B
 
 # itinerary
 
-# conclusions

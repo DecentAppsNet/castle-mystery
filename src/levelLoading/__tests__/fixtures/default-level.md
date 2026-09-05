@@ -27,7 +27,6 @@ HC
 
 # characters
 ## Sam
-### Default
 
 # items
 
@@ -36,4 +35,3 @@ HC
 0:00:00 Sam sits
 0:00:03 Sam @ Closet
 
-# conclusions

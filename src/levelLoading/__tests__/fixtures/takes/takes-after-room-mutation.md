@@ -39,4 +39,3 @@ tJ..
 0:00:00 Jo drops Coin on Table
 0:00:00 Sam takes Key
 
-# conclusions

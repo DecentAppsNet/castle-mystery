@@ -42,4 +42,3 @@ S..J
 
 0:00:00 Sam sits
 
-# conclusions

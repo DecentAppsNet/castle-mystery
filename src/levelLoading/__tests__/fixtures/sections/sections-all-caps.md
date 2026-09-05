@@ -22,4 +22,3 @@ H
 
 # CHARACTERS
 ## SAM
-### DEFAULT

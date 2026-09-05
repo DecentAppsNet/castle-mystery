@@ -42,4 +42,3 @@ HS
 0:00:00 Sam faces right
 0:00:05 Sam @ Closet
 
-# conclusions

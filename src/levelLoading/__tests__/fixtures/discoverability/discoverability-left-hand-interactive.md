@@ -25,12 +25,9 @@ H
 * description=An alert detective.
 * leftHand=Lantern
 
-### Default
 
 # items
 ## Lantern
 * description=Lights dark spaces.
 
 # itinerary
-
-# conclusions

@@ -29,7 +29,6 @@ HS
 * title=Detective Sam
 * description=Lead investigator.
 
-### Default
 
 # items
 

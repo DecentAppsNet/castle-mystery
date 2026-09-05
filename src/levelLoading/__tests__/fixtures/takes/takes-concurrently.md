@@ -37,4 +37,3 @@ kSJv
 0:00:00 Sam takes Key
 0:00:00 Jo takes Vase
 
-# conclusions

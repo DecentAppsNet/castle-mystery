@@ -50,4 +50,3 @@ HC
 
 # itinerary
 
-# conclusions

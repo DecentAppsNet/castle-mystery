@@ -25,12 +25,9 @@ H
 * description=An alert detective.
 * items=Notebook
 
-### Default
 
 # items
 ## Notebook
 * description=Contains important clues.
 
 # itinerary
-
-# conclusions

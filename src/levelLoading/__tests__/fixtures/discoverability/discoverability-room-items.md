@@ -25,7 +25,6 @@ KNS.
 ## Sam
 * description=An alert detective.
 
-### Default
 
 # items
 ## Key
@@ -34,5 +33,3 @@ KNS.
 ## Note
 
 # itinerary
-
-# conclusions

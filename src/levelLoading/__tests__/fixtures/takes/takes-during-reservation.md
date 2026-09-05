@@ -34,4 +34,3 @@ k..S
 0:00:00 Sam takes Key
 0:00:01 Sam drops Pencil
 
-# conclusions

@@ -22,4 +22,3 @@ S...
 
 # characters
 ## Sam
-### Default

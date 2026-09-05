@@ -26,10 +26,8 @@ AB
 
 # characters
 ## Sam
-### Default
 
 # items
 
 # itinerary
 
-# conclusions

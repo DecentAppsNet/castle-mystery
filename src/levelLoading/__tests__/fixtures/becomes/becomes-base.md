@@ -36,4 +36,3 @@ K...
 
 # itinerary
 
-# conclusions

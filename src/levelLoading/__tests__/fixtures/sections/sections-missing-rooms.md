@@ -11,4 +11,3 @@ H
 
 # characters
 ## Sam
-### Default

@@ -59,5 +59,3 @@ HS
 : Sam takes Vase in right hand
 0:00:06 Sam @ Closet
 : drops Vase on Table
-
-# conclusions

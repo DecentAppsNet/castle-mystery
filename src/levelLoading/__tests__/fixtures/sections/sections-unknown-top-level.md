@@ -22,7 +22,6 @@ H
 
 # characters
 ## Sam
-### Default
 
 # mystery
 hello

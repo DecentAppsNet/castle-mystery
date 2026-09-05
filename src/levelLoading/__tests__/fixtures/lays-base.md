@@ -27,4 +27,3 @@ H
 
 # itinerary
 
-# conclusions

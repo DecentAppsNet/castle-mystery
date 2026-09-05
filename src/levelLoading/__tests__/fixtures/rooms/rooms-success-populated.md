@@ -36,7 +36,6 @@ HC
 
 # characters
 ## Sam
-### Default
 
 # items
 ## Brass Key
@@ -44,4 +43,3 @@ HC
 
 # itinerary
 
-# conclusions
