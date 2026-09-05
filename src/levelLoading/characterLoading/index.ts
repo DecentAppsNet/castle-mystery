@@ -6,7 +6,7 @@ import { ErrorCollector } from "../errorCollection";
 import SectionEntryMap from "../types/SectionEntryMap";
 import { createNormalizedSectionEntryMap, describeAllowedValues, getSectionIdsFromSectionText, parseBoolean } from "../levelFileSectionUtil";
 import { assertNonNullable } from "decent-portal";
-import { parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
+import { parseSectionEntriesWithLines, parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
 import { getFaceImageAssetUrl } from "@/game/imageUrlUtil";
 import { rand } from "@/common/randUtil";
 import { parseItem, parseItems } from "../itemLoading";
@@ -17,6 +17,7 @@ import { findAllCharacterPositions } from "../roomLoading";
 import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
+import CharacterSkin from "@/game/types/CharacterSkin";
 
 type PartiallyLoadedCharacters = {
   characters:MutableCharacter[],
@@ -39,6 +40,22 @@ function _parseBodyOrientation(text:string, errors:ErrorCollector, characterId:s
   return DEFAULT_BODY_ORIENTATION;
 }
 
+function _parseCharacterSkins(characterSectionEntry:SectionEntryWithLine, characterId:string, errors:ErrorCollector):CharacterSkin[] {
+  const entries = parseSectionEntriesWithLines(characterSectionEntry.value, 2, false, characterSectionEntry.lineNo);
+  if (!entries.length) return [];
+  return entries.map(entry => {
+    const nameValues = parseUniqueNameValueLines(entry.value, `character skin "${entry.name}"`, false, entry.lineNo);
+    const skinName = normalizeId(entry.name);
+    if (skinName === 'default') {
+      errors.addAt(`"Default" can't be used as name of a character skin because it is a reserved word.`, ['characters', characterId, 'default']);
+    } // Okay to fall through and return something. An upstream caller can check for added errors.
+    const id = `${characterId}-${normalizeId(entry.name)}`;
+    const description = nameValues.description ?? null;
+    const faceImageUrl = nameValues.faceImage ?? null;
+    return { id, description, faceImageUrl };
+  });
+}
+
 function _parseCharacter(characterId:string, position:Position, characterSectionEntry:SectionEntryWithLine,
   errors:ErrorCollector):{character:Character, isTitleKnown:boolean} {
   const nameValues = parseUniqueNameValueLines(characterSectionEntry.value, `character ${characterId}`, false, characterSectionEntry.lineNo);
@@ -53,10 +70,11 @@ function _parseCharacter(characterId:string, position:Position, characterSection
   const items = parseItems(nameValues.items ?? '');
   const leftHandItem = parseItem(nameValues.leftHand ?? '');
   const rightHandItem = parseItem(nameValues.rightHand ?? '');
+  const skins = _parseCharacterSkins(characterSectionEntry, characterId, errors);
   const character:MutableCharacter = {
     ...createDefaultCharacter(),
     id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
-    bodyOrientation, items, leftHandItem, rightHandItem, position
+    bodyOrientation, items, leftHandItem, rightHandItem, position, skins
   }
   return { character, isTitleKnown };
 }

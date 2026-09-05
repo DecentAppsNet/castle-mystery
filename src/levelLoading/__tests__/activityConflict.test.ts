@@ -232,7 +232,6 @@ describe('character activity conflict integration', () => {
   it('does not make a character busy for item-only activities', () => {
     const { level, errors } = _loadActivities([
       '0:00:00 Coin emits "A bell rings for several seconds."',
-      '0:00:00 Coin becomes Ring',
       '0:00:00 hide Coin',
       '0:00:00 show Coin',
       '0:00:00 Sam waits 2'

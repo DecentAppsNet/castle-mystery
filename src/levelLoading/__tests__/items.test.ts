@@ -78,7 +78,7 @@ describe('loading levels - items', () => {
   });
 
   it('indexes an inventory item referenced by activity toItemId', () => {
-    const text = replaceSection(itemPlacementText, 'itinerary', ['0:00:00 Key becomes Pencil']);
+    const text = replaceSection(itemPlacementText, 'itinerary', ['0:00:00 pencil becomes broken pencil']);
     const { level, errors } = loadLevelForTest(text, 'items-activity-to-item.md');
 
     expect(errors.describeErrors()).toBe('');

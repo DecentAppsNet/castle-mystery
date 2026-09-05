@@ -1,4 +1,4 @@
-import { assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 import Room from "../types/Room";
 import Timeline from "../types/Timeline";
 import TimelineKeyframe from "../types/TimelineKeyframe";
@@ -9,6 +9,7 @@ import { createKeyframeAtTime } from "./retrievalUtil";
 import CharacterKeyframe from "../types/CharacterKeyframe";
 import { findRoomAtPosition } from "../roomUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
+import { DEFAULT_SKIN_ID } from "../types/CharacterSkin";
 
 function _findActiveContext(characters:CharacterWithEffects[], rooms:Room[], activeCharacterId:string):{
   activeCharacter:CharacterWithEffects,
@@ -26,6 +27,24 @@ function _createSnapshot(characters:CharacterWithEffects[], rooms:Room[], active
   return { activeCharacter, activeRoom, characters, rooms };
 }
 
+function _findCharacterMemberWithSkins(character:CharacterKeyframe, baseCharacter:Character, memberName:string):string|null {
+  const { skinId } = character;
+  const baseValue = ((baseCharacter as any)[memberName]) ?? null;
+  assert(typeof baseValue === 'string' || baseValue === null);
+  if (skinId === DEFAULT_SKIN_ID) return baseValue;
+  const skin = baseCharacter.skins.find(s => s.id === skinId);
+  assertNonNullable(skin);
+  return skin.faceImageUrl ?? baseValue;
+}
+
+function _findFaceImageUrlWithSkins(character:CharacterKeyframe, baseCharacter:Character):string|null {
+  return _findCharacterMemberWithSkins(character, baseCharacter, 'faceImageUrl');
+}
+
+function _findDescriptionWithSkins(character:CharacterKeyframe, baseCharacter:Character):string {
+  return _findCharacterMemberWithSkins(character, baseCharacter, 'description') ?? '';
+}
+
 function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character):CharacterWithEffects {
   return {
     // Any members from the keyframe are used.
@@ -38,9 +57,12 @@ function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Ch
     // Permanent members come from base character.
     id:baseCharacter.id,
     title:baseCharacter.title,
-    description:baseCharacter.description,
-    faceImageUrl:baseCharacter.faceImageUrl,
     randomSalt:baseCharacter.randomSalt,
+    skins:baseCharacter.skins,
+
+    // Skin-overridable members may come from base character or keyframe-selected skin.
+    description:_findDescriptionWithSkins(character, baseCharacter),
+    faceImageUrl:_findFaceImageUrlWithSkins(character, baseCharacter),
     
     // Temporal item instances can be shared directly from the keyframe.
     items:character.items,

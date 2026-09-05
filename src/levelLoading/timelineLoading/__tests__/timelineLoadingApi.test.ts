@@ -105,14 +105,14 @@ describe('timelineLoadingApi', () => {
       const timeline = createEditableTimeline([_character('alpha', 0)], [], 1000);
 
       addCharacterKeyChanges({ isVisible:false }, 0, 1000, timeline);
-      addCharacterKeyChanges({ appearanceId:'guard' }, 0, 1000, timeline);
+      addCharacterKeyChanges({ skinId:'guard' }, 0, 1000, timeline);
 
       const snapshot = createKeyframeAtTime(timeline.keyframes, 1000);
 
       expect(timeline.keyframes).toHaveLength(1);
       expect(snapshot.characters[0]).toMatchObject({
         isVisible:false,
-        appearanceId:'guard'
+        skinId:'guard'
       });
     });
 

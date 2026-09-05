@@ -3,6 +3,7 @@ import { assert } from "decent-portal";
 import CharacterWithEffects from "./CharacterWithEffects";
 import Item, { duplicateItem } from "./Item";
 import Position, { createDefaultPosition, duplicatePosition } from "./Position";
+import CharacterSkin, { duplicateCharacterSkin } from "./CharacterSkin";
 
 export type FacingDirection = 'left' | 'right';
 export const VALID_FACING_DIRECTIONS:FacingDirection[] = ['left', 'right'];
@@ -16,6 +17,7 @@ export type MutableCharacter = {
   readonly title:string,
   readonly faceImageUrl:string|null,
   readonly randomSalt:number,
+  readonly skins:CharacterSkin[],
   isVisible:boolean,
   facingDirection:FacingDirection,
   bodyOrientation:BodyOrientation,
@@ -34,6 +36,7 @@ export function createDefaultCharacter():Character {
     title:'Character',
     faceImageUrl:null,
     randomSalt:0,
+    skins:[],
     isVisible:true,
     facingDirection:DEFAULT_FACING_DIRECTION,
     bodyOrientation:DEFAULT_BODY_ORIENTATION,
@@ -52,6 +55,7 @@ export function duplicateCharacter(from:Character):Character {
     title:from.title,
     faceImageUrl:from.faceImageUrl,
     randomSalt:from.randomSalt,
+    skins:from.skins.map(duplicateCharacterSkin),
     isVisible:from.isVisible,
     facingDirection:from.facingDirection,
     bodyOrientation:from.bodyOrientation,
