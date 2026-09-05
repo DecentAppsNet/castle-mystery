@@ -53,7 +53,7 @@ describe('parseFormatUtil', () => {
 				makeIdentifier('characterId', 'CharacterId', true),
 				makeVerb('appears'),
 				makeLiteral('as', true),
-				makeIdentifier('appearanceId', 'AppearanceId'),
+				makeIdentifier('skinId', 'SkinId'),
 			]);
 			const parseFormat = _expected(rootParseStep);
 
@@ -215,7 +215,7 @@ describe('parseFormatUtil', () => {
 			});
 
 			it('describes the appears activity parse format', () => {
-				expect(describeParseFormat(createAppearsParseFormat())).toBe('Timestamp [CharacterId] `appears` [`as`] AppearanceId');
+				expect(describeParseFormat(createAppearsParseFormat())).toBe('Timestamp [CharacterId] `appears` [`as`] SkinId');
 			});
 
 			it('describes the becomes activity parse format', () => {

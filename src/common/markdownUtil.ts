@@ -19,12 +19,20 @@ Some conventions this module supports/promotes:
 If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes.
 */
 
-// Type for associative array
+/**
+ * Maps parsed section names to their body text.
+ */
 export type Sections = { [sectionName:string]:string };
 type NameValues = { [name:string]:string };
+/**
+ * A parsed heading section with its body text and original source location.
+ */
 export type SectionEntryWithLine = { name:string, value:string, lineNo:number, bodyStartLineI:number };
 type NameValueEntryWithLine = { name:string, value:string, lineNo:number };
 
+/**
+ * Error raised for malformed markdown at a known one-based source line.
+ */
 export class MarkdownLineError extends Error {
   readonly lineNo:number;
 
@@ -36,7 +44,12 @@ export class MarkdownLineError extends Error {
   }
 }
 
-// Convert a markdown-style label into a normalized camelCase key.
+/**
+ * Converts a markdown-style label to a normalized camelCase key.
+ *
+ * @param text - Label to normalize.
+ * @returns The normalized key.
+ */
 export function normalizeMarkdownName(text:string):string {
   const words = text.trim().split(' ').filter(word => word.trim() !== '');
   if (words.length === 0) return '';
@@ -158,13 +171,30 @@ function _createSectionsObject(sectionNames:string[], sectionContents:string[], 
   return sections;
 }
 
-// Parse markdown headings into a section-name-to-content map.
+/**
+ * Parses headings into section-name-to-body-text entries.
+ *
+ * @param markdownText - Markdown to parse.
+ * @param indentLevel - One-based heading depth to include; `#` headings are level 1.
+ * @param useCamelCase - Whether to normalize heading names.
+ * @returns Parsed sections by name.
+ * @throws {MarkdownLineError} If matching headings produce a duplicate name.
+ */
 export function parseSections(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Sections {
   const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
   return _createSectionsObject(sectionNames, sectionContents);
 }
 
-// Parse only the requested heading sections into a section-name-to-content map.
+/**
+ * Parses selected headings into section-name-to-body-text entries.
+ *
+ * @param markdownText - Markdown to parse.
+ * @param includedSectionIds - Heading names to retain.
+ * @param indentLevel - One-based heading depth to include; `#` headings are level 1.
+ * @param useCamelCase - Whether to normalize heading names.
+ * @returns Selected parsed sections by name.
+ * @throws {MarkdownLineError} If matching headings produce a duplicate name.
+ */
 export function parseIncludedSections(markdownText:string, includedSectionIds:ReadonlyArray<string>, indentLevel:number = 1,
   useCamelCase:boolean = false):Sections {
   const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
@@ -172,13 +202,32 @@ export function parseIncludedSections(markdownText:string, includedSectionIds:Re
   return _createSectionsObject(sectionNames, sectionContents, normalizedIncludedSectionIds);
 }
 
-// Parse heading sections into ordered name/content entry tuples.
+/**
+ * Parses headings in document order.
+ *
+ * @param markdownText - Markdown to parse.
+ * @param indentLevel - One-based heading depth to include; `#` headings are level 1.
+ * @param useCamelCase - Whether to normalize heading names.
+ * @returns One tuple per matching heading, in source order. Each tuple contains
+ *          the heading name at index 0 and the raw text below that heading, up to the
+ *          next matching heading, at index 1. The body text excludes the heading line.
+ * @throws {MarkdownLineError} If matching headings produce a duplicate name.
+ */
 export function parseSectionEntries(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Array<readonly [string, string]> {
   const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
   return sectionNames.map((sectionName, index) => [sectionName, sectionContents[index]] as const);
 }
 
-// Parse heading sections into entries that include each section's starting line number.
+/**
+ * Parses headings with source locations.
+ *
+ * @param markdownText - Markdown to parse.
+ * @param indentLevel - One-based heading depth to include; `#` headings are level 1.
+ * @param useCamelCase - Whether to normalize heading names.
+ * @param firstLineNo - Source line number of the first text line.
+ * @returns Ordered sections with body text and source locations.
+ * @throws {MarkdownLineError} If matching headings produce a duplicate name.
+ */
 export function parseSectionEntriesWithLines(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false,
   firstLineNo:number = 1):SectionEntryWithLine[] {
   return _parseSectionEntriesWithLines(markdownText, indentLevel, useCamelCase, firstLineNo);
@@ -219,7 +268,16 @@ function _parseNameValueEntries(markdownText:string, useCamelCase:boolean = fals
   return _parseNameValueEntriesWithLines(markdownText, useCamelCase).map(({ name, value }) => [name, value] as const);
 }
 
-// Parse unique bulleted name/value lines into a lookup object.
+/**
+ * Parses unique bulleted name/value entries.
+ *
+ * @param markdownText - Section body to parse.
+ * @param contextLabel - Description included in duplicate errors.
+ * @param useCamelCase - Whether to normalize names.
+ * @param firstLineNo - Source line number of the first text line.
+ * @returns Values indexed by entry name.
+ * @throws {MarkdownLineError} If an entry name is duplicated.
+ */
 export function parseUniqueNameValueLines(markdownText:string, contextLabel:string, useCamelCase:boolean = false,
   firstLineNo:number = 1):NameValues {
   const nameValues:NameValues = {};
@@ -230,7 +288,13 @@ export function parseUniqueNameValueLines(markdownText:string, contextLabel:stri
   return nameValues;
 }
 
-// Find the line number of a parsed bulleted name/value property within a section.
+/**
+ * Finds a named bulleted property.
+ *
+ * @param sectionText - Section body to search.
+ * @param propertyName - Property name, accepting normalized equivalents.
+ * @returns One-based relative line number, or `-1` when absent.
+ */
 export function findNameValueLineNo(sectionText:string, propertyName:string):number {
   const matchingEntry = _parseNameValueEntriesWithLines(sectionText).find(entry => {
     return entry.name === propertyName || normalizeMarkdownName(entry.name) === propertyName;
@@ -238,17 +302,33 @@ export function findNameValueLineNo(sectionText:string, propertyName:string):num
   return matchingEntry === null ? -1 : matchingEntry.lineNo;
 }
 
-// Parse bulleted name/value lines into ordered name/value entry tuples.
+/**
+ * Parses bulleted name/value lines in source order.
+ *
+ * @param markdownText - Section body to parse.
+ * @param useCamelCase - Whether to normalize names.
+ * @returns Ordered tuples of property name and unescaped value.
+ */
 export function parseNameValueLineEntries(markdownText:string, useCamelCase:boolean = false):Array<readonly [string, string]> {
   return _parseNameValueEntries(markdownText, useCamelCase);
 }
 
-// Split a pipe-delimited option list into trimmed non-empty values.
+/**
+ * Splits a pipe-delimited option list.
+ *
+ * @param optionText - Text containing pipe-separated options.
+ * @returns Trimmed non-empty option values.
+ */
 export function parseOptions(optionText:string):string[] {
   return optionText.split('|').map(t => t.trim()).filter(t => t.length > 0);
 }
 
-// Return the non-empty lines from the first fenced code block in the markdown text.
+/**
+ * Reads the first fenced code block.
+ *
+ * @param markdownText - Markdown to search.
+ * @returns Trimmed non-empty lines inside the first block, or an empty array when absent.
+ */
 export function parseFirstFencedCodeBlockLines(markdownText:string):string[] {
   const lines = markdownText.split('\n');
   const fenceStartIndex = lines.findIndex(line => line.trim().startsWith('```'));

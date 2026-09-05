@@ -18,7 +18,7 @@ import {
 import { tryParseActivity } from '../parseUtil';
 import ActivityParsingRules from '../types/ActivityParsingRules';
 
-const APPEARANCE_IDS = ['guard uniform', 'royal robes', 'tiara'];
+const SKIN_IDS = ['guard uniform', 'royal robes', 'tiara'];
 const CHARACTER_IDS = ['samuel', 'lady beatrice'];
 const ITEM_IDS = ['apple', 'golden apple'];
 const ROOM_IDS = ['master bedroom', 'kitchen'];
@@ -28,7 +28,7 @@ describe('parseUtil', () => {
     let sharedRules: ActivityParsingRules;
 
     beforeEach(() => {
-      sharedRules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS);
+      sharedRules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS);
     });
 
     describe('basic parsing', () => {
@@ -49,7 +49,7 @@ describe('parseUtil', () => {
 
     describe('literal parsing', () => {
       it('fails when a required literal does not match', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('bows'),
           makeLiteral('deeply')
@@ -60,16 +60,16 @@ describe('parseUtil', () => {
       });
 
       it('skips an optional literal when it is absent', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('appears'),
           makeLiteral('as', true),
-          makeIdentifier('appearanceId', 'AppearanceId'),
+          makeIdentifier('skinId', 'SkinId'),
         ])));
 
         expect(tryParseActivity(': samuel appears guard uniform', rules)).toMatchObject({
           parts: {
-            appearanceId: 'guard uniform',
+            skinId: 'guard uniform',
             characterId: 'samuel',
             verb: 'appears',
           },
@@ -77,7 +77,7 @@ describe('parseUtil', () => {
       });
 
       it('stores the value of an optional variable literal when it matches', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('emits'),
           makeText('speech'),
@@ -97,7 +97,7 @@ describe('parseUtil', () => {
 
     describe('number parsing', () => {
       it('parses a required number into a numeric part value', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('waits'),
           makeNumber('seconds'),
@@ -113,7 +113,7 @@ describe('parseUtil', () => {
       });
 
       it('skips an optional number when it is absent', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('waits'),
           makeNumber('seconds', true),
@@ -128,7 +128,7 @@ describe('parseUtil', () => {
       });
 
       it('fails when a required number token is not numeric', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('waits'),
           makeNumber('seconds'),
@@ -141,7 +141,7 @@ describe('parseUtil', () => {
 
     describe('text parsing', () => {
       it('parses required quote-enclosed text into the requested variable', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('says'),
           makeText('speech'),
@@ -157,7 +157,7 @@ describe('parseUtil', () => {
       });
 
       it('skips optional text when it is absent', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('thinks'),
           makeText('thought', true),
@@ -172,7 +172,7 @@ describe('parseUtil', () => {
       });
 
       it('fails when required text is not quote-enclosed', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('says'),
           makeText('speech'),
@@ -185,7 +185,7 @@ describe('parseUtil', () => {
 
     describe('option parsing', () => {
       it('matches a non-variable option without adding an option part', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('faces'),
           makeOptions([
@@ -203,7 +203,7 @@ describe('parseUtil', () => {
       });
 
       it('stores the chosen value for variable options', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('turns'),
           makeVariableOptions('direction', [
@@ -222,7 +222,7 @@ describe('parseUtil', () => {
       });
 
       it('skips optional options when they are absent', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('gestures'),
           makeOptions([
@@ -242,7 +242,7 @@ describe('parseUtil', () => {
 
     describe('sequence parsing', () => {
       it('parses a required child sequence as a unit', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('greets'),
           makeSequence([
@@ -261,7 +261,7 @@ describe('parseUtil', () => {
       });
 
       it('skips an optional child sequence when it is absent', () => {
-        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, APPEARANCE_IDS, createParseFormat(makeSequence([
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_IDS, createParseFormat(makeSequence([
           makeIdentifier('characterId', 'CharacterId'),
           makeVerb('says'),
           makeText('speech'),
@@ -309,7 +309,7 @@ describe('parseUtil', () => {
       it('parses with character id and with "as"', () => {
         expect(tryParseActivity(': samuel appears as guard uniform', sharedRules)).toMatchObject({
           parts: {
-            appearanceId: 'guard uniform',
+            skinId: 'guard uniform',
             characterId: 'samuel',
             verb: 'appears',
           },
@@ -320,7 +320,7 @@ describe('parseUtil', () => {
       it('parses with character id and without "as"', () => {
         expect(tryParseActivity(': samuel appears tiara', sharedRules)).toMatchObject({
           parts: {
-            appearanceId: 'tiara',
+            skinId: 'tiara',
             characterId: 'samuel',
             verb: 'appears',
           },
@@ -331,7 +331,7 @@ describe('parseUtil', () => {
       it('parses without character id and with "as"', () => {
         expect(tryParseActivity(': appears as royal robes', sharedRules)).toMatchObject({
           parts: {
-            appearanceId: 'royal robes',
+            skinId: 'royal robes',
             verb: 'appears',
           },
           verb: 'appears',
@@ -341,7 +341,7 @@ describe('parseUtil', () => {
       it('parses without character id and without "as"', () => {
         expect(tryParseActivity(': appears guard uniform', sharedRules)).toMatchObject({
           parts: {
-            appearanceId: 'guard uniform',
+            skinId: 'guard uniform',
             verb: 'appears',
           },
           verb: 'appears',

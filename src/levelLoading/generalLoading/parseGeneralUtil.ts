@@ -4,8 +4,8 @@
 import { createDefaultMutableLevel, MutableLevel } from "@/game/types/Level";
 import LevelFileSections from "../types/LevelFileSections";
 import { ErrorCollector } from "../errorCollection";
-import { findNameValueLineNo, parseUniqueNameValueLines } from "@/common/markdownUtil";
-import { normalizeOptionalId } from "@/game/idUtil";
+import { findNameValueLineNo, MarkdownLineError, parseSectionEntries, parseSections, parseUniqueNameValueLines, Sections } from "@/common/markdownUtil";
+import { normalizeId, normalizeOptionalId } from "@/game/idUtil";
 import { initActivityParsingRules, parseTimestampToMsecs } from "../activityLoading";
 import { assert, assertNonNullable } from "decent-portal";
 import { getBackgroundImageAssetUrl } from "@/game/imageUrlUtil";
@@ -33,8 +33,34 @@ function _getAllowedValuesFromSubSectionIds(sections:LevelFileSections, sectionI
   return getSectionIdsFromSectionText(section.text, 2, sectionId, errors);
 }
 
-function _getAppearanceIdAllowedValues(charactersSectionText:string, errors:ErrorCollector):string[] {
-  return getSectionIdsFromSectionText(charactersSectionText, 3, 'characters', errors);
+function _getCharacterSectionsAndNames(charactersSectionText:string, errors:ErrorCollector):{characterSections:Sections, characterSectionNames:string[]} {
+  let characterSections:Sections = {}, characterSectionNames:string[] = [];
+  try {
+    characterSections = parseSections(charactersSectionText, 2, false);
+    characterSectionNames = Object.keys(characterSections);
+    return { characterSections, characterSectionNames };
+  } catch(err) {
+    if (err instanceof MarkdownLineError && err.message.includes('duplicate')) {
+      errors.addAt(err.message, 'characters');
+      return { characterSections, characterSectionNames }
+    }
+    throw err;
+  }
+}
+
+/* Gets all the skin ID values defined in character sub-sections. Only general validation checks 
+   performed (non-unique section names) - nothing specific to character skins. */
+function _getSkinIdAllowedValues(charactersSectionText:string, errors:ErrorCollector):string[] {
+  const skinIds:string[] = [];
+  const { characterSections, characterSectionNames } = _getCharacterSectionsAndNames(charactersSectionText, errors);
+  characterSectionNames.forEach(characterSectionName => {
+    const characterId = normalizeId(characterSectionName);
+    const characterSectionText = characterSections[characterSectionName];
+    const skinSectionIds = getSectionIdsFromSectionText(characterSectionText, 3, characterSectionName, errors);
+    const fullSkinIds = skinSectionIds.map(si => `${characterId}-${si}`);
+    skinIds.push(...fullSkinIds);
+  });
+  return skinIds;
 }
 
 function _createAllowedValuesByIdentifier(sections:LevelFileSections, errors:ErrorCollector):AllowedValuesByIdentifierId {
@@ -42,7 +68,7 @@ function _createAllowedValuesByIdentifier(sections:LevelFileSections, errors:Err
   av['RoomId'] = _getAllowedValuesFromSubSectionIds(sections, 'rooms', errors);
   av['CharacterId'] = _getAllowedValuesFromSubSectionIds(sections, 'characters', errors);
   av['ItemId'] = _getAllowedValuesFromSubSectionIds(sections, 'items', errors);
-  av['AppearanceId'] = _getAppearanceIdAllowedValues(sections.characters.text, errors);
+  av['SkinId'] = _getSkinIdAllowedValues(sections.characters.text, errors);
   return av;
 }
 

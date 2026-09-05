@@ -9,7 +9,7 @@ export function initActivityParsingRules(allowedValuesByIdentifierId:AllowedValu
   const roomIds = allowedValuesByIdentifierId['RoomId'];
   const characterIds = allowedValuesByIdentifierId['CharacterId'];
   const itemIds = allowedValuesByIdentifierId['ItemId'];
-  const appearanceIds = allowedValuesByIdentifierId['AppearanceId'];
-  const rules = createActivityParsingRules(characterIds, roomIds, itemIds, appearanceIds);
+  const skinIds = allowedValuesByIdentifierId['SkinId'];
+  const rules = createActivityParsingRules(characterIds, roomIds, itemIds, skinIds);
   return rules;
 }

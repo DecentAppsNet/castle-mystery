@@ -96,9 +96,9 @@ describe('loading levels - general section', () => {
     expect(errors.describeErrors()).toContain("duplicate section 'Key'");
   });
 
-  it('fails if the characters section contains duplicate appearance subsections with the same heading text', () => {
+  it('fails if the characters section contains duplicate skin subsections with the same heading text', () => {
     const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '### Default', '', '### Default']);
-    const { level, errors } = loadLevelForTest(text, 'general-duplicate-appearance-sections.md');
+    const { level, errors } = loadLevelForTest(text, 'general-duplicate-skin-sections.md');
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain("duplicate section 'Default'");
