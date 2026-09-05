@@ -59,18 +59,26 @@ HS
 
 ## Vase
 
+* description=An ordinary vase.
+
 ## Table
+
+## Super Vase
+
+* description=Fukkin super vase, bro.
 
 # itinerary
 
 0:00:00 Sam @ Hall
 : takes vase in right hand
-: drops vase
+: says "Vase."
+: vase becomes Super Vase
+: says "Super Vase!"
+: drops super vase
+: Super Vase becomes Vase
+: says "Vase."
 : takes vase in left hand
-: unlocks Stairwell
-: @ Closet
-: gives vase to Maria
-: @ Hall
-: locks Stairwell
+: Vase becomes Super Vase
+: says "YEAAAAAH! SUPER VASE!"
 
 # conclusions
