@@ -205,6 +205,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     conclusionsRevision:0,
     discoveryState:{
       discoveredCharacterIds:new Set<string>(),
+      discoveredSkinIds:new Set<string>(),
       discoveredItemIds:new Set<string>(),
       discoveredRoomIds:new Set<string>(),
       titleKnownCharacterIds:new Set(level.discoveryConfig.initiallyKnownTitleCharacterIds),

@@ -381,15 +381,17 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
     }
   });
 
-  // Draw discovery markers above the completed room content.
+    // Draw discovery markers above the completed room content.
   contents.forEach(content => {
     if (content.type === 'item' && isItemInteractive(content.item) && !discoveryState.discoveredItemIds.has(content.item.id)) {
       const rect = getItemCanvasRectInRoom(content.item, content.displayPosition, scalingFactors, imageSet);
       drawUndiscoveredMarker(rect.x + rect.width / 2, rect.y + rect.height / 2 + calcUndiscoveredMarkerHeightPixels(scalingFactors) / 2, content.item.randomSalt, scalingFactors, context, metaTime);
     }
-    if (content.type === 'character' && isCharacterInteractive(content.character)
-      && (!discoveryState.discoveredCharacterIds.has(content.character.id)
-        || hasDrawnUndiscoveredHeldItem(content.character, discoveryState.discoveredItemIds))) {
+    if (content.type === 'character' && isCharacterInteractive(content.character)) {
+      const isCharacterDiscovered = discoveryState.discoveredCharacterIds.has(content.character.id);
+      const skinId = content.character.skinId;
+      const isCharacterSkinDiscovered = isCharacterDiscovered && (!skinId || discoveryState.discoveredSkinIds.has(skinId));
+      if (isCharacterSkinDiscovered && !hasDrawnUndiscoveredHeldItem(content.character, discoveryState.discoveredItemIds)) return;
       const { centerX, centerY } = getCharacterSpeechAnchor(
         content.character, content.displayPosition, scalingFactors, gameTime);
       drawUndiscoveredMarker(centerX, centerY, content.character.randomSalt, scalingFactors, context, metaTime);

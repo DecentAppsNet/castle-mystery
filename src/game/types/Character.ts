@@ -25,7 +25,8 @@ export type MutableCharacter = {
   items:Item[],
   leftHandItem:Item|null,
   rightHandItem:Item|null,
-  position:Position
+  position:Position,
+  skinId:string|null
 }
 
 type Character = Readonly<MutableCharacter>;
@@ -45,6 +46,7 @@ export function createDefaultCharacter():Character {
     leftHandItem:null,
     rightHandItem:null,
     position:createDefaultPosition(),
+    skinId:null
   };
 }
 
@@ -63,7 +65,8 @@ export function duplicateCharacter(from:Character):Character {
     items:from.items.map(duplicateItem),
     leftHandItem:from.leftHandItem ? duplicateItem(from.leftHandItem) : null,
     rightHandItem:from.rightHandItem ? duplicateItem(from.rightHandItem) : null,
-    position:duplicatePosition(from.position)
+    position:duplicatePosition(from.position),
+    skinId:from.skinId
   };
 }
 

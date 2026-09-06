@@ -44,6 +44,7 @@ HS
 ## Stairwell
 
 * exits=Hall
+* obscured=true
 
 # characters
 ## Sam
@@ -71,19 +72,11 @@ HS
 
 ## Table
 
-## Super Vase
-
-* description=Fukkin super vase, bro.
-
 # itinerary
 
 0:00:00 Sam @ Hall
-: says "Just me."
+: @ Stairwell
 : appears as guard2
-: says "Guard 2"
-: appears as guard3
-: says "Guard 3"
-: appears as default
-: says "Just me again."
+: @ Closet
 
 # conclusions

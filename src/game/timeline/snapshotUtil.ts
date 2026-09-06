@@ -52,6 +52,7 @@ function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Ch
     bodyOrientation:character.bodyOrientation,
     position:character.position,
     effects:character.effects,
+    skinId:character.skinId,
 
     // Permanent members come from base character.
     id:baseCharacter.id,

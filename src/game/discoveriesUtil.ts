@@ -7,6 +7,7 @@ import Character from "./types/Character";
 export function markCharacterDiscovered(gameState:GameState, character:Character) {
   if (!isCharacterInteractive(character)) return;
   gameState.discoveryState.discoveredCharacterIds.add(character.id);
+  if (character.skinId) gameState.discoveryState.discoveredSkinIds.add(character.skinId);
 }
 
 export function markItemDiscovered(gameState:GameState, item:Item) {
