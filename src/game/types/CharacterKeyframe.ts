@@ -2,16 +2,15 @@ import Character, { BodyOrientation, createDefaultCharacter, FacingDirection } f
 import Item, { duplicateItem } from "@/game/types/Item";
 import Position, { duplicatePosition } from "@/game/types/Position";
 import Effect, { duplicateEffect } from "../effects/types/Effect";
-import { DEFAULT_SKIN_ID } from "./CharacterSkin";
 
 type CharacterKeyframe = {
   isVisible: boolean;
   facingDirection: FacingDirection;
   bodyOrientation: BodyOrientation;
   items: Item[];
-  leftHandItem: Item | null;
-  rightHandItem: Item | null;
-  skinId: string,
+  leftHandItem: Item|null;
+  rightHandItem: Item|null;
+  skinId: string|null,
   position: Position;
   effects: Effect[]
 };
@@ -27,7 +26,7 @@ export function createDefaultCharacterKeyframe():CharacterKeyframe {
     leftHandItem:DEFAULT_CHARACTER.leftHandItem,
     rightHandItem:DEFAULT_CHARACTER.rightHandItem,
     position:DEFAULT_CHARACTER.position,
-    skinId:DEFAULT_SKIN_ID,
+    skinId:null,
     effects:[]
   }
 }

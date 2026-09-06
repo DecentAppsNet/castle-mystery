@@ -15,7 +15,6 @@ import EditableTimeline, { createDefaultEditableTimeline } from "./types/Editabl
 import Effect from "@/game/effects/types/Effect";
 import { findCharacterKeyframeForTime } from "@/game/timeline/retrievalUtil";
 import { duplicateRoomExit } from "@/game/types/RoomExit";
-import { DEFAULT_SKIN_ID } from "@/game/types/CharacterSkin";
 
 function _findInsertAfterI(time:number, keyframes:TimelineKeyframe[]):number {
   assert(keyframes.length > 0);
@@ -122,7 +121,7 @@ function _duplicateOptionalItem(item:Readonly<Item>|null):Item|null {
 
 function _createFirstCharacterKeyframe(character:Readonly<Character>):CharacterKeyframe {
   const keyframe:CharacterKeyframe = {
-    skinId: DEFAULT_SKIN_ID,
+    skinId: null,
     isVisible:character.isVisible,
     facingDirection:character.facingDirection,
     bodyOrientation:character.bodyOrientation,

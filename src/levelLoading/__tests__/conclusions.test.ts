@@ -15,9 +15,7 @@ describe('loading levels - conclusions', () => {
       '## Sam',
       '* title=Detective Sam',
       '* description=Lead investigator.',
-      '* faceImage=sam.png',
-      '',
-      '### Default'
+      '* faceImage=sam.png'
     ]);
     text = replaceSection(text, 'conclusions', [
       '## Missing Book',

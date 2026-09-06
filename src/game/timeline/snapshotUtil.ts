@@ -9,7 +9,6 @@ import { createKeyframeAtTime } from "./retrievalUtil";
 import CharacterKeyframe from "../types/CharacterKeyframe";
 import { findRoomAtPosition } from "../roomUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
-import { DEFAULT_SKIN_ID } from "../types/CharacterSkin";
 
 function _findActiveContext(characters:CharacterWithEffects[], rooms:Room[], activeCharacterId:string):{
   activeCharacter:CharacterWithEffects,
@@ -31,7 +30,7 @@ function _findCharacterMemberWithSkins(character:CharacterKeyframe, baseCharacte
   const { skinId } = character;
   const baseValue = ((baseCharacter as any)[memberName]) ?? null;
   assert(typeof baseValue === 'string' || baseValue === null);
-  if (skinId === DEFAULT_SKIN_ID) return baseValue;
+  if (!skinId) return baseValue;
   const skin = baseCharacter.skins.find(s => s.id === skinId);
   assertNonNullable(skin);
   return skin.faceImageUrl ?? baseValue;

@@ -4,8 +4,8 @@
 import { createDefaultMutableLevel, MutableLevel } from "@/game/types/Level";
 import LevelFileSections from "../types/LevelFileSections";
 import { ErrorCollector } from "../errorCollection";
-import { findNameValueLineNo, MarkdownLineError, parseSectionEntries, parseSections, parseUniqueNameValueLines, Sections } from "@/common/markdownUtil";
-import { normalizeId, normalizeOptionalId } from "@/game/idUtil";
+import { findNameValueLineNo, MarkdownLineError, parseSections, parseUniqueNameValueLines, Sections } from "@/common/markdownUtil";
+import { normalizeOptionalId } from "@/game/idUtil";
 import { initActivityParsingRules, parseTimestampToMsecs } from "../activityLoading";
 import { assert, assertNonNullable } from "decent-portal";
 import { getBackgroundImageAssetUrl } from "@/game/imageUrlUtil";
@@ -13,6 +13,7 @@ import ActivityParsingRules, { AllowedValuesByIdentifierId } from "../activityLo
 import LevelLoadingContext from "../types/LevelLoadingContext";
 import { getSectionIdsFromSectionText, isSectionRequired } from "../levelFileSectionUtil";
 import { findActiveCharacterFromItinerary } from "../activityLoading";
+import { createSkinId, validateSkinName } from "./skinIdUtil";
 
 const DEFAULT_WIN_SYNOPSIS = 'You won the level!';
 
@@ -48,17 +49,26 @@ function _getCharacterSectionsAndNames(charactersSectionText:string, errors:Erro
   }
 }
 
+function _validateSkinNames(skinNames:string[], characterName:string, errors:ErrorCollector):boolean {
+  const originalErrorCount = errors.count;
+  skinNames.forEach(skinName => {
+    const message = validateSkinName(skinName);
+    if (message) errors.addAt(message, ['characters', characterName, skinName]);
+  });
+  return errors.count === originalErrorCount;
+}
+
 /* Gets all the skin ID values defined in character sub-sections. Only general validation checks 
    performed (non-unique section names) - nothing specific to character skins. */
 function _getSkinIdAllowedValues(charactersSectionText:string, errors:ErrorCollector):string[] {
   const skinIds:string[] = [];
   const { characterSections, characterSectionNames } = _getCharacterSectionsAndNames(charactersSectionText, errors);
-  characterSectionNames.forEach(characterSectionName => {
-    const characterId = normalizeId(characterSectionName);
-    const characterSectionText = characterSections[characterSectionName];
-    const skinSectionIds = getSectionIdsFromSectionText(characterSectionText, 3, characterSectionName, errors);
-    const fullSkinIds = skinSectionIds.map(si => `${characterId}-${si}`);
-    skinIds.push(...fullSkinIds);
+  characterSectionNames.forEach(characterName => {
+    const characterSectionText = characterSections[characterName];
+    const skinNames = getSectionIdsFromSectionText(characterSectionText, 3, characterName, errors);
+    if (!_validateSkinNames(skinNames, characterName, errors)) return [];
+    const characterSkinIds = skinNames.map(si => createSkinId(characterName, si));
+    skinIds.push(...characterSkinIds);
   });
   return skinIds;
 }

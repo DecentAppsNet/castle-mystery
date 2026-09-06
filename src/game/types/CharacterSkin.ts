@@ -10,6 +10,4 @@ export function duplicateCharacterSkin(from:CharacterSkin) {
   return {...from};
 }
 
-export const DEFAULT_SKIN_ID = 'default';
-
 export default CharacterSkin;

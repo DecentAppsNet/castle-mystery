@@ -36,9 +36,7 @@ describe('loading levels - characters', () => {
       '* isTitleKnown=true',
       '* items=Notebook',
       '* leftHand=Lantern',
-      '* rightHand=Brass Key',
-      '',
-      '### Default'
+      '* rightHand=Brass Key'
     ]);
     text = replaceSection(text, 'items', [
       '## Notebook',
@@ -118,7 +116,7 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if a character visible value is not boolean-like', () => {
-    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* visible=maybe', '### Default']);
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* visible=maybe']);
     const { level, errors } = loadLevelForTest(text, 'characters-invalid-visible.md');
 
     expect(level).toBeNull();
@@ -126,7 +124,7 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if a character facingDirection is not an allowed value', () => {
-    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* facingDirection=up', '### Default']);
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* facingDirection=up']);
     const { level, errors } = loadLevelForTest(text, 'characters-invalid-facing-direction.md');
 
     expect(level).toBeNull();
@@ -134,7 +132,7 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if a character bodyOrientation is not an allowed value', () => {
-    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* bodyOrientation=floating', '### Default']);
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* bodyOrientation=floating']);
     const { level, errors } = loadLevelForTest(text, 'characters-invalid-body-orientation.md');
 
     expect(level).toBeNull();
@@ -142,7 +140,7 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if a character isTitleKnown value is not boolean-like', () => {
-    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* isTitleKnown=maybe', '### Default']);
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* isTitleKnown=maybe']);
     const { level, errors } = loadLevelForTest(text, 'characters-invalid-is-title-known.md');
 
     expect(level).toBeNull();
@@ -150,7 +148,7 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if a character inventory item is not defined in the items section', () => {
-    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* items=Notebook', '### Default']);
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* items=Notebook']);
     const { level, errors } = loadLevelForTest(text, 'characters-item-missing-definition.md');
 
     expect(level).toBeNull();
@@ -158,7 +156,7 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if a character leftHand item is not defined in the items section', () => {
-    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* leftHand=Lantern', '### Default']);
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* leftHand=Lantern']);
     const { level, errors } = loadLevelForTest(text, 'characters-left-hand-missing-definition.md');
 
     expect(level).toBeNull();
@@ -166,7 +164,7 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if a character rightHand item is not defined in the items section', () => {
-    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* rightHand=Brass Key', '### Default']);
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* rightHand=Brass Key']);
     const { level, errors } = loadLevelForTest(text, 'characters-right-hand-missing-definition.md');
 
     expect(level).toBeNull();
