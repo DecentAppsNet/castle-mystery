@@ -14,7 +14,7 @@ import twoInteractiveCharactersText from './fixtures/discoverability/discoverabi
 import twoRoomsText from './fixtures/discoverability/discoverability-two-rooms.md?raw';
 import unplacedCharacterText from './fixtures/discoverability/discoverability-unplaced-character.md?raw';
 import authoredCountsText from './fixtures/discoverability/discoverability-authored-counts.md?raw';
-import { loadLevelForTest } from './testLevelUtil';
+import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 describe('loading levels - discoverability', () => {
   it('loads one discoverable character and room from a minimal level with no itinerary', () => {
@@ -24,6 +24,22 @@ describe('loading levels - discoverability', () => {
     expect(level).not.toBeNull();
     expect(level?.discoveryConfig.discoverableCharacterCount).toBe(1);
     expect(level?.discoveryConfig.discoverableRoomCount).toBe(1);
+  });
+
+  it('counts each defined skin as an additional discoverable character appearance', () => {
+    const text = replaceSection(minimalText, 'characters', [
+      '## Sam',
+      '* description=An alert detective.',
+      '',
+      '### Detective',
+      '',
+      '### Guard'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'discoverability-character-skins.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(3);
   });
 
   it('loads two discoverable placed interactive characters', () => {

@@ -10,7 +10,9 @@ import Activity from "../activityLoading/types/Activity";
 function _countDiscoverableCharacters(directReferencedCharacters:readonly Character[]):number {
   let count = 0;
   directReferencedCharacters.forEach(character => {
-    if (isCharacterInteractive(character)) ++count;
+    if (isCharacterInteractive(character)) {
+      count += (character.skins.length + 1); // Each possible way a character can appear counts as one discoverable character.
+    }
   });
   return count;
 }
