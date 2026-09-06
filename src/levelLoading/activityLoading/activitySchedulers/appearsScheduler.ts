@@ -11,19 +11,19 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
-import { skinIdToName } from "@/levelLoading/generalLoading";
+import { createSkinId } from "@/levelLoading/generalLoading";
 
 export const NO_SKIN_DEFAULT = 'default';
 
 type PartsShape = {
   characterId:string,
-  skinId?:string,
+  skinName?:string,
   isDefault?:string
 };
 
-function _getSkinIdKeyChangeValue(skinId?:string, isDefault?:string):string|null {
-  if (skinId) return skinId;
-  assertNonNullable(isDefault);
+function _getSkinIdKeyChangeValue(characterId:string, skinName?:string, isDefault?:string):string|null {
+  if (skinName) return createSkinId(characterId, skinName);
+  assertNonNullable(isDefault); // Either skin name or default will be specified.
   return null;
 }
 
@@ -32,9 +32,9 @@ export function createAppearsParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const appears = makeVerb('appears');
   const as = makeLiteral('as', true); // Has no meaning, just supporting natural grammar in authoring for "Sam appears drunk" vs "Sam appears as mailman".
-  const skinId = makeIdentifier('skinId', 'SkinId');
+  const skinName = makeIdentifier('skinName', 'SkinName');
   const isDefault = makeVariableLiteral('isDefault', NO_SKIN_DEFAULT);
-  const becomeOptions = makeOptions([ skinId, isDefault ]);
+  const becomeOptions = makeOptions([ skinName, isDefault ]);
   const rootParseStep = makeSequence([characterId, appears, as, becomeOptions]);
   return createParseFormat(rootParseStep);
 }
@@ -43,21 +43,21 @@ export function createAppearsParseFormat():ParseFormat {
 export function scheduleAppearsActivity(level:Level, _waypointContext:WaypointGenerationContext, 
     activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
 
-  const { characterId, skinId, isDefault } = activity.parts as PartsShape;
+  const { characterId, skinName, isDefault } = activity.parts as PartsShape;
 
-  const skinIdKeyChangeValue = _getSkinIdKeyChangeValue(skinId, isDefault);
-  if (!skinIdKeyChangeValue) return false;
-  const character = level.characters.find(c => c.id === characterId);
-  assertNonNullable(character);
-  if (!character.skins.some(s => s.id === skinId)) {
-    assertNonNullable(skinId);
-    const skinName = skinIdToName(skinId);
-    errors.addAtLine(`${characterId} can't appear as "${skinName}" because no skin with that name is defined for this character.`, activity.lineI);
-    return false;
+  const skinIdKeyChangeValue = _getSkinIdKeyChangeValue(characterId, skinName, isDefault);
+  if (skinIdKeyChangeValue) {
+    const character = level.characters.find(c => c.id === characterId);
+    assertNonNullable(character);
+    if (!character.skins.some(s => s.id === skinIdKeyChangeValue)) {
+      assertNonNullable(skinIdKeyChangeValue);
+      errors.addAtLine(`${characterId} can't appear as "${skinName}" because no skin with that name is defined for this character.`, activity.lineI);
+      return false;
+    }
   }
 
   const characterI = editableTimeline.characterIdToI[characterId];
-  assertNonNullable(character);
+  assertNonNullable(characterI);
   assertNonNullable(activity.startTime);
   addCharacterKeyChanges({ skinId:skinIdKeyChangeValue }, characterI, activity.startTime, editableTimeline);
 

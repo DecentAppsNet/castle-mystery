@@ -18,6 +18,8 @@ import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
 import CharacterSkin from "@/game/types/CharacterSkin";
+import { createSkinId } from "../generalLoading";
+import { NO_SKIN_DEFAULT } from "../activityLoading/activitySchedulers/appearsScheduler";
 
 type PartiallyLoadedCharacters = {
   characters:MutableCharacter[],
@@ -41,17 +43,17 @@ function _parseBodyOrientation(text:string, errors:ErrorCollector, characterId:s
 }
 
 function _parseCharacterSkins(characterSectionEntry:SectionEntryWithLine, characterId:string, errors:ErrorCollector):CharacterSkin[] {
-  const entries = parseSectionEntriesWithLines(characterSectionEntry.value, 2, false, characterSectionEntry.lineNo);
+  const entries = parseSectionEntriesWithLines(characterSectionEntry.value, 3, false, characterSectionEntry.lineNo);
   if (!entries.length) return [];
   return entries.map(entry => {
     const nameValues = parseUniqueNameValueLines(entry.value, `character skin "${entry.name}"`, false, entry.lineNo);
     const skinName = normalizeId(entry.name);
-    if (skinName === 'default') {
-      errors.addAt(`"Default" can't be used as name of a character skin because it is a reserved word.`, ['characters', characterId, 'default']);
+    if (skinName === NO_SKIN_DEFAULT) {
+      errors.addAt(`"${NO_SKIN_DEFAULT}" can't be used as name of a character skin because it is a reserved word.`, ['characters', characterId, 'default']);
     } // Okay to fall through and return something. An upstream caller can check for added errors.
-    const id = `${characterId}-${normalizeId(entry.name)}`;
+    const id = createSkinId(characterId, skinName);
     const description = nameValues.description ?? null;
-    const faceImageUrl = nameValues.faceImage ?? null;
+    const faceImageUrl = nameValues.faceImage ? getFaceImageAssetUrl(nameValues.faceImage.trim()) : null;
     return { id, description, faceImageUrl };
   });
 }

@@ -97,11 +97,11 @@ function _sortByWordCountDescending(elements:string[]):string[] {
 
 /** Creates validated parsing rules for all supported activity verbs and identifiers. */
 export function createActivityParsingRules(characterIds:string[], roomIds:string[], itemIds:string[], 
-    skinIds:string[], parseFormatOverride:ParseFormat|null = null):ActivityParsingRules {
+    skinNames:string[], parseFormatOverride:ParseFormat|null = null):ActivityParsingRules {
   const av:AllowedValuesByIdentifierId = {};
   av['CharacterId'] = _sortByWordCountDescending(characterIds);
   av['RoomId'] = _sortByWordCountDescending(roomIds);
-  av['SkinId'] = _sortByWordCountDescending(skinIds);
+  av['SkinName'] = _sortByWordCountDescending(skinNames);
   av['ItemId'] = _sortByWordCountDescending(itemIds);
 
   const pf:ParseFormatsByVerb = {};

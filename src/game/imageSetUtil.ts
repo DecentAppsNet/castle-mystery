@@ -34,7 +34,14 @@ function _findItemImageUrls(level:Level):string[] {
 }
 
 function _findCharacterFaceImageUrls(level:Level):string[] {
-  return level.characters.map(c => c.faceImageUrl).filter(imageUrl => imageUrl !== null);
+  const faceImageUrls = new Set<string>();
+  level.characters.forEach(c => {
+    if (c.faceImageUrl) faceImageUrls.add(c.faceImageUrl);
+    c.skins.forEach(s => {
+      if (s.faceImageUrl) faceImageUrls.add(s.faceImageUrl);
+    });
+  });
+  return [...faceImageUrls];
 }
 
 function _findImageUrls(level:Level):string[] {

@@ -215,7 +215,7 @@ describe('parseFormatUtil', () => {
 			});
 
 			it('describes the appears activity parse format', () => {
-				expect(describeParseFormat(createAppearsParseFormat())).toBe('Timestamp [CharacterId] `appears` [`as`] {SkinId|`default`}');
+				expect(describeParseFormat(createAppearsParseFormat())).toBe('Timestamp [CharacterId] `appears` [`as`] {SkinName|`default`}');
 			});
 
 			it('describes the becomes activity parse format', () => {

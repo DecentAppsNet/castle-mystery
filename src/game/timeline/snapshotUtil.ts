@@ -33,7 +33,7 @@ function _findCharacterMemberWithSkins(character:CharacterKeyframe, baseCharacte
   if (!skinId) return baseValue;
   const skin = baseCharacter.skins.find(s => s.id === skinId);
   assertNonNullable(skin);
-  return skin.faceImageUrl ?? baseValue;
+  return (skin as any)[memberName] ?? baseValue;
 }
 
 function _findFaceImageUrlWithSkins(character:CharacterKeyframe, baseCharacter:Character):string|null {

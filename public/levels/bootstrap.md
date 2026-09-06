@@ -51,6 +51,14 @@ HS
 * description=It's just a guy.
 * bodyOrientation=sitting
 
+### Guard2
+* faceImage=guard2.png
+* description=Guard2
+
+### Guard3
+* faceImage=guard3.png
+* description=Guard3
+
 ## Maria
 * faceImage=maria.png
 * description=It's just a gal.
@@ -70,15 +78,12 @@ HS
 # itinerary
 
 0:00:00 Sam @ Hall
-: takes vase in right hand
-: says "Vase."
-: vase becomes Super Vase
-: says "Super Vase!"
-: drops super vase
-: Super Vase becomes Vase
-: says "Vase."
-: takes vase in left hand
-: Vase becomes Super Vase
-: says "YEAAAAAH! SUPER VASE!"
+: says "Just me."
+: appears as guard2
+: says "Guard 2"
+: appears as guard3
+: says "Guard 3"
+: appears as default
+: says "Just me again."
 
 # conclusions

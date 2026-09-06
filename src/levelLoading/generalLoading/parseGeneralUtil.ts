@@ -13,7 +13,7 @@ import ActivityParsingRules, { AllowedValuesByIdentifierId } from "../activityLo
 import LevelLoadingContext from "../types/LevelLoadingContext";
 import { getSectionIdsFromSectionText, isSectionRequired } from "../levelFileSectionUtil";
 import { findActiveCharacterFromItinerary } from "../activityLoading";
-import { createSkinId, validateSkinName } from "./skinIdUtil";
+import { validateSkinName } from "./skinIdUtil";
 
 const DEFAULT_WIN_SYNOPSIS = 'You won the level!';
 
@@ -58,19 +58,18 @@ function _validateSkinNames(skinNames:string[], characterName:string, errors:Err
   return errors.count === originalErrorCount;
 }
 
-/* Gets all the skin ID values defined in character sub-sections. Only general validation checks 
-   performed (non-unique section names) - nothing specific to character skins. */
-function _getSkinIdAllowedValues(charactersSectionText:string, errors:ErrorCollector):string[] {
-  const skinIds:string[] = [];
+/* Gets all the skin name values defined in character sub-sections. Only general validation checks 
+   performed (non-unique section names) - nothing specific to skins.*/
+function _getSkinNameAllowedValues(charactersSectionText:string, errors:ErrorCollector):string[] {
+  const allowedValues = new Set<string>();
   const { characterSections, characterSectionNames } = _getCharacterSectionsAndNames(charactersSectionText, errors);
   characterSectionNames.forEach(characterName => {
     const characterSectionText = characterSections[characterName];
     const skinNames = getSectionIdsFromSectionText(characterSectionText, 3, characterName, errors);
     if (!_validateSkinNames(skinNames, characterName, errors)) return [];
-    const characterSkinIds = skinNames.map(si => createSkinId(characterName, si));
-    skinIds.push(...characterSkinIds);
+    skinNames.forEach(sn => allowedValues.add(sn));
   });
-  return skinIds;
+  return [...allowedValues];
 }
 
 function _createAllowedValuesByIdentifier(sections:LevelFileSections, errors:ErrorCollector):AllowedValuesByIdentifierId {
@@ -78,7 +77,7 @@ function _createAllowedValuesByIdentifier(sections:LevelFileSections, errors:Err
   av['RoomId'] = _getAllowedValuesFromSubSectionIds(sections, 'rooms', errors);
   av['CharacterId'] = _getAllowedValuesFromSubSectionIds(sections, 'characters', errors);
   av['ItemId'] = _getAllowedValuesFromSubSectionIds(sections, 'items', errors);
-  av['SkinId'] = _getSkinIdAllowedValues(sections.characters.text, errors);
+  av['SkinName'] = _getSkinNameAllowedValues(sections.characters.text, errors);
   return av;
 }
 
