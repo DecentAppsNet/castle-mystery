@@ -1,7 +1,7 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assert, assertNonNullable, botch } from "decent-portal";
+import { botch } from "decent-portal";
 
 import GameState from "./types/GameState";
 import Room from "./types/Room";
@@ -40,11 +40,7 @@ import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
 import { createTimelineSnapshot, createInitialTimelineSnapshot } from "./timeline";
 import { findMetaTimeNow } from "./metaTimeUtil";
-import { SkinLinkages } from "./types/DiscoveryState";
-import TimelineKeyframe from "./types/TimelineKeyframe";
-import { findRoomAtPosition } from "./roomUtil";
-import { createDefaultSkinId } from "@/levelLoading/generalLoading";
-import Character from "./types/Character";
+import { createRevealedSkinLinkages } from "./skinLinkageUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -162,43 +158,6 @@ function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D
   _drawBackgroundImageToCanvas(backgroundImage, context);
 }
 
-function _addSkinLinkage(skindId1:string, skindId2:string, linkages:SkinLinkages) {
-  let skinIdSet:Set<string> = linkages[skindId1];
-  if (!skinIdSet) {
-    skinIdSet = new Set<string>;
-    linkages[skindId1] = skinIdSet;
-  }
-  skinIdSet.add(skindId2);
-}
-
-function _addSkinLinkagePair(characterId:string, skinId1:string|null, skinId2:string|null, linkages:SkinLinkages) {
-  assert(skinId1 !== skinId2);
-  if (skinId1 === null) skinId1 = createDefaultSkinId(characterId);
-  if (skinId2 === null) skinId2 = createDefaultSkinId(characterId);
-  _addSkinLinkage(skinId1, skinId2, linkages);
-  _addSkinLinkage(skinId2, skinId1, linkages);
-}
-
-function _createRevealedSkinLinkages(keyframes:TimelineKeyframe[], baseCharacters:Character[], baseRooms:Room[], obscuredRoomIds:Set<string>):SkinLinkages {
-  assert(keyframes.length > 0);
-  const linkages:SkinLinkages = {};  
-  const characterCount = keyframes[0].characters.length;
-  for(let characterI = 0; characterI < characterCount; ++characterI) {
-    let previousSkinId = keyframes[0].characters[characterI].skinId;
-    const characterId = baseCharacters[characterI].id;
-    for(let keyframeI = 1; keyframeI < keyframes.length; ++keyframeI) {
-      const skinId = keyframes[keyframeI].characters[characterI].skinId;
-      if (skinId === previousSkinId) continue;
-      const { position } = keyframes[keyframeI].characters[characterI];
-      const room = findRoomAtPosition(baseRooms, position.x, position.y);
-      assertNonNullable(room);
-      if (!obscuredRoomIds.has(room.id)) _addSkinLinkagePair(characterId, skinId, previousSkinId, linkages);
-      previousSkinId = skinId;
-    }
-  }
-  return linkages;
-}
-
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
     onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
     onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
@@ -255,7 +214,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
       discoverableCharacterCount:level.discoveryConfig.discoverableCharacterCount,
       discoverableItemCount:level.discoveryConfig.discoverableItemCount,
       discoverableRoomCount:level.discoveryConfig.discoverableRoomCount,
-      revealedSkinLinkages:_createRevealedSkinLinkages(level.timeline.keyframes, baseCharacters, baseRooms, obscuredRoomIds)
+      revealedSkinLinkages:createRevealedSkinLinkages(level.timeline.keyframes, baseCharacters, baseRooms, obscuredRoomIds)
     },
     duration,
     groundFloorY:level.groundFloorY,
