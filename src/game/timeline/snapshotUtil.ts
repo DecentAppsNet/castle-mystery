@@ -30,10 +30,11 @@ function _findCharacterMemberWithSkins(character:CharacterKeyframe, baseCharacte
   const { skinId } = character;
   const baseValue = ((baseCharacter as any)[memberName]) ?? null;
   assert(typeof baseValue === 'string' || baseValue === null);
-  if (!skinId) return baseValue;
   const skin = baseCharacter.skins.find(s => s.id === skinId);
-  assertNonNullable(skin);
-  return (skin as any)[memberName] ?? baseValue;
+  return skin === undefined // Undefined means skinId was the constant indicating no skin applied.
+    ? baseValue
+    : (skin as any)[memberName] // Override with the skin value, but...
+      ?? baseValue; // Not every value is overridden by a skin.
 }
 
 function _findFaceImageUrlWithSkins(character:CharacterKeyframe, baseCharacter:Character):string|null {

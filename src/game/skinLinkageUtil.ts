@@ -2,8 +2,6 @@
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from "decent-portal";
-import { createDefaultSkinId } from "@/levelLoading/generalLoading";
-import Character from "./types/Character";
 import { SkinLinkages } from "./types/DiscoveryState";
 import TimelineKeyframe from "./types/TimelineKeyframe";
 import Room from "./types/Room";
@@ -18,22 +16,19 @@ function _addSkinLinkage(skinId1:string, skinId2:string, linkages:SkinLinkages) 
   skinIdSet.add(skinId2);
 }
 
-function _addSkinLinkagePair(characterId:string, skinId1:string|null, skinId2:string|null, linkages:SkinLinkages) {
+function _addSkinLinkagePair(skinId1:string, skinId2:string, linkages:SkinLinkages) {
   assert(skinId1 !== skinId2);
-  if (skinId1 === null) skinId1 = createDefaultSkinId(characterId);
-  if (skinId2 === null) skinId2 = createDefaultSkinId(characterId);
   _addSkinLinkage(skinId1, skinId2, linkages);
   _addSkinLinkage(skinId2, skinId1, linkages);
 }
 
 /** Creates bidirectional skin links for appearance changes witnessed outside obscured rooms. */
-export function createRevealedSkinLinkages(keyframes:TimelineKeyframe[], baseCharacters:Character[], baseRooms:Room[], obscuredRoomIds:Set<string>):SkinLinkages {
+export function createRevealedSkinLinkages(keyframes:TimelineKeyframe[], baseRooms:Room[], obscuredRoomIds:Set<string>):SkinLinkages {
   assert(keyframes.length > 0);
   const linkages:SkinLinkages = {};
   const characterCount = keyframes[0].characters.length;
   for(let characterI = 0; characterI < characterCount; ++characterI) {
     let previousSkinId = keyframes[0].characters[characterI].skinId;
-    const characterId = baseCharacters[characterI].id;
 
     for(let keyframeI = 1; keyframeI < keyframes.length; ++keyframeI) {
       const skinId = keyframes[keyframeI].characters[characterI].skinId;
@@ -41,7 +36,7 @@ export function createRevealedSkinLinkages(keyframes:TimelineKeyframe[], baseCha
       const { position } = keyframes[keyframeI].characters[characterI];
       const room = findRoomAtPosition(baseRooms, position.x, position.y);
       assertNonNullable(room);
-      if (!obscuredRoomIds.has(room.id)) _addSkinLinkagePair(characterId, skinId, previousSkinId, linkages);
+      if (!obscuredRoomIds.has(room.id)) _addSkinLinkagePair(skinId, previousSkinId, linkages);
       previousSkinId = skinId;
     }
   }

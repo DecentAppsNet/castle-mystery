@@ -18,7 +18,7 @@ import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
 import { MutableLevel } from "@/game/types/Level";
 import CharacterSkin from "@/game/types/CharacterSkin";
-import { createSkinId } from "../generalLoading";
+import { createDefaultSkinId, createSkinId } from "../generalLoading";
 import { NO_SKIN_DEFAULT } from "../activityLoading/activitySchedulers/appearsScheduler";
 
 type PartiallyLoadedCharacters = {
@@ -73,10 +73,11 @@ function _parseCharacter(characterId:string, position:Position, characterSection
   const leftHandItem = parseItem(nameValues.leftHand ?? '');
   const rightHandItem = parseItem(nameValues.rightHand ?? '');
   const skins = _parseCharacterSkins(characterSectionEntry, characterId, errors);
+  const skinId = createDefaultSkinId(characterId);
   const character:MutableCharacter = {
     ...createDefaultCharacter(),
     id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
-    bodyOrientation, items, leftHandItem, rightHandItem, position, skins
+    bodyOrientation, items, leftHandItem, rightHandItem, position, skins, skinId
   }
   return { character, isTitleKnown };
 }

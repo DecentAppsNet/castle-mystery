@@ -11,7 +11,7 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
-import { createSkinId } from "@/levelLoading/generalLoading";
+import { createDefaultSkinId, createSkinId, skinIdToName } from "@/levelLoading/generalLoading";
 
 export const NO_SKIN_DEFAULT = 'default';
 
@@ -21,10 +21,22 @@ type PartsShape = {
   isDefault?:string
 };
 
-function _getSkinIdKeyChangeValue(characterId:string, skinName?:string, isDefault?:string):string|null {
+function _getSkinIdKeyChangeValue(characterId:string, skinName?:string, isDefault?:string):string {
   if (skinName) return createSkinId(characterId, skinName);
   assertNonNullable(isDefault); // Either skin name or default will be specified.
-  return null;
+  return createDefaultSkinId(characterId);
+}
+
+function _validateCharacterHasSkin(level:Level, characterId:string, skinId:string, lineI:number, errors:ErrorCollector):boolean {
+  const character = level.characters.find(c => c.id === characterId);
+  assertNonNullable(character);
+  if (!character.skins.some(s => s.id === skinId)) {
+    assertNonNullable(skinId);
+    const skinName = skinIdToName(skinId);
+    errors.addAtLine(`${characterId} can't appear as "${skinName}" because no skin with that name is defined for this character.`, lineI);
+    return false;
+  }
+  return character !== undefined;
 }
 
 /** Creates the accepted syntax for appearance activities. */
@@ -45,21 +57,13 @@ export function scheduleAppearsActivity(level:Level, _waypointContext:WaypointGe
 
   const { characterId, skinName, isDefault } = activity.parts as PartsShape;
 
-  const skinIdKeyChangeValue = _getSkinIdKeyChangeValue(characterId, skinName, isDefault);
-  if (skinIdKeyChangeValue) {
-    const character = level.characters.find(c => c.id === characterId);
-    assertNonNullable(character);
-    if (!character.skins.some(s => s.id === skinIdKeyChangeValue)) {
-      assertNonNullable(skinIdKeyChangeValue);
-      errors.addAtLine(`${characterId} can't appear as "${skinName}" because no skin with that name is defined for this character.`, activity.lineI);
-      return false;
-    }
-  }
+  const skinId = _getSkinIdKeyChangeValue(characterId, skinName, isDefault);
+  if (skinName && !_validateCharacterHasSkin(level, characterId, skinId, activity.lineI, errors)) return false;
 
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);
   assertNonNullable(activity.startTime);
-  addCharacterKeyChanges({ skinId:skinIdKeyChangeValue }, characterI, activity.startTime, editableTimeline);
+  addCharacterKeyChanges({ skinId }, characterI, activity.startTime, editableTimeline);
 
   activity.busyCharacterIds = [characterId];
   activity.busyItemIds = [];

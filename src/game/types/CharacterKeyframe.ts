@@ -10,7 +10,7 @@ type CharacterKeyframe = {
   items: Item[];
   leftHandItem: Item|null;
   rightHandItem: Item|null;
-  skinId: string|null,
+  skinId: string,
   position: Position;
   effects: Effect[]
 };
@@ -26,7 +26,7 @@ export function createDefaultCharacterKeyframe():CharacterKeyframe {
     leftHandItem:DEFAULT_CHARACTER.leftHandItem,
     rightHandItem:DEFAULT_CHARACTER.rightHandItem,
     position:DEFAULT_CHARACTER.position,
-    skinId:null,
+    skinId:DEFAULT_CHARACTER.skinId,
     effects:[]
   }
 }

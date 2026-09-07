@@ -214,7 +214,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
       discoverableCharacterCount:level.discoveryConfig.discoverableCharacterCount,
       discoverableItemCount:level.discoveryConfig.discoverableItemCount,
       discoverableRoomCount:level.discoveryConfig.discoverableRoomCount,
-      revealedSkinLinkages:createRevealedSkinLinkages(level.timeline.keyframes, baseCharacters, baseRooms, obscuredRoomIds)
+      revealedSkinLinkages:createRevealedSkinLinkages(level.timeline.keyframes, baseRooms, obscuredRoomIds)
     },
     duration,
     groundFloorY:level.groundFloorY,

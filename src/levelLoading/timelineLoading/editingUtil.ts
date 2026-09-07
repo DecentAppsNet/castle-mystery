@@ -121,15 +121,15 @@ function _duplicateOptionalItem(item:Readonly<Item>|null):Item|null {
 
 function _createFirstCharacterKeyframe(character:Readonly<Character>):CharacterKeyframe {
   const keyframe:CharacterKeyframe = {
-    skinId: null,
-    isVisible:character.isVisible,
-    facingDirection:character.facingDirection,
-    bodyOrientation:character.bodyOrientation,
-    items:[...character.items.map(duplicateItem)],
+    skinId: character.skinId,
+    isVisible: character.isVisible,
+    facingDirection: character.facingDirection,
+    bodyOrientation: character.bodyOrientation,
+    items: [...character.items.map(duplicateItem)],
     leftHandItem: _duplicateOptionalItem(character.leftHandItem),
     rightHandItem: _duplicateOptionalItem(character.rightHandItem),
     position: duplicatePosition(character.position),
-    effects:[]
+    effects: []
   };
   return keyframe;
 }

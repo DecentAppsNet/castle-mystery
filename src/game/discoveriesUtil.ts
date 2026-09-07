@@ -3,7 +3,7 @@ import GameState from "./types/GameState";
 import Discoveries from "./types/Discoveries";
 import Item from "./types/Item";
 import Character from "./types/Character";
-import { createDefaultSkinId, parseSkinId } from "@/levelLoading/generalLoading";
+import { parseSkinId } from "@/levelLoading/generalLoading";
 import { assertNonNullable } from "decent-portal";
 import { NO_SKIN_DEFAULT } from "@/levelLoading/activityLoading/activitySchedulers/appearsScheduler";
 
@@ -20,10 +20,11 @@ function _skinIdsToCharacterIconUrls(skinIdSet:Set<string>, baseCharacters:Chara
   });
 }
 
+// Each potential appearance (skin) of a character is treated as a separate "character" for discovery purposes.
+// For characters without skins, the default appearance has its own skin ID.
 export function markCharacterDiscovered(gameState:GameState, character:Character) {
   if (!isCharacterInteractive(character)) return;
-  const skinId = character.skinId ?? createDefaultSkinId(character.id);
-  gameState.discoveryState.discoveredSkinIds.add(skinId);
+  gameState.discoveryState.discoveredSkinIds.add(character.skinId);
 }
 
 export function markItemDiscovered(gameState:GameState, item:Item) {

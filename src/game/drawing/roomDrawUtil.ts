@@ -55,7 +55,6 @@ import CharacterWithEffects from "../types/CharacterWithEffects";
 import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
 import CharacterCanvasAnatomy from "../effects/types/CharacterCanvasAnatomy";
 import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
-import { createDefaultSkinId } from "@/levelLoading/generalLoading";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -315,9 +314,8 @@ export function createDrawableContents(room:Room, charactersInRoom:CharacterWith
 
  function _shouldDrawUndiscoveredMarkerForCharacter(character:Character, discoveryState:DiscoveryState):boolean {
     if (!isCharacterInteractive(character)) return false;
-    const skinId = character.skinId === null ? createDefaultSkinId(character.id) : character.skinId;
-    const isSkinDiscovered = discoveryState.discoveredSkinIds.has(skinId);
-    const hasUndiscoveredHeldItems = hasDrawnUndiscoveredHeldItem(character, discoveryState.discoveredItemIds)
+    const isSkinDiscovered = discoveryState.discoveredSkinIds.has(character.skinId);
+    const hasUndiscoveredHeldItems = hasDrawnUndiscoveredHeldItem(character, discoveryState.discoveredItemIds);
     return !isSkinDiscovered || hasUndiscoveredHeldItems;
   }
 

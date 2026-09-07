@@ -69,7 +69,7 @@ export function createCharacterKeyframeAtTime(keyframes:TimelineKeyframe[], char
   if (!afterKeyframe) return beforeKeyframe.characters[characterI];
   if (_areCharacterKeyframePositionsEqual(beforeKeyframe, afterKeyframe, characterI)) return beforeKeyframe.characters[characterI];
   const interpolatedPosition = findInterpolatedCharacterPosition(beforeKeyframe, afterKeyframe, time, characterI);
-  const betweenCharacterKeyframe = duplicateCharacterKeyframe(beforeKeyframe.characters[characterI]);
+  const betweenCharacterKeyframe = duplicateCharacterKeyframe(beforeKeyframe.characters[characterI], false);
   betweenCharacterKeyframe.position = interpolatedPosition;
   return betweenCharacterKeyframe;
 }

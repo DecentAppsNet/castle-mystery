@@ -26,7 +26,7 @@ export type MutableCharacter = {
   leftHandItem:Item|null,
   rightHandItem:Item|null,
   position:Position,
-  skinId:string|null
+  skinId:string
 }
 
 type Character = Readonly<MutableCharacter>;
@@ -46,7 +46,7 @@ export function createDefaultCharacter():Character {
     leftHandItem:null,
     rightHandItem:null,
     position:createDefaultPosition(),
-    skinId:null
+    skinId:'INVALID-default' // Must set this once actual character ID is known.
   };
 }
 
