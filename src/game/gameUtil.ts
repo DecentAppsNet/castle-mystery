@@ -204,7 +204,6 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     conclusions:level.conclusions.map(duplicateConclusion),
     conclusionsRevision:0,
     discoveryState:{
-      discoveredCharacterIds:new Set<string>(),
       discoveredSkinIds:new Set<string>(),
       discoveredItemIds:new Set<string>(),
       discoveredRoomIds:new Set<string>(),

@@ -55,6 +55,7 @@ import CharacterWithEffects from "../types/CharacterWithEffects";
 import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
 import CharacterCanvasAnatomy from "../effects/types/CharacterCanvasAnatomy";
 import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
+import { createDefaultSkinId } from "@/levelLoading/generalLoading";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -312,6 +313,14 @@ export function createDrawableContents(room:Room, charactersInRoom:CharacterWith
   return mergeStairsWithSortedContents(stairContents, sortedNonStairContents);
 }
 
+ function _shouldDrawUndiscoveredMarkerForCharacter(character:Character, discoveryState:DiscoveryState):boolean {
+    if (!isCharacterInteractive(character)) return false;
+    const skinId = character.skinId === null ? createDefaultSkinId(character.id) : character.skinId;
+    const isSkinDiscovered = discoveryState.discoveredSkinIds.has(skinId);
+    const hasUndiscoveredHeldItems = hasDrawnUndiscoveredHeldItem(character, discoveryState.discoveredItemIds)
+    return !isSkinDiscovered || hasUndiscoveredHeldItems;
+  }
+
 function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], activeCharacter:CharacterWithEffects,
     hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
@@ -381,17 +390,13 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
     }
   });
 
-    // Draw discovery markers above the completed room content.
+  // Draw discovery markers above the completed room content.
   contents.forEach(content => {
     if (content.type === 'item' && isItemInteractive(content.item) && !discoveryState.discoveredItemIds.has(content.item.id)) {
       const rect = getItemCanvasRectInRoom(content.item, content.displayPosition, scalingFactors, imageSet);
       drawUndiscoveredMarker(rect.x + rect.width / 2, rect.y + rect.height / 2 + calcUndiscoveredMarkerHeightPixels(scalingFactors) / 2, content.item.randomSalt, scalingFactors, context, metaTime);
     }
-    if (content.type === 'character' && isCharacterInteractive(content.character)) {
-      const isCharacterDiscovered = discoveryState.discoveredCharacterIds.has(content.character.id);
-      const skinId = content.character.skinId;
-      const isCharacterSkinDiscovered = isCharacterDiscovered && (!skinId || discoveryState.discoveredSkinIds.has(skinId));
-      if (isCharacterSkinDiscovered && !hasDrawnUndiscoveredHeldItem(content.character, discoveryState.discoveredItemIds)) return;
+    if (content.type === 'character' && _shouldDrawUndiscoveredMarkerForCharacter(content.character, discoveryState)) {
       const { centerX, centerY } = getCharacterSpeechAnchor(
         content.character, content.displayPosition, scalingFactors, gameTime);
       drawUndiscoveredMarker(centerX, centerY, content.character.randomSalt, scalingFactors, context, metaTime);

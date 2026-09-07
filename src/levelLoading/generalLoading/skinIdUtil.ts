@@ -18,6 +18,11 @@ export function createSkinId(characterName:string, skinName:string):string {
   return `${characterId}-${normalizedSkinName}`;
 }
 
+// Creates a skin ID that is useful in tracking the combination of a character and lack of a skin.
+export function createDefaultSkinId(characterName:string):string {
+  return createSkinId(characterName, NO_SKIN_DEFAULT);
+}
+
 /**
  * Extracts a normalized skin name from its combined skin identifier.
  *
@@ -29,6 +34,12 @@ export function skinIdToName(skinId:string):string {
   const tokens = skinId.split('-');
   assert(tokens.length === 2);
   return tokens[1];
+}
+
+export function parseSkinId(skinId:string):{characterId:string, skinName:string} {
+  const tokens = skinId.split('-');
+  assert(tokens.length === 2);
+  return { characterId:tokens[0], skinName:tokens[1] };
 }
 
 /**

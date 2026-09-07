@@ -1,10 +1,12 @@
 /* This module groups mutable conclusion-state helpers, including conclusion comparison, author edits, and runtime unlock syncing.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+import { createDefaultSkinId } from "@/levelLoading/generalLoading";
 import { syncConclusionsWithUnlocks } from "./conclusions/conclusionDiscoveryUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import { isCharacterInteractive, isItemInteractive } from "./interactivityUtil";
 import { getOwnedItems } from "./itemOwnershipUtil";
+import Character from "./types/Character";
 import GameState from "./types/GameState";
 import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
 
@@ -37,6 +39,14 @@ function _syncLevelCompleteState(gameState:GameState):boolean {
   return true;
 }
 
+function _addDiscoveredCharacterSkinIds(baseCharacters:Character[], discoveredSkinIds:Set<string>) {
+  baseCharacters.forEach(character => {
+    if (!isCharacterInteractive(character)) return;
+    discoveredSkinIds.add(createDefaultSkinId(character.id));
+    character.skins.forEach(s => discoveredSkinIds.add(s.id));
+  });
+}
+
 function _applyLevelCompleteReveal(gameState:GameState) {
   const { discoveryState } = gameState;
   gameState.baseRooms.forEach(room => {
@@ -44,10 +54,8 @@ function _applyLevelCompleteReveal(gameState:GameState) {
     discoveryState.obscuredRoomIds.delete(room.id);
   });
 
-  gameState.baseCharacters
-    .filter(isCharacterInteractive)
-    .forEach(character => discoveryState.discoveredCharacterIds.add(character.id));
-
+  _addDiscoveredCharacterSkinIds(gameState.baseCharacters, discoveryState.discoveredSkinIds);
+  
   const markItemDiscovered = (item:{ id:string, description:string }) => {
     if (!isItemInteractive(item)) return;
     discoveryState.discoveredItemIds.add(item.id);

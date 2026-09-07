@@ -25,7 +25,7 @@ describe('discovery state integration', () => {
 
     expect(level.discoveryConfig.initiallyKnownTitleCharacterIds).toEqual(new Set(['sam']));
     expect(level.discoveryConfig.initiallyObscuredRoomIds).toEqual(new Set(['study']));
-    expect(gameState1.discoveryState.discoveredCharacterIds).toEqual(new Set());
+    expect(gameState1.discoveryState.discoveredSkinIds).toEqual(new Set());
     expect(gameState1.discoveryState.discoveredItemIds).toEqual(new Set());
     expect(gameState1.discoveryState.discoveredRoomIds).toEqual(new Set(['hall']));
     expect(gameState1.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam']));
@@ -51,7 +51,7 @@ describe('discovery state integration', () => {
     markCharacterDiscovered(gameState, pat);
 
     expect(gameState.discoveryState.discoveredItemIds).toEqual(new Set(['brass key']));
-    expect(gameState.discoveryState.discoveredCharacterIds).toEqual(new Set(['pat']));
+    expect(gameState.discoveryState.discoveredSkinIds).toEqual(new Set(['pat-default']));
     expect(brassKey).not.toHaveProperty('isDiscovered');
     expect(pat).not.toHaveProperty('isDiscovered');
     expect(createDiscoveries(gameState)).toMatchObject({
@@ -64,7 +64,7 @@ describe('discovery state integration', () => {
   it('preserves discovery state when replacing the timeline snapshot', () => {
     const gameState = _createGameState();
     const discoveryState = gameState.discoveryState;
-    gameState.discoveryState.discoveredCharacterIds.add('pat');
+    gameState.discoveryState.discoveredSkinIds.add('pat-default');
     gameState.discoveryState.discoveredItemIds.add('brass key');
     gameState.discoveryState.discoveredRoomIds.add('study');
     gameState.discoveryState.titleKnownCharacterIds.add('pat');
@@ -73,7 +73,7 @@ describe('discovery state integration', () => {
     gameState.timelineSnapshot = createTimelineSnapshot(gameState, gameState.startTime);
 
     expect(gameState.discoveryState).toBe(discoveryState);
-    expect(gameState.discoveryState.discoveredCharacterIds).toEqual(new Set(['pat']));
+    expect(gameState.discoveryState.discoveredSkinIds).toEqual(new Set(['pat-default']));
     expect(gameState.discoveryState.discoveredItemIds).toEqual(new Set(['brass key']));
     expect(gameState.discoveryState.discoveredRoomIds).toEqual(new Set(['hall', 'study']));
     expect(gameState.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam', 'pat']));
@@ -149,7 +149,7 @@ describe('discovery state integration', () => {
     });
 
     expect(gameState.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam', 'pat']));
-    expect(gameState.discoveryState.discoveredCharacterIds).toEqual(new Set(['sam', 'pat']));
+    expect(gameState.discoveryState.discoveredSkinIds).toEqual(new Set(['sam-default', 'pat-default']));
     expect(gameState.discoveryState.discoveredItemIds).toEqual(new Set(['brass key']));
     expect(gameState.discoveryState.discoveredRoomIds).toEqual(new Set(['hall', 'study']));
     expect(gameState.isLevelComplete).toBe(true);
