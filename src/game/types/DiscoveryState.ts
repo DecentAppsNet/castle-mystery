@@ -8,7 +8,7 @@ type DiscoveryState = {
   readonly discoveredRoomIds:Set<string>,
   readonly discoveredSkinIds:Set<string>,
   readonly obscuredRoomIds:Set<string>,
-  readonly revealedSkinLinkages:SkinLinkages,
+  revealedSkinLinkages:SkinLinkages,
   readonly titleKnownCharacterIds:Set<string>,
 }
 

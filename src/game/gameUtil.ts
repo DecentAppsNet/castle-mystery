@@ -41,6 +41,8 @@ import { updateAndDrawFps } from "@/developer/fpsUtil";
 import { createTimelineSnapshot, createInitialTimelineSnapshot } from "./timeline";
 import { findMetaTimeNow } from "./metaTimeUtil";
 import { createRevealedSkinLinkages } from "./skinLinkageUtil";
+import Timeline from "./types/Timeline";
+import { findCharacterKeyframeForTime } from "./timeline/retrievalUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -158,6 +160,12 @@ function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D
   _drawBackgroundImageToCanvas(backgroundImage, context);
 }
 
+function _findCharacterSkinIdAtTime(timeline:Timeline, time:number, characterId:string):string {
+  const characterI = timeline.characterIdToI[characterId];
+  const characterKeyframe = findCharacterKeyframeForTime(timeline.keyframes, characterI, time);
+  return characterKeyframe.skinId;
+}
+
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
     onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
     onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
@@ -196,8 +204,10 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
   const baseRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, baseItemsById));
   const duration = level.endTime - level.startTime;
   const obscuredRoomIds = new Set(level.discoveryConfig.initiallyObscuredRoomIds);
+  const activeSkinIdAtSelection = _findCharacterSkinIdAtTime(level.timeline, level.initialTime, level.activeCharacterId);
   const gameState:GameState = {
     activeCharacterId:level.activeCharacterId,
+    activeSkinIdAtSelection,
     backgroundImageUrl:level.backgroundImageUrl,
     baseCharacters,
     baseItemsById,
@@ -239,9 +249,9 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     scalingFactors:ZERO_SCALING_FACTORS,
     startTime:level.startTime,
     time:level.initialTime,
-    timeline:level.timeline, // Timeline is immutable and it is a large data structure - no harm in sharing instance.
+    timeline:level.timeline, // Timeline is a large, immutable data structure - no harm in sharing instance.
     timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms, level.timeline,
-      level.activeCharacterId, level.initialTime),
+      level.activeCharacterId, level.initialTime, obscuredRoomIds),
     viewedItemIds:new Set<string>(),
     winSynopsis:level.winSynopsis,
   }

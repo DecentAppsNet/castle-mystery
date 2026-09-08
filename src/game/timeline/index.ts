@@ -1,10 +1,12 @@
 export { createTimelineSnapshot, createInitialTimelineSnapshot, updateTimelineSnapshotActiveContext } from './snapshotUtil';
 export { 
-  createKeyframeAtTime, 
   createCharacterKeyframeAtTime,
+  createKeyframeAtTime, 
   findCharacterPositionAtTime,
+  findFollowingKeyframe,
   findKeyframeForTime, 
   findKeyframeInRange,
+  findPrecedingKeyframe,
   findRoomKeyframeForTime 
 } from './retrievalUtil';
 export { findInterpolatedCharacterPosition } from './interpolationUtil';

@@ -14,6 +14,7 @@ import DiscoveryState from "./DiscoveryState";
 // Unless otherwise noted, "readonly" is intended deeply despite shallow Typescript checks.
 type GameState = {
   activeCharacterId:string,
+  activeSkinIdAtSelection:string,
   camera:Camera,
   conclusions:Conclusion[],
   conclusionsRevision:number,

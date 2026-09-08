@@ -4,10 +4,12 @@
 # map
 
 ```
-H
+HCB
 ```
 
 * H=Hall
+* C=Closet
+* B=Bedroom
 
 # rooms
 ## Hall
@@ -20,6 +22,13 @@ H
 
 * S=Sam
 * A=Alex
+
+## Closet
+
+* obscured=true
+* exits=Hall | Bedroom
+
+## Bedroom
 
 # characters
 ## Sam

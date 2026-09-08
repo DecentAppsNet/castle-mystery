@@ -2,6 +2,7 @@
 
 * title=Bootstrap
 * activeCharacter=Sam
+//* time=0:00:10
 
 # map
 
@@ -80,3 +81,7 @@ HS
 : @ Closet
 
 # conclusions
+
+## Any Thing
+* conclusion=[Sam] is the guard.
+* revealRooms=Stairwell

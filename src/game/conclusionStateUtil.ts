@@ -9,6 +9,7 @@ import { getOwnedItems } from "./itemOwnershipUtil";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
+import { createRevealedSkinLinkages } from "./skinLinkageUtil";
 
 function _haveSameParts(conclusion1:Conclusion, conclusion2:Conclusion):boolean {
   return JSON.stringify(conclusion1.parts) === JSON.stringify(conclusion2.parts);
@@ -55,6 +56,8 @@ function _applyLevelCompleteReveal(gameState:GameState) {
   });
 
   _addDiscoveredCharacterSkinIds(gameState.baseCharacters, discoveryState.discoveredSkinIds);
+  discoveryState.revealedSkinLinkages = createRevealedSkinLinkages(gameState.timeline.keyframes, 
+    gameState.baseRooms, discoveryState.obscuredRoomIds);
   
   const markItemDiscovered = (item:{ id:string, description:string }) => {
     if (!isItemInteractive(item)) return;
@@ -73,7 +76,11 @@ function _applyCompletedConclusionRoomReveals(gameState:GameState) {
     .filter(conclusion => conclusion.isComplete)
     .flatMap(conclusion => conclusion.revealRoomIds));
   if (!revealedRoomIds.size) return;
-  revealedRoomIds.forEach(roomId => gameState.discoveryState.obscuredRoomIds.delete(roomId));
+
+  const { obscuredRoomIds } = gameState.discoveryState;
+  revealedRoomIds.forEach(roomId => obscuredRoomIds.delete(roomId));
+  gameState.discoveryState.revealedSkinLinkages = createRevealedSkinLinkages(gameState.timeline.keyframes, 
+    gameState.baseRooms, obscuredRoomIds);
 }
 
 export function syncConclusionUnlocks(gameState:GameState):boolean {

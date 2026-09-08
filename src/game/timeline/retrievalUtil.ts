@@ -111,3 +111,22 @@ export function findKeyframeInRange(keyframes:TimelineKeyframe[], startTime:numb
   return null;
 }
 
+export function findPrecedingKeyframe(keyframes:TimelineKeyframe[], time:number, predicate?:FindKeyframePredicate):TimelineKeyframe|null {
+  if (!keyframes.length) return null;
+  const startI = _findKeyframeIBeforeOrAtTime(keyframes, time);
+  for(let keyframeI = startI - 1; keyframeI >= 0; --keyframeI) {
+    const keyframe = keyframes[keyframeI];
+    if (!predicate || predicate(keyframe)) return keyframe;
+  }
+  return null;
+}
+
+export function findFollowingKeyframe(keyframes:TimelineKeyframe[], time:number, predicate?:FindKeyframePredicate):TimelineKeyframe|null {
+  if (!keyframes.length) return null;
+  const startI = _findKeyframeIBeforeOrAtTime(keyframes, time);
+  for(let keyframeI = startI + 1; keyframeI < keyframes.length; ++keyframeI) {
+    const keyframe = keyframes[keyframeI];
+    if (!predicate || predicate(keyframe)) return keyframe;
+  }
+  return null;
+}

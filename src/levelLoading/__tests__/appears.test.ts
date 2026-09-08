@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { createInitialTimelineSnapshot } from '@/game/timeline/snapshotUtil';
 import appearsBaseText from './fixtures/appears/appears-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
+import Level from '@/game/types/Level';
 
 describe('level loading - appears activities', () => {
-  function snapshotAt(level:NonNullable<ReturnType<typeof loadLevelForTest>['level']>, time:number) {
-    return createInitialTimelineSnapshot(level.characters, level.rooms, level.timeline, level.activeCharacterId, time).activeCharacter;
+  function snapshotAt(level:Level, time:number) {
+    const obscuredRoomIds = new Set(level.discoveryConfig.initiallyObscuredRoomIds);
+    return createInitialTimelineSnapshot(level.characters, level.rooms, level.timeline, 
+        level.activeCharacterId, time, obscuredRoomIds).activeCharacter;
   }
 
   it('applies the selected skin to a character at the appearance time', () => {
@@ -83,4 +86,21 @@ describe('level loading - appears activities', () => {
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain(`sam can't appear as "butler" because no skin with that name is defined for this character.`);
   });
+
+  /*
+  Some explanation on expected behavior for implementation of tests below.
+
+  A character can have multiple skins. Levels can be designed such that learning that two different appearances (skins) are the same
+  character. Skins are grouped into sets that indicate if the game will treat the skin-depicted characters as separate or the same 
+  character to the player. The term for this in the code is "revealed skin linkage" with "linkage" / "linked" used here in this text to
+  mean that one skin is presented by the game as being the same character when one or more other skins are being shown.
+
+  Internally, the snapshot is revised to hide information from the player based on linkage. As an example, Sam begins in a level with
+  no skin applied to his appearance (Character.skinId === 'sam-default'). Sam walks into an obscured room, changes appearance to a disguise 
+  (`: appears disguised`), and returns to the first room in the disguise.
+
+  When "appears" activities occur in an obscured room, they do
+  */
+
+  it.todo('');
 });

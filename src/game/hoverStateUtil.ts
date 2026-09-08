@@ -102,23 +102,30 @@ function _findHoverInteractionRoom(gameState:GameState, x:number, y:number):Room
     : _findActiveVisibleRoom(gameState);
 }
 
-export function updateGameStateForMouseDown(gameState:GameState, characters:CharacterWithEffects[], event:MouseDownEvent, _metaTime:number) {
-  const characterContent = _findInteractiveCharacterContentAtPosition(gameState, characters, event.x, event.y);
+function _findSkinIdForCharacter(characters:Character[], characterId:string):string {
+  const character = characters.find(c => c.id === characterId);
+  assertNonNullable(character);
+  return character.skinId;
+}
+
+export function updateGameStateForMouseDown(gameState:GameState, snapshotCharacters:CharacterWithEffects[], event:MouseDownEvent, _metaTime:number) {
+  const characterContent = _findInteractiveCharacterContentAtPosition(gameState, snapshotCharacters, event.x, event.y);
   if (characterContent) {
     const character = characterContent.character;
     gameState.activeCharacterId = character.id;
+    gameState.activeSkinIdAtSelection = _findSkinIdForCharacter(snapshotCharacters, character.id);
     updateTimelineSnapshotActiveContext(gameState.timelineSnapshot, character.id);
     return;
   }
 }
 
-export function updateGameStateForMouseMove(gameState:GameState, characters:CharacterWithEffects[], event:MouseMoveEvent) {
+export function updateGameStateForMouseMove(gameState:GameState, snapshotCharacters:CharacterWithEffects[], event:MouseMoveEvent) {
   const interactionRoom = _findHoverInteractionRoom(gameState, event.x, event.y);
   if (!interactionRoom) {
     _clearHoverTargets(gameState);
     return;
   }
-  const hoveredContent = _findHoveredRoomContent(gameState, interactionRoom, characters, event.x, event.y);
+  const hoveredContent = _findHoveredRoomContent(gameState, interactionRoom, snapshotCharacters, event.x, event.y);
   const hoveredItem = hoveredContent?.type === 'item' ? hoveredContent.item : null;
   gameState.hoveredItemId = hoveredItem?.id ?? null;
   if (hoveredItem) _recordViewedItem(gameState, hoveredItem);
@@ -126,6 +133,6 @@ export function updateGameStateForMouseMove(gameState:GameState, characters:Char
   const hoveredExit = !hoveredItem && !gameState.hoveredCharacterId ? _findExitAtPosition(interactionRoom, event.x, event.y, gameState) : null;
   gameState.hoveredExitKey = hoveredExit?.id ?? null;
   gameState.hoveredRoomId = !hoveredItem && !gameState.hoveredCharacterId && !hoveredExit 
-    ? _findNavigableRoomAtPosition(gameState, characters, event.x, event.y)?.id ?? null 
+    ? _findNavigableRoomAtPosition(gameState, snapshotCharacters, event.x, event.y)?.id ?? null 
     : null;
 }
