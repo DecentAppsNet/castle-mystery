@@ -165,7 +165,9 @@ function HomeScreen() {
           characters={gameState.baseCharacters}
           rooms={gameState.baseRooms}
           roomsRevision={gameState.conclusionsRevision}
-          activeRoomId={gameState.timelineSnapshot.activeRoom.id}
+          activeCharacterId={gameState.activeCharacterId}
+          activeSkinIdAtSelection={gameState.activeSkinIdAtSelection}
+          discoveryState={gameState.discoveryState}
           labels={gameState.labels}
           isPlaying={isPlaying}
           isPlayPauseDisabled={isPlayPauseDisabled}

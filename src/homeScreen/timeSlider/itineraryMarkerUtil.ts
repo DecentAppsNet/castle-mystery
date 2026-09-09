@@ -1,10 +1,17 @@
 /* This module groups itinerary-marker derivation helpers for time-slider room, speech, and encounter markers.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
+  import { assert, assertNonNullable } from "decent-portal";
+
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import Character from "@/game/types/Character";
+import { SkinLinkages } from "@/game/types/DiscoveryState";
 import Room from "@/game/types/Room";
 import Timeline from "@/game/types/Timeline";
+import TimelineKeyframe from "@/game/types/TimelineKeyframe";
+import { findRoomIdAtPosition } from "@/game/roomUtil";
+import Position from "@/game/types/Position";
+import { arePositionsEqual } from "@/game/positionUtil";
 
 export const SPEECH_CLUSTER_GAP_MSECS = 6 * MSECS_IN_SECOND;
 
@@ -121,16 +128,73 @@ function _mergeSpeechRanges(speechRanges:SpeechMarkerRange[], obscuredRanges:Obs
   }, []);
 } */
 
-export function createItineraryMarkerModel(_timeline:Timeline|null, _rooms:Room[] = [], _initialRoomId:string|null = null,
-  _durationMsecs:number = 0, _characters:Pick<Character, 'id' | 'description'>[] = []):ItineraryMarkerModel {
-  // if (!timeline) {
-    return {
-      roomEntryTimes:[],
-      speechRanges:[],
-      encounterMarkers:[],
-      obscuredRanges:[]
-    };
-  // }
+function _isKeyframeObscured(characterPosition:Position, characterSkinId:string, rooms:Room[], revealedSkinIds:Set<string>, obscuredRoomIds:Set<string>):boolean {
+  if (!revealedSkinIds.has(characterSkinId)) return true;
+  const { x, y } = characterPosition;
+  const roomId = findRoomIdAtPosition(rooms, x, y);
+  assertNonNullable(roomId);
+  return obscuredRoomIds.has(roomId);
+}
+
+function _findObscuredRangeStartingAtKeyframe(keyframes:TimelineKeyframe[], startKeyframeI:number, activeCharacterI:number, rooms:Room[],
+    revealedSkinIds:Set<string>, obscuredRoomIds:Set<string>):{obscuredRange:ObscuredMarkerRange, lastObscuredKeyframeI:number}|null {
+  const obscuredRange = { startTime:keyframes[startKeyframeI].time, endTime:-1 };
+  let lastObscuredKeyframeI:number = -1;
+
+  let lastSkinId = '';
+  let lastPosition = {x:-1, y:-1, z:-1};
+  for(let keyframeI = startKeyframeI; keyframeI < keyframes.length; ++keyframeI) {
+    const characterKeyframe = keyframes[keyframeI].characters[activeCharacterI];
+    assertNonNullable(characterKeyframe);
+    const { skinId, position } = characterKeyframe;
+    if (skinId !== lastSkinId || !arePositionsEqual(position, lastPosition)) {
+      const isKeyframeObscured = _isKeyframeObscured(position, skinId, rooms, revealedSkinIds, obscuredRoomIds);
+      if (!isKeyframeObscured) break;
+      lastPosition = position;
+      lastSkinId = skinId;
+    }
+    obscuredRange.endTime = keyframes[keyframeI].time;
+    lastObscuredKeyframeI = keyframeI;
+  }
+
+  if (obscuredRange.endTime === -1) return null;
+
+  assert(lastObscuredKeyframeI >= startKeyframeI);
+  return { obscuredRange, lastObscuredKeyframeI };
+}
+
+export function createItineraryMarkerModel(timeline:Timeline|null, activeCharacterId:string, activeSkinIdAtSelection:string, rooms:Room[] = [], 
+    _characters:Pick<Character, 'id' | 'description'>[] = [], 
+    revealedSkinLinkages:SkinLinkages, obscuredRoomIds:Set<string>):ItineraryMarkerModel {
+  
+  const markers:ItineraryMarkerModel = {
+    roomEntryTimes:[],
+    speechRanges:[],
+    encounterMarkers:[],
+    obscuredRanges:[]
+  };
+  if (!timeline || timeline.keyframes.length < 1) return markers;
+  
+  const { keyframes } = timeline;
+  const activeCharacterI  = timeline.characterIdToI[activeCharacterId];
+  const revealedSkinIds = revealedSkinLinkages[activeSkinIdAtSelection]; // All of the active character skins the player is allowed to see.
+  assertNonNullable(activeCharacterI);
+  assertNonNullable(revealedSkinIds);
+  for(let keyframeI = 0; keyframeI < keyframes.length; ++keyframeI) {
+
+    // Identify an obscured range at current keyframe if it is there. And skip over it.
+    const obscuredRangeResult = _findObscuredRangeStartingAtKeyframe(keyframes, keyframeI, activeCharacterI, rooms, 
+        revealedSkinIds, obscuredRoomIds); // There is an unneeded extra call to this function after a skip. Optimize if needed.
+    if (obscuredRangeResult) {
+      markers.obscuredRanges.push(obscuredRangeResult.obscuredRange);
+      keyframeI = obscuredRangeResult.lastObscuredKeyframeI;
+      continue; // Skip past keyframes inside obscured range so their events aren't represented in markers.
+    }
+
+    // TODO - add the other kinds of markers.
+  }
+
+  return markers;
 
   /* TODO with timeline
   const interactiveCharacterIds = new Set(characters.filter(isCharacterInteractive).map(character => character.id));
