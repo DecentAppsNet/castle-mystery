@@ -17,8 +17,8 @@
     "test": "vitest --run src",
     "test:file": "vitest run --reporter=json --outputFile tempTests/vitest-results.json --no-file-parallelism --poolOptions.forks.singleFork",
     "testscripts": "vitest --run scripts",
-    "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage"
+    "test:watch": "vitest --watch src",
+    "test:coverage": "vitest --coverage --run src"
   },
   "dependencies": {
     "decent-portal": "^2.4.7",

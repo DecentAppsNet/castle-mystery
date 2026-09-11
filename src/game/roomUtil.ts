@@ -62,3 +62,7 @@ export function calcRoomsBoundingRect(rooms:Room[]):Rect {
   }
   return {x:leftX, y:topY, width:rightX - leftX, height:bottomY - topY};
 }
+
+export function areRoomsConnected(room1:Room, room2:Room):boolean {
+  return room1.exits.some(e => e.room1Id === room2.id || e.room2Id === room2.id);
+}

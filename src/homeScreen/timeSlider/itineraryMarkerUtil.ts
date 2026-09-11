@@ -12,6 +12,8 @@ import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { findRoomIdAtPosition } from "@/game/roomUtil";
 import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/positionUtil";
+import { generateRoomEntryEvents } from "./roomEntranceUtil";
+import RoomEntryEvents from "./types/RoomEntryEvents";
 
 export const SPEECH_CLUSTER_GAP_MSECS = 6 * MSECS_IN_SECOND;
 
@@ -137,19 +139,25 @@ function _isKeyframeObscured(characterPosition:Position, characterSkinId:string,
 }
 
 function _findObscuredRangeStartingAtKeyframe(keyframes:TimelineKeyframe[], startKeyframeI:number, activeCharacterI:number, rooms:Room[],
-    revealedSkinIds:Set<string>, obscuredRoomIds:Set<string>):{obscuredRange:ObscuredMarkerRange, lastObscuredKeyframeI:number}|null {
+    revealedSkinIds:Set<string>, obscuredRoomIds:Set<string>, roomEntryEvents:RoomEntryEvents):{obscuredRange:ObscuredMarkerRange, lastObscuredKeyframeI:number}|null {
   const obscuredRange = { startTime:keyframes[startKeyframeI].time, endTime:-1 };
   let lastObscuredKeyframeI:number = -1;
+  let firstUnobscuredKeyframeI = keyframes.length;
 
-  let lastSkinId = '';
+  // Sentinel values - guaranteed not to match.
+  let lastSkinId = ''; 
   let lastPosition = {x:-1, y:-1, z:-1};
+
   for(let keyframeI = startKeyframeI; keyframeI < keyframes.length; ++keyframeI) {
     const characterKeyframe = keyframes[keyframeI].characters[activeCharacterI];
     assertNonNullable(characterKeyframe);
     const { skinId, position } = characterKeyframe;
     if (skinId !== lastSkinId || !arePositionsEqual(position, lastPosition)) {
       const isKeyframeObscured = _isKeyframeObscured(position, skinId, rooms, revealedSkinIds, obscuredRoomIds);
-      if (!isKeyframeObscured) break;
+      if (!isKeyframeObscured) {
+        firstUnobscuredKeyframeI = keyframeI;
+        break;
+      }
       lastPosition = position;
       lastSkinId = skinId;
     }
@@ -159,8 +167,18 @@ function _findObscuredRangeStartingAtKeyframe(keyframes:TimelineKeyframe[], star
 
   if (obscuredRange.endTime === -1) return null;
 
+  const priorRoomEntry = roomEntryEvents.findLast(event => event.time <= obscuredRange.startTime);
+  if (priorRoomEntry && obscuredRoomIds.has(priorRoomEntry.roomId)) obscuredRange.startTime = priorRoomEntry.time;
+  const nextRoomEntry = roomEntryEvents.find(event => event.time > obscuredRange.endTime);
+  if (nextRoomEntry && nextRoomEntry.time <= keyframes[firstUnobscuredKeyframeI]?.time
+      && !obscuredRoomIds.has(nextRoomEntry.roomId)) obscuredRange.endTime = nextRoomEntry.time;
+
   assert(lastObscuredKeyframeI >= startKeyframeI);
   return { obscuredRange, lastObscuredKeyframeI };
+}
+
+function _isTimeWithinObscuredRange(time:number, obscuredRanges:ObscuredMarkerRange[]):boolean {
+  return obscuredRanges.some(or => or.startTime < time && or.endTime > time);
 }
 
 export function createItineraryMarkerModel(timeline:Timeline|null, activeCharacterId:string, activeSkinIdAtSelection:string, rooms:Room[] = [], 
@@ -174,9 +192,12 @@ export function createItineraryMarkerModel(timeline:Timeline|null, activeCharact
     obscuredRanges:[]
   };
   if (!timeline || timeline.keyframes.length < 1) return markers;
+
+  const roomEntryEvents:RoomEntryEvents[] = generateRoomEntryEvents(timeline.keyframes, rooms);
   
   const { keyframes } = timeline;
   const activeCharacterI  = timeline.characterIdToI[activeCharacterId];
+  const characterRoomEntries:RoomEntryEvents = roomEntryEvents[activeCharacterI];
   const revealedSkinIds = revealedSkinLinkages[activeSkinIdAtSelection]; // All of the active character skins the player is allowed to see.
   assertNonNullable(activeCharacterI);
   assertNonNullable(revealedSkinIds);
@@ -184,7 +205,7 @@ export function createItineraryMarkerModel(timeline:Timeline|null, activeCharact
 
     // Identify an obscured range at current keyframe if it is there. And skip over it.
     const obscuredRangeResult = _findObscuredRangeStartingAtKeyframe(keyframes, keyframeI, activeCharacterI, rooms, 
-        revealedSkinIds, obscuredRoomIds); // There is an unneeded extra call to this function after a skip. Optimize if needed.
+        revealedSkinIds, obscuredRoomIds, characterRoomEntries); // There is an unneeded extra call to this function after a skip. Optimize if needed.
     if (obscuredRangeResult) {
       markers.obscuredRanges.push(obscuredRangeResult.obscuredRange);
       keyframeI = obscuredRangeResult.lastObscuredKeyframeI;
@@ -193,6 +214,10 @@ export function createItineraryMarkerModel(timeline:Timeline|null, activeCharact
 
     // TODO - add the other kinds of markers.
   }
+
+  markers.roomEntryTimes = characterRoomEntries
+    .filter(re => !_isTimeWithinObscuredRange(re.time, markers.obscuredRanges))
+    .map(re => re.time);
 
   return markers;
 
