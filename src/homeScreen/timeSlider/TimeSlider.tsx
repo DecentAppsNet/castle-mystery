@@ -22,7 +22,6 @@ type Props = {
   step?:number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
   timeline:Timeline|null,
   rooms:Room[];
-  roomsRevision?:number;
   activeCharacterId:string;
   activeSkinIdAtSelection:string;
   discoveryState:DiscoveryState,
@@ -93,7 +92,7 @@ function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
 }
 
 function TimeSlider(props:Props) {
-  const { fromMinutes, toMinutes, minutes, timeline, rooms, roomsRevision = 0, activeCharacterId, activeSkinIdAtSelection, 
+  const { fromMinutes, toMinutes, minutes, timeline, rooms, activeCharacterId, activeSkinIdAtSelection, 
     discoveryState, labels, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
   } = props;
   const [displayMinutes, setDisplayMinutes] = useState(minutes);
@@ -104,7 +103,8 @@ function TimeSlider(props:Props) {
   const itineraryMarkers = useMemo(
     () => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, timeline, activeCharacterId, activeSkinIdAtSelection, rooms,
       discoveryState.revealedSkinLinkages, discoveryState.obscuredRoomIds),
-      [sliderWidth, fromMinutes, toMinutes, timeline, activeCharacterId, activeSkinIdAtSelection, rooms, roomsRevision, discoveryState]
+      [sliderWidth, fromMinutes, toMinutes, timeline, activeCharacterId, activeSkinIdAtSelection, rooms, discoveryState.obscuredRoomIds,
+      discoveryState.revealedSkinLinkages]
   );
 
   function _onSliderUpdate(nextValue:number) {
