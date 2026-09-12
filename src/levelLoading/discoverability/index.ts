@@ -6,12 +6,23 @@ import Character from "@/game/types/Character";
 import Level from "@/game/types/Level";
 import Room from "@/game/types/Room";
 import Activity from "../activityLoading/types/Activity";
+import { createSkinId } from "../generalLoading";
 
-function _countDiscoverableCharacters(directReferencedCharacters:readonly Character[]):number {
+function _findReferencedSkinIds(activities:readonly Activity[]):Set<string> {
+  const skinIds = new Set<string>();
+  activities.forEach(activity => {
+    if (activity.verb !== 'appears') return;
+    const { characterId, skinName } = activity.parts;
+    if (typeof characterId === 'string' && typeof skinName === 'string') skinIds.add(createSkinId(characterId, skinName));
+  });
+  return skinIds;
+}
+
+function _countDiscoverableCharacters(characters:readonly Character[], referencedSkinIds:Set<string>):number {
   let count = 0;
-  directReferencedCharacters.forEach(character => {
+  characters.forEach(character => {
     if (isCharacterInteractive(character)) {
-      count += (character.skins.length + 1); // Each possible way a character can appear counts as one discoverable character.
+      count += character.skins.filter(skin => referencedSkinIds.has(skin.id)).length + 1; // The default appearance is always discoverable.
     }
   });
   return count;
@@ -21,7 +32,7 @@ function _countDiscoverableCharacters(directReferencedCharacters:readonly Charac
 //  in a room OR
 //  in a character's left/right hand OR
 //  in character inventory and referenced in itinerary
-function _countDiscoverableItems(directReferencedCharacters:readonly Character[], rooms:readonly Room[], activities:readonly Activity[]):number {
+function _countDiscoverableItems(characters:readonly Character[], rooms:readonly Room[], activities:readonly Activity[]):number {
   const countedItemIds = new Set<string>();
   const activityReferencedItemIds = new Set<string>();
 
@@ -32,7 +43,7 @@ function _countDiscoverableItems(directReferencedCharacters:readonly Character[]
     if (typeof toItemId === 'string') activityReferencedItemIds.add(toItemId);
   });
 
-  directReferencedCharacters.forEach(character => {
+  characters.forEach(character => {
     if (character.leftHandItem && isItemInteractive(character.leftHandItem)) countedItemIds.add(character.leftHandItem.id);
     if (character.rightHandItem && isItemInteractive(character.rightHandItem)) countedItemIds.add(character.rightHandItem.id);
     character.items.forEach(item => {
@@ -48,9 +59,16 @@ function _countDiscoverableItems(directReferencedCharacters:readonly Character[]
   return countedItemIds.size;
 }
 
-/** Counts discoverable characters, contextually discoverable items, and rooms. */
+/**
+ * Counts discoverable characters, contextually discoverable items, and rooms.
+ *
+ * @param level - Loaded level whose `characters` contain only the characters directly referenced by room placement.
+ * @param activities - Parsed itinerary activities that determine which character skins and inventory items are discoverable.
+ * @returns The calculated discoverable counts before optional authored overrides are applied.
+ */
 export function findDiscoverableCounts(level:Level, activities:readonly Activity[]):{discoverableCharacterCount:number, discoverableItemCount:number, discoverableRoomCount:number} {
-  const discoverableCharacterCount = _countDiscoverableCharacters(level.characters);
+  const referencedSkinIds = _findReferencedSkinIds(activities);
+  const discoverableCharacterCount = _countDiscoverableCharacters(level.characters, referencedSkinIds);
   const discoverableItemCount = _countDiscoverableItems(level.characters, level.rooms, activities);
   const discoverableRoomCount = level.rooms.length;
   return { discoverableCharacterCount, discoverableItemCount, discoverableRoomCount };

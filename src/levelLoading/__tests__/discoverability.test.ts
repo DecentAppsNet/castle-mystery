@@ -26,7 +26,7 @@ describe('loading levels - discoverability', () => {
     expect(level?.discoveryConfig.discoverableRoomCount).toBe(1);
   });
 
-  it('counts each defined skin as an additional discoverable character appearance', () => {
+  it('excludes defined skins not referenced in the itinerary', () => {
     const text = replaceSection(minimalText, 'characters', [
       '## Sam',
       '* description=An alert detective.',
@@ -39,7 +39,24 @@ describe('loading levels - discoverability', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(3);
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(1);
+  });
+
+  it('counts each defined skin referenced in an appearance activity', () => {
+    const textWithSkins = replaceSection(minimalText, 'characters', [
+      '## Sam',
+      '* description=An alert detective.',
+      '',
+      '### Detective',
+      '',
+      '### Guard'
+    ]);
+    const text = replaceSection(textWithSkins, 'itinerary', ['0:00:05 Sam appears Detective']);
+    const { level, errors } = loadLevelForTest(text, 'discoverability-referenced-character-skin.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(2);
   });
 
   it('loads two discoverable placed interactive characters', () => {
