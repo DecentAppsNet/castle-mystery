@@ -34,6 +34,13 @@ export function findRoomIdAtPosition(rooms:readonly Room[], x:number, y:number):
   return room?.id ?? null;
 }
 
+export function findRoomIAtPosition(rooms:readonly Room[], x:number, y:number):number {
+  for(let roomI = 0; roomI < rooms.length; ++roomI) {
+    if (isPositionInRect(x, y, rooms[roomI].rect)) return roomI;
+  }
+  return -1;
+}
+
 export function findCharactersInRoom(room:Room, characters:readonly Character[]):Character[] {
   return characters.filter(c => isPositionInRect(c.position.x, c.position.y, room.rect));
 }

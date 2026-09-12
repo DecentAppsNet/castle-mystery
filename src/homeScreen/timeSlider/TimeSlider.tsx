@@ -7,7 +7,6 @@ import { calcTimeLabelPositions } from "./labelUtil";
 import { createPositionedLabels, formatMinutes, minutesToPercent, percentToMinutes } from "./timeSliderUtil";
 import TimeLabel from "@/game/types/TimeLabel";
 import TimeLabelPositions from "./types/TimeLabelPositions";
-import Character from "@/game/types/Character";
 import Room from "@/game/types/Room";
 import { createItineraryMarkerModel } from "./itineraryMarkerUtil";
 import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawing/drawColorConstants";
@@ -22,7 +21,6 @@ type Props = {
   minutes:number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
   step?:number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
   timeline:Timeline|null,
-  characters:Character[];
   rooms:Room[];
   roomsRevision?:number;
   activeCharacterId:string;
@@ -50,9 +48,10 @@ function _renderEncounterMarker(left:number, key:string) {
 }
 
 function _renderItineraryMarkers(sliderWidth:number, fromMinutes:number, toMinutes:number, timeline:Timeline|null, 
-    activeCharacterId:string, activeSkinIdAtSelection:string, rooms:Room[], characters:Character[], revealedSkinLinkages:SkinLinkages, obscuredRoomIds:Set<string>) {
-  
-  const markerModel = createItineraryMarkerModel(timeline, activeCharacterId, activeSkinIdAtSelection, rooms, characters, revealedSkinLinkages, obscuredRoomIds);
+    activeCharacterId:string, activeSkinIdAtSelection:string, rooms:Room[], revealedSkinLinkages:SkinLinkages, 
+    obscuredRoomIds:Set<string>) {
+    
+  const markerModel = createItineraryMarkerModel(timeline, activeCharacterId, activeSkinIdAtSelection, rooms, revealedSkinLinkages, obscuredRoomIds);
   const toLeft = (time:number) => minutesToPercent(_msecsToMinutes(time), fromMinutes, toMinutes) / 100 * sliderWidth;
 
   return <div className={styles.markerLayer}>
@@ -77,7 +76,7 @@ function _renderItineraryMarkers(sliderWidth:number, fromMinutes:number, toMinut
     {markerModel.roomEntryTimes.map((time, index) =>
       <span key={`room-entry-${index}-${time}`} className={styles.roomEntryMarker} style={{left: `${toLeft(time)}px`}} />
     )}
-    {markerModel.encounterMarkers.map((marker, index) => _renderEncounterMarker(toLeft(marker.startTime), `encounter-${index}-${marker.startTime}`))}
+    {markerModel.encounterTimes.map((time, index) => _renderEncounterMarker(toLeft(time), `encounter-${index}-${time}`))}
   </div>;
 }
 
@@ -94,8 +93,8 @@ function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
 }
 
 function TimeSlider(props:Props) {
-  const { fromMinutes, toMinutes, minutes, timeline, characters, rooms,
-    roomsRevision = 0, activeCharacterId, activeSkinIdAtSelection, discoveryState, labels, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
+  const { fromMinutes, toMinutes, minutes, timeline, rooms, roomsRevision = 0, activeCharacterId, activeSkinIdAtSelection, 
+    discoveryState, labels, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
   } = props;
   const [displayMinutes, setDisplayMinutes] = useState(minutes);
   const [sliderWidth, setSliderWidth] = useState(0);
@@ -103,9 +102,9 @@ function TimeSlider(props:Props) {
   const sliderRef = useRef<HTMLDivElement>(null);
   const percent = minutesToPercent(minutes, fromMinutes, toMinutes);
   const itineraryMarkers = useMemo(
-    () => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, timeline, activeCharacterId, activeSkinIdAtSelection, rooms, characters,
+    () => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, timeline, activeCharacterId, activeSkinIdAtSelection, rooms,
       discoveryState.revealedSkinLinkages, discoveryState.obscuredRoomIds),
-      [sliderWidth, fromMinutes, toMinutes, timeline, activeCharacterId, activeSkinIdAtSelection, rooms, characters, roomsRevision, discoveryState]
+      [sliderWidth, fromMinutes, toMinutes, timeline, activeCharacterId, activeSkinIdAtSelection, rooms, roomsRevision, discoveryState]
   );
 
   function _onSliderUpdate(nextValue:number) {

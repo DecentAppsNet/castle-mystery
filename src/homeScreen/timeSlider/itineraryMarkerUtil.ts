@@ -1,10 +1,9 @@
 /* This module groups itinerary-marker derivation helpers for time-slider room, speech, and encounter markers.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-  import { assert, assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 
 import { MSECS_IN_SECOND } from "@/common/timeUtil";
-import Character from "@/game/types/Character";
 import { SkinLinkages } from "@/game/types/DiscoveryState";
 import Room from "@/game/types/Room";
 import Timeline from "@/game/types/Timeline";
@@ -14,120 +13,12 @@ import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/positionUtil";
 import { generateRoomEntryEvents } from "./roomEntranceUtil";
 import RoomEntryEvents from "./types/RoomEntryEvents";
+import { doesKeyframeHaveSpeechHeardByCharacter } from "@/levelLoading/activityLoading/activitySchedulers/util/speechUtil";
+import TimeRange from "./types/TimeRange";
+import { isTimeInRanges, subtractRanges } from "./timeRangeUtil";
+import ItineraryMarkerModel from "./types/ItineraryMarkerModel";
 
-export const SPEECH_CLUSTER_GAP_MSECS = 6 * MSECS_IN_SECOND;
-
-type SpeechMarkerRange = {
-  startTime:number,
-  endTime:number
-}
-
-type EncounterMarker = {
-  startTime:number
-}
-
-type ObscuredMarkerRange = {
-  startTime:number,
-  endTime:number
-}
-
-export type ItineraryMarkerModel = {
-  roomEntryTimes:number[],
-  speechRanges:SpeechMarkerRange[],
-  encounterMarkers:EncounterMarker[],
-  obscuredRanges:ObscuredMarkerRange[]
-}
-
-/* TODO uncomment if needed
-function _isTimeInsideRange(time:number, range:ObscuredMarkerRange):boolean {
-  return time >= range.startTime && time < range.endTime;
-} */
-
-/* TODO uncomment if needed
-function _subtractObscuredRangesFromSpeechRange(range:SpeechMarkerRange, obscuredRanges:ObscuredMarkerRange[]):SpeechMarkerRange[] {
-  return obscuredRanges.reduce<SpeechMarkerRange[]>((remainingRanges, obscuredRange) => {
-    return remainingRanges.flatMap(remainingRange => {
-      if (obscuredRange.endTime <= remainingRange.startTime || obscuredRange.startTime >= remainingRange.endTime) {
-        return [remainingRange];
-      }
-
-      const nextRanges:SpeechMarkerRange[] = [];
-      if (obscuredRange.startTime > remainingRange.startTime) {
-        nextRanges.push({ startTime:remainingRange.startTime, endTime:Math.min(obscuredRange.startTime, remainingRange.endTime) });
-      }
-      if (obscuredRange.endTime < remainingRange.endTime) {
-        nextRanges.push({ startTime:Math.max(obscuredRange.endTime, remainingRange.startTime), endTime:remainingRange.endTime });
-      }
-      return nextRanges;
-    });
-  }, [range]).filter(remainingRange => remainingRange.endTime > remainingRange.startTime);
-} */
-
-/* TODO with timeline
-function _createObscuredRanges(itinerary:Itinerary, initiallyObscuredRoomIds:ReadonlySet<string>, initialRoomId:string|null, durationMsecs:number):ObscuredMarkerRange[] {
-  const roomEntryEvents = itinerary
-    .filter(event => event.type === ItineraryEventType.ROOM_ENTRY)
-    .map(event => event as RoomEntryEvent)
-    .sort((event1, event2) => event1.startTime - event2.startTime);
-  const obscuredRanges:ObscuredMarkerRange[] = [];
-  let currentRoomId = initialRoomId;
-  let obscuredStartTime = currentRoomId && initiallyObscuredRoomIds.has(currentRoomId) ? 0 : null;
-
-  roomEntryEvents.forEach(roomEntryEvent => {
-    if (obscuredStartTime !== null) {
-      obscuredRanges.push({ startTime:obscuredStartTime, endTime:roomEntryEvent.startTime });
-    }
-    currentRoomId = roomEntryEvent.roomId;
-    obscuredStartTime = initiallyObscuredRoomIds.has(currentRoomId) ? roomEntryEvent.startTime : null;
-  });
-
-  if (obscuredStartTime !== null && durationMsecs > obscuredStartTime) {
-    obscuredRanges.push({ startTime:obscuredStartTime, endTime:durationMsecs });
-  }
-
-  return obscuredRanges.filter(range => range.endTime > range.startTime);
-} */
-
-/* TODO with timeline
-function _createSpeechRanges(itinerary:Itinerary):SpeechMarkerRange[] {
-  return itinerary
-    .filter(event => event.type === ItineraryEventType.SPEECH || event.type === ItineraryEventType.THOUGHT)
-    .map(event => {
-      return {
-        startTime:event.startTime,
-        endTime:event.startTime + event.duration
-      };
-    })
-    .sort((range1, range2) => range1.startTime - range2.startTime);
-} */
-
-/* TODO uncomment if needed
-function _hasObscuredRangeBetween(range1:SpeechMarkerRange, range2:SpeechMarkerRange, obscuredRanges:ObscuredMarkerRange[]):boolean {
-  return obscuredRanges.some(obscuredRange => obscuredRange.startTime >= range1.endTime && obscuredRange.endTime <= range2.startTime);
-} */
-
-/* TODO uncomment if needed
-function _mergeSpeechRanges(speechRanges:SpeechMarkerRange[], obscuredRanges:ObscuredMarkerRange[] = []):SpeechMarkerRange[] {
-  const sortedSpeechRanges = [...speechRanges].sort((range1, range2) => range1.startTime - range2.startTime);
-
-  return sortedSpeechRanges.reduce<SpeechMarkerRange[]>((mergedRanges, nextRange) => {
-    const previousRange = mergedRanges[mergedRanges.length - 1] || null;
-    if (!previousRange) {
-      mergedRanges.push(nextRange);
-      return mergedRanges;
-    }
-    if (_hasObscuredRangeBetween(previousRange, nextRange, obscuredRanges)) {
-      mergedRanges.push(nextRange);
-      return mergedRanges;
-    }
-    if (nextRange.startTime - previousRange.endTime <= SPEECH_CLUSTER_GAP_MSECS) {
-      previousRange.endTime = Math.max(previousRange.endTime, nextRange.endTime);
-      return mergedRanges;
-    }
-    mergedRanges.push(nextRange);
-    return mergedRanges;
-  }, []);
-} */
+const SPEECH_CLUSTER_GAP_MSECS = 6 * MSECS_IN_SECOND;
 
 function _isKeyframeObscured(characterPosition:Position, characterSkinId:string, rooms:Room[], revealedSkinIds:Set<string>, obscuredRoomIds:Set<string>):boolean {
   if (!revealedSkinIds.has(characterSkinId)) return true;
@@ -138,7 +29,7 @@ function _isKeyframeObscured(characterPosition:Position, characterSkinId:string,
 }
 
 function _findObscuredRangeStartingAtKeyframe(keyframes:TimelineKeyframe[], startKeyframeI:number, activeCharacterI:number, rooms:Room[],
-    revealedSkinIds:Set<string>, obscuredRoomIds:Set<string>, roomEntryEvents:RoomEntryEvents):{obscuredRange:ObscuredMarkerRange, lastObscuredKeyframeI:number}|null {
+    revealedSkinIds:Set<string>, obscuredRoomIds:Set<string>, roomEntryEvents:RoomEntryEvents):{obscuredRange:TimeRange, lastObscuredKeyframeI:number}|null {
   const obscuredRange = { startTime:keyframes[startKeyframeI].time, endTime:-1 };
   let lastObscuredKeyframeI:number = -1;
   let firstUnobscuredKeyframeI = keyframes.length;
@@ -176,10 +67,6 @@ function _findObscuredRangeStartingAtKeyframe(keyframes:TimelineKeyframe[], star
   return { obscuredRange, lastObscuredKeyframeI };
 }
 
-function _isTimeWithinObscuredRange(time:number, obscuredRanges:ObscuredMarkerRange[]):boolean {
-  return obscuredRanges.some(or => or.startTime < time && or.endTime > time);
-}
-
 function _findOtherCharacterEncounterTimes(activeRoomId:string, activeCharacterI:number, roomEntryEvents:RoomEntryEvents[], 
     activeCharacterEntryTime:number, activeCharacterExitTime:number):number[] {
   const entryTimes:number[] = [];
@@ -199,8 +86,9 @@ function _findOtherCharacterEncounterTimes(activeRoomId:string, activeCharacterI
   return entryTimes;
 }
 
-function _generateEncounterMarkers(roomEntryEvents:RoomEntryEvents[], activeCharacterI:number):EncounterMarker[] {
-  const markers:EncounterMarker[] = [];
+function _generateEncounterTimes(roomEntryEvents:RoomEntryEvents[], activeCharacterI:number, 
+    obscuredRanges:TimeRange[]):number[] {
+  const markers:number[] = [];
   const activeCharacterRoomEntries = roomEntryEvents[activeCharacterI];
   assertNonNullable(activeCharacterRoomEntries);
   for(let roomEntryI = 0; roomEntryI < activeCharacterRoomEntries.length; ++roomEntryI) {
@@ -212,19 +100,87 @@ function _generateEncounterMarkers(roomEntryEvents:RoomEntryEvents[], activeChar
     const encounterTimes = _findOtherCharacterEncounterTimes(activeRoomId, activeCharacterI, roomEntryEvents,
         activeCharacterEntryTime, activeCharacterExitTime);
     if (!encounterTimes.length) continue;
-    const characterEncounterMarkers:EncounterMarker[] = encounterTimes.map(time => { return { startTime:time }; });
-    markers.push(...characterEncounterMarkers);
+    markers.push(...encounterTimes);
   }
-  return markers;
+  return markers.filter(time => !isTimeInRanges(time, obscuredRanges));
 }
 
-export function createItineraryMarkerModel(timeline:Timeline|null, activeCharacterId:string, activeSkinIdAtSelection:string, rooms:Room[], 
-    _characters:Character[], revealedSkinLinkages:SkinLinkages, obscuredRoomIds:Set<string>):ItineraryMarkerModel {
+function _combineSpeechRangeWithPreviousAsNeeded(startTime:number, endTime:number, speechRanges:TimeRange[]):boolean {
+  const lastSpeechRange = speechRanges[speechRanges.length-1] ?? null;
+  if (!lastSpeechRange || (startTime - lastSpeechRange.endTime) >= SPEECH_CLUSTER_GAP_MSECS) return false; // No combining needed.
+  lastSpeechRange.endTime = endTime; // Combine the ranges.
+  return true;
+}
+
+function _generateObscuredRanges(keyframes:TimelineKeyframe[], characterI:number, rooms:Room[], obscuredRoomIds:Set<string>, 
+      revealedSkinIds:Set<string>, characterRoomEntries:RoomEntryEvents):TimeRange[] {
+  const obscuredRanges:TimeRange[] = [];
+  for(let keyframeI = 0; keyframeI < keyframes.length; ++keyframeI) {
+    const keyframe = keyframes[keyframeI];
+
+    // Identify an obscured range at current keyframe if it is there. And skip over it.
+    const obscuredRangeResult = _findObscuredRangeStartingAtKeyframe(keyframes, keyframeI, characterI, rooms, 
+        revealedSkinIds, obscuredRoomIds, characterRoomEntries); // There is an unneeded extra call to this function after a skip. Optimize if needed.
+    if (obscuredRangeResult) {
+      obscuredRanges.push(obscuredRangeResult.obscuredRange);
+      keyframeI = obscuredRangeResult.lastObscuredKeyframeI;
+      continue; // Skip past keyframes inside obscured range so their events aren't represented in markers.
+    }
+
+    // keyframeI must be outside of any obscured range at this point.
+    assert(!isTimeInRanges(keyframe.time, obscuredRanges));
+  }
+
+  return obscuredRanges;
+}
+
+function _generateRoomEntryTimes(characterRoomEntries:RoomEntryEvents, obscuredRanges:TimeRange[]):number[] {
+  return characterRoomEntries
+    .filter(re => !isTimeInRanges(re.time, obscuredRanges))
+    .map(re => re.time);
+}
+
+function _generateSpeechRanges(keyframes:TimelineKeyframe[], characterI:number, rooms:Room[], 
+    obscuredRanges:TimeRange[]):TimeRange[] {
+
+  const speechRanges:TimeRange[] = [];
+
+  let pendingSpeechMarkerStartTime:number = -1;
+  function _isSpeechMarkerOpen() { return pendingSpeechMarkerStartTime !== -1; }
+  function _openSpeechMarker(time:number) { pendingSpeechMarkerStartTime = time; }
+  function _closeSpeechMarker(endTime:number) {
+    const startTime = pendingSpeechMarkerStartTime;
+    pendingSpeechMarkerStartTime = -1;
+    if (!_combineSpeechRangeWithPreviousAsNeeded(startTime, endTime, speechRanges)) {
+      speechRanges.push({ startTime, endTime });
+    }
+  }
+
+  // Open and close a pending speech marker at boundaries. Closing the marker updates speechRanges.
+  for(let keyframeI = 0; keyframeI < keyframes.length; ++keyframeI) {
+    const keyframe = keyframes[keyframeI];
+    if (doesKeyframeHaveSpeechHeardByCharacter(keyframe, characterI, rooms)) {
+      if (!_isSpeechMarkerOpen()) _openSpeechMarker(keyframe.time);
+    } else {
+      if (_isSpeechMarkerOpen()) _closeSpeechMarker(keyframe.time);
+    }
+  }
+
+  // Speech scheduling should generate a closing keyframe without speech. This allows processing above 
+  // to close out all speech markers.
+  assert(!_isSpeechMarkerOpen()); 
+
+  return subtractRanges(speechRanges, obscuredRanges);
+}
+  
+
+export function createItineraryMarkerModel(timeline:Timeline|null, activeCharacterId:string, activeSkinIdAtSelection:string, 
+    rooms:Room[], revealedSkinLinkages:SkinLinkages, obscuredRoomIds:Set<string>):ItineraryMarkerModel {
   
   const markers:ItineraryMarkerModel = {
     roomEntryTimes:[],
     speechRanges:[],
-    encounterMarkers:[],
+    encounterTimes:[],
     obscuredRanges:[]
   };
   if (!timeline || timeline.keyframes.length < 1) return markers;
@@ -237,56 +193,11 @@ export function createItineraryMarkerModel(timeline:Timeline|null, activeCharact
   const revealedSkinIds = revealedSkinLinkages[activeSkinIdAtSelection]; // All of the active character skins the player is allowed to see.
   assertNonNullable(activeCharacterI);
   assertNonNullable(revealedSkinIds);
-  for(let keyframeI = 0; keyframeI < keyframes.length; ++keyframeI) {
 
-    // Identify an obscured range at current keyframe if it is there. And skip over it.
-    const obscuredRangeResult = _findObscuredRangeStartingAtKeyframe(keyframes, keyframeI, activeCharacterI, rooms, 
-        revealedSkinIds, obscuredRoomIds, characterRoomEntries); // There is an unneeded extra call to this function after a skip. Optimize if needed.
-    if (obscuredRangeResult) {
-      markers.obscuredRanges.push(obscuredRangeResult.obscuredRange);
-      keyframeI = obscuredRangeResult.lastObscuredKeyframeI;
-      continue; // Skip past keyframes inside obscured range so their events aren't represented in markers.
-    }
-
-    // keyframeI must be outside of any obscured range at this point.
-    const keyframe = keyframes[keyframeI];
-    assert(!_isTimeWithinObscuredRange(keyframe.time, markers.obscuredRanges));
-
-    // TODO - add the other kinds of markers.
-  }
-
-  markers.encounterMarkers = _generateEncounterMarkers(roomEntryEvents, activeCharacterI)
-    .filter(em => !_isTimeWithinObscuredRange(em.startTime, markers.obscuredRanges));
-
-  markers.roomEntryTimes = characterRoomEntries
-    .filter(re => !_isTimeWithinObscuredRange(re.time, markers.obscuredRanges))
-    .map(re => re.time);
+  markers.obscuredRanges = _generateObscuredRanges(keyframes, activeCharacterI, rooms, obscuredRoomIds, revealedSkinIds, characterRoomEntries);
+  markers.roomEntryTimes = _generateRoomEntryTimes(characterRoomEntries, markers.obscuredRanges);
+  markers.encounterTimes = _generateEncounterTimes(roomEntryEvents, activeCharacterI, markers.obscuredRanges);
+  markers.speechRanges = _generateSpeechRanges(keyframes, activeCharacterI, rooms, markers.obscuredRanges);
 
   return markers;
-
-  /* TODO with timeline
-  const interactiveCharacterIds = new Set(characters.filter(isCharacterInteractive).map(character => character.id));
-  const obscuredRanges = _createObscuredRanges(itinerary, rooms, initialRoomId, durationMsecs);
-  const visibleSpeechRanges = _mergeSpeechRanges(_createSpeechRanges(itinerary)
-    .flatMap(range => _subtractObscuredRangesFromSpeechRange(range, obscuredRanges)), obscuredRanges);
-  const visibleEncounterMarkers = itinerary
-    .filter(event => event.type === ItineraryEventType.CHARACTER_ENCOUNTER)
-    .map(event => {
-      const encounterEvent = event as CharacterEncounterEvent;
-      return {
-        startTime:encounterEvent.startTime,
-        encounteredCharacterIds:encounterEvent.encounteredCharacterIds.filter(characterId => interactiveCharacterIds.has(characterId))
-      };
-    })
-    .filter(marker => marker.encounteredCharacterIds.length > 0)
-    .filter(marker => !obscuredRanges.some(range => _isTimeInsideRange(marker.startTime, range)));
-
-  return {
-    roomEntryTimes:itinerary
-      .filter(event => event.type === ItineraryEventType.ROOM_ENTRY)
-      .map(event => event.startTime),
-    speechRanges:visibleSpeechRanges,
-    encounterMarkers:visibleEncounterMarkers,
-    obscuredRanges
-  }; */
 }

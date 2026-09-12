@@ -8,21 +8,26 @@ import { MSECS_IN_SECOND } from "@/common/timeUtil";
 import Room from "@/game/types/Room";
 import { formatMsecsAsTimestamp } from "@/levelLoading/activityLoading";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
-import { findKeyframeInRange, findCharacterPositionAtTime, findKeyframeForTime } from "@/game/timeline";
-import { findRoomAtPosition } from "@/game/roomUtil";
+import { findKeyframeInRange, findKeyframeForTime, createKeyframeAtTime } from "@/game/timeline";
+import { findRoomAtPosition, findRoomIAtPosition } from "@/game/roomUtil";
 import Effect from "@/game/effects/types/Effect";
 import Position from "@/game/types/Position";
 
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
 const SPEECH_MSECS_PER_CHARACTER = 90;
 
-function _findRoomsInEarshot(keyframes:TimelineKeyframe[], characterI:number, rooms:Room[], speechStartTime:number):Room[] {
-  const position = findCharacterPositionAtTime(keyframes, characterI, speechStartTime);
-  const characterRoom = findRoomAtPosition(rooms, position.x, position.y);
+function _findRoomsInEarshotAtKeyframe(keyframe:TimelineKeyframe, characterI:number, rooms:Room[]):Room[] {
+  assert(keyframe.rooms.length === rooms.length);
+  
+  const position = keyframe.characters[characterI].position;
+  const characterRoomI = findRoomIAtPosition(rooms, position.x, position.y);
+  const characterRoomExits = keyframe.rooms[characterRoomI].exits;
+  const characterRoom = rooms[characterRoomI];
   assertNonNullable(characterRoom);
+  assertNonNullable(characterRoomExits);
 
   const earshotRooms:Room[] = [characterRoom];
-  characterRoom.exits.forEach(exit => {
+  characterRoomExits.forEach(exit => {
     if (exit.exitStatus === 'open') {
       const otherRoomId = exit.room1Id === characterRoom.id ? exit.room2Id : exit.room1Id;
       const otherRoom = rooms.find(r => r.id === otherRoomId);
@@ -33,8 +38,17 @@ function _findRoomsInEarshot(keyframes:TimelineKeyframe[], characterI:number, ro
   return earshotRooms;
 }
 
+function _findRoomsInEarshot(keyframes:TimelineKeyframe[], characterI:number, rooms:Room[], speechStartTime:number):Room[] {
+  const keyframe = createKeyframeAtTime(keyframes, speechStartTime);
+  return _findRoomsInEarshotAtKeyframe(keyframe, characterI, rooms);
+}
+
 function _isCharacterSayingAtTime(effects:Effect[], startTime:number):boolean {
   return effects.find(e => e.endTime > startTime && e.kind === 'says') !== undefined;
+}
+
+function _isCharacterSayingOrThinkingAtTime(effects:Effect[], startTime:number):boolean {
+  return effects.find(e => e.endTime > startTime && (e.kind === 'says' || e.kind === 'thinks')) !== undefined;
 }
 
 function _isCharacterInEarshot(earshotRooms:Room[], characterPosition:Position):boolean {
@@ -90,3 +104,9 @@ export function findSpeechConflict(speechKind:'says'|'interrupts'|'thinks'|'emit
   assert(speechKind === 'says');
   return _findCharacterSpeechInterrupting(earshotRooms, keyframes, characterI, speechStartTime, speechEndTime);
 }
+
+export function doesKeyframeHaveSpeechHeardByCharacter(keyframe:TimelineKeyframe, characterI:number, rooms:Room[]):boolean {
+  if (_isCharacterSayingOrThinkingAtTime(keyframe.characters[characterI].effects, keyframe.time)) return true;
+  const earshotRooms = _findRoomsInEarshotAtKeyframe(keyframe, characterI, rooms);
+  return _isOtherCharacterSayingInEarshot(keyframe, characterI, earshotRooms, keyframe.time);
+} 
