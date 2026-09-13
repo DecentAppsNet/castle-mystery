@@ -43,8 +43,9 @@ import { findMetaTimeNow } from "./metaTimeUtil";
 import { createRevealedSkinLinkages } from "./skinLinkageUtil";
 import Timeline from "./types/Timeline";
 import { findCharacterKeyframeForTime } from "./timeline/retrievalUtil";
-import { removeExpiredMetaTimeEffects } from "./effects/metaTimeEffectUtil";
+import { removeExpiredCharacterMetaTimeEffects, removeExpiredMetaTimeEffects } from "./effects/metaTimeEffectUtil";
 import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
+import Effect from "./effects/types/Effect";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -98,9 +99,14 @@ function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEven
   gameState.camera.zoomAmount = clamp(gameState.camera.zoomAmount + zoomDirection * CAMERA_ZOOM_STEP, 0, 1);
 }
 
+function _removeExpiredEffects(gameState:GameState, metaTime:number) {
+  removeExpiredMetaTimeEffects(gameState.metaTimeEffects, metaTime);
+  removeExpiredCharacterMetaTimeEffects(gameState.characterMetaTimeEffectsByCharacterId, metaTime);
+}
+
 function _updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:number, cameraAspectRatio:number) {
   // Remove ended effects before events can create effects at the current meta-time.
-  removeExpiredMetaTimeEffects(gameState.metaTimeEffects, metaTime);
+  _removeExpiredEffects(gameState, metaTime);
 
   // Apply current-frame player events.
   const snapshotCharacters = gameState.timelineSnapshot.characters;
@@ -224,6 +230,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     baseItemsById,
     baseRooms,
     camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
+    characterMetaTimeEffectsByCharacterId:new Map<string, Effect[]>(),
     conclusions:level.conclusions.map(duplicateConclusion),
     conclusionsRevision:0,
     discoveryState:{

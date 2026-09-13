@@ -9,3 +9,21 @@ export function removeExpiredMetaTimeEffects(effects:Effect[], metaTime:number):
     if (effects[effectI].endTime <= metaTime) effects.splice(effectI, 1);
   }
 }
+
+/** Appends an effect for a character, creating that character's collection when needed. */
+export function appendCharacterMetaTimeEffect(effectsByCharacterId:Map<string, Effect[]>, characterId:string, effect:Effect):void {
+  const effects = effectsByCharacterId.get(characterId);
+  if (effects) {
+    effects.push(effect);
+  } else {
+    effectsByCharacterId.set(characterId, [effect]);
+  }
+}
+
+/** Removes ended character effects and deletes character entries with no surviving effects. */
+export function removeExpiredCharacterMetaTimeEffects(effectsByCharacterId:Map<string, Effect[]>, metaTime:number):void {
+  effectsByCharacterId.forEach((effects, characterId) => {
+    removeExpiredMetaTimeEffects(effects, metaTime);
+    if (effects.length === 0) effectsByCharacterId.delete(characterId);
+  });
+}

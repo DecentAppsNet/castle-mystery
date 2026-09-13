@@ -17,6 +17,7 @@ type GameState = {
   activeCharacterId:string,
   activeSkinIdAtSelection:string,
   camera:Camera,
+  readonly characterMetaTimeEffectsByCharacterId:Map<string, Effect[]>, // Keys target characters; contained effect times use meta-time.
   conclusions:Conclusion[],
   conclusionsRevision:number,
   readonly discoveryState:DiscoveryState,
