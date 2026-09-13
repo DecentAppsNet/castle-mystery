@@ -79,6 +79,10 @@ HS
 : @ Stairwell
 : appears as guard2
 : @ Closet
+: Maria says, "who are you?"
+: Sam says, "It's me - Sam!"
+: Maria says, "You look nothing like him."
+: Sam says, "Disguise!"
 
 # conclusions
 
