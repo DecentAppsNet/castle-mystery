@@ -56,7 +56,6 @@ function _setActiveRoomDiscovered(gameState:GameState) {
 function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
   const wasPlaying = gameState.isPlaying;
   gameState.time = event.time;
-  gameState.timelineSnapshot = createTimelineSnapshot(gameState, event.time);
   gameState.isPlaying = false;
   gameState.metaTimeToGameTimeOffset = 0;
   if (wasPlaying) gameState.metaTimeEffects.push(createPauseEffect(metaTime));
@@ -104,7 +103,7 @@ function _removeExpiredEffects(gameState:GameState, metaTime:number) {
   removeExpiredCharacterMetaTimeEffects(gameState.characterMetaTimeEffectsByCharacterId, metaTime);
 }
 
-function _updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:number, cameraAspectRatio:number) {
+export function updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:number, cameraAspectRatio:number) {
   // Remove ended effects before events can create effects at the current meta-time.
   _removeExpiredEffects(gameState, metaTime);
 
@@ -128,11 +127,11 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:nu
     const endTime = gameState.startTime + gameState.duration;
     const nextTime = Math.min(endTime, metaTime + gameState.metaTimeToGameTimeOffset);
     gameState.time = nextTime;
-    gameState.timelineSnapshot = createTimelineSnapshot(gameState, nextTime);
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
 
-  // Update world state derived from the current timeline snapshot.
+  // Create the frame's final snapshot, then update world state derived from it.
+  gameState.timelineSnapshot = createTimelineSnapshot(gameState, gameState.time);
   syncCameraTargetToActiveRoom(gameState.camera, gameState.baseRooms, gameState.timelineSnapshot.activeRoom,
     cameraAspectRatio, metaTime, gameState.groundFloorY);
   updateCamera(gameState.camera, metaTime);
@@ -198,7 +197,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   const metaTime = findMetaTimeNow();
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
-  _updateGameState(gameState, events, metaTime, calcCanvasAspectRatio(context));
+  updateGameState(gameState, events, metaTime, calcCanvasAspectRatio(context));
   syncConclusionUnlocks(gameState);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   callOnMinutesChangedAsNeeded(gameState, onMinutesChanged, metaTime);

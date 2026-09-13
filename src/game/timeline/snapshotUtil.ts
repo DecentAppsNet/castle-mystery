@@ -11,6 +11,7 @@ import { findRoomAtPosition } from "../roomUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import { SkinLinkages } from "../types/DiscoveryState";
 import { areSkinIdsLinked, createRevealedSkinLinkages } from "../skinLinkageUtil";
+import Effect from "../effects/types/Effect";
 
 function _findActiveContext(characters:CharacterWithEffects[], rooms:Room[], activeCharacterId:string):{
   activeCharacter:CharacterWithEffects,
@@ -47,14 +48,25 @@ function _findDescriptionWithSkins(character:CharacterKeyframe, baseCharacter:Ch
   return _findCharacterMemberWithSkins(character, baseCharacter, 'description') ?? '';
 }
 
-function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character):CharacterWithEffects {
+function _combineEffectsAsNeeded(characterTimelineEffects:Effect[], characterMetaTimeEffects:Effect[]|undefined):Effect[] {
+  // If either array is empty, return the other, avoiding allocation. This approach is coupled to the following assumptions.
+  // 1. characterTimelineEffects is never mutated. 2. characterMetaTimeEffects is mutated once per animation frame,
+  //    and will not be mutated for the remaining duration of the animation frame.
+  // A safer implementation would be to duplicate everything, but we'd like to reduce allocations for better performance.
+  if (!characterMetaTimeEffects || !characterMetaTimeEffects.length) return characterTimelineEffects;
+  if (!characterTimelineEffects.length) return characterMetaTimeEffects;
+  return [...characterTimelineEffects, ...characterMetaTimeEffects]; // Effects themselves are stateless and immutable.
+}
+
+function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character,
+    characterMetaTimeEffects:Effect[]|undefined):CharacterWithEffects {
   return {
     // Any members from the keyframe are used.
     isVisible:character.isVisible,
     facingDirection:character.facingDirection,
     bodyOrientation:character.bodyOrientation,
     position:character.position,
-    effects:character.effects,
+    effects:_combineEffectsAsNeeded(character.effects, characterMetaTimeEffects),
     skinId:character.skinId,
 
     // Permanent members come from base character.
@@ -120,7 +132,8 @@ function _chooseKeyframeToHideUnrevealedSkinChangesAsNeeded(activeSkinIdAtSelect
 }
 
 function _createSnapshotCharacters(baseCharacters:Character[], activeCharacterId:string, activeSkinIdAtSelection:string, 
-    revealedSkinLinkages:SkinLinkages, time:number, timeline:Timeline, keyframe:TimelineKeyframe):CharacterWithEffects[] {
+  revealedSkinLinkages:SkinLinkages, time:number, timeline:Timeline, keyframe:TimelineKeyframe,
+  characterMetaTimeEffectsByCharacterId:ReadonlyMap<string, Effect[]>|null):CharacterWithEffects[] {
   const characters = baseCharacters.map(character => {
     const characterI = timeline.characterIdToI[character.id];
     assertNonNullable(characterI);
@@ -129,7 +142,8 @@ function _createSnapshotCharacters(baseCharacters:Character[], activeCharacterId
       keyframe = _chooseKeyframeToHideUnrevealedSkinChangesAsNeeded(activeSkinIdAtSelection, characterI, keyframe, 
           time, timeline, revealedSkinLinkages);
     }
-    return _combineCharacterWithBase(keyframe.characters[characterI], character);
+    return _combineCharacterWithBase(keyframe.characters[characterI], character,
+      characterMetaTimeEffectsByCharacterId?.get(character.id));
   });
   return characters;
 }
@@ -139,7 +153,8 @@ function _createSnapshotCharacters(baseCharacters:Character[], activeCharacterId
 export function createTimelineSnapshot(gameState:GameState, time:number):TimelineSnapshot {
   const keyframe = createKeyframeAtTime(gameState.timeline.keyframes, time);
   const characters = _createSnapshotCharacters(gameState.baseCharacters, gameState.activeCharacterId, gameState.activeSkinIdAtSelection, 
-      gameState.discoveryState.revealedSkinLinkages, time, gameState.timeline, keyframe);
+      gameState.discoveryState.revealedSkinLinkages, time, gameState.timeline, keyframe,
+      gameState.characterMetaTimeEffectsByCharacterId);
   const rooms = _createSnapshotRooms(gameState.baseRooms, gameState.timeline, keyframe);
   return _createSnapshot(characters, rooms, gameState.activeCharacterId);
 }
@@ -153,7 +168,7 @@ export function createInitialTimelineSnapshot(baseCharacters:Character[], baseRo
   const activeSkinId = keyframe.characters[activeCharacterI].skinId;
   const skinLinkages:SkinLinkages = createRevealedSkinLinkages(timeline.keyframes, baseRooms, obscuredRoomIds);
   const characters = _createSnapshotCharacters(baseCharacters, activeCharacterId, activeSkinId, 
-    skinLinkages, initialTime, timeline, keyframe);
+    skinLinkages, initialTime, timeline, keyframe, null);
   const rooms = _createSnapshotRooms(baseRooms, timeline, keyframe);
   return _createSnapshot(characters, rooms, activeCharacterId);
 }

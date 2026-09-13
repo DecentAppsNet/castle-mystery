@@ -17,7 +17,7 @@ function _createGameState() {
   return createGameState(_loadLevel());
 }
 
-describe('discovery state integration', () => {
+describe('discovery state', () => {
   it('initializes independent discovery state from authored level values and discovers the active room', () => {
     const level = _loadLevel();
     const gameState1 = createGameState(level);
