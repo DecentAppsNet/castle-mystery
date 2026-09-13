@@ -46,32 +46,22 @@
 
 # Testing
 
-This project uses two test categories.
-
-## Unit Tests
-
-Unit tests verify the contract of a file. They may mock dependency files when useful, but should usually exercise real code paths.
+Tests verify exported contracts through real code paths. There is no guidance distinction between "unit" and "integration" tests: a focused test may naturally grow to exercise multiple collaborating modules as implementation boundaries change.
 
 Guidelines:
 
 * Prefer not to mock. Only mock file I/O, network I/O, operating-system functions, or other behavior that is non-deterministic or leaves persistent side effects.
-* Do not add unit tests for drawing or rendering files. Their results are visual, contract-based tests are usually not practical, and implementation-coupled tests are low value.
+* Do not add tests for drawing or rendering files. Their results are visual, contract-based tests are usually not practical, and implementation-coupled tests are low value.
 * If a drawing file depends on non-visual logic that would be valuable to test, refactor that logic into a separate non-drawing file and test that file instead.
 * Only test exported functions.
 * Put imports at the top of the file.
-* Place unit tests at `.../fileFolder/__tests__/fileName.test.ts`, where `fileFolder` is the folder containing the file under test, and `fileName` matches the file under test.
-* Use `describe('file name')` at the top level.
-* Nest `describe('functionName()')` blocks under the top-level file block.
+* Place tests in the nearest relevant `__tests__` folder. When a test primarily covers one file, name it `fileName.test.ts` after that file.
+* Use a file name or tested area at the top-level `describe()` according to the scope of the behavior.
+* When organizing tests around one file, nest `describe('functionName()')` blocks under the top-level file block. Alternatively, if it is more meaningful to group tests around a use case area rather than function name, e.g. `adding and removing elements`, the second-level-nested blocks can be described that way, rather than by function name.
 * Keep each test focused on one behavior.
 * Inline one-line test setup instead of extracting it into a helper function. Use test helpers only when they replace multiple lines and materially improve readability.
-* Prefer separate, explicit test cases over parameterized tests such as `it.each()` or loops. Some repetition is acceptable in unit tests when it improves readability and makes individual cases easier to debug.
+* Prefer separate, explicit test cases over parameterized tests such as `it.each()` or loops. Some repetition is acceptable when it improves readability and makes individual cases easier to debug.
 * Order tests from simpler and more fundamental behavior to more complex behavior.
-
-## Integration Tests
-
-Integration tests verify a collection of behaviors around a feature. Because they don't differ signifantly from file-based unit tests, we put them in the same folder with unit tests.
-
-The same guidelines for unit tests from the previous section apply to integration test. The only difference is that `describe()` suites are based on areas of functionality or testing concepts rather than filenames and functions.
 
 ## Determinism
 
@@ -83,7 +73,7 @@ The same guidelines for unit tests from the previous section apply to integratio
 * Do not add shell commands or subprocess execution to tests.
 * Do not add network calls to tests.
 * AI agents and automated tools must follow the same rule: do not introduce filesystem, shell, subprocess, or network access into tests.
-* AI agents should not put generated code into shell execution requests. If temporary generated test code is needed during development, create a diagnostic unit test under `/tempTests` instead.
+* AI agents should not put generated code into shell execution requests. If temporary generated test code is needed during development, create a diagnostic test under `/tempTests` instead.
 * Diagnostic tests under `/tempTests` do not need to follow the usual unit-test placement and structure rules, but they must still follow the filesystem, shell, subprocess, and network safety rules above.
 * Diagnostic tests under `/tempTests` may not inherit the same TypeScript path-alias and raw-import setup as files under `src/`. Prefer relative imports there, and if a diagnostic needs `*.md?raw` imports, add or reference a local `.d.ts` declaration in `/tempTests` rather than assuming existing project declarations will be visible.
 * Delete diagnostic tests when they are no longer needed. If the same test keeps proving useful, replace it with a permanent test that follows the normal project test rules.
@@ -111,7 +101,7 @@ Guidelines:
 
 * Low-test-value files should be ignored from code coverage.
 * In this project, low-test-value files commonly include `.tsx` files and files whose main purpose is drawing or rendering.
-* Do not add unit tests for drawing or rendering files. Confirm those results with manual visual testing instead.
+* Do not add tests for drawing or rendering files. Confirm those results with manual visual testing instead.
 * If a drawing or rendering file contains logic with a meaningful non-visual contract, extract that logic into a separate file and test the extracted file instead of the drawing file.
 * Low-test-value files may be excluded from coverage either with an in-source coverage ignore comment or with project-level coverage configuration. Prefer project configuration when excluding a broad category such as all `.tsx` files.
 * For file-level exclusion with Vitest's V8 coverage, place a comment such as `/* v8 ignore file -- @preserve */` at the top of the file.
@@ -168,6 +158,6 @@ Guidelines:
 * All RegExs should be encapsulated in a function whose name describes what the RegEx does.
 * Regex function names should be fairly complete self-descriptions, for example `findWhiteSpaceEnclosedNumber()` rather than `findNumber()`.
 * If the function name would become excessively long, or still would not describe the full logic clearly, prefer non-regex code and optionally call smaller regex helper functions inside that logic.
-* All regex functions need unit tests.
+* All regex functions need tests.
 * Prefer general-purpose regex helper functions where possible and put them in `src/common/regExUtil.ts`.
 * When use-case-specific logic is needed, prefer a non-regex function in the feature file that composes shared regex helpers from `src/common/regExUtil.ts`.
