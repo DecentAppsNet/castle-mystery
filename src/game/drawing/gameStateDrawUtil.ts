@@ -387,6 +387,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
   }
   handleAfterLevelDrawEffects(
     characters,
+    gameState.metaTimeEffects,
     gameState.scalingFactors,
     gameState.time,
     _createLevelEffectDrawContext(characters, rooms, activeRoom, gameState.isLevelComplete, gameState.scalingFactors),
