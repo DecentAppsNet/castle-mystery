@@ -10,6 +10,7 @@ import RoomShellCache from "./RoomShellCache";
 import Timeline from "./Timeline";
 import TimelineSnapshot from "./TimelineSnapshot";
 import DiscoveryState from "./DiscoveryState";
+import Effect from "../effects/types/Effect";
 
 // Unless otherwise noted, "readonly" is intended deeply despite shallow Typescript checks.
 type GameState = {
@@ -41,6 +42,7 @@ type GameState = {
   readonly startTime:number,
   readonly timeline:Timeline;
   readonly winSynopsis:string,
+  metaTimeEffects:Effect[], // Effects in this collection interpret startTime and endTime as meta-time.
   metaTimeToGameTimeOffset:number,
   roomShellCacheByRoomId:RoomShellCache,
   roomShellCacheKey:string,

@@ -241,6 +241,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     lastMinutesChangedValue:NaN,
     lastNotifiedConclusionsRevision:0,
     lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries()),
+    metaTimeEffects:[],
     metaTimeToGameTimeOffset:0,
     roomShellCacheByRoomId:createEmptyRoomShellCache(),
     roomShellCacheKey:'',
