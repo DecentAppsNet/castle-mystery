@@ -16,7 +16,7 @@ const LOCK_UNLOCK_DURATION = 500;
 function _drawLockChange(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
     context:CanvasRenderingContext2D, exitPosition:Position, startTime:number, travelDirection:1|-1):null {
   if (drawCall.stage !== 'afterCharacter') return null;
-  const image = findImageBitmap(drawCall.characterContext.itemTransfer.imageSet, KEY_IMAGE_URL);
+  const image = findImageBitmap(drawCall.characterContext.imageSet, KEY_IMAGE_URL);
   if (!image) return null;
 
   // Calculate the current canvas geometry from the timeline progress and scaling.

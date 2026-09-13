@@ -12,6 +12,7 @@ import Level from "./types/Level";
 import ImageSet from "./types/ImageSet";
 import { assertNonNullable } from "decent-portal";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
+import { CHARACTER_SELECTION_NIMBUS_IMAGE_URL } from "./effects/characterSelectionEffectUtil";
 
 export function createEmptyImageSet():ImageSet {
   return new Map();
@@ -45,7 +46,12 @@ function _findCharacterFaceImageUrls(level:Level):string[] {
 }
 
 function _findImageUrls(level:Level):string[] {
-  const imageUrls = new Set<string>([KEY_IMAGE_URL, getGroundImageAssetUrl(), UNKNOWN_ITEM_ICON_URL]);
+  const imageUrls = new Set<string>([
+    CHARACTER_SELECTION_NIMBUS_IMAGE_URL,
+    KEY_IMAGE_URL,
+    getGroundImageAssetUrl(),
+    UNKNOWN_ITEM_ICON_URL
+  ]);
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
   level.rooms.forEach(room => {
     room.backWallTexture && findTextureImageUrls(room.backWallTexture).forEach(imageUrl => imageUrls.add(imageUrl));

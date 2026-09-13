@@ -35,7 +35,7 @@ function _handleGive(drawCall:EffectDrawCall, item:Item, sourcePlacement:Charact
   if (sourcePlacement === INVENTORY) {
     if (drawCall.stage === 'beforeCharacter') return null;
     drawItemAtCanvasPositionInRoom(item, animated[0], animated[1], scalingFactors, context,
-      drawCall.characterContext.itemTransfer.imageSet);
+      drawCall.characterContext.imageSet);
     return null;
   }
 

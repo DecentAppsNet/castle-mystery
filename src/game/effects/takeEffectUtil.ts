@@ -17,7 +17,7 @@ type CharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter'|'afte
 
 function _getSourceCanvasPoint(drawCall:CharacterDrawCall, item:Item, sourceFloorPosition:Position,
     sourceRoomItemI:number, scalingFactors:ScalingFactors):[number, number] {
-  const displayPosition = drawCall.characterContext.itemTransfer.roomContentDisplayLayout
+  const displayPosition = drawCall.characterContext.roomContentDisplayLayout
     .findProspectiveItemDisplayPosition(item, sourceFloorPosition, sourceRoomItemI);
   return getItemCanvasPositionInRoom(displayPosition, scalingFactors);
 }
@@ -42,7 +42,7 @@ function _handleTake(drawCall:EffectDrawCall, item:Item, destinationPlacement:Ch
   if (destinationPlacement === INVENTORY) {
     if (drawCall.stage === 'beforeCharacter') return null;
     drawItemAtCanvasPositionInRoom(item, animated[0], animated[1], scalingFactors, context,
-      drawCall.characterContext.itemTransfer.imageSet);
+      drawCall.characterContext.imageSet);
     return null;
   }
   if (drawCall.stage === 'afterCharacter') return null;

@@ -16,7 +16,7 @@ const DROP_EFFECT_TIME = 500;
 type CharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter'|'afterCharacter' }>;
 function _getDestinationCanvasPoint(drawCall:CharacterDrawCall, item:Item, destinationFloorPosition:Position, 
     scalingFactors:ScalingFactors):[number, number] {
-  const displayPosition = drawCall.characterContext.itemTransfer.roomContentDisplayLayout
+  const displayPosition = drawCall.characterContext.roomContentDisplayLayout
     .findProspectiveItemDisplayPosition(item, destinationFloorPosition);
   return getItemCanvasPositionInRoom(displayPosition, scalingFactors);
 }
@@ -26,14 +26,14 @@ function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:Charact
   scalingFactors:ScalingFactors, time:number,
     context:CanvasRenderingContext2D):EffectHandlerResult|null {
   if (drawCall.stage === 'afterLevel') return null;
-  const itemTransfer = drawCall.characterContext.itemTransfer;
+  const characterContext = drawCall.characterContext;
   const anatomy = drawCall.characterContext.characterAnatomy;
   const destination = _getDestinationCanvasPoint(drawCall, item, destinationFloorPosition, scalingFactors);
   const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
   if (sourcePlacement === INVENTORY) {
     if (drawCall.stage === 'beforeCharacter') return null;
     const [x, y] = interpolateNumberPair(anatomy.characterCenterCanvasPoint, destination, progress);
-    drawItemAtCanvasPositionInRoom(item, x, y, scalingFactors, context, itemTransfer.imageSet);
+    drawItemAtCanvasPositionInRoom(item, x, y, scalingFactors, context, characterContext.imageSet);
     return null;
   }
   if (drawCall.stage === 'afterCharacter') return null;

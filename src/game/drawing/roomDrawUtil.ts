@@ -374,12 +374,10 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         const characterContext:CharacterEffectDrawContext = {
           characterAnatomy,
           characterAnatomyById,
+          imageSet,
           isCharacterInActiveRoom,
           isLevelComplete,
-          itemTransfer:{
-            roomContentDisplayLayout:displayLayout,
-            imageSet
-          }
+          roomContentDisplayLayout:displayLayout
         };
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
         const spriteOverrides = handleBeforeCharacterDrawEffects(

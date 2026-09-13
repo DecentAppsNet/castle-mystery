@@ -1,12 +1,14 @@
+import { RoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
+import ImageSet from "@/game/types/ImageSet";
 import CharacterCanvasAnatomy from "./CharacterCanvasAnatomy";
-import CharacterItemTransferDrawContext from "./CharacterItemTransferDrawContext";
 
 type CharacterEffectDrawContext = {
   characterAnatomy:CharacterCanvasAnatomy,
   characterAnatomyById:ReadonlyMap<string, CharacterCanvasAnatomy>,
+  imageSet:ImageSet,
   isCharacterInActiveRoom:boolean,
   isLevelComplete:boolean,
-  itemTransfer:CharacterItemTransferDrawContext
+  roomContentDisplayLayout:RoomContentDisplayLayout
 }
 
 export default CharacterEffectDrawContext;
