@@ -5,7 +5,6 @@ import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/positionUtil";
 import { findInterpolatedCharacterPosition } from "./interpolationUtil";
 import CharacterKeyframe, { duplicateCharacterKeyframe } from "@/game/types/CharacterKeyframe";
-import RoomKeyframe from "@/game/types/RoomKeyframe";
 
 type FindKeyframePredicate = (keyFrame:TimelineKeyframe) => boolean;
 
@@ -92,11 +91,6 @@ export function findKeyframeForTime(keyframes:TimelineKeyframe[], time:number):T
 export function findCharacterKeyframeForTime(keyframes:TimelineKeyframe[], characterI:number, time:number):CharacterKeyframe {
   const { beforeKeyframe } = _findKeyframesBeforeAndAfterTime(keyframes, time);
   return beforeKeyframe.characters[characterI];
-}
-
-export function findRoomKeyframeForTime(keyframes:TimelineKeyframe[], roomI:number, time:number):RoomKeyframe {
-  const { beforeKeyframe } = _findKeyframesBeforeAndAfterTime(keyframes, time);
-  return beforeKeyframe.rooms[roomI];
 }
 
 export function findKeyframeInRange(keyframes:TimelineKeyframe[], startTime:number, 

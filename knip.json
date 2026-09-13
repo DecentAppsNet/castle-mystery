@@ -1,6 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignore": [
+    "src/developer/config.ts",
     "src/components/modalDialogs/OkayDialog.tsx",
     "src/components/progressBar/ProgressBar.tsx",
     "src/components/waitingEllipsis/WaitingEllipsis.tsx",

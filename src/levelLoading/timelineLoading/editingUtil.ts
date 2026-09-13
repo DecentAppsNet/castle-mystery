@@ -1,7 +1,8 @@
 /* This file creates and edits partial and resolved timeline keyframes.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { assert, assertNonNullable, botch } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
+
 import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
 import EditableTimelineKeyframe from "./types/EditableTimelineKeyframe";
 import CharacterKeyframe, { CHARACTER_KEYFRAME_KEYS } from "@/game/types/CharacterKeyframe";
@@ -272,22 +273,4 @@ export function createEditableTimeline(characters:readonly Character[], rooms:re
   timeline.keyframes.push(firstKeyframe);
   timeline.editableKeyframes.push(firstKeyframe); // First keyframe always guaranteed to be fully resolved.
   return timeline;
-}
-
-function _isEmptyKeyframe(keyframe:Partial<CharacterKeyframe>|Partial<RoomKeyframe>):boolean {
-  for (const key in keyframe) {
-    if (Object.hasOwn(keyframe, key)) return false;
-  }
-  return true;
-}
-
-/** Returns the latest resolved keyframe for a character ID or index. */
-export function findLatestKeyFrameForCharacter(timeline:EditableTimeline, characterRef:string|number):TimelineKeyframe {
-  const characterI:number = typeof characterRef === 'string' ? timeline.characterIdToI[characterRef] : characterRef;
-  assert(timeline.keyframes.length === timeline.editableKeyframes.length);
-  for(let i = timeline.editableKeyframes.length - 1; i >= 0; --i) {
-    if (!_isEmptyKeyframe(timeline.editableKeyframes[i].characters[characterI])) 
-      return timeline.keyframes[i];
-  }
-  botch(); // There should at least be a first editable keyframe that includes all keys.
 }

@@ -3,10 +3,7 @@ export {
   createCharacterKeyframeAtTime,
   createKeyframeAtTime, 
   findCharacterPositionAtTime,
-  findFollowingKeyframe,
   findKeyframeForTime, 
-  findKeyframeInRange,
-  findPrecedingKeyframe,
-  findRoomKeyframeForTime 
+  findKeyframeInRange
 } from './retrievalUtil';
 export { findInterpolatedCharacterPosition } from './interpolationUtil';

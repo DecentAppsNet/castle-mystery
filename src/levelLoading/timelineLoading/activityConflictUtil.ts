@@ -8,13 +8,6 @@ import { ErrorCollector } from "../errorCollection";
 import { formatMsecsAsTimestamp } from "../activityLoading";
 import { verbToPlainForm } from "../activityLoading/parseFormatUtil";
 
-/** A prior activity that overlaps the current activity through a shared busy character. */
-export type ActivityConflict = {
-  kind:'item'|'character',
-  conflictingId:string,
-  activity:Activity
-};
-
 function _findSharedCharacterOrItemId(firstIds:readonly string[], secondIds:readonly string[]):string|null {
   return firstIds.find(characterId => secondIds.includes(characterId)) ?? null;
 }

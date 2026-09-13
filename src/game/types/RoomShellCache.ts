@@ -1,4 +1,4 @@
-type RoomShellVariantImage = Readonly<{
+export type RoomShellVariantImage = Readonly<{
   image:CanvasImageSource|null,
   width:number,
   height:number,
@@ -28,4 +28,3 @@ export function createEmptyRoomShellVariantImages():RoomShellVariantImages {
 }
 
 export default RoomShellCache;
-export type { RoomShellVariantImage, RoomShellVariantImages };

@@ -61,14 +61,6 @@ function _calcItemImageRect(itemDrawRect:ItemImageRect, image:ImageBitmap):ItemI
   };
 }
 
-function _getItemBaseDisplayPosition(item:Item):Position {
-  return {
-    x:item.position.x + item.drawOffset.x,
-    y:item.position.y + item.drawOffset.y,
-    z:item.position.z + item.drawOffset.z
-  };
-}
-
 // Converts base item dimensions plus projection outsets into the canvas draw rect shape used by item images.
 export function createItemDrawRect(baseWidthPixels:number, baseHeightPixels:number,
   projectionOutsetXPixels:number, projectionOutsetYPixels:number):ItemImageRect {
@@ -99,10 +91,6 @@ function _getRoomItemGamePosition(displayPosition:Position, scalingFactors:Scali
 
 export function getItemCanvasPositionInRoom(displayPosition:Position, scalingFactors:ScalingFactors):[number, number] {
   return projectRoomPointWithDepth(displayPosition.x, displayPosition.y, displayPosition.z, scalingFactors);
-}
-
-export function getItemBaseCanvasPositionInRoom(item:Item, scalingFactors:ScalingFactors):[number, number] {
-  return getItemCanvasPositionInRoom(_getItemBaseDisplayPosition(item), scalingFactors);
 }
 
 // Returns the canvas-space rectangle occupied by the item's image in a room.

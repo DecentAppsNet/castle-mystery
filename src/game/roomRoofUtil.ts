@@ -11,7 +11,7 @@ const ROOF_PEAK_HEIGHT_RATIO = 0.2;
 const RENDERED_PANEL_RIGHT_OVERHANG_HEIGHT_RATIO = 0.04;
 const RENDERED_PANEL_BOTTOM_OVERHANG_HEIGHT_RATIO = 0.02;
 
-export type RoofTile = Readonly<{
+type RoofTile = Readonly<{
   leftX:number,
   topY:number,
   width:number

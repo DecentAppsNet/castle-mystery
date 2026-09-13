@@ -41,12 +41,12 @@ export function findRoomIAtPosition(rooms:readonly Room[], x:number, y:number):n
   return -1;
 }
 
-export function findCharactersInRoom(room:Room, characters:readonly Character[]):Character[] {
+function _findCharactersInRoom(room:Room, characters:readonly Character[]):Character[] {
   return characters.filter(c => isPositionInRect(c.position.x, c.position.y, room.rect));
 }
 
 export function findCharactersWithEffectsInRoom(room:Room, characters:readonly CharacterWithEffects[]):CharacterWithEffects[] {
-  return findCharactersInRoom(room, characters) as CharacterWithEffects[];
+  return _findCharactersInRoom(room, characters) as CharacterWithEffects[];
 }
 
 export function findOpenExitConnectingRooms(room:Room, otherRoom:Room):RoomExit|null {

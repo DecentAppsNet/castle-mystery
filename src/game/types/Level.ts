@@ -50,8 +50,4 @@ export function createDefaultMutableLevel():MutableLevel {
   };
 }
 
-export function createDefaultLevel():Level {
-  return createDefaultMutableLevel();
-}
-
 export default Level;
