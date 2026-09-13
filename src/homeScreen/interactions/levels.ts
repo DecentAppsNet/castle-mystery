@@ -52,7 +52,7 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   
   const { level, errors } = await loadLevelFromUrl(levelUrl);
   if (!level) {
-    console.error(errors.describeErrors);
+    console.error(errors.describeErrors());
     throw new Error('Failed to load level. See console for details.');
   }
   const imageSet = await createImageSetFromLevel(level);

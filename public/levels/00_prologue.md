@@ -124,7 +124,7 @@ VVVHHGG
 : Marty says, "Why?"
 : Lorenzo says, "It's weird to give a museum tour to just one person."
 : Marty says, "LARRY!"
-11:00:16 Larry @ Exhibit Room.90%
+11:00:16 Larry @ Exhibit Room (90%)
 : Lorenzo faces right.
 : says, "Okay, I guess two people is enough for a tour."
 : faces left.
@@ -138,25 +138,25 @@ VVVHHGG
 : Larry takes Vase in right hand
 : Lorenzo faces right.
 : says, "Put that down!"
-11:00:45 Larry @ Gift Shop.80%
+11:00:45 Larry @ Gift Shop (80%)
 : drops Vase on Shelf 3
-: @ Gift Shop.30%
-11:00:46 Lorenzo @ Gift Shop.10%
+: @ Gift Shop (30%)
+11:00:46 Lorenzo @ Gift Shop (10%)
 : says, "Where is it?"
 : Larry faces right.
-: Lorenzo @ Gift Shop.80%
-: @ Gift Shop.70%
+: Lorenzo @ Gift Shop (80%)
+: @ (70%)
 : says, "Oh no!"
-: @ Gift Shop.80%
-: @ Gift Shop.60%
-: @ Gift Shop.70%
+: @ (80%)
+: @ (60%)
+: @ (70%)
 
 11:00:04 Larry thinks, "What is Marty doing?"
 
 11:00:48 Marty takes Sarcophagus Lid in left hand
-: @ Exhibit Room.30%
+: @ Exhibit Room (30%)
 : drops Sarcophagus Lid
-: @ Exhibit Room.50%
+: @ Exhibit Room (50%)
 : faces left
 : says, "Sick!"
 

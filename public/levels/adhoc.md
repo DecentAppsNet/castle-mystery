@@ -1,8 +1,8 @@
 # general
 
-* title=Bootstrap
+* title=Adhoc
 * activeCharacter=Sam
-//* time=0:00:10
+* time=0:00:10
 
 # map
 

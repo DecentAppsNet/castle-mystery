@@ -8,6 +8,7 @@ type CharacterEffectDrawContext = {
   imageSet:ImageSet,
   isCharacterInActiveRoom:boolean,
   isLevelComplete:boolean,
+  roomFrontLeftCanvasX:number,
   roomContentDisplayLayout:RoomContentDisplayLayout
 }
 

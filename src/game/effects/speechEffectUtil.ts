@@ -103,9 +103,10 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
   startTime: number, dipOffset: number, characterId:string):EffectHandlerResult|null {
   if (drawCall.stage === 'beforeCharacter') return _calcSpeakingHeadRotationResult(time, startTime, dipOffset);
   if (drawCall.stage === 'afterCharacter') {
-    const { characterAnatomy:{ anchorX, anchorTopY }, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
+    const { characterAnatomy:{ anchorX, anchorTopY }, isCharacterInActiveRoom, isLevelComplete,
+      roomFrontLeftCanvasX } = drawCall.characterContext;
     if (isCharacterInActiveRoom || isLevelComplete) {
-      drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+      drawSpeechBubble(text, anchorX, anchorTopY, roomFrontLeftCanvasX, scalingFactors, context, startTime, time);
     }
     return null;
   }

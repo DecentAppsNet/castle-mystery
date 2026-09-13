@@ -1,3 +1,4 @@
 # levels
 
-* bootstrap.md
+* adhoc.md
+* 00_prologue.md
