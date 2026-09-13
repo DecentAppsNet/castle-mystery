@@ -13,7 +13,7 @@ const FADE_IN_DURATION = 200;
 const HOLD_DURATION = 300;
 const FADE_OUT_DURATION = 350;
 const ROTATION_DURATION = 1000;
-const HEAD_RADIUS_TO_DIAMETER = 4;
+const HEAD_RADIUS_TO_DIAMETER = 8;
 
 function _calcOpacity(elapsedMetaTime:number):number {
   if (elapsedMetaTime < FADE_IN_DURATION) return clamp(elapsedMetaTime / FADE_IN_DURATION, 0, 1);

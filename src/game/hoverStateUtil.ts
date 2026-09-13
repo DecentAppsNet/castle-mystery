@@ -20,6 +20,8 @@ import ExitType from "./types/ExitType";
 import { findCharactersWithEffectsInRoom, findRoom, findRoomAtPosition } from "./roomUtil";
 import { updateTimelineSnapshotActiveContext } from "./timeline";
 import CharacterWithEffects from "./types/CharacterWithEffects";
+import { createCharacterSelectionEffect } from "./effects/characterSelectionEffectUtil";
+import { appendCharacterMetaTimeEffect } from "./effects/metaTimeEffectUtil";
 
 function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }) {
   gameState.viewedItemIds.add(item.id);
@@ -108,13 +110,15 @@ function _findSkinIdForCharacter(characters:Character[], characterId:string):str
   return character.skinId;
 }
 
-export function updateGameStateForMouseDown(gameState:GameState, snapshotCharacters:CharacterWithEffects[], event:MouseDownEvent, _metaTime:number) {
+export function updateGameStateForMouseDown(gameState:GameState, snapshotCharacters:CharacterWithEffects[], event:MouseDownEvent, metaTime:number) {
   const characterContent = _findInteractiveCharacterContentAtPosition(gameState, snapshotCharacters, event.x, event.y);
   if (characterContent) {
     const character = characterContent.character;
     gameState.activeCharacterId = character.id;
     gameState.activeSkinIdAtSelection = _findSkinIdForCharacter(snapshotCharacters, character.id);
     updateTimelineSnapshotActiveContext(gameState.timelineSnapshot, character.id);
+    const effect = createCharacterSelectionEffect(metaTime);
+    appendCharacterMetaTimeEffect(gameState.characterMetaTimeEffectsByCharacterId, character.id, effect);
     return;
   }
 }
