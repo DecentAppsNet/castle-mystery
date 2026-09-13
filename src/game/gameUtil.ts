@@ -43,6 +43,8 @@ import { findMetaTimeNow } from "./metaTimeUtil";
 import { createRevealedSkinLinkages } from "./skinLinkageUtil";
 import Timeline from "./types/Timeline";
 import { findCharacterKeyframeForTime } from "./timeline/retrievalUtil";
+import { removeExpiredMetaTimeEffects } from "./effects/metaTimeEffectUtil";
+import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
 
 const CAMERA_ZOOM_STEP = 0.1;
 
@@ -50,36 +52,37 @@ function _setActiveRoomDiscovered(gameState:GameState) {
   gameState.discoveryState.discoveredRoomIds.add(gameState.timelineSnapshot.activeRoom.id);
 }
 
-function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, _metaTime:number) {
-  // const wasPlaying = gameState.isPlaying;
+function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
+  const wasPlaying = gameState.isPlaying;
   gameState.time = event.time;
   gameState.timelineSnapshot = createTimelineSnapshot(gameState, event.time);
   gameState.isPlaying = false;
   gameState.metaTimeToGameTimeOffset = 0;
-  // TODO restore - if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
+  if (wasPlaying) gameState.metaTimeEffects.push(createPauseEffect(metaTime));
 }
 
 function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent, metaTime:number) {
-  // const wasPlaying = gameState.isPlaying;
+  const wasPlaying = gameState.isPlaying;
+
+  // Update playback state and its clock offset.
   gameState.isPlaying = event.isPlaying;
   if (event.isPlaying) {
     gameState.metaTimeToGameTimeOffset = gameState.time - metaTime;
   } else {
     gameState.metaTimeToGameTimeOffset = 0; // To find errors if code incorrectly assumes the value to be set.
   }
-  // TODO restore
-  /* if (wasPlaying !== event.isPlaying) {
-    gameState.activeEffects.push(event.isPlaying
-      ? createPlayEffect(metaTime, gameState.scalingFactors.roomLineWidth)
-      : createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
-  } */
+
+  // Emit feedback only for a real playback transition.
+  if (wasPlaying !== event.isPlaying) {
+    gameState.metaTimeEffects.push(event.isPlaying ? createPlayEffect(metaTime) : createPauseEffect(metaTime));
+  }
 }
 
-function _pauseGameState(gameState:GameState, _metaTime:number) {
-  // const wasPlaying = gameState.isPlaying;
+function _pauseGameState(gameState:GameState, metaTime:number) {
+  const wasPlaying = gameState.isPlaying;
   gameState.isPlaying = false;
   gameState.metaTimeToGameTimeOffset = 0;
-  // TODO restore if (wasPlaying) gameState.activeEffects.push(createPauseEffect(metaTime, gameState.scalingFactors.roomLineWidth));
+  if (wasPlaying) gameState.metaTimeEffects.push(createPauseEffect(metaTime));
 }
 
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
@@ -96,6 +99,10 @@ function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEven
 }
 
 function _updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:number, cameraAspectRatio:number) {
+  // Remove ended effects before events can create effects at the current meta-time.
+  removeExpiredMetaTimeEffects(gameState.metaTimeEffects, metaTime);
+
+  // Apply current-frame player events.
   const snapshotCharacters = gameState.timelineSnapshot.characters;
   events.forEach(event => {
     switch(event.type) {
@@ -109,6 +116,8 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:nu
       default: botch();
     }
   });
+
+  // Advance timeline playback and pause at its end.
   if (gameState.isPlaying) {
     const endTime = gameState.startTime + gameState.duration;
     const nextTime = Math.min(endTime, metaTime + gameState.metaTimeToGameTimeOffset);
@@ -116,6 +125,8 @@ function _updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:nu
     gameState.timelineSnapshot = createTimelineSnapshot(gameState, nextTime);
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
   }
+
+  // Update world state derived from the current timeline snapshot.
   syncCameraTargetToActiveRoom(gameState.camera, gameState.baseRooms, gameState.timelineSnapshot.activeRoom,
     cameraAspectRatio, metaTime, gameState.groundFloorY);
   updateCamera(gameState.camera, metaTime);
