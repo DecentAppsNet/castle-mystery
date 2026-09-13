@@ -342,6 +342,8 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
       anchorX:canvasLayout.characterCenterCanvasPoint[0],
       anchorTopY:canvasLayout.anchorTopY,
       characterCenterCanvasPoint:canvasLayout.characterCenterCanvasPoint,
+      headCenterCanvasPoint:[canvasLayout.layout.head.centerX, canvasLayout.layout.head.centerY],
+      headRadius:canvasLayout.layout.head.radius,
       leftHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'left', scalingFactors),
       rightHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'right', scalingFactors)
     });
@@ -380,7 +382,8 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           }
         };
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
-        const spriteOverrides = handleBeforeCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
+        const spriteOverrides = handleBeforeCharacterDrawEffects(
+          content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context);
         drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
           isHighlighted, metaTime, spriteOverrides, characterCanvasLayout);
         handleAfterCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);

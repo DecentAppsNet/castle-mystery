@@ -7,17 +7,16 @@ import ScalingFactors from "@/game/types/ScalingFactors";
 const NO_OVERRIDES:SpriteOverride[] = []; // Avoid repeated allocations for trivial return logic.
 
 // Specialized effect handler calling for the beforeCharacter draw stage. Coupled to this knowledge:
-// * none of the before-character-draw handlers use metaTime
 // * some of them will return sprite overrides
 // This function can potentially be called hundreds of times in one animation frame. Avoid introducing performance issues.
-export function handleBeforeCharacterDrawEffects(effects:Effect[], scalingFactors:ScalingFactors, gameTime:number, 
+export function handleBeforeCharacterDrawEffects(effects:Effect[], scalingFactors:ScalingFactors, gameTime:number, metaTime:number,
     characterContext:CharacterEffectDrawContext, canvasContext:CanvasRenderingContext2D):SpriteOverride[] {
   if (effects.length === 0) return NO_OVERRIDES;
   const spriteOverrides:SpriteOverride[] = [];
   const drawCall:EffectDrawCall = { stage:'beforeCharacter', characterContext };
   effects.forEach(effect => {
     if (!effect.handler) return; // TODO after you've implemented all the handlers, consider if null handlers are still a valid case and tighten the type if not.
-    const result = effect.handler(drawCall, scalingFactors, gameTime, -1 /* unused */, canvasContext);
+    const result = effect.handler(drawCall, scalingFactors, gameTime, metaTime, canvasContext);
     if (result) spriteOverrides.push(...result.spriteOverrides);
   });
   return spriteOverrides;
