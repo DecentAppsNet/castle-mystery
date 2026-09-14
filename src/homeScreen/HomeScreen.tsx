@@ -15,7 +15,6 @@ import LevelSelector from "./levelSelector/LevelSelector";
 import { changeLevel, continueToNextLevel } from "./interactions/levels";
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
 import { createDiscoveries } from "@/game/discoveriesUtil";
-import Timeline from "@/game/types/Timeline";
 import TimeSlider from "./timeSlider/TimeSlider";
 
 function _isEditableTarget(target:EventTarget|null):boolean {
@@ -43,7 +42,6 @@ function HomeScreen() {
   const [discoveries, setDiscoveries] = useState<Discoveries>(createEmptyDiscoveries());
   const [conclusionClaimCooldowns, setConclusionClaimCooldowns] = useState<Record<string, number>>({});
   const [, setActiveCharacterId] = useState<string>("");
-  const [timeline, setTimeline] = useState<Timeline|null>(null);
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
@@ -62,7 +60,6 @@ function HomeScreen() {
       setConclusions(initResults.gameState.conclusions);
       setDiscoveries(createDiscoveries(initResults.gameState));
       setActiveCharacterId(initResults.gameState.activeCharacterId);
-      setTimeline(initResults.gameState.timeline);
       if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
     }).catch((error:unknown) => {
       if (isCancelled) return;
@@ -161,7 +158,7 @@ function HomeScreen() {
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
           minutes={minutes}
-          timeline={timeline}
+          timeline={gameState.timeline}
           rooms={gameState.baseRooms}
           activeCharacterId={gameState.activeCharacterId}
           activeSkinIdAtSelection={gameState.activeSkinIdAtSelection}
