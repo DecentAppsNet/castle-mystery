@@ -2,6 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { createScratchCanvas } from "@/game/drawing/canvasSurfaceUtil";
+import { calcTextureOverlaySize } from "@/game/textureSizingUtil";
 
 import { ImageFilterArgs } from "./imageFilterUtil";
 
@@ -70,22 +71,23 @@ function _sampleSmoothNoise(grid:number[][], x:number, y:number, width:number, h
 }
 
 function _applyStoneOverlayImageFilter({ context, width, height, seed }:ImageFilterArgs, spec:StoneOverlaySpec) {
-  const overlayCanvas = createScratchCanvas(width, height);
+  const { width:overlayWidth, height:overlayHeight } = calcTextureOverlaySize(width, height);
+  const overlayCanvas = createScratchCanvas(overlayWidth, overlayHeight);
   if (!overlayCanvas) return;
   const overlayContext = overlayCanvas.getContext('2d');
   if (!overlayContext) return;
 
-  const imageData = overlayContext.createImageData(width, height);
+  const imageData = overlayContext.createImageData(overlayWidth, overlayHeight);
   const pixels = imageData.data;
   const coarseNoise = _createNoiseGrid(spec.coarseColumns, spec.coarseRows, seed ^ spec.coarseSeed);
   const detailNoise = _createNoiseGrid(spec.detailColumns, spec.detailRows, seed ^ spec.detailSeed);
 
-  for (let y = 0; y < height; ++y) {
-    for (let x = 0; x < width; ++x) {
-      const nx = x / width;
-      const ny = y / height;
-      const coarse = _sampleSmoothNoise(coarseNoise, x, y, width, height);
-      const detail = _sampleSmoothNoise(detailNoise, x, y, width, height);
+  for (let y = 0; y < overlayHeight; ++y) {
+    for (let x = 0; x < overlayWidth; ++x) {
+      const nx = x / overlayWidth;
+      const ny = y / overlayHeight;
+      const coarse = _sampleSmoothNoise(coarseNoise, x, y, overlayWidth, overlayHeight);
+      const detail = _sampleSmoothNoise(detailNoise, x, y, overlayWidth, overlayHeight);
       const blendedNoise = coarse * 0.8 + detail * 0.2;
       const splotch = _smoothstep01((blendedNoise - spec.splotchThreshold) / spec.splotchRange);
       const edgeDistance = Math.min(nx, 1 - nx, ny, 1 - ny);
@@ -97,7 +99,7 @@ function _applyStoneOverlayImageFilter({ context, width, height, seed }:ImageFil
         + bottomGrime * spec.bottomGrimeDarkness
       );
       const alpha = Math.round(darkness * 255);
-      const pixelI = (y * width + x) * 4;
+      const pixelI = (y * overlayWidth + x) * 4;
       pixels[pixelI] = 0;
       pixels[pixelI + 1] = 0;
       pixels[pixelI + 2] = 0;
@@ -108,7 +110,7 @@ function _applyStoneOverlayImageFilter({ context, width, height, seed }:ImageFil
   overlayContext.putImageData(imageData, 0, 0);
   context.save();
   context.globalCompositeOperation = 'multiply';
-  context.drawImage(overlayCanvas, 0, 0);
+  context.drawImage(overlayCanvas, 0, 0, width, height);
   context.restore();
 }
 

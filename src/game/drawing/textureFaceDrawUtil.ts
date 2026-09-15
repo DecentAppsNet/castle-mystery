@@ -133,6 +133,13 @@ function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWi
   faceContext.putImageData(targetImageData, 0, 0);
 }
 
+function _textureNeedsFrequentPixelReads(imageSet:ImageSet, texture:Texture):boolean {
+  return texture.operations.some(operation => {
+    if (!isTextureImageOperation(operation)) return false;
+    return operation.alphaMode === 'punch' || Boolean(findImageAsset(imageSet, operation.imageUrl)?.punchMaskImage);
+  });
+}
+
 export function createTiledTextureFaceCanvas(imageSet:ImageSet, texture:Texture, totalHorizontalCount:number,
   totalVerticalCount:number, textureLightness:number, seedText:string):TextureFaceImage|null {
   if (totalHorizontalCount <= 0 || totalVerticalCount <= 0) return null;
@@ -152,7 +159,7 @@ export function createTiledTextureFaceCanvas(imageSet:ImageSet, texture:Texture,
   );
   const faceCanvas = createScratchCanvas(faceWidth, faceHeight);
   if (!faceCanvas) return null;
-  const faceContext = getScratchCanvasContext2d(faceCanvas, true);
+  const faceContext = getScratchCanvasContext2d(faceCanvas, _textureNeedsFrequentPixelReads(imageSet, texture));
   if (!faceContext) return null;
 
   texture.operations.forEach((operation, operationIndex) => {

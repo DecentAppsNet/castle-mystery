@@ -121,10 +121,9 @@ function _aggregateTargetSamples(events:TraceEvent[], navigationStartTs:number):
   return metrics;
 }
 
-function _findFirstPresentedFrameTs(events:TraceEvent[], afterTs:number):number {
+function _findFirstPresentedFrameTs(events:TraceEvent[], afterTs:number):number|undefined {
   const drawFrame = events.find(event => event.name === 'DrawFrame' && event.ts >= afterTs);
-  if (!drawFrame) throw new Error('No DrawFrame found after the final overlay sample.');
-  return drawFrame.ts;
+  return drawFrame?.ts;
 }
 
 function _analyzeTrace(tracePath:string) {
@@ -137,7 +136,10 @@ function _analyzeTrace(tracePath:string) {
 
   return {
     tracePath:resolvedPath,
-    navigationToPresentedFrameUsecs:firstPresentedFrameTs - navigationStartTs,
+    navigationToFinalOverlaySampleUsecs:metrics.lastTargetSampleTs - navigationStartTs,
+    navigationToPresentedFrameUsecs:firstPresentedFrameTs === undefined
+      ? undefined
+      : firstPresentedFrameTs - navigationStartTs,
     ...metrics
   };
 }
@@ -154,13 +156,19 @@ function main() {
 
   results.forEach((result, resultI) => {
     console.log(`Sample ${resultI + 1}: ${result.tracePath}`);
-    console.log(`  reload to first DrawFrame after overlay work: ${_formatMsecs(result.navigationToPresentedFrameUsecs)}`);
+    console.log(`  reload to final overlay sample: ${_formatMsecs(result.navigationToFinalOverlaySampleUsecs)}`);
+    console.log(`  reload to first DrawFrame after overlay work: ${result.navigationToPresentedFrameUsecs === undefined
+      ? 'unavailable (capture ended before presentation)'
+      : _formatMsecs(result.navigationToPresentedFrameUsecs)}`);
     console.log(`  overlay sampled inclusive time: ${_formatMsecs(result.inclusiveUsecs)}`);
     console.log(`  overlay sampled self time: ${_formatMsecs(result.selfUsecs)}`);
     console.log(`  overlay samples: ${result.targetSampleCount}`);
   });
 
-  console.log(`Median reload-to-render: ${_formatMsecs(_median(results.map(result => result.navigationToPresentedFrameUsecs)))}`);
+  const renderTimings = results.flatMap(result => result.navigationToPresentedFrameUsecs === undefined
+    ? []
+    : [result.navigationToPresentedFrameUsecs]);
+  if (renderTimings.length > 0) console.log(`Median reload-to-render: ${_formatMsecs(_median(renderTimings))}`);
   console.log('Invocation count and canvas dimensions are not encoded by sampled CPU profiles; inspect separately if required.');
 }
 

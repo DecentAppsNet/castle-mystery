@@ -120,7 +120,7 @@ VVVHHGG
 
 11:00:00 Marty says, "Aren't you going to give a tour?"
 : Larry faces left.
-: Lorenzo says, "I need more people here before I can start."
+: Lorenzo says, "I need more people here before I can start." to Marty
 : Marty says, "Why?"
 : Lorenzo says, "It's weird to give a museum tour to just one person."
 : Marty says, "LARRY!"
