@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Canvas from '@/components/canvas/Canvas';
 import { mouseDown, mouseMove, mouseWheel } from '@/game/playerEventUtil';
 import { canvasToGamePosition } from '@/game/drawing/drawUtil';
+import { prepareRoomShellCache } from '@/game/drawing/gameStateDrawUtil';
 import { updateAndDraw } from '@/game/gameUtil';
 import styles from './LevelView.module.css';
 import GameState from '@/game/types/GameState';
@@ -19,7 +20,8 @@ type Props = {
 }
 
 function LevelView({gameState, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged, onDiscoveriesChanged, isScrubbing}:Props) {
-  const gameStateRef = useRef<GameState>(null);
+  const gameStateRef = useRef<GameState>(gameState);
+  const [roomShellCachePreparedGameState, setRoomShellCachePreparedGameState] = useState<GameState|null>(null);
   
   useEffect(() => { 
     gameStateRef.current = gameState;
@@ -28,7 +30,15 @@ function LevelView({gameState, onMinutesChanged, onIsPlayingChanged, onActiveCha
   return <div className={styles.container}>
     <Canvas 
       isAnimated={true} 
-      onDraw={(context) => updateAndDraw(gameStateRef.current, context, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged, isScrubbing, onDiscoveriesChanged)} 
+      onDraw={(context) => {
+        if (roomShellCachePreparedGameState !== gameState) return;
+        updateAndDraw(gameStateRef.current, context, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
+          onConclusionsChanged, isScrubbing, onDiscoveriesChanged);
+      }}
+      onDrawLoopStart={(destWidth, destHeight) => {
+        prepareRoomShellCache(gameState, destWidth, destHeight);
+        setRoomShellCachePreparedGameState(gameState);
+      }}
       onMouseDown={(e) => {
         if (!gameStateRef.current) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();

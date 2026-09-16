@@ -199,9 +199,7 @@ function _createRoomRoofCanvas(room:Room, gameState:GameState, destWidth:number,
   });
 }
 
-function _ensureRoomShellCaches(gameState:GameState, context:CanvasRenderingContext2D) {
-  const destWidth = context.canvas.width;
-  const destHeight = context.canvas.height;
+export function prepareRoomShellCache(gameState:GameState, destWidth:number, destHeight:number) {
   if (destWidth <= 0 || destHeight <= 0) return;
 
   const cacheKey = _calcRoomShellCacheKey(destWidth, destHeight);
@@ -336,7 +334,7 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
 }
 
 export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D, metaTime:number) {
-  _ensureRoomShellCaches(gameState, context);
+  prepareRoomShellCache(gameState, context.canvas.width, context.canvas.height);
   const { activeCharacter, activeRoom, characters, rooms } = gameState.timelineSnapshot;
   const canShowHoverPopovers = gameState.isLevelComplete
     || !gameState.discoveryState.obscuredRoomIds.has(activeRoom.id);
