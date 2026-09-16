@@ -85,6 +85,12 @@ function _pauseGameState(gameState:GameState, metaTime:number) {
   if (wasPlaying) gameState.metaTimeEffects.push(createPauseEffect(metaTime));
 }
 
+// Use only when playback must stop synchronously because the RAF update loop is about to be suspended.
+// Normal gameplay changes must use player events so game state remains owned by the RAF update loop.
+export function pauseGameState(gameState:GameState) {
+  _pauseGameState(gameState, findMetaTimeNow());
+}
+
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
   const activeRoom = gameState.timelineSnapshot.activeRoom;
   if (!gameState.isLevelComplete && gameState.discoveryState.obscuredRoomIds.has(activeRoom.id)) return null;
