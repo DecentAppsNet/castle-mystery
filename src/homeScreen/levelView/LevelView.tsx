@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Canvas from '@/components/canvas/Canvas';
-import { mouseDown, mouseMove, mouseWheel } from '@/game/playerEventUtil';
+import { mouseDown, mouseMove, mouseWheel, playPause } from '@/game/playerEventUtil';
 import { canvasToGamePosition } from '@/game/drawing/drawUtil';
 import { prepareRoomShellCache } from '@/game/drawing/gameStateDrawUtil';
-import { updateAndDraw } from '@/game/gameUtil';
+import { pauseGameState, updateAndDraw } from '@/game/gameUtil';
 import styles from './LevelView.module.css';
 import GameState from '@/game/types/GameState';
 import Discoveries from '@/game/types/Discoveries';
@@ -38,6 +38,12 @@ function LevelView({gameState, onMinutesChanged, onIsPlayingChanged, onActiveCha
       onDrawLoopStart={(destWidth, destHeight) => {
         prepareRoomShellCache(gameState, destWidth, destHeight);
         setRoomShellCachePreparedGameState(gameState);
+      }}
+      onPageViewingChange={(isViewingPage) => {
+        if (isViewingPage) return;
+        pauseGameState(gameState);
+        playPause(false);
+        onIsPlayingChanged(false);
       }}
       onMouseDown={(e) => {
         if (!gameStateRef.current) return;

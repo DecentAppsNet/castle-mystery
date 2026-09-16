@@ -16,6 +16,7 @@ interface IProps {
   onClick?:MouseEventHandler<HTMLCanvasElement>,
   onDraw:DrawCallback,
   onDrawLoopStart?:(destWidth:number, destHeight:number) => void,
+  onPageViewingChange?:(isViewingPage:boolean) => void,
   onExitFullScreen?:() => void,
   exitFullScreenText?:string,
   onMouseMove?:MouseEventHandler<HTMLCanvasElement>,
@@ -38,7 +39,7 @@ function _updateCanvasDimensions(container:HTMLDivElement, setContainerDimension
 function Canvas(props:IProps) {
   const [containerDimensions, setContainerDimensions] = useState<[number,number]|null>(null);
   const [fullScreenCanvasStyle, setFullScreenCanvasStyle] = useState<CSSProperties>({});
-  const { onClick, onDraw, onDrawLoopStart, onExitFullScreen,
+  const { onClick, onDraw, onDrawLoopStart, onPageViewingChange, onExitFullScreen,
     onMouseDown, onMouseMove, onMouseUp, onWheel,
     isAnimated, isFullScreen, exitFullScreenText } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,6 +55,7 @@ function Canvas(props:IProps) {
   useEffect(() => { // Handle drawing.
     const context = canvasRef.current?.getContext('2d');
     if (!context) return;
+    let isDrawLoopActive = true;
 
     const container:HTMLDivElement|null = containerRef?.current;
     if (container) {
@@ -62,19 +64,33 @@ function Canvas(props:IProps) {
     }
 
     const render = () => {
+      if (!isDrawLoopActive || document.hidden) return;
       if (context.canvas.width && context.canvas.height) onDraw(context);
-      if (isAnimated) animationFrameId = window.requestAnimationFrame(render);
+      if (isDrawLoopActive && isAnimated) animationFrameId = window.requestAnimationFrame(render);
     };
-    render();
+    const onVisibilityChange = () => {
+      const isViewingPage = !document.hidden;
+      onPageViewingChange?.(isViewingPage);
+      if (!isViewingPage) {
+        window.cancelAnimationFrame(animationFrameId);
+        animationFrameId = NO_ANIMATION_IN_PROGRESS;
+      } else {
+        render();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    if (!document.hidden) render();
 
     return () => {
+      isDrawLoopActive = false;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       if (isAnimated) window.cancelAnimationFrame(animationFrameId);
     }
-  }, [onDraw, onDrawLoopStart, isAnimated]);
+  }, [onDraw, onDrawLoopStart, onPageViewingChange, isAnimated]);
 
   useEffect(() => { // Handle redrawing after canvas dimensions are updated.
     const context = canvasRef.current?.getContext('2d');
-    if (!context || !context.canvas.width || !context.canvas.height) return;
+    if (document.hidden || !context || !context.canvas.width || !context.canvas.height) return;
     onDraw(context);
   }, [onDraw, containerDimensions]);
 
