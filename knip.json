@@ -5,6 +5,7 @@
     "src/components/modalDialogs/OkayDialog.tsx",
     "src/components/progressBar/ProgressBar.tsx",
     "src/components/waitingEllipsis/WaitingEllipsis.tsx",
-    "src/persistence/**"
+    "src/persistence/**",
+    "scripts/**"
   ]
 }
