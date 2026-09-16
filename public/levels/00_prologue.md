@@ -118,7 +118,8 @@ VVVHHGG
 
 # itinerary
 
-11:00:00 Marty says, "Aren't you going to give a tour?"
+11:00:00 Marty waits
+: says, "Aren't you going to give a tour?"
 : Larry faces left.
 : Lorenzo says, "I need more people here before I can start." to Marty
 : Marty says, "Why?"
