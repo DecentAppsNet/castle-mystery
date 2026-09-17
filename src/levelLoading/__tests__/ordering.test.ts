@@ -22,4 +22,18 @@ describe('level loading - activity ordering', () => {
     expect(createKeyframeAtTime(level!.timeline.keyframes, 1_000).characters[samI].bodyOrientation).toBe('laying');
     expect(createKeyframeAtTime(level!.timeline.keyframes, 3_000).characters[samI].bodyOrientation).toBe('standing');
   });
+
+  it('schedules a newly resolved relative activity before a preceding later activity', () => {
+    const text = replaceSection(defaultLevelText, 'itinerary', [
+      '0:00:00 Sam waits 20',
+      ': Sam sits',
+      '0:00:12 Benny waits 1',
+      ': Benny lays'
+    ]);
+
+    const { level, errors } = loadLevelForTest(text, 'ordering-resolved-before-preceding.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
 });

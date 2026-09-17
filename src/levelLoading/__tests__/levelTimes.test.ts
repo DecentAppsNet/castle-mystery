@@ -13,9 +13,9 @@ describe('level loading - times and labels', () => {
     expect(level?.startTime).toBe(3_723_000);
   });
 
-  it('ignores leading and interstitial blank itinerary lines', () => {
+  it('ignores leading and interstitial blank lines and visual descriptions', () => {
     const text = replaceSection(levelTimesBaseText, 'itinerary', [
-      '', '', '0:00:03 Sam sits', '', ': Sam stands'
+      '', '(Sam enters the room)', '', '0:00:03 Sam sits', '(Sam leaves)', '', ': Sam stands'
     ]);
     const { level, errors } = loadLevelForTest(text, 'times-blank-lines.md');
 

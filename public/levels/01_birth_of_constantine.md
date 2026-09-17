@@ -180,7 +180,7 @@ A.......
 
 9:00:00 Sticky Agatha says "Today, we may see our Queen."
 : takes infant in right hand.
-9:00:07 @ East Square.10%
+9:00:07 @ East Square (10%)
 
 9:00:00 Pope takes Holy Binky in right hand
 : says "Behold the Holy Binky!"
@@ -188,10 +188,10 @@ A.......
 : says "Carved by Joseph. Given to the baby Jesus."
 : Ugolino says "A fitting gift for the new mother."
 
-9:00:19 Ugolino @ Cathedral.30%
+9:00:19 Ugolino @ Cathedral (30%)
 : faces right.
 
-9:00:20 Pope @ Birthing Tent.20%
+9:00:20 Pope @ Birthing Tent (20%)
 : Sofia the Midwife says, "My lady, his Holiness has arrived."
 : Constance I says, "I know! He reeks of frankincense."
 : Pope says, "Oh, beloved daughter, Queen of Sicily."
@@ -200,11 +200,11 @@ A.......
 : Constance I says, "Just leave it on the pile."
 : Pope says, "But-"
 : Constance I says, "Thank you! You can go."
-: Pope @ Birthing Tent.80%
+: Pope @ Birthing Tent (80%)
 : drops Holy Binky
 : Constance I says, "(huff) (huff)"
 
-9:00:43 Amos @ Birthing Tent.90%
+9:00:43 Amos @ Birthing Tent (90%)
 : Amos says, "Your Majesty, shall I bring them in?"
 : Constance I says, "Yes! As many as possible."
 : Constance I says, "All must see!"
@@ -219,11 +219,11 @@ A.......
 : @ Guard Quarters
 : Amos drops vase.
 : thinks, "Best to keep it here."
-: @ East Square.10%
+: @ East Square (10%)
 
-9:00:57 Sticky Agatha @ Birthing Tent.90%
+9:00:57 Sticky Agatha @ Birthing Tent (90%)
 : Constance I says, "Aiieeee!"
-: Sofia the Midwife @ Birthing Tent.70%
+: Sofia the Midwife @ Birthing Tent (70%)
 : faces left.
 : Constance I gives newborn baby to Sofia the Midwife.
 : Sofia the Midwife takes newborn baby in left hand.

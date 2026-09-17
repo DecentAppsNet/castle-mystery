@@ -9,9 +9,14 @@ import Activity, { ParsedActivity } from './types/Activity';
 import { tryParseAbsoluteTimestamp } from './timestampUtil';
 import LevelFileSection from '../types/LevelFileSection';
 
+export function isItineraryLineBlankOrVisualDescription(lineText:string):boolean {
+  const trimmedLineText = lineText.trim();
+  return !trimmedLineText || (trimmedLineText.startsWith('(') && trimmedLineText.endsWith(')'));
+}
+
 function _findFirstActivityLine(itinerarySection:LevelFileSection):{lineText:string, sectionLineI:number} {
   const lines = itinerarySection.text.split('\n');
-  const sectionLineI = lines.findIndex(lineText => lineText.trim().length > 0);
+  const sectionLineI = lines.findIndex(lineText => !isItineraryLineBlankOrVisualDescription(lineText));
   return { lineText:sectionLineI < 0 ? '' : lines[sectionLineI].trim(), sectionLineI };
 }
 
@@ -39,8 +44,7 @@ export function findLastActivityEndTime(activities:Activity[]):number|null {
 
 /** Returns the earliest absolute itinerary timestamp, defaulting to zero when none exists. */
 export function findStartTimeFromItinerary(itinerarySectionText:string):number|null {
-  if (!itinerarySectionText.trim()) return 0;
-  const lines = itinerarySectionText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const lines = itinerarySectionText.split('\n').map(l => l.trim()).filter(l => !isItineraryLineBlankOrVisualDescription(l));
   let earliestTime = Infinity;
   lines.forEach(line => {
     const timestampPart = line.split(' ')[0];
@@ -52,7 +56,7 @@ export function findStartTimeFromItinerary(itinerarySectionText:string):number|n
 
 /** Validates that the first activity begins with an absolute timestamp. */
 export function isFirstActivityTimestampValid(itinerarySection:LevelFileSection, errors:ErrorCollector):boolean {
-  assert(itinerarySection.text.trim().length > 0); // Don't call for an empty itinerary.
+  assert(itinerarySection.text.split('\n').some(lineText => !isItineraryLineBlankOrVisualDescription(lineText))); // Don't call for an empty itinerary.
   const { lineText, sectionLineI } = _findFirstActivityLine(itinerarySection);
   const timestampPart = lineText.split(' ')[0];
   const time = tryParseAbsoluteTimestamp(timestampPart);
@@ -67,7 +71,7 @@ export function isFirstActivityTimestampValid(itinerarySection:LevelFileSection,
 /** Returns the explicit character from the first itinerary activity, when present. */
 export function findActiveCharacterFromItinerary(itinerarySection:LevelFileSection|undefined, rules:ActivityParsingRules,
     errors:ErrorCollector):string|null {
-  if (!itinerarySection?.text.trim()) return null;
+  if (!itinerarySection || !itinerarySection.text.split('\n').some(lineText => !isItineraryLineBlankOrVisualDescription(lineText))) return null;
   const activity = _parseFirstActivity(itinerarySection, rules, errors);
   if (!activity) return null;
   const characterId = activity.parts.characterId;

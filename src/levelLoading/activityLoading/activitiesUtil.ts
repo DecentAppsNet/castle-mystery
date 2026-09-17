@@ -5,7 +5,7 @@ import Activity from "./types/Activity";
 import ActivityParsingRules from "./types/ActivityParsingRules";
 import { ErrorCollector } from "../errorCollection";
 import { tryParseActivity } from "./parseUtil";
-import { isFirstActivityTimestampValid } from "./levelTimeUtil";
+import { isFirstActivityTimestampValid, isItineraryLineBlankOrVisualDescription } from "./levelTimeUtil";
 import { assert } from "decent-portal";
 import { sortActivities } from "./activitySortingUtil";
 import LevelFileSection from "../types/LevelFileSection";
@@ -31,14 +31,15 @@ export function loadActivitiesPartially(itinerarySection:LevelFileSection|undefi
 
   if (!itinerarySection) return [];
   const itinerarySectionText = itinerarySection.text;
-  if (!itinerarySectionText.trim() || !isFirstActivityTimestampValid(itinerarySection, errors)) return [];
+  if (!itinerarySectionText.split('\n').some(lineText => !isItineraryLineBlankOrVisualDescription(lineText))
+    || !isFirstActivityTimestampValid(itinerarySection, errors)) return [];
 
   const activities:Activity[] = [];
   const lines = itinerarySectionText.split('\n');
   let prevActivity:Activity|null = null;
   for(let sectionLineI = 0; sectionLineI < lines.length; ++sectionLineI) {
     const lineText = lines[sectionLineI];
-    if (!lineText.trim()) continue;
+    if (isItineraryLineBlankOrVisualDescription(lineText)) continue;
     const parseResult = tryParseActivity(lineText, rules);
     if (typeof parseResult === 'string') {
       errors.addAtLine(parseResult, itinerarySection.lineI + sectionLineI);
