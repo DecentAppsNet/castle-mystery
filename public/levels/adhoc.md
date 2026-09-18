@@ -1,91 +1,191 @@
-# general
+# General
 
 * title=Adhoc
-* activeCharacter=Sam
-* time=0:00:10
+* activeCharacter=Sticky Agatha
+* time=9:00
+* background=countryside.png
+* imports=items.md | characters.md | roomStyles.md
 
-# map
-
-```
-CS
-HS
-```
-
-* H=Hall
-* C=Closet
-* S=Stairwell
-
-# rooms
-## Hall
-
-* exits=Stairwell (locked, lockable)
+# Map
 
 ```
-.v..
-..S.
-....
+..........
+AABB..DDF.
+AABBCCDDE.
 ```
 
-* S=Sam
+* A=Cathedral
+* B=West Square
+* C=Birthing Tent
+* D=East Square
+* E=Guard Quarters
+* F=Living Space
+
+# Rooms
+
+## Cathedral
+
+* style=Old Castle
+* exits=West Square
+
+```
+.n.c....
+....U.P.
+........
+```
+
+* P=Pope
+* U=Ugolino
+* n=Side Table|Letter
+* c=Coffer
+
+## West Square
+
+* title=
+* outside=true
+* exits=Birthing Tent
+* style=Town Street Day
+
+```
+..NMFGHI
+........
+........
+```
+
+* M=male peasant
+* F=female peasant
+* N=male peasant 3
+* G=female peasant 3
+* H=old male peasant
+* I=old female peasant
+
+## Birthing Tent
+
+* outside=true
+* exits=East Square
+* style=Town Street Day
+
+```
+....C.p.
+..M.....
+........
+```
+
+* p=Pile of Presents
+* C=Constance I
+* M=Sofia the Midwife
+
+## East Square
+
+* outside=true
+* style=Town Street Day
+* title=
+* exits=Guard Quarters|Living Space
+
+
+```
+v.F..GH.
+A.......
+...MNI..
+```
+
+* A=Amos
 * v=Vase
+* M=male peasant 2
+* F=female peasant 2
+* N=male peasant 4
+* G=female peasant 4
+* H=old male peasant 2
+* I=old female peasant 2
 
-## Closet
+## Guard Quarters
 
-* exits=Stairwell
+* style=Old Castle
+
+## Living Space
+
+* style=Old Castle
 
 ```
-.t..
-..M.
+.I..
+.A..
 ....
 ```
 
-* t=Table
-* M=Maria
+* A=Sticky Agatha
+* I=infant
 
-## Stairwell
+# Characters
 
-* exits=Hall
-* obscured=true
+## Constance I
+* orientation=laying
+* items=newborn baby
 
-# characters
-## Sam
-* faceImage=guard1.png
-* description=It's just a guy.
-* bodyOrientation=sitting
+## Pope
 
-### Guard2
-* faceImage=guard2.png
-* description=Guard2
+* items=Holy Binky
 
-### Guard3
-* faceImage=guard3.png
-* description=Guard3
+## Male Peasant 2
+* facing=left
 
-## Maria
-* faceImage=maria.png
-* description=It's just a gal.
+## Female Peasant 2
+* facing=left
 
-# items
+## Male Peasant 4
+* facing=left
+
+## Female Peasant 4
+* facing=left
+
+## Old Male Peasant 2
+* facing=left
+
+## Old Female Peasant 2
+* facing=left
+
+## Sticky Agatha
+
+# Items
+
+## Pile of Presents
+* image=presents.png
 
 ## Vase
 
-* description=An ordinary vase.
+* description=A vase of water with "Amos" written on it.
+* image=amosVase.png
 
-## Table
+## Holy Binky
 
-# itinerary
+## Infant
 
-0:00:00 Sam @ Hall
-: @ Stairwell
-: appears as guard2
-: @ Closet
-: Maria says, "who are you?"
-: Sam says, "It's me - Sam!"
-: Maria says, "You look nothing like him."
-: Sam says, "Disguise!"
+* description=A swaddled-up infant, peering calmly at the World around him.
+* image=swaddledBaby.png
 
-# conclusions
+## Newborn Baby
 
-## Any Thing
-* conclusion=[Sam] is the guard.
-* revealRooms=Stairwell
+* description=A swaddled-up infant, peering irritatedly at the World around him.
+* image=newborn.png
+
+## Coffer
+
+* description=Contains a note, "And now we are promised an heir for both Sicily and Germany? An Emperor of this kind would be uncontrollable!"
+## Side Table
+
+## Letter
+
+* description="His Holiness and Archbishop Ugolino di Conti shall arrive at your humble parish on Tuesday. Provide the most lavish accomodations you may manage. May God forgive your shortcomings as a host."
+
+# Itinerary
+
+9:00:00 Sticky Agatha says "Today, we may see our Queen."
+: takes infant in right hand.
+9:00:07 @ East Square (10%)
+
+# Conclusions
+
+## Identities
+* unlockConclusions=The Relic
+
+## The Relic
+* conclusion=The [Holy Binky] was regifted to [Sticky Agatha].
