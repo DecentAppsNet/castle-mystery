@@ -10,7 +10,7 @@ import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { assertNonNullable } from "decent-portal";
 import { addCharacterEffect } from "@/levelLoading/timelineLoading";
-import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
+import { calcSpeechDuration } from "./util/speechUtil";
 import { createEmitsEffect } from "@/game/effects/speechEffectUtil";
 
 /** Creates the accepted syntax for emission activities. */
@@ -30,17 +30,16 @@ type PartsShape = {
   characterId:string,
   itemId?:string,
   text:string,
-  verb:'emits',
   isLoud?:string
 }
 
 /** Schedules an audible emission into an editable timeline. */
-export function scheduleEmitsActivity(level:Level,
+export function scheduleEmitsActivity(_level:Level,
   _waypointContext:WaypointGenerationContext,
-    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+    activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
 
   assertNonNullable(activity.startTime);
-  const { characterId, itemId, text, verb, isLoud } = activity.parts as PartsShape;
+  const { characterId, itemId, text, isLoud } = activity.parts as PartsShape;
   const isItemEmitting = itemId !== undefined;
   activity.busyCharacterIds = isItemEmitting ? [] : [characterId];
   activity.busyItemIds = isItemEmitting ? [itemId] : []; // Busy because a "becomes" or "hide" activity might remove/hide the item while it is depicted as source of audio.
@@ -48,13 +47,6 @@ export function scheduleEmitsActivity(level:Level,
 
   const speechDuration = calcSpeechDuration(text);
   activity.endTime = activity.startTime + speechDuration;
-
-  const speechConflictResult = findSpeechConflict(verb, level.rooms, editableTimeline.keyframes, 
-      editableTimeline.characterIds, characterI, activity.startTime, activity.endTime);
-  if (speechConflictResult) {
-    errors.addAtLine(speechConflictResult, activity.lineI);
-    return false;
-  }
 
   // TODO this is missing any handling for an emit bubble showing over an item instead of a character.
   const emitsEffect = createEmitsEffect(characterId, text, activity.startTime, speechDuration, isLoud !== undefined);

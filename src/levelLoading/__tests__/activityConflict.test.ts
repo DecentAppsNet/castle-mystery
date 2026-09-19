@@ -148,14 +148,14 @@ describe('character activity conflict integration', () => {
     expect(level).not.toBeNull();
   });
 
-  it('still rejects incompatible speech by another audible character', () => {
+  it('allows overlapping speech by different audible characters', () => {
     const { level, errors } = _loadActivities([
       '0:00:00 Sam says "This sentence lasts several seconds."',
       '0:00:01 Jo says "Overlapping audible speech."'
     ]);
 
-    expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('jo can\'t start speaking');
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
   });
 
   it('schedules an interrupt as speech while another character is speaking', () => {
@@ -199,14 +199,14 @@ describe('character activity conflict integration', () => {
     expect(errors.describeErrors()).toContain('jo can\'t wait because they are busy with "interrupts" activity');
   });
 
-  it('does not let ordinary speech interrupt an interrupting character', () => {
+  it('allows ordinary speech to overlap an interrupting character', () => {
     const { level, errors } = _loadActivities([
       '0:00:00 Sam interrupts "This interruption lasts several seconds."',
       '0:00:01 Jo says "Overlapping audible speech."'
     ]);
 
-    expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('jo can\'t start speaking');
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
   });
 
   it('does not make a drop location target busy', () => {

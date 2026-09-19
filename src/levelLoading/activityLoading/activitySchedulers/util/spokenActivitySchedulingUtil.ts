@@ -1,4 +1,4 @@
-/* This file schedules shared spoken-activity behavior for ordinary speech and interruptions.
+/* This file schedules shared ordinary spoken-activity behavior.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from "decent-portal";
@@ -10,20 +10,19 @@ import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { findCharacterFacingDirection } from "./facingUtil";
-import { calcSpeechDuration, findSpeechConflict } from "./speechUtil";
+import { calcSpeechDuration } from "./speechUtil";
 
 type SpokenActivityParts = {
   characterId:string,
   text:string,
-  toCharacterId?:string,
-  verb:'says'|'interrupts'
+  toCharacterId?:string
 }
 
-/** Schedules speech timing, facing, conflict validation, and its presentation effect. */
-export function scheduleSpokenActivity(level:Level, activity:Activity,
-    editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+/** Schedules speech timing, facing, and its presentation effect. */
+export function scheduleSpokenActivity(_level:Level, activity:Activity,
+    editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
   assertNonNullable(activity.startTime);
-  const { characterId, text, toCharacterId, verb } = activity.parts as SpokenActivityParts;
+  const { characterId, text, toCharacterId } = activity.parts as SpokenActivityParts;
   activity.busyCharacterIds = [characterId];
   activity.busyItemIds = [];
   const characterI = editableTimeline.characterIdToI[characterId];
@@ -34,17 +33,10 @@ export function scheduleSpokenActivity(level:Level, activity:Activity,
     addCharacterKeyChanges({ facingDirection }, characterI, activity.startTime, editableTimeline);
   }
 
-  // Resolve speech timing and reject overlap unless this activity grants interruption permission.
+  // Resolve speech timing before creating its presentation effect.
   const speechDuration = calcSpeechDuration(text);
   activity.endTime = activity.startTime + speechDuration;
-  const speechConflictResult = findSpeechConflict(verb, level.rooms, editableTimeline.keyframes, 
-      editableTimeline.characterIds, characterI, activity.startTime, activity.endTime);
-  if (speechConflictResult) {
-    errors.addAtLine(speechConflictResult, activity.lineI);
-    return false;
-  }
 
-  // Interruptions use ordinary speech presentation so they do not grant permission to later speakers.
   const saysEffect = createSaysEffect(characterId, text, activity.startTime, speechDuration);
   addCharacterEffect(saysEffect, characterI, editableTimeline);
   return true;

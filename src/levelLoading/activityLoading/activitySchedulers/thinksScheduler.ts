@@ -10,7 +10,7 @@ import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { assertNonNullable } from "decent-portal";
 import { addCharacterEffect } from "@/levelLoading/timelineLoading";
-import { calcSpeechDuration, findSpeechConflict } from "./util/speechUtil";
+import { calcSpeechDuration } from "./util/speechUtil";
 import { createThinksEffect } from "@/game/effects/speechEffectUtil";
 
 /** Creates the accepted syntax for thought activities. */
@@ -24,16 +24,15 @@ export function createThinksParseFormat():ParseFormat {
 
 type PartsShape = {
   characterId:string,
-  text:string,
-  verb:'thinks'
+  text:string
 }
 
 /** Schedules a character thought into an editable timeline. */
-export function scheduleThinksActivity(level:Level, _waypointContext:WaypointGenerationContext,
-    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+export function scheduleThinksActivity(_level:Level, _waypointContext:WaypointGenerationContext,
+  activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
   
   assertNonNullable(activity.startTime);
-  const { characterId, text, verb} = activity.parts as PartsShape;
+  const { characterId, text } = activity.parts as PartsShape;
   activity.busyCharacterIds = [characterId];
   activity.busyItemIds = [];
   const characterI = editableTimeline.characterIdToI[characterId];
@@ -41,13 +40,6 @@ export function scheduleThinksActivity(level:Level, _waypointContext:WaypointGen
 
   const speechDuration = calcSpeechDuration(text);
   activity.endTime = activity.startTime + speechDuration;
-
-  const speechConflictResult = findSpeechConflict(verb, level.rooms, editableTimeline.keyframes, 
-      editableTimeline.characterIds, characterI, activity.startTime, activity.endTime);
-  if (speechConflictResult) {
-    errors.addAtLine(speechConflictResult, activity.lineI);
-    return false;
-  }
   
   const thinksEffect = createThinksEffect(text, activity.startTime, speechDuration);
   addCharacterEffect(thinksEffect, characterI, editableTimeline);
