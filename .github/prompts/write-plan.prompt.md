@@ -28,7 +28,7 @@ Create a new Markdown plan file under `workAssets/plans` from the project root. 
 - Limit each phase to at most 100 changed production-source lines, additions plus deletions. Generated files, tests, fixtures, documentation, and the plan do not count.
 - Require the implementing agent to stop after every phase for human review and explicit approval before proceeding.
 - Require the implementing agent to stop before exceeding a phase's production-line limit and discuss how to repartition the work.
-- Include a Phase 0 that establishes a clean baseline before source changes: inspect the worktree, read the relevant files and instructions, and run the applicable build and tests.
+- Include a Phase 0 that establishes a clean baseline before source changes: inspect the worktree, read the relevant files and instructions, run check:unused, and run the applicable build and tests. Where practical, combine shell requests together, e.g. `npm run build & npm test & npm check:unused`, to reduce user approvals.
 - Incorporate relevant constraints from `CONTRIBUTING.md`, ADRs, and repository instructions. Either summarize the essential constraints or explicitly require reading the applicable project files.
 - Account for concurrent user changes: require target files to be re-read before editing and unrelated work to be preserved.
 - Include validation appropriate to each phase and a final verification phase.

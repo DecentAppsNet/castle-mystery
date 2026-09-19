@@ -93,17 +93,9 @@ export function findCharacterKeyframeForTime(keyframes:TimelineKeyframe[], chara
   return beforeKeyframe.characters[characterI];
 }
 
-export function findKeyframeInRange(keyframes:TimelineKeyframe[], startTime:number, 
-    endTime:number, predicate?:FindKeyframePredicate):TimelineKeyframe|null {
-  if (!keyframes.length) return null;
-  const startI = _findKeyframeIBeforeOrAtTime(keyframes, startTime);
-  const endI = _findKeyframeIBeforeOrAtTime(keyframes, endTime);
-  for(let keyframeI = startI; keyframeI < endI; ++keyframeI) {
-    const keyframe = keyframes[keyframeI];
-    if (!predicate || predicate(keyframe)) return keyframe;
-  }
-  return null;
-}
+// Potentially useful function - can be resurrected from pre-09/19/26 commit.
+// export function findKeyframeInRange(keyframes:TimelineKeyframe[], startTime:number, 
+//    endTime:number, predicate?:FindKeyframePredicate):TimelineKeyframe|null {
 
 export function findPrecedingKeyframe(keyframes:TimelineKeyframe[], time:number, predicate?:FindKeyframePredicate):TimelineKeyframe|null {
   if (!keyframes.length) return null;

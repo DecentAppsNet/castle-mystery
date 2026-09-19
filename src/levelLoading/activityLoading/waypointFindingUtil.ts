@@ -34,7 +34,7 @@ export function isWaypointOnMiddleRow(waypoint:Waypoint):boolean {
   return waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z;
 }
 
-export type ScoreWaypointCallback = (waypoint:Waypoint) => number;
+type ScoreWaypointCallback = (waypoint:Waypoint) => number;
 
 function _findNearestXZWaypoint(waypoints:Waypoint[], x:number, y:number, z:number, excludedWaypoints:Waypoint[]):Waypoint|null {
   let nearestWaypoint:Waypoint|null = null;

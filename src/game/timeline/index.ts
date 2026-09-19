@@ -4,6 +4,5 @@ export {
   createKeyframeAtTime, 
   findCharacterPositionAtTime,
   findKeyframeForTime, 
-  findKeyframeInRange
 } from './retrievalUtil';
 export { findInterpolatedCharacterPosition } from './interpolationUtil';
