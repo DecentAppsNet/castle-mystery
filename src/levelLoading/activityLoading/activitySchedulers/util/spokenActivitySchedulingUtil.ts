@@ -37,8 +37,8 @@ export function scheduleSpokenActivity(level:Level, activity:Activity,
   // Resolve speech timing and reject overlap unless this activity grants interruption permission.
   const speechDuration = calcSpeechDuration(text);
   activity.endTime = activity.startTime + speechDuration;
-  const speechConflictResult = findSpeechConflict(verb, level.rooms, editableTimeline.keyframes,
-    characterI, activity.startTime, activity.endTime);
+  const speechConflictResult = findSpeechConflict(verb, level.rooms, editableTimeline.keyframes, 
+      editableTimeline.characterIds, characterI, activity.startTime, activity.endTime);
   if (speechConflictResult) {
     errors.addAtLine(speechConflictResult, activity.lineI);
     return false;

@@ -399,6 +399,11 @@ function _getStartAndEndTimes(activityTime:number|null, verb:string):{startTime:
 /** Reports whether a verb interprets its authored timestamp as an end time. */
 export function doesActivityUseEndTimestamp(verb:string) { return verb === '@'; }
 
+/** Reports whether an activity has no authored or resolved timestamp. */
+export function isActivityRelativeTimestamp(activity:ParsedActivity):boolean {
+  return activity.startTime === null && activity.endTime === null;
+}
+
 /** Parses an activity line, returning either the activity or an author-facing error message. */
 export function tryParseActivity(activityLine:string, rules:ActivityParsingRules):ParsedActivity|string {
   throwIfActivityParsingRulesAreInvalid(rules);

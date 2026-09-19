@@ -5,7 +5,7 @@ import { assert, assertNonNullable } from "decent-portal";
 
 import Level from "@/game/types/Level";
 import Timeline from "@/game/types/Timeline";
-import { sortActivitiesAfterStartTimeAssignment } from "../activityLoading";
+import { isActivityRelativeTimestamp, sortActivitiesAfterStartTimeAssignment } from "../activityLoading";
 import { scheduleAppearsActivity } from "../activityLoading/activitySchedulers/appearsScheduler";
 import { scheduleAtActivity } from "../activityLoading/activitySchedulers/atScheduler";
 import { scheduleBecomesActivity } from "../activityLoading/activitySchedulers/becomesScheduler";
@@ -81,8 +81,8 @@ function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContex
 }
 
 function _editableTimelineToTimeline(editableTimeline:Readonly<EditableTimeline>):Timeline {
-  const { keyframes, roomIdToI, characterIdToI } = editableTimeline;
-  return { keyframes, roomIdToI, characterIdToI };
+  const { keyframes, roomIdToI, characterIds, characterIdToI } = editableTimeline;
+  return { keyframes, roomIdToI, characterIds, characterIdToI };
 }
 
 function _createEmptyTimeline(level:Readonly<Level>):Timeline {
@@ -110,8 +110,9 @@ export function scheduleActivities(level:Level, activities:Activity[], waypointC
     scheduledActivities.push(activity);
 
     toBeScheduled.shift();
+    // Resolve the next relative activity after this one completes.
     const nextActivity = activity.nextActivity;
-    if (nextActivity && nextActivity.startTime === null && !doesActivityUseEndTimestamp(nextActivity.verb)) {
+    if (nextActivity && isActivityRelativeTimestamp(nextActivity)) {
       nextActivity.startTime = activity.endTime;
       const nextActivityI = toBeScheduled.indexOf(nextActivity);
       toBeScheduled = sortActivitiesAfterStartTimeAssignment(toBeScheduled, nextActivityI, level.startTime);

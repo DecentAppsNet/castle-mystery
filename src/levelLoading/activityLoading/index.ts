@@ -6,3 +6,4 @@ export { loadActivitiesPartially } from './activitiesUtil';
 export { findActiveCharacterFromItinerary, findStartTimeFromItinerary, findLastActivityEndTime } from './levelTimeUtil';
 export { beginsWithTimestamp, parseTimestampToMsecs, formatMsecsAsTimestamp } from './timestampUtil';
 export { sortActivitiesAfterStartTimeAssignment } from './activitySortingUtil';
+export { isActivityRelativeTimestamp } from './parseUtil';

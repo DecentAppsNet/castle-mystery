@@ -93,7 +93,8 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
   const isRelativeTimestamp = activity.endTime === null;
 
   // Derive availability from activities while reading presentation state from the timeline.
-  const fromTime = findLatestBusyCharacterActivityEndTime(characterId, scheduledActivities) ?? level.startTime;
+  const fromTime = Math.max(activity.startTime ?? level.startTime,
+    findLatestBusyCharacterActivityEndTime(characterId, scheduledActivities) ?? level.startTime);
   const fromKeyframe = createKeyframeAtTime(editableTimeline.keyframes, fromTime);
   const fromPos = fromKeyframe.characters[characterI].position;
   const fromFacingDirection = fromKeyframe.characters[characterI].facingDirection;

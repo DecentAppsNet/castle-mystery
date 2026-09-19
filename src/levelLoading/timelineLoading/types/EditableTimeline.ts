@@ -6,6 +6,7 @@ type EditableTimeline = {
   editableKeyframes: EditableTimelineKeyframe[];
   keyframes: TimelineKeyframe[];
   roomIdToI:{[roomId:string]:number};
+  characterIds:string[],
   characterIdToI:{[characterId:string]:number};
 }
 
@@ -15,6 +16,7 @@ export function createDefaultEditableTimeline():EditableTimeline {
     keyframes:[],
     editableKeyframes:[],
     roomIdToI:{},
+    characterIds:[],
     characterIdToI:{}
   }
 }

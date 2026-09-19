@@ -16,6 +16,14 @@ import Position from "@/game/types/Position";
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
 const SPEECH_MSECS_PER_CHARACTER = 90;
 
+
+type SpeechConflict = {
+  characterId:string,
+  verb:'says'|'thinks'|'emits',
+  startTime:number,
+  endTime:number
+}
+
 function _findRoomsInEarshotAtKeyframe(keyframe:TimelineKeyframe, characterI:number, rooms:Room[]):Room[] {
   assert(keyframe.rooms.length === rooms.length);
   
@@ -43,44 +51,66 @@ function _findRoomsInEarshot(keyframes:TimelineKeyframe[], characterI:number, ro
   return _findRoomsInEarshotAtKeyframe(keyframe, characterI, rooms);
 }
 
-function _isCharacterSayingAtTime(effects:Effect[], startTime:number):boolean {
-  return effects.find(e => e.endTime > startTime && e.kind === 'says') !== undefined;
+function _findCharacterSayingEffectAtTime(effects:Effect[], startTime:number):Effect|null {
+  return effects.find(e => e.endTime > startTime && e.kind === 'says') ?? null;
 }
 
-function _isCharacterSayingOrThinkingAtTime(effects:Effect[], startTime:number):boolean {
-  return effects.find(e => e.endTime > startTime && (e.kind === 'says' || e.kind === 'thinks')) !== undefined;
+function _findCharacterSayingOrThinkingEffectAtTime(effects:Effect[], startTime:number):Effect|null {
+  return effects.find(e => e.endTime > startTime && (e.kind === 'says' || e.kind === 'thinks')) ?? null;
 }
 
 function _isCharacterInEarshot(earshotRooms:Room[], characterPosition:Position):boolean {
   return findRoomAtPosition(earshotRooms, characterPosition.x, characterPosition.y) !== null;
 }
 
-function _isOtherCharacterSayingInEarshot(keyframe:TimelineKeyframe, currentCharacterI:number,
-    earshotRooms:Room[], speechStartTime:number):boolean {
+function _findOtherCharacterSayingInEarshot(keyframe:TimelineKeyframe, characterIds:string[], currentCharacterI:number,
+    earshotRooms:Room[], speechStartTime:number):SpeechConflict|null {
   for(let characterI = 0; characterI < keyframe.characters.length; ++characterI) {
     if (characterI === currentCharacterI) continue;
     const characterKeyframe = keyframe.characters[characterI];
-    if (_isCharacterSayingAtTime(characterKeyframe.effects, speechStartTime)
-        && _isCharacterInEarshot(earshotRooms, characterKeyframe.position)) return true;
+    const sayingEffect = _findCharacterSayingEffectAtTime(characterKeyframe.effects, speechStartTime);
+    if (sayingEffect && _isCharacterInEarshot(earshotRooms, characterKeyframe.position)) {
+      return {
+        characterId:characterIds[characterI],
+        verb:'says',
+        startTime:sayingEffect.startTime,
+        endTime:sayingEffect.endTime
+      };
+    }
   }
-  return false;
+  return null;
 }
 
-function _findCharacterSpeechInterrupting(earshotRooms:Room[], keyframes:TimelineKeyframe[], 
+function _findCharacterSpeechInterrupting(earshotRooms:Room[], keyframes:TimelineKeyframe[], characterIds:string[], 
   currentCharacterI:number, speechStartTime:number, speechEndTime:number):string|null {
-  const startTimestamp = formatMsecsAsTimestamp(speechStartTime);
-  const errorMessage = `Character can't start speaking at ${startTimestamp} because they will interrupt.`;
 
   // Detect speech already active when this speech starts, even if no later keyframe occurs in its interval.
   const startKeyframe = findKeyframeForTime(keyframes, speechStartTime);
-  if (_isOtherCharacterSayingInEarshot(startKeyframe, currentCharacterI, earshotRooms, speechStartTime)) return errorMessage;
+  let conflict = _findOtherCharacterSayingInEarshot(startKeyframe, characterIds, currentCharacterI, earshotRooms, speechStartTime);
+  if (conflict) {
+    return `${characterIds[currentCharacterI]} can't start speaking at ${formatMsecsAsTimestamp(speechStartTime)} `  + 
+      `without interrupting ${conflict.characterId} who is already speaking from ${formatMsecsAsTimestamp(conflict.startTime)} to ` +
+      `${formatMsecsAsTimestamp(conflict.endTime)}. Change timings or use "interrupts" instead of "says".`;
+  }
 
   // Detect another character whose speech starts later in this speech interval.
-  const keyframe = findKeyframeInRange(keyframes, speechStartTime, speechEndTime, (keyframe:TimelineKeyframe) => {
-    // The earshot check is needed for each keyframe because character positions can change.
-    return _isOtherCharacterSayingInEarshot(keyframe, currentCharacterI, earshotRooms, speechStartTime);
-  });
-  return !keyframe ? null : errorMessage;
+  {
+    let secondConflict:SpeechConflict|null = null;
+    const keyframe = findKeyframeInRange(keyframes, speechStartTime, speechEndTime, (keyframe:TimelineKeyframe) => {
+      // The earshot check is needed for each keyframe because character positions can change.
+      secondConflict = _findOtherCharacterSayingInEarshot(keyframe, characterIds, currentCharacterI, earshotRooms, speechStartTime);
+      return (secondConflict !== null);
+    });
+    if (!keyframe) return null;
+    conflict = (secondConflict as unknown as SpeechConflict); // Typescript is not smart enough to trace execution through callback above, so scream at Typescript very loudly about which type we have.
+  }
+
+  // TODO - I'm doubting the logic in this function to cover the case of `A says` followed by `B interrupts`. I believe the activity for A
+  // will always fail even if B has interrupts. You'll need a test that mixes relative and absolute timings in a way that allows B to be the first
+  // activity to scheduled despite being chronologically later. If that test fails, consider if the second conflict check is even necessary.
+  return `${characterIds[currentCharacterI]} can't start speaking at ${formatMsecsAsTimestamp(speechStartTime)} `  + 
+      `without being interrupted by ${conflict.characterId} who is already speaking from ${formatMsecsAsTimestamp(conflict.startTime)} to ` +
+      `${formatMsecsAsTimestamp(conflict.endTime)}. Change timings or use "interrupts" for ${conflict.characterId} instead of "says".`;
 }
 
 /** Estimates speech duration from text length with a minimum duration. */
@@ -90,7 +120,7 @@ export function calcSpeechDuration(speech:string):number {
 
 /** Returns an author-facing conflict for incompatible overlapping speech, or null. */
 export function findSpeechConflict(speechKind:'says'|'interrupts'|'thinks'|'emits', rooms:Room[], 
-    keyframes:TimelineKeyframe[], characterI:number, speechStartTime:number, speechEndTime:number):string|null {
+    keyframes:TimelineKeyframe[], characterIds:string[], characterI:number, speechStartTime:number, speechEndTime:number):string|null {
 
   if (speechKind === 'interrupts' || // The author explicitly permits this character to start over another speaker.
       speechKind === 'emits' ||  // Often an author's intent to have a sound effect/noise heard while other speech is happening.
@@ -102,11 +132,11 @@ export function findSpeechConflict(speechKind:'says'|'interrupts'|'thinks'|'emit
   // For "says", check for interruption because generally an author doesn't want characters speaking over each other,
   // especially for two separate conversations happening at same time due to an authoring mistake.
   assert(speechKind === 'says');
-  return _findCharacterSpeechInterrupting(earshotRooms, keyframes, characterI, speechStartTime, speechEndTime);
+  return _findCharacterSpeechInterrupting(earshotRooms, keyframes, characterIds, characterI, speechStartTime, speechEndTime);
 }
 
-export function doesKeyframeHaveSpeechHeardByCharacter(keyframe:TimelineKeyframe, characterI:number, rooms:Room[]):boolean {
-  if (_isCharacterSayingOrThinkingAtTime(keyframe.characters[characterI].effects, keyframe.time)) return true;
+export function doesKeyframeHaveSpeechHeardByCharacter(keyframe:TimelineKeyframe, characterIds:string[], characterI:number, rooms:Room[]):boolean {
+  if (!_findCharacterSayingOrThinkingEffectAtTime(keyframe.characters[characterI].effects, keyframe.time)) return true;
   const earshotRooms = _findRoomsInEarshotAtKeyframe(keyframe, characterI, rooms);
-  return _isOtherCharacterSayingInEarshot(keyframe, characterI, earshotRooms, keyframe.time);
+  return _findOtherCharacterSayingInEarshot(keyframe, characterIds, characterI, earshotRooms, keyframe.time) !== null;
 } 

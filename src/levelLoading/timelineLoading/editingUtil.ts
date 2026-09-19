@@ -267,6 +267,7 @@ export function addRoomKeyChanges(roomKeyChanges:Readonly<Partial<RoomKeyframe>>
 /** Creates an editable timeline initialized with level state at the start time. */
 export function createEditableTimeline(characters:readonly Character[], rooms:readonly Room[], startTime:number):EditableTimeline {
   const timeline = createDefaultEditableTimeline();
+  timeline.characterIds = characters.map(c => c.id);
   timeline.characterIdToI = _createCharacterIdToI(characters);
   timeline.roomIdToI = _createRoomIdToI(rooms);
   const firstKeyframe = _createFirstKeyframe(characters, rooms, startTime);

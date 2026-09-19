@@ -1,7 +1,7 @@
 # General
 
 * title=Adhoc
-* activeCharacter=Sticky Agatha
+* activeCharacter=Constance I
 * time=9:00
 * background=countryside.png
 * imports=items.md | characters.md | roomStyles.md
@@ -191,6 +191,68 @@ A.......
 9:00:19 Ugolino @ Cathedral (30%)
 : faces right.
 
+9:00:20 Pope @ Birthing Tent (20%)
+: Sofia the Midwife says, "My lady, his Holiness has arrived."
+: Constance I says, "I know! He reeks of frankincense."
+: Pope says, "Oh, beloved daughter, Queen of Sicily."
+: Constance I says, "(huff) (huff)"
+: Pope says, "I bestow to your newborn a gift most-"
+: Constance I says, "Just leave it on the pile."
+: Pope says, "But-"
+: Constance I says, "Thank you! You can go."
+: Pope @ Birthing Tent (80%)
+: drops Holy Binky
+: Constance I says, "(huff) (huff)"
+
+9:00:43 Amos @ Birthing Tent (90%)
+: Amos says, "Your Majesty, shall I bring them in?"
+: Constance I says, "Yes! As many as possible."
+: Constance I says, "All must see!"
+
+9:00:52 Amos @ East Square
+: faces left.
+: says, "You there."
+: Sticky Agatha faces right.
+: says, "Me?"
+: Amos says, "Yes. Go inside the tent."
+9:00:59 Amos takes vase in right hand.
+: @ Guard Quarters
+: Amos drops vase.
+: thinks, "Best to keep it here."
+: @ East Square (10%)
+
+9:00:57 Sticky Agatha @ Birthing Tent (90%)
+: Constance I says, "Aiieeee!"
+: Sofia the Midwife @ Birthing Tent (70%)
+: faces left.
+: Constance I gives newborn baby to Sofia the Midwife.
+: Sofia the Midwife takes newborn baby in left hand.
+: Constance I says, "Did you see?"
+: Sticky Agatha says, "Your Majesty?"
+: Constance I says, "Did you see the birth!"
+: Sticky Agatha says, "Yes!"
+: Constance I says, "Oh, you have a little one too!"
+: Sticky Agatha says, "Yes, your Majesty."
+: Constance I says, "See that pile of gifts?"
+: Constance I says, "Grab one of them for your baby."
+: Sticky Agatha takes Holy Binky.
+: says, "I am overwhelmed by your grace."
+: Constance I says, "Just tell everybody I wasn't faking."
+(Agatha leaves)
+: Sofia the Midwife says, "Majesty, what shall you name him?"
+: Constance I says, "Constantine. After myself, of course."
+
+9:00:48 Pope @ Cathedral
+: Ugolino says, "Your Holiness has returned."
+: Pope says, "That is apparent. Why say it?"
+: Ugolino says, "I... uh... "
+: says "...wanted to acknowledge your presence respectfully."
+: Pope says, "A simple bow suffices, Archbishop."
+9:01:02 faces right.
+: says, "What a drab little church."
+: says, "Not a single flying buttress!"
+: Ugolino says, "I shall tell the parish priest of your dissatisfaction."
+: Pope says, "Good."
 
 # Conclusions
 

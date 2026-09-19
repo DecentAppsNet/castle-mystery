@@ -140,7 +140,7 @@ function _generateRoomEntryTimes(characterRoomEntries:RoomEntryEvents, obscuredR
     .map(re => re.time);
 }
 
-function _generateSpeechRanges(keyframes:TimelineKeyframe[], characterI:number, rooms:Room[], 
+function _generateSpeechRanges(keyframes:TimelineKeyframe[], characterIds:string[], characterI:number, rooms:Room[], 
     obscuredRanges:TimeRange[]):TimeRange[] {
 
   const speechRanges:TimeRange[] = [];
@@ -159,7 +159,7 @@ function _generateSpeechRanges(keyframes:TimelineKeyframe[], characterI:number, 
   // Open and close a pending speech marker at boundaries. Closing the marker updates speechRanges.
   for(let keyframeI = 0; keyframeI < keyframes.length; ++keyframeI) {
     const keyframe = keyframes[keyframeI];
-    if (doesKeyframeHaveSpeechHeardByCharacter(keyframe, characterI, rooms)) {
+    if (doesKeyframeHaveSpeechHeardByCharacter(keyframe, characterIds, characterI, rooms)) {
       if (!_isSpeechMarkerOpen()) _openSpeechMarker(keyframe.time);
     } else {
       if (_isSpeechMarkerOpen()) _closeSpeechMarker(keyframe.time);
@@ -187,7 +187,7 @@ export function createItineraryMarkerModel(timeline:Timeline|null, activeCharact
 
   const roomEntryEvents:RoomEntryEvents[] = generateRoomEntryEvents(timeline.keyframes, rooms);
   
-  const { keyframes } = timeline;
+  const { keyframes, characterIds } = timeline;
   const activeCharacterI  = timeline.characterIdToI[activeCharacterId];
   const characterRoomEntries:RoomEntryEvents = roomEntryEvents[activeCharacterI];
   const revealedSkinIds = revealedSkinLinkages[activeSkinIdAtSelection]; // All of the active character skins the player is allowed to see.
@@ -197,7 +197,7 @@ export function createItineraryMarkerModel(timeline:Timeline|null, activeCharact
   markers.obscuredRanges = _generateObscuredRanges(keyframes, activeCharacterI, rooms, obscuredRoomIds, revealedSkinIds, characterRoomEntries);
   markers.roomEntryTimes = _generateRoomEntryTimes(characterRoomEntries, markers.obscuredRanges);
   markers.encounterTimes = _generateEncounterTimes(roomEntryEvents, activeCharacterI, markers.obscuredRanges);
-  markers.speechRanges = _generateSpeechRanges(keyframes, activeCharacterI, rooms, markers.obscuredRanges);
+  markers.speechRanges = _generateSpeechRanges(keyframes, characterIds, activeCharacterI, rooms, markers.obscuredRanges);
 
   return markers;
 }
