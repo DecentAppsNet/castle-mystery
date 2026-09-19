@@ -15,8 +15,8 @@
     "preview": "vite preview",
     "setup-portal-workflows": "mkdir -p .github/workflows && cp -r ./node_modules/decent-portal/github-workflows/*.yml .github/workflows",
     "test": "vitest --run src",
-    "test:all": "vitest --run src --reporter=json --outputFile tempTests/vitest-results.json --no-file-parallelism --poolOptions.forks.singleFork",
-    "test:file": "vitest run --reporter=json --outputFile tempTests/vitest-results.json --no-file-parallelism --poolOptions.forks.singleFork",
+      "test:all": "vitest --run src --reporter=dot --no-file-parallelism --poolOptions.forks.singleFork",
+      "test:file": "vitest run --reporter=dot --no-file-parallelism --poolOptions.forks.singleFork",
     "testscripts": "vitest --run scripts",
     "test:watch": "vitest --watch src",
     "test:coverage": "vitest --coverage --run src"

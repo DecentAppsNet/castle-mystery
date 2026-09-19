@@ -51,8 +51,10 @@ Tests verify exported contracts through real code paths. There is no guidance di
 ## Test Commands
 
 * Use `npm test` for a human-readable full-suite run.
-* Use `npm run test:all` for a full-suite machine-readable report in `tempTests/vitest-results.json`.
-* Use `npm run test:file -- path/to/test.ts` for a focused machine-readable report in `tempTests/vitest-results.json`.
+* Use `npm run test:all` for a full-suite run with concise output.
+* Use `npm run test:file -- path/to/test.ts` for a focused run with concise output.
+
+Both commands use their exit code and terminal output as the authoritative result.
 
 Guidelines:
 
