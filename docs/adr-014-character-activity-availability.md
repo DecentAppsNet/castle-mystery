@@ -44,9 +44,9 @@ An activity ending exactly when another begins does not overlap. Activities whos
 
 Effects describe runtime presentation and ownership transitions; they are not scheduling records. Give, take, and drop retain their drawable effects and exact ownership-transfer boundaries. A give retains only the giver-owned drawable effect and does not create a handler-less receiver effect. Character availability therefore cannot accidentally depend on effect kind, duration, or placement.
 
-### Speech retains separate cross-character rules
+### Speech uses the same availability rules
 
-Generic activity availability handles a character overlapping their own speech, thought, or character-source emission with another nonzero activity. Speech keeps a separate rule for incompatible speech by other audible characters because that rule depends on earshot, room connections, movement, and intentional exemptions for thoughts and emissions. Those auditory rules explicitly exclude the current speaker and do not define character availability.
+Generic activity availability handles a character overlapping their own speech, thought, or character-source emission with another nonzero activity. Cross-character speech overlap is not a character-availability conflict and is permitted under ADR 016. Runtime earshot remains a presentation concern and does not define loading-time availability.
 
 ## Consequences
 
@@ -55,5 +55,5 @@ Generic activity availability handles a character overlapping their own speech, 
 - Participation can cover a complete activity even when its visual effect covers only part of it.
 - Exact boundaries and zero-duration state changes have consistent behavior across all activity categories.
 - Runtime effects contain only behavior needed for presentation or state transitions.
-- Cross-character auditory validation remains specialized without duplicating same-character availability checks.
+- Speech uses the same centralized availability check as other nonzero character activities.
 - Adding a new activity category does not require extending a central verb table or effect-kind reservation system.

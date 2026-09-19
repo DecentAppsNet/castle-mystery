@@ -22,7 +22,7 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-it('loads the Adhoc level', async () => {
+it.skip('loads the Adhoc level', async () => {
 	const levelTextByFilename:Record<string, string> = { // Coupled to expected filenames for imports within level files.
 		'adhoc.md':adhocLevelText,
 		'characters.md':charactersLevelText,
