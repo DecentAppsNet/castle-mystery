@@ -30,6 +30,12 @@ export function calcExitWaypointY(exit:RoomExit):number {
   return calcLandingWaypointY(exit.y);
 }
 
+export function isWaypointOnMiddleRow(waypoint:Waypoint):boolean {
+  return waypoint.position.z === WAYPOINT_MIDDLE_ROW_Z;
+}
+
+export type ScoreWaypointCallback = (waypoint:Waypoint) => number;
+
 function _findNearestXZWaypoint(waypoints:Waypoint[], x:number, y:number, z:number, excludedWaypoints:Waypoint[]):Waypoint|null {
   let nearestWaypoint:Waypoint|null = null;
   let nearestDistance = Infinity;
@@ -123,6 +129,21 @@ export function findNearestIncludedFloorWaypointToPosition(context:WaypointGener
     excludedWaypoints:Waypoint[]):Waypoint|null {
   const floorY = room.rect.y + room.rect.height - FLOOR_WAYPOINT_Y_OFFSET;
   return _findNearestXZWaypoint(findWaypointsForRoom(context, room.id), position.x, floorY, position.z, excludedWaypoints);
+}
+
+export function findBestIncludedFloorWaypointToPosition(context:WaypointGenerationContext, 
+    excludedWaypoints:Waypoint[], onScoreWaypoint:ScoreWaypointCallback):Waypoint|null {
+  let bestWaypoint = null;
+  let bestScore = -Infinity;
+  for(const waypoint of context.waypoints) {
+    if (excludedWaypoints.find(ew => ew === waypoint)) continue;
+    const score = onScoreWaypoint(waypoint);
+    if (score > bestScore) {
+      bestWaypoint = waypoint;
+      bestScore = score;
+    }
+  }
+  return bestWaypoint;
 }
 
 /** Finds the nearest included floor waypoint on the back row. */

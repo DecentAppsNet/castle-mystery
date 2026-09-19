@@ -16,7 +16,7 @@ import { arePositionsEqual } from "@/game/positionUtil";
 import Waypoint from "@/levelLoading/types/Waypoint";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
-import { findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findWaypointsForRoom } from "../waypointFindingUtil";
+import { findBestIncludedFloorWaypointToPosition, findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findWaypointsForRoom, isExitWaypoint, isWaypointOnMiddleRow } from "../waypointFindingUtil";
 import { createKeyframeAtTime } from "@/game/timeline";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { findLatestBusyCharacterActivityEndTime } from "@/levelLoading/timelineLoading/activityConflictUtil";
@@ -31,6 +31,10 @@ function _findClaimedWaypointsFromSnapshot(waypoints:Waypoint[], snapshot:Timeli
   return claimedWaypoints;
 }
 
+function _isItemInRoomAtPosition(room:Room, position:Position):boolean {
+  return room.items.find(i => arePositionsEqual(i.position, position)) !== undefined;
+}
+
 function _findBestTargetWaypoint(context:WaypointGenerationContext, waypoints:Waypoint[], claimedWaypoints:Waypoint[],
   targetRoom:Room, targetXPercent:number):Waypoint {
   const x = targetRoom.rect.x + (targetXPercent * targetRoom.rect.width);
@@ -38,7 +42,17 @@ function _findBestTargetWaypoint(context:WaypointGenerationContext, waypoints:Wa
   assert(waypoints.length > 0);
 
   const targetPosition = {x, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z};
-  let waypoint = findNearestIncludedFloorWaypointToPosition(context, targetRoom, targetPosition, claimedWaypoints); 
+
+  function _onScoreWaypoint(waypoint:Waypoint):number {
+    let score = 0;
+    if (!isExitWaypoint(targetRoom, waypoint)) score += 1000000;
+    if (isWaypointOnMiddleRow(waypoint)) score += 100000;
+    if (!_isItemInRoomAtPosition(targetRoom, waypoint.position)) score += 10000; // Avoid standing on top of items.
+    score += 1000 - Math.hypot(waypoint.position.x - targetPosition.x, waypoint.position.z - targetPosition.z);
+    return score;
+  }
+
+  let waypoint = findBestIncludedFloorWaypointToPosition(context, claimedWaypoints, _onScoreWaypoint);
   if (waypoint) return waypoint;
   waypoint = findNearestFloorWaypointToPosition(context, targetRoom, targetPosition); // A crowded room. Just share a square with somebody else.
   assertNonNullable(waypoint, 'How can there be no available waypoints in the room?');

@@ -182,6 +182,16 @@ A.......
 : takes infant in right hand.
 9:00:07 @ East Square (10%)
 
+9:00:00 Pope takes Holy Binky in right hand
+: says "Behold the Holy Binky!"
+: faces left.
+: says "Carved by Joseph. Given to the baby Jesus."
+: Ugolino says "A fitting gift for the new mother."
+
+9:00:19 Ugolino @ Cathedral (30%)
+: faces right.
+
+
 # Conclusions
 
 ## Identities
