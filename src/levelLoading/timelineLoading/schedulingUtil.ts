@@ -14,7 +14,6 @@ import { scheduleEmitsActivity } from "../activityLoading/activitySchedulers/emi
 import { scheduleFacesActivity } from "../activityLoading/activitySchedulers/facesScheduler";
 import { scheduleGivesActivity } from "../activityLoading/activitySchedulers/givesScheduler";
 import { scheduleHideActivity } from "../activityLoading/activitySchedulers/hideScheduler";
-import { scheduleInterruptsActivity } from "../activityLoading/activitySchedulers/interruptsScheduler";
 import { scheduleKneelsActivity } from "../activityLoading/activitySchedulers/kneelsScheduler";
 import { scheduleLaysActivity } from "../activityLoading/activitySchedulers/laysScheduler";
 import { scheduleLocksActivity } from "../activityLoading/activitySchedulers/locksScheduler";
@@ -46,7 +45,6 @@ const VERB_TO_ACTIVITY_SCHEDULER:Readonly<{[verb:string]:ActivityScheduler}> = {
   'faces': scheduleFacesActivity,
   'gives': scheduleGivesActivity,
   'hide': scheduleHideActivity,
-  'interrupts': scheduleInterruptsActivity,
   'kneels': scheduleKneelsActivity,
   'lays': scheduleLaysActivity,
   'locks': scheduleLocksActivity,

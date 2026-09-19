@@ -630,52 +630,6 @@ describe('parseUtil', () => {
       });
     });
 
-    describe('interrupts activity parsing', () => {
-      it('parses with character id and without a target sequence', () => {
-        expect(tryParseActivity(': samuel interrupts "hello"', sharedRules)).toMatchObject({
-          parts: {
-            characterId: 'samuel',
-            text: 'hello',
-            verb: 'interrupts',
-          },
-          verb: 'interrupts',
-        });
-      });
-
-      it('parses with character id and with a target sequence', () => {
-        expect(tryParseActivity(': samuel interrupts "hello" to lady beatrice', sharedRules)).toMatchObject({
-          parts: {
-            characterId: 'samuel',
-            text: 'hello',
-            toCharacterId: 'lady beatrice',
-            verb: 'interrupts',
-          },
-          verb: 'interrupts',
-        });
-      });
-
-      it('parses without character id and without a target sequence', () => {
-        expect(tryParseActivity(': interrupts "hello"', sharedRules)).toMatchObject({
-          parts: {
-            text: 'hello',
-            verb: 'interrupts',
-          },
-          verb: 'interrupts',
-        });
-      });
-
-      it('parses without character id and with a target sequence', () => {
-        expect(tryParseActivity(': interrupts "hello" to samuel', sharedRules)).toMatchObject({
-          parts: {
-            text: 'hello',
-            toCharacterId: 'samuel',
-            verb: 'interrupts',
-          },
-          verb: 'interrupts',
-        });
-      });
-    });
-
     describe('kneels activity parsing', () => {
       it('parses with character id', () => {
         expect(tryParseActivity(': samuel kneels', sharedRules)).toMatchObject({

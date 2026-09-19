@@ -24,7 +24,6 @@ import { createEmitsParseFormat } from '../activitySchedulers/emitsScheduler';
 import { createFacesParseFormat } from '../activitySchedulers/facesScheduler';
 import { createGivesParseFormat } from '../activitySchedulers/givesScheduler';
 import { createHideParseFormat } from '../activitySchedulers/hideScheduler';
-import { createInterruptsParseFormat } from '../activitySchedulers/interruptsScheduler';
 import { createKneelsParseFormat } from '../activitySchedulers/kneelsScheduler';
 import { createLaysParseFormat } from '../activitySchedulers/laysScheduler';
 import { createLocksParseFormat } from '../activitySchedulers/locksScheduler';
@@ -124,11 +123,11 @@ describe('parseFormatUtil', () => {
 		it('returns verb text when root sequence contains a verb literal', () => {
 			const rootParseStep = makeSequence([
 				makeIdentifier('characterId', 'CharacterId', true),
-				makeVerb('interrupts'),
+				makeVerb('says'),
 				makeText(),
 			]);
 
-			expect(findVerbText(rootParseStep)).toBe('interrupts');
+			expect(findVerbText(rootParseStep)).toBe('says');
 		});
 
 		it('returns null when root sequence does not contain a verb literal', () => {
@@ -242,11 +241,6 @@ describe('parseFormatUtil', () => {
 
 			it('describes the hide activity parse format', () => {
 				expect(describeParseFormat(createHideParseFormat())).toBe('Timestamp `hide` {CharacterId|ItemId}');
-			});
-
-			it('describes the interrupts activity parse format', () => {
-				expect(describeParseFormat(createInterruptsParseFormat())).toBe('Timestamp [CharacterId] `interrupts` "Text" [`to` CharacterId]');
-				//expect(describeParseFormat(createInterruptsParseFormat())).toBe('Timestamp [CharacterId] `interrupts` "Text" [{`to` CharacterId}]');
 			});
 
 			it('describes the kneels activity parse format', () => {
