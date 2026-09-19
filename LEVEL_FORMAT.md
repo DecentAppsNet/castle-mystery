@@ -378,7 +378,6 @@ In that example, the `:05` and `:07` lines both still refer to Steve, because St
 The itinerary loader currently supports these activity verbs and forms:
 * `@ Room` / `@ Room.50%` / `@ 50%`
 * `says ...`
-* `interrupts ...`
 * `thinks ...`
 * `Item emits ...`
 * `faces left|right|Target`
@@ -419,11 +418,7 @@ With a relative timestamp `:`, the walk starts as soon as the character's previo
 
 Example: `0:15:03 John says "I found the note."`
 
-Use `says` for normal speech. A `says` line cannot start while another audible character is already speaking.
-
-`interrupts "..."` is the overlapping-speech version. Use it when talking over another speaker is intentional.
-
-Example: `0:15:04 Mary interrupts "Wait."`
+Different characters may speak simultaneously. Use playtesting to evaluate whether overlapping dialogue is understandable and intentional.
 
 ### Thinks
 

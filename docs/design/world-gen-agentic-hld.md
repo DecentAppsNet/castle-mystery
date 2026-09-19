@@ -1,5 +1,7 @@
 # HLD: world-gen & world-fix Agentic Call Graphs
 
+<!-- This doc is being kept for historical reasons and is not updated to align with other changes. -->
+
 ## Status
 
 **Living document.** Started 2026-06-14 on the `world-gen` branch. Tracks the agentic

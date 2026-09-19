@@ -192,12 +192,13 @@ name continues the **most recently named** character.
 
 Activities:
 - `Name @ Room Title` or `Name @ Room Title.NN%` — move to a room (optional 0–100% position).
-- `says, "…"` (audible) / `interrupts "…"` (intentional overlap) / `thinks, "…"` (silent).
+- `says, "…"` (audible) / `thinks, "…"` (silent).
 - `faces left|right`, `stands|sits|lays`.
 - `takes <Item> in left|right hand`, `drops <Item> (x,y,z)`, `gives <Item> to <Character>`.
 
 Rules: a single character may not have two **overlapping** `says` (load fails) — sequence speech
-with `:` or use `interrupts`. Items must exist before being taken/dropped.
+with `:`. Different characters may speak simultaneously; evaluate overlapping dialogue through playtesting.
+Items must exist before being taken/dropped.
 
 ## 7. `# Conclusions`
 

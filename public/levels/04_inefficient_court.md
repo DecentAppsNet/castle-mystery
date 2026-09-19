@@ -697,7 +697,7 @@ N1234567890ABCD.
 : hide P21
 
 8:02:23 Harold @ West Stairwell
-: interrupts "Next... hey!"
+: says "Next... hey!"
 : @ Throne Room.10%
 : stands on Small Rug
 
@@ -707,7 +707,7 @@ N1234567890ABCD.
 (Andronikos returns to Entrance Hall)
 
 8:02:24 Toro @ Throne Room.20%
-: Toro interrupts, "Toro."
+: Toro says, "Toro."
 : King Frederick says, "Approach and speak, Toro."
 : Harold thinks, "It's like they don't even need a herald!"
 : Toro @ 50%

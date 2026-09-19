@@ -1,5 +1,7 @@
 # Design: Multi-Agent Generative Level Generator (`world-gen`)
 
+<!-- This doc is being kept for historical reasons and is not updated to align with other changes. -->
+
 ## Status
 
 **Living document.** Started 2026-06-14 on the `world-gen` branch. Design accepted;
