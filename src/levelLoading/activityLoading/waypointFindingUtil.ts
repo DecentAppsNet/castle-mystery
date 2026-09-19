@@ -131,11 +131,13 @@ export function findNearestIncludedFloorWaypointToPosition(context:WaypointGener
   return _findNearestXZWaypoint(findWaypointsForRoom(context, room.id), position.x, floorY, position.z, excludedWaypoints);
 }
 
-export function findBestIncludedFloorWaypointToPosition(context:WaypointGenerationContext, 
+export function findBestIncludedFloorWaypointToPosition(context:WaypointGenerationContext, room:Room,
     excludedWaypoints:Waypoint[], onScoreWaypoint:ScoreWaypointCallback):Waypoint|null {
   let bestWaypoint = null;
   let bestScore = -Infinity;
-  for(const waypoint of context.waypoints) {
+  const roomWaypoints = context.waypointsByRoomId.get(room.id);
+  assertNonNullable(roomWaypoints);
+  for(const waypoint of roomWaypoints) {
     if (excludedWaypoints.find(ew => ew === waypoint)) continue;
     const score = onScoreWaypoint(waypoint);
     if (score > bestScore) {

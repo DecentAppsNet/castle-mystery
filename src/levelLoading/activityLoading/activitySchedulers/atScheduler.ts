@@ -16,7 +16,7 @@ import { arePositionsEqual } from "@/game/positionUtil";
 import Waypoint from "@/levelLoading/types/Waypoint";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
-import { findBestIncludedFloorWaypointToPosition, findNearestFloorWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findWaypointsForRoom, isExitWaypoint, isWaypointOnMiddleRow } from "../waypointFindingUtil";
+import { findBestIncludedFloorWaypointToPosition, findNearestFloorWaypointToPosition, findWaypointsForRoom, isExitWaypoint, isWaypointOnMiddleRow } from "../waypointFindingUtil";
 import { createKeyframeAtTime } from "@/game/timeline";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { findLatestBusyCharacterActivityEndTime } from "@/levelLoading/timelineLoading/activityConflictUtil";
@@ -52,7 +52,7 @@ function _findBestTargetWaypoint(context:WaypointGenerationContext, waypoints:Wa
     return score;
   }
 
-  let waypoint = findBestIncludedFloorWaypointToPosition(context, claimedWaypoints, _onScoreWaypoint);
+  let waypoint = findBestIncludedFloorWaypointToPosition(context, targetRoom, claimedWaypoints, _onScoreWaypoint);
   if (waypoint) return waypoint;
   waypoint = findNearestFloorWaypointToPosition(context, targetRoom, targetPosition); // A crowded room. Just share a square with somebody else.
   assertNonNullable(waypoint, 'How can there be no available waypoints in the room?');
