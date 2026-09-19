@@ -66,7 +66,7 @@ function _parseCharacter(characterId:string, position:Position, characterSection
   const description = nameValues.description ?? '';
   const faceImageUrl = nameValues.faceImage ? getFaceImageAssetUrl(nameValues.faceImage.trim()) : null;
   const isVisible = parseBoolean(nameValues.visible ?? 'true', errors, ['characters', characterId], 'faceImage');
-  const facingDirection = _parseFacingDirection(nameValues.facingDirection ?? DEFAULT_FACING_DIRECTION, errors, characterId);
+  const facingDirection = _parseFacingDirection(nameValues.facing ?? DEFAULT_FACING_DIRECTION, errors, characterId);
   const bodyOrientation = _parseBodyOrientation(nameValues.bodyOrientation ?? 'standing', errors, characterId);
   const isTitleKnown = parseBoolean(nameValues.isTitleKnown ?? 'false', errors, ['characters', characterId], 'isTitleKnown');
   const items = parseItems(nameValues.items ?? '');
