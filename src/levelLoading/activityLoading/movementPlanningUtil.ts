@@ -202,10 +202,10 @@ function _calcWalkStartDelayForWaypointPath(waypointPath:Waypoint[], maxWalkDura
   return maxWalkDuration - walkDuration;
 }
 
-function _createCantArriveInTimeMessage(room:Room, msecsNeeded:number, toTime:number):string {
+function _createCantArriveInTimeMessage(characterId:string, room:Room, msecsNeeded:number, toTime:number):string {
   const secondsNeeded = _getSecondsText(msecsNeeded);
   const toTimestamp = formatMsecsAsTimestamp(toTime);
-  return `Can't arrive at destination in "${room.id}" room by ${toTimestamp}}. Need another ${secondsNeeded}.`;
+  return `${characterId} can't arrive at destination in "${room.id}" room by ${toTimestamp}. Need another ${secondsNeeded}.`;
 }
 
 function _scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
@@ -214,9 +214,10 @@ function _scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext,
   const fromWaypoint = findNearestFloorWaypointToPosition(context, room, fromPosition);
   const toWaypoint = findNearestFloorWaypointToPosition(context, room, toPosition);
   const waypointPath = _simplifyWaypointPath(_findWaypointPath(room, fromWaypoint, toWaypoint));
+  const characterId = timeline.characterIds[characterI];
 
   const walkStartDelay = toTime === null ? 0 : _calcWalkStartDelayForWaypointPath(waypointPath, toTime - fromTime);
-  if (walkStartDelay < 0) return _createCantArriveInTimeMessage(room, -walkStartDelay, toTime!);
+  if (walkStartDelay < 0) return _createCantArriveInTimeMessage(characterId, room, -walkStartDelay, toTime!);
 
   const walkDuration = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, walkStartDelay, characterI, initialFacingDirection, timeline);
   assert(toTime === null || fromTime + walkStartDelay + walkDuration === toTime);
@@ -234,8 +235,9 @@ function _scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContex
   }
   const waypointPath = _findWaypointPathThroughRooms(context, fromRoom, toRoom, fromPosition, toPosition);
 
+  const characterId = timeline.characterIds[characterI];
   const walkStartDelay = toTime === null ? 0 : _calcWalkStartDelayForWaypointPath(waypointPath, toTime - fromTime);
-  if (walkStartDelay < 0) return _createCantArriveInTimeMessage(toRoom, -walkStartDelay, toTime!);
+  if (walkStartDelay < 0) return _createCantArriveInTimeMessage(characterId, toRoom, -walkStartDelay, toTime!);
 
   const walkDuration = _scheduleWaypointPathAfterDelay(waypointPath, fromTime, walkStartDelay, characterI, initialFacingDirection, timeline);
   assert(toTime === null || fromTime + walkStartDelay + walkDuration === toTime);

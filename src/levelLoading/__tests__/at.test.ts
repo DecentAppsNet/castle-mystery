@@ -164,6 +164,6 @@ describe('level loading - @ activities', () => {
     const { level, errors } = loadLevelForTest(text, 'at-too-soon.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain(`at-too-soon.md:${activityLineNo}:0: Can't arrive at destination`);
+    expect(errors.describeErrors()).toContain(`at-too-soon.md:${activityLineNo}:0: sam can't arrive at destination`);
   });
 });
