@@ -48,6 +48,12 @@
 
 Tests verify exported contracts through real code paths. There is no guidance distinction between "unit" and "integration" tests: a focused test may naturally grow to exercise multiple collaborating modules as implementation boundaries change.
 
+## Test Commands
+
+* Use `npm test` for a human-readable full-suite run.
+* Use `npm run test:all` for a full-suite machine-readable report in `tempTests/vitest-results.json`.
+* Use `npm run test:file -- path/to/test.ts` for a focused machine-readable report in `tempTests/vitest-results.json`.
+
 Guidelines:
 
 * Prefer not to mock. Only mock file I/O, network I/O, operating-system functions, or other behavior that is non-deterministic or leaves persistent side effects.
