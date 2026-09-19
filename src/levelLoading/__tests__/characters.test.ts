@@ -31,8 +31,8 @@ describe('loading levels - characters', () => {
       '* description=The lead investigator.',
       '* faceImage=sam.png',
       '* visible=false',
-      '* facingDirection=left',
-      '* bodyOrientation=sitting',
+      '* facing=left',
+      '* orientation=sitting',
       '* isTitleKnown=true',
       '* items=Notebook',
       '* leftHand=Lantern',
@@ -123,8 +123,8 @@ describe('loading levels - characters', () => {
     expect(errors.describeErrors()).toContain('Expected "maybe" to be "true" or "false"');
   });
 
-  it('fails if a character facingDirection is not an allowed value', () => {
-    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* facingDirection=up']);
+  it('fails if a character facing is not an allowed value', () => {
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* facing=up']);
     const { level, errors } = loadLevelForTest(text, 'characters-invalid-facing-direction.md');
 
     expect(level).toBeNull();
@@ -132,7 +132,7 @@ describe('loading levels - characters', () => {
   });
 
   it('fails if a character bodyOrientation is not an allowed value', () => {
-    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* bodyOrientation=floating']);
+    const text = replaceSection(defaultLevelText, 'characters', ['## Sam', '* orientation=floating']);
     const { level, errors } = loadLevelForTest(text, 'characters-invalid-body-orientation.md');
 
     expect(level).toBeNull();
