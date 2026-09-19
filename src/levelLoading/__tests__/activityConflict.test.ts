@@ -155,7 +155,7 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('Character can\'t start speaking');
+    expect(errors.describeErrors()).toContain('jo can\'t start speaking');
   });
 
   it('schedules an interrupt as speech while another character is speaking', () => {
@@ -206,7 +206,7 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('Character can\'t start speaking');
+    expect(errors.describeErrors()).toContain('jo can\'t start speaking');
   });
 
   it('does not make a drop location target busy', () => {
