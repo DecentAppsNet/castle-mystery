@@ -22,6 +22,11 @@
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 ```
 
+## Type Definition Helpers
+
+* Type definition files generally may not include functions other than a limited set that are highly coupled to the type definition: `createDefault*()`, `duplicate*()`, and `are*Equal()`. Create these type-coupled functions only when code needs them.
+* Put these functions with the type definition because changes to the type will likely require simultaneous changes to its defaulting, duplication, or equality behavior.
+
 ## Refactoring Large Files
 
 * AI agent instructions: If a file contains more than 500 lines of code, ask the user if they want to refactor that file. You don't need to interrupt a running task - just ask at the next graceful opportunity, e.g., at the end of completing a request.
