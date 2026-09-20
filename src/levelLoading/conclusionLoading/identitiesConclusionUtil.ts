@@ -16,6 +16,7 @@ import { parseOptions } from "@/common/markdownUtil";
 import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
 import Room from "@/game/types/Room";
 import { normalizeId } from "@/game/idUtil";
+import { randIntInRange } from "@/common/randUtil";
 
 function _findCharactersForConclusionOptions(characters:readonly Character[],
   initiallyKnownTitleCharacterIds:ReadonlySet<string>):Character[] {
@@ -23,6 +24,15 @@ function _findCharactersForConclusionOptions(characters:readonly Character[],
     isCharacterInteractive(character) && !initiallyKnownTitleCharacterIds.has(character.id));
   const sorted = conclusionCharacters.sort((a, b) => a.title.localeCompare(b.title, undefined, {sensitivity:'base'}));
   return sorted;
+}
+
+function _randomizeIdentityRows(characters:readonly Character[]):Character[] {
+  const shuffled = [...characters];
+  for(let i = shuffled.length - 1; i > 0; --i) {
+    const swapI = randIntInRange(0, i + 1);
+    [shuffled[i], shuffled[swapI]] = [shuffled[swapI], shuffled[i]];
+  }
+  return shuffled;
 }
 
 function _getCharacterFaceImageUrl(character:Character):string {
@@ -108,7 +118,7 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
   if (!characterOptions.length) return null;
     
   const parts:ClozePart[] = [];
-  conclusionCharacters
+  _randomizeIdentityRows(conclusionCharacters)
     .filter(character => !initiallyKnownTitleCharacterIds.has(character.id))
     .forEach((character, characterI) => {
       if (characterI > 0) parts.push({ type:ClozePartType.separator });
