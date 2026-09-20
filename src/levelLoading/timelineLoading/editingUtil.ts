@@ -85,10 +85,8 @@ function _generateNextKeyframe(previousKeyframe:Readonly<TimelineKeyframe>,
   return nextKeyframe;
 }
 
-// If this gets to be a bottleneck, you can use an algoritm like:
-// 1. Receive a fromI param that is set to the earliest known change in frame keying.
-// 2. Update existing frames from fromI until a frame is unchanged from its original value. (Signals end of affected keyframes).
-function _generateKeyframes(editableKeyframes:readonly EditableTimelineKeyframe[]):TimelineKeyframe[] {
+/** Resolves every editable keyframe; used as the reference implementation for incremental updates. */
+export function generateKeyframes(editableKeyframes:readonly EditableTimelineKeyframe[]):TimelineKeyframe[] {
   // Replay every editable (partial) keyframe to generate resolved keyframes.
   assert(editableKeyframes.length >= 1);
   const keyframes:TimelineKeyframe[] = [];
@@ -96,6 +94,46 @@ function _generateKeyframes(editableKeyframes:readonly EditableTimelineKeyframe[
   for(let i = 0; i < editableKeyframes.length; ++i) {
     if (i > 0) currentKeyframe = _generateNextKeyframe(currentKeyframe, editableKeyframes, i);
     keyframes.push(currentKeyframe);
+  }
+  return keyframes;
+}
+
+function _findEarliestAffectedKeyframeI(editableKeyframes:readonly EditableTimelineKeyframe[],
+    changedKeyframeI:number):number {
+  const changedKeyframe = editableKeyframes[changedKeyframeI];
+  let earliestAffectedKeyframeI = changedKeyframeI;
+  for (let characterI = 0; characterI < changedKeyframe.characters.length; ++characterI) {
+    if (changedKeyframe.characters[characterI].position === undefined) continue;
+    let previousPositionKeyframeI = 0;
+    for (let keyframeI = changedKeyframeI - 1; keyframeI >= 0; --keyframeI) {
+      if (editableKeyframes[keyframeI].characters[characterI].position !== undefined) {
+        previousPositionKeyframeI = keyframeI;
+        break;
+      }
+    }
+    earliestAffectedKeyframeI = Math.min(earliestAffectedKeyframeI, previousPositionKeyframeI + 1);
+  }
+  return earliestAffectedKeyframeI;
+}
+
+function _updateKeyframes(editableKeyframes:readonly EditableTimelineKeyframe[],
+    existingKeyframes:readonly TimelineKeyframe[], fromI:number, insertedKeyframeI:number|null = null):TimelineKeyframe[] {
+  assert(editableKeyframes.length >= 1);
+  assert(fromI >= 0 && fromI < editableKeyframes.length);
+  assert(editableKeyframes.length === existingKeyframes.length || insertedKeyframeI !== null);
+
+  // Retain the unchanged resolved prefix and replay from the earliest edited frame.
+  const keyframes = existingKeyframes.slice(0, fromI);
+  let keyframeI = fromI;
+  if (keyframeI === 0) {
+    keyframes.push(editableKeyframes[0] as TimelineKeyframe);
+    keyframeI = 1;
+  }
+
+  // Replay the affected suffix from the earliest editable change.
+  for (; keyframeI < editableKeyframes.length; ++keyframeI) {
+    const nextKeyframe = _generateNextKeyframe(keyframes.at(-1)!, editableKeyframes, keyframeI);
+    keyframes.push(nextKeyframe);
   }
   return keyframes;
 }
@@ -215,7 +253,9 @@ function _insertEditableKeyframeAfter(array:EditableTimelineKeyframe[], insertAf
 function _addKeyframe(editableKeyframe:Readonly<EditableTimelineKeyframe>, timeline:EditableTimeline) {
   const insertAfterI = _findInsertAfterI(editableKeyframe.time, timeline.keyframes);
   _insertEditableKeyframeAfter(timeline.editableKeyframes, insertAfterI, editableKeyframe);
-  timeline.keyframes = _generateKeyframes(timeline.editableKeyframes);
+  const changedKeyframeI = insertAfterI + 1;
+  const fromI = _findEarliestAffectedKeyframeI(timeline.editableKeyframes, changedKeyframeI);
+  timeline.keyframes = _updateKeyframes(timeline.editableKeyframes, timeline.keyframes, fromI, changedKeyframeI);
 }
 
 /** Merges character state changes at a time and regenerates resolved keyframes. */
@@ -225,7 +265,9 @@ export function addCharacterKeyChanges(characterKeyChanges:Readonly<Partial<Char
   const existingFrame = timeline.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
     _addCharacterKeyframeToTimelineKeyframe(characterKeyChanges, characterI, existingFrame);
-    timeline.keyframes = _generateKeyframes(timeline.editableKeyframes);
+    const existingFrameI = timeline.editableKeyframes.indexOf(existingFrame);
+    const fromI = _findEarliestAffectedKeyframeI(timeline.editableKeyframes, existingFrameI);
+    timeline.keyframes = _updateKeyframes(timeline.editableKeyframes, timeline.keyframes, fromI);
   } else {
     const keyframe = _createEditableKeyframeFromCharacterKeyframe(characterKeyChanges, characterI, time, characterCount, roomCount);
     _addKeyframe(keyframe, timeline);
@@ -239,7 +281,8 @@ export function addCharacterEffect(effect:Effect, characterI:number, timeline:Ed
   // Need a keyframe at the end time to represent the effect is no longer active.
   const existingFrame = timeline.editableKeyframes.find(kf => kf.time === effect.endTime);
   if (existingFrame) {
-    timeline.keyframes = _generateKeyframes(timeline.editableKeyframes);
+    const existingFrameI = timeline.editableKeyframes.indexOf(existingFrame);
+    timeline.keyframes = _updateKeyframes(timeline.editableKeyframes, timeline.keyframes, existingFrameI);
   } else {
     const characterKeyframe = findCharacterKeyframeForTime(timeline.keyframes, characterI, effect.endTime);
     const effects = characterKeyframe.effects.filter(e => e !== effect);
@@ -257,7 +300,8 @@ export function addRoomKeyChanges(roomKeyChanges:Readonly<Partial<RoomKeyframe>>
   const existingFrame = timeline.editableKeyframes.find(kf => kf.time === time);
   if (existingFrame) {
     _addRoomKeyframeToTimelineKeyframe(roomKeyChanges, roomI, existingFrame);
-    timeline.keyframes = _generateKeyframes(timeline.editableKeyframes);
+    const existingFrameI = timeline.editableKeyframes.indexOf(existingFrame);
+    timeline.keyframes = _updateKeyframes(timeline.editableKeyframes, timeline.keyframes, existingFrameI);
   } else {
     const keyframe = _createEditableKeyframeFromRoomKeyframe(roomKeyChanges, roomI, time, characterCount, roomCount);
     _addKeyframe(keyframe, timeline);

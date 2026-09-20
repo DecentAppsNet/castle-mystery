@@ -1,282 +1,639 @@
 # General
 
 * title=Adhoc
-* activeCharacter=Constance I
-* time=9:00
+* activeCharacter=Pietro
+* time=7:30
 * background=countryside.png
 * imports=items.md | characters.md | roomStyles.md
+* winSynopsis=Heinrich and the young King Frederick enjoyed an afternoon of friendship and falconing. Master Mason Pietro tolerated the apprentice leaving work, hoping for a future royal construction project. The seed of conspiracy was planted in a corner of the workshop yard.
 
 # Map
 
 ```
-..........
-AABB..DDF.
-AABBCCDDE.
+SSWW/AA\......
+SSFF/KK\YYYYC.
+SSMM/HH\YYYYTT
 ```
 
-* A=Cathedral
-* B=West Square
-* C=Birthing Tent
-* D=East Square
-* E=Guard Quarters
-* F=Living Space
+* S=Street
+* M=Master's Hall
+* K=Common Kitchen
+* F=Family Quarters
+* A=Apprentices' Chamber
+* W=Workers' Dormitory
+* /=Stairwell
+* \=Stairwell 2
+* C=Accounts Room
+* Y=Workshop Yard
+* T=Stone Store
+* H=Tool Store
 
 # Rooms
 
-## Cathedral
+## Street
 
-* style=Old Castle
-* exits=West Square
+* outside=true
+* exits=Master's Hall (unlocked, lockable)
+* style=Town Street Day
 
 ```
-.n.c....
-....U.P.
+........
+.F......
 ........
 ```
 
-* P=Pope
-* U=Ugolino
-* n=Side Table|Letter
-* c=Coffer
+* F=King Frederick
 
-## West Square
+## Master's Hall
 
+* exits=Street (lockable) | Stairwell (closed)
+* style=Old Castle
+
+
+```
+........
+...P....
+........
+```
+
+* P=Pietro
+
+## Stairwell
+
+* style=Old Castle
 * title=
-* outside=true
-* exits=Birthing Tent
-* style=Town Street Day
-
-```
-..NMFGHI
-........
-........
-```
-
-* M=male peasant
-* F=female peasant
-* N=male peasant 3
-* G=female peasant 3
-* H=old male peasant
-* I=old female peasant
-
-## Birthing Tent
-
-* outside=true
-* exits=East Square
-* style=Town Street Day
-
-```
-....C.p.
-..M.....
-........
-```
-
-* p=Pile of Presents
-* C=Constance I
-* M=Sofia the Midwife
-
-## East Square
-
-* outside=true
-* style=Town Street Day
-* title=
-* exits=Guard Quarters|Living Space
+* exits=Workers' Dormitory (unlocked, lockable)
 
 
 ```
-v.F..GH.
-A.......
-...MNI..
-```
-
-* A=Amos
-* v=Vase
-* M=male peasant 2
-* F=female peasant 2
-* N=male peasant 4
-* G=female peasant 4
-* H=old male peasant 2
-* I=old female peasant 2
-
-## Guard Quarters
-
-* style=Old Castle
-
-## Living Space
-
-* style=Old Castle
-
-```
-.I..
+....
 .A..
 ....
 ```
 
-* A=Sticky Agatha
-* I=infant
+* A=Ahmad
+
+## Family Quarters
+
+* style=Old Castle
+* exits=Stairwell (lockable, locked)
+
+## Apprentices' Chamber
+
+* exits=Stairwell (closed) | Stairwell 2 (closed)
+* style=Old Castle
+
+```
+........
+.....H..
+........
+```
+
+* H=Heinrich
+
+## Workers' Dormitory
+
+* style=Old Castle
+* exits=Stairwell (unlocked, lockable)
+
+
+```
+.Iw.....
+........
+....S...
+```
+
+* I=Giorgios
+* S=Stefan
+* w=Big Wineskin
+
+## Common Kitchen
+
+* exits=Stairwell | Stairwell 2
+* style=Old Castle
+
+
+```
+..b..N.p
+...M...A
+........
+```
+
+* M=Maria
+* A=Anna
+* N=Niccolo
+* b=bread roll
+* p=painting
+
+## Stairwell 2
+
+* title=
+* style=Old Castle
+* exits=Tool Store (locked, lockable) | Workshop Yard (closed)
+
+## Tool Store
+
+* style=Old Castle
+
+## Stone Store
+
+* style=Old Castle
+
+## Workshop Yard
+
+* style=Yard
+* exits=Stone Store (unlocked, lockable) | Accounts Room (unlocked, lockable)
+* outside=true
+
+
+```
+.p.s...c.....u..
+...A.Y.G........
+................
+```
+
+* u=Cutting Station
+* c=Masonry Station
+* s=Carving Station
+* p=Pedestal
+* A=Andreas
+* G=Giovanni
+* Y=Yusuf
+
+## Accounts Room
+
+* style=Old Castle
+
+```
+..mc
+..S.
+....
+```
+
+* c=Yard Workers
+* m=Monthly Wages
+* S=Salomone
 
 # Characters
 
-## Constance I
+## Giorgios
+
+* orientation=sitting
+* facing=right
+
+## Giovanni
+
+* items=Chisel
+
+## Heinrich
+
+* facing=left
 * orientation=laying
-* items=newborn baby
 
-## Pope
+## Niccolo
 
-* items=Holy Binky
+* orientation=sitting
 
-## Male Peasant 2
+## Pietro
+
 * facing=left
+* items=owner's key
 
-## Female Peasant 2
-* facing=left
+## Maria
 
-## Male Peasant 4
-* facing=left
+## King Frederick
 
-## Female Peasant 4
-* facing=left
+* items=Furia Perched
 
-## Old Male Peasant 2
-* facing=left
+## Salomone
 
-## Old Female Peasant 2
-* facing=left
-
-## Sticky Agatha
+* items=abacus
 
 # Items
 
-## Pile of Presents
-* image=presents.png
+## Masonry Station
 
-## Vase
+* image=cutLimestone.png
+* description=Rough chunks of limestone are shaped into construction-ready blocks here.
+* drawOffsetX=1
+* drawOffsetZ=.07
 
-* description=A vase of water with "Amos" written on it.
-* image=amosVase.png
+## Pedestal
+* drawOffsetX=2
 
-## Holy Binky
+## Cutting Station
 
-## Infant
+* image=uncutLimestone.png
+* description=Raw limestone that will be cut into chunks.
+* drawOffsetX=1
+* drawOffsetZ=.07
 
-* description=A swaddled-up infant, peering calmly at the World around him.
-* image=swaddledBaby.png
+## Carving Station
 
-## Newborn Baby
+* image=carvingStation.png
+* description=Details are applied to ornamental stonework here.
+* drawOffsetX=1
+* drawOffsetY=.8
+* drawOffsetZ=.07
 
-* description=A swaddled-up infant, peering irritatedly at the World around him.
-* image=newborn.png
+## Owner's Key
 
-## Coffer
+## Yard Workers
+* image=codex.png
+* description=Ahmad - Foreman | Heinrich - Apprentice | Giovanni - Journeyman Mason | Niccoló - Stone Cutter | Giorgios - Master carver | Andreas - Apprentice Carver | Yusuf - Builder and surveyor | Stefan - Quarry laborer
 
-* description=Contains a note, "And now we are promised an heir for both Sicily and Germany? An Emperor of this kind would be uncontrollable!"
-## Side Table
+## Monthly Wages
+* image=codex.png
+* description=Apprentice - 1 denari|Servant (non-family) - 5 denari|Quarry Laborer - 15 denari|Cook/House Manager - 30 denari|Stone Cutter - 2 tari|Journeyman Mason - 3 tari|Journeyman Carver - 4 tari|Foreman - 4 tari|Master Carver - 5 tari|Master Mason - 4 tari|Builder and surveyor - 6 tari|Clerk/accountant - 6 tari
 
-## Letter
-
-* description="His Holiness and Archbishop Ugolino di Conti shall arrive at your humble parish on Tuesday. Provide the most lavish accomodations you may manage. May God forgive your shortcomings as a host."
+## Painting
+* image=mariaPainting.png
+* description=A rough drawing with the inscription, "Maria, my forever love -Tommaso"
+* drawOffsetZ=-.5
+* drawOffsetY=-3
 
 # Itinerary
 
-9:00:00 Constance I says "Aiiieeee!"
-: says "(huff) (huff) (huff)"
-: Sofia the Midwife says "My lady, let me send these common folk away."
-: Constance I says "No! They must all see!"
-: Sofia the Midwife says "As you wish."
-9:00:15 Constance I says "(huff) (huff)"
+7:30:00 King Frederick takes Furia Perched in right hand
 
-9:00:00 Sticky Agatha says "Today, we may see our Queen."
-: takes infant in right hand.
-9:00:07 @ East Square (10%)
+7:30:00 Pietro @ Master's Hall
+7:30:03 Ahmad @ Master's Hall (80%)
+7:30:03 Pietro faces right
+: says, "Are they up and working, Ahmad?"
+: Ahmad says, "I haven't checked yet."
+: Pietro says, "Well, you better - that's your job."
+: Pietro @ Master's Hall (20%)
+(Ahmad leaves)
+7:30:14 Anna @ Master's Hall
+: Pietro faces right
+: says, "Daughter, why do you disturb me?"
+: Anna says, "You weren't doing anything."
+: Pietro says, "I was thinking!"
+: says, "A man like me must do a lot of thinking."
+: thinks, "(thinking)"
+: Anna thinks, "(thinking)"
+: Pietro says, "What are you doing?"
+: Anna says, "Papa, if both of us think,"
+: says, "the work goes twice as fast!"
+: Pietro says, "Okay, then think about masonry contracts."
+: says, "But do it somewhere else."
+(Anna leaves for family quarters)
+7:30:40 Pietro faces left
 
-9:00:00 Pope takes Holy Binky in right hand
-: says "Behold the Holy Binky!"
-: faces left.
-: says "Carved by Joseph. Given to the baby Jesus."
-: Ugolino says "A fitting gift for the new mother."
+7:30:05 Yusuf thinks, "I must see Anna today."
 
-9:00:19 Ugolino @ Cathedral (30%)
-: faces right.
+7:30:06 Stefan @ Common Kitchen
+: Maria faces Stefan
+: says, "Good morning, my strong young man from Ragusa."
+: Stefan faces left
+: Stefan says, "Good morning."
+: Maria says, "You remind me so much of my dead husband Tommaso."
+(Stefan leaves for workshop yard)
 
-9:00:20 Pope @ Birthing Tent (20%)
-: Sofia the Midwife says, "My lady, his Holiness has arrived."
-: Constance I says, "I know! He reeks of frankincense."
-: Pope says, "Oh, beloved daughter, Queen of Sicily."
-: Constance I says, "(huff) (huff)"
-: Pope says, "I bestow to your newborn a gift most-"
-: Constance I says, "Just leave it on the pile."
-: Pope says, "But-"
-: Constance I says, "Thank you! You can go."
-: Pope @ Birthing Tent (80%)
-: drops Holy Binky
-: Constance I says, "(huff) (huff)"
+7:30:18 Ahmad @ Apprentices' Chamber
+: says "Get up!"
+: Heinrich stands
+: Ahmad says, "I don't care about your royal friend."
+: says, "In the House of Rocks, I am your King."
+: says, "And the King says, 'get to the yard'!"
 
-9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
+7:30:20 Stefan @ Workshop Yard (80%)
+7:30:36 faces left
+7:30:39 @ Stone Store
+: thinks, "I really don't want to talk to Niccoló."
+: thinks, "He's going to complain about cracks again."
+: waits 10
+: @ Stone Store (30%)
+: waits 20
+: @ Stone Store (70%)
+: faces left
+: waits 10
+: @ Stone Store (50%)
+: waits 20
+: @ Stone Store (20%)
+: waits 15
+: @ Stone Store (80%)
+: waits 20
+: @ Stone Store (60%)
 
-9:00:43 Amos @ Birthing Tent (90%)
-: Amos says, "Your Majesty, shall I bring them in?"
-: Constance I says, "Yes! As many as possible."
-: Constance I says, "All must see!"
+7:30:20 Giovanni @ Workshop Yard (40%)
+: waits 20
+: kneels
+(continues working until Heinrich arrives below)
 
-9:00:52 Amos @ East Square
-: faces left.
-: says, "You there."
-: Sticky Agatha faces right.
-: says, "Me?"
-: Amos says, "Yes. Go inside the tent."
-9:00:59 Amos takes vase in right hand.
-: @ Guard Quarters
-: Amos drops vase.
-: thinks, "Best to keep it here."
-: @ East Square (10%)
+7:30:20 Maria @ Common Kitchen
+: faces left
+: says, "Niccolò, you know he's going to come"
+: says, "and yell at you."
+: Niccolo says, "(sigh)"
+: stands
+: says, "Time to chop rocks."
+7:30:37 Maria faces right
 
-9:00:57 Sticky Agatha @ Birthing Tent (90%)
-: Constance I says, "Aiieeee!"
-: Sofia the Midwife @ Birthing Tent (70%)
-: faces left.
-: Constance I gives newborn baby to Sofia the Midwife.
-: Sofia the Midwife takes newborn baby in left hand.
-: Constance I says, "Did you see?"
-: Sticky Agatha says, "Your Majesty?"
-: Constance I says, "Did you see the birth!"
-: Sticky Agatha says, "Yes!"
-: Constance I says, "Oh, you have a little one too!"
-: Sticky Agatha says, "Yes, your Majesty."
-: Constance I says, "See that pile of gifts?"
-: Constance I says, "Grab one of them for your baby."
-: Sticky Agatha takes Holy Binky.
-: says, "I am overwhelmed by your grace."
-: Constance I says, "Just tell everybody I wasn't faking."
-(Agatha leaves)
-: Sofia the Midwife says, "Majesty, what shall you name him?"
-: Constance I says, "Constantine. After myself, of course."
+7:30:30 Yusuf @ Accounts Room
+: says, "Good morning, my friend!"
+: Salomone says, "Good morning."
+: Yusuf says, "You know I can read, right?"
+: Salomone says, "Of course."
+: Yusuf says, "In the codex, you list me among the yard workers."
+: Salomone says, "Why would I not?"
+: Yusuf says, "I visit the yard. But I do not work there."
+: Salomone says, "It is just a list."
+: Yusuf says, "But is it a correct list?"
+: Salomone says, "Correct enough."
+: Yusuf says, "I will speak with Pietro about this."
+(they both leave)
 
-9:00:48 Pope @ Cathedral
-: Ugolino says, "Your Holiness has returned."
-: Pope says, "That is apparent. Why say it?"
-: Ugolino says, "I... uh... "
-: says "...wanted to acknowledge your presence respectfully."
-: Pope says, "A simple bow suffices, Archbishop."
-9:01:02 faces right.
-: says, "What a drab little church."
-: says, "Not a single flying buttress!"
-: Ugolino says, "I shall tell the parish priest of your dissatisfaction."
-: Pope says, "Good."
+7:30:37 Ahmad @ Workers' Dormitory
+: says, "Drunken fool!"
+: says, "Your apprentice starts work well before you."
+: says, "And his hands are steady. Are yours?"
+: Giorgios says, "My wine is watered." 
+: stands
+: takes Big Wineskin in right hand
+: says, "And my hands are steady for carving."
+(Giorgios leaves for Workshop Yard)
 
-9:01:25 Sticky Agatha @ Living Space
+7:30:37 Heinrich @ Common Kitchen (80%)
+: Maria says, "There's still breakfast left for you."
+: Heinrich faces left
+: Heinrich says, "No time. I'm late!"
+: Maria says, "Wait!"
+: takes bread roll in left hand
+: gives bread roll to Heinrich
+: says, "Take it with you."
+: Heinrich says, "Thank you, ma'am."
+: takes bread roll into inventory
 
-9:01:28 Amos says, "Next!"
-: says, "Get in there and witness."
+7:30:40 Niccolo @ Workshop Yard (90%)
+(Niccolo is always in front of the cutting station, working, while he is in the yard.)
+: waits 10
+: @ Workshop Yard (80%)
+: waits 20
+: @ Workshop Yard (90%)
+: waits 10
+: faces left
+: waits 3
+: @ Workshop Yard (70%)
+: waits 10
+: @ Workshop Yard (90%)
+: faces left
+: kneels
+: waits 20
+: thinks, "(thinking dark thoughts)"
+: stands
+: @ Workshop Yard (80%)
+: waits 10
+: @ Workshop Yard (90%)
+: faces left
+: kneels
+: waits 10
+: @ Workshop Yard (70%)
+: Niccolo thinks, "This is Stefan's fault."
+(leaves cutting station for stone store)
 
-9:00:57 Male Peasant 4 thinks, "She brings a baby into the tent?"
-: Old Female Peasant 2 thinks, "What fraud is this? We are not blind."
+7:30:44 Anna @ Family Quarters
 
-9:00:18 Female Peasant thinks, "40 years? She's too old to have a child!"
+7:31:00 Ahmad @ Common Kitchen
+: says, "Did they linger today?"
+: Maria says, "Linger, sir?"
+: Ahmad says, "The workers shouldn't linger at breakfast."
+: Maria says, "Shall I make my food less delicious?"
+: Ahmad says, "No lingering after sun up!"
+: Maria says, "Even for you?"
+: Ahmad says, "I am not lingering!"
+(Ahmad leaves for Workshop Yard)
+
+7:31:19 Yusuf @ Master's Hall
+7:31:20 Salomone @ Master's Hall
+: Pietro faces left
+7:31:21 Pietro says, "What?"
+: Yusuf says, "The clerk lists me with the yard workers."
+: says, "But I go to churches and bridges and castles."
+: says, "My work is there - not in the yard."
+: Pietro says, "Then we shall make a new list."
+: Yusuf says, "Good."
+: Pietro says, "And only your name will be on it."
+: Yusuf says, "Very good. What is this list?"
+: Pietro says, "A list of People Who Complain."
+: Yusuf says, "Oh no no no, sir."
+: says, "I only wanted your records to be in order."
+: Pietro says, "Get back to work."
+(Yusuf leaves for tool store)
+7:31:54 Salomone says, "Master, I must share some numbers with you."
+: Pietro faces Salomone
+: Pietro says, "Always with the numbers."
+: Salomone says, "Just two numbers."
+: says, "The first is 58 tari."
+: says, "The second is 0."
+: Pietro says "The first number is our income?"
+: Salomone says, "No, that is the second number. The first number-"
+: Pietro says "Our expenses."
+: Salomone says, "Yes."
+: Pietro says "Don't worry! More jobs are coming."
+: Salomone says, "May we all prosper, sir."
+(Salomone leaves for accounts room)
+7:32:30 Pietro @ Master's Hall (60%)
+: faces left
+
+7:30:56 Heinrich @ Workshop Yard
+(Giovanni is always in front of the masonry station, working, while he is in the yard.)
+: Giovanni faces Heinrich
+: says, "Apprentice, you're finally here."
+: says, "Oil my tool!"
+: Andreas says, "(snickers)"
+: Giovanni says, "Oh, shut up."
+: takes chisel in right hand
+: gives chisel to Heinrich
+: Heinrich takes chisel in right hand
+(Giovanni follows Heinrich to the Tool Store)
+
+7:31:06 Giorgios @ Workshop Yard (20%)
+(Giorgios is always in front of the carving station, while he is in the yard. Andreas is there as well.)
+: says, "Boy, your carves are fair."
+: Andreas faces Giorgios
+: Giorgios says, "But bring the blade toward your body"
+: says, "with a fast jerking motion."
+: says, "It is safer."
+: says, "Also, do you want some wine?"
+: Andreas says, "I am thirsty. Do you have water?"
+: Giorgios says, "The wine has some water in it."
+: Andreas says, "No, thank you, sir."
+: Giorgios @ (10%)
+: drops Big Wineskin on Pedestal
+: @ (30%)
+: faces left
+: waits 10
+: takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+: drops Big Wineskin on Pedestal
+: @ (30%)
+: faces left
+: waits 10
+: takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+: drops Big Wineskin on Pedestal
+: @ (30%)
+: faces left
+: sits
+: says, "Yer doon... sho good!"
+: Andreas faces Giorgios
+: says, "Sorry, sir?"
+: Giorgios says, "I shed..."
+: Giorgios says, "Yer doon sho good!"
+: Andreas faces left
+: says, "Thank you, sir."
+: Giorgios takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+: drops Big Wineskin on Pedestal
+: @ (30%)
+: lays
+: waits
+: says, "Ish a byooty full..."
+: says, "Byooty full day!"
+
+7:31:08 Heinrich @ Tool Store (30%)
+7:31:10 Giovanni @ Tool Store (60%)
+: says, "Listen,"
+: Heinrich faces Giovanni
+: Giovanni says, "Kings don't make good friends."
+: says "But a good rock?" 
+: says "It will never let you down!"
+: says "Set your mind on rocks."
+: Heinrich says, "Thank you for your guidance, sir."
+(Giovanni leaves for workshop yard)
+
+7:31:23 Ahmad @ Workshop Yard
+(Ahmad paces to different positions in the Workshop Yard, sometimes near each of three stations.)
+: waits 20
+: @ (80%)
+: waits 20
+: @ (50%)
+: waits 5
+: Ahmad @ (40%)
+: faces Giorgios
+: says, "Take yourself and "
+: says, "your ridiculously large wineskin out of my yard!"
+: says, "No pay for today."
+: Giorgios waits
+: takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+(Giorgios leaves for Workers dorm)
+7:32:25 Ahmad thinks, "That worthless drunk is paid 1 tari more than I!"
+: faces right
+: waits 20
+: @ (30%)
+7:32:52 Ahmad faces right
+
+7:31:28 Giovanni @ Workshop Yard
+(Giovanni has returned to his position in front of the masonry station.)
+: waits 20
+: @ (40%)
+: kneels
+: faces right
+: thinks, "(thinks about rocks)"
+: waits 20
+: @ (55%)
+: waits 10
+: @ (40%)
+: kneels
+: faces right
+: waits 30
+: @ (60%)
+: thinks, "(thinks about rocks some more)"
+
+7:32:08 Yusuf @ Tool Store (60%)
+: @ Tool Store (80%)
+: @ Tool Store (40%)
+: @ Tool Store (60%)
+: faces Heinrich
+: Yusuf says "Have you seen my abacus?"
+: Heinrich says "Not in here."
+: Yusuf says "Don't you understand I need it?"
+: Heinrich says "Pardon, sir. I will look for it."
+: Yusuf says "Sorry. I'm just in a bad mood."
+: says "It's that Salomone."
+: says "He always acts superior to me."
+: says "Yet we are paid exactly the same!"
+: Heinrich says "I will look for the abacus."
+(Heinrich leaves for the Accounts Room)
+(Yusuf leaves for the Family Quarters)
+
+7:32:31 King Frederick @ Master's Hall (10%)
+: Pietro kneels
+: says, "Your Majesty. Such an honor to receive you!"
+: King Frederick says, "Please rise, Master Mason."
+: Pietro stands
+: King Frederick says, "Is Heinrich here?"
+: Pietro says, "Of course. Shall I fetch him for you?"
+: King Frederick says, "Yes, I thought we'd go falconing."
+: Pietro says, "Majesty, did I ever show you my stones?"
+: King Frederick says, "I've seen many stones. They are all the same."
+: Pietro says, "Oh, no, Majesty. My stones are quite special."
+: says, "I would love to show them to you."
+: King Frederick says, "I shall ask my falcon."
+: says, "Furia, do you wish to see this man's special stones?"
+: Furia Perched emits "(squawk)"
+: King Frederick says, "She prefers to fly in the air and hunt."
+: Pietro says "I shall return with Heinrich shortly, my King."
+
+7:32:35 Yusuf @ Apprentices' Chamber
+: @ Family Quarters
+: Anna says, "You cannot be here!"
+: Yusuf says, "I needed to be near you."
+: Anna faces Yusuf.
+: Anna says, "I am spurning you, do you understand?"
+: says, "Spurn, spurn, spurn!"
+: Yusuf says, "But I'm having a really bad day."
+: Anna says, "You have been spurned."
+: Yusuf says, "But can I just-"
+: Anna says, "No! Get out!"
+: says, "I'm busy helping my father think!"
+: thinks, "(thinking)"
+: thinks, "(thinking very hard)"
+
+7:32:35 Giorgios @ Workers' Dormitory (10%)
+: drops Big Wineskin
+: lays
+
+7:32:41 Heinrich @ Accounts Room (90%)
+7:32:44 Salomone @ Accounts Room
+: says, "What are you doing here?"
+: Heinrich faces Salomone
+: Heinrich says, "Looking for the abacus, sir."
+: Salomone says, "Does the surveyor need it again?"
+: Heinrich says, "Yes."
+: Salomone gives abacus to Heinrich
+: Heinrich takes abacus in left hand
+: says, "There you have it."
+: Heinrich says, "Thank you, sir."
+
+7:32:38 Niccolo @ Stone Store
+: Niccolo says, "What kind of garbage limestone is this?"
+: Stefan faces Niccolo
+: Stefan says, "What? It's fine."
+: Niccolo says, "It's full of cracks."
+: Stefan says, "So use them. Easier to cut, right?"
+: Niccolo says, "I'll be lucky to cut three blocks out of it."
+: Stefan says, "Look, Pietro bought from Monte Pellegrino."
+: Niccolo says, "The worst quarry in Palermo."
+: says, "Even the most simple things"
+: says, "are done cheaply and poorly now."
+: says, "There is no love of craft!"
+: Stefan says, "I..."
+: Stefan says, "would like to stop talking to you now."
+
+7:33:01 Heinrich @ Workshop Yard
+
+7:33:06 Yusuf @ Apprentices' Chamber
+: says, "She is insane!"
 
 # Conclusions
 
 ## Identities
-* unlockConclusions=The Relic
 
-## The Relic
-* conclusion=The [Holy Binky] was regifted to [Sticky Agatha].
+* unlockConclusions=Labor Costs
+
+## Labor Costs
+
+* conclusion=We don't know how much [Pietro di Ruggero di Palermo ] pays himself.---And it's unclear what [Anna di Pietro] is paid, though possibly 5 denari.---But of those whose wages we know, two are paid the most - [Salomone ben David di Palermo] who faces left at 7:32, and [Yusuf ibn Khalaf al-Balarmi] who faces right.

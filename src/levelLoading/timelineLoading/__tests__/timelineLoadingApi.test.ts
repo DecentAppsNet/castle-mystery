@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultRoom } from '@/game/types/Room';
 import { createDefaultItem } from '@/game/types/Item';
-import { addCharacterKeyChanges, addRoomKeyChanges, createEditableTimeline } from '../editingUtil';
+import { addCharacterKeyChanges, addRoomKeyChanges, createEditableTimeline, generateKeyframes } from '../editingUtil';
 import { createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
 
 function _position(x:number, y = 0, z = 0) {
@@ -158,6 +158,19 @@ describe('timelineLoadingApi', () => {
       expect(timeline.keyframes).toHaveLength(1);
       expect(snapshot.characters[0]?.isVisible).toBe(false);
       expect(snapshot.rooms[0]?.items[0]).toMatchObject({ id:'relic', position:_position(9) });
+    });
+  });
+
+  describe('incremental updates', () => {
+    it('matches full keyframe generation after inserts and same-time changes', () => {
+      const timeline = createEditableTimeline([_character('alpha', 0), _character('beta', 20)], [_room('hall')], 1000);
+
+      addCharacterKeyChanges({ position:_position(30) }, 0, 4000, timeline);
+      addCharacterKeyChanges({ isVisible:false }, 0, 2000, timeline);
+      addCharacterKeyChanges({ position:_position(10) }, 1, 3000, timeline);
+      addRoomKeyChanges({ items:[_item('relic', 9)] }, 0, 2000, timeline);
+
+      expect(timeline.keyframes).toEqual(generateKeyframes(timeline.editableKeyframes));
     });
   });
 });
