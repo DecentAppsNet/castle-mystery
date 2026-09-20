@@ -76,7 +76,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!indexUsedItemsInLevel(items, activities, rooms, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
-  level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, items, rooms,
+  level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, [...level.itemsById.values()], rooms,
     initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
 
   // Schedule activities into timeline data structure.

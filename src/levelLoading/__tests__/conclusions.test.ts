@@ -120,6 +120,41 @@ describe('loading levels - conclusions', () => {
     expect(finalMystery?.isLocked).toBe(true);
   });
 
+  it('offers only directly referenced interactive items for an item conclusion blank', () => {
+    let text = replaceSection(defaultLevelText, 'rooms', [
+      '## Hall',
+      '',
+      '```',
+      'ko..',
+      '..S.',
+      '....',
+      '```',
+      '',
+      '* S=Sam',
+      '* k=Key',
+      '* o=Ornament',
+      '',
+      '## Study',
+      '* obscured=true'
+    ]);
+    text = replaceSection(text, 'items', [
+      '## Key',
+      '* title=Master Key',
+      '* description=Opens a lock.',
+      '',
+      '## Ornament',
+      '',
+      '## Unused Token',
+      '* description=Never appears in the level.'
+    ]);
+    text = replaceSection(text, 'conclusions', ['## Mystery', '* conclusion=[Master Key]']);
+    const { level, errors } = loadLevelForTest(text, 'conclusions-direct-items.md');
+
+    expect(errors.describeErrors()).toBe('');
+    const mystery = level?.conclusions.find(conclusion => conclusion.id === 'mystery');
+    expect(mystery?.parts[0]).toMatchObject({ availableAnswers:['Master Key'] });
+  });
+
   it('fails if the conclusions section contains duplicate subsections with the same heading text', () => {
     const text = replaceSection(defaultLevelText, 'conclusions', ['## Mystery', '', '## Mystery']);
     _expectFailure(text, 'conclusions-duplicate-heading.md', "duplicate section 'Mystery'");
