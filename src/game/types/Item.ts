@@ -1,4 +1,6 @@
-import Position, { duplicatePosition } from "./Position";
+import { assert } from "decent-portal";
+
+import Position, { arePositionsEqual, duplicatePosition } from "./Position";
 
 export type MutableItem = {
   readonly id:string,
@@ -40,6 +42,13 @@ export function duplicateItem(from:Item):Item {
     stackOffset:duplicatePosition(from.stackOffset),
     description:from.description
   };
+}
+
+export function areItemsEqual(a:Item, b:Item):boolean {
+  assert(a.id !== b.id || (a.title === b.title && a.imageUrl === b.imageUrl && arePositionsEqual(a.stackOffset, b.stackOffset) &&
+    a.randomSalt === b.randomSalt && a.description === b.description)); // Should never create another instance with same ID and different read-only members.
+  if (a === b) return true;
+  return (a.id === b.id && a.isVisible === b.isVisible && arePositionsEqual(a.position, b.position) && arePositionsEqual(a.drawOffset, b.drawOffset));
 }
 
 export default Item;

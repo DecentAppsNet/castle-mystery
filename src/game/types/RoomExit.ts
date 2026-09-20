@@ -1,3 +1,5 @@
+import { assert } from 'decent-portal';
+
 import ExitStatus from './ExitStatus';
 import ExitType from './ExitType';
 
@@ -21,6 +23,14 @@ export function createRoomExitId(room1Id:string, room2Id:string, x:number, y:num
 
 export function duplicateRoomExit(from:RoomExit):RoomExit {
   return {...from};
+}
+
+export function areRoomExitsEqual(a:RoomExit, b:RoomExit):boolean {
+  if (a === b) return true;
+  assert(a.id !== b.id || (a.x === b.x && a.y === b.y && a.room1Id === b.room1Id && a.room2Id === b.room2Id &&
+      a.exitType === b.exitType && a.lockableFromRoom1With === b.lockableFromRoom1With && 
+      a.lockableFromRoom2With === b.lockableFromRoom2With)); // Should never have instance with same ID but different readonly members.
+  return (a.id === b.id && a.exitStatus === b.exitStatus);
 }
 
 export default RoomExit;

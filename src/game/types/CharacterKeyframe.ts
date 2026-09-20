@@ -1,6 +1,6 @@
 import Character, { BodyOrientation, createDefaultCharacter, FacingDirection } from "@/game/types/Character";
-import Item, { duplicateItem } from "@/game/types/Item";
-import Position, { duplicatePosition } from "@/game/types/Position";
+import Item, { areItemsEqual, duplicateItem } from "@/game/types/Item";
+import Position, { arePositionsEqual, duplicatePosition } from "@/game/types/Position";
 import Effect, { duplicateEffect } from "../effects/types/Effect";
 
 type CharacterKeyframe = {
@@ -40,6 +40,29 @@ export function duplicateCharacterKeyframe(from:CharacterKeyframe, isDuplicating
     position:duplicatePosition(from.position),
     effects:isDuplicatingEffects ? from.effects.map(duplicateEffect) : [...from.effects]
   }
+}
+
+function _areNullableItemsEqual(a:Item|null, b:Item|null):boolean {
+  if (a === null) return b === null;
+  if (b === null) return false;
+  return areItemsEqual(a, b);
+}
+
+export function areCharacterKeyframesEqual(a:CharacterKeyframe, b:CharacterKeyframe):boolean {
+  if (a === b) return true;
+  return (a.isVisible === b.isVisible &&
+    a.facingDirection === b.facingDirection &&
+    a.bodyOrientation === b.bodyOrientation &&
+    a.items.length === b.items.length &&
+    a.items.every((item:Item, i:number) => areItemsEqual(item, b.items[i])) &&
+    _areNullableItemsEqual(a.leftHandItem, b.leftHandItem) &&
+    _areNullableItemsEqual(a.rightHandItem, b.rightHandItem) &&
+    a.skinId === b.skinId &&
+    arePositionsEqual(a.position, b.position) &&
+    a.effects.length === b.effects.length &&
+    // Effect instances are reused and not mutated, so equality can just check instance.
+    a.effects.every((effect:Effect, i:number) => effect === b.effects[i]) 
+  );
 }
 
 export const CHARACTER_KEYFRAME_KEYS = Object.keys(createDefaultCharacterKeyframe());

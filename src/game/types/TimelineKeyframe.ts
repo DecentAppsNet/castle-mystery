@@ -1,5 +1,5 @@
-import CharacterKeyframe, { duplicateCharacterKeyframe } from "@/game/types/CharacterKeyframe";
-import RoomKeyframe, { duplicateRoomKeyframe } from "@/game/types/RoomKeyframe";
+import CharacterKeyframe, { areCharacterKeyframesEqual, duplicateCharacterKeyframe } from "@/game/types/CharacterKeyframe";
+import RoomKeyframe, { areRoomKeyframesEqual, duplicateRoomKeyframe } from "@/game/types/RoomKeyframe";
 
 type TimelineKeyframe<
   TCharacter = CharacterKeyframe,
@@ -18,5 +18,11 @@ export function duplicateTimelineKeyframe(from:TimelineKeyframe, isDuplicatingEf
   }
 }
 
-export default TimelineKeyframe;
+export function areTimelineKeyframesEqual(a:TimelineKeyframe, b:TimelineKeyframe):boolean {
+  if (a === b) return true;
+  if (a.time !== b.time || a.characters.length !== b.characters.length || a.rooms.length !== b.rooms.length) return false;
+  return a.characters.every((ckf:CharacterKeyframe, i:number) => areCharacterKeyframesEqual(ckf, b.characters[i])) &&
+    a.rooms.every((rkf:RoomKeyframe, i:number) => areRoomKeyframesEqual(rkf, b.rooms[i]));
+}
 
+export default TimelineKeyframe;

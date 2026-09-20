@@ -1,6 +1,6 @@
-import Item, { duplicateItem } from "@/game/types/Item";
+import Item, { areItemsEqual, duplicateItem } from "@/game/types/Item";
 import Room, { createDefaultRoom } from "@/game/types/Room";
-import RoomExit, { duplicateRoomExit } from "./RoomExit";
+import RoomExit, { areRoomExitsEqual, duplicateRoomExit } from "./RoomExit";
 
 type RoomKeyframe = {
   items: Item[],
@@ -18,6 +18,15 @@ export function duplicateRoomKeyframe(from:RoomKeyframe) {
     items:from.items.map(duplicateItem),
     exits:from.exits.map(duplicateRoomExit)
   };
+}
+
+export function areRoomKeyframesEqual(a:RoomKeyframe, b:RoomKeyframe):boolean {
+  if (a === b) return true;
+  return (a.items.length === b.items.length &&
+    a.items.every((item, i) => areItemsEqual(item, b.items[i])) &&
+    a.exits.length === b.exits.length &&
+    a.exits.every((exit, i) => areRoomExitsEqual(exit, b.exits[i]))
+  );
 }
 
 export const ROOM_KEYFRAME_KEYS = Object.keys(createDefaultRoomKeyframe());
