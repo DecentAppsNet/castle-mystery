@@ -10,7 +10,7 @@ import Timeline from "@/game/types/Timeline";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { findRoomIdAtPosition } from "@/game/roomUtil";
 import Position from "@/game/types/Position";
-import { arePositionsEqual } from "@/game/positionUtil";
+import { arePositionsEqual } from "@/game/types/Position";
 import { generateRoomEntryEvents } from "./roomEntranceUtil";
 import RoomEntryEvents from "./types/RoomEntryEvents";
 import { doesKeyframeHaveSpeechHeardByCharacter } from "@/levelLoading/activityLoading/activitySchedulers/util/speechUtil";

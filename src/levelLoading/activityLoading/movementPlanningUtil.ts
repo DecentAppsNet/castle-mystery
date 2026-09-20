@@ -7,7 +7,7 @@ import Room from "@/game/types/Room";
 import Waypoint from "../types/Waypoint";
 import EditableTimeline from "../timelineLoading/types/EditableTimeline";
 import Position from "@/game/types/Position";
-import { arePositionsEqual } from "@/game/positionUtil";
+import { arePositionsEqual } from "@/game/types/Position";
 import { findNearestFloorWaypointToPosition, isFloorWaypoint, WAYPOINT_MIDDLE_ROW_Z } from "./waypointFindingUtil";
 import { addCharacterKeyChanges } from "../timelineLoading/editingUtil";
 import { formatMsecsAsTimestamp } from "./timestampUtil";

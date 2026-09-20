@@ -5,7 +5,7 @@ import Room from "@/game/types/Room";
 import Waypoint from "../types/Waypoint";
 import { FLOOR_WAYPOINT_Y_OFFSET, ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import Position from "@/game/types/Position";
-import { arePositionsEqual } from "@/game/positionUtil";
+import { arePositionsEqual } from "@/game/types/Position";
 import { assert, assertNonNullable } from "decent-portal";
 import RoomExit from "@/game/types/RoomExit";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";

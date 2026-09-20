@@ -12,7 +12,7 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import Room from "@/game/types/Room";
 import Position from "@/game/types/Position";
-import { arePositionsEqual } from "@/game/positionUtil";
+import { arePositionsEqual } from "@/game/types/Position";
 import Waypoint from "@/levelLoading/types/Waypoint";
 import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";

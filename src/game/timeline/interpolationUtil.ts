@@ -4,7 +4,7 @@
 import { assert, assertNonNullable } from "decent-portal";
 
 import Position from "@/game/types/Position";
-import { arePositionsEqual } from "@/game/positionUtil";
+import { arePositionsEqual } from "@/game/types/Position";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 
 type CharacterPositionKeyframe = {

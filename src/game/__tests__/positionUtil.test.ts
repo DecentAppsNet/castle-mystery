@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { COLUMN_WIDTH, LAYER_HEIGHT } from '../roomGridUtil';
-import { arePositionsAdjacent, arePositionsEqual, arePositionsOrthogonal } from '../positionUtil';
+import { arePositionsAdjacent, arePositionsOrthogonal } from '../positionUtil';
+import { arePositionsEqual } from '../types/Position';
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 
 describe('positionUtil', () => {

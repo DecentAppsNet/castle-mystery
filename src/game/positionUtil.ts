@@ -7,9 +7,7 @@ import Position from "./types/Position";
 
 const MAX_XZ_DISTANCE = Math.hypot(ROOM_BACK_ROW_CENTER_Z - ROOM_MIDDLE_ROW_CENTER_Z, COLUMN_WIDTH);
 
-export function arePositionsEqual(a:Position, b:Position):boolean {
-  return a.x === b.x && a.y === b.y && a.z === b.z;
-}
+// arePositionsEqual() is defined with the type definition rather than in this file, for sake of consistency.
 
 export function arePositionsOrthogonal(a:Position, b:Position):boolean {
   let sameCount = 0;
