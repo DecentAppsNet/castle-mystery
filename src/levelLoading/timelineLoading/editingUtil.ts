@@ -98,6 +98,21 @@ export function generateKeyframes(editableKeyframes:readonly EditableTimelineKey
   return keyframes;
 }
 
+function _areValuesEqual(left:unknown, right:unknown):boolean {
+  if (left === right) return true;
+  if (!left || !right || typeof left !== 'object' || typeof right !== 'object') return false;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+    return left.every((value, index) => _areValuesEqual(value, right[index]));
+  }
+  const leftRecord = left as Record<string, unknown>;
+  const rightRecord = right as Record<string, unknown>;
+  const leftKeys = Object.keys(leftRecord);
+  const rightKeys = Object.keys(rightRecord);
+  return leftKeys.length === rightKeys.length && leftKeys.every(key =>
+    Object.prototype.hasOwnProperty.call(rightRecord, key) && _areValuesEqual(leftRecord[key], rightRecord[key]));
+}
+
 function _findEarliestAffectedKeyframeI(editableKeyframes:readonly EditableTimelineKeyframe[],
     changedKeyframeI:number):number {
   const changedKeyframe = editableKeyframes[changedKeyframeI];
@@ -130,10 +145,16 @@ function _updateKeyframes(editableKeyframes:readonly EditableTimelineKeyframe[],
     keyframeI = 1;
   }
 
-  // Replay the affected suffix from the earliest editable change.
+  // A new frame shifts the following aligned resolved frames by one index.
   for (; keyframeI < editableKeyframes.length; ++keyframeI) {
     const nextKeyframe = _generateNextKeyframe(keyframes.at(-1)!, editableKeyframes, keyframeI);
     keyframes.push(nextKeyframe);
+    const existingKeyframeI = insertedKeyframeI !== null && keyframeI >= insertedKeyframeI ? keyframeI - 1 : keyframeI;
+    const existingKeyframe = existingKeyframes[existingKeyframeI];
+    if (insertedKeyframeI !== null && keyframeI >= insertedKeyframeI && existingKeyframe
+        && _areValuesEqual(nextKeyframe, existingKeyframe)) {
+      return [...keyframes, ...existingKeyframes.slice(existingKeyframeI + 1)];
+    }
   }
   return keyframes;
 }

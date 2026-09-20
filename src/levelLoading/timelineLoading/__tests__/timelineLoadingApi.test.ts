@@ -162,6 +162,18 @@ describe('timelineLoadingApi', () => {
   });
 
   describe('incremental updates', () => {
+    it('reuses an unchanged suffix after inserting a keyframe', () => {
+      const timeline = createEditableTimeline([_character('alpha', 0)], [], 1000);
+
+      addCharacterKeyChanges({ position:_position(30) }, 0, 4000, timeline);
+      addCharacterKeyChanges({ isVisible:true }, 0, 3000, timeline);
+      const unchangedEndKeyframe = timeline.keyframes[2];
+      addCharacterKeyChanges({ isVisible:false }, 0, 2000, timeline);
+
+      expect(timeline.keyframes).toEqual(generateKeyframes(timeline.editableKeyframes));
+      expect(timeline.keyframes[3]).toBe(unchangedEndKeyframe);
+    });
+
     it('matches full keyframe generation after inserts and same-time changes', () => {
       const timeline = createEditableTimeline([_character('alpha', 0), _character('beta', 20)], [_room('hall')], 1000);
 
