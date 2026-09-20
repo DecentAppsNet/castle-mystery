@@ -14,13 +14,36 @@ import { findRoomAtPosition } from "@/game/roomUtil";
 import { CharacterOwnedItemPlacement, findCharacterOwnedItem, INVENTORY, LEFT_HAND, RIGHT_HAND } from "@/game/itemOwnershipUtil";
 import CharacterKeyframe from "@/game/types/CharacterKeyframe";
 import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
-import { arePositionsAdjacent } from "@/game/positionUtil";
-import { findClaimedWaypointsFromKeyframe, findNearestIncludedFloorWaypointToPosition } from "../waypointFindingUtil";
+import { arePositionsAdjacent, arePositionsEqual } from "@/game/positionUtil";
+import { findBestIncludedFloorWaypointToPosition, findClaimedWaypointsFromKeyframe, isExitWaypoint, isWaypointOnMiddleRow } from "../waypointFindingUtil";
 import { scheduleCharacterMovementWithinRoom } from "../movementPlanningUtil";
 import { createGiveEffect } from "@/game/effects/giveEffectUtil";
 import { findCharacterFacingDirection } from "./util/facingUtil";
+import Room from "@/game/types/Room";
+import Position from "@/game/types/Position";
+import Waypoint from "@/levelLoading/types/Waypoint";
 
 type PartsShape = { characterId:string, itemId:string, toCharacterId:string };
+
+function _isItemInRoomAtPosition(room:Room, position:Position):boolean {
+  return room.items.some(item => arePositionsEqual(item.position, position));
+}
+
+function _findBestGivePosition(context:WaypointGenerationContext, room:Room, targetPosition:Position,
+    claimedWaypoints:Waypoint[], fallbackPosition:Position):Position {
+  function _onScoreWaypoint(waypoint:Waypoint):number {
+    let score = 0;
+    if (!isExitWaypoint(room, waypoint)) score += 1000000;
+    if (isWaypointOnMiddleRow(waypoint)) score += 100000;
+    if (!_isItemInRoomAtPosition(room, waypoint.position)) score += 10000;
+    score += 1000 - Math.hypot(waypoint.position.x - targetPosition.x, waypoint.position.z - targetPosition.z);
+    return score;
+  }
+
+  return findBestIncludedFloorWaypointToPosition(context, room, claimedWaypoints, _onScoreWaypoint)?.position
+    ?? fallbackPosition;
+}
+
 function _scheduleRemoveOwnedItem(characterKeyframe:CharacterKeyframe, placement:CharacterOwnedItemPlacement,
     itemId:string, characterI:number, time:number, editableTimeline:EditableTimeline) {
 
@@ -98,8 +121,8 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
   if (!arePositionsAdjacent(characterKeyframe.position, toCharacterKeyframe.position)) {
     const roomI = editableTimeline.roomIdToI[room.id];
     const claimedWaypoints = findClaimedWaypointsFromKeyframe(room, roomI, fromKeyframe, waypointContext);
-    const givePosition = findNearestIncludedFloorWaypointToPosition(waypointContext, room,
-      toCharacterKeyframe.position, claimedWaypoints)?.position ?? characterKeyframe.position;
+    const givePosition = _findBestGivePosition(waypointContext, room, toCharacterKeyframe.position,
+      claimedWaypoints, characterKeyframe.position);
     const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, room, characterKeyframe.position,
       scheduleTime, givePosition, characterI, characterKeyframe.facingDirection, editableTimeline);
     if (typeof scheduleResult === 'string') {
