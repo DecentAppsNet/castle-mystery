@@ -254,7 +254,7 @@ DDCCAAABBE
 22:59:50 Harold Masked faces right
 22:59:51 Giorgios Masked faces right
 : Giovanni Masked faces right
-22:59:52 Niccolo Masked @ Nave.80%
+22:59:52 Niccolo Masked @ Nave (80%)
 : faces left
 : Yusuf Masked faces right
 : Hugo Masked faces right
