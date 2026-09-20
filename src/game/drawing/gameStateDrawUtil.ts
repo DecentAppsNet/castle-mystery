@@ -371,6 +371,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
         gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet,
         gameState.discoveryState.discoveredRoomIds.has(room.id));
     }
+    drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
     if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) continue;
     drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, 
       hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,
@@ -379,9 +380,6 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     if (!_drawCachedRoomRoof(room, gameState, context)) {
       drawRoomRoofs(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors, context);
     }
-  }
-  for (const { room, isActive } of roomRenderStates) {
-    drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
   }
   handleAfterLevelDrawEffects(
     characters,
