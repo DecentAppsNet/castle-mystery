@@ -18,12 +18,13 @@ function _activitiesOverlap(firstStartTime:number, firstEndTime:number,
   return firstStartTime < secondEndTime && secondStartTime < firstEndTime;
 }
 
-/** Returns when a character's latest scheduled busy interval ends, if any. */
-export function findLatestBusyCharacterActivityEndTime(characterId:string,
+/** Returns when a character's latest busy interval ending by `latestAllowedEndTime` ends, if any. */
+export function findPrecedingBusyCharacterActivityEndTime(characterId:string, latestAllowedEndTime:number,
     scheduledActivities:readonly Activity[]):number|null {
   let latestEndTime:number|null = null;
   for(const activity of scheduledActivities) {
-    if (activity.endTime === null || !activity.busyCharacterIds?.includes(characterId)) continue;
+    assertNonNullable(activity.endTime); // All scheduled activities have resolved timing.
+    if (activity.endTime > latestAllowedEndTime || !activity.busyCharacterIds.includes(characterId)) continue;
     latestEndTime = Math.max(latestEndTime ?? activity.endTime, activity.endTime);
   }
   return latestEndTime;

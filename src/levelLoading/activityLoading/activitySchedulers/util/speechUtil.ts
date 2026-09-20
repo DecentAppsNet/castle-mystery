@@ -67,7 +67,7 @@ export function calcSpeechDuration(speech:string):number {
 }
 
 export function doesKeyframeHaveSpeechHeardByCharacter(keyframe:TimelineKeyframe, _characterIds:string[], characterI:number, rooms:Room[]):boolean {
-  if (!_findCharacterSayingOrThinkingEffectAtTime(keyframe.characters[characterI].effects, keyframe.time)) return true;
+  if (_findCharacterSayingOrThinkingEffectAtTime(keyframe.characters[characterI].effects, keyframe.time)) return true;
   const earshotRooms = _findRoomsInEarshotAtKeyframe(keyframe, characterI, rooms);
   return _doesOtherCharacterSayInEarshot(keyframe, characterI, earshotRooms, keyframe.time);
 } 

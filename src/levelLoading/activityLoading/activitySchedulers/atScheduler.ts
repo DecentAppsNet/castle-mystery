@@ -19,7 +19,7 @@ import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime 
 import { findBestIncludedFloorWaypointToPosition, findNearestFloorWaypointToPosition, findWaypointsForRoom, isExitWaypoint, isWaypointOnMiddleRow } from "../waypointFindingUtil";
 import { createKeyframeAtTime } from "@/game/timeline";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
-import { findLatestBusyCharacterActivityEndTime } from "@/levelLoading/timelineLoading/activityConflictUtil";
+import { findPrecedingBusyCharacterActivityEndTime } from "@/levelLoading/timelineLoading/activityConflictUtil";
 
 function _findClaimedWaypointsFromSnapshot(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
   const claimedWaypoints:Waypoint[] = [];
@@ -73,6 +73,30 @@ type PartsShape = {
 }
 
 const DEFAULT_HORIZONTAL_TARGET = .5;
+
+function _findEarliestMovementTime(level:Level, activity:Activity, characterId:string,
+    scheduledActivities:readonly Activity[], isRelativeTimestamp:boolean):number {
+  /* A relative activity has no authored end time. Its startTime is resolved from the preceding
+     authored activity, and movement begins at that time. Future activities must not delay this
+     movement; normal overlap validation rejects them later if they conflict with its time range.
+     If this is the first itinerary activity, loading assigns the level start time to .startTime. */
+  if (isRelativeTimestamp) {
+    assert(activity.endTime === null);
+    assertNonNullable(activity.startTime);
+    return activity.startTime;
+  }
+
+  /* An absolute @ timestamp is its required arrival time, not its movement start time. The loader
+    seeds the first itinerary activity's .startTime with the level start time, including absolute
+    @ activities; otherwise .startTime remains null. Activities are scheduled in an order that can
+    put a later busy interval in scheduledActivities before this activity. Only intervals ending by
+    this arrival deadline can determine where movement begins. */
+  assertNonNullable(activity.endTime);
+  assert(activity.startTime === null || activity.startTime === level.startTime);
+  return findPrecedingBusyCharacterActivityEndTime(characterId, activity.endTime, scheduledActivities)
+    ?? level.startTime;
+}
+
 /** Schedules a character to be at an authored position by the activity end time. */
 export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerationContext,
   activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector,
@@ -93,8 +117,7 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
   const isRelativeTimestamp = activity.endTime === null;
 
   // Derive availability from activities while reading presentation state from the timeline.
-  const fromTime = Math.max(activity.startTime ?? level.startTime,
-    findLatestBusyCharacterActivityEndTime(characterId, scheduledActivities) ?? level.startTime);
+  const fromTime = _findEarliestMovementTime(level, activity, characterId, scheduledActivities, isRelativeTimestamp);
   const fromKeyframe = createKeyframeAtTime(editableTimeline.keyframes, fromTime);
   const fromPos = fromKeyframe.characters[characterI].position;
   const fromFacingDirection = fromKeyframe.characters[characterI].facingDirection;

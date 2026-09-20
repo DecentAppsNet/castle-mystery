@@ -38,7 +38,31 @@ describe('level loading - @ activities', () => {
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('closet');
   });
 
-  it('starts relative movement after the latest busy activity rather than a preceding state change', () => {
+  it('loads a relative @ activity before a non-conflicting future activity', () => {
+    const text = replaceSection(defaultLevelText, 'itinerary', [
+      '0:00:00 Sam waits',
+      ': Sam @ Closet',
+      '0:01:00 Sam waits 1'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'at-relative-before-future-activity.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
+  it('rejects a future activity that conflicts with a relative @ activity', () => {
+    const text = replaceSection(defaultLevelText, 'itinerary', [
+      '0:00:00 Sam waits',
+      ': Sam @ Closet',
+      '0:00:02 Sam waits 1'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'at-relative-conflicts-with-future-activity.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain(`sam can't wait because they are busy with "@" activity`);
+  });
+
+  it('rejects a relative @ activity that overlaps an earlier busy activity', () => {
     const text = replaceSection(defaultLevelText, 'itinerary', [
       '0:00:00 Sam waits 3',
       '0:00:01 Sam faces Benny',
@@ -46,13 +70,8 @@ describe('level loading - @ activities', () => {
     ]);
     const { level, errors } = loadLevelForTest(text, 'at-relative-after-latest-busy-activity.md');
 
-    expect(errors.describeErrors()).toBe('');
-    expect(level).not.toBeNull();
-    const characterI = level!.timeline.characterIdToI.sam;
-    const positionBeforeMovement = findCharacterPositionAtTime(level!.timeline.keyframes, characterI, 2_999);
-    expect(findRoomAtPosition(level!.rooms, positionBeforeMovement.x, positionBeforeMovement.y)?.id).toBe('hall');
-    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, characterI, level!.endTime);
-    expect(findRoomAtPosition(level!.rooms, endPosition.x, endPosition.y)?.id).toBe('closet');
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain(`sam can't @ because they are busy with "waits" activity`);
   });
 
   it('loads a relative @ activity with a horizontal target in the current room', () => {
