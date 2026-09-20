@@ -178,6 +178,13 @@ A.......
 
 # Itinerary
 
+9:00:00 Constance I says "Aiiieeee!"
+: says "(huff) (huff) (huff)"
+: Sofia the Midwife says "My lady, let me send these common folk away."
+: Constance I says "No! They must all see!"
+: Sofia the Midwife says "As you wish."
+9:00:15 Constance I says "(huff) (huff)"
+
 9:00:00 Sticky Agatha says "Today, we may see our Queen."
 : takes infant in right hand.
 9:00:07 @ East Square (10%)
@@ -203,6 +210,8 @@ A.......
 : Pope @ Birthing Tent (80%)
 : drops Holy Binky
 : Constance I says, "(huff) (huff)"
+
+9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
 
 9:00:43 Amos @ Birthing Tent (90%)
 : Amos says, "Your Majesty, shall I bring them in?"
@@ -253,6 +262,16 @@ A.......
 : says, "Not a single flying buttress!"
 : Ugolino says, "I shall tell the parish priest of your dissatisfaction."
 : Pope says, "Good."
+
+9:01:25 Sticky Agatha @ Living Space
+
+9:01:28 Amos says, "Next!"
+: says, "Get in there and witness."
+
+9:00:57 Male Peasant 4 thinks, "She brings a baby into the tent?"
+: Old Female Peasant 2 thinks, "What fraud is this? We are not blind."
+
+9:00:18 Female Peasant thinks, "40 years? She's too old to have a child!"
 
 # Conclusions
 

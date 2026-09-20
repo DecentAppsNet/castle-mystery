@@ -5,6 +5,7 @@
 * time=9:00
 * background=countryside.png
 * imports=items.md | characters.md | roomStyles.md
+* winSynopsis=Queen Constance birthed Constantine publicly to avoid disputes of lineage. The Pope, seeking to gain the earliest possible favor with the future king, bestowed a holy relic to the newborn. But in the end, Sticky Agatha kept the Holy Binky for her own child.
 
 # Map
 
@@ -178,6 +179,13 @@ A.......
 
 # Itinerary
 
+9:00:00 Constance I says "Aiiieeee!"
+: says "(huff) (huff) (huff)"
+: Sofia the Midwife says "My lady, let me send these common folk away."
+: Constance I says "No! They must all see!"
+: Sofia the Midwife says "As you wish."
+9:00:15 Constance I says "(huff) (huff)"
+
 9:00:00 Sticky Agatha says "Today, we may see our Queen."
 : takes infant in right hand.
 9:00:07 @ East Square (10%)
@@ -203,6 +211,8 @@ A.......
 : Pope @ Birthing Tent (80%)
 : drops Holy Binky
 : Constance I says, "(huff) (huff)"
+
+9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
 
 9:00:43 Amos @ Birthing Tent (90%)
 : Amos says, "Your Majesty, shall I bring them in?"
@@ -253,15 +263,6 @@ A.......
 : says, "Not a single flying buttress!"
 : Ugolino says, "I shall tell the parish priest of your dissatisfaction."
 : Pope says, "Good."
-
-9:00:00 Constance I says "Aiiieeee!"
-: says "(huff) (huff) (huff)"
-: Sofia the Midwife says "My lady, let me send these common folk away."
-: Constance I says "No! They must all see!"
-: Sofia the Midwife says "As you wish."
-9:00:15 Constance I says "(huff) (huff)"
-
-9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
 
 9:01:25 Sticky Agatha @ Living Space
 
