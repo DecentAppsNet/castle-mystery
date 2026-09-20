@@ -129,7 +129,7 @@ SSMM/HH\YYYYTT
 
 * title=
 * style=Old Castle
-* exits=Tool Store (locked, lockable) | Workshop Yard
+* exits=Tool Store (locked, lockable) | Workshop Yard (closed)
 
 ## Tool Store
 
@@ -257,12 +257,12 @@ SSMM/HH\YYYYTT
 7:30:00 King Frederick takes Furia Perched in right hand
 
 7:30:00 Pietro @ Master's Hall
-7:30:03 Ahmad @ Master's Hall.80%
+7:30:03 Ahmad @ Master's Hall (80%)
 7:30:03 Pietro faces right
 : says, "Are they up and working, Ahmad?"
 : Ahmad says, "I haven't checked yet."
 : Pietro says, "Well, you better - that's your job."
-: Pietro @ Master's Hall.20%
+: Pietro @ Master's Hall (20%)
 (Ahmad leaves)
 7:30:14 Anna @ Master's Hall
 : Pietro faces right
@@ -297,26 +297,26 @@ SSMM/HH\YYYYTT
 : says, "In the House of Rocks, I am your King."
 : says, "And the King says, 'get to the yard'!"
 
-7:30:20 Stefan @ Workshop Yard.80%
+7:30:20 Stefan @ Workshop Yard (80%)
 7:30:36 faces left
 7:30:39 @ Stone Store
 : thinks, "I really don't want to talk to Niccoló."
 : thinks, "He's going to complain about cracks again."
 : waits 10
-: @ Stone Store.30%
+: @ Stone Store (30%)
 : waits 20
-: @ Stone Store.70%
+: @ Stone Store (70%)
 : faces left
 : waits 10
-: @ Stone Store.50%
+: @ Stone Store (50%)
 : waits 20
-: @ Stone Store.20%
+: @ Stone Store (20%)
 : waits 15
-: @ Stone Store.80%
+: @ Stone Store (80%)
 : waits 20
-: @ Stone Store.60%
+: @ Stone Store (60%)
 
-7:30:20 Giovanni @ Workshop Yard.40%
+7:30:20 Giovanni @ Workshop Yard (40%)
 : waits 20
 : kneels
 (continues working until Heinrich arrives below)
@@ -354,7 +354,7 @@ SSMM/HH\YYYYTT
 : says, "And my hands are steady for carving."
 (Giorgios leaves for Workshop Yard)
 
-7:30:37 Heinrich @ Common Kitchen.80%
+7:30:37 Heinrich @ Common Kitchen (80%)
 : Maria says, "There's still breakfast left for you."
 : Heinrich faces left
 : Heinrich says, "No time. I'm late!"
@@ -365,30 +365,30 @@ SSMM/HH\YYYYTT
 : Heinrich says, "Thank you, ma'am."
 : takes bread roll into inventory
 
-7:30:40 Niccolo @ Workshop Yard.90%
+7:30:40 Niccolo @ Workshop Yard (90%)
 (Niccolo is always in front of the cutting station, working, while he is in the yard.)
 : waits 10
-: @ Workshop Yard.80%
+: @ Workshop Yard (80%)
 : waits 20
-: @ Workshop Yard.90%
+: @ Workshop Yard (90%)
 : waits 10
 : faces left
 : waits 3
-: @ Workshop Yard.70%
+: @ Workshop Yard (70%)
 : waits 10
-: @ Workshop Yard.90%
+: @ Workshop Yard (90%)
 : faces left
 : kneels
 : waits 20
 : thinks, "(thinking dark thoughts)"
 : stands
-: @ Workshop Yard.80%
+: @ Workshop Yard (80%)
 : waits 10
-: @ Workshop Yard.90%
+: @ Workshop Yard (90%)
 : faces left
 : kneels
 : waits 10
-: @ Workshop Yard.70%
+: @ Workshop Yard (70%)
 : Niccolo thinks, "This is Stefan's fault."
 (leaves cutting station for stone store)
 
@@ -433,7 +433,7 @@ SSMM/HH\YYYYTT
 : Pietro says "Don't worry! More jobs are coming."
 : Salomone says, "May we all prosper, sir."
 (Salomone leaves for accounts room)
-7:32:22 Pietro @ Master's Hall.60%
+7:32:30 Pietro @ Master's Hall (60%)
 : faces left
 
 7:30:56 Heinrich @ Workshop Yard
@@ -445,9 +445,10 @@ SSMM/HH\YYYYTT
 : Giovanni says, "Oh, shut up."
 : takes chisel in right hand
 : gives chisel to Heinrich
+: Heinrich takes chisel in right hand
 (Giovanni follows Heinrich to the Tool Store)
 
-7:31:06 Giorgios @ Workshop Yard.20%
+7:31:06 Giorgios @ Workshop Yard (20%)
 (Giorgios is always in front of the carving station, while he is in the yard. Andreas is there as well.)
 : says, "Boy, your carves are fair."
 : Andreas faces Giorgios
@@ -458,21 +459,21 @@ SSMM/HH\YYYYTT
 : Andreas says, "I am thirsty. Do you have water?"
 : Giorgios says, "The wine has some water in it."
 : Andreas says, "No, thank you, sir."
-: Giorgios @ 10%
+: Giorgios @ (10%)
 : drops Big Wineskin on Pedestal
-: @ 30%
+: @ (30%)
 : faces left
 : waits 10
 : takes Big Wineskin in right hand
 : Big Wineskin emits "(glug, glug)"
 : drops Big Wineskin on Pedestal
-: @ 30%
+: @ (30%)
 : faces left
 : waits 10
 : takes Big Wineskin in right hand
 : Big Wineskin emits "(glug, glug)"
 : drops Big Wineskin on Pedestal
-: @ 30%
+: @ (30%)
 : faces left
 : sits
 : says, "Yer doon... sho good!"
@@ -485,14 +486,14 @@ SSMM/HH\YYYYTT
 : Giorgios takes Big Wineskin in right hand
 : Big Wineskin emits "(glug, glug)"
 : drops Big Wineskin on Pedestal
-: @ 30%
+: @ (30%)
 : lays
 : waits
 : says, "Ish a byooty full..."
 : says, "Byooty full day!"
 
-7:31:08 Heinrich @ Tool Store.30%
-7:31:10 Giovanni @ Tool Store.60%
+7:31:08 Heinrich @ Tool Store (30%)
+7:31:10 Giovanni @ Tool Store (60%)
 : says, "Listen,"
 : Heinrich faces Giovanni
 : Giovanni says, "Kings don't make good friends."
@@ -505,11 +506,11 @@ SSMM/HH\YYYYTT
 7:31:23 Ahmad @ Workshop Yard
 (Ahmad paces to different positions in the Workshop Yard, sometimes near each of three stations.)
 : waits 20
-: @ 80%
+: @ (80%)
 : waits 20
-@ 50%
+: @ (50%)
 : waits 5
-: Ahmad @ 40%
+: Ahmad @ (40%)
 : faces Giorgios
 : says, "Take yourself and "
 : says, "your ridiculously large wineskin out of my yard!"
@@ -521,30 +522,30 @@ SSMM/HH\YYYYTT
 7:32:25 Ahmad thinks, "That worthless drunk is paid 1 tari more than I!"
 : faces right
 : waits 20
-: @ 30%
+: @ (30%)
 7:32:52 Ahmad faces right
 
 7:31:28 Giovanni @ Workshop Yard
 (Giovanni has returned to his position in front of the masonry station.)
 : waits 20
-: @ 40%
+: @ (40%)
 : kneels
 : faces right
 : thinks, "(thinks about rocks)"
 : waits 20
-: @ 55%
+: @ (55%)
 : waits 10
-: @ 40%
+: @ (40%)
 : kneels
 : faces right
 : waits 30
-: @ 60%
+: @ (60%)
 : thinks, "(thinks about rocks some more)"
 
-7:32:08 Yusuf @ Tool Store.60%
-: @ Tool Store.80%
-: @ Tool Store.40%
-: @ Tool Store.60%
+7:32:08 Yusuf @ Tool Store (60%)
+: @ Tool Store (80%)
+: @ Tool Store (40%)
+: @ Tool Store (60%)
 : faces Heinrich
 : Yusuf says "Have you seen my abacus?"
 : Heinrich says "Not in here."
@@ -558,7 +559,7 @@ SSMM/HH\YYYYTT
 (Heinrich leaves for the Accounts Room)
 (Yusuf leaves for the Family Quarters)
 
-7:32:25 King Frederick @ Master's Hall.10%
+7:32:31 King Frederick @ Master's Hall (10%)
 : Pietro kneels
 : says, "Your Majesty. Such an honor to receive you!"
 : King Frederick says, "Please rise, Master Mason."
@@ -591,18 +592,19 @@ SSMM/HH\YYYYTT
 : thinks, "(thinking)"
 : thinks, "(thinking very hard)"
 
-7:32:35 Giorgios @ Workers' Dormitory.10%
+7:32:35 Giorgios @ Workers' Dormitory (10%)
 : drops Big Wineskin
 : lays
 
-7:32:39 Heinrich @ Accounts Room.90%
-7:32:42 Salomone @ Accounts Room
+7:32:41 Heinrich @ Accounts Room (90%)
+7:32:44 Salomone @ Accounts Room
 : says, "What are you doing here?"
 : Heinrich faces Salomone
 : Heinrich says, "Looking for the abacus, sir."
 : Salomone says, "Does the surveyor need it again?"
 : Heinrich says, "Yes."
 : Salomone gives abacus to Heinrich
+: Heinrich takes abacus in left hand
 : says, "There you have it."
 : Heinrich says, "Thank you, sir."
 
@@ -621,7 +623,17 @@ SSMM/HH\YYYYTT
 : Stefan says, "I..."
 : Stefan says, "would like to stop talking to you now."
 
-7:32:59 Heinrich @ Workshop Yard
+7:33:01 Heinrich @ Workshop Yard
 
-7:33:06 Yusuf @ Stairwell
+7:33:06 Yusuf @ Apprentices' Chamber
 : says, "She is insane!"
+
+# Conclusions
+
+## Identities
+
+* unlockConclusions=Labor Costs
+
+## Labor Costs
+
+* conclusion=We don't know how much [Pietro di Ruggero di Palermo ] pays himself.---And it's unclear what [Anna di Pietro] is paid, though possibly 5 denari.---But of those whose wages we know, two are paid the most - [Salomone ben David di Palermo] who faces left at 7:32, and [Yusuf ibn Khalaf al-Balarmi] who faces right.
