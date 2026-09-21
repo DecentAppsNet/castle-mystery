@@ -56,6 +56,7 @@ import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawCont
 import CharacterCanvasAnatomy from "../effects/types/CharacterCanvasAnatomy";
 import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
 import { ROOM_FULL_DEPTH } from "../roomSpaceConstants";
+import CharacterEffectDrawEntry from "./characters/types/CharacterEffectDrawEntry";
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -324,7 +325,8 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
     hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
     stairTextureLightness:{ top:number, side:number, front:number }, discoveryState:DiscoveryState,
-    isCharacterInActiveRoom:boolean, isLevelComplete:boolean, layoutPlanner:CanvasLayoutPlanner|null = null) {
+  isCharacterInActiveRoom:boolean, isLevelComplete:boolean,
+  layoutPlanner:CanvasLayoutPlanner|null = null):CharacterEffectDrawEntry[] {
 
   // Resolve room content placement and drawing order.
   const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom);
@@ -353,6 +355,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
   });
 
   // Draw ordered room content and dispatch character effects around their owners.
+  const characterEffectDrawEntries:CharacterEffectDrawEntry[] = [];
   contents.forEach(content => {
     switch(content.type) {
       case 'stair':
@@ -383,6 +386,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           roomFrontLeftCanvasX,
           roomContentDisplayLayout:displayLayout
         };
+        characterEffectDrawEntries.push({ character:content.character, characterContext });
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
         const spriteOverrides = handleBeforeCharacterDrawEffects(
           content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context);
@@ -405,6 +409,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
       drawUndiscoveredMarker(centerX, centerY, content.character.randomSalt, scalingFactors, context, metaTime);
     }
   });
+  return characterEffectDrawEntries;
 }
 
 function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
@@ -415,21 +420,22 @@ function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:C
 export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:CharacterWithEffects[], isActive:boolean, activeCharacter:CharacterWithEffects,
     hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet,
-    discoveryState:DiscoveryState, showFullContents:boolean = false, layoutPlanner:CanvasLayoutPlanner|null = null) {
-  if (!discoveryState.discoveredRoomIds.has(room.id)) return;
+    discoveryState:DiscoveryState, showFullContents:boolean = false,
+    layoutPlanner:CanvasLayoutPlanner|null = null):CharacterEffectDrawEntry[] {
+  if (!discoveryState.discoveredRoomIds.has(room.id)) return [];
   const isRoomObscured = discoveryState.obscuredRoomIds.has(room.id) && !showFullContents;
   if (isRoomObscured) {
     if (isActive && activeCharacter) drawObscuredActiveCharacter(room, activeCharacter, scalingFactors, context, imageSet);
-    return;
+    return [];
   }
   const stairTextureLightness = showFullContents || isActive
     ? { top:ACTIVE_FLOOR_TEXTURE_LIGHTNESS, side:ACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS, front:ACTIVE_BACK_WALL_TEXTURE_LIGHTNESS }
     : { top:INACTIVE_FLOOR_TEXTURE_LIGHTNESS, side:INACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS, front:INACTIVE_BACK_WALL_TEXTURE_LIGHTNESS };
   if (showFullContents || (isActive && activeCharacter)) {
-    _drawRoomContents(room, charactersInRoom, activeCharacter, hoveredCharacterId, hoveredItemId,
+    return _drawRoomContents(room, charactersInRoom, activeCharacter, hoveredCharacterId, hoveredItemId,
       scalingFactors, context, gameTime, metaTime, imageSet, true, stairTextureLightness, discoveryState,
       isActive, showFullContents, layoutPlanner);
-  } else {
-    _drawRoomStairsOnly(room, scalingFactors, context, imageSet, stairTextureLightness);
   }
+  _drawRoomStairsOnly(room, scalingFactors, context, imageSet, stairTextureLightness);
+  return [];
 }

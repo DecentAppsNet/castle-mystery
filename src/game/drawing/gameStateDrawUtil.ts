@@ -33,6 +33,7 @@ import CharacterWithEffects from "../types/CharacterWithEffects";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import Item from "../types/Item";
 import { handleAfterLevelDrawEffects } from "./levelEffectDispatchUtil";
+import CharacterEffectDrawEntry from "./characters/types/CharacterEffectDrawEntry";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
@@ -349,6 +350,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     const isActive = activeRoom.id === room.id;
     return { room, charactersInRoom, isActive };
   });
+  const characterEffectDrawEntries:CharacterEffectDrawEntry[] = [];
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
     const drewCachedRoomShell = _drawCachedRoomShell(room, gameState, isActive, context);
     if (drewCachedRoomShell) {
@@ -373,14 +375,16 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     }
     drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
     if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) continue;
-    drawRoomCharactersAndEffects(room, charactersInRoom, isActive, activeCharacter, 
-      hoveredCharacterHighlightId, hoveredItemHighlightId, gameState.scalingFactors, context,
-      gameState.time, metaTime, gameState.imageSet, gameState.discoveryState,
-      gameState.isLevelComplete, layoutPlanner);
+    const roomCharacterEffectDrawEntries = drawRoomCharactersAndEffects(
+      room, charactersInRoom, isActive, activeCharacter, hoveredCharacterHighlightId,
+      hoveredItemHighlightId, gameState.scalingFactors, context, gameState.time, metaTime,
+      gameState.imageSet, gameState.discoveryState, gameState.isLevelComplete, layoutPlanner);
+    characterEffectDrawEntries.push(...roomCharacterEffectDrawEntries);
     if (!_drawCachedRoomRoof(room, gameState, context)) {
       drawRoomRoofs(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors, context);
     }
   }
+  void characterEffectDrawEntries; // Phase 4 dispatches these after all room roofs.
   handleAfterLevelDrawEffects(
     characters,
     gameState.metaTimeEffects,
