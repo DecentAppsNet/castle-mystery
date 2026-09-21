@@ -34,6 +34,7 @@ import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectio
 import Item from "../types/Item";
 import { handleAfterLevelDrawEffects } from "./levelEffectDispatchUtil";
 import CharacterEffectDrawEntry from "./characters/types/CharacterEffectDrawEntry";
+import { handleCharacterAfterLevelDrawEffects } from "./characters/characterEffectDispatchUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
@@ -373,18 +374,19 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
         gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet,
         gameState.discoveryState.discoveredRoomIds.has(room.id));
     }
-    drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
     if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) continue;
     const roomCharacterEffectDrawEntries = drawRoomCharactersAndEffects(
       room, charactersInRoom, isActive, activeCharacter, hoveredCharacterHighlightId,
       hoveredItemHighlightId, gameState.scalingFactors, context, gameState.time, metaTime,
       gameState.imageSet, gameState.discoveryState, gameState.isLevelComplete, layoutPlanner);
     characterEffectDrawEntries.push(...roomCharacterEffectDrawEntries);
+    drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
     if (!_drawCachedRoomRoof(room, gameState, context)) {
       drawRoomRoofs(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors, context);
     }
   }
-  void characterEffectDrawEntries; // Phase 4 dispatches these after all room roofs.
+  handleCharacterAfterLevelDrawEffects(
+    characterEffectDrawEntries, gameState.scalingFactors, gameState.time, context);
   handleAfterLevelDrawEffects(
     characters,
     gameState.metaTimeEffects,
