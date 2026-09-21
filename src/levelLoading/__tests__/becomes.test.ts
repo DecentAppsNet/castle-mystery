@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { createKeyframeAtTime } from '@/game/timeline';
+import { findItemKeyframeLocation } from '@/levelLoading/activityLoading/activitySchedulers/util/itemKeyframeLocationUtil';
 
 import becomesBaseText from './fixtures/becomes/becomes-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
@@ -9,6 +10,43 @@ function _loadBecomes(itineraryLines:readonly string[]) {
   const text = replaceSection(becomesBaseText, 'itinerary', itineraryLines);
   return loadLevelForTest(text, 'becomes.md');
 }
+
+describe('findItemKeyframeLocation()', () => {
+  it('finds an item placed in a room', () => {
+    const { level } = _loadBecomes([]);
+    const keyframe = createKeyframeAtTime(level!.timeline.keyframes, 0);
+
+    expect(findItemKeyframeLocation(keyframe, 'key')).toMatchObject({ kind:'room', roomI:0, item:{ id:'key' } });
+  });
+
+  it('finds an item held in a character left hand', () => {
+    const { level } = _loadBecomes([]);
+    const keyframe = createKeyframeAtTime(level!.timeline.keyframes, 0);
+
+    expect(findItemKeyframeLocation(keyframe, 'eraser')).toMatchObject({ kind:'leftHand', characterI:0, item:{ id:'eraser' } });
+  });
+
+  it('finds an item held in a character right hand', () => {
+    const { level } = _loadBecomes([]);
+    const keyframe = createKeyframeAtTime(level!.timeline.keyframes, 0);
+
+    expect(findItemKeyframeLocation(keyframe, 'paper')).toMatchObject({ kind:'rightHand', characterI:0, item:{ id:'paper' } });
+  });
+
+  it('finds an item in a character inventory', () => {
+    const { level } = _loadBecomes([]);
+    const keyframe = createKeyframeAtTime(level!.timeline.keyframes, 0);
+
+    expect(findItemKeyframeLocation(keyframe, 'pencil')).toMatchObject({ kind:'inventory', characterI:0, item:{ id:'pencil' } });
+  });
+
+  it('returns null for an unplaced item', () => {
+    const { level } = _loadBecomes([]);
+    const keyframe = createKeyframeAtTime(level!.timeline.keyframes, 0);
+
+    expect(findItemKeyframeLocation(keyframe, 'vase')).toBeNull();
+  });
+});
 
 describe('level loading - becomes activities', () => {
   it('rejects an item becoming itself', () => {

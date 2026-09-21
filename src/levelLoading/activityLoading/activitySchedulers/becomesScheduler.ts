@@ -18,33 +18,10 @@ import RoomKeyframe from "@/game/types/RoomKeyframe";
 import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import Character from "@/game/types/Character";
 import Room from "@/game/types/Room";
+import ItemKeyframeLocation from "../types/ItemKeyframeLocation";
+import { findItemKeyframeLocation } from "./util/itemKeyframeLocationUtil";
 
 type PartsShape = { itemId:string, toItemId:string };
-
-type ItemKeyframeLocation = {
-  kind:'inventory'|'leftHand'|'rightHand',
-  item:Item,
-  characterI:number
-} | {
-  kind:'room',
-  item:Item,
-  roomI:number
-}
-
-function _findItemInKeyframe(keyframe:TimelineKeyframe, itemId:string):ItemKeyframeLocation|null {
-  for(let roomI = 0; roomI < keyframe.rooms.length; ++roomI) {
-    const item = keyframe.rooms[roomI].items.find(i => i.id === itemId);
-    if (item) return { kind:'room', item, roomI }
-  }
-  for(let characterI = 0; characterI < keyframe.characters.length; ++characterI) {
-    const ckf = keyframe.characters[characterI];
-    if (ckf.leftHandItem?.id === itemId) return { kind:'leftHand', item:ckf.leftHandItem, characterI };
-    if (ckf.rightHandItem?.id === itemId) return { kind:'rightHand', item:ckf.rightHandItem, characterI };
-    const item = ckf.items.find(i => i.id === itemId) ;
-    if (item) return { kind:'inventory', item, characterI };
-  }
-  return null;
-}
 
 function _describeItemLocation(location:ItemKeyframeLocation, characters:Character[], rooms:Room[]):string {
   if (location.kind === 'room') {
@@ -108,8 +85,8 @@ export function scheduleBecomesActivity(level:Level, _waypointContext:WaypointGe
   assert(Object.keys(editableTimeline.roomIdToI).length === level.rooms.length);
   assert(Object.keys(editableTimeline.characterIdToI).length === level.characters.length);
   const keyframe = findKeyframeForTime(editableTimeline.keyframes, activity.startTime);
-  const fromLocation = _findItemInKeyframe(keyframe, itemId);
-  const toLocation = _findItemInKeyframe(keyframe, toItemId);
+  const fromLocation = findItemKeyframeLocation(keyframe, itemId);
+  const toLocation = findItemKeyframeLocation(keyframe, toItemId);
   if (!fromLocation) {
     errors.addAtLine(`"${itemId}" item can't become "${toItemId}" because "${itemId}" isn't placed in a room or on a character.`, activity.lineI);
     return false;
