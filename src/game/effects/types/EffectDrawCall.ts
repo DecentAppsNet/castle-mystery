@@ -8,6 +8,9 @@ type EffectDrawCall = | {
   stage:'afterCharacter',
   characterContext:CharacterEffectDrawContext
 } | {
+  stage:'characterAfterLevel',
+  characterContext:CharacterEffectDrawContext
+} | {
   stage:'afterLevel',
   levelContext:LevelEffectDrawContext
 }

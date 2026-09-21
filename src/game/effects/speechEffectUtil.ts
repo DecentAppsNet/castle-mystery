@@ -110,11 +110,13 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
     }
     return null;
   }
-  const { characterLocationById, isLevelComplete } = drawCall.levelContext;
-  const location = characterLocationById.get(characterId);
-  if (!isLevelComplete && location?.kind === 'adjacentOpenExit') {
-    drawSpeechBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
-      scalingFactors, context, startTime, time);
+  if (drawCall.stage === 'afterLevel') {
+    const { characterLocationById, isLevelComplete } = drawCall.levelContext;
+    const location = characterLocationById.get(characterId);
+    if (!isLevelComplete && location?.kind === 'adjacentOpenExit') {
+      drawSpeechBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
+        scalingFactors, context, startTime, time);
+    }
   }
   return null;
 }
@@ -122,11 +124,10 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
 function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
   startTime: number, speechDuration:number):EffectHandlerResult|null {
   if (drawCall.stage === 'beforeCharacter') return _calcThinkingHeadRotationResult(time, startTime, speechDuration);
-  if (drawCall.stage !== 'afterCharacter') return null;
-
-  // afterCharacter draw stage
-  const { anchorX, anchorTopY } = drawCall.characterContext.characterAnatomy;
-  drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+  if (drawCall.stage === 'afterCharacter') {
+    const { anchorX, anchorTopY } = drawCall.characterContext.characterAnatomy;
+    drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+  }
   return null;
 }
 
@@ -140,16 +141,17 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
     return null;
   }
   
-  if (drawCall.stage !== 'afterLevel') return null;
-  const { characterLocationById, isLevelComplete, activeRoomTopCenterCanvasPoint } = drawCall.levelContext;
-  const location = characterLocationById.get(characterId);
-  if (location?.kind === 'activeRoom' || isLevelComplete) return null;
-  if (isLoud) {
-    const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(activeRoomTopCenterCanvasPoint, scalingFactors);
-    drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
-  } else if (location?.kind === 'adjacentOpenExit') {
-    drawEmitBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
-      scalingFactors, context, startTime, time);
+  if (drawCall.stage === 'afterLevel') {
+    const { characterLocationById, isLevelComplete, activeRoomTopCenterCanvasPoint } = drawCall.levelContext;
+    const location = characterLocationById.get(characterId);
+    if (location?.kind === 'activeRoom' || isLevelComplete) return null;
+    if (isLoud) {
+      const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(activeRoomTopCenterCanvasPoint, scalingFactors);
+      drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+    } else if (location?.kind === 'adjacentOpenExit') {
+      drawEmitBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
+        scalingFactors, context, startTime, time);
+    }
   }
   return null;
 }

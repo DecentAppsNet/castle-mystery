@@ -1,8 +1,12 @@
+/* This file dispatches character-owned effects at stages before, after, and above character drawing.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import CharacterEffectDrawContext from "@/game/effects/types/CharacterEffectDrawContext";
 import Effect from "@/game/effects/types/Effect";
 import EffectDrawCall from "@/game/effects/types/EffectDrawCall";
 import SpriteOverride from "@/game/effects/types/SpriteOverride";
 import ScalingFactors from "@/game/types/ScalingFactors";
+import CharacterEffectDrawEntry from "./types/CharacterEffectDrawEntry";
 
 const NO_OVERRIDES:SpriteOverride[] = []; // Avoid repeated allocations for trivial return logic.
 
@@ -32,5 +36,15 @@ export function handleAfterCharacterDrawEffects(effects:Effect[], scalingFactors
   const drawCall:EffectDrawCall = { stage:'afterCharacter', characterContext };
   effects.forEach(effect => {
     if (effect.handler) effect.handler(drawCall, scalingFactors, gameTime, -1 /* unused */, canvasContext);
+  });
+}
+
+export function handleCharacterAfterLevelDrawEffects(entries:ReadonlyArray<CharacterEffectDrawEntry>,
+    scalingFactors:ScalingFactors, gameTime:number, canvasContext:CanvasRenderingContext2D):void {
+  entries.forEach(({ character, characterContext }) => {
+    const drawCall:EffectDrawCall = { stage:'characterAfterLevel', characterContext };
+    character.effects.forEach(effect => {
+      if (effect.handler) effect.handler(drawCall, scalingFactors, gameTime, -1 /* unused */, canvasContext);
+    });
   });
 }

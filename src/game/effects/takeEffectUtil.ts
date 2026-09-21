@@ -31,10 +31,9 @@ function _getDestinationCanvasPoint(drawCall:CharacterDrawCall,
     : anatomy.rightHandItemCanvasPoint;
 }
 
-function _handleTake(drawCall:EffectDrawCall, item:Item, destinationPlacement:CharacterOwnedItemPlacement,
+function _handleCharacterTake(drawCall:CharacterDrawCall, item:Item, destinationPlacement:CharacterOwnedItemPlacement,
     sourceFloorPosition:Position, sourceRoomItemI:number, startTime:number, endTime:number,
     scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
-  if (drawCall.stage === 'afterLevel') return null;
   const source = _getSourceCanvasPoint(drawCall, item, sourceFloorPosition, sourceRoomItemI, scalingFactors);
   const destination = _getDestinationCanvasPoint(drawCall, destinationPlacement);
   const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
@@ -52,6 +51,16 @@ function _handleTake(drawCall:EffectDrawCall, item:Item, destinationPlacement:Ch
     translateCanvasX:animated[0] - destination[0],
     translateCanvasY:animated[1] - destination[1]
   }] };
+}
+
+function _handleTake(drawCall:EffectDrawCall, item:Item, destinationPlacement:CharacterOwnedItemPlacement,
+    sourceFloorPosition:Position, sourceRoomItemI:number, startTime:number, endTime:number,
+    scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
+  if (drawCall.stage === 'beforeCharacter' || drawCall.stage === 'afterCharacter') {
+    return _handleCharacterTake(drawCall, item, destinationPlacement, sourceFloorPosition, sourceRoomItemI,
+      startTime, endTime, scalingFactors, time, context);
+  }
+  return null;
 }
 
 export function createTakeEffect(item:Item, destinationPlacement:CharacterOwnedItemPlacement,

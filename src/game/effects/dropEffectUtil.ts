@@ -21,11 +21,10 @@ function _getDestinationCanvasPoint(drawCall:CharacterDrawCall, item:Item, desti
   return getItemCanvasPositionInRoom(displayPosition, scalingFactors);
 }
 
-function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
+function _handleCharacterDrop(drawCall:CharacterDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
     destinationFloorPosition:Position, startTime:number, endTime:number,
   scalingFactors:ScalingFactors, time:number,
     context:CanvasRenderingContext2D):EffectHandlerResult|null {
-  if (drawCall.stage === 'afterLevel') return null;
   const characterContext = drawCall.characterContext;
   const anatomy = drawCall.characterContext.characterAnatomy;
   const destination = _getDestinationCanvasPoint(drawCall, item, destinationFloorPosition, scalingFactors);
@@ -47,6 +46,16 @@ function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:Charact
     translateCanvasX:animated[0] - source[0],
     translateCanvasY:animated[1] - source[1]
   }] };
+}
+
+function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
+    destinationFloorPosition:Position, startTime:number, endTime:number, scalingFactors:ScalingFactors,
+    time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
+  if (drawCall.stage === 'beforeCharacter' || drawCall.stage === 'afterCharacter') {
+    return _handleCharacterDrop(drawCall, item, sourcePlacement, destinationFloorPosition, startTime,
+      endTime, scalingFactors, time, context);
+  }
+  return null;
 }
 
 export function createDropEffect(item:Item, sourcePlacement:CharacterOwnedItemPlacement,
