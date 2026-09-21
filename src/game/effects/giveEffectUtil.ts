@@ -13,11 +13,11 @@ import { EffectHandlerResult } from "./types/EffectHandler";
 
 const GIVE_EFFECT_TIME = 500;
 
-function _handleGive(drawCall:EffectDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
+type CharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter'|'afterCharacter' }>;
+
+function _handleCharacterGive(drawCall:CharacterDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
     receivingCharacterId:string, startTime:number, endTime:number, scalingFactors:ScalingFactors,
     time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
-  if (drawCall.stage === 'afterLevel') return null;
-
   // Resolve both endpoints from current room-local character anatomy.
   const sourceAnatomy = drawCall.characterContext.characterAnatomy;
   const destinationAnatomy = drawCall.characterContext.characterAnatomyById.get(receivingCharacterId);
@@ -47,6 +47,16 @@ function _handleGive(drawCall:EffectDrawCall, item:Item, sourcePlacement:Charact
     translateCanvasX:animated[0] - source[0],
     translateCanvasY:animated[1] - source[1]
   }] };
+}
+
+function _handleGive(drawCall:EffectDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
+    receivingCharacterId:string, startTime:number, endTime:number, scalingFactors:ScalingFactors,
+    time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
+  if (drawCall.stage === 'beforeCharacter' || drawCall.stage === 'afterCharacter') {
+    return _handleCharacterGive(drawCall, item, sourcePlacement, receivingCharacterId, startTime,
+      endTime, scalingFactors, time, context);
+  }
+  return null;
 }
 
 /** Creates an item effect that moves from its giver placement to a receiving character's center. */

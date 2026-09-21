@@ -15,6 +15,8 @@ const FADE_OUT_DURATION = 350;
 const ROTATION_DURATION = 1000;
 const HEAD_RADIUS_TO_DIAMETER = 8;
 
+type BeforeCharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter' }>;
+
 function _calcOpacity(elapsedMetaTime:number):number {
   if (elapsedMetaTime < FADE_IN_DURATION) return clamp(elapsedMetaTime / FADE_IN_DURATION, 0, 1);
   const fadeOutStartTime = FADE_IN_DURATION + HOLD_DURATION;
@@ -22,9 +24,8 @@ function _calcOpacity(elapsedMetaTime:number):number {
   return clamp(1 - (elapsedMetaTime - fadeOutStartTime) / FADE_OUT_DURATION, 0, 1);
 }
 
-function _handleCharacterSelectionEffect(startMetaTime:number, drawCall:EffectDrawCall,
+function _drawCharacterSelectionEffect(startMetaTime:number, drawCall:BeforeCharacterDrawCall,
     metaTime:number, context:CanvasRenderingContext2D):null {
-  if (drawCall.stage !== 'beforeCharacter') return null;
   const nimbusImage = findImageBitmap(drawCall.characterContext.imageSet, CHARACTER_SELECTION_NIMBUS_IMAGE_URL);
   if (!nimbusImage) return null;
 
@@ -41,6 +42,14 @@ function _handleCharacterSelectionEffect(startMetaTime:number, drawCall:EffectDr
   context.rotate(rotation);
   context.drawImage(nimbusImage, -drawDiameter / 2, -drawDiameter / 2, drawDiameter, drawDiameter);
   context.restore();
+  return null;
+}
+
+function _handleCharacterSelectionEffect(startMetaTime:number, drawCall:EffectDrawCall,
+    metaTime:number, context:CanvasRenderingContext2D):null {
+  if (drawCall.stage === 'beforeCharacter') {
+    return _drawCharacterSelectionEffect(startMetaTime, drawCall, metaTime, context);
+  }
   return null;
 }
 

@@ -13,9 +13,10 @@ import EffectHandler from "./types/EffectHandler";
 export const KEY_IMAGE_URL = '/assets/sprites/key.png';
 const LOCK_UNLOCK_DURATION = 500;
 
-function _drawLockChange(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
+type AfterCharacterDrawCall = Extract<EffectDrawCall, { stage:'afterCharacter' }>;
+
+function _drawLockChange(drawCall:AfterCharacterDrawCall, scalingFactors:ScalingFactors, time:number,
     context:CanvasRenderingContext2D, exitPosition:Position, startTime:number, travelDirection:1|-1):null {
-  if (drawCall.stage !== 'afterCharacter') return null;
   const image = findImageBitmap(drawCall.characterContext.imageSet, KEY_IMAGE_URL);
   if (!image) return null;
 
@@ -35,10 +36,18 @@ function _drawLockChange(drawCall:EffectDrawCall, scalingFactors:ScalingFactors,
   return null;
 }
 
+function _handleLockChange(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
+    context:CanvasRenderingContext2D, exitPosition:Position, startTime:number, travelDirection:1|-1):null {
+  if (drawCall.stage === 'afterCharacter') {
+    return _drawLockChange(drawCall, scalingFactors, time, context, exitPosition, startTime, travelDirection);
+  }
+  return null;
+}
+
 function _createLockChangeEffect(kind:'lockExit'|'unlockExit', exitPosition:Position, startTime:number,
     travelDirection:1|-1):Effect {
   const handler:EffectHandler = (drawCall, scalingFactors, time, _metaTime, context) =>
-    _drawLockChange(drawCall, scalingFactors, time, context, exitPosition, startTime, travelDirection);
+    _handleLockChange(drawCall, scalingFactors, time, context, exitPosition, startTime, travelDirection);
   return { kind, startTime, endTime:startTime + LOCK_UNLOCK_DURATION, handler };
 }
 
