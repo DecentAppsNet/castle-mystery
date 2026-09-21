@@ -10,6 +10,7 @@ import EffectDrawCall from "./types/EffectDrawCall";
 import EffectHandler, { EffectHandlerResult } from "./types/EffectHandler";
 import { rand } from "@/common/randUtil";
 import SpriteOverride from "./types/SpriteOverride";
+import EmitSource from "./types/EmitSource";
 
 type TalkingDip = Readonly<{
   startTimeOffset:number,
@@ -131,7 +132,9 @@ function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors
 }
 
 function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
-  context:CanvasRenderingContext2D, text:string, startTime:number, isLoud:boolean, characterId:string):EffectHandlerResult|null {
+  context:CanvasRenderingContext2D, text:string, startTime:number, isLoud:boolean, source:EmitSource,
+  carrierCharacterId:string):EffectHandlerResult|null {
+  const characterId = source.kind === 'character' ? source.characterId : carrierCharacterId;
   if (drawCall.stage === 'characterAfterLevel') {
     const { characterAnatomy:{ anchorX, anchorTopY }, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
     if (isCharacterInActiveRoom || isLevelComplete) {
@@ -170,8 +173,9 @@ export function createThinksEffect(text:string, startTime:number, speechDuration
   return { kind:'thinks', startTime, endTime:startTime+speechDuration, handler };
 }
 
-export function createEmitsEffect(characterId:string, text:string, startTime:number, speechDuration:number, isLoud:boolean):Effect {
+export function createEmitsEffect(source:EmitSource, carrierCharacterId:string, text:string, startTime:number,
+    speechDuration:number, isLoud:boolean):Effect {
   const handler:EffectHandler = (drawCall, scalingFactors, time, _metaTime, context) =>
-    _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud, characterId);
+    _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud, source, carrierCharacterId);
   return { kind:'emits', startTime, endTime:startTime+speechDuration, handler };
 }

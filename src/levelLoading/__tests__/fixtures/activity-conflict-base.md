@@ -28,7 +28,8 @@ S..J
 
 # characters
 ## Sam
-* items=Coin|Ring
+* items=Ring
+* leftHand=Coin
 
 ## Jo
 * items=Book

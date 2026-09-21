@@ -238,13 +238,13 @@ describe('level loading - gives activities', () => {
 
   it('rejects an item emitting while two characters transfer it', () => {
     const text = replaceSection(givesBaseText, 'itinerary', [
-      '0:00:00 Sam gives Coin to Jo',
-      '0:00:01 Coin emits "A bell rings for several seconds."'
+      '0:00:00 Sam gives Key to Jo',
+      '0:00:01 Key emits "A bell rings for several seconds."'
     ]);
     const { level, errors } = loadLevelForTest(text, 'gives-item-reservation.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('Can\'t emit because "coin" item is busy with "gives" activity');
+    expect(errors.describeErrors()).toContain('Can\'t emit because "key" item is busy with "gives" activity');
   });
 
   it('allows independent character pairs to give concurrently in one room', () => {
