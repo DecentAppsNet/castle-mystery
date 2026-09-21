@@ -170,7 +170,7 @@ export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:numb
 }
 
 function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
-  leftBoundaryCanvasX:number, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
   startTime:number, time:number, target:BubbleTarget|null) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
@@ -185,9 +185,8 @@ function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
   const boxWidth = context.measureText(speech).width + padding * 2;
   const targetedBox = target ? _findBubbleBoxNearTarget(target, boxWidth, boxHeight, tailHeight, context) : null;
   const maximumLeft = Math.max(0, context.canvas.width - boxWidth);
-  const minimumLeft = Math.min(Math.max(0, leftBoundaryCanvasX), maximumLeft);
   const left = targetedBox?.left
-    ?? Math.round(clamp(anchorX - boxWidth / 2, minimumLeft, maximumLeft));
+    ?? Math.round(clamp(anchorX - boxWidth / 2, 0, maximumLeft));
   const top = targetedBox?.top
     ?? Math.round(clamp(anchorTopY - boxHeight - tailHeight - scalingFactors.roomLineWidth * 2,
       0, context.canvas.height - boxHeight - tailHeight));
@@ -208,15 +207,15 @@ function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
   context.restore();
 }
 
-export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number, leftBoundaryCanvasX:number,
+export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
     scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number) {
-  _drawSpeechBubble(speech, anchorX, anchorTopY, leftBoundaryCanvasX, scalingFactors, context, startTime, time, null);
+  _drawSpeechBubble(speech, anchorX, anchorTopY, scalingFactors, context, startTime, time, null);
 }
 
 export function drawSpeechBubbleNearExit(speech:string, exitTargetCanvasPoint:[number, number],
     activeRoomInteriorCanvasPoint:[number, number], scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, startTime:number, time:number) {
-  _drawSpeechBubble(speech, 0, 0, 0, scalingFactors, context, startTime, time,
+  _drawSpeechBubble(speech, 0, 0, scalingFactors, context, startTime, time,
     { targetCanvasPoint:exitTargetCanvasPoint, interiorCanvasPoint:activeRoomInteriorCanvasPoint });
 }
 

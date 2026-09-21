@@ -55,7 +55,6 @@ import CharacterWithEffects from "../types/CharacterWithEffects";
 import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
 import CharacterCanvasAnatomy from "../effects/types/CharacterCanvasAnatomy";
 import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
-import { ROOM_FULL_DEPTH } from "../roomSpaceConstants";
 import CharacterEffectDrawEntry from "./characters/types/CharacterEffectDrawEntry";
 
 const OPEN_DOOR_NEARNESS = 2;
@@ -330,8 +329,6 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
 
   // Resolve room content placement and drawing order.
   const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom);
-  const [roomFrontLeftCanvasX] = projectRoomPointWithDepth(
-    room.rect.x, room.rect.y, ROOM_FULL_DEPTH, scalingFactors);
   const contents = createDrawableContents(room, charactersInRoom, discoveryState.discoveredItemIds,
     includeUndiscoveredItems, displayLayout);
 
@@ -383,7 +380,6 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           imageSet,
           isCharacterInActiveRoom,
           isLevelComplete,
-          roomFrontLeftCanvasX,
           roomContentDisplayLayout:displayLayout
         };
         characterEffectDrawEntries.push({ character:content.character, characterContext });
