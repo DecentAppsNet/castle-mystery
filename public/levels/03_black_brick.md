@@ -383,7 +383,7 @@ AABBCCDFGGHHH.
 : says, "It has been my secret pleasure."
 : says, "But now we can do it together!"
 : Helena thinks, "Great."
-12:00:00 emits "(massive boom)"
+(massive boom emitted from Arabic Tower at noon)
 : Raniero faces left
 : says, "What was that?"
 (Raniero and Helena leave for the Wine Cellar)
@@ -442,7 +442,7 @@ AABBCCDFGGHHH.
 12:00:00 show Arabic Tower Collapsed
 (The Arabic tower collapses in the direction of King Frederick. It nearly hits the King, and would have if he were still standing close to it.)
 : King Frederick lays
-: Arabic Tower Collapsed emits "(crash)"
+: Arabic Tower Collapsed emits "(massive boom)" loudly
 : Pope says, "My King!"
 : waits
 : King Frederick stands
@@ -474,7 +474,6 @@ AABBCCDFGGHHH.
 : show Rubble
 (The pillar collapsed from Toro's pushing, and rubble from the ceiling fell down and buried Toro beneath it. Toro's body, barely visible, is moving slightly beneath the rubble.)
 : Toro lays
-: rubble emits "(crash)"
 : Hugo waits
 : takes Small Hourglass into inventory
 : says, "Thank you, my strong, stupid bull."

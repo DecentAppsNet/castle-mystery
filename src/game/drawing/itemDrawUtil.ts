@@ -21,6 +21,7 @@ import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { findImageBitmap } from "@/game/imageAssetUtil";
 import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
 import Position from "../types/Position";
+import CanvasBubbleAnchor from "../effects/types/CanvasBubbleAnchor";
 
 const ITEM_SIZING_RATIO = 0.21;
 const PULSE_CADENCE_MS = 1000;
@@ -93,13 +94,11 @@ export function getItemCanvasPositionInRoom(displayPosition:Position, scalingFac
   return projectRoomPointWithDepth(displayPosition.x, displayPosition.y, displayPosition.z, scalingFactors);
 }
 
-// Returns the canvas-space rectangle occupied by the item's image in a room.
-export function getItemCanvasRectInRoom(item:Item, displayPosition:Position,
-    scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
+// Returns the canvas-space rectangle occupied by an item image at a caller-supplied anchor.
+export function getItemCanvasRectAtCanvasPosition(item:Item, x:number, y:number,
+    itemDrawRect:ItemImageRect, imageSet:ImageSet):Rect {
   const image = _findItemImage(item, imageSet);
   if (!image) return { x:0, y:0, width:0, height:0 }; // Headless.
-  const itemDrawRect = calcItemDrawRect(scalingFactors);
-  const [x, y] = getItemCanvasPositionInRoom(displayPosition, scalingFactors);
   const imageRect = _calcItemImageRect(itemDrawRect, image);
   return {
     x:x + imageRect.leftOffsetPixels,
@@ -107,6 +106,20 @@ export function getItemCanvasRectInRoom(item:Item, displayPosition:Position,
     width:imageRect.widthPixels,
     height:imageRect.heightPixels
   };
+}
+
+// Returns the canvas-space rectangle occupied by the item's image in a room.
+export function getItemCanvasRectInRoom(item:Item, displayPosition:Position,
+    scalingFactors:ScalingFactors, imageSet:ImageSet):Rect {
+  const itemDrawRect = calcItemDrawRect(scalingFactors);
+  const [x, y] = getItemCanvasPositionInRoom(displayPosition, scalingFactors);
+  return getItemCanvasRectAtCanvasPosition(item, x, y, itemDrawRect, imageSet);
+}
+
+function _getItemBubbleAnchorInRoom(item:Item, displayPosition:Position,
+    scalingFactors:ScalingFactors, imageSet:ImageSet):CanvasBubbleAnchor {
+  const rect = getItemCanvasRectInRoom(item, displayPosition, scalingFactors, imageSet);
+  return { anchorX:rect.x + rect.width / 2, anchorTopY:rect.y };
 }
 
 // Returns the game-space hover rectangle for item hit-testing.
@@ -259,8 +272,9 @@ function drawItem(item:Item, displayPosition:Position, scalingFactors:ScalingFac
 
 // Public room-item draw entry point used by room rendering.
 export function drawRoomItem(item:Item, displayPosition:Position, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  imageSet:ImageSet, isHighlighted:boolean, metaTime:number) {
+  imageSet:ImageSet, isHighlighted:boolean, metaTime:number):CanvasBubbleAnchor {
   drawItem(item, displayPosition, scalingFactors, context, imageSet, isHighlighted, metaTime);
+  return _getItemBubbleAnchorInRoom(item, displayPosition, scalingFactors, imageSet);
 }
 
 // Draws an item at a caller-supplied canvas anchor using precomputed metrics.

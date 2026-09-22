@@ -38,7 +38,7 @@ import { handleCharacterAfterLevelDrawEffects } from "./characters/characterEffe
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
-const LEVEL_EFFECT_CEILING_MARGIN_Y = 0.5;
+const LEVEL_EFFECT_CEILING_MARGIN_Y = 4.5;
 
 function _drawReservedRects(layoutPlanner:CanvasLayoutPlanner, context:CanvasRenderingContext2D) {
   if (!DRAW_RESERVED_RECTS) return;
