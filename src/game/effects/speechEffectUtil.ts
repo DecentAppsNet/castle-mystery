@@ -16,6 +16,7 @@ import CanvasBubbleAnchor from "./types/CanvasBubbleAnchor";
 import LevelEffectDrawContext from "./types/LevelEffectDrawContext";
 import LevelEffectCharacterLocation from "./types/LevelEffectCharacterLocation";
 import { findEmitTipDirection } from "./emitDirectionUtil";
+import { FacingDirection } from "../types/Character";
 
 type TalkingDip = Readonly<{
   startTimeOffset:number,
@@ -86,7 +87,8 @@ function _calcSpeakingHeadRotationResult(time:number, effectStartTime:number, di
   return { spriteOverrides:[rotationOverride] };
 }
 
-function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, effectDuration:number):EffectHandlerResult {
+function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, effectDuration:number,
+  facingDirection:FacingDirection):EffectHandlerResult {
   const animationDuration = THINKING_LOOK_DOWN_DURATION_MSECS + THINKING_LOOK_UP_DURATION_MSECS;
   const durationScale = Math.min(1, Math.max(0, effectDuration) / animationDuration);
   const lookDownDuration = THINKING_LOOK_DOWN_DURATION_MSECS * durationScale;
@@ -100,6 +102,7 @@ function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, ef
   } else if (elapsedTime >= lookDownDuration && elapsedTime < effectDuration - lookUpDuration) {
     angleOffsetRadians = THINKING_ANGLE_RADIANS;
   }
+  if (facingDirection === 'left') angleOffsetRadians *= -1;
   return { spriteOverrides:[{
     spriteKind:'head', transformType:'rotate', rotateRadians:angleOffsetRadians
   }] };
@@ -127,8 +130,10 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
 }
 
 function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
-  startTime: number, speechDuration:number):EffectHandlerResult|null {
-  if (drawCall.stage === 'beforeCharacter') return _calcThinkingHeadRotationResult(time, startTime, speechDuration);
+  startTime: number, speechDuration:number, facingDirection:FacingDirection):EffectHandlerResult|null {
+  if (drawCall.stage === 'beforeCharacter') {
+    return _calcThinkingHeadRotationResult(time, startTime, speechDuration, facingDirection);
+  }
   if (drawCall.stage === 'characterAfterLevel') {
     const { anchorX, anchorTopY } = drawCall.characterContext.characterAnatomy;
     drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
@@ -188,9 +193,10 @@ export function createSaysEffect(characterId:string, text:string, startTime:numb
   return { kind:'says', startTime, endTime:startTime+speechDuration, handler };
 }
 
-export function createThinksEffect(text:string, startTime:number, speechDuration:number):Effect {
+export function createThinksEffect(text:string, startTime:number, speechDuration:number,
+    facingDirection:FacingDirection):Effect {
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
-    return _thinksHandler(drawCall, scalingFactors, time, context, text, startTime, speechDuration);
+    return _thinksHandler(drawCall, scalingFactors, time, context, text, startTime, speechDuration, facingDirection);
   }
   return { kind:'thinks', startTime, endTime:startTime+speechDuration, handler };
 }

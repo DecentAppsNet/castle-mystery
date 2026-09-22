@@ -12,6 +12,7 @@ import { assertNonNullable } from "decent-portal";
 import { addCharacterEffect } from "@/levelLoading/timelineLoading";
 import { calcSpeechDuration } from "./util/speechUtil";
 import { createThinksEffect } from "@/game/effects/speechEffectUtil";
+import { findKeyframeForTime } from "@/game/timeline";
 
 /** Creates the accepted syntax for thought activities. */
 export function createThinksParseFormat():ParseFormat {
@@ -40,8 +41,10 @@ export function scheduleThinksActivity(_level:Level, _waypointContext:WaypointGe
 
   const speechDuration = calcSpeechDuration(text);
   activity.endTime = activity.startTime + speechDuration;
-  
-  const thinksEffect = createThinksEffect(text, activity.startTime, speechDuration);
+
+  const keyframe = findKeyframeForTime(editableTimeline.keyframes, activity.startTime);
+  const facingDirection = keyframe.characters[characterI].facingDirection;
+  const thinksEffect = createThinksEffect(text, activity.startTime, speechDuration, facingDirection);
   addCharacterEffect(thinksEffect, characterI, editableTimeline);
   return true;
 }
