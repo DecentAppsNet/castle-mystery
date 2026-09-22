@@ -430,13 +430,19 @@ Thoughts are private. They do not need to respect audible speech in the room, bu
 
 ### Emits
 
-`Item emits "..."` emits text from an item instead of from a character.
+`emits "..."` displays a sound or other emitted text from a character or item. Add the optional trailing `loudly` modifier to make the emission audible from every room.
 
 Examples:
 * `0:15:03 Bell emits "GONG"`
 * `0:15:03 Master Key emits "clink"`
+* `0:15:03 John emits "Help!" loudly`
+* `: emits "Ahem"`
 
-The emitted item can be on the floor or carried by a character.
+An explicit item subject is the source of the emission; `loudly` does not change it to the implied character. Without an explicit subject, the source is the implied character resolved by the usual itinerary rules.
+
+At the emission's start time, a character source must be visible and placed in a room. An item source must be visible and either on a room floor or held in a character's hand. Inventory and unplaced items are not valid sources. Invalid sources produce a level-loading error and no emission.
+
+When its source is currently presented, an emission bubble appears attached above that character, floor item, or held item. Otherwise, a loud emission appears near the top center of the active room. Its tip indicates the source room's approximate cardinal or diagonal direction; an obscured source in the active room has no tip. A non-loud emission without an attached source appears only when the source is audible through an open exit to an adjacent room.
 
 ### Faces
 
