@@ -278,7 +278,7 @@ function _createCharacterLocationById(characters:CharacterWithEffects[], rooms:R
   characters.forEach(character => {
     const characterRoom = findRoomAtPosition(rooms, character.position.x, character.position.y);
     if (!characterRoom) {
-      locationByCharacterId.set(character.id, { kind:'outsideLocalAudibleRange' });
+      locationByCharacterId.set(character.id, { kind:'outsideLocalAudibleRange', roomId:null, roomRect:null });
       return;
     }
     let location = locationsByRoomId.get(characterRoom.id);
@@ -286,14 +286,16 @@ function _createCharacterLocationById(characters:CharacterWithEffects[], rooms:R
       const openExit = findOpenExitConnectingRooms(characterRoom, activeRoom);
       const exitRect = openExit ? getProjectedExitCanvasRect(openExit, scalingFactors) : null;
       location = characterRoom.id === activeRoom.id
-        ? { kind:'activeRoom' }
+        ? { kind:'activeRoom', roomId:characterRoom.id, roomRect:characterRoom.rect }
         : exitRect
           ? {
               kind:'adjacentOpenExit',
+              roomId:characterRoom.id,
+              roomRect:characterRoom.rect,
               exitTargetCanvasPoint:[exitRect.x + exitRect.width / 2, exitRect.y + exitRect.height / 2],
               activeRoomInteriorCanvasPoint
             }
-          : { kind:'outsideLocalAudibleRange' };
+          : { kind:'outsideLocalAudibleRange', roomId:characterRoom.id, roomRect:characterRoom.rect };
       locationsByRoomId.set(characterRoom.id, location);
     }
     locationByCharacterId.set(character.id, location);
@@ -307,6 +309,9 @@ function _createLevelEffectDrawContext(characters:CharacterWithEffects[], rooms:
   return {
     characterLocationById:_createCharacterLocationById(characters, rooms, activeRoom, scalingFactors),
     framePresentationIndex,
+    roomRectById:new Map(rooms.map(room => [room.id, room.rect])),
+    activeRoomId:activeRoom.id,
+    activeRoomRect:activeRoom.rect,
     isLevelComplete,
     activeRoomTopCenterCanvasPoint:projectRoomPointWithDepth(
       activeRoom.rect.x + activeRoom.rect.width / 2,

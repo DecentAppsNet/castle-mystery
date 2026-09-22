@@ -4,6 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import ScalingFactors from "@/game/types/ScalingFactors";
 import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_SPEECH_BUBBLE_FILL } from "../drawColorConstants";
+import EmitTipDirection from "@/game/effects/types/EmitTipDirection";
 
 const BUBBLE_INTRO_DURATION_MSECS = 100;
 const BUBBLE_INTRO_START_SCALE = 1.05;
@@ -219,8 +220,46 @@ export function drawSpeechBubbleNearExit(speech:string, exitTargetCanvasPoint:[n
     { targetCanvasPoint:exitTargetCanvasPoint, interiorCanvasPoint:activeRoomInteriorCanvasPoint });
 }
 
+type EmitTipPoints = [[number, number], [number, number], [number, number]];
+
+function _findEmitTipPoints(box:BubbleBox, direction:EmitTipDirection, tipLength:number, base:number):EmitTipPoints {
+  const centerX = box.left + box.width / 2;
+  const centerY = box.top + box.height / 2;
+  const right = box.left + box.width;
+  const bottom = box.top + box.height;
+
+  // Align the base to the selected edge or corner and point outward.
+  switch(direction) {
+    case 'up': return [[centerX - base, box.top], [centerX + base, box.top], [centerX, box.top - tipLength]];
+    case 'right': return [[right, centerY - base], [right, centerY + base], [right + tipLength, centerY]];
+    case 'bottom': return [[centerX - base, bottom], [centerX + base, bottom], [centerX, bottom + tipLength]];
+    case 'left': return [[box.left, centerY - base], [box.left, centerY + base], [box.left - tipLength, centerY]];
+    case 'up-left': return [[box.left + base, box.top], [box.left, box.top + base], [box.left - tipLength, box.top - tipLength]];
+    case 'up-right': return [[right - base, box.top], [right, box.top + base], [right + tipLength, box.top - tipLength]];
+    case 'bottom-left': return [[box.left, bottom - base], [box.left + base, bottom], [box.left - tipLength, bottom + tipLength]];
+    case 'bottom-right': return [[right, bottom - base], [right - base, bottom], [right + tipLength, bottom + tipLength]];
+  }
+}
+
+function _drawEmitTip(box:BubbleBox, direction:EmitTipDirection,
+    scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
+  const tipLength = Math.max(4, scalingFactors.roomLineWidth * 2);
+  const base = Math.max(3, scalingFactors.roomLineWidth * 1.5);
+  const [start, end, tip] = _findEmitTipPoints(box, direction, tipLength, base);
+
+  // Draw the outward triangle using the bubble's active fill and stroke styles.
+  context.beginPath();
+  context.moveTo(...start);
+  context.lineTo(...tip);
+  context.lineTo(...end);
+  context.closePath();
+  context.fill();
+  context.stroke();
+}
+
 function _drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number, target:BubbleTarget|null) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number,
+  target:BubbleTarget|null, tipDirection:EmitTipDirection|null = null) {
   const { padding, fontSize, boxHeight } = _getEmitBubbleMetrics(scalingFactors);
 
   context.save();
@@ -243,6 +282,7 @@ function _drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
   context.rect(bubbleBox.left, bubbleBox.top, bubbleBox.width, bubbleBox.height);
   context.fill();
   context.stroke();
+  if (tipDirection) _drawEmitTip(bubbleBox, tipDirection, scalingFactors, context);
 
   context.fillStyle = COLOR_BLACK;
   context.fillText(emitText, left + boxWidth / 2, top + boxHeight / 2);
@@ -250,8 +290,9 @@ function _drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
 }
 
 export function drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
-    scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number) {
-  _drawEmitBubble(emitText, anchorX, anchorTopY, scalingFactors, context, startTime, time, null);
+    scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number,
+    tipDirection:EmitTipDirection|null = null) {
+  _drawEmitBubble(emitText, anchorX, anchorTopY, scalingFactors, context, startTime, time, null, tipDirection);
 }
 
 export function drawEmitBubbleNearExit(emitText:string, exitTargetCanvasPoint:[number, number],
