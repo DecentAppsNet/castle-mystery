@@ -4,6 +4,7 @@ import Rect from "@/game/types/Rect"
 
 type LevelEffectDrawContext = {
   characterLocationById:ReadonlyMap<string, LevelEffectCharacterLocation>,
+  roomLocationById:ReadonlyMap<string, LevelEffectCharacterLocation>,
   framePresentationIndex:FramePresentationIndex,
   roomRectById:ReadonlyMap<string, Rect>,
   activeRoomId:string,

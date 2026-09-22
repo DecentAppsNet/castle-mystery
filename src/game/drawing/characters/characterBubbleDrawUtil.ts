@@ -241,20 +241,43 @@ function _findEmitTipPoints(box:BubbleBox, direction:EmitTipDirection, tipLength
   }
 }
 
-function _drawEmitTip(box:BubbleBox, direction:EmitTipDirection,
+function _drawEmitBubbleOutline(box:BubbleBox, direction:EmitTipDirection,
     scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const tipLength = Math.max(4, scalingFactors.roomLineWidth * 2);
   const base = Math.max(3, scalingFactors.roomLineWidth * 1.5);
   const [start, end, tip] = _findEmitTipPoints(box, direction, tipLength, base);
+  const right = box.left + box.width;
+  const bottom = box.top + box.height;
 
-  // Draw the outward triangle using the bubble's active fill and stroke styles.
   context.beginPath();
-  context.moveTo(...start);
-  context.lineTo(...tip);
-  context.lineTo(...end);
+  if (direction === 'up-left') {
+    context.moveTo(...start);
+  } else {
+    context.moveTo(box.left, box.top);
+    if (direction === 'up' || direction === 'up-right') context.lineTo(...start);
+  }
+  if (direction === 'up' || direction === 'up-right') context.lineTo(...tip);
+  if (direction === 'up') context.lineTo(...end);
+  if (direction === 'up-right') context.lineTo(...end);
+  else context.lineTo(right, box.top);
+  if (direction === 'right' || direction === 'bottom-right') context.lineTo(...start);
+  if (direction === 'right' || direction === 'bottom-right') context.lineTo(...tip);
+  if (direction === 'right' || direction === 'bottom-right') context.lineTo(...end);
+  if (direction !== 'bottom-right') context.lineTo(right, bottom);
+  if (direction === 'bottom') {
+    context.lineTo(...end);
+    context.lineTo(...tip);
+    context.lineTo(...start);
+  }
+  if (direction !== 'bottom-left') context.lineTo(box.left, bottom);
+  if (direction === 'bottom-left' || direction === 'left') context.lineTo(...end);
+  if (direction === 'bottom-left' || direction === 'left') context.lineTo(...tip);
+  if (direction === 'bottom-left' || direction === 'left') context.lineTo(...start);
+  if (direction === 'up-left') {
+    context.lineTo(...end);
+    context.lineTo(...tip);
+  }
   context.closePath();
-  context.fill();
-  context.stroke();
 }
 
 function _drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
@@ -278,11 +301,14 @@ function _drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
   context.fillStyle = COLOR_SPEECH_BUBBLE_FILL;
   context.strokeStyle = COLOR_DARK_GRAY;
   context.lineWidth = Math.max(1, scalingFactors.roomLineWidth / 2);
-  context.beginPath();
-  context.rect(bubbleBox.left, bubbleBox.top, bubbleBox.width, bubbleBox.height);
+  if (tipDirection) {
+    _drawEmitBubbleOutline(bubbleBox, tipDirection, scalingFactors, context);
+  } else {
+    context.beginPath();
+    context.rect(bubbleBox.left, bubbleBox.top, bubbleBox.width, bubbleBox.height);
+  }
   context.fill();
   context.stroke();
-  if (tipDirection) _drawEmitTip(bubbleBox, tipDirection, scalingFactors, context);
 
   context.fillStyle = COLOR_BLACK;
   context.fillText(emitText, left + boxWidth / 2, top + boxHeight / 2);

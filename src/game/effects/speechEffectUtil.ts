@@ -11,6 +11,11 @@ import EffectHandler, { EffectHandlerResult } from "./types/EffectHandler";
 import { rand } from "@/common/randUtil";
 import SpriteOverride from "./types/SpriteOverride";
 import EmitSource from "./types/EmitSource";
+import FramePresentationIndex from "./types/FramePresentationIndex";
+import CanvasBubbleAnchor from "./types/CanvasBubbleAnchor";
+import LevelEffectDrawContext from "./types/LevelEffectDrawContext";
+import LevelEffectCharacterLocation from "./types/LevelEffectCharacterLocation";
+import { findEmitTipDirection } from "./emitDirectionUtil";
 
 type TalkingDip = Readonly<{
   startTimeOffset:number,
@@ -131,29 +136,46 @@ function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors
   return null;
 }
 
+function _findEmitSourceAnchor(source:EmitSource,
+    framePresentationIndex:FramePresentationIndex):CanvasBubbleAnchor|null {
+  return source.kind === 'character'
+    ? framePresentationIndex.characterBubbleAnchorById.get(source.characterId) ?? null
+    : framePresentationIndex.itemBubbleAnchorById.get(source.itemId) ?? null;
+}
+
+function _findEmitSourceLocation(source:EmitSource,
+    levelContext:LevelEffectDrawContext):LevelEffectCharacterLocation|null {
+  if (source.kind === 'floorItem') return levelContext.roomLocationById.get(source.roomId) ?? null;
+  const characterId = source.kind === 'character' ? source.characterId : source.ownerCharacterId;
+  return levelContext.characterLocationById.get(characterId) ?? null;
+}
+
 function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
-  context:CanvasRenderingContext2D, text:string, startTime:number, isLoud:boolean, source:EmitSource,
-  carrierCharacterId:string):EffectHandlerResult|null {
-  const characterId = source.kind === 'character' ? source.characterId : carrierCharacterId;
-  if (drawCall.stage === 'characterAfterLevel') {
-    const { characterAnatomy:{ anchorX, anchorTopY }, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
-    if (isCharacterInActiveRoom || isLevelComplete) {
-      drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
-    }
+  context:CanvasRenderingContext2D, text:string, startTime:number, isLoud:boolean,
+  source:EmitSource):EffectHandlerResult|null {
+  if (drawCall.stage !== 'afterLevel') return null;
+  const levelContext = drawCall.levelContext;
+  const anchor = _findEmitSourceAnchor(source, levelContext.framePresentationIndex);
+  if (anchor) {
+    drawEmitBubble(text, anchor.anchorX, anchor.anchorTopY, scalingFactors, context, startTime, time);
     return null;
   }
-  
-  if (drawCall.stage === 'afterLevel') {
-    const { characterLocationById, isLevelComplete, activeRoomTopCenterCanvasPoint } = drawCall.levelContext;
-    const location = characterLocationById.get(characterId);
-    if (location?.kind === 'activeRoom' || isLevelComplete) return null;
-    if (isLoud) {
-      const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(activeRoomTopCenterCanvasPoint, scalingFactors);
-      drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
-    } else if (location?.kind === 'adjacentOpenExit') {
-      drawEmitBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
-        scalingFactors, context, startTime, time);
-    }
+
+  const location = _findEmitSourceLocation(source, levelContext);
+  if (isLoud) {
+    const tipDirection = location?.roomId && location.roomRect
+      ? findEmitTipDirection(levelContext.activeRoomId, levelContext.activeRoomRect,
+          location.roomId, location.roomRect)
+      : null;
+    const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(
+      levelContext.activeRoomTopCenterCanvasPoint, scalingFactors);
+    drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time, tipDirection);
+    return null;
+  }
+
+  if (location?.kind === 'adjacentOpenExit') {
+    drawEmitBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
+      scalingFactors, context, startTime, time);
   }
   return null;
 }
@@ -173,9 +195,8 @@ export function createThinksEffect(text:string, startTime:number, speechDuration
   return { kind:'thinks', startTime, endTime:startTime+speechDuration, handler };
 }
 
-export function createEmitsEffect(source:EmitSource, carrierCharacterId:string, text:string, startTime:number,
-    speechDuration:number, isLoud:boolean):Effect {
+export function createEmitsEffect(source:EmitSource, text:string, startTime:number, speechDuration:number, isLoud:boolean):Effect {
   const handler:EffectHandler = (drawCall, scalingFactors, time, _metaTime, context) =>
-    _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud, source, carrierCharacterId);
+    _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud, source);
   return { kind:'emits', startTime, endTime:startTime+speechDuration, handler };
 }

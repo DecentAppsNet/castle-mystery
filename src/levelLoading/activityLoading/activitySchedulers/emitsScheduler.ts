@@ -108,7 +108,7 @@ export function scheduleEmitsActivity(level:Level,
     : _createCharacterEmitSource(level, editableTimeline, characterId, text, activity, errors);
   if (!source) return false;
 
-  const emitsEffect = createEmitsEffect(source, characterId, text, activity.startTime, speechDuration, isLoud !== undefined);
+  const emitsEffect = createEmitsEffect(source, text, activity.startTime, speechDuration, isLoud !== undefined);
   addCharacterEffect(emitsEffect, characterI, editableTimeline);
   return true;
 }

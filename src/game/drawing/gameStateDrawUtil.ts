@@ -265,39 +265,43 @@ function _drawRoomSilhouettes(gameState:GameState, context:CanvasRenderingContex
   }
 }
 
-function _createCharacterLocationById(characters:CharacterWithEffects[], rooms:Room[], activeRoom:Room,
+function _createRoomLocationById(rooms:Room[], activeRoom:Room,
     scalingFactors:ScalingFactors):ReadonlyMap<string, LevelEffectCharacterLocation> {
-  const locationsByRoomId = new Map<string, LevelEffectCharacterLocation>();
-  const locationByCharacterId = new Map<string, LevelEffectCharacterLocation>();
+  const locationByRoomId = new Map<string, LevelEffectCharacterLocation>();
   const activeRoomInteriorCanvasPoint = projectRoomPointWithDepth(
     activeRoom.rect.x + activeRoom.rect.width / 2,
     activeRoom.rect.y + activeRoom.rect.height / 2,
     0,
     scalingFactors
   );
+  rooms.forEach(room => {
+    const openExit = findOpenExitConnectingRooms(room, activeRoom);
+    const exitRect = openExit ? getProjectedExitCanvasRect(openExit, scalingFactors) : null;
+    const location:LevelEffectCharacterLocation = room.id === activeRoom.id
+      ? { kind:'activeRoom', roomId:room.id, roomRect:room.rect }
+      : exitRect
+        ? {
+            kind:'adjacentOpenExit', roomId:room.id, roomRect:room.rect,
+            exitTargetCanvasPoint:[exitRect.x + exitRect.width / 2, exitRect.y + exitRect.height / 2],
+            activeRoomInteriorCanvasPoint
+          }
+        : { kind:'outsideLocalAudibleRange', roomId:room.id, roomRect:room.rect };
+    locationByRoomId.set(room.id, location);
+  });
+  return locationByRoomId;
+}
+
+function _createCharacterLocationById(characters:CharacterWithEffects[], rooms:Room[],
+    locationByRoomId:ReadonlyMap<string, LevelEffectCharacterLocation>):ReadonlyMap<string, LevelEffectCharacterLocation> {
+  const locationByCharacterId = new Map<string, LevelEffectCharacterLocation>();
   characters.forEach(character => {
     const characterRoom = findRoomAtPosition(rooms, character.position.x, character.position.y);
     if (!characterRoom) {
       locationByCharacterId.set(character.id, { kind:'outsideLocalAudibleRange', roomId:null, roomRect:null });
       return;
     }
-    let location = locationsByRoomId.get(characterRoom.id);
-    if (!location) {
-      const openExit = findOpenExitConnectingRooms(characterRoom, activeRoom);
-      const exitRect = openExit ? getProjectedExitCanvasRect(openExit, scalingFactors) : null;
-      location = characterRoom.id === activeRoom.id
-        ? { kind:'activeRoom', roomId:characterRoom.id, roomRect:characterRoom.rect }
-        : exitRect
-          ? {
-              kind:'adjacentOpenExit',
-              roomId:characterRoom.id,
-              roomRect:characterRoom.rect,
-              exitTargetCanvasPoint:[exitRect.x + exitRect.width / 2, exitRect.y + exitRect.height / 2],
-              activeRoomInteriorCanvasPoint
-            }
-          : { kind:'outsideLocalAudibleRange', roomId:characterRoom.id, roomRect:characterRoom.rect };
-      locationsByRoomId.set(characterRoom.id, location);
-    }
+    const location = locationByRoomId.get(characterRoom.id);
+    assertNonNullable(location);
     locationByCharacterId.set(character.id, location);
   });
   return locationByCharacterId;
@@ -306,8 +310,10 @@ function _createCharacterLocationById(characters:CharacterWithEffects[], rooms:R
 function _createLevelEffectDrawContext(characters:CharacterWithEffects[], rooms:Room[], activeRoom:Room,
     isLevelComplete:boolean, scalingFactors:ScalingFactors,
     framePresentationIndex:FramePresentationIndex):LevelEffectDrawContext {
+  const roomLocationById = _createRoomLocationById(rooms, activeRoom, scalingFactors);
   return {
-    characterLocationById:_createCharacterLocationById(characters, rooms, activeRoom, scalingFactors),
+    characterLocationById:_createCharacterLocationById(characters, rooms, roomLocationById),
+    roomLocationById,
     framePresentationIndex,
     roomRectById:new Map(rooms.map(room => [room.id, room.rect])),
     activeRoomId:activeRoom.id,
