@@ -36,7 +36,7 @@ import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
 import { findTexturePrimaryImageOperation } from "@/game/textureUtil";
-import { getHeldItemCanvasPoint, hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
+import { getHeldItemBubbleAnchor, getHeldItemCanvasPoint, hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
 import Character from "../types/Character";
 import GameState from "../types/GameState";
 import Room from "../types/Room";
@@ -55,7 +55,15 @@ import CharacterWithEffects from "../types/CharacterWithEffects";
 import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
 import CharacterCanvasAnatomy from "../effects/types/CharacterCanvasAnatomy";
 import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
-import CharacterEffectDrawEntry from "./characters/types/CharacterEffectDrawEntry";
+import RoomDrawResult from "./types/RoomDrawResult";
+
+function _createEmptyRoomDrawResult():RoomDrawResult {
+  return {
+    characterEffectDrawEntries:[],
+    characterBubbleAnchorById:new Map(),
+    itemBubbleAnchorById:new Map()
+  };
+}
 
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
@@ -325,7 +333,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
     stairTextureLightness:{ top:number, side:number, front:number }, discoveryState:DiscoveryState,
   isCharacterInActiveRoom:boolean, isLevelComplete:boolean,
-  layoutPlanner:CanvasLayoutPlanner|null = null):CharacterEffectDrawEntry[] {
+  layoutPlanner:CanvasLayoutPlanner|null = null):RoomDrawResult {
 
   // Resolve room content placement and drawing order.
   const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom);
@@ -352,7 +360,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
   });
 
   // Draw ordered room content and dispatch character effects around their owners.
-  const characterEffectDrawEntries:CharacterEffectDrawEntry[] = [];
+  const result = _createEmptyRoomDrawResult();
   contents.forEach(content => {
     switch(content.type) {
       case 'stair':
@@ -362,8 +370,9 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         if (layoutPlanner && isItemInteractive(content.item)) {
           layoutPlanner.reserveRect(getItemCanvasRectInRoom(content.item, content.displayPosition, scalingFactors, imageSet));
         }
-        drawRoomItem(content.item, content.displayPosition, scalingFactors, context, imageSet,
+        const itemAnchor = drawRoomItem(content.item, content.displayPosition, scalingFactors, context, imageSet,
           content.item.id === hoveredItemId, metaTime);
+        result.itemBubbleAnchorById.set(content.item.id, itemAnchor);
         return;
       case 'character':
         if (layoutPlanner && isCharacterInteractive(content.character)) {
@@ -382,10 +391,21 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           isLevelComplete,
           roomContentDisplayLayout:displayLayout
         };
-        characterEffectDrawEntries.push({ character:content.character, characterContext });
+        result.characterEffectDrawEntries.push({ character:content.character, characterContext });
+        result.characterBubbleAnchorById.set(content.character.id, characterAnatomy);
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
         const spriteOverrides = handleBeforeCharacterDrawEffects(
           content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context);
+        const heldItems = [
+          { item:content.character.leftHandItem, hand:'left' as const },
+          { item:content.character.rightHandItem, hand:'right' as const }
+        ];
+        heldItems.forEach(({ item, hand }) => {
+          if (!item) return;
+          const anchor = getHeldItemBubbleAnchor(
+            item, characterCanvasLayout.layout, hand, scalingFactors, imageSet, spriteOverrides);
+          if (anchor) result.itemBubbleAnchorById.set(item.id, anchor);
+        });
         drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
           isHighlighted, metaTime, spriteOverrides, characterCanvasLayout);
         handleAfterCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
@@ -405,7 +425,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
       drawUndiscoveredMarker(centerX, centerY, content.character.randomSalt, scalingFactors, context, metaTime);
     }
   });
-  return characterEffectDrawEntries;
+  return result;
 }
 
 function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
@@ -417,12 +437,12 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
     hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet,
     discoveryState:DiscoveryState, showFullContents:boolean = false,
-    layoutPlanner:CanvasLayoutPlanner|null = null):CharacterEffectDrawEntry[] {
-  if (!discoveryState.discoveredRoomIds.has(room.id)) return [];
+    layoutPlanner:CanvasLayoutPlanner|null = null):RoomDrawResult {
+  if (!discoveryState.discoveredRoomIds.has(room.id)) return _createEmptyRoomDrawResult();
   const isRoomObscured = discoveryState.obscuredRoomIds.has(room.id) && !showFullContents;
   if (isRoomObscured) {
     if (isActive && activeCharacter) drawObscuredActiveCharacter(room, activeCharacter, scalingFactors, context, imageSet);
-    return [];
+    return _createEmptyRoomDrawResult();
   }
   const stairTextureLightness = showFullContents || isActive
     ? { top:ACTIVE_FLOOR_TEXTURE_LIGHTNESS, side:ACTIVE_RIGHT_WALL_TEXTURE_LIGHTNESS, front:ACTIVE_BACK_WALL_TEXTURE_LIGHTNESS }
@@ -433,5 +453,5 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
       isActive, showFullContents, layoutPlanner);
   }
   _drawRoomStairsOnly(room, scalingFactors, context, imageSet, stairTextureLightness);
-  return [];
+  return _createEmptyRoomDrawResult();
 }

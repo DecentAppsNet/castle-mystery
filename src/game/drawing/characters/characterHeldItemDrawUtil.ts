@@ -50,7 +50,7 @@ function _findHeldItemCanvasTranslation(spriteOverrides:SpriteOverride[], hand:H
     : [0, 0];
 }
 
-function _getHeldItemBubbleAnchor(item:Item, layout:CharacterLayout, hand:Hand,
+export function getHeldItemBubbleAnchor(item:Item, layout:CharacterLayout, hand:Hand,
     scalingFactors:ScalingFactors, imageSet:ImageSet,
     spriteOverrides:SpriteOverride[]):CanvasBubbleAnchor|null {
   if (!item.isVisible) return null;
@@ -68,7 +68,7 @@ function _drawHeldItem(item:Item, layout:CharacterLayout, hand:Hand, scalingFact
   const [itemX, itemY] = getHeldItemCanvasPoint(layout, hand, scalingFactors);
   const [translateX, translateY] = _findHeldItemCanvasTranslation(spriteOverrides, hand);
   drawItemAtCanvasPosition(item, itemX + translateX, itemY + translateY, imageDrawRect, context, imageSet);
-  return _getHeldItemBubbleAnchor(item, layout, hand, scalingFactors, imageSet, spriteOverrides);
+  return getHeldItemBubbleAnchor(item, layout, hand, scalingFactors, imageSet, spriteOverrides);
 }
 
 function _findBackHandItem(character:Character):Item|null {

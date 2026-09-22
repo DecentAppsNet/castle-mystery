@@ -35,6 +35,8 @@ import Item from "../types/Item";
 import { handleAfterLevelDrawEffects } from "./levelEffectDispatchUtil";
 import CharacterEffectDrawEntry from "./characters/types/CharacterEffectDrawEntry";
 import { handleCharacterAfterLevelDrawEffects } from "./characters/characterEffectDispatchUtil";
+import FramePresentationIndex from "../effects/types/FramePresentationIndex";
+import CanvasBubbleAnchor from "../effects/types/CanvasBubbleAnchor";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
@@ -300,9 +302,11 @@ function _createCharacterLocationById(characters:CharacterWithEffects[], rooms:R
 }
 
 function _createLevelEffectDrawContext(characters:CharacterWithEffects[], rooms:Room[], activeRoom:Room,
-    isLevelComplete:boolean, scalingFactors:ScalingFactors):LevelEffectDrawContext {
+    isLevelComplete:boolean, scalingFactors:ScalingFactors,
+    framePresentationIndex:FramePresentationIndex):LevelEffectDrawContext {
   return {
     characterLocationById:_createCharacterLocationById(characters, rooms, activeRoom, scalingFactors),
+    framePresentationIndex,
     isLevelComplete,
     activeRoomTopCenterCanvasPoint:projectRoomPointWithDepth(
       activeRoom.rect.x + activeRoom.rect.width / 2,
@@ -352,6 +356,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     return { room, charactersInRoom, isActive };
   });
   const characterEffectDrawEntries:CharacterEffectDrawEntry[] = [];
+  const characterBubbleAnchorById = new Map<string, CanvasBubbleAnchor>();
+  const itemBubbleAnchorById = new Map<string, CanvasBubbleAnchor>();
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
     const drewCachedRoomShell = _drawCachedRoomShell(room, gameState, isActive, context);
     if (drewCachedRoomShell) {
@@ -375,11 +381,13 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
         gameState.discoveryState.discoveredRoomIds.has(room.id));
     }
     if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) continue;
-    const roomCharacterEffectDrawEntries = drawRoomCharactersAndEffects(
+    const roomDrawResult = drawRoomCharactersAndEffects(
       room, charactersInRoom, isActive, activeCharacter, hoveredCharacterHighlightId,
       hoveredItemHighlightId, gameState.scalingFactors, context, gameState.time, metaTime,
       gameState.imageSet, gameState.discoveryState, gameState.isLevelComplete, layoutPlanner);
-    characterEffectDrawEntries.push(...roomCharacterEffectDrawEntries);
+    characterEffectDrawEntries.push(...roomDrawResult.characterEffectDrawEntries);
+    roomDrawResult.characterBubbleAnchorById.forEach((anchor, id) => characterBubbleAnchorById.set(id, anchor));
+    roomDrawResult.itemBubbleAnchorById.forEach((anchor, id) => itemBubbleAnchorById.set(id, anchor));
     drawRoomTitle(room, isActive, gameState, context, layoutPlanner);
     if (!_drawCachedRoomRoof(room, gameState, context)) {
       drawRoomRoofs(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors, context);
@@ -392,7 +400,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     gameState.metaTimeEffects,
     gameState.scalingFactors,
     gameState.time,
-    _createLevelEffectDrawContext(characters, rooms, activeRoom, gameState.isLevelComplete, gameState.scalingFactors),
+    _createLevelEffectDrawContext(characters, rooms, activeRoom, gameState.isLevelComplete, gameState.scalingFactors,
+      { characterBubbleAnchorById, itemBubbleAnchorById }),
     metaTime,
     context
   );
