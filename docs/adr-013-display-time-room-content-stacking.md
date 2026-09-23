@@ -59,11 +59,13 @@ An item's own `stackOffset` therefore affects only later content. Its `drawOffse
 
 Invisible items are neither drawn nor supports. Removing or hiding an item collapses the visible stack during the next layout calculation without rewriting any positions.
 
-### 4. Characters use the nearest square's support transform
+### 4. Stopped characters use the nearest square's support transform
 
 A character's position is snapped to the nearest floor-square center only to select a support stack. The resulting drawable metadata calls this the `snappedPosition`.
 
-The character's display position is its actual position plus that square's final cumulative item support transform. Its actual movement path is not replaced by the snapped position. Consequently, a moving character switches stack transforms around the midpoint between squares while retaining its interpolated base position.
+A stopped character's display position is its actual position plus that square's final cumulative item support transform. Its actual world position is not replaced by the snapped position.
+
+A moving character retains its actual interpolated world position without the selected square's item support transform. Movement is derived ephemerally on the current timeline snapshot by comparing each character's position in adjacent stored keyframes, except that the first stored keyframe always represents rest; movement is not persisted or scheduled as stack state. Nearest-square selection, stack membership, and painter grouping remain unchanged while moving.
 
 Characters do not support one another. Every character at a square receives the same item-derived transform, and adding another character does not raise either character or any item.
 
@@ -149,6 +151,7 @@ Explicit layout creation makes the calculation cost visible to callers and allow
 5. Effect-specific base-position helpers are named separately from static display-position APIs.
 6. Canvas-heavy behavior is validated with manual smoke tests in addition to pure layout tests and existing drawing tests.
 7. Character anatomy maps are recreated per room draw pass and are not general character-location or activity-reservation state.
+8. The current snapshot's moving-character IDs suppress item support transforms without changing stack grouping metadata.
 
 ## Not Chosen
 

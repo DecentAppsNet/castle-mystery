@@ -104,6 +104,63 @@ describe('roomContentDisplayPositionUtil', () => {
       expect(entry.stackMemberI).toBe(2);
     });
 
+    it('keeps a moving character at its world position while crossing a tall item stack', () => {
+      const bottom = _createItem('bottom', LEFT_SQUARE, { x:1, y:-2, z:0.1 }, { x:3, y:-4, z:0.2 });
+      const top = _createItem('top', LEFT_SQUARE, { x:-1, y:-1, z:-0.1 }, { x:2, y:-3, z:0.3 });
+      const character = _createCharacter('walker', { x:14.5, y:FLOOR_Y, z:0.5 });
+
+      const entry = createRoomContentDisplayLayout(_createRoom([bottom, top]), [character], new Set(['walker']))
+        .characterLayoutById.get(character.id)!;
+
+      expect(entry.displayPosition).toBe(character.position);
+    });
+
+    it('applies the complete support transform to the same character when stopped', () => {
+      const item = _createItem('table', LEFT_SQUARE, { x:1, y:-2, z:0.1 }, { x:3, y:-4, z:0.2 });
+      const character = _createCharacter('walker');
+
+      const entry = createRoomContentDisplayLayout(_createRoom([item]), [character], new Set())
+        .characterLayoutById.get(character.id)!;
+
+      _expectPosition(entry.displayPosition, {
+        x:LEFT_SQUARE.x + 4,
+        y:FLOOR_Y - 6 - ITEM_CUBOID_HEIGHT_GAME,
+        z:LEFT_SQUARE.z + 0.3
+      });
+    });
+
+    it('resolves moving and stopped characters independently at the same square', () => {
+      const item = _createItem('table');
+      const moving = _createCharacter('moving');
+      const stopped = _createCharacter('stopped');
+      const layout = createRoomContentDisplayLayout(_createRoom([item]), [moving, stopped], new Set(['moving']));
+
+      expect(layout.characterLayoutById.get('moving')!.displayPosition).toBe(moving.position);
+      expect(layout.characterLayoutById.get('stopped')!.displayPosition)
+        .toEqual({ ...stopped.position, y:FLOOR_Y - ITEM_CUBOID_HEIGHT_GAME });
+    });
+
+    it('updates nearest-square metadata across the midpoint while a character is moving', () => {
+      const character = _createCharacter('walker', { x:15.001, y:FLOOR_Y, z:0.5 });
+
+      const entry = createRoomContentDisplayLayout(_createRoom([]), [character], new Set(['walker']))
+        .characterLayoutById.get(character.id)!;
+
+      expect(entry.displayPosition).toBe(character.position);
+      expect(entry.squarePosition).toEqual(RIGHT_SQUARE);
+    });
+
+    it('preserves stack painter metadata for a moving character', () => {
+      const bottom = _createItem('bottom');
+      const top = _createItem('top');
+      const character = _createCharacter('walker');
+      const layout = createRoomContentDisplayLayout(_createRoom([bottom, top]), [character], new Set(['walker']));
+      const entry = layout.characterLayoutById.get(character.id)!;
+
+      expect(entry.painterOrderAnchor).toEqual(layout.itemLayoutById.get('bottom')!.displayPosition);
+      expect(entry.stackMemberI).toBe(2);
+    });
+
     it('gives same-square characters equal transforms without using either as support', () => {
       const item = _createItem('table', LEFT_SQUARE, { x:1, y:-2, z:0.1 }, { x:3, y:-4, z:0.2 });
       const sam = _createCharacter('sam');

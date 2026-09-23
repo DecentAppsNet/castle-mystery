@@ -28,6 +28,8 @@ type SquareLayout = {
   nextStackMemberI:number
 }
 
+const EMPTY_MOVING_CHARACTER_IDS:ReadonlySet<string> = new Set();
+
 function _addPositions(...positions:Position[]):Position {
   return positions.reduce((sum, position) => ({
     x:sum.x + position.x,
@@ -59,7 +61,8 @@ function _findSupportTransformBeforeRoomItem(room:Room, squarePosition:Position,
   }, { x:0, y:0, z:0 });
 }
 
-export function createRoomContentDisplayLayout(room:Room, charactersInRoom:ReadonlyArray<Character>):RoomContentDisplayLayout {
+export function createRoomContentDisplayLayout(room:Room, charactersInRoom:ReadonlyArray<Character>,
+  movingCharacterIds:ReadonlySet<string> = EMPTY_MOVING_CHARACTER_IDS):RoomContentDisplayLayout {
   const itemLayoutById = new Map<string, RoomContentDisplayLayoutEntry>();
   const characterLayoutById = new Map<string, RoomContentDisplayLayoutEntry>();
   const layoutBySquareKey = new Map<string, SquareLayout>();
@@ -83,7 +86,8 @@ export function createRoomContentDisplayLayout(room:Room, charactersInRoom:Reado
   charactersInRoom.forEach(character => {
     const squarePosition = findNearestFloorSquareCenter(room, character.position);
     const squareLayout = _getOrCreateSquareLayout(layoutBySquareKey, squarePosition);
-    const displayPosition = _addPositions(character.position, squareLayout.supportTransform);
+    const displayPosition = movingCharacterIds.has(character.id)
+      ? character.position : _addPositions(character.position, squareLayout.supportTransform);
     characterLayoutById.set(character.id, {
       displayPosition,
       squarePosition,
