@@ -8,6 +8,17 @@ import CharacterKeyframe, { duplicateCharacterKeyframe } from "@/game/types/Char
 
 type FindKeyframePredicate = (keyFrame:TimelineKeyframe) => boolean;
 
+type KeyframesAroundTime = Readonly<{
+  beforeKeyframe:TimelineKeyframe,
+  afterKeyframe:TimelineKeyframe|null,
+  sourceKeyframeI:number
+}>;
+
+type CreateKeyframeResult = Readonly<{
+  keyframe:Readonly<TimelineKeyframe>,
+  sourceKeyframeI:number
+}>;
+
 function _findKeyframeBeforeTimeRecursively(keyframes:TimelineKeyframe[], fromI:number, toI:number, time:number):number {
   assert(toI > fromI);
   const middleI = fromI + Math.floor((toI - fromI) / 2);
@@ -20,8 +31,7 @@ function _findKeyframeBeforeTimeRecursively(keyframes:TimelineKeyframe[], fromI:
   return _findKeyframeBeforeTimeRecursively(keyframes, fromI, middleI, time);
 }
 
-function _findKeyframesBeforeAndAfterTime(keyframes:TimelineKeyframe[], time:number):
-    {beforeKeyframe:TimelineKeyframe, afterKeyframe:TimelineKeyframe|null} {
+function _findKeyframesBeforeAndAfterTime(keyframes:TimelineKeyframe[], time:number):KeyframesAroundTime {
   assert(keyframes.length > 0 && keyframes[0].time <= time);
   const beforeI = _findKeyframeBeforeTimeRecursively(keyframes, 0, keyframes.length, time);
   assert(beforeI >= 0 && beforeI < keyframes.length);
@@ -30,7 +40,7 @@ function _findKeyframesBeforeAndAfterTime(keyframes:TimelineKeyframe[], time:num
       ? null : keyframes[beforeI+1];
   assert(beforeKeyframe.time <= time);
   assert(afterKeyframe === null || afterKeyframe.time >= time);
-  return {beforeKeyframe, afterKeyframe};
+  return {beforeKeyframe, afterKeyframe, sourceKeyframeI:beforeI};
 }
 
 function _findKeyframeIBeforeOrAtTime(keyframes:TimelineKeyframe[], time:number):number {
@@ -45,9 +55,9 @@ function _areCharacterKeyframePositionsEqual(fromKeyframe:TimelineKeyframe, toKe
   return arePositionsEqual(fromKeyframe.characters[characterI].position, toKeyframe.characters[characterI].position);
 }
 
-export function createKeyframeAtTime(keyframes:TimelineKeyframe[], time:number):Readonly<TimelineKeyframe> {
-  const {beforeKeyframe, afterKeyframe} = _findKeyframesBeforeAndAfterTime(keyframes, time);
-  if (!afterKeyframe) return { ...beforeKeyframe, time };
+function _createKeyframeAtTime(keyframes:TimelineKeyframe[], time:number):CreateKeyframeResult {
+  const {beforeKeyframe, afterKeyframe, sourceKeyframeI} = _findKeyframesBeforeAndAfterTime(keyframes, time);
+  if (!afterKeyframe) return { keyframe:{ ...beforeKeyframe, time }, sourceKeyframeI };
 
   // Look for characters between the two keyframes that need an interpolated position.
   let betweenKeyframe:TimelineKeyframe|null = null;
@@ -59,7 +69,15 @@ export function createKeyframeAtTime(keyframes:TimelineKeyframe[], time:number):
   }
 
   // Return a keyframe with interpolated positions if it was needed.
-  return betweenKeyframe ?? { ...beforeKeyframe, time};
+  return { keyframe:betweenKeyframe ?? { ...beforeKeyframe, time}, sourceKeyframeI };
+}
+
+export function createKeyframeAtTime(keyframes:TimelineKeyframe[], time:number):Readonly<TimelineKeyframe> {
+  return _createKeyframeAtTime(keyframes, time).keyframe;
+}
+
+export function createKeyframeAtTimeWithSourceIndex(keyframes:TimelineKeyframe[], time:number):CreateKeyframeResult {
+  return _createKeyframeAtTime(keyframes, time);
 }
 
 export function createCharacterKeyframeAtTime(keyframes:TimelineKeyframe[], characterI:number, 

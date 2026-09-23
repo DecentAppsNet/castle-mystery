@@ -82,5 +82,17 @@ describe('movementPlanningUtil', () => {
         OTHER_ROOM, { x:15, y:FLOOR_Y, z:0 }, 2_000, 0, 'right', timeline);
       _expectOnlyFirstAddedKeyframeStands(timeline);
     });
+
+    it('preserves the starting position until the delayed walk begins', () => {
+      const timeline = _createTimeline();
+      const fromPosition = { x:0, y:FLOOR_Y, z:0 };
+
+      const result = scheduleCharacterMovementToRoomAtTime(_createContext(), ROOM, fromPosition, 100,
+        OTHER_ROOM, { x:15, y:FLOOR_Y, z:0 }, 2_000, 0, 'right', timeline);
+
+      expect(result).toEqual({ walkDuration:900, walkStartDelay:1_000 });
+      expect(timeline.keyframes[1]).toMatchObject({ time:1_100, characters:[{ position:fromPosition }] });
+      expect(timeline.keyframes.at(-1)).toMatchObject({ time:2_000, characters:[{ position:{ x:15, y:FLOOR_Y, z:0 } }] });
+    });
   });
 });

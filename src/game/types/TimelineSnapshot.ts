@@ -5,7 +5,8 @@ type TimelineSnapshot = {
   activeCharacter:CharacterWithEffects,
   activeRoom:Room,
   characters:CharacterWithEffects[],
-  rooms:Room[]
+  rooms:Room[],
+  movingCharacterIds:ReadonlySet<string>
 }
 
 export default TimelineSnapshot;

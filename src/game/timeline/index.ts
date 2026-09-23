@@ -2,6 +2,7 @@ export { createTimelineSnapshot, createInitialTimelineSnapshot, updateTimelineSn
 export { 
   createCharacterKeyframeAtTime,
   createKeyframeAtTime, 
+  createKeyframeAtTimeWithSourceIndex,
   findCharacterPositionAtTime,
   findKeyframeForTime, 
 } from './retrievalUtil';

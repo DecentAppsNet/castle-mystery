@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
 import { createDefaultRoomKeyframe } from '@/game/types/RoomKeyframe';
 import TimelineKeyframe from '@/game/types/TimelineKeyframe';
-import { createCharacterKeyframeAtTime, createKeyframeAtTime, findCharacterPositionAtTime, findKeyframeForTime } from '@/game/timeline';
+import {
+	createCharacterKeyframeAtTime,
+	createKeyframeAtTime,
+	createKeyframeAtTimeWithSourceIndex,
+	findCharacterPositionAtTime,
+	findKeyframeForTime
+} from '@/game/timeline';
 
 function _createKeyframe(time:number, positions:Array<{ x:number, y:number, z:number }>):TimelineKeyframe {
 	return {
@@ -76,6 +82,70 @@ describe('retrievalUtil', () => {
 			expect(snapshot).toEqual({...keyframes[0], time:1500});
 			expect(snapshot.characters[0]?.position).toEqual({ x:3, y:4, z:5 });
 			expect(snapshot.characters[1]?.position).toEqual({ x:0, y:0, z:10 });
+		});
+	});
+
+	describe('createKeyframeAtTimeWithSourceIndex()', () => {
+		it('returns the earlier source index with an interpolated keyframe between keyframes', () => {
+			const keyframes = [
+				_createKeyframe(1000, [{ x:0, y:0, z:0 }]),
+				_createKeyframe(2000, [{ x:10, y:10, z:10 }])
+			];
+
+			const result = createKeyframeAtTimeWithSourceIndex(keyframes, 1500);
+
+			expect(result.sourceKeyframeI).toBe(0);
+			expect(result.keyframe.characters[0].position).toEqual({ x:5, y:5, z:5 });
+			expect(result.keyframe).toEqual(createKeyframeAtTime(keyframes, 1500));
+		});
+
+		it('returns the matching source index at the first keyframe', () => {
+			const keyframes = [
+				_createKeyframe(1000, [{ x:0, y:0, z:0 }]),
+				_createKeyframe(2000, [{ x:10, y:10, z:10 }])
+			];
+
+			const result = createKeyframeAtTimeWithSourceIndex(keyframes, 1000);
+
+			expect(result.sourceKeyframeI).toBe(0);
+			expect(result.keyframe).toEqual(createKeyframeAtTime(keyframes, 1000));
+		});
+
+		it('returns the matching source index at an intermediate keyframe', () => {
+			const keyframes = [
+				_createKeyframe(1000, [{ x:0, y:0, z:0 }]),
+				_createKeyframe(2000, [{ x:10, y:10, z:10 }]),
+				_createKeyframe(3000, [{ x:20, y:20, z:20 }])
+			];
+
+			const result = createKeyframeAtTimeWithSourceIndex(keyframes, 2000);
+
+			expect(result.sourceKeyframeI).toBe(1);
+			expect(result.keyframe).toEqual(createKeyframeAtTime(keyframes, 2000));
+		});
+
+		it('returns the matching source index at the last keyframe', () => {
+			const keyframes = [
+				_createKeyframe(1000, [{ x:0, y:0, z:0 }]),
+				_createKeyframe(2000, [{ x:10, y:10, z:10 }])
+			];
+
+			const result = createKeyframeAtTimeWithSourceIndex(keyframes, 2000);
+
+			expect(result.sourceKeyframeI).toBe(1);
+			expect(result.keyframe).toEqual(createKeyframeAtTime(keyframes, 2000));
+		});
+
+		it('returns the final source index after the last keyframe', () => {
+			const keyframes = [
+				_createKeyframe(1000, [{ x:0, y:0, z:0 }]),
+				_createKeyframe(2000, [{ x:10, y:10, z:10 }])
+			];
+
+			const result = createKeyframeAtTimeWithSourceIndex(keyframes, 5000);
+
+			expect(result.sourceKeyframeI).toBe(1);
+			expect(result.keyframe).toEqual(createKeyframeAtTime(keyframes, 5000));
 		});
 	});
 

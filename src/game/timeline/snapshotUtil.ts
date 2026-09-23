@@ -5,13 +5,25 @@ import TimelineKeyframe, { duplicateTimelineKeyframe } from "../types/TimelineKe
 import Character from "../types/Character";
 import GameState from "../types/GameState";
 import TimelineSnapshot from "../types/TimelineSnapshot";
-import { createKeyframeAtTime, findFollowingKeyframe, findPrecedingKeyframe } from "./retrievalUtil";
+import { createKeyframeAtTimeWithSourceIndex, findFollowingKeyframe, findPrecedingKeyframe } from "./retrievalUtil";
 import CharacterKeyframe from "../types/CharacterKeyframe";
 import { findRoomAtPosition } from "../roomUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import { SkinLinkages } from "../types/DiscoveryState";
 import { areSkinIdsLinked, createRevealedSkinLinkages } from "../skinLinkageUtil";
 import Effect from "../effects/types/Effect";
+import { arePositionsEqual } from "../types/Position";
+
+function _findMovingCharacterIds(timeline:Timeline, sourceKeyframeI:number):ReadonlySet<string> {
+  if (sourceKeyframeI === 0) return new Set();
+  const sourceKeyframe = timeline.keyframes[sourceKeyframeI];
+  const followingKeyframe = timeline.keyframes[sourceKeyframeI + 1];
+  if (!followingKeyframe) return new Set();
+  assert(sourceKeyframe.characters.length === followingKeyframe.characters.length
+    && sourceKeyframe.characters.length === timeline.characterIds.length);
+  return new Set(timeline.characterIds.filter((_, characterI) =>
+    !arePositionsEqual(sourceKeyframe.characters[characterI].position, followingKeyframe.characters[characterI].position)));
+}
 
 function _findActiveContext(characters:CharacterWithEffects[], rooms:Room[], activeCharacterId:string):{
   activeCharacter:CharacterWithEffects,
@@ -24,9 +36,10 @@ function _findActiveContext(characters:CharacterWithEffects[], rooms:Room[], act
   return { activeCharacter, activeRoom };
 }
 
-function _createSnapshot(characters:CharacterWithEffects[], rooms:Room[], activeCharacterId:string):TimelineSnapshot {
+function _createSnapshot(characters:CharacterWithEffects[], rooms:Room[], activeCharacterId:string,
+    movingCharacterIds:ReadonlySet<string>):TimelineSnapshot {
   const { activeCharacter, activeRoom } = _findActiveContext(characters, rooms, activeCharacterId);
-  return { activeCharacter, activeRoom, characters, rooms };
+  return { activeCharacter, activeRoom, characters, rooms, movingCharacterIds };
 }
 
 function _findCharacterMemberWithSkins(character:CharacterKeyframe, baseCharacter:Character, memberName:string):string|null {
@@ -151,26 +164,28 @@ function _createSnapshotCharacters(baseCharacters:Character[], activeCharacterId
 // This function does some extra work to create fully-populated characters and rooms. The keyframe retrieval functions are more lightweight and are
 // preferable to use if a full snapshot isn't needed. Ideally, one snapshot is created per game loop frame and passed in to whatever needs it.
 export function createTimelineSnapshot(gameState:GameState, time:number):TimelineSnapshot {
-  const keyframe = createKeyframeAtTime(gameState.timeline.keyframes, time);
+  const { keyframe, sourceKeyframeI } = createKeyframeAtTimeWithSourceIndex(gameState.timeline.keyframes, time);
+  const movingCharacterIds = _findMovingCharacterIds(gameState.timeline, sourceKeyframeI);
   const characters = _createSnapshotCharacters(gameState.baseCharacters, gameState.activeCharacterId, gameState.activeSkinIdAtSelection, 
       gameState.discoveryState.revealedSkinLinkages, time, gameState.timeline, keyframe,
       gameState.characterMetaTimeEffectsByCharacterId);
   const rooms = _createSnapshotRooms(gameState.baseRooms, gameState.timeline, keyframe);
-  return _createSnapshot(characters, rooms, gameState.activeCharacterId);
+  return _createSnapshot(characters, rooms, gameState.activeCharacterId, movingCharacterIds);
 }
 
 // Create a snapshot for the initial time in the level. Note there is a lot of test code that uses this function as a way to check
 // keyframe information without creating gameState instance. Take care not extend its functionality *just* for the test code.
 export function createInitialTimelineSnapshot(baseCharacters:Character[], baseRooms:Room[], timeline:Timeline,
     activeCharacterId:string, initialTime:number, obscuredRoomIds:Set<string>):TimelineSnapshot {
-  const keyframe = createKeyframeAtTime(timeline.keyframes, initialTime);
+  const { keyframe, sourceKeyframeI } = createKeyframeAtTimeWithSourceIndex(timeline.keyframes, initialTime);
+  const movingCharacterIds = _findMovingCharacterIds(timeline, sourceKeyframeI);
   const activeCharacterI = timeline.characterIdToI[activeCharacterId];
   const activeSkinId = keyframe.characters[activeCharacterI].skinId;
   const skinLinkages:SkinLinkages = createRevealedSkinLinkages(timeline.keyframes, baseRooms, obscuredRoomIds);
   const characters = _createSnapshotCharacters(baseCharacters, activeCharacterId, activeSkinId, 
     skinLinkages, initialTime, timeline, keyframe, null);
   const rooms = _createSnapshotRooms(baseRooms, timeline, keyframe);
-  return _createSnapshot(characters, rooms, activeCharacterId);
+  return _createSnapshot(characters, rooms, activeCharacterId, movingCharacterIds);
 }
 
 export function updateTimelineSnapshotActiveContext(snapshot:TimelineSnapshot, activeCharacterId:string) {
