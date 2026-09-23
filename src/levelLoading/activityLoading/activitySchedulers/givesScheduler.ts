@@ -121,7 +121,7 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
   let scheduleTime = activity.startTime;
   if (!arePositionsAdjacent(characterKeyframe.position, toCharacterKeyframe.position)) {
     const roomI = editableTimeline.roomIdToI[room.id];
-    const claimedWaypoints = findClaimedWaypointsFromKeyframe(room, roomI, fromKeyframe, waypointContext);
+    const claimedWaypoints = findClaimedWaypointsFromKeyframe(room, roomI, fromKeyframe, waypointContext, characterI);
     const givePosition = _findBestGivePosition(waypointContext, room, toCharacterKeyframe.position,
       claimedWaypoints, characterKeyframe.position);
     const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, room, characterKeyframe.position,

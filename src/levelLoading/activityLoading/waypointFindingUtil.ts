@@ -67,9 +67,9 @@ function _isPositionInPositions(position:Position, positions:Position[]):boolean
   return positions.find(p => arePositionsEqual(p, position)) !== undefined;
 }
 
-function _findRoomCharacterPositions(characterKeyframes:CharacterKeyframe[], roomWaypoints:Waypoint[]):Position[] {
+function _findRoomCharacterPositions(characterKeyframes:CharacterKeyframe[], roomWaypoints:Waypoint[], excludeCharacterI:number):Position[] {
   return characterKeyframes
-    .filter(c => c.isVisible && _isPositionInWaypoints(c.position, roomWaypoints))
+    .filter((c, i) => c.isVisible && i !== excludeCharacterI && _isPositionInWaypoints(c.position, roomWaypoints))
     .map(c => c.position);
 }
 
@@ -167,12 +167,12 @@ export function findRoomWaypointAtPosition(waypointContext:WaypointGenerationCon
 // is positioned at a waypoint. Room exit and non-floor waypoints are excluded.
 /** Returns floor waypoints occupied by visible characters or room items in a keyframe. */
 export function findClaimedWaypointsFromKeyframe(room:Room, roomI:number, keyframe:TimelineKeyframe, 
-    waypointContext:WaypointGenerationContext):Waypoint[] {
+    waypointContext:WaypointGenerationContext, excludeCharacterI:number = -1):Waypoint[] {
   const waypoints:Waypoint[] = _findRoomFloorWaypoints(room, waypointContext);
   const roomKeyframe = keyframe.rooms[roomI];
   assertNonNullable(roomKeyframe);
   const roomItemPositions = _findRoomItemPositions(roomKeyframe.items);
-  const roomCharacterPositions = _findRoomCharacterPositions(keyframe.characters, waypoints);
+  const roomCharacterPositions = _findRoomCharacterPositions(keyframe.characters, waypoints, excludeCharacterI);
   const claimedPositions:Position[] = roomItemPositions.concat(roomCharacterPositions);
   return waypoints.filter(w => _isPositionInPositions(w.position, claimedPositions));
 }
