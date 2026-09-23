@@ -357,7 +357,7 @@ AABBCCDFGGHHH.
 
 (Raniero remains in his office)
 11:58:35 Raniero thinks, "As soon as she returns with my key..."
-: says, "I shall be free to frolic in the bins."
+: thinks, "I shall be free to frolic in the bins."
 
 11:58:52 Raniero thinks, "It is hard to stand so much."
 : thinks, "What if I got a tall chair?"
