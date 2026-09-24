@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCharacterKeyframeAtTime } from '@/game/timeline';
+import { createCharacterKeyframeAtTime, createKeyframeAtTime } from '@/game/timeline';
 
 import defaultLevelText from './fixtures/lays-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
@@ -38,5 +38,27 @@ describe('level loading - lays activities', () => {
     const bodyOrientation = _loadSamBodyOrientation(['0:00:00 lays'], 0);
 
     expect(bodyOrientation).toBe('laying');
+  });
+
+  it('walks to a target and lays only at arrival', () => {
+    const text = replaceSection(defaultLevelText, 'itinerary', ['0:00:00 Sam lays on Bed']);
+    const { level, errors } = loadLevelForTest(text, 'lays-target.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const samI = level!.timeline.characterIdToI.sam;
+    const bed = createKeyframeAtTime(level!.timeline.keyframes, 0).rooms[level!.timeline.roomIdToI.hall].items[0];
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.endTime - 1).bodyOrientation)
+      .toBe('standing');
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.endTime))
+      .toMatchObject({ position:bed.position, bodyOrientation:'laying' });
+  });
+
+  it('rejects a target in another room', () => {
+    const text = replaceSection(defaultLevelText, 'itinerary', ['0:00:00 Sam lays above Vase']);
+    const { level, errors } = loadLevelForTest(text, 'lays-other-room.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('"vase" item is in "closet" room, not "hall" room');
   });
 });

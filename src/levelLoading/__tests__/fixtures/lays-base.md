@@ -4,26 +4,42 @@
 # map
 
 ```
-H
+HC
 ```
 
 * H=Hall
+* C=Closet
 
 # rooms
 ## Hall
 
+* exits=Closet
+
 ```
 ....
-..S.
+b.S.
 ....
 ```
 
 * S=Sam
+* b=Bed
+
+## Closet
+
+```
+....
+.v..
+....
+```
+
+* v=Vase
 
 # characters
 ## Sam
 
 # items
+## Bed
+## Vase
 
 # itinerary
 

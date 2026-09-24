@@ -244,11 +244,11 @@ describe('parseFormatUtil', () => {
 			});
 
 			it('describes the kneels activity parse format', () => {
-				expect(describeParseFormat(createKneelsParseFormat())).toBe('Timestamp [CharacterId] `kneels`');
+				expect(describeParseFormat(createKneelsParseFormat())).toBe('Timestamp [CharacterId] `kneels` [{`on`|`above`|`in`|`over`|`at`} ItemId]');
 			});
 
 			it('describes the lays activity parse format', () => {
-				expect(describeParseFormat(createLaysParseFormat())).toBe('Timestamp [CharacterId] `lays`');
+				expect(describeParseFormat(createLaysParseFormat())).toBe('Timestamp [CharacterId] `lays` [{`on`|`above`|`in`|`over`|`at`} ItemId]');
 			});
 
 			it('describes the locks activity parse format', () => {
@@ -264,7 +264,7 @@ describe('parseFormatUtil', () => {
 			});
 
 			it('describes the sits activity parse format', () => {
-				expect(describeParseFormat(createSitsParseFormat())).toBe('Timestamp [CharacterId] `sits`');
+				expect(describeParseFormat(createSitsParseFormat())).toBe('Timestamp [CharacterId] `sits` [{`on`|`above`|`in`|`over`|`at`} ItemId]');
 			});
 
 			it('describes the stands activity parse format', () => {

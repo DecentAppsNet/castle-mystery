@@ -14,16 +14,19 @@ H
 
 ```
 ....
-..S.
+m.S.
 ....
 ```
 
 * S=Sam
+* m=Marker
 
 # characters
 ## Sam
 
 # items
+## Marker
+* visible=false
 
 # itinerary
 

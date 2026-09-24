@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCharacterKeyframeAtTime } from '@/game/timeline';
+import { createCharacterKeyframeAtTime, createKeyframeAtTime } from '@/game/timeline';
 
 import defaultLevelText from './fixtures/kneels-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
@@ -38,5 +38,27 @@ describe('level loading - kneels activities', () => {
     const bodyOrientation = _loadSamBodyOrientation(['0:00:00 kneels'], 0);
 
     expect(bodyOrientation).toBe('kneeling');
+  });
+
+  it('walks to a target and kneels only at arrival', () => {
+    const text = replaceSection(defaultLevelText, 'itinerary', ['0:00:00 Sam kneels at Altar']);
+    const { level, errors } = loadLevelForTest(text, 'kneels-target.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const samI = level!.timeline.characterIdToI.sam;
+    const altar = createKeyframeAtTime(level!.timeline.keyframes, 0).rooms[level!.timeline.roomIdToI.hall].items[0];
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.endTime - 1).bodyOrientation)
+      .toBe('standing');
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.endTime))
+      .toMatchObject({ position:altar.position, bodyOrientation:'kneeling' });
+  });
+
+  it('rejects a character-owned target', () => {
+    const text = replaceSection(defaultLevelText, 'itinerary', ['0:00:00 Sam kneels over Coin']);
+    const { level, errors } = loadLevelForTest(text, 'kneels-owned-target.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('"coin" item is owned by "sam" character');
   });
 });

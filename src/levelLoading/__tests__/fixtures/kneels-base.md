@@ -14,16 +14,20 @@ H
 
 ```
 ....
-..S.
+a.S.
 ....
 ```
 
 * S=Sam
+* a=Altar
 
 # characters
 ## Sam
+* items=Coin
 
 # items
+## Altar
+## Coin
 
 # itinerary
 
