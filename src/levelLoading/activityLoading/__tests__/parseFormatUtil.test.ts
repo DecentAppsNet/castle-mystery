@@ -268,7 +268,7 @@ describe('parseFormatUtil', () => {
 			});
 
 			it('describes the stands activity parse format', () => {
-				expect(describeParseFormat(createStandsParseFormat())).toBe('Timestamp [CharacterId] `stands`');
+				expect(describeParseFormat(createStandsParseFormat())).toBe('Timestamp [CharacterId] `stands` [{`on`|`above`|`in`|`over`|`at`} ItemId]');
 			});
 
 			it('describes the takes activity parse format', () => {
