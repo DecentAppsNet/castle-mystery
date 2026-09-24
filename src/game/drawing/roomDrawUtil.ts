@@ -332,11 +332,11 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
     hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet, includeUndiscoveredItems:boolean,
     stairTextureLightness:{ top:number, side:number, front:number }, discoveryState:DiscoveryState,
-  isCharacterInActiveRoom:boolean, isLevelComplete:boolean,
+  movingCharacterIds:ReadonlySet<string>, isCharacterInActiveRoom:boolean, isLevelComplete:boolean,
   layoutPlanner:CanvasLayoutPlanner|null = null):RoomDrawResult {
 
   // Resolve room content placement and drawing order.
-  const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom);
+  const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom, movingCharacterIds);
   const contents = createDrawableContents(room, charactersInRoom, discoveryState.discoveredItemIds,
     includeUndiscoveredItems, displayLayout);
 
@@ -436,7 +436,7 @@ function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:C
 export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:CharacterWithEffects[], isActive:boolean, activeCharacter:CharacterWithEffects,
     hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet,
-    discoveryState:DiscoveryState, showFullContents:boolean = false,
+  discoveryState:DiscoveryState, movingCharacterIds:ReadonlySet<string>, showFullContents:boolean = false,
     layoutPlanner:CanvasLayoutPlanner|null = null):RoomDrawResult {
   if (!discoveryState.discoveredRoomIds.has(room.id)) return _createEmptyRoomDrawResult();
   const isRoomObscured = discoveryState.obscuredRoomIds.has(room.id) && !showFullContents;
@@ -450,7 +450,7 @@ export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:Charact
   if (showFullContents || (isActive && activeCharacter)) {
     return _drawRoomContents(room, charactersInRoom, activeCharacter, hoveredCharacterId, hoveredItemId,
       scalingFactors, context, gameTime, metaTime, imageSet, true, stairTextureLightness, discoveryState,
-      isActive, showFullContents, layoutPlanner);
+      movingCharacterIds, isActive, showFullContents, layoutPlanner);
   }
   _drawRoomStairsOnly(room, scalingFactors, context, imageSet, stairTextureLightness);
   return _createEmptyRoomDrawResult();

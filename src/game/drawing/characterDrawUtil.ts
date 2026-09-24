@@ -366,10 +366,11 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,
-  imageSet:ImageSet, isTitleKnown:boolean, layoutPlanner:CanvasLayoutPlanner|null = null, room:Room|null = null) {
+  imageSet:ImageSet, isTitleKnown:boolean, movingCharacterIds:ReadonlySet<string>,
+  layoutPlanner:CanvasLayoutPlanner|null = null, room:Room|null = null) {
   if (!isCharacterInteractive(character)) return;
   const title = isTitleKnown ? _getCharacterDisplayName(character) : "";
-  const displayLayout = room ? createRoomContentDisplayLayout(room, [character]) : null;
+  const displayLayout = room ? createRoomContentDisplayLayout(room, [character], movingCharacterIds) : null;
   const displayPosition = displayLayout?.characterLayoutById.get(character.id)?.displayPosition ?? character.position;
   drawPopover({ targetRect:getCharacterCanvasRect(character, displayPosition, scalingFactors, time, imageSet), title,
     bodyEntries:_createCharacterPopoverBodyEntries(character), scalingFactors, context, imageSet, layoutPlanner });

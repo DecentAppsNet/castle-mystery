@@ -22,6 +22,7 @@ import { updateTimelineSnapshotActiveContext } from "./timeline";
 import CharacterWithEffects from "./types/CharacterWithEffects";
 import { createCharacterSelectionEffect } from "./effects/characterSelectionEffectUtil";
 import { appendCharacterMetaTimeEffect } from "./effects/metaTimeEffectUtil";
+import { createRoomContentDisplayLayout } from "./roomContentDisplayPositionUtil";
 
 function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }) {
   gameState.viewedItemIds.add(item.id);
@@ -29,7 +30,14 @@ function _recordViewedItem(gameState:GameState, item:{ id:string, title:string }
 }
 
 function _findHoveredRoomContent(gameState:GameState, room:Room, characters:CharacterWithEffects[], x:number, y:number) {
-  const contents = createDrawableContents(room, findCharactersWithEffectsInRoom(room, characters), gameState.discoveryState.discoveredItemIds, true);
+  // Resolve the same movement-aware geometry used by room drawing.
+  const charactersInRoom = findCharactersWithEffectsInRoom(room, characters);
+  const displayLayout = createRoomContentDisplayLayout(room, charactersInRoom,
+    gameState.timelineSnapshot.movingCharacterIds);
+  const contents = createDrawableContents(room, charactersInRoom,
+    gameState.discoveryState.discoveredItemIds, true, displayLayout);
+
+  // Hit-test from front to back using the resolved drawable ordering.
   for (let i = contents.length - 1; i >= 0; --i) {
     const content = contents[i];
     if (content.type === 'item' && isPositionInOrOnRect(x, y,

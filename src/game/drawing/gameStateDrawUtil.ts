@@ -352,7 +352,7 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
 
 export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D, metaTime:number) {
   prepareRoomShellCache(gameState, context.canvas.width, context.canvas.height);
-  const { activeCharacter, activeRoom, characters, rooms } = gameState.timelineSnapshot;
+  const { activeCharacter, activeRoom, characters, rooms, movingCharacterIds } = gameState.timelineSnapshot;
   const canShowHoverPopovers = gameState.isLevelComplete
     || !gameState.discoveryState.obscuredRoomIds.has(activeRoom.id);
   const hoveredCharacterHighlightId = _findHoveredCharacterHighlightId(gameState, canShowHoverPopovers);
@@ -395,7 +395,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     const roomDrawResult = drawRoomCharactersAndEffects(
       room, charactersInRoom, isActive, activeCharacter, hoveredCharacterHighlightId,
       hoveredItemHighlightId, gameState.scalingFactors, context, gameState.time, metaTime,
-      gameState.imageSet, gameState.discoveryState, gameState.isLevelComplete, layoutPlanner);
+      gameState.imageSet, gameState.discoveryState, movingCharacterIds, gameState.isLevelComplete, layoutPlanner);
     characterEffectDrawEntries.push(...roomDrawResult.characterEffectDrawEntries);
     roomDrawResult.characterBubbleAnchorById.forEach((anchor, id) => characterBubbleAnchorById.set(id, anchor));
     roomDrawResult.itemBubbleAnchorById.forEach((anchor, id) => itemBubbleAnchorById.set(id, anchor));
@@ -430,7 +430,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
       if (hoveredCharacter.rightHandItem) markItemDiscovered(gameState, hoveredCharacter.rightHandItem);
       if (hoveredCharacter.leftHandItem) markItemDiscovered(gameState, hoveredCharacter.leftHandItem);
       drawCharacterPopover(hoveredCharacter, gameState.scalingFactors, context, gameState.time, gameState.imageSet,
-        gameState.discoveryState.titleKnownCharacterIds.has(hoveredCharacter.id), layoutPlanner, hoveredCharacterRoom);
+        gameState.discoveryState.titleKnownCharacterIds.has(hoveredCharacter.id), movingCharacterIds,
+        layoutPlanner, hoveredCharacterRoom);
     }
   } else if (canShowHoverPopovers && gameState.hoveredExitKey) {
     const hoveredExit = _findHoveredExit(gameState);
