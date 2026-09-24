@@ -2,7 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Level from "@/game/types/Level";
-import { createParseFormat, makeIdentifier, makeSequence, makeVerb } from "../parseFormatUtil";
+import { createParseFormat, makeIdentifier, makeLiteralOptions, makeSequence, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
@@ -16,6 +16,10 @@ export function createStandsParseFormat():ParseFormat {
   const rootParseStep = makeSequence([
     makeIdentifier('characterId', 'CharacterId', true),
     makeVerb('stands'),
+    makeSequence([ 
+      makeLiteralOptions(['on', 'above', 'in', 'over', 'at']),
+      makeIdentifier('targetItemId', 'ItemId')
+    ], true)
   ]);
   return createParseFormat(rootParseStep);
 }
