@@ -4,27 +4,56 @@
 # map
 
 ```
-H
+HC
 ```
 
 * H=Hall
+* C=Closet
 
 # rooms
 ## Hall
 
+* exits=Closet
+
 ```
-....
-..S.
+r.Sm
+.J..
 ....
 ```
 
+* r=Rug
 * S=Sam
+* m=Marker
+* J=Jo
+
+## Closet
+
+```
+....
+.v..
+....
+```
+
+* v=Vase
 
 # characters
 ## Sam
-* bodyOrientation=sitting
+* orientation=sitting
+* items=Pencil
+* leftHand=Eraser
+
+## Jo
+* items=Coin
 
 # items
+## Rug
+## Marker
+* visible=false
+## Vase
+## Pencil
+## Eraser
+## Coin
+## Relic
 
 # itinerary
 
