@@ -53,7 +53,8 @@ function _isPositionInsideParentheses(text:string, position:number):boolean {
 }
 
 function _isPositionAtDecimalPoint(text:string, position:number):boolean {
-  return (text[position] === '.' && _isNumericChar(text[position-1]) && _isNumericChar(text[position+1]));
+  return text[position] === '.' && _isNumericChar(text[position+1])
+    && (_isNumericChar(text[position-1]) || position === 0 || text[position-1] === ' ');
 }
 
 function _isPositionAtNegativeSign(text:string, position:number):boolean {
