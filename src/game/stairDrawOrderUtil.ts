@@ -104,6 +104,10 @@ function _isBackRowCharacterWithinMiddleRowCatwalk(characterY:number, characterD
 // - flights can force themselves ahead once the character reaches the landing y
 // - unrelated flights should not affect same-row left/right ordering, so they stay on
 //   the stair-before-character side instead of participating in flight phase ordering
+// TODO - you may find yourself debugging draw order problems that are based on characters marginally extending into places where 
+// the draw order is wrong because their position coordinates are in a different place than the edge. To handle that, you'd need
+// to modify the algorithm to use a visual bounding box. I'd only add this if the complexity is worth the benefit. Delete this comment
+// if after you add the final body rendering in, you don't see a need for visual bounding boxes.
 export function compareCharacterToStairPartRows(characterX:number, characterY:number, characterDepth:number, stairPart:StairPart):number {
   if (_isCharacterAtDirectLandingY(characterY, stairPart)) return 1;
   if (_isCharacterAtFullStoryLandingY(characterY, stairPart)) return 1;

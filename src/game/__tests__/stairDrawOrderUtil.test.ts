@@ -14,11 +14,11 @@ const CATWALK_DEPTH = ROOM_ROW_DEPTH;
 const LANDING_DEPTH = ROOM_FRONT_ROW_MIN_Z;
 const FULL_DEPTH = ROOM_FULL_DEPTH;
 
-function _createFlight(startX:number, endX:number, z:number):StairPart {
+function _createFlight(startX:number, endX:number, z:number, startY:number = 20, endY:number = 10):StairPart {
   return {
     type:StairPartType.flight,
-    startPosition:{ x:startX, y:20, z:BACK_ROW_Z },
-    endPosition:{ x:endX, y:10, z:BACK_ROW_Z },
+    startPosition:{ x:startX, y:startY, z:BACK_ROW_Z },
+    endPosition:{ x:endX, y:endY, z:BACK_ROW_Z },
     z
   };
 }
@@ -70,11 +70,6 @@ describe('stairDrawOrderUtil', () => {
 
     it('draws left-ascending flights after same-row characters', () => {
       expect(compareCharacterToStairPartRows(6, 15, MIDDLE_ROW_DEPTH, _createFlight(8, 4, MIDDLE_ROW_Z))).toBeLessThan(0);
-    });
-
-    it.skip('draws a left-ascending flight after a character overlapping its bottom endpoint', () => {
-      expect(compareCharacterToStairPartRows(267.5, 79.999, BACK_ROW_CHARACTER_DEPTH,
-        _createFlight(264.999, 245, BACK_ROW_Z))).toBeLessThan(0);
     });
 
     it('leaves same-row non-flight stair parts to the default depth sort', () => {
