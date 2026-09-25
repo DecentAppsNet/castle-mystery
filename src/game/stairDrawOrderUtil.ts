@@ -51,9 +51,10 @@ function _isCharacterAtFlightLandingY(characterY:number, stairPart:StairPart):bo
     && Math.abs(characterY - stairPart.endPosition.y) <= STAIR_POSITION_TOLERANCE;
 }
 
-/** Reports whether a character position lies within a stair flight's movement bounds. */
-export function isCharacterOnStairFlight(characterX:number, characterY:number, stairPart:StairPart):boolean {
+/** Reports whether a character position lies within a stair flight's movement bounds and depth row. */
+export function isCharacterOnStairFlight(characterX:number, characterY:number, characterDepth:number, stairPart:StairPart):boolean {
   if (stairPart.type !== StairPartType.flight) return false;
+  if (quantizeDepthToDrawRow(characterDepth) !== calcStairPartDrawRow(stairPart)) return false;
 
   const minX = Math.min(stairPart.startPosition.x, stairPart.endPosition.x) - STAIR_POSITION_TOLERANCE;
   const maxX = Math.max(stairPart.startPosition.x, stairPart.endPosition.x) + STAIR_POSITION_TOLERANCE;
@@ -114,7 +115,7 @@ export function compareCharacterToStairPartRows(characterX:number, characterY:nu
   if (_isBackRowCharacterWithinWindingStoryLanding(characterY, characterDepth, stairPart)) return 1;
   if (_isBackRowCharacterWithinMiddleRowCatwalk(characterY, characterDepth, stairPart)) return 1;
   if (_isCharacterAtFlightLandingY(characterY, stairPart)) return 1;
-  if (stairPart.type === StairPartType.flight && !isCharacterOnStairFlight(characterX, characterY, stairPart)
+  if (stairPart.type === StairPartType.flight && !isCharacterOnStairFlight(characterX, characterY, characterDepth, stairPart)
     && quantizeDepthToDrawRow(characterDepth) === calcStairPartDrawRow(stairPart)) return 1;
 
   const characterRow = quantizeDepthToDrawRow(characterDepth);

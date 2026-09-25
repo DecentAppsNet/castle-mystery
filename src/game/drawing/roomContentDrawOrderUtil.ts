@@ -127,8 +127,8 @@ function _findTraversedFlightInsertionIndex(stairContent:StairDrawableContent,
   const traversingContentIs:number[] = [];
   sortedContents.forEach((content, contentI) => {
     if (content.type !== 'character') return;
-    const { x, y } = content.character.position;
-    if (isCharacterOnStairFlight(x, y, stairPart)) traversingContentIs.push(contentI);
+    const { x, y, z } = content.character.position;
+    if (isCharacterOnStairFlight(x, y, z, stairPart)) traversingContentIs.push(contentI);
   });
   if (!traversingContentIs.length) return null;
 

@@ -435,6 +435,89 @@ N1234567890ABCD.
 : says "He is the size of two men at least."
 : says "So we'll admit no more for now."
 
+(Sticky Agatha begins in West Stairwell. The West Stairwell is connected to the Antechamber where a line of people are.)
+8:00:05 Sticky Agatha @ Throne Room (20%)
+: Harold faces Sticky Agatha
+: says, "(whispers) What is your name?"
+: Sticky Agatha says, "Sticky Agatha."
+: Harold faces King Frederick
+: says, "Agatha of Stickiness, seeking audience with His Majesty!"
+: waits
+: says, "Approach and speak."
+: Sticky Agatha @ (50%)
+: says "Your Highness,"
+: says "I am the mother of your friend, Heinrich."
+: says "I wish to open a business in Palermo, washing clothes."
+: Gualtiero says, "No permission from this court is required."
+: says, "Merely register and pay your taxes."
+: Sticky Agatha says, "I offer the King an opportunity..."
+: says, "To invest!"
+: Gualtiero says, "Oh, you want money!"
+: says "So you came here like a street beggar."
+: Sticky Agatha says, "I thought the King's friendship with my son-"
+: King Frederick says, "If Heinrich needs something, he may ask me himself."
+: King Frederick says, "Your request is denied." 
+: Gualtiero says, "And why are you so sticky?"
+: says, "No sticky woman should clean clothing!"
+: Sticky Agatha says, "(weeps)"
+: King Frederick says, "Chamberlain, your comments lack grace."
+: Gualtiero says, "Forgive my excesses, your Majesty."
+(Sticky Agatha leaves for Robing Chamber)
+
+8:00:30 Toro @ Central Hall (90%)
+: waits 8
+: says "Impatience."
+: P10 faces Toro
+: waits
+: P10 faces left
+: waits 3
+: Toro says "Frustration."
+: P9 faces Toro
+: P7 faces Toro
+: P6 faces Toro
+: says, "We are all frustrated, friend."
+: P9 faces left
+: waits
+: P7 faces left
+: waits .5
+: P6 faces left
+: waits 1
+: Toro says "ANGER!"
+: P10 faces Toro
+: P1 faces Toro
+: P2 faces Toro
+: P3 faces Toro
+: P4 faces Toro
+: P5 faces Toro
+: P6 faces Toro
+: P7 faces Toro
+: P8 faces Toro
+: P9 faces Toro
+: P10 says, "Just go on ahead."
+: P8 says, "Yeah, just go."
+: Toro says "Gratitude."
+(Toro leaves for Antechamber)
+8:00:55 P10 faces left
+8:00:56 P9 faces left
+: P7 faces left
+8:00:57 P8 faces left
+: P6 faces left
+: P4 faces left
+8:00:58 P5 faces left
+: P3 faces left
+: P2 faces left
+: P1 faces left
+
+8:00:35 Andronikos @ Usher's Office
+: thinks "Let's add this bull to our registry..."
+: @ (10%)
+: hide Petitioner Registry
+: show Petitioner Registry Updated
+: Andronikos thinks, "Done."
+: @ (30%)
+(returns to Entrance Hall)
+
+8:00:45 Andronikos @ Entrance Hall (50%)
 
 # Conclusions
 

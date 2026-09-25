@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_BACK_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_FULL_DEPTH, ROOM_MIDDLE_ROW_CENTER_Z, ROOM_MIDDLE_ROW_MIN_Z, ROOM_ROW_DEPTH } from '../roomSpaceConstants';
-import { calcStairPartDrawPhase, calcStairPartDrawRow, compareCharacterToStairPartRows, quantizeDepthToDrawRow } from '../stairDrawOrderUtil';
+import { calcStairPartDrawPhase, calcStairPartDrawRow, compareCharacterToStairPartRows, isCharacterOnStairFlight, quantizeDepthToDrawRow } from '../stairDrawOrderUtil';
 import StairPart, { StairLandingType, StairPartType } from '../types/StairPart';
 
 const BACK_ROW_Z = ROOM_BACK_Z;
@@ -108,6 +108,14 @@ describe('stairDrawOrderUtil', () => {
 
     it('draws an unrelated front-row flight after a back-row character', () => {
       expect(compareCharacterToStairPartRows(20, 15, BACK_ROW_CHARACTER_DEPTH, _createFlight(4, 8, FRONT_ROW_Z))).toBeLessThan(0);
+    });
+  });
+
+  describe('isCharacterOnStairFlight()', () => {
+    it('requires the character to occupy the flight depth row', () => {
+      const flight = _createFlight(4, 8, BACK_ROW_Z);
+      expect(isCharacterOnStairFlight(6, 15, BACK_ROW_CHARACTER_DEPTH, flight)).toBe(true);
+      expect(isCharacterOnStairFlight(6, 15, MIDDLE_ROW_DEPTH, flight)).toBe(false);
     });
   });
 

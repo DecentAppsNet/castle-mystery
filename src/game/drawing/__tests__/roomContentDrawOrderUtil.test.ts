@@ -47,7 +47,7 @@ describe('mergeStairsWithSortedContents', () => {
   it('places a left-ascending flight after its traversing character', () => {
     _expectContentOrder(_createFlight(), [
       _createCharacterContent('guard 1', 267.5, 80, 0.1667),
-      _createCharacterContent('toro', 255, 70, 0.5),
+      _createCharacterContent('toro', 255, 70, 0.1667),
       _createCharacterContent('guard 2', 267.5, 80, 0.8333)
     ], ['guard 1', 'toro', 'stair-0', 'guard 2']);
   });
@@ -55,7 +55,7 @@ describe('mergeStairsWithSortedContents', () => {
   it('places a right-ascending flight before its traversing character', () => {
     _expectContentOrder(_createFlight(245, 265), [
       _createCharacterContent('guard 1', 267.5, 80, 0.1667),
-      _createCharacterContent('toro', 255, 70, 0.5),
+      _createCharacterContent('toro', 255, 70, 0.1667),
       _createCharacterContent('guard 2', 267.5, 80, 0.8333)
     ], ['guard 1', 'stair-0', 'toro', 'guard 2']);
   });
@@ -63,9 +63,17 @@ describe('mergeStairsWithSortedContents', () => {
   it('places a left-ascending flight after all of its traversing characters', () => {
     _expectContentOrder(_createFlight(), [
       _createCharacterContent('guard 1', 267.5, 80, 0.1667),
-      _createCharacterContent('toro', 255, 70, 0.5),
-      _createCharacterContent('guard 3', 258, 73, 0.6),
+      _createCharacterContent('toro', 255, 70, 0.1667),
+      _createCharacterContent('guard 3', 258, 73, 0.1667),
       _createCharacterContent('guard 2', 267.5, 80, 0.8333)
     ], ['guard 1', 'toro', 'guard 3', 'stair-0', 'guard 2']);
+  });
+
+  it('places a back-row flight before a middle-row character within its x/y bounds', () => {
+    _expectContentOrder(_createFlight(), [
+      _createCharacterContent('guard 1', 267.5, 80, 0.1667),
+      _createCharacterContent('toro', 255, 70, 0.5),
+      _createCharacterContent('guard 2', 267.5, 80, 0.8333)
+    ], ['stair-0', 'guard 1', 'toro', 'guard 2']);
   });
 });
