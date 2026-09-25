@@ -1,7 +1,7 @@
 /* This file orders room characters, items, and stair parts for layered drawing.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { compareCharacterToStairPartRows } from "../stairDrawOrderUtil";
+import { compareCharacterToStairPartRows, isCharacterOnStairFlight } from "../stairDrawOrderUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import Item from "../types/Item";
 import Position from "../types/Position";
@@ -100,7 +100,6 @@ function _compareStairToContent(stairContent:StairDrawableContent, content:NonSt
       content.character.position.z,
       stairContent.stairPart
     );
-    if (content.character.id === 'toro' && stairContent.stairPart.type === StairPartType.flight && stairContent.stairPart.endPosition.x < content.character.position.x && content.character.position.x < stairContent.stairPart.startPosition.x && stairContent.stairPart.endPosition.y < content.character.position.y && content.character.position.y < stairContent.stairPart.startPosition.y) { console.log('!!1'); debugger; } // Conditional Debug Injection
     if (stairComparison !== 0) return -stairComparison;
   }
 
@@ -120,14 +119,41 @@ function _hasLaterFullStoryLandingBeforeCharacter(stairContents:StairDrawableCon
   return false;
 }
 
-/** Interleaves stair parts with already ordered characters and items using stair-specific overlap rules. */
+function _findTraversedFlightInsertionIndex(stairContent:StairDrawableContent,
+  sortedContents:NonStairDrawableContent[]):number|null {
+  const { stairPart } = stairContent;
+  if (stairPart.type !== StairPartType.flight) return null;
+
+  const traversingContentIs:number[] = [];
+  sortedContents.forEach((content, contentI) => {
+    if (content.type !== 'character') return;
+    const { x, y } = content.character.position;
+    if (isCharacterOnStairFlight(x, y, stairPart)) traversingContentIs.push(contentI);
+  });
+  if (!traversingContentIs.length) return null;
+
+  return stairPart.endPosition.x > stairPart.startPosition.x
+    ? traversingContentIs[0]
+    : traversingContentIs[traversingContentIs.length - 1] + 1;
+}
+
+/** Merges stair parts with ordered room contents, grouping each traversed flight with its characters. */
 export function mergeStairsWithSortedContents(stairContents:StairDrawableContent[],
-  sortedContents:NonStairDrawableContent[]):RoomDrawableContent[] {
+    sortedContents:NonStairDrawableContent[]):RoomDrawableContent[] {
+  const insertionIndexes = stairContents.map(stairContent =>
+    _findTraversedFlightInsertionIndex(stairContent, sortedContents));
   const mergedContents:RoomDrawableContent[] = [];
   let stairIndex = 0;
 
-  sortedContents.forEach(content => {
+  sortedContents.forEach((content, contentI) => {
     while (stairIndex < stairContents.length) {
+      const insertionIndex = insertionIndexes[stairIndex];
+      if (insertionIndex !== null) {
+        if (contentI < insertionIndex) break;
+        mergedContents.push(stairContents[stairIndex]);
+        stairIndex += 1;
+        continue;
+      }
       if (_compareStairToContent(stairContents[stairIndex], content) <= 0) {
         mergedContents.push(stairContents[stairIndex]);
         stairIndex += 1;
