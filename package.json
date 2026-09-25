@@ -15,21 +15,21 @@
     "preview": "vite preview",
     "setup-portal-workflows": "mkdir -p .github/workflows && cp -r ./node_modules/decent-portal/github-workflows/*.yml .github/workflows",
     "test": "vitest --run src",
-      "test:all": "vitest --run src --reporter=dot --no-file-parallelism --poolOptions.forks.singleFork",
-      "test:file": "vitest run --reporter=dot --no-file-parallelism --poolOptions.forks.singleFork",
+    "test:all": "vitest --run src --reporter=dot --no-file-parallelism --poolOptions.forks.singleFork",
+    "test:file": "vitest run --reporter=dot --no-file-parallelism --poolOptions.forks.singleFork",
     "testscripts": "vitest --run scripts",
     "test:watch": "vitest --watch src",
     "test:coverage": "vitest --coverage --run src"
   },
   "dependencies": {
     "decent-portal": "^2.4.7",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "@vitejs/plugin-react": "^5.0.4",
