@@ -7,6 +7,7 @@ import Activity from "../activityLoading/types/Activity";
 import { ErrorCollector } from "../errorCollection";
 import { formatMsecsAsTimestamp } from "../activityLoading";
 import { verbToPlainForm } from "../activityLoading/parseFormatUtil";
+import { SpeechVerb, speechVerbToGerund } from "../activityLoading/activitySchedulers/util/speechUtil";
 
 function _findSharedCharacterOrItemId(firstIds:readonly string[], secondIds:readonly string[]):string|null {
   return firstIds.find(characterId => secondIds.includes(characterId)) ?? null;
@@ -16,6 +17,10 @@ function _activitiesOverlap(firstStartTime:number, firstEndTime:number,
     secondStartTime:number, secondEndTime:number):boolean {
   if (firstStartTime === firstEndTime || secondStartTime === secondEndTime) return false;
   return firstStartTime < secondEndTime && secondStartTime < firstEndTime;
+}
+
+function _isSpeechVerb(verb:string):verb is SpeechVerb {
+  return verb === 'says' || verb === 'thinks';
 }
 
 /** Returns when a character's latest busy interval ending by `latestAllowedEndTime` ends, if any. */
@@ -50,6 +55,12 @@ export function doesActivityConflictWithScheduled(activity:Activity, scheduledAc
 
     const conflictingCharacterId = _findSharedCharacterOrItemId(activity.busyCharacterIds, busyCharacterIds);
     if (conflictingCharacterId !== null) { 
+      if (_isSpeechVerb(candidate.verb) && typeof candidate.parts.text === 'string') {
+        const remainingMsecs = endTime - activity.startTime;
+        errors.addAtLine(`${conflictingCharacterId} can't ${verbToPlainForm(activity.verb)} because they are busy ${speechVerbToGerund(candidate.verb)} `
+          + `"${candidate.parts.text}" which needs ${remainingMsecs}ms longer to complete.`, activity.lineI);
+        return true;
+      }
       const conflictStart = formatMsecsAsTimestamp(candidate.startTime!);
       errors.addAtLine(`${conflictingCharacterId} can't ${verbToPlainForm(activity.verb)} because they are busy with `
           + `"${candidate.verb}" activity starting at ${conflictStart}.`, activity.lineI);

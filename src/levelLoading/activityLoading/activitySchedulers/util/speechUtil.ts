@@ -14,6 +14,13 @@ import Position from "@/game/types/Position";
 const MIN_SPEECH_TIME = MSECS_IN_SECOND;
 const SPEECH_MSECS_PER_CHARACTER = 90;
 
+export type SpeechVerb = 'says'|'thinks';
+
+/** Converts a known speech activity verb to its gerund form. */
+export function speechVerbToGerund(verb:SpeechVerb):string {
+  return verb === 'says' ? 'saying' : 'thinking';
+}
+
 function _findRoomsInEarshotAtKeyframe(keyframe:TimelineKeyframe, characterI:number, rooms:Room[]):Room[] {
   assert(keyframe.rooms.length === rooms.length);
   

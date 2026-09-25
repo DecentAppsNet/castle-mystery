@@ -93,7 +93,17 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('sam can\'t say because they are busy with "says" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t say because they are busy saying "This sentence lasts several seconds." which needs 2240ms longer to complete.');
+  });
+
+  it('identifies interrupted speech text and remaining duration', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "This sentence lasts several seconds."',
+      '0:00:01 Sam says "So does this sentence."'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('sam can\'t say because they are busy saying "This sentence lasts several seconds." which needs 2240ms longer to complete.');
   });
 
   it('rejects overlapping thinks activities by the same character', () => {
@@ -103,7 +113,7 @@ describe('character activity conflict integration', () => {
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('sam can\'t think because they are busy with "thinks" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t think because they are busy thinking "This thought lasts several seconds." which needs 2150ms longer to complete.');
   });
 
   it('makes a character-source emits activity busy', () => {

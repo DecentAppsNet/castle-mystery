@@ -832,7 +832,7 @@ N1234567890ABCD.
 ## Audience Granted
 
 * conclusion=List petitioners in order of their appearance before the King.---1. [Sticky Agatha]---2. [Niccolò il Calabrese]---3. [Matteo il Toro]
-* revealRooms=Throne Room|Record Room|Withdrawal Chamber
+* revealRooms=Throne Room|Record Room
 * unlockConclusions=Disproof
 
 ## Disproof

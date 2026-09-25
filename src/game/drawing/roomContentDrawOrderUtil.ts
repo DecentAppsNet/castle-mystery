@@ -1,5 +1,5 @@
-/* This module groups room-content ordering helpers that merge characters, items, and stair parts for drawing.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file orders room characters, items, and stair parts for layered drawing.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { compareCharacterToStairPartRows } from "../stairDrawOrderUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
@@ -15,6 +15,7 @@ function _comparePositionedContentForDrawOrder(depth1:number, x1:number, y1:numb
     || sortId1.localeCompare(sortId2);
 }
 
+/** A stair part with the ordering coordinates used when merging room contents. */
 export type StairDrawableContent = {
   type:'stair',
   depth:number,
@@ -48,6 +49,7 @@ type ItemDrawableContent = {
   stackMemberI:number
 };
 
+/** A drawable room entity after stair parts have been interleaved with characters and items. */
 export type RoomDrawableContent = StairDrawableContent | CharacterDrawableContent | ItemDrawableContent;
 type NonStairDrawableContent = CharacterDrawableContent | ItemDrawableContent;
 
@@ -77,6 +79,7 @@ function _compareSameStackGroupContents(content1:NonStairDrawableContent,
   );
 }
 
+/** Orders characters and items by their shared floor-square stack or painter-order anchor. */
 export function compareNonStairDrawableContents(content1:NonStairDrawableContent, content2:NonStairDrawableContent):number {
   if (_areContentsInSameStackGroup(content1, content2)) {
     return _compareSameStackGroupContents(content1, content2);
@@ -97,6 +100,7 @@ function _compareStairToContent(stairContent:StairDrawableContent, content:NonSt
       content.character.position.z,
       stairContent.stairPart
     );
+    if (content.character.id === 'toro' && stairContent.stairPart.type === StairPartType.flight && stairContent.stairPart.endPosition.x < content.character.position.x && content.character.position.x < stairContent.stairPart.startPosition.x && stairContent.stairPart.endPosition.y < content.character.position.y && content.character.position.y < stairContent.stairPart.startPosition.y) { console.log('!!1'); debugger; } // Conditional Debug Injection
     if (stairComparison !== 0) return -stairComparison;
   }
 
@@ -116,6 +120,7 @@ function _hasLaterFullStoryLandingBeforeCharacter(stairContents:StairDrawableCon
   return false;
 }
 
+/** Interleaves stair parts with already ordered characters and items using stair-specific overlap rules. */
 export function mergeStairsWithSortedContents(stairContents:StairDrawableContent[],
   sortedContents:NonStairDrawableContent[]):RoomDrawableContent[] {
   const mergedContents:RoomDrawableContent[] = [];
