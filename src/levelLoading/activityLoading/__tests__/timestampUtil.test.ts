@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { tryParseAbsoluteTimestamp } from '../timestampUtil';
+import { formatMsecsAsTimestamp, tryParseAbsoluteTimestamp } from '../timestampUtil';
 
 describe('timestampUtil', () => {
   describe('tryParseAbsoluteTimestamp()', () => {
@@ -20,6 +20,12 @@ describe('timestampUtil', () => {
 
     it('rejects a two-component timestamp that could be interpreted as minutes and seconds', () => {
       expect(tryParseAbsoluteTimestamp('01:02')).toBeNull();
+    });
+  });
+
+  describe('formatMsecsAsTimestamp()', () => {
+    it('rounds fractional milliseconds to the nearest authorable second', () => {
+      expect(formatMsecsAsTimestamp(28_919_923)).toBe('8:02:00');
     });
   });
 });

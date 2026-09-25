@@ -61,14 +61,11 @@ export function parseTimestampToMsecs(text:string):number {
 
 /** Formats single-day milliseconds as an authored timestamp. */
 export function formatMsecsAsTimestamp(milliseconds:number):string {
+  milliseconds = Math.round(milliseconds / MSECS_IN_SECOND) * MSECS_IN_SECOND;
   milliseconds %= MSECS_IN_DAY; // Confine the time to be between midnight and midnight.
   const totalSeconds = Math.floor(milliseconds / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  const remainingMilliseconds = milliseconds % 1000;
-  const wholeSecondsText = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  return remainingMilliseconds === 0
-    ? wholeSecondsText
-    : `${wholeSecondsText}.${String(remainingMilliseconds).padStart(3, '0')}`;
+  return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }

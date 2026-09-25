@@ -74,34 +74,106 @@ type PartsShape = {
 
 const DEFAULT_HORIZONTAL_TARGET = .5;
 
-function _findEarliestMovementTime(level:Level, activity:Activity, characterId:string,
-    scheduledActivities:readonly Activity[], isRelativeTimestamp:boolean):number {
-  /* A relative activity has no authored end time. Its startTime is resolved from the preceding
-     authored activity, and movement begins at that time. Future activities must not delay this
-     movement; normal overlap validation rejects them later if they conflict with its time range.
-     If this is the first itinerary activity, loading assigns the level start time to .startTime. */
-  if (isRelativeTimestamp) {
-    assert(activity.endTime === null);
-    assertNonNullable(activity.startTime);
-    return activity.startTime;
+type AtSchedulingContext = {
+  level:Level,
+  waypointContext:WaypointGenerationContext,
+  activity:Activity,
+  editableTimeline:EditableTimeline,
+  errors:ErrorCollector,
+  scheduledActivities:readonly Activity[],
+  characterId:string,
+  characterI:number,
+  roomId?:string,
+  horizontalPercent:number,
+  hasHorizontalTarget:boolean
+}
+
+function _isMovementUnneeded(fromRoom:Room, fromPosition:Position, toRoom:Room,
+    toPosition:Position, hasHorizontalTarget:boolean):boolean {
+  return fromRoom.id === toRoom.id && (!hasHorizontalTarget || arePositionsEqual(fromPosition, toPosition));
+}
+
+function _scheduleRelativeAtActivity({ level, waypointContext, activity, editableTimeline, errors, characterI,
+    horizontalPercent, hasHorizontalTarget, roomId }:AtSchedulingContext):boolean {
+  
+  assert(activity.endTime === null); // Relative-timestamp activities have .endTime of null until they are scheduled.
+  assertNonNullable(activity.startTime);
+
+  // Gather supporting data.
+  const fromKeyframe = createKeyframeAtTime(editableTimeline.keyframes, activity.startTime);
+  const fromPosition = fromKeyframe.characters[characterI].position;
+  const fromRoom = findRoomAtPosition(level.rooms, fromPosition.x, fromPosition.y);
+  assertNonNullable(fromRoom);
+  const toRoom = roomId === undefined ? fromRoom : findRoom(level.rooms, roomId); // If roomId is undefined, it indicates same-room travel.
+  assertNonNullable(toRoom);
+  const toPosition = _findTargetPosition(waypointContext, fromKeyframe, toRoom, horizontalPercent);
+
+  // If no movement needed to reach target position, exit trivially.
+  if (_isMovementUnneeded(fromRoom, fromPosition, toRoom, toPosition, hasHorizontalTarget)) {
+    activity.endTime = activity.startTime;
+    return true;
   }
 
-  /* An absolute @ timestamp is its required arrival time, not its movement start time. The loader
-    seeds the first itinerary activity's .startTime with the level start time, including absolute
-    @ activities; otherwise .startTime remains null. Activities are scheduled in an order that can
-    put a later busy interval in scheduledActivities before this activity. Only intervals ending by
-    this arrival deadline can determine where movement begins. */
-  assertNonNullable(activity.endTime);
+  // Add keyframes as needed to move character to target position, maybe through multiple rooms.
+  const result = scheduleCharacterMovementToRoom(waypointContext, fromRoom, fromPosition, activity.startTime,
+    toRoom, toPosition, characterI, fromKeyframe.characters[characterI].facingDirection, editableTimeline);
+  if (typeof result === 'string') {
+    errors.addAtLine(result, activity.lineI);
+    return false;
+  }
+  
+  // A route to reach the destination was found.
+  assert(result.walkStartDelay === 0); // Character should begin moving immediately for a relative timestamp.
+  activity.endTime = activity.startTime + result.walkDuration;
+  return true;
+}
+
+function _scheduleAbsoluteAtActivity({ level, waypointContext, activity, editableTimeline, errors, scheduledActivities,
+    characterId, characterI, horizontalPercent, hasHorizontalTarget, roomId } :AtSchedulingContext):boolean {
+  
+  assertNonNullable(activity.endTime); // Absolute timestamps for @ activity indicate the arrival time, so are applied to .endTime.
   assert(activity.startTime === null || activity.startTime === level.startTime);
-  return findPrecedingBusyCharacterActivityEndTime(characterId, activity.endTime, scheduledActivities)
-    ?? level.startTime;
+  
+  // Gather supporting data. "from" below corresponds to the earliest possible time movement could begin to reach the destination.
+  const deadline = activity.endTime;
+  assert(deadline >= level.startTime);
+  const fromTime = findPrecedingBusyCharacterActivityEndTime(characterId, deadline, scheduledActivities) ?? level.startTime;
+  const fromKeyframe = createKeyframeAtTime(editableTimeline.keyframes, fromTime);
+  const fromPosition = fromKeyframe.characters[characterI].position;
+  const fromRoom = findRoomAtPosition(level.rooms, fromPosition.x, fromPosition.y);
+  assertNonNullable(fromRoom);
+  const toRoom = roomId === undefined ? fromRoom : findRoom(level.rooms, roomId);
+  assertNonNullable(toRoom);
+  const deadlineKeyframe = createKeyframeAtTime(editableTimeline.keyframes, deadline);
+  const toPosition = _findTargetPosition(waypointContext, deadlineKeyframe, toRoom, horizontalPercent);
+
+  // If no movement needed to reach target position, exit trivially.
+  if (_isMovementUnneeded(fromRoom, fromPosition, toRoom, toPosition, hasHorizontalTarget)) {
+    activity.startTime = activity.endTime = deadline;
+    return true;
+  }
+
+  // Add keyframes as needed to move character to target position, maybe through multiple rooms.
+  const result = scheduleCharacterMovementToRoomAtTime(waypointContext, fromRoom, fromPosition, fromTime,
+    toRoom, toPosition, deadline, characterI, fromKeyframe.characters[characterI].facingDirection, editableTimeline);
+  if (typeof result === 'string') {
+    errors.addAtLine(result, activity.lineI);
+    return false;
+  }
+
+  // A route to reach the destination by the deadline was found.
+  assert(result.walkStartDelay >= 0);
+  activity.startTime = fromTime + result.walkStartDelay;
+  assert(activity.endTime === activity.startTime + result.walkDuration);
+  return true;
 }
 
 /** Schedules a character to be at an authored position by the activity end time. */
 export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerationContext,
-  activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector,
-  scheduledActivities:readonly Activity[]):boolean {
+    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector,
+    scheduledActivities:readonly Activity[]):boolean {
   const { characterId, roomId, horizontalTarget } = activity.parts as PartsShape;
+  
   assertNonNullable(characterId, 'implied subjects should have been resolved');
   activity.busyCharacterIds = [characterId];
   activity.busyItemIds = [];
@@ -114,51 +186,12 @@ export function scheduleAtActivity(level:Level, waypointContext:WaypointGenerati
   }
 
   const characterI = editableTimeline.characterIdToI[characterId];
-  const isRelativeTimestamp = activity.endTime === null;
-
-  // Derive availability from activities while reading presentation state from the timeline.
-  const fromTime = _findEarliestMovementTime(level, activity, characterId, scheduledActivities, isRelativeTimestamp);
-  const fromKeyframe = createKeyframeAtTime(editableTimeline.keyframes, fromTime);
-  const fromPos = fromKeyframe.characters[characterI].position;
-  const fromFacingDirection = fromKeyframe.characters[characterI].facingDirection;
-  const fromRoom = findRoomAtPosition(level.rooms, fromPos.x, fromPos.y);
-  assertNonNullable(fromRoom);
-
-  const toRoom = roomId === undefined ? fromRoom : findRoom(level.rooms, roomId);
   const horizontalPercent = horizontalTarget === undefined ? DEFAULT_HORIZONTAL_TARGET : horizontalTarget / 100;
-  assertNonNullable(toRoom);
-
-  const toKeyframe = isRelativeTimestamp 
-    ? fromKeyframe
-    : createKeyframeAtTime(editableTimeline.keyframes, activity.endTime!);
-  const toPos = _findTargetPosition(waypointContext, toKeyframe, toRoom, horizontalPercent);
-
-  /* If character is already in the room and no horizontal target was specified, then no movement needed. This isn't handled as an error, 
-     because it can be useful for a level author to assert or self-document character position, e.g., "Sam @ Hall" means "I think Sam 
-     should already be in the Hall". */
-  if (fromRoom.id === toRoom.id && 
-      // But if horizontal target was specified, same-room movement may still be needed.
-      (horizontalTarget === undefined || arePositionsEqual(fromPos, toPos))) { // No movement needed.
-    const endTime = isRelativeTimestamp ? fromTime : activity.endTime; // Use activity end time if available, because that can affect the timing of following activities.
-    activity.startTime = activity.endTime = endTime;
-    return true;
-  }
-
-  assert(activity.endTime === null || activity.endTime >= level.startTime);
-  const toTime = toKeyframe.time;
-
-  const scheduleResult = isRelativeTimestamp 
-    ? scheduleCharacterMovementToRoom(waypointContext, fromRoom, fromPos, fromTime, toRoom, toPos, characterI, fromFacingDirection, editableTimeline)
-    : scheduleCharacterMovementToRoomAtTime(waypointContext, fromRoom, fromPos, fromTime, toRoom, toPos, toTime, characterI, fromFacingDirection, editableTimeline)
-  if (typeof scheduleResult === 'string') {
-    errors.addAtLine(scheduleResult, activity.lineI);
-    return false;
-  }
-
-  activity.startTime = fromTime + scheduleResult.walkStartDelay;
-  activity.endTime = activity.startTime + scheduleResult.walkDuration;
-  assert(isRelativeTimestamp || toTime === activity.endTime);
-  return true;
+  const context = { level, waypointContext, activity, editableTimeline, errors, scheduledActivities,
+    characterId, characterI, roomId, horizontalPercent, hasHorizontalTarget:horizontalTarget !== undefined };
+  return activity.endTime === null
+    ? _scheduleRelativeAtActivity(context)
+    : _scheduleAbsoluteAtActivity(context);
 }
 
 /** Creates the accepted syntax for positioning activities. */
