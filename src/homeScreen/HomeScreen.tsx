@@ -159,6 +159,7 @@ function HomeScreen() {
           toMinutes={toMinutes}
           minutes={minutes}
           timeline={gameState.timeline}
+          baseCharacters={gameState.baseCharacters}
           rooms={gameState.baseRooms}
           activeCharacterId={gameState.activeCharacterId}
           activeSkinIdAtSelection={gameState.activeSkinIdAtSelection}

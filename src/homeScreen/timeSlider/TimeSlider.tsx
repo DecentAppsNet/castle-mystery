@@ -12,6 +12,7 @@ import { createItineraryMarkerModel } from "./itineraryMarkerUtil";
 import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawing/drawColorConstants";
 import Timeline from "@/game/types/Timeline";
 import DiscoveryState, { SkinLinkages } from "@/game/types/DiscoveryState";
+import Character from "@/game/types/Character";
 
 const NO_QUANTIZING = -1;
 
@@ -21,6 +22,7 @@ type Props = {
   minutes:number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
   step?:number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
   timeline:Timeline|null,
+  baseCharacters:Character[];
   rooms:Room[];
   activeCharacterId:string;
   activeSkinIdAtSelection:string;
@@ -47,10 +49,11 @@ function _renderEncounterMarker(left:number, key:string) {
 }
 
 function _renderItineraryMarkers(sliderWidth:number, fromMinutes:number, toMinutes:number, timeline:Timeline|null, 
-    activeCharacterId:string, activeSkinIdAtSelection:string, rooms:Room[], revealedSkinLinkages:SkinLinkages, 
+  baseCharacters:Character[], activeCharacterId:string, activeSkinIdAtSelection:string, rooms:Room[], revealedSkinLinkages:SkinLinkages,
     obscuredRoomIds:Set<string>) {
     
-  const markerModel = createItineraryMarkerModel(timeline, activeCharacterId, activeSkinIdAtSelection, rooms, revealedSkinLinkages, obscuredRoomIds);
+  const markerModel = createItineraryMarkerModel(timeline, baseCharacters, activeCharacterId, activeSkinIdAtSelection, rooms,
+    revealedSkinLinkages, obscuredRoomIds);
   const toLeft = (time:number) => minutesToPercent(_msecsToMinutes(time), fromMinutes, toMinutes) / 100 * sliderWidth;
 
   return <div className={styles.markerLayer}>
@@ -92,7 +95,7 @@ function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
 }
 
 function TimeSlider(props:Props) {
-  const { fromMinutes, toMinutes, minutes, timeline, rooms, activeCharacterId, activeSkinIdAtSelection, 
+  const { fromMinutes, toMinutes, minutes, timeline, baseCharacters, rooms, activeCharacterId, activeSkinIdAtSelection,
     discoveryState, labels, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
   } = props;
   const [displayMinutes, setDisplayMinutes] = useState(minutes);
@@ -101,10 +104,10 @@ function TimeSlider(props:Props) {
   const sliderRef = useRef<HTMLDivElement>(null);
   const percent = minutesToPercent(minutes, fromMinutes, toMinutes);
   const itineraryMarkers = useMemo(
-    () => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, timeline, activeCharacterId, activeSkinIdAtSelection, rooms,
-      discoveryState.revealedSkinLinkages, discoveryState.obscuredRoomIds),
-      [sliderWidth, fromMinutes, toMinutes, timeline, activeCharacterId, activeSkinIdAtSelection, rooms, discoveryState.obscuredRoomIds,
-      discoveryState.revealedSkinLinkages]
+    () => _renderItineraryMarkers(sliderWidth, fromMinutes, toMinutes, timeline, baseCharacters, activeCharacterId,
+      activeSkinIdAtSelection, rooms, discoveryState.revealedSkinLinkages, discoveryState.obscuredRoomIds),
+      [sliderWidth, fromMinutes, toMinutes, timeline, baseCharacters, activeCharacterId, activeSkinIdAtSelection, rooms,
+      discoveryState.obscuredRoomIds, discoveryState.revealedSkinLinkages]
   );
 
   function _onSliderUpdate(nextValue:number) {

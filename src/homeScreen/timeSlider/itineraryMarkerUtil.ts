@@ -17,6 +17,8 @@ import { doesKeyframeHaveSpeechHeardByCharacter } from "@/levelLoading/activityL
 import TimeRange from "./types/TimeRange";
 import { isTimeInRanges, subtractRanges } from "./timeRangeUtil";
 import ItineraryMarkerModel from "./types/ItineraryMarkerModel";
+import Character from "@/game/types/Character";
+import { isCharacterInteractive } from "@/game/interactivityUtil";
 
 const SPEECH_CLUSTER_GAP_MSECS = 6 * MSECS_IN_SECOND;
 
@@ -68,10 +70,14 @@ function _findObscuredRangeStartingAtKeyframe(keyframes:TimelineKeyframe[], star
 }
 
 function _findOtherCharacterEncounterTimes(activeRoomId:string, activeCharacterI:number, roomEntryEvents:RoomEntryEvents[], 
-    activeCharacterEntryTime:number, activeCharacterExitTime:number):number[] {
+    characterIds:string[], interactiveCharacterIds:ReadonlySet<string>, activeCharacterEntryTime:number,
+    activeCharacterExitTime:number):number[] {
   const entryTimes:number[] = [];
   roomEntryEvents.forEach((characterRoomEntryEvents, characterI) => {
     if (characterI === activeCharacterI) return;
+    const characterId = characterIds[characterI];
+    assertNonNullable(characterId);
+    if (!interactiveCharacterIds.has(characterId)) return;
 
     const priorRoomEntry = characterRoomEntryEvents.findLast(event => event.time <= activeCharacterEntryTime);
     const isAlreadyInActiveRoom = priorRoomEntry?.roomId === activeRoomId
@@ -86,9 +92,10 @@ function _findOtherCharacterEncounterTimes(activeRoomId:string, activeCharacterI
   return entryTimes;
 }
 
-function _generateEncounterTimes(roomEntryEvents:RoomEntryEvents[], activeCharacterI:number, 
-    obscuredRanges:TimeRange[]):number[] {
+function _generateEncounterTimes(roomEntryEvents:RoomEntryEvents[], characterIds:string[], baseCharacters:Character[],
+    activeCharacterI:number, obscuredRanges:TimeRange[]):number[] {
   const markers:number[] = [];
+  const interactiveCharacterIds = new Set(baseCharacters.filter(isCharacterInteractive).map(character => character.id));
   const activeCharacterRoomEntries = roomEntryEvents[activeCharacterI];
   assertNonNullable(activeCharacterRoomEntries);
   for(let roomEntryI = 0; roomEntryI < activeCharacterRoomEntries.length; ++roomEntryI) {
@@ -97,8 +104,8 @@ function _generateEncounterTimes(roomEntryEvents:RoomEntryEvents[], activeCharac
     const activeCharacterEntryTime = activeRoomEntry.time;
     const activeCharacterExitTime = roomEntryI === activeCharacterRoomEntries.length - 1 
         ? Infinity : activeCharacterRoomEntries[roomEntryI + 1].time;
-    const encounterTimes = _findOtherCharacterEncounterTimes(activeRoomId, activeCharacterI, roomEntryEvents,
-        activeCharacterEntryTime, activeCharacterExitTime);
+    const encounterTimes = _findOtherCharacterEncounterTimes(activeRoomId, activeCharacterI, roomEntryEvents, characterIds,
+      interactiveCharacterIds, activeCharacterEntryTime, activeCharacterExitTime);
     if (!encounterTimes.length) continue;
     markers.push(...encounterTimes);
   }
@@ -174,8 +181,9 @@ function _generateSpeechRanges(keyframes:TimelineKeyframe[], characterIds:string
 }
   
 
-export function createItineraryMarkerModel(timeline:Timeline|null, activeCharacterId:string, activeSkinIdAtSelection:string, 
-    rooms:Room[], revealedSkinLinkages:SkinLinkages, obscuredRoomIds:Set<string>):ItineraryMarkerModel {
+export function createItineraryMarkerModel(timeline:Timeline|null, baseCharacters:Character[], activeCharacterId:string,
+  activeSkinIdAtSelection:string, rooms:Room[], revealedSkinLinkages:SkinLinkages,
+  obscuredRoomIds:Set<string>):ItineraryMarkerModel {
   
   const markers:ItineraryMarkerModel = {
     roomEntryTimes:[],
@@ -196,7 +204,8 @@ export function createItineraryMarkerModel(timeline:Timeline|null, activeCharact
 
   markers.obscuredRanges = _generateObscuredRanges(keyframes, activeCharacterI, rooms, obscuredRoomIds, revealedSkinIds, characterRoomEntries);
   markers.roomEntryTimes = _generateRoomEntryTimes(characterRoomEntries, markers.obscuredRanges);
-  markers.encounterTimes = _generateEncounterTimes(roomEntryEvents, activeCharacterI, markers.obscuredRanges);
+  markers.encounterTimes = _generateEncounterTimes(roomEntryEvents, characterIds, baseCharacters, activeCharacterI,
+    markers.obscuredRanges);
   markers.speechRanges = _generateSpeechRanges(keyframes, characterIds, activeCharacterI, rooms, markers.obscuredRanges);
 
   return markers;
