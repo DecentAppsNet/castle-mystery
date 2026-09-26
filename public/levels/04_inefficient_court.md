@@ -167,7 +167,7 @@ MMMNNFLDKKKKAAA
 ```
 
 * C=Room Capacities
-* R=Petitioner Registry|Petitioner Registry Updated
+* R=Petitioner Registry
 
 ## Antechamber
 
@@ -261,8 +261,7 @@ N1234567890ABCD.
 
 ## Andronikos
 
-* items=Wax Tablet | Wax Tablet Updated
-(There is only one wax tablet in the story, but the two versions represent a change from one state to another.)
+* items=Wax Tablet
 
 ## King Frederick
 * description=The young king seems ill at ease.
@@ -393,7 +392,6 @@ N1234567890ABCD.
 ## Petitioner Registry Updated
 * title=Petitioner Registry (Updated)
 * description=17 JULY 1195, TERCE|Konrad of Augsburg - tax relief|Faraj ibn Sa'id al-Balarmi - property dispute|Tancredi of Cefalù - property dispute|Salvatori of Trapani - tax relief|Toro - treachery
-* visible=false
 * image=codex.png
 * drawOffsetY=2
 
@@ -407,9 +405,9 @@ N1234567890ABCD.
 
 # Itinerary
 
-8:00:00 Toro @ East Gate
+7:59:57 Toro @ East Gate
 
-8:00:00 Andronikos @ Entrance Hall
+7:59:57 Andronikos @ Entrance Hall
 : takes Wax Tablet in right hand
 : faces Guard 3
 : says "The antechamber is completely full, of course."
@@ -429,8 +427,7 @@ N1234567890ABCD.
 : Toro says, "Gratitude."
 (Toro leaves for Central Hall)
 : Andronikos thinks, "Toro, like a bull."
-: takes Wax Tablet into inventory
-: takes Wax Tablet Updated into right hand
+: Wax Tablet becomes Wax Tablet Updated
 : faces Guard 3
 : says "He is the size of two men at least."
 : says "So we'll admit no more for now."
@@ -463,7 +460,6 @@ N1234567890ABCD.
 : King Frederick says, "Chamberlain, your comments lack grace."
 : Gualtiero says, "Forgive my excesses, your Majesty."
 (Sticky Agatha leaves for Robing Chamber)
-
 
 8:00:30 Toro @ Central Hall (90%)
 : waits 8
@@ -512,8 +508,7 @@ N1234567890ABCD.
 8:00:35 Andronikos @ Usher's Office
 : thinks "Let's add this bull to our registry..."
 : @ (10%)
-: hide Petitioner Registry
-: show Petitioner Registry Updated
+: Petitioner Registry becomes Petitioner Registry Updated
 : Andronikos thinks, "Done."
 : @ (30%)
 (returns to Entrance Hall)
@@ -566,7 +561,7 @@ N1234567890ABCD.
 : P24 faces left
 : waits 3
 (Using an item in Toro's possesion to position emit bubble over his body. Storywise, Toro is emitting the fart noise - not the black paint jar.)
-: Black Paint Jar emits "(loud fart)"
+: Toro emits "(loud fart)"
 : Toro says, "Apologies."
 : P24 says "(coughing)"
 : P22 says "Ghastly!"
@@ -588,6 +583,7 @@ N1234567890ABCD.
 : P1 says, "I do not know."
 : says "But I want no part of it."
 : faces left
+
 
 8:01:12 Harold @ West Stairwell
 : says "Next!"
@@ -666,37 +662,37 @@ N1234567890ABCD.
 8:01:52 @ (95%)
 : hide P18
 8:01:44 P17 @ East Gate (95%)
-8:01:45 @ (95%)
+8:01:48 @ (95%)
 : hide P17
 8:01:46 P19 @ East Gate (95%)
 8:01:47 @ (95%)
 : hide P19
 8:01:49 P16 @ East Gate (95%)
-8:01:50 @ (95%)
+8:01:51 @ (95%)
 : hide P16
 8:01:52 P15 @ East Gate (95%)
-8:01:53 @ (95%)
+8:01:54 @ (95%)
 : hide P15
 8:01:56 P12 @ East Gate (95%)
-8:01:57 @ (95%)
+8:01:59 @ (95%)
 : hide P12
 8:01:56 P22 @ East Gate (95%)
-8:01:58 @ (95%)
+8:01:59 @ (95%)
 : hide P22
 8:02:00 P13 @ East Gate (95%)
 8:02:01 @ (95%)
 : hide P13
-8:02:04 P11 @ East Gate (95%)
-8:02:05 @ (95%)
+8:02:05 P11 @ East Gate (95%)
+8:02:06 @ (95%)
 : hide P11
 8:02:06 P14 @ East Gate (95%)
-8:02:07 @ (95%)
+8:02:09 @ (95%)
 : hide P14
 8:02:12 P21 @ East Gate (95%)
-8:02:13 @ (95%)
+8:02:15 @ (95%)
 : hide P21
 
-8:02:23 Harold @ West Stairwell
+8:02:22 Harold @ West Stairwell
 : says "Next... hey!"
 : @ Throne Room (10%)
 : stands on Small Rug

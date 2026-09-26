@@ -167,7 +167,7 @@ MMMNNFLDKKKKAAA
 ```
 
 * C=Room Capacities
-* R=Petitioner Registry|Petitioner Registry Updated
+* R=Petitioner Registry
 
 ## Antechamber
 
@@ -261,8 +261,7 @@ N1234567890ABCD.
 
 ## Andronikos
 
-* items=Wax Tablet | Wax Tablet Updated
-(There is only one wax tablet in the story, but the two versions represent a change from one state to another.)
+* items=Wax Tablet
 
 ## King Frederick
 * description=The young king seems ill at ease.
@@ -393,7 +392,6 @@ N1234567890ABCD.
 ## Petitioner Registry Updated
 * title=Petitioner Registry (Updated)
 * description=17 JULY 1195, TERCE|Konrad of Augsburg - tax relief|Faraj ibn Sa'id al-Balarmi - property dispute|Tancredi of Cefalù - property dispute|Salvatori of Trapani - tax relief|Toro - treachery
-* visible=false
 * image=codex.png
 * drawOffsetY=2
 
@@ -429,8 +427,7 @@ N1234567890ABCD.
 : Toro says, "Gratitude."
 (Toro leaves for Central Hall)
 : Andronikos thinks, "Toro, like a bull."
-: takes Wax Tablet into inventory
-: takes Wax Tablet Updated into right hand
+: Wax Tablet becomes Wax Tablet Updated
 : faces Guard 3
 : says "He is the size of two men at least."
 : says "So we'll admit no more for now."
@@ -511,13 +508,302 @@ N1234567890ABCD.
 8:00:35 Andronikos @ Usher's Office
 : thinks "Let's add this bull to our registry..."
 : @ (10%)
-: hide Petitioner Registry
-: show Petitioner Registry Updated
+: Petitioner Registry becomes Petitioner Registry Updated
 : Andronikos thinks, "Done."
 : @ (30%)
 (returns to Entrance Hall)
 
 8:00:45 Andronikos @ Entrance Hall (50%)
+
+8:01:01 Toro @ Antechamber (95%)
+: waits 3
+: says, "ANGER!"
+: Niccolo faces Toro
+: P11 faces Toro
+: P12 faces Toro
+: P13 faces Toro
+: P14 faces Toro
+: P15 faces Toro
+: P16 faces Toro
+: P17 faces Toro
+: P18 faces Toro
+: P19 faces Toro
+: P20 faces Toro
+: P21 faces Toro
+: P22 faces Toro
+: P23 faces Toro
+: P24 faces Toro
+: waits
+: Guard 4 says, "Shut up or get out."
+: Toro says, "(sighs)"
+: Niccolo faces left
+: waits
+: P12 faces left
+: P14 faces left
+: waits
+: P11 faces left
+: waits .5
+: P13 faces left
+: P15 faces left
+: P19 faces left
+: waits .5
+: P16 faces left
+: P17 faces left
+: P20 faces left
+: P22 faces left
+: waits 1
+: P18 faces left
+: P19 faces left
+: P23 faces left
+: waits .5
+: P21 faces left
+: P22 faces left
+: P24 faces left
+: waits 3
+(Using an item in Toro's possesion to position emit bubble over his body. Storywise, Toro is emitting the fart noise - not the black paint jar.)
+: Toro emits "(loud fart)"
+: Toro says, "Apologies."
+: P24 says "(coughing)"
+: P22 says "Ghastly!"
+: P18 says "I can come back tomorrow."
+: P21 thinks "I shall endure it."
+8:01:56 Toro @ (30%)
+: Guard 4 says, "You have thoroughly befouled this place."
+: says, "But I don't mind less people in here."
+
+8:02:03 P1 @ Antechamber (95%)
+: P1 says, "Has some animal died?"
+: Guard 4 says, "You may wait for audience in this room."
+: P1 says, "I... uh..."
+: Guard 4 says, "Or you may return to the central hall."
+: P1 says, "Yes. That."
+: P1 @ Central Hall (10%)
+: says, "A catastrophe has befallen those in the room ahead."
+: P5 says, "Of what manner?"
+: P1 says, "I do not know."
+: says "But I want no part of it."
+: faces left
+
+
+8:01:12 Harold @ West Stairwell
+: says "Next!"
+: @ Throne Room (10%)
+: stands on Small Rug
+
+8:01:18 Niccolo @ Throne Room (20%)
+: Harold faces Niccolo
+: says, "(whispers) Your name?"
+: Niccolo says, "Niccolò il Calabrese."
+: Harold faces King Frederick
+: says, "Niccolò il Calabrese, seeking audience with His Majesty!"
+: waits
+: says, "Approach and speak."
+: Niccolo @ (50%)
+: says, "Many quarries sell cheap rocks."
+: says, "Bad rocks filled with moisture and cracks."
+: says, "If the Kingdom is to have strong structures,"
+: says, "We must demand quality in our supplies."
+: King Frederick says, "Then demand it. How is this my matter?"
+: Niccolo says, "Jobs are given to whoever bids lowest."
+: says, "But if we had some agreed standard--"
+: King Frederick says, "I am familiar with the threat of shoddy masonry."
+: says, "And also how a promise of protection..."
+: says, "may come from the instigator himself."
+: says, "I will not be involved with your scheme."
+(Niccolo leaves for East Gate)
+8:02:12 Gualtiero faces King Frederick
+: says, "I share your outrage, Highness!"
+: King Frederick says, "You need not provide your every opinion."
+: Gualtiero says, "Ah, I share your opinion of my opinions, Highness!"
+: King Frederick says, "(sighs)"
+: Gualtiero faces left.
+
+8:01:23 Sticky Agatha @ Robing Chamber
+: takes Royal Tunic
+: thinks, "This will do."
+: @ East Gate (80%)
+: faces left
+: thinks "He was just behind me in line."
+: thinks "I will wait for him."
+
+(Andronikos is in the Entrance Hall, a stream of petitioners are exiting)
+8:01:29 Andronikos faces left
+: says "What is this commotion?"
+8:01:36 P22 @ Entrance Hall (60%)
+: Andronikos faces P22
+: says "Peasant!"
+: P22 faces Andronikos
+: Andronikos says, "Why are all these people leaving?"
+: P22 says, "The unholy stench of a man-beast's innards pervades the antechamber!"
+: Andronikos says, "I do not follow your meaning."
+: P22 says, "I fear for my very soul!"
+(P22 resumes fleeing to the East Gate)
+
+(Andronikos remains in the Entrance Hall. The clamore of the petitioners fleeing has subsided.)
+8:02:07 Andronikos faces Guard 3
+: says "I will assess the antechamber."
+: says "Admit no petitioners in my absence."
+: Guard 3 says, "Of course, sir."
+(Andronikos leaves for the antechamber)
+
+8:01:52 P21 thinks, "It is unendurable."
+8:01:34 P23 @ East Gate (95%)
+: hide P23
+8:01:37 P24 @ East Gate (95%)
+8:01:38 @ (95%)
+: hide P24
+8:01:39 P20 @ East Gate (95%)
+8:01:40 @ (95%)
+: hide P20
+8:01:40 P23 @ East Gate (95%)
+8:01:41 @ (95%)
+: hide P23
+8:01:51 P18 @ East Gate (95%)
+8:01:52 @ (95%)
+: hide P18
+8:01:44 P17 @ East Gate (95%)
+8:01:48 @ (95%)
+: hide P17
+8:01:46 P19 @ East Gate (95%)
+8:01:47 @ (95%)
+: hide P19
+8:01:49 P16 @ East Gate (95%)
+8:01:51 @ (95%)
+: hide P16
+8:01:52 P15 @ East Gate (95%)
+8:01:54 @ (95%)
+: hide P15
+8:01:56 P12 @ East Gate (95%)
+8:01:59 @ (95%)
+: hide P12
+8:01:56 P22 @ East Gate (95%)
+8:01:59 @ (95%)
+: hide P22
+8:02:00 P13 @ East Gate (95%)
+8:02:01 @ (95%)
+: hide P13
+8:02:05 P11 @ East Gate (95%)
+8:02:06 @ (95%)
+: hide P11
+8:02:06 P14 @ East Gate (95%)
+8:02:09 @ (95%)
+: hide P14
+8:02:12 P21 @ East Gate (95%)
+8:02:15 @ (95%)
+: hide P21
+
+8:02:22 Harold @ West Stairwell
+: says "Next... hey!"
+: @ Throne Room (10%)
+: stands on Small Rug
+
+8:02:25 Andronikos @ Antechamber (90%)
+: Andronikos says, "Ohhhh."
+: waits
+(Andronikos returns to Entrance Hall)
+
+8:02:24 Toro @ Throne Room (20%)
+: Toro says, "Toro."
+: King Frederick says, "Approach and speak, Toro."
+: Harold thinks, "It's like they don't even need a herald!"
+: Toro @ (50%)
+: says, "Pillar. Tower. Palace. Pope."
+: says, "Treachery. Brick. Lies!"
+: Gualtiero says, "Speak clearly, imbecile!"
+: King Frederick says, "Toro, the matter interests me."
+: says, "But I do not yet understand."
+: Toro takes Black Paint Jar in right hand.
+: King Frederick @ (55%)
+: Toro says "Paint."
+: Toro gives Black Paint Jar to King Frederick
+: King Frederick takes Black Paint Jar in right hand.
+: @ (65%)
+: says, "Interesting."
+: faces Harold
+: says, "Herald, fetch the Black Brick."
+: Harold says, "Right away, your Majesty."
+(Harold leaves for Chamberlain's Office)
+: King Frederick waits
+: faces right
+: says, "While we wait, I will speak on another matter."
+: says, "Our petitioning process is a failure."
+: Gualtiero says, "Most certainly it is!"
+: King Frederick says, "In what exact way, Chamberlain?"
+: Gualtiero says, "Oh, uh... I..."
+: says, "Hope to hear your thoughts on the subject first."
+: King Frederick says, "These people come seeking some gift or mercy from me."
+: says, "The World has more complaints than I can hear!"
+: Ugolino says, "The Church can hear them, Majesty."
+: King Frederick says, "Yes, let God receive their prayers - not I."
+: says, "It's more efficient that way."
+: Gualtiero says, "Such insight, Majesty."
+: King Frederick faces left
+
+8:02:36 Andronikos @ Entrance Hall (50%)
+: faces Guard 3
+: says, "People complain about drafty castles."
+: says, "But today, I wish for ours to be draftier."
+: faces right
+: Guard 3 thinks, "What is he even talking about?"
+: Andronikos says, "I shall deposit the Terce records."
+: Guard 3 thinks, "I don't care."
+: Andronikos @ Usher's Office
+: takes Petitioner Registry Updated
+: @ Record Room
+: drops Petitioner Registry Updated
+: thinks, "Let us see if they've withdrawn."
+: @ Withdrawal Chamber
+: thinks, "No surprise."
+: thinks, "Common petitions rarely warrant further discussion."
+: @ Tapestry Store (90%)
+: drops Wax Tablet Updated
+: lays on Tapestry Stack
+: faces right
+: thinks, "Nobody ever comes to this room."
+: thinks, "The perfect place for a little nap."
+
+8:02:36 Niccolo @ East Gate (85%)
+: Sticky Agatha says "Niccoló!" to Niccolo
+: Niccolo faces Sticky Agatha
+: Sticky Agatha says, "How does Heinrich fare in Master Pietro's House?"
+: Niccolo says, "Fair."
+: Sticky Agatha says, "He fares fairly?"
+: Niccolo says, "Yes."
+: Sticky Agatha says, "You seem troubled."
+: Niccolo says, "The King gives no support for my mission."
+: Sticky Agatha says, "Let us talk elsewhere."
+: @ (95%)
+: hide Niccolo
+: Sticky Agatha @ (95%)
+: hide Sticky Agatha
+
+8:03:12 Harold @ Chamberlain's Office
+: thinks, "No, it is not here."
+: Harold @ Deep Archives (95%)
+: takes Black Brick in right hand
+: thinks "Heralding is what I do - not fetching!"
+: thinks "My mother named me for this destiny."
+
+8:03:58 Harold @ Throne Room (65%)
+: King Frederick faces left
+: Harold gives Black Brick to King Frederick
+: King Frederick takes Black Brick in left hand
+: Harold stands on small rug
+: King Frederick says "Hmm."
+: says, "The paint matches."
+: Ugolino says, "This jar is from the Lateran Palace."
+: says, "Our jar mold bestows this symbol."
+: Gualtiero says, "But what does it prove?"
+: King Frederick says, "A better question perhaps is..."
+: says, "What does it disprove?"
+: says, "Toro, you have done a service for the Crown."
+: says, "Is there anything you want?"
+: Toro says, "Job."
+: King Frederick says, "What job can you do?"
+: Toro says, "Herald."
+: Harold faces right.
+: says, "What?"
+: King Frederick says, "Granted. You are my new herald."
 
 # Conclusions
 
