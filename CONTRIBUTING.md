@@ -95,6 +95,15 @@ Guidelines:
 * Put substantial authored content, malformed document structures, and changes spanning multiple sections in dedicated fixtures.
 * If code under test would otherwise perform filesystem, shell, subprocess, or network I/O, mock that boundary rather than performing the real operation.
 
+## Shell Execution Safety
+
+* AI agents should not put generated source code (e.g., Python, JS, and other programming languages distinct from shell command syntaxes) into shell execution requests.
+* AI agents should not use flow control statements in shell execution requests. I don't want to be overly prescriptive here, but the gist is that shell execution requests should look like a series of programs to execute rather than programming logic.
+* AI agents should favor IDE-provided tools over shell execution requests, if there is no significant advantage to using one or the other.
+* AI agents should favor shell execution requests specifying NPM run scripts over bespoke commands, if there is no significant advantage to using one or the other.
+* If a shell execution request with a bespoke command seems likely to be reused in the future, propose to the user the creation of an NPM run script to encapsulate the request. In this way, the user can review and approve the run script one time, and treat all future shell requests for that script as requiring less review.
+* If the constraints above are ambiguous or difficult to work with, discuss with the user to find a solution.
+
 ## Code Coverage
 
 * Coverage should be improved with contract-based tests rather than tests written around implementation branches.
