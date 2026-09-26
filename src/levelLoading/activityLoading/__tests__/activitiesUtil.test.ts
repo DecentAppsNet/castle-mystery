@@ -1,8 +1,8 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { ErrorCollector } from '../../errorCollection';
-import { loadLevelSections } from '../../levelFileSectionUtil';
+import { ErrorCollector } from '@/levelLoading/errorCollection';
+import { loadLevelSections } from '@/levelLoading/levelFileSectionUtil';
 import activityProvenanceLevelText from './fixtures/activity-provenance.md?raw';
 import { loadActivitiesPartially } from '../activitiesUtil';
 import { createActivityParsingRules } from '../parsingRulesUtil';

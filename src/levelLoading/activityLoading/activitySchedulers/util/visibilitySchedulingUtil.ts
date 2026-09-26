@@ -3,7 +3,7 @@ import Item, { duplicateItem } from "@/game/types/Item";
 import RoomKeyframe from "@/game/types/RoomKeyframe";
 import { addCharacterKeyChanges, addRoomKeyChanges } from "@/levelLoading/timelineLoading";
 import { assert, assertNonNullable } from "decent-portal";
-import Activity from "../../types/Activity";
+import Activity from "@/levelLoading/activityLoading/types/Activity";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { findKeyframeForTime } from "@/game/timeline";

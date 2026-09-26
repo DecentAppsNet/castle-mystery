@@ -13,10 +13,10 @@ from public/levels.
 import { afterEach, expect, it, vi } from 'vitest';
 
 import { loadLevelFromUrl } from '..';
-import adhocLevelText from '../../../public/levels/adhoc.md?raw';
-import charactersLevelText from '../../../public/levels/characters.md?raw';
-import itemsLevelText from '../../../public/levels/items.md?raw';
-import roomStylesLevelText from '../../../public/levels/roomStyles.md?raw';
+import adhocLevelText from '@public/levels/adhoc.md?raw';
+import charactersLevelText from '@public/levels/characters.md?raw';
+import itemsLevelText from '@public/levels/items.md?raw';
+import roomStylesLevelText from '@public/levels/roomStyles.md?raw';
 
 afterEach(() => {
 	vi.unstubAllGlobals();

@@ -40,7 +40,7 @@ export default defineConfig(({mode}) => {
     },
     server: { port: 3000 },
     resolve: {
-      alias: { '@': '/src' }
+      alias: { '@': '/src', '@public': '/public' }
     },
     build: { 
       sourcemap: true, 

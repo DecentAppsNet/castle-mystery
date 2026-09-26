@@ -6,7 +6,8 @@
     "module": "ESNext",
     "skipLibCheck": false,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@public/*": ["./public/*"]
     },
 
     /* Bundler mode */
