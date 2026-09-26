@@ -12,11 +12,14 @@ from public/levels.
 
 import { afterEach, expect, it, vi } from 'vitest';
 
+import { initCastleDebug } from '@/developer/debugUtil';
 import { loadLevelFromUrl } from '..';
 import adhocLevelText from '@public/levels/adhoc.md?raw';
 import charactersLevelText from '@public/levels/characters.md?raw';
 import itemsLevelText from '@public/levels/items.md?raw';
 import roomStylesLevelText from '@public/levels/roomStyles.md?raw';
+
+initCastleDebug();
 
 afterEach(() => {
 	vi.unstubAllGlobals();

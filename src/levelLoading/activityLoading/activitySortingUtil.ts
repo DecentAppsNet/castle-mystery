@@ -6,17 +6,22 @@ import { assert } from "decent-portal";
 import Activity from "./types/Activity";
 
 type ActivityGroup = {
-  startTime:number,
+  orderingTime:number,
   activities:Activity[]
+}
+
+function _findActivityOrderingTime(activity:Activity):number|null {
+  return activity.startTime ?? activity.endTime;
 }
 
 function _findFirstBadlyOrderedActivity(activities:readonly Activity[], startTime:number):number {
   let time = startTime;
   for(let i = 0; i < activities.length; ++i) {
     const activity = activities[i];
-    if (activity.startTime !== null) {
-      if (activity.startTime < time) return i;
-      time = activity.startTime;
+    const orderingTime = _findActivityOrderingTime(activity);
+    if (orderingTime !== null) {
+      if (orderingTime < time) return i;
+      time = orderingTime;
     }
   }
   return -1;
@@ -24,18 +29,19 @@ function _findFirstBadlyOrderedActivity(activities:readonly Activity[], startTim
 
 function _groupActivities(activities:readonly Activity[]):ActivityGroup[] {
   const groups:ActivityGroup[] = [];
-  let group:ActivityGroup = { startTime:activities[0].startTime!, activities:[activities[0]] };
+  let group:ActivityGroup = { orderingTime:_findActivityOrderingTime(activities[0])!, activities:[activities[0]] };
   for(let activityI = 1; activityI < activities.length; ++activityI) {
     const activity = activities[activityI];
-    if (activity.startTime === null) {
+    const orderingTime = _findActivityOrderingTime(activity);
+    if (orderingTime === null) {
       group.activities.push(activity);
     } else {
       groups.push(group);
-      group = { startTime:activity.startTime, activities:[activity] };
+      group = { orderingTime, activities:[activity] };
     }
   }
   groups.push(group);
-  return groups.sort((a, b) => a.startTime - b.startTime);
+  return groups.sort((a, b) => a.orderingTime - b.orderingTime);
 }
 
 /** Orders timestamped activity groups while preserving authored order within each group. */
@@ -52,8 +58,8 @@ export function sortActivities(activities:readonly Activity[], startTime:number)
 
 /** Has a similar result as calling sortActivities(), but is optimized for a single change of one element in the array.
  *  The activity at `updatedActivityI` has had a new .startTime assigned to it, when it was previously null. If there are
- *  activities with non-null .startTimes that are no longer in order, they must be reordered around the updated activity.
- *  No activities with null timestamps should be moved.
+ *  activities with known start or end times that are no longer in order, they must be reordered around the updated activity.
+ *  Activities with neither time known should not be moved.
  *
  * If there is no need for reordering, the original unmodified activities array should be returned.
  */
@@ -71,8 +77,10 @@ export function sortActivitiesAfterStartTimeAssignment(activities:Activity[], up
 
   // Move the updated activity before the first preceding timestamp that is later than it.
   if (firstBadlyOrderedActivityI <= updatedActivityI) {
-    const insertionActivityI = activities.findIndex(activity => activity.startTime !== null
-      && activity.startTime > updatedActivity.startTime!);
+    const insertionActivityI = activities.findIndex(activity => {
+      const orderingTime = _findActivityOrderingTime(activity);
+      return orderingTime !== null && orderingTime > updatedActivity.startTime!;
+    });
     assert(insertionActivityI >= 0 && insertionActivityI < updatedActivityI);
     const sortedActivities = [
       ...activities.slice(0, insertionActivityI),
@@ -84,12 +92,13 @@ export function sortActivitiesAfterStartTimeAssignment(activities:Activity[], up
     return sortedActivities;
   }
 
-  // Separate later timestamped activities that must move ahead of the updated activity.
+  // Separate later activities with earlier known ordering times that must move ahead of the updated activity.
   const activitiesToMove:Activity[] = [];
   const remainingActivities:Activity[] = [];
   for(let activityI = updatedActivityI + 1; activityI < activities.length; ++activityI) {
     const activity = activities[activityI];
-    if (activity.startTime !== null && activity.startTime < updatedActivity.startTime) {
+    const orderingTime = _findActivityOrderingTime(activity);
+    if (orderingTime !== null && orderingTime < updatedActivity.startTime) {
       activitiesToMove.push(activity);
     } else {
       remainingActivities.push(activity);

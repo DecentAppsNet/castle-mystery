@@ -5,12 +5,12 @@ import { describe, expect, it } from 'vitest';
 import { sortActivities, sortActivitiesAfterStartTimeAssignment } from '../activitySortingUtil';
 import Activity from '../types/Activity';
 
-function _activity(verb:string, startTime:number|null, lineI:number = 0):Activity {
+function _activity(verb:string, startTime:number|null, endTime:number|null = null):Activity {
   return {
-    lineI,
+    lineI:0,
     verb,
     startTime,
-    endTime:null,
+    endTime,
     busyCharacterIds:[],
     busyItemIds:[],
     parts:{},
@@ -70,6 +70,26 @@ describe('activitySortingUtil', () => {
 
       expect(_verbs(sortActivities(activities, 0))).toEqual(['first', 'first-relative', 'second']);
     });
+
+    it('sorts by end time when start time is unavailable', () => {
+      const activities = [
+        _activity('starts-late', 30),
+        _activity('ends-early', null, 10),
+        _activity('ends-middle', null, 20)
+      ];
+
+      expect(_verbs(sortActivities(activities, 0))).toEqual(['ends-early', 'ends-middle', 'starts-late']);
+    });
+
+    it('keeps relative activities with their preceding end-timestamped activity', () => {
+      const activities = [
+        _activity('starts-late', 30),
+        _activity('ends-early', null, 10),
+        _activity('relative-after-end', null)
+      ];
+
+      expect(_verbs(sortActivities(activities, 0))).toEqual(['ends-early', 'relative-after-end', 'starts-late']);
+    });
   });
 
   describe('sortActivitiesAfterStartTimeAssignment()', () => {
@@ -108,6 +128,24 @@ describe('activitySortingUtil', () => {
         'at-twelve'
       ]);
       expect(result).not.toBe(activities);
+    });
+
+    it('moves later end-timestamped activities that precede the newly assigned time', () => {
+      const activities = [
+        _activity('first', 0),
+        _activity('updated', 10),
+        _activity('relative-after-updated', null),
+        _activity('ends-at-five', null, 5)
+      ];
+
+      const result = sortActivitiesAfterStartTimeAssignment(activities, 1, 0);
+
+      expect(_verbs(result)).toEqual([
+        'first',
+        'ends-at-five',
+        'updated',
+        'relative-after-updated'
+      ]);
     });
   });
 });

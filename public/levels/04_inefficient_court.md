@@ -772,7 +772,7 @@ N1234567890ABCD.
 : Sticky Agatha says, "You seem troubled."
 : Niccolo says, "The King gives no support for my mission."
 : Sticky Agatha says, "Let us talk elsewhere."
-: @ (95%)
+: Niccolo @ (95%)
 : hide Niccolo
 : Sticky Agatha @ (95%)
 : hide Sticky Agatha

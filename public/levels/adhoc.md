@@ -1,8 +1,8 @@
 # General
 
-* title=Adhoc
-* activeCharacter=Toro
-* time=8:00:00
+* title=adhock
+* activeCharacter=Sticky Agatha
+* time=8:01:40
 * background=daySky.png
 * imports=items.md | characters.md | roomStyles.md
 * winSynopsis=The King's decisions planted seeds of discontent among two petitioners. Toro's luck changed for the better with a new job. King Frederick resolved to reform administrative procedures to isolate him from his subjects. The Pope became an untrustworthy figure in his eyes.
@@ -646,52 +646,6 @@ N1234567890ABCD.
 : Guard 3 says, "Of course, sir."
 (Andronikos leaves for the antechamber)
 
-8:01:52 P21 thinks, "It is unendurable."
-8:01:34 P23 @ East Gate (95%)
-: hide P23
-8:01:37 P24 @ East Gate (95%)
-8:01:38 @ (95%)
-: hide P24
-8:01:39 P20 @ East Gate (95%)
-8:01:40 @ (95%)
-: hide P20
-8:01:40 P23 @ East Gate (95%)
-8:01:41 @ (95%)
-: hide P23
-8:01:51 P18 @ East Gate (95%)
-8:01:52 @ (95%)
-: hide P18
-8:01:44 P17 @ East Gate (95%)
-8:01:48 @ (95%)
-: hide P17
-8:01:46 P19 @ East Gate (95%)
-8:01:47 @ (95%)
-: hide P19
-8:01:49 P16 @ East Gate (95%)
-8:01:51 @ (95%)
-: hide P16
-8:01:52 P15 @ East Gate (95%)
-8:01:54 @ (95%)
-: hide P15
-8:01:56 P12 @ East Gate (95%)
-8:01:59 @ (95%)
-: hide P12
-8:01:56 P22 @ East Gate (95%)
-8:01:59 @ (95%)
-: hide P22
-8:02:00 P13 @ East Gate (95%)
-8:02:01 @ (95%)
-: hide P13
-8:02:05 P11 @ East Gate (95%)
-8:02:06 @ (95%)
-: hide P11
-8:02:06 P14 @ East Gate (95%)
-8:02:09 @ (95%)
-: hide P14
-8:02:12 P21 @ East Gate (95%)
-8:02:15 @ (95%)
-: hide P21
-
 8:02:22 Harold @ West Stairwell
 : says "Next... hey!"
 : @ Throne Room (10%)
@@ -772,7 +726,7 @@ N1234567890ABCD.
 : Sticky Agatha says, "You seem troubled."
 : Niccolo says, "The King gives no support for my mission."
 : Sticky Agatha says, "Let us talk elsewhere."
-: @ (95%)
+: Niccolo @ (95%)
 : hide Niccolo
 : Sticky Agatha @ (95%)
 : hide Sticky Agatha
