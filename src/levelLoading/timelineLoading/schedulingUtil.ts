@@ -13,6 +13,7 @@ import { scheduleDropsActivity } from "../activityLoading/activitySchedulers/dro
 import { scheduleEmitsActivity } from "../activityLoading/activitySchedulers/emitsScheduler";
 import { scheduleFacesActivity } from "../activityLoading/activitySchedulers/facesScheduler";
 import { scheduleGivesActivity } from "../activityLoading/activitySchedulers/givesScheduler";
+import { scheduleGoesActivity } from "../activityLoading/activitySchedulers/goesScheduler";
 import { scheduleHideActivity } from "../activityLoading/activitySchedulers/hideScheduler";
 import { scheduleKneelsActivity } from "../activityLoading/activitySchedulers/kneelsScheduler";
 import { scheduleLaysActivity } from "../activityLoading/activitySchedulers/laysScheduler";
@@ -44,6 +45,7 @@ const VERB_TO_ACTIVITY_SCHEDULER:Readonly<{[verb:string]:ActivityScheduler}> = {
   'emits': scheduleEmitsActivity,
   'faces': scheduleFacesActivity,
   'gives': scheduleGivesActivity,
+  'goes': scheduleGoesActivity,
   'hide': scheduleHideActivity,
   'kneels': scheduleKneelsActivity,
   'lays': scheduleLaysActivity,

@@ -76,6 +76,7 @@ export function makeIdentifier(variableId:string, identifierKind:string, isOptio
 // This is coupled to the known verbs for activities. If a new verb is added, check for needed 
 // special-casing beyond chopping off the "s". E.g. "does" -> "do" rather than "doe".
 export function verbToPlainForm(verb:string):string {
+  if (verb === 'goes') return 'go';
   if (!verb.endsWith('s')) return verb;
   return verb.substring(0, verb.length-1);
 }

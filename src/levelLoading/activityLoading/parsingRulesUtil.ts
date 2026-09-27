@@ -10,6 +10,7 @@ import { createDropsParseFormat } from './activitySchedulers/dropsScheduler';
 import { createEmitsParseFormat } from "./activitySchedulers/emitsScheduler";
 import { createFacesParseFormat } from "./activitySchedulers/facesScheduler";
 import { createGivesParseFormat } from "./activitySchedulers/givesScheduler";
+import { createGoesParseFormat } from "./activitySchedulers/goesScheduler";
 import { createHideParseFormat } from "./activitySchedulers/hideScheduler";
 import { createKneelsParseFormat } from "./activitySchedulers/kneelsScheduler";
 import { createLaysParseFormat } from "./activitySchedulers/laysScheduler";
@@ -114,6 +115,7 @@ export function createActivityParsingRules(characterIds:string[], roomIds:string
     pf['emits'] = createEmitsParseFormat();
     pf['faces'] = createFacesParseFormat();
     pf['gives'] = createGivesParseFormat();
+    pf['goes'] = createGoesParseFormat();
     pf['hide'] = createHideParseFormat();
     pf['kneels'] = createKneelsParseFormat();
     pf['lays'] = createLaysParseFormat();
