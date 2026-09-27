@@ -6,11 +6,7 @@ import { createDefaultRoom } from '@/game/types/Room';
 import { createEditableTimeline } from '@/levelLoading/timelineLoading/editingUtil';
 import WaypointGenerationContext from '@/levelLoading/types/WaypointGenerationContext';
 import Waypoint from '@/levelLoading/types/Waypoint';
-import {
-  scheduleCharacterMovementToRoom,
-  scheduleCharacterMovementToRoomAtTime,
-  scheduleCharacterMovementWithinRoom
-} from '../movementPlanningUtil';
+import { scheduleCharacterMovementToRoom, scheduleCharacterMovementWithinRoom } from '../movementPlanningUtil';
 
 const ROOM = { ...createDefaultRoom(), id:'room', rect:{ x:0, y:0, width:20, height:20 } };
 const OTHER_ROOM = { ...createDefaultRoom(), id:'other-room', rect:{ x:20, y:0, width:20, height:20 } };
@@ -72,27 +68,6 @@ describe('movementPlanningUtil', () => {
       scheduleCharacterMovementToRoom(_createContext(), ROOM, { x:0, y:FLOOR_Y, z:0 }, 100,
         OTHER_ROOM, { x:15, y:FLOOR_Y, z:0 }, 0, 'right', timeline);
       _expectOnlyFirstAddedKeyframeStands(timeline);
-    });
-  });
-
-  describe('scheduleCharacterMovementToRoomAtTime()', () => {
-    it('keys standing only on the first added character keyframe', () => {
-      const timeline = _createTimeline();
-      scheduleCharacterMovementToRoomAtTime(_createContext(), ROOM, { x:0, y:FLOOR_Y, z:0 }, 100,
-        OTHER_ROOM, { x:15, y:FLOOR_Y, z:0 }, 2_000, 0, 'right', timeline);
-      _expectOnlyFirstAddedKeyframeStands(timeline);
-    });
-
-    it('preserves the starting position until the delayed walk begins', () => {
-      const timeline = _createTimeline();
-      const fromPosition = { x:0, y:FLOOR_Y, z:0 };
-
-      const result = scheduleCharacterMovementToRoomAtTime(_createContext(), ROOM, fromPosition, 100,
-        OTHER_ROOM, { x:15, y:FLOOR_Y, z:0 }, 2_000, 0, 'right', timeline);
-
-      expect(result).toEqual({ walkDuration:900, walkStartDelay:1_000 });
-      expect(timeline.keyframes[1]).toMatchObject({ time:1_100, characters:[{ position:fromPosition }] });
-      expect(timeline.keyframes.at(-1)).toMatchObject({ time:2_000, characters:[{ position:{ x:15, y:FLOOR_Y, z:0 } }] });
     });
   });
 });

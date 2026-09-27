@@ -124,14 +124,9 @@ export function scheduleGivesActivity(level:Level, waypointContext:WaypointGener
     const claimedWaypoints = findClaimedWaypointsFromKeyframe(room, roomI, fromKeyframe, waypointContext, characterI);
     const givePosition = _findBestGivePosition(waypointContext, room, toCharacterKeyframe.position,
       claimedWaypoints, characterKeyframe.position);
-    const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, room, characterKeyframe.position,
+    const walkDuration = scheduleCharacterMovementWithinRoom(waypointContext, room, characterKeyframe.position,
       scheduleTime, givePosition, characterI, characterKeyframe.facingDirection, editableTimeline);
-    if (typeof scheduleResult === 'string') {
-      errors.addAtLine(scheduleResult, activity.lineI);
-      return false;
-    }
-    assert(scheduleResult.walkStartDelay === 0);
-    scheduleTime += scheduleResult.walkDuration;
+    scheduleTime += walkDuration;
   }
 
   // Re-resolve and validate transfer state after any walk.

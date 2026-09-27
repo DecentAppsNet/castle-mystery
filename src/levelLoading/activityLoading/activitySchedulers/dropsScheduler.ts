@@ -153,14 +153,9 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   let scheduleTime = activity.startTime;
   if (!arePositionsAdjacent(dropFloorPosition, characterKeyframe.position)) {
     const dropAdjacentPosition = _findDropAdjacentPosition(baseRoom, claimedWaypoints, waypointContext, dropFloorPosition);
-    const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, baseRoom, characterKeyframe.position, scheduleTime, 
+    const walkDuration = scheduleCharacterMovementWithinRoom(waypointContext, baseRoom, characterKeyframe.position, scheduleTime, 
         dropAdjacentPosition, characterI, characterKeyframe.facingDirection, editableTimeline);
-    if (typeof scheduleResult === 'string') {
-      errors.addAtLine(scheduleResult, activity.lineI);
-      return false;
-    }
-    assert(scheduleResult.walkStartDelay === 0);
-    scheduleTime += scheduleResult.walkDuration;
+    scheduleTime += walkDuration;
   }
   
   // Schedule the visual transfer while the character retains ownership of the item.

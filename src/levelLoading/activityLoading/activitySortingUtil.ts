@@ -10,18 +10,13 @@ type ActivityGroup = {
   activities:Activity[]
 }
 
-function _findActivityOrderingTime(activity:Activity):number|null {
-  return activity.startTime ?? activity.endTime;
-}
-
 function _findFirstBadlyOrderedActivity(activities:readonly Activity[], startTime:number):number {
   let time = startTime;
   for(let i = 0; i < activities.length; ++i) {
-    const activity = activities[i];
-    const orderingTime = _findActivityOrderingTime(activity);
-    if (orderingTime !== null) {
-      if (orderingTime < time) return i;
-      time = orderingTime;
+    const { startTime } = activities[i];
+    if (startTime !== null) {
+      if (startTime < time) return i;
+      time = startTime;
     }
   }
   return -1;
@@ -29,10 +24,10 @@ function _findFirstBadlyOrderedActivity(activities:readonly Activity[], startTim
 
 function _groupActivities(activities:readonly Activity[]):ActivityGroup[] {
   const groups:ActivityGroup[] = [];
-  let group:ActivityGroup = { orderingTime:_findActivityOrderingTime(activities[0])!, activities:[activities[0]] };
+  let group:ActivityGroup = { orderingTime:activities[0].startTime!, activities:[activities[0]] };
   for(let activityI = 1; activityI < activities.length; ++activityI) {
     const activity = activities[activityI];
-    const orderingTime = _findActivityOrderingTime(activity);
+    const orderingTime = activity.startTime;
     if (orderingTime === null) {
       group.activities.push(activity);
     } else {
@@ -78,8 +73,8 @@ export function sortActivitiesAfterStartTimeAssignment(activities:Activity[], up
   // Move the updated activity before the first preceding timestamp that is later than it.
   if (firstBadlyOrderedActivityI <= updatedActivityI) {
     const insertionActivityI = activities.findIndex(activity => {
-      const orderingTime = _findActivityOrderingTime(activity);
-      return orderingTime !== null && orderingTime > updatedActivity.startTime!;
+      const { startTime } = activity;
+      return startTime !== null && startTime > updatedActivity.startTime!;
     });
     assert(insertionActivityI >= 0 && insertionActivityI < updatedActivityI);
     const sortedActivities = [
@@ -97,8 +92,8 @@ export function sortActivitiesAfterStartTimeAssignment(activities:Activity[], up
   const remainingActivities:Activity[] = [];
   for(let activityI = updatedActivityI + 1; activityI < activities.length; ++activityI) {
     const activity = activities[activityI];
-    const orderingTime = _findActivityOrderingTime(activity);
-    if (orderingTime !== null && orderingTime < updatedActivity.startTime) {
+    const { startTime } = activity;
+    if (startTime !== null && startTime < updatedActivity.startTime) {
       activitiesToMove.push(activity);
     } else {
       remainingActivities.push(activity);

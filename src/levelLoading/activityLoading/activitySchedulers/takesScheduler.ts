@@ -141,14 +141,9 @@ export function scheduleTakesActivity(level:Level, waypointContext:WaypointGener
   const characterWaypoint = findNearestFloorWaypointToPosition(waypointContext, characterRoom, characterKeyframe.position);
   assertNonNullable(characterWaypoint);
   const takeWaypoint = _findBestTakeWaypoint(waypointContext, keyframe, characterRoom, roomI, roomItem);
-  const scheduleResult = scheduleCharacterMovementWithinRoom(waypointContext, characterRoom, characterKeyframe.position, scheduleTime, takeWaypoint.position,
+  const walkDuration = scheduleCharacterMovementWithinRoom(waypointContext, characterRoom, characterKeyframe.position, scheduleTime, takeWaypoint.position,
     characterI, characterKeyframe.facingDirection, editableTimeline);
-  if (typeof scheduleResult === 'string') {
-    errors.addAtLine(scheduleResult, activity.lineI);
-    return false;
-  }
-  assert(scheduleResult.walkStartDelay === 0);
-  scheduleTime += scheduleResult.walkDuration;
+  scheduleTime += walkDuration;
 
   const scheduleKeyframe = findKeyframeForTime(editableTimeline.keyframes, scheduleTime);
   const scheduleRoomKeyframe = scheduleKeyframe.rooms[roomI];

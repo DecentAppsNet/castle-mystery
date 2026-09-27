@@ -1,7 +1,7 @@
 /* This file schedules immediate or room-item-targeted character posture activities.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { assert, assertNonNullable } from "decent-portal";
+import { assertNonNullable } from "decent-portal";
 
 import { findRoomAtPosition } from "@/game/roomUtil";
 import { createKeyframeAtTime } from "@/game/timeline";
@@ -16,6 +16,7 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { findItemKeyframeLocation } from "./itemKeyframeLocationUtil";
 
+// TODO - does the name of this function make sense? The main thing it is doing is scheduling movement. Check callers for more context.
 /** Schedules a posture immediately or after movement to a captured room-item position. */
 export function schedulePostureActivity(bodyOrientation:BodyOrientation, level:Level,
     waypointContext:WaypointGenerationContext, activity:Activity,
@@ -54,16 +55,9 @@ export function schedulePostureActivity(bodyOrientation:BodyOrientation, level:L
   }
 
   // Walk immediately, then apply non-standing requested postures at arrival.
-  const result = scheduleCharacterMovementWithinRoom(waypointContext, room, characterKeyframe.position,
+  const walkDuration = scheduleCharacterMovementWithinRoom(waypointContext, room, characterKeyframe.position,
     activity.startTime, roomItem.position, characterI, characterKeyframe.facingDirection, editableTimeline);
-  if (typeof result === 'string') {
-    errors.addAtLine(result, activity.lineI);
-    return false;
-  }
-  assert(result.walkStartDelay === 0);
-  activity.endTime = activity.startTime + result.walkDuration;
-  if (bodyOrientation !== 'standing') {
-    addCharacterKeyChanges({ bodyOrientation }, characterI, activity.endTime, editableTimeline);
-  }
+  activity.endTime = activity.startTime + walkDuration;
+  if (bodyOrientation !== 'standing') addCharacterKeyChanges({ bodyOrientation }, characterI, activity.endTime, editableTimeline);
   return true;
 }

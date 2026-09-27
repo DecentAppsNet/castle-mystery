@@ -89,13 +89,8 @@ export function scheduleStartTimeRoomMovement(level:Level, waypointContext:Waypo
   }
 
   // Add movement keyframes immediately and retain its complete occupied interval.
-  const result = scheduleCharacterMovementToRoom(waypointContext, fromRoom, fromPosition, activity.startTime,
+  const walkDuration = scheduleCharacterMovementToRoom(waypointContext, fromRoom, fromPosition, activity.startTime,
     toRoom, toPosition, characterI, fromKeyframe.characters[characterI].facingDirection, editableTimeline);
-  if (typeof result === 'string') {
-    errors.addAtLine(result, activity.lineI);
-    return false;
-  }
-  assert(result.walkStartDelay === 0);
-  activity.endTime = activity.startTime + result.walkDuration;
+  activity.endTime = activity.startTime + walkDuration;
   return true;
 }
