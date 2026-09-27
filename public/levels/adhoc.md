@@ -140,27 +140,30 @@ VVVHHGG
 : Larry takes Vase in right hand
 : Lorenzo faces right.
 : says, "Put that down!"
+11:00:39 Larry goes to Gift Shop (80%)
+11:00:42 Lorenzo goes to Gift Shop (10%)
 11:00:45 Larry @ Gift Shop (80%)
 : drops Vase on Shelf 3
-: @ Gift Shop (30%)
+: goes to Gift Shop (30%)
 11:00:46 Lorenzo @ Gift Shop (10%)
 : says, "Where is it?"
 : Larry faces right.
-: Lorenzo @ Gift Shop (80%)
-: @ (70%)
+: Lorenzo goes (80%)
+: goes (70%)
 : says, "Oh no!"
-: @ (80%)
-: @ (60%)
-: @ (70%)
+: goes (80%)
+: goes (60%)
+: goes (70%)
 
 11:00:04 Larry thinks, "What is Marty doing?"
 
 11:00:48 Marty takes Sarcophagus Lid in left hand
-: @ Exhibit Room (30%)
+: goes (30%)
 : drops Sarcophagus Lid
-: @ Exhibit Room (50%)
+: goes (50%)
 : faces left
 : says, "Sick!"
+
 
 # Conclusions
 

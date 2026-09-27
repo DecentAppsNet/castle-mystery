@@ -209,7 +209,7 @@ describe('parseFormatUtil', () => {
 
 		describe('activity parse formats', () => {
 			it('describes the @ activity parse format', () => {
-				expect(describeParseFormat(createAtActivityParseFormat())).toBe('Timestamp [CharacterId] `@` RoomId');
+				expect(describeParseFormat(createAtActivityParseFormat())).toBe('Timestamp [CharacterId] `@` RoomId [`(` HorizontalTarget `%` `)`]');
 			});
 
 			it('describes the appears activity parse format', () => {
@@ -222,12 +222,10 @@ describe('parseFormatUtil', () => {
 
 			it('describes the drops activity parse format', () => {
 				expect(describeParseFormat(createDropsParseFormat())).toBe('Timestamp [CharacterId] `drops` ItemId [{`at`|`on`|`onto`|`to`} {ItemId|CharacterId}]');
-				// expect(describeParseFormat(createDropsParseFormat())).toBe('Timestamp [CharacterId] `drops` ItemId [{{`at`|`on`|`onto`|`to`} {ItemId|CharacterId}}]');
 			});
 
 			it('describes the emits activity parse format', () => {
 				expect(describeParseFormat(createEmitsParseFormat())).toBe('Timestamp [CharacterId|ItemId] `emits` "Text" [`loudly`]');
-				// expect(describeParseFormat(createEmitsParseFormat())).toBe('Timestamp [{CharacterId|ItemId}] `emits` "Text" [`loudly`]');
 			});
 
 			it('describes the faces activity parse format', () => {

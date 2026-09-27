@@ -151,6 +151,57 @@ describe('level loading - @ activities', () => {
     );
   });
 
+  it('validates a room and horizontal target after matching movement', () => {
+    const { level, errors } = _loadAt([
+      '0:00:00 Sam goes Hall (80%)',
+      ': Sam @ Hall (80%)'
+    ], 'at-horizontal-target.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
+  it('allows any in-room position when no horizontal target is specified', () => {
+    const { level, errors } = _loadAt([
+      '0:00:00 Sam goes Hall (20%)',
+      ': Sam @ Hall'
+    ], 'at-room-only-after-horizontal-movement.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
+  it('reports a horizontal target mismatch without moving the character', () => {
+    const { level, errors } = _loadAt([
+      '0:00:00 Sam goes Hall (20%)',
+      ': Sam @ Hall (80%)'
+    ], 'at-wrong-horizontal-target.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('sam was not at the 80% target in hall at');
+  });
+
+  it('uses the asserted horizontal target for correction guidance', () => {
+    const { errors } = loadLevelForTest(replaceSection(guidanceLevelText, 'itinerary', [
+      '0:00:10 Sam @ Library (100%)'
+    ]), 'at-horizontal-target-guidance.md');
+
+    expect(errors.describeErrors()).toContain(
+      'sam would need to start movement from hall at 0:00:07 to arrive in time.'
+    );
+  });
+
+  it('does not recommend movement from a preceding @ with an invalid horizontal target', () => {
+    const { errors } = loadLevelForTest(replaceSection(guidanceLevelText, 'itinerary', [
+      '0:00:00 Sam @ Hall (0%)',
+      '0:00:10 Sam @ Library'
+    ]), 'at-invalid-horizontal-origin.md');
+
+    expect(errors.describeErrors()).toContain(
+      'The previous @ activity at 0:00:00 is invalid, so no recommended correction has been made.'
+    );
+  });
+
   it('calculates guidance for two failures without changing the completed timeline', () => {
     const text = replaceSection(guidanceLevelText, 'itinerary', [
       '0:00:00 Sam @ Hall',
@@ -184,11 +235,11 @@ describe('level loading - @ activities', () => {
     expect(errors.describeErrors()).toContain('Expected format for "@": Timestamp [CharacterId] `@` RoomId');
   });
 
-  it('rejects a room plus percentage destination', () => {
+  it('accepts a room plus percentage destination', () => {
     const { level, errors } = _loadAt(['0:00:00 Sam @ Hall (80%)'], 'at-room-percentage.md');
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('Expected format for "@": Timestamp [CharacterId] `@` RoomId');
+    expect(errors.describeErrors()).toContain('sam was not at the 80% target in hall at 0:00:00.');
   });
 
   it('starts a relative successor at the assertion time', () => {

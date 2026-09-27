@@ -5,9 +5,10 @@ import Activity from "../types/Activity";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import Level from "@/game/types/Level";
 import ParseFormat from "../types/ParseFormat";
-import { createParseFormat, makeIdentifier, makeSequence, makeVerb } from "../parseFormatUtil";
+import { createParseFormat, makeIdentifier, makeLiteral, makeNumber, makeSequence, makeVerb } from "../parseFormatUtil";
 import { assert, assertNonNullable } from "decent-portal";
 import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
+import { arePositionsEqual } from "@/game/types/Position";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { createKeyframeAtTime } from "@/game/timeline";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
@@ -20,7 +21,8 @@ import Position from "@/game/types/Position";
 
 type PartsShape = {
   characterId:string,
-  roomId:string
+  roomId:string,
+  horizontalTarget?:number
 }
 
 type MovementOrigin = {
@@ -51,7 +53,21 @@ function _findLatestSameCharacterGoesOrAtActivityBeforeAssertion(assertion:Activ
   return latestActivity;
 }
 
-function _findOriginForMovementToRoom(level:Level, characterI:number, assertion:Activity,
+function _doesAtActivityMatchSnapshot(level:Level, waypointContext:WaypointGenerationContext,
+    activity:Activity, snapshot:TimelineKeyframe, characterI:number):boolean {
+  const { roomId, horizontalTarget } = activity.parts as PartsShape;
+  const position = snapshot.characters[characterI].position;
+  const actualRoom = findRoomAtPosition(level.rooms, position.x, position.y);
+  if (actualRoom?.id !== roomId) return false;
+  if (horizontalTarget === undefined) return true;
+
+  const targetPosition = findRoomMovementTargetPosition(waypointContext, snapshot, actualRoom,
+    horizontalTarget, characterI);
+  return arePositionsEqual(position, targetPosition);
+}
+
+function _findOriginForMovementToRoom(level:Level, waypointContext:WaypointGenerationContext,
+  characterI:number, assertion:Activity,
   activities:readonly Activity[], timeline:EditableTimeline):MovementOrigin {
 
   // Find activity that indicates the previous room the character was instructed to
@@ -66,7 +82,8 @@ function _findOriginForMovementToRoom(level:Level, characterI:number, assertion:
   const originPosition = originSnapshot.characters[characterI].position;
   const originRoom = findRoomAtPosition(level.rooms, originPosition.x, originPosition.y);
   assertNonNullable(originRoom);
-  if (originActivity?.verb === '@' && originActivity.parts.roomId !== originRoom.id) {
+  if (originActivity?.verb === '@'
+      && !_doesAtActivityMatchSnapshot(level, waypointContext, originActivity, originSnapshot, characterI)) {
     return { invalidAtActivity:originActivity };
   }
 
@@ -76,11 +93,12 @@ function _findOriginForMovementToRoom(level:Level, characterI:number, assertion:
 function _createPlacementCorrectionGuidance(level:Level, waypointContext:WaypointGenerationContext, assertion:Activity,
     activities:readonly Activity[], timeline:EditableTimeline):string {
 
-  const { characterId, roomId } = assertion.parts as PartsShape;
+  const { characterId, roomId, horizontalTarget } = assertion.parts as PartsShape;
   const characterI = timeline.characterIdToI[characterId];
 
   // I need the room that character would begin moving from to reach the room in the assertion.
-  const movementOrigin = _findOriginForMovementToRoom(level, characterI, assertion, activities, timeline);
+  const movementOrigin = _findOriginForMovementToRoom(level, waypointContext, characterI,
+    assertion, activities, timeline);
   if ('invalidAtActivity' in movementOrigin) {
     const timestamp = formatMsecsAsTimestamp(movementOrigin.invalidAtActivity.startTime!);
     return `The previous @ activity at ${timestamp} is invalid, so no recommended correction has been made.`;
@@ -89,7 +107,7 @@ function _createPlacementCorrectionGuidance(level:Level, waypointContext:Waypoin
 
   const targetRoom = findRoom(level.rooms, roomId);
   assertNonNullable(targetRoom);
-  const targetPosition = findRoomMovementTargetPosition(waypointContext, originSnapshot, targetRoom);
+  const targetPosition = findRoomMovementTargetPosition(waypointContext, originSnapshot, targetRoom, horizontalTarget);
   const walkDuration = calcCharacterMovementDuration(waypointContext, originRoom, originPosition, targetRoom, targetPosition);
   const suggestedStart = formatMsecsAsTimestamp(assertion.startTime! - walkDuration);
   return `${characterId} would need to start movement from ${originRoom.id} at ${suggestedStart} to arrive in time.`;
@@ -104,7 +122,7 @@ export function validateAtActivities(level:Level, waypointContext:WaypointGenera
     assertNonNullable(activity.startTime);
     assertNonNullable(activity.endTime);
     assert(Number.isFinite(activity.startTime) && Number.isFinite(activity.endTime));
-    const { characterId, roomId } = activity.parts as PartsShape;
+    const { characterId, roomId, horizontalTarget } = activity.parts as PartsShape;
     assertNonNullable(characterId, 'implied subjects should have been resolved');
     assertNonNullable(roomId);
 
@@ -114,12 +132,14 @@ export function validateAtActivities(level:Level, waypointContext:WaypointGenera
     const position = snapshot.characters[characterI].position;
     const actualRoom = findRoomAtPosition(level.rooms, position.x, position.y);
     assertNonNullable(actualRoom);
-    if (actualRoom.id === roomId) continue; // Character is at location asserted by the @ activity.
+    if (_doesAtActivityMatchSnapshot(level, waypointContext, activity, snapshot, characterI)) continue;
 
     // Create a helpful error for the author.
     const timestamp = formatMsecsAsTimestamp(activity.startTime);
     const guidance = _createPlacementCorrectionGuidance(level, waypointContext, activity, activities, timeline);
-    const message = `${characterId} was not at ${roomId} at ${timestamp}. Actual room: ${actualRoom.id}.`;
+    const message = actualRoom.id === roomId
+      ? `${characterId} was not at the ${horizontalTarget}% target in ${roomId} at ${timestamp}.`
+      : `${characterId} was not at ${roomId} at ${timestamp}. Actual room: ${actualRoom.id}.`;
     errors.addAtLine(`${message} ${guidance}`, activity.lineI);
   }
 }
@@ -143,5 +163,8 @@ export function createAtActivityParseFormat():ParseFormat {
   const characterId = makeIdentifier('characterId', 'CharacterId', true);
   const at = makeVerb('@');
   const roomId = makeIdentifier('roomId', 'RoomId');
-  return createParseFormat(makeSequence([characterId, at, roomId]));
+  const horizontalTarget = makeSequence([
+    makeLiteral('('), makeNumber('horizontalTarget'), makeLiteral('%'), makeLiteral(')')
+  ], true);
+  return createParseFormat(makeSequence([characterId, at, roomId, horizontalTarget]));
 }

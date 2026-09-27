@@ -19,8 +19,10 @@ import { scheduleCharacterMovementToRoom } from "@/levelLoading/activityLoading/
 import { createKeyframeAtTime } from "@/game/timeline";
 import { findBestIncludedFloorWaypointToPosition, findNearestFloorWaypointToPosition, findWaypointsForRoom, isExitWaypoint, isWaypointOnMiddleRow } from "@/levelLoading/activityLoading/waypointFindingUtil";
 
-function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
-  return snapshot.characters.flatMap(character => {
+function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:TimelineKeyframe,
+    ignoredCharacterI:number|null):Waypoint[] {
+  return snapshot.characters.flatMap((character, characterI) => {
+    if (characterI === ignoredCharacterI) return [];
     const waypoint = waypoints.find(candidate => arePositionsEqual(candidate.position, character.position));
     return waypoint ? [waypoint] : [];
   });
@@ -46,10 +48,11 @@ function _findBestTargetWaypoint(context:WaypointGenerationContext, waypoints:Wa
 }
 /** Finds the preferred room waypoint for a horizontal destination at a timeline snapshot. */
 export function findRoomMovementTargetPosition(context:WaypointGenerationContext, snapshot:TimelineKeyframe,
-    targetRoom:Room, targetXPercent:number = .5):Position {
+    targetRoom:Room, horizontalTarget?:number, ignoredCharacterI:number|null = null):Position {
   const waypoints = findWaypointsForRoom(context, targetRoom.id);
-  const targetPosition = { x:targetRoom.rect.x + targetXPercent * targetRoom.rect.width, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z };
-  const claimedWaypoints = _findClaimedWaypoints(waypoints, snapshot);
+  const targetXRatio = horizontalTarget === undefined ? .5 : horizontalTarget / 100;
+  const targetPosition = { x:targetRoom.rect.x + targetXRatio * targetRoom.rect.width, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z };
+  const claimedWaypoints = _findClaimedWaypoints(waypoints, snapshot, ignoredCharacterI);
 
   return _findBestTargetWaypoint(context, waypoints, claimedWaypoints, targetRoom, targetPosition).position;
 }
@@ -71,7 +74,6 @@ export function scheduleStartTimeRoomMovement(level:Level, waypointContext:Waypo
   assert(activity.endTime === null);
   assertNonNullable(activity.startTime);
   const characterI = editableTimeline.characterIdToI[characterId];
-  const horizontalPercent = horizontalTarget === undefined ? .5 : horizontalTarget / 100;
 
   // Resolve the authored target from the character's position when movement begins.
   const fromKeyframe = createKeyframeAtTime(editableTimeline.keyframes, activity.startTime);
@@ -80,7 +82,7 @@ export function scheduleStartTimeRoomMovement(level:Level, waypointContext:Waypo
   assertNonNullable(fromRoom);
   const toRoom = roomId === undefined ? fromRoom : findRoom(level.rooms, roomId);
   assertNonNullable(toRoom);
-  const toPosition = findRoomMovementTargetPosition(waypointContext, fromKeyframe, toRoom, horizontalPercent);
+  const toPosition = findRoomMovementTargetPosition(waypointContext, fromKeyframe, toRoom, horizontalTarget);
   if (fromRoom.id === toRoom.id && (horizontalTarget === undefined || arePositionsEqual(fromPosition, toPosition))) {
     activity.endTime = activity.startTime;
     return true;
