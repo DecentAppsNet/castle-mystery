@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { createKeyframeAtTime } from '@/game/timeline';
 import { CharacterOwnedItemPlacement, INVENTORY, LEFT_HAND, RIGHT_HAND } from '@/game/itemOwnershipUtil';
+import movingTargetBaseText from './fixtures/drops/drops-moving-target-base.md?raw';
 import dropsOnItemText from './fixtures/drops-on-item.md?raw';
-import { loadLevelForTest } from './testLevelUtil';
+import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 function _loadDropFrom(sourcePlacement:CharacterOwnedItemPlacement) {
   const takeTarget = sourcePlacement === INVENTORY ? '' : ` in ${sourcePlacement}`;
@@ -28,6 +29,25 @@ describe('level loading - drops activities', () => {
     expect(sam.leftHandItem).toBeNull();
     expect(sam.rightHandItem).toBeNull();
     expect(sam.items.map(item => item.id)).not.toContain('vase');
+  });
+
+  it.fails('drops an item at a character position during future-arriving movement', () => {
+    const text = replaceSection(movingTargetBaseText, 'itinerary', [
+      '0:00:00 Sam stands',
+      '0:00:19 Benny drops Coin at Sam',
+      '0:00:20 Sam @ Hall (90%)'
+    ]);
+    /* Sam's absolute @ activity back-plans movement through the time when Benny drops Coin at him. Although the
+    arrival timestamp is later than the drop timestamp, Sam has already moved to the right by then. This verifies
+    that the drop destination uses Sam's position on that movement timeline instead of his initial position. */
+    const { level, errors } = loadLevelForTest(text, 'drops-during-future-arrival.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const atDrop = createKeyframeAtTime(level!.timeline.keyframes, 19_000);
+    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+    const coin = end.rooms[level!.timeline.roomIdToI.hall].items.find(item => item.id === 'coin');
+    expect(coin?.position).toEqual(atDrop.characters[level!.timeline.characterIdToI.sam].position);
   });
 
   it('transfers an inventory item exactly at the drop effect end', () => {

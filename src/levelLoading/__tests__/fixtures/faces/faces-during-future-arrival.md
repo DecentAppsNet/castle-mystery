@@ -4,16 +4,17 @@
 # map
 
 ```
-HC
+HPL
 ```
 
 * H=Hall
-* C=Closet
+* P=Passage
+* L=Library
 
 # rooms
 ## Hall
 
-* exits=Closet
+* exits=Passage
 
 ```
 ....
@@ -23,27 +24,29 @@ HC
 
 * S=Sam
 
-## Closet
+## Passage
+
+* exits=Library
 
 ```
-..K.
-.B..
+....
+B...
 ....
 ```
 
 * B=Benny
-* K=Key
+
+## Library
 
 # characters
 ## Sam
 
 ## Benny
-* items=Coin
 
 # items
-## Key
-
-## Coin
 
 # itinerary
 
+0:00:00 Sam stands
+0:00:19 Benny faces Sam
+0:00:20 Sam @ Library

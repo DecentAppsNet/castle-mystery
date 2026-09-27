@@ -5,6 +5,7 @@ import { FacingDirection } from '@/game/types/Character';
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_FRONT_ROW_CENTER_Z } from '@/game/roomSpaceConstants';
 
 import defaultLevelText from './fixtures/faces/faces-base.md?raw';
+import futureArrivalLevelText from './fixtures/faces/faces-during-future-arrival.md?raw';
 import windingStairLevelText from './fixtures/faces/faces-winding-stair.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
@@ -58,6 +59,18 @@ describe('level loading - faces activities', () => {
   it('character faces another character', () => {
     const facingDirection = _loadSamFacingDirection(['0:00:00 Sam faces Benny'], 0);
 
+    expect(facingDirection).toBe('right');
+  });
+
+  it.fails('faces a character at their position during future-arriving movement', () => {
+    const { level, errors } = loadLevelForTest(futureArrivalLevelText, 'faces-during-future-arrival.md');
+    /* The fixture gives Sam an absolute @ activity whose back-planned movement places him to Benny’s right by 
+    the time Benny faces him. Although the @ arrival timestamp is later than the faces timestamp, its movement 
+    begins earlier. This verifies that the facing activity uses Sam’s position on that movement timeline. */
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const bennyI = level!.timeline.characterIdToI.benny;
+    const facingDirection = createCharacterKeyframeAtTime(level!.timeline.keyframes, bennyI, 19_000).facingDirection;
     expect(facingDirection).toBe('right');
   });
 

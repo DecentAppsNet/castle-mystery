@@ -1,38 +1,26 @@
 # general
+
 * activeCharacter=Sam
 
 # map
 
 ```
-HC
+H
 ```
 
 * H=Hall
-* C=Closet
 
 # rooms
 ## Hall
 
-* exits=Closet
-
 ```
-....
-..S.
-....
+S....B......
+............
+............
 ```
 
 * S=Sam
-
-## Closet
-
-```
-..K.
-.B..
-....
-```
-
 * B=Benny
-* K=Key
 
 # characters
 ## Sam
@@ -41,9 +29,6 @@ HC
 * items=Coin
 
 # items
-## Key
-
 ## Coin
 
 # itinerary
-
