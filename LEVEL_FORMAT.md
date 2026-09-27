@@ -317,7 +317,7 @@ The `itinerary` section is where you script what characters do over time.
 Each line usually describes one action for one character at one time. Different characters can have interleaved actions, so the file reads more like a story timeline than a per-character checklist.
 
 Typical examples are:
-* moving to a room
+* moving to a room with `goes`
 * moving to a precise floor position in a room
 * speaking or thinking
 * taking, dropping, or giving an item
@@ -331,7 +331,7 @@ Most lines use this shape:
 
 Examples:
 * `0:00:10 Butler says "Someone was here."`
-* `0:00:20 Lady Marlowe @ Study`
+* `0:00:20 Lady Marlowe goes to Study`
 * `: Butler takes Master Key`
 
 You may also omit the `CHARACTER` part:
@@ -347,7 +347,7 @@ When the character is omitted, the loader uses the last character referenced ear
 
 There are two kinds of timestamps:
 * an absolute timestamp such as `0:00:10`, which places the activity at a specific time
-* a relative timestamp written as `:`, which means "after this character's previous authored activity finishes".
+* a relative timestamp written as `:`, which means "after the immediately previous authored activity in file order finishes".
 
 Relative timestamps are useful when you want one action to wait for the previous one without calculating the exact time yourself.
 
@@ -376,7 +376,8 @@ In that example, the `:05` and `:07` lines both still refer to Steve, because St
 ## Activities
 
 The itinerary loader currently supports these activity verbs and forms:
-* `@ Room` / `@ Room.50%` / `@ 50%`
+* `goes [to] Room [(50%)]` / `goes [to] (50%)`
+* `@ Room [(50%)]` / `@ (50%)`
 * `says ...`
 * `thinks ...`
 * `Item emits ...`
@@ -394,23 +395,37 @@ The itinerary loader currently supports these activity verbs and forms:
 * `hide Character|Item`
 * `waits` / `waits seconds`
 
+### Goes
+
+`goes` produces character movement. Its timestamp always identifies when movement starts: an absolute timestamp starts walking at that exact time, and a relative `:` timestamp starts walking when the previous authored activity completes.
+
+`to` is optional syntax with no semantic effect. A room-only destination uses the default horizontal target. A percentage selects a floor waypoint near that horizontal percentage; without a room it moves within the character's current room.
+
+Examples:
+* `0:15:03 John goes Library`
+* `0:15:03 John goes to Library`
+* `: goes Library (80%)`
+* `: goes to (50%)`
+
+The character is busy while walking, and a following relative activity begins when that movement finishes. If the character is already in a room-only destination, `goes` has zero duration.
+
 ### @
 
-`@ Room` means the character goes to a room. You can also target a floor waypoint by percentage with `@ Room.50%`.
+`@ Room` is the legacy room-positioning activity. You can also target a floor waypoint by percentage with `@ Room (50%)`.
 
-`@ 50%` (without a room name) means "move within the current room" to the closest floor waypoint near that horizontal percentage.
+`@ (50%)` (without a room name) means "move within the current room" to the closest floor waypoint near that horizontal percentage.
 
-`Room.50%` means: look at the room's floor waypoints, ignore any that are currently claimed by other characters if possible, and choose the one whose `x` position is closest to 50% of the room width. Any whole number from `0` through `100` is allowed.
+`Room (50%)` means: look at the room's floor waypoints, ignore any that are currently claimed by other characters if possible, and choose the one whose `x` position is closest to 50% of the room width. Any whole number from `0` through `100` is allowed.
 
 Examples:
 * `0:15:03 John @ Library`
-* `0:15:03 John @ Library.0%`
-* `0:15:03 John @ Library.50%`
-* `0:15:03 John @ Library.100%`
+* `0:15:03 John @ Library (0%)`
+* `0:15:03 John @ Library (50%)`
+* `0:15:03 John @ Library (100%)`
 
-This is the one activity where an absolute timestamp means when the character should finish an activity (walking to a room, in this case), not when they should start the activity. The loader plans movement so the character reaches the destination by that time.
+Unlike `goes`, an absolute `@` timestamp means when the character must arrive. The loader back-plans movement so the character reaches the destination by that time. This temporary distinction remains while existing `@` uses are migrated under a later plan.
 
-With a relative timestamp `:`, the walk starts as soon as the character's previous activity has finished.
+With a relative timestamp `:`, `@` movement starts as soon as the previous authored activity has finished.
 
 ### Says
 
