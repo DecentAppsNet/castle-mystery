@@ -42,7 +42,7 @@ The resolved `endTime` is exposed on the `Level` type alongside `duration`. They
 When the level crosses midnight (rule 2), any *absolute* itinerary timestamp whose parsed value is less than `startTime` is interpreted as the next day — i.e. the loader adds 24 hours during itinerary parsing. This means authors write:
 
 ```
-19:30:00 Hero @ Dining Car
+19:30:00 Hero goes to Dining Car
 00:15:00 Hero says "I cannot sleep."
 06:45:00 Hero says "Morning."
 ```

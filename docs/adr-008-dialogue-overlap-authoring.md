@@ -21,14 +21,6 @@ Some overlap is almost certainly invalid:
 
 - a single character having two overlapping speech events
 
-There is also an important middle case that is suspicious but may be intentional. Example:
-
-- `0:00:00 Bob says "Why hello there, June! I have more than one second of things to say to you right now."`
-- `0:00:01 June @ Living Room`
-- `: June says "Hi, Bob."`
-
-Here, the author may have intended June to wait until Bob finished, but absolute timestamps can legitimately make June begin speaking while Bob is still talking. That behavior is not inherently wrong, but plain `says` does not clearly express whether overlap is intended.
-
 The loader already has a clear rule for file-relative `:` timestamps from [docs/adr-004-file-order-relative-itinerary-timestamps.md](docs/adr-004-file-order-relative-itinerary-timestamps.md): each `:` line waits only for the immediately previous authored activity in file order. That means cross-character overlap can still arise legitimately after level load.
 
 We want a rule that:

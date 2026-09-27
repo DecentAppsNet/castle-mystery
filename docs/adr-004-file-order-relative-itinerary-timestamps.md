@@ -4,15 +4,13 @@
 
 Accepted
 
-> **ADR 011 clarification:** [ADR 011](adr-011-itinerary-derived-timeline-bounds.md) preserves the absolute and relative `@` scheduling semantics in this ADR, but overrules any implication that back-planned movement determines the level start. The level start uses the earliest authored absolute timestamp directly, including when that timestamp belongs to an `@` activity. ADR 011 also requires the first itinerary activity to be absolute, so a relative `:` activity cannot be first.
-
 ## Context
 
 The itinerary format supports a leading `:` timestamp form, for example:
 
 - `: Jester says "Surely it must be a hardship, sire."`
 - `: King says "Where did I put that book?"`
-- `: King @ Library`
+- `: King goes to Library`
 
 This syntax is useful for authored sequences where the next activity should follow naturally from the one written immediately before it in the level file.
 
@@ -24,15 +22,9 @@ A key use case is interleaved dialogue between multiple characters:
 
 In this style, each line should begin only after the previously authored activity has completed, even when the speaker changes.
 
-At the same time, `@` activities have special movement semantics. Absolute authored timestamps such as:
-
-- `0:00:34 King @ Library`
-
-mean the character must already have arrived by that timestamp, so generated movement is back-planned before the authored time.
-
 For `:` timestamps, that back-planned meaning does not fit the author intent. In:
 
-- `: King @ Library`
+- `: King goes to Library`
 
 what matters is that the generated movement should begin only after the previously authored activity has completed.
 
@@ -86,29 +78,6 @@ Examples:
 
 In each case, the first event of that activity begins at or after the previous authored activity's completion, subject to actor availability.
 
-### 5. `: Character @ Room` also uses a lower-bound start model
-
-`@` is the only activity whose absolute timestamp form plans movement in advance of the authored time.
-
-For absolute timestamps:
-
-- `0:00:34 King @ Library`
-
-means King must arrive by `0:00:34`, so movement is back-planned to end at that timestamp.
-
-For relative timestamps:
-
-- `: King @ Library`
-
-we do **not** back-plan from the lower-bound timestamp.
-
-Instead:
-
-- the generated movement events have a lower bound immediately after the previous authored activity completes
-- those movement events begin at or after that lower bound, subject to actor availability
-
-So the relative `@` form behaves like a "begin traveling after" activity, not an "arrive by this exact time" activity.
-
 ## Rationale
 
 This design preserves the most useful authored meaning of `:`:
@@ -116,7 +85,6 @@ This design preserves the most useful authored meaning of `:`:
 - level authors can write interleaved conversational turns naturally
 - file order remains the source of truth for relative chaining
 - the engine does not reinterpret `:` per character, which would make authored dialogue more awkward
-- `@` retains its intuitive arrival-by semantics for absolute timestamps while gaining a more useful start-after meaning for relative timestamps
 
 This also reduces surprising failures where a valid interleaved dialogue sequence would otherwise be rejected because the previous activity belonged to a different character.
 
@@ -126,13 +94,11 @@ This also reduces surprising failures where a valid interleaved dialogue sequenc
 
 - Interleaved multi-character dialogue is easy to author
 - File order remains the authoritative meaning of `:`
-- Relative `@` activities become useful in authored step-by-step action sequences
 - Actor availability is still respected without changing the author's intended chain structure
 
 ### Negative
 
 - `:` no longer implies anything specifically about the same character's previous activity
-- The meaning of `@` differs between absolute and relative timestamp forms
 - Good error messages remain important when an activity still cannot be scheduled for other reasons
 
 ## Implementation Notes
@@ -142,8 +108,6 @@ Implementation should follow these principles:
 1. Parse itinerary activities in file order.
 2. For each `:` activity, resolve its lower-bound timestamp from the completion time of the immediately previous authored activity.
 3. Respect the acting character's own availability when deciding the actual start.
-4. For absolute `@`, continue back-planning arrival to the authored timestamp.
-5. For relative `@`, schedule generated movement to begin no earlier than the resolved lower bound.
 6. Throw descriptive errors only when the activity still cannot be scheduled under those rules.
 
 ## Not Chosen
