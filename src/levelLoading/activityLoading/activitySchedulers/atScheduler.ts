@@ -9,62 +9,14 @@ import { createParseFormat, makeIdentifier, makeLiteral, makeNumber, makeSequenc
 import { assert, assertNonNullable } from "decent-portal";
 import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
-import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import Room from "@/game/types/Room";
 import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/types/Position";
-import Waypoint from "@/levelLoading/types/Waypoint";
-import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import { scheduleCharacterMovementToRoom, scheduleCharacterMovementToRoomAtTime } from "../movementPlanningUtil";
-import { findBestIncludedFloorWaypointToPosition, findNearestFloorWaypointToPosition, findWaypointsForRoom, isExitWaypoint, isWaypointOnMiddleRow } from "../waypointFindingUtil";
 import { createKeyframeAtTime } from "@/game/timeline";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { findPrecedingBusyCharacterActivityEndTime } from "@/levelLoading/timelineLoading/activityConflictUtil";
-
-function _findClaimedWaypointsFromSnapshot(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
-  const claimedWaypoints:Waypoint[] = [];
-  for(let characterI = 0; characterI < snapshot.characters.length; ++characterI) {
-    const characterPosition = snapshot.characters[characterI].position;
-    const claimedWaypoint = waypoints.find(waypoint => arePositionsEqual(waypoint.position, characterPosition));
-    if (claimedWaypoint) claimedWaypoints.push(claimedWaypoint);
-  }
-  return claimedWaypoints;
-}
-
-function _isItemInRoomAtPosition(room:Room, position:Position):boolean {
-  return room.items.find(i => arePositionsEqual(i.position, position)) !== undefined;
-}
-
-function _findBestTargetWaypoint(context:WaypointGenerationContext, waypoints:Waypoint[], claimedWaypoints:Waypoint[],
-  targetRoom:Room, targetXPercent:number):Waypoint {
-  const x = targetRoom.rect.x + (targetXPercent * targetRoom.rect.width);
-
-  assert(waypoints.length > 0);
-
-  const targetPosition = {x, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z};
-
-  function _onScoreWaypoint(waypoint:Waypoint):number {
-    let score = 0;
-    if (!isExitWaypoint(targetRoom, waypoint)) score += 1000000;
-    if (isWaypointOnMiddleRow(waypoint)) score += 100000;
-    if (!_isItemInRoomAtPosition(targetRoom, waypoint.position)) score += 10000; // Avoid standing on top of items.
-    score += 1000 - Math.hypot(waypoint.position.x - targetPosition.x, waypoint.position.z - targetPosition.z);
-    return score;
-  }
-
-  let waypoint = findBestIncludedFloorWaypointToPosition(context, targetRoom, claimedWaypoints, _onScoreWaypoint);
-  if (waypoint) return waypoint;
-  waypoint = findNearestFloorWaypointToPosition(context, targetRoom, targetPosition); // A crowded room. Just share a square with somebody else.
-  assertNonNullable(waypoint, 'How can there be no available waypoints in the room?');
-  return waypoint;
-}
-
-function _findTargetPosition(context:WaypointGenerationContext, snapshot:TimelineKeyframe, targetRoom:Room, targetXPercent:number = .5):Position {
-  const waypoints = findWaypointsForRoom(context, targetRoom.id);
-  const claimedWaypoints = _findClaimedWaypointsFromSnapshot(waypoints, snapshot);
-  const bestWaypoint = _findBestTargetWaypoint(context, waypoints, claimedWaypoints, targetRoom, targetXPercent);
-  return bestWaypoint.position;
-}
+import { findRoomMovementTargetPosition } from "./util/roomMovementSchedulingUtil";
 
 type PartsShape = {
   characterId:string,
@@ -106,7 +58,7 @@ function _scheduleRelativeAtActivity({ level, waypointContext, activity, editabl
   assertNonNullable(fromRoom);
   const toRoom = roomId === undefined ? fromRoom : findRoom(level.rooms, roomId); // If roomId is undefined, it indicates same-room travel.
   assertNonNullable(toRoom);
-  const toPosition = _findTargetPosition(waypointContext, fromKeyframe, toRoom, horizontalPercent);
+  const toPosition = findRoomMovementTargetPosition(waypointContext, fromKeyframe, toRoom, horizontalPercent);
 
   // If no movement needed to reach target position, exit trivially.
   if (_isMovementUnneeded(fromRoom, fromPosition, toRoom, toPosition, hasHorizontalTarget)) {
@@ -145,7 +97,7 @@ function _scheduleAbsoluteAtActivity({ level, waypointContext, activity, editabl
   const toRoom = roomId === undefined ? fromRoom : findRoom(level.rooms, roomId);
   assertNonNullable(toRoom);
   const deadlineKeyframe = createKeyframeAtTime(editableTimeline.keyframes, deadline);
-  const toPosition = _findTargetPosition(waypointContext, deadlineKeyframe, toRoom, horizontalPercent);
+  const toPosition = findRoomMovementTargetPosition(waypointContext, deadlineKeyframe, toRoom, horizontalPercent);
 
   // If no movement needed to reach target position, exit trivially.
   if (_isMovementUnneeded(fromRoom, fromPosition, toRoom, toPosition, hasHorizontalTarget)) {
