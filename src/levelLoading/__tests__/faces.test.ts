@@ -62,11 +62,10 @@ describe('level loading - faces activities', () => {
     expect(facingDirection).toBe('right');
   });
 
-  it.fails('faces a character at their position during future-arriving movement', () => {
+  it('faces a character at their position during causal movement', () => {
     const { level, errors } = loadLevelForTest(futureArrivalLevelText, 'faces-during-future-arrival.md');
-    /* The fixture gives Sam an absolute @ activity whose back-planned movement places him to Benny’s right by 
-    the time Benny faces him. Although the @ arrival timestamp is later than the faces timestamp, its movement 
-    begins earlier. This verifies that the facing activity uses Sam’s position on that movement timeline. */
+    /* Sam's causal goes activity is scheduled before Benny faces him, so the completed movement timeline is
+    available when the facing activity resolves Sam's position. */
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const bennyI = level!.timeline.characterIdToI.benny;

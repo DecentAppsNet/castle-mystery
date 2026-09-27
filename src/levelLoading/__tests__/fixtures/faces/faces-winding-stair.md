@@ -40,5 +40,6 @@ HS
 # itinerary
 
 0:00:00 Sam faces right
-0:00:05 Sam @ Closet
+: Sam goes Closet
+: Sam @ Closet
 

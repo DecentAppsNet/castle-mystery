@@ -25,7 +25,6 @@ import { scheduleStandsActivity } from "../activityLoading/activitySchedulers/st
 import { scheduleTakesActivity } from "../activityLoading/activitySchedulers/takesScheduler";
 import { scheduleUnlocksActivity } from "../activityLoading/activitySchedulers/unlocksScheduler";
 import { scheduleWaitsActivity } from "../activityLoading/activitySchedulers/waitsScheduler";
-import { doesActivityUseEndTimestamp } from "../activityLoading/parseUtil";
 import Activity from "../activityLoading/types/Activity";
 import ErrorCollector from "../errorCollection/ErrorCollector";
 import { createEditableTimeline } from "./editingUtil";
@@ -63,7 +62,7 @@ function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContex
   timeline:EditableTimeline, errors:ErrorCollector, scheduledActivities:readonly Activity[]):boolean {
   const activityScheduler = VERB_TO_ACTIVITY_SCHEDULER[activity.verb];
   assertNonNullable(activityScheduler, `Add scheduler for "${activity.verb}"`);
-  if (!doesActivityUseEndTimestamp(activity.verb) && activity.startTime === null) return false; // A preceding activity must be scheduled first.
+  if (activity.startTime === null) return false; // A preceding activity must be scheduled first.
 
   if (!activityScheduler(level, waypointContext, activity, timeline, errors, scheduledActivities)) return false;
 

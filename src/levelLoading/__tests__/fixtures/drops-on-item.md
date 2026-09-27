@@ -57,5 +57,6 @@ HS
 0:00:00 Sam @ Hall
 : waits .1
 : Sam takes Vase in right hand
-0:00:06 Sam @ Closet
+: Sam goes Closet
+: Sam @ Closet
 : drops Vase on Table

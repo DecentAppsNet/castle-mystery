@@ -47,6 +47,6 @@ B...
 
 # itinerary
 
-0:00:00 Sam stands
+0:00:00 Sam goes Library
 0:00:19 Benny faces Sam
 0:00:20 Sam @ Library

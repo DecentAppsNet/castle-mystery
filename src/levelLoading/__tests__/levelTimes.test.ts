@@ -102,7 +102,7 @@ describe('level loading - times and labels', () => {
   });
 
   it('sets end time based on latest activity in itinerary when itinerary available', () => {
-    const text = replaceSection(levelTimesBaseText, 'itinerary', ['0:00:00 Sam @ Hall', '1:00:00 Sam @ Closet', '2:00:00 Sam @ Hall']);
+    const text = replaceSection(levelTimesBaseText, 'itinerary', ['0:00:00 Sam @ Hall', '1:00:00 Sam @ Hall', '2:00:00 Sam @ Hall']);
     const { level, errors } = loadLevelForTest(text, 'times-inferred-end.md');
 
     expect(errors.describeErrors()).toBe('');

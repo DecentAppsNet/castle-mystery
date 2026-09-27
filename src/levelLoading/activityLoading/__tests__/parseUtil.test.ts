@@ -289,7 +289,7 @@ describe('parseUtil', () => {
             roomId: 'master bedroom',
             verb: '@',
           },
-          endTime: 3723000,
+          startTime: 3723000,
           verb: '@',
         });
       });

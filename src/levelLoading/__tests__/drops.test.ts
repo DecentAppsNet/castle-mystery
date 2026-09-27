@@ -31,23 +31,24 @@ describe('level loading - drops activities', () => {
     expect(sam.items.map(item => item.id)).not.toContain('vase');
   });
 
-  it.fails('drops an item at a character position during future-arriving movement', () => {
+  it('drops an item at a character position during causal movement', () => {
     const text = replaceSection(movingTargetBaseText, 'itinerary', [
-      '0:00:00 Sam stands',
-      '0:00:19 Benny drops Coin at Sam',
-      '0:00:20 Sam @ Hall (90%)'
+      '0:00:00 Sam goes Hall (90%)',
+      ': Sam @ Hall',
+      '0:00:01 Benny drops Coin at Sam'
     ]);
-    /* Sam's absolute @ activity back-plans movement through the time when Benny drops Coin at him. Although the
-    arrival timestamp is later than the drop timestamp, Sam has already moved to the right by then. This verifies
-    that the drop destination uses Sam's position on that movement timeline instead of his initial position. */
+    /* Sam's causal goes activity is scheduled before Benny's drop, so the completed movement timeline is
+    available when the drop resolves Sam's position. */
     const { level, errors } = loadLevelForTest(text, 'drops-during-future-arrival.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    const atDrop = createKeyframeAtTime(level!.timeline.keyframes, 19_000);
+    const start = createKeyframeAtTime(level!.timeline.keyframes, 0);
     const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
     const coin = end.rooms[level!.timeline.roomIdToI.hall].items.find(item => item.id === 'coin');
-    expect(coin?.position).toEqual(atDrop.characters[level!.timeline.characterIdToI.sam].position);
+    const samI = level!.timeline.characterIdToI.sam;
+    expect(coin!.position.x).toBeGreaterThan(start.characters[samI].position.x);
+    expect(coin!.position.x).toBeLessThan(end.characters[samI].position.x);
   });
 
   it('transfers an inventory item exactly at the drop effect end', () => {
@@ -132,8 +133,9 @@ describe('level loading - drops activities', () => {
       .replace('.t..\n....\n....\n```\n\n* t=Table|Book',
         '.t..\n....\n...J\n```\n\n* t=Table|Book\n* J=Jo')
       .replace('## Sam\n\n# items', '## Sam\n\n## Jo\n\n# items')
-      .replace('0:00:06 Sam @ Closet\n: drops Vase on Table', [
-        '0:00:06 Sam @ Closet',
+      .replace(': Sam goes Closet\n: Sam @ Closet\n: drops Vase on Table', [
+        ': Sam goes Closet',
+        ': Sam @ Closet',
         '0:00:06 Sam drops Vase on Table',
         '0:00:06 Jo faces Sam',
         '0:00:06 Vase emits "A bell rings for several seconds."'
@@ -168,8 +170,9 @@ describe('level loading - drops activities', () => {
         '.t..\n....\n...J\n```\n\n* t=Table|Book\n* J=Jo')
       .replace('## Sam\n\n# items', '## Sam\n\n## Jo\n* items=Coin\n\n# items')
       .replace('## Book\n', '## Book\n\n## Coin\n')
-      .replace('0:00:06 Sam @ Closet\n: drops Vase on Table', [
-        '0:00:06 Sam @ Closet',
+      .replace(': Sam goes Closet\n: Sam @ Closet\n: drops Vase on Table', [
+        ': Sam goes Closet',
+        ': Sam @ Closet',
         '0:00:06 Sam drops Vase on Table',
         '0:00:06 Jo drops Coin on Table'
       ].join('\n'));

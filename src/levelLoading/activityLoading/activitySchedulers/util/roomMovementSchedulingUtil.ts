@@ -45,7 +45,7 @@ function _findBestTargetWaypoint(context:WaypointGenerationContext, waypoints:Wa
   return crowdedRoomWaypoint;
 }
 /** Finds the preferred room waypoint for a horizontal destination at a timeline snapshot. */
-export function findRoomMovementTargetPosition(context:WaypointGenerationContext, snapshot:TimelineKeyframe,
+function findRoomMovementTargetPosition(context:WaypointGenerationContext, snapshot:TimelineKeyframe,
     targetRoom:Room, targetXPercent:number = .5):Position {
   const waypoints = findWaypointsForRoom(context, targetRoom.id);
   const targetPosition = { x:targetRoom.rect.x + targetXPercent * targetRoom.rect.width, y:0, z:ROOM_MIDDLE_ROW_CENTER_Z };

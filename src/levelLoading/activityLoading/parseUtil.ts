@@ -387,19 +387,6 @@ function _tryParseActivityTextAgainstFormat(activityText:string, parseFormat:Par
   return parts;
 }
 
-function _getStartAndEndTimes(activityTime:number|null, verb:string):{startTime:number|null, endTime:number|null} {
-  let startTime = null, endTime = null;
-  if (doesActivityUseEndTimestamp(verb)) {
-    endTime = activityTime;
-  } else {
-    startTime = activityTime;
-  }
-  return {startTime, endTime};
-}
-
-/** Reports whether a verb interprets its authored timestamp as an end time. */
-export function doesActivityUseEndTimestamp(verb:string) { return verb === '@'; }
-
 /** Reports whether an activity has no authored or resolved timestamp. */
 export function isActivityRelativeTimestamp(activity:ParsedActivity):boolean {
   return activity.startTime === null && activity.endTime === null;
@@ -421,7 +408,7 @@ export function tryParseActivity(activityLine:string, rules:ActivityParsingRules
   const verb = _findVerbInActivityText(activityText, rules);
   if (!verb) return `Itinerary line didn't include a known verb.`;
 
-  const { startTime, endTime } = _getStartAndEndTimes(activityTime, verb);
+  const startTime = activityTime, endTime = null;
 
   const parseFormat = rules.parseFormatsByVerb[verb];
   assertNonNullable(parseFormat, 'Earlier successful call to _findVerbInActivityText() should guarantee a parse format for the verb exists.');

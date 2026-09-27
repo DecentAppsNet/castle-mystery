@@ -192,6 +192,7 @@ describe('level loading - gives activities', () => {
   it('starts subsequent receiver movement after the give activity ends', () => {
     const text = replaceSection(givesBaseText, 'itinerary', [
       '0:00:00 Sam gives Coin to Jo',
+      ': Jo goes Closet',
       ': Jo @ Closet'
     ]);
     const { level, errors } = loadLevelForTest(text, 'gives-then-receiver-moves.md');

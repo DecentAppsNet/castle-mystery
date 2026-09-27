@@ -27,12 +27,12 @@ describe('character activity conflict integration', () => {
   it('rejects waiting during relative movement', () => {
     const { level, errors } = _loadActivities([
       '0:00:00 Sam stands',
-      ': Sam @ Closet',
+      ': Sam goes Closet',
       '0:00:00 Sam waits 3'
     ]);
 
     expect(level).toBeNull();
-    expect(errors.describeErrors()).toContain('sam can\'t wait because they are busy with "@" activity');
+    expect(errors.describeErrors()).toContain('sam can\'t wait because they are busy with "goes" activity');
   });
 
   it('allows concurrent nonzero activities by different characters', () => {

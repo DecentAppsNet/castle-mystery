@@ -9,7 +9,7 @@ import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimel
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { assert, assertNonNullable } from "decent-portal";
-import { findKeyframeForTime } from "@/game/timeline";
+import { createKeyframeAtTime, findKeyframeForTime } from "@/game/timeline";
 import { findRoomIdAtPosition } from "@/game/roomUtil";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { findClaimedWaypointsFromKeyframe, findNearestIncludedFloorBackRowWaypointToPosition, findNearestIncludedFloorWaypointToPosition, findRoomWaypointAtPosition } from "../waypointFindingUtil";
@@ -87,9 +87,8 @@ function _findDropInRoomPosition(baseRoom:Room, claimedWaypoints:Waypoint[],
 
 function _findDropAdjacentPosition(baseRoom:Room, claimedWaypoints:Waypoint[], waypointContext:WaypointGenerationContext, dropPosition:Position):Position {
   const dropWaypoint = findRoomWaypointAtPosition(waypointContext, baseRoom.id, dropPosition);
-  assertNonNullable(dropWaypoint);
-  claimedWaypoints.push(dropWaypoint);
-  const targetWaypoint = findNearestIncludedFloorWaypointToPosition(waypointContext, baseRoom, dropPosition, claimedWaypoints);
+  const excludedWaypoints = dropWaypoint ? [...claimedWaypoints, dropWaypoint] : claimedWaypoints;
+  const targetWaypoint = findNearestIncludedFloorWaypointToPosition(waypointContext, baseRoom, dropPosition, excludedWaypoints);
   return targetWaypoint?.position ?? dropPosition;
 }
 
@@ -118,7 +117,7 @@ export function scheduleDropsActivity(level:Level, waypointContext:WaypointGener
   const { characterId, itemId, toItemId, toCharacterId } = activity.parts as PartsShape;
   activity.busyCharacterIds = [characterId]; // toCharacterId only indicates a destination position.
   activity.busyItemIds = [itemId]; // toItemId only indicates a destination position.
-  const fromKeyframe = findKeyframeForTime(editableTimeline.keyframes, activity.startTime);
+  const fromKeyframe = createKeyframeAtTime(editableTimeline.keyframes, activity.startTime);
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);
   const characterKeyframe = fromKeyframe.characters[characterI];

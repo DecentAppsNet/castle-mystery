@@ -209,8 +209,7 @@ describe('parseFormatUtil', () => {
 
 		describe('activity parse formats', () => {
 			it('describes the @ activity parse format', () => {
-				expect(describeParseFormat(createAtActivityParseFormat())).toBe('Timestamp [CharacterId] `@` [RoomId] [`(` HorizontalTarget `%` `)`]');
-				//expect(describeParseFormat(createAtActivityParseFormat())).toBe('Timestamp [CharacterId] `@` [RoomId] [{`(` HorizontalTarget `%` `)`}]');
+				expect(describeParseFormat(createAtActivityParseFormat())).toBe('Timestamp [CharacterId] `@` RoomId');
 			});
 
 			it('describes the appears activity parse format', () => {

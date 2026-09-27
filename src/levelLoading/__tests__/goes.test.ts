@@ -172,8 +172,7 @@ describe('level loading - goes activities', () => {
   });
 
   it('uses a completed goes timeline when another character faces the mover', () => {
-    const text = facesFutureMovementText.replace('0:00:20 Sam @ Library', '0:00:00 Sam goes Library');
-    const { level, errors } = loadLevelForTest(text, 'faces-during-goes.md');
+    const { level, errors } = loadLevelForTest(facesFutureMovementText, 'faces-during-goes.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();

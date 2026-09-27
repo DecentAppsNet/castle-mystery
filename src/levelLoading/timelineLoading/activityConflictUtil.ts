@@ -23,18 +23,6 @@ function _isSpeechVerb(verb:string):verb is SpeechVerb {
   return verb === 'says' || verb === 'thinks';
 }
 
-/** Returns when a character's latest busy interval ending by `latestAllowedEndTime` ends, if any. */
-export function findPrecedingBusyCharacterActivityEndTime(characterId:string, latestAllowedEndTime:number,
-    scheduledActivities:readonly Activity[]):number|null {
-  let latestEndTime:number|null = null;
-  for(const activity of scheduledActivities) {
-    assertNonNullable(activity.endTime); // All scheduled activities have resolved timing.
-    if (activity.endTime > latestAllowedEndTime || !activity.busyCharacterIds.includes(characterId)) continue;
-    latestEndTime = Math.max(latestEndTime ?? activity.endTime, activity.endTime);
-  }
-  return latestEndTime;
-}
-
 export function doesActivityConflictWithScheduled(activity:Activity, scheduledActivities:readonly Activity[], errors:ErrorCollector):boolean {
   // Validate the current activity contract supplied by successful scheduling.
   assertNonNullable(activity.startTime);
