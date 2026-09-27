@@ -4,6 +4,7 @@ import { createCharacterKeyframeAtTime, findCharacterPositionAtTime } from '@/ga
 import { findRoomAtPosition } from '@/game/roomUtil';
 
 import defaultLevelText from './fixtures/at/at-base.md?raw';
+import guidanceLevelText from './fixtures/at/at-guidance-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 function _loadAt(itineraryLines:readonly string[], filename:string) {
@@ -82,6 +83,90 @@ describe('level loading - @ activities', () => {
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain(
       `at-wrong-room.md:${activityLineNo}:0: sam was not at closet at 0:00:05. Actual room: hall.`
+    );
+  });
+
+  it('suggests a movement start from a trustworthy preceding assertion', () => {
+    const text = replaceSection(guidanceLevelText, 'itinerary', [
+      '0:00:00 Sam @ Hall',
+      '0:00:10 Sam @ Library'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'at-guidance-from-at.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain(
+      'sam would need to start movement from hall at 0:00:08 to arrive in time.'
+    );
+  });
+
+  it('derives guidance origin from the timeline at a preceding goes start', () => {
+    const text = replaceSection(guidanceLevelText, 'itinerary', [
+      '0:00:01 Sam goes Closet',
+      '0:00:10 Sam @ Library'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'at-guidance-from-goes.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain(
+      'sam would need to start movement from hall at 0:00:08 to arrive in time.'
+    );
+  });
+
+  it('uses the latest preceding goes or @ activity for the same character', () => {
+    const text = replaceSection(guidanceLevelText, 'itinerary', [
+      '0:00:00 Sam @ Hall',
+      '0:00:01 Sam goes Closet',
+      ': Sam @ Closet',
+      '0:00:10 Sam @ Library'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'at-guidance-latest-origin-activity.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('sam would need to start movement from closet at');
+  });
+
+  it('ignores other characters and later-source equal-time activities', () => {
+    const text = replaceSection(guidanceLevelText, 'itinerary', [
+      '0:00:00 Sam goes Closet',
+      ': Sam @ Closet',
+      '0:00:10 Benny @ Closet',
+      '0:00:10 Sam @ Library',
+      '0:00:10 Sam @ Hall'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'at-guidance-origin-activity-eligibility.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('sam would need to start movement from closet at');
+  });
+
+  it('uses initial placement when no preceding goes or trustworthy @ activity exists', () => {
+    const { level, errors } = loadLevelForTest(replaceSection(guidanceLevelText, 'itinerary', [
+      '0:00:10 Sam @ Library'
+    ]), 'at-guidance-from-initial-placement.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain(
+      'sam was not at library at 0:00:10. Actual room: hall. '
+      + 'sam would need to start movement from hall at 0:00:08 to arrive in time.'
+    );
+  });
+
+  it('calculates guidance for two failures without changing the completed timeline', () => {
+    const text = replaceSection(guidanceLevelText, 'itinerary', [
+      '0:00:00 Sam @ Hall',
+      '0:00:10 Sam @ Closet',
+      '0:00:20 Sam @ Library'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'at-guidance-does-not-move.md');
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain(
+      'sam was not at closet at 0:00:10. Actual room: hall. '
+      + 'sam would need to start movement from hall at'
+    );
+    expect(errors.describeErrors()).toContain(
+      'sam was not at library at 0:00:20. Actual room: hall. '
+      + 'The previous @ activity at 0:00:10 is invalid, so no recommended correction has been made.'
     );
   });
 

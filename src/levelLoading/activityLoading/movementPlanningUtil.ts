@@ -136,6 +136,17 @@ function _findWaypointPathThroughRooms(context:WaypointGenerationContext, fromRo
   botch(`A waypoint path should exist from ${fromRoom.id} to ${toRoom.id}`);
 }
 
+function _findCharacterMovementWaypointPath(context:WaypointGenerationContext, fromRoom:Room,
+    fromPosition:Position, toRoom:Room, toPosition:Position):Waypoint[] {
+  if (fromRoom.id !== toRoom.id) {
+    return _findWaypointPathThroughRooms(context, fromRoom, toRoom, fromPosition, toPosition);
+  }
+
+  const fromWaypoint = findNearestFloorWaypointToPosition(context, fromRoom, fromPosition);
+  const toWaypoint = findNearestFloorWaypointToPosition(context, toRoom, toPosition);
+  return _simplifyWaypointPath(_findWaypointPath(fromRoom, fromWaypoint, toWaypoint));
+}
+
 function _calcWalkDurationBetweenPositions(fromPosition:Position, toPosition:Position):number {
   // Ignore Y movement because I like characters to hustle up/down the steps fast.
   const distance = Math.hypot(toPosition.x - fromPosition.x, toPosition.z - fromPosition.z);
@@ -148,6 +159,14 @@ function _calcWalkDurationForWaypointPath(waypoints:Waypoint[]):number {
     duration += _calcWalkDurationBetweenPositions(waypoints[i].position, waypoints[i+1].position);
   }
   return duration;
+}
+
+/** Calculates waypoint-based movement duration without changing a timeline. */
+export function calcCharacterMovementDuration(context:WaypointGenerationContext, fromRoom:Room,
+    fromPosition:Position, toRoom:Room, toPosition:Position):number {
+  if (arePositionsEqual(fromPosition, toPosition)) return 0;
+  const waypointPath = _findCharacterMovementWaypointPath(context, fromRoom, fromPosition, toRoom, toPosition);
+  return _calcWalkDurationForWaypointPath(waypointPath);
 }
 
 function _getSecondsText(msecs:number):string {
@@ -211,9 +230,7 @@ function _createCantArriveInTimeMessage(characterId:string, room:Room, msecsNeed
 function _scheduleCharacterMovementWithinRoom(context:WaypointGenerationContext, room:Room, fromPosition:Position, fromTime:number, toPosition:Position, 
     toTime:number|null, characterI:number, initialFacingDirection:FacingDirection, timeline:EditableTimeline):ScheduleResult {
   assert(toTime === null || toTime >= fromTime);
-  const fromWaypoint = findNearestFloorWaypointToPosition(context, room, fromPosition);
-  const toWaypoint = findNearestFloorWaypointToPosition(context, room, toPosition);
-  const waypointPath = _simplifyWaypointPath(_findWaypointPath(room, fromWaypoint, toWaypoint));
+  const waypointPath = _findCharacterMovementWaypointPath(context, room, fromPosition, room, toPosition);
   const characterId = timeline.characterIds[characterI];
 
   const walkStartDelay = toTime === null ? 0 : _calcWalkStartDelayForWaypointPath(waypointPath, toTime - fromTime);
@@ -233,7 +250,7 @@ function _scheduleCharacterMovementToRoomAtTime(context:WaypointGenerationContex
     return _scheduleCharacterMovementWithinRoom(context, fromRoom, fromPosition, fromTime, toPosition, 
         toTime, characterI, initialFacingDirection, timeline);
   }
-  const waypointPath = _findWaypointPathThroughRooms(context, fromRoom, toRoom, fromPosition, toPosition);
+  const waypointPath = _findCharacterMovementWaypointPath(context, fromRoom, fromPosition, toRoom, toPosition);
 
   const characterId = timeline.characterIds[characterI];
   const walkStartDelay = toTime === null ? 0 : _calcWalkStartDelayForWaypointPath(waypointPath, toTime - fromTime);

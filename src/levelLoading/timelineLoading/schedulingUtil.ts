@@ -118,6 +118,6 @@ export function scheduleActivities(level:Level, activities:Activity[], waypointC
     }
   }
   assert(toBeScheduled.length === 0);
-  validateAtActivities(level, activities, timeline, errors);
+  validateAtActivities(level, waypointContext, activities, timeline, errors);
   return errors.count > originalErrorCount ? null : _editableTimelineToTimeline(timeline);
 }
