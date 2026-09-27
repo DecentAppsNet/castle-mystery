@@ -7,7 +7,7 @@ import Level from "@/game/types/Level";
 import Timeline from "@/game/types/Timeline";
 import { isActivityRelativeTimestamp, sortActivitiesAfterStartTimeAssignment } from "../activityLoading";
 import { scheduleAppearsActivity } from "../activityLoading/activitySchedulers/appearsScheduler";
-import { scheduleAtActivity } from "../activityLoading/activitySchedulers/atScheduler";
+import { scheduleAtActivity, validateAtActivities } from "../activityLoading/activitySchedulers/atScheduler";
 import { scheduleBecomesActivity } from "../activityLoading/activitySchedulers/becomesScheduler";
 import { scheduleDropsActivity } from "../activityLoading/activitySchedulers/dropsScheduler";
 import { scheduleEmitsActivity } from "../activityLoading/activitySchedulers/emitsScheduler";
@@ -119,5 +119,6 @@ export function scheduleActivities(level:Level, activities:Activity[], waypointC
     }
   }
   assert(toBeScheduled.length === 0);
+  validateAtActivities(level, activities, timeline, errors);
   return errors.count > originalErrorCount ? null : _editableTimelineToTimeline(timeline);
 }

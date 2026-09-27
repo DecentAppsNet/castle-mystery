@@ -17,6 +17,7 @@ import { createKeyframeAtTime } from "@/game/timeline";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import { findPrecedingBusyCharacterActivityEndTime } from "@/levelLoading/timelineLoading/activityConflictUtil";
 import { findRoomMovementTargetPosition, scheduleStartTimeRoomMovement } from "./util/roomMovementSchedulingUtil";
+import { formatMsecsAsTimestamp } from "../timestampUtil";
 
 type PartsShape = {
   characterId:string,
@@ -38,6 +39,32 @@ type AtSchedulingContext = {
   roomId?:string,
   horizontalPercent:number,
   hasHorizontalTarget:boolean
+}
+
+/** Validates room-targeted @ activities against the completed timeline at their legacy arrival times. */
+export function validateAtActivities(level:Level, activities:readonly Activity[], timeline:EditableTimeline,
+    errors:ErrorCollector):void {
+  for(const activity of activities) {
+    if (activity.verb !== '@') continue;
+    
+    assertNonNullable(activity.startTime);
+    assertNonNullable(activity.endTime);
+    assert(Number.isFinite(activity.startTime) && Number.isFinite(activity.endTime));
+    const { characterId, roomId } = activity.parts as PartsShape;
+    assertNonNullable(characterId, 'implied subjects should have been resolved');
+    if (roomId === undefined) continue;
+
+    // Compare the authored room with the character's interpolated completed-timeline position.
+    const characterI = timeline.characterIdToI[characterId];
+    const snapshot = createKeyframeAtTime(timeline.keyframes, activity.endTime);
+    const position = snapshot.characters[characterI].position;
+    const actualRoom = findRoomAtPosition(level.rooms, position.x, position.y);
+    assertNonNullable(actualRoom);
+    if (actualRoom.id === roomId) continue;
+
+    const timestamp = formatMsecsAsTimestamp(activity.endTime);
+    errors.addAtLine(`${characterId} was not at ${roomId} at ${timestamp}. Actual room: ${actualRoom.id}.`, activity.lineI);
+  }
 }
 
 function _isMovementUnneeded(fromRoom:Room, fromPosition:Position, toRoom:Room,

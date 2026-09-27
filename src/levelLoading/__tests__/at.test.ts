@@ -171,6 +171,21 @@ describe('level loading - @ activities', () => {
     expect(findRoomAtPosition(level!.rooms, bennyPosition.x, bennyPosition.y)?.id).toBe('hall');
   });
 
+  it('validates an @ arrival before later movement away', () => {
+    const text = replaceSection(defaultLevelText, 'itinerary', [
+      '0:00:00 Sam stands',
+      '0:00:05 Sam @ Closet',
+      '0:00:06 Sam goes Hall'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'at-before-later-movement.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const samPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
+      level!.timeline.characterIdToI.sam, level!.endTime);
+    expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('hall');
+  });
+
   it('reports an unschedulable @ activity at its exact source line', () => {
     const activityText = '0:00:00 Sam @ Closet';
     const text = replaceSection(defaultLevelText, 'itinerary', [
