@@ -10,7 +10,15 @@ import { ROOM_MIDDLE_ROW_CENTER_Z } from "@/game/roomSpaceConstants";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";
 import Waypoint from "@/levelLoading/types/Waypoint";
-import { findBestIncludedFloorWaypointToPosition, findNearestFloorWaypointToPosition, findWaypointsForRoom, isExitWaypoint, isWaypointOnMiddleRow } from "../../waypointFindingUtil";
+import Activity from "@/levelLoading/activityLoading/types/Activity";
+import { ErrorCollector } from "@/levelLoading/errorCollection";
+import Level from "@/game/types/Level";
+import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
+import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
+import { scheduleCharacterMovementToRoom } from "@/levelLoading/activityLoading/movementPlanningUtil";
+import { createKeyframeAtTime } from "@/game/timeline";
+import { findBestIncludedFloorWaypointToPosition, findNearestFloorWaypointToPosition, findWaypointsForRoom, isExitWaypoint, isWaypointOnMiddleRow } from "@/levelLoading/activityLoading/waypointFindingUtil";
+
 function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:TimelineKeyframe):Waypoint[] {
   return snapshot.characters.flatMap(character => {
     const waypoint = waypoints.find(candidate => arePositionsEqual(candidate.position, character.position));
@@ -44,4 +52,48 @@ export function findRoomMovementTargetPosition(context:WaypointGenerationContext
   const claimedWaypoints = _findClaimedWaypoints(waypoints, snapshot);
 
   return _findBestTargetWaypoint(context, waypoints, claimedWaypoints, targetRoom, targetPosition).position;
+}
+
+/** Schedules immediate room-directed movement from an activity's resolved start time. */
+export function scheduleStartTimeRoomMovement(level:Level, waypointContext:WaypointGenerationContext,
+    activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
+  const { characterId, roomId, horizontalTarget } = activity.parts as { characterId:string, roomId?:string, horizontalTarget?:number };
+  assertNonNullable(characterId, 'implied subjects should have been resolved');
+  activity.busyCharacterIds = [characterId];
+  activity.busyItemIds = [];
+  assertNonNullable(level.characters.find(character => character.id === characterId));
+
+  if (!roomId && !horizontalTarget) {
+    errors.addAtLine(`The ${activity.verb} activity needs room ID, horizontal target %, or both specified.`, activity.lineI);
+    return false;
+  }
+
+  assert(activity.endTime === null);
+  assertNonNullable(activity.startTime);
+  const characterI = editableTimeline.characterIdToI[characterId];
+  const horizontalPercent = horizontalTarget === undefined ? .5 : horizontalTarget / 100;
+
+  // Resolve the authored target from the character's position when movement begins.
+  const fromKeyframe = createKeyframeAtTime(editableTimeline.keyframes, activity.startTime);
+  const fromPosition = fromKeyframe.characters[characterI].position;
+  const fromRoom = findRoomAtPosition(level.rooms, fromPosition.x, fromPosition.y);
+  assertNonNullable(fromRoom);
+  const toRoom = roomId === undefined ? fromRoom : findRoom(level.rooms, roomId);
+  assertNonNullable(toRoom);
+  const toPosition = findRoomMovementTargetPosition(waypointContext, fromKeyframe, toRoom, horizontalPercent);
+  if (fromRoom.id === toRoom.id && (horizontalTarget === undefined || arePositionsEqual(fromPosition, toPosition))) {
+    activity.endTime = activity.startTime;
+    return true;
+  }
+
+  // Add movement keyframes immediately and retain its complete occupied interval.
+  const result = scheduleCharacterMovementToRoom(waypointContext, fromRoom, fromPosition, activity.startTime,
+    toRoom, toPosition, characterI, fromKeyframe.characters[characterI].facingDirection, editableTimeline);
+  if (typeof result === 'string') {
+    errors.addAtLine(result, activity.lineI);
+    return false;
+  }
+  assert(result.walkStartDelay === 0);
+  activity.endTime = activity.startTime + result.walkDuration;
+  return true;
 }
