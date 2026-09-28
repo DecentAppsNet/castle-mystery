@@ -188,6 +188,7 @@ A.......
 
 9:00:00 Sticky Agatha says "Today, we may see our Queen."
 : takes infant in right hand.
+9:00:04 goes to East Square (10%)
 9:00:07 @ East Square (10%)
 
 9:00:00 Pope takes Holy Binky in right hand
@@ -196,8 +197,12 @@ A.......
 : says "Carved by Joseph. Given to the baby Jesus."
 : Ugolino says "A fitting gift for the new mother."
 
+9:00:16 Pope goes to Birthing Tent (20%)
+9:00:18 Ugolino goes (30%)
 9:00:19 Ugolino @ Cathedral (30%)
 : faces right.
+
+9:00:18 Female Peasant thinks, "40 years? She's too old to have a child!"
 
 9:00:20 Pope @ Birthing Tent (20%)
 : Sofia the Midwife says, "My lady, his Holiness has arrived."
@@ -208,16 +213,19 @@ A.......
 : Constance I says, "Just leave it on the pile."
 : Pope says, "But-"
 : Constance I says, "Thank you! You can go."
-: Pope @ Birthing Tent (80%)
+: Pope goes (80%)
 : drops Holy Binky
 : Constance I says, "(huff) (huff)"
 
 9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
 
+9:00:42 Amos goes to Birthing Tent (90%)
+9:00:43 Pope goes to Cathedral
 9:00:43 Amos @ Birthing Tent (90%)
 : Amos says, "Your Majesty, shall I bring them in?"
 : Constance I says, "Yes! As many as possible."
 : Constance I says, "All must see!"
+: Amos goes to East Square
 
 9:00:52 Amos @ East Square
 : faces left.
@@ -225,12 +233,14 @@ A.......
 : Sticky Agatha faces right.
 : says, "Me?"
 : Amos says, "Yes. Go inside the tent."
+: Sticky Agatha goes to Birthing Tent (90%)
 9:00:59 Amos takes vase in right hand.
-: @ Guard Quarters
+: goes to Guard Quarters
 : Amos drops vase.
-: thinks, "Best to keep it here."
-: @ East Square (10%)
+: thinks, "Best to keep my vase here."
+: goes to East Square (10%)
 
+9:00:57 Sofia the Midwife goes to Birthing Tent (70%)
 9:00:57 Sticky Agatha @ Birthing Tent (90%)
 : Constance I says, "Aiieeee!"
 : Sofia the Midwife @ Birthing Tent (70%)
@@ -248,8 +258,8 @@ A.......
 : Sticky Agatha takes Holy Binky.
 : says, "I am overwhelmed by your grace."
 : Constance I says, "Just tell everybody I wasn't faking."
-(Agatha leaves)
-: Sofia the Midwife says, "Majesty, what shall you name him?"
+9:01:21 Sticky Agatha goes to Living Space
+9:01:23 Sofia the Midwife says, "Majesty, what shall you name him?"
 : Constance I says, "Constantine. After myself, of course."
 
 9:00:48 Pope @ Cathedral
@@ -271,8 +281,6 @@ A.......
 
 9:00:57 Male Peasant 4 thinks, "She brings a baby into the tent?"
 : Old Female Peasant 2 thinks, "What fraud is this? We are not blind."
-
-9:00:18 Female Peasant thinks, "40 years? She's too old to have a child!"
 
 # Conclusions
 

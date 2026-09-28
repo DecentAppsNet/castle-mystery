@@ -1,179 +1,291 @@
 # General
 
-* title=Adhoc
-* activeCharacter=Marty
-* time=11:00:00
-* background=daySky.png
+* title=adhoc
+* activeCharacter=Constance I
+* time=9:00
+* background=countryside.png
 * imports=items.md | characters.md | roomStyles.md
-* winSynopsis=Storywise, nothing important happened in this level - it was just a tutorial to get you warmed up. We'll let you figure out the rest of the game on your own. The real story begins next!
+* winSynopsis=Queen Constance birthed Constantine publicly to avoid disputes of lineage. The Pope, seeking to gain the earliest possible favor with the future king, bestowed a holy relic to the newborn. But in the end, Sticky Agatha kept the Holy Binky for her own child.
 
 # Map
 
 ```
-.......
-VVV....
-VVVHHGG
+..........
+AABB..DDF.
+AABBCCDDE.
 ```
 
-* V=Exhibit Room
-* H=Hallway
-* G=Gift Shop
+* A=Cathedral
+* B=West Square
+* C=Birthing Tent
+* D=East Square
+* E=Guard Quarters
+* F=Living Space
 
 # Rooms
 
-## Exhibit Room
+## Cathedral
 
-* style=Museum
-* exits=hallway
-
-```
-..t..s...v..
-..M....L....
-............
-```
-
-* s=Sarcophagus | Sarcophagus Lid
-* t=Time of Day Plaque
-* v=Pedestal | Vase 
-* L=Lorenzo
-* M=Marty
-
-## Hallway
-
-* style=Museum
+* style=Old Castle
+* exits=West Square
 
 ```
-........
-....L...
+.n.c....
+....U.P.
 ........
 ```
 
-* L=Larry
-* exits=Gift Shop
+* P=Pope
+* U=Ugolino
+* n=Side Table|Letter
+* c=Coffer
 
-## Gift Shop
+## West Square
 
-* style=Museum
+* title=
+* outside=true
+* exits=Birthing Tent
+* style=Town Street Day
 
 ```
-..1.2.3.
+..NMFGHI
 ........
 ........
 ```
 
-* 1=Shelf 1
-* 2=Shelf 2
-* 3=Shelf 3
+* M=male peasant
+* F=female peasant
+* N=male peasant 3
+* G=female peasant 3
+* H=old male peasant
+* I=old female peasant
+
+## Birthing Tent
+
+* outside=true
+* exits=East Square
+* style=Town Street Day
+
+```
+....C.p.
+..M.....
+........
+```
+
+* p=Pile of Presents
+* C=Constance I
+* M=Sofia the Midwife
+
+## East Square
+
+* outside=true
+* style=Town Street Day
+* title=
+* exits=Guard Quarters|Living Space
+
+
+```
+v.F..GH.
+A.......
+...MNI..
+```
+
+* A=Amos
+* v=Vase
+* M=male peasant 2
+* F=female peasant 2
+* N=male peasant 4
+* G=female peasant 4
+* H=old male peasant 2
+* I=old female peasant 2
+
+## Guard Quarters
+
+* style=Old Castle
+
+## Living Space
+
+* style=Old Castle
+
+```
+.I..
+.A..
+....
+```
+
+* A=Sticky Agatha
+* I=infant
 
 # Characters
 
-## Lorenzo
+## Constance I
+* orientation=laying
+* items=newborn baby
 
-* description=He wears a name badge that says "Guida / Guide - Lorenzo".
+## Pope
+
+* items=Holy Binky
+
+## Male Peasant 2
 * facing=left
-* faceImage=lorenzo.png
 
-## Larry
+## Female Peasant 2
+* facing=left
 
-* description=A seven-year-old boy, ready for trouble.
-* faceImage=larry.png
+## Male Peasant 4
+* facing=left
 
-## Marty
+## Female Peasant 4
+* facing=left
 
-* description=He seems bored and curious at the same time.
-* faceImage=marty.png
+## Old Male Peasant 2
+* facing=left
+
+## Old Female Peasant 2
+* facing=left
+
+## Sticky Agatha
 
 # Items
 
-## Sarcophagus
-
-* description=A nearby plaque reads, "Federico II (1194–1250), Imperatore del Sacro Romano Impero e Re di Sicilia. Sepolto nel sarcofago imperiale di porfido della Cattedrale di Palermo."
-* image=sarcophagus.png
-* drawOffsetX=1
-
-## Sarcophagus Lid
-* image=sarcophagusLid.png
-* drawOffsetX=0
-* drawOffsetY=.3
-
-## Time of Day Plaque
-* drawOffsetY=-1
+## Pile of Presents
+* image=presents.png
 
 ## Vase
 
-* description=An ancient clay vase with faded symbols on it.
+* description=A vase of water with "Amos" written on it.
 * image=amosVase.png
-* drawOffsetX=.5
 
-## Shelf 1
-* image=giftShopShelf1.png
+## Holy Binky
 
-## Shelf 2
-* image=giftShopShelf2.png
+## Infant
 
-## Shelf 3
-* image=giftShopShelf3.png
-* stackOffsetX=.8
-* stackOffsetY=-.8
+* description=A swaddled-up infant, peering calmly at the World around him.
+* image=swaddledBaby.png
 
-# itinerary
+## Newborn Baby
 
-11:00:00 Marty waits
-: says, "Aren't you going to give a tour?"
-: Larry faces left.
-: Lorenzo says, "I need more people here before I can start." to Marty
-: Marty says, "Why?"
-: Lorenzo says, "It's weird to give a museum tour to just one person."
-: Marty says, "LARRY!"
-: Larry goes to Exhibit Room (90%)
-11:00:16 Larry @ Exhibit Room
-: Lorenzo faces right.
-: says, "Okay, I guess two people is enough for a tour."
+* description=A swaddled-up infant, peering irritatedly at the World around him.
+* image=newborn.png
+
+## Coffer
+
+* description=Contains a note, "And now we are promised an heir for both Sicily and Germany? An Emperor of this kind would be uncontrollable!"
+## Side Table
+
+## Letter
+
+* description="His Holiness and Archbishop Ugolino di Conti shall arrive at your humble parish on Tuesday. Provide the most lavish accomodations you may manage. May God forgive your shortcomings as a host."
+
+# Itinerary
+
+9:00:00 Constance I says "Aiiieeee!"
+: says "(huff) (huff) (huff)"
+: Sofia the Midwife says "My lady, let me send these common folk away."
+: Constance I says "No! They must all see!"
+: Sofia the Midwife says "As you wish."
+9:00:15 Constance I says "(huff) (huff)"
+
+9:00:00 Sticky Agatha says "Today, we may see our Queen."
+: takes infant in right hand.
+9:00:04 goes to East Square (10%)
+9:00:07 @ East Square (10%)
+
+9:00:00 Pope takes Holy Binky in right hand
+: says "Behold the Holy Binky!"
 : faces left.
-: says, "You stand before the tomb of"
-: says, "Emperor Frederick II, ruler of-"
-: Marty says, "Is he in that box right now?"
-: Lorenzo says, "Yes."
-: Marty says, "Can we see?"
-: Lorenzo says, "No! Let me give the tour."
-: says "You stand before the tomb-"
-: Larry takes Vase in right hand
-: Lorenzo faces right.
-: says, "Put that down!"
-11:00:39 Larry goes to Gift Shop (80%)
-11:00:42 Lorenzo goes to Gift Shop (10%)
-11:00:45 Larry @ Gift Shop (80%)
-: drops Vase on Shelf 3
-: goes to Gift Shop (30%)
-11:00:46 Lorenzo @ Gift Shop (10%)
-: says, "Where is it?"
-: Larry faces right.
-: Lorenzo goes (80%)
-: goes (70%)
-: says, "Oh no!"
-: goes (80%)
-: goes (60%)
-: goes (70%)
+: says "Carved by Joseph. Given to the baby Jesus."
+: Ugolino says "A fitting gift for the new mother."
 
-11:00:04 Larry thinks, "What is Marty doing?"
+9:00:16 Pope goes to Birthing Tent (20%)
+9:00:18 Ugolino goes (30%)
+9:00:19 Ugolino @ Cathedral (30%)
+: faces right.
 
-11:00:48 Marty takes Sarcophagus Lid in left hand
-: goes (30%)
-: drops Sarcophagus Lid
-: goes (50%)
-: faces left
-: says, "Sick!"
+9:00:18 Female Peasant thinks, "40 years? She's too old to have a child!"
 
+9:00:20 Pope @ Birthing Tent (20%)
+: Sofia the Midwife says, "My lady, his Holiness has arrived."
+: Constance I says, "I know! He reeks of frankincense."
+: Pope says, "Oh, beloved daughter, Queen of Sicily."
+: Constance I says, "(huff) (huff)"
+: Pope says, "I bestow to your newborn a gift most-"
+: Constance I says, "Just leave it on the pile."
+: Pope says, "But-"
+: Constance I says, "Thank you! You can go."
+: Pope goes (80%)
+: drops Holy Binky
+: Constance I says, "(huff) (huff)"
+
+9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
+
+9:00:42 Amos goes to Birthing Tent (90%)
+9:00:43 Pope goes to Cathedral
+9:00:43 Amos @ Birthing Tent (90%)
+: Amos says, "Your Majesty, shall I bring them in?"
+: Constance I says, "Yes! As many as possible."
+: Constance I says, "All must see!"
+: Amos goes to East Square
+
+9:00:52 Amos @ East Square
+: faces left.
+: says, "You there."
+: Sticky Agatha faces right.
+: says, "Me?"
+: Amos says, "Yes. Go inside the tent."
+: Sticky Agatha goes to Birthing Tent (90%)
+9:00:59 Amos takes vase in right hand.
+: goes to Guard Quarters
+: Amos drops vase.
+: thinks, "Best to keep my vase here."
+: goes to East Square (10%)
+
+9:00:57 Sofia the Midwife goes to Birthing Tent (70%)
+9:00:57 Sticky Agatha @ Birthing Tent (90%)
+: Constance I says, "Aiieeee!"
+: Sofia the Midwife @ Birthing Tent (70%)
+: faces left.
+: Constance I gives newborn baby to Sofia the Midwife.
+: Sofia the Midwife takes newborn baby in left hand.
+: Constance I says, "Did you see?"
+: Sticky Agatha says, "Your Majesty?"
+: Constance I says, "Did you see the birth!"
+: Sticky Agatha says, "Yes!"
+: Constance I says, "Oh, you have a little one too!"
+: Sticky Agatha says, "Yes, your Majesty."
+: Constance I says, "See that pile of gifts?"
+: Constance I says, "Grab one of them for your baby."
+: Sticky Agatha takes Holy Binky.
+: says, "I am overwhelmed by your grace."
+: Constance I says, "Just tell everybody I wasn't faking."
+9:01:21 Sticky Agatha goes to Living Space
+9:01:23 Sofia the Midwife says, "Majesty, what shall you name him?"
+: Constance I says, "Constantine. After myself, of course."
+
+9:00:48 Pope @ Cathedral
+: Ugolino says, "Your Holiness has returned."
+: Pope says, "That is apparent. Why say it?"
+: Ugolino says, "I... uh... "
+: says "...wanted to acknowledge your presence respectfully."
+: Pope says, "A simple bow suffices, Archbishop."
+9:01:02 faces right.
+: says, "What a drab little church."
+: says, "Not a single flying buttress!"
+: Ugolino says, "I shall tell the parish priest of your dissatisfaction."
+: Pope says, "Good."
+
+9:01:25 Sticky Agatha @ Living Space
+
+9:01:28 Amos says, "Next!"
+: says, "Get in there and witness."
+
+9:00:57 Male Peasant 4 thinks, "She brings a baby into the tent?"
+: Old Female Peasant 2 thinks, "What fraud is this? We are not blind."
 
 # Conclusions
 
-* verbs=stole|hid|broke|smashed|painted|crushed|dropped
-* withObjects=a hammer|his fist|a brush|other vases|his foot|difficulty|his uncle
-
 ## Identities
+* unlockConclusions=The Relic
 
-* unlockConclusions=What Happened to the Vase?
-
-## What Happened to the Vase?
-
-* conclusion=[Larry] took the vase to the [Gift Shop] and [hid] it with [other vases].
+## The Relic
+* conclusion=The [Holy Binky] was regifted to [Sticky Agatha].
