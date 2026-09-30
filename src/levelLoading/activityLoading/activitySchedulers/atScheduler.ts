@@ -18,6 +18,7 @@ import { calcCharacterMovementDuration } from "../movementPlanningUtil";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import Room from "@/game/types/Room";
 import Position from "@/game/types/Position";
+import { MSECS_IN_SECOND } from "@/common/timeUtil";
 
 type PartsShape = {
   characterId:string,
@@ -90,6 +91,10 @@ function _findOriginForMovementToRoom(level:Level, waypointContext:WaypointGener
   return { originSnapshot, originRoom, originPosition };
 }
 
+function _roundDownMsecsToSecond(msecs:number):number {
+  return Math.floor(msecs / MSECS_IN_SECOND) * MSECS_IN_SECOND;
+}
+
 function _createPlacementCorrectionGuidance(level:Level, waypointContext:WaypointGenerationContext, assertion:Activity,
     activities:readonly Activity[], timeline:EditableTimeline):string {
 
@@ -107,9 +112,11 @@ function _createPlacementCorrectionGuidance(level:Level, waypointContext:Waypoin
 
   const targetRoom = findRoom(level.rooms, roomId);
   assertNonNullable(targetRoom);
+  assertNonNullable(assertion.startTime); // Because validation is done after all activities are scheduled.
   const targetPosition = findRoomMovementTargetPosition(waypointContext, originSnapshot, targetRoom, horizontalTarget);
   const walkDuration = calcCharacterMovementDuration(waypointContext, originRoom, originPosition, targetRoom, targetPosition);
-  const suggestedStart = formatMsecsAsTimestamp(assertion.startTime! - walkDuration);
+  const suggestedStartTime = _roundDownMsecsToSecond(assertion.startTime - walkDuration); // Round down to nearest section because timestamps don't allow sub-second specification.
+  const suggestedStart = formatMsecsAsTimestamp(suggestedStartTime);
   return `${characterId} would need to start movement from ${originRoom.id} at ${suggestedStart} to arrive in time.`;
 }
 
