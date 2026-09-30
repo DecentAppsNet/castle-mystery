@@ -281,8 +281,8 @@ SSMM/HH\YYYYTT
 : says, "the work goes twice as fast!"
 : Pietro says, "Okay, then think about masonry contracts."
 : says, "But do it somewhere else."
-(Anna leaves for family quarters)
 7:30:40 Pietro faces left
+7:30:40 Anna goes to Family Quarters
 
 7:30:05 Yusuf thinks, "I must see Anna today."
 
@@ -351,6 +351,7 @@ SSMM/HH\YYYYTT
 : Yusuf says, "I will speak with Pietro about this."
 (they both leave)
 
+7:30:32 Niccolo goes to Workshop Yard (90%)
 7:30:33 Ahmad goes to Workers' Dormitory
 7:30:37 Ahmad @ Workers' Dormitory
 : says, "Drunken fool!"
@@ -368,6 +369,288 @@ SSMM/HH\YYYYTT
 : Heinrich faces left
 : Heinrich says, "No time. I'm late!"
 : Maria says, "Wait!"
+: takes bread roll in left hand
+: gives bread roll to Heinrich
+: says, "Take it with you."
+: Heinrich says, "Thank you, ma'am."
+: takes bread roll into inventory
+
+7:30:40 Niccolo @ Workshop Yard (90%)
+(Niccolo is always in front of the cutting station, working, while he is in the yard.)
+: waits 10
+: goes (80%)
+: waits 20
+: goes (90%)
+: waits 10
+: faces left
+: waits 3
+: goes (70%)
+: waits 10
+: goes (90%)
+: faces left
+: kneels
+: waits 20
+: thinks, "(thinking dark thoughts)"
+: stands
+: goes (80%)
+: waits 10
+: goes (90%)
+: faces left
+: kneels
+: waits 10
+: goes (70%)
+: Niccolo thinks, "This is Stefan's fault."
+7:32:36 Niccolo goes to Stone Store
+
+7:30:44 Anna @ Family Quarters
+
+7:30:54 Ahmad goes to Common Kitchen
+
+7:31:00 Ahmad @ Common Kitchen
+: says, "Did they linger today?"
+: Maria says, "Linger, sir?"
+: Ahmad says, "The workers shouldn't linger at breakfast."
+: Maria says, "Shall I make my food less delicious?"
+: Ahmad says, "No lingering after sun up!"
+: Maria says, "Even for you?"
+: Ahmad says, "I am not lingering!"
+(Ahmad leaves for Workshop Yard)
+
+7:31:04 Yusuf goes to Master's Hall
+7:31:05 Salomone goes to Master's Hall
+7:31:19 Yusuf @ Master's Hall
+7:31:20 Salomone @ Master's Hall
+: Pietro faces left
+7:31:21 Pietro says, "What?"
+: Yusuf says, "The clerk lists me with the yard workers."
+: says, "But I go to churches and bridges and castles."
+: says, "My work is there - not in the yard."
+: Pietro says, "Then we shall make a new list."
+: Yusuf says, "Good."
+: Pietro says, "And only your name will be on it."
+: Yusuf says, "Very good. What is this list?"
+: Pietro says, "A list of People Who Complain."
+: Yusuf says, "Oh no no no, sir."
+: says, "I only wanted your records to be in order."
+: Pietro says, "Get back to work."
+(Yusuf leaves for tool store)
+7:31:54 Salomone says, "Master, I must share some numbers with you."
+: Pietro faces Salomone
+: Pietro says, "Always with the numbers."
+: Salomone says, "Just two numbers."
+: says, "The first is 58 tari."
+: says, "The second is 0."
+: Pietro says "The first number is our income?"
+: Salomone says, "No, that is the second number. The first number-"
+: Pietro says "Our expenses."
+: Salomone says, "Yes."
+: Pietro says "Don't worry! More jobs are coming."
+: Salomone says, "May we all prosper, sir."
+7:32:29 Salomone goes to Accounts Room
+7:32:30 Pietro goes (60%)
+: faces left
+
+7:30:51 Heinrich goes to Workshop Yard
+7:30:55 Giorgios goes to Workshop Yard (20%)
+7:30:56 Heinrich @ Workshop Yard
+(Giovanni is always in front of the masonry station, working, while he is in the yard.)
+: Giovanni faces Heinrich
+: says, "Apprentice, you're finally here."
+: says, "Oil my tool!"
+: Andreas says, "(snickers)"
+: Giovanni says, "Oh, shut up."
+: takes chisel in right hand
+: gives chisel to Heinrich
+: Heinrich takes chisel in right hand
+(Giovanni follows Heinrich to the Tool Store)
+
+7:31:06 Giorgios @ Workshop Yard (20%)
+(Giorgios is always in front of the carving station, while he is in the yard. Andreas is there as well.)
+: says, "Boy, your carves are fair."
+: Andreas faces Giorgios
+: Giorgios says, "But bring the blade toward your body"
+: says, "with a fast jerking motion."
+: says, "It is safer."
+: says, "Also, do you want some wine?"
+: Andreas says, "I am thirsty. Do you have water?"
+: Giorgios says, "The wine has some water in it."
+: Andreas says, "No, thank you, sir."
+: Giorgios goes (10%)
+: drops Big Wineskin on Pedestal
+: goes (30%)
+: faces left
+: waits 10
+: takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+: drops Big Wineskin on Pedestal
+: goes (30%)
+: faces left
+: waits 10
+: takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+: drops Big Wineskin on Pedestal
+: goes (30%)
+: faces left
+: sits
+: says, "Yer doon... sho good!"
+: Andreas faces Giorgios
+: says, "Sorry, sir?"
+: Giorgios says, "I shed..."
+: Giorgios says, "Yer doon sho good!"
+: Andreas faces left
+: says, "Thank you, sir."
+: Giorgios takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+: drops Big Wineskin on Pedestal
+: goes (30%)
+: lays
+: waits
+: says, "Ish a byooty full..."
+: says, "Byooty full day!"
+
+7:31:03 Heinrich goes to Tool Store (30%)
+7:31:05 Giovanni goes to Tool Store (60%)
+7:31:09 Heinrich @ Tool Store (30%)
+7:31:10 Giovanni @ Tool Store (60%)
+: says, "Listen,"
+: Heinrich faces Giovanni
+: Giovanni says, "Kings don't make good friends."
+: says "But a good rock?" 
+: says "It will never let you down!"
+: says "Set your mind on rocks."
+: Heinrich says, "Thank you for your guidance, sir."
+(Giovanni leaves for workshop yard)
+
+7:31:16 Ahmad goes to Workshop Yard
+7:31:23 Ahmad @ Workshop Yard
+(Ahmad paces to different positions in the Workshop Yard, sometimes near each of three stations.)
+: Ahmad waits 20
+: goes (80%)
+: waits 20
+: goes (50%)
+: waits 5
+: goes (40%)
+: faces Giorgios
+: says, "Take yourself and "
+: says, "your ridiculously large wineskin out of my yard!"
+: says, "No pay for today."
+: Giorgios waits
+: takes Big Wineskin in right hand
+: Big Wineskin emits "(glug, glug)"
+7:32:24 Giorgios goes to Workers' Dormitory (10%)
+7:32:25 Ahmad thinks, "That worthless drunk is paid 1 tari more than I!"
+: faces right
+: waits 20
+: goes (30%)
+7:32:52 Ahmad faces right
+
+7:31:23 Giovanni goes to Workshop Yard
+7:31:28 Giovanni @ Workshop Yard
+(Giovanni has returned to his position in front of the masonry station.)
+: waits 20
+: goes (40%)
+: kneels
+: faces right
+: thinks, "(thinks about rocks)"
+: waits 20
+: goes (55%)
+: waits 10
+: goes (40%)
+: kneels
+: faces right
+: waits 30
+: goes (60%)
+: thinks, "(thinks about rocks some more)"
+
+7:31:58 Yusuf goes to Tool Store (60%)
+7:32:08 Yusuf @ Tool Store (60%)
+: goes (80%)
+: goes (40%)
+: goes (60%)
+: faces Heinrich
+: Yusuf says "Have you seen my abacus?"
+: Heinrich says "Not in here."
+: Yusuf says "Don't you understand I need it?"
+: Heinrich says "Pardon, sir. I will look for it."
+: Yusuf says "Sorry. I'm just in a bad mood."
+: says "It's that Salomone."
+: says "He always acts superior to me."
+: says "Yet we are paid exactly the same!"
+: Heinrich says "I will look for the abacus."
+7:32:32 Heinrich goes to Accounts Room (90%)
+7:32:29 Yusuf goes to Apprentices' Chamber
+
+7:32:28 King Frederick goes to Master's Hall (10%)
+7:32:31 King Frederick @ Master's Hall (10%)
+: Pietro kneels
+: says, "Your Majesty. Such an honor to receive you!"
+: King Frederick says, "Please rise, Master Mason."
+: Pietro stands
+: King Frederick says, "Is Heinrich here?"
+: Pietro says, "Of course. Shall I fetch him for you?"
+: King Frederick says, "Yes, I thought we'd go falconing."
+: Pietro says, "Majesty, did I ever show you my stones?"
+: King Frederick says, "I've seen many stones. They are all the same."
+: Pietro says, "Oh, no, Majesty. My stones are quite special."
+: says, "I would love to show them to you."
+: King Frederick says, "I shall ask my falcon."
+: says, "Furia, do you wish to see this man's special stones?"
+: Furia Perched emits "(squawk)"
+: King Frederick says, "She prefers to fly in the air and hunt."
+: Pietro says "I shall return with Heinrich shortly, my King."
+
+7:32:35 Yusuf @ Apprentices' Chamber
+: goes to Family Quarters
+: Anna says, "You cannot be here!"
+: Yusuf says, "I needed to be near you."
+: Anna faces Yusuf.
+: Anna says, "I am spurning you, do you understand?"
+: says, "Spurn, spurn, spurn!"
+: Yusuf says, "But I'm having a really bad day."
+: Anna says, "You have been spurned."
+: Yusuf says, "But can I just-"
+: Anna says, "No! Get out!"
+: says, "I'm busy helping my father think!"
+: thinks, "(thinking)"
+: thinks, "(thinking very hard)"
+7:33:05 Yusuf goes to Apprentices' Chamber
+
+7:32:35 Giorgios @ Workers' Dormitory (10%)
+: drops Big Wineskin
+: lays
+
+7:32:41 Heinrich @ Accounts Room (90%)
+7:32:44 Salomone @ Accounts Room
+: says, "What are you doing here?"
+: Heinrich faces Salomone
+: Heinrich says, "Looking for the abacus, sir."
+: Salomone says, "Does the surveyor need it again?"
+: Heinrich says, "Yes."
+: Salomone gives abacus to Heinrich
+: Heinrich takes abacus in left hand
+: says, "There you have it."
+: Heinrich says, "Thank you, sir."
+7:32:57 Heinrich goes to Workshop Yard
+
+7:32:39 Niccolo @ Stone Store
+: Niccolo says, "What kind of garbage limestone is this?"
+: Stefan faces Niccolo
+: Stefan says, "What? It's fine."
+: Niccolo says, "It's full of cracks."
+: Stefan says, "So use them. Easier to cut, right?"
+: Niccolo says, "I'll be lucky to cut three blocks out of it."
+: Stefan says, "Look, Pietro bought from Monte Pellegrino."
+: Niccolo says, "The worst quarry in Palermo."
+: says, "Even the most simple things"
+: says, "are done cheaply and poorly now."
+: says, "There is no love of craft!"
+: Stefan says, "I..."
+: Stefan says, "would like to stop talking to you now."
+
+7:33:01 Heinrich @ Workshop Yard
+
+7:33:10 Yusuf @ Apprentices' Chamber
+: says, "She is insane!"
 
 
 # Conclusions
