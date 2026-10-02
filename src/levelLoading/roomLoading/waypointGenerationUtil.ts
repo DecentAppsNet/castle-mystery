@@ -95,6 +95,14 @@ function _findAllNearestWaypointsByX(waypoints:Waypoint[], x:number):Waypoint[] 
   return nearestWaypoints;
 }
 
+function _findNearestStairApproachWaypoints(waypoints:Waypoint[], flight:StairFlight):Waypoint[] {
+  const ascentX = flight.endPosition.x - flight.startPosition.x;
+  const approachWaypoints = waypoints.filter(waypoint => ascentX === 0
+    || ascentX < 0 && waypoint.position.x >= flight.startPosition.x - STAIR_POSITION_TOLERANCE
+    || ascentX > 0 && waypoint.position.x <= flight.startPosition.x + STAIR_POSITION_TOLERANCE);
+  return _findAllNearestWaypointsByX(approachWaypoints, flight.startPosition.x);
+}
+
 function _findNearestWaypointByY(waypoints:Waypoint[], y:number):Waypoint {
   assert(waypoints.length > 0);
   let nearestWaypoint = waypoints[0];
@@ -216,7 +224,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
       stairs.forEach(flight => {
         const stairStartWaypoint = _getOrCreateWaypoint(flight.startPosition.x, flight.startPosition.y, WAYPOINT_BACK_ROW_Z);
         const landingWaypoint = _getOrCreateWaypoint(flight.endPosition.x, calcLandingWaypointY(flight.endPosition.y), WAYPOINT_BACK_ROW_Z);
-        _findAllNearestWaypointsByX(backRowFloorWaypoints, flight.startPosition.x)
+        _findNearestStairApproachWaypoints(backRowFloorWaypoints, flight)
           .forEach(nearestFloorWaypoint => connectWaypoints(stairStartWaypoint, nearestFloorWaypoint));
         connectWaypoints(stairStartWaypoint, landingWaypoint);
       });
@@ -245,7 +253,7 @@ export function generateWaypoints(roomId:string, roomRect:Rect, exits:RoomExit[]
         if (previousTopMiddleWaypoint !== null) {
           connectWaypoints(previousTopMiddleWaypoint, currentBottomBackWaypoint);
         } else if (firstFlight.startPosition.y === floorY) {
-          _findAllNearestWaypointsByX(backRowFloorWaypoints, firstFlight.startPosition.x)
+          _findNearestStairApproachWaypoints(backRowFloorWaypoints, firstFlight)
             .forEach(nearestFloorWaypoint => connectWaypoints(currentBottomBackWaypoint, nearestFloorWaypoint));
         }
 
