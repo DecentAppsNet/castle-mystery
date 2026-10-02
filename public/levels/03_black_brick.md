@@ -283,6 +283,8 @@ AABBCCDFGGHHH.
 : Pope says, "You stand at the very heart of Christendom!"
 : King Frederick says, "It's more a collection of buildings than a palace."
 : Pope says, "Hrmph."
+11:58:17 Pope goes to Lawn (60%)
+11:58:18 King Frederick goes to Lawn
 
 (11:58 Raniero is in the Steward's Office standing behind a desk that comes up to his eyes.)
 11:58:02 Raniero thinks, "My desk is the perfect height."
@@ -291,20 +293,23 @@ AABBCCDFGGHHH.
 : thinks, "Rather than the shape of one."
 
 (11:58 Helena at right end of wine cellar)
+11:58:01 Helena goes to Textile Store
 11:58:03 Helena @ Textile Store
 : thinks, "Who left this here?"
 : waits
 (Helena was referring to the black brick. She leaves for Steward's Office.)
-11:58:08 Toro faces left
+11:58:06 Helena goes to Steward's Office (60%)
+11:58:09 Toro faces left
 
 (11:58 Hugo is in the guard chamber)
 11:58:00 Hugo thinks "I'll need this."
 11:58:02 Hugo takes Small Hourglass
-11:58:17 Toro faces right
+11:58:05 Hugo goes to Textile Store
+11:58:16 Toro faces Hugo
 11:58:19 Hugo @ Textile Store
 : takes Black Brick
-: Hugo @ Central Stairwell
-11:58:24 Toro faces left
+: goes Central Stairwell
+11:58:23 Toro faces Hugo
 
 11:58:14 Helena @ Steward's Office (60%)
 : Helena says, "I need to lock up the textile store."
@@ -313,8 +318,8 @@ AABBCCDFGGHHH.
 : Raniero says, "It's-"
 : Helena says, "It's the only one. I know, sir."
 : Helena takes Steward's Key in right hand
-: Raniero @ (30%)
-(Helena leaves for Wine Cellar)
+: Raniero goes (30%)
+11:58:26 Helena goes to Wine Cellar (90%)
 
 11:58:20 Pope @ Lawn
 11:58:21 King Frederick @ Lawn
@@ -328,6 +333,8 @@ AABBCCDFGGHHH.
 : King Frederick says, "I have enemies?"
 : Pope says, "German princes, Otto, and of course..."
 : says, "the Freemasons - most insidious of all!"
+11:58:49 Pope goes to Lawn East (60%)
+11:58:50 King Frederick goes to Lawn East
 
 11:58:41 Hugo thinks, "His schemes are always so complicated."
 
@@ -338,6 +345,8 @@ AABBCCDFGGHHH.
 : Pope says, "You see nothing because I have shielded you well."
 : says, "But danger is everywhere!"
 : King Frederick says, "Hmm."
+11:59:14 Pope goes to Central Stairwell
+11:59:15 King Frederick goes to Central Stairwell
 
 (Helena walks by Toro in the Wine Cellar)
 11:58:30 Toro says, "Key!"
@@ -352,8 +361,8 @@ AABBCCDFGGHHH.
 : Helena says, "You want to try an adjective today?"
 : Toro says, "Adjective."
 : Helena says, "(sigh)"
-(Helena leaves for the Liturgical Vault)
-11:58:53 Toro faces left.
+11:58:50 Helena goes to West Hall
+11:58:52 Toro faces left.
 
 (Raniero remains in his office)
 11:58:35 Raniero thinks, "As soon as she returns with my key..."
@@ -364,13 +373,51 @@ AABBCCDFGGHHH.
 : thinks, "I would sit only when very tired."
 
 11:59:00 Helena @ West Hall
-: @ Liturgical Vault (10%)
+: goes to Liturgical Vault (10%)
 : Helena takes Black Paint Jar in left hand
-: @ Lower Passage
-11:59:32 @ Grain Store (40%)
+: goes to Lower Passage
+
+11:59:06 Raniero faces right
+: thinks, "She is taking forever!"
+: thinks, "I shall go find her."
+: goes to Wine Cellar (90%)
+: thinks, "Locked. And she's not here."
+11:59:29 goes to Grain Store (20%)
+11:59:16 Toro faces right
+
+11:59:16 Hugo goes to East Hall (40%)
+
+(Helena is in the lower passage, holding the black paint jar)
+11:59:16 Helena thinks, "Why did he have me paint that brick?"
+11:59:20 Helena goes to Grain Store (40%)
+
+11:59:18 Pope @ Central Stairwell
+11:59:19 King Frederick @ Central Stairwell
+: Pope says, "One moment, my King."
+: Pope goes to East Hall (20%)
+
+11:59:18 Hugo @ East Hall (40%)
+11:59:22 Pope @ East Hall (20%)
+: Hugo gives black brick to Pope
+: Hugo takes small hourglass in right hand
+(Hugo leaves for cellar)
+11:59:24 Pope goes to Central Stairwell
+
+11:59:26 Pope @ Central Stairwell
+: Pope says, "Let us continue with a briskness."
+: Pope says, "Ha ha! It is fun to walk fast!"
+11:59:32 Pope goes to Courtyard East (10%)
+11:59:32 King Frederick goes to Courtyard East (20%)
+
+11:59:31 Toro faces left
+
+11:59:32 Helena @ Grain Store (40%)
 : drops Black Paint Jar
 : thinks "I'll hide it deep in the grain."
 : hide Black Paint Jar
+
+11:59:33 Hugo goes to Wine Cellar (30%)
+
 11:59:38 Raniero @ Grain Store (20%)
 : Raniero says, "What are you doing in here?"
 : Helena faces Raniero
@@ -386,39 +433,13 @@ AABBCCDFGGHHH.
 (massive boom emitted from Arabic Tower at noon)
 : Raniero faces left
 : says, "What was that?"
-(Raniero and Helena leave for the Wine Cellar)
-
-11:59:06 Raniero faces right
-: thinks, "She is taking forever!"
-: thinks, "I shall go find her."
-: @ Wine Cellar (90%)
-: thinks, "Locked. And she's not here."
-11:59:17 Toro faces Raniero
-
-11:59:18 Pope @ Central Stairwell
-11:59:19 King Frederick @ Central Stairwell
-: Pope says, "One moment, my King."
-
-11:59:18 Hugo @ East Hall (40%)
-11:59:22 Pope @ East Hall (20%)
-: Hugo gives black brick to Pope
-: Hugo takes small hourglass in right hand
-(Hugo leaves for cellar)
-
-(Helena is in the lower passage, holding the black paint jar)
-11:59:17 Helena thinks, "Why did he have me paint that brick?"
-: thinks "Whatever his plan, I must remain blameless!"
-
-11:59:26 Pope @ Central Stairwell
-: Pope says, "Let us continue with a briskness."
-: Pope says, "Ha ha! It is fun to walk fast!"
-
-11:59:32 Toro faces left
+12:00:04 Raniero goes to Wine Cellar (20%)
+12:00:04 Helena goes to Wine Cellar (15%)
 
 11:59:38 Hugo @ Wine Cellar (30%)
-: says, "They say you are strong..."
+: says, "They say you are strong..." to Toro
 : says, "Like a bull!"
-: Toro says, "Truth."
+: Toro says, "Truth." to Hugo
 : Hugo says, "Are you strong?"
 : Toro says, "Toro! Strength!"
 : Hugo says, "But Helena said you are weak."
@@ -426,16 +447,17 @@ AABBCCDFGGHHH.
 : Hugo says, "Show me. Smash that pillar!"
 : Toro faces right.
 : Toro says, "Toro! Toro! Toro!"
+11:59:53 Toro goes to Wine Cellar (75%)
 
 11:59:39 Pope @ Courtyard East (10%)
 11:59:40 King Frederick @ Courtyard East (20%)
 : King Frederick says, "This tower, I love."
 : says, "It has art and symmetry!"
 : Pope says, "Yes, the old thing stands apart in style."
-: King Frederick @ (50%)
+: King Frederick goes (50%)
 : Pope says, "Ah, but you must stand further back!"
 : says, "To take it in properly!"
-: King Frederick @ (30%)
+: King Frederick goes (30%)
 : faces right
 11:59:59 Arabic Tower emits, "(rumble)"
 12:00:00 hide Arabic Tower
@@ -447,11 +469,11 @@ AABBCCDFGGHHH.
 : waits
 : King Frederick stands
 : says, "I am okay."
-: Pope @ (40%)
+: Pope goes (40%)
 : Pope says, "Just as I suspected! Here in the rubble..."
 : takes black brick into left hand.
 : says, "a black brick!"
-: @ (20%)
+: goes (20%)
 : faces King Frederick
 : King Frederick faces Pope
 : Pope drops black brick
@@ -466,7 +488,7 @@ AABBCCDFGGHHH.
 : King Frederick says, "It was a really good tower!"
 : faces right
 
-11:59:55 Toro @ (75%)
+11:59:55 Toro @ Wine Cellar (75%)
 11:59:56 Hugo says, "Do it now!"
 : Toro says, "Arrrrrrgh!"
 : Toro says, "RAWWWWWRRRHGH!"
@@ -486,8 +508,8 @@ AABBCCDFGGHHH.
 : Toro says, "Pain!"
 : Helena says, "He's still alive!"
 : Hugo says, "Oh, good."
-: Helena @ (50%)
-: Raniero @ (50%)
+: Helena goes (50%)
+: Raniero goes (50%)
 : says, "But why would he do that?"
 : Toro says, "Hugo!"
 : Hugo says, "I am here, old friend!"

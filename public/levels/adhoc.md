@@ -1,664 +1,543 @@
 # General
 
 * title=Adhoc
-* activeCharacter=Pietro
-* time=7:30
-* background=countryside.png
+* activeCharacter=King Frederick
+* time=11:58:00
+* background=daySky.png
 * imports=items.md | characters.md | roomStyles.md
-* winSynopsis=Heinrich and the young King Frederick enjoyed an afternoon of friendship and falconing. Master Mason Pietro tolerated the apprentice leaving work, hoping for a future royal construction project. The seed of conspiracy was planted in a corner of the workshop yard.
+* groundFloorRoom=Lawn
+* winSynopsis=The Pope's convoluted caper was executed flawlessly. He aimed to scare young King Frederick. But who knows what effect the collapsed tower had on the boy?
 
 # Map
 
 ```
-SSWW/AA\......
-SSFF/KK\YYYYC.
-SSMM/HH\YYYYTT
+....CCDE..HHH.
+AABBCCDFGGHHH.
+...QIIDJJMKKKL
+...QOOOPPMNNN.
+...QRRRRRM....
 ```
 
-* S=Street
-* M=Master's Hall
-* K=Common Kitchen
-* F=Family Quarters
-* A=Apprentices' Chamber
-* W=Workers' Dormitory
-* /=Stairwell
-* \=Stairwell 2
-* C=Accounts Room
-* Y=Workshop Yard
-* T=Stone Store
-* H=Tool Store
+* A=Lawn West
+* B=Lawn
+* C=Lawn East
+* D=Central Stairwell
+* E=Guard Chamber
+* F=Portcullis Chamber
+* G=Courtyard
+* H=Courtyard East
+* I=West Hall
+* J=East Hall
+* K=Wine Cellar
+* L=Textile Store
+* M=East Stairwell
+* N=Grain Store
+* P=Steward's Office
+* O=Liturgical Vault
+* Q=West Stairwell
+* R=Lower Passage
 
 # Rooms
 
-## Street
+## Lawn West
 
+* title=
 * outside=true
-* exits=Master's Hall (unlocked, lockable)
-* style=Town Street Day
+* exits=Lawn
+* style=Palace Garden
 
 ```
 ........
-.F......
+.F.P....
 ........
 ```
 
+* P=Pope
 * F=King Frederick
 
-## Master's Hall
+## Lawn
 
-* exits=Street (lockable) | Stairwell (closed)
-* style=Old Castle
-
-
-```
-........
-...P....
-........
-```
-
-* P=Pietro
-
-## Stairwell
-
-* style=Old Castle
-* title=
-* exits=Workers' Dormitory (unlocked, lockable)
-
-
-```
-....
-.A..
-....
-```
-
-* A=Ahmad
-
-## Family Quarters
-
-* style=Old Castle
-* exits=Stairwell (lockable, locked)
-
-## Apprentices' Chamber
-
-* exits=Stairwell (closed) | Stairwell 2 (closed)
-* style=Old Castle
-
-```
-........
-.....H..
-........
-```
-
-* H=Heinrich
-
-## Workers' Dormitory
-
-* style=Old Castle
-* exits=Stairwell (unlocked, lockable)
-
-
-```
-.Iw.....
-........
-....S...
-```
-
-* I=Giorgios
-* S=Stefan
-* w=Big Wineskin
-
-## Common Kitchen
-
-* exits=Stairwell | Stairwell 2
-* style=Old Castle
-
-
-```
-..b..N.p
-...M...A
-........
-```
-
-* M=Maria
-* A=Anna
-* N=Niccolo
-* b=bread roll
-* p=painting
-
-## Stairwell 2
-
-* title=
-* style=Old Castle
-* exits=Tool Store (locked, lockable) | Workshop Yard (closed)
-
-## Tool Store
-
-* style=Old Castle
-
-## Stone Store
-
-* style=Old Castle
-
-## Workshop Yard
-
-* style=Yard
-* exits=Stone Store (unlocked, lockable) | Accounts Room (unlocked, lockable)
 * outside=true
+* exits=Lawn East
+* style=Palace Garden
 
+## Lawn East
 
-```
-.p.s...c.....u..
-...A.Y.G........
-................
-```
+* title=
+* outside=true
+* exits=Central Stairwell (closed)
+* style=Palace Garden
 
-* u=Cutting Station
-* c=Masonry Station
-* s=Carving Station
-* p=Pedestal
-* A=Andreas
-* G=Giovanni
-* Y=Yusuf
+## Central Stairwell
 
-## Accounts Room
+* title=
+* style=Old Castle
 
+## Guard Chamber
+
+* exits=Central Stairwell (closed)
 * style=Old Castle
 
 ```
-..mc
-..S.
+..s.
+..H.
 ....
 ```
 
-* c=Yard Workers
-* m=Monthly Wages
-* S=Salomone
+* s=Small Hourglass
+* H=Hugo
+
+## Portcullis Chamber
+
+* exits=Central Stairwell (closed) | Courtyard (closed)
+* style=Old Castle
+
+## Courtyard
+
+* outside=true
+* exits=Courtyard East
+* style=Courtyard
+
+## Courtyard East
+
+* title=
+* outside=true
+* style=Courtyard
+
+```
+............
+............
+.......c.t..
+```
+
+* t=Arabic Tower
+* c=Arabic Tower Collapsed
+
+## West Hall
+
+* exits=Central Stairwell (closed) | West Stairwell (closed)
+* style=Old Castle
+
+## East Hall
+
+* obscured=true
+* exits=Central Stairwell (closed) | East Stairwell (closed)
+* style=Old Castle
+
+## Wine Cellar
+
+* exits=East Stairwell (closed) | Textile Store (unlocked, unlockable with Steward's Key)
+* style=Old Castle
+
+```
+............
+....T....H..
+........p...
+```
+* H=Helena
+* T=Toro
+* p=Pillar|Rubble
+
+## Textile Store
+
+```
+....
+....
+..b.
+```
+
+* b=Black Brick
+* style=Old Castle
+
+## East Stairwell
+
+* exits=Grain Store (locked, unlockable with Steward's Key) | Steward's Office (unlockable with Steward's Key)
+* style=Old Castle
+
+## Grain Store
+
+* exits=East Stairwell (locked)
+* style=Old Castle
+
+```
+............
+.....b.o.w..
+............
+```
+
+* b=Barley Bin
+* o=Oat Bin
+* w=Wheat Bin
+
+## Steward's Office
+
+* exits=East Stairwell (locked, unlockable with Steward's Key)
+* style=Old Castle
+
+```
+.......t
+..Sw....
+........
+```
+
+* t=Time of Day Plaque
+* w=Walnut Table|Staff List
+* S=Raniero
+
+## Liturgical Vault
+
+* exits=West Stairwell (closed)
+* style=Old Castle
+
+```
+...p........
+............
+............
+```
+
+* p=Black Paint Jar
+
+## West Stairwell
+
+* title=
+* style=Old Castle
+
+## Lower Passage
+
+* exits=West Stairwell (closed) | East Stairwell (closed)
+* style=Old Castle
 
 # Characters
 
-## Giorgios
-
-* orientation=sitting
-* facing=right
-
-## Giovanni
-
-* items=Chisel
-
-## Heinrich
+## Hugo
 
 * facing=left
-* orientation=laying
-
-## Niccolo
-
-* orientation=sitting
-
-## Pietro
-
-* facing=left
-* items=owner's key
-
-## Maria
 
 ## King Frederick
+* description=His friends still call him "Constantine".
+* isTitleKnown=true
 
-* items=Furia Perched
+## Pope
+* description=If a man names himself "Innocent", just how innocent will he be?
+* facing=left
+* isTitleKnown=true
 
-## Salomone
+## Raniero
+* items=Steward's Key
 
-* items=abacus
+## Helena
 
 # Items
 
-## Masonry Station
+## Arabic Tower
 
-* image=cutLimestone.png
-* description=Rough chunks of limestone are shaped into construction-ready blocks here.
-* drawOffsetX=1
-* drawOffsetZ=.07
+* image=arabicTower.png
+* description=Maybe a century old, structurally sound.
 
-## Pedestal
-* drawOffsetX=2
+## Arabic Tower Collapsed
+* image=arabicTowerCollapsed.png
+* description=It's seen better days - yesterday, for example.
+* visible=false
 
-## Cutting Station
+## Barley Bin
+* drawOffsetY=.5
 
-* image=uncutLimestone.png
-* description=Raw limestone that will be cut into chunks.
-* drawOffsetX=1
-* drawOffsetZ=.07
+## Oat Bin
+* drawOffsetY=.5
 
-## Carving Station
+## Pillar
+* description=A pillar. Maybe load-bearing. Or maybe just ornamental.
+* drawOffsetY=-.7
 
-* image=carvingStation.png
-* description=Details are applied to ornamental stonework here.
-* drawOffsetX=1
+## Rubble
+* description=A massive pile of rubble, fallen from a new hole in the ceiling.
+* visible=false
+* drawOffsetX=-1
 * drawOffsetY=.8
-* drawOffsetZ=.07
 
-## Owner's Key
+## Steward's Key
+* description=An ordinary key. It probably unlocks some things.
+* image=brassKey.png
 
-## Yard Workers
+## Time of Day Plaque
+* description=Not a clock. Not a calendar. It tells you what the key moments are in any given day.
+
+## Walnut Table
+* description=An unusually high desk.
+
+## Staff List
+* description=Helena of Gaeta - Keeper of Textiles | Matteo il Toro - Cellarer | Hugo of Speyer - Guard Sargeant | Raniero de Stefano - Steward
 * image=codex.png
-* description=Ahmad - Foreman | Heinrich - Apprentice | Giovanni - Journeyman Mason | Niccoló - Stone Cutter | Giorgios - Master carver | Andreas - Apprentice Carver | Yusuf - Builder and surveyor | Stefan - Quarry laborer
+* drawOffsetY=-2.5
+* drawOffsetX=1
 
-## Monthly Wages
-* image=codex.png
-* description=Apprentice - 1 denari|Servant (non-family) - 5 denari|Quarry Laborer - 15 denari|Cook/House Manager - 30 denari|Stone Cutter - 2 tari|Journeyman Mason - 3 tari|Journeyman Carver - 4 tari|Foreman - 4 tari|Master Carver - 5 tari|Master Mason - 4 tari|Builder and surveyor - 6 tari|Clerk/accountant - 6 tari
-
-## Painting
-* image=mariaPainting.png
-* description=A rough drawing with the inscription, "Maria, my forever love -Tommaso"
-* drawOffsetZ=-.5
-* drawOffsetY=-3
+## Wheat Bin
+* drawOffsetY=.5
 
 # Itinerary
 
-7:30:00 King Frederick takes Furia Perched in right hand
-7:30:01 Stefan goes to Common Kitchen
-7:30:02 Ahmad goes to Master's Hall (80%)
-7:30:08 Anna goes to Master's Hall
-7:30:12 Ahmad goes to Apprentices' Chamber
+(11:58 Pope and Frederick are at West Lawn)
+11:58:00 Pope says, "Welcome to the Lateran Palace, my boy."
+: King Frederick says, "It is nice here."
+: Pope says, "''Nice'', you say?"
+: Pope says, "You stand at the very heart of Christendom!"
+: King Frederick says, "It's more a collection of buildings than a palace."
+: Pope says, "Hrmph."
+11:58:17 Pope goes to Lawn (60%)
+11:58:18 King Frederick goes to Lawn
 
-7:30:00 Pietro @ Master's Hall
-7:30:03 Ahmad @ Master's Hall (80%)
-7:30:03 Pietro faces right
-: says, "Are they up and working, Ahmad?"
-: Ahmad says, "I haven't checked yet."
-: Pietro says, "Well, you better - that's your job."
-: goes (20%)
-(Ahmad leaves)
-7:30:14 Anna @ Master's Hall
-: Pietro faces right
-: says, "Daughter, why do you disturb me?"
-: Anna says, "You weren't doing anything."
-: Pietro says, "I was thinking!"
-: says, "A man like me must do a lot of thinking."
-: thinks, "(thinking)"
-: Anna thinks, "(thinking)"
-: Pietro says, "What are you doing?"
-: Anna says, "Papa, if both of us think,"
-: says, "the work goes twice as fast!"
-: Pietro says, "Okay, then think about masonry contracts."
-: says, "But do it somewhere else."
-7:30:40 Pietro faces left
-7:30:40 Anna goes to Family Quarters
+(11:58 Raniero is in the Steward's Office standing behind a desk that comes up to his eyes.)
+11:58:02 Raniero thinks, "My desk is the perfect height."
+: thinks, "If I stand instead of sitting..."
+: thinks, "My abdomen will form the shape of six!"
+: thinks, "Rather than the shape of one."
 
-7:30:05 Yusuf thinks, "I must see Anna today."
-
-7:30:06 Stefan @ Common Kitchen
-: Maria faces Stefan
-: says, "Good morning, my strong young man from Ragusa."
-: Stefan faces left
-: Stefan says, "Good morning."
-: Maria says, "You remind me so much of my dead husband Tommaso."
-7:30:12 Stefan goes to Workshop Yard (80%)
-
-7:30:18 Ahmad @ Apprentices' Chamber
-: says "Get up!"
-: Heinrich stands
-: Ahmad says, "I don't care about your royal friend."
-: says, "In the House of Rocks, I am your King."
-: says, "And the King says, 'get to the yard'!"
-
-7:30:20 Stefan @ Workshop Yard (80%)
-7:30:36 faces left
-: goes to Stone Store
-7:30:39 @ Stone Store
-: thinks, "I really don't want to talk to Niccoló."
-: thinks, "He's going to complain about cracks again."
-: waits 10
-: goes Stone Store (30%)
-: waits 20
-: goes (70%)
-: faces left
-: waits 10
-: goes (50%)
-: waits 20
-: goes (20%)
-: waits 15
-: goes (80%)
-: waits 20
-: goes (60%)
-
-7:30:19 Giovanni goes to Workshop Yard (40%)
-7:30:20 Giovanni @ Workshop Yard (40%)
-: waits 20
-: kneels
-(continues working until Heinrich arrives below)
-
-7:30:20 Maria @ Common Kitchen
-: faces left
-: says, "Niccolò, you know he's going to come"
-: says, "and yell at you."
-: Niccolo says, "(sigh)"
-: stands
-: says, "Time to chop rocks."
-7:30:37 Maria faces right
-
-7:30:26 Yusuf goes to Accounts Room
-7:30:30 Yusuf @ Accounts Room
-: says, "Good morning, my friend!"
-: Salomone says, "Good morning."
-: Yusuf says, "You know I can read, right?"
-: Salomone says, "Of course."
-: Yusuf says, "In the codex, you list me among the yard workers."
-: Salomone says, "Why would I not?"
-: Yusuf says, "I visit the yard. But I do not work there."
-: Salomone says, "It is just a list."
-: Yusuf says, "But is it a correct list?"
-: Salomone says, "Correct enough."
-: Yusuf says, "I will speak with Pietro about this."
-(they both leave)
-
-7:30:32 Niccolo goes to Workshop Yard (90%)
-7:30:33 Ahmad goes to Workers' Dormitory
-7:30:37 Ahmad @ Workers' Dormitory
-: says, "Drunken fool!"
-: says, "Your apprentice starts work well before you."
-: says, "And his hands are steady. Are yours?"
-: Giorgios says, "My wine is watered." 
-: stands
-: takes Big Wineskin in right hand
-: says, "And my hands are steady for carving."
-(Giorgios leaves for Workshop Yard)
-
-7:30:33 Heinrich goes to Common Kitchen (80%)
-7:30:37 Heinrich @ Common Kitchen (80%)
-: Maria says, "There's still breakfast left for you."
-: Heinrich faces left
-: Heinrich says, "No time. I'm late!"
-: Maria says, "Wait!"
-: takes bread roll in left hand
-: gives bread roll to Heinrich
-: says, "Take it with you."
-: Heinrich says, "Thank you, ma'am."
-: takes bread roll into inventory
-
-7:30:40 Niccolo @ Workshop Yard (90%)
-(Niccolo is always in front of the cutting station, working, while he is in the yard.)
-: waits 10
-: goes (80%)
-: waits 20
-: goes (90%)
-: waits 10
-: faces left
-: waits 3
-: goes (70%)
-: waits 10
-: goes (90%)
-: faces left
-: kneels
-: waits 20
-: thinks, "(thinking dark thoughts)"
-: stands
-: goes (80%)
-: waits 10
-: goes (90%)
-: faces left
-: kneels
-: waits 10
-: goes (70%)
-: Niccolo thinks, "This is Stefan's fault."
-7:32:36 Niccolo goes to Stone Store
-
-7:30:44 Anna @ Family Quarters
-
-7:30:54 Ahmad goes to Common Kitchen
-
-7:31:00 Ahmad @ Common Kitchen
-: says, "Did they linger today?"
-: Maria says, "Linger, sir?"
-: Ahmad says, "The workers shouldn't linger at breakfast."
-: Maria says, "Shall I make my food less delicious?"
-: Ahmad says, "No lingering after sun up!"
-: Maria says, "Even for you?"
-: Ahmad says, "I am not lingering!"
-(Ahmad leaves for Workshop Yard)
-
-7:31:04 Yusuf goes to Master's Hall
-7:31:05 Salomone goes to Master's Hall
-7:31:19 Yusuf @ Master's Hall
-7:31:20 Salomone @ Master's Hall
-: Pietro faces left
-7:31:21 Pietro says, "What?"
-: Yusuf says, "The clerk lists me with the yard workers."
-: says, "But I go to churches and bridges and castles."
-: says, "My work is there - not in the yard."
-: Pietro says, "Then we shall make a new list."
-: Yusuf says, "Good."
-: Pietro says, "And only your name will be on it."
-: Yusuf says, "Very good. What is this list?"
-: Pietro says, "A list of People Who Complain."
-: Yusuf says, "Oh no no no, sir."
-: says, "I only wanted your records to be in order."
-: Pietro says, "Get back to work."
-(Yusuf leaves for tool store)
-7:31:54 Salomone says, "Master, I must share some numbers with you."
-: Pietro faces Salomone
-: Pietro says, "Always with the numbers."
-: Salomone says, "Just two numbers."
-: says, "The first is 58 tari."
-: says, "The second is 0."
-: Pietro says "The first number is our income?"
-: Salomone says, "No, that is the second number. The first number-"
-: Pietro says "Our expenses."
-: Salomone says, "Yes."
-: Pietro says "Don't worry! More jobs are coming."
-: Salomone says, "May we all prosper, sir."
-7:32:29 Salomone goes to Accounts Room
-7:32:30 Pietro goes (60%)
-: faces left
-
-7:30:51 Heinrich goes to Workshop Yard
-7:30:55 Giorgios goes to Workshop Yard (20%)
-7:30:56 Heinrich @ Workshop Yard
-(Giovanni is always in front of the masonry station, working, while he is in the yard.)
-: Giovanni faces Heinrich
-: says, "Apprentice, you're finally here."
-: says, "Oil my tool!"
-: Andreas says, "(snickers)"
-: Giovanni says, "Oh, shut up."
-: takes chisel in right hand
-: gives chisel to Heinrich
-: Heinrich takes chisel in right hand
-(Giovanni follows Heinrich to the Tool Store)
-
-7:31:06 Giorgios @ Workshop Yard (20%)
-(Giorgios is always in front of the carving station, while he is in the yard. Andreas is there as well.)
-: says, "Boy, your carves are fair."
-: Andreas faces Giorgios
-: Giorgios says, "But bring the blade toward your body"
-: says, "with a fast jerking motion."
-: says, "It is safer."
-: says, "Also, do you want some wine?"
-: Andreas says, "I am thirsty. Do you have water?"
-: Giorgios says, "The wine has some water in it."
-: Andreas says, "No, thank you, sir."
-: Giorgios goes (10%)
-: drops Big Wineskin on Pedestal
-: goes (30%)
-: faces left
-: waits 10
-: takes Big Wineskin in right hand
-: Big Wineskin emits "(glug, glug)"
-: drops Big Wineskin on Pedestal
-: goes (30%)
-: faces left
-: waits 10
-: takes Big Wineskin in right hand
-: Big Wineskin emits "(glug, glug)"
-: drops Big Wineskin on Pedestal
-: goes (30%)
-: faces left
-: sits
-: says, "Yer doon... sho good!"
-: Andreas faces Giorgios
-: says, "Sorry, sir?"
-: Giorgios says, "I shed..."
-: Giorgios says, "Yer doon sho good!"
-: Andreas faces left
-: says, "Thank you, sir."
-: Giorgios takes Big Wineskin in right hand
-: Big Wineskin emits "(glug, glug)"
-: drops Big Wineskin on Pedestal
-: goes (30%)
-: lays
+(11:58 Helena at right end of wine cellar)
+11:58:01 Helena goes to Textile Store
+11:58:03 Helena @ Textile Store
+: thinks, "Who left this here?"
 : waits
-: says, "Ish a byooty full..."
-: says, "Byooty full day!"
+(Helena was referring to the black brick. She leaves for Steward's Office.)
+11:58:06 Helena goes to Steward's Office (60%)
+11:58:09 Toro faces left
 
-7:31:03 Heinrich goes to Tool Store (30%)
-7:31:05 Giovanni goes to Tool Store (60%)
-7:31:09 Heinrich @ Tool Store (30%)
-7:31:10 Giovanni @ Tool Store (60%)
-: says, "Listen,"
-: Heinrich faces Giovanni
-: Giovanni says, "Kings don't make good friends."
-: says "But a good rock?" 
-: says "It will never let you down!"
-: says "Set your mind on rocks."
-: Heinrich says, "Thank you for your guidance, sir."
-(Giovanni leaves for workshop yard)
+(11:58 Hugo is in the guard chamber)
+11:58:00 Hugo thinks "I'll need this."
+11:58:02 Hugo takes Small Hourglass
+11:58:05 Hugo goes to Textile Store
+11:58:16 Toro faces Hugo
+11:58:19 Hugo @ Textile Store
+: takes Black Brick
+: goes Central Stairwell
+11:58:23 Toro faces Hugo
 
-7:31:16 Ahmad goes to Workshop Yard
-7:31:23 Ahmad @ Workshop Yard
-(Ahmad paces to different positions in the Workshop Yard, sometimes near each of three stations.)
-: Ahmad waits 20
-: goes (80%)
-: waits 20
-: goes (50%)
-: waits 5
-: goes (40%)
-: faces Giorgios
-: says, "Take yourself and "
-: says, "your ridiculously large wineskin out of my yard!"
-: says, "No pay for today."
-: Giorgios waits
-: takes Big Wineskin in right hand
-: Big Wineskin emits "(glug, glug)"
-7:32:24 Giorgios goes to Workers' Dormitory (10%)
-7:32:25 Ahmad thinks, "That worthless drunk is paid 1 tari more than I!"
+11:58:14 Helena @ Steward's Office (60%)
+: Helena says, "I need to lock up the textile store."
+: Raniero says, "Take my key then, but bring it back!"
+: Raniero gives Steward's Key to Helena
+: Raniero says, "It's-"
+: Helena says, "It's the only one. I know, sir."
+: Helena takes Steward's Key in right hand
+: Raniero goes (30%)
+11:58:26 Helena goes to Wine Cellar (90%)
+
+11:58:20 Pope @ Lawn
+11:58:21 King Frederick @ Lawn
+: Pope says, "Since your poor mother, Constance, passed,"
+: says, "you have been under my protection."
+: says, "Many times I have saved you from peril."
+: King Frederick faces Pope
+: says, "You have?"
+: Pope says, "Nearly every week, I thwart some scheme."
+: says, "Your enemies plot to dethrone or kill you."
+: King Frederick says, "I have enemies?"
+: Pope says, "German princes, Otto, and of course..."
+: says, "the Freemasons - most insidious of all!"
+11:58:49 Pope goes to Lawn East (60%)
+11:58:50 King Frederick goes to Lawn East
+
+11:58:41 Hugo thinks, "His schemes are always so complicated."
+
+11:58:52 Pope @ Lawn East
+11:58:53 King Frederick @ Lawn East
+: King Frederick says, "You say I am threatened..." 
+: says, "but I see no evidence of it."
+: Pope says, "You see nothing because I have shielded you well."
+: says, "But danger is everywhere!"
+: King Frederick says, "Hmm."
+11:59:14 Pope goes to Central Stairwell
+11:59:15 King Frederick goes to Central Stairwell
+
+(Helena walks by Toro in the Wine Cellar)
+11:58:30 Toro says, "Key!"
+11:58:32 faces right
+
+11:58:33 Helena @ Wine Cellar (90%)
+: locks Textile Store
+11:58:36 Toro says, "Door!"
+: Helena says, "That's right. I have a key."
+: says, "I used it to lock the door."
+: Toro says, "Door."
+: Helena says, "You want to try an adjective today?"
+: Toro says, "Adjective."
+: Helena says, "(sigh)"
+11:58:50 Helena goes to West Hall
+11:58:52 Toro faces left.
+
+(Raniero remains in his office)
+11:58:35 Raniero thinks, "As soon as she returns with my key..."
+: thinks, "I shall be free to frolic in the bins."
+
+11:58:52 Raniero thinks, "It is hard to stand so much."
+: thinks, "What if I got a tall chair?"
+: thinks, "I would sit only when very tired."
+
+11:59:00 Helena @ West Hall
+: goes to Liturgical Vault (10%)
+: Helena takes Black Paint Jar in left hand
+: goes to Lower Passage
+
+11:59:06 Raniero faces right
+: thinks, "She is taking forever!"
+: thinks, "I shall go find her."
+: goes to Wine Cellar (90%)
+: thinks, "Locked. And she's not here."
+11:59:29 goes to Grain Store (20%)
+11:59:16 Toro faces right
+
+11:59:16 Hugo goes to East Hall (40%)
+
+(Helena is in the lower passage, holding the black paint jar)
+11:59:16 Helena thinks, "Why did he have me paint that brick?"
+11:59:20 Helena goes to Grain Store (40%)
+
+11:59:18 Pope @ Central Stairwell
+11:59:19 King Frederick @ Central Stairwell
+: Pope says, "One moment, my King."
+: Pope goes to East Hall (20%)
+
+11:59:18 Hugo @ East Hall (40%)
+11:59:22 Pope @ East Hall (20%)
+: Hugo gives black brick to Pope
+: Hugo takes small hourglass in right hand
+(Hugo leaves for cellar)
+11:59:24 Pope goes to Central Stairwell
+
+11:59:26 Pope @ Central Stairwell
+: Pope says, "Let us continue with a briskness."
+: Pope says, "Ha ha! It is fun to walk fast!"
+11:59:32 Pope goes to Courtyard East (10%)
+11:59:32 King Frederick goes to Courtyard East (20%)
+
+11:59:31 Toro faces left
+
+11:59:32 Helena @ Grain Store (40%)
+: drops Black Paint Jar
+: thinks "I'll hide it deep in the grain."
+: hide Black Paint Jar
+
+11:59:33 Hugo goes to Wine Cellar (30%)
+
+11:59:38 Raniero @ Grain Store (20%)
+: Raniero says, "What are you doing in here?"
+: Helena faces Raniero
+: Helena says, "I have a confession!"
+: Raniero says, "Yes?"
+: Helena says, "I..."
+: says, "I love to get inside the bins and..."
+: says, "step on the little grains with my bare feet!"
+: Raniero says, "Me too!"
+: says, "It has been my secret pleasure."
+: says, "But now we can do it together!"
+: Helena thinks, "Great."
+(massive boom emitted from Arabic Tower at noon)
+: Raniero faces left
+: says, "What was that?"
+12:00:04 Raniero goes to Wine Cellar (20%)
+12:00:04 Helena goes to Wine Cellar (15%)
+
+11:59:38 Hugo @ Wine Cellar (30%)
+: says, "They say you are strong..." to Toro
+: says, "Like a bull!"
+: Toro says, "Truth." to Hugo
+: Hugo says, "Are you strong?"
+: Toro says, "Toro! Strength!"
+: Hugo says, "But Helena said you are weak."
+: Toro says, "Lies!"
+: Hugo says, "Show me. Smash that pillar!"
+: Toro faces right.
+: Toro says, "Toro! Toro! Toro!"
+11:59:53 Toro goes to Wine Cellar (75%)
+
+11:59:39 Pope @ Courtyard East (10%)
+11:59:40 King Frederick @ Courtyard East (20%)
+: King Frederick says, "This tower, I love."
+: says, "It has art and symmetry!"
+: Pope says, "Yes, the old thing stands apart in style."
+: King Frederick goes (50%)
+: Pope says, "Ah, but you must stand further back!"
+: says, "To take it in properly!"
+: King Frederick goes (30%)
 : faces right
-: waits 20
-: goes (30%)
-7:32:52 Ahmad faces right
-
-7:31:23 Giovanni goes to Workshop Yard
-7:31:28 Giovanni @ Workshop Yard
-(Giovanni has returned to his position in front of the masonry station.)
-: waits 20
-: goes (40%)
-: kneels
+11:59:59 Arabic Tower emits, "(rumble)"
+12:00:00 hide Arabic Tower
+12:00:00 show Arabic Tower Collapsed
+(The Arabic tower collapses in the direction of King Frederick. It nearly hits the King, and would have if he were still standing close to it.)
+: King Frederick lays
+: Arabic Tower Collapsed emits "(massive boom)" loudly
+: Pope says, "My King!"
+: waits
+: King Frederick stands
+: says, "I am okay."
+: Pope goes (40%)
+: Pope says, "Just as I suspected! Here in the rubble..."
+: takes black brick into left hand.
+: says, "a black brick!"
+: goes (20%)
+: faces King Frederick
+: King Frederick faces Pope
+: Pope drops black brick
+: King Frederick says, "What is this madness?"
+: Pope says, "The Freemasons, my King."
+: says, "They built this tower with a black brick!"
+: says, "A black brick waits til one specific moment..."
+: says, "And then it fails, dropping death on the Freemasons' target."
+: King Frederick says, "I am so angry."
+: Pope says, "Of course! Those devils meant to kill you."
+: King Frederick says, "No, not that."
+: King Frederick says, "It was a really good tower!"
 : faces right
-: thinks, "(thinks about rocks)"
-: waits 20
-: goes (55%)
-: waits 10
-: goes (40%)
-: kneels
-: faces right
-: waits 30
-: goes (60%)
-: thinks, "(thinks about rocks some more)"
 
-7:31:58 Yusuf goes to Tool Store (60%)
-7:32:08 Yusuf @ Tool Store (60%)
-: goes (80%)
-: goes (40%)
-: goes (60%)
-: faces Heinrich
-: Yusuf says "Have you seen my abacus?"
-: Heinrich says "Not in here."
-: Yusuf says "Don't you understand I need it?"
-: Heinrich says "Pardon, sir. I will look for it."
-: Yusuf says "Sorry. I'm just in a bad mood."
-: says "It's that Salomone."
-: says "He always acts superior to me."
-: says "Yet we are paid exactly the same!"
-: Heinrich says "I will look for the abacus."
-7:32:32 Heinrich goes to Accounts Room (90%)
-7:32:29 Yusuf goes to Apprentices' Chamber
+11:59:55 Toro @ Wine Cellar (75%)
+11:59:56 Hugo says, "Do it now!"
+: Toro says, "Arrrrrrgh!"
+: Toro says, "RAWWWWWRRRHGH!"
+12:00:00 hide Pillar
+: show Rubble
+(The pillar collapsed from Toro's pushing, and rubble from the ceiling fell down and buried Toro beneath it. Toro's body, barely visible, is moving slightly beneath the rubble.)
+: Toro lays
+: Hugo waits
+: takes Small Hourglass into inventory
+: says, "Thank you, my strong, stupid bull."
+: says, "You've brought us victory."
 
-7:32:28 King Frederick goes to Master's Hall (10%)
-7:32:31 King Frederick @ Master's Hall (10%)
-: Pietro kneels
-: says, "Your Majesty. Such an honor to receive you!"
-: King Frederick says, "Please rise, Master Mason."
-: Pietro stands
-: King Frederick says, "Is Heinrich here?"
-: Pietro says, "Of course. Shall I fetch him for you?"
-: King Frederick says, "Yes, I thought we'd go falconing."
-: Pietro says, "Majesty, did I ever show you my stones?"
-: King Frederick says, "I've seen many stones. They are all the same."
-: Pietro says, "Oh, no, Majesty. My stones are quite special."
-: says, "I would love to show them to you."
-: King Frederick says, "I shall ask my falcon."
-: says, "Furia, do you wish to see this man's special stones?"
-: Furia Perched emits "(squawk)"
-: King Frederick says, "She prefers to fly in the air and hunt."
-: Pietro says "I shall return with Heinrich shortly, my King."
-
-7:32:35 Yusuf @ Apprentices' Chamber
-: goes to Family Quarters
-: Anna says, "You cannot be here!"
-: Yusuf says, "I needed to be near you."
-: Anna faces Yusuf.
-: Anna says, "I am spurning you, do you understand?"
-: says, "Spurn, spurn, spurn!"
-: Yusuf says, "But I'm having a really bad day."
-: Anna says, "You have been spurned."
-: Yusuf says, "But can I just-"
-: Anna says, "No! Get out!"
-: says, "I'm busy helping my father think!"
-: thinks, "(thinking)"
-: thinks, "(thinking very hard)"
-7:33:05 Yusuf goes to Apprentices' Chamber
-
-7:32:35 Giorgios @ Workers' Dormitory (10%)
-: drops Big Wineskin
-: lays
-
-7:32:41 Heinrich @ Accounts Room (90%)
-7:32:44 Salomone @ Accounts Room
-: says, "What are you doing here?"
-: Heinrich faces Salomone
-: Heinrich says, "Looking for the abacus, sir."
-: Salomone says, "Does the surveyor need it again?"
-: Heinrich says, "Yes."
-: Salomone gives abacus to Heinrich
-: Heinrich takes abacus in left hand
-: says, "There you have it."
-: Heinrich says, "Thank you, sir."
-7:32:57 Heinrich goes to Workshop Yard
-
-7:32:39 Niccolo @ Stone Store
-: Niccolo says, "What kind of garbage limestone is this?"
-: Stefan faces Niccolo
-: Stefan says, "What? It's fine."
-: Niccolo says, "It's full of cracks."
-: Stefan says, "So use them. Easier to cut, right?"
-: Niccolo says, "I'll be lucky to cut three blocks out of it."
-: Stefan says, "Look, Pietro bought from Monte Pellegrino."
-: Niccolo says, "The worst quarry in Palermo."
-: says, "Even the most simple things"
-: says, "are done cheaply and poorly now."
-: says, "There is no love of craft!"
-: Stefan says, "I..."
-: Stefan says, "would like to stop talking to you now."
-
-7:33:01 Heinrich @ Workshop Yard
-
-7:33:10 Yusuf @ Apprentices' Chamber
-: says, "She is insane!"
-
+12:00:10 Raniero @ Wine Cellar (20%)
+12:00:11 Helena @ Wine Cellar (20%)
+: Raniero says, "What happened?"
+: Hugo says, "Toro pushed the pillar down."
+: Toro says, "Pain!"
+: Helena says, "He's still alive!"
+: Hugo says, "Oh, good."
+: Helena goes (50%)
+: Raniero goes (50%)
+: says, "But why would he do that?"
+: Toro says, "Hugo!"
+: Hugo says, "I am here, old friend!"
+: Toro says, "Conspiracy!"
+: Hugo says, "You were involved in a conspiracy?"
+: Toro says, "Hugo! Guilt!"
+: Hugo says, "You feel guilty about conspiring?"
+: Raniero says, "It is so hard to understand him."
+: says, "He can only speak in nouns."
 
 # Conclusions
 
-## Identities
+* suspects=Pope Innocent III|the Freemasons|Helena|Raniero|Toro|Hugo|King Frederick|Nobody|The wind
+* knockedVerbs=paid|amused|seduced|blackmailed|goaded|murdered
+* aftermathVerbs=fall|hide|disappear|succeed|speak|initiate|deceive|murder
+* popeActions=discovered|cremated|painted|planted|rebuked|salvaged
+* numbers=one|two|three|four|five|six
+* items=Arabic Tower | Barley Bin | Black Brick | Black Paint Jar | Oat Bin | Pillar | Small Hourglass | Staff List | Steward's Key | Walnut Table | Wheat Bin
 
-* unlockConclusions=Labor Costs
+## identities
 
-## Labor Costs
+* unlockConclusions=Collapse of a Tower
 
-* conclusion=We don't know how much [Pietro di Ruggero di Palermo ] pays himself.---And it's unclear what [Anna di Pietro] is paid, though possibly 5 denari.---But of those whose wages we know, two are paid the most - [Salomone ben David di Palermo] who faces left at 7:32, and [Yusuf ibn Khalaf al-Balarmi] who faces right.
+## Collapse of a Tower
+* conclusion=[Toro] pushed down the [pillar], because [Hugo] [goaded] him. This caused the [Arabic Tower] to [fall].
+
+* unlockConclusions=Chain of Custody
+
+## Chain of Custody
+
+* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [Pope Innocent III] [planted] it in the [Arabic Tower], attempting to [deceive] [King Frederick].
