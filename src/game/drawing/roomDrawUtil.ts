@@ -387,6 +387,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           characterAnatomy,
           characterAnatomyById,
           imageSet,
+          isActiveCharacter:content.character.id === activeCharacter.id,
           isCharacterInActiveRoom,
           isLevelComplete,
           roomContentDisplayLayout:displayLayout

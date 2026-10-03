@@ -6,6 +6,7 @@ type CharacterEffectDrawContext = {
   characterAnatomy:CharacterCanvasAnatomy,
   characterAnatomyById:ReadonlyMap<string, CharacterCanvasAnatomy>,
   imageSet:ImageSet,
+  isActiveCharacter:boolean,
   isCharacterInActiveRoom:boolean,
   isLevelComplete:boolean,
   roomContentDisplayLayout:RoomContentDisplayLayout

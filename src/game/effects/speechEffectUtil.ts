@@ -17,6 +17,7 @@ import LevelEffectDrawContext from "./types/LevelEffectDrawContext";
 import LevelEffectCharacterLocation from "./types/LevelEffectCharacterLocation";
 import { findEmitTipDirection } from "./emitDirectionUtil";
 import { FacingDirection } from "../types/Character";
+import { isThoughtObservable } from "./speechObservabilityPolicy";
 
 type TalkingDip = Readonly<{
   startTimeOffset:number,
@@ -135,8 +136,10 @@ function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors
     return _calcThinkingHeadRotationResult(time, startTime, speechDuration, facingDirection);
   }
   if (drawCall.stage === 'characterAfterLevel') {
-    const { anchorX, anchorTopY } = drawCall.characterContext.characterAnatomy;
-    drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+    const { characterAnatomy:{ anchorX, anchorTopY }, isActiveCharacter, isLevelComplete } = drawCall.characterContext;
+    if (isThoughtObservable(isActiveCharacter, isLevelComplete)) {
+      drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+    }
   }
   return null;
 }
