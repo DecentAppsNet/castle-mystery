@@ -393,7 +393,6 @@ N1234567890ABCD.
 * title=Petitioner Registry (Updated)
 * description=17 JULY 1195, TERCE|Konrad of Augsburg - tax relief|Faraj ibn Sa'id al-Balarmi - property dispute|Tancredi of Cefalù - property dispute|Salvatori of Trapani - tax relief|Toro - treachery
 * image=codex.png
-* drawOffsetY=2
 
 ## Letter about Freemasons
 * image=letter.png
@@ -406,6 +405,9 @@ N1234567890ABCD.
 # Itinerary
 
 7:59:57 Toro @ East Gate
+8:00:02 Toro goes to Entrance Hall (80%)
+
+8:00:01 Sticky Agatha goes to Throne Room (20%)
 
 7:59:57 Andronikos @ Entrance Hall
 : takes Wax Tablet in right hand
@@ -414,8 +416,7 @@ N1234567890ABCD.
 : says "In the central hall, we have space for just two more."
 
 8:00:06 Toro @ Entrance Hall (80%)
-: Andronikos faces Toro
-: Andronikos says, "State your name."
+: Andronikos says, "State your name." to Toro
 : Toro says, "Toro."
 : Andronikos says, "What are you here for?"
 : Toro says, "Petition. King."
@@ -431,17 +432,16 @@ N1234567890ABCD.
 : faces Guard 3
 : says "He is the size of two men at least."
 : says "So we'll admit no more for now."
+8:00:26 Toro goes to Central Hall (90%)
+8:00:32 Andronikos goes to Usher's Office
 
-(Sticky Agatha begins in West Stairwell. The West Stairwell is connected to the Antechamber where a line of people are.)
 8:00:05 Sticky Agatha @ Throne Room (20%)
-: Harold faces Sticky Agatha
-: says, "(whispers) What is your name?"
+: Harold says, "(whispers) What is your name?" to Sticky Agatha
 : Sticky Agatha says, "Sticky Agatha."
-: Harold faces King Frederick
-: says, "Agatha of Stickiness, seeking audience with His Majesty!"
+: Harold says, "Agatha of Stickiness, seeking audience with His Majesty!" to King Frederick
 : waits
 : says, "Approach and speak."
-: Sticky Agatha @ (50%)
+: Sticky Agatha goes (50%)
 : says "Your Highness,"
 : says "I am the mother of your friend, Heinrich."
 : says "I wish to open a business in Palermo, washing clothes."
@@ -459,7 +459,8 @@ N1234567890ABCD.
 : Sticky Agatha says, "(weeps)"
 : King Frederick says, "Chamberlain, your comments lack grace."
 : Gualtiero says, "Forgive my excesses, your Majesty."
-(Sticky Agatha leaves for Robing Chamber)
+8:01:07 Harold goes to West Stairwell
+8:01:09 Sticky Agatha goes to Robing Chamber
 
 8:00:30 Toro @ Central Hall (90%)
 : waits 8
@@ -491,9 +492,8 @@ N1234567890ABCD.
 : P8 faces Toro
 : P9 faces Toro
 : P10 says, "Just go on ahead."
-: P8 says, "Yeah, just go."
 : Toro says "Gratitude."
-(Toro leaves for Antechamber)
+8:00:54 Toro goes to Antechamber (95%)
 8:00:55 P10 faces left
 8:00:56 P9 faces left
 : P7 faces left
@@ -507,11 +507,11 @@ N1234567890ABCD.
 
 8:00:35 Andronikos @ Usher's Office
 : thinks "Let's add this bull to our registry..."
-: @ (10%)
+: goes (10%)
 : Petitioner Registry becomes Petitioner Registry Updated
 : Andronikos thinks, "Done."
-: @ (30%)
-(returns to Entrance Hall)
+: goes (30%)
+8:00:42 goes to Entrance Hall (50%)
 
 8:00:45 Andronikos @ Entrance Hall (50%)
 
@@ -560,45 +560,44 @@ N1234567890ABCD.
 : P22 faces left
 : P24 faces left
 : waits 3
-(Using an item in Toro's possesion to position emit bubble over his body. Storywise, Toro is emitting the fart noise - not the black paint jar.)
 : Toro emits "(loud fart)"
 : Toro says, "Apologies."
 : P24 says "(coughing)"
 : P22 says "Ghastly!"
 : P18 says "I can come back tomorrow."
 : P21 thinks "I shall endure it."
-8:01:56 Toro @ (30%)
+8:01:56 Toro goes (30%)
 : Guard 4 says, "You have thoroughly befouled this place."
 : says, "But I don't mind less people in here."
+8:01:59 P1 goes to Antechamber (95%)
+8:02:14 Toro goes to Throne Room (20%)
 
-8:02:03 P1 @ Antechamber (95%)
+8:02:06 P1 @ Antechamber (95%)
 : P1 says, "Has some animal died?"
 : Guard 4 says, "You may wait for audience in this room."
 : P1 says, "I... uh..."
 : Guard 4 says, "Or you may return to the central hall."
 : P1 says, "Yes. That."
-: P1 @ Central Hall (10%)
+: P1 goes to Central Hall (10%)
 : says, "A catastrophe has befallen those in the room ahead."
 : P5 says, "Of what manner?"
 : P1 says, "I do not know."
 : says "But I want no part of it."
 : faces left
 
-
 8:01:12 Harold @ West Stairwell
 : says "Next!"
-: @ Throne Room (10%)
+: goes Throne Room (10%)
 : stands on Small Rug
 
+8:01:13 Niccolo goes to Throne Room (20%)
 8:01:18 Niccolo @ Throne Room (20%)
-: Harold faces Niccolo
-: says, "(whispers) Your name?"
+: Harold says, "(whispers) Your name?" to Niccolo
 : Niccolo says, "Niccolò il Calabrese."
-: Harold faces King Frederick
-: says, "Niccolò il Calabrese, seeking audience with His Majesty!"
+: Harold says, "Niccolò il Calabrese, seeking audience with His Majesty!" to King Frederick
 : waits
 : says, "Approach and speak."
-: Niccolo @ (50%)
+: Niccolo goes (50%)
 : says, "Many quarries sell cheap rocks."
 : says, "Bad rocks filled with moisture and cracks."
 : says, "If the Kingdom is to have strong structures,"
@@ -610,7 +609,7 @@ N1234567890ABCD.
 : says, "And also how a promise of protection..."
 : says, "may come from the instigator himself."
 : says, "I will not be involved with your scheme."
-(Niccolo leaves for East Gate)
+8:02:12 Niccolo goes to East Gate (85%)
 8:02:12 Gualtiero faces King Frederick
 : says, "I share your outrage, Highness!"
 : King Frederick says, "You need not provide your every opinion."
@@ -621,10 +620,12 @@ N1234567890ABCD.
 8:01:23 Sticky Agatha @ Robing Chamber
 : takes Royal Tunic
 : thinks, "This will do."
-: @ East Gate (80%)
+: goes to East Gate (80%)
 : faces left
 : thinks "He was just behind me in line."
 : thinks "I will wait for him."
+
+8:01:26 P22 goes to Entrance Hall (60%)
 
 (Andronikos is in the Entrance Hall, a stream of petitioners are exiting)
 8:01:29 Andronikos faces left
@@ -639,85 +640,82 @@ N1234567890ABCD.
 : P22 says, "I fear for my very soul!"
 (P22 resumes fleeing to the East Gate)
 
-(Andronikos remains in the Entrance Hall. The clamore of the petitioners fleeing has subsided.)
+(Andronikos remains in the Entrance Hall. The clamor of the petitioners fleeing has subsided.)
 8:02:07 Andronikos faces Guard 3
 : says "I will assess the antechamber."
 : says "Admit no petitioners in my absence."
 : Guard 3 says, "Of course, sir."
-(Andronikos leaves for the antechamber)
+8:02:15 Andronikos goes to Antechamber (90%)
 
 8:01:52 P21 thinks, "It is unendurable."
-8:01:34 P23 @ East Gate (95%)
+8:01:19 P23 goes to East Gate (95%)
+8:01:34 @ East Gate (95%)
 : hide P23
-8:01:37 P24 @ East Gate (95%)
-8:01:38 @ (95%)
+8:01:23 P24 goes to East Gate (95%)
+8:01:37 @ East Gate (95%)
 : hide P24
-8:01:39 P20 @ East Gate (95%)
-8:01:40 @ (95%)
+8:01:23 P20 goes to East Gate (95%)
+8:01:39 @ East Gate (95%)
 : hide P20
-8:01:40 P23 @ East Gate (95%)
-8:01:41 @ (95%)
-: hide P23
-8:01:51 P18 @ East Gate (95%)
-8:01:52 @ (95%)
+8:01:35 P18 goes to East Gate (95%)
+8:01:51 @ East Gate (95%)
 : hide P18
-8:01:44 P17 @ East Gate (95%)
-8:01:48 @ (95%)
+8:01:28 P17 goes to East Gate (95%)
+8:01:44 @ East Gate (95%)
 : hide P17
-8:01:46 P19 @ East Gate (95%)
-8:01:47 @ (95%)
+8:01:30 P19 goes to East Gate (95%)
+8:01:46 @ East Gate (95%)
 : hide P19
-8:01:49 P16 @ East Gate (95%)
-8:01:51 @ (95%)
+8:01:32 P16 goes to East Gate (95%)
+8:01:49 @ East Gate (95%)
 : hide P16
-8:01:52 P15 @ East Gate (95%)
-8:01:54 @ (95%)
+8:01:35 P15 goes to East Gate (95%)
+8:01:52 @ East Gate (95%)
 : hide P15
-8:01:56 P12 @ East Gate (95%)
-8:01:59 @ (95%)
+8:01:38 P12 goes to East Gate (95%)
+8:01:56 @ East Gate (95%)
 : hide P12
-8:01:56 P22 @ East Gate (95%)
-8:01:59 @ (95%)
+8:01:51 P22 goes to East Gate (95%)
 : hide P22
-8:02:00 P13 @ East Gate (95%)
-8:02:01 @ (95%)
+8:01:42 P13 goes to East Gate (95%)
+8:02:00 @ East Gate (95%)
 : hide P13
-8:02:05 P11 @ East Gate (95%)
-8:02:06 @ (95%)
+8:01:47 P11 goes to East Gate (95%)
+8:02:05 @ East Gate (95%)
 : hide P11
-8:02:06 P14 @ East Gate (95%)
-8:02:09 @ (95%)
+8:01:49 P14 goes to East Gate (95%)
 : hide P14
-8:02:12 P21 @ East Gate (95%)
-8:02:15 @ (95%)
+8:01:57 P21 goes to East Gate (95%)
+8:02:12 @ East Gate (95%)
 : hide P21
+
+8:02:18 Harold goes to West Stairwell
 
 8:02:22 Harold @ West Stairwell
 : says "Next... hey!"
-: @ Throne Room (10%)
+: goes to Throne Room (10%)
 : stands on Small Rug
 
 8:02:25 Andronikos @ Antechamber (90%)
 : Andronikos says, "Ohhhh."
-: waits
-(Andronikos returns to Entrance Hall)
+8:02:26 Andronikos goes to Entrance Hall (50%)
 
 8:02:24 Toro @ Throne Room (20%)
 : Toro says, "Toro."
 : King Frederick says, "Approach and speak, Toro."
 : Harold thinks, "It's like they don't even need a herald!"
-: Toro @ (50%)
+: Toro goes (50%)
 : says, "Pillar. Tower. Palace. Pope."
 : says, "Treachery. Brick. Lies!"
 : Gualtiero says, "Speak clearly, imbecile!"
 : King Frederick says, "Toro, the matter interests me."
 : says, "But I do not yet understand."
 : Toro takes Black Paint Jar in right hand.
-: King Frederick @ (55%)
+: King Frederick goes (55%)
 : Toro says "Paint."
 : Toro gives Black Paint Jar to King Frederick
 : King Frederick takes Black Paint Jar in right hand.
-: @ (65%)
+: goes (65%)
 : says, "Interesting."
 : faces Harold
 : says, "Herald, fetch the Black Brick."
@@ -738,24 +736,24 @@ N1234567890ABCD.
 : says, "It's more efficient that way."
 : Gualtiero says, "Such insight, Majesty."
 : King Frederick faces left
+8:02:57 Harold goes to Chamberlain's Office
 
 8:02:36 Andronikos @ Entrance Hall (50%)
-: faces Guard 3
-: says, "People complain about drafty castles."
+: says, "People complain about drafty castles." to Guard 3
 : says, "But today, I wish for ours to be draftier."
 : faces right
 : Guard 3 thinks, "What is he even talking about?"
 : Andronikos says, "I shall deposit the Terce records."
 : Guard 3 thinks, "I don't care."
-: Andronikos @ Usher's Office
+: Andronikos goes to Usher's Office
 : takes Petitioner Registry Updated
-: @ Record Room
+: goes to Record Room
 : drops Petitioner Registry Updated
 : thinks, "Let us see if they've withdrawn."
-: @ Withdrawal Chamber
+: goes to Withdrawal Chamber
 : thinks, "No surprise."
 : thinks, "Common petitions rarely warrant further discussion."
-: @ Tapestry Store (90%)
+: goes to Tapestry Store (90%)
 : drops Wax Tablet Updated
 : lays on Tapestry Stack
 : faces right
@@ -772,17 +770,18 @@ N1234567890ABCD.
 : Sticky Agatha says, "You seem troubled."
 : Niccolo says, "The King gives no support for my mission."
 : Sticky Agatha says, "Let us talk elsewhere."
-: Niccolo @ (95%)
+: Niccolo goes (95%)
 : hide Niccolo
-: Sticky Agatha @ (95%)
+: Sticky Agatha goes (95%)
 : hide Sticky Agatha
 
 8:03:12 Harold @ Chamberlain's Office
 : thinks, "No, it is not here."
-: Harold @ Deep Archives (95%)
+: Harold goes to Deep Archives (95%)
 : takes Black Brick in right hand
 : thinks "Heralding is what I do - not fetching!"
 : thinks "My mother named me for this destiny."
+8:03:37 Harold goes to Throne Room (65%)
 
 8:03:58 Harold @ Throne Room (65%)
 : King Frederick faces left

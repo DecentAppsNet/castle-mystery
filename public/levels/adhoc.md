@@ -1,543 +1,835 @@
 # General
 
-* title=Adhoc
-* activeCharacter=King Frederick
-* time=11:58:00
+* title=adhoc
+* activeCharacter=Toro
+* time=8:00:00
 * background=daySky.png
 * imports=items.md | characters.md | roomStyles.md
-* groundFloorRoom=Lawn
-* winSynopsis=The Pope's convoluted caper was executed flawlessly. He aimed to scare young King Frederick. But who knows what effect the collapsed tower had on the boy?
+* winSynopsis=The King's decisions planted seeds of discontent among two petitioners. Toro's luck changed for the better with a new job. King Frederick resolved to reform administrative procedures to isolate him from his subjects. The Pope became an untrustworthy figure in his eyes.
 
 # Map
 
 ```
-....CCDE..HHH.
-AABBCCDFGGHHH.
-...QIIDJJMKKKL
-...QOOOPPMNNN.
-...QRRRRRM....
+.GGGGFOO.......
+JGGGGFCCCBBB...
+JIIIIFEDHBBBAAA
+MMMNNFLDKKKKAAA
 ```
 
-* A=Lawn West
-* B=Lawn
-* C=Lawn East
-* D=Central Stairwell
-* E=Guard Chamber
-* F=Portcullis Chamber
-* G=Courtyard
-* H=Courtyard East
-* I=West Hall
-* J=East Hall
-* K=Wine Cellar
-* L=Textile Store
-* M=East Stairwell
-* N=Grain Store
-* P=Steward's Office
-* O=Liturgical Vault
-* Q=West Stairwell
-* R=Lower Passage
+* A=East Gate
+* B=Entrance Hall
+* C=Central Hall
+* D=Lower Stairwell
+* E=Record Room
+* F=East Stairwell
+* G=Throne Room
+* H=Usher's Office
+* I=Antechamber
+* J=West Stairwell
+* K=Deep Archives
+* L=Tapestry Store
+* M=Withdrawal Chamber
+* N=Robing Chamber
+* O=Chamberlain's Office
 
 # Rooms
 
-## Lawn West
-
-* title=
-* outside=true
-* exits=Lawn
-* style=Palace Garden
-
-```
-........
-.F.P....
-........
-```
-
-* P=Pope
-* F=King Frederick
-
-## Lawn
+## East Gate
 
 * outside=true
-* exits=Lawn East
-* style=Palace Garden
-
-## Lawn East
-
-* title=
-* outside=true
-* exits=Central Stairwell (closed)
-* style=Palace Garden
-
-## Central Stairwell
-
-* title=
-* style=Old Castle
-
-## Guard Chamber
-
-* exits=Central Stairwell (closed)
-* style=Old Castle
+* exits=Entrance Hall (closed)
+* style=Town Street Day
 
 ```
-..s.
-..H.
-....
+.....G......
+........T...
+.....H......
 ```
 
-* s=Small Hourglass
-* H=Hugo
-
-## Portcullis Chamber
-
-* exits=Central Stairwell (closed) | Courtyard (closed)
-* style=Old Castle
-
-## Courtyard
-
-* outside=true
-* exits=Courtyard East
-* style=Courtyard
-
-## Courtyard East
-
-* title=
-* outside=true
-* style=Courtyard
-
-```
-............
-............
-.......c.t..
-```
-
-* t=Arabic Tower
-* c=Arabic Tower Collapsed
-
-## West Hall
-
-* exits=Central Stairwell (closed) | West Stairwell (closed)
-* style=Old Castle
-
-## East Hall
-
-* obscured=true
-* exits=Central Stairwell (closed) | East Stairwell (closed)
-* style=Old Castle
-
-## Wine Cellar
-
-* exits=East Stairwell (closed) | Textile Store (unlocked, unlockable with Steward's Key)
-* style=Old Castle
-
-```
-............
-....T....H..
-........p...
-```
-* H=Helena
 * T=Toro
-* p=Pillar|Rubble
+* G=Guard 1
+* H=Guard 2
 
-## Textile Store
+## Entrance Hall
+
+* exits=Usher's Office (unlocked, unlockable) | Central Hall 
+* style=Finished
+
 
 ```
+..G.........
+.......A....
+............
+```
+
+* A=Andronikos
+* G=Guard 3
+
+## Central Hall
+
+* 1=P1
+* 2=P2
+* 3=P3
+* 4=P4
+* 5=P5
+* 6=P6
+* 7=P7
+* 8=P8
+* 9=P9
+* 0=P10
+
+```
+............
+1234567890..
+............
+```
+
+* style=Finished
+* obscured=true
+* exits=East Stairwell
+
+## Lower Stairwell
+
+* title=
+* exits=Deep Archives (locked, unlockable) | Tapestry Store (locked, unlockable)
+* style=Old Castle
+
+## Record Room
+
+* exits=Lower Stairwell | East Stairwell (locked,unlockable)
+* obscured=true
+* style=Old Castle
+
+```
+..f.
 ....
 ....
-..b.
 ```
 
-* b=Black Brick
-* style=Old Castle
-
-## East Stairwell
-
-* exits=Grain Store (locked, unlockable with Steward's Key) | Steward's Office (unlockable with Steward's Key)
-* style=Old Castle
-
-## Grain Store
-
-* exits=East Stairwell (locked)
-* style=Old Castle
-
-```
-............
-.....b.o.w..
-............
-```
-
-* b=Barley Bin
-* o=Oat Bin
-* w=Wheat Bin
-
-## Steward's Office
-
-* exits=East Stairwell (locked, unlockable with Steward's Key)
-* style=Old Castle
-
-```
-.......t
-..Sw....
-........
-```
-
-* t=Time of Day Plaque
-* w=Walnut Table|Staff List
-* S=Raniero
-
-## Liturgical Vault
-
-* exits=West Stairwell (closed)
-* style=Old Castle
-
-```
-...p........
-............
-............
-```
-
-* p=Black Paint Jar
+* f=Furnishing Requests
 
 ## West Stairwell
 
 * title=
+* obscured=true
 * style=Old Castle
 
-## Lower Passage
+```
+....
+.A..
+....
+```
 
-* exits=West Stairwell (closed) | East Stairwell (closed)
+* A=Sticky Agatha
+
+## Throne Room
+
+* exits=West Stairwell
+* obscured=true
+* style=Finished
+
+```
+...H.....A..G...
+..............t.
+............U...
+```
+
+* t=Throne|King Frederick
+* U=Ugolino
+* G=Gualtiero
+* A=Amos
+* H=Small Rug|Harold
+
+## Chamberlain's Office
+
+* exits=East Stairwell (unlocked, lockable)
+* style=Finished
+
+```
+..c.....
+......th
+........
+```
+
+* c=Chamberlain's Coffer
+* h=Chair Left
+* t=Walnut Table | Letter about Freemasons
+
+## Usher's Office
+
+* exits=Entrance Hall (unlockable)
 * style=Old Castle
+
+```
+..CR
+....
+....
+```
+
+* C=Room Capacities
+* R=Petitioner Registry
+
+## Antechamber
+
+* obscured=true
+* exits=West Stairwell | East Stairwell
+* style=Finished
+
+```
+................
+N1234567890ABCD.
+.G..............
+```
+
+* N=Niccolo
+* 1=P11
+* 2=P12
+* 3=P13
+* 4=P14
+* 5=P15
+* 6=P16
+* 7=P17
+* 8=P18
+* 9=P19
+* 0=P20
+* A=P21
+* B=P22
+* C=P23
+* D=P24
+* G=Guard 4
+
+## East Stairwell
+* title=
+* obscured=true
+* exits=Chamberlain's Office (lockable)
+* style=Old Castle
+
+## Deep Archives
+* exits=Lower Stairwell (locked)
+* style=Old Castle
+
+```
+..............b.
+................
+................
+```
+
+* b=Black Brick
+
+## Tapestry Store
+* exits=Lower Stairwell (locked)
+* style=Old Castle
+
+```
+..t.
+....
+....
+```
+
+* t=Tapestry Stack
+
+## Withdrawal Chamber
+* exits=Robing Chamber (closed)
+* style=Finished
+
+```
+..t.........
+............
+............
+```
+
+* t=Time of Day Plaque
+
+## Robing Chamber
+* exits=East Stairwell (closed)
+* obscured=true
+* style=Finished
+
+```
+..t.....
+........
+........
+```
+
+* t=Royal Tunic
 
 # Characters
 
-## Hugo
-
+## Amos
 * facing=left
+* isTitleKnown=true
+
+## Andronikos
+
+* items=Wax Tablet
 
 ## King Frederick
-* description=His friends still call him "Constantine".
-* isTitleKnown=true
-
-## Pope
-* description=If a man names himself "Innocent", just how innocent will he be?
+* description=The young king seems ill at ease.
 * facing=left
+* orientation=sitting
 * isTitleKnown=true
 
-## Raniero
-* items=Steward's Key
+## Niccolo
+* isTitleKnown=true
+* facing=left
 
-## Helena
+## P1
+* faceImage=malePeasant2.png
+* facing=left
+## P2
+* faceImage=oldFemalePeasant2.png
+* facing=left
+## P3
+* faceImage=femalePeasant.png
+* facing=left
+## P4
+* faceImage=oldMalePeasant.png
+* facing=left
+## P5
+* faceImage=femalePeasant2.png
+* facing=left
+## P6
+* faceImage=malePeasant3.png
+* facing=left
+## P7
+* faceImage=oldFemalePeasant.png
+* facing=left
+## P8
+* faceImage=malePeasant4.png
+* facing=left
+## P9
+* faceImage=femalePeasant3.png
+* facing=left
+## P10
+* faceImage=femalePeasant4.png
+* facing=left
+## P11
+* faceImage=oldMalePeasant2.png
+* facing=left
+## P12
+* faceImage=oldFemalePeasant2.png
+* facing=left
+## P13
+* faceImage=malePeasant.png
+* facing=left
+## P14
+* faceImage=malePeasant2.png
+* facing=left
+## P15
+* faceImage=femalePeasant4.png
+* facing=left
+## P16
+* faceImage=oldMalePeasant.png
+* facing=left
+## P17
+* faceImage=malePeasant3.png
+* facing=left
+## P18
+* faceImage=oldFemalePeasant.png
+* facing=left
+## P19
+* faceImage=femalePeasant2.png
+* facing=left
+## P20
+* faceImage=malePeasant4.png
+* facing=left
+## P21
+* faceImage=oldMalePeasant2.png
+* facing=left
+## P22
+* faceImage=femalePeasant.png
+* facing=left
+## P23
+* faceImage=malePeasant3.png
+* facing=left
+## P24
+* faceImage=malePeasant2.png
+* facing=left
+
+## Sticky Agatha
+* description=A woman in her thirties. Oddly sticky.
+* isTitleKnown=true
+
+## Toro
+* description=Toro has a bad limp and a bad mood.
+* isTitleKnown=true
+* items=Black Paint Jar
+
+## Ugolino
+* description=The Archbishop in the court of King Frederick, far from the Lateran Palace.
+* isTitleKnown=true
+* facing=left
+
+## Gualtiero
+* facing=left
 
 # Items
 
-## Arabic Tower
+## Chamberlain's Coffer
+* image=coffer.png
+* description=A note inside reads:|"Gualti, take your mother's advice. Kings must be praised at every moment. Speak of all others with contempt. By these means, you shall secure a privileged position in court.||-Love, Momiavelli"
 
-* image=arabicTower.png
-* description=Maybe a century old, structurally sound.
+## Furnishing Requests
+* image=codex.png
+* description=The topmost page of the codex reads:|"The table provided to my office is unsuitable. When sat upon my chair, I can scarcely peer over the tabletop. I shall not be perceived by my guests as some child awaiting porridge!|-Gualtiero of Masala"
 
-## Arabic Tower Collapsed
-* image=arabicTowerCollapsed.png
-* description=It's seen better days - yesterday, for example.
-* visible=false
+## Wax Tablet
+* description=Greek numbering of "κϛ" is scratched into the wax.
 
-## Barley Bin
-* drawOffsetY=.5
+## Wax Tablet Updated
+* title=Wax Tablet (Updated)
+* image=waxTablet.png
+* description=Greek numbering of "κζ" is scratched into the wax.
 
-## Oat Bin
-* drawOffsetY=.5
+## Room Capacities
+* image=codex.png
+* description=For the safety of the King, petitioners in these rooms should not exceed these counts:|Entrance Hall - 1|Central Hall - 12|Antechamber - 16
 
-## Pillar
-* description=A pillar. Maybe load-bearing. Or maybe just ornamental.
-* drawOffsetY=-.7
+## Petitioner Registry
+* description=17 JULY 1195, TERCE|Konrad of Augsburg - tax relief|Faraj ibn Sa'id al-Balarmi - property dispute|Tancredi of Cefalù - property dispute|Salvatori of Trapani - tax relief
+* image=codex.png
 
-## Rubble
-* description=A massive pile of rubble, fallen from a new hole in the ceiling.
-* visible=false
-* drawOffsetX=-1
-* drawOffsetY=.8
+## Petitioner Registry Updated
+* title=Petitioner Registry (Updated)
+* description=17 JULY 1195, TERCE|Konrad of Augsburg - tax relief|Faraj ibn Sa'id al-Balarmi - property dispute|Tancredi of Cefalù - property dispute|Salvatori of Trapani - tax relief|Toro - treachery
+* image=codex.png
 
-## Steward's Key
-* description=An ordinary key. It probably unlocks some things.
-* image=brassKey.png
+## Letter about Freemasons
+* image=letter.png
+* drawOffsetY=-2.5
+* description=You will hear aspersions toward a group named the "Freemasons". Do they even exist? I have doubts and suspect some deceit from the Lateran Palace. There is opportunity for favorable change in our futures. But we must act with discretion.|-U d C||P.S. Do not leave this letter laying on your desk!
 
 ## Time of Day Plaque
-* description=Not a clock. Not a calendar. It tells you what the key moments are in any given day.
-
-## Walnut Table
-* description=An unusually high desk.
-
-## Staff List
-* description=Helena of Gaeta - Keeper of Textiles | Matteo il Toro - Cellarer | Hugo of Speyer - Guard Sargeant | Raniero de Stefano - Steward
-* image=codex.png
-* drawOffsetY=-2.5
-* drawOffsetX=1
-
-## Wheat Bin
-* drawOffsetY=.5
+* description=Apparently, quite a few of these plaques were mass-produced.
 
 # Itinerary
 
-(11:58 Pope and Frederick are at West Lawn)
-11:58:00 Pope says, "Welcome to the Lateran Palace, my boy."
-: King Frederick says, "It is nice here."
-: Pope says, "''Nice'', you say?"
-: Pope says, "You stand at the very heart of Christendom!"
-: King Frederick says, "It's more a collection of buildings than a palace."
-: Pope says, "Hrmph."
-11:58:17 Pope goes to Lawn (60%)
-11:58:18 King Frederick goes to Lawn
+7:59:57 Toro @ East Gate
+8:00:02 Toro goes to Entrance Hall (80%)
 
-(11:58 Raniero is in the Steward's Office standing behind a desk that comes up to his eyes.)
-11:58:02 Raniero thinks, "My desk is the perfect height."
-: thinks, "If I stand instead of sitting..."
-: thinks, "My abdomen will form the shape of six!"
-: thinks, "Rather than the shape of one."
+8:00:01 Sticky Agatha goes to Throne Room (20%)
 
-(11:58 Helena at right end of wine cellar)
-11:58:01 Helena goes to Textile Store
-11:58:03 Helena @ Textile Store
-: thinks, "Who left this here?"
+7:59:57 Andronikos @ Entrance Hall
+: takes Wax Tablet in right hand
+: faces Guard 3
+: says "The antechamber is completely full, of course."
+: says "In the central hall, we have space for just two more."
+
+8:00:06 Toro @ Entrance Hall (80%)
+: Andronikos says, "State your name." to Toro
+: Toro says, "Toro."
+: Andronikos says, "What are you here for?"
+: Toro says, "Petition. King."
+: Andronikos says, "Concerning?"
+: Toro says, "TREACHERY!"
+: Andronikos says, "Calm yourself."
+: Toro says, "(whispers loudly) Treachery!"
+: Andronikos says, "Just go up the stairs and wait."
+: Toro says, "Gratitude."
+(Toro leaves for Central Hall)
+: Andronikos thinks, "Toro, like a bull."
+: Wax Tablet becomes Wax Tablet Updated
+: faces Guard 3
+: says "He is the size of two men at least."
+: says "So we'll admit no more for now."
+8:00:26 Toro goes to Central Hall (90%)
+8:00:32 Andronikos goes to Usher's Office
+
+8:00:05 Sticky Agatha @ Throne Room (20%)
+: Harold says, "(whispers) What is your name?" to Sticky Agatha
+: Sticky Agatha says, "Sticky Agatha."
+: Harold says, "Agatha of Stickiness, seeking audience with His Majesty!" to King Frederick
 : waits
-(Helena was referring to the black brick. She leaves for Steward's Office.)
-11:58:06 Helena goes to Steward's Office (60%)
-11:58:09 Toro faces left
+: says, "Approach and speak."
+: Sticky Agatha goes (50%)
+: says "Your Highness,"
+: says "I am the mother of your friend, Heinrich."
+: says "I wish to open a business in Palermo, washing clothes."
+: Gualtiero says, "No permission from this court is required."
+: says, "Merely register and pay your taxes."
+: Sticky Agatha says, "I offer the King an opportunity..."
+: says, "To invest!"
+: Gualtiero says, "Oh, you want money!"
+: says "So you came here like a street beggar."
+: Sticky Agatha says, "I thought the King's friendship with my son-"
+: King Frederick says, "If Heinrich needs something, he may ask me himself."
+: King Frederick says, "Your request is denied." 
+: Gualtiero says, "And why are you so sticky?"
+: says, "No sticky woman should clean clothing!"
+: Sticky Agatha says, "(weeps)"
+: King Frederick says, "Chamberlain, your comments lack grace."
+: Gualtiero says, "Forgive my excesses, your Majesty."
+8:01:07 Harold goes to West Stairwell
+8:01:09 Sticky Agatha goes to Robing Chamber
 
-(11:58 Hugo is in the guard chamber)
-11:58:00 Hugo thinks "I'll need this."
-11:58:02 Hugo takes Small Hourglass
-11:58:05 Hugo goes to Textile Store
-11:58:16 Toro faces Hugo
-11:58:19 Hugo @ Textile Store
-: takes Black Brick
-: goes Central Stairwell
-11:58:23 Toro faces Hugo
-
-11:58:14 Helena @ Steward's Office (60%)
-: Helena says, "I need to lock up the textile store."
-: Raniero says, "Take my key then, but bring it back!"
-: Raniero gives Steward's Key to Helena
-: Raniero says, "It's-"
-: Helena says, "It's the only one. I know, sir."
-: Helena takes Steward's Key in right hand
-: Raniero goes (30%)
-11:58:26 Helena goes to Wine Cellar (90%)
-
-11:58:20 Pope @ Lawn
-11:58:21 King Frederick @ Lawn
-: Pope says, "Since your poor mother, Constance, passed,"
-: says, "you have been under my protection."
-: says, "Many times I have saved you from peril."
-: King Frederick faces Pope
-: says, "You have?"
-: Pope says, "Nearly every week, I thwart some scheme."
-: says, "Your enemies plot to dethrone or kill you."
-: King Frederick says, "I have enemies?"
-: Pope says, "German princes, Otto, and of course..."
-: says, "the Freemasons - most insidious of all!"
-11:58:49 Pope goes to Lawn East (60%)
-11:58:50 King Frederick goes to Lawn East
-
-11:58:41 Hugo thinks, "His schemes are always so complicated."
-
-11:58:52 Pope @ Lawn East
-11:58:53 King Frederick @ Lawn East
-: King Frederick says, "You say I am threatened..." 
-: says, "but I see no evidence of it."
-: Pope says, "You see nothing because I have shielded you well."
-: says, "But danger is everywhere!"
-: King Frederick says, "Hmm."
-11:59:14 Pope goes to Central Stairwell
-11:59:15 King Frederick goes to Central Stairwell
-
-(Helena walks by Toro in the Wine Cellar)
-11:58:30 Toro says, "Key!"
-11:58:32 faces right
-
-11:58:33 Helena @ Wine Cellar (90%)
-: locks Textile Store
-11:58:36 Toro says, "Door!"
-: Helena says, "That's right. I have a key."
-: says, "I used it to lock the door."
-: Toro says, "Door."
-: Helena says, "You want to try an adjective today?"
-: Toro says, "Adjective."
-: Helena says, "(sigh)"
-11:58:50 Helena goes to West Hall
-11:58:52 Toro faces left.
-
-(Raniero remains in his office)
-11:58:35 Raniero thinks, "As soon as she returns with my key..."
-: thinks, "I shall be free to frolic in the bins."
-
-11:58:52 Raniero thinks, "It is hard to stand so much."
-: thinks, "What if I got a tall chair?"
-: thinks, "I would sit only when very tired."
-
-11:59:00 Helena @ West Hall
-: goes to Liturgical Vault (10%)
-: Helena takes Black Paint Jar in left hand
-: goes to Lower Passage
-
-11:59:06 Raniero faces right
-: thinks, "She is taking forever!"
-: thinks, "I shall go find her."
-: goes to Wine Cellar (90%)
-: thinks, "Locked. And she's not here."
-11:59:29 goes to Grain Store (20%)
-11:59:16 Toro faces right
-
-11:59:16 Hugo goes to East Hall (40%)
-
-(Helena is in the lower passage, holding the black paint jar)
-11:59:16 Helena thinks, "Why did he have me paint that brick?"
-11:59:20 Helena goes to Grain Store (40%)
-
-11:59:18 Pope @ Central Stairwell
-11:59:19 King Frederick @ Central Stairwell
-: Pope says, "One moment, my King."
-: Pope goes to East Hall (20%)
-
-11:59:18 Hugo @ East Hall (40%)
-11:59:22 Pope @ East Hall (20%)
-: Hugo gives black brick to Pope
-: Hugo takes small hourglass in right hand
-(Hugo leaves for cellar)
-11:59:24 Pope goes to Central Stairwell
-
-11:59:26 Pope @ Central Stairwell
-: Pope says, "Let us continue with a briskness."
-: Pope says, "Ha ha! It is fun to walk fast!"
-11:59:32 Pope goes to Courtyard East (10%)
-11:59:32 King Frederick goes to Courtyard East (20%)
-
-11:59:31 Toro faces left
-
-11:59:32 Helena @ Grain Store (40%)
-: drops Black Paint Jar
-: thinks "I'll hide it deep in the grain."
-: hide Black Paint Jar
-
-11:59:33 Hugo goes to Wine Cellar (30%)
-
-11:59:38 Raniero @ Grain Store (20%)
-: Raniero says, "What are you doing in here?"
-: Helena faces Raniero
-: Helena says, "I have a confession!"
-: Raniero says, "Yes?"
-: Helena says, "I..."
-: says, "I love to get inside the bins and..."
-: says, "step on the little grains with my bare feet!"
-: Raniero says, "Me too!"
-: says, "It has been my secret pleasure."
-: says, "But now we can do it together!"
-: Helena thinks, "Great."
-(massive boom emitted from Arabic Tower at noon)
-: Raniero faces left
-: says, "What was that?"
-12:00:04 Raniero goes to Wine Cellar (20%)
-12:00:04 Helena goes to Wine Cellar (15%)
-
-11:59:38 Hugo @ Wine Cellar (30%)
-: says, "They say you are strong..." to Toro
-: says, "Like a bull!"
-: Toro says, "Truth." to Hugo
-: Hugo says, "Are you strong?"
-: Toro says, "Toro! Strength!"
-: Hugo says, "But Helena said you are weak."
-: Toro says, "Lies!"
-: Hugo says, "Show me. Smash that pillar!"
-: Toro faces right.
-: Toro says, "Toro! Toro! Toro!"
-11:59:53 Toro goes to Wine Cellar (75%)
-
-11:59:39 Pope @ Courtyard East (10%)
-11:59:40 King Frederick @ Courtyard East (20%)
-: King Frederick says, "This tower, I love."
-: says, "It has art and symmetry!"
-: Pope says, "Yes, the old thing stands apart in style."
-: King Frederick goes (50%)
-: Pope says, "Ah, but you must stand further back!"
-: says, "To take it in properly!"
-: King Frederick goes (30%)
-: faces right
-11:59:59 Arabic Tower emits, "(rumble)"
-12:00:00 hide Arabic Tower
-12:00:00 show Arabic Tower Collapsed
-(The Arabic tower collapses in the direction of King Frederick. It nearly hits the King, and would have if he were still standing close to it.)
-: King Frederick lays
-: Arabic Tower Collapsed emits "(massive boom)" loudly
-: Pope says, "My King!"
+8:00:30 Toro @ Central Hall (90%)
+: waits 8
+: says "Impatience."
+: P10 faces Toro
 : waits
-: King Frederick stands
-: says, "I am okay."
-: Pope goes (40%)
-: Pope says, "Just as I suspected! Here in the rubble..."
-: takes black brick into left hand.
-: says, "a black brick!"
-: goes (20%)
-: faces King Frederick
-: King Frederick faces Pope
-: Pope drops black brick
-: King Frederick says, "What is this madness?"
-: Pope says, "The Freemasons, my King."
-: says, "They built this tower with a black brick!"
-: says, "A black brick waits til one specific moment..."
-: says, "And then it fails, dropping death on the Freemasons' target."
-: King Frederick says, "I am so angry."
-: Pope says, "Of course! Those devils meant to kill you."
-: King Frederick says, "No, not that."
-: King Frederick says, "It was a really good tower!"
+: P10 faces left
+: waits 3
+: Toro says "Frustration."
+: P9 faces Toro
+: P7 faces Toro
+: P6 faces Toro
+: says, "We are all frustrated, friend."
+: P9 faces left
+: waits
+: P7 faces left
+: waits .5
+: P6 faces left
+: waits 1
+: Toro says "ANGER!"
+: P10 faces Toro
+: P1 faces Toro
+: P2 faces Toro
+: P3 faces Toro
+: P4 faces Toro
+: P5 faces Toro
+: P6 faces Toro
+: P7 faces Toro
+: P8 faces Toro
+: P9 faces Toro
+: P10 says, "Just go on ahead."
+: Toro says "Gratitude."
+8:00:54 Toro goes to Antechamber (95%)
+8:00:55 P10 faces left
+8:00:56 P9 faces left
+: P7 faces left
+8:00:57 P8 faces left
+: P6 faces left
+: P4 faces left
+8:00:58 P5 faces left
+: P3 faces left
+: P2 faces left
+: P1 faces left
+
+8:00:35 Andronikos @ Usher's Office
+: thinks "Let's add this bull to our registry..."
+: goes (10%)
+: Petitioner Registry becomes Petitioner Registry Updated
+: Andronikos thinks, "Done."
+: goes (30%)
+8:00:42 goes to Entrance Hall (50%)
+
+8:00:45 Andronikos @ Entrance Hall (50%)
+
+8:01:01 Toro @ Antechamber (95%)
+: waits 3
+: says, "ANGER!"
+: Niccolo faces Toro
+: P11 faces Toro
+: P12 faces Toro
+: P13 faces Toro
+: P14 faces Toro
+: P15 faces Toro
+: P16 faces Toro
+: P17 faces Toro
+: P18 faces Toro
+: P19 faces Toro
+: P20 faces Toro
+: P21 faces Toro
+: P22 faces Toro
+: P23 faces Toro
+: P24 faces Toro
+: waits
+: Guard 4 says, "Shut up or get out."
+: Toro says, "(sighs)"
+: Niccolo faces left
+: waits
+: P12 faces left
+: P14 faces left
+: waits
+: P11 faces left
+: waits .5
+: P13 faces left
+: P15 faces left
+: P19 faces left
+: waits .5
+: P16 faces left
+: P17 faces left
+: P20 faces left
+: P22 faces left
+: waits 1
+: P18 faces left
+: P19 faces left
+: P23 faces left
+: waits .5
+: P21 faces left
+: P22 faces left
+: P24 faces left
+: waits 3
+: Toro emits "(loud fart)"
+: Toro says, "Apologies."
+: P24 says "(coughing)"
+: P22 says "Ghastly!"
+: P18 says "I can come back tomorrow."
+: P21 thinks "I shall endure it."
+8:01:56 Toro goes (30%)
+: Guard 4 says, "You have thoroughly befouled this place."
+: says, "But I don't mind less people in here."
+8:01:59 P1 goes to Antechamber (95%)
+8:02:14 Toro goes to Throne Room (20%)
+
+8:02:06 P1 @ Antechamber (95%)
+: P1 says, "Has some animal died?"
+: Guard 4 says, "You may wait for audience in this room."
+: P1 says, "I... uh..."
+: Guard 4 says, "Or you may return to the central hall."
+: P1 says, "Yes. That."
+: P1 goes to Central Hall (10%)
+: says, "A catastrophe has befallen those in the room ahead."
+: P5 says, "Of what manner?"
+: P1 says, "I do not know."
+: says "But I want no part of it."
+: faces left
+
+8:01:12 Harold @ West Stairwell
+: says "Next!"
+: goes Throne Room (10%)
+: stands on Small Rug
+
+8:01:13 Niccolo goes to Throne Room (20%)
+8:01:18 Niccolo @ Throne Room (20%)
+: Harold says, "(whispers) Your name?" to Niccolo
+: Niccolo says, "Niccolò il Calabrese."
+: Harold says, "Niccolò il Calabrese, seeking audience with His Majesty!" to King Frederick
+: waits
+: says, "Approach and speak."
+: Niccolo goes (50%)
+: says, "Many quarries sell cheap rocks."
+: says, "Bad rocks filled with moisture and cracks."
+: says, "If the Kingdom is to have strong structures,"
+: says, "We must demand quality in our supplies."
+: King Frederick says, "Then demand it. How is this my matter?"
+: Niccolo says, "Jobs are given to whoever bids lowest."
+: says, "But if we had some agreed standard--"
+: King Frederick says, "I am familiar with the threat of shoddy masonry."
+: says, "And also how a promise of protection..."
+: says, "may come from the instigator himself."
+: says, "I will not be involved with your scheme."
+8:02:12 Niccolo goes to East Gate (85%)
+8:02:12 Gualtiero faces King Frederick
+: says, "I share your outrage, Highness!"
+: King Frederick says, "You need not provide your every opinion."
+: Gualtiero says, "Ah, I share your opinion of my opinions, Highness!"
+: King Frederick says, "(sighs)"
+: Gualtiero faces left.
+
+8:01:23 Sticky Agatha @ Robing Chamber
+: takes Royal Tunic
+: thinks, "This will do."
+: goes to East Gate (80%)
+: faces left
+: thinks "He was just behind me in line."
+: thinks "I will wait for him."
+
+8:01:26 P22 goes to Entrance Hall (60%)
+
+(Andronikos is in the Entrance Hall, a stream of petitioners are exiting)
+8:01:29 Andronikos faces left
+: says "What is this commotion?"
+8:01:36 P22 @ Entrance Hall (60%)
+: Andronikos faces P22
+: says "Peasant!"
+: P22 faces Andronikos
+: Andronikos says, "Why are all these people leaving?"
+: P22 says, "The unholy stench of a man-beast's innards pervades the antechamber!"
+: Andronikos says, "I do not follow your meaning."
+: P22 says, "I fear for my very soul!"
+(P22 resumes fleeing to the East Gate)
+
+(Andronikos remains in the Entrance Hall. The clamor of the petitioners fleeing has subsided.)
+8:02:07 Andronikos faces Guard 3
+: says "I will assess the antechamber."
+: says "Admit no petitioners in my absence."
+: Guard 3 says, "Of course, sir."
+8:02:15 Andronikos goes to Antechamber (90%)
+
+8:01:52 P21 thinks, "It is unendurable."
+8:01:19 P23 goes to East Gate (95%)
+8:01:34 @ East Gate (95%)
+: hide P23
+8:01:23 P24 goes to East Gate (95%)
+8:01:37 @ East Gate (95%)
+: hide P24
+8:01:23 P20 goes to East Gate (95%)
+8:01:39 @ East Gate (95%)
+: hide P20
+8:01:35 P18 goes to East Gate (95%)
+8:01:51 @ East Gate (95%)
+: hide P18
+8:01:28 P17 goes to East Gate (95%)
+8:01:44 @ East Gate (95%)
+: hide P17
+8:01:30 P19 goes to East Gate (95%)
+8:01:46 @ East Gate (95%)
+: hide P19
+8:01:32 P16 goes to East Gate (95%)
+8:01:49 @ East Gate (95%)
+: hide P16
+8:01:35 P15 goes to East Gate (95%)
+8:01:52 @ East Gate (95%)
+: hide P15
+8:01:38 P12 goes to East Gate (95%)
+8:01:56 @ East Gate (95%)
+: hide P12
+8:01:51 P22 goes to East Gate (95%)
+: hide P22
+8:01:42 P13 goes to East Gate (95%)
+8:02:00 @ East Gate (95%)
+: hide P13
+8:01:47 P11 goes to East Gate (95%)
+8:02:05 @ East Gate (95%)
+: hide P11
+8:01:49 P14 goes to East Gate (95%)
+: hide P14
+8:01:57 P21 goes to East Gate (95%)
+8:02:12 @ East Gate (95%)
+: hide P21
+
+8:02:18 Harold goes to West Stairwell
+
+8:02:22 Harold @ West Stairwell
+: says "Next... hey!"
+: goes to Throne Room (10%)
+: stands on Small Rug
+
+8:02:25 Andronikos @ Antechamber (90%)
+: Andronikos says, "Ohhhh."
+8:02:26 Andronikos goes to Entrance Hall (50%)
+
+8:02:24 Toro @ Throne Room (20%)
+: Toro says, "Toro."
+: King Frederick says, "Approach and speak, Toro."
+: Harold thinks, "It's like they don't even need a herald!"
+: Toro goes (50%)
+: says, "Pillar. Tower. Palace. Pope."
+: says, "Treachery. Brick. Lies!"
+: Gualtiero says, "Speak clearly, imbecile!"
+: King Frederick says, "Toro, the matter interests me."
+: says, "But I do not yet understand."
+: Toro takes Black Paint Jar in right hand.
+: King Frederick goes (55%)
+: Toro says "Paint."
+: Toro gives Black Paint Jar to King Frederick
+: King Frederick takes Black Paint Jar in right hand.
+: goes (65%)
+: says, "Interesting."
+: faces Harold
+: says, "Herald, fetch the Black Brick."
+: Harold says, "Right away, your Majesty."
+(Harold leaves for Chamberlain's Office)
+: King Frederick waits
 : faces right
+: says, "While we wait, I will speak on another matter."
+: says, "Our petitioning process is a failure."
+: Gualtiero says, "Most certainly it is!"
+: King Frederick says, "In what exact way, Chamberlain?"
+: Gualtiero says, "Oh, uh... I..."
+: says, "Hope to hear your thoughts on the subject first."
+: King Frederick says, "These people come seeking some gift or mercy from me."
+: says, "The World has more complaints than I can hear!"
+: Ugolino says, "The Church can hear them, Majesty."
+: King Frederick says, "Yes, let God receive their prayers - not I."
+: says, "It's more efficient that way."
+: Gualtiero says, "Such insight, Majesty."
+: King Frederick faces left
+8:02:57 Harold goes to Chamberlain's Office
 
-11:59:55 Toro @ Wine Cellar (75%)
-11:59:56 Hugo says, "Do it now!"
-: Toro says, "Arrrrrrgh!"
-: Toro says, "RAWWWWWRRRHGH!"
-12:00:00 hide Pillar
-: show Rubble
-(The pillar collapsed from Toro's pushing, and rubble from the ceiling fell down and buried Toro beneath it. Toro's body, barely visible, is moving slightly beneath the rubble.)
-: Toro lays
-: Hugo waits
-: takes Small Hourglass into inventory
-: says, "Thank you, my strong, stupid bull."
-: says, "You've brought us victory."
+8:02:36 Andronikos @ Entrance Hall (50%)
+: says, "People complain about drafty castles." to Guard 3
+: says, "But today, I wish for ours to be draftier."
+: faces right
+: Guard 3 thinks, "What is he even talking about?"
+: Andronikos says, "I shall deposit the Terce records."
+: Guard 3 thinks, "I don't care."
+: Andronikos goes to Usher's Office
+: takes Petitioner Registry Updated
+: goes to Record Room
+: drops Petitioner Registry Updated
+: thinks, "Let us see if they've withdrawn."
+: goes to Withdrawal Chamber
+: thinks, "No surprise."
+: thinks, "Common petitions rarely warrant further discussion."
+: goes to Tapestry Store (90%)
+: drops Wax Tablet Updated
+: lays on Tapestry Stack
+: faces right
+: thinks, "Nobody ever comes to this room."
+: thinks, "The perfect place for a little nap."
 
-12:00:10 Raniero @ Wine Cellar (20%)
-12:00:11 Helena @ Wine Cellar (20%)
-: Raniero says, "What happened?"
-: Hugo says, "Toro pushed the pillar down."
-: Toro says, "Pain!"
-: Helena says, "He's still alive!"
-: Hugo says, "Oh, good."
-: Helena goes (50%)
-: Raniero goes (50%)
-: says, "But why would he do that?"
-: Toro says, "Hugo!"
-: Hugo says, "I am here, old friend!"
-: Toro says, "Conspiracy!"
-: Hugo says, "You were involved in a conspiracy?"
-: Toro says, "Hugo! Guilt!"
-: Hugo says, "You feel guilty about conspiring?"
-: Raniero says, "It is so hard to understand him."
-: says, "He can only speak in nouns."
+8:02:36 Niccolo @ East Gate (85%)
+: Sticky Agatha says "Niccoló!" to Niccolo
+: Niccolo faces Sticky Agatha
+: Sticky Agatha says, "How does Heinrich fare in Master Pietro's House?"
+: Niccolo says, "Fair."
+: Sticky Agatha says, "He fares fairly?"
+: Niccolo says, "Yes."
+: Sticky Agatha says, "You seem troubled."
+: Niccolo says, "The King gives no support for my mission."
+: Sticky Agatha says, "Let us talk elsewhere."
+: Niccolo goes (95%)
+: hide Niccolo
+: Sticky Agatha goes (95%)
+: hide Sticky Agatha
+
+8:03:12 Harold @ Chamberlain's Office
+: thinks, "No, it is not here."
+: Harold goes to Deep Archives (95%)
+: takes Black Brick in right hand
+: thinks "Heralding is what I do - not fetching!"
+: thinks "My mother named me for this destiny."
+8:03:37 Harold goes to Throne Room (65%)
+
+8:03:58 Harold @ Throne Room (65%)
+: King Frederick faces left
+: Harold gives Black Brick to King Frederick
+: King Frederick takes Black Brick in left hand
+: Harold stands on small rug
+: King Frederick says "Hmm."
+: says, "The paint matches."
+: Ugolino says, "This jar is from the Lateran Palace."
+: says, "Our jar mold bestows this symbol."
+: Gualtiero says, "But what does it prove?"
+: King Frederick says, "A better question perhaps is..."
+: says, "What does it disprove?"
+: says, "Toro, you have done a service for the Crown."
+: says, "Is there anything you want?"
+: Toro says, "Job."
+: King Frederick says, "What job can you do?"
+: Toro says, "Herald."
+: Harold faces right.
+: says, "What?"
+: King Frederick says, "Granted. You are my new herald."
 
 # Conclusions
 
-* suspects=Pope Innocent III|the Freemasons|Helena|Raniero|Toro|Hugo|King Frederick|Nobody|The wind
-* knockedVerbs=paid|amused|seduced|blackmailed|goaded|murdered
-* aftermathVerbs=fall|hide|disappear|succeed|speak|initiate|deceive|murder
-* popeActions=discovered|cremated|painted|planted|rebuked|salvaged
-* numbers=one|two|three|four|five|six
-* items=Arabic Tower | Barley Bin | Black Brick | Black Paint Jar | Oat Bin | Pillar | Small Hourglass | Staff List | Steward's Key | Walnut Table | Wheat Bin
+* numbers=1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32
+* petitioners=Andronikos of Thessalonica|Gualtiero of Masala|King Frederick|Harold of Norwich|Matteo il Toro|Niccolò il Calabrese|Sticky Agatha|Ugolino di Conti
+* verbs=thrown|revealed|painted|planted|destroyed|hidden|murdered|poisoned
+* marks=King|Freemasons|Lateran Palace|Antichrist|Chamberlain|House of Pietro|Holy Roman Empire
+* items=Black Brick|Black Paint Jar|Chamberlain's Coffer|Petitioner Registry|Royal Tunic|Wax Tablet
 
-## identities
+## How Many Petitioners?
 
-* unlockConclusions=Collapse of a Tower
+* conclusion=After Toro joined them, [27] petitioners waited for an audience with the King.
+* revealRooms=Central Hall|East Stairwell
+* unlockConclusions=Something Amiss
 
-## Collapse of a Tower
-* conclusion=[Toro] pushed down the [pillar], because [Hugo] [goaded] him. This caused the [Arabic Tower] to [fall].
+## Something Amiss
 
-* unlockConclusions=Chain of Custody
+* conclusion=After petitioning, [Sticky Agatha] took something from the [Robing Chamber].
+* revealRooms=Antechamber | West Stairwell | Robing Chamber
+* unlockConclusions=Audience Granted
 
-## Chain of Custody
+## Audience Granted
 
-* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [Pope Innocent III] [planted] it in the [Arabic Tower], attempting to [deceive] [King Frederick].
+* conclusion=List petitioners in order of their appearance before the King.---1. [Sticky Agatha]---2. [Niccolò il Calabrese]---3. [Matteo il Toro]
+* revealRooms=Throne Room|Record Room
+* unlockConclusions=Disproof
+
+## Disproof
+
+* conclusion=Pope Innocent III claimed the fallen Arabic tower was constructed by Freemasons using the [Black Brick]. However, it was [painted] using the [Black Paint Jar], which bore a mark of the [Lateran Palace]. This cast doubt on the Pope's claim in the mind of [King Frederick].
