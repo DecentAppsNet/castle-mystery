@@ -13,7 +13,6 @@ import { addCharacterEffect } from "@/levelLoading/timelineLoading";
 import { calcSpeechDuration } from "./util/speechUtil";
 import { createEmitsEffect } from "@/game/effects/speechEffectUtil";
 import { findKeyframeForTime } from "@/game/timeline";
-import { findRoomIAtPosition } from "@/game/roomUtil";
 import EmitSource from "@/game/effects/types/EmitSource";
 import { findItemKeyframeLocation } from "./util/itemKeyframeLocationUtil";
 import { formatMsecsAsTimestamp } from "../timestampUtil";
@@ -39,29 +38,12 @@ type PartsShape = {
 }
 
 function _addSourceError(sourceId:string, text:string, startTime:number, reason:string,
-    activity:Activity, errors:ErrorCollector):null {
+    activity:Activity, errors:ErrorCollector):void {
   errors.addAtLine(`"${sourceId}"${activity.parts.itemId ? ' item' : ''} can't emit "${text}" at `
     + `${formatMsecsAsTimestamp(startTime)} because ${reason}.`, activity.lineI);
-  return null;
 }
 
-function _createCharacterEmitSource(level:Level, editableTimeline:EditableTimeline, characterId:string,
-    text:string, activity:Activity, errors:ErrorCollector):EmitSource|null {
-  // Resolve a placed timeline character at the emit start.
-  assertNonNullable(activity.startTime);
-  const keyframe = findKeyframeForTime(editableTimeline.keyframes, activity.startTime);
-  const characterI = editableTimeline.characterIdToI[characterId];
-  if (characterI === undefined) {
-    return _addSourceError(characterId, text, activity.startTime, 'they are not placed in a room', activity, errors);
-  }
-
-  // Require the character to be currently visible and inside a room.
-  const character = keyframe.characters[characterI];
-  assertNonNullable(character);
-  if (!character.isVisible) return _addSourceError(characterId, text, activity.startTime, 'they are not visible', activity, errors);
-  if (findRoomIAtPosition(level.rooms, character.position.x, character.position.y) < 0) {
-    return _addSourceError(characterId, text, activity.startTime, 'they are not placed in a room', activity, errors);
-  }
+function _createCharacterEmitSource(characterId:string):EmitSource {
   return { kind:'character', characterId };
 }
 
@@ -71,9 +53,14 @@ function _createItemEmitSource(level:Level, editableTimeline:EditableTimeline, i
   assertNonNullable(activity.startTime);
   const keyframe = findKeyframeForTime(editableTimeline.keyframes, activity.startTime);
   const location = findItemKeyframeLocation(keyframe, itemId);
-  if (!location) return _addSourceError(itemId, text, activity.startTime, 'it is not placed in a room or held by a character', activity, errors);
-  if (!location.item.isVisible) return _addSourceError(itemId, text, activity.startTime, 'it is not visible', activity, errors);
-  if (location.kind === 'inventory') return _addSourceError(itemId, text, activity.startTime, 'it is in inventory', activity, errors);
+  if (!location) {
+    _addSourceError(itemId, text, activity.startTime, 'it is not placed in a room or held by a character', activity, errors);
+    return null;
+  }
+  if (location.kind === 'inventory') {
+    _addSourceError(itemId, text, activity.startTime, 'it is in inventory', activity, errors);
+    return null;
+  }
 
   // Capture stable floor or hand placement details.
   if (location.kind === 'room') {
@@ -105,7 +92,7 @@ export function scheduleEmitsActivity(level:Level,
 
   const source = itemId
     ? _createItemEmitSource(level, editableTimeline, itemId, text, activity, errors)
-    : _createCharacterEmitSource(level, editableTimeline, characterId, text, activity, errors);
+    : _createCharacterEmitSource(characterId);
   if (!source) return false;
 
   const emitsEffect = createEmitsEffect(source, text, activity.startTime, speechDuration, isLoud !== undefined);

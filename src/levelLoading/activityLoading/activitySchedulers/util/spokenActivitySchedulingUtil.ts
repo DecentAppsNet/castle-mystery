@@ -26,6 +26,7 @@ export function scheduleSpokenActivity(_level:Level, activity:Activity,
   activity.busyCharacterIds = [characterId];
   activity.busyItemIds = [];
   const characterI = editableTimeline.characterIdToI[characterId];
+  assertNonNullable(characterI);
 
   // Face toward an explicit speech target.
   if (toCharacterId) {

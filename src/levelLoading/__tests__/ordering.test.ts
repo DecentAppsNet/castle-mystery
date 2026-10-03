@@ -9,8 +9,8 @@ describe('level loading - activity ordering', () => {
   it('schedules newly resolved relative activities around earlier absolute activities', () => {
     const text = replaceSection(defaultLevelText, 'itinerary', [
       '0:00:00 Sam sits',
-      ': waits 3',
-      ': stands',
+      ': Benny waits 3',
+      ': Sam stands',
       '0:00:01 Sam lays'
     ]);
     const { level, errors } = loadLevelForTest(text, 'ordering-relative-around-absolute.md');

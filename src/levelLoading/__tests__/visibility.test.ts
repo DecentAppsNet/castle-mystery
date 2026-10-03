@@ -7,13 +7,6 @@ import Level from '@/game/types/Level';
 import itemPlacementText from './fixtures/items/items-placement.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
-function _loadVisibility(itineraryLines:readonly string[], text:string = itemPlacementText) {
-  return loadLevelForTest(replaceSection(text, 'itinerary', [
-    '0:00:00 Sam waits 2',
-    ...itineraryLines
-  ]), 'visibility.md');
-}
-
 function _findItemAtTime(level:Level, itemId:string, time:number):Item {
   const snapshot = createKeyframeAtTime(level.timeline.keyframes, time);
   const roomItem = snapshot.rooms.flatMap(room => room.items).find(item => item.id === itemId);
@@ -28,10 +21,12 @@ function _findItemAtTime(level:Level, itemId:string, time:number):Item {
 
 describe('level loading - visibility activities', () => {
   it('hides and later shows a character', () => {
-    const { level, errors } = _loadVisibility([
+    const text = replaceSection(itemPlacementText, 'itinerary', [
       '0:00:00 hide Sam',
-      '0:00:01 show Sam'
+      '0:00:01 show Sam',
+      '0:00:02 Sam waits'
     ]);
+    const { level, errors } = loadLevelForTest(text, 'visibility.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -41,8 +36,13 @@ describe('level loading - visibility activities', () => {
   });
 
   it('shows an initially hidden character', () => {
-    const text = itemPlacementText.replace('## Sam\n* items=Pencil', '## Sam\n* visible=false\n* items=Pencil');
-    const { level, errors } = _loadVisibility(['0:00:00 show Sam'], text);
+    const initiallyHiddenText = itemPlacementText.replace(
+      '## Sam\n* items=Pencil', '## Sam\n* visible=false\n* items=Pencil');
+    const text = replaceSection(initiallyHiddenText, 'itinerary', [
+      '0:00:00 show Sam',
+      '0:00:02 Sam waits'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'visibility.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -51,10 +51,12 @@ describe('level loading - visibility activities', () => {
   });
 
   it('hides and later shows a room item', () => {
-    const { level, errors } = _loadVisibility([
+    const text = replaceSection(itemPlacementText, 'itinerary', [
       '0:00:01 hide Key',
-      '0:00:02 show Key'
+      '0:00:02 show Key',
+      '0:00:02 Sam waits'
     ]);
+    const { level, errors } = loadLevelForTest(text, 'visibility.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -63,8 +65,12 @@ describe('level loading - visibility activities', () => {
   });
 
   it('shows an initially hidden room item', () => {
-    const text = itemPlacementText.replace('## Key\n', '## Key\n* visible=false\n');
-    const { level, errors } = _loadVisibility(['0:00:01 show Key'], text);
+    const initiallyHiddenText = itemPlacementText.replace('## Key\n', '## Key\n* visible=false\n');
+    const text = replaceSection(initiallyHiddenText, 'itinerary', [
+      '0:00:01 show Key',
+      '0:00:02 Sam waits'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'visibility.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -72,7 +78,11 @@ describe('level loading - visibility activities', () => {
   });
 
   it('hides an inventory item', () => {
-    const { level, errors } = _loadVisibility(['0:00:01 hide Pencil']);
+    const text = replaceSection(itemPlacementText, 'itinerary', [
+      '0:00:01 hide Pencil',
+      '0:00:02 Sam waits'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'visibility.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -80,7 +90,11 @@ describe('level loading - visibility activities', () => {
   });
 
   it('hides an item in the left hand', () => {
-    const { level, errors } = _loadVisibility(['0:00:01 hide Eraser']);
+    const text = replaceSection(itemPlacementText, 'itinerary', [
+      '0:00:01 hide Eraser',
+      '0:00:02 Sam waits'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'visibility.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
@@ -88,7 +102,11 @@ describe('level loading - visibility activities', () => {
   });
 
   it('hides an item in the right hand', () => {
-    const { level, errors } = _loadVisibility(['0:00:01 hide Paper']);
+    const text = replaceSection(itemPlacementText, 'itinerary', [
+      '0:00:01 hide Paper',
+      '0:00:02 Sam waits'
+    ]);
+    const { level, errors } = loadLevelForTest(text, 'visibility.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();

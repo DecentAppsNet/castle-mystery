@@ -32,6 +32,7 @@ import EditableTimeline from "./types/EditableTimeline";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";
 import { scheduleThinksActivity } from "../activityLoading/activitySchedulers/thinksScheduler";
 import { doesActivityConflictWithScheduled } from "./activityConflictUtil";
+import { validateSpeechSourceBeforeScheduling, validateSpeechSources } from "./speechSourceValidationUtil";
 
 type ActivityScheduler = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
   timeline:EditableTimeline, errors:ErrorCollector, scheduledActivities:readonly Activity[]) => boolean;
@@ -63,6 +64,7 @@ function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContex
   const activityScheduler = VERB_TO_ACTIVITY_SCHEDULER[activity.verb];
   assertNonNullable(activityScheduler, `Add scheduler for "${activity.verb}"`);
   if (activity.startTime === null) return false; // A preceding activity must be scheduled first.
+  if (!validateSpeechSourceBeforeScheduling(activity, timeline, errors)) return false;
 
   if (!activityScheduler(level, waypointContext, activity, timeline, errors, scheduledActivities)) return false;
 
@@ -119,5 +121,6 @@ export function scheduleActivities(level:Level, activities:Activity[], waypointC
   }
   assert(toBeScheduled.length === 0);
   validateAtActivities(level, waypointContext, activities, timeline, errors);
+  validateSpeechSources(level, activities, timeline, errors);
   return errors.count > originalErrorCount ? null : _editableTimelineToTimeline(timeline);
 }

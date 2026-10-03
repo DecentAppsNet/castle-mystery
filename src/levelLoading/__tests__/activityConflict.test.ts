@@ -156,6 +156,16 @@ describe('character activity conflict integration', () => {
     expect(errors.describeErrors()).toContain('sam can\'t hide because they are busy saying');
   });
 
+  it('allows hiding a character at the exact end of their speech', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "Hi"',
+      '0:00:01 hide Sam'
+    ]);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
   it('rejects giving an item while that item is emitting', () => {
     const { level, errors } = _loadActivities([
       '0:00:00 Coin emits "A bell rings for several seconds."',
@@ -236,5 +246,25 @@ describe('character activity conflict integration', () => {
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('Can\'t hide because "coin" item is busy with "emits" activity');
+  });
+
+  it('rejects transforming an item during its emission', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Coin emits "A bell rings for several seconds."',
+      '0:00:01 Coin becomes Bell'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Can\'t become because "coin" item is busy with "emits" activity');
+  });
+
+  it('allows transforming an item at the exact end of its emission', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Coin emits "Hi"',
+      '0:00:01 Coin becomes Bell'
+    ]);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
   });
 });
