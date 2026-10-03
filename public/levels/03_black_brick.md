@@ -501,8 +501,8 @@ AABBCCDFGGHHH.
 : says, "Thank you, my strong, stupid bull."
 : says, "You've brought us victory."
 
-12:00:10 Raniero @ Wine Cellar (20%)
-12:00:11 Helena @ Wine Cellar (20%)
+12:00:10 Raniero @ Wine Cellar
+12:00:11 Helena @ Wine Cellar
 : Raniero says, "What happened?"
 : Hugo says, "Toro pushed the pillar down."
 : Toro says, "Pain!"
