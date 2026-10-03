@@ -23,7 +23,7 @@ function _findClaimedWaypoints(waypoints:Waypoint[], snapshot:TimelineKeyframe,
     ignoredCharacterI:number|null):Waypoint[] {
   return snapshot.characters.flatMap((character, characterI) => {
     if (characterI === ignoredCharacterI) return [];
-    const waypoint = waypoints.find(candidate => arePositionsEqual(candidate.position, character.position));
+    const waypoint = waypoints.find(candidate => character.isVisible && arePositionsEqual(candidate.position, character.position));
     return waypoint ? [waypoint] : [];
   });
 }

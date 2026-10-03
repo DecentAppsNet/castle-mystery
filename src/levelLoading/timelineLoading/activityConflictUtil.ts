@@ -50,8 +50,9 @@ export function doesActivityConflictWithScheduled(activity:Activity, scheduledAc
         return true;
       }
       const conflictStart = formatMsecsAsTimestamp(candidate.startTime!);
+        const remainingMsecs = endTime - activity.startTime;
       errors.addAtLine(`${conflictingCharacterId} can't ${verbToPlainForm(activity.verb)} because they are busy with `
-          + `"${candidate.verb}" activity starting at ${conflictStart}.`, activity.lineI);
+          + `"${candidate.verb}" activity starting at ${conflictStart}, which needs ${remainingMsecs} msecs to complete.`, activity.lineI);
       return true;
     };
 

@@ -21,7 +21,7 @@ describe('character activity conflict integration', () => {
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain(`overlapping-activities.md:${currentLineNo}:0:`);
-    expect(errors.describeErrors()).toContain('sam can\'t say because they are busy with "waits" activity starting at 0:00:00.');
+    expect(errors.describeErrors()).toContain('sam can\'t say because they are busy with "waits" activity starting at 0:00:00, which needs 2000 msecs to complete.');
   });
 
   it('rejects waiting during relative movement', () => {
