@@ -433,10 +433,10 @@ function _drawRoomStairsOnly(room:Room, scalingFactors:ScalingFactors, context:C
   room.stairParts.forEach(stairPart => drawStairPart(stairPart, room, scalingFactors, context, imageSet, stairTextureLightness));
 }
 
-export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:CharacterWithEffects[], isActive:boolean, activeCharacter:CharacterWithEffects,
-    hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
+export function drawRoomCharactersAndEffects(room:Room, charactersInRoom:CharacterWithEffects[], isActive:boolean, 
+    activeCharacter:CharacterWithEffects,hoveredCharacterId:string|null, hoveredItemId:string|null, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, metaTime:number, imageSet:ImageSet,
-  discoveryState:DiscoveryState, movingCharacterIds:ReadonlySet<string>, showFullContents:boolean = false,
+    discoveryState:DiscoveryState, movingCharacterIds:ReadonlySet<string>, showFullContents:boolean = false,
     layoutPlanner:CanvasLayoutPlanner|null = null):RoomDrawResult {
   if (!discoveryState.discoveredRoomIds.has(room.id)) return _createEmptyRoomDrawResult();
   const isRoomObscured = discoveryState.obscuredRoomIds.has(room.id) && !showFullContents;
