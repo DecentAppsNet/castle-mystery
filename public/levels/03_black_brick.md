@@ -431,7 +431,7 @@ AABBCCDFGGHHH.
 : says, "But now we can do it together!"
 : Helena thinks, "Great."
 (massive boom emitted from Arabic Tower at noon)
-: Raniero faces left
+12:00:01 Raniero faces left
 : says, "What was that?"
 12:00:04 Raniero goes to Wine Cellar (20%)
 12:00:04 Helena goes to Wine Cellar (15%)
