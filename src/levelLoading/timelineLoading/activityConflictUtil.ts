@@ -15,7 +15,11 @@ function _findSharedCharacterOrItemId(firstIds:readonly string[], secondIds:read
 
 function _activitiesOverlap(firstStartTime:number, firstEndTime:number,
     secondStartTime:number, secondEndTime:number):boolean {
-  if (firstStartTime === firstEndTime || secondStartTime === secondEndTime) return false;
+  const isFirstZeroDuration = firstStartTime === firstEndTime;
+  const isSecondZeroDuration = secondStartTime === secondEndTime;
+  if (isFirstZeroDuration && isSecondZeroDuration) return false;
+  if (isFirstZeroDuration) return secondStartTime < firstStartTime && firstStartTime < secondEndTime;
+  if (isSecondZeroDuration) return firstStartTime < secondStartTime && secondStartTime < firstEndTime;
   return firstStartTime < secondEndTime && secondStartTime < firstEndTime;
 }
 

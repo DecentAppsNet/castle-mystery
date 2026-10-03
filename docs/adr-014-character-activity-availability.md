@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Level loading must reject timelines in which one character participates in multiple nonzero-duration activities at the same time. Previously, some availability rules were inferred from runtime effects. Item transfers, for example, searched for active transfer effects, and a give created a handler-less effect on the receiver solely to reserve that character.
+Level loading must reject timelines in which one character or item participates in incompatible activities at the same time. Previously, some availability rules were inferred from runtime effects. Item transfers, for example, searched for active transfer effects, and a give created a handler-less effect on the receiver solely to reserve that character.
 
 That approach mixed authoring validation with presentation state. It also made availability operation-specific: each scheduler needed to know which effects represented a busy character. Effects can cover only part of an activity, while participation can cover more. A give receiver, for example, participates while the giver approaches as well as while the item is animated.
 
@@ -16,9 +16,9 @@ Activity syntax determines participation. The receiver of a give participates, b
 
 ### Activities own loading-time availability
 
-`Activity.busyCharacterIds` is the source of truth for character availability while loading a level. It is loading-only state and is not copied into the runtime timeline, characters, keyframes, or effects.
+`Activity.busyCharacterIds` and `Activity.busyItemIds` are the sources of truth for participant availability while loading a level. They are loading-only state and are not copied into the runtime timeline, characters, items, keyframes, or effects.
 
-Each activity scheduler explicitly derives its busy participants from normalized parsed parts. There is no generic default. An empty array is valid for an item-only activity, while `null` means that the scheduler has not yet fulfilled its scheduling contract.
+Each activity scheduler explicitly derives its busy participants from normalized parsed parts. There is no generic default. Empty arrays are valid when an activity has no busy participant of that kind.
 
 This keeps syntax-specific policy beside syntax-specific scheduling. For example, `gives` declares both giver and receiver busy, while `drops` declares only its subject busy.
 
@@ -30,7 +30,7 @@ The scheduler compares the current activity with an explicit ordered collection 
 
 A failed activity scheduler may have temporarily changed the editable timeline. This is acceptable because a scheduling error discards that timeline; no rollback mechanism is needed.
 
-### Intervals are half-open and zero-duration activities occupy no time
+### Zero-duration activities conflict only inside occupied intervals
 
 A nonzero activity occupies the interval `[startTime, endTime)`. Two such intervals conflict when:
 
@@ -38,7 +38,9 @@ A nonzero activity occupies the interval `[startTime, endTime)`. Two such interv
 first.startTime < second.endTime && second.startTime < first.endTime
 ```
 
-An activity ending exactly when another begins does not overlap. Activities whose start and end times are equal are explicitly excluded from conflicts, including when their timestamp falls inside a longer activity. This permits instantaneous state changes without weakening nonzero activity participation rules.
+An activity ending exactly when another begins does not overlap. A zero-duration activity is a point activity: it occupies no interval, but conflicts with a nonzero activity sharing a busy character or item when its timestamp is strictly inside `(startTime, endTime)`.
+
+A point activity at the exact start or end of a nonzero activity does not conflict. Two point activities at the same timestamp also do not conflict. These boundary rules permit ordered instantaneous setup and teardown while preventing a participant's state from changing during an activity that depends on that state remaining stable.
 
 ### Effects do not reserve characters
 
@@ -46,14 +48,15 @@ Effects describe runtime presentation and ownership transitions; they are not sc
 
 ### Speech uses the same availability rules
 
-Generic activity availability handles a character overlapping their own speech, thought, or character-source emission with another nonzero activity. Cross-character speech overlap is not a character-availability conflict and is permitted under ADR 016. Runtime earshot remains a presentation concern and does not define loading-time availability.
+Generic activity availability handles a character overlapping their own speech, thought, or character-source emission with another activity. It also prevents zero-duration visibility or transformation changes from invalidating a speech source strictly during speech. Cross-character speech overlap is not a character-availability conflict and is permitted under ADR 016. Runtime earshot remains a presentation concern and does not define loading-time availability.
 
 ## Consequences
 
-- Every new activity scheduler must explicitly declare its busy-participant policy.
+- Every new activity scheduler must explicitly declare its busy-character and busy-item policy.
 - Missing participant declarations become scheduler contract failures instead of silently allowing overlap.
 - Participation can cover a complete activity even when its visual effect covers only part of it.
-- Exact boundaries and zero-duration state changes have consistent behavior across all activity categories.
+- Point activities may establish state at an interval's start or change it at the interval's end, but may not change a shared busy participant strictly inside the interval.
+- Multiple point activities may share a timestamp; their authored scheduling order determines the resulting state.
 - Runtime effects contain only behavior needed for presentation or state transitions.
-- Speech uses the same centralized availability check as other nonzero character activities.
+- Speech uses the same centralized availability check as other activities.
 - Adding a new activity category does not require extending a central verb table or effect-kind reservation system.

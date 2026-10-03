@@ -66,10 +66,30 @@ describe('character activity conflict integration', () => {
     expect(level).not.toBeNull();
   });
 
-  it('allows a zero-duration state change during a longer activity', () => {
+  it('rejects a zero-duration state change inside a longer activity', () => {
     const { level, errors } = _loadActivities([
       '0:00:00 Sam waits 3',
       '0:00:01 Sam sits'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('sam can\'t sit because they are busy with "waits" activity');
+  });
+
+  it('allows a zero-duration state change at the start of a longer activity', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam sits',
+      '0:00:00 Sam waits 3'
+    ]);
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
+  it('allows a zero-duration state change at the end of a longer activity', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam waits 2',
+      '0:00:02 Sam sits'
     ]);
 
     expect(errors.describeErrors()).toBe('');
@@ -124,6 +144,16 @@ describe('character activity conflict integration', () => {
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('sam can\'t wait because they are busy with "emits" activity');
+  });
+
+  it('rejects hiding a character during their speech', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Sam says "This sentence lasts several seconds."',
+      '0:00:01 hide Sam'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('sam can\'t hide because they are busy saying');
   });
 
   it('rejects giving an item while that item is emitting', () => {
@@ -186,7 +216,7 @@ describe('character activity conflict integration', () => {
     expect(errors.describeErrors()).toContain('jo can\'t wait because they are busy with "gives" activity');
   });
 
-  it('does not make a character busy for item-only activities', () => {
+  it('allows item visibility changes at the start of an item emission', () => {
     const { level, errors } = _loadActivities([
       '0:00:00 Coin emits "A bell rings for several seconds."',
       '0:00:00 hide Coin',
@@ -196,5 +226,15 @@ describe('character activity conflict integration', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
+  });
+
+  it('rejects hiding an item during its emission', () => {
+    const { level, errors } = _loadActivities([
+      '0:00:00 Coin emits "A bell rings for several seconds."',
+      '0:00:01 hide Coin'
+    ]);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Can\'t hide because "coin" item is busy with "emits" activity');
   });
 });

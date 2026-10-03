@@ -90,14 +90,13 @@ function _scheduleItemVisibility(itemId:string, isVisible:boolean, activity:Acti
 
 export function scheduleVisibilityActivity(isVisible:boolean, activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   const { characterId, itemId } = activity.parts as PartsShape;
+  assertNonNullable(characterId); // Implied subject handling supplies this for both character and item forms.
 
   activity.endTime = activity.startTime;
-  activity.busyCharacterIds = []; // Even for characters and items on characters, this shouldn't cause a busy state.
+  activity.busyCharacterIds = itemId ? [] : [characterId];
   activity.busyItemIds = itemId ? [itemId] : [];
 
-  // The characterId will always be non-null due to implied subject handling. Item must be checked first.
-  assertNonNullable(characterId);
-
+  // Item must be checked first because implied subject handling also supplies characterId for item forms.
   if (itemId) return _scheduleItemVisibility(itemId, isVisible, activity, editableTimeline, errors);
   return _scheduleCharacterVisibility(characterId, isVisible, activity, editableTimeline);
 }
