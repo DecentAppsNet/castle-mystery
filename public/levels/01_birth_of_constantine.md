@@ -279,8 +279,8 @@ A.......
 9:01:28 Amos says, "Next!"
 : says, "Get in there and witness."
 
-9:00:57 Male Peasant 4 thinks, "She brings a baby into the tent?"
-: Old Female Peasant 2 thinks, "What fraud is this? We are not blind."
+9:00:57 Male Peasant 4 says, "She brings a baby into the tent?"
+: Old Female Peasant 2 says, "What fraud is this? We are not blind."
 
 # Conclusions
 
