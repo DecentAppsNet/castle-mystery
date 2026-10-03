@@ -164,6 +164,7 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
   source:EmitSource):EffectHandlerResult|null {
   if (drawCall.stage !== 'afterLevel') return null;
   const levelContext = drawCall.levelContext;
+  if (!isSpeechAudible(levelContext.isActiveRoomObscured, levelContext.isLevelComplete)) return null;
   const anchor = _findEmitSourceAnchor(source, levelContext.framePresentationIndex);
   if (anchor) {
     drawEmitBubble(text, anchor.anchorX, anchor.anchorTopY, scalingFactors, context, startTime, time);
