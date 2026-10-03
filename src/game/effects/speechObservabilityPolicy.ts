@@ -5,3 +5,9 @@
 export function isThoughtObservable(isActiveCharacter:boolean, isLevelComplete:boolean):boolean {
   return isActiveCharacter || isLevelComplete;
 }
+
+/** Returns whether speech is audible to the current observer. */
+export function isSpeechAudible(
+    isActiveRoomObscured:boolean, isLevelComplete:boolean):boolean {
+  return !isActiveRoomObscured || isLevelComplete;
+}

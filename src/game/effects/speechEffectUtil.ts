@@ -17,7 +17,7 @@ import LevelEffectDrawContext from "./types/LevelEffectDrawContext";
 import LevelEffectCharacterLocation from "./types/LevelEffectCharacterLocation";
 import { findEmitTipDirection } from "./emitDirectionUtil";
 import { FacingDirection } from "../types/Character";
-import { isThoughtObservable } from "./speechObservabilityPolicy";
+import { isSpeechAudible, isThoughtObservable } from "./speechObservabilityPolicy";
 
 type TalkingDip = Readonly<{
   startTimeOffset:number,
@@ -120,9 +120,10 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
     return null;
   }
   if (drawCall.stage === 'afterLevel') {
-    const { characterLocationById, isLevelComplete } = drawCall.levelContext;
+    const { characterLocationById, isActiveRoomObscured, isLevelComplete } = drawCall.levelContext;
     const location = characterLocationById.get(characterId);
-    if (!isLevelComplete && location?.kind === 'adjacentOpenExit') {
+    const isAudible = isSpeechAudible(isActiveRoomObscured, isLevelComplete);
+    if (!isLevelComplete && isAudible && location?.kind === 'adjacentOpenExit') {
       drawSpeechBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
         scalingFactors, context, startTime, time);
     }

@@ -1,5 +1,5 @@
-/* This module groups top-level game-state drawing responsibilities, including scaling updates, full-scene rendering, and cursor-related popover drawing.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups top-level game-state drawing responsibilities, including scaling updates, full-scene rendering, and cursor-related popover drawing.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from "decent-portal";
 
@@ -203,6 +203,7 @@ function _createRoomRoofCanvas(room:Room, gameState:GameState, destWidth:number,
   });
 }
 
+/** Prepares size-specific active, inactive, silhouette, and roof images for every base room. */
 export function prepareRoomShellCache(gameState:GameState, destWidth:number, destHeight:number) {
   if (destWidth <= 0 || destHeight <= 0) return;
 
@@ -308,7 +309,7 @@ function _createCharacterLocationById(characters:CharacterWithEffects[], rooms:R
 }
 
 function _createLevelEffectDrawContext(characters:CharacterWithEffects[], rooms:Room[], activeRoom:Room,
-    isLevelComplete:boolean, scalingFactors:ScalingFactors,
+    isActiveRoomObscured:boolean, isLevelComplete:boolean, scalingFactors:ScalingFactors,
     framePresentationIndex:FramePresentationIndex):LevelEffectDrawContext {
   const roomLocationById = _createRoomLocationById(rooms, activeRoom, scalingFactors);
   return {
@@ -318,6 +319,7 @@ function _createLevelEffectDrawContext(characters:CharacterWithEffects[], rooms:
     roomRectById:new Map(rooms.map(room => [room.id, room.rect])),
     activeRoomId:activeRoom.id,
     activeRoomRect:activeRoom.rect,
+    isActiveRoomObscured,
     isLevelComplete,
     activeRoomTopCenterCanvasPoint:projectRoomPointWithDepth(
       activeRoom.rect.x + activeRoom.rect.width / 2,
@@ -328,6 +330,7 @@ function _createLevelEffectDrawContext(characters:CharacterWithEffects[], rooms:
   };
 }
 
+/** Updates scaling for canvas or camera changes and returns the current factors. */
 export function updateScalingFactorsAsNeeded(gameState:GameState, context:CanvasRenderingContext2D):ScalingFactors {
   const destW = context.canvas.width;
   const destH = context.canvas.height;
@@ -350,13 +353,18 @@ export function updateScalingFactorsAsNeeded(gameState:GameState, context:Canvas
   return scalingFactors;
 }
 
+/** Renders the current game snapshot, effects, discovery state, and interactive popovers. */
 export function drawGameState(gameState:GameState, context:CanvasRenderingContext2D, metaTime:number) {
+  // Prepare shared frame state and hover eligibility.
   prepareRoomShellCache(gameState, context.canvas.width, context.canvas.height);
   const { activeCharacter, activeRoom, characters, rooms, movingCharacterIds } = gameState.timelineSnapshot;
+  const isActiveRoomObscured = gameState.discoveryState.obscuredRoomIds.has(activeRoom.id);
   const canShowHoverPopovers = gameState.isLevelComplete
-    || !gameState.discoveryState.obscuredRoomIds.has(activeRoom.id);
+    || !isActiveRoomObscured;
   const hoveredCharacterHighlightId = _findHoveredCharacterHighlightId(gameState, canShowHoverPopovers);
   const hoveredItemHighlightId = _findHoveredItemHighlightId(rooms, gameState, canShowHoverPopovers);
+
+  // Draw the scene background and prepare per-room content.
   const drawnExitIds = new Set<string>();
   const layoutPlanner = new CanvasLayoutPlanner(context.canvas.width, context.canvas.height);
   _drawGround(gameState, context);
@@ -366,10 +374,13 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     const isActive = activeRoom.id === room.id;
     return { room, charactersInRoom, isActive };
   });
+
+  // Draw rooms and collect presentation data for deferred effects.
   const characterEffectDrawEntries:CharacterEffectDrawEntry[] = [];
   const characterBubbleAnchorById = new Map<string, CanvasBubbleAnchor>();
   const itemBubbleAnchorById = new Map<string, CanvasBubbleAnchor>();
   for (const { room, charactersInRoom, isActive } of roomRenderStates) {
+    // Draw the room shell, obscurity, and exits.
     const drewCachedRoomShell = _drawCachedRoomShell(room, gameState, isActive, context);
     if (drewCachedRoomShell) {
       if (gameState.discoveryState.obscuredRoomIds.has(room.id) && !gameState.isLevelComplete
@@ -391,6 +402,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
         gameState.scalingFactors, context, gameState.isLevelComplete, isActive, layoutPlanner, gameState.imageSet,
         gameState.discoveryState.discoveredRoomIds.has(room.id));
     }
+
+      // Draw discovered contents and collect effect anchors.
     if (!gameState.discoveryState.discoveredRoomIds.has(room.id)) continue;
     const roomDrawResult = drawRoomCharactersAndEffects(
       room, charactersInRoom, isActive, activeCharacter, hoveredCharacterHighlightId,
@@ -404,6 +417,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
       drawRoomRoofs(room, gameState.baseRooms, gameState.groundFloorY, gameState.scalingFactors, context);
     }
   }
+
+  // Dispatch effects that require complete room presentation data.
   handleCharacterAfterLevelDrawEffects(
     characterEffectDrawEntries, gameState.scalingFactors, gameState.time, context);
   handleAfterLevelDrawEffects(
@@ -411,11 +426,14 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
     gameState.metaTimeEffects,
     gameState.scalingFactors,
     gameState.time,
-    _createLevelEffectDrawContext(characters, rooms, activeRoom, gameState.isLevelComplete, gameState.scalingFactors,
+    _createLevelEffectDrawContext(characters, rooms, activeRoom, isActiveRoomObscured,
+      gameState.isLevelComplete, gameState.scalingFactors,
       { characterBubbleAnchorById, itemBubbleAnchorById }),
     metaTime,
     context
   );
+
+  // Draw and apply discovery side effects for the active hover popover.
   if (canShowHoverPopovers && gameState.hoveredItemId) {
     const hoveredItem = _findHoveredItem(rooms, gameState);
     if (hoveredItem && isItemInteractive(hoveredItem.item)) {
@@ -444,5 +462,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
         gameState.scalingFactors, context, layoutPlanner);
     }
   }
+
+  // Draw optional developer layout diagnostics last.
   _drawReservedRects(layoutPlanner, context);
 }

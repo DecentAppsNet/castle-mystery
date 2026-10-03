@@ -9,6 +9,7 @@ type LevelEffectDrawContext = {
   roomRectById:ReadonlyMap<string, Rect>,
   activeRoomId:string,
   activeRoomRect:Rect,
+  isActiveRoomObscured:boolean,
   isLevelComplete:boolean,
   activeRoomTopCenterCanvasPoint:[number, number]
 }
