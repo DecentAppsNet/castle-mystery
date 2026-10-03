@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft
+Accepted
 
 ## General Principles for Speech Observability
 
@@ -25,8 +25,6 @@ If the active character's room is obscured during ordinary play, no speech effec
 
 Characters and items must be visible and placed at the time they are used as speech sources. A speech activity with a hidden or unplaced source is invalid rather than merely unobservable.
 
-**Current-behavior note:** `emits` validates that its source is visible and placed when the activity starts. `says` and `thinks` currently create effects without equivalent source validation.
-
 ### `says`
 
 During ordinary play, `says` is observable when all of the following are true:
@@ -41,8 +39,6 @@ When the speaker is presented in the active room, the bubble should be attached 
 
 When the level is complete, every valid active `says` effect in the level is observable. Its bubble should be attached to its presented speaker regardless of which room contains the speaker.
 
-**Current-behavior note:** When the active room is obscured, attached `says` bubbles are suppressed, but level-scoped adjacent-exit fallback can still render speech from an adjacent room. This violates the requirement that an obscured active room suppress all speech observation.
-
 ### `thinks`
 
 Thoughts are observable but never audible. During ordinary play, a `thinks` effect is observable only when:
@@ -54,8 +50,6 @@ Thoughts are observable but never audible. During ordinary play, a `thinks` effe
 The thought bubble should be attached to the active character. Another character's thoughts are not observable during ordinary play, even when that character is visible in the active room. Thoughts have no adjacent-room or other audibility-based presentation.
 
 When the level is complete, every valid active `thinks` effect in the level is observable and should be attached to its presented thinker.
-
-**Current-behavior note:** During ordinary play, the drawing pipeline currently renders thoughts for every presented character in the active room rather than only for the active character.
 
 ### `emits`
 
@@ -74,5 +68,3 @@ During ordinary play, a loud `emits` effect from a valid source is observable fr
 When the source is presented, both loud and non-loud emission bubbles should be attached to that source. Otherwise, an observable non-loud emission should be rendered unattached near the connecting exit. An observable loud emission should be rendered unattached near the top center of the active room, with a tip indicating the source room's approximate direction when the source is in another room. These placement choices must not change whether the emission is observable or produce duplicate bubbles.
 
 When the level is complete, every valid active `emits` effect in the level is observable. Each effect still renders exactly one bubble; omniscience does not require rendering a copy in every room.
-
-**Current-behavior note:** When the active room is obscured, non-loud adjacent-exit fallback and loud top-center fallback can still render emission bubbles. This violates the requirement that an obscured active room suppress all speech observation.
