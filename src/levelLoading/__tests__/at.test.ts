@@ -95,7 +95,7 @@ describe('level loading - @ activities', () => {
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain(
-      'sam would need to start movement from hall at 0:00:08 to arrive in time.'
+      'sam would need to start movement from hall at 0:00:07 to arrive in time.'
     );
   });
 
@@ -108,7 +108,7 @@ describe('level loading - @ activities', () => {
 
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain(
-      'sam would need to start movement from hall at 0:00:08 to arrive in time.'
+      'sam would need to start movement from hall at 0:00:07 to arrive in time.'
     );
   });
 
@@ -147,7 +147,7 @@ describe('level loading - @ activities', () => {
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain(
       'sam was not at library at 0:00:10. Actual room: hall. '
-      + 'sam would need to start movement from hall at 0:00:08 to arrive in time.'
+      + 'sam would need to start movement from hall at 0:00:07 to arrive in time.'
     );
   });
 
@@ -156,6 +156,19 @@ describe('level loading - @ activities', () => {
       '0:00:00 Sam goes Hall (80%)',
       ': Sam @ Hall (80%)'
     ], 'at-horizontal-target.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+  });
+
+  it('validates the horizontal target selected when movement started after occupancy changes', () => {
+    const { level, errors } = _loadAt([
+      '0:00:00 Benny goes Hall (80%)',
+      ': Benny @ Hall (80%)',
+      ': Sam goes Hall (80%)',
+      ': Benny goes Closet',
+      ': Sam @ Hall (80%)'
+    ], 'at-horizontal-target-origin-occupancy.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();

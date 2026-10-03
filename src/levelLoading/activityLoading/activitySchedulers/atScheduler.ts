@@ -34,6 +34,8 @@ type MovementOrigin = {
   invalidAtActivity:Activity
 };
 
+type ValidMovementOrigin = Exclude<MovementOrigin, { invalidAtActivity:Activity }>;
+
 function _findLatestSameCharacterGoesOrAtActivityBeforeAssertion(assertion:Activity,
     activities:readonly Activity[]):Activity|null {
   const { characterId } = assertion.parts as PartsShape;
@@ -54,16 +56,15 @@ function _findLatestSameCharacterGoesOrAtActivityBeforeAssertion(assertion:Activ
   return latestActivity;
 }
 
-function _doesAtActivityMatchSnapshot(level:Level, waypointContext:WaypointGenerationContext,
-    activity:Activity, snapshot:TimelineKeyframe, characterI:number):boolean {
+function _doesPositionMatchAtActivity(level:Level, waypointContext:WaypointGenerationContext,
+    activity:Activity, position:Position, movementOrigin:ValidMovementOrigin):boolean {
   const { roomId, horizontalTarget } = activity.parts as PartsShape;
-  const position = snapshot.characters[characterI].position;
   const actualRoom = findRoomAtPosition(level.rooms, position.x, position.y);
   if (actualRoom?.id !== roomId) return false;
   if (horizontalTarget === undefined) return true;
 
-  const targetPosition = findRoomMovementTargetPosition(waypointContext, snapshot, actualRoom,
-    horizontalTarget, characterI);
+  const targetPosition = findRoomMovementTargetPosition(waypointContext,
+    movementOrigin.originSnapshot, actualRoom, horizontalTarget);
   return arePositionsEqual(position, targetPosition);
 }
 
@@ -83,12 +84,25 @@ function _findOriginForMovementToRoom(level:Level, waypointContext:WaypointGener
   const originPosition = originSnapshot.characters[characterI].position;
   const originRoom = findRoomAtPosition(level.rooms, originPosition.x, originPosition.y);
   assertNonNullable(originRoom);
-  if (originActivity?.verb === '@'
-      && !_doesAtActivityMatchSnapshot(level, waypointContext, originActivity, originSnapshot, characterI)) {
-    return { invalidAtActivity:originActivity };
+  if (originActivity?.verb === '@') {
+    const previousOrigin = _findOriginForMovementToRoom(level, waypointContext, characterI,
+      originActivity, activities, timeline);
+    if ('invalidAtActivity' in previousOrigin
+        || !_doesPositionMatchAtActivity(level, waypointContext, originActivity,
+          originPosition, previousOrigin)) return { invalidAtActivity:originActivity };
   }
 
   return { originSnapshot, originRoom, originPosition };
+}
+
+function _doesAtActivityMatchSnapshot(level:Level, waypointContext:WaypointGenerationContext,
+    activity:Activity, snapshot:TimelineKeyframe, characterI:number,
+    activities:readonly Activity[], timeline:EditableTimeline):boolean {
+  const movementOrigin = _findOriginForMovementToRoom(level, waypointContext, characterI,
+    activity, activities, timeline);
+  if ('invalidAtActivity' in movementOrigin) return false;
+  return _doesPositionMatchAtActivity(level, waypointContext, activity,
+    snapshot.characters[characterI].position, movementOrigin);
 }
 
 function _roundDownMsecsToSecond(msecs:number):number {
@@ -108,12 +122,13 @@ function _createPlacementCorrectionGuidance(level:Level, waypointContext:Waypoin
     const timestamp = formatMsecsAsTimestamp(movementOrigin.invalidAtActivity.startTime!);
     return `The previous @ activity at ${timestamp} is invalid, so no recommended correction has been made.`;
   }
-  const { originSnapshot, originRoom, originPosition } = movementOrigin;
+  const { originRoom, originPosition } = movementOrigin;
 
   const targetRoom = findRoom(level.rooms, roomId);
   assertNonNullable(targetRoom);
   assertNonNullable(assertion.startTime); // Because validation is done after all activities are scheduled.
-  const targetPosition = findRoomMovementTargetPosition(waypointContext, originSnapshot, targetRoom, horizontalTarget);
+  const targetPosition = findRoomMovementTargetPosition(waypointContext,
+    movementOrigin.originSnapshot, targetRoom, horizontalTarget);
   const walkDuration = calcCharacterMovementDuration(waypointContext, originRoom, originPosition, targetRoom, targetPosition);
   const suggestedStartTime = _roundDownMsecsToSecond(assertion.startTime - walkDuration); // Round down to nearest section because timestamps don't allow sub-second specification.
   const suggestedStart = formatMsecsAsTimestamp(suggestedStartTime);
@@ -139,7 +154,8 @@ export function validateAtActivities(level:Level, waypointContext:WaypointGenera
     const position = snapshot.characters[characterI].position;
     const actualRoom = findRoomAtPosition(level.rooms, position.x, position.y);
     assertNonNullable(actualRoom);
-    if (_doesAtActivityMatchSnapshot(level, waypointContext, activity, snapshot, characterI)) continue;
+    if (_doesAtActivityMatchSnapshot(level, waypointContext, activity, snapshot,
+      characterI, activities, timeline)) continue;
 
     // Create a helpful error for the author.
     const timestamp = formatMsecsAsTimestamp(activity.startTime);
