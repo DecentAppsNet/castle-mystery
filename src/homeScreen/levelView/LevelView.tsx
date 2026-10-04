@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useImperativeHandle, useRef, type Ref } from 'react';
 
 import Canvas from '@/components/canvas/Canvas';
 import { mouseDown, mouseMove, mouseWheel, playPause } from '@/game/playerEventUtil';
@@ -7,13 +7,16 @@ import { pauseGameState, updateAndDraw } from '@/game/gameUtil';
 import styles from './LevelView.module.css';
 import GameState from '@/game/types/GameState';
 import Discoveries from '@/game/types/Discoveries';
-import { drawCurtainOverlay } from './curtains';
-import { announceInitialClosedFrame, cancelInitialClosedFrame, clearLevelView,
+import { drawCurtainOverlay, isCurtainVisible } from './curtains';
+import { announceInitialClosedFrame, clearLevelView,
   prepareLevelViewCache, prepareLevelViewFrame } from './levelViewFrameUtil';
 import type LevelViewFrameState from './types/LevelViewFrameState';
 import type InitialClosedFrameHandoff from './types/InitialClosedFrameHandoff';
+import type LevelViewHandle from './types/LevelViewHandle';
+import { announceCurtainClosed, cancelCurtainClose, requestCurtainClose } from './levelViewCloseUtil';
 
 type Props = {
+  ref?:Ref<LevelViewHandle>,
   gameState:GameState|null, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
   onMinutesChanged:(minutes:number) => void,
   onIsPlayingChanged:(isPlaying:boolean) => void,
@@ -24,37 +27,40 @@ type Props = {
   hasLoadingFailed:boolean
 }
 
-function LevelView({gameState, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
+function LevelView({ref, gameState, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
   onDiscoveriesChanged, onInitialClosedFrame, hasLoadingFailed}:Props) {
   const gameStateRef = useRef<GameState|null>(gameState);
-  const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null });
-  const startupHandoffRef = useRef<InitialClosedFrameHandoff>({ pendingFrame:null, hasAnnounced:false });
+  const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
+    closeRequest:null, awaitingReplacement:false });
+  const startupHandoffRef = useRef<InitialClosedFrameHandoff>({ drawnAt:null, hasAnnounced:false });
+  useImperativeHandle(ref, () => ({ close:() => requestCurtainClose(frameStateRef.current, performance.now()) }), []);
 
   useEffect(() => {
-    const handoff = startupHandoffRef.current;
-    return () => cancelInitialClosedFrame(handoff);
+    const state = frameStateRef.current;
+    return () => cancelCurtainClose(state);
   }, []);
   
   useEffect(() => { 
+    if (gameStateRef.current !== gameState) frameStateRef.current.awaitingReplacement = false;
     gameStateRef.current = gameState;
   }, [gameState]);
 
   return <div className={styles.container}>
     <Canvas 
       isAnimated={true} 
-      onDraw={(context) => {
+      onDraw={(context, animationFrameTimestamp) => {
         const currentGameState = gameStateRef.current === gameState ? gameState : null;
         const { width, height } = context.canvas;
-        const frame = prepareLevelViewFrame(frameStateRef.current, currentGameState,
-          width, height, hasLoadingFailed, performance.now());
+        const frame = prepareLevelViewFrame(frameStateRef.current, currentGameState, width, height, hasLoadingFailed, performance.now());
         if (frame.canRenderScene && currentGameState) {
           updateAndDraw(currentGameState, context, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
             onConclusionsChanged, onDiscoveriesChanged);
         } else {
           clearLevelView(context);
         }
-        drawCurtainOverlay(context, frame, hasLoadingFailed);
-        announceInitialClosedFrame(startupHandoffRef.current, onInitialClosedFrame);
+        if (isCurtainVisible(frame)) drawCurtainOverlay(context, frame, hasLoadingFailed);
+        announceCurtainClosed(frameStateRef.current, animationFrameTimestamp); // TODO - conditionally call only when needed.
+        announceInitialClosedFrame(startupHandoffRef.current, animationFrameTimestamp, onInitialClosedFrame); // TODO - conditionally call only when needed.
       }}
       onDrawLoopStart={(destWidth, destHeight) => {
         prepareLevelViewCache(frameStateRef.current, gameState, destWidth, destHeight);

@@ -1,9 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
-import { MIN_CLOSED_MS, calculateCurtainFrame } from '../curtainTiming';
+import { MIN_CLOSED_MS, calculateCurtainFrame, isCurtainVisible } from '../curtainTiming';
 import type CurtainTransition from '../types/CurtainTransition';
 
 describe('curtainTiming', () => {
+  describe('isCurtainVisible()', () => {
+    it('hides the fully open overlay', () => {
+      expect(isCurtainVisible(calculateCurtainFrame({ phase:'open', startedAt:0 }, 0))).toBe(false);
+    });
+
+    it('shows partially open curtain halves', () => {
+      expect(isCurtainVisible(calculateCurtainFrame({ phase:'opening', startedAt:0 }, 310))).toBe(true);
+    });
+
+    it('shows the valance after the halves have opened', () => {
+      expect(isCurtainVisible(calculateCurtainFrame({ phase:'opening', startedAt:0 }, 700))).toBe(true);
+    });
+
+    it('shows an unloaded status label even without visible fabric', () => {
+      expect(isCurtainVisible({ curtainAmount:0, valanceAmount:0, settlingDisplacement:0, canRenderScene:false })).toBe(true);
+    });
+  });
+
   describe('calculateCurtainFrame()', () => {
     it('starts closed without settling or scene rendering', () => {
       const frame = calculateCurtainFrame({ phase:'closed', startedAt:100 }, 100);

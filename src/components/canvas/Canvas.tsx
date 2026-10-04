@@ -7,7 +7,8 @@ const NO_ANIMATION_IN_PROGRESS = -1;
 let animationFrameId = NO_ANIMATION_IN_PROGRESS;
 
 type DrawCallback = {
-  (context:CanvasRenderingContext2D):void;
+  /** Null timestamp identifies a synchronous draw, not an animation-frame observation. */
+  (context:CanvasRenderingContext2D, animationFrameTimestamp:number|null):void;
 }
 
 interface IProps {
@@ -63,10 +64,10 @@ function Canvas(props:IProps) {
       onDrawLoopStart?.(destWidth, destHeight);
     }
 
-    const render = () => {
+    const render = (animationFrameTimestamp:number|null) => {
       if (!isDrawLoopActive || document.hidden) return;
-      if (context.canvas.width && context.canvas.height) onDraw(context);
-      if (isDrawLoopActive && isAnimated) animationFrameId = window.requestAnimationFrame(render);
+      if (context.canvas.width && context.canvas.height) onDraw(context, animationFrameTimestamp);
+      if (isDrawLoopActive && isAnimated) animationFrameId = window.requestAnimationFrame(render); // RAF will pass a timestamp to render() in this case.
     };
     const onVisibilityChange = () => {
       const isViewingPage = !document.hidden;
@@ -75,11 +76,11 @@ function Canvas(props:IProps) {
         window.cancelAnimationFrame(animationFrameId);
         animationFrameId = NO_ANIMATION_IN_PROGRESS;
       } else {
-        render();
+        render(null);
       }
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
-    if (!document.hidden) render();
+    if (!document.hidden) render(null);
 
     return () => {
       isDrawLoopActive = false;
@@ -91,7 +92,7 @@ function Canvas(props:IProps) {
   useEffect(() => { // Handle redrawing after canvas dimensions are updated.
     const context = canvasRef.current?.getContext('2d');
     if (document.hidden || !context || !context.canvas.width || !context.canvas.height) return;
-    onDraw(context);
+    onDraw(context, null);
   }, [onDraw, containerDimensions]);
 
   useEffect(() => { // Handle wheel with a non-passive listener so callers can prevent page scrolling.

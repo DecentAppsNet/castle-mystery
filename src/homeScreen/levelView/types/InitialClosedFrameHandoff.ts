@@ -1,7 +1,7 @@
-/** One-time startup paint notification and its cancellable animation-frame request. */
+/** One-time closed-frame notification advanced only by Canvas animation-frame observations. */
 type InitialClosedFrameHandoff = {
-  /** Null when no handoff animation frame is outstanding: before scheduling, after cancellation, or after notification. */
-  pendingFrame:number|null,
+  /** Null until a closed curtain has been drawn in an animation frame. Synchronous draws do not set this. */
+  drawnAt:number|null,
   hasAnnounced:boolean
 };
 

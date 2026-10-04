@@ -7,6 +7,7 @@ import { calculateCurtainFrame } from './curtains';
 import type CurtainFrame from './curtains/types/CurtainFrame';
 import type LevelViewFrameState from './types/LevelViewFrameState';
 import type InitialClosedFrameHandoff from './types/InitialClosedFrameHandoff';
+import { advanceCurtainClosing, observeClosedCurtainFrame } from './levelViewCloseUtil';
 
 /** Prepares room-shell caches only when game-state identity or positive destination dimensions change. */
 export function prepareLevelViewCache(state:LevelViewFrameState, gameState:GameState|null, width:number, height:number) {
@@ -22,12 +23,14 @@ export function prepareLevelViewFrame(state:LevelViewFrameState, gameState:GameS
   width:number, height:number, hasLoadingFailed:boolean, now:number):CurtainFrame {
   // Establish startup closure and calculate the current presentation.
   state.transition ??= { phase:'closed', startedAt:now };
+  advanceCurtainClosing(state, now);
   let frame = calculateCurtainFrame(state.transition, now);
   prepareLevelViewCache(state, gameState, width, height);
 
   // Begin scene eligibility on the first opening frame, after cache and hold readiness.
   if (gameState && state.preparedCache?.gameState === gameState && width > 0 && height > 0
-    && state.transition.phase === 'closed' && frame.isClosedHoldComplete && !hasLoadingFailed) {
+    && state.transition.phase === 'closed' && frame.isClosedHoldComplete && !hasLoadingFailed
+    && !state.awaitingReplacement) {
     state.transition = { phase:'opening', startedAt:now };
     frame = calculateCurtainFrame(state.transition, now);
   }
@@ -44,19 +47,7 @@ export function clearLevelView(context:CanvasRenderingContext2D) {
 }
 
 /** Announces startup closure once, allowing a browser paint between drawing and heavy initialization. */
-export function announceInitialClosedFrame(handoff:InitialClosedFrameHandoff, onInitialClosedFrame:() => void) {
-  if (handoff.hasAnnounced || handoff.pendingFrame !== null) return;
-  handoff.pendingFrame = requestAnimationFrame(() => {
-    handoff.pendingFrame = requestAnimationFrame(() => {
-      handoff.pendingFrame = null;
-      handoff.hasAnnounced = true;
-      onInitialClosedFrame();
-    });
-  });
-}
-
-/** Cancels any outstanding startup notification when LevelView's effect is cleaned up. */
-export function cancelInitialClosedFrame(handoff:InitialClosedFrameHandoff) {
-  if (handoff.pendingFrame !== null) cancelAnimationFrame(handoff.pendingFrame);
-  handoff.pendingFrame = null;
+export function announceInitialClosedFrame(handoff:InitialClosedFrameHandoff,
+  timestamp:number|null, onInitialClosedFrame:() => void) {
+  if (observeClosedCurtainFrame(handoff, timestamp)) onInitialClosedFrame();
 }

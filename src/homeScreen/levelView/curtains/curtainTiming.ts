@@ -3,6 +3,7 @@
 
 import { clamp } from '@/common/numberUtil';
 import type CurtainFrame from './types/CurtainFrame';
+import type CurtainPresentation from './types/CurtainPresentation';
 import type CurtainTransition from './types/CurtainTransition';
 
 const CLOSE_MS = 420;
@@ -16,6 +17,11 @@ const SETTLE_FREQUENCY = 18;
 const FULL_CLOSE_MS = VALANCE_CLOSE_MS + CLOSE_MS + SETTLE_MS;
 /** Additional fully closed hold in milliseconds, concurrent with loading and measured after settling or startup closure. */
 export const MIN_CLOSED_MS = FULL_CLOSE_MS;
+
+/** Whether the curtain overlay has visible fabric, valance, or an unloaded status label. */
+export function isCurtainVisible(frame:CurtainPresentation):boolean {
+  return frame.curtainAmount > 0 || frame.valanceAmount > 0 || !frame.canRenderScene;
+}
 
 function _progress(elapsed:number, duration:number):number {
   return clamp(elapsed / duration, 0, 1);
