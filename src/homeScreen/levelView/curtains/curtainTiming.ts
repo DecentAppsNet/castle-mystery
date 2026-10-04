@@ -2,6 +2,8 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from '@/common/numberUtil';
+import type CurtainFrame from './types/CurtainFrame';
+import type CurtainTransition from './types/CurtainTransition';
 
 const CLOSE_MS = 420;
 const OPEN_MS = 620;
@@ -14,23 +16,6 @@ const SETTLE_FREQUENCY = 18;
 const FULL_CLOSE_MS = VALANCE_CLOSE_MS + CLOSE_MS + SETTLE_MS;
 /** Additional fully closed hold in milliseconds, concurrent with loading and measured after settling or startup closure. */
 export const MIN_CLOSED_MS = FULL_CLOSE_MS;
-
-/** Presentation phase and its start timestamp in milliseconds; closed starts when the fully closed view is established. */
-export type CurtainTransition = Readonly<{
-  phase:'open'|'closing'|'closed'|'opening',
-  startedAt:number
-}>;
-
-type CurtainFrame = Readonly<{
-  curtainAmount:number,
-  valanceAmount:number,
-  settlingDisplacement:number,
-  canRenderScene:boolean,
-  isTransitionComplete:boolean,
-  transitionEndsAt:number|null,
-  closedHoldEndsAt:number|null,
-  isClosedHoldComplete:boolean
-}>;
 
 function _progress(elapsed:number, duration:number):number {
   return clamp(elapsed / duration, 0, 1);

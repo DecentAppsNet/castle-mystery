@@ -1,11 +1,15 @@
-/* This file paints curtain halves with folded red fabric and outlined inner edges over the level-view canvas.
+/* This file paints the level-view curtain overlay, including folded halves, valance, and loading status.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 /* v8 ignore file -- Canvas painting is verified visually rather than through drawing-call tests. @preserve */
 
 import {
-  calculateCurtainEdgePoints, CURTAIN_DESIGN_HEIGHT, CURTAIN_DESIGN_WIDTH, type CurtainSide
+  calculateCurtainEdgePoints, CURTAIN_DESIGN_HEIGHT, CURTAIN_DESIGN_WIDTH
 } from './curtainGeometry';
 import { createCurtainPaths } from './curtainPathUtil';
+import type CurtainPresentation from './types/CurtainPresentation';
+import type CurtainSide from './types/CurtainSide';
+
+const VALANCE_HEIGHT = 78;
 
 function _drawFolds(context:CanvasRenderingContext2D, side:CurtainSide) {
   const direction = side === 'left' ? 1 : -1;
@@ -54,7 +58,7 @@ function _drawHalfCurtain(context:CanvasRenderingContext2D, side:CurtainSide,
 }
 
 /** Paints both curtain halves at current canvas dimensions, preserving context state and drawing nothing when fully open. */
-export function drawCurtainHalves(context:CanvasRenderingContext2D, amount:number, settlingDisplacement:number) {
+function _drawCurtainHalves(context:CanvasRenderingContext2D, amount:number, settlingDisplacement:number) {
   const { width, height } = context.canvas;
   if (amount <= 0 || width <= 0 || height <= 0) return;
 
@@ -64,5 +68,56 @@ export function drawCurtainHalves(context:CanvasRenderingContext2D, amount:numbe
   context.globalAlpha = 1;
   _drawHalfCurtain(context, 'left', amount, settlingDisplacement);
   _drawHalfCurtain(context, 'right', amount, settlingDisplacement);
+  context.restore();
+}
+
+function _drawValance(context:CanvasRenderingContext2D, amount:number) {
+  if (amount <= 0) return;
+
+  // Move the full scalloped height offscreen, scaling independently to current dimensions.
+  context.save();
+  context.scale(context.canvas.width / CURTAIN_DESIGN_WIDTH, context.canvas.height / CURTAIN_DESIGN_HEIGHT);
+  context.translate(0, -VALANCE_HEIGHT * (1 - amount));
+  context.fillStyle = '#671613';
+  context.fillRect(0, 0, CURTAIN_DESIGN_WIDTH, 42);
+
+  // Preserve the prototype's lowered band and semicircular scallops.
+  context.fillStyle = '#9f3229';
+  for (let scallopX = 0; scallopX < CURTAIN_DESIGN_WIDTH; scallopX += 80) {
+    const scallop = new Path2D();
+    scallop.arc(scallopX + 40, 38, 40, 0, Math.PI);
+    context.fill(scallop);
+  }
+  context.restore();
+}
+
+function _drawLoadingLabel(context:CanvasRenderingContext2D, hasLoadingFailed:boolean) {
+  const label = hasLoadingFailed ? 'Loading failed' : 'Loading\u2026';
+  context.save();
+  context.scale(context.canvas.width / CURTAIN_DESIGN_WIDTH, context.canvas.height / CURTAIN_DESIGN_HEIGHT);
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.font = 'bold 27px Jellee';
+  context.lineWidth = 5;
+  context.strokeStyle = 'rgba(45,8,6,.75)';
+
+  // Outline before filling, keeping the status centered in the design coordinate system.
+  context.strokeText(label, CURTAIN_DESIGN_WIDTH / 2, CURTAIN_DESIGN_HEIGHT / 2);
+  context.fillStyle = '#f3d9a5';
+  context.fillText(label, CURTAIN_DESIGN_WIDTH / 2, CURTAIN_DESIGN_HEIGHT / 2);
+  context.restore();
+}
+
+/** Paints supplied curtain presentation values, showing loading status only while scene rendering is ineligible. */
+export function drawCurtainOverlay(context:CanvasRenderingContext2D, frame:CurtainPresentation,
+  hasLoadingFailed:boolean = false) {
+  if (context.canvas.width <= 0 || context.canvas.height <= 0) return;
+
+  // Keep presentation state isolated from the level scene and preserve the caller's current path.
+  context.save();
+  context.globalAlpha = 1;
+  _drawCurtainHalves(context, frame.curtainAmount, frame.settlingDisplacement);
+  if (!frame.canRenderScene) _drawLoadingLabel(context, hasLoadingFailed);
+  _drawValance(context, frame.valanceAmount);
   context.restore();
 }

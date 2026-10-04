@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { MIN_CLOSED_MS, calculateCurtainFrame, type CurtainTransition } from '../curtainTiming';
+import { MIN_CLOSED_MS, calculateCurtainFrame } from '../curtainTiming';
+import type CurtainTransition from '../types/CurtainTransition';
 
 describe('curtainTiming', () => {
   describe('calculateCurtainFrame()', () => {

@@ -3,7 +3,8 @@
 
 import { assertNonNullable } from 'decent-portal';
 
-import { type CurtainEdgePoint, type CurtainSide } from './curtainGeometry';
+import type CurtainEdgePoint from './types/CurtainEdgePoint';
+import type CurtainSide from './types/CurtainSide';
 
 type CurtainPaths = Readonly<{ half:Path2D, innerEdge:Path2D }>;
 
