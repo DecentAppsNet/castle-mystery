@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import styles from './HomeScreen.module.css';
 import { init } from "./interactions/initialization";
@@ -16,6 +16,9 @@ import { changeLevel, continueToNextLevel } from "./interactions/levels";
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
 import { createDiscoveries } from "@/game/discoveriesUtil";
 import TimeSlider from "./timeSlider/TimeSlider";
+import type LevelViewHandle from './levelView/types/LevelViewHandle';
+import type LevelLoadRequest from './types/LevelLoadRequest';
+import { assertNonNullable } from 'decent-portal';
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -32,6 +35,8 @@ function _shouldOpenWinLevelDialog(previousConclusions:ReadonlyArray<Conclusion>
 }
 
 function HomeScreen() {
+  const levelViewRef = useRef<LevelViewHandle|null>(null);
+  const loadRequestRef = useRef<LevelLoadRequest>({ pending:null, isMounted:true });
   const [gameState, setGameState] = useState<GameState|null>(null);
   const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
   const [initErrorMessage, setInitErrorMessage] = useState<string|null>(null);
@@ -47,6 +52,22 @@ function HomeScreen() {
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
+
+  useEffect(() => {
+    const request = loadRequestRef.current;
+    request.isMounted = true;
+    return () => { request.isMounted = false; };
+  }, []);
+
+  function _closeCurtain():Promise<boolean> {
+    assertNonNullable(levelViewRef.current);
+    setInitErrorMessage(null);
+    return levelViewRef.current.close();
+  }
+
+  function _handleLoadingFailed(error:unknown) {
+    setInitErrorMessage(error instanceof Error ? error.message : 'Failed to load level.');
+  }
   
   useEffect(() => {
     if (!isInitialClosedFramePainted || gameState) return;
@@ -115,7 +136,10 @@ function HomeScreen() {
         {levelManifest && <LevelSelector
           levelManifest={levelManifest}
           onSelect={(levelUrl) => {
-            changeLevel({
+            void changeLevel({
+              loadRequest:loadRequestRef.current,
+              closeCurtain:_closeCurtain,
+              onLoadingFailed:_handleLoadingFailed,
               levelUrl,
               levelManifest,
               setGameState,
@@ -132,6 +156,7 @@ function HomeScreen() {
           }}
         />}
         <LevelView 
+          ref={levelViewRef}
           gameState={gameState} 
           onMinutesChanged={setMinutes} 
           onIsPlayingChanged={setIsPlaying} 
@@ -181,11 +206,11 @@ function HomeScreen() {
       {gameState && levelManifest && <WinLevelDialog 
         synopsis={winSynopsis} 
         isOpen={modalDialogName === WinLevelDialog.name} 
-        onContinue={() => continueToNextLevel({levelManifest, setGameState, setLevelManifest, setIsPlaying,
+        onContinue={() => { void continueToNextLevel({levelManifest, setGameState, setLevelManifest, setIsPlaying,
             setMinutes, setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
-            setModalDialogName
-          })
-        }
+            setModalDialogName, loadRequest:loadRequestRef.current, closeCurtain:_closeCurtain,
+            onLoadingFailed:_handleLoadingFailed
+          }); }}
         onReturn={() => setModalDialogName(null)} 
       />}
     </div>

@@ -14,8 +14,12 @@ import LevelManifest from "@/levelLoading/types/LevelManifest";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
 import { msecsToMinutes } from "./gameplay";
 import WinLevelDialog from "../dialogs/WinLevelDialog";
+import type LevelLoadRequest from '../types/LevelLoadRequest';
 
 type ChangeLevelParams = {
+  loadRequest:LevelLoadRequest,
+  closeCurtain:() => Promise<boolean>,
+  onLoadingFailed:(error:unknown) => void,
   levelUrl:string,
   levelManifest:LevelManifest,
   setGameState:Dispatch<SetStateAction<GameState|null>>,
@@ -47,7 +51,7 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
   setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>, setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
-  setModalDialogName:Dispatch<SetStateAction<string|null>>):Promise<void> {
+  setModalDialogName:Dispatch<SetStateAction<string|null>>, loadRequest:LevelLoadRequest):Promise<void> {
   
   const { level, errors } = await loadLevelFromUrl(levelUrl);
   if (!level) {
@@ -55,6 +59,7 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
     throw new Error('Failed to load level. See console for details.');
   }
   const imageSet = await createImageSetFromLevel(level);
+  if (!loadRequest.isMounted) return;
   const gameState = createGameState(level, imageSet);
 
   setGameState(gameState);
@@ -71,7 +76,31 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   await setLastLevelUrl(levelUrl);
 }
 
-export async function changeLevel({
+/** Reuses the active request and ignores additional selections until close/load/apply settles. */
+function _requestLevelLoad(loadRequest:LevelLoadRequest, closeCurtain:() => Promise<boolean>,
+  load:() => Promise<void>, onLoadingFailed:(error:unknown) => void):Promise<void> {
+  if (loadRequest.pending) return loadRequest.pending;
+  if (!loadRequest.isMounted) return Promise.resolve();
+
+  // Store the request before closure can notify completion.
+  loadRequest.pending = Promise.resolve().then(async () => {
+    try {
+      if (!await closeCurtain() || !loadRequest.isMounted) return;
+      await load();
+    } catch (error:unknown) {
+      if (!loadRequest.isMounted) return;
+      console.error(error);
+      onLoadingFailed(error);
+    }
+  }).finally(() => { loadRequest.pending = null; });
+  return loadRequest.pending;
+}
+
+/** Closes the curtain before fetching, then applies a replacement without changing gameplay reset semantics. */
+export function changeLevel({
+  loadRequest,
+  closeCurtain,
+  onLoadingFailed,
   levelUrl,
   levelManifest,
   setGameState,
@@ -85,33 +114,21 @@ export async function changeLevel({
   setActiveCharacterId,
   setModalDialogName
 }:ChangeLevelParams):Promise<void> {
-  await _loadAndApplyLevel(levelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
+  return _requestLevelLoad(loadRequest, closeCurtain, () => _loadAndApplyLevel(levelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
     setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
-    setModalDialogName);
+    setModalDialogName, loadRequest), onLoadingFailed);
 }
 
 type ContinueToNextLevelParams = Omit<ChangeLevelParams, 'levelUrl'>;
 
-export async function continueToNextLevel({
-  levelManifest,
-  setGameState,
-  setLevelManifest,
-  setIsPlaying,
-  setMinutes,
-  setWinSynopsis,
-  setConclusions,
-  setDiscoveries,
-  setConclusionClaimCooldowns,
-  setActiveCharacterId,
-  setModalDialogName
-}:ContinueToNextLevelParams):Promise<void> {
+/** Resolves next-level availability before closure; no next level only dismisses the dialog. */
+export function continueToNextLevel(params:ContinueToNextLevelParams):Promise<void> {
+  const { levelManifest, setModalDialogName } = params;
   const nextLevelUrl = levelManifest.levelUrls[levelManifest.lastLevelI + 1] || null;
   if (!nextLevelUrl) {
     setModalDialogName(null);
-    return;
+    return Promise.resolve();
   }
 
-  await _loadAndApplyLevel(nextLevelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
-      setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
-      setModalDialogName);
+  return changeLevel({ ...params, levelUrl:nextLevelUrl });
 }
