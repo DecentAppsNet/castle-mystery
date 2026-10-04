@@ -94,17 +94,19 @@ function _drawValance(context:CanvasRenderingContext2D, amount:number) {
 function _drawLoadingLabel(context:CanvasRenderingContext2D, hasLoadingFailed:boolean) {
   const label = hasLoadingFailed ? 'Loading failed' : 'Loading\u2026';
   context.save();
-  context.scale(context.canvas.width / CURTAIN_DESIGN_WIDTH, context.canvas.height / CURTAIN_DESIGN_HEIGHT);
+  context.translate(context.canvas.width / 2, context.canvas.height / 2);
+  const textScale = context.canvas.height / CURTAIN_DESIGN_HEIGHT;
+  context.scale(textScale, textScale);
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.font = 'bold 27px Jellee';
   context.lineWidth = 5;
   context.strokeStyle = 'rgba(45,8,6,.75)';
 
-  // Outline before filling, keeping the status centered in the design coordinate system.
-  context.strokeText(label, CURTAIN_DESIGN_WIDTH / 2, CURTAIN_DESIGN_HEIGHT / 2);
+  // Outline before filling, preserving normal text proportions at a height-derived size.
+  context.strokeText(label, 0, 0);
   context.fillStyle = '#f3d9a5';
-  context.fillText(label, CURTAIN_DESIGN_WIDTH / 2, CURTAIN_DESIGN_HEIGHT / 2);
+  context.fillText(label, 0, 0);
   context.restore();
 }
 

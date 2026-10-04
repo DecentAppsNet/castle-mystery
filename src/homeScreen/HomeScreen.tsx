@@ -35,6 +35,7 @@ function HomeScreen() {
   const [gameState, setGameState] = useState<GameState|null>(null);
   const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
   const [initErrorMessage, setInitErrorMessage] = useState<string|null>(null);
+  const [isInitialClosedFramePainted, setIsInitialClosedFramePainted] = useState(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
   const [winSynopsis, setWinSynopsis] = useState<string>("");
@@ -48,7 +49,7 @@ function HomeScreen() {
   const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
   
   useEffect(() => {
-    if (gameState) return;
+    if (!isInitialClosedFramePainted || gameState) return;
     let isCancelled = false;
     init().then((initResults) => {
       if (!initResults || isCancelled) return;
@@ -68,7 +69,7 @@ function HomeScreen() {
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [isInitialClosedFramePainted]);
 
   function _handleConclusionsChanged(nextConclusions:Conclusion[]) {
     setConclusions(previousConclusions => {
@@ -107,24 +108,11 @@ function HomeScreen() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [gameState, isPlaying, isPlayPauseDisabled]);
 
-  if (initErrorMessage) {
-    return (
-      <div className={styles.initErrorContainer}>
-        <div className={styles.initErrorCard}>
-          <h1>Error</h1>
-          <p>{initErrorMessage}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!gameState || !levelManifest) return null;
-
   return (
     <div className={styles.container}>
       <TopBar />
       <div className={styles.content}>
-        <LevelSelector
+        {levelManifest && <LevelSelector
           levelManifest={levelManifest}
           onSelect={(levelUrl) => {
             changeLevel({
@@ -142,7 +130,7 @@ function HomeScreen() {
               setModalDialogName
             });
           }}
-        />
+        />}
         <LevelView 
           gameState={gameState} 
           onMinutesChanged={setMinutes} 
@@ -150,8 +138,10 @@ function HomeScreen() {
           onActiveCharacterChanged={setActiveCharacterId} 
           onConclusionsChanged={_handleConclusionsChanged} 
           onDiscoveriesChanged={setDiscoveries} 
+          onInitialClosedFrame={() => setIsInitialClosedFramePainted(true)}
+          hasLoadingFailed={initErrorMessage !== null}
         />
-        <TimeSlider
+        {gameState && <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
           minutes={minutes}
@@ -166,10 +156,10 @@ function HomeScreen() {
           isPlayPauseDisabled={isPlayPauseDisabled}
           onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
           onPlayPauseChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
-        />
+        />}
       </div>
 
-      <div className={styles.sidePane}>
+      {gameState && <div className={styles.sidePane}>
         <div className={styles.conclusionsPane}>
           <ConclusionsView 
             conclusions={conclusions} 
@@ -187,8 +177,8 @@ function HomeScreen() {
         <div className={styles.discoveriesPane}>
           <DiscoveriesView discoveries={discoveries} />
         </div>
-      </div>
-      <WinLevelDialog 
+      </div>}
+      {gameState && levelManifest && <WinLevelDialog 
         synopsis={winSynopsis} 
         isOpen={modalDialogName === WinLevelDialog.name} 
         onContinue={() => continueToNextLevel({levelManifest, setGameState, setLevelManifest, setIsPlaying,
@@ -197,7 +187,7 @@ function HomeScreen() {
           })
         }
         onReturn={() => setModalDialogName(null)} 
-      />
+      />}
     </div>
   );
 }

@@ -3,19 +3,15 @@ import { useEffect, useRef } from 'react';
 import Canvas from '@/components/canvas/Canvas';
 import { mouseDown, mouseMove, mouseWheel, playPause } from '@/game/playerEventUtil';
 import { canvasToGamePosition } from '@/game/drawing/drawUtil';
-import { prepareRoomShellCache } from '@/game/drawing/gameStateDrawUtil';
 import { pauseGameState, updateAndDraw } from '@/game/gameUtil';
 import styles from './LevelView.module.css';
 import GameState from '@/game/types/GameState';
 import Discoveries from '@/game/types/Discoveries';
-import { calculateCurtainFrame, drawCurtainOverlay } from './curtains';
-import type CurtainTransition from './curtains/types/CurtainTransition';
-
-type PreparedRoomShellCache = {
-  gameState:GameState,
-  width:number,
-  height:number
-};
+import { drawCurtainOverlay } from './curtains';
+import { announceInitialClosedFrame, cancelInitialClosedFrame, clearLevelView,
+  prepareLevelViewCache, prepareLevelViewFrame } from './levelViewFrameUtil';
+import type LevelViewFrameState from './types/LevelViewFrameState';
+import type InitialClosedFrameHandoff from './types/InitialClosedFrameHandoff';
 
 type Props = {
   gameState:GameState|null, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
@@ -23,13 +19,21 @@ type Props = {
   onIsPlayingChanged:(isPlaying:boolean) => void,
   onActiveCharacterChanged:(characterId:string) => void,
   onConclusionsChanged:(conclusions:GameState['conclusions']) => void,
-  onDiscoveriesChanged:(discoveries:Discoveries) => void
+  onDiscoveriesChanged:(discoveries:Discoveries) => void,
+  onInitialClosedFrame:() => void,
+  hasLoadingFailed:boolean
 }
 
-function LevelView({gameState, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged, onDiscoveriesChanged}:Props) {
+function LevelView({gameState, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
+  onDiscoveriesChanged, onInitialClosedFrame, hasLoadingFailed}:Props) {
   const gameStateRef = useRef<GameState|null>(gameState);
-  const roomShellCachePreparedRef = useRef<PreparedRoomShellCache|null>(null);
-  const curtainTransitionRef = useRef<CurtainTransition|null>(null);
+  const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null });
+  const startupHandoffRef = useRef<InitialClosedFrameHandoff>({ pendingFrame:null, hasAnnounced:false });
+
+  useEffect(() => {
+    const handoff = startupHandoffRef.current;
+    return () => cancelInitialClosedFrame(handoff);
+  }, []);
   
   useEffect(() => { 
     gameStateRef.current = gameState;
@@ -39,32 +43,21 @@ function LevelView({gameState, onMinutesChanged, onIsPlayingChanged, onActiveCha
     <Canvas 
       isAnimated={true} 
       onDraw={(context) => {
-        const now = performance.now();
-        if (!curtainTransitionRef.current) {
-          curtainTransitionRef.current = { phase:gameState ? 'open' : 'closed', startedAt:now };
-        }
-        const frame = calculateCurtainFrame(curtainTransitionRef.current, now);
-        const currentGameState = gameStateRef.current;
+        const currentGameState = gameStateRef.current === gameState ? gameState : null;
         const { width, height } = context.canvas;
-
-        if (frame.canRenderScene && currentGameState && currentGameState === gameState) {
-          const prepared = roomShellCachePreparedRef.current;
-          if (prepared?.gameState !== currentGameState || prepared.width !== width || prepared.height !== height) {
-            prepareRoomShellCache(currentGameState, width, height);
-            roomShellCachePreparedRef.current = { gameState:currentGameState, width, height };
-          }
+        const frame = prepareLevelViewFrame(frameStateRef.current, currentGameState,
+          width, height, hasLoadingFailed, performance.now());
+        if (frame.canRenderScene && currentGameState) {
           updateAndDraw(currentGameState, context, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
             onConclusionsChanged, onDiscoveriesChanged);
         } else {
-          context.clearRect(0, 0, width, height);
-          context.canvas.style.cursor = 'default';
+          clearLevelView(context);
         }
-        drawCurtainOverlay(context, frame);
+        drawCurtainOverlay(context, frame, hasLoadingFailed);
+        announceInitialClosedFrame(startupHandoffRef.current, onInitialClosedFrame);
       }}
       onDrawLoopStart={(destWidth, destHeight) => {
-        if (!gameState || destWidth <= 0 || destHeight <= 0) return;
-        prepareRoomShellCache(gameState, destWidth, destHeight);
-        roomShellCachePreparedRef.current = { gameState, width:destWidth, height:destHeight };
+        prepareLevelViewCache(frameStateRef.current, gameState, destWidth, destHeight);
       }}
       onPageViewingChange={(isViewingPage) => {
         const currentGameState = gameStateRef.current;
