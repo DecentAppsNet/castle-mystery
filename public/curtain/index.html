@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://decentapps.net/fonts/jellee/jellee.css" type="text/css">
+<title>Canvas2D Curtain Transition Prototype</title>
+<style>
+  html, body { height:100%; margin:0; background:#201b18; color:#f4e7cf; font:14px system-ui,sans-serif; }
+  body { display:grid; place-items:center; }
+  .wrap { width:min(1000px,94vw); }
+  canvas { width:100%; aspect-ratio:16/9; display:block; background:#7fb5df; border:2px solid #100d0b; }
+  .controls { display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  button { padding:7px 12px; cursor:pointer; }
+  #status { margin-left:auto; opacity:.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <canvas id="game" width="960" height="540"></canvas>
+  <div class="controls">
+    <button id="toggle">Unload / close</button>
+    <button id="cycle">Simulate level load</button>
+    <span id="status">loaded</span>
+  </div>
+</div>
+
+<script>
+const canvas = document.querySelector("#game");
+const ctx = canvas.getContext("2d");
+const toggle = document.querySelector("#toggle");
+const cycle = document.querySelector("#cycle");
+const statusEl = document.querySelector("#status");
+
+let state = "loaded"; // loaded, closing, unloaded, opening
+let transitionStart = 0;
+let curtainSettleStart = 0;
+let loadTimer = null;
+
+const CLOSE_MS = 420;
+const OPEN_MS = 620;
+const VALANCE_CLOSE_MS = 140;
+const VALANCE_OPEN_MS = 180;
+const SETTLE_AMPLITUDE = 16;
+const SETTLE_DAMPING = 8;
+const SETTLE_FREQUENCY = 18;
+
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const smooth = t => t * t * (3 - 2 * t);
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+function setState(next) {
+  state = next;
+  transitionStart = performance.now();
+  if (next === "unloaded") curtainSettleStart = transitionStart;
+  statusEl.textContent = next;
+  toggle.textContent = next === "loaded" ? "Unload / close" : "Load / open";
+}
+
+function curtainAmount(now) {
+  if (state === "loaded") return 0;
+  if (state === "unloaded") return 1;
+  const elapsed = now - transitionStart;
+
+  if (state === "closing") {
+    const t = smooth(clamp01((elapsed - VALANCE_CLOSE_MS) / CLOSE_MS));
+    if (elapsed >= VALANCE_CLOSE_MS + CLOSE_MS) setState("unloaded");
+    return t;
+  }
+
+  const t = easeOut(clamp01(elapsed / OPEN_MS));
+  if (elapsed >= OPEN_MS + VALANCE_OPEN_MS) setState("loaded");
+  return 1 - t;
+}
+
+function valanceAmount(now) {
+  if (state === "loaded") return 0;
+  if (state === "unloaded") return 1;
+  const elapsed = now - transitionStart;
+
+  if (state === "closing") return easeOut(clamp01(elapsed / VALANCE_CLOSE_MS));
+
+  const t = smooth(clamp01((elapsed - OPEN_MS) / VALANCE_OPEN_MS));
+  return 1 - t;
+}
+
+function drawLevel(now) {
+  const w = canvas.width, h = canvas.height;
+
+  // Cheap placeholder "level" so the curtain can be evaluated in context.
+  const sky = ctx.createLinearGradient(0,0,0,h);
+  sky.addColorStop(0,"#338ee8");
+  sky.addColorStop(1,"#b6dcf3");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0,0,w,h);
+
+  ctx.fillStyle = "#6e9d70";
+  ctx.beginPath();
+  ctx.moveTo(0,390);
+  for (let x=0; x<=w; x+=80)
+    ctx.lineTo(x, 370 + Math.sin(x*.018)*20);
+  ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.fill();
+
+  ctx.fillStyle="#8c8173";
+  ctx.fillRect(0,440,w,100);
+
+  // A little movement demonstrates that the level can keep rendering underneath.
+  const x = 120 + ((now * .08) % 700);
+  ctx.fillStyle="#33291f";
+  ctx.beginPath(); ctx.arc(x,410,24,0,Math.PI*2); ctx.fill();
+  ctx.fillRect(x-13,430,26,38);
+
+  ctx.fillStyle="rgba(255,255,255,.8)";
+  ctx.font="bold 20px system-ui";
+  ctx.fillText("LEVEL VIEW", 24, 34);
+}
+
+function curtainEdgePoints(side, amount, now) {
+  const w=canvas.width, h=canvas.height;
+  const center=w/2;
+  const openX = side === "left" ? -28 : w+28;
+  const closedX = side === "left" ? center+34 : center-34;
+  const baseX = openX + (closedX-openX)*amount;
+  const settleElapsed = state === "unloaded"
+    ? Math.max(0, now - curtainSettleStart) / 1000
+    : null;
+
+  // Designed perturbations rather than cloth physics.
+  const ys=[0,.13,.27,.42,.58,.74,.89,1];
+  return ys.map((v,i) => {
+    const envelope = Math.sin(v*Math.PI);
+    const fold = Math.sin(i*1.85 + (side==="left"?0:.7)) * 18 * envelope;
+    const pull = (1-amount) * envelope * 34;
+    const dir = side==="left" ? -1 : 1;
+    const settle = settleElapsed === null ? 0
+      : SETTLE_AMPLITUDE * Math.exp(-SETTLE_DAMPING * settleElapsed)
+        * Math.sin(SETTLE_FREQUENCY * settleElapsed) * v * v;
+    const inwardDir = side === "left" ? 1 : -1;
+    return { x: baseX + dir*(fold*amount + pull) + inwardDir*settle, y:v*h };
+  });
+}
+
+function drawHalfCurtain(side, amount, now) {
+  const w=canvas.width, h=canvas.height;
+  const pts=curtainEdgePoints(side,amount,now);
+  const isLeft=side==="left";
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(isLeft ? 0 : w, 0);
+  ctx.lineTo(pts[0].x,pts[0].y);
+
+  for(let i=1;i<pts.length;i++) {
+    const a=pts[i-1], b=pts[i];
+    const cy=(a.y+b.y)/2;
+    ctx.bezierCurveTo(a.x,cy,b.x,cy,b.x,b.y);
+  }
+
+  ctx.lineTo(isLeft ? 0 : w,h);
+  ctx.closePath();
+
+  const edgeX=pts[Math.floor(pts.length/2)].x;
+  const grad=ctx.createLinearGradient(
+    isLeft?0:edgeX, 0,
+    isLeft?edgeX:w, 0
+  );
+  grad.addColorStop(0,"#4c0e0d");
+  grad.addColorStop(.18,"#8c2420");
+  grad.addColorStop(.38,"#52100f");
+  grad.addColorStop(.58,"#a73229");
+  grad.addColorStop(.78,"#591311");
+  grad.addColorStop(1,"#8d241f");
+  ctx.fillStyle=grad;
+  ctx.fill();
+
+  // Broad fold strokes; deliberately illustrative rather than simulated.
+  ctx.clip();
+  ctx.globalAlpha=.22;
+  ctx.lineWidth=18;
+  for(let i=0;i<7;i++) {
+    const fx=(isLeft?0:w) + (isLeft?1:-1)*(35+i*72);
+    ctx.strokeStyle=i%2 ? "#f1a072" : "#160403";
+    ctx.beginPath();
+    ctx.moveTo(fx,0);
+    ctx.bezierCurveTo(fx+15*(isLeft?1:-1),h*.3,
+                      fx-10*(isLeft?1:-1),h*.68,fx,h);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Heavy inner edge helps hide any subpixel seam.
+  ctx.strokeStyle="#3a0908";
+  ctx.lineWidth=5;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++) {
+    const a=pts[i-1], b=pts[i], cy=(a.y+b.y)/2;
+    ctx.bezierCurveTo(a.x,cy,b.x,cy,b.x,b.y);
+  }
+  ctx.stroke();
+}
+
+function drawCurtains(amount, now) {
+  if (amount <= .001) return;
+  drawHalfCurtain("left",amount,now);
+  drawHalfCurtain("right",amount,now);
+
+  if (state === "unloaded") {
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.font="bold 27px Jellee";
+    ctx.lineWidth=5;
+    ctx.strokeStyle="rgba(45,8,6,.75)";
+    ctx.strokeText("Loading…",canvas.width/2,canvas.height/2);
+    ctx.fillStyle="#f3d9a5";
+    ctx.fillText("Loading…",canvas.width/2,canvas.height/2);
+  }
+}
+
+function drawValance(amount) {
+  if (amount <= .001) return;
+
+  // The valance enters before the curtains close and exits after they open.
+  ctx.save();
+  ctx.translate(0, -42 * (1 - amount));
+  ctx.fillStyle="#671613";
+  ctx.fillRect(0,0,canvas.width,42);
+  ctx.fillStyle="#9f3229";
+  for(let x=0;x<canvas.width;x+=80) {
+    ctx.beginPath();
+    ctx.arc(x+40,38,40,0,Math.PI);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function frame(now) {
+  drawLevel(now);
+  const amount=curtainAmount(now);
+  drawCurtains(amount,now);
+  drawValance(valanceAmount(now));
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+toggle.addEventListener("click", () => {
+  clearTimeout(loadTimer);
+  if (state==="loaded" || state==="opening") setState("closing");
+  else setState("opening");
+});
+
+cycle.addEventListener("click", () => {
+  clearTimeout(loadTimer);
+  setState("closing");
+
+  // Wait for close, then imitate a ~900ms level load while curtain is static.
+  loadTimer=setTimeout(() => {
+    setState("unloaded");
+    loadTimer=setTimeout(() => setState("opening"),900);
+  }, VALANCE_CLOSE_MS + CLOSE_MS);
+});
+</script>
+</body>
+</html>
