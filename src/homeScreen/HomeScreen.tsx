@@ -42,7 +42,6 @@ function HomeScreen() {
   const [discoveries, setDiscoveries] = useState<Discoveries>(createEmptyDiscoveries());
   const [conclusionClaimCooldowns, setConclusionClaimCooldowns] = useState<Record<string, number>>({});
   const [, setActiveCharacterId] = useState<string>("");
-  const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
@@ -128,7 +127,7 @@ function HomeScreen() {
         <LevelSelector
           levelManifest={levelManifest}
           onSelect={(levelUrl) => {
-            void changeLevel({
+            changeLevel({
               levelUrl,
               levelManifest,
               setGameState,
@@ -140,7 +139,6 @@ function HomeScreen() {
               setDiscoveries,
               setConclusionClaimCooldowns,
               setActiveCharacterId,
-              setIsScrubbing,
               setModalDialogName
             });
           }}
@@ -152,7 +150,6 @@ function HomeScreen() {
           onActiveCharacterChanged={setActiveCharacterId} 
           onConclusionsChanged={_handleConclusionsChanged} 
           onDiscoveriesChanged={setDiscoveries} 
-          isScrubbing={isScrubbing} 
         />
         <TimeSlider
           fromMinutes={fromMinutes}
@@ -169,7 +166,6 @@ function HomeScreen() {
           isPlayPauseDisabled={isPlayPauseDisabled}
           onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
           onPlayPauseChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
-          onScrubbingChange={setIsScrubbing}
         />
       </div>
 
@@ -195,22 +191,11 @@ function HomeScreen() {
       <WinLevelDialog 
         synopsis={winSynopsis} 
         isOpen={modalDialogName === WinLevelDialog.name} 
-        onContinue={() => {
-          void continueToNextLevel({
-            levelManifest,
-            setGameState,
-            setLevelManifest,
-            setIsPlaying,
-            setMinutes,
-            setWinSynopsis,
-            setConclusions,
-            setDiscoveries,
-            setConclusionClaimCooldowns,
-            setActiveCharacterId,
-            setIsScrubbing,
+        onContinue={() => continueToNextLevel({levelManifest, setGameState, setLevelManifest, setIsPlaying,
+            setMinutes, setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
             setModalDialogName
-          });
-        }}
+          })
+        }
         onReturn={() => setModalDialogName(null)} 
       />
     </div>

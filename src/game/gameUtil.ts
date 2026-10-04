@@ -191,7 +191,7 @@ function _findCharacterSkinIdAtTime(timeline:Timeline, time:number, characterId:
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
     onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
     onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
-    _isScrubbing:boolean = false, onDiscoveriesChanged?:(discoveries:Discoveries) => void) {
+    onDiscoveriesChanged?:(discoveries:Discoveries) => void) {
   
   if (!gameState) {
     context.canvas.style.cursor = "default";

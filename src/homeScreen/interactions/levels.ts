@@ -27,7 +27,6 @@ type ChangeLevelParams = {
   setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>,
   setActiveCharacterId:Dispatch<SetStateAction<string>>,
-  setIsScrubbing:Dispatch<SetStateAction<boolean>>,
   setModalDialogName:Dispatch<SetStateAction<string|null>>
 };
 
@@ -48,7 +47,7 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
   setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>, setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
-  setIsScrubbing:Dispatch<SetStateAction<boolean>>, setModalDialogName:Dispatch<SetStateAction<string|null>>):Promise<void> {
+  setModalDialogName:Dispatch<SetStateAction<string|null>>):Promise<void> {
   
   const { level, errors } = await loadLevelFromUrl(levelUrl);
   if (!level) {
@@ -67,7 +66,6 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setDiscoveries(createDiscoveries(gameState));
   setConclusionClaimCooldowns({});
   setActiveCharacterId(gameState.activeCharacterId);
-  setIsScrubbing(false);
   setModalDialogName(gameState.isLevelComplete ? WinLevelDialog.name : null);
 
   await setLastLevelUrl(levelUrl);
@@ -85,11 +83,10 @@ export async function changeLevel({
   setDiscoveries,
   setConclusionClaimCooldowns,
   setActiveCharacterId,
-  setIsScrubbing,
   setModalDialogName
 }:ChangeLevelParams):Promise<void> {
   await _loadAndApplyLevel(levelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
-    setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
+    setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
     setModalDialogName);
 }
 
@@ -106,7 +103,6 @@ export async function continueToNextLevel({
   setDiscoveries,
   setConclusionClaimCooldowns,
   setActiveCharacterId,
-  setIsScrubbing,
   setModalDialogName
 }:ContinueToNextLevelParams):Promise<void> {
   const nextLevelUrl = levelManifest.levelUrls[levelManifest.lastLevelI + 1] || null;
@@ -116,6 +112,6 @@ export async function continueToNextLevel({
   }
 
   await _loadAndApplyLevel(nextLevelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
-    setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setIsScrubbing,
-    setModalDialogName);
+      setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
+      setModalDialogName);
 }

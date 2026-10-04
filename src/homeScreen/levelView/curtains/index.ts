@@ -1,4 +1,5 @@
-/* This file defines the curtain module boundary; public APIs will be added as external integrations need them.
+/* This file exposes curtain frame calculation and overlay painting to the level view.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-export {};
+export { calculateCurtainFrame } from './curtainTiming';
+export { drawCurtainOverlay } from './curtainDrawUtil';
