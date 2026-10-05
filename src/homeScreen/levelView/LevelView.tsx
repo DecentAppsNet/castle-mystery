@@ -59,8 +59,10 @@ function LevelView({ref, gameState, onMinutesChanged, onIsPlayingChanged, onActi
           clearLevelView(context);
         }
         if (isCurtainVisible(frame)) drawCurtainOverlay(context, frame, hasLoadingFailed);
-        announceCurtainClosed(frameStateRef.current, animationFrameTimestamp); // TODO - conditionally call only when needed.
-        announceInitialClosedFrame(startupHandoffRef.current, animationFrameTimestamp, onInitialClosedFrame); // TODO - conditionally call only when needed.
+        if (frameStateRef.current.transition?.phase === 'closed' && animationFrameTimestamp !== null) {
+          if (frameStateRef.current.closeRequest) announceCurtainClosed(frameStateRef.current, animationFrameTimestamp);
+          if (!startupHandoffRef.current.hasAnnounced) announceInitialClosedFrame(startupHandoffRef.current, animationFrameTimestamp, onInitialClosedFrame);
+        }
       }}
       onDrawLoopStart={(destWidth, destHeight) => {
         prepareLevelViewCache(frameStateRef.current, gameState, destWidth, destHeight);
