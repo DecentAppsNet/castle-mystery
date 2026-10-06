@@ -170,13 +170,15 @@ function HomeScreen() {
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
           minutes={minutes}
-          timeline={gameState.timeline}
-          baseCharacters={gameState.baseCharacters}
-          rooms={gameState.baseRooms}
-          activeCharacterId={gameState.activeCharacterId}
-          activeSkinIdAtSelection={gameState.activeSkinIdAtSelection}
-          discoveryState={gameState.discoveryState}
-          labels={gameState.labels}
+          levelData={{
+            timeline:gameState.timeline,
+            baseCharacters:gameState.baseCharacters,
+            baseRooms:gameState.baseRooms,
+            activeCharacterId:gameState.activeCharacterId,
+            activeSkinIdAtSelection:gameState.activeSkinIdAtSelection,
+            discoveryState:gameState.discoveryState,
+            labels:gameState.labels
+          }}
           isPlaying={isPlaying}
           isPlayPauseDisabled={isPlayPauseDisabled}
           onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}

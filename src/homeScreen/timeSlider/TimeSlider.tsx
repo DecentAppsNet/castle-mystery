@@ -5,13 +5,13 @@ import PlayPauseButton from "@/components/playPauseButton/PlayPauseButton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { calcTimeLabelPositions } from "./labelUtil";
 import { createPositionedLabels, formatMinutes, minutesToPercent, percentToMinutes } from "./timeSliderUtil";
-import TimeLabel from "@/game/types/TimeLabel";
 import TimeLabelPositions from "./types/TimeLabelPositions";
+import type TimeSliderLevelData from "./types/TimeSliderLevelData";
 import Room from "@/game/types/Room";
 import { createItineraryMarkerModel } from "./itineraryMarkerUtil";
 import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawing/drawColorConstants";
 import Timeline from "@/game/types/Timeline";
-import DiscoveryState, { SkinLinkages } from "@/game/types/DiscoveryState";
+import { SkinLinkages } from "@/game/types/DiscoveryState";
 import Character from "@/game/types/Character";
 
 const NO_QUANTIZING = -1;
@@ -21,13 +21,7 @@ type Props = {
   toMinutes:number; // Maximum value in minutes for when slider thumb is at rightmost position.
   minutes:number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
   step?:number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
-  timeline:Timeline|null,
-  baseCharacters:Character[];
-  rooms:Room[];
-  activeCharacterId:string;
-  activeSkinIdAtSelection:string;
-  discoveryState:DiscoveryState,
-  labels:TimeLabel[];
+  levelData:TimeSliderLevelData;
   isPlaying:boolean;
   isPlayPauseDisabled?:boolean;
   onChange:(minutes: number) => void;
@@ -95,9 +89,9 @@ function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
 }
 
 function TimeSlider(props:Props) {
-  const { fromMinutes, toMinutes, minutes, timeline, baseCharacters, rooms, activeCharacterId, activeSkinIdAtSelection,
-    discoveryState, labels, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
+  const { fromMinutes, toMinutes, minutes, levelData, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
   } = props;
+  const { timeline, baseCharacters, baseRooms:rooms, activeCharacterId, activeSkinIdAtSelection, discoveryState, labels } = levelData;
   const [displayMinutes, setDisplayMinutes] = useState(minutes);
   const [sliderWidth, setSliderWidth] = useState(0);
   const [timeLabelPositions, setTimeLabelPositions] = useState<TimeLabelPositions|null>(null);
