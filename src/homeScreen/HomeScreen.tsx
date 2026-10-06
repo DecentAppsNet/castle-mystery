@@ -166,11 +166,11 @@ function HomeScreen() {
           onInitialClosedFrame={() => setIsInitialClosedFramePainted(true)}
           hasLoadingFailed={initErrorMessage !== null}
         />
-        {gameState && <TimeSlider
+        <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
           minutes={minutes}
-          levelData={{
+          levelData={gameState ? {
             timeline:gameState.timeline,
             baseCharacters:gameState.baseCharacters,
             baseRooms:gameState.baseRooms,
@@ -178,12 +178,12 @@ function HomeScreen() {
             activeSkinIdAtSelection:gameState.activeSkinIdAtSelection,
             discoveryState:gameState.discoveryState,
             labels:gameState.labels
-          }}
+          } : null}
           isPlaying={isPlaying}
           isPlayPauseDisabled={isPlayPauseDisabled}
           onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
           onPlayPauseChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
-        />}
+        />
       </div>
 
       {gameState && <div className={styles.sidePane}>

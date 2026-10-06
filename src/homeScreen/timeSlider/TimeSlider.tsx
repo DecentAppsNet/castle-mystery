@@ -13,6 +13,7 @@ import { COLOR_BLACK, COLOR_SPEECH_BUBBLE_FILL } from "@/game/drawing/drawColorC
 import Timeline from "@/game/types/Timeline";
 import { SkinLinkages } from "@/game/types/DiscoveryState";
 import Character from "@/game/types/Character";
+import { assertNonNullable } from "decent-portal";
 
 const NO_QUANTIZING = -1;
 
@@ -21,7 +22,8 @@ type Props = {
   toMinutes:number; // Maximum value in minutes for when slider thumb is at rightmost position.
   minutes:number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
   step?:number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
-  levelData:TimeSliderLevelData;
+  /** Null means an empty and inactive panel, because no level is available or game interaction is disabled. */
+  levelData:TimeSliderLevelData|null;
   isPlaying:boolean;
   isPlayPauseDisabled?:boolean;
   onChange:(minutes: number) => void;
@@ -88,9 +90,10 @@ function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
   });
 }
 
-function TimeSlider(props:Props) {
+function _PopulatedTimeSlider(props:Props) {
   const { fromMinutes, toMinutes, minutes, levelData, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
   } = props;
+  assertNonNullable(levelData);
   const { timeline, baseCharacters, baseRooms:rooms, activeCharacterId, activeSkinIdAtSelection, discoveryState, labels } = levelData;
   const [displayMinutes, setDisplayMinutes] = useState(minutes);
   const [sliderWidth, setSliderWidth] = useState(0);
@@ -132,7 +135,7 @@ function TimeSlider(props:Props) {
   }, [labels, sliderWidth, fromMinutes, toMinutes]);
 
   return (
-    <div className={styles.container}>
+    <>
       <div className={styles.slider} ref={sliderRef}>
         {_renderTimeLabels(timeLabelPositions)}
         {itineraryMarkers}
@@ -150,8 +153,14 @@ function TimeSlider(props:Props) {
         />
       </div>
       <div className={styles.timeText}>{formatMinutes(displayMinutes)}</div>
-    </div>
+    </>
   );
+}
+
+function TimeSlider(props:Props) {
+  return <div className={styles.container}>
+    {props.levelData !== null && <_PopulatedTimeSlider {...props} />}
+  </div>;
 }
 
 export default TimeSlider;
