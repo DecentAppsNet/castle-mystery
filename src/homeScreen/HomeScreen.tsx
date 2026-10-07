@@ -4,7 +4,7 @@ import styles from './HomeScreen.module.css';
 import { init } from "./interactions/initialization";
 import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/homeScreen/levelView/LevelView";
-import { updateNextCharacter, updatePlayPause, updateConclusions, updateTime } from "./interactions/gameplay";
+import { msecsToMinutes, updateNextCharacter, updatePlayPause, updateConclusions, updateTime } from "./interactions/gameplay";
 import GameState from "@/game/types/GameState";
 import ConclusionsView from "./conclusionsView/ConclusionsView";
 import DiscoveriesView from "./discoveriesView/DiscoveriesView";
@@ -18,7 +18,7 @@ import { createDiscoveries } from "@/game/discoveriesUtil";
 import TimeSlider from "./timeSlider/TimeSlider";
 import type LevelViewHandle from './levelView/types/LevelViewHandle';
 import type LevelLoadRequest from './types/LevelLoadRequest';
-import { assertNonNullable } from 'decent-portal';
+import { assert, assertNonNullable } from 'decent-portal';
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -37,6 +37,8 @@ function _shouldOpenWinLevelDialog(previousConclusions:ReadonlyArray<Conclusion>
 function HomeScreen() {
   const levelViewRef = useRef<LevelViewHandle|null>(null);
   const loadRequestRef = useRef<LevelLoadRequest>({ pending:null, isMounted:true });
+  const isGameDisabledRef = useRef(true);
+  const [isGameDisabled, setIsGameDisabled] = useState(true);
   const [gameState, setGameState] = useState<GameState|null>(null);
   const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
   const [initErrorMessage, setInitErrorMessage] = useState<string|null>(null);
@@ -59,8 +61,23 @@ function HomeScreen() {
     return () => { request.isMounted = false; };
   }, []);
 
+  function _setGameDisabled(isDisabled:boolean) {
+    isGameDisabledRef.current = isDisabled;
+    setIsGameDisabled(isDisabled);
+  }
+
+  function _handleOpeningStarted(preparedGameState:GameState) {
+    // The same GameState object, after LevelView confirms cache readiness and starts opening.
+    assert(preparedGameState.baseRooms.every(room => preparedGameState.roomShellCacheByRoomId.has(room.id)));
+    if (!loadRequestRef.current.isMounted) return;
+    setMinutes(msecsToMinutes(preparedGameState.time));
+    setIsPlaying(preparedGameState.isPlaying);
+    _setGameDisabled(false);
+  }
+
   function _closeCurtain():Promise<boolean> {
     assertNonNullable(levelViewRef.current);
+    _setGameDisabled(true);
     setInitErrorMessage(null);
     return levelViewRef.current.close();
   }
@@ -129,6 +146,16 @@ function HomeScreen() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [gameState, isPlaying, isPlayPauseDisabled]);
 
+  const timeSliderLevelData = !isGameDisabled && gameState ? {
+    timeline:gameState.timeline,
+    baseCharacters:gameState.baseCharacters,
+    baseRooms:gameState.baseRooms,
+    activeCharacterId:gameState.activeCharacterId,
+    activeSkinIdAtSelection:gameState.activeSkinIdAtSelection,
+    discoveryState:gameState.discoveryState,
+    labels:gameState.labels
+  } : null;
+
   return (
     <div className={styles.container}>
       <TopBar />
@@ -164,21 +191,14 @@ function HomeScreen() {
           onConclusionsChanged={_handleConclusionsChanged} 
           onDiscoveriesChanged={setDiscoveries} 
           onInitialClosedFrame={() => setIsInitialClosedFramePainted(true)}
+          onOpeningStarted={_handleOpeningStarted}
           hasLoadingFailed={initErrorMessage !== null}
         />
         <TimeSlider
           fromMinutes={fromMinutes}
           toMinutes={toMinutes}
           minutes={minutes}
-          levelData={gameState ? {
-            timeline:gameState.timeline,
-            baseCharacters:gameState.baseCharacters,
-            baseRooms:gameState.baseRooms,
-            activeCharacterId:gameState.activeCharacterId,
-            activeSkinIdAtSelection:gameState.activeSkinIdAtSelection,
-            discoveryState:gameState.discoveryState,
-            labels:gameState.labels
-          } : null}
+          levelData={timeSliderLevelData}
           isPlaying={isPlaying}
           isPlayPauseDisabled={isPlayPauseDisabled}
           onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
