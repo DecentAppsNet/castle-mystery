@@ -20,11 +20,10 @@ function _minutesToX(minutes:number, fromMinutes:number, toMinutes:number, width
   return minutesToPercent(minutes, fromMinutes, toMinutes) / 100 * width;
 }
 
-export function percentToMinutes(percent:number, fromMinutes:number, toMinutes:number, step:number) {
+export function percentToMinutes(percent:number, fromMinutes:number, toMinutes:number) {
   const range = toMinutes - fromMinutes;
   if (range <= 0) return fromMinutes;
   let minutes = fromMinutes + percent / 100 * range;
-  if (step >= 0) minutes = fromMinutes + Math.round((minutes - fromMinutes) / step) * step;
   minutes = _clampMinutes(minutes, fromMinutes, toMinutes);
   return minutes;
 }

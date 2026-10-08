@@ -15,13 +15,10 @@ import { SkinLinkages } from "@/game/types/DiscoveryState";
 import Character from "@/game/types/Character";
 import { assertNonNullable } from "decent-portal";
 
-const NO_QUANTIZING = -1;
-
 type Props = {
   fromMinutes:number; // Minimum value in minutes for when slider thumb is at leftmost position.
   toMinutes:number; // Maximum value in minutes for when slider thumb is at rightmost position.
   minutes:number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
-  step?:number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
   levelData:TimeSliderLevelData|null; // Null means an empty and inactive panel, because no level is available or game interaction is disabled.
   isPlaying:boolean;
   onChange:(minutes: number) => void;
@@ -105,7 +102,7 @@ function _PopulatedTimeSlider(props:Props) {
   );
 
   function _onSliderUpdate(nextValue:number) {
-    const nextMinutes = percentToMinutes(nextValue, fromMinutes, toMinutes, NO_QUANTIZING);
+    const nextMinutes = percentToMinutes(nextValue, fromMinutes, toMinutes);
     setDisplayMinutes(nextMinutes);
     onChange(nextMinutes);
   }
