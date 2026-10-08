@@ -16,7 +16,7 @@ const SETTLE_DAMPING = 8;
 const SETTLE_FREQUENCY = 18;
 const FULL_CLOSE_MS = VALANCE_CLOSE_MS + CLOSE_MS + SETTLE_MS;
 /** Additional fully closed hold in milliseconds, concurrent with loading and measured after settling or startup closure. */
-export const MIN_CLOSED_MS = 10000; // FULL_CLOSE_MS; TODO delete the fake value after done testing.
+export const MIN_CLOSED_MS = FULL_CLOSE_MS;
 
 /** Whether the curtain overlay has visible fabric, valance, or an unloaded status label. */
 export function isCurtainVisible(frame:CurtainPresentation):boolean {

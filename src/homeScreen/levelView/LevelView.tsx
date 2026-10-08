@@ -67,8 +67,18 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
     acceptedGameStateRef.current = gameState;
   }, [gameState]);
 
+  function _handleMinutesChanged(minutes:number) {
+    if (isGameDisabled()) return;
+    onMinutesChanged(minutes);
+  }
+
+  function _handleIsPlayingChanged(isPlaying:boolean) {
+    if (isGameDisabled()) return;
+    onIsPlayingChanged(isPlaying);
+  }
+
   function _updateAndDrawScene(currentGameState:GameState, context:CanvasRenderingContext2D) {
-    updateAndDraw(currentGameState, context, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
+    updateAndDraw(currentGameState, context, _handleMinutesChanged, _handleIsPlayingChanged, onActiveCharacterChanged,
         onConclusionsChanged, onDiscoveriesChanged);
   }
 
@@ -109,7 +119,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
         if (isViewingPage || !currentGameState) return;
         pauseGameState(currentGameState);
         playPause(false);
-        onIsPlayingChanged(false);
+        _handleIsPlayingChanged(false);
       }}
       onMouseDown={(e) => {
         if (isGameDisabled()) return;
