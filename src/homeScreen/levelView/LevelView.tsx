@@ -17,6 +17,7 @@ import { announceCurtainClosed, cancelCurtainClose, requestCurtainClose } from '
 type Props = {
   ref?:Ref<LevelViewHandle>, // Enables imperative calls.
   gameState:GameState|null, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
+  isGameDisabled:() => boolean,
   onMinutesChanged:(minutes:number) => void,
   onIsPlayingChanged:(isPlaying:boolean) => void,
   onActiveCharacterChanged:(characterId:string) => void,
@@ -47,7 +48,7 @@ type Props = {
  * Failure keeps curtains closed; unmount cancels a pending close without starting loading.
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
-function LevelView({ref, gameState, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
+function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
     onDiscoveriesChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
@@ -111,6 +112,7 @@ function LevelView({ref, gameState, onMinutesChanged, onIsPlayingChanged, onActi
         onIsPlayingChanged(false);
       }}
       onMouseDown={(e) => {
+        if (isGameDisabled()) return;
         if (!acceptedGameStateRef.current) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
         const x = Math.round(e.clientX - rect.left);
@@ -119,6 +121,7 @@ function LevelView({ref, gameState, onMinutesChanged, onIsPlayingChanged, onActi
         mouseDown(gameX, gameY);
       }}
       onMouseMove={(e) => {
+        if (isGameDisabled()) return;
         if (!acceptedGameStateRef.current) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
         const x = Math.round(e.clientX - rect.left);
@@ -127,6 +130,7 @@ function LevelView({ref, gameState, onMinutesChanged, onIsPlayingChanged, onActi
         mouseMove(gameX, gameY);
       }}
       onWheel={(e) => {
+        if (isGameDisabled()) return;
         e.preventDefault();
         mouseWheel(e.deltaY);
       }}

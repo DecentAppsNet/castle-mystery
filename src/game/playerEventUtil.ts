@@ -67,3 +67,7 @@ export function popPlayerEvents():PlayerEvent[] {
   thePlayerEvents = [];
   return events;
 }
+
+export function clearPlayerEvents() {
+  thePlayerEvents = [];
+}

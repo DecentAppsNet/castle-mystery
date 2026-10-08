@@ -22,10 +22,8 @@ type Props = {
   toMinutes:number; // Maximum value in minutes for when slider thumb is at rightmost position.
   minutes:number; // Affects position of the slider thumb. Clamped to a value between fromMinutes and toMinutes.
   step?:number; // If specified will quantize the value to nearest step expressed in minutes. E.g., 15 to quantize to 15 minute increments, .5 to 30 second.
-  /** Null means an empty and inactive panel, because no level is available or game interaction is disabled. */
-  levelData:TimeSliderLevelData|null;
+  levelData:TimeSliderLevelData|null; // Null means an empty and inactive panel, because no level is available or game interaction is disabled.
   isPlaying:boolean;
-  isPlayPauseDisabled?:boolean;
   onChange:(minutes: number) => void;
   onPlayPauseChange:(isPlaying:boolean) => void;
   onScrubbingChange?:(isScrubbing:boolean) => void;
@@ -91,8 +89,7 @@ function _renderTimeLabels(timeLabelPositions:TimeLabelPositions|null) {
 }
 
 function _PopulatedTimeSlider(props:Props) {
-  const { fromMinutes, toMinutes, minutes, levelData, isPlaying, isPlayPauseDisabled, onChange, onPlayPauseChange, onScrubbingChange
-  } = props;
+  const { fromMinutes, toMinutes, minutes, levelData, isPlaying, onChange, onPlayPauseChange, onScrubbingChange } = props;
   assertNonNullable(levelData);
   const { timeline, baseCharacters, baseRooms:rooms, activeCharacterId, activeSkinIdAtSelection, discoveryState, labels } = levelData;
   const [displayMinutes, setDisplayMinutes] = useState(minutes);
@@ -148,7 +145,7 @@ function _PopulatedTimeSlider(props:Props) {
       <div className={styles.playPauseButton}>
         <PlayPauseButton
           isPlaying={isPlaying}
-          disabled={isPlayPauseDisabled}
+          disabled={minutes >= toMinutes}
           onChange={onPlayPauseChange}
         />
       </div>

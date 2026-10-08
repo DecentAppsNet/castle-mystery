@@ -19,6 +19,7 @@ import TimeSlider from "./timeSlider/TimeSlider";
 import type LevelViewHandle from './levelView/types/LevelViewHandle';
 import type LevelLoadRequest from './types/LevelLoadRequest';
 import { assert, assertNonNullable } from 'decent-portal';
+import { clearPlayerEvents } from '@/game/playerEventUtil';
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -35,6 +36,7 @@ function _shouldOpenWinLevelDialog(previousConclusions:ReadonlyArray<Conclusion>
 }
 
 function HomeScreen() {
+  const applicationRootRef = useRef<HTMLDivElement|null>(null);
   const levelViewRef = useRef<LevelViewHandle|null>(null);
   const loadRequestRef = useRef<LevelLoadRequest>({ pending:null, isMounted:true });
   const isGameDisabledRef = useRef(true);
@@ -53,7 +55,7 @@ function HomeScreen() {
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
-  const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
+  // const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
 
   useEffect(() => {
     const request = loadRequestRef.current;
@@ -63,13 +65,29 @@ function HomeScreen() {
 
   function _setGameDisabled(isDisabled:boolean) {
     isGameDisabledRef.current = isDisabled;
+    if (applicationRootRef.current) applicationRootRef.current.inert = isDisabled;
     setIsGameDisabled(isDisabled);
+  }
+
+  function _isGameDisabled():boolean {
+    return isGameDisabledRef.current;
+  }
+
+  function _handleTimeChange(nextMinutes:number) {
+    if (_isGameDisabled()) return;
+    updateTime(nextMinutes, setIsPlaying);
+  }
+
+  function _handlePlayPauseChange(nextIsPlaying:boolean) {
+    if (_isGameDisabled()) return;
+    updatePlayPause(nextIsPlaying, setIsPlaying);
   }
 
   function _handleOpeningStarted(preparedGameState:GameState) {
     // The same GameState object, after LevelView confirms cache readiness and starts opening.
     assert(preparedGameState.baseRooms.every(room => preparedGameState.roomShellCacheByRoomId.has(room.id)));
     if (!loadRequestRef.current.isMounted) return;
+    clearPlayerEvents();
     setMinutes(msecsToMinutes(preparedGameState.time));
     setIsPlaying(preparedGameState.isPlaying);
     _setGameDisabled(false);
@@ -78,6 +96,7 @@ function HomeScreen() {
   function _closeCurtain():Promise<boolean> {
     assertNonNullable(levelViewRef.current);
     _setGameDisabled(true);
+    clearPlayerEvents();
     setInitErrorMessage(null);
     return levelViewRef.current.close();
   }
@@ -123,14 +142,16 @@ function HomeScreen() {
     });
   }
 
+  const isSliderAtRightmostPosition = minutes >= toMinutes;
   useEffect(() => {
     if (!gameState) return;
     const onKeyDown = (event:KeyboardEvent) => {
+      if (_isGameDisabled()) return;
       if (event.repeat || _isEditableTarget(event.target)) return;
 
       if (event.code === "Space") {
-        if (isPlayPauseDisabled) return;
         event.preventDefault();
+        if (isSliderAtRightmostPosition) return; // Playing would just stop immediately.
         updatePlayPause(!isPlaying, setIsPlaying);
         return;
       }
@@ -144,7 +165,7 @@ function HomeScreen() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [gameState, isPlaying, isPlayPauseDisabled]);
+  }, [gameState, isPlaying, isSliderAtRightmostPosition]);
 
   const timeSliderLevelData = !isGameDisabled && gameState ? {
     timeline:gameState.timeline,
@@ -157,7 +178,7 @@ function HomeScreen() {
   } : null;
 
   return (
-    <div className={styles.container}>
+    <div ref={applicationRootRef} className={styles.container} inert={isGameDisabled}>
       <TopBar />
       <div className={styles.content}>
         {levelManifest && <LevelSelector
@@ -185,6 +206,7 @@ function HomeScreen() {
         <LevelView 
           ref={levelViewRef}
           gameState={gameState} 
+          isGameDisabled={_isGameDisabled}
           onMinutesChanged={setMinutes} 
           onIsPlayingChanged={setIsPlaying} 
           onActiveCharacterChanged={setActiveCharacterId} 
@@ -200,9 +222,8 @@ function HomeScreen() {
           minutes={minutes}
           levelData={timeSliderLevelData}
           isPlaying={isPlaying}
-          isPlayPauseDisabled={isPlayPauseDisabled}
-          onChange={nextMinutes => updateTime(nextMinutes, setIsPlaying)}
-          onPlayPauseChange={(nextIsPlaying) => updatePlayPause(nextIsPlaying, setIsPlaying)}
+          onChange={_handleTimeChange}
+          onPlayPauseChange={_handlePlayPauseChange}
         />
       </div>
 
