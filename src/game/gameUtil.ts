@@ -30,7 +30,7 @@ import {
   callOnMinutesChangedAsNeeded,
   callOnConclusionsChangedAsNeeded
 } from "./gameStateNotificationUtil";
-import { updateGameStateForMouseDown, updateGameStateForMouseMove } from "./hoverStateUtil";
+import { updateGameStateForMouseDown, updateGameStateForMouseMove, updateGameStateForNextCharacter } from "./hoverStateUtil";
 import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from "./conclusionStateUtil";
 import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
 import { clamp } from "@/common/numberUtil";
@@ -119,7 +119,7 @@ export function updateGameState(gameState:GameState, events:PlayerEvent[], metaT
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent, metaTime); break;
       case PlayerEventType.CHANGE_CONCLUSIONS: updateGameStateForChangeConclusions(gameState, event as ChangeConclusionsEvent); break;
-      case PlayerEventType.NEXT_CHARACTER: break;
+      case PlayerEventType.NEXT_CHARACTER: updateGameStateForNextCharacter(gameState, snapshotCharacters, metaTime); break;
       case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent, metaTime); break;
       case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, snapshotCharacters, event as MouseDownEvent, metaTime); break;
       case PlayerEventType.MOUSEMOVE: updateGameStateForMouseMove(gameState, snapshotCharacters, event as MouseMoveEvent); break;

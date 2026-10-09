@@ -1,14 +1,14 @@
 /* This module groups pointer-hit testing and hover-driven state updates for characters, items, and exit popovers.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 
 import { getExitHoverRect } from "./drawing/exitDrawUtil";
 import { getCharacterHoverRect } from "./drawing/characterDrawUtil";
 import { getItemHoverRect } from "./drawing/itemDrawUtil";
 import { createDrawableContents } from "./drawing/roomDrawUtil";
 import { isCharacterInteractive } from "./interactivityUtil";
-import { isPositionInOrOnRect } from "./rectUtil";
+import { isPositionInOrOnRect, isPositionInRect } from "./rectUtil";
 import Character from "./types/Character";
 import GameState from "./types/GameState";
 import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
@@ -118,17 +118,31 @@ function _findSkinIdForCharacter(characters:Character[], characterId:string):str
   return character.skinId;
 }
 
-export function updateGameStateForMouseDown(gameState:GameState, snapshotCharacters:CharacterWithEffects[], event:MouseDownEvent, metaTime:number) {
-  const characterContent = _findInteractiveCharacterContentAtPosition(gameState, snapshotCharacters, event.x, event.y);
-  if (characterContent) {
-    const character = characterContent.character;
-    gameState.activeCharacterId = character.id;
-    gameState.activeSkinIdAtSelection = _findSkinIdForCharacter(snapshotCharacters, character.id);
-    updateTimelineSnapshotActiveContext(gameState.timelineSnapshot, character.id);
-    const effect = createCharacterSelectionEffect(metaTime);
-    appendCharacterMetaTimeEffect(gameState.characterMetaTimeEffectsByCharacterId, character.id, effect);
+function _selectCharacter(gameState:GameState, snapshotCharacters:CharacterWithEffects[], character:Character, metaTime:number) {
+  gameState.activeCharacterId = character.id;
+  gameState.activeSkinIdAtSelection = _findSkinIdForCharacter(snapshotCharacters, character.id);
+  updateTimelineSnapshotActiveContext(gameState.timelineSnapshot, character.id);
+  const effect = createCharacterSelectionEffect(metaTime);
+  appendCharacterMetaTimeEffect(gameState.characterMetaTimeEffectsByCharacterId, character.id, effect);
+}
+
+export function updateGameStateForNextCharacter(gameState:GameState, snapshotCharacters:CharacterWithEffects[], metaTime:number) {
+  const room = _findActiveVisibleRoom(gameState);
+  if (!room) return;
+  const activeCharacterI = snapshotCharacters.findIndex(character => character.id === gameState.activeCharacterId);
+  assert(activeCharacterI >= 0);
+
+  for (let offset = 1; offset < snapshotCharacters.length; ++offset) {
+    const character = snapshotCharacters[(activeCharacterI + offset) % snapshotCharacters.length];
+    if (!isCharacterInteractive(character) || !isPositionInRect(character.position.x, character.position.y, room.rect)) continue;
+    _selectCharacter(gameState, snapshotCharacters, character, metaTime);
     return;
   }
+}
+
+export function updateGameStateForMouseDown(gameState:GameState, snapshotCharacters:CharacterWithEffects[], event:MouseDownEvent, metaTime:number) {
+  const characterContent = _findInteractiveCharacterContentAtPosition(gameState, snapshotCharacters, event.x, event.y);
+  if (characterContent) _selectCharacter(gameState, snapshotCharacters, characterContent.character, metaTime);
 }
 
 export function updateGameStateForMouseMove(gameState:GameState, snapshotCharacters:CharacterWithEffects[], event:MouseMoveEvent) {
