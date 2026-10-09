@@ -1,15 +1,15 @@
 /* This module groups player-event queue helpers used to accumulate and consume UI-driven game actions.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
-import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
-import PlayerEventType from "./types/playerEvents/PlayerEventType";
-import PlayerEvent from "./types/playerEvents/PlayerEvent";
-import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
-import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
-import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
-import MouseWheelEvent from "./types/playerEvents/MouseWheelEvent";
-import NextCharacterEvent from "./types/playerEvents/NextCharacterEvent";
+import ChangeTimeEvent from "./playerEvents/types/ChangeTimeEvent";
+import ChangeConclusionsEvent from "./playerEvents/types/ChangeConclusionsEvent";
+import PlayerEventType from "./playerEvents/types/PlayerEventType";
+import PlayerEvent from "./playerEvents/types/PlayerEvent";
+import PlayPauseEvent from "./playerEvents/types/PlayPauseEvent";
+import MouseDownEvent from "./playerEvents/types/MouseDownEvent";
+import MouseMoveEvent from "./playerEvents/types/MouseMoveEvent";
+import MouseWheelEvent from "./playerEvents/types/MouseWheelEvent";
+import NextCharacterEvent from "./playerEvents/types/NextCharacterEvent";
 import Conclusion from "./conclusions/types/Conclusion";
 
 let thePlayerEvents:PlayerEvent[] = [];

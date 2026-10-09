@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { updateGameStateForChangeConclusions } from '@/game/conclusionStateUtil';
+import { updateGameStateForChangeConclusions } from '@/game/playerEvents';
 import { createDiscoveries, markCharacterDiscovered, markItemDiscovered } from '@/game/discoveriesUtil';
 import { createGameState } from '@/game/gameUtil';
 import { callOnMinutesChangedAsNeeded } from '@/game/gameStateNotificationUtil';
 import { createKeyframeAtTime, createTimelineSnapshot, updateTimelineSnapshotActiveContext } from '@/game/timeline';
-import PlayerEventType from '@/game/types/playerEvents/PlayerEventType';
+import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import discoveryStateLevelText from './fixtures/discovery-state.md?raw';
 

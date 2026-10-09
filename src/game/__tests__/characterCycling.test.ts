@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createGameState, updateGameState } from '@/game/gameUtil';
-import PlayerEventType from '@/game/types/playerEvents/PlayerEventType';
+import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import levelText from './fixtures/character-cycling.md?raw';
 

@@ -5,18 +5,18 @@ import { botch } from "decent-portal";
 
 import GameState from "./types/GameState";
 import Room from "./types/Room";
-import ChangeTimeEvent from "./types/playerEvents/ChangeTimeEvent";
-import ChangeConclusionsEvent from "./types/playerEvents/ChangeConclusionsEvent";
-import PlayerEvent from "./types/playerEvents/PlayerEvent";
-import PlayerEventType from "./types/playerEvents/PlayerEventType";
+import ChangeTimeEvent from "./playerEvents/types/ChangeTimeEvent";
+import ChangeConclusionsEvent from "./playerEvents/types/ChangeConclusionsEvent";
+import PlayerEvent from "./playerEvents/types/PlayerEvent";
+import PlayerEventType from "./playerEvents/types/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
 import Level from "./types/Level";
-import PlayPauseEvent from "./types/playerEvents/PlayPauseEvent";
+import PlayPauseEvent from "./playerEvents/types/PlayPauseEvent";
 import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera, syncCameraTargetToActiveRoom, updateCamera } from "./cameraUtil";
-import MouseDownEvent from "./types/playerEvents/MouseDownEvent";
-import MouseMoveEvent from "./types/playerEvents/MouseMoveEvent";
-import MouseWheelEvent from "./types/playerEvents/MouseWheelEvent";
+import MouseDownEvent from "./playerEvents/types/MouseDownEvent";
+import MouseMoveEvent from "./playerEvents/types/MouseMoveEvent";
+import MouseWheelEvent from "./playerEvents/types/MouseWheelEvent";
 import { COLOR_BLACK } from "./drawing/drawColorConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
 import { findImageBitmap } from "./imageAssetUtil";
@@ -30,10 +30,17 @@ import {
   callOnMinutesChangedAsNeeded,
   callOnConclusionsChangedAsNeeded
 } from "./gameStateNotificationUtil";
-import { updateGameStateForMouseDown, updateGameStateForMouseMove, updateGameStateForNextCharacter } from "./hoverStateUtil";
-import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from "./conclusionStateUtil";
 import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
-import { clamp } from "@/common/numberUtil";
+import {
+  updateGameStateForChangeTime,
+  updateGameStateForChangeConclusions,
+  updateGameStateForPlayPause,
+  updateGameStateForMouseWheel,
+  updateGameStateForMouseDown,
+  updateGameStateForMouseMove,
+  updateGameStateForNextCharacter,
+  syncConclusionUnlocks
+} from './playerEvents';
 import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
@@ -44,38 +51,11 @@ import { createRevealedSkinLinkages } from "./skinLinkageUtil";
 import Timeline from "./types/Timeline";
 import { findCharacterKeyframeForTime } from "./timeline/retrievalUtil";
 import { removeExpiredCharacterMetaTimeEffects, removeExpiredMetaTimeEffects } from "./effects/metaTimeEffectUtil";
-import { createPauseEffect, createPlayEffect } from "./effects/playPauseEffectUtil";
+import { createPauseEffect } from "./effects/playPauseEffectUtil";
 import Effect from "./effects/types/Effect";
-
-const CAMERA_ZOOM_STEP = 0.1;
 
 function _setActiveRoomDiscovered(gameState:GameState) {
   gameState.discoveryState.discoveredRoomIds.add(gameState.timelineSnapshot.activeRoom.id);
-}
-
-function _updateGameStateForChangeTime(gameState:GameState, event:ChangeTimeEvent, metaTime:number) {
-  const wasPlaying = gameState.isPlaying;
-  gameState.time = event.time;
-  gameState.isPlaying = false;
-  gameState.metaTimeToGameTimeOffset = 0;
-  if (wasPlaying) gameState.metaTimeEffects.push(createPauseEffect(metaTime));
-}
-
-function _updateGameStateForPlayPause(gameState:GameState, event:PlayPauseEvent, metaTime:number) {
-  const wasPlaying = gameState.isPlaying;
-
-  // Update playback state and its clock offset.
-  gameState.isPlaying = event.isPlaying;
-  if (event.isPlaying) {
-    gameState.metaTimeToGameTimeOffset = gameState.time - metaTime;
-  } else {
-    gameState.metaTimeToGameTimeOffset = 0; // To find errors if code incorrectly assumes the value to be set.
-  }
-
-  // Emit feedback only for a real playback transition.
-  if (wasPlaying !== event.isPlaying) {
-    gameState.metaTimeEffects.push(event.isPlaying ? createPlayEffect(metaTime) : createPauseEffect(metaTime));
-  }
 }
 
 function _pauseGameState(gameState:GameState, metaTime:number) {
@@ -97,13 +77,6 @@ function _findActiveVisibleRoom(gameState:GameState):Room|null {
   return activeRoom;
 }
 
-function _updateGameStateForMouseWheel(gameState:GameState, event:MouseWheelEvent) {
-  if (event.deltaY === 0) return;
-  const zoomDirection = -Math.sign(event.deltaY);
-  if (zoomDirection === 0) return;
-  gameState.camera.zoomAmount = clamp(gameState.camera.zoomAmount + zoomDirection * CAMERA_ZOOM_STEP, 0, 1);
-}
-
 function _removeExpiredEffects(gameState:GameState, metaTime:number) {
   removeExpiredMetaTimeEffects(gameState.metaTimeEffects, metaTime);
   removeExpiredCharacterMetaTimeEffects(gameState.characterMetaTimeEffectsByCharacterId, metaTime);
@@ -117,13 +90,13 @@ export function updateGameState(gameState:GameState, events:PlayerEvent[], metaT
   const snapshotCharacters = gameState.timelineSnapshot.characters;
   events.forEach(event => {
     switch(event.type) {
-      case PlayerEventType.CHANGE_TIME: _updateGameStateForChangeTime(gameState, event as ChangeTimeEvent, metaTime); break;
+      case PlayerEventType.CHANGE_TIME: updateGameStateForChangeTime(gameState, event as ChangeTimeEvent, metaTime); break;
       case PlayerEventType.CHANGE_CONCLUSIONS: updateGameStateForChangeConclusions(gameState, event as ChangeConclusionsEvent); break;
       case PlayerEventType.NEXT_CHARACTER: updateGameStateForNextCharacter(gameState, snapshotCharacters, metaTime); break;
-      case PlayerEventType.PLAY_PAUSE: _updateGameStateForPlayPause(gameState, event as PlayPauseEvent, metaTime); break;
+      case PlayerEventType.PLAY_PAUSE: updateGameStateForPlayPause(gameState, event as PlayPauseEvent, metaTime); break;
       case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, snapshotCharacters, event as MouseDownEvent, metaTime); break;
       case PlayerEventType.MOUSEMOVE: updateGameStateForMouseMove(gameState, snapshotCharacters, event as MouseMoveEvent); break;
-      case PlayerEventType.MOUSEWHEEL: _updateGameStateForMouseWheel(gameState, event as MouseWheelEvent); break;
+      case PlayerEventType.MOUSEWHEEL: updateGameStateForMouseWheel(gameState, event as MouseWheelEvent); break;
       default: botch();
     }
   });
