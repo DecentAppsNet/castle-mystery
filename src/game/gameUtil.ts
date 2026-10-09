@@ -171,9 +171,9 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     return;
   }
 
+  const metaTime = findMetaTimeNow();
   _clearCanvas(gameState, context);
 
-  const metaTime = findMetaTimeNow();
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
   updateGameState(gameState, events, metaTime, calcCanvasAspectRatio(context));
@@ -190,7 +190,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
   if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
   drawGameState(gameState, context, metaTime);
-  if (DRAW_FPS_COUNTER) updateAndDrawFps(metaTime, context);
+  if (DRAW_FPS_COUNTER) updateAndDrawFps(metaTime, findMetaTimeNow(), context);
 }
 
 export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {

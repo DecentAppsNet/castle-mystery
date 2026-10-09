@@ -1,49 +1,18 @@
 /* This module groups developer-only frame-rate measurement and drawing helpers for an on-canvas FPS counter.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-const FPS_SAMPLE_COUNT = 30;
+import { createMovingAverage, updateMovingAverage } from "@/common/movingAverage";
+
+const FPS_SAMPLE_COUNT = 100;
 const FPS_FONT_SIZE = 12;
 const FPS_PADDING = 8;
-const FPS_TEXT = '0 fps';
 
 let _lastFrameMetaTime:number|undefined;
-let _frameDurations:number[] = [];
-let _frameDurationSum = 0;
 
-function _addFrameDuration(frameDuration:number) {
-  _frameDurations.push(frameDuration);
-  _frameDurationSum += frameDuration;
-  if (_frameDurations.length <= FPS_SAMPLE_COUNT) return;
-  const removedDuration = _frameDurations.shift();
-  if (removedDuration !== undefined) _frameDurationSum -= removedDuration;
-}
+const frameDurationMovingAverage = createMovingAverage(FPS_SAMPLE_COUNT);
+const virtualFrameDurationMovingAverage = createMovingAverage(FPS_SAMPLE_COUNT);
 
-function _findAverageFrameDuration():number|null {
-  if (_frameDurations.length === 0 || _frameDurationSum <= 0) return null;
-  return _frameDurationSum / _frameDurations.length;
-}
-
-function _findFpsText():string {
-  const averageFrameDuration = _findAverageFrameDuration();
-  if (!averageFrameDuration) return FPS_TEXT;
-  return `${Math.round(1000 / averageFrameDuration)} fps`;
-}
-
-function _updateFps(frameMetaTime:number) {
-  if (_lastFrameMetaTime === undefined) {
-    _lastFrameMetaTime = frameMetaTime;
-    return;
-  }
-
-  const frameDuration = frameMetaTime - _lastFrameMetaTime;
-  _lastFrameMetaTime = frameMetaTime;
-  if (frameDuration <= 0) return;
-  _addFrameDuration(frameDuration);
-}
-
-function _drawFps(context:CanvasRenderingContext2D) {
-  const text = _findFpsText();
-
+function _drawText(text:string, context:CanvasRenderingContext2D) {
   context.save();
   context.font = `${FPS_FONT_SIZE}px monospace`;
   context.textAlign = 'right';
@@ -56,7 +25,17 @@ function _drawFps(context:CanvasRenderingContext2D) {
   context.restore();
 }
 
-export function updateAndDrawFps(frameMetaTime:number, context:CanvasRenderingContext2D) {
-  _updateFps(frameMetaTime);
-  _drawFps(context);
+export function updateAndDrawFps(frameStartMetaTime:number, frameEndMetaTime:number, context:CanvasRenderingContext2D) {
+  if (_lastFrameMetaTime === undefined) {
+    _lastFrameMetaTime = frameStartMetaTime;
+    return;
+  }
+  const averageFrameDuration = updateMovingAverage(frameStartMetaTime - _lastFrameMetaTime, frameDurationMovingAverage);
+  _lastFrameMetaTime = frameStartMetaTime;
+
+  const averageVirtualFrameDuration = updateMovingAverage(frameEndMetaTime - frameStartMetaTime, virtualFrameDurationMovingAverage);
+  
+  const text = `${Math.round(1000 / averageFrameDuration)} fps / ${Math.round(1000 / averageVirtualFrameDuration)} vfps`;
+
+  _drawText(text, context);
 }
