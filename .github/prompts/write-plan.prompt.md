@@ -13,7 +13,7 @@ Use the informal requirements and design context preceding this prompt as the ba
 
 - If the requirements or design are fundamentally unclear, stop and discuss them before continuing.
 - If an important decision would significantly change the plan's architecture or scope, stop and discuss it before continuing.
-- Do not ask questions that can easily be resolved through review of the completed plan. Choose a reasonable initial value for refinements such as animation timing and document it for review.
+- Do not ask questions that can easily be resolved through review of the completed plan.
 
 For example, whether performance-oriented data-structure changes belong in scope can justify an upfront question. The precise delay of an otherwise-defined animation generally does not.
 
@@ -36,6 +36,7 @@ Create a new Markdown plan file under `workAssets/plans` from the project root. 
 - Account for concurrent user changes: require target files to be re-read before editing and unrelated work to be preserved.
 - Include validation appropriate to each phase and a final verification phase.
 - Do not instruct the implementing agent to access files outside the project folder.
+- Phase headings in the plan file should follow this format `# Plan Name - Phase N: Phase Description`. For example: `# Body Part Sprites - Phase 2: Create helper functions for sprite rotation`. The "Plan Name" is always the same on each phase. This formatting is useful for copying text to git commit logs.
 
 ## Completion response
 
