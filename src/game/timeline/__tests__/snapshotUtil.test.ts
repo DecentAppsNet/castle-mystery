@@ -30,6 +30,8 @@ function _createKeyframe(time:number, walkerX:number, sitterX = 15):TimelineKeyf
 
 function _createTimeline(keyframes:TimelineKeyframe[]):Timeline {
 	return {
+		startTime:1000,
+		endTime:3000,
 		characterIds:['walker', 'sitter'],
 		characterIdToI:{ walker:0, sitter:1 },
 		roomIdToI:{ left:0, right:1 },

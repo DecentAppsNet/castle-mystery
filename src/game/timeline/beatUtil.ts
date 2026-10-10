@@ -18,6 +18,10 @@ For all room keyframes...
   If characters in active room have changed from active room, return match.
   If any from-identified character in active room has a different character key frame than from keyframe, return match.
 
+
+  How do handle audible speech from other rooms?
+
+  A function getAudibleAdjacentRoomSpeech():string[]. Call it for starting keyframe and each evaluated keyframe. If the returned texts don't match, then its a beat keyframe.
 */
 
 function _findActiveCharacterRoomIdInKeyframe(baseRooms:Room[], keyframe:TimelineKeyframe, characterI:number):string {

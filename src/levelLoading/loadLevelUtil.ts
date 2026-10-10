@@ -82,8 +82,9 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   // Schedule activities into timeline data structure.
   const timeline = scheduleActivities(level, activities, waypointGenerationContext, errors);
   if (!timeline) return null;
-  level.timeline = timeline;
   level.endTime = findLastActivityEndTime(activities) ?? level.startTime;
+  assert(Number.isFinite(level.startTime) && Number.isFinite(level.endTime) && level.startTime <= level.endTime);
+  level.timeline = { ...timeline, startTime:level.startTime, endTime:level.endTime };
   level.initialTime = _getInitialTimeValue(loadingContext.initialTime, level.startTime, level.endTime);
 
   // Set counts of discoverable room, items, and characters.

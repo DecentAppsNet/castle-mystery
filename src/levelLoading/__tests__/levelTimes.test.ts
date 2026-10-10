@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import levelTimesBaseText from './fixtures/level-times-base.md?raw';
+import noItineraryText from './fixtures/level-times-no-itinerary.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 describe('level loading - times and labels', () => {
@@ -11,6 +12,9 @@ describe('level loading - times and labels', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(level?.startTime).toBe(3_723_000);
+    expect(level?.timeline.startTime).toBe(3_723_000);
+    expect(level?.timeline.endTime).toBe(3_724_000);
+    expect(level?.timeline.endTime).toBe(level?.endTime);
   });
 
   it('ignores leading and interstitial blank lines and visual descriptions', () => {
@@ -23,6 +27,8 @@ describe('level loading - times and labels', () => {
     expect(level).not.toBeNull();
     expect(level?.startTime).toBe(3_000);
     expect(level?.endTime).toBe(3_000);
+    expect(level?.timeline.startTime).toBe(level?.startTime);
+    expect(level?.timeline.endTime).toBe(level?.endTime);
   });
 
   it('reports an invalid first timestamp at the first activity line', () => {
@@ -53,13 +59,66 @@ describe('level loading - times and labels', () => {
     expect(errors.describeErrors().startsWith(`times-invalid-activity.md:${activityLineNo}:0:`)).toBe(true);
   });
 
-  it('sets start time to 0 when itinerary is unavailable', () => {
+  it('sets both timeline bounds to 0 when itinerary is present but empty', () => {
     const text = replaceSection(levelTimesBaseText, 'itinerary', []);
     const { level, errors } = loadLevelForTest(text, 'times-default-start.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(level?.startTime).toBe(0);
+    expect(level?.endTime).toBe(0);
+    expect(level?.timeline.startTime).toBe(0);
+    expect(level?.timeline.endTime).toBe(0);
+    expect(level?.initialTime).toBe(0);
+  });
+
+  it('sets both timeline bounds to 0 when itinerary section is absent', () => {
+    const { level, errors } = loadLevelForTest(noItineraryText, 'times-no-itinerary.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    expect(level?.startTime).toBe(0);
+    expect(level?.endTime).toBe(0);
+    expect(level?.timeline.startTime).toBe(0);
+    expect(level?.timeline.endTime).toBe(0);
+    expect(level?.initialTime).toBe(0);
+  });
+
+  it('uses the earliest absolute timestamp rather than the first authored timestamp', () => {
+    const text = replaceSection(levelTimesBaseText, 'itinerary', ['0:00:05 Sam sits', '0:00:01 Sam stands']);
+    const { level, errors } = loadLevelForTest(text, 'times-earliest-start.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.timeline.startTime).toBe(1_000);
+    expect(level?.timeline.endTime).toBe(5_000);
+    expect(level?.timeline.startTime).toBe(level?.startTime);
+    expect(level?.timeline.endTime).toBe(level?.endTime);
+  });
+
+  it('includes default and relative wait durations in timeline bounds', () => {
+    const text = replaceSection(levelTimesBaseText, 'itinerary', ['0:00:01 Sam waits', ': Sam waits .5']);
+    const { level, errors } = loadLevelForTest(text, 'times-relative-end.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.timeline.startTime).toBe(1_000);
+    expect(level?.timeline.endTime).toBe(2_500);
+    expect(level?.timeline.startTime).toBe(level?.startTime);
+    expect(level?.timeline.endTime).toBe(level?.endTime);
+  });
+
+  it('includes generated speech duration before a relative successor in timeline bounds', () => {
+    const text = replaceSection(levelTimesBaseText, 'itinerary', ['0:00:01 Sam says "Hello."', ': Sam waits .5']);
+    const { level, errors } = loadLevelForTest(text, 'times-generated-end.md');
+
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const samI = level!.timeline.characterIdToI.sam;
+    const speech = level!.timeline.keyframes.flatMap(keyframe => keyframe.characters[samI].effects)
+      .find(effect => effect.kind === 'says')!;
+    expect(speech.endTime).toBeGreaterThan(1_000);
+    expect(level?.timeline.startTime).toBe(1_000);
+    expect(level?.timeline.endTime).toBe(speech.endTime + 500);
+    expect(level?.timeline.endTime).toBe(level?.endTime);
   });
 
   it('sets initial time to authored value when available', () => {
@@ -108,9 +167,11 @@ describe('level loading - times and labels', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(level?.endTime).toBe(7_200_000);
+    expect(level?.timeline.startTime).toBe(0);
+    expect(level?.timeline.endTime).toBe(7_200_000);
   });
 
-  it('sets end time to start time when itinerary is unavailable', () => {
+  it('sets end time to start time when itinerary is empty', () => {
     const text = replaceSection(levelTimesBaseText, 'itinerary', []);
     const { level, errors } = loadLevelForTest(text, 'times-default-end.md');
 
@@ -161,6 +222,10 @@ describe('level loading - times and labels', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
+    expect(level?.timeline.startTime).toBe(82_800_000);
+    expect(level?.timeline.endTime).toBe(90_000_000);
+    expect(level?.timeline.startTime).toBe(level?.startTime);
+    expect(level?.timeline.endTime).toBe(level?.endTime);
     expect(level?.labels).toEqual([
       { minutes:1380, label:'11pm' }, { minutes:1410, label:'11:30pm' }, { minutes:1440, label:'midnight' },
       { minutes:1470, label:'12:30am' }, { minutes:1500, label:'1am' }

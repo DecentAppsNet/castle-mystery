@@ -34,6 +34,7 @@ import { scheduleThinksActivity } from "../activityLoading/activitySchedulers/th
 import { doesActivityConflictWithScheduled } from "./activityConflictUtil";
 import { validateSpeechSourceBeforeScheduling, validateSpeechSources } from "./speechSourceValidationUtil";
 
+type ScheduledTimeline = Omit<Timeline, 'startTime' | 'endTime'>;
 type ActivityScheduler = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
   timeline:EditableTimeline, errors:ErrorCollector, scheduledActivities:readonly Activity[]) => boolean;
 const VERB_TO_ACTIVITY_SCHEDULER:Readonly<{[verb:string]:ActivityScheduler}> = {
@@ -81,19 +82,19 @@ function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContex
   return true;
 }
 
-function _editableTimelineToTimeline(editableTimeline:Readonly<EditableTimeline>):Timeline {
+function _editableTimelineToTimeline(editableTimeline:Readonly<EditableTimeline>):ScheduledTimeline {
   const { keyframes, roomIdToI, characterIds, characterIdToI } = editableTimeline;
   return { keyframes, roomIdToI, characterIds, characterIdToI };
 }
 
-function _createEmptyTimeline(level:Readonly<Level>):Timeline {
+function _createEmptyTimeline(level:Readonly<Level>):ScheduledTimeline {
   const editable = createEditableTimeline(level.characters, level.rooms, 0);
   return _editableTimelineToTimeline(editable);
 }
 
 /** Schedules all parsed activities and returns a resolved timeline, or null on error. */
 export function scheduleActivities(level:Level, activities:Activity[], waypointContext:WaypointGenerationContext,
-  errors:ErrorCollector):Timeline|null {
+  errors:ErrorCollector):ScheduledTimeline|null {
   if (!activities.length) return _createEmptyTimeline(level);
   const originalErrorCount = errors.count;
 

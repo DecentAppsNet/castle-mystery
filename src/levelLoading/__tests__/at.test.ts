@@ -277,6 +277,10 @@ describe('level loading - @ activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level?.endTime).toBe(5_000);
+    expect(level?.timeline.startTime).toBe(0);
+    expect(level?.timeline.endTime).toBe(5_000);
+    expect(level?.timeline.endTime).toBe(level?.endTime);
+    expect(level!.timeline.keyframes.every(keyframe => keyframe.time < level!.timeline.endTime)).toBe(true);
   });
 
   it('validates an assertion before later movement away', () => {
