@@ -137,7 +137,7 @@ describe('level loading - gives activities', () => {
     const samI = level!.timeline.characterIdToI.sam;
     const startPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, effect.startTime);
     const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, effect.endTime);
-    expect(effect.startTime).toBeGreaterThan(level!.startTime);
+    expect(effect.startTime).toBeGreaterThan(level!.timeline.startTime);
     expect(startPosition).not.toEqual(level!.timeline.keyframes[0].characters[samI].position);
     expect(endPosition).toEqual(startPosition);
   });
@@ -202,7 +202,7 @@ describe('level loading - gives activities', () => {
     const effectEndTime = _findGiveEffect(level!).endTime;
     const joI = level!.timeline.characterIdToI.jo;
     const positionAtEffectEnd = findCharacterPositionAtTime(level!.timeline.keyframes, joI, effectEndTime);
-    const finalPosition = findCharacterPositionAtTime(level!.timeline.keyframes, joI, level!.endTime);
+    const finalPosition = findCharacterPositionAtTime(level!.timeline.keyframes, joI, level!.timeline.endTime);
     expect(positionAtEffectEnd).toEqual(level!.timeline.keyframes[0].characters[joI].position);
     expect(findRoomAtPosition(level!.rooms, finalPosition.x, finalPosition.y)?.id).toBe('closet');
   });
@@ -270,7 +270,7 @@ describe('level loading - gives activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.timeline.endTime);
     expect(end.characters[level!.timeline.characterIdToI.jo].items.map(item => item.id))
       .toEqual(['book', 'coin', 'ring']);
   });

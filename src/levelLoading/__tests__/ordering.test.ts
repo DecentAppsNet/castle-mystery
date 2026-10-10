@@ -51,7 +51,7 @@ describe('level loading - activity ordering', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.timeline.endTime);
     expect(end.rooms[level!.timeline.roomIdToI.closet].items.map(item => item.id)).toContain('key');
   });
 

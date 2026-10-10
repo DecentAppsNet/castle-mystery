@@ -26,7 +26,7 @@ function _expectSamEndsAtItem(activityText:string, itemId:string):void {
 
   expect(errors.describeErrors()).toBe('');
   expect(level).not.toBeNull();
-  const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+  const end = createKeyframeAtTime(level!.timeline.keyframes, level!.timeline.endTime);
   const sam = end.characters[level!.timeline.characterIdToI.sam];
   const item = end.rooms.flatMap(room => room.items).find(candidate => candidate.id === itemId);
   expect(sam.position).toEqual(item?.position);
@@ -93,7 +93,7 @@ describe('level loading - stands activities', () => {
     const samI = level!.timeline.characterIdToI.sam;
     const beforeStart = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 999);
     const start = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 1_000);
-    const end = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.endTime);
+    const end = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime);
     const rug = _findRoomItem(level!, 'rug', 1_000);
 
     expect(beforeStart.bodyOrientation).toBe('sitting');
@@ -111,9 +111,9 @@ describe('level loading - stands activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
-    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.endTime - 1).bodyOrientation)
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime - 1).bodyOrientation)
       .toBe('standing');
-    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.endTime).bodyOrientation)
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime).bodyOrientation)
       .toBe('sitting');
   });
 
@@ -127,7 +127,7 @@ describe('level loading - stands activities', () => {
 
     expect(first.errors.describeErrors()).toBe('');
     expect(repeated.errors.describeErrors()).toBe('');
-    expect(repeated.level?.endTime).toBe(first.level?.endTime);
+    expect(repeated.level?.timeline.endTime).toBe(first.level?.timeline.endTime);
   });
 
   it('allows a hidden room item as a target', () => {
@@ -139,7 +139,7 @@ describe('level loading - stands activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(_findRoomItem(level!, 'rug', level!.endTime)).toEqual(_findRoomItem(level!, 'rug', 0));
+    expect(_findRoomItem(level!, 'rug', level!.timeline.endTime)).toEqual(_findRoomItem(level!, 'rug', 0));
   });
 
   it('does not reserve or chase a target item that moves later', () => {
@@ -152,7 +152,7 @@ describe('level loading - stands activities', () => {
     expect(level).not.toBeNull();
     const start = createKeyframeAtTime(level!.timeline.keyframes, 0);
     const rug = start.rooms[level!.timeline.roomIdToI.hall].items.find(item => item.id === 'rug');
-    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.timeline.endTime);
     const sam = end.characters[level!.timeline.characterIdToI.sam];
     const jo = end.characters[level!.timeline.characterIdToI.jo];
 

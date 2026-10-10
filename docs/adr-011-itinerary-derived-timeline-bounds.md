@@ -87,9 +87,9 @@ The asymmetric derivation is intentional. The start is based on the earliest aut
 
 1. Reject `startTime` and `endTime` in the `# general` section as unsupported fields.
 2. Require the first itinerary activity to have an absolute timestamp.
-3. Parse all absolute itinerary timestamps and use their minimum as `Level.startTime` without scheduling activities.
+3. Parse all absolute itinerary timestamps and use their minimum as the local construction start without scheduling activities; store it as `Timeline.startTime` when the completed timeline is constructed.
 5. Initialize timeline scheduling from the derived start.
-6. Set `Level.endTime` to the latest scheduled activity end after scheduling completes.
+6. Set `Timeline.endTime` to the latest scheduled activity end after scheduling completes. Completed `Level` and `GameState` objects share this timeline instead of storing duplicate bounds or duration.
 7. Accept hour components of 24 or greater and do not apply automatic cross-midnight offsets.
 8. Keep `general.time` as the optional initial playhead position, defaulting it to the derived start.
 

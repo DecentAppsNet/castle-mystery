@@ -17,8 +17,8 @@ describe('level loading - @ activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.startTime).toBe(5_000);
-    expect(level?.endTime).toBe(5_000);
+    expect(level?.timeline.startTime).toBe(5_000);
+    expect(level?.timeline.endTime).toBe(5_000);
   });
 
   it('validates a relative assertion after goes completes', () => {
@@ -30,7 +30,7 @@ describe('level loading - @ activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const position = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.endTime);
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
     expect(findRoomAtPosition(level!.rooms, position.x, position.y)?.id).toBe('closet');
   });
 
@@ -266,7 +266,7 @@ describe('level loading - @ activities', () => {
     const snapshot = createCharacterKeyframeAtTime(level!.timeline.keyframes,
       level!.timeline.characterIdToI.sam, 0);
     expect(snapshot.bodyOrientation).toBe('sitting');
-    expect(level!.endTime).toBe(0);
+    expect(level!.timeline.endTime).toBe(0);
   });
 
   it('extends the level end time as a zero-duration activity', () => {
@@ -276,10 +276,8 @@ describe('level loading - @ activities', () => {
     ], 'at-level-end.md');
 
     expect(errors.describeErrors()).toBe('');
-    expect(level?.endTime).toBe(5_000);
     expect(level?.timeline.startTime).toBe(0);
     expect(level?.timeline.endTime).toBe(5_000);
-    expect(level?.timeline.endTime).toBe(level?.endTime);
     expect(level!.timeline.keyframes.every(keyframe => keyframe.time < level!.timeline.endTime)).toBe(true);
   });
 
@@ -293,7 +291,7 @@ describe('level loading - @ activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const position = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.endTime);
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
     expect(findRoomAtPosition(level!.rooms, position.x, position.y)?.id).toBe('closet');
   });
 });

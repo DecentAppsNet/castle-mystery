@@ -19,10 +19,10 @@ describe('level loading - goes activities', () => {
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
     const startPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, 0);
-    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, level!.endTime);
+    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime);
     expect(findRoomAtPosition(level!.rooms, startPosition.x, startPosition.y)?.id).toBe('hall');
     expect(findRoomAtPosition(level!.rooms, endPosition.x, endPosition.y)?.id).toBe('closet');
-    expect(level!.endTime).toBeGreaterThan(0);
+    expect(level!.timeline.endTime).toBeGreaterThan(0);
   });
 
   it('accepts room movement without the optional to', () => {
@@ -31,7 +31,7 @@ describe('level loading - goes activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.endTime);
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
     expect(findRoomAtPosition(level!.rooms, endPosition.x, endPosition.y)?.id).toBe('closet');
   });
 
@@ -45,7 +45,7 @@ describe('level loading - goes activities', () => {
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
     const atStart = findCharacterPositionAtTime(level!.timeline.keyframes, samI, 1_000);
-    const atEnd = findCharacterPositionAtTime(level!.timeline.keyframes, samI, level!.endTime);
+    const atEnd = findCharacterPositionAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime);
     expect(findRoomAtPosition(level!.rooms, atStart.x, atStart.y)?.id).toBe('hall');
     expect(findRoomAtPosition(level!.rooms, atEnd.x, atEnd.y)?.id).toBe('closet');
   });
@@ -66,7 +66,7 @@ describe('level loading - goes activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.endTime);
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
     expect(findRoomAtPosition(level!.rooms, endPosition.x, endPosition.y)?.id).toBe('closet');
   });
 
@@ -77,7 +77,7 @@ describe('level loading - goes activities', () => {
     expect(level).not.toBeNull();
     const closet = level!.rooms.find(room => room.id === 'closet')!;
     const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.endTime);
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
     expect(endPosition.x).toBeGreaterThan(closet.rect.x + closet.rect.width / 2);
   });
 
@@ -88,7 +88,7 @@ describe('level loading - goes activities', () => {
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
     const startPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, 0);
-    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, level!.endTime);
+    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime);
     expect(endPosition.x).toBeGreaterThan(startPosition.x);
   });
 
@@ -133,7 +133,7 @@ describe('level loading - goes activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const snapshot = createCharacterKeyframeAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.endTime);
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
     expect(snapshot.bodyOrientation).toBe('sitting');
   });
 
@@ -144,7 +144,7 @@ describe('level loading - goes activities', () => {
     ], 'goes-already-satisfied.md');
 
     expect(errors.describeErrors()).toBe('');
-    expect(level?.endTime).toBe(1_000);
+    expect(level?.timeline.endTime).toBe(1_000);
   });
 
   it('uses the central conflict validator for movement', () => {
@@ -166,7 +166,7 @@ describe('level loading - goes activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const snapshot = createCharacterKeyframeAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.endTime);
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
     expect(snapshot.facingDirection).toBe('left');
     expect(snapshot.bodyOrientation).toBe('standing');
   });

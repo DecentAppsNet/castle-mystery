@@ -16,9 +16,7 @@ export type MutableLevel = {
   backgroundImageUrl:string|null,
   groundFloorY:number,
   activeCharacterId:string,
-  startTime:number,
   initialTime:number,
-  endTime:number,
   labels:TimeLabel[],
   timeline:Timeline
 }
@@ -42,9 +40,7 @@ export function createDefaultMutableLevel():MutableLevel {
     backgroundImageUrl:null,
     groundFloorY:0,
     activeCharacterId:'',
-    startTime:0,
     initialTime:0,
-    endTime:0,
     labels:[],
     timeline:createDefaultTimeline()
   };

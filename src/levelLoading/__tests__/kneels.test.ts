@@ -48,9 +48,9 @@ describe('level loading - kneels activities', () => {
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
     const altar = createKeyframeAtTime(level!.timeline.keyframes, 0).rooms[level!.timeline.roomIdToI.hall].items[0];
-    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.endTime - 1).bodyOrientation)
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime - 1).bodyOrientation)
       .toBe('standing');
-    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.endTime))
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime))
       .toMatchObject({ position:altar.position, bodyOrientation:'kneeling' });
   });
 

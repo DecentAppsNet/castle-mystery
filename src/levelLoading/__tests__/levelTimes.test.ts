@@ -11,10 +11,10 @@ describe('level loading - times and labels', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.startTime).toBe(3_723_000);
     expect(level?.timeline.startTime).toBe(3_723_000);
     expect(level?.timeline.endTime).toBe(3_724_000);
-    expect(level?.timeline.endTime).toBe(level?.endTime);
+    expect(level).not.toHaveProperty('startTime');
+    expect(level).not.toHaveProperty('endTime');
   });
 
   it('ignores leading and interstitial blank lines and visual descriptions', () => {
@@ -25,10 +25,8 @@ describe('level loading - times and labels', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.startTime).toBe(3_000);
-    expect(level?.endTime).toBe(3_000);
-    expect(level?.timeline.startTime).toBe(level?.startTime);
-    expect(level?.timeline.endTime).toBe(level?.endTime);
+    expect(level?.timeline.startTime).toBe(3_000);
+    expect(level?.timeline.endTime).toBe(3_000);
   });
 
   it('reports an invalid first timestamp at the first activity line', () => {
@@ -65,8 +63,6 @@ describe('level loading - times and labels', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.startTime).toBe(0);
-    expect(level?.endTime).toBe(0);
     expect(level?.timeline.startTime).toBe(0);
     expect(level?.timeline.endTime).toBe(0);
     expect(level?.initialTime).toBe(0);
@@ -77,8 +73,6 @@ describe('level loading - times and labels', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.startTime).toBe(0);
-    expect(level?.endTime).toBe(0);
     expect(level?.timeline.startTime).toBe(0);
     expect(level?.timeline.endTime).toBe(0);
     expect(level?.initialTime).toBe(0);
@@ -91,8 +85,6 @@ describe('level loading - times and labels', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level?.timeline.startTime).toBe(1_000);
     expect(level?.timeline.endTime).toBe(5_000);
-    expect(level?.timeline.startTime).toBe(level?.startTime);
-    expect(level?.timeline.endTime).toBe(level?.endTime);
   });
 
   it('includes default and relative wait durations in timeline bounds', () => {
@@ -102,8 +94,6 @@ describe('level loading - times and labels', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level?.timeline.startTime).toBe(1_000);
     expect(level?.timeline.endTime).toBe(2_500);
-    expect(level?.timeline.startTime).toBe(level?.startTime);
-    expect(level?.timeline.endTime).toBe(level?.endTime);
   });
 
   it('includes generated speech duration before a relative successor in timeline bounds', () => {
@@ -118,7 +108,6 @@ describe('level loading - times and labels', () => {
     expect(speech.endTime).toBeGreaterThan(1_000);
     expect(level?.timeline.startTime).toBe(1_000);
     expect(level?.timeline.endTime).toBe(speech.endTime + 500);
-    expect(level?.timeline.endTime).toBe(level?.endTime);
   });
 
   it('sets initial time to authored value when available', () => {
@@ -166,7 +155,6 @@ describe('level loading - times and labels', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.endTime).toBe(7_200_000);
     expect(level?.timeline.startTime).toBe(0);
     expect(level?.timeline.endTime).toBe(7_200_000);
   });
@@ -177,7 +165,7 @@ describe('level loading - times and labels', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.endTime).toBe(0);
+    expect(level?.timeline.endTime).toBe(0);
   });
 
   it('sets time labels when start time is equal to end time', () => {
@@ -224,8 +212,6 @@ describe('level loading - times and labels', () => {
     expect(level).not.toBeNull();
     expect(level?.timeline.startTime).toBe(82_800_000);
     expect(level?.timeline.endTime).toBe(90_000_000);
-    expect(level?.timeline.startTime).toBe(level?.startTime);
-    expect(level?.timeline.endTime).toBe(level?.endTime);
     expect(level?.labels).toEqual([
       { minutes:1380, label:'11pm' }, { minutes:1410, label:'11:30pm' }, { minutes:1440, label:'midnight' },
       { minutes:1470, label:'12:30am' }, { minutes:1500, label:'1am' }

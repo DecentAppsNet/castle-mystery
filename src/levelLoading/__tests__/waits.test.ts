@@ -13,6 +13,6 @@ describe('level loading - waits activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level?.endTime).toBe(1_500);
+    expect(level?.timeline.endTime).toBe(1_500);
   });
 });

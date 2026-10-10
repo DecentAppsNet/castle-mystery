@@ -49,8 +49,8 @@ describe('level loading - sits activities', () => {
     const samI = level!.timeline.characterIdToI.sam;
     const hallI = level!.timeline.roomIdToI.hall;
     const start = createKeyframeAtTime(level!.timeline.keyframes, 0);
-    const beforeEnd = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime - 1);
-    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+    const beforeEnd = createKeyframeAtTime(level!.timeline.keyframes, level!.timeline.endTime - 1);
+    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.timeline.endTime);
     const marker = start.rooms[hallI].items.find(item => item.id === 'marker');
 
     expect(marker?.isVisible).toBe(false);
@@ -71,6 +71,6 @@ describe('level loading - sits activities', () => {
     expect(level).not.toBeNull();
     const movementEndTime = level!.timeline.keyframes.findLast(keyframe =>
       keyframe.characters[level!.timeline.characterIdToI.sam].position.x !== undefined)?.time;
-    expect(level!.endTime).toBe(movementEndTime! + 1_000);
+    expect(level!.timeline.endTime).toBe(movementEndTime! + 1_000);
   });
 });

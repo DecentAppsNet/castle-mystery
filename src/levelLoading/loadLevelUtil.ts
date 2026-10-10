@@ -2,6 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Level from "@/game/types/Level";
+import Timeline from "@/game/types/Timeline";
 import { ErrorCollector } from "./errorCollection";
 import { loadLevelSections } from "./levelFileSectionUtil";
 import { initMutableLevelAndLoadingContext } from "./generalLoading";
@@ -63,12 +64,12 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!partiallyLoadedCharacters) return null;
   const { characters, initiallyKnownTitleCharacterIds } = partiallyLoadedCharacters;
   const itinerarySection = sections.itinerary;
-  level.startTime = findStartTimeFromItinerary(itinerarySection?.text ?? '') ?? 0;
+    const startTime = findStartTimeFromItinerary(itinerarySection?.text ?? '') ?? 0;
   const activities = loadActivitiesPartially(itinerarySection, loadingContext.activityParsingRules, 
-      level.startTime, loadingContext.activeCharacterId, errors);
+      startTime, loadingContext.activeCharacterId, errors);
   if (!activities) return null;
 
-  if (loadingContext.initialTime === null) level.initialTime = level.startTime;
+    if (loadingContext.initialTime === null) level.initialTime = startTime;
 
   // Add items, characters, and rooms to level, resolving dependencies.
   if (!addRoomsToLevel(rooms, loadingContext.groundFloorRoomRef, level, errors)) return null;
@@ -80,12 +81,13 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
     initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
 
   // Schedule activities into timeline data structure.
-  const timeline = scheduleActivities(level, activities, waypointGenerationContext, errors);
-  if (!timeline) return null;
-  level.endTime = findLastActivityEndTime(activities) ?? level.startTime;
-  assert(Number.isFinite(level.startTime) && Number.isFinite(level.endTime) && level.startTime <= level.endTime);
-  level.timeline = { ...timeline, startTime:level.startTime, endTime:level.endTime };
-  level.initialTime = _getInitialTimeValue(loadingContext.initialTime, level.startTime, level.endTime);
+  const scheduledTimeline = scheduleActivities(level, activities, startTime, waypointGenerationContext, errors);
+  if (!scheduledTimeline) return null;
+  const endTime = findLastActivityEndTime(activities) ?? startTime;
+  assert(Number.isFinite(startTime) && Number.isFinite(endTime) && startTime <= endTime);
+  const timeline:Timeline = { ...scheduledTimeline, startTime, endTime };
+  level.timeline = timeline;
+  level.initialTime = _getInitialTimeValue(loadingContext.initialTime, timeline.startTime, timeline.endTime);
 
   // Set counts of discoverable room, items, and characters.
   const counts = findDiscoverableCounts(level, activities);
@@ -97,7 +99,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
     discoverableRoomCount:loadingContext.discoverableRoomCount ?? counts.discoverableRoomCount
   };
 
-  level.labels = createTimeLabels(level.startTime, level.endTime);
+  level.labels = createTimeLabels(timeline.startTime, timeline.endTime);
 
   return errors.count <= originalErrorCount ? level : null;
 }

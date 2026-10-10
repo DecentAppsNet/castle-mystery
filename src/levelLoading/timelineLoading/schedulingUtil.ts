@@ -60,7 +60,7 @@ const VERB_TO_ACTIVITY_SCHEDULER:Readonly<{[verb:string]:ActivityScheduler}> = {
   'waits': scheduleWaitsActivity
 }
 
-function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
+function _scheduleActivity(level:Level, startTime:number, waypointContext:WaypointGenerationContext, activity:Activity,
   timeline:EditableTimeline, errors:ErrorCollector, scheduledActivities:readonly Activity[]):boolean {
   const activityScheduler = VERB_TO_ACTIVITY_SCHEDULER[activity.verb];
   assertNonNullable(activityScheduler, `Add scheduler for "${activity.verb}"`);
@@ -74,10 +74,10 @@ function _scheduleActivity(level:Level, waypointContext:WaypointGenerationContex
   assertNonNullable(activity.startTime);
   assertNonNullable(activity.endTime);
   assert(activity.startTime <= activity.endTime);
-  assert(activity.startTime >= level.startTime);
+  assert(activity.startTime >= startTime);
   assertNonNullable(activity.busyCharacterIds);
   assert(activity.busyCharacterIds.every(characterId => level.characters.some(character => character.id === characterId)));
-  // Level.endTime is still not known because it requires all scheduling to be completed.
+  // The completed timeline end is not known until all scheduling is complete.
 
   return true;
 }
@@ -93,19 +93,19 @@ function _createEmptyTimeline(level:Readonly<Level>):ScheduledTimeline {
 }
 
 /** Schedules all parsed activities and returns a resolved timeline, or null on error. */
-export function scheduleActivities(level:Level, activities:Activity[], waypointContext:WaypointGenerationContext,
+export function scheduleActivities(level:Level, activities:Activity[], startTime:number, waypointContext:WaypointGenerationContext,
   errors:ErrorCollector):ScheduledTimeline|null {
   if (!activities.length) return _createEmptyTimeline(level);
   const originalErrorCount = errors.count;
 
-  const timeline:EditableTimeline = createEditableTimeline(level.characters, level.rooms, level.startTime);
+  const timeline:EditableTimeline = createEditableTimeline(level.characters, level.rooms, startTime);
   // Track only activities that completed scheduling and conflict validation.
   const scheduledActivities:Activity[] = [];
   let toBeScheduled = [...activities];
   for(let attemptI = 0; attemptI < activities.length; ++attemptI) {
     assert(toBeScheduled.length > 0);
     const activity = toBeScheduled[0];
-    if (!_scheduleActivity(level, waypointContext, activity, timeline, errors, scheduledActivities)) return null;
+    if (!_scheduleActivity(level, startTime, waypointContext, activity, timeline, errors, scheduledActivities)) return null;
 
     // Reject authored overlap before accepting the activity as successfully scheduled.
     if (doesActivityConflictWithScheduled(activity, scheduledActivities, errors)) return null;
@@ -117,7 +117,7 @@ export function scheduleActivities(level:Level, activities:Activity[], waypointC
     if (nextActivity && isActivityRelativeTimestamp(nextActivity)) {
       nextActivity.startTime = activity.endTime;
       const nextActivityI = toBeScheduled.indexOf(nextActivity);
-      toBeScheduled = sortActivitiesAfterStartTimeAssignment(toBeScheduled, nextActivityI, level.startTime);
+      toBeScheduled = sortActivitiesAfterStartTimeAssignment(toBeScheduled, nextActivityI, startTime);
     }
   }
   assert(toBeScheduled.length === 0);

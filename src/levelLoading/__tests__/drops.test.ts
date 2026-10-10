@@ -44,7 +44,7 @@ describe('level loading - drops activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const start = createKeyframeAtTime(level!.timeline.keyframes, 0);
-    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.timeline.endTime);
     const coin = end.rooms[level!.timeline.roomIdToI.hall].items.find(item => item.id === 'coin');
     const samI = level!.timeline.characterIdToI.sam;
     expect(coin!.position.x).toBeGreaterThan(start.characters[samI].position.x);
@@ -159,7 +159,7 @@ describe('level loading - drops activities', () => {
       keyframe.characters[level!.timeline.characterIdToI.sam].effects);
     const dropEffect = effects.find(effect => effect.kind === 'dropItem');
     expect(dropEffect).toBeDefined();
-    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.endTime);
+    const end = createKeyframeAtTime(level!.timeline.keyframes, level!.timeline.endTime);
     expect(end.characters[level!.timeline.characterIdToI.sam].items.map(item => item.id))
       .toContain('vase');
   });
