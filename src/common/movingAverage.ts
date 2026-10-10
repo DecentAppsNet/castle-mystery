@@ -1,13 +1,13 @@
 import { assert } from "decent-portal";
 
-export type MovingAverageData = {
+type MovingAverageData = {
   series:number[]
   seriesLength:number, 
   nextI:number; // Point to where next number in series will be added.
   lastAverage:number;
 }
 
-export function createMovingAverage(seriesLength:number): MovingAverageData {
+export function createMovingAverage(seriesLength:number):MovingAverageData {
   assert(Number.isFinite(seriesLength) && seriesLength > 0);
   const series:number[] = [];
   return { series, nextI:0, lastAverage:0, seriesLength };
