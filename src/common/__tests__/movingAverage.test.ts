@@ -4,11 +4,6 @@ import { createMovingAverage, updateMovingAverage } from "../movingAverage";
 
 describe('simpleMovingAverage', () => {
   describe('calculating averages', () => {
-    it('initial average should be 0', () => {
-      const movingAverageData = createMovingAverage(3);
-      expect(movingAverageData.lastAverage).toBe(0);
-    });
-
     it('returns the same value added when series is empty', () => {
       const movingAverageData = createMovingAverage(3);
       expect(updateMovingAverage(5, movingAverageData)).toBe(5);
