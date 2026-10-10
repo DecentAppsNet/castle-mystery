@@ -103,7 +103,7 @@ export function updateGameState(gameState:GameState, events:PlayerEvent[], metaT
 
   // Advance timeline playback and pause at its end.
   if (gameState.isPlaying) {
-    const endTime = gameState.startTime + gameState.duration;
+    const endTime = gameState.timeline.endTime;
     const nextTime = Math.min(endTime, metaTime + gameState.metaTimeToGameTimeOffset);
     gameState.time = nextTime;
     if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
@@ -197,7 +197,6 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
   const baseItemsById = createItemsById(level.rooms, level.characters, duplicateItemsById(level.itemsById));
   const baseCharacters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, baseItemsById));
   const baseRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, baseItemsById));
-  const duration = level.endTime - level.startTime;
   const obscuredRoomIds = new Set(level.discoveryConfig.initiallyObscuredRoomIds);
   const activeSkinIdAtSelection = _findCharacterSkinIdAtTime(level.timeline, level.initialTime, level.activeCharacterId);
   const gameState:GameState = {
@@ -222,7 +221,6 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
       discoverableRoomCount:level.discoveryConfig.discoverableRoomCount,
       revealedSkinLinkages:createRevealedSkinLinkages(level.timeline.keyframes, baseRooms, obscuredRoomIds)
     },
-    duration,
     groundFloorY:level.groundFloorY,
     hoveredCharacterId:null,
     hoveredExitKey:null,
@@ -244,7 +242,6 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     roomTitleWrapsByRoomId:new Map<string, string[]>(),
     roomTitleWrapScalingFactors:ZERO_SCALING_FACTORS,
     scalingFactors:ZERO_SCALING_FACTORS,
-    startTime:level.startTime,
     time:level.initialTime,
     timeline:level.timeline, // Timeline is a large, immutable data structure - no harm in sharing instance.
     timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms, level.timeline,

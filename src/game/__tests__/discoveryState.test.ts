@@ -70,7 +70,7 @@ describe('discovery state', () => {
     gameState.discoveryState.titleKnownCharacterIds.add('pat');
     gameState.discoveryState.obscuredRoomIds.delete('study');
 
-    gameState.timelineSnapshot = createTimelineSnapshot(gameState, gameState.startTime);
+    gameState.timelineSnapshot = createTimelineSnapshot(gameState, gameState.timeline.startTime);
 
     expect(gameState.discoveryState).toBe(discoveryState);
     expect(gameState.discoveryState.discoveredSkinIds).toEqual(new Set(['pat-default']));
@@ -82,8 +82,8 @@ describe('discovery state', () => {
 
   it('shares temporal item instances when combining a keyframe with base content', () => {
     const gameState = _createGameState();
-    const keyframe = createKeyframeAtTime(gameState.timeline.keyframes, gameState.startTime);
-    const snapshot = createTimelineSnapshot(gameState, gameState.startTime);
+    const keyframe = createKeyframeAtTime(gameState.timeline.keyframes, gameState.timeline.startTime);
+    const snapshot = createTimelineSnapshot(gameState, gameState.timeline.startTime);
     const hallI = gameState.timeline.roomIdToI.hall;
     const samI = gameState.timeline.characterIdToI.sam;
 

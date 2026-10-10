@@ -37,10 +37,8 @@ type GameState = {
   readonly baseCharacters:Character[],
   readonly baseItemsById:Map<string, Item>,
   readonly baseRooms:Room[],
-  readonly duration:number,
   readonly groundFloorY:number,
   readonly imageSet:ImageSet,
-  readonly startTime:number,
   readonly timeline:Timeline;
   readonly winSynopsis:string,
   metaTimeEffects:Effect[], // Effects in this collection interpret startTime and endTime as meta-time.
