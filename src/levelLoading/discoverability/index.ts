@@ -6,14 +6,20 @@ import Character from "@/game/types/Character";
 import Level from "@/game/types/Level";
 import Room from "@/game/types/Room";
 import Activity from "../activityLoading/types/Activity";
-import { createSkinId } from "../generalLoading";
+import { createDefaultSkinId, createSkinId } from "../generalLoading";
+import { assert } from "decent-portal";
 
-function _findReferencedSkinIds(activities:readonly Activity[]):Set<string> {
-  const skinIds = new Set<string>();
+function _findReferencedSkinIds(characters:readonly Character[], activities:readonly Activity[]):Set<string> {
+  const skinIds = new Set(characters.map(character => character.skinId));
   activities.forEach(activity => {
     if (activity.verb !== 'appears') return;
-    const { characterId, skinName } = activity.parts;
-    if (typeof characterId === 'string' && typeof skinName === 'string') skinIds.add(createSkinId(characterId, skinName));
+    const { characterId, skinName, isDefault } = activity.parts;
+    assert(typeof characterId === 'string');
+    if (typeof skinName === 'string') skinIds.add(createSkinId(characterId, skinName));
+    else {
+      assert(typeof isDefault === 'string');
+      skinIds.add(createDefaultSkinId(characterId));
+    }
   });
   return skinIds;
 }
@@ -22,7 +28,8 @@ function _countDiscoverableCharacters(characters:readonly Character[], reference
   let count = 0;
   characters.forEach(character => {
     if (isCharacterInteractive(character)) {
-      count += character.skins.filter(skin => referencedSkinIds.has(skin.id)).length + 1; // The default appearance is always discoverable.
+      const skinIds = new Set([createDefaultSkinId(character.id), ...character.skins.map(skin => skin.id)]);
+      count += [...skinIds].filter(skinId => referencedSkinIds.has(skinId)).length;
     }
   });
   return count;
@@ -67,7 +74,7 @@ function _countDiscoverableItems(characters:readonly Character[], rooms:readonly
  * @returns The calculated discoverable counts before optional authored overrides are applied.
  */
 export function findDiscoverableCounts(level:Level, activities:readonly Activity[]):{discoverableCharacterCount:number, discoverableItemCount:number, discoverableRoomCount:number} {
-  const referencedSkinIds = _findReferencedSkinIds(activities);
+  const referencedSkinIds = _findReferencedSkinIds(level.characters, activities);
   const discoverableCharacterCount = _countDiscoverableCharacters(level.characters, referencedSkinIds);
   const discoverableItemCount = _countDiscoverableItems(level.characters, level.rooms, activities);
   const discoverableRoomCount = level.rooms.length;

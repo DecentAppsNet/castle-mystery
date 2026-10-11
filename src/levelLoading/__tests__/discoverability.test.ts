@@ -14,9 +14,58 @@ import twoInteractiveCharactersText from './fixtures/discoverability/discoverabi
 import twoRoomsText from './fixtures/discoverability/discoverability-two-rooms.md?raw';
 import unplacedCharacterText from './fixtures/discoverability/discoverability-unplaced-character.md?raw';
 import authoredCountsText from './fixtures/discoverability/discoverability-authored-counts.md?raw';
+import initialSkinText from './fixtures/discoverability/discoverability-initial-skin.md?raw';
+import repeatedAppearancesText from './fixtures/discoverability/discoverability-repeated-appearances.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 describe('loading levels - discoverability', () => {
+  it('counts a custom initial skin once, excluding unused skins and unplaced or non-interactive characters', () => {
+    const { level, errors } = loadLevelForTest(initialSkinText);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(1);
+  });
+
+  it('counts default when an activity reaches it after a custom initial skin', () => {
+    const text = replaceSection(initialSkinText, 'itinerary', ['0:00:05 Sam appears default']);
+    const { level, errors } = loadLevelForTest(text);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(2);
+  });
+
+  it('does not count an activity selecting the initial custom skin twice', () => {
+    const text = replaceSection(initialSkinText, 'itinerary', ['0:00:05 Sam appears Detective']);
+    const { level, errors } = loadLevelForTest(text);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(1);
+  });
+
+  it('counts two selected custom skins without adding an unseen default', () => {
+    const text = replaceSection(initialSkinText, 'itinerary', ['0:00:05 Sam appears Guard']);
+    const { level, errors } = loadLevelForTest(text);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(2);
+  });
+
+  it('deduplicates repeated named and default selections', () => {
+    const { level, errors } = loadLevelForTest(repeatedAppearancesText);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(3);
+  });
+
+  it('excludes selected appearances of placed non-interactive characters', () => {
+    const text = replaceSection(initialSkinText, 'itinerary', ['0:00:05 Alex appears default']);
+    const { level, errors } = loadLevelForTest(text);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(1);
+  });
+
+  it('preserves authored count overrides with a custom initial skin', () => {
+    const text = initialSkinText.replace('* activeCharacter=Sam', '* discoverableCharacterCount=7');
+    const { level, errors } = loadLevelForTest(text);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.discoveryConfig.discoverableCharacterCount).toBe(7);
+  });
+
   it('loads one discoverable character and room from a minimal level with no itinerary', () => {
     const { level, errors } = loadLevelForTest(minimalText, 'discoverability-minimal.md');
 

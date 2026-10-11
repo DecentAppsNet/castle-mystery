@@ -152,6 +152,7 @@ DDCCAAABBE
 * orientation=sitting
 * items=Goat Mask
 * facing=right
+* appearsAs=Masked
 
 ### Masked
 * faceImage=goatMask.png
@@ -162,6 +163,7 @@ DDCCAAABBE
 * items=Horse Mask
 * facing=right
 * orientation=sitting
+* appearsAs=Masked
 
 ### Masked
 * faceImage=horseMask.png
@@ -172,6 +174,7 @@ DDCCAAABBE
 * items=Bull Mask
 * orientation=sitting
 * facing=right
+* appearsAs=Masked
 
 ### Masked
 * faceImage=bullMask.png
@@ -182,6 +185,7 @@ DDCCAAABBE
 * orientation=sitting
 * items=Rabbit Mask
 * facing=right
+* appearsAs=Masked
 
 ### Masked
 * faceImage=rabbitMask.png
@@ -192,6 +196,7 @@ DDCCAAABBE
 * items=Stag Mask
 * orientation=sitting
 * facing=right
+* appearsAs=Masked
 
 ### Masked
 * faceImage=stagMask.png
