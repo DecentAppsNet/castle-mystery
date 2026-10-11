@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import defaultLevelText from './fixtures/conclusions-base.md?raw';
-import { loadLevelForTest, replaceSection } from './testLevelUtil';
+import initialAppearanceText from './fixtures/initial-appearance.md?raw';
+import { loadLevelForTest, loadValidLevelForTest, replaceSection } from './testLevelUtil';
+import { UNKNOWN_CHARACTER_ICON_URL } from '@/game/discoveryIconUrlUtil';
 
 function _expectFailure(text:string, filename:string, expectedMessage:string) {
   const { level, errors } = loadLevelForTest(text, filename);
@@ -10,6 +12,63 @@ function _expectFailure(text:string, filename:string, expectedMessage:string) {
 }
 
 describe('loading levels - conclusions', () => {
+  it('uses the initial skin portrait for a placed character without authored identity options', () => {
+    const text = initialAppearanceText.replace('* characters=Sam|Visitor', '');
+    const level = loadValidLevelForTest(text);
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
+    expect(identities?.parts[0]).toMatchObject({ imageUrl:'/assets/faces/detective.png' });
+    expect(identities?.parts.filter(part => part.type === 'blank')).toHaveLength(1);
+  });
+
+  it('uses initial skin portraits for placed and unplaced characters selected by identity overrides', () => {
+    const level = loadValidLevelForTest(initialAppearanceText);
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
+    expect(level.characters.map(character => character.id)).toEqual(['sam']);
+    expect(identities?.parts.filter(part => part.type === 'image')).toEqual(expect.arrayContaining([
+      { type:'image', imageUrl:'/assets/faces/detective.png' },
+      { type:'image', imageUrl:'/assets/faces/guard.png' }
+    ]));
+    expect(identities?.parts.filter(part => part.type === 'blank')).toHaveLength(2);
+  });
+
+  it('preserves the base identity portrait when the initial appearance is omitted', () => {
+    const text = initialAppearanceText.replace('* appearsAs=Detective', '');
+    const level = loadValidLevelForTest(text);
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
+    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/faces/samBase.png' });
+  });
+
+  it('preserves the base identity portrait for explicit default', () => {
+    const text = initialAppearanceText.replace('* appearsAs=Detective', '* appearsAs=default');
+    const level = loadValidLevelForTest(text);
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
+    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/faces/samBase.png' });
+  });
+
+  it('falls back to the base identity portrait when the initial skin has no image', () => {
+    const text = initialAppearanceText.replace('* appearsAs=Detective', '* appearsAs=Witness');
+    const level = loadValidLevelForTest(text);
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
+    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/faces/samBase.png' });
+  });
+
+  it('uses the unknown icon when both the initial skin and base portrait are absent', () => {
+    const text = initialAppearanceText.replace('* faceImage=samBase.png', '').replace('* appearsAs=Detective', '* appearsAs=Witness');
+    const level = loadValidLevelForTest(text);
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
+    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:UNKNOWN_CHARACTER_ICON_URL });
+  });
+
+  it('keeps the authored initial portrait despite later appearances and a later opening time', () => {
+    const level = loadValidLevelForTest(initialAppearanceText);
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
+    expect(level.initialTime).toBe(10_000);
+    expect(level.characters[0].skinId).toBe('sam-detective');
+    expect(level.timeline.keyframes.at(-1)?.characters[0].skinId).toBe('sam-witness');
+    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/faces/detective.png' });
+    expect(identities?.parts).not.toContainEqual({ type:'image', imageUrl:'/assets/faces/samBase.png' });
+  });
+
   it('loads an authored conclusion and a generated identities conclusion into level.conclusions', () => {
     let text = replaceSection(defaultLevelText, 'characters', [
       '## Sam',

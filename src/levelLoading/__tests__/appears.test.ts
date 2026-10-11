@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialTimelineSnapshot } from '@/game/timeline/snapshotUtil';
 import appearsBaseText from './fixtures/appears/appears-base.md?raw';
-import { loadLevelForTest, replaceSection } from './testLevelUtil';
+import initialAppearanceText from './fixtures/initial-appearance.md?raw';
+import { loadLevelForTest, loadValidLevelForTest, replaceSection } from './testLevelUtil';
 import Level from '@/game/types/Level';
 
 describe('level loading - appears activities', () => {
@@ -10,6 +11,20 @@ describe('level loading - appears activities', () => {
     return createInitialTimelineSnapshot(level.characters, level.rooms, level.timeline, 
         level.activeCharacterId, time, obscuredRoomIds).activeCharacter;
   }
+
+  it('applies an initial skin and lets later default and named appearances override it', () => {
+    const level = loadValidLevelForTest(initialAppearanceText);
+    expect(snapshotAt(level, 0)).toMatchObject({
+      skinId:'sam-detective', faceImageUrl:'/assets/faces/detective.png', description:'Detective description.'
+    });
+    expect(snapshotAt(level, 5_000)).toMatchObject({
+      skinId:'sam-default', faceImageUrl:'/assets/faces/samBase.png', description:'Base description.'
+    });
+    expect(snapshotAt(level, 10_000)).toMatchObject({
+      skinId:'sam-witness', faceImageUrl:'/assets/faces/samBase.png', description:'Witness description.'
+    });
+    expect(snapshotAt(level, 0).skinId).toBe('sam-detective');
+  });
 
   it('applies the selected skin to a character at the appearance time', () => {
     const text = replaceSection(appearsBaseText, 'itinerary', ['0:00:05 Sam appears Detective']);

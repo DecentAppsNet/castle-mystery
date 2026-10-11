@@ -1,8 +1,68 @@
 import { describe, it, expect } from 'vitest';
 import defaultLevelText from './fixtures/characters-base.md?raw';
+import appearsBaseText from './fixtures/appears/appears-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 describe('loading levels - characters', () => {
+  it('keeps the default initial skin when appearsAs is omitted', () => {
+    const { level, errors } = loadLevelForTest(appearsBaseText);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.characters[0].skinId).toBe('sam-default');
+    expect(level?.timeline.keyframes[0].characters[0].skinId).toBe('sam-default');
+  });
+
+  it('copies a named initial skin into the first timeline keyframe without changing base metadata', () => {
+    const text = appearsBaseText.replace('## Sam', '## Sam\n* appearsAs=Detective');
+    const { level, errors } = loadLevelForTest(text);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.characters[0]).toMatchObject({ skinId:'sam-detective', faceImageUrl:'/assets/faces/base.png', description:'Base description.' });
+    expect(level?.timeline.keyframes[0].characters[0].skinId).toBe('sam-detective');
+  });
+
+  it('normalizes case and surrounding whitespace in an initial skin reference', () => {
+    const text = appearsBaseText.replace('## Sam', '## Sam\n* appearsAs=  dEtEcTiVe  ');
+    const { level, errors } = loadLevelForTest(text);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.characters[0].skinId).toBe('sam-detective');
+  });
+
+  it('accepts an explicit normalized default initial appearance', () => {
+    const text = appearsBaseText.replace('## Sam', '## Sam\n* appearsAs= DEFAULT ');
+    const { level, errors } = loadLevelForTest(text);
+    expect(errors.describeErrors()).toBe('');
+    expect(level?.characters[0].skinId).toBe('sam-default');
+  });
+
+  it('reports an unknown initial skin at its authored property line', () => {
+    const text = appearsBaseText.replace('* faceImage=base.png', '* appearsAs=Missing');
+    const { level, errors } = loadLevelForTest(text, 'initial-unknown.md');
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('initial-unknown.md:36:');
+    expect(errors.describeErrors()).toContain('Unknown initial appearance "Missing"');
+  });
+
+  it('rejects an explicitly empty initial skin reference', () => {
+    const text = appearsBaseText.replace('* faceImage=base.png', '* appearsAs=');
+    const { level, errors } = loadLevelForTest(text, 'initial-empty.md');
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('initial-empty.md:36:');
+    expect(errors.describeErrors()).toContain('Unknown initial appearance ""');
+  });
+
+  it('rejects a complete skin ID as an initial skin heading reference', () => {
+    const text = appearsBaseText.replace('## Sam', '## Sam\n* appearsAs=sam-detective');
+    const { level, errors } = loadLevelForTest(text);
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Unknown initial appearance "sam-detective"');
+  });
+
+  it('rejects a skin belonging only to another character', () => {
+    const text = appearsBaseText.replace('## Sam', '## Sam\n* appearsAs=Butler');
+    const { level, errors } = loadLevelForTest(text);
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Unknown initial appearance "Butler"');
+  });
+
   it('loads a minimal character into allCharactersById on the returned level', () => {
     const { level, errors } = loadLevelForTest(defaultLevelText, 'characters-success-minimal.md');
 

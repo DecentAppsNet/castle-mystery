@@ -41,7 +41,8 @@ function _randomizeIdentityRows(characters:readonly Character[]):Character[] {
 }
 
 function _getCharacterFaceImageUrl(character:Character):string {
-  return character.faceImageUrl ?? UNKNOWN_CHARACTER_ICON_URL;
+  const initialSkin = character.skins.find(skin => skin.id === character.skinId);
+  return initialSkin?.faceImageUrl ?? character.faceImageUrl ?? UNKNOWN_CHARACTER_ICON_URL;
 }
 
 function _createClozeBlankFromCorrectAnswer(correctAnswer:string, conclusionOptions:string[]):ClozeBlank {

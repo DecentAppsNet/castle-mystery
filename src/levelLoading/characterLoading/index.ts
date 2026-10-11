@@ -59,10 +59,21 @@ function _parseCharacterSkins(characterSectionEntry:SectionEntryWithLine, charac
   });
 }
 
+function _parseInitialSkinId(appearanceText:string, characterId:string, skins:readonly CharacterSkin[], errors:ErrorCollector):string {
+  const skinName = normalizeId(appearanceText);
+  if (skinName === NO_SKIN_DEFAULT) return createDefaultSkinId(characterId);
+  const skinId = createSkinId(characterId, skinName);
+  if (skins.some(skin => skin.id === skinId)) return skinId;
+  errors.addAt(`Unknown initial appearance "${appearanceText}". Use a skin heading belonging to this character or "default".`,
+    ['characters', characterId], '* appearsAs=');
+  return createDefaultSkinId(characterId);
+}
+
 function _parseCharacter(characterId:string, position:Position|null, characterSectionEntry:SectionEntryWithLine,
     errors:ErrorCollector):{character:Character, isTitleKnown:boolean} {
   
   if (!position) position = createDefaultPosition(); // This is an invalid position within the level. Since character is unplaced, that's fine.
+  const skins = _parseCharacterSkins(characterSectionEntry, characterId, errors);
   const nameValues = parseUniqueNameValueLines(characterSectionEntry.value, `character ${characterId}`, false, characterSectionEntry.lineNo);
   const authoredCharacterName = characterSectionEntry.name.trim();
   const title = nameValues.title ?? authoredCharacterName;
@@ -75,8 +86,8 @@ function _parseCharacter(characterId:string, position:Position|null, characterSe
   const items = parseItems(nameValues.items ?? '');
   const leftHandItem = parseItem(nameValues.leftHand ?? '');
   const rightHandItem = parseItem(nameValues.rightHand ?? '');
-  const skins = _parseCharacterSkins(characterSectionEntry, characterId, errors);
-  const skinId = createDefaultSkinId(characterId);
+  const skinId = nameValues.appearsAs === undefined ? createDefaultSkinId(characterId)
+    : _parseInitialSkinId(nameValues.appearsAs, characterId, skins, errors);
   const character:MutableCharacter = {
     ...createDefaultCharacter(),
     id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
