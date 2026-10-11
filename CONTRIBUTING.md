@@ -175,6 +175,13 @@ Guidelines:
 * `px` should not be used unless there is a strong case that a non-scaling pixel length is appropriate for layout.
 * `!important` should not be used unless there is a strong case to be made for it.
 
+## Preferred Types
+
+Depart from these conventions when there is a clear benefit.
+
+* For string- or number-keyed lookups, prefer named index signatures (e.g., `type IdLookup = { [id: string]: string | undefined }`) over `Map` or `Record`. Include `| undefined` when a key may be absent so TypeScript requires handling that possibility.
+* Prefer `null` over `undefined` to represent an expected absence of a value. Reserve `undefined` for unassigned values or values originating from external APIs (e.g., React callbacks or DOM APIs).
+
 ## Using RegEx
 
 * All RegExs should be encapsulated in a function whose name describes what the RegEx does.
