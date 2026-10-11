@@ -15,9 +15,13 @@ describe('loading levels - conclusions', () => {
       '## Sam',
       '* title=Detective Sam',
       '* description=Lead investigator.',
-      '* faceImage=sam.png'
+      '* faceImage=sam.png',
+      '## Pat',
+      '* title=Doctor Pat',
+      '* isTitleKnown=true'
     ]);
     text = replaceSection(text, 'conclusions', [
+      '* characters=Sam | Pat',
       '## Missing Book',
       '* conclusion=(book.png)[Study]---[Detective Sam]',
       '* revealRooms=Study'
@@ -42,7 +46,7 @@ describe('loading levels - conclusions', () => {
     expect(identities?.parts.map(part => part.type)).toEqual(['image', 'text', 'blank']);
     expect(identities?.parts[0]).toMatchObject({ imageUrl:'/assets/faces/sam.png' });
     expect(identities?.parts[2]).toMatchObject({
-      availableAnswers:['Detective Sam'],
+      availableAnswers:['Detective Sam', 'Doctor Pat'],
       correctAnswerIndexes:[0],
       playerAnswerIndex:-1
     });
@@ -63,7 +67,7 @@ describe('loading levels - conclusions', () => {
       playerAnswerIndex:-1
     });
     expect(missingBook?.parts[3]).toMatchObject({
-      availableAnswers:['Detective Sam'],
+      availableAnswers:['Detective Sam', 'Doctor Pat'],
       correctAnswerIndexes:[0],
       playerAnswerIndex:-1
     });

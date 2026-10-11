@@ -17,6 +17,7 @@ import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionI
 import Room from "@/game/types/Room";
 import { normalizeId } from "@/game/idUtil";
 import { randIntInRange } from "@/common/randUtil";
+import { assertNonNullable } from "decent-portal";
 
 function _findCharactersForConclusionOptions(characters:readonly Character[],
   initiallyKnownTitleCharacterIds:ReadonlySet<string>):Character[] {
@@ -30,7 +31,11 @@ function _randomizeIdentityRows(characters:readonly Character[]):Character[] {
   const shuffled = [...characters];
   for(let i = shuffled.length - 1; i > 0; --i) {
     const swapI = randIntInRange(0, i + 1);
-    [shuffled[i], shuffled[swapI]] = [shuffled[swapI], shuffled[i]];
+    assertNonNullable(shuffled[swapI]);
+    assertNonNullable(shuffled[i]);
+    const swapValue = shuffled[swapI];
+    shuffled[swapI] = shuffled[i]!;
+    shuffled[i] = swapValue;
   }
   return shuffled;
 }
@@ -80,11 +85,12 @@ function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Ro
 function _findCharacterByIdOrTitle(characters:readonly Character[], characterRef:string):Character|null {
   const maybeCharacterId = normalizeId(characterRef);
   const maybeCharacterTitle = normalizeCategoryPhrase(characterRef);
-  return characters.find(c => 
-    c.id === maybeCharacterId || normalizeCategoryPhrase(c.title) === maybeCharacterTitle) ?? null;
+  return characters.find(c => c.id === maybeCharacterId) // Search by ID first, because they can be used by author to disambiguate two characters with same title.
+      ?? characters.find(c => normalizeCategoryPhrase(c.title) === maybeCharacterTitle) 
+      ?? null;
 }
 
-function _findCharactersForOptions(characterOptions:string[], characters:readonly Character[], 
+export function findCharactersForAuthoredOptions(characterOptions:string[], characters:readonly Character[], 
     errors:ErrorCollector):readonly Character[] {
   return characterOptions.map(characterRef => {
     const character = _findCharacterByIdOrTitle(characters, characterRef);
@@ -94,27 +100,28 @@ function _findCharactersForOptions(characterOptions:string[], characters:readonl
   }).filter(c => c !== null);
 }
 
-function _generateConclusionOptions(authoredCharacterOptions:string[]|null, characters:readonly Character[], 
-    initiallyKnownTitleCharacterIds:ReadonlySet<string>, errors:ErrorCollector):{
+function _generateConclusionOptions(authoredCharacterOptions:string[]|null, placedCharacters:readonly Character[], 
+      allCharacters:readonly Character[], initiallyKnownTitleCharacterIds:ReadonlySet<string>, errors:ErrorCollector):{
       characterOptions:string[], conclusionCharacters:readonly Character[]
     } {
   if (authoredCharacterOptions) {
-    const conclusionCharacters = _findCharactersForOptions(authoredCharacterOptions, characters, errors);
-    return { characterOptions:authoredCharacterOptions, conclusionCharacters };
+    const conclusionCharacters = findCharactersForAuthoredOptions(authoredCharacterOptions, allCharacters, errors);
+    const characterOptions = conclusionCharacters.map(character => character.title); // Return titles instead of the authored options, which may be IDs or titles.
+    return { characterOptions, conclusionCharacters };
   }
-  const conclusionCharacters = _findCharactersForConclusionOptions(characters, initiallyKnownTitleCharacterIds);
+  const conclusionCharacters = _findCharactersForConclusionOptions(placedCharacters, initiallyKnownTitleCharacterIds);
   if (!conclusionCharacters.length) return  { characterOptions:[], conclusionCharacters:[] }; // Not an error - every character title can be initially known.
   return {characterOptions:conclusionCharacters.map(c => c.title), conclusionCharacters };
 }
 
 /** Generates an identities conclusion unless all character titles are initially known. */
-export function createGeneratedIdentityConclusion(conclusionsSectionText:string, characters:readonly Character[], 
-    rooms:readonly Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>,
+export function createGeneratedIdentityConclusion(conclusionsSectionText:string, placedCharacters:readonly Character[], 
+    allCharacters:readonly Character[], rooms:readonly Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>,
     initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):Conclusion|null {
   const overrides = _findAuthoredOverrides(conclusionsSectionText, rooms, initiallyObscuredRoomIds, errors);
   
-  const { conclusionCharacters, characterOptions} = _generateConclusionOptions(overrides.characterOptions, characters,
-    initiallyKnownTitleCharacterIds, errors);
+  const { conclusionCharacters, characterOptions} = _generateConclusionOptions(overrides.characterOptions, placedCharacters,
+    allCharacters, initiallyKnownTitleCharacterIds, errors);
   if (!characterOptions.length) return null;
     
   const parts:ClozePart[] = [];

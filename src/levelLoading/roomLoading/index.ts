@@ -84,7 +84,7 @@ export function addRoomsToLevel(rooms:Room[], groundFloorRoomRef:string|null, le
   return errors.count <= originalErrorCount;
 }
 
-type CharacterIdToPosition = Record<string, Position>;
+type CharacterIdToPosition = Record<string, Position|undefined>;
 
 /** Resolves character positions from room legends. */
 export function findAllCharacterPositions(rooms:Room[], characterIds:string[], roomsSectionText:string, errors:ErrorCollector):CharacterIdToPosition {

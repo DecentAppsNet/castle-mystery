@@ -60,25 +60,27 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   const partiallyLoadedRooms = loadRoomsPartially(sections, items, errors); // Rooms still missing inventory. Side effect - items receive positions.
   if (!partiallyLoadedRooms) return null;
   const { rooms, waypointGenerationContext, initiallyObscuredRoomIds } = partiallyLoadedRooms;
-  const partiallyLoadedCharacters = loadCharactersPartially(sections.characters.text, sections.rooms.text, rooms, errors); // Characters still missing inventory.
+  const charactersSectionText = sections.characters?.text ?? '';
+  const roomsSectionText = sections.rooms?.text ?? '';
+  const partiallyLoadedCharacters = loadCharactersPartially(charactersSectionText, roomsSectionText, rooms, errors); // Characters still missing inventory.
   if (!partiallyLoadedCharacters) return null;
-  const { characters, initiallyKnownTitleCharacterIds } = partiallyLoadedCharacters;
+  const { placedCharacters, allCharacters, initiallyKnownTitleCharacterIds } = partiallyLoadedCharacters;
   const itinerarySection = sections.itinerary;
     const startTime = findStartTimeFromItinerary(itinerarySection?.text ?? '') ?? 0;
   const activities = loadActivitiesPartially(itinerarySection, loadingContext.activityParsingRules, 
       startTime, loadingContext.activeCharacterId, errors);
   if (!activities) return null;
 
-    if (loadingContext.initialTime === null) level.initialTime = startTime;
+  if (loadingContext.initialTime === null) level.initialTime = startTime;
 
   // Add items, characters, and rooms to level, resolving dependencies.
   if (!addRoomsToLevel(rooms, loadingContext.groundFloorRoomRef, level, errors)) return null;
-  if (!addCharactersToLevel(characters, items, level, errors)) return null;
+  if (!addCharactersToLevel(placedCharacters, items, level, errors)) return null;
   if (!indexUsedItemsInLevel(items, activities, rooms, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
-  level.conclusions = loadConclusions(sections.conclusions?.text ?? '', characters, [...level.itemsById.values()], rooms,
-    initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
+  level.conclusions = loadConclusions(sections.conclusions?.text ?? '', placedCharacters, allCharacters, 
+      [...level.itemsById.values()], rooms, initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
 
   // Schedule activities into timeline data structure.
   const scheduledTimeline = scheduleActivities(level, activities, startTime, waypointGenerationContext, errors);

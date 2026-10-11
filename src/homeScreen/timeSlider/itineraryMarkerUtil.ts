@@ -32,6 +32,7 @@ function _isKeyframeObscured(characterPosition:Position, characterSkinId:string,
 
 function _findObscuredRangeStartingAtKeyframe(keyframes:TimelineKeyframe[], startKeyframeI:number, activeCharacterI:number, rooms:Room[],
     revealedSkinIds:Set<string>, obscuredRoomIds:Set<string>, roomEntryEvents:RoomEntryEvents):{obscuredRange:TimeRange, lastObscuredKeyframeI:number}|null {
+  assertNonNullable(keyframes[startKeyframeI]);
   const obscuredRange = { startTime:keyframes[startKeyframeI].time, endTime:-1 };
   let lastObscuredKeyframeI:number = -1;
   let firstUnobscuredKeyframeI = keyframes.length;
@@ -41,7 +42,8 @@ function _findObscuredRangeStartingAtKeyframe(keyframes:TimelineKeyframe[], star
   let lastPosition = {x:-1, y:-1, z:-1};
 
   for(let keyframeI = startKeyframeI; keyframeI < keyframes.length; ++keyframeI) {
-    const characterKeyframe = keyframes[keyframeI].characters[activeCharacterI];
+    assertNonNullable(keyframes[keyframeI]);
+    const characterKeyframe = keyframes[keyframeI]!.characters[activeCharacterI];
     assertNonNullable(characterKeyframe);
     const { skinId, position } = characterKeyframe;
     if (skinId !== lastSkinId || !arePositionsEqual(position, lastPosition)) {
@@ -53,7 +55,7 @@ function _findObscuredRangeStartingAtKeyframe(keyframes:TimelineKeyframe[], star
       lastPosition = position;
       lastSkinId = skinId;
     }
-    obscuredRange.endTime = keyframes[keyframeI].time;
+    obscuredRange.endTime = keyframes[keyframeI]!.time;
     lastObscuredKeyframeI = keyframeI;
   }
 

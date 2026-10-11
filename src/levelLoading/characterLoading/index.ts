@@ -12,7 +12,7 @@ import { rand } from "@/common/randUtil";
 import { parseItem, parseItems } from "../itemLoading";
 import { normalizeId } from "@/game/idUtil";
 import Room from "@/game/types/Room";
-import Position from "@/game/types/Position";
+import Position, { createDefaultPosition } from "@/game/types/Position";
 import { findAllCharacterPositions } from "../roomLoading";
 import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
@@ -22,7 +22,8 @@ import { createDefaultSkinId, createSkinId } from "../generalLoading";
 import { NO_SKIN_DEFAULT } from "../activityLoading/activitySchedulers/appearsScheduler";
 
 type PartiallyLoadedCharacters = {
-  characters:MutableCharacter[],
+  allCharacters:MutableCharacter[],
+  placedCharacters:MutableCharacter[],
   initiallyKnownTitleCharacterIds:ReadonlySet<string>
 }
 
@@ -58,8 +59,10 @@ function _parseCharacterSkins(characterSectionEntry:SectionEntryWithLine, charac
   });
 }
 
-function _parseCharacter(characterId:string, position:Position, characterSectionEntry:SectionEntryWithLine,
-  errors:ErrorCollector):{character:Character, isTitleKnown:boolean} {
+function _parseCharacter(characterId:string, position:Position|null, characterSectionEntry:SectionEntryWithLine,
+    errors:ErrorCollector):{character:Character, isTitleKnown:boolean} {
+  
+  if (!position) position = createDefaultPosition(); // This is an invalid position within the level. Since character is unplaced, that's fine.
   const nameValues = parseUniqueNameValueLines(characterSectionEntry.value, `character ${characterId}`, false, characterSectionEntry.lineNo);
   const authoredCharacterName = characterSectionEntry.name.trim();
   const title = nameValues.title ?? authoredCharacterName;
@@ -84,40 +87,42 @@ function _parseCharacter(characterId:string, position:Position, characterSection
 
 /** Parses positioned characters while deferring resolution of their item references. */
 export function loadCharactersPartially(charactersSectionText:string, roomsSectionText:string, rooms:Room[],
-  errors:ErrorCollector):PartiallyLoadedCharacters|null {
+    errors:ErrorCollector):PartiallyLoadedCharacters|null {
   const originalErrorCount = errors.count;
 
-  if (!charactersSectionText) return { characters:[], initiallyKnownTitleCharacterIds:new Set<string>() };
+  if (!charactersSectionText) return { placedCharacters:[], allCharacters:[], initiallyKnownTitleCharacterIds:new Set<string>() };
+
+  function _isPlacedCharacter(position:Position|null) { return position !== null; }
 
   const characterIds = getSectionIdsFromSectionText(charactersSectionText, 2, 'characters', errors);
   const characterIdToPosition = findAllCharacterPositions(rooms, characterIds, roomsSectionText, errors);
 
   const characterSectionsById:SectionEntryMap = createNormalizedSectionEntryMap(charactersSectionText, 2, 'characters', errors);
   const characterSectionNames:string[] = [...characterSectionsById.keys()];
-  const characters:Character[] = [];
+  const placedCharacters:Character[] = [];
+  const allCharacters:Character[] = [];
   const initiallyKnownTitleCharacterIds = new Set<string>();
   characterSectionNames.forEach(sectionName => {
     const sectionEntry = characterSectionsById.get(sectionName);
     assertNonNullable(sectionEntry);
     const characterId = normalizeId(sectionName);
-    const fromPosition = characterIdToPosition[characterId] ?? null; // Due to importing, its possible to have unplaced characters.
-    if (fromPosition) {
-      const { character, isTitleKnown } = _parseCharacter(characterId, fromPosition, sectionEntry, errors);
-      characters.push(character);
-      if (isTitleKnown) initiallyKnownTitleCharacterIds.add(character.id);
-    }
+    const fromPosition = characterIdToPosition[characterId] ?? null; // Due to importing, its possible to have unplaced characters, in which case the position will be undefined.
+    const { character, isTitleKnown } = _parseCharacter(characterId, fromPosition, sectionEntry, errors);
+    allCharacters.push(character);
+    if (isTitleKnown) initiallyKnownTitleCharacterIds.add(character.id);
+    if (_isPlacedCharacter(fromPosition)) placedCharacters.push(character);
   });
   
-  return errors.count <= originalErrorCount ? { characters, initiallyKnownTitleCharacterIds } : null;
+  return errors.count <= originalErrorCount ? { placedCharacters, allCharacters, initiallyKnownTitleCharacterIds } : null;
 }
 
 /** Resolves character item references and assigns the characters to the level. */
-export function addCharactersToLevel(characters:MutableCharacter[], items:Item[], level:MutableLevel, errors:ErrorCollector):boolean {
+export function addCharactersToLevel(placedCharacters:MutableCharacter[], items:Item[], level:MutableLevel, errors:ErrorCollector):boolean {
   const originalErrorCount = errors.count;
   assertNonNullable(level.activeCharacterId);
 
-  mergeCharacterItems(characters, items, errors);
-  level.characters = characters;
+  mergeCharacterItems(placedCharacters, items, errors);
+  level.characters = placedCharacters;
   
   return errors.count <= originalErrorCount;
 }
