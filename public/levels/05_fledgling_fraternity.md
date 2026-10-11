@@ -241,7 +241,7 @@ DDCCAAABBE
 : Niccolo says, "Well, we must start somewhere."
 : Sticky Agatha says "Put on your mask!"
 : Niccolo says, "Oh, right."
-: becomes Niccolo Masked
+: appears as Niccolo Masked
 : Sticky Agatha says, "I'll stay here and keep watch."
 
 (Niccolo enters Nave, and everybody turns to look at him)

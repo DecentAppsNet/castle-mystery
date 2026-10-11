@@ -1,835 +1,279 @@
 # General
 
 * title=adhoc
-* activeCharacter=Toro
-* time=8:00:00
-* background=daySky.png
+* activeCharacter=Niccolo
+* time:22:59:30
+* background=nightSky.png
+* groundFloorRoom=Forest
 * imports=items.md | characters.md | roomStyles.md
-* winSynopsis=The King's decisions planted seeds of discontent among two petitioners. Toro's luck changed for the better with a new job. King Frederick resolved to reform administrative procedures to isolate him from his subjects. The Pope became an untrustworthy figure in his eyes.
+
+The crypt is obscured until player guesses identities of each masked individual. They have the dropdown of Niccolo, Yusuf, Giorgios, Harold, Hugo, Giovanni, Sticky Agatha. There will be some way to confirm that Agatha did not enter the nave, which is half-constructed.
+
+Voices heard from the crypt. One person (Hugo) says, "Oh, I prefer to keep mine on." It is allowed.
+
+Hugo says, "Fellow freemasons, what is our next plan? I am ready to do my part!"
+
+Niccolo, "Freemasons? We're not freemasons."
+
+Hugo says, "You're not? I really thought you were."
+
+Niccolo, "We haven't even picked a name yet."
+
+Hugo says, "Oh, then my apologies. I'm at the wrong meeting." Hugo leaves.
+
+Niccolo, "They've just been using that fake name to rile people up. There are no freemasons."
+
+Yusuf, "But what if... we were the freemasons?"
+
+Niccolo, "I don't understand."
+
+Yusuf, "The Pope knows freemasons aren't real. If we choose the same name for ourselves."
+
+Niccolo, "Our actions will blend in with the rumors he himself started."
+
+Yusuf, "It gives us cover!"
+
+Harold, "So I'm a freemason now?"
+
+Niccolo, "Yes! Oh, but actually... you're more a freeherald. Something like that."
+
+
+Hugo meets Ugolino nearby. "My apologies, Father. They are not freemasons."
+Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay clear about it."
+
 
 # Map
 
 ```
-.GGGGFOO.......
-JGGGGFCCCBBB...
-JIIIIFEDHBBBAAA
-MMMNNFLDKKKKAAA
+........H.
+........HE
+..CCAAAGFE
+DDCCAAABBE
+.........E
+.....IIIIE
 ```
 
-* A=East Gate
-* B=Entrance Hall
-* C=Central Hall
-* D=Lower Stairwell
-* E=Record Room
-* F=East Stairwell
-* G=Throne Room
-* H=Usher's Office
-* I=Antechamber
-* J=West Stairwell
-* K=Deep Archives
-* L=Tapestry Store
-* M=Withdrawal Chamber
-* N=Robing Chamber
-* O=Chamberlain's Office
+* A=Nave
+* B=Hall
+* C=Entrance
+* D=Forest
+* E=Stairwell
+* F=Sacristy
+* G=Sacristan's Quarters
+* H=Bell Tower
+* I=Crypt
 
 # Rooms
 
-## East Gate
+## Entrance
 
+* style=Palace Garden
+* exits=Nave (unlocked, lockable) | Forest
 * outside=true
-* exits=Entrance Hall (closed)
-* style=Town Street Day
+
+## Forest
+
+* style=Woods Night
+* outside=true
 
 ```
-.....G......
-........T...
-.....H......
-```
-
-* T=Toro
-* G=Guard 1
-* H=Guard 2
-
-## Entrance Hall
-
-* exits=Usher's Office (unlocked, unlockable) | Central Hall 
-* style=Finished
-
-
-```
-..G.........
-.......A....
-............
-```
-
-* A=Andronikos
-* G=Guard 3
-
-## Central Hall
-
-* 1=P1
-* 2=P2
-* 3=P3
-* 4=P4
-* 5=P5
-* 6=P6
-* 7=P7
-* 8=P8
-* 9=P9
-* 0=P10
-
-```
-............
-1234567890..
-............
-```
-
-* style=Finished
-* obscured=true
-* exits=East Stairwell
-
-## Lower Stairwell
-
-* title=
-* exits=Deep Archives (locked, unlockable) | Tapestry Store (locked, unlockable)
-* style=Old Castle
-
-## Record Room
-
-* exits=Lower Stairwell | East Stairwell (locked,unlockable)
-* obscured=true
-* style=Old Castle
-
-```
-..f.
-....
-....
-```
-
-* f=Furnishing Requests
-
-## West Stairwell
-
-* title=
-* obscured=true
-* style=Old Castle
-
-```
-....
-.A..
-....
+........
+..AN....
+........
 ```
 
 * A=Sticky Agatha
-
-## Throne Room
-
-* exits=West Stairwell
-* obscured=true
-* style=Finished
-
-```
-...H.....A..G...
-..............t.
-............U...
-```
-
-* t=Throne|King Frederick
-* U=Ugolino
-* G=Gualtiero
-* A=Amos
-* H=Small Rug|Harold
-
-## Chamberlain's Office
-
-* exits=East Stairwell (unlocked, lockable)
-* style=Finished
-
-```
-..c.....
-......th
-........
-```
-
-* c=Chamberlain's Coffer
-* h=Chair Left
-* t=Walnut Table | Letter about Freemasons
-
-## Usher's Office
-
-* exits=Entrance Hall (unlockable)
-* style=Old Castle
-
-```
-..CR
-....
-....
-```
-
-* C=Room Capacities
-* R=Petitioner Registry
-
-## Antechamber
-
-* obscured=true
-* exits=West Stairwell | East Stairwell
-* style=Finished
-
-```
-................
-N1234567890ABCD.
-.G..............
-```
-
 * N=Niccolo
-* 1=P11
-* 2=P12
-* 3=P13
-* 4=P14
-* 5=P15
-* 6=P16
-* 7=P17
-* 8=P18
-* 9=P19
-* 0=P20
-* A=P21
-* B=P22
-* C=P23
-* D=P24
-* G=Guard 4
 
-## East Stairwell
+## Nave
+
+* style=Old Castle
+* backWallTexture=greyBricks2.png | aged stone | naveWindows.png (*,*)
+* exits=Hall | Entrance (lockable)
+
+```
+..1.2w3.4...
+............
+..5.6.7.8...
+```
+
+* 1=Pew 1|Harold
+* 2=Pew 2|Giorgios
+* 3=Pew 3
+* 4=Pew 4|Yusuf
+* 5=Pew 5|Giovanni
+* 6=Pew 6
+* 7=Pew 7|Hugo
+* 8=Pew 8
+* w=Big Wineskin
+
+## Hall
+* obscured=true
+* style=Old Castle
+* exits=Stairwell
+
+## Stairwell
+* obscured=true
+* style=Old Castle
 * title=
+
+## Bell Tower
+* style=Old Castle
+* exits=Stairwell
+
+## Sacristy
+* style=Old Castle
+* exits=Stairwell | Sacristan's Quarters (locked, lockable)
+
+## Sacristan's Quarters
+* style=Old Castle
+* exits=Sacristy (lockable)
+
+## Crypt
+* style=Old Castle
 * obscured=true
-* exits=Chamberlain's Office (lockable)
-* style=Old Castle
-
-## Deep Archives
-* exits=Lower Stairwell (locked)
-* style=Old Castle
-
-```
-..............b.
-................
-................
-```
-
-* b=Black Brick
-
-## Tapestry Store
-* exits=Lower Stairwell (locked)
-* style=Old Castle
-
-```
-..t.
-....
-....
-```
-
-* t=Tapestry Stack
-
-## Withdrawal Chamber
-* exits=Robing Chamber (closed)
-* style=Finished
-
-```
-..t.........
-............
-............
-```
-
-* t=Time of Day Plaque
-
-## Robing Chamber
-* exits=East Stairwell (closed)
-* obscured=true
-* style=Finished
-
-```
-..t.....
-........
-........
-```
-
-* t=Royal Tunic
+* exits=Stairwell
 
 # Characters
 
-## Amos
-* facing=left
-* isTitleKnown=true
-
-## Andronikos
-
-* items=Wax Tablet
-
-## King Frederick
-* description=The young king seems ill at ease.
-* facing=left
-* orientation=sitting
+## Sticky Agatha
 * isTitleKnown=true
 
 ## Niccolo
 * isTitleKnown=true
-* facing=left
+* description=A man holding dark thoughts on a dark night.
+* items=Pig Mask
 
-## P1
-* faceImage=malePeasant2.png
-* facing=left
-## P2
-* faceImage=oldFemalePeasant2.png
-* facing=left
-## P3
-* faceImage=femalePeasant.png
-* facing=left
-## P4
-* faceImage=oldMalePeasant.png
-* facing=left
-## P5
-* faceImage=femalePeasant2.png
-* facing=left
-## P6
-* faceImage=malePeasant3.png
-* facing=left
-## P7
-* faceImage=oldFemalePeasant.png
-* facing=left
-## P8
-* faceImage=malePeasant4.png
-* facing=left
-## P9
-* faceImage=femalePeasant3.png
-* facing=left
-## P10
-* faceImage=femalePeasant4.png
-* facing=left
-## P11
-* faceImage=oldMalePeasant2.png
-* facing=left
-## P12
-* faceImage=oldFemalePeasant2.png
-* facing=left
-## P13
-* faceImage=malePeasant.png
-* facing=left
-## P14
-* faceImage=malePeasant2.png
-* facing=left
-## P15
-* faceImage=femalePeasant4.png
-* facing=left
-## P16
-* faceImage=oldMalePeasant.png
-* facing=left
-## P17
-* faceImage=malePeasant3.png
-* facing=left
-## P18
-* faceImage=oldFemalePeasant.png
-* facing=left
-## P19
-* faceImage=femalePeasant2.png
-* facing=left
-## P20
-* faceImage=malePeasant4.png
-* facing=left
-## P21
-* faceImage=oldMalePeasant2.png
-* facing=left
-## P22
-* faceImage=femalePeasant.png
-* facing=left
-## P23
-* faceImage=malePeasant3.png
-* facing=left
-## P24
-* faceImage=malePeasant2.png
-* facing=left
+### Masked
+* faceImage=pigMask.png
+* description=The same person we saw earlier - just with a mask on.
 
-## Sticky Agatha
-* description=A woman in her thirties. Oddly sticky.
-* isTitleKnown=true
+## Harold 
+* orientation=sitting
+* items=Goat Mask
+* facing=right
 
-## Toro
-* description=Toro has a bad limp and a bad mood.
-* isTitleKnown=true
-* items=Black Paint Jar
+### Masked
+* faceImage=goatMask.png
+* description=The same person we saw much earlier - just with a mask on.
 
-## Ugolino
-* description=The Archbishop in the court of King Frederick, far from the Lateran Palace.
-* isTitleKnown=true
-* facing=left
+## Hugo
+* title=Hugo of Speyer
+* items=Horse Mask
+* facing=right
+* orientation=sitting
 
-## Gualtiero
-* facing=left
+### Masked
+* faceImage=horseMask.png
+* description=The same person we saw much earlier - just with a mask on.
+
+## Giorgios 
+* title=Giorgios tou Nikolaou
+* items=Bull Mask
+* orientation=sitting
+* facing=right
+
+### Masked
+* faceImage=bullMask.png
+* description=The same person we saw much earlier - just with a mask on.
+
+## Yusuf 
+* title=Yusuf ibn Khalaf al-Balarmi
+* orientation=sitting
+* items=Rabbit Mask
+* facing=right
+
+### Masked
+* faceImage=rabbitMask.png
+* description=The same person we saw much earlier - just with a mask on.
+
+## Giovanni 
+* title=Giovanni di Leone di Monreale
+* items=Stag Mask
+* orientation=sitting
+* facing=right
+
+### Masked
+* faceImage=stagMask.png
+* description=The same person we saw much earlier - just with a mask on.
 
 # Items
 
-## Chamberlain's Coffer
-* image=coffer.png
-* description=A note inside reads:|"Gualti, take your mother's advice. Kings must be praised at every moment. Speak of all others with contempt. By these means, you shall secure a privileged position in court.||-Love, Momiavelli"
+## Pew 1
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
 
-## Furnishing Requests
-* image=codex.png
-* description=The topmost page of the codex reads:|"The table provided to my office is unsuitable. When sat upon my chair, I can scarcely peer over the tabletop. I shall not be perceived by my guests as some child awaiting porridge!|-Gualtiero of Masala"
+## Pew 2
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
 
-## Wax Tablet
-* description=Greek numbering of "κϛ" is scratched into the wax.
+## Pew 3
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
 
-## Wax Tablet Updated
-* title=Wax Tablet (Updated)
-* image=waxTablet.png
-* description=Greek numbering of "κζ" is scratched into the wax.
+## Pew 4
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
 
-## Room Capacities
-* image=codex.png
-* description=For the safety of the King, petitioners in these rooms should not exceed these counts:|Entrance Hall - 1|Central Hall - 12|Antechamber - 16
+## Pew 5
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
 
-## Petitioner Registry
-* description=17 JULY 1195, TERCE|Konrad of Augsburg - tax relief|Faraj ibn Sa'id al-Balarmi - property dispute|Tancredi of Cefalù - property dispute|Salvatori of Trapani - tax relief
-* image=codex.png
+## Pew 6
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
 
-## Petitioner Registry Updated
-* title=Petitioner Registry (Updated)
-* description=17 JULY 1195, TERCE|Konrad of Augsburg - tax relief|Faraj ibn Sa'id al-Balarmi - property dispute|Tancredi of Cefalù - property dispute|Salvatori of Trapani - tax relief|Toro - treachery
-* image=codex.png
+## Pew 7
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
 
-## Letter about Freemasons
-* image=letter.png
-* drawOffsetY=-2.5
-* description=You will hear aspersions toward a group named the "Freemasons". Do they even exist? I have doubts and suspect some deceit from the Lateran Palace. There is opportunity for favorable change in our futures. But we must act with discretion.|-U d C||P.S. Do not leave this letter laying on your desk!
-
-## Time of Day Plaque
-* description=Apparently, quite a few of these plaques were mass-produced.
+## Pew 8
+* image=chairRight.png
+* stackOffsetY=.9
+* stackOffsetX=-.5
 
 # Itinerary
 
-7:59:57 Toro @ East Gate
-8:00:02 Toro goes to Entrance Hall (80%)
+22:59:30 Niccolo says, "I was thinking we might get a hundred people." to Sticky Agatha
+: Sticky Agatha says, "We've got five."
+: Niccolo says, "Five hundred!"
+: Sticky Agatha says, "No. I only found five."
+: Niccolo says, "Well, we must start somewhere."
+: Sticky Agatha says "Put on your mask!"
+: Niccolo says, "Oh, right."
+: appears Masked
+: Sticky Agatha says, "I'll stay here and keep watch."
+22:59:45 Niccolo goes to Nave (80%)
 
-8:00:01 Sticky Agatha goes to Throne Room (20%)
+(Niccolo enters Nave, and everybody turns to look at him)
+22:59:48 Harold faces left
+: Giovanni faces left
+: Hugo faces left
+: Yusuf faces left
+: Giorgios faces left
 
-7:59:57 Andronikos @ Entrance Hall
-: takes Wax Tablet in right hand
-: faces Guard 3
-: says "The antechamber is completely full, of course."
-: says "In the central hall, we have space for just two more."
+22:59:50 Harold faces right
+22:59:51 Giorgios faces right
+: Giovanni faces right
+22:59:52 Niccolo @ Nave (80%)
 
-8:00:06 Toro @ Entrance Hall (80%)
-: Andronikos says, "State your name." to Toro
-: Toro says, "Toro."
-: Andronikos says, "What are you here for?"
-: Toro says, "Petition. King."
-: Andronikos says, "Concerning?"
-: Toro says, "TREACHERY!"
-: Andronikos says, "Calm yourself."
-: Toro says, "(whispers loudly) Treachery!"
-: Andronikos says, "Just go up the stairs and wait."
-: Toro says, "Gratitude."
-(Toro leaves for Central Hall)
-: Andronikos thinks, "Toro, like a bull."
-: Wax Tablet becomes Wax Tablet Updated
-: faces Guard 3
-: says "He is the size of two men at least."
-: says "So we'll admit no more for now."
-8:00:26 Toro goes to Central Hall (90%)
-8:00:32 Andronikos goes to Usher's Office
-
-8:00:05 Sticky Agatha @ Throne Room (20%)
-: Harold says, "(whispers) What is your name?" to Sticky Agatha
-: Sticky Agatha says, "Sticky Agatha."
-: Harold says, "Agatha of Stickiness, seeking audience with His Majesty!" to King Frederick
-: waits
-: says, "Approach and speak."
-: Sticky Agatha goes (50%)
-: says "Your Highness,"
-: says "I am the mother of your friend, Heinrich."
-: says "I wish to open a business in Palermo, washing clothes."
-: Gualtiero says, "No permission from this court is required."
-: says, "Merely register and pay your taxes."
-: Sticky Agatha says, "I offer the King an opportunity..."
-: says, "To invest!"
-: Gualtiero says, "Oh, you want money!"
-: says "So you came here like a street beggar."
-: Sticky Agatha says, "I thought the King's friendship with my son-"
-: King Frederick says, "If Heinrich needs something, he may ask me himself."
-: King Frederick says, "Your request is denied." 
-: Gualtiero says, "And why are you so sticky?"
-: says, "No sticky woman should clean clothing!"
-: Sticky Agatha says, "(weeps)"
-: King Frederick says, "Chamberlain, your comments lack grace."
-: Gualtiero says, "Forgive my excesses, your Majesty."
-8:01:07 Harold goes to West Stairwell
-8:01:09 Sticky Agatha goes to Robing Chamber
-
-8:00:30 Toro @ Central Hall (90%)
-: waits 8
-: says "Impatience."
-: P10 faces Toro
-: waits
-: P10 faces left
-: waits 3
-: Toro says "Frustration."
-: P9 faces Toro
-: P7 faces Toro
-: P6 faces Toro
-: says, "We are all frustrated, friend."
-: P9 faces left
-: waits
-: P7 faces left
-: waits .5
-: P6 faces left
-: waits 1
-: Toro says "ANGER!"
-: P10 faces Toro
-: P1 faces Toro
-: P2 faces Toro
-: P3 faces Toro
-: P4 faces Toro
-: P5 faces Toro
-: P6 faces Toro
-: P7 faces Toro
-: P8 faces Toro
-: P9 faces Toro
-: P10 says, "Just go on ahead."
-: Toro says "Gratitude."
-8:00:54 Toro goes to Antechamber (95%)
-8:00:55 P10 faces left
-8:00:56 P9 faces left
-: P7 faces left
-8:00:57 P8 faces left
-: P6 faces left
-: P4 faces left
-8:00:58 P5 faces left
-: P3 faces left
-: P2 faces left
-: P1 faces left
-
-8:00:35 Andronikos @ Usher's Office
-: thinks "Let's add this bull to our registry..."
-: goes (10%)
-: Petitioner Registry becomes Petitioner Registry Updated
-: Andronikos thinks, "Done."
-: goes (30%)
-8:00:42 goes to Entrance Hall (50%)
-
-8:00:45 Andronikos @ Entrance Hall (50%)
-
-8:01:01 Toro @ Antechamber (95%)
-: waits 3
-: says, "ANGER!"
-: Niccolo faces Toro
-: P11 faces Toro
-: P12 faces Toro
-: P13 faces Toro
-: P14 faces Toro
-: P15 faces Toro
-: P16 faces Toro
-: P17 faces Toro
-: P18 faces Toro
-: P19 faces Toro
-: P20 faces Toro
-: P21 faces Toro
-: P22 faces Toro
-: P23 faces Toro
-: P24 faces Toro
-: waits
-: Guard 4 says, "Shut up or get out."
-: Toro says, "(sighs)"
-: Niccolo faces left
-: waits
-: P12 faces left
-: P14 faces left
-: waits
-: P11 faces left
-: waits .5
-: P13 faces left
-: P15 faces left
-: P19 faces left
-: waits .5
-: P16 faces left
-: P17 faces left
-: P20 faces left
-: P22 faces left
-: waits 1
-: P18 faces left
-: P19 faces left
-: P23 faces left
-: waits .5
-: P21 faces left
-: P22 faces left
-: P24 faces left
-: waits 3
-: Toro emits "(loud fart)"
-: Toro says, "Apologies."
-: P24 says "(coughing)"
-: P22 says "Ghastly!"
-: P18 says "I can come back tomorrow."
-: P21 thinks "I shall endure it."
-8:01:56 Toro goes (30%)
-: Guard 4 says, "You have thoroughly befouled this place."
-: says, "But I don't mind less people in here."
-8:01:59 P1 goes to Antechamber (95%)
-8:02:14 Toro goes to Throne Room (20%)
-
-8:02:06 P1 @ Antechamber (95%)
-: P1 says, "Has some animal died?"
-: Guard 4 says, "You may wait for audience in this room."
-: P1 says, "I... uh..."
-: Guard 4 says, "Or you may return to the central hall."
-: P1 says, "Yes. That."
-: P1 goes to Central Hall (10%)
-: says, "A catastrophe has befallen those in the room ahead."
-: P5 says, "Of what manner?"
-: P1 says, "I do not know."
-: says "But I want no part of it."
-: faces left
-
-8:01:12 Harold @ West Stairwell
-: says "Next!"
-: goes Throne Room (10%)
-: stands on Small Rug
-
-8:01:13 Niccolo goes to Throne Room (20%)
-8:01:18 Niccolo @ Throne Room (20%)
-: Harold says, "(whispers) Your name?" to Niccolo
-: Niccolo says, "Niccolò il Calabrese."
-: Harold says, "Niccolò il Calabrese, seeking audience with His Majesty!" to King Frederick
-: waits
-: says, "Approach and speak."
-: Niccolo goes (50%)
-: says, "Many quarries sell cheap rocks."
-: says, "Bad rocks filled with moisture and cracks."
-: says, "If the Kingdom is to have strong structures,"
-: says, "We must demand quality in our supplies."
-: King Frederick says, "Then demand it. How is this my matter?"
-: Niccolo says, "Jobs are given to whoever bids lowest."
-: says, "But if we had some agreed standard--"
-: King Frederick says, "I am familiar with the threat of shoddy masonry."
-: says, "And also how a promise of protection..."
-: says, "may come from the instigator himself."
-: says, "I will not be involved with your scheme."
-8:02:12 Niccolo goes to East Gate (85%)
-8:02:12 Gualtiero faces King Frederick
-: says, "I share your outrage, Highness!"
-: King Frederick says, "You need not provide your every opinion."
-: Gualtiero says, "Ah, I share your opinion of my opinions, Highness!"
-: King Frederick says, "(sighs)"
-: Gualtiero faces left.
-
-8:01:23 Sticky Agatha @ Robing Chamber
-: takes Royal Tunic
-: thinks, "This will do."
-: goes to East Gate (80%)
-: faces left
-: thinks "He was just behind me in line."
-: thinks "I will wait for him."
-
-8:01:26 P22 goes to Entrance Hall (60%)
-
-(Andronikos is in the Entrance Hall, a stream of petitioners are exiting)
-8:01:29 Andronikos faces left
-: says "What is this commotion?"
-8:01:36 P22 @ Entrance Hall (60%)
-: Andronikos faces P22
-: says "Peasant!"
-: P22 faces Andronikos
-: Andronikos says, "Why are all these people leaving?"
-: P22 says, "The unholy stench of a man-beast's innards pervades the antechamber!"
-: Andronikos says, "I do not follow your meaning."
-: P22 says, "I fear for my very soul!"
-(P22 resumes fleeing to the East Gate)
-
-(Andronikos remains in the Entrance Hall. The clamor of the petitioners fleeing has subsided.)
-8:02:07 Andronikos faces Guard 3
-: says "I will assess the antechamber."
-: says "Admit no petitioners in my absence."
-: Guard 3 says, "Of course, sir."
-8:02:15 Andronikos goes to Antechamber (90%)
-
-8:01:52 P21 thinks, "It is unendurable."
-8:01:19 P23 goes to East Gate (95%)
-8:01:34 @ East Gate (95%)
-: hide P23
-8:01:23 P24 goes to East Gate (95%)
-8:01:37 @ East Gate (95%)
-: hide P24
-8:01:23 P20 goes to East Gate (95%)
-8:01:39 @ East Gate (95%)
-: hide P20
-8:01:35 P18 goes to East Gate (95%)
-8:01:51 @ East Gate (95%)
-: hide P18
-8:01:28 P17 goes to East Gate (95%)
-8:01:44 @ East Gate (95%)
-: hide P17
-8:01:30 P19 goes to East Gate (95%)
-8:01:46 @ East Gate (95%)
-: hide P19
-8:01:32 P16 goes to East Gate (95%)
-8:01:49 @ East Gate (95%)
-: hide P16
-8:01:35 P15 goes to East Gate (95%)
-8:01:52 @ East Gate (95%)
-: hide P15
-8:01:38 P12 goes to East Gate (95%)
-8:01:56 @ East Gate (95%)
-: hide P12
-8:01:51 P22 goes to East Gate (95%)
-: hide P22
-8:01:42 P13 goes to East Gate (95%)
-8:02:00 @ East Gate (95%)
-: hide P13
-8:01:47 P11 goes to East Gate (95%)
-8:02:05 @ East Gate (95%)
-: hide P11
-8:01:49 P14 goes to East Gate (95%)
-: hide P14
-8:01:57 P21 goes to East Gate (95%)
-8:02:12 @ East Gate (95%)
-: hide P21
-
-8:02:18 Harold goes to West Stairwell
-
-8:02:22 Harold @ West Stairwell
-: says "Next... hey!"
-: goes to Throne Room (10%)
-: stands on Small Rug
-
-8:02:25 Andronikos @ Antechamber (90%)
-: Andronikos says, "Ohhhh."
-8:02:26 Andronikos goes to Entrance Hall (50%)
-
-8:02:24 Toro @ Throne Room (20%)
-: Toro says, "Toro."
-: King Frederick says, "Approach and speak, Toro."
-: Harold thinks, "It's like they don't even need a herald!"
-: Toro goes (50%)
-: says, "Pillar. Tower. Palace. Pope."
-: says, "Treachery. Brick. Lies!"
-: Gualtiero says, "Speak clearly, imbecile!"
-: King Frederick says, "Toro, the matter interests me."
-: says, "But I do not yet understand."
-: Toro takes Black Paint Jar in right hand.
-: King Frederick goes (55%)
-: Toro says "Paint."
-: Toro gives Black Paint Jar to King Frederick
-: King Frederick takes Black Paint Jar in right hand.
-: goes (65%)
-: says, "Interesting."
-: faces Harold
-: says, "Herald, fetch the Black Brick."
-: Harold says, "Right away, your Majesty."
-(Harold leaves for Chamberlain's Office)
-: King Frederick waits
-: faces right
-: says, "While we wait, I will speak on another matter."
-: says, "Our petitioning process is a failure."
-: Gualtiero says, "Most certainly it is!"
-: King Frederick says, "In what exact way, Chamberlain?"
-: Gualtiero says, "Oh, uh... I..."
-: says, "Hope to hear your thoughts on the subject first."
-: King Frederick says, "These people come seeking some gift or mercy from me."
-: says, "The World has more complaints than I can hear!"
-: Ugolino says, "The Church can hear them, Majesty."
-: King Frederick says, "Yes, let God receive their prayers - not I."
-: says, "It's more efficient that way."
-: Gualtiero says, "Such insight, Majesty."
-: King Frederick faces left
-8:02:57 Harold goes to Chamberlain's Office
-
-8:02:36 Andronikos @ Entrance Hall (50%)
-: says, "People complain about drafty castles." to Guard 3
-: says, "But today, I wish for ours to be draftier."
-: faces right
-: Guard 3 thinks, "What is he even talking about?"
-: Andronikos says, "I shall deposit the Terce records."
-: Guard 3 thinks, "I don't care."
-: Andronikos goes to Usher's Office
-: takes Petitioner Registry Updated
-: goes to Record Room
-: drops Petitioner Registry Updated
-: thinks, "Let us see if they've withdrawn."
-: goes to Withdrawal Chamber
-: thinks, "No surprise."
-: thinks, "Common petitions rarely warrant further discussion."
-: goes to Tapestry Store (90%)
-: drops Wax Tablet Updated
-: lays on Tapestry Stack
-: faces right
-: thinks, "Nobody ever comes to this room."
-: thinks, "The perfect place for a little nap."
-
-8:02:36 Niccolo @ East Gate (85%)
-: Sticky Agatha says "Niccoló!" to Niccolo
-: Niccolo faces Sticky Agatha
-: Sticky Agatha says, "How does Heinrich fare in Master Pietro's House?"
-: Niccolo says, "Fair."
-: Sticky Agatha says, "He fares fairly?"
-: Niccolo says, "Yes."
-: Sticky Agatha says, "You seem troubled."
-: Niccolo says, "The King gives no support for my mission."
-: Sticky Agatha says, "Let us talk elsewhere."
-: Niccolo goes (95%)
-: hide Niccolo
-: Sticky Agatha goes (95%)
-: hide Sticky Agatha
-
-8:03:12 Harold @ Chamberlain's Office
-: thinks, "No, it is not here."
-: Harold goes to Deep Archives (95%)
-: takes Black Brick in right hand
-: thinks "Heralding is what I do - not fetching!"
-: thinks "My mother named me for this destiny."
-8:03:37 Harold goes to Throne Room (65%)
-
-8:03:58 Harold @ Throne Room (65%)
-: King Frederick faces left
-: Harold gives Black Brick to King Frederick
-: King Frederick takes Black Brick in left hand
-: Harold stands on small rug
-: King Frederick says "Hmm."
-: says, "The paint matches."
-: Ugolino says, "This jar is from the Lateran Palace."
-: says, "Our jar mold bestows this symbol."
-: Gualtiero says, "But what does it prove?"
-: King Frederick says, "A better question perhaps is..."
-: says, "What does it disprove?"
-: says, "Toro, you have done a service for the Crown."
-: says, "Is there anything you want?"
-: Toro says, "Job."
-: King Frederick says, "What job can you do?"
-: Toro says, "Herald."
-: Harold faces right.
-: says, "What?"
-: King Frederick says, "Granted. You are my new herald."
 
 # Conclusions
 
-* numbers=1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32
-* petitioners=Andronikos of Thessalonica|Gualtiero of Masala|King Frederick|Harold of Norwich|Matteo il Toro|Niccolò il Calabrese|Sticky Agatha|Ugolino di Conti
-* verbs=thrown|revealed|painted|planted|destroyed|hidden|murdered|poisoned
-* marks=King|Freemasons|Lateran Palace|Antichrist|Chamberlain|House of Pietro|Holy Roman Empire
-* items=Black Brick|Black Paint Jar|Chamberlain's Coffer|Petitioner Registry|Royal Tunic|Wax Tablet
+* characters=Ahmad ibn Faraj al-Balarmi | Giorgios tou Nikolaou | Giovanni di Leone di Monreale | Gualtiero of Masala | Harold of Norwich | Hugo of Speyer | Matteo il Toro | Niccolò il Calabrese | Pietro di Ruggero di Palermo | Raniero de Stefano | Salomone ben David di Palermo | Stefan of Ragusa | Sticky Agatha | Ugolino di Conti | Yusuf ibn Khalaf al-Balarmi
 
-## How Many Petitioners?
+## Costumes
 
-* conclusion=After Toro joined them, [27] petitioners waited for an audience with the King.
-* revealRooms=Central Hall|East Stairwell
-* unlockConclusions=Something Amiss
+* conclusion=[Niccolò il Calabrese] disguised themself as a pig.
+* revealRooms=Hall
 
-## Something Amiss
+## One More
 
-* conclusion=After petitioning, [Sticky Agatha] took something from the [Robing Chamber].
-* revealRooms=Antechamber | West Stairwell | Robing Chamber
-* unlockConclusions=Audience Granted
-
-## Audience Granted
-
-* conclusion=List petitioners in order of their appearance before the King.---1. [Sticky Agatha]---2. [Niccolò il Calabrese]---3. [Matteo il Toro]
-* revealRooms=Throne Room|Record Room
-* unlockConclusions=Disproof
-
-## Disproof
-
-* conclusion=Pope Innocent III claimed the fallen Arabic tower was constructed by Freemasons using the [Black Brick]. However, it was [painted] using the [Black Paint Jar], which bore a mark of the [Lateran Palace]. This cast doubt on the Pope's claim in the mind of [King Frederick].
+* conclusion=[Sticky Agatha] donned no disguise at all.
