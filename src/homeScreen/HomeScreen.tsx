@@ -20,6 +20,7 @@ import type LevelViewHandle from './levelView/types/LevelViewHandle';
 import type LevelLoadRequest from './types/LevelLoadRequest';
 import { assert, assertNonNullable } from 'decent-portal';
 import { clearPlayerEvents } from '@/game/playerEventUtil';
+import { findNextTimelineBeat, findPreviousTimelineBeat } from '@/game/timeline/beatUtil';
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -148,6 +149,14 @@ function HomeScreen() {
     const onKeyDown = (event:KeyboardEvent) => {
       if (_isGameDisabled()) return;
       if (event.repeat || _isEditableTarget(event.target)) return;
+
+      if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+        event.preventDefault();
+        const findBeat = event.code === "ArrowRight" ? findNextTimelineBeat : findPreviousTimelineBeat;
+        const beatTime = findBeat(gameState.baseRooms, gameState.timeline, gameState.time, gameState.activeCharacterId);
+        _handleTimeChange(msecsToMinutes(beatTime));
+        return;
+      }
 
       if (event.code === "Space") {
         event.preventDefault();

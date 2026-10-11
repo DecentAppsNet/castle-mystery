@@ -7,3 +7,4 @@ export {
   findKeyframeForTime, 
 } from './retrievalUtil';
 export { findInterpolatedCharacterPosition } from './interpolationUtil';
+export { doesKeyframeHaveSpeechObservedByCharacter } from './speechObservationUtil';

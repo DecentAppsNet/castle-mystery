@@ -13,7 +13,7 @@ import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/types/Position";
 import { generateRoomEntryEvents } from "./roomEntranceUtil";
 import RoomEntryEvents from "./types/RoomEntryEvents";
-import { doesKeyframeHaveSpeechHeardByCharacter } from "@/levelLoading/activityLoading/activitySchedulers/util/speechUtil";
+import { doesKeyframeHaveSpeechObservedByCharacter } from "@/game/timeline";
 import TimeRange from "./types/TimeRange";
 import { isTimeInRanges, subtractRanges } from "./timeRangeUtil";
 import ItineraryMarkerModel from "./types/ItineraryMarkerModel";
@@ -147,7 +147,7 @@ function _generateRoomEntryTimes(characterRoomEntries:RoomEntryEvents, obscuredR
     .map(re => re.time);
 }
 
-function _generateSpeechRanges(keyframes:TimelineKeyframe[], characterIds:string[], characterI:number, rooms:Room[], 
+function _generateSpeechRanges(keyframes:TimelineKeyframe[], characterI:number, rooms:Room[], 
     obscuredRanges:TimeRange[]):TimeRange[] {
 
   const speechRanges:TimeRange[] = [];
@@ -166,7 +166,7 @@ function _generateSpeechRanges(keyframes:TimelineKeyframe[], characterIds:string
   // Open and close a pending speech marker at boundaries. Closing the marker updates speechRanges.
   for(let keyframeI = 0; keyframeI < keyframes.length; ++keyframeI) {
     const keyframe = keyframes[keyframeI];
-    if (doesKeyframeHaveSpeechHeardByCharacter(keyframe, characterIds, characterI, rooms)) {
+    if (doesKeyframeHaveSpeechObservedByCharacter(keyframe, characterI, rooms)) {
       if (!_isSpeechMarkerOpen()) _openSpeechMarker(keyframe.time);
     } else {
       if (_isSpeechMarkerOpen()) _closeSpeechMarker(keyframe.time);
@@ -206,7 +206,7 @@ export function createItineraryMarkerModel(timeline:Timeline|null, baseCharacter
   markers.roomEntryTimes = _generateRoomEntryTimes(characterRoomEntries, markers.obscuredRanges);
   markers.encounterTimes = _generateEncounterTimes(roomEntryEvents, characterIds, baseCharacters, activeCharacterI,
     markers.obscuredRanges);
-  markers.speechRanges = _generateSpeechRanges(keyframes, characterIds, activeCharacterI, rooms, markers.obscuredRanges);
+  markers.speechRanges = _generateSpeechRanges(keyframes, activeCharacterI, rooms, markers.obscuredRanges);
 
   return markers;
 }

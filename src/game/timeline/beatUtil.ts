@@ -1,4 +1,8 @@
+/* This file finds key moments ("beats") that are used for rewinding/fast-forwarding in the game UI.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assertNonNullable } from "decent-portal";
+
 import { findRoomAtPosition } from "../roomUtil";
 import Room from "../types/Room";
 import Timeline from "../types/Timeline";
@@ -6,23 +10,7 @@ import TimelineKeyframe from "../types/TimelineKeyframe";
 import { createKeyframeAtTime, findFollowingKeyframe, findPrecedingKeyframe } from "./retrievalUtil";
 import CharacterKeyframe, { areCharacterKeyframesEqual } from "../types/CharacterKeyframe";
 import { areRoomKeyframesEqual } from "../types/RoomKeyframe";
-
-/*
-Is there a generic way to get all the relevant beats?
-
-Maybe just find first keyframe that affects something in the active room.
-
-For all room keyframes...
-  If the active room changes, return match. (Evaluate first, as other checks assume same active room)
-  If room keyframe for active room does not match from room keyframe, return match
-  If characters in active room have changed from active room, return match.
-  If any from-identified character in active room has a different character key frame than from keyframe, return match.
-
-
-  How do handle audible speech from other rooms?
-
-  A function getAudibleAdjacentRoomSpeech():string[]. Call it for starting keyframe and each evaluated keyframe. If the returned texts don't match, then its a beat keyframe.
-*/
+import { doKeyframesHaveSameObservedSpeech } from "./speechObservationUtil";
 
 function _findActiveCharacterRoomIdInKeyframe(baseRooms:Room[], keyframe:TimelineKeyframe, characterI:number):string {
   const position = keyframe.characters[characterI].position;
@@ -49,10 +37,18 @@ function _findCharactersAtRoomInKeyframe(baseRooms:Room[], roomId:string, charac
   return characterIndices;
 }
 
+function _areCharacterKeyframesCloseToSame(a:CharacterKeyframe, b:CharacterKeyframe):boolean {
+  const bModified = { ...b, 
+    // Any keys that shouldn't be considered for equality are overwritten to be equal.
+    position:a.position, facingDirection:a.facingDirection, bodyOrientation:a.bodyOrientation 
+  };
+  return areCharacterKeyframesEqual(a, bModified);
+}
+
 function _collectStartingKeyframeInfo(baseRooms:Room[], timeline:Timeline, time:number, activeCharacterId:string):{startingKeyframe:TimelineKeyframe,
     activeCharacterI:number, startingRoomId:string, startingRoomI:number, startingCharacterIndices:number[]} {
   const activeCharacterI = timeline.characterIdToI[activeCharacterId];
-  const startingKeyframe = createKeyframeAtTime(timeline.keyframes, time);
+  const startingKeyframe = createKeyframeAtTime(timeline.keyframes, Math.round(time));
   const startingRoomId = _findActiveCharacterRoomIdInKeyframe(baseRooms, startingKeyframe, activeCharacterI);
   const startingRoomI = timeline.roomIdToI[startingRoomId];
   const startingCharacterIndices = _findCharactersAtRoomInKeyframe(baseRooms, startingRoomId, startingKeyframe.characters);
@@ -75,8 +71,12 @@ function _isBeatKeyframe(baseRooms:Room[], activeCharacterI:number, startingKeyf
     // Look for any changes to character keyframes for starting occupants.
     for (let characterI = 0; characterI < keyframe.characters.length; ++characterI) {
       if (!startingCharacterIndices.includes(characterI)) continue;
-      if (!areCharacterKeyframesEqual(startingKeyframe.characters[characterI], keyframe.characters[characterI])) return true;
+      if (!_areCharacterKeyframesCloseToSame(startingKeyframe.characters[characterI], keyframe.characters[characterI])) return true;
     }
+
+    // Perform a larger check for changes to what speech the active character observes. This will catch
+    // things like sounds audible from adjacent rooms.
+    if (!doKeyframesHaveSameObservedSpeech(startingKeyframe, keyframe, activeCharacterI, baseRooms)) return true;
 
     return false;
   }
@@ -84,21 +84,17 @@ function _isBeatKeyframe(baseRooms:Room[], activeCharacterI:number, startingKeyf
 export function findNextTimelineBeat(baseRooms:Room[], timeline:Timeline, time:number, activeCharacterId:string):number {
   const { startingKeyframe, activeCharacterI, startingRoomI, startingRoomId, startingCharacterIndices } =
       _collectStartingKeyframeInfo(baseRooms, timeline, time, activeCharacterId);
-
   const beatKeyframe = findFollowingKeyframe(timeline.keyframes, time, (keyframe) => 
     _isBeatKeyframe(baseRooms, activeCharacterI, startingKeyframe, startingRoomId, startingRoomI, startingCharacterIndices, keyframe)
   );
-  if (beatKeyframe) return beatKeyframe.time;
-  return timeline.keyframes[timeline.keyframes.length - 1].time; // TODO - fix to return true end of timeline or Infinity and let caller handle it.
+  return (beatKeyframe) ? beatKeyframe.time : timeline.endTime;
 }
 
 export function findPreviousTimelineBeat(baseRooms:Room[], timeline:Timeline, time:number, activeCharacterId:string):number {
   const { startingKeyframe, activeCharacterI, startingRoomI, startingRoomId, startingCharacterIndices } =
       _collectStartingKeyframeInfo(baseRooms, timeline, time, activeCharacterId);
-
   const beatKeyframe = findPrecedingKeyframe(timeline.keyframes, time, (keyframe) => 
     _isBeatKeyframe(baseRooms, activeCharacterI, startingKeyframe, startingRoomId, startingRoomI, startingCharacterIndices, keyframe)
   );
-  if (beatKeyframe) return beatKeyframe.time;
-  return timeline.keyframes[0].time; // TODO - fix to return true end of timeline or -Infinity and let caller handle it.
+  return (beatKeyframe) ? beatKeyframe.time : timeline.startTime;
 }
