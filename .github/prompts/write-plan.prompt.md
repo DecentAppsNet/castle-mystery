@@ -31,10 +31,10 @@ Create a new Markdown plan file under `workAssets/plans` from the project root. 
 - Limit each phase to at most 100 changed production-source lines, additions plus deletions. Generated files, tests, fixtures, documentation, and the plan do not count.
 - Require the implementing agent to stop after every phase for human review and explicit approval before proceeding.
 - Require the implementing agent to stop before exceeding a phase's production-line limit and discuss how to repartition the work.
-- Include a Phase 0 that establishes a clean baseline before source changes: inspect the worktree, read the relevant files and instructions, run `check:unused`, and run the applicable build and tests. Where practical, combine shell requests together, e.g. `npm run build & npm test & npm check:unused`, to reduce user approvals.
+- Include a Phase 0 that establishes a clean baseline before source changes: inspect the worktree, read the relevant files and instructions, and run `npm run check:baseline` with no arguments. It runs build, all tests, and Knip sequentially, stopping on the first failure. Require reading the project-local logs named by its output for diagnostics and warnings; if a check fails, stop for user direction before source edits.
 - Incorporate relevant constraints from `CONTRIBUTING.md`, ADRs, and repository instructions. Either summarize the essential constraints or explicitly require reading the applicable project files.
 - Account for concurrent user changes: require target files to be re-read before editing and unrelated work to be preserved.
-- Include validation appropriate to each phase and a final verification phase.
+- Include focused validation appropriate to each phase and a final verification phase using `npm run check:baseline`. Keep targeted tests for quick post-edit checks; do not substitute a full baseline for every focused check.
 - Do not instruct the implementing agent to access files outside the project folder.
 - Phase headings in the plan file should follow this format `# Plan Name - Phase N: Phase Description`. For example: `# Body Part Sprites - Phase 2: Create helper functions for sprite rotation`. The "Plan Name" is always the same on each phase. This formatting is useful for copying text to git commit logs.
 

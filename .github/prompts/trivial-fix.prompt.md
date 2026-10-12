@@ -43,7 +43,7 @@ For this prompt, a "bug" means behavior that deviates from author's intent as ev
 
 ## Running Tests and Observing Results
 
-For `npm run test:all` and `npm run test:file`, use the command exit code and concise terminal output to determine whether tests failed. Do not issue ad hoc commands to interpret test results.
+For tests-only checks, use `npm run test:all` or `npm run test:file -- path/to/test.ts` and their exit codes and output to determine whether tests failed. If full build/test/unused-code validation is needed, use `npm run check:baseline` and read its project-local logs with workspace tools. Do not issue ad hoc commands to interpret results. A baseline failure outside the permitted fix scope must be reported, not repaired or bypassed.
 
 ## Completion response
 

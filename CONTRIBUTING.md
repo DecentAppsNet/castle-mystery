@@ -55,11 +55,12 @@ Tests verify exported contracts through real code paths. There is no guidance di
 
 ## Test Commands
 
+* Use `npm run check:baseline` for baseline and final full-project validation. It runs build, all tests, and Knip sequentially, stopping on the first failure. It accepts no command-line arguments.
 * Use `npm test` for a human-readable full-suite run.
-* Use `npm run test:all` for a full-suite run with concise output.
+* Use `npm run test:all` when only full-suite tests are needed. It uses the verbose reporter with serial, single-worker execution.
 * Use `npm run test:file -- path/to/test.ts` for a focused run with concise output.
 
-Both commands use their exit code and terminal output as the authoritative result.
+Use command exit codes as the authoritative pass/fail result. `check:baseline` prints each npm invocation, its underlying command, and its result; full stdout/stderr is captured in `tempTests/last-build-output.txt`, `tempTests/last-test-all-output.txt`, and `tempTests/last-check-unused-output.txt`. Read those logs with workspace tools for failure diagnostics, test totals, or successful-run warnings. Logs are replaced each invocation; skipped checks are marked as not run, not passed.
 
 Guidelines:
 
@@ -101,6 +102,8 @@ Guidelines:
 * AI agents should not use flow control statements in shell execution requests. I don't want to be overly prescriptive here, but the gist is that shell execution requests should look like a series of programs to execute rather than programming logic.
 * AI agents should favor IDE-provided tools over shell execution requests, if there is no significant advantage to using one or the other.
 * AI agents should favor shell execution requests specifying NPM run scripts over bespoke commands, if there is no significant advantage to using one or the other.
+* For the build/test/unused-code baseline, use `npm run check:baseline` rather than chaining the individual commands. Do not add pass-through arguments, output filters, or shell wrappers to retrieve or shorten its output; read the project-local logs instead.
+* Do not modify `scripts/checkBaseline.ts` without discussing the change with the user first.
 * If a shell execution request with a bespoke command seems likely to be reused in the future, propose to the user the creation of an NPM run script to encapsulate the request. In this way, the user can review and approve the run script one time, and treat all future shell requests for that script as requiring less review.
 * If the constraints above are ambiguous or difficult to work with, discuss with the user to find a solution.
 

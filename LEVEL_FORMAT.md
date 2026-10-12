@@ -236,6 +236,7 @@ Write one subsection per character. The subsection name is the character's name.
 * `leftHand` (optional) - item character begins with in left hand. Default: no starting item.
 * `rightHand` (optional) - item character begins with in right hand. Default: no starting item.
 * `faceImage` (optional) - the image used for the character's face in the UI. Default: no face image.
+* `appearsAs` (optional) - the character's initial appearance, referencing a skin heading belonging to that character. Default: `default` (the base appearance).
 * `alive` (optional) - whether the character begins alive. Must be `true` or `false`. Default: `true`.
 * `facing` (optional) - which way the character initially faces. Must be `left` or `right`. Default: `right`.
 * `orientation` (optional) - the character's initial body pose. Must be `standing`, `sitting`, or `laying`. Default: `standing`.
@@ -261,6 +262,31 @@ This section defines the character, but it does not place them on the map. Chara
 
 * description=The lady of the house, calm in public and furious in private.
 ```
+
+## Initial Appearance
+
+Define custom skins with level-three headings inside a character subsection. A skin may override `faceImage` and `description`; omitted skin values fall back to the character's base values.
+
+`appearsAs` references the skin heading name, ignoring case and surrounding whitespace, not a complete skin ID. Omission or explicit `appearsAs=default` selects the base appearance. `default` is reserved and cannot be a custom skin heading. Empty, unknown, complete-ID, or other-character-only references fail loading with an authoring error located at the `appearsAs` line.
+
+```md
+## Sam
+* description=A traveler.
+* faceImage=sam.png
+* appearsAs=Masked
+
+### Masked
+* faceImage=mask.png
+* description=A masked traveler.
+```
+
+This selects the initial skin without changing the character's base image or description. Later itinerary activities such as `Sam appears default` or `Sam appears Masked` change the appearance normally.
+
+Generated `Identities` portraits use the authored initial skin's image, falling back to the base character image, then to the unknown-character icon if neither has an image. This also applies to unplaced characters selected by an authored identity option override. Later itinerary appearances and the configured opening `time` do not change these portraits.
+
+## Discoverable Appearances
+
+The calculated character discovery total counts distinct appearances selected initially or by itinerary appearance activities for placed interactive characters. Default counts only when initially selected or explicitly reached. Repeated selections count once; unused skin definitions, unplaced characters, and non-interactive characters are excluded. An authored `discoverableCharacterCount` in the `general` section still overrides the calculated total.
 
 ## Initial Pose And Facing
 

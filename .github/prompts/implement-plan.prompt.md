@@ -32,6 +32,7 @@ If any of above conditions are not met, abort implementation and discuss with us
 1. Read and consider the full plan file.
 2. Abort and ask questions of the user if you don't understand how to follow the plan. The plan will have been previously designed to answer all questions needed, and you do have an ability to surface questions later between phases, so your threshold for asking questions should be high.
 3. Begin with phase 0 of the plan, and simply follow instructions in the plan.
+4. For baseline or final verification requesting build, all tests, and Knip, use `npm run check:baseline` instead of separate or chained commands. Read the project-local logs named by its output for diagnostics and warnings. Preserve the plan's approval gates and focused intermediate checks.
 
 ## Completion response
 

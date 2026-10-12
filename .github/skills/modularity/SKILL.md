@@ -22,11 +22,8 @@ Take extra care never to evaluate/modify inside `/node_modules`, `/workAssets`, 
 
 # Setup Steps
 
-1. DO: run `npm run build`. If the build is broken, abort the operation. (We must begin from a good state, to see if we break anything.)
-2. DO: run `npm test`. If tests fail, abort the operation.
-3. DO: run `npm run check:unused` and retain the output for future reference.
-
-You can combine these into one shell command to reduce the approval interactions with me.
+1. DO: run `npm run check:baseline` with no arguments. If build or tests fail, abort the operation. A failure only in `check:unused` may be addressed under the existing Remove Unused rules below.
+2. DO: read the project-local logs named by its output with workspace tools for diagnostics and warnings, retaining the Knip findings for the operation. Reading these validation logs is permitted regardless of the source-file scope. Do not add shell filters or rerun checks merely to retrieve output.
 
 # Per-File Evaluation and Fixing
 
@@ -57,7 +54,7 @@ The above points aid in finding bypasses. When code has bypassed the API:
 
 # Operation Verification
 
-* DO: Confirm that `npm run build` and `npm test` still pass after changes have been made.
+* DO: Run `npm run check:baseline` after changes. Confirm build and tests pass, and compare Knip findings with the setup result. Report remaining findings outside the permitted fix scope; do not claim skipped checks passed.
 * DO: If they do not pass, and you see a way to fix that follows all constraints, perform that fix. But if you have doubts, just stop and discuss. I can revert changes in the IDE or via git fairly easily.
 
 # Operation Summary

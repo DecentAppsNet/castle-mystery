@@ -23,10 +23,8 @@ Take extra care never to evaluate/modify inside `/node_modules`, `/workAssets`, 
 
 # Baseline Check
 
-1. DO: run `npm run build`. If the build is broken, abort the operation. (We must begin from a good state, to see if we break anything.)
-2. DO: run `npm test`. If tests fail, abort the operation.
-
-You can combine these into one shell command to reduce the approval interactions with me.
+1. DO: run `npm run check:baseline` with no arguments. If any check fails, abort the operation. (We must begin from a good state, to see if we break anything.)
+2. DO: read the project-local logs named by its output with workspace tools for failure diagnostics and successful-run warnings. Reading these validation logs is permitted regardless of the source-file scope. Do not add shell filters or rerun checks merely to retrieve output.
 
 # General Definition of Good Documentation
 
@@ -100,7 +98,7 @@ Do not add/review documentation for non-exported OESs.
 
 # Operation Verification
 
-* DO: Confirm that `npm run build` and `npm test` still pass after changes have been made.
+* DO: Run `npm run check:baseline` after changes and confirm all three checks pass. Read its project-local logs for diagnostics and warnings; skipped checks are not passes.
 * DO: If they do not pass, and you see a way to fix that follows all constraints, perform that fix. But if you have doubts, just stop and discuss. I can revert changes in the IDE or via git fairly easily.
 
 # Operation Summary
