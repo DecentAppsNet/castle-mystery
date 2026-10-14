@@ -268,7 +268,102 @@ DDCCAAABBE
 22:59:51 Giorgios faces right
 : Giovanni faces right
 22:59:52 Niccolo @ Nave (80%)
+: faces left
+: Yusuf faces right
+: Hugo faces right
+: Niccolo says, "Friends, welcome!"
+: says, "We are bound together by our anger."
+: says, "We come together, in secret..."
+: says, "To solve a common problem."
+: Hugo says, "That's right."
+: Harold says, "Uh huh."
+: Niccolo says, "Do you want dignity and respect?"
+: Yusuf says, "Yes!"
+: Niccolo says, "Do you want to earn fair pay for your labor?"
+: Giovanni says, "Oh yeah!"
+: Giorgios says, "Yes! Yes!"
+: Niccolo says, "And do you want..."
+: says "the highest standards of craftsmanship to be upheld?"
+: Yusuf says, "Uh... sure."
+: Giovanni says, "Brother, your words touch my heart."
+: says, "To cut a rock..."
+: says, "To shape a rock..."
+: says, "You must think like a rock!"
+: Niccolo says, "Truly, we must all know our craft."
+: says, "That is our strength!"
+: Giorgios says, "Carving fine details in stone is hard."
+: says, "Wine should flow freely throughout the day!"
+: Niccolo says, "We should work in comfortable conditions."
+: says, "Yes, brother."
+: Yusuf says, "The right names need to be on the right lists!"
+: Niccolo says, "We need ways to verify who is one of us."
+: says, "Lists, perhaps, though..."
+: says, "secret handshakes are good too."
+: Harold says, "And if some massive jerk takes your job..."
+: says, "because he did one convenient thing for King Frederick..."
+: says, "REVENGE IS IN ORDER!"
+: Niccolo says, "Uh..."
+: says, "Jobs should be given based on ability to do them well."
+: says, "Not as personal favors."
+: Hugo says, "We should strive to rise from..."
+: says "our precarious status and claim wealth..."
+: says "in proportion to what we contribute to society."
+: Niccolo says, "Well said, brother! So glad you came."
+: Yusuf says, "These masks are really hot and itchy."
+: Giorgios says, "And I already know at least half of you."
+: Yusuf says, "Can we just take off the masks?"
+: Niccolo says, "Fine. But then we have to..."
+: says, "go into the crypt to avoid being seen."
+: Giorgios takes Big Wineskin
 
+23:01:52 Yusuf goes to Hall (60%)
+23:01:52 Giovanni goes to Hall (40%)
+23:01:52 Harold goes to Hall (80%)
+23:01:54 Giorgios goes to Hall (70%)
+23:01:56 Hugo goes to Hall (30%)
+23:02:13 Niccolo goes to Hall (20%)
+
+23:01:55 Yusuf @ Hall
+: appears default
+: drops Rabbit Mask
+23:01:56 Giovanni @ Hall
+: appears default
+: drops Stag Mask
+: faces left
+23:01:57 Harold @ Hall (80%)
+: appears default
+: drops Goat Mask
+: faces left
+23:01:58 Giorgios @ Hall (70%)
+: appears default
+: drops Bull Mask
+: faces left
+23:01:59 Hugo @ Hall (30%)
+: says, "I... don't want to take off my mask."
+: Yusuf says, "Why?" to Hugo
+: Hugo says, "I don't trust everyone here yet."
+: Yusuf says, "Understandable."
+: Yusuf says, "I work with everyone here except you and..."
+: says, "this guy." to Harold.
+: Harold says, "I'm Harold."
+23:02:15 Niccolo @ Hall (20%)
+: appears default
+: drops Pig Mask
+
+23:02:16 Niccolo goes to Crypt (10%)
+23:02:17 Yusuf goes to Crypt (20%)
+23:02:19 Giorgios goes to Crypt (80%)
+23:02:21 Harold goes to Crypt (50%)
+23:02:21 Giovanni goes to Crypt (40%)
+23:02:21 Hugo goes to Crypt (70%)
+
+23:02:26 Niccolo @ Crypt (10%)
+: faces right
+23:02:26 Giorgios @ Crypt (80%)
+23:02:27 Yusuf @ Crypt (20%)
+23:02:28 Harold @ Crypt (50%)
+23:02:29 Giovanni @ Crypt (40%)
+23:02:30 Hugo @ Crypt (70%)
 
 # Conclusions
 
