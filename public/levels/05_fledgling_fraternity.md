@@ -7,41 +7,6 @@
 * groundFloorRoom=Forest
 * imports=items.md | characters.md | roomStyles.md
 
-The crypt is obscured until player guesses identities of each masked individual. They have the dropdown of Niccolo, Yusuf, Giorgios, Harold, Hugo, Giovanni, Sticky Agatha. There will be some way to confirm that Agatha did not enter the nave, which is half-constructed.
-
-Voices heard from the crypt. One person (Hugo) says, "Oh, I prefer to keep mine on." It is allowed.
-
-Hugo says, "Fellow freemasons, what is our next plan? I am ready to do my part!"
-
-Niccolo, "Freemasons? We're not freemasons."
-
-Hugo says, "You're not? I really thought you were."
-
-Niccolo, "We haven't even picked a name yet."
-
-Hugo says, "Oh, then my apologies. I'm at the wrong meeting." Hugo leaves.
-
-Niccolo, "They've just been using that fake name to rile people up. There are no freemasons."
-
-Yusuf, "But what if... we were the freemasons?"
-
-Niccolo, "I don't understand."
-
-Yusuf, "The Pope knows freemasons aren't real. If we choose the same name for ourselves."
-
-Niccolo, "Our actions will blend in with the rumors he himself started."
-
-Yusuf, "It gives us cover!"
-
-Harold, "So I'm a freemason now?"
-
-Niccolo, "Yes! Oh, but actually... you're more a freeherald. Something like that."
-
-
-Hugo meets Ugolino nearby. "My apologies, Father. They are not freemasons."
-Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay clear about it."
-
-
 # Map
 
 ```
@@ -128,6 +93,14 @@ DDCCAAABBE
 ## Sacristan's Quarters
 * style=Old Castle
 * exits=Sacristy (lockable)
+
+```
+....
+.U..
+....
+```
+
+* U=Ugolino
 
 ## Crypt
 * style=Old Castle
@@ -345,6 +318,8 @@ DDCCAAABBE
 : Yusuf says, "Understandable."
 : Yusuf says, "I work with everyone here except you and..."
 : says, "this guy." to Harold.
+: Giorgios faces Harold
+: Giovanni faces Harold
 : Harold says, "I'm Harold."
 23:02:15 Niccolo @ Hall (20%)
 : appears default
@@ -352,18 +327,53 @@ DDCCAAABBE
 
 23:02:16 Niccolo goes to Crypt (10%)
 23:02:17 Yusuf goes to Crypt (20%)
-23:02:19 Giorgios goes to Crypt (80%)
-23:02:21 Harold goes to Crypt (50%)
-23:02:21 Giovanni goes to Crypt (40%)
+23:02:19 Giorgios goes to Crypt (90%)
+23:02:21 Harold goes to Crypt (40%)
+23:02:21 Giovanni goes to Crypt (50%)
 23:02:21 Hugo goes to Crypt (70%)
 
 23:02:26 Niccolo @ Crypt (10%)
 : faces right
-23:02:26 Giorgios @ Crypt (80%)
+23:02:26 Giorgios @ Crypt (90%)
 23:02:27 Yusuf @ Crypt (20%)
-23:02:28 Harold @ Crypt (50%)
-23:02:29 Giovanni @ Crypt (40%)
+23:02:28 Harold @ Crypt (40%)
+23:02:29 Giovanni @ Crypt (50%)
 23:02:30 Hugo @ Crypt (70%)
+: says, "Fellow Freemasons, what is our next plan?"
+: says "I am ready to do my part!"
+: Niccolo says, "Freemasons? We're not freemasons."
+: Hugo says, "You're not?"
+: Niccolo says, "We haven't even picked a name yet."
+: Hugo says, "My apologies!"
+: says, "I'm at the wrong meeting."
+: Hugo goes to Sacristan's Quarters (70%)
+23:02:50 Niccolo says, "They've just been using that fake name to rile people up." 
+: says "There are no freemasons."
+: Yusuf says, "But what if..." to Niccolo
+: says "we *were* the Freemasons?"
+: Niccolo says, "I don't understand."
+: Yusuf says, "The pope knows the Freemasons aren't real."
+: says, "If we choose the same name for ourselves..."
+: Niccolo says, "Our actions will blend in with the rumors he himself started."
+: Yusuf says, "It gives us cover!"
+: Harold says, "So I'm a Freemason now?"
+: Niccolo says, "Yes! Oh, but actually..."
+: says, "you're more a... Freeherald, I guess."
+: Harold says, "It's a separate organization?"
+: Niccolo says, "Yes, though closely allied with the Freemasons."
+: Harold says, "Sounds good."
+23:02:28 Giorgios goes (60%)
+
+23:02:55 Hugo @ Sacristan's Quarters (70%)
+: Hugo says, "My apologies, Father."
+: says, "They are not Freemasons."
+: Ugolino says, "I told you - the Freemasons are a fiction!"
+: says, "Be done with your foolishness,"
+: says, "and return to the Lateran Palace."
+: Hugo says, "Yes, Father."
+: goes to Forest (10%)
+: hide Hugo
+
 
 # Conclusions
 
