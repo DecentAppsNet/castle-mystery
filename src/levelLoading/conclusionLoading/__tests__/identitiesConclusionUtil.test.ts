@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { findCharactersForAuthoredOptions } from '../identitiesConclusionUtil';
+import { findCharacterOptionsFromAuthoring } from '../identitiesConclusionUtil';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { ErrorCollector } from '@/levelLoading/errorCollection';
 
@@ -11,10 +11,10 @@ describe('identitiesConclusionUtil', () => {
       const idMatch = { ...createDefaultCharacter(), id:'ahmad', title:'Ahmad ibn Faraj al-Balarmi' };
       const errors = new ErrorCollector('', []);
 
-      const characters = findCharactersForAuthoredOptions(['ahmad'], [titleMatch, idMatch], errors);
+      const characters = findCharacterOptionsFromAuthoring(['ahmad'], [titleMatch, idMatch], errors);
 
       expect(characters).toHaveLength(1);
-      expect(characters[0]).toBe(idMatch);
+      expect(characters[0]).toBe(idMatch.title);
       expect(errors.count).toBe(0);
     });
   });

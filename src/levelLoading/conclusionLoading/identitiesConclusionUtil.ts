@@ -19,14 +19,6 @@ import { normalizeId } from "@/game/idUtil";
 import { randIntInRange } from "@/common/randUtil";
 import { assertNonNullable } from "decent-portal";
 
-function _findCharactersForConclusionOptions(characters:readonly Character[],
-  initiallyKnownTitleCharacterIds:ReadonlySet<string>):Character[] {
-  const conclusionCharacters:Character[] = characters.filter(character =>
-    isCharacterInteractive(character) && !initiallyKnownTitleCharacterIds.has(character.id));
-  const sorted = conclusionCharacters.sort((a, b) => a.title.localeCompare(b.title, undefined, {sensitivity:'base'}));
-  return sorted;
-}
-
 function _randomizeIdentityRows(characters:readonly Character[]):Character[] {
   const shuffled = [...characters];
   for(let i = shuffled.length - 1; i > 0; --i) {
@@ -38,6 +30,12 @@ function _randomizeIdentityRows(characters:readonly Character[]):Character[] {
     shuffled[i] = swapValue;
   }
   return shuffled;
+}
+
+function _findIdentityRowCharacters(placedCharacters:readonly Character[],
+    initiallyKnownTitleCharacterIds:ReadonlySet<string>):Character[] {
+  const characters = placedCharacters.filter(character => isCharacterInteractive(character) && !initiallyKnownTitleCharacterIds.has(character.id));
+  return _randomizeIdentityRows(characters);
 }
 
 function _getCharacterFaceImageUrl(character:Character):string {
@@ -91,44 +89,39 @@ function _findCharacterByIdOrTitle(characters:readonly Character[], characterRef
       ?? null;
 }
 
-export function findCharactersForAuthoredOptions(characterOptions:string[], characters:readonly Character[], 
-    errors:ErrorCollector):readonly Character[] {
+export function findCharacterOptionsFromAuthoring(characterOptions:string[], allCharacters:readonly Character[], 
+    errors:ErrorCollector):string[] {
   return characterOptions.map(characterRef => {
-    const character = _findCharacterByIdOrTitle(characters, characterRef);
-    if (character) return character;
+    const character = _findCharacterByIdOrTitle(allCharacters, characterRef);
+    if (character) return character.title;
     errors.addAt(`Could not find character matching "${characterRef}".`, 'conclusions', '* characters=', characterRef);
     return null;
-  }).filter(c => c !== null);
+  })
+  .filter(c => c !== null)
+  .sort();
 }
 
-function _generateConclusionOptions(authoredCharacterOptions:string[]|null, placedCharacters:readonly Character[], 
-      allCharacters:readonly Character[], initiallyKnownTitleCharacterIds:ReadonlySet<string>, errors:ErrorCollector):{
-      characterOptions:string[], conclusionCharacters:readonly Character[]
-    } {
-  if (authoredCharacterOptions) {
-    const conclusionCharacters = findCharactersForAuthoredOptions(authoredCharacterOptions, allCharacters, errors);
-    const characterOptions = conclusionCharacters.map(character => character.title); // Return titles instead of the authored options, which may be IDs or titles.
-    return { characterOptions, conclusionCharacters };
-  }
-  const conclusionCharacters = _findCharactersForConclusionOptions(placedCharacters, initiallyKnownTitleCharacterIds);
-  if (!conclusionCharacters.length) return  { characterOptions:[], conclusionCharacters:[] }; // Not an error - every character title can be initially known.
-  return {characterOptions:conclusionCharacters.map(c => c.title), conclusionCharacters };
+function _findCharacterOptionsFromIdentityRowCharacters(identityRowCharacters:readonly Character[]):string[] {
+  return identityRowCharacters.map(c => c.title).sort();
 }
 
 /** Generates an identities conclusion unless all character titles are initially known. */
 export function createGeneratedIdentityConclusion(conclusionsSectionText:string, placedCharacters:readonly Character[], 
     allCharacters:readonly Character[], rooms:readonly Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>,
     initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):Conclusion|null {
+  const originalErrorCount = errors.count;
+
   const overrides = _findAuthoredOverrides(conclusionsSectionText, rooms, initiallyObscuredRoomIds, errors);
-  
-  const { conclusionCharacters, characterOptions} = _generateConclusionOptions(overrides.characterOptions, placedCharacters,
-    allCharacters, initiallyKnownTitleCharacterIds, errors);
-  if (!characterOptions.length) return null;
+
+  const identityRowCharacters = _findIdentityRowCharacters(placedCharacters, initiallyKnownTitleCharacterIds);
+  if (errors.count > originalErrorCount) return null;
+
+  const characterOptions = !overrides.characterOptions 
+    ? _findCharacterOptionsFromIdentityRowCharacters(identityRowCharacters)
+    : findCharacterOptionsFromAuthoring(overrides.characterOptions, allCharacters, errors);
     
   const parts:ClozePart[] = [];
-  _randomizeIdentityRows(conclusionCharacters)
-    .filter(character => !initiallyKnownTitleCharacterIds.has(character.id))
-    .forEach((character, characterI) => {
+  identityRowCharacters.forEach((character, characterI) => {
       if (characterI > 0) parts.push({ type:ClozePartType.separator });
       parts.push({ type:ClozePartType.image, imageUrl:_getCharacterFaceImageUrl(character) });
       parts.push({ type:ClozePartType.text, text:' = ' });

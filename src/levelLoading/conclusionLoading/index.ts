@@ -8,17 +8,16 @@ import Item from "@/game/types/Item";
 import Room from "@/game/types/Room";
 import { createClozeCategories } from "./clozeCategoryUtil";
 import { lockConclusionsAsNeeded, parseAuthoredConclusions } from "./parseConclusionUtil";
-import { createGeneratedIdentityConclusion, findCharactersForAuthoredOptions, hasIdentitiesConclusion } from "./identitiesConclusionUtil";
+import { createGeneratedIdentityConclusion, findCharacterOptionsFromAuthoring, hasIdentitiesConclusion } from "./identitiesConclusionUtil";
 
 /** Loads authored conclusions, adds identities when needed, and applies dependency locks. */
 export function loadConclusions(conclusionsSectionText:string, placedCharacters:Character[], allCharacters:Character[], items:Item[], 
-  rooms:Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>, initiallyObscuredRoomIds:ReadonlySet<string>,
-  errors:ErrorCollector):Conclusion[] {
+    rooms:Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>, initiallyObscuredRoomIds:ReadonlySet<string>,
+    errors:ErrorCollector):Conclusion[] {
   const originalErrorCount = errors.count;
   const categories = createClozeCategories(conclusionsSectionText, rooms, placedCharacters, items, errors);
   if (categories.characters) {
-    categories.characters.allowedValues = findCharactersForAuthoredOptions(categories.characters.allowedValues, allCharacters, errors)
-      .map(character => character.title);
+    categories.characters.allowedValues = findCharacterOptionsFromAuthoring(categories.characters.allowedValues, allCharacters, errors);
   }
   const conclusions = parseAuthoredConclusions(conclusionsSectionText, rooms, categories, initiallyObscuredRoomIds, errors) ?? [];
   if (!hasIdentitiesConclusion(conclusions)) {

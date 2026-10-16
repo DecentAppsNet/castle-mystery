@@ -20,17 +20,6 @@ describe('loading levels - conclusions', () => {
     expect(identities?.parts.filter(part => part.type === 'blank')).toHaveLength(1);
   });
 
-  it('uses initial skin portraits for placed and unplaced characters selected by identity overrides', () => {
-    const level = loadValidLevelForTest(initialAppearanceText);
-    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
-    expect(level.characters.map(character => character.id)).toEqual(['sam']);
-    expect(identities?.parts.filter(part => part.type === 'image')).toEqual(expect.arrayContaining([
-      { type:'image', imageUrl:'/assets/faces/detective.png' },
-      { type:'image', imageUrl:'/assets/faces/guard.png' }
-    ]));
-    expect(identities?.parts.filter(part => part.type === 'blank')).toHaveLength(2);
-  });
-
   it('preserves the base identity portrait when the initial appearance is omitted', () => {
     const text = initialAppearanceText.replace('* appearsAs=Detective', '');
     const level = loadValidLevelForTest(text);

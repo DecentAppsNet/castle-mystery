@@ -175,6 +175,9 @@ DDCCAAABBE
 * faceImage=stagMask.png
 * description=The same person we saw much earlier - just with a mask on.
 
+## Ugolino
+* isTitleKnown=true
+
 # Items
 
 ## Pew 1
@@ -373,6 +376,12 @@ DDCCAAABBE
 : Hugo says, "Yes, Father."
 : goes to Forest (10%)
 : hide Hugo
+
+23:03:22 Sticky Agatha says, "Hello!" to Hugo.
+: says "You're leaving?"
+: faces Hugo
+: waits
+: thinks "I have no idea who that was."
 
 
 # Conclusions
