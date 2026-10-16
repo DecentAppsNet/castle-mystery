@@ -317,11 +317,10 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     context:CanvasRenderingContext2D, gameTime:number, imageSet:ImageSet, isHighlighted:boolean,
     metaTime:number, spriteOverrides:SpriteOverride[],
     characterCanvasLayout = createCharacterCanvasLayout(character, displayPosition, scalingFactors, gameTime)) {
-  const { layout, characterWidth, characterHeight, characterCenterCanvasPoint:[, centerY],
-    highlightCenterX:centerX } = characterCanvasLayout;
+  const { layout, characterWidth, characterHeight } = characterCanvasLayout;
   const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
   const faceAngleOffsetRadians = _findHeadRotationSpriteOverride(spriteOverrides);
-  if (isHighlighted) _drawActiveCharacterHighlight(centerX, centerY, characterWidth, characterHeight, scalingFactors, context, metaTime);
+  if (isHighlighted) _drawActiveCharacterHighlight(layout.head.centerX, layout.head.centerY, characterWidth, characterHeight, scalingFactors, context, metaTime);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   drawHeldItemsBehindCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
