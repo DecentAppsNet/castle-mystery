@@ -65,3 +65,10 @@ export function findVisibleHoveredRoom(gameState:GameState, x:number, y:number):
     || (!gameState.isLevelComplete && gameState.discoveryState.obscuredRoomIds.has(hoveredRoom.id))) return null;
   return hoveredRoom;
 }
+
+export function findNavigableRoomAtPosition(gameState:GameState, x:number, y:number):Room|null {
+  const hoveredRoom = findVisibleHoveredRoom(gameState, x, y);
+  if (!hoveredRoom) return null;
+  if (gameState.timelineSnapshot.activeRoom.id === hoveredRoom.id) return null;
+  return hoveredRoom;
+}
