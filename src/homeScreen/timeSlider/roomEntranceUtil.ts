@@ -1,48 +1,18 @@
-import { areRoomsConnected, findRoomAtPosition, findRoomIdAtPosition } from "@/game/roomUtil";
+/* This file derives per-character room-entry events from scheduled timeline positions.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
+import { findRoomAtPosition, findRoomIdAtPosition } from "@/game/roomUtil";
+import { findCrossedRooms } from "@/game/roomTraversalUtil";
 import Position from "@/game/types/Position";
 import Room from "@/game/types/Room";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
 import { assert, assertNonNullable } from "decent-portal";
 import RoomEntryEvents from "./types/RoomEntryEvents";
 
-const RIGHT = 1, LEFT = -1;
-type DIRECTION = 1|-1;
-
 // Check for trivial disqualification for room-entrance consideration.
 function _couldMovementSpanRooms(fromPosition:Position, toPosition:Position):boolean {
   // Coupled to knowledge that it is only possible to enter a room traveling purely horizontally between two waypoints.
   return (fromPosition.x !== toPosition.x && fromPosition.y === toPosition.y && fromPosition.z === toPosition.z);
-}
-
-const INSIDE_LEFT_ROOM_OFFSET = .0001;
-function _nextRoomX(room:Room, direction:DIRECTION):number {
-  return direction === RIGHT 
-    ? room.rect.x + room.rect.width 
-    : room.rect.x - INSIDE_LEFT_ROOM_OFFSET; // The offset puts the X value inside the leftward room.
-}
-
-function _findRoomsInDirection(toPosition:Position, rooms:Room[], fromRoom:Room, y:number, direction:DIRECTION):Room[] {
-  const foundRooms:Room[] = [];
-  let lastRoom:Room|null = fromRoom;
-  let x = _nextRoomX(lastRoom, direction);
-  let iterationCount = 0; // Shouldn't need to check, but infinite loops will hang a browser.
-  while((direction > 0 ? x <= toPosition.x : x >= toPosition.x) && ++iterationCount <= rooms.length) {
-    const room = findRoomAtPosition(rooms, x, y);
-    assertNonNullable(room);
-    assert(areRoomsConnected(lastRoom, room)); // Earlier path generation should only have moved character through connected rooms.
-    foundRooms.push(room);
-    x = _nextRoomX(room, direction);
-    lastRoom = room;
-  }
-  return foundRooms;
-}
-
-function _findRightwardRooms(fromPosition:Position, toPosition:Position, rooms:Room[], fromRoom:Room):Room[] {
-  return _findRoomsInDirection(toPosition, rooms, fromRoom, fromPosition.y, RIGHT);
-}
-
-function _findLeftwardRooms(fromPosition:Position, toPosition:Position, rooms:Room[], fromRoom:Room):Room[] {
-  return _findRoomsInDirection(toPosition, rooms, fromRoom, fromPosition.y, LEFT);
 }
 
 function _generateRoomEntriesFromCrossedRooms(fromPosition:Position, toPosition:Position, 
@@ -63,12 +33,7 @@ function _generateRoomEntriesFromCrossedRooms(fromPosition:Position, toPosition:
 function _generateRoomEntriesBetweenPositions(fromPosition:Position, toPosition:Position, fromTime:number, 
   toTime:number, rooms:Room[], fromRoom:Room):RoomEntryEvents {
   assert(fromPosition.x !== toPosition.x && fromPosition.y === toPosition.y && fromPosition.z === toPosition.z);
-  
-  const seekDirection = Math.sign(toPosition.x - fromPosition.x);
-  assert(seekDirection === LEFT || seekDirection === RIGHT);
-  const crossedRooms = seekDirection === RIGHT
-    ? _findRightwardRooms(fromPosition, toPosition, rooms, fromRoom) 
-    : _findLeftwardRooms(fromPosition, toPosition, rooms, fromRoom);
+  const crossedRooms = findCrossedRooms(fromPosition, toPosition, rooms, fromRoom);
   
   return _generateRoomEntriesFromCrossedRooms(fromPosition, toPosition, fromTime, toTime, crossedRooms);
 }
