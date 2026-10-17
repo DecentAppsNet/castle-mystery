@@ -377,6 +377,9 @@ DDCCAAABBE
 : goes to Forest (10%)
 : hide Hugo
 
+23:03:11 Ugolino thinks, "Are liars confused by their own lies?"
+: thinks, "It was he who framed the poor brute in the cellar."
+
 23:03:22 Sticky Agatha says, "Hello!" to Hugo.
 : says "You're leaving?"
 : faces Hugo
