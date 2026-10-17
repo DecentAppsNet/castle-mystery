@@ -28,7 +28,8 @@ function _findInteractiveCharacterContentAtPosition(gameState:GameState, charact
 
 function _navigateToRoom(gameState:GameState, room:Room, event:MouseDownEvent, metaTime:number) {
   // Preview the destination under the selected identity's existing skin-discovery rules.
-  const target = findRoomNavigationTarget(gameState.timeline, gameState.baseRooms, gameState.activeCharacterId, room.id, gameState.time);
+  const target = findRoomNavigationTarget(gameState.timeline, gameState.baseRooms, gameState.activeCharacterId,
+    room.id, gameState.time, gameState.discoveryState.discoveredSkinIds);
   if (!target) return;
   const changesIdentity = target.characterId !== gameState.activeCharacterId;
   const activeSkinIdAtSelection = changesIdentity

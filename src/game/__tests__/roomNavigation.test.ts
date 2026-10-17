@@ -56,8 +56,23 @@ function _roomSurface(gameState:GameState, roomId:string) {
 }
 
 describe('room navigation events', () => {
+  it('does not navigate to an unknown skin of a discovered fallback identity', () => {
+    const gameState = _createSkinGameState();
+    gameState.discoveryState.discoveredSkinIds.add('pat-default');
+
+    updateGameState(gameState, [{ type:PlayerEventType.MOUSEDOWN, ..._roomSurface(gameState, 'study') }], 100, 1);
+
+    expect(gameState.time).toBe(0);
+    expect(gameState.activeCharacterId).toBe('sam');
+    expect(gameState.timelineSnapshot.activeRoom.id).toBe('hall');
+    expect(gameState.discoveryState.discoveredSkinIds.has('pat-guard')).toBe(false);
+    expect(gameState.characterMetaTimeEffectsByCharacterId.size).toBe(0);
+    expect(gameState.metaTimeEffects).toEqual([]);
+  });
+
   it('switches identity and time with one nimbus and the destination skin', () => {
     const gameState = _createSkinGameState();
+    gameState.discoveryState.discoveredSkinIds.add('pat-guard');
 
     updateGameState(gameState, [{ type:PlayerEventType.MOUSEDOWN, ..._roomSurface(gameState, 'study') }], 100, 1);
 

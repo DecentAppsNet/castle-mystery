@@ -49,25 +49,25 @@ describe('roomNavigationUtil', () => {
     it('returns null when the character never visits the target room', () => {
       const { timeline, rooms } = _createScenario([{ time:1000, roomId:'west' }, { time:3000, roomId:'west' }]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 2000)).toBeNull();
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 2000, new Set())).toBeNull();
     });
 
     it('returns the current time for a character already occupying the room', () => {
       const { timeline, rooms } = _createScenario([{ time:1000, roomId:'west' }, { time:3000, roomId:'west' }]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 2000)).toEqual({ characterId:'sam', time:2000 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 2000, new Set())).toEqual({ characterId:'sam', time:2000 });
     });
 
     it('recognizes current occupancy through interpolation rather than the preceding keyframe', () => {
       const { timeline, rooms } = _createScenario([{ time:1000, roomId:'west' }, { time:3000, roomId:'east' }]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 2000)).toEqual({ characterId:'sam', time:2000 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 2000, new Set())).toEqual({ characterId:'sam', time:2000 });
     });
 
     it('does not treat the preceding keyframe room as current occupancy after moving out of it', () => {
       const { timeline, rooms } = _createScenario([{ time:1000, roomId:'west' }, { time:3000, roomId:'east' }]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 2000)).toEqual({ characterId:'sam', time:1000 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 2000, new Set())).toEqual({ characterId:'sam', time:1000 });
     });
 
     it('returns a past-only candidate at the immediate preceding keyframe', () => {
@@ -75,13 +75,13 @@ describe('roomNavigationUtil', () => {
         { time:1000, roomId:'west' }, { time:2000, roomId:'west' }, { time:3000, roomId:'east' }
       ]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 2750)).toEqual({ characterId:'sam', time:2000 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 2750, new Set())).toEqual({ characterId:'sam', time:2000 });
     });
 
     it('returns a future-only crossing candidate', () => {
       const { timeline, rooms } = _createScenario([{ time:1000, roomId:'west' }, { time:3000, roomId:'east' }]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'east', 1000)).toEqual({ characterId:'sam', time:2750 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'east', 1000, new Set())).toEqual({ characterId:'sam', time:2750 });
     });
 
     it('chooses the past when it is closer than a future visit', () => {
@@ -89,7 +89,7 @@ describe('roomNavigationUtil', () => {
         { time:2000, roomId:'west' }, { time:3000, roomId:'east' }, { time:7000, roomId:'west' }
       ]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 3000)).toEqual({ characterId:'sam', time:2000 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 3000, new Set())).toEqual({ characterId:'sam', time:2000 });
     });
 
     it('chooses the future when it is closer than a past visit', () => {
@@ -97,7 +97,7 @@ describe('roomNavigationUtil', () => {
         { time:1000, roomId:'west' }, { time:5000, roomId:'east' }, { time:6000, roomId:'west' }
       ]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 5000)).toEqual({ characterId:'sam', time:5875 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 5000, new Set())).toEqual({ characterId:'sam', time:5875 });
     });
 
     it('prefers the future when past and future candidates are equally distant', () => {
@@ -105,13 +105,13 @@ describe('roomNavigationUtil', () => {
         { time:1000, roomId:'west' }, { time:2000, roomId:'east' }, { time:6000, roomId:'west' }
       ]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 3250)).toEqual({ characterId:'sam', time:5500 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 3250, new Set())).toEqual({ characterId:'sam', time:5500 });
     });
 
     it('returns an interior sample for a rightward transit-only room', () => {
       const { timeline, rooms } = _createScenario([{ time:0, roomId:'west' }, { time:4000, roomId:'east' }]);
 
-      const target = findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 0);
+      const target = findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 0, new Set());
       const position = findCharacterPositionAtTime(timeline.keyframes, 0, target!.time);
 
       expect(target).toEqual({ characterId:'sam', time:2000 });
@@ -121,7 +121,7 @@ describe('roomNavigationUtil', () => {
     it('returns an interior sample rather than the neighboring boundary for a leftward transit-only room', () => {
       const { timeline, rooms } = _createScenario([{ time:0, roomId:'east' }, { time:4000, roomId:'west' }]);
 
-      const target = findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 0);
+      const target = findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 0, new Set());
       const position = findCharacterPositionAtTime(timeline.keyframes, 0, target!.time);
 
       expect(target).toEqual({ characterId:'sam', time:2000 });
@@ -131,35 +131,35 @@ describe('roomNavigationUtil', () => {
     it('includes a target-room keyframe at the timeline start', () => {
       const { timeline, rooms } = _createScenario([{ time:1000, roomId:'west' }, { time:3000, roomId:'east' }]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 3000)).toEqual({ characterId:'sam', time:timeline.startTime });
+      expect(findRoomNavigationTarget(timeline, rooms, 'sam', 'west', 3000, new Set())).toEqual({ characterId:'sam', time:timeline.startTime });
     });
 
     it('includes the timeline end even when it is the first instant inside the target room', () => {
       const scenario = _createScenario([{ time:1000, roomId:'west' }, { time:3000, roomId:'east' }]);
       const timeline = { ...scenario.timeline, endTime:2500 };
 
-      expect(findRoomNavigationTarget(timeline, scenario.rooms, 'sam', 'east', 1000)).toEqual({ characterId:'sam', time:2500 });
+      expect(findRoomNavigationTarget(timeline, scenario.rooms, 'sam', 'east', 1000, new Set())).toEqual({ characterId:'sam', time:2500 });
     });
 
     it('excludes visits before the timeline start', () => {
       const scenario = _createScenario([{ time:1000, roomId:'west' }, { time:3000, roomId:'east' }]);
       const timeline = { ...scenario.timeline, startTime:2500 };
 
-      expect(findRoomNavigationTarget(timeline, scenario.rooms, 'sam', 'west', 3000)).toBeNull();
+      expect(findRoomNavigationTarget(timeline, scenario.rooms, 'sam', 'west', 3000, new Set())).toBeNull();
     });
 
     it('excludes visits after the timeline end', () => {
       const scenario = _createScenario([{ time:1000, roomId:'west' }, { time:3000, roomId:'east' }]);
       const timeline = { ...scenario.timeline, endTime:2000 };
 
-      expect(findRoomNavigationTarget(timeline, scenario.rooms, 'sam', 'east', 1000)).toBeNull();
+      expect(findRoomNavigationTarget(timeline, scenario.rooms, 'sam', 'east', 1000, new Set())).toBeNull();
     });
 
     it('samples a clipped leftward interval without rounding a fractional time onto its entry boundary', () => {
       const scenario = _createScenario([{ time:1000, roomId:'east' }, { time:1001, roomId:'west' }]);
       const timeline = { ...scenario.timeline, startTime:1000.25, endTime:1000.5 };
 
-      const target = findRoomNavigationTarget(timeline, scenario.rooms, 'sam', 'center', 1000.25);
+      const target = findRoomNavigationTarget(timeline, scenario.rooms, 'sam', 'center', 1000.25, new Set());
       const position = findCharacterPositionAtTime(timeline.keyframes, 0, target!.time);
 
       expect(target).toEqual({ characterId:'sam', time:1000.375 });
@@ -168,19 +168,68 @@ describe('roomNavigationUtil', () => {
   });
 
   describe('findRoomNavigationTarget()', () => {
+    it('skips an undiscovered current occupant in favor of a discovered earlier visitor', () => {
+      const { timeline, rooms } = _createResolverScenario([
+        { time:0, roomIds:['west', 'east', 'west'] },
+        { time:4000, roomIds:['west', 'west', 'east'] }
+      ]);
+
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 4000, new Set(['first-default'])))
+        .toEqual({ characterId:'first', time:0 });
+    });
+
+    it('returns null when every fallback destination skin is undiscovered', () => {
+      const { timeline, rooms } = _createResolverScenario([
+        { time:0, roomIds:['west', 'east', 'west'] },
+        { time:4000, roomIds:['west', 'west', 'east'] }
+      ]);
+
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 3000, new Set())).toBeNull();
+    });
+
+    it('does not treat a known identity as discovery of its other destination skin', () => {
+      const { timeline, rooms } = _createResolverScenario([{ time:0, roomIds:['west', 'east', 'west'] }]);
+      timeline.keyframes[0].characters[1].skinId = 'first-disguise';
+
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 0, new Set(['first-default'])))
+        .toBeNull();
+    });
+
+    it('keeps searching the same identity for a discovered skin at an earlier time', () => {
+      const { timeline, rooms } = _createResolverScenario([
+        { time:0, roomIds:['west', 'east', 'west'] },
+        { time:4000, roomIds:['west', 'east', 'west'] }
+      ]);
+      timeline.keyframes[1].characters[1].skinId = 'first-disguise';
+
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 4000, new Set(['first-default'])))
+        .toEqual({ characterId:'first', time:0 });
+    });
+
+    it('rejects unknown crossing samples but accepts them after their skin is discovered', () => {
+      const { timeline, rooms } = _createResolverScenario([
+        { time:0, roomIds:['west', 'west', 'west'] },
+        { time:4000, roomIds:['west', 'east', 'west'] }
+      ]);
+
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'center', 0, new Set())).toBeNull();
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'center', 0, new Set(['first-default'])))
+        .toEqual({ characterId:'first', time:2000 });
+    });
+
     it('prefers the active character even when another character occupies the room now', () => {
       const { timeline, rooms } = _createResolverScenario([
         { time:0, roomIds:['west', 'east', 'west'] },
         { time:4000, roomIds:['east', 'east', 'west'] }
       ]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 0)).toEqual({ characterId:'active', time:3500 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 0, new Set())).toEqual({ characterId:'active', time:3500 });
     });
 
     it('keeps an active-character candidate at time zero', () => {
       const { timeline, rooms } = _createResolverScenario([{ time:0, roomIds:['east', 'east', 'east'] }]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 0)).toEqual({ characterId:'active', time:0 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 0, new Set())).toEqual({ characterId:'active', time:0 });
     });
 
     it('chooses the nearest fallback character rather than the first character with a visit', () => {
@@ -189,7 +238,8 @@ describe('roomNavigationUtil', () => {
         { time:4000, roomIds:['west', 'west', 'east'] }
       ]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 2500)).toEqual({ characterId:'second', time:3500 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 2500, new Set(['first-default', 'second-default'])))
+        .toEqual({ characterId:'second', time:3500 });
     });
 
     it('uses interpolated current occupancy for a fallback without a time jump', () => {
@@ -198,7 +248,8 @@ describe('roomNavigationUtil', () => {
         { time:4000, roomIds:['west', 'west', 'east'] }
       ]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 3000)).toEqual({ characterId:'second', time:3000 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 3000, new Set(['first-default', 'second-default'])))
+        .toEqual({ characterId:'second', time:3000 });
     });
 
     it('retains base-character order on ties even when a later character has a future candidate', () => {
@@ -207,20 +258,22 @@ describe('roomNavigationUtil', () => {
         { time:4000, roomIds:['west', 'west', 'east'] }
       ]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 1750)).toEqual({ characterId:'first', time:0 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 1750, new Set(['first-default', 'second-default'])))
+        .toEqual({ characterId:'first', time:0 });
     });
 
     it('returns base identity rather than a skin identifier belonging to another character', () => {
       const { timeline, rooms } = _createResolverScenario([{ time:0, roomIds:['west', 'east', 'west'] }]);
       timeline.keyframes[0].characters[1].skinId = 'second';
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 0)).toEqual({ characterId:'first', time:0 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 0, new Set(['second'])))
+        .toEqual({ characterId:'first', time:0 });
     });
 
     it('finds the active character by identity when its index is not zero', () => {
       const { timeline, rooms } = _createResolverScenario([{ time:0, roomIds:['west', 'east', 'west'] }]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'first', 'east', 0)).toEqual({ characterId:'first', time:0 });
+      expect(findRoomNavigationTarget(timeline, rooms, 'first', 'east', 0, new Set())).toEqual({ characterId:'first', time:0 });
     });
 
     it('returns null normally when no character has a target-room candidate', () => {
@@ -229,7 +282,8 @@ describe('roomNavigationUtil', () => {
         { time:4000, roomIds:['west', 'west', 'west'] }
       ]);
 
-      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 2000)).toBeNull();
+      expect(findRoomNavigationTarget(timeline, rooms, 'active', 'east', 2000, new Set(['first-default', 'second-default'])))
+        .toBeNull();
     });
   });
 });

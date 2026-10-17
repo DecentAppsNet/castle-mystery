@@ -6,13 +6,16 @@ import Room from "../types/Room";
 import Timeline from "../types/Timeline";
 import { findRoomAtPosition } from "../roomUtil";
 import { findRoomCrossings } from "../roomTraversalUtil";
-import { findCharacterPositionAtTime } from "./retrievalUtil";
+import { createCharacterKeyframeAtTime } from "./retrievalUtil";
 
 type RoomNavigationTarget = Readonly<{ characterId:string, time:number }>;
 
-function _isCharacterInRoomAtTime(timeline:Timeline, rooms:Room[], characterI:number, roomId:string, time:number):boolean {
+function _isCharacterInRoomAtTime(timeline:Timeline, rooms:Room[], characterI:number, roomId:string, time:number,
+    discoveredSkinIds:ReadonlySet<string>|null):boolean {
   if (time < timeline.startTime || time > timeline.endTime) return false;
-  const position = findCharacterPositionAtTime(timeline.keyframes, characterI, time);
+  const character = createCharacterKeyframeAtTime(timeline.keyframes, characterI, time);
+  if (discoveredSkinIds !== null && !discoveredSkinIds.has(character.skinId)) return false;
+  const { position } = character;
   return findRoomAtPosition(rooms, position.x, position.y)?.id === roomId;
 }
 
@@ -24,14 +27,15 @@ function _chooseCloserTime(time:number, closestTime:number|null, candidateTime:n
     ? candidateTime : closestTime;
 }
 
-function _findCharacterRoomTime(timeline:Timeline, rooms:Room[], characterI:number, roomId:string, time:number):number|null {
+function _findCharacterRoomTime(timeline:Timeline, rooms:Room[], characterI:number, roomId:string, time:number,
+  discoveredSkinIds:ReadonlySet<string>|null):number|null {
   // Current occupancy must be interpolated, not inferred from the preceding keyframe's room.
-  if (_isCharacterInRoomAtTime(timeline, rooms, characterI, roomId, time)) return time;
+  if (_isCharacterInRoomAtTime(timeline, rooms, characterI, roomId, time, discoveredSkinIds)) return time;
   let closestTime:number|null = null;
 
   // Timeline bounds can fall inside a movement segment or a stationary interval.
   for (const candidateTime of [timeline.startTime, timeline.endTime]) {
-    if (_isCharacterInRoomAtTime(timeline, rooms, characterI, roomId, candidateTime)) {
+    if (_isCharacterInRoomAtTime(timeline, rooms, characterI, roomId, candidateTime, discoveredSkinIds)) {
       closestTime = _chooseCloserTime(time, closestTime, candidateTime);
     }
   }
@@ -39,7 +43,7 @@ function _findCharacterRoomTime(timeline:Timeline, rooms:Room[], characterI:numb
   // Keep in-room keyframe times as candidates alongside crossing samples.
   for (let keyframeI = 0; keyframeI < timeline.keyframes.length; ++keyframeI) {
     const keyframe = timeline.keyframes[keyframeI];
-    if (_isCharacterInRoomAtTime(timeline, rooms, characterI, roomId, keyframe.time)) {
+    if (_isCharacterInRoomAtTime(timeline, rooms, characterI, roomId, keyframe.time, discoveredSkinIds)) {
       closestTime = _chooseCloserTime(time, closestTime, keyframe.time);
     }
     const followingKeyframe = timeline.keyframes[keyframeI + 1];
@@ -54,7 +58,7 @@ function _findCharacterRoomTime(timeline:Timeline, rooms:Room[], characterI:numb
       const toTime = Math.min(crossing.exitTime, timeline.endTime);
       if (fromTime > toTime) continue;
       const candidateTime = fromTime + (toTime - fromTime) / 2;
-      if (_isCharacterInRoomAtTime(timeline, rooms, characterI, roomId, candidateTime)) {
+      if (_isCharacterInRoomAtTime(timeline, rooms, characterI, roomId, candidateTime, discoveredSkinIds)) {
         closestTime = _chooseCloserTime(time, closestTime, candidateTime);
       }
     }
@@ -63,18 +67,18 @@ function _findCharacterRoomTime(timeline:Timeline, rooms:Room[], characterI:numb
 }
 
 export function findRoomNavigationTarget(timeline:Timeline, rooms:Room[], activeCharacterId:string,
-    roomId:string, time:number):RoomNavigationTarget|null {
+  roomId:string, time:number, discoveredSkinIds:ReadonlySet<string>):RoomNavigationTarget|null {
   // Preserve the active identity whenever it has any valid target-room candidate.
   const activeCharacterI = timeline.characterIdToI[activeCharacterId];
   assertNonNullable(activeCharacterI);
-  const activeTime = _findCharacterRoomTime(timeline, rooms, activeCharacterI, roomId, time);
+  const activeTime = _findCharacterRoomTime(timeline, rooms, activeCharacterI, roomId, time, null);
   if (activeTime !== null) return { characterId:activeCharacterId, time:activeTime };
 
   // Strict improvement retains base-character order on ties, regardless of candidate direction.
   let closestTarget:RoomNavigationTarget|null = null;
   for (let characterI = 0; characterI < timeline.characterIds.length; ++characterI) {
     if (characterI === activeCharacterI) continue;
-    const candidateTime = _findCharacterRoomTime(timeline, rooms, characterI, roomId, time);
+    const candidateTime = _findCharacterRoomTime(timeline, rooms, characterI, roomId, time, discoveredSkinIds);
     if (candidateTime === null) continue;
     if (closestTarget === null || Math.abs(candidateTime - time) < Math.abs(closestTarget.time - time)) {
       closestTarget = { characterId:timeline.characterIds[characterI], time:candidateTime };
