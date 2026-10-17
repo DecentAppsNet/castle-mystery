@@ -1,11 +1,14 @@
-/* This file finds valid character room-navigation times from scheduled timeline positions.
+/* This file resolves character and time destinations for room navigation from scheduled timeline positions.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
+import { assertNonNullable } from "decent-portal";
 import Room from "../types/Room";
 import Timeline from "../types/Timeline";
 import { findRoomAtPosition } from "../roomUtil";
 import { findRoomCrossings } from "../roomTraversalUtil";
 import { findCharacterPositionAtTime } from "./retrievalUtil";
+
+type RoomNavigationTarget = Readonly<{ characterId:string, time:number }>;
 
 function _isCharacterInRoomAtTime(timeline:Timeline, rooms:Room[], characterI:number, roomId:string, time:number):boolean {
   if (time < timeline.startTime || time > timeline.endTime) return false;
@@ -21,7 +24,7 @@ function _chooseCloserTime(time:number, closestTime:number|null, candidateTime:n
     ? candidateTime : closestTime;
 }
 
-export function findCharacterRoomTime(timeline:Timeline, rooms:Room[], characterI:number, roomId:string, time:number):number|null {
+function _findCharacterRoomTime(timeline:Timeline, rooms:Room[], characterI:number, roomId:string, time:number):number|null {
   // Current occupancy must be interpolated, not inferred from the preceding keyframe's room.
   if (_isCharacterInRoomAtTime(timeline, rooms, characterI, roomId, time)) return time;
   let closestTime:number|null = null;
@@ -57,4 +60,25 @@ export function findCharacterRoomTime(timeline:Timeline, rooms:Room[], character
     }
   }
   return closestTime;
+}
+
+export function findRoomNavigationTarget(timeline:Timeline, rooms:Room[], activeCharacterId:string,
+    roomId:string, time:number):RoomNavigationTarget|null {
+  // Preserve the active identity whenever it has any valid target-room candidate.
+  const activeCharacterI = timeline.characterIdToI[activeCharacterId];
+  assertNonNullable(activeCharacterI);
+  const activeTime = _findCharacterRoomTime(timeline, rooms, activeCharacterI, roomId, time);
+  if (activeTime !== null) return { characterId:activeCharacterId, time:activeTime };
+
+  // Strict improvement retains base-character order on ties, regardless of candidate direction.
+  let closestTarget:RoomNavigationTarget|null = null;
+  for (let characterI = 0; characterI < timeline.characterIds.length; ++characterI) {
+    if (characterI === activeCharacterI) continue;
+    const candidateTime = _findCharacterRoomTime(timeline, rooms, characterI, roomId, time);
+    if (candidateTime === null) continue;
+    if (closestTarget === null || Math.abs(candidateTime - time) < Math.abs(closestTarget.time - time)) {
+      closestTarget = { characterId:timeline.characterIds[characterI], time:candidateTime };
+    }
+  }
+  return closestTarget;
 }

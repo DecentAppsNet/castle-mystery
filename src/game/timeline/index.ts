@@ -8,4 +8,4 @@ export {
 } from './retrievalUtil';
 export { findInterpolatedCharacterPosition } from './interpolationUtil';
 export { doesKeyframeHaveSpeechObservedByCharacter } from './speechObservationUtil';
-export { findCharacterRoomTime } from './roomNavigationUtil';
+export { findRoomNavigationTarget } from './roomNavigationUtil';
