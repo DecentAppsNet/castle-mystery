@@ -1,4 +1,4 @@
-/* This file enumerates connected rooms crossed by scheduled horizontal movement.
+/* This file enumerates connected rooms and crossing intervals for scheduled horizontal movement.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from "decent-portal";
@@ -9,6 +9,8 @@ import { areRoomsConnected, findRoomAtPosition } from "./roomUtil";
 const RIGHT = 1, LEFT = -1;
 type DIRECTION = 1|-1;
 const INSIDE_LEFT_ROOM_OFFSET = .0001;
+
+type RoomCrossing = Readonly<{ roomId:string, entryTime:number, exitTime:number }>;
 
 function _nextRoomX(room:Room, direction:DIRECTION):number {
   return direction === RIGHT
@@ -35,4 +37,33 @@ export function findCrossedRooms(fromPosition:Position, toPosition:Position, roo
     lastRoom = room;
   }
   return foundRooms;
+}
+
+// Check for trivial disqualification for room-entrance consideration.
+function _couldMovementSpanRooms(fromPosition:Position, toPosition:Position):boolean {
+  // Coupled to knowledge that it is only possible to enter a room traveling purely horizontally between two waypoints.
+  return (fromPosition.x !== toPosition.x && fromPosition.y === toPosition.y && fromPosition.z === toPosition.z);
+}
+
+export function findRoomCrossings(fromPosition:Position, toPosition:Position, fromTime:number,
+    toTime:number, rooms:Room[]):RoomCrossing[] {
+  // Scheduled cross-room movement is purely horizontal.
+  if (!_couldMovementSpanRooms(fromPosition, toPosition)) return [];
+  const fromRoom = findRoomAtPosition(rooms, fromPosition.x, fromPosition.y);
+  assertNonNullable(fromRoom);
+  const movementX = toPosition.x - fromPosition.x;
+  const crossedRooms = findCrossedRooms(fromPosition, toPosition, rooms, fromRoom);
+
+  // Retain boundary entry times and bound each interval by the segment endpoint.
+  return crossedRooms.map(room => {
+    const entranceX = movementX > 0 ? room.rect.x : room.rect.x + room.rect.width;
+    const exitX = movementX > 0 ? Math.min(room.rect.x + room.rect.width, toPosition.x) : Math.max(room.rect.x, toPosition.x);
+    const elapsedRatio = (entranceX - fromPosition.x) / movementX;
+    assert(elapsedRatio >= 0 && elapsedRatio <= 1);
+    return {
+      roomId:room.id,
+      entryTime:fromTime + (toTime - fromTime) * elapsedRatio,
+      exitTime:fromTime + (toTime - fromTime) * (exitX - fromPosition.x) / movementX
+    };
+  });
 }
