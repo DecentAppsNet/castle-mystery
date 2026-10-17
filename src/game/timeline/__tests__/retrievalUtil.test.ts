@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
 import { createDefaultRoomKeyframe } from '@/game/types/RoomKeyframe';
 import TimelineKeyframe from '@/game/types/TimelineKeyframe';
+import { findPrecedingKeyframe } from '../retrievalUtil';
 import {
 	createCharacterKeyframeAtTime,
 	createKeyframeAtTime,
@@ -23,6 +24,60 @@ function _createKeyframe(time:number, positions:Array<{ x:number, y:number, z:nu
 }
 
 describe('retrievalUtil', () => {
+	describe('findPrecedingKeyframe()', () => {
+		it('returns null for empty input', () => {
+			expect(findPrecedingKeyframe([], 1000)).toBeNull();
+		});
+
+		it('returns null at the first keyframe', () => {
+			const keyframes = [_createKeyframe(1000, []), _createKeyframe(2000, [])];
+
+			expect(findPrecedingKeyframe(keyframes, 1000)).toBeNull();
+		});
+
+		it('excludes the keyframe at the exact requested time', () => {
+			const keyframes = [_createKeyframe(1000, []), _createKeyframe(2000, [])];
+
+			expect(findPrecedingKeyframe(keyframes, 2000)).toBe(keyframes[0]);
+		});
+
+		it('includes the first keyframe when the requested time is between keyframes', () => {
+			const keyframes = [_createKeyframe(1000, []), _createKeyframe(2000, [])];
+
+			expect(findPrecedingKeyframe(keyframes, 1500)).toBe(keyframes[0]);
+		});
+
+		it('returns the immediate predecessor between later keyframes', () => {
+			const keyframes = [_createKeyframe(1000, []), _createKeyframe(2000, []), _createKeyframe(3000, [])];
+
+			expect(findPrecedingKeyframe(keyframes, 2500)).toBe(keyframes[1]);
+		});
+
+		it('accepts the immediate predecessor when it matches the predicate', () => {
+			const keyframes = [_createKeyframe(1000, []), _createKeyframe(2000, []), _createKeyframe(3000, [])];
+
+			expect(findPrecedingKeyframe(keyframes, 2500, keyframe => keyframe.time === 2000)).toBe(keyframes[1]);
+		});
+
+		it('searches earlier keyframes when the immediate predecessor fails the predicate', () => {
+			const keyframes = [_createKeyframe(1000, []), _createKeyframe(2000, []), _createKeyframe(3000, [])];
+
+			expect(findPrecedingKeyframe(keyframes, 2500, keyframe => keyframe.time === 1000)).toBe(keyframes[0]);
+		});
+
+		it('returns null when no preceding keyframe matches the predicate', () => {
+			const keyframes = [_createKeyframe(1000, []), _createKeyframe(2000, [])];
+
+			expect(findPrecedingKeyframe(keyframes, 2000, keyframe => keyframe.time === 2000)).toBeNull();
+		});
+
+		it('returns the final keyframe after the last keyframe time', () => {
+			const keyframes = [_createKeyframe(1000, []), _createKeyframe(2000, [])];
+
+			expect(findPrecedingKeyframe(keyframes, 3000)).toBe(keyframes[1]);
+		});
+	});
+
 	describe('createKeyframetAtTime()', () => {
 		it('returns a snapshot with interpolated positions for characters that moved by the requested time', () => {
 			const keyframes = [

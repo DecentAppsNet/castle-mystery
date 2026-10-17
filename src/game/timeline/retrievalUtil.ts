@@ -1,3 +1,6 @@
+/* This file retrieves timeline keyframes and interpolated character positions at requested times.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from "decent-portal";
 
 import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
@@ -118,7 +121,8 @@ export function findCharacterKeyframeForTime(keyframes:TimelineKeyframe[], chara
 export function findPrecedingKeyframe(keyframes:TimelineKeyframe[], time:number, predicate?:FindKeyframePredicate):TimelineKeyframe|null {
   if (!keyframes.length) return null;
   const startI = _findKeyframeIBeforeOrAtTime(keyframes, time);
-  for(let keyframeI = startI - 1; keyframeI >= 0; --keyframeI) {
+  const precedingI = keyframes[startI].time === time ? startI - 1 : startI;
+  for(let keyframeI = precedingI; keyframeI >= 0; --keyframeI) {
     const keyframe = keyframes[keyframeI];
     if (!predicate || predicate(keyframe)) return keyframe;
   }
