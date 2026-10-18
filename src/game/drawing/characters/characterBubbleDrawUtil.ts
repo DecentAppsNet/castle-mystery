@@ -5,6 +5,8 @@ import { clamp } from "@/common/numberUtil";
 import ScalingFactors from "@/game/types/ScalingFactors";
 import { COLOR_BLACK, COLOR_DARK_GRAY, COLOR_SPEECH_BUBBLE_FILL } from "../drawColorConstants";
 import EmitTipDirection from "@/game/effects/types/EmitTipDirection";
+import { PreparedAnimationText } from "@/game/textAnimations/types/PreparedAnimationText";
+import { drawBubbleText } from "./bubbleTextDrawUtil";
 
 const BUBBLE_INTRO_DURATION_MSECS = 100;
 const BUBBLE_INTRO_START_SCALE = 1.05;
@@ -172,7 +174,7 @@ export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:numb
 
 function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  startTime:number, time:number, target:BubbleTarget|null) {
+  startTime:number, time:number, target:BubbleTarget|null, preparedText?:PreparedAnimationText, metaTime:number = 0) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
@@ -204,13 +206,14 @@ function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
   context.stroke();
 
   context.fillStyle = COLOR_BLACK;
-  context.fillText(speech, left + boxWidth / 2, top + boxHeight / 2);
+  if (preparedText) drawBubbleText(preparedText, left + boxWidth / 2, top + boxHeight / 2, metaTime, context);
+  else context.fillText(speech, left + boxWidth / 2, top + boxHeight / 2);
   context.restore();
 }
 
-export function drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
-    scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number) {
-  _drawSpeechBubble(speech, anchorX, anchorTopY, scalingFactors, context, startTime, time, null);
+export function drawSpeechBubble(speech:PreparedAnimationText, anchorX:number, anchorTopY:number,
+    scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number, metaTime:number) {
+  _drawSpeechBubble(speech.plainText, anchorX, anchorTopY, scalingFactors, context, startTime, time, null, speech, metaTime);
 }
 
 export function drawSpeechBubbleNearExit(speech:string, exitTargetCanvasPoint:[number, number],

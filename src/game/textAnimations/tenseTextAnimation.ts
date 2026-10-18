@@ -8,7 +8,7 @@ const TENSE_PERIOD_MSECS = 240;
 export function calcTenseTextAnimationTransform(_text:string, letterI:number, metaTime:number):Partial<LetterTransform> {
   const phase = (metaTime % TENSE_PERIOD_MSECS) / TENSE_PERIOD_MSECS * Math.PI * 2 + letterI * 2.4;
   return {
-    translateXFraction:Math.sin(phase) * 0.08,
+    translateXFraction:Math.sin(phase) * 0.04,
     translateYFraction:Math.cos(phase * 2) * 0.04
   };
 }

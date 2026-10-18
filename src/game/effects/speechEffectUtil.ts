@@ -110,13 +110,13 @@ function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, ef
   }] };
 }
 
-function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
-  startTime: number, dipOffset: number, characterId:string):EffectHandlerResult|null {
+function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: PreparedAnimationText,
+  startTime: number, dipOffset: number, characterId:string, metaTime:number):EffectHandlerResult|null {
   if (drawCall.stage === 'beforeCharacter') return _calcSpeakingHeadRotationResult(time, startTime, dipOffset);
   if (drawCall.stage === 'characterAfterLevel') {
     const { characterAnatomy:{ anchorX, anchorTopY }, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
     if (isCharacterInActiveRoom || isLevelComplete) {
-      drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+      drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time, metaTime);
     }
     return null;
   }
@@ -125,7 +125,7 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
     const location = characterLocationById.get(characterId);
     const isAudible = isSpeechAudible(isActiveRoomObscured, isLevelComplete);
     if (!isLevelComplete && isAudible && location?.kind === 'adjacentOpenExit') {
-      drawSpeechBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
+      drawSpeechBubbleNearExit(text.plainText, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
         scalingFactors, context, startTime, time);
     }
   }
@@ -193,8 +193,8 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
 
 export function createSaysEffect(characterId:string, text:PreparedAnimationText, startTime:number, speechDuration:number):Effect {
   const dipOffset = rand() * TALKING_DIPS_DURATION; // Set this randomly so that characters rarely have same head animation.
-  const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
-    return _saysHandler(drawCall, scalingFactors, time, context, text.plainText, startTime, dipOffset, characterId);
+  const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, metaTime:number, context:CanvasRenderingContext2D) => {
+    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, dipOffset, characterId, metaTime);
   }
   return { kind:'says', startTime, endTime:startTime+speechDuration, handler };
 }

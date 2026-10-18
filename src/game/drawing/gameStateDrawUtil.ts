@@ -420,7 +420,7 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
 
   // Dispatch effects that require complete room presentation data.
   handleCharacterAfterLevelDrawEffects(
-    characterEffectDrawEntries, gameState.scalingFactors, gameState.time, context);
+    characterEffectDrawEntries, gameState.scalingFactors, gameState.time, metaTime, context);
   handleAfterLevelDrawEffects(
     characters,
     gameState.metaTimeEffects,

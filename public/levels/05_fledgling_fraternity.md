@@ -287,7 +287,7 @@ DDCCAAABBE
 : says, "secret handshakes are good too."
 : Harold says, "And if some massive jerk takes your job..."
 : says, "because he did one convenient thing for King Frederick..."
-: says, "REVENGE IS IN ORDER!"
+: says, "[tense]REVENGE IS IN ORDER![/]"
 : Niccolo says, "Uh..."
 : says, "Jobs should be given based on ability to do them well."
 : says, "Not as personal favors."

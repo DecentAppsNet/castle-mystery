@@ -40,11 +40,11 @@ export function handleAfterCharacterDrawEffects(effects:Effect[], scalingFactors
 }
 
 export function handleCharacterAfterLevelDrawEffects(entries:ReadonlyArray<CharacterEffectDrawEntry>,
-    scalingFactors:ScalingFactors, gameTime:number, canvasContext:CanvasRenderingContext2D):void {
+  scalingFactors:ScalingFactors, gameTime:number, metaTime:number, canvasContext:CanvasRenderingContext2D):void {
   entries.forEach(({ character, characterContext }) => {
     const drawCall:EffectDrawCall = { stage:'characterAfterLevel', characterContext };
     character.effects.forEach(effect => {
-      if (effect.handler) effect.handler(drawCall, scalingFactors, gameTime, -1 /* unused */, canvasContext);
+      if (effect.handler) effect.handler(drawCall, scalingFactors, gameTime, metaTime, canvasContext);
     });
   });
 }
