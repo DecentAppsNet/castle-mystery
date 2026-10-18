@@ -30,6 +30,49 @@ function _expectInvalidText(text:string, message:string) {
 
 describe('speechTextPreparationUtil', () => {
   describe('prepareSpeechText()', () => {
+    it('prepares asterisk emphasis exactly like either bracketed form', () => {
+      const shorthand = _createContext('We *need* your help.');
+      const anonymous = _createContext('We [emphasis]need[/] your help.');
+      const named = _createContext('We [emphasis]need[/emphasis] your help.');
+      const prepared = prepareSpeechText('We *need* your help.', shorthand.activity, shorthand.errors);
+      expect(prepared).toEqual({ plainText:'We need your help.', spans:[{
+        name:'emphasis', startUtf16Offset:3, endUtf16Offset:7, text:'need', graphemes:['n', 'e', 'e', 'd']
+      }] });
+      expect(prepared).toEqual(prepareSpeechText('We [emphasis]need[/] your help.', anonymous.activity, anonymous.errors));
+      expect(prepared).toEqual(prepareSpeechText('We [emphasis]need[/emphasis] your help.', named.activity, named.errors));
+      expect(shorthand.errors.count + anonymous.errors.count + named.errors.count).toBe(0);
+    });
+
+    it('allows shorthand beside other spans and retains whitespace and graphemes', () => {
+      _expectPreparedText('*e\u0301 *[tense]A[/]*B*', { plainText:'e\u0301 AB', spans:[
+        { name:'emphasis', startUtf16Offset:0, endUtf16Offset:3, text:'e\u0301 ', graphemes:['e\u0301', ' '] },
+        { name:'tense', startUtf16Offset:3, endUtf16Offset:4, text:'A', graphemes:['A'] },
+        { name:'emphasis', startUtf16Offset:4, endUtf16Offset:5, text:'B', graphemes:['B'] }
+      ] });
+    });
+
+    it('allows an empty shorthand span', () => {
+      _expectPreparedText('**', { plainText:'', spans:[{
+        name:'emphasis', startUtf16Offset:0, endUtf16Offset:0, text:'', graphemes:[]
+      }] });
+    });
+
+    it('rejects an unclosed shorthand span', () => {
+      _expectInvalidText('We *need help.', 'Unclosed text animation "emphasis".');
+    });
+
+    it('rejects shorthand inside a bracketed span', () => {
+      _expectInvalidText('[tense]*need*[/]', 'Nested text animation spans are invalid.');
+    });
+
+    it('rejects bracketed spans inside shorthand', () => {
+      _expectInvalidText('*[emphasis]need[/]*', 'Nested text animation spans are invalid.');
+    });
+
+    it('rejects a bracketed closer for shorthand', () => {
+      _expectInvalidText('*need[/emphasis]', 'Text animation closing delimiter does not match its opening delimiter.');
+    });
+
     it('preserves plain text without preparing unmarked graphemes', () => {
       _expectPreparedText('It will be your doom.', { plainText:'It will be your doom.', spans:[] });
     });

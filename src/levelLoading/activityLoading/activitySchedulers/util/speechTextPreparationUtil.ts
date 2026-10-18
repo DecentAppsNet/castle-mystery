@@ -15,23 +15,32 @@ type TextAnimationParseResult =
 function _parseTextAnimations(text:string):TextAnimationParseResult {
   let plainText = '';
   let cursorUtf16Offset = 0;
-  let openSpan:{ name:TextAnimationName, startUtf16Offset:number, authoredUtf16Offset:number }|null = null;
+  let openSpan:{ name:TextAnimationName, startUtf16Offset:number, authoredUtf16Offset:number, shorthand:boolean }|null = null;
   const spans:TextAnimationSpan[] = [];
 
   while (cursorUtf16Offset < text.length) {
-    const startUtf16Offset = text.indexOf('[', cursorUtf16Offset);
-    const endUtf16Offset = text.indexOf(']', cursorUtf16Offset);
-    if (endUtf16Offset >= 0 && (startUtf16Offset < 0 || endUtf16Offset < startUtf16Offset)) {
-      return { success:false, message:'Unmatched text animation closing bracket.', utf16Offset:endUtf16Offset };
+    const bracketUtf16Offset = text.indexOf('[', cursorUtf16Offset);
+    const starUtf16Offset = text.indexOf('*', cursorUtf16Offset);
+    const shorthand = starUtf16Offset >= 0 && (bracketUtf16Offset < 0 || starUtf16Offset < bracketUtf16Offset);
+    const startUtf16Offset = shorthand ? starUtf16Offset : bracketUtf16Offset;
+    const closingBracketUtf16Offset = text.indexOf(']', cursorUtf16Offset);
+    const endUtf16Offset = shorthand ? starUtf16Offset : closingBracketUtf16Offset;
+    if (closingBracketUtf16Offset >= 0 && (startUtf16Offset < 0 || closingBracketUtf16Offset < startUtf16Offset)) {
+      return { success:false, message:'Unmatched text animation closing bracket.', utf16Offset:closingBracketUtf16Offset };
     }
     if (startUtf16Offset < 0) break;
     if (endUtf16Offset < 0) {
       return { success:false, message:'Missing text animation closing bracket.', utf16Offset:startUtf16Offset };
     }
     plainText += text.slice(cursorUtf16Offset, startUtf16Offset);
-    const name = text.slice(startUtf16Offset + 1, endUtf16Offset);
+    const name:string = shorthand ? (openSpan?.shorthand ? '/emphasis' : 'emphasis')
+      : text.slice(startUtf16Offset + 1, endUtf16Offset);
     if (name.startsWith('/')) {
       if (!openSpan) return { success:false, message:'Unmatched text animation closing tag.', utf16Offset:startUtf16Offset };
+      if (shorthand !== openSpan.shorthand) {
+        return { success:false, message:'Text animation closing delimiter does not match its opening delimiter.',
+          utf16Offset:startUtf16Offset };
+      }
       const closingName = name.slice(1);
       if (closingName && closingName !== openSpan.name) {
         return { success:false, message:`Text animation closing tag "${closingName}" does not match "${openSpan.name}".`,
@@ -46,7 +55,7 @@ function _parseTextAnimations(text:string):TextAnimationParseResult {
         return { success:false, message:`Unknown text animation "${name}".`, utf16Offset:startUtf16Offset };
       }
       if (openSpan) return { success:false, message:'Nested text animation spans are invalid.', utf16Offset:startUtf16Offset };
-      openSpan = { name, startUtf16Offset:plainText.length, authoredUtf16Offset:startUtf16Offset };
+      openSpan = { name, startUtf16Offset:plainText.length, authoredUtf16Offset:startUtf16Offset, shorthand };
     }
     cursorUtf16Offset = endUtf16Offset + 1;
   }

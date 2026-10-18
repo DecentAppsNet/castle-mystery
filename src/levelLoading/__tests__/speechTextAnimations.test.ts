@@ -32,6 +32,25 @@ function _expectSourceError(activityText:string, message:string) {
 }
 
 describe('level loading - speech text animations', () => {
+  it('uses visible shorthand speech for effect and successor timing', () => {
+    _expectSameTiming('0:00:00 Sam says "The *doom* awaits you."',
+      '0:00:00 Sam says "The doom awaits you."', 'says');
+  });
+
+  it('accepts shorthand in thoughts', () => {
+    _expectSameTiming('0:00:00 Sam thinks "The *doom* awaits you."',
+      '0:00:00 Sam thinks "The doom awaits you."', 'thinks');
+  });
+
+  it('accepts shorthand in loud held-item emissions', () => {
+    _expectSameTiming('0:00:00 Right Bell emits "The *doom* awaits you." loudly',
+      '0:00:00 Right Bell emits "The doom awaits you." loudly', 'emits');
+  });
+
+  it('reports unclosed shorthand at the activity source line', () => {
+    _expectSourceError('0:00:00 Sam says "We *need help."', 'Unclosed text animation "emphasis".');
+  });
+
   it('uses visible speech for effect and successor timing', () => {
     _expectSameTiming('0:00:00 Sam says "The [tense]doom[/] awaits you."',
       '0:00:00 Sam says "The doom awaits you."', 'says');
