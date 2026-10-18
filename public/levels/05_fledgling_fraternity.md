@@ -86,14 +86,6 @@ DDCCAAABBE
 * style=Old Castle
 * exits=Stairwell
 
-## Sacristy
-* style=Old Castle
-* exits=Stairwell | Sacristan's Quarters (locked, lockable)
-
-## Sacristan's Quarters
-* style=Old Castle
-* exits=Sacristy (lockable)
-
 ```
 ....
 .U..
@@ -101,6 +93,14 @@ DDCCAAABBE
 ```
 
 * U=Ugolino
+
+## Sacristy
+* style=Old Castle
+* exits=Stairwell | Sacristan's Quarters (locked, lockable)
+
+## Sacristan's Quarters
+* style=Old Castle
+* exits=Sacristy (lockable)
 
 ## Crypt
 * style=Old Castle
@@ -178,6 +178,10 @@ DDCCAAABBE
 ## Ugolino
 * isTitleKnown=true
 
+### Masked
+* faceImage=bullMask.png
+* description=Yes, it's Ugolino. But... hmm.
+
 # Items
 
 ## Pew 1
@@ -232,6 +236,12 @@ DDCCAAABBE
 : appears Masked
 : Sticky Agatha says, "I'll stay here and keep watch."
 22:59:45 Niccolo goes to Nave (80%)
+
+22:59:34 Ugolino thinks "Why did I indulge this fool?"
+: thinks "I could be home sleeping."
+: thinks "Perhaps the sacristan has a bed."
+: goes to Sacristan's Quarters (30%)
+: faces right
 
 (Niccolo enters Nave, and everybody turns to look at him)
 22:59:48 Harold faces left
@@ -290,7 +300,7 @@ DDCCAAABBE
 : Yusuf says, "Can we just take off the masks?"
 : Niccolo says, "Fine. But then we have to..."
 : says, "go into the crypt to avoid being seen."
-: Giorgios takes Big Wineskin
+: Giorgios takes Big Wineskin in right hand
 
 23:01:52 Yusuf goes to Hall (60%)
 23:01:52 Giovanni goes to Hall (40%)
@@ -343,17 +353,16 @@ DDCCAAABBE
 23:02:29 Giovanni @ Crypt (50%)
 23:02:30 Hugo @ Crypt (70%)
 : says, "Fellow Freemasons, what is our next plan?"
-: says "I am ready to do my part!"
 : Niccolo says, "Freemasons? We're not freemasons."
 : Hugo says, "You're not?"
 : Niccolo says, "We haven't even picked a name yet."
 : Hugo says, "My apologies!"
 : says, "I'm at the wrong meeting."
 : Hugo goes to Sacristan's Quarters (70%)
-23:02:50 Niccolo says, "They've just been using that fake name to rile people up." 
-: says "There are no freemasons."
+23:02:50 Niccolo says, "There are no Freemasons." 
+: says "They've just been using that name to rile people up."
 : Yusuf says, "But what if..." to Niccolo
-: says "we *were* the Freemasons?"
+: says "*we* were the Freemasons?"
 : Niccolo says, "I don't understand."
 : Yusuf says, "The pope knows the Freemasons aren't real."
 : says, "If we choose the same name for ourselves..."
@@ -364,8 +373,29 @@ DDCCAAABBE
 : says, "you're more a... Freeherald, I guess."
 : Harold says, "It's a separate organization?"
 : Niccolo says, "Yes, though closely allied with the Freemasons."
-: Harold says, "Sounds good."
+: Harold says, "Brilliant!"
 23:02:28 Giorgios goes (60%)
+23:03:33 Giorgios says, "I don't feel so good."
+: Harold faces Giorgios
+: Giovanni faces Giorgios
+: Yusuf says "What's wrong?" to Giorgios
+: Giorgios says, "I'm gonna get some air."
+23:03:39 Giorgios goes to Nave (90%)
+
+23:03:42 Harold faces left
+: says "If you like, I could stand by the door"
+: Giovanni faces Harold
+: says "and loudly announce people's names as they enter."
+: Niccolo says, "Appreciated, brother. But perhaps..."
+: says "heralding is not so useful for a secret society."
+: Yusuf says, "I am thinking we should have a sign-in sheet"
+: Niccolo says, "A list of people's names?"
+: Yusuf says, "Yes! To record who attends our meetings." to Niccolo
+: Niccolo says, "I fear we are not yet understanding the concept of..."
+: says, "secrecy."
+
+23:00:43 Sticky Agatha goes to Entrance
+: faces left
 
 23:02:55 Hugo @ Sacristan's Quarters (70%)
 : Hugo says, "My apologies, Father."
@@ -379,23 +409,45 @@ DDCCAAABBE
 
 23:03:11 Ugolino thinks, "Are liars confused by their own lies?"
 : thinks, "It was he who framed the poor brute in the cellar."
+23:03:34 Ugolino goes to Hall
 
-23:03:22 Sticky Agatha says, "Hello!" to Hugo.
-: says "You're leaving?"
+23:03:20 Sticky Agatha says, "Hello!" to Hugo.
+: says "You're leaving?" to Hugo.
 : faces Hugo
 : waits
 : thinks "I have no idea who that was."
+23:03:26 goes to Nave (20%)
 
+23:03:41 Ugolino @ Hall
+: thinks "Best to be safe."
+: takes Bull Mask
+: appears as Masked
+: goes to Nave
+
+23:03:48 Ugolino @ Nave
+23:03:48 Giorgios @ Nave
+: says, "Wait!"
+: Ugolino faces Giorgios
+: Giorgios says, "I thought I was the bull."
+: says, "So you are actually me?"
+: Ugolino says, "Yes."
+: goes to Forest (10%)
+: hide Ugolino
+23:03:56 Sticky Agatha says, "Giorgios, you're drunk again."
+: Giorgios says, "I'm not drunk at all!"
+: Sticky Agatha says, "Ah, just stupid then."
 
 # Conclusions
 
 * characters=Ahmad ibn Faraj al-Balarmi | Giorgios tou Nikolaou | Giovanni di Leone di Monreale | Gualtiero of Masala | Harold of Norwich | Hugo of Speyer | Matteo il Toro | Niccolò il Calabrese | Pietro di Ruggero di Palermo | Raniero de Stefano | Salomone ben David di Palermo | Stefan of Ragusa | Sticky Agatha | Ugolino di Conti | Yusuf ibn Khalaf al-Balarmi
 
-## Costumes
+## Identities
 
-* conclusion=[Niccolò il Calabrese] disguised themself as a pig.
-* revealRooms=Hall
+* revealRooms=Hall | Stairwell
 
-## One More
+## Undisguised
 
 * conclusion=[Sticky Agatha] donned no disguise at all.
+
+* revealRooms=Crypt
+* unlockConclusions=Identities
