@@ -8,6 +8,15 @@ describe('textAnimations', () => {
       expect(isTextAnimationName('tense')).toBe(true);
     });
 
+    it('recognizes the six new animations', () => {
+      expect(isTextAnimationName('sneaky')).toBe(true);
+      expect(isTextAnimationName('emphasis')).toBe(true);
+      expect(isTextAnimationName('whisper')).toBe(true);
+      expect(isTextAnimationName('yell')).toBe(true);
+      expect(isTextAnimationName('flourish')).toBe(true);
+      expect(isTextAnimationName('manic')).toBe(true);
+    });
+
     it('rejects unknown names', () => {
       expect(isTextAnimationName('pulse')).toBe(false);
       expect(isTextAnimationName('Tense')).toBe(false);

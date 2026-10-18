@@ -1,379 +1,141 @@
 # General
 
-* title=adhoc
-* activeCharacter=Niccolo
-* time:22:59:30
-* background=nightSky.png
-* groundFloorRoom=Forest
+* title=Adhoc
+* activeCharacter=Marty
+* time=11:00:00
+* background=daySky.png
 * imports=items.md | characters.md | roomStyles.md
-
-The crypt is obscured until player guesses identities of each masked individual. They have the dropdown of Niccolo, Yusuf, Giorgios, Harold, Hugo, Giovanni, Sticky Agatha. There will be some way to confirm that Agatha did not enter the nave, which is half-constructed.
-
-Voices heard from the crypt. One person (Hugo) says, "Oh, I prefer to keep mine on." It is allowed.
-
-Hugo says, "Fellow freemasons, what is our next plan? I am ready to do my part!"
-
-Niccolo, "Freemasons? We're not freemasons."
-
-Hugo says, "You're not? I really thought you were."
-
-Niccolo, "We haven't even picked a name yet."
-
-Hugo says, "Oh, then my apologies. I'm at the wrong meeting." Hugo leaves.
-
-Niccolo, "They've just been using that fake name to rile people up. There are no freemasons."
-
-Yusuf, "But what if... we were the freemasons?"
-
-Niccolo, "I don't understand."
-
-Yusuf, "The Pope knows freemasons aren't real. If we choose the same name for ourselves."
-
-Niccolo, "Our actions will blend in with the rumors he himself started."
-
-Yusuf, "It gives us cover!"
-
-Harold, "So I'm a freemason now?"
-
-Niccolo, "Yes! Oh, but actually... you're more a freeherald. Something like that."
-
-
-Hugo meets Ugolino nearby. "My apologies, Father. They are not freemasons."
-Ugolino, "It is as I said then. The freemasons are a fiction. Let our minds stay clear about it."
-
+* winSynopsis=Storywise, nothing important happened in this level - it was just a tutorial to get you warmed up. We'll let you figure out the rest of the game on your own. The real story begins next!
 
 # Map
 
 ```
-........H.
-........HE
-..CCAAAGFE
-DDCCAAABBE
-.........E
-.....IIIIE
+.......
+VVV....
+VVVHHGG
 ```
 
-* A=Nave
-* B=Hall
-* C=Entrance
-* D=Forest
-* E=Stairwell
-* F=Sacristy
-* G=Sacristan's Quarters
-* H=Bell Tower
-* I=Crypt
+* V=Exhibit Room
+* H=Hallway
+* G=Gift Shop
 
 # Rooms
 
-## Entrance
+## Exhibit Room
 
-* style=Palace Garden
-* exits=Nave (unlocked, lockable) | Forest
-* outside=true
-
-## Forest
-
-* style=Woods Night
-* outside=true
+* style=Museum
+* exits=hallway
 
 ```
-........
-..AN....
-........
-```
-
-* A=Sticky Agatha
-* N=Niccolo
-
-## Nave
-
-* style=Old Castle
-* backWallTexture=greyBricks2.png | aged stone | naveWindows.png (*,*)
-* exits=Hall | Entrance (lockable)
-
-```
-..1.2w3.4...
+..t..s...v..
+..M....L....
 ............
-..5.6.7.8...
 ```
 
-* 1=Pew 1|Harold
-* 2=Pew 2|Giorgios
-* 3=Pew 3
-* 4=Pew 4|Yusuf
-* 5=Pew 5|Giovanni
-* 6=Pew 6
-* 7=Pew 7|Hugo
-* 8=Pew 8
-* w=Big Wineskin
+* s=Sarcophagus | Sarcophagus Lid
+* t=Time of Day Plaque
+* v=Pedestal | Vase 
+* L=Lorenzo
+* M=Marty
 
-## Hall
-* obscured=true
-* style=Old Castle
-* exits=Stairwell
+## Hallway
 
-## Stairwell
-* obscured=true
-* style=Old Castle
-* title=
+* style=Museum
 
-## Bell Tower
-* style=Old Castle
-* exits=Stairwell
+```
+........
+....L...
+........
+```
 
-## Sacristy
-* style=Old Castle
-* exits=Stairwell | Sacristan's Quarters (locked, lockable)
+* L=Larry
+* exits=Gift Shop
 
-## Sacristan's Quarters
-* style=Old Castle
-* exits=Sacristy (lockable)
+## Gift Shop
 
-## Crypt
-* style=Old Castle
-* obscured=true
-* exits=Stairwell
+* style=Museum
+
+```
+..1.2.3.
+........
+........
+```
+
+* 1=Shelf 1
+* 2=Shelf 2
+* 3=Shelf 3
 
 # Characters
 
-## Sticky Agatha
-* isTitleKnown=true
+## Lorenzo
 
-## Niccolo
-* isTitleKnown=true
-* description=A man holding dark thoughts on a dark night.
-* items=Pig Mask
+* description=He wears a name badge that says "Guida / Guide - Lorenzo".
+* facing=left
+* faceImage=lorenzo.png
 
-### Masked
-* faceImage=pigMask.png
-* description=The same person we saw earlier - just with a mask on.
+## Larry
 
-## Harold 
-* orientation=sitting
-* items=Goat Mask
-* facing=right
-* appearsAs=Masked
+* description=A seven-year-old boy, ready for trouble.
+* faceImage=larry.png
 
-### Masked
-* faceImage=goatMask.png
-* description=The same person we saw much earlier - just with a mask on.
+## Marty
 
-## Hugo
-* title=Hugo of Speyer
-* items=Horse Mask
-* facing=right
-* orientation=sitting
-* appearsAs=Masked
-
-### Masked
-* faceImage=horseMask.png
-* description=The same person we saw much earlier - just with a mask on.
-
-## Giorgios 
-* title=Giorgios tou Nikolaou
-* items=Bull Mask
-* orientation=sitting
-* facing=right
-* appearsAs=Masked
-
-### Masked
-* faceImage=bullMask.png
-* description=The same person we saw much earlier - just with a mask on.
-
-## Yusuf 
-* title=Yusuf ibn Khalaf al-Balarmi
-* orientation=sitting
-* items=Rabbit Mask
-* facing=right
-* appearsAs=Masked
-
-### Masked
-* faceImage=rabbitMask.png
-* description=The same person we saw much earlier - just with a mask on.
-
-## Giovanni 
-* title=Giovanni di Leone di Monreale
-* items=Stag Mask
-* orientation=sitting
-* facing=right
-* appearsAs=Masked
-
-### Masked
-* faceImage=stagMask.png
-* description=The same person we saw much earlier - just with a mask on.
+* description=He seems bored and curious at the same time.
+* faceImage=marty.png
 
 # Items
 
-## Pew 1
-* image=chairRight.png
-* stackOffsetY=.9
-* stackOffsetX=-.5
+## Sarcophagus
 
-## Pew 2
-* image=chairRight.png
-* stackOffsetY=.9
-* stackOffsetX=-.5
+* description=A nearby plaque reads, "Federico II (1194–1250), Imperatore del Sacro Romano Impero e Re di Sicilia. Sepolto nel sarcofago imperiale di porfido della Cattedrale di Palermo."
+* image=sarcophagus.png
+* drawOffsetX=1
 
-## Pew 3
-* image=chairRight.png
-* stackOffsetY=.9
-* stackOffsetX=-.5
+## Sarcophagus Lid
+* image=sarcophagusLid.png
+* drawOffsetX=0
+* drawOffsetY=.3
 
-## Pew 4
-* image=chairRight.png
-* stackOffsetY=.9
-* stackOffsetX=-.5
+## Time of Day Plaque
+* drawOffsetY=-1
 
-## Pew 5
-* image=chairRight.png
-* stackOffsetY=.9
-* stackOffsetX=-.5
+## Vase
 
-## Pew 6
-* image=chairRight.png
-* stackOffsetY=.9
-* stackOffsetX=-.5
+* description=An ancient clay vase with faded symbols on it.
+* image=amosVase.png
+* drawOffsetX=.5
 
-## Pew 7
-* image=chairRight.png
-* stackOffsetY=.9
-* stackOffsetX=-.5
+## Shelf 1
+* image=giftShopShelf1.png
 
-## Pew 8
-* image=chairRight.png
-* stackOffsetY=.9
-* stackOffsetX=-.5
+## Shelf 2
+* image=giftShopShelf2.png
 
-# Itinerary
+## Shelf 3
+* image=giftShopShelf3.png
+* stackOffsetX=.8
+* stackOffsetY=-.8
 
-22:59:30 Niccolo says, "I was thinking we might get a hundred people." to Sticky Agatha
-: Sticky Agatha says, "We've got five."
-: Niccolo says, "Five hundred!"
-: Sticky Agatha says, "No. I only found five."
-: Niccolo says, "Well, we must start somewhere."
-: Sticky Agatha says "Put on your mask!"
-: Niccolo says, "Oh, right."
-: appears Masked
-: Sticky Agatha says, "I'll stay here and keep watch."
-22:59:45 Niccolo goes to Nave (80%)
+# itinerary
 
-(Niccolo enters Nave, and everybody turns to look at him)
-22:59:48 Harold faces left
-: Giovanni faces left
-: Hugo faces left
-: Yusuf faces left
-: Giorgios faces left
-
-22:59:50 Harold faces right
-22:59:51 Giorgios faces right
-: Giovanni faces right
-22:59:52 Niccolo @ Nave (80%)
-: faces left
-: Yusuf faces right
-: Hugo faces right
-: Niccolo says, "Friends, welcome!"
-: says, "We are bound together by our anger."
-: says, "We come together, in secret..."
-: says, "To solve a common problem."
-: Hugo says, "That's right."
-: Harold says, "Uh huh."
-: Niccolo says, "Do you want dignity and respect?"
-: Yusuf says, "Yes!"
-: Niccolo says, "Do you want to earn fair pay for your labor?"
-: Giovanni says, "Oh yeah!"
-: Giorgios says, "Yes! Yes!"
-: Niccolo says, "And do you want..."
-: says "the highest standards of craftsmanship to be upheld?"
-: Yusuf says, "Uh... sure."
-: Giovanni says, "Brother, your words touch my heart."
-: says, "To cut a rock..."
-: says, "To shape a rock..."
-: says, "You must think like a rock!"
-: Niccolo says, "Truly, we must all know our craft."
-: says, "That is our strength!"
-: Giorgios says, "Carving fine details in stone is hard."
-: says, "Wine should flow freely throughout the day!"
-: Niccolo says, "We should work in comfortable conditions."
-: says, "Yes, brother."
-: Yusuf says, "The right names need to be on the right lists!"
-: Niccolo says, "We need ways to verify who is one of us."
-: says, "Lists, perhaps, though..."
-: says, "secret handshakes are good too."
-: Harold says, "And if some massive jerk takes your job..."
-: says, "because he did one convenient thing for King Frederick..."
-: says, "REVENGE IS IN ORDER!"
-: Niccolo says, "Uh..."
-: says, "Jobs should be given based on ability to do them well."
-: says, "Not as personal favors."
-: Hugo says, "We should strive to rise from..."
-: says "our precarious status and claim wealth..."
-: says "in proportion to what we contribute to society."
-: Niccolo says, "Well said, brother! So glad you came."
-: Yusuf says, "These masks are really hot and itchy."
-: Giorgios says, "And I already know at least half of you."
-: Yusuf says, "Can we just take off the masks?"
-: Niccolo says, "Fine. But then we have to..."
-: says, "go into the crypt to avoid being seen."
-: Giorgios takes Big Wineskin
-
-23:01:52 Yusuf goes to Hall (60%)
-23:01:52 Giovanni goes to Hall (40%)
-23:01:52 Harold goes to Hall (80%)
-23:01:54 Giorgios goes to Hall (70%)
-23:01:56 Hugo goes to Hall (30%)
-23:02:13 Niccolo goes to Hall (20%)
-
-23:01:55 Yusuf @ Hall
-: appears default
-: drops Rabbit Mask
-23:01:56 Giovanni @ Hall
-: appears default
-: drops Stag Mask
-: faces left
-23:01:57 Harold @ Hall (80%)
-: appears default
-: drops Goat Mask
-: faces left
-23:01:58 Giorgios @ Hall (70%)
-: appears default
-: drops Bull Mask
-: faces left
-23:01:59 Hugo @ Hall (30%)
-: says, "I... don't want to take off my mask."
-: Yusuf says, "Why?" to Hugo
-: Hugo says, "I don't trust everyone here yet."
-: Yusuf says, "Understandable."
-: Yusuf says, "I work with everyone here except you and..."
-: says, "this guy." to Harold.
-: Harold says, "I'm Harold."
-23:02:15 Niccolo @ Hall (20%)
-: appears default
-: drops Pig Mask
-
-23:02:16 Niccolo goes to Crypt (10%)
-23:02:17 Yusuf goes to Crypt (20%)
-23:02:19 Giorgios goes to Crypt (80%)
-23:02:21 Harold goes to Crypt (50%)
-23:02:21 Giovanni goes to Crypt (40%)
-23:02:21 Hugo goes to Crypt (70%)
-
-23:02:26 Niccolo @ Crypt (10%)
-: faces right
-23:02:26 Giorgios @ Crypt (80%)
-23:02:27 Yusuf @ Crypt (20%)
-23:02:28 Harold @ Crypt (50%)
-23:02:29 Giovanni @ Crypt (40%)
-23:02:30 Hugo @ Crypt (70%)
+11:00:00 Marty waits
+: says, "Sometimes, I'm a little [tense]tense[/]."
+: says, "Other times, I like to be [sneaky]sneaky[/]."
+: says, "I'm not [emphasis]always[/] a pain."
+: says, "[whisper]Do you want to hear a secret?[/]"
+: says, "[yell]Too bad![/] I don't trust you."
+: says, "My favorite ice cream is [flourish]neopolitan[/]."
+: says, "Some people they call me a [manic]space cowboy[/]."
 
 # Conclusions
 
-* characters=Ahmad ibn Faraj al-Balarmi | Giorgios tou Nikolaou | Giovanni di Leone di Monreale | Gualtiero of Masala | Harold of Norwich | Hugo of Speyer | Matteo il Toro | Niccolò il Calabrese | Pietro di Ruggero di Palermo | Raniero de Stefano | Salomone ben David di Palermo | Stefan of Ragusa | Sticky Agatha | Ugolino di Conti | Yusuf ibn Khalaf al-Balarmi
+* verbs=stole|hid|broke|smashed|painted|crushed|dropped
+* withObjects=a hammer|his fist|a brush|other vases|his foot|difficulty|his uncle
 
-## Costumes
+## Identities
 
-* conclusion=[Niccolò il Calabrese] disguised themself as a pig.
-* revealRooms=Hall
+* unlockConclusions=What Happened to the Vase?
 
-## One More
+## What Happened to the Vase?
 
-* conclusion=[Sticky Agatha] donned no disguise at all.
+* conclusion=[Larry] took the vase to the [Gift Shop] and [hid] it with [other vases].

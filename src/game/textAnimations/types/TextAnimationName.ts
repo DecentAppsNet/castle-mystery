@@ -1,1 +1,1 @@
-export type TextAnimationName = 'tense';
+export type TextAnimationName = 'tense' | 'sneaky' | 'emphasis' | 'whisper' | 'yell' | 'flourish' | 'manic';

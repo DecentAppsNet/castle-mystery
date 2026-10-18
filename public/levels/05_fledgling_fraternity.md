@@ -287,7 +287,7 @@ DDCCAAABBE
 : says, "secret handshakes are good too."
 : Harold says, "And if some massive jerk takes your job..."
 : says, "because he did one convenient thing for King Frederick..."
-: says, "[tense]REVENGE IS IN ORDER![/]"
+: says, "[tense]revenge is in order![/]"
 : Niccolo says, "Uh..."
 : says, "Jobs should be given based on ability to do them well."
 : says, "Not as personal favors."
@@ -362,7 +362,7 @@ DDCCAAABBE
 23:02:50 Niccolo says, "There are no Freemasons." 
 : says "They've just been using that name to rile people up."
 : Yusuf says, "But what if..." to Niccolo
-: says "*we* were the Freemasons?"
+: says "[tense]we[/] were the Freemasons?"
 : Niccolo says, "I don't understand."
 : Yusuf says, "The pope knows the Freemasons aren't real."
 : says, "If we choose the same name for ourselves..."
@@ -415,7 +415,7 @@ DDCCAAABBE
 : says "You're leaving?" to Hugo.
 : faces Hugo
 : waits
-: thinks "I have no idea who that was."
+: thinks "I have [tense]no idea[/] who that was."
 23:03:26 goes to Nave (20%)
 
 23:03:41 Ugolino @ Hall
