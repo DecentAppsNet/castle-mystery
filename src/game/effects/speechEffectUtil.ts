@@ -18,6 +18,7 @@ import LevelEffectCharacterLocation from "./types/LevelEffectCharacterLocation";
 import { findEmitTipDirection } from "./emitDirectionUtil";
 import { FacingDirection } from "../types/Character";
 import { isSpeechAudible, isThoughtObservable } from "./speechObservabilityPolicy";
+import { PreparedAnimationText } from "@/game/textAnimations/types/PreparedAnimationText";
 
 type TalkingDip = Readonly<{
   startTimeOffset:number,
@@ -190,24 +191,24 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
   return null;
 }
 
-export function createSaysEffect(characterId:string, text:string, startTime:number, speechDuration:number):Effect {
+export function createSaysEffect(characterId:string, text:PreparedAnimationText, startTime:number, speechDuration:number):Effect {
   const dipOffset = rand() * TALKING_DIPS_DURATION; // Set this randomly so that characters rarely have same head animation.
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
-    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, dipOffset, characterId);
+    return _saysHandler(drawCall, scalingFactors, time, context, text.plainText, startTime, dipOffset, characterId);
   }
   return { kind:'says', startTime, endTime:startTime+speechDuration, handler };
 }
 
-export function createThinksEffect(text:string, startTime:number, speechDuration:number,
+export function createThinksEffect(text:PreparedAnimationText, startTime:number, speechDuration:number,
     facingDirection:FacingDirection):Effect {
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
-    return _thinksHandler(drawCall, scalingFactors, time, context, text, startTime, speechDuration, facingDirection);
+    return _thinksHandler(drawCall, scalingFactors, time, context, text.plainText, startTime, speechDuration, facingDirection);
   }
   return { kind:'thinks', startTime, endTime:startTime+speechDuration, handler };
 }
 
-export function createEmitsEffect(source:EmitSource, text:string, startTime:number, speechDuration:number, isLoud:boolean):Effect {
+export function createEmitsEffect(source:EmitSource, text:PreparedAnimationText, startTime:number, speechDuration:number, isLoud:boolean):Effect {
   const handler:EffectHandler = (drawCall, scalingFactors, time, _metaTime, context) =>
-    _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud, source);
+    _emitsHandler(drawCall, scalingFactors, time, context, text.plainText, startTime, isLoud, source);
   return { kind:'emits', startTime, endTime:startTime+speechDuration, handler };
 }

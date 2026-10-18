@@ -1,18 +1,23 @@
-/* This file prepares authored flat animation spans and reports invalid speech markup as data.
+/* This file prepares speech text with flat animation spans and reports invalid markup at the activity's source line.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { isTextAnimationName, segmentTextAnimation } from '@/game/textAnimations';
+import { PreparedAnimationText } from '@/game/textAnimations/types/PreparedAnimationText';
 import { TextAnimationName } from '@/game/textAnimations/types/TextAnimationName';
 import { TextAnimationSpan } from '@/game/textAnimations/types/TextAnimationSpan';
-import { TextAnimationParseResult } from './types/TextAnimationParseResult';
+import Activity from '@/levelLoading/activityLoading/types/Activity';
+import { ErrorCollector } from '@/levelLoading/errorCollection';
 
-export function parseTextAnimations(text:string):TextAnimationParseResult {
+type TextAnimationParseResult =
+  | Readonly<{ success:true, preparedText:PreparedAnimationText }>
+  | Readonly<{ success:false, message:string, utf16Offset:number }>;
+
+function _parseTextAnimations(text:string):TextAnimationParseResult {
   let plainText = '';
   let cursorUtf16Offset = 0;
   let openSpan:{ name:TextAnimationName, startUtf16Offset:number, authoredUtf16Offset:number }|null = null;
   const spans:TextAnimationSpan[] = [];
 
-  // Copy literal runs and record spans in visible-text coordinates.
   while (cursorUtf16Offset < text.length) {
     const startUtf16Offset = text.indexOf('[', cursorUtf16Offset);
     const endUtf16Offset = text.indexOf(']', cursorUtf16Offset);
@@ -41,10 +46,16 @@ export function parseTextAnimations(text:string):TextAnimationParseResult {
     cursorUtf16Offset = endUtf16Offset + 1;
   }
 
-  // Preserve the final literal run and reject any unfinished span.
   plainText += text.slice(cursorUtf16Offset);
   if (openSpan) {
     return { success:false, message:`Unclosed text animation "${openSpan.name}".`, utf16Offset:openSpan.authoredUtf16Offset };
   }
   return { success:true, preparedText:{ plainText, spans } };
+}
+
+export function prepareSpeechText(text:string, activity:Activity, errors:ErrorCollector):PreparedAnimationText|null {
+  const result = _parseTextAnimations(text);
+  if (result.success) return result.preparedText;
+  errors.addAtLine(result.message, activity.lineI);
+  return null;
 }

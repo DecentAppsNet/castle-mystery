@@ -16,6 +16,7 @@ import { findKeyframeForTime } from "@/game/timeline";
 import EmitSource from "@/game/effects/types/EmitSource";
 import { findItemKeyframeLocation } from "./util/itemKeyframeLocationUtil";
 import { formatMsecsAsTimestamp } from "../timestampUtil";
+import { prepareSpeechText } from "./util/speechTextPreparationUtil";
 
 /** Creates the accepted syntax for emission activities. */
 export function createEmitsParseFormat():ParseFormat {
@@ -82,12 +83,14 @@ export function scheduleEmitsActivity(level:Level,
 
   assertNonNullable(activity.startTime);
   const { characterId, itemId, text, isLoud } = activity.parts as PartsShape;
+  const preparedText = prepareSpeechText(text, activity, errors);
+  if (!preparedText) return false;
   const isItemEmitting = itemId !== undefined;
   activity.busyCharacterIds = isItemEmitting ? [] : [characterId];
   activity.busyItemIds = isItemEmitting ? [itemId] : []; // Busy prevents overlapping transfers and transformations; zero-duration visibility changes remain possible.
   const characterI = editableTimeline.characterIdToI[characterId];
 
-  const speechDuration = calcSpeechDuration(text);
+  const speechDuration = calcSpeechDuration(preparedText.plainText);
   activity.endTime = activity.startTime + speechDuration;
 
   const source = itemId
@@ -95,7 +98,7 @@ export function scheduleEmitsActivity(level:Level,
     : _createCharacterEmitSource(characterId);
   if (!source) return false;
 
-  const emitsEffect = createEmitsEffect(source, text, activity.startTime, speechDuration, isLoud !== undefined);
+  const emitsEffect = createEmitsEffect(source, preparedText, activity.startTime, speechDuration, isLoud !== undefined);
   addCharacterEffect(emitsEffect, characterI, editableTimeline);
   return true;
 }

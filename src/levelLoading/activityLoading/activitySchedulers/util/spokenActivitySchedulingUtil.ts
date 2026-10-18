@@ -11,6 +11,7 @@ import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timel
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { findCharacterFacingDirection } from "./facingUtil";
 import { calcSpeechDuration } from "./speechUtil";
+import { prepareSpeechText } from "./speechTextPreparationUtil";
 
 type SpokenActivityParts = {
   characterId:string,
@@ -20,9 +21,11 @@ type SpokenActivityParts = {
 
 /** Schedules speech timing, facing, and its presentation effect. */
 export function scheduleSpokenActivity(_level:Level, activity:Activity,
-    editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+    editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   assertNonNullable(activity.startTime);
   const { characterId, text, toCharacterId } = activity.parts as SpokenActivityParts;
+  const preparedText = prepareSpeechText(text, activity, errors);
+  if (!preparedText) return false;
   activity.busyCharacterIds = [characterId];
   activity.busyItemIds = [];
   const characterI = editableTimeline.characterIdToI[characterId];
@@ -35,10 +38,10 @@ export function scheduleSpokenActivity(_level:Level, activity:Activity,
   }
 
   // Resolve speech timing before creating its presentation effect.
-  const speechDuration = calcSpeechDuration(text);
+  const speechDuration = calcSpeechDuration(preparedText.plainText);
   activity.endTime = activity.startTime + speechDuration;
 
-  const saysEffect = createSaysEffect(characterId, text, activity.startTime, speechDuration);
+  const saysEffect = createSaysEffect(characterId, preparedText, activity.startTime, speechDuration);
   addCharacterEffect(saysEffect, characterI, editableTimeline);
   return true;
 }

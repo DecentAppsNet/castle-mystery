@@ -13,6 +13,7 @@ import { addCharacterEffect } from "@/levelLoading/timelineLoading";
 import { calcSpeechDuration } from "./util/speechUtil";
 import { createThinksEffect } from "@/game/effects/speechEffectUtil";
 import { findKeyframeForTime } from "@/game/timeline";
+import { prepareSpeechText } from "./util/speechTextPreparationUtil";
 
 /** Creates the accepted syntax for thought activities. */
 export function createThinksParseFormat():ParseFormat {
@@ -30,21 +31,23 @@ type PartsShape = {
 
 /** Schedules a character thought into an editable timeline. */
 export function scheduleThinksActivity(_level:Level, _waypointContext:WaypointGenerationContext,
-  activity:Activity, editableTimeline:EditableTimeline, _errors:ErrorCollector):boolean {
+  activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   
   assertNonNullable(activity.startTime);
   const { characterId, text } = activity.parts as PartsShape;
+  const preparedText = prepareSpeechText(text, activity, errors);
+  if (!preparedText) return false;
   activity.busyCharacterIds = [characterId];
   activity.busyItemIds = [];
   const characterI = editableTimeline.characterIdToI[characterId];
   assertNonNullable(characterI);
 
-  const speechDuration = calcSpeechDuration(text);
+  const speechDuration = calcSpeechDuration(preparedText.plainText);
   activity.endTime = activity.startTime + speechDuration;
 
   const keyframe = findKeyframeForTime(editableTimeline.keyframes, activity.startTime);
   const facingDirection = keyframe.characters[characterI].facingDirection;
-  const thinksEffect = createThinksEffect(text, activity.startTime, speechDuration, facingDirection);
+  const thinksEffect = createThinksEffect(preparedText, activity.startTime, speechDuration, facingDirection);
   addCharacterEffect(thinksEffect, characterI, editableTimeline);
   return true;
 }
