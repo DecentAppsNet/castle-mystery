@@ -11,24 +11,9 @@ The level file has these sections:
 * itinerary - authors time-based character activities such as movement, speech, thoughts, item interactions, and door changes.
 * conclusions - declares the conclusion prompts and answers used by the mystery-solving UI.
 
-# Syntax Style - Forgiving and Protective
+## Intended Audience for this Guide
 
-The syntax style is designed with these goals in mind:
-* be forgiving of the various ways an author can express their intent
-* where it is clear that data in the level file would cause a problem, fail the level load with an error message that will be helpful to the author, even giving instruction on how to fix.
-* if forgiving syntax parsing leads to an ambiguity of what the author intends, the syntax should be made stricter
-* if forgiving syntax parsing leads to complicated parsing code, the syntax should be made stricter
-
-Examples of forgiving syntax parsing:
-* white space can be of any length between different tokesn or omitted
-* sentence punctuation that an author might accidentally include in the English-sentence-like itinerary commands is allowed and ignored
-* case insensitivity for matching room/item/character name references
-
-Examples of syntax parsing that is too forgiving:
-* a misspelled character name is matched against the closest-matching name
-* correcting the times of itinerary events on author's behalf to resolve a loading error
-
-To sum up, when parsing the level file, we try a little (not a lot) to interpret and realize the author's intent across varied input. And when we can't interpret or realize the author's intent, we are loud and helpful about the failure.
+This guide is for level authors and doesn't assume technical knowledge.
 
 # "General" Section
 
@@ -484,6 +469,18 @@ An explicit item subject is the source of the emission; `loudly` does not change
 At the emission's start time, a character source must be visible and placed in a room. An item source must be visible and either on a room floor or held in a character's hand. Inventory and unplaced items are not valid sources. Invalid sources produce a level-loading error and no emission.
 
 When its source is currently presented, an emission bubble appears attached above that character, floor item, or held item. Otherwise, a loud emission appears near the top center of the active room. Its tip indicates the source room's approximate cardinal or diagonal direction; an obscured source in the active room has no tip. A non-loud emission without an attached source appears only when the source is audible through an open exit to an adjacent room.
+
+### Text Animations
+
+Use `[tense]...[/]` or `[tense]...[/tense]` inside `says`, `thinks`, or any `emits` text, including item emissions and emissions marked `loudly`:
+
+```text
+: Sam says "It will be your [tense]doom[/]."
+: Sam thinks "[tense]Not again[/tense]."
+: Bell emits "[tense]GONG[/tense]" loudly
+```
+
+Only `tense` is currently supported. Names are case-sensitive.
 
 ### Faces
 
