@@ -30,7 +30,7 @@ Create a new Markdown plan file under `workAssets/plans` from the project root. 
 - Divide implementation into independently testable phases.
 - Limit each phase to at most 100 changed production-source lines, additions plus deletions. Generated files, tests, fixtures, documentation, and the plan do not count.
 - Require the implementing agent to stop after every phase for human review and explicit approval before proceeding.
-- Require the implementing agent to stop before exceeding a phase's production-line limit and discuss how to repartition the work.
+- Require the implementing agent to stop before exceeding a 120 production-line limit and discuss how to continue. The difference between the 100-line limit for your planning and the higher 120-line limit for the implementing agent is to avoid the need for extra conversation when the implementing agent is slightly over the predicted line count.
 - Prefix the plan filename with a 3 digit number, e.g. `001_refactor_sprite_operations.md`.
 - Include a Phase 0 that establishes a clean baseline before source changes: inspect the worktree, read the relevant files and instructions, and run `npm run check:baseline` with no arguments. It runs build, all tests, and Knip sequentially, stopping on the first failure. Require reading the project-local logs named by its output for diagnostics and warnings; if a check fails, stop for user direction before source edits.
 - Incorporate relevant constraints from `CONTRIBUTING.md`, ADRs, and repository instructions. Either summarize the essential constraints or explicitly require reading the applicable project files.
