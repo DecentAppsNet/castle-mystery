@@ -123,8 +123,8 @@ describe('characterDrawUtil', () => {
         font:''
       } as unknown as CanvasRenderingContext2D;
 
-      drawEmitBubble('Hello', 100, 80, SCALING_FACTORS, context, 1_000, 1_000);
-      drawEmitBubble('Hello', 100, 80, SCALING_FACTORS, context, 1_000, 1_300);
+      drawEmitBubble({ plainText:'Hello', spans:[] }, 100, 80, SCALING_FACTORS, context, 1_000, 1_000, 0);
+      drawEmitBubble({ plainText:'Hello', spans:[] }, 100, 80, SCALING_FACTORS, context, 1_000, 1_300, 300);
 
       expect(fillTextCalls[0]).toEqual(fillTextCalls[1]);
       expect(fillTextCalls[0]).toEqual({ text:'Hello', x:100, y:40 });

@@ -139,8 +139,39 @@ describe('speechTextPreparationUtil', () => {
       _expectInvalidText('[ tense]', 'Unknown text animation " tense".');
     });
 
-    it('requires the exact closing tag contents', () => {
-      _expectInvalidText('[tense] a b [/ ]', 'Unknown text animation "/ ".');
+    it('accepts a matching named closing tag', () => {
+      _expectPreparedText('Your [tense]doom[/tense].', { plainText:'Your doom.', spans:[{
+        name:'tense', startUtf16Offset:5, endUtf16Offset:9, text:'doom', graphemes:['d', 'o', 'o', 'm']
+      }] });
+    });
+
+    it('allows named and unnamed closing tags in the same message', () => {
+      _expectPreparedText('[tense]A[/tense][tense]V[/]', { plainText:'AV', spans:[
+        { name:'tense', startUtf16Offset:0, endUtf16Offset:1, text:'A', graphemes:['A'] },
+        { name:'tense', startUtf16Offset:1, endUtf16Offset:2, text:'V', graphemes:['V'] }
+      ] });
+    });
+
+    it('accepts an empty span with a named closer', () => {
+      _expectPreparedText('[tense][/tense]', { plainText:'', spans:[{
+        name:'tense', startUtf16Offset:0, endUtf16Offset:0, text:'', graphemes:[]
+      }] });
+    });
+
+    it('rejects a mismatched named closing tag', () => {
+      _expectInvalidText('[tense]doom[/pulse]', 'Text animation closing tag "pulse" does not match "tense".');
+    });
+
+    it('rejects a named closing tag without an open span', () => {
+      _expectInvalidText('doom[/tense]', 'Unmatched text animation closing tag.');
+    });
+
+    it('compares closing names case-sensitively', () => {
+      _expectInvalidText('[tense]doom[/Tense]', 'Text animation closing tag "Tense" does not match "tense".');
+    });
+
+    it('does not trim closing tag contents', () => {
+      _expectInvalidText('[tense] a b [/ ]', 'Text animation closing tag " " does not match "tense".');
     });
   });
 });

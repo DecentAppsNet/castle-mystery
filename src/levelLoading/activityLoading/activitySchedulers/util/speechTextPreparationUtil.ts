@@ -30,8 +30,13 @@ function _parseTextAnimations(text:string):TextAnimationParseResult {
     }
     plainText += text.slice(cursorUtf16Offset, startUtf16Offset);
     const name = text.slice(startUtf16Offset + 1, endUtf16Offset);
-    if (name === '/') {
+    if (name.startsWith('/')) {
       if (!openSpan) return { success:false, message:'Unmatched text animation closing tag.', utf16Offset:startUtf16Offset };
+      const closingName = name.slice(1);
+      if (closingName && closingName !== openSpan.name) {
+        return { success:false, message:`Text animation closing tag "${closingName}" does not match "${openSpan.name}".`,
+          utf16Offset:startUtf16Offset };
+      }
       const spanText = plainText.slice(openSpan.startUtf16Offset);
       spans.push({ name:openSpan.name, startUtf16Offset:openSpan.startUtf16Offset,
         endUtf16Offset:plainText.length, text:spanText, graphemes:segmentTextAnimation(spanText) });

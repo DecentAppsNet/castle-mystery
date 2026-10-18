@@ -125,22 +125,22 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
     const location = characterLocationById.get(characterId);
     const isAudible = isSpeechAudible(isActiveRoomObscured, isLevelComplete);
     if (!isLevelComplete && isAudible && location?.kind === 'adjacentOpenExit') {
-      drawSpeechBubbleNearExit(text.plainText, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
-        scalingFactors, context, startTime, time);
+      drawSpeechBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
+        scalingFactors, context, startTime, time, metaTime);
     }
   }
   return null;
 }
 
-function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: string, 
-  startTime: number, speechDuration:number, facingDirection:FacingDirection):EffectHandlerResult|null {
+function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: PreparedAnimationText,
+  startTime: number, speechDuration:number, facingDirection:FacingDirection, metaTime:number):EffectHandlerResult|null {
   if (drawCall.stage === 'beforeCharacter') {
     return _calcThinkingHeadRotationResult(time, startTime, speechDuration, facingDirection);
   }
   if (drawCall.stage === 'characterAfterLevel') {
     const { characterAnatomy:{ anchorX, anchorTopY }, isActiveCharacter, isLevelComplete } = drawCall.characterContext;
     if (isThoughtObservable(isActiveCharacter, isLevelComplete)) {
-      drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time);
+      drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time, metaTime);
     }
   }
   return null;
@@ -161,14 +161,14 @@ function _findEmitSourceLocation(source:EmitSource,
 }
 
 function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
-  context:CanvasRenderingContext2D, text:string, startTime:number, isLoud:boolean,
-  source:EmitSource):EffectHandlerResult|null {
+  context:CanvasRenderingContext2D, text:PreparedAnimationText, startTime:number, isLoud:boolean,
+  source:EmitSource, metaTime:number):EffectHandlerResult|null {
   if (drawCall.stage !== 'afterLevel') return null;
   const levelContext = drawCall.levelContext;
   if (!isSpeechAudible(levelContext.isActiveRoomObscured, levelContext.isLevelComplete)) return null;
   const anchor = _findEmitSourceAnchor(source, levelContext.framePresentationIndex);
   if (anchor) {
-    drawEmitBubble(text, anchor.anchorX, anchor.anchorTopY, scalingFactors, context, startTime, time);
+    drawEmitBubble(text, anchor.anchorX, anchor.anchorTopY, scalingFactors, context, startTime, time, metaTime);
     return null;
   }
 
@@ -180,13 +180,13 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
       : null;
     const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(
       levelContext.activeRoomTopCenterCanvasPoint, scalingFactors);
-    drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time, tipDirection);
+    drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time, metaTime, tipDirection);
     return null;
   }
 
   if (location?.kind === 'adjacentOpenExit') {
     drawEmitBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
-      scalingFactors, context, startTime, time);
+      scalingFactors, context, startTime, time, metaTime);
   }
   return null;
 }
@@ -201,14 +201,14 @@ export function createSaysEffect(characterId:string, text:PreparedAnimationText,
 
 export function createThinksEffect(text:PreparedAnimationText, startTime:number, speechDuration:number,
     facingDirection:FacingDirection):Effect {
-  const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, _metaTime:number, context:CanvasRenderingContext2D) => {
-    return _thinksHandler(drawCall, scalingFactors, time, context, text.plainText, startTime, speechDuration, facingDirection);
+  const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, metaTime:number, context:CanvasRenderingContext2D) => {
+    return _thinksHandler(drawCall, scalingFactors, time, context, text, startTime, speechDuration, facingDirection, metaTime);
   }
   return { kind:'thinks', startTime, endTime:startTime+speechDuration, handler };
 }
 
 export function createEmitsEffect(source:EmitSource, text:PreparedAnimationText, startTime:number, speechDuration:number, isLoud:boolean):Effect {
-  const handler:EffectHandler = (drawCall, scalingFactors, time, _metaTime, context) =>
-    _emitsHandler(drawCall, scalingFactors, time, context, text.plainText, startTime, isLoud, source);
+  const handler:EffectHandler = (drawCall, scalingFactors, time, metaTime, context) =>
+    _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud, source, metaTime);
   return { kind:'emits', startTime, endTime:startTime+speechDuration, handler };
 }

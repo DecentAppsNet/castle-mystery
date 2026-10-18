@@ -42,6 +42,16 @@ describe('level loading - speech text animations', () => {
       '0:00:00 Sam thinks "The doom awaits you."', 'thinks');
   });
 
+  it('accepts named closing tags without affecting speech timing', () => {
+    _expectSameTiming('0:00:00 Sam says "The [tense]doom[/tense] awaits you."',
+      '0:00:00 Sam says "The doom awaits you."', 'says');
+  });
+
+  it('reports mismatched closing names at the activity source line', () => {
+    _expectSourceError('0:00:00 Sam thinks "[tense]doom[/pulse]"',
+      'Text animation closing tag "pulse" does not match "tense".');
+  });
+
   it('uses visible character emissions for effect and successor timing', () => {
     _expectSameTiming('0:00:00 Sam emits "The [tense]doom[/] awaits you."',
       '0:00:00 Sam emits "The doom awaits you."', 'emits');

@@ -118,8 +118,8 @@ function _drawRoundedBubbleOutline(left:number, top:number, width:number, height
   context.closePath();
 }
 
-export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:number,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number) {
+export function drawThoughtBubble(speech:PreparedAnimationText, anchorX:number, anchorTopY:number,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number, metaTime:number) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
@@ -135,7 +135,7 @@ export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:numb
   context.textAlign = "center";
   context.textBaseline = "middle";
 
-  const boxWidth = context.measureText(speech).width + padding * 2;
+  const boxWidth = context.measureText(speech.plainText).width + padding * 2;
   const unclampedLeft = anchorX - boxWidth / 2;
   const unclampedTop = anchorTopY - boxHeight - extraBottomSpace - scalingFactors.roomLineWidth * 2;
   const left = Math.round(clamp(unclampedLeft, 0, context.canvas.width - boxWidth));
@@ -168,13 +168,13 @@ export function drawThoughtBubble(speech:string, anchorX:number, anchorTopY:numb
   context.stroke();
 
   context.fillStyle = COLOR_BLACK;
-  context.fillText(speech, left + boxWidth / 2, top + boxHeight / 2);
+  drawBubbleText(speech, left + boxWidth / 2, top + boxHeight / 2, metaTime, context);
   context.restore();
 }
 
-function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
+function _drawSpeechBubble(speech:PreparedAnimationText, anchorX:number, anchorTopY:number,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D,
-  startTime:number, time:number, target:BubbleTarget|null, preparedText?:PreparedAnimationText, metaTime:number = 0) {
+  startTime:number, time:number, target:BubbleTarget|null, metaTime:number) {
   const padding = Math.max(4, scalingFactors.roomLineWidth * 1.5);
   const fontSize = Math.max(10, Math.round(scalingFactors.roomFontHeight * 0.8));
   const boxHeight = fontSize + padding * 2;
@@ -185,7 +185,7 @@ function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
   context.textAlign = "center";
   context.textBaseline = "middle";
 
-  const boxWidth = context.measureText(speech).width + padding * 2;
+  const boxWidth = context.measureText(speech.plainText).width + padding * 2;
   const targetedBox = target ? _findBubbleBoxNearTarget(target, boxWidth, boxHeight, tailHeight, context) : null;
   const maximumLeft = Math.max(0, context.canvas.width - boxWidth);
   const left = targetedBox?.left
@@ -206,21 +206,20 @@ function _drawSpeechBubble(speech:string, anchorX:number, anchorTopY:number,
   context.stroke();
 
   context.fillStyle = COLOR_BLACK;
-  if (preparedText) drawBubbleText(preparedText, left + boxWidth / 2, top + boxHeight / 2, metaTime, context);
-  else context.fillText(speech, left + boxWidth / 2, top + boxHeight / 2);
+  drawBubbleText(speech, left + boxWidth / 2, top + boxHeight / 2, metaTime, context);
   context.restore();
 }
 
 export function drawSpeechBubble(speech:PreparedAnimationText, anchorX:number, anchorTopY:number,
     scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number, metaTime:number) {
-  _drawSpeechBubble(speech.plainText, anchorX, anchorTopY, scalingFactors, context, startTime, time, null, speech, metaTime);
+  _drawSpeechBubble(speech, anchorX, anchorTopY, scalingFactors, context, startTime, time, null, metaTime);
 }
 
-export function drawSpeechBubbleNearExit(speech:string, exitTargetCanvasPoint:[number, number],
+export function drawSpeechBubbleNearExit(speech:PreparedAnimationText, exitTargetCanvasPoint:[number, number],
     activeRoomInteriorCanvasPoint:[number, number], scalingFactors:ScalingFactors,
-    context:CanvasRenderingContext2D, startTime:number, time:number) {
+    context:CanvasRenderingContext2D, startTime:number, time:number, metaTime:number) {
   _drawSpeechBubble(speech, 0, 0, scalingFactors, context, startTime, time,
-    { targetCanvasPoint:exitTargetCanvasPoint, interiorCanvasPoint:activeRoomInteriorCanvasPoint });
+    { targetCanvasPoint:exitTargetCanvasPoint, interiorCanvasPoint:activeRoomInteriorCanvasPoint }, metaTime);
 }
 
 type EmitTipPoints = [[number, number], [number, number], [number, number]];
@@ -283,9 +282,9 @@ function _drawEmitBubbleOutline(box:BubbleBox, direction:EmitTipDirection,
   context.closePath();
 }
 
-function _drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
+function _drawEmitBubble(emitText:PreparedAnimationText, anchorX:number, anchorTopY:number,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number,
-  target:BubbleTarget|null, tipDirection:EmitTipDirection|null = null) {
+  metaTime:number, target:BubbleTarget|null, tipDirection:EmitTipDirection|null = null) {
   const { padding, fontSize, boxHeight } = _getEmitBubbleMetrics(scalingFactors);
 
   context.save();
@@ -293,7 +292,7 @@ function _drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
   context.textAlign = "center";
   context.textBaseline = "middle";
 
-  const boxWidth = context.measureText(emitText).width + padding * 2;
+  const boxWidth = context.measureText(emitText.plainText).width + padding * 2;
   const targetedBox = target ? _findBubbleBoxNearTarget(target, boxWidth, boxHeight, scalingFactors.roomLineWidth * 2, context) : null;
   const left = targetedBox?.left
     ?? Math.round(clamp(anchorX - boxWidth / 2, 0, context.canvas.width - boxWidth));
@@ -314,19 +313,19 @@ function _drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
   context.stroke();
 
   context.fillStyle = COLOR_BLACK;
-  context.fillText(emitText, left + boxWidth / 2, top + boxHeight / 2);
+  drawBubbleText(emitText, left + boxWidth / 2, top + boxHeight / 2, metaTime, context);
   context.restore();
 }
 
-export function drawEmitBubble(emitText:string, anchorX:number, anchorTopY:number,
-    scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number,
+export function drawEmitBubble(emitText:PreparedAnimationText, anchorX:number, anchorTopY:number,
+    scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, startTime:number, time:number, metaTime:number,
     tipDirection:EmitTipDirection|null = null) {
-  _drawEmitBubble(emitText, anchorX, anchorTopY, scalingFactors, context, startTime, time, null, tipDirection);
+  _drawEmitBubble(emitText, anchorX, anchorTopY, scalingFactors, context, startTime, time, metaTime, null, tipDirection);
 }
 
-export function drawEmitBubbleNearExit(emitText:string, exitTargetCanvasPoint:[number, number],
+export function drawEmitBubbleNearExit(emitText:PreparedAnimationText, exitTargetCanvasPoint:[number, number],
     activeRoomInteriorCanvasPoint:[number, number], scalingFactors:ScalingFactors,
-    context:CanvasRenderingContext2D, startTime:number, time:number) {
-  _drawEmitBubble(emitText, 0, 0, scalingFactors, context, startTime, time,
+    context:CanvasRenderingContext2D, startTime:number, time:number, metaTime:number) {
+  _drawEmitBubble(emitText, 0, 0, scalingFactors, context, startTime, time, metaTime,
     { targetCanvasPoint:exitTargetCanvasPoint, interiorCanvasPoint:activeRoomInteriorCanvasPoint });
 }
