@@ -124,7 +124,7 @@ VVVHHGG
 : Lorenzo says, "I need more people here before I can start." to Marty
 : Marty says, "Why?"
 : Lorenzo says, "It's weird to give a museum tour to just one person."
-: Marty says, "LARRY!"
+: Marty says, "[yell]Larry![/]"
 : Larry goes to Exhibit Room (90%)
 11:00:16 Larry @ Exhibit Room
 : Lorenzo faces right.
@@ -134,23 +134,23 @@ VVVHHGG
 : says, "Emperor Frederick II, ruler of-"
 : Marty says, "Is he in that box right now?"
 : Lorenzo says, "Yes."
-: Marty says, "Can we see?"
-: Lorenzo says, "No! Let me give the tour."
+: Marty says, "[sneaky]Can we see?[/]"
+: Lorenzo says, "[yell]No![/yell] Let me give the tour."
 : says "You stand before the tomb-"
 : Larry takes Vase in right hand
 : Lorenzo faces right.
-: says, "Put that down!"
+: says, "[yell]Put that down![/]"
 11:00:39 Larry goes to Gift Shop (80%)
 11:00:42 Lorenzo goes to Gift Shop (10%)
 11:00:45 Larry @ Gift Shop (80%)
 : drops Vase on Shelf 3
 : goes to Gift Shop (30%)
 11:00:46 Lorenzo @ Gift Shop (10%)
-: says, "Where is it?"
+: says, "[tense]Where is it?[/]"
 : Larry faces right.
 : Lorenzo goes (80%)
 : goes (70%)
-: says, "Oh no!"
+: says, "[tense]Oh no![/]"
 : goes (80%)
 : goes (60%)
 : goes (70%)
@@ -162,7 +162,7 @@ VVVHHGG
 : drops Sarcophagus Lid
 : goes (50%)
 : faces left
-: says, "Sick!"
+: says, "[manic]Sick![/]"
 
 
 # Conclusions

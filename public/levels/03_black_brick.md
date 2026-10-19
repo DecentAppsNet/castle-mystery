@@ -279,10 +279,10 @@ AABBCCDFGGHHH.
 (11:58 Pope and Frederick are at West Lawn)
 11:58:00 Pope says, "Welcome to the Lateran Palace, my boy."
 : King Frederick says, "It is nice here."
-: Pope says, "''Nice'', you say?"
-: Pope says, "You stand at the very heart of Christendom!"
+: Pope says, "*Nice*, you say?"
+: Pope says, "You stand at the [flourish]very heart of Christendom[/]!"
 : King Frederick says, "It's more a collection of buildings than a palace."
-: Pope says, "Hrmph."
+: Pope says, "[sneaky]Hrmph[/]."
 11:58:17 Pope goes to Lawn (60%)
 11:58:18 King Frederick goes to Lawn
 
@@ -332,7 +332,7 @@ AABBCCDFGGHHH.
 : says, "Your enemies plot to dethrone or kill you."
 : King Frederick says, "I have enemies?"
 : Pope says, "German princes, Otto, and of course..."
-: says, "the Freemasons - most insidious of all!"
+: says, "[flourish]the Freemasons[/] - most insidious of all!"
 11:58:49 Pope goes to Lawn East (60%)
 11:58:50 King Frederick goes to Lawn East
 
@@ -360,13 +360,13 @@ AABBCCDFGGHHH.
 : Toro says, "Door."
 : Helena says, "You want to try an adjective today?"
 : Toro says, "Adjective."
-: Helena says, "(sigh)"
+: Helena says, "[sneaky](sigh)[/]"
 11:58:50 Helena goes to West Hall
 11:58:52 Toro faces left.
 
 (Raniero remains in his office)
 11:58:35 Raniero thinks, "As soon as she returns with my key..."
-: thinks, "I shall be free to frolic in the bins."
+: thinks, "I shall be free to [sneaky]frolic in the bins[/]."
 
 11:58:52 Raniero thinks, "It is hard to stand so much."
 : thinks, "What if I got a tall chair?"
@@ -405,7 +405,7 @@ AABBCCDFGGHHH.
 
 11:59:26 Pope @ Central Stairwell
 : Pope says, "Let us continue with a briskness."
-: Pope says, "Ha ha! It is fun to walk fast!"
+: Pope says, "*Ha ha!* It is fun to walk fast!"
 11:59:32 Pope goes to Courtyard East (10%)
 11:59:32 King Frederick goes to Courtyard East (20%)
 
@@ -413,7 +413,7 @@ AABBCCDFGGHHH.
 
 11:59:32 Helena @ Grain Store (40%)
 : drops Black Paint Jar
-: thinks "I'll hide it deep in the grain."
+: thinks "[sneaky]I'll hide it deep in the grain.[/]"
 : hide Black Paint Jar
 
 11:59:33 Hugo goes to Wine Cellar (30%)
@@ -424,8 +424,8 @@ AABBCCDFGGHHH.
 : Helena says, "I have a confession!"
 : Raniero says, "Yes?"
 : Helena says, "I..."
-: says, "I love to get inside the bins and..."
-: says, "step on the little grains with my bare feet!"
+: says, "[whisper]I love to get inside the bins and...[/]"
+: says, "[whisper]step on the little grains with my bare feet![/]"
 : Raniero says, "Me too!"
 : says, "It has been my secret pleasure."
 : says, "But now we can do it together!"
@@ -446,7 +446,7 @@ AABBCCDFGGHHH.
 : Toro says, "Lies!"
 : Hugo says, "Show me. Smash that pillar!"
 : Toro faces right.
-: Toro says, "Toro! Toro! Toro!"
+: Toro says, "[yell]Toro! Toro! Toro![/]"
 11:59:53 Toro goes to Wine Cellar (75%)
 
 11:59:39 Pope @ Courtyard East (10%)
@@ -459,26 +459,26 @@ AABBCCDFGGHHH.
 : says, "To take it in properly!"
 : King Frederick goes (30%)
 : faces right
-11:59:59 Arabic Tower emits, "(rumble)"
+11:59:59 Arabic Tower emits, "[sneaky](rumble)[/]"
 12:00:00 hide Arabic Tower
 12:00:00 show Arabic Tower Collapsed
 (The Arabic tower collapses in the direction of King Frederick. It nearly hits the King, and would have if he were still standing close to it.)
 : King Frederick lays
-: Arabic Tower Collapsed emits "(massive boom)" loudly
-: Pope says, "My King!"
+: Arabic Tower Collapsed emits "[yell](massive boom)[/]" loudly
+: Pope says, "[yell]My King![/]"
 : waits
 : King Frederick stands
 : says, "I am okay."
 : Pope goes (40%)
 : Pope says, "Just as I suspected! Here in the rubble..."
 : takes black brick into left hand.
-: says, "a black brick!"
+: says, "a *black brick*!"
 : goes (20%)
 : faces King Frederick
 : King Frederick faces Pope
 : Pope drops black brick
 : King Frederick says, "What is this madness?"
-: Pope says, "The Freemasons, my King."
+: Pope says, "[flourish]The Freemasons[/], my King."
 : says, "They built this tower with a black brick!"
 : says, "A black brick waits til one specific moment..."
 : says, "And then it fails, dropping death on the Freemasons' target."
@@ -489,9 +489,9 @@ AABBCCDFGGHHH.
 : faces right
 
 11:59:55 Toro @ Wine Cellar (75%)
-11:59:56 Hugo says, "Do it now!"
-: Toro says, "Arrrrrrgh!"
-: Toro says, "RAWWWWWRRRHGH!"
+11:59:56 Hugo says, "[yell]Do it now![/]"
+: Toro says, "[tense]Arrrrrrgh![/]"
+: Toro says, "[yell]RAWWWWWRRRHGH![/]"
 12:00:00 hide Pillar
 : show Rubble
 (The pillar collapsed from Toro's pushing, and rubble from the ceiling fell down and buried Toro beneath it. Toro's body, barely visible, is moving slightly beneath the rubble.)
@@ -505,17 +505,17 @@ AABBCCDFGGHHH.
 12:00:11 Helena @ Wine Cellar
 : Raniero says, "What happened?"
 : Hugo says, "Toro pushed the pillar down."
-: Toro says, "Pain!"
+: Toro says, "[yell]Pain![/]"
 : Helena says, "He's still alive!"
-: Hugo says, "Oh, good."
+: Hugo says, "[sneaky]Oh, good.[/]"
 : Helena goes (50%)
 : Raniero goes (50%)
 : says, "But why would he do that?"
-: Toro says, "Hugo!"
+: Toro says, "[yell]Hugo![/]"
 : Hugo says, "I am here, old friend!"
-: Toro says, "Conspiracy!"
+: Toro says, "[yell]Conspiracy![/]"
 : Hugo says, "You were involved in a conspiracy?"
-: Toro says, "Hugo! Guilt!"
+: Toro says, "[yell]Hugo! Guilt![/]"
 : Hugo says, "You feel guilty about conspiring?"
 : Raniero says, "It is so hard to understand him."
 : says, "He can only speak in nouns."

@@ -421,24 +421,24 @@ N1234567890ABCD.
 : Andronikos says, "What are you here for?"
 : Toro says, "Petition. King."
 : Andronikos says, "Concerning?"
-: Toro says, "TREACHERY!"
+: Toro says, "[yell]TREACHERY![/]"
 : Andronikos says, "Calm yourself."
-: Toro says, "(whispers loudly) Treachery!"
+: Toro says, "[whisper]Treachery![/]"
 : Andronikos says, "Just go up the stairs and wait."
 : Toro says, "Gratitude."
 (Toro leaves for Central Hall)
 : Andronikos thinks, "Toro, like a bull."
 : Wax Tablet becomes Wax Tablet Updated
 : faces Guard 3
-: says "He is the size of two men at least."
+: says "He is the size of *two* men at least."
 : says "So we'll admit no more for now."
 8:00:26 Toro goes to Central Hall (90%)
 8:00:32 Andronikos goes to Usher's Office
 
 8:00:05 Sticky Agatha @ Throne Room (20%)
-: Harold says, "(whispers) What is your name?" to Sticky Agatha
-: Sticky Agatha says, "Sticky Agatha."
-: Harold says, "Agatha of Stickiness, seeking audience with His Majesty!" to King Frederick
+: Harold says, "[whisper]What is your name?[/]" to Sticky Agatha
+: Sticky Agatha says, "[whisper]Sticky Agatha.[/]"
+: Harold says, "[flourish]Agatha of Stickiness[/], seeking audience with His Majesty!" to King Frederick
 : waits
 : says, "Approach and speak."
 : Sticky Agatha goes (50%)
@@ -456,7 +456,7 @@ N1234567890ABCD.
 : King Frederick says, "Your request is denied." 
 : Gualtiero says, "And why are you so sticky?"
 : says, "No sticky woman should clean clothing!"
-: Sticky Agatha says, "(weeps)"
+: Sticky Agatha says, "[tense](weeps)[/]"
 : King Frederick says, "Chamberlain, your comments lack grace."
 : Gualtiero says, "Forgive my excesses, your Majesty."
 8:01:07 Harold goes to West Stairwell
@@ -469,7 +469,7 @@ N1234567890ABCD.
 : waits
 : P10 faces left
 : waits 3
-: Toro says "Frustration."
+: Toro says "[tense]Frustration.[/]"
 : P9 faces Toro
 : P7 faces Toro
 : P6 faces Toro
@@ -480,7 +480,7 @@ N1234567890ABCD.
 : waits .5
 : P6 faces left
 : waits 1
-: Toro says "ANGER!"
+: Toro says "[yell]Anger![/]"
 : P10 faces Toro
 : P1 faces Toro
 : P2 faces Toro
@@ -517,7 +517,7 @@ N1234567890ABCD.
 
 8:01:01 Toro @ Antechamber (95%)
 : waits 3
-: says, "ANGER!"
+: says, "[yell]Anger![/]"
 : Niccolo faces Toro
 : P11 faces Toro
 : P12 faces Toro
@@ -535,7 +535,7 @@ N1234567890ABCD.
 : P24 faces Toro
 : waits
 : Guard 4 says, "Shut up or get out."
-: Toro says, "(sighs)"
+: Toro says, "[sneaky](sighs)[/]"
 : Niccolo faces left
 : waits
 : P12 faces left
@@ -560,22 +560,22 @@ N1234567890ABCD.
 : P22 faces left
 : P24 faces left
 : waits 3
-: Toro emits "(loud fart)"
+: Toro emits "[yell](loud fart)[/]"
 : Toro says, "Apologies."
 : P24 says "(coughing)"
 : P22 says "Ghastly!"
 : P18 says "I can come back tomorrow."
 : P21 thinks "I shall endure it."
 8:01:56 Toro goes (30%)
-: Guard 4 says, "You have thoroughly befouled this place."
+: Guard 4 says, "You have *thoroughly* befouled this place."
 : says, "But I don't mind less people in here."
 8:01:59 P1 goes to Antechamber (95%)
 8:02:14 Toro goes to Throne Room (20%)
 
 8:02:06 P1 @ Antechamber (95%)
-: P1 says, "Has some animal died?"
+: P1 says, "[tense]Has some animal died?[/]"
 : Guard 4 says, "You may wait for audience in this room."
-: P1 says, "I... uh..."
+: P1 says, "[tense]I... uh...[/]"
 : Guard 4 says, "Or you may return to the central hall."
 : P1 says, "Yes. That."
 : P1 goes to Central Hall (10%)
@@ -586,15 +586,15 @@ N1234567890ABCD.
 : faces left
 
 8:01:12 Harold @ West Stairwell
-: says "Next!"
+: says "[yell]Next![/]"
 : goes Throne Room (10%)
 : stands on Small Rug
 
 8:01:13 Niccolo goes to Throne Room (20%)
 8:01:18 Niccolo @ Throne Room (20%)
-: Harold says, "(whispers) Your name?" to Niccolo
+: Harold says, "[whisper]Your name?[/]" to Niccolo
 : Niccolo says, "Niccolò il Calabrese."
-: Harold says, "Niccolò il Calabrese, seeking audience with His Majesty!" to King Frederick
+: Harold says, "[flourish]Niccolò il Calabrese[/], seeking audience with His Majesty!" to King Frederick
 : waits
 : says, "Approach and speak."
 : Niccolo goes (50%)
@@ -614,7 +614,7 @@ N1234567890ABCD.
 : says, "I share your outrage, Highness!"
 : King Frederick says, "You need not provide your every opinion."
 : Gualtiero says, "Ah, I share your opinion of my opinions, Highness!"
-: King Frederick says, "(sighs)"
+: King Frederick says, "[sneaky](sighs)[/]"
 : Gualtiero faces left.
 
 8:01:23 Sticky Agatha @ Robing Chamber
@@ -635,9 +635,9 @@ N1234567890ABCD.
 : says "Peasant!"
 : P22 faces Andronikos
 : Andronikos says, "Why are all these people leaving?"
-: P22 says, "The unholy stench of a man-beast's innards pervades the antechamber!"
+: P22 says, "[tense]The unholy stench of a man-beast's innards pervades the antechamber![/]"
 : Andronikos says, "I do not follow your meaning."
-: P22 says, "I fear for my very soul!"
+: P22 says, "[tense]I fear for my very soul![/]"
 (P22 resumes fleeing to the East Gate)
 
 (Andronikos remains in the Entrance Hall. The clamor of the petitioners fleeing has subsided.)
@@ -780,7 +780,7 @@ N1234567890ABCD.
 : Harold goes to Deep Archives (95%)
 : takes Black Brick in right hand
 : thinks "Heralding is what I do - not fetching!"
-: thinks "My mother named me for this destiny."
+: thinks "My mother *named* me for this destiny."
 8:03:37 Harold goes to Throne Room (65%)
 
 8:03:58 Harold @ Throne Room (65%)
@@ -789,7 +789,7 @@ N1234567890ABCD.
 : King Frederick takes Black Brick in left hand
 : Harold stands on small rug
 : King Frederick says "Hmm."
-: says, "The paint matches."
+: says, "[sneaky]The paint matches.[/]"
 : Ugolino says, "This jar is from the Lateran Palace."
 : says, "Our jar mold bestows this symbol."
 : Gualtiero says, "But what does it prove?"
@@ -801,7 +801,7 @@ N1234567890ABCD.
 : King Frederick says, "What job can you do?"
 : Toro says, "Herald."
 : Harold faces right.
-: says, "What?"
+: says, "[tense]What?[/]"
 : King Frederick says, "Granted. You are my new herald."
 
 # Conclusions

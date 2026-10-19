@@ -228,7 +228,7 @@ DDCCAAABBE
 
 22:59:30 Niccolo says, "I was thinking we might get a hundred people." to Sticky Agatha
 : Sticky Agatha says, "We've got five."
-: Niccolo says, "Five hundred!"
+: Niccolo says, "[tense]Five hundred![/]"
 : Sticky Agatha says, "No. I only found five."
 : Niccolo says, "Well, we must start somewhere."
 : Sticky Agatha says "Put on your mask!"
@@ -259,18 +259,18 @@ DDCCAAABBE
 : Hugo faces right
 : Niccolo says, "Friends, welcome!"
 : says, "We are bound together by our anger."
-: says, "We come together, in secret..."
+: says, "We come together, in [sneaky]secret[/]..."
 : says, "To solve a common problem."
 : Hugo says, "That's right."
 : Harold says, "Uh huh."
-: Niccolo says, "Do you want dignity and respect?"
+: Niccolo says, "Do you want *dignity* and *respect*?"
 : Yusuf says, "Yes!"
-: Niccolo says, "Do you want to earn fair pay for your labor?"
-: Giovanni says, "Oh yeah!"
-: Giorgios says, "Yes! Yes!"
+: Niccolo says, "Do you want to earn *fair pay* for your labor?"
+: Giovanni says, "[yell]Oh yeah![/]"
+: Giorgios says, "[yell]Yes! Yes![/]"
 : Niccolo says, "And do you want..."
 : says "the highest standards of craftsmanship to be upheld?"
-: Yusuf says, "Uh... sure."
+: Yusuf says, "Uh... [sneaky]sure[/]."
 : Giovanni says, "Brother, your words touch my heart."
 : says, "To cut a rock..."
 : says, "To shape a rock..."
@@ -280,13 +280,12 @@ DDCCAAABBE
 : Giorgios says, "Carving fine details in stone is hard."
 : says, "Wine should flow freely throughout the day!"
 : Niccolo says, "We should work in comfortable conditions."
-: says, "Yes, brother."
 : Yusuf says, "The right names need to be on the right lists!"
 : Niccolo says, "We need ways to verify who is one of us."
 : says, "Lists, perhaps, though..."
 : says, "secret handshakes are good too."
-: Harold says, "And if some massive jerk takes your job..."
-: says, "because he did one convenient thing for King Frederick..."
+: Harold says, "And if some [tense]massive jerk[/] takes your job..."
+: says, "[sneaky]because he did one convenient thing for King Frederick...[/]"
 : says, "[tense]revenge is in order![/]"
 : Niccolo says, "Uh..."
 : says, "Jobs should be given based on ability to do them well."
@@ -353,7 +352,7 @@ DDCCAAABBE
 23:02:29 Giovanni @ Crypt (50%)
 23:02:30 Hugo @ Crypt (70%)
 : says, "Fellow Freemasons, what is our next plan?"
-: Niccolo says, "Freemasons? We're not freemasons."
+: Niccolo says, "*Freemasons?* We're not freemasons."
 : Hugo says, "You're not?"
 : Niccolo says, "We haven't even picked a name yet."
 : Hugo says, "My apologies!"
@@ -361,8 +360,8 @@ DDCCAAABBE
 : Hugo goes to Sacristan's Quarters (70%)
 23:02:50 Niccolo says, "There are no Freemasons." 
 : says "They've just been using that name to rile people up."
-: Yusuf says, "But what if..." to Niccolo
-: says "[tense]we[/] were the Freemasons?"
+: Yusuf says, "[sneaky]But what if...[/]" to Niccolo
+: says "*we* were the Freemasons?"
 : Niccolo says, "I don't understand."
 : Yusuf says, "The pope knows the Freemasons aren't real."
 : says, "If we choose the same name for ourselves..."
@@ -373,9 +372,9 @@ DDCCAAABBE
 : says, "you're more a... Freeherald, I guess."
 : Harold says, "It's a separate organization?"
 : Niccolo says, "Yes, though closely allied with the Freemasons."
-: Harold says, "Brilliant!"
+: Harold says, "*Brilliant!*"
 23:02:28 Giorgios goes (60%)
-23:03:33 Giorgios says, "I don't feel so good."
+23:03:33 Giorgios says, "[sneaky]I don't feel so good.[/]"
 : Harold faces Giorgios
 : Giovanni faces Giorgios
 : Yusuf says "What's wrong?" to Giorgios
@@ -385,10 +384,10 @@ DDCCAAABBE
 23:03:42 Harold faces left
 : says "If you like, I could stand by the door"
 : Giovanni faces Harold
-: says "and loudly announce people's names as they enter."
+: Harold says "and loudly announce people's names as they enter."
 : Niccolo says, "Appreciated, brother. But perhaps..."
-: says "heralding is not so useful for a secret society."
-: Yusuf says, "I am thinking we should have a sign-in sheet"
+: says "heralding is not so useful for a *secret* society."
+: Yusuf says, "I am thinking we should have a sign-in sheet" to Niccolo
 : Niccolo says, "A list of people's names?"
 : Yusuf says, "Yes! To record who attends our meetings." to Niccolo
 : Niccolo says, "I fear we are not yet understanding the concept of..."
@@ -398,17 +397,17 @@ DDCCAAABBE
 : faces left
 
 23:02:55 Hugo @ Sacristan's Quarters (70%)
-: Hugo says, "My apologies, Father."
-: says, "They are not Freemasons."
-: Ugolino says, "I told you - the Freemasons are a fiction!"
-: says, "Be done with your foolishness,"
-: says, "and return to the Lateran Palace."
-: Hugo says, "Yes, Father."
+: Hugo says, "[whisper]My apologies, Father.[/]"
+: says, "[whisper]They are not Freemasons.[/]"
+: Ugolino says, "[whisper]I told you[/] - the Freemasons are a fiction!"
+: says, "[whisper]Be done with your foolishness,[/]"
+: says, "[whisper]and return to the Lateran Palace.[/]"
+: Hugo says, "[whisper]Yes, Father.[/]"
 : goes to Forest (10%)
 : hide Hugo
 
 23:03:11 Ugolino thinks, "Are liars confused by their own lies?"
-: thinks, "It was he who framed the poor brute in the cellar."
+: thinks, "It was *he* who framed the poor brute in the cellar."
 23:03:34 Ugolino goes to Hall
 
 23:03:20 Sticky Agatha says, "Hello!" to Hugo.
@@ -419,7 +418,7 @@ DDCCAAABBE
 23:03:26 goes to Nave (20%)
 
 23:03:41 Ugolino @ Hall
-: thinks "Best to be safe."
+: thinks "[sneaky]Best to be safe.[/]"
 : takes Bull Mask
 : appears as Masked
 : goes to Nave

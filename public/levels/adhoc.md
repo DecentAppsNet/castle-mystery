@@ -121,7 +121,7 @@ VVVHHGG
 11:00:00 Marty waits
 : says, "Sometimes, I'm a little [tense]tense[/]."
 : says, "Other times, I like to be [sneaky]sneaky[/]."
-: says, "I'm not [emphasis]always[/] a pain."
+: says, "I'm not *always* a pain."
 : says, "[whisper]Do you want to hear a secret?[/]"
 : says, "[yell]Too bad![/] I don't trust you."
 : says, "My favorite ice cream is [flourish]neopolitan[/]."

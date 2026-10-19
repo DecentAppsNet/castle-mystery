@@ -179,12 +179,12 @@ A.......
 
 # Itinerary
 
-9:00:00 Constance I says "Aiiieeee!"
-: says "(huff) (huff) (huff)"
+9:00:00 Constance I says "[tense]Aiiieeee![/]"
+: says "[tense](huff) (huff) (huff)[/]"
 : Sofia the Midwife says "My lady, let me send these common folk away."
-: Constance I says "No! They must all see!"
+: Constance I says "*No!* [tense]They must all see[/]!"
 : Sofia the Midwife says "As you wish."
-9:00:15 Constance I says "(huff) (huff)"
+9:00:15 Constance I says "[tense](huff) (huff)[/]"
 
 9:00:00 Sticky Agatha says "Today, we may see our Queen."
 : takes infant in right hand.
@@ -192,7 +192,7 @@ A.......
 9:00:07 @ East Square (10%)
 
 9:00:00 Pope takes Holy Binky in right hand
-: says "Behold the Holy Binky!"
+: says "[flourish]Behold the Holy Binky![/]"
 : faces left.
 : says "Carved by Joseph. Given to the baby Jesus."
 : Ugolino says "A fitting gift for the new mother."
@@ -202,29 +202,29 @@ A.......
 9:00:19 Ugolino @ Cathedral (30%)
 : faces right.
 
-9:00:18 Female Peasant thinks, "40 years? She's too old to have a child!"
+9:00:18 Female Peasant thinks, "*40 years?* She's too old to have a child!"
 
 9:00:20 Pope @ Birthing Tent (20%)
-: Sofia the Midwife says, "My lady, his Holiness has arrived."
+: Sofia the Midwife says, "My lady, [flourish]his Holiness[/] has arrived."
 : Constance I says, "I know! He reeks of frankincense."
-: Pope says, "Oh, beloved daughter, Queen of Sicily."
-: Constance I says, "(huff) (huff)"
+: Pope says, "Oh, beloved daughter, [flourish]Queen of Sicily[/]."
+: Constance I says, "[tense](huff) (huff)[/]"
 : Pope says, "I bestow to your newborn a gift most-"
-: Constance I says, "Just leave it on the pile."
+: Constance I says, "[tense]Just leave it on the pile.[/]"
 : Pope says, "But-"
-: Constance I says, "Thank you! You can go."
+: Constance I says, "[yell]Thank you![/] [tense]You can go.[/]"
 : Pope goes (80%)
 : drops Holy Binky
-: Constance I says, "(huff) (huff)"
+: Constance I says, "[tense](huff) (huff)[/]"
 
-9:00:21 Old Female Peasant 2 thinks, "The Queen is much too old for this."
+9:00:21 Old Female Peasant 2 thinks, "The Queen is *much* too old for this."
 
 9:00:42 Amos goes to Birthing Tent (90%)
 9:00:43 Pope goes to Cathedral
 9:00:43 Amos @ Birthing Tent (90%)
 : Amos says, "Your Majesty, shall I bring them in?"
-: Constance I says, "Yes! As many as possible."
-: Constance I says, "All must see!"
+: Constance I says, "[tense]Yes! As many as possible.[/]"
+: Constance I says, "[tense]All must see![/]"
 : Amos goes to East Square
 
 9:00:52 Amos @ East Square
@@ -242,7 +242,7 @@ A.......
 
 9:00:57 Sofia the Midwife goes to Birthing Tent (70%)
 9:00:57 Sticky Agatha @ Birthing Tent (90%)
-: Constance I says, "Aiieeee!"
+: Constance I says, "[manic]Aiieeee![/]"
 : Sofia the Midwife @ Birthing Tent (70%)
 : faces left.
 : Constance I gives newborn baby to Sofia the Midwife.
@@ -260,7 +260,7 @@ A.......
 : Constance I says, "Just tell everybody I wasn't faking."
 9:01:21 Sticky Agatha goes to Living Space
 9:01:23 Sofia the Midwife says, "Majesty, what shall you name him?"
-: Constance I says, "Constantine. After myself, of course."
+: Constance I says, "[flourish]Constantine.[/] After myself, of course."
 
 9:00:48 Pope @ Cathedral
 : Ugolino says, "Your Holiness has returned."
@@ -272,15 +272,15 @@ A.......
 : says, "What a drab little church."
 : says, "Not a single flying buttress!"
 : Ugolino says, "I shall tell the parish priest of your dissatisfaction."
-: Pope says, "Good."
+: Pope says, "[sneaky]Good.[/]"
 
 9:01:25 Sticky Agatha @ Living Space
 
-9:01:28 Amos says, "Next!"
+9:01:28 Amos says, "[yell]Next![/]"
 : says, "Get in there and witness."
 
-9:00:57 Male Peasant 4 says, "She brings a baby into the tent?"
-: Old Female Peasant 2 says, "What fraud is this? We are not blind."
+9:00:57 Male Peasant 4 thinks, "She brings a baby into the tent?"
+: Old Female Peasant 2 thinks, "What fraud is this? We are not blind."
 
 # Conclusions
 

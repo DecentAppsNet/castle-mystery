@@ -289,7 +289,7 @@ SSMM/HH\YYYYTT
 7:30:40 Pietro faces left
 7:30:40 Anna goes to Family Quarters
 
-7:30:05 Yusuf thinks, "I must see Anna today."
+7:30:05 Yusuf thinks, "I *must* see Anna today."
 
 7:30:06 Stefan @ Common Kitchen
 : Maria faces Stefan
@@ -304,7 +304,7 @@ SSMM/HH\YYYYTT
 : Heinrich stands
 : Ahmad says, "I don't care about your royal friend."
 : says, "In the House of Rocks, I am your King."
-: says, "And the King says, 'get to the yard'!"
+: says, "And the King says, *get to the yard*!"
 
 7:30:20 Stefan @ Workshop Yard (80%)
 7:30:36 faces left
@@ -336,7 +336,7 @@ SSMM/HH\YYYYTT
 : faces left
 : says, "Niccolò, you know he's going to come"
 : says, "and yell at you."
-: Niccolo says, "(sigh)"
+: Niccolo says, "[sneaky](sigh)[/]"
 : stands
 : says, "Time to chop rocks."
 7:30:37 Maria faces right
@@ -349,7 +349,7 @@ SSMM/HH\YYYYTT
 : Salomone says, "Of course."
 : Yusuf says, "In the codex, you list me among the yard workers."
 : Salomone says, "Why would I not?"
-: Yusuf says, "I visit the yard. But I do not work there."
+: Yusuf says, "I visit the yard. But I do not *work* there."
 : Salomone says, "It is just a list."
 : Yusuf says, "But is it a correct list?"
 : Salomone says, "Correct enough."
@@ -359,7 +359,7 @@ SSMM/HH\YYYYTT
 7:30:32 Niccolo goes to Workshop Yard (90%)
 7:30:33 Ahmad goes to Workers' Dormitory
 7:30:37 Ahmad @ Workers' Dormitory
-: says, "Drunken fool!"
+: says, "[yell]Drunken fool![/]"
 : says, "Your apprentice starts work well before you."
 : says, "And his hands are steady. Are yours?"
 : Giorgios says, "My wine is watered." 
@@ -373,7 +373,7 @@ SSMM/HH\YYYYTT
 : Maria says, "There's still breakfast left for you."
 : Heinrich faces left
 : Heinrich says, "No time. I'm late!"
-: Maria says, "Wait!"
+: Maria says, "[yell]Wait![/]"
 : takes bread roll in left hand
 : gives bread roll to Heinrich
 : says, "Take it with you."
@@ -395,7 +395,7 @@ SSMM/HH\YYYYTT
 : faces left
 : kneels
 : waits 20
-: thinks, "(thinking dark thoughts)"
+: thinks, "[sneaky](thinking dark thoughts)[/]"
 : stands
 : goes (80%)
 : waits 10
@@ -404,7 +404,7 @@ SSMM/HH\YYYYTT
 : kneels
 : waits 10
 : goes (70%)
-: Niccolo thinks, "This is Stefan's fault."
+: Niccolo thinks, "[sneaky]This is Stefan's fault.[/]"
 7:32:36 Niccolo goes to Stone Store
 
 7:30:44 Anna @ Family Quarters
@@ -418,7 +418,7 @@ SSMM/HH\YYYYTT
 : Maria says, "Shall I make my food less delicious?"
 : Ahmad says, "No lingering after sun up!"
 : Maria says, "Even for you?"
-: Ahmad says, "I am not lingering!"
+: Ahmad says, "[yell]I am not lingering![/]"
 (Ahmad leaves for Workshop Yard)
 
 7:31:04 Yusuf goes to Master's Hall
@@ -434,8 +434,8 @@ SSMM/HH\YYYYTT
 : Yusuf says, "Good."
 : Pietro says, "And only your name will be on it."
 : Yusuf says, "Very good. What is this list?"
-: Pietro says, "A list of People Who Complain."
-: Yusuf says, "Oh no no no, sir."
+: Pietro says, "A list of [flourish]People Who Complain[/]."
+: Yusuf says, "[tense]Oh no no no,[/] sir."
 : says, "I only wanted your records to be in order."
 : Pietro says, "Get back to work."
 (Yusuf leaves for tool store)
@@ -462,7 +462,7 @@ SSMM/HH\YYYYTT
 : Heinrich faces Giovanni
 : Giovanni says, "Apprentice, you're finally here." to Heinrich
 : says, "Oil my tool!"
-: Andreas says, "(snickers)"
+: Andreas says, "[whisper](snickers)[/]"
 : Giovanni says, "Oh, shut up."
 : takes chisel in right hand
 : gives chisel to Heinrich
@@ -477,7 +477,7 @@ SSMM/HH\YYYYTT
 : says, "with a fast jerking motion."
 : says, "It is safer."
 : says, "Also, do you want some wine?"
-: Andreas says, "I am thirsty. Do you have water?"
+: Andreas says, "I *am* thirsty. Do you have water?"
 : Giorgios says, "The wine has some water in it."
 : Andreas says, "No, thank you, sir."
 : Giorgios goes (10%)
@@ -536,14 +536,14 @@ SSMM/HH\YYYYTT
 : waits 5
 : goes (40%)
 : faces Giorgios
-: says, "Take yourself and "
-: says, "your ridiculously large wineskin out of my yard!"
+: says, "[sneaky]Take yourself and[/]"
+: says, "[yell]your ridiculously large wineskin out of my yard![/]"
 : says, "No pay for today."
 : Giorgios waits
 : takes Big Wineskin in right hand
 : Big Wineskin emits "(glug, glug)"
 7:32:24 Giorgios goes to Workers' Dormitory (10%)
-7:32:25 Ahmad thinks, "That worthless drunk is paid 1 tari more than I!"
+7:32:25 Ahmad thinks, "That drunk is paid *one tari* more than I!"
 : faces right
 : waits 20
 : goes (30%)
@@ -575,10 +575,10 @@ SSMM/HH\YYYYTT
 : faces Heinrich
 : Yusuf says "Have you seen my abacus?"
 : Heinrich says "Not in here."
-: Yusuf says "Don't you understand I need it?"
+: Yusuf says "[tense]Don't you understand I need it?[/]"
 : Heinrich says "Pardon, sir. I will look for it."
 : Yusuf says "Sorry. I'm just in a bad mood."
-: says "It's that Salomone."
+: says "It's that *Salomone*."
 : says "He always acts superior to me."
 : says "Yet we are paid exactly the same!"
 : Heinrich says "I will look for the abacus."
@@ -588,7 +588,7 @@ SSMM/HH\YYYYTT
 7:32:29 King Frederick goes to Master's Hall (30%)
 7:32:32 King Frederick @ Master's Hall (30%)
 : Pietro kneels
-: says, "Your Majesty. Such an honor to receive you!"
+: says, "Your Majesty. [flourish]Such an honor[/] to receive you!"
 : King Frederick says, "Please rise, Master Mason."
 : Pietro stands
 : King Frederick says, "Is Heinrich here?"
@@ -596,26 +596,26 @@ SSMM/HH\YYYYTT
 : King Frederick says, "Yes, I thought we'd go falconing."
 : Pietro says, "Majesty, did I ever show you my stones?"
 : King Frederick says, "I've seen many stones. They are all the same."
-: Pietro says, "Oh, no, Majesty. My stones are quite special."
+: Pietro says, "Oh, no, Majesty. My stones are *quite* special."
 : says, "I would love to show them to you."
 : King Frederick says, "I shall ask my falcon."
 : says, "Furia, do you wish to see this man's special stones?"
-: Furia Perched emits "(squawk)"
+: Furia Perched emits "[yell](squawk)[/]"
 : King Frederick says, "She prefers to fly in the air and hunt."
 : Pietro says "I shall return with Heinrich shortly, my King."
 
 7:32:35 Yusuf @ Apprentices' Chamber
 : goes to Family Quarters
-: Anna says, "You cannot be here!"
+: Anna says, "[tense]You cannot be here![/]"
 : Yusuf says, "I needed to be near you."
 : Anna faces Yusuf.
 : Anna says, "I am spurning you, do you understand?"
-: says, "Spurn, spurn, spurn!"
+: says, "[yell]Spurn, spurn, spurn![/]"
 : Yusuf says, "But I'm having a really bad day."
 : Anna says, "You have been spurned."
 : Yusuf says, "But can I just-"
-: Anna says, "No! Get out!"
-: says, "I'm busy helping my father think!"
+: Anna says, "[yell]No! Get out![/]"
+: says, "[yell]I'm busy helping my father think![/]"
 : thinks, "(thinking)"
 : thinks, "(thinking very hard)"
 7:33:05 Yusuf goes to Apprentices' Chamber
@@ -655,7 +655,7 @@ SSMM/HH\YYYYTT
 7:33:01 Heinrich @ Workshop Yard
 
 7:33:10 Yusuf @ Apprentices' Chamber
-: says, "She is insane!"
+: says, "She is *insane*!"
 
 # Conclusions
 
