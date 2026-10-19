@@ -20,7 +20,7 @@ import ItineraryMarkerModel from "./types/ItineraryMarkerModel";
 import Character from "@/game/types/Character";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
 
-const SPEECH_CLUSTER_GAP_MSECS = 6 * MSECS_IN_SECOND;
+const SPEECH_CLUSTER_GAP_MSECS = .5 * MSECS_IN_SECOND;
 
 function _isKeyframeObscured(characterPosition:Position, characterSkinId:string, rooms:Room[], revealedSkinIds:Set<string>, obscuredRoomIds:Set<string>):boolean {
   if (!revealedSkinIds.has(characterSkinId)) return true;

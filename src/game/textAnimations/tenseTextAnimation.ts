@@ -3,7 +3,7 @@
 
 import { LetterTransform } from './types/LetterTransform';
 
-const TENSE_PERIOD_MSECS = 120;
+const TENSE_PERIOD_MSECS = 200;
 
 export function calcTenseTextAnimationTransform(_text:string, letterI:number, metaTime:number):Partial<LetterTransform> {
   const phase = (metaTime % TENSE_PERIOD_MSECS) / TENSE_PERIOD_MSECS * Math.PI * 2 + letterI * 2.4;
