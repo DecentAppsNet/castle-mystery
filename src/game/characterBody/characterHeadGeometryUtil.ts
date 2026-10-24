@@ -4,8 +4,16 @@
 import BodyPart from './types/BodyPart';
 import ResolvedBodyPart from './types/ResolvedBodyPart';
 import Rect from '../types/Rect';
+import { FacingDirection } from '../types/Character';
 import { createRect } from '../rectUtil';
-import { transformBodyRect } from './characterBodyTransformUtil';
+import { composeBodyTransforms, createBodyAttachmentTransform, transformBodyRect } from './characterBodyTransformUtil';
+
+/** Adds a draw-time neck rotation without changing the base placement; radians retain their visual direction under facing. */
+export function rotateHeadPose(head:ResolvedBodyPart, facing:FacingDirection, radians:number):ResolvedBodyPart {
+  const pivot = head.part.pivotPoint;
+  const rotation = createBodyAttachmentTransform(pivot, pivot, facing === 'left' ? -radians : radians);
+  return { part:head.part, transform:composeBodyTransforms(head.transform, rotation) };
+}
 
 /** Returns a centered, aspect-preserving local game-unit fit; null selects fallback for unusable image dimensions. */
 export function fitHeadImage(head:Pick<BodyPart, 'width'|'height'>,
