@@ -3,7 +3,7 @@ import Point from './Point';
 
 type ConnectedBodyPart = {
   readonly part:BodyPart,
-  readonly connectionPoint:Point
+  readonly connectionPoint:Point // Game units from the parent part's local origin.
 };
 
 export default ConnectedBodyPart;
