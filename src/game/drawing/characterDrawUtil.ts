@@ -4,7 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
-import { createBodyCanvasLayout, createBodyPose, getHeadImageBounds, getResolvedBodyPart, transformBodyPoint } from '@/game/characterBody';
+import { createBodyCanvasLayout, createBodyPose, getBodyPaintOrder, getHeadImageBounds, getResolvedBodyPart } from '@/game/characterBody';
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Character from "../types/Character";
@@ -187,14 +187,8 @@ export function createCharacterCanvasLayout(character:Character, displayPosition
   const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
   const pose = createBodyPose(character.rootBodyPart, character.bodyOrientation, character.facingDirection);
   const projected = createBodyCanvasLayout(pose, [centerX + sway, bottomY], scalingFactors);
-  const segments = projected.parts.filter(({ part }) => part.kind !== 'head').map(({ part, transform }) => {
-    const [fromX, fromY] = transformBodyPoint(transform, part.pivotPoint);
-    const [toX, toY] = transformBodyPoint(transform, [part.width / 2, part.height]);
-    return { fromX, fromY, toX, toY };
-  });
-  const layout = { ...projected, segments };
   return {
-    layout,
+    layout:projected,
     characterWidth:projected.bounds.width,
     characterHeight:projected.bounds.height,
     characterCenterCanvasPoint:[...projected.characterCenterCanvasPoint] as [number, number],
@@ -277,11 +271,14 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   drawHeldItemsBehindCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
-  layout.parts.forEach(part => {
-    if (part.part.kind !== 'head') drawCharacterBodyPart(part, context);
+  getBodyPaintOrder(character.facingDirection).forEach(kind => {
+    const part = getResolvedBodyPart(layout.parts, kind);
+    if (kind === 'head') {
+      drawCharacterHead(part, character, imageSet, spriteOverrides, scalingFactors.roomLineWidth, context);
+    } else {
+      drawCharacterBodyPart(part, context);
+    }
   });
-  drawCharacterHead(getResolvedBodyPart(layout.parts, 'head'), character, imageSet,
-    spriteOverrides, scalingFactors.roomLineWidth, context);
   drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
   drawCharacterAttachmentMarkers(layout.parts, context);
 }

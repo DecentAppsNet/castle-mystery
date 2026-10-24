@@ -21,11 +21,12 @@ A
 * style=Museum
 
 ```
-..M.
+.cM.
 ....
 ```
 
 * M=Marty
+* c=Chair Right
 
 # Characters
 
@@ -55,3 +56,23 @@ A
 : says "7. kneeling, facing right"
 : faces left
 : says "8. kneeling, facing left"
+: stands on Chair Right
+: faces right
+: says "9. stacked, standing, facing right"
+: faces left
+: says "10. stacked, standing, facing left"
+: lays
+: faces right
+: says "11. stacked, laying, facing right"
+: faces left
+: says "12. stacked, laying, facing left"
+: sits
+: faces right
+: says "13. stacked, sitting, facing right"
+: faces left
+: says "14. stacked, sitting, facing left"
+: kneels
+: faces right
+: says "15. stacked, kneeling, facing right"
+: faces left
+: says "16. stacked, kneeling, facing left"

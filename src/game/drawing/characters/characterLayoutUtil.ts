@@ -222,12 +222,3 @@ export function createCharacterLayout(backboneX:number, centerY:number, characte
   if (bodyOrientation === 'sitting') return _createSittingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
   return _createStandingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
 }
-
-export function strokeCharacterBody(layout:{ readonly segments:readonly StrokeSegment[] }, context:CanvasRenderingContext2D) {
-  context.beginPath();
-  layout.segments.forEach(segment => {
-    context.moveTo(segment.fromX, segment.fromY);
-    context.lineTo(segment.toX, segment.toY);
-  });
-  context.stroke();
-}
