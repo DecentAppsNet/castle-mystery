@@ -66,8 +66,14 @@ export function getBodyBounds(parts:readonly ResolvedBodyPart[]):Rect {
  */
 export function createBodyPose(root:BodyPart, orientation:BodyOrientation, facing:FacingDirection):readonly ResolvedBodyPart[] {
   const legAngle = _getLegAngle(orientation);
-  const rootTransform = createBodyAttachmentTransform([0, 0], root.pivotPoint,
-    orientation === 'laying' ? Math.PI / 2 : 0);
+  const postureTransform = createBodyAttachmentTransform([0, 0], root.pivotPoint,
+    orientation === 'laying' ? -(Math.PI / 2) : 0);
+  const rootTransform = orientation === 'laying'
+    ? composeBodyTransforms(postureTransform, {
+      horizontalX:-1, horizontalY:0, verticalX:0, verticalY:1,
+      translateX:root.pivotPoint[0] * 2, translateY:0
+    })
+    : postureTransform;
   const parts = resolveBodyHierarchy(root, rootTransform, { leftLeg:legAngle, rightLeg:legAngle });
   const supports = orientation === 'standing'
     ? [getResolvedBodyPart(parts, 'leftLeg'), getResolvedBodyPart(parts, 'rightLeg')]

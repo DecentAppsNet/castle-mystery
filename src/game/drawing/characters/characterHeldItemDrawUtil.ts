@@ -11,7 +11,7 @@ import Item from "@/game/types/Item";
 import ScalingFactors from "@/game/types/ScalingFactors";
 import ImageSet from "@/game/types/ImageSet";
 import SpriteOverride from "@/game/effects/types/SpriteOverride";
-import { CharacterLayout } from "./characterLayoutUtil";
+import CharacterLayout from '@/game/characterBody/types/CharacterLayout';
 import CanvasBubbleAnchor from "@/game/effects/types/CanvasBubbleAnchor";
 
 type Hand = 'left'|'right';

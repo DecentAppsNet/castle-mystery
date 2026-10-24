@@ -8,7 +8,7 @@ describe('characterHeadGeometryUtil', () => {
       const head = { width:8, height:6 };
       const fit = fitHeadImage(head, 100, 200)!;
       expect(fit.width / fit.height).toBeCloseTo(100 / 200);
-      expect(fit.height).toBeCloseTo(head.height);
+      expect(fit.width).toBeCloseTo(head.width);
       expect(fit.x + fit.width / 2).toBeCloseTo(head.width / 2);
       expect(fit.y + fit.height / 2).toBeCloseTo(head.height / 2);
     });

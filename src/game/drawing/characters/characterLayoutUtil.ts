@@ -223,7 +223,7 @@ export function createCharacterLayout(backboneX:number, centerY:number, characte
   return _createStandingCharacterLayout(backboneX, centerY, characterWidth, characterHeight, facingDirection);
 }
 
-export function strokeCharacterBody(layout:CharacterLayout, context:CanvasRenderingContext2D) {
+export function strokeCharacterBody(layout:{ readonly segments:readonly StrokeSegment[] }, context:CanvasRenderingContext2D) {
   context.beginPath();
   layout.segments.forEach(segment => {
     context.moveTo(segment.fromX, segment.fromY);

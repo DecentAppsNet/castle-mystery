@@ -15,11 +15,11 @@ export function rotateHeadPose(head:ResolvedBodyPart, facing:FacingDirection, ra
   return { part:head.part, transform:composeBodyTransforms(head.transform, rotation) };
 }
 
-/** Returns a centered, aspect-preserving local game-unit fit; null selects fallback for unusable image dimensions. */
+/** Fits the logical head width and derives height from image aspect ratio; null selects fallback for unusable dimensions. */
 export function fitHeadImage(head:Pick<BodyPart, 'width'|'height'>,
     imageWidth:number, imageHeight:number):Rect|null {
   if (imageWidth <= 0 || imageHeight <= 0) return null;
-  const scale = Math.min(head.width / imageWidth, head.height / imageHeight);
+  const scale = head.width / imageWidth;
   const width = imageWidth * scale;
   const height = imageHeight * scale;
   return createRect((head.width - width) / 2, (head.height - height) / 2, width, height);

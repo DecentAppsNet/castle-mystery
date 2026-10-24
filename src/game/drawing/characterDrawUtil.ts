@@ -4,7 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
-import { MAP_TILE_SIZE } from "../roomGridUtil";
+import { createBodyCanvasLayout, createBodyPose, transformBodyPoint } from '@/game/characterBody';
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Character from "../types/Character";
@@ -16,7 +16,7 @@ import Item from "../types/Item";
 import Position from "../types/Position";
 import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK } from "./drawColorConstants";
 import { drawPopover, PopoverBodyEntry } from "./popoverDrawUtil";
-import { createCharacterLayout, strokeCharacterBody } from "./characters/characterLayoutUtil";
+import { drawCharacterAttachmentMarkers, drawCharacterBodyPart } from './characters/characterBodyDrawUtil';
 import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from "./characters/characterHeldItemDrawUtil";
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
@@ -32,8 +32,6 @@ const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.2;
 const CHARACTER_SWAY_INTERVAL = 1500;
 const CHARACTER_SWAY_AMOUNT = 1;
-const CHARACTER_HEIGHT_STORY_RATIO = 0.4;
-const CHARACTER_WIDTH_HEIGHT_RATIO = 0.5;
 const OBSCURED_ACTIVE_HEAD_WORLD_WIDTH = 3;
 const OBSCURED_ACTIVE_HEAD_WORLD_HEIGHT = 3;
 const OBSCURED_ACTIVE_HEAD_TITLE_GAP_RATIO = 0.5;
@@ -42,14 +40,6 @@ const ROOM_TITLE_MARGIN = 2;
 type ScratchCanvas = OffscreenCanvas|HTMLCanvasElement;
 
 const _obscuredActiveHeadSilhouetteCanvasCache = new WeakMap<ImageBitmap, Map<string, ScratchCanvas>>();
-
-function _getCharacterSizePixels(scalingFactors:ScalingFactors):{ characterWidth:number, characterHeight:number } {
-  const characterHeight = MAP_TILE_SIZE * CHARACTER_HEIGHT_STORY_RATIO * scalingFactors.scaleY;
-  return {
-    characterWidth:characterHeight * CHARACTER_WIDTH_HEIGHT_RATIO,
-    characterHeight
-  };
-}
 
 function _calcObscuredActiveHeadCacheKey(widthPixels:number, heightPixels:number):string {
   return `${Math.max(1, Math.round(widthPixels))}|${Math.max(1, Math.round(heightPixels))}`;
@@ -191,16 +181,23 @@ function _createCharacterPopoverBodyEntries(character:Character):PopoverBodyEntr
 
 export function createCharacterCanvasLayout(character:Character, displayPosition:Position,
     scalingFactors:ScalingFactors, time:number) {
-  const { anchorX:backboneX, anchorTopY, centerX, centerY, characterWidth, characterHeight } = getCharacterSpeechAnchor(
-    character, displayPosition, scalingFactors, time);
-  const layout = createCharacterLayout(backboneX, centerY, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
+  const [centerX, bottomY] = _getCharacterCanvasBottomPosition(displayPosition, scalingFactors);
+  const swayPhase = ((time + character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
+  const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
+  const pose = createBodyPose(character.rootBodyPart, character.bodyOrientation, character.facingDirection);
+  const projected = createBodyCanvasLayout(pose, [centerX + sway, bottomY], scalingFactors);
+  const segments = projected.parts.filter(({ part }) => part.kind !== 'head').map(({ part, transform }) => {
+    const [fromX, fromY] = transformBodyPoint(transform, part.pivotPoint);
+    const [toX, toY] = transformBodyPoint(transform, [part.width / 2, part.height]);
+    return { fromX, fromY, toX, toY };
+  });
+  const layout = { ...projected, segments, topY:projected.bounds.y, bottomY:projected.bounds.y + projected.bounds.height };
   return {
     layout,
-    characterWidth,
-    characterHeight,
-    characterCenterCanvasPoint:[backboneX, centerY] as [number, number],
-    highlightCenterX:centerX,
-    anchorTopY
+    characterWidth:projected.bounds.width,
+    characterHeight:projected.bounds.height,
+    characterCenterCanvasPoint:[...projected.characterCenterCanvasPoint] as [number, number],
+    anchorTopY:projected.anchorTopY
   };
 }
 
@@ -208,9 +205,7 @@ function _getFaceImageDrawSize(faceImage:ImageBitmap, headRadius:number):{ drawW
   const faceImageWidth = faceImage.width;
   const faceImageHeight = faceImage.height;
   if (!faceImageWidth || !faceImageHeight) return null;
-  const maxFaceWidth = headRadius * 6;
-  const maxFaceHeight = headRadius * 6;
-  const faceScale = Math.min(maxFaceWidth / faceImageWidth, maxFaceHeight / faceImageHeight);
+  const faceScale = headRadius * 2 / faceImageWidth;
   return {
     drawWidth:faceImageWidth * faceScale,
     drawHeight:faceImageHeight * faceScale
@@ -259,15 +254,9 @@ export function getCharacterHoverRect(character:Character, displayPosition:Posit
 
 export function getCharacterSpeechAnchor(character:Character, displayPosition:Position,
   scalingFactors:ScalingFactors, time:number) {
-  const [centerX, bottomY] = _getCharacterCanvasBottomPosition(displayPosition, scalingFactors);
-  const { characterWidth, characterHeight } = _getCharacterSizePixels(scalingFactors);
-  const provisionalLayout = createCharacterLayout(0, 0, characterWidth, characterHeight, character.facingDirection, character.bodyOrientation);
-  const centerY = Math.round(bottomY - provisionalLayout.bottomY);
-  const swayPhase = ((time + character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
-  const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
-  const anchorX = centerX + sway;
-  const anchorTopY = Math.round(centerY + provisionalLayout.topY);
-  return { anchorX, anchorTopY, centerX, centerY, characterWidth, characterHeight:provisionalLayout.bottomY - provisionalLayout.topY };
+  const { layout, characterWidth, characterHeight } = createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
+  const [centerX, centerY] = layout.characterCenterCanvasPoint;
+  return { anchorX:layout.anchorX, anchorTopY:layout.anchorTopY, centerX, centerY, characterWidth, characterHeight };
 }
 
 function _drawActiveCharacterHighlight(centerX:number, centerY:number, characterWidth:number, characterHeight:number,
@@ -324,7 +313,9 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   drawHeldItemsBehindCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
-  strokeCharacterBody(layout, context);
+  layout.parts.forEach(part => {
+    if (part.part.kind !== 'head') drawCharacterBodyPart(part, context);
+  });
   const headRadius = layout.head.radius;
   if (!faceImage) {
     context.beginPath();
@@ -332,6 +323,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
+    drawCharacterAttachmentMarkers(layout.parts, context);
     return;
   }
 
@@ -341,6 +333,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
     context.stroke();
     drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
+    drawCharacterAttachmentMarkers(layout.parts, context);
     return;
   }
   const { drawWidth, drawHeight } = faceImageDrawSize;
@@ -352,6 +345,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
     context.restore();
     drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
+    drawCharacterAttachmentMarkers(layout.parts, context);
     return;
   }
 
@@ -362,6 +356,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
   context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
   drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
+  drawCharacterAttachmentMarkers(layout.parts, context);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,
