@@ -34,8 +34,20 @@ describe('characterBodyLayoutUtil', () => {
       expect([layout.leftHand.x, layout.leftHand.y]).toEqual(transformBodyPoint(leftArm.transform, leftArm.part.handPoint!));
       expect([layout.rightHand.x, layout.rightHand.y]).toEqual(transformBodyPoint(rightArm.transform, rightArm.part.handPoint!));
       expect(layout.bounds).toEqual(getBodyBounds(layout.parts));
-      expect(layout.anchorX).toBe(137);
+      expect(layout.anchorX).toBe(layout.head.centerX);
       expect(layout.anchorTopY).toBe(layout.bounds.y);
+    });
+
+    it('anchors bubbles horizontally on the head when laying right', () => {
+      const pose = createBodyPose(createDefaultCharacterBody(), 'laying', 'right');
+      const layout = createBodyCanvasLayout(pose, [137, 251], { scaleX:3, scaleY:5 });
+      expect(layout.anchorX).toBe(layout.head.centerX);
+    });
+
+    it('anchors bubbles horizontally on the head when laying left', () => {
+      const pose = createBodyPose(createDefaultCharacterBody(), 'laying', 'left');
+      const layout = createBodyCanvasLayout(pose, [137, 251], { scaleX:3, scaleY:5 });
+      expect(layout.anchorX).toBe(layout.head.centerX);
     });
 
     it('keeps standing feet on the supplied support', () => {

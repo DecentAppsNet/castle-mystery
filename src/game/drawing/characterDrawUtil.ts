@@ -17,6 +17,7 @@ import Position from "../types/Position";
 import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK } from "./drawColorConstants";
 import { drawPopover, PopoverBodyEntry } from "./popoverDrawUtil";
 import { drawCharacterAttachmentMarkers, drawCharacterBodyPart } from './characters/characterBodyDrawUtil';
+import { drawCharacterHead } from './characters/characterHeadDrawUtil';
 import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from "./characters/characterHeldItemDrawUtil";
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
@@ -201,17 +202,6 @@ export function createCharacterCanvasLayout(character:Character, displayPosition
   };
 }
 
-function _getFaceImageDrawSize(faceImage:ImageBitmap, headRadius:number):{ drawWidth:number, drawHeight:number }|null {
-  const faceImageWidth = faceImage.width;
-  const faceImageHeight = faceImage.height;
-  if (!faceImageWidth || !faceImageHeight) return null;
-  const faceScale = headRadius * 2 / faceImageWidth;
-  return {
-    drawWidth:faceImageWidth * faceScale,
-    drawHeight:faceImageHeight * faceScale
-  };
-}
-
 export function getCharacterCanvasRect(character:Character, displayPosition:Position, scalingFactors:ScalingFactors,
   time:number, imageSet:ImageSet|null = null,
   characterCanvasLayout = createCharacterCanvasLayout(character, displayPosition, scalingFactors, time)):Rect {
@@ -278,18 +268,11 @@ export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character
   context.restore();
 }
 
-function _findHeadRotationSpriteOverride(spriteOverrides:SpriteOverride[]):number {
-  return spriteOverrides.find(spriteOverride =>
-    spriteOverride.spriteKind === 'head')?.rotateRadians ?? 0;
-}
-
 export function drawCharacter(character:Character, displayPosition:Position, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, imageSet:ImageSet, isHighlighted:boolean,
     metaTime:number, spriteOverrides:SpriteOverride[],
     characterCanvasLayout = createCharacterCanvasLayout(character, displayPosition, scalingFactors, gameTime)) {
   const { layout, characterWidth, characterHeight } = characterCanvasLayout;
-  const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
-  const faceAngleOffsetRadians = _findHeadRotationSpriteOverride(spriteOverrides);
   if (isHighlighted) _drawActiveCharacterHighlight(layout.head.centerX, layout.head.centerY, characterWidth, characterHeight, scalingFactors, context, metaTime);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
@@ -297,52 +280,15 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
   layout.parts.forEach(part => {
     if (part.part.kind !== 'head') drawCharacterBodyPart(part, context);
   });
-  const headRadius = layout.head.radius;
-  if (!faceImage) {
-    context.beginPath();
-    context.moveTo(layout.head.centerX + headRadius, layout.head.centerY);
-    context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
-    context.stroke();
-    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
-    drawCharacterAttachmentMarkers(layout.parts, context);
-    return;
-  }
-
-  const faceImageDrawSize = _getFaceImageDrawSize(faceImage, headRadius);
-  if (!faceImageDrawSize) {
-    context.beginPath();
-    context.arc(layout.head.centerX, layout.head.centerY, headRadius, 0, Math.PI * 2);
-    context.stroke();
-    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
-    drawCharacterAttachmentMarkers(layout.parts, context);
-    return;
-  }
-  const { drawWidth, drawHeight } = faceImageDrawSize;
-  if (character.bodyOrientation !== 'laying') {
-    context.save();
-    context.translate(layout.head.centerX, layout.head.centerY);
-    context.rotate(faceAngleOffsetRadians);
-    if (character.facingDirection === 'left') context.scale(-1, 1);
-    context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
-    context.restore();
-    drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
-    drawCharacterAttachmentMarkers(layout.parts, context);
-    return;
-  }
-
-  context.save();
-  context.translate(layout.head.centerX, layout.head.centerY);
-  context.rotate((character.facingDirection === 'right' ? -Math.PI / 2 : Math.PI / 2) + faceAngleOffsetRadians);
-  if (character.facingDirection === 'left') context.scale(-1, 1);
-  context.drawImage(faceImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
-  context.restore();
+  drawCharacterHead(getResolvedBodyPart(layout.parts, 'head'), character, imageSet,
+    spriteOverrides, scalingFactors.roomLineWidth, context);
   drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
   drawCharacterAttachmentMarkers(layout.parts, context);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,
-  imageSet:ImageSet, isTitleKnown:boolean, movingCharacterIds:ReadonlySet<string>,
-  layoutPlanner:CanvasLayoutPlanner|null = null, room:Room|null = null) {
+    imageSet:ImageSet, isTitleKnown:boolean, movingCharacterIds:ReadonlySet<string>,
+    layoutPlanner:CanvasLayoutPlanner|null = null, room:Room|null = null) {
   if (!isCharacterInteractive(character)) return;
   const title = isTitleKnown ? _getCharacterDisplayName(character) : "";
   const displayLayout = room ? createRoomContentDisplayLayout(room, [character], movingCharacterIds) : null;

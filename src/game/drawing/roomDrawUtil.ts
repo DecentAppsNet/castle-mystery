@@ -349,7 +349,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
       content.character, content.displayPosition, scalingFactors, gameTime);
     characterCanvasLayoutById.set(content.character.id, canvasLayout);
     characterAnatomyById.set(content.character.id, {
-      anchorX:canvasLayout.characterCenterCanvasPoint[0],
+      anchorX:canvasLayout.layout.anchorX,
       anchorTopY:canvasLayout.anchorTopY,
       characterCenterCanvasPoint:canvasLayout.characterCenterCanvasPoint,
       headCenterCanvasPoint:[canvasLayout.layout.head.centerX, canvasLayout.layout.head.centerY],

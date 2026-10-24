@@ -38,6 +38,6 @@ export function createBodyCanvasLayout(pose:readonly ResolvedBodyPart[], support
     head:{ centerX, centerY, radius:Math.max(headBounds.width, headBounds.height) / 2 },
     leftHand:_getHand(getResolvedBodyPart(parts, 'leftArm')),
     rightHand:_getHand(getResolvedBodyPart(parts, 'rightArm')),
-    anchorX:supportAnchor[0], anchorTopY:bounds.y
+    anchorX:centerX, anchorTopY:bounds.y
   };
 }
