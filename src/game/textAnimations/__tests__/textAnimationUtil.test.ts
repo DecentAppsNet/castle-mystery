@@ -61,9 +61,9 @@ describe('textAnimations', () => {
         .not.toEqual(calcTextAnimationTransform('tense', 'doom', 1, 95));
     });
 
-    it('repeats after its chosen 240 millisecond period', () => {
+    it('repeats after its chosen 200 millisecond period', () => {
       const initial = calcTextAnimationTransform('tense', 'doom', 1, 35);
-      const repeated = calcTextAnimationTransform('tense', 'doom', 1, 275);
+      const repeated = calcTextAnimationTransform('tense', 'doom', 1, 235);
 
       expect(repeated.translateXFraction).toBeCloseTo(initial.translateXFraction!);
       expect(repeated.translateYFraction).toBeCloseTo(initial.translateYFraction!);
