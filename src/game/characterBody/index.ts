@@ -3,5 +3,6 @@
 
 export { createDefaultCharacterBody } from './characterBodyDefinitionUtil';
 export { createBodyCanvasLayout } from './characterBodyLayoutUtil';
+export { fitHeadImage, getHeadImageBounds } from './characterHeadGeometryUtil';
 export { composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint, transformBodyRect } from './characterBodyTransformUtil';
 export { createBodyPose, getBodyPaintOrder, getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy } from './characterBodyPoseUtil';
