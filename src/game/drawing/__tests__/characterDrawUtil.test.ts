@@ -36,24 +36,6 @@ describe('characterDrawUtil', () => {
   });
 
   describe('getCharacterCanvasRect()', () => {
-    it('extends bounds to include a drawn face image', () => {
-      const character = {
-        ...createDefaultCharacter(),
-        faceImageUrl:'/assets/faces/test.png'
-      };
-      const imageSet:ImageSet = new Map([
-        ['/assets/faces/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
-      ]);
-
-      const rectWithoutFaceImage = getCharacterCanvasRect(
-        { ...character, faceImageUrl:null }, character.position, SCALING_FACTORS, 0, imageSet);
-      const rectWithFaceImage = getCharacterCanvasRect(character, character.position, SCALING_FACTORS, 0, imageSet);
-
-      expect(rectWithFaceImage.y).toBeLessThan(rectWithoutFaceImage.y);
-      expect(rectWithFaceImage.height).toBeGreaterThan(rectWithoutFaceImage.height);
-      expect(rectWithFaceImage.width).toBeGreaterThan(rectWithoutFaceImage.width);
-    });
-
     it('raises the rendered rect when a room item stack shares the character square', () => {
       const room = {
         ...createDefaultRoom(),

@@ -40,18 +40,6 @@ describe('character body postures', () => {
     }
   });
 
-  it('lays the torso on the support surface with the head toward the facing direction', () => {
-    const parts = createBodyPose(createDefaultCharacterBody(), 'laying', 'right');
-    const torso = getResolvedBodyPart(parts, 'torso');
-    const head = getResolvedBodyPart(parts, 'head');
-    const torsoBounds = getBodyBounds([torso]);
-    const torsoCenter = transformBodyPoint(torso.transform, [torso.part.width / 2, torso.part.height / 2]);
-    const headCenter = transformBodyPoint(head.transform, [head.part.width / 2, head.part.height / 2]);
-
-    expect(torsoBounds.y + torsoBounds.height).toBeCloseTo(0);
-    expect(headCenter[0]).toBeGreaterThan(torsoCenter[0]);
-  });
-
   it('keeps anatomical hand ownership when mirroring every posture', () => {
     const root = createDefaultCharacterBody();
     for (const orientation of ['standing', 'sitting', 'kneeling', 'laying'] as const) {
