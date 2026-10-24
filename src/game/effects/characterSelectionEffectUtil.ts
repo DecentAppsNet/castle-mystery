@@ -13,7 +13,7 @@ const FADE_IN_DURATION = 200;
 const HOLD_DURATION = 300;
 const FADE_OUT_DURATION = 350;
 const ROTATION_DURATION = 1000;
-const HEAD_RADIUS_TO_DIAMETER = 8;
+const HEAD_RADIUS_TO_DIAMETER = 4;
 
 type BeforeCharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter' }>;
 
