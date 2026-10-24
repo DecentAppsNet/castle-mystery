@@ -2,13 +2,28 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import BodyPartTransform from './types/BodyPartTransform';
-import Point from './types/Point';
+import Point from '../types/Point';
+import Rect from '../types/Rect';
+import { createRect } from '../rectUtil';
 
 export function transformBodyPoint(transform:BodyPartTransform, point:Point):Point {
   return [
     transform.horizontalX * point[0] + transform.verticalX * point[1] + transform.translateX,
     transform.horizontalY * point[0] + transform.verticalY * point[1] + transform.translateY
   ];
+}
+
+export function transformBodyRect(transform:BodyPartTransform, rect:Rect):Rect {
+  const corners = [
+    transformBodyPoint(transform, [rect.x, rect.y]),
+    transformBodyPoint(transform, [rect.x + rect.width, rect.y]),
+    transformBodyPoint(transform, [rect.x, rect.y + rect.height]),
+    transformBodyPoint(transform, [rect.x + rect.width, rect.y + rect.height])
+  ];
+  const left = Math.min(...corners.map(point => point[0]));
+  const top = Math.min(...corners.map(point => point[1]));
+  return createRect(left, top, Math.max(...corners.map(point => point[0])) - left,
+    Math.max(...corners.map(point => point[1])) - top);
 }
 
 export function composeBodyTransforms(parent:BodyPartTransform, child:BodyPartTransform):BodyPartTransform {

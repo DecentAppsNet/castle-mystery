@@ -1,5 +1,5 @@
 import BodyPart from './BodyPart';
-import Point from './Point';
+import Point from '@/game/types/Point';
 
 type ConnectedBodyPart = {
   readonly part:BodyPart,

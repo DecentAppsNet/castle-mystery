@@ -4,8 +4,8 @@ import CharacterWithEffects from "./CharacterWithEffects";
 import Item, { duplicateItem } from "./Item";
 import Position, { createDefaultPosition, duplicatePosition } from "./Position";
 import CharacterSkin, { duplicateCharacterSkin } from "./CharacterSkin";
-import BodyPart from "./BodyPart";
-import { createDefaultCharacterBody } from "../characterBodyDefinitionUtil";
+import BodyPart from "../characterBody/types/BodyPart";
+import { createDefaultCharacterBody } from "../characterBody";
 
 export type FacingDirection = 'left' | 'right';
 export const VALID_FACING_DIRECTIONS:FacingDirection[] = ['left', 'right'];

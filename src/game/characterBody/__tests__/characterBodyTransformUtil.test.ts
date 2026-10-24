@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint } from '../characterBodyTransformUtil';
+import { composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint } from '../index';
 import BodyPartTransform from '../types/BodyPartTransform';
 
 describe('characterBodyTransformUtil', () => {

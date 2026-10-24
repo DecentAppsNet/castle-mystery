@@ -1,6 +1,6 @@
 import ConnectedBodyPart from './ConnectedBodyPart';
 import PartKind from './PartKind';
-import Point from './Point';
+import Point from '@/game/types/Point';
 
 type BodyPart = {
   readonly kind:PartKind,

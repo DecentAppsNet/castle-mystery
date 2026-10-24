@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDefaultCharacterBody } from '../characterBodyDefinitionUtil';
-import { createDefaultCharacter, duplicateCharacter } from '../types/Character';
+import { createDefaultCharacterBody } from '../index';
+import { createDefaultCharacter, duplicateCharacter } from '@/game/types/Character';
 
 describe('characterBodyDefinitionUtil', () => {
   describe('character defaulting and duplication', () => {

@@ -1,7 +1,7 @@
 /* This file defines the shared default character body in game-unit local coordinates.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { MAP_TILE_SIZE } from './roomGridUtil';
+import { MAP_TILE_SIZE } from '../roomGridUtil';
 import BodyPart from './types/BodyPart';
 
 const BODY_HEIGHT = MAP_TILE_SIZE * 0.4;
