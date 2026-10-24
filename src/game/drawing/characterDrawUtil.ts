@@ -4,7 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
-import { createBodyCanvasLayout, createBodyPose, transformBodyPoint } from '@/game/characterBody';
+import { createBodyCanvasLayout, createBodyPose, getHeadImageBounds, getResolvedBodyPart, transformBodyPoint } from '@/game/characterBody';
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Character from "../types/Character";
@@ -191,7 +191,7 @@ export function createCharacterCanvasLayout(character:Character, displayPosition
     const [toX, toY] = transformBodyPoint(transform, [part.width / 2, part.height]);
     return { fromX, fromY, toX, toY };
   });
-  const layout = { ...projected, segments, topY:projected.bounds.y, bottomY:projected.bounds.y + projected.bounds.height };
+  const layout = { ...projected, segments };
   return {
     layout,
     characterWidth:projected.bounds.width,
@@ -212,35 +212,16 @@ function _getFaceImageDrawSize(faceImage:ImageBitmap, headRadius:number):{ drawW
   };
 }
 
-function _getCharacterBodyCanvasRect(character:Character, displayPosition:Position,
-  scalingFactors:ScalingFactors, time:number):Rect {
-  const { layout } = createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
-  const segmentXs = layout.segments.flatMap(segment => [segment.fromX, segment.toX]);
-  const leftX = Math.min(layout.head.centerX - layout.head.radius, ...segmentXs);
-  const rightX = Math.max(layout.head.centerX + layout.head.radius, ...segmentXs);
-  return createRect(leftX, layout.topY, rightX - leftX, layout.bottomY - layout.topY);
-}
-
-function _getCharacterFaceCanvasRect(character:Character, displayPosition:Position,
-  scalingFactors:ScalingFactors, time:number, imageSet:ImageSet):Rect|null {
-  if (!character.faceImageUrl) return null;
-  const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
-  if (!faceImage) return null;
-
-  const { layout } = createCharacterCanvasLayout(character, displayPosition, scalingFactors, time);
-  const faceImageDrawSize = _getFaceImageDrawSize(faceImage, layout.head.radius);
-  if (!faceImageDrawSize) return null;
-
-  const drawWidth = character.bodyOrientation === 'laying' ? faceImageDrawSize.drawHeight : faceImageDrawSize.drawWidth;
-  const drawHeight = character.bodyOrientation === 'laying' ? faceImageDrawSize.drawWidth : faceImageDrawSize.drawHeight;
-  return createRect(layout.head.centerX - drawWidth / 2, layout.head.centerY - drawHeight / 2, drawWidth, drawHeight);
-}
-
 export function getCharacterCanvasRect(character:Character, displayPosition:Position, scalingFactors:ScalingFactors,
-  time:number, imageSet:ImageSet|null = null):Rect {
-  const bodyRect = _getCharacterBodyCanvasRect(character, displayPosition, scalingFactors, time);
+  time:number, imageSet:ImageSet|null = null,
+  characterCanvasLayout = createCharacterCanvasLayout(character, displayPosition, scalingFactors, time)):Rect {
+  const { layout } = characterCanvasLayout;
+  const bodyRect = layout.bounds;
   if (!imageSet) return bodyRect;
-  const faceRect = _getCharacterFaceCanvasRect(character, displayPosition, scalingFactors, time, imageSet);
+  const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
+  const faceRect = faceImage
+    ? getHeadImageBounds(getResolvedBodyPart(layout.parts, 'head'), faceImage.width, faceImage.height)
+    : null;
   return faceRect ? extendRectToContainRect(bodyRect, faceRect) : bodyRect;
 }
 

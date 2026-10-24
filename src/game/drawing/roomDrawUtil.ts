@@ -375,13 +375,13 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         result.itemBubbleAnchorById.set(content.item.id, itemAnchor);
         return;
       case 'character':
+        const characterCanvasLayout = characterCanvasLayoutById.get(content.character.id);
+        assertNonNullable(characterCanvasLayout);
         if (layoutPlanner && isCharacterInteractive(content.character)) {
           layoutPlanner.reserveRect(getCharacterCanvasRect(
-            content.character, content.displayPosition, scalingFactors, gameTime, imageSet));
+            content.character, content.displayPosition, scalingFactors, gameTime, imageSet, characterCanvasLayout));
         }
-        const characterCanvasLayout = characterCanvasLayoutById.get(content.character.id);
         const characterAnatomy = characterAnatomyById.get(content.character.id);
-        assertNonNullable(characterCanvasLayout);
         assertNonNullable(characterAnatomy);
         const characterContext:CharacterEffectDrawContext = {
           characterAnatomy,
