@@ -51,10 +51,35 @@ describe('character body postures', () => {
         expect(leftArm.part).toBe(rightArm.part);
         const rightHand = transformBodyPoint(rightArm.transform, rightArm.part.handPoint!);
         const leftHand = transformBodyPoint(leftArm.transform, leftArm.part.handPoint!);
-        expect(leftHand[0]).toBeCloseTo(-rightHand[0]);
-        expect(leftHand[1]).toBeCloseTo(rightHand[1]);
+        const rightPivot = transformBodyPoint(rightArm.transform, rightArm.part.pivotPoint);
+        const leftPivot = transformBodyPoint(leftArm.transform, leftArm.part.pivotPoint);
+        expect(leftHand[0] - leftPivot[0]).toBeCloseTo(-(rightHand[0] - rightPivot[0]));
+        expect(leftHand[1] - leftPivot[1]).toBeCloseTo(rightHand[1] - rightPivot[1]);
       }
     }
+  });
+
+  it('resolves facing-dependent limb attachments through the torso transform without changing definitions', () => {
+    const root = createDefaultCharacterBody();
+    const original = structuredClone(root);
+    for (const orientation of ['standing', 'sitting', 'kneeling', 'laying'] as const) {
+      for (const facing of ['left', 'right'] as const) {
+        const parts = createBodyPose(root, orientation, facing);
+        const torso = getResolvedBodyPart(parts, 'torso');
+        for (const connection of root.connectedParts) {
+          const child = getResolvedBodyPart(parts, connection.part.kind);
+          const [connectionX, connectionY] = connection.connectionPoint;
+          const reflect = facing === 'right' && connection.part.kind !== 'head';
+          const expected = transformBodyPoint(torso.transform,
+            [reflect ? root.width - connectionX : connectionX, connectionY]);
+          const pivot = transformBodyPoint(child.transform, child.part.pivotPoint);
+          expect(child.part).toBe(connection.part);
+          expect(pivot[0]).toBeCloseTo(expected[0]);
+          expect(pivot[1]).toBeCloseTo(expected[1]);
+        }
+      }
+    }
+    expect(root).toEqual(original);
   });
 
   it('does not let protruding children change seated or laying grounding', () => {

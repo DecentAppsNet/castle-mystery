@@ -7,6 +7,7 @@ import { createRect, extendRectToContainRect } from '../rectUtil';
 import BodyPart from './types/BodyPart';
 import BodyPartTransform from './types/BodyPartTransform';
 import PartKind from './types/PartKind';
+import Point from '../types/Point';
 import Rect from '../types/Rect';
 import ResolvedBodyPart from './types/ResolvedBodyPart';
 import type { BodyOrientation, FacingDirection } from '../types/Character';
@@ -16,13 +17,18 @@ const DEGREES_90 = Math.PI / 2;
 type BodyPartRotations = { readonly [kind in PartKind]?:number }; // Local rotation angles in radians.
 
 function _resolvePart(part:BodyPart, transform:BodyPartTransform, rotations:BodyPartRotations,
-    resolved:ResolvedBodyPart[]) {
+  resolved:ResolvedBodyPart[], reflectTorsoAttachments:boolean = false) {
   assert(!resolved.some(entry => entry.part.kind === part.kind), 'Body part kinds must be unique.');
   resolved.push({ part, transform });
   part.connectedParts.forEach(connection => {
-    const attachment = createBodyAttachmentTransform(connection.connectionPoint,
+    const kind = connection.part.kind;
+    const isPairedLimb = kind === 'leftArm' || kind === 'rightArm' || kind === 'leftLeg' || kind === 'rightLeg';
+    const connectionPoint:Point = reflectTorsoAttachments && part.kind === 'torso' && isPairedLimb
+      ? [part.width - connection.connectionPoint[0], connection.connectionPoint[1]]
+      : connection.connectionPoint;
+    const attachment = createBodyAttachmentTransform(connectionPoint,
       connection.part.pivotPoint, rotations[connection.part.kind] ?? 0);
-    _resolvePart(connection.part, composeBodyTransforms(transform, attachment), rotations, resolved);
+    _resolvePart(connection.part, composeBodyTransforms(transform, attachment), rotations, resolved, reflectTorsoAttachments);
   });
 }
 
@@ -62,13 +68,15 @@ export function getBodyBounds(parts:readonly ResolvedBodyPart[]):Rect {
 /**
  * Creates ephemeral placement in game units with the support surface at Y = 0 and root pivot X = 0.
  * Standing rests on the feet; other postures rest on the torso regardless of protruding children.
- * Facing mirrors the complete posture without exchanging anatomical identities or mutating definitions.
+ * Facing mirrors artwork; right-facing poses reflect torso limb attachments to match the visible side.
+ * Anatomical identities and definitions remain unchanged.
  */
 export function createBodyPose(root:BodyPart, orientation:BodyOrientation, facing:FacingDirection):readonly ResolvedBodyPart[] {
   const legAngle = _getLegAngle(orientation);
   const rootTransform = createBodyAttachmentTransform([0, 0], root.pivotPoint,
     orientation === 'laying' ? -DEGREES_90 : 0);
-  const parts = resolveBodyHierarchy(root, rootTransform, { leftLeg:legAngle, rightLeg:legAngle });
+  const parts:ResolvedBodyPart[] = [];
+  _resolvePart(root, rootTransform, { leftLeg:legAngle, rightLeg:legAngle }, parts, facing === 'right');
   const supports = orientation === 'standing'
     ? [getResolvedBodyPart(parts, 'leftLeg'), getResolvedBodyPart(parts, 'rightLeg')]
     : [getResolvedBodyPart(parts, 'torso')];
