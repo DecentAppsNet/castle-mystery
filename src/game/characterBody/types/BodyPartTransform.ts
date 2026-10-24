@@ -1,3 +1,4 @@
+/** Affine mapping with coefficients in Canvas (a, b, c, d, e, f) order, without a Canvas dependency. */
 type BodyPartTransform = {
   readonly horizontalX:number, // Output X units per input X unit (Canvas coefficient a).
   readonly horizontalY:number, // Output Y units per input X unit (Canvas coefficient b).

@@ -2,6 +2,7 @@ import ConnectedBodyPart from './ConnectedBodyPart';
 import PartKind from './PartKind';
 import Point from '@/game/types/Point';
 
+/** Readonly local geometry and attachments shared across poses; contains no resolved placement. */
 type BodyPart = {
   readonly kind:PartKind,
   readonly width:number, // Local drawing width in game units, not canvas pixels.

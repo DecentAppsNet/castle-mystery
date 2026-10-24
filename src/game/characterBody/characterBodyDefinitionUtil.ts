@@ -1,4 +1,4 @@
-/* This file defines the shared default character body in game-unit local coordinates.
+/* This file creates default character body definitions in game-unit local coordinates.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { MAP_TILE_SIZE } from '../roomGridUtil';
@@ -18,7 +18,8 @@ function _createLeg(kind:'leftLeg'|'rightLeg'):BodyPart {
   return { kind, width, height, pivotPoint:[width / 4, 0], connectedParts:[], handPoint:null };
 }
 
-function _createDefaultBody():BodyPart {
+/** Creates a readonly torso-root definition in game units; callers must not mutate it. */
+export function createDefaultCharacterBody():BodyPart {
   const width = BODY_HEIGHT / 10;
   const height = BODY_HEIGHT * 3 / 8;
   const headSize = BODY_HEIGHT * 0.75;
@@ -36,10 +37,4 @@ function _createDefaultBody():BodyPart {
       { part:_createLeg('rightLeg'), connectionPoint:[width * 0.75, height] }
     ]
   };
-}
-
-const _defaultBody = _createDefaultBody();
-
-export function createDefaultCharacterBody():BodyPart {
-  return _defaultBody;
 }

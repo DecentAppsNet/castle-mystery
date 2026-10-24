@@ -3,4 +3,4 @@
 
 export { createDefaultCharacterBody } from './characterBodyDefinitionUtil';
 export { composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint, transformBodyRect } from './characterBodyTransformUtil';
-export { getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy } from './characterBodyPoseUtil';
+export { createBodyPose, getBodyPaintOrder, getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy } from './characterBodyPoseUtil';

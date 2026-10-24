@@ -5,11 +5,11 @@ import appearsBaseText from './fixtures/appears/appears-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
 
 describe('loading levels - characters', () => {
-  it('inherits the shared body definition without adding it to timeline state', () => {
+  it('inherits the default body definition without adding it to timeline state', () => {
     const { level, errors } = loadLevelForTest(defaultLevelText);
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(level!.characters[0].rootBodyPart).toBe(createDefaultCharacter().rootBodyPart);
+    expect(level!.characters[0].rootBodyPart).toEqual(createDefaultCharacter().rootBodyPart);
     expect(level!.timeline.keyframes[0].characters[0]).not.toHaveProperty('rootBodyPart');
   });
 

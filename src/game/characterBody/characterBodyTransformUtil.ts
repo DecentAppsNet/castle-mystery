@@ -6,6 +6,7 @@ import Point from '../types/Point';
 import Rect from '../types/Rect';
 import { createRect } from '../rectUtil';
 
+/** Maps an input-space point into the transform's output space, including translation. */
 export function transformBodyPoint(transform:BodyPartTransform, point:Point):Point {
   return [
     transform.horizontalX * point[0] + transform.verticalX * point[1] + transform.translateX,
@@ -13,6 +14,7 @@ export function transformBodyPoint(transform:BodyPartTransform, point:Point):Poi
   ];
 }
 
+/** Returns axis-aligned bounds in output-space units enclosing the entire transformed input rectangle. */
 export function transformBodyRect(transform:BodyPartTransform, rect:Rect):Rect {
   const corners = [
     transformBodyPoint(transform, [rect.x, rect.y]),
@@ -26,6 +28,7 @@ export function transformBodyRect(transform:BodyPartTransform, rect:Rect):Rect {
     Math.max(...corners.map(point => point[1])) - top);
 }
 
+/** Composes parent * child: applies the child first, then maps its result through the parent. */
 export function composeBodyTransforms(parent:BodyPartTransform, child:BodyPartTransform):BodyPartTransform {
   return {
     horizontalX:parent.horizontalX * child.horizontalX + parent.verticalX * child.horizontalY,
@@ -37,6 +40,10 @@ export function composeBodyTransforms(parent:BodyPartTransform, child:BodyPartTr
   };
 }
 
+/**
+ * Maps a child's local pivot onto a parent-local connection, with both points measured in game units.
+ * Rotation is in radians, positive clockwise in downward-Y coordinates; the pivot remains attached.
+ */
 export function createBodyAttachmentTransform(connectionPoint:Point, pivotPoint:Point,
     rotationRadians:number = 0):BodyPartTransform {
   const cosine = Math.cos(rotationRadians);
