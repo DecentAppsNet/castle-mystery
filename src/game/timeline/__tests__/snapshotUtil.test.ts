@@ -44,6 +44,13 @@ function _createSnapshot(keyframes:TimelineKeyframe[], time:number) {
 }
 
 describe('snapshotUtil', () => {
+	it('shares the base body definition in a current-frame character', () => {
+		const snapshot = _createSnapshot([_createKeyframe(1000, 2), _createKeyframe(2000, 8)], 1500);
+
+		expect(snapshot.characters[0].rootBodyPart).toBe(CHARACTERS[0].rootBodyPart);
+		expect(snapshot.characters[1].rootBodyPart).toBe(CHARACTERS[1].rootBodyPart);
+	});
+
 	describe('movement classification', () => {
 		it('classifies moving and stationary characters independently', () => {
 			const snapshot = _createSnapshot([

@@ -4,6 +4,8 @@ import CharacterWithEffects from "./CharacterWithEffects";
 import Item, { duplicateItem } from "./Item";
 import Position, { createDefaultPosition, duplicatePosition } from "./Position";
 import CharacterSkin, { duplicateCharacterSkin } from "./CharacterSkin";
+import BodyPart from "./BodyPart";
+import { createDefaultCharacterBody } from "../characterBodyDefinitionUtil";
 
 export type FacingDirection = 'left' | 'right';
 export const VALID_FACING_DIRECTIONS:FacingDirection[] = ['left', 'right'];
@@ -18,6 +20,7 @@ export type MutableCharacter = {
   readonly faceImageUrl:string|null,
   readonly randomSalt:number,
   readonly skins:CharacterSkin[],
+  readonly rootBodyPart:BodyPart,
   isVisible:boolean,
   facingDirection:FacingDirection,
   bodyOrientation:BodyOrientation,
@@ -38,6 +41,7 @@ export function createDefaultCharacter():Character {
     faceImageUrl:null,
     randomSalt:0,
     skins:[],
+    rootBodyPart:createDefaultCharacterBody(),
     isVisible:true,
     facingDirection:DEFAULT_FACING_DIRECTION,
     bodyOrientation:DEFAULT_BODY_ORIENTATION,
@@ -58,6 +62,7 @@ export function duplicateCharacter(from:Character):Character {
     faceImageUrl:from.faceImageUrl,
     randomSalt:from.randomSalt,
     skins:from.skins.map(duplicateCharacterSkin),
+    rootBodyPart:from.rootBodyPart, // The readonly body definition is shared; duplication does not require a deep copy.
     isVisible:from.isVisible,
     facingDirection:from.facingDirection,
     bodyOrientation:from.bodyOrientation,

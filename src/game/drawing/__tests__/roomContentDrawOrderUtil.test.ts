@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ROOM_BACK_Z } from '@/game/roomSpaceConstants';
-import CharacterWithEffects from '@/game/types/CharacterWithEffects';
+import { createDefaultCharacter } from '@/game/types/Character';
 import StairPart, { StairPartType } from '@/game/types/StairPart';
 
 import { mergeStairsWithSortedContents, StairDrawableContent } from '../roomContentDrawOrderUtil';
@@ -30,7 +30,7 @@ function _createCharacterContent(id:string, x:number, y:number, z:number):Charac
     x,
     y,
     sortId:id,
-    character:{ id, position } as CharacterWithEffects,
+    character:{ ...createDefaultCharacter(), id, position, effects:[] },
     displayPosition:position,
     snappedPosition:position,
     painterOrderAnchor:position,

@@ -87,6 +87,7 @@ function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Ch
     title:baseCharacter.title,
     randomSalt:baseCharacter.randomSalt,
     skins:baseCharacter.skins,
+    rootBodyPart:baseCharacter.rootBodyPart,
 
     // Skin-overridable members may come from base character or keyframe-selected skin.
     description:_findDescriptionWithSkins(character, baseCharacter),
