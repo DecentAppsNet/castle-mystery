@@ -13,7 +13,7 @@ import { COLOR_BLACK } from '../drawColorConstants';
 export function drawCharacterHead(head:ResolvedBodyPart, character:Character, imageSet:ImageSet,
     spriteOverrides:readonly SpriteOverride[], lineWidth:number, context:CanvasRenderingContext2D) {
   const image = findImageBitmap(imageSet, head.part.imageUrl);
-  const fit = image ? fitHeadImage(head.part, image.width, image.height) : null;
+  const fit = image ? fitHeadImage(head.part, image.width, image.height, character.rootBodyPart.imageUrl !== null) : null;
   context.save();
   if (image && fit) {
     const angle = spriteOverrides.find(override => override.spriteKind === 'head')?.rotateRadians ?? 0;

@@ -1,10 +1,12 @@
-/* This file paints placeholder body parts from resolved canvas transforms without calculating poses or attachments.
+/* This file paints raster or placeholder body parts from resolved transforms without calculating poses or attachments.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from 'decent-portal';
 import { getArmThickness, transformBodyPoint } from '@/game/characterBody';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Point from '@/game/types/Point';
+import ImageSet from '@/game/types/ImageSet';
+import { findImageBitmap } from '@/game/imageAssetUtil';
 import { COLOR_BLACK } from '../drawColorConstants';
 
 const ARM_BEND = Math.PI / 12;
@@ -89,10 +91,19 @@ function _drawArm(width:number, height:number, inset:number, resolved:ResolvedBo
     [thickness * cosine + length * sine, height - thickness * sine], [length * sine, height]], inset, resolved, context);
 }
 
-/** Paints one non-head part with a fixed canvas-pixel border. Does not determine paint order. */
-export function drawCharacterBodyPart(resolved:ResolvedBodyPart, context:CanvasRenderingContext2D) {
+/** Paints one non-head part; vector placeholders have a fixed canvas-pixel border. Does not determine paint order. */
+export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageSet, context:CanvasRenderingContext2D) {
   const { part, transform } = resolved;
   assert(part.kind !== 'head'); // Head artwork uses the head painter.
+  const image = findImageBitmap(imageSet, part.imageUrl);
+  if (image) {
+    context.save();
+    context.transform(transform.horizontalX, transform.horizontalY, transform.verticalX,
+      transform.verticalY, transform.translateX, transform.translateY);
+    context.drawImage(image, 0, 0, part.width, part.height);
+    context.restore();
+    return;
+  }
   const scale = Math.min(Math.hypot(transform.horizontalX, transform.horizontalY),
       Math.hypot(transform.verticalX, transform.verticalY));
   const inset = BORDER_WIDTH_PIXELS / (2 * scale);

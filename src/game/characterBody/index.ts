@@ -5,6 +5,6 @@ export { createDefaultCharacterBody, getHeadImageUrl, replaceHeadImage } from '.
 export { createRasterCharacterBody } from './rasterBodyDefinitionUtil';
 export { getArmThickness } from './characterArmGeometryUtil';
 export { createBodyCanvasLayout } from './characterBodyLayoutUtil';
-export { fitHeadImage, getHeadImageBounds, rotateHeadPose } from './characterHeadGeometryUtil';
+export { fitHeadImage, calcHeadImageBounds, rotateHeadPose } from './characterHeadGeometryUtil';
 export { composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint, transformBodyRect } from './characterBodyTransformUtil';
 export { createBodyPose, getBodyPaintOrder, getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy } from './characterBodyPoseUtil';

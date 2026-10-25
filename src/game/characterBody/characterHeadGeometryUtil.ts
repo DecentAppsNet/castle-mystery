@@ -1,4 +1,4 @@
-/* This file fits face images into logical head slots and calculates their transformed bounds without drawing.
+/* This file selects head image rectangles and calculates their transformed bounds without drawing.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import BodyPart from './types/BodyPart';
@@ -15,18 +15,20 @@ export function rotateHeadPose(head:ResolvedBodyPart, facing:FacingDirection, ra
   return { part:head.part, transform:composeBodyTransforms(head.transform, rotation) };
 }
 
-/** Fits the logical head width and derives height from image aspect ratio; null selects fallback for unusable dimensions. */
+/** Fits vector-body heads by aspect ratio, or uses exact raster anatomy; null selects fallback for unusable dimensions. */
 export function fitHeadImage(head:Pick<BodyPart, 'width'|'height'>,
-    imageWidth:number, imageHeight:number):Rect|null {
+    imageWidth:number, imageHeight:number, useExactDimensions:boolean = false):Rect|null {
   if (imageWidth <= 0 || imageHeight <= 0) return null;
+  if (useExactDimensions) return createRect(0, 0, head.width, head.height);
   const scale = head.width / imageWidth;
   const width = imageWidth * scale;
   const height = imageHeight * scale;
   return createRect((head.width - width) / 2, (head.height - height) / 2, width, height);
 }
 
-/** Returns fitted image bounds in the head transform's output units; null means use the head fallback bounds. */
-export function getHeadImageBounds(head:ResolvedBodyPart, imageWidth:number, imageHeight:number):Rect|null {
-  const imageRect = fitHeadImage(head.part, imageWidth, imageHeight);
+/** Returns image bounds in the head transform's output units; null means use the head fallback bounds. */
+export function calcHeadImageBounds(head:ResolvedBodyPart, imageWidth:number, imageHeight:number,
+    useExactDimensions:boolean = false):Rect|null {
+  const imageRect = fitHeadImage(head.part, imageWidth, imageHeight, useExactDimensions);
   return imageRect ? transformBodyRect(head.transform, imageRect) : null;
 }

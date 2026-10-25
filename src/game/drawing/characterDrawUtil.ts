@@ -4,7 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
-import { createBodyCanvasLayout, createBodyPose, getBodyPaintOrder, getHeadImageBounds, getHeadImageUrl, getResolvedBodyPart } from '@/game/characterBody';
+import { createBodyCanvasLayout, createBodyPose, getBodyPaintOrder, calcHeadImageBounds, getHeadImageUrl, getResolvedBodyPart } from '@/game/characterBody';
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Character from "../types/Character";
@@ -204,7 +204,8 @@ export function getCharacterCanvasRect(character:Character, displayPosition:Posi
   if (!imageSet) return bodyRect;
   const headImage = findImageBitmap(imageSet, getHeadImageUrl(character.rootBodyPart));
   const headRect = headImage
-    ? getHeadImageBounds(getResolvedBodyPart(layout.parts, 'head'), headImage.width, headImage.height)
+    ? calcHeadImageBounds(getResolvedBodyPart(layout.parts, 'head'), headImage.width, headImage.height,
+      character.rootBodyPart.imageUrl !== null)
     : null;
   return headRect ? extendRectToContainRect(bodyRect, headRect) : bodyRect;
 }
@@ -276,7 +277,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     if (kind === 'head') {
       drawCharacterHead(part, character, imageSet, spriteOverrides, scalingFactors.roomLineWidth, context);
     } else {
-      drawCharacterBodyPart(part, context);
+      drawCharacterBodyPart(part, imageSet, context);
     }
   });
   drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);

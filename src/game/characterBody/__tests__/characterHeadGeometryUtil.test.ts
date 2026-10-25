@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createBodyCanvasLayout, createBodyPose, createDefaultCharacterBody, fitHeadImage,
-  getHeadImageBounds, getResolvedBodyPart, transformBodyPoint } from '../index';
+  calcHeadImageBounds, getResolvedBodyPart, transformBodyPoint } from '../index';
 
 describe('characterHeadGeometryUtil', () => {
   describe('fitHeadImage()', () => {
@@ -34,7 +34,7 @@ describe('characterHeadGeometryUtil', () => {
     });
   });
 
-  describe('getHeadImageBounds()', () => {
+  describe('calcHeadImageBounds()', () => {
     it('contains every fitted corner for upright and laying heads in both facings', () => {
       const root = createDefaultCharacterBody();
       const original = structuredClone(root);
@@ -46,7 +46,7 @@ describe('characterHeadGeometryUtil', () => {
           expect(head.part.pivotPoint[1]).not.toBe(head.part.height / 2);
           for (const [imageWidth, imageHeight] of [[100, 200], [200, 100]]) {
             const fit = fitHeadImage(head.part, imageWidth, imageHeight)!;
-            const bounds = getHeadImageBounds(head, imageWidth, imageHeight)!;
+            const bounds = calcHeadImageBounds(head, imageWidth, imageHeight)!;
             for (const point of [[fit.x, fit.y], [fit.x + fit.width, fit.y],
               [fit.x, fit.y + fit.height], [fit.x + fit.width, fit.y + fit.height]] as const) {
               const [canvasX, canvasY] = transformBodyPoint(head.transform, point);
@@ -64,7 +64,7 @@ describe('characterHeadGeometryUtil', () => {
 
     it('selects fallback bounds for an unusable image', () => {
       const head = getResolvedBodyPart(createBodyPose(createDefaultCharacterBody(), 'standing', 'right'), 'head');
-      expect(getHeadImageBounds(head, 0, 120)).toBeNull();
+      expect(calcHeadImageBounds(head, 0, 120)).toBeNull();
     });
   });
 });
