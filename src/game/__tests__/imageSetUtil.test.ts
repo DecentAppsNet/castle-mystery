@@ -18,7 +18,7 @@ describe('imageSetUtil', () => {
   });
 
   describe('createImageSetFromLevel()', () => {
-    it('loads every body part and skin override without reading the temporary character image', async () => {
+    it('loads every body part and skin override', async () => {
       const root = createDefaultCharacterBody();
       const rootBodyPart = {
         ...root, imageUrl:'/assets/bodies/torso.png',
@@ -28,7 +28,7 @@ describe('imageSetUtil', () => {
       };
       const level = createDefaultMutableLevel();
       level.characters = [{
-        ...createDefaultCharacter(), rootBodyPart, faceImageUrl:'/assets/bodies/stale.png',
+        ...createDefaultCharacter(), rootBodyPart,
         skins:[{ id:'character-alternate', description:null, headImageUrl:'/assets/bodies/alternate.png' }]
       }];
 
@@ -38,8 +38,6 @@ describe('imageSetUtil', () => {
         expect(imageSet.has(`/assets/bodies/${kind}.png`)).toBe(true);
         expect(fetch).toHaveBeenCalledWith(`/castle-mystery/assets/bodies/${kind}.png`);
       }
-      expect(imageSet.has('/assets/bodies/stale.png')).toBe(false);
-      expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/bodies/stale.png');
     });
 
     it('deduplicates shared body and skin URLs across characters', async () => {

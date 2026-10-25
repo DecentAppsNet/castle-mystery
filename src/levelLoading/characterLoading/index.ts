@@ -79,8 +79,8 @@ function _parseCharacter(characterId:string, position:Position|null, characterSe
   const authoredCharacterName = characterSectionEntry.name.trim();
   const title = nameValues.title ?? authoredCharacterName;
   const description = nameValues.description ?? '';
-  const faceImageUrl = nameValues.headImage ? getBodyImageAssetUrl(nameValues.headImage.trim()) : null;
-  const isVisible = parseBoolean(nameValues.visible ?? 'true', errors, ['characters', characterId], 'faceImage');
+  const headImageUrl = nameValues.headImage ? getBodyImageAssetUrl(nameValues.headImage.trim()) : null;
+  const isVisible = parseBoolean(nameValues.visible ?? 'true', errors, ['characters', characterId], 'visible');
   const facingDirection = _parseFacingDirection(nameValues.facing ?? DEFAULT_FACING_DIRECTION, errors, characterId);
   const bodyOrientation = _parseBodyOrientation(nameValues.orientation ?? 'standing', errors, characterId);
   const isTitleKnown = parseBoolean(nameValues.isTitleKnown ?? 'false', errors, ['characters', characterId], 'isTitleKnown');
@@ -91,9 +91,9 @@ function _parseCharacter(characterId:string, position:Position|null, characterSe
     : _parseInitialSkinId(nameValues.appearsAs, characterId, skins, errors);
   const character:MutableCharacter = {
     ...createDefaultCharacter(),
-    id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
+    id:characterId, title:title, description, randomSalt:rand(), isVisible, facingDirection,
     bodyOrientation, items, leftHandItem, rightHandItem, position, skins, skinId,
-    rootBodyPart:replaceHeadImage(createDefaultCharacterBody(), faceImageUrl)
+    rootBodyPart:replaceHeadImage(createDefaultCharacterBody(), headImageUrl)
   }
   return { character, isTitleKnown };
 }

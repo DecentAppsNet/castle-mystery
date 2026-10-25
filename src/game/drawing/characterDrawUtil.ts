@@ -4,7 +4,7 @@
 import { clamp } from "@/common/numberUtil";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
-import { createBodyCanvasLayout, createBodyPose, getBodyPaintOrder, getHeadImageBounds, getResolvedBodyPart } from '@/game/characterBody';
+import { createBodyCanvasLayout, createBodyPose, getBodyPaintOrder, getHeadImageBounds, getHeadImageUrl, getResolvedBodyPart } from '@/game/characterBody';
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset } from "./roomPanelProjectionUtil";
 import Character from "../types/Character";
@@ -46,30 +46,30 @@ function _calcObscuredActiveHeadCacheKey(widthPixels:number, heightPixels:number
   return `${Math.max(1, Math.round(widthPixels))}|${Math.max(1, Math.round(heightPixels))}`;
 }
 
-function _renderObscuredActiveHeadSilhouetteCanvas(faceImage:ImageBitmap, silhouetteCanvas:ScratchCanvas) {
+function _renderObscuredActiveHeadSilhouetteCanvas(headImage:ImageBitmap, silhouetteCanvas:ScratchCanvas) {
   const context = silhouetteCanvas.getContext("2d", { willReadFrequently:false }) as CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D|null;
   if (!context) return;
 
   context.clearRect(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
-  context.drawImage(faceImage, 0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
+  context.drawImage(headImage, 0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
   context.globalCompositeOperation = 'source-in';
   context.fillStyle = '#fff';
   context.fillRect(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
   context.globalCompositeOperation = 'source-over';
 }
 
-function _findObscuredActiveHeadSilhouetteCanvas(faceImage:ImageBitmap, widthPixels:number, heightPixels:number):ScratchCanvas|null {
+function _findObscuredActiveHeadSilhouetteCanvas(headImage:ImageBitmap, widthPixels:number, heightPixels:number):ScratchCanvas|null {
   const cacheKey = _calcObscuredActiveHeadCacheKey(widthPixels, heightPixels);
-  const cachedCanvasesBySize = _obscuredActiveHeadSilhouetteCanvasCache.get(faceImage) ?? new Map<string, ScratchCanvas>();
+  const cachedCanvasesBySize = _obscuredActiveHeadSilhouetteCanvasCache.get(headImage) ?? new Map<string, ScratchCanvas>();
   const cachedCanvas = cachedCanvasesBySize.get(cacheKey) || null;
   if (cachedCanvas) return cachedCanvas;
 
   const silhouetteCanvas = createScratchCanvas(Math.max(1, Math.round(widthPixels)), Math.max(1, Math.round(heightPixels)));
   if (!silhouetteCanvas) return null;
 
-  _renderObscuredActiveHeadSilhouetteCanvas(faceImage, silhouetteCanvas);
+  _renderObscuredActiveHeadSilhouetteCanvas(headImage, silhouetteCanvas);
   cachedCanvasesBySize.set(cacheKey, silhouetteCanvas);
-  _obscuredActiveHeadSilhouetteCanvasCache.set(faceImage, cachedCanvasesBySize);
+  _obscuredActiveHeadSilhouetteCanvasCache.set(headImage, cachedCanvasesBySize);
   return silhouetteCanvas;
 }
 
@@ -202,11 +202,11 @@ export function getCharacterCanvasRect(character:Character, displayPosition:Posi
   const { layout } = characterCanvasLayout;
   const bodyRect = layout.bounds;
   if (!imageSet) return bodyRect;
-  const faceImage = findImageBitmap(imageSet, character.faceImageUrl);
-  const faceRect = faceImage
-    ? getHeadImageBounds(getResolvedBodyPart(layout.parts, 'head'), faceImage.width, faceImage.height)
+  const headImage = findImageBitmap(imageSet, getHeadImageUrl(character.rootBodyPart));
+  const headRect = headImage
+    ? getHeadImageBounds(getResolvedBodyPart(layout.parts, 'head'), headImage.width, headImage.height)
     : null;
-  return faceRect ? extendRectToContainRect(bodyRect, faceRect) : bodyRect;
+  return headRect ? extendRectToContainRect(bodyRect, headRect) : bodyRect;
 }
 
 export function getCharacterHoverRect(character:Character, displayPosition:Position,
@@ -240,18 +240,18 @@ export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character
   context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const { centerX, centerY } = _getObscuredActiveHeadAnchor(room, scalingFactors, context);
   const { widthPixels, heightPixels } = _getObscuredActiveHeadSizePixels(scalingFactors);
-  const faceImage = findImageBitmap(imageSet, activeCharacter.faceImageUrl);
+  const headImage = findImageBitmap(imageSet, getHeadImageUrl(activeCharacter.rootBodyPart));
 
   context.save();
   context.translate(centerX, centerY);
 
-  if (!faceImage) {
+  if (!headImage) {
     _drawObscuredActiveHeadFallback(0, 0, widthPixels, heightPixels, context);
     context.restore();
     return;
   }
 
-  const silhouetteCanvas = _findObscuredActiveHeadSilhouetteCanvas(faceImage, widthPixels, heightPixels);
+  const silhouetteCanvas = _findObscuredActiveHeadSilhouetteCanvas(headImage, widthPixels, heightPixels);
   if (!silhouetteCanvas) {
     _drawObscuredActiveHeadFallback(0, 0, widthPixels, heightPixels, context);
     context.restore();

@@ -4,6 +4,7 @@ import appearsBaseText from './fixtures/appears/appears-base.md?raw';
 import initialAppearanceText from './fixtures/initial-appearance.md?raw';
 import { loadLevelForTest, loadValidLevelForTest, replaceSection } from './testLevelUtil';
 import Level from '@/game/types/Level';
+import { getHeadImageUrl } from '@/game/characterBody';
 
 describe('level loading - appears activities', () => {
   function snapshotAt(level:Level, time:number) {
@@ -15,14 +16,17 @@ describe('level loading - appears activities', () => {
   it('applies an initial skin and lets later default and named appearances override it', () => {
     const level = loadValidLevelForTest(initialAppearanceText);
     expect(snapshotAt(level, 0)).toMatchObject({
-      skinId:'sam-detective', faceImageUrl:'/assets/bodies/detective.png', description:'Detective description.'
+      skinId:'sam-detective', description:'Detective description.'
     });
     expect(snapshotAt(level, 5_000)).toMatchObject({
-      skinId:'sam-default', faceImageUrl:'/assets/bodies/samBase.png', description:'Base description.'
+      skinId:'sam-default', description:'Base description.'
     });
     expect(snapshotAt(level, 10_000)).toMatchObject({
-      skinId:'sam-witness', faceImageUrl:'/assets/bodies/samBase.png', description:'Witness description.'
+      skinId:'sam-witness', description:'Witness description.'
     });
+    expect(getHeadImageUrl(snapshotAt(level, 0).rootBodyPart)).toBe('/assets/bodies/detective.png');
+    expect(getHeadImageUrl(snapshotAt(level, 5_000).rootBodyPart)).toBe('/assets/bodies/samBase.png');
+    expect(getHeadImageUrl(snapshotAt(level, 10_000).rootBodyPart)).toBe('/assets/bodies/samBase.png');
     expect(snapshotAt(level, 0).skinId).toBe('sam-detective');
   });
 
@@ -40,10 +44,10 @@ describe('level loading - appears activities', () => {
     expect(overridden.rootBodyPart.connectedParts[0].part.pivotPoint).toBe(base.rootBodyPart.connectedParts[0].part.pivotPoint);
     expect(restored.rootBodyPart).toBe(base.rootBodyPart);
     expect(inherited.rootBodyPart).toBe(base.rootBodyPart);
-    expect(restored.rootBodyPart.connectedParts[0].part.imageUrl).toBe(restored.faceImageUrl);
-    expect(inherited.rootBodyPart.connectedParts[0].part.imageUrl).toBe(inherited.faceImageUrl);
+    expect(getHeadImageUrl(restored.rootBodyPart)).toBe('/assets/bodies/samBase.png');
+    expect(getHeadImageUrl(inherited.rootBodyPart)).toBe('/assets/bodies/samBase.png');
     expect(base).toEqual(before);
-    expect(base.skins.find(skin => skin.id === 'sam-detective')?.headImageUrl).toBe(overridden.faceImageUrl);
+    expect(base.skins.find(skin => skin.id === 'sam-detective')?.headImageUrl).toBe(getHeadImageUrl(overridden.rootBodyPart));
   });
 
   it('restores an absent base head image after an initial skin override', () => {
@@ -55,12 +59,11 @@ describe('level loading - appears activities', () => {
     const inherited = snapshotAt(level, 10_000);
 
     expect(overridden.rootBodyPart.connectedParts[0].part.imageUrl).toBe('/assets/bodies/detective.png');
-    expect(overridden.faceImageUrl).toBe('/assets/bodies/detective.png');
     expect(base.rootBodyPart.connectedParts[0].part.imageUrl).toBeNull();
     expect(restored.rootBodyPart).toBe(base.rootBodyPart);
-    expect(restored.faceImageUrl).toBeNull();
+    expect(getHeadImageUrl(restored.rootBodyPart)).toBeNull();
     expect(inherited.rootBodyPart).toBe(base.rootBodyPart);
-    expect(inherited.faceImageUrl).toBeNull();
+    expect(getHeadImageUrl(inherited.rootBodyPart)).toBeNull();
   });
 
   it('applies the selected skin to a character at the appearance time', () => {
@@ -70,8 +73,9 @@ describe('level loading - appears activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(snapshotAt(level!, 5_000)).toMatchObject({
-      faceImageUrl:'/assets/bodies/detective.png', description:'Detective description.'
+      description:'Detective description.'
     });
+    expect(getHeadImageUrl(snapshotAt(level!, 5_000).rootBodyPart)).toBe('/assets/bodies/detective.png');
   });
 
   it('restores the base appearance when a character appears as default', () => {
@@ -83,8 +87,9 @@ describe('level loading - appears activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(snapshotAt(level!, 10_000)).toMatchObject({
-      faceImageUrl:'/assets/bodies/base.png', description:'Base description.'
+      description:'Base description.'
     });
+    expect(getHeadImageUrl(snapshotAt(level!, 10_000).rootBodyPart)).toBe('/assets/bodies/base.png');
   });
 
   it('can apply another skin after restoring the base appearance', () => {
@@ -96,8 +101,9 @@ describe('level loading - appears activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(snapshotAt(level!, 15_000)).toMatchObject({
-      faceImageUrl:'/assets/bodies/base.png', description:'Witness description.'
+      description:'Witness description.'
     });
+    expect(getHeadImageUrl(snapshotAt(level!, 15_000).rootBodyPart)).toBe('/assets/bodies/base.png');
   });
 
   it('uses only the last skin when appearances share a timestamp', () => {
@@ -109,8 +115,9 @@ describe('level loading - appears activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(snapshotAt(level!, 5_000)).toMatchObject({
-      faceImageUrl:'/assets/bodies/guard.png', description:'Base description.'
+      description:'Base description.'
     });
+    expect(getHeadImageUrl(snapshotAt(level!, 5_000).rootBodyPart)).toBe('/assets/bodies/guard.png');
   });
 
   it('keeps the base head image when the selected skin has no head image', () => {
@@ -119,7 +126,7 @@ describe('level loading - appears activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(snapshotAt(level!, 5_000).faceImageUrl).toBe('/assets/bodies/base.png');
+    expect(getHeadImageUrl(snapshotAt(level!, 5_000).rootBodyPart)).toBe('/assets/bodies/base.png');
   });
 
   it('keeps the base description when the selected skin has no description', () => {

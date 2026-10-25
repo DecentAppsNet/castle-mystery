@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createDefaultCharacter } from '@/game/types/Character';
-import { createDefaultCharacterBody, replaceHeadImage } from '@/game/characterBody';
+import { createDefaultCharacterBody, getHeadImageUrl, replaceHeadImage } from '@/game/characterBody';
 import defaultLevelText from './fixtures/characters-base.md?raw';
 import appearsBaseText from './fixtures/appears/appears-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
@@ -19,8 +19,8 @@ describe('loading levels - characters', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const sam = level!.characters[0];
-    expect(sam.faceImageUrl).toBe('/assets/bodies/base.png');
-    expect(sam.rootBodyPart).toEqual(replaceHeadImage(createDefaultCharacterBody(), sam.faceImageUrl));
+    expect(getHeadImageUrl(sam.rootBodyPart)).toBe('/assets/bodies/base.png');
+    expect(sam.rootBodyPart).toEqual(replaceHeadImage(createDefaultCharacterBody(), '/assets/bodies/base.png'));
   });
 
   it('keeps the default initial skin when appearsAs is omitted', () => {
@@ -34,7 +34,8 @@ describe('loading levels - characters', () => {
     const text = appearsBaseText.replace('## Sam', '## Sam\n* appearsAs=Detective');
     const { level, errors } = loadLevelForTest(text);
     expect(errors.describeErrors()).toBe('');
-    expect(level?.characters[0]).toMatchObject({ skinId:'sam-detective', faceImageUrl:'/assets/bodies/base.png', description:'Base description.' });
+    expect(level?.characters[0]).toMatchObject({ skinId:'sam-detective', description:'Base description.' });
+    expect(getHeadImageUrl(level!.characters[0].rootBodyPart)).toBe('/assets/bodies/base.png');
     expect(level?.timeline.keyframes[0].characters[0].skinId).toBe('sam-detective');
   });
 
@@ -92,7 +93,7 @@ describe('loading levels - characters', () => {
     expect(sam).toMatchObject({
       id:'sam',
       title:'Sam',
-      faceImageUrl:null,
+      rootBodyPart:createDefaultCharacterBody(),
       isVisible:true,
       facingDirection:'right',
       bodyOrientation:'standing',
@@ -138,7 +139,7 @@ describe('loading levels - characters', () => {
     expect(sam).toMatchObject({
       id:'sam',
       title:'Detective Sam',
-      faceImageUrl:'/assets/bodies/sam.png',
+      rootBodyPart:replaceHeadImage(createDefaultCharacterBody(), '/assets/bodies/sam.png'),
       isVisible:false,
       facingDirection:'left',
       bodyOrientation:'sitting',

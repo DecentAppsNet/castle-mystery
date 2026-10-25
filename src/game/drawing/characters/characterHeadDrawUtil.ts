@@ -12,7 +12,7 @@ import { COLOR_BLACK } from '../drawColorConstants';
 /** Paints a canvas-resolved head without altering base anatomy or deciding part order; lineWidth is canvas pixels. */
 export function drawCharacterHead(head:ResolvedBodyPart, character:Character, imageSet:ImageSet,
     spriteOverrides:readonly SpriteOverride[], lineWidth:number, context:CanvasRenderingContext2D) {
-  const image = findImageBitmap(imageSet, character.faceImageUrl);
+  const image = findImageBitmap(imageSet, head.part.imageUrl);
   const fit = image ? fitHeadImage(head.part, image.width, image.height) : null;
   context.save();
   if (image && fit) {

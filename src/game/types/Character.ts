@@ -17,7 +17,6 @@ export const DEFAULT_BODY_ORIENTATION:BodyOrientation = 'standing';
 export type MutableCharacter = {
   readonly id:string,
   readonly title:string,
-  readonly faceImageUrl:string|null,
   readonly randomSalt:number,
   readonly skins:CharacterSkin[],
   readonly rootBodyPart:BodyPart,
@@ -38,7 +37,6 @@ export function createDefaultCharacter():Character {
   return {
     id:'character',
     title:'Character',
-    faceImageUrl:null,
     randomSalt:0,
     skins:[],
     rootBodyPart:createDefaultCharacterBody(),
@@ -59,7 +57,6 @@ export function duplicateCharacter(from:Character):Character {
   return {
     id:from.id,
     title:from.title,
-    faceImageUrl:from.faceImageUrl,
     randomSalt:from.randomSalt,
     skins:from.skins.map(duplicateCharacterSkin),
     rootBodyPart:from.rootBodyPart, // The readonly body definition is shared; duplication does not require a deep copy.

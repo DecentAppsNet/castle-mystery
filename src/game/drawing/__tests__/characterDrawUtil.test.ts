@@ -10,6 +10,7 @@ import type ImageSet from '@/game/types/ImageSet';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
 import { createRoomContentDisplayLayout } from '@/game/roomContentDisplayPositionUtil';
+import { createDefaultCharacterBody, replaceHeadImage } from '@/game/characterBody';
 
 const SCALING_FACTORS:ScalingFactors = {
   sourceX:0,
@@ -69,12 +70,12 @@ describe('characterDrawUtil', () => {
 
       const rightFacingScales = _drawObscuredAndCaptureScales({
         ...createDefaultCharacter(),
-        faceImageUrl:'/assets/bodies/test.png',
+        rootBodyPart:replaceHeadImage(createDefaultCharacterBody(), '/assets/bodies/test.png'),
         facingDirection:'right'
       }, room, imageSet);
       const leftFacingScales = _drawObscuredAndCaptureScales({
         ...createDefaultCharacter(),
-        faceImageUrl:'/assets/bodies/test.png',
+        rootBodyPart:replaceHeadImage(createDefaultCharacterBody(), '/assets/bodies/test.png'),
         facingDirection:'left'
       }, room, imageSet);
 

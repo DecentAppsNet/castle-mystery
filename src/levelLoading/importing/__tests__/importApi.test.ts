@@ -131,11 +131,11 @@ describe('importApi', () => {
 
     const loaded = await loadLevelWithImportsAndSourceLineMap('source.md');
     const nestedItemLineNo = _findMergedLineNo(loaded.text, '* description=Nested item import');
-    const faceImageLineNo = _findMergedLineNo(loaded.text, '* headImage=importFace.png');
+    const headImageLineNo = _findMergedLineNo(loaded.text, '* headImage=importFace.png');
     const sourceDescriptionLineNo = _findMergedLineNo(loaded.text, '* description=Source Simon');
 
     expect(loaded.sourceLineMap[sourceDescriptionLineNo - 1]).toEqual({ filename:'source.md', lineNo:10 });
-    expect(loaded.sourceLineMap[faceImageLineNo - 1]).toEqual({ filename:'characters.md', lineNo:9 });
+    expect(loaded.sourceLineMap[headImageLineNo - 1]).toEqual({ filename:'characters.md', lineNo:9 });
     expect(loaded.sourceLineMap[nestedItemLineNo - 1]).toEqual({ filename:'items.md', lineNo:5 });
   });
 
