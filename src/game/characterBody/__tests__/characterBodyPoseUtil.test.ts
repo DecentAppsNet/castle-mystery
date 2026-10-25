@@ -7,14 +7,14 @@ import BodyPart from '../types/BodyPart';
 import BodyPartTransform from '../types/BodyPartTransform';
 
 const HAND:BodyPart = {
-  kind:'leftArm', width:4, height:6, pivotPoint:[1, 2], handPoint:[3, 5], connectedParts:[]
+  kind:'leftArm', imageUrl:null, width:4, height:6, pivotPoint:[1, 2], handPoint:[3, 5], connectedParts:[]
 };
 const HEAD:BodyPart = {
-  kind:'head', width:3, height:5, pivotPoint:[2, 4], handPoint:null,
+  kind:'head', imageUrl:null, width:3, height:5, pivotPoint:[2, 4], handPoint:null,
   connectedParts:[{ part:HAND, connectionPoint:[1, 3] }]
 };
 const ROOT:BodyPart = {
-  kind:'torso', width:4, height:8, pivotPoint:[2, 8], handPoint:null,
+  kind:'torso', imageUrl:null, width:4, height:8, pivotPoint:[2, 8], handPoint:null,
   connectedParts:[{ part:HEAD, connectionPoint:[2, 0] }]
 };
 
