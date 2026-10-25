@@ -33,7 +33,7 @@ export function createDefaultCharacterBody():BodyPart {
   return {
     kind:'torso', imageUrl:null, width, height, pivotPoint:[width / 2, height], handPoint:null,
     connectedParts:[
-      { part:head, connectionPoint:[width / 2, 0 /* + height * .3 */] },
+      { part:head, connectionPoint:[width / 2, 0 + height * .3] },
       { part:_createArm('leftArm'), connectionPoint:[0 + (width * .2), 0 + (height * .2)] },
       { part:_createArm('rightArm'), connectionPoint:[width - (width * .2), 0 + (height * .2)] },
       { part:_createLeg('leftLeg'), connectionPoint:[width / 4, height * .8] },
