@@ -26,6 +26,43 @@ describe('level loading - appears activities', () => {
     expect(snapshotAt(level, 0).skinId).toBe('sam-detective');
   });
 
+  it('resolves skin heads without modifying base anatomy or skin definitions', () => {
+    const level = loadValidLevelForTest(initialAppearanceText);
+    const base = level.characters.find(character => character.id === 'sam')!;
+    const before = structuredClone(base);
+    const overridden = snapshotAt(level, 0);
+    const restored = snapshotAt(level, 5_000);
+    const inherited = snapshotAt(level, 10_000);
+
+    expect(overridden.rootBodyPart.connectedParts[0].part.imageUrl).toBe('/assets/bodies/detective.png');
+    expect(overridden.rootBodyPart).not.toBe(base.rootBodyPart);
+    expect(overridden.rootBodyPart.connectedParts[1]).toBe(base.rootBodyPart.connectedParts[1]);
+    expect(overridden.rootBodyPart.connectedParts[0].part.pivotPoint).toBe(base.rootBodyPart.connectedParts[0].part.pivotPoint);
+    expect(restored.rootBodyPart).toBe(base.rootBodyPart);
+    expect(inherited.rootBodyPart).toBe(base.rootBodyPart);
+    expect(restored.rootBodyPart.connectedParts[0].part.imageUrl).toBe(restored.faceImageUrl);
+    expect(inherited.rootBodyPart.connectedParts[0].part.imageUrl).toBe(inherited.faceImageUrl);
+    expect(base).toEqual(before);
+    expect(base.skins.find(skin => skin.id === 'sam-detective')?.headImageUrl).toBe(overridden.faceImageUrl);
+  });
+
+  it('restores an absent base head image after an initial skin override', () => {
+    const text = initialAppearanceText.replace('* headImage=samBase.png', '');
+    const level = loadValidLevelForTest(text);
+    const base = level.characters.find(character => character.id === 'sam')!;
+    const overridden = snapshotAt(level, 0);
+    const restored = snapshotAt(level, 5_000);
+    const inherited = snapshotAt(level, 10_000);
+
+    expect(overridden.rootBodyPart.connectedParts[0].part.imageUrl).toBe('/assets/bodies/detective.png');
+    expect(overridden.faceImageUrl).toBe('/assets/bodies/detective.png');
+    expect(base.rootBodyPart.connectedParts[0].part.imageUrl).toBeNull();
+    expect(restored.rootBodyPart).toBe(base.rootBodyPart);
+    expect(restored.faceImageUrl).toBeNull();
+    expect(inherited.rootBodyPart).toBe(base.rootBodyPart);
+    expect(inherited.faceImageUrl).toBeNull();
+  });
+
   it('applies the selected skin to a character at the appearance time', () => {
     const text = replaceSection(appearsBaseText, 'itinerary', ['0:00:05 Sam appears Detective']);
     const { level, errors } = loadLevelForTest(text, 'appears-skin.md');
@@ -76,9 +113,9 @@ describe('level loading - appears activities', () => {
     });
   });
 
-  it('keeps the base face image when the selected skin has no face image', () => {
+  it('keeps the base head image when the selected skin has no head image', () => {
     const text = replaceSection(appearsBaseText, 'itinerary', ['0:00:05 Sam appears Witness']);
-    const { level, errors } = loadLevelForTest(text, 'appears-skin-without-face.md');
+    const { level, errors } = loadLevelForTest(text, 'appears-skin-without-head.md');
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();

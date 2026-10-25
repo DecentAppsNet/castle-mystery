@@ -13,6 +13,7 @@ import { SkinLinkages } from "../types/DiscoveryState";
 import { areSkinIdsLinked, createRevealedSkinLinkages } from "../skinLinkageUtil";
 import Effect from "../effects/types/Effect";
 import { arePositionsEqual } from "../types/Position";
+import { replaceHeadImage } from "../characterBody";
 
 function _findMovingCharacterIds(timeline:Timeline, sourceKeyframeI:number):ReadonlySet<string> {
   if (sourceKeyframeI === 0) return new Set();
@@ -53,8 +54,11 @@ function _findCharacterMemberWithSkins(character:CharacterKeyframe, baseCharacte
       ?? baseValue; // Not every value is overridden by a skin.
 }
 
-function _findFaceImageUrlWithSkins(character:CharacterKeyframe, baseCharacter:Character):string|null {
-  return _findCharacterMemberWithSkins(character, baseCharacter, 'faceImageUrl');
+function _findHeadImageUrlWithSkins(character:CharacterKeyframe, baseCharacter:Character):string|null {
+  const head = baseCharacter.rootBodyPart.connectedParts.find(({ part }) => part.kind === 'head');
+  assertNonNullable(head);
+  const skin = baseCharacter.skins.find(skin => skin.id === character.skinId);
+  return skin?.headImageUrl ?? head.part.imageUrl;
 }
 
 function _findDescriptionWithSkins(character:CharacterKeyframe, baseCharacter:Character):string {
@@ -73,6 +77,7 @@ function _combineEffectsAsNeeded(characterTimelineEffects:Effect[], characterMet
 
 function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Character,
     characterMetaTimeEffects:Effect[]|undefined):CharacterWithEffects {
+  const headImageUrl = _findHeadImageUrlWithSkins(character, baseCharacter);
   return {
     // Any members from the keyframe are used.
     isVisible:character.isVisible,
@@ -87,11 +92,11 @@ function _combineCharacterWithBase(character:CharacterKeyframe, baseCharacter:Ch
     title:baseCharacter.title,
     randomSalt:baseCharacter.randomSalt,
     skins:baseCharacter.skins,
-    rootBodyPart:baseCharacter.rootBodyPart,
+    rootBodyPart:replaceHeadImage(baseCharacter.rootBodyPart, headImageUrl),
 
     // Skin-overridable members may come from base character or keyframe-selected skin.
     description:_findDescriptionWithSkins(character, baseCharacter),
-    faceImageUrl:_findFaceImageUrlWithSkins(character, baseCharacter),
+    faceImageUrl:headImageUrl,
     
     // Temporal item instances can be shared directly from the keyframe.
     items:character.items,

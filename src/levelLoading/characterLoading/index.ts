@@ -55,8 +55,8 @@ function _parseCharacterSkins(characterSectionEntry:SectionEntryWithLine, charac
     } // Okay to fall through and return something. An upstream caller can check for added errors.
     const id = createSkinId(characterId, skinName);
     const description = nameValues.description ?? null;
-    const faceImageUrl = nameValues.headImage ? getBodyImageAssetUrl(nameValues.headImage.trim()) : null;
-    return { id, description, faceImageUrl };
+    const headImageUrl = nameValues.headImage ? getBodyImageAssetUrl(nameValues.headImage.trim()) : null;
+    return { id, description, headImageUrl };
   });
 }
 

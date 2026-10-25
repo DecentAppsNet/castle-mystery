@@ -40,7 +40,7 @@ function _findIdentityRowCharacters(placedCharacters:readonly Character[],
 
 function _getCharacterFaceImageUrl(character:Character):string {
   const initialSkin = character.skins.find(skin => skin.id === character.skinId);
-  return initialSkin?.faceImageUrl ?? character.faceImageUrl ?? UNKNOWN_CHARACTER_ICON_URL;
+  return initialSkin?.headImageUrl ?? character.faceImageUrl ?? UNKNOWN_CHARACTER_ICON_URL;
 }
 
 function _createClozeBlankFromCorrectAnswer(correctAnswer:string, conclusionOptions:string[]):ClozeBlank {

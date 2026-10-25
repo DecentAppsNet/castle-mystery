@@ -1,9 +1,9 @@
 type CharacterSkin = {
   readonly id:string, // ID of skin. It will be prefixed with character ID, e.g. `sam-drunk`, and default skin witll just be `sam`.
 
-  // Members below describe overrides of character members with null value indicating no override.
+  // Appearance overrides; null inherits the base description or body head image.
   readonly description:string|null,
-  readonly faceImageUrl:string|null
+  readonly headImageUrl:string|null
 }
 
 export function duplicateCharacterSkin(from:CharacterSkin) { 

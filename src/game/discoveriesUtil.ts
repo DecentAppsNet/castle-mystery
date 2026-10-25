@@ -16,7 +16,7 @@ function _skinIdsToCharacterIconUrls(skinIdSet:Set<string>, baseCharacters:Chara
     if (skinName === NO_SKIN_DEFAULT) return character.faceImageUrl ?? '';
     const skin = character.skins.find(s => s.id === skinId);
     assertNonNullable(skin);
-    return skin.faceImageUrl ?? '';
+    return skin.headImageUrl ?? '';
   });
 }
 

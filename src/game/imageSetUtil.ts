@@ -39,7 +39,7 @@ function _findCharacterFaceImageUrls(level:Level):string[] {
   level.characters.forEach(c => {
     if (c.faceImageUrl) faceImageUrls.add(c.faceImageUrl);
     c.skins.forEach(s => {
-      if (s.faceImageUrl) faceImageUrls.add(s.faceImageUrl);
+      if (s.headImageUrl) faceImageUrls.add(s.headImageUrl);
     });
   });
   return [...faceImageUrls];
