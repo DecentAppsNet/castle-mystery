@@ -8,6 +8,21 @@ import { getArmThickness } from './characterArmGeometryUtil';
 const PLACEHOLDER_PROPORTION_SCALE = MAP_TILE_SIZE * 0.4;
 const HEAD_TORSO_WIDTH_RATIO = 2;
 
+/**
+ * Returns a body tree with the head image replaced, preserving all geometry and leaving the input unchanged.
+ * Shares unaffected parts and connections; returns the original root if no image changes, including when no head exists.
+ * A null URL clears the head image. This only changes the reference; it does not load or validate the asset.
+ */
+export function replaceHeadImage(root:BodyPart, imageUrl:string|null):BodyPart {
+  if (root.kind === 'head') return root.imageUrl === imageUrl ? root : { ...root, imageUrl };
+  const connectedParts = root.connectedParts.map(connection => {
+    const part = replaceHeadImage(connection.part, imageUrl);
+    return part === connection.part ? connection : { ...connection, part };
+  });
+  return connectedParts.every((connection, index) => connection === root.connectedParts[index])
+    ? root : { ...root, connectedParts };
+}
+
 function _createArm(kind:'leftArm'|'rightArm'):BodyPart {
   const width = PLACEHOLDER_PROPORTION_SCALE * 0.2;
   const height = PLACEHOLDER_PROPORTION_SCALE * 0.3;

@@ -20,7 +20,7 @@
 ## Simon
 
 * description=Imported Simon
-* faceImage=importFace.png
+* headImage=importFace.png
 
 ## Queen
 

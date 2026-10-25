@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createDefaultCharacter } from '@/game/types/Character';
+import { createDefaultCharacterBody, replaceHeadImage } from '@/game/characterBody';
 import defaultLevelText from './fixtures/characters-base.md?raw';
 import appearsBaseText from './fixtures/appears/appears-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
@@ -13,6 +14,15 @@ describe('loading levels - characters', () => {
     expect(level!.timeline.keyframes[0].characters[0]).not.toHaveProperty('rootBodyPart');
   });
 
+  it('loads the authored head image into the default body without changing its geometry', () => {
+    const { level, errors } = loadLevelForTest(appearsBaseText);
+    expect(errors.describeErrors()).toBe('');
+    expect(level).not.toBeNull();
+    const sam = level!.characters[0];
+    expect(sam.faceImageUrl).toBe('/assets/bodies/base.png');
+    expect(sam.rootBodyPart).toEqual(replaceHeadImage(createDefaultCharacterBody(), sam.faceImageUrl));
+  });
+
   it('keeps the default initial skin when appearsAs is omitted', () => {
     const { level, errors } = loadLevelForTest(appearsBaseText);
     expect(errors.describeErrors()).toBe('');
@@ -24,7 +34,7 @@ describe('loading levels - characters', () => {
     const text = appearsBaseText.replace('## Sam', '## Sam\n* appearsAs=Detective');
     const { level, errors } = loadLevelForTest(text);
     expect(errors.describeErrors()).toBe('');
-    expect(level?.characters[0]).toMatchObject({ skinId:'sam-detective', faceImageUrl:'/assets/faces/base.png', description:'Base description.' });
+    expect(level?.characters[0]).toMatchObject({ skinId:'sam-detective', faceImageUrl:'/assets/bodies/base.png', description:'Base description.' });
     expect(level?.timeline.keyframes[0].characters[0].skinId).toBe('sam-detective');
   });
 
@@ -43,7 +53,7 @@ describe('loading levels - characters', () => {
   });
 
   it('reports an unknown initial skin at its authored property line', () => {
-    const text = appearsBaseText.replace('* faceImage=base.png', '* appearsAs=Missing');
+    const text = appearsBaseText.replace('* headImage=base.png', '* appearsAs=Missing');
     const { level, errors } = loadLevelForTest(text, 'initial-unknown.md');
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('initial-unknown.md:36:');
@@ -51,7 +61,7 @@ describe('loading levels - characters', () => {
   });
 
   it('rejects an explicitly empty initial skin reference', () => {
-    const text = appearsBaseText.replace('* faceImage=base.png', '* appearsAs=');
+    const text = appearsBaseText.replace('* headImage=base.png', '* appearsAs=');
     const { level, errors } = loadLevelForTest(text, 'initial-empty.md');
     expect(level).toBeNull();
     expect(errors.describeErrors()).toContain('initial-empty.md:36:');
@@ -98,7 +108,7 @@ describe('loading levels - characters', () => {
       '## Sam',
       '* title=Detective Sam',
       '* description=The lead investigator.',
-      '* faceImage=sam.png',
+      '* headImage=sam.png',
       '* visible=false',
       '* facing=left',
       '* orientation=sitting',
@@ -128,7 +138,7 @@ describe('loading levels - characters', () => {
     expect(sam).toMatchObject({
       id:'sam',
       title:'Detective Sam',
-      faceImageUrl:'/assets/faces/sam.png',
+      faceImageUrl:'/assets/bodies/sam.png',
       isVisible:false,
       facingDirection:'left',
       bodyOrientation:'sitting',

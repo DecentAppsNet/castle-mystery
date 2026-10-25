@@ -6,7 +6,7 @@ import { validateFilename } from "@/common/filenameValidationUtil";
 export type CandidateUrls = string[];
 
 const BACKGROUND_IMAGE_ASSET_BASE_URL = '/assets/backgrounds/';
-const FACE_IMAGE_ASSET_BASE_URL = '/assets/faces/';
+const BODY_IMAGE_ASSET_BASE_URL = '/assets/bodies/';
 const ITEM_IMAGE_ASSET_BASE_URL = '/assets/items/';
 const ROOM_TEXTURE_ASSET_BASE_URL = '/assets/room/';
 const CONCLUSION_IMAGE_ASSET_BASE_URL = '/assets/conclusions/';
@@ -20,9 +20,9 @@ export function getBackgroundImageAssetUrl(backgroundImageFilename:string):strin
   return `${BACKGROUND_IMAGE_ASSET_BASE_URL}${backgroundImageFilename}`;
 }
 
-export function getFaceImageAssetUrl(faceImageFilename:string):string {
-  validateFilename(faceImageFilename, 'character faceImage');
-  return `${FACE_IMAGE_ASSET_BASE_URL}${faceImageFilename}`;
+export function getBodyImageAssetUrl(bodyImageFilename:string):string {
+  validateFilename(bodyImageFilename, 'character body image');
+  return `${BODY_IMAGE_ASSET_BASE_URL}${bodyImageFilename}`;
 }
 
 export function getItemImageAssetUrl(itemImageFilename:string):string {
@@ -43,7 +43,7 @@ function _getConclusionImageAssetUrl(conclusionImageFilename:string):string {
 export function getClozeImageCandidateUrls(conclusionImageFilename:string):CandidateUrls {
   return [
     _getConclusionImageAssetUrl(conclusionImageFilename),
-    getFaceImageAssetUrl(conclusionImageFilename)
+    getBodyImageAssetUrl(conclusionImageFilename)
   ];
 }
 

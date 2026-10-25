@@ -33,14 +33,14 @@ HCB
 # characters
 ## Sam
 * description=Base description.
-* faceImage=base.png
+* headImage=base.png
 
 ### Detective
 * description=Detective description.
-* faceImage=detective.png
+* headImage=detective.png
 
 ### Guard
-* faceImage=guard.png
+* headImage=guard.png
 
 ### Witness
 * description=Witness description.
@@ -49,7 +49,7 @@ HCB
 
 ### Butler
 * description=Butler description.
-* faceImage=butler.png
+* headImage=butler.png
 
 # items
 

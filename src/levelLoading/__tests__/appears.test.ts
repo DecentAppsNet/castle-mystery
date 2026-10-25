@@ -15,13 +15,13 @@ describe('level loading - appears activities', () => {
   it('applies an initial skin and lets later default and named appearances override it', () => {
     const level = loadValidLevelForTest(initialAppearanceText);
     expect(snapshotAt(level, 0)).toMatchObject({
-      skinId:'sam-detective', faceImageUrl:'/assets/faces/detective.png', description:'Detective description.'
+      skinId:'sam-detective', faceImageUrl:'/assets/bodies/detective.png', description:'Detective description.'
     });
     expect(snapshotAt(level, 5_000)).toMatchObject({
-      skinId:'sam-default', faceImageUrl:'/assets/faces/samBase.png', description:'Base description.'
+      skinId:'sam-default', faceImageUrl:'/assets/bodies/samBase.png', description:'Base description.'
     });
     expect(snapshotAt(level, 10_000)).toMatchObject({
-      skinId:'sam-witness', faceImageUrl:'/assets/faces/samBase.png', description:'Witness description.'
+      skinId:'sam-witness', faceImageUrl:'/assets/bodies/samBase.png', description:'Witness description.'
     });
     expect(snapshotAt(level, 0).skinId).toBe('sam-detective');
   });
@@ -33,7 +33,7 @@ describe('level loading - appears activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(snapshotAt(level!, 5_000)).toMatchObject({
-      faceImageUrl:'/assets/faces/detective.png', description:'Detective description.'
+      faceImageUrl:'/assets/bodies/detective.png', description:'Detective description.'
     });
   });
 
@@ -46,7 +46,7 @@ describe('level loading - appears activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(snapshotAt(level!, 10_000)).toMatchObject({
-      faceImageUrl:'/assets/faces/base.png', description:'Base description.'
+      faceImageUrl:'/assets/bodies/base.png', description:'Base description.'
     });
   });
 
@@ -59,7 +59,7 @@ describe('level loading - appears activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(snapshotAt(level!, 15_000)).toMatchObject({
-      faceImageUrl:'/assets/faces/base.png', description:'Witness description.'
+      faceImageUrl:'/assets/bodies/base.png', description:'Witness description.'
     });
   });
 
@@ -72,7 +72,7 @@ describe('level loading - appears activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     expect(snapshotAt(level!, 5_000)).toMatchObject({
-      faceImageUrl:'/assets/faces/guard.png', description:'Base description.'
+      faceImageUrl:'/assets/bodies/guard.png', description:'Base description.'
     });
   });
 
@@ -82,7 +82,7 @@ describe('level loading - appears activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    expect(snapshotAt(level!, 5_000).faceImageUrl).toBe('/assets/faces/base.png');
+    expect(snapshotAt(level!, 5_000).faceImageUrl).toBe('/assets/bodies/base.png');
   });
 
   it('keeps the base description when the selected skin has no description', () => {

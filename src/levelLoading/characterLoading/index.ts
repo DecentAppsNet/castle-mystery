@@ -7,7 +7,8 @@ import SectionEntryMap from "../types/SectionEntryMap";
 import { createNormalizedSectionEntryMap, describeAllowedValues, getSectionIdsFromSectionText, parseBoolean } from "../levelFileSectionUtil";
 import { assertNonNullable } from "decent-portal";
 import { parseSectionEntriesWithLines, parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
-import { getFaceImageAssetUrl } from "@/game/imageUrlUtil";
+import { getBodyImageAssetUrl } from "@/game/imageUrlUtil";
+import { createDefaultCharacterBody, replaceHeadImage } from "@/game/characterBody";
 import { rand } from "@/common/randUtil";
 import { parseItem, parseItems } from "../itemLoading";
 import { normalizeId } from "@/game/idUtil";
@@ -54,7 +55,7 @@ function _parseCharacterSkins(characterSectionEntry:SectionEntryWithLine, charac
     } // Okay to fall through and return something. An upstream caller can check for added errors.
     const id = createSkinId(characterId, skinName);
     const description = nameValues.description ?? null;
-    const faceImageUrl = nameValues.faceImage ? getFaceImageAssetUrl(nameValues.faceImage.trim()) : null;
+    const faceImageUrl = nameValues.headImage ? getBodyImageAssetUrl(nameValues.headImage.trim()) : null;
     return { id, description, faceImageUrl };
   });
 }
@@ -78,7 +79,7 @@ function _parseCharacter(characterId:string, position:Position|null, characterSe
   const authoredCharacterName = characterSectionEntry.name.trim();
   const title = nameValues.title ?? authoredCharacterName;
   const description = nameValues.description ?? '';
-  const faceImageUrl = nameValues.faceImage ? getFaceImageAssetUrl(nameValues.faceImage.trim()) : null;
+  const faceImageUrl = nameValues.headImage ? getBodyImageAssetUrl(nameValues.headImage.trim()) : null;
   const isVisible = parseBoolean(nameValues.visible ?? 'true', errors, ['characters', characterId], 'faceImage');
   const facingDirection = _parseFacingDirection(nameValues.facing ?? DEFAULT_FACING_DIRECTION, errors, characterId);
   const bodyOrientation = _parseBodyOrientation(nameValues.orientation ?? 'standing', errors, characterId);
@@ -91,7 +92,8 @@ function _parseCharacter(characterId:string, position:Position|null, characterSe
   const character:MutableCharacter = {
     ...createDefaultCharacter(),
     id:characterId, title:title, description, faceImageUrl, randomSalt:rand(), isVisible, facingDirection, 
-    bodyOrientation, items, leftHandItem, rightHandItem, position, skins, skinId
+    bodyOrientation, items, leftHandItem, rightHandItem, position, skins, skinId,
+    rootBodyPart:replaceHeadImage(createDefaultCharacterBody(), faceImageUrl)
   }
   return { character, isTitleKnown };
 }

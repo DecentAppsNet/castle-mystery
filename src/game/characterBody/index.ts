@@ -1,7 +1,7 @@
 /* This file exposes the static definition and pure geometry API for character bodies.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-export { createDefaultCharacterBody } from './characterBodyDefinitionUtil';
+export { createDefaultCharacterBody, replaceHeadImage } from './characterBodyDefinitionUtil';
 export { getArmThickness } from './characterArmGeometryUtil';
 export { createBodyCanvasLayout } from './characterBodyLayoutUtil';
 export { fitHeadImage, getHeadImageBounds, rotateHeadPose } from './characterHeadGeometryUtil';

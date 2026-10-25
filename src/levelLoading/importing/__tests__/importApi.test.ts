@@ -97,7 +97,7 @@ describe('importApi', () => {
 
     expect(loadedText).toContain('* title=Village');
     expect(loadedText).toContain('* description=Source Simon');
-    expect(loadedText).toContain('* faceImage=importFace.png');
+    expect(loadedText).toContain('* headImage=importFace.png');
     expect(loadedText).toContain('## Queen');
     expect(loadedText).toContain('## Side Table');
     expect(loadedText).toContain('* description=Nested item import');
@@ -131,7 +131,7 @@ describe('importApi', () => {
 
     const loaded = await loadLevelWithImportsAndSourceLineMap('source.md');
     const nestedItemLineNo = _findMergedLineNo(loaded.text, '* description=Nested item import');
-    const faceImageLineNo = _findMergedLineNo(loaded.text, '* faceImage=importFace.png');
+    const faceImageLineNo = _findMergedLineNo(loaded.text, '* headImage=importFace.png');
     const sourceDescriptionLineNo = _findMergedLineNo(loaded.text, '* description=Source Simon');
 
     expect(loaded.sourceLineMap[sourceDescriptionLineNo - 1]).toEqual({ filename:'source.md', lineNo:10 });

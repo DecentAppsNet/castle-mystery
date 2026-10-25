@@ -118,7 +118,7 @@ DDCCAAABBE
 * items=Pig Mask
 
 ### Masked
-* faceImage=pigMask.png
+* headImage=pigMask.png
 * description=The same person we saw earlier - just with a mask on.
 
 ## Harold 
@@ -128,7 +128,7 @@ DDCCAAABBE
 * appearsAs=Masked
 
 ### Masked
-* faceImage=goatMask.png
+* headImage=goatMask.png
 * description=The same person we saw much earlier - just with a mask on.
 
 ## Hugo
@@ -139,7 +139,7 @@ DDCCAAABBE
 * appearsAs=Masked
 
 ### Masked
-* faceImage=horseMask.png
+* headImage=horseMask.png
 * description=The same person we saw much earlier - just with a mask on.
 
 ## Giorgios 
@@ -150,7 +150,7 @@ DDCCAAABBE
 * appearsAs=Masked
 
 ### Masked
-* faceImage=bullMask.png
+* headImage=bullMask.png
 * description=The same person we saw much earlier - just with a mask on.
 
 ## Yusuf 
@@ -161,7 +161,7 @@ DDCCAAABBE
 * appearsAs=Masked
 
 ### Masked
-* faceImage=rabbitMask.png
+* headImage=rabbitMask.png
 * description=The same person we saw much earlier - just with a mask on.
 
 ## Giovanni 
@@ -172,14 +172,14 @@ DDCCAAABBE
 * appearsAs=Masked
 
 ### Masked
-* faceImage=stagMask.png
+* headImage=stagMask.png
 * description=The same person we saw much earlier - just with a mask on.
 
 ## Ugolino
 * isTitleKnown=true
 
 ### Masked
-* faceImage=bullMask.png
+* headImage=bullMask.png
 * description=Yes, it's Ugolino. But... hmm.
 
 # Items

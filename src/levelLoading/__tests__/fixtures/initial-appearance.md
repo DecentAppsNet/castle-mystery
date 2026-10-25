@@ -24,11 +24,11 @@ H
 # characters
 ## Sam
 * description=Base description.
-* faceImage=samBase.png
+* headImage=samBase.png
 * appearsAs=Detective
 
 ### Detective
-* faceImage=detective.png
+* headImage=detective.png
 * description=Detective description.
 
 ### Witness
@@ -36,11 +36,11 @@ H
 
 ## Visitor
 * description=Unplaced visitor.
-* faceImage=visitorBase.png
+* headImage=visitorBase.png
 * appearsAs=Guard
 
 ### Guard
-* faceImage=guard.png
+* headImage=guard.png
 
 # items
 

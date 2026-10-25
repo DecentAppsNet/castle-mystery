@@ -220,7 +220,7 @@ Write one subsection per character. The subsection name is the character's name.
 * `items` (optional) - items the character begins with, separated by `|`. Default: no starting items.
 * `leftHand` (optional) - item character begins with in left hand. Default: no starting item.
 * `rightHand` (optional) - item character begins with in right hand. Default: no starting item.
-* `faceImage` (optional) - the image used for the character's face in the UI. Default: no face image.
+* `headImage` (optional) - the image used for the character's face in the UI. Default: no face image.
 * `appearsAs` (optional) - the character's initial appearance, referencing a skin heading belonging to that character. Default: `default` (the base appearance).
 * `alive` (optional) - whether the character begins alive. Must be `true` or `false`. Default: `true`.
 * `facing` (optional) - which way the character initially faces. Must be `left` or `right`. Default: `right`.
@@ -240,7 +240,7 @@ This section defines the character, but it does not place them on the map. Chara
 * title=Edgar Flint
 * description=A careful old servant who notices more than he says.
 * items=Master Key|Notebook
-* faceImage=butlerFace.png
+* headImage=butlerFace.png
 * isTitleKnown=true
 
 ## Lady Marlowe
@@ -250,18 +250,18 @@ This section defines the character, but it does not place them on the map. Chara
 
 ## Initial Appearance
 
-Define custom skins with level-three headings inside a character subsection. A skin may override `faceImage` and `description`; omitted skin values fall back to the character's base values.
+Define custom skins with level-three headings inside a character subsection. A skin may override `headImage` and `description`; omitted skin values fall back to the character's base values.
 
 `appearsAs` references the skin heading name, ignoring case and surrounding whitespace, not a complete skin ID. Omission or explicit `appearsAs=default` selects the base appearance. `default` is reserved and cannot be a custom skin heading. Empty, unknown, complete-ID, or other-character-only references fail loading with an authoring error located at the `appearsAs` line.
 
 ```md
 ## Sam
 * description=A traveler.
-* faceImage=sam.png
+* headImage=sam.png
 * appearsAs=Masked
 
 ### Masked
-* faceImage=mask.png
+* headImage=mask.png
 * description=A masked traveler.
 ```
 

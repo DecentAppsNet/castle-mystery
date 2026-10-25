@@ -16,7 +16,7 @@ describe('loading levels - conclusions', () => {
     const text = initialAppearanceText.replace('* characters=Sam|Visitor', '');
     const level = loadValidLevelForTest(text);
     const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
-    expect(identities?.parts[0]).toMatchObject({ imageUrl:'/assets/faces/detective.png' });
+    expect(identities?.parts[0]).toMatchObject({ imageUrl:'/assets/bodies/detective.png' });
     expect(identities?.parts.filter(part => part.type === 'blank')).toHaveLength(1);
   });
 
@@ -24,25 +24,25 @@ describe('loading levels - conclusions', () => {
     const text = initialAppearanceText.replace('* appearsAs=Detective', '');
     const level = loadValidLevelForTest(text);
     const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
-    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/faces/samBase.png' });
+    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/bodies/samBase.png' });
   });
 
   it('preserves the base identity portrait for explicit default', () => {
     const text = initialAppearanceText.replace('* appearsAs=Detective', '* appearsAs=default');
     const level = loadValidLevelForTest(text);
     const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
-    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/faces/samBase.png' });
+    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/bodies/samBase.png' });
   });
 
   it('falls back to the base identity portrait when the initial skin has no image', () => {
     const text = initialAppearanceText.replace('* appearsAs=Detective', '* appearsAs=Witness');
     const level = loadValidLevelForTest(text);
     const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
-    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/faces/samBase.png' });
+    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/bodies/samBase.png' });
   });
 
   it('uses the unknown icon when both the initial skin and base portrait are absent', () => {
-    const text = initialAppearanceText.replace('* faceImage=samBase.png', '').replace('* appearsAs=Detective', '* appearsAs=Witness');
+    const text = initialAppearanceText.replace('* headImage=samBase.png', '').replace('* appearsAs=Detective', '* appearsAs=Witness');
     const level = loadValidLevelForTest(text);
     const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
     expect(identities?.parts).toContainEqual({ type:'image', imageUrl:UNKNOWN_CHARACTER_ICON_URL });
@@ -54,8 +54,8 @@ describe('loading levels - conclusions', () => {
     expect(level.initialTime).toBe(10_000);
     expect(level.characters[0].skinId).toBe('sam-detective');
     expect(level.timeline.keyframes.at(-1)?.characters[0].skinId).toBe('sam-witness');
-    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/faces/detective.png' });
-    expect(identities?.parts).not.toContainEqual({ type:'image', imageUrl:'/assets/faces/samBase.png' });
+    expect(identities?.parts).toContainEqual({ type:'image', imageUrl:'/assets/bodies/detective.png' });
+    expect(identities?.parts).not.toContainEqual({ type:'image', imageUrl:'/assets/bodies/samBase.png' });
   });
 
   it('loads an authored conclusion and a generated identities conclusion into level.conclusions', () => {
@@ -63,7 +63,7 @@ describe('loading levels - conclusions', () => {
       '## Sam',
       '* title=Detective Sam',
       '* description=Lead investigator.',
-      '* faceImage=sam.png',
+      '* headImage=sam.png',
       '## Pat',
       '* title=Doctor Pat',
       '* isTitleKnown=true'
@@ -92,7 +92,7 @@ describe('loading levels - conclusions', () => {
       revealRoomIds:[]
     });
     expect(identities?.parts.map(part => part.type)).toEqual(['image', 'text', 'blank']);
-    expect(identities?.parts[0]).toMatchObject({ imageUrl:'/assets/faces/sam.png' });
+    expect(identities?.parts[0]).toMatchObject({ imageUrl:'/assets/bodies/sam.png' });
     expect(identities?.parts[2]).toMatchObject({
       availableAnswers:['Detective Sam', 'Doctor Pat'],
       correctAnswerIndexes:[0],
@@ -108,7 +108,7 @@ describe('loading levels - conclusions', () => {
       revealRoomIds:['study']
     });
     expect(missingBook?.parts.map(part => part.type)).toEqual(['image', 'blank', 'separator', 'blank']);
-    expect(missingBook?.parts[0]).toMatchObject({ imageUrl:['/assets/conclusions/book.png', '/assets/faces/book.png'] });
+    expect(missingBook?.parts[0]).toMatchObject({ imageUrl:['/assets/conclusions/book.png', '/assets/bodies/book.png'] });
     expect(missingBook?.parts[1]).toMatchObject({
       availableAnswers:['Hall', 'Study'],
       correctAnswerIndexes:[1],

@@ -64,17 +64,17 @@ describe('characterDrawUtil', () => {
     it('keeps the obscured head silhouette fixed regardless of the active character facing direction', () => {
       const room = { ...createDefaultRoom(), rect:{ x:0, y:0, width:20, height:20 }, title:'Test Room' };
       const imageSet:ImageSet = new Map([
-        ['/assets/faces/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
+        ['/assets/bodies/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
       ]);
 
       const rightFacingScales = _drawObscuredAndCaptureScales({
         ...createDefaultCharacter(),
-        faceImageUrl:'/assets/faces/test.png',
+        faceImageUrl:'/assets/bodies/test.png',
         facingDirection:'right'
       }, room, imageSet);
       const leftFacingScales = _drawObscuredAndCaptureScales({
         ...createDefaultCharacter(),
-        faceImageUrl:'/assets/faces/test.png',
+        faceImageUrl:'/assets/bodies/test.png',
         facingDirection:'left'
       }, room, imageSet);
 

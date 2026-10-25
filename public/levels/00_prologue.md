@@ -71,17 +71,17 @@ VVVHHGG
 
 * description=He wears a name badge that says "Guida / Guide - Lorenzo".
 * facing=left
-* faceImage=lorenzo.png
+* headImage=lorenzo.png
 
 ## Larry
 
 * description=A seven-year-old boy, ready for trouble.
-* faceImage=larry.png
+* headImage=larry.png
 
 ## Marty
 
 * description=He seems bored and curious at the same time.
-* faceImage=marty.png
+* headImage=marty.png
 
 # Items
 

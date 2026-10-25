@@ -6,7 +6,7 @@
 
 ## Simon
 
-* faceImage=importFace.png
+* headImage=importFace.png
 
 ## Queen
 

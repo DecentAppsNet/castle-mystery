@@ -28,7 +28,7 @@ H
 * description=Local character.
 
 ### Guard
-* faceImage=localGuard.png
+* headImage=localGuard.png
 
 # items
 

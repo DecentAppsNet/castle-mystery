@@ -4,4 +4,4 @@
 * description=Imported character.
 
 ### Night Guard
-* faceImage=importedGuard.png
+* headImage=importedGuard.png
