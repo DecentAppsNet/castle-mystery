@@ -2,6 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 export { createDefaultCharacterBody, getHeadImageUrl, replaceHeadImage } from './characterBodyDefinitionUtil';
+export { createRasterCharacterBody } from './rasterBodyDefinitionUtil';
 export { getArmThickness } from './characterArmGeometryUtil';
 export { createBodyCanvasLayout } from './characterBodyLayoutUtil';
 export { fitHeadImage, getHeadImageBounds, rotateHeadPose } from './characterHeadGeometryUtil';
