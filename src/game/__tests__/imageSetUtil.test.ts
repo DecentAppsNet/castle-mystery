@@ -18,6 +18,72 @@ describe('imageSetUtil', () => {
   });
 
   describe('createImageSetFromLevel()', () => {
+    it('rejects an unavailable configured head image with its canonical URL', async () => {
+      const level = createDefaultMutableLevel();
+      level.characters = [{ ...createDefaultCharacter(),
+        rootBodyPart:replaceHeadImage(createDefaultCharacterBody(), '/assets/bodies/missing.png') }];
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        status:url === '/castle-mystery/assets/bodies/missing.png' ? 404 : 200
+      }));
+
+      await expect(createImageSetFromLevel(level)).rejects.toThrow(
+        'Could not load required character images (fetch or decode failed): /assets/bodies/missing.png');
+    });
+
+    it('rejects an undecodable skin override even when it is not selected', async () => {
+      const level = createDefaultMutableLevel();
+      level.characters = [{ ...createDefaultCharacter(),
+        skins:[{ id:'character-alternate', description:null, headImageUrl:'/assets/bodies/broken.png' }] }];
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        headers:{ 'content-type':url === '/castle-mystery/assets/bodies/broken.png' ? 'image/broken' : 'image/png' }
+      }));
+      vi.mocked(createImageBitmap).mockImplementation(async source => {
+        if (source instanceof Blob && source.type === 'image/broken') throw new Error('decode failed');
+        return { width:1, height:1 } as ImageBitmap;
+      });
+
+      await expect(createImageSetFromLevel(level)).rejects.toThrow('/assets/bodies/broken.png');
+    });
+
+    it('rejects a network failure for a configured non-head body part', async () => {
+      const level = createDefaultMutableLevel();
+      level.characters = [{ ...createDefaultCharacter(), rootBodyPart:{
+        ...createDefaultCharacterBody(), imageUrl:'/assets/bodies/torso.png'
+      } }];
+      vi.mocked(fetch).mockImplementation(async url => {
+        if (url === '/castle-mystery/assets/bodies/torso.png') throw new Error('network failed');
+        return new Response(new Blob());
+      });
+
+      await expect(createImageSetFromLevel(level)).rejects.toThrow('/assets/bodies/torso.png');
+    });
+
+    it('keeps a loaded character image when its optional punch mask is absent', async () => {
+      const level = createDefaultMutableLevel();
+      level.characters = [{ ...createDefaultCharacter(),
+        rootBodyPart:replaceHeadImage(createDefaultCharacterBody(), '/assets/bodies/head.png') }];
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        status:String(url).endsWith('.punch.png') ? 404 : 200
+      }));
+
+      const imageSet = await createImageSetFromLevel(level);
+
+      expect(imageSet.get('/assets/bodies/head.png')?.punchMaskImage).toBeNull();
+      expect(imageSet.get('/assets/bodies/head.png')?.image).toEqual({ width:1, height:1 });
+    });
+
+    it('tolerates unrelated asset failures and omitted character images', async () => {
+      const level = createDefaultMutableLevel();
+      level.characters = [createDefaultCharacter()];
+      level.backgroundImageUrl = '/assets/backgrounds/missing.png';
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status:404 }));
+
+      const imageSet = await createImageSetFromLevel(level);
+
+      expect(imageSet.size).toBe(0);
+      expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('/assets/bodies/'));
+    });
+
     it('loads every body part and skin override', async () => {
       const root = createDefaultCharacterBody();
       const rootBodyPart = {

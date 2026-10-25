@@ -186,6 +186,10 @@ export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
   const loadImageBitmap = _createLoadImageBitmapCache();
   const loadPunchMaskImageBitmap = _createLoadPunchMaskImageBitmapCache();
   await _loadDirectReferencedImages(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
+  const failedCharacterUrls = _findCharacterImageUrls(level).filter(imageUrl => !imageSet.has(imageUrl));
+  if (failedCharacterUrls.length) {
+    throw new Error(`Could not load required character images (fetch or decode failed): ${failedCharacterUrls.join(', ')}`);
+  }
   await _resolveLevelConclusionImageUrls(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
   return imageSet;
 }
