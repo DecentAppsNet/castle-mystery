@@ -1,7 +1,7 @@
 # General
 
 * title=Adhoc
-* activeCharacter=Marty
+* activeCharacter=Duchess
 * time=11:00:00
 * background=daySky.png
 * imports=items.md | characters.md | roomStyles.md
@@ -25,19 +25,14 @@ A
 ....
 ```
 
-* M=Marty
+* M=Duchess
 * c=Chair Right
 
 # Characters
 
-## Marty
-
-* description=He seems bored and curious at the same time.
-* faceImage=marty.png
-
 # itinerary
 
-11:00:00 Marty stands
+11:00:00 Duchess stands
 : says "1. standing, facing right"
 : faces left
 : says "2. standing, facing left"
