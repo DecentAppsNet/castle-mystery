@@ -4,9 +4,17 @@
 import { MAP_TILE_SIZE } from '../roomGridUtil';
 import BodyPart from './types/BodyPart';
 import { getArmThickness } from './characterArmGeometryUtil';
+import { assertNonNullable } from 'decent-portal';
 
 const PLACEHOLDER_PROPORTION_SCALE = MAP_TILE_SIZE * 0.4;
 const HEAD_TORSO_WIDTH_RATIO = 2;
+
+/** Returns the head image of a torso-root definition; the head must be a direct child. */
+export function getHeadImageUrl(root:BodyPart):string|null {
+  const head = root.connectedParts.find(({ part }) => part.kind === 'head');
+  assertNonNullable(head);
+  return head.part.imageUrl;
+}
 
 /**
  * Returns a body tree with the head image replaced, preserving all geometry and leaving the input unchanged.

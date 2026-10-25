@@ -1,3 +1,6 @@
+/* This file records discoveries and resolves their display icons and counts.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { isCharacterInteractive, isItemInteractive } from "./interactivityUtil";
 import GameState from "./types/GameState";
 import Discoveries from "./types/Discoveries";
@@ -6,6 +9,7 @@ import Character from "./types/Character";
 import { parseSkinId } from "@/levelLoading/generalLoading";
 import { assertNonNullable } from "decent-portal";
 import { NO_SKIN_DEFAULT } from "@/levelLoading/activityLoading/activitySchedulers/appearsScheduler";
+import { getHeadImageUrl } from './characterBody';
 
 function _skinIdsToCharacterIconUrls(skinIdSet:Set<string>, baseCharacters:Character[]):string[] {
   const skinIds = [...skinIdSet];
@@ -13,7 +17,7 @@ function _skinIdsToCharacterIconUrls(skinIdSet:Set<string>, baseCharacters:Chara
     const { characterId, skinName } = parseSkinId(skinId);
     const character = baseCharacters.find(character => character.id === characterId);
     assertNonNullable(character);
-    if (skinName === NO_SKIN_DEFAULT) return character.faceImageUrl ?? '';
+    if (skinName === NO_SKIN_DEFAULT) return getHeadImageUrl(character.rootBodyPart) ?? '';
     const skin = character.skins.find(s => s.id === skinId);
     assertNonNullable(skin);
     return skin.headImageUrl ?? '';

@@ -18,6 +18,7 @@ import Room from "@/game/types/Room";
 import { normalizeId } from "@/game/idUtil";
 import { randIntInRange } from "@/common/randUtil";
 import { assertNonNullable } from "decent-portal";
+import { getHeadImageUrl } from '@/game/characterBody';
 
 function _randomizeIdentityRows(characters:readonly Character[]):Character[] {
   const shuffled = [...characters];
@@ -38,9 +39,9 @@ function _findIdentityRowCharacters(placedCharacters:readonly Character[],
   return _randomizeIdentityRows(characters);
 }
 
-function _getCharacterFaceImageUrl(character:Character):string {
+function _getCharacterHeadImageUrl(character:Character):string {
   const initialSkin = character.skins.find(skin => skin.id === character.skinId);
-  return initialSkin?.headImageUrl ?? character.faceImageUrl ?? UNKNOWN_CHARACTER_ICON_URL;
+  return initialSkin?.headImageUrl ?? getHeadImageUrl(character.rootBodyPart) ?? UNKNOWN_CHARACTER_ICON_URL;
 }
 
 function _createClozeBlankFromCorrectAnswer(correctAnswer:string, conclusionOptions:string[]):ClozeBlank {
@@ -123,7 +124,7 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
   const parts:ClozePart[] = [];
   identityRowCharacters.forEach((character, characterI) => {
       if (characterI > 0) parts.push({ type:ClozePartType.separator });
-      parts.push({ type:ClozePartType.image, imageUrl:_getCharacterFaceImageUrl(character) });
+      parts.push({ type:ClozePartType.image, imageUrl:_getCharacterHeadImageUrl(character) });
       parts.push({ type:ClozePartType.text, text:' = ' });
       parts.push(_createClozeBlankFromCorrectAnswer(character.title, characterOptions));
     });

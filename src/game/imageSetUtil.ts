@@ -13,6 +13,7 @@ import ImageSet from "./types/ImageSet";
 import { assertNonNullable } from "decent-portal";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
 import { CHARACTER_SELECTION_NIMBUS_IMAGE_URL } from "./effects/characterSelectionEffectUtil";
+import BodyPart from './characterBody/types/BodyPart';
 
 export function createEmptyImageSet():ImageSet {
   return new Map();
@@ -34,15 +35,20 @@ function _findItemImageUrls(level:Level):string[] {
   return [...imageUrls];
 }
 
-function _findCharacterFaceImageUrls(level:Level):string[] {
-  const faceImageUrls = new Set<string>();
-  level.characters.forEach(c => {
-    if (c.faceImageUrl) faceImageUrls.add(c.faceImageUrl);
-    c.skins.forEach(s => {
-      if (s.headImageUrl) faceImageUrls.add(s.headImageUrl);
+function _collectBodyImageUrls(part:BodyPart, imageUrls:Set<string>):void {
+  if (part.imageUrl !== null) imageUrls.add(part.imageUrl);
+  part.connectedParts.forEach(connection => _collectBodyImageUrls(connection.part, imageUrls));
+}
+
+function _findCharacterImageUrls(level:Level):string[] {
+  const imageUrls = new Set<string>();
+  level.characters.forEach(character => {
+    _collectBodyImageUrls(character.rootBodyPart, imageUrls);
+    character.skins.forEach(skin => {
+      if (skin.headImageUrl) imageUrls.add(skin.headImageUrl);
     });
   });
-  return [...faceImageUrls];
+  return [...imageUrls];
 }
 
 function _findImageUrls(level:Level):string[] {
@@ -64,7 +70,7 @@ function _findImageUrls(level:Level):string[] {
     if (item.imageUrl) imageUrls.add(item.imageUrl);
   }));
   _findItemImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
-  _findCharacterFaceImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
+  _findCharacterImageUrls(level).forEach(imageUrl => imageUrls.add(imageUrl));
   level.conclusions.forEach(conclusion => conclusion.parts.forEach(part => {
     if (part.type !== ClozePartType.image) return;
     const imageUrl = (part as ClozeImage).imageUrl;

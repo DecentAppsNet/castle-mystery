@@ -8,6 +8,8 @@ import { createKeyframeAtTime, createTimelineSnapshot, updateTimelineSnapshotAct
 import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import discoveryStateLevelText from './fixtures/discovery-state.md?raw';
+import initialAppearanceText from '@/levelLoading/__tests__/fixtures/initial-appearance.md?raw';
+import { replaceHeadImage } from '../characterBody';
 
 function _loadLevel() {
   return loadValidLevelForTest(discoveryStateLevelText, 'discovery-state.md');
@@ -18,6 +20,23 @@ function _createGameState() {
 }
 
 describe('discovery state', () => {
+  it('resolves discovered base and specified skin icons independently of the initial skin', () => {
+    const original = createGameState(loadValidLevelForTest(initialAppearanceText));
+    const gameState = {
+      ...original,
+      baseCharacters:original.baseCharacters.map(character => character.id !== 'sam' ? character : {
+        ...character, rootBodyPart:replaceHeadImage(character.rootBodyPart, '/assets/bodies/body-head.png')
+      })
+    };
+    gameState.discoveryState.discoveredSkinIds.add('sam-default');
+    gameState.discoveryState.discoveredSkinIds.add('sam-detective');
+    gameState.discoveryState.discoveredSkinIds.add('sam-witness');
+
+    expect(createDiscoveries(gameState).discoveredCharacterIconUrls).toEqual([
+      '/assets/bodies/body-head.png', '/assets/bodies/detective.png', ''
+    ]);
+  });
+
   it('initializes independent discovery state from authored level values and discovers the active room', () => {
     const level = _loadLevel();
     const gameState1 = createGameState(level);
