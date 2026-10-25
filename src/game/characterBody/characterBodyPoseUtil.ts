@@ -68,7 +68,8 @@ export function getBodyBounds(parts:readonly ResolvedBodyPart[]):Rect {
 /**
  * Creates ephemeral placement in game units with the support surface at Y = 0 and root pivot X = 0.
  * Standing rests on the feet; other postures rest on the torso regardless of protruding children.
- * Facing mirrors artwork; right-facing poses reflect torso limb attachments to match the visible side.
+ * Facing mirrors artwork; only vector placeholders reflect right-facing torso limb attachments.
+ * Raster bodies retain authored connections in every posture before whole-pose reflection.
  * Anatomical identities and definitions remain unchanged.
  */
 export function createBodyPose(root:BodyPart, orientation:BodyOrientation, facing:FacingDirection):readonly ResolvedBodyPart[] {
@@ -76,7 +77,8 @@ export function createBodyPose(root:BodyPart, orientation:BodyOrientation, facin
   const rootTransform = createBodyAttachmentTransform([0, 0], root.pivotPoint,
     orientation === 'laying' ? -DEGREES_90 : 0);
   const parts:ResolvedBodyPart[] = [];
-  _resolvePart(root, rootTransform, { leftLeg:legAngle, rightLeg:legAngle }, parts, facing === 'right');
+  const reflectVectorAttachments = root.imageUrl === null && facing === 'right';
+  _resolvePart(root, rootTransform, { leftLeg:legAngle, rightLeg:legAngle }, parts, reflectVectorAttachments);
   const supports = orientation === 'standing'
     ? [getResolvedBodyPart(parts, 'leftLeg'), getResolvedBodyPart(parts, 'rightLeg')]
     : [getResolvedBodyPart(parts, 'torso')];

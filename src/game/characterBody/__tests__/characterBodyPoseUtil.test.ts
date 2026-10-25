@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy,
+import { createBodyPose, createRasterCharacterBody, getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy,
   composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint, transformBodyRect } from '../index';
 import { createRect, isPositionInOrOnRect } from '@/game/rectUtil';
 import BodyPart from '../types/BodyPart';
 import BodyPartTransform from '../types/BodyPartTransform';
+import rasterBody from './fixtures/rasterBody';
 
 const HAND:BodyPart = {
   kind:'leftArm', imageUrl:null, width:4, height:6, pivotPoint:[1, 2], handPoint:[3, 5], connectedParts:[]
@@ -19,6 +20,42 @@ const ROOT:BodyPart = {
 };
 
 describe('characterBodyPoseUtil', () => {
+  describe('createBodyPose()', () => {
+    it('keeps raster pivots on authored torso connections in every posture and facing', () => {
+      const root = createRasterCharacterBody(rasterBody, 460);
+      const before = structuredClone(root);
+      for (const orientation of ['standing', 'sitting', 'kneeling', 'laying'] as const) {
+        for (const facing of ['right', 'left'] as const) {
+          const parts = createBodyPose(root, orientation, facing);
+          const torso = getResolvedBodyPart(parts, 'torso');
+          for (const { part, connectionPoint } of root.connectedParts) {
+            const child = getResolvedBodyPart(parts, part.kind);
+            const pivot = transformBodyPoint(child.transform, part.pivotPoint);
+            const connection = transformBodyPoint(torso.transform, connectionPoint);
+            expect(pivot[0]).toBeCloseTo(connection[0]);
+            expect(pivot[1]).toBeCloseTo(connection[1]);
+            expect(child.part).toBe(part);
+          }
+        }
+      }
+      expect(root).toEqual(before);
+    });
+
+    it('mirrors the complete raster pose without exchanging anatomical parts', () => {
+      const root = createRasterCharacterBody(rasterBody, 460);
+      const right = createBodyPose(root, 'standing', 'right');
+      const left = createBodyPose(root, 'standing', 'left');
+      for (const resolved of right) {
+        const mirrored = getResolvedBodyPart(left, resolved.part.kind);
+        const point = transformBodyPoint(resolved.transform, resolved.part.pivotPoint);
+        const mirroredPoint = transformBodyPoint(mirrored.transform, mirrored.part.pivotPoint);
+        expect(mirroredPoint[0]).toBeCloseTo(-point[0]);
+        expect(mirroredPoint[1]).toBeCloseTo(point[1]);
+        expect(mirrored.part).toBe(resolved.part);
+      }
+    });
+  });
+
   describe('resolveBodyHierarchy()', () => {
     it('attaches a rotated noncentral child pivot to the transformed parent connection', () => {
       const rootTransform = createBodyAttachmentTransform([20, 30], ROOT.pivotPoint, Math.PI / 4);
