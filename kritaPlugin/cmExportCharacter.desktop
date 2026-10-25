@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=cmExportCharacter
+X-Python-2-Compatible=false
+Name=CM Export Character
+Comment=Export character body-part PNGs and pivot and connection metadata.
