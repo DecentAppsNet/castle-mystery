@@ -4,6 +4,7 @@
 import { assertNonNullable } from 'decent-portal';
 import Point from '../types/Point';
 import ScalingFactors from '../types/ScalingFactors';
+import { FacingDirection } from '../types/Character';
 import CharacterLayout from './types/CharacterLayout';
 import ResolvedBodyPart from './types/ResolvedBodyPart';
 import BodyPartTransform from './types/BodyPartTransform';
@@ -22,7 +23,7 @@ function _getHand({ part, transform }:ResolvedBodyPart):{ x:number, y:number } {
 
 /** Projects a support-grounded game-unit pose once; supportAnchor is already in canvas pixels. */
 export function createBodyCanvasLayout(pose:readonly ResolvedBodyPart[], supportAnchor:Point,
-    scalingFactors:Pick<ScalingFactors, 'scaleX'|'scaleY'>):CharacterLayout {
+  scalingFactors:Pick<ScalingFactors, 'scaleX'|'scaleY'>, facing:FacingDirection = 'right'):CharacterLayout {
   const projection:BodyPartTransform = {
     horizontalX:scalingFactors.scaleX, horizontalY:0, verticalX:0, verticalY:scalingFactors.scaleY,
     translateX:supportAnchor[0], translateY:supportAnchor[1]
@@ -32,12 +33,13 @@ export function createBodyCanvasLayout(pose:readonly ResolvedBodyPart[], support
   const head = getResolvedBodyPart(parts, 'head');
   const [centerX, centerY] = _getCenter(head);
   const headBounds = getBodyBounds([head]);
+  const swapHandRoles = facing === 'left' && getResolvedBodyPart(parts, 'torso').part.imageUrl !== null;
   return {
     parts, bounds,
     characterCenterCanvasPoint:_getCenter(getResolvedBodyPart(parts, 'torso')),
     head:{ centerX, centerY, radius:Math.max(headBounds.width, headBounds.height) / 2 },
-    leftHand:_getHand(getResolvedBodyPart(parts, 'leftArm')),
-    rightHand:_getHand(getResolvedBodyPart(parts, 'rightArm')),
+    leftHand:_getHand(getResolvedBodyPart(parts, swapHandRoles ? 'rightArm' : 'leftArm')),
+    rightHand:_getHand(getResolvedBodyPart(parts, swapHandRoles ? 'leftArm' : 'rightArm')),
     anchorX:centerX, anchorTopY:bounds.y
   };
 }

@@ -8,7 +8,7 @@ import { createNormalizedSectionEntryMap, describeAllowedValues, getSectionIdsFr
 import { assertNonNullable } from "decent-portal";
 import { parseSectionEntriesWithLines, parseUniqueNameValueLines, SectionEntryWithLine } from "@/common/markdownUtil";
 import { getBodyImageAssetUrl } from "@/game/imageUrlUtil";
-import { createDefaultCharacterBody, replaceHeadImage } from "@/game/characterBody";
+import { loadCharacterBody } from './characterBodyLoadingUtil';
 import { rand } from "@/common/randUtil";
 import { parseItem, parseItems } from "../itemLoading";
 import { normalizeId } from "@/game/idUtil";
@@ -79,7 +79,6 @@ function _parseCharacter(characterId:string, position:Position|null, characterSe
   const authoredCharacterName = characterSectionEntry.name.trim();
   const title = nameValues.title ?? authoredCharacterName;
   const description = nameValues.description ?? '';
-  const headImageUrl = nameValues.headImage ? getBodyImageAssetUrl(nameValues.headImage.trim()) : null;
   const isVisible = parseBoolean(nameValues.visible ?? 'true', errors, ['characters', characterId], 'visible');
   const facingDirection = _parseFacingDirection(nameValues.facing ?? DEFAULT_FACING_DIRECTION, errors, characterId);
   const bodyOrientation = _parseBodyOrientation(nameValues.orientation ?? 'standing', errors, characterId);
@@ -93,7 +92,7 @@ function _parseCharacter(characterId:string, position:Position|null, characterSe
     ...createDefaultCharacter(),
     id:characterId, title:title, description, randomSalt:rand(), isVisible, facingDirection,
     bodyOrientation, items, leftHandItem, rightHandItem, position, skins, skinId,
-    rootBodyPart:replaceHeadImage(createDefaultCharacterBody(), headImageUrl)
+    rootBodyPart:loadCharacterBody(nameValues, characterId, errors)
   }
   return { character, isTitleKnown };
 }

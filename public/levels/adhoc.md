@@ -21,6 +21,7 @@ A
 * style=Museum
 
 ```
+....
 .cM.
 ....
 ```
@@ -30,9 +31,14 @@ A
 
 # Characters
 
+## Duchess
+* items=Letter | Brass Key
+
 # itinerary
 
 11:00:00 Duchess stands
+: takes Letter in left hand
+: takes Brass Key in right hand
 : says "1. standing, facing right"
 : faces left
 : says "2. standing, facing left"

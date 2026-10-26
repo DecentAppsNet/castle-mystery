@@ -92,8 +92,10 @@ export function createBodyPose(root:BodyPart, orientation:BodyOrientation, facin
 
 const _rightFacingPaintOrder:readonly PartKind[] = ['leftArm', 'leftLeg', 'rightLeg', 'torso', 'head', 'rightArm'];
 const _leftFacingPaintOrder:readonly PartKind[] = ['rightArm', 'rightLeg', 'leftLeg', 'torso', 'head', 'leftArm'];
+const _rasterLeftFacingPaintOrder:readonly PartKind[] = ['leftArm', 'rightLeg', 'leftLeg', 'torso', 'head', 'rightArm'];
 
-/** Returns the shared back-to-front part order for this facing, independent of hierarchy traversal. */
-export function getBodyPaintOrder(facing:FacingDirection):readonly PartKind[] {
+/** Returns back-to-front order; raster arms retain fixed far/near roles under facing reflection. */
+export function getBodyPaintOrder(facing:FacingDirection, isRasterBody:boolean = false):readonly PartKind[] {
+  if (isRasterBody && facing === 'left') return _rasterLeftFacingPaintOrder;
   return facing === 'right' ? _rightFacingPaintOrder : _leftFacingPaintOrder;
 }

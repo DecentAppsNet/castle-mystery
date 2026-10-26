@@ -1,9 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { createBodyCanvasLayout, createBodyPose, createDefaultCharacterBody, getBodyBounds,
+import { createBodyCanvasLayout, createBodyPose, createDefaultCharacterBody, createRasterCharacterBody, getBodyBounds,
   getResolvedBodyPart, transformBodyPoint } from '../index';
+import rasterBody from './fixtures/rasterBody';
 
 describe('characterBodyLayoutUtil', () => {
   describe('createBodyCanvasLayout()', () => {
+    it('maps raster arm roles to character-relative hands across postures and facings', () => {
+      const root = createRasterCharacterBody(rasterBody, 460);
+      for (const orientation of ['standing', 'sitting', 'kneeling', 'laying'] as const) {
+        for (const facing of ['right', 'left'] as const) {
+          const layout = createBodyCanvasLayout(createBodyPose(root, orientation, facing),
+            [137, 251], { scaleX:3, scaleY:5 }, facing);
+          const crLeftArm = getResolvedBodyPart(layout.parts, facing === 'left' ? 'rightArm' : 'leftArm');
+          const crRightArm = getResolvedBodyPart(layout.parts, facing === 'left' ? 'leftArm' : 'rightArm');
+          expect([layout.leftHand.x, layout.leftHand.y]).toEqual(
+            transformBodyPoint(crLeftArm.transform, crLeftArm.part.handPoint!));
+          expect([layout.rightHand.x, layout.rightHand.y]).toEqual(
+            transformBodyPoint(crRightArm.transform, crRightArm.part.handPoint!));
+        }
+      }
+    });
+
     it('projects every part after laying rotation while preserving definition references', () => {
       const pose = createBodyPose(createDefaultCharacterBody(), 'laying', 'left');
       const layout = createBodyCanvasLayout(pose, [137, 251], { scaleX:3, scaleY:5 });

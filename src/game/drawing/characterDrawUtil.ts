@@ -2,6 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
+import { DRAW_CHARACTER_DIAGNOSTICS } from '@/developer/config';
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
 import { createBodyCanvasLayout, createBodyPose, getBodyPaintOrder, calcHeadImageBounds, getHeadImageUrl, getResolvedBodyPart } from '@/game/characterBody';
@@ -186,7 +187,7 @@ export function createCharacterCanvasLayout(character:Character, displayPosition
   const swayPhase = ((time + character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
   const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
   const pose = createBodyPose(character.rootBodyPart, character.bodyOrientation, character.facingDirection);
-  const projected = createBodyCanvasLayout(pose, [centerX + sway, bottomY], scalingFactors);
+  const projected = createBodyCanvasLayout(pose, [centerX + sway, bottomY], scalingFactors, character.facingDirection);
   return {
     layout:projected,
     characterWidth:projected.bounds.width,
@@ -272,7 +273,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
   drawHeldItemsBehindCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
-  getBodyPaintOrder(character.facingDirection).forEach(kind => {
+  getBodyPaintOrder(character.facingDirection, character.rootBodyPart.imageUrl !== null).forEach(kind => {
     const part = getResolvedBodyPart(layout.parts, kind);
     if (kind === 'head') {
       drawCharacterHead(part, character, imageSet, spriteOverrides, scalingFactors.roomLineWidth, context);
@@ -281,7 +282,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     }
   });
   drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
-  drawCharacterAttachmentMarkers(layout.parts, context);
+  if (DRAW_CHARACTER_DIAGNOSTICS) drawCharacterAttachmentMarkers(layout.parts, context);
 }
 
 export function drawCharacterPopover(character:Character, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, time:number,
