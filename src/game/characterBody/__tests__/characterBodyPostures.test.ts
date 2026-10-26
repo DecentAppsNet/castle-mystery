@@ -40,19 +40,19 @@ describe('character body postures', () => {
     }
   });
 
-  it('keeps anatomical hand ownership when mirroring every posture', () => {
+  it('keeps vector hand ownership when mirroring every posture', () => {
     const root = createDefaultCharacterBody();
     for (const orientation of ['standing', 'sitting', 'kneeling', 'laying'] as const) {
       const right = createBodyPose(root, orientation, 'right');
       const left = createBodyPose(root, orientation, 'left');
-      for (const kind of ['leftArm', 'rightArm'] as const) {
-        const rightArm = getResolvedBodyPart(right, kind);
-        const leftArm = getResolvedBodyPart(left, kind);
-        expect(leftArm.part).toBe(rightArm.part);
-        const rightHand = transformBodyPoint(rightArm.transform, rightArm.part.handPoint!);
-        const leftHand = transformBodyPoint(leftArm.transform, leftArm.part.handPoint!);
-        const rightPivot = transformBodyPoint(rightArm.transform, rightArm.part.pivotPoint);
-        const leftPivot = transformBodyPoint(leftArm.transform, leftArm.part.pivotPoint);
+      for (const kind of ['farArm', 'nearArm'] as const) {
+        const rightFacingArm = getResolvedBodyPart(right, kind);
+        const leftFacingArm = getResolvedBodyPart(left, kind);
+        expect(leftFacingArm.part).toBe(rightFacingArm.part);
+        const rightHand = transformBodyPoint(rightFacingArm.transform, rightFacingArm.part.handPoint!);
+        const leftHand = transformBodyPoint(leftFacingArm.transform, leftFacingArm.part.handPoint!);
+        const rightPivot = transformBodyPoint(rightFacingArm.transform, rightFacingArm.part.pivotPoint);
+        const leftPivot = transformBodyPoint(leftFacingArm.transform, leftFacingArm.part.pivotPoint);
         expect(leftHand[0] - leftPivot[0]).toBeCloseTo(-(rightHand[0] - rightPivot[0]));
         expect(leftHand[1] - leftPivot[1]).toBeCloseTo(rightHand[1] - rightPivot[1]);
       }
@@ -96,13 +96,13 @@ describe('character body postures', () => {
     }
   });
 
-  it('paints the near arm over the torso and the far arm behind it', () => {
+  it('preserves the legacy vector arm order for each facing', () => {
     const right = getBodyPaintOrder('right');
     const left = getBodyPaintOrder('left');
 
-    expect(right.indexOf('leftArm')).toBeLessThan(right.indexOf('torso'));
-    expect(right.indexOf('rightArm')).toBeGreaterThan(right.indexOf('torso'));
-    expect(left.indexOf('rightArm')).toBeLessThan(left.indexOf('torso'));
-    expect(left.indexOf('leftArm')).toBeGreaterThan(left.indexOf('torso'));
+    expect(right.indexOf('farArm')).toBeLessThan(right.indexOf('torso'));
+    expect(right.indexOf('nearArm')).toBeGreaterThan(right.indexOf('torso'));
+    expect(left.indexOf('nearArm')).toBeLessThan(left.indexOf('torso'));
+    expect(left.indexOf('farArm')).toBeGreaterThan(left.indexOf('torso'));
   });
 });

@@ -100,7 +100,7 @@ describe('imageSetUtil', () => {
 
       const imageSet = await createImageSetFromLevel(level);
 
-      for (const kind of ['torso', 'head', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', 'alternate']) {
+      for (const kind of ['torso', 'head', 'farArm', 'nearArm', 'leftLeg', 'rightLeg', 'alternate']) {
         expect(imageSet.has(`/assets/bodies/${kind}.png`)).toBe(true);
         expect(fetch).toHaveBeenCalledWith(`/castle-mystery/assets/bodies/${kind}.png`);
       }

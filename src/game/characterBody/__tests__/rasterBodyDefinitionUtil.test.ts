@@ -20,7 +20,7 @@ describe('rasterBodyDefinitionUtil', () => {
         expect(part.height).toBe(source.height * 2);
         expect(part.pivotPoint).toEqual(source.pivotPoint.map(value => value * 2));
         expect(part.imageUrl).toBe(source.imageUrl);
-        const isArm = part.kind === 'leftArm' || part.kind === 'rightArm';
+        const isArm = part.kind === 'farArm' || part.kind === 'nearArm';
         // The provisional hand convention is 75% across the arm at its bottom edge, then scaled.
         expect(part.handPoint).toEqual(isArm ? [source.width * 0.75 * 2, source.height * 2] : null);
       }

@@ -14,11 +14,17 @@ describe('character body loading', () => {
     expect(head.part.imageUrl).toBe('/assets/bodies/duchessTest_head.png');
     expect(head.part.width).toBeCloseTo(282 * scale);
     expect(head.connectionPoint).toEqual([250 * scale, 25 * scale]);
+    expect(root.connectedParts[1].part.kind).toBe('farArm');
+    expect(root.connectedParts[1].part.imageUrl).toBe('/assets/bodies/duchessTest_farArm.png');
+    expect(root.connectedParts[1].connectionPoint).toEqual([360 * scale, 149 * scale]);
+    expect(root.connectedParts[2].part.kind).toBe('nearArm');
+    expect(root.connectedParts[2].part.imageUrl).toBe('/assets/bodies/duchessTest_nearArm.png');
+    expect(root.connectedParts[2].connectionPoint).toEqual([139 * scale, 161 * scale]);
     expect(root.connectedParts).toHaveLength(5);
   });
 
   it('uses exact default geometry and only the authored head when a limb image is missing', () => {
-    const text = rasterText.replace('* leftArmImage=duchessTest_leftArm.png', '');
+    const text = rasterText.replace('* farArmImage=duchessTest_farArm.png', '');
     const root = loadValidLevelForTest(text).characters[0].rootBodyPart;
     expect(root).toEqual(replaceHeadImage(createDefaultCharacterBody(), '/assets/bodies/duchessTest_head.png'));
   });
@@ -49,7 +55,7 @@ describe('character body loading', () => {
 
   it('rejects an invalid supplied filename even when geometry is incomplete', () => {
     const text = rasterText.replace('* torsoDimensions=484,635', '')
-      .replace('* leftArmImage=duchessTest_leftArm.png', '* leftArmImage=../arm.png');
+      .replace('* farArmImage=duchessTest_farArm.png', '* farArmImage=../arm.png');
     expect(() => loadLevelForTest(text)).toThrow('character body image must be a filename, not a path or URL');
   });
 

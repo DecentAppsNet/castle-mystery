@@ -11,12 +11,12 @@ describe('characterBodyLayoutUtil', () => {
         for (const facing of ['right', 'left'] as const) {
           const layout = createBodyCanvasLayout(createBodyPose(root, orientation, facing),
             [137, 251], { scaleX:3, scaleY:5 }, facing);
-          const crLeftArm = getResolvedBodyPart(layout.parts, facing === 'left' ? 'rightArm' : 'leftArm');
-          const crRightArm = getResolvedBodyPart(layout.parts, facing === 'left' ? 'leftArm' : 'rightArm');
+          const leftHandArm = getResolvedBodyPart(layout.parts, facing === 'left' ? 'nearArm' : 'farArm');
+          const rightHandArm = getResolvedBodyPart(layout.parts, facing === 'left' ? 'farArm' : 'nearArm');
           expect([layout.leftHand.x, layout.leftHand.y]).toEqual(
-            transformBodyPoint(crLeftArm.transform, crLeftArm.part.handPoint!));
+            transformBodyPoint(leftHandArm.transform, leftHandArm.part.handPoint!));
           expect([layout.rightHand.x, layout.rightHand.y]).toEqual(
-            transformBodyPoint(crRightArm.transform, crRightArm.part.handPoint!));
+            transformBodyPoint(rightHandArm.transform, rightHandArm.part.handPoint!));
         }
       }
     });
@@ -46,10 +46,10 @@ describe('characterBodyLayoutUtil', () => {
         [torso.part.width / 2, torso.part.height / 2]));
       expect([layout.head.centerX, layout.head.centerY]).toEqual(transformBodyPoint(head.transform,
         [head.part.width / 2, head.part.height / 2]));
-      const leftArm = getResolvedBodyPart(layout.parts, 'leftArm');
-      const rightArm = getResolvedBodyPart(layout.parts, 'rightArm');
-      expect([layout.leftHand.x, layout.leftHand.y]).toEqual(transformBodyPoint(leftArm.transform, leftArm.part.handPoint!));
-      expect([layout.rightHand.x, layout.rightHand.y]).toEqual(transformBodyPoint(rightArm.transform, rightArm.part.handPoint!));
+      const farArm = getResolvedBodyPart(layout.parts, 'farArm');
+      const nearArm = getResolvedBodyPart(layout.parts, 'nearArm');
+      expect([layout.leftHand.x, layout.leftHand.y]).toEqual(transformBodyPoint(farArm.transform, farArm.part.handPoint!));
+      expect([layout.rightHand.x, layout.rightHand.y]).toEqual(transformBodyPoint(nearArm.transform, nearArm.part.handPoint!));
       expect(layout.bounds).toEqual(getBodyBounds(layout.parts));
       expect(layout.anchorX).toBe(layout.head.centerX);
       expect(layout.anchorTopY).toBe(layout.bounds.y);

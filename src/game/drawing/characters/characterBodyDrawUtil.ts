@@ -119,7 +119,7 @@ export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageS
   } else if (part.kind === 'leftLeg' || part.kind === 'rightLeg') {
     _drawLeg(width, height, inset, resolved, context);
   } else {
-    assert(part.kind === 'leftArm' || part.kind === 'rightArm');
+    assert(part.kind === 'farArm' || part.kind === 'nearArm');
     _drawArm(width, height, inset, resolved, context);
   }
   context.restore();

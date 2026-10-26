@@ -9,8 +9,8 @@ import { getBodyImageAssetUrl } from '@/game/imageUrlUtil';
 import { ErrorCollector } from '../errorCollection';
 
 type BodyProperties = { readonly [name:string]:string|undefined };
-const PART_NAMES = ['head', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', 'torso'] as const;
-const CHILD_NAMES = ['head', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'] as const;
+const PART_NAMES = ['head', 'farArm', 'nearArm', 'leftLeg', 'rightLeg', 'torso'] as const;
+const CHILD_NAMES = ['head', 'farArm', 'nearArm', 'leftLeg', 'rightLeg'] as const;
 
 function _connectionProperty(kind:string):string {
   return `torso${kind[0].toUpperCase()}${kind.slice(1)}Connection`;
@@ -54,9 +54,9 @@ export function loadCharacterBody(values:BodyProperties, characterId:string, err
     return _parsePair(values, _connectionProperty(kind), false, characterId, errors);
   }
   const definition = {
-    parts:{ head:_part('head'), leftArm:_part('leftArm'), rightArm:_part('rightArm'),
+    parts:{ head:_part('head'), farArm:_part('farArm'), nearArm:_part('nearArm'),
       leftLeg:_part('leftLeg'), rightLeg:_part('rightLeg'), torso:_part('torso') },
-    connections:{ head:_connection('head'), leftArm:_connection('leftArm'), rightArm:_connection('rightArm'),
+    connections:{ head:_connection('head'), farArm:_connection('farArm'), nearArm:_connection('nearArm'),
       leftLeg:_connection('leftLeg'), rightLeg:_connection('rightLeg') }
   };
   return errors.count === originalErrorCount ? createRasterCharacterBody(definition) : fallback;

@@ -8,7 +8,7 @@ import BodyPartTransform from '../types/BodyPartTransform';
 import rasterBody from './fixtures/rasterBody';
 
 const HAND:BodyPart = {
-  kind:'leftArm', imageUrl:null, width:4, height:6, pivotPoint:[1, 2], handPoint:[3, 5], connectedParts:[]
+  kind:'farArm', imageUrl:null, width:4, height:6, pivotPoint:[1, 2], handPoint:[3, 5], connectedParts:[]
 };
 const HEAD:BodyPart = {
   kind:'head', imageUrl:null, width:3, height:5, pivotPoint:[2, 4], handPoint:null,
@@ -41,7 +41,7 @@ describe('characterBodyPoseUtil', () => {
       expect(root).toEqual(before);
     });
 
-    it('mirrors the complete raster pose without exchanging anatomical parts', () => {
+    it('mirrors the complete raster pose without exchanging body parts', () => {
       const root = createRasterCharacterBody(rasterBody, 460);
       const right = createBodyPose(root, 'standing', 'right');
       const left = createBodyPose(root, 'standing', 'left');
@@ -72,7 +72,7 @@ describe('characterBodyPoseUtil', () => {
     it('inherits ancestor rotations and translation for nested hand and center points', () => {
       const rootTransform = createBodyAttachmentTransform([20, 30], ROOT.pivotPoint, Math.PI / 2);
       const parts = resolveBodyHierarchy(ROOT, rootTransform, { head:Math.PI / 2 });
-      const arm = getResolvedBodyPart(parts, 'leftArm');
+      const arm = getResolvedBodyPart(parts, 'farArm');
       const hand = transformBodyPoint(arm.transform, HAND.handPoint!);
       const torsoCenter = transformBodyPoint(getResolvedBodyPart(parts, 'torso').transform, [2, 4]);
       const headCenter = transformBodyPoint(getResolvedBodyPart(parts, 'head').transform, [1.5, 2.5]);

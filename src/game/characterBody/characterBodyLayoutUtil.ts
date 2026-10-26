@@ -21,7 +21,7 @@ function _getHand({ part, transform }:ResolvedBodyPart):{ x:number, y:number } {
   return { x, y };
 }
 
-/** Projects a support-grounded game-unit pose once; supportAnchor is already in canvas pixels. */
+/** Projects a grounded pose to canvas pixels; maps raster depth roles to gameplay hands, retaining vector ownership. */
 export function createBodyCanvasLayout(pose:readonly ResolvedBodyPart[], supportAnchor:Point,
   scalingFactors:Pick<ScalingFactors, 'scaleX'|'scaleY'>, facing:FacingDirection = 'right'):CharacterLayout {
   const projection:BodyPartTransform = {
@@ -38,8 +38,8 @@ export function createBodyCanvasLayout(pose:readonly ResolvedBodyPart[], support
     parts, bounds,
     characterCenterCanvasPoint:_getCenter(getResolvedBodyPart(parts, 'torso')),
     head:{ centerX, centerY, radius:Math.max(headBounds.width, headBounds.height) / 2 },
-    leftHand:_getHand(getResolvedBodyPart(parts, swapHandRoles ? 'rightArm' : 'leftArm')),
-    rightHand:_getHand(getResolvedBodyPart(parts, swapHandRoles ? 'leftArm' : 'rightArm')),
+    leftHand:_getHand(getResolvedBodyPart(parts, swapHandRoles ? 'nearArm' : 'farArm')),
+    rightHand:_getHand(getResolvedBodyPart(parts, swapHandRoles ? 'farArm' : 'nearArm')),
     anchorX:centerX, anchorTopY:bounds.y
   };
 }

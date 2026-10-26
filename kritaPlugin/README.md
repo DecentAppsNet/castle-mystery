@@ -30,8 +30,8 @@ The plugin runs in Krita's embedded Python environment and uses its bundled
    | Body layer | Pivot marker layer |
    | --- | --- |
    | head | headPivot |
-   | leftArm | leftArmPivot |
-   | rightArm | rightArmPivot |
+   | nearArm | nearArmPivot |
+   | farArm | farArmPivot |
    | leftLeg | leftLegPivot |
    | rightLeg | rightLegPivot |
    | torso | torsoPivot |
@@ -46,8 +46,8 @@ The plugin runs in Krita's embedded Python environment and uses its bundled
 ## Output
 
 Files are written beside the source document. For `duchessTest.kra`, the output
-is six PNGs named `duchessTest_head.png`, `duchessTest_leftArm.png`,
-`duchessTest_rightArm.png`, `duchessTest_leftLeg.png`, `duchessTest_rightLeg.png`,
+is six PNGs named `duchessTest_head.png`, `duchessTest_nearArm.png`,
+`duchessTest_farArm.png`, `duchessTest_leftLeg.png`, `duchessTest_rightLeg.png`,
 and `duchessTest_torso.png`, plus `duchessTest.md`.
 
 PNGs are cropped to each body layer's content bounds, with transparency enabled.
@@ -55,7 +55,7 @@ Pivot marker layers are not exported. PNG options dialogs are suppressed using
 temporary batch mode; other PNG options use Krita's defaults.
 
 The Markdown file contains a heading using the document's filename stem and
-`* key=value` entries, ordered head, left arm, right arm, left leg, right leg,
+`* key=value` entries, ordered head, near arm, far arm, left leg, right leg,
 then torso:
 
 - `<part>Image`: exported PNG filename without a path.

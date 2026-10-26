@@ -6,15 +6,15 @@ type RasterBodyDefinition = {
   readonly parts:{
     readonly torso:RasterPartGeometry,
     readonly head:RasterPartGeometry,
-    readonly leftArm:RasterPartGeometry,
-    readonly rightArm:RasterPartGeometry,
+    readonly farArm:RasterPartGeometry,
+    readonly nearArm:RasterPartGeometry,
     readonly leftLeg:RasterPartGeometry,
     readonly rightLeg:RasterPartGeometry
   },
   readonly connections:{
     readonly head:Point,
-    readonly leftArm:Point,
-    readonly rightArm:Point,
+    readonly farArm:Point,
+    readonly nearArm:Point,
     readonly leftLeg:Point,
     readonly rightLeg:Point
   }

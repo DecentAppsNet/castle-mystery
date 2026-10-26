@@ -22,7 +22,7 @@ function _resolvePart(part:BodyPart, transform:BodyPartTransform, rotations:Body
   resolved.push({ part, transform });
   part.connectedParts.forEach(connection => {
     const kind = connection.part.kind;
-    const isPairedLimb = kind === 'leftArm' || kind === 'rightArm' || kind === 'leftLeg' || kind === 'rightLeg';
+    const isPairedLimb = kind === 'farArm' || kind === 'nearArm' || kind === 'leftLeg' || kind === 'rightLeg';
     const connectionPoint:Point = reflectTorsoAttachments && part.kind === 'torso' && isPairedLimb
       ? [part.width - connection.connectionPoint[0], connection.connectionPoint[1]]
       : connection.connectionPoint;
@@ -70,7 +70,7 @@ export function getBodyBounds(parts:readonly ResolvedBodyPart[]):Rect {
  * Standing rests on the feet; other postures rest on the torso regardless of protruding children.
  * Facing mirrors artwork; only vector placeholders reflect right-facing torso limb attachments.
  * Raster bodies retain authored connections in every posture before whole-pose reflection.
- * Anatomical identities and definitions remain unchanged.
+ * Part identities and definitions remain unchanged; vector arm roles retain legacy hand ownership.
  */
 export function createBodyPose(root:BodyPart, orientation:BodyOrientation, facing:FacingDirection):readonly ResolvedBodyPart[] {
   const legAngle = _getLegAngle(orientation);
@@ -90,9 +90,9 @@ export function createBodyPose(root:BodyPart, orientation:BodyOrientation, facin
   return parts.map(({ part, transform }) => ({ part, transform:composeBodyTransforms(grounding, transform) }));
 }
 
-const _rightFacingPaintOrder:readonly PartKind[] = ['leftArm', 'leftLeg', 'rightLeg', 'torso', 'head', 'rightArm'];
-const _leftFacingPaintOrder:readonly PartKind[] = ['rightArm', 'rightLeg', 'leftLeg', 'torso', 'head', 'leftArm'];
-const _rasterLeftFacingPaintOrder:readonly PartKind[] = ['leftArm', 'rightLeg', 'leftLeg', 'torso', 'head', 'rightArm'];
+const _rightFacingPaintOrder:readonly PartKind[] = ['farArm', 'leftLeg', 'rightLeg', 'torso', 'head', 'nearArm'];
+const _leftFacingPaintOrder:readonly PartKind[] = ['nearArm', 'rightLeg', 'leftLeg', 'torso', 'head', 'farArm'];
+const _rasterLeftFacingPaintOrder:readonly PartKind[] = ['farArm', 'rightLeg', 'leftLeg', 'torso', 'head', 'nearArm'];
 
 /** Returns back-to-front order; raster arms retain fixed far/near roles under facing reflection. */
 export function getBodyPaintOrder(facing:FacingDirection, isRasterBody:boolean = false):readonly PartKind[] {

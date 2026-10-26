@@ -31,7 +31,7 @@ export function replaceHeadImage(root:BodyPart, imageUrl:string|null):BodyPart {
     ? root : { ...root, connectedParts };
 }
 
-function _createArm(kind:'leftArm'|'rightArm'):BodyPart {
+function _createArm(kind:'farArm'|'nearArm'):BodyPart {
   const width = PLACEHOLDER_PROPORTION_SCALE * 0.2;
   const height = PLACEHOLDER_PROPORTION_SCALE * 0.3;
   const shoulderCenter = getArmThickness(width, height) / 2;
@@ -57,8 +57,8 @@ export function createDefaultCharacterBody():BodyPart {
     kind:'torso', imageUrl:null, width, height, pivotPoint:[width / 2, height], handPoint:null,
     connectedParts:[
       { part:head, connectionPoint:[width / 2, 0 + height * .3] },
-      { part:_createArm('leftArm'), connectionPoint:[0 + (width * .2), 0 + (height * .2)] },
-      { part:_createArm('rightArm'), connectionPoint:[width - (width * .2), 0 + (height * .2)] },
+      { part:_createArm('farArm'), connectionPoint:[0 + (width * .2), 0 + (height * .2)] },
+      { part:_createArm('nearArm'), connectionPoint:[width - (width * .2), 0 + (height * .2)] },
       { part:_createLeg('leftLeg'), connectionPoint:[width / 4, height * .8] },
       { part:_createLeg('rightLeg'), connectionPoint:[width * 0.75, height * .8] }
     ]
