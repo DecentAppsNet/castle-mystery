@@ -57,7 +57,7 @@ These fields/sections are *always* filtered out because they don't contribute in
 * # rooms -> ## room ID -> roomStyle
 * # rooms -> ## room ID -> *Texture (any of the settings for textures are filtered)
 * # characters -> ## character ID -> isTitleKnown (though this value is used for filtering/replacing ID and title of characters)
-* # characters -> ## character ID -> faceImage
+* # characters -> ## character ID -> headImage
 * # characters -> ## character ID -> ### skin ID (though this value is used for generating placeholder IDs)
 * # characters -> ## character ID -> isVisible (if character isn't visible, character section would have been filtered - see next section)
 * # items -> ## item ID -> image

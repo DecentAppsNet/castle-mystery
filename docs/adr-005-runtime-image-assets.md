@@ -4,6 +4,8 @@
 
 Accepted
 
+Character-field names, canonical URL identity, and character-image failure/fallback rules below are historical and superseded by [ADR 010](adr-010-level-asset-filename-normalization.md) and [ADR 021](adr-021-raster-character-assets.md). The synchronous parsing/state-construction and explicit runtime asset-loading boundaries remain accepted.
+
 ## Context
 
 Character face images were introduced to allow authored characters to render with artwork instead of the default circle head.

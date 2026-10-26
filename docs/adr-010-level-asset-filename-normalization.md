@@ -4,6 +4,8 @@
 
 Accepted
 
+Character examples use the head/body terminology established by [ADR 021](adr-021-raster-character-assets.md); its required-character-asset failure policy does not change this ADR's filename or fetch-time rules.
+
 ## Context
 
 Level files currently author some HTTP-loaded asset references as URL-like strings.
@@ -36,7 +38,7 @@ The field name determines the asset bucket.
 Examples:
 
 - `background=filename.png`
-- `faceImage=filename.png`
+- `headImage=filename.png`
 
 Authors should not provide paths, query strings, fragments, protocol-relative URLs, or absolute URLs in these fields.
 
@@ -71,7 +73,7 @@ The runtime asset URL is derived by concatenating the validated filename onto a 
 Examples:
 
 - `background=sky.png` becomes `/assets/backgrounds/sky.png`
-- `faceImage=queen.png` becomes `/assets/faces/queen.png`
+- `headImage=queen.png` becomes `/assets/bodies/queen.png`
 
 The author controls the filename only.
 
@@ -146,7 +148,7 @@ Downstream code should not re-interpret the original authored text.
 
 ### 11. This rule applies to HTTP-loaded level assets broadly, not just current image fields
 
-These principles are not specific to `background` and `faceImage` alone.
+These principles are not specific to `background` and `headImage` alone.
 
 Any level-authored field whose value is used to load an HTTP asset should follow the same model unless an ADR explicitly makes a different decision:
 

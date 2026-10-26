@@ -4,6 +4,8 @@
 
 Accepted
 
+Raster authoring, exact raster-head fitting, required-asset errors, and retained vector compatibility are specified by [ADR 021](adr-021-raster-character-assets.md). It extends this decision without changing its hierarchy/projection boundaries.
+
 ## Decision
 
 Replace stick geometry with six parts resolved through a torso-root hierarchy. Pure definition, transform, pose, and projection logic lives in `src/game/characterBody`; canvas painters consume its resolved geometry.
@@ -17,7 +19,7 @@ Replace stick geometry with six parts resolved through a torso-root hierarchy. P
 - Standing grounds the feet. Sitting, kneeling, and laying ground the torso's lower transformed edge, independently of protruding children or overall bounds.
 - Project the stack-supported display anchor once, including room depth/panel offset. Apply local view scale and the existing pixel sway once to the shared layout. Bounds, hands, head summaries, and transfer anatomy derive from those same transforms.
 - Transfer centers remain torso-centered; speech/thought anchors use head-center X and the layout's top edge. Anatomy is available before effect dispatch. Speech rotation is a draw-time neck-pivot adjustment, not a change to interaction bounds.
-- Head painting and bounds share one width-driven, aspect-preserving image fit centered in the logical head slot. The fitted image may extend beyond the slot height. Missing images retain the circular fallback.
+- Head painting and bounds share one width-driven, aspect-preserving image fit for vector bodies; it may extend beyond the logical head slot. Raster bodies use the exact head part rectangle instead. Omitted head artwork retains the circular fallback; configured image failures are loading errors under ADR 021.
 
 ## Paint Order
 
@@ -31,4 +33,4 @@ Held items retain their before/after-body layering, resolved hand anchors, exist
 
 ## Scope
 
-The legacy stick layout is removed. This establishes placeholder vector bodies and existing face artwork, not raster body authoring, articulated joints, new limb effects, or independent part scaling. Existing stacking and effect-observability decisions remain unchanged.
+The legacy stick layout is removed. This decision established placeholder vector bodies and head artwork; ADR 021 adds raster body authoring. Articulated joints, new limb effects, and independent part scaling remain outside scope. Existing stacking and effect-observability decisions remain unchanged.

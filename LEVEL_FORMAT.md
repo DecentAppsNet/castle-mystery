@@ -220,7 +220,7 @@ Write one subsection per character. The subsection name is the character's name.
 * `items` (optional) - items the character begins with, separated by `|`. Default: no starting items.
 * `leftHand` (optional) - item character begins with in left hand. Default: no starting item.
 * `rightHand` (optional) - item character begins with in right hand. Default: no starting item.
-* `headImage` (optional) - the image used for the character's face in the UI. Default: no face image.
+* `headImage` (optional) - head artwork and portrait filename from `public/assets/bodies/`. Default: a vector head, unless a skin supplies artwork. See Raster Bodies below for full-body authoring.
 * `appearsAs` (optional) - the character's initial appearance, referencing a skin heading belonging to that character. Default: `default` (the base appearance).
 * `alive` (optional) - whether the character begins alive. Must be `true` or `false`. Default: `true`.
 * `facing` (optional) - which way the character initially faces. Must be `left` or `right`. Default: `right`.
@@ -248,9 +248,38 @@ This section defines the character, but it does not place them on the map. Chara
 * description=The lady of the house, calm in public and furious in private.
 ```
 
+## Raster Bodies
+
+Characters support two configurations: the existing vector body with optional head artwork, or a complete six-part raster body. Supply all 23 properties below on the base character to activate a raster body:
+
+| Part | Image filename | Dimensions | Local pivot |
+| --- | --- | --- | --- |
+| Head | `headImage` | `headDimensions` | `headPivot` |
+| Far arm | `farArmImage` | `farArmDimensions` | `farArmPivot` |
+| Near arm | `nearArmImage` | `nearArmDimensions` | `nearArmPivot` |
+| Left leg | `leftLegImage` | `leftLegDimensions` | `leftLegPivot` |
+| Right leg | `rightLegImage` | `rightLegDimensions` | `rightLegPivot` |
+| Torso | `torsoImage` | `torsoDimensions` | `torsoPivot` |
+
+The five remaining properties are `torsoHeadConnection`, `torsoFarArmConnection`, `torsoNearArmConnection`, `torsoLeftLegConnection`, and `torsoRightLegConnection`. Each connection locates the corresponding child pivot within the torso image.
+
+Image values must be filenames only, such as `duchessTest_farArm.png`, without directories, URLs, query strings, or fragments. Place the files in `public/assets/bodies/`; stored runtime URLs use `/assets/bodies/`. The old arm names are not aliases. See the complete [Duchess example](public/levels/characters.md) and the [Krita exporter](kritaPlugin/README.md).
+
+Dimensions use `width,height`; pivots and connections use `x,y`. Every pair must contain exactly two nonempty finite numbers. Dimensions must be strictly positive. Coordinates may be negative or outside the image rectangle. Origins are image top-left corners; positive X is rightward and positive Y is downward. For example, `* farArmDimensions=193,158` and `* torsoFarArmConnection=360,149`.
+
+If any required property is missing or blank, the entire body uses the unchanged default vector geometry, with only the optional base head artwork applied. Partial numeric geometry is ignored, including malformed pairs; partial limb images are not used. Supplied nonblank image filenames are still validated. A complete set with malformed numeric geometry fails level loading rather than falling back. Omitting the base head image also selects the default-body configuration.
+
+Author every image and coordinate in the standing, right-facing rest pose. The loader assembles the full image rectangles, including transparent padding, and applies one uniform scale to their union's height. The current target is `DEFAULT_BODY_HEIGHT = MAP_TILE_SIZE * 0.4` in game units. Dimensions, pivots, connections, and hand points all use that same scale; there is no independent part/axis scaling or alpha-bound measurement. Other poses are not height-clamped.
+
+Left-facing reflects the whole raster pose without exchanging arm assets: the far arm stays behind the torso and the near arm stays in front. Leg names remain anatomical. Gameplay hand ownership stays character-relative: right-facing maps the far arm to the left hand and the near arm to the right hand; left-facing reverses that mapping. Raster hand anchors are provisional, at `[width * 0.75, height]` within each arm, not authored grip positions. The vector fallback retains its existing attachments and hand behavior.
+
+Raster heads paint and measure against their exact part rectangle. Vector-body heads retain aspect-preserving, width-driven fitting; without artwork they retain the circular head. A configured body or skin image that cannot be fetched or decoded causes a useful application loading error naming the failed URL, even for an unused skin. Omitted artwork is not a load failure. Optional punch masks and unrelated assets keep their existing failure policies.
+
 ## Initial Appearance
 
 Define custom skins with level-three headings inside a character subsection. A skin may override `headImage` and `description`; omitted skin values fall back to the character's base values.
+
+Skin head images use the same filename-only body bucket. They replace only the head artwork, retaining the base dimensions, pivot, and connections. Full-raster skins stretch into the base head rectangle, so different image proportions can distort or misalign. Skins cannot define body geometry or replace other parts. An initial skin does not supply a missing base `headImage` for full-raster completeness.
 
 `appearsAs` references the skin heading name, ignoring case and surrounding whitespace, not a complete skin ID. Omission or explicit `appearsAs=default` selects the base appearance. `default` is reserved and cannot be a custom skin heading. Empty, unknown, complete-ID, or other-character-only references fail loading with an authoring error located at the `appearsAs` line.
 
