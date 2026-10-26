@@ -83,9 +83,11 @@ Build a ZIP when ready to install a new plugin version, not for every source
 change. From the repository root:
 
 ```sh
-cd kritaPlugin
-zip cmExportCharacter.zip cmExportCharacter.desktop cmExportCharacter/ cmExportCharacter/__init__.py cmExportCharacter/cmExportCharacter.py
+./kritaPlugin/package.sh
 ```
+
+The script can run from any working directory and replaces the archive with a
+fresh ZIP containing only the required plugin entries.
 
 The desktop file and `cmExportCharacter` package must be at the ZIP root, not inside an
 extra `kritaPlugin` folder. Include the explicit `cmExportCharacter/` directory entry:

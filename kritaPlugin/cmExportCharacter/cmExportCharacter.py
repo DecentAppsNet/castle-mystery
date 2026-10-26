@@ -45,7 +45,7 @@ def _exportCharacter(checked=False):
         _showMessage("Open a character document before exporting.")
         return
 
-    bodyNames = ("head", "leftArm", "rightArm", "leftLeg", "rightLeg", "torso")
+    bodyNames = ("head", "nearArm", "farArm", "leftLeg", "rightLeg", "torso")
     requiredNames = bodyNames + tuple(name + "Pivot" for name in bodyNames)
     layers = _findLayers(document.rootNode())
     trackedLayers = {}
