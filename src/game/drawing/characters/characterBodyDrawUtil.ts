@@ -6,6 +6,7 @@ import { getArmThickness, transformBodyPoint } from '@/game/characterBody';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Point from '@/game/types/Point';
 import ImageSet from '@/game/types/ImageSet';
+import SpriteOverride from '@/game/effects/types/SpriteOverride';
 import { findImageBitmap } from '@/game/imageAssetUtil';
 import { COLOR_BLACK } from '../drawColorConstants';
 
@@ -92,12 +93,19 @@ function _drawArm(width:number, height:number, inset:number, resolved:ResolvedBo
 }
 
 /** Paints one non-head part; vector placeholders have a fixed canvas-pixel border. Does not determine paint order. */
-export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageSet, context:CanvasRenderingContext2D) {
+export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageSet,
+    spriteOverrides:readonly SpriteOverride[], context:CanvasRenderingContext2D) {
   const { part, transform } = resolved;
   assert(part.kind !== 'head'); // Head artwork uses the head painter.
+  const translation = spriteOverrides.find(override => override.transformType === 'translatePartHeight'
+    && override.spriteKind === part.kind);
+  context.save();
+  if (translation?.transformType === 'translatePartHeight') {
+    const verticalScale = Math.hypot(transform.verticalX, transform.verticalY);
+    context.translate(0, translation.translateHeightRatio * part.height * verticalScale);
+  }
   const image = findImageBitmap(imageSet, part.imageUrl);
   if (image) {
-    context.save();
     context.transform(transform.horizontalX, transform.horizontalY, transform.verticalX,
       transform.verticalY, transform.translateX, transform.translateY);
     context.drawImage(image, 0, 0, part.width, part.height);
@@ -109,7 +117,6 @@ export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageS
   const inset = BORDER_WIDTH_PIXELS / (2 * scale);
   const width = part.width - inset * 2;
   const height = part.height - inset * 2;
-  context.save();
   context.fillStyle = '#fff';
   context.strokeStyle = COLOR_BLACK;
   context.lineWidth = BORDER_WIDTH_PIXELS;
