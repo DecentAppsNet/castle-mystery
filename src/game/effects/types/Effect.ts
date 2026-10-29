@@ -1,7 +1,7 @@
 import EffectHandler from "./EffectHandler";
 
 type EffectKind = 'characterSelection' | 'dropItem' | 'enterRoom' | 'giveItem' | 'lockExit' | 'pause' | 'play'
-  | 'says' | 'thinks' | 'emits' | 'takeItem' | 'unlockExit';
+  | 'says' | 'thinks' | 'emits' | 'takeItem' | 'unlockExit' | 'walk';
 
 /* Effect is meant as a small, general, non-discriminated type. Its members should apply to all or most effects.
    There are other conventions to use for getting information to the effect handler:
