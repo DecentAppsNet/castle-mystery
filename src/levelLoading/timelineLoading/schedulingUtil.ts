@@ -33,6 +33,7 @@ import WaypointGenerationContext from "../types/WaypointGenerationContext";
 import { scheduleThinksActivity } from "../activityLoading/activitySchedulers/thinksScheduler";
 import { doesActivityConflictWithScheduled } from "./activityConflictUtil";
 import { validateSpeechSourceBeforeScheduling, validateSpeechSources } from "./speechSourceValidationUtil";
+import { scheduleWalkingEffects } from "./walkingEffectSchedulingUtil";
 
 type ScheduledTimeline = Omit<Timeline, 'startTime' | 'endTime'>;
 type ActivityScheduler = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
@@ -123,5 +124,7 @@ export function scheduleActivities(level:Level, activities:Activity[], startTime
   assert(toBeScheduled.length === 0);
   validateAtActivities(level, waypointContext, activities, timeline, errors);
   validateSpeechSources(level, activities, timeline, errors);
-  return errors.count > originalErrorCount ? null : _editableTimelineToTimeline(timeline);
+  if (errors.count > originalErrorCount) return null;
+  scheduleWalkingEffects(timeline);
+  return _editableTimelineToTimeline(timeline);
 }
