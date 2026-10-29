@@ -2,7 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from 'decent-portal';
-import { getArmThickness, transformBodyPoint } from '@/game/characterBody';
+import { composeBodyTransforms, createBodyAttachmentTransform, getArmThickness, transformBodyPoint } from '@/game/characterBody';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Point from '@/game/types/Point';
 import ImageSet from '@/game/types/ImageSet';
@@ -95,8 +95,15 @@ function _drawArm(width:number, height:number, inset:number, resolved:ResolvedBo
 /** Paints one non-head part; vector placeholders have a fixed canvas-pixel border. Does not determine paint order. */
 export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageSet,
     spriteOverrides:readonly SpriteOverride[], context:CanvasRenderingContext2D) {
-  const { part, transform } = resolved;
+  const { part } = resolved;
   assert(part.kind !== 'head'); // Head artwork uses the head painter.
+  const rotation = spriteOverrides.find(override => override.transformType === 'rotate'
+    && override.spriteKind === part.kind);
+  const drawnPart = rotation?.transformType === 'rotate'
+    ? { part, transform:composeBodyTransforms(resolved.transform,
+      createBodyAttachmentTransform(part.pivotPoint, part.pivotPoint, rotation.rotateRadians)) }
+    : resolved;
+  const { transform } = drawnPart;
   const translation = spriteOverrides.find(override => override.transformType === 'translatePartHeight'
     && override.spriteKind === part.kind);
   context.save();
@@ -122,12 +129,12 @@ export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageS
   context.lineWidth = BORDER_WIDTH_PIXELS;
   context.lineJoin = 'round';
   if (part.kind === 'torso') {
-    _drawTorso(width, height, inset, resolved, context);
+    _drawTorso(width, height, inset, drawnPart, context);
   } else if (part.kind === 'leftLeg' || part.kind === 'rightLeg') {
-    _drawLeg(width, height, inset, resolved, context);
+    _drawLeg(width, height, inset, drawnPart, context);
   } else {
     assert(part.kind === 'farArm' || part.kind === 'nearArm');
-    _drawArm(width, height, inset, resolved, context);
+    _drawArm(width, height, inset, drawnPart, context);
   }
   context.restore();
 }

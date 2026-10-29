@@ -1,4 +1,4 @@
-/* This file creates deterministic timeline-based walking effects with relative leg translations.
+/* This file creates deterministic timeline-based walking effects with relative limb offsets.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from 'decent-portal';
@@ -7,6 +7,7 @@ import Effect from './types/Effect';
 import EffectHandler from './types/EffectHandler';
 
 const WALK_LEG_LIFT_RATIO = 0.2;
+const WALK_ARM_SWING_ARC_DEGREES = 30;
 const WALK_CYCLE_DURATION_MSECS = 600;
 const WALK_FADE_DURATION_MSECS = 150;
 
@@ -26,11 +27,15 @@ export function createWalkEffect(startTime:number, endTime:number):Effect {
     const envelope = _smoothstep(elapsed / fadeDuration) * _smoothstep((duration - elapsed) / fadeDuration);
     const phase = elapsed * 2 * Math.PI / WALK_CYCLE_DURATION_MSECS;
     const liftRatio = WALK_LEG_LIFT_RATIO * envelope;
+    const armRotation = envelope === 0 ? 0
+      : WALK_ARM_SWING_ARC_DEGREES * Math.PI / 360 * Math.sin(phase) * envelope;
     return { spriteOverrides:[
       { spriteKind:'leftLeg', transformType:'translatePartHeight',
         translateHeightRatio:liftRatio === 0 ? 0 : -liftRatio * (1 + Math.sin(phase)) / 2 },
       { spriteKind:'rightLeg', transformType:'translatePartHeight',
-        translateHeightRatio:liftRatio === 0 ? 0 : -liftRatio * (1 - Math.sin(phase)) / 2 }
+        translateHeightRatio:liftRatio === 0 ? 0 : -liftRatio * (1 - Math.sin(phase)) / 2 },
+      { spriteKind:'nearArm', transformType:'rotate', rotateRadians:armRotation },
+      { spriteKind:'farArm', transformType:'rotate', rotateRadians:armRotation === 0 ? 0 : -armRotation }
     ] };
   };
 

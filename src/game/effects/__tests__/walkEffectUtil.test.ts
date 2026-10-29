@@ -26,11 +26,13 @@ describe('walkEffectUtil', () => {
       expect(effect.handler).toEqual(expect.any(Function));
     });
 
-    it('returns only proportional translations for the two legs', () => {
+    it('returns only supported leg translations and arm rotations', () => {
       const result = _query(createWalkEffect(100, 1100), 400);
       expect(result?.spriteOverrides).toEqual([
         { spriteKind:'leftLeg', transformType:'translatePartHeight', translateHeightRatio:expect.any(Number) },
-        { spriteKind:'rightLeg', transformType:'translatePartHeight', translateHeightRatio:expect.any(Number) }
+        { spriteKind:'rightLeg', transformType:'translatePartHeight', translateHeightRatio:expect.any(Number) },
+        { spriteKind:'nearArm', transformType:'rotate', rotateRadians:expect.any(Number) },
+        { spriteKind:'farArm', transformType:'rotate', rotateRadians:expect.any(Number) }
       ]);
     });
 
@@ -45,7 +47,9 @@ describe('walkEffectUtil', () => {
       const effect = createWalkEffect(100, 1100);
       const neutral = { spriteOverrides:[
         { spriteKind:'leftLeg', transformType:'translatePartHeight', translateHeightRatio:0 },
-        { spriteKind:'rightLeg', transformType:'translatePartHeight', translateHeightRatio:0 }
+        { spriteKind:'rightLeg', transformType:'translatePartHeight', translateHeightRatio:0 },
+        { spriteKind:'nearArm', transformType:'rotate', rotateRadians:0 },
+        { spriteKind:'farArm', transformType:'rotate', rotateRadians:0 }
       ] };
       expect(_query(effect, 0)).toEqual(neutral);
       expect(_query(effect, 100)).toEqual(neutral);
@@ -56,7 +60,8 @@ describe('walkEffectUtil', () => {
     it('preserves endpoint neutrality for short travel intervals', () => {
       const effect = createWalkEffect(100, 101);
       expect(_query(effect, 100)).toEqual(_query(effect, 101));
-      expect(_query(effect, 100.5)?.spriteOverrides).toHaveLength(2);
+      expect(_query(effect, 100.5)?.spriteOverrides.map(override => override.spriteKind))
+        .toEqual(['leftLeg', 'rightLeg', 'nearArm', 'farArm']);
     });
 
     it('reproduces poses after out-of-order queries regardless of meta time', () => {
