@@ -33,4 +33,4 @@ Held items retain their before/after-body layering, resolved hand anchors, exist
 
 ## Scope
 
-The legacy stick layout is removed. This decision established placeholder vector bodies and head artwork; ADR 021 adds raster body authoring. Articulated joints, new limb effects, and independent part scaling remain outside scope. Existing stacking and effect-observability decisions remain unchanged.
+The legacy stick layout is removed. This decision established placeholder vector bodies and head artwork; ADR 021 adds raster body authoring. [ADR 022](adr-022-walking-leg-effects.md) extends it with draw-time walking leg effects. Articulated joints and independent part scaling remain outside scope. Existing stacking and effect-observability decisions remain unchanged.

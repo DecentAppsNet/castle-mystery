@@ -100,6 +100,12 @@ describe('level loading - stands activities', () => {
     expect(start.bodyOrientation).toBe('standing');
     expect(start.facingDirection).toBe('left');
     expect(end.position).toEqual(rug?.position);
+    expect(beforeStart.effects).toEqual([]);
+    expect(start.effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:1_000, endTime:level!.timeline.endTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime - 1).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:1_000, endTime:level!.timeline.endTime })]);
+    expect(end.effects).toEqual([]);
   });
 
   it('starts a relative successor when targeted travel ends', () => {

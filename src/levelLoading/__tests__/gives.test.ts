@@ -69,6 +69,15 @@ describe('level loading - gives activities', () => {
     expect(transferTime).toBeGreaterThan(0);
     const effect = _findGiveEffect(level!);
     expect(effect.endTime).toBe(transferTime);
+    expect(effect.startTime).toBeGreaterThan(0);
+    expect(createKeyframeAtTime(level!.timeline.keyframes, 0).characters[samI].effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:effect.startTime })]);
+    expect(createKeyframeAtTime(level!.timeline.keyframes, effect.startTime - 1).characters[samI].effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:effect.startTime })]);
+    expect(createKeyframeAtTime(level!.timeline.keyframes, effect.startTime).characters[samI].effects
+      .some(candidate => candidate.kind === 'walk')).toBe(false);
+    expect(createKeyframeAtTime(level!.timeline.keyframes, effect.startTime - 1).characters[joI].effects
+      .some(candidate => candidate.kind === 'walk')).toBe(false);
     expect(before.characters[samI].effects).toContain(effect);
     expect(before.characters[joI].effects.some(candidate => candidate.kind === 'giveItem')).toBe(false);
     expect(before.characters[samI].items.map(item => item.id)).toEqual(['coin', 'ring']);

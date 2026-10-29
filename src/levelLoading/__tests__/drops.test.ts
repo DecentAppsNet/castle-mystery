@@ -29,6 +29,18 @@ describe('level loading - drops activities', () => {
     expect(sam.leftHandItem).toBeNull();
     expect(sam.rightHandItem).toBeNull();
     expect(sam.items.map(item => item.id)).not.toContain('vase');
+    const samI = level!.timeline.characterIdToI.sam;
+    const drop = level!.timeline.keyframes.flatMap(keyframe => keyframe.characters[samI].effects)
+      .find(effect => effect.kind === 'dropItem')!;
+    const take = level!.timeline.keyframes.flatMap(keyframe => keyframe.characters[samI].effects)
+      .find(effect => effect.kind === 'takeItem')!;
+    expect(drop.startTime).toBeGreaterThan(take.endTime);
+    expect(createKeyframeAtTime(level!.timeline.keyframes, take.endTime).characters[samI].effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:take.endTime, endTime:drop.startTime })]);
+    expect(createKeyframeAtTime(level!.timeline.keyframes, drop.startTime - 1).characters[samI].effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:take.endTime, endTime:drop.startTime })]);
+    expect(createKeyframeAtTime(level!.timeline.keyframes, drop.startTime).characters[samI].effects
+      .some(effect => effect.kind === 'walk')).toBe(false);
   });
 
   it('drops an item at a character position during causal movement', () => {

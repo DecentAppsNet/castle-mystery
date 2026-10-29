@@ -23,6 +23,12 @@ describe('level loading - goes activities', () => {
     expect(findRoomAtPosition(level!.rooms, startPosition.x, startPosition.y)?.id).toBe('hall');
     expect(findRoomAtPosition(level!.rooms, endPosition.x, endPosition.y)?.id).toBe('closet');
     expect(level!.timeline.endTime).toBeGreaterThan(0);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 0).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime - 1).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime).effects).toEqual([]);
+    expect(level!.timeline).not.toHaveProperty('pendingWalkingIntervals');
   });
 
   it('accepts room movement without the optional to', () => {
@@ -122,6 +128,9 @@ describe('level loading - goes activities', () => {
     const atStart = findCharacterPositionAtTime(level!.timeline.keyframes, samI, 5_000);
     expect(findRoomAtPosition(level!.rooms, beforeStart.x, beforeStart.y)?.id).toBe('hall');
     expect(atStart).toEqual(beforeStart);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 4_999).effects).toEqual([]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 5_000).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:5_000, endTime:level!.timeline.endTime })]);
   });
 
   it('resolves a following relative activity from completed movement', () => {
@@ -145,6 +154,8 @@ describe('level loading - goes activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level?.timeline.endTime).toBe(1_000);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, level!.timeline.characterIdToI.sam, 0).effects).toEqual([]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, level!.timeline.characterIdToI.sam, 1_000).effects).toEqual([]);
   });
 
   it('uses the central conflict validator for movement', () => {
@@ -169,6 +180,31 @@ describe('level loading - goes activities', () => {
       level!.timeline.characterIdToI.sam, level!.timeline.endTime);
     expect(snapshot.facingDirection).toBe('left');
     expect(snapshot.bodyOrientation).toBe('standing');
+    const samI = level!.timeline.characterIdToI.sam;
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 0).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime - 1).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(snapshot.effects).toEqual([]);
+  });
+
+  it('ends a walk during a real wait and starts a fresh walk afterward', () => {
+    const { level, errors } = _loadGoes([
+      '0:00:00 Sam goes Closet',
+      ': Sam waits 1',
+      ': Sam goes Hall'
+    ], 'goes-wait-splits-walk.md');
+
+    expect(errors.describeErrors()).toBe('');
+    const samI = level!.timeline.characterIdToI.sam;
+    const first = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 0).effects
+      .find(effect => effect.kind === 'walk')!;
+    expect(first).toBeDefined();
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, first.endTime).effects).toEqual([]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, first.endTime + 999).effects).toEqual([]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, first.endTime + 1_000).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:first.endTime + 1_000, endTime:level!.timeline.endTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime).effects).toEqual([]);
   });
 
   it('uses a completed goes timeline when another character faces the mover', () => {

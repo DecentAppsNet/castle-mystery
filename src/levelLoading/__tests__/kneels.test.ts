@@ -52,6 +52,11 @@ describe('level loading - kneels activities', () => {
       .toBe('standing');
     expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime))
       .toMatchObject({ position:altar.position, bodyOrientation:'kneeling' });
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 0).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime - 1).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime).effects).toEqual([]);
   });
 
   it('rejects a character-owned target', () => {

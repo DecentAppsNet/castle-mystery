@@ -44,6 +44,15 @@ describe('level loading - takes activities', () => {
     expect(findRoomAtPosition(level!.rooms, samPosition.x, samPosition.y)?.id).toBe('hall');
     expect(hall.items.map(item => item.id)).not.toContain('key');
     expect(snapshot.characters[level!.timeline.characterIdToI.sam].items.map(item => item.id)).toContain('key');
+    const samI = level!.timeline.characterIdToI.sam;
+    const take = _findTakeEffect(level!);
+    expect(take.startTime).toBeGreaterThan(0);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 0).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:take.startTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, take.startTime - 1).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:take.startTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, take.startTime).effects
+      .some(effect => effect.kind === 'walk')).toBe(false);
   });
 
   it('preserves an earlier-scheduled room mutation that completes during the walk to take an item', () => {

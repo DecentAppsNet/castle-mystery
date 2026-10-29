@@ -52,6 +52,11 @@ describe('level loading - lays activities', () => {
       .toBe('standing');
     expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime))
       .toMatchObject({ position:bed.position, bodyOrientation:'laying' });
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 0).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime - 1).effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime).effects).toEqual([]);
   });
 
   it('rejects a target in another room', () => {

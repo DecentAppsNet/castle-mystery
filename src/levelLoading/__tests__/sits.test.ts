@@ -58,6 +58,11 @@ describe('level loading - sits activities', () => {
     expect(beforeEnd.characters[samI].bodyOrientation).toBe('standing');
     expect(end.characters[samI]).toMatchObject({ position:marker?.position, bodyOrientation:'sitting' });
     expect(end.rooms[hallI].items.find(item => item.id === 'marker')).toEqual(marker);
+    expect(start.characters[samI].effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(beforeEnd.characters[samI].effects)
+      .toEqual([expect.objectContaining({ kind:'walk', startTime:0, endTime:level!.timeline.endTime })]);
+    expect(end.characters[samI].effects).toEqual([]);
   });
 
   it('starts a relative successor after targeted travel', () => {
