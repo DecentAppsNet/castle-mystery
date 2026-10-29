@@ -1,10 +1,12 @@
 import EditableTimelineKeyframe from "./EditableTimelineKeyframe";
 import TimelineKeyframe from "@/game/types/TimelineKeyframe";
+import WalkingInterval from "./WalkingInterval";
 
-/** Holds sparse editable keyframes, resolved keyframes, and entity index maps. */
+/** Holds editable and resolved keyframes, pending walking intervals, and entity index maps. */
 type EditableTimeline = {
   editableKeyframes: EditableTimelineKeyframe[];
   keyframes: TimelineKeyframe[];
+  pendingWalkingIntervals:WalkingInterval[];
   roomIdToI:{[roomId:string]:number};
   characterIds:string[],
   characterIdToI:{[characterId:string]:number};
@@ -15,6 +17,7 @@ export function createDefaultEditableTimeline():EditableTimeline {
   return { 
     keyframes:[],
     editableKeyframes:[],
+    pendingWalkingIntervals:[],
     roomIdToI:{},
     characterIds:[],
     characterIdToI:{}

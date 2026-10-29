@@ -60,6 +60,56 @@ describe('movementPlanningUtil', () => {
         { x:5, y:FLOOR_Y, z:0 }, 0, 'right', timeline);
       _expectOnlyFirstAddedKeyframeStands(timeline);
     });
+
+    it('records the actual interval without changing movement timing or destination', () => {
+      const timeline = _createTimeline();
+      const destination = { x:5, y:FLOOR_Y, z:0 };
+      const duration = scheduleCharacterMovementWithinRoom(_createContext(), ROOM,
+        { x:0, y:FLOOR_Y, z:0 }, 100, destination, 0, 'right', timeline);
+
+      expect(duration).toBeGreaterThan(0);
+      expect(timeline.pendingWalkingIntervals).toEqual([{ characterI:0, startTime:100, endTime:100 + duration }]);
+      expect(timeline.keyframes.at(-1)).toMatchObject({ time:100 + duration, characters:[{ position:destination }] });
+    });
+
+    it('does not record a walk for an unchanged position', () => {
+      const timeline = _createTimeline();
+      const position = { x:0, y:FLOOR_Y, z:0 };
+      const duration = scheduleCharacterMovementWithinRoom(_createContext(), ROOM,
+        position, 100, position, 0, 'right', timeline);
+
+      expect(duration).toBe(0);
+      expect(timeline.pendingWalkingIntervals).toEqual([]);
+    });
+
+    it('records touching calls separately for later coalescing', () => {
+      const timeline = _createTimeline();
+      const context = _createContext();
+      const origin = { x:0, y:FLOOR_Y, z:0 };
+      const destination = { x:5, y:FLOOR_Y, z:0 };
+      const outward = scheduleCharacterMovementWithinRoom(context, ROOM, origin, 100,
+        destination, 0, 'right', timeline);
+      const returning = scheduleCharacterMovementWithinRoom(context, ROOM, destination, 100 + outward,
+        origin, 0, 'right', timeline);
+
+      expect(timeline.pendingWalkingIntervals).toEqual([
+        { characterI:0, startTime:100, endTime:100 + outward },
+        { characterI:0, startTime:100 + outward, endTime:100 + outward + returning }
+      ]);
+    });
+
+    it('keeps pending intervals independent between timelines and initial placement effect-free', () => {
+      const first = _createTimeline();
+      const second = _createTimeline();
+      expect(first.pendingWalkingIntervals).toEqual([]);
+      expect(first.pendingWalkingIntervals).not.toBe(second.pendingWalkingIntervals);
+
+      scheduleCharacterMovementWithinRoom(_createContext(), ROOM, { x:0, y:FLOOR_Y, z:0 }, 100,
+        { x:5, y:FLOOR_Y, z:0 }, 0, 'right', first);
+
+      expect(first.pendingWalkingIntervals).toHaveLength(1);
+      expect(second.pendingWalkingIntervals).toEqual([]);
+    });
   });
 
   describe('scheduleCharacterMovementToRoom()', () => {
@@ -68,6 +118,29 @@ describe('movementPlanningUtil', () => {
       scheduleCharacterMovementToRoom(_createContext(), ROOM, { x:0, y:FLOOR_Y, z:0 }, 100,
         OTHER_ROOM, { x:15, y:FLOOR_Y, z:0 }, 0, 'right', timeline);
       _expectOnlyFirstAddedKeyframeStands(timeline);
+    });
+
+    it('records one interval across multiple segments and a room crossing', () => {
+      const timeline = _createTimeline();
+      const context = _createContext();
+      context.waypoints[1].position.z = 1;
+      const destination = { x:15, y:FLOOR_Y, z:0 };
+      const duration = scheduleCharacterMovementToRoom(context, ROOM, { x:0, y:FLOOR_Y, z:0 }, 100,
+        OTHER_ROOM, destination, 0, 'right', timeline);
+
+      expect(timeline.keyframes.some(frame => frame.characters[0].position.z === 1)).toBe(true);
+      expect(timeline.pendingWalkingIntervals).toEqual([{ characterI:0, startTime:100, endTime:100 + duration }]);
+      expect(timeline.keyframes.at(-1)).toMatchObject({ time:100 + duration, characters:[{ position:destination }] });
+    });
+
+    it('does not record a walk when already at the destination', () => {
+      const timeline = _createTimeline();
+      const position = { x:0, y:FLOOR_Y, z:0 };
+      const duration = scheduleCharacterMovementToRoom(_createContext(), ROOM, position, 100,
+        ROOM, position, 0, 'right', timeline);
+
+      expect(duration).toBe(0);
+      expect(timeline.pendingWalkingIntervals).toEqual([]);
     });
   });
 });

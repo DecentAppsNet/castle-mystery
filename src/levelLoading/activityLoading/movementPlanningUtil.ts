@@ -9,7 +9,7 @@ import EditableTimeline from "../timelineLoading/types/EditableTimeline";
 import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/types/Position";
 import { findNearestFloorWaypointToPosition, isFloorWaypoint, WAYPOINT_MIDDLE_ROW_Z } from "./waypointFindingUtil";
-import { addCharacterKeyChanges } from "../timelineLoading/editingUtil";
+import { addCharacterKeyChanges } from "../timelineLoading";
 import WaypointGenerationContext from "../types/WaypointGenerationContext";
 import { FacingDirection } from "@/game/types/Character";
 
@@ -201,6 +201,9 @@ function _scheduleWaypointPath(waypointPath:Waypoint[], fromTime:number, charact
       time += walkDuration;
     }
     assert(walkDuration > 0); // Unneeded waypoints are being generated somewhere.
+  }
+  if (time > fromTime) {
+    timeline.pendingWalkingIntervals.push({ characterI, startTime:fromTime, endTime:time });
   }
   return time - fromTime;
 }
