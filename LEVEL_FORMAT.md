@@ -429,6 +429,7 @@ The itinerary loader currently supports these activity verbs and forms:
 * `takes Item ...`
 * `drops Item ...`
 * `gives Item to Character`
+* `points [at|to] Direction|Character|Item [quickly|slowly]`
 * `locks Room`
 * `unlocks Room`
 * `show Character|Item`
@@ -591,6 +592,37 @@ If the item is elsewhere in the room, the loader adds the needed walk first. The
 Example: `0:15:03 John gives Note to Mary`
 
 If the two characters are too far apart, the loader adds the short walk needed to get close enough first.
+
+### Points
+
+`points` makes the character raise their front arm, hold the gesture, then lower it. It does not turn or move them, or change their posture.
+
+Examples:
+* `0:15:03 John points left`
+* `: points at Mary slowly`
+* `: points to Note quickly`
+
+`at` and `to` are optional. The usual omitted-character and relative-timestamp rules apply.
+
+Choose a direction: `left`, `right`, `up`, `down`, `upleft`, `upright`, `downleft`, or `downright`. These mean directions on the room view, regardless of which way the character faces. Diagonals are halfway between their neighboring directions. These words, along with `points`, `quickly`, and `slowly`, cannot be character or item IDs.
+
+Alternatively, name a visible character or item in the same room when the gesture starts:
+* A character target aims toward their head.
+* An item in the room aims toward its center, including draw offsets and stacking.
+* An item held in someone's hand aims toward the holder's body center, not the item itself.
+* Items in inventory cannot be targeted. Unavailable targets and targets exactly at the pointing shoulder are reported as level errors.
+
+The character aims at where the target is when pointing starts. They do not follow later movement. Aiming ignores front-to-back depth and does not compensate for bent arms or the apparent angle of custom artwork.
+
+| Speed | Raising | Holding | Lowering | Total |
+| --- | --- | --- | --- | --- |
+| `quickly` | 0.1 s | 0.3 s | 0.1 s | 0.5 s |
+| Omitted | 0.2 s | 0.6 s | 0.2 s | 1 s |
+| `slowly` | 0.4 s | 1.2 s | 0.4 s | 2 s |
+
+The pointing character is busy for the entire gesture, including lowering their arm. A following `:` activity starts after that. The target character or item remains free for other activities.
+
+A pointing character may already be holding an item. That item stays at its usual hand position; it does not follow the animated arm. This is separate from pointing at somebody else's held item.
 
 ### Waits
 

@@ -3,7 +3,9 @@ import ViewerArmKind from '@/game/characterBody/types/ViewerArmKind';
 
 type BodyPartTarget<Kind extends PartKind|ViewerArmKind> = { spriteKind:Kind };
 
-/** Body-part transforms are deltas from the current resolved pose; zero leaves it unchanged. */
+/** Current body transforms are relative deltas; zero preserves the resolved pose.
+ * Future absolute variants must include `absolute` in their name.
+ * Viewer arm targets select visual depth roles; PartKind targets select exact parts. */
 type SpriteOverride = BodyPartTarget<'head'> & {
   transformType:'rotate',
   /** Relative angular adjustment in radians. */
