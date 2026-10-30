@@ -1,12 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { assertNonNullable } from 'decent-portal';
+import { createDefaultCharacter } from '@/game/types/Character';
+import { createDefaultRoom } from '@/game/types/Room';
+import { createDefaultItem } from '@/game/types/Item';
+import { createBodyPose, getResolvedBodyPart, transformBodyPoint } from '@/game/characterBody';
+import { ITEM_CUBOID_HEIGHT_GAME } from '@/game/itemSizeUtil';
+import PointStartSnapshot from '../types/PointStartSnapshot';
 
 import ScalingFactors from '@/game/types/ScalingFactors';
 import CharacterEffectDrawContext from '../types/CharacterEffectDrawContext';
 import LevelEffectDrawContext from '../types/LevelEffectDrawContext';
 import Effect from '../types/Effect';
 import EffectDrawCall from '../types/EffectDrawCall';
-import { createPointEffect, getPointDuration } from '../pointEffectUtil';
+import { createPointEffect as createSnapshotPointEffect, getPointDuration } from '../pointEffectUtil';
+
+function _snapshot(direction:'left'|'right' = 'left'):PointStartSnapshot {
+  const subject = { ...createDefaultCharacter(), id:'sam', position:{ x:2, y:5, z:0 } };
+  return { subject, room:createDefaultRoom(), characters:[subject], movingCharacterIds:new Set(),
+    target:{ kind:'direction', direction } };
+}
+
+function _createEffect(speed:'quickly'|'slowly'|null = null):Effect {
+  const effect = createSnapshotPointEffect(100, _snapshot(), speed);
+  assertNonNullable(effect);
+  return effect;
+}
 
 const CHARACTER_CONTEXT = {} as CharacterEffectDrawContext;
 const SCALING_FACTORS = {} as ScalingFactors;
@@ -31,7 +49,7 @@ describe('pointEffectUtil', () => {
   describe('createPointEffect()', () => {
     it('uses the complete default timing profile', () => {
       const duration = getPointDuration();
-      const effect = createPointEffect(100, 1);
+      const effect = _createEffect();
 
       expect(effect.kind).toBe('point');
       expect(effect.endTime - effect.startTime).toBe(duration);
@@ -39,31 +57,33 @@ describe('pointEffectUtil', () => {
 
     it('uses the complete quick timing profile', () => {
       const duration = getPointDuration('quickly');
-      const effect = createPointEffect(100, 1, 'quickly');
+      const effect = _createEffect('quickly');
 
       expect(effect.endTime - effect.startTime).toBe(duration);
     });
 
     it('uses the complete slow timing profile', () => {
       const duration = getPointDuration('slowly');
-      const effect = createPointEffect(100, 1, 'slowly');
+      const effect = _createEffect('slowly');
 
       expect(effect.endTime - effect.startTime).toBe(duration);
     });
 
     it('emits only a relative near-arm rotation', () => {
-      const effect = createPointEffect(100, 1);
+      const effect = _createEffect();
 
       expect(_query(effect, 100 + getPointDuration() / 2)).toEqual({ spriteOverrides:[
-        { spriteKind:'nearArm', transformType:'rotate', rotateRadians:1 }
+        { spriteKind:'nearArm', transformType:'rotate', rotateRadians:expect.any(Number) }
       ] });
     });
 
     it('advances to the captured angle, holds it, and returns toward rest', () => {
-      const effect = createPointEffect(100, 1);
+      const effect = _createEffect();
       const duration = getPointDuration();
+      const heldAngle = _rotation(effect, effect.startTime + duration / 2);
+      expect(heldAngle).not.toBe(0);
       const samples = Array.from({ length:101 }, (_, sampleI) =>
-        _rotation(effect, effect.startTime + duration * sampleI / 100));
+        _rotation(effect, effect.startTime + duration * sampleI / 100) / heldAngle);
       const firstHoldI = samples.indexOf(1);
       const lastHoldI = samples.lastIndexOf(1);
 
@@ -81,22 +101,14 @@ describe('pointEffectUtil', () => {
     });
 
     it('leaves the resolved pose unchanged outside its interval', () => {
-      const effect = createPointEffect(100, -1);
+      const effect = _createEffect();
 
       expect(_rotation(effect, effect.startTime - 1)).toBe(0);
       expect(_rotation(effect, effect.endTime + 1)).toBe(0);
     });
 
-    it('preserves the sign of a negative relative angle', () => {
-      const effect = createPointEffect(100, -1);
-      const duration = getPointDuration();
-
-      expect(_rotation(effect, effect.startTime + duration / 2)).toBe(-1);
-      expect(_rotation(effect, effect.endTime)).toBe(0);
-    });
-
     it('returns no result at unrelated drawing stages', () => {
-      const effect = createPointEffect(100, 1);
+      const effect = _createEffect();
 
       expect(_query(effect, 100, 0, { stage:'afterCharacter', characterContext:CHARACTER_CONTEXT })).toBeNull();
       expect(_query(effect, 100, 0, { stage:'characterAfterLevel', characterContext:CHARACTER_CONTEXT })).toBeNull();
@@ -104,7 +116,7 @@ describe('pointEffectUtil', () => {
     });
 
     it('reproduces results after reverse and repeated queries regardless of meta time', () => {
-      const effect = createPointEffect(100, 1);
+      const effect = _createEffect();
       const duration = getPointDuration();
       const sampleTime = effect.startTime + duration / 10;
       const first = _query(effect, sampleTime, 10);
@@ -114,7 +126,67 @@ describe('pointEffectUtil', () => {
       _query(effect, effect.startTime, 40);
       expect(_query(effect, sampleTime, 10000)).toEqual(first);
       expect(_query(effect, sampleTime, 10000)).toEqual(first);
-      expect(_query(createPointEffect(100, 1), sampleTime)).toEqual(first);
+      expect(_query(_createEffect(), sampleTime)).toEqual(first);
+    });
+
+    it('captures character geometry before the first handler evaluation', () => {
+      const snapshot = _snapshot();
+      const target = { ...snapshot.subject, id:'jo', position:{ x:7, y:5, z:0 } };
+      const entitySnapshot:PointStartSnapshot = { ...snapshot, characters:[snapshot.subject, target],
+        target:{ kind:'character', characterId:'jo' } };
+      const effect = createSnapshotPointEffect(100, entitySnapshot);
+      const control = createSnapshotPointEffect(100, entitySnapshot);
+      assertNonNullable(effect);
+      assertNonNullable(control);
+      target.position.x = -100;
+
+      expect(_query(effect, 100 + getPointDuration() / 2)).toEqual(
+        _query(control, 100 + getPointDuration() / 2));
+    });
+
+    it('captures stacked room-item geometry before the first handler evaluation', () => {
+      const snapshot = _snapshot();
+      const support = { ...createDefaultItem(), id:'table', position:{ x:8, y:5, z:0 } };
+      const item = { ...createDefaultItem(), id:'vase', position:{ x:8, y:5, z:0 } };
+      const entitySnapshot:PointStartSnapshot = { ...snapshot, room:{ ...snapshot.room, items:[support, item] },
+        target:{ kind:'item', itemId:'vase' } };
+      const effect = createSnapshotPointEffect(100, entitySnapshot);
+      const control = createSnapshotPointEffect(100, entitySnapshot);
+      assertNonNullable(effect);
+      assertNonNullable(control);
+      support.drawOffset.y = -100;
+      item.position.x = -100;
+
+      expect(_query(effect, 100 + getPointDuration() / 2)).toEqual(
+        _query(control, 100 + getPointDuration() / 2));
+    });
+
+    it('captures the held-item holder rather than following later holder movement', () => {
+      const snapshot = _snapshot();
+      const holder = { ...snapshot.subject, id:'jo', position:{ x:7, y:5, z:0 } };
+      const entitySnapshot:PointStartSnapshot = { ...snapshot, characters:[snapshot.subject, holder],
+        target:{ kind:'heldItem', holderId:'jo' } };
+      const effect = createSnapshotPointEffect(100, entitySnapshot);
+      const control = createSnapshotPointEffect(100, entitySnapshot);
+      assertNonNullable(effect);
+      assertNonNullable(control);
+      holder.position.x = -100;
+
+      expect(_query(effect, 100 + getPointDuration() / 2)).toEqual(
+        _query(control, 100 + getPointDuration() / 2));
+    });
+
+    it('returns an explicit invalid result for an item coincident with the arm pivot', () => {
+      const snapshot = _snapshot();
+      const arm = getResolvedBodyPart(createBodyPose(snapshot.subject.rootBodyPart, 'standing', 'right'), 'nearArm');
+      const pivot = transformBodyPoint(arm.transform, arm.part.pivotPoint);
+      const item = { ...createDefaultItem(), id:'vase', position:{ x:8, y:5, z:0 },
+        drawOffset:{ x:snapshot.subject.position.x + pivot[0] - 8,
+          y:snapshot.subject.position.y + pivot[1] + ITEM_CUBOID_HEIGHT_GAME / 2 - 5, z:0 } };
+      const coincident:PointStartSnapshot = { ...snapshot, room:{ ...snapshot.room, items:[item] },
+        target:{ kind:'item', itemId:'vase' } };
+
+      expect(createSnapshotPointEffect(100, coincident)).toBeNull();
     });
   });
 });
