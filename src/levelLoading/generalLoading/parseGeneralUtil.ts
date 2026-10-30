@@ -11,7 +11,7 @@ import { assert, assertNonNullable } from "decent-portal";
 import { getBackgroundImageAssetUrl } from "@/game/imageUrlUtil";
 import ActivityParsingRules, { AllowedValuesByIdentifierId } from "../activityLoading/types/ActivityParsingRules";
 import LevelLoadingContext from "../types/LevelLoadingContext";
-import { getSectionIdsFromSectionText, isSectionRequired } from "../levelFileSectionUtil";
+import { createNormalizedSectionEntryMap, getSectionIdsFromSectionText, isSectionRequired } from "../levelFileSectionUtil";
 import { findActiveCharacterFromItinerary } from "../activityLoading";
 import { validateSkinName } from "./skinIdUtil";
 
@@ -81,6 +81,18 @@ function _createAllowedValuesByIdentifier(sections:LevelFileSections, errors:Err
   return av;
 }
 
+function _validateReservedIds(sections:LevelFileSections, sectionId:'characters'|'items',
+    reservedWords:ReadonlySet<string>, errors:ErrorCollector):void {
+  const section = sections[sectionId];
+  if (!section) return;
+  const entries = createNormalizedSectionEntryMap(section.text, 2, sectionId, errors);
+  const category = sectionId === 'characters' ? 'Character' : 'Item';
+  entries.forEach((entry, entityId) => {
+    if (reservedWords.has(entityId)) errors.addAtLine(`${category} ID "${entityId}" is a reserved activity word.`,
+      section.lineI + entry.lineNo - 1);
+  });
+}
+
 function _parseGeneralSection(generalSectionText:string, level:MutableLevel, errors:ErrorCollector):LevelLoadingContext {
   const generalNameValues = parseUniqueNameValueLines(generalSectionText, 'general', true);
   const initialTime = generalNameValues.time ? parseTimestampToMsecs(generalNameValues.time) : null;
@@ -118,6 +130,9 @@ export function initMutableLevelAndLoadingContext(sections:LevelFileSections, er
   const loadingContext = _parseGeneralSection(sections.general.text, level, errors);
   const allowedValuesByIdentifier = _createAllowedValuesByIdentifier(sections, errors);
   loadingContext.activityParsingRules = initActivityParsingRules(allowedValuesByIdentifier); // Fixes the placeholder.
+  if (errors.hasErrors) return null;
+  _validateReservedIds(sections, 'characters', loadingContext.activityParsingRules.reservedWords, errors);
+  _validateReservedIds(sections, 'items', loadingContext.activityParsingRules.reservedWords, errors);
   level.activeCharacterId = loadingContext.activeCharacterId ?? findActiveCharacterFromItinerary(sections.itinerary,
     loadingContext.activityParsingRules, errors);
   return errors.hasErrors ? null : { level, loadingContext };
