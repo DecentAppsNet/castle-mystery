@@ -27,6 +27,7 @@ Create a new Markdown plan file under `workAssets/plans` from the project root. 
 ## Plan requirements
 
 - Write a self-contained handoff for the same model in a fresh conversation. The implementing agent will not have this chat history or session memory.
+- Include an explicit instruction in every generated plan: "Keep this plan limited to agreed requirements and implementation approach. Put progress, discoveries, and verification outcomes in chat, not in the plan. Change the plan only for agreed scope/approach changes." Do not append implementation status, completion checklists, findings, or validation reports to the plan.
 - Divide implementation into independently testable phases.
 - Limit each phase to at most 100 changed production-source lines, additions plus deletions. Generated files, tests, fixtures, documentation, and the plan do not count.
 - Require the implementing agent to stop after every phase for human review and explicit approval before proceeding.
