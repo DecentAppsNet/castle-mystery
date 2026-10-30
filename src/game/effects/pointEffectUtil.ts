@@ -13,9 +13,9 @@ const POINT_TIMINGS = {
   slowly:{ pointing:400, pointed:1200, resting:400 }
 } as const;
 
-export function getPointTiming(speed:'quickly'|'slowly'|null = null) {
+export function getPointDuration(speed:'quickly'|'slowly'|null = null):number {
   const stages = POINT_TIMINGS[speed ?? 'default'];
-  return { ...stages, duration:stages.pointing + stages.pointed + stages.resting } as const;
+  return stages.pointing + stages.pointed + stages.resting;
 }
 
 function _smoothstep(progress:number):number {
@@ -37,7 +37,8 @@ function _handlePointEffect(drawCall:EffectDrawCall, time:number, startTime:numb
 export function createPointEffect(startTime:number, relativeAngle:number,
     speed:'quickly'|'slowly'|null = null):Effect {
   assert(Number.isFinite(startTime) && Number.isFinite(relativeAngle));
-  const { pointing, pointed, resting, duration } = getPointTiming(speed);
+  const { pointing, pointed, resting } = POINT_TIMINGS[speed ?? 'default'];
+  const duration = getPointDuration(speed);
   const endTime = startTime + duration;
 
   const handler:EffectHandler = (drawCall, _scalingFactors, time) => {
