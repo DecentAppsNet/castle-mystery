@@ -1,13 +1,14 @@
 import PartKind from '@/game/characterBody/types/PartKind';
+import ViewerArmKind from '@/game/characterBody/types/ViewerArmKind';
 
-type BodyPartTarget<Kind extends PartKind> = { spriteKind:Kind };
+type BodyPartTarget<Kind extends PartKind|ViewerArmKind> = { spriteKind:Kind };
 
 /** Body-part transforms are deltas from the current resolved pose; zero leaves it unchanged. */
 type SpriteOverride = BodyPartTarget<'head'> & {
   transformType:'rotate',
   /** Relative angular adjustment in radians. */
   rotateRadians:number
-}|BodyPartTarget<'nearArm'|'farArm'> & {
+}|BodyPartTarget<'nearArm'|'farArm'|ViewerArmKind> & {
   transformType:'rotate',
   rotateRadians:number
 }|BodyPartTarget<'leftLeg'|'rightLeg'> & {

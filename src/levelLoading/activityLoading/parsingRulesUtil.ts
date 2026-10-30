@@ -25,6 +25,7 @@ import { createUnlocksParseFormat } from "./activitySchedulers/unlocksScheduler"
 import { createWaitsParseFormat } from "./activitySchedulers/waitsScheduler";
 import ParseFormat from "./types/ParseFormat";
 import ParseStep from "./types/ParseStep";
+import { createPointsParseFormat } from './activitySchedulers/pointsScheduler';
 
 function _countWords(text:string):number {
   return text.split(' ').length;
@@ -120,6 +121,7 @@ export function createActivityParsingRules(characterIds:string[], roomIds:string
     pf['kneels'] = createKneelsParseFormat();
     pf['lays'] = createLaysParseFormat();
     pf['locks'] = createLocksParseFormat();
+    pf['points'] = createPointsParseFormat();
     pf['says'] = createSaysParseFormat();
     pf['show'] = createShowParseFormat();
     pf['sits'] = createSitsParseFormat();

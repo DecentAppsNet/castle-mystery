@@ -1,9 +1,9 @@
-/* This file creates deterministic three-stage pointing effects with relative near-arm rotation.
+/* This file creates deterministic three-stage pointing effects with viewer-front-arm rotation.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from 'decent-portal';
 import { clamp } from '@/common/numberUtil';
-import { createBodyPose, getResolvedBodyPart, transformBodyPoint } from '@/game/characterBody';
+import { createBodyPose, getResolvedBodyPart, getViewerArmPartKind, transformBodyPoint } from '@/game/characterBody';
 import Character from '@/game/types/Character';
 import Point from '@/game/types/Point';
 import PartKind from '@/game/characterBody/types/PartKind';
@@ -41,7 +41,8 @@ function _findPointAngle(snapshot:PointStartSnapshot):number|null {
   const inRoom = characters.filter(character =>
     findRoomAtPosition([room], character.position.x, character.position.y) !== null);
   const layout = createRoomContentDisplayLayout(room, inRoom, movingCharacterIds);
-  const pivot = _characterPoint(subject, 'nearArm', layout, true);
+  const armKind = getViewerArmPartKind(subject, 'viewerFrontArm');
+  const pivot = _characterPoint(subject, armKind, layout, true);
   let vector:Point;
 
   if (target.kind === 'direction') {
@@ -70,7 +71,7 @@ function _findPointAngle(snapshot:PointStartSnapshot):number|null {
   }
 
   const { transform } = getResolvedBodyPart(createBodyPose(subject.rootBodyPart,
-    subject.bodyOrientation, subject.facingDirection), 'nearArm');
+    subject.bodyOrientation, subject.facingDirection), armKind);
   const localX = vector[0] * transform.horizontalX + vector[1] * transform.horizontalY;
   const localY = vector[0] * transform.verticalX + vector[1] * transform.verticalY;
   const angle = Math.atan2(-localX, localY);
@@ -89,7 +90,7 @@ function _handlePointEffect(drawCall:EffectDrawCall, time:number, startTime:numb
   const progress = elapsed < pointingDuration ? _smoothstep(elapsed / pointingDuration)
     : elapsed <= pointingDuration + pointedDuration ? 1 : _smoothstep((totalDuration - elapsed) / restingDuration);
   return { spriteOverrides:[
-    { spriteKind:'nearArm', transformType:'rotate', rotateRadians:progress === 0 ? 0 : relativeAngle * progress }
+    { spriteKind:'viewerFrontArm', transformType:'rotate', rotateRadians:progress === 0 ? 0 : relativeAngle * progress }
   ] };
 }
 

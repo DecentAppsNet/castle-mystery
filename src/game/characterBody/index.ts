@@ -7,4 +7,4 @@ export { getArmThickness } from './characterArmGeometryUtil';
 export { createBodyCanvasLayout } from './characterBodyLayoutUtil';
 export { fitHeadImage, calcHeadImageBounds, rotateHeadPose } from './characterHeadGeometryUtil';
 export { composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint, transformBodyRect } from './characterBodyTransformUtil';
-export { createBodyPose, getBodyPaintOrder, getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy } from './characterBodyPoseUtil';
+export { createBodyPose, getBodyPaintOrder, getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy, getViewerArmPartKind } from './characterBodyPoseUtil';

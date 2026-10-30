@@ -278,7 +278,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
     if (kind === 'head') {
       drawCharacterHead(part, character, imageSet, spriteOverrides, scalingFactors.roomLineWidth, context);
     } else {
-      drawCharacterBodyPart(part, imageSet, spriteOverrides, context);
+      drawCharacterBodyPart(part, imageSet, spriteOverrides, character, context);
     }
   });
   drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);

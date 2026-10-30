@@ -2,7 +2,8 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from 'decent-portal';
-import { composeBodyTransforms, createBodyAttachmentTransform, getArmThickness, transformBodyPoint } from '@/game/characterBody';
+import { composeBodyTransforms, createBodyAttachmentTransform, getArmThickness, getViewerArmPartKind, transformBodyPoint } from '@/game/characterBody';
+import Character from '@/game/types/Character';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Point from '@/game/types/Point';
 import ImageSet from '@/game/types/ImageSet';
@@ -94,11 +95,16 @@ function _drawArm(width:number, height:number, inset:number, resolved:ResolvedBo
 
 /** Paints one non-head part; vector placeholders have a fixed canvas-pixel border. Does not determine paint order. */
 export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageSet,
-    spriteOverrides:readonly SpriteOverride[], context:CanvasRenderingContext2D) {
+  spriteOverrides:readonly SpriteOverride[], character:Character, context:CanvasRenderingContext2D) {
   const { part } = resolved;
   assert(part.kind !== 'head'); // Head artwork uses the head painter.
-  const rotation = spriteOverrides.find(override => override.transformType === 'rotate'
-    && override.spriteKind === part.kind);
+  const rotation = spriteOverrides.find(override => {
+    if (override.transformType !== 'rotate') return false;
+    const target = override.spriteKind;
+    const kind = target === 'viewerFrontArm' || target === 'viewerBackArm'
+      ? getViewerArmPartKind(character, target) : target;
+    return kind === part.kind;
+  });
   const drawnPart = rotation?.transformType === 'rotate'
     ? { part, transform:composeBodyTransforms(resolved.transform,
       createBodyAttachmentTransform(part.pivotPoint, part.pivotPoint, rotation.rotateRadians)) }

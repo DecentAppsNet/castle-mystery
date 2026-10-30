@@ -69,12 +69,22 @@ describe('pointEffectUtil', () => {
       expect(effect.endTime - effect.startTime).toBe(duration);
     });
 
-    it('emits only a relative near-arm rotation', () => {
+    it('emits only a relative viewer-front-arm rotation', () => {
       const effect = _createEffect();
 
       expect(_query(effect, 100 + getPointDuration() / 2)).toEqual({ spriteOverrides:[
-        { spriteKind:'nearArm', transformType:'rotate', rotateRadians:expect.any(Number) }
+        { spriteKind:'viewerFrontArm', transformType:'rotate', rotateRadians:expect.any(Number) }
       ] });
+    });
+
+    it('requests the viewer-front arm when facing left', () => {
+      const base = _snapshot();
+      const subject = { ...base.subject, facingDirection:'left' as const };
+      const effect = createSnapshotPointEffect(100, { ...base, subject, characters:[subject] });
+      assertNonNullable(effect);
+
+      expect(_query(effect, 100 + getPointDuration() / 2)?.spriteOverrides[0].spriteKind)
+        .toBe('viewerFrontArm');
     });
 
     it('advances to the captured angle, holds it, and returns toward rest', () => {
@@ -187,6 +197,19 @@ describe('pointEffectUtil', () => {
         target:{ kind:'item', itemId:'vase' } };
 
       expect(createSnapshotPointEffect(100, coincident)).toBeNull();
+    });
+
+    it('uses the front-arm pivot for left-facing target validation', () => {
+      const base = _snapshot();
+      const subject = { ...base.subject, facingDirection:'left' as const };
+      const arm = getResolvedBodyPart(createBodyPose(subject.rootBodyPart, 'standing', 'left'), 'farArm');
+      const pivot = transformBodyPoint(arm.transform, arm.part.pivotPoint);
+      const item = { ...createDefaultItem(), id:'vase', position:{ x:8, y:5, z:0 },
+        drawOffset:{ x:subject.position.x + pivot[0] - 8,
+          y:subject.position.y + pivot[1] + ITEM_CUBOID_HEIGHT_GAME / 2 - 5, z:0 } };
+
+      expect(createSnapshotPointEffect(100, { ...base, subject, characters:[subject],
+        room:{ ...base.room, items:[item] }, target:{ kind:'item', itemId:'vase' } })).toBeNull();
     });
   });
 });

@@ -7,6 +7,8 @@ import { createRect, extendRectToContainRect } from '../rectUtil';
 import BodyPart from './types/BodyPart';
 import BodyPartTransform from './types/BodyPartTransform';
 import PartKind from './types/PartKind';
+import ViewerArmKind from './types/ViewerArmKind';
+import Character from '../types/Character';
 import Point from '../types/Point';
 import Rect from '../types/Rect';
 import ResolvedBodyPart from './types/ResolvedBodyPart';
@@ -98,4 +100,12 @@ const _rasterLeftFacingPaintOrder:readonly PartKind[] = ['farArm', 'rightLeg', '
 export function getBodyPaintOrder(facing:FacingDirection, isRasterBody:boolean = false):readonly PartKind[] {
   if (isRasterBody && facing === 'left') return _rasterLeftFacingPaintOrder;
   return facing === 'right' ? _rightFacingPaintOrder : _leftFacingPaintOrder;
+}
+
+/** Maps a viewer-relative arm role to the body's unchanged concrete part identity. */
+export function getViewerArmPartKind(character:Pick<Character, 'facingDirection'|'rootBodyPart'>,
+    target:ViewerArmKind):'nearArm'|'farArm' {
+  const arms = getBodyPaintOrder(character.facingDirection, character.rootBodyPart.imageUrl !== null)
+    .filter(kind => kind === 'nearArm' || kind === 'farArm');
+  return arms[target === 'viewerFrontArm' ? 1 : 0];
 }

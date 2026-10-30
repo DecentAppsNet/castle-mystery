@@ -34,6 +34,7 @@ import { scheduleThinksActivity } from "../activityLoading/activitySchedulers/th
 import { doesActivityConflictWithScheduled } from "./activityConflictUtil";
 import { validateSpeechSourceBeforeScheduling, validateSpeechSources } from "./speechSourceValidationUtil";
 import { scheduleWalkingEffects } from "./walkingEffectSchedulingUtil";
+import { finalizePointEffects, schedulePointsActivity } from '../activityLoading/activitySchedulers/pointsScheduler';
 
 type ScheduledTimeline = Omit<Timeline, 'startTime' | 'endTime'>;
 type ActivityScheduler = (level:Level, waypointContext:WaypointGenerationContext, activity:Activity,
@@ -52,6 +53,7 @@ const VERB_TO_ACTIVITY_SCHEDULER:Readonly<{[verb:string]:ActivityScheduler}> = {
   'kneels': scheduleKneelsActivity,
   'lays': scheduleLaysActivity,
   'locks': scheduleLocksActivity,
+  'points': schedulePointsActivity,
   'says': scheduleSaysActivity,
   'show': scheduleShowActivity,
   'sits': scheduleSitsActivity,
@@ -126,5 +128,6 @@ export function scheduleActivities(level:Level, activities:Activity[], startTime
   validateSpeechSources(level, activities, timeline, errors);
   if (errors.count > originalErrorCount) return null;
   scheduleWalkingEffects(timeline);
+  if (!finalizePointEffects(level, scheduledActivities, timeline, errors)) return null;
   return _editableTimelineToTimeline(timeline);
 }
