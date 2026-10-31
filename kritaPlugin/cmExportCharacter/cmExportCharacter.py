@@ -47,7 +47,8 @@ def _exportCharacter(checked=False):
         return
 
     bodyNames = ("head", "nearArm", "farArm", "leftLeg", "rightLeg", "torso")
-    requiredNames = bodyNames + tuple(name + "Pivot" for name in bodyNames)
+    handNames = ("nearHand", "farHand")
+    requiredNames = bodyNames + tuple(name + "Pivot" for name in bodyNames) + handNames
     layers = _findLayers(document.rootNode())
     trackedLayers = {}
     errors = []
@@ -125,6 +126,13 @@ def _exportCharacter(checked=False):
         connectionY = pivotY + bounds.y() - torsoBounds.y()
         connectionName = name[0].upper() + name[1:]
         lines.append(f"* torso{connectionName}Connection={connectionX},{connectionY}")
+
+    for handName, armName in zip(handNames, ("nearArm", "farArm")):
+        handBounds = trackedLayers[handName].bounds()
+        armBounds = trackedLayers[armName].bounds()
+        connectionX = round(handBounds.x() + handBounds.width() / 2 - armBounds.x())
+        connectionY = round(handBounds.y() + handBounds.height() / 2 - armBounds.y())
+        lines.append(f"* {handName}Connection={connectionX},{connectionY}")
 
     try:
         metadataPath.write_text("\n".join(lines) + "\n", encoding="utf-8")

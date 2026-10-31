@@ -75,6 +75,8 @@ ethnicityBackground=Greek Sicilian
 * torsoFarArmConnection=360,149
 * torsoLeftLegConnection=334,509
 * torsoRightLegConnection=150,500
+* nearHandConnection=63,176
+* farHandConnection=40,165
 
 ## Emperor Frederick
 

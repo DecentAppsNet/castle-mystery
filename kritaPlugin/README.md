@@ -36,8 +36,12 @@ The plugin runs in Krita's embedded Python environment and uses its bundled
    | rightLeg | rightLegPivot |
    | torso | torsoPivot |
 
+   Also create exactly one `nearHand` and one `farHand` marker layer.
+
 3. Position each pivot marker so the center of its content bounds marks the
-   corresponding body part's pivot point. Layers may be nested inside groups;
+   corresponding body part's pivot point. Position each hand marker so the center
+   of its content bounds marks the hand's connection point on the corresponding
+   arm. Layers may be nested inside groups;
    required names must be unique across the document.
 4. Choose **Tools > Scripts > CM Export Character**. A message reports success
    or an error. Missing or duplicate layers stop the export before any files
@@ -51,7 +55,7 @@ is six PNGs named `duchessTest_head.png`, `duchessTest_nearArm.png`,
 and `duchessTest_torso.png`, plus `duchessTest.md`.
 
 PNGs are cropped to each body layer's content bounds, with transparency enabled.
-Pivot marker layers are not exported. PNG options dialogs are suppressed using
+Pivot and hand marker layers are not exported. PNG options dialogs are suppressed using
 temporary batch mode; other PNG options use Krita's defaults.
 
 The Markdown file contains a heading using the document's filename stem and
@@ -64,6 +68,9 @@ then torso:
   rounded to the nearest integer (ties to even).
 - `torso<Part>Connection`: each non-torso part's rounded pivot position expressed
   relative to the torso's top-left.
+- `nearHandConnection` and `farHandConnection`: hand marker center relative to
+   the corresponding arm layer's top-left, rounded to the nearest integer
+   (ties to even). These entries follow the torso connections.
 
 **Existing output files are overwritten without confirmation.** Each PNG is
 verified as readable before replacing its destination. Metadata is written only
