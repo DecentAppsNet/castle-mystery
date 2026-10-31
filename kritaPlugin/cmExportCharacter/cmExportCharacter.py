@@ -1,10 +1,11 @@
+# Start of copy-and-paste section for Scripter. Do not refactor functions to other files or it will break Scripter copy and paste.
+
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from PyQt5.QtGui import QImage
 from PyQt5.QtWidgets import QMessageBox
 from krita import Extension, InfoObject, Krita
-
 
 def _showMessage(text):
     window = Krita.instance().activeWindow()
@@ -137,10 +138,11 @@ def _exportCharacter(checked=False):
         f"{documentPath.parent}"
     )
 
-
+# The lines below allow all the code above to run from Scripter within Krita without deploying a plugin.
 if __name__ == "__main__":
     _exportCharacter()
 
+# End of copy-and-paste section for Scripter.
 
 class CMExportCharacterExtension(Extension):
     def setup(self):
