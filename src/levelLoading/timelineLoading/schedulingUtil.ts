@@ -123,11 +123,15 @@ export function scheduleActivities(level:Level, activities:Activity[], startTime
       toBeScheduled = sortActivitiesAfterStartTimeAssignment(toBeScheduled, nextActivityI, startTime);
     }
   }
+
+  // Perform second-pass validations and adjustments to scheduling that require information from the first pass.
+  // Read ADR-023 before adding more second-pass handling below.
   assert(toBeScheduled.length === 0);
-  validateAtActivities(level, waypointContext, activities, timeline, errors);
-  validateSpeechSources(level, activities, timeline, errors);
-  if (errors.count > originalErrorCount) return null;
-  scheduleWalkingEffects(timeline);
-  if (!finalizePointEffects(level, scheduledActivities, timeline, errors)) return null;
+  validateAtActivities(level, waypointContext, activities, timeline, errors); // Requires positions of characters to be finalized.
+  validateSpeechSources(level, activities, timeline, errors); // Requires character placement/visibility and item placement/visibility/ownership at speech start to be finalized, including same-timestamp edits.
+  if (errors.count > originalErrorCount) return null; // Try to perform all validation before exiting in order to collect more errors for an author to see.
+  scheduleWalkingEffects(timeline); // Requires positions of characters to be finalized.
+  if (!finalizePointEffects(level, scheduledActivities, timeline, errors)) return null; // Requires positions, facing directions, and body orientations to be finalized.
+  
   return _editableTimelineToTimeline(timeline);
 }
