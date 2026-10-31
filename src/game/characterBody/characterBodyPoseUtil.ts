@@ -1,4 +1,4 @@
-/* This file resolves character body attachments, grounded postures, bounds, and paint order without mutating definitions.
+/* This file resolves character body attachments, grounded postures, bounds, paint order, and arm roles without mutating definitions.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from 'decent-portal';
@@ -108,4 +108,9 @@ export function getViewerArmPartKind(character:Pick<Character, 'facingDirection'
   const arms = getBodyPaintOrder(character.facingDirection, character.rootBodyPart.imageUrl !== null)
     .filter(kind => kind === 'nearArm' || kind === 'farArm');
   return arms[target === 'viewerFrontArm' ? 1 : 0];
+}
+
+export function getHandArmPartKind(isRasterBody:boolean, facing:FacingDirection, hand:'left'|'right'):'nearArm'|'farArm' {
+  const swapHandRoles = isRasterBody && facing === 'left';
+  return (hand === 'left') !== swapHandRoles ? 'farArm' : 'nearArm';
 }

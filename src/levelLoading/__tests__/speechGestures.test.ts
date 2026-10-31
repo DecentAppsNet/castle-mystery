@@ -22,7 +22,8 @@ describe('level loading - speech gestures', () => {
     const handler = effect.handler;
     assertNonNullable(handler);
     const sample = (time:number, bodyOrientation:BodyOrientation) => handler({
-      stage:'beforeCharacter', characterContext:{ bodyOrientation } as CharacterEffectDrawContext
+      stage:'beforeCharacter', characterContext:{ bodyOrientation, isNearArmHoldingItem:false,
+        isFarArmHoldingItem:false } as CharacterEffectDrawContext
     }, {} as ScalingFactors, time, 0, {} as CanvasRenderingContext2D);
     const time = Array.from({ length:Math.floor(effect.endTime / 100) }, (_, timeI) => timeI * 100)
       .find(candidate => sample(candidate, speaker.bodyOrientation)?.spriteOverrides.length === 3);

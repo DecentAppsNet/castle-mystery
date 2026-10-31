@@ -8,7 +8,7 @@ import { FacingDirection } from '../types/Character';
 import CharacterLayout from './types/CharacterLayout';
 import ResolvedBodyPart from './types/ResolvedBodyPart';
 import BodyPartTransform from './types/BodyPartTransform';
-import { getBodyBounds, getResolvedBodyPart } from './characterBodyPoseUtil';
+import { getBodyBounds, getResolvedBodyPart, getHandArmPartKind } from './characterBodyPoseUtil';
 import { composeBodyTransforms, transformBodyPoint } from './characterBodyTransformUtil';
 
 function _getCenter({ part, transform }:ResolvedBodyPart):Point {
@@ -33,13 +33,13 @@ export function createBodyCanvasLayout(pose:readonly ResolvedBodyPart[], support
   const head = getResolvedBodyPart(parts, 'head');
   const [centerX, centerY] = _getCenter(head);
   const headBounds = getBodyBounds([head]);
-  const swapHandRoles = facing === 'left' && getResolvedBodyPart(parts, 'torso').part.imageUrl !== null;
+  const isRasterBody = getResolvedBodyPart(parts, 'torso').part.imageUrl !== null;
   return {
     parts, bounds,
     characterCenterCanvasPoint:_getCenter(getResolvedBodyPart(parts, 'torso')),
     head:{ centerX, centerY, radius:Math.max(headBounds.width, headBounds.height) / 2 },
-    leftHand:_getHand(getResolvedBodyPart(parts, swapHandRoles ? 'nearArm' : 'farArm')),
-    rightHand:_getHand(getResolvedBodyPart(parts, swapHandRoles ? 'farArm' : 'nearArm')),
+    leftHand:_getHand(getResolvedBodyPart(parts, getHandArmPartKind(isRasterBody, facing, 'left'))),
+    rightHand:_getHand(getResolvedBodyPart(parts, getHandArmPartKind(isRasterBody, facing, 'right'))),
     anchorX:centerX, anchorTopY:bounds.y
   };
 }

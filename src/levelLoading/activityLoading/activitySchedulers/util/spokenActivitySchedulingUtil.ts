@@ -4,7 +4,6 @@
 import { assertNonNullable } from "decent-portal";
 
 import { createSaysEffect } from "@/game/effects/speechEffectUtil";
-import Level from "@/game/types/Level";
 import Activity from "@/levelLoading/activityLoading/types/Activity";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { addCharacterEffect, addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
@@ -20,7 +19,7 @@ type SpokenActivityParts = {
 }
 
 /** Schedules speech timing, facing, and its presentation effect. */
-export function scheduleSpokenActivity(_level:Level, activity:Activity,
+export function scheduleSpokenActivity(activity:Activity,
     editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
   assertNonNullable(activity.startTime);
   const { characterId, text, toCharacterId } = activity.parts as SpokenActivityParts;

@@ -24,7 +24,7 @@ export function createSaysParseFormat():ParseFormat {
 }
 
 /** Schedules character speech and any target-facing change into an editable timeline. */
-export function scheduleSaysActivity(level:Level, _waypointContext:WaypointGenerationContext,
+export function scheduleSaysActivity(_level:Level, _waypointContext:WaypointGenerationContext,
     activity:Activity, editableTimeline:EditableTimeline, errors:ErrorCollector):boolean {
-  return scheduleSpokenActivity(level, activity, editableTimeline, errors);
+  return scheduleSpokenActivity(activity, editableTimeline, errors);
 }

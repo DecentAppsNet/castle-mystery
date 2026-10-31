@@ -11,6 +11,8 @@ type CharacterEffectDrawContext = {
   isActiveCharacter:boolean,
   isCharacterInActiveRoom:boolean,
   isLevelComplete:boolean,
+  isNearArmHoldingItem:boolean,
+  isFarArmHoldingItem:boolean,
   roomContentDisplayLayout:RoomContentDisplayLayout
 }
 

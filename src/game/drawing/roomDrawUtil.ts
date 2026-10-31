@@ -3,6 +3,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
+import { getHandArmPartKind } from "@/game/characterBody";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 import { roomHeightToLayerCount, roomWidthToColumnCount } from "@/game/roomGridUtil";
@@ -383,6 +384,8 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         }
         const characterAnatomy = characterAnatomyById.get(content.character.id);
         assertNonNullable(characterAnatomy);
+        const leftArm = getHandArmPartKind(content.character.rootBodyPart.imageUrl !== null,
+          content.character.facingDirection, 'left');
         const characterContext:CharacterEffectDrawContext = {
           bodyOrientation:content.character.bodyOrientation,
           characterAnatomy,
@@ -391,6 +394,8 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           isActiveCharacter:content.character.id === activeCharacter.id,
           isCharacterInActiveRoom,
           isLevelComplete,
+          isNearArmHoldingItem:(leftArm === 'nearArm' ? content.character.leftHandItem : content.character.rightHandItem) !== null,
+          isFarArmHoldingItem:(leftArm === 'farArm' ? content.character.leftHandItem : content.character.rightHandItem) !== null,
           roomContentDisplayLayout:displayLayout
         };
         result.characterEffectDrawEntries.push({ character:content.character, characterContext });

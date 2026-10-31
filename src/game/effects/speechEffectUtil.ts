@@ -53,7 +53,10 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
   sampleGestures:TalkingGestureSampler):EffectHandlerResult|null {
   if (drawCall.stage === 'beforeCharacter') {
     const gestureScale = drawCall.characterContext.bodyOrientation === 'laying' ? LAYING_GESTURE_ANGLE_SCALE : 1;
-    const armOverrides = sampleGestures(time - startTime).map(override => {
+    const { isNearArmHoldingItem, isFarArmHoldingItem } = drawCall.characterContext;
+    const armOverrides = sampleGestures(time - startTime).filter(override =>
+      !(isNearArmHoldingItem && override.spriteKind === 'nearArm')
+      && !(isFarArmHoldingItem && override.spriteKind === 'farArm')).map(override => {
       assert(override.transformType === 'rotate');
       return { ...override, rotateRadians:override.rotateRadians * gestureScale };
     });

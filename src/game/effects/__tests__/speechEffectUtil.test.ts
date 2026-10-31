@@ -10,7 +10,8 @@ import Effect from '../types/Effect';
 import EffectDrawCall from '../types/EffectDrawCall';
 
 const TEXT:PreparedAnimationText = { plainText:'Hello.', spans:[] };
-const CHARACTER_CONTEXT = { bodyOrientation:'standing' } as CharacterEffectDrawContext;
+const CHARACTER_CONTEXT = { bodyOrientation:'standing', isNearArmHoldingItem:false,
+  isFarArmHoldingItem:false } as CharacterEffectDrawContext;
 const SCALING_FACTORS = {} as ScalingFactors;
 const CANVAS_CONTEXT = {} as CanvasRenderingContext2D;
 
@@ -111,6 +112,59 @@ describe('speechEffectUtil', () => {
           anchorX:0, anchorTopY:0
         } as CharacterEffectDrawContext['characterAnatomy'], isCharacterInActiveRoom:false, isLevelComplete:false }
       })).toBeNull();
+    });
+  });
+
+  describe('current held-item context', () => {
+    it('suppresses only the near arm without changing head or free-arm samples', () => {
+      const effect = createSaysEffect('sam', TEXT, 100, 60000);
+      const original = Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100));
+      expect(original.some(result => result?.spriteOverrides.some(override => override.spriteKind === 'nearArm')))
+        .toBe(true);
+      const drawCall:EffectDrawCall = { stage:'beforeCharacter',
+        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, isNearArmHoldingItem:true }) };
+      expect(Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100, 0, drawCall)))
+        .toEqual(original.map(result => ({ spriteOverrides:result!.spriteOverrides
+          .filter(override => override.spriteKind !== 'nearArm') })));
+    });
+
+    it('suppresses only the far arm without changing head or free-arm samples', () => {
+      const effect = createSaysEffect('sam', TEXT, 100, 60000);
+      const original = Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100));
+      expect(original.some(result => result?.spriteOverrides.some(override => override.spriteKind === 'farArm')))
+        .toBe(true);
+      const drawCall:EffectDrawCall = { stage:'beforeCharacter',
+        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, isFarArmHoldingItem:true }) };
+      expect(Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100, 0, drawCall)))
+        .toEqual(original.map(result => ({ spriteOverrides:result!.spriteOverrides
+          .filter(override => override.spriteKind !== 'farArm') })));
+    });
+
+    it('suppresses both arms and retains deterministic head dips', () => {
+      const effect = createSaysEffect('sam', TEXT, 100, 60000);
+      const original = _query(effect, 12345);
+      const drawCall:EffectDrawCall = { stage:'beforeCharacter',
+        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, isNearArmHoldingItem:true, isFarArmHoldingItem:true }) };
+      expect(_query(effect, 12345, 0, drawCall)).toEqual({ spriteOverrides:original!.spriteOverrides
+        .filter(override => override.spriteKind === 'head') });
+      _query(effect, 50000);
+      _query(effect, 1000);
+      expect(_query(effect, 12345, 9999, drawCall)).toEqual({ spriteOverrides:original!.spriteOverrides
+        .filter(override => override.spriteKind === 'head') });
+    });
+
+    it('resumes free-arm samples when current occupancy clears without replacing the handler', () => {
+      const effect = createSaysEffect('sam', TEXT, 100, 60000);
+      const handler = effect.handler;
+      const time = Array.from({ length:600 }, (_, timeI) => 100 + timeI * 100)
+        .find(candidate => _query(effect, candidate)?.spriteOverrides.length === 3);
+      assertNonNullable(time);
+      const original = _query(effect, time);
+      const drawCall:EffectDrawCall = { stage:'beforeCharacter',
+        characterContext:{ ...CHARACTER_CONTEXT, isNearArmHoldingItem:true, isFarArmHoldingItem:true } };
+      expect(_query(effect, time, 0, drawCall)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, time)).toEqual(original);
+      expect(effect.handler).toBe(handler);
     });
   });
 
