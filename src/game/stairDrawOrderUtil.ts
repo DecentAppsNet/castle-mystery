@@ -11,7 +11,7 @@ const RIGHT_ASCENDING_FLIGHT_PHASE = 0;
 const DEFAULT_DRAW_PHASE = 1;
 const LEFT_ASCENDING_FLIGHT_PHASE = 2;
 
-export function quantizeDepthToDrawRow(z:number):number {
+function _quantizeDepthToDrawRow(z:number):number {
   if (z < ROOM_MIDDLE_ROW_MIN_Z - DRAW_ROW_EPSILON) return 0;
   if (z < ROOM_FRONT_ROW_MIN_Z - DRAW_ROW_EPSILON) return 1;
   return 2;
@@ -21,14 +21,14 @@ function _isRightAscendingFlight(stairPart:StairPart):boolean {
   return stairPart.type === StairPartType.flight && stairPart.endPosition.x > stairPart.startPosition.x;
 }
 
-export function calcStairPartDrawPhase(stairPart:StairPart):number {
+function _calcStairPartDrawPhase(stairPart:StairPart):number {
   if (stairPart.type !== StairPartType.flight) return DEFAULT_DRAW_PHASE;
   return _isRightAscendingFlight(stairPart) ? RIGHT_ASCENDING_FLIGHT_PHASE : LEFT_ASCENDING_FLIGHT_PHASE;
 }
 
-export function calcStairPartDrawRow(stairPart:StairPart):number {
+function _calcStairPartDrawRow(stairPart:StairPart):number {
   if (stairPart.type === StairPartType.catwalk) return MIDDLE_DRAW_ROW;
-  return quantizeDepthToDrawRow(stairPart.z);
+  return _quantizeDepthToDrawRow(stairPart.z);
 }
 
 function _isCharacterWithinPartYBounds(characterY:number, topY:number, height:number):boolean {
@@ -54,7 +54,7 @@ function _isCharacterAtFlightLandingY(characterY:number, stairPart:StairPart):bo
 /** Reports whether a character position lies within a stair flight's movement bounds and depth row. */
 export function isCharacterOnStairFlight(characterX:number, characterY:number, characterDepth:number, stairPart:StairPart):boolean {
   if (stairPart.type !== StairPartType.flight) return false;
-  if (quantizeDepthToDrawRow(characterDepth) !== calcStairPartDrawRow(stairPart)) return false;
+  if (_quantizeDepthToDrawRow(characterDepth) !== _calcStairPartDrawRow(stairPart)) return false;
 
   const minX = Math.min(stairPart.startPosition.x, stairPart.endPosition.x) - STAIR_POSITION_TOLERANCE;
   const maxX = Math.max(stairPart.startPosition.x, stairPart.endPosition.x) + STAIR_POSITION_TOLERANCE;
@@ -78,14 +78,14 @@ function _isCharacterAtFullStoryLandingY(characterY:number, stairPart:StairPart)
 function _isBackRowCharacterWithinWindingStoryLanding(characterY:number, characterDepth:number, stairPart:StairPart):boolean {
   return stairPart.type === StairPartType.landing
     && stairPart.landingType === StairLandingType.terminalStory
-    && quantizeDepthToDrawRow(characterDepth) === 0
+    && _quantizeDepthToDrawRow(characterDepth) === 0
     && _isCharacterWithinLandingYBounds(characterY, stairPart);
 }
 
 function _isBackRowCharacterWithinMiddleRowCatwalk(characterY:number, characterDepth:number, stairPart:StairPart):boolean {
   return stairPart.type === StairPartType.catwalk
-    && quantizeDepthToDrawRow(characterDepth) === 0
-    && quantizeDepthToDrawRow(stairPart.z) === 1
+    && _quantizeDepthToDrawRow(characterDepth) === 0
+    && _quantizeDepthToDrawRow(stairPart.z) === 1
     && _isCharacterWithinCatwalkYBounds(characterY, stairPart);
 }
 
@@ -116,10 +116,10 @@ export function compareCharacterToStairPartRows(characterX:number, characterY:nu
   if (_isBackRowCharacterWithinMiddleRowCatwalk(characterY, characterDepth, stairPart)) return 1;
   if (_isCharacterAtFlightLandingY(characterY, stairPart)) return 1;
   if (stairPart.type === StairPartType.flight && !isCharacterOnStairFlight(characterX, characterY, characterDepth, stairPart)
-    && quantizeDepthToDrawRow(characterDepth) === calcStairPartDrawRow(stairPart)) return 1;
+    && _quantizeDepthToDrawRow(characterDepth) === _calcStairPartDrawRow(stairPart)) return 1;
 
-  const characterRow = quantizeDepthToDrawRow(characterDepth);
-  const stairRow = calcStairPartDrawRow(stairPart);
+  const characterRow = _quantizeDepthToDrawRow(characterDepth);
+  const stairRow = _calcStairPartDrawRow(stairPart);
   if (characterRow !== stairRow) return characterRow - stairRow;
-  return DEFAULT_DRAW_PHASE - calcStairPartDrawPhase(stairPart);
+  return DEFAULT_DRAW_PHASE - _calcStairPartDrawPhase(stairPart);
 }

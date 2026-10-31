@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
-import { createDefaultRoomKeyframe } from '@/game/types/RoomKeyframe';
+import { createCharacterKeyframeForTest } from '@/game/test/keyframeTestUtil';
 import TimelineKeyframe from '@/game/types/TimelineKeyframe';
 import { findPrecedingKeyframe } from '../retrievalUtil';
 import {
 	createCharacterKeyframeAtTime,
 	createKeyframeAtTime,
 	createKeyframeAtTimeWithSourceIndex,
-	findCharacterPositionAtTime,
 	findKeyframeForTime
 } from '@/game/timeline';
 
@@ -16,10 +14,10 @@ function _createKeyframe(time:number, positions:Array<{ x:number, y:number, z:nu
 	return {
 		time,
 		characters:positions.map(position => ({
-			...createDefaultCharacterKeyframe(),
+			...createCharacterKeyframeForTest(),
 			position
 		})),
-		rooms:[createDefaultRoomKeyframe()]
+		rooms:[{ items:[], exits:[] }]
 	};
 }
 
@@ -251,55 +249,6 @@ describe('retrievalUtil', () => {
 
 			expect(snapshot).toBe(keyframes[0].characters[0]);
 			expect(snapshot.position).toEqual({ x:7, y:8, z:9 });
-		});
-	});
-
-	describe('findCharacterPositionAtTime()', () => {
-		it('returns the interpolated character position at the requested time', () => {
-			const keyframes = [
-				_createKeyframe(1000, [{ x:2, y:4, z:6 }]),
-				_createKeyframe(2000, [{ x:8, y:10, z:12 }])
-			];
-
-			const position = findCharacterPositionAtTime(keyframes, 0, 1500);
-
-			expect(position).toEqual({ x:5, y:7, z:9 });
-		});
-
-		it('returns the last keyframe position when the requested time is past the last keyframe', () => {
-			const keyframes = [
-				_createKeyframe(1000, [{ x:2, y:4, z:6 }]),
-				_createKeyframe(2000, [{ x:8, y:10, z:12 }])
-			];
-
-			const position = findCharacterPositionAtTime(keyframes, 0, 5000);
-
-			expect(position).toBe(keyframes[1].characters[0].position);
-			expect(position).toEqual({ x:8, y:10, z:12 });
-		});
-
-		it('returns the last keyframe position when the requested time is on the last keyframe', () => {
-			const keyframes = [
-				_createKeyframe(1000, [{ x:2, y:4, z:6 }]),
-				_createKeyframe(2000, [{ x:8, y:10, z:12 }])
-			];
-
-			const position = findCharacterPositionAtTime(keyframes, 0, 2000);
-
-			expect(position).toBe(keyframes[1].characters[0].position);
-			expect(position).toEqual({ x:8, y:10, z:12 });
-		});
-
-		it('returns the unchanged character position when the requested time falls between keyframes with the same position', () => {
-			const keyframes = [
-				_createKeyframe(1000, [{ x:8, y:10, z:12 }]),
-				_createKeyframe(2000, [{ x:8, y:10, z:12 }])
-			];
-
-			const position = findCharacterPositionAtTime(keyframes, 0, 1500);
-
-			expect(position).toBe(keyframes[0].characters[0].position);
-			expect(position).toEqual({ x:8, y:10, z:12 });
 		});
 	});
 

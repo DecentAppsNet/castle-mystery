@@ -55,7 +55,7 @@ export function calcRoomRoofBounds(room:Room, rooms:ReadonlyArray<Room>, groundF
   };
 }
 
-export function calcRoomsBoundingRectWithRoofs(rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):Rect {
+function _calcRoomsBoundingRectWithRoofs(rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):Rect {
   if (!rooms.length) throw new Error('cannot calculate room bounds with no rooms');
 
   let boundingRect = calcRoomRoofBounds(rooms[0], rooms, groundFloorY);
@@ -76,7 +76,7 @@ function _calcRenderedPanelOverhang(baseBounds:Rect):{ right:number, bottom:numb
 
 export function calcRenderedRoomBounds(room:Room, rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):Rect {
   const roofBounds = calcRoomRoofBounds(room, rooms, groundFloorY);
-  const levelRoofBounds = calcRoomsBoundingRectWithRoofs(rooms, groundFloorY);
+  const levelRoofBounds = _calcRoomsBoundingRectWithRoofs(rooms, groundFloorY);
   const panelOverhang = _calcRenderedPanelOverhang(levelRoofBounds);
   return {
     x:roofBounds.x,
@@ -87,7 +87,7 @@ export function calcRenderedRoomBounds(room:Room, rooms:ReadonlyArray<Room>, gro
 }
 
 export function calcRenderedRoomsBoundingRect(rooms:ReadonlyArray<Room>, groundFloorY:number = Infinity):Rect {
-  const roofBounds = calcRoomsBoundingRectWithRoofs(rooms, groundFloorY);
+  const roofBounds = _calcRoomsBoundingRectWithRoofs(rooms, groundFloorY);
   const panelOverhang = _calcRenderedPanelOverhang(roofBounds);
   return {
     x:roofBounds.x,

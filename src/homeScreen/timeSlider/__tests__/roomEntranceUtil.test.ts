@@ -1,7 +1,7 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
+import { createCharacterKeyframeForTest } from '@/game/test/keyframeTestUtil';
 import Position from '@/game/types/Position';
 import { createDefaultRoom } from '@/game/types/Room';
 import RoomExit from '@/game/types/RoomExit';
@@ -11,7 +11,7 @@ import { generateRoomEntryEvents } from '../roomEntranceUtil';
 function _createKeyframe(time:number, positions:Position[]):TimelineKeyframe {
   return {
     time,
-    characters:positions.map(position => ({ ...createDefaultCharacterKeyframe(), position })),
+    characters:positions.map(position => ({ ...createCharacterKeyframeForTest(), position })),
     rooms:[]
   };
 }

@@ -86,19 +86,19 @@ export function verbToPlainForm(verb:string):string {
 // parse formats earlier in code for faster fixes. So, just add checks for things that are easy to check or seem to 
 // come up in development.
 /** Throws when a parse format has an invalid root or verb. */
-export function throwIfParseFormatInvalid(parseFormat:ParseFormat):void {
+function _throwIfParseFormatInvalid(parseFormat:ParseFormat):void {
   if (!parseFormat.activityVerb) throw Error('Missing activity verb.');
-  throwIfParseStepsInvalid(parseFormat.rootParseStep);
+  _throwIfParseStepsInvalid(parseFormat.rootParseStep);
 }
 
 /** Throws when a parse-step tree has an invalid root or lacks a verb. */
-export function throwIfParseStepsInvalid(rootParseStep:ParseStep):void {
+function _throwIfParseStepsInvalid(rootParseStep:ParseStep):void {
   if (rootParseStep.kind !== 'literal' && rootParseStep.kind !== 'sequence') throw Error('root can only be verb or a sequence');
-  if (!findVerbText(rootParseStep)) throw Error('Could not find verb');
+  if (!_findVerbText(rootParseStep)) throw Error('Could not find verb');
 }
 
 /** Finds the activity verb literal within a parse-step tree. */
-export function findVerbText(rootParseStep:ParseStep):string|null {
+function _findVerbText(rootParseStep:ParseStep):string|null {
   if (rootParseStep.kind === 'literal') { // Check for verb at root.
     const asLiteral = rootParseStep as ParseLiteral;
     if (asLiteral.variableId === 'verb') return asLiteral.text;
@@ -147,14 +147,14 @@ function _describeParseStep(step:ParseStep, isRoot = false):string {
 // Returns display text explaining parse format syntax.
 /** Describes a parse format as concise author-facing syntax. */
 export function describeParseFormat(parseFormat:ParseFormat):string {
-  throwIfParseFormatInvalid(parseFormat);
+  _throwIfParseFormatInvalid(parseFormat);
   return `Timestamp ${_describeParseStep(parseFormat.rootParseStep, true)}`;
 }
 
 /** Validates a parse-step tree and creates its verb-keyed parse format. */
 export function createParseFormat(rootParseStep:ParseStep):ParseFormat {
-  throwIfParseStepsInvalid(rootParseStep);
-  const activityVerb = findVerbText(rootParseStep);
-  assertNonNullable(activityVerb, 'throwIfParseStepsInvalid() should have thrown an exception if verb was missing.');
+  _throwIfParseStepsInvalid(rootParseStep);
+  const activityVerb = _findVerbText(rootParseStep);
+  assertNonNullable(activityVerb, '_throwIfParseStepsInvalid() should have thrown an exception if verb was missing.');
   return { activityVerb, rootParseStep };
 }

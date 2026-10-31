@@ -12,9 +12,7 @@ import {
 	makeVariableLiteral,
 	makeVerb,
 	describeParseFormat,
-	findVerbText,
-	throwIfParseFormatInvalid,
-	throwIfParseStepsInvalid,
+	createParseFormat,
 } from '../parseFormatUtil';
 import { createAppearsParseFormat } from '../activitySchedulers/appearsScheduler';
 import { createAtActivityParseFormat } from '../activitySchedulers/atScheduler'
@@ -37,16 +35,9 @@ import { createWaitsParseFormat } from '../activitySchedulers/waitsScheduler';
 
 
 import ParseFormat from '../types/ParseFormat';
-import ParseStep from '../types/ParseStep';
-
-function _expected(rootParseStep:ParseStep):ParseFormat {
-	const activityVerb = findVerbText(rootParseStep);
-	if (!activityVerb) throw Error('debug error in _expected()');
-	return { activityVerb, rootParseStep };
-}
 
 describe('parseFormatUtil', () => {
-	describe('throwIfParseFormatInvalid()', () => {
+	describe('describeParseFormat() validation', () => {
 		it('does not throw for a valid parse format', () => {
 			const rootParseStep = makeSequence([
 				makeIdentifier('characterId', 'CharacterId', true),
@@ -54,9 +45,9 @@ describe('parseFormatUtil', () => {
 				makeLiteral('as', true),
 				makeIdentifier('skinId', 'SkinId'),
 			]);
-			const parseFormat = _expected(rootParseStep);
+			const parseFormat = createParseFormat(rootParseStep);
 
-			expect(() => throwIfParseFormatInvalid(parseFormat)).not.toThrow();
+			expect(() => describeParseFormat(parseFormat)).not.toThrow();
 		});
 
 		it('throws if activityVerb is empty', () => {
@@ -65,7 +56,7 @@ describe('parseFormatUtil', () => {
 				rootParseStep:makeVerb('appears'),
 			};
 
-			expect(() => throwIfParseFormatInvalid(parseFormat)).toThrow('Missing activity verb.');
+			expect(() => describeParseFormat(parseFormat)).toThrow('Missing activity verb.');
 		});
 
 		it('throws if rootParseStep is invalid', () => {
@@ -74,29 +65,29 @@ describe('parseFormatUtil', () => {
 				rootParseStep:makeOptions([makeLiteral('appears')]),
 			};
 
-			expect(() => throwIfParseFormatInvalid(parseFormat)).toThrow();
+			expect(() => describeParseFormat(parseFormat)).toThrow();
 		});
 	});
 
-	describe('throwIfParseStepsInvalid()', () => {
-		it('does not throw for a verb literal at root', () => {
-			expect(() => throwIfParseStepsInvalid(makeVerb('appears'))).not.toThrow();
+	describe('createParseFormat()', () => {
+		it('extracts a verb literal at root', () => {
+			expect(createParseFormat(makeVerb('appears')).activityVerb).toBe('appears');
 		});
 
-		it('does not throw for a root sequence containing a verb literal', () => {
+		it('extracts a verb literal from a root sequence', () => {
 			const rootParseStep = makeSequence([
 				makeIdentifier('characterId', 'CharacterId', true),
 				makeVerb('waits'),
 				makeNumber('seconds', true),
 			]);
 
-			expect(() => throwIfParseStepsInvalid(rootParseStep)).not.toThrow();
+			expect(createParseFormat(rootParseStep)).toEqual({ activityVerb:'waits', rootParseStep });
 		});
 
 		it('throws if rootParseStep is not a literal or sequence', () => {
 			const rootParseStep = makeOptions([makeLiteral('left'), makeLiteral('right')]);
 
-			expect(() => throwIfParseStepsInvalid(rootParseStep)).toThrow('root can only be verb or a sequence');
+			expect(() => createParseFormat(rootParseStep)).toThrow('root can only be verb or a sequence');
 		});
 
 		it('throws if root sequence does not contain a verb literal', () => {
@@ -105,56 +96,25 @@ describe('parseFormatUtil', () => {
 				makeText(),
 			]);
 
-			expect(() => throwIfParseStepsInvalid(rootParseStep)).toThrow('Could not find verb');
+			expect(() => createParseFormat(rootParseStep)).toThrow('Could not find verb');
 		});
 
 		it('throws if root literal is not a verb literal', () => {
 			const rootParseStep = makeVariableLiteral('characterId', 'samuel');
 
-			expect(() => throwIfParseStepsInvalid(rootParseStep)).toThrow('Could not find verb');
-		});
-	});
-
-	describe('findVerbText()', () => {
-		it('returns verb text when rootParseStep is a verb literal', () => {
-			expect(findVerbText(makeVerb('appears'))).toBe('appears');
-		});
-
-		it('returns verb text when root sequence contains a verb literal', () => {
-			const rootParseStep = makeSequence([
-				makeIdentifier('characterId', 'CharacterId', true),
-				makeVerb('says'),
-				makeText(),
-			]);
-
-			expect(findVerbText(rootParseStep)).toBe('says');
-		});
-
-		it('returns null when root sequence does not contain a verb literal', () => {
-			const rootParseStep = makeSequence([
-				makeIdentifier('characterId', 'CharacterId', true),
-				makeNumber('seconds', true),
-			]);
-
-			expect(findVerbText(rootParseStep)).toBeNull();
-		});
-
-		it('returns null when rootParseStep is not a literal or sequence containing a verb', () => {
-			const rootParseStep = makeOptions([makeLiteral('left'), makeLiteral('right')]);
-
-			expect(findVerbText(rootParseStep)).toBeNull();
+			expect(() => createParseFormat(rootParseStep)).toThrow('Could not find verb');
 		});
 	});
 
 	describe('describeParseFormat()', () => {
 		it('describes a root verb literal', () => {
-			const parseFormat = _expected(makeVerb('@'));
+			const parseFormat = createParseFormat(makeVerb('@'));
 
 			expect(describeParseFormat(parseFormat)).toBe('Timestamp `@`');
 		});
 
 		it('describes an identifier step', () => {
-			const parseFormat = _expected(makeSequence([
+			const parseFormat = createParseFormat(makeSequence([
 				makeIdentifier('characterId', 'CharacterId', true),
 				makeVerb('appears'),
 			]));
@@ -163,7 +123,7 @@ describe('parseFormatUtil', () => {
 		});
 
 		it('describes a literal step', () => {
-			const parseFormat = _expected(makeSequence([
+			const parseFormat = createParseFormat(makeSequence([
 				makeVerb('gives'),
 				makeLiteral('to'),
 			]));
@@ -172,7 +132,7 @@ describe('parseFormatUtil', () => {
 		});
 
 		it('describes a number step', () => {
-			const parseFormat = _expected(makeSequence([
+			const parseFormat = createParseFormat(makeSequence([
 				makeVerb('waits'),
 				makeNumber('seconds', true),
 			]));
@@ -181,7 +141,7 @@ describe('parseFormatUtil', () => {
 		});
 
 		it('describes an options step', () => {
-			const parseFormat = _expected(makeSequence([
+			const parseFormat = createParseFormat(makeSequence([
 				makeVerb('faces'),
 				makeOptions([makeLiteral('left'), makeLiteral('right')], true),
 			]));
@@ -190,7 +150,7 @@ describe('parseFormatUtil', () => {
 		});
 
 		it('describes a sequence step', () => {
-			const parseFormat = _expected(makeSequence([
+			const parseFormat = createParseFormat(makeSequence([
 				makeVerb('says'),
 				makeSequence([makeLiteral('to'), makeIdentifier('toCharacterId', 'CharacterId')], true),
 			]));
@@ -199,7 +159,7 @@ describe('parseFormatUtil', () => {
 		});
 
 		it('describes a text step', () => {
-			const parseFormat = _expected(makeSequence([
+			const parseFormat = createParseFormat(makeSequence([
 				makeVerb('emits'),
 				makeText(),
 			]));

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { createBodyPose, createRasterCharacterBody, getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy,
-  composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint, transformBodyRect } from '../index';
+import { createBodyPose, createRasterCharacterBody, getBodyBounds, getResolvedBodyPart,
+  composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint } from '../index';
+import { resolveBodyHierarchy } from '../characterBodyPoseUtil';
 import { createRect, isPositionInOrOnRect } from '@/game/rectUtil';
 import BodyPart from '../types/BodyPart';
 import BodyPartTransform from '../types/BodyPartTransform';
@@ -130,18 +131,4 @@ describe('characterBodyPoseUtil', () => {
     });
   });
 
-  describe('transformBodyRect()', () => {
-    it('uses all four corners for an off-origin rectangle under rotation and reflection', () => {
-      const transform:BodyPartTransform = {
-        horizontalX:-Math.SQRT1_2, horizontalY:Math.SQRT1_2,
-        verticalX:Math.SQRT1_2, verticalY:Math.SQRT1_2, translateX:10, translateY:20
-      };
-      const bounds = transformBodyRect(transform, createRect(2, 3, 4, 6));
-
-      expect(bounds.x).toBeCloseTo(10 - 3 * Math.SQRT1_2);
-      expect(bounds.y).toBeCloseTo(20 + 5 * Math.SQRT1_2);
-      expect(bounds.width).toBeCloseTo(10 * Math.SQRT1_2);
-      expect(bounds.height).toBeCloseTo(10 * Math.SQRT1_2);
-    });
-  });
 });

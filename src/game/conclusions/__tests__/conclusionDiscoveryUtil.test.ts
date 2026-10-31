@@ -2,14 +2,18 @@
 import { describe, expect, it } from 'vitest';
 
 import { syncConclusionsWithUnlocks } from '../conclusionDiscoveryUtil';
-import Conclusion, { createDefaultConclusion } from '../types/Conclusion';
+import Conclusion from '../types/Conclusion';
 import ClozePartType from '../types/ClozePartType';
 
 function createConclusion(overrides:Partial<Conclusion> = {}):Conclusion {
   return {
-    ...createDefaultConclusion(),
+    id:'conclusion',
+    title:'Conclusion',
     parts:[{ type:ClozePartType.text, text:'Test' }],
+    isComplete:false,
     isLocked:true,
+    unlockConclusionIds:[],
+    revealRoomIds:[],
     ...overrides
   };
 }

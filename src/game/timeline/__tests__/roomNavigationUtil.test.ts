@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { findCharacterPositionAtTime, findRoomNavigationTarget } from '@/game/timeline';
+import { createCharacterKeyframeAtTime, findRoomNavigationTarget } from '@/game/timeline';
 import { findRoomAtPosition } from '@/game/roomUtil';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import roomTraversalText from '@/game/__tests__/fixtures/room-traversal.md?raw';
@@ -112,7 +112,7 @@ describe('roomNavigationUtil', () => {
       const { timeline, rooms } = _createScenario([{ time:0, roomId:'west' }, { time:4000, roomId:'east' }]);
 
       const target = findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 0, new Set());
-      const position = findCharacterPositionAtTime(timeline.keyframes, 0, target!.time);
+      const position = createCharacterKeyframeAtTime(timeline.keyframes, 0, target!.time).position;
 
       expect(target).toEqual({ characterId:'sam', time:2000 });
       expect(findRoomAtPosition(rooms, position.x, position.y)?.id).toBe('center');
@@ -122,7 +122,7 @@ describe('roomNavigationUtil', () => {
       const { timeline, rooms } = _createScenario([{ time:0, roomId:'east' }, { time:4000, roomId:'west' }]);
 
       const target = findRoomNavigationTarget(timeline, rooms, 'sam', 'center', 0, new Set());
-      const position = findCharacterPositionAtTime(timeline.keyframes, 0, target!.time);
+      const position = createCharacterKeyframeAtTime(timeline.keyframes, 0, target!.time).position;
 
       expect(target).toEqual({ characterId:'sam', time:2000 });
       expect(findRoomAtPosition(rooms, position.x, position.y)?.id).toBe('center');
@@ -160,7 +160,7 @@ describe('roomNavigationUtil', () => {
       const timeline = { ...scenario.timeline, startTime:1000.25, endTime:1000.5 };
 
       const target = findRoomNavigationTarget(timeline, scenario.rooms, 'sam', 'center', 1000.25, new Set());
-      const position = findCharacterPositionAtTime(timeline.keyframes, 0, target!.time);
+      const position = createCharacterKeyframeAtTime(timeline.keyframes, 0, target!.time).position;
 
       expect(target).toEqual({ characterId:'sam', time:1000.375 });
       expect(findRoomAtPosition(scenario.rooms, position.x, position.y)?.id).toBe('center');

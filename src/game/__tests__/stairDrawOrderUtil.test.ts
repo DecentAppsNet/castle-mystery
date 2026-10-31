@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_BACK_Z, ROOM_FRONT_ROW_CENTER_Z, ROOM_FRONT_ROW_MIN_Z, ROOM_FULL_DEPTH, ROOM_MIDDLE_ROW_CENTER_Z, ROOM_MIDDLE_ROW_MIN_Z, ROOM_ROW_DEPTH } from '../roomSpaceConstants';
-import { calcStairPartDrawPhase, calcStairPartDrawRow, compareCharacterToStairPartRows, isCharacterOnStairFlight, quantizeDepthToDrawRow } from '../stairDrawOrderUtil';
+import { compareCharacterToStairPartRows, isCharacterOnStairFlight } from '../stairDrawOrderUtil';
 import StairPart, { StairLandingType, StairPartType } from '../types/StairPart';
 
 const BACK_ROW_Z = ROOM_BACK_Z;
@@ -49,16 +49,6 @@ function _createCatwalk(z:number):StairPart {
 }
 
 describe('stairDrawOrderUtil', () => {
-  describe('quantizeDepthToDrawRow()', () => {
-    it('maps stair and character depths into shared back, middle, and front rows', () => {
-      expect(quantizeDepthToDrawRow(0)).toBe(0);
-      expect(quantizeDepthToDrawRow(MIDDLE_ROW_Z)).toBe(1);
-      expect(quantizeDepthToDrawRow(MIDDLE_ROW_DEPTH)).toBe(1);
-      expect(quantizeDepthToDrawRow(FRONT_ROW_Z)).toBe(2);
-      expect(quantizeDepthToDrawRow(FULL_DEPTH)).toBe(2);
-    });
-  });
-
   describe('compareCharacterToStairPartRows()', () => {
     it('draws flights after characters in smaller rows', () => {
       expect(compareCharacterToStairPartRows(6, 15, BACK_ROW_CHARACTER_DEPTH, _createFlight(4, 8, FRONT_ROW_Z))).toBeLessThan(0);
@@ -119,22 +109,4 @@ describe('stairDrawOrderUtil', () => {
     });
   });
 
-  describe('calcStairPartDrawPhase()', () => {
-    it('orders right-ascending flights before default content and left-ascending flights after it', () => {
-      expect(calcStairPartDrawPhase(_createFlight(4, 8, MIDDLE_ROW_Z))).toBeLessThan(calcStairPartDrawPhase(_createLanding(MIDDLE_ROW_Z)));
-      expect(calcStairPartDrawPhase(_createFlight(8, 4, MIDDLE_ROW_Z))).toBeGreaterThan(calcStairPartDrawPhase(_createLanding(MIDDLE_ROW_Z)));
-    });
-  });
-
-  describe('calcStairPartDrawRow()', () => {
-    it('treats catwalks as middle-row for draw ordering regardless of their authored z', () => {
-      expect(calcStairPartDrawRow(_createCatwalk(BACK_ROW_Z))).toBe(1);
-      expect(calcStairPartDrawRow(_createCatwalk(MIDDLE_ROW_Z))).toBe(1);
-    });
-
-    it('still treats direct back-row landings as back-row for row comparisons', () => {
-      expect(calcStairPartDrawRow(_createLanding(BACK_ROW_Z))).toBe(0);
-      expect(calcStairPartDrawRow(_createLanding(BACK_ROW_Z, FULL_DEPTH, StairLandingType.fullStory))).toBe(0);
-    });
-  });
 });

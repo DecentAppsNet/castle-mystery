@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { COLUMN_WIDTH, LAYER_HEIGHT } from '../roomGridUtil';
-import { arePositionsAdjacent, arePositionsOrthogonal } from '../positionUtil';
+import { arePositionsAdjacent } from '../positionUtil';
 import { arePositionsEqual } from '../types/Position';
 import { ROOM_BACK_ROW_CENTER_Z, ROOM_MIDDLE_ROW_CENTER_Z } from '../roomSpaceConstants';
 
@@ -13,20 +13,6 @@ describe('positionUtil', () => {
 
     it('returns false when a coordinate differs', () => {
       expect(arePositionsEqual({ x:1, y:2, z:3 }, { x:2, y:2, z:3 })).toBe(false);
-    });
-  });
-
-  describe('arePositionsOrthogonal()', () => {
-    it('returns true when exactly two coordinates are equal', () => {
-      expect(arePositionsOrthogonal({ x:1, y:2, z:3 }, { x:4, y:2, z:3 })).toBe(true);
-    });
-
-    it('returns false when fewer than two coordinates are equal', () => {
-      expect(arePositionsOrthogonal({ x:1, y:2, z:3 }, { x:4, y:5, z:3 })).toBe(false);
-    });
-
-    it('returns false for equal positions', () => {
-      expect(arePositionsOrthogonal({ x:1, y:2, z:3 }, { x:1, y:2, z:3 })).toBe(false);
     });
   });
 

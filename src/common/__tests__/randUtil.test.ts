@@ -1,9 +1,12 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
-import { expect, it, describe, beforeEach } from 'vitest';
-import { setSeed, clearSeed, rand, randInRange, randIntInRange } from '../randUtil';
+import { expect, it, describe, beforeEach, afterEach } from 'vitest';
+import { setSeed, clearSeed, rand, randIntInRange } from '../randUtil';
 
 describe('randUtil.ts', () => {
   beforeEach(() => {
+    clearSeed();
+  });
+  afterEach(() => {
     clearSeed();
   });
 
@@ -35,15 +38,6 @@ describe('randUtil.ts', () => {
     expect(seq1).toEqual(seq2);
   });
 
-  it('randInRange returns values in [min,max) without seed', () => {
-    const min = -5.5, max = 10.2;
-    for (let i = 0; i < 100; ++i) {
-      const v = randInRange(min, max);
-      expect(v).toBeGreaterThanOrEqual(min);
-      expect(v).toBeLessThan(max);
-    }
-  });
-
   it('randIntInRange returns integers in [min,max) without seed', () => {
     const min = -10, max = 10;
     for (let i = 0; i < 100; ++i) {
@@ -52,19 +46,6 @@ describe('randUtil.ts', () => {
       expect(v).toBeGreaterThanOrEqual(min);
       expect(v).toBeLessThan(max);
     }
-  });
-
-  it('randInRange is deterministic with seed', () => {
-    const seed = 12345;
-    setSeed(seed);
-    const seq1: number[] = [];
-    for (let i = 0; i < 50; ++i) seq1.push(randInRange(0, 1));
-
-    setSeed(seed);
-    const seq2: number[] = [];
-    for (let i = 0; i < 50; ++i) seq2.push(randInRange(0, 1));
-
-    expect(seq1).toEqual(seq2);
   });
 
   it('randIntInRange is deterministic with seed', () => {

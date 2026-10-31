@@ -10,18 +10,6 @@ type Conclusion = {
   readonly revealRoomIds:readonly string[];
 };
 
-export function createDefaultConclusion():Conclusion {
-  return {
-    id:'conclusion',
-    title:'Conclusion',
-    parts:[],
-    isComplete:false,
-    isLocked:false,
-    unlockConclusionIds:[],
-    revealRoomIds:[]
-  };
-}
-
 export function duplicateConclusion(from:Conclusion):Conclusion {
   return {
     id:from.id,

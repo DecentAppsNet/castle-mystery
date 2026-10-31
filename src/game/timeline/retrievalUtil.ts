@@ -4,7 +4,6 @@
 import { assert } from "decent-portal";
 
 import TimelineKeyframe, { duplicateTimelineKeyframe } from "@/game/types/TimelineKeyframe";
-import Position from "@/game/types/Position";
 import { arePositionsEqual } from "@/game/types/Position";
 import { findInterpolatedCharacterPosition } from "./interpolationUtil";
 import CharacterKeyframe, { duplicateCharacterKeyframe } from "@/game/types/CharacterKeyframe";
@@ -92,14 +91,6 @@ export function createCharacterKeyframeAtTime(keyframes:TimelineKeyframe[], char
   const betweenCharacterKeyframe = duplicateCharacterKeyframe(beforeKeyframe.characters[characterI], false);
   betweenCharacterKeyframe.position = interpolatedPosition;
   return betweenCharacterKeyframe;
-}
-
-export function findCharacterPositionAtTime(keyframes:TimelineKeyframe[], characterI:number, time:number):Readonly<Position> {
-  const {beforeKeyframe, afterKeyframe} = _findKeyframesBeforeAndAfterTime(keyframes, time);
-  const beforePosition = beforeKeyframe.characters[characterI].position;
-  return afterKeyframe && !_areCharacterKeyframePositionsEqual(beforeKeyframe, afterKeyframe, characterI)
-    ? findInterpolatedCharacterPosition(beforeKeyframe, afterKeyframe, time, characterI)
-    : beforePosition;
 }
 
 // Unlike the create*Keyframe() functions, this won't interpolate any values. Use this faster function if

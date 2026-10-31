@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { doKeyframesHaveSameObservedSpeech } from '../speechObservationUtil';
 import Effect from '@/game/effects/types/Effect';
-import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
+import { createCharacterKeyframeForTest } from '@/game/test/keyframeTestUtil';
 import { createDefaultRoom } from '@/game/types/Room';
 import TimelineKeyframe, { duplicateTimelineKeyframe } from '@/game/types/TimelineKeyframe';
 
 function _createFrames(kind:Effect['kind'] = 'says') {
   const rooms = [createDefaultRoom(), { ...createDefaultRoom(), id:'adjacent', rect:{ x:10, y:0, width:10, height:10 } }];
-  const observer = { ...createDefaultCharacterKeyframe(), position:{ x:1, y:1, z:0 } };
-  const speaker = { ...createDefaultCharacterKeyframe(), position:{ x:11, y:1, z:0 },
+  const observer = { ...createCharacterKeyframeForTest(), position:{ x:1, y:1, z:0 } };
+  const speaker = { ...createCharacterKeyframeForTest(), position:{ x:11, y:1, z:0 },
     effects:[{ kind, startTime:0, endTime:100, handler:() => null }] };
   const frameA:TimelineKeyframe = { time:10, characters:[observer, speaker], rooms:[{ items:[], exits:[{
     id:'exit', x:10, y:1, room1Id:'room', room2Id:'adjacent', exitType:'door',

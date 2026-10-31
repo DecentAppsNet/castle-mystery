@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
+import { createCharacterKeyframeForTest } from '@/game/test/keyframeTestUtil';
 import { createDefaultRoom } from '@/game/types/Room';
-import { createDefaultRoomKeyframe } from '@/game/types/RoomKeyframe';
 import Timeline from '@/game/types/Timeline';
 import { findPreviousTimelineBeat } from '../beatUtil';
 
@@ -20,8 +19,8 @@ function _createTimeline(positions:number[]):Timeline {
 		roomIdToI:{ left:0, right:1 },
 		keyframes:positions.map((positionX, positionI) => ({
 			time:(positionI + 1) * 1000,
-			characters:[{ ...createDefaultCharacterKeyframe(), position:{ x:positionX, y:5, z:0 } }],
-			rooms:[createDefaultRoomKeyframe(), createDefaultRoomKeyframe()]
+			characters:[{ ...createCharacterKeyframeForTest(), position:{ x:positionX, y:5, z:0 } }],
+			rooms:[{ items:[], exits:[] }, { items:[], exits:[] }]
 		}))
 	};
 }

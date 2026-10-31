@@ -1,22 +1,13 @@
 /* This module groups top-level game state orchestration, coordinating input events, simulation updates, drawing, and outward callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { botch } from "decent-portal";
-
 import GameState from "./types/GameState";
 import Room from "./types/Room";
-import ChangeTimeEvent from "./playerEvents/types/ChangeTimeEvent";
-import ChangeConclusionsEvent from "./playerEvents/types/ChangeConclusionsEvent";
 import PlayerEvent from "./playerEvents/types/PlayerEvent";
-import PlayerEventType from "./playerEvents/types/PlayerEventType";
 import { popPlayerEvents } from "./playerEventUtil";
 import Level from "./types/Level";
-import PlayPauseEvent from "./playerEvents/types/PlayPauseEvent";
 import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
-import { calcCanvasAspectRatio, createCamera, syncCameraTargetToActiveRoom, updateCamera } from "./cameraUtil";
-import MouseDownEvent from "./playerEvents/types/MouseDownEvent";
-import MouseMoveEvent from "./playerEvents/types/MouseMoveEvent";
-import MouseWheelEvent from "./playerEvents/types/MouseWheelEvent";
+import { calcCanvasAspectRatio, createCamera } from "./cameraUtil";
 import { COLOR_BLACK } from "./drawing/drawColorConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
 import { findImageBitmap } from "./imageAssetUtil";
@@ -31,90 +22,28 @@ import {
   callOnConclusionsChangedAsNeeded
 } from "./gameStateNotificationUtil";
 import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
-import {
-  updateGameStateForChangeTime,
-  updateGameStateForChangeConclusions,
-  updateGameStateForPlayPause,
-  updateGameStateForMouseWheel,
-  updateGameStateForMouseDown,
-  updateGameStateForMouseMove,
-  updateGameStateForNextCharacter,
-  syncConclusionUnlocks
-} from './playerEvents';
+import { syncConclusionUnlocks } from './playerEvents';
 import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { DRAW_FPS_COUNTER } from "@/developer/config";
 import { updateAndDrawFps } from "@/developer/fpsUtil";
-import { createTimelineSnapshot, createInitialTimelineSnapshot } from "./timeline";
+import { createInitialTimelineSnapshot } from "./timeline";
 import { findMetaTimeNow } from "./metaTimeUtil";
 import { createRevealedSkinLinkages } from "./skinLinkageUtil";
 import Timeline from "./types/Timeline";
 import { findCharacterKeyframeForTime } from "./timeline/retrievalUtil";
-import { removeExpiredCharacterMetaTimeEffects, removeExpiredMetaTimeEffects } from "./effects/metaTimeEffectUtil";
-import { createPauseEffect } from "./effects/playPauseEffectUtil";
 import Effect from "./effects/types/Effect";
+import { updateGameState } from "./gameStateUpdateUtil";
+export { pauseGameState } from "./gameStateUpdateUtil";
 
 function _setActiveRoomDiscovered(gameState:GameState) {
   gameState.discoveryState.discoveredRoomIds.add(gameState.timelineSnapshot.activeRoom.id);
-}
-
-function _pauseGameState(gameState:GameState, metaTime:number) {
-  const wasPlaying = gameState.isPlaying;
-  gameState.isPlaying = false;
-  gameState.metaTimeToGameTimeOffset = 0;
-  if (wasPlaying) gameState.metaTimeEffects.push(createPauseEffect(metaTime));
-}
-
-// Use only when playback must stop synchronously because the RAF update loop is about to be suspended.
-// Normal gameplay changes must use player events so game state remains owned by the RAF update loop.
-export function pauseGameState(gameState:GameState) {
-  _pauseGameState(gameState, findMetaTimeNow());
 }
 
 function _findActiveVisibleRoom(gameState:GameState):Room|null {
   const activeRoom = gameState.timelineSnapshot.activeRoom;
   if (!gameState.isLevelComplete && gameState.discoveryState.obscuredRoomIds.has(activeRoom.id)) return null;
   return activeRoom;
-}
-
-function _removeExpiredEffects(gameState:GameState, metaTime:number) {
-  removeExpiredMetaTimeEffects(gameState.metaTimeEffects, metaTime);
-  removeExpiredCharacterMetaTimeEffects(gameState.characterMetaTimeEffectsByCharacterId, metaTime);
-}
-
-export function updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:number, cameraAspectRatio:number) {
-  // Remove ended effects before events can create effects at the current meta-time.
-  _removeExpiredEffects(gameState, metaTime);
-
-  // Apply current-frame player events.
-  const snapshotCharacters = gameState.timelineSnapshot.characters;
-  events.forEach(event => {
-    switch(event.type) {
-      case PlayerEventType.CHANGE_TIME: updateGameStateForChangeTime(gameState, event as ChangeTimeEvent, metaTime); break;
-      case PlayerEventType.CHANGE_CONCLUSIONS: updateGameStateForChangeConclusions(gameState, event as ChangeConclusionsEvent); break;
-      case PlayerEventType.NEXT_CHARACTER: updateGameStateForNextCharacter(gameState, snapshotCharacters, metaTime); break;
-      case PlayerEventType.PLAY_PAUSE: updateGameStateForPlayPause(gameState, event as PlayPauseEvent, metaTime); break;
-      case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, snapshotCharacters, event as MouseDownEvent, metaTime); break;
-      case PlayerEventType.MOUSEMOVE: updateGameStateForMouseMove(gameState, snapshotCharacters, event as MouseMoveEvent); break;
-      case PlayerEventType.MOUSEWHEEL: updateGameStateForMouseWheel(gameState, event as MouseWheelEvent); break;
-      default: botch();
-    }
-  });
-
-  // Advance timeline playback and pause at its end.
-  if (gameState.isPlaying) {
-    const endTime = gameState.timeline.endTime;
-    const nextTime = Math.min(endTime, metaTime + gameState.metaTimeToGameTimeOffset);
-    gameState.time = nextTime;
-    if (nextTime >= endTime) _pauseGameState(gameState, metaTime);
-  }
-
-  // Create the frame's final snapshot, then update world state derived from it.
-  gameState.timelineSnapshot = createTimelineSnapshot(gameState, gameState.time);
-  syncCameraTargetToActiveRoom(gameState.camera, gameState.baseRooms, gameState.timelineSnapshot.activeRoom,
-    cameraAspectRatio, metaTime, gameState.groundFloorY);
-  updateCamera(gameState.camera, metaTime);
-  _setActiveRoomDiscovered(gameState);
 }
 
 function _fillCanvasBlack(context:CanvasRenderingContext2D) {

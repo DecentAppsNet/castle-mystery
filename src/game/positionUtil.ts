@@ -9,14 +9,6 @@ const MAX_XZ_DISTANCE = Math.hypot(ROOM_BACK_ROW_CENTER_Z - ROOM_MIDDLE_ROW_CENT
 
 // arePositionsEqual() is defined with the type definition rather than in this file, for sake of consistency.
 
-export function arePositionsOrthogonal(a:Position, b:Position):boolean {
-  let sameCount = 0;
-  if (a.x === b.x) ++sameCount;
-  if (a.y === b.y) ++sameCount;
-  if (a.z === b.z) ++sameCount;
-  return sameCount === 2;
-}
-
 // Two positions are considered adjacent if their Y values are <= one map tile height, and the XZ distance between
 // them is same or equal to the distance of travelling diagonally from an adjacent row/column.
 export function arePositionsAdjacent(a:Position, b:Position):boolean {

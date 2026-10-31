@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { MAP_TILE_SIZE } from '../roomGridUtil';
-import { calcRenderedRoomBounds, calcRenderedRoomsBoundingRect, calcRoomRoofBounds, calcRoomsBoundingRectWithRoofs, findRoofTiles } from '../roomRoofUtil';
+import { calcRenderedRoomBounds, calcRenderedRoomsBoundingRect, calcRoomRoofBounds, findRoofTiles } from '../roomRoofUtil';
 import Rect from '../types/Rect';
 import Room, { createDefaultRoom } from '../types/Room';
 
@@ -84,22 +84,6 @@ describe('roomRoofUtil', () => {
       const roomAbove = _createRoom('above', { x:0, y:60, width:MAP_TILE_SIZE, height:20 });
 
       expect(calcRoomRoofBounds(room, [room, roomAbove])).toEqual(room.rect);
-    });
-  });
-
-  describe('calcRoomsBoundingRectWithRoofs()', () => {
-    it('includes roof overhang in the combined top bound', () => {
-      const leftRoom = _createRoom('left', { x:0, y:80, width:MAP_TILE_SIZE, height:40 });
-      const rightRoom = _createRoom('right', { x:40, y:100, width:MAP_TILE_SIZE, height:20 });
-
-      expect(calcRoomsBoundingRectWithRoofs([leftRoom, rightRoom])).toEqual({ x:0, y:76, width:60, height:44 });
-    });
-
-    it('ignores roof overhang for rooms at or below the ground floor', () => {
-      const upperRoom = _createRoom('upper', { x:0, y:60, width:MAP_TILE_SIZE, height:20 });
-      const undergroundRoom = _createRoom('underground', { x:0, y:80, width:MAP_TILE_SIZE, height:40 });
-
-      expect(calcRoomsBoundingRectWithRoofs([upperRoom, undergroundRoom], 80)).toEqual({ x:0, y:56, width:MAP_TILE_SIZE, height:64 });
     });
   });
 

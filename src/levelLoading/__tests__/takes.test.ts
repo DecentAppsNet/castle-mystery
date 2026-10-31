@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import { findRoomAtPosition } from '@/game/roomUtil';
 import Level from '@/game/types/Level';
-import { createCharacterKeyframeAtTime, createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
+import { createCharacterKeyframeAtTime, createKeyframeAtTime } from '@/game/timeline';
 import takesAfterRoomMutationText from './fixtures/takes/takes-after-room-mutation.md?raw';
 import takesConcurrentlyText from './fixtures/takes/takes-concurrently.md?raw';
 import takesDuringReservationText from './fixtures/takes/takes-during-reservation.md?raw';
@@ -36,8 +36,8 @@ describe('level loading - takes activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    const samPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, AFTER_ACTIVITY_TIME);
+    const samPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes,
+      level!.timeline.characterIdToI.sam, AFTER_ACTIVITY_TIME).position;
     const snapshot = createKeyframeAtTime(level!.timeline.keyframes, AFTER_ACTIVITY_TIME);
     const hall = snapshot.rooms[level!.timeline.roomIdToI.hall];
 

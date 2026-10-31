@@ -1,15 +1,19 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 import { countConclusionMistakes, isConclusionMissingAnswers } from '../conclusionUtil';
-import Conclusion, { createDefaultConclusion } from '../types/Conclusion.ts';
+import Conclusion from '../types/Conclusion.ts';
 import { UNSPECIFIED_ANSWER } from '../types/ClozeBlank';
 import ClozePartType from '../types/ClozePartType';
 
 function createConclusion(overrides:Partial<Conclusion> = {}):Conclusion {
   return {
-    ...createDefaultConclusion(),
     id:'test-conclusion',
     title:'Test Statement',
+    parts:[],
+    isComplete:false,
+    isLocked:false,
+    unlockConclusionIds:[],
+    revealRoomIds:[],
     ...overrides
   };
 }

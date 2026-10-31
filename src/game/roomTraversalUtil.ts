@@ -18,7 +18,7 @@ function _nextRoomX(room:Room, direction:DIRECTION):number {
     : room.rect.x - INSIDE_LEFT_ROOM_OFFSET; // The offset puts the X value inside the leftward room.
 }
 
-export function findCrossedRooms(fromPosition:Position, toPosition:Position, rooms:Room[], fromRoom:Room):Room[] {
+function _findCrossedRooms(fromPosition:Position, toPosition:Position, rooms:Room[], fromRoom:Room):Room[] {
   // Start at the first boundary in the movement direction.
   const direction = Math.sign(toPosition.x - fromPosition.x);
   assert(direction === LEFT || direction === RIGHT);
@@ -52,7 +52,7 @@ export function findRoomCrossings(fromPosition:Position, toPosition:Position, fr
   const fromRoom = findRoomAtPosition(rooms, fromPosition.x, fromPosition.y);
   assertNonNullable(fromRoom);
   const movementX = toPosition.x - fromPosition.x;
-  const crossedRooms = findCrossedRooms(fromPosition, toPosition, rooms, fromRoom);
+  const crossedRooms = _findCrossedRooms(fromPosition, toPosition, rooms, fromRoom);
 
   // Retain boundary entry times and bound each interval by the segment endpoint.
   return crossedRooms.map(room => {

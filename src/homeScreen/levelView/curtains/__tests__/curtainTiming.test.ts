@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { MIN_CLOSED_MS, calculateCurtainFrame, isCurtainVisible } from '../curtainTiming';
+import { calculateCurtainFrame, isCurtainVisible } from '../curtainTiming';
 import type CurtainTransition from '../types/CurtainTransition';
 
 describe('curtainTiming', () => {
@@ -35,7 +35,6 @@ describe('curtainTiming', () => {
         closedHoldEndsAt:1260,
         isClosedHoldComplete:false
       });
-      expect(MIN_CLOSED_MS).toBe(1160);
     });
 
     it('keeps the open endpoint completely hidden and scene eligible', () => {

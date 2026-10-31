@@ -19,7 +19,7 @@ export function setSeed(seed: number): void {
   if (theSequenceState === 0) theSequenceState = 1;
 }
 
-/** Discards deterministic sequence state and restores unseeded randomness. */
+/** Discards deterministic sequence state and restores unseeded randomness. @internal */
 export function clearSeed(): void {
   theSeed = false;
   theSequenceState = 0;
@@ -29,15 +29,6 @@ export function clearSeed(): void {
   from a repeatable pseudo-random sequence generated from the seed. */
 export function rand(): number {
   return theSeed ? _calcNextRand() : Math.random();
-}
-
-/** Returns a random number in [minInclusive, maxExclusive); throws for non-finite or unordered bounds. */
-export function randInRange(minInclusive:number, maxExclusive:number):number {
-  const min = Number(minInclusive);
-  const max = Number(maxExclusive);
-  if (!Number.isFinite(min) || !Number.isFinite(max)) throw new TypeError('min and max must be finite numbers');
-  if (max <= min) throw new RangeError('maxExclusive must be greater than minInclusive');
-  return min + rand() * (max - min);
 }
 
 /** Returns a random integer between the ceiled minimum (inclusive) and floored maximum (exclusive); invalid bounds throw. */

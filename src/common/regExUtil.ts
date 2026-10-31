@@ -6,24 +6,6 @@ export function escapeRegexCharacters(text:string):string {
   return text.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-/** Finds ASCII alphanumeric runs with internal apostrophes; offsets are zero-based with an exclusive end. */
-export function findWordLikeTextSegments(text:string):Array<{ startIndex:number, endIndex:number, enclosedText:string }> {
-  const wordLikeTextRegex = /[A-Za-z0-9]+(?:'[A-Za-z0-9]+)*/g;
-  const segments:Array<{ startIndex:number, endIndex:number, enclosedText:string }> = [];
-
-  let match = wordLikeTextRegex.exec(text);
-  while (match) {
-    segments.push({
-      startIndex:match.index,
-      endIndex:match.index + match[0].length,
-      enclosedText:match[0]
-    });
-    match = wordLikeTextRegex.exec(text);
-  }
-
-  return segments;
-}
-
 /** Finds non-empty square-bracket contents; zero-based offsets include brackets and the end is exclusive. */
 export function findSquareBracketEnclosedTextSegments(text:string):Array<{ startIndex:number, endIndex:number, enclosedText:string }> {
   const squareBracketEnclosedTextRegex = /\[([^\]]+)\]/g;

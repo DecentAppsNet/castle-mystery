@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { FLOOR_WAYPOINT_Y_OFFSET } from '@/game/roomSpaceConstants';
-import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
+import { createCharacterKeyframeForTest } from '@/game/test/keyframeTestUtil';
 import ExitStatus from '@/game/types/ExitStatus';
 import ExitType from '@/game/types/ExitType';
 import { createDefaultItem } from '@/game/types/Item';
@@ -175,7 +175,7 @@ describe('waypointFindingUtil', () => {
     it('includes floor waypoints claimed by visible characters', () => {
       const claimed = _createWaypoint(5, FLOOR_Y, WAYPOINT_BACK_ROW_Z);
       const unclaimed = _createWaypoint(10, FLOOR_Y, WAYPOINT_BACK_ROW_Z);
-      const character = { ...createDefaultCharacterKeyframe(), position:claimed.position };
+      const character = { ...createCharacterKeyframeForTest(), position:claimed.position };
       const context = _createContext([claimed, unclaimed]);
 
       expect(findClaimedWaypointsFromKeyframe(
@@ -185,7 +185,7 @@ describe('waypointFindingUtil', () => {
 
     it('does not let invisible characters claim floor waypoints', () => {
       const waypoint = _createWaypoint(5, FLOOR_Y, WAYPOINT_BACK_ROW_Z);
-      const character = { ...createDefaultCharacterKeyframe(), isVisible:false, position:waypoint.position };
+      const character = { ...createCharacterKeyframeForTest(), isVisible:false, position:waypoint.position };
 
       expect(findClaimedWaypointsFromKeyframe(
         _createRoom(), 0, _createKeyframe([], [character]), _createContext([waypoint])

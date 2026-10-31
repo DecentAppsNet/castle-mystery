@@ -9,7 +9,7 @@ type RoomKeyframe = {
 
 const DEFAULT_ROOM:Readonly<Room> = createDefaultRoom();
 
-export function createDefaultRoomKeyframe():RoomKeyframe {
+function _createDefaultRoomKeyframe():RoomKeyframe {
   return { items:DEFAULT_ROOM.items, exits:DEFAULT_ROOM.exits };
 }
 
@@ -29,6 +29,6 @@ export function areRoomKeyframesEqual(a:RoomKeyframe, b:RoomKeyframe):boolean {
   );
 }
 
-export const ROOM_KEYFRAME_KEYS = Object.keys(createDefaultRoomKeyframe());
+export const ROOM_KEYFRAME_KEYS = Object.keys(_createDefaultRoomKeyframe());
 
 export default RoomKeyframe;

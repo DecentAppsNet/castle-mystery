@@ -2,25 +2,22 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  normalizeMarkdownName,
   parseFirstFencedCodeBlockLines,
-  parseIncludedSections,
   parseNameValueLineEntries,
   parseOptions,
-  parseSectionEntries,
   parseSectionEntriesWithLines,
   parseSections,
   parseUniqueNameValueLines
 } from '../markdownUtil';
 
 describe('markdownUtil', () => {
-  describe('normalizeMarkdownName()', () => {
+  describe('parseSections() name normalization', () => {
     it('normalizes mixed-case whitespace-separated names to camelCase', () => {
-      expect(normalizeMarkdownName('  WIN synopsis  ')).toBe('winSynopsis');
+      expect(parseSections('#   WIN synopsis  ', 1, true)).toEqual({ winSynopsis:'' });
     });
 
     it('preserves existing camelCase names', () => {
-      expect(normalizeMarkdownName('winSynopsis')).toBe('winSynopsis');
+      expect(parseSections('# winSynopsis', 1, true)).toEqual({ winSynopsis:'' });
     });
   });
 
@@ -80,75 +77,32 @@ describe('markdownUtil', () => {
     });
   });
 
-  describe('parseIncludedSections()', () => {
-    it('returns no sections when includedSectionIds is empty', () => {
-      const sections = parseIncludedSections([
-        '# General',
-        '* activeCharacter=Hero',
-        '# Rooms',
-        '* ignored=true'
-      ].join('\n'), [], 1, true);
-
-      expect(sections).toEqual({});
-    });
-
-    it('returns only the included subset of sections', () => {
-      const sections = parseIncludedSections([
-        '# General',
-        '* activeCharacter=Hero',
-        '# Map',
-        '* A=Hall',
-        '# Rooms',
-        '* title=Hall'
-      ].join('\n'), ['general', 'rooms'], 1, true);
-
-      expect(Object.keys(sections)).toEqual(['general', 'rooms']);
-      expect(sections.general).toContain('* activeCharacter=Hero');
-      expect(sections.rooms).toContain('* title=Hall');
-    });
-
-    it('ignores includedSectionIds that do not match any parsed section', () => {
-      const sections = parseIncludedSections([
-        '# General',
-        '* activeCharacter=Hero',
-        '# Rooms',
-        '* title=Hall'
-      ].join('\n'), ['general', 'items', 'conclusions'], 1, true);
-
-      expect(sections).toEqual({
-        general:'* activeCharacter=Hero'
-      });
-    });
-  });
-
-  describe('parseSectionEntries()', () => {
+  describe('parseSectionEntriesWithLines()', () => {
     it('preserves section order and content without collapsing entries into an object', () => {
-      const entries = parseSectionEntries([
+      const entries = parseSectionEntriesWithLines([
         '## East Hall',
         '* title=East Hall',
         '## West Hall',
         '* title=West Hall'
       ].join('\n'), 2);
 
-      expect(entries).toEqual([
+      expect(entries.map(({ name, value }) => [name, value])).toEqual([
         ['East Hall', '* title=East Hall'],
         ['West Hall', '* title=West Hall']
       ]);
     });
 
     it('normalizes heading names when requested', () => {
-      const entries = parseSectionEntries([
+      const entries = parseSectionEntriesWithLines([
         '# General',
         '* activeCharacter=Hero',
         '# WIN SYNOPSIS',
         '* ignored=true'
       ].join('\n'), 1, true);
 
-      expect(entries.map(([name]) => name)).toEqual(['general', 'winSynopsis']);
+      expect(entries.map(({ name }) => name)).toEqual(['general', 'winSynopsis']);
     });
-  });
 
-  describe('parseSectionEntriesWithLines()', () => {
     it('returns one-based heading line numbers and zero-based body start indexes', () => {
       const entries = parseSectionEntriesWithLines([
         '',

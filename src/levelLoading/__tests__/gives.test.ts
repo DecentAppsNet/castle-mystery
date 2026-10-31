@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
+import { createKeyframeAtTime, createCharacterKeyframeAtTime } from '@/game/timeline';
 import { findRoomAtPosition } from '@/game/roomUtil';
 import { findCharacterOwnedItem } from '@/game/itemOwnershipUtil';
 import Level from '@/game/types/Level';
@@ -144,8 +144,8 @@ describe('level loading - gives activities', () => {
     expect(level).not.toBeNull();
     const effect = _findGiveEffect(level!);
     const samI = level!.timeline.characterIdToI.sam;
-    const startPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, effect.startTime);
-    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, effect.endTime);
+    const startPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, effect.startTime).position;
+    const endPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, effect.endTime).position;
     expect(effect.startTime).toBeGreaterThan(level!.timeline.startTime);
     expect(startPosition).not.toEqual(level!.timeline.keyframes[0].characters[samI].position);
     expect(endPosition).toEqual(startPosition);
@@ -210,8 +210,8 @@ describe('level loading - gives activities', () => {
     expect(level).not.toBeNull();
     const effectEndTime = _findGiveEffect(level!).endTime;
     const joI = level!.timeline.characterIdToI.jo;
-    const positionAtEffectEnd = findCharacterPositionAtTime(level!.timeline.keyframes, joI, effectEndTime);
-    const finalPosition = findCharacterPositionAtTime(level!.timeline.keyframes, joI, level!.timeline.endTime);
+    const positionAtEffectEnd = createCharacterKeyframeAtTime(level!.timeline.keyframes, joI, effectEndTime).position;
+    const finalPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes, joI, level!.timeline.endTime).position;
     expect(positionAtEffectEnd).toEqual(level!.timeline.keyframes[0].characters[joI].position);
     expect(findRoomAtPosition(level!.rooms, finalPosition.x, finalPosition.y)?.id).toBe('closet');
   });

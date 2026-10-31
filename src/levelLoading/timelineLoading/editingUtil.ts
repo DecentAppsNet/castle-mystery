@@ -85,19 +85,6 @@ function _generateNextKeyframe(previousKeyframe:Readonly<TimelineKeyframe>,
   return nextKeyframe;
 }
 
-/** Resolves every editable keyframe; used as the reference implementation for incremental updates. */
-export function generateKeyframes(editableKeyframes:readonly EditableTimelineKeyframe[]):TimelineKeyframe[] {
-  // Replay every editable (partial) keyframe to generate resolved keyframes.
-  assert(editableKeyframes.length >= 1);
-  const keyframes:TimelineKeyframe[] = [];
-  let currentKeyframe:TimelineKeyframe = editableKeyframes[0] as TimelineKeyframe; // First frame always guaranteed to be resolved.
-  for(let i = 0; i < editableKeyframes.length; ++i) {
-    if (i > 0) currentKeyframe = _generateNextKeyframe(currentKeyframe, editableKeyframes, i);
-    keyframes.push(currentKeyframe);
-  }
-  return keyframes;
-}
-
 function _findEarliestAffectedKeyframeI(editableKeyframes:readonly EditableTimelineKeyframe[],
     changedKeyframeI:number):number {
   const changedKeyframe = editableKeyframes[changedKeyframeI];

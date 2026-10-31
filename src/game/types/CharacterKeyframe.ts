@@ -17,7 +17,7 @@ type CharacterKeyframe = {
 
 const DEFAULT_CHARACTER:Character = createDefaultCharacter();
 
-export function createDefaultCharacterKeyframe():CharacterKeyframe {
+function _createDefaultCharacterKeyframe():CharacterKeyframe {
   return {
     isVisible:DEFAULT_CHARACTER.isVisible,
     facingDirection:DEFAULT_CHARACTER.facingDirection,
@@ -65,6 +65,6 @@ export function areCharacterKeyframesEqual(a:CharacterKeyframe, b:CharacterKeyfr
   );
 }
 
-export const CHARACTER_KEYFRAME_KEYS = Object.keys(createDefaultCharacterKeyframe());
+export const CHARACTER_KEYFRAME_KEYS = Object.keys(_createDefaultCharacterKeyframe());
 
 export default CharacterKeyframe;

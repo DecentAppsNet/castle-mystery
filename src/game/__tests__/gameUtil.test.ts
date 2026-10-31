@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createGameState, updateGameState } from '@/game/gameUtil';
+import { createGameState } from '@/game/gameUtil';
+import { updateGameState } from '@/game/gameStateUpdateUtil';
 import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
 import { loadValidLevelForTest, replaceSection } from '@/levelLoading/__tests__/testLevelUtil';
 import levelTimesBaseText from '@/levelLoading/__tests__/fixtures/level-times-base.md?raw';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCharacterKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
+import { createCharacterKeyframeAtTime } from '@/game/timeline';
 import { findRoomAtPosition } from '@/game/roomUtil';
 
 import defaultLevelText from './fixtures/at/at-base.md?raw';
@@ -29,8 +29,8 @@ describe('level loading - @ activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    const position = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
+    const position = createCharacterKeyframeAtTime(level!.timeline.keyframes,
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime).position;
     expect(findRoomAtPosition(level!.rooms, position.x, position.y)?.id).toBe('closet');
   });
 
@@ -50,8 +50,8 @@ describe('level loading - @ activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
-    expect(findCharacterPositionAtTime(level!.timeline.keyframes, samI, 5_000))
-      .toEqual(findCharacterPositionAtTime(level!.timeline.keyframes, samI, 0));
+    expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 5_000).position)
+      .toEqual(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 0).position);
   });
 
   it('does not reserve the character during another activity', () => {
@@ -290,8 +290,8 @@ describe('level loading - @ activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    const position = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
+    const position = createCharacterKeyframeAtTime(level!.timeline.keyframes,
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime).position;
     expect(findRoomAtPosition(level!.rooms, position.x, position.y)?.id).toBe('closet');
   });
 });

@@ -6,5 +6,5 @@ export { createRasterCharacterBody } from './rasterBodyDefinitionUtil';
 export { getArmThickness } from './characterArmGeometryUtil';
 export { createBodyCanvasLayout } from './characterBodyLayoutUtil';
 export { fitHeadImage, calcHeadImageBounds, rotateHeadPose } from './characterHeadGeometryUtil';
-export { composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint, transformBodyRect } from './characterBodyTransformUtil';
-export { createBodyPose, getBodyPaintOrder, getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy, getViewerArmPartKind, getHandArmPartKind } from './characterBodyPoseUtil';
+export { composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint } from './characterBodyTransformUtil';
+export { createBodyPose, getBodyPaintOrder, getBodyBounds, getResolvedBodyPart, getViewerArmPartKind, getHandArmPartKind } from './characterBodyPoseUtil';

@@ -2,9 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { createInitialTimelineSnapshot, updateTimelineSnapshotActiveContext } from '@/game/timeline';
 import { createDefaultCharacter } from '@/game/types/Character';
-import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
+import { createCharacterKeyframeForTest } from '@/game/test/keyframeTestUtil';
 import { createDefaultRoom } from '@/game/types/Room';
-import { createDefaultRoomKeyframe } from '@/game/types/RoomKeyframe';
 import Timeline from '@/game/types/Timeline';
 import TimelineKeyframe from '@/game/types/TimelineKeyframe';
 
@@ -21,10 +20,10 @@ function _createKeyframe(time:number, walkerX:number, sitterX = 15):TimelineKeyf
 	return {
 		time,
 		characters:[
-			{ ...createDefaultCharacterKeyframe(), skinId:'walker-default', position:{ x:walkerX, y:5, z:0 } },
-			{ ...createDefaultCharacterKeyframe(), skinId:'sitter-default', position:{ x:sitterX, y:5, z:0 } }
+			{ ...createCharacterKeyframeForTest(), skinId:'walker-default', position:{ x:walkerX, y:5, z:0 } },
+			{ ...createCharacterKeyframeForTest(), skinId:'sitter-default', position:{ x:sitterX, y:5, z:0 } }
 		],
-		rooms:[createDefaultRoomKeyframe(), createDefaultRoomKeyframe()]
+		rooms:[{ items:[], exits:[] }, { items:[], exits:[] }]
 	};
 }
 

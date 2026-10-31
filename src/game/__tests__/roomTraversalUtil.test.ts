@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import { findInterpolatedCharacterPosition } from '../timeline';
 import { findRoomAtPosition } from '../roomUtil';
-import { findCrossedRooms, findRoomCrossings } from '../roomTraversalUtil';
-import { createDefaultCharacterKeyframe } from '../types/CharacterKeyframe';
+import { findRoomCrossings } from '../roomTraversalUtil';
+import { createCharacterKeyframeForTest } from '../test/keyframeTestUtil';
 import Position from '../types/Position';
 import Room from '../types/Room';
 import TimelineKeyframe from '../types/TimelineKeyframe';
@@ -25,54 +25,54 @@ function _roomCenter(room:Room):Position {
 }
 
 function _createKeyframe(time:number, position:Position):TimelineKeyframe {
-  return { time, characters:[{ ...createDefaultCharacterKeyframe(), position }], rooms:[] };
+  return { time, characters:[{ ...createCharacterKeyframeForTest(), position }], rooms:[] };
 }
 
 describe('roomTraversalUtil', () => {
-  describe('findCrossedRooms()', () => {
+  describe('findRoomCrossings() traversal order', () => {
     it('returns no crossed rooms for movement within the starting room', () => {
       const { rooms, west } = _loadRooms();
       const fromPosition = _roomCenter(west);
 
-      expect(findCrossedRooms(fromPosition, { ...fromPosition, x:fromPosition.x + 1 }, rooms, west)).toEqual([]);
+      expect(findRoomCrossings(fromPosition, { ...fromPosition, x:fromPosition.x + 1 }, 0, 1000, rooms)).toEqual([]);
     });
 
     it('enumerates rightward travel across three rooms in travel order', () => {
       const { rooms, west, center, east } = _loadRooms();
 
-      expect(findCrossedRooms(_roomCenter(west), _roomCenter(east), rooms, west)).toEqual([center, east]);
+      expect(findRoomCrossings(_roomCenter(west), _roomCenter(east), 0, 1000, rooms)).toMatchObject([{ roomId:center.id }, { roomId:east.id }]);
     });
 
     it('enumerates leftward travel across three rooms in travel order', () => {
       const { rooms, west, center, east } = _loadRooms();
 
-      expect(findCrossedRooms(_roomCenter(east), _roomCenter(west), rooms, east)).toEqual([center, west]);
+      expect(findRoomCrossings(_roomCenter(east), _roomCenter(west), 0, 1000, rooms)).toMatchObject([{ roomId:center.id }, { roomId:west.id }]);
     });
 
     it('stops inside the intermediate room when traveling right', () => {
       const { rooms, west, center } = _loadRooms();
 
-      expect(findCrossedRooms(_roomCenter(west), _roomCenter(center), rooms, west)).toEqual([center]);
+      expect(findRoomCrossings(_roomCenter(west), _roomCenter(center), 0, 1000, rooms)).toMatchObject([{ roomId:center.id }]);
     });
 
     it('stops inside the intermediate room when traveling left', () => {
       const { rooms, center, east } = _loadRooms();
 
-      expect(findCrossedRooms(_roomCenter(east), _roomCenter(center), rooms, east)).toEqual([center]);
+      expect(findRoomCrossings(_roomCenter(east), _roomCenter(center), 0, 1000, rooms)).toMatchObject([{ roomId:center.id }]);
     });
 
     it('includes a room reached exactly at its left boundary while traveling right', () => {
       const { rooms, west, center, east } = _loadRooms();
       const toPosition = { ..._roomCenter(east), x:east.rect.x };
 
-      expect(findCrossedRooms(_roomCenter(west), toPosition, rooms, west)).toEqual([center, east]);
+      expect(findRoomCrossings(_roomCenter(west), toPosition, 0, 1000, rooms)).toMatchObject([{ roomId:center.id }, { roomId:east.id }]);
     });
 
     it('does not enter the room left of an exact boundary endpoint while traveling left', () => {
       const { rooms, center, east } = _loadRooms();
       const toPosition = { ..._roomCenter(center), x:center.rect.x };
 
-      expect(findCrossedRooms(_roomCenter(east), toPosition, rooms, east)).toEqual([center]);
+      expect(findRoomCrossings(_roomCenter(east), toPosition, 0, 1000, rooms)).toMatchObject([{ roomId:center.id }]);
     });
   });
 

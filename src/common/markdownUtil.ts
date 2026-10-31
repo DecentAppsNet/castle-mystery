@@ -50,7 +50,7 @@ export class MarkdownLineError extends Error {
  * @param text - Label to normalize.
  * @returns The normalized key.
  */
-export function normalizeMarkdownName(text:string):string {
+function _normalizeMarkdownName(text:string):string {
   const words = text.trim().split(' ').filter(word => word.trim() !== '');
   if (words.length === 0) return '';
   if (words.length === 1) {
@@ -121,7 +121,7 @@ function _parseSectionEntriesWithLines(markdownText:string, indentLevel:number =
           bodyStartLineI:sectionLineNo
         });
       }
-      sectionName = useCamelCase ? normalizeMarkdownName(headingText) : headingText;
+      sectionName = useCamelCase ? _normalizeMarkdownName(headingText) : headingText;
       sectionLineNo = firstLineNo + index;
       sectionContent = '';
     } else {
@@ -155,17 +155,11 @@ function _parseSectionArrays(markdownText:string, indentLevel:number = 1, useCam
   };
 }
 
-// Normalize the requested section ids into the same naming form as parsed sections.
-function _normalizeIncludedSectionIds(includedSectionIds:ReadonlyArray<string>, useCamelCase:boolean):Set<string> {
-  return new Set(includedSectionIds.map(sectionId => useCamelCase ? normalizeMarkdownName(sectionId) : sectionId));
-}
-
-// Build a section lookup object, optionally filtering to a specific set of section ids.
-function _createSectionsObject(sectionNames:string[], sectionContents:string[], includedSectionIds:Set<string>|null = null):Sections {
+// Build a section lookup object.
+function _createSectionsObject(sectionNames:string[], sectionContents:string[]):Sections {
   const sections:Sections = {};
   for (let i = 0; i < sectionNames.length; ++i) {
     const sectionName = sectionNames[i];
-    if (includedSectionIds && !includedSectionIds.has(sectionName)) continue;
     sections[sectionName] = sectionContents[i];
   }
   return sections;
@@ -183,39 +177,6 @@ function _createSectionsObject(sectionNames:string[], sectionContents:string[], 
 export function parseSections(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Sections {
   const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
   return _createSectionsObject(sectionNames, sectionContents);
-}
-
-/**
- * Parses selected headings into section-name-to-body-text entries.
- *
- * @param markdownText - Markdown to parse.
- * @param includedSectionIds - Heading names to retain.
- * @param indentLevel - One-based heading depth to include; `#` headings are level 1.
- * @param useCamelCase - Whether to normalize heading names.
- * @returns Selected parsed sections by name.
- * @throws {MarkdownLineError} If matching headings produce a duplicate name.
- */
-export function parseIncludedSections(markdownText:string, includedSectionIds:ReadonlyArray<string>, indentLevel:number = 1,
-  useCamelCase:boolean = false):Sections {
-  const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
-  const normalizedIncludedSectionIds = _normalizeIncludedSectionIds(includedSectionIds, useCamelCase);
-  return _createSectionsObject(sectionNames, sectionContents, normalizedIncludedSectionIds);
-}
-
-/**
- * Parses headings in document order.
- *
- * @param markdownText - Markdown to parse.
- * @param indentLevel - One-based heading depth to include; `#` headings are level 1.
- * @param useCamelCase - Whether to normalize heading names.
- * @returns One tuple per matching heading, in source order. Each tuple contains
- *          the heading name at index 0 and the raw text below that heading, up to the
- *          next matching heading, at index 1. The body text excludes the heading line.
- * @throws {MarkdownLineError} If matching headings produce a duplicate name.
- */
-export function parseSectionEntries(markdownText:string, indentLevel:number = 1, useCamelCase:boolean = false):Array<readonly [string, string]> {
-  const {sectionNames, sectionContents} = _parseSectionArrays(markdownText, indentLevel, useCamelCase);
-  return sectionNames.map((sectionName, index) => [sectionName, sectionContents[index]] as const);
 }
 
 /**
@@ -258,7 +219,7 @@ function _parseNameValueEntriesWithLines(markdownText:string, useCamelCase:boole
     const name = bulletText.slice(0, hyphenPos).trim();
     if (!name.length) continue;
     const value = _unescapeValue(bulletText.slice(hyphenPos + 1).trim());
-    entries.push({ name:useCamelCase ? normalizeMarkdownName(name) : name, value, lineNo:firstLineNo + i });
+    entries.push({ name:useCamelCase ? _normalizeMarkdownName(name) : name, value, lineNo:firstLineNo + i });
   }
   return entries;
 }
@@ -297,7 +258,7 @@ export function parseUniqueNameValueLines(markdownText:string, contextLabel:stri
  */
 export function findNameValueLineNo(sectionText:string, propertyName:string):number {
   const matchingEntry = _parseNameValueEntriesWithLines(sectionText).find(entry => {
-    return entry.name === propertyName || normalizeMarkdownName(entry.name) === propertyName;
+    return entry.name === propertyName || _normalizeMarkdownName(entry.name) === propertyName;
   }) || null;
   return matchingEntry === null ? -1 : matchingEntry.lineNo;
 }

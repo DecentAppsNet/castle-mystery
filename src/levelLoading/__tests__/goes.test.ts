@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCharacterKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
+import { createCharacterKeyframeAtTime } from '@/game/timeline';
 import { findRoomAtPosition } from '@/game/roomUtil';
 
 import goesBaseText from './fixtures/goes/goes-base.md?raw';
@@ -18,8 +18,8 @@ describe('level loading - goes activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
-    const startPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, 0);
-    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime);
+    const startPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 0).position;
+    const endPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime).position;
     expect(findRoomAtPosition(level!.rooms, startPosition.x, startPosition.y)?.id).toBe('hall');
     expect(findRoomAtPosition(level!.rooms, endPosition.x, endPosition.y)?.id).toBe('closet');
     expect(level!.timeline.endTime).toBeGreaterThan(0);
@@ -36,8 +36,8 @@ describe('level loading - goes activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
+    const endPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes,
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime).position;
     expect(findRoomAtPosition(level!.rooms, endPosition.x, endPosition.y)?.id).toBe('closet');
   });
 
@@ -50,8 +50,8 @@ describe('level loading - goes activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
-    const atStart = findCharacterPositionAtTime(level!.timeline.keyframes, samI, 1_000);
-    const atEnd = findCharacterPositionAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime);
+    const atStart = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 1_000).position;
+    const atEnd = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime).position;
     expect(findRoomAtPosition(level!.rooms, atStart.x, atStart.y)?.id).toBe('hall');
     expect(findRoomAtPosition(level!.rooms, atEnd.x, atEnd.y)?.id).toBe('closet');
   });
@@ -71,8 +71,8 @@ describe('level loading - goes activities', () => {
 
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
-    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
+    const endPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes,
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime).position;
     expect(findRoomAtPosition(level!.rooms, endPosition.x, endPosition.y)?.id).toBe('closet');
   });
 
@@ -82,8 +82,8 @@ describe('level loading - goes activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const closet = level!.rooms.find(room => room.id === 'closet')!;
-    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes,
-      level!.timeline.characterIdToI.sam, level!.timeline.endTime);
+    const endPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes,
+      level!.timeline.characterIdToI.sam, level!.timeline.endTime).position;
     expect(endPosition.x).toBeGreaterThan(closet.rect.x + closet.rect.width / 2);
   });
 
@@ -93,8 +93,8 @@ describe('level loading - goes activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
-    const startPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, 0);
-    const endPosition = findCharacterPositionAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime);
+    const startPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 0).position;
+    const endPosition = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, level!.timeline.endTime).position;
     expect(endPosition.x).toBeGreaterThan(startPosition.x);
   });
 
@@ -124,8 +124,8 @@ describe('level loading - goes activities', () => {
     expect(errors.describeErrors()).toBe('');
     expect(level).not.toBeNull();
     const samI = level!.timeline.characterIdToI.sam;
-    const beforeStart = findCharacterPositionAtTime(level!.timeline.keyframes, samI, 4_999);
-    const atStart = findCharacterPositionAtTime(level!.timeline.keyframes, samI, 5_000);
+    const beforeStart = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 4_999).position;
+    const atStart = createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 5_000).position;
     expect(findRoomAtPosition(level!.rooms, beforeStart.x, beforeStart.y)?.id).toBe('hall');
     expect(atStart).toEqual(beforeStart);
     expect(createCharacterKeyframeAtTime(level!.timeline.keyframes, samI, 4_999).effects).toEqual([]);

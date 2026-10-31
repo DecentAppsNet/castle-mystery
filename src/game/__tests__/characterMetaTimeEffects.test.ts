@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createGameState, updateGameState } from '@/game/gameUtil';
+import { createGameState } from '@/game/gameUtil';
+import { updateGameState } from '@/game/gameStateUpdateUtil';
 import { createKeyframeAtTime, createTimelineSnapshot } from '@/game/timeline';
 import Effect from '@/game/effects/types/Effect';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';

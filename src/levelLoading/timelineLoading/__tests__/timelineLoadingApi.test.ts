@@ -3,8 +3,8 @@ import { describe, it, expect } from 'vitest';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultRoom } from '@/game/types/Room';
 import { createDefaultItem } from '@/game/types/Item';
-import { addCharacterKeyChanges, addRoomKeyChanges, createEditableTimeline, generateKeyframes } from '../editingUtil';
-import { createKeyframeAtTime, findCharacterPositionAtTime } from '@/game/timeline';
+import { addCharacterKeyChanges, addRoomKeyChanges, createEditableTimeline } from '../editingUtil';
+import { createKeyframeAtTime, createCharacterKeyframeAtTime } from '@/game/timeline';
 
 function _position(x:number, y = 0, z = 0) {
   return { x, y, z };
@@ -64,8 +64,8 @@ describe('timelineLoadingApi', () => {
       };
 
       const timeline = createEditableTimeline([alpha, beta], [], 5000);
-      const alphaPosition = findCharacterPositionAtTime(timeline.keyframes, 0, 5000);
-      const betaPosition = findCharacterPositionAtTime(timeline.keyframes, 1, 5000);
+      const alphaPosition = createCharacterKeyframeAtTime(timeline.keyframes, 0, 5000).position;
+      const betaPosition = createCharacterKeyframeAtTime(timeline.keyframes, 1, 5000).position;
 
       expect(timeline.characterIdToI).toEqual({ alpha:0, beta:1 });
       expect(alphaPosition).toEqual({ x:1, y:2, z:3 });
@@ -170,11 +170,13 @@ describe('timelineLoadingApi', () => {
       const unchangedEndKeyframe = timeline.keyframes[2];
       addCharacterKeyChanges({ isVisible:false }, 0, 2000, timeline);
 
-      expect(timeline.keyframes).toEqual(generateKeyframes(timeline.editableKeyframes));
+      expect(timeline.keyframes.map(keyframe => keyframe.time)).toEqual([1000, 2000, 3000, 4000]);
+      expect(timeline.keyframes.map(keyframe => keyframe.characters[0].position)).toEqual([_position(0), _position(10), _position(20), _position(30)]);
+      expect(timeline.keyframes.map(keyframe => keyframe.characters[0].isVisible)).toEqual([true, false, true, true]);
       expect(timeline.keyframes[3]).toBe(unchangedEndKeyframe);
     });
 
-    it('matches full keyframe generation after inserts and same-time changes', () => {
+    it('preserves interpolated positions and merged state after inserts and same-time changes', () => {
       const timeline = createEditableTimeline([_character('alpha', 0), _character('beta', 20)], [_room('hall')], 1000);
 
       addCharacterKeyChanges({ position:_position(30) }, 0, 4000, timeline);
@@ -182,7 +184,17 @@ describe('timelineLoadingApi', () => {
       addCharacterKeyChanges({ position:_position(10) }, 1, 3000, timeline);
       addRoomKeyChanges({ items:[_item('relic', 9)] }, 0, 2000, timeline);
 
-      expect(timeline.keyframes).toEqual(generateKeyframes(timeline.editableKeyframes));
+      expect(timeline.keyframes.map(keyframe => keyframe.time)).toEqual([1000, 2000, 3000, 4000]);
+      expect(timeline.keyframes.map(keyframe => keyframe.characters.map(character => character.position))).toEqual([
+        [_position(0), _position(20)],
+        [_position(10), _position(15)],
+        [_position(20), _position(10)],
+        [_position(30), _position(10)]
+      ]);
+      expect(timeline.keyframes.map(keyframe => keyframe.characters[0].isVisible)).toEqual([true, false, false, false]);
+      expect(timeline.keyframes.map(keyframe => keyframe.rooms[0].items)).toEqual([
+        [_item('crown', 1)], [_item('relic', 9)], [_item('relic', 9)], [_item('relic', 9)]
+      ]);
     });
   });
 });

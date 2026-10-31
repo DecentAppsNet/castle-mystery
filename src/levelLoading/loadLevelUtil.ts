@@ -38,6 +38,8 @@ function _getInitialTimeValue(authoredInitialTime:number|null, levelStartTime:nu
  * Otherwise, debug errors can be caught with assert*() calls to check invariants or
  * even just uncaught exceptions. We should not have code that bucket-catches unexpected 
  * exceptions and logs via `.errors`.
+ *
+ * @internal Exported for level-loading tests; production enters through loadLevelFromUrl.
 */
 export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null {
   const originalErrorCount = errors.count;

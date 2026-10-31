@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assert } from 'decent-portal';
-import { createRasterCharacterBody, getBodyBounds, getResolvedBodyPart, resolveBodyHierarchy, transformBodyPoint } from '../index';
+import { createRasterCharacterBody, getBodyBounds, getResolvedBodyPart, transformBodyPoint } from '../index';
+import { resolveBodyHierarchy } from '../characterBodyPoseUtil';
 import rasterBody from './fixtures/rasterBody';
 
 // Identity coefficients measure authored rectangles without posing, reflection, or translation.

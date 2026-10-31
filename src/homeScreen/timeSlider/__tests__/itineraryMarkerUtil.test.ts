@@ -2,9 +2,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { createDefaultCharacter } from '@/game/types/Character';
-import { createDefaultCharacterKeyframe } from '@/game/types/CharacterKeyframe';
+import { createCharacterKeyframeForTest } from '@/game/test/keyframeTestUtil';
 import { createDefaultRoom } from '@/game/types/Room';
-import { createDefaultRoomKeyframe } from '@/game/types/RoomKeyframe';
 import { createDefaultTimeline } from '@/game/types/Timeline';
 import { createItineraryMarkerModel } from '../itineraryMarkerUtil';
 
@@ -19,10 +18,10 @@ describe('itineraryMarkerUtil', () => {
       const characterIdToI = { active:0, interactive:1, 'non-interactive':2 };
       const position = { x:5, y:5, z:0 };
       const characters = characterIds.map((id, characterI) => ({
-        ...createDefaultCharacterKeyframe(), position, skinId:characterI === 0 ? 'active-skin' : id
+        ...createCharacterKeyframeForTest(), position, skinId:characterI === 0 ? 'active-skin' : id
       }));
       const timeline = { ...createDefaultTimeline(), characterIds, characterIdToI,
-        keyframes:[{ time:0, characters, rooms:[createDefaultRoomKeyframe()] }] };
+        keyframes:[{ time:0, characters, rooms:[{ items:[], exits:[] }] }] };
       const rooms = [{ ...createDefaultRoom(), id:'room', rect:{ x:0, y:0, width:10, height:10 } }];
 
       const markers = createItineraryMarkerModel(timeline, baseCharacters, 'active', 'active-skin', rooms,
