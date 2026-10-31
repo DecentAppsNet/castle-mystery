@@ -10,7 +10,7 @@ import Effect from '../types/Effect';
 import EffectDrawCall from '../types/EffectDrawCall';
 
 const TEXT:PreparedAnimationText = { plainText:'Hello.', spans:[] };
-const CHARACTER_CONTEXT = {} as CharacterEffectDrawContext;
+const CHARACTER_CONTEXT = { bodyOrientation:'standing' } as CharacterEffectDrawContext;
 const SCALING_FACTORS = {} as ScalingFactors;
 const CANVAS_CONTEXT = {} as CanvasRenderingContext2D;
 
@@ -49,6 +49,7 @@ describe('speechEffectUtil', () => {
     it('does not sample arms before speech or at its end', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 1000);
       expect(_query(effect, 99)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, 100)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
       expect(_query(effect, 1100)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
       expect(_query(effect, 1101)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
     });
@@ -63,6 +64,42 @@ describe('speechEffectUtil', () => {
       _query(effect, 200);
       _query(effect, 40000);
       expect(rand()).toBe(expected);
+    });
+
+    it('uses the current posture for both arms without changing head dips or context', () => {
+      const effect = createSaysEffect('sam', TEXT, 100, 60000);
+      const standing:EffectDrawCall = { stage:'beforeCharacter',
+        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, bodyOrientation:'standing' }) };
+      const laying:EffectDrawCall = { stage:'beforeCharacter',
+        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, bodyOrientation:'laying' }) };
+      const time = Array.from({ length:600 }, (_, timeI) => 100 + timeI * 100)
+        .find(candidate => _query(effect, candidate)?.spriteOverrides.length === 3);
+      assertNonNullable(time);
+      const uprightResult = _query(effect, time, 0, standing);
+      const layingResult = _query(effect, time, 0, laying);
+      assertNonNullable(uprightResult);
+      assertNonNullable(layingResult);
+      expect(layingResult.spriteOverrides.find(override => override.spriteKind === 'head'))
+        .toEqual(uprightResult.spriteOverrides.find(override => override.spriteKind === 'head'));
+      expect(layingResult.spriteOverrides.find(override => override.spriteKind === 'nearArm'))
+        .not.toEqual(uprightResult.spriteOverrides.find(override => override.spriteKind === 'nearArm'));
+      expect(layingResult.spriteOverrides.find(override => override.spriteKind === 'farArm'))
+        .not.toEqual(uprightResult.spriteOverrides.find(override => override.spriteKind === 'farArm'));
+      expect(_query(effect, time, 10000, standing)).toEqual(uprightResult);
+    });
+
+    it('keeps zero-length speech arms neutral', () => {
+      const effect = createSaysEffect('sam', TEXT, 100, 0);
+      expect(_query(effect, 100)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, 101)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
+    });
+
+    it('keeps very short speech finite with neutral arm endpoints', () => {
+      const effect = createSaysEffect('sam', TEXT, 100, 0.001);
+      expect(_query(effect, 100)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, 100.001)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, 100.0005)?.spriteOverrides.every(override => override.transformType === 'rotate'
+        && Number.isFinite(override.rotateRadians))).toBe(true);
     });
 
     it('does not return arm overrides at other drawing stages', () => {

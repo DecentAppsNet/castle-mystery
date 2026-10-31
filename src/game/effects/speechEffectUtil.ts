@@ -1,6 +1,7 @@
 /* This file creates and draws speech, thought, and emitted-text character effects.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
+import { assert } from "decent-portal";
 import { createEmitBubbleAnchorAtTopCenter, drawEmitBubble, drawEmitBubbleNearExit, drawSpeechBubble,
   drawSpeechBubbleNearExit, drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
 import ScalingFactors from "../types/ScalingFactors";
@@ -24,6 +25,7 @@ import TalkingDipSampler from "./types/TalkingDipSampler";
 const THINKING_ANGLE_RADIANS = Math.PI / 12;
 const THINKING_LOOK_DOWN_DURATION_MSECS = 200;
 const THINKING_LOOK_UP_DURATION_MSECS = 200;
+const LAYING_GESTURE_ANGLE_SCALE = 0.3;
 
 function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, effectDuration:number,
   facingDirection:FacingDirection):EffectHandlerResult {
@@ -50,7 +52,12 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
   startTime: number, sampleDips:TalkingDipSampler, characterId:string, metaTime:number,
   sampleGestures:TalkingGestureSampler):EffectHandlerResult|null {
   if (drawCall.stage === 'beforeCharacter') {
-    return { spriteOverrides:[...sampleDips(time - startTime), ...sampleGestures(time - startTime)] };
+    const gestureScale = drawCall.characterContext.bodyOrientation === 'laying' ? LAYING_GESTURE_ANGLE_SCALE : 1;
+    const armOverrides = sampleGestures(time - startTime).map(override => {
+      assert(override.transformType === 'rotate');
+      return { ...override, rotateRadians:override.rotateRadians * gestureScale };
+    });
+    return { spriteOverrides:[...sampleDips(time - startTime), ...armOverrides] };
   }
   if (drawCall.stage === 'characterAfterLevel') {
     const { characterAnatomy:{ anchorX, anchorTopY }, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;

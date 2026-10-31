@@ -3,6 +3,7 @@
 
 import { assert, assertNonNullable } from 'decent-portal';
 import { rand, randIntInRange } from '@/common/randUtil';
+import { clamp, interpolateNumber } from '@/common/numberUtil';
 import SpriteOverride from './types/SpriteOverride';
 import TalkingGestureSampler from './types/TalkingGestureSampler';
 
@@ -20,6 +21,8 @@ const MAX_REST_DURATION_MSECS = 2000;
 const MIN_GESTURE_DURATION_MSECS = 100;
 const MAX_GESTURE_DURATION_MSECS = 1000;
 const TARGET_ANGLES_RADIANS = [15, 18, 45, 48, 90, 93].map(degrees => degrees * Math.PI / 180);
+const TRANSITION_DURATION_MSECS = 100;
+const SPEECH_FADE_DURATION_MSECS = 150;
 
 let theTalkingGestures:readonly TalkingGesture[]|null = null;
 
@@ -45,12 +48,21 @@ function _getOrCreateTalkingGestures():readonly TalkingGesture[] {
   return theTalkingGestures;
 }
 
+function _smoothstep(progress:number):number {
+  const clamped = clamp(progress, 0, 1);
+  return clamped * clamped * (3 - 2 * clamped);
+}
+
 function _sampleGesture(gestures:readonly TalkingGesture[], elapsed:number, phase:number):number {
   const position = (elapsed + phase) % TALKING_GESTURES_DURATION_MSECS;
-  const gesture = gestures.find(segment => position >= segment.startTimeOffset
+  const gestureI = gestures.findIndex(segment => position >= segment.startTimeOffset
     && position < segment.startTimeOffset + segment.durationMsecs);
+  const gesture = gestures[gestureI];
   assertNonNullable(gesture);
-  return gesture.targetAngleRadians;
+  const previous = gestures[(gestureI + gestures.length - 1) % gestures.length];
+  const transitionDuration = Math.min(TRANSITION_DURATION_MSECS, gesture.durationMsecs);
+  const progress = _smoothstep((position - gesture.startTimeOffset) / transitionDuration);
+  return interpolateNumber(previous.targetAngleRadians, gesture.targetAngleRadians, progress);
 }
 
 export function createTalkingGestureSampler(speechDuration:number):TalkingGestureSampler {
@@ -60,11 +72,13 @@ export function createTalkingGestureSampler(speechDuration:number):TalkingGestur
   const displacement = randIntInRange(MIN_PHASE_SEPARATION_MSECS + 1,
     TALKING_GESTURES_DURATION_MSECS - MIN_PHASE_SEPARATION_MSECS);
   const phases = [nearPhase, (nearPhase + displacement) % TALKING_GESTURES_DURATION_MSECS];
+  const fadeDuration = Math.min(SPEECH_FADE_DURATION_MSECS, speechDuration / 2);
 
   return elapsed => {
-    if (elapsed < 0 || elapsed >= speechDuration) return [];
+    if (elapsed <= 0 || elapsed >= speechDuration) return [];
+    const envelope = _smoothstep(elapsed / fadeDuration) * _smoothstep((speechDuration - elapsed) / fadeDuration);
     return (['nearArm', 'farArm'] as const).flatMap<SpriteOverride>((spriteKind, armI) => {
-      const angle = _sampleGesture(gestures, elapsed, phases[armI]);
+      const angle = _sampleGesture(gestures, elapsed, phases[armI]) * envelope;
       return angle === 0 ? [] : [{ spriteKind, transformType:'rotate', rotateRadians:-angle }];
     });
   };

@@ -384,6 +384,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         const characterAnatomy = characterAnatomyById.get(content.character.id);
         assertNonNullable(characterAnatomy);
         const characterContext:CharacterEffectDrawContext = {
+          bodyOrientation:content.character.bodyOrientation,
           characterAnatomy,
           characterAnatomyById,
           imageSet,
