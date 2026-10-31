@@ -1,5 +1,5 @@
-/* This module groups seeded and unseeded random-number helpers for deterministic and runtime behavior.
-  If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
+/* This file groups seeded and unseeded random-number helpers for deterministic and runtime behavior.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 let theSeed:boolean = false;
 let theSequenceState:number = 0;
@@ -11,6 +11,7 @@ function _calcNextRand():number {
   return ((t >>> 0) / 4294967296);
 }
 
+/** Restarts the shared deterministic sequence using an unsigned 32-bit seed; zero maps to one. */
 export function setSeed(seed: number): void {
   theSeed = true;
   // normalize to 32-bit unsigned integer
@@ -18,17 +19,19 @@ export function setSeed(seed: number): void {
   if (theSequenceState === 0) theSequenceState = 1;
 }
 
+/** Discards deterministic sequence state and restores unseeded randomness. */
 export function clearSeed(): void {
   theSeed = false;
   theSequenceState = 0;
 }
 
-/* If no seed has been set, returns Math.random(). Otherwise returns a number between 0 (inclusive) and 1 (exclusive) 
-   from a repeatable psuedo-random sequence generated from the seed. */
+/** If no seed has been set, returns Math.random(). Otherwise returns a number between 0 (inclusive) and 1 (exclusive)
+  from a repeatable pseudo-random sequence generated from the seed. */
 export function rand(): number {
   return theSeed ? _calcNextRand() : Math.random();
 }
 
+/** Returns a random number in [minInclusive, maxExclusive); throws for non-finite or unordered bounds. */
 export function randInRange(minInclusive:number, maxExclusive:number):number {
   const min = Number(minInclusive);
   const max = Number(maxExclusive);
@@ -37,6 +40,7 @@ export function randInRange(minInclusive:number, maxExclusive:number):number {
   return min + rand() * (max - min);
 }
 
+/** Returns a random integer between the ceiled minimum (inclusive) and floored maximum (exclusive); invalid bounds throw. */
 export function randIntInRange(minInclusive:number, maxExclusive:number):number {
   const min = Math.ceil(Number(minInclusive));
   const max = Math.floor(Number(maxExclusive));

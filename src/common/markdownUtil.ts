@@ -1,5 +1,5 @@
 /*
-This module groups shared markdown-parsing helpers for section, line, and name/value conventions used as configuration formats.
+This file groups shared markdown-parsing helpers for section, line, and name/value conventions used as configuration formats.
 
 There's some parsing conventions that seem to work well across multiple formats based on markdown. Think of the format layering like:
 
@@ -16,7 +16,7 @@ Some conventions this module supports/promotes:
 * Use of Markdown headings to hierarchically arrange sections.
 * Name/value pairs retrieved from bulleted lines.
 
-If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes.
+If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes.
 */
 
 /**
@@ -25,7 +25,7 @@ If this module grows beyond 500 lines of code, read the "Refactoring Large Modul
 export type Sections = { [sectionName:string]:string };
 type NameValues = { [name:string]:string };
 /**
- * A parsed heading section with its body text and original source location.
+ * A parsed heading section with body text, a one-based heading line number, and a zero-based body-start line index.
  */
 export type SectionEntryWithLine = { name:string, value:string, lineNo:number, bodyStartLineI:number };
 type NameValueEntryWithLine = { name:string, value:string, lineNo:number };

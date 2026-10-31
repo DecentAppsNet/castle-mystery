@@ -3,6 +3,7 @@
 
 export const COLOR_BLACK = "#000";
 export const COLOR_DARK_GRAY = "#333";
+export const COLOR_MEDIUM_GREY = "#777";
 export const COLOR_ACTIVE_ROOM_FILL = "#f2f2f2";
 export const COLOR_ACTIVE_FLOOR_FILL = "#fff";
 export const COLOR_ACTIVE_RIGHT_WALL_FILL = "#ddd";

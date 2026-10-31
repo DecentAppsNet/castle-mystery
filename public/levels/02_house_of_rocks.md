@@ -305,6 +305,7 @@ SSMM/HH\YYYYTT
 : Ahmad says, "I don't care about your royal friend."
 : says, "In the House of Rocks, I am your King."
 : says, "And the King says, *get to the yard*!"
+: points right
 
 7:30:20 Stefan @ Workshop Yard (80%)
 7:30:36 faces left

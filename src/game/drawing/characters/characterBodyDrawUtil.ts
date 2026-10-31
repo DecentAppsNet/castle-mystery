@@ -9,10 +9,11 @@ import Point from '@/game/types/Point';
 import ImageSet from '@/game/types/ImageSet';
 import SpriteOverride from '@/game/effects/types/SpriteOverride';
 import { findImageBitmap } from '@/game/imageAssetUtil';
-import { COLOR_BLACK } from '../drawColorConstants';
+import { COLOR_BLACK, COLOR_MEDIUM_GREY } from '../drawColorConstants';
 
 const ARM_BEND = Math.PI / 12;
 const BORDER_WIDTH_PIXELS = 2;
+const BODY_PART_FILL_COLOR = COLOR_MEDIUM_GREY;
 
 function _drawCrosshair(point:Point, resolved:ResolvedBodyPart, context:CanvasRenderingContext2D) {
   const [x, y] = transformBodyPoint(resolved.transform, point);
@@ -130,7 +131,7 @@ export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageS
   const inset = BORDER_WIDTH_PIXELS / (2 * scale);
   const width = part.width - inset * 2;
   const height = part.height - inset * 2;
-  context.fillStyle = '#fff';
+  context.fillStyle = BODY_PART_FILL_COLOR;
   context.strokeStyle = COLOR_BLACK;
   context.lineWidth = BORDER_WIDTH_PIXELS;
   context.lineJoin = 'round';

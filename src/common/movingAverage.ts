@@ -1,3 +1,6 @@
+/* This file maintains mutable rolling-average state for a bounded series of numeric samples.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from "decent-portal";
 
 type MovingAverageData = {
@@ -7,12 +10,14 @@ type MovingAverageData = {
   lastAverage:number;
 }
 
+/** Creates empty rolling-average state; seriesLength must be a positive integer. */
 export function createMovingAverage(seriesLength:number):MovingAverageData {
   assert(Number.isFinite(seriesLength) && seriesLength > 0);
   const series:number[] = [];
   return { series, nextI:0, lastAverage:0, seriesLength };
 }
 
+/** Adds a finite sample, mutates the state, and returns the average of the retained samples. */
 export function updateMovingAverage(nextValue:number, mad:MovingAverageData):number {
   assert(Number.isFinite(nextValue));
   

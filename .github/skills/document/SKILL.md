@@ -21,6 +21,14 @@ Take extra care never to evaluate/modify inside `/node_modules`, `/workAssets`, 
 * Do not create or execute ad-hoc scripts for analyzing or modifying the codebase. Use normal file inspection/editing capabilities and the explicitly authorized project commands instead.
 * The final diff for any individual file may contain at most 50 added or deleted lines combined. Before making a change that would cause a file to exceed this limit, stop modifying that file and report that its documentation was only partially completed.
 
+# Preservation of Existing Comments
+
+* Comment edits must be corrective, not subtractive. This rule applies to all existing comments, including file headers, design rationale, examples, and inline comments, and takes precedence over concision, formatting, and documentation non-goals elsewhere in this skill.
+* Do not delete existing comments or remove their information to shorten, simplify, restyle, or replace them with a standard summary. Add or correct required summary wording without removing surrounding commentary.
+* Make minimal, targeted corrections when a comment does not match the current source code. Replace inaccurate statements with accurate ones while preserving all still-valid information; do not remove the comment or unrelated explanatory context.
+* If a comment appears entirely obsolete or cannot be corrected confidently, leave it unchanged and report it for discussion. Removing existing commentary requires explicit permission from the invoker.
+* DO: Before finishing, review comment changes for lost information. Restore any removed information unless it was replaced by a factual correction or its removal was explicitly authorized.
+
 # Baseline Check
 
 1. DO: run `npm run check:baseline` with no arguments. If any check fails, abort the operation. (We must begin from a good state, to see if we break anything.)
