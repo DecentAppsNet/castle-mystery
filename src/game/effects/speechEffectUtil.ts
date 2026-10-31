@@ -1,15 +1,12 @@
 /* This file creates and draws speech, thought, and emitted-text character effects.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { assert } from "decent-portal";
 import { createEmitBubbleAnchorAtTopCenter, drawEmitBubble, drawEmitBubbleNearExit, drawSpeechBubble,
   drawSpeechBubbleNearExit, drawThoughtBubble } from "../drawing/characters/characterBubbleDrawUtil";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
 import EffectHandler, { EffectHandlerResult } from "./types/EffectHandler";
-import { rand } from "@/common/randUtil";
-import SpriteOverride from "./types/SpriteOverride";
 import EmitSource from "./types/EmitSource";
 import FramePresentationIndex from "./types/FramePresentationIndex";
 import CanvasBubbleAnchor from "./types/CanvasBubbleAnchor";
@@ -19,75 +16,14 @@ import { findEmitTipDirection } from "./emitDirectionUtil";
 import { FacingDirection } from "../types/Character";
 import { isSpeechAudible, isThoughtObservable } from "./speechObservabilityPolicy";
 import { PreparedAnimationText } from "@/game/textAnimations/types/PreparedAnimationText";
+import { createTalkingGestureSampler } from "./talkingGestureUtil";
+import TalkingGestureSampler from "./types/TalkingGestureSampler";
+import { createTalkingDipSampler } from "./talkingDipUtil";
+import TalkingDipSampler from "./types/TalkingDipSampler";
 
-type TalkingDip = Readonly<{
-  startTimeOffset:number,
-  peakAngleOffsetRadians:number,
-  returnDurationMsecs:number
-}>;
-
-const SMALL_DIP_ANGLE_RADIANS = Math.PI / 180;
-const LARGE_DIP_ANGLE_RADIANS = Math.PI / 90;
-const SMALL_DIP_DURATION_MSECS = 100;
-const LARGE_DIP_DURATION_MSECS = 200;
-const MIN_GAP_DURATION_MSECS = 20;
-const MAX_GAP_DURATION_MSECS = 140;
 const THINKING_ANGLE_RADIANS = Math.PI / 12;
 const THINKING_LOOK_DOWN_DURATION_MSECS = 200;
 const THINKING_LOOK_UP_DURATION_MSECS = 200;
-
-let theTalkingDips:TalkingDip[]|null = null;
-const TALKING_DIPS_DURATION = 60000; // Set pretty high for less chance of animations looking similar between two characters talking at same time.
-
-function _createTalkingDips(duration:number):TalkingDip[] {
-  assert(duration > 0);
-  const dips:TalkingDip[] = [];
-  let timeOffset = 0;
-  while (timeOffset < duration) {
-    const isLargeDip = rand() < 0.35;
-    const returnDurationMsecs = isLargeDip ? LARGE_DIP_DURATION_MSECS : SMALL_DIP_DURATION_MSECS;
-    dips.push({
-      startTimeOffset:timeOffset,
-      peakAngleOffsetRadians:isLargeDip ? LARGE_DIP_ANGLE_RADIANS : SMALL_DIP_ANGLE_RADIANS,
-      returnDurationMsecs
-    });
-    const gapDuration = MIN_GAP_DURATION_MSECS + Math.floor(rand() * (MAX_GAP_DURATION_MSECS - MIN_GAP_DURATION_MSECS + 1));
-    timeOffset += returnDurationMsecs + gapDuration;
-  }
-
-  return dips;
-}
-
-// Returns populated singleton.
-function _getOrCreateTalkingDips():TalkingDip[] {
-  if (!theTalkingDips) theTalkingDips = _createTalkingDips(TALKING_DIPS_DURATION);
-  return theTalkingDips;
-}
-
-function _calcSpeakingHeadRotationResult(time:number, effectStartTime:number, dipOffset:number):EffectHandlerResult {
-  const dipPosition = ((time - effectStartTime) + dipOffset) % TALKING_DIPS_DURATION;
-  const dips = _getOrCreateTalkingDips();
-  assert(dipPosition >= 0 && dipPosition < TALKING_DIPS_DURATION);
-  assert(dips.length > 0);
-
-  let headRotationOffsetRadians = 0;
-  for (let dipI = dips.length - 1; dipI >= 0; --dipI) {
-    const dip = dips[dipI];
-    if (dipPosition < dip.startTimeOffset) continue;
-    const dipElapsedTime = dipPosition - dip.startTimeOffset;
-    if (dipElapsedTime <= dip.returnDurationMsecs) {
-      headRotationOffsetRadians = dip.peakAngleOffsetRadians * (1 - dipElapsedTime / dip.returnDurationMsecs);
-    }
-    break;
-  }
-
-  const rotationOverride:SpriteOverride = {
-    spriteKind:'head',
-    transformType:'rotate',
-    rotateRadians:headRotationOffsetRadians
-  }
-  return { spriteOverrides:[rotationOverride] };
-}
 
 function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, effectDuration:number,
   facingDirection:FacingDirection):EffectHandlerResult {
@@ -111,8 +47,11 @@ function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, ef
 }
 
 function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: PreparedAnimationText,
-  startTime: number, dipOffset: number, characterId:string, metaTime:number):EffectHandlerResult|null {
-  if (drawCall.stage === 'beforeCharacter') return _calcSpeakingHeadRotationResult(time, startTime, dipOffset);
+  startTime: number, sampleDips:TalkingDipSampler, characterId:string, metaTime:number,
+  sampleGestures:TalkingGestureSampler):EffectHandlerResult|null {
+  if (drawCall.stage === 'beforeCharacter') {
+    return { spriteOverrides:[...sampleDips(time - startTime), ...sampleGestures(time - startTime)] };
+  }
   if (drawCall.stage === 'characterAfterLevel') {
     const { characterAnatomy:{ anchorX, anchorTopY }, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
     if (isCharacterInActiveRoom || isLevelComplete) {
@@ -192,9 +131,10 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
 }
 
 export function createSaysEffect(characterId:string, text:PreparedAnimationText, startTime:number, speechDuration:number):Effect {
-  const dipOffset = rand() * TALKING_DIPS_DURATION; // Set this randomly so that characters rarely have same head animation.
+  const sampleDips = createTalkingDipSampler();
+  const sampleGestures = createTalkingGestureSampler(speechDuration);
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, metaTime:number, context:CanvasRenderingContext2D) => {
-    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, dipOffset, characterId, metaTime);
+    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, sampleDips, characterId, metaTime, sampleGestures);
   }
   return { kind:'says', startTime, endTime:startTime+speechDuration, handler };
 }
