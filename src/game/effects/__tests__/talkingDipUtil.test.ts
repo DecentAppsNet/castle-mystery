@@ -7,21 +7,22 @@ describe('talkingDipUtil', () => {
   beforeEach(() => setSeed(407));
 
   describe('createTalkingDipSampler()', () => {
-    it('defers singleton initialization to first sampling and reuses it thereafter', () => {
+    it('initializes during creation so even the first sample consumes no randomness', () => {
+      const sample = createTalkingDipSampler();
+      setSeed(902);
+      const expected = rand();
+      setSeed(902);
+      sample(0);
+      sample(100);
+      expect(rand()).toBe(expected);
+    });
+
+    it('reuses the shared sequence when creating another sampler', () => {
+      createTalkingDipSampler();
+      setSeed(407);
       rand();
       const afterPhase = rand();
       setSeed(407);
-      const sample = createTalkingDipSampler();
-      expect(rand()).toBe(afterPhase);
-
-      setSeed(902);
-      const withoutInitialization = rand();
-      setSeed(902);
-      sample(0);
-      expect(rand()).not.toBe(withoutInitialization);
-
-      setSeed(407);
-      sample(100);
       createTalkingDipSampler();
       expect(rand()).toBe(afterPhase);
     });

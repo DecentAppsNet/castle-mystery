@@ -45,9 +45,8 @@ function _getOrCreateTalkingDips():readonly TalkingDip[] {
   return theTalkingDips;
 }
 
-function _sampleDip(elapsed:number, phase:number):number {
+function _sampleDip(dips:readonly TalkingDip[], elapsed:number, phase:number):number {
   const dipPosition = (elapsed + phase) % TALKING_DIPS_DURATION_MSECS;
-  const dips = _getOrCreateTalkingDips();
   assert(dipPosition >= 0 && dipPosition < TALKING_DIPS_DURATION_MSECS);
   assert(dips.length > 0);
 
@@ -65,9 +64,15 @@ function _sampleDip(elapsed:number, phase:number):number {
   return headRotationOffsetRadians;
 }
 
+/** Creates a sampler: a function returning animation overrides for a supplied elapsed time in milliseconds.
+ * Captures a random starting phase in the shared looping head-dip sequence for one speech effect.
+ * The returned function produces a head rotation without drawing or advancing playback state;
+ * repeated or out-of-order queries for the same elapsed time return the same values.
+ */
 export function createTalkingDipSampler():TalkingDipSampler {
   const phase = rand() * TALKING_DIPS_DURATION_MSECS;
+  const dips = _getOrCreateTalkingDips();
   return elapsed => [{
-    spriteKind:'head', transformType:'rotate', rotateRadians:_sampleDip(elapsed, phase)
+    spriteKind:'head', transformType:'rotate', rotateRadians:_sampleDip(dips, elapsed, phase)
   }];
 }

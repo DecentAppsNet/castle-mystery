@@ -21,6 +21,9 @@ import { createTalkingGestureSampler } from "./talkingGestureUtil";
 import TalkingGestureSampler from "./types/TalkingGestureSampler";
 import { createTalkingDipSampler } from "./talkingDipUtil";
 import TalkingDipSampler from "./types/TalkingDipSampler";
+import AnatomyHandler from './types/AnatomyHandler';
+import CharacterAnatomyContext from './types/CharacterAnatomyContext';
+import SpriteOverride from './types/SpriteOverride';
 
 const THINKING_ANGLE_RADIANS = Math.PI / 12;
 const THINKING_LOOK_DOWN_DURATION_MSECS = 200;
@@ -28,7 +31,8 @@ const THINKING_LOOK_UP_DURATION_MSECS = 200;
 const LAYING_GESTURE_ANGLE_SCALE = 0.3;
 
 function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, effectDuration:number,
-  facingDirection:FacingDirection):EffectHandlerResult {
+  facingDirection:FacingDirection):SpriteOverride[] {
+  if (time < effectStartTime || time >= effectStartTime + effectDuration) return [];
   const animationDuration = THINKING_LOOK_DOWN_DURATION_MSECS + THINKING_LOOK_UP_DURATION_MSECS;
   const durationScale = Math.min(1, Math.max(0, effectDuration) / animationDuration);
   const lookDownDuration = THINKING_LOOK_DOWN_DURATION_MSECS * durationScale;
@@ -43,25 +47,26 @@ function _calcThinkingHeadRotationResult(time:number, effectStartTime:number, ef
     angleOffsetRadians = THINKING_ANGLE_RADIANS;
   }
   if (facingDirection === 'left') angleOffsetRadians *= -1;
-  return { spriteOverrides:[{
+  return [{
     spriteKind:'head', transformType:'rotate', rotateRadians:angleOffsetRadians
-  }] };
+  }];
+}
+
+function _calcSpeakingOverrides(context:CharacterAnatomyContext, elapsed:number,
+  sampleDips:TalkingDipSampler, sampleGestures:TalkingGestureSampler):SpriteOverride[] {
+  const gestureScale = context.bodyOrientation === 'laying' ? LAYING_GESTURE_ANGLE_SCALE : 1;
+  const { isNearArmHoldingItem, isFarArmHoldingItem } = context;
+  const armOverrides = sampleGestures(elapsed).filter(override =>
+    !(isNearArmHoldingItem && override.spriteKind === 'nearArm')
+    && !(isFarArmHoldingItem && override.spriteKind === 'farArm')).map(override => {
+    assert(override.transformType === 'rotate');
+    return { ...override, rotateRadians:override.rotateRadians * gestureScale };
+  });
+  return [...sampleDips(elapsed), ...armOverrides];
 }
 
 function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: PreparedAnimationText,
-  startTime: number, sampleDips:TalkingDipSampler, characterId:string, metaTime:number,
-  sampleGestures:TalkingGestureSampler):EffectHandlerResult|null {
-  if (drawCall.stage === 'beforeCharacter') {
-    const gestureScale = drawCall.characterContext.bodyOrientation === 'laying' ? LAYING_GESTURE_ANGLE_SCALE : 1;
-    const { isNearArmHoldingItem, isFarArmHoldingItem } = drawCall.characterContext;
-    const armOverrides = sampleGestures(time - startTime).filter(override =>
-      !(isNearArmHoldingItem && override.spriteKind === 'nearArm')
-      && !(isFarArmHoldingItem && override.spriteKind === 'farArm')).map(override => {
-      assert(override.transformType === 'rotate');
-      return { ...override, rotateRadians:override.rotateRadians * gestureScale };
-    });
-    return { spriteOverrides:[...sampleDips(time - startTime), ...armOverrides] };
-  }
+  startTime:number, characterId:string, metaTime:number):EffectHandlerResult|null {
   if (drawCall.stage === 'characterAfterLevel') {
     const { characterAnatomy:{ anchorX, anchorTopY }, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
     if (isCharacterInActiveRoom || isLevelComplete) {
@@ -82,10 +87,7 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
 }
 
 function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: PreparedAnimationText,
-  startTime: number, speechDuration:number, facingDirection:FacingDirection, metaTime:number):EffectHandlerResult|null {
-  if (drawCall.stage === 'beforeCharacter') {
-    return _calcThinkingHeadRotationResult(time, startTime, speechDuration, facingDirection);
-  }
+  startTime:number, metaTime:number):EffectHandlerResult|null {
   if (drawCall.stage === 'characterAfterLevel') {
     const { characterAnatomy:{ anchorX, anchorTopY }, isActiveCharacter, isLevelComplete } = drawCall.characterContext;
     if (isThoughtObservable(isActiveCharacter, isLevelComplete)) {
@@ -143,18 +145,22 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
 export function createSaysEffect(characterId:string, text:PreparedAnimationText, startTime:number, speechDuration:number):Effect {
   const sampleDips = createTalkingDipSampler();
   const sampleGestures = createTalkingGestureSampler(speechDuration);
+  const anatomyHandler:AnatomyHandler = (context, time) => time < startTime || time >= startTime + speechDuration
+    ? [] : _calcSpeakingOverrides(context, time - startTime, sampleDips, sampleGestures);
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, metaTime:number, context:CanvasRenderingContext2D) => {
-    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, sampleDips, characterId, metaTime, sampleGestures);
+    return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, characterId, metaTime);
   }
-  return { kind:'says', startTime, endTime:startTime+speechDuration, drawHandler:handler, anatomyHandler:null };
+  return { kind:'says', startTime, endTime:startTime+speechDuration, drawHandler:handler, anatomyHandler };
 }
 
 export function createThinksEffect(text:PreparedAnimationText, startTime:number, speechDuration:number,
     facingDirection:FacingDirection):Effect {
+  const anatomyHandler:AnatomyHandler = (_context, time) =>
+    _calcThinkingHeadRotationResult(time, startTime, speechDuration, facingDirection);
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, metaTime:number, context:CanvasRenderingContext2D) => {
-    return _thinksHandler(drawCall, scalingFactors, time, context, text, startTime, speechDuration, facingDirection, metaTime);
+    return _thinksHandler(drawCall, scalingFactors, time, context, text, startTime, metaTime);
   }
-  return { kind:'thinks', startTime, endTime:startTime+speechDuration, drawHandler:handler, anatomyHandler:null };
+  return { kind:'thinks', startTime, endTime:startTime+speechDuration, drawHandler:handler, anatomyHandler };
 }
 
 export function createEmitsEffect(source:EmitSource, text:PreparedAnimationText, startTime:number, speechDuration:number, isLoud:boolean):Effect {

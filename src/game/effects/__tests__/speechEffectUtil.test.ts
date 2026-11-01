@@ -1,4 +1,3 @@
-import { assertNonNullable } from 'decent-portal';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { rand, setSeed } from '@/common/randUtil';
@@ -6,19 +5,25 @@ import { PreparedAnimationText } from '@/game/textAnimations/types/PreparedAnima
 import ScalingFactors from '@/game/types/ScalingFactors';
 import { createEmitsEffect, createSaysEffect, createThinksEffect } from '../speechEffectUtil';
 import CharacterEffectDrawContext from '../types/CharacterEffectDrawContext';
+import CharacterAnatomyContext from '../types/CharacterAnatomyContext';
 import Effect from '../types/Effect';
 import EffectDrawCall from '../types/EffectDrawCall';
 
 const TEXT:PreparedAnimationText = { plainText:'Hello.', spans:[] };
-const CHARACTER_CONTEXT = { bodyOrientation:'standing', isNearArmHoldingItem:false,
-  isFarArmHoldingItem:false } as CharacterEffectDrawContext;
+const CHARACTER_CONTEXT:CharacterAnatomyContext = { bodyOrientation:'standing', isNearArmHoldingItem:false,
+  isFarArmHoldingItem:false };
 const SCALING_FACTORS = {} as ScalingFactors;
 const CANVAS_CONTEXT = {} as CanvasRenderingContext2D;
 
 function _query(effect:Effect, time:number, metaTime = 0,
-    drawCall:EffectDrawCall = { stage:'beforeCharacter', characterContext:CHARACTER_CONTEXT }) {
+    context:CharacterAnatomyContext = CHARACTER_CONTEXT) {
+  expect(effect.anatomyHandler).toEqual(expect.any(Function));
+  return effect.anatomyHandler!(context, time, metaTime);
+}
+
+function _draw(effect:Effect, drawCall:EffectDrawCall) {
   expect(effect.drawHandler).toEqual(expect.any(Function));
-  return effect.drawHandler!(drawCall, SCALING_FACTORS, time, metaTime, CANVAS_CONTEXT);
+  return effect.drawHandler!(drawCall, SCALING_FACTORS, 500, 0, CANVAS_CONTEXT);
 }
 
 describe('speechEffectUtil', () => {
@@ -29,9 +34,9 @@ describe('speechEffectUtil', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
       expect(effect).toMatchObject({ kind:'says', startTime:100, endTime:60100 });
       const samples = Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100));
-      expect(samples.every(result => result?.spriteOverrides.filter(override => override.spriteKind === 'head').length === 1))
+      expect(samples.every(result => result.filter(override => override.spriteKind === 'head').length === 1))
         .toBe(true);
-      const overrides = samples.flatMap(result => result?.spriteOverrides ?? []);
+      const overrides = samples.flat();
       expect(new Set(overrides.map(override => override.spriteKind)))
         .toEqual(new Set(['head', 'nearArm', 'farArm']));
       expect(overrides.every(override => override.transformType === 'rotate'
@@ -47,17 +52,17 @@ describe('speechEffectUtil', () => {
       expect(_query(effect, 72445, 20000)).toEqual(first);
     });
 
-    it('does not sample arms before speech or at its end', () => {
+    it('returns no anatomy outside speech and begins with neutral arms', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 1000);
-      expect(_query(effect, 99)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
-      expect(_query(effect, 100)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
-      expect(_query(effect, 1100)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
-      expect(_query(effect, 1101)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, -100000)).toEqual([]);
+      expect(_query(effect, 99)).toEqual([]);
+      expect(_query(effect, 100).map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, 1100)).toEqual([]);
+      expect(_query(effect, 1101)).toEqual([]);
     });
 
-    it('performs no random draws while sampling after existing head-dip initialization', () => {
+    it('performs no random draws while sampling anatomy', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
-      _query(effect, 100);
       setSeed(902);
       const expected = rand();
       setSeed(902);
@@ -69,46 +74,44 @@ describe('speechEffectUtil', () => {
 
     it('uses the current posture for both arms without changing head dips or context', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
-      const standing:EffectDrawCall = { stage:'beforeCharacter',
-        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, bodyOrientation:'standing' }) };
-      const laying:EffectDrawCall = { stage:'beforeCharacter',
-        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, bodyOrientation:'laying' }) };
+      const standing:CharacterAnatomyContext = Object.freeze({ ...CHARACTER_CONTEXT, bodyOrientation:'standing' });
+      const laying:CharacterAnatomyContext = Object.freeze({ ...CHARACTER_CONTEXT, bodyOrientation:'laying' });
       const time = Array.from({ length:600 }, (_, timeI) => 100 + timeI * 100)
-        .find(candidate => _query(effect, candidate)?.spriteOverrides.length === 3);
-      assertNonNullable(time);
-      const uprightResult = _query(effect, time, 0, standing);
-      const layingResult = _query(effect, time, 0, laying);
-      assertNonNullable(uprightResult);
-      assertNonNullable(layingResult);
-      expect(layingResult.spriteOverrides.find(override => override.spriteKind === 'head'))
-        .toEqual(uprightResult.spriteOverrides.find(override => override.spriteKind === 'head'));
-      expect(layingResult.spriteOverrides.find(override => override.spriteKind === 'nearArm'))
-        .not.toEqual(uprightResult.spriteOverrides.find(override => override.spriteKind === 'nearArm'));
-      expect(layingResult.spriteOverrides.find(override => override.spriteKind === 'farArm'))
-        .not.toEqual(uprightResult.spriteOverrides.find(override => override.spriteKind === 'farArm'));
-      expect(_query(effect, time, 10000, standing)).toEqual(uprightResult);
+        .find(candidate => _query(effect, candidate).length === 3);
+      expect(time).toBeDefined();
+      const uprightResult = _query(effect, time!, 0, standing);
+      const layingResult = _query(effect, time!, 0, laying);
+      expect(layingResult.find(override => override.spriteKind === 'head'))
+        .toEqual(uprightResult.find(override => override.spriteKind === 'head'));
+      expect(layingResult.find(override => override.spriteKind === 'nearArm'))
+        .not.toEqual(uprightResult.find(override => override.spriteKind === 'nearArm'));
+      expect(layingResult.find(override => override.spriteKind === 'farArm'))
+        .not.toEqual(uprightResult.find(override => override.spriteKind === 'farArm'));
+      expect(_query(effect, time!, 10000, standing)).toEqual(uprightResult);
     });
 
-    it('keeps zero-length speech arms neutral', () => {
+    it('returns no anatomy for zero-length speech', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 0);
-      expect(_query(effect, 100)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
-      expect(_query(effect, 101)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, 100)).toEqual([]);
+      expect(_query(effect, 101)).toEqual([]);
     });
 
     it('keeps very short speech finite with neutral arm endpoints', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 0.001);
-      expect(_query(effect, 100)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
-      expect(_query(effect, 100.001)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
-      expect(_query(effect, 100.0005)?.spriteOverrides.every(override => override.transformType === 'rotate'
+      expect(_query(effect, 100).map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, 100.001)).toEqual([]);
+      expect(_query(effect, 100.0005).every(override => override.transformType === 'rotate'
         && Number.isFinite(override.rotateRadians))).toBe(true);
     });
 
-    it('does not return arm overrides at other drawing stages', () => {
+    it('does not return anatomy through drawing stages', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
-      expect(_query(effect, 500, 0, { stage:'afterCharacter', characterContext:CHARACTER_CONTEXT })).toBeNull();
-      expect(_query(effect, 500, 0, {
+      const characterContext = CHARACTER_CONTEXT as CharacterEffectDrawContext;
+      expect(_draw(effect, { stage:'beforeCharacter', characterContext })).toBeNull();
+      expect(_draw(effect, { stage:'afterCharacter', characterContext })).toBeNull();
+      expect(_draw(effect, {
         stage:'characterAfterLevel',
-        characterContext:{ ...CHARACTER_CONTEXT, characterAnatomy:{
+        characterContext:{ ...characterContext, characterAnatomy:{
           anchorX:0, anchorTopY:0
         } as CharacterEffectDrawContext['characterAnatomy'], isCharacterInActiveRoom:false, isLevelComplete:false }
       })).toBeNull();
@@ -119,64 +122,60 @@ describe('speechEffectUtil', () => {
     it('suppresses only the near arm without changing head or free-arm samples', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
       const original = Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100));
-      expect(original.some(result => result?.spriteOverrides.some(override => override.spriteKind === 'nearArm')))
+      expect(original.some(result => result.some(override => override.spriteKind === 'nearArm')))
         .toBe(true);
-      const drawCall:EffectDrawCall = { stage:'beforeCharacter',
-        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, isNearArmHoldingItem:true }) };
-      expect(Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100, 0, drawCall)))
-        .toEqual(original.map(result => ({ spriteOverrides:result!.spriteOverrides
-          .filter(override => override.spriteKind !== 'nearArm') })));
+      const context = Object.freeze({ ...CHARACTER_CONTEXT, isNearArmHoldingItem:true });
+      expect(Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100, 0, context)))
+        .toEqual(original.map(result => result.filter(override => override.spriteKind !== 'nearArm')));
     });
 
     it('suppresses only the far arm without changing head or free-arm samples', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
       const original = Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100));
-      expect(original.some(result => result?.spriteOverrides.some(override => override.spriteKind === 'farArm')))
+      expect(original.some(result => result.some(override => override.spriteKind === 'farArm')))
         .toBe(true);
-      const drawCall:EffectDrawCall = { stage:'beforeCharacter',
-        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, isFarArmHoldingItem:true }) };
-      expect(Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100, 0, drawCall)))
-        .toEqual(original.map(result => ({ spriteOverrides:result!.spriteOverrides
-          .filter(override => override.spriteKind !== 'farArm') })));
+      const context = Object.freeze({ ...CHARACTER_CONTEXT, isFarArmHoldingItem:true });
+      expect(Array.from({ length:600 }, (_, timeI) => _query(effect, 100 + timeI * 100, 0, context)))
+        .toEqual(original.map(result => result.filter(override => override.spriteKind !== 'farArm')));
     });
 
     it('suppresses both arms and retains deterministic head dips', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
       const original = _query(effect, 12345);
-      const drawCall:EffectDrawCall = { stage:'beforeCharacter',
-        characterContext:Object.freeze({ ...CHARACTER_CONTEXT, isNearArmHoldingItem:true, isFarArmHoldingItem:true }) };
-      expect(_query(effect, 12345, 0, drawCall)).toEqual({ spriteOverrides:original!.spriteOverrides
-        .filter(override => override.spriteKind === 'head') });
+      const context = Object.freeze({ ...CHARACTER_CONTEXT, isNearArmHoldingItem:true, isFarArmHoldingItem:true });
+      expect(_query(effect, 12345, 0, context)).toEqual(original.filter(override => override.spriteKind === 'head'));
       _query(effect, 50000);
       _query(effect, 1000);
-      expect(_query(effect, 12345, 9999, drawCall)).toEqual({ spriteOverrides:original!.spriteOverrides
-        .filter(override => override.spriteKind === 'head') });
+      expect(_query(effect, 12345, 9999, context)).toEqual(original.filter(override => override.spriteKind === 'head'));
     });
 
     it('resumes free-arm samples when current occupancy clears without replacing the handler', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
       const handler = effect.drawHandler;
+      const anatomyHandler = effect.anatomyHandler;
       const time = Array.from({ length:600 }, (_, timeI) => 100 + timeI * 100)
-        .find(candidate => _query(effect, candidate)?.spriteOverrides.length === 3);
-      assertNonNullable(time);
-      const original = _query(effect, time);
-      const drawCall:EffectDrawCall = { stage:'beforeCharacter',
-        characterContext:{ ...CHARACTER_CONTEXT, isNearArmHoldingItem:true, isFarArmHoldingItem:true } };
-      expect(_query(effect, time, 0, drawCall)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
-      expect(_query(effect, time)).toEqual(original);
+        .find(candidate => _query(effect, candidate).length === 3);
+      expect(time).toBeDefined();
+      const original = _query(effect, time!);
+      const context = { ...CHARACTER_CONTEXT, isNearArmHoldingItem:true, isFarArmHoldingItem:true };
+      expect(_query(effect, time!, 0, context).map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, time!)).toEqual(original);
       expect(effect.drawHandler).toBe(handler);
+      expect(effect.anatomyHandler).toBe(anatomyHandler);
     });
   });
 
   describe('other speech factories', () => {
     it('keeps thoughts restricted to the existing head override', () => {
       const effect = createThinksEffect(TEXT, 100, 60000, 'right');
-      expect(_query(effect, 500)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
+      expect(_query(effect, 500).map(override => override.spriteKind)).toEqual(['head']);
+      expect(_draw(effect, { stage:'beforeCharacter', characterContext:CHARACTER_CONTEXT as CharacterEffectDrawContext })).toBeNull();
     });
 
     it('does not give character emissions arm or head overrides', () => {
       const effect = createEmitsEffect({ kind:'character', characterId:'sam' }, TEXT, 100, 60000, false);
-      expect(_query(effect, 500)).toBeNull();
+      expect(effect.anatomyHandler).toBeNull();
+      expect(effect.drawHandler).toEqual(expect.any(Function));
     });
   });
 });

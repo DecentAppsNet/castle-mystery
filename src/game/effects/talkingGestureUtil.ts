@@ -65,6 +65,12 @@ function _sampleGesture(gestures:readonly TalkingGesture[], elapsed:number, phas
   return interpolateNumber(previous.targetAngleRadians, gesture.targetAngleRadians, progress);
 }
 
+/** Creates a sampler: a function returning animation overrides for a supplied elapsed time in milliseconds.
+ * Captures distinct random phases for the near and far arms in the shared gesture sequence,
+ * fading their rotations in and out over the supplied speech duration. Neutral arms are omitted.
+ * Sampling neither draws nor advances playback state, so repeated or out-of-order queries are stable;
+ * times at or outside the speech interval return no overrides.
+ */
 export function createTalkingGestureSampler(speechDuration:number):TalkingGestureSampler {
   const gestures = _getOrCreateTalkingGestures();
   assert(MIN_PHASE_SEPARATION_MSECS + 1 < TALKING_GESTURES_DURATION_MSECS - MIN_PHASE_SEPARATION_MSECS);
