@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { assert } from 'decent-portal';
 import { createRasterCharacterBody, getBodyBounds, getResolvedBodyPart, transformBodyPoint } from '../index';
 import { resolveBodyHierarchy } from '../characterBodyPoseUtil';
+import RasterBodyDefinition from '../types/RasterBodyDefinition';
 import rasterBody from './fixtures/rasterBody';
 
 // Identity coefficients measure authored rectangles without posing, reflection, or translation.
@@ -30,6 +31,21 @@ describe('rasterBodyDefinitionUtil', () => {
         assert(part.kind !== 'torso');
         expect(connectionPoint).toEqual(rasterBody.connections[part.kind].map(value => value * 2));
       }
+    });
+
+    it('scales supplied hand connections without mutating or sharing source coordinates', () => {
+      const definition:RasterBodyDefinition = { ...rasterBody, connections:{ ...rasterBody.connections,
+        nearHand:[63, 176], farHand:[40, 165] } };
+      const before = structuredClone(definition);
+      const root = createRasterCharacterBody(definition, 460);
+      const parts = resolveBodyHierarchy(root, IDENTITY);
+      const nearHand = getResolvedBodyPart(parts, 'nearArm').part.handPoint;
+      const farHand = getResolvedBodyPart(parts, 'farArm').part.handPoint;
+      expect(nearHand).toEqual([126, 352]);
+      expect(farHand).toEqual([80, 330]);
+      expect(nearHand).not.toBe(definition.connections.nearHand);
+      expect(farHand).not.toBe(definition.connections.farHand);
+      expect(definition).toEqual(before);
     });
 
     it('preserves pivot-to-connection alignment without reflecting authored connections', () => {

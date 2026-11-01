@@ -53,11 +53,16 @@ export function loadCharacterBody(values:BodyProperties, characterId:string, err
   function _connection(kind:string):Point {
     return _parsePair(values, _connectionProperty(kind), false, characterId, errors);
   }
+  function _handConnection(side:'near'|'far'):Point|null {
+    const property = `${side}HandConnection`;
+    return values[property] === undefined ? null : _parsePair(values, property, false, characterId, errors);
+  }
   const definition = {
     parts:{ head:_part('head'), farArm:_part('farArm'), nearArm:_part('nearArm'),
       leftLeg:_part('leftLeg'), rightLeg:_part('rightLeg'), torso:_part('torso') },
     connections:{ head:_connection('head'), farArm:_connection('farArm'), nearArm:_connection('nearArm'),
-      leftLeg:_connection('leftLeg'), rightLeg:_connection('rightLeg') }
+      leftLeg:_connection('leftLeg'), rightLeg:_connection('rightLeg'),
+      nearHand:_handConnection('near'), farHand:_handConnection('far') }
   };
   return errors.count === originalErrorCount ? createRasterCharacterBody(definition) : fallback;
 }

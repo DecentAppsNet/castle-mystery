@@ -10,6 +10,7 @@ import RasterBodyDefinition from './types/RasterBodyDefinition';
 import { getBodyBounds, resolveBodyHierarchy } from './characterBodyPoseUtil';
 
 const DEFAULT_BODY_HEIGHT = MAP_TILE_SIZE * 0.4;
+const DEFAULT_HAND_X_WIDTH_RATIO = 0.75;
 const CHILD_KINDS = ['head', 'farArm', 'nearArm', 'leftLeg', 'rightLeg'] as const;
 
 function _createPart(definition:RasterBodyDefinition, kind:PartKind):BodyPart {
@@ -17,7 +18,10 @@ function _createPart(definition:RasterBodyDefinition, kind:PartKind):BodyPart {
   const isArm = kind === 'farArm' || kind === 'nearArm';
   return {
     ...geometry, kind, connectedParts:[],
-    handPoint:isArm ? [geometry.width * 0.75, geometry.height] : null
+    handPoint:isArm
+      ? definition.connections[kind === 'nearArm' ? 'nearHand' : 'farHand']
+        ?? [geometry.width * DEFAULT_HAND_X_WIDTH_RATIO, geometry.height]
+      : null
   };
 }
 

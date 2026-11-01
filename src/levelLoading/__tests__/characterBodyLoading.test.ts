@@ -23,6 +23,89 @@ describe('character body loading', () => {
     expect(root.connectedParts).toHaveLength(5);
   });
 
+  it('scales authored hand connections from each arm image origin', () => {
+    const root = loadValidLevelForTest(rasterText).characters[0].rootBodyPart;
+    const scale = root.width / 484;
+    expect(root.connectedParts[1].part.handPoint).toEqual([40 * scale, 165 * scale]);
+    expect(root.connectedParts[2].part.handPoint).toEqual([63 * scale, 176 * scale]);
+  });
+
+  it('keeps complete raster anatomy when both hand connections are omitted', () => {
+    const text = rasterText.replace('* nearHandConnection=63,176', '').replace('* farHandConnection=40,165', '');
+    const root = loadValidLevelForTest(text).characters[0].rootBodyPart;
+    expect(root.imageUrl).toBe('/assets/bodies/duchessTest_torso.png');
+    expect(root.connectedParts[1].part.handPoint).not.toBeNull();
+    expect(root.connectedParts[2].part.handPoint).not.toBeNull();
+  });
+
+  it('defaults only the near hand when its connection is omitted', () => {
+    const text = rasterText.replace('* nearHandConnection=63,176', '');
+    const root = loadValidLevelForTest(text).characters[0].rootBodyPart;
+    const defaults = loadValidLevelForTest(text.replace('* farHandConnection=40,165', '')).characters[0].rootBodyPart;
+    expect(root.connectedParts[2].part.handPoint).toEqual(defaults.connectedParts[2].part.handPoint);
+    const scale = root.width / 484;
+    expect(root.connectedParts[1].part.handPoint).toEqual([40 * scale, 165 * scale]);
+  });
+
+  it('defaults only the far hand when its connection is omitted', () => {
+    const text = rasterText.replace('* farHandConnection=40,165', '');
+    const root = loadValidLevelForTest(text).characters[0].rootBodyPart;
+    const defaults = loadValidLevelForTest(text.replace('* nearHandConnection=63,176', '')).characters[0].rootBodyPart;
+    expect(root.connectedParts[1].part.handPoint).toEqual(defaults.connectedParts[1].part.handPoint);
+    const scale = root.width / 484;
+    expect(root.connectedParts[2].part.handPoint).toEqual([63 * scale, 176 * scale]);
+  });
+
+  it('accepts zero, negative, and out-of-image hand coordinates without changing body scale', () => {
+    const text = rasterText.replace('* nearHandConnection=63,176', '* nearHandConnection=0,-100')
+      .replace('* farHandConnection=40,165', '* farHandConnection=900,1000');
+    const root = loadValidLevelForTest(text).characters[0].rootBodyPart;
+    const original = loadValidLevelForTest(rasterText).characters[0].rootBodyPart;
+    const scale = root.width / 484;
+    expect(root.width).toBe(original.width);
+    expect(root.connectedParts[2].part.handPoint).toEqual([0, -100 * scale]);
+    expect(root.connectedParts[1].part.handPoint).toEqual([900 * scale, 1000 * scale]);
+  });
+
+  it('rejects a supplied blank hand connection', () => {
+    const text = rasterText.replace('* nearHandConnection=63,176', '* nearHandConnection=   ');
+    const { level, errors } = loadLevelForTest(text, 'blank-hand.md');
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('blank-hand.md:44:');
+    expect(errors.describeErrors()).toContain('Expected nearHandConnection to contain exactly two finite numbers.');
+  });
+
+  it('rejects an empty hand coordinate', () => {
+    const { level, errors } = loadLevelForTest(rasterText.replace('* farHandConnection=40,165', '* farHandConnection=,165'));
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Expected farHandConnection to contain exactly two finite numbers.');
+  });
+
+  it('rejects extra hand coordinates', () => {
+    const { level, errors } = loadLevelForTest(rasterText.replace('* nearHandConnection=63,176', '* nearHandConnection=63,176,0'));
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Expected nearHandConnection to contain exactly two finite numbers.');
+  });
+
+  it('rejects nonfinite hand coordinates', () => {
+    const { level, errors } = loadLevelForTest(rasterText.replace('* farHandConnection=40,165', '* farHandConnection=Infinity,165'));
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Expected farHandConnection to contain exactly two finite numbers.');
+  });
+
+  it('ignores malformed hand connections on incomplete raster anatomy with a head image', () => {
+    const text = rasterText.replace('* torsoDimensions=484,635', '')
+      .replace('* nearHandConnection=63,176', '* nearHandConnection=not a pair');
+    const root = loadValidLevelForTest(text).characters[0].rootBodyPart;
+    expect(root).toEqual(replaceHeadImage(createDefaultCharacterBody(), '/assets/bodies/duchessTest_head.png'));
+  });
+
+  it('ignores hand connections when the base head image is omitted', () => {
+    const text = rasterText.replace('* headImage=duchessTest_head.png', '')
+      .replace('* farHandConnection=40,165', '* farHandConnection=');
+    expect(loadValidLevelForTest(text).characters[0].rootBodyPart).toEqual(createDefaultCharacterBody());
+  });
+
   it('uses exact default geometry and only the authored head when a limb image is missing', () => {
     const text = rasterText.replace('* farArmImage=duchessTest_farArm.png', '');
     const root = loadValidLevelForTest(text).characters[0].rootBodyPart;

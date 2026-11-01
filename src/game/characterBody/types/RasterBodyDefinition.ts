@@ -16,7 +16,9 @@ type RasterBodyDefinition = {
     readonly farArm:Point,
     readonly nearArm:Point,
     readonly leftLeg:Point,
-    readonly rightLeg:Point
+    readonly rightLeg:Point,
+    readonly nearHand?:Point|null,
+    readonly farHand?:Point|null
   }
 };
 
