@@ -5,6 +5,7 @@ import BodyPartTransform from './types/BodyPartTransform';
 import Point from '../types/Point';
 import Rect from '../types/Rect';
 import { createRect } from '../rectUtil';
+import { assert } from 'decent-portal';
 
 /** Maps an input-space point into the transform's output space, including translation. */
 export function transformBodyPoint(transform:BodyPartTransform, point:Point):Point {
@@ -63,4 +64,17 @@ export function applyBodyTransformDeltas(base:BodyPartTransform, pivot:Point, ro
   translation:Point):BodyPartTransform {
   const rotated = composeBodyTransforms(base, createBodyAttachmentTransform(pivot, pivot, rotateRadians));
   return { ...rotated, translateX:rotated.translateX + translation[0], translateY:rotated.translateY + translation[1] };
+}
+
+/** Maps output coordinates back to local coordinates; body transforms must be finite and invertible. */
+export function invertBodyTransform(transform:BodyPartTransform):BodyPartTransform {
+  const { horizontalX, horizontalY, verticalX, verticalY, translateX, translateY } = transform;
+  const determinant = horizontalX * verticalY - verticalX * horizontalY;
+  assert(Number.isFinite(determinant) && determinant !== 0, 'Body transforms must be invertible.');
+  return {
+    horizontalX:verticalY / determinant, horizontalY:-horizontalY / determinant,
+    verticalX:-verticalX / determinant, verticalY:horizontalX / determinant,
+    translateX:(verticalX * translateY - verticalY * translateX) / determinant,
+    translateY:(horizontalY * translateX - horizontalX * translateY) / determinant
+  };
 }

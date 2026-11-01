@@ -3,7 +3,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import { getHandArmPartKind } from "@/game/characterBody";
+import { createVisualBodyLayout, getHandArmPartKind } from "@/game/characterBody";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 import { roomHeightToLayerCount, roomWidthToColumnCount } from "@/game/roomGridUtil";
@@ -404,6 +404,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
         const spriteOverrides = aggregateSpriteOverrides(handleBeforeCharacterDrawEffects(
           content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context), content.character);
+        const visualLayout = createVisualBodyLayout(characterCanvasLayout.layout, spriteOverrides, content.character.facingDirection);
         const heldItems = [
           { item:content.character.leftHandItem, hand:'left' as const },
           { item:content.character.rightHandItem, hand:'right' as const }
@@ -411,11 +412,11 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         heldItems.forEach(({ item, hand }) => {
           if (!item) return;
           const anchor = getHeldItemBubbleAnchor(
-            item, characterCanvasLayout.layout, hand, scalingFactors, imageSet, spriteOverrides);
+            item, visualLayout, hand, scalingFactors, imageSet, spriteOverrides);
           if (anchor) result.itemBubbleAnchorById.set(item.id, anchor);
         });
         drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
-          isHighlighted, metaTime, spriteOverrides, characterCanvasLayout);
+          isHighlighted, metaTime, spriteOverrides, { ...characterCanvasLayout, layout:visualLayout });
         handleAfterCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
         return;
     }

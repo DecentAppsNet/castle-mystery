@@ -276,9 +276,9 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
   getBodyPaintOrder(character.facingDirection, character.rootBodyPart.imageUrl !== null).forEach(kind => {
     const part = getResolvedBodyPart(layout.parts, kind);
     if (kind === 'head') {
-      drawCharacterHead(part, character, imageSet, spriteOverrides, scalingFactors.roomLineWidth, context);
+      drawCharacterHead(part, character, imageSet, scalingFactors.roomLineWidth, context);
     } else {
-      drawCharacterBodyPart(part, imageSet, spriteOverrides, context);
+      drawCharacterBodyPart(part, imageSet, context);
     }
   });
   drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);

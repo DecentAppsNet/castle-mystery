@@ -2,11 +2,10 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from 'decent-portal';
-import { applyBodyTransformDeltas, getArmThickness, transformBodyPoint } from '@/game/characterBody';
+import { getArmThickness, transformBodyPoint } from '@/game/characterBody';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Point from '@/game/types/Point';
 import ImageSet from '@/game/types/ImageSet';
-import SpriteOverride from '@/game/effects/types/SpriteOverride';
 import { findImageBitmap } from '@/game/imageAssetUtil';
 import { COLOR_BLACK, COLOR_MEDIUM_GREY } from '../drawColorConstants';
 
@@ -96,17 +95,9 @@ function _drawArm(width:number, height:number, inset:number, resolved:ResolvedBo
 
 /** Paints one non-head part; vector placeholders have a fixed canvas-pixel border. Does not determine paint order. */
 export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageSet,
-  spriteOverrides:readonly SpriteOverride[], context:CanvasRenderingContext2D) {
-  const { part } = resolved;
+  context:CanvasRenderingContext2D) {
+  const { part, transform } = resolved;
   assert(part.kind !== 'head'); // Head artwork uses the head painter.
-  const rotation = spriteOverrides.find(override => override.transformType === 'rotate' && override.spriteKind === part.kind);
-  const translation = spriteOverrides.find(override => override.transformType === 'translatePartHeight'
-    && override.spriteKind === part.kind);
-  const translateY = translation?.transformType === 'translatePartHeight'
-    ? translation.translateHeightRatio * part.height * Math.hypot(resolved.transform.verticalX, resolved.transform.verticalY) : 0;
-  const drawnPart = { part, transform:applyBodyTransformDeltas(resolved.transform, part.pivotPoint,
-    rotation?.transformType === 'rotate' ? rotation.rotateRadians : 0, [0, translateY]) };
-  const { transform } = drawnPart;
   context.save();
   const image = findImageBitmap(imageSet, part.imageUrl);
   if (image) {
@@ -126,12 +117,12 @@ export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageS
   context.lineWidth = BORDER_WIDTH_PIXELS;
   context.lineJoin = 'round';
   if (part.kind === 'torso') {
-    _drawTorso(width, height, inset, drawnPart, context);
+    _drawTorso(width, height, inset, resolved, context);
   } else if (part.kind === 'leftLeg' || part.kind === 'rightLeg') {
-    _drawLeg(width, height, inset, drawnPart, context);
+    _drawLeg(width, height, inset, resolved, context);
   } else {
     assert(part.kind === 'farArm' || part.kind === 'nearArm');
-    _drawArm(width, height, inset, drawnPart, context);
+    _drawArm(width, height, inset, resolved, context);
   }
   context.restore();
 }

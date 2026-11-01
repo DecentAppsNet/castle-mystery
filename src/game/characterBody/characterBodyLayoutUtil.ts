@@ -1,4 +1,4 @@
-/* This file projects resolved body poses into shared canvas geometry without drawing or world projection.
+/* This file projects body poses and resolves shared visual deltas without drawing or changing base grounding.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Point from '../types/Point';
@@ -8,7 +8,9 @@ import CharacterLayout from './types/CharacterLayout';
 import ResolvedBodyPart from './types/ResolvedBodyPart';
 import BodyPartTransform from './types/BodyPartTransform';
 import { getBodyBounds, getResolvedBodyPart, getHandArmPartKind } from './characterBodyPoseUtil';
-import { composeBodyTransforms, transformBodyPoint } from './characterBodyTransformUtil';
+import { applyBodyTransformDeltas, composeBodyTransforms, invertBodyTransform, transformBodyPoint } from './characterBodyTransformUtil';
+import { rotateHeadPose } from './characterHeadGeometryUtil';
+import SpriteOverride from '../effects/types/SpriteOverride';
 
 function _getCenter({ part, transform }:ResolvedBodyPart):Point {
   return transformBodyPoint(transform, [part.width / 2, part.height / 2]);
@@ -18,6 +20,35 @@ function _getHand(parts:readonly ResolvedBodyPart[], armKind:'nearArm'|'farArm')
   const { transform } = getResolvedBodyPart(parts, armKind === 'nearArm' ? 'nearHand' : 'farHand');
   const [x, y] = transformBodyPoint(transform, [0, 0]);
   return { x, y };
+}
+
+/** Resolves aggregated concrete deltas parent-first; preserves base bounds, grounding, and unrelated anchors. */
+export function createVisualBodyLayout(base:CharacterLayout, overrides:readonly SpriteOverride[],
+  facing:FacingDirection):CharacterLayout {
+  const parts:ResolvedBodyPart[] = [];
+  function _resolve(original:ResolvedBodyPart, inherited:BodyPartTransform|null) {
+    const { part } = original;
+    const transform = inherited ? composeBodyTransforms(inherited, original.transform) : original.transform;
+    const rotation = overrides.find(entry => entry.transformType === 'rotate' && entry.spriteKind === part.kind);
+    const translation = overrides.find(entry => entry.transformType === 'translatePartHeight' && entry.spriteKind === part.kind);
+    const angle = rotation?.transformType === 'rotate' && (part.kind !== 'head' || part.imageUrl !== null)
+      ? rotation.rotateRadians : 0;
+    const translateY = translation?.transformType === 'translatePartHeight'
+      ? translation.translateHeightRatio * part.height * Math.hypot(transform.verticalX, transform.verticalY) : 0;
+    const unchanged = angle === 0 && translateY === 0;
+    const resolved = unchanged ? { part, transform } : part.kind === 'head'
+      ? rotateHeadPose({ part, transform }, facing, angle)
+      : { part, transform:applyBodyTransformDeltas(transform, part.pivotPoint, angle, [0, translateY]) };
+    parts.push(resolved);
+    const delta = unchanged ? inherited : composeBodyTransforms(resolved.transform, invertBodyTransform(original.transform));
+    part.connectedParts.forEach(({ part:child }) => _resolve(getResolvedBodyPart(base.parts, child.kind), delta));
+  }
+  const torso = getResolvedBodyPart(base.parts, 'torso');
+  _resolve(torso, null);
+  const isRasterBody = torso.part.imageUrl !== null;
+  return { ...base, parts,
+    leftHand:_getHand(parts, getHandArmPartKind(isRasterBody, facing, 'left')),
+    rightHand:_getHand(parts, getHandArmPartKind(isRasterBody, facing, 'right')) };
 }
 
 /** Projects a grounded pose to canvas pixels; maps raster depth roles to gameplay hands, retaining vector ownership. */

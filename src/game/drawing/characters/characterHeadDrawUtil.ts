@@ -1,23 +1,21 @@
-/* This file paints resolved character heads with shared image fitting and draw-time neck rotation.
+/* This file paints visually resolved character heads with shared image fitting.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { fitHeadImage, getBodyBounds, rotateHeadPose, transformBodyPoint } from '@/game/characterBody';
+import { fitHeadImage, getBodyBounds, transformBodyPoint } from '@/game/characterBody';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Character from '@/game/types/Character';
 import ImageSet from '@/game/types/ImageSet';
-import SpriteOverride from '@/game/effects/types/SpriteOverride';
 import { findImageBitmap } from '@/game/imageAssetUtil';
 import { COLOR_BLACK } from '../drawColorConstants';
 
 /** Paints a canvas-resolved head without altering base anatomy or deciding part order; lineWidth is canvas pixels. */
 export function drawCharacterHead(head:ResolvedBodyPart, character:Character, imageSet:ImageSet,
-    spriteOverrides:readonly SpriteOverride[], lineWidth:number, context:CanvasRenderingContext2D) {
+  lineWidth:number, context:CanvasRenderingContext2D) {
   const image = findImageBitmap(imageSet, head.part.imageUrl);
   const fit = image ? fitHeadImage(head.part, image.width, image.height, character.rootBodyPart.imageUrl !== null) : null;
   context.save();
   if (image && fit) {
-    const angle = spriteOverrides.find(override => override.spriteKind === 'head')?.rotateRadians ?? 0;
-    const { transform } = rotateHeadPose(head, character.facingDirection, angle);
+    const { transform } = head;
     context.transform(transform.horizontalX, transform.horizontalY, transform.verticalX,
       transform.verticalY, transform.translateX, transform.translateY);
     context.drawImage(image, fit.x, fit.y, fit.width, fit.height);

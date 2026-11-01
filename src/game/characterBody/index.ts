@@ -4,7 +4,7 @@
 export { createDefaultCharacterBody, getHeadImageUrl, replaceHeadImage } from './characterBodyDefinitionUtil';
 export { createRasterCharacterBody } from './rasterBodyDefinitionUtil';
 export { getArmThickness } from './characterArmGeometryUtil';
-export { createBodyCanvasLayout } from './characterBodyLayoutUtil';
-export { fitHeadImage, calcHeadImageBounds, rotateHeadPose } from './characterHeadGeometryUtil';
-export { applyBodyTransformDeltas, transformBodyPoint } from './characterBodyTransformUtil';
+export { createBodyCanvasLayout, createVisualBodyLayout } from './characterBodyLayoutUtil';
+export { fitHeadImage, calcHeadImageBounds } from './characterHeadGeometryUtil';
+export { transformBodyPoint } from './characterBodyTransformUtil';
 export { createBodyPose, getBodyPaintOrder, getBodyBounds, getResolvedBodyPart, getViewerArmPartKind, getHandArmPartKind } from './characterBodyPoseUtil';
