@@ -22,11 +22,7 @@ function _handleCharacterGive(drawCall:CharacterDrawCall, item:Item, sourcePlace
   const sourceAnatomy = drawCall.characterContext.characterAnatomy;
   const destinationAnatomy = drawCall.characterContext.characterAnatomyById.get(receivingCharacterId);
   assertNonNullable(destinationAnatomy, `missing anatomy for receiving character ${receivingCharacterId}`);
-  const source = sourcePlacement === INVENTORY
-    ? sourceAnatomy.characterCenterCanvasPoint
-    : sourcePlacement === LEFT_HAND
-      ? sourceAnatomy.leftHandItemCanvasPoint
-      : sourceAnatomy.rightHandItemCanvasPoint;
+  const source = sourceAnatomy.characterCenterCanvasPoint;
   const destination = destinationAnatomy.characterCenterCanvasPoint;
   const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
   const animated = interpolateNumberPair(source, destination, progress);
@@ -39,14 +35,7 @@ function _handleCharacterGive(drawCall:CharacterDrawCall, item:Item, sourcePlace
     return null;
   }
 
-  // Translate the ordinary held-item sprite only before the character is drawn.
-  if (drawCall.stage === 'afterCharacter') return null;
-  return { spriteOverrides:[{
-    spriteKind:sourcePlacement === LEFT_HAND ? 'leftHandItem' : 'rightHandItem',
-    transformType:'translateCanvas',
-    translateCanvasX:animated[0] - source[0],
-    translateCanvasY:animated[1] - source[1]
-  }] };
+  return null;
 }
 
 function _handleGive(drawCall:EffectDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
@@ -68,8 +57,19 @@ export function createGiveEffect(item:Item, sourcePlacement:CharacterOwnedItemPl
     kind:'giveItem',
     startTime,
     endTime,
-    anatomyHandler:null,
-    drawHandler:(drawCall, scalingFactors, time, _metaTime, context) =>
+    anatomyHandler:sourcePlacement === INVENTORY ? null : (context, time) => {
+      if (time < startTime || time > endTime) return [];
+      const destination = context.baseCharacterCenterById.get(receivingCharacterId);
+      assertNonNullable(destination, `missing base center for receiving character ${receivingCharacterId}`);
+      return [{
+        spriteKind:sourcePlacement === LEFT_HAND ? context.leftHandPartKind
+          : context.leftHandPartKind === 'nearHand' ? 'farHand' : 'nearHand',
+        transformType:'deferredHandDisplacement',
+        destinationCanvasPoint:destination,
+        weight:clamp((time - startTime) / (endTime - startTime), 0, 1)
+      }];
+    },
+    drawHandler:sourcePlacement !== INVENTORY ? null : (drawCall, scalingFactors, time, _metaTime, context) =>
       _handleGive(drawCall, effectItem, sourcePlacement, receivingCharacterId, startTime, endTime,
         scalingFactors, time, context)
   };

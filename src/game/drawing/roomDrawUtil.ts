@@ -347,11 +347,13 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
   // Calculate reusable current-frame layout and anatomy for every drawable character.
   const characterCanvasLayoutById = new Map<string, ReturnType<typeof createCharacterCanvasLayout>>();
   const characterAnatomyById = new Map<string, CharacterCanvasAnatomy>();
+  const baseCharacterCenterById = new Map<string, Point>();
   contents.forEach(content => {
     if (content.type !== 'character') return;
     const canvasLayout = createCharacterCanvasLayout(
       content.character, content.displayPosition, scalingFactors, gameTime);
     characterCanvasLayoutById.set(content.character.id, canvasLayout);
+    baseCharacterCenterById.set(content.character.id, canvasLayout.characterCenterCanvasPoint);
     characterAnatomyById.set(content.character.id, {
       anchorX:canvasLayout.layout.anchorX,
       anchorTopY:canvasLayout.anchorTopY,
@@ -419,6 +421,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           leftHandPartKind:leftArm === 'nearArm' ? 'nearHand' : 'farHand',
           scalingFactors,
           roomItemCenterOffsetById,
+          baseCharacterCenterById,
           roomContentDisplayLayout:displayLayout
         }, gameTime, metaTime);
         const spriteOverrides = aggregateSpriteOverrides([...anatomyOverrides, ...handleBeforeCharacterDrawEffects(

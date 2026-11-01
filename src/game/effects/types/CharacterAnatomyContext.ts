@@ -15,6 +15,7 @@ type CharacterAnatomyContext = {
   readonly isFarArmHoldingItem:boolean,
   readonly leftHandPartKind:'nearHand'|'farHand',
   readonly scalingFactors:Readonly<ScalingFactors>,
+  readonly baseCharacterCenterById:ReadonlyMap<string, Point>,
   readonly roomItemCenterOffsetById:ReadonlyMap<string, Point>,
   readonly roomContentDisplayLayout:RoomItemDisplayQuery
 };
