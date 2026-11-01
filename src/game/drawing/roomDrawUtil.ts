@@ -417,7 +417,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         heldItems.forEach(({ item, hand }) => {
           if (!item) return;
           const anchor = getHeldItemBubbleAnchor(
-            item, visualLayout, hand, scalingFactors, imageSet, spriteOverrides);
+            item, content.character, visualLayout, hand, scalingFactors, imageSet, spriteOverrides);
           if (anchor) result.itemBubbleAnchorById.set(item.id, anchor);
         });
         drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,

@@ -1,9 +1,37 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyBodyTransformDeltas, composeBodyTransforms, createBodyAttachmentTransform, createCanvasAttachmentTransform, transformBodyPoint } from '../characterBodyTransformUtil';
+import { applyBodyTransformDeltas, composeBodyTransforms, createBodyAttachmentTransform, createCanvasAttachmentTransform, transformBodyPoint, transformBodyRect } from '../characterBodyTransformUtil';
 import BodyPartTransform from '../types/BodyPartTransform';
 
 describe('characterBodyTransformUtil', () => {
+  describe('transformBodyRect()', () => {
+    it('encloses a centered rectangle after reflected rotation and unequal projection without mutating inputs', () => {
+      const transform:BodyPartTransform = Object.freeze({
+        horizontalX:-1.2, horizontalY:2.4, verticalX:1.6, verticalY:1.8, translateX:100, translateY:200
+      });
+      const rect = Object.freeze({ x:-5, y:-10, width:10, height:20 });
+      const bounds = transformBodyRect(transform, rect);
+      expect(bounds.x).toBeCloseTo(78);
+      expect(bounds.y).toBeCloseTo(170);
+      expect(bounds.width).toBeCloseTo(44);
+      expect(bounds.height).toBeCloseTo(60);
+      expect(bounds.x + bounds.width / 2).toBeCloseTo(100);
+      expect(bounds.y + bounds.height / 2).toBeCloseTo(200);
+    });
+
+    it('applies fixed canvas displacement once without changing rotated bounds dimensions', () => {
+      const transform = createBodyAttachmentTransform([100, 200], [0, 0], Math.PI / 3);
+      const rect = { x:-5, y:-10, width:10, height:20 };
+      const original = transformBodyRect(transform, rect);
+      const displaced = transformBodyRect({ ...transform,
+        translateX:transform.translateX + 17, translateY:transform.translateY - 9 }, rect);
+      expect(displaced.x - original.x).toBeCloseTo(17);
+      expect(displaced.y - original.y).toBeCloseTo(-9);
+      expect(displaced.width).toBeCloseTo(original.width);
+      expect(displaced.height).toBeCloseTo(original.height);
+    });
+  });
+
   describe('createCanvasAttachmentTransform()', () => {
     it('keeps already-sized artwork unchanged at an unrotated attachment despite body and view scaling', () => {
       const transform:BodyPartTransform = {
