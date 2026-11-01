@@ -1,11 +1,9 @@
-import { assertNonNullable } from 'decent-portal';
 import { describe, expect, it } from 'vitest';
 
 import { setSeed } from '@/common/randUtil';
 import { getHandArmPartKind } from '@/game/characterBody';
-import CharacterEffectDrawContext from '@/game/effects/types/CharacterEffectDrawContext';
+import CharacterAnatomyContext from '@/game/effects/types/CharacterAnatomyContext';
 import { createKeyframeAtTime } from '@/game/timeline';
-import ScalingFactors from '@/game/types/ScalingFactors';
 import baseText from './fixtures/emits/emits-base.md?raw';
 import rasterText from './fixtures/characters-raster.md?raw';
 import { loadLevelForTest, loadValidLevelForTest, replaceSection } from './testLevelUtil';
@@ -15,23 +13,23 @@ function _sampleSpeech(text:string, itinerary:readonly string[]) {
   const activities = itinerary.map(activity => activity.replace('The doom awaits you.', 'The doom awaits you. '.repeat(50)));
   const level = loadValidLevelForTest(replaceSection(text, 'itinerary', activities));
   const characterI = level.timeline.characterIdToI.sam;
-  const effect = level.timeline.keyframes.flatMap(frame => frame.characters[characterI].effects)
+  const foundEffect = level.timeline.keyframes.flatMap(frame => frame.characters[characterI].effects)
     .find(candidate => candidate.kind === 'says');
-  assertNonNullable(effect);
+  expect(foundEffect).toBeDefined();
+  const effect = foundEffect!;
   const speaker = createKeyframeAtTime(level.timeline.keyframes, effect.startTime).characters[characterI];
   const character = level.characters.find(candidate => candidate.id === 'sam');
-  assertNonNullable(character);
-  const leftArm = getHandArmPartKind(character.rootBodyPart.imageUrl !== null, speaker.facingDirection, 'left');
-  const characterContext = {
+  expect(character).toBeDefined();
+  const leftArm = getHandArmPartKind(character!.rootBodyPart.imageUrl !== null, speaker.facingDirection, 'left');
+  const characterContext:CharacterAnatomyContext = {
     bodyOrientation:speaker.bodyOrientation,
     isNearArmHoldingItem:(leftArm === 'nearArm' ? speaker.leftHandItem : speaker.rightHandItem) !== null,
     isFarArmHoldingItem:(leftArm === 'farArm' ? speaker.leftHandItem : speaker.rightHandItem) !== null
-  } as CharacterEffectDrawContext;
-  const handler = effect.drawHandler;
-  assertNonNullable(handler);
-  const targets = Array.from({ length:Math.ceil(effect.endTime - effect.startTime) }, (_, elapsed) => handler({
-    stage:'beforeCharacter', characterContext
-  }, {} as ScalingFactors, effect.startTime + elapsed, 0, {} as CanvasRenderingContext2D)?.spriteOverrides ?? []).flat();
+  };
+  const handler = effect.anatomyHandler;
+  expect(handler).toEqual(expect.any(Function));
+  const targets = Array.from({ length:Math.ceil(effect.endTime - effect.startTime) }, (_, elapsed) =>
+    handler!(characterContext, effect.startTime + elapsed, 0)).flat();
   return { speaker, effect, targets:new Set(targets.map(override => override.spriteKind)) };
 }
 

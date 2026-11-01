@@ -1,11 +1,8 @@
-import { assertNonNullable } from 'decent-portal';
 import { describe, expect, it } from 'vitest';
 
 import { setSeed } from '@/common/randUtil';
-import CharacterEffectDrawContext from '@/game/effects/types/CharacterEffectDrawContext';
 import { createKeyframeAtTime } from '@/game/timeline';
 import { BodyOrientation } from '@/game/types/Character';
-import ScalingFactors from '@/game/types/ScalingFactors';
 import sameTimeText from './fixtures/speech-gestures-same-time.md?raw';
 import { loadValidLevelForTest } from './testLevelUtil';
 
@@ -17,25 +14,25 @@ describe('level loading - speech gestures', () => {
     const speaker = createKeyframeAtTime(level.timeline.keyframes, 0).characters[samI];
     expect(speaker.bodyOrientation).toBe('laying');
     expect(speaker.facingDirection).toBe('left');
-    const effect = speaker.effects.find(candidate => candidate.kind === 'says');
-    assertNonNullable(effect);
-    const handler = effect.drawHandler;
-    assertNonNullable(handler);
-    const sample = (time:number, bodyOrientation:BodyOrientation) => handler({
-      stage:'beforeCharacter', characterContext:{ bodyOrientation, isNearArmHoldingItem:false,
-        isFarArmHoldingItem:false } as CharacterEffectDrawContext
-    }, {} as ScalingFactors, time, 0, {} as CanvasRenderingContext2D);
+    const foundEffect = speaker.effects.find(candidate => candidate.kind === 'says');
+    expect(foundEffect).toBeDefined();
+    const effect = foundEffect!;
+    const handler = effect.anatomyHandler;
+    expect(handler).toEqual(expect.any(Function));
+    const sample = (time:number, bodyOrientation:BodyOrientation) => handler!({
+      bodyOrientation, isNearArmHoldingItem:false, isFarArmHoldingItem:false
+    }, time, 0);
     const time = Array.from({ length:Math.floor(effect.endTime / 100) }, (_, timeI) => timeI * 100)
-      .find(candidate => sample(candidate, speaker.bodyOrientation)?.spriteOverrides.length === 3);
-    assertNonNullable(time);
+      .find(candidate => sample(candidate, speaker.bodyOrientation).some(override => override.spriteKind !== 'head'));
+    expect(time).toBeDefined();
 
-    const currentSpeaker = createKeyframeAtTime(level.timeline.keyframes, time).characters[samI];
-    const currentResult = sample(time, currentSpeaker.bodyOrientation);
-    const standingResult = sample(time, 'standing');
+    const currentSpeaker = createKeyframeAtTime(level.timeline.keyframes, time!).characters[samI];
+    const currentResult = sample(time!, currentSpeaker.bodyOrientation);
+    const standingResult = sample(time!, 'standing');
     expect(currentResult).not.toEqual(standingResult);
-    expect(currentResult?.spriteOverrides.find(override => override.spriteKind === 'head'))
-      .toEqual(standingResult?.spriteOverrides.find(override => override.spriteKind === 'head'));
-    expect(sample(time, currentSpeaker.bodyOrientation)).toEqual(currentResult);
+    expect(currentResult.find(override => override.spriteKind === 'head'))
+      .toEqual(standingResult.find(override => override.spriteKind === 'head'));
+    expect(sample(time!, currentSpeaker.bodyOrientation)).toEqual(currentResult);
     expect(level.timeline.endTime).toBe(effect.endTime);
   });
 });
