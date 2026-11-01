@@ -2,8 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from 'decent-portal';
-import { composeBodyTransforms, createBodyAttachmentTransform, getArmThickness, getViewerArmPartKind, transformBodyPoint } from '@/game/characterBody';
-import Character from '@/game/types/Character';
+import { applyBodyTransformDeltas, getArmThickness, transformBodyPoint } from '@/game/characterBody';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Point from '@/game/types/Point';
 import ImageSet from '@/game/types/ImageSet';
@@ -97,28 +96,18 @@ function _drawArm(width:number, height:number, inset:number, resolved:ResolvedBo
 
 /** Paints one non-head part; vector placeholders have a fixed canvas-pixel border. Does not determine paint order. */
 export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageSet,
-  spriteOverrides:readonly SpriteOverride[], character:Character, context:CanvasRenderingContext2D) {
+  spriteOverrides:readonly SpriteOverride[], context:CanvasRenderingContext2D) {
   const { part } = resolved;
   assert(part.kind !== 'head'); // Head artwork uses the head painter.
-  const rotation = spriteOverrides.find(override => {
-    if (override.transformType !== 'rotate') return false;
-    const target = override.spriteKind;
-    const kind = target === 'viewerFrontArm' || target === 'viewerBackArm'
-      ? getViewerArmPartKind(character, target) : target;
-    return kind === part.kind;
-  });
-  const drawnPart = rotation?.transformType === 'rotate'
-    ? { part, transform:composeBodyTransforms(resolved.transform,
-      createBodyAttachmentTransform(part.pivotPoint, part.pivotPoint, rotation.rotateRadians)) }
-    : resolved;
-  const { transform } = drawnPart;
+  const rotation = spriteOverrides.find(override => override.transformType === 'rotate' && override.spriteKind === part.kind);
   const translation = spriteOverrides.find(override => override.transformType === 'translatePartHeight'
     && override.spriteKind === part.kind);
+  const translateY = translation?.transformType === 'translatePartHeight'
+    ? translation.translateHeightRatio * part.height * Math.hypot(resolved.transform.verticalX, resolved.transform.verticalY) : 0;
+  const drawnPart = { part, transform:applyBodyTransformDeltas(resolved.transform, part.pivotPoint,
+    rotation?.transformType === 'rotate' ? rotation.rotateRadians : 0, [0, translateY]) };
+  const { transform } = drawnPart;
   context.save();
-  if (translation?.transformType === 'translatePartHeight') {
-    const verticalScale = Math.hypot(transform.verticalX, transform.verticalY);
-    context.translate(0, translation.translateHeightRatio * part.height * verticalScale);
-  }
   const image = findImageBitmap(imageSet, part.imageUrl);
   if (image) {
     context.transform(transform.horizontalX, transform.horizontalY, transform.verticalX,

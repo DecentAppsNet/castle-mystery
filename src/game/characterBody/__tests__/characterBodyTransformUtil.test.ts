@@ -1,9 +1,46 @@
 import { describe, expect, it } from 'vitest';
 
-import { composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint } from '../index';
+import { applyBodyTransformDeltas, composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint } from '../characterBodyTransformUtil';
 import BodyPartTransform from '../types/BodyPartTransform';
 
 describe('characterBodyTransformUtil', () => {
+  describe('applyBodyTransformDeltas()', () => {
+    it('preserves the base transform for zero deltas', () => {
+      const base = createBodyAttachmentTransform([13, 29], [2, 3], Math.PI / 3);
+      expect(applyBodyTransformDeltas(base, [2, 3], 0, [0, 0])).toEqual(base);
+    });
+
+    it('rotates around the translated pivot without rotating or scaling the output-space displacement', () => {
+      const base:BodyPartTransform = {
+        horizontalX:0, horizontalY:-2, verticalX:-3, verticalY:0, translateX:100, translateY:200
+      };
+      const before = { ...base };
+      const originalPivot = transformBodyPoint(base, [2, 3]);
+      const result = applyBodyTransformDeltas(base, [2, 3], Math.PI / 2, [7, -11]);
+      const pivot = transformBodyPoint(result, [2, 3]);
+      const tip = transformBodyPoint(result, [4, 3]);
+      expect(pivot[0]).toBeCloseTo(originalPivot[0] + 7);
+      expect(pivot[1]).toBeCloseTo(originalPivot[1] - 11);
+      expect(tip[0]).toBeCloseTo(pivot[0] - 6);
+      expect(tip[1]).toBeCloseTo(pivot[1]);
+      expect(base).toEqual(before);
+    });
+
+    it('keeps the same output displacement at different local rotation angles', () => {
+      const base = createBodyAttachmentTransform([13, 29], [2, 3], Math.PI / 3);
+      for (const angle of [0, Math.PI / 4, -Math.PI / 2]) {
+        const rotated = applyBodyTransformDeltas(base, [2, 3], angle, [0, 0]);
+        const translated = applyBodyTransformDeltas(base, [2, 3], angle, [7, -11]);
+        for (const point of [[2, 3], [4, 6]] as const) {
+          const original = transformBodyPoint(rotated, point);
+          const result = transformBodyPoint(translated, point);
+          expect(result[0] - original[0]).toBeCloseTo(7);
+          expect(result[1] - original[1]).toBeCloseTo(-11);
+        }
+      }
+    });
+  });
+
   describe('createBodyAttachmentTransform()', () => {
     it('leaves a point unchanged for an origin attachment without rotation', () => {
       const transform = createBodyAttachmentTransform([0, 0], [0, 0]);

@@ -57,3 +57,10 @@ export function createBodyAttachmentTransform(connectionPoint:Point, pivotPoint:
     translateY:connectionPoint[1] - sine * pivotPoint[0] - cosine * pivotPoint[1]
   };
 }
+
+/** Applies a local-pivot angular delta, then a fixed output-space translation that also moves the pivot. */
+export function applyBodyTransformDeltas(base:BodyPartTransform, pivot:Point, rotateRadians:number,
+  translation:Point):BodyPartTransform {
+  const rotated = composeBodyTransforms(base, createBodyAttachmentTransform(pivot, pivot, rotateRadians));
+  return { ...rotated, translateX:rotated.translateX + translation[0], translateY:rotated.translateY + translation[1] };
+}

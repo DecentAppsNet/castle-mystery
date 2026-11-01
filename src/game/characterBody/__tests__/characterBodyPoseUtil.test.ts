@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createBodyPose, createRasterCharacterBody, getBodyBounds, getResolvedBodyPart,
-  composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint } from '../index';
+import { createBodyPose, createRasterCharacterBody, getBodyBounds, getResolvedBodyPart, transformBodyPoint } from '../index';
+import { composeBodyTransforms, createBodyAttachmentTransform } from '../characterBodyTransformUtil';
 import { resolveBodyHierarchy } from '../characterBodyPoseUtil';
 import { createRect, isPositionInOrOnRect } from '@/game/rectUtil';
 import BodyPart from '../types/BodyPart';

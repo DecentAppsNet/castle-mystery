@@ -57,6 +57,7 @@ import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawCont
 import CharacterCanvasAnatomy from "../effects/types/CharacterCanvasAnatomy";
 import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
 import RoomDrawResult from "./types/RoomDrawResult";
+import { aggregateSpriteOverrides } from '@/game/effects/spriteOverrideUtil';
 
 function _createEmptyRoomDrawResult():RoomDrawResult {
   return {
@@ -401,8 +402,8 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         result.characterEffectDrawEntries.push({ character:content.character, characterContext });
         result.characterBubbleAnchorById.set(content.character.id, characterAnatomy);
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
-        const spriteOverrides = handleBeforeCharacterDrawEffects(
-          content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context);
+        const spriteOverrides = aggregateSpriteOverrides(handleBeforeCharacterDrawEffects(
+          content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context), content.character);
         const heldItems = [
           { item:content.character.leftHandItem, hand:'left' as const },
           { item:content.character.rightHandItem, hand:'right' as const }
