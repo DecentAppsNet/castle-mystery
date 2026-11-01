@@ -275,6 +275,8 @@ Author every image and coordinate in the standing, right-facing rest pose. The l
 
 Left-facing reflects the whole raster pose without exchanging arm assets: the far arm stays behind the torso and the near arm stays in front. Leg names remain anatomical. Gameplay hand ownership stays character-relative: right-facing maps the far arm to the left hand and the near arm to the right hand; left-facing reverses that mapping. Raster hand anchors use the optional authored connections or their per-arm defaults described above. The vector fallback retains its existing attachments and hand behavior.
 
+For both raster and vector bodies, the center of the full held-item image rectangle attaches to the hand, including transparent padding. Artwork follows arm rotation, posture, facing reflection, and current-frame animation; its existing size and before/after-body layering are preserved. Emission bubbles sit above the transformed image bounds. Hand takes/drops meet the room image center at handoff; gives retain the recipient's body-center target. No alpha scanning, per-item translation/rotation properties, or fixed/inherited rotation modes are provided.
+
 Raster heads paint and measure against their exact part rectangle. Vector-body heads retain aspect-preserving, width-driven fitting; without artwork they retain the circular head. A configured body or skin image that cannot be fetched or decoded causes a useful application loading error naming the failed URL, even for an unused skin. Omitted artwork is not a load failure. Optional punch masks and unrelated assets keep their existing failure policies.
 
 ## Initial Appearance
@@ -624,7 +626,7 @@ The character aims at where the target is when pointing starts. They do not foll
 
 The pointing character is busy for the entire gesture, including lowering their arm. A following `:` activity starts after that. The target character or item remains free for other activities.
 
-A pointing character may already be holding an item. That item stays at its usual hand position; it does not follow the animated arm. This is separate from pointing at somebody else's held item.
+A pointing character may already be holding an item. That item remains centered on its hand and follows the animated arm's movement and orientation. This is separate from pointing at somebody else's held item.
 
 ### Waits
 

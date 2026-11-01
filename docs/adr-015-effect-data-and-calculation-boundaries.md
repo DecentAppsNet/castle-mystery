@@ -20,7 +20,7 @@ Choosing where to calculate effect data involves competing goals. Level loading 
 
 Extending `Effect` has a deliberately high barrier. A new member belongs there only when it has coherent meaning for all or most effect kinds and cannot be represented more appropriately by curried effect-specific data or draw-stage context.
 
-Effect-specific payloads must not turn `Effect` into a discriminated union of presentation models. `kind`, timing, and handler remain the common effect contract unless a separate architectural decision establishes a broadly shared need.
+Effect-specific payloads must not turn `Effect` into a discriminated union of presentation models. `kind`, timing, and the nullable `anatomyHandler` and `drawHandler` capabilities form the common effect contract. Separating anatomy calculation from drawing is a broadly shared need, not an effect-specific payload.
 
 ### 2. Level loading supplies world and scheduling inputs
 
@@ -58,6 +58,14 @@ An effect-specific need alone is not sufficient reason to expand `EffectDrawCall
 ### 5. Resolve conflicting goals case by case
 
 These principles establish boundaries, not an exhaustive placement algorithm. A requirement may involve stable data, current-frame state, shared layout, and expensive calculation simultaneously. When the choices conflict or would create significant coupling, document the tradeoff and perform further design work rather than forcing the calculation into one layer solely to satisfy a guideline in this ADR.
+
+### 6. Prepare Anatomy Separately From Drawing
+
+`anatomyHandler` receives narrowly scoped readonly base presentation inputs and timeline/meta-time clocks, returning relative override data or an empty array. It receives neither a canvas context nor a draw-stage discriminator, and performs no drawing, I/O, mutation, or timeline reconstruction. Stable effect data remains curried by factories. `drawHandler` retains the existing `EffectDrawCall` stages and returns `void`; drawing results cannot contribute anatomy. No anatomy draw stage or result compatibility path is retained.
+
+Room presentation prepares base layouts, torso centers, and numeric room-image center offsets for all drawable characters before invoking anatomy handlers. It collects each capability once, aggregates numeric contributions, resolves visual hierarchy and deferred hand displacement, and prepares held-item bounds before executing queued content draws in the original paint order. Frame-local closures retain completed visual geometry; handlers never consume another handler's output or a partially updated visual map. Base bounds and unrelated anchors remain separate from animation.
+
+Hand transfers receive numeric endpoints, not bitmaps or final attachment references. Take/drop endpoints convert room base anchors to full image-rectangle centers; gives retain recipient base torso centers. Inventory transfers remain drawing operations with their existing base anchors. The displacement contract is specified in ADR 022.
 
 ## Rationale
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { setSeed } from '@/common/randUtil';
+import characterAnatomyContext from '@/game/effects/__tests__/fixtures/characterAnatomyContext';
 import { createKeyframeAtTime } from '@/game/timeline';
 import { BodyOrientation } from '@/game/types/Character';
 import sameTimeText from './fixtures/speech-gestures-same-time.md?raw';
@@ -20,7 +21,7 @@ describe('level loading - speech gestures', () => {
     const handler = effect.anatomyHandler;
     expect(handler).toEqual(expect.any(Function));
     const sample = (time:number, bodyOrientation:BodyOrientation) => handler!({
-      bodyOrientation, isNearArmHoldingItem:false, isFarArmHoldingItem:false
+      ...characterAnatomyContext, bodyOrientation
     }, time, 0);
     const time = Array.from({ length:Math.floor(effect.endTime / 100) }, (_, timeI) => timeI * 100)
       .find(candidate => sample(candidate, speaker.bodyOrientation).some(override => override.spriteKind !== 'head'));
