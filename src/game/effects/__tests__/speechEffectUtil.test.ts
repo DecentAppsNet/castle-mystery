@@ -8,10 +8,20 @@ import CharacterEffectDrawContext from '../types/CharacterEffectDrawContext';
 import CharacterAnatomyContext from '../types/CharacterAnatomyContext';
 import Effect from '../types/Effect';
 import EffectDrawCall from '../types/EffectDrawCall';
+import characterAnatomyContext from './fixtures/characterAnatomyContext';
+import { createRoomContentDisplayLayout } from '@/game/roomContentDisplayPositionUtil';
+import { createDefaultRoom } from '@/game/types/Room';
 
 const TEXT:PreparedAnimationText = { plainText:'Hello.', spans:[] };
-const CHARACTER_CONTEXT:CharacterAnatomyContext = { bodyOrientation:'standing', isNearArmHoldingItem:false,
-  isFarArmHoldingItem:false };
+const CHARACTER_CONTEXT:CharacterAnatomyContext = { ...characterAnatomyContext };
+const DRAW_CHARACTER_CONTEXT:CharacterEffectDrawContext = {
+  bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false,
+  characterAnatomy:{ anchorX:0, anchorTopY:0, characterCenterCanvasPoint:[0, 0],
+    headCenterCanvasPoint:[0, 0], headRadius:1, leftHandItemCanvasPoint:[0, 0], rightHandItemCanvasPoint:[0, 0] },
+  characterAnatomyById:new Map(), imageSet:new Map(),
+  isActiveCharacter:false, isCharacterInActiveRoom:false, isLevelComplete:false,
+  roomContentDisplayLayout:createRoomContentDisplayLayout(createDefaultRoom(), [])
+};
 const SCALING_FACTORS = {} as ScalingFactors;
 const CANVAS_CONTEXT = {} as CanvasRenderingContext2D;
 
@@ -108,14 +118,12 @@ describe('speechEffectUtil', () => {
 
     it('does not return anatomy through drawing stages', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
-      const characterContext = CHARACTER_CONTEXT as CharacterEffectDrawContext;
+      const characterContext = DRAW_CHARACTER_CONTEXT;
       expect(_draw(effect, { stage:'beforeCharacter', characterContext })).toBeNull();
       expect(_draw(effect, { stage:'afterCharacter', characterContext })).toBeNull();
       expect(_draw(effect, {
         stage:'characterAfterLevel',
-        characterContext:{ ...characterContext, characterAnatomy:{
-          anchorX:0, anchorTopY:0
-        } as CharacterEffectDrawContext['characterAnatomy'], isCharacterInActiveRoom:false, isLevelComplete:false }
+        characterContext
       })).toBeNull();
     });
   });
@@ -171,7 +179,7 @@ describe('speechEffectUtil', () => {
     it('keeps thoughts restricted to the existing head override', () => {
       const effect = createThinksEffect(TEXT, 100, 60000, 'right');
       expect(_query(effect, 500).map(override => override.spriteKind)).toEqual(['head']);
-      expect(_draw(effect, { stage:'beforeCharacter', characterContext:CHARACTER_CONTEXT as CharacterEffectDrawContext })).toBeNull();
+      expect(_draw(effect, { stage:'beforeCharacter', characterContext:DRAW_CHARACTER_CONTEXT })).toBeNull();
     });
 
     it('returns no thought anatomy outside its interval or for zero duration', () => {

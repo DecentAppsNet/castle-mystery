@@ -48,10 +48,12 @@ import ExitType from "../types/ExitType";
 import StairPart, { StairPartType } from "../types/StairPart";
 import { findRoom } from "../roomUtil";
 import { getCharacterCanvasRect } from "./characterDrawUtil";
-import { getItemCanvasRectInRoom } from "./itemDrawUtil";
+import { getItemCanvasRectInRoom, getItemCanvasPositionInRoom } from "./itemDrawUtil";
+import Point from '../types/Point';
 import { calcUndiscoveredMarkerHeightPixels, drawUndiscoveredMarker } from "./undiscoveredMarkerDrawUtil";
 import DiscoveryState from "../types/DiscoveryState";
-import { createRoomContentDisplayLayout, RoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
+import { createRoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
+import RoomContentDisplayLayout from "../types/RoomContentDisplayLayout";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawContext";
 import CharacterCanvasAnatomy from "../effects/types/CharacterCanvasAnatomy";
@@ -402,10 +404,22 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         result.characterEffectDrawEntries.push({ character:content.character, characterContext });
         result.characterBubbleAnchorById.set(content.character.id, characterAnatomy);
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
+        const roomItemCenterOffsetById = new Map<string, Point>();
+        const [itemAnchorX, itemAnchorY] = getItemCanvasPositionInRoom(content.displayPosition, scalingFactors);
+        for (const item of [content.character.leftHandItem, content.character.rightHandItem]) {
+          if (!item) continue;
+          const rect = getItemCanvasRectInRoom(item, content.displayPosition, scalingFactors, imageSet);
+          roomItemCenterOffsetById.set(item.id, rect.width === 0 && rect.height === 0 ? [0, 0]
+            : [rect.x + rect.width / 2 - itemAnchorX, rect.y + rect.height / 2 - itemAnchorY]);
+        }
         const anatomyOverrides = collectAnatomyOverrides(content.character.effects, {
           bodyOrientation:characterContext.bodyOrientation,
           isNearArmHoldingItem:characterContext.isNearArmHoldingItem,
-          isFarArmHoldingItem:characterContext.isFarArmHoldingItem
+          isFarArmHoldingItem:characterContext.isFarArmHoldingItem,
+          leftHandPartKind:leftArm === 'nearArm' ? 'nearHand' : 'farHand',
+          scalingFactors,
+          roomItemCenterOffsetById,
+          roomContentDisplayLayout:displayLayout
         }, gameTime, metaTime);
         const spriteOverrides = aggregateSpriteOverrides([...anatomyOverrides, ...handleBeforeCharacterDrawEffects(
           content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context)], content.character);

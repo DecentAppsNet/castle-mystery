@@ -45,6 +45,18 @@ export function createVisualBodyLayout(base:CharacterLayout, overrides:readonly 
   }
   const torso = getResolvedBodyPart(base.parts, 'torso');
   _resolve(torso, null);
+  for (const [partI, resolved] of parts.entries()) {
+    if (resolved.part.kind !== 'nearHand' && resolved.part.kind !== 'farHand') continue;
+    const reference = resolved.transform;
+    let translateX = 0, translateY = 0;
+    for (const override of overrides) {
+      if (override.transformType !== 'deferredHandDisplacement' || override.spriteKind !== resolved.part.kind) continue;
+      translateX += override.weight * (override.destinationCanvasPoint[0] - reference.translateX);
+      translateY += override.weight * (override.destinationCanvasPoint[1] - reference.translateY);
+    }
+    parts[partI] = { ...resolved,
+      transform:{ ...reference, translateX:reference.translateX + translateX, translateY:reference.translateY + translateY } };
+  }
   const isRasterBody = torso.part.imageUrl !== null;
   return { ...base, parts,
     leftHand:_getHand(parts, getHandArmPartKind(isRasterBody, facing, 'left')),

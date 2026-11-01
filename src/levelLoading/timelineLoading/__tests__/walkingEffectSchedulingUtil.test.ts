@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createKeyframeAtTime } from '@/game/timeline';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createWalkEffect } from '@/game/effects/walkEffectUtil';
+import characterAnatomyContext from '@/game/effects/__tests__/fixtures/characterAnatomyContext';
 import { addCharacterEffect, addCharacterKeyChanges, createEditableTimeline } from '../editingUtil';
 import EditableTimeline from '../types/EditableTimeline';
 import { scheduleWalkingEffects } from '../walkingEffectSchedulingUtil';
@@ -124,9 +125,9 @@ describe('walkingEffectSchedulingUtil', () => {
       expect(_walksAt(timeline, 500)).toEqual([]);
       expect(_walksAt(timeline, 350)[0].anatomyHandler).toEqual(expect.any(Function));
       expect(_walksAt(timeline, 350)[0].anatomyHandler!(
-        { bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false }, 350, 0
+        characterAnatomyContext, 350, 0
       )).toEqual(createWalkEffect(100, 500).anatomyHandler!(
-        { bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false }, 350, 0
+        characterAnatomyContext, 350, 0
       ));
     });
   });

@@ -6,9 +6,69 @@ import { createVisualBodyLayout } from '../characterBodyLayoutUtil';
 import { applyBodyTransformDeltas, composeBodyTransforms, createBodyAttachmentTransform } from '../characterBodyTransformUtil';
 import { rotateHeadPose } from '../characterHeadGeometryUtil';
 import { aggregateSpriteOverrides } from '@/game/effects/spriteOverrideUtil';
+import SpriteOverride from '@/game/effects/types/SpriteOverride';
+
+function _createDeferredTestLayout() {
+  const root = createRasterCharacterBody(rasterBody);
+  const base = createBodyCanvasLayout(createBodyPose(root, 'sitting', 'left'), [137, 251], { scaleX:3, scaleY:5 }, 'left');
+  const rotation:SpriteOverride = { spriteKind:'nearArm', transformType:'rotate', rotateRadians:0.7 };
+  const animated = createVisualBodyLayout(base, [rotation], 'left');
+  const reference = getResolvedBodyPart(animated.parts, 'nearHand').transform;
+  return { root, base, rotation, animated, reference };
+}
 
 describe('characterBodyLayoutUtil', () => {
   describe('createVisualBodyLayout()', () => {
+    it('preserves the animated attachment when deferred weight is zero', () => {
+      const { base, rotation, animated } = _createDeferredTestLayout();
+      const result = createVisualBodyLayout(base, [rotation,
+        { spriteKind:'nearHand', transformType:'deferredHandDisplacement', destinationCanvasPoint:[800, 900], weight:0 }
+      ], 'left');
+      expect(result).toEqual(animated);
+    });
+
+    it('reaches a canvas endpoint at full weight without changing inherited orientation or other parts', () => {
+      const { base, rotation, animated, reference } = _createDeferredTestLayout();
+      const before = structuredClone(base);
+      const result = createVisualBodyLayout(base, [rotation,
+        { spriteKind:'nearHand', transformType:'deferredHandDisplacement', destinationCanvasPoint:[800, 900], weight:1 }
+      ], 'left');
+      expect(getResolvedBodyPart(result.parts, 'nearHand').transform).toEqual({ ...reference, translateX:800, translateY:900 });
+      expect(result.leftHand).toEqual({ x:800, y:900 });
+      expect(result.parts.filter(({ part }) => part.kind !== 'nearHand'))
+        .toEqual(animated.parts.filter(({ part }) => part.kind !== 'nearHand'));
+      expect(result.bounds).toBe(base.bounds);
+      expect(base).toEqual(before);
+    });
+
+    it('interpolates from the animated hand rather than the base hand in fixed canvas axes', () => {
+      const { base, rotation, reference } = _createDeferredTestLayout();
+      expect(reference).not.toEqual(getResolvedBodyPart(base.parts, 'nearHand').transform);
+      const result = createVisualBodyLayout(base, [rotation,
+        { spriteKind:'nearHand', transformType:'deferredHandDisplacement', destinationCanvasPoint:[800, 900], weight:0.25 }
+      ], 'left');
+      expect(result.leftHand.x).toBeCloseTo(reference.translateX + 0.25 * (800 - reference.translateX));
+      expect(result.leftHand.y).toBeCloseTo(reference.translateY + 0.25 * (900 - reference.translateY));
+    });
+
+    it('sums independent contributions from one reference without feedback or order dependence', () => {
+      const { root, base, rotation, reference } = _createDeferredTestLayout();
+      const contributions:SpriteOverride[] = [rotation,
+        { spriteKind:'nearHand', transformType:'deferredHandDisplacement', destinationCanvasPoint:[800, 900], weight:0.2 },
+        { spriteKind:'nearHand', transformType:'deferredHandDisplacement', destinationCanvasPoint:[-120, 350], weight:0.4 }
+      ];
+      const before = structuredClone(contributions);
+      const character = { rootBodyPart:root, facingDirection:'left' as const };
+      const result = createVisualBodyLayout(base, aggregateSpriteOverrides(contributions, character), 'left');
+      const reversed = createVisualBodyLayout(base, aggregateSpriteOverrides([...contributions].reverse(), character), 'left');
+      expect(result.leftHand.x).toBeCloseTo(reference.translateX + 0.2 * (800 - reference.translateX) + 0.4 * (-120 - reference.translateX));
+      expect(result.leftHand.y).toBeCloseTo(reference.translateY + 0.2 * (900 - reference.translateY) + 0.4 * (350 - reference.translateY));
+      expect(reversed.leftHand.x).toBeCloseTo(result.leftHand.x);
+      expect(reversed.leftHand.y).toBeCloseTo(result.leftHand.y);
+      expect(createVisualBodyLayout(base, aggregateSpriteOverrides(contributions, character), 'left')).toEqual(result);
+      expect(contributions).toEqual(before);
+    });
+
     it('preserves the complete base layout with zero contributions', () => {
       const root = createDefaultCharacterBody();
       const base = createBodyCanvasLayout(createBodyPose(root, 'sitting', 'left'), [137, 251], { scaleX:3, scaleY:5 }, 'left');

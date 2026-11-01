@@ -22,6 +22,10 @@ export function aggregateSpriteOverrides(overrides:readonly SpriteOverride[],
   character:CharacterArmContext):SpriteOverride[] {
   const aggregated:SpriteOverride[] = [];
   for (const override of overrides) {
+    if (override.transformType === 'deferredHandDisplacement') {
+      aggregated.push({ ...override });
+      continue;
+    }
     const next = override.transformType === 'rotate'
       && (override.spriteKind === 'viewerFrontArm' || override.spriteKind === 'viewerBackArm')
       ? { ...override, spriteKind:getViewerArmPartKind(character, override.spriteKind) } : { ...override };

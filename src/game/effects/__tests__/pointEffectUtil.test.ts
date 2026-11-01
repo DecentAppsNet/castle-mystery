@@ -10,6 +10,7 @@ import CharacterAnatomyContext from '../types/CharacterAnatomyContext';
 import SpriteOverride from '../types/SpriteOverride';
 import Effect from '../types/Effect';
 import { createPointEffect as createSnapshotPointEffect, getPointDuration } from '../pointEffectUtil';
+import characterAnatomyContext from './fixtures/characterAnatomyContext';
 
 type RotationOverride = Extract<SpriteOverride, { transformType:'rotate' }>;
 
@@ -26,7 +27,7 @@ function _createEffect(speed:'quickly'|'slowly'|null = null):Effect {
 }
 
 const CHARACTER_CONTEXT:CharacterAnatomyContext = {
-  bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false
+  ...characterAnatomyContext
 };
 
 function _query(effect:Effect|null, time:number, metaTime = 0) {

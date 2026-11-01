@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import CharacterAnatomyContext from '../types/CharacterAnatomyContext';
 import Effect from '../types/Effect';
 import { createWalkEffect } from '../walkEffectUtil';
+import characterAnatomyContext from './fixtures/characterAnatomyContext';
 
 const CHARACTER_CONTEXT:CharacterAnatomyContext = {
-  bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false
+  ...characterAnatomyContext
 };
 
 function _query(effect:Effect, time:number, metaTime = 0) {

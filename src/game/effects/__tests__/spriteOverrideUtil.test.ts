@@ -5,12 +5,13 @@ import SpriteOverride from '../types/SpriteOverride';
 import CharacterAnatomyContext from '../types/CharacterAnatomyContext';
 import Effect from '../types/Effect';
 import { createWalkEffect } from '../walkEffectUtil';
+import characterAnatomyContext from './fixtures/characterAnatomyContext';
 
 describe('spriteOverrideUtil', () => {
   describe('collectAnatomyOverrides()', () => {
     it('calls each anatomy capability once with the same readonly context and clocks, never invoking drawing', () => {
       const context:CharacterAnatomyContext = Object.freeze({
-        bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:true
+        ...characterAnatomyContext, isFarArmHoldingItem:true
       });
       const calls:unknown[] = [];
       const contribution:SpriteOverride = { spriteKind:'head', transformType:'rotate', rotateRadians:0.2 };
@@ -30,7 +31,7 @@ describe('spriteOverrideUtil', () => {
 
     it('returns an empty array for no effects or inactive anatomy', () => {
       const context:CharacterAnatomyContext = {
-        bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false
+        ...characterAnatomyContext
       };
       expect(collectAnatomyOverrides([], context, 0, 0)).toEqual([]);
       expect(collectAnatomyOverrides([createWalkEffect(100, 1100)], context, 99, 0)).toEqual([]);
@@ -39,7 +40,7 @@ describe('spriteOverrideUtil', () => {
     it('collects a walking contribution once before aggregation and preserves legacy contributions', () => {
       const character = createDefaultCharacter();
       const context:CharacterAnatomyContext = {
-        bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false
+        ...characterAnatomyContext
       };
       const effect = createWalkEffect(100, 1100);
       const collected = collectAnatomyOverrides([effect], context, 400, 0);

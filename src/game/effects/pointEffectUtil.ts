@@ -7,7 +7,8 @@ import { createBodyPose, getResolvedBodyPart, getViewerArmPartKind, transformBod
 import Character from '@/game/types/Character';
 import Point from '@/game/types/Point';
 import PartKind from '@/game/characterBody/types/PartKind';
-import { createRoomContentDisplayLayout, RoomContentDisplayLayout } from '@/game/roomContentDisplayPositionUtil';
+import { createRoomContentDisplayLayout } from '@/game/roomContentDisplayPositionUtil';
+import RoomContentDisplayLayout from '@/game/types/RoomContentDisplayLayout';
 import { findRoomAtPosition } from '@/game/roomUtil';
 import { ITEM_CUBOID_HEIGHT_GAME } from '@/game/itemSizeUtil';
 import PointStartSnapshot from './types/PointStartSnapshot';

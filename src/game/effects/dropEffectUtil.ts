@@ -10,13 +10,15 @@ import ScalingFactors from "@/game/types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
 import { EffectHandlerResult } from "./types/EffectHandler";
+import CharacterAnatomyContext from './types/CharacterAnatomyContext';
+import { assertNonNullable } from 'decent-portal';
 
 const DROP_EFFECT_TIME = 500;
 
 type CharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter'|'afterCharacter' }>;
-function _getDestinationCanvasPoint(drawCall:CharacterDrawCall, item:Item, destinationFloorPosition:Position, 
+function _getDestinationCanvasPoint(roomContentDisplayLayout:CharacterAnatomyContext['roomContentDisplayLayout'], item:Item, destinationFloorPosition:Position,
     scalingFactors:ScalingFactors):[number, number] {
-  const displayPosition = drawCall.characterContext.roomContentDisplayLayout
+  const displayPosition = roomContentDisplayLayout
     .findProspectiveItemDisplayPosition(item, destinationFloorPosition);
   return getItemCanvasPositionInRoom(displayPosition, scalingFactors);
 }
@@ -27,7 +29,7 @@ function _handleCharacterDrop(drawCall:CharacterDrawCall, item:Item, sourcePlace
     context:CanvasRenderingContext2D):EffectHandlerResult|null {
   const characterContext = drawCall.characterContext;
   const anatomy = drawCall.characterContext.characterAnatomy;
-  const destination = _getDestinationCanvasPoint(drawCall, item, destinationFloorPosition, scalingFactors);
+  const destination = _getDestinationCanvasPoint(characterContext.roomContentDisplayLayout, item, destinationFloorPosition, scalingFactors);
   const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
   if (sourcePlacement === INVENTORY) {
     if (drawCall.stage === 'beforeCharacter') return null;
@@ -35,17 +37,7 @@ function _handleCharacterDrop(drawCall:CharacterDrawCall, item:Item, sourcePlace
     drawItemAtCanvasPositionInRoom(item, x, y, scalingFactors, context, characterContext.imageSet);
     return null;
   }
-  if (drawCall.stage === 'afterCharacter') return null;
-  const source = sourcePlacement === LEFT_HAND
-    ? anatomy.leftHandItemCanvasPoint
-    : anatomy.rightHandItemCanvasPoint;
-  const animated = interpolateNumberPair(source, destination, progress);
-  return { spriteOverrides:[{
-    spriteKind:sourcePlacement === LEFT_HAND ? 'leftHandItem' : 'rightHandItem',
-    transformType:'translateCanvas',
-    translateCanvasX:animated[0] - source[0],
-    translateCanvasY:animated[1] - source[1]
-  }] };
+  return null;
 }
 
 function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
@@ -58,6 +50,7 @@ function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:Charact
   return null;
 }
 
+/** Creates a deferred hand transfer or the existing draw-only inventory transfer to a room destination. */
 export function createDropEffect(item:Item, sourcePlacement:CharacterOwnedItemPlacement,
     destinationFloorPosition:Position, startTime:number):Effect {
   const endTime = startTime + DROP_EFFECT_TIME;
@@ -67,8 +60,20 @@ export function createDropEffect(item:Item, sourcePlacement:CharacterOwnedItemPl
     kind:'dropItem',
     startTime,
     endTime,
-    anatomyHandler:null,
-    drawHandler:(drawCall, scalingFactors, time, _metaTime, context) =>
+    anatomyHandler:sourcePlacement === INVENTORY ? null : (context, time) => {
+      if (time < startTime || time > endTime) return [];
+      const centerOffset = context.roomItemCenterOffsetById.get(effectItem.id);
+      assertNonNullable(centerOffset, `Missing room image center offset for held item ${effectItem.id}`);
+      const destination = _getDestinationCanvasPoint(context.roomContentDisplayLayout, effectItem, effectDestination, context.scalingFactors);
+      return [{
+        spriteKind:sourcePlacement === LEFT_HAND ? context.leftHandPartKind
+          : context.leftHandPartKind === 'nearHand' ? 'farHand' : 'nearHand',
+        transformType:'deferredHandDisplacement',
+        destinationCanvasPoint:[destination[0] + centerOffset[0], destination[1] + centerOffset[1]],
+        weight:clamp((time - startTime) / (endTime - startTime), 0, 1)
+      }];
+    },
+    drawHandler:sourcePlacement !== INVENTORY ? null : (drawCall, scalingFactors, time, _metaTime, context) =>
       _handleDrop(drawCall, effectItem, sourcePlacement, effectDestination, startTime, endTime,
         scalingFactors, time, context)
   }

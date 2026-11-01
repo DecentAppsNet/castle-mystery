@@ -7,20 +7,8 @@ import Character from "./types/Character";
 import Item from "./types/Item";
 import Position from "./types/Position";
 import Room from "./types/Room";
-
-type RoomContentDisplayLayoutEntry = {
-  displayPosition:Position,
-  squarePosition:Position,
-  painterOrderAnchor:Position,
-  stackMemberI:number
-}
-
-export type RoomContentDisplayLayout = {
-  itemLayoutById:ReadonlyMap<string, RoomContentDisplayLayoutEntry>,
-  characterLayoutById:ReadonlyMap<string, RoomContentDisplayLayoutEntry>,
-  findProspectiveItemDisplayPosition:(item:Item, destinationFloorPosition:Position,
-    insertionRoomItemI?:number) => Position
-}
+import RoomContentDisplayLayout from "./types/RoomContentDisplayLayout";
+import RoomContentDisplayLayoutEntry from "./types/RoomContentDisplayLayoutEntry";
 
 type SquareLayout = {
   supportTransform:Position,
@@ -96,6 +84,10 @@ export function createRoomContentDisplayLayout(room:Room, charactersInRoom:Reado
     });
   });
 
+  // Transfer effects call this later in the same frame to locate an item without inserting it into the room.
+  // The closure keeps stack support private: drop uses the completed stack; take supplies its original
+  // room-item index to sum only preceding supports. That path reads captured room.items, which must
+  // remain unchanged while this layout is in use. Both paths include the transferred item's draw offset.
   const findProspectiveItemDisplayPosition = (item:Item, destinationFloorPosition:Position,
       insertionRoomItemI?:number):Position => {
     const squareLayout = layoutBySquareKey.get(_createSquareKey(destinationFloorPosition));

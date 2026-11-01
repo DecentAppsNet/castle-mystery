@@ -1,5 +1,6 @@
 import PartKind from '@/game/characterBody/types/PartKind';
 import ViewerArmKind from '@/game/characterBody/types/ViewerArmKind';
+import Point from '@/game/types/Point';
 
 type BodyPartTarget<Kind extends PartKind|ViewerArmKind> = { spriteKind:Kind };
 
@@ -17,6 +18,10 @@ type SpriteOverride = BodyPartTarget<'head'> & {
   transformType:'translatePartHeight',
   /** Canvas-Y displacement in units of this part's logical height, projected once; negative is upward. */
   translateHeightRatio:number
+}|BodyPartTarget<'nearHand'|'farHand'> & {
+  transformType:'deferredHandDisplacement',
+  destinationCanvasPoint:Point,
+  weight:number
 }|{
   spriteKind:'leftHandItem'|'rightHandItem',
   transformType:'translateCanvas',

@@ -1,4 +1,4 @@
-import { RoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
+import RoomContentDisplayLayout from "@/game/types/RoomContentDisplayLayout";
 import ImageSet from "@/game/types/ImageSet";
 import { BodyOrientation } from "@/game/types/Character";
 import CharacterCanvasAnatomy from "./CharacterCanvasAnatomy";

@@ -3,6 +3,7 @@ import { assertNonNullable } from 'decent-portal';
 import { createPointEffect, getPointDuration } from '@/game/effects/pointEffectUtil';
 import Effect from '@/game/effects/types/Effect';
 import PointStartSnapshot from '@/game/effects/types/PointStartSnapshot';
+import characterAnatomyContext from '@/game/effects/__tests__/fixtures/characterAnatomyContext';
 import { createKeyframeAtTime } from '@/game/timeline';
 import Level from '@/game/types/Level';
 import sameTimeText from './fixtures/points-same-time.md?raw';
@@ -20,7 +21,7 @@ function _pointAt(level:Level, time:number):Effect {
 
 function _sample(effect:Effect, time:number) {
   expect(effect.anatomyHandler).toEqual(expect.any(Function));
-  return effect.anatomyHandler!({ bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false }, time, 0);
+  return effect.anatomyHandler!(characterAnatomyContext, time, 0);
 }
 
 function _expectedPoint(level:Level, time:number, target:PointStartSnapshot['target'] = { kind:'character', characterId:'jo' },

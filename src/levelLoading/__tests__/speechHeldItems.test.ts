@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { setSeed } from '@/common/randUtil';
 import { getHandArmPartKind } from '@/game/characterBody';
 import CharacterAnatomyContext from '@/game/effects/types/CharacterAnatomyContext';
+import characterAnatomyContext from '@/game/effects/__tests__/fixtures/characterAnatomyContext';
 import { createKeyframeAtTime } from '@/game/timeline';
 import baseText from './fixtures/emits/emits-base.md?raw';
 import rasterText from './fixtures/characters-raster.md?raw';
@@ -22,6 +23,8 @@ function _sampleSpeech(text:string, itinerary:readonly string[]) {
   expect(character).toBeDefined();
   const leftArm = getHandArmPartKind(character!.rootBodyPart.imageUrl !== null, speaker.facingDirection, 'left');
   const characterContext:CharacterAnatomyContext = {
+    ...characterAnatomyContext,
+    leftHandPartKind:leftArm === 'nearArm' ? 'nearHand' : 'farHand',
     bodyOrientation:speaker.bodyOrientation,
     isNearArmHoldingItem:(leftArm === 'nearArm' ? speaker.leftHandItem : speaker.rightHandItem) !== null,
     isFarArmHoldingItem:(leftArm === 'farArm' ? speaker.leftHandItem : speaker.rightHandItem) !== null
