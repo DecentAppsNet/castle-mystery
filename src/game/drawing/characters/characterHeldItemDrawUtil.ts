@@ -30,12 +30,6 @@ function _createHeldItemDrawRect(scalingFactors:ScalingFactors) {
   };
 }
 
-/** Returns the selected gameplay hand's canvas-space attachment origin without an image offset. */
-export function getHeldItemCanvasPoint(layout:CharacterLayout, hand:Hand):[number, number] {
-  const handPosition = hand === 'left' ? layout.leftHand : layout.rightHand;
-  return [handPosition.x, handPosition.y];
-}
-
 function _createHeldItemPlacement(item:Item, character:Character, layout:CharacterLayout, hand:Hand,
   scalingFactors:ScalingFactors, imageSet:ImageSet) {
   const imageDrawRect = _createHeldItemDrawRect(scalingFactors);

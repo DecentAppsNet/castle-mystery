@@ -17,7 +17,7 @@ const CHARACTER_CONTEXT:CharacterAnatomyContext = { ...characterAnatomyContext }
 const DRAW_CHARACTER_CONTEXT:CharacterEffectDrawContext = {
   bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false,
   characterAnatomy:{ anchorX:0, anchorTopY:0, characterCenterCanvasPoint:[0, 0],
-    headCenterCanvasPoint:[0, 0], headRadius:1, leftHandItemCanvasPoint:[0, 0], rightHandItemCanvasPoint:[0, 0] },
+    headCenterCanvasPoint:[0, 0], headRadius:1 },
   characterAnatomyById:new Map(), imageSet:new Map(),
   isActiveCharacter:false, isCharacterInActiveRoom:false, isLevelComplete:false,
   roomContentDisplayLayout:createRoomContentDisplayLayout(createDefaultRoom(), [])

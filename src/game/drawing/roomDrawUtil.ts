@@ -37,7 +37,7 @@ import { drawRoomRoofs } from "./roomRoofDrawUtil";
 import { drawStairPart } from "./stairDrawUtil";
 import { createTiledTextureFaceCanvas } from "./textureFaceDrawUtil";
 import { findTexturePrimaryImageOperation } from "@/game/textureUtil";
-import { getHeldItemBubbleAnchor, getHeldItemCanvasPoint, hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
+import { getHeldItemBubbleAnchor, hasDrawnUndiscoveredHeldItem } from "./characters/characterHeldItemDrawUtil";
 import Character from "../types/Character";
 import GameState from "../types/GameState";
 import Room from "../types/Room";
@@ -348,6 +348,7 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
   const characterCanvasLayoutById = new Map<string, ReturnType<typeof createCharacterCanvasLayout>>();
   const characterAnatomyById = new Map<string, CharacterCanvasAnatomy>();
   const baseCharacterCenterById = new Map<string, Point>();
+  const roomItemCenterOffsetById = new Map<string, Point>();
   contents.forEach(content => {
     if (content.type !== 'character') return;
     const canvasLayout = createCharacterCanvasLayout(
@@ -359,34 +360,38 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
       anchorTopY:canvasLayout.anchorTopY,
       characterCenterCanvasPoint:canvasLayout.characterCenterCanvasPoint,
       headCenterCanvasPoint:[canvasLayout.layout.head.centerX, canvasLayout.layout.head.centerY],
-      headRadius:canvasLayout.layout.head.radius,
-      leftHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'left'),
-      rightHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'right')
+      headRadius:canvasLayout.layout.head.radius
     });
+    const [itemAnchorX, itemAnchorY] = getItemCanvasPositionInRoom(content.displayPosition, scalingFactors);
+    for (const item of [content.character.leftHandItem, content.character.rightHandItem]) {
+      if (!item) continue;
+      const rect = getItemCanvasRectInRoom(item, content.displayPosition, scalingFactors, imageSet);
+      roomItemCenterOffsetById.set(item.id, rect.width === 0 && rect.height === 0 ? [0, 0]
+        : [rect.x + rect.width / 2 - itemAnchorX, rect.y + rect.height / 2 - itemAnchorY]);
+    }
   });
 
-  // Draw ordered room content and dispatch character effects around their owners.
+  // Prepare completed geometry and defer painting until every character has been resolved.
   const result = _createEmptyRoomDrawResult();
+  const drawContents:(() => void)[] = [];
   contents.forEach(content => {
     switch(content.type) {
       case 'stair':
-        drawStairPart(content.stairPart, room, scalingFactors, context, imageSet, stairTextureLightness);
+        drawContents.push(() => drawStairPart(content.stairPart, room, scalingFactors, context, imageSet, stairTextureLightness));
         return;
       case 'item':
-        if (layoutPlanner && isItemInteractive(content.item)) {
-          layoutPlanner.reserveRect(getItemCanvasRectInRoom(content.item, content.displayPosition, scalingFactors, imageSet));
-        }
-        const itemAnchor = drawRoomItem(content.item, content.displayPosition, scalingFactors, context, imageSet,
-          content.item.id === hoveredItemId, metaTime);
-        result.itemBubbleAnchorById.set(content.item.id, itemAnchor);
+        drawContents.push(() => {
+          if (layoutPlanner && isItemInteractive(content.item)) {
+            layoutPlanner.reserveRect(getItemCanvasRectInRoom(content.item, content.displayPosition, scalingFactors, imageSet));
+          }
+          const itemAnchor = drawRoomItem(content.item, content.displayPosition, scalingFactors, context, imageSet,
+            content.item.id === hoveredItemId, metaTime);
+          result.itemBubbleAnchorById.set(content.item.id, itemAnchor);
+        });
         return;
       case 'character':
         const characterCanvasLayout = characterCanvasLayoutById.get(content.character.id);
         assertNonNullable(characterCanvasLayout);
-        if (layoutPlanner && isCharacterInteractive(content.character)) {
-          layoutPlanner.reserveRect(getCharacterCanvasRect(
-            content.character, content.displayPosition, scalingFactors, gameTime, imageSet, characterCanvasLayout));
-        }
         const characterAnatomy = characterAnatomyById.get(content.character.id);
         assertNonNullable(characterAnatomy);
         const leftArm = getHandArmPartKind(content.character.rootBodyPart.imageUrl !== null,
@@ -406,14 +411,6 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         result.characterEffectDrawEntries.push({ character:content.character, characterContext });
         result.characterBubbleAnchorById.set(content.character.id, characterAnatomy);
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
-        const roomItemCenterOffsetById = new Map<string, Point>();
-        const [itemAnchorX, itemAnchorY] = getItemCanvasPositionInRoom(content.displayPosition, scalingFactors);
-        for (const item of [content.character.leftHandItem, content.character.rightHandItem]) {
-          if (!item) continue;
-          const rect = getItemCanvasRectInRoom(item, content.displayPosition, scalingFactors, imageSet);
-          roomItemCenterOffsetById.set(item.id, rect.width === 0 && rect.height === 0 ? [0, 0]
-            : [rect.x + rect.width / 2 - itemAnchorX, rect.y + rect.height / 2 - itemAnchorY]);
-        }
         const anatomyOverrides = collectAnatomyOverrides(content.character.effects, {
           bodyOrientation:characterContext.bodyOrientation,
           isNearArmHoldingItem:characterContext.isNearArmHoldingItem,
@@ -424,8 +421,6 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           baseCharacterCenterById,
           roomContentDisplayLayout:displayLayout
         }, gameTime, metaTime);
-        handleBeforeCharacterDrawEffects(
-          content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context);
         const spriteOverrides = aggregateSpriteOverrides(anatomyOverrides, content.character);
         const visualLayout = createVisualBodyLayout(characterCanvasLayout.layout, spriteOverrides, content.character.facingDirection);
         const heldItems = [
@@ -438,12 +433,21 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
             item, content.character, visualLayout, hand, scalingFactors, imageSet);
           if (anchor) result.itemBubbleAnchorById.set(item.id, anchor);
         });
-        drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
-          isHighlighted, metaTime, { ...characterCanvasLayout, layout:visualLayout });
-        handleAfterCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
+        drawContents.push(() => {
+          if (layoutPlanner && isCharacterInteractive(content.character)) {
+            layoutPlanner.reserveRect(getCharacterCanvasRect(
+              content.character, content.displayPosition, scalingFactors, gameTime, imageSet, characterCanvasLayout));
+          }
+          handleBeforeCharacterDrawEffects(
+            content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context);
+          drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
+            isHighlighted, metaTime, { ...characterCanvasLayout, layout:visualLayout });
+          handleAfterCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
+        });
         return;
     }
   });
+  drawContents.forEach(draw => draw());
 
   // Draw discovery markers above the completed room content.
   contents.forEach(content => {

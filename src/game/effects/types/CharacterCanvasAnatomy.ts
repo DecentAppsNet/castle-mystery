@@ -3,9 +3,7 @@ type CharacterCanvasAnatomy = {
   anchorTopY:number,
   characterCenterCanvasPoint:[number, number],
   headCenterCanvasPoint:[number, number],
-  headRadius:number,
-  leftHandItemCanvasPoint:[number, number],
-  rightHandItemCanvasPoint:[number, number]
+  headRadius:number
 };
 
 export default CharacterCanvasAnatomy;
