@@ -51,8 +51,9 @@ describe('character body postures', () => {
         const rightFacingArm = getResolvedBodyPart(right, kind);
         const leftFacingArm = getResolvedBodyPart(left, kind);
         expect(leftFacingArm.part).toBe(rightFacingArm.part);
-        const rightHand = transformBodyPoint(rightFacingArm.transform, rightFacingArm.part.handPoint!);
-        const leftHand = transformBodyPoint(leftFacingArm.transform, leftFacingArm.part.handPoint!);
+        const handKind = kind === 'nearArm' ? 'nearHand' : 'farHand';
+        const rightHand = transformBodyPoint(getResolvedBodyPart(right, handKind).transform, [0, 0]);
+        const leftHand = transformBodyPoint(getResolvedBodyPart(left, handKind).transform, [0, 0]);
         const rightPivot = transformBodyPoint(rightFacingArm.transform, rightFacingArm.part.pivotPoint);
         const leftPivot = transformBodyPoint(leftFacingArm.transform, leftFacingArm.part.pivotPoint);
         expect(leftHand[0] - leftPivot[0]).toBeCloseTo(-(rightHand[0] - rightPivot[0]));

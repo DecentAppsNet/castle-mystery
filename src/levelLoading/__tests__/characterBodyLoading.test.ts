@@ -26,34 +26,36 @@ describe('character body loading', () => {
   it('scales authored hand connections from each arm image origin', () => {
     const root = loadValidLevelForTest(rasterText).characters[0].rootBodyPart;
     const scale = root.width / 484;
-    expect(root.connectedParts[1].part.handPoint).toEqual([40 * scale, 165 * scale]);
-    expect(root.connectedParts[2].part.handPoint).toEqual([63 * scale, 176 * scale]);
+    expect(root.connectedParts[1].part.connectedParts[0].connectionPoint).toEqual([40 * scale, 165 * scale]);
+    expect(root.connectedParts[2].part.connectedParts[0].connectionPoint).toEqual([63 * scale, 176 * scale]);
   });
 
   it('keeps complete raster anatomy when both hand connections are omitted', () => {
     const text = rasterText.replace('* nearHandConnection=63,176', '').replace('* farHandConnection=40,165', '');
     const root = loadValidLevelForTest(text).characters[0].rootBodyPart;
     expect(root.imageUrl).toBe('/assets/bodies/duchessTest_torso.png');
-    expect(root.connectedParts[1].part.handPoint).not.toBeNull();
-    expect(root.connectedParts[2].part.handPoint).not.toBeNull();
+    expect(root.connectedParts[1].part.connectedParts[0].part.kind).toBe('farHand');
+    expect(root.connectedParts[2].part.connectedParts[0].part.kind).toBe('nearHand');
   });
 
   it('defaults only the near hand when its connection is omitted', () => {
     const text = rasterText.replace('* nearHandConnection=63,176', '');
     const root = loadValidLevelForTest(text).characters[0].rootBodyPart;
     const defaults = loadValidLevelForTest(text.replace('* farHandConnection=40,165', '')).characters[0].rootBodyPart;
-    expect(root.connectedParts[2].part.handPoint).toEqual(defaults.connectedParts[2].part.handPoint);
+    expect(root.connectedParts[2].part.connectedParts[0].connectionPoint)
+      .toEqual(defaults.connectedParts[2].part.connectedParts[0].connectionPoint);
     const scale = root.width / 484;
-    expect(root.connectedParts[1].part.handPoint).toEqual([40 * scale, 165 * scale]);
+    expect(root.connectedParts[1].part.connectedParts[0].connectionPoint).toEqual([40 * scale, 165 * scale]);
   });
 
   it('defaults only the far hand when its connection is omitted', () => {
     const text = rasterText.replace('* farHandConnection=40,165', '');
     const root = loadValidLevelForTest(text).characters[0].rootBodyPart;
     const defaults = loadValidLevelForTest(text.replace('* nearHandConnection=63,176', '')).characters[0].rootBodyPart;
-    expect(root.connectedParts[1].part.handPoint).toEqual(defaults.connectedParts[1].part.handPoint);
+    expect(root.connectedParts[1].part.connectedParts[0].connectionPoint)
+      .toEqual(defaults.connectedParts[1].part.connectedParts[0].connectionPoint);
     const scale = root.width / 484;
-    expect(root.connectedParts[2].part.handPoint).toEqual([63 * scale, 176 * scale]);
+    expect(root.connectedParts[2].part.connectedParts[0].connectionPoint).toEqual([63 * scale, 176 * scale]);
   });
 
   it('accepts zero, negative, and out-of-image hand coordinates without changing body scale', () => {
@@ -63,8 +65,8 @@ describe('character body loading', () => {
     const original = loadValidLevelForTest(rasterText).characters[0].rootBodyPart;
     const scale = root.width / 484;
     expect(root.width).toBe(original.width);
-    expect(root.connectedParts[2].part.handPoint).toEqual([0, -100 * scale]);
-    expect(root.connectedParts[1].part.handPoint).toEqual([900 * scale, 1000 * scale]);
+    expect(root.connectedParts[2].part.connectedParts[0].connectionPoint).toEqual([0, -100 * scale]);
+    expect(root.connectedParts[1].part.connectedParts[0].connectionPoint).toEqual([900 * scale, 1000 * scale]);
   });
 
   it('rejects a supplied blank hand connection', () => {

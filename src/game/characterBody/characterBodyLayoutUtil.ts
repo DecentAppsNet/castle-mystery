@@ -1,7 +1,6 @@
 /* This file projects resolved body poses into shared canvas geometry without drawing or world projection.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { assertNonNullable } from 'decent-portal';
 import Point from '../types/Point';
 import ScalingFactors from '../types/ScalingFactors';
 import { FacingDirection } from '../types/Character';
@@ -15,9 +14,9 @@ function _getCenter({ part, transform }:ResolvedBodyPart):Point {
   return transformBodyPoint(transform, [part.width / 2, part.height / 2]);
 }
 
-function _getHand({ part, transform }:ResolvedBodyPart):{ x:number, y:number } {
-  assertNonNullable(part.handPoint);
-  const [x, y] = transformBodyPoint(transform, part.handPoint);
+function _getHand(parts:readonly ResolvedBodyPart[], armKind:'nearArm'|'farArm'):{ x:number, y:number } {
+  const { transform } = getResolvedBodyPart(parts, armKind === 'nearArm' ? 'nearHand' : 'farHand');
+  const [x, y] = transformBodyPoint(transform, [0, 0]);
   return { x, y };
 }
 
@@ -38,8 +37,8 @@ export function createBodyCanvasLayout(pose:readonly ResolvedBodyPart[], support
     parts, bounds,
     characterCenterCanvasPoint:_getCenter(getResolvedBodyPart(parts, 'torso')),
     head:{ centerX, centerY, radius:Math.max(headBounds.width, headBounds.height) / 2 },
-    leftHand:_getHand(getResolvedBodyPart(parts, getHandArmPartKind(isRasterBody, facing, 'left'))),
-    rightHand:_getHand(getResolvedBodyPart(parts, getHandArmPartKind(isRasterBody, facing, 'right'))),
+    leftHand:_getHand(parts, getHandArmPartKind(isRasterBody, facing, 'left')),
+    rightHand:_getHand(parts, getHandArmPartKind(isRasterBody, facing, 'right')),
     anchorX:centerX, anchorTopY:bounds.y
   };
 }

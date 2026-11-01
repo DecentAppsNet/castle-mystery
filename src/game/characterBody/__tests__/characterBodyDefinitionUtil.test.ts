@@ -40,8 +40,8 @@ describe('characterBodyDefinitionUtil', () => {
       const farArm = getResolvedBodyPart(parts, 'farArm');
       expect(nearArm.part.connectedParts[0].part).toBe(getResolvedBodyPart(parts, 'nearHand').part);
       expect(farArm.part.connectedParts[0].part).toBe(getResolvedBodyPart(parts, 'farHand').part);
-      expect(nearArm.part.connectedParts[0].connectionPoint).toEqual(nearArm.part.handPoint);
-      expect(farArm.part.connectedParts[0].connectionPoint).toEqual(farArm.part.handPoint);
+      expect(getResolvedBodyPart(parts, 'nearHand').part.pivotPoint).toEqual([0, 0]);
+      expect(getResolvedBodyPart(parts, 'farHand').part.pivotPoint).toEqual([0, 0]);
       expect(getResolvedBodyPart(parts, 'nearHand').part.imageUrl).toBeNull();
       expect(getResolvedBodyPart(parts, 'farHand').part.imageUrl).toBeNull();
       expect(getBodyPaintOrder('right')).not.toContain('nearHand');

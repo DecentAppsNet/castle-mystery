@@ -14,7 +14,7 @@ const IDENTITY = { horizontalX:1, horizontalY:0, verticalX:0, verticalY:1, trans
 // These values depend on the fixture, not the production default height.
 describe('rasterBodyDefinitionUtil', () => {
   describe('createRasterCharacterBody()', () => {
-    it('uniformly scales every dimension, pivot, connection, and arm hand point', () => {
+    it('uniformly scales every dimension, pivot, and connection', () => {
       const root = createRasterCharacterBody(rasterBody, 460);
       const parts = [root, ...root.connectedParts.map(({ part }) => part)];
 
@@ -26,8 +26,8 @@ describe('rasterBodyDefinitionUtil', () => {
         expect(part.pivotPoint).toEqual(source.pivotPoint.map(value => value * 2));
         expect(part.imageUrl).toBe(source.imageUrl);
         const isArm = part.kind === 'farArm' || part.kind === 'nearArm';
-        // The provisional hand convention is 75% across the arm at its bottom edge, then scaled.
-        expect(part.handPoint).toEqual(isArm ? [source.width * 0.75 * 2, source.height * 2] : null);
+        // The default hand connection is 75% across the arm at its bottom edge, then scaled.
+        if (isArm) expect(part.connectedParts[0].connectionPoint).toEqual([source.width * 0.75 * 2, source.height * 2]);
       }
       for (const { part, connectionPoint } of root.connectedParts) {
         expect(['torso', 'nearHand', 'farHand']).not.toContain(part.kind);
@@ -41,8 +41,8 @@ describe('rasterBodyDefinitionUtil', () => {
       const before = structuredClone(definition);
       const root = createRasterCharacterBody(definition, 460);
       const parts = resolveBodyHierarchy(root, IDENTITY);
-      const nearHand = getResolvedBodyPart(parts, 'nearArm').part.handPoint;
-      const farHand = getResolvedBodyPart(parts, 'farArm').part.handPoint;
+      const nearHand = getResolvedBodyPart(parts, 'nearArm').part.connectedParts[0].connectionPoint;
+      const farHand = getResolvedBodyPart(parts, 'farArm').part.connectedParts[0].connectionPoint;
       expect(nearHand).toEqual([126, 352]);
       expect(farHand).toEqual([80, 330]);
       expect(nearHand).not.toBe(definition.connections.nearHand);
@@ -59,7 +59,7 @@ describe('rasterBodyDefinitionUtil', () => {
       const nearArm = getResolvedBodyPart(parts, 'nearArm');
       const farArm = getResolvedBodyPart(parts, 'farArm');
       expect(nearArm.part.connectedParts).toEqual([{ connectionPoint:[126, 352], part:{
-        kind:'nearHand', imageUrl:null, width:0, height:0, pivotPoint:[0, 0], connectedParts:[], handPoint:null } }]);
+        kind:'nearHand', imageUrl:null, width:0, height:0, pivotPoint:[0, 0], connectedParts:[] } }]);
       expect(farArm.part.connectedParts[0].part.kind).toBe('farHand');
       expect(farArm.part.connectedParts[0].connectionPoint).toEqual([80, 330]);
       const nearHand = getResolvedBodyPart(parts, 'nearHand');

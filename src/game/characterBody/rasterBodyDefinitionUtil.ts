@@ -19,14 +19,14 @@ type RasterPartKind = Exclude<PartKind, 'nearHand'|'farHand'>;
 function _createPart(definition:RasterBodyDefinition, kind:RasterPartKind):BodyPart {
   const geometry = definition.parts[kind];
   const isArm = kind === 'farArm' || kind === 'nearArm';
-  const handPoint = isArm
+  const handConnection = isArm
     ? definition.connections[kind === 'nearArm' ? 'nearHand' : 'farHand']
       ?? [geometry.width * DEFAULT_HAND_X_WIDTH_RATIO, geometry.height] as Point
     : null;
   return {
-    ...geometry, kind, handPoint,
-    connectedParts:handPoint === null ? []
-      : [{ part:createHandBodyPart(kind === 'nearArm' ? 'nearHand' : 'farHand'), connectionPoint:handPoint }]
+    ...geometry, kind,
+    connectedParts:handConnection === null ? []
+      : [{ part:createHandBodyPart(kind === 'nearArm' ? 'nearHand' : 'farHand'), connectionPoint:handConnection }]
   };
 }
 
@@ -42,7 +42,6 @@ function _scalePart(part:BodyPart, scale:number):BodyPart {
   const scaled = {
     ...part,
     pivotPoint:_scalePoint(part.pivotPoint, scale),
-    handPoint:part.handPoint ? _scalePoint(part.handPoint, scale) : null,
     connectedParts:part.connectedParts.map(({ part:child, connectionPoint }) => ({
       part:_scalePart(child, scale), connectionPoint:_scalePoint(connectionPoint, scale)
     }))

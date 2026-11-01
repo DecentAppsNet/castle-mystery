@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createBodyCanvasLayout, createBodyPose, createDefaultCharacterBody, createRasterCharacterBody, getBodyBounds,
-  getResolvedBodyPart, transformBodyPoint } from '../index';
+  getResolvedBodyPart, replaceHeadImage, transformBodyPoint } from '../index';
 import rasterBody from './fixtures/rasterBody';
 
 describe('characterBodyLayoutUtil', () => {
@@ -11,12 +11,28 @@ describe('characterBodyLayoutUtil', () => {
         for (const facing of ['right', 'left'] as const) {
           const layout = createBodyCanvasLayout(createBodyPose(root, orientation, facing),
             [137, 251], { scaleX:3, scaleY:5 }, facing);
-          const leftHandArm = getResolvedBodyPart(layout.parts, facing === 'left' ? 'nearArm' : 'farArm');
-          const rightHandArm = getResolvedBodyPart(layout.parts, facing === 'left' ? 'farArm' : 'nearArm');
+          const leftHand = getResolvedBodyPart(layout.parts, facing === 'left' ? 'nearHand' : 'farHand');
+          const rightHand = getResolvedBodyPart(layout.parts, facing === 'left' ? 'farHand' : 'nearHand');
           expect([layout.leftHand.x, layout.leftHand.y]).toEqual(
-            transformBodyPoint(leftHandArm.transform, leftHandArm.part.handPoint!));
+            transformBodyPoint(leftHand.transform, [0, 0]));
           expect([layout.rightHand.x, layout.rightHand.y]).toEqual(
-            transformBodyPoint(rightHandArm.transform, rightHandArm.part.handPoint!));
+            transformBodyPoint(rightHand.transform, [0, 0]));
+        }
+      }
+    });
+
+    it('retains vector hand ownership across postures and facings, including raster heads', () => {
+      const root = createDefaultCharacterBody();
+      for (const body of [root, replaceHeadImage(root, '/assets/bodies/head.png')]) {
+        for (const orientation of ['standing', 'sitting', 'kneeling', 'laying'] as const) {
+          for (const facing of ['right', 'left'] as const) {
+            const layout = createBodyCanvasLayout(createBodyPose(body, orientation, facing),
+              [137, 251], { scaleX:3, scaleY:5 }, facing);
+            const leftHand = getResolvedBodyPart(layout.parts, 'farHand');
+            const rightHand = getResolvedBodyPart(layout.parts, 'nearHand');
+            expect([layout.leftHand.x, layout.leftHand.y]).toEqual(transformBodyPoint(leftHand.transform, [0, 0]));
+            expect([layout.rightHand.x, layout.rightHand.y]).toEqual(transformBodyPoint(rightHand.transform, [0, 0]));
+          }
         }
       }
     });
@@ -46,10 +62,14 @@ describe('characterBodyLayoutUtil', () => {
         [torso.part.width / 2, torso.part.height / 2]));
       expect([layout.head.centerX, layout.head.centerY]).toEqual(transformBodyPoint(head.transform,
         [head.part.width / 2, head.part.height / 2]));
-      const farArm = getResolvedBodyPart(layout.parts, 'farArm');
-      const nearArm = getResolvedBodyPart(layout.parts, 'nearArm');
-      expect([layout.leftHand.x, layout.leftHand.y]).toEqual(transformBodyPoint(farArm.transform, farArm.part.handPoint!));
-      expect([layout.rightHand.x, layout.rightHand.y]).toEqual(transformBodyPoint(nearArm.transform, nearArm.part.handPoint!));
+      const farHand = getResolvedBodyPart(layout.parts, 'farHand');
+      const nearHand = getResolvedBodyPart(layout.parts, 'nearHand');
+      const leftHand = transformBodyPoint(farHand.transform, [0, 0]);
+      const rightHand = transformBodyPoint(nearHand.transform, [0, 0]);
+      expect(layout.leftHand.x).toBeCloseTo(leftHand[0]);
+      expect(layout.leftHand.y).toBeCloseTo(leftHand[1]);
+      expect(layout.rightHand.x).toBeCloseTo(rightHand[0]);
+      expect(layout.rightHand.y).toBeCloseTo(rightHand[1]);
       expect(layout.bounds).toEqual(getBodyBounds(layout.parts));
       expect(layout.anchorX).toBe(layout.head.centerX);
       expect(layout.anchorTopY).toBe(layout.bounds.y);

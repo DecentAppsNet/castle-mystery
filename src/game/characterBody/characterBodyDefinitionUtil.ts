@@ -50,22 +50,22 @@ export function replaceHeadImage(root:BodyPart, imageUrl:string|null):BodyPart {
 
 /** Creates an attachment-only node with its pivot at the local item-center origin. */
 export function createHandBodyPart(kind:'nearHand'|'farHand'):BodyPart {
-  return { kind, imageUrl:null, width:0, height:0, pivotPoint:[0, 0], connectedParts:[], handPoint:null };
+  return { kind, imageUrl:null, width:0, height:0, pivotPoint:[0, 0], connectedParts:[] };
 }
 
 function _createArm(kind:'farArm'|'nearArm'):BodyPart {
   const width = PLACEHOLDER_PROPORTION_SCALE * ARM_WIDTH_RATIO;
   const height = PLACEHOLDER_PROPORTION_SCALE * ARM_HEIGHT_RATIO;
   const shoulderCenter = getArmThickness(width, height) / CENTER_DIVISOR;
-  const handPoint:BodyPart['handPoint'] = [width * HAND_X_WIDTH_RATIO, height];
-  return { kind, imageUrl:null, width, height, pivotPoint:[shoulderCenter, shoulderCenter], handPoint,
-    connectedParts:[{ part:createHandBodyPart(kind === 'nearArm' ? 'nearHand' : 'farHand'), connectionPoint:handPoint }] };
+  return { kind, imageUrl:null, width, height, pivotPoint:[shoulderCenter, shoulderCenter],
+    connectedParts:[{ part:createHandBodyPart(kind === 'nearArm' ? 'nearHand' : 'farHand'),
+      connectionPoint:[width * HAND_X_WIDTH_RATIO, height] }] };
 }
 
 function _createLeg(kind:'leftLeg'|'rightLeg'):BodyPart {
   const width = PLACEHOLDER_PROPORTION_SCALE * LEG_WIDTH_RATIO;
   const height = PLACEHOLDER_PROPORTION_SCALE / LEG_HEIGHT_DIVISOR;
-  return { kind, imageUrl:null, width, height, pivotPoint:[width / LEG_PIVOT_X_DIVISOR, 0], connectedParts:[], handPoint:null };
+  return { kind, imageUrl:null, width, height, pivotPoint:[width / LEG_PIVOT_X_DIVISOR, 0], connectedParts:[] };
 }
 
 /** Creates a readonly torso-root definition in game units; callers must not mutate it. */
@@ -75,10 +75,10 @@ export function createDefaultCharacterBody():BodyPart {
   const headSize = width * HEAD_TORSO_WIDTH_RATIO;
   const head:BodyPart = {
     kind:'head', imageUrl:null, width:headSize, height:headSize,
-    pivotPoint:[headSize / CENTER_DIVISOR, headSize * HEAD_PIVOT_Y_RATIO], connectedParts:[], handPoint:null
+    pivotPoint:[headSize / CENTER_DIVISOR, headSize * HEAD_PIVOT_Y_RATIO], connectedParts:[]
   };
   return {
-    kind:'torso', imageUrl:null, width, height, pivotPoint:[width / CENTER_DIVISOR, height], handPoint:null,
+    kind:'torso', imageUrl:null, width, height, pivotPoint:[width / CENTER_DIVISOR, height],
     connectedParts:[
       { part:head, connectionPoint:[width / CENTER_DIVISOR, height * HEAD_CONNECTION_Y_RATIO] },
       { part:_createArm('farArm'), connectionPoint:[width * SHOULDER_X_INSET_RATIO, height * SHOULDER_Y_RATIO] },

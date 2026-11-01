@@ -9,14 +9,18 @@ import BodyPartTransform from '../types/BodyPartTransform';
 import rasterBody from './fixtures/rasterBody';
 
 const HAND:BodyPart = {
-  kind:'farArm', imageUrl:null, width:4, height:6, pivotPoint:[1, 2], handPoint:[3, 5], connectedParts:[]
+  kind:'farHand', imageUrl:null, width:0, height:0, pivotPoint:[0, 0], connectedParts:[]
+};
+const ARM:BodyPart = {
+  kind:'farArm', imageUrl:null, width:4, height:6, pivotPoint:[1, 2],
+  connectedParts:[{ part:HAND, connectionPoint:[3, 5] }]
 };
 const HEAD:BodyPart = {
-  kind:'head', imageUrl:null, width:3, height:5, pivotPoint:[2, 4], handPoint:null,
-  connectedParts:[{ part:HAND, connectionPoint:[1, 3] }]
+  kind:'head', imageUrl:null, width:3, height:5, pivotPoint:[2, 4],
+  connectedParts:[{ part:ARM, connectionPoint:[1, 3] }]
 };
 const ROOT:BodyPart = {
-  kind:'torso', imageUrl:null, width:4, height:8, pivotPoint:[2, 8], handPoint:null,
+  kind:'torso', imageUrl:null, width:4, height:8, pivotPoint:[2, 8],
   connectedParts:[{ part:HEAD, connectionPoint:[2, 0] }]
 };
 
@@ -73,8 +77,7 @@ describe('characterBodyPoseUtil', () => {
     it('inherits ancestor rotations and translation for nested hand and center points', () => {
       const rootTransform = createBodyAttachmentTransform([20, 30], ROOT.pivotPoint, Math.PI / 2);
       const parts = resolveBodyHierarchy(ROOT, rootTransform, { head:Math.PI / 2 });
-      const arm = getResolvedBodyPart(parts, 'farArm');
-      const hand = transformBodyPoint(arm.transform, HAND.handPoint!);
+      const hand = transformBodyPoint(getResolvedBodyPart(parts, 'farHand').transform, [0, 0]);
       const torsoCenter = transformBodyPoint(getResolvedBodyPart(parts, 'torso').transform, [2, 4]);
       const headCenter = transformBodyPoint(getResolvedBodyPart(parts, 'head').transform, [1.5, 2.5]);
 
@@ -96,10 +99,11 @@ describe('characterBodyPoseUtil', () => {
       expect(ROOT).toEqual(before);
       expect(ROOT.connectedParts).toBe(connections);
       expect(ROOT.connectedParts[0].part).toBe(HEAD);
-      expect(HEAD.connectedParts[0].part).toBe(HAND);
+      expect(HEAD.connectedParts[0].part).toBe(ARM);
+      expect(ARM.connectedParts[0].part).toBe(HAND);
       expect(second).toEqual(first);
       expect(first[0].part).toBe(ROOT);
-      expect(second[2].part).toBe(HAND);
+      expect(getResolvedBodyPart(second, 'farHand').part).toBe(HAND);
       expect(second).not.toBe(first);
     });
   });

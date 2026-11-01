@@ -5,8 +5,7 @@ import Point from '@/game/types/Point';
 /** Readonly local geometry and attachments shared across poses; contains no resolved placement. */
 type BodyPart = {
   readonly pivotPoint:Point, // Game units from this part's local origin.
-  readonly connectedParts:readonly ConnectedBodyPart[],
-  readonly handPoint:Point|null // Game units from this part's local origin. Null means no hand attachment point.
+  readonly connectedParts:readonly ConnectedBodyPart[]
 } & ({
   readonly kind:Exclude<PartKind, 'nearHand'|'farHand'>,
   readonly imageUrl:string|null,
