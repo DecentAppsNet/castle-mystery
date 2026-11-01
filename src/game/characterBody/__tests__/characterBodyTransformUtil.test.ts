@@ -1,9 +1,46 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyBodyTransformDeltas, composeBodyTransforms, createBodyAttachmentTransform, transformBodyPoint } from '../characterBodyTransformUtil';
+import { applyBodyTransformDeltas, composeBodyTransforms, createBodyAttachmentTransform, createCanvasAttachmentTransform, transformBodyPoint } from '../characterBodyTransformUtil';
 import BodyPartTransform from '../types/BodyPartTransform';
 
 describe('characterBodyTransformUtil', () => {
+  describe('createCanvasAttachmentTransform()', () => {
+    it('keeps already-sized artwork unchanged at an unrotated attachment despite body and view scaling', () => {
+      const transform:BodyPartTransform = {
+        horizontalX:8, horizontalY:0, verticalX:0, verticalY:12, translateX:100, translateY:200
+      };
+      const result = createCanvasAttachmentTransform(transform, { scaleX:2, scaleY:3 });
+      expect(transformBodyPoint(result, [0, 0])).toEqual([100, 200]);
+      expect(transformBodyPoint(result, [10, 20])).toEqual([110, 220]);
+    });
+
+    it('preserves reflected orientation in game space before unequal view projection', () => {
+      const orientation:BodyPartTransform = {
+        horizontalX:0, horizontalY:-1, verticalX:-1, verticalY:0, translateX:0, translateY:0
+      };
+      const view:BodyPartTransform = {
+        horizontalX:2, horizontalY:0, verticalX:0, verticalY:3, translateX:100, translateY:200
+      };
+      const projected = Object.freeze(composeBodyTransforms(view, orientation));
+      const result = createCanvasAttachmentTransform(projected, { scaleX:2, scaleY:3 });
+      const expected = transformBodyPoint(projected, [5, 7]);
+      expect(transformBodyPoint(result, [10, 21])).toEqual(expected);
+      expect(transformBodyPoint(result, [0, 0])).toEqual([100, 200]);
+    });
+
+    it('does not apply zoom twice to already-sized artwork', () => {
+      const transform:BodyPartTransform = {
+        horizontalX:0, horizontalY:3, verticalX:-2, verticalY:0, translateX:100, translateY:200
+      };
+      const zoomed:BodyPartTransform = {
+        horizontalX:0, horizontalY:6, verticalX:-4, verticalY:0, translateX:200, translateY:400
+      };
+      const original = transformBodyPoint(createCanvasAttachmentTransform(transform, { scaleX:2, scaleY:3 }), [10, 21]);
+      const result = transformBodyPoint(createCanvasAttachmentTransform(zoomed, { scaleX:4, scaleY:6 }), [20, 42]);
+      expect(result).toEqual([original[0] * 2, original[1] * 2]);
+    });
+  });
+
   describe('applyBodyTransformDeltas()', () => {
     it('preserves the base transform for zero deltas', () => {
       const base = createBodyAttachmentTransform([13, 29], [2, 3], Math.PI / 3);

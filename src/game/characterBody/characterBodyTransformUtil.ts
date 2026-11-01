@@ -6,6 +6,26 @@ import Point from '../types/Point';
 import Rect from '../types/Rect';
 import { createRect } from '../rectUtil';
 import { assert } from 'decent-portal';
+import ScalingFactors from '../types/ScalingFactors';
+
+type ViewScale = Pick<ScalingFactors, 'scaleX'|'scaleY'>;
+
+/** Converts a projected body attachment into a transform for artwork already sized in canvas pixels.
+ * Removes uniform body scale while preserving inherited rotation, reflection, and the canvas-space origin.
+ * Accounts for unequal view scales in game space so camera scaling is not applied twice.
+ */
+export function createCanvasAttachmentTransform(transform:BodyPartTransform, { scaleX, scaleY }:ViewScale):BodyPartTransform {
+  assert(scaleX > 0 && scaleY > 0, 'Attachment view scales must be positive.');
+  const bodyScale = Math.hypot(transform.horizontalX / scaleX, transform.horizontalY / scaleY);
+  assert(Number.isFinite(bodyScale) && bodyScale > 0, 'Attachment body scale must be finite and positive.');
+  return {
+    horizontalX:transform.horizontalX / bodyScale / scaleX,
+    horizontalY:transform.horizontalY / bodyScale / scaleX,
+    verticalX:transform.verticalX / bodyScale / scaleY,
+    verticalY:transform.verticalY / bodyScale / scaleY,
+    translateX:transform.translateX, translateY:transform.translateY
+  };
+}
 
 /** Maps an input-space point into the transform's output space, including translation. */
 export function transformBodyPoint(transform:BodyPartTransform, point:Point):Point {

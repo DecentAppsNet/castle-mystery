@@ -356,8 +356,8 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
       characterCenterCanvasPoint:canvasLayout.characterCenterCanvasPoint,
       headCenterCanvasPoint:[canvasLayout.layout.head.centerX, canvasLayout.layout.head.centerY],
       headRadius:canvasLayout.layout.head.radius,
-      leftHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'left', scalingFactors),
-      rightHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'right', scalingFactors)
+      leftHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'left'),
+      rightHandItemCanvasPoint:getHeldItemCanvasPoint(canvasLayout.layout, 'right')
     });
   });
 
