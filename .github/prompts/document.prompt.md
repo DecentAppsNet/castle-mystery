@@ -1,9 +1,10 @@
 ---
 name: document
 description: Add standard documentation for files, functions, types, and other symbols.
+agent: agent
 ---
 
-"I" and "me" refer to the invoker of this skill. "You" refers to the AI agent performing the operation of the skill.
+"I" and "me" refer to the invoker of this prompt. "You" refers to the AI agent performing the operation of the prompt.
 
 I prefix any action I want you to potentially take within the operation with "DO:" so you can distinguish it from other information.
 
@@ -23,7 +24,7 @@ Take extra care never to evaluate/modify inside `/node_modules`, `/workAssets`, 
 
 # Preservation of Existing Comments
 
-* Comment edits must be corrective, not subtractive. This rule applies to all existing comments, including file headers, design rationale, examples, and inline comments, and takes precedence over concision, formatting, and documentation non-goals elsewhere in this skill.
+* Comment edits must be corrective, not subtractive. This rule applies to all existing comments, including file headers, design rationale, examples, and inline comments, and takes precedence over concision, formatting, and documentation non-goals elsewhere in this prompt.
 * Do not delete existing comments or remove their information to shorten, simplify, restyle, or replace them with a standard summary. Add or correct required summary wording without removing surrounding commentary.
 * Make minimal, targeted corrections when a comment does not match the current source code. Replace inaccurate statements with accurate ones while preserving all still-valid information; do not remove the comment or unrelated explanatory context.
 * If a comment appears entirely obsolete or cannot be corrected confidently, leave it unchanged and report it for discussion. Removing existing commentary requires explicit permission from the invoker.
@@ -116,4 +117,3 @@ I will see all your changes in the IDE, so I don't need you to summarize them al
 * DO: If there were no problems or things to call out, just output "Operation complete."
 * DO: Otherwise, call out problems or areas of ambiguity concisely - one line per problem. I can ask for details as needed.
 * DO: List any function/symbol renaming opportunities found previously.
-
