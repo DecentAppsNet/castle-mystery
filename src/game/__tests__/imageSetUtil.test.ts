@@ -3,6 +3,9 @@ import { createImageSetFromLevel } from '../imageSetUtil';
 import { createDefaultMutableLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
 import { createDefaultCharacterBody, replaceHeadImage } from '../characterBody';
+import BodyPart from '../characterBody/types/BodyPart';
+
+type PhysicalBodyPart = Exclude<BodyPart, { kind:'nearHand'|'farHand' }>;
 
 describe('imageSetUtil', () => {
   beforeEach(() => {
@@ -47,8 +50,10 @@ describe('imageSetUtil', () => {
 
     it('rejects a network failure for a configured non-head body part', async () => {
       const level = createDefaultMutableLevel();
+      const root = createDefaultCharacterBody();
+      expect(root.kind).toBe('torso');
       level.characters = [{ ...createDefaultCharacter(), rootBodyPart:{
-        ...createDefaultCharacterBody(), imageUrl:'/assets/bodies/torso.png'
+        ...root, kind:'torso', imageUrl:'/assets/bodies/torso.png'
       } }];
       vi.mocked(fetch).mockImplementation(async url => {
         if (url === '/castle-mystery/assets/bodies/torso.png') throw new Error('network failed');
@@ -86,11 +91,14 @@ describe('imageSetUtil', () => {
 
     it('loads every body part and skin override', async () => {
       const root = createDefaultCharacterBody();
+      expect(root.kind).toBe('torso');
       const rootBodyPart = {
-        ...root, imageUrl:'/assets/bodies/torso.png',
-        connectedParts:root.connectedParts.map(connection => ({
-          ...connection, part:{ ...connection.part, imageUrl:`/assets/bodies/${connection.part.kind}.png` }
-        }))
+        ...root, kind:'torso' as const, imageUrl:'/assets/bodies/torso.png',
+        connectedParts:root.connectedParts.map(connection => {
+          const part = connection.part as PhysicalBodyPart;
+          expect(['nearHand', 'farHand']).not.toContain(part.kind);
+          return { ...connection, part:{ ...part, imageUrl:`/assets/bodies/${part.kind}.png` } };
+        })
       };
       const level = createDefaultMutableLevel();
       level.characters = [{
@@ -123,10 +131,12 @@ describe('imageSetUtil', () => {
 
     it('loads images on nested descendants and ignores null part images', async () => {
       const root = createDefaultCharacterBody();
+      const nestedPart = root.connectedParts[1].part;
+      expect(nestedPart.kind).toBe('farArm');
       const level = createDefaultMutableLevel();
       level.characters = [{ ...createDefaultCharacter(), rootBodyPart:{ ...root, connectedParts:[{
         ...root.connectedParts[0], part:{ ...root.connectedParts[0].part, connectedParts:[{
-          connectionPoint:[0, 0], part:{ ...root.connectedParts[1].part, imageUrl:'/assets/bodies/nested.png' }
+          connectionPoint:[0, 0], part:{ ...nestedPart, kind:'farArm', imageUrl:'/assets/bodies/nested.png' }
         }] }
       }] } }];
 

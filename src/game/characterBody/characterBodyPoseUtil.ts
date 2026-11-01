@@ -59,10 +59,11 @@ export function getResolvedBodyPart(parts:readonly ResolvedBodyPart[], kind:Part
   return resolved;
 }
 
-/** Returns the union of part drawing bounds in their shared output-space units; parts must be nonempty. */
+/** Returns physical drawing bounds in shared output-space units; at least one physical part is required. */
 export function getBodyBounds(parts:readonly ResolvedBodyPart[]):Rect {
-  assert(parts.length > 0, 'Body bounds require at least one resolved part.');
-  const bounds = parts.map(({ part, transform }) =>
+  const physicalParts = parts.filter(({ part }) => part.kind !== 'nearHand' && part.kind !== 'farHand');
+  assert(physicalParts.length > 0, 'Body bounds require at least one physical part.');
+  const bounds = physicalParts.map(({ part, transform }) =>
     transformBodyRect(transform, createRect(0, 0, part.width, part.height)));
   return bounds.slice(1).reduce(extendRectToContainRect, bounds[0]);
 }

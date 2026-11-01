@@ -17,16 +17,18 @@ describe('viewer arm roles', () => {
 
   it('retains depth roles for right-facing raster bodies', () => {
     const base = createDefaultCharacter();
+    expect(base.rootBodyPart.kind).toBe('torso');
     const character = { ...base, facingDirection:'right' as const,
-      rootBodyPart:{ ...base.rootBodyPart, imageUrl:'/assets/bodies/torso.png' } };
+      rootBodyPart:{ ...base.rootBodyPart, kind:'torso' as const, imageUrl:'/assets/bodies/torso.png' } };
     expect(getViewerArmPartKind(character, 'viewerFrontArm')).toBe('nearArm');
     expect(getViewerArmPartKind(character, 'viewerBackArm')).toBe('farArm');
   });
 
   it('retains depth roles for left-facing raster bodies', () => {
     const base = createDefaultCharacter();
+    expect(base.rootBodyPart.kind).toBe('torso');
     const character = { ...base, facingDirection:'left' as const,
-      rootBodyPart:{ ...base.rootBodyPart, imageUrl:'/assets/bodies/torso.png' } };
+      rootBodyPart:{ ...base.rootBodyPart, kind:'torso' as const, imageUrl:'/assets/bodies/torso.png' } };
     expect(getViewerArmPartKind(character, 'viewerFrontArm')).toBe('nearArm');
     expect(getViewerArmPartKind(character, 'viewerBackArm')).toBe('farArm');
   });

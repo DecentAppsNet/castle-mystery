@@ -3,6 +3,8 @@ import { createBodyPose, createDefaultCharacterBody, getBodyBounds, getBodyPaint
   getResolvedBodyPart, transformBodyPoint } from '../index';
 import BodyPart from '../types/BodyPart';
 
+type PhysicalBodyPart = Exclude<BodyPart, { kind:'nearHand'|'farHand' }>;
+
 describe('character body postures', () => {
   it('places standing foot contact on the support surface', () => {
     const parts = createBodyPose(createDefaultCharacterBody(), 'standing', 'right');
@@ -84,9 +86,11 @@ describe('character body postures', () => {
 
   it('does not let protruding children change seated or laying grounding', () => {
     const root = createDefaultCharacterBody();
-    const oversized:BodyPart = { ...root, connectedParts:root.connectedParts.map(connection => ({
-      ...connection, part:{ ...connection.part, width:connection.part.width * 100, height:connection.part.height * 100 }
-    })) };
+    const oversized:BodyPart = { ...root, connectedParts:root.connectedParts.map(connection => {
+      const part = connection.part as PhysicalBodyPart;
+      expect(['nearHand', 'farHand']).not.toContain(part.kind);
+      return { ...connection, part:{ ...part, width:part.width * 100, height:part.height * 100 } };
+    }) };
     for (const orientation of ['sitting', 'kneeling', 'laying'] as const) {
       for (const facing of ['left', 'right'] as const) {
         const normal = getResolvedBodyPart(createBodyPose(root, orientation, facing), 'torso');

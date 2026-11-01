@@ -33,6 +33,7 @@ function _drawPivotCrosshair(resolved:ResolvedBodyPart, context:CanvasRenderingC
 }
 
 function _drawPartBounds(resolved:ResolvedBodyPart, context:CanvasRenderingContext2D) {
+  if (resolved.part.kind === 'nearHand' || resolved.part.kind === 'farHand') return;
   const { width, height } = resolved.part;
   const corners:readonly Point[] = [[0, 0], [width, 0], [width, height], [0, height]];
   context.beginPath();

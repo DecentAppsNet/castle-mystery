@@ -8,20 +8,25 @@ import BodyPart from './types/BodyPart';
 import PartKind from './types/PartKind';
 import RasterBodyDefinition from './types/RasterBodyDefinition';
 import { getBodyBounds, resolveBodyHierarchy } from './characterBodyPoseUtil';
+import { createHandBodyPart } from './characterBodyDefinitionUtil';
 
 const DEFAULT_BODY_HEIGHT = MAP_TILE_SIZE * 0.4;
 const DEFAULT_HAND_X_WIDTH_RATIO = 0.75;
 const CHILD_KINDS = ['head', 'farArm', 'nearArm', 'leftLeg', 'rightLeg'] as const;
 
-function _createPart(definition:RasterBodyDefinition, kind:PartKind):BodyPart {
+type RasterPartKind = Exclude<PartKind, 'nearHand'|'farHand'>;
+
+function _createPart(definition:RasterBodyDefinition, kind:RasterPartKind):BodyPart {
   const geometry = definition.parts[kind];
   const isArm = kind === 'farArm' || kind === 'nearArm';
+  const handPoint = isArm
+    ? definition.connections[kind === 'nearArm' ? 'nearHand' : 'farHand']
+      ?? [geometry.width * DEFAULT_HAND_X_WIDTH_RATIO, geometry.height] as Point
+    : null;
   return {
-    ...geometry, kind, connectedParts:[],
-    handPoint:isArm
-      ? definition.connections[kind === 'nearArm' ? 'nearHand' : 'farHand']
-        ?? [geometry.width * DEFAULT_HAND_X_WIDTH_RATIO, geometry.height]
-      : null
+    ...geometry, kind, handPoint,
+    connectedParts:handPoint === null ? []
+      : [{ part:createHandBodyPart(kind === 'nearArm' ? 'nearHand' : 'farHand'), connectionPoint:handPoint }]
   };
 }
 
@@ -29,15 +34,21 @@ function _scalePoint(point:Point, scale:number):Point {
   return [point[0] * scale, point[1] * scale];
 }
 
+function _isPhysicalPart(part:BodyPart):part is BodyPart & { kind:RasterPartKind } {
+  return part.kind !== 'nearHand' && part.kind !== 'farHand';
+}
+
 function _scalePart(part:BodyPart, scale:number):BodyPart {
-  return {
-    ...part, width:part.width * scale, height:part.height * scale,
+  const scaled = {
+    ...part,
     pivotPoint:_scalePoint(part.pivotPoint, scale),
     handPoint:part.handPoint ? _scalePoint(part.handPoint, scale) : null,
     connectedParts:part.connectedParts.map(({ part:child, connectionPoint }) => ({
       part:_scalePart(child, scale), connectionPoint:_scalePoint(connectionPoint, scale)
     }))
   };
+  return _isPhysicalPart(scaled)
+    ? { ...scaled, width:scaled.width * scale, height:scaled.height * scale } : scaled;
 }
 
 /** Scales validated six-part anatomy to a standing rest height without posing, I/O, or input mutation. */
