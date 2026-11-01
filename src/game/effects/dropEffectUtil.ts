@@ -9,7 +9,6 @@ import Position from "@/game/types/Position";
 import ScalingFactors from "@/game/types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
-import { EffectHandlerResult } from "./types/EffectHandler";
 import CharacterAnatomyContext from './types/CharacterAnatomyContext';
 import { assertNonNullable } from 'decent-portal';
 
@@ -26,28 +25,25 @@ function _getDestinationCanvasPoint(roomContentDisplayLayout:CharacterAnatomyCon
 function _handleCharacterDrop(drawCall:CharacterDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
     destinationFloorPosition:Position, startTime:number, endTime:number,
   scalingFactors:ScalingFactors, time:number,
-    context:CanvasRenderingContext2D):EffectHandlerResult|null {
+    context:CanvasRenderingContext2D):void {
   const characterContext = drawCall.characterContext;
   const anatomy = drawCall.characterContext.characterAnatomy;
   const destination = _getDestinationCanvasPoint(characterContext.roomContentDisplayLayout, item, destinationFloorPosition, scalingFactors);
   const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
   if (sourcePlacement === INVENTORY) {
-    if (drawCall.stage === 'beforeCharacter') return null;
+    if (drawCall.stage === 'beforeCharacter') return;
     const [x, y] = interpolateNumberPair(anatomy.characterCenterCanvasPoint, destination, progress);
     drawItemAtCanvasPositionInRoom(item, x, y, scalingFactors, context, characterContext.imageSet);
-    return null;
   }
-  return null;
 }
 
 function _handleDrop(drawCall:EffectDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
     destinationFloorPosition:Position, startTime:number, endTime:number, scalingFactors:ScalingFactors,
-    time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
+    time:number, context:CanvasRenderingContext2D):void {
   if (drawCall.stage === 'beforeCharacter' || drawCall.stage === 'afterCharacter') {
     return _handleCharacterDrop(drawCall, item, sourcePlacement, destinationFloorPosition, startTime,
       endTime, scalingFactors, time, context);
   }
-  return null;
 }
 
 /** Creates a deferred hand transfer or the existing draw-only inventory transfer to a room destination. */

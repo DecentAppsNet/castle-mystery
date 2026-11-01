@@ -7,7 +7,7 @@ import { createEmitBubbleAnchorAtTopCenter, drawEmitBubble, drawEmitBubbleNearEx
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
-import EffectHandler, { EffectHandlerResult } from "./types/EffectHandler";
+import EffectHandler from "./types/EffectHandler";
 import EmitSource from "./types/EmitSource";
 import FramePresentationIndex from "./types/FramePresentationIndex";
 import CanvasBubbleAnchor from "./types/CanvasBubbleAnchor";
@@ -66,13 +66,13 @@ function _calcSpeakingOverrides(context:CharacterAnatomyContext, elapsed:number,
 }
 
 function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: PreparedAnimationText,
-  startTime:number, characterId:string, metaTime:number):EffectHandlerResult|null {
+  startTime:number, characterId:string, metaTime:number):void {
   if (drawCall.stage === 'characterAfterLevel') {
     const { characterAnatomy:{ anchorX, anchorTopY }, isCharacterInActiveRoom, isLevelComplete } = drawCall.characterContext;
     if (isCharacterInActiveRoom || isLevelComplete) {
       drawSpeechBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time, metaTime);
     }
-    return null;
+    return;
   }
   if (drawCall.stage === 'afterLevel') {
     const { characterLocationById, isActiveRoomObscured, isLevelComplete } = drawCall.levelContext;
@@ -83,18 +83,16 @@ function _saysHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, 
         scalingFactors, context, startTime, time, metaTime);
     }
   }
-  return null;
 }
 
 function _thinksHandler(drawCall: EffectDrawCall, scalingFactors: ScalingFactors, time: number, context: CanvasRenderingContext2D, text: PreparedAnimationText,
-  startTime:number, metaTime:number):EffectHandlerResult|null {
+  startTime:number, metaTime:number):void {
   if (drawCall.stage === 'characterAfterLevel') {
     const { characterAnatomy:{ anchorX, anchorTopY }, isActiveCharacter, isLevelComplete } = drawCall.characterContext;
     if (isThoughtObservable(isActiveCharacter, isLevelComplete)) {
       drawThoughtBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time, metaTime);
     }
   }
-  return null;
 }
 
 function _findEmitSourceAnchor(source:EmitSource,
@@ -113,14 +111,14 @@ function _findEmitSourceLocation(source:EmitSource,
 
 function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
   context:CanvasRenderingContext2D, text:PreparedAnimationText, startTime:number, isLoud:boolean,
-  source:EmitSource, metaTime:number):EffectHandlerResult|null {
-  if (drawCall.stage !== 'afterLevel') return null;
+  source:EmitSource, metaTime:number):void {
+  if (drawCall.stage !== 'afterLevel') return;
   const levelContext = drawCall.levelContext;
-  if (!isSpeechAudible(levelContext.isActiveRoomObscured, levelContext.isLevelComplete)) return null;
+  if (!isSpeechAudible(levelContext.isActiveRoomObscured, levelContext.isLevelComplete)) return;
   const anchor = _findEmitSourceAnchor(source, levelContext.framePresentationIndex);
   if (anchor) {
     drawEmitBubble(text, anchor.anchorX, anchor.anchorTopY, scalingFactors, context, startTime, time, metaTime);
-    return null;
+    return;
   }
 
   const location = _findEmitSourceLocation(source, levelContext);
@@ -132,14 +130,13 @@ function _emitsHandler(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, t
     const { anchorX, anchorTopY } = createEmitBubbleAnchorAtTopCenter(
       levelContext.activeRoomTopCenterCanvasPoint, scalingFactors);
     drawEmitBubble(text, anchorX, anchorTopY, scalingFactors, context, startTime, time, metaTime, tipDirection);
-    return null;
+    return;
   }
 
   if (location?.kind === 'adjacentOpenExit') {
     drawEmitBubbleNearExit(text, location.exitTargetCanvasPoint, location.activeRoomInteriorCanvasPoint,
       scalingFactors, context, startTime, time, metaTime);
   }
-  return null;
 }
 
 export function createSaysEffect(characterId:string, text:PreparedAnimationText, startTime:number, speechDuration:number):Effect {

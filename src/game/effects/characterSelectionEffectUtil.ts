@@ -25,9 +25,9 @@ function _calcOpacity(elapsedMetaTime:number):number {
 }
 
 function _drawCharacterSelectionEffect(startMetaTime:number, drawCall:BeforeCharacterDrawCall,
-    metaTime:number, context:CanvasRenderingContext2D):null {
+    metaTime:number, context:CanvasRenderingContext2D):void {
   const nimbusImage = findImageBitmap(drawCall.characterContext.imageSet, CHARACTER_SELECTION_NIMBUS_IMAGE_URL);
-  if (!nimbusImage) return null;
+  if (!nimbusImage) return;
 
   // Calculate presentation from current anatomy and elapsed player-experience time.
   const elapsedMetaTime = metaTime - startMetaTime;
@@ -42,15 +42,13 @@ function _drawCharacterSelectionEffect(startMetaTime:number, drawCall:BeforeChar
   context.rotate(rotation);
   context.drawImage(nimbusImage, -drawDiameter / 2, -drawDiameter / 2, drawDiameter, drawDiameter);
   context.restore();
-  return null;
 }
 
 function _handleCharacterSelectionEffect(startMetaTime:number, drawCall:EffectDrawCall,
-    metaTime:number, context:CanvasRenderingContext2D):null {
+    metaTime:number, context:CanvasRenderingContext2D):void {
   if (drawCall.stage === 'beforeCharacter') {
     return _drawCharacterSelectionEffect(startMetaTime, drawCall, metaTime, context);
   }
-  return null;
 }
 
 /** Creates a character-selection nimbus beginning at the supplied meta-time. */

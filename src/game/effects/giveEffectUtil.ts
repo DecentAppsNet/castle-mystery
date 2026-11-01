@@ -9,7 +9,6 @@ import ScalingFactors from "@/game/types/ScalingFactors";
 import { assertNonNullable } from "decent-portal";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
-import { EffectHandlerResult } from "./types/EffectHandler";
 
 const GIVE_EFFECT_TIME = 500;
 
@@ -17,7 +16,7 @@ type CharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter'|'afte
 
 function _handleCharacterGive(drawCall:CharacterDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
     receivingCharacterId:string, startTime:number, endTime:number, scalingFactors:ScalingFactors,
-    time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
+    time:number, context:CanvasRenderingContext2D):void {
   // Resolve both endpoints from current room-local character anatomy.
   const sourceAnatomy = drawCall.characterContext.characterAnatomy;
   const destinationAnatomy = drawCall.characterContext.characterAnatomyById.get(receivingCharacterId);
@@ -29,23 +28,20 @@ function _handleCharacterGive(drawCall:CharacterDrawCall, item:Item, sourcePlace
 
   // Directly draw inventory items only after the giving character.
   if (sourcePlacement === INVENTORY) {
-    if (drawCall.stage === 'beforeCharacter') return null;
+    if (drawCall.stage === 'beforeCharacter') return;
     drawItemAtCanvasPositionInRoom(item, animated[0], animated[1], scalingFactors, context,
       drawCall.characterContext.imageSet);
-    return null;
   }
 
-  return null;
 }
 
 function _handleGive(drawCall:EffectDrawCall, item:Item, sourcePlacement:CharacterOwnedItemPlacement,
     receivingCharacterId:string, startTime:number, endTime:number, scalingFactors:ScalingFactors,
-    time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
+    time:number, context:CanvasRenderingContext2D):void {
   if (drawCall.stage === 'beforeCharacter' || drawCall.stage === 'afterCharacter') {
     return _handleCharacterGive(drawCall, item, sourcePlacement, receivingCharacterId, startTime,
       endTime, scalingFactors, time, context);
   }
-  return null;
 }
 
 /** Creates an item effect that moves from its giver placement to a receiving character's center. */

@@ -9,7 +9,6 @@ import Position, { duplicatePosition } from "@/game/types/Position";
 import ScalingFactors from "@/game/types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
-import { EffectHandlerResult } from "./types/EffectHandler";
 import CharacterAnatomyContext from './types/CharacterAnatomyContext';
 import { assertNonNullable } from 'decent-portal';
 
@@ -26,28 +25,25 @@ function _getSourceCanvasPoint(roomContentDisplayLayout:CharacterAnatomyContext[
 
 function _handleCharacterTake(drawCall:CharacterDrawCall, item:Item, destinationPlacement:CharacterOwnedItemPlacement,
     sourceFloorPosition:Position, sourceRoomItemI:number, startTime:number, endTime:number,
-    scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
+    scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D):void {
   const source = _getSourceCanvasPoint(drawCall.characterContext.roomContentDisplayLayout, item, sourceFloorPosition, sourceRoomItemI, scalingFactors);
   const destination = drawCall.characterContext.characterAnatomy.characterCenterCanvasPoint;
   const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
   const animated = interpolateNumberPair(source, destination, progress);
   if (destinationPlacement === INVENTORY) {
-    if (drawCall.stage === 'beforeCharacter') return null;
+    if (drawCall.stage === 'beforeCharacter') return;
     drawItemAtCanvasPositionInRoom(item, animated[0], animated[1], scalingFactors, context,
       drawCall.characterContext.imageSet);
-    return null;
   }
-  return null;
 }
 
 function _handleTake(drawCall:EffectDrawCall, item:Item, destinationPlacement:CharacterOwnedItemPlacement,
     sourceFloorPosition:Position, sourceRoomItemI:number, startTime:number, endTime:number,
-    scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
+    scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D):void {
   if (drawCall.stage === 'beforeCharacter' || drawCall.stage === 'afterCharacter') {
     return _handleCharacterTake(drawCall, item, destinationPlacement, sourceFloorPosition, sourceRoomItemI,
       startTime, endTime, scalingFactors, time, context);
   }
-  return null;
 }
 
 /** Creates a deferred room-image-center to hand transfer, or the existing draw-only inventory transfer. */

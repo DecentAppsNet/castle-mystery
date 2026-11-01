@@ -119,12 +119,12 @@ describe('speechEffectUtil', () => {
     it('does not return anatomy through drawing stages', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
       const characterContext = DRAW_CHARACTER_CONTEXT;
-      expect(_draw(effect, { stage:'beforeCharacter', characterContext })).toBeNull();
-      expect(_draw(effect, { stage:'afterCharacter', characterContext })).toBeNull();
+      expect(_draw(effect, { stage:'beforeCharacter', characterContext })).toBeUndefined();
+      expect(_draw(effect, { stage:'afterCharacter', characterContext })).toBeUndefined();
       expect(_draw(effect, {
         stage:'characterAfterLevel',
         characterContext
-      })).toBeNull();
+      })).toBeUndefined();
     });
   });
 
@@ -179,7 +179,7 @@ describe('speechEffectUtil', () => {
     it('keeps thoughts restricted to the existing head override', () => {
       const effect = createThinksEffect(TEXT, 100, 60000, 'right');
       expect(_query(effect, 500).map(override => override.spriteKind)).toEqual(['head']);
-      expect(_draw(effect, { stage:'beforeCharacter', characterContext:DRAW_CHARACTER_CONTEXT })).toBeNull();
+      expect(_draw(effect, { stage:'beforeCharacter', characterContext:DRAW_CHARACTER_CONTEXT })).toBeUndefined();
     });
 
     it('returns no thought anatomy outside its interval or for zero duration', () => {

@@ -16,9 +16,9 @@ const LOCK_UNLOCK_DURATION = 500;
 type AfterCharacterDrawCall = Extract<EffectDrawCall, { stage:'afterCharacter' }>;
 
 function _drawLockChange(drawCall:AfterCharacterDrawCall, scalingFactors:ScalingFactors, time:number,
-    context:CanvasRenderingContext2D, exitPosition:Position, startTime:number, travelDirection:1|-1):null {
+    context:CanvasRenderingContext2D, exitPosition:Position, startTime:number, travelDirection:1|-1):void {
   const image = findImageBitmap(drawCall.characterContext.imageSet, KEY_IMAGE_URL);
-  if (!image) return null;
+  if (!image) return;
 
   // Calculate the current canvas geometry from the timeline progress and scaling.
   const progress = clamp((time - startTime) / LOCK_UNLOCK_DURATION, 0, 1);
@@ -33,15 +33,13 @@ function _drawLockChange(drawCall:AfterCharacterDrawCall, scalingFactors:Scaling
   context.globalAlpha = 1 - progress;
   context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
   context.restore();
-  return null;
 }
 
 function _handleLockChange(drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number,
-    context:CanvasRenderingContext2D, exitPosition:Position, startTime:number, travelDirection:1|-1):null {
+    context:CanvasRenderingContext2D, exitPosition:Position, startTime:number, travelDirection:1|-1):void {
   if (drawCall.stage === 'afterCharacter') {
     return _drawLockChange(drawCall, scalingFactors, time, context, exitPosition, startTime, travelDirection);
   }
-  return null;
 }
 
 function _createLockChangeEffect(kind:'lockExit'|'unlockExit', exitPosition:Position, startTime:number,

@@ -15,9 +15,8 @@ export type EffectHandlerResult = {
  * @param metaTime Player-experience time, which always moves forward.
  * @param context Canvas to draw to.
  * 
- * @returns Optionally, the handler can return EffectHandlerResults to influence how calling code draws things. It is
- *          preferable for the handler to directly draw an effect, but if the calling code is already drawing a sprite or 
- *          other element, this return value can be used to apply transformations or other tweaks to that drawing.
+ * @returns Draw handlers return no value. Legacy results remain accepted temporarily while dispatch is migrated;
+ *          anatomy contributions belong in the separate anatomy handler.
  */
 type EffectHandler = (
     drawCall:EffectDrawCall,
@@ -25,6 +24,6 @@ type EffectHandler = (
     time:number,
     metaTime:number,
     context:CanvasRenderingContext2D)
-  => EffectHandlerResult|null;
+  => EffectHandlerResult|null|void;
 
 export default EffectHandler;

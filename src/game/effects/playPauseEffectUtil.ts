@@ -15,7 +15,7 @@ const END_SCALE = 1.08;
 const FONT_SIZE_CANVAS_RATIO = 0.22;
 
 function _handlePlayPauseEffect(iconText:string, startTime:number, drawCall:EffectDrawCall,
-    scalingFactors:ScalingFactors, metaTime:number, context:CanvasRenderingContext2D):null {
+    scalingFactors:ScalingFactors, metaTime:number, context:CanvasRenderingContext2D):void {
   assert(drawCall.stage === 'afterLevel');
 
   // Calculate the current animation presentation.
@@ -38,7 +38,6 @@ function _handlePlayPauseEffect(iconText:string, startTime:number, drawCall:Effe
   context.fillStyle = COLOR_BLACK;
   context.fillText(iconText, x, y);
   context.restore();
-  return null;
 }
 
 function _createPlayPauseEffect(kind:'play'|'pause', iconText:string, metaTime:number):Effect {

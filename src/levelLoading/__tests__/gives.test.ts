@@ -26,12 +26,12 @@ function _findTransferTime(level:Level, itemId:string):number {
 function _findGiveEffect(level:Level, characterId:string = 'sam') {
   const characterI = level.timeline.characterIdToI[characterId];
   const effect = level.timeline.keyframes.flatMap(keyframe => keyframe.characters[characterI].effects)
-    .find(candidate => candidate.kind === 'giveItem' && candidate.drawHandler !== null);
+    .find(candidate => candidate.kind === 'giveItem' && (candidate.drawHandler !== null || candidate.anatomyHandler !== null));
   expect(effect).toBeDefined();
   return effect!;
 }
 
-/** Verifies ownership and the drawable giver effect across a give's boundaries. */
+/** Verifies ownership and the active giver effect across a give's boundaries. */
 function _expectGiveBoundaries(level:Level, itemId:string) {
   const effect = _findGiveEffect(level);
   const samI = level.timeline.characterIdToI.sam;
@@ -227,7 +227,7 @@ describe('level loading - gives activities', () => {
     expect(level).not.toBeNull();
     const effects = level!.timeline.keyframes.flatMap(keyframe =>
       keyframe.characters[level!.timeline.characterIdToI.sam].effects)
-      .filter(effect => effect.kind === 'giveItem' && effect.drawHandler !== null);
+      .filter(effect => effect.kind === 'giveItem' && (effect.drawHandler !== null || effect.anatomyHandler !== null));
     expect(effects).toHaveLength(2);
     expect(effects[1].startTime).toBe(effects[0].endTime);
   });
