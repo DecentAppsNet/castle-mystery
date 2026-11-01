@@ -10,32 +10,25 @@ import ScalingFactors from "@/game/types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
 import { EffectHandlerResult } from "./types/EffectHandler";
+import CharacterAnatomyContext from './types/CharacterAnatomyContext';
+import { assertNonNullable } from 'decent-portal';
 
 const TAKE_EFFECT_TIME = 500;
 
 type CharacterDrawCall = Extract<EffectDrawCall, { stage:'beforeCharacter'|'afterCharacter' }>;
 
-function _getSourceCanvasPoint(drawCall:CharacterDrawCall, item:Item, sourceFloorPosition:Position,
+function _getSourceCanvasPoint(roomContentDisplayLayout:CharacterAnatomyContext['roomContentDisplayLayout'], item:Item, sourceFloorPosition:Position,
     sourceRoomItemI:number, scalingFactors:ScalingFactors):[number, number] {
-  const displayPosition = drawCall.characterContext.roomContentDisplayLayout
+  const displayPosition = roomContentDisplayLayout
     .findProspectiveItemDisplayPosition(item, sourceFloorPosition, sourceRoomItemI);
   return getItemCanvasPositionInRoom(displayPosition, scalingFactors);
-}
-
-function _getDestinationCanvasPoint(drawCall:CharacterDrawCall,
-    destinationPlacement:CharacterOwnedItemPlacement):[number, number] {
-  const anatomy = drawCall.characterContext.characterAnatomy;
-  if (destinationPlacement === INVENTORY) return anatomy.characterCenterCanvasPoint;
-  return destinationPlacement === LEFT_HAND
-    ? anatomy.leftHandItemCanvasPoint
-    : anatomy.rightHandItemCanvasPoint;
 }
 
 function _handleCharacterTake(drawCall:CharacterDrawCall, item:Item, destinationPlacement:CharacterOwnedItemPlacement,
     sourceFloorPosition:Position, sourceRoomItemI:number, startTime:number, endTime:number,
     scalingFactors:ScalingFactors, time:number, context:CanvasRenderingContext2D):EffectHandlerResult|null {
-  const source = _getSourceCanvasPoint(drawCall, item, sourceFloorPosition, sourceRoomItemI, scalingFactors);
-  const destination = _getDestinationCanvasPoint(drawCall, destinationPlacement);
+  const source = _getSourceCanvasPoint(drawCall.characterContext.roomContentDisplayLayout, item, sourceFloorPosition, sourceRoomItemI, scalingFactors);
+  const destination = drawCall.characterContext.characterAnatomy.characterCenterCanvasPoint;
   const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
   const animated = interpolateNumberPair(source, destination, progress);
   if (destinationPlacement === INVENTORY) {
@@ -44,13 +37,7 @@ function _handleCharacterTake(drawCall:CharacterDrawCall, item:Item, destination
       drawCall.characterContext.imageSet);
     return null;
   }
-  if (drawCall.stage === 'afterCharacter') return null;
-  return { spriteOverrides:[{
-    spriteKind:destinationPlacement === LEFT_HAND ? 'leftHandItem' : 'rightHandItem',
-    transformType:'translateCanvas',
-    translateCanvasX:animated[0] - destination[0],
-    translateCanvasY:animated[1] - destination[1]
-  }] };
+  return null;
 }
 
 function _handleTake(drawCall:EffectDrawCall, item:Item, destinationPlacement:CharacterOwnedItemPlacement,
@@ -63,6 +50,7 @@ function _handleTake(drawCall:EffectDrawCall, item:Item, destinationPlacement:Ch
   return null;
 }
 
+/** Creates a deferred room-image-center to hand transfer, or the existing draw-only inventory transfer. */
 export function createTakeEffect(item:Item, destinationPlacement:CharacterOwnedItemPlacement,
     sourceFloorPosition:Position, sourceRoomItemI:number, startTime:number):Effect {
   const endTime = startTime + TAKE_EFFECT_TIME;
@@ -72,8 +60,20 @@ export function createTakeEffect(item:Item, destinationPlacement:CharacterOwnedI
     kind:'takeItem',
     startTime,
     endTime,
-    anatomyHandler:null,
-    drawHandler:(drawCall, scalingFactors, time, _metaTime, context) =>
+    anatomyHandler:destinationPlacement === INVENTORY ? null : (context, time) => {
+      if (time < startTime || time > endTime) return [];
+      const centerOffset = context.roomItemCenterOffsetById.get(effectItem.id);
+      assertNonNullable(centerOffset, `Missing room image center offset for held item ${effectItem.id}`);
+      const source = _getSourceCanvasPoint(context.roomContentDisplayLayout, effectItem, effectSourcePosition, sourceRoomItemI, context.scalingFactors);
+      return [{
+        spriteKind:destinationPlacement === LEFT_HAND ? context.leftHandPartKind
+          : context.leftHandPartKind === 'nearHand' ? 'farHand' : 'nearHand',
+        transformType:'deferredHandDisplacement',
+        destinationCanvasPoint:[source[0] + centerOffset[0], source[1] + centerOffset[1]],
+        weight:1 - clamp((time - startTime) / (endTime - startTime), 0, 1)
+      }];
+    },
+    drawHandler:destinationPlacement !== INVENTORY ? null : (drawCall, scalingFactors, time, _metaTime, context) =>
       _handleTake(drawCall, effectItem, destinationPlacement, effectSourcePosition, sourceRoomItemI,
         startTime, endTime, scalingFactors, time, context)
   }
