@@ -424,8 +424,9 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           baseCharacterCenterById,
           roomContentDisplayLayout:displayLayout
         }, gameTime, metaTime);
-        const spriteOverrides = aggregateSpriteOverrides([...anatomyOverrides, ...handleBeforeCharacterDrawEffects(
-          content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context)], content.character);
+        handleBeforeCharacterDrawEffects(
+          content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context);
+        const spriteOverrides = aggregateSpriteOverrides(anatomyOverrides, content.character);
         const visualLayout = createVisualBodyLayout(characterCanvasLayout.layout, spriteOverrides, content.character.facingDirection);
         const heldItems = [
           { item:content.character.leftHandItem, hand:'left' as const },
@@ -434,11 +435,11 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         heldItems.forEach(({ item, hand }) => {
           if (!item) return;
           const anchor = getHeldItemBubbleAnchor(
-            item, content.character, visualLayout, hand, scalingFactors, imageSet, spriteOverrides);
+            item, content.character, visualLayout, hand, scalingFactors, imageSet);
           if (anchor) result.itemBubbleAnchorById.set(item.id, anchor);
         });
         drawCharacter(content.character, content.displayPosition, scalingFactors, context, gameTime, imageSet,
-          isHighlighted, metaTime, spriteOverrides, { ...characterCanvasLayout, layout:visualLayout });
+          isHighlighted, metaTime, { ...characterCanvasLayout, layout:visualLayout });
         handleAfterCharacterDrawEffects(content.character.effects, scalingFactors, gameTime, characterContext, context);
         return;
     }

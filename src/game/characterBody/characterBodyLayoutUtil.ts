@@ -30,15 +30,16 @@ export function createVisualBodyLayout(base:CharacterLayout, overrides:readonly 
     const { part } = original;
     const transform = inherited ? composeBodyTransforms(inherited, original.transform) : original.transform;
     const rotation = overrides.find(entry => entry.transformType === 'rotate' && entry.spriteKind === part.kind);
-    const translation = overrides.find(entry => entry.transformType === 'translatePartHeight' && entry.spriteKind === part.kind);
+    const translation = overrides.find(entry => (entry.transformType === 'translatePartHeight' || entry.transformType === 'translateCanvas') && entry.spriteKind === part.kind);
     const angle = rotation?.transformType === 'rotate' && (part.kind !== 'head' || part.imageUrl !== null)
       ? rotation.rotateRadians : 0;
+    const translateX = translation?.transformType === 'translateCanvas' ? translation.translateCanvasX : 0;
     const translateY = translation?.transformType === 'translatePartHeight'
-      ? translation.translateHeightRatio * part.height * Math.hypot(transform.verticalX, transform.verticalY) : 0;
-    const unchanged = angle === 0 && translateY === 0;
+      ? translation.translateHeightRatio * part.height * Math.hypot(transform.verticalX, transform.verticalY) : translation?.transformType === 'translateCanvas' ? translation.translateCanvasY : 0;
+    const unchanged = angle === 0 && translateX === 0 && translateY === 0;
     const resolved = unchanged ? { part, transform } : part.kind === 'head'
       ? rotateHeadPose({ part, transform }, facing, angle)
-      : { part, transform:applyBodyTransformDeltas(transform, part.pivotPoint, angle, [0, translateY]) };
+      : { part, transform:applyBodyTransformDeltas(transform, part.pivotPoint, angle, [translateX, translateY]) };
     parts.push(resolved);
     const delta = unchanged ? inherited : composeBodyTransforms(resolved.transform, invertBodyTransform(original.transform));
     part.connectedParts.forEach(({ part:child }) => _resolve(getResolvedBodyPart(base.parts, child.kind), delta));

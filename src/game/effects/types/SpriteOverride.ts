@@ -22,8 +22,7 @@ type SpriteOverride = BodyPartTarget<'head'> & {
   transformType:'deferredHandDisplacement',
   destinationCanvasPoint:Point,
   weight:number
-}|{
-  spriteKind:'leftHandItem'|'rightHandItem',
+}|BodyPartTarget<'nearHand'|'farHand'> & {
   transformType:'translateCanvas',
   translateCanvasX:number,
   translateCanvasY:number

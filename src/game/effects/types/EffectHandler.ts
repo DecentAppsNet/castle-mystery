@@ -1,10 +1,5 @@
 import ScalingFactors from "@/game/types/ScalingFactors";
-import SpriteOverride from "./SpriteOverride";
 import EffectDrawCall from "./EffectDrawCall";
-
-export type EffectHandlerResult = {
-  spriteOverrides:SpriteOverride[]
-}
 
 /**
  * The effect handler's parameters should be limited to values that can't be learned and curried at effect creation time.
@@ -15,8 +10,7 @@ export type EffectHandlerResult = {
  * @param metaTime Player-experience time, which always moves forward.
  * @param context Canvas to draw to.
  * 
- * @returns Draw handlers return no value. Legacy results remain accepted temporarily while dispatch is migrated;
- *          anatomy contributions belong in the separate anatomy handler.
+ * @returns No value; anatomy contributions belong in the separate anatomy handler.
  */
 type EffectHandler = (
     drawCall:EffectDrawCall,
@@ -24,6 +18,6 @@ type EffectHandler = (
     time:number,
     metaTime:number,
     context:CanvasRenderingContext2D)
-  => EffectHandlerResult|null|void;
+  => void;
 
 export default EffectHandler;

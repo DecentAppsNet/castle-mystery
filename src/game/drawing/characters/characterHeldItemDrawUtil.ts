@@ -11,7 +11,6 @@ import Character from "@/game/types/Character";
 import Item from "@/game/types/Item";
 import ScalingFactors from "@/game/types/ScalingFactors";
 import ImageSet from "@/game/types/ImageSet";
-import SpriteOverride from "@/game/effects/types/SpriteOverride";
 import CharacterLayout from '@/game/characterBody/types/CharacterLayout';
 import CanvasBubbleAnchor from "@/game/effects/types/CanvasBubbleAnchor";
 import { createCanvasAttachmentTransform, getHandArmPartKind, getResolvedBodyPart, transformBodyRect } from '@/game/characterBody';
@@ -37,44 +36,34 @@ export function getHeldItemCanvasPoint(layout:CharacterLayout, hand:Hand):[numbe
   return [handPosition.x, handPosition.y];
 }
 
-function _findHeldItemCanvasTranslation(spriteOverrides:SpriteOverride[], hand:Hand):[number, number] {
-  const spriteKind = hand === 'left' ? 'leftHandItem' : 'rightHandItem';
-  const override = spriteOverrides.find(candidate => candidate.spriteKind === spriteKind);
-  return override && override.transformType === 'translateCanvas'
-    ? [override.translateCanvasX, override.translateCanvasY]
-    : [0, 0];
-}
-
 function _createHeldItemPlacement(item:Item, character:Character, layout:CharacterLayout, hand:Hand,
-  scalingFactors:ScalingFactors, imageSet:ImageSet, spriteOverrides:SpriteOverride[]) {
+  scalingFactors:ScalingFactors, imageSet:ImageSet) {
   const imageDrawRect = _createHeldItemDrawRect(scalingFactors);
   const rect = getItemCanvasRectAtCanvasPosition(item, 0, 0, imageDrawRect, imageSet);
   const armKind = getHandArmPartKind(character.rootBodyPart.imageUrl !== null, character.facingDirection, hand);
   const attachment = getResolvedBodyPart(layout.parts, armKind === 'nearArm' ? 'nearHand' : 'farHand');
   const transform = createCanvasAttachmentTransform(attachment.transform, scalingFactors);
-  const [translateX, translateY] = _findHeldItemCanvasTranslation(spriteOverrides, hand);
   return {
     imageDrawRect, rect,
     centeredRect:{ x:-rect.width / 2, y:-rect.height / 2, width:rect.width, height:rect.height },
-    transform:{ ...transform, translateX:transform.translateX + translateX, translateY:transform.translateY + translateY }
+    transform
   };
 }
 
 /** Places the bubble above the canvas bounds of the centered, rotated, and translated held image. */
 export function getHeldItemBubbleAnchor(item:Item, character:Character, layout:CharacterLayout, hand:Hand,
-    scalingFactors:ScalingFactors, imageSet:ImageSet,
-    spriteOverrides:SpriteOverride[]):CanvasBubbleAnchor|null {
+    scalingFactors:ScalingFactors, imageSet:ImageSet):CanvasBubbleAnchor|null {
   if (!item.isVisible) return null;
-  const { centeredRect, transform } = _createHeldItemPlacement(item, character, layout, hand, scalingFactors, imageSet, spriteOverrides);
+  const { centeredRect, transform } = _createHeldItemPlacement(item, character, layout, hand, scalingFactors, imageSet);
   if (centeredRect.width === 0 && centeredRect.height === 0) return { anchorX:0, anchorTopY:0 };
   const bounds = transformBodyRect(transform, centeredRect);
   return { anchorX:bounds.x + bounds.width / 2, anchorTopY:bounds.y };
 }
 
 function _drawHeldItem(item:Item, character:Character, layout:CharacterLayout, hand:Hand, scalingFactors:ScalingFactors,
-  context:CanvasRenderingContext2D, imageSet:ImageSet, spriteOverrides:SpriteOverride[]):void {
+  context:CanvasRenderingContext2D, imageSet:ImageSet):void {
   const { imageDrawRect, rect, centeredRect, transform } =
-    _createHeldItemPlacement(item, character, layout, hand, scalingFactors, imageSet, spriteOverrides);
+    _createHeldItemPlacement(item, character, layout, hand, scalingFactors, imageSet);
   context.save();
   context.transform(transform.horizontalX, transform.horizontalY, transform.verticalX, transform.verticalY,
     transform.translateX, transform.translateY);
@@ -103,18 +92,16 @@ export function hasDrawnUndiscoveredHeldItem(character:Character, discoveredItem
 }
 
 export function drawHeldItemsBehindCharacter(character:Character, layout:CharacterLayout,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet,
-  spriteOverrides:SpriteOverride[]) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const backHandItem = _findBackHandItem(character);
   if (!backHandItem?.isVisible) return;
   const hand = character.facingDirection === 'right' ? 'left' : 'right';
-  _drawHeldItem(backHandItem, character, layout, hand, scalingFactors, context, imageSet, spriteOverrides);
+  _drawHeldItem(backHandItem, character, layout, hand, scalingFactors, context, imageSet);
 }
 
 export function drawHeldItemsInFrontOfCharacter(character:Character, layout:CharacterLayout,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet,
-  spriteOverrides:SpriteOverride[]) {
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const frontHandItem = _findFrontHandItem(character);
   if (!frontHandItem?.isVisible) return;
-  _drawHeldItem(frontHandItem, character, layout, character.facingDirection, scalingFactors, context, imageSet, spriteOverrides);
+  _drawHeldItem(frontHandItem, character, layout, character.facingDirection, scalingFactors, context, imageSet);
 }

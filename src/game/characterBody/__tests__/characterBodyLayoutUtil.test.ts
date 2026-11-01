@@ -19,6 +19,20 @@ function _createDeferredTestLayout() {
 
 describe('characterBodyLayoutUtil', () => {
   describe('createVisualBodyLayout()', () => {
+    it('applies numeric hand translations once in canvas axes without changing orientation or base geometry', () => {
+      const { base, rotation, reference, animated } = _createDeferredTestLayout();
+      const before = structuredClone(base);
+      const result = createVisualBodyLayout(base, [rotation,
+        { spriteKind:'nearHand', transformType:'translateCanvas', translateCanvasX:17, translateCanvasY:-23 }
+      ], 'left');
+      expect(getResolvedBodyPart(result.parts, 'nearHand').transform).toEqual({ ...reference,
+        translateX:reference.translateX + 17, translateY:reference.translateY - 23 });
+      expect(result.parts.filter(({ part }) => part.kind !== 'nearHand'))
+        .toEqual(animated.parts.filter(({ part }) => part.kind !== 'nearHand'));
+      expect(result.bounds).toBe(base.bounds);
+      expect(base).toEqual(before);
+    });
+
     it('preserves the animated attachment when deferred weight is zero', () => {
       const { base, rotation, animated } = _createDeferredTestLayout();
       const result = createVisualBodyLayout(base, [rotation,
@@ -51,9 +65,10 @@ describe('characterBodyLayoutUtil', () => {
       expect(result.leftHand.y).toBeCloseTo(reference.translateY + 0.25 * (900 - reference.translateY));
     });
 
-    it('sums independent contributions from one reference without feedback or order dependence', () => {
+    it('sums deferred contributions from the numerically translated reference without feedback or order dependence', () => {
       const { root, base, rotation, reference } = _createDeferredTestLayout();
       const contributions:SpriteOverride[] = [rotation,
+      { spriteKind:'nearHand', transformType:'translateCanvas', translateCanvasX:17, translateCanvasY:-23 },
         { spriteKind:'nearHand', transformType:'deferredHandDisplacement', destinationCanvasPoint:[800, 900], weight:0.2 },
         { spriteKind:'nearHand', transformType:'deferredHandDisplacement', destinationCanvasPoint:[-120, 350], weight:0.4 }
       ];
@@ -61,8 +76,9 @@ describe('characterBodyLayoutUtil', () => {
       const character = { rootBodyPart:root, facingDirection:'left' as const };
       const result = createVisualBodyLayout(base, aggregateSpriteOverrides(contributions, character), 'left');
       const reversed = createVisualBodyLayout(base, aggregateSpriteOverrides([...contributions].reverse(), character), 'left');
-      expect(result.leftHand.x).toBeCloseTo(reference.translateX + 0.2 * (800 - reference.translateX) + 0.4 * (-120 - reference.translateX));
-      expect(result.leftHand.y).toBeCloseTo(reference.translateY + 0.2 * (900 - reference.translateY) + 0.4 * (350 - reference.translateY));
+      const referenceX = reference.translateX + 17, referenceY = reference.translateY - 23;
+      expect(result.leftHand.x).toBeCloseTo(referenceX + 0.2 * (800 - referenceX) + 0.4 * (-120 - referenceX));
+      expect(result.leftHand.y).toBeCloseTo(referenceY + 0.2 * (900 - referenceY) + 0.4 * (350 - referenceY));
       expect(reversed.leftHand.x).toBeCloseTo(result.leftHand.x);
       expect(reversed.leftHand.y).toBeCloseTo(result.leftHand.y);
       expect(createVisualBodyLayout(base, aggregateSpriteOverrides(contributions, character), 'left')).toEqual(result);

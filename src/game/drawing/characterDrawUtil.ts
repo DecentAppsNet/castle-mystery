@@ -28,7 +28,6 @@ import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
 import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
-import SpriteOverride from "../effects/types/SpriteOverride";
 
 const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.2;
@@ -266,13 +265,13 @@ export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character
 
 export function drawCharacter(character:Character, displayPosition:Position, scalingFactors:ScalingFactors,
     context:CanvasRenderingContext2D, gameTime:number, imageSet:ImageSet, isHighlighted:boolean,
-    metaTime:number, spriteOverrides:SpriteOverride[],
+    metaTime:number,
     characterCanvasLayout = createCharacterCanvasLayout(character, displayPosition, scalingFactors, gameTime)) {
   const { layout, characterWidth, characterHeight } = characterCanvasLayout;
   if (isHighlighted) _drawActiveCharacterHighlight(layout.head.centerX, layout.head.centerY, characterWidth, characterHeight, scalingFactors, context, metaTime);
   context.lineWidth = scalingFactors.roomLineWidth;
   context.strokeStyle = COLOR_BLACK;
-  drawHeldItemsBehindCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
+  drawHeldItemsBehindCharacter(character, layout, scalingFactors, context, imageSet);
   getBodyPaintOrder(character.facingDirection, character.rootBodyPart.imageUrl !== null).forEach(kind => {
     const part = getResolvedBodyPart(layout.parts, kind);
     if (kind === 'head') {
@@ -281,7 +280,7 @@ export function drawCharacter(character:Character, displayPosition:Position, sca
       drawCharacterBodyPart(part, imageSet, context);
     }
   });
-  drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet, spriteOverrides);
+  drawHeldItemsInFrontOfCharacter(character, layout, scalingFactors, context, imageSet);
   if (DRAW_CHARACTER_DIAGNOSTICS) drawCharacterAttachmentMarkers(layout.parts, context);
 }
 
