@@ -46,7 +46,8 @@ function _createPlayPauseEffect(kind:'play'|'pause', iconText:string, metaTime:n
     kind,
     startTime:metaTime,
     endTime:metaTime + PLAY_PAUSE_EFFECT_DURATION,
-    handler:(drawCall, scalingFactors, _time, currentMetaTime, context) =>
+    anatomyHandler:null,
+    drawHandler:(drawCall, scalingFactors, _time, currentMetaTime, context) =>
       _handlePlayPauseEffect(iconText, metaTime, drawCall, scalingFactors, currentMetaTime, context)
   };
 }

@@ -11,7 +11,7 @@ describe('metaTimeEffectUtil', () => {
   describe('appendCharacterMetaTimeEffect()', () => {
     it('creates a collection for a new character', () => {
       const effectsByCharacterId = new Map<string, Effect[]>();
-      const effect:Effect = { kind:'play', startTime:100, endTime:200, handler:null };
+      const effect:Effect = { kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
 
       appendCharacterMetaTimeEffect(effectsByCharacterId, 'character-a', effect);
 
@@ -19,8 +19,8 @@ describe('metaTimeEffectUtil', () => {
     });
 
     it('appends to an existing collection without replacing it', () => {
-      const firstEffect:Effect = { kind:'play', startTime:100, endTime:200, handler:null };
-      const secondEffect:Effect = { kind:'play', startTime:150, endTime:250, handler:null };
+      const firstEffect:Effect = { kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
+      const secondEffect:Effect = { kind:'play', startTime:150, endTime:250, drawHandler:null, anatomyHandler:null };
       const effects = [firstEffect];
       const effectsByCharacterId = new Map([['character-a', effects]]);
 
@@ -41,7 +41,7 @@ describe('metaTimeEffectUtil', () => {
     });
 
     it('keeps an effect before its end time', () => {
-      const effect:Effect = { kind:'play', startTime:100, endTime:200, handler:null };
+      const effect:Effect = { kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
       const effects = [effect];
 
       removeExpiredMetaTimeEffects(effects, 199);
@@ -51,7 +51,7 @@ describe('metaTimeEffectUtil', () => {
     });
 
     it('removes an effect exactly at its end time', () => {
-      const effects:Effect[] = [{ kind:'play', startTime:100, endTime:200, handler:null }];
+      const effects:Effect[] = [{ kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null }];
 
       removeExpiredMetaTimeEffects(effects, 200);
 
@@ -59,10 +59,10 @@ describe('metaTimeEffectUtil', () => {
     });
 
     it('removes adjacent expired effects without skipping either effect', () => {
-      const activeEffect:Effect = { kind:'play', startTime:200, endTime:300, handler:null };
+      const activeEffect:Effect = { kind:'play', startTime:200, endTime:300, drawHandler:null, anatomyHandler:null };
       const effects:Effect[] = [
-        { kind:'play', startTime:0, endTime:50, handler:null },
-        { kind:'play', startTime:50, endTime:100, handler:null },
+        { kind:'play', startTime:0, endTime:50, drawHandler:null, anatomyHandler:null },
+        { kind:'play', startTime:50, endTime:100, drawHandler:null, anatomyHandler:null },
         activeEffect
       ];
 
@@ -72,11 +72,11 @@ describe('metaTimeEffectUtil', () => {
     });
 
     it('preserves active and future effects in order with their original identities', () => {
-      const firstEffect:Effect = { kind:'play', startTime:50, endTime:150, handler:null };
-      const secondEffect:Effect = { kind:'play', startTime:200, endTime:300, handler:null };
+      const firstEffect:Effect = { kind:'play', startTime:50, endTime:150, drawHandler:null, anatomyHandler:null };
+      const secondEffect:Effect = { kind:'play', startTime:200, endTime:300, drawHandler:null, anatomyHandler:null };
       const effects:Effect[] = [
         firstEffect,
-        { kind:'play', startTime:0, endTime:100, handler:null },
+        { kind:'play', startTime:0, endTime:100, drawHandler:null, anatomyHandler:null },
         secondEffect
       ];
 
@@ -90,7 +90,7 @@ describe('metaTimeEffectUtil', () => {
 
   describe('removeExpiredCharacterMetaTimeEffects()', () => {
     it('retains active effects', () => {
-      const effect:Effect = { kind:'play', startTime:100, endTime:200, handler:null };
+      const effect:Effect = { kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
       const effects = [effect];
       const effectsByCharacterId = new Map([['character-a', effects]]);
 
@@ -101,10 +101,10 @@ describe('metaTimeEffectUtil', () => {
     });
 
     it('removes adjacent expired effects', () => {
-      const activeEffect:Effect = { kind:'play', startTime:100, endTime:200, handler:null };
+      const activeEffect:Effect = { kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
       const effects:Effect[] = [
-        { kind:'play', startTime:0, endTime:50, handler:null },
-        { kind:'play', startTime:50, endTime:100, handler:null },
+        { kind:'play', startTime:0, endTime:50, drawHandler:null, anatomyHandler:null },
+        { kind:'play', startTime:50, endTime:100, drawHandler:null, anatomyHandler:null },
         activeEffect
       ];
       const effectsByCharacterId = new Map([['character-a', effects]]);
@@ -115,11 +115,11 @@ describe('metaTimeEffectUtil', () => {
     });
 
     it('preserves surviving effect identity and order', () => {
-      const firstEffect:Effect = { kind:'play', startTime:50, endTime:150, handler:null };
-      const secondEffect:Effect = { kind:'play', startTime:200, endTime:300, handler:null };
+      const firstEffect:Effect = { kind:'play', startTime:50, endTime:150, drawHandler:null, anatomyHandler:null };
+      const secondEffect:Effect = { kind:'play', startTime:200, endTime:300, drawHandler:null, anatomyHandler:null };
       const effects:Effect[] = [
         firstEffect,
-        { kind:'play', startTime:0, endTime:100, handler:null },
+        { kind:'play', startTime:0, endTime:100, drawHandler:null, anatomyHandler:null },
         secondEffect
       ];
       const effectsByCharacterId = new Map([['character-a', effects]]);
@@ -134,7 +134,7 @@ describe('metaTimeEffectUtil', () => {
 
     it('deletes a character entry whose effects all expired', () => {
       const effectsByCharacterId = new Map<string, Effect[]>([
-        ['character-a', [{ kind:'play', startTime:0, endTime:100, handler:null }]]
+        ['character-a', [{ kind:'play', startTime:0, endTime:100, drawHandler:null, anatomyHandler:null }]]
       ]);
 
       removeExpiredCharacterMetaTimeEffects(effectsByCharacterId, 100);
@@ -143,9 +143,9 @@ describe('metaTimeEffectUtil', () => {
     });
 
     it('retains nonempty keys while deleting empty keys', () => {
-      const activeEffect:Effect = { kind:'play', startTime:100, endTime:200, handler:null };
+      const activeEffect:Effect = { kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
       const effectsByCharacterId = new Map<string, Effect[]>([
-        ['character-a', [{ kind:'play', startTime:0, endTime:100, handler:null }]],
+        ['character-a', [{ kind:'play', startTime:0, endTime:100, drawHandler:null, anatomyHandler:null }]],
         ['character-b', [activeEffect]]
       ]);
 

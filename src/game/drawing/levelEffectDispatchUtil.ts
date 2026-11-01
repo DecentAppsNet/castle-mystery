@@ -15,12 +15,12 @@ export function handleAfterLevelDrawEffects(characters:CharacterWithEffects[], m
   // Dispatch immutable timeline effects first.
   characters.forEach(character => {
     character.effects.forEach(effect => {
-      if (effect.handler) effect.handler(drawCall, scalingFactors, gameTime, metaTime, context);
+      if (effect.drawHandler) effect.drawHandler(drawCall, scalingFactors, gameTime, metaTime, context);
     });
   });
 
   // Dispatch active meta-time effects in collection order.
   metaTimeEffects.forEach(effect => {
-    if (effect.handler) effect.handler(drawCall, scalingFactors, gameTime, metaTime, context);
+    if (effect.drawHandler) effect.drawHandler(drawCall, scalingFactors, gameTime, metaTime, context);
   });
 }

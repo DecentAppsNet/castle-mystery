@@ -57,7 +57,7 @@ import CharacterEffectDrawContext from "../effects/types/CharacterEffectDrawCont
 import CharacterCanvasAnatomy from "../effects/types/CharacterCanvasAnatomy";
 import { handleAfterCharacterDrawEffects, handleBeforeCharacterDrawEffects } from "./characters/characterEffectDispatchUtil";
 import RoomDrawResult from "./types/RoomDrawResult";
-import { aggregateSpriteOverrides } from '@/game/effects/spriteOverrideUtil';
+import { aggregateSpriteOverrides, collectAnatomyOverrides } from '@/game/effects/spriteOverrideUtil';
 
 function _createEmptyRoomDrawResult():RoomDrawResult {
   return {
@@ -402,8 +402,13 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
         result.characterEffectDrawEntries.push({ character:content.character, characterContext });
         result.characterBubbleAnchorById.set(content.character.id, characterAnatomy);
         const isHighlighted = content.character.id === activeCharacter.id || content.character.id === hoveredCharacterId;
-        const spriteOverrides = aggregateSpriteOverrides(handleBeforeCharacterDrawEffects(
-          content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context), content.character);
+        const anatomyOverrides = collectAnatomyOverrides(content.character.effects, {
+          bodyOrientation:characterContext.bodyOrientation,
+          isNearArmHoldingItem:characterContext.isNearArmHoldingItem,
+          isFarArmHoldingItem:characterContext.isFarArmHoldingItem
+        }, gameTime, metaTime);
+        const spriteOverrides = aggregateSpriteOverrides([...anatomyOverrides, ...handleBeforeCharacterDrawEffects(
+          content.character.effects, scalingFactors, gameTime, metaTime, characterContext, context)], content.character);
         const visualLayout = createVisualBodyLayout(characterCanvasLayout.layout, spriteOverrides, content.character.facingDirection);
         const heldItems = [
           { item:content.character.leftHandItem, hand:'left' as const },

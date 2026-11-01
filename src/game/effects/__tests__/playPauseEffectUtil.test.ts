@@ -10,7 +10,7 @@ describe('playPauseEffectUtil', () => {
       expect(effect.kind).toBe('play');
       expect(effect.startTime).toBe(1000);
       expect(effect.endTime).toBe(1260);
-      expect(effect.handler).toEqual(expect.any(Function));
+      expect(effect.drawHandler).toEqual(expect.any(Function));
     });
 
     it('creates independent effect objects on repeated calls', () => {
@@ -28,7 +28,7 @@ describe('playPauseEffectUtil', () => {
       expect(effect.kind).toBe('pause');
       expect(effect.startTime).toBe(2000);
       expect(effect.endTime).toBe(2260);
-      expect(effect.handler).toEqual(expect.any(Function));
+      expect(effect.drawHandler).toEqual(expect.any(Function));
     });
   });
 });

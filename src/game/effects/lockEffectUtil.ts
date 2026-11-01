@@ -48,7 +48,7 @@ function _createLockChangeEffect(kind:'lockExit'|'unlockExit', exitPosition:Posi
     travelDirection:1|-1):Effect {
   const handler:EffectHandler = (drawCall, scalingFactors, time, _metaTime, context) =>
     _handleLockChange(drawCall, scalingFactors, time, context, exitPosition, startTime, travelDirection);
-  return { kind, startTime, endTime:startTime + LOCK_UNLOCK_DURATION, handler };
+  return { kind, startTime, endTime:startTime + LOCK_UNLOCK_DURATION, drawHandler:handler, anatomyHandler:null };
 }
 
 export function createLockEffect(exitPosition:Position, startTime:number):Effect {

@@ -27,7 +27,7 @@ function _sampleSpeech(text:string, itinerary:readonly string[]) {
     isNearArmHoldingItem:(leftArm === 'nearArm' ? speaker.leftHandItem : speaker.rightHandItem) !== null,
     isFarArmHoldingItem:(leftArm === 'farArm' ? speaker.leftHandItem : speaker.rightHandItem) !== null
   } as CharacterEffectDrawContext;
-  const handler = effect.handler;
+  const handler = effect.drawHandler;
   assertNonNullable(handler);
   const targets = Array.from({ length:Math.ceil(effect.endTime - effect.startTime) }, (_, elapsed) => handler({
     stage:'beforeCharacter', characterContext

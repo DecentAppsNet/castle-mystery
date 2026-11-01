@@ -68,7 +68,8 @@ export function createGiveEffect(item:Item, sourcePlacement:CharacterOwnedItemPl
     kind:'giveItem',
     startTime,
     endTime,
-    handler:(drawCall, scalingFactors, time, _metaTime, context) =>
+    anatomyHandler:null,
+    drawHandler:(drawCall, scalingFactors, time, _metaTime, context) =>
       _handleGive(drawCall, effectItem, sourcePlacement, receivingCharacterId, startTime, endTime,
         scalingFactors, time, context)
   };

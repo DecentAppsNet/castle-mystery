@@ -107,7 +107,7 @@ describe('walkingEffectSchedulingUtil', () => {
       addCharacterKeyChanges({ position:{ x:5, y:0, z:0 } }, 0, 300, timeline);
       addCharacterKeyChanges({ position:{ x:10, y:0, z:0 } }, 0, 500, timeline);
       addCharacterKeyChanges({ isVisible:false }, 1, 350, timeline);
-      addCharacterEffect({ kind:'says', startTime:50, endTime:600, handler:null }, 0, timeline);
+      addCharacterEffect({ kind:'says', startTime:50, endTime:600, drawHandler:null, anatomyHandler:null }, 0, timeline);
       const before = createKeyframeAtTime(timeline.keyframes, 350).characters[0];
       timeline.pendingWalkingIntervals.push(
         { characterI:0, startTime:100, endTime:300 },
@@ -122,10 +122,11 @@ describe('walkingEffectSchedulingUtil', () => {
       expect(_walksAt(timeline, 300)).toMatchObject([{ startTime:100, endTime:500 }]);
       expect(_walksAt(timeline, 350)).toMatchObject([{ startTime:100, endTime:500 }]);
       expect(_walksAt(timeline, 500)).toEqual([]);
-      expect(_walksAt(timeline, 350)[0].handler?.(
-        { stage:'beforeCharacter', characterContext:{} as never }, {} as never, 350, 0, {} as never
-      )).toEqual(createWalkEffect(100, 500).handler?.(
-        { stage:'beforeCharacter', characterContext:{} as never }, {} as never, 350, 0, {} as never
+      expect(_walksAt(timeline, 350)[0].anatomyHandler).toEqual(expect.any(Function));
+      expect(_walksAt(timeline, 350)[0].anatomyHandler!(
+        { bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false }, 350, 0
+      )).toEqual(createWalkEffect(100, 500).anatomyHandler!(
+        { bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false }, 350, 0
       ));
     });
   });

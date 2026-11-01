@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { assertNonNullable } from 'decent-portal';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultRoom } from '@/game/types/Room';
 import { createDefaultItem } from '@/game/types/Item';
@@ -7,12 +6,12 @@ import { createBodyPose, getResolvedBodyPart, transformBodyPoint } from '@/game/
 import { ITEM_CUBOID_HEIGHT_GAME } from '@/game/itemSizeUtil';
 import PointStartSnapshot from '../types/PointStartSnapshot';
 
-import ScalingFactors from '@/game/types/ScalingFactors';
-import CharacterEffectDrawContext from '../types/CharacterEffectDrawContext';
-import LevelEffectDrawContext from '../types/LevelEffectDrawContext';
+import CharacterAnatomyContext from '../types/CharacterAnatomyContext';
+import SpriteOverride from '../types/SpriteOverride';
 import Effect from '../types/Effect';
-import EffectDrawCall from '../types/EffectDrawCall';
 import { createPointEffect as createSnapshotPointEffect, getPointDuration } from '../pointEffectUtil';
+
+type RotationOverride = Extract<SpriteOverride, { transformType:'rotate' }>;
 
 function _snapshot(direction:'left'|'right' = 'left'):PointStartSnapshot {
   const subject = { ...createDefaultCharacter(), id:'sam', position:{ x:2, y:5, z:0 } };
@@ -22,27 +21,24 @@ function _snapshot(direction:'left'|'right' = 'left'):PointStartSnapshot {
 
 function _createEffect(speed:'quickly'|'slowly'|null = null):Effect {
   const effect = createSnapshotPointEffect(100, _snapshot(), speed);
-  assertNonNullable(effect);
-  return effect;
+  expect(effect).not.toBeNull();
+  return effect!;
 }
 
-const CHARACTER_CONTEXT = {} as CharacterEffectDrawContext;
-const SCALING_FACTORS = {} as ScalingFactors;
-const CANVAS_CONTEXT = {} as CanvasRenderingContext2D;
+const CHARACTER_CONTEXT:CharacterAnatomyContext = {
+  bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false
+};
 
-function _query(effect:Effect, time:number, metaTime = 0,
-    drawCall:EffectDrawCall = { stage:'beforeCharacter', characterContext:CHARACTER_CONTEXT }) {
-  assertNonNullable(effect.handler);
-  return effect.handler(drawCall, SCALING_FACTORS, time, metaTime, CANVAS_CONTEXT);
+function _query(effect:Effect|null, time:number, metaTime = 0) {
+  expect(effect?.anatomyHandler).toEqual(expect.any(Function));
+  return effect!.anatomyHandler!(CHARACTER_CONTEXT, time, metaTime);
 }
 
 function _rotation(effect:Effect, time:number):number {
   const result = _query(effect, time);
-  assertNonNullable(result);
-  const override = result.spriteOverrides[0];
-  assertNonNullable(override);
-  if (override.transformType !== 'rotate') throw new Error('Expected rotation override.');
-  return override.rotateRadians;
+  const override = result[0];
+  expect(override).toMatchObject({ transformType:'rotate' });
+  return (override as RotationOverride).rotateRadians;
 }
 
 describe('pointEffectUtil', () => {
@@ -72,18 +68,18 @@ describe('pointEffectUtil', () => {
     it('emits only a relative viewer-front-arm rotation', () => {
       const effect = _createEffect();
 
-      expect(_query(effect, 100 + getPointDuration() / 2)).toEqual({ spriteOverrides:[
+      expect(_query(effect, 100 + getPointDuration() / 2)).toEqual([
         { spriteKind:'viewerFrontArm', transformType:'rotate', rotateRadians:expect.any(Number) }
-      ] });
+      ]);
     });
 
     it('requests the viewer-front arm when facing left', () => {
       const base = _snapshot();
       const subject = { ...base.subject, facingDirection:'left' as const };
       const effect = createSnapshotPointEffect(100, { ...base, subject, characters:[subject] });
-      assertNonNullable(effect);
+      expect(effect).not.toBeNull();
 
-      expect(_query(effect, 100 + getPointDuration() / 2)?.spriteOverrides[0].spriteKind)
+      expect(_query(effect, 100 + getPointDuration() / 2)[0].spriteKind)
         .toBe('viewerFrontArm');
     });
 
@@ -113,16 +109,15 @@ describe('pointEffectUtil', () => {
     it('leaves the resolved pose unchanged outside its interval', () => {
       const effect = _createEffect();
 
-      expect(_rotation(effect, effect.startTime - 1)).toBe(0);
-      expect(_rotation(effect, effect.endTime + 1)).toBe(0);
+      expect(_query(effect, effect.startTime - 1)).toEqual([]);
+      expect(_query(effect, effect.endTime + 1)).toEqual([]);
     });
 
-    it('returns no result at unrelated drawing stages', () => {
+    it('has only an anatomy handler and no drawing-stage dependency', () => {
       const effect = _createEffect();
 
-      expect(_query(effect, 100, 0, { stage:'afterCharacter', characterContext:CHARACTER_CONTEXT })).toBeNull();
-      expect(_query(effect, 100, 0, { stage:'characterAfterLevel', characterContext:CHARACTER_CONTEXT })).toBeNull();
-      expect(_query(effect, 100, 0, { stage:'afterLevel', levelContext:{} as LevelEffectDrawContext })).toBeNull();
+      expect(effect.drawHandler).toBeNull();
+      expect(effect.anatomyHandler).toEqual(expect.any(Function));
     });
 
     it('reproduces results after reverse and repeated queries regardless of meta time', () => {
@@ -146,8 +141,8 @@ describe('pointEffectUtil', () => {
         target:{ kind:'character', characterId:'jo' } };
       const effect = createSnapshotPointEffect(100, entitySnapshot);
       const control = createSnapshotPointEffect(100, entitySnapshot);
-      assertNonNullable(effect);
-      assertNonNullable(control);
+      expect(effect).not.toBeNull();
+      expect(control).not.toBeNull();
       target.position.x = -100;
 
       expect(_query(effect, 100 + getPointDuration() / 2)).toEqual(
@@ -162,8 +157,8 @@ describe('pointEffectUtil', () => {
         target:{ kind:'item', itemId:'vase' } };
       const effect = createSnapshotPointEffect(100, entitySnapshot);
       const control = createSnapshotPointEffect(100, entitySnapshot);
-      assertNonNullable(effect);
-      assertNonNullable(control);
+      expect(effect).not.toBeNull();
+      expect(control).not.toBeNull();
       support.drawOffset.y = -100;
       item.position.x = -100;
 
@@ -178,8 +173,8 @@ describe('pointEffectUtil', () => {
         target:{ kind:'heldItem', holderId:'jo' } };
       const effect = createSnapshotPointEffect(100, entitySnapshot);
       const control = createSnapshotPointEffect(100, entitySnapshot);
-      assertNonNullable(effect);
-      assertNonNullable(control);
+      expect(effect).not.toBeNull();
+      expect(control).not.toBeNull();
       holder.position.x = -100;
 
       expect(_query(effect, 100 + getPointDuration() / 2)).toEqual(

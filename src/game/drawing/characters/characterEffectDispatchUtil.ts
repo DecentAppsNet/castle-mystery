@@ -19,8 +19,8 @@ export function handleBeforeCharacterDrawEffects(effects:Effect[], scalingFactor
   const spriteOverrides:SpriteOverride[] = [];
   const drawCall:EffectDrawCall = { stage:'beforeCharacter', characterContext };
   effects.forEach(effect => {
-    if (!effect.handler) return; // TODO after you've implemented all the handlers, consider if null handlers are still a valid case and tighten the type if not.
-    const result = effect.handler(drawCall, scalingFactors, gameTime, metaTime, canvasContext);
+    if (!effect.drawHandler) return;
+    const result = effect.drawHandler(drawCall, scalingFactors, gameTime, metaTime, canvasContext);
     if (result) spriteOverrides.push(...result.spriteOverrides);
   });
   return spriteOverrides;
@@ -35,7 +35,7 @@ export function handleAfterCharacterDrawEffects(effects:Effect[], scalingFactors
   if (effects.length === 0) return; 
   const drawCall:EffectDrawCall = { stage:'afterCharacter', characterContext };
   effects.forEach(effect => {
-    if (effect.handler) effect.handler(drawCall, scalingFactors, gameTime, -1 /* unused */, canvasContext);
+    if (effect.drawHandler) effect.drawHandler(drawCall, scalingFactors, gameTime, -1 /* unused */, canvasContext);
   });
 }
 
@@ -44,7 +44,7 @@ export function handleCharacterAfterLevelDrawEffects(entries:ReadonlyArray<Chara
   entries.forEach(({ character, characterContext }) => {
     const drawCall:EffectDrawCall = { stage:'characterAfterLevel', characterContext };
     character.effects.forEach(effect => {
-      if (effect.handler) effect.handler(drawCall, scalingFactors, gameTime, metaTime, canvasContext);
+      if (effect.drawHandler) effect.drawHandler(drawCall, scalingFactors, gameTime, metaTime, canvasContext);
     });
   });
 }

@@ -67,7 +67,8 @@ export function createDropEffect(item:Item, sourcePlacement:CharacterOwnedItemPl
     kind:'dropItem',
     startTime,
     endTime,
-    handler:(drawCall, scalingFactors, time, _metaTime, context) =>
+    anatomyHandler:null,
+    drawHandler:(drawCall, scalingFactors, time, _metaTime, context) =>
       _handleDrop(drawCall, effectItem, sourcePlacement, effectDestination, startTime, endTime,
         scalingFactors, time, context)
   }

@@ -59,7 +59,8 @@ export function createCharacterSelectionEffect(metaTime:number):Effect {
     kind:'characterSelection',
     startTime:metaTime,
     endTime:metaTime + EFFECT_DURATION,
-    handler:(drawCall, _scalingFactors:ScalingFactors, _time, currentMetaTime, context) =>
+    anatomyHandler:null,
+    drawHandler:(drawCall, _scalingFactors:ScalingFactors, _time, currentMetaTime, context) =>
       _handleCharacterSelectionEffect(metaTime, drawCall, currentMetaTime, context)
   };
 }

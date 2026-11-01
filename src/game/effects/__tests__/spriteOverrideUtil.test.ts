@@ -1,9 +1,57 @@
 import { describe, expect, it } from 'vitest';
 import { createDefaultCharacter } from '@/game/types/Character';
-import { aggregateSpriteOverrides } from '../spriteOverrideUtil';
+import { aggregateSpriteOverrides, collectAnatomyOverrides } from '../spriteOverrideUtil';
 import SpriteOverride from '../types/SpriteOverride';
+import CharacterAnatomyContext from '../types/CharacterAnatomyContext';
+import Effect from '../types/Effect';
+import { createWalkEffect } from '../walkEffectUtil';
 
 describe('spriteOverrideUtil', () => {
+  describe('collectAnatomyOverrides()', () => {
+    it('calls each anatomy capability once with the same readonly context and clocks, never invoking drawing', () => {
+      const context:CharacterAnatomyContext = Object.freeze({
+        bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:true
+      });
+      const calls:unknown[] = [];
+      const contribution:SpriteOverride = { spriteKind:'head', transformType:'rotate', rotateRadians:0.2 };
+      const effect:Effect = { kind:'says', startTime:0, endTime:1000,
+        drawHandler:() => { throw new Error('Draw handler must not run during anatomy collection.'); },
+        anatomyHandler:(received, gameTime, metaTime) => {
+          calls.push([received, gameTime, metaTime]);
+          return [contribution];
+        }
+      };
+      const effects = [effect, { ...effect, anatomyHandler:null }, { ...effect, drawHandler:null }];
+      const result = collectAnatomyOverrides(effects, context, 123, 456);
+      expect(result).toEqual([contribution, contribution]);
+      expect(calls).toEqual([[context, 123, 456], [context, 123, 456]]);
+      expect(effect.anatomyHandler).toEqual(expect.any(Function));
+    });
+
+    it('returns an empty array for no effects or inactive anatomy', () => {
+      const context:CharacterAnatomyContext = {
+        bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false
+      };
+      expect(collectAnatomyOverrides([], context, 0, 0)).toEqual([]);
+      expect(collectAnatomyOverrides([createWalkEffect(100, 1100)], context, 99, 0)).toEqual([]);
+    });
+
+    it('collects a walking contribution once before aggregation and preserves legacy contributions', () => {
+      const character = createDefaultCharacter();
+      const context:CharacterAnatomyContext = {
+        bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false
+      };
+      const effect = createWalkEffect(100, 1100);
+      const collected = collectAnatomyOverrides([effect], context, 400, 0);
+      expect(collected).toHaveLength(4);
+      expect(effect.drawHandler).toBeNull();
+      const legacy:SpriteOverride = { spriteKind:'head', transformType:'rotate', rotateRadians:0.2 };
+      const result = aggregateSpriteOverrides([...collected, legacy], character);
+      expect(result).toHaveLength(5);
+      for (const contribution of [...collected, legacy]) expect(result).toContainEqual(contribution);
+    });
+  });
+
   describe('aggregateSpriteOverrides()', () => {
     it('returns no contributions for empty input', () => {
       expect(aggregateSpriteOverrides([], createDefaultCharacter())).toEqual([]);

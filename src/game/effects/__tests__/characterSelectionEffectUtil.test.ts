@@ -10,7 +10,7 @@ describe('characterSelectionEffectUtil', () => {
       expect(effect.kind).toBe('characterSelection');
       expect(effect.startTime).toBe(1000);
       expect(effect.endTime).toBe(1850);
-      expect(effect.handler).toEqual(expect.any(Function));
+      expect(effect.drawHandler).toEqual(expect.any(Function));
     });
 
     it('creates independent effect objects on repeated calls', () => {

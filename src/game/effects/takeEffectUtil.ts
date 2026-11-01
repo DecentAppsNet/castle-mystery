@@ -72,7 +72,8 @@ export function createTakeEffect(item:Item, destinationPlacement:CharacterOwnedI
     kind:'takeItem',
     startTime,
     endTime,
-    handler:(drawCall, scalingFactors, time, _metaTime, context) =>
+    anatomyHandler:null,
+    drawHandler:(drawCall, scalingFactors, time, _metaTime, context) =>
       _handleTake(drawCall, effectItem, destinationPlacement, effectSourcePosition, sourceRoomItemI,
         startTime, endTime, scalingFactors, time, context)
   }

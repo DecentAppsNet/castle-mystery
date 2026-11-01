@@ -1,11 +1,19 @@
-/* This file aggregates relative sprite deltas by concrete target without drawing or mutating inputs.
+/* This file collects anatomy contributions and aggregates relative deltas without drawing or mutating inputs.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { getViewerArmPartKind } from '@/game/characterBody';
 import Character from '../types/Character';
 import SpriteOverride from './types/SpriteOverride';
+import Effect from './types/Effect';
+import CharacterAnatomyContext from './types/CharacterAnatomyContext';
 
 type CharacterArmContext = Pick<Character, 'facingDirection'|'rootBodyPart'>;
+
+/** Invokes each anatomy capability once with the same base context and clocks, without calling draw handlers. */
+export function collectAnatomyOverrides(effects:readonly Effect[], context:CharacterAnatomyContext,
+  gameTime:number, metaTime:number):SpriteOverride[] {
+  return effects.flatMap(effect => effect.anatomyHandler?.(context, gameTime, metaTime) ?? []);
+}
 
 /** Adds angles around each attached pivot and translations within their declared fixed canvas frame.
  * Head reflection and logical-height projection remain consumer responsibilities, applied once to totals.

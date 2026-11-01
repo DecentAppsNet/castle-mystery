@@ -17,8 +17,8 @@ const CANVAS_CONTEXT = {} as CanvasRenderingContext2D;
 
 function _query(effect:Effect, time:number, metaTime = 0,
     drawCall:EffectDrawCall = { stage:'beforeCharacter', characterContext:CHARACTER_CONTEXT }) {
-  assertNonNullable(effect.handler);
-  return effect.handler(drawCall, SCALING_FACTORS, time, metaTime, CANVAS_CONTEXT);
+  expect(effect.drawHandler).toEqual(expect.any(Function));
+  return effect.drawHandler!(drawCall, SCALING_FACTORS, time, metaTime, CANVAS_CONTEXT);
 }
 
 describe('speechEffectUtil', () => {
@@ -155,7 +155,7 @@ describe('speechEffectUtil', () => {
 
     it('resumes free-arm samples when current occupancy clears without replacing the handler', () => {
       const effect = createSaysEffect('sam', TEXT, 100, 60000);
-      const handler = effect.handler;
+      const handler = effect.drawHandler;
       const time = Array.from({ length:600 }, (_, timeI) => 100 + timeI * 100)
         .find(candidate => _query(effect, candidate)?.spriteOverrides.length === 3);
       assertNonNullable(time);
@@ -164,7 +164,7 @@ describe('speechEffectUtil', () => {
         characterContext:{ ...CHARACTER_CONTEXT, isNearArmHoldingItem:true, isFarArmHoldingItem:true } };
       expect(_query(effect, time, 0, drawCall)?.spriteOverrides.map(override => override.spriteKind)).toEqual(['head']);
       expect(_query(effect, time)).toEqual(original);
-      expect(effect.handler).toBe(handler);
+      expect(effect.drawHandler).toBe(handler);
     });
   });
 

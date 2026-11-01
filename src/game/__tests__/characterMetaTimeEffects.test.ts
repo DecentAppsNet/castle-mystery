@@ -21,8 +21,8 @@ describe('character meta-time effects', () => {
   it('combines timeline effects before character meta-time effects without mutating either source', () => {
     const gameState = createGameState(loadValidLevelForTest(discoveryStateLevelText, 'discovery-state.md'));
     const samI = gameState.timeline.characterIdToI.sam;
-    const timelineEffect:Effect = { kind:'says', startTime:0, endTime:1000, handler:null };
-    const metaTimeEffect:Effect = { kind:'play', startTime:100, endTime:200, handler:null };
+    const timelineEffect:Effect = { kind:'says', startTime:0, endTime:1000, drawHandler:null, anatomyHandler:null };
+    const metaTimeEffect:Effect = { kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
     const timelineEffects = gameState.timeline.keyframes[0].characters[samI].effects;
     const characterMetaTimeEffects = [metaTimeEffect];
     timelineEffects.push(timelineEffect);
@@ -38,8 +38,8 @@ describe('character meta-time effects', () => {
 
   it('scopes meta-time effects to their target characters', () => {
     const gameState = createGameState(loadValidLevelForTest(discoveryStateLevelText, 'discovery-state.md'));
-    const samEffect:Effect = { kind:'play', startTime:100, endTime:200, handler:null };
-    const patEffect:Effect = { kind:'pause', startTime:100, endTime:200, handler:null };
+    const samEffect:Effect = { kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
+    const patEffect:Effect = { kind:'pause', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
     const samEffects = [samEffect];
     const patEffects = [patEffect];
     gameState.characterMetaTimeEffectsByCharacterId.set('sam', samEffects);
@@ -53,7 +53,7 @@ describe('character meta-time effects', () => {
 
   it('refreshes a paused frame snapshot after removing expired effects', () => {
     const gameState = createGameState(loadValidLevelForTest(discoveryStateLevelText, 'discovery-state.md'));
-    const expiredEffect:Effect = { kind:'play', startTime:100, endTime:200, handler:null };
+    const expiredEffect:Effect = { kind:'play', startTime:100, endTime:200, drawHandler:null, anatomyHandler:null };
     gameState.characterMetaTimeEffectsByCharacterId.set('sam', [expiredEffect]);
     gameState.timelineSnapshot = createTimelineSnapshot(gameState, gameState.time);
     const staleSnapshot = gameState.timelineSnapshot;

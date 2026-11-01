@@ -19,9 +19,8 @@ function _pointAt(level:Level, time:number):Effect {
 }
 
 function _sample(effect:Effect, time:number) {
-  assertNonNullable(effect.handler);
-  return effect.handler({ stage:'beforeCharacter', characterContext:{} as never },
-    {} as never, time, 0, {} as never);
+  expect(effect.anatomyHandler).toEqual(expect.any(Function));
+  return effect.anatomyHandler!({ bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false }, time, 0);
 }
 
 function _expectedPoint(level:Level, time:number, target:PointStartSnapshot['target'] = { kind:'character', characterId:'jo' },

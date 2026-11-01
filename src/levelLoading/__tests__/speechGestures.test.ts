@@ -19,7 +19,7 @@ describe('level loading - speech gestures', () => {
     expect(speaker.facingDirection).toBe('left');
     const effect = speaker.effects.find(candidate => candidate.kind === 'says');
     assertNonNullable(effect);
-    const handler = effect.handler;
+    const handler = effect.drawHandler;
     assertNonNullable(handler);
     const sample = (time:number, bodyOrientation:BodyOrientation) => handler({
       stage:'beforeCharacter', characterContext:{ bodyOrientation, isNearArmHoldingItem:false,

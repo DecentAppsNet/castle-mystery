@@ -146,7 +146,7 @@ export function createSaysEffect(characterId:string, text:PreparedAnimationText,
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, metaTime:number, context:CanvasRenderingContext2D) => {
     return _saysHandler(drawCall, scalingFactors, time, context, text, startTime, sampleDips, characterId, metaTime, sampleGestures);
   }
-  return { kind:'says', startTime, endTime:startTime+speechDuration, handler };
+  return { kind:'says', startTime, endTime:startTime+speechDuration, drawHandler:handler, anatomyHandler:null };
 }
 
 export function createThinksEffect(text:PreparedAnimationText, startTime:number, speechDuration:number,
@@ -154,11 +154,11 @@ export function createThinksEffect(text:PreparedAnimationText, startTime:number,
   const handler:EffectHandler = (drawCall:EffectDrawCall, scalingFactors:ScalingFactors, time:number, metaTime:number, context:CanvasRenderingContext2D) => {
     return _thinksHandler(drawCall, scalingFactors, time, context, text, startTime, speechDuration, facingDirection, metaTime);
   }
-  return { kind:'thinks', startTime, endTime:startTime+speechDuration, handler };
+  return { kind:'thinks', startTime, endTime:startTime+speechDuration, drawHandler:handler, anatomyHandler:null };
 }
 
 export function createEmitsEffect(source:EmitSource, text:PreparedAnimationText, startTime:number, speechDuration:number, isLoud:boolean):Effect {
   const handler:EffectHandler = (drawCall, scalingFactors, time, metaTime, context) =>
     _emitsHandler(drawCall, scalingFactors, time, context, text, startTime, isLoud, source, metaTime);
-  return { kind:'emits', startTime, endTime:startTime+speechDuration, handler };
+  return { kind:'emits', startTime, endTime:startTime+speechDuration, drawHandler:handler, anatomyHandler:null };
 }

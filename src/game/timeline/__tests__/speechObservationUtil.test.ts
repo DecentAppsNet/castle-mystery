@@ -9,7 +9,7 @@ function _createFrames(kind:Effect['kind'] = 'says') {
   const rooms = [createDefaultRoom(), { ...createDefaultRoom(), id:'adjacent', rect:{ x:10, y:0, width:10, height:10 } }];
   const observer = { ...createCharacterKeyframeForTest(), position:{ x:1, y:1, z:0 } };
   const speaker = { ...createCharacterKeyframeForTest(), position:{ x:11, y:1, z:0 },
-    effects:[{ kind, startTime:0, endTime:100, handler:() => null }] };
+    effects:[{ kind, startTime:0, endTime:100, drawHandler:() => null, anatomyHandler:null }] };
   const frameA:TimelineKeyframe = { time:10, characters:[observer, speaker], rooms:[{ items:[], exits:[{
     id:'exit', x:10, y:1, room1Id:'room', room2Id:'adjacent', exitType:'door',
     lockableFromRoom1With:null, lockableFromRoom2With:null, exitStatus:'open'
@@ -26,7 +26,7 @@ describe('speechObservationUtil', () => {
     });
     it('detects separate speech events', () => {
       const { rooms, frameA, frameB } = _createFrames();
-      frameB.characters[1].effects[0].handler = () => null;
+      frameB.characters[1].effects[0].drawHandler = () => null;
       expect(doKeyframesHaveSameObservedSpeech(frameA, frameB, 0, rooms)).toBe(false);
     });
     it('detects speech ending exactly at the frame time', () => {
@@ -58,7 +58,7 @@ describe('speechObservationUtil', () => {
     });
     it('detects additional simultaneous speech', () => {
       const { rooms, frameA, frameB } = _createFrames();
-      frameB.characters[1].effects.push({ kind:'says', startTime:0, endTime:100, handler:() => null });
+      frameB.characters[1].effects.push({ kind:'says', startTime:0, endTime:100, drawHandler:() => null, anatomyHandler:null });
       expect(doKeyframesHaveSameObservedSpeech(frameA, frameB, 0, rooms)).toBe(false);
     });
     it('ignores changes to speech outside earshot', () => {

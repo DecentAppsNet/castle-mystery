@@ -12,8 +12,8 @@ import { findRoomAtPosition } from '@/game/roomUtil';
 import { ITEM_CUBOID_HEIGHT_GAME } from '@/game/itemSizeUtil';
 import PointStartSnapshot from './types/PointStartSnapshot';
 import Effect from './types/Effect';
-import EffectHandler, { EffectHandlerResult } from './types/EffectHandler';
-import EffectDrawCall from './types/EffectDrawCall';
+import AnatomyHandler from './types/AnatomyHandler';
+import SpriteOverride from './types/SpriteOverride';
 
 const POINT_TIMINGS = {
   quickly:{ pointing:100, pointed:300, resting:100 },
@@ -83,15 +83,15 @@ function _smoothstep(progress:number):number {
   return clamped * clamped * (3 - 2 * clamped);
 }
 
-function _handlePointEffect(drawCall:EffectDrawCall, time:number, startTime:number, pointingDuration:number, 
-    pointedDuration:number, restingDuration:number, totalDuration:number, relativeAngle:number):EffectHandlerResult|null{
-  if (drawCall.stage !== 'beforeCharacter') return null;
+function _handlePointEffect(time:number, startTime:number, pointingDuration:number,
+    pointedDuration:number, restingDuration:number, totalDuration:number, relativeAngle:number):SpriteOverride[] {
+  if (time < startTime || time > startTime + totalDuration) return [];
   const elapsed = clamp(time - startTime, 0, totalDuration);
   const progress = elapsed < pointingDuration ? _smoothstep(elapsed / pointingDuration)
     : elapsed <= pointingDuration + pointedDuration ? 1 : _smoothstep((totalDuration - elapsed) / restingDuration);
-  return { spriteOverrides:[
+  return [
     { spriteKind:'viewerFrontArm', transformType:'rotate', rotateRadians:progress === 0 ? 0 : relativeAngle * progress }
-  ] };
+  ];
 }
 
 export function createPointEffect(startTime:number, snapshot:PointStartSnapshot,
@@ -103,9 +103,9 @@ export function createPointEffect(startTime:number, snapshot:PointStartSnapshot,
   const duration = getPointDuration(speed);
   const endTime = startTime + duration;
 
-  const handler:EffectHandler = (drawCall, _scalingFactors, time) => {
-    return _handlePointEffect(drawCall, time, startTime, pointing, pointed, resting, duration, relativeAngle);
+  const anatomyHandler:AnatomyHandler = (_context, time) => {
+    return _handlePointEffect(time, startTime, pointing, pointed, resting, duration, relativeAngle);
   };
 
-  return { kind:'point', startTime, endTime, handler };
+  return { kind:'point', startTime, endTime, drawHandler:null, anatomyHandler };
 }

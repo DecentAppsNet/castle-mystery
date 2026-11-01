@@ -1,4 +1,5 @@
 import EffectHandler from "./EffectHandler";
+import AnatomyHandler from './AnatomyHandler';
 
 type EffectKind = 'characterSelection' | 'dropItem' | 'enterRoom' | 'giveItem' | 'lockExit' | 'pause' | 'play'
   | 'says' | 'thinks' | 'emits' | 'takeItem' | 'unlockExit' | 'walk' | 'point';
@@ -16,7 +17,8 @@ type Effect = {
   kind:EffectKind,
   startTime:number,
   endTime:number,
-  handler:EffectHandler|null
+  drawHandler:EffectHandler|null,
+  anatomyHandler:AnatomyHandler|null
 }
 
 export function duplicateEffect(from:Effect):Effect {

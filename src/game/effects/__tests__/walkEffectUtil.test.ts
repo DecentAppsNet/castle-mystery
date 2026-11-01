@@ -1,21 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { assertNonNullable } from 'decent-portal';
-
-import ScalingFactors from '@/game/types/ScalingFactors';
-import CharacterEffectDrawContext from '../types/CharacterEffectDrawContext';
-import LevelEffectDrawContext from '../types/LevelEffectDrawContext';
+import CharacterAnatomyContext from '../types/CharacterAnatomyContext';
 import Effect from '../types/Effect';
-import EffectDrawCall from '../types/EffectDrawCall';
 import { createWalkEffect } from '../walkEffectUtil';
 
-const CHARACTER_CONTEXT = {} as CharacterEffectDrawContext;
-const SCALING_FACTORS = {} as ScalingFactors;
-const CANVAS_CONTEXT = {} as CanvasRenderingContext2D;
+const CHARACTER_CONTEXT:CharacterAnatomyContext = {
+  bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false
+};
 
-function _query(effect:Effect, time:number, metaTime = 0,
-    drawCall:EffectDrawCall = { stage:'beforeCharacter', characterContext:CHARACTER_CONTEXT }) {
-  assertNonNullable(effect.handler);
-  return effect.handler(drawCall, SCALING_FACTORS, time, metaTime, CANVAS_CONTEXT);
+function _query(effect:Effect, time:number, metaTime = 0) {
+  expect(effect.anatomyHandler).toEqual(expect.any(Function));
+  return effect.anatomyHandler!(CHARACTER_CONTEXT, time, metaTime);
 }
 
 describe('walkEffectUtil', () => {
@@ -23,12 +17,13 @@ describe('walkEffectUtil', () => {
     it('creates a walk effect with the supplied timeline interval', () => {
       const effect = createWalkEffect(100, 1100);
       expect(effect).toMatchObject({ kind:'walk', startTime:100, endTime:1100 });
-      expect(effect.handler).toEqual(expect.any(Function));
+      expect(effect.anatomyHandler).toEqual(expect.any(Function));
+      expect(effect.drawHandler).toBeNull();
     });
 
     it('returns only supported leg translations and arm rotations', () => {
       const result = _query(createWalkEffect(100, 1100), 400);
-      expect(result?.spriteOverrides).toEqual([
+      expect(result).toEqual([
         { spriteKind:'leftLeg', transformType:'translatePartHeight', translateHeightRatio:expect.any(Number) },
         { spriteKind:'rightLeg', transformType:'translatePartHeight', translateHeightRatio:expect.any(Number) },
         { spriteKind:'nearArm', transformType:'rotate', rotateRadians:expect.any(Number) },
@@ -36,31 +31,29 @@ describe('walkEffectUtil', () => {
       ]);
     });
 
-    it('returns no result at unrelated drawing stages', () => {
+    it('does not expose a drawing handler', () => {
       const effect = createWalkEffect(100, 1100);
-      expect(_query(effect, 400, 0, { stage:'afterCharacter', characterContext:CHARACTER_CONTEXT })).toBeNull();
-      expect(_query(effect, 400, 0, { stage:'characterAfterLevel', characterContext:CHARACTER_CONTEXT })).toBeNull();
-      expect(_query(effect, 400, 0, { stage:'afterLevel', levelContext:{} as LevelEffectDrawContext })).toBeNull();
+      expect(effect.drawHandler).toBeNull();
     });
 
     it('leaves the resolved pose unchanged at both endpoints and outside the interval', () => {
       const effect = createWalkEffect(100, 1100);
-      const neutral = { spriteOverrides:[
+      const neutral = [
         { spriteKind:'leftLeg', transformType:'translatePartHeight', translateHeightRatio:0 },
         { spriteKind:'rightLeg', transformType:'translatePartHeight', translateHeightRatio:0 },
         { spriteKind:'nearArm', transformType:'rotate', rotateRadians:0 },
         { spriteKind:'farArm', transformType:'rotate', rotateRadians:0 }
-      ] };
-      expect(_query(effect, 0)).toEqual(neutral);
+      ];
+      expect(_query(effect, 0)).toEqual([]);
       expect(_query(effect, 100)).toEqual(neutral);
       expect(_query(effect, 1100)).toEqual(neutral);
-      expect(_query(effect, 1200)).toEqual(neutral);
+      expect(_query(effect, 1200)).toEqual([]);
     });
 
     it('preserves endpoint neutrality for short travel intervals', () => {
       const effect = createWalkEffect(100, 101);
       expect(_query(effect, 100)).toEqual(_query(effect, 101));
-      expect(_query(effect, 100.5)?.spriteOverrides.map(override => override.spriteKind))
+      expect(_query(effect, 100.5).map(override => override.spriteKind))
         .toEqual(['leftLeg', 'rightLeg', 'nearArm', 'farArm']);
     });
 

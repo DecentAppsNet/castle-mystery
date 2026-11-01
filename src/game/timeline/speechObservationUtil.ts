@@ -75,5 +75,5 @@ function _findObservedSpeechEffects(keyframe:TimelineKeyframe, observingCharacte
 export function doKeyframesHaveSameObservedSpeech(keyframeA:TimelineKeyframe, keyframeB:TimelineKeyframe, observingCharacterI:number, rooms:Room[]):boolean {
   const effectsA = _findObservedSpeechEffects(keyframeA, observingCharacterI, rooms);
   const effectsB = _findObservedSpeechEffects(keyframeB, observingCharacterI, rooms);
-  return effectsA.length === effectsB.length && effectsA.every((effect, effectI) => effect.handler === effectsB[effectI].handler);
+  return effectsA.length === effectsB.length && effectsA.every((effect, effectI) => effect.drawHandler === effectsB[effectI].drawHandler);
 }

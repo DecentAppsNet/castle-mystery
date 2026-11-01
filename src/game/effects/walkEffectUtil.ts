@@ -4,7 +4,7 @@
 import { assert } from 'decent-portal';
 import { clamp } from '@/common/numberUtil';
 import Effect from './types/Effect';
-import EffectHandler from './types/EffectHandler';
+import AnatomyHandler from './types/AnatomyHandler';
 
 const WALK_LEG_LIFT_RATIO = 0.2;
 const WALK_ARM_SWING_ARC_DEGREES = 30;
@@ -21,23 +21,23 @@ export function createWalkEffect(startTime:number, endTime:number):Effect {
   const duration = endTime - startTime;
   const fadeDuration = Math.min(WALK_FADE_DURATION_MSECS, duration / 2);
 
-  const handler:EffectHandler = (drawCall, _scalingFactors, time) => {
-    if (drawCall.stage !== 'beforeCharacter') return null;
+  const anatomyHandler:AnatomyHandler = (_context, time) => {
+    if (time < startTime || time > endTime) return [];
     const elapsed = clamp(time - startTime, 0, duration);
     const envelope = _smoothstep(elapsed / fadeDuration) * _smoothstep((duration - elapsed) / fadeDuration);
     const phase = elapsed * 2 * Math.PI / WALK_CYCLE_DURATION_MSECS;
     const liftRatio = WALK_LEG_LIFT_RATIO * envelope;
     const armRotation = envelope === 0 ? 0
       : WALK_ARM_SWING_ARC_DEGREES * Math.PI / 360 * Math.sin(phase) * envelope;
-    return { spriteOverrides:[
+    return [
       { spriteKind:'leftLeg', transformType:'translatePartHeight',
         translateHeightRatio:liftRatio === 0 ? 0 : -liftRatio * (1 + Math.sin(phase)) / 2 },
       { spriteKind:'rightLeg', transformType:'translatePartHeight',
         translateHeightRatio:liftRatio === 0 ? 0 : -liftRatio * (1 - Math.sin(phase)) / 2 },
       { spriteKind:'nearArm', transformType:'rotate', rotateRadians:armRotation },
       { spriteKind:'farArm', transformType:'rotate', rotateRadians:armRotation === 0 ? 0 : -armRotation }
-    ] };
+    ];
   };
 
-  return { kind:'walk', startTime, endTime, handler };
+  return { kind:'walk', startTime, endTime, drawHandler:null, anatomyHandler };
 }
