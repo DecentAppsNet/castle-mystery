@@ -35,3 +35,8 @@ export function createNonGlobalRegex(regex:RegExp):RegExp {
 export function collapseWhitespace(text:string):string {
   return text.trim().replace(/\s+/g, ' ');
 }
+
+/** Checks for a nonempty sequence containing only ASCII digits. */
+export function isAsciiDigitSequence(text:string):boolean {
+  return text.length > 0 && !/[^0-9]/.test(text);
+}

@@ -1,9 +1,31 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
 
-import { collapseWhitespace, createNonGlobalRegex, escapeRegexCharacters, findSquareBracketEnclosedTextSegments } from '../regExUtil';
+import { collapseWhitespace, createNonGlobalRegex, escapeRegexCharacters, findSquareBracketEnclosedTextSegments, isAsciiDigitSequence } from '../regExUtil';
 
 describe('regExUtil.ts', () => {
+  describe('isAsciiDigitSequence()', () => {
+    it('accepts digits including zero and leading zeros', () => {
+      expect(isAsciiDigitSequence('00123456789')).toBe(true);
+    });
+
+    it('rejects empty text', () => {
+      expect(isAsciiDigitSequence('')).toBe(false);
+    });
+
+    it('rejects non-ASCII digits', () => {
+      expect(isAsciiDigitSequence('\u0661')).toBe(false);
+    });
+
+    it('rejects non-digit characters', () => {
+      expect(isAsciiDigitSequence('12a')).toBe(false);
+    });
+
+    it('rejects a trailing newline', () => {
+      expect(isAsciiDigitSequence('12\n')).toBe(false);
+    });
+  });
+
   describe('escapeRegexCharacters()', () => {
     it('escapes regex metacharacters so they can be matched literally', () => {
       expect(escapeRegexCharacters('a+b?c')).toBe('a\\+b\\?c');

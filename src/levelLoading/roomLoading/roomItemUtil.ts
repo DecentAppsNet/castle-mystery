@@ -7,17 +7,18 @@ import { ErrorCollector } from "../errorCollection";
 import { getUniqueIdsFromLegendGrid, parseLegendGrid } from "./legendGridUtil";
 import LegendGrid from "./types/LegendGrid";
 import { calcFloorSquareCenter } from "@/game/squareUtil";
+import { resolveItemDefinition } from "../itemLoading";
 
 function _findItemById(items:MutableItem[], itemId:string):MutableItem|null {
   return items.find(i => i.id === itemId) ?? null;
 }
 
-function _areAllLegendIdsValidReferences(roomLegendGrid:LegendGrid, availableItemIds:string[], 
+function _areAllLegendIdsValidReferences(roomLegendGrid:LegendGrid, items:MutableItem[],
     availableCharacterIds:string[], errors:ErrorCollector, roomId:string):boolean {
   const originalErrorCount = errors.count;
   const ids:string[] = getUniqueIdsFromLegendGrid(roomLegendGrid);
   ids.forEach(id => {
-    if (!availableItemIds.includes(id) && !availableCharacterIds.includes(id)) {
+    if (!availableCharacterIds.includes(id) && !resolveItemDefinition(items, id)) {
       errors.addAt(`"${id}" referenced in legend for "${roomId}" room does not have a definition in "items" or "characters" sections.`,
         ['rooms', roomId], '```');
     }
@@ -30,8 +31,7 @@ export function createItemsForRoom(room:Room, items:MutableItem[], availableChar
   const itemsResult:Item[] = [];
   const roomLegendGrid = parseLegendGrid(roomSectionText, errors, ['rooms', room.id]);
   if (!roomLegendGrid || !roomLegendGrid.entries.length) return [];
-  const availableItemIds:string[] = items.map(item => item.id);
-  if (!_areAllLegendIdsValidReferences(roomLegendGrid, availableItemIds, availableCharacterIds, errors, room.id)) return [];
+  if (!_areAllLegendIdsValidReferences(roomLegendGrid, items, availableCharacterIds, errors, room.id)) return [];
   roomLegendGrid.entries.forEach(entry => { 
     const { col, row, id } = entry;
     const itemToUse = _findItemById(items, id);

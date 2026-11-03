@@ -14,6 +14,21 @@ import { createDefaultPosition } from "@/game/types/Position";
 import { MutableLevel } from "@/game/types/Level";
 import Room from "@/game/types/Room";
 import Activity from "../activityLoading/types/Activity";
+import { getNumberedItemBaseId } from "../numberedItemIdUtil";
+
+/** Resolves exact definitions first, registering numbered copies once in this load's item collection. */
+export function resolveItemDefinition(items:MutableItem[], itemId:string):MutableItem|null {
+  const existingItem = items.find(item => item.id === itemId);
+  if (existingItem) return existingItem;
+  const baseId = getNumberedItemBaseId(itemId);
+  if (baseId === null) return null;
+  const base = items.find(item => item.id === baseId);
+  if (!base) return null;
+
+  const item = { ...base, id:itemId, position:createDefaultPosition(), randomSalt:rand() };
+  items.push(item);
+  return item;
+}
 
 function _createStubItem(itemId:string):Item {
   return {...createDefaultItem(), id:itemId, description:'Stub Item'};
