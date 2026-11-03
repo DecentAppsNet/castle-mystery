@@ -17,6 +17,7 @@ import { isRelativeTimestamp, tryParseAbsoluteTimestamp } from "./timestampUtil"
 import { describeParseFormat } from "./parseFormatUtil";
 import { throwIfActivityParsingRulesAreInvalid } from "./parsingRulesUtil";
 import { isNormalizedId, normalizeId } from "@/game/idUtil";
+import { getNumberedItemBaseId } from "../numberedItemIdUtil";
 
 
 const SYMBOL_CHARS:string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_1234567890'
@@ -311,10 +312,12 @@ function _countWords(text:string):number {
 }
 
 function _tryParseIdentifier(tokens:string[], fromI:number, step:ParseIdentifier, parts:ActivityParts, allowedValuesByIdentifierId:AllowedValuesByIdentifierId):string|number {
+  // Allowed IDs are ordered longest-first, so complete authored names are tried before shorter prefixes.
   const allowedValues = allowedValuesByIdentifierId[step.identifierKind];
   assertNonNullable(allowedValues, 'allowed values for an indentifier kind should be provided for all identifier parse steps');
 
   for(let valueI = 0; valueI < allowedValues.length; ++valueI) {
+    // Join enough input tokens to compare against this allowed ID, including multiword names.
     const value = allowedValues[valueI];
     assert(isNormalizedId(value), `"${value} is not a normalized ID.`);
     const wordCount = _countWords(value);
@@ -324,11 +327,29 @@ function _tryParseIdentifier(tokens:string[], fromI:number, step:ParseIdentifier
     }
     tokenCandidate = normalizeId(tokenCandidate);
     if (value === tokenCandidate) {
+      // Include the next token when it forms a single numbered suffix on an explicitly allowed item base.
+      const numberedCandidate = `${tokenCandidate} ${tokens[fromI + wordCount] ?? ''}`;
+      const numberedBaseId = getNumberedItemBaseId(numberedCandidate);
+      const itemIds = allowedValuesByIdentifierId['ItemId'] ?? [];
+      const isNumberedItem = numberedBaseId === value && itemIds.includes(value);
+
+      // An item match consumes the suffix too, rather than accepting only the unsuffixed prefix.
+      if (step.identifierKind === 'ItemId' && isNumberedItem) {
+        _addPartValue(parts, step.variableId, numberedCandidate);
+        return fromI + wordCount + 1;
+      }
+
+      // Do not let a shorter non-item match consume a complete item reference. For example, a character
+      // named "apple" must leave "apple #1" for the item alternative, whether generated or explicitly authored.
+      if (step.identifierKind !== 'ItemId' && (isNumberedItem || itemIds.includes(numberedCandidate))) continue;
+
+      // Otherwise retain the ordinary exact match. Return the first input token not consumed by this ID.
       _addPartValue(parts, step.variableId, tokenCandidate);
       return fromI + wordCount;
     }
   }
 
+  // No allowed ID matched; return the existing contextual error without modifying parsed parts.
   const thisToken = tokens[fromI], lastToken = _getLastToken(tokens, fromI);
   return _concatExpectedIdentifierMessage(step.identifierKind, lastToken, thisToken);
 }

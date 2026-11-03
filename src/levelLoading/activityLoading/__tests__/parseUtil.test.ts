@@ -31,6 +31,163 @@ describe('parseUtil', () => {
       sharedRules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ITEM_IDS, SKIN_NAMES);
     });
 
+    describe('numbered item identifiers', () => {
+      it('recognizes a numbered item subject before its base prefix', () => {
+        expect(tryParseActivity(': apple #1 emits "clink"', sharedRules)).toMatchObject({
+          parts:{ itemId:'apple #1', text:'clink' }
+        });
+      });
+
+      it('recognizes multiword numbered item subjects and replacement targets', () => {
+        expect(tryParseActivity(': golden apple #2 becomes apple #20', sharedRules)).toMatchObject({
+          parts:{ itemId:'golden apple #2', toItemId:'apple #20' }
+        });
+      });
+
+      it('recognizes numbered pointing targets', () => {
+        expect(tryParseActivity(': samuel points at golden apple #01 slowly', sharedRules)).toMatchObject({
+          parts:{ characterId:'samuel', targetItemId:'golden apple #01', speed:'slowly' }
+        });
+      });
+
+      it('recognizes numbered drop items and targets', () => {
+        expect(tryParseActivity(': samuel drops apple #1 on golden apple #2', sharedRules)).toMatchObject({
+          parts:{ characterId:'samuel', itemId:'apple #1', toItemId:'golden apple #2' }
+        });
+      });
+
+      it('preserves zero suffixes', () => {
+        expect(tryParseActivity(': takes apple #0', sharedRules)).toMatchObject({ parts:{ itemId:'apple #0' } });
+      });
+
+      it('does not impose a numeric limit', () => {
+        expect(tryParseActivity(': takes apple #9999999999999999999999999999', sharedRules)).toMatchObject({
+          parts:{ itemId:'apple #9999999999999999999999999999' }
+        });
+      });
+
+      it('preserves exact explicit numbered item IDs without an unsuffixed definition', () => {
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ['apple #2'], SKIN_NAMES);
+
+        expect(tryParseActivity(': takes apple #2', rules)).toMatchObject({ parts:{ itemId:'apple #2' } });
+      });
+
+      it('preserves exact explicit item IDs outside the generation grammar', () => {
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ['apple', 'apple#2', 'apple #2 #3'], SKIN_NAMES);
+
+        expect(tryParseActivity(': apple#2 becomes apple #2 #3', rules)).toMatchObject({
+          parts:{ itemId:'apple#2', toItemId:'apple #2 #3' }
+        });
+      });
+
+      it('preserves longer exact ID ordering over a numbered prefix', () => {
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ['apple', 'apple #2 basket'], SKIN_NAMES);
+
+        expect(tryParseActivity(': takes apple #2 basket', rules)).toMatchObject({
+          parts:{ itemId:'apple #2 basket' }
+        });
+      });
+
+      it('does not let a shorter character subject consume a numbered item prefix', () => {
+        const rules = createActivityParsingRules(['apple'], ROOM_IDS, ITEM_IDS, SKIN_NAMES);
+
+        expect(tryParseActivity(': apple #1 emits "clink"', rules)).toMatchObject({
+          parts:{ itemId:'apple #1', text:'clink' }
+        });
+      });
+
+      it('does not let a shorter character target consume a numbered item prefix', () => {
+        const rules = createActivityParsingRules([...CHARACTER_IDS, 'golden apple'], ROOM_IDS, ITEM_IDS, SKIN_NAMES);
+
+        expect(tryParseActivity(': samuel points golden apple #1', rules)).toMatchObject({
+          parts:{ characterId:'samuel', targetItemId:'golden apple #1' }
+        });
+      });
+
+      it('allows exact numbered items after a shared character prefix without a base item', () => {
+        const rules = createActivityParsingRules(['apple'], ROOM_IDS, ['apple #2'], SKIN_NAMES);
+
+        expect(tryParseActivity(': apple #2 emits "clink"', rules)).toMatchObject({ parts:{ itemId:'apple #2' } });
+      });
+
+      it('preserves exact character precedence for a shared complete numbered ID', () => {
+        const rules = createActivityParsingRules(['apple #1'], ROOM_IDS, ['apple', 'apple #1'], SKIN_NAMES);
+
+        expect(tryParseActivity(': apple #1 emits "hello"', rules)).toMatchObject({
+          parts:{ characterId:'apple #1', text:'hello' }
+        });
+      });
+
+      it('preserves unsuffixed character precedence when its ID also names an item', () => {
+        const rules = createActivityParsingRules(['apple'], ROOM_IDS, ITEM_IDS, SKIN_NAMES);
+
+        expect(tryParseActivity(': apple emits "hello"', rules)).toMatchObject({ parts:{ characterId:'apple' } });
+      });
+
+      it('rejects unknown bases', () => {
+        expect(tryParseActivity(': takes pear #1', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('rejects suffixes without a separating space', () => {
+        expect(tryParseActivity(': takes apple#1', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('rejects empty suffixes', () => {
+        expect(tryParseActivity(': takes apple #', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('rejects signed suffixes', () => {
+        expect(tryParseActivity(': takes apple #-1', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('rejects decimal suffixes', () => {
+        expect(tryParseActivity(': takes apple #1.5', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('rejects non-ASCII digits', () => {
+        expect(tryParseActivity(': takes apple #\u0661', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('rejects recursive generation', () => {
+        expect(tryParseActivity(': takes apple #2 #3', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('does not generate from an explicitly numbered base', () => {
+        const rules = createActivityParsingRules(CHARACTER_IDS, ROOM_IDS, ['apple #2'], SKIN_NAMES);
+
+        expect(tryParseActivity(': takes apple #2 #3', rules)).toEqual(expect.any(String));
+      });
+
+      it('does not extend character identifiers', () => {
+        expect(tryParseActivity(': samuel #1 says "hello"', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('does not extend room identifiers', () => {
+        expect(tryParseActivity(': samuel goes kitchen #1', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('does not extend skin names', () => {
+        expect(tryParseActivity(': samuel appears tiara #1', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('does not extend direction words', () => {
+        expect(tryParseActivity(': samuel points left #1', sharedRules)).toEqual(expect.any(String));
+      });
+
+      it('leaves quoted numbered references unchanged', () => {
+        expect(tryParseActivity(': samuel says "apple #01 becomes pear #2"', sharedRules)).toMatchObject({
+          parts:{ characterId:'samuel', text:'apple #01 becomes pear #2' }
+        });
+      });
+
+      it('does not register generated identifiers while parsing', () => {
+        const before = [...sharedRules.allowedValuesByIdentifierId['ItemId']];
+
+        expect(tryParseActivity(': takes apple #1', sharedRules)).toMatchObject({ parts:{ itemId:'apple #1' } });
+        expect(sharedRules.allowedValuesByIdentifierId['ItemId']).toEqual(before);
+      });
+    });
+
     describe('basic parsing', () => {
       it('fails when no activity text follows the timestamp token', () => {
         expect(tryParseActivity('samuel', sharedRules)).toContain('timestamp followed by activity text');
