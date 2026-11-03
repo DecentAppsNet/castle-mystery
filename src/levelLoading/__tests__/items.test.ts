@@ -3,11 +3,101 @@ import defaultLevelText from './fixtures/items/items-base.md?raw';
 import itemPlacementText from './fixtures/items/items-placement.md?raw';
 import numberedItemsText from './fixtures/items/items-numbered.md?raw';
 import explicitNumberedItemsText from './fixtures/items/items-numbered-explicit.md?raw';
+import numberedActivitiesText from './fixtures/items/items-numbered-activities.md?raw';
 import { loadLevelForTest, loadValidLevelForTest, replaceSection } from './testLevelUtil';
 import { resolveItemDefinition } from '../itemLoading';
 import { createDefaultPosition } from '@/game/types/Position';
+import { createKeyframeAtTime } from '@/game/timeline';
 
 describe('loading levels - items', () => {
+  describe('numbered character and activity items', () => {
+    it('resolves numbered inventory and both hands without indexing unused inventory or bases', () => {
+      const text = replaceSection(numberedActivitiesText, 'itinerary', []);
+      const level = loadValidLevelForTest(text);
+      const sam = level.characters[0];
+
+      expect(sam.items).toMatchObject([
+        { id:'token #1', title:'Copper Token', description:'A small copper token.' },
+        { id:'token #2', title:'Copper Token' }
+      ]);
+      expect(sam.leftHandItem).toBe(level.itemsById.get('token #3'));
+      expect(sam.rightHandItem).toBe(level.itemsById.get('token #4'));
+      expect(sam.leftHandItem).toMatchObject({ id:'token #3', title:'Copper Token' });
+      expect(sam.rightHandItem).toMatchObject({ id:'token #4', title:'Copper Token' });
+      expect([...level.itemsById.keys()].sort()).toEqual(['chair #1', 'chair #2', 'token #3', 'token #4']);
+    });
+
+    it('preserves shared inventory and hand reference identity without adding ownership restrictions', () => {
+      const text = replaceSection(numberedActivitiesText, 'itinerary', [])
+        .replace('* leftHand=Token #3', '* leftHand=Token #1');
+      const level = loadValidLevelForTest(text);
+
+      expect(level.characters[0].items[0]).toBe(level.characters[0].leftHandItem);
+      expect(level.characters[0].leftHandItem).toBe(level.itemsById.get('token #1'));
+    });
+
+    it('materializes activity-only replacements for held and inventory items', () => {
+      const level = loadValidLevelForTest(numberedActivitiesText);
+      const snapshot = createKeyframeAtTime(level.timeline.keyframes, level.timeline.endTime);
+
+      expect(level.itemsById.get('broken token #1')).toMatchObject({ title:'Broken Token' });
+      expect(level.itemsById.get('broken token #2')).toMatchObject({ title:'Broken Token' });
+      expect(level.itemsById.has('broken token')).toBe(false);
+      expect(snapshot.characters[0].leftHandItem?.id).toBe('broken token #1');
+      expect(snapshot.characters[0].items.map(item => item.id)).toEqual(['broken token #2', 'token #2']);
+      expect(snapshot.characters[0].rightHandItem?.id).toBe('token #4');
+    });
+
+    it('reuses numbered activity identities without changing the other placed chair', () => {
+      const level = loadValidLevelForTest(numberedActivitiesText);
+      const originalChairs = level.rooms[0].items;
+      const snapshot = createKeyframeAtTime(level.timeline.keyframes, level.timeline.endTime);
+      const effects = new Set(level.timeline.keyframes.flatMap(frame => frame.characters[0].effects));
+
+      expect([...effects].filter(effect => effect.kind === 'point')).toHaveLength(2);
+      expect(snapshot.rooms[0].items.map(item => item.id)).toEqual(['chair #1', 'chair #2']);
+      expect(snapshot.rooms[0].items[0]).toMatchObject({ id:'chair #1', position:originalChairs[0].position });
+      expect(snapshot.rooms[0].items[1]).toMatchObject({ id:'chair #2', position:originalChairs[1].position });
+      expect([...level.itemsById.values()].filter(item => item.id === 'chair #1')).toHaveLength(1);
+    });
+
+    it('keeps visibility changes independent for two generated IDs', () => {
+      const text = replaceSection(numberedActivitiesText, 'itinerary', ['0:00:00 hide Chair #1']);
+      const level = loadValidLevelForTest(text);
+      const snapshot = createKeyframeAtTime(level.timeline.keyframes, 0);
+
+      expect(snapshot.rooms[0].items).toMatchObject([
+        { id:'chair #1', isVisible:false }, { id:'chair #2', isVisible:true }
+      ]);
+      expect(level.itemsById.get('chair #1')?.isVisible).toBe(true);
+    });
+
+    it('counts numbered discovery identities separately without counting their unused bases', () => {
+      const level = loadValidLevelForTest(numberedActivitiesText);
+
+      expect(level.discoveryConfig.discoverableItemCount).toBe(5);
+      expect(level.itemsById.has('chair')).toBe(false);
+      expect(level.itemsById.has('token')).toBe(false);
+      expect(level.itemsById.has('token #2')).toBe(false);
+    });
+
+    it('does not place a generated activity subject implicitly', () => {
+      const text = replaceSection(numberedActivitiesText, 'itinerary', ['0:00:00 Token #9 becomes Broken Token #1']);
+      const { level, errors } = loadLevelForTest(text);
+
+      expect(level).toBeNull();
+      expect(errors.describeErrors()).toContain('"token #9" isn\'t placed in a room or on a character');
+    });
+
+    it('materializes targetItemId references without making unplaced targets available', () => {
+      const text = replaceSection(numberedActivitiesText, 'itinerary', ['0:00:00 Sam points Chair #9']);
+      const { level, errors } = loadLevelForTest(text);
+
+      expect(level).toBeNull();
+      expect(errors.describeErrors()).toContain('Pointing target "chair #9" is unavailable');
+    });
+  });
+
   describe('numbered room items', () => {
     it('places distinct numbered items in different rooms', () => {
       const level = loadValidLevelForTest(numberedItemsText);

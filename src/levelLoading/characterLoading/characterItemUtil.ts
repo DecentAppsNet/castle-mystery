@@ -4,9 +4,10 @@
 import Item from "@/game/types/Item";
 import { ErrorCollector } from "../errorCollection";
 import { MutableCharacter } from "@/game/types/Character";
+import { resolveItemDefinition } from "../itemLoading";
 
 function _findItemById(items:Item[], itemId:string, errors:ErrorCollector, characterId:string, variableName:String):Item|null {
-  const item = items.find(i => i.id === itemId) ?? null;
+  const item = resolveItemDefinition(items, itemId);
   if (!item) {
     errors.addAt(`Could not find item in Items section matching "${itemId}".`, 
       ['characters', characterId], `* ${variableName}}=`, itemId);

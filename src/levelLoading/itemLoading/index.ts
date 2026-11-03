@@ -104,6 +104,24 @@ export function loadItemsPartially(itemsSectionText:string, errors:ErrorCollecto
   return errors.count <= originalErrorCount ? items : null;
 }
 
+function _getActivityItemIds(activity:Activity):string[] {
+  const { itemId, toItemId, targetItemId } = activity.parts;
+  return [itemId, toItemId, targetItemId].filter((value):value is string => typeof value === 'string');
+}
+
+/** Adds missing numbered definitions to items and reports unresolved activity references. */
+export function resolveActivityItemDefinitions(items:Item[], activities:readonly Activity[], errors:ErrorCollector):boolean {
+  const originalErrorCount = errors.count;
+  activities.forEach(activity => {
+    _getActivityItemIds(activity).forEach(itemId => {
+      if (!resolveItemDefinition(items, itemId)) {
+        errors.addAtLine(`Could not find item definition matching "${itemId}".`, activity.lineI);
+      }
+    });
+  });
+  return errors.count <= originalErrorCount;
+}
+
 /** Finds items placed in rooms or character hands, or referenced by an activity. */
 function _findUsedItemIds(activities:readonly Activity[], rooms:readonly Room[], level:MutableLevel):Set<string> {
   const itemIds = new Set<string>();
@@ -113,15 +131,13 @@ function _findUsedItemIds(activities:readonly Activity[], rooms:readonly Room[],
     if (character.rightHandItem) itemIds.add(character.rightHandItem.id);
   });
   activities.forEach(activity => {
-    const { itemId, toItemId } = activity.parts;
-    if (typeof itemId === 'string') itemIds.add(itemId);
-    if (typeof toItemId === 'string') itemIds.add(toItemId);
+    _getActivityItemIds(activity).forEach(itemId => itemIds.add(itemId));
   });
   return itemIds;
 }
 
 /** Indexes item definitions referenced by initial placement or activities. */
-export function indexUsedItemsInLevel(items:Item[], activities:readonly Activity[], rooms:readonly Room[],
+export function indexUsedItemsInLevel(items:readonly Item[], activities:readonly Activity[], rooms:readonly Room[],
     level:MutableLevel, _errors:ErrorCollector):boolean {
   const usedItemIds = _findUsedItemIds(activities, rooms, level);
   items
