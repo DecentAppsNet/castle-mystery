@@ -337,6 +337,27 @@ In practice, an author can think of this section as answering three questions:
 
 This section defines the item, but it does not place the item anywhere. Item placement belongs in the `rooms` section, and starting carried items belong in the `characters` section.
 
+## Numbered Instances
+
+Define an item once, such as `## Chair`, then refer to `Chair #1` and `Chair #2` wherever item references are supported: room legends (including `|`-separated stacks), character `items`, `leftHand`, and `rightHand` values, and itinerary item subjects or targets. Each complete ID names one concrete object. `Chair`, `Chair #1`, and `Chair #2` are three distinct objects; repeating `Chair #1` refers to that same object, not another copy.
+
+The automatic numbered form has these rules:
+* The suffix is one separating space, `#`, and one or more ASCII digits at the end of the name, such as `Chair #20`.
+* Zero and leading zeros are allowed and preserved: `Chair #0`, `Chair #01`, and `Chair #1` name different objects.
+* Numbers do not need to be consecutive and have no numeric limit. Referencing `Chair #20` does not create `Chair #1` through `Chair #19`.
+* Existing name matching ignores case and surrounding whitespace. No new whitespace normalization is added; do not insert extra spaces before `#`.
+* Only one suffix can be generated, and its base must be explicitly defined. `Chair #2 #3` is not generated from either `Chair` or an explicit `Chair #2` definition.
+
+Imports are combined before item references are resolved. An exact definition for the complete ID always wins, even for names outside the automatic form. Otherwise, a numbered reference inherits all authored properties from its unsuffixed definition: title, description, image, visibility, draw offsets, and stack offsets. Placement remains independent. With `## Chair` and no `title`, every generated chair is displayed as `Chair`; with `title=Wooden Seat`, every generated chair is displayed as `Wooden Seat`, without the numbered suffix.
+
+An explicitly authored `## Chair #2` is a complete replacement definition, not a partial property override on `Chair`. Its own normal defaults apply: without `title`, it displays as `Chair #2`, and omitted properties do not inherit from `Chair`.
+
+Generating a definition does not place an object. Place it in a room or give it to a character normally. Existing activity availability rules still apply; for example, an unplaced item cannot be a pointing target, while a `becomes` replacement target may begin unplaced. Numbered references do not generate characters or rooms, and numbered names inside speech or descriptions remain ordinary text.
+
+Each numbered object retains its own discovery identity and counts separately under the usual discovery rules, even when several objects share a displayed title. An unused base definition does not become discoverable merely because it supplied numbered instances.
+
+An item ID may have only one initial room placement. Reusing the same ID across rooms, in multiple cells of one room, or more than once in a stack is a loading error identifying both placements. Use distinct numbered IDs for separate objects. Repeated itinerary references and later take/drop/give transfers remain valid; inventory and hand ownership rules are unchanged. Repeating a room's map tile to make a larger room is also still valid.
+
 ## Example
 
 ```md

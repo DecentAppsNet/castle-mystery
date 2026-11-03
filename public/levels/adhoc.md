@@ -28,7 +28,7 @@ AB
 ```
 
 * M=Duchess
-* c=Chair Right
+* c=Chair Right #1
 
 ## Room 2
 
@@ -73,7 +73,7 @@ AB
 : says "7. kneeling, facing right"
 : faces left
 : says "8. kneeling, facing left"
-: stands on Chair Right
+: stands on Chair Right #1
 : faces right
 : says "9. stacked, standing, facing right"
 : faces left
