@@ -25,10 +25,86 @@ import successPopulatedText from './fixtures/rooms/rooms-success-populated.md?ra
 import textureBadFormatText from './fixtures/rooms/rooms-texture-bad-format.md?raw';
 import textureInvalidAlphaText from './fixtures/rooms/rooms-texture-invalid-alpha.md?raw';
 import textureInvalidPositiveIntegerText from './fixtures/rooms/rooms-texture-invalid-positive-integer.md?raw';
+import duplicateAcrossRoomsText from './fixtures/rooms/rooms-duplicate-item-across-rooms.md?raw';
+import duplicateNumberedText from './fixtures/rooms/rooms-duplicate-numbered-across-rooms.md?raw';
+import duplicateCellsText from './fixtures/rooms/rooms-duplicate-item-cells.md?raw';
+import duplicateStackText from './fixtures/rooms/rooms-duplicate-item-stack.md?raw';
+import numberedMultipleTilesText from './fixtures/rooms/rooms-numbered-multiple-map-tiles.md?raw';
 import { loadLevelForTest } from './testLevelUtil';
 import { LOCKABLE_WITHOUT_INV_CHECK } from '@/game/types/RoomExit';
 
 describe('loading levels - rooms', () => {
+	it('rejects duplicate explicit item placement across rooms with both room names', () => {
+		const { level, errors } = loadLevelForTest(duplicateAcrossRoomsText, 'duplicate-rooms.md');
+		const message = errors.describeErrors();
+		const offendingRoom = message.includes('duplicate initial placement in room "Hall"') ? 'Hall' : 'Closet';
+		const gridOffset = duplicateAcrossRoomsText.indexOf('```', duplicateAcrossRoomsText.indexOf(`## ${offendingRoom}`));
+		const gridLineNo = duplicateAcrossRoomsText.slice(0, gridOffset).split('\n').length;
+
+		expect(level).toBeNull();
+		expect(errors.count).toBe(1);
+		expect(message).toContain(`duplicate-rooms.md:${gridLineNo}:`);
+		expect(message).toContain('Item "key" has duplicate initial placement');
+		expect(message).toContain('room "Hall"');
+		expect(message).toContain('room "Closet"');
+		expect(message).toContain('Use separate numbered IDs for separate objects.');
+	});
+
+	it('rejects the same generated numbered ID placed in two rooms', () => {
+		const { level, errors } = loadLevelForTest(duplicateNumberedText, 'duplicate-numbered.md');
+		const message = errors.describeErrors();
+		const offendingRoom = message.includes('duplicate initial placement in room "Hall"') ? 'Hall' : 'Closet';
+		const gridOffset = duplicateNumberedText.indexOf('```', duplicateNumberedText.indexOf(`## ${offendingRoom}`));
+		const gridLineNo = duplicateNumberedText.slice(0, gridOffset).split('\n').length;
+
+		expect(level).toBeNull();
+		expect(errors.count).toBe(1);
+		expect(message).toContain(`duplicate-numbered.md:${gridLineNo}:`);
+		expect(message).toContain('Item "key #1" has duplicate initial placement');
+		expect(message).toContain('room "Hall"');
+		expect(message).toContain('room "Closet"');
+	});
+
+	it('rejects repeated item symbols in different cells within one room', () => {
+		const { level, errors } = loadLevelForTest(duplicateCellsText, 'duplicate-cells.md');
+		const gridLineNo = duplicateCellsText.slice(0, duplicateCellsText.indexOf('```', duplicateCellsText.indexOf('# rooms'))).split('\n').length;
+
+		expect(level).toBeNull();
+		expect(errors.count).toBe(1);
+		expect(errors.describeErrors()).toContain(`duplicate-cells.md:${gridLineNo}:`);
+		expect(errors.describeErrors()).toContain('Item "key" has duplicate initial placement in room "Hall" at column 3, row 1.');
+		expect(errors.describeErrors()).toContain('First placed in room "Hall" at column 1, row 1.');
+	});
+
+	it('rejects duplicate IDs within one stack', () => {
+		const { level, errors } = loadLevelForTest(duplicateStackText, 'duplicate-stack.md');
+		const gridLineNo = duplicateStackText.slice(0, duplicateStackText.indexOf('```', duplicateStackText.indexOf('# rooms'))).split('\n').length;
+
+		expect(level).toBeNull();
+		expect(errors.count).toBe(1);
+		expect(errors.describeErrors()).toContain(`duplicate-stack.md:${gridLineNo}:`);
+		expect(errors.describeErrors()).toContain('Item "key #1" has duplicate initial placement in room "Hall" at column 1, row 1.');
+		expect(errors.describeErrors()).toContain('First placed in room "Hall" at column 1, row 1.');
+	});
+
+	it('accepts distinct numbered items in a room spanning repeated map tiles', () => {
+		const { level, errors } = loadLevelForTest(numberedMultipleTilesText);
+
+		expect(errors.describeErrors()).toBe('');
+		expect(level?.rooms).toHaveLength(1);
+		expect(level?.rooms[0].items.map(item => item.id)).toEqual(['key #1', 'key #2']);
+	});
+
+	it('does not retain placement registry state between level loads', () => {
+		const first = loadLevelForTest(numberedMultipleTilesText);
+		const second = loadLevelForTest(numberedMultipleTilesText);
+
+		expect(first.errors.describeErrors()).toBe('');
+		expect(second.errors.describeErrors()).toBe('');
+		expect(first.level).not.toBeNull();
+		expect(second.level).not.toBeNull();
+	});
+
 	it('loads a minimal room layout into the returned level', () => {
 		const { level, errors } = loadLevelForTest(successMinimalText, 'rooms-success-minimal.md');
 

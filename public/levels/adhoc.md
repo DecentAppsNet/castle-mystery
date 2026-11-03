@@ -41,7 +41,7 @@ AB
 ```
 
 * M=Gualtiero
-* c=Chair Right
+* c=Chair Right #2
 
 # Characters
 

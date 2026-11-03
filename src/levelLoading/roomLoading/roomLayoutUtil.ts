@@ -15,6 +15,7 @@ import { parseRoomTexture } from "./parseTextureUtil";
 import LegendGrid from "./types/LegendGrid";
 import { MutableItem } from "@/game/types/Item";
 import { createItemsForRoom } from "./roomItemUtil";
+import ItemPlacementById from "./types/ItemPlacementById";
 
 type RoomStyle = Readonly<{
   backWallTexture:string|undefined,
@@ -66,6 +67,7 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
   const roomSectionsById = createNormalizedSectionEntryMap(roomsSectionText, 2, 'rooms', errors);
   const roomStyleMetadataById = _createRoomStyleById(roomStylesSectionText, errors);
   const initiallyObscuredRoomIds = new Set<string>();
+  const itemPlacements:ItemPlacementById = Object.create(null);
   rooms.forEach((room, roomI) => {
     const roomSectionEntry = roomSectionsById.get(room.id);
     if (!roomSectionEntry) {
@@ -78,7 +80,8 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
       ? _findRoomStyle(roomNameValues.style, roomStyleMetadataById)
       : null;
     const title = Object.hasOwn(roomNameValues, 'title') ? roomNameValues.title : roomSectionEntry.name.trim();
-    const items = createItemsForRoom(room, availableItems, availableCharacterIds, roomSectionEntry.value, errors);
+    const items = createItemsForRoom(room, availableItems, availableCharacterIds, roomSectionEntry.value,
+      itemPlacements, roomSectionEntry.name.trim(), errors);
     if ((roomNameValues.obscured || '').toLowerCase() === 'true') initiallyObscuredRoomIds.add(room.id);
     rooms[roomI] = {
       ...room,
