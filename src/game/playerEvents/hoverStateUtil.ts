@@ -15,6 +15,20 @@ import ExitType from "../types/ExitType";
 import { findCharactersWithEffectsInRoom, findRoom, findRoomAtPosition } from "../roomUtil";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import { createRoomContentDisplayLayout } from "../roomContentDisplayPositionUtil";
+import Item from "../types/Item";
+
+export function findHoveredItem(rooms:ReadonlyArray<Room>, hoveredItemId:string|null,
+    isLevelComplete:boolean, discoveredRoomIds:ReadonlySet<string>):{room:Room, item:Item}|null {
+  if (!hoveredItemId) return null;
+  const candidateRooms = isLevelComplete
+    ? rooms.filter(room => discoveredRoomIds.has(room.id))
+    : rooms;
+  for (const room of candidateRooms) {
+    const item = room.items.find(item => item.id === hoveredItemId && item.isVisible) || null;
+    if (item) return { room, item };
+  }
+  return null;
+}
 
 export function findHoveredRoomContent(gameState:GameState, room:Room, characters:CharacterWithEffects[], x:number, y:number) {
   // Resolve the same movement-aware geometry used by room drawing.

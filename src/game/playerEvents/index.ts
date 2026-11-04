@@ -9,3 +9,4 @@ export { syncConclusionUnlocks } from './conclusionStateUtil';
 export { updateGameStateForMouseDown } from './mouseDownHandler';
 export { updateGameStateForMouseMove } from './mouseMoveHandler';
 export { updateGameStateForNextCharacter } from './nextCharacterHandler';
+export { findHoveredItem } from './hoverStateUtil';

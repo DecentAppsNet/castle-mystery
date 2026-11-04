@@ -31,7 +31,7 @@ import LevelEffectDrawContext from "../effects/types/LevelEffectDrawContext";
 import LevelEffectCharacterLocation from "../effects/types/LevelEffectCharacterLocation";
 import CharacterWithEffects from "../types/CharacterWithEffects";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
-import Item from "../types/Item";
+import { findHoveredItem } from "../playerEvents";
 import { handleAfterLevelDrawEffects } from "./levelEffectDispatchUtil";
 import CharacterEffectDrawEntry from "./characters/types/CharacterEffectDrawEntry";
 import { handleCharacterAfterLevelDrawEffects } from "./characters/characterEffectDispatchUtil";
@@ -78,18 +78,6 @@ function _drawGround(gameState:GameState, context:CanvasRenderingContext2D) {
   }
 }
 
-function _findHoveredItem(rooms:Room[], gameState:GameState):{room:Room, item:Item}|null {
-  if (!gameState.hoveredItemId) return null;
-  const candidateRooms = gameState.isLevelComplete
-    ? rooms.filter(room => gameState.discoveryState.discoveredRoomIds.has(room.id))
-    : rooms;
-  for (const room of candidateRooms) {
-    const hoveredItem = room.items.find(item => item.id === gameState.hoveredItemId) || null;
-    if (hoveredItem) return { room, item:hoveredItem };
-  }
-  return null;
-}
-
 function _findHoveredExit(gameState:GameState):RoomExit|null {
   if (!gameState.hoveredExitKey) return null;
   for (const room of gameState.baseRooms) {
@@ -108,7 +96,8 @@ function _findHoveredCharacterHighlightId(gameState:GameState, canShowHoverPopov
 
 function _findHoveredItemHighlightId(snapshotRooms:Room[], gameState:GameState, canShowHoverPopovers:boolean):string|null {
   if (!canShowHoverPopovers || !gameState.hoveredItemId) return null;
-  const hoveredItem = _findHoveredItem(snapshotRooms, gameState);
+  const hoveredItem = findHoveredItem(snapshotRooms, gameState.hoveredItemId,
+    gameState.isLevelComplete, gameState.discoveryState.discoveredRoomIds);
   if (!hoveredItem || !isItemInteractive(hoveredItem.item)) return null;
   return hoveredItem.item.id;
 }
@@ -435,7 +424,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
 
   // Draw and apply discovery side effects for the active hover popover.
   if (canShowHoverPopovers && gameState.hoveredItemId) {
-    const hoveredItem = _findHoveredItem(rooms, gameState);
+    const hoveredItem = findHoveredItem(rooms, gameState.hoveredItemId,
+      gameState.isLevelComplete, gameState.discoveryState.discoveredRoomIds);
     if (hoveredItem && isItemInteractive(hoveredItem.item)) {
       markItemDiscovered(gameState, hoveredItem.item);
       drawItemPopover(hoveredItem.room, hoveredItem.item, gameState.scalingFactors, context, gameState.imageSet, layoutPlanner);
