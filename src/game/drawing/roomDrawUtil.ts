@@ -72,6 +72,8 @@ function _createEmptyRoomDrawResult():RoomDrawResult {
 const OPEN_DOOR_NEARNESS = 2;
 const CX_ROOM_TITLE_MARGIN = 2;
 const ROOM_TITLE_OUTLINE_WIDTH_RATIO = 0.15;
+const CHARACTER_SWAY_INTERVAL = 3500;
+const CHARACTER_SWAY_DEGREES = 1;
 
 function _drawRoomBackWall(room:Room, imageSet:ImageSet|null, scaledTopLeft:[number, number], scaledWidth:number,
   scaledHeight:number, context:CanvasRenderingContext2D, textureLightness:number) {
@@ -421,6 +423,11 @@ function _drawRoomContents(room:Room, charactersInRoom:CharacterWithEffects[], a
           baseCharacterCenterById,
           roomContentDisplayLayout:displayLayout
         }, gameTime, metaTime);
+        const swayPhase = ((gameTime + content.character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
+        anatomyOverrides.push({
+          spriteKind:'torso', transformType:'rotate',
+          rotateRadians:Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_DEGREES * Math.PI / 180
+        });
         const spriteOverrides = aggregateSpriteOverrides(anatomyOverrides, content.character);
         const visualLayout = createVisualBodyLayout(characterCanvasLayout.layout, spriteOverrides, content.character.facingDirection);
         const heldItems = [

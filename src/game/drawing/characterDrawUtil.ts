@@ -31,8 +31,6 @@ import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositio
 
 const PULSE_CADENCE_MS = 1000;
 const PULSE_SCALE_PEAK = 1.2;
-const CHARACTER_SWAY_INTERVAL = 1500;
-const CHARACTER_SWAY_AMOUNT = 1;
 const OBSCURED_ACTIVE_HEAD_WORLD_WIDTH = 3;
 const OBSCURED_ACTIVE_HEAD_WORLD_HEIGHT = 3;
 const OBSCURED_ACTIVE_HEAD_TITLE_GAP_RATIO = 0.5;
@@ -181,12 +179,10 @@ function _createCharacterPopoverBodyEntries(character:Character):PopoverBodyEntr
 }
 
 export function createCharacterCanvasLayout(character:Character, displayPosition:Position,
-    scalingFactors:ScalingFactors, time:number) {
+    scalingFactors:ScalingFactors, _time:number) {
   const [centerX, bottomY] = _getCharacterCanvasBottomPosition(displayPosition, scalingFactors);
-  const swayPhase = ((time + character.randomSalt * CHARACTER_SWAY_INTERVAL) % CHARACTER_SWAY_INTERVAL) / CHARACTER_SWAY_INTERVAL;
-  const sway = Math.sin(swayPhase * 2 * Math.PI) * CHARACTER_SWAY_AMOUNT;
   const pose = createBodyPose(character.rootBodyPart, character.bodyOrientation, character.facingDirection);
-  const projected = createBodyCanvasLayout(pose, [centerX + sway, bottomY], scalingFactors, character.facingDirection);
+  const projected = createBodyCanvasLayout(pose, [centerX, bottomY], scalingFactors, character.facingDirection);
   return {
     layout:projected,
     characterWidth:projected.bounds.width,
