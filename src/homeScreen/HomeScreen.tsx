@@ -4,7 +4,8 @@ import styles from './HomeScreen.module.css';
 import { init } from "./interactions/initialization";
 import TopBar from '@/components/topBar/TopBar';
 import LevelView from "@/homeScreen/levelView/LevelView";
-import { msecsToMinutes, updateNextCharacter, updatePlayPause, updateConclusions, updateTime } from "./interactions/gameplay";
+import { updateNextCharacter, updatePlayPause, updateConclusions, updateTime } from "./interactions/gameplay";
+import { msecsToMinutes } from '@/common/timeUtil';
 import GameState from "@/game/types/GameState";
 import ConclusionsView from "./conclusionsView/ConclusionsView";
 import DiscoveriesView from "./discoveriesView/DiscoveriesView";
@@ -118,7 +119,6 @@ function HomeScreen() {
       setConclusions(initResults.gameState.conclusions);
       setDiscoveries(createDiscoveries(initResults.gameState));
       setActiveCharacterId(initResults.gameState.activeCharacterId);
-      if (initResults.gameState.isLevelComplete) setModalDialogName(WinLevelDialog.name);
     }).catch((error:unknown) => {
       if (isCancelled) return;
       setInitErrorMessage(error instanceof Error ? error.message : 'Failed to initialize the app.');

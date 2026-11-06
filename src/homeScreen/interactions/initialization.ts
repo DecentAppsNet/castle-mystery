@@ -1,8 +1,8 @@
 /* This module groups home-screen initialization helpers that load the selected level and create initial runtime state.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { msecsToMinutes } from "./gameplay";
-import { createGameState } from "@/game/gameUtil";
+import { msecsToMinutes } from '@/common/timeUtil';
+import { prepareLevelState } from '../levelPreparation';
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
 import { loadLevelFromUrl, loadLevelManifestFromUrl } from "@/levelLoading";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
@@ -36,7 +36,7 @@ async function _runInit():Promise<InitResults|null> {
     throw new Error('Level could not be loaded due to errors. See console for details.');
   }
   const imageSet = await createImageSetFromLevel(level);
-  const gameState = createGameState(level, imageSet);
+  const { gameState } = await prepareLevelState(level, imageSet, initialLevelUrl);
   const minutes = msecsToMinutes(gameState.time);
   return {
     gameState,
@@ -45,6 +45,7 @@ async function _runInit():Promise<InitResults|null> {
   };
 }
 
+/** Handles the home screen's first closed-curtain frame by sharing its pending initialization. */
 export function init():Promise<InitResults|null> {
   if (_initPromise) return _initPromise;
   _initPromise = _runInit().catch(error => {

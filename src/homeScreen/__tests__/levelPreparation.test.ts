@@ -147,4 +147,32 @@ describe('prepareLevelState()', () => {
     expect(prepared.needsInitialSave).toBe(true);
     expect(prepared.gameState.time).toBe(level.initialTime);
   });
+
+  it('does not return prepared state until the saved progress read settles', async () => {
+    const level = loadValidLevelForTest(defaultText);
+    const save = createLevelSaveState(createGameState(level), level.timeline.endTime);
+    let finishRead!:(text:string|null) => void;
+    pathStoreMock.getText.mockImplementationOnce(() => new Promise(resolve => { finishRead = resolve; }));
+    const ready = vi.fn();
+    const pending = prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    void pending.then(ready);
+    await Promise.resolve();
+    expect(ready).not.toHaveBeenCalled();
+    finishRead(JSON.stringify(save));
+    const prepared = await pending;
+    expect(prepared.gameState.time).toBe(level.timeline.endTime);
+    expect(prepared.gameState.timelineSnapshot.activeRoom.id).toBe('closet');
+    expect(ready).toHaveBeenCalledWith(prepared);
+  });
+
+  it('returns authoritative saved discoveries with the selected character', async () => {
+    const level = loadValidLevelForTest(discoveryText);
+    const save = { ...createLevelSaveState(createGameState(level)), activeCharacterId:'pat',
+      discoveredItemIds:['brass key'], discoveredSkinIds:['pat-default'] };
+    await setLevelSaveState(levelUrl, save);
+    const { gameState } = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    expect(gameState.activeCharacterId).toBe('pat');
+    expect(gameState.discoveryState.discoveredItemIds).toContain('brass key');
+    expect(gameState.discoveryState.discoveredSkinIds).toContain('pat-default');
+  });
 });

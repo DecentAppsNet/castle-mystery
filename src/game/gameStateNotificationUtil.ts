@@ -1,7 +1,7 @@
 /* This module groups outward notification helpers that translate mutable game-state changes into throttled UI callbacks.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { msecsToMinutes } from "@/homeScreen/interactions/gameplay";
+import { msecsToMinutes } from "@/common/timeUtil";
 
 import { createDiscoveries } from "./discoveriesUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";

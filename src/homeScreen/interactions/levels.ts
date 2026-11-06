@@ -4,7 +4,7 @@
 import type { Dispatch, SetStateAction } from "react";
 
 import { createDiscoveries } from "@/game/discoveriesUtil";
-import { createGameState } from "@/game/gameUtil";
+import { prepareLevelState } from '../levelPreparation';
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
 import Discoveries from "@/game/types/Discoveries";
 import GameState from "@/game/types/GameState";
@@ -12,8 +12,7 @@ import Conclusion from "@/game/conclusions/types/Conclusion";
 import { loadLevelFromUrl } from "@/levelLoading";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
-import { msecsToMinutes } from "./gameplay";
-import WinLevelDialog from "../dialogs/WinLevelDialog";
+import { msecsToMinutes } from '@/common/timeUtil';
 import type LevelLoadRequest from '../types/LevelLoadRequest';
 
 type ChangeLevelParams = {
@@ -60,7 +59,8 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   }
   const imageSet = await createImageSetFromLevel(level);
   if (!loadRequest.isMounted) return;
-  const gameState = createGameState(level, imageSet);
+  const { gameState } = await prepareLevelState(level, imageSet, levelUrl);
+  if (!loadRequest.isMounted) return;
 
   setGameState(gameState);
   setLevelManifest(_createLevelManifestWithSelectedLevel(levelManifest, levelUrl));
@@ -71,7 +71,7 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setDiscoveries(createDiscoveries(gameState));
   setConclusionClaimCooldowns({});
   setActiveCharacterId(gameState.activeCharacterId);
-  setModalDialogName(gameState.isLevelComplete ? WinLevelDialog.name : null);
+  setModalDialogName(null);
 
   await setLastLevelUrl(levelUrl);
 }
@@ -96,7 +96,7 @@ function _requestLevelLoad(loadRequest:LevelLoadRequest, closeCurtain:() => Prom
   return loadRequest.pending;
 }
 
-/** Closes the curtain before fetching, then applies a replacement without changing gameplay reset semantics. */
+/** Handles level selection by closing the curtain and publishing the selected level's restored state. */
 export function changeLevel({
   loadRequest,
   closeCurtain,
@@ -121,7 +121,7 @@ export function changeLevel({
 
 type ContinueToNextLevelParams = Omit<ChangeLevelParams, 'levelUrl'>;
 
-/** Resolves next-level availability before closure; no next level only dismisses the dialog. */
+/** Handles Continue from the victory dialog; no next level only dismisses the dialog. */
 export function continueToNextLevel(params:ContinueToNextLevelParams):Promise<void> {
   const { levelManifest, setModalDialogName } = params;
   const nextLevelUrl = levelManifest.levelUrls[levelManifest.lastLevelI + 1] || null;

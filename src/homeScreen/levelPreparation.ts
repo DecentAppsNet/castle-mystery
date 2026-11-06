@@ -6,7 +6,7 @@ import { isLevelSaveStateCompatible, restoreGameStateFromSave } from '@/game/lev
 import ImageSet from '@/game/types/ImageSet';
 import Level from '@/game/types/Level';
 import { clearLevelSaveState, getLevelSaveState } from '@/persistence/levelSaveState';
-import PreparedLevelState from '../types/PreparedLevelState';
+import PreparedLevelState from './types/PreparedLevelState';
 
 /** Creates paused state and restores compatible progress, treating storage failures as unavailable saves. */
 export async function prepareLevelState(level:Level, imageSet:ImageSet, levelUrl:string):Promise<PreparedLevelState> {
