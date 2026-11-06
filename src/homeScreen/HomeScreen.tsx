@@ -13,7 +13,7 @@ import Conclusion from "@/game/conclusions/types/Conclusion";
 import WinLevelDialog from "./dialogs/WinLevelDialog";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
 import LevelSelector from "./levelSelector/LevelSelector";
-import { changeLevel, continueToNextLevel } from "./interactions/levels";
+import { changeLevel, continueToNextLevel, resetLevel } from "./interactions/levels";
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
 import { createDiscoveries } from "@/game/discoveriesUtil";
 import TimeSlider from "./timeSlider/TimeSlider";
@@ -261,6 +261,14 @@ function HomeScreen() {
             conclusions={conclusions} 
             imageSet={gameState.imageSet} 
             conclusionClaimCooldowns={conclusionClaimCooldowns}
+            onReset={() => {
+              if (_isGameDisabled() || !levelManifest) return;
+              void resetLevel({ levelManifest, loadRequest:loadRequestRef.current,
+                saveCoordinator:saveCoordinatorRef.current, closeCurtain:_closeCurtain,
+                onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
+                setLevelManifest, setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
+                setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setModalDialogName });
+            }}
             onIncorrectClaim={(conclusionId) => {
               setConclusionClaimCooldowns(from => ({
                 ...from,

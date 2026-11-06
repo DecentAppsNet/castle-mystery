@@ -10,6 +10,7 @@ type Props = {
   imageSet:ImageSet,
   conclusionClaimCooldowns:Record<string, number>,
   onIncorrectClaim:(conclusionId:string) => void,
+  onReset:() => void,
   onUpdate:(conclusions:Conclusion[]) => void
 }
 
@@ -21,7 +22,7 @@ function _createRevealLevelConclusions(conclusions:ReadonlyArray<Conclusion>):Co
   }));
 }
 
-function ConclusionsView({conclusions, imageSet, conclusionClaimCooldowns, onIncorrectClaim, onUpdate}:Props) {
+function ConclusionsView({conclusions, imageSet, conclusionClaimCooldowns, onIncorrectClaim, onReset, onUpdate}:Props) {
   const conclusionsContent = conclusions.map((s, i) => 
     <ConclusionView key={s.id} imageSet={imageSet} conclusion={s} cooldownUntilTime={conclusionClaimCooldowns[s.id] ?? null} onIncorrectClaim={() => onIncorrectClaim(s.id)} onUpdate={(nextConclusion) => {
       const nextConclusions = [...conclusions];
@@ -32,11 +33,11 @@ function ConclusionsView({conclusions, imageSet, conclusionClaimCooldowns, onInc
   return <div className={styles.container}>
     <h1 className={styles.title}>Conclusions</h1>
     <div className={styles.conclusionList}>{conclusionsContent}</div>
-    {SHOW_REVEAL_LEVEL_BUTTON ? (
-      <div className={styles.actions}>
-        <ContentButton text='Reveal Level' onClick={() => onUpdate(_createRevealLevelConclusions(conclusions))} />
-      </div>
-    ) : null}
+    <div className={styles.actions}>
+      <ContentButton text='Reset Level' onClick={onReset} />
+      {SHOW_REVEAL_LEVEL_BUTTON &&
+        <ContentButton text='Reveal Level' onClick={() => onUpdate(_createRevealLevelConclusions(conclusions))} />}
+    </div>
   </div>;
 }
 

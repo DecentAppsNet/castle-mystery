@@ -19,12 +19,15 @@
 
 .actions {
 	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6vh;
 	margin: .3vh 0 0.8vh;
 	flex: 0 0 auto;
 }
 
 .conclusionList {
 	display: flex;
+	flex: 1 1 0;
 	flex-direction: column;
 	gap: 0.6vh;
 	overflow-y: auto;
