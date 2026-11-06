@@ -74,7 +74,6 @@ function HomeScreen() {
   }, []);
 
   function _publishPreparedLevelState(prepared:PreparedLevelState) {
-    void saveCoordinatorRef.current?.stopAndSettle();
     saveGameStateRef.current = prepared.gameState;
     saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
     previousConclusionsRef.current = prepared.gameState.conclusions;
@@ -213,6 +212,7 @@ function HomeScreen() {
           onSelect={(levelUrl) => {
             void changeLevel({
               loadRequest:loadRequestRef.current,
+              saveCoordinator:saveCoordinatorRef.current,
               closeCurtain:_closeCurtain,
               onLoadingFailed:_handleLoadingFailed,
               levelUrl,
@@ -280,6 +280,7 @@ function HomeScreen() {
         onContinue={() => { void continueToNextLevel({levelManifest, onLevelPrepared:_publishPreparedLevelState, setLevelManifest, setIsPlaying,
             setMinutes, setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
             setModalDialogName, loadRequest:loadRequestRef.current, closeCurtain:_closeCurtain,
+            saveCoordinator:saveCoordinatorRef.current,
             onLoadingFailed:_handleLoadingFailed
           }); }}
         onReturn={() => setModalDialogName(null)} 

@@ -3,7 +3,7 @@
 
 import { createLevelSaveState } from '@/game/levelSaveStateUtil';
 import GameState from '@/game/types/GameState';
-import { setLevelSaveState } from '@/persistence/levelSaveState';
+import { clearLevelSaveState, setLevelSaveState } from '@/persistence/levelSaveState';
 import LevelSaveState from '@/persistence/types/LevelSaveState';
 
 class LevelSaveCoordinator {
@@ -81,6 +81,12 @@ class LevelSaveCoordinator {
     this._cancelPausedTime();
     this._isStopped = true;
     return this._pending;
+  }
+
+  /** Cancels delayed saves and clears this level only after earlier writes have settled. */
+  async clearSaveAfterSettling():Promise<void> {
+    await this.stopAndSettle();
+    await clearLevelSaveState(this._levelUrl);
   }
 }
 

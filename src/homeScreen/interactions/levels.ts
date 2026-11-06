@@ -14,9 +14,12 @@ import LevelManifest from "@/levelLoading/types/LevelManifest";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
 import { msecsToMinutes } from '@/common/timeUtil';
 import type LevelLoadRequest from '../types/LevelLoadRequest';
+import LevelSaveCoordinator from '../levelSaveCoordinator';
+import { assertNonNullable } from 'decent-portal';
 
 type ChangeLevelParams = {
   loadRequest:LevelLoadRequest,
+  saveCoordinator:LevelSaveCoordinator|null,
   closeCurtain:() => Promise<boolean>,
   onLoadingFailed:(error:unknown) => void,
   levelUrl:string,
@@ -79,7 +82,8 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
 
 /** Reuses the active request and ignores additional selections until close/load/apply settles. */
 function _requestLevelLoad(loadRequest:LevelLoadRequest, closeCurtain:() => Promise<boolean>,
-  load:() => Promise<void>, onLoadingFailed:(error:unknown) => void):Promise<void> {
+  load:() => Promise<void>, onLoadingFailed:(error:unknown) => void,
+  saveCoordinator:LevelSaveCoordinator|null, resetSave:boolean):Promise<void> {
   if (loadRequest.pending) return loadRequest.pending;
   if (!loadRequest.isMounted) return Promise.resolve();
 
@@ -87,6 +91,15 @@ function _requestLevelLoad(loadRequest:LevelLoadRequest, closeCurtain:() => Prom
   loadRequest.pending = Promise.resolve().then(async () => {
     try {
       if (!await closeCurtain() || !loadRequest.isMounted) return;
+
+      // Finish outgoing storage before any target read, including same-level re-entry.
+      if (resetSave) {
+        assertNonNullable(saveCoordinator);
+        await saveCoordinator.clearSaveAfterSettling();
+      } else await saveCoordinator?.stopAndSettle(true);
+      if (!loadRequest.isMounted) return;
+
+      // A failed load leaves the outgoing coordinator stopped behind the closed curtain.
       await load();
     } catch (error:unknown) {
       if (!loadRequest.isMounted) return;
@@ -97,9 +110,10 @@ function _requestLevelLoad(loadRequest:LevelLoadRequest, closeCurtain:() => Prom
   return loadRequest.pending;
 }
 
-/** Handles level selection by closing the curtain and publishing the selected level's restored state. */
-export function changeLevel({
+/** Runs selection and Reset through the same protected close/save/load lifecycle. */
+function _changeLevel({
   loadRequest,
+  saveCoordinator,
   closeCurtain,
   onLoadingFailed,
   levelUrl,
@@ -114,13 +128,24 @@ export function changeLevel({
   setConclusionClaimCooldowns,
   setActiveCharacterId,
   setModalDialogName
-}:ChangeLevelParams):Promise<void> {
+}:ChangeLevelParams, resetSave:boolean):Promise<void> {
   return _requestLevelLoad(loadRequest, closeCurtain, () => _loadAndApplyLevel(levelUrl, levelManifest, onLevelPrepared, setLevelManifest, setIsPlaying, setMinutes,
     setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
-    setModalDialogName, loadRequest), onLoadingFailed);
+    setModalDialogName, loadRequest), onLoadingFailed, saveCoordinator, resetSave);
 }
 
 type ContinueToNextLevelParams = Omit<ChangeLevelParams, 'levelUrl'>;
+
+/** Handles level selection, flushing outgoing paused time before loading the target. */
+export function changeLevel(params:ChangeLevelParams):Promise<void> {
+  return _changeLevel(params, false);
+}
+
+/** Handles Reset by clearing current progress before reloading the same manifest level. */
+export function resetLevel(params:ContinueToNextLevelParams):Promise<void> {
+  const levelUrl = params.levelManifest.levelUrls[params.levelManifest.lastLevelI];
+  return _changeLevel({ ...params, levelUrl }, true);
+}
 
 /** Handles Continue from the victory dialog; no next level only dismisses the dialog. */
 export function continueToNextLevel(params:ContinueToNextLevelParams):Promise<void> {

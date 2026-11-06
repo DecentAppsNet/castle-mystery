@@ -47,6 +47,30 @@ describe('LevelSaveCoordinator', () => {
     expect(pathStoreMock.setText).not.toHaveBeenCalled();
   });
 
+  it('settles a deferred write before clearing and never recreates the deleted save', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    let finishWrite!:() => void;
+    pathStoreMock.setText.mockImplementationOnce((key, text) => new Promise(resolve => {
+      finishWrite = () => { pathStoreMock.values[key] = text; resolve(); };
+    }));
+    state.discoveryState.discoveredItemIds.add('key');
+    coordinator.observe();
+    await Promise.resolve();
+    state.time += 1000;
+    coordinator.observe();
+    const cleared = coordinator.clearSaveAfterSettling();
+    expect(pathStoreMock.deleteByKey).not.toHaveBeenCalled();
+    state.discoveryState.discoveredSkinIds.add('sam-default');
+    coordinator.observe();
+    finishWrite();
+    await cleared;
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(pathStoreMock.setText).toHaveBeenCalledOnce();
+    expect(pathStoreMock.deleteByKey).toHaveBeenCalledOnce();
+    await expect(getLevelSaveState('castle.md')).resolves.toBeNull();
+  });
+
   it('submits fresh initial progress exactly once when requested', async () => {
     const state = _createState();
     const coordinator = new LevelSaveCoordinator('/levels/castle.md', state, true);
@@ -55,6 +79,113 @@ describe('LevelSaveCoordinator', () => {
     await coordinator.stopAndSettle();
     expect(pathStoreMock.setText).toHaveBeenCalledOnce();
     await expect(getLevelSaveState('/levels/castle.md')).resolves.toMatchObject({ time:state.time });
+  });
+
+  it('waits for a deferred outgoing flush before same-level preparation reads progress', async () => {
+    const state = _createState();
+    const outgoing = new LevelSaveCoordinator('castle.md', state);
+    let finishWrite!:() => void;
+    pathStoreMock.setText.mockImplementationOnce((key, text) => new Promise(resolve => {
+      finishWrite = () => { pathStoreMock.values[key] = text; resolve(); };
+    }));
+    state.time += 1000;
+    state.discoveryState.discoveredItemIds.add('key');
+    outgoing.observe();
+    await Promise.resolve();
+    const reentered = outgoing.stopAndSettle(true).then(() =>
+      prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md'));
+    expect(pathStoreMock.getText).not.toHaveBeenCalled();
+    finishWrite();
+    const prepared = await reentered;
+    expect(pathStoreMock.setText).toHaveBeenCalledTimes(2);
+    expect(prepared.gameState.time).toBe(state.time);
+    expect(prepared.gameState.discoveryState.discoveredItemIds).toContain('key');
+    expect(prepared.needsInitialSave).toBe(false);
+  });
+
+  it('allows replacement saves only after earlier same-key writes have settled', async () => {
+    const state = _createState();
+    const outgoing = new LevelSaveCoordinator('castle.md', state);
+    let finishWrite!:() => void;
+    pathStoreMock.setText.mockImplementationOnce((key, text) => new Promise(resolve => {
+      finishWrite = () => { pathStoreMock.values[key] = text; resolve(); };
+    }));
+    state.discoveryState.discoveredItemIds.add('key');
+    outgoing.observe();
+    await Promise.resolve();
+    const settled = outgoing.stopAndSettle(true);
+    finishWrite();
+    await settled;
+    const prepared = await prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md');
+    const incoming = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
+    prepared.gameState.discoveryState.titleKnownCharacterIds.add('sam');
+    incoming.observe();
+    state.discoveryState.discoveredItemIds.clear();
+    outgoing.observe();
+    await incoming.stopAndSettle();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ discoveredItemIds:['key'], titleKnownCharacterIds:['sam'] });
+  });
+
+  it('prepares the same level fresh after Reset and cannot restore outgoing progress later', async () => {
+    const state = _createState();
+    const outgoing = new LevelSaveCoordinator('castle.md', state, true);
+    state.discoveryState.discoveredItemIds.add('key');
+    state.time += 1000;
+    outgoing.observe();
+    await outgoing.clearSaveAfterSettling();
+    const prepared = await prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md');
+    expect(prepared.levelUrl).toBe('castle.md');
+    expect(prepared.gameState.time).toBe(state.timeline.startTime);
+    expect(prepared.gameState.discoveryState.discoveredItemIds.size).toBe(0);
+    expect(prepared.needsInitialSave).toBe(true);
+    const incoming = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
+    outgoing.observe();
+    await vi.advanceTimersByTimeAsync(5000);
+    await incoming.stopAndSettle();
+    const revisited = await prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md');
+    expect(revisited.gameState.discoveryState.discoveredItemIds.size).toBe(0);
+    expect(revisited.gameState.time).toBe(state.timeline.startTime);
+    expect(revisited.needsInitialSave).toBe(false);
+  });
+
+  it('awaits deletion before fresh preparation can start', async () => {
+    const state = _createState();
+    const outgoing = new LevelSaveCoordinator('castle.md', state, true);
+    await Promise.resolve();
+    let finishDelete!:() => void;
+    pathStoreMock.deleteByKey.mockImplementationOnce(key => new Promise(resolve => {
+      finishDelete = () => { delete pathStoreMock.values[key]; resolve(); };
+    }));
+    const cleared = outgoing.clearSaveAfterSettling();
+    await vi.advanceTimersByTimeAsync(0);
+    const reloaded = cleared.then(() =>
+      prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md'));
+    expect(pathStoreMock.deleteByKey).toHaveBeenCalledOnce();
+    expect(pathStoreMock.getText).not.toHaveBeenCalled();
+    finishDelete();
+    expect((await reloaded).needsInitialSave).toBe(true);
+  });
+
+  it('propagates clear failure and keeps outgoing submissions stopped', async () => {
+    const state = _createState();
+    const outgoing = new LevelSaveCoordinator('castle.md', state);
+    pathStoreMock.deleteByKey.mockRejectedValueOnce(new Error('Delete unavailable'));
+    state.time += 1000;
+    outgoing.observe();
+    await expect(outgoing.clearSaveAfterSettling()).rejects.toThrow('Delete unavailable');
+    state.discoveryState.discoveredItemIds.add('key');
+    outgoing.observe();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+  });
+
+  it('clears only the outgoing coordinator key, leaving other levels intact', async () => {
+    const first = new LevelSaveCoordinator('/levels/castle/first.md', _createState(), true);
+    const second = new LevelSaveCoordinator('/levels/tower/first.md', _createState(), true);
+    await second.stopAndSettle();
+    await first.clearSaveAfterSettling();
+    await expect(getLevelSaveState('/levels/castle/first.md')).resolves.toBeNull();
+    await expect(getLevelSaveState('/levels/tower/first.md')).resolves.not.toBeNull();
   });
 
   it('observes progress without returning a storage promise', async () => {
