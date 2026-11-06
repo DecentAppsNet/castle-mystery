@@ -19,7 +19,8 @@ import {
   updateGameStateForMouseWheel,
   updateGameStateForMouseDown,
   updateGameStateForMouseMove,
-  updateGameStateForNextCharacter
+  updateGameStateForNextCharacter,
+  syncConclusionUnlocks
 } from './playerEvents';
 import { createTimelineSnapshot } from "./timeline";
 import { findMetaTimeNow } from "./metaTimeUtil";
@@ -35,8 +36,9 @@ function _pauseGameState(gameState:GameState, metaTime:number) {
 
 // Use only when playback must stop synchronously because the RAF update loop is about to be suspended.
 // Normal gameplay changes must use player events so game state remains owned by the RAF update loop.
-export function pauseGameState(gameState:GameState) {
+export function pauseGameState(gameState:GameState, onStateChanged?:(gameState:GameState) => void) {
   _pauseGameState(gameState, findMetaTimeNow());
+  onStateChanged?.(gameState);
 }
 
 function _removeExpiredEffects(gameState:GameState, metaTime:number) {
@@ -44,7 +46,9 @@ function _removeExpiredEffects(gameState:GameState, metaTime:number) {
   removeExpiredCharacterMetaTimeEffects(gameState.characterMetaTimeEffectsByCharacterId, metaTime);
 }
 
-export function updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:number, cameraAspectRatio:number) {
+/** Applies a frame and observes final authoritative state independently of UI notifications. */
+export function updateGameState(gameState:GameState, events:PlayerEvent[], metaTime:number, cameraAspectRatio:number,
+  onStateChanged?:(gameState:GameState) => void) {
   // Remove ended effects before events can create effects at the current meta-time.
   _removeExpiredEffects(gameState, metaTime);
 
@@ -77,4 +81,8 @@ export function updateGameState(gameState:GameState, events:PlayerEvent[], metaT
     cameraAspectRatio, metaTime, gameState.groundFloorY);
   updateCamera(gameState.camera, metaTime);
   gameState.discoveryState.discoveredRoomIds.add(gameState.timelineSnapshot.activeRoom.id);
+
+  // Observe only after conclusion unlocks and completion discoveries are synchronized.
+  syncConclusionUnlocks(gameState);
+  onStateChanged?.(gameState);
 }

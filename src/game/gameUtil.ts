@@ -93,7 +93,7 @@ function _findCharacterSkinIdAtTime(timeline:Timeline, time:number, characterId:
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
     onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
     onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
-    onDiscoveriesChanged?:(discoveries:Discoveries) => void) {
+    onDiscoveriesChanged?:(discoveries:Discoveries) => void, onStateChanged?:(gameState:GameState) => void) {
   
   if (!gameState) {
     context.canvas.style.cursor = "default";
@@ -105,8 +105,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
 
   const wasPlaying = gameState.isPlaying;
   const events:PlayerEvent[] = popPlayerEvents();
-  updateGameState(gameState, events, metaTime, calcCanvasAspectRatio(context));
-  syncConclusionUnlocks(gameState);
+  updateGameState(gameState, events, metaTime, calcCanvasAspectRatio(context), onStateChanged);
   if (onIsPlayingChanged && wasPlaying !== gameState.isPlaying) onIsPlayingChanged(gameState.isPlaying);
   callOnMinutesChangedAsNeeded(gameState, onMinutesChanged, metaTime);
   if (onActiveCharacterChanged) callOnActiveCharacterChangedAsNeeded(gameState, onActiveCharacterChanged);

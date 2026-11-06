@@ -1,12 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGameState } from '@/game/gameUtil';
+import { pauseGameState, updateGameState } from '@/game/gameStateUpdateUtil';
+import { createDiscoveries } from '@/game/discoveriesUtil';
+import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
+import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
+import { createEmptyImageSet } from '@/game/imageSetUtil';
+import { createLevelSaveState } from '@/game/levelSaveStateUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import ClozePartType from '@/game/conclusions/types/ClozePartType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import levelText from '@/game/__tests__/fixtures/save-state.md?raw';
-import { getLevelSaveState } from '@/persistence/levelSaveState';
+import discoveryText from '@/game/__tests__/fixtures/discovery-state.md?raw';
+import cyclingText from '@/game/__tests__/fixtures/character-cycling.md?raw';
+import { getLevelSaveState, setLevelSaveState } from '@/persistence/levelSaveState';
 import { pathStoreMock } from '@/persistence/__tests__/pathStoreMock';
 import LevelSaveCoordinator from '../levelSaveCoordinator';
+import { prepareLevelState } from '../levelPreparation';
 
 vi.mock('@/persistence/pathStore', async () => {
   const { pathStoreMock } = await import('@/persistence/__tests__/pathStoreMock');
@@ -59,6 +68,121 @@ describe('LevelSaveCoordinator', () => {
     expect(pathStoreMock.setText).toHaveBeenCalledOnce();
     finishWrite();
     await coordinator.stopAndSettle();
+  });
+
+  it('saves unfinished answers applied through authoritative player events', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    const conclusions = state.conclusions.map(duplicateConclusion);
+    const mystery = conclusions.find(conclusion => conclusion.id === 'mystery')!;
+    const blank = mystery.parts.find(part => part.type === ClozePartType.blank) as ClozeBlank;
+    blank.playerAnswerIndex = 1;
+    updateGameState(state, [{ type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions }], 100, 1,
+      () => coordinator.observe());
+    await coordinator.stopAndSettle();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({
+      incompleteConclusionAnswerIndexesById:{ mystery:[1, -1] }
+    });
+  });
+
+  it('observes conclusion unlocks before saving authoritative completion', async () => {
+    const state = _createState();
+    state.conclusions = state.conclusions.map(conclusion => conclusion.id === 'mystery'
+      ? { ...conclusion, unlockConclusionIds:['finding'] }
+      : conclusion.id === 'finding' ? { ...conclusion, isLocked:true } : conclusion);
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    const conclusions = state.conclusions.map(duplicateConclusion);
+    conclusions.find(conclusion => conclusion.id === 'mystery')!.isComplete = true;
+    updateGameState(state, [{ type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions }], 100, 1, updated => {
+      expect(updated.conclusions.find(conclusion => conclusion.id === 'finding')!.isLocked).toBe(false);
+      coordinator.observe();
+    });
+    await coordinator.stopAndSettle();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ completedConclusionIds:['mystery'] });
+  });
+
+  it('saves completion-derived skin and item discoveries in the same authoritative snapshot', async () => {
+    const state = createGameState(loadValidLevelForTest(discoveryText));
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    const conclusions = state.conclusions.map(conclusion => ({ ...duplicateConclusion(conclusion), isComplete:true }));
+    updateGameState(state, [{ type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions }], 100, 1,
+      () => coordinator.observe());
+    await coordinator.stopAndSettle();
+    expect(pathStoreMock.setText).toHaveBeenCalledOnce();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({
+      discoveredItemIds:['brass key'], discoveredSkinIds:expect.arrayContaining(['sam-default', 'pat-default']),
+      titleKnownCharacterIds:expect.arrayContaining(['sam', 'pat'])
+    });
+  });
+
+  it('observes raw title changes even when the discoveries summary is unchanged', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    const summary = createDiscoveries(state);
+    state.discoveryState.titleKnownCharacterIds.add('sam');
+    updateGameState(state, [], 100, 1, () => coordinator.observe());
+    expect(createDiscoveries(state)).toEqual(summary);
+    await coordinator.stopAndSettle();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ titleKnownCharacterIds:['sam'] });
+  });
+
+  it('debounces a synchronous page-hide pause without another simulation frame', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    updateGameState(state, [{ type:PlayerEventType.PLAY_PAUSE, isPlaying:true }], 100, 1,
+      () => coordinator.observe());
+    updateGameState(state, [], 1100, 1, () => coordinator.observe());
+    pauseGameState(state, () => coordinator.observe());
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(3000);
+    await coordinator.stopAndSettle();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ time:state.timeline.startTime + 1000 });
+  });
+
+  it('observes changed skin IDs even when their displayed icons and counts match', async () => {
+    const state = createGameState(loadValidLevelForTest(discoveryText));
+    state.discoveryState.discoveredSkinIds.add('sam-default');
+    const summary = createDiscoveries(state);
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    state.discoveryState.discoveredSkinIds.clear();
+    state.discoveryState.discoveredSkinIds.add('pat-default');
+    updateGameState(state, [], 100, 1, () => coordinator.observe());
+    expect(createDiscoveries(state)).toEqual(summary);
+    await coordinator.stopAndSettle();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ discoveredSkinIds:['pat-default'] });
+  });
+
+  it('saves active character selection applied through a player event', async () => {
+    const state = createGameState(loadValidLevelForTest(cyclingText));
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    updateGameState(state, [{ type:PlayerEventType.NEXT_CHARACTER }], 100, 1, () => coordinator.observe());
+    await coordinator.stopAndSettle();
+    expect(state.activeCharacterId).toBe('pat');
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ activeCharacterId:'pat' });
+  });
+
+  it('attaches after real preparation without resubmitting restored progress', async () => {
+    const level = loadValidLevelForTest(levelText);
+    const saved = { ...createLevelSaveState(createGameState(level)), discoveredItemIds:['key'] };
+    await setLevelSaveState('castle.md', saved);
+    pathStoreMock.setText.mockClear();
+    const prepared = await prepareLevelState(level, createEmptyImageSet(), 'castle.md');
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+    const coordinator = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
+    updateGameState(prepared.gameState, [], 100, 1, () => coordinator.observe());
+    await coordinator.stopAndSettle();
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+    expect(prepared.gameState.discoveryState.discoveredItemIds).toContain('key');
+  });
+
+  it('submits prepared fresh initial progress once before unchanged simulation updates', async () => {
+    const prepared = await prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md');
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+    const coordinator = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
+    updateGameState(prepared.gameState, [], 100, 1, () => coordinator.observe());
+    await coordinator.stopAndSettle();
+    expect(pathStoreMock.setText).toHaveBeenCalledOnce();
+    await expect(getLevelSaveState('castle.md')).resolves.toEqual(createLevelSaveState(prepared.gameState));
   });
 
   it('retains committed time during playback and progress changes', async () => {

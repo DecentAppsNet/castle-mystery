@@ -23,6 +23,7 @@ type Props = {
   onActiveCharacterChanged:(characterId:string) => void,
   onConclusionsChanged:(conclusions:GameState['conclusions']) => void,
   onDiscoveriesChanged:(discoveries:Discoveries) => void,
+  onStateChanged:(gameState:GameState) => void,
   onInitialClosedFrame:() => void,
   onOpeningStarted:(preparedGameState:GameState) => void, // preparedGameState is expected to have its room shell cache populated.
   hasLoadingFailed:boolean
@@ -49,7 +50,7 @@ type Props = {
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
 function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
-    onDiscoveriesChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
+    onDiscoveriesChanged, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
     closeRequest:null, awaitingReplacement:false });
@@ -79,7 +80,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
 
   function _updateAndDrawScene(currentGameState:GameState, context:CanvasRenderingContext2D) {
     updateAndDraw(currentGameState, context, _handleMinutesChanged, _handleIsPlayingChanged, onActiveCharacterChanged,
-        onConclusionsChanged, onDiscoveriesChanged);
+        onConclusionsChanged, onDiscoveriesChanged, onStateChanged);
   }
 
   function _onDraw(context:CanvasRenderingContext2D, animationFrameTimestamp:number|null) {
@@ -117,7 +118,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
       onPageViewingChange={(isViewingPage) => {
         const currentGameState = acceptedGameStateRef.current;
         if (isViewingPage || !currentGameState) return;
-        pauseGameState(currentGameState);
+        pauseGameState(currentGameState, onStateChanged);
         playPause(false);
         _handleIsPlayingChanged(false);
       }}

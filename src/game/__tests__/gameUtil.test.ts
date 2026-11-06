@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createGameState } from '@/game/gameUtil';
-import { updateGameState } from '@/game/gameStateUpdateUtil';
+import { pauseGameState, updateGameState } from '@/game/gameStateUpdateUtil';
 import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
 import { loadValidLevelForTest, replaceSection } from '@/levelLoading/__tests__/testLevelUtil';
 import levelTimesBaseText from '@/levelLoading/__tests__/fixtures/level-times-base.md?raw';
@@ -20,6 +20,18 @@ describe('gameUtil', () => {
   });
 
   describe('updateGameState()', () => {
+    it('observes final snapshot and discoveries after frame updates', () => {
+      const gameState = createGameState(loadValidLevelForTest(levelTimesBaseText));
+      gameState.discoveryState.discoveredRoomIds.clear();
+      let observations = 0;
+      updateGameState(gameState, [], 100, 1, state => {
+        observations += 1;
+        expect(state).toBe(gameState);
+        expect(state.discoveryState.discoveredRoomIds.has(state.timelineSnapshot.activeRoom.id)).toBe(true);
+      });
+      expect(observations).toBe(1);
+    });
+
     it('advances within a nonzero-start range using the playback clock offset', () => {
       const text = replaceSection(levelTimesBaseText, 'itinerary', ['0:00:03 Sam sits', '0:00:05 Sam stands']);
       const level = loadValidLevelForTest(text);
@@ -97,6 +109,20 @@ describe('gameUtil', () => {
       expect(gameState.time).toBe(0);
       expect(gameState.isPlaying).toBe(false);
       expect(gameState.metaTimeToGameTimeOffset).toBe(0);
+    });
+  });
+
+  describe('pauseGameState()', () => {
+    it('observes a synchronous pause without waiting for another frame', () => {
+      const gameState = createGameState(loadValidLevelForTest(levelTimesBaseText));
+      gameState.isPlaying = true;
+      let observations = 0;
+      pauseGameState(gameState, state => {
+        observations += 1;
+        expect(state.isPlaying).toBe(false);
+        expect(state.metaTimeToGameTimeOffset).toBe(0);
+      });
+      expect(observations).toBe(1);
     });
   });
 });

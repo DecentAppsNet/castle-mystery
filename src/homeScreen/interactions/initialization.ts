@@ -6,10 +6,9 @@ import { prepareLevelState } from '../levelPreparation';
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
 import { loadLevelFromUrl, loadLevelManifestFromUrl } from "@/levelLoading";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
-import GameState from "@/game/types/GameState";
+import PreparedLevelState from '../types/PreparedLevelState';
 
-type InitResults = {
-  gameState:GameState,
+type InitResults = PreparedLevelState & {
   minutes:number,
   levelManifest:LevelManifest
 }
@@ -36,10 +35,11 @@ async function _runInit():Promise<InitResults|null> {
     throw new Error('Level could not be loaded due to errors. See console for details.');
   }
   const imageSet = await createImageSetFromLevel(level);
-  const { gameState } = await prepareLevelState(level, imageSet, initialLevelUrl);
+  const prepared = await prepareLevelState(level, imageSet, initialLevelUrl);
+  const { gameState } = prepared;
   const minutes = msecsToMinutes(gameState.time);
   return {
-    gameState,
+    ...prepared,
     minutes,
     levelManifest
   };

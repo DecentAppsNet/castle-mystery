@@ -7,7 +7,7 @@ import { createDiscoveries } from "@/game/discoveriesUtil";
 import { prepareLevelState } from '../levelPreparation';
 import { createImageSetFromLevel } from "@/game/imageSetUtil";
 import Discoveries from "@/game/types/Discoveries";
-import GameState from "@/game/types/GameState";
+import PreparedLevelState from '../types/PreparedLevelState';
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import { loadLevelFromUrl } from "@/levelLoading";
 import LevelManifest from "@/levelLoading/types/LevelManifest";
@@ -21,7 +21,7 @@ type ChangeLevelParams = {
   onLoadingFailed:(error:unknown) => void,
   levelUrl:string,
   levelManifest:LevelManifest,
-  setGameState:Dispatch<SetStateAction<GameState|null>>,
+  onLevelPrepared:(prepared:PreparedLevelState) => void,
   setLevelManifest:Dispatch<SetStateAction<LevelManifest|null>>,
   setIsPlaying:Dispatch<SetStateAction<boolean>>,
   setMinutes:Dispatch<SetStateAction<number>>,
@@ -46,7 +46,7 @@ function _createLevelManifestWithSelectedLevel(levelManifest:LevelManifest, leve
 }
 
 async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
-  setGameState:Dispatch<SetStateAction<GameState|null>>, setLevelManifest:Dispatch<SetStateAction<LevelManifest|null>>,
+  onLevelPrepared:(prepared:PreparedLevelState) => void, setLevelManifest:Dispatch<SetStateAction<LevelManifest|null>>,
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
   setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>, setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
@@ -59,10 +59,11 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   }
   const imageSet = await createImageSetFromLevel(level);
   if (!loadRequest.isMounted) return;
-  const { gameState } = await prepareLevelState(level, imageSet, levelUrl);
+  const prepared = await prepareLevelState(level, imageSet, levelUrl);
   if (!loadRequest.isMounted) return;
 
-  setGameState(gameState);
+  const { gameState } = prepared;
+  onLevelPrepared(prepared);
   setLevelManifest(_createLevelManifestWithSelectedLevel(levelManifest, levelUrl));
   setIsPlaying(false);
   setMinutes(msecsToMinutes(gameState.time));
@@ -103,7 +104,7 @@ export function changeLevel({
   onLoadingFailed,
   levelUrl,
   levelManifest,
-  setGameState,
+  onLevelPrepared,
   setLevelManifest,
   setIsPlaying,
   setMinutes,
@@ -114,7 +115,7 @@ export function changeLevel({
   setActiveCharacterId,
   setModalDialogName
 }:ChangeLevelParams):Promise<void> {
-  return _requestLevelLoad(loadRequest, closeCurtain, () => _loadAndApplyLevel(levelUrl, levelManifest, setGameState, setLevelManifest, setIsPlaying, setMinutes,
+  return _requestLevelLoad(loadRequest, closeCurtain, () => _loadAndApplyLevel(levelUrl, levelManifest, onLevelPrepared, setLevelManifest, setIsPlaying, setMinutes,
     setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
     setModalDialogName, loadRequest), onLoadingFailed);
 }
