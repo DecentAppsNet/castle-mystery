@@ -20,9 +20,14 @@ function _createState() {
 describe('LevelSaveCoordinator', () => {
   beforeEach(() => {
     pathStoreMock.reset();
+    vi.useFakeTimers();
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
   it('uses restored progress as its baseline without writing', async () => {
     const state = _createState();
@@ -146,6 +151,121 @@ describe('LevelSaveCoordinator', () => {
     await coordinator.stopAndSettle();
     expect(pathStoreMock.setText).toHaveBeenCalledOnce();
     await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ discoveredSkinIds:[] });
+  });
+
+  it('coalesces sustained paused scrubbing into one write after three quiet seconds', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    state.time += 1000;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(2000);
+    state.time += 1000;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(2999);
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    await coordinator.stopAndSettle();
+    expect(pathStoreMock.setText).toHaveBeenCalledOnce();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ time:state.time });
+  });
+
+  it('saves entry into pause even without a subsequent time change', async () => {
+    const state = _createState();
+    state.isPlaying = true;
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    state.time += 1000;
+    coordinator.observe();
+    state.isPlaying = false;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(3000);
+    await coordinator.stopAndSettle();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ time:state.time });
+  });
+
+  it('cancels pending paused time when playback resumes', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    state.time += 1000;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(2000);
+    state.isPlaying = true;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(3000);
+    await coordinator.stopAndSettle(true);
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+  });
+
+  it('keeps committed time for immediate progress and saves latest progress at timer expiry', async () => {
+    const state = _createState();
+    const committedTime = state.time;
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    state.time += 1000;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(2000);
+    state.discoveryState.discoveredItemIds.add('key');
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(0);
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ time:committedTime, discoveredItemIds:['key'] });
+    state.discoveryState.discoveredSkinIds.add('sam-default');
+    await vi.advanceTimersByTimeAsync(1000);
+    await coordinator.stopAndSettle();
+    expect(pathStoreMock.setText).toHaveBeenCalledTimes(2);
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ time:state.time,
+      discoveredItemIds:['key'], discoveredSkinIds:['sam-default'] });
+  });
+
+  it('uses the newly committed position for later immediate progress saves', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    state.time += 1000;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(3000);
+    const committedTime = state.time;
+    state.time += 1000;
+    state.discoveryState.discoveredItemIds.add('key');
+    coordinator.observe();
+    await coordinator.stopAndSettle();
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ time:committedTime, discoveredItemIds:['key'] });
+  });
+
+  it('flushes outstanding paused position on ordinary transition without later timer writes', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    state.time += 1000;
+    coordinator.observe();
+    await coordinator.stopAndSettle(true);
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ time:state.time });
+    state.time += 1000;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(5000);
+    await coordinator.stopAndSettle(true);
+    expect(pathStoreMock.setText).toHaveBeenCalledOnce();
+  });
+
+  it('cancels outstanding paused position for Reset and never submits it later', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    state.time += 1000;
+    coordinator.observe();
+    await coordinator.stopAndSettle();
+    await vi.advanceTimersByTimeAsync(5000);
+    coordinator.observe();
+    await coordinator.stopAndSettle(true);
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+  });
+
+  it('does not continuously save playback time', async () => {
+    const state = _createState();
+    const coordinator = new LevelSaveCoordinator('castle.md', state);
+    state.isPlaying = true;
+    state.time += 1000;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(3000);
+    state.time += 1000;
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(3000);
+    await coordinator.stopAndSettle(true);
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
   });
 
   it('keeps each originating full level path independent', async () => {
