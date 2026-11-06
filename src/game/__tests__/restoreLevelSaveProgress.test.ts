@@ -4,16 +4,16 @@ import ClozeBlank from '../conclusions/types/ClozeBlank';
 import ClozePartType from '../conclusions/types/ClozePartType';
 import { countConclusionMistakes } from '../conclusions/conclusionUtil';
 import { createGameState } from '../gameUtil';
-import { createLevelSaveState, restoreLevelSaveProgress } from '../levelSaveStateUtil';
+import { createLevelSaveState, restoreGameStateFromSave } from '../levelSaveStateUtil';
 import discoveryText from './fixtures/discovery-state.md?raw';
 import saveText from './fixtures/save-state.md?raw';
 
-describe('restoreLevelSaveProgress()', () => {
+describe('restoreGameStateFromSave()', () => {
   it('merges saved discoveries without removing authored known titles or initial rooms', () => {
     const state = createGameState(loadValidLevelForTest(discoveryText));
     const save = { ...createLevelSaveState(state), discoveredRoomIds:['study'],
       discoveredItemIds:['brass key'], discoveredSkinIds:['pat-default'], titleKnownCharacterIds:['pat'] };
-    restoreLevelSaveProgress(state, save);
+    restoreGameStateFromSave(state, save);
     expect(state.discoveryState.discoveredRoomIds).toEqual(new Set(['hall', 'study']));
     expect(state.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam', 'pat']));
     expect(state.discoveryState.discoveredItemIds).toEqual(new Set(['brass key']));
@@ -24,7 +24,7 @@ describe('restoreLevelSaveProgress()', () => {
   it('restores unfinished selections in blank order without completing a conclusion', () => {
     const state = createGameState(loadValidLevelForTest(saveText));
     const save = { ...createLevelSaveState(state), incompleteConclusionAnswerIndexesById:{ mystery:[1, -1] } };
-    restoreLevelSaveProgress(state, save);
+    restoreGameStateFromSave(state, save);
     expect(createLevelSaveState(state).incompleteConclusionAnswerIndexesById.mystery).toEqual([1, -1]);
     expect(state.conclusions.find(conclusion => conclusion.id === 'mystery')!.isComplete).toBe(false);
     expect(state.isLevelComplete).toBe(false);
@@ -34,7 +34,7 @@ describe('restoreLevelSaveProgress()', () => {
     const state = createGameState(loadValidLevelForTest(saveText));
     const save = { ...createLevelSaveState(state), completedConclusionIds:['mystery'],
       incompleteConclusionAnswerIndexesById:{} };
-    restoreLevelSaveProgress(state, save);
+    restoreGameStateFromSave(state, save);
     const conclusion = state.conclusions.find(conclusion => conclusion.id === 'mystery')!;
     const blanks = conclusion.parts.filter(part => part.type === ClozePartType.blank) as ClozeBlank[];
     expect(blanks).toHaveLength(2);
@@ -49,7 +49,7 @@ describe('restoreLevelSaveProgress()', () => {
       ? { ...conclusion, unlockConclusionIds:['identities'] } : { ...conclusion, isLocked:true });
     const save = { ...createLevelSaveState(state), completedConclusionIds:['discovery'],
       incompleteConclusionAnswerIndexesById:{} };
-    restoreLevelSaveProgress(state, save);
+    restoreGameStateFromSave(state, save);
     expect(state.conclusions.find(conclusion => conclusion.id === 'identities')!.isLocked).toBe(false);
     expect(state.discoveryState.obscuredRoomIds).not.toContain('study');
     expect(state.isLevelComplete).toBe(false);
@@ -62,7 +62,7 @@ describe('restoreLevelSaveProgress()', () => {
       ? { ...conclusion, unlockConclusionIds:['identities'] } : { ...conclusion, isLocked:true });
     const save = { ...createLevelSaveState(state), completedConclusionIds:['identities', 'discovery'],
       incompleteConclusionAnswerIndexesById:{} };
-    restoreLevelSaveProgress(state, save);
+    restoreGameStateFromSave(state, save);
     expect(state.conclusions.every(conclusion => conclusion.isComplete && !conclusion.isLocked)).toBe(true);
     expect(state.isLevelComplete).toBe(true);
     expect(state.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam', 'pat']));
@@ -80,7 +80,7 @@ describe('restoreLevelSaveProgress()', () => {
     state.conclusions.find(conclusion => conclusion.id === 'finding')!.isComplete = true;
     const save = { ...createLevelSaveState(state), completedConclusionIds:[],
       incompleteConclusionAnswerIndexesById:{} };
-    restoreLevelSaveProgress(state, save);
+    restoreGameStateFromSave(state, save);
     expect(createLevelSaveState(state).incompleteConclusionAnswerIndexesById.mystery).toEqual([1, -1]);
     expect(state.conclusions.find(conclusion => conclusion.id === 'finding')!.isComplete).toBe(true);
   });
@@ -92,11 +92,11 @@ describe('restoreLevelSaveProgress()', () => {
       incompleteConclusionAnswerIndexesById:{} };
     const originalSave = JSON.stringify(save);
     const originalConclusions = JSON.stringify(level.conclusions);
-    restoreLevelSaveProgress(state, save);
+    restoreGameStateFromSave(state, save);
     const restoredSave = createLevelSaveState(state);
     const revision = state.conclusionsRevision;
     const linkages = state.discoveryState.revealedSkinLinkages;
-    restoreLevelSaveProgress(state, save);
+    restoreGameStateFromSave(state, save);
     expect(createLevelSaveState(state)).toEqual(restoredSave);
     expect(state.conclusionsRevision).toBe(revision);
     expect(state.discoveryState.revealedSkinLinkages).toEqual(linkages);

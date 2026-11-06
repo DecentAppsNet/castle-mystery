@@ -8,6 +8,7 @@ import ClozePartType from './conclusions/types/ClozePartType';
 import Conclusion, { duplicateConclusion } from './conclusions/types/Conclusion';
 import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from './playerEvents';
 import PlayerEventType from './playerEvents/types/PlayerEventType';
+import { createKeyframeAtTime, createTimelineSnapshot } from './timeline';
 import GameState from './types/GameState';
 
 function _getBlanks(conclusion:Conclusion):ClozeBlank[] {
@@ -28,8 +29,7 @@ function _restoreConclusion(conclusion:Conclusion, save:LevelSaveState):Conclusi
   return restored;
 }
 
-/** Applies compatible saved progress, preserving defaults and recomputing conclusion-derived reveals. */
-export function restoreLevelSaveProgress(gameState:GameState, save:LevelSaveState):void {
+function _applySavedDiscoveriesAndConclusions(gameState:GameState, save:LevelSaveState):void {
   // Merge saved discoveries into the freshly initialized discovery sets.
   const { discoveryState } = gameState;
   save.discoveredRoomIds.forEach(roomId => discoveryState.discoveredRoomIds.add(roomId));
@@ -41,6 +41,22 @@ export function restoreLevelSaveProgress(gameState:GameState, save:LevelSaveStat
   const conclusions = gameState.conclusions.map(conclusion => _restoreConclusion(conclusion, save));
   updateGameStateForChangeConclusions(gameState, { type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions });
   syncConclusionUnlocks(gameState);
+}
+
+/** Applies a compatible save to freshly created game state, then rebuilds its paused timeline snapshot. */
+export function restoreGameStateFromSave(gameState:GameState, save:LevelSaveState):void {
+  // Restore discoveries and conclusion-derived visibility before rebuilding the snapshot.
+  _applySavedDiscoveriesAndConclusions(gameState, save);
+  gameState.time = save.time;
+  gameState.activeCharacterId = save.activeCharacterId;
+  gameState.isPlaying = false;
+  gameState.metaTimeToGameTimeOffset = 0;
+
+  // Anchor selection to the actual skin at the saved coordinate, not the initial appearance.
+  const keyframe = createKeyframeAtTime(gameState.timeline.keyframes, save.time);
+  const characterI = gameState.timeline.characterIdToI[save.activeCharacterId];
+  gameState.activeSkinIdAtSelection = keyframe.characters[characterI].skinId;
+  gameState.timelineSnapshot = createTimelineSnapshot(gameState, save.time);
 }
 
 /** Copies authoritative progress into an independent save, optionally retaining a committed timeline position. */
