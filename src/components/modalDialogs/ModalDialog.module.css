@@ -18,6 +18,8 @@
 }
 
 .dialog {
+    --dialog-padding: 2rem;
+    --dialog-border-width: .6rem;
     position: absolute;
     left: 50%;
     top: 50%;
@@ -26,8 +28,8 @@
     background-color: background-content;
     border-style: solid;
     border-radius: 1rem;
-    border-width: .6rem;
-    padding: 2rem;
+    border-width: var(--dialog-border-width);
+    padding: var(--dialog-padding);
     font-size: 1.5rem;
     cursor: default;
 }

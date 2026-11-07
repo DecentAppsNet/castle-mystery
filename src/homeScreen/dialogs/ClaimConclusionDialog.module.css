@@ -1,4 +1,17 @@
+:has(> .statement) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 4vh - 2 * var(--dialog-padding) - 2 * var(--dialog-border-width));
+}
+
+:has(> .statement) > :not(.statement) {
+  flex-shrink: 0;
+}
+
 .statement {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   font-size: 1vh;
   line-height: 1.8;
   margin: 1vh 0;
