@@ -14,6 +14,7 @@ import { assertNonNullable } from "decent-portal";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
 import { CHARACTER_SELECTION_NIMBUS_IMAGE_URL } from "./effects/characterSelectionEffectUtil";
 import BodyPart from './characterBody/types/BodyPart';
+import { BOOK_ICON_IMAGE_URL } from "./drawing/iconUtil";
 
 export function createEmptyImageSet():ImageSet {
   return new Map();
@@ -56,7 +57,8 @@ function _findImageUrls(level:Level):string[] {
     CHARACTER_SELECTION_NIMBUS_IMAGE_URL,
     KEY_IMAGE_URL,
     getGroundImageAssetUrl(),
-    UNKNOWN_ITEM_ICON_URL
+    UNKNOWN_ITEM_ICON_URL,
+    BOOK_ICON_IMAGE_URL
   ]);
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
   level.rooms.forEach(room => {

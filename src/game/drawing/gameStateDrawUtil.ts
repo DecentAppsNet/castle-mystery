@@ -37,6 +37,7 @@ import CharacterEffectDrawEntry from "./characters/types/CharacterEffectDrawEntr
 import { handleCharacterAfterLevelDrawEffects } from "./characters/characterEffectDispatchUtil";
 import FramePresentationIndex from "../effects/types/FramePresentationIndex";
 import CanvasBubbleAnchor from "../effects/types/CanvasBubbleAnchor";
+import { drawOverlayIcons } from "./iconUtil";
 
 const GROUND_HEIGHT_STORIES = 4;
 const GROUND_Y_OFFSET = -1.8;
@@ -452,6 +453,8 @@ export function drawGameState(gameState:GameState, context:CanvasRenderingContex
         gameState.scalingFactors, context, layoutPlanner);
     }
   }
+
+  drawOverlayIcons(gameState.imageSet, context);
 
   // Draw optional developer layout diagnostics last.
   _drawReservedRects(layoutPlanner, context);
