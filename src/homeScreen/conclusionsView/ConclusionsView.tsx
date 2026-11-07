@@ -3,7 +3,6 @@ import Conclusion from "@/game/conclusions/types/Conclusion"
 import ConclusionView from './ConclusionView';
 import ImageSet from '@/game/types/ImageSet';
 import ContentButton from '@/components/contentButton/ContentButton';
-import { SHOW_REVEAL_LEVEL_BUTTON } from '@/developer/config';
 
 type Props = {
   conclusions:Conclusion[],
@@ -12,14 +11,6 @@ type Props = {
   onIncorrectClaim:(conclusionId:string) => void,
   onReset:() => void,
   onUpdate:(conclusions:Conclusion[]) => void
-}
-
-function _createRevealLevelConclusions(conclusions:ReadonlyArray<Conclusion>):Conclusion[] {
-  return conclusions.map(conclusion => ({
-    ...conclusion,
-    isLocked:false,
-    isComplete:true
-  }));
 }
 
 function ConclusionsView({conclusions, imageSet, conclusionClaimCooldowns, onIncorrectClaim, onReset, onUpdate}:Props) {
@@ -35,8 +26,6 @@ function ConclusionsView({conclusions, imageSet, conclusionClaimCooldowns, onInc
     <div className={styles.conclusionList}>{conclusionsContent}</div>
     <div className={styles.actions}>
       <ContentButton text='Reset Level' onClick={onReset} />
-      {SHOW_REVEAL_LEVEL_BUTTON &&
-        <ContentButton text='Reveal Level' onClick={() => onUpdate(_createRevealLevelConclusions(conclusions))} />}
     </div>
   </div>;
 }

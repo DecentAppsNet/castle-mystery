@@ -160,6 +160,15 @@ function HomeScreen() {
     _handleConclusionsChanged(nextConclusions);
   }
 
+  function _handleRevealLevel() {
+    const nextConclusions = conclusions.map(conclusion => ({
+      ...conclusion,
+      isLocked:false,
+      isComplete:true
+    }));
+    updateConclusions(nextConclusions, _handleManualConclusionsUpdate);
+  }
+
   const isSliderAtRightmostPosition = minutes >= toMinutes;
   useEffect(() => {
     if (!gameState) return;
@@ -205,7 +214,7 @@ function HomeScreen() {
 
   return (
     <div ref={applicationRootRef} className={styles.container} inert={isGameDisabled}>
-      <TopBar />
+      <TopBar onRevealLevel={_handleRevealLevel} />
       <div className={styles.content}>
         {levelManifest && <LevelSelector
           levelManifest={levelManifest}
