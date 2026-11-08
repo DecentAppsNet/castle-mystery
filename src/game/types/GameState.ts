@@ -11,11 +11,13 @@ import Timeline from "./Timeline";
 import TimelineSnapshot from "./TimelineSnapshot";
 import DiscoveryState from "./DiscoveryState";
 import Effect from "../effects/types/Effect";
+import BookState from "@/book/types/BookState";
 
 // Unless otherwise noted, "readonly" is intended deeply despite shallow Typescript checks.
 type GameState = {
   activeCharacterId:string,
   activeSkinIdAtSelection:string,
+  bookState:BookState,
   camera:Camera,
   readonly characterMetaTimeEffectsByCharacterId:Map<string, Effect[]>, // Keys target characters; contained effect times use meta-time.
   conclusions:Conclusion[],

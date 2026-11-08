@@ -14,6 +14,8 @@ import type LevelViewFrameState from './types/LevelViewFrameState';
 import type InitialClosedFrameHandoff from './types/InitialClosedFrameHandoff';
 import type LevelViewHandle from './types/LevelViewHandle';
 import { announceCurtainClosed, cancelCurtainClose, requestCurtainClose } from './levelViewCloseUtil';
+import { drawBook } from '@/book';
+import { findMetaTimeNow } from '@/game/metaTimeUtil';
 
 type Props = {
   ref?:Ref<LevelViewHandle>, // Enables imperative calls.
@@ -113,6 +115,9 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
       clearLevelView(context);
     }
     if (isCurtainVisible(frame)) drawCurtainOverlay(context, frame, hasLoadingFailed);
+    if (frame.canRenderScene && currentGameState) {
+      drawBook(currentGameState.bookState, findMetaTimeNow(), currentGameState.imageSet, context);
+    }
 
     if (state.transition?.phase === 'closed' && animationFrameTimestamp !== null) {
       if (state.closeRequest) announceCurtainClosed(state, animationFrameTimestamp);

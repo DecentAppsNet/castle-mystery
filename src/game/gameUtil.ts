@@ -34,6 +34,7 @@ import Timeline from "./types/Timeline";
 import { findCharacterKeyframeForTime } from "./timeline/retrievalUtil";
 import Effect from "./effects/types/Effect";
 import { updateGameState } from "./gameStateUpdateUtil";
+import { createBookState } from "@/book";
 export { pauseGameState } from "./gameStateUpdateUtil";
 
 function _setActiveRoomDiscovered(gameState:GameState) {
@@ -134,6 +135,7 @@ export function createGameState(level:Level, imageSet:ImageSet = createEmptyImag
     baseCharacters,
     baseItemsById,
     baseRooms,
+    bookState:createBookState(),
     camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
     characterMetaTimeEffectsByCharacterId:new Map<string, Effect[]>(),
     conclusions:level.conclusions.map(duplicateConclusion),
