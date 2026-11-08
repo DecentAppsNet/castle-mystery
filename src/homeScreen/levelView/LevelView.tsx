@@ -3,6 +3,7 @@ import { useEffect, useImperativeHandle, useRef, type Ref } from 'react';
 import Canvas from '@/components/canvas/Canvas';
 import { mouseDown, mouseMove, mouseWheel, playPause } from '@/game/playerEventUtil';
 import { canvasToGamePosition } from '@/game/drawing/drawUtil';
+import { findOverlayControlAtPoint } from '@/game/drawing/overlay';
 import { pauseGameState, updateAndDraw } from '@/game/gameUtil';
 import styles from './LevelView.module.css';
 import GameState from '@/game/types/GameState';
@@ -55,6 +56,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
     closeRequest:null, awaitingReplacement:false });
   const startupHandoffRef = useRef<InitialClosedFrameHandoff>({ drawnAt:null, hasAnnounced:false });
+  const pointerClientPositionRef = useRef<readonly [number, number]|null>(null);
 
   useImperativeHandle(ref, () => ({ close:() => requestCurtainClose(frameStateRef.current, performance.now()) }), []);
 
@@ -78,9 +80,19 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
     onIsPlayingChanged(isPlaying);
   }
 
+  function _updateOverlayCursor(context:CanvasRenderingContext2D) {
+    const pointer = pointerClientPositionRef.current;
+    if (!pointer || isGameDisabled()) return;
+    const rect = context.canvas.getBoundingClientRect();
+    const canvasX = (pointer[0] - rect.left) * context.canvas.width / rect.width;
+    const canvasY = (pointer[1] - rect.top) * context.canvas.height / rect.height;
+    if (findOverlayControlAtPoint(canvasX, canvasY)) context.canvas.style.cursor = 'pointer';
+  }
+
   function _updateAndDrawScene(currentGameState:GameState, context:CanvasRenderingContext2D) {
     updateAndDraw(currentGameState, context, _handleMinutesChanged, _handleIsPlayingChanged, onActiveCharacterChanged,
         onConclusionsChanged, onDiscoveriesChanged, onStateChanged);
+    _updateOverlayCursor(context);
   }
 
   function _onDraw(context:CanvasRenderingContext2D, animationFrameTimestamp:number|null) {
@@ -108,7 +120,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
     }
   }
 
-  return <div className={styles.container}>
+  return <div className={styles.container} onMouseLeave={() => { pointerClientPositionRef.current = null; }}>
     <Canvas 
       isAnimated={true} 
       onDraw={_onDraw}
@@ -132,6 +144,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
         mouseDown(gameX, gameY);
       }}
       onMouseMove={(e) => {
+        pointerClientPositionRef.current = [e.clientX, e.clientY];
         if (isGameDisabled()) return;
         if (!acceptedGameStateRef.current) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();

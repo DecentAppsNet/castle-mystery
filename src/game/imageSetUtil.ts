@@ -14,7 +14,7 @@ import { assertNonNullable } from "decent-portal";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
 import { CHARACTER_SELECTION_NIMBUS_IMAGE_URL } from "./effects/characterSelectionEffectUtil";
 import BodyPart from './characterBody/types/BodyPart';
-import { BOOK_ICON_IMAGE_URL } from "./drawing/iconUtil";
+import { BOOK_ICON_IMAGE_URL } from "./drawing/overlay";
 
 export function createEmptyImageSet():ImageSet {
   return new Map();
