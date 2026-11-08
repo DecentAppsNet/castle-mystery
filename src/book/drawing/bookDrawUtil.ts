@@ -4,6 +4,7 @@ import BookLayout from "./types/BookLayout";
 import { findImageBitmap } from "@/game/imageAssetUtil";
 import { assert, assertNonNullable } from "decent-portal";
 import Rect from "@/game/types/Rect";
+import { calcBookOffsetsForAnimationAndUpdate } from "./bookAnimationUtil";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -79,12 +80,16 @@ function _calcSinglePageDrawRect(layout:BookLayout, pageNo:number):Rect {
   return { ...layout.rect, x };
 }
 
-function _calcBookDrawRect(bookState:BookState, _metaTime:number):Rect {
+function _calcBookDrawRect(bookState:BookState, metaTime:number):Rect {
   assertNonNullable(bookState.layout);
   const drawRect = bookState.layout.isSinglePageView 
     ? _calcSinglePageDrawRect(bookState.layout, bookState.pageNo)
-    : bookState.layout.rect;
-  // TODO animation adjustments.
+    : { ...bookState.layout.rect };
+  if (bookState.animationKind !== null) {
+    const { offsetX, offsetY } = calcBookOffsetsForAnimationAndUpdate(metaTime, bookState);
+    drawRect.x += offsetX;
+    drawRect.y += offsetY;
+  }
   return drawRect;
 }
 
@@ -102,6 +107,7 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   assertNonNullable(bookImage);
   _updateBookLayoutAsNeeded(context.canvas.width, context.canvas.height, bookImage, bookState);
   const { x, y, width, height } = _calcBookDrawRect(bookState, metaTime);
+  if (!bookState.isVisible) return; // Animations have hidden the book.
   _drawTranslucentBackground(context);
   context.drawImage(bookImage, x, y, width, height);
 }
@@ -113,6 +119,6 @@ export function createBookState():BookState { // TODO this will change later to 
     { kind:'bookStart' },
   ];
   bookState.pageNo = 1;
-  bookState.isVisible = true;
+  bookState.isVisible = false;
   return bookState;
 }

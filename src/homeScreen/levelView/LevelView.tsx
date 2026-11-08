@@ -14,7 +14,7 @@ import type LevelViewFrameState from './types/LevelViewFrameState';
 import type InitialClosedFrameHandoff from './types/InitialClosedFrameHandoff';
 import type LevelViewHandle from './types/LevelViewHandle';
 import { announceCurtainClosed, cancelCurtainClose, requestCurtainClose } from './levelViewCloseUtil';
-import { drawBook } from '@/book';
+import { drawBook, showBook, onBookMouseDown, onBookMouseUp, onBookMouseOver, onBookMouseWheel } from '@/book';
 import { findMetaTimeNow } from '@/game/metaTimeUtil';
 
 type Props = {
@@ -143,16 +143,42 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
         if (isGameDisabled()) return;
         if (!acceptedGameStateRef.current) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
+        const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
+        const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
+        if (acceptedGameStateRef.current.bookState.isVisible) {
+          onBookMouseDown(canvasX, canvasY, findMetaTimeNow(), acceptedGameStateRef.current.bookState);
+          return;
+        }
+        if (findOverlayControlAtPoint(canvasX, canvasY) === 'book') {
+          const bookState = acceptedGameStateRef.current.bookState;
+          showBook(findMetaTimeNow(), bookState);
+          return;
+        }
         const x = Math.round(e.clientX - rect.left);
         const y = Math.round(e.clientY - rect.top);
         const [gameX, gameY] = canvasToGamePosition(x, y, acceptedGameStateRef.current.scalingFactors);
         mouseDown(gameX, gameY);
+      }}
+      onMouseUp={(e) => {
+        if (isGameDisabled()) return;
+        const currentGameState = acceptedGameStateRef.current;
+        if (!currentGameState?.bookState.isVisible) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
+        const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
+        onBookMouseUp(canvasX, canvasY, findMetaTimeNow(), currentGameState.bookState);
       }}
       onMouseMove={(e) => {
         pointerClientPositionRef.current = [e.clientX, e.clientY];
         if (isGameDisabled()) return;
         if (!acceptedGameStateRef.current) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
+        if (acceptedGameStateRef.current.bookState.isVisible) {
+          const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
+          const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
+          onBookMouseOver(canvasX, canvasY, findMetaTimeNow(), acceptedGameStateRef.current.bookState);
+          return;
+        }
         const x = Math.round(e.clientX - rect.left);
         const y = Math.round(e.clientY - rect.top);
         const [gameX, gameY] = canvasToGamePosition(x, y, acceptedGameStateRef.current.scalingFactors);
@@ -161,6 +187,10 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
       onWheel={(e) => {
         if (isGameDisabled()) return;
         e.preventDefault();
+        if (acceptedGameStateRef.current?.bookState.isVisible) {
+          onBookMouseWheel(e.deltaY, findMetaTimeNow(), acceptedGameStateRef.current.bookState);
+          return;
+        }
         mouseWheel(e.deltaY);
       }}
     />
