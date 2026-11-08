@@ -1,0 +1,1 @@
+type BookControlId = 'prevPage' | 'nextPage' | 'closeBook';

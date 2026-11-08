@@ -1,3 +1,4 @@
+import ControlLayout from "@/canvasControls/types/ControlLayout";
 import Rect from "@/game/types/Rect"
 
 type BookLayout = {
@@ -5,7 +6,8 @@ type BookLayout = {
   canvasHeight:number,
   isSinglePageView:boolean,
   singlePageViewOffsetX:number,
-  rect:Rect
+  rect:Rect,
+  controlLayout:ControlLayout
 }
 
 export default BookLayout;
