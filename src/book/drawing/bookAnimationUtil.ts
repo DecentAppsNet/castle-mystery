@@ -3,7 +3,7 @@ import BookState from "../types/BookState";
 import BookLayout from "./types/BookLayout";
 
 const APPEAR_ANIMATION_DURATION = 500;
-const DISAPPEAR_ANIMATION_DURATION = 500;
+const DISAPPEAR_ANIMATION_DURATION = 200;
 
 type Offsets = Readonly<{offsetX:number, offsetY:number}>;
 const ZERO_OFFSETS:Offsets = {offsetX:0, offsetY:0 };
