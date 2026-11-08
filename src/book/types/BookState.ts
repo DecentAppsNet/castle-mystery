@@ -1,16 +1,23 @@
-import BookLayout, { createDefaultBookLayout } from "../drawing/types/BookLayout"
+import BookLayout from "../drawing/types/BookLayout"
+import BookPage from "./BookPage"
 
 type BookState = {
-  layout:BookLayout,
+  layout:BookLayout|null,
   animationKind:'appear'|'disappear'|null
-  animationStartMetaTime:number
+  animationStartMetaTime:number,
+  isVisible:boolean,
+  pageNo:number,
+  pages:BookPage[]
 }
 
 export function createDefaultBookState():BookState {
   return {
-    layout:createDefaultBookLayout(),
+    layout:null,
     animationKind:null,
-    animationStartMetaTime:0
+    animationStartMetaTime:0,
+    isVisible:false,
+    pageNo:1,
+    pages:[]
   }
 }
 

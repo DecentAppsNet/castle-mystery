@@ -115,7 +115,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
       clearLevelView(context);
     }
     if (isCurtainVisible(frame)) drawCurtainOverlay(context, frame, hasLoadingFailed);
-    if (frame.canRenderScene && currentGameState) {
+    if (frame.canRenderScene && currentGameState && currentGameState.bookState.isVisible) {
       drawBook(currentGameState.bookState, findMetaTimeNow(), currentGameState.imageSet, context);
     }
 
