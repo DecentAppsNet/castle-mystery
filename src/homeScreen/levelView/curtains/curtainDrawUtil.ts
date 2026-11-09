@@ -99,7 +99,7 @@ function _drawLoadingLabel(context:CanvasRenderingContext2D, hasLoadingFailed:bo
   context.scale(textScale, textScale);
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  context.font = 'bold 27px Jellee';
+  context.font = 'bold 27px im-fell-english';
   context.lineWidth = 5;
   context.strokeStyle = 'rgba(45,8,6,.75)';
 

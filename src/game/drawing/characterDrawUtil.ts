@@ -91,7 +91,7 @@ function _calcRoomTitleMaxWidth(room:Room, scalingFactors:ScalingFactors):number
 }
 
 function _measureWrappedRoomTitleLines(room:Room, scalingFactors:ScalingFactors, context:CanvasRenderingContext2D):string[] {
-  const font = `${scalingFactors.roomFontHeight}px Jellee`;
+  const font = `${scalingFactors.roomFontHeight}px im-fell-english`;
   return wrapRoomTitle(room.title, _calcRoomTitleMaxWidth(room, scalingFactors), titleText => {
     context.save();
     context.font = font;

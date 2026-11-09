@@ -1,0 +1,13 @@
+@font-face {
+  font-family: 'im-fell-english';
+  src: url('IMFellEnglish-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'im-fell-english';
+  src: url('IMFellEnglish-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}

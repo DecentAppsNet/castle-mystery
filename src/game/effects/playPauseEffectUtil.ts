@@ -30,7 +30,7 @@ function _handlePlayPauseEffect(iconText:string, startTime:number, drawCall:Effe
   context.globalAlpha = 1 - progress;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = `${fontSize}px Jellee`;
+  context.font = `${fontSize}px im-fell-english`;
   context.lineJoin = "round";
   context.strokeStyle = COLOR_POPOVER_FILL;
   context.lineWidth = Math.max(1, scalingFactors.roomLineWidth);

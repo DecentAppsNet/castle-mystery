@@ -131,7 +131,7 @@ export function drawThoughtBubble(speech:PreparedAnimationText, anchorX:number, 
   const cornerRadius = Math.min(boxHeight / 2, Math.max(6, scalingFactors.roomLineWidth * 3));
 
   context.save();
-  context.font = `${fontSize}px Jellee`;
+  context.font = `${fontSize}px im-fell-english`;
   context.textAlign = "center";
   context.textBaseline = "middle";
 
@@ -181,7 +181,7 @@ function _drawSpeechBubble(speech:PreparedAnimationText, anchorX:number, anchorT
   const tailHeight = Math.max(4, scalingFactors.roomLineWidth * 2);
 
   context.save();
-  context.font = `${fontSize}px Jellee`;
+  context.font = `${fontSize}px im-fell-english`;
   context.textAlign = "center";
   context.textBaseline = "middle";
 
@@ -288,7 +288,7 @@ function _drawEmitBubble(emitText:PreparedAnimationText, anchorX:number, anchorT
   const { padding, fontSize, boxHeight } = _getEmitBubbleMetrics(scalingFactors);
 
   context.save();
-  context.font = `${fontSize}px Jellee`;
+  context.font = `${fontSize}px im-fell-english`;
   context.textAlign = "center";
   context.textBaseline = "middle";
 

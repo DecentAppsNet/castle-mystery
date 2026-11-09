@@ -3,9 +3,11 @@ import { assert, assertNonNullable, botch } from "decent-portal";
 import ImageSet from "@/game/types/ImageSet";
 import BookState from "../types/BookState";
 import { findImageBitmap } from "@/game/imageAssetUtil";
-import { calcBookDrawRect, calcPageViewOffsetX, updateBookLayoutAsNeeded } from "./bookLayoutUtil";
+import { calcBookDrawRect, calcPageViewOffsetX, isLeftPageNo, updateBookLayoutAsNeeded } from "./bookLayoutUtil";
 import { getAnimationProgress } from "./bookAnimationUtil";
 import { drawPageFlipPreview } from "./pageFlipAnimationUtil";
+import Rect from "@/game/types/Rect";
+import { drawPage } from "./pageDrawUtil";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -87,6 +89,17 @@ function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D
   context.restore();
 }
 
+function _drawPageContent(bookState:BookState, bookDrawRect:Rect, context:CanvasRenderingContext2D) {
+  const isOnLeftPage = isLeftPageNo(bookState.pageNo);
+  const leftPageNo = isOnLeftPage ? bookState.pageNo : bookState.pageNo - 1;
+  const rightPageNo = isOnLeftPage ? bookState.pageNo + 1 : bookState.pageNo;
+  const width = bookDrawRect.width / 2;
+  const leftPageRect = { ...bookDrawRect, width};
+  const rightPageRect = { ...bookDrawRect, x:bookDrawRect.x + width, width };
+  drawPage(bookState.pages[leftPageNo-1], leftPageNo, leftPageRect, context);
+  drawPage(bookState.pages[rightPageNo-1], rightPageNo, rightPageRect, context);
+}
+
 export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D) {
   assert(bookState.isVisible); // Prefer caller to check for readability.
   const bookImage = findImageBitmap(imageSet, BOOK_IMAGE_URL);
@@ -98,6 +111,7 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   if (!bookState.isVisible) return; // Animations have hidden the book.
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
+  _drawPageContent(bookState, drawRect, context);
   drawPageFlipPreview(bookState, metaTime, drawRect, bookImage, imageSet, context);
   if (bookState.animationKind === null) _drawBookControls(bookState, context);
 }

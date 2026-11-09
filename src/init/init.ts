@@ -12,7 +12,7 @@ function _initLocalDeveloperTools():void {
 }
 
 async function _preloadFonts():Promise<void> {
- await document.fonts.load('1rem Jellee');
+ await document.fonts.load('1rem im-fell-english');
 }
 
 // Only access the DOM for prerequisites needed before the first render.

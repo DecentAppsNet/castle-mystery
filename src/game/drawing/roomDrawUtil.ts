@@ -207,7 +207,7 @@ function _getWrappedRoomTitleLines(gameState:GameState, room:Room, context:Canva
   if (cachedLines) return cachedLines;
 
   const wrapScalingFactors = gameState.roomTitleWrapScalingFactors;
-  const wrapFont = `${wrapScalingFactors.roomFontHeight}px Jellee`;
+  const wrapFont = `${wrapScalingFactors.roomFontHeight}px im-fell-english`;
   const lines = wrapRoomTitle(room.title, _calcRoomTitleMaxWidth(room, wrapScalingFactors), titleText => {
     context.save();
     context.font = wrapFont;
@@ -229,7 +229,7 @@ function _getRoomTitleCanvasRect(room:Room, gameState:GameState, context:CanvasR
   );
   const lines = _getWrappedRoomTitleLines(gameState, room, context);
   context.save();
-  context.font = `${scalingFactors.roomFontHeight}px Jellee`;
+  context.font = `${scalingFactors.roomFontHeight}px im-fell-english`;
   const maxLineWidth = lines.reduce((maxWidth, line) => Math.max(maxWidth, context.measureText(line).width), 0);
   context.restore();
   const totalTextHeight = lines.length * scalingFactors.roomFontHeight;
@@ -255,7 +255,7 @@ export function drawRoomTitle(room:Room, isActive:boolean, gameState:GameState, 
     1,
     scalingFactors
   );
-  const font = `${scalingFactors.roomFontHeight}px Jellee`;
+  const font = `${scalingFactors.roomFontHeight}px im-fell-english`;
   const lines = _getWrappedRoomTitleLines(gameState, room, context);
   const lineHeight = scalingFactors.roomFontHeight;
   const totalTextHeight = lines.length * lineHeight;
