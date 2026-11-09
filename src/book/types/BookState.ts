@@ -7,6 +7,7 @@ type BookState = {
   layout:BookLayout|null,
   animationKind:'appear'|'disappear'|null
   animationStartMetaTime:number,
+  animationDuration:number,
   onAnimationEnd:AnimationEndCallback|null,
   isVisible:boolean,
   pageNo:number,
@@ -18,6 +19,7 @@ export function createDefaultBookState():BookState {
     layout:null,
     animationKind:null,
     animationStartMetaTime:0,
+    animationDuration:0,
     onAnimationEnd:null,
     isVisible:false,
     pageNo:1,

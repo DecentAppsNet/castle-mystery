@@ -5,16 +5,24 @@ import BookState, { createDefaultBookState } from "../types/BookState";
 import { findImageBitmap } from "@/game/imageAssetUtil";
 import { calcBookDrawRect, updateBookLayoutAsNeeded } from "./bookLayoutUtil";
 import BookLayout from "./types/BookLayout";
+import { getAnimationProgress } from "./bookAnimationUtil";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
 const BACKGROUND_ALPHA = .7;
 const BOOK_CONTROL_ALPHA = .8;
 
-function _drawTranslucentBackground(context:CanvasRenderingContext2D) {
+function _drawTranslucentBackground(bookState:BookState, metaTime:number, context:CanvasRenderingContext2D) {
+  let alphaFadeAmount = 1;
+  if (bookState.animationKind === 'appear') {
+    alphaFadeAmount = getAnimationProgress(bookState, metaTime);
+  } else if (bookState.animationKind === 'disappear') {
+    alphaFadeAmount = 1 - getAnimationProgress(bookState, metaTime);
+  }
+
   context.save();
   context.fillStyle = 'black';
-  context.globalAlpha = BACKGROUND_ALPHA;
+  context.globalAlpha = BACKGROUND_ALPHA * alphaFadeAmount;
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   context.restore();
 }
@@ -70,7 +78,7 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   assertNonNullable(bookState.layout);
   const { x, y, width, height } = calcBookDrawRect(bookState, metaTime);
   if (!bookState.isVisible) return; // Animations have hidden the book.
-  _drawTranslucentBackground(context);
+  _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
   if (bookState.animationKind === null) {
     _drawBookControls(bookState.layout, x - bookState.layout.rect.x, y - bookState.layout.rect.y, context);
