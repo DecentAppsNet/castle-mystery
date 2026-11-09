@@ -15,6 +15,7 @@ import type InitialClosedFrameHandoff from './types/InitialClosedFrameHandoff';
 import type LevelViewHandle from './types/LevelViewHandle';
 import { announceCurtainClosed, cancelCurtainClose, requestCurtainClose } from './levelViewCloseUtil';
 import { drawBook, showBook, onBookMouseDown, onBookMouseUp, onBookMouseOver, onBookMouseWheel } from '@/book';
+import { startPageFlipPreview } from '@/book';
 import { findMetaTimeNow } from '@/game/metaTimeUtil';
 
 type Props = {
@@ -71,6 +72,23 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
     if (acceptedGameStateRef.current !== gameState) frameStateRef.current.awaitingReplacement = false;
     acceptedGameStateRef.current = gameState;
   }, [gameState]);
+
+  useEffect(() => {
+    const onKeyDown = (event:KeyboardEvent) => {
+      if (event.key !== '[' && event.key !== ']') return;
+      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || isGameDisabled()) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable ||
+          ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(target.tagName))) return;
+
+      const currentGameState = acceptedGameStateRef.current;
+      if (!currentGameState || currentGameState !== gameState) return;
+      startPageFlipPreview(findMetaTimeNow(), currentGameState.bookState, event.key === '[' ? 'flipPrev' : 'flipNext');
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [gameState, isGameDisabled]);
 
   function _handleMinutesChanged(minutes:number) {
     if (isGameDisabled()) return;

@@ -85,6 +85,8 @@ export function calcBookOffsetsForAnimationAndUpdate(metaTime:number, bookState:
     case 'disappear': return _calcDisappearOffsets(bookState, elapsed);
     case 'shiftLeft': return _calcShiftLeftOffsets(bookState, elapsed);
     case 'shiftRight': return _calcShiftRightOffsets(bookState, elapsed);
+    case 'flipPrev':
+    case 'flipNext': return ZERO_OFFSETS;
     default:
       botch();
   }
