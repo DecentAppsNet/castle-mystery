@@ -1,10 +1,9 @@
-import { assert, assertNonNullable } from "decent-portal";
+import { assert, assertNonNullable, botch } from "decent-portal";
 
 import ImageSet from "@/game/types/ImageSet";
-import BookState, { createDefaultBookState } from "../types/BookState";
+import BookState from "../types/BookState";
 import { findImageBitmap } from "@/game/imageAssetUtil";
-import { calcBookDrawRect, updateBookLayoutAsNeeded } from "./bookLayoutUtil";
-import BookLayout from "./types/BookLayout";
+import { calcBookDrawRect, calcPageViewOffsetX, updateBookLayoutAsNeeded } from "./bookLayoutUtil";
 import { getAnimationProgress } from "./bookAnimationUtil";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
@@ -27,41 +26,58 @@ function _drawTranslucentBackground(bookState:BookState, metaTime:number, contex
   context.restore();
 }
 
-function _drawBookControls(layout:BookLayout, drawOffsetX:number, drawOffsetY:number, context:CanvasRenderingContext2D) {
+function _drawLeftArrow(context:CanvasRenderingContext2D) {
+  context.moveTo(.1, .5);
+  context.lineTo(.5, .1);
+  context.lineTo(.5, .35);
+  context.lineTo(.9, .35);
+  context.lineTo(.9, .65);
+  context.lineTo(.5, .65);
+  context.lineTo(.5, .9);
+}
+
+function _drawRightArrow(context:CanvasRenderingContext2D) {
+  context.translate(1, 0);
+  context.scale(-1, 1);
+  _drawLeftArrow(context);
+}
+
+function _drawCloseIcon(context:CanvasRenderingContext2D) {
+  context.moveTo(.2, .1);
+  context.lineTo(.5, .4);
+  context.lineTo(.8, .1);
+  context.lineTo(.9, .2);
+  context.lineTo(.6, .5);
+  context.lineTo(.9, .8);
+  context.lineTo(.8, .9);
+  context.lineTo(.5, .6);
+  context.lineTo(.2, .9);
+  context.lineTo(.1, .8);
+  context.lineTo(.4, .5);
+  context.lineTo(.1, .2);
+}
+
+function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D) {
+  const { layout } = bookState;
+  assertNonNullable(layout);
+  const drawOffsetX = calcPageViewOffsetX(bookState);
   context.save();
   context.fillStyle = 'white';
   context.globalAlpha = BOOK_CONTROL_ALPHA;
   for (const control of layout.controlLayout.controls) {
-    if (control.id !== 'prevPage' && control.id !== 'nextPage' && control.id !== 'closeBook') continue;
+    if (!control.isVisible) continue;
     context.save();
-    context.translate(control.rect.x + drawOffsetX, control.rect.y + drawOffsetY);
+    
+    if (control.id === layout.controlLayout.hoveredControlId) context.fillStyle = 'yellow';
+    
+    context.translate(control.rect.x + drawOffsetX, control.rect.y);
     context.scale(control.rect.width, control.rect.height);
     context.beginPath();
-    if (control.id === 'closeBook') {
-      context.moveTo(.2, .1);
-      context.lineTo(.5, .4);
-      context.lineTo(.8, .1);
-      context.lineTo(.9, .2);
-      context.lineTo(.6, .5);
-      context.lineTo(.9, .8);
-      context.lineTo(.8, .9);
-      context.lineTo(.5, .6);
-      context.lineTo(.2, .9);
-      context.lineTo(.1, .8);
-      context.lineTo(.4, .5);
-      context.lineTo(.1, .2);
-    } else {
-      if (control.id === 'nextPage') {
-        context.translate(1, 0);
-        context.scale(-1, 1);
-      }
-      context.moveTo(.1, .5);
-      context.lineTo(.5, .1);
-      context.lineTo(.5, .35);
-      context.lineTo(.9, .35);
-      context.lineTo(.9, .65);
-      context.lineTo(.5, .65);
-      context.lineTo(.5, .9);
+    switch(control.id) {
+      case 'closeBook': _drawCloseIcon(context); break;
+      case 'nextPage': _drawRightArrow(context); break;
+      case 'prevPage': _drawLeftArrow(context); break;
+      default: botch();
     }
     context.closePath();
     context.fill();
@@ -80,18 +96,5 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   if (!bookState.isVisible) return; // Animations have hidden the book.
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
-  if (bookState.animationKind === null) {
-    _drawBookControls(bookState.layout, x - bookState.layout.rect.x, y - bookState.layout.rect.y, context);
-  }
-}
-
-export function createBookState():BookState { // TODO this will change later to take some data, similar to createGameState().
-  const bookState = createDefaultBookState();
-  bookState.pages = [
-    { kind:'blank' },
-    { kind:'bookStart' },
-  ];
-  bookState.pageNo = 1;
-  bookState.isVisible = false;
-  return bookState;
+  if (bookState.animationKind === null) _drawBookControls(bookState, context);
 }

@@ -5,8 +5,8 @@ import { assert, assertNonNullable } from "decent-portal";
 import BookLayout from "./types/BookLayout";
 import { calcBookOffsetsForAnimationAndUpdate } from "./bookAnimationUtil";
 import { createLayout, updateControlRect } from "@/canvasControls";
-
-export const BOOK_IMAGE_URL = '/assets/ui/book.png';
+import { setPageNavigationButtonVisibility } from "../navigationUtil";
+import BookControlId from "./types/BookControlId";
 
 const CANVAS_HEIGHT_TO_OUTER_MARGIN_RATIO = .05;
 
@@ -51,13 +51,17 @@ function _calcSinglePageViewRect(sourceWidth:number, sourceHeight:number, fitWid
   }
 }
 
+export function isLeftPageNo(pageNo:number):boolean {
+  return pageNo % 2 === 1;
+}
+
 // Returns a rect defining the canvas-local area for placing buttons below the book.
 function _calcBelowBookButtonAreaRect(bookRect:Rect, isSinglePageView:boolean, pageNo:number):Rect {
   const rect = {...bookRect};
   rect.y += (bookRect.height * .99);
   rect.height = bookRect.height * .05;
   if (isSinglePageView) {
-    const isLeftPage = _isLeftPageNo(pageNo);
+    const isLeftPage = isLeftPageNo(pageNo);
     const pageWidth = rect.width / 2;
     rect.width = pageWidth;
     if (!isLeftPage) rect.x += pageWidth;
@@ -78,15 +82,17 @@ function _addBelowBookButtonControls(belowBookButtonAreaRect:Rect, layout:Contro
   _updateControlRect('closeBook', { x:belowBookButtonAreaRect.x + (belowBookButtonAreaRect.width - width) / 2, y, width, height }, layout);
 }
 
-function _createBookControlLayout(canvasWidth:number, canvasHeight:number, bookRect:Rect, isSinglePageView:boolean, pageNo:number):ControlLayout {
-  const layout = createLayout(canvasWidth, canvasHeight);
+function _createBookControlLayout(bookRect:Rect, isSinglePageView:boolean, pageNo:number):ControlLayout {
+  const layout = createLayout();
   const belowBookButtonAreaRect = _calcBelowBookButtonAreaRect(bookRect, isSinglePageView, pageNo);
   _addBelowBookButtonControls(belowBookButtonAreaRect, layout);
   return layout;
 }
 
-function _isLeftPageNo(pageNo:number):boolean {
-  return pageNo % 2 === 1;
+export function updateControlLayout(bookState:BookState) {
+  const { layout } = bookState;
+  assertNonNullable(layout);
+  layout.controlLayout = _createBookControlLayout(layout.rect, layout.isSinglePageView, bookState.pageNo);
 }
 
 export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number, bookImage:ImageBitmap, bookState:BookState) {
@@ -103,7 +109,7 @@ export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number
     : _calcDoublePageViewRect(scaledWidth, fitHeight, outerMargin, canvasWidth);
   const singlePageViewOffsetX = rect.width / 4; // Half the width of one page.
 
-  const controlLayout = _createBookControlLayout(canvasWidth, canvasHeight, rect, isSinglePageView, bookState.pageNo);
+  const controlLayout = _createBookControlLayout(rect, isSinglePageView, bookState.pageNo);
 
   bookState.layout = {
     canvasWidth, canvasHeight,
@@ -112,11 +118,20 @@ export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number
     rect,
     controlLayout
   }
+
+  setPageNavigationButtonVisibility(bookState);
 }
 
 function _calcSinglePageDrawRect(layout:BookLayout, pageNo:number):Rect {
-  const x = layout.rect.x + (_isLeftPageNo(pageNo) ? layout.singlePageViewOffsetX : -layout.singlePageViewOffsetX );
+  const x = layout.rect.x + (isLeftPageNo(pageNo) ? layout.singlePageViewOffsetX : -layout.singlePageViewOffsetX );
   return { ...layout.rect, x };
+}
+
+export function calcPageViewOffsetX(bookState:BookState):number {
+  const { layout } = bookState;
+  assertNonNullable(layout);
+  if (!layout.isSinglePageView) return 0;
+  return isLeftPageNo(bookState.pageNo) ? layout.singlePageViewOffsetX : -layout.singlePageViewOffsetX;
 }
 
 export function calcBookDrawRect(bookState:BookState, metaTime:number):Rect {

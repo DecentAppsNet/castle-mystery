@@ -5,7 +5,7 @@ type AnimationEndCallback = (metaTime:number, isAborted:boolean, bookState:BookS
 
 type BookState = {
   layout:BookLayout|null,
-  animationKind:'appear'|'disappear'|null
+  animationKind:'appear'|'disappear'|'shiftLeft'|'shiftRight'|null
   animationStartMetaTime:number,
   animationDuration:number,
   onAnimationEnd:AnimationEndCallback|null,
