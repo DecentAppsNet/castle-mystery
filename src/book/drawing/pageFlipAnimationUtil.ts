@@ -6,8 +6,13 @@ import BookState from "../types/BookState";
 import Rect from "@/game/types/Rect";
 import { clamp, interpolateNumber } from "@/common/numberUtil";
 import { getAnimationProgress } from "./bookAnimationUtil";
+import ImageSet from "@/game/types/ImageSet";
+import { findImageBitmap } from "@/game/imageAssetUtil";
+import { assertNonNullable } from "decent-portal";
 
-const PAGE_FLIP_ANIMATION_DURATION = 200;
+export const BOOK_PAGE_TILE_IMAGE_URL = '/assets/ui/bookPageTile.png';
+
+const PAGE_FLIP_ANIMATION_DURATION = 100;
 const PAPER_HORIZONTAL_INSET = .055;
 const PAPER_TOP_INSET = .05;
 const PAPER_BOTTOM_INSET = .055;
@@ -21,6 +26,14 @@ const SHAPE_KEYS = [
   { time:.81, tip:-.82, bulge:.17 },
   { time:1, tip:-1, bulge:0 }
 ];
+
+let theTilePattern:CanvasPattern|null = null;
+
+function _getParchmentPattern(tileImage:ImageBitmap, context:CanvasRenderingContext2D):CanvasPattern {
+  if (theTilePattern === null) theTilePattern = context.createPattern(tileImage, 'repeat');
+  assertNonNullable(theTilePattern);
+  return theTilePattern;
+}
 
 function _shapeAt(progress:number, direction:-1|1) {
   let keyIndex = 0;
@@ -55,15 +68,22 @@ function _leafPath(tip:number, bulge:number, drawRect:Rect, context:CanvasRender
   context.closePath();
 }
 
-export function drawPageFlipPreview(bookState:BookState, metaTime:number, drawRect:Rect, context:CanvasRenderingContext2D) {
+export function drawPageFlipPreview(bookState:BookState, metaTime:number, drawRect:Rect,
+    bookImage:ImageBitmap, imageSet:ImageSet, context:CanvasRenderingContext2D) {
   if (bookState.animationKind !== 'flipPrev' && bookState.animationKind !== 'flipNext') return;
   const progress = getAnimationProgress(bookState, metaTime);
   if (progress <= 0 || progress >= 1) return;
   const shape = _shapeAt(progress, bookState.animationKind === 'flipNext' ? 1 : -1);
+  const tileImage = findImageBitmap(imageSet, BOOK_PAGE_TILE_IMAGE_URL);
+  assertNonNullable(tileImage);
+  const pattern = _getParchmentPattern(tileImage, context);
+  pattern.setTransform({ a:drawRect.width / bookImage.width, d:drawRect.height / bookImage.height });
 
-  // Use canvas coordinates so later texture filling can remain stationary.
+  // Canvas-coordinate geometry and a scale-only pattern keep the grain stationary.
   context.save();
   _leafPath(shape.tip, shape.bulge, drawRect, context);
+  context.fillStyle = pattern;
+  context.fill();
   context.strokeStyle = '#8c6841';
   context.lineWidth = drawRect.width * OUTLINE_WIDTH_RATIO;
   context.lineJoin = 'round';

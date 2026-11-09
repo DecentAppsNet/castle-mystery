@@ -98,6 +98,6 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   if (!bookState.isVisible) return; // Animations have hidden the book.
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
-  drawPageFlipPreview(bookState, metaTime, drawRect, context);
+  drawPageFlipPreview(bookState, metaTime, drawRect, bookImage, imageSet, context);
   if (bookState.animationKind === null) _drawBookControls(bookState, context);
 }
