@@ -5,6 +5,7 @@ import BookState from "../types/BookState";
 import { findImageBitmap } from "@/game/imageAssetUtil";
 import { calcBookDrawRect, calcPageViewOffsetX, updateBookLayoutAsNeeded } from "./bookLayoutUtil";
 import { getAnimationProgress } from "./bookAnimationUtil";
+import { drawPageFlipPreview } from "./pageFlipAnimationUtil";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -92,9 +93,11 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   assertNonNullable(bookImage);
   updateBookLayoutAsNeeded(context.canvas.width, context.canvas.height, bookImage, bookState);
   assertNonNullable(bookState.layout);
-  const { x, y, width, height } = calcBookDrawRect(bookState, metaTime);
+  const drawRect = calcBookDrawRect(bookState, metaTime);
+  const { x, y, width, height } = drawRect;
   if (!bookState.isVisible) return; // Animations have hidden the book.
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
+  drawPageFlipPreview(bookState, metaTime, drawRect, context);
   if (bookState.animationKind === null) _drawBookControls(bookState, context);
 }
