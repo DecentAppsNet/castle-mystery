@@ -33,12 +33,6 @@ export function drawPage(page:BookPage, pageNo:number, targetRect:Rect, context:
   const innerPageRect = _calcInnerPageRect(targetRect, pageNo);
   const centerX = innerPageRect.x + innerPageRect.width / 2;
 
-  // Keep the content bounds visible temporarily for alignment review.
-  context.save();
-  context.strokeStyle = '#b3261e';
-  context.lineWidth = targetRect.height * .001;
-  context.strokeRect(innerPageRect.x, innerPageRect.y, innerPageRect.width, innerPageRect.height);
-
   // Place text within the flat-paper bounds without leaking drawing state.
   context.fillStyle = '#392b20';
   context.textAlign = 'center';
@@ -50,6 +44,6 @@ export function drawPage(page:BookPage, pageNo:number, targetRect:Rect, context:
 
   context.textBaseline = 'bottom';
   context.font = `${targetRect.height * PAGE_NO_FONT_SIZE}px im-fell-english, serif`;
-  context.fillText(String(pageNo), centerX, innerPageRect.y + innerPageRect.height, innerPageRect.width);
+  context.fillText('-' + pageNo + '-', centerX, innerPageRect.y + innerPageRect.height, innerPageRect.width);
   context.restore();
 }

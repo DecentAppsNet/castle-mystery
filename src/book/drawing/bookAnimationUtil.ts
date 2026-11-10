@@ -3,6 +3,7 @@ import BookState from "../types/BookState";
 import BookLayout from "./types/BookLayout";
 import { isLeftPageNo } from "./bookLayoutUtil";
 import { setPageNavigationButtonVisibility } from "../navigationUtil";
+import AnimationEndCallback from "../types/AnimationEndCallback";
 
 const APPEAR_ANIMATION_DURATION = 500;
 const DISAPPEAR_ANIMATION_DURATION = 500;
@@ -55,13 +56,14 @@ function _calcDisappearOffsets(bookState:BookState, elapsed:number):Offsets {
 function _endCurrentAnimationAsNeeded(metaTime:number, bookState:BookState) {
   if (bookState.animationKind !== null) {
     const elapsed = metaTime - bookState.animationStartMetaTime;
-    const isAborted = elapsed <= bookState.animationDuration;
-    if (bookState.onAnimationEnd) bookState.onAnimationEnd(metaTime, isAborted, bookState);
+    const isAborted = elapsed < bookState.animationDuration;
+    const onAnimationEnd = bookState.onAnimationEnd;
     bookState.animationKind = null;
     // The next assignments aren't needed, but will show bugs better if code incorrectly tries to access these members.
     bookState.onAnimationEnd = null;
     bookState.animationDuration = 0;
     bookState.animationStartMetaTime = -1;
+    if (onAnimationEnd) onAnimationEnd(metaTime, isAborted, bookState);
   }
 }
 
@@ -112,16 +114,18 @@ export function hideBook(metaTime:number, bookState:BookState) {
   bookState.onAnimationEnd = (_metaTime, _isAborted, bookState2) => bookState2.isVisible = false;
 }
 
-export function shiftBookLeft(metaTime:number, bookState:BookState) {
+export function shiftBookLeft(metaTime:number, bookState:BookState, onAnimationEnd:AnimationEndCallback|null = null) {
   _endCurrentAnimationAsNeeded(metaTime, bookState);
   bookState.animationKind = 'shiftLeft';
   bookState.animationDuration = SHIFT_LEFT_RIGHT_ANIMATION_DURATION;
+  bookState.onAnimationEnd = onAnimationEnd;
   bookState.animationStartMetaTime = metaTime;
 }
 
-export function shiftBookRight(metaTime:number, bookState:BookState) {
+export function shiftBookRight(metaTime:number, bookState:BookState, onAnimationEnd:AnimationEndCallback|null = null) {
   _endCurrentAnimationAsNeeded(metaTime, bookState);
   bookState.animationKind = 'shiftRight';
   bookState.animationDuration = SHIFT_LEFT_RIGHT_ANIMATION_DURATION;
+  bookState.onAnimationEnd = onAnimationEnd;
   bookState.animationStartMetaTime = metaTime;
 }

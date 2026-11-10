@@ -9,6 +9,7 @@ import { getAnimationProgress } from "./bookAnimationUtil";
 import ImageSet from "@/game/types/ImageSet";
 import { findImageBitmap } from "@/game/imageAssetUtil";
 import { assertNonNullable } from "decent-portal";
+import AnimationEndCallback from "../types/AnimationEndCallback";
 
 export const BOOK_PAGE_TILE_IMAGE_URL = '/assets/ui/bookPageTile.png';
 
@@ -68,7 +69,7 @@ function _leafPath(tip:number, bulge:number, drawRect:Rect, context:CanvasRender
   context.closePath();
 }
 
-export function drawPageFlipPreview(bookState:BookState, metaTime:number, drawRect:Rect,
+export function drawPageFlip(bookState:BookState, metaTime:number, drawRect:Rect,
     bookImage:ImageBitmap, imageSet:ImageSet, context:CanvasRenderingContext2D) {
   if (bookState.animationKind !== 'flipPrev' && bookState.animationKind !== 'flipNext') return;
   const progress = getAnimationProgress(bookState, metaTime);
@@ -91,11 +92,12 @@ export function drawPageFlipPreview(bookState:BookState, metaTime:number, drawRe
   context.restore();
 }
 
-export function startPageFlipPreview(metaTime:number, bookState:BookState, kind:'flipPrev'|'flipNext') {
+export function startPageFlip(metaTime:number, bookState:BookState, kind:'flipPrev'|'flipNext',
+  onAnimationEnd:AnimationEndCallback|null = null) {
   if (!bookState.isVisible || !bookState.layout || bookState.animationKind !== null) return;
 
   bookState.animationKind = kind;
   bookState.animationStartMetaTime = metaTime;
   bookState.animationDuration = PAGE_FLIP_ANIMATION_DURATION;
-  bookState.onAnimationEnd = null;
+  bookState.onAnimationEnd = onAnimationEnd;
 }

@@ -1,7 +1,6 @@
 import BookLayout from "../drawing/types/BookLayout"
+import AnimationEndCallback from "./AnimationEndCallback"
 import BookPage from "./BookPage"
-
-type AnimationEndCallback = (metaTime:number, isAborted:boolean, bookState:BookState) => void;
 
 type BookState = {
   layout:BookLayout|null,

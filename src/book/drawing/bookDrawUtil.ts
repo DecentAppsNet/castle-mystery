@@ -5,7 +5,7 @@ import BookState from "../types/BookState";
 import { findImageBitmap } from "@/game/imageAssetUtil";
 import { calcBookDrawRect, calcPageViewOffsetX, isLeftPageNo, updateBookLayoutAsNeeded } from "./bookLayoutUtil";
 import { getAnimationProgress } from "./bookAnimationUtil";
-import { drawPageFlipPreview } from "./pageFlipAnimationUtil";
+import { drawPageFlip } from "./pageFlipAnimationUtil";
 import Rect from "@/game/types/Rect";
 import { drawPage } from "./pageDrawUtil";
 
@@ -112,6 +112,6 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
   _drawPageContent(bookState, drawRect, context);
-  drawPageFlipPreview(bookState, metaTime, drawRect, bookImage, imageSet, context);
+  drawPageFlip(bookState, metaTime, drawRect, bookImage, imageSet, context);
   if (bookState.animationKind === null) _drawBookControls(bookState, context);
 }
