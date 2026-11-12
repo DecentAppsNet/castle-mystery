@@ -7,10 +7,9 @@ import Rect from "@/game/types/Rect";
 import { assert } from "decent-portal";
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
+type ColorName = 'dkBrown' | 'red';
 type TextJustification = 'left' | 'right' | 'center';
 type DividerStyle = 'rule' | 'diamondCentered' | 'tripleDot';
-
-const DIVIDER_RED = '#9e302c';
 
 // Font sizes expressed as fractions of page height.
 const fontSizeToLineHeight = {
@@ -20,6 +19,11 @@ const fontSizeToLineHeight = {
   'l': .06,
   'xl': .1
 };
+
+const colorNameToHex = {
+  'dkBrown': '#392b20',
+  'red': '#9e302c'
+}
 
 class PageWriter {
   private _pageRect:Rect;
@@ -43,7 +47,7 @@ class PageWriter {
 
   // Draws text on its own line, based on Y position of cursor and specified justification. (X position of cursor ignored.)
   // Embedded line breaks draw separate lines; each advances the cursor by line height with X reset to 0%.
-  addTextLine(text:string, justification:TextJustification = 'center') {
+  addTextLine(text:string, justification:TextJustification = 'center', colorName:ColorName = 'dkBrown') {
     const lineHeight = this.getLineHeight();
     const xRatio = justification === 'left' ? 0 : justification === 'right' ? 1 : .5;
     const x = this._pageRect.x + this._pageRect.width * xRatio;
@@ -51,7 +55,7 @@ class PageWriter {
 
     // Keep text styling local to this line so callers retain their canvas state.
     this._context.save();
-    this._context.fillStyle = '#392b20';
+    this._context.fillStyle = colorNameToHex[colorName];
     this._context.font = `${this._pageRect.height * lineHeight / 100}px im-fell-english, serif`;
     this._context.textAlign = justification;
     this._context.textBaseline = 'top';
@@ -96,9 +100,9 @@ class PageWriter {
 
   // Draws text at current X,Y position of cursor with word-wrapping. One or more calls can be made to append portions of text.
   // Advances cursor to next position for outputting more text continuing from the last character of this text.
-  addText(text:string) {
+  addText(text:string, colorName:ColorName = 'dkBrown') {
     this._context.save();
-    this._context.fillStyle = '#392b20';
+    this._context.fillStyle = colorNameToHex[colorName];
     this._context.font = `${this._pageRect.height * this.getLineHeight() / 100}px im-fell-english, serif`;
     this._context.textAlign = 'left';
     this._context.textBaseline = 'top';
@@ -131,7 +135,7 @@ class PageWriter {
 
   // Draws a divider across the page rect and advances cursor to next line. Uses the current font size to determine
   // line height and vertically centers the line within that height.
-  addDivider(dividerStyle:DividerStyle) {
+  addDivider(dividerStyle:DividerStyle = 'rule', colorName:ColorName = 'red') {
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     const centerX = this._pageRect.x + this._pageRect.width / 2;
     const centerY = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100 + lineHeight / 2;
@@ -141,7 +145,7 @@ class PageWriter {
 
     // Keep divider styling independent of surrounding text and canvas paths.
     context.save();
-    context.strokeStyle = DIVIDER_RED;
+    context.strokeStyle = colorNameToHex[colorName];
     context.fillStyle = context.strokeStyle;
     context.lineWidth = Math.min(lineHeight * .06, this._pageRect.width * .006);
     context.setLineDash([]);
@@ -184,6 +188,10 @@ class PageWriter {
     }
     context.restore();
     this.addLineBreak();
+  }
+
+  getCursorYPercent():number {
+    return this._cursorPoint[1];
   }
 
   getLineHeight(fontSize:FontSize = this._fontSize):number {

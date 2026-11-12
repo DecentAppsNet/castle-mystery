@@ -97,7 +97,7 @@ function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rec
   const leftPageRect = { ...bookDrawRect, width};
   const rightPageRect = { ...bookDrawRect, x:bookDrawRect.x + width, width };
   drawPage(bookState.pages[leftPageNo-1], metaTime, leftPageNo, leftPageRect, context);
-  drawPage(bookState.pages[rightPageNo-1], metaTime, rightPageNo, rightPageRect, context);
+  if (rightPageNo <= bookState.pages.length) drawPage(bookState.pages[rightPageNo-1], metaTime, rightPageNo, rightPageRect, context);
 }
 
 export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D) {

@@ -9,6 +9,7 @@ import { assert, botch } from "decent-portal";
 import PageWriter from "./PageWriter";
 import ClozePartType from "@/game/conclusions/types/ClozePartType";
 import ClozeText from "@/game/conclusions/types/ClozeText";
+import { drawObscuredPolygon } from "@/common/drawing/obscurePolygonDrawUtil";
 
 const PAGE_OUTER_MARGIN = .12;
 const PAGE_GUTTER_MARGIN = .05;
@@ -80,8 +81,53 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
   }
 }
 
-function _drawLockedConclusionPage(_metaTime:number, _innerPageRect:Rect, _pageWriter:PageWriter, _context:CanvasRenderingContext2D) {
-  // TODO
+function _createLockedPageClipPath(rect:Rect, isLeftPage:boolean):Path2D {
+  const bindingX = isLeftPage ? rect.x + rect.width : rect.x;
+  const outerX = isLeftPage ? rect.x : rect.x + rect.width;
+  const direction = isLeftPage ? -1 : 1;
+  const curveWidth = rect.width * .105;
+  const curveDepth = rect.height * .015;
+  const flatX = bindingX + direction * curveWidth;
+  const bottom = rect.y + rect.height;
+  const path = new Path2D();
+
+  path.moveTo(bindingX, rect.y + curveDepth);
+  path.bezierCurveTo(bindingX + direction * curveWidth * .3, rect.y + curveDepth * .3,
+    bindingX + direction * curveWidth * .65, rect.y, flatX, rect.y);
+  path.lineTo(outerX, rect.y);
+  path.lineTo(outerX, bottom);
+  path.lineTo(flatX, bottom);
+  path.bezierCurveTo(bindingX + direction * curveWidth * .65, bottom,
+    bindingX + direction * curveWidth * .3, bottom + curveDepth * .3, bindingX, bottom + curveDepth);
+  path.closePath();
+  return path;
+}
+
+function _drawLockedConclusionPage(metaTime:number, innerPageRect:Rect, isLeftPage:boolean, pw:PageWriter,
+    context:CanvasRenderingContext2D) {
+  const topPercent = pw.getCursorYPercent();
+  const bottomPercent = 100 - 2 * pw.getLineHeight('s');
+  assert(topPercent < bottomPercent);
+  const left = innerPageRect.x;
+  const right = left + innerPageRect.width;
+  const top = innerPageRect.y + innerPageRect.height * topPercent / 100;
+  const bottom = innerPageRect.y + innerPageRect.height * bottomPercent / 100;
+  const clipPath = _createLockedPageClipPath({ x:left, y:top, width:right - left, height:bottom - top }, isLeftPage);
+
+  drawObscuredPolygon([
+    [left, top],
+    [right, top],
+    [right, bottom],
+    [left, bottom]
+  ], context, metaTime, clipPath);
+
+  const middleTextHeight = pw.getLineHeight('m') * 3;
+  pw.jump(0, 50 - (middleTextHeight / 2));
+  pw.setFontSize('m');
+  pw.addTextLine('This conclusion is locked.', 'center', 'red');
+  pw.addDivider('tripleDot');
+  pw.addTextLine('Claim another conclusion\nfrom this chapter to unlock it.', 'center', 'red');
+
 }
 
 function _isLockedConclusionPage(page:BookPage) {
@@ -106,7 +152,7 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
     case 'chapterStart': _drawChapterStartPage(page, pageWriter); break;
     case 'conclusion': 
       if (_isLockedConclusionPage(page)) {
-        _drawLockedConclusionPage(metaTime, innerPageRect, pageWriter, context);
+        _drawLockedConclusionPage(metaTime, innerPageRect, isLeftPageNo(pageNo), pageWriter, context);
       } else {
         _drawConclusionPage(page, pageWriter);
       }
