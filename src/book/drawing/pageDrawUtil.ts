@@ -10,8 +10,9 @@ import PageWriter from "./PageWriter";
 import ClozePartType from "@/game/conclusions/types/ClozePartType";
 import ClozeText from "@/game/conclusions/types/ClozeText";
 import { drawObscuredPolygon } from "@/common/drawing/obscurePolygonDrawUtil";
+import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
 
-const PAGE_OUTER_MARGIN = .12;
+const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
 const PAGE_TOP_MARGIN = .04;
 const PAGE_BOTTOM_MARGIN = .07;
@@ -60,7 +61,9 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
     const part = page.conclusion.parts[partI];
     switch(part.type) {
       case ClozePartType.blank:
-        pw.addText('[ ]');
+        const blankPart = part as ClozeBlank;
+        const playerGuess = blankPart.availableAnswers[blankPart.playerAnswerIndex] ?? '?';
+        pw.addText(`[${playerGuess}]`);
       break;
 
       case ClozePartType.image:
