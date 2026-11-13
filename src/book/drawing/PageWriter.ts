@@ -5,6 +5,8 @@
 import Point from "@/game/types/Point";
 import Rect from "@/game/types/Rect";
 import { assert } from "decent-portal";
+import { drawIllumination } from "./illuminationDrawUtil";
+import ImageSet from "@/game/types/ImageSet";
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 type ColorName = 'dkBrown' | 'red';
@@ -30,8 +32,9 @@ class PageWriter {
   private _context:CanvasRenderingContext2D;
   private _fontSize:FontSize;
   private _cursorPoint:Point; // Units are percentages of pageRect width and height.
+  private _imageSet:ImageSet;
 
-  constructor(pageRect:Rect, context:CanvasRenderingContext2D) {
+  constructor(pageRect:Rect, imageSet:ImageSet, context:CanvasRenderingContext2D) {
     assert(pageRect.width > 0 && pageRect.height > 0);
     assert(!context.isContextLost());
     assert(context.canvas.width > 0 && context.canvas.height > 0);
@@ -39,6 +42,7 @@ class PageWriter {
     this._context = context;
     this._fontSize = 'm';
     this._cursorPoint = [0, 0]; // Top-left of page rect.
+    this._imageSet = imageSet;
   }
 
   setFontSize(fontSize:FontSize) {
@@ -96,6 +100,12 @@ class PageWriter {
       chunk += character;
     }
     this._writeChunk(chunk);
+  }
+
+  addIllumination(letter:string) {
+    const canvasX = this._pageRect.x;
+    const canvasY = this._pageRect.y + (this._cursorPoint[1]/100 * this._pageRect.height);
+    drawIllumination(letter, canvasX, canvasY, this._imageSet, this._context);
   }
 
   // Draws text at current X,Y position of cursor with word-wrapping. One or more calls can be made to append portions of text.

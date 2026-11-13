@@ -89,15 +89,17 @@ function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D
   context.restore();
 }
 
-function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rect, context:CanvasRenderingContext2D) {
+function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rect, imageSet:ImageSet, context:CanvasRenderingContext2D) {
   const isOnLeftPage = isLeftPageNo(bookState.pageNo);
   const leftPageNo = isOnLeftPage ? bookState.pageNo : bookState.pageNo - 1;
   const rightPageNo = isOnLeftPage ? bookState.pageNo + 1 : bookState.pageNo;
   const width = bookDrawRect.width / 2;
   const leftPageRect = { ...bookDrawRect, width};
   const rightPageRect = { ...bookDrawRect, x:bookDrawRect.x + width, width };
-  drawPage(bookState.pages[leftPageNo-1], metaTime, leftPageNo, leftPageRect, context);
-  if (rightPageNo <= bookState.pages.length) drawPage(bookState.pages[rightPageNo-1], metaTime, rightPageNo, rightPageRect, context);
+  drawPage(bookState.pages[leftPageNo-1], metaTime, leftPageNo, leftPageRect, imageSet, context);
+  if (rightPageNo <= bookState.pages.length) {
+    drawPage(bookState.pages[rightPageNo-1], metaTime, rightPageNo, rightPageRect, imageSet, context);
+  }
 }
 
 export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D) {
@@ -111,7 +113,7 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   if (!bookState.isVisible) return; // Animations have hidden the book.
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
-  _drawPageContent(bookState, metaTime, drawRect, context);
+  _drawPageContent(bookState, metaTime, drawRect, imageSet, context);
   drawPageFlip(bookState, metaTime, drawRect, bookImage, imageSet, context);
   if (bookState.animationKind === null) _drawBookControls(bookState, context);
 }

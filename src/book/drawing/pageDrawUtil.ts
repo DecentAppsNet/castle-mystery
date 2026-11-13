@@ -11,6 +11,7 @@ import ClozePartType from "@/game/conclusions/types/ClozePartType";
 import ClozeText from "@/game/conclusions/types/ClozeText";
 import { drawObscuredPolygon } from "@/common/drawing/obscurePolygonDrawUtil";
 import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
+import ImageSet from "@/game/types/ImageSet";
 
 const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
@@ -51,6 +52,7 @@ function _drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
   pw.setFontSize('l');
   pw.addTextLine(page.title);
   pw.addDivider('diamondCentered');
+  pw.addIllumination(page.title[0]);
 }
 
 
@@ -137,9 +139,9 @@ function _isLockedConclusionPage(page:BookPage) {
   return page.kind === 'conclusion' && page.conclusion.isLocked;
 }
 
-export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRect:Rect, context:CanvasRenderingContext2D) {
+export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRect:Rect, imageSet:ImageSet, context:CanvasRenderingContext2D) {
   const innerPageRect = _calcInnerPageRect(targetRect, pageNo);
-  const pageWriter = new PageWriter(innerPageRect, context);
+  const pageWriter = new PageWriter(innerPageRect, imageSet, context);
 
   // Place the heading and footer within the flat-paper bounds.
   pageWriter.setFontSize('s');
