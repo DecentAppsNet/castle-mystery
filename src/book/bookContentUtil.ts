@@ -24,7 +24,7 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
     { type:'blank', availableAnswers:['Gift Shop'], correctAnswerIndexes:[0], playerAnswerIndex:0 },
     { type:'text', text:' and ' },
     { type:'blank', availableAnswers:['hid'], correctAnswerIndexes:[0], playerAnswerIndex:0 },
-    { type:'text', text:' with ' },
+    { type:'text', text:' it with ' },
     { type:'blank', availableAnswers:['other vases'], correctAnswerIndexes:[0], playerAnswerIndex:0 },
     { type:'text', text:'.' },
   ],
@@ -38,7 +38,7 @@ export function createBookState():BookState { // TODO this will change later to 
   const bookState = createDefaultBookState();
   bookState.pages = [
     { kind:'blank', headingText:'' },
-    { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', author:'Erik Hermansen', description:'A tale of one young ruler besieged by trickery and manipulation. It may not, on all counts, be historically accurate.' },
+    { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', author:'Erik Hermansen', description:'A tale of one young ruler besieged by trickery and manipulation. It may not, on all counts, be historically accurate. But honesty in the telling was certainly attempted.' },
     { kind:'chapterStart', headingText:'', title:'Prologue'  },
     { kind:'conclusion', headingText:'Identities', conclusion:conclusion1 },
     { kind:'conclusion', headingText:'Prologue - What Happened to the Vase?', conclusion:conclusion2 },

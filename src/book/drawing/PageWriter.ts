@@ -13,6 +13,10 @@ type ColorName = 'dkBrown' | 'red';
 type TextJustification = 'left' | 'right' | 'center';
 type DividerStyle = 'rule' | 'diamondCentered' | 'tripleDot';
 
+const ILLUMINATION_RIGHT_MARGIN_PERCENT = 2;
+const ILLUMINATION_WIDTH_PERCENT_OF_PAGE_HEIGHT = 20;
+const ILLUMINATION_HEIGHT_PERCENT_OF_PAGE_HEIGHT = 20;
+
 // Font sizes expressed as fractions of page height.
 const fontSizeToLineHeight = {
   'xs': .02,
@@ -33,6 +37,7 @@ class PageWriter {
   private _fontSize:FontSize;
   private _cursorPoint:Point; // Units are percentages of pageRect width and height.
   private _imageSet:ImageSet;
+  private _illuminationEnd:Point|null = null;
 
   constructor(pageRect:Rect, imageSet:ImageSet, context:CanvasRenderingContext2D) {
     assert(pageRect.width > 0 && pageRect.height > 0);
@@ -79,24 +84,34 @@ class PageWriter {
       this._cursorPoint[1]];
   }
 
+  private _getLineStartXPercent():number {
+    if (this._illuminationEnd && this._cursorPoint[1] >= this._illuminationEnd[1]) this._illuminationEnd = null;
+    return this._illuminationEnd ? this._illuminationEnd[0] : 0;
+  }
+
+  private _getRemainingWidth():number {
+    return this._pageRect.width * (1 - this._cursorPoint[0] / 100);
+  }
+
   private _writeWord(word:string) {
     if (word === '') return;
     const width = this._context.measureText(word).width;
-    const remainingWidth = this._pageRect.width * (1 - this._cursorPoint[0] / 100);
-    if (this._cursorPoint[0] > 0 && width > remainingWidth) this.addLineBreak();
-    if (width <= this._pageRect.width) {
+    if (this._cursorPoint[0] > this._getLineStartXPercent() && width > this._getRemainingWidth()) this.addLineBreak();
+    if (width <= this._getRemainingWidth()) {
       this._writeChunk(word);
       return;
     }
 
-    // Break oversized words at character boundaries rather than shrinking the paragraph font.
+    // Break oversized words within each line's available width beside the illumination.
     let chunk = '';
     for (const character of word) {
-      if (chunk !== '' && this._context.measureText(chunk + character).width > this._pageRect.width) {
+      if (chunk !== '' && this._context.measureText(chunk + character).width > this._getRemainingWidth()) {
         this._writeChunk(chunk);
         this.addLineBreak();
         chunk = '';
       }
+      while (chunk === '' && this._illuminationEnd &&
+          this._context.measureText(character).width > this._getRemainingWidth()) this.addLineBreak();
       chunk += character;
     }
     this._writeChunk(chunk);
@@ -105,7 +120,14 @@ class PageWriter {
   addIllumination(letter:string) {
     const canvasX = this._pageRect.x;
     const canvasY = this._pageRect.y + (this._cursorPoint[1]/100 * this._pageRect.height);
-    drawIllumination(letter, canvasX, canvasY, this._imageSet, this._context);
+    const width = this._pageRect.height * ILLUMINATION_WIDTH_PERCENT_OF_PAGE_HEIGHT / 100;
+    const height = this._pageRect.height * ILLUMINATION_HEIGHT_PERCENT_OF_PAGE_HEIGHT / 100;
+    drawIllumination(letter, canvasX, canvasY, width, height, this._imageSet, this._context);
+    this._illuminationEnd = [
+      width / this._pageRect.width * 100 + ILLUMINATION_RIGHT_MARGIN_PERCENT,
+      this._cursorPoint[1] + height / this._pageRect.height * 100
+    ];
+    this._cursorPoint = [this._illuminationEnd[0], this._cursorPoint[1]];
   }
 
   // Draws text at current X,Y position of cursor with word-wrapping. One or more calls can be made to append portions of text.
@@ -137,10 +159,19 @@ class PageWriter {
     this._context.restore();
   }
 
+  addIlluminatedText(text:string, colorName:ColorName = 'dkBrown') {
+    if (!text.length) return;
+    const firstLetter = text[0];
+    const theRest = text.substring(1);
+    this.addIllumination(firstLetter);
+    this.addText(theRest, colorName);
+  }
+
   // Advances cursor to start of next line, based on current font height. If already at the start of an empty line, this will
-  // leave an empty line when advancing to next line.
+  // leave an empty line when advancing to next line. Lines beside an illumination start at its right edge.
   addLineBreak() {
     this._cursorPoint = [0, this._cursorPoint[1] + this.getLineHeight()];
+    this._cursorPoint = [this._getLineStartXPercent(), this._cursorPoint[1]];
   }
 
   // Draws a divider across the page rect and advances cursor to next line. Uses the current font size to determine
@@ -212,6 +243,7 @@ class PageWriter {
 
   // Moves cursor to a specific place in page rect.
   jump(xPercent:number, yPercent:number):void {
+    this._illuminationEnd = null;
     this._cursorPoint = [xPercent, yPercent];
   }
 }

@@ -44,7 +44,7 @@ function _drawBookStartPage(page:BookStartPage, pw:PageWriter) {
   pw.addDivider('diamondCentered');
   pw.setFontSize('m');
   pw.addLineBreak();
-  pw.addText(page.description);
+  pw.addIlluminatedText(page.description);
 }
 
 type ChapterStartPage = Extract<BookPage, { kind:'chapterStart' }>;
@@ -52,7 +52,6 @@ function _drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
   pw.setFontSize('l');
   pw.addTextLine(page.title);
   pw.addDivider('diamondCentered');
-  pw.addIllumination(page.title[0]);
 }
 
 
