@@ -6,7 +6,6 @@ import { getArmThickness, transformBodyPoint } from '@/game/characterBody';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Point from '@/game/types/Point';
 import ImageSet from '@/game/types/ImageSet';
-import { findImageBitmap } from '@/game/imageAssetUtil';
 import { COLOR_BLACK, COLOR_MEDIUM_GREY } from '../drawColorConstants';
 
 const ARM_BEND = Math.PI / 12;
@@ -99,7 +98,7 @@ export function drawCharacterBodyPart(resolved:ResolvedBodyPart, imageSet:ImageS
   const { part, transform } = resolved;
   assert(part.kind !== 'head'); // Head artwork uses the head painter.
   context.save();
-  const image = findImageBitmap(imageSet, part.imageUrl);
+  const image = part.imageUrl ? imageSet.findImage(part.imageUrl)?.image ?? null : null;
   if (image) {
     context.transform(transform.horizontalX, transform.horizontalY, transform.verticalX,
       transform.verticalY, transform.translateX, transform.translateY);

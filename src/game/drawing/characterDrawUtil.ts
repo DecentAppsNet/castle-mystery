@@ -23,7 +23,6 @@ import { drawHeldItemsBehindCharacter, drawHeldItemsInFrontOfCharacter } from ".
 import { createRect, extendRectToContainRect } from "@/game/rectUtil";
 import { canvasToGamePosition } from "./drawUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
-import { findImageBitmap } from "@/game/imageAssetUtil";
 import { createScratchCanvas } from "./canvasSurfaceUtil";
 import { projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { wrapRoomTitle } from "./roomTitleLayoutUtil";
@@ -198,7 +197,8 @@ export function getCharacterCanvasRect(character:Character, displayPosition:Posi
   const { layout } = characterCanvasLayout;
   const bodyRect = layout.bounds;
   if (!imageSet) return bodyRect;
-  const headImage = findImageBitmap(imageSet, getHeadImageUrl(character.rootBodyPart));
+  const headImageUrl = getHeadImageUrl(character.rootBodyPart);
+  const headImage = headImageUrl ? imageSet.findImage(headImageUrl)?.image ?? null : null;
   const headRect = headImage
     ? calcHeadImageBounds(getResolvedBodyPart(layout.parts, 'head'), headImage.width, headImage.height,
       character.rootBodyPart.imageUrl !== null)
@@ -237,7 +237,8 @@ export function drawObscuredActiveCharacter(room:Room, activeCharacter:Character
   context:CanvasRenderingContext2D, imageSet:ImageSet) {
   const { centerX, centerY } = _getObscuredActiveHeadAnchor(room, scalingFactors, context);
   const { widthPixels, heightPixels } = _getObscuredActiveHeadSizePixels(scalingFactors);
-  const headImage = findImageBitmap(imageSet, getHeadImageUrl(activeCharacter.rootBodyPart));
+  const headImageUrl = getHeadImageUrl(activeCharacter.rootBodyPart);
+  const headImage = headImageUrl ? imageSet.findImage(headImageUrl)?.image ?? null : null;
 
   context.save();
   context.translate(centerX, centerY);

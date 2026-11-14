@@ -5,13 +5,12 @@ import { fitHeadImage, getBodyBounds, transformBodyPoint } from '@/game/characte
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Character from '@/game/types/Character';
 import ImageSet from '@/game/types/ImageSet';
-import { findImageBitmap } from '@/game/imageAssetUtil';
 import { COLOR_BLACK } from '../drawColorConstants';
 
 /** Paints a canvas-resolved head without altering base anatomy or deciding part order; lineWidth is canvas pixels. */
 export function drawCharacterHead(head:ResolvedBodyPart, character:Character, imageSet:ImageSet,
   lineWidth:number, context:CanvasRenderingContext2D) {
-  const image = findImageBitmap(imageSet, head.part.imageUrl);
+  const image = head.part.imageUrl ? imageSet.findImage(head.part.imageUrl)?.image ?? null : null;
   const fit = image ? fitHeadImage(head.part, image.width, image.height, character.rootBodyPart.imageUrl !== null) : null;
   context.save();
   if (image && fit) {
