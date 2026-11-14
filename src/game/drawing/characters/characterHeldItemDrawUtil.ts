@@ -10,7 +10,7 @@ import { createItemDrawRect, drawItemAtCanvasPosition, getItemCanvasRectAtCanvas
 import Character from "@/game/types/Character";
 import Item from "@/game/types/Item";
 import ScalingFactors from "@/game/types/ScalingFactors";
-import ImageSet from "@/game/types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import CharacterLayout from '@/game/characterBody/types/CharacterLayout';
 import CanvasBubbleAnchor from "@/game/effects/types/CanvasBubbleAnchor";
 import { createCanvasAttachmentTransform, getHandArmPartKind, getResolvedBodyPart, transformBodyRect } from '@/game/characterBody';

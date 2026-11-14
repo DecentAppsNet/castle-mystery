@@ -6,7 +6,7 @@ import Texture from "../types/Texture";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
-import ImageSet from "../types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import { ROOM_DEPTH_ROW_COUNT } from "../roomSpaceConstants";
 import { gameToCanvasPosition } from "./drawUtil";
 import { calcPanelOffset, createProjectedRightWallDoorOutlinePoints, getRightWallDoorHeightPixels } from "./roomPanelProjectionUtil";

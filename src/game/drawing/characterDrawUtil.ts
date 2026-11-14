@@ -12,7 +12,7 @@ import Character from "../types/Character";
 import Rect from "../types/Rect";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
-import ImageSet from "../types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import Item from "../types/Item";
 import Position from "../types/Position";
 import { COLOR_ACTIVE_CHARACTER_HIGHLIGHT, COLOR_BLACK } from "./drawColorConstants";

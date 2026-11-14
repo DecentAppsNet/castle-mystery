@@ -10,7 +10,7 @@ import ClozeText from "@/game/conclusions/types/ClozeText";
 import ClozePartType from "@/game/conclusions/types/ClozePartType";
 import { duplicateConclusion } from "@/game/conclusions/types/Conclusion";
 import { isConclusionMissingAnswers } from "@/game/conclusions/conclusionUtil";
-import ImageSet from "@/game/types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import { isCandidateUrls } from "@/game/imageUrlUtil";
 
 import styles from './ClaimConclusionDialog.module.css';

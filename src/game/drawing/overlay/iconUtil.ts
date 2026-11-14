@@ -5,7 +5,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import ImageSet from "@/game/types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import ControlLayout from "@/canvasControls/types/ControlLayout";
 import { findControlRect, updateControlRect } from "@/canvasControls";
 

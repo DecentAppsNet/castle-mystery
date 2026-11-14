@@ -6,7 +6,7 @@ import Point from "@/game/types/Point";
 import Rect from "@/game/types/Rect";
 import { assert } from "decent-portal";
 import { drawIllumination } from "./illuminationDrawUtil";
-import ImageSet from "@/game/types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 type ColorName = 'dkBrown' | 'red';

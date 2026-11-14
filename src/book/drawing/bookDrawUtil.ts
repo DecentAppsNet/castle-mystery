@@ -3,7 +3,7 @@
 
 import { assert, assertNonNullable, botch } from "decent-portal";
 
-import ImageSet from "@/game/types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import BookState from "../types/BookState";
 import { calcBookDrawRect, calcPageViewOffsetX, isLeftPageNo, updateBookLayoutAsNeeded } from "./bookLayoutUtil";
 import { getAnimationProgress } from "./bookAnimationUtil";

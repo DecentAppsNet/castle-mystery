@@ -7,7 +7,7 @@ import { findTextureImageUrls } from "./textureUtil";
 import ClozeImage from "./conclusions/types/ClozeImage";
 import ClozePartType from "./conclusions/types/ClozePartType";
 import Level from "./types/Level";
-import ImageSet from "./types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import { assertNonNullable } from "decent-portal";
 import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
 import { CHARACTER_SELECTION_NIMBUS_IMAGE_URL } from "./effects/characterSelectionEffectUtil";

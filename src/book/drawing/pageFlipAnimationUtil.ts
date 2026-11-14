@@ -6,7 +6,7 @@ import BookState from "../types/BookState";
 import Rect from "@/game/types/Rect";
 import { clamp, interpolateNumber } from "@/common/numberUtil";
 import { getAnimationProgress } from "./bookAnimationUtil";
-import ImageSet from "@/game/types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import { assertNonNullable } from "decent-portal";
 import AnimationEndCallback from "../types/AnimationEndCallback";
 

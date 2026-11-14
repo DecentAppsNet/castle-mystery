@@ -6,7 +6,7 @@ import { assertNonNullable } from "decent-portal";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { choosePopoverBoxRect } from "@/game/popoverLayoutUtil";
 
-import ImageSet from "../types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import Rect from "../types/Rect";
 import ScalingFactors from "../types/ScalingFactors";
 import { COLOR_BLACK, COLOR_POPOVER_FILL } from "./drawColorConstants";

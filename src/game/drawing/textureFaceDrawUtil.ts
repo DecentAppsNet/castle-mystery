@@ -4,7 +4,7 @@
 import { applyTextureModifiers } from "@/game/imageFilters/imageFilterUtil";
 import { findTexturePrimaryImageOperation, isTextureFilterOperation, isTextureImageOperation } from "@/game/textureUtil";
 
-import ImageSet from "../types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import Texture from "../types/Texture";
 import TextureImageOperation from "../types/TextureImageOperation";
 import { calcTextureFaceSize } from "../textureSizingUtil";

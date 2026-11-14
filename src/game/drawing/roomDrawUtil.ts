@@ -43,7 +43,7 @@ import GameState from "../types/GameState";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
-import ImageSet from "../types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import ExitType from "../types/ExitType";
 import StairPart, { StairPartType } from "../types/StairPart";
 import { findRoom } from "../roomUtil";

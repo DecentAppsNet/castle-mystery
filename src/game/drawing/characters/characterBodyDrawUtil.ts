@@ -5,7 +5,7 @@ import { assert } from 'decent-portal';
 import { getArmThickness, transformBodyPoint } from '@/game/characterBody';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Point from '@/game/types/Point';
-import ImageSet from '@/game/types/ImageSet';
+import { ImageSet } from '@/imageLoading';
 import { COLOR_BLACK, COLOR_MEDIUM_GREY } from '../drawColorConstants';
 
 const ARM_BEND = Math.PI / 12;

@@ -11,7 +11,7 @@ import { calcCanvasAspectRatio, createCamera } from "./cameraUtil";
 import { COLOR_BLACK } from "./drawing/drawColorConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
-import ImageSet from "./types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import { createEmptyImageSet } from "./imageSetUtil";
 import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import {

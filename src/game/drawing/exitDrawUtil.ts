@@ -10,7 +10,7 @@ import Rect from "../types/Rect";
 import Room from "../types/Room";
 import RoomExit from "../types/RoomExit";
 import ScalingFactors from "../types/ScalingFactors";
-import ImageSet from "../types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import { COLOR_BLACK } from "./drawColorConstants";
 import { canvasToGamePosition, gameToCanvasPosition } from "./drawUtil";
 import { drawTextPopover } from "./popoverDrawUtil";

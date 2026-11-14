@@ -1,7 +1,7 @@
 import TimeLabel from "./TimeLabel";
 import Camera from "./Camera";
 import Character from "./Character";
-import ImageSet from "./ImageSet";
+import { ImageSet } from "@/imageLoading";
 import Item from "./Item";
 import Room from "./Room";
 import ScalingFactors from "./ScalingFactors";

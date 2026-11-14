@@ -14,7 +14,7 @@ import { COLOR_ITEM_POPOVER_HIGHLIGHT } from "./drawColorConstants";
 import Item from "../types/Item";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
-import ImageSet from "../types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";

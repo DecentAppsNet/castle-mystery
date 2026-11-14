@@ -11,7 +11,7 @@ import ClozePartType from "@/game/conclusions/types/ClozePartType";
 import ClozeText from "@/game/conclusions/types/ClozeText";
 import { drawObscuredPolygon } from "@/common/drawing/obscurePolygonDrawUtil";
 import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
-import ImageSet from "@/game/types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import { toNumeral } from "@/common/romanNumeralUtil";
 
 const PAGE_OUTER_MARGIN = .16;

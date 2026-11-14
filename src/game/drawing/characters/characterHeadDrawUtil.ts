@@ -4,7 +4,7 @@
 import { fitHeadImage, getBodyBounds, transformBodyPoint } from '@/game/characterBody';
 import ResolvedBodyPart from '@/game/characterBody/types/ResolvedBodyPart';
 import Character from '@/game/types/Character';
-import ImageSet from '@/game/types/ImageSet';
+import { ImageSet } from '@/imageLoading';
 import { COLOR_BLACK } from '../drawColorConstants';
 
 /** Paints a canvas-resolved head without altering base anatomy or deciding part order; lineWidth is canvas pixels. */

@@ -1,4 +1,4 @@
-import ImageSet from "@/game/types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import ControlLayout from "@/canvasControls/types/ControlLayout";
 import { createLayout, findControlAtPoint } from "@/canvasControls";
 import { drawOverlayIcons, updateOverlayIconsLayout } from "./iconUtil";

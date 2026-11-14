@@ -1,4 +1,4 @@
-import ImageSet from "./types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import ImageAsset from "@/imageLoading/types/ImageAsset";
 
 export function findImageAsset(imageSet:ImageSet, imageUrl:string|null|undefined):ImageAsset|null {

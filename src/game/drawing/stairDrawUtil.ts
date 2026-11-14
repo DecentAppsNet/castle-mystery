@@ -13,7 +13,7 @@ import Position from "../types/Position";
 import Room from "../types/Room";
 import ScalingFactors from "../types/ScalingFactors";
 import StairPart, { StairPartType } from "../types/StairPart";
-import ImageSet from "../types/ImageSet";
+import { ImageSet } from "@/imageLoading";
 import { COLUMNS_PER_MAP_TILE, LAYERS_PER_MAP_TILE, MAP_TILE_SIZE } from "../roomGridUtil";
 import { ROOM_FULL_DEPTH, ROOM_ROW_DEPTH, ROOM_DEPTH_ROW_COUNT, FLOOR_WAYPOINT_Y_OFFSET } from "../roomSpaceConstants";
 import { findTexturePrimaryImageOperation } from "@/game/textureUtil";

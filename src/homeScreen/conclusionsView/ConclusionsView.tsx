@@ -1,7 +1,7 @@
 import styles from './ConclusionsView.module.css';
 import Conclusion from "@/game/conclusions/types/Conclusion"
 import ConclusionView from './ConclusionView';
-import ImageSet from '@/game/types/ImageSet';
+import { ImageSet } from '@/imageLoading';
 import ContentButton from '@/components/contentButton/ContentButton';
 
 type Props = {

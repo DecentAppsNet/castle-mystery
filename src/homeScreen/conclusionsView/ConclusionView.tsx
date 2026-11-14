@@ -4,7 +4,7 @@ import { baseUrl } from '@/common/urlUtil';
 import styles from './ConclusionView.module.css';
 import Conclusion from "@/game/conclusions/types/Conclusion"
 import ClaimConclusionDialog from '../dialogs/ClaimConclusionDialog';
-import ImageSet from '@/game/types/ImageSet';
+import { ImageSet } from '@/imageLoading';
 import { claimConclusion } from './interactions/conclusions';
 
 const CONCLUSION_REVEAL_START_MSECS = 0;
