@@ -29,14 +29,6 @@ class ImageSet {
     return this._imagesByUrl.size;
   }
 
-  get(url:string):ImageAsset|undefined {
-    return this._imagesByUrl.get(url);
-  }
-
-  has(url:string):boolean {
-    return this._imagesByUrl.has(url);
-  }
-
   /** Returns a fully loaded asset, or null. Never starts or waits for loading. */
   findImage(url:string):ImageAsset|null {
     return this._imagesByUrl.get(url) ?? null;

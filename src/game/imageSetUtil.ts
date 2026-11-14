@@ -15,10 +15,6 @@ import BodyPart from './characterBody/types/BodyPart';
 import { BOOK_ICON_IMAGE_URL } from "./drawing/overlay";
 import { BOOK_IMAGE_URL, BOOK_PAGE_TILE_IMAGE_URL, ILLUMINATIONS_IMAGE_URL } from "@/book";
 
-export function createEmptyImageSet():ImageSet {
-  return new ImageSet();
-}
-
 function _findItemImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>();
   const itemIds = level.itemsById.keys();
@@ -126,7 +122,7 @@ async function _resolveLevelConclusionImageUrls(level:Level, imageSet:ImageSet) 
 }
 
 export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
-  const imageSet = createEmptyImageSet();
+  const imageSet = new ImageSet();
   await _loadDirectReferencedImages(level, imageSet);
   await _resolveLevelConclusionImageUrls(level, imageSet);
   return imageSet;

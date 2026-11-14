@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createEmptyImageSet, createImageSetFromLevel } from '../imageSetUtil';
+import { createImageSetFromLevel } from '../imageSetUtil';
 import { ImageSet } from '@/imageLoading';
 import { createDefaultMutableLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
@@ -33,9 +33,9 @@ describe('imageSetUtil', () => {
     vi.unstubAllGlobals();
   });
 
-  describe('createEmptyImageSet()', () => {
+  describe('ImageSet construction', () => {
     it('synchronously returns an empty class instance without image I/O', () => {
-      const imageSet = createEmptyImageSet();
+      const imageSet = new ImageSet();
 
       expect(imageSet).toBeInstanceOf(ImageSet);
       expect(imageSet.size).toBe(0);
@@ -209,8 +209,8 @@ describe('imageSetUtil', () => {
 
       const imageSet = await createImageSetFromLevel(level);
 
-      expect(imageSet.get('/assets/bodies/head.png')?.punchMaskImage).toBeNull();
-      expect(imageSet.get('/assets/bodies/head.png')?.image).toEqual({ width:1, height:1 });
+      expect(imageSet.findImage('/assets/bodies/head.png')?.punchMaskImage).toBeNull();
+      expect(imageSet.findImage('/assets/bodies/head.png')?.image).toEqual({ width:1, height:1 });
     });
 
     it('rejects a missing non-character asset with its canonical URL', async () => {
@@ -294,7 +294,7 @@ describe('imageSetUtil', () => {
       const imageSet = await createImageSetFromLevel(level);
 
       for (const kind of ['torso', 'head', 'farArm', 'nearArm', 'leftLeg', 'rightLeg', 'alternate']) {
-        expect(imageSet.has(`/assets/bodies/${kind}.png`)).toBe(true);
+        expect(imageSet.findImage(`/assets/bodies/${kind}.png`)).not.toBeNull();
         expect(fetch).toHaveBeenCalledWith(`/castle-mystery/assets/bodies/${kind}.png`);
       }
     });
@@ -311,7 +311,7 @@ describe('imageSetUtil', () => {
 
       const imageSet = await createImageSetFromLevel(level);
 
-      expect(imageSet.has('/assets/bodies/shared.png')).toBe(true);
+      expect(imageSet.findImage('/assets/bodies/shared.png')).not.toBeNull();
       expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === '/castle-mystery/assets/bodies/shared.png')).toHaveLength(1);
       expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === '/castle-mystery/assets/bodies/shared.punch.png')).toHaveLength(1);
     });
@@ -329,7 +329,7 @@ describe('imageSetUtil', () => {
 
       const imageSet = await createImageSetFromLevel(level);
 
-      expect(imageSet.has('/assets/bodies/nested.png')).toBe(true);
+      expect(imageSet.findImage('/assets/bodies/nested.png')).not.toBeNull();
       expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/bodies/head.png');
     });
   });

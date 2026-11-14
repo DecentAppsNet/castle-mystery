@@ -4,7 +4,7 @@ import { pauseGameState, updateGameState } from '@/game/gameStateUpdateUtil';
 import { createDiscoveries } from '@/game/discoveriesUtil';
 import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
 import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
-import { createEmptyImageSet } from '@/game/imageSetUtil';
+import { ImageSet } from '@/imageLoading';
 import { createLevelSaveState } from '@/game/levelSaveStateUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import ClozePartType from '@/game/conclusions/types/ClozePartType';
@@ -93,7 +93,7 @@ describe('LevelSaveCoordinator', () => {
     outgoing.observe();
     await Promise.resolve();
     const reentered = outgoing.stopAndSettle(true).then(() =>
-      prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md'));
+      prepareLevelState(loadValidLevelForTest(levelText), new ImageSet(), 'castle.md'));
     expect(pathStoreMock.getText).not.toHaveBeenCalled();
     finishWrite();
     const prepared = await reentered;
@@ -116,7 +116,7 @@ describe('LevelSaveCoordinator', () => {
     const settled = outgoing.stopAndSettle(true);
     finishWrite();
     await settled;
-    const prepared = await prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md');
+    const prepared = await prepareLevelState(loadValidLevelForTest(levelText), new ImageSet(), 'castle.md');
     const incoming = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
     prepared.gameState.discoveryState.titleKnownCharacterIds.add('sam');
     incoming.observe();
@@ -133,7 +133,7 @@ describe('LevelSaveCoordinator', () => {
     state.time += 1000;
     outgoing.observe();
     await outgoing.clearSaveAfterSettling();
-    const prepared = await prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md');
+    const prepared = await prepareLevelState(loadValidLevelForTest(levelText), new ImageSet(), 'castle.md');
     expect(prepared.levelUrl).toBe('castle.md');
     expect(prepared.gameState.time).toBe(state.timeline.startTime);
     expect(prepared.gameState.discoveryState.discoveredItemIds.size).toBe(0);
@@ -142,7 +142,7 @@ describe('LevelSaveCoordinator', () => {
     outgoing.observe();
     await vi.advanceTimersByTimeAsync(5000);
     await incoming.stopAndSettle();
-    const revisited = await prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md');
+    const revisited = await prepareLevelState(loadValidLevelForTest(levelText), new ImageSet(), 'castle.md');
     expect(revisited.gameState.discoveryState.discoveredItemIds.size).toBe(0);
     expect(revisited.gameState.time).toBe(state.timeline.startTime);
     expect(revisited.needsInitialSave).toBe(false);
@@ -159,7 +159,7 @@ describe('LevelSaveCoordinator', () => {
     const cleared = outgoing.clearSaveAfterSettling();
     await vi.advanceTimersByTimeAsync(0);
     const reloaded = cleared.then(() =>
-      prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md'));
+      prepareLevelState(loadValidLevelForTest(levelText), new ImageSet(), 'castle.md'));
     expect(pathStoreMock.deleteByKey).toHaveBeenCalledOnce();
     expect(pathStoreMock.getText).not.toHaveBeenCalled();
     finishDelete();
@@ -297,7 +297,7 @@ describe('LevelSaveCoordinator', () => {
     const saved = { ...createLevelSaveState(createGameState(level)), discoveredItemIds:['key'] };
     await setLevelSaveState('castle.md', saved);
     pathStoreMock.setText.mockClear();
-    const prepared = await prepareLevelState(level, createEmptyImageSet(), 'castle.md');
+    const prepared = await prepareLevelState(level, new ImageSet(), 'castle.md');
     expect(pathStoreMock.setText).not.toHaveBeenCalled();
     const coordinator = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
     updateGameState(prepared.gameState, [], 100, 1, () => coordinator.observe());
@@ -307,7 +307,7 @@ describe('LevelSaveCoordinator', () => {
   });
 
   it('submits prepared fresh initial progress once before unchanged simulation updates', async () => {
-    const prepared = await prepareLevelState(loadValidLevelForTest(levelText), createEmptyImageSet(), 'castle.md');
+    const prepared = await prepareLevelState(loadValidLevelForTest(levelText), new ImageSet(), 'castle.md');
     expect(pathStoreMock.setText).not.toHaveBeenCalled();
     const coordinator = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
     updateGameState(prepared.gameState, [], 100, 1, () => coordinator.observe());

@@ -12,7 +12,6 @@ import { COLOR_BLACK } from "./drawing/drawColorConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import { ImageSet } from "@/imageLoading";
-import { createEmptyImageSet } from "./imageSetUtil";
 import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import {
   callOnActiveCharacterChangedAsNeeded,
@@ -121,7 +120,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   if (DRAW_FPS_COUNTER) updateAndDrawFps(metaTime, findMetaTimeNow(), context);
 }
 
-export function createGameState(level:Level, imageSet:ImageSet = createEmptyImageSet()):GameState {
+export function createGameState(level:Level, imageSet:ImageSet = new ImageSet()):GameState {
   const baseItemsById = createItemsById(level.rooms, level.characters, duplicateItemsById(level.itemsById));
   const baseCharacters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, baseItemsById));
   const baseRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, baseItemsById));

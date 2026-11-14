@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { drawRoomItem } from '../itemDrawUtil';
 import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
-import { createEmptyImageSet } from '@/game/imageSetUtil';
+import { ImageSet } from '@/imageLoading';
 import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
 
 const SCALING_FACTORS:ScalingFactors = {
@@ -46,7 +46,7 @@ describe('itemDrawUtil', () => {
         stackOffset:{ x:0, y:0, z:0 },
         description:'A crown.'
       };
-      const imageSet = createEmptyImageSet();
+      const imageSet = new ImageSet();
       await imageSet.loadImage('/assets/items/other.png');
       const context = {
         drawImage:vi.fn(),

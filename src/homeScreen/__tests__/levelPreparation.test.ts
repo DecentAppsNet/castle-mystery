@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGameState } from '@/game/gameUtil';
-import { createEmptyImageSet } from '@/game/imageSetUtil';
 import { ImageSet } from '@/imageLoading';
 import { createLevelSaveState } from '@/game/levelSaveStateUtil';
 import saveText from '@/game/__tests__/fixtures/save-state.md?raw';
@@ -28,7 +27,7 @@ describe('prepareLevelState()', () => {
 
   it('keeps no-save defaults and supplied image assets and requests an initial save', async () => {
     const level = loadValidLevelForTest(defaultText);
-    const imageSet = createEmptyImageSet();
+    const imageSet = new ImageSet();
     const prepared = await prepareLevelState(level, imageSet, levelUrl);
     expect(prepared.levelUrl).toBe(levelUrl);
     expect(prepared.needsInitialSave).toBe(true);
@@ -43,7 +42,7 @@ describe('prepareLevelState()', () => {
     const level = loadValidLevelForTest(defaultText);
     const save = createLevelSaveState(createGameState(level), level.timeline.endTime);
     await setLevelSaveState(levelUrl, save);
-    const { gameState, needsInitialSave } = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const { gameState, needsInitialSave } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(needsInitialSave).toBe(false);
     expect(gameState.time).toBe(level.timeline.endTime);
     expect(gameState.activeCharacterId).toBe('sam');
@@ -56,7 +55,7 @@ describe('prepareLevelState()', () => {
     const level = loadValidLevelForTest(discoveryText);
     const save = { ...createLevelSaveState(createGameState(level)), activeCharacterId:'pat' };
     await setLevelSaveState(levelUrl, save);
-    const { gameState } = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(level.activeCharacterId).toBe('sam');
     expect(gameState.activeCharacterId).toBe('pat');
     expect(gameState.activeSkinIdAtSelection).toBe('pat-default');
@@ -67,7 +66,7 @@ describe('prepareLevelState()', () => {
   it('replaces the initial selected skin with the appearance at saved time', async () => {
     const level = loadValidLevelForTest(appearanceText);
     await setLevelSaveState(levelUrl, createLevelSaveState(createGameState(level), 5000));
-    const { gameState } = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(level.initialTime).toBe(10000);
     expect(gameState.time).toBe(5000);
     expect(gameState.activeSkinIdAtSelection).toBe('sam-default');
@@ -84,7 +83,7 @@ describe('prepareLevelState()', () => {
     const level = loadValidLevelForTest(saveText);
     const time = level.timeline.startTime + 25000;
     await setLevelSaveState(levelUrl, createLevelSaveState(createGameState(level), time));
-    const { gameState } = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(gameState.time).toBe(25 * 3600000 + 25000);
   });
 
@@ -93,7 +92,7 @@ describe('prepareLevelState()', () => {
     const save = { ...createLevelSaveState(createGameState(level)), activeCharacterId:'missing',
       discoveredItemIds:['key'] };
     await setLevelSaveState(levelUrl, save);
-    const prepared = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const prepared = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(prepared.needsInitialSave).toBe(true);
     expect(prepared.gameState.discoveryState.discoveredItemIds.size).toBe(0);
     expect(prepared.gameState.activeCharacterId).toBe(level.activeCharacterId);
@@ -104,7 +103,7 @@ describe('prepareLevelState()', () => {
   it('falls back to fresh state after storage read rejection', async () => {
     const level = loadValidLevelForTest(defaultText);
     pathStoreMock.getText.mockRejectedValueOnce(new Error('Storage unavailable'));
-    const prepared = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const prepared = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(prepared.needsInitialSave).toBe(true);
     expect(prepared.gameState.time).toBe(level.initialTime);
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining(levelUrl), expect.any(Error));
@@ -114,7 +113,7 @@ describe('prepareLevelState()', () => {
     const level = loadValidLevelForTest(defaultText);
     await setLevelSaveState(levelUrl, { ...createLevelSaveState(createGameState(level)), time:-1 });
     pathStoreMock.deleteByKey.mockRejectedValueOnce(new Error('Delete unavailable'));
-    const prepared = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const prepared = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(prepared.needsInitialSave).toBe(true);
     expect(prepared.gameState.time).toBe(level.initialTime);
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Unable to clear'), expect.any(Error));
@@ -124,7 +123,7 @@ describe('prepareLevelState()', () => {
     const level = loadValidLevelForTest(defaultText);
     pathStoreMock.getText.mockResolvedValueOnce('{');
     pathStoreMock.deleteByKey.mockRejectedValueOnce(new Error('Delete unavailable'));
-    const prepared = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const prepared = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(prepared.needsInitialSave).toBe(true);
     expect(prepared.gameState.time).toBe(level.initialTime);
   });
@@ -136,7 +135,7 @@ describe('prepareLevelState()', () => {
       completedConclusionIds:level.conclusions.map(conclusion => conclusion.id),
       incompleteConclusionAnswerIndexesById:{} };
     await setLevelSaveState(levelUrl, save);
-    const { gameState } = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(gameState.isLevelComplete).toBe(true);
     expect(JSON.stringify(level)).toBe(original);
     expect(gameState.timeline).toBe(level.timeline);
@@ -145,7 +144,7 @@ describe('prepareLevelState()', () => {
   it('keeps same-named levels in different manifest directories isolated', async () => {
     const level = loadValidLevelForTest(defaultText);
     await setLevelSaveState('tower/first.md', createLevelSaveState(createGameState(level), level.timeline.endTime));
-    const prepared = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const prepared = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(prepared.needsInitialSave).toBe(true);
     expect(prepared.gameState.time).toBe(level.initialTime);
   });
@@ -156,7 +155,7 @@ describe('prepareLevelState()', () => {
     let finishRead!:(text:string|null) => void;
     pathStoreMock.getText.mockImplementationOnce(() => new Promise(resolve => { finishRead = resolve; }));
     const ready = vi.fn();
-    const pending = prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const pending = prepareLevelState(level, new ImageSet(), levelUrl);
     void pending.then(ready);
     await Promise.resolve();
     expect(ready).not.toHaveBeenCalled();
@@ -172,7 +171,7 @@ describe('prepareLevelState()', () => {
     const save = { ...createLevelSaveState(createGameState(level)), activeCharacterId:'pat',
       discoveredItemIds:['brass key'], discoveredSkinIds:['pat-default'] };
     await setLevelSaveState(levelUrl, save);
-    const { gameState } = await prepareLevelState(level, createEmptyImageSet(), levelUrl);
+    const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(gameState.activeCharacterId).toBe('pat');
     expect(gameState.discoveryState.discoveredItemIds).toContain('brass key');
     expect(gameState.discoveryState.discoveredSkinIds).toContain('pat-default');
