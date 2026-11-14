@@ -35,6 +35,18 @@ function _splitTextToLines(text:string):string[] {
   return text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
 }
 
+function _getIlluminatedTextSections(text:string):{firstLetter:string, firstWord:string, theRest:string} {
+  let firstLetter = '', firstWord = '', theRest = '';
+  if (text.length === 0) return { firstLetter, firstWord, theRest };
+  firstLetter = text[0];
+  if (text.length === 1) return { firstLetter, firstWord, theRest };
+  let endOfFirstWordI = text.indexOf(' ');
+  if (endOfFirstWordI === -1) endOfFirstWordI = text.length;
+  firstWord = text.substring(1, endOfFirstWordI).toLocaleUpperCase();
+  if (endOfFirstWordI !== text.length) theRest = text.substring(endOfFirstWordI);
+  return { firstLetter, firstWord, theRest };
+}
+
 class PageWriter {
   private _pageRect:Rect;
   private _context:CanvasRenderingContext2D;
@@ -207,9 +219,9 @@ class PageWriter {
 
   addIlluminatedText(text:string, colorName:ColorName = 'dkBrown') {
     if (!text.length) return;
-    const firstLetter = text[0];
-    const theRest = text.substring(1);
+    const { firstLetter, firstWord, theRest } = _getIlluminatedTextSections(text);
     this.addIllumination(firstLetter);
+    this.addText(firstWord, 'red');
     this.addText(theRest, colorName);
   }
 
