@@ -3,7 +3,6 @@
 
 import { clamp } from "@/common/numberUtil";
 import { gameToCanvasPosition } from "@/game/drawing/drawUtil";
-import { findImageBitmap } from "@/game/imageAssetUtil";
 import Position from "../types/Position";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
@@ -17,13 +16,15 @@ type AfterCharacterDrawCall = Extract<EffectDrawCall, { stage:'afterCharacter' }
 
 function _drawLockChange(drawCall:AfterCharacterDrawCall, scalingFactors:ScalingFactors, time:number,
     context:CanvasRenderingContext2D, exitPosition:Position, startTime:number, travelDirection:1|-1):void {
-  const image = findImageBitmap(drawCall.characterContext.imageSet, KEY_IMAGE_URL);
+  const { imageSet } = drawCall.characterContext;
+  const image = imageSet.findImage(KEY_IMAGE_URL);
   if (!image) return;
 
   // Calculate the current canvas geometry from the timeline progress and scaling.
+  const dimensions = image.visibleSourceRect ?? image.image;
   const progress = clamp((time - startTime) / LOCK_UNLOCK_DURATION, 0, 1);
   const drawHeight = Math.max(12, scalingFactors.roomLineWidth * 4);
-  const drawWidth = drawHeight * image.width / image.height;
+  const drawWidth = drawHeight * dimensions.width / dimensions.height;
   const [exitCanvasX, exitCanvasY] = gameToCanvasPosition(exitPosition.x, exitPosition.y, scalingFactors);
   const drawX = exitCanvasX - drawWidth / 2;
   const drawY = exitCanvasY - drawHeight / 2 + progress * drawHeight * travelDirection;
@@ -31,7 +32,7 @@ function _drawLockChange(drawCall:AfterCharacterDrawCall, scalingFactors:Scaling
   // Fade and draw the key over the character-room pass.
   context.save();
   context.globalAlpha = 1 - progress;
-  context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+  imageSet.drawImage(image, drawX, drawY, drawWidth, drawHeight, context);
   context.restore();
 }
 

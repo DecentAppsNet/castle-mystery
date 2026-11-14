@@ -2,7 +2,6 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { clamp } from "@/common/numberUtil";
-import { findImageBitmap } from "@/game/imageAssetUtil";
 import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
@@ -26,7 +25,7 @@ function _calcOpacity(elapsedMetaTime:number):number {
 
 function _drawCharacterSelectionEffect(startMetaTime:number, drawCall:BeforeCharacterDrawCall,
     metaTime:number, context:CanvasRenderingContext2D):void {
-  const nimbusImage = findImageBitmap(drawCall.characterContext.imageSet, CHARACTER_SELECTION_NIMBUS_IMAGE_URL);
+  const nimbusImage = drawCall.characterContext.imageSet.findImage(CHARACTER_SELECTION_NIMBUS_IMAGE_URL);
   if (!nimbusImage) return;
 
   // Calculate presentation from current anatomy and elapsed player-experience time.
@@ -40,7 +39,7 @@ function _drawCharacterSelectionEffect(startMetaTime:number, drawCall:BeforeChar
   context.globalAlpha = _calcOpacity(elapsedMetaTime);
   context.translate(headCenterX, headCenterY);
   context.rotate(rotation);
-  context.drawImage(nimbusImage, -drawDiameter / 2, -drawDiameter / 2, drawDiameter, drawDiameter);
+  context.drawImage(nimbusImage.image, -drawDiameter / 2, -drawDiameter / 2, drawDiameter, drawDiameter);
   context.restore();
 }
 
