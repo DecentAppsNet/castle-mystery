@@ -18,7 +18,7 @@ import ImageSet from "../types/ImageSet";
 import { drawPopover } from "./popoverDrawUtil";
 import { calcPanelOffset, projectRoomPointWithDepth } from "./roomPanelProjectionUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
-import { findImageBitmap } from "@/game/imageAssetUtil";
+import ImageAsset from "@/imageLoading/types/ImageAsset";
 import { createRoomContentDisplayLayout } from "@/game/roomContentDisplayPositionUtil";
 import Position from "../types/Position";
 import CanvasBubbleAnchor from "../effects/types/CanvasBubbleAnchor";
@@ -45,13 +45,15 @@ type ItemHighlightGlowMetrics = {
 
 // Converts shared image layout metrics into the final rectangle for one decoded image.
 const IMAGE_PIXELS_PER_COLUMN = 256;
-function _calcItemImageRect(itemDrawRect:ItemImageRect, image:ImageBitmap):ItemImageRect {
+function _calcItemImageRect(itemDrawRect:ItemImageRect, imageAsset:ImageAsset):ItemImageRect {
+  const image = imageAsset.visibleSourceRect ?? imageAsset.image;
   /* Item images imply the number of columns that will be used to render them by their image width.
     In case some image is not exactly aligned with the pixel count per column, round up or down to nearest 
     column count. */
-  const imageColumnCount = Math.max(1, Math.round(image.width / IMAGE_PIXELS_PER_COLUMN));
+  const imageColumnCount = Math.max(1, Math.round(imageAsset.image.width / IMAGE_PIXELS_PER_COLUMN));
 
-  const widthPixels = itemDrawRect.widthPixels * imageColumnCount; // Quantized to nearest column-aligned width.
+  const fullWidthPixels = itemDrawRect.widthPixels * imageColumnCount; // Quantized to nearest column-aligned width.
+  const widthPixels = fullWidthPixels * image.width / imageAsset.image.width;
   const leftOffsetPixels = itemDrawRect.leftOffsetPixels - (widthPixels - itemDrawRect.widthPixels) / 2;
   const heightPixels = widthPixels * image.height / image.width;
   return {
@@ -139,9 +141,9 @@ export function getItemHoverRect(item:Item, displayPosition:Position,
 }
 
 // Resolves the image to draw for an item, falling back to the unknown-item asset.
-function _findItemImage(item:Item, imageSet:ImageSet):ImageBitmap|null {
-  if (!item.imageUrl) return findImageBitmap(imageSet, UNKNOWN_ITEM_ICON_URL);
-  const image = findImageBitmap(imageSet, item.imageUrl);
+function _findItemImage(item:Item, imageSet:ImageSet):ImageAsset|null {
+  if (!item.imageUrl) return imageSet.findImage(UNKNOWN_ITEM_ICON_URL);
+  const image = imageSet.findImage(item.imageUrl);
   if (imageSet.size > 0) {
     assertNonNullable(image, `missing loaded image asset for item ${item.id} (${item.imageUrl})`);
   }
@@ -149,16 +151,13 @@ function _findItemImage(item:Item, imageSet:ImageSet):ImageBitmap|null {
 }
 
 // Draws an item image at the supplied projected anchor point.
-function _drawItemImage(image:ImageBitmap, x:number, y:number, itemDrawRect:ItemImageRect, context:CanvasRenderingContext2D) {
-  if (!image.width || !image.height) return;
+function _drawItemImage(image:ImageAsset, x:number, y:number, itemDrawRect:ItemImageRect,
+    context:CanvasRenderingContext2D, imageSet:ImageSet) {
+  if (!image.image.width || !image.image.height) return;
   const imageRect = _calcItemImageRect(itemDrawRect, image);
-  context.drawImage(
-    image,
-    x + imageRect.leftOffsetPixels,
-    y + imageRect.topOffsetPixels,
-    imageRect.widthPixels,
-    imageRect.heightPixels
-  );
+  const drawX = x + imageRect.leftOffsetPixels;
+  const drawY = y + imageRect.topOffsetPixels;
+  imageSet.drawImage(image, drawX, drawY, imageRect.widthPixels, imageRect.heightPixels, context);
 }
 
 // Computes the animated glow size used for hovered-item highlighting.
@@ -188,11 +187,11 @@ function _createItemImageHighlightSilhouetteCanvas(widthPixels:number, heightPix
 }
 
 // Rasterizes a solid silhouette of an item image for glow highlighting.
-function _renderItemImageHighlightSilhouetteCanvas(image:ImageBitmap, silhouetteCanvas:HTMLCanvasElement) {
+function _renderItemImageHighlightSilhouetteCanvas(image:ImageAsset, silhouetteCanvas:HTMLCanvasElement, imageSet:ImageSet) {
   const context = silhouetteCanvas.getContext("2d", { willReadFrequently:true });
   if (!context) return;
   context.clearRect(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
-  context.drawImage(image, 0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
+  imageSet.drawImage(image, 0, 0, silhouetteCanvas.width, silhouetteCanvas.height, context);
 
   const imageData = context.getImageData(0, 0, silhouetteCanvas.width, silhouetteCanvas.height);
   for (let i = 0; i < imageData.data.length; i += 4) {
@@ -206,26 +205,27 @@ function _renderItemImageHighlightSilhouetteCanvas(image:ImageBitmap, silhouette
 }
 
 // Looks up or creates the cached highlight silhouette for an item image size.
-function _findItemImageHighlightSilhouetteCanvas(image:ImageBitmap, imageRect:ItemImageRect):HTMLCanvasElement|null {
+function _findItemImageHighlightSilhouetteCanvas(image:ImageAsset, imageRect:ItemImageRect,
+  imageSet:ImageSet):HTMLCanvasElement|null {
   const cacheKey = _calcItemImageHighlightCanvasKey(imageRect.widthPixels, imageRect.heightPixels);
-  const cachedCanvasesBySize = _itemImageHighlightSilhouetteCanvasCache.get(image) ?? new Map<string, HTMLCanvasElement>();
+  const cachedCanvasesBySize = _itemImageHighlightSilhouetteCanvasCache.get(image.image) ?? new Map<string, HTMLCanvasElement>();
   const cachedCanvas = cachedCanvasesBySize.get(cacheKey) || null;
   if (cachedCanvas) return cachedCanvas;
 
   const silhouetteCanvas = _createItemImageHighlightSilhouetteCanvas(imageRect.widthPixels, imageRect.heightPixels);
   if (!silhouetteCanvas) return null;
-  _renderItemImageHighlightSilhouetteCanvas(image, silhouetteCanvas);
+  _renderItemImageHighlightSilhouetteCanvas(image, silhouetteCanvas, imageSet);
   cachedCanvasesBySize.set(cacheKey, silhouetteCanvas);
-  _itemImageHighlightSilhouetteCanvasCache.set(image, cachedCanvasesBySize);
+  _itemImageHighlightSilhouetteCanvasCache.set(image.image, cachedCanvasesBySize);
   return silhouetteCanvas;
 }
 
 // Draws the pulsing hover highlight around an item image.
-function _drawItemImageHighlight(image:ImageBitmap, x:number, y:number, itemDrawRect:ItemImageRect,
-  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, metaTime:number) {
-  if (!image.width || !image.height) return;
+function _drawItemImageHighlight(image:ImageAsset, x:number, y:number, itemDrawRect:ItemImageRect,
+  scalingFactors:ScalingFactors, context:CanvasRenderingContext2D, metaTime:number, imageSet:ImageSet) {
+  if (!image.visibleSourceRect) return;
   const imageRect = _calcItemImageRect(itemDrawRect, image);
-  const silhouetteCanvas = _findItemImageHighlightSilhouetteCanvas(image, imageRect);
+  const silhouetteCanvas = _findItemImageHighlightSilhouetteCanvas(image, imageRect, imageSet);
   if (!silhouetteCanvas) return;
   const { glowWidth, glowBlur } = _calcItemHighlightGlowMetrics(scalingFactors.roomLineWidth, metaTime);
   const outsetPixels = scalingFactors.roomLineWidth * ITEM_IMAGE_HIGHLIGHT_OUTSET_LINE_WIDTHS;
@@ -265,8 +265,8 @@ function drawItem(item:Item, displayPosition:Position, scalingFactors:ScalingFac
   const [x, y] = getItemCanvasPositionInRoom(displayPosition, scalingFactors);
   const itemDrawRect = _calcItemDrawRect(scalingFactors);
   context.save();
-  if (isHighlighted) _drawItemImageHighlight(image, x, y, itemDrawRect, scalingFactors, context, metaTime);
-  _drawItemImage(image, x, y, itemDrawRect, context);
+  if (isHighlighted) _drawItemImageHighlight(image, x, y, itemDrawRect, scalingFactors, context, metaTime, imageSet);
+  _drawItemImage(image, x, y, itemDrawRect, context, imageSet);
   context.restore();
 }
 
@@ -283,7 +283,7 @@ export function drawItemAtCanvasPosition(item:Item, x:number, y:number, itemDraw
   const image = _findItemImage(item, imageSet);
   if (!image) return; // Headless/test code call - no drawing needed.
   context.save();
-  _drawItemImage(image, x, y, itemDrawRect, context);
+  _drawItemImage(image, x, y, itemDrawRect, context, imageSet);
   context.restore();
 }
 

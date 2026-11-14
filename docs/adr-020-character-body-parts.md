@@ -31,6 +31,8 @@ Hierarchy traversal does not determine occlusion. Back-to-front order is:
 
 Held items retain their before/after-body layering and gameplay hand ownership. The center of the full image rectangle attaches to the resolved hand node, replacing the downward screen offset and upright artwork. Artwork inherits arm and ancestor orientation/reflection, including current-frame animation. Item sizing remains independent of body-source scaling; camera projection is applied once, including nonuniform view scales. Bubbles use the union of transformed image corners. Head overrides preserve their visual rotation direction under reflection.
 
+The ImageSet migration supersedes the full-image held-item anchor: visible content is now centered on the resolved hand node, excluding transparent padding. Original bitmap width still determines 256-pixel column sizing; visible bounds determine aspect ratio, drawing, and bubble geometry. The existing attachment transforms and layering remain unchanged.
+
 ## Scope
 
 The legacy stick layout is removed. This decision established placeholder vector bodies and head artwork; ADR 021 adds raster body authoring. [ADR 022](adr-022-walking-leg-effects.md) extends it with anatomy effects and their composition rules. Articulated joints, independent part scaling, and per-item translation/rotation authoring or fixed/inherited rotation modes remain outside scope. Existing stacking and effect-observability decisions remain unchanged.
