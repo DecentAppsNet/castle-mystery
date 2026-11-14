@@ -6,6 +6,7 @@ import { assertNonNullable } from "decent-portal";
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { choosePopoverBoxRect } from "@/game/popoverLayoutUtil";
 import { findImageBitmap } from "@/game/imageAssetUtil";
+import { findVisibleImageSourceRect } from "@/imageLoading";
 
 import ImageSet from "../types/ImageSet";
 import Rect from "../types/Rect";
@@ -77,7 +78,6 @@ type VisibleImageSourceRect = {
 
 const SEPARATOR_WIDTH_RATIO = 0.25;
 const ITEM_DESCRIPTION_FONT_SIZE_RATIO = 0.75;
-const IMAGE_ALPHA_THRESHOLD = 16;
 
 const _visibleImageSourceRectCache = new WeakMap<ImageBitmap, VisibleImageSourceRect>();
 
@@ -197,30 +197,15 @@ function _findVisibleImageSourceRect(image:ImageBitmap):VisibleImageSourceRect|n
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
   const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
-  let minX = width;
-  let minY = height;
-  let maxX = -1;
-  let maxY = -1;
-
-  for (let y = 0; y < height; ++y) {
-    for (let x = 0; x < width; ++x) {
-      const alpha = data[(y * width + x) * 4 + 3];
-      if (alpha < IMAGE_ALPHA_THRESHOLD) continue;
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
-    }
-  }
-
-  if (maxX < minX || maxY < minY) return null;
+  const bounds = findVisibleImageSourceRect(data, width, height);
+  if (!bounds) return null;
 
   const visibleRect = {
-    sx:minX,
-    sy:minY,
-    sw:maxX - minX + 1,
-    sh:maxY - minY + 1,
-    aspectRatio:(maxY - minY + 1) / (maxX - minX + 1)
+    sx:bounds.x,
+    sy:bounds.y,
+    sw:bounds.width,
+    sh:bounds.height,
+    aspectRatio:bounds.height / bounds.width
   };
   _visibleImageSourceRectCache.set(image, visibleRect);
   return visibleRect;

@@ -1,4 +1,4 @@
-import ImageAsset from "./ImageAsset";
+import ImageAsset from "@/imageLoading/types/ImageAsset";
 
 type ImageSet = Map<string, ImageAsset>;
 
