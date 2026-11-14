@@ -3,6 +3,35 @@ import { findVisibleImageSourceRect } from '../imageBoundsUtil';
 
 describe('imageBoundsUtil', () => {
   describe('findVisibleImageSourceRect()', () => {
+    it('scans a clip using the full image stride and returns image coordinates', () => {
+      const data = new Uint8ClampedArray(6 * 4 * 4);
+      data[(0 * 6 + 0) * 4 + 3] = 255;
+      data[(2 * 6 + 3) * 4 + 3] = 16;
+      data[(3 * 6 + 4) * 4 + 3] = 255;
+      data[(3 * 6 + 5) * 4 + 3] = 255;
+
+      expect(findVisibleImageSourceRect(data, 6, 4, { x:2, y:1, width:3, height:3 }))
+        .toEqual({ x:3, y:2, width:2, height:2 });
+    });
+
+    it('returns null for a transparent clip surrounded by visible pixels', () => {
+      const data = new Uint8ClampedArray(4 * 3 * 4).fill(255);
+      data[(1 * 4 + 1) * 4 + 3] = 0;
+      data[(1 * 4 + 2) * 4 + 3] = 15;
+
+      expect(findVisibleImageSourceRect(data, 4, 3, { x:1, y:1, width:2, height:1 })).toBeNull();
+    });
+
+    it('rejects fractional clip coordinates', () => {
+      expect(() => findVisibleImageSourceRect(new Uint8ClampedArray(16), 2, 2,
+        { x:0.5, y:0, width:1, height:1 })).toThrow();
+    });
+
+    it('rejects clips extending outside the image', () => {
+      expect(() => findVisibleImageSourceRect(new Uint8ClampedArray(16), 2, 2,
+        { x:1, y:0, width:2, height:1 })).toThrow();
+    });
+
     it('returns null for fully transparent pixels', () => {
       const data = new Uint8ClampedArray(3 * 2 * 4);
 

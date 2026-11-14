@@ -2,18 +2,24 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Rect from '@/game/types/Rect';
+import { assert } from 'decent-portal';
 
 const IMAGE_ALPHA_THRESHOLD = 16;
 
-export function findVisibleImageSourceRect(data:Uint8ClampedArray, width:number, height:number):Rect|null {
+export function findVisibleImageSourceRect(data:Uint8ClampedArray, width:number, height:number,
+    clipRect:Rect = { x:0, y:0, width, height }):Rect|null {
+  assert(Number.isInteger(clipRect.x) && Number.isInteger(clipRect.y) &&
+    Number.isInteger(clipRect.width) && Number.isInteger(clipRect.height));
+  assert(clipRect.x >= 0 && clipRect.y >= 0 && clipRect.width >= 0 && clipRect.height >= 0 &&
+    clipRect.x + clipRect.width <= width && clipRect.y + clipRect.height <= height);
   let minX = width;
   let minY = height;
   let maxX = -1;
   let maxY = -1;
 
   // Include every pixel meeting the existing visibility threshold.
-  for (let pixelY = 0; pixelY < height; ++pixelY) {
-    for (let pixelX = 0; pixelX < width; ++pixelX) {
+  for (let pixelY = clipRect.y; pixelY < clipRect.y + clipRect.height; ++pixelY) {
+    for (let pixelX = clipRect.x; pixelX < clipRect.x + clipRect.width; ++pixelX) {
       const alpha = data[(pixelY * width + pixelX) * 4 + 3];
       if (alpha < IMAGE_ALPHA_THRESHOLD) continue;
       minX = Math.min(minX, pixelX);

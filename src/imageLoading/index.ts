@@ -2,3 +2,4 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 export { default as ImageSet } from './ImageSet';
+export { findVisibleImageSourceRect } from './imageBoundsUtil';

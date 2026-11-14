@@ -2,12 +2,33 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 /* v8 ignore file -- Sprite drawing is verified visually. @preserve */
 
-import { ImageSet } from "@/imageLoading";
+import { findVisibleImageSourceRect, ImageSet } from "@/imageLoading";
+import Rect from "@/game/types/Rect";
+import { createScratchCanvas, getScratchCanvasContext2d } from "@/game/drawing/canvasSurfaceUtil";
 import { assertNonNullable } from "decent-portal";
 
 export const ILLUMINATIONS_IMAGE_URL = '/assets/ui/illuminations.png'; // Only contains English alphabet (26 letters).
 const COLUMN_COUNT = 13; // Number of columns in the source image.
 const ROW_COUNT = 2; // Number of rows in the source image.
+
+let theLetterSourceRects:(Rect|null)[]|null = null;
+
+function _createLetterSourceRects(image:ImageBitmap):(Rect|null)[] {
+  const canvas = createScratchCanvas(image.width, image.height);
+  assertNonNullable(canvas);
+  const context = getScratchCanvasContext2d(canvas, true);
+  assertNonNullable(context);
+  context.drawImage(image, 0, 0);
+  const { data } = context.getImageData(0, 0, image.width, image.height);
+  const width = image.width / COLUMN_COUNT;
+  const height = image.height / ROW_COUNT;
+  return Array.from({ length:COLUMN_COUNT * ROW_COUNT }, (_, letterIndex) =>
+    findVisibleImageSourceRect(data, image.width, image.height, {
+      x:(letterIndex % COLUMN_COUNT) * width,
+      y:Math.floor(letterIndex / COLUMN_COUNT) * height,
+      width, height
+    }));
+}
 
 /** Draw an illuminated letter to specified place on canvas.
  * 
@@ -46,9 +67,9 @@ export function drawIllumination(letter:string, canvasX:number, canvasY:number, 
 
   const image = imageSet.findImage(ILLUMINATIONS_IMAGE_URL)?.image ?? null;
   assertNonNullable(image);
-  const width = image.width / COLUMN_COUNT;
-  const height = image.height / ROW_COUNT;
-  const sourceX = (letterIndex % COLUMN_COUNT) * width;
-  const sourceY = Math.floor(letterIndex / COLUMN_COUNT) * height;
-  context.drawImage(image, sourceX, sourceY, width, height, canvasX, canvasY, destinationWidth, destinationHeight);
+  theLetterSourceRects ??= _createLetterSourceRects(image);
+  const sourceRect = theLetterSourceRects[letterIndex];
+  if (!sourceRect) return;
+  context.drawImage(image, sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height,
+    canvasX, canvasY, destinationWidth, destinationHeight);
 }
