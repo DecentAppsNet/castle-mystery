@@ -24,7 +24,6 @@ import { calcScalingFactorsForRect, gameToCanvasPosition } from "./drawUtil";
 import { drawItemPopover } from "./itemDrawUtil";
 import { calcLevelCameraRect, calcRoomCameraRect } from "../cameraUtil";
 import { MAP_TILE_SIZE } from "../roomGridUtil";
-import { findImageBitmap } from "@/game/imageAssetUtil";
 import { getGroundImageAssetUrl } from "../imageUrlUtil";
 import { markCharacterDiscovered, markItemDiscovered } from "../discoveriesUtil";
 import LevelEffectDrawContext from "../effects/types/LevelEffectDrawContext";
@@ -53,7 +52,7 @@ function _drawReservedRects(layoutPlanner:CanvasLayoutPlanner, context:CanvasRen
 }
 
 function _drawGround(gameState:GameState, context:CanvasRenderingContext2D) {
-  const groundImage = findImageBitmap(gameState.imageSet, getGroundImageAssetUrl());
+  const groundImage = gameState.imageSet.findImage(getGroundImageAssetUrl())?.image ?? null;
   if (!groundImage || groundImage.width <= 0 || groundImage.height <= 0) return;
 
   const groundHeight = MAP_TILE_SIZE * GROUND_HEIGHT_STORIES;

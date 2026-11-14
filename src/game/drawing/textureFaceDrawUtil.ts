@@ -1,5 +1,7 @@
+/* This file composes and draws tiled texture faces with filters and punch-through masks.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { applyTextureModifiers } from "@/game/imageFilters/imageFilterUtil";
-import { findImageAsset } from "@/game/imageAssetUtil";
 import { findTexturePrimaryImageOperation, isTextureFilterOperation, isTextureImageOperation } from "@/game/textureUtil";
 
 import ImageSet from "../types/ImageSet";
@@ -136,7 +138,7 @@ function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWi
 function _textureNeedsFrequentPixelReads(imageSet:ImageSet, texture:Texture):boolean {
   return texture.operations.some(operation => {
     if (!isTextureImageOperation(operation)) return false;
-    return operation.alphaMode === 'punch' || Boolean(findImageAsset(imageSet, operation.imageUrl)?.punchMaskImage);
+    return operation.alphaMode === 'punch' || Boolean(imageSet.findImage(operation.imageUrl)?.punchMaskImage);
   });
 }
 
@@ -145,7 +147,7 @@ export function createTiledTextureFaceCanvas(imageSet:ImageSet, texture:Texture,
   if (totalHorizontalCount <= 0 || totalVerticalCount <= 0) return null;
   const textureImageOperation = findTexturePrimaryImageOperation(texture);
   if (!textureImageOperation) return null;
-  const imageAsset = findImageAsset(imageSet, textureImageOperation.imageUrl);
+  const imageAsset = imageSet.findImage(textureImageOperation.imageUrl);
   const image = imageAsset?.image || null;
   if (!image || image.width <= 0 || image.height <= 0) return null;
 
@@ -164,7 +166,7 @@ export function createTiledTextureFaceCanvas(imageSet:ImageSet, texture:Texture,
 
   texture.operations.forEach((operation, operationIndex) => {
     if (isTextureImageOperation(operation)) {
-      const operationImageAsset = findImageAsset(imageSet, operation.imageUrl);
+      const operationImageAsset = imageSet.findImage(operation.imageUrl);
       const operationImage = operationImageAsset?.image || null;
       if (!operationImage || operationImage.width <= 0 || operationImage.height <= 0) return;
       _drawTextureImageOperation(faceContext as unknown as CanvasRenderingContext2D, faceWidth, faceHeight,

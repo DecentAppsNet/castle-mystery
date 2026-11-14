@@ -10,7 +10,6 @@ import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera } from "./cameraUtil";
 import { COLOR_BLACK } from "./drawing/drawColorConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
-import { findImageBitmap } from "./imageAssetUtil";
 import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import ImageSet from "./types/ImageSet";
 import { createEmptyImageSet } from "./imageSetUtil";
@@ -76,7 +75,7 @@ function _clearCanvas(gameState:GameState|null, context:CanvasRenderingContext2D
     return;
   }
 
-  const backgroundImage = findImageBitmap(gameState.imageSet, gameState.backgroundImageUrl);
+  const backgroundImage = gameState.imageSet.findImage(gameState.backgroundImageUrl)?.image ?? null;
   if (!backgroundImage) {
     _fillCanvasBlack(context);
     return;

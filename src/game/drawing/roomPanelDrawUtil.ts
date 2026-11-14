@@ -1,7 +1,6 @@
 /* This module groups room-panel drawing helpers for wall panels, floors, and room-side surfaces.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { findImageBitmap } from "@/game/imageAssetUtil";
 import { findTexturePrimaryImageOperation } from "@/game/textureUtil";
 import Texture from "../types/Texture";
 import Room from "../types/Room";
@@ -28,7 +27,7 @@ function _fillPanel(points:Array<[number, number]>, scalingFactors:ScalingFactor
   textureLightness:number = 1, seedText:string) {
   const textureImageOperation = findTexturePrimaryImageOperation(texture);
   if (!textureImageOperation) return;
-  const image = findImageBitmap(imageSet, textureImageOperation.imageUrl);
+  const image = imageSet.findImage(textureImageOperation.imageUrl)?.image ?? null;
   if (!image || image.width <= 0 || image.height <= 0) return;
   const faceImage = createTiledTextureFaceCanvas(
     imageSet,
