@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createImageAsset } from '@/game/imageAssetUtil';
+import { createImageAsset } from '@/imageLoading';
 import { createTiledTextureFaceCanvas } from '../textureFaceDrawUtil';
 import type ImageSet from '@/game/types/ImageSet';
 import type Texture from '@/game/types/Texture';

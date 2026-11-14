@@ -15,7 +15,7 @@ import Room from "../types/Room";
 import { createEmptyRoomShellVariantImages, RoomShellVariantImage } from "../types/RoomShellCache";
 import { drawCharacterPopover } from "./characterDrawUtil";
 import { COLOR_BLACK, COLOR_DARK_GRAY } from "./drawColorConstants";
-import { createScratchCanvas } from "./canvasSurfaceUtil";
+import { createScratchCanvas, getScratchCanvasContext2d } from "./canvasSurfaceUtil";
 import { drawExitPopover, getProjectedExitCanvasRect } from "./exitDrawUtil";
 import { drawObscuredRoom } from "./obscureDrawUtil";
 import { drawCacheableRoomShell, drawRoomCharactersAndEffects, drawRoomShellExits, drawRoomTitle } from "./roomDrawUtil";
@@ -147,7 +147,7 @@ function _createRoomVisualCanvas(room:Room, gameState:GameState, destWidth:numbe
   const canvasHeight = Math.max(1, Math.ceil(visualBounds.height) + padding * 2);
   const visualCanvas = createScratchCanvas(canvasWidth, canvasHeight);
   if (!visualCanvas) return { image:null, width:0, height:0, padding:0 };
-  const visualContext = visualCanvas.getContext('2d');
+  const visualContext = getScratchCanvasContext2d(visualCanvas);
   if (!visualContext) return { image:null, width:0, height:0, padding:0 };
 
   const localScalingFactors = {

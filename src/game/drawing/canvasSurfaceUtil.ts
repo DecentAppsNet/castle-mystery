@@ -17,5 +17,7 @@ export function createScratchCanvas(width:number, height:number):HTMLCanvasEleme
 
 export function getScratchCanvasContext2d(canvas:HTMLCanvasElement|OffscreenCanvas,
   willReadFrequently:boolean = false):CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D|null {
-  return canvas.getContext('2d', willReadFrequently ? { willReadFrequently:true } : undefined);
+  // The literal context ID guarantees a 2D result despite the combined canvas overloads.
+  return canvas.getContext('2d', willReadFrequently ? { willReadFrequently:true } : undefined) as
+    CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D|null;
 }

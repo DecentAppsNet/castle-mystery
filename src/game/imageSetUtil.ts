@@ -4,7 +4,7 @@
 import { baseUrl } from "@/common/urlUtil";
 import { getGroundImageAssetUrl, isCandidateUrls } from "./imageUrlUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "./discoveryIconUrlUtil";
-import { createImageAsset } from "./imageAssetUtil";
+import { createImageAsset } from "@/imageLoading";
 import { findTextureImageUrls } from "./textureUtil";
 import ClozeImage from "./conclusions/types/ClozeImage";
 import ClozePartType from "./conclusions/types/ClozePartType";

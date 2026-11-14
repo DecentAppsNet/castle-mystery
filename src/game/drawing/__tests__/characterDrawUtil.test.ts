@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { drawObscuredActiveCharacter, getCharacterCanvasRect } from '../characterDrawUtil';
 import { drawEmitBubble } from '../characters/characterBubbleDrawUtil';
-import { createImageAsset } from '@/game/imageAssetUtil';
+import { createImageAsset } from '@/imageLoading';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultItem } from '@/game/types/Item';
 import { createDefaultRoom } from '@/game/types/Room';

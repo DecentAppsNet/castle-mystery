@@ -1,7 +1,7 @@
 /* This file applies deterministic aged-stone and plaster texture overlays to images.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { createScratchCanvas } from "@/game/drawing/canvasSurfaceUtil";
+import { createScratchCanvas, getScratchCanvasContext2d } from "@/game/drawing/canvasSurfaceUtil";
 import { calcTextureOverlaySize } from "@/game/textureSizingUtil";
 
 import { ImageFilterArgs } from "./imageFilterUtil";
@@ -74,7 +74,7 @@ function _applyStoneOverlayImageFilter({ context, width, height, seed }:ImageFil
   const { width:overlayWidth, height:overlayHeight } = calcTextureOverlaySize(width, height);
   const overlayCanvas = createScratchCanvas(overlayWidth, overlayHeight);
   if (!overlayCanvas) return;
-  const overlayContext = overlayCanvas.getContext('2d');
+  const overlayContext = getScratchCanvasContext2d(overlayCanvas);
   if (!overlayContext) return;
 
   const imageData = overlayContext.createImageData(overlayWidth, overlayHeight);

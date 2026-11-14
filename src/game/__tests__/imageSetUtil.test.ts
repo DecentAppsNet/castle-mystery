@@ -4,11 +4,13 @@ import { createDefaultMutableLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
 import { createDefaultCharacterBody, replaceHeadImage } from '../characterBody';
 import BodyPart from '../characterBody/types/BodyPart';
+import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
 
 type PhysicalBodyPart = Exclude<BodyPart, { kind:'nearHand'|'farHand' }>;
 
 describe('imageSetUtil', () => {
   beforeEach(() => {
+    stubOffscreenCanvas();
     vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
     vi.stubGlobal('fetch', vi.fn(async () => new Response(new Blob(), {
       headers:{ 'content-type':'image/png' }

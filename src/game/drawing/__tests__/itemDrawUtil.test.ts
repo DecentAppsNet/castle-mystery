@@ -1,10 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { drawRoomItem } from '../itemDrawUtil';
-import { createImageAsset } from '@/game/imageAssetUtil';
+import { createImageAsset } from '@/imageLoading';
 import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { createEmptyImageSet } from '@/game/imageSetUtil';
+import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
 
 const SCALING_FACTORS:ScalingFactors = {
   sourceX:0,
@@ -22,6 +23,14 @@ const SCALING_FACTORS:ScalingFactors = {
 };
 
 describe('itemDrawUtil', () => {
+  beforeEach(() => {
+    stubOffscreenCanvas();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   describe('drawRoomItem()', () => {
     it('asserts when an authored item image is missing from a non-empty image set', () => {
       const item:Item = {

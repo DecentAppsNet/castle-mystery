@@ -1,10 +1,6 @@
 import ImageSet from "./types/ImageSet";
 import ImageAsset from "@/imageLoading/types/ImageAsset";
 
-export function createImageAsset(image:ImageBitmap, punchMaskImage:ImageBitmap|null = null):ImageAsset {
-  return { image, punchMaskImage };
-}
-
 export function findImageAsset(imageSet:ImageSet, imageUrl:string|null|undefined):ImageAsset|null {
   if (!imageUrl) return null;
   return imageSet.get(imageUrl) || null;
