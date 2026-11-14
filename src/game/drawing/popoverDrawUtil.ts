@@ -5,8 +5,6 @@ import { assertNonNullable } from "decent-portal";
 
 import CanvasLayoutPlanner from "@/game/CanvasLayoutPlanner";
 import { choosePopoverBoxRect } from "@/game/popoverLayoutUtil";
-import { findImageBitmap } from "@/game/imageAssetUtil";
-import { findVisibleImageSourceRect } from "@/imageLoading";
 
 import ImageSet from "../types/ImageSet";
 import Rect from "../types/Rect";
@@ -68,18 +66,8 @@ type WrappedPopoverRow =
   | { type:'separator', rowHeight:number, lineWidth:number }
   | { type:'imageTextRow', titleLines:string[], descriptionLines:string[], imageUrl:string, imageWidth:number, imageHeight:number, textWidth:number, rowHeight:number };
 
-type VisibleImageSourceRect = {
-  sx:number,
-  sy:number,
-  sw:number,
-  sh:number,
-  aspectRatio:number
-};
-
 const SEPARATOR_WIDTH_RATIO = 0.25;
 const ITEM_DESCRIPTION_FONT_SIZE_RATIO = 0.75;
-
-const _visibleImageSourceRectCache = new WeakMap<ImageBitmap, VisibleImageSourceRect>();
 
 function _drawPopoverConnectorLine(targetRect:Rect, boxLayout:PopoverBoxLayout,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
@@ -172,43 +160,11 @@ function _createDescriptionOnlyImageTextRowLines(bodyText:string, maxTextWidth:n
 }
 
 function _findImageAspectRatio(imageUrl:string, imageSet:ImageSet|undefined, fallbackAspectRatio:number):number {
-  const image = imageSet ? findImageBitmap(imageSet, imageUrl) : null;
+  const imageAsset = imageSet?.findImage(imageUrl);
+  const image = imageAsset?.image;
   if (!image || image.width <= 0 || image.height <= 0) return fallbackAspectRatio;
-  return _findVisibleImageSourceRect(image)?.aspectRatio ?? image.height / image.width;
-}
-
-function _createImageAnalysisCanvas(image:ImageBitmap):HTMLCanvasElement|null {
-  if (typeof document === 'undefined' || image.width <= 0 || image.height <= 0) return null;
-  const canvas = document.createElement('canvas');
-  canvas.width = image.width;
-  canvas.height = image.height;
-  return canvas;
-}
-
-function _findVisibleImageSourceRect(image:ImageBitmap):VisibleImageSourceRect|null {
-  const cachedRect = _visibleImageSourceRectCache.get(image) || null;
-  if (cachedRect) return cachedRect;
-
-  const canvas = _createImageAnalysisCanvas(image);
-  if (!canvas) return null;
-  const context = canvas.getContext('2d', { willReadFrequently:true });
-  if (!context) return null;
-
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
-  const bounds = findVisibleImageSourceRect(data, width, height);
-  if (!bounds) return null;
-
-  const visibleRect = {
-    sx:bounds.x,
-    sy:bounds.y,
-    sw:bounds.width,
-    sh:bounds.height,
-    aspectRatio:bounds.height / bounds.width
-  };
-  _visibleImageSourceRectCache.set(image, visibleRect);
-  return visibleRect;
+  const bounds = imageAsset?.visibleSourceRect;
+  return bounds ? bounds.height / bounds.width : image.height / image.width;
 }
 
 function _createWrappedPopoverRows(bodyEntries:PopoverBodyEntry[], typographyAndSpacing:PopoverTypographyAndSpacing,
@@ -391,22 +347,15 @@ export function drawPopover({ targetRect, title = "", bodyEntries, scalingFactor
       return;
     }
 
-    const image = imageSet ? findImageBitmap(imageSet, row.imageUrl) : null;
+    const imageAsset = imageSet?.findImage(row.imageUrl);
     if (imageSet && imageSet.size > 0) {
-      assertNonNullable(image, `missing loaded popover image asset ${row.imageUrl}`);
+      assertNonNullable(imageAsset, `missing loaded popover image asset ${row.imageUrl}`);
     }
     const imageLeft = left + padding;
     const imageTop = rowTop;
     const textLeft = imageLeft + row.imageWidth + typographyAndSpacing.imageColumnGap;
-    if (image) {
-      const sourceRect = _findVisibleImageSourceRect(image);
-      if (sourceRect) {
-        context.drawImage(image,
-          sourceRect.sx, sourceRect.sy, sourceRect.sw, sourceRect.sh,
-          imageLeft, imageTop, row.imageWidth, row.imageHeight);
-      } else {
-        context.drawImage(image, imageLeft, imageTop, row.imageWidth, row.imageHeight);
-      }
+    if (imageAsset && imageSet) {
+      imageSet.drawImage(imageAsset, imageLeft, imageTop, row.imageWidth, row.imageHeight, context);
     }
     let lineTop = rowTop;
     context.font = bodyFont;
