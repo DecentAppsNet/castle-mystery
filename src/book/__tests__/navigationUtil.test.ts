@@ -10,7 +10,7 @@ function _createSinglePageBookState(pageNo:number) {
   bookState.pageNo = pageNo;
   bookState.pages = [
     { kind:'blank', headingText:'' },
-    { kind:'bookStart', headingText:'', title:'', author:'', description:'' },
+    { kind:'bookStart', headingText:'', title:'', author:'', subtitle:null },
     { kind:'blank', headingText:'' },
     { kind:'blank', headingText:'' }
   ];
