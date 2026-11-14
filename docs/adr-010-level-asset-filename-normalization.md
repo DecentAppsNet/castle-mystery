@@ -101,6 +101,8 @@ Candidate URLs are ordered from most specific or preferred bucket to least prefe
 
 Resolution of `CandidateUrls` into a single canonical runtime URL happens later, during runtime asset loading, by trying candidates in order and selecting the first successful result.
 
+Candidate selection belongs to level asset orchestration, not the generic image store. Individual candidate failures are expected while probing alternatives; failure of every candidate prevents level preparation from completing.
+
 ### 7. Canonical runtime URLs remain single-path identities after resolution
 
 `CandidateUrls` is an unresolved load-time representation only.

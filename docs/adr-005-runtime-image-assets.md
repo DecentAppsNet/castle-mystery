@@ -6,6 +6,14 @@ Accepted
 
 Character-field names, canonical URL identity, and character-image failure/fallback rules below are historical and superseded by [ADR 010](adr-010-level-asset-filename-normalization.md) and [ADR 021](adr-021-raster-character-assets.md). The synchronous parsing/state-construction and explicit runtime asset-loading boundaries remain accepted.
 
+The update below additionally supersedes the Map representation, blanket resilience policy, and related implementation notes and consequences. The original decision is retained as historical rationale.
+
+## Revised Asset Boundary
+
+- ImageSet owns asset loading, preparation, and lookup behind an encapsulated boundary. Rendering consumes prepared assets synchronously; it does not initiate loading or repeat visible-content analysis.
+- Visible-content bounds are presentation metadata, not a replacement for original source geometry. Decorative padding may be excluded from presentation, but authored joins, tiling, and sprite coordinates must retain their source alignment.
+- All directly referenced images must be ready before a level is published to rendering. Any required asset failure rejects preparation rather than publishing a partial set. Optional masks remain optional; omitted artwork remains distinct from failed configured artwork.
+
 ## Context
 
 Character face images were introduced to allow authored characters to render with artwork instead of the default circle head.

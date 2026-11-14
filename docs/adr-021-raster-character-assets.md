@@ -14,6 +14,7 @@ Support exactly two authored configurations: default vector geometry with an opt
 - Authored image values are filenames from `public/assets/bodies/`. Runtime references and image-set keys are canonical `/assets/bodies/...` paths. This supersedes ADR 005's authored-URL identity and character-field details. ADR 010's filename validation and fetch-time `baseUrl()` requirements remain unchanged.
 - Parsing and game-state construction remain synchronous and perform no asset I/O. Initialization loads decoded assets into the game state's image set before creating game state. Bitmap data never enters body definitions or snapshots.
 - Collect and deduplicate every configured body-part and skin image, including unselected skins. Fetch/decode failure for any required character URL rejects image-set creation with the failed URLs. This supersedes ADR 005's blanket resilience, silent character fallback, and no-ImageBitmap fallback promises. Optional punch masks and unrelated asset policies remain unchanged.
+- ADR 005's revised asset boundary extends required-asset failure handling to all directly referenced images, superseding the preceding bullet's character-only scope. Optional masks and omitted-artwork fallback remain unchanged.
 - Omitted artwork still selects the vector fallback. A failed configured image is not equivalent to omitted artwork. Headless callers may still construct game state with an empty image set without initiating I/O.
 
 ### Geometry And Rendering

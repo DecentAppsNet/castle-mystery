@@ -31,7 +31,7 @@ Hierarchy traversal does not determine occlusion. Back-to-front order is:
 
 Held items retain their before/after-body layering and gameplay hand ownership. The center of the full image rectangle attaches to the resolved hand node, replacing the downward screen offset and upright artwork. Artwork inherits arm and ancestor orientation/reflection, including current-frame animation. Item sizing remains independent of body-source scaling; camera projection is applied once, including nonuniform view scales. Bubbles use the union of transformed image corners. Head overrides preserve their visual rotation direction under reflection.
 
-The ImageSet migration supersedes the full-image held-item anchor: visible content is now centered on the resolved hand node, excluding transparent padding. Original bitmap width still determines 256-pixel column sizing; visible bounds determine aspect ratio, drawing, and bubble geometry. The existing attachment transforms and layering remain unchanged.
+The ImageSet migration supersedes the full-image held-item anchor: transparent item padding is decorative, not an authored grip offset. Visible content is centered on the hand without changing authored item scale or the attachment transforms.
 
 ## Scope
 
