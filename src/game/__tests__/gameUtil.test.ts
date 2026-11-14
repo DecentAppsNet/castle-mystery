@@ -1,13 +1,45 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createGameState } from '@/game/gameUtil';
+import { ImageSet } from '@/imageLoading';
 import { pauseGameState, updateGameState } from '@/game/gameStateUpdateUtil';
 import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
 import { loadValidLevelForTest, replaceSection } from '@/levelLoading/__tests__/testLevelUtil';
 import levelTimesBaseText from '@/levelLoading/__tests__/fixtures/level-times-base.md?raw';
 
 describe('gameUtil', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   describe('createGameState()', () => {
+    it('synchronously creates independent empty image sets without image I/O', () => {
+      vi.stubGlobal('fetch', vi.fn());
+      vi.stubGlobal('createImageBitmap', vi.fn());
+      const level = loadValidLevelForTest(levelTimesBaseText);
+
+      const firstState = createGameState(level);
+      const secondState = createGameState(level);
+
+      expect(firstState.imageSet).toBeInstanceOf(ImageSet);
+      expect(firstState.imageSet.size).toBe(0);
+      expect(secondState.imageSet).toBeInstanceOf(ImageSet);
+      expect(secondState.imageSet).not.toBe(firstState.imageSet);
+      expect(fetch).not.toHaveBeenCalled();
+      expect(createImageBitmap).not.toHaveBeenCalled();
+    });
+
+    it('shares a supplied image-set instance across game states', () => {
+      const level = loadValidLevelForTest(levelTimesBaseText);
+      const imageSet = new ImageSet();
+
+      const firstState = createGameState(level, imageSet);
+      const secondState = createGameState(level, imageSet);
+
+      expect(firstState.imageSet).toBe(imageSet);
+      expect(secondState.imageSet).toBe(imageSet);
+    });
+
     it('shares the completed timeline without storing duplicate timing bounds', () => {
       const level = loadValidLevelForTest(levelTimesBaseText);
       const gameState = createGameState(level);

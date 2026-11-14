@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createImageSetFromLevel } from '../imageSetUtil';
+import { createEmptyImageSet, createImageSetFromLevel } from '../imageSetUtil';
+import { ImageSet } from '@/imageLoading';
 import { createDefaultMutableLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
 import { createDefaultCharacterBody, replaceHeadImage } from '../characterBody';
@@ -20,6 +21,17 @@ describe('imageSetUtil', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  describe('createEmptyImageSet()', () => {
+    it('synchronously returns an empty class instance without image I/O', () => {
+      const imageSet = createEmptyImageSet();
+
+      expect(imageSet).toBeInstanceOf(ImageSet);
+      expect(imageSet.size).toBe(0);
+      expect(fetch).not.toHaveBeenCalled();
+      expect(createImageBitmap).not.toHaveBeenCalled();
+    });
   });
 
   describe('createImageSetFromLevel()', () => {

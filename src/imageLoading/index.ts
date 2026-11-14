@@ -3,3 +3,4 @@
 
 export { findVisibleImageSourceRect } from './imageBoundsUtil';
 export { createImageAsset } from './imageAssetUtil';
+export { default as ImageSet } from './ImageSet';

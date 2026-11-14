@@ -18,7 +18,7 @@ import { BOOK_ICON_IMAGE_URL } from "./drawing/overlay";
 import { BOOK_IMAGE_URL, BOOK_PAGE_TILE_IMAGE_URL, ILLUMINATIONS_IMAGE_URL } from "@/book";
 
 export function createEmptyImageSet():ImageSet {
-  return new Map();
+  return new ImageSet();
 }
 
 function _findPunchMaskImageUrl(imageUrl:string):string|null {

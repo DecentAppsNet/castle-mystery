@@ -11,6 +11,7 @@ import EffectDrawCall from '../types/EffectDrawCall';
 import characterAnatomyContext from './fixtures/characterAnatomyContext';
 import { createRoomContentDisplayLayout } from '@/game/roomContentDisplayPositionUtil';
 import { createDefaultRoom } from '@/game/types/Room';
+import { ImageSet } from '@/imageLoading';
 
 const TEXT:PreparedAnimationText = { plainText:'Hello.', spans:[] };
 const CHARACTER_CONTEXT:CharacterAnatomyContext = { ...characterAnatomyContext };
@@ -18,7 +19,7 @@ const DRAW_CHARACTER_CONTEXT:CharacterEffectDrawContext = {
   bodyOrientation:'standing', isNearArmHoldingItem:false, isFarArmHoldingItem:false,
   characterAnatomy:{ anchorX:0, anchorTopY:0, characterCenterCanvasPoint:[0, 0],
     headCenterCanvasPoint:[0, 0], headRadius:1 },
-  characterAnatomyById:new Map(), imageSet:new Map(),
+  characterAnatomyById:new Map(), imageSet:new ImageSet(),
   isActiveCharacter:false, isCharacterInActiveRoom:false, isLevelComplete:false,
   roomContentDisplayLayout:createRoomContentDisplayLayout(createDefaultRoom(), [])
 };

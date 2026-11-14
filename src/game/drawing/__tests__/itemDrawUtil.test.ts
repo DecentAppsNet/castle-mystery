@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { drawRoomItem } from '../itemDrawUtil';
-import { createImageAsset } from '@/imageLoading';
 import type Item from '@/game/types/Item';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { createEmptyImageSet } from '@/game/imageSetUtil';
@@ -25,6 +24,9 @@ const SCALING_FACTORS:ScalingFactors = {
 describe('itemDrawUtil', () => {
   beforeEach(() => {
     stubOffscreenCanvas();
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new Blob())));
+    vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width:32, height:32 })));
   });
 
   afterEach(() => {
@@ -32,7 +34,7 @@ describe('itemDrawUtil', () => {
   });
 
   describe('drawRoomItem()', () => {
-    it('asserts when an authored item image is missing from a non-empty image set', () => {
+    it('asserts when an authored item image is missing from a non-empty image set', async () => {
       const item:Item = {
         id:'crown',
         title:'Crown',
@@ -45,7 +47,7 @@ describe('itemDrawUtil', () => {
         description:'A crown.'
       };
       const imageSet = createEmptyImageSet();
-      imageSet.set('/assets/items/other.png', createImageAsset({ width:32, height:32 } as ImageBitmap));
+      await imageSet.loadImage('/assets/items/other.png');
       const context = {
         drawImage:vi.fn(),
         save:vi.fn(),

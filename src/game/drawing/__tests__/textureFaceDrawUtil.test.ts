@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createImageAsset } from '@/imageLoading';
+import { ImageSet } from '@/imageLoading';
 import { createTiledTextureFaceCanvas } from '../textureFaceDrawUtil';
-import type ImageSet from '@/game/types/ImageSet';
 import type Texture from '@/game/types/Texture';
 
 type PixelImage = Readonly<{
@@ -83,16 +82,21 @@ describe('textureFaceDrawUtil', () => {
   });
 
   describe('createTiledTextureFaceCanvas()', () => {
-    it('reapplies the sidecar punch mask after drawing so the source image cannot refill punched openings', () => {
+    it('reapplies the sidecar punch mask after drawing so the source image cannot refill punched openings', async () => {
       vi.stubGlobal('OffscreenCanvas', FakeOffscreenCanvas);
+      vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+      vi.stubGlobal('fetch', vi.fn(async () => new Response(new Blob(), {
+        headers:{ 'content-type':'image/png' }
+      })));
 
       const bricksImage = _createPixelImage([40, 60, 80, 255]);
       const windowImage = _createPixelImage([240, 250, 255, 255]);
       const punchMaskImage = _createPixelImage([0, 0, 0, 0]);
-      const imageSet:ImageSet = new Map([
-        ['/assets/room/bricks.png', createImageAsset(bricksImage)],
-        ['/assets/room/window.png', createImageAsset(windowImage, punchMaskImage)]
-      ]);
+      vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValueOnce(bricksImage)
+        .mockResolvedValueOnce(windowImage).mockResolvedValueOnce(punchMaskImage));
+      const imageSet = new ImageSet();
+      await imageSet.loadImage('/assets/room/bricks.png');
+      await imageSet.loadImage('/assets/room/window.png', true);
       const texture:Texture = {
         operations:[
           { type:'image', imageUrl:'/assets/room/bricks.png', horizontalCount:1, verticalCount:1, alphaMode:'composite' },

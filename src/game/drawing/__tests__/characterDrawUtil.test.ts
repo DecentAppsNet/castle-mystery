@@ -2,11 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { drawObscuredActiveCharacter, getCharacterCanvasRect } from '../characterDrawUtil';
 import { drawEmitBubble } from '../characters/characterBubbleDrawUtil';
-import { createImageAsset } from '@/imageLoading';
+import { ImageSet } from '@/imageLoading';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultItem } from '@/game/types/Item';
 import { createDefaultRoom } from '@/game/types/Room';
-import type ImageSet from '@/game/types/ImageSet';
 import type ScalingFactors from '@/game/types/ScalingFactors';
 import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
 import { createRoomContentDisplayLayout } from '@/game/roomContentDisplayPositionUtil';
@@ -30,6 +29,9 @@ const SCALING_FACTORS:ScalingFactors = {
 describe('characterDrawUtil', () => {
   beforeEach(() => {
     stubOffscreenCanvas();
+    vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new Blob())));
+    vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width:120, height:120 })));
   });
 
   afterEach(() => {
@@ -62,11 +64,10 @@ describe('characterDrawUtil', () => {
   });
 
   describe('drawObscuredActiveCharacter()', () => {
-    it('keeps the obscured head silhouette fixed regardless of the active character facing direction', () => {
+    it('keeps the obscured head silhouette fixed regardless of the active character facing direction', async () => {
       const room = { ...createDefaultRoom(), rect:{ x:0, y:0, width:20, height:20 }, title:'Test Room' };
-      const imageSet:ImageSet = new Map([
-        ['/assets/bodies/test.png', createImageAsset({ width:120, height:120 } as ImageBitmap)]
-      ]);
+      const imageSet = new ImageSet();
+      await imageSet.loadImage('/assets/bodies/test.png');
 
       const rightFacingScales = _drawObscuredAndCaptureScales({
         ...createDefaultCharacter(),

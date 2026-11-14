@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGameState } from '@/game/gameUtil';
 import { createEmptyImageSet } from '@/game/imageSetUtil';
+import { ImageSet } from '@/imageLoading';
 import { createLevelSaveState } from '@/game/levelSaveStateUtil';
 import saveText from '@/game/__tests__/fixtures/save-state.md?raw';
 import discoveryText from '@/game/__tests__/fixtures/discovery-state.md?raw';
@@ -31,6 +32,7 @@ describe('prepareLevelState()', () => {
     const prepared = await prepareLevelState(level, imageSet, levelUrl);
     expect(prepared.levelUrl).toBe(levelUrl);
     expect(prepared.needsInitialSave).toBe(true);
+    expect(prepared.gameState.imageSet).toBeInstanceOf(ImageSet);
     expect(prepared.gameState.imageSet).toBe(imageSet);
     expect(prepared.gameState.time).toBe(level.initialTime);
     expect(prepared.gameState.isPlaying).toBe(false);
