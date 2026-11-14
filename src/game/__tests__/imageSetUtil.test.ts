@@ -6,6 +6,7 @@ import { createDefaultCharacter } from '../types/Character';
 import { createDefaultCharacterBody, replaceHeadImage } from '../characterBody';
 import BodyPart from '../characterBody/types/BodyPart';
 import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
+import { createGameState } from '../gameUtil';
 
 type PhysicalBodyPart = Exclude<BodyPart, { kind:'nearHand'|'farHand' }>;
 
@@ -44,7 +45,7 @@ describe('imageSetUtil', () => {
       }));
 
       await expect(createImageSetFromLevel(level)).rejects.toThrow(
-        'Could not load required character images (fetch or decode failed): /assets/bodies/missing.png');
+        'Could not load image /assets/bodies/missing.png: Image fetch failed (404)');
     });
 
     it('rejects an undecodable skin override even when it is not selected', async () => {
@@ -91,16 +92,65 @@ describe('imageSetUtil', () => {
       expect(imageSet.get('/assets/bodies/head.png')?.image).toEqual({ width:1, height:1 });
     });
 
-    it('tolerates unrelated asset failures and omitted character images', async () => {
+    it('rejects a missing non-character asset with its canonical URL', async () => {
+      const level = createDefaultMutableLevel();
+      level.backgroundImageUrl = '/assets/backgrounds/missing.png';
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        status:url === '/castle-mystery/assets/backgrounds/missing.png' ? 404 : 200
+      }));
+
+      await expect(createImageSetFromLevel(level)).rejects.toThrow('/assets/backgrounds/missing.png');
+    });
+
+    it('keeps omitted character artwork headless while loading built-in assets', async () => {
       const level = createDefaultMutableLevel();
       level.characters = [createDefaultCharacter()];
-      level.backgroundImageUrl = '/assets/backgrounds/missing.png';
-      vi.mocked(fetch).mockResolvedValue(new Response(null, { status:404 }));
 
       const imageSet = await createImageSetFromLevel(level);
 
-      expect(imageSet.size).toBe(0);
+      expect(imageSet.size).toBeGreaterThan(0);
       expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('/assets/bodies/'));
+    });
+
+    it('does not publish game state from a failed batch even after other loads succeed', async () => {
+      const level = createDefaultMutableLevel();
+      level.backgroundImageUrl = '/assets/backgrounds/missing.png';
+      const failureResponse = Promise.withResolvers<Response>();
+      const successfulDecode = Promise.withResolvers<void>();
+      vi.mocked(fetch).mockImplementation(async url => {
+        if (url === '/castle-mystery/assets/backgrounds/missing.png') return failureResponse.promise;
+        return new Response(new Blob());
+      });
+      vi.mocked(createImageBitmap).mockImplementation(async () => {
+        successfulDecode.resolve();
+        return { width:1, height:1 } as ImageBitmap;
+      });
+      const publish = vi.fn();
+      const loading = createImageSetFromLevel(level).then(imageSet => {
+        const gameState = createGameState(level, imageSet);
+        publish(gameState);
+        return gameState;
+      });
+      const rejected = expect(loading).rejects.toThrow('/assets/backgrounds/missing.png');
+      await successfulDecode.promise;
+
+      expect(publish).not.toHaveBeenCalled();
+      failureResponse.resolve(new Response(null, { status:404 }));
+      await rejected;
+      expect(publish).not.toHaveBeenCalled();
+    });
+
+    it('probes optional masks for non-character direct images', async () => {
+      const level = createDefaultMutableLevel();
+      level.backgroundImageUrl = '/assets/backgrounds/sky.png';
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        status:String(url).endsWith('.punch.png') ? 404 : 200
+      }));
+
+      const imageSet = await createImageSetFromLevel(level);
+
+      expect(imageSet.findImage('/assets/backgrounds/sky.png')?.punchMaskImage).toBeNull();
+      expect(fetch).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/sky.punch.png');
     });
 
     it('loads every body part and skin override', async () => {
@@ -136,11 +186,13 @@ describe('imageSetUtil', () => {
       };
       const level = createDefaultMutableLevel();
       level.characters = [character, { ...character, id:'other' }];
+      level.backgroundImageUrl = '/assets/bodies/shared.png';
 
       const imageSet = await createImageSetFromLevel(level);
 
       expect(imageSet.has('/assets/bodies/shared.png')).toBe(true);
       expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === '/castle-mystery/assets/bodies/shared.png')).toHaveLength(1);
+      expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === '/castle-mystery/assets/bodies/shared.punch.png')).toHaveLength(1);
     });
 
     it('loads images on nested descendants and ignores null part images', async () => {

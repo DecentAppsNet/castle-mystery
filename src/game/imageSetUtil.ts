@@ -117,40 +117,9 @@ async function _loadOptionalPunchMaskImageBitmap(imageUrl:string):Promise<ImageB
   }
 }
 
-function _createLoadImageBitmapCache() {
-  const imageBitmapPromisesByUrl = new Map<string, Promise<ImageBitmap|null>>();
-  return (imageUrl:string) => {
-    const existingPromise = imageBitmapPromisesByUrl.get(imageUrl);
-    if (existingPromise) return existingPromise;
-    const imageBitmapPromise = _loadImageBitmap(imageUrl);
-    imageBitmapPromisesByUrl.set(imageUrl, imageBitmapPromise);
-    return imageBitmapPromise;
-  };
-}
-
-function _createLoadPunchMaskImageBitmapCache() {
-  const imageBitmapPromisesByUrl = new Map<string, Promise<ImageBitmap|null>>();
-  return (imageUrl:string) => {
-    const existingPromise = imageBitmapPromisesByUrl.get(imageUrl);
-    if (existingPromise) return existingPromise;
-    const imageBitmapPromise = _loadOptionalPunchMaskImageBitmap(imageUrl);
-    imageBitmapPromisesByUrl.set(imageUrl, imageBitmapPromise);
-    return imageBitmapPromise;
-  };
-}
-
-async function _loadDirectReferencedImages(level:Level, imageSet:ImageSet,
-  loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>,
-  loadPunchMaskImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>):Promise<void> {
+async function _loadDirectReferencedImages(level:Level, imageSet:ImageSet):Promise<void> {
   const imageUrls = _findImageUrls(level);
-  const imageEntries = await Promise.all(imageUrls.map(async imageUrl => {
-    const imageBitmap = await loadImageBitmap(imageUrl);
-    const punchMaskImage = imageBitmap ? await loadPunchMaskImageBitmap(imageUrl) : null;
-    return [imageUrl, imageBitmap, punchMaskImage] as const;
-  }));
-  imageEntries.forEach(([imageUrl, imageBitmap, punchMaskImage]) => {
-    if (imageBitmap) imageSet.set(imageUrl, createImageAsset(imageBitmap, punchMaskImage));
-  });
+  await Promise.all(imageUrls.map(imageUrl => imageSet.loadImage(imageUrl, true)));
 }
 
 async function _resolveCandidateUrl(candidateUrls:string[], imageSet:ImageSet,
@@ -189,13 +158,7 @@ async function _resolveLevelConclusionImageUrls(level:Level, imageSet:ImageSet,
 
 export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
   const imageSet = createEmptyImageSet();
-  const loadImageBitmap = _createLoadImageBitmapCache();
-  const loadPunchMaskImageBitmap = _createLoadPunchMaskImageBitmapCache();
-  await _loadDirectReferencedImages(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
-  const failedCharacterUrls = _findCharacterImageUrls(level).filter(imageUrl => !imageSet.has(imageUrl));
-  if (failedCharacterUrls.length) {
-    throw new Error(`Could not load required character images (fetch or decode failed): ${failedCharacterUrls.join(', ')}`);
-  }
-  await _resolveLevelConclusionImageUrls(level, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
+  await _loadDirectReferencedImages(level, imageSet);
+  await _resolveLevelConclusionImageUrls(level, imageSet, _loadImageBitmap, _loadOptionalPunchMaskImageBitmap);
   return imageSet;
 }
