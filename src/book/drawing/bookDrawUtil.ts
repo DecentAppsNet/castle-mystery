@@ -1,8 +1,10 @@
+/* This file draws the book, page content, and navigation controls with their animations.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert, assertNonNullable, botch } from "decent-portal";
 
 import ImageSet from "@/game/types/ImageSet";
 import BookState from "../types/BookState";
-import { findImageBitmap } from "@/game/imageAssetUtil";
 import { calcBookDrawRect, calcPageViewOffsetX, isLeftPageNo, updateBookLayoutAsNeeded } from "./bookLayoutUtil";
 import { getAnimationProgress } from "./bookAnimationUtil";
 import { drawPageFlip } from "./pageFlipAnimationUtil";
@@ -104,7 +106,7 @@ function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rec
 
 export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D) {
   assert(bookState.isVisible); // Prefer caller to check for readability.
-  const bookImage = findImageBitmap(imageSet, BOOK_IMAGE_URL);
+  const bookImage = imageSet.findImage(BOOK_IMAGE_URL)?.image ?? null;
   assertNonNullable(bookImage);
   updateBookLayoutAsNeeded(context.canvas.width, context.canvas.height, bookImage, bookState);
   assertNonNullable(bookState.layout);

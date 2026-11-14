@@ -7,7 +7,6 @@ import Rect from "@/game/types/Rect";
 import { clamp, interpolateNumber } from "@/common/numberUtil";
 import { getAnimationProgress } from "./bookAnimationUtil";
 import ImageSet from "@/game/types/ImageSet";
-import { findImageBitmap } from "@/game/imageAssetUtil";
 import { assertNonNullable } from "decent-portal";
 import AnimationEndCallback from "../types/AnimationEndCallback";
 
@@ -75,7 +74,7 @@ export function drawPageFlip(bookState:BookState, metaTime:number, drawRect:Rect
   const progress = getAnimationProgress(bookState, metaTime);
   if (progress <= 0 || progress >= 1) return;
   const shape = _shapeAt(progress, bookState.animationKind === 'flipNext' ? 1 : -1);
-  const tileImage = findImageBitmap(imageSet, BOOK_PAGE_TILE_IMAGE_URL);
+  const tileImage = imageSet.findImage(BOOK_PAGE_TILE_IMAGE_URL)?.image ?? null;
   assertNonNullable(tileImage);
   const pattern = _getParchmentPattern(tileImage, context);
   pattern.setTransform({ a:drawRect.width / bookImage.width, d:drawRect.height / bookImage.height });

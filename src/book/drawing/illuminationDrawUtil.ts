@@ -3,7 +3,6 @@
 /* v8 ignore file -- Sprite drawing is verified visually. @preserve */
 
 import ImageSet from "@/game/types/ImageSet";
-import { findImageBitmap } from "@/game/imageAssetUtil";
 import { assertNonNullable } from "decent-portal";
 
 export const ILLUMINATIONS_IMAGE_URL = '/assets/ui/illuminations.png'; // Only contains English alphabet (26 letters).
@@ -45,7 +44,7 @@ export function drawIllumination(letter:string, canvasX:number, canvasY:number, 
     return;
   }
 
-  const image = findImageBitmap(imageSet, ILLUMINATIONS_IMAGE_URL);
+  const image = imageSet.findImage(ILLUMINATIONS_IMAGE_URL)?.image ?? null;
   assertNonNullable(image);
   const width = image.width / COLUMN_COUNT;
   const height = image.height / ROW_COUNT;
