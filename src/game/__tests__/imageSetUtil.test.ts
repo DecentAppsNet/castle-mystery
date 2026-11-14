@@ -7,6 +7,15 @@ import { createDefaultCharacterBody, replaceHeadImage } from '../characterBody';
 import BodyPart from '../characterBody/types/BodyPart';
 import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
 import { createGameState } from '../gameUtil';
+import Conclusion from '../conclusions/types/Conclusion';
+import ClozePartType from '../conclusions/types/ClozePartType';
+
+function _createImageConclusion(imageUrl:string|string[]):Conclusion {
+  return {
+    id:'test', title:'Test', parts:[{ type:ClozePartType.image, imageUrl }],
+    isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
+  };
+}
 
 type PhysicalBodyPart = Exclude<BodyPart, { kind:'nearHand'|'farHand' }>;
 
@@ -36,6 +45,118 @@ describe('imageSetUtil', () => {
   });
 
   describe('createImageSetFromLevel()', () => {
+    it('chooses the first successful candidate and does not request later alternatives', async () => {
+      const level = createDefaultMutableLevel();
+      level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
+
+      const imageSet = await createImageSetFromLevel(level);
+
+      expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:'/assets/conclusions/test.png' });
+      expect(imageSet.findImage('/assets/conclusions/test.png')).not.toBeNull();
+      expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/bodies/test.png');
+    });
+
+    it('awaits each candidate failure before requesting the next alternative', async () => {
+      const level = createDefaultMutableLevel();
+      level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
+      const firstResponse = Promise.withResolvers<Response>();
+      const firstRequested = Promise.withResolvers<void>();
+      vi.mocked(fetch).mockImplementation(async url => {
+        if (url === '/castle-mystery/assets/conclusions/test.png') {
+          firstRequested.resolve();
+          return firstResponse.promise;
+        }
+        return new Response(new Blob());
+      });
+      const loading = createImageSetFromLevel(level);
+      await firstRequested.promise;
+
+      expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/bodies/test.png');
+      firstResponse.resolve(new Response(null, { status:404 }));
+      const imageSet = await loading;
+      expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:'/assets/bodies/test.png' });
+      expect(imageSet.findImage('/assets/conclusions/test.png')).toBeNull();
+      expect(imageSet.findImage('/assets/bodies/test.png')).not.toBeNull();
+      expect(fetch).toHaveBeenCalledWith('/castle-mystery/assets/bodies/test.punch.png');
+    });
+
+    it('falls back after a candidate decode failure', async () => {
+      const level = createDefaultMutableLevel();
+      level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        headers:{ 'content-type':url === '/castle-mystery/assets/conclusions/test.png' ? 'image/broken' : 'image/png' }
+      }));
+      vi.mocked(createImageBitmap).mockImplementation(async source => {
+        if (source instanceof Blob && source.type === 'image/broken') throw new Error('Decode failed');
+        return { width:1, height:1 } as ImageBitmap;
+      });
+
+      const imageSet = await createImageSetFromLevel(level);
+
+      expect(imageSet.findImage('/assets/conclusions/test.png')).toBeNull();
+      expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:'/assets/bodies/test.png' });
+    });
+
+    it('reuses an already loaded direct candidate without probing earlier alternatives', async () => {
+      const level = createDefaultMutableLevel();
+      level.backgroundImageUrl = '/assets/bodies/test.png';
+      level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
+
+      const imageSet = await createImageSetFromLevel(level);
+
+      expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:'/assets/bodies/test.png' });
+      expect(imageSet.findImage('/assets/bodies/test.png')).not.toBeNull();
+      expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/conclusions/test.png');
+      expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === '/castle-mystery/assets/bodies/test.png')).toHaveLength(1);
+    });
+
+    it('reuses a resolved candidate across conclusions', async () => {
+      const level = createDefaultMutableLevel();
+      level.conclusions = [
+        _createImageConclusion(['/assets/conclusions/first.png', '/assets/bodies/shared.png']),
+        { ..._createImageConclusion(['/assets/conclusions/second.png', '/assets/bodies/shared.png']), id:'second' }
+      ];
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        status:url === '/castle-mystery/assets/conclusions/first.png' ? 404 : 200
+      }));
+
+      await createImageSetFromLevel(level);
+
+      expect(level.conclusions.map(conclusion => conclusion.parts[0])).toEqual([
+        { type:ClozePartType.image, imageUrl:'/assets/bodies/shared.png' },
+        { type:ClozePartType.image, imageUrl:'/assets/bodies/shared.png' }
+      ]);
+      expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/conclusions/second.png');
+      expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === '/castle-mystery/assets/bodies/shared.png')).toHaveLength(1);
+    });
+
+    it('rejects candidate exhaustion with the ordered candidate URLs', async () => {
+      const level = createDefaultMutableLevel();
+      level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        status:String(url).endsWith('/test.png') ? 404 : 200
+      }));
+
+      await expect(createImageSetFromLevel(level)).rejects.toThrow(
+        'Could not load conclusion image candidates: /assets/conclusions/test.png, /assets/bodies/test.png');
+      expect(level.conclusions[0].parts[0]).toEqual({
+        type:ClozePartType.image, imageUrl:['/assets/conclusions/test.png', '/assets/bodies/test.png']
+      });
+    });
+
+    it('rejects direct-image failure without starting candidate probing', async () => {
+      const level = createDefaultMutableLevel();
+      level.backgroundImageUrl = '/assets/backgrounds/missing.png';
+      level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        status:url === '/castle-mystery/assets/backgrounds/missing.png' ? 404 : 200
+      }));
+
+      await expect(createImageSetFromLevel(level)).rejects.toThrow('/assets/backgrounds/missing.png');
+      expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/conclusions/test.png');
+      expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/bodies/test.png');
+    });
+
     it('rejects an unavailable configured head image with its canonical URL', async () => {
       const level = createDefaultMutableLevel();
       level.characters = [{ ...createDefaultCharacter(),

@@ -37,11 +37,6 @@ class ImageSet {
     return this._imagesByUrl.has(url);
   }
 
-  set(url:string, imageAsset:ImageAsset):this {
-    this._imagesByUrl.set(url, imageAsset);
-    return this;
-  }
-
   /** Returns a fully loaded asset, or null. Never starts or waits for loading. */
   findImage(url:string):ImageAsset|null {
     return this._imagesByUrl.get(url) ?? null;

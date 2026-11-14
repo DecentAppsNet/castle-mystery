@@ -1,10 +1,8 @@
 /* This module groups image-set creation and loading helpers for built-in and authored runtime image assets.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { baseUrl } from "@/common/urlUtil";
 import { getGroundImageAssetUrl, isCandidateUrls } from "./imageUrlUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "./discoveryIconUrlUtil";
-import { createImageAsset } from "@/imageLoading";
 import { findTextureImageUrls } from "./textureUtil";
 import ClozeImage from "./conclusions/types/ClozeImage";
 import ClozePartType from "./conclusions/types/ClozePartType";
@@ -19,11 +17,6 @@ import { BOOK_IMAGE_URL, BOOK_PAGE_TILE_IMAGE_URL, ILLUMINATIONS_IMAGE_URL } fro
 
 export function createEmptyImageSet():ImageSet {
   return new ImageSet();
-}
-
-function _findPunchMaskImageUrl(imageUrl:string):string|null {
-  if (!imageUrl.toLowerCase().endsWith('.png')) return null;
-  return imageUrl.slice(0, -4) + '.punch.png';
 }
 
 function _findItemImageUrls(level:Level):string[] {
@@ -88,33 +81,9 @@ function _findImageUrls(level:Level):string[] {
 
 function _findResolvedCandidateUrl(candidateUrls:string[], imageSet:ImageSet):string|null {
   for (const candidateUrl of candidateUrls) {
-    if (imageSet.has(candidateUrl)) return candidateUrl;
+    if (imageSet.findImage(candidateUrl)) return candidateUrl;
   }
   return null;
-}
-
-async function _loadImageBitmap(imageUrl:string):Promise<ImageBitmap|null> {
-  try {
-    const response = await fetch(baseUrl(imageUrl));
-    if (!response.ok) return null;
-    return await createImageBitmap(await response.blob());
-  } catch {
-    return null;
-  }
-}
-
-async function _loadOptionalPunchMaskImageBitmap(imageUrl:string):Promise<ImageBitmap|null> {
-  const punchMaskImageUrl = _findPunchMaskImageUrl(imageUrl);
-  if (!punchMaskImageUrl) return null;
-  try {
-    const response = await fetch(baseUrl(punchMaskImageUrl));
-    if (!response.ok) return null;
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.toLowerCase().startsWith('image/')) return null;
-    return await createImageBitmap(await response.blob());
-  } catch {
-    return null;
-  }
 }
 
 async function _loadDirectReferencedImages(level:Level, imageSet:ImageSet):Promise<void> {
@@ -122,32 +91,32 @@ async function _loadDirectReferencedImages(level:Level, imageSet:ImageSet):Promi
   await Promise.all(imageUrls.map(imageUrl => imageSet.loadImage(imageUrl, true)));
 }
 
-async function _resolveCandidateUrl(candidateUrls:string[], imageSet:ImageSet,
-  loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>,
-  loadPunchMaskImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>):Promise<string|null> {
+async function _resolveCandidateUrl(candidateUrls:string[], imageSet:ImageSet):Promise<string> {
   const resolvedImageUrl = _findResolvedCandidateUrl(candidateUrls, imageSet);
   if (resolvedImageUrl) return resolvedImageUrl;
 
+  // Candidate failures are expected while probing ordered alternative buckets.
+  let lastError:unknown = null;
   for (const candidateUrl of candidateUrls) {
-    const imageBitmap = await loadImageBitmap(candidateUrl);
-    if (!imageBitmap) continue;
-    imageSet.set(candidateUrl, createImageAsset(imageBitmap, await loadPunchMaskImageBitmap(candidateUrl)));
-    return candidateUrl;
+    try {
+      await imageSet.loadImage(candidateUrl, true);
+      return candidateUrl;
+    } catch (error) {
+      lastError = error;
+    }
   }
 
-  return null;
+  // Do not publish unresolved images after all permitted candidates fail.
+  throw new Error(`Could not load conclusion image candidates: ${candidateUrls.join(', ')}`, { cause:lastError });
 }
 
-async function _resolveLevelConclusionImageUrls(level:Level, imageSet:ImageSet,
-  loadImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>,
-  loadPunchMaskImageBitmap:(imageUrl:string) => Promise<ImageBitmap|null>) {
+async function _resolveLevelConclusionImageUrls(level:Level, imageSet:ImageSet) {
   for (const conclusion of level.conclusions) {
     for (const [partIndex, part] of conclusion.parts.entries()) {
       if (part.type !== ClozePartType.image) continue;
       const imagePart = part as ClozeImage;
       if (!isCandidateUrls(imagePart.imageUrl)) continue;
-      const resolvedImageUrl = await _resolveCandidateUrl(imagePart.imageUrl, imageSet, loadImageBitmap, loadPunchMaskImageBitmap);
-      if (!resolvedImageUrl) continue;
+      const resolvedImageUrl = await _resolveCandidateUrl(imagePart.imageUrl, imageSet);
       conclusion.parts[partIndex] = {
         ...imagePart,
         imageUrl:resolvedImageUrl
@@ -159,6 +128,6 @@ async function _resolveLevelConclusionImageUrls(level:Level, imageSet:ImageSet,
 export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
   const imageSet = createEmptyImageSet();
   await _loadDirectReferencedImages(level, imageSet);
-  await _resolveLevelConclusionImageUrls(level, imageSet, _loadImageBitmap, _loadOptionalPunchMaskImageBitmap);
+  await _resolveLevelConclusionImageUrls(level, imageSet);
   return imageSet;
 }
