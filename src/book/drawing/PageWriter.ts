@@ -31,6 +31,10 @@ const colorNameToHex = {
   'red': '#9e302c'
 }
 
+function _splitTextToLines(text:string):string[] {
+  return text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
+}
+
 class PageWriter {
   private _pageRect:Rect;
   private _context:CanvasRenderingContext2D;
@@ -60,7 +64,7 @@ class PageWriter {
     const lineHeight = this.getLineHeight();
     const xRatio = justification === 'left' ? 0 : justification === 'right' ? 1 : .5;
     const x = this._pageRect.x + this._pageRect.width * xRatio;
-    const lines = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
+    const lines = _splitTextToLines(text);
 
     // Keep text styling local to this line so callers retain their canvas state.
     this._context.save();
@@ -76,11 +80,16 @@ class PageWriter {
     this._context.restore();
   }
 
-  private _writeChunk(text:string) {
+  private _writeChunk(text:string, isUnderlined:boolean = false) {
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
+    const width = this._context.measureText(text).width;
     this._context.fillText(text, x, y);
-    this._cursorPoint = [this._cursorPoint[0] + this._context.measureText(text).width / this._pageRect.width * 100,
+    if (isUnderlined) {
+      const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
+      this._context.fillRect(x, y + lineHeight * .98, width, lineHeight * .035);
+    }
+    this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100,
       this._cursorPoint[1]];
   }
 
@@ -93,12 +102,12 @@ class PageWriter {
     return this._pageRect.width * (1 - this._cursorPoint[0] / 100);
   }
 
-  private _writeWord(word:string) {
+  private _writeWord(word:string, isUnderlined:boolean = false) {
     if (word === '') return;
     const width = this._context.measureText(word).width;
     if (this._cursorPoint[0] > this._getLineStartXPercent() && width > this._getRemainingWidth()) this.addLineBreak();
     if (width <= this._getRemainingWidth()) {
-      this._writeChunk(word);
+      this._writeChunk(word, isUnderlined);
       return;
     }
 
@@ -106,7 +115,7 @@ class PageWriter {
     let chunk = '';
     for (const character of word) {
       if (chunk !== '' && this._context.measureText(chunk + character).width > this._getRemainingWidth()) {
-        this._writeChunk(chunk);
+        this._writeChunk(chunk, isUnderlined);
         this.addLineBreak();
         chunk = '';
       }
@@ -114,7 +123,7 @@ class PageWriter {
           this._context.measureText(character).width > this._getRemainingWidth()) this.addLineBreak();
       chunk += character;
     }
-    this._writeChunk(chunk);
+    this._writeChunk(chunk, isUnderlined);
   }
 
   addIllumination(letter:string) {
@@ -132,7 +141,7 @@ class PageWriter {
 
   // Draws text at current X,Y position of cursor with word-wrapping. One or more calls can be made to append portions of text.
   // Advances cursor to next position for outputting more text continuing from the last character of this text.
-  addText(text:string, colorName:ColorName = 'dkBrown') {
+  addText(text:string, colorName:ColorName = 'dkBrown', isUnderlined:boolean = false) {
     this._context.save();
     this._context.fillStyle = colorNameToHex[colorName];
     this._context.font = `${this._pageRect.height * this.getLineHeight() / 100}px im-fell-english, serif`;
@@ -146,17 +155,54 @@ class PageWriter {
         word += character;
         continue;
       }
-      this._writeWord(word);
+      this._writeWord(word, isUnderlined);
       word = '';
       if (character === '\n') {
         this.addLineBreak();
       } else if (character !== '\r') {
-        const spaceWidth = this._context.measureText(character === '\t' ? '    ' : ' ').width;
-        this._cursorPoint = [this._cursorPoint[0] + spaceWidth / this._pageRect.width * 100, this._cursorPoint[1]];
+        const whitespace = character === '\t' ? '    ' : ' ';
+        if (isUnderlined) {
+          this._writeChunk(whitespace, true);
+        } else {
+          const spaceWidth = this._context.measureText(whitespace).width;
+          this._cursorPoint = [this._cursorPoint[0] + spaceWidth / this._pageRect.width * 100, this._cursorPoint[1]];
+        }
       }
     }
-    this._writeWord(word);
+    this._writeWord(word, isUnderlined);
     this._context.restore();
+  }
+
+  addTextBox(text:string) {
+    const context = this._context;
+    const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
+    const padding = lineHeight * .15;
+    context.save();
+    context.font = `${lineHeight}px im-fell-english, serif`;
+    context.textAlign = 'left';
+    context.textBaseline = 'top';
+    let textWidth = context.measureText(text).width;
+    const maxTextWidth = Math.max(this._pageRect.width - padding * 2, this._pageRect.width * .1);
+    if (textWidth > maxTextWidth) {
+      context.font = `${lineHeight * maxTextWidth / textWidth}px im-fell-english, serif`;
+      textWidth = context.measureText(text).width;
+    }
+    const width = text === '' ? this._pageRect.width * .1 : textWidth + padding * 2;
+    if (width > this._getRemainingWidth() && this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
+    while (this._illuminationEnd && width > this._getRemainingWidth()) this.addLineBreak();
+
+    const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
+    const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
+    context.fillStyle = '#c8b294';
+    context.fillRect(x, y, width, lineHeight);
+    context.strokeStyle = colorNameToHex.dkBrown;
+    context.lineWidth = lineHeight * .035;
+    context.setLineDash([]);
+    context.strokeRect(x, y, width, lineHeight);
+    context.fillStyle = colorNameToHex.dkBrown;
+    context.fillText(text, x + padding, y);
+    this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100, this._cursorPoint[1]];
+    context.restore();
   }
 
   addIlluminatedText(text:string, colorName:ColorName = 'dkBrown') {
@@ -239,6 +285,11 @@ class PageWriter {
     const percent = fontSizeToLineHeight[fontSize];
     assert(Number.isFinite(percent));
     return percent * 100;
+  }
+
+  getTextLineHeight(text:string, fontSize:FontSize = this._fontSize):number {
+    const lines = _splitTextToLines(text);
+    return lines.length * this.getLineHeight(fontSize);
   }
 
   // Moves cursor to a specific place in page rect.

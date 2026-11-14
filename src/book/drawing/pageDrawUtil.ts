@@ -12,6 +12,7 @@ import ClozeText from "@/game/conclusions/types/ClozeText";
 import { drawObscuredPolygon } from "@/common/drawing/obscurePolygonDrawUtil";
 import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
 import ImageSet from "@/game/types/ImageSet";
+import { toNumeral } from "@/common/romanNumeralUtil";
 
 const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
@@ -34,24 +35,37 @@ function _calcInnerPageRect(pageRect:Rect, pageNo:number):Rect {
 
 type BookStartPage = Extract<BookPage, { kind:'bookStart' }>;
 function _drawBookStartPage(page:BookStartPage, pw:PageWriter) {
+  const aboveDividerTextHeight = pw.getTextLineHeight(page.title, 'xl') +
+    (page.subtitle === null ? 0 : pw.getLineHeight('m'));
+  const dividerHeight = pw.getLineHeight('l');
+
+  pw.jump(0, 50 - aboveDividerTextHeight - (dividerHeight / 2));
+
   pw.setFontSize('xl');
   pw.addTextLine(page.title);
-  pw.setFontSize('m');
+  if (page.subtitle) {
+    pw.setFontSize('m');
+    pw.addTextLine(page.subtitle);
+  }
+  pw.setFontSize('l');
   pw.addDivider('diamondCentered');
   pw.setFontSize('m');
   pw.addTextLine(`by ${page.author}`);
-  pw.setFontSize('m');
-  pw.addDivider('diamondCentered');
-  pw.setFontSize('m');
-  pw.addLineBreak();
-  pw.addIlluminatedText(page.description);
 }
 
 type ChapterStartPage = Extract<BookPage, { kind:'chapterStart' }>;
 function _drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
+  const aboveDividerTextHeight = pw.getLineHeight('l') + pw.getTextLineHeight(page.title, 'l');
+  const dividerHeight = pw.getLineHeight('m');
+
+  pw.jump(0, 50 - aboveDividerTextHeight - (dividerHeight / 2));
+
   pw.setFontSize('l');
+  pw.addTextLine(`Chapter ${toNumeral(page.chapterNo)}`);
   pw.addTextLine(page.title);
-  pw.addDivider('diamondCentered');
+  pw.setFontSize('m');
+  pw.addDivider('rule');
+  pw.addIlluminatedText(page.description);
 }
 
 
@@ -63,8 +77,9 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
     switch(part.type) {
       case ClozePartType.blank:
         const blankPart = part as ClozeBlank;
-        const playerGuess = blankPart.availableAnswers[blankPart.playerAnswerIndex] ?? '?';
-        pw.addText(`[${playerGuess}]`);
+        const playerGuess = blankPart.availableAnswers[blankPart.playerAnswerIndex] ?? '';
+        if (page.conclusion.isComplete) pw.addText(playerGuess, 'dkBrown', true);
+        else pw.addTextBox(playerGuess);
       break;
 
       case ClozePartType.image:

@@ -11,10 +11,6 @@ const conclusion1:Conclusion = { // TODO - stub data to delete.
   revealRoomIds: []
 }
 
-//[Larry] took the vase to the [Gift Shop] and [hid] it with [other vases].
-/*readonly availableAnswers: string[];
-  readonly correctAnswerIndexes: number[];
-  playerAnswerIndex: number;*/
 const conclusion2:Conclusion = { // TODO - stub data to delete.
   id: "What Happened to the Vase?",
   title: "What Happened to the Vase?",
@@ -38,8 +34,9 @@ export function createBookState():BookState { // TODO this will change later to 
   const bookState = createDefaultBookState();
   bookState.pages = [
     { kind:'blank', headingText:'' },
-    { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', author:'Erik Hermansen', description:'A tale of one young ruler besieged by trickery and manipulation. It may not, on all counts, be historically accurate. But honesty in the telling was certainly attempted.' },
-    { kind:'chapterStart', headingText:'', title:'Prologue'  },
+    { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', subtitle:null, author:'Erik Hermansen' },
+    { kind:'blank', headingText:'' },
+    { kind:'chapterStart', headingText:'', title:'Birth of Constantine', chapterNo:1, description:'Wherein Frederick is introduced to the World by a different name, and the earliest seeds of trouble are planted.' },
     { kind:'conclusion', headingText:'Identities', conclusion:conclusion1 },
     { kind:'conclusion', headingText:'Prologue - What Happened to the Vase?', conclusion:conclusion2 },
   ];

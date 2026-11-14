@@ -7,12 +7,14 @@ type BookPageBase<Kind extends string> = {
 
 type BookStartPage = BookPageBase<'bookStart'> & {
   title:string,
+  subtitle:string|null
   author:string,
-  description:string
 }
 
 type ChapterStartPage = BookPageBase<'chapterStart'> & {
-  title:string
+  title:string,
+  chapterNo:number,
+  description:string
 }
 
 type ConclusionPage = BookPageBase<'conclusion'> & {
