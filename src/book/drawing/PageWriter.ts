@@ -16,6 +16,7 @@ type ColorName = 'black' | 'red';
 type TextJustification = 'left' | 'right' | 'center';
 
 const TEXT_FLOW_RIGHT_MARGIN_PERCENT = 2;
+const TEXT_PAD_Y = .006;
 const TAB_COLUMN_WIDTH_PERCENT = 25;
 const ILLUMINATION_WIDTH_PERCENT_OF_PAGE_HEIGHT = 20;
 const ILLUMINATION_HEIGHT_PERCENT_OF_PAGE_HEIGHT = 20;
@@ -57,16 +58,23 @@ class PageWriter {
     this._fontSize = fontSize;
   }
 
+  private _getTextFontSizePixels():number {
+    return this._pageRect.height * (this.getLineHeight() / 100 - TEXT_PAD_Y * 2);
+  }
+
+  private _getTextY():number {
+    return this._pageRect.y + this._pageRect.height * (this._cursorPoint[1] / 100 + TEXT_PAD_Y);
+  }
+
   // Draws text on its own line, based on Y position of cursor and specified justification. (X position of cursor ignored.)
   // Embedded line breaks draw separate lines; each advances the cursor by line height with X reset to 0%.
   addTextLine(text:string, justification:TextJustification = 'center', colorName:ColorName = 'black') {
-    const lineHeight = this.getLineHeight();
     const xRatio = justification === 'left' ? 0 : justification === 'right' ? 1 : .5;
     const x = this._pageRect.x + this._pageRect.width * xRatio;
     const lines = splitTextToLines(text);
-    const fontSizePixels = this._pageRect.height * lineHeight / 100;
+    const fontSizePixels = this._getTextFontSizePixels();
     for (const line of lines) {
-      const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
+      const y = this._getTextY();
       drawPageTextLine(line, x, y, this._pageRect.width, fontSizePixels, justification,
         colorNameToHex[colorName], this._context);
       this.addLineBreak();
@@ -75,12 +83,12 @@ class PageWriter {
 
   private _writeChunk(text:string, isUnderlined:boolean = false) {
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
-    const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
+    const y = this._getTextY();
     const width = this._context.measureText(text).width;
     this._context.fillText(text, x, y);
     if (isUnderlined) {
-      const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
-      this._context.fillRect(x, y + lineHeight * .98, width, lineHeight * .035);
+      const fontSizePixels = this._getTextFontSizePixels();
+      this._context.fillRect(x, y + fontSizePixels * .98, width, fontSizePixels * .035);
     }
     this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100,
       this._cursorPoint[1]];
@@ -162,7 +170,7 @@ class PageWriter {
   addText(text:string, colorName:ColorName = 'black', isUnderlined:boolean = false) {
     this._context.save();
     this._context.fillStyle = colorNameToHex[colorName];
-    this._context.font = `${this._pageRect.height * this.getLineHeight() / 100}px im-fell-english, serif`;
+    this._context.font = `${this._getTextFontSizePixels()}px im-fell-english, serif`;
     this._context.textAlign = 'left';
     this._context.textBaseline = 'top';
 
@@ -195,7 +203,7 @@ class PageWriter {
   addTextBox(text:string) {
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     const { width, padding, fontSizePixels } = measurePageTextBox(text, this._pageRect.width,
-      lineHeight, this._context);
+      lineHeight, this._context, this._getTextFontSizePixels());
     if (width > this._getRemainingWidth() && this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
     while (this._textFlowObstacleEnd && width > this._getRemainingWidth()) this.addLineBreak();
 
@@ -243,7 +251,7 @@ class PageWriter {
     this._startFullWidthLine();
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     const { width, padding, fontSizePixels } = measurePageTextBox(text, this._pageRect.width,
-      lineHeight, this._context);
+      lineHeight, this._context, this._getTextFontSizePixels());
     const centerX = this._pageRect.x + this._pageRect.width / 2;
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
 

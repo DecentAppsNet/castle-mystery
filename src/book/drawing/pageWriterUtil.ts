@@ -41,9 +41,9 @@ export function drawPageTextLine(text:string, x:number, y:number, maxWidth:numbe
 
 /* v8 ignore next -- Canvas text sizing is verified visually. @preserve */
 export function measurePageTextBox(text:string, pageWidth:number, lineHeight:number,
-    context:CanvasRenderingContext2D):PageTextBoxMetrics {
+    context:CanvasRenderingContext2D, initialFontSizePixels:number = lineHeight):PageTextBoxMetrics {
   const padding = lineHeight * .15;
-  let fontSizePixels = lineHeight;
+  let fontSizePixels = initialFontSizePixels;
   context.save();
   context.font = _canvasFont(fontSizePixels);
   context.textAlign = 'left';
@@ -74,7 +74,7 @@ export function drawPageTextBox(text:string, x:number, y:number, width:number, l
   context.setLineDash([]);
   context.strokeRect(x, y, width, lineHeight);
   context.fillStyle = colorHex;
-  context.fillText(text, x + padding, y);
+  context.fillText(text, x + padding, y + (lineHeight - fontSizePixels) / 2);
   context.restore();
 }
 
