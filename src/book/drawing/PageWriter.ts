@@ -215,9 +215,12 @@ class PageWriter {
     this._cursorPoint = [this._getLineStartXPercent(), this._cursorPoint[1]];
   }
 
-  // Draws a divider across the page rect and advances cursor to next line. Uses the current font size to determine
-  // line height and vertically centers the line within that height.
+  // Draws a divider on a fresh full-width line, skipping any text flow obstacle, then advances to the next line.
+  // Uses the current font size to determine line height and vertically centers the divider within that height.
   addDivider(dividerStyle:DividerStyle = 'rule', colorName:ColorName = 'red') {
+    if (this._cursorPoint[0] !== this._getLineStartXPercent()) this.addLineBreak();
+    while (this._textFlowObstacleEnd) this.addLineBreak();
+
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     drawPageDivider(this._pageRect, this._cursorPoint[1], lineHeight, dividerStyle,
       colorNameToHex[colorName], this._context);

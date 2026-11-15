@@ -64,8 +64,8 @@ export function createBookState():BookState { // TODO this will change later to 
     { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', subtitle:null, author:'Erik Hermansen' },
     { kind:'blank', headingText:'' },
     { kind:'chapterStart', headingText:'', title:'Birth of Constantine', chapterNo:1, description:'Wherein Frederick is introduced to the World by a different name, and the earliest seeds of trouble are planted.' },
-    { kind:'conclusion', headingText:'Identities', conclusion:conclusion1 },
-    { kind:'conclusion', headingText:'Prologue - What Happened to the Vase?', conclusion:conclusion2 },
+    { kind:'conclusion', headingText:'Chap. I - Identities', conclusion:conclusion1 },
+    { kind:'conclusion', headingText:'Chap. I - Locked Conclusion', conclusion:conclusion2 },
   ];
   bookState.pageNo = 1;
   bookState.isVisible = false;
