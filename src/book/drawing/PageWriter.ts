@@ -234,6 +234,12 @@ class PageWriter {
     this.addLineBreak();
   }
 
+  // Draws a single button horizontally centered on a fresh full-width line, skipping any text flow obstacle, 
+  // then advances to the next line. Uses the current font size to determine button height.
+  addButton(text:string) {
+
+  }
+
   getCursorYPercent():number {
     return this._cursorPoint[1];
   }

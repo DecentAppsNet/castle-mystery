@@ -92,7 +92,7 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
       break;
 
       case ClozePartType.image:
-        pw.addImage((part as ClozeImage).imageUrl as string); // TODO figure out how to handle candidate URLs
+        pw.addImage((part as ClozeImage).imageUrl as string, 2); // TODO figure out how to handle candidate URLs
       break;
 
       default:

@@ -52,7 +52,7 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
    {type:"text",text:"."}
   ],
   isComplete: false,
-  isLocked: true,
+  isLocked: false,
   unlockConclusionIds: [],
   revealRoomIds: []
 }
