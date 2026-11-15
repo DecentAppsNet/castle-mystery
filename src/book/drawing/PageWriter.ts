@@ -1,4 +1,4 @@
-/* This file provides percentage-based canvas text placement within a book page.
+/* This file manages percentage-based book-page placement, cursor movement, and text wrapping.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 /* v8 ignore file -- Canvas text placement is verified visually. @preserve */
 
@@ -7,11 +7,13 @@ import Rect from "@/game/types/Rect";
 import { assert } from "decent-portal";
 import { drawIllumination } from "./illuminationDrawUtil";
 import { ImageSet } from "@/imageLoading";
+import { drawPageDivider, drawPageTextBox, drawPageTextLine, getIlluminatedTextSections,
+  measurePageTextBox, splitTextToLines } from "./pageWriterUtil";
+import DividerStyle from "./types/DividerStyle";
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
-type ColorName = 'dkBrown' | 'red';
+type ColorName = 'black' | 'red';
 type TextJustification = 'left' | 'right' | 'center';
-type DividerStyle = 'rule' | 'diamondCentered' | 'tripleDot';
 
 const ILLUMINATION_RIGHT_MARGIN_PERCENT = 2;
 const ILLUMINATION_WIDTH_PERCENT_OF_PAGE_HEIGHT = 20;
@@ -26,25 +28,9 @@ const fontSizeToLineHeight = {
   'xl': .1
 };
 
-const colorNameToHex = {
-  'dkBrown': '#392b20',
+const colorNameToHex:Record<ColorName, string> = {
+  'black': '#392b20',
   'red': '#9e302c'
-}
-
-function _splitTextToLines(text:string):string[] {
-  return text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
-}
-
-function _getIlluminatedTextSections(text:string):{firstLetter:string, firstWord:string, theRest:string} {
-  let firstLetter = '', firstWord = '', theRest = '';
-  if (text.length === 0) return { firstLetter, firstWord, theRest };
-  firstLetter = text[0];
-  if (text.length === 1) return { firstLetter, firstWord, theRest };
-  let endOfFirstWordI = text.indexOf(' ');
-  if (endOfFirstWordI === -1) endOfFirstWordI = text.length;
-  firstWord = text.substring(1, endOfFirstWordI).toLocaleUpperCase();
-  if (endOfFirstWordI !== text.length) theRest = text.substring(endOfFirstWordI);
-  return { firstLetter, firstWord, theRest };
 }
 
 class PageWriter {
@@ -72,24 +58,18 @@ class PageWriter {
 
   // Draws text on its own line, based on Y position of cursor and specified justification. (X position of cursor ignored.)
   // Embedded line breaks draw separate lines; each advances the cursor by line height with X reset to 0%.
-  addTextLine(text:string, justification:TextJustification = 'center', colorName:ColorName = 'dkBrown') {
+  addTextLine(text:string, justification:TextJustification = 'center', colorName:ColorName = 'black') {
     const lineHeight = this.getLineHeight();
     const xRatio = justification === 'left' ? 0 : justification === 'right' ? 1 : .5;
     const x = this._pageRect.x + this._pageRect.width * xRatio;
-    const lines = _splitTextToLines(text);
-
-    // Keep text styling local to this line so callers retain their canvas state.
-    this._context.save();
-    this._context.fillStyle = colorNameToHex[colorName];
-    this._context.font = `${this._pageRect.height * lineHeight / 100}px im-fell-english, serif`;
-    this._context.textAlign = justification;
-    this._context.textBaseline = 'top';
+    const lines = splitTextToLines(text);
+    const fontSizePixels = this._pageRect.height * lineHeight / 100;
     for (const line of lines) {
       const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
-      this._context.fillText(line, x, y, this._pageRect.width);
+      drawPageTextLine(line, x, y, this._pageRect.width, fontSizePixels, justification,
+        colorNameToHex[colorName], this._context);
       this.addLineBreak();
     }
-    this._context.restore();
   }
 
   private _writeChunk(text:string, isUnderlined:boolean = false) {
@@ -153,7 +133,7 @@ class PageWriter {
 
   // Draws text at current X,Y position of cursor with word-wrapping. One or more calls can be made to append portions of text.
   // Advances cursor to next position for outputting more text continuing from the last character of this text.
-  addText(text:string, colorName:ColorName = 'dkBrown', isUnderlined:boolean = false) {
+  addText(text:string, colorName:ColorName = 'black', isUnderlined:boolean = false) {
     this._context.save();
     this._context.fillStyle = colorNameToHex[colorName];
     this._context.font = `${this._pageRect.height * this.getLineHeight() / 100}px im-fell-english, serif`;
@@ -186,41 +166,24 @@ class PageWriter {
   }
 
   addTextBox(text:string) {
-    const context = this._context;
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
-    const padding = lineHeight * .15;
-    context.save();
-    context.font = `${lineHeight}px im-fell-english, serif`;
-    context.textAlign = 'left';
-    context.textBaseline = 'top';
-    let textWidth = context.measureText(text).width;
-    const maxTextWidth = Math.max(this._pageRect.width - padding * 2, this._pageRect.width * .1);
-    if (textWidth > maxTextWidth) {
-      context.font = `${lineHeight * maxTextWidth / textWidth}px im-fell-english, serif`;
-      textWidth = context.measureText(text).width;
-    }
-    const width = text === '' ? this._pageRect.width * .1 : textWidth + padding * 2;
+    const { width, padding, fontSizePixels } = measurePageTextBox(text, this._pageRect.width,
+      lineHeight, this._context);
     if (width > this._getRemainingWidth() && this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
     while (this._illuminationEnd && width > this._getRemainingWidth()) this.addLineBreak();
 
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
-    context.fillStyle = '#c8b294';
-    context.fillRect(x, y, width, lineHeight);
-    context.strokeStyle = colorNameToHex.dkBrown;
-    context.lineWidth = lineHeight * .035;
-    context.setLineDash([]);
-    context.strokeRect(x, y, width, lineHeight);
-    context.fillStyle = colorNameToHex.dkBrown;
-    context.fillText(text, x + padding, y);
+    drawPageTextBox(text, x, y, width, lineHeight, padding, fontSizePixels,
+      colorNameToHex.black, this._context);
     this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100, this._cursorPoint[1]];
-    context.restore();
   }
 
-  addIlluminatedText(text:string, colorName:ColorName = 'dkBrown') {
+  addIlluminatedText(text:string, colorName:ColorName = 'black') {
     if (!text.length) return;
-    const { firstLetter, firstWord, theRest } = _getIlluminatedTextSections(text);
+    const { firstLetter, firstWord, theRest } = getIlluminatedTextSections(text);
     this.addIllumination(firstLetter);
+    this._cursorPoint = [this._cursorPoint[0] - 2, this._cursorPoint[1]]; // Nudge first word slightly to left to visually connect it to illumination.
     this.addText(firstWord, 'red');
     this.addText(theRest, colorName);
   }
@@ -236,56 +199,8 @@ class PageWriter {
   // line height and vertically centers the line within that height.
   addDivider(dividerStyle:DividerStyle = 'rule', colorName:ColorName = 'red') {
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
-    const centerX = this._pageRect.x + this._pageRect.width / 2;
-    const centerY = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100 + lineHeight / 2;
-    const halfWidth = this._pageRect.width * .4;
-    const ornamentSize = Math.min(lineHeight * .3, this._pageRect.width * .03);
-    const context = this._context;
-
-    // Keep divider styling independent of surrounding text and canvas paths.
-    context.save();
-    context.strokeStyle = colorNameToHex[colorName];
-    context.fillStyle = context.strokeStyle;
-    context.lineWidth = Math.min(lineHeight * .06, this._pageRect.width * .006);
-    context.setLineDash([]);
-    context.beginPath();
-
-    switch (dividerStyle) {
-      case 'rule':
-        context.lineCap = 'round';
-        context.moveTo(centerX - halfWidth, centerY);
-        context.lineTo(centerX + halfWidth, centerY);
-        context.stroke();
-        break;
-      case 'diamondCentered': {
-        const gap = ornamentSize * 1.35;
-        context.lineCap = 'butt';
-        context.moveTo(centerX - halfWidth, centerY);
-        context.lineTo(centerX - gap, centerY);
-        context.moveTo(centerX + gap, centerY);
-        context.lineTo(centerX + halfWidth, centerY);
-        context.stroke();
-        context.beginPath();
-        context.moveTo(centerX, centerY - ornamentSize);
-        context.lineTo(centerX + ornamentSize, centerY);
-        context.lineTo(centerX, centerY + ornamentSize);
-        context.lineTo(centerX - ornamentSize, centerY);
-        context.closePath();
-        context.fill();
-        break;
-      }
-      case 'tripleDot':
-        for (const offset of [-1, 0, 1]) {
-          const dotX = centerX + offset * ornamentSize * 1.8;
-          context.moveTo(dotX + ornamentSize * .42, centerY);
-          context.arc(dotX, centerY, ornamentSize * .42, 0, Math.PI * 2);
-        }
-        context.fill();
-        break;
-      default:
-        assert(false, 'Unknown divider style');
-    }
-    context.restore();
+    drawPageDivider(this._pageRect, this._cursorPoint[1], lineHeight, dividerStyle,
+      colorNameToHex[colorName], this._context);
     this.addLineBreak();
   }
 
@@ -300,7 +215,7 @@ class PageWriter {
   }
 
   getTextLineHeight(text:string, fontSize:FontSize = this._fontSize):number {
-    const lines = _splitTextToLines(text);
+    const lines = splitTextToLines(text);
     return lines.length * this.getLineHeight(fontSize);
   }
 
