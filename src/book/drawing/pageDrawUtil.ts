@@ -83,10 +83,6 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
         else pw.addTextBox(playerGuess);
       break;
 
-      case ClozePartType.image:
-        // TODO
-      break;
-
       case ClozePartType.separator:
         pw.addDivider('rule');
       break;

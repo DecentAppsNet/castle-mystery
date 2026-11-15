@@ -4,7 +4,7 @@
 
 import Point from "@/game/types/Point";
 import Rect from "@/game/types/Rect";
-import { assert } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 import { drawIllumination } from "./illuminationDrawUtil";
 import { ImageSet } from "@/imageLoading";
 import { drawPageDivider, drawPageTextBox, drawPageTextLine, getIlluminatedTextSections,
@@ -15,7 +15,7 @@ type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 type ColorName = 'black' | 'red';
 type TextJustification = 'left' | 'right' | 'center';
 
-const ILLUMINATION_RIGHT_MARGIN_PERCENT = 2;
+const TEXT_FLOW_RIGHT_MARGIN_PERCENT = 2;
 const ILLUMINATION_WIDTH_PERCENT_OF_PAGE_HEIGHT = 20;
 const ILLUMINATION_HEIGHT_PERCENT_OF_PAGE_HEIGHT = 20;
 
@@ -39,7 +39,7 @@ class PageWriter {
   private _fontSize:FontSize;
   private _cursorPoint:Point; // Units are percentages of pageRect width and height.
   private _imageSet:ImageSet;
-  private _illuminationEnd:Point|null = null;
+  private _textFlowObstacleEnd:Point|null = null;
 
   constructor(pageRect:Rect, imageSet:ImageSet, context:CanvasRenderingContext2D) {
     assert(pageRect.width > 0 && pageRect.height > 0);
@@ -86,8 +86,8 @@ class PageWriter {
   }
 
   private _getLineStartXPercent():number {
-    if (this._illuminationEnd && this._cursorPoint[1] >= this._illuminationEnd[1]) this._illuminationEnd = null;
-    return this._illuminationEnd ? this._illuminationEnd[0] : 0;
+    if (this._textFlowObstacleEnd && this._cursorPoint[1] >= this._textFlowObstacleEnd[1]) this._textFlowObstacleEnd = null;
+    return this._textFlowObstacleEnd ? this._textFlowObstacleEnd[0] : 0;
   }
 
   private _getRemainingWidth():number {
@@ -103,7 +103,7 @@ class PageWriter {
       return;
     }
 
-    // Break oversized words within each line's available width beside the illumination.
+    // Break oversized words within each line's available width beside the obstacle.
     let chunk = '';
     for (const character of word) {
       if (chunk !== '' && this._context.measureText(chunk + character).width > this._getRemainingWidth()) {
@@ -111,31 +111,44 @@ class PageWriter {
         this.addLineBreak();
         chunk = '';
       }
-      while (chunk === '' && this._illuminationEnd &&
+      while (chunk === '' && this._textFlowObstacleEnd &&
           this._context.measureText(character).width > this._getRemainingWidth()) this.addLineBreak();
       chunk += character;
     }
     this._writeChunk(chunk, isUnderlined);
   }
 
+  private _placeTextFlowObstacle(width:number, height:number):Rect {
+    const yPercent = this._textFlowObstacleEnd
+      ? Math.max(this._cursorPoint[1], this._textFlowObstacleEnd[1]) : this._cursorPoint[1];
+    this._textFlowObstacleEnd = [
+      width / this._pageRect.width * 100 + TEXT_FLOW_RIGHT_MARGIN_PERCENT,
+      yPercent + height / this._pageRect.height * 100
+    ];
+    this._cursorPoint = [this._textFlowObstacleEnd[0], yPercent];
+    return { x:this._pageRect.x, y:this._pageRect.y + yPercent / 100 * this._pageRect.height, width, height };
+  }
+
   addIllumination(letter:string) {
-    const canvasX = this._pageRect.x;
-    const canvasY = this._pageRect.y + (this._cursorPoint[1]/100 * this._pageRect.height);
     const width = this._pageRect.height * ILLUMINATION_WIDTH_PERCENT_OF_PAGE_HEIGHT / 100;
     const height = this._pageRect.height * ILLUMINATION_HEIGHT_PERCENT_OF_PAGE_HEIGHT / 100;
-    drawIllumination(letter, canvasX, canvasY, width, height, this._imageSet, this._context);
-    this._illuminationEnd = [
-      width / this._pageRect.width * 100 + ILLUMINATION_RIGHT_MARGIN_PERCENT,
-      this._cursorPoint[1] + height / this._pageRect.height * 100
-    ];
-    this._cursorPoint = [this._illuminationEnd[0], this._cursorPoint[1]];
+    const destination = this._placeTextFlowObstacle(width, height);
+    drawIllumination(letter, destination.x, destination.y, width, height, this._imageSet, this._context);
   }
 
   // Draws an image on left side of page at cursor Y. Text will flow around it. The lineCount param is used to determine 
-  // the destination height of the image. Destination width will be calculated be scaling source width of image to
-  // match destination height while maintaining aspect ratio of source image.
-  addImage(_url:string, _lineCount:number = 3) {
-    // TODO
+  // the destination height of the image. Destination width is scaled to maintain the aspect ratio of visible content.
+  addImage(url:string, lineCount:number = 3) {
+    assert(Number.isFinite(lineCount) && lineCount > 0);
+    const imageAsset = this._imageSet.findImage(url);
+    assertNonNullable(imageAsset, `Missing loaded image asset ${url}`);
+    const sourceRect = imageAsset.visibleSourceRect;
+    if (!sourceRect) return;
+
+    const height = this._pageRect.height * this.getLineHeight() * lineCount / 100;
+    const width = height * sourceRect.width / sourceRect.height;
+    const destination = this._placeTextFlowObstacle(width, height);
+    this._imageSet.drawImage(imageAsset, destination.x, destination.y, width, height, this._context);
   }
 
   // Draws text at current X,Y position of cursor with word-wrapping. One or more calls can be made to append portions of text.
@@ -177,7 +190,7 @@ class PageWriter {
     const { width, padding, fontSizePixels } = measurePageTextBox(text, this._pageRect.width,
       lineHeight, this._context);
     if (width > this._getRemainingWidth() && this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
-    while (this._illuminationEnd && width > this._getRemainingWidth()) this.addLineBreak();
+    while (this._textFlowObstacleEnd && width > this._getRemainingWidth()) this.addLineBreak();
 
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
@@ -196,7 +209,7 @@ class PageWriter {
   }
 
   // Advances cursor to start of next line, based on current font height. If already at the start of an empty line, this will
-  // leave an empty line when advancing to next line. Lines beside an illumination start at its right edge.
+  // leave an empty line when advancing to next line. Lines beside an obstacle start at its right edge.
   addLineBreak() {
     this._cursorPoint = [0, this._cursorPoint[1] + this.getLineHeight()];
     this._cursorPoint = [this._getLineStartXPercent(), this._cursorPoint[1]];
@@ -228,7 +241,7 @@ class PageWriter {
 
   // Moves cursor to a specific place in page rect.
   jump(xPercent:number, yPercent:number):void {
-    this._illuminationEnd = null;
+    this._textFlowObstacleEnd = null;
     this._cursorPoint = [xPercent, yPercent];
   }
 }
