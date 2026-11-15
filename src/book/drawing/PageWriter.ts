@@ -10,9 +10,11 @@ import { ImageSet } from "@/imageLoading";
 import { drawPageDivider, drawPageTextBox, drawPageTextLine, getIlluminatedTextSections,
   measurePageTextBox, splitTextToLines } from "./pageWriterUtil";
 import DividerStyle from "./types/DividerStyle";
+import { hatchRect } from "@/common/drawing/hatchUtil";
+import HatchStyle from "@/common/drawing/types/HatchStyle";
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
-type ColorName = 'black' | 'red';
+type ColorName = 'black' | 'red' | 'grey';
 type TextJustification = 'left' | 'right' | 'center';
 
 const TEXT_FLOW_RIGHT_MARGIN_PERCENT = 2;
@@ -23,15 +25,16 @@ const ILLUMINATION_HEIGHT_PERCENT_OF_PAGE_HEIGHT = 20;
 
 // Font sizes expressed as fractions of page height.
 const fontSizeToLineHeight = {
-  'xs': .02,
-  's': .03,
-  'm': .04,
+  'xs': .03,
+  's': .04,
+  'm': .05,
   'l': .06,
   'xl': .1
 };
 
 const colorNameToHex:Record<ColorName, string> = {
   'black': '#392b20',
+  'grey': '#777777',
   'red': '#9e302c'
 }
 
@@ -211,6 +214,14 @@ class PageWriter {
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
     drawPageTextBox(text, x, y, width, lineHeight, padding, fontSizePixels,
       colorNameToHex.black, this._context);
+    const style:HatchStyle = {
+      angle: .5,
+      spacing: 10,
+      lineWeightStart: .1,
+      lineWeightEnd: 1,
+      color: colorNameToHex['grey']
+    }
+    hatchRect({x, y, width, height:lineHeight}, style, this._context);
     this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100, this._cursorPoint[1]];
   }
 
