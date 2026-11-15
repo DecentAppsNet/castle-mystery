@@ -99,6 +99,7 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
         botch();
     }
   }
+  pw.addButton('Claim Conclusion');
 }
 
 function _createLockedPageClipPath(rect:Rect, isLeftPage:boolean):Path2D {

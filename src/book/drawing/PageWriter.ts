@@ -222,12 +222,15 @@ class PageWriter {
     this._cursorPoint = [this._getLineStartXPercent(), this._cursorPoint[1]];
   }
 
+  private _startFullWidthLine():void {
+    if (this._cursorPoint[0] !== this._getLineStartXPercent()) this.addLineBreak();
+    while (this._textFlowObstacleEnd) this.addLineBreak();
+  }
+
   // Draws a divider on a fresh full-width line, skipping any text flow obstacle, then advances to the next line.
   // Uses the current font size to determine line height and vertically centers the divider within that height.
   addDivider(dividerStyle:DividerStyle = 'rule', colorName:ColorName = 'red') {
-    if (this._cursorPoint[0] !== this._getLineStartXPercent()) this.addLineBreak();
-    while (this._textFlowObstacleEnd) this.addLineBreak();
-
+    this._startFullWidthLine();
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     drawPageDivider(this._pageRect, this._cursorPoint[1], lineHeight, dividerStyle,
       colorNameToHex[colorName], this._context);
@@ -237,7 +240,21 @@ class PageWriter {
   // Draws a single button horizontally centered on a fresh full-width line, skipping any text flow obstacle, 
   // then advances to the next line. Uses the current font size to determine button height.
   addButton(text:string) {
+    this._startFullWidthLine();
+    const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
+    const { width, padding, fontSizePixels } = measurePageTextBox(text, this._pageRect.width,
+      lineHeight, this._context);
+    const centerX = this._pageRect.x + this._pageRect.width / 2;
+    const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
 
+    this._context.save();
+    this._context.globalAlpha = 1;
+    this._context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    this._context.fillRect(centerX - width / 2, y, width, lineHeight);
+    drawPageTextLine(text, centerX, y + (lineHeight - fontSizePixels) / 2, width - padding * 2,
+      fontSizePixels, 'center', '#ffffff', this._context);
+    this._context.restore();
+    this.addLineBreak();
   }
 
   getCursorYPercent():number {
