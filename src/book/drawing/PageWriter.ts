@@ -16,6 +16,7 @@ type ColorName = 'black' | 'red';
 type TextJustification = 'left' | 'right' | 'center';
 
 const TEXT_FLOW_RIGHT_MARGIN_PERCENT = 2;
+const TAB_COLUMN_WIDTH_PERCENT = 25;
 const ILLUMINATION_WIDTH_PERCENT_OF_PAGE_HEIGHT = 20;
 const ILLUMINATION_HEIGHT_PERCENT_OF_PAGE_HEIGHT = 20;
 
@@ -151,6 +152,11 @@ class PageWriter {
     this._imageSet.drawImage(imageAsset, destination.x, destination.y, width, height, this._context);
   }
 
+  private _findNextTabXPercent():number {
+    const nextTabColumn = Math.floor(this._cursorPoint[0] / TAB_COLUMN_WIDTH_PERCENT) + 1;
+    return Math.min(nextTabColumn * TAB_COLUMN_WIDTH_PERCENT, 100);
+  }
+
   // Draws text at current X,Y position of cursor with word-wrapping. One or more calls can be made to append portions of text.
   // Advances cursor to next position for outputting more text continuing from the last character of this text.
   addText(text:string, colorName:ColorName = 'black', isUnderlined:boolean = false) {
@@ -171,12 +177,13 @@ class PageWriter {
       word = '';
       if (character === '\n') {
         this.addLineBreak();
+      } else if (character === '\t') {
+        this._cursorPoint = [this._findNextTabXPercent(), this._cursorPoint[1]];
       } else if (character !== '\r') {
-        const whitespace = character === '\t' ? '    ' : ' ';
         if (isUnderlined) {
-          this._writeChunk(whitespace, true);
+          this._writeChunk(' ', true);
         } else {
-          const spaceWidth = this._context.measureText(whitespace).width;
+          const spaceWidth = this._context.measureText(' ').width;
           this._cursorPoint = [this._cursorPoint[0] + spaceWidth / this._pageRect.width * 100, this._cursorPoint[1]];
         }
       }
