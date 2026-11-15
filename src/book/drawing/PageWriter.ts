@@ -131,6 +131,13 @@ class PageWriter {
     this._cursorPoint = [this._illuminationEnd[0], this._cursorPoint[1]];
   }
 
+  // Draws an image on left side of page at cursor Y. Text will flow around it. The lineCount param is used to determine 
+  // the destination height of the image. Destination width will be calculated be scaling source width of image to
+  // match destination height while maintaining aspect ratio of source image.
+  addImage(_url:string, _lineCount:number = 3) {
+    // TODO
+  }
+
   // Draws text at current X,Y position of cursor with word-wrapping. One or more calls can be made to append portions of text.
   // Advances cursor to next position for outputting more text continuing from the last character of this text.
   addText(text:string, colorName:ColorName = 'black', isUnderlined:boolean = false) {

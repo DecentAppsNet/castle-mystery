@@ -1,31 +1,58 @@
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import BookState, { createDefaultBookState } from "./types/BookState";
 
+/*
+[{"id":"identities","title":"Identities","parts":[
+{"type":"image","imageUrl":"/assets/bodies/amosTheGuard.png"},{"type":"text","text":" = "},{"type":"blank","availableAnswers":["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"],"correctAnswerIndexes":[0],"playerAnswerIndex":-1},{"type":"separator"},{"type":"image","imageUrl":"/assets/bodies/constanceI.png"},{"type":"text","text":" = "},{"type":"blank","availableAnswers":["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"],"correctAnswerIndexes":[1],"playerAnswerIndex":-1},{"type":"separator"},{"type":"image","imageUrl":"/assets/bodies/ugolino.png"},{"type":"text","text":" = "},{"type":"blank","availableAnswers":["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"],"correctAnswerIndexes":[5],"playerAnswerIndex":-1},{"type":"separator"},{"type":"image","imageUrl":"/assets/bodies/pope.png"},{"type":"text","text":" = "},{"type":"blank","availableAnswers":["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"],"correctAnswerIndexes":[2],"playerAnswerIndex":-1},{"type":"separator"},{"type":"image","imageUrl":"/assets/bodies/stickyAgatha.png"},{"type":"text","text":" = "},{"type":"blank","availableAnswers":["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"],"correctAnswerIndexes":[4],"playerAnswerIndex":-1},{"type":"separator"},{"type":"image","imageUrl":"/assets/bodies/midwife.png"},{"type":"text","text":" = "},{"type":"blank","availableAnswers":["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"],"correctAnswerIndexes":[3],"playerAnswerIndex":-1}],"unlockConclusionIds":["the relic"],"revealRoomIds":[],"isComplete":false,"isLocked":false},{"id":"the relic","title":"The Relic","parts":[{"type":"text","text":"The "},{"type":"blank","availableAnswers":["Coffer","Holy Binky","Infant","Letter","Newborn Baby","Vase"],"correctAnswerIndexes":[1],"playerAnswerIndex":-1},{"type":"text","text":" was regifted to "},{"type":"blank","availableAnswers":["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"],"correctAnswerIndexes":[4],"playerAnswerIndex":-1},{"type":"text","text":"."}],"isComplete":false,"isLocked":true,"unlockConclusionIds":[],"revealRoomIds":[]}]
+*/
+
+const characterNames = ["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"];
 const conclusion1:Conclusion = { // TODO - stub data to delete.
   id: "identities",
   title: "Identities",
-  parts: [],
+  parts: [
+    {type:"image", imageUrl:"/assets/bodies/amosTheGuard.png"},
+    {type:"text", text:" = "},
+    {type:"blank", availableAnswers:characterNames, correctAnswerIndexes:[0], playerAnswerIndex:-1},
+    {type:"separator"},
+    {type:"image", imageUrl:"/assets/bodies/constanceI.png"},
+    {type:"text",text:" = "},
+    {type:"blank",availableAnswers:characterNames,correctAnswerIndexes:[1],playerAnswerIndex:-1},
+    {type:"separator"},
+    {type:"image",imageUrl:"/assets/bodies/ugolino.png"},
+    {type:"text",text:" = "},
+    {type:"blank",availableAnswers:characterNames,correctAnswerIndexes:[5],playerAnswerIndex:-1},
+    {type:"separator"},
+    {type:"image",imageUrl:"/assets/bodies/pope.png"},
+    {type:"text",text:" = "},
+    {type:"blank",availableAnswers:characterNames,correctAnswerIndexes:[2],playerAnswerIndex:-1},
+    {type:"separator"},
+    {type:"image",imageUrl:"/assets/bodies/stickyAgatha.png"},
+    {type:"text",text:" = "},
+    {type:"blank",availableAnswers:characterNames,correctAnswerIndexes:[4],playerAnswerIndex:-1},
+    {type:"separator"},
+    {type:"image",imageUrl:"/assets/bodies/midwife.png"},
+    {type:"text",text:" = "},
+    {type:"blank",availableAnswers:characterNames,correctAnswerIndexes:[3],playerAnswerIndex:-1},
+  ],
   isComplete: false,
-  isLocked: true,
-  unlockConclusionIds: [],
+  isLocked: false,
+  unlockConclusionIds: ['the relic'],
   revealRoomIds: []
 }
 
 const conclusion2:Conclusion = { // TODO - stub data to delete.
-  id: "What Happened to the Vase?",
-  title: "What Happened to the Vase?",
+  id: "the relic",
+  title: "The Relic",
   parts: [
-    { type:'blank', availableAnswers:['Larry', 'Marty', 'Lorenzo'], correctAnswerIndexes:[0], playerAnswerIndex:0 },
-    { type:'text', text:' took the vase to the ' },
-    { type:'blank', availableAnswers:['Gift Shop'], correctAnswerIndexes:[0], playerAnswerIndex:0 },
-    { type:'text', text:' and ' },
-    { type:'blank', availableAnswers:['hid'], correctAnswerIndexes:[0], playerAnswerIndex:0 },
-    { type:'text', text:' it with ' },
-    { type:'blank', availableAnswers:['other vases'], correctAnswerIndexes:[0], playerAnswerIndex:0 },
-    { type:'text', text:'.' },
+   {type:"text",text:"The "},
+   {type:"blank",availableAnswers:["Coffer","Holy Binky","Infant","Letter","Newborn Baby","Vase"],correctAnswerIndexes:[1],playerAnswerIndex:-1},
+   {type:"text",text:" was regifted to "},
+   {type:"blank","availableAnswers":characterNames,"correctAnswerIndexes":[4],playerAnswerIndex:-1},
+   {type:"text",text:"."}
   ],
   isComplete: false,
-  isLocked: false,
+  isLocked: true,
   unlockConclusionIds: [],
   revealRoomIds: []
 }

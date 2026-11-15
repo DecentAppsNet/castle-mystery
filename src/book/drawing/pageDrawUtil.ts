@@ -13,6 +13,7 @@ import { drawObscuredPolygon } from "@/common/drawing/obscurePolygonDrawUtil";
 import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
 import { ImageSet } from "@/imageLoading";
 import { toNumeral } from "@/common/romanNumeralUtil";
+import ClozeImage from "@/game/conclusions/types/ClozeImage";
 
 const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
@@ -78,7 +79,7 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
       case ClozePartType.blank:
         const blankPart = part as ClozeBlank;
         const playerGuess = blankPart.availableAnswers[blankPart.playerAnswerIndex] ?? '';
-        if (page.conclusion.isComplete) pw.addText(playerGuess, 'dkBrown', true);
+        if (page.conclusion.isComplete) pw.addText(playerGuess, 'black', true);
         else pw.addTextBox(playerGuess);
       break;
 
@@ -92,6 +93,10 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
 
       case ClozePartType.text:
         pw.addText((part as ClozeText).text);
+      break;
+
+      case ClozePartType.image:
+        pw.addImage((part as ClozeImage).imageUrl as string); // TODO figure out how to handle candidate URLs
       break;
 
       default:
