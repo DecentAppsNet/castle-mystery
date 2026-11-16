@@ -73,6 +73,7 @@ function _drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
 type ConclusionPage = Extract<BookPage, { kind:'conclusion' }>;
 function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
   pw.setFontSize('m');
+  let pieceStyleNo = 3; // TODO - tie to cloze category later.
   for(let partI = 0; partI < page.conclusion.parts.length; ++partI) {
     const part = page.conclusion.parts[partI];
     switch(part.type) {
@@ -80,7 +81,7 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
         const blankPart = part as ClozeBlank;
         const playerGuess = blankPart.availableAnswers[blankPart.playerAnswerIndex] ?? '';
         if (page.conclusion.isComplete) pw.addText(playerGuess, 'black', true);
-        else pw.addTextBox(playerGuess);
+        else pw.addPieceSlot(playerGuess, pieceStyleNo++);
       break;
 
       case ClozePartType.separator:

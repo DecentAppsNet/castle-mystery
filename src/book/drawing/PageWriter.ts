@@ -7,11 +7,9 @@ import Rect from "@/game/types/Rect";
 import { assert, assertNonNullable } from "decent-portal";
 import { drawIllumination } from "./illuminationDrawUtil";
 import { ImageSet } from "@/imageLoading";
-import { drawPageDivider, drawPageTextBox, drawPageTextLine, getIlluminatedTextSections,
+import { drawPageDivider, drawPagePieceSlot, drawPageTextLine, getIlluminatedTextSections,
   measurePageTextBox, splitTextToLines } from "./pageWriterUtil";
 import DividerStyle from "./types/DividerStyle";
-import { hatchRect } from "@/common/drawing/hatchUtil";
-import HatchStyle from "@/common/drawing/types/HatchStyle";
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 type ColorName = 'black' | 'red' | 'grey';
@@ -203,7 +201,7 @@ class PageWriter {
     this._context.restore();
   }
 
-  addTextBox(text:string) {
+  addPieceSlot(text:string, styleNo:number = -1) {
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     const { width, padding, fontSizePixels } = measurePageTextBox(text, this._pageRect.width,
       lineHeight, this._context, this._getTextFontSizePixels());
@@ -212,16 +210,8 @@ class PageWriter {
 
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
-    drawPageTextBox(text, x, y, width, lineHeight, padding, fontSizePixels,
-      colorNameToHex.black, this._context);
-    const style:HatchStyle = {
-      angle: .5,
-      spacing: 10,
-      lineWeightStart: .1,
-      lineWeightEnd: 1,
-      color: colorNameToHex['grey']
-    }
-    hatchRect({x, y, width, height:lineHeight}, style, this._context);
+    drawPagePieceSlot(text, x, y, width, lineHeight, padding, fontSizePixels,
+      colorNameToHex.black, styleNo, this._context);
     this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100, this._cursorPoint[1]];
   }
 

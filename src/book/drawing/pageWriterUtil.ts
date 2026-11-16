@@ -3,6 +3,7 @@
 
 import Rect from "@/game/types/Rect";
 import { assert } from "decent-portal";
+import { calcPieceBorderPolygon } from "./pieceDrawUtil";
 import DividerStyle from "./types/DividerStyle";
 import PageTextBoxMetrics from "./types/PageTextBoxMetrics";
 
@@ -60,21 +61,34 @@ export function measurePageTextBox(text:string, pageWidth:number, lineHeight:num
   return { width, padding, fontSizePixels };
 }
 
-/* v8 ignore next -- Text box drawing is verified visually. @preserve */
-export function drawPageTextBox(text:string, x:number, y:number, width:number, lineHeight:number,
-    padding:number, fontSizePixels:number, colorHex:string, context:CanvasRenderingContext2D):void {
+/* v8 ignore next -- Piece slot drawing is verified visually. @preserve */
+export function drawPagePieceSlot(text:string, x:number, y:number, width:number, lineHeight:number,
+    padding:number, fontSizePixels:number, colorHex:string, pieceStyleNo:number, context:CanvasRenderingContext2D):void {
+  // Keep the flair within the existing padding so the text area stays unchanged.
+  const polygon = calcPieceBorderPolygon({ x, y, width, height:lineHeight },
+    pieceStyleNo, Math.min(padding, width / 2));
+  const borderPath = new Path2D();
+  borderPath.moveTo(polygon[0][0], polygon[0][1]);
+  for (const [pointX, pointY] of polygon.slice(1)) borderPath.lineTo(pointX, pointY);
+  borderPath.closePath();
+
+  // Fill and outline the piece border independently of the caller's canvas state.
   context.save();
   context.font = _canvasFont(fontSizePixels);
   context.textAlign = 'left';
   context.textBaseline = 'top';
-  context.fillStyle = '#c8b294';
-  context.fillRect(x, y, width, lineHeight);
+  if (text === '') {
+    context.fillStyle = '#c8b294';
+    context.fill(borderPath);
+  }
   context.strokeStyle = colorHex;
   context.lineWidth = lineHeight * .035;
   context.setLineDash([]);
-  context.strokeRect(x, y, width, lineHeight);
-  context.fillStyle = colorHex;
-  context.fillText(text, x + padding, y + (lineHeight - fontSizePixels) / 2);
+  context.stroke(borderPath);
+  if (text !== '') {
+    context.fillStyle = colorHex;
+    context.fillText(text, x + padding, y + (lineHeight - fontSizePixels) / 2);
+  }
   context.restore();
 }
 
