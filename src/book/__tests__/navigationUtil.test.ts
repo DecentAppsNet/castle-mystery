@@ -19,6 +19,8 @@ function _createSinglePageBookState(pageNo:number) {
     rect:{ x:0, y:0, width:800, height:500 },
     isSinglePageView:true,
     singlePageViewOffsetX:200,
+    pieceLayouts:[],
+    pieceLayoutsPageNo:null,
     controlLayout:createLayout()
   };
   return bookState;

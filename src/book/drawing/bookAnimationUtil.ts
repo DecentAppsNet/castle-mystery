@@ -1,7 +1,7 @@
 import { assert, assertNonNullable, botch } from "decent-portal";
 import BookState from "../types/BookState";
 import BookLayout from "./types/BookLayout";
-import { isLeftPageNo } from "./bookLayoutUtil";
+import { invalidatePieceLayouts, isLeftPageNo } from "./bookLayoutUtil";
 import { setPageNavigationButtonVisibility } from "../navigationUtil";
 import AnimationEndCallback from "../types/AnimationEndCallback";
 
@@ -96,6 +96,7 @@ export function calcBookOffsetsForAnimationAndUpdate(metaTime:number, bookState:
 
 export function showBook(metaTime:number, bookState:BookState) {
   _endCurrentAnimationAsNeeded(metaTime, bookState);
+  invalidatePieceLayouts(bookState);
   bookState.animationKind = 'appear';
   bookState.animationDuration = APPEAR_ANIMATION_DURATION;
   bookState.animationStartMetaTime = metaTime;
@@ -106,6 +107,7 @@ export function showBook(metaTime:number, bookState:BookState) {
 export function hideBook(metaTime:number, bookState:BookState) {
   assertNonNullable(bookState.layout);
   _endCurrentAnimationAsNeeded(metaTime, bookState);
+  invalidatePieceLayouts(bookState);
   bookState.animationKind = 'disappear';
   bookState.animationDuration = DISAPPEAR_ANIMATION_DURATION;
   bookState.animationStartMetaTime = metaTime;
@@ -116,6 +118,7 @@ export function hideBook(metaTime:number, bookState:BookState) {
 
 export function shiftBookLeft(metaTime:number, bookState:BookState, onAnimationEnd:AnimationEndCallback|null = null) {
   _endCurrentAnimationAsNeeded(metaTime, bookState);
+  invalidatePieceLayouts(bookState);
   bookState.animationKind = 'shiftLeft';
   bookState.animationDuration = SHIFT_LEFT_RIGHT_ANIMATION_DURATION;
   bookState.onAnimationEnd = onAnimationEnd;
@@ -124,6 +127,7 @@ export function shiftBookLeft(metaTime:number, bookState:BookState, onAnimationE
 
 export function shiftBookRight(metaTime:number, bookState:BookState, onAnimationEnd:AnimationEndCallback|null = null) {
   _endCurrentAnimationAsNeeded(metaTime, bookState);
+  invalidatePieceLayouts(bookState);
   bookState.animationKind = 'shiftRight';
   bookState.animationDuration = SHIFT_LEFT_RIGHT_ANIMATION_DURATION;
   bookState.onAnimationEnd = onAnimationEnd;

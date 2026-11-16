@@ -9,6 +9,7 @@ import { getAnimationProgress } from "./bookAnimationUtil";
 import { ImageSet } from "@/imageLoading";
 import { assertNonNullable } from "decent-portal";
 import AnimationEndCallback from "../types/AnimationEndCallback";
+import { invalidatePieceLayouts } from "./bookLayoutUtil";
 
 export const BOOK_PAGE_TILE_IMAGE_URL = '/assets/ui/bookPageTile.png';
 
@@ -95,6 +96,7 @@ export function startPageFlip(metaTime:number, bookState:BookState, kind:'flipPr
   onAnimationEnd:AnimationEndCallback|null = null) {
   if (!bookState.isVisible || !bookState.layout || bookState.animationKind !== null) return;
 
+  invalidatePieceLayouts(bookState);
   bookState.animationKind = kind;
   bookState.animationStartMetaTime = metaTime;
   bookState.animationDuration = PAGE_FLIP_ANIMATION_DURATION;

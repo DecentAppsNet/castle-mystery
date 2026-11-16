@@ -6,6 +6,7 @@ import { assert } from "decent-portal";
 import Point from "@/game/types/Point";
 import Rect from "@/game/types/Rect";
 import Piece from "../types/Piece";
+import PieceLayout from "./types/PieceLayout";
 import { drawBorderedBookText, measureBookTextBox } from "./bookTextDrawUtil";
 
 const FLAIR_PROFILES:ReadonlyArray<ReadonlyArray<Point>> = [
@@ -34,16 +35,23 @@ export function calcPieceBorderPolygon(rect:Rect, styleNo:number, flairMargin:nu
 	return [...leftSide, ...rightSide.reverse()];
 }
 
-export function drawBookPieces(pieces:ReadonlyArray<Piece>, bookRect:Rect,
-	context:CanvasRenderingContext2D):void {
+export function preparePieceLayouts(pieces:ReadonlyArray<Piece>, bookRect:Readonly<Rect>,
+	context:CanvasRenderingContext2D):PieceLayout[] {
 	// Size loose pieces consistently using the book height and the page text font.
 	const lineHeight = bookRect.height * .045;
 	const fontSizePixels = bookRect.height * .034;
-	for (const piece of pieces) {
+	return pieces.map(piece => {
 		const metrics = measureBookTextBox(piece.text, bookRect.width / 2, lineHeight, context, fontSizePixels);
-		const x = bookRect.x + bookRect.width * piece.xPercent / 100;
-		const y = bookRect.y + bookRect.height * piece.yPercent / 100;
+		const x = bookRect.x + bookRect.width * piece.xPercent / 100 - metrics.width / 2;
+		const y = bookRect.y + bookRect.height * piece.yPercent / 100 - lineHeight / 2;
 		const rect = { x, y, width:metrics.width, height:lineHeight };
+		return { piece, rect, metrics };
+	});
+}
+
+export function drawBookPieces(pieceLayouts:ReadonlyArray<PieceLayout>,
+	context:CanvasRenderingContext2D):void {
+	for (const { piece, rect, metrics } of pieceLayouts) {
 		const polygon = calcPieceBorderPolygon(rect, piece.styleNo, Math.min(metrics.padding, rect.width / 2));
 		drawBorderedBookText(piece.text, rect, polygon, metrics.padding,
 			metrics.fontSizePixels, '#392b20', '#d8b98d', context);

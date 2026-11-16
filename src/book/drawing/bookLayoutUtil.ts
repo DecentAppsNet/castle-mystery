@@ -89,9 +89,16 @@ function _createBookControlLayout(bookRect:Rect, isSinglePageView:boolean, pageN
   return layout;
 }
 
+export function invalidatePieceLayouts(bookState:BookState) {
+  if (!bookState.layout) return;
+  bookState.layout.pieceLayouts = [];
+  bookState.layout.pieceLayoutsPageNo = null;
+}
+
 export function updateControlLayout(bookState:BookState) {
   const { layout } = bookState;
   assertNonNullable(layout);
+  invalidatePieceLayouts(bookState);
   layout.controlLayout = _createBookControlLayout(layout.rect, layout.isSinglePageView, bookState.pageNo);
 }
 
@@ -116,6 +123,8 @@ export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number
     isSinglePageView,
     singlePageViewOffsetX,
     rect,
+    pieceLayouts:[],
+    pieceLayoutsPageNo:null,
     controlLayout
   }
 
