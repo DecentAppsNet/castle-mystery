@@ -39,14 +39,13 @@ const conclusion1:Conclusion = { // TODO - stub data to delete.
 
 function _makePiece(text:string, styleNo:number, pieceI:number):Piece {
   return {
+    conclusionId:conclusion1.id,
     text,
     styleNo,
     xPercent:50 + pieceI * 3,
     yPercent:30 + pieceI * 3
   }
 }
-
-const pieces:Piece[] = characterNames.map((text, i) => _makePiece(text, 0, i));
 
 const conclusion2:Conclusion = { // TODO - stub data to delete.
   id: "the relic",
@@ -66,13 +65,14 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
 
 export function createBookState():BookState { // TODO this will change later to take some data, similar to createGameState().
   const bookState = createDefaultBookState();
+  bookState.pieceStack = characterNames.map((text, pieceI) => _makePiece(text, 0, pieceI));
   bookState.pages = [
     { kind:'blank', headingText:'' },
     { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', subtitle:null, author:'Erik Hermansen' },
     { kind:'blank', headingText:'' },
     { kind:'chapterStart', headingText:'', title:'Birth of Constantine', chapterNo:1, description:'Wherein Frederick is introduced to the World by a different name, and the earliest seeds of trouble are planted.' },
-    { kind:'conclusion', headingText:'Chap. I - Identities', conclusion:conclusion1, pieces },
-    { kind:'conclusion', headingText:'Chap. I - Locked Conclusion', conclusion:conclusion2, pieces:[] },
+    { kind:'conclusion', headingText:'Chap. I - Identities', conclusion:conclusion1 },
+    { kind:'conclusion', headingText:'Chap. I - Locked Conclusion', conclusion:conclusion2 },
   ];
   bookState.pageNo = 1;
   bookState.isVisible = false;

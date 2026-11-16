@@ -11,6 +11,7 @@ import { drawPageFlip } from "./pageFlipAnimationUtil";
 import Rect from "@/game/types/Rect";
 import { drawPage } from "./pageDrawUtil";
 import { drawBookPieces, preparePieceLayouts } from "./pieceDrawUtil";
+import { getVisibleBookPieces } from "../pieceInteractionUtil";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -108,9 +109,7 @@ function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rec
 function _drawPieces(bookState:BookState, bookRect:Rect, context:CanvasRenderingContext2D) {
   assertNonNullable(bookState.layout);
   // Collect both visible pages before drawing so pieces overlay all page content.
-  const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
-  const visiblePages = bookState.pages.slice(leftPageNo - 1, leftPageNo + 1);
-  const pieces = visiblePages.flatMap(page => page.kind === 'conclusion' ? page.pieces : []);
+  const pieces = getVisibleBookPieces(bookState);
   const pieceLayouts = preparePieceLayouts(pieces, bookRect, context);
   bookState.layout.pieceLayouts = bookState.animationKind === null ? pieceLayouts : [];
   bookState.layout.pieceLayoutsPageNo = bookState.animationKind === null ? bookState.pageNo : null;

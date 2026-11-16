@@ -1,6 +1,7 @@
 import BookLayout from "../drawing/types/BookLayout"
 import AnimationEndCallback from "./AnimationEndCallback"
 import BookPage from "./BookPage"
+import Piece from "./Piece"
 
 type BookState = {
   layout:BookLayout|null,
@@ -10,6 +11,7 @@ type BookState = {
   onAnimationEnd:AnimationEndCallback|null,
   isVisible:boolean,
   pageNo:number,
+  pieceStack:Piece[],
   pages:BookPage[]
 }
 
@@ -22,6 +24,7 @@ export function createDefaultBookState():BookState {
     onAnimationEnd:null,
     isVisible:false,
     pageNo:1,
+    pieceStack:[],
     pages:[]
   }
 }

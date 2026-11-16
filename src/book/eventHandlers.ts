@@ -10,7 +10,7 @@ import { calcPageViewOffsetX } from "./drawing/bookLayoutUtil";
 import { findControlAtPoint } from "@/canvasControls";
 import { goNextPage, goPrevPage } from "./navigationUtil";
 import BookControlId from "./drawing/types/BookControlId";
-import { findBookPieceAtPoint } from "./pieceInteractionUtil";
+import { bringBookPieceToFront, findBookPieceAtPoint } from "./pieceInteractionUtil";
 
 function _findControlAtPoint(bookState:BookState, canvasX:number, canvasY:number):BookControlId|null {
   if (!bookState.layout) return null;
@@ -32,6 +32,7 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
 
   const id = _findControlAtPoint(bookState, canvasX, canvasY);
   const piece = id === null ? findBookPieceAtPoint(bookState, canvasX, canvasY) : null;
+  if (piece !== null) return bringBookPieceToFront(bookState, piece);
   if (id === 'closeBook' || (id === null && piece === null && !_isPointInsideBook(bookState, canvasX, canvasY))) {
     hideBook(metaTime, bookState);
     return;

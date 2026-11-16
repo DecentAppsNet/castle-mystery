@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { createLayout, updateControlRect } from '@/canvasControls';
 import { createBookState } from '../bookContentUtil';
 import { onBookMouseDown } from '../eventHandlers';
-import { findBookPieceAtPoint } from '../pieceInteractionUtil';
+import { bringBookPieceToFront, findBookPieceAtPoint, getVisibleBookPieces } from '../pieceInteractionUtil';
 
 function _createBookState() {
   const bookState = createBookState();
   const conclusionPages = bookState.pages.filter(page => page.kind === 'conclusion');
-  const [lower, upper] = conclusionPages[0].pieces;
-  conclusionPages[0].pieces = [lower];
-  conclusionPages[1].pieces = [upper];
+  const lower = { ...bookState.pieceStack[0] };
+  const upper = { ...lower, conclusionId:conclusionPages[1].conclusion.id };
+  bookState.pieceStack = [lower, upper];
   bookState.pages = conclusionPages;
   bookState.pageNo = 1;
   bookState.isVisible = true;
@@ -32,6 +32,106 @@ function _createBookState() {
 }
 
 describe('pieceInteractionUtil', () => {
+  describe('getVisibleBookPieces()', () => {
+    it('preserves stack order for distinct pieces with identical text and style', () => {
+      const { bookState, lower, upper } = _createBookState();
+      const third = { ...lower };
+      bookState.pieceStack = [upper, lower, third];
+      const pieces = getVisibleBookPieces(bookState);
+      expect(pieces).toHaveLength(3);
+      expect(pieces[0]).toBe(upper);
+      expect(pieces[1]).toBe(lower);
+      expect(pieces[2]).toBe(third);
+      expect(lower).not.toBe(upper);
+    });
+
+    it('filters hidden pages without losing their stacking order on return', () => {
+      const { bookState, lower, upper } = _createBookState();
+      bringBookPieceToFront(bookState, lower);
+      bookState.pages.push({ kind:'blank', headingText:'' }, { kind:'blank', headingText:'' });
+      bookState.pageNo = 3;
+      expect(getVisibleBookPieces(bookState)).toEqual([]);
+      expect(bookState.pieceStack[1]).toBe(lower);
+      bookState.pageNo = 2;
+      const pieces = getVisibleBookPieces(bookState);
+      expect(pieces[0]).toBe(upper);
+      expect(pieces[1]).toBe(lower);
+    });
+
+    it('reads changed stack membership without reconciling another collection', () => {
+      const { bookState, lower, upper } = _createBookState();
+      bringBookPieceToFront(bookState, lower);
+      const replacement = { ...upper };
+      bookState.pieceStack = [lower, replacement];
+      const stack = bookState.pieceStack;
+      const pieces = getVisibleBookPieces(bookState);
+      expect(pieces[0]).toBe(lower);
+      expect(pieces[1]).toBe(replacement);
+      expect(bookState.pieceStack).toBe(stack);
+      expect(bookState.pieceStack).not.toContain(upper);
+    });
+
+    it('preserves stacking across layout replacement', () => {
+      const { bookState, lower, upper } = _createBookState();
+      bringBookPieceToFront(bookState, lower);
+      bookState.layout = null;
+      expect(getVisibleBookPieces(bookState)[0]).toBe(upper);
+      expect(getVisibleBookPieces(bookState)[1]).toBe(lower);
+    });
+
+    it('retains piece ownership when pages are reordered', () => {
+      const { bookState, lower, upper } = _createBookState();
+      const [leftPage, rightPage] = bookState.pages;
+      bookState.pages = [rightPage, { kind:'blank', headingText:'' }, leftPage];
+      expect(getVisibleBookPieces(bookState)).toEqual([upper]);
+      bookState.pageNo = 3;
+      expect(getVisibleBookPieces(bookState)).toEqual([lower]);
+    });
+  });
+
+  describe('createBookState()', () => {
+    it('creates independent piece collections and mutable piece instances', () => {
+      const first = createBookState();
+      const second = createBookState();
+      expect(first.pieceStack.length).toBeGreaterThan(0);
+      expect(first.pieceStack).not.toBe(second.pieceStack);
+      expect(first.pieceStack).toEqual(second.pieceStack);
+      first.pieceStack.forEach((piece, pieceI) => expect(piece).not.toBe(second.pieceStack[pieceI]));
+      const originalPosition = second.pieceStack[0].xPercent;
+      first.pieceStack[0].xPercent += 10;
+      first.pieceStack.reverse();
+      expect(second.pieceStack[0].xPercent).toBe(originalPosition);
+      expect(createBookState().pieceStack).toEqual(second.pieceStack);
+    });
+  });
+
+  describe('bringBookPieceToFront()', () => {
+    it('updates prepared order and overlapping hit selection without another draw', () => {
+      const { bookState, layout, lower, upper } = _createBookState();
+      expect(findBookPieceAtPoint(bookState, 100, 50)).toBe(upper);
+      bringBookPieceToFront(bookState, lower);
+      expect(layout.pieceLayouts[0].piece).toBe(upper);
+      expect(layout.pieceLayouts[1].piece).toBe(lower);
+      expect(findBookPieceAtPoint(bookState, 100, 50)).toBe(lower);
+      expect(getVisibleBookPieces(bookState)[1]).toBe(lower);
+    });
+
+    it('promotes repeatedly without duplicating references or changing conclusion ownership', () => {
+      const { bookState, layout, lower, upper } = _createBookState();
+      const conclusionIds = [lower.conclusionId, upper.conclusionId];
+      const pages = [...bookState.pages];
+      bringBookPieceToFront(bookState, lower);
+      bringBookPieceToFront(bookState, upper);
+      bringBookPieceToFront(bookState, upper);
+      expect(bookState.pieceStack).toHaveLength(2);
+      expect(bookState.pieceStack[0]).toBe(lower);
+      expect(bookState.pieceStack[1]).toBe(upper);
+      expect(layout.pieceLayouts).toHaveLength(2);
+      expect([lower.conclusionId, upper.conclusionId]).toEqual(conclusionIds);
+      expect(bookState.pages).toEqual(pages);
+    });
+  });
+
   describe('findBookPieceAtPoint()', () => {
     it('returns the topmost piece across both conclusion pages', () => {
       const { bookState, upper } = _createBookState();
@@ -108,9 +208,23 @@ describe('pieceInteractionUtil', () => {
       bookState.pages[1] = { kind:'blank', headingText:'' };
       expect(findBookPieceAtPoint(bookState, 100, 50)).toBe(lower);
     });
+
+    it('rejects a removed stack reference even when its conclusion is still visible', () => {
+      const { bookState, lower } = _createBookState();
+      bookState.pieceStack = [lower];
+      expect(findBookPieceAtPoint(bookState, 100, 50)).toBe(lower);
+    });
   });
 
   describe('onBookMouseDown()', () => {
+    it('promotes a clicked piece without moving its center', () => {
+      const { bookState, lower } = _createBookState();
+      const originalPosition = [lower.xPercent, lower.yPercent];
+      onBookMouseDown(85, 42, 0, bookState);
+      expect(findBookPieceAtPoint(bookState, 100, 50)).toBe(lower);
+      expect([lower.xPercent, lower.yPercent]).toEqual(originalPosition);
+    });
+
     it('does not dismiss when a visible piece protrudes beyond the book', () => {
       const { bookState } = _createBookState();
       onBookMouseDown(95, 50, 0, bookState);
