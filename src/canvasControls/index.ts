@@ -1,7 +1,21 @@
+/* This file groups canvas control layout, visibility, and rectangular hit-testing helpers.
+   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assertNonNullable } from "decent-portal";
 import ControlLayout from "./types/ControlLayout";
+import Control from "./types/Control";
 import Rect from "@/game/types/Rect";
 import { isPositionInRect } from "@/game/rectUtil";
+
+export function findTopmostControlAtPoint<ControlType extends Control>(
+  controls:ReadonlyArray<ControlType>, canvasX:number, canvasY:number):ControlType|null {
+  for (let controlI = controls.length - 1; controlI >= 0; --controlI) {
+    const control = controls[controlI];
+    if (!control.isVisible) continue;
+    if (isPositionInRect(canvasX, canvasY, control.rect)) return control;
+  }
+  return null;
+}
 
 export function createLayout(canvasWidth:number = -1, canvasHeight:number = -1):ControlLayout {
   return { 
@@ -26,12 +40,7 @@ export function findControlRect(layout:ControlLayout, controlId:string):Rect {
 }
 
 export function findControlAtPoint(layout:ControlLayout, canvasX:number, canvasY:number):string|null {
-  for(let controlI = 0; controlI < layout.controls.length; ++controlI) {
-    const control = layout.controls[controlI];
-    if (!control.isVisible) continue;
-    if (isPositionInRect(canvasX, canvasY, control.rect)) return control.id;
-  }
-  return null;
+  return findTopmostControlAtPoint(layout.controls, canvasX, canvasY)?.id ?? null;
 }
 
 function _setControlVisibility(controlId:string, isVisible:boolean, layout:ControlLayout) {

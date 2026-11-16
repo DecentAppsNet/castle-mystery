@@ -1,3 +1,6 @@
+/* This file routes book mouse events to controls, dismissal, and loose-piece interactions.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert } from "decent-portal";
 
 import { isPositionInRect } from "@/game/rectUtil";
@@ -7,6 +10,7 @@ import { calcPageViewOffsetX } from "./drawing/bookLayoutUtil";
 import { findControlAtPoint } from "@/canvasControls";
 import { goNextPage, goPrevPage } from "./navigationUtil";
 import BookControlId from "./drawing/types/BookControlId";
+import { findBookPieceAtPoint } from "./pieceInteractionUtil";
 
 function _findControlAtPoint(bookState:BookState, canvasX:number, canvasY:number):BookControlId|null {
   if (!bookState.layout) return null;
@@ -27,7 +31,8 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
   if (!bookState.layout || bookState.animationKind) return;
 
   const id = _findControlAtPoint(bookState, canvasX, canvasY);
-  if (id === 'closeBook' || (id === null && !_isPointInsideBook(bookState, canvasX, canvasY))) {
+  const piece = id === null ? findBookPieceAtPoint(bookState, canvasX, canvasY) : null;
+  if (id === 'closeBook' || (id === null && piece === null && !_isPointInsideBook(bookState, canvasX, canvasY))) {
     hideBook(metaTime, bookState);
     return;
   }

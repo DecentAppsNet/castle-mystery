@@ -45,13 +45,14 @@ export function preparePieceLayouts(pieces:ReadonlyArray<Piece>, bookRect:Readon
 		const x = bookRect.x + bookRect.width * piece.xPercent / 100 - metrics.width / 2;
 		const y = bookRect.y + bookRect.height * piece.yPercent / 100 - lineHeight / 2;
 		const rect = { x, y, width:metrics.width, height:lineHeight };
-		return { piece, rect, metrics };
+		return { piece, rect, metrics, isVisible:true };
 	});
 }
 
 export function drawBookPieces(pieceLayouts:ReadonlyArray<PieceLayout>,
 	context:CanvasRenderingContext2D):void {
-	for (const { piece, rect, metrics } of pieceLayouts) {
+	for (const { piece, rect, metrics, isVisible } of pieceLayouts) {
+		if (!isVisible) continue;
 		const polygon = calcPieceBorderPolygon(rect, piece.styleNo, Math.min(metrics.padding, rect.width / 2));
 		drawBorderedBookText(piece.text, rect, polygon, metrics.padding,
 			metrics.fontSizePixels, '#392b20', '#d8b98d', context);

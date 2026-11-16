@@ -1,7 +1,7 @@
-import Control from "./Control";
+import IdentifiedControl from "./IdentifiedControl";
 
 type ControlLayout = {
-  controls:Control[],
+  controls:IdentifiedControl[],
   hoveredControlId:string|null,
   canvasWidth:number, 
   canvasHeight:number

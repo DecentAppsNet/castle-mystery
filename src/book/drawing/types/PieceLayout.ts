@@ -1,10 +1,9 @@
-import Rect from "@/game/types/Rect";
-import Piece from "../../types/Piece";
+import Control from "@/canvasControls/types/Control";
+import Piece from "@/book/types/Piece";
 import PageTextBoxMetrics from "./PageTextBoxMetrics";
 
-type PieceLayout = {
+type PieceLayout = Control & {
   readonly piece:Piece;
-  readonly rect:Rect;
   readonly metrics:PageTextBoxMetrics;
 };
 
