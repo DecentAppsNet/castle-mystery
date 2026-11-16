@@ -7,6 +7,7 @@ import { calcBookOffsetsForAnimationAndUpdate } from "./bookAnimationUtil";
 import { createLayout, updateControlRect } from "@/canvasControls";
 import { setPageNavigationButtonVisibility } from "../navigationUtil";
 import BookControlId from "./types/BookControlId";
+import { endBookPieceDrag } from "../pieceInteractionUtil";
 
 const CANVAS_HEIGHT_TO_OUTER_MARGIN_RATIO = .05;
 
@@ -90,6 +91,7 @@ function _createBookControlLayout(bookRect:Rect, isSinglePageView:boolean, pageN
 }
 
 export function invalidatePieceLayouts(bookState:BookState) {
+  endBookPieceDrag(bookState);
   if (!bookState.layout) return;
   bookState.layout.pieceLayouts = [];
   bookState.layout.pieceLayoutsPageNo = null;
@@ -104,6 +106,7 @@ export function updateControlLayout(bookState:BookState) {
 
 export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number, bookImage:ImageBitmap, bookState:BookState) {
   if (bookState.layout && canvasWidth === bookState.layout.canvasWidth && canvasHeight === bookState.layout.canvasHeight) return;
+  invalidatePieceLayouts(bookState);
 
   const outerMargin = canvasHeight * CANVAS_HEIGHT_TO_OUTER_MARGIN_RATIO;
   const fitHeight = canvasHeight - (outerMargin * 2);

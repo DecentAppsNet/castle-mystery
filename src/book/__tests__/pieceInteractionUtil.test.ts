@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { createLayout, updateControlRect } from '@/canvasControls';
 import { createBookState } from '../bookContentUtil';
 import BookLayout from '../drawing/types/BookLayout';
+import { hideBook } from '../drawing/bookAnimationUtil';
+import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '../drawing/bookLayoutUtil';
+import { startPageFlip } from '../drawing/pageFlipAnimationUtil';
+import { goNextPage, goPrevPage } from '../navigationUtil';
 import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '..';
 import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPieceAtPoint,
   getVisibleBookPieces, moveBookPieceDrag } from '../pieceInteractionUtil';
@@ -45,6 +49,89 @@ function _createDraggableBookState() {
 }
 
 describe('pieceInteractionUtil', () => {
+  describe('drag cancellation on book transitions', () => {
+    it('cancels when closing programmatically without undoing movement or stacking', () => {
+      const { bookState, lower } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 485, 242)).toBe(true);
+      moveBookPieceDrag(bookState, 585, 342);
+      const position = [lower.xPercent, lower.yPercent];
+      const stack = bookState.pieceStack;
+      hideBook(0, bookState);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(bookState.pieceStack).toBe(stack);
+      expect(bookState.pieceStack[1]).toBe(lower);
+      moveBookPieceDrag(bookState, 800, 400);
+      expect([lower.xPercent, lower.yPercent]).toEqual(position);
+    });
+
+    it('cancels before programmatic next-spread navigation completes', () => {
+      const { bookState } = _createDraggableBookState();
+      bookState.pages.push({ kind:'blank', headingText:'' }, { kind:'blank', headingText:'' });
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      goNextPage(0, bookState);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(bookState.pageNo).toBe(3);
+    });
+
+    it('cancels during programmatic previous-page navigation', () => {
+      const { bookState, layout } = _createDraggableBookState();
+      bookState.pageNo = layout.pieceLayoutsPageNo = 2;
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      goPrevPage(0, bookState);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(bookState.pageNo).toBe(1);
+    });
+
+    it('cancels when single-page navigation starts a shift', () => {
+      const { bookState, layout } = _createDraggableBookState();
+      layout.isSinglePageView = true;
+      layout.pieceLayouts.forEach(record => record.rect.x += 200);
+      expect(beginBookPieceDrag(bookState, 700, 250)).toBe(true);
+      goNextPage(0, bookState);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(bookState.animationKind).toBe('shiftRight');
+    });
+
+    it('cancels when a page flip starts without navigation', () => {
+      const { bookState } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      startPageFlip(0, bookState, 'flipNext');
+      expect(bookState.pieceDragState).toBeNull();
+    });
+
+    it('cancels before replacing the layout on resize and preserves position and stacking', () => {
+      const { bookState, layout, lower } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 485, 242)).toBe(true);
+      moveBookPieceDrag(bookState, 585, 342);
+      const position = [lower.xPercent, lower.yPercent];
+      const stack = bookState.pieceStack;
+      updateBookLayoutAsNeeded(1200, 700, { width:800, height:500 } as ImageBitmap, bookState);
+      expect(bookState.layout).not.toBe(layout);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(bookState.pieceStack).toBe(stack);
+      expect([lower.xPercent, lower.yPercent]).toEqual(position);
+      expect(findBookPieceAtPoint(bookState, 585, 342)).toBeNull();
+    });
+
+    it('does not cancel when the layout dimensions have not changed', () => {
+      const { bookState, layout } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      const drag = bookState.pieceDragState;
+      updateBookLayoutAsNeeded(1000, 600, { width:800, height:500 } as ImageBitmap, bookState);
+      expect(bookState.layout).toBe(layout);
+      expect(bookState.pieceDragState).toBe(drag);
+    });
+
+    it('can invalidate repeatedly even after the layout has been removed', () => {
+      const { bookState } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      bookState.layout = null;
+      invalidatePieceLayouts(bookState);
+      invalidatePieceLayouts(bookState);
+      expect(bookState.pieceDragState).toBeNull();
+    });
+  });
+
   describe('beginBookPieceDrag()', () => {
     it('selects the topmost piece without moving it and retains its style and grab offset', () => {
       const { bookState, upper } = _createDraggableBookState();

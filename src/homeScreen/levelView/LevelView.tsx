@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useRef, type Ref } from 'react';
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef, type Ref } from 'react';
 
 import Canvas from '@/components/canvas/Canvas';
 import { mouseDown, mouseMove, mouseWheel, playPause } from '@/game/playerEventUtil';
@@ -61,8 +61,18 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
   const startupHandoffRef = useRef<InitialClosedFrameHandoff>({ drawnAt:null, hasAnnounced:false });
   const pointerClientPositionRef = useRef<readonly [number, number]|null>(null);
   const cancelBookDragRef = useRef<(() => void)|null>(null);
+  const draggedBookRef = useRef<BookState|null>(null);
 
-  useEffect(() => () => cancelBookDragRef.current?.(), []);
+  function _cancelInvalidBookDrag() {
+    const bookState = draggedBookRef.current;
+    if (bookState === null) return;
+    if (bookState !== gameState?.bookState || bookState !== acceptedGameStateRef.current?.bookState
+      || bookState.pieceDragState === null || !bookState.isVisible || bookState.animationKind !== null
+      || isGameDisabled()) cancelBookDragRef.current?.();
+  }
+
+  useLayoutEffect(_cancelInvalidBookDrag);
+  useLayoutEffect(() => () => cancelBookDragRef.current?.(), []);
 
   useImperativeHandle(ref, () => ({ close:() => requestCurtainClose(frameStateRef.current, performance.now()) }), []);
 
@@ -82,6 +92,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
       listeners.abort();
       endBookPieceDrag(bookState);
       cancelBookDragRef.current = null;
+      draggedBookRef.current = null;
     }
 
     function _onWindowMouse(event:MouseEvent) {
@@ -104,9 +115,11 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
     }
 
     cancelBookDragRef.current = _cancel;
+    draggedBookRef.current = bookState;
     window.addEventListener('mousemove', _onWindowMouse, { signal:listeners.signal });
     window.addEventListener('mouseup', _onWindowMouse, { signal:listeners.signal });
     window.addEventListener('blur', _cancel, { signal:listeners.signal });
+    window.addEventListener('resize', _cancel, { signal:listeners.signal });
   }
 
   function _handleMinutesChanged(minutes:number) {
@@ -135,6 +148,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
   }
 
   function _onDraw(context:CanvasRenderingContext2D, animationFrameTimestamp:number|null) {
+    _cancelInvalidBookDrag();
     const state = frameStateRef.current;
     const startupHandoff = startupHandoffRef.current;
     const currentGameState = acceptedGameStateRef.current === gameState ? gameState : null;
@@ -155,6 +169,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
     if (frame.canRenderScene && currentGameState && currentGameState.bookState.isVisible) {
       drawBook(currentGameState.bookState, findMetaTimeNow(), currentGameState.imageSet, context);
     }
+    _cancelInvalidBookDrag();
 
     if (state.transition?.phase === 'closed' && animationFrameTimestamp !== null) {
       if (state.closeRequest) announceCurtainClosed(state, animationFrameTimestamp);
@@ -170,6 +185,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
         prepareLevelViewCache(frameStateRef.current, gameState, destWidth, destHeight);
       }}
       onPageViewingChange={(isViewingPage) => {
+        if (!isViewingPage) cancelBookDragRef.current?.();
         const currentGameState = acceptedGameStateRef.current;
         if (isViewingPage || !currentGameState) return;
         pauseGameState(currentGameState, onStateChanged);
