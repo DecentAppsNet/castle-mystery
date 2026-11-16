@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createLayout, updateControlRect } from '@/canvasControls';
 import { createBookState } from '../bookContentUtil';
 import BookLayout from '../drawing/types/BookLayout';
-import { onBookMouseDown } from '../eventHandlers';
+import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '..';
 import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPieceAtPoint,
   getVisibleBookPieces, moveBookPieceDrag } from '../pieceInteractionUtil';
 
@@ -403,6 +403,41 @@ describe('pieceInteractionUtil', () => {
   });
 
   describe('onBookMouseDown()', () => {
+    it('reports a drag start only when explicitly enabled', () => {
+      const { bookState, upper } = _createDraggableBookState();
+      expect(onBookMouseDown(500, 250, 0, bookState)).toBe(false);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(onBookMouseDown(500, 250, 0, bookState, true)).toBe(true);
+      expect(bookState.pieceDragState?.piece).toBe(upper);
+      expect(onBookMouseDown(485, 242, 0, bookState, true)).toBe(false);
+      expect(bookState.pieceDragState?.piece).toBe(upper);
+    });
+
+    it('keeps controls above pieces even when drag initiation is enabled', () => {
+      const { bookState, layout } = _createDraggableBookState();
+      updateControlRect('closeBook', { x:490, y:245, width:40, height:30 }, layout.controlLayout);
+      expect(onBookMouseDown(500, 250, 0, bookState, true)).toBe(false);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(bookState.animationKind).toBe('disappear');
+    });
+
+    it('keeps navigation working without reporting a drag', () => {
+      const { bookState, layout } = _createDraggableBookState();
+      bookState.pages.push({ kind:'blank', headingText:'' }, { kind:'blank', headingText:'' });
+      updateControlRect('nextPage', { x:490, y:245, width:40, height:30 }, layout.controlLayout);
+      expect(onBookMouseDown(500, 250, 0, bookState, true)).toBe(false);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(bookState.pageNo).toBe(3);
+      expect(bookState.animationKind).toBe('flipNext');
+    });
+
+    it('dismisses outside the book without starting a drag when enabled', () => {
+      const { bookState } = _createDraggableBookState();
+      expect(onBookMouseDown(0, 0, 0, bookState, true)).toBe(false);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(bookState.animationKind).toBe('disappear');
+    });
+
     it('promotes a clicked piece without moving its center', () => {
       const { bookState, lower } = _createBookState();
       const originalPosition = [lower.xPercent, lower.yPercent];
@@ -444,6 +479,76 @@ describe('pieceInteractionUtil', () => {
       bookState.pages = [];
       onBookMouseDown(95, 50, 0, bookState);
       expect(bookState.animationKind).toBe('disappear');
+    });
+  });
+
+  describe('onBookMouseOver()', () => {
+    it('updates ordinary control hover while no drag is active', () => {
+      const { bookState, layout } = _createDraggableBookState();
+      updateControlRect('closeBook', { x:590, y:345, width:40, height:30 }, layout.controlLayout);
+      onBookMouseOver(600, 350, 0, bookState);
+      expect(layout.controlLayout.hoveredControlId).toBe('closeBook');
+      onBookMouseOver(0, 0, 0, bookState);
+      expect(layout.controlLayout.hoveredControlId).toBeNull();
+    });
+
+    it('moves the active piece without updating control hover', () => {
+      const { bookState, layout, upper } = _createDraggableBookState();
+      updateControlRect('closeBook', { x:590, y:345, width:40, height:30 }, layout.controlLayout);
+      expect(onBookMouseDown(500, 250, 0, bookState, true)).toBe(true);
+      onBookMouseOver(600, 350, 0, bookState);
+      expect(upper.xPercent).toBeCloseTo(63.75);
+      expect(upper.yPercent).toBe(68);
+      expect(findBookPieceAtPoint(bookState, 600, 350)).toBe(upper);
+      expect(layout.controlLayout.hoveredControlId).toBeNull();
+    });
+  });
+
+  describe('onBookMouseUp()', () => {
+    it('applies the final release position and ends the drag outside the book', () => {
+      const { bookState, upper } = _createDraggableBookState();
+      expect(onBookMouseDown(500, 250, 0, bookState, true)).toBe(true);
+      onBookMouseOver(600, 350, 0, bookState);
+      onBookMouseUp(2000, 2000, 0, bookState);
+      expect([upper.xPercent, upper.yPercent]).toEqual([100, 100]);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(bookState.pieceStack[1]).toBe(upper);
+      expect(bookState.isVisible).toBe(true);
+      onBookMouseOver(500, 250, 0, bookState);
+      onBookMouseUp(0, 0, 0, bookState);
+      expect([upper.xPercent, upper.yPercent]).toEqual([100, 100]);
+    });
+
+    it('clears the drag after layout invalidation without accepting the release position', () => {
+      const { bookState, layout, upper } = _createDraggableBookState();
+      expect(onBookMouseDown(500, 250, 0, bookState, true)).toBe(true);
+      onBookMouseOver(600, 350, 0, bookState);
+      const position = [upper.xPercent, upper.yPercent];
+      layout.pieceLayoutsPageNo = null;
+      onBookMouseUp(2000, 2000, 0, bookState);
+      expect(bookState.pieceDragState).toBeNull();
+      expect([upper.xPercent, upper.yPercent]).toEqual(position);
+    });
+
+    it('clears the drag even after the book is hidden and its layout is removed', () => {
+      const { bookState, upper } = _createDraggableBookState();
+      expect(onBookMouseDown(500, 250, 0, bookState, true)).toBe(true);
+      const position = [upper.xPercent, upper.yPercent];
+      bookState.isVisible = false;
+      bookState.layout = null;
+      onBookMouseUp(2000, 2000, 0, bookState);
+      expect(bookState.pieceDragState).toBeNull();
+      expect([upper.xPercent, upper.yPercent]).toEqual(position);
+    });
+
+    it('clears the drag after animation starts without accepting the release position', () => {
+      const { bookState, upper } = _createDraggableBookState();
+      expect(onBookMouseDown(500, 250, 0, bookState, true)).toBe(true);
+      const position = [upper.xPercent, upper.yPercent];
+      bookState.animationKind = 'flipNext';
+      onBookMouseUp(2000, 2000, 0, bookState);
+      expect(bookState.pieceDragState).toBeNull();
+      expect([upper.xPercent, upper.yPercent]).toEqual(position);
     });
   });
 });
