@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createLayout, updateControlRect } from '@/canvasControls';
 import { createBookState } from '../bookContentUtil';
+import BookLayout from '../drawing/types/BookLayout';
 import { onBookMouseDown } from '../eventHandlers';
-import { bringBookPieceToFront, findBookPieceAtPoint, getVisibleBookPieces } from '../pieceInteractionUtil';
+import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPieceAtPoint,
+  getVisibleBookPieces, moveBookPieceDrag } from '../pieceInteractionUtil';
 
 function _createBookState() {
   const bookState = createBookState();
@@ -13,7 +15,7 @@ function _createBookState() {
   bookState.pages = conclusionPages;
   bookState.pageNo = 1;
   bookState.isVisible = true;
-  const layout = {
+  const layout:BookLayout = {
     canvasWidth:1000, canvasHeight:600,
     rect:{ x:100, y:20, width:800, height:500 },
     isSinglePageView:false,
@@ -31,7 +33,191 @@ function _createBookState() {
   return { bookState, layout, lower, upper };
 }
 
+function _createDraggableBookState() {
+  const fixture = _createBookState();
+  for (const { piece, rect } of fixture.layout.pieceLayouts) {
+    rect.x += 400;
+    rect.y += 200;
+    piece.xPercent = (rect.x + rect.width / 2 - fixture.layout.rect.x) / fixture.layout.rect.width * 100;
+    piece.yPercent = (rect.y + rect.height / 2 - fixture.layout.rect.y) / fixture.layout.rect.height * 100;
+  }
+  return fixture;
+}
+
 describe('pieceInteractionUtil', () => {
+  describe('beginBookPieceDrag()', () => {
+    it('selects the topmost piece without moving it and retains its style and grab offset', () => {
+      const { bookState, upper } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      expect(bookState.pieceDragState?.piece).toBe(upper);
+      expect(bookState.pieceDragState?.piece.styleNo).toBe(upper.styleNo);
+      expect(bookState.pieceDragState?.grabOffset).toEqual([-10, -10]);
+      expect(upper.xPercent).toBeCloseTo(51.25);
+      expect(upper.yPercent).toBe(48);
+    });
+
+    it('promotes the selected lower piece before another hit test', () => {
+      const { bookState, lower } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 485, 242)).toBe(true);
+      expect(bookState.pieceStack[1]).toBe(lower);
+      expect(findBookPieceAtPoint(bookState, 500, 250)).toBe(lower);
+    });
+
+    it('does not replace an active drag or its original grab offset', () => {
+      const { bookState } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      const drag = bookState.pieceDragState;
+      expect(beginBookPieceDrag(bookState, 485, 242)).toBe(false);
+      expect(bookState.pieceDragState).toBe(drag);
+    });
+
+    it('does not begin while the book is hidden', () => {
+      const { bookState } = _createDraggableBookState();
+      bookState.isVisible = false;
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(false);
+      expect(bookState.pieceDragState).toBeNull();
+    });
+
+    it('does not begin while the book is animating', () => {
+      const { bookState } = _createDraggableBookState();
+      bookState.animationKind = 'flipNext';
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(false);
+      expect(bookState.pieceDragState).toBeNull();
+    });
+
+    it('does not begin with a stale layout or outside all pieces', () => {
+      const { bookState, layout } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 0, 0)).toBe(false);
+      layout.pieceLayoutsPageNo = null;
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(false);
+      expect(bookState.pieceDragState).toBeNull();
+    });
+  });
+
+  describe('moveBookPieceDrag()', () => {
+    it('preserves an off-center grab on the first move without a jump', () => {
+      const { bookState, upper } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      moveBookPieceDrag(bookState, 500, 250);
+      expect(upper.xPercent).toBeCloseTo(51.25);
+      expect(upper.yPercent).toBe(48);
+    });
+
+    it('updates percentages and hit selection on consecutive moves without drawing', () => {
+      const { bookState, lower, upper } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      moveBookPieceDrag(bookState, 600, 350);
+      expect(upper.xPercent).toBeCloseTo(63.75);
+      expect(upper.yPercent).toBe(68);
+      expect(findBookPieceAtPoint(bookState, 600, 350)).toBe(upper);
+      expect(findBookPieceAtPoint(bookState, 500, 250)).toBe(lower);
+      moveBookPieceDrag(bookState, 700, 400);
+      expect(findBookPieceAtPoint(bookState, 700, 400)).toBe(upper);
+      expect(findBookPieceAtPoint(bookState, 600, 350)).toBeNull();
+    });
+
+    it('clamps the center at every corner while allowing piece edges to protrude', () => {
+      const { bookState, upper } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      moveBookPieceDrag(bookState, -1000, -1000);
+      expect([upper.xPercent, upper.yPercent]).toEqual([0, 0]);
+      expect(findBookPieceAtPoint(bookState, 90, 10)).toBe(upper);
+      moveBookPieceDrag(bookState, 2000, -1000);
+      expect([upper.xPercent, upper.yPercent]).toEqual([100, 0]);
+      moveBookPieceDrag(bookState, -1000, 2000);
+      expect([upper.xPercent, upper.yPercent]).toEqual([0, 100]);
+      moveBookPieceDrag(bookState, 2000, 2000);
+      expect([upper.xPercent, upper.yPercent]).toEqual([100, 100]);
+    });
+
+    it('uses the original grab offset after reentering the book', () => {
+      const { bookState, upper } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      const offset = bookState.pieceDragState?.grabOffset;
+      moveBookPieceDrag(bookState, -1000, -1000);
+      moveBookPieceDrag(bookState, 500, 250);
+      expect(upper.xPercent).toBeCloseTo(51.25);
+      expect(upper.yPercent).toBe(48);
+      expect(bookState.pieceDragState?.grabOffset).toBe(offset);
+    });
+
+    it('uses the displayed left-page offset exactly once', () => {
+      const { bookState, layout, upper } = _createDraggableBookState();
+      layout.isSinglePageView = true;
+      layout.pieceLayouts.forEach(record => record.rect.x += 200);
+      expect(beginBookPieceDrag(bookState, 700, 250)).toBe(true);
+      moveBookPieceDrag(bookState, 800, 350);
+      expect(upper.xPercent).toBeCloseTo(63.75);
+      expect(upper.yPercent).toBe(68);
+      expect(findBookPieceAtPoint(bookState, 800, 350)).toBe(upper);
+    });
+
+    it('uses the displayed right-page offset exactly once', () => {
+      const { bookState, layout, upper } = _createDraggableBookState();
+      layout.isSinglePageView = true;
+      bookState.pageNo = layout.pieceLayoutsPageNo = 2;
+      layout.pieceLayouts.forEach(record => record.rect.x -= 200);
+      expect(beginBookPieceDrag(bookState, 300, 250)).toBe(true);
+      moveBookPieceDrag(bookState, 400, 350);
+      expect(upper.xPercent).toBeCloseTo(63.75);
+      expect(upper.yPercent).toBe(68);
+      expect(findBookPieceAtPoint(bookState, 400, 350)).toBe(upper);
+    });
+
+    it('converts movement using a differently sized and translated book', () => {
+      const { bookState, layout, upper } = _createDraggableBookState();
+      layout.rect = { x:200, y:100, width:400, height:200 };
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      moveBookPieceDrag(bookState, 400, 240);
+      expect(upper.xPercent).toBe(52.5);
+      expect(upper.yPercent).toBe(75);
+    });
+
+    it('cancels rather than mutating a piece with an invalidated layout', () => {
+      const { bookState, layout, upper } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      layout.pieceLayoutsPageNo = null;
+      moveBookPieceDrag(bookState, 600, 350);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(upper.xPercent).toBeCloseTo(51.25);
+      expect(upper.yPercent).toBe(48);
+    });
+
+    it('cancels rather than mutating a piece removed from the stack', () => {
+      const { bookState, lower, upper } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      bookState.pieceStack = [lower];
+      moveBookPieceDrag(bookState, 600, 350);
+      expect(bookState.pieceDragState).toBeNull();
+      expect(upper.xPercent).toBeCloseTo(51.25);
+      expect(upper.yPercent).toBe(48);
+    });
+  });
+
+  describe('endBookPieceDrag()', () => {
+    it('is idempotent and preserves the last position and stacking after ending', () => {
+      const { bookState, lower } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 485, 242)).toBe(true);
+      moveBookPieceDrag(bookState, 585, 342);
+      const position = [lower.xPercent, lower.yPercent];
+      endBookPieceDrag(bookState);
+      endBookPieceDrag(bookState);
+      moveBookPieceDrag(bookState, 900, 900);
+      expect(bookState.pieceDragState).toBeNull();
+      expect([lower.xPercent, lower.yPercent]).toEqual(position);
+      expect(bookState.pieceStack[1]).toBe(lower);
+      expect(beginBookPieceDrag(bookState, 585, 342)).toBe(true);
+    });
+
+    it('can cancel without a layout', () => {
+      const { bookState } = _createDraggableBookState();
+      expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
+      bookState.layout = null;
+      endBookPieceDrag(bookState);
+      expect(bookState.pieceDragState).toBeNull();
+    });
+  });
+
   describe('getVisibleBookPieces()', () => {
     it('preserves stack order for distinct pieces with identical text and style', () => {
       const { bookState, lower, upper } = _createBookState();

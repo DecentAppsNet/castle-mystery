@@ -2,6 +2,7 @@ import BookLayout from "../drawing/types/BookLayout"
 import AnimationEndCallback from "./AnimationEndCallback"
 import BookPage from "./BookPage"
 import Piece from "./Piece"
+import PieceDragState from "./PieceDragState"
 
 type BookState = {
   layout:BookLayout|null,
@@ -12,6 +13,7 @@ type BookState = {
   isVisible:boolean,
   pageNo:number,
   pieceStack:Piece[],
+  pieceDragState:PieceDragState|null,
   pages:BookPage[]
 }
 
@@ -25,6 +27,7 @@ export function createDefaultBookState():BookState {
     isVisible:false,
     pageNo:1,
     pieceStack:[],
+    pieceDragState:null,
     pages:[]
   }
 }

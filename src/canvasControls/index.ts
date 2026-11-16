@@ -1,11 +1,24 @@
-/* This file groups canvas control layout, visibility, and rectangular hit-testing helpers.
+/* This file groups canvas control layout, visibility, rectangular hit testing, and drag calculations.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from "decent-portal";
 import ControlLayout from "./types/ControlLayout";
 import Control from "./types/Control";
 import Rect from "@/game/types/Rect";
+import Point from "@/game/types/Point";
+import { clamp } from "@/common/numberUtil";
 import { isPositionInRect } from "@/game/rectUtil";
+
+export function calcDragGrabOffset(rect:Readonly<Rect>, canvasX:number, canvasY:number):Point {
+  return [canvasX - rect.x - rect.width / 2, canvasY - rect.y - rect.height / 2];
+}
+
+export function calcClampedDragCenter(grabOffset:Point, bounds:Readonly<Rect>, canvasX:number, canvasY:number):Point {
+  return [
+    clamp(canvasX - grabOffset[0], bounds.x, bounds.x + bounds.width),
+    clamp(canvasY - grabOffset[1], bounds.y, bounds.y + bounds.height)
+  ];
+}
 
 export function findTopmostControlAtPoint<ControlType extends Control>(
   controls:ReadonlyArray<ControlType>, canvasX:number, canvasY:number):ControlType|null {

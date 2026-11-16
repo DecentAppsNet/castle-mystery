@@ -1,10 +1,51 @@
 import { describe, expect, it } from 'vitest';
-import { createLayout, findControlAtPoint, findTopmostControlAtPoint, hideControl, updateControlRect } from '..';
+import { calcClampedDragCenter, calcDragGrabOffset, createLayout, findControlAtPoint,
+  findTopmostControlAtPoint, hideControl, updateControlRect } from '..';
 import Control from '../types/Control';
 
 type TestControl = Control & { readonly label:string };
 
 describe('canvasControls', () => {
+  describe('calcDragGrabOffset()', () => {
+    it('captures the signed pointer offset from the rectangle center', () => {
+      expect(calcDragGrabOffset({ x:100, y:50, width:40, height:20 }, 105, 65)).toEqual([-15, 5]);
+    });
+  });
+
+  describe('calcClampedDragCenter()', () => {
+    const bounds = { x:100, y:50, width:200, height:100 };
+
+    it('preserves an off-center grab without an initial jump', () => {
+      const offset = calcDragGrabOffset({ x:100, y:50, width:40, height:20 }, 105, 65);
+      expect(calcClampedDragCenter(offset, bounds, 105, 65)).toEqual([120, 60]);
+      expect(calcClampedDragCenter(offset, bounds, 155, 90)).toEqual([170, 85]);
+    });
+
+    it('clamps the center at the left and right edges', () => {
+      expect(calcClampedDragCenter([10, -5], bounds, -100, 95)).toEqual([100, 100]);
+      expect(calcClampedDragCenter([10, -5], bounds, 500, 95)).toEqual([300, 100]);
+    });
+
+    it('clamps the center at the top and bottom edges', () => {
+      expect(calcClampedDragCenter([10, -5], bounds, 210, -100)).toEqual([200, 50]);
+      expect(calcClampedDragCenter([10, -5], bounds, 210, 500)).toEqual([200, 150]);
+    });
+
+    it('clamps independently at all four corners', () => {
+      expect(calcClampedDragCenter([10, -5], bounds, -100, -100)).toEqual([100, 50]);
+      expect(calcClampedDragCenter([10, -5], bounds, 500, -100)).toEqual([300, 50]);
+      expect(calcClampedDragCenter([10, -5], bounds, -100, 500)).toEqual([100, 150]);
+      expect(calcClampedDragCenter([10, -5], bounds, 500, 500)).toEqual([300, 150]);
+    });
+
+    it('retains the original offset after leaving and reentering the bounds', () => {
+      const offset = calcDragGrabOffset({ x:100, y:50, width:40, height:20 }, 105, 65);
+      expect(calcClampedDragCenter(offset, bounds, -500, -500)).toEqual([100, 50]);
+      expect(calcClampedDragCenter(offset, bounds, 155, 90)).toEqual([170, 85]);
+      expect(offset).toEqual([-15, 5]);
+    });
+  });
+
   describe('findTopmostControlAtPoint()', () => {
     it('returns the last overlapping control by reference', () => {
       const lower = { rect:{ x:0, y:0, width:20, height:20 }, isVisible:true };
