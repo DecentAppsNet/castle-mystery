@@ -10,6 +10,7 @@ import { getAnimationProgress } from "./bookAnimationUtil";
 import { drawPageFlip } from "./pageFlipAnimationUtil";
 import Rect from "@/game/types/Rect";
 import { drawPage } from "./pageDrawUtil";
+import { drawBookPieces } from "./pieceDrawUtil";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -104,6 +105,14 @@ function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rec
   }
 }
 
+function _drawPieces(bookState:BookState, bookRect:Rect, context:CanvasRenderingContext2D) {
+  // Collect both visible pages before drawing so pieces overlay all page content.
+  const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
+  const visiblePages = bookState.pages.slice(leftPageNo - 1, leftPageNo + 1);
+  const pieces = visiblePages.flatMap(page => page.kind === 'conclusion' ? page.pieces : []);
+  drawBookPieces(pieces, bookRect, context);
+}
+
 export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D) {
   assert(bookState.isVisible); // Prefer caller to check for readability.
   const bookImage = imageSet.findImage(BOOK_IMAGE_URL)?.image ?? null;
@@ -116,6 +125,7 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
   _drawPageContent(bookState, metaTime, drawRect, imageSet, context);
+  _drawPieces(bookState, drawRect, context);
   drawPageFlip(bookState, metaTime, drawRect, bookImage, imageSet, context);
   if (bookState.animationKind === null) _drawBookControls(bookState, context);
 }

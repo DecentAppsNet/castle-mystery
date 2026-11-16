@@ -41,8 +41,8 @@ function _makePiece(text:string, styleNo:number, pieceI:number):Piece {
   return {
     text,
     styleNo,
-    xPercent:pieceI * 3,
-    yPercent:pieceI * 3
+    xPercent:50 + pieceI * 3,
+    yPercent:30 + pieceI * 3
   }
 }
 

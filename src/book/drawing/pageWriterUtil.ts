@@ -1,18 +1,14 @@
-/* This file provides text-section parsing, text measurement, and stateless page drawing for PageWriter.
+/* This file provides text-section parsing and stateless page drawing for PageWriter.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import Rect from "@/game/types/Rect";
 import { assert } from "decent-portal";
 import { calcPieceBorderPolygon } from "./pieceDrawUtil";
+import { bookCanvasFont, drawBorderedBookText } from "./bookTextDrawUtil";
 import DividerStyle from "./types/DividerStyle";
-import PageTextBoxMetrics from "./types/PageTextBoxMetrics";
 
 export function splitTextToLines(text:string):string[] {
   return text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
-}
-
-function _canvasFont(fontSizePixels:number) {
-  return `${fontSizePixels}px im-fell-english, serif`;
 }
 
 export function getIlluminatedTextSections(text:string):{firstLetter:string, firstWord:string, theRest:string} {
@@ -33,63 +29,23 @@ export function drawPageTextLine(text:string, x:number, y:number, maxWidth:numbe
   // Keep text styling local to this line so callers retain their canvas state.
   context.save();
   context.fillStyle = colorHex;
-  context.font = _canvasFont(fontSizePixels);
+  context.font = bookCanvasFont(fontSizePixels);
   context.textAlign = justification;
   context.textBaseline = 'top';
   context.fillText(text, x, y, maxWidth);
   context.restore();
 }
 
-/* v8 ignore next -- Canvas text sizing is verified visually. @preserve */
-export function measurePageTextBox(text:string, pageWidth:number, lineHeight:number,
-    context:CanvasRenderingContext2D, initialFontSizePixels:number = lineHeight):PageTextBoxMetrics {
-  const padding = lineHeight * .15;
-  let fontSizePixels = initialFontSizePixels;
-  context.save();
-  context.font = _canvasFont(fontSizePixels);
-  context.textAlign = 'left';
-  context.textBaseline = 'top';
-  let textWidth = context.measureText(text).width;
-  const maxTextWidth = Math.max(pageWidth - padding * 2, pageWidth * .1);
-  if (textWidth > maxTextWidth) {
-    fontSizePixels *= maxTextWidth / textWidth;
-    context.font = `${fontSizePixels}px im-fell-english, serif`;
-    textWidth = context.measureText(text).width;
-  }
-  const width = text === '' ? pageWidth * .1 : textWidth + padding * 2;
-  context.restore();
-  return { width, padding, fontSizePixels };
-}
-
 /* v8 ignore next -- Piece slot drawing is verified visually. @preserve */
 export function drawPagePieceSlot(text:string, x:number, y:number, width:number, lineHeight:number,
-    padding:number, fontSizePixels:number, colorHex:string, pieceStyleNo:number, context:CanvasRenderingContext2D):void {
+  padding:number, fontSizePixels:number, colorHex:string, pieceStyleNo:number, context:CanvasRenderingContext2D,
+  backgroundColor:string | null = null):void {
   // Keep the flair within the existing padding so the text area stays unchanged.
-  const polygon = calcPieceBorderPolygon({ x, y, width, height:lineHeight },
+  const rect = { x, y, width, height:lineHeight };
+  const polygon = calcPieceBorderPolygon(rect,
     pieceStyleNo, Math.min(padding, width / 2));
-  const borderPath = new Path2D();
-  borderPath.moveTo(polygon[0][0], polygon[0][1]);
-  for (const [pointX, pointY] of polygon.slice(1)) borderPath.lineTo(pointX, pointY);
-  borderPath.closePath();
-
-  // Fill and outline the piece border independently of the caller's canvas state.
-  context.save();
-  context.font = _canvasFont(fontSizePixels);
-  context.textAlign = 'left';
-  context.textBaseline = 'top';
-  if (text === '') {
-    context.fillStyle = '#c8b294';
-    context.fill(borderPath);
-  }
-  context.strokeStyle = colorHex;
-  context.lineWidth = lineHeight * .035;
-  context.setLineDash([]);
-  context.stroke(borderPath);
-  if (text !== '') {
-    context.fillStyle = colorHex;
-    context.fillText(text, x + padding, y + (lineHeight - fontSizePixels) / 2);
-  }
-  context.restore();
+  const fillColor = backgroundColor ?? (text === '' ? '#c8b294' : null);
+  drawBorderedBookText(text, rect, polygon, padding, fontSizePixels, colorHex, fillColor, context);
 }
 
 /* v8 ignore next -- Divider drawing is verified visually. @preserve */

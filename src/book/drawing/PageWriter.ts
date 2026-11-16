@@ -8,7 +8,8 @@ import { assert, assertNonNullable } from "decent-portal";
 import { drawIllumination } from "./illuminationDrawUtil";
 import { ImageSet } from "@/imageLoading";
 import { drawPageDivider, drawPagePieceSlot, drawPageTextLine, getIlluminatedTextSections,
-  measurePageTextBox, splitTextToLines } from "./pageWriterUtil";
+  splitTextToLines } from "./pageWriterUtil";
+import { measureBookTextBox } from "./bookTextDrawUtil";
 import DividerStyle from "./types/DividerStyle";
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
@@ -203,7 +204,7 @@ class PageWriter {
 
   addPieceSlot(text:string, styleNo:number = -1) {
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
-    const { width, padding, fontSizePixels } = measurePageTextBox(text, this._pageRect.width,
+    const { width, padding, fontSizePixels } = measureBookTextBox(text, this._pageRect.width,
       lineHeight, this._context, this._getTextFontSizePixels());
     if (width > this._getRemainingWidth() && this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
     while (this._textFlowObstacleEnd && width > this._getRemainingWidth()) this.addLineBreak();
@@ -251,7 +252,7 @@ class PageWriter {
   addButton(text:string) {
     this._startFullWidthLine();
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
-    const { width, padding, fontSizePixels } = measurePageTextBox(text, this._pageRect.width,
+    const { width, padding, fontSizePixels } = measureBookTextBox(text, this._pageRect.width,
       lineHeight, this._context, this._getTextFontSizePixels());
     const centerX = this._pageRect.x + this._pageRect.width / 2;
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
