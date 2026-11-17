@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { setSeed } from '@/common/randUtil';
 import { createTalkingGestureSampler } from '../talkingGestureUtil';
 
+function _findMax(values:readonly number[]):number {
+  return values.reduce((maximum, value) => Math.max(maximum, value), -Infinity);
+}
+
 describe('talkingGestureUtil', () => {
   beforeEach(() => setSeed(407));
 
@@ -58,7 +62,7 @@ describe('talkingGestureUtil', () => {
             - (afterRotation?.transformType === 'rotate' ? afterRotation.rotateRadians : 0));
         });
       }).flat();
-      expect(Math.max(...differences)).toBeCloseTo(0, 6);
+      expect(_findMax(differences)).toBeCloseTo(0, 6);
     });
 
     it('samples both concrete arms with finite rotations and omits settled rest', () => {
