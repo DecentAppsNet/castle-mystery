@@ -1,6 +1,9 @@
+/* This file creates temporary book pages and their generated loose-piece inventory.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import BookState, { createDefaultBookState } from "./types/BookState";
-import Piece from "./types/Piece";
+import { generatePieceStack } from "./pieceGenerationUtil";
 
 const characterNames = ["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"];
 const conclusion1:Conclusion = { // TODO - stub data to delete.
@@ -37,16 +40,6 @@ const conclusion1:Conclusion = { // TODO - stub data to delete.
   revealRoomIds: []
 }
 
-function _makePiece(text:string, styleNo:number, pieceI:number):Piece {
-  return {
-    conclusionId:conclusion1.id,
-    text,
-    styleNo,
-    xPercent:50 + pieceI * 3,
-    yPercent:30 + pieceI * 3
-  }
-}
-
 const conclusion2:Conclusion = { // TODO - stub data to delete.
   id: "the relic",
   title: "The Relic",
@@ -64,8 +57,8 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
 }
 
 export function createBookState():BookState { // TODO this will change later to take some data, similar to createGameState().
+  // Establish all pages before generating their loose-piece inventory.
   const bookState = createDefaultBookState();
-  bookState.pieceStack = characterNames.map((text, pieceI) => _makePiece(text, 0, pieceI));
   bookState.pages = [
     { kind:'blank', headingText:'' },
     { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', subtitle:null, author:'Erik Hermansen' },
@@ -74,6 +67,9 @@ export function createBookState():BookState { // TODO this will change later to 
     { kind:'conclusion', headingText:'Chap. I - Identities', conclusion:conclusion1 },
     { kind:'conclusion', headingText:'Chap. I - Locked Conclusion', conclusion:conclusion2 },
   ];
+  bookState.pieceStack = generatePieceStack(bookState);
+
+  // Start with the book closed at its first page.
   bookState.pageNo = 1;
   bookState.isVisible = false;
   return bookState;
