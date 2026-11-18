@@ -6,6 +6,17 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import Conclusion from '@/game/conclusions/types/Conclusion';
 import AnswerSetIdToPieceStyleNoMap from './types/AnswerSetIdToPieceStyleNoMap';
 
+function _findReservedStyleNoForAnswerSet(answerSet:AnswerSet):number {
+  if (answerSet.sourceCategoryIds.length !== 1) return -1;
+  const categoryId = answerSet.sourceCategoryIds[0];
+  switch(categoryId) {
+    case 'characters': return 0;
+    case 'items': return 1;
+    case 'rooms': return 2;
+    default: return -1;
+  }
+}
+
 export function generateAnswerSetIdToPieceStyleNoMap(conclusion:Readonly<Conclusion>):AnswerSetIdToPieceStyleNoMap {
   // Group exact membership without changing any blank's ordered options or indexes.
   const groups:{ membership:string, answerSets:AnswerSet[] }[] = [];
@@ -25,8 +36,8 @@ export function generateAnswerSetIdToPieceStyleNoMap(conclusion:Readonly<Conclus
   const styles:{ [answerSetId:string]:number | undefined } = Object.create(null);
   let nextCustomStyleNo = 3;
   for (const group of groups) {
-    const reservedStyleNo = ['characters', 'items', 'rooms'].findIndex(categoryId =>
-      group.answerSets.some(answerSet => answerSet.sourceCategoryIds.includes(categoryId)));
+    const reservedStyleNo = group.answerSets.length === 1 
+      ? _findReservedStyleNoForAnswerSet(group.answerSets[0]) : -1;
     const styleNo = reservedStyleNo >= 0 ? reservedStyleNo : nextCustomStyleNo++;
     for (const answerSet of group.answerSets) styles[answerSet.id] = styleNo;
   }

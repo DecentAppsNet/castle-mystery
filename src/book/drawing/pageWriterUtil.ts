@@ -3,7 +3,7 @@
 
 import Rect from "@/game/types/Rect";
 import { assert } from "decent-portal";
-import { calcPieceBorderPolygon } from "./pieceDrawUtil";
+import { calcPieceBorderPolygon, getPieceSlotColor } from "./pieceDrawUtil";
 import { bookCanvasFont, drawBorderedBookText } from "./bookTextDrawUtil";
 import DividerStyle from "./types/DividerStyle";
 
@@ -44,7 +44,7 @@ export function drawPagePieceSlot(text:string, x:number, y:number, width:number,
   const rect = { x, y, width, height:lineHeight };
   const polygon = calcPieceBorderPolygon(rect,
     pieceStyleNo, Math.min(padding, width / 2));
-  const fillColor = backgroundColor ?? (text === '' ? '#c8b294' : null);
+  const fillColor = backgroundColor ?? (text === '' ? getPieceSlotColor(pieceStyleNo) : null);
   drawBorderedBookText(text, rect, polygon, padding, fontSizePixels, colorHex, fillColor, context);
 }
 

@@ -8,25 +8,21 @@ import Rect from "@/game/types/Rect";
 import Piece from "../types/Piece";
 import PieceLayout from "./types/PieceLayout";
 import { drawBorderedBookText, measureBookTextBox } from "./bookTextDrawUtil";
+import { getPieceFlairProfile } from "../pieceFlairUtil";
 
-const FLAIR_PROFILES:ReadonlyArray<ReadonlyArray<Point>> = [
-	[[0, 0], [1, .55], [.40, .55], [.75, .7], [0, .75], [.40, .80], [.35, 1]],
-	[[0, 0], [0, .3], [1, .3], [1, .7], [0, .7], [0, 1]],
-	[[0, 0], [0, .25], [1, .5], [0, .75], [0, 1]],
-	[[1, 0], [0, 1]],
-	[[0, 0], [0, .35], [.5, .35], [.5, .65], [1, .65], [1, 1]],
-	[[1, 0], [0, .5], [1, 1]],
-	[[0, 0], [1, .25], [0, .5], [1, .75], [0, 1]],
-	[[0, 0], [0, .35], [1, .2], [1, .8], [0, .65], [0, 1]],
-	[[0, 0], [1, .35], [0, .65], [1, 1]]
-];
+function _getPieceColor(styleNo:number):string {
+	return getPieceFlairProfile(styleNo).pieceColor;
+}
+
+export function getPieceSlotColor(styleNo:number):string {
+	return getPieceFlairProfile(styleNo).pieceSlotColor;
+}
 
 export function calcPieceBorderPolygon(rect:Rect, styleNo:number, flairMargin:number):Point[] {
 	// Profiles use fractions of the side's inset width and the rectangle's height.
-	assert(Number.isInteger(styleNo) && styleNo >= 0);
 	assert(rect.width >= 0 && rect.height >= 0);
 	assert(Number.isFinite(flairMargin) && flairMargin >= 0 && flairMargin <= rect.width / 2);
-	const profile = FLAIR_PROFILES[styleNo % FLAIR_PROFILES.length];
+	const profile = getPieceFlairProfile(styleNo).borderPolygon;
 
 	// Translate, rather than mirror, the profile so neighboring edges can interlock.
 	const leftSide:Point[] = profile.map(([inset, height]) =>
@@ -56,6 +52,6 @@ export function drawBookPieces(pieceLayouts:ReadonlyArray<PieceLayout>,
 		if (!isVisible) continue;
 		const polygon = calcPieceBorderPolygon(rect, piece.styleNo, Math.min(metrics.padding, rect.width / 2));
 		drawBorderedBookText(piece.text, rect, polygon, metrics.padding,
-			metrics.fontSizePixels, '#392b20', '#d8b98d', context);
+			metrics.fontSizePixels, '#392b20', _getPieceColor(piece.styleNo), context);
 	}
 }
