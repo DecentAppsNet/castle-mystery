@@ -79,25 +79,35 @@ describe('answerSetUtil', () => {
     });
   });
 
-  describe('duplicateClozeBlank() migration metadata', () => {
-    it('shares immutable metadata while copying legacy arrays and selection state', () => {
-      const answers = ['B', 'A'];
-      const answerSet = Object.freeze(createAnswerSet(answers, [], false));
-      const blank = { type:'blank' as const, availableAnswers:answers, answerSet,
+  describe('duplicateClozeBlank()', () => {
+    it('shares the authoritative frozen answer set without adding legacy options', () => {
+      const answers = Object.freeze(['B', 'A']);
+      const answerSet = createAnswerSet(answers, ['characters'], false);
+      Object.freeze(answerSet.sourceCategoryIds);
+      Object.freeze(answerSet);
+      const blank = { type:'blank' as const, answerSet,
         correctAnswerIndexes:[1], playerAnswerIndex:0 };
       const copy = duplicateClozeBlank(blank);
+      expect(copy).toEqual(blank);
+      expect(copy).not.toBe(blank);
       expect(copy.answerSet).toBe(answerSet);
-      expect(copy.availableAnswers).toEqual(answers);
-      expect(copy.availableAnswers).not.toBe(answers);
-      expect(copy.correctAnswerIndexes).not.toBe(blank.correctAnswerIndexes);
-      copy.playerAnswerIndex = 1;
-      expect(blank.playerAnswerIndex).toBe(0);
+      expect(copy.answerSet.answers).toBe(answers);
+      expect(copy).not.toHaveProperty('availableAnswers');
     });
 
-    it('preserves legacy blanks without adding absent metadata', () => {
-      const blank = { type:'blank' as const, availableAnswers:['A'], correctAnswerIndexes:[0], playerAnswerIndex:-1 };
-      expect(duplicateClozeBlank(blank)).toEqual(blank);
-      expect(duplicateClozeBlank(blank)).not.toHaveProperty('answerSet');
+    it('keeps selection and mutable correct-answer indexes independent', () => {
+      const blank = { type:'blank' as const, answerSet:createAnswerSet(['B', 'A'], [], false),
+        correctAnswerIndexes:[1], playerAnswerIndex:-1 };
+      const copy = duplicateClozeBlank(blank);
+      expect(copy.correctAnswerIndexes).not.toBe(blank.correctAnswerIndexes);
+      copy.correctAnswerIndexes[0] = 0;
+      copy.playerAnswerIndex = 1;
+      expect(blank.correctAnswerIndexes).toEqual([1]);
+      expect(blank.playerAnswerIndex).toBe(-1);
+      blank.correctAnswerIndexes.push(0);
+      blank.playerAnswerIndex = 0;
+      expect(copy.correctAnswerIndexes).toEqual([0]);
+      expect(copy.playerAnswerIndex).toBe(1);
     });
   });
 });

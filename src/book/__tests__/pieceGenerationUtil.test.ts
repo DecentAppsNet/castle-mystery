@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createLayout } from '@/canvasControls';
+import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { generatePieceStack } from '../pieceGenerationUtil';
 import BookPage from '../types/BookPage';
@@ -10,8 +11,8 @@ function _createConclusionPage(conclusionId:string, answerGroups:string[][]):Ext
     kind:'conclusion', headingText:'',
     conclusion:{
       id:conclusionId, title:conclusionId,
-      parts:answerGroups.map(availableAnswers => ({
-        type:'blank', availableAnswers, correctAnswerIndexes:[0], playerAnswerIndex:-1
+      parts:answerGroups.map(answers => ({
+        type:'blank', answerSet:createAnswerSet(answers, [], false), correctAnswerIndexes:[0], playerAnswerIndex:-1
       })),
       isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
     }
@@ -71,7 +72,7 @@ describe('pieceGenerationUtil', () => {
       const original = structuredClone(state);
       expect(generatePieceStack(state).map(piece => piece.text)).toEqual(['B', 'A']);
       expect(state).toEqual(original);
-      expect(blank.availableAnswers[blank.playerAnswerIndex]).toBe('B');
+      expect(blank.answerSet.answers[blank.playerAnswerIndex]).toBe('B');
     });
 
     it('keeps partially overlapping and subset memberships separate', () => {
@@ -183,6 +184,8 @@ describe('pieceGenerationUtil', () => {
       const page = _createConclusionPage('one', [answers]);
       const blank = page.conclusion.parts[0] as ClozeBlank;
       Object.freeze(answers);
+      Object.freeze(blank.answerSet.sourceCategoryIds);
+      Object.freeze(blank.answerSet);
       Object.freeze(blank.correctAnswerIndexes);
       Object.freeze(blank);
       Object.freeze(page.conclusion.parts);

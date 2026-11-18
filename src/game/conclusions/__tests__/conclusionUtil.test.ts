@@ -1,5 +1,6 @@
 // Follow test conventions from CONTRIBUTING.md when editing this file.
 import { describe, expect, it } from 'vitest';
+import { createAnswerSet } from '../answerSetUtil';
 import { countConclusionMistakes, isConclusionMissingAnswers } from '../conclusionUtil';
 import Conclusion from '../types/Conclusion.ts';
 import { UNSPECIFIED_ANSWER } from '../types/ClozeBlank';
@@ -26,7 +27,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            availableAnswers:['apple', 'orange'],
+            answerSet:createAnswerSet(['apple', 'orange'], [], false),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 1
           }
@@ -42,7 +43,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            availableAnswers:['apple', 'orange'],
+            answerSet:createAnswerSet(['apple', 'orange'], [], false),
             correctAnswerIndexes:[0],
             playerAnswerIndex:UNSPECIFIED_ANSWER
           }
@@ -58,7 +59,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            availableAnswers:['apple', 'orange'],
+            answerSet:createAnswerSet(['apple', 'orange'], [], false),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 99
           }
@@ -90,7 +91,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            availableAnswers:['apple', 'fruit'],
+            answerSet:createAnswerSet(['apple', 'fruit'], [], false),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 0
           },
@@ -100,7 +101,7 @@ describe('conclusionUtil', () => {
           },
           {
             type:ClozePartType.blank,
-            availableAnswers:['fruit', 'vegetable'],
+            answerSet:createAnswerSet(['fruit', 'vegetable'], [], false),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 0
           }
@@ -116,7 +117,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            availableAnswers:['apple', 'orange'],
+            answerSet:createAnswerSet(['apple', 'orange'], [], false),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 1
           }
@@ -132,7 +133,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            availableAnswers:['apple', 'orange'],
+            answerSet:createAnswerSet(['apple', 'orange'], [], false),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 1
           },
@@ -142,7 +143,7 @@ describe('conclusionUtil', () => {
           },
           {
             type:ClozePartType.blank,
-            availableAnswers:['fruit', 'vegetable'],
+            answerSet:createAnswerSet(['fruit', 'vegetable'], [], false),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 1
           },
@@ -152,7 +153,7 @@ describe('conclusionUtil', () => {
           },
           {
             type:ClozePartType.blank,
-            availableAnswers:['red', 'yellow'],
+            answerSet:createAnswerSet(['red', 'yellow'], [], false),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 0
           }
@@ -168,7 +169,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            availableAnswers:['cat', 'dog', 'kitten'],
+            answerSet:createAnswerSet(['cat', 'dog', 'kitten'], [], false),
             correctAnswerIndexes:[0, 2],
             playerAnswerIndex: 2
           }

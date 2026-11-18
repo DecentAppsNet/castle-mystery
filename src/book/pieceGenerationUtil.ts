@@ -57,7 +57,7 @@ export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
     const answerGroups:Piece[][] = [];
     for (const part of page.conclusion.parts) {
       if (part.type !== 'blank') continue;
-      const answers = (part as ClozeBlank).availableAnswers;
+      const answers = (part as ClozeBlank).answerSet.answers;
       if (groups.some(group => group.conclusionId === conclusionId && _haveSameMembership(group.answers, answers))) continue;
 
       // Emit each new group's answers in their original order with fresh mutable pieces.

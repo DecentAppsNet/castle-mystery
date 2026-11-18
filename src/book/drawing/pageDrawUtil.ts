@@ -79,7 +79,7 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
     switch(part.type) {
       case ClozePartType.blank:
         const blankPart = part as ClozeBlank;
-        const playerGuess = blankPart.availableAnswers[blankPart.playerAnswerIndex] ?? '';
+        const playerGuess = blankPart.answerSet.answers[blankPart.playerAnswerIndex] ?? '';
         if (page.conclusion.isComplete) pw.addText(playerGuess, 'black', true);
         else pw.addPieceSlot(playerGuess, pieceStyleNo++);
       break;

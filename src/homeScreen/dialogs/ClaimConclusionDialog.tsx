@@ -68,7 +68,7 @@ function ImageBitmapCanvas({ imageBitmap }: { imageBitmap:ImageBitmap }) {
 
 function _createBlankText(blank:ClozeBlank):string {
   if (blank.playerAnswerIndex === UNSPECIFIED_ANSWER) return '';
-  return blank.availableAnswers[blank.playerAnswerIndex] || '';
+  return blank.answerSet.answers[blank.playerAnswerIndex] || '';
 }
 
 function _updateConclusionBlankAnswer(conclusion:Conclusion, blankPartIndex:number, playerAnswerIndex:number):Conclusion {
@@ -148,7 +148,7 @@ function _renderClozePart(part:Conclusion['parts'][number], partIndex:number, co
     onChange={(event:ChangeEvent<HTMLSelectElement>) => onBlankAnswerChanged(partIndex, Number(event.target.value))}
   >
     <option value={UNSPECIFIED_ANSWER}>Select…</option>
-    {blank.availableAnswers.map((answer, answerIndex) =>
+    {blank.answerSet.answers.map((answer, answerIndex) =>
       <option key={answerIndex} value={answerIndex}>{answer}</option>
     )}
   </select>;

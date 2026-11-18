@@ -125,7 +125,7 @@ export function isLevelSaveStateCompatible(save:LevelSaveState, gameState:GameSt
       return _incompatible(`Conclusion "${conclusionId}" has ${indexes.length} saved answers; expected ${blanks.length} blanks.`);
     }
     return indexes.every((index, blankI) => {
-      const answerCount = blanks[blankI].availableAnswers.length;
+      const answerCount = blanks[blankI].answerSet.answers.length;
       return index === UNSPECIFIED_ANSWER || (index >= 0 && index < answerCount)
         || _incompatible(`Conclusion "${conclusionId}", blank ${blankI + 1}: answer index ${index} is outside [0, ${answerCount}) and is not ${UNSPECIFIED_ANSWER}.`);
     });
