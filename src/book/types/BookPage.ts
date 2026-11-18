@@ -1,4 +1,5 @@
 import Conclusion from "@/game/conclusions/types/Conclusion"
+import AnswerSetIdToPieceStyleNoMap from './AnswerSetIdToPieceStyleNoMap';
 
 type BookPageBase<Kind extends string> = {
   kind:Kind,
@@ -18,7 +19,8 @@ type ChapterStartPage = BookPageBase<'chapterStart'> & {
 }
 
 type ConclusionPage = BookPageBase<'conclusion'> & {
-  conclusion:Conclusion
+  conclusion:Conclusion,
+  readonly answerSetIdToPieceStyleNoMap:AnswerSetIdToPieceStyleNoMap
 }
 
 type BlankPage = BookPageBase<'blank'> & {

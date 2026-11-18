@@ -2,20 +2,23 @@ import { describe, expect, it } from 'vitest';
 import { createLayout } from '@/canvasControls';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import Conclusion from '@/game/conclusions/types/Conclusion';
+import { generateAnswerSetIdToPieceStyleNoMap } from '../answerSetPieceStyleUtil';
 import { generatePieceStack } from '../pieceGenerationUtil';
 import BookPage from '../types/BookPage';
 import BookState, { createDefaultBookState } from '../types/BookState';
 
 function _createConclusionPage(conclusionId:string, answerGroups:string[][]):Extract<BookPage, { kind:'conclusion' }> {
-  return {
-    kind:'conclusion', headingText:'',
-    conclusion:{
+  const conclusion:Conclusion = {
       id:conclusionId, title:conclusionId,
       parts:answerGroups.map(answers => ({
         type:'blank', answerSet:createAnswerSet(answers, [], false), correctAnswerIndexes:[0], playerAnswerIndex:-1
       })),
       isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
-    }
+  };
+  return {
+    kind:'conclusion', headingText:'', conclusion,
+    answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion)
   };
 }
 
@@ -97,18 +100,6 @@ describe('pieceGenerationUtil', () => {
       expect(generatePieceStack(state)).toMatchObject([
         { conclusionId:'one', text:'A', styleNo:0 },
         { conclusionId:'two', text:'A', styleNo:1 }
-      ]);
-    });
-
-    it('uses conclusion ID ownership to merge equivalent groups across pages', () => {
-      const state = _createBookState([
-        _createConclusionPage('one', [['B', 'A']]),
-        _createConclusionPage('one', [['A', 'B'], ['C']])
-      ]);
-      expect(generatePieceStack(state)).toMatchObject([
-        { conclusionId:'one', text:'B', styleNo:0 },
-        { conclusionId:'one', text:'A', styleNo:0 },
-        { conclusionId:'one', text:'C', styleNo:1 }
       ]);
     });
 

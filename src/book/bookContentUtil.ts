@@ -5,6 +5,7 @@ import Conclusion from "@/game/conclusions/types/Conclusion";
 import BookState, { createDefaultBookState } from "./types/BookState";
 import { generatePieceStack } from "./pieceGenerationUtil";
 import { createAnswerSet } from "@/game/conclusions/answerSetUtil";
+import { generateAnswerSetIdToPieceStyleNoMap } from './answerSetPieceStyleUtil';
 
 const characterAnswerSet = createAnswerSet(["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"], ['characters'], true);
 const conclusion1:Conclusion = { // TODO - stub data to delete.
@@ -110,11 +111,14 @@ export function createBookState():BookState { // TODO this will change later to 
     { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', subtitle:null, author:'Erik Hermansen' },
     { kind:'blank', headingText:'' },
     { kind:'chapterStart', headingText:'', title:'Birth of Constantine', chapterNo:1, description:'Wherein Frederick is introduced to the World by a different name, and the earliest seeds of trouble are planted.' },
-    { kind:'conclusion', headingText:'Chap. I - Identities', conclusion:conclusion1 },
+    { kind:'conclusion', headingText:'Chap. I - Identities', conclusion:conclusion1,
+      answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion1) },
     { kind:'blank', headingText:'Chap. I - Identities' },
-    { kind:'conclusion', headingText:'Chap. I - The Relic', conclusion:conclusion2 },
+    { kind:'conclusion', headingText:'Chap. I - The Relic', conclusion:conclusion2,
+      answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion2) },
     { kind:'blank', headingText:'Chap. I - The Relic' },
-    { kind:'conclusion', headingText:'Chap. I - Chain of Custody', conclusion:conclusion3 },
+    { kind:'conclusion', headingText:'Chap. I - Chain of Custody', conclusion:conclusion3,
+      answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion3) },
     { kind:'blank', headingText:'Chap. I - Chain of Custody' },
   ];
   bookState.pieceStack = generatePieceStack(bookState);
