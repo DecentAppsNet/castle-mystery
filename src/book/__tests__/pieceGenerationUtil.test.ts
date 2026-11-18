@@ -20,7 +20,8 @@ function _createConclusionPage(conclusionId:string, answerGroups:string[][]):Ext
 
 function _createBookState(pages:BookPage[]):BookState {
   const state = createDefaultBookState();
-  state.pages = pages;
+  state.pages = pages.flatMap((page):BookPage[] => page.kind === 'conclusion'
+    ? [page, { kind:'blank', headingText:'' }] : [page]);
   return state;
 }
 
@@ -40,7 +41,8 @@ describe('pieceGenerationUtil', () => {
       const state = _createBookState([
         { kind:'blank', headingText:'' },
         { kind:'bookStart', headingText:'', title:'Book', subtitle:null, author:'Author' },
-        { kind:'chapterStart', headingText:'', title:'Chapter', chapterNo:1, description:'' }, page
+        { kind:'chapterStart', headingText:'', title:'Chapter', chapterNo:1, description:'' },
+        { kind:'blank', headingText:'' }, page
       ]);
       expect(generatePieceStack(state)).toEqual([]);
     });
@@ -49,8 +51,8 @@ describe('pieceGenerationUtil', () => {
       const answers = ['B', 'A'];
       const state = _createBookState([_createConclusionPage('one', [answers, answers])]);
       expect(generatePieceStack(state)).toEqual([
-        { conclusionId:'one', text:'B', styleNo:0, xPercent:25, yPercent:5 },
-        { conclusionId:'one', text:'A', styleNo:0, xPercent:25, yPercent:10 }
+        { conclusionId:'one', text:'B', styleNo:0, xPercent:75, yPercent:5 },
+        { conclusionId:'one', text:'A', styleNo:0, xPercent:75, yPercent:10 }
       ]);
     });
 
@@ -92,7 +94,7 @@ describe('pieceGenerationUtil', () => {
         _createConclusionPage('one', [answers]), _createConclusionPage('two', [answers])
       ]);
       expect(generatePieceStack(state)).toEqual([
-        { conclusionId:'one', text:'A', styleNo:0, xPercent:25, yPercent:5 },
+        { conclusionId:'one', text:'A', styleNo:0, xPercent:75, yPercent:5 },
         { conclusionId:'two', text:'A', styleNo:1, xPercent:75, yPercent:5 }
       ]);
     });
@@ -103,8 +105,8 @@ describe('pieceGenerationUtil', () => {
         _createConclusionPage('one', [['A', 'B'], ['C']])
       ]);
       expect(generatePieceStack(state)).toEqual([
-        { conclusionId:'one', text:'B', styleNo:0, xPercent:25, yPercent:5 },
-        { conclusionId:'one', text:'A', styleNo:0, xPercent:25, yPercent:10 },
+        { conclusionId:'one', text:'B', styleNo:0, xPercent:75, yPercent:5 },
+        { conclusionId:'one', text:'A', styleNo:0, xPercent:75, yPercent:10 },
         { conclusionId:'one', text:'C', styleNo:1, xPercent:75, yPercent:5 }
       ]);
     });
@@ -117,16 +119,59 @@ describe('pieceGenerationUtil', () => {
       expect(generatePieceStack(state).map(piece => piece.styleNo)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
 
-    it('places by actual page parity and resets Y per page, not per group', () => {
+    it('separates groups on the right page and resets placement for each spread', () => {
       const state = _createBookState([
         _createConclusionPage('one', [['A', 'B'], ['C']]),
-        { kind:'blank', headingText:'' },
         _createConclusionPage('two', [['D']]),
         _createConclusionPage('three', [['E']])
       ]);
       expect(generatePieceStack(state).map(({ xPercent, yPercent }) => [xPercent, yPercent])).toEqual([
-        [25, 5], [25, 10], [25, 15], [25, 5], [75, 5]
+        [75, 5], [75, 10], [75, 20], [75, 5], [75, 5]
       ]);
+    });
+
+    it('rejects a conclusion on the right even when it has no pieces', () => {
+      const state = _createBookState([{ kind:'blank', headingText:'' }, _createConclusionPage('one', [])]);
+      expect(() => generatePieceStack(state)).toThrow();
+    });
+
+    it('rejects a conclusion without a following page', () => {
+      const state = _createBookState([_createConclusionPage('one', [])]);
+      state.pages.pop();
+      expect(() => generatePieceStack(state)).toThrow();
+    });
+
+    it('rejects a conclusion followed by a non-blank page', () => {
+      const state = _createBookState([_createConclusionPage('one', [])]);
+      state.pages[1] = _createConclusionPage('two', []);
+      expect(() => generatePieceStack(state)).toThrow();
+    });
+
+    it('uses two fixed columns when one column reaches capacity', () => {
+      const answers = Array.from({ length:18 }, (_, index) => String(index));
+      const pieces = generatePieceStack(_createBookState([_createConclusionPage('one', [answers])]));
+      expect(pieces.map(piece => piece.xPercent)).toEqual([...Array(9).fill(62.5), ...Array(9).fill(87.5)]);
+      expect(pieces[8].yPercent).toBe(45);
+      expect(pieces[9].yPercent).toBe(5);
+    });
+
+    it('uses three columns without squeezing when two columns reach capacity', () => {
+      const answers = Array.from({ length:36 }, (_, index) => String(index));
+      const pieces = generatePieceStack(_createBookState([_createConclusionPage('one', [answers])]));
+      expect(new Set(pieces.map(piece => piece.xPercent)).size).toBe(3);
+      expect(pieces[11].yPercent).toBe(60);
+      expect(pieces[12].yPercent).toBe(5);
+    });
+
+    it('squeezes crowded inventories within the right page margins', () => {
+      const answers = Array.from({ length:90 }, (_, index) => String(index));
+      const pieces = generatePieceStack(_createBookState([_createConclusionPage('one', [answers])]));
+      expect(pieces).toHaveLength(90);
+      expect(new Set(pieces.map(piece => piece.xPercent)).size).toBe(3);
+      expect(pieces.every(piece => piece.xPercent > 50 && piece.xPercent < 100
+        && piece.yPercent >= 5 && piece.yPercent <= 95)).toBe(true);
+      expect(pieces[1].yPercent - pieces[0].yPercent).toBeLessThan(5);
+      expect(pieces[89].yPercent).toBeCloseTo(95);
     });
 
     it('generates all pages with null layout irrespective of the selected page', () => {
@@ -159,7 +204,7 @@ describe('pieceGenerationUtil', () => {
       first[0].yPercent = 98;
       first.reverse();
       expect(generatePieceStack(state)).toEqual(second);
-      expect(second[0]).toEqual({ conclusionId:'one', text:'A', styleNo:0, xPercent:25, yPercent:5 });
+      expect(second[0]).toEqual({ conclusionId:'one', text:'A', styleNo:0, xPercent:75, yPercent:5 });
     });
 
     it('leaves frozen source data, existing stack, and layout untouched', () => {
