@@ -57,7 +57,7 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
 }
 
 const custodyNames = ["Helena of Gaeta", "Hugo of Speyer", "King Frederick", "Matteo il Toro", "Pope Innocent III", "Raniero de Stefano"];
-const custodyRooms = ["", "Courtyard", "East Hall", "East Stairwell", "Grain Store", "Guard Chamber", "Lawn", "Liturgical Vault", "Lower Passage", "Portcullis Chamber", "Steward's Office", "Textile Store", "West Hall", "Wine Cellar"];
+const custodyRooms = ["Courtyard", "East Hall", "East Stairwell", "Grain Store", "Guard Chamber", "Lawn", "Liturgical Vault", "Lower Passage", "Portcullis Chamber", "Steward's Office", "Textile Store", "West Hall", "Wine Cellar"];
 const custodySuspects = ["Pope Innocent III", "the Freemasons", "Helena", "Raniero", "Toro", "Hugo", "King Frederick", "Nobody", "The wind", "Helena of Gaeta", "Hugo of Speyer", "Matteo il Toro", "Raniero de Stefano"];
 const conclusion3:Conclusion = {
   id: "chain of custody",

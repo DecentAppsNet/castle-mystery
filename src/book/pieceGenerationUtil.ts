@@ -6,8 +6,9 @@ import { assert } from 'decent-portal';
 import BookState from './types/BookState';
 import Piece from './types/Piece';
 
-const FIRST_ROW_Y_PERCENT = 5;
-const LAST_ROW_Y_PERCENT = 95;
+// Piece centers leave room for half a piece above/below, clear of the heading and page number.
+const FIRST_ROW_Y_PERCENT = 14;
+const LAST_ROW_Y_PERCENT = 86;
 const PREFERRED_ROW_SPACING_PERCENT = 5;
 
 function _haveSameMembership(first:readonly string[], second:readonly string[]):boolean {
@@ -28,16 +29,16 @@ function _placeAnswerGroupsOnRightPage(answerGroups:readonly Piece[][]):void {
   const rowSpacingPercent = Math.min(PREFERRED_ROW_SPACING_PERCENT,
     usableHeightPercent / Math.max(1, rowsPerColumn - 1));
 
-  // Fill columns top-to-bottom, leaving one empty slot between consecutive groups.
+  // Separate groups only within a column; a column break already provides separation.
   let placementIndex = 0;
   for (const group of answerGroups) {
+    if (placementIndex % rowsPerColumn !== 0) placementIndex++;
     for (const piece of group) {
       const columnIndex = Math.floor(placementIndex / rowsPerColumn);
       piece.xPercent = 50 + (columnIndex + .5) * 50 / columnCount;
       piece.yPercent = FIRST_ROW_Y_PERCENT + (placementIndex % rowsPerColumn) * rowSpacingPercent;
       placementIndex++;
     }
-    placementIndex++;
   }
 }
 
