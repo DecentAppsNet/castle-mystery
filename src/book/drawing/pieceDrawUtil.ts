@@ -10,6 +10,7 @@ import PieceLayout from "./types/PieceLayout";
 import { drawBorderedBookText, measureBookTextBox } from "./bookTextDrawUtil";
 
 const FLAIR_PROFILES:ReadonlyArray<ReadonlyArray<Point>> = [
+	[[0, 0], [1, .55], [.40, .55], [.75, .7], [0, .75], [.40, .80], [.35, 1]],
 	[[0, 0], [0, .3], [1, .3], [1, .7], [0, .7], [0, 1]],
 	[[0, 0], [0, .25], [1, .5], [0, .75], [0, 1]],
 	[[1, 0], [0, 1]],

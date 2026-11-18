@@ -105,7 +105,6 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   };
 
   level.labels = createTimeLabels(timeline.startTime, timeline.endTime);
-
   return errors.count <= originalErrorCount ? level : null;
 }
 

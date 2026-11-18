@@ -20,7 +20,7 @@ export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
   bookState.pages.forEach((page, pageI) => {
     if (page.kind !== 'conclusion') return;
     const conclusionId = page.conclusion.id;
-    const xPercent = pageI % 2 === 0 ? 25 : 75;
+    let xPercent = pageI % 2 === 0 ? 25 : 75;
     let yPercent = 5;
     for (const part of page.conclusion.parts) {
       if (part.type !== 'blank') continue;
@@ -31,6 +31,10 @@ export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
       groups.push({ conclusionId, answers });
       const styleNo = nextStyleNo++;
       for (const text of answers) {
+        if (yPercent >= 95) {
+          xPercent += 5;
+          yPercent = 5;
+        }
         pieces.push({ conclusionId, styleNo, text, xPercent, yPercent });
         yPercent += 5;
       }

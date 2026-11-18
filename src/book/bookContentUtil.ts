@@ -56,6 +56,51 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
   revealRoomIds: []
 }
 
+const custodyNames = ["Helena of Gaeta", "Hugo of Speyer", "King Frederick", "Matteo il Toro", "Pope Innocent III", "Raniero de Stefano"];
+const custodyRooms = ["", "Courtyard", "East Hall", "East Stairwell", "Grain Store", "Guard Chamber", "Lawn", "Liturgical Vault", "Lower Passage", "Portcullis Chamber", "Steward's Office", "Textile Store", "West Hall", "Wine Cellar"];
+const custodySuspects = ["Pope Innocent III", "the Freemasons", "Helena", "Raniero", "Toro", "Hugo", "King Frederick", "Nobody", "The wind", "Helena of Gaeta", "Hugo of Speyer", "Matteo il Toro", "Raniero de Stefano"];
+const conclusion3:Conclusion = {
+  id: "chain of custody",
+  title: "Chain of Custody",
+  parts: [
+    {type:"text",text:"These people carried or saw the Black Brick."},
+    {type:"separator"},
+    {type:"text",text:"1. "},
+    {type:"blank",availableAnswers:custodyNames,correctAnswerIndexes:[0],playerAnswerIndex:-1},
+    {type:"text",text:" noticed it in the "},
+    {type:"blank",availableAnswers:custodyRooms,correctAnswerIndexes:[11],playerAnswerIndex:-1},
+    {type:"text",text:", but did not pick it up."},
+    {type:"separator"},
+    {type:"text",text:"2. "},
+    {type:"blank",availableAnswers:custodyNames,correctAnswerIndexes:[1],playerAnswerIndex:-1},
+    {type:"text",text:" snatched the brick."},
+    {type:"separator"},
+    {type:"text",text:"3. "},
+    {type:"blank",availableAnswers:custodyNames,correctAnswerIndexes:[1],playerAnswerIndex:-1},
+    {type:"text",text:" gave the brick to "},
+    {type:"blank",availableAnswers:custodySuspects,correctAnswerIndexes:[0],playerAnswerIndex:-1},
+    {type:"text",text:" in the "},
+    {type:"blank",availableAnswers:custodyRooms,correctAnswerIndexes:[2],playerAnswerIndex:-1},
+    {type:"text",text:"."},
+    {type:"separator"},
+    {type:"text",text:"4. "},
+    {type:"blank",availableAnswers:custodySuspects,correctAnswerIndexes:[0],playerAnswerIndex:-1},
+    {type:"text",text:" "},
+    {type:"blank",availableAnswers:["discovered", "cremated", "painted", "planted", "rebuked", "salvaged"],correctAnswerIndexes:[3],playerAnswerIndex:-1},
+    {type:"text",text:" it in the "},
+    {type:"blank",availableAnswers:["Arabic Tower", "Barley Bin", "Black Brick", "Black Paint Jar", "Oat Bin", "Pillar", "Small Hourglass", "Staff List", "Steward's Key", "Walnut Table", "Wheat Bin"],correctAnswerIndexes:[0],playerAnswerIndex:-1},
+    {type:"text",text:", attempting to "},
+    {type:"blank",availableAnswers:["fall", "hide", "disappear", "succeed", "speak", "initiate", "deceive", "murder"],correctAnswerIndexes:[6],playerAnswerIndex:-1},
+    {type:"text",text:" "},
+    {type:"blank",availableAnswers:custodySuspects,correctAnswerIndexes:[6],playerAnswerIndex:-1},
+    {type:"text",text:"."}
+  ],
+  isComplete: false,
+  isLocked: false,
+  unlockConclusionIds: [],
+  revealRoomIds: []
+}
+
 export function createBookState():BookState { // TODO this will change later to take some data, similar to createGameState().
   // Establish all pages before generating their loose-piece inventory.
   const bookState = createDefaultBookState();
@@ -65,7 +110,11 @@ export function createBookState():BookState { // TODO this will change later to 
     { kind:'blank', headingText:'' },
     { kind:'chapterStart', headingText:'', title:'Birth of Constantine', chapterNo:1, description:'Wherein Frederick is introduced to the World by a different name, and the earliest seeds of trouble are planted.' },
     { kind:'conclusion', headingText:'Chap. I - Identities', conclusion:conclusion1 },
-    { kind:'conclusion', headingText:'Chap. I - Locked Conclusion', conclusion:conclusion2 },
+    { kind:'blank', headingText:'Chap. I - Identities' },
+    { kind:'conclusion', headingText:'Chap. I - The Relic', conclusion:conclusion2 },
+    { kind:'blank', headingText:'Chap. I - The Relic' },
+    { kind:'conclusion', headingText:'Chap. I - Chain of Custody', conclusion:conclusion3 },
+    { kind:'blank', headingText:'Chap. I - Chain of Custody' },
   ];
   bookState.pieceStack = generatePieceStack(bookState);
 

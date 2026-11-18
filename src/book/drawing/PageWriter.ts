@@ -4,7 +4,7 @@
 
 import Point from "@/game/types/Point";
 import Rect from "@/game/types/Rect";
-import { assert, assertNonNullable } from "decent-portal";
+import { assert } from "decent-portal";
 import { drawIllumination } from "./illuminationDrawUtil";
 import { ImageSet } from "@/imageLoading";
 import { drawPageDivider, drawPagePieceSlot, drawPageTextLine, getIlluminatedTextSections,
@@ -152,11 +152,17 @@ class PageWriter {
   addImage(url:string, lineCount:number = 3) {
     assert(Number.isFinite(lineCount) && lineCount > 0);
     const imageAsset = this._imageSet.findImage(url);
-    assertNonNullable(imageAsset, `Missing loaded image asset ${url}`);
+    const height = this._pageRect.height * this.getLineHeight() * lineCount / 100;
+    if (!imageAsset) {
+      const destination = this._placeTextFlowObstacle(height, height);
+      drawPageTextLine('?', destination.x + height / 2, destination.y + height * .1,
+        height, height * .8, 'center', colorNameToHex.black, this._context);
+      return;
+    }
+
     const sourceRect = imageAsset.visibleSourceRect;
     if (!sourceRect) return;
 
-    const height = this._pageRect.height * this.getLineHeight() * lineCount / 100;
     const width = height * sourceRect.width / sourceRect.height;
     const destination = this._placeTextFlowObstacle(width, height);
     this._imageSet.drawImage(imageAsset, destination.x, destination.y, width, height, this._context);
