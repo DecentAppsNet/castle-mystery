@@ -95,6 +95,7 @@ describe('loading levels - conclusions', () => {
     expect(identities?.parts[0]).toMatchObject({ imageUrl:'/assets/bodies/sam.png' });
     expect(identities?.parts[2]).toMatchObject({
       availableAnswers:['Detective Sam', 'Doctor Pat'],
+      answerSet:{ id:'characters', sourceCategoryIds:['characters'], answers:['Detective Sam', 'Doctor Pat'] },
       correctAnswerIndexes:[0],
       playerAnswerIndex:-1
     });
@@ -111,11 +112,13 @@ describe('loading levels - conclusions', () => {
     expect(missingBook?.parts[0]).toMatchObject({ imageUrl:['/assets/conclusions/book.png', '/assets/bodies/book.png'] });
     expect(missingBook?.parts[1]).toMatchObject({
       availableAnswers:['Hall', 'Study'],
+      answerSet:{ id:'rooms', sourceCategoryIds:['rooms'], answers:['Hall', 'Study'] },
       correctAnswerIndexes:[1],
       playerAnswerIndex:-1
     });
     expect(missingBook?.parts[3]).toMatchObject({
       availableAnswers:['Detective Sam', 'Doctor Pat'],
+      answerSet:{ id:'characters', sourceCategoryIds:['characters'], answers:['Detective Sam', 'Doctor Pat'] },
       correctAnswerIndexes:[0],
       playerAnswerIndex:-1
     });

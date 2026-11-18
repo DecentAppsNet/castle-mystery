@@ -15,9 +15,12 @@ import { parseOptions } from "@/common/markdownUtil";
 import ClozeBlank, { UNSPECIFIED_ANSWER } from "@/game/conclusions/types/ClozeBlank";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
+import { createAnswerSet } from "@/game/conclusions/answerSetUtil";
 
-function _createBlankAvailableAnswers(correctAnswers:string[], clozeCategories:Record<string, ClozeCategory>):string[] {
+function _createBlankAvailableAnswers(correctAnswers:string[], clozeCategories:Record<string, ClozeCategory>) {
+  // Accumulate options and provenance in the existing category traversal order.
   const availableAnswers:string[] = [];
+  const sourceCategoryIds:string[] = [];
   const normalizedCorrectAnswers = correctAnswers.map(normalizeCategoryPhrase);
 
   const categoryIds = Object.keys(clozeCategories);
@@ -28,6 +31,7 @@ function _createBlankAvailableAnswers(correctAnswers:string[], clozeCategories:R
 
     const doesCategoryContainAnyCorrectAnswer = normalizedCorrectAnswers.some(answer => normalizedValues.has(answer));
     if (!doesCategoryContainAnyCorrectAnswer) return; // This category is unrelated to the blank.
+    sourceCategoryIds.push(categoryId);
     
     // Add all unique values for this category to the returned available answers for the blank.
     allowedValues.forEach(value => {
@@ -37,26 +41,32 @@ function _createBlankAvailableAnswers(correctAnswers:string[], clozeCategories:R
   });
 
   // Covering the case of correct answers not matching against any category, add the correct answers as options.
+  const categoryAnswerCount = availableAnswers.length;
   correctAnswers.forEach(answer => {
     if (availableAnswers.includes(answer)) return;
     availableAnswers.push(answer);
   });
 
-  return availableAnswers;
+  // Share the resolved options with migration metadata without reordering either representation.
+  const isExactCategory = sourceCategoryIds.length === 1 && availableAnswers.length === categoryAnswerCount;
+  return { availableAnswers, answerSet:createAnswerSet(availableAnswers, sourceCategoryIds, isExactCategory) };
 }
 
 /** Parses one cloze blank into its answer and available category values. */
 export function createClozeBlankFromTemplateText(blankText:string, clozeCategories:Record<string, ClozeCategory>):ClozeBlank {
+  // Resolve options before computing indexes using the existing normalized matching semantics.
   const correctAnswers = parseOptions(blankText);
-  const availableAnswers = _createBlankAvailableAnswers(correctAnswers, clozeCategories);
+  const { availableAnswers, answerSet } = _createBlankAvailableAnswers(correctAnswers, clozeCategories);
   const normalizedAvailableAnswers = availableAnswers.map(normalizeCategoryPhrase);
   const correctAnswerIndexes = correctAnswers
     .map(correctAnswer => normalizedAvailableAnswers.indexOf(normalizeCategoryPhrase(correctAnswer)))
     .filter((answerIndex, index, allAnswerIndexes) => answerIndex >= 0 && allAnswerIndexes.indexOf(answerIndex) === index);
 
+  // Keep selection state independent of the immutable answer-set metadata.
   return {
     type:ClozePartType.blank,
     availableAnswers,
+    answerSet,
     correctAnswerIndexes,
     playerAnswerIndex:UNSPECIFIED_ANSWER
   };
