@@ -127,6 +127,7 @@ Guidelines:
 * Low-test-value files should be ignored from code coverage.
 * In this project, low-test-value files commonly include `.tsx` files and files whose main purpose is drawing or rendering.
 * Do not add tests for drawing or rendering files. Confirm those results with manual visual testing instead.
+* AI agents must not launch browsers, including integrated or headless browsers. Leave manual visual testing to the user and report any visual checks that remain outstanding.
 * If a drawing or rendering file contains logic with a meaningful non-visual contract, extract that logic into a separate file and test the extracted file instead of the drawing file.
 * Low-test-value files may be excluded from coverage either with an in-source coverage ignore comment or with project-level coverage configuration. Prefer project configuration when excluding a broad category such as all `.tsx` files.
 * For file-level exclusion with Vitest's V8 coverage, place a comment such as `/* v8 ignore file -- @preserve */` at the top of the file.

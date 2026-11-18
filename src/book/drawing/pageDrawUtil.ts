@@ -5,7 +5,7 @@
 import Rect from "@/game/types/Rect";
 import BookPage from "../types/BookPage";
 import { isLeftPageNo } from "./bookLayoutUtil";
-import { assert, botch } from "decent-portal";
+import { assert, assertNonNullable, botch } from "decent-portal";
 import PageWriter from "./PageWriter";
 import ClozePartType from "@/game/conclusions/types/ClozePartType";
 import ClozeText from "@/game/conclusions/types/ClozeText";
@@ -73,7 +73,6 @@ function _drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
 type ConclusionPage = Extract<BookPage, { kind:'conclusion' }>;
 function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
   pw.setFontSize('m');
-  let pieceStyleNo = 3; // TODO - tie to cloze category later.
   for(let partI = 0; partI < page.conclusion.parts.length; ++partI) {
     const part = page.conclusion.parts[partI];
     switch(part.type) {
@@ -81,7 +80,11 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
         const blankPart = part as ClozeBlank;
         const playerGuess = blankPart.answerSet.answers[blankPart.playerAnswerIndex] ?? '';
         if (page.conclusion.isComplete) pw.addText(playerGuess, 'black', true);
-        else pw.addPieceSlot(playerGuess, pieceStyleNo++);
+        else {
+          const pieceStyleNo = page.answerSetIdToPieceStyleNoMap[blankPart.answerSet.id];
+          assertNonNullable(pieceStyleNo);
+          pw.addPieceSlot(playerGuess, pieceStyleNo);
+        }
       break;
 
       case ClozePartType.separator:

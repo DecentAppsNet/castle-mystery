@@ -55,8 +55,8 @@ describe('pieceGenerationUtil', () => {
       const answers = ['B', 'A'];
       const state = _createBookState([_createConclusionPage('one', [answers, answers])]);
       expect(generatePieceStack(state)).toMatchObject([
-        { conclusionId:'one', text:'B', styleNo:0 },
-        { conclusionId:'one', text:'A', styleNo:0 }
+        { conclusionId:'one', text:'B', styleNo:3 },
+        { conclusionId:'one', text:'A', styleNo:3 }
       ]);
     });
 
@@ -81,14 +81,14 @@ describe('pieceGenerationUtil', () => {
     it('keeps partially overlapping and subset memberships separate', () => {
       const state = _createBookState([_createConclusionPage('one', [['A', 'B'], ['B', 'C'], ['A']])]);
       expect(generatePieceStack(state).map(({ text, styleNo }) => [text, styleNo])).toEqual([
-        ['A', 0], ['B', 0], ['B', 1], ['C', 1], ['A', 2]
+        ['A', 3], ['B', 3], ['B', 4], ['C', 4], ['A', 5]
       ]);
     });
 
     it('compares answer strings exactly without normalization', () => {
       const state = _createBookState([_createConclusionPage('one', [['Amos'], ['amos'], [' Amos']])]);
       expect(generatePieceStack(state).map(({ text, styleNo }) => [text, styleNo])).toEqual([
-        ['Amos', 0], ['amos', 1], [' Amos', 2]
+        ['Amos', 3], ['amos', 4], [' Amos', 5]
       ]);
     });
 
@@ -98,17 +98,63 @@ describe('pieceGenerationUtil', () => {
         _createConclusionPage('one', [answers]), _createConclusionPage('two', [answers])
       ]);
       expect(generatePieceStack(state)).toMatchObject([
-        { conclusionId:'one', text:'A', styleNo:0 },
-        { conclusionId:'two', text:'A', styleNo:1 }
+        { conclusionId:'one', text:'A', styleNo:3 },
+        { conclusionId:'two', text:'A', styleNo:3 }
       ]);
     });
 
-    it('continues sequential styles across pages beyond eight without wrapping', () => {
+    it('assigns custom styles beyond eight without wrapping and restarts for each conclusion', () => {
       const state = _createBookState([
-        _createConclusionPage('one', [['0'], ['1'], ['2'], ['3'], ['4']]),
-        _createConclusionPage('two', [['5'], ['6'], ['7'], ['8'], ['9']])
+        _createConclusionPage('one', [['0'], ['1'], ['2'], ['3'], ['4'], ['5'], ['6'], ['7'], ['8'], ['9']]),
+        _createConclusionPage('two', [['other']])
       ]);
-      expect(generatePieceStack(state).map(piece => piece.styleNo)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      expect(generatePieceStack(state).map(piece => piece.styleNo)).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3]);
+    });
+
+    it('uses the page lookup for reserved, extended, and custom groups', () => {
+      const sets = [
+        createAnswerSet(['Hall'], ['rooms'], true),
+        createAnswerSet(['Sam', 'Nobody'], ['characters', 'suspects'], false),
+        createAnswerSet(['Key', 'Nothing'], ['items'], false),
+        createAnswerSet(['found'], ['verbs'], true)
+      ];
+      const conclusion:Conclusion = {
+        id:'one', title:'One',
+        parts:sets.map(answerSet => ({ type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:-1 })),
+        isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
+      };
+      const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
+      const pieces = generatePieceStack(_createBookState([
+        { kind:'conclusion', headingText:'', conclusion, answerSetIdToPieceStyleNoMap:styles }
+      ]));
+      expect(pieces.map(piece => piece.styleNo)).toEqual([2, 0, 0, 1, 1, 3]);
+      sets.forEach(set => expect(pieces.filter(piece => set.answers.includes(piece.text))
+        .every(piece => piece.styleNo === styles[set.id])).toBe(true));
+    });
+
+    it('deduplicates reordered aliases using their shared reserved style', () => {
+      const unknown = createAnswerSet(['B', 'A'], [], false);
+      const characters = createAnswerSet(['A', 'B'], ['characters'], false);
+      const conclusion:Conclusion = {
+        id:'one', title:'One',
+        parts:[unknown, characters].map(answerSet => ({ type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:1 })),
+        isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
+      };
+      const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
+      const pieces = generatePieceStack(_createBookState([
+        { kind:'conclusion', headingText:'', conclusion, answerSetIdToPieceStyleNoMap:styles }
+      ]));
+      expect(pieces.map(({ text, styleNo }) => [text, styleNo])).toEqual([['B', 0], ['A', 0]]);
+      expect(styles[unknown.id]).toBe(styles[characters.id]);
+      expect(conclusion.parts.map(part => (part as ClozeBlank).playerAnswerIndex)).toEqual([1, 1]);
+    });
+
+    it('asserts missing styles even for a deduplicated blank', () => {
+      const page = _createConclusionPage('one', [['A'], ['A']]);
+      const blank = page.conclusion.parts[1] as ClozeBlank;
+      const alias = { ...blank.answerSet, id:'missing' };
+      page.conclusion.parts[1] = { ...blank, answerSet:alias };
+      expect(() => generatePieceStack(_createBookState([page]))).toThrow();
     });
 
     it('rejects a conclusion on the right even when it has no pieces', () => {
@@ -155,7 +201,7 @@ describe('pieceGenerationUtil', () => {
       expect(generatePieceStack(_createBookState([page])).map(piece => piece.text)).toEqual(['A', 'B']);
     });
 
-    it('returns independent mutable pieces and resets styles on every call', () => {
+    it('returns independent mutable pieces and retains mapped styles on every call', () => {
       const state = _createBookState([_createConclusionPage('one', [['A', 'B']])]);
       const first = generatePieceStack(state);
       const second = generatePieceStack(state);
@@ -166,7 +212,7 @@ describe('pieceGenerationUtil', () => {
       first[0].yPercent = 98;
       first.reverse();
       expect(generatePieceStack(state)).toEqual(second);
-      expect(second[0]).toMatchObject({ conclusionId:'one', text:'A', styleNo:0 });
+      expect(second[0]).toMatchObject({ conclusionId:'one', text:'A', styleNo:3 });
     });
 
     it('leaves frozen source data, existing stack, and layout untouched', () => {
@@ -181,6 +227,7 @@ describe('pieceGenerationUtil', () => {
       Object.freeze(blank);
       Object.freeze(page.conclusion.parts);
       Object.freeze(page.conclusion);
+      Object.freeze(page.answerSetIdToPieceStyleNoMap);
       Object.freeze(page);
 
       // Preserve an already-positioned piece and an existing layout.
@@ -206,6 +253,8 @@ describe('pieceGenerationUtil', () => {
       expect(state.pieceStack[0]).toBe(existingPiece);
       expect(pieces).not.toBe(state.pieceStack);
       expect(pieces.map(piece => piece.text)).toEqual(['B', 'A']);
+      expect(pieces.every(piece => piece.styleNo === page.answerSetIdToPieceStyleNoMap[blank.answerSet.id])).toBe(true);
+      expect(generatePieceStack(state)).toEqual(pieces);
     });
   });
 });

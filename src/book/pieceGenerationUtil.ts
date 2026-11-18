@@ -2,7 +2,7 @@
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import { assert } from 'decent-portal';
+import { assert, assertNonNullable } from 'decent-portal';
 import BookState from './types/BookState';
 import Piece from './types/Piece';
 
@@ -43,10 +43,9 @@ function _placeAnswerGroupsOnRightPage(answerGroups:readonly Piece[][]):void {
 }
 
 export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
-  // Keep grouping and style assignment local to this inventory generation.
+  // Keep inventory grouping local while consuming each page's shared style lookup.
   const pieces:Piece[] = [];
   const groups:{ readonly conclusionId:string, readonly answers:readonly string[] }[] = [];
-  let nextStyleNo = 0;
 
   // Validate each conclusion spread and collect its new groups before positioning them.
   bookState.pages.forEach((page, pageI) => {
@@ -57,12 +56,14 @@ export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
     const answerGroups:Piece[][] = [];
     for (const part of page.conclusion.parts) {
       if (part.type !== 'blank') continue;
-      const answers = (part as ClozeBlank).answerSet.answers;
+      const { answerSet } = part as ClozeBlank;
+      const { answers } = answerSet;
+      const styleNo:number | undefined = page.answerSetIdToPieceStyleNoMap[answerSet.id];
+      assertNonNullable(styleNo);
       if (groups.some(group => group.conclusionId === conclusionId && _haveSameMembership(group.answers, answers))) continue;
 
       // Emit each new group's answers in their original order with fresh mutable pieces.
       groups.push({ conclusionId, answers });
-      const styleNo = nextStyleNo++;
       const groupPieces = answers.map(text => ({ conclusionId, styleNo, text, xPercent:0, yPercent:0 }));
       if (groupPieces.length > 0) answerGroups.push(groupPieces);
       pieces.push(...groupPieces);
