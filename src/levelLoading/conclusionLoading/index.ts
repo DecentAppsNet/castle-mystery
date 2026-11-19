@@ -9,6 +9,7 @@ import Room from "@/game/types/Room";
 import { createClozeCategories } from "./clozeCategoryUtil";
 import { lockConclusionsAsNeeded, parseAuthoredConclusions } from "./parseConclusionUtil";
 import { createGeneratedIdentityConclusion, hasIdentitiesConclusion } from "./identitiesConclusionUtil";
+import { validateBlankGroupsAndShareAnswerSets } from './finalizeConclusionsUtil';
 
 /** Loads authored conclusions, adds identities when needed, and applies dependency locks. */
 export function loadConclusions(conclusionsSectionText:string, placedCharacters:Character[], items:Item[],
@@ -23,6 +24,8 @@ export function loadConclusions(conclusionsSectionText:string, placedCharacters:
       categories.characters, rooms, initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
     if (identitiesConclusion) conclusions.unshift(identitiesConclusion);
   }
+  if (errors.count > originalErrorCount) return [];
+  validateBlankGroupsAndShareAnswerSets(conclusions, errors);
   lockConclusionsAsNeeded(conclusions);
   return errors.count <= originalErrorCount ? conclusions : [];
 }

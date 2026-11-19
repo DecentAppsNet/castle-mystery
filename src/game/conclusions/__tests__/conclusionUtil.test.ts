@@ -184,6 +184,25 @@ describe('conclusionUtil', () => {
 
       expect(countConclusionMistakes(statement)).toBe(0);
     });
+
+    it('compares selected display text by trimmed lowercase rather than by index or set identity', () => {
+      const statement = createConclusion({ parts:[
+        { type:'blank', answerSet:createAnswerSet(['Jack', 'Jill'], ['characters'], true),
+          correctAnswerIndexes:[0, 1], playerAnswerIndex:0 },
+        { type:'blank', answerSet:createAnswerSet(['Jill', ' JACK '], ['names'], true),
+          correctAnswerIndexes:[0, 1], playerAnswerIndex:1 }
+      ] });
+      expect(countConclusionMistakes(statement)).toBe(1);
+    });
+
+    it('counts each unspecified blank once without treating its sentinel as a selected answer', () => {
+      const answerSet = createAnswerSet(['Jack', 'Jill'], ['characters'], true);
+      const statement = createConclusion({ parts:[
+        { type:'blank', answerSet, correctAnswerIndexes:[0, 1], playerAnswerIndex:-1 },
+        { type:'blank', answerSet, correctAnswerIndexes:[0, 1], playerAnswerIndex:-1 }
+      ] });
+      expect(countConclusionMistakes(statement)).toBe(2);
+    });
   });
 });
 

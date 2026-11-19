@@ -8,10 +8,7 @@ import Room from "@/game/types/Room";
 import { ErrorCollector } from "../errorCollection";
 
 
-/** Normalizes a category phrase for case-insensitive matching. */
-export function normalizeCategoryPhrase(phrase:string):string {
-  return phrase.trim().toLowerCase();
-}
+export { normalizeCategoryPhrase } from '@/game/conclusions/conclusionUtil';
 
 /** Resolves reveal-room references and reports rooms that are unknown or initially visible. */
 export function resolveRevealRoomIds(conclusionName:string, revealRoomsText:string|undefined, 

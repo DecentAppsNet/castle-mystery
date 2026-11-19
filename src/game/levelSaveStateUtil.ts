@@ -10,6 +10,8 @@ import { syncConclusionUnlocks, updateGameStateForChangeConclusions } from './pl
 import PlayerEventType from './playerEvents/types/PlayerEventType';
 import { createKeyframeAtTime, createTimelineSnapshot } from './timeline';
 import GameState from './types/GameState';
+import { assertNonNullable } from 'decent-portal';
+import { normalizeCategoryPhrase } from './conclusions/conclusionUtil';
 
 function _getBlanks(conclusion:Conclusion):ClozeBlank[] {
   return conclusion.parts.filter(part => part.type === ClozePartType.blank) as ClozeBlank[];
@@ -20,10 +22,16 @@ function _restoreConclusion(conclusion:Conclusion, save:LevelSaveState):Conclusi
   const restored = duplicateConclusion(conclusion);
   if (save.completedConclusionIds.includes(restored.id)) restored.isComplete = true;
 
-  // Completed blanks use authored answers; absent unfinished selections retain defaults.
+  // Validated identical/disjoint alternative groups permit greedy distinct completed assignments.
   const indexes = save.incompleteConclusionAnswerIndexesById[restored.id];
+  const selected = new Set<string>();
   _getBlanks(restored).forEach((blank, blankI) => {
-    if (restored.isComplete) blank.playerAnswerIndex = blank.correctAnswerIndexes[0];
+    if (restored.isComplete) {
+      const index = blank.correctAnswerIndexes.find(candidate => !selected.has(normalizeCategoryPhrase(blank.answerSet.answers[candidate])));
+      assertNonNullable(index);
+      blank.playerAnswerIndex = index;
+      selected.add(normalizeCategoryPhrase(blank.answerSet.answers[index]));
+    }
     else if (indexes !== undefined) blank.playerAnswerIndex = indexes[blankI];
   });
   return restored;

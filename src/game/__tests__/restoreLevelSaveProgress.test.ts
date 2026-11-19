@@ -43,6 +43,49 @@ describe('restoreGameStateFromSave()', () => {
     expect(conclusion.isComplete).toBe(true);
   });
 
+  it('round-trips completed interchangeable blanks into deterministic distinct answers', () => {
+    const text = saveText.replace('[Sam|Key]', '[Key|Sam]');
+    const level = loadValidLevelForTest(text);
+    const state = createGameState(level);
+    const conclusion = state.conclusions.find(candidate => candidate.id === 'mystery')!;
+    const blanks = conclusion.parts.filter(part => part.type === 'blank') as ClozeBlank[];
+    blanks[0].playerAnswerIndex = 1;
+    blanks[1].playerAnswerIndex = 0;
+    conclusion.isComplete = true;
+    const save = createLevelSaveState(state);
+    const originalSave = JSON.stringify(save);
+    const restored = createGameState(level);
+
+    restoreGameStateFromSave(restored, save);
+    const completed = restored.conclusions.find(candidate => candidate.id === 'mystery')!;
+    const completedBlanks = completed.parts.filter(part => part.type === 'blank') as ClozeBlank[];
+    expect(completedBlanks.map(blank => blank.playerAnswerIndex)).toEqual([0, 1]);
+    expect(countConclusionMistakes(completed)).toBe(0);
+    expect(completed.isComplete).toBe(true);
+    expect(createLevelSaveState(restored)).toEqual(save);
+    restoreGameStateFromSave(restored, save);
+    expect(createLevelSaveState(restored)).toEqual(save);
+    expect(JSON.stringify(save)).toBe(originalSave);
+    expect((level.conclusions.find(candidate => candidate.id === 'mystery')!.parts[1] as ClozeBlank).playerAnswerIndex).toBe(-1);
+  });
+
+  it('round-trips duplicate unfinished selections unchanged instead of repairing them', () => {
+    const level = loadValidLevelForTest(saveText);
+    const state = createGameState(level);
+    const conclusion = state.conclusions.find(candidate => candidate.id === 'mystery')!;
+    const blanks = conclusion.parts.filter(part => part.type === 'blank') as ClozeBlank[];
+    blanks[0].playerAnswerIndex = 1;
+    blanks[1].playerAnswerIndex = 1;
+    const save = createLevelSaveState(state);
+    const restored = createGameState(level);
+
+    restoreGameStateFromSave(restored, save);
+    expect(createLevelSaveState(restored)).toEqual(save);
+    const unfinished = restored.conclusions.find(candidate => candidate.id === 'mystery')!;
+    expect(unfinished.isComplete).toBe(false);
+    expect(countConclusionMistakes(unfinished)).toBe(1);
+  });
+
   it('unlocks dependent conclusions and reveals rooms through existing state helpers', () => {
     const state = createGameState(loadValidLevelForTest(discoveryText));
     state.conclusions = state.conclusions.map(conclusion => conclusion.id === 'discovery'
