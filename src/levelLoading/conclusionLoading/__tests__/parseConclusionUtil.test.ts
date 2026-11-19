@@ -63,6 +63,7 @@ describe('parseConclusionUtil', () => {
       const categories = Object.freeze({ characters });
       const blank = _parseValidBlank('Sam|Pat', categories);
       expect(allowedValues).toEqual(['Pat', 'Sam']);
+      expect(blank.answerSet.answers).toBe(allowedValues);
       expect(blank.answerSet.answers).toEqual(['Pat', 'Sam']);
       expect(blank.correctAnswerIndexes).toEqual([1, 0]);
     });
@@ -84,13 +85,48 @@ describe('parseConclusionUtil', () => {
       expect(reportError).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('Answer "Nobody"'));
     });
 
-    it('accepts normalized matches while retaining the transitional answer-array builder', () => {
-      const blank = _parseValidBlank('SAM', {
+    it('matches case and surrounding whitespace without adding options or extending the category', () => {
+      const blank = _parseValidBlank('  SAM  ', {
         characters:{ id:'characters', authoredName:'Characters', allowedValues:['Pat', 'Sam'] }
       });
-      expect(blank.answerSet.answers).toEqual(['Pat', 'Sam', 'SAM']);
+      expect(blank.answerSet.answers).toEqual(['Pat', 'Sam']);
       expect(blank.correctAnswerIndexes).toEqual([1]);
-      expect(blank.answerSet.id).not.toBe('characters');
+      expect(blank.answerSet.id).toBe('characters');
+    });
+
+    it('retains the full custom category spelling and order regardless of alternative order', () => {
+      const blank = _parseValidBlank('painted|HID', {
+        actions:{ id:'actions', authoredName:'Actions', allowedValues:['hid', 'Planted', 'Painted'] },
+        rooms:{ id:'rooms', authoredName:'Rooms', allowedValues:['Hall'] }
+      });
+
+      expect(blank.answerSet.answers).toEqual(['hid', 'Planted', 'Painted']);
+      expect(blank.answerSet.sourceCategoryIds).toEqual(['actions']);
+      expect(blank.correctAnswerIndexes).toEqual([2, 0]);
+      expect(blank.playerAnswerIndex).toBe(-1);
+    });
+
+    it('resolves repeated normalized alternatives to a single correct index', () => {
+      const blank = _parseValidBlank('Sam|SAM|Pat| sam |PAT', {
+        characters:{ id:'characters', authoredName:'Characters', allowedValues:['Pat', 'Sam', 'Nobody'] }
+      });
+
+      expect(blank.answerSet.answers).toEqual(['Pat', 'Sam', 'Nobody']);
+      expect(blank.correctAnswerIndexes).toEqual([1, 0]);
+    });
+
+    it('keeps player selections and correct indexes independent while sharing immutable category options', () => {
+      const categories = { characters:{ id:'characters', authoredName:'Characters', allowedValues:['Pat', 'Sam'] } };
+      const first = _parseValidBlank('Sam', categories);
+      const second = _parseValidBlank('Pat', categories);
+      first.playerAnswerIndex = 1;
+
+      expect(first.answerSet.answers).toBe(categories.characters.allowedValues);
+      expect(second.answerSet.answers).toBe(first.answerSet.answers);
+      expect(second.playerAnswerIndex).toBe(-1);
+      expect(first.correctAnswerIndexes).toEqual([1]);
+      expect(second.correctAnswerIndexes).toEqual([0]);
+      expect(second.correctAnswerIndexes).not.toBe(first.correctAnswerIndexes);
     });
 
     it('rejects an empty blank without constructing an answer set', () => {

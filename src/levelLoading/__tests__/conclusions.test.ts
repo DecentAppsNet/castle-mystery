@@ -145,6 +145,18 @@ describe('loading levels - conclusions', () => {
     });
   });
 
+  it('uses canonical room options and indexes for normalized authored alternatives', () => {
+    const text = replaceSection(defaultLevelText, 'conclusions', ['## Mystery', '* conclusion=[ study | HALL | STUDY ]']);
+    const level = loadValidLevelForTest(text);
+    const mystery = level.conclusions.find(conclusion => conclusion.id === 'mystery');
+
+    expect(mystery?.parts[0]).toMatchObject({
+      answerSet:{ id:'rooms', sourceCategoryIds:['rooms'], answers:['Hall', 'Study'] },
+      correctAnswerIndexes:[1, 0],
+      playerAnswerIndex:-1
+    });
+  });
+
   it('treats an identities subsection with only metadata as overrides for the generated identities conclusion', () => {
     const text = replaceSection(defaultLevelText, 'conclusions', [
       '## Final Mystery',

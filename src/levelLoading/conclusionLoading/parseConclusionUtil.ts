@@ -18,48 +18,16 @@ import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionI
 import { createAnswerSet } from "@/game/conclusions/answerSetUtil";
 import { resolveBlankCategory } from "./blankCategoryUtil";
 
-function _createBlankAnswerSet(correctAnswers:string[], clozeCategories:Record<string, ClozeCategory>) {
-  // Accumulate options and provenance in the existing category traversal order.
-  const answers:string[] = [];
-  const sourceCategoryIds:string[] = [];
-  const normalizedCorrectAnswers = correctAnswers.map(normalizeCategoryPhrase);
-
-  const categoryIds = Object.keys(clozeCategories);
-
-  categoryIds.forEach(categoryId => {
-    const allowedValues = clozeCategories[categoryId].allowedValues;
-    const normalizedValues = new Set(allowedValues.map(normalizeCategoryPhrase));
-
-    const doesCategoryContainAnyCorrectAnswer = normalizedCorrectAnswers.some(answer => normalizedValues.has(answer));
-    if (!doesCategoryContainAnyCorrectAnswer) return; // This category is unrelated to the blank.
-    sourceCategoryIds.push(categoryId);
-    
-    // Add all unique values for this category to the returned available answers for the blank.
-    allowedValues.forEach(value => {
-      if (answers.includes(value)) return;
-      answers.push(value);
-    });
-  });
-
-  // Covering the case of correct answers not matching against any category, add the correct answers as options.
-  const categoryAnswerCount = answers.length;
-  correctAnswers.forEach(answer => {
-    if (answers.includes(answer)) return;
-    answers.push(answer);
-  });
-
-  // Construct the authoritative answer set without reordering its options.
-  const isExactCategory = sourceCategoryIds.length === 1 && answers.length === categoryAnswerCount;
-  return createAnswerSet(answers, sourceCategoryIds, isExactCategory);
-}
-
 /** Parses one cloze blank into its answer and available category values. */
 export function createClozeBlankFromTemplateText(blankText:string, clozeCategories:Record<string, ClozeCategory>,
   reportError:(message:string) => void):ClozeBlank|null {
-  // Resolve options before computing indexes using the existing normalized matching semantics.
+  // Use the resolved category's complete ordered membership without adding authored alternatives.
   const correctAnswers = parseOptions(blankText);
-  if (!resolveBlankCategory(correctAnswers, clozeCategories, reportError)) return null;
-  const answerSet = _createBlankAnswerSet(correctAnswers, clozeCategories);
+  const category = resolveBlankCategory(correctAnswers, clozeCategories, reportError);
+  if (!category) return null;
+  const answerSet = createAnswerSet(category.allowedValues, [category.id], true);
+
+  // Resolve normalized alternatives to canonical display options, counting repeated alternatives once.
   const normalizedAnswers = answerSet.answers.map(normalizeCategoryPhrase);
   const correctAnswerIndexes = correctAnswers
     .map(correctAnswer => normalizedAnswers.indexOf(normalizeCategoryPhrase(correctAnswer)))

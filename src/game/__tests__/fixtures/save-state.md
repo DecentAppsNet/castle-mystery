@@ -36,6 +36,8 @@ KS..
 25:00:20 Sam waits 10
 
 # conclusions
+* items=Key|Sam
+
 ## Mystery
 * conclusion=The [Key|Sam] belongs to [Sam|Key].
 
