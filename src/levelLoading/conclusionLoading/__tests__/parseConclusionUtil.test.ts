@@ -12,28 +12,29 @@ function _parseValidBlank(text:string, categories:Record<string, ClozeCategory>)
 
 describe('parseConclusionUtil', () => {
   describe('createClozeBlankFromTemplateText()', () => {
-    it('retains exact characters provenance and ordered options without legacy properties', () => {
+    it('retains the characters category identity and ordered options without legacy properties', () => {
       const blank = _parseValidBlank('Sam', {
         characters:{ id:'characters', authoredName:'Characters', allowedValues:['Pat', 'Sam'] }
       });
-      expect(blank.answerSet).toEqual({ id:'characters', sourceCategoryIds:['characters'], answers:['Pat', 'Sam'] });
+      expect(blank.answerSet).toEqual({ id:'characters', sourceCategoryId:'characters', answers:['Pat', 'Sam'] });
       expect(blank).not.toHaveProperty('availableAnswers');
       expect(blank.correctAnswerIndexes).toEqual([1]);
       expect(blank.playerAnswerIndex).toBe(-1);
     });
 
-    it('retains exact items provenance', () => {
+    it('retains the items category identity', () => {
       const blank = _parseValidBlank('Key', {
         items:{ id:'items', authoredName:'Items', allowedValues:['Key', 'Book'] }
       });
-      expect(blank.answerSet.id).toBe('items');
+      expect(blank.answerSet).toEqual({ id:'items', sourceCategoryId:'items', answers:['Key', 'Book'] });
     });
 
-    it('retains exact rooms provenance', () => {
+    it('retains the rooms category identity', () => {
       const blank = _parseValidBlank('Study', {
         rooms:{ id:'rooms', authoredName:'Rooms', allowedValues:['Study', 'Hall'] }
       });
       expect(blank.answerSet.id).toBe('rooms');
+      expect(blank.answerSet.sourceCategoryId).toBe('rooms');
       expect(blank.answerSet.answers).toEqual(['Study', 'Hall']);
     });
 
@@ -101,7 +102,8 @@ describe('parseConclusionUtil', () => {
       });
 
       expect(blank.answerSet.answers).toEqual(['hid', 'Planted', 'Painted']);
-      expect(blank.answerSet.sourceCategoryIds).toEqual(['actions']);
+      expect(blank.answerSet.id).toBe('actions');
+      expect(blank.answerSet.sourceCategoryId).toBe('actions');
       expect(blank.correctAnswerIndexes).toEqual([2, 0]);
       expect(blank.playerAnswerIndex).toBe(-1);
     });

@@ -7,7 +7,7 @@ import { generatePieceStack } from "./pieceGenerationUtil";
 import { createAnswerSet } from "@/game/conclusions/answerSetUtil";
 import { generateAnswerSetIdToPieceStyleNoMap } from './answerSetPieceStyleUtil';
 
-const characterAnswerSet = createAnswerSet(["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"], ['characters'], true);
+const characterAnswerSet = createAnswerSet(["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"], 'characters');
 const conclusion1:Conclusion = { // TODO - stub data to delete.
   id: "identities",
   title: "Identities",
@@ -47,7 +47,7 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
   title: "The Relic",
   parts: [
    {type:"text",text:"The "},
-  {type:"blank",answerSet:createAnswerSet(["Coffer","Holy Binky","Infant","Letter","Newborn Baby","Vase"], ['items'], true),correctAnswerIndexes:[1],playerAnswerIndex:-1},
+  {type:"blank",answerSet:createAnswerSet(["Coffer","Holy Binky","Infant","Letter","Newborn Baby","Vase"], 'items'),correctAnswerIndexes:[1],playerAnswerIndex:-1},
    {type:"text",text:" was regifted to "},
   {type:"blank",answerSet:characterAnswerSet,"correctAnswerIndexes":[4],playerAnswerIndex:-1},
    {type:"text",text:"."}
@@ -58,8 +58,8 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
   revealRoomIds: []
 }
 
-const custodyCharacterAnswerSet = createAnswerSet(["Helena of Gaeta", "Hugo of Speyer", "King Frederick", "Matteo il Toro", "Pope Innocent III", "Raniero de Stefano", "the Freemasons", "Helena", "Raniero", "Toro", "Hugo", "The King", "The Pope", "Nobody", "The wind"], ['characters'], true);
-const custodyRoomAnswerSet = createAnswerSet(["Courtyard", "East Hall", "East Stairwell", "Grain Store", "Guard Chamber", "Lawn", "Liturgical Vault", "Lower Passage", "Portcullis Chamber", "Steward's Office", "Textile Store", "West Hall", "Wine Cellar", "Arabic Tower"], ['rooms'], true);
+const custodyCharacterAnswerSet = createAnswerSet(["Helena of Gaeta", "Hugo of Speyer", "King Frederick", "Matteo il Toro", "Pope Innocent III", "Raniero de Stefano", "the Freemasons", "Helena", "Raniero", "Toro", "Hugo", "The King", "The Pope", "Nobody", "The wind"], 'characters');
+const custodyRoomAnswerSet = createAnswerSet(["Courtyard", "East Hall", "East Stairwell", "Grain Store", "Guard Chamber", "Lawn", "Liturgical Vault", "Lower Passage", "Portcullis Chamber", "Steward's Office", "Textile Store", "West Hall", "Wine Cellar", "Arabic Tower"], 'rooms');
 const conclusion3:Conclusion = {
   id: "chain of custody",
   title: "Chain of Custody",
@@ -85,11 +85,11 @@ const conclusion3:Conclusion = {
     {type:"separator"},
     {type:"text",text:"4. "},
     {type:"text",text:"The Pope "},
-    {type:"blank",answerSet:createAnswerSet(["discovered", "cremated", "painted", "planted", "rebuked", "salvaged"], ['discovery verbs'], true),correctAnswerIndexes:[3],playerAnswerIndex:-1},
+    {type:"blank",answerSet:createAnswerSet(["discovered", "cremated", "painted", "planted", "rebuked", "salvaged"], 'discovery verbs'),correctAnswerIndexes:[3],playerAnswerIndex:-1},
     {type:"text",text:" it in the "},
     {type:"blank",answerSet:custodyRoomAnswerSet,correctAnswerIndexes:[13],playerAnswerIndex:-1},
     {type:"text",text:", attempting to "},
-    {type:"blank",answerSet:createAnswerSet(["fall", "hide", "disappear", "succeed", "speak", "initiate", "deceive", "murder"], ['intent verbs'], true),correctAnswerIndexes:[6],playerAnswerIndex:-1},
+    {type:"blank",answerSet:createAnswerSet(["fall", "hide", "disappear", "succeed", "speak", "initiate", "deceive", "murder"], 'intent verbs'),correctAnswerIndexes:[6],playerAnswerIndex:-1},
     {type:"text",text:" "},
     {type:"blank",answerSet:custodyCharacterAnswerSet,correctAnswerIndexes:[2],playerAnswerIndex:-1},
     {type:"text",text:"."}

@@ -38,7 +38,7 @@ export function validateBlankGroupsAndShareAnswerSets(conclusions:readonly Concl
       }
 
       // Replace only immutable metadata references; indexes and mutable selections stay independent.
-      const categoryId = part.answerSet.sourceCategoryIds[0];
+      const categoryId = part.answerSet.sourceCategoryId;
       const answerSet = sets.get(categoryId) ?? part.answerSet;
       sets.set(categoryId, answerSet);
       return { ...part, answerSet };

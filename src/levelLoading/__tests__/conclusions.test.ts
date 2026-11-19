@@ -94,7 +94,7 @@ describe('loading levels - conclusions', () => {
     expect(identities?.parts.map(part => part.type)).toEqual(['image', 'text', 'blank']);
     expect(identities?.parts[0]).toMatchObject({ imageUrl:'/assets/bodies/sam.png' });
     expect(identities?.parts[2]).toMatchObject({
-      answerSet:{ id:'characters', sourceCategoryIds:['characters'], answers:['Detective Sam', 'Doctor Pat'] },
+      answerSet:{ id:'characters', sourceCategoryId:'characters', answers:['Detective Sam', 'Doctor Pat'] },
       correctAnswerIndexes:[0],
       playerAnswerIndex:-1
     });
@@ -110,12 +110,12 @@ describe('loading levels - conclusions', () => {
     expect(missingBook?.parts.map(part => part.type)).toEqual(['image', 'blank', 'separator', 'blank']);
     expect(missingBook?.parts[0]).toMatchObject({ imageUrl:['/assets/conclusions/book.png', '/assets/bodies/book.png'] });
     expect(missingBook?.parts[1]).toMatchObject({
-      answerSet:{ id:'rooms', sourceCategoryIds:['rooms'], answers:['Hall', 'Study'] },
+      answerSet:{ id:'rooms', sourceCategoryId:'rooms', answers:['Hall', 'Study'] },
       correctAnswerIndexes:[1],
       playerAnswerIndex:-1
     });
     expect(missingBook?.parts[3]).toMatchObject({
-      answerSet:{ id:'characters', sourceCategoryIds:['characters'], answers:['Detective Sam', 'Doctor Pat'] },
+      answerSet:{ id:'characters', sourceCategoryId:'characters', answers:['Detective Sam', 'Doctor Pat'] },
       correctAnswerIndexes:[0],
       playerAnswerIndex:-1
     });
@@ -151,7 +151,7 @@ describe('loading levels - conclusions', () => {
     const mystery = level.conclusions.find(conclusion => conclusion.id === 'mystery');
 
     expect(mystery?.parts[0]).toMatchObject({
-      answerSet:{ id:'rooms', sourceCategoryIds:['rooms'], answers:['Hall', 'Study'] },
+      answerSet:{ id:'rooms', sourceCategoryId:'rooms', answers:['Hall', 'Study'] },
       correctAnswerIndexes:[1, 0],
       playerAnswerIndex:-1
     });
@@ -217,7 +217,7 @@ describe('loading levels - conclusions', () => {
     expect(errors.describeErrors()).toBe('');
     const mystery = level?.conclusions.find(conclusion => conclusion.id === 'mystery');
     expect(mystery?.parts[0]).toMatchObject({
-      answerSet:{ id:'items', sourceCategoryIds:['items'], answers:['Master Key'] }
+      answerSet:{ id:'items', sourceCategoryId:'items', answers:['Master Key'] }
     });
   });
 

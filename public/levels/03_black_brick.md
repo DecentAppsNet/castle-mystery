@@ -540,4 +540,4 @@ AABBCCDFGGHHH.
 
 ## Chain of Custody
 
-* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [The Pope] [planted] it in the [Arabic Tower], attempting to [deceive] [The King].
+* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. The same person gave the brick to [Pope Innocent III] in the [East Hall].---4. [The Pope] [planted] it in the [Arabic Tower], attempting to [deceive] [The King].

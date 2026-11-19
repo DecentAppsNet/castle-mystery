@@ -11,8 +11,8 @@ import BookState, { createDefaultBookState } from '../types/BookState';
 function _createConclusionPage(conclusionId:string, answerGroups:string[][]):Extract<BookPage, { kind:'conclusion' }> {
   const conclusion:Conclusion = {
       id:conclusionId, title:conclusionId,
-      parts:answerGroups.map(answers => ({
-        type:'blank', answerSet:createAnswerSet(answers, [], false), correctAnswerIndexes:[0], playerAnswerIndex:-1
+      parts:answerGroups.map((answers, index) => ({
+        type:'blank', answerSet:createAnswerSet(answers, `category-${index}`), correctAnswerIndexes:[0], playerAnswerIndex:-1
       })),
       isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
   };
@@ -113,10 +113,10 @@ describe('pieceGenerationUtil', () => {
 
     it('uses the page lookup for reserved, extended, and custom groups', () => {
       const sets = [
-        createAnswerSet(['Hall'], ['rooms'], true),
-        createAnswerSet(['Sam', 'Nobody'], ['characters'], true),
-        createAnswerSet(['Key', 'Nothing'], ['items'], false),
-        createAnswerSet(['found'], ['verbs'], true)
+        createAnswerSet(['Hall'], 'rooms'),
+        createAnswerSet(['Sam', 'Nobody'], 'characters'),
+        createAnswerSet(['Key', 'Nothing'], 'items'),
+        createAnswerSet(['found'], 'verbs')
       ];
       const conclusion:Conclusion = {
         id:'one', title:'One',
@@ -133,27 +133,12 @@ describe('pieceGenerationUtil', () => {
     });
 
     // TODO Phases 9–10: replace cross-category alias merging with shared-category inventory coverage.
-    it.skip('deduplicates reordered aliases using their shared reserved style', () => {
-      const unknown = createAnswerSet(['B', 'A'], [], false);
-      const characters = createAnswerSet(['A', 'B'], ['characters'], false);
-      const conclusion:Conclusion = {
-        id:'one', title:'One',
-        parts:[unknown, characters].map(answerSet => ({ type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:1 })),
-        isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
-      };
-      const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
-      const pieces = generatePieceStack(_createBookState([
-        { kind:'conclusion', headingText:'', conclusion, answerSetIdToPieceStyleNoMap:styles }
-      ]));
-      expect(pieces.map(({ text, styleNo }) => [text, styleNo])).toEqual([['B', 0], ['A', 0]]);
-      expect(styles[unknown.id]).toBe(styles[characters.id]);
-      expect(conclusion.parts.map(part => (part as ClozeBlank).playerAnswerIndex)).toEqual([1, 1]);
-    });
+    it.skip('deduplicates shared-category inventory using its reserved style', () => {});
 
     it('asserts missing styles even for a deduplicated blank', () => {
       const page = _createConclusionPage('one', [['A'], ['A']]);
       const blank = page.conclusion.parts[1] as ClozeBlank;
-      const alias = { ...blank.answerSet, id:'missing' };
+      const alias = createAnswerSet(blank.answerSet.answers, 'missing');
       page.conclusion.parts[1] = { ...blank, answerSet:alias };
       expect(() => generatePieceStack(_createBookState([page]))).toThrow();
     });
@@ -222,7 +207,6 @@ describe('pieceGenerationUtil', () => {
       const page = _createConclusionPage('one', [answers]);
       const blank = page.conclusion.parts[0] as ClozeBlank;
       Object.freeze(answers);
-      Object.freeze(blank.answerSet.sourceCategoryIds);
       Object.freeze(blank.answerSet);
       Object.freeze(blank.correctAnswerIndexes);
       Object.freeze(blank);

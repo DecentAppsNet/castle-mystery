@@ -7,8 +7,7 @@ import Conclusion from '@/game/conclusions/types/Conclusion';
 import AnswerSetIdToPieceStyleNoMap from './types/AnswerSetIdToPieceStyleNoMap';
 
 function _findReservedStyleNoForAnswerSet(answerSet:AnswerSet):number {
-  if (answerSet.sourceCategoryIds.length !== 1) return -1;
-  const categoryId = answerSet.sourceCategoryIds[0];
+  const categoryId = answerSet.sourceCategoryId;
   switch(categoryId) {
     case 'characters': return 0;
     case 'items': return 1;

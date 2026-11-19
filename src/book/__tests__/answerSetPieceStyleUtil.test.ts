@@ -25,17 +25,17 @@ describe('answerSetPieceStyleUtil', () => {
     });
 
     it('reserves built-in styles regardless of their appearance order', () => {
-      const rooms = createAnswerSet(['Hall'], ['rooms'], true);
-      const items = createAnswerSet(['Key'], ['items'], true);
-      const characters = createAnswerSet(['Sam'], ['characters'], true);
+      const rooms = createAnswerSet(['Hall'], 'rooms');
+      const items = createAnswerSet(['Key'], 'items');
+      const characters = createAnswerSet(['Sam'], 'characters');
       const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion([rooms, items, characters]));
       expect([styles[characters.id], styles[items.id], styles[rooms.id]]).toEqual([0, 1, 2]);
     });
 
     it('keeps absent built-in styles reserved without consuming custom numbers', () => {
-      const first = createAnswerSet(['found'], ['verbs'], true);
-      const rooms = createAnswerSet(['Hall'], ['rooms'], true);
-      const second = createAnswerSet(['Nobody'], [], false);
+      const first = createAnswerSet(['found'], 'verbs');
+      const rooms = createAnswerSet(['Hall'], 'rooms');
+      const second = createAnswerSet(['Nobody'], 'unknown-people');
       const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion([first, rooms, second]));
       expect([styles[first.id], styles[rooms.id], styles[second.id]]).toEqual([3, 2, 4]);
       expect(styles.characters).toBeUndefined();
@@ -43,53 +43,35 @@ describe('answerSetPieceStyleUtil', () => {
     });
 
     it('assigns custom styles in first-appearance order beyond eight without wrapping', () => {
-      const sets = Array.from({ length:10 }, (_, index) => createAnswerSet([String(index)], [], false));
+      const sets = Array.from({ length:10 }, (_, index) => createAnswerSet([String(index)], `category-${index}`));
       const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion(sets));
       expect(sets.map(set => styles[set.id])).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     });
 
-    it('uses provenance rather than generated IDs for extended built-ins', () => {
-      const characters = createAnswerSet(['Sam', 'Nobody'], ['characters'], false);
-      const items = createAnswerSet(['Key', 'Nothing'], ['items'], false);
-      const rooms = createAnswerSet(['Hall', 'Nowhere'], ['rooms'], false);
+    it('uses category IDs for extended built-ins', () => {
+      const characters = createAnswerSet(['Sam', 'Nobody'], 'characters');
+      const items = createAnswerSet(['Key', 'Nothing'], 'items');
+      const rooms = createAnswerSet(['Hall', 'Nowhere'], 'rooms');
       const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion([characters, items, rooms]));
-      expect(characters.id).not.toBe('characters');
+      expect(characters.id).toBe('characters');
       expect([styles[characters.id], styles[items.id], styles[rooms.id]]).toEqual([0, 1, 2]);
     });
 
     // TODO Phase 9: replace combined-category precedence with single-category style coverage.
-    it.skip('prioritizes characters over items and rooms for combined sets', () => {
-      const set = createAnswerSet(['Sam', 'Key', 'Hall'], ['rooms', 'items', 'characters', 'custom'], false);
-      expect(generateAnswerSetIdToPieceStyleNoMap(_createConclusion([set]))[set.id]).toBe(0);
-    });
+    it.skip('assigns the characters style using a single category', () => {});
 
     // TODO Phase 9: replace combined-category precedence with single-category style coverage.
-    it.skip('prioritizes items over rooms for combined sets', () => {
-      const set = createAnswerSet(['Key', 'Hall'], ['rooms', 'items'], false);
-      expect(generateAnswerSetIdToPieceStyleNoMap(_createConclusion([set]))[set.id]).toBe(1);
-    });
+    it.skip('assigns the items style using a single category', () => {});
 
     // TODO Phase 9: replace combined-category precedence with single-category style coverage.
-    it.skip('retains a rooms style when combined with a non-reserved category', () => {
-      const set = createAnswerSet(['Hall', 'Outside'], ['places', 'rooms'], false);
-      expect(generateAnswerSetIdToPieceStyleNoMap(_createConclusion([set]))[set.id]).toBe(2);
-    });
+    it.skip('assigns the rooms style using a single category', () => {});
 
     // TODO Phase 9: replace membership-alias precedence with category-based assignment coverage.
-    it.skip('resolves later reserved aliases before numbering custom groups', () => {
-      const unknown = createAnswerSet(['B', 'A', 'B'], [], false);
-      const custom = createAnswerSet(['Other'], [], false);
-      const rooms = createAnswerSet(['A', 'B'], ['rooms'], false);
-      const items = createAnswerSet(['B', 'A'], ['items'], false);
-      const characters = createAnswerSet(['A', 'B'], ['characters'], false);
-      const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion([unknown, custom, rooms, items, characters]));
-      expect([unknown, rooms, items, characters].map(set => styles[set.id])).toEqual([0, 0, 0, 0]);
-      expect(styles[custom.id]).toBe(3);
-    });
+    it.skip('assigns styles by category rather than membership-alias precedence', () => {});
 
     it('merges custom membership aliases without rewriting blank indexes or live options', () => {
-      const first = createAnswerSet(['B', 'A'], ['verbs'], false);
-      const second = createAnswerSet(['A', 'B'], [], false);
+      const first = createAnswerSet(['B', 'A'], 'verbs');
+      const second = createAnswerSet(['A', 'B'], 'alternate-verbs');
       const conclusion = _createConclusion([first, second]);
       const blank = conclusion.parts[1] as ClozeBlank;
       blank.playerAnswerIndex = 1;
@@ -104,21 +86,21 @@ describe('answerSetPieceStyleUtil', () => {
     });
 
     it('keeps exact case, whitespace, subsets, and overlapping membership distinct', () => {
-      const sets = [['A'], ['a'], [' A'], ['A', 'B'], ['B', 'C']].map(answers => createAnswerSet(answers, [], false));
+      const sets = [['A'], ['a'], [' A'], ['A', 'B'], ['B', 'C']]
+        .map((answers, index) => createAnswerSet(answers, `category-${index}`));
       const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion(sets));
       expect(sets.map(set => styles[set.id])).toEqual([3, 4, 5, 6, 7]);
     });
 
     it('supports prototype-like IDs without inheriting entries', () => {
-      const sets = ['__proto__', 'constructor', 'tostring'].map(id => ({ ...createAnswerSet([id], [], false), id }));
+      const sets = ['__proto__', 'constructor', 'tostring'].map(id => createAnswerSet([id], id));
       const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion(sets));
       expect(sets.map(set => styles[set.id])).toEqual([3, 4, 5]);
       expect(Object.getPrototypeOf(styles)).toBeNull();
     });
 
     it('is deterministic with frozen source data and ignores completion, locking, and selection', () => {
-      const set = createAnswerSet(Object.freeze(['B', 'A']), [], false);
-      Object.freeze(set.sourceCategoryIds);
+      const set = createAnswerSet(Object.freeze(['B', 'A']), 'frozen-options');
       Object.freeze(set);
       const conclusion = _createConclusion([set]);
       const before = structuredClone(conclusion);
@@ -137,8 +119,8 @@ describe('answerSetPieceStyleUtil', () => {
     });
 
     it('keeps custom assignment independent across conclusions', () => {
-      const shared = createAnswerSet(['Shared'], [], false);
-      const other = createAnswerSet(['Other'], [], false);
+      const shared = createAnswerSet(['Shared'], 'shared-options');
+      const other = createAnswerSet(['Other'], 'other-options');
       const first = generateAnswerSetIdToPieceStyleNoMap(_createConclusion([other, shared], 'first'));
       const second = generateAnswerSetIdToPieceStyleNoMap(_createConclusion([shared], 'second'));
       expect(first[shared.id]).toBe(4);

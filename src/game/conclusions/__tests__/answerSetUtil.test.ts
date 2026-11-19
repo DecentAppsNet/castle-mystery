@@ -1,90 +1,71 @@
 import { describe, expect, it } from 'vitest';
-import { isNormalizedId } from '@/game/idUtil';
 import { createAnswerSet } from '../answerSetUtil';
-import { duplicateClozeBlank } from '../types/ClozeBlank';
+import ClozeBlank, { duplicateClozeBlank } from '../types/ClozeBlank';
+import { duplicateConclusion } from '../types/Conclusion';
 
 describe('answerSetUtil', () => {
   describe('createAnswerSet()', () => {
-    it('reserves the exact characters category identity', () => {
-      expect(createAnswerSet(['Sam', 'Pat'], ['characters'], true).id).toBe('characters');
+    it('uses the characters category as its identity', () => {
+      expect(createAnswerSet(['Sam', 'Pat'], 'characters')).toEqual({
+        id:'characters', sourceCategoryId:'characters', answers:['Sam', 'Pat']
+      });
     });
 
-    it('reserves the exact items category identity', () => {
-      expect(createAnswerSet(['Key'], ['items'], true).id).toBe('items');
+    it('uses the items category as its identity', () => {
+      expect(createAnswerSet(['Key'], 'items').id).toBe('items');
     });
 
-    it('reserves the exact rooms category identity', () => {
-      expect(createAnswerSet(['Hall'], ['rooms'], true).id).toBe('rooms');
+    it('uses the rooms category as its identity', () => {
+      expect(createAnswerSet(['Hall'], 'rooms').id).toBe('rooms');
     });
 
-    it('generates identities for exact custom categories rather than using authored IDs', () => {
-      const answerSet = createAnswerSet(['A'], ['verbs'], true);
-      expect(answerSet.id).toMatch(/^answer-set-[0-9a-f]+$/);
-      expect(answerSet.id).not.toBe('verbs');
+    it('uses a normalized custom category as its identity without extra fields', () => {
+      expect(createAnswerSet(['Hid', 'Painted'], 'possible actions')).toEqual({
+        id:'possible actions', sourceCategoryId:'possible actions', answers:['Hid', 'Painted']
+      });
     });
 
-    it('canonicalizes duplicated and reordered sources without changing the inputs', () => {
-      const answers = Object.freeze(['B', 'A']);
-      const sources = Object.freeze(['rooms', 'characters', 'rooms']);
-      const answerSet = createAnswerSet(answers, sources, false);
-      expect(answerSet.id).toBe(createAnswerSet(['A', 'B'], ['characters', 'rooms'], false).id);
-      expect(answerSet.sourceCategoryIds).toEqual(['characters', 'rooms']);
+    it('keeps distinct category identities even for identical membership', () => {
+      const first = createAnswerSet(['Sam', 'Pat'], 'characters');
+      const second = createAnswerSet(['Sam', 'Pat'], 'suspects');
+      expect(first.id).not.toBe(second.id);
+      expect(first.sourceCategoryId).toBe('characters');
+      expect(second.sourceCategoryId).toBe('suspects');
+    });
+
+    it('does not globally intern the same category across different local memberships', () => {
+      const firstAnswers = Object.freeze(['Sam', 'Pat']);
+      const secondAnswers = Object.freeze(['Quinn', 'Nobody']);
+      const first = createAnswerSet(firstAnswers, 'characters');
+      const second = createAnswerSet(secondAnswers, 'characters');
+      expect(first.id).toBe(second.id);
+      expect(first).not.toBe(second);
+      expect(first.answers).toBe(firstAnswers);
+      expect(second.answers).toBe(secondAnswers);
+    });
+
+    it('shares frozen input without changing its order, spelling or repetitions', () => {
+      const answers = Object.freeze([' Pat ', 'sAM', ' Pat ']);
+      const answerSet = createAnswerSet(answers, 'characters');
       expect(answerSet.answers).toBe(answers);
-      expect(answers).toEqual(['B', 'A']);
-      expect(sources).toEqual(['rooms', 'characters', 'rooms']);
+      expect(answerSet.answers).toEqual([' Pat ', 'sAM', ' Pat ']);
+      expect(answerSet.id).toBe('characters');
     });
 
-    it('distinguishes source IDs that would collide when joined with underscores', () => {
-      expect(createAnswerSet(['A'], ['a_b', 'c'], false).id)
-        .not.toBe(createAnswerSet(['A'], ['a', 'b_c'], false).id);
+    it('asserts rather than normalizing an uppercase category', () => {
+      expect(() => createAnswerSet(['Sam'], 'Characters')).toThrow('Assertion failed.');
     });
 
-    it('distinguishes answer boundaries and embedded serialization punctuation', () => {
-      expect(createAnswerSet(['a_b', 'c'], [], false).id)
-        .not.toBe(createAnswerSet(['a', 'b_c'], [], false).id);
-      expect(createAnswerSet(['a","b'], [], false).id)
-        .not.toBe(createAnswerSet(['a', 'b'], [], false).id);
-    });
-
-    it('includes extra answers in identities even when category provenance is unchanged', () => {
-      const extended = createAnswerSet(['Sam', 'Nobody'], ['characters'], false);
-      expect(extended.id).not.toBe('characters');
-      expect(extended.id).not.toBe(createAnswerSet(['Sam', 'Someone'], ['characters'], false).id);
-      expect(extended.sourceCategoryIds).toEqual(['characters']);
-    });
-
-    it('distinguishes exact case and whitespace in answer membership', () => {
-      const id = createAnswerSet(['Amos'], [], false).id;
-      expect(id).not.toBe(createAnswerSet(['amos'], [], false).id);
-      expect(id).not.toBe(createAnswerSet([' Amos'], [], false).id);
-      expect(id).not.toBe(createAnswerSet(['Amos '], [], false).id);
-    });
-
-    it('canonicalizes membership without deduplicating or sorting the live options', () => {
-      const answers = ['B', 'A', 'B'];
-      const answerSet = createAnswerSet(answers, [], false);
-      expect(answerSet.id).toBe(createAnswerSet(['A', 'B'], [], false).id);
-      expect(answerSet.answers).toBe(answers);
-      expect(answerSet.answers).toEqual(['B', 'A', 'B']);
-    });
-
-    it('losslessly encodes UTF-16 membership into normalized deterministic identities', () => {
-      const answerSet = createAnswerSet(['😀', '\ud800', '\u0000'], [], false);
-      const payload = answerSet.id.slice('answer-set-'.length);
-      const decoded = payload.match(/.{4}/g)!.map(unit => String.fromCharCode(parseInt(unit, 16))).join('');
-      expect(JSON.parse(decoded)).toEqual([[], ['\u0000', '\ud800', '😀']]);
-      expect(isNormalizedId(answerSet.id)).toBe(true);
-      expect(answerSet.id).toBe(createAnswerSet(['😀', '\ud800', '\u0000'], [], false).id);
-      expect(answerSet.id).not.toBe(createAnswerSet(['😁', '\ud800', '\u0000'], [], false).id);
+    it('asserts rather than trimming a category', () => {
+      expect(() => createAnswerSet(['Sam'], ' characters')).toThrow('Assertion failed.');
+      expect(() => createAnswerSet(['Sam'], 'characters ')).toThrow('Assertion failed.');
     });
   });
 
   describe('duplicateClozeBlank()', () => {
     it('shares the authoritative frozen answer set without adding legacy options', () => {
       const answers = Object.freeze(['B', 'A']);
-      const answerSet = createAnswerSet(answers, ['characters'], false);
-      Object.freeze(answerSet.sourceCategoryIds);
-      Object.freeze(answerSet);
+      const answerSet = Object.freeze(createAnswerSet(answers, 'characters'));
       const blank = { type:'blank' as const, answerSet,
         correctAnswerIndexes:[1], playerAnswerIndex:0 };
       const copy = duplicateClozeBlank(blank);
@@ -96,7 +77,7 @@ describe('answerSetUtil', () => {
     });
 
     it('keeps selection and mutable correct-answer indexes independent', () => {
-      const blank = { type:'blank' as const, answerSet:createAnswerSet(['B', 'A'], [], false),
+      const blank = { type:'blank' as const, answerSet:createAnswerSet(['B', 'A'], 'characters'),
         correctAnswerIndexes:[1], playerAnswerIndex:-1 };
       const copy = duplicateClozeBlank(blank);
       expect(copy.correctAnswerIndexes).not.toBe(blank.correctAnswerIndexes);
@@ -108,6 +89,24 @@ describe('answerSetUtil', () => {
       blank.playerAnswerIndex = 0;
       expect(copy.correctAnswerIndexes).toEqual([0]);
       expect(copy.playerAnswerIndex).toBe(1);
+    });
+  });
+
+  describe('duplicateConclusion()', () => {
+    it('shares frozen answer sets while keeping blank indexes and selections independent', () => {
+      const answerSet = Object.freeze(createAnswerSet(Object.freeze(['Pat', 'Sam']), 'characters'));
+      const blank = { type:'blank' as const, answerSet, correctAnswerIndexes:[1], playerAnswerIndex:-1 };
+      const copy = duplicateConclusion({ id:'mystery', title:'Mystery', parts:[blank],
+        isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[] });
+      const copiedBlank = copy.parts[0] as ClozeBlank;
+      expect(copiedBlank.type).toBe('blank');
+      expect(copiedBlank).not.toBe(blank);
+      expect(copiedBlank.answerSet).toBe(answerSet);
+      expect(copiedBlank.correctAnswerIndexes).not.toBe(blank.correctAnswerIndexes);
+      copiedBlank.correctAnswerIndexes[0] = 0;
+      copiedBlank.playerAnswerIndex = 0;
+      expect(blank.correctAnswerIndexes).toEqual([1]);
+      expect(blank.playerAnswerIndex).toBe(-1);
     });
   });
 });

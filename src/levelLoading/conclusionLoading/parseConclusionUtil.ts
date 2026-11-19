@@ -25,7 +25,7 @@ export function createClozeBlankFromTemplateText(blankText:string, clozeCategori
   const correctAnswers = parseOptions(blankText);
   const category = resolveBlankCategory(correctAnswers, clozeCategories, reportError);
   if (!category) return null;
-  const answerSet = createAnswerSet(category.allowedValues, [category.id], true);
+  const answerSet = createAnswerSet(category.allowedValues, category.id);
 
   // Resolve normalized alternatives to canonical display options, counting repeated alternatives once.
   const normalizedAnswers = answerSet.answers.map(normalizeCategoryPhrase);

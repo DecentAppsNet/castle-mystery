@@ -1,6 +1,6 @@
 type AnswerSet = {
   readonly id:string;
-  readonly sourceCategoryIds:readonly string[];
+  readonly sourceCategoryId:string;
   readonly answers:readonly string[];
 };
 

@@ -27,7 +27,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['apple', 'orange'], [], false),
+            answerSet:createAnswerSet(['apple', 'orange'], 'fruits'),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 1
           }
@@ -43,7 +43,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['apple', 'orange'], [], false),
+            answerSet:createAnswerSet(['apple', 'orange'], 'fruits'),
             correctAnswerIndexes:[0],
             playerAnswerIndex:UNSPECIFIED_ANSWER
           }
@@ -59,7 +59,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['apple', 'orange'], [], false),
+            answerSet:createAnswerSet(['apple', 'orange'], 'fruits'),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 99
           }
@@ -91,7 +91,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['apple', 'fruit'], [], false),
+            answerSet:createAnswerSet(['apple', 'fruit'], 'foods'),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 0
           },
@@ -101,7 +101,7 @@ describe('conclusionUtil', () => {
           },
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['fruit', 'vegetable'], [], false),
+            answerSet:createAnswerSet(['fruit', 'vegetable'], 'food types'),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 0
           }
@@ -117,7 +117,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['apple', 'orange'], [], false),
+            answerSet:createAnswerSet(['apple', 'orange'], 'fruits'),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 1
           }
@@ -133,7 +133,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['apple', 'orange'], [], false),
+            answerSet:createAnswerSet(['apple', 'orange'], 'fruits'),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 1
           },
@@ -143,7 +143,7 @@ describe('conclusionUtil', () => {
           },
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['fruit', 'vegetable'], [], false),
+            answerSet:createAnswerSet(['fruit', 'vegetable'], 'food types'),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 1
           },
@@ -153,7 +153,7 @@ describe('conclusionUtil', () => {
           },
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['red', 'yellow'], [], false),
+            answerSet:createAnswerSet(['red', 'yellow'], 'colors'),
             correctAnswerIndexes:[0],
             playerAnswerIndex: 0
           }
@@ -169,7 +169,7 @@ describe('conclusionUtil', () => {
         parts:[
           {
             type:ClozePartType.blank,
-            answerSet:createAnswerSet(['cat', 'dog', 'kitten'], [], false),
+            answerSet:createAnswerSet(['cat', 'dog', 'kitten'], 'animals'),
             correctAnswerIndexes:[0, 2],
             playerAnswerIndex: 2
           }
@@ -187,16 +187,16 @@ describe('conclusionUtil', () => {
 
     it('compares selected display text by trimmed lowercase rather than by index or set identity', () => {
       const statement = createConclusion({ parts:[
-        { type:'blank', answerSet:createAnswerSet(['Jack', 'Jill'], ['characters'], true),
+        { type:'blank', answerSet:createAnswerSet(['Jack', 'Jill'], 'characters'),
           correctAnswerIndexes:[0, 1], playerAnswerIndex:0 },
-        { type:'blank', answerSet:createAnswerSet(['Jill', ' JACK '], ['names'], true),
+        { type:'blank', answerSet:createAnswerSet(['Jill', ' JACK '], 'names'),
           correctAnswerIndexes:[0, 1], playerAnswerIndex:1 }
       ] });
       expect(countConclusionMistakes(statement)).toBe(1);
     });
 
     it('counts each unspecified blank once without treating its sentinel as a selected answer', () => {
-      const answerSet = createAnswerSet(['Jack', 'Jill'], ['characters'], true);
+      const answerSet = createAnswerSet(['Jack', 'Jill'], 'characters');
       const statement = createConclusion({ parts:[
         { type:'blank', answerSet, correctAnswerIndexes:[0, 1], playerAnswerIndex:-1 },
         { type:'blank', answerSet, correctAnswerIndexes:[0, 1], playerAnswerIndex:-1 }
