@@ -300,7 +300,7 @@ Skin head images use the same filename-only body bucket. They replace only the h
 
 This selects the initial skin without changing the character's base image or description. Later itinerary activities such as `Sam appears default` or `Sam appears Masked` change the appearance normally.
 
-Generated `Identities` portraits use the authored initial skin's image, falling back to the base character image, then to the unknown-character icon if neither has an image. This also applies to unplaced characters selected by an authored identity option override. Later itinerary appearances and the configured opening `time` do not change these portraits.
+Generated `Identities` portraits use the authored initial skin's image, falling back to the base character image, then to the unknown-character icon if neither has an image. Later itinerary appearances and the configured opening `time` do not change these portraits.
 
 ## Discoverable Appearances
 
@@ -701,14 +701,20 @@ Write category lines before any `##` conclusion subsections.
 Format:
 * `* category name=Option 1|Option 2|Option 3`
 
-When a blank's correct answer or answers all appear in one of these categories, the whole category becomes the answer list for that blank.
+Each blank uses one category's complete list of options, in the order shown in that list. Every correct alternative must belong to that same category.
+
+Writing `characters=`, `items=`, or `rooms=` replaces that automatic list completely. Options are literal display text, not references to character or item names; for example, `Nobody` is allowed. Use a character's displayed title rather than a shorter name used elsewhere in the level.
+
+An option must appear only once and in only one category, including automatic categories, even when no blank uses it. Capitalization and surrounding spaces do not make options different. Repeated titles in automatic lists contribute just one option.
+
+For example, if you create a `suspects` list and an error says it overlaps `characters`, remove or rename the overlap, or write a complete `characters=` replacement containing your intended options instead of a separate overlapping list.
 
 Example:
 
 ```md
 # conclusions
 
-* people=King|Queen|Butler
+* characters=King|Queen|Butler
 * rooms=Library|Kitchen|Study
 ```
 
@@ -734,7 +740,11 @@ Put a blank answer inside square brackets:
 
 Answers inside a blank are separated by `|`.
 
-If the blank matches one of your categories, the player will see that category's full answer list. If it does not match any category, the player will only see the correct answer or answers.
+Every answer must appear in a category; an empty blank or an answer outside all categories prevents the level from loading. Matching ignores capitalization and surrounding spaces, but players see the category's original spelling.
+
+Within one conclusion, the player must use a different answer for each blank. To mention the same person again, use ordinary text or a pronoun rather than another blank.
+
+Interchangeable blanks are allowed: `[Jack|Jill] and [Jill|Jack]` accepts either order, but not the same name twice. Their alternative lists must contain exactly the same choices, and there must be enough different choices for all those blanks. Repeating an alternative does not add another choice. Partial overlaps such as `[Jack|Jill] ... [Jack]` are not allowed. Separate conclusions may reuse answers freely.
 
 ## Images And Separators
 
@@ -748,7 +758,9 @@ This is most useful for identity-style conclusions.
 
 ## Secret Identities
 
-The engine automatically generates an `Identities` conclusion when the level has characters.
+The engine automatically generates an `Identities` conclusion for placed, interactive characters whose identities are not already known. Its options also include interactive characters whose identities are known.
+
+If you replace `characters=`, include every displayed title needed by those identity blanks. Two generated identity blanks cannot require the same title.
 
 If you want to customize only the metadata for that generated conclusion, add an `## identities` subsection without a `conclusion=` line. In that special case, the generated identity blanks are kept, while authored metadata such as `title`, `revealRooms`, and `unlockConclusions` is applied.
 
@@ -759,7 +771,7 @@ If you do author a `conclusion=` line inside `## identities`, that authored conc
 ```md
 # conclusions
 
-* people=King|Queen|Butler
+* characters=King|Queen|Butler
 * actions=searched|looked|hid
 
 ## The Missing Book
