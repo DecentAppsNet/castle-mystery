@@ -58,9 +58,8 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
   revealRoomIds: []
 }
 
-const custodyCharacterAnswerSet = createAnswerSet(["Helena of Gaeta", "Hugo of Speyer", "King Frederick", "Matteo il Toro", "Pope Innocent III", "Raniero de Stefano"], ['characters'], true);
-const custodyRoomAnswerSet = createAnswerSet(["Courtyard", "East Hall", "East Stairwell", "Grain Store", "Guard Chamber", "Lawn", "Liturgical Vault", "Lower Passage", "Portcullis Chamber", "Steward's Office", "Textile Store", "West Hall", "Wine Cellar"], ['rooms'], true);
-const custodySuspectAnswerSet = createAnswerSet(["Pope Innocent III", "the Freemasons", "Helena", "Raniero", "Toro", "Hugo", "King Frederick", "Nobody", "The wind", "Helena of Gaeta", "Hugo of Speyer", "Matteo il Toro", "Raniero de Stefano"], ['characters', 'suspects'], false);
+const custodyCharacterAnswerSet = createAnswerSet(["Helena of Gaeta", "Hugo of Speyer", "King Frederick", "Matteo il Toro", "Pope Innocent III", "Raniero de Stefano", "the Freemasons", "Helena", "Raniero", "Toro", "Hugo", "The King", "The Pope", "Nobody", "The wind"], ['characters'], true);
+const custodyRoomAnswerSet = createAnswerSet(["Courtyard", "East Hall", "East Stairwell", "Grain Store", "Guard Chamber", "Lawn", "Liturgical Vault", "Lower Passage", "Portcullis Chamber", "Steward's Office", "Textile Store", "West Hall", "Wine Cellar", "Arabic Tower"], ['rooms'], true);
 const conclusion3:Conclusion = {
   id: "chain of custody",
   title: "Chain of Custody",
@@ -78,23 +77,21 @@ const conclusion3:Conclusion = {
     {type:"text",text:" snatched the brick."},
     {type:"separator"},
     {type:"text",text:"3. "},
-    {type:"blank",answerSet:custodyCharacterAnswerSet,correctAnswerIndexes:[1],playerAnswerIndex:-1},
-    {type:"text",text:" gave the brick to "},
-    {type:"blank",answerSet:custodySuspectAnswerSet,correctAnswerIndexes:[0],playerAnswerIndex:-1},
+    {type:"text",text:"He gave the brick to "},
+    {type:"blank",answerSet:custodyCharacterAnswerSet,correctAnswerIndexes:[4],playerAnswerIndex:-1},
     {type:"text",text:" in the "},
     {type:"blank",answerSet:custodyRoomAnswerSet,correctAnswerIndexes:[2],playerAnswerIndex:-1},
     {type:"text",text:"."},
     {type:"separator"},
     {type:"text",text:"4. "},
-    {type:"blank",answerSet:custodySuspectAnswerSet,correctAnswerIndexes:[0],playerAnswerIndex:-1},
-    {type:"text",text:" "},
+    {type:"text",text:"The Pope "},
     {type:"blank",answerSet:createAnswerSet(["discovered", "cremated", "painted", "planted", "rebuked", "salvaged"], ['discovery verbs'], true),correctAnswerIndexes:[3],playerAnswerIndex:-1},
     {type:"text",text:" it in the "},
-    {type:"blank",answerSet:createAnswerSet(["Arabic Tower", "Barley Bin", "Black Brick", "Black Paint Jar", "Oat Bin", "Pillar", "Small Hourglass", "Staff List", "Steward's Key", "Walnut Table", "Wheat Bin"], ['rooms', 'items'], false),correctAnswerIndexes:[0],playerAnswerIndex:-1},
+    {type:"blank",answerSet:custodyRoomAnswerSet,correctAnswerIndexes:[13],playerAnswerIndex:-1},
     {type:"text",text:", attempting to "},
     {type:"blank",answerSet:createAnswerSet(["fall", "hide", "disappear", "succeed", "speak", "initiate", "deceive", "murder"], ['intent verbs'], true),correctAnswerIndexes:[6],playerAnswerIndex:-1},
     {type:"text",text:" "},
-    {type:"blank",answerSet:custodySuspectAnswerSet,correctAnswerIndexes:[6],playerAnswerIndex:-1},
+    {type:"blank",answerSet:custodyCharacterAnswerSet,correctAnswerIndexes:[2],playerAnswerIndex:-1},
     {type:"text",text:"."}
   ],
   isComplete: false,

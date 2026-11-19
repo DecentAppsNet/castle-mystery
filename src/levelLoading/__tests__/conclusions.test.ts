@@ -69,7 +69,7 @@ describe('loading levels - conclusions', () => {
       '* isTitleKnown=true'
     ]);
     text = replaceSection(text, 'conclusions', [
-      '* characters=Sam | Pat',
+      '* characters=Detective Sam | Doctor Pat',
       '## Missing Book',
       '* conclusion=(book.png)[Study]---[Detective Sam]',
       '* revealRooms=Study'
@@ -260,9 +260,15 @@ describe('loading levels - conclusions', () => {
     _expectFailure(text, 'conclusions-unlock-unknown.md', '"Aftermath" doesn\'t match a defined conclusion.');
   });
 
-  it('fails if an authored identities character option does not match a defined character', () => {
-    const text = replaceSection(defaultLevelText, 'conclusions', ['* characters=Ghost']);
-    _expectFailure(text, 'conclusions-unknown-character-option.md', 'Could not find character matching "Ghost".');
+  it('allows literal character options without matching entity definitions', () => {
+    const text = defaultLevelText.replace('# conclusions', '# conclusions\n* characters=Detective Sam|Ghost');
+    const level = loadValidLevelForTest(text);
+    const identities = level.conclusions.find(conclusion => conclusion.id === 'identities');
+
+    expect(identities?.parts[2]).toMatchObject({
+      answerSet:{ answers:['Detective Sam', 'Ghost'] },
+      correctAnswerIndexes:[0]
+    });
   });
 
   it('fails if the conclusions section repeats a top-level variable', () => {

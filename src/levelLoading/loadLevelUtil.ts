@@ -66,7 +66,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   const roomsSectionText = sections.rooms?.text ?? '';
   const partiallyLoadedCharacters = loadCharactersPartially(charactersSectionText, roomsSectionText, rooms, errors); // Characters still missing inventory.
   if (!partiallyLoadedCharacters) return null;
-  const { placedCharacters, allCharacters, initiallyKnownTitleCharacterIds } = partiallyLoadedCharacters;
+  const { placedCharacters, initiallyKnownTitleCharacterIds } = partiallyLoadedCharacters;
   const itinerarySection = sections.itinerary;
     const startTime = findStartTimeFromItinerary(itinerarySection?.text ?? '') ?? 0;
   const activities = loadActivitiesPartially(itinerarySection, loadingContext.activityParsingRules, 
@@ -82,7 +82,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
   if (!indexUsedItemsInLevel(items, activities, rooms, level, errors)) return null;
   
   // Build authored conclusions and synthesize the generated identities conclusion when needed.
-  level.conclusions = loadConclusions(sections.conclusions?.text ?? '', placedCharacters, allCharacters, 
+  level.conclusions = loadConclusions(sections.conclusions?.text ?? '', placedCharacters,
       [...level.itemsById.values()], rooms, initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
 
   // Schedule activities into timeline data structure.

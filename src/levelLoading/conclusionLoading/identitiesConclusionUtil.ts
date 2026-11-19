@@ -13,9 +13,8 @@ import { createClozeBlankFromTemplateText } from "./parseConclusionUtil";
 import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
 import { createNormalizedSectionEntryMap, createSectionVariables, getSectionIdsFromSectionText } from "../levelFileSectionUtil";
 import { parseOptions } from "@/common/markdownUtil";
-import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
+import { resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
 import Room from "@/game/types/Room";
-import { normalizeId } from "@/game/idUtil";
 import { randIntInRange } from "@/common/randUtil";
 import { assertNonNullable } from "decent-portal";
 import { getHeadImageUrl } from '@/game/characterBody';
@@ -82,33 +81,13 @@ function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Ro
   return { title, unlockConclusionIds, revealRoomIds, characterOptions };
 }
 
-function _findCharacterByIdOrTitle(characters:readonly Character[], characterRef:string):Character|null {
-  const maybeCharacterId = normalizeId(characterRef);
-  const maybeCharacterTitle = normalizeCategoryPhrase(characterRef);
-  return characters.find(c => c.id === maybeCharacterId) // Search by ID first, because they can be used by author to disambiguate two characters with same title.
-      ?? characters.find(c => normalizeCategoryPhrase(c.title) === maybeCharacterTitle) 
-      ?? null;
-}
-
-export function findCharacterOptionsFromAuthoring(characterOptions:string[], allCharacters:readonly Character[], 
-    errors:ErrorCollector):string[] {
-  return characterOptions.map(characterRef => {
-    const character = _findCharacterByIdOrTitle(allCharacters, characterRef);
-    if (character) return character.title;
-    errors.addAt(`Could not find character matching "${characterRef}".`, 'conclusions', '* characters=', characterRef);
-    return null;
-  })
-  .filter(c => c !== null)
-  .sort();
-}
-
 function _findCharacterOptionsFromIdentityRowCharacters(identityRowCharacters:readonly Character[]):string[] {
   return identityRowCharacters.map(c => c.title).sort();
 }
 
 /** Generates an identities conclusion unless all character titles are initially known. */
 export function createGeneratedIdentityConclusion(conclusionsSectionText:string, placedCharacters:readonly Character[], 
-    allCharacters:readonly Character[], rooms:readonly Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>,
+  rooms:readonly Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>,
     initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):Conclusion|null {
   const originalErrorCount = errors.count;
 
@@ -117,9 +96,7 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
   const identityRowCharacters = _findIdentityRowCharacters(placedCharacters, initiallyKnownTitleCharacterIds);
   if (errors.count > originalErrorCount) return null;
 
-  const characterOptions = !overrides.characterOptions 
-    ? _findCharacterOptionsFromIdentityRowCharacters(identityRowCharacters)
-    : findCharacterOptionsFromAuthoring(overrides.characterOptions, allCharacters, errors);
+  const characterOptions = overrides.characterOptions ?? _findCharacterOptionsFromIdentityRowCharacters(identityRowCharacters);
     
   const parts:ClozePart[] = [];
   identityRowCharacters.forEach((character, characterI) => {
