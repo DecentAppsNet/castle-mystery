@@ -19,7 +19,7 @@ export function loadConclusions(conclusionsSectionText:string, placedCharacters:
   const conclusions = parseAuthoredConclusions(conclusionsSectionText, rooms, categories, initiallyObscuredRoomIds, errors) ?? [];
   if (!hasIdentitiesConclusion(conclusions)) {
     const identitiesConclusion = createGeneratedIdentityConclusion(conclusionsSectionText, placedCharacters, 
-      rooms, initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
+      categories.characters, rooms, initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
     if (identitiesConclusion) conclusions.unshift(identitiesConclusion);
   }
   lockConclusionsAsNeeded(conclusions);

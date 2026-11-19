@@ -10,9 +10,7 @@ import ClozeCategory from "./types/ClozeCategory";
 import { ErrorCollector } from "../errorCollection";
 import { UNKNOWN_CHARACTER_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { createClozeBlankFromTemplateText } from "./parseConclusionUtil";
-import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
 import { createNormalizedSectionEntryMap, createSectionVariables, getSectionIdsFromSectionText } from "../levelFileSectionUtil";
-import { parseOptions } from "@/common/markdownUtil";
 import { resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
 import Room from "@/game/types/Room";
 import { randIntInRange } from "@/common/randUtil";
@@ -43,25 +41,14 @@ function _getCharacterHeadImageUrl(character:Character):string {
   return initialSkin?.headImageUrl ?? getHeadImageUrl(character.rootBodyPart) ?? UNKNOWN_CHARACTER_ICON_URL;
 }
 
-function _createClozeBlankFromCorrectAnswer(correctAnswer:string, conclusionOptions:string[]):ClozeBlank {
-  const clozeCategories:Record<string, ClozeCategory> = {};
-  const id = 'characters';
-  clozeCategories[id] = {id, authoredName:id, allowedValues:conclusionOptions}; 
-  return createClozeBlankFromTemplateText(correctAnswer, clozeCategories);
-}
-
 function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Room[],
   initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):{
   title:string|null,
   unlockConclusionIds:string[]|null,
-  revealRoomIds:string[]|null,
-  characterOptions:string[]|null
+  revealRoomIds:string[]|null
 } {
-  let title = null, unlockConclusionIds = null, revealRoomIds = null, characterOptions = null;
-  if (conclusionsSectionText.trim() === '') return {title, unlockConclusionIds, revealRoomIds, characterOptions};
-  const conclusionsVariables = createSectionVariables(conclusionsSectionText, 'conclusions', errors);
-  const characterOptionsText = conclusionsVariables.characters ?? null;
-  if (characterOptionsText) characterOptions = parseOptions(characterOptionsText.value);
+  let title = null, unlockConclusionIds = null, revealRoomIds = null;
+  if (conclusionsSectionText.trim() === '') return {title, unlockConclusionIds, revealRoomIds};
 
   const conclusionIds = getSectionIdsFromSectionText(conclusionsSectionText, 2, 'conclusions', errors);
   const normalizedSections = createNormalizedSectionEntryMap(conclusionsSectionText, 2, 'conclusions', errors);
@@ -78,16 +65,12 @@ function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Ro
       revealRoomIds = resolveRevealRoomIds('identities', revealRoomsText, rooms, initiallyObscuredRoomIds, errors);
     }
   }
-  return { title, unlockConclusionIds, revealRoomIds, characterOptions };
-}
-
-function _findCharacterOptionsFromIdentityRowCharacters(identityRowCharacters:readonly Character[]):string[] {
-  return identityRowCharacters.map(c => c.title).sort();
+  return { title, unlockConclusionIds, revealRoomIds };
 }
 
 /** Generates an identities conclusion unless all character titles are initially known. */
-export function createGeneratedIdentityConclusion(conclusionsSectionText:string, placedCharacters:readonly Character[], 
-  rooms:readonly Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>,
+export function createGeneratedIdentityConclusion(conclusionsSectionText:string, placedCharacters:readonly Character[],
+    characterCategory:ClozeCategory, rooms:readonly Room[], initiallyKnownTitleCharacterIds:ReadonlySet<string>,
     initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):Conclusion|null {
   const originalErrorCount = errors.count;
 
@@ -96,14 +79,14 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
   const identityRowCharacters = _findIdentityRowCharacters(placedCharacters, initiallyKnownTitleCharacterIds);
   if (errors.count > originalErrorCount) return null;
 
-  const characterOptions = overrides.characterOptions ?? _findCharacterOptionsFromIdentityRowCharacters(identityRowCharacters);
-    
+  // Use the effective category without rebuilding options from the filtered identity rows.
+  const clozeCategories = { characters:characterCategory };
   const parts:ClozePart[] = [];
   identityRowCharacters.forEach((character, characterI) => {
       if (characterI > 0) parts.push({ type:ClozePartType.separator });
       parts.push({ type:ClozePartType.image, imageUrl:_getCharacterHeadImageUrl(character) });
       parts.push({ type:ClozePartType.text, text:' = ' });
-      parts.push(_createClozeBlankFromCorrectAnswer(character.title, characterOptions));
+      parts.push(createClozeBlankFromTemplateText(character.title, clozeCategories));
     });
   if (!parts.length) return null;
 
