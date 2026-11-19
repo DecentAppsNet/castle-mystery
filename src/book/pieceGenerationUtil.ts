@@ -1,4 +1,4 @@
-/* This file generates loose book pieces from conclusion-scoped answer groups without drawing or changing source data.
+/* This file generates each category's loose-piece inventory once per conclusion page without changing source data.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
@@ -10,11 +10,6 @@ import Piece from './types/Piece';
 const FIRST_ROW_Y_PERCENT = 14;
 const LAST_ROW_Y_PERCENT = 86;
 const PREFERRED_ROW_SPACING_PERCENT = 5;
-
-function _haveSameMembership(first:readonly string[], second:readonly string[]):boolean {
-  if (first === second) return true;
-  return first.every(answer => second.includes(answer)) && second.every(answer => first.includes(answer));
-}
 
 function _placeAnswerGroupsOnRightPage(answerGroups:readonly Piece[][]):void {
   if (answerGroups.length === 0) return;
@@ -45,7 +40,6 @@ function _placeAnswerGroupsOnRightPage(answerGroups:readonly Piece[][]):void {
 export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
   // Keep inventory grouping local while consuming each page's shared style lookup.
   const pieces:Piece[] = [];
-  const groups:{ readonly conclusionId:string, readonly answers:readonly string[] }[] = [];
 
   // Validate each conclusion spread and collect its new groups before positioning them.
   bookState.pages.forEach((page, pageI) => {
@@ -54,16 +48,17 @@ export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
     assert(bookState.pages[pageI + 1]?.kind === 'blank', 'Conclusion pages must have a blank right page.');
     const conclusionId = page.conclusion.id;
     const answerGroups:Piece[][] = [];
+    const emittedCategoryIds = new Set<string>();
     for (const part of page.conclusion.parts) {
       if (part.type !== 'blank') continue;
       const { answerSet } = part as ClozeBlank;
       const { answers } = answerSet;
       const styleNo:number | undefined = page.answerSetIdToPieceStyleNoMap[answerSet.id];
       assertNonNullable(styleNo);
-      if (groups.some(group => group.conclusionId === conclusionId && _haveSameMembership(group.answers, answers))) continue;
+      if (emittedCategoryIds.has(answerSet.id)) continue;
 
-      // Emit each new group's answers in their original order with fresh mutable pieces.
-      groups.push({ conclusionId, answers });
+      // Emit each category's ordered answers once; category validation guarantees disjoint membership.
+      emittedCategoryIds.add(answerSet.id);
       const groupPieces = answers.map(text => ({ conclusionId, styleNo, text, xPercent:0, yPercent:0 }));
       if (groupPieces.length > 0) answerGroups.push(groupPieces);
       pieces.push(...groupPieces);
