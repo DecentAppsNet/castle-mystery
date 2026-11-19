@@ -16,6 +16,7 @@ export function loadConclusions(conclusionsSectionText:string, placedCharacters:
     errors:ErrorCollector):Conclusion[] {
   const originalErrorCount = errors.count;
   const categories = createClozeCategories(conclusionsSectionText, rooms, placedCharacters, items, errors);
+  if (errors.count > originalErrorCount) return [];
   const conclusions = parseAuthoredConclusions(conclusionsSectionText, rooms, categories, initiallyObscuredRoomIds, errors) ?? [];
   if (!hasIdentitiesConclusion(conclusions)) {
     const identitiesConclusion = createGeneratedIdentityConclusion(conclusionsSectionText, placedCharacters, 

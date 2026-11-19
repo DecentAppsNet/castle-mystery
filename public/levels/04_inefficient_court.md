@@ -807,7 +807,7 @@ N1234567890ABCD.
 # Conclusions
 
 * numbers=1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32
-* petitioners=Andronikos of Thessalonica|Gualtiero of Masala|King Frederick|Harold of Norwich|Matteo il Toro|Niccolò il Calabrese|Sticky Agatha|Ugolino di Conti
+* petitioners=Andronikos|Gualtiero|The King|Harold|Toro|Niccolò|Agatha|Ugolino
 * verbs=thrown|revealed|painted|planted|destroyed|hidden|murdered|poisoned
 * marks=King|Freemasons|Lateran Palace|Antichrist|Chamberlain|House of Pietro|Holy Roman Empire
 * items=Black Brick|Black Paint Jar|Chamberlain's Coffer|Petitioner Registry|Royal Tunic|Wax Tablet
@@ -826,7 +826,7 @@ N1234567890ABCD.
 
 ## Audience Granted
 
-* conclusion=List petitioners in order of their appearance before the King.---1. [Sticky Agatha]---2. [Niccolò il Calabrese]---3. [Matteo il Toro]
+* conclusion=List petitioners in order of their appearance before the King.---1. [Agatha]---2. [Niccolò]---3. [Toro]
 * revealRooms=Throne Room|Record Room
 * unlockConclusions=Disproof
 

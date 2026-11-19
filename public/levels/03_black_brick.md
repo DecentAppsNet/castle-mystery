@@ -522,7 +522,7 @@ AABBCCDFGGHHH.
 
 # Conclusions
 
-* suspects=Pope Innocent III|the Freemasons|Helena|Raniero|Toro|Hugo|King Frederick|Nobody|The wind
+* suspects=The Pope|the Freemasons|Helena|Raniero|Toro|Hugo|The King|Nobody|The wind
 * knockedVerbs=paid|amused|seduced|blackmailed|goaded|murdered
 * aftermathVerbs=fall|hide|disappear|succeed|speak|initiate|deceive|murder
 * popeActions=discovered|cremated|painted|planted|rebuked|salvaged
@@ -540,4 +540,4 @@ AABBCCDFGGHHH.
 
 ## Chain of Custody
 
-* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [Pope Innocent III] [planted] it in the [Arabic Tower], attempting to [deceive] [King Frederick].
+* conclusion=These people carried or saw the Black Brick.---1. [Helena of Gaeta] noticed it in the [Textile Store], but did not pick it up.---2. [Hugo of Speyer] snatched the brick.---3. [Hugo of Speyer] gave the brick to [Pope Innocent III] in the [East Hall].---4. [The Pope] [planted] it in the [Arabic Tower], attempting to [deceive] [The King].
