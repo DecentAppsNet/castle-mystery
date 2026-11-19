@@ -1,10 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createClozeBlankFromTemplateText } from '../parseConclusionUtil';
+import ClozeCategory from '../types/ClozeCategory';
+
+function _parseValidBlank(text:string, categories:Record<string, ClozeCategory>) {
+  const reportError = vi.fn();
+  const blank = createClozeBlankFromTemplateText(text, categories, reportError);
+  expect(reportError).not.toHaveBeenCalled();
+  expect(blank).not.toBeNull();
+  return blank!;
+}
 
 describe('parseConclusionUtil', () => {
   describe('createClozeBlankFromTemplateText()', () => {
     it('retains exact characters provenance and ordered options without legacy properties', () => {
-      const blank = createClozeBlankFromTemplateText('Sam', {
+      const blank = _parseValidBlank('Sam', {
         characters:{ id:'characters', authoredName:'Characters', allowedValues:['Pat', 'Sam'] }
       });
       expect(blank.answerSet).toEqual({ id:'characters', sourceCategoryIds:['characters'], answers:['Pat', 'Sam'] });
@@ -14,42 +23,37 @@ describe('parseConclusionUtil', () => {
     });
 
     it('retains exact items provenance', () => {
-      const blank = createClozeBlankFromTemplateText('Key', {
+      const blank = _parseValidBlank('Key', {
         items:{ id:'items', authoredName:'Items', allowedValues:['Key', 'Book'] }
       });
       expect(blank.answerSet.id).toBe('items');
     });
 
     it('retains exact rooms provenance', () => {
-      const blank = createClozeBlankFromTemplateText('Study', {
+      const blank = _parseValidBlank('Study', {
         rooms:{ id:'rooms', authoredName:'Rooms', allowedValues:['Study', 'Hall'] }
       });
       expect(blank.answerSet.id).toBe('rooms');
       expect(blank.answerSet.answers).toEqual(['Study', 'Hall']);
     });
 
-    it('combines matching categories in traversal order with exact deduplication', () => {
-      const blank = createClozeBlankFromTemplateText('Sam|Hall|Nobody|sam', {
-        rooms:{ id:'rooms', authoredName:'Rooms', allowedValues:['Hall', 'Sam'] },
-        unrelated:{ id:'unrelated', authoredName:'Unrelated', allowedValues:['Other'] },
-        characters:{ id:'characters', authoredName:'Characters', allowedValues:['Sam', 'Pat', 'sam'] }
-      });
-      expect(blank.answerSet.answers).toEqual(['Hall', 'Sam', 'Pat', 'sam', 'Nobody']);
-      expect(blank.correctAnswerIndexes).toEqual([1, 0, 4]);
-      expect(blank.answerSet.sourceCategoryIds).toEqual(['characters', 'rooms']);
-      expect(blank.answerSet.id).toMatch(/^answer-set-/);
+    it('rejects alternatives in different categories instead of combining them', () => {
+      const reportError = vi.fn();
+      const blank = createClozeBlankFromTemplateText('Sam|Hall', {
+        rooms:{ id:'rooms', authoredName:'Rooms', allowedValues:['Hall'] },
+        characters:{ id:'characters', authoredName:'Characters', allowedValues:['Sam', 'Pat'] }
+      }, reportError);
+      expect(blank).toBeNull();
+      expect(reportError).toHaveBeenCalledWith(expect.stringContaining('All alternatives in a blank must use the same category'));
     });
 
-    it('gives reordered equivalent categories one identity without rewriting blank indexes', () => {
+    it('rejects ambiguous answers rather than constructing a combined set', () => {
+      const reportError = vi.fn();
       const rooms = { id:'rooms', authoredName:'Rooms', allowedValues:['Hall', 'Sam'] };
       const characters = { id:'characters', authoredName:'Characters', allowedValues:['Sam', 'Pat'] };
-      const first = createClozeBlankFromTemplateText('Sam', { rooms, characters });
-      const second = createClozeBlankFromTemplateText('Sam', { characters, rooms });
-      expect(first.answerSet.id).toBe(second.answerSet.id);
-      expect(first.answerSet.answers).toEqual(['Hall', 'Sam', 'Pat']);
-      expect(second.answerSet.answers).toEqual(['Sam', 'Pat', 'Hall']);
-      expect(first.correctAnswerIndexes).toEqual([1]);
-      expect(second.correctAnswerIndexes).toEqual([0]);
+      const blank = createClozeBlankFromTemplateText('Sam', { rooms, characters }, reportError);
+      expect(blank).toBeNull();
+      expect(reportError).toHaveBeenCalledWith(expect.stringContaining('found 2'));
     });
 
     it('does not mutate frozen categories or their allowed values', () => {
@@ -57,37 +61,48 @@ describe('parseConclusionUtil', () => {
       Object.freeze(allowedValues);
       const characters = Object.freeze({ id:'characters', authoredName:'Characters', allowedValues });
       const categories = Object.freeze({ characters });
-      const blank = createClozeBlankFromTemplateText('Sam|Nobody', categories);
+      const blank = _parseValidBlank('Sam|Pat', categories);
       expect(allowedValues).toEqual(['Pat', 'Sam']);
-      expect(blank.answerSet.answers).toEqual(['Pat', 'Sam', 'Nobody']);
+      expect(blank.answerSet.answers).toEqual(['Pat', 'Sam']);
+      expect(blank.correctAnswerIndexes).toEqual([1, 0]);
     });
 
-    it('creates uncategorized fallback-only sets in first-encounter order', () => {
-      const blank = createClozeBlankFromTemplateText('Nobody|Someone|Nobody', {});
-      expect(blank.answerSet.answers).toEqual(['Nobody', 'Someone']);
-      expect(blank.correctAnswerIndexes).toEqual([0, 1]);
-      expect(blank.answerSet.sourceCategoryIds).toEqual([]);
-      expect(blank.answerSet.id).toMatch(/^answer-set-/);
+    it('rejects unknown answers rather than creating fallback-only sets', () => {
+      const reportError = vi.fn();
+      const blank = createClozeBlankFromTemplateText('Nobody|Someone', {}, reportError);
+      expect(blank).toBeNull();
+      expect(reportError).toHaveBeenCalledTimes(2);
+      expect(reportError).toHaveBeenCalledWith(expect.stringContaining('Answer "Nobody"'));
+      expect(reportError).toHaveBeenCalledWith(expect.stringContaining('Answer "Someone"'));
     });
 
-    it('gives extended built-ins generated identities and distinguishes different fallback additions', () => {
+    it('rejects unknown alternatives even when another alternative resolves', () => {
+      const reportError = vi.fn();
       const categories = { characters:{ id:'characters', authoredName:'Characters', allowedValues:['Pat', 'Sam'] } };
-      const first = createClozeBlankFromTemplateText('Sam|Nobody', categories);
-      const second = createClozeBlankFromTemplateText('Sam|Someone', categories);
-      expect(first.answerSet.id).not.toBe('characters');
-      expect(first.answerSet.id).not.toBe(second.answerSet.id);
-      expect(first.answerSet.sourceCategoryIds).toEqual(['characters']);
-      expect(first.answerSet.answers).toEqual(['Pat', 'Sam', 'Nobody']);
-      expect(first.correctAnswerIndexes).toEqual([1, 2]);
+      const blank = createClozeBlankFromTemplateText('Sam|Nobody', categories, reportError);
+      expect(blank).toBeNull();
+      expect(reportError).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('Answer "Nobody"'));
     });
 
-    it('preserves normalized matching while treating differently spelled fallback options as extensions', () => {
-      const blank = createClozeBlankFromTemplateText('SAM', {
+    it('accepts normalized matches while retaining the transitional answer-array builder', () => {
+      const blank = _parseValidBlank('SAM', {
         characters:{ id:'characters', authoredName:'Characters', allowedValues:['Pat', 'Sam'] }
       });
       expect(blank.answerSet.answers).toEqual(['Pat', 'Sam', 'SAM']);
       expect(blank.correctAnswerIndexes).toEqual([1]);
       expect(blank.answerSet.id).not.toBe('characters');
+    });
+
+    it('rejects an empty blank without constructing an answer set', () => {
+      const reportError = vi.fn();
+      expect(createClozeBlankFromTemplateText('', {}, reportError)).toBeNull();
+      expect(reportError).toHaveBeenCalledWith(expect.stringContaining('no correct answers'));
+    });
+
+    it('rejects whitespace and separator-only blanks', () => {
+      const reportError = vi.fn();
+      expect(createClozeBlankFromTemplateText(' |  | ', {}, reportError)).toBeNull();
+      expect(reportError).toHaveBeenCalledWith(expect.stringContaining('no correct answers'));
     });
   });
 });

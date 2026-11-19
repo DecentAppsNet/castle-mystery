@@ -16,6 +16,7 @@ import ClozeBlank, { UNSPECIFIED_ANSWER } from "@/game/conclusions/types/ClozeBl
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
 import { createAnswerSet } from "@/game/conclusions/answerSetUtil";
+import { resolveBlankCategory } from "./blankCategoryUtil";
 
 function _createBlankAnswerSet(correctAnswers:string[], clozeCategories:Record<string, ClozeCategory>) {
   // Accumulate options and provenance in the existing category traversal order.
@@ -53,9 +54,11 @@ function _createBlankAnswerSet(correctAnswers:string[], clozeCategories:Record<s
 }
 
 /** Parses one cloze blank into its answer and available category values. */
-export function createClozeBlankFromTemplateText(blankText:string, clozeCategories:Record<string, ClozeCategory>):ClozeBlank {
+export function createClozeBlankFromTemplateText(blankText:string, clozeCategories:Record<string, ClozeCategory>,
+  reportError:(message:string) => void):ClozeBlank|null {
   // Resolve options before computing indexes using the existing normalized matching semantics.
   const correctAnswers = parseOptions(blankText);
+  if (!resolveBlankCategory(correctAnswers, clozeCategories, reportError)) return null;
   const answerSet = _createBlankAnswerSet(correctAnswers, clozeCategories);
   const normalizedAnswers = answerSet.answers.map(normalizeCategoryPhrase);
   const correctAnswerIndexes = correctAnswers
@@ -86,6 +89,9 @@ function _isImageToken(text:string, startIndex:number, endIndex:number):boolean 
 }
 
 function _findNextSpecialToken(text:string, startIndex:number):{ type:'blank'|'image'|'separator', startIndex:number, endIndex:number }|null {
+  const emptyBlankStartIndex = text.indexOf('[]', startIndex);
+  const emptyBlank = emptyBlankStartIndex >= 0
+    ? { type:'blank' as const, startIndex:emptyBlankStartIndex, endIndex:emptyBlankStartIndex + 2 } : null;
   const nextBlankSegment = findSquareBracketEnclosedTextSegments(text.slice(startIndex))[0] || null;
   const nextBlank = nextBlankSegment ? {
     type:'blank' as const,
@@ -105,16 +111,18 @@ function _findNextSpecialToken(text:string, startIndex:number):{ type:'blank'|'i
     startIndex:nextImageStartIndex,
     endIndex:nextImageEndIndex + 1
   } : null;
-  return [nextBlank, nextImage, nextSeparator]
+  return [emptyBlank, nextBlank, nextImage, nextSeparator]
     .filter(token => token !== null)
     .sort((token1, token2) => token1!.startIndex - token2!.startIndex)[0] || null;
 }
 
-function _parseClozeTemplateToParts(clozeTemplate:string, clozeCategories:Record<string, ClozeCategory>):ClozePart[] {
+function _parseClozeTemplateToParts(clozeTemplate:string, clozeCategories:Record<string, ClozeCategory>,
+  conclusionName:string, errors:ErrorCollector):ClozePart[] {
   if (!clozeTemplate.trim()) return [];
 
   const parts:ClozePart[] = [];
   let currentIndex = 0;
+  let blankNo = 0;
 
   while (currentIndex < clozeTemplate.length) {
     const nextToken = _findNextSpecialToken(clozeTemplate, currentIndex);
@@ -129,7 +137,11 @@ function _parseClozeTemplateToParts(clozeTemplate:string, clozeCategories:Record
 
     if (nextToken.type === 'blank') {
       const blankText = clozeTemplate.slice(nextToken.startIndex + 1, nextToken.endIndex - 1);
-      parts.push(createClozeBlankFromTemplateText(blankText, clozeCategories));
+      blankNo++;
+      const blank = createClozeBlankFromTemplateText(blankText, clozeCategories, message =>
+        errors.addAt(`Conclusion "${conclusionName}", blank ${blankNo}: ${message}`,
+          ['conclusions', conclusionName], '* conclusion=', `[${blankText}]`));
+      if (blank) parts.push(blank);
     } else if (nextToken.type === 'image') {
       parts.push({
         type:ClozePartType.image,
@@ -159,7 +171,7 @@ function _parseConclusion(conclusionName:string, sectionText:string, rooms:Reado
   }
   const id = normalizeId(conclusionName);
   const title = conclusionName.trim();
-  const parts = _parseClozeTemplateToParts(clozeTemplate, clozeCategories);
+  const parts = _parseClozeTemplateToParts(clozeTemplate, clozeCategories, conclusionName, errors);
   const revealRoomIds = resolveRevealRoomIds(conclusionName, variables.revealrooms?.value ?? '', rooms,
     initiallyObscuredRoomIds, errors);
   const unlockConclusionIds = resolveUnlockConclusionIds(conclusionName, variables.unlockconclusions?.value ?? '', conclusionIds, errors);

@@ -83,12 +83,16 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
   const clozeCategories = { characters:characterCategory };
   const parts:ClozePart[] = [];
   identityRowCharacters.forEach((character, characterI) => {
+      const blank = createClozeBlankFromTemplateText(character.title, clozeCategories, message =>
+        errors.addAt(`Generated identities row ${characterI + 1} for "${character.title}" (characters category): ${message}`,
+          ['characters', character.id]));
+      if (!blank) return;
       if (characterI > 0) parts.push({ type:ClozePartType.separator });
       parts.push({ type:ClozePartType.image, imageUrl:_getCharacterHeadImageUrl(character) });
       parts.push({ type:ClozePartType.text, text:' = ' });
-      parts.push(createClozeBlankFromTemplateText(character.title, clozeCategories));
+      parts.push(blank);
     });
-  if (!parts.length) return null;
+  if (!parts.length || errors.count > originalErrorCount) return null;
 
   const conclusion:Conclusion = {
     id:'identities',
