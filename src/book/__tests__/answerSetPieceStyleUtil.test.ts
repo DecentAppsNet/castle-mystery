@@ -57,29 +57,58 @@ describe('answerSetPieceStyleUtil', () => {
       expect([styles[characters.id], styles[items.id], styles[rooms.id]]).toEqual([0, 1, 2]);
     });
 
-    // TODO Phase 9: replace combined-category precedence with single-category style coverage.
-    it.skip('assigns the characters style using a single category', () => {});
+    it('reuses the characters style for repeated blanks including replacement distractors', () => {
+      const characters = createAnswerSet(['Sam', 'Nobody'], 'characters');
+      const custom = createAnswerSet(['found'], 'verbs');
+      const sets = [characters, custom, characters];
+      const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion(sets));
+      expect(sets.map(set => styles[set.id])).toEqual([0, 3, 0]);
+      expect(Object.keys(styles)).toEqual([characters.id, custom.id]);
+    });
 
-    // TODO Phase 9: replace combined-category precedence with single-category style coverage.
-    it.skip('assigns the items style using a single category', () => {});
+    it('reuses the items style for repeated blanks including replacement distractors', () => {
+      const items = createAnswerSet(['Key', 'Nothing'], 'items');
+      const custom = createAnswerSet(['found'], 'verbs');
+      const sets = [custom, items, items];
+      const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion(sets));
+      expect(sets.map(set => styles[set.id])).toEqual([3, 1, 1]);
+      expect(Object.keys(styles)).toEqual([custom.id, items.id]);
+    });
 
-    // TODO Phase 9: replace combined-category precedence with single-category style coverage.
-    it.skip('assigns the rooms style using a single category', () => {});
+    it('reuses the rooms style for repeated blanks including replacement distractors', () => {
+      const rooms = createAnswerSet(['Hall', 'Nowhere'], 'rooms');
+      const custom = createAnswerSet(['found'], 'verbs');
+      const sets = [rooms, rooms, custom];
+      const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion(sets));
+      expect(sets.map(set => styles[set.id])).toEqual([2, 2, 3]);
+      expect(Object.keys(styles)).toEqual([rooms.id, custom.id]);
+    });
 
-    // TODO Phase 9: replace membership-alias precedence with category-based assignment coverage.
-    it.skip('assigns styles by category rather than membership-alias precedence', () => {});
+    it('reuses a repeated custom category without advancing first-appearance numbering', () => {
+      const first = createAnswerSet(['found', 'lost'], 'verbs');
+      const second = createAnswerSet(['quickly'], 'adverbs');
+      const third = createAnswerSet(['yesterday'], 'times');
+      const sets = [first, first, second, first, third];
+      const styles = generateAnswerSetIdToPieceStyleNoMap(_createConclusion(sets));
+      expect(sets.map(set => styles[set.id])).toEqual([3, 3, 4, 3, 5]);
+      expect(Object.keys(styles)).toEqual([first.id, second.id, third.id]);
+    });
 
-    it('merges custom membership aliases without rewriting blank indexes or live options', () => {
+    it('does not merge distinct categories with matching membership or rewrite indexes and options', () => {
+      // Controlled overlapping input isolates style assignment; category validation belongs to level loading.
       const first = createAnswerSet(['B', 'A'], 'verbs');
       const second = createAnswerSet(['A', 'B'], 'alternate-verbs');
       const conclusion = _createConclusion([first, second]);
       const blank = conclusion.parts[1] as ClozeBlank;
       blank.playerAnswerIndex = 1;
+
+      // Membership order must not affect category styles or the blank's live answer references.
       const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
       expect(first.id).not.toBe(second.id);
-      expect([styles[first.id], styles[second.id]]).toEqual([3, 3]);
+      expect([styles[first.id], styles[second.id]]).toEqual([3, 4]);
       expect(first.answers).toEqual(['B', 'A']);
       expect(second.answers).toEqual(['A', 'B']);
+      expect(blank.answerSet).toBe(second);
       expect(blank.playerAnswerIndex).toBe(1);
       expect(blank.correctAnswerIndexes).toEqual([0]);
       expect(blank.answerSet.answers[blank.playerAnswerIndex]).toBe('B');
@@ -100,19 +129,26 @@ describe('answerSetPieceStyleUtil', () => {
     });
 
     it('is deterministic with frozen source data and ignores completion, locking, and selection', () => {
+      // Freeze every input layer while two blanks share the same answer set.
       const set = createAnswerSet(Object.freeze(['B', 'A']), 'frozen-options');
       Object.freeze(set);
-      const conclusion = _createConclusion([set]);
+      const conclusion = _createConclusion([set, set]);
       const before = structuredClone(conclusion);
-      const blank = conclusion.parts[0] as ClozeBlank;
-      Object.freeze(blank.correctAnswerIndexes);
-      Object.freeze(blank);
+      for (const part of conclusion.parts) {
+        const blank = part as ClozeBlank;
+        Object.freeze(blank.correctAnswerIndexes);
+        Object.freeze(blank);
+      }
       Object.freeze(conclusion.parts);
       Object.freeze(conclusion);
+
+      // Selection and conclusion state must not change the lookup or mutate frozen source data.
       const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
+      expect(styles[set.id]).toBe(3);
+      expect(Object.keys(styles)).toEqual([set.id]);
       Object.freeze(styles);
       const again = generateAnswerSetIdToPieceStyleNoMap({ ...conclusion, isComplete:true, isLocked:true,
-        parts:[{ ...blank, playerAnswerIndex:1 }] });
+        parts:conclusion.parts.map((part, index) => ({ ...part as ClozeBlank, playerAnswerIndex:index })) });
       expect(again).toEqual(styles);
       expect(again).not.toBe(styles);
       expect(conclusion).toEqual(before);

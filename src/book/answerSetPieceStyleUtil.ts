@@ -1,13 +1,11 @@
-/* This file derives shared conclusion-scoped piece-style lookups from answer membership and provenance.
+/* This file assigns conclusion-scoped piece styles by category, reserving built-in category styles.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import AnswerSet from '@/game/conclusions/types/AnswerSet';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import Conclusion from '@/game/conclusions/types/Conclusion';
 import AnswerSetIdToPieceStyleNoMap from './types/AnswerSetIdToPieceStyleNoMap';
 
-function _findReservedStyleNoForAnswerSet(answerSet:AnswerSet):number {
-  const categoryId = answerSet.sourceCategoryId;
+function _findReservedStyleNoForCategory(categoryId:string):number {
   switch(categoryId) {
     case 'characters': return 0;
     case 'items': return 1;
@@ -17,28 +15,23 @@ function _findReservedStyleNoForAnswerSet(answerSet:AnswerSet):number {
 }
 
 export function generateAnswerSetIdToPieceStyleNoMap(conclusion:Readonly<Conclusion>):AnswerSetIdToPieceStyleNoMap {
-  // Group exact membership without changing any blank's ordered options or indexes.
-  const groups:{ membership:string, answerSets:AnswerSet[] }[] = [];
+  // Keep the shared page lookup prototype-free and reserve styles 0–2 even when absent.
+  const styles:{ [answerSetId:string]:number | undefined } = Object.create(null);
+  const categoryStyles = new Map<string, number>();
+  let nextCustomStyleNo = 3;
+
+  // Assign each category once in blank appearance order, independently of answer membership.
   for (const part of conclusion.parts) {
     if (part.type !== 'blank') continue;
     const { answerSet } = part as ClozeBlank;
-    const membership = JSON.stringify([...new Set(answerSet.answers)].sort());
-    let group = groups.find(candidate => candidate.membership === membership);
-    if (!group) {
-      group = { membership, answerSets:[] };
-      groups.push(group);
+    const categoryId = answerSet.sourceCategoryId;
+    let styleNo = categoryStyles.get(categoryId);
+    if (styleNo === undefined) {
+      const reservedStyleNo = _findReservedStyleNoForCategory(categoryId);
+      styleNo = reservedStyleNo >= 0 ? reservedStyleNo : nextCustomStyleNo++;
+      categoryStyles.set(categoryId, styleNo);
     }
-    group.answerSets.push(answerSet);
-  }
-
-  // Resolve aliases together so later provenance can supply a higher-priority reserved style.
-  const styles:{ [answerSetId:string]:number | undefined } = Object.create(null);
-  let nextCustomStyleNo = 3;
-  for (const group of groups) {
-    const reservedStyleNo = group.answerSets.length === 1 
-      ? _findReservedStyleNoForAnswerSet(group.answerSets[0]) : -1;
-    const styleNo = reservedStyleNo >= 0 ? reservedStyleNo : nextCustomStyleNo++;
-    for (const answerSet of group.answerSets) styles[answerSet.id] = styleNo;
+    styles[answerSet.id] = styleNo;
   }
   return styles;
 }
