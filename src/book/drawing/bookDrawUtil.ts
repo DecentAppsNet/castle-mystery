@@ -13,7 +13,8 @@ import { drawPage } from "./pageDrawUtil";
 import { drawBookPieces, preparePieceLayouts } from "./pieceDrawUtil";
 import { getVisibleBookPieces } from "../pieceInteractionUtil";
 import PieceSlotLayout from "./types/PieceSlotLayout";
-import { updateBookPieceSlotTarget } from "../pieceSlotTargetUtil";
+import { prepareBookPieceSlotPresentations } from "../pieceSlotPresentationUtil";
+import PieceSlotPresentation from "../types/PieceSlotPresentation";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -95,7 +96,8 @@ function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D
   context.restore();
 }
 
-function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rect, imageSet:ImageSet, context:CanvasRenderingContext2D) {
+function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rect, imageSet:ImageSet,
+  context:CanvasRenderingContext2D, presentations:readonly PieceSlotPresentation[]) {
   // Use displayed page rectangles; their single-page offset is already applied.
   const { layout } = bookState;
   assertNonNullable(layout);
@@ -110,10 +112,10 @@ function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rec
   const slots:PieceSlotLayout[] = [];
   const canCollect = bookState.isVisible && bookState.animationKind === null;
   drawPage(bookState.pages[leftPageNo-1], metaTime, leftPageNo, leftPageRect, imageSet, context,
-    canCollect && (!layout.isSinglePageView || isOnLeftPage) ? slots : null);
+    canCollect && (!layout.isSinglePageView || isOnLeftPage) ? slots : null, presentations);
   if (rightPageNo <= bookState.pages.length) {
     drawPage(bookState.pages[rightPageNo-1], metaTime, rightPageNo, rightPageRect, imageSet, context,
-      canCollect && (!layout.isSinglePageView || !isOnLeftPage) ? slots : null);
+      canCollect && (!layout.isSinglePageView || !isOnLeftPage) ? slots : null, presentations);
   }
 
   // Replace rather than retain records from earlier page/content draws.
@@ -139,10 +141,10 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   const drawRect = calcBookDrawRect(bookState, metaTime);
   const { x, y, width, height } = drawRect;
   if (!bookState.isVisible) return; // Animations have hidden the book.
-  updateBookPieceSlotTarget(bookState);
+  const presentations = prepareBookPieceSlotPresentations(bookState, metaTime);
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
-  _drawPageContent(bookState, metaTime, drawRect, imageSet, context);
+  _drawPageContent(bookState, metaTime, drawRect, imageSet, context, presentations);
   _drawPieces(bookState, drawRect, context);
   drawPageFlip(bookState, metaTime, drawRect, bookImage, imageSet, context);
   if (bookState.animationKind === null) _drawBookControls(bookState, context);
