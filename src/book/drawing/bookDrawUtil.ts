@@ -13,6 +13,7 @@ import { drawPage } from "./pageDrawUtil";
 import { drawBookPieces, preparePieceLayouts } from "./pieceDrawUtil";
 import { getVisibleBookPieces } from "../pieceInteractionUtil";
 import PieceSlotLayout from "./types/PieceSlotLayout";
+import { updateBookPieceSlotTarget } from "../pieceSlotTargetUtil";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -138,6 +139,7 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   const drawRect = calcBookDrawRect(bookState, metaTime);
   const { x, y, width, height } = drawRect;
   if (!bookState.isVisible) return; // Animations have hidden the book.
+  updateBookPieceSlotTarget(bookState);
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
   _drawPageContent(bookState, metaTime, drawRect, imageSet, context);

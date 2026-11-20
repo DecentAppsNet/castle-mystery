@@ -3,6 +3,7 @@ import AnimationEndCallback from "./AnimationEndCallback"
 import BookPage from "./BookPage"
 import Piece from "./Piece"
 import PieceDragState from "./PieceDragState"
+import PieceSlotLayout from "../drawing/types/PieceSlotLayout"
 
 type BookState = {
   layout:BookLayout|null,
@@ -14,6 +15,7 @@ type BookState = {
   pageNo:number,
   pieceStack:Piece[],
   pieceDragState:PieceDragState|null,
+  hungryPieceSlot:PieceSlotLayout|null,
   pages:BookPage[]
 }
 
@@ -28,6 +30,7 @@ export function createDefaultBookState():BookState {
     pageNo:1,
     pieceStack:[],
     pieceDragState:null,
+    hungryPieceSlot:null,
     pages:[]
   }
 }

@@ -6,6 +6,7 @@ import { assert, assertNonNullable } from "decent-portal";
 import { calcPageViewOffsetX, isLeftPageNo } from "./drawing/bookLayoutUtil";
 import BookState from "./types/BookState";
 import Piece from "./types/Piece";
+import { updateBookPieceSlotTarget } from "./pieceSlotTargetUtil";
 
 export function getVisibleBookPieces(bookState:Readonly<BookState>):Piece[] {
   const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
@@ -48,11 +49,13 @@ export function beginBookPieceDrag(bookState:BookState, canvasX:number, canvasY:
 
   bookState.pieceDragState = { piece, grabOffset:calcDragGrabOffset(record.rect, canvasX, canvasY) };
   bringBookPieceToFront(bookState, piece);
+  updateBookPieceSlotTarget(bookState);
   return true;
 }
 
 export function endBookPieceDrag(bookState:BookState):void {
   bookState.pieceDragState = null;
+  bookState.hungryPieceSlot = null;
 }
 
 export function moveBookPieceDrag(bookState:BookState, canvasX:number, canvasY:number):void {
@@ -70,4 +73,5 @@ export function moveBookPieceDrag(bookState:BookState, canvasX:number, canvasY:n
   pieceDragState.piece.xPercent = (centerX - bounds.x) / bounds.width * 100;
   pieceDragState.piece.yPercent = (centerY - bounds.y) / bounds.height * 100;
   record.rect = { ...record.rect, x:centerX - record.rect.width / 2, y:centerY - record.rect.height / 2 };
+  updateBookPieceSlotTarget(bookState);
 }
