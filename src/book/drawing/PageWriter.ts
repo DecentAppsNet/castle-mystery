@@ -208,18 +208,21 @@ class PageWriter {
     this._context.restore();
   }
 
-  addPieceSlot(text:string, styleNo:number = -1) {
+  addPieceSlot(text:string, styleNo:number = -1):Rect {
+    // Measure and wrap using the normal slot dimensions.
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     const { width, padding, fontSizePixels } = measureBookTextBox(text, this._pageRect.width,
       lineHeight, this._context, this._getTextFontSizePixels());
     if (width > this._getRemainingWidth() && this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
     while (this._textFlowObstacleEnd && width > this._getRemainingWidth()) this.addLineBreak();
 
+    // Draw and advance normally, exposing the same unmodified geometry.
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
     drawPagePieceSlot(text, x, y, width, lineHeight, padding, fontSizePixels,
       colorNameToHex.black, styleNo, this._context);
     this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100, this._cursorPoint[1]];
+    return { x, y, width, height:lineHeight };
   }
 
   addIlluminatedText(text:string, colorName:ColorName = 'black') {

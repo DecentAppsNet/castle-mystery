@@ -14,6 +14,7 @@ import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
 import { ImageSet } from "@/imageLoading";
 import { toNumeral } from "@/common/romanNumeralUtil";
 import ClozeImage from "@/game/conclusions/types/ClozeImage";
+import PieceSlotLayout from "./types/PieceSlotLayout";
 
 const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
@@ -71,7 +72,8 @@ function _drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
 
 
 type ConclusionPage = Extract<BookPage, { kind:'conclusion' }>;
-function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
+function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, slotLayouts:PieceSlotLayout[]|null) {
+  // Draw parts in file order, retaining the actual mutable blank identity.
   pw.setFontSize('m');
   for(let partI = 0; partI < page.conclusion.parts.length; ++partI) {
     const part = page.conclusion.parts[partI];
@@ -83,7 +85,8 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter) {
         else {
           const pieceStyleNo = page.answerSetIdToPieceStyleNoMap[blankPart.answerSet.id];
           assertNonNullable(pieceStyleNo);
-          pw.addPieceSlot(playerGuess, pieceStyleNo);
+          const rect = pw.addPieceSlot(playerGuess, pieceStyleNo);
+          slotLayouts?.push({ page, pageNo, partIndex:partI, blank:blankPart, styleNo:pieceStyleNo, rect });
         }
       break;
 
@@ -159,7 +162,9 @@ function _isLockedConclusionPage(page:BookPage) {
   return page.kind === 'conclusion' && page.conclusion.isLocked;
 }
 
-export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRect:Rect, imageSet:ImageSet, context:CanvasRenderingContext2D) {
+export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRect:Rect, imageSet:ImageSet,
+    context:CanvasRenderingContext2D, slotLayouts:PieceSlotLayout[]|null = null) {
+  // Create disposable placement state for this draw only.
   const innerPageRect = _calcInnerPageRect(targetRect, pageNo);
   const pageWriter = new PageWriter(innerPageRect, imageSet, context);
 
@@ -172,6 +177,7 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
   }
   pageWriter.addLineBreak();
 
+  // Only unlocked, incomplete conclusions publish slot geometry.
   switch(page.kind) {
     case 'bookStart': _drawBookStartPage(page, pageWriter); break;
     case 'chapterStart': _drawChapterStartPage(page, pageWriter); break;
@@ -179,7 +185,7 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
       if (_isLockedConclusionPage(page)) {
         _drawLockedConclusionPage(metaTime, innerPageRect, isLeftPageNo(pageNo), pageWriter, context);
       } else {
-        _drawConclusionPage(page, pageWriter);
+        _drawConclusionPage(page, pageWriter, pageNo, slotLayouts);
       }
       break;
     default:
@@ -187,6 +193,7 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
     break;
   }
 
+  // Keep the footer independent of the content cursor.
   pageWriter.setFontSize('s');
   const lineHeight = pageWriter.getLineHeight();
   pageWriter.jump(0, 100 - lineHeight);

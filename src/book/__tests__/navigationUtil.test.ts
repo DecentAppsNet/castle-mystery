@@ -20,6 +20,7 @@ function _createSinglePageBookState(pageNo:number) {
     isSinglePageView:true,
     singlePageViewOffsetX:200,
     pieceLayouts:[],
+    pieceSlotLayouts:[],
     pieceLayoutsPageNo:null,
     controlLayout:createLayout()
   };

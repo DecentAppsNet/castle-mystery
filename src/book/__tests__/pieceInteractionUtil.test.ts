@@ -24,6 +24,7 @@ function _createBookState() {
     rect:{ x:100, y:20, width:800, height:500 },
     isSinglePageView:false,
     singlePageViewOffsetX:200,
+    pieceSlotLayouts:[],
     pieceLayoutsPageNo:1,
     pieceLayouts:[
       { piece:lower, isVisible:true, rect:{ x:80, y:40, width:40, height:30 },

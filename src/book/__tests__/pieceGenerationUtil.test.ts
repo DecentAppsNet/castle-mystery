@@ -268,7 +268,7 @@ describe('pieceGenerationUtil', () => {
       state.layout = {
         canvasWidth:1000, canvasHeight:600, rect:{ x:0, y:0, width:800, height:500 },
         isSinglePageView:false, singlePageViewOffsetX:200,
-        pieceLayouts:[], pieceLayoutsPageNo:null, controlLayout:createLayout()
+        pieceLayouts:[], pieceSlotLayouts:[], pieceLayoutsPageNo:null, controlLayout:createLayout()
       };
       const original = structuredClone(state);
       Object.freeze(existingPiece);

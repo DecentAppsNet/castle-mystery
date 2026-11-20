@@ -1,3 +1,6 @@
+/* This file calculates book placement and control layout and invalidates prepared interaction geometry.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import Rect from "@/game/types/Rect";
 import BookState from "../types/BookState";
 import ControlLayout from "@/canvasControls/types/ControlLayout";
@@ -94,6 +97,7 @@ export function invalidatePieceLayouts(bookState:BookState) {
   endBookPieceDrag(bookState);
   if (!bookState.layout) return;
   bookState.layout.pieceLayouts = [];
+  bookState.layout.pieceSlotLayouts = [];
   bookState.layout.pieceLayoutsPageNo = null;
 }
 
@@ -127,6 +131,7 @@ export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number
     singlePageViewOffsetX,
     rect,
     pieceLayouts:[],
+    pieceSlotLayouts:[],
     pieceLayoutsPageNo:null,
     controlLayout
   }

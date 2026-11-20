@@ -12,6 +12,7 @@ import Rect from "@/game/types/Rect";
 import { drawPage } from "./pageDrawUtil";
 import { drawBookPieces, preparePieceLayouts } from "./pieceDrawUtil";
 import { getVisibleBookPieces } from "../pieceInteractionUtil";
+import PieceSlotLayout from "./types/PieceSlotLayout";
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -94,16 +95,28 @@ function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D
 }
 
 function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rect, imageSet:ImageSet, context:CanvasRenderingContext2D) {
+  // Use displayed page rectangles; their single-page offset is already applied.
+  const { layout } = bookState;
+  assertNonNullable(layout);
   const isOnLeftPage = isLeftPageNo(bookState.pageNo);
   const leftPageNo = isOnLeftPage ? bookState.pageNo : bookState.pageNo - 1;
   const rightPageNo = isOnLeftPage ? bookState.pageNo + 1 : bookState.pageNo;
   const width = bookDrawRect.width / 2;
   const leftPageRect = { ...bookDrawRect, width};
   const rightPageRect = { ...bookDrawRect, x:bookDrawRect.x + width, width };
-  drawPage(bookState.pages[leftPageNo-1], metaTime, leftPageNo, leftPageRect, imageSet, context);
+
+  // Collect only interactive pages, never animation previews or the hidden neighbor.
+  const slots:PieceSlotLayout[] = [];
+  const canCollect = bookState.isVisible && bookState.animationKind === null;
+  drawPage(bookState.pages[leftPageNo-1], metaTime, leftPageNo, leftPageRect, imageSet, context,
+    canCollect && (!layout.isSinglePageView || isOnLeftPage) ? slots : null);
   if (rightPageNo <= bookState.pages.length) {
-    drawPage(bookState.pages[rightPageNo-1], metaTime, rightPageNo, rightPageRect, imageSet, context);
+    drawPage(bookState.pages[rightPageNo-1], metaTime, rightPageNo, rightPageRect, imageSet, context,
+      canCollect && (!layout.isSinglePageView || !isOnLeftPage) ? slots : null);
   }
+
+  // Replace rather than retain records from earlier page/content draws.
+  layout.pieceSlotLayouts = slots;
 }
 
 function _drawPieces(bookState:BookState, bookRect:Rect, context:CanvasRenderingContext2D) {
