@@ -12,6 +12,7 @@ import { drawPageDivider, drawPagePieceSlot, drawPageTextLine, getIlluminatedTex
 import { measureBookTextBox } from "./bookTextDrawUtil";
 import DividerStyle from "./types/DividerStyle";
 import PageTextBoxMetrics from './types/PageTextBoxMetrics';
+import PieceSlotAnimationState from './types/PieceSlotAnimationState';
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 type ColorName = 'black' | 'red' | 'grey';
@@ -209,7 +210,8 @@ class PageWriter {
     this._context.restore();
   }
 
-  addPieceSlot(text:string, styleNo:number = -1, offsetX:number = 0, scale:number = 1):Rect & { readonly metrics:PageTextBoxMetrics } {
+  addPieceSlot(text:string, styleNo:number = -1,
+    animation:PieceSlotAnimationState = { offsetX:0, scale:1, glintAngle:null }):Rect & { readonly metrics:PageTextBoxMetrics } {
     // Measure and wrap using the normal slot dimensions.
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     const metrics = measureBookTextBox(text, this._pageRect.width,
@@ -222,11 +224,11 @@ class PageWriter {
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
     this._context.save();
-    this._context.translate(x + width / 2 + offsetX, y + lineHeight / 2);
-    this._context.scale(scale, scale);
+    this._context.translate(x + width / 2 + animation.offsetX, y + lineHeight / 2);
+    this._context.scale(animation.scale, animation.scale);
     this._context.translate(-x - width / 2, -y - lineHeight / 2);
     drawPagePieceSlot(text, x, y, width, lineHeight, padding, fontSizePixels,
-      colorNameToHex.black, styleNo, this._context);
+      colorNameToHex.black, styleNo, this._context, null, animation.glintAngle);
     this._context.restore();
     this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100, this._cursorPoint[1]];
     return { x, y, width, height:lineHeight, metrics };

@@ -22,6 +22,7 @@ const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
 const PAGE_TOP_MARGIN = .04;
 const PAGE_BOTTOM_MARGIN = .07;
+const GLINT_PREVIEW_ROTATION_PERIOD_MSECS = 2000;
 
 // Use percentage-based margins to return an inner page rect representing the part of the page that will look
 // visually correct to draw text over. In other words, we want to draw text over the flat paper part of the image -
@@ -74,7 +75,7 @@ function _drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
 
 type ConclusionPage = Extract<BookPage, { kind:'conclusion' }>;
 function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, slotLayouts:PieceSlotLayout[]|null,
-  presentations:readonly PieceSlotPresentation[]) {
+  presentations:readonly PieceSlotPresentation[], metaTime:number) {
   // Draw parts in file order, retaining the actual mutable blank identity.
   pw.setFontSize('m');
   for(let partI = 0; partI < page.conclusion.parts.length; ++partI) {
@@ -89,7 +90,11 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, 
           assertNonNullable(pieceStyleNo);
           const presentation = presentations.find(({ slot }) =>
             slot.page === page && slot.blank === blankPart && slot.partIndex === partI && slot.pageNo === pageNo);
-          const { metrics, ...rect } = pw.addPieceSlot(playerGuess, pieceStyleNo, presentation?.offsetX ?? 0, presentation?.scale ?? 1);
+          const { metrics, ...rect } = pw.addPieceSlot(playerGuess, pieceStyleNo, {
+            offsetX:presentation?.offsetX ?? 0, scale:presentation?.scale ?? 1,
+            // Temporary preview: all slots share one rotating angle, including filled slots.
+            glintAngle:(metaTime % GLINT_PREVIEW_ROTATION_PERIOD_MSECS) / GLINT_PREVIEW_ROTATION_PERIOD_MSECS * Math.PI * 2
+          });
           slotLayouts?.push({ page, pageNo, partIndex:partI, blank:blankPart, styleNo:pieceStyleNo, rect, metrics });
         }
       break;
@@ -192,7 +197,7 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
       if (_isLockedConclusionPage(page)) {
         _drawLockedConclusionPage(metaTime, innerPageRect, isLeftPageNo(pageNo), pageWriter, context);
       } else {
-        _drawConclusionPage(page, pageWriter, pageNo, slotLayouts, presentations);
+        _drawConclusionPage(page, pageWriter, pageNo, slotLayouts, presentations, metaTime);
       }
       break;
     default:

@@ -17,6 +17,8 @@ import { announceCurtainClosed, cancelCurtainClose, requestCurtainClose } from '
 import { drawBook, showBook, onBookMouseDown, onBookMouseUp, onBookMouseOver, onBookMouseWheel, endBookPieceDrag } from '@/book';
 import BookState from '@/book/types/BookState';
 import { findMetaTimeNow } from '@/game/metaTimeUtil';
+import { DRAW_FPS_COUNTER } from '@/developer/config';
+import { updateAndDrawFps } from '@/developer/fpsUtil';
 
 type Props = {
   ref?:Ref<LevelViewHandle>, // Enables imperative calls.
@@ -148,6 +150,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
   }
 
   function _onDraw(context:CanvasRenderingContext2D, animationFrameTimestamp:number|null) {
+    const frameStartMetaTime = findMetaTimeNow();
     _cancelInvalidBookDrag();
     const state = frameStateRef.current;
     const startupHandoff = startupHandoffRef.current;
@@ -170,6 +173,9 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
       drawBook(currentGameState.bookState, findMetaTimeNow(), currentGameState.imageSet, context);
     }
     _cancelInvalidBookDrag();
+    if (frame.canRenderScene && currentGameState && DRAW_FPS_COUNTER) {
+      updateAndDrawFps(frameStartMetaTime, findMetaTimeNow(), context);
+    }
 
     if (state.transition?.phase === 'closed' && animationFrameTimestamp !== null) {
       if (state.closeRequest) announceCurtainClosed(state, animationFrameTimestamp);

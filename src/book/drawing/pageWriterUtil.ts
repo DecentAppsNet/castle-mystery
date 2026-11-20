@@ -6,6 +6,11 @@ import { assert } from "decent-portal";
 import { calcPieceBorderPolygon, getPieceSlotColor } from "./pieceDrawUtil";
 import { bookCanvasFont, drawBorderedBookText } from "./bookTextDrawUtil";
 import DividerStyle from "./types/DividerStyle";
+import Point from '@/game/types/Point';
+import { calcPieceSlotGlintPoint } from '../pieceSlotGlintUtil';
+
+const GLINT_COLOR_RGB = '255, 255, 210';
+const GLINT_RADIUS_IN_LINE_HEIGHTS = .25;
 
 export function splitTextToLines(text:string):string[] {
   return text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
@@ -36,16 +41,36 @@ export function drawPageTextLine(text:string, x:number, y:number, maxWidth:numbe
   context.restore();
 }
 
+/* v8 ignore next -- Glint appearance is verified visually. @preserve */
+function _drawPieceSlotGlint(center:Point, polygon:readonly Point[], angle:number,
+  lineHeight:number, context:CanvasRenderingContext2D):void {
+  // Calculate on the normal polygon; the caller's transform moves the entire result together.
+  const [x, y] = calcPieceSlotGlintPoint(center, polygon, angle);
+  const radius = lineHeight * GLINT_RADIUS_IN_LINE_HEIGHTS;
+  const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
+  gradient.addColorStop(0, `rgba(${GLINT_COLOR_RGB}, 1)`);
+  gradient.addColorStop(1, `rgba(${GLINT_COLOR_RGB}, 0)`);
+
+  // Let the soft glow extend across the border without clipping to the slot.
+  context.save();
+  context.fillStyle = gradient;
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+}
+
 /* v8 ignore next -- Piece slot drawing is verified visually. @preserve */
 export function drawPagePieceSlot(text:string, x:number, y:number, width:number, lineHeight:number,
   padding:number, fontSizePixels:number, colorHex:string, pieceStyleNo:number, context:CanvasRenderingContext2D,
-  backgroundColor:string | null = null):void {
+  backgroundColor:string | null = null, glintAngle:number|null = null):void {
   // Keep the flair within the existing padding so the text area stays unchanged.
   const rect = { x, y, width, height:lineHeight };
   const polygon = calcPieceBorderPolygon(rect,
     pieceStyleNo, Math.min(padding, width / 2));
   const fillColor = backgroundColor ?? (text === '' ? getPieceSlotColor(pieceStyleNo) : null);
   drawBorderedBookText(text, rect, polygon, padding, fontSizePixels, colorHex, fillColor, context);
+  if (glintAngle !== null) _drawPieceSlotGlint([x + width / 2, y + lineHeight / 2], polygon, glintAngle, lineHeight, context);
 }
 
 /* v8 ignore next -- Divider drawing is verified visually. @preserve */
