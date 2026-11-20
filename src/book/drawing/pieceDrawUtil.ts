@@ -10,10 +10,8 @@ import PieceLayout from "./types/PieceLayout";
 import { drawBorderedBookText, measureBookTextBox } from "./bookTextDrawUtil";
 import { getPieceFlairProfile } from "../pieceFlairUtil";
 import PieceDragState from '../types/PieceDragState';
-
-function _getPieceColor(styleNo:number):string {
-	return getPieceFlairProfile(styleNo).pieceColor;
-}
+import BookState from '../types/BookState';
+import { getBookPieceBackgroundColor } from '../pieceColorUtil';
 
 export function getPieceSlotColor(styleNo:number):string {
 	return getPieceFlairProfile(styleNo).pieceSlotColor;
@@ -51,11 +49,11 @@ export function preparePieceLayouts(pieces:ReadonlyArray<Piece>, bookRect:Readon
 }
 
 export function drawBookPieces(pieceLayouts:ReadonlyArray<PieceLayout>,
-	context:CanvasRenderingContext2D):void {
+	context:CanvasRenderingContext2D, bookState:Readonly<BookState>):void {
 	for (const { piece, rect, metrics, isVisible } of pieceLayouts) {
 		if (!isVisible) continue;
 		const polygon = calcPieceBorderPolygon(rect, piece.styleNo, Math.min(metrics.padding, rect.width / 2));
 		drawBorderedBookText(piece.text, rect, polygon, metrics.padding,
-			metrics.fontSizePixels, '#392b20', _getPieceColor(piece.styleNo), context);
+			metrics.fontSizePixels, '#392b20', getBookPieceBackgroundColor(bookState, piece), context);
 	}
 }

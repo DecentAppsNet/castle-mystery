@@ -129,7 +129,7 @@ function _drawPieces(bookState:BookState, bookRect:Rect, context:CanvasRendering
   const pieceLayouts = preparePieceLayouts(pieces, bookRect, context, bookState.pieceDragState);
   bookState.layout.pieceLayouts = bookState.animationKind === null ? pieceLayouts : [];
   bookState.layout.pieceLayoutsPageNo = bookState.animationKind === null ? bookState.pageNo : null;
-  drawBookPieces(pieceLayouts, context);
+  drawBookPieces(pieceLayouts, context, bookState);
 }
 
 export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D) {
