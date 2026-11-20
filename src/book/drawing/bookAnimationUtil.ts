@@ -1,3 +1,6 @@
+/* This file manages book visibility and page-shift animations using the meta-time clock.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
+
 import { assert, assertNonNullable, botch } from "decent-portal";
 import BookState from "../types/BookState";
 import BookLayout from "./types/BookLayout";
@@ -23,7 +26,7 @@ function _calcShiftOffsets(bookState:BookState, elapsed:number, direction:-1|1):
   const easedProgress = progress < 0.5
     ? 4 * progress * progress * progress
     : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-  const offsetX = (1 - easedProgress) * direction * 2 * bookState.layout.singlePageViewOffsetX;
+  const offsetX = (1 - easedProgress) * direction * 2 * (bookState.layout.rect.width / 4);
   return { offsetX, offsetY:0 };
 }
 

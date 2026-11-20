@@ -75,7 +75,10 @@ export function beginBookPieceDrag(bookState:BookState, canvasX:number, canvasY:
   assertNonNullable(record);
 
   // Preserve the grab point and the extracted slot's dimensions across subsequent redraws.
-  bookState.pieceDragState = { piece, grabOffset:calcDragGrabOffset(record.rect, canvasX, canvasY), extractedLayout };
+  const extractedAppearance = extractedLayout === null ? null : {
+    height:extractedLayout.rect.height, metrics:extractedLayout.metrics
+  };
+  bookState.pieceDragState = { piece, grabOffset:calcDragGrabOffset(record.rect, canvasX, canvasY), extractedAppearance };
   bringBookPieceToFront(bookState, piece);
   updateBookPieceSlotTarget(bookState);
   return true;

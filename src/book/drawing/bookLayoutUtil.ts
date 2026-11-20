@@ -5,7 +5,6 @@ import Rect from "@/game/types/Rect";
 import BookState from "../types/BookState";
 import ControlLayout from "@/canvasControls/types/ControlLayout";
 import { assert, assertNonNullable } from "decent-portal";
-import BookLayout from "./types/BookLayout";
 import { calcBookOffsetsForAnimationAndUpdate } from "./bookAnimationUtil";
 import { createLayout, updateControlRect } from "@/canvasControls";
 import { setPageNavigationButtonVisibility } from "../navigationUtil";
@@ -122,14 +121,12 @@ export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number
   const rect = isSinglePageView 
     ? _calcSinglePageViewRect(bookImage.width, bookImage.height, fitWidth, fitHeight, outerMargin, canvasWidth, canvasHeight)
     : _calcDoublePageViewRect(scaledWidth, fitHeight, outerMargin, canvasWidth);
-  const singlePageViewOffsetX = rect.width / 4; // Half the width of one page.
 
   const controlLayout = _createBookControlLayout(rect, isSinglePageView, bookState.pageNo);
 
   bookState.layout = {
     canvasWidth, canvasHeight,
     isSinglePageView,
-    singlePageViewOffsetX,
     rect,
     pieceLayouts:[],
     pieceSlotLayouts:[],
@@ -140,23 +137,18 @@ export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number
   setPageNavigationButtonVisibility(bookState);
 }
 
-function _calcSinglePageDrawRect(layout:BookLayout, pageNo:number):Rect {
-  const x = layout.rect.x + (isLeftPageNo(pageNo) ? layout.singlePageViewOffsetX : -layout.singlePageViewOffsetX );
-  return { ...layout.rect, x };
-}
-
 export function calcPageViewOffsetX(bookState:BookState):number {
   const { layout } = bookState;
   assertNonNullable(layout);
   if (!layout.isSinglePageView) return 0;
-  return isLeftPageNo(bookState.pageNo) ? layout.singlePageViewOffsetX : -layout.singlePageViewOffsetX;
+  const offsetX = layout.rect.width / 4; // Half the width of one page.
+  return isLeftPageNo(bookState.pageNo) ? offsetX : -offsetX;
 }
 
 export function calcBookDrawRect(bookState:BookState, metaTime:number):Rect {
   assertNonNullable(bookState.layout);
-  const drawRect = bookState.layout.isSinglePageView 
-    ? _calcSinglePageDrawRect(bookState.layout, bookState.pageNo)
-    : { ...bookState.layout.rect };
+  const { rect } = bookState.layout;
+  const drawRect = { ...rect, x:rect.x + calcPageViewOffsetX(bookState) };
   if (bookState.animationKind !== null) {
     const { offsetX, offsetY } = calcBookOffsetsForAnimationAndUpdate(metaTime, bookState);
     drawRect.x += offsetX;

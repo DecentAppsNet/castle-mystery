@@ -32,7 +32,7 @@ function _createPreparedBook() {
     metrics:{ width:40, padding:2, fontSizePixels:12 } };
   const second = { ...first, partIndex:1, blank:otherBlank, rect:{ x:500, y:255, width:40, height:30 } };
   const layout:BookLayout = {
-    canvasWidth:1000, canvasHeight:600, isSinglePageView:false, singlePageViewOffsetX:200,
+    canvasWidth:1000, canvasHeight:600, isSinglePageView:false,
     rect:{ x:100, y:20, width:800, height:500 }, controlLayout:createLayout(), pieceLayoutsPageNo:1,
     pieceLayouts:[
       { piece, isVisible:true, rect:{ x:480, y:255, width:40, height:30 }, metrics:{ width:40, padding:2, fontSizePixels:12 } },
@@ -272,7 +272,8 @@ describe('loose-piece release placement', () => {
     expect(onBookMouseDown(210, 110, 150, bookState, true)).toBe(true);
     expect(blank.playerAnswerIndex).toBe(-1);
     expect(piece.placement).toBeNull();
-    expect(bookState.pieceDragState).toMatchObject({ piece, grabOffset:[-30, -8], extractedLayout:{ rect:first.rect, metrics:first.metrics } });
+    expect(bookState.pieceDragState).toMatchObject({ piece, grabOffset:[-30, -8],
+      extractedAppearance:{ height:36, metrics:first.metrics } });
     expect([piece.xPercent, piece.yPercent]).toEqual([17.5, 19.6]);
     expect(getVisibleBookPieces(bookState)).toContain(piece);
     expect(prepareBookPieceSlotPresentations(bookState, 150).find(({ slot }) => slot.blank === blank)?.offsetX).toBe(0);

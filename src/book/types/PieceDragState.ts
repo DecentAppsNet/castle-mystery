@@ -1,11 +1,14 @@
 import Point from "@/game/types/Point";
 import Piece from "./Piece";
-import PieceLayout from '../drawing/types/PieceLayout';
+import PageTextBoxMetrics from '../drawing/types/PageTextBoxMetrics';
 
 type PieceDragState = {
   readonly piece:Piece;
   readonly grabOffset:Point;
-  readonly extractedLayout:PieceLayout|null;
+  readonly extractedAppearance:{
+    readonly height:number;
+    readonly metrics:PageTextBoxMetrics;
+  }|null;
 };
 
 export default PieceDragState;

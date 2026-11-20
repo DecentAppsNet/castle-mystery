@@ -30,7 +30,7 @@ function _createPreparedBook() {
 
   // Prepared records use displayed coordinates, without invoking canvas drawing.
   const layout:BookLayout = {
-    canvasWidth:1000, canvasHeight:600, isSinglePageView:false, singlePageViewOffsetX:200,
+    canvasWidth:1000, canvasHeight:600, isSinglePageView:false,
     rect:{ x:100, y:20, width:800, height:500 }, controlLayout:createLayout(), pieceLayoutsPageNo:1,
     pieceLayouts:[{ piece, isVisible:true, rect:{ x:480, y:255, width:40, height:30 },
       metrics:{ width:40, padding:2, fontSizePixels:12 } }],

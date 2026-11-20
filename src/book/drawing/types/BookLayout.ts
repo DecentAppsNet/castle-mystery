@@ -7,7 +7,6 @@ type BookLayout = {
   canvasWidth:number, // Canvas backing-store width in pixels when this layout was calculated.
   canvasHeight:number, // Canvas backing-store height in pixels when this layout was calculated.
   isSinglePageView:boolean, // Whether the canvas fits only one page rather than the full spread.
-  singlePageViewOffsetX:number, // Horizontal shift magnitude used to center the selected page in single-page view.
   rect:Rect, // Full two-page book rectangle in canvas pixels, before page-view and animation offsets.
   pieceLayouts:ReadonlyArray<PieceLayout>, // Prepared piece references, displayed canvas rectangles, and text metrics; empty while invalid or animating.
   pieceSlotLayouts:ReadonlyArray<PieceSlotLayout>, // Normal slot rectangles and actual page/blank ownership for the interactive view.

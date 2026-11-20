@@ -18,7 +18,6 @@ function _createSinglePageBookState(pageNo:number) {
     canvasWidth:400, canvasHeight:600,
     rect:{ x:0, y:0, width:800, height:500 },
     isSinglePageView:true,
-    singlePageViewOffsetX:200,
     pieceLayouts:[],
     pieceSlotLayouts:[],
     pieceLayoutsPageNo:null,

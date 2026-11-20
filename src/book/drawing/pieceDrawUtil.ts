@@ -37,10 +37,10 @@ export function preparePieceLayouts(pieces:ReadonlyArray<Piece>, bookRect:Readon
 	const lineHeight = bookRect.height * .045;
 	const fontSizePixels = bookRect.height * .034;
 	return pieces.map(piece => {
-		const extracted = dragState?.piece === piece ? dragState.extractedLayout : null;
+		const extracted = dragState?.piece === piece ? dragState.extractedAppearance : null;
 		const metrics = extracted?.metrics ?? measureBookTextBox(piece.text, bookRect.width / 2, lineHeight, context, fontSizePixels);
-		const width = extracted?.rect.width ?? metrics.width;
-		const height = extracted?.rect.height ?? lineHeight;
+		const width = metrics.width;
+		const height = extracted?.height ?? lineHeight;
 		const x = bookRect.x + bookRect.width * piece.xPercent / 100 - width / 2;
 		const y = bookRect.y + bookRect.height * piece.yPercent / 100 - height / 2;
 		const rect = { x, y, width, height };

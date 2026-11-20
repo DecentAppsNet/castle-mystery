@@ -267,7 +267,7 @@ describe('pieceGenerationUtil', () => {
       state.pieceStack = [existingPiece];
       state.layout = {
         canvasWidth:1000, canvasHeight:600, rect:{ x:0, y:0, width:800, height:500 },
-        isSinglePageView:false, singlePageViewOffsetX:200,
+        isSinglePageView:false,
         pieceLayouts:[], pieceSlotLayouts:[], pieceLayoutsPageNo:null, controlLayout:createLayout()
       };
       const original = structuredClone(state);

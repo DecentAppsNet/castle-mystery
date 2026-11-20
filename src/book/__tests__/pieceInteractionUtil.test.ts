@@ -23,7 +23,6 @@ function _createBookState() {
     canvasWidth:1000, canvasHeight:600,
     rect:{ x:100, y:20, width:800, height:500 },
     isSinglePageView:false,
-    singlePageViewOffsetX:200,
     pieceSlotLayouts:[],
     pieceLayoutsPageNo:1,
     pieceLayouts:[
