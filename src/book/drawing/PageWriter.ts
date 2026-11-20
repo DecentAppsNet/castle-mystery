@@ -208,7 +208,7 @@ class PageWriter {
     this._context.restore();
   }
 
-  addPieceSlot(text:string, styleNo:number = -1, offsetX:number = 0):Rect {
+  addPieceSlot(text:string, styleNo:number = -1, offsetX:number = 0, scale:number = 1):Rect {
     // Measure and wrap using the normal slot dimensions.
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     const { width, padding, fontSizePixels } = measureBookTextBox(text, this._pageRect.width,
@@ -220,7 +220,9 @@ class PageWriter {
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
     const y = this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100;
     this._context.save();
-    this._context.translate(offsetX, 0);
+    this._context.translate(x + width / 2 + offsetX, y + lineHeight / 2);
+    this._context.scale(scale, scale);
+    this._context.translate(-x - width / 2, -y - lineHeight / 2);
     drawPagePieceSlot(text, x, y, width, lineHeight, padding, fontSizePixels,
       colorNameToHex.black, styleNo, this._context);
     this._context.restore();

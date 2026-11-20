@@ -9,17 +9,22 @@ import { endBookPieceDrag, getVisibleBookPieces } from './pieceInteractionUtil';
 import BookState from './types/BookState';
 import Piece from './types/Piece';
 
-function _isEligible(bookState:Readonly<BookState>, slot:PieceSlotLayout, piece:Piece, isSinglePageView:boolean):boolean {
+export function isCurrentEmptyPieceSlot(bookState:Readonly<BookState>, slot:PieceSlotLayout, isSinglePageView:boolean):boolean {
   // Reject hidden pages and obsolete page/part references before checking their mutable state.
   const { page, pageNo, partIndex, blank, styleNo } = slot;
   const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
   const isDisplayed = isSinglePageView ? pageNo === bookState.pageNo : pageNo === leftPageNo || pageNo === leftPageNo + 1;
   if (!isDisplayed || bookState.pages[pageNo - 1] !== page || page.conclusion.parts[partIndex] !== blank) return false;
 
-  // Category style, conclusion ownership, and listed membership all matter; correctness does not.
+  // Empty visible blanks may animate independently of drag eligibility.
   return !page.conclusion.isLocked && !page.conclusion.isComplete && blank.playerAnswerIndex === -1
+    && page.answerSetIdToPieceStyleNoMap[blank.answerSet.id] === styleNo;
+}
+
+function _isEligible(bookState:Readonly<BookState>, slot:PieceSlotLayout, piece:Piece, isSinglePageView:boolean):boolean {
+  const { page, blank, styleNo } = slot;
+  return isCurrentEmptyPieceSlot(bookState, slot, isSinglePageView)
     && page.conclusion.id === piece.conclusionId && styleNo === piece.styleNo
-    && page.answerSetIdToPieceStyleNoMap[blank.answerSet.id] === styleNo
     && blank.answerSet.answers.some(answer => normalizeCategoryPhrase(answer) === normalizeCategoryPhrase(piece.text));
 }
 

@@ -95,6 +95,7 @@ function _createBookControlLayout(bookRect:Rect, isSinglePageView:boolean, pageN
 
 export function invalidatePieceLayouts(bookState:BookState) {
   endBookPieceDrag(bookState);
+  bookState.pieceSlotTransitions = [];
   if (!bookState.layout) return;
   bookState.layout.pieceLayouts = [];
   bookState.layout.pieceSlotLayouts = [];
