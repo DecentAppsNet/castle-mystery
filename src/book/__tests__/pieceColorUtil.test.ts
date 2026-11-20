@@ -14,7 +14,7 @@ function _createFixture() {
   const page:Extract<BookPage, { kind:'conclusion' }> = {
     kind:'conclusion', headingText:'', answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
-      isLocked:false, unlockConclusionIds:[], revealRoomIds:[] }
+      isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const piece:Piece = { conclusionId:'synthetic', text:'Second', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();

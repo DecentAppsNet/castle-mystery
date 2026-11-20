@@ -15,6 +15,7 @@ import { getVisibleBookPieces } from "../pieceInteractionUtil";
 import PieceSlotLayout from "./types/PieceSlotLayout";
 import { prepareBookPieceSlotPresentations } from "../pieceSlotPresentationUtil";
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
+import { updateBookClaimControls } from '../bookClaimControlUtil';
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -67,9 +68,33 @@ function _drawCloseIcon(context:CanvasRenderingContext2D) {
   context.lineTo(.1, .2);
 }
 
+function _drawClaimHand(context:CanvasRenderingContext2D) {
+  // An open grasp: spread, curled fingertips narrowing into the palm and wrist.
+  context.moveTo(.32, .94);
+  context.lineTo(.30, .76);
+  context.bezierCurveTo(.23, .66, .12, .59, .08, .47);
+  context.bezierCurveTo(.04, .36, .12, .32, .18, .39);
+  context.lineTo(.30, .53);
+  context.lineTo(.23, .20);
+  context.bezierCurveTo(.20, .06, .34, .03, .37, .16);
+  context.lineTo(.43, .40);
+  context.lineTo(.43, .10);
+  context.bezierCurveTo(.43, -.02, .57, -.02, .57, .10);
+  context.lineTo(.58, .38);
+  context.lineTo(.63, .14);
+  context.bezierCurveTo(.66, .02, .79, .05, .77, .18);
+  context.lineTo(.73, .44);
+  context.lineTo(.80, .28);
+  context.bezierCurveTo(.86, .17, .97, .23, .92, .35);
+  context.lineTo(.83, .64);
+  context.bezierCurveTo(.80, .73, .72, .78, .70, .83);
+  context.lineTo(.69, .94);
+}
+
 function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D) {
   const { layout } = bookState;
   assertNonNullable(layout);
+  updateBookClaimControls(bookState);
   const drawOffsetX = calcPageViewOffsetX(bookState);
   context.save();
   context.fillStyle = 'white';
@@ -87,6 +112,8 @@ function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D
       case 'closeBook': _drawCloseIcon(context); break;
       case 'nextPage': _drawRightArrow(context); break;
       case 'prevPage': _drawLeftArrow(context); break;
+      case 'claimLeft':
+      case 'claimRight': _drawClaimHand(context); break;
       default: botch();
     }
     context.closePath();

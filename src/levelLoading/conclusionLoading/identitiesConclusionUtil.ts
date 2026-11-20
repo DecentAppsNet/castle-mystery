@@ -95,6 +95,7 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
   if (!parts.length || errors.count > originalErrorCount) return null;
 
   const conclusion:Conclusion = {
+    incorrectGuessCount:0,
     id:'identities',
     title:overrides.title ?? 'Identities',
     parts,

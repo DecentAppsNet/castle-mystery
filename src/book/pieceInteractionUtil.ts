@@ -9,6 +9,7 @@ import Piece from "./types/Piece";
 import { findPieceSlotAnswerIndex, isCurrentPieceSlot, updateBookPieceSlotTarget } from "./pieceSlotTargetUtil";
 import { isPositionInRect } from '@/game/rectUtil';
 import PieceLayout from './drawing/types/PieceLayout';
+import PieceSlotLayout from './drawing/types/PieceSlotLayout';
 
 export function getVisibleBookPieces(bookState:Readonly<BookState>):Piece[] {
   const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
@@ -40,26 +41,32 @@ export function findBookPieceAtPoint(bookState:Readonly<BookState>, canvasX:numb
   return findTopmostControlAtPoint(visibleLayouts, canvasX, canvasY)?.piece ?? null;
 }
 
-function _extractBookPieceAtPoint(bookState:BookState, canvasX:number, canvasY:number):PieceLayout|null {
-  // Validate normal slot geometry and actual content before changing either side of the placement.
+export function detachBookPiece(bookState:BookState, slot:PieceSlotLayout, offsetX:number = 0, offsetY:number = 0):PieceLayout {
+  // Resolve the exact placed piece before clearing either side of the association.
   const { layout } = bookState;
   assertNonNullable(layout);
-  const slot = layout.pieceSlotLayouts.find(candidate => candidate.blank.playerAnswerIndex !== -1
-    && isCurrentPieceSlot(bookState, candidate, layout.isSinglePageView) && isPositionInRect(canvasX, canvasY, candidate.rect));
-  if (!slot) return null;
   const piece = bookState.pieceStack.find(candidate => candidate.placement?.page === slot.page && candidate.placement.blank === slot.blank);
   assertNonNullable(piece);
   assert(findPieceSlotAnswerIndex(slot, piece) === slot.blank.playerAnswerIndex);
 
-  // Detach the answer and place the exact inventory piece at the full slot's normal rectangle.
+  // Retain full-slot geometry for immediate interaction, optionally displaced for ejection.
   slot.blank.playerAnswerIndex = -1;
   piece.placement = null;
   const bounds = { ...layout.rect, x:layout.rect.x + calcPageViewOffsetX(bookState) };
-  piece.xPercent = (slot.rect.x + slot.rect.width / 2 - bounds.x) / bounds.width * 100;
-  piece.yPercent = (slot.rect.y + slot.rect.height / 2 - bounds.y) / bounds.height * 100;
-  const record = { piece, rect:{ ...slot.rect }, metrics:slot.metrics, isVisible:true };
+  piece.xPercent = (slot.rect.x + slot.rect.width / 2 + offsetX - bounds.x) / bounds.width * 100;
+  piece.yPercent = (slot.rect.y + slot.rect.height / 2 + offsetY - bounds.y) / bounds.height * 100;
+  const record = { piece, rect:{ ...slot.rect, x:slot.rect.x + offsetX, y:slot.rect.y + offsetY }, metrics:slot.metrics, isVisible:true };
   layout.pieceLayouts = [...layout.pieceLayouts.filter(candidate => candidate.piece !== piece), record];
+  layout.pieceLayouts = [...layout.pieceLayouts].sort((a, b) => bookState.pieceStack.indexOf(a.piece) - bookState.pieceStack.indexOf(b.piece));
   return record;
+}
+
+function _extractBookPieceAtPoint(bookState:BookState, canvasX:number, canvasY:number):PieceLayout|null {
+  const { layout } = bookState;
+  assertNonNullable(layout);
+  const slot = layout.pieceSlotLayouts.find(candidate => candidate.blank.playerAnswerIndex !== -1
+    && isCurrentPieceSlot(bookState, candidate, layout.isSinglePageView) && isPositionInRect(canvasX, canvasY, candidate.rect));
+  return slot ? detachBookPiece(bookState, slot) : null;
 }
 
 export function beginBookPieceDrag(bookState:BookState, canvasX:number, canvasY:number):boolean {

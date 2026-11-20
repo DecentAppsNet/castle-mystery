@@ -15,7 +15,7 @@ function _createConclusionPage(conclusionId:string, answerSets:readonly AnswerSe
       parts:answerSets.map(answerSet => ({
         type:'blank', answerSet, correctAnswerIndexes:answerSet.answers.map((_, index) => index), playerAnswerIndex:-1
       })),
-      isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
+      isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
   };
   return {
     kind:'conclusion', headingText:'', conclusion,
@@ -149,7 +149,7 @@ describe('pieceGenerationUtil', () => {
       const conclusion:Conclusion = {
         id:'one', title:'One',
         parts:sets.map(answerSet => ({ type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:-1 })),
-        isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
+        isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
       };
       const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
       const pieces = generatePieceStack(_createBookState([

@@ -15,6 +15,7 @@ function _haveSameConclusions(conclusion1:Conclusion, conclusion2:Conclusion):bo
     && _haveSameParts(conclusion1, conclusion2)
     && conclusion1.isComplete === conclusion2.isComplete
     && conclusion1.isLocked === conclusion2.isLocked
+    && conclusion1.incorrectGuessCount === conclusion2.incorrectGuessCount
     && JSON.stringify(conclusion1.unlockConclusionIds) === JSON.stringify(conclusion2.unlockConclusionIds)
     && JSON.stringify(conclusion1.revealRoomIds) === JSON.stringify(conclusion2.revealRoomIds);
 }

@@ -9,7 +9,7 @@ function _createConclusion(answerSets:readonly AnswerSet[], id:string = 'one'):C
   return {
     id, title:id,
     parts:answerSets.map(answerSet => ({ type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:-1 })),
-    isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[]
+    isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
   };
 }
 

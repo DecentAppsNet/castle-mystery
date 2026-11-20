@@ -13,6 +13,7 @@ function createConclusion(overrides:Partial<Conclusion> = {}):Conclusion {
     parts:[],
     isComplete:false,
     isLocked:false,
+    incorrectGuessCount:0,
     unlockConclusionIds:[],
     revealRoomIds:[],
     ...overrides

@@ -12,6 +12,7 @@ import { goNextPage, goPrevPage } from "./navigationUtil";
 import BookControlId from "./drawing/types/BookControlId";
 import { beginBookPieceDrag, bringBookPieceToFront, releaseBookPieceDrag, findBookPieceAtPoint,
   moveBookPieceDrag } from "./pieceInteractionUtil";
+import { claimBookConclusion } from './bookClaimControlUtil';
 
 function _findControlAtPoint(bookState:BookState, canvasX:number, canvasY:number):BookControlId|null {
   if (!bookState.layout) return null;
@@ -47,6 +48,10 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
 
   if (id === 'prevPage') goPrevPage(metaTime, bookState);
   if (id === 'nextPage') goNextPage(metaTime, bookState);
+  if (id === 'claimLeft' || id === 'claimRight') {
+    const leftPageNo = bookState.pageNo % 2 === 1 ? bookState.pageNo : bookState.pageNo - 1;
+    claimBookConclusion(bookState, leftPageNo + (id === 'claimRight' ? 1 : 0));
+  }
   return false;
 }
 

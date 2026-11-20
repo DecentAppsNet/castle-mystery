@@ -97,7 +97,7 @@ describe('answerSetUtil', () => {
       const answerSet = Object.freeze(createAnswerSet(Object.freeze(['Pat', 'Sam']), 'characters'));
       const blank = { type:'blank' as const, answerSet, correctAnswerIndexes:[1], playerAnswerIndex:-1 };
       const copy = duplicateConclusion({ id:'mystery', title:'Mystery', parts:[blank],
-        isComplete:false, isLocked:false, unlockConclusionIds:[], revealRoomIds:[] });
+        isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] });
       const copiedBlank = copy.parts[0] as ClozeBlank;
       expect(copiedBlank.type).toBe('blank');
       expect(copiedBlank).not.toBe(blank);

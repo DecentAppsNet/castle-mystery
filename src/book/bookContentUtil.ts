@@ -9,6 +9,7 @@ import { generateAnswerSetIdToPieceStyleNoMap } from './answerSetPieceStyleUtil'
 
 const characterAnswerSet = createAnswerSet(["Amos of Jesi","Constance I","Pope Innocent III","Sofia the Midwife","Sticky Agatha","Ugolino di Conti"], 'characters');
 const conclusion1:Conclusion = { // TODO - stub data to delete.
+  incorrectGuessCount:0,
   id: "identities",
   title: "Identities",
   parts: [
@@ -43,6 +44,7 @@ const conclusion1:Conclusion = { // TODO - stub data to delete.
 }
 
 const conclusion2:Conclusion = { // TODO - stub data to delete.
+  incorrectGuessCount:0,
   id: "the relic",
   title: "The Relic",
   parts: [
@@ -61,6 +63,7 @@ const conclusion2:Conclusion = { // TODO - stub data to delete.
 const custodyCharacterAnswerSet = createAnswerSet(["Helena of Gaeta", "Hugo of Speyer", "King Frederick", "Matteo il Toro", "Pope Innocent III", "Raniero de Stefano", "the Freemasons", "Helena", "Raniero", "Toro", "Hugo", "The King", "The Pope", "Nobody", "The wind"], 'characters');
 const custodyRoomAnswerSet = createAnswerSet(["Courtyard", "East Hall", "East Stairwell", "Grain Store", "Guard Chamber", "Lawn", "Liturgical Vault", "Lower Passage", "Portcullis Chamber", "Steward's Office", "Textile Store", "West Hall", "Wine Cellar", "Arabic Tower"], 'rooms');
 const conclusion3:Conclusion = {
+  incorrectGuessCount:0,
   id: "chain of custody",
   title: "Chain of Custody",
   parts: [

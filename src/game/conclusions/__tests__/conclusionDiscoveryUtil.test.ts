@@ -12,6 +12,7 @@ function createConclusion(overrides:Partial<Conclusion> = {}):Conclusion {
     parts:[{ type:ClozePartType.text, text:'Test' }],
     isComplete:false,
     isLocked:true,
+    incorrectGuessCount:0,
     unlockConclusionIds:[],
     revealRoomIds:[],
     ...overrides

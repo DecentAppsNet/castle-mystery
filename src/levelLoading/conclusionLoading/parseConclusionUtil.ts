@@ -146,7 +146,7 @@ function _parseConclusion(conclusionName:string, sectionText:string, rooms:Reado
   const isComplete = false;
   const isLocked = false;
   return errors.count > originalErrorCount ? 
-    null : { id, title, parts, isComplete, isLocked, unlockConclusionIds, revealRoomIds }
+    null : { id, title, parts, isComplete, isLocked, incorrectGuessCount:0, unlockConclusionIds, revealRoomIds }
 }
 
 /** Locks conclusions that another conclusion is configured to unlock. */

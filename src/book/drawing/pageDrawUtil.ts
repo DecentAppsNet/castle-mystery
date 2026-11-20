@@ -16,6 +16,7 @@ import { toNumeral } from "@/common/romanNumeralUtil";
 import ClozeImage from "@/game/conclusions/types/ClozeImage";
 import PieceSlotLayout from "./types/PieceSlotLayout";
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
+import { getConclusionPageInstructionText } from '../bookClaimControlUtil';
 
 const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
@@ -71,7 +72,6 @@ function _drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
   pw.addIlluminatedText(page.description);
 }
 
-
 type ConclusionPage = Extract<BookPage, { kind:'conclusion' }>;
 function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, slotLayouts:PieceSlotLayout[]|null,
   presentations:readonly PieceSlotPresentation[]) {
@@ -110,7 +110,9 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, 
         botch();
     }
   }
-  //pw.addButton('Claim Conclusion');
+  const instructionText = getConclusionPageInstructionText(page.conclusion);
+  pw.jump(0, 100-pw.getLineHeight('m')-pw.getLineHeight('s'));
+  pw.addTextLine(instructionText);
 }
 
 function _createLockedPageClipPath(rect:Rect, isLeftPage:boolean):Path2D {
