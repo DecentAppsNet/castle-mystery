@@ -279,13 +279,13 @@ describe('pieceSlotTargetUtil', () => {
       expect(bookState.hungryPieceSlot).toBeNull();
     });
 
-    it('clears the target on release without assigning answers or removing the piece', () => {
+    it('clears the target after placing the final release answer without removing the piece', () => {
       const { bookState, piece, blank, otherBlank } = _createPreparedBook();
       onBookMouseDown(500, 270, 0, bookState, true);
       onBookMouseUp(520, 270, 1, bookState);
       expect(bookState.hungryPieceSlot).toBeNull();
       expect(bookState.pieceDragState).toBeNull();
-      expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
+      expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, 0]);
       expect(bookState.pieceStack).toEqual([piece]);
       expect(piece.xPercent).toBe(52.5);
     });

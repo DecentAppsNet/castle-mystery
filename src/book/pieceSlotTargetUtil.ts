@@ -21,11 +21,15 @@ export function isCurrentEmptyPieceSlot(bookState:Readonly<BookState>, slot:Piec
     && page.answerSetIdToPieceStyleNoMap[blank.answerSet.id] === styleNo;
 }
 
+export function findPieceSlotAnswerIndex(slot:PieceSlotLayout, piece:Piece):number {
+  return slot.blank.answerSet.answers.findIndex(answer => normalizeCategoryPhrase(answer) === normalizeCategoryPhrase(piece.text));
+}
+
 function _isEligible(bookState:Readonly<BookState>, slot:PieceSlotLayout, piece:Piece, isSinglePageView:boolean):boolean {
-  const { page, blank, styleNo } = slot;
+  const { page, styleNo } = slot;
   return isCurrentEmptyPieceSlot(bookState, slot, isSinglePageView)
     && page.conclusion.id === piece.conclusionId && styleNo === piece.styleNo
-    && blank.answerSet.answers.some(answer => normalizeCategoryPhrase(answer) === normalizeCategoryPhrase(piece.text));
+    && findPieceSlotAnswerIndex(slot, piece) !== -1;
 }
 
 export function updateBookPieceSlotTarget(bookState:BookState):ReadonlyArray<PieceSlotLayout> {

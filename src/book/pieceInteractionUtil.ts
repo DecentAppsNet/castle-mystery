@@ -6,7 +6,7 @@ import { assert, assertNonNullable } from "decent-portal";
 import { calcPageViewOffsetX, isLeftPageNo } from "./drawing/bookLayoutUtil";
 import BookState from "./types/BookState";
 import Piece from "./types/Piece";
-import { updateBookPieceSlotTarget } from "./pieceSlotTargetUtil";
+import { findPieceSlotAnswerIndex, updateBookPieceSlotTarget } from "./pieceSlotTargetUtil";
 
 export function getVisibleBookPieces(bookState:Readonly<BookState>):Piece[] {
   const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
@@ -74,4 +74,20 @@ export function moveBookPieceDrag(bookState:BookState, canvasX:number, canvasY:n
   pieceDragState.piece.yPercent = (centerY - bounds.y) / bounds.height * 100;
   record.rect = { ...record.rect, x:centerX - record.rect.width / 2, y:centerY - record.rect.height / 2 };
   updateBookPieceSlotTarget(bookState);
+}
+
+export function releaseBookPieceDrag(bookState:BookState, canvasX:number, canvasY:number):void {
+  // Movement validates the drag and resolves the shared target at the final release position.
+  moveBookPieceDrag(bookState, canvasX, canvasY);
+  const { pieceDragState, hungryPieceSlot } = bookState;
+  if (pieceDragState !== null && hungryPieceSlot !== null) {
+    const answerIndex = findPieceSlotAnswerIndex(hungryPieceSlot, pieceDragState.piece);
+    assert(answerIndex !== -1); // The shared selector guarantees listed membership.
+    hungryPieceSlot.blank.playerAnswerIndex = answerIndex;
+    bookState.pieceSlotTransitions = bookState.pieceSlotTransitions.filter(({ slot }) =>
+      slot.page !== hungryPieceSlot.page || slot.blank !== hungryPieceSlot.blank);
+  }
+
+  // Cancellation stays assignment-free and may safely run again during listener cleanup.
+  endBookPieceDrag(bookState);
 }

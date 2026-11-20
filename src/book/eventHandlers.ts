@@ -10,7 +10,7 @@ import { calcPageViewOffsetX } from "./drawing/bookLayoutUtil";
 import { findControlAtPoint } from "@/canvasControls";
 import { goNextPage, goPrevPage } from "./navigationUtil";
 import BookControlId from "./drawing/types/BookControlId";
-import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPieceAtPoint,
+import { beginBookPieceDrag, bringBookPieceToFront, releaseBookPieceDrag, findBookPieceAtPoint,
   moveBookPieceDrag } from "./pieceInteractionUtil";
 
 function _findControlAtPoint(bookState:BookState, canvasX:number, canvasY:number):BookControlId|null {
@@ -51,8 +51,7 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
 
 export function onBookMouseUp(canvasX:number, canvasY:number, _metaTime:number, bookState:BookState) {
   if (bookState.pieceDragState !== null) {
-    moveBookPieceDrag(bookState, canvasX, canvasY);
-    endBookPieceDrag(bookState);
+    releaseBookPieceDrag(bookState, canvasX, canvasY);
     return;
   }
   assert(bookState.isVisible); // Caller should check.
