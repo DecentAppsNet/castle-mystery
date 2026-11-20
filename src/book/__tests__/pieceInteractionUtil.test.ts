@@ -13,7 +13,7 @@ import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPi
 function _createBookState() {
   const bookState = createBookState();
   const conclusionPages = bookState.pages.filter(page => page.kind === 'conclusion');
-  const lower = { ...bookState.pieceStack[0] };
+  const lower = { ...bookState.pieceStack[0], placement:null };
   const upper = { ...lower, conclusionId:conclusionPages[1].conclusion.id };
   bookState.pieceStack = [lower, upper];
   bookState.pages = conclusionPages;

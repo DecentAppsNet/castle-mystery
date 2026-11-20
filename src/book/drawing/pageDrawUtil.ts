@@ -89,8 +89,8 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, 
           assertNonNullable(pieceStyleNo);
           const presentation = presentations.find(({ slot }) =>
             slot.page === page && slot.blank === blankPart && slot.partIndex === partI && slot.pageNo === pageNo);
-          const rect = pw.addPieceSlot(playerGuess, pieceStyleNo, presentation?.offsetX ?? 0, presentation?.scale ?? 1);
-          slotLayouts?.push({ page, pageNo, partIndex:partI, blank:blankPart, styleNo:pieceStyleNo, rect });
+          const { metrics, ...rect } = pw.addPieceSlot(playerGuess, pieceStyleNo, presentation?.offsetX ?? 0, presentation?.scale ?? 1);
+          slotLayouts?.push({ page, pageNo, partIndex:partI, blank:blankPart, styleNo:pieceStyleNo, rect, metrics });
         }
       break;
 

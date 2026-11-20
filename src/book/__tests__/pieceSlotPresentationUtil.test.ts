@@ -22,7 +22,7 @@ function _createPreparedBook() {
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50 };
+  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
   bookState.pages = [page, { kind:'blank', headingText:'' },
@@ -30,7 +30,8 @@ function _createPreparedBook() {
   bookState.pieceStack = [piece];
 
   // Start away from either slot so both slots are awake rather than hungry.
-  const first = { page, pageNo:1, partIndex:0, blank, styleNo:3, rect:{ x:200, y:100, width:40, height:30 } };
+  const first = { page, pageNo:1, partIndex:0, blank, styleNo:3, rect:{ x:200, y:100, width:40, height:30 },
+    metrics:{ width:40, padding:2, fontSizePixels:12 } };
   const second = { ...first, partIndex:1, blank:otherBlank, rect:{ x:300, y:100, width:40, height:30 } };
   const layout:BookLayout = {
     canvasWidth:1000, canvasHeight:600, isSinglePageView:false, singlePageViewOffsetX:200,

@@ -11,6 +11,7 @@ import { drawPageDivider, drawPagePieceSlot, drawPageTextLine, getIlluminatedTex
   splitTextToLines } from "./pageWriterUtil";
 import { measureBookTextBox } from "./bookTextDrawUtil";
 import DividerStyle from "./types/DividerStyle";
+import PageTextBoxMetrics from './types/PageTextBoxMetrics';
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 type ColorName = 'black' | 'red' | 'grey';
@@ -208,11 +209,12 @@ class PageWriter {
     this._context.restore();
   }
 
-  addPieceSlot(text:string, styleNo:number = -1, offsetX:number = 0, scale:number = 1):Rect {
+  addPieceSlot(text:string, styleNo:number = -1, offsetX:number = 0, scale:number = 1):Rect & { readonly metrics:PageTextBoxMetrics } {
     // Measure and wrap using the normal slot dimensions.
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
-    const { width, padding, fontSizePixels } = measureBookTextBox(text, this._pageRect.width,
+    const metrics = measureBookTextBox(text, this._pageRect.width,
       lineHeight, this._context, this._getTextFontSizePixels());
+    const { width, padding, fontSizePixels } = metrics;
     if (width > this._getRemainingWidth() && this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
     while (this._textFlowObstacleEnd && width > this._getRemainingWidth()) this.addLineBreak();
 
@@ -227,7 +229,7 @@ class PageWriter {
       colorNameToHex.black, styleNo, this._context);
     this._context.restore();
     this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100, this._cursorPoint[1]];
-    return { x, y, width, height:lineHeight };
+    return { x, y, width, height:lineHeight, metrics };
   }
 
   addIlluminatedText(text:string, colorName:ColorName = 'black') {

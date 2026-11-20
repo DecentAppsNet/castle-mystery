@@ -126,7 +126,7 @@ function _drawPieces(bookState:BookState, bookRect:Rect, context:CanvasRendering
   assertNonNullable(bookState.layout);
   // Collect both visible pages before drawing so pieces overlay all page content.
   const pieces = getVisibleBookPieces(bookState);
-  const pieceLayouts = preparePieceLayouts(pieces, bookRect, context);
+  const pieceLayouts = preparePieceLayouts(pieces, bookRect, context, bookState.pieceDragState);
   bookState.layout.pieceLayouts = bookState.animationKind === null ? pieceLayouts : [];
   bookState.layout.pieceLayoutsPageNo = bookState.animationKind === null ? bookState.pageNo : null;
   drawBookPieces(pieceLayouts, context);

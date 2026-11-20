@@ -21,15 +21,16 @@ function _createPreparedBook() {
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50 };
+  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
   bookState.pages = [page, { kind:'blank', headingText:'' }];
   bookState.pieceStack = [piece];
 
   // Geometry is already in displayed canvas coordinates, independent of rendering.
-  const first = { page, pageNo:1, partIndex:0, blank, styleNo:3, rect:{ x:480, y:255, width:40, height:30 } };
-  const second = { page, pageNo:1, partIndex:1, blank:otherBlank, styleNo:3, rect:{ x:500, y:255, width:40, height:30 } };
+  const first = { page, pageNo:1, partIndex:0, blank, styleNo:3, rect:{ x:480, y:255, width:40, height:30 },
+    metrics:{ width:40, padding:2, fontSizePixels:12 } };
+  const second = { ...first, partIndex:1, blank:otherBlank, rect:{ x:500, y:255, width:40, height:30 } };
   const layout:BookLayout = {
     canvasWidth:1000, canvasHeight:600, isSinglePageView:false, singlePageViewOffsetX:200,
     rect:{ x:100, y:20, width:800, height:500 }, controlLayout:createLayout(), pieceLayoutsPageNo:1,

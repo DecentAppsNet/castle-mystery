@@ -9,16 +9,20 @@ import { endBookPieceDrag, getVisibleBookPieces } from './pieceInteractionUtil';
 import BookState from './types/BookState';
 import Piece from './types/Piece';
 
-export function isCurrentEmptyPieceSlot(bookState:Readonly<BookState>, slot:PieceSlotLayout, isSinglePageView:boolean):boolean {
+export function isCurrentPieceSlot(bookState:Readonly<BookState>, slot:PieceSlotLayout, isSinglePageView:boolean):boolean {
   // Reject hidden pages and obsolete page/part references before checking their mutable state.
   const { page, pageNo, partIndex, blank, styleNo } = slot;
   const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
   const isDisplayed = isSinglePageView ? pageNo === bookState.pageNo : pageNo === leftPageNo || pageNo === leftPageNo + 1;
   if (!isDisplayed || bookState.pages[pageNo - 1] !== page || page.conclusion.parts[partIndex] !== blank) return false;
 
-  // Empty visible blanks may animate independently of drag eligibility.
-  return !page.conclusion.isLocked && !page.conclusion.isComplete && blank.playerAnswerIndex === -1
+  // Both full and empty slots may be interactive, but never locked or completed conclusions.
+  return !page.conclusion.isLocked && !page.conclusion.isComplete
     && page.answerSetIdToPieceStyleNoMap[blank.answerSet.id] === styleNo;
+}
+
+export function isCurrentEmptyPieceSlot(bookState:Readonly<BookState>, slot:PieceSlotLayout, isSinglePageView:boolean):boolean {
+  return slot.blank.playerAnswerIndex === -1 && isCurrentPieceSlot(bookState, slot, isSinglePageView);
 }
 
 export function findPieceSlotAnswerIndex(slot:PieceSlotLayout, piece:Piece):number {

@@ -59,11 +59,22 @@ export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
 
       // Emit each category's ordered answers once; category validation guarantees disjoint membership.
       emittedCategoryIds.add(answerSet.id);
-      const groupPieces = answers.map(text => ({ conclusionId, styleNo, text, xPercent:0, yPercent:0 }));
+      const groupPieces:Piece[] = answers.map(text => ({ conclusionId, styleNo, text, xPercent:0, yPercent:0, placement:null }));
       if (groupPieces.length > 0) answerGroups.push(groupPieces);
       pieces.push(...groupPieces);
     }
     _placeAnswerGroupsOnRightPage(answerGroups);
+
+    // Associate prefilled blanks without changing their answers or the generated inventory order.
+    for (const part of page.conclusion.parts) {
+      if (part.type !== 'blank') continue;
+      const blank = part as ClozeBlank;
+      if (blank.playerAnswerIndex === -1) continue;
+      const matches = answerGroups.flat().filter(piece => piece.styleNo === page.answerSetIdToPieceStyleNoMap[blank.answerSet.id]
+        && piece.text === blank.answerSet.answers[blank.playerAnswerIndex]);
+      assert(matches.length === 1 && matches[0].placement === null, 'Initial piece placement must be unambiguous.');
+      matches[0].placement = { page, blank };
+    }
   });
   return pieces;
 }

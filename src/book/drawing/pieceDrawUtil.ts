@@ -9,6 +9,7 @@ import Piece from "../types/Piece";
 import PieceLayout from "./types/PieceLayout";
 import { drawBorderedBookText, measureBookTextBox } from "./bookTextDrawUtil";
 import { getPieceFlairProfile } from "../pieceFlairUtil";
+import PieceDragState from '../types/PieceDragState';
 
 function _getPieceColor(styleNo:number):string {
 	return getPieceFlairProfile(styleNo).pieceColor;
@@ -33,15 +34,18 @@ export function calcPieceBorderPolygon(rect:Rect, styleNo:number, flairMargin:nu
 }
 
 export function preparePieceLayouts(pieces:ReadonlyArray<Piece>, bookRect:Readonly<Rect>,
-	context:CanvasRenderingContext2D):PieceLayout[] {
+	context:CanvasRenderingContext2D, dragState:Readonly<PieceDragState>|null = null):PieceLayout[] {
 	// Size loose pieces consistently using the book height and the page text font.
 	const lineHeight = bookRect.height * .045;
 	const fontSizePixels = bookRect.height * .034;
 	return pieces.map(piece => {
-		const metrics = measureBookTextBox(piece.text, bookRect.width / 2, lineHeight, context, fontSizePixels);
-		const x = bookRect.x + bookRect.width * piece.xPercent / 100 - metrics.width / 2;
-		const y = bookRect.y + bookRect.height * piece.yPercent / 100 - lineHeight / 2;
-		const rect = { x, y, width:metrics.width, height:lineHeight };
+		const extracted = dragState?.piece === piece ? dragState.extractedLayout : null;
+		const metrics = extracted?.metrics ?? measureBookTextBox(piece.text, bookRect.width / 2, lineHeight, context, fontSizePixels);
+		const width = extracted?.rect.width ?? metrics.width;
+		const height = extracted?.rect.height ?? lineHeight;
+		const x = bookRect.x + bookRect.width * piece.xPercent / 100 - width / 2;
+		const y = bookRect.y + bookRect.height * piece.yPercent / 100 - height / 2;
+		const rect = { x, y, width, height };
 		return { piece, rect, metrics, isVisible:true };
 	});
 }

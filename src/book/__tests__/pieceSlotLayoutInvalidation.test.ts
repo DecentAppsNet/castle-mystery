@@ -21,7 +21,7 @@ function _createPreparedBook() {
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50 };
+  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
   bookState.pages = [page, { kind:'blank', headingText:'' },
@@ -35,8 +35,10 @@ function _createPreparedBook() {
     pieceLayouts:[{ piece, isVisible:true, rect:{ x:480, y:255, width:40, height:30 },
       metrics:{ width:40, padding:2, fontSizePixels:12 } }],
     pieceSlotLayouts:[
-      { page, pageNo:1, partIndex:0, blank, styleNo:3, rect:{ x:200, y:100, width:60, height:30 } },
-      { page, pageNo:1, partIndex:1, blank:otherBlank, styleNo:3, rect:{ x:300, y:100, width:60, height:30 } }
+      { page, pageNo:1, partIndex:0, blank, styleNo:3, rect:{ x:200, y:100, width:60, height:30 },
+        metrics:{ width:60, padding:2, fontSizePixels:12 } },
+      { page, pageNo:1, partIndex:1, blank:otherBlank, styleNo:3, rect:{ x:300, y:100, width:60, height:30 },
+        metrics:{ width:60, padding:2, fontSizePixels:12 } }
     ]
   };
   bookState.layout = layout;

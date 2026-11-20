@@ -5,7 +5,7 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '..';
 import { invalidatePieceLayouts } from '../drawing/bookLayoutUtil';
 import BookLayout from '../drawing/types/BookLayout';
-import { endBookPieceDrag, releaseBookPieceDrag } from '../pieceInteractionUtil';
+import { endBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces, releaseBookPieceDrag } from '../pieceInteractionUtil';
 import { prepareBookPieceSlotPresentations } from '../pieceSlotPresentationUtil';
 import BookPage from '../types/BookPage';
 import { createDefaultBookState } from '../types/BookState';
@@ -20,7 +20,7 @@ function _createPreparedBook() {
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50 };
+  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const parkedPiece = { ...piece, text:'Second', xPercent:75, yPercent:75 };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
@@ -28,7 +28,8 @@ function _createPreparedBook() {
   bookState.pieceStack = [piece, parkedPiece];
 
   // Both slots overlap around the initial pointer; release must use normal geometry.
-  const first = { page, pageNo:1, partIndex:0, blank, styleNo:3, rect:{ x:480, y:255, width:40, height:30 } };
+  const first = { page, pageNo:1, partIndex:0, blank, styleNo:3, rect:{ x:480, y:255, width:40, height:30 },
+    metrics:{ width:40, padding:2, fontSizePixels:12 } };
   const second = { ...first, partIndex:1, blank:otherBlank, rect:{ x:500, y:255, width:40, height:30 } };
   const layout:BookLayout = {
     canvasWidth:1000, canvasHeight:600, isSinglePageView:false, singlePageViewOffsetX:200,
@@ -68,6 +69,9 @@ describe('loose-piece release placement', () => {
     expect([piece.xPercent, piece.yPercent]).toEqual([50, 50]);
     expect(bookState.pieceDragState).toBeNull();
     expect(bookState.hungryPieceSlot).toBeNull();
+    expect(piece.placement).toEqual({ page, blank });
+    expect(getVisibleBookPieces(bookState)).toEqual([parkedPiece]);
+    expect(findBookPieceAtPoint(bookState, 500, 270)).toBeNull();
   });
 
   it('places a listed wrong answer using the final release position without an intervening move or draw', () => {
@@ -93,6 +97,7 @@ describe('loose-piece release placement', () => {
     onBookMouseUp(850, 450, 120, fixture.bookState);
     expect([fixture.blank.playerAnswerIndex, fixture.otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
     expect(fixture.piece.xPercent).toBe(93.75);
+    expect(fixture.piece.placement).toBeNull();
   });
 
   it('chooses the nearest overlapping center at release', () => {
@@ -146,11 +151,11 @@ describe('loose-piece release placement', () => {
     expect([fixture.blank.playerAnswerIndex, fixture.otherBlank.playerAnswerIndex]).toEqual([1, 0]);
   });
 
-  it('permits duplicate placement in a different empty blank and keeps the inventory', () => {
+  it('extracts the same piece before placing it in another blank, without duplicating inventory', () => {
     const fixture = _createPreparedBook();
     _drop(fixture);
     _drop(fixture, 520, 270);
-    expect([fixture.blank.playerAnswerIndex, fixture.otherBlank.playerAnswerIndex]).toEqual([0, 0]);
+    expect([fixture.blank.playerAnswerIndex, fixture.otherBlank.playerAnswerIndex]).toEqual([-1, 0]);
     expect(fixture.bookState.pieceStack).toHaveLength(2);
   });
 
@@ -234,6 +239,7 @@ describe('loose-piece release placement', () => {
     expect([fixture.blank.playerAnswerIndex, fixture.otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
     expect(fixture.piece.xPercent).toBe(52.5);
     expect(fixture.bookState.pieceStack).toBe(stack);
+    expect(fixture.piece.placement).toBeNull();
   });
 
   it('cannot assign after the normal invalidation cancellation funnel', () => {
@@ -255,6 +261,45 @@ describe('loose-piece release placement', () => {
     expect([fixture.blank.playerAnswerIndex, fixture.otherBlank.playerAnswerIndex]).toEqual([0, -1]);
     expect(fixture.bookState.pieceStack).toBe(stack);
     expect([fixture.piece.xPercent, fixture.piece.yPercent]).toEqual([50, 50]);
+  });
+
+  it('extracts at the full slot rectangle with the same grab point, then leaves it loose on cancellation', () => {
+    const fixture = _createPreparedBook();
+    const { bookState, first, blank, piece, layout } = fixture;
+    _drop(fixture);
+    Object.assign(first.rect, { x:200, y:100, width:80, height:36 });
+    first.metrics.width = 80;
+    expect(onBookMouseDown(210, 110, 150, bookState, true)).toBe(true);
+    expect(blank.playerAnswerIndex).toBe(-1);
+    expect(piece.placement).toBeNull();
+    expect(bookState.pieceDragState).toMatchObject({ piece, grabOffset:[-30, -8], extractedLayout:{ rect:first.rect, metrics:first.metrics } });
+    expect([piece.xPercent, piece.yPercent]).toEqual([17.5, 19.6]);
+    expect(getVisibleBookPieces(bookState)).toContain(piece);
+    expect(prepareBookPieceSlotPresentations(bookState, 150).find(({ slot }) => slot.blank === blank)?.offsetX).toBe(0);
+    onBookMouseOver(310, 160, 180, bookState);
+    expect(layout.pieceLayouts.find(record => record.piece === piece)?.rect).toEqual({ x:300, y:150, width:80, height:36 });
+    expect(prepareBookPieceSlotPresentations(bookState, 195).find(({ slot }) => slot.blank === blank)?.offsetX).not.toBe(0);
+    endBookPieceDrag(bookState);
+    expect(blank.playerAnswerIndex).toBe(-1);
+    expect(getVisibleBookPieces(bookState)).toContain(piece);
+    expect(prepareBookPieceSlotPresentations(bookState, 195).every(presentation => presentation.offsetX === 0)).toBe(true);
+  });
+
+  it('does not extract on a non-primary interaction', () => {
+    const fixture = _createPreparedBook();
+    _drop(fixture);
+    expect(onBookMouseDown(500, 270, 150, fixture.bookState, false)).toBe(false);
+    expect(fixture.blank.playerAnswerIndex).toBe(0);
+    expect(fixture.bookState.pieceDragState).toBeNull();
+  });
+
+  it('keeps placement hidden after layout invalidation and cannot extract stale geometry', () => {
+    const fixture = _createPreparedBook();
+    _drop(fixture);
+    invalidatePieceLayouts(fixture.bookState);
+    expect(onBookMouseDown(500, 270, 150, fixture.bookState, true)).toBe(false);
+    expect(fixture.blank.playerAnswerIndex).toBe(0);
+    expect(getVisibleBookPieces(fixture.bookState)).toEqual([fixture.parkedPiece]);
   });
 
   it('switches the filled target directly to neutral presentation without affecting another shrinking slot', () => {

@@ -74,7 +74,7 @@ describe('pieceGenerationUtil', () => {
       expect(pieces.map(({ text, styleNo }) => [text, styleNo])).toEqual([
         ['B', 3], ['A', 3], ['C', 3], ['Unused', 3]
       ]);
-      expect(pieces).toEqual(generatePieceStack(_createBookState([_createConclusionPage('one', [answers])])));
+      expect(pieces.map(piece => piece.placement?.blank ?? null)).toEqual([second, null, first, null]);
       expect(state).toEqual(original);
       expect([first.answerSet, second.answerSet, third.answerSet].every(set => set === answers)).toBe(true);
       expect(first).not.toBe(second);
@@ -87,7 +87,7 @@ describe('pieceGenerationUtil', () => {
       expect([first.playerAnswerIndex, second.playerAnswerIndex, third.playerAnswerIndex]).toEqual([2, 1, -1]);
       expect([first.correctAnswerIndexes, second.correctAnswerIndexes, third.correctAnswerIndexes])
         .toEqual([[0, 1, 2], [2, 1, 0], [1, 0, 2]]);
-      expect(generatePieceStack(state)).toEqual(pieces);
+      expect(generatePieceStack(state).map(piece => piece.placement?.blank ?? null)).toEqual([null, second, first, null]);
     });
 
     it('keeps disjoint categories ordered with distinct styles despite interleaved shared blanks', () => {
@@ -263,7 +263,7 @@ describe('pieceGenerationUtil', () => {
 
       // Preserve an already-positioned piece and an existing layout.
       const state = _createBookState([page]);
-      const existingPiece = { conclusionId:'one', text:'old', styleNo:12, xPercent:91, yPercent:82 };
+      const existingPiece = { conclusionId:'one', text:'old', styleNo:12, xPercent:91, yPercent:82, placement:null };
       state.pieceStack = [existingPiece];
       state.layout = {
         canvasWidth:1000, canvasHeight:600, rect:{ x:0, y:0, width:800, height:500 },

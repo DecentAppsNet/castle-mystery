@@ -39,6 +39,7 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
     bringBookPieceToFront(bookState, piece);
     return false;
   }
+  if (id === null && canStartPieceDrag && beginBookPieceDrag(bookState, canvasX, canvasY)) return true;
   if (id === 'closeBook' || (id === null && piece === null && !_isPointInsideBook(bookState, canvasX, canvasY))) {
     hideBook(metaTime, bookState);
     return false;
