@@ -6,16 +6,15 @@ import { hideControl, showControl, updateControlRect } from '@/canvasControls';
 import ControlLayout from '@/canvasControls/types/ControlLayout';
 import { countConclusionMistakes, isConclusionMissingAnswers } from '@/game/conclusions/conclusionUtil';
 import Conclusion from '@/game/conclusions/types/Conclusion';
-import { rand } from '@/common/randUtil';
-import { detachBookPiece } from './pieceInteractionUtil';
+import { applyBookClaimResults } from './bookClaimResultUtil';
+import { calcBookClaimTiming } from './bookClaimTimingUtil';
+import BookClaimState from './types/BookClaimState';
 import { isCurrentPieceSlot } from './pieceSlotTargetUtil';
 import PieceSlotLayout from './drawing/types/PieceSlotLayout';
 import Rect from '@/game/types/Rect';
 import BookState from './types/BookState';
 import BookPage from './types/BookPage';
 import BookControlId from './drawing/types/BookControlId';
-
-const EJECTION_DISTANCE_IN_LINE_HEIGHTS = .1;
 
 function _canClaim(page:BookPage|undefined):boolean {
   return page?.kind === 'conclusion' && !page.conclusion.isLocked && !page.conclusion.isComplete
@@ -72,17 +71,11 @@ export function updateBookClaimControls(bookState:Readonly<BookState>):void {
   _placeControl('claimRight', { x:isSinglePageView ? claimX : claimX + rect.width / 2, y, width, height }, right, controlLayout);
 }
 
-function _applyBookClaim(bookState:BookState, conclusion:Conclusion, slots:readonly PieceSlotLayout[], correct:boolean):void {
-  // Apply the resolved result separately so a future animation can delay this step.
-  if (correct) conclusion.isComplete = true;
-  else {
-    conclusion.incorrectGuessCount++;
-    for (const slot of slots) {
-      const angle = rand() * Math.PI * 2;
-      const distance = slot.rect.height * EJECTION_DISTANCE_IN_LINE_HEIGHTS;
-      detachBookPiece(bookState, slot, Math.cos(angle) * distance, Math.sin(angle) * distance);
-    }
-  }
+function _applyBookClaim(bookState:BookState, page:Extract<BookPage, { kind:'conclusion' }>, slots:readonly PieceSlotLayout[], correct:boolean):void {
+  // Preserve immediate resolution by applying all scheduled results at the sequence endpoint.
+  const claim:BookClaimState = { page, blanks:slots.map(slot => slot.blank), correct, startedAt:0,
+    resultApplied:false, ejectedCount:0 };
+  applyBookClaimResults(bookState, claim, calcBookClaimTiming(0, claim.blanks.length, correct).totalDuration);
 
   // Remove obsolete feedback and refresh availability without invalidating ejected geometry.
   bookState.hungryPieceSlot = null;
@@ -102,5 +95,5 @@ export function claimBookConclusion(bookState:BookState, pageNo:number):void {
   const slots = layout.pieceSlotLayouts.filter(slot => slot.page === page && slot.pageNo === pageNo
     && isCurrentPieceSlot(bookState, slot, layout.isSinglePageView));
   if (slots.length !== blanks.length || !blanks.every(blank => slots.some(slot => slot.blank === blank))) return;
-  _applyBookClaim(bookState, page.conclusion, slots, countConclusionMistakes(page.conclusion) === 0);
+  _applyBookClaim(bookState, page, slots, countConclusionMistakes(page.conclusion) === 0);
 }

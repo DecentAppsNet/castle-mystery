@@ -8,6 +8,9 @@ import { claimBookConclusion, getConclusionPageInstructionText, updateBookClaimC
 import { onBookMouseDown } from '../eventHandlers';
 import { beginBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces } from '../pieceInteractionUtil';
 import { generatePieceStack } from '../pieceGenerationUtil';
+import { applyBookClaimResults } from '../bookClaimResultUtil';
+import PieceLayout from '../drawing/types/PieceLayout';
+import BookClaimState from '../types/BookClaimState';
 import BookPage from '../types/BookPage';
 import { createDefaultBookState } from '../types/BookState';
 
@@ -33,10 +36,17 @@ function _createFixture(single:boolean = false) {
   const second = { ...first, partIndex:1, blank:otherBlank,
     rect:{ x:300 + offset, y:200, width:60, height:40 }, metrics:{ width:60, padding:3, fontSizePixels:14 } };
   const layout = { canvasWidth:1000, canvasHeight:600, rect:{ x:100, y:20, width:800, height:500 },
-    isSinglePageView:single, pieceLayouts:[], pieceSlotLayouts:[first, second], pieceLayoutsPageNo:1 as number|null,
+    isSinglePageView:single, pieceLayouts:[] as readonly PieceLayout[], pieceSlotLayouts:[first, second], pieceLayoutsPageNo:1 as number|null,
     controlLayout:createLayout() };
   bookState.layout = layout;
   return { bookState, page, blank, otherBlank, first, second, layout };
+}
+
+function _createClaimFixture(correct:boolean = false) {
+  const fixture = _createFixture();
+  const claim:BookClaimState = { page:fixture.page, blanks:[fixture.blank, fixture.otherBlank],
+    correct, startedAt:123, resultApplied:false, ejectedCount:0 };
+  return { ...fixture, claim };
 }
 
 afterEach(clearSeed);
@@ -198,6 +208,78 @@ describe('book claim resolution', () => {
     bookState.pieceDragState = { piece:bookState.pieceStack[2], grabOffset:[0, 0], extractedAppearance:null };
     claimBookConclusion(bookState, 1);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
+  });
+});
+
+describe('applyBookClaimResults()', () => {
+  it('initializes books without an active claim', () => {
+    expect(createDefaultBookState().claimState).toBeNull();
+  });
+
+  it('defers failure mutations until result entry, then ejects in captured blank order once', () => {
+    const { bookState, claim, page, blank, otherBlank, layout } = _createClaimFixture();
+    layout.pieceSlotLayouts.reverse();
+    setSeed(503);
+    applyBookClaimResults(bookState, claim, 2999);
+    expect(page.conclusion.incorrectGuessCount).toBe(0);
+    expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
+    applyBookClaimResults(bookState, claim, 3000);
+    expect(page.conclusion.incorrectGuessCount).toBe(1);
+    expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, 1]);
+    expect(claim.ejectedCount).toBe(1);
+    const position = [bookState.pieceStack[0].xPercent, bookState.pieceStack[0].yPercent];
+    applyBookClaimResults(bookState, claim, 3000);
+    applyBookClaimResults(bookState, claim, 3499);
+    expect(claim.ejectedCount).toBe(1);
+    expect([bookState.pieceStack[0].xPercent, bookState.pieceStack[0].yPercent]).toEqual(position);
+    applyBookClaimResults(bookState, claim, 3500);
+    expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
+    expect(claim.ejectedCount).toBe(2);
+    expect(page.conclusion.incorrectGuessCount).toBe(1);
+    expect(claim.startedAt).toBe(123);
+  });
+
+  it('uses refreshed slot geometry for later ejections', () => {
+    const { bookState, claim, second, layout } = _createClaimFixture();
+    setSeed(503);
+    applyBookClaimResults(bookState, claim, 3000);
+    const refreshed = { ...second, rect:{ ...second.rect, x:600, y:300 } };
+    layout.pieceSlotLayouts = [refreshed];
+    applyBookClaimResults(bookState, claim, 3500);
+    const record = layout.pieceLayouts.find(record => record.piece === bookState.pieceStack[1])!;
+    expect(record.rect.width).toBe(refreshed.rect.width);
+    expect(record.rect.height).toBe(refreshed.rect.height);
+    expect(record.rect.x).toBeGreaterThan(second.rect.x + second.rect.width);
+    expect(record.rect.y).toBeGreaterThan(second.rect.y + second.rect.height);
+  });
+
+  it('catches up every failure result once even when all stages are skipped', () => {
+    const { bookState, claim, page, blank, otherBlank } = _createClaimFixture();
+    setSeed(503);
+    applyBookClaimResults(bookState, claim, 1000000);
+    const positions = bookState.pieceStack.map(piece => [piece.xPercent, piece.yPercent]);
+    applyBookClaimResults(bookState, claim, 1000000);
+    expect(page.conclusion.incorrectGuessCount).toBe(1);
+    expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
+    expect(claim.ejectedCount).toBe(2);
+    expect(bookState.pieceStack.map(piece => [piece.xPercent, piece.yPercent])).toEqual(positions);
+  });
+
+  it('completes success only at its interval end, preserving captured answers and placements', () => {
+    const { bookState, claim, page, blank, otherBlank, layout } = _createClaimFixture(true);
+    const placements = bookState.pieceStack.map(piece => piece.placement);
+    applyBookClaimResults(bookState, claim, 3000);
+    applyBookClaimResults(bookState, claim, 3499);
+    expect(page.conclusion.isComplete).toBe(false);
+    applyBookClaimResults(bookState, claim, 3500);
+    expect(page.conclusion.isComplete).toBe(true);
+    layout.pieceSlotLayouts = [];
+    applyBookClaimResults(bookState, claim, 1000000);
+    expect(page.conclusion.incorrectGuessCount).toBe(0);
+    expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
+    expect(bookState.pieceStack.map(piece => piece.placement)).toEqual(placements);
+    expect(claim.ejectedCount).toBe(0);
+    expect(claim.resultApplied).toBe(true);
   });
 });
 

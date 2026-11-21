@@ -5,9 +5,11 @@ import Piece from "./Piece"
 import PieceDragState from "./PieceDragState"
 import PieceSlotLayout from "../drawing/types/PieceSlotLayout"
 import PieceSlotTransition from "./PieceSlotTransition"
+import BookClaimState from "./BookClaimState"
 
 type BookState = {
   layout:BookLayout|null,
+  claimState:BookClaimState|null,
   animationKind:'appear'|'disappear'|'shiftLeft'|'shiftRight'|'flipPrev'|'flipNext'|null
   animationStartMetaTime:number,
   animationDuration:number,
@@ -24,6 +26,7 @@ type BookState = {
 export function createDefaultBookState():BookState {
   return {
     layout:null,
+    claimState:null,
     animationKind:null,
     animationStartMetaTime:0,
     animationDuration:0,
