@@ -24,6 +24,7 @@ import { clearPlayerEvents } from '@/game/playerEventUtil';
 import { findNextTimelineBeat, findPreviousTimelineBeat } from '@/game/timeline/beatUtil';
 import LevelSaveCoordinator from './levelSaveCoordinator';
 import PreparedLevelState from './types/PreparedLevelState';
+import { createBookState } from '@/book';
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -49,6 +50,7 @@ function HomeScreen() {
   const isGameDisabledRef = useRef(true);
   const [isGameDisabled, setIsGameDisabled] = useState(true);
   const [gameState, setGameState] = useState<GameState|null>(null);
+  const [bookState] = useState(createBookState);
   const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
   const [initErrorMessage, setInitErrorMessage] = useState<string|null>(null);
   const [isInitialClosedFramePainted, setIsInitialClosedFramePainted] = useState(false);
@@ -251,6 +253,7 @@ function HomeScreen() {
         <LevelView 
           ref={levelViewRef}
           gameState={gameState} 
+          bookState={bookState}
           isGameDisabled={_isGameDisabled}
           onMinutesChanged={setMinutes} 
           onIsPlayingChanged={setIsPlaying} 

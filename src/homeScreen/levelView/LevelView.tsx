@@ -23,6 +23,7 @@ import { updateAndDrawFps } from '@/developer/fpsUtil';
 type Props = {
   ref?:Ref<LevelViewHandle>, // Enables imperative calls.
   gameState:GameState|null, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
+  bookState:BookState,
   isGameDisabled:() => boolean,
   onMinutesChanged:(minutes:number) => void,
   onIsPlayingChanged:(isPlaying:boolean) => void,
@@ -55,7 +56,7 @@ type Props = {
  * Failure keeps curtains closed; unmount cancels a pending close without starting loading.
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
-function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
+function LevelView({ref, gameState, bookState, isGameDisabled, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
     onDiscoveriesChanged, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
@@ -66,10 +67,10 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
   const draggedBookRef = useRef<BookState|null>(null);
 
   function _cancelInvalidBookDrag() {
-    const bookState = draggedBookRef.current;
-    if (bookState === null) return;
-    if (bookState !== gameState?.bookState || bookState !== acceptedGameStateRef.current?.bookState
-      || bookState.pieceDragState === null || !bookState.isVisible || bookState.animationKind !== null
+    const draggedBookState = draggedBookRef.current;
+    if (draggedBookState === null) return;
+    if (draggedBookState !== bookState || !gameState || gameState !== acceptedGameStateRef.current
+      || draggedBookState.pieceDragState === null || !draggedBookState.isVisible || draggedBookState.animationKind !== null
       || isGameDisabled()) cancelBookDragRef.current?.();
   }
 
@@ -88,11 +89,12 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
     acceptedGameStateRef.current = gameState;
   }, [gameState]);
 
-  function _startBookDragTracking(canvas:HTMLCanvasElement, bookState:BookState) {
+  function _startBookDragTracking(canvas:HTMLCanvasElement, draggedBookState:BookState) {
     const listeners = new AbortController();
+    const draggedGameState = acceptedGameStateRef.current;
     function _cancel() {
       listeners.abort();
-      endBookPieceDrag(bookState);
+      endBookPieceDrag(draggedBookState);
       cancelBookDragRef.current = null;
       draggedBookRef.current = null;
     }
@@ -100,7 +102,8 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
     function _onWindowMouse(event:MouseEvent) {
       const isRelease = event.type === 'mouseup';
       if (isRelease && event.button !== 0) return;
-      if (bookState.pieceDragState === null || acceptedGameStateRef.current?.bookState !== bookState
+      if (draggedBookState.pieceDragState === null || draggedBookRef.current !== draggedBookState
+        || !acceptedGameStateRef.current || acceptedGameStateRef.current !== draggedGameState
         || isGameDisabled() || (!isRelease && (event.buttons & 1) === 0)) return _cancel();
 
       const rect = canvas.getBoundingClientRect();
@@ -108,16 +111,16 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
       const canvasX = (event.clientX - rect.left) * canvas.width / rect.width;
       const canvasY = (event.clientY - rect.top) * canvas.height / rect.height;
       if (isRelease) {
-        onBookMouseUp(canvasX, canvasY, findMetaTimeNow(), bookState);
+        onBookMouseUp(canvasX, canvasY, findMetaTimeNow(), draggedBookState);
         _cancel();
       } else {
-        onBookMouseOver(canvasX, canvasY, findMetaTimeNow(), bookState);
-        if (bookState.pieceDragState === null) _cancel();
+        onBookMouseOver(canvasX, canvasY, findMetaTimeNow(), draggedBookState);
+        if (draggedBookState.pieceDragState === null) _cancel();
       }
     }
 
     cancelBookDragRef.current = _cancel;
-    draggedBookRef.current = bookState;
+    draggedBookRef.current = draggedBookState;
     window.addEventListener('mousemove', _onWindowMouse, { signal:listeners.signal });
     window.addEventListener('mouseup', _onWindowMouse, { signal:listeners.signal });
     window.addEventListener('blur', _cancel, { signal:listeners.signal });
@@ -169,8 +172,8 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
       clearLevelView(context);
     }
     if (isCurtainVisible(frame)) drawCurtainOverlay(context, frame, hasLoadingFailed);
-    if (frame.canRenderScene && currentGameState && currentGameState.bookState.isVisible) {
-      drawBook(currentGameState.bookState, findMetaTimeNow(), currentGameState.imageSet, context);
+    if (frame.canRenderScene && currentGameState && bookState.isVisible) {
+      drawBook(bookState, findMetaTimeNow(), currentGameState.imageSet, context);
     }
     _cancelInvalidBookDrag();
     if (frame.canRenderScene && currentGameState && DRAW_FPS_COUNTER) {
@@ -205,8 +208,7 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
         const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
         const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
-        if (acceptedGameStateRef.current.bookState.isVisible) {
-          const bookState = acceptedGameStateRef.current.bookState;
+        if (bookState.isVisible) {
           if (onBookMouseDown(canvasX, canvasY, findMetaTimeNow(), bookState, e.button === 0)) {
             e.preventDefault();
             _startBookDragTracking(e.currentTarget, bookState);
@@ -214,7 +216,6 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
           return;
         }
         if (findOverlayControlAtPoint(canvasX, canvasY) === 'book') {
-          const bookState = acceptedGameStateRef.current.bookState;
           showBook(findMetaTimeNow(), bookState);
           return;
         }
@@ -227,11 +228,11 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
         if (cancelBookDragRef.current) return;
         if (isGameDisabled()) return;
         const currentGameState = acceptedGameStateRef.current;
-        if (!currentGameState?.bookState.isVisible) return;
+        if (!currentGameState || !bookState.isVisible) return;
         const rect = e.currentTarget.getBoundingClientRect();
         const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
         const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
-        onBookMouseUp(canvasX, canvasY, findMetaTimeNow(), currentGameState.bookState);
+        onBookMouseUp(canvasX, canvasY, findMetaTimeNow(), bookState);
       }}
       onMouseMove={(e) => {
         pointerClientPositionRef.current = [e.clientX, e.clientY];
@@ -239,10 +240,10 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
         if (isGameDisabled()) return;
         if (!acceptedGameStateRef.current) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
-        if (acceptedGameStateRef.current.bookState.isVisible) {
+        if (bookState.isVisible) {
           const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
           const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
-          onBookMouseOver(canvasX, canvasY, findMetaTimeNow(), acceptedGameStateRef.current.bookState);
+          onBookMouseOver(canvasX, canvasY, findMetaTimeNow(), bookState);
           return;
         }
         const x = Math.round(e.clientX - rect.left);
@@ -253,8 +254,8 @@ function LevelView({ref, gameState, isGameDisabled, onMinutesChanged, onIsPlayin
       onWheel={(e) => {
         if (isGameDisabled()) return;
         e.preventDefault();
-        if (acceptedGameStateRef.current?.bookState.isVisible) {
-          onBookMouseWheel(e.deltaY, findMetaTimeNow(), acceptedGameStateRef.current.bookState);
+        if (acceptedGameStateRef.current && bookState.isVisible) {
+          onBookMouseWheel(e.deltaY, findMetaTimeNow(), bookState);
           return;
         }
         mouseWheel(e.deltaY);
