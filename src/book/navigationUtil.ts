@@ -1,3 +1,5 @@
+/* This file manages book page navigation and navigation-control availability.
+  If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 import { assertNonNullable } from "decent-portal";
 import BookState from "./types/BookState";
 import { isLeftPageNo, updateControlLayout } from "./drawing/bookLayoutUtil";
@@ -6,6 +8,7 @@ import { hideControl, showControl } from "@/canvasControls";
 import ControlLayout from "@/canvasControls/types/ControlLayout";
 import BookControlId from "./drawing/types/BookControlId";
 import { startPageFlip } from "./drawing/pageFlipAnimationUtil";
+import { updateBookClaimControls } from './bookClaimControlUtil';
 
 function _setControlVisibility(controlId:BookControlId, isVisible:boolean, controlLayout:ControlLayout) {
   if (isVisible) {
@@ -17,6 +20,7 @@ function _setControlVisibility(controlId:BookControlId, isVisible:boolean, contr
 
 export function setPageNavigationButtonVisibility(bookState:BookState) {
   assertNonNullable(bookState.layout);
+  if (bookState.claimState !== null) return updateBookClaimControls(bookState);
   const showPrevPage = !(bookState.pageNo === 1 || 
     (!bookState.layout.isSinglePageView && bookState.pageNo === 2));
   const showNextPage = !(bookState.pageNo === bookState.pages.length || 
@@ -32,6 +36,7 @@ function _setPageNo(pageNo:number, bookState:BookState) {
 }
 
 function _changePageNo(pageNo:number, metaTime:number, bookState:BookState) {
+  if (bookState.claimState !== null) return;
   if (bookState.pageNo === pageNo) return;
   assertNonNullable(bookState.layout);
   const isCurrentLeftPage = isLeftPageNo(bookState.pageNo);

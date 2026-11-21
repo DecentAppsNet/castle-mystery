@@ -18,6 +18,7 @@ function _scaleAt(transition:PieceSlotTransition, metaTime:number):number {
 }
 
 export function prepareBookPieceSlotPresentations(bookState:BookState, metaTime:number):readonly PieceSlotPresentation[] {
+  if (bookState.claimState !== null) return [];
   // Refresh targeting, then discard obsolete layout/view records even after a drag ends.
   const eligible = updateBookPieceSlotTarget(bookState);
   const { layout, pieceSlotTransitions:previous } = bookState;

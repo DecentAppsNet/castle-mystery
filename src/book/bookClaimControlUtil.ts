@@ -1,16 +1,16 @@
 /* This file manages book-only claim resolution, instruction text, and claim-control placement.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { assertNonNullable } from 'decent-portal';
+import { assert, assertNonNullable } from 'decent-portal';
 import { hideControl, showControl, updateControlRect } from '@/canvasControls';
 import ControlLayout from '@/canvasControls/types/ControlLayout';
 import { countConclusionMistakes, isConclusionMissingAnswers } from '@/game/conclusions/conclusionUtil';
 import Conclusion from '@/game/conclusions/types/Conclusion';
+import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { applyBookClaimResults } from './bookClaimResultUtil';
 import { calcBookClaimTiming } from './bookClaimTimingUtil';
-import BookClaimState from './types/BookClaimState';
+import { setPageNavigationButtonVisibility } from './navigationUtil';
 import { isCurrentPieceSlot } from './pieceSlotTargetUtil';
-import PieceSlotLayout from './drawing/types/PieceSlotLayout';
 import Rect from '@/game/types/Rect';
 import BookState from './types/BookState';
 import BookPage from './types/BookPage';
@@ -53,6 +53,11 @@ export function updateBookClaimControls(bookState:Readonly<BookState>):void {
   const { layout, pageNo, pages } = bookState;
   assertNonNullable(layout);
   const { rect, isSinglePageView, controlLayout } = layout;
+  if (bookState.claimState !== null) {
+    for (const control of controlLayout.controls) hideControl(control.id, controlLayout);
+    controlLayout.hoveredControlId = null;
+    return;
+  }
   const leftPageNo = pageNo % 2 === 1 ? pageNo : pageNo - 1;
   const isInteractive = bookState.isVisible && bookState.animationKind === null;
   const left = isInteractive && (!isSinglePageView || pageNo === leftPageNo) && _canClaim(pages[leftPageNo - 1]);
@@ -71,29 +76,46 @@ export function updateBookClaimControls(bookState:Readonly<BookState>):void {
   _placeControl('claimRight', { x:isSinglePageView ? claimX : claimX + rect.width / 2, y, width, height }, right, controlLayout);
 }
 
-function _applyBookClaim(bookState:BookState, page:Extract<BookPage, { kind:'conclusion' }>, slots:readonly PieceSlotLayout[], correct:boolean):void {
-  // Preserve immediate resolution by applying all scheduled results at the sequence endpoint.
-  const claim:BookClaimState = { page, blanks:slots.map(slot => slot.blank), correct, startedAt:0,
-    resultApplied:false, ejectedCount:0 };
-  applyBookClaimResults(bookState, claim, calcBookClaimTiming(0, claim.blanks.length, correct).totalDuration);
+export function claimBookConclusion(bookState:BookState, pageNo:number, metaTime:number):void {
+  // Ignore stale clicks, noninteractive pages, and incomplete answer sets.
+  const { layout } = bookState;
+  const page = bookState.pages[pageNo - 1];
+  if (bookState.claimState !== null || !bookState.isVisible || bookState.animationKind !== null || bookState.pieceDragState !== null
+    || !layout || layout.pieceLayoutsPageNo !== bookState.pageNo || !_canClaim(page) || page.kind !== 'conclusion') return;
 
-  // Remove obsolete feedback and refresh availability without invalidating ejected geometry.
+  // Capture all normal geometry before clearing answers can change text flow.
+  const blanks = page.conclusion.parts.filter((part):part is ClozeBlank => part.type === 'blank');
+  const slots = layout.pieceSlotLayouts.filter(slot => slot.page === page && slot.pageNo === pageNo
+    && isCurrentPieceSlot(bookState, slot, layout.isSinglePageView));
+  if (slots.length !== blanks.length || !blanks.every(blank => slots.some(slot => slot.blank === blank))) return;
+  bookState.claimState = { page, blanks, correct:countConclusionMistakes(page.conclusion) === 0,
+    startedAt:metaTime, resultApplied:false, ejectedCount:0 };
   bookState.hungryPieceSlot = null;
   bookState.pieceSlotTransitions = [];
   updateBookClaimControls(bookState);
 }
 
-export function claimBookConclusion(bookState:BookState, pageNo:number):void {
-  // Ignore stale clicks, noninteractive pages, and incomplete answer sets.
-  const { layout } = bookState;
-  const page = bookState.pages[pageNo - 1];
-  if (!bookState.isVisible || bookState.animationKind !== null || bookState.pieceDragState !== null
-    || !layout || layout.pieceLayoutsPageNo !== bookState.pageNo || !_canClaim(page) || page.kind !== 'conclusion') return;
+export function updateBookClaim(bookState:BookState, metaTime:number):void {
+  // Discard obsolete ownership without rolling back results already applied.
+  const claim = bookState.claimState;
+  if (claim === null) return;
+  const pageNo = bookState.pages.indexOf(claim.page) + 1;
+  const leftPageNo = bookState.pageNo % 2 === 1 ? bookState.pageNo : bookState.pageNo - 1;
+  const blanks = claim.page.conclusion.parts.filter(part => part.type === 'blank');
+  if (!bookState.isVisible || pageNo === 0 || (bookState.layout?.isSinglePageView
+    ? pageNo !== bookState.pageNo : pageNo !== leftPageNo && pageNo !== leftPageNo + 1)
+    || blanks.length !== claim.blanks.length || blanks.some((blank, i) => blank !== claim.blanks[i])) {
+    bookState.claimState = null;
+  } else {
+    // Consume freshly collected normal geometry, including after resize, before loose-piece drawing.
+    assert(bookState.animationKind === null);
+    if (!bookState.layout || bookState.layout.pieceLayoutsPageNo !== bookState.pageNo) return;
+    const elapsed = metaTime - claim.startedAt;
+    applyBookClaimResults(bookState, claim, elapsed);
+    if (calcBookClaimTiming(elapsed, claim.blanks.length, claim.correct).isDone) bookState.claimState = null;
+  }
 
-  // Capture all normal geometry before clearing answers can change text flow.
-  const blanks = page.conclusion.parts.filter(part => part.type === 'blank');
-  const slots = layout.pieceSlotLayouts.filter(slot => slot.page === page && slot.pageNo === pageNo
-    && isCurrentPieceSlot(bookState, slot, layout.isSinglePageView));
-  if (slots.length !== blanks.length || !blanks.every(blank => slots.some(slot => slot.blank === blank))) return;
-  _applyBookClaim(bookState, page, slots, countConclusionMistakes(page.conclusion) === 0);
+  // Restore ordinary controls only after recovery or external ownership cancellation.
+  if (bookState.layout && bookState.claimState === null) setPageNavigationButtonVisibility(bookState);
+  if (bookState.layout) updateBookClaimControls(bookState);
 }

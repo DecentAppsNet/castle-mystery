@@ -10,6 +10,7 @@ import { createLayout, updateControlRect } from "@/canvasControls";
 import { setPageNavigationButtonVisibility } from "../navigationUtil";
 import BookControlId from "./types/BookControlId";
 import { endBookPieceDrag } from "../pieceInteractionUtil";
+import { updateBookClaimControls } from '../bookClaimControlUtil';
 
 const CANVAS_HEIGHT_TO_OUTER_MARGIN_RATIO = .05;
 
@@ -106,6 +107,7 @@ export function updateControlLayout(bookState:BookState) {
   assertNonNullable(layout);
   invalidatePieceLayouts(bookState);
   layout.controlLayout = _createBookControlLayout(layout.rect, layout.isSinglePageView, bookState.pageNo);
+  if (bookState.claimState !== null) updateBookClaimControls(bookState);
 }
 
 export function updateBookLayoutAsNeeded(canvasWidth:number, canvasHeight:number, bookImage:ImageBitmap, bookState:BookState) {

@@ -94,7 +94,7 @@ export function drawPageFlip(bookState:BookState, metaTime:number, drawRect:Rect
 
 export function startPageFlip(metaTime:number, bookState:BookState, kind:'flipPrev'|'flipNext',
   onAnimationEnd:AnimationEndCallback|null = null) {
-  if (!bookState.isVisible || !bookState.layout || bookState.animationKind !== null) return;
+  if (bookState.claimState !== null || !bookState.isVisible || !bookState.layout || bookState.animationKind !== null) return;
 
   invalidatePieceLayouts(bookState);
   bookState.animationKind = kind;

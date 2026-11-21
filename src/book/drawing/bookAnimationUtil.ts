@@ -98,6 +98,7 @@ export function calcBookOffsetsForAnimationAndUpdate(metaTime:number, bookState:
 }
 
 export function showBook(metaTime:number, bookState:BookState) {
+  bookState.claimState = null;
   _endCurrentAnimationAsNeeded(metaTime, bookState);
   invalidatePieceLayouts(bookState);
   bookState.animationKind = 'appear';
@@ -108,6 +109,7 @@ export function showBook(metaTime:number, bookState:BookState) {
 }
 
 export function hideBook(metaTime:number, bookState:BookState) {
+  bookState.claimState = null;
   assertNonNullable(bookState.layout);
   _endCurrentAnimationAsNeeded(metaTime, bookState);
   invalidatePieceLayouts(bookState);
@@ -120,6 +122,7 @@ export function hideBook(metaTime:number, bookState:BookState) {
 }
 
 export function shiftBookLeft(metaTime:number, bookState:BookState, onAnimationEnd:AnimationEndCallback|null = null) {
+  if (bookState.claimState !== null) return;
   _endCurrentAnimationAsNeeded(metaTime, bookState);
   invalidatePieceLayouts(bookState);
   bookState.animationKind = 'shiftLeft';
@@ -129,6 +132,7 @@ export function shiftBookLeft(metaTime:number, bookState:BookState, onAnimationE
 }
 
 export function shiftBookRight(metaTime:number, bookState:BookState, onAnimationEnd:AnimationEndCallback|null = null) {
+  if (bookState.claimState !== null) return;
   _endCurrentAnimationAsNeeded(metaTime, bookState);
   invalidatePieceLayouts(bookState);
   bookState.animationKind = 'shiftRight';

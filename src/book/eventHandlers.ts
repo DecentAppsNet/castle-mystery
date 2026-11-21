@@ -30,6 +30,7 @@ function _isPointInsideBook(bookState:BookState, canvasX:number, canvasY:number)
 
 export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number, bookState:BookState,
   canStartPieceDrag:boolean = false):boolean {
+  if (bookState.claimState !== null) return false;
   assert(bookState.isVisible); // Caller should check.
   if (!bookState.layout || bookState.animationKind || bookState.pieceDragState !== null) return false;
 
@@ -50,12 +51,13 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
   if (id === 'nextPage') goNextPage(metaTime, bookState);
   if (id === 'claimLeft' || id === 'claimRight') {
     const leftPageNo = bookState.pageNo % 2 === 1 ? bookState.pageNo : bookState.pageNo - 1;
-    claimBookConclusion(bookState, leftPageNo + (id === 'claimRight' ? 1 : 0));
+    claimBookConclusion(bookState, leftPageNo + (id === 'claimRight' ? 1 : 0), metaTime);
   }
   return false;
 }
 
 export function onBookMouseUp(canvasX:number, canvasY:number, _metaTime:number, bookState:BookState) {
+  if (bookState.claimState !== null) return;
   if (bookState.pieceDragState !== null) {
     releaseBookPieceDrag(bookState, canvasX, canvasY);
     return;
@@ -68,6 +70,7 @@ export function onBookMouseUp(canvasX:number, canvasY:number, _metaTime:number, 
 }
 
 export function onBookMouseOver(canvasX:number, canvasY:number, _metaTime:number, bookState:BookState) {
+  if (bookState.claimState !== null) return;
   if (bookState.pieceDragState !== null) {
     moveBookPieceDrag(bookState, canvasX, canvasY);
     return;
@@ -79,6 +82,7 @@ export function onBookMouseOver(canvasX:number, canvasY:number, _metaTime:number
 }
 
 export function onBookMouseWheel(_deltaY:number, _metaTime:number, bookState:BookState) {
+  if (bookState.claimState !== null) return;
   assert(bookState.isVisible); // Caller should check.
   if (!bookState.layout || bookState.animationKind) return;
 }

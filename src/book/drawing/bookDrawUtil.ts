@@ -15,7 +15,7 @@ import { getVisibleBookPieces } from "../pieceInteractionUtil";
 import PieceSlotLayout from "./types/PieceSlotLayout";
 import { prepareBookPieceSlotPresentations } from "../pieceSlotPresentationUtil";
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
-import { updateBookClaimControls } from '../bookClaimControlUtil';
+import { updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -147,6 +147,7 @@ function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rec
 
   // Replace rather than retain records from earlier page/content draws.
   layout.pieceSlotLayouts = slots;
+  layout.pieceLayoutsPageNo = canCollect ? bookState.pageNo : null;
 }
 
 function _drawPieces(bookState:BookState, bookRect:Rect, context:CanvasRenderingContext2D) {
@@ -172,6 +173,7 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   _drawTranslucentBackground(bookState, metaTime, context);
   context.drawImage(bookImage, x, y, width, height);
   _drawPageContent(bookState, metaTime, drawRect, imageSet, context, presentations);
+  updateBookClaim(bookState, metaTime);
   _drawPieces(bookState, drawRect, context);
   drawPageFlip(bookState, metaTime, drawRect, bookImage, imageSet, context);
   if (bookState.animationKind === null) _drawBookControls(bookState, context);

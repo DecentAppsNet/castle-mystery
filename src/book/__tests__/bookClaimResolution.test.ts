@@ -4,7 +4,7 @@ import { clearSeed, setSeed } from '@/common/randUtil';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
-import { claimBookConclusion, getConclusionPageInstructionText, updateBookClaimControls } from '../bookClaimControlUtil';
+import { claimBookConclusion, getConclusionPageInstructionText, updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 import { onBookMouseDown } from '../eventHandlers';
 import { beginBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces } from '../pieceInteractionUtil';
 import { generatePieceStack } from '../pieceGenerationUtil';
@@ -39,6 +39,7 @@ function _createFixture(single:boolean = false) {
     isSinglePageView:single, pieceLayouts:[] as readonly PieceLayout[], pieceSlotLayouts:[first, second], pieceLayoutsPageNo:1 as number|null,
     controlLayout:createLayout() };
   bookState.layout = layout;
+  updateBookClaimControls(bookState);
   return { bookState, page, blank, otherBlank, first, second, layout };
 }
 
@@ -57,7 +58,8 @@ describe('book claim resolution', () => {
     otherBlank.correctAnswerIndexes.push(1);
     const stack = bookState.pieceStack;
     const placements = stack.map(piece => piece.placement);
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 3623);
     expect(page.conclusion.isComplete).toBe(true);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
     expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
@@ -72,7 +74,8 @@ describe('book claim resolution', () => {
     const stack = bookState.pieceStack;
     const unusedPosition = [stack[2].xPercent, stack[2].yPercent];
     setSeed(503);
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 4623);
     expect(page.conclusion.isComplete).toBe(false);
     expect(page.conclusion.incorrectGuessCount).toBe(1);
     expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
@@ -87,7 +90,8 @@ describe('book claim resolution', () => {
   it('uses independently random directions with nonzero displacement proportional to slot height', () => {
     const { bookState, first, second, layout } = _createFixture();
     setSeed(503);
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 4623);
     const displacements = [first, second].map((slot, i) => {
       const piece = bookState.pieceStack[i];
       const x = layout.rect.x + layout.rect.width * piece.xPercent / 100;
@@ -107,9 +111,11 @@ describe('book claim resolution', () => {
     const first = _createFixture();
     const second = _createFixture();
     setSeed(23);
-    claimBookConclusion(first.bookState, 1);
+    claimBookConclusion(first.bookState, 1, 123);
+    updateBookClaim(first.bookState, 4623);
     setSeed(23);
-    claimBookConclusion(second.bookState, 1);
+    claimBookConclusion(second.bookState, 1, 123);
+    updateBookClaim(second.bookState, 4623);
     expect(first.bookState.pieceStack.map(piece => [piece.xPercent, piece.yPercent]))
       .toEqual(second.bookState.pieceStack.map(piece => [piece.xPercent, piece.yPercent]));
   });
@@ -117,7 +123,8 @@ describe('book claim resolution', () => {
   it('makes ejected pieces immediately hittable and draggable without a draw', () => {
     const { bookState } = _createFixture();
     setSeed(503);
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 4623);
     const piece = bookState.pieceStack[0];
     const record = bookState.layout!.pieceLayouts.find(record => record.piece === piece)!;
     const x = record.rect.x + record.rect.width / 2;
@@ -130,9 +137,11 @@ describe('book claim resolution', () => {
     const spread = _createFixture();
     const single = _createFixture(true);
     setSeed(503);
-    claimBookConclusion(spread.bookState, 1);
+    claimBookConclusion(spread.bookState, 1, 123);
+    updateBookClaim(spread.bookState, 4623);
     setSeed(503);
-    claimBookConclusion(single.bookState, 1);
+    claimBookConclusion(single.bookState, 1, 123);
+    updateBookClaim(single.bookState, 4623);
     single.bookState.pieceStack.slice(0, 2).forEach((piece, i) => {
       expect(piece.xPercent).toBeCloseTo(spread.bookState.pieceStack[i].xPercent);
       expect(piece.yPercent).toBeCloseTo(spread.bookState.pieceStack[i].yPercent);
@@ -144,7 +153,12 @@ describe('book claim resolution', () => {
     otherBlank.correctAnswerIndexes.push(1);
     updateBookClaimControls(bookState);
     const rect = findControlRect(layout.controlLayout, 'claimLeft');
-    expect(onBookMouseDown(rect.x + rect.width / 2, rect.y + rect.height / 2, 0, bookState, true)).toBe(false);
+    expect(onBookMouseDown(rect.x + rect.width / 2, rect.y + rect.height / 2, 123, bookState, true)).toBe(false);
+    expect(bookState.claimState).toMatchObject({ page, startedAt:123, correct:true, resultApplied:false });
+    expect(page.conclusion.isComplete).toBe(false);
+    updateBookClaim(bookState, 3622);
+    expect(page.conclusion.isComplete).toBe(false);
+    updateBookClaim(bookState, 3623);
     expect(page.conclusion.isComplete).toBe(true);
     expect(bookState.animationKind).toBeNull();
     expect(bookState.isVisible).toBe(true);
@@ -154,9 +168,10 @@ describe('book claim resolution', () => {
   it('ignores a repeated claim after a failed attempt has emptied the blanks', () => {
     const { bookState, page } = _createFixture();
     setSeed(1);
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 4623);
     const positions = bookState.pieceStack.map(piece => [piece.xPercent, piece.yPercent]);
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 5000);
     expect(page.conclusion.incorrectGuessCount).toBe(1);
     expect(bookState.pieceStack.map(piece => [piece.xPercent, piece.yPercent])).toEqual(positions);
   });
@@ -173,7 +188,7 @@ describe('book claim resolution', () => {
   it('ignores invalidated geometry without partially ejecting answers', () => {
     const { bookState, page, blank, otherBlank, layout } = _createFixture();
     layout.pieceLayoutsPageNo = null;
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
     expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
   });
@@ -181,7 +196,7 @@ describe('book claim resolution', () => {
   it('requires geometry for all blanks before changing any answer', () => {
     const { bookState, page, blank, otherBlank, layout } = _createFixture();
     layout.pieceSlotLayouts.pop();
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
     expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
   });
@@ -189,24 +204,24 @@ describe('book claim resolution', () => {
   it('rejects replaced page content at the same page number', () => {
     const { bookState, page } = _createFixture();
     bookState.pages[0] = { ...page };
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
   });
 
   it('does not claim the hidden neighboring page in single-page view', () => {
     const { bookState, page, layout } = _createFixture(true);
     bookState.pageNo = layout.pieceLayoutsPageNo = 2;
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
   });
 
   it('does not claim during a book animation or an active drag', () => {
     const { bookState, page } = _createFixture();
     bookState.animationKind = 'flipNext';
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
     bookState.animationKind = null;
     bookState.pieceDragState = { piece:bookState.pieceStack[2], grabOffset:[0, 0], extractedAppearance:null };
-    claimBookConclusion(bookState, 1);
+    claimBookConclusion(bookState, 1, 123);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
   });
 });
