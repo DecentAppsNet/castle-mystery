@@ -2,7 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 /* v8 ignore file -- Canvas page layout and text rendering are verified visually. @preserve */
 
-import BookPage from "../types/BookPage";
+import BookPage from "@/book/types/BookPage";
 import PageWriter from "./PageWriter";
 
 type BookStartPage = Extract<BookPage, { kind:'bookStart' }>;

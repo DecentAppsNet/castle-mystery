@@ -7,7 +7,7 @@ import { createDefaultBookState } from '@/book/types/BookState';
 import BookLayout from '@/book/drawing/types/BookLayout';
 import { hideBook, showBook } from '@/book/drawing/bookAnimationUtil';
 import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '@/book/drawing/bookLayoutUtil';
-import { startPageFlip } from '@/book/drawing/pageFlipAnimationUtil';
+import { startPageFlip } from '@/book/drawing/pages';
 import { goNextPage } from '@/book/navigationUtil';
 import { beginBookPieceDrag } from '../pieceInteractionUtil';
 

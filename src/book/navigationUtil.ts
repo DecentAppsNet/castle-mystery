@@ -7,7 +7,7 @@ import { shiftBookLeft, shiftBookRight } from "./drawing/bookAnimationUtil";
 import { hideControl, showControl } from "@/canvasControls";
 import ControlLayout from "@/canvasControls/types/ControlLayout";
 import BookControlId from "./drawing/types/BookControlId";
-import { startPageFlip } from "./drawing/pageFlipAnimationUtil";
+import { startPageFlip } from "./drawing/pages";
 import { updateBookClaimControls } from './bookClaimControlUtil';
 
 function _setControlVisibility(controlId:BookControlId, isVisible:boolean, controlLayout:ControlLayout) {

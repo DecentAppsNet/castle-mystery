@@ -2,14 +2,14 @@
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 /* v8 ignore file -- Visual animation preview glue is verified manually. @preserve */
 
-import BookState from "../types/BookState";
+import BookState from "@/book/types/BookState";
 import Rect from "@/game/types/Rect";
 import { clamp, interpolateNumber } from "@/common/numberUtil";
-import { getAnimationProgress } from "./bookAnimationUtil";
+import { getAnimationProgress } from "../bookAnimationUtil";
 import { ImageSet } from "@/imageLoading";
 import { assertNonNullable } from "decent-portal";
-import AnimationEndCallback from "../types/AnimationEndCallback";
-import { invalidatePieceLayouts } from "./bookLayoutUtil";
+import AnimationEndCallback from "@/book/types/AnimationEndCallback";
+import { invalidatePieceLayouts } from "../bookLayoutUtil";
 
 export const BOOK_PAGE_TILE_IMAGE_URL = '/assets/ui/bookPageTile.png';
 

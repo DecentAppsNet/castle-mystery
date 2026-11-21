@@ -11,7 +11,7 @@ import { goNextPage, goPrevPage, setPageNavigationButtonVisibility } from '../na
 import { generatePieceStack } from '../pieces';
 import { hideBook, shiftBookLeft, shiftBookRight, showBook } from '../drawing/bookAnimationUtil';
 import { updateBookLayoutAsNeeded, updateControlLayout } from '../drawing/bookLayoutUtil';
-import { startPageFlip } from '../drawing/pageFlipAnimationUtil';
+import { startPageFlip } from '../drawing/pages';
 import BookLayout from '../drawing/types/BookLayout';
 import PieceSlotLayout from '../drawing/types/PieceSlotLayout';
 import BookPage from '../types/BookPage';

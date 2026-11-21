@@ -9,10 +9,10 @@ import { drawIllumination } from "./illuminationDrawUtil";
 import { ImageSet } from "@/imageLoading";
 import { drawPageDivider, drawPagePieceSlot, drawPageTextLine, getIlluminatedTextSections,
   splitTextToLines } from "./pageWriterUtil";
-import { measureBookTextBox } from "./bookTextDrawUtil";
-import DividerStyle from "./types/DividerStyle";
-import PageTextBoxMetrics from './types/PageTextBoxMetrics';
-import PieceSlotAnimationState from './types/PieceSlotAnimationState';
+import { measureBookTextBox } from "../bookTextDrawUtil";
+import DividerStyle from "../types/DividerStyle";
+import PageTextBoxMetrics from '../types/PageTextBoxMetrics';
+import PieceSlotAnimationState from '../types/PieceSlotAnimationState';
 
 type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 type ColorName = 'black' | 'red' | 'grey';

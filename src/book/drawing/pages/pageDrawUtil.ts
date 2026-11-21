@@ -3,15 +3,15 @@
 /* v8 ignore file -- Canvas page layout and text rendering are verified visually. @preserve */
 
 import Rect from "@/game/types/Rect";
-import BookPage from "../types/BookPage";
-import { isLeftPageNo } from "./bookLayoutUtil";
+import BookPage from "@/book/types/BookPage";
+import { isLeftPageNo } from "../bookLayoutUtil";
 import { assert } from "decent-portal";
 import PageWriter from "./PageWriter";
 import { ImageSet } from "@/imageLoading";
 import { toNumeral } from "@/common/romanNumeralUtil";
-import PieceSlotLayout from "./types/PieceSlotLayout";
-import PieceSlotPresentation from "../types/PieceSlotPresentation";
-import BookClaimGlint from '../types/BookClaimGlint';
+import PieceSlotLayout from "../types/PieceSlotLayout";
+import PieceSlotPresentation from "@/book/types/PieceSlotPresentation";
+import BookClaimGlint from '@/book/types/BookClaimGlint';
 import { drawBookStartPage } from "./bookStartPageDrawUtil";
 import { drawChapterStartPage } from "./chapterStartPageDrawUtil";
 import { drawConclusionPage, drawLockedConclusionPage } from "./conclusionPageDrawUtil";

@@ -4,7 +4,7 @@ import { createBookState } from '@/book/bookContentUtil';
 import BookLayout from '@/book/drawing/types/BookLayout';
 import { hideBook } from '@/book/drawing/bookAnimationUtil';
 import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '@/book/drawing/bookLayoutUtil';
-import { startPageFlip } from '@/book/drawing/pageFlipAnimationUtil';
+import { startPageFlip } from '@/book/drawing/pages';
 import { goNextPage, goPrevPage } from '@/book/navigationUtil';
 import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '@/book';
 import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPieceAtPoint,

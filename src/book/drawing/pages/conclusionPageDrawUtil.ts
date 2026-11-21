@@ -3,7 +3,7 @@
 /* v8 ignore file -- Canvas page layout and text rendering are verified visually. @preserve */
 
 import Rect from "@/game/types/Rect";
-import BookPage from "../types/BookPage";
+import BookPage from "@/book/types/BookPage";
 import { assert, assertNonNullable, botch } from "decent-portal";
 import PageWriter from "./PageWriter";
 import ClozePartType from "@/game/conclusions/types/ClozePartType";
@@ -11,10 +11,10 @@ import ClozeText from "@/game/conclusions/types/ClozeText";
 import { drawObscuredPolygon } from "@/common/drawing/obscurePolygonDrawUtil";
 import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
 import ClozeImage from "@/game/conclusions/types/ClozeImage";
-import PieceSlotLayout from "./types/PieceSlotLayout";
-import PieceSlotPresentation from "../types/PieceSlotPresentation";
-import { getConclusionPageInstructionText } from '../bookClaimControlUtil';
-import BookClaimGlint from '../types/BookClaimGlint';
+import PieceSlotLayout from "../types/PieceSlotLayout";
+import PieceSlotPresentation from "@/book/types/PieceSlotPresentation";
+import { getConclusionPageInstructionText } from '@/book/bookClaimControlUtil';
+import BookClaimGlint from '@/book/types/BookClaimGlint';
 import ClozePart from "@/game/conclusions/types/ClozePart";
 
 function _isClozeImageUrlResolved(part:ClozePart) {
