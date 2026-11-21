@@ -5,6 +5,7 @@ import { clearSeed, setSeed } from '@/common/randUtil';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { claimBookConclusion, updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
+import { calcBookClaimMessageAlpha } from '../bookClaimPresentationUtil';
 import { onBookMouseDown, onBookMouseOver, onBookMouseUp, onBookMouseWheel } from '../eventHandlers';
 import { goNextPage, goPrevPage, setPageNavigationButtonVisibility } from '../navigationUtil';
 import { generatePieceStack } from '../pieceGenerationUtil';
@@ -63,6 +64,56 @@ afterEach(clearSeed);
 
 describe('book claim runtime', () => {
   describe('updateBookClaim()', () => {
+    it('starts message feedback at the scheduled recovery end, not a late rendered frame', () => {
+      const { bookState, page, layout } = _createFixture(true);
+      claimBookConclusion(bookState, 1, STARTED_AT);
+      updateBookClaim(bookState, STARTED_AT + 6500);
+      expect(bookState.claimState?.page).toBe(page);
+      expect(bookState.claimState?.startedAt).toBe(STARTED_AT);
+      expect(calcBookClaimMessageAlpha(bookState, page, STARTED_AT + 6500)).toBe(.5);
+      _expectHiddenControls(layout);
+      const before = structuredClone(bookState);
+      onBookMouseDown(-100, -100, STARTED_AT + 6500, bookState, true);
+      onBookMouseUp(0, 0, STARTED_AT + 6500, bookState);
+      onBookMouseOver(0, 0, STARTED_AT + 6500, bookState);
+      onBookMouseWheel(1, STARTED_AT + 6500, bookState);
+      expect(bookState).toEqual(before);
+      updateBookClaim(bookState, STARTED_AT + 7000);
+      expect(bookState.claimState).toBeNull();
+      expect(calcBookClaimMessageAlpha(bookState, page, STARTED_AT + 7000)).toBe(1);
+      expect(layout.controlLayout.controls.find(control => control.id === 'closeBook')?.isVisible).toBe(true);
+    });
+
+    it('does not restart message feedback when a frame skips the entire fade-in', () => {
+      const { bookState } = _createFixture(true);
+      claimBookConclusion(bookState, 1, STARTED_AT);
+      updateBookClaim(bookState, STARTED_AT + 1000000);
+      expect(bookState.claimState).toBeNull();
+    });
+
+    it('discards message feedback on page replacement', () => {
+      const { bookState } = _createFixture(true);
+      claimBookConclusion(bookState, 1, STARTED_AT);
+      updateBookClaim(bookState, STARTED_AT + 6000);
+      expect(bookState.claimState).not.toBeNull();
+      bookState.pages = [];
+      updateBookClaim(bookState, STARTED_AT + 6100);
+      expect(bookState.claimState).toBeNull();
+    });
+
+    it('discards message feedback on hiding or showing the book', () => {
+      const hidden = _createFixture(true).bookState;
+      claimBookConclusion(hidden, 1, STARTED_AT);
+      updateBookClaim(hidden, STARTED_AT + 6500);
+      hideBook(STARTED_AT + 6500, hidden);
+      expect(hidden.claimState).toBeNull();
+      const shown = _createFixture(true).bookState;
+      claimBookConclusion(shown, 1, STARTED_AT);
+      updateBookClaim(shown, STARTED_AT + 6500);
+      showBook(STARTED_AT + 6500, shown);
+      expect(shown.claimState).toBeNull();
+    });
+
     it('captures failure without mutating answers or inventory and does not rejudge later correctness', () => {
       const { bookState, page, blank, otherBlank } = _createFixture();
       const stack = bookState.pieceStack;
@@ -90,7 +141,7 @@ describe('book claim runtime', () => {
       expect(bookState.claimState).toBe(claim);
     });
 
-    it('captures success and completes only at 3500, retaining the claim until recovery ends at 4000', () => {
+    it('captures success and completes only at 5500, retaining the claim until message fade ends at 7000', () => {
       const { bookState, page, blank, otherBlank, layout } = _createFixture(true);
       const placements = bookState.pieceStack.map(piece => piece.placement);
       claimBookConclusion(bookState, 1, STARTED_AT);
@@ -99,7 +150,9 @@ describe('book claim runtime', () => {
       updateBookClaim(bookState, STARTED_AT + 3000);
       updateBookClaim(bookState, STARTED_AT + 3499);
       expect(page.conclusion.isComplete).toBe(false);
-      updateBookClaim(bookState, STARTED_AT + 3500);
+      updateBookClaim(bookState, STARTED_AT + 5499);
+      expect(page.conclusion.isComplete).toBe(false);
+      updateBookClaim(bookState, STARTED_AT + 5500);
       expect(page.conclusion.isComplete).toBe(true);
       expect(claim.correct).toBe(true);
       expect(claim.resultApplied).toBe(true);
@@ -107,10 +160,15 @@ describe('book claim runtime', () => {
       expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
       bookState.pieceStack.forEach((piece, i) => expect(piece.placement).toBe(placements[i]));
       _expectHiddenControls(layout);
-      updateBookClaim(bookState, STARTED_AT + 3999);
+      updateBookClaim(bookState, STARTED_AT + 5999);
       expect(bookState.claimState).toBe(claim);
       _expectHiddenControls(layout);
-      updateBookClaim(bookState, STARTED_AT + 4000);
+      updateBookClaim(bookState, STARTED_AT + 6000);
+      expect(bookState.claimState).toBe(claim);
+      _expectHiddenControls(layout);
+      updateBookClaim(bookState, STARTED_AT + 6999);
+      _expectHiddenControls(layout);
+      updateBookClaim(bookState, STARTED_AT + 7000);
       expect(bookState.claimState).toBeNull();
       expect(page.conclusion.incorrectGuessCount).toBe(0);
       expect(layout.controlLayout.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
@@ -180,7 +238,7 @@ describe('book claim runtime', () => {
       expect(bookState).toEqual(after);
     });
 
-    it('keeps every control hidden across failure recovery and restores last-spread availability at 4500', () => {
+    it('keeps every control hidden through failure message fade and restores last-spread availability at 5500', () => {
       const { bookState, page, first, layout } = _createFixture(false, 3);
       bookState.hungryPieceSlot = first;
       bookState.pieceSlotTransitions = [{ layout, slot:first, fromScale:1, toScale:1.2, startedAt:STARTED_AT - 100 }];
@@ -198,6 +256,11 @@ describe('book claim runtime', () => {
       updateBookClaim(bookState, STARTED_AT + 4499);
       _expectHiddenControls(layout);
       updateBookClaim(bookState, STARTED_AT + 4500);
+      expect(bookState.claimState).not.toBeNull();
+      expect(calcBookClaimMessageAlpha(bookState, page, STARTED_AT + 5000)).toBe(.5);
+      updateBookClaim(bookState, STARTED_AT + 5499);
+      _expectHiddenControls(layout);
+      updateBookClaim(bookState, STARTED_AT + 5500);
       expect(bookState.claimState).toBeNull();
       expect(page.conclusion.incorrectGuessCount).toBe(1);
       expect(layout.controlLayout.controls.find(control => control.id === 'prevPage')?.isVisible).toBe(true);
@@ -418,7 +481,7 @@ describe('book claim runtime', () => {
       expect(bookState).toEqual(wrongPage);
       layout.pieceSlotLayouts = [first, second];
       layout.pieceLayoutsPageNo = bookState.pageNo;
-      updateBookClaim(bookState, STARTED_AT + 4500);
+      updateBookClaim(bookState, STARTED_AT + 5500);
       expect(bookState.claimState).toBeNull();
       expect(claim.ejectedCount).toBe(2);
       expect(page.conclusion.incorrectGuessCount).toBe(1);
@@ -456,7 +519,7 @@ describe('book claim runtime', () => {
       expect(Math.hypot(record.rect.x - freshSecond.rect.x, record.rect.y - freshSecond.rect.y)).toBeLessThan(freshSecond.rect.height);
       expect(claim.startedAt).toBe(STARTED_AT);
       _expectHiddenControls(resized);
-      updateBookClaim(bookState, STARTED_AT + 4500);
+      updateBookClaim(bookState, STARTED_AT + 5500);
       expect(bookState.claimState).toBeNull();
     });
 
@@ -479,7 +542,7 @@ describe('book claim runtime', () => {
       const freshSecond = { ...second, rect:{ ...second.rect, x:600, y:300 } };
       layout.pieceSlotLayouts = [first, freshSecond];
       layout.pieceLayoutsPageNo = bookState.pageNo;
-      updateBookClaim(bookState, STARTED_AT + 4500);
+      updateBookClaim(bookState, STARTED_AT + 5500);
       expect(bookState.claimState).toBeNull();
       expect(page.conclusion.incorrectGuessCount).toBe(1);
       expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, -1]);

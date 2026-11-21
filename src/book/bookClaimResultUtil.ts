@@ -1,4 +1,4 @@
-/* This file applies book-claim results once, ejecting pieces from current normal slot geometry.
+/* This file applies book-claim results once, ejecting failed answers and removing unused successful pieces.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 import { assertNonNullable } from 'decent-portal';
 import { rand } from '@/common/randUtil';
@@ -20,7 +20,13 @@ export function applyBookClaimResults(bookState:BookState, claim:BookClaimState,
   // Apply the counter at failure entry or completion at success exit, never on presentation sampling.
   const timing = calcBookClaimTiming(elapsed, claim.blanks.length, claim.correct);
   if (!claim.resultApplied && (timing.shouldComplete || timing.dueEjectionCount > 0)) {
-    if (claim.correct) claim.page.conclusion.isComplete = true;
+    if (claim.correct) {
+      claim.page.conclusion.isComplete = true;
+      bookState.pieceStack = bookState.pieceStack.filter(piece =>
+        piece.placement !== null || piece.conclusionId !== claim.page.conclusion.id);
+      if (bookState.layout) bookState.layout.pieceLayouts = bookState.layout.pieceLayouts.filter(({ piece }) =>
+        bookState.pieceStack.includes(piece));
+    }
     else claim.page.conclusion.incorrectGuessCount++;
     claim.resultApplied = true;
   }

@@ -17,6 +17,8 @@ import { prepareBookPieceSlotPresentations } from "../pieceSlotPresentationUtil"
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
 import { updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 import { calcBookClaimShakeOffset, calcBookClaimTiming } from '../bookClaimTimingUtil';
+import { calcBookClaimMessageAlpha, prepareBookClaimGlints } from '../bookClaimPresentationUtil';
+import { prepareBookClaimPieceFalls } from '../bookClaimPieceFallUtil';
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -154,11 +156,14 @@ function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rec
   // Collect only interactive pages, never animation previews or the hidden neighbor.
   const slots:PieceSlotLayout[] = [];
   const canCollect = bookState.isVisible && bookState.animationKind === null;
+  const glints = prepareBookClaimGlints(bookState.claimState, metaTime);
   drawPage(bookState.pages[leftPageNo-1], metaTime, leftPageNo, leftPageRect, imageSet, context,
-    canCollect && (!layout.isSinglePageView || isOnLeftPage) ? slots : null, presentations);
+    canCollect && (!layout.isSinglePageView || isOnLeftPage) ? slots : null, presentations, glints,
+    calcBookClaimMessageAlpha(bookState, bookState.pages[leftPageNo-1], metaTime));
   if (rightPageNo <= bookState.pages.length) {
     drawPage(bookState.pages[rightPageNo-1], metaTime, rightPageNo, rightPageRect, imageSet, context,
-      canCollect && (!layout.isSinglePageView || !isOnLeftPage) ? slots : null, presentations);
+      canCollect && (!layout.isSinglePageView || !isOnLeftPage) ? slots : null, presentations, glints,
+      calcBookClaimMessageAlpha(bookState, bookState.pages[rightPageNo-1], metaTime));
   }
 
   // Replace rather than retain records from earlier page/content draws.
@@ -166,14 +171,15 @@ function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rec
   layout.pieceLayoutsPageNo = canCollect ? bookState.pageNo : null;
 }
 
-function _drawPieces(bookState:BookState, bookRect:Rect, context:CanvasRenderingContext2D) {
+function _drawPieces(bookState:BookState, bookRect:Rect, metaTime:number, context:CanvasRenderingContext2D) {
   assertNonNullable(bookState.layout);
   // Collect both visible pages before drawing so pieces overlay all page content.
   const pieces = getVisibleBookPieces(bookState);
   const pieceLayouts = preparePieceLayouts(pieces, bookRect, context, bookState.pieceDragState);
   bookState.layout.pieceLayouts = bookState.animationKind === null ? pieceLayouts : [];
   bookState.layout.pieceLayoutsPageNo = bookState.animationKind === null ? bookState.pageNo : null;
-  drawBookPieces(pieceLayouts, context, bookState);
+  drawBookPieces(prepareBookClaimPieceFalls(pieceLayouts, bookState.claimState, metaTime,
+    context.canvas.height), context, bookState);
 }
 
 export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D) {
@@ -197,7 +203,7 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   _drawBookImage(bookImage, drawRect, bookState, metaTime, context);
   _drawPageContent(bookState, metaTime, drawRect, imageSet, context, presentations);
   updateBookClaim(bookState, metaTime);
-  _drawPieces(bookState, drawRect, context);
+  _drawPieces(bookState, drawRect, metaTime, context);
   context.restore();
 
   // Navigation and overlays remain outside the claim transform, including the resumed recovery-end frame.

@@ -72,7 +72,13 @@ class PageWriter {
 
   // Draws text on its own line, based on Y position of cursor and specified justification. (X position of cursor ignored.)
   // Embedded line breaks draw separate lines; each advances the cursor by line height with X reset to 0%.
-  addTextLine(text:string, justification:TextJustification = 'center', colorName:ColorName = 'black') {
+  addTextLine(text:string, justification:TextJustification = 'center', colorName:ColorName = 'black', alpha:number = 1) {
+    // Scope opacity to these lines, preserving the caller's existing canvas opacity.
+    assert(Number.isFinite(alpha) && alpha >= 0 && alpha <= 1);
+    this._context.save();
+    this._context.globalAlpha *= alpha;
+
+    // Place each line normally, even when invisible, so cursor and layout remain stable.
     const xRatio = justification === 'left' ? 0 : justification === 'right' ? 1 : .5;
     const x = this._pageRect.x + this._pageRect.width * xRatio;
     const lines = splitTextToLines(text);
@@ -83,6 +89,7 @@ class PageWriter {
         colorNameToHex[colorName], this._context);
       this.addLineBreak();
     }
+    this._context.restore();
   }
 
   private _writeChunk(text:string, isUnderlined:boolean = false) {

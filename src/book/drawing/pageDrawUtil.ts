@@ -17,6 +17,7 @@ import ClozeImage from "@/game/conclusions/types/ClozeImage";
 import PieceSlotLayout from "./types/PieceSlotLayout";
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
 import { getConclusionPageInstructionText } from '../bookClaimControlUtil';
+import BookClaimGlint from '../types/BookClaimGlint';
 
 const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
@@ -74,7 +75,7 @@ function _drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
 
 type ConclusionPage = Extract<BookPage, { kind:'conclusion' }>;
 function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, slotLayouts:PieceSlotLayout[]|null,
-  presentations:readonly PieceSlotPresentation[]) {
+  presentations:readonly PieceSlotPresentation[], glints:readonly BookClaimGlint[], messageAlpha:number) {
   // Draw parts in file order, retaining the actual mutable blank identity.
   pw.setFontSize('m');
   for(let partI = 0; partI < page.conclusion.parts.length; ++partI) {
@@ -91,7 +92,7 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, 
             slot.page === page && slot.blank === blankPart && slot.partIndex === partI && slot.pageNo === pageNo);
           const { metrics, ...rect } = pw.addPieceSlot(playerGuess, pieceStyleNo, {
             offsetX:presentation?.offsetX ?? 0, scale:presentation?.scale ?? 1,
-            glintAngle:null
+            glintAngle:glints.find(glint => glint.page === page && glint.blank === blankPart)?.angle ?? null
           });
           slotLayouts?.push({ page, pageNo, partIndex:partI, blank:blankPart, styleNo:pieceStyleNo, rect, metrics });
         }
@@ -115,7 +116,7 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, 
   }
   const instructionText = getConclusionPageInstructionText(page.conclusion);
   pw.jump(0, 100-pw.getLineHeight('m')-pw.getLineHeight('s'));
-  pw.addTextLine(instructionText);
+  pw.addTextLine(instructionText, 'center', 'black', messageAlpha);
 }
 
 function _createLockedPageClipPath(rect:Rect, isLeftPage:boolean):Path2D {
@@ -173,7 +174,7 @@ function _isLockedConclusionPage(page:BookPage) {
 
 export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRect:Rect, imageSet:ImageSet,
   context:CanvasRenderingContext2D, slotLayouts:PieceSlotLayout[]|null = null,
-  presentations:readonly PieceSlotPresentation[] = []) {
+  presentations:readonly PieceSlotPresentation[] = [], glints:readonly BookClaimGlint[] = [], messageAlpha:number = 1) {
   // Create disposable placement state for this draw only.
   const innerPageRect = _calcInnerPageRect(targetRect, pageNo);
   const pageWriter = new PageWriter(innerPageRect, imageSet, context);
@@ -195,7 +196,7 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
       if (_isLockedConclusionPage(page)) {
         _drawLockedConclusionPage(metaTime, innerPageRect, isLeftPageNo(pageNo), pageWriter, context);
       } else {
-        _drawConclusionPage(page, pageWriter, pageNo, slotLayouts, presentations);
+        _drawConclusionPage(page, pageWriter, pageNo, slotLayouts, presentations, glints, messageAlpha);
       }
       break;
     default:

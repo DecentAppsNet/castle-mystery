@@ -112,10 +112,11 @@ export function updateBookClaim(bookState:BookState, metaTime:number):void {
     if (!bookState.layout || bookState.layout.pieceLayoutsPageNo !== bookState.pageNo) return;
     const elapsed = metaTime - claim.startedAt;
     applyBookClaimResults(bookState, claim, elapsed);
-    if (calcBookClaimTiming(elapsed, claim.blanks.length, claim.correct).isDone) bookState.claimState = null;
+    const timing = calcBookClaimTiming(elapsed, claim.blanks.length, claim.correct);
+    if (timing.isDone) bookState.claimState = null;
   }
 
-  // Restore ordinary controls only after recovery or external ownership cancellation.
+  // Restore ordinary controls after the message fade or external ownership cancellation.
   if (bookState.layout && bookState.claimState === null) setPageNavigationButtonVisibility(bookState);
   if (bookState.layout) updateBookClaimControls(bookState);
 }

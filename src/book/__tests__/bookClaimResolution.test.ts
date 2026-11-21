@@ -53,19 +53,19 @@ function _createClaimFixture(correct:boolean = false) {
 afterEach(clearSeed);
 
 describe('book claim resolution', () => {
-  it('marks a correct conclusion complete without ejecting answers or changing the inventory', () => {
+  it('marks a correct conclusion complete, retaining assigned pieces and removing unused pieces', () => {
     const { bookState, page, blank, otherBlank, layout } = _createFixture();
     otherBlank.correctAnswerIndexes.push(1);
     const stack = bookState.pieceStack;
     const placements = stack.map(piece => piece.placement);
     claimBookConclusion(bookState, 1, 123);
-    updateBookClaim(bookState, 3623);
+    updateBookClaim(bookState, 5623);
     expect(page.conclusion.isComplete).toBe(true);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
     expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
-    expect(bookState.pieceStack).toBe(stack);
+    expect(bookState.pieceStack).toEqual(stack.slice(0, 2));
     stack.forEach((piece, i) => expect(piece.placement).toBe(placements[i]));
-    expect(getVisibleBookPieces(bookState)).toEqual([stack[2]]);
+    expect(getVisibleBookPieces(bookState)).toEqual([]);
     expect(layout.controlLayout.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
   });
 
@@ -156,9 +156,9 @@ describe('book claim resolution', () => {
     expect(onBookMouseDown(rect.x + rect.width / 2, rect.y + rect.height / 2, 123, bookState, true)).toBe(false);
     expect(bookState.claimState).toMatchObject({ page, startedAt:123, correct:true, resultApplied:false });
     expect(page.conclusion.isComplete).toBe(false);
-    updateBookClaim(bookState, 3622);
+    updateBookClaim(bookState, 5622);
     expect(page.conclusion.isComplete).toBe(false);
-    updateBookClaim(bookState, 3623);
+    updateBookClaim(bookState, 5623);
     expect(page.conclusion.isComplete).toBe(true);
     expect(bookState.animationKind).toBeNull();
     expect(bookState.isVisible).toBe(true);
@@ -286,13 +286,15 @@ describe('applyBookClaimResults()', () => {
     applyBookClaimResults(bookState, claim, 3000);
     applyBookClaimResults(bookState, claim, 3499);
     expect(page.conclusion.isComplete).toBe(false);
-    applyBookClaimResults(bookState, claim, 3500);
+    applyBookClaimResults(bookState, claim, 5499);
+    expect(page.conclusion.isComplete).toBe(false);
+    applyBookClaimResults(bookState, claim, 5500);
     expect(page.conclusion.isComplete).toBe(true);
     layout.pieceSlotLayouts = [];
     applyBookClaimResults(bookState, claim, 1000000);
     expect(page.conclusion.incorrectGuessCount).toBe(0);
     expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([0, 1]);
-    expect(bookState.pieceStack.map(piece => piece.placement)).toEqual(placements);
+    expect(bookState.pieceStack.map(piece => piece.placement)).toEqual(placements.slice(0, 2));
     expect(claim.ejectedCount).toBe(0);
     expect(claim.resultApplied).toBe(true);
   });

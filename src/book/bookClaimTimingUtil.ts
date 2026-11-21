@@ -7,10 +7,13 @@ export const FULL_REVOLUTION_RADIANS = Math.PI * 2;
 const FADE_MS = 1000;
 const INSPECTION_SLOT_MS = 1000;
 const INSPECTION_MAX_MS = 5000;
-const SUCCESS_MS = 500;
+export const SUCCESS_REVOLUTION_COUNT = 5;
+const SUCCESS_REVOLUTION_MS = 500;
+const SUCCESS_MS = SUCCESS_REVOLUTION_MS * SUCCESS_REVOLUTION_COUNT;
 const FAILURE_SLOT_MS = 500;
 const FAILURE_MAX_MS = 2500;
 const RECOVERY_MS = 500;
+const MESSAGE_FADE_IN_MS = 1000;
 const SHAKE_PERIOD_MS = 180;
 const SHAKE_HEIGHT_RATIO = .003;
 
@@ -26,19 +29,22 @@ export function calcBookClaimTiming(elapsed:number, slotCount:number, correct:bo
   const failureInterval = Math.min(FAILURE_SLOT_MS, FAILURE_MAX_MS / slotCount);
   const resultStart = FADE_MS + slotCount * inspectionInterval;
   const recoveryStart = resultStart + (correct ? SUCCESS_MS : slotCount * failureInterval);
-  const totalDuration = recoveryStart + RECOVERY_MS;
+  const messageStart = recoveryStart + RECOVERY_MS;
+  const totalDuration = messageStart + MESSAGE_FADE_IN_MS;
   const stage = elapsed < FADE_MS ? 'fade' : elapsed < resultStart ? 'inspection'
-    : elapsed < recoveryStart ? (correct ? 'success' : 'failure') : elapsed < totalDuration ? 'recovery' : 'done';
+    : elapsed < recoveryStart ? (correct ? 'success' : 'failure') : elapsed < messageStart ? 'recovery'
+    : elapsed < totalDuration ? 'message' : 'done';
 
   // Sample local presentation while retaining cumulative events owed after skipped stages.
   const inspectedIndex = stage === 'inspection' ? _intervalIndex(elapsed, FADE_MS, inspectionInterval) : null;
   const start = stage === 'fade' ? 0 : stage === 'inspection' ? FADE_MS + inspectedIndex! * inspectionInterval
-    : stage === 'success' || stage === 'failure' ? resultStart : recoveryStart;
+    : stage === 'success' || stage === 'failure' ? resultStart : stage === 'recovery' ? recoveryStart : messageStart;
   const duration = stage === 'fade' ? FADE_MS : stage === 'inspection' ? inspectionInterval
-    : stage === 'success' ? SUCCESS_MS : stage === 'failure' ? slotCount * failureInterval : RECOVERY_MS;
+    : stage === 'success' ? SUCCESS_MS : stage === 'failure' ? slotCount * failureInterval
+    : stage === 'recovery' ? RECOVERY_MS : MESSAGE_FADE_IN_MS;
   const progress = clamp((elapsed - start) / duration, 0, 1);
   return { stage, progress, inspectedIndex, totalDuration,
-    envelope:stage === 'fade' ? progress : stage === 'recovery' ? 1 - progress : stage === 'done' ? 0 : 1,
+    envelope:stage === 'fade' ? progress : stage === 'recovery' ? 1 - progress : stage === 'message' || stage === 'done' ? 0 : 1,
     dueEjectionCount:!correct && elapsed >= resultStart ? Math.min(slotCount, _intervalIndex(elapsed, resultStart, failureInterval) + 1) : 0,
     shouldComplete:correct && elapsed >= recoveryStart, isDone:elapsed >= totalDuration } as const;
 }

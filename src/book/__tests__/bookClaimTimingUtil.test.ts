@@ -6,7 +6,7 @@ describe('bookClaimTimingUtil', () => {
     it('is exactly neutral before start and at or beyond completion for both result paths', () => {
       expect(calcBookClaimShakeOffset(-100, 3, false, 500)).toBe(0);
       expect(calcBookClaimShakeOffset(0, 3, true, 500)).toBe(0);
-      expect(calcBookClaimShakeOffset(5000, 3, true, 500)).toBe(0);
+      expect(calcBookClaimShakeOffset(7000, 3, true, 500)).toBe(0);
       expect(calcBookClaimShakeOffset(6000, 3, false, 500)).toBe(0);
       expect(calcBookClaimShakeOffset(1000000, 3, false, 500)).toBe(0);
     });
@@ -42,9 +42,9 @@ describe('bookClaimTimingUtil', () => {
     it('shares shake between outcomes until their recovery schedules diverge', () => {
       expect(calcBookClaimShakeOffset(1234, 3, true, 500))
         .toBe(calcBookClaimShakeOffset(1234, 3, false, 500));
-      const failure = calcBookClaimShakeOffset(4750, 3, false, 500);
-      expect(Math.abs(failure)).toBeGreaterThan(0);
-      expect(calcBookClaimShakeOffset(4750, 3, true, 500)).toBeCloseTo(failure * .5);
+      const success = calcBookClaimShakeOffset(5750, 3, true, 500);
+      expect(Math.abs(success)).toBeGreaterThan(0);
+      expect(calcBookClaimShakeOffset(5750, 3, false, 500)).toBeCloseTo(success * .5);
     });
   });
 
@@ -67,14 +67,17 @@ describe('bookClaimTimingUtil', () => {
       expect(calcBookClaimTiming(1999, 1, true).stage).toBe('inspection');
       expect(calcBookClaimTiming(2000, 1, true)).toMatchObject({ stage:'success', progress:0,
         inspectedIndex:null, shouldComplete:false, envelope:1 });
-      expect(calcBookClaimTiming(2250, 1, true)).toMatchObject({ stage:'success', progress:.5 });
-      expect(calcBookClaimTiming(2499, 1, true).shouldComplete).toBe(false);
-      expect(calcBookClaimTiming(2500, 1, true)).toMatchObject({ stage:'recovery', progress:0,
+      expect(calcBookClaimTiming(3250, 1, true)).toMatchObject({ stage:'success', progress:.5 });
+      expect(calcBookClaimTiming(4499, 1, true).shouldComplete).toBe(false);
+      expect(calcBookClaimTiming(4500, 1, true)).toMatchObject({ stage:'recovery', progress:0,
         shouldComplete:true, envelope:1 });
-      expect(calcBookClaimTiming(2750, 1, true)).toMatchObject({ stage:'recovery', progress:.5, envelope:.5 });
-      expect(calcBookClaimTiming(2999, 1, true).isDone).toBe(false);
-      expect(calcBookClaimTiming(3000, 1, true)).toMatchObject({ stage:'done', envelope:0, isDone:true,
-        shouldComplete:true, dueEjectionCount:0, totalDuration:3000 });
+      expect(calcBookClaimTiming(4750, 1, true)).toMatchObject({ stage:'recovery', progress:.5, envelope:.5 });
+      expect(calcBookClaimTiming(4999, 1, true).isDone).toBe(false);
+      expect(calcBookClaimTiming(5000, 1, true)).toMatchObject({ stage:'message', progress:0, envelope:0, isDone:false });
+      expect(calcBookClaimTiming(5500, 1, true)).toMatchObject({ stage:'message', progress:.5, envelope:0 });
+      expect(calcBookClaimTiming(5999, 1, true).isDone).toBe(false);
+      expect(calcBookClaimTiming(6000, 1, true)).toMatchObject({ stage:'done', envelope:0, isDone:true,
+        shouldComplete:true, dueEjectionCount:0, totalDuration:6000 });
     });
 
     it('owes the first failure ejection at entry and retains its final interval', () => {
@@ -84,7 +87,10 @@ describe('bookClaimTimingUtil', () => {
       expect(calcBookClaimTiming(2499, 1, false).stage).toBe('failure');
       expect(calcBookClaimTiming(2500, 1, false)).toMatchObject({ stage:'recovery', dueEjectionCount:1 });
       expect(calcBookClaimTiming(2999, 1, false).isDone).toBe(false);
-      expect(calcBookClaimTiming(3000, 1, false)).toMatchObject({ stage:'done', dueEjectionCount:1,
+      expect(calcBookClaimTiming(3000, 1, false)).toMatchObject({ stage:'message', progress:0, envelope:0, isDone:false });
+      expect(calcBookClaimTiming(3500, 1, false)).toMatchObject({ stage:'message', progress:.5, envelope:0 });
+      expect(calcBookClaimTiming(3999, 1, false).isDone).toBe(false);
+      expect(calcBookClaimTiming(4000, 1, false)).toMatchObject({ stage:'done', dueEjectionCount:1,
         shouldComplete:false, envelope:0, isDone:true });
     });
 
@@ -105,14 +111,16 @@ describe('bookClaimTimingUtil', () => {
       expect(calcBookClaimTiming(5499, 3, false).stage).toBe('failure');
       expect(calcBookClaimTiming(5500, 3, false)).toMatchObject({ stage:'recovery', envelope:1 });
       expect(calcBookClaimTiming(5750, 3, false).envelope).toBe(.5);
-      expect(calcBookClaimTiming(6000, 3, false)).toMatchObject({ stage:'done', totalDuration:6000 });
+      expect(calcBookClaimTiming(6000, 3, false)).toMatchObject({ stage:'message', envelope:0 });
+      expect(calcBookClaimTiming(7000, 3, false)).toMatchObject({ stage:'done', totalDuration:7000 });
     });
 
     it('uses the same inspection schedule but a fixed success interval for a few blanks', () => {
       expect(calcBookClaimTiming(4000, 3, true)).toMatchObject({ stage:'success', shouldComplete:false });
-      expect(calcBookClaimTiming(4499, 3, true).shouldComplete).toBe(false);
-      expect(calcBookClaimTiming(4500, 3, true)).toMatchObject({ stage:'recovery', shouldComplete:true });
-      expect(calcBookClaimTiming(5000, 3, true)).toMatchObject({ stage:'done', totalDuration:5000 });
+      expect(calcBookClaimTiming(6499, 3, true).shouldComplete).toBe(false);
+      expect(calcBookClaimTiming(6500, 3, true)).toMatchObject({ stage:'recovery', shouldComplete:true });
+      expect(calcBookClaimTiming(7000, 3, true)).toMatchObject({ stage:'message', envelope:0 });
+      expect(calcBookClaimTiming(8000, 3, true)).toMatchObject({ stage:'done', totalDuration:8000 });
     });
 
     it('caps inspection and failure totals for many blanks', () => {
@@ -126,14 +134,16 @@ describe('bookClaimTimingUtil', () => {
       expect(calcBookClaimTiming(8250, 10, false).dueEjectionCount).toBe(10);
       expect(calcBookClaimTiming(8499, 10, false).stage).toBe('failure');
       expect(calcBookClaimTiming(8500, 10, false).stage).toBe('recovery');
-      expect(calcBookClaimTiming(9000, 10, false)).toMatchObject({ stage:'done', totalDuration:9000 });
+      expect(calcBookClaimTiming(9000, 10, false)).toMatchObject({ stage:'message', envelope:0 });
+      expect(calcBookClaimTiming(10000, 10, false)).toMatchObject({ stage:'done', totalDuration:10000 });
     });
 
     it('caps many-slot success inspection without changing success or recovery durations', () => {
       expect(calcBookClaimTiming(6000, 10, true)).toMatchObject({ stage:'success', shouldComplete:false });
-      expect(calcBookClaimTiming(6499, 10, true).shouldComplete).toBe(false);
-      expect(calcBookClaimTiming(6500, 10, true)).toMatchObject({ stage:'recovery', shouldComplete:true });
-      expect(calcBookClaimTiming(7000, 10, true)).toMatchObject({ stage:'done', totalDuration:7000 });
+      expect(calcBookClaimTiming(8499, 10, true).shouldComplete).toBe(false);
+      expect(calcBookClaimTiming(8500, 10, true)).toMatchObject({ stage:'recovery', shouldComplete:true });
+      expect(calcBookClaimTiming(9000, 10, true)).toMatchObject({ stage:'message', envelope:0 });
+      expect(calcBookClaimTiming(10000, 10, true)).toMatchObject({ stage:'done', totalDuration:10000 });
     });
 
     it('starts the next slot at fractional capped boundaries', () => {
@@ -151,9 +161,9 @@ describe('bookClaimTimingUtil', () => {
 
     it('retains every owed result when a frame skips the whole sequence', () => {
       expect(calcBookClaimTiming(1000000, 100, false)).toMatchObject({ stage:'done', progress:1,
-        envelope:0, inspectedIndex:null, dueEjectionCount:100, shouldComplete:false, isDone:true, totalDuration:9000 });
+        envelope:0, inspectedIndex:null, dueEjectionCount:100, shouldComplete:false, isDone:true, totalDuration:10000 });
       expect(calcBookClaimTiming(1000000, 100, true)).toMatchObject({ stage:'done', progress:1,
-        envelope:0, dueEjectionCount:0, shouldComplete:true, isDone:true, totalDuration:7000 });
+        envelope:0, dueEjectionCount:0, shouldComplete:true, isDone:true, totalDuration:10000 });
     });
   });
 });
