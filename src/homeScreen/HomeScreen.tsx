@@ -169,6 +169,15 @@ function HomeScreen() {
     updateConclusions(nextConclusions, _handleManualConclusionsUpdate);
   }
 
+  function _handleResetLevel() {
+    if (_isGameDisabled() || !levelManifest) return;
+    void resetLevel({ levelManifest, loadRequest:loadRequestRef.current,
+      saveCoordinator:saveCoordinatorRef.current, closeCurtain:_closeCurtain,
+      onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
+      setLevelManifest, setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
+      setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setModalDialogName });
+  }
+
   const isSliderAtRightmostPosition = minutes >= toMinutes;
   useEffect(() => {
     if (!gameState) return;
@@ -214,7 +223,7 @@ function HomeScreen() {
 
   return (
     <div ref={applicationRootRef} className={styles.container} inert={isGameDisabled}>
-      <TopBar onRevealLevel={_handleRevealLevel} />
+      <TopBar onRevealLevel={_handleRevealLevel} onResetLevel={_handleResetLevel} />
       <div className={styles.content}>
         {levelManifest && <LevelSelector
           levelManifest={levelManifest}
@@ -270,14 +279,6 @@ function HomeScreen() {
             conclusions={conclusions} 
             imageSet={gameState.imageSet} 
             conclusionClaimCooldowns={conclusionClaimCooldowns}
-            onReset={() => {
-              if (_isGameDisabled() || !levelManifest) return;
-              void resetLevel({ levelManifest, loadRequest:loadRequestRef.current,
-                saveCoordinator:saveCoordinatorRef.current, closeCurtain:_closeCurtain,
-                onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
-                setLevelManifest, setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
-                setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setModalDialogName });
-            }}
             onIncorrectClaim={(conclusionId) => {
               setConclusionClaimCooldowns(from => ({
                 ...from,

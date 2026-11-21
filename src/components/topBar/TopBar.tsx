@@ -14,10 +14,11 @@ const appLinks = [
 const contributorText = 'Erik Hermansen, Peter Turner';
 
 type Props = {
-  onRevealLevel:() => void
+  onRevealLevel:() => void,
+  onResetLevel:() => void
 }
 
-function TopBar({onRevealLevel}:Props) {
+function TopBar({onRevealLevel, onResetLevel}:Props) {
   const links = isServingLocally() 
     ? [...appLinks]
     : [...appLinks].filter(link => link.description !== 'DevTools');
@@ -37,6 +38,7 @@ function TopBar({onRevealLevel}:Props) {
     <DeveloperDialog 
       onReturn={() => setModalDialogName(null)} 
       onRevealLevel={() => { setModalDialogName(null); onRevealLevel(); }} 
+      onResetLevel={() => { setModalDialogName(null); onResetLevel(); }}
       isOpen={modalDialogName === DeveloperDialog.name} 
     />
   </>;
