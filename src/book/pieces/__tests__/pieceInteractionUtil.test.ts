@@ -66,7 +66,7 @@ describe('pieceInteractionUtil', () => {
 
     it('cancels before programmatic next-spread navigation completes', () => {
       const { bookState } = _createDraggableBookState();
-      bookState.pages.push({ kind:'blank', headingText:'' }, { kind:'blank', headingText:'' });
+      bookState.pages.push({ kind:'blank', headingText:'', chapterNo:1 }, { kind:'blank', headingText:'', chapterNo:1 });
       expect(beginBookPieceDrag(bookState, 500, 250)).toBe(true);
       goNextPage(0, bookState);
       expect(bookState.pieceDragState).toBeNull();
@@ -321,7 +321,7 @@ describe('pieceInteractionUtil', () => {
     it('filters hidden pages without losing their stacking order on return', () => {
       const { bookState, lower, upper } = _createBookState();
       bringBookPieceToFront(bookState, lower);
-      bookState.pages.push({ kind:'blank', headingText:'' }, { kind:'blank', headingText:'' });
+      bookState.pages.push({ kind:'blank', headingText:'', chapterNo:1 }, { kind:'blank', headingText:'', chapterNo:1 });
       bookState.pageNo = 3;
       expect(getVisibleBookPieces(bookState)).toEqual([]);
       expect(bookState.pieceStack[1]).toBe(lower);
@@ -355,7 +355,7 @@ describe('pieceInteractionUtil', () => {
     it('retains piece ownership when pages are reordered', () => {
       const { bookState, lower, upper } = _createBookState();
       const [leftPage, rightPage] = bookState.pages;
-      bookState.pages = [rightPage, { kind:'blank', headingText:'' }, leftPage];
+      bookState.pages = [rightPage, { kind:'blank', headingText:'', chapterNo:1 }, leftPage];
       expect(getVisibleBookPieces(bookState)).toEqual([upper]);
       bookState.pageNo = 3;
       expect(getVisibleBookPieces(bookState)).toEqual([lower]);
@@ -478,7 +478,7 @@ describe('pieceInteractionUtil', () => {
 
     it('skips a stale topmost piece while retaining the visible lower piece', () => {
       const { bookState, lower } = _createBookState();
-      bookState.pages[1] = { kind:'blank', headingText:'' };
+      bookState.pages[1] = { kind:'blank', headingText:'', chapterNo:1 };
       expect(findBookPieceAtPoint(bookState, 100, 50)).toBe(lower);
     });
 
@@ -510,7 +510,7 @@ describe('pieceInteractionUtil', () => {
 
     it('keeps navigation working without reporting a drag', () => {
       const { bookState, layout } = _createDraggableBookState();
-      bookState.pages.push({ kind:'blank', headingText:'' }, { kind:'blank', headingText:'' });
+      bookState.pages.push({ kind:'blank', headingText:'', chapterNo:1 }, { kind:'blank', headingText:'', chapterNo:1 });
       updateControlRect('nextPage', { x:490, y:245, width:40, height:30 }, layout.controlLayout);
       expect(onBookMouseDown(500, 250, 0, bookState, true)).toBe(false);
       expect(bookState.pieceDragState).toBeNull();

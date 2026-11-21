@@ -28,12 +28,14 @@ export function getConclusionPageInstructionText(conclusion:Conclusion):string {
   // Share the readiness check and distinguish first attempts from retries.
   if (!isConclusionMissingAnswers(conclusion)) {
     return conclusion.incorrectGuessCount > 0
-      ? 'Try claiming again, but only when you are ready.'
+      ? 'Claim correctly or take a mark of shame.'
       : 'Claim this conclusion when you are confident.';
   }
-  return conclusion.incorrectGuessCount > 0
-    ? 'Your last guess was incorrect. You may try again.'
-    : 'Fill the blanks with your guesses.';
+  switch(conclusion.incorrectGuessCount) {
+    case 0: return 'Fill the blanks with your knowledge.';
+    case 1: return 'Your claim was false. Try again.';
+    default: return 'Your false claim earned a mark of shame.';
+  }
 }
 
 function _placeControl(id:BookControlId, rect:Rect, visible:boolean, controls:ControlLayout):void {

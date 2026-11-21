@@ -13,14 +13,14 @@ function _createFixture(single:boolean = false, pageNo:number = 1) {
     correctAnswerIndexes:[1], playerAnswerIndex:0 };
   const otherBlank = { ...blank };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', answerSetIdToPieceStyleNoMap:{ people:3 },
+    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
   bookState.pageNo = pageNo;
-  bookState.pages = [page, { kind:'blank', headingText:'' }];
+  bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 }];
 
   // Match existing arrow endpoints and close geometry in unshifted book coordinates.
   const controls = createLayout();
@@ -68,7 +68,7 @@ describe('bookClaimControlUtil', () => {
 
   it('supports the selected right conclusion in single-page view without double-applying the view offset', () => {
     const { bookState, page, controls } = _createFixture(true, 2);
-    bookState.pages = [{ kind:'blank', headingText:'' }, page];
+    bookState.pages = [{ kind:'blank', headingText:'', chapterNo:1 }, page];
     updateBookClaimControls(bookState);
     const claim = findControlRect(controls, 'claimRight');
     expect(claim.x).toBeCloseTo(500 + 380 / 3);
@@ -120,7 +120,7 @@ describe('bookClaimControlUtil', () => {
   it('drops stale claims when page content is replaced', () => {
     const { bookState, controls } = _createFixture();
     updateBookClaimControls(bookState);
-    bookState.pages[0] = { kind:'blank', headingText:'' };
+    bookState.pages[0] = { kind:'blank', headingText:'', chapterNo:1 };
     updateBookClaimControls(bookState);
     expect(controls.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
   });

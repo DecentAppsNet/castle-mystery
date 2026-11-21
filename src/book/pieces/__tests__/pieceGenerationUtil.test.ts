@@ -18,7 +18,7 @@ function _createConclusionPage(conclusionId:string, answerSets:readonly AnswerSe
       isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
   };
   return {
-    kind:'conclusion', headingText:'', conclusion,
+    kind:'conclusion', headingText:'', chapterNo:1, conclusion,
     answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion)
   };
 }
@@ -26,7 +26,7 @@ function _createConclusionPage(conclusionId:string, answerSets:readonly AnswerSe
 function _createBookState(pages:BookPage[]):BookState {
   const state = createDefaultBookState();
   state.pages = pages.flatMap((page):BookPage[] => page.kind === 'conclusion'
-    ? [page, { kind:'blank', headingText:'' }] : [page]);
+    ? [page, { kind:'blank', headingText:'', chapterNo:1 }] : [page]);
   return state;
 }
 
@@ -44,10 +44,10 @@ describe('pieceGenerationUtil', () => {
         { type:'text', text:'No blanks' }, { type:'separator' }, { type:'image', imageUrl:'/example.png' }
       ];
       const state = _createBookState([
-        { kind:'blank', headingText:'' },
-        { kind:'bookStart', headingText:'', title:'Book', subtitle:null, author:'Author' },
+        { kind:'blank', headingText:'', chapterNo:0 },
+        { kind:'bookStart', headingText:'', chapterNo:0, title:'Book', subtitle:null, author:'Author' },
         { kind:'chapterStart', headingText:'', title:'Chapter', chapterNo:1, description:'' },
-        { kind:'blank', headingText:'' }, page
+        { kind:'blank', headingText:'', chapterNo:1 }, page
       ]);
       expect(generatePieceStack(state)).toEqual([]);
     });
@@ -153,7 +153,7 @@ describe('pieceGenerationUtil', () => {
       };
       const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
       const pieces = generatePieceStack(_createBookState([
-        { kind:'conclusion', headingText:'', conclusion, answerSetIdToPieceStyleNoMap:styles }
+        { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:styles }
       ]));
       expect(pieces.map(piece => piece.styleNo)).toEqual([2, 0, 0, 1, 1, 3]);
       sets.forEach(set => expect(pieces.filter(piece => set.answers.includes(piece.text))
@@ -183,7 +183,7 @@ describe('pieceGenerationUtil', () => {
     });
 
     it('rejects a conclusion on the right even when it has no pieces', () => {
-      const state = _createBookState([{ kind:'blank', headingText:'' }, _createConclusionPage('one', [])]);
+      const state = _createBookState([{ kind:'blank', headingText:'', chapterNo:1 }, _createConclusionPage('one', [])]);
       expect(() => generatePieceStack(state)).toThrow();
     });
 

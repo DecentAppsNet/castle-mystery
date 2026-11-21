@@ -16,7 +16,7 @@ function _createPreparedBook() {
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:-1 };
   const otherBlank:ClozeBlank = { ...blank, correctAnswerIndexes:[1] };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', answerSetIdToPieceStyleNoMap:{ people:3 },
+    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
@@ -24,7 +24,7 @@ function _createPreparedBook() {
   const parkedPiece = { ...piece, text:'Second', xPercent:75, yPercent:75 };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
-  bookState.pages = [page, { kind:'blank', headingText:'' }];
+  bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 }];
   bookState.pieceStack = [piece, parkedPiece];
 
   // Both slots overlap around the initial pointer; release must use normal geometry.

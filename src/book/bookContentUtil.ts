@@ -107,19 +107,20 @@ export function createBookState():BookState { // TODO this will change later to 
   // Establish all pages before generating their loose-piece inventory.
   const bookState = createDefaultBookState();
   bookState.pages = [
-    { kind:'blank', headingText:'' },
-    { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', subtitle:null, author:'Erik Hermansen' },
-    { kind:'blank', headingText:'' },
+    { kind:'blank', headingText:'', chapterNo:0 },
+    { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', subtitle:null, author:'Erik Hermansen', chapterNo:0 },
+    { kind:'blank', headingText:'', chapterNo:0 },
     { kind:'chapterStart', headingText:'', title:'Birth of Constantine', chapterNo:1, description:'Wherein Frederick is introduced to the World by a different name, and the earliest seeds of trouble are planted.' },
-    { kind:'conclusion', headingText:'Chap. I - Identities', conclusion:conclusion1,
-      answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion1) },
-    { kind:'blank', headingText:'Chap. I - Identities' },
-    { kind:'conclusion', headingText:'Chap. I - The Relic', conclusion:conclusion2,
-      answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion2) },
-    { kind:'blank', headingText:'Chap. I - The Relic' },
-    { kind:'conclusion', headingText:'Chap. I - Chain of Custody', conclusion:conclusion3,
-      answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion3) },
-    { kind:'blank', headingText:'Chap. I - Chain of Custody' },
+    { kind:'conclusion', headingText:'Identities', conclusion:conclusion1,
+      answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion1), chapterNo:1 },
+    { kind:'blank', headingText:'Identities', chapterNo:1 },
+    { kind:'conclusion', headingText:'The Relic', conclusion:conclusion2,
+      answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion2), chapterNo:1 },
+    { kind:'blank', headingText:'The Relic', chapterNo:1 },
+    { kind:'conclusion', headingText:'Chain of Custody', conclusion:conclusion3,
+      answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion3) , chapterNo:1},
+    { kind:'blank', headingText:'Chain of Custody', chapterNo:1 },
+    { kind:'tally', headingText:'Tally', conclusions:[conclusion1,conclusion2, conclusion3], chapterNo:1 }
   ];
   bookState.pieceStack = generatePieceStack(bookState);
 

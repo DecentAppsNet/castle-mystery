@@ -3,7 +3,8 @@ import AnswerSetIdToPieceStyleNoMap from './AnswerSetIdToPieceStyleNoMap';
 
 type BookPageBase<Kind extends string> = {
   kind:Kind,
-  headingText:string
+  headingText:string,
+  chapterNo:number
 }
 
 type BookStartPage = BookPageBase<'bookStart'> & {
@@ -23,9 +24,12 @@ type ConclusionPage = BookPageBase<'conclusion'> & {
   readonly answerSetIdToPieceStyleNoMap:AnswerSetIdToPieceStyleNoMap
 }
 
-type BlankPage = BookPageBase<'blank'> & {
+type TallyPage = BookPageBase<'tally'> & {
+  conclusions:Conclusion[]
 }
 
-type BookPage = BookStartPage | ChapterStartPage | ConclusionPage | BlankPage;
+type BlankPage = BookPageBase<'blank'> & { }
+
+type BookPage = BookStartPage | ChapterStartPage | ConclusionPage | BlankPage | TallyPage;
 
 export default BookPage;

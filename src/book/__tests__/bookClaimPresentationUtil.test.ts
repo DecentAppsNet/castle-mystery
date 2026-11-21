@@ -16,7 +16,7 @@ function _createClaim(count:number = 2, correct:boolean = true):BookClaimState {
     type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:0
   }));
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', answerSetIdToPieceStyleNoMap:{ people:3 },
+    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:'presentation', title:'Presentation', parts:blanks.flatMap(blank => [
       { type:'text' as const, text:' then ' }, blank
     ]), isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }

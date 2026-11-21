@@ -17,15 +17,15 @@ function _createPreparedBook() {
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:-1 };
   const otherBlank:ClozeBlank = { ...blank, correctAnswerIndexes:[1] };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', answerSetIdToPieceStyleNoMap:{ people:3 },
+    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
-  bookState.pages = [page, { kind:'blank', headingText:'' },
-    { kind:'blank', headingText:'' }, { kind:'blank', headingText:'' }];
+  bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 },
+    { kind:'blank', headingText:'', chapterNo:1 }, { kind:'blank', headingText:'', chapterNo:1 }];
   bookState.pieceStack = [piece];
 
   // Prepared records use displayed coordinates, without invoking canvas drawing.

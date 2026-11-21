@@ -9,10 +9,10 @@ function _createSinglePageBookState(pageNo:number) {
   bookState.isVisible = true;
   bookState.pageNo = pageNo;
   bookState.pages = [
-    { kind:'blank', headingText:'' },
-    { kind:'bookStart', headingText:'', title:'', author:'', subtitle:null },
-    { kind:'blank', headingText:'' },
-    { kind:'blank', headingText:'' }
+    { kind:'blank', headingText:'', chapterNo:0 },
+    { kind:'bookStart', headingText:'', chapterNo:0, title:'', author:'', subtitle:null },
+    { kind:'blank', headingText:'', chapterNo:0 },
+    { kind:'blank', headingText:'', chapterNo:0 }
   ];
   bookState.layout = {
     canvasWidth:400, canvasHeight:600,

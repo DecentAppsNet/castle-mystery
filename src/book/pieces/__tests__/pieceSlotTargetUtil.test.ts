@@ -17,14 +17,14 @@ function _createPreparedBook() {
   const otherBlank:ClozeBlank = { ...blank, correctAnswerIndexes:[0] };
   const styles = { people:3 };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', answerSetIdToPieceStyleNoMap:styles,
+    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:styles,
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
-  bookState.pages = [page, { kind:'blank', headingText:'' }];
+  bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 }];
   bookState.pieceStack = [piece];
 
   // Geometry is already in displayed canvas coordinates, independent of rendering.
@@ -364,7 +364,7 @@ describe('pieceSlotTargetUtil', () => {
     it('cancels when the owning conclusion is no longer displayed', () => {
       const { bookState } = _createPreparedBook();
       beginBookPieceDrag(bookState, 500, 270);
-      bookState.pages = [{ kind:'blank', headingText:'' }];
+      bookState.pages = [{ kind:'blank', headingText:'', chapterNo:1 }];
       expect(updateBookPieceSlotTarget(bookState)).toEqual([]);
       expect(bookState.hungryPieceSlot).toBeNull();
       expect(bookState.pieceDragState).toBeNull();

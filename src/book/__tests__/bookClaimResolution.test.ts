@@ -19,13 +19,13 @@ function _createFixture(single:boolean = false) {
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:0 };
   const otherBlank:ClozeBlank = { ...blank, playerAnswerIndex:1 };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', answerSetIdToPieceStyleNoMap:{ people:3 },
+    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
-  bookState.pages = [page, { kind:'blank', headingText:'' }];
+  bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 }];
   bookState.pieceStack = generatePieceStack(bookState);
 
   // Prepared geometry is already in displayed coordinates, including the single-page shift once.
@@ -303,7 +303,7 @@ describe('getConclusionPageInstructionText()', () => {
   it('instructs a new unfinished conclusion to fill its blanks', () => {
     const { page, blank } = _createFixture();
     blank.playerAnswerIndex = -1;
-    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Fill the blanks with your guesses.');
+    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Fill the blanks with your knowledge.');
   });
 
   it('invites the first claim once all answers are filled', () => {
@@ -315,13 +315,13 @@ describe('getConclusionPageInstructionText()', () => {
     const { page, blank } = _createFixture();
     blank.playerAnswerIndex = -1;
     page.conclusion.incorrectGuessCount = 1;
-    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Your last guess was incorrect. You may try again.');
+    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Your claim was false. Try again.');
   });
 
   it('invites another claim after the player refills the blanks', () => {
     const { page } = _createFixture();
     page.conclusion.incorrectGuessCount = 2;
-    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Try claiming again, but only when you are ready.');
+    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Claim correctly or take a mark of shame.');
   });
 
   it('gives completion priority over attempt history', () => {

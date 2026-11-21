@@ -25,14 +25,14 @@ function _createFixture(correct:boolean = false, pageNo:number = 1, conclusionId
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:0 };
   const otherBlank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[correct ? 1 : 0], playerAnswerIndex:1 };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', answerSetIdToPieceStyleNoMap:{ people:3 },
+    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:conclusionId, title:'Runtime', parts:[blank, { type:'text', text:' then ' }, otherBlank],
       isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
   bookState.pageNo = pageNo;
-  bookState.pages = [page, { kind:'blank', headingText:'' }, { kind:'blank', headingText:'' }, { kind:'blank', headingText:'' }];
+  bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 }, { kind:'blank', headingText:'', chapterNo:1 }, { kind:'blank', headingText:'', chapterNo:1 }];
   if (pageNo === 3) bookState.pages = [bookState.pages[1], bookState.pages[2], page, bookState.pages[3]];
   bookState.pieceStack = generatePieceStack(bookState);
 
@@ -338,7 +338,7 @@ describe('book claim runtime', () => {
 
     it('refuses direct next/previous navigation, shifts, and flips without invalidating claim geometry', () => {
       const { bookState, layout } = _createFixture(false, 3);
-      bookState.pages.push({ kind:'blank', headingText:'' }, { kind:'blank', headingText:'' });
+      bookState.pages.push({ kind:'blank', headingText:'', chapterNo:1 }, { kind:'blank', headingText:'', chapterNo:1 });
       claimBookConclusion(bookState, 3, STARTED_AT);
       const before = structuredClone(bookState);
       goNextPage(STARTED_AT + 1, bookState);
