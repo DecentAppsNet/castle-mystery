@@ -16,7 +16,7 @@ import PieceSlotLayout from "./types/PieceSlotLayout";
 import { prepareBookPieceSlotPresentations } from "../pieceSlotPresentationUtil";
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
 import { updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
-import { calcBookClaimTiming } from '../bookClaimTimingUtil';
+import { calcBookClaimShakeOffset, calcBookClaimTiming } from '../bookClaimTimingUtil';
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -186,10 +186,21 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   if (!bookState.isVisible) return; // Animations have hidden the book.
   const presentations = prepareBookPieceSlotPresentations(bookState, metaTime);
   _drawTranslucentBackground(bookState, metaTime, context);
+
+  // Shake the book layers together without shifting normal geometry or persistent ejection positions.
+  context.save();
+  const claim = bookState.claimState;
+  if (claim !== null) {
+    context.translate(calcBookClaimShakeOffset(metaTime - claim.startedAt, claim.blanks.length,
+      claim.correct, drawRect.height), 0);
+  }
   _drawBookImage(bookImage, drawRect, bookState, metaTime, context);
   _drawPageContent(bookState, metaTime, drawRect, imageSet, context, presentations);
   updateBookClaim(bookState, metaTime);
   _drawPieces(bookState, drawRect, context);
+  context.restore();
+
+  // Navigation and overlays remain outside the claim transform, including the resumed recovery-end frame.
   drawPageFlip(bookState, metaTime, drawRect, bookImage, imageSet, context);
   if (bookState.animationKind === null) _drawBookControls(bookState, context);
 }

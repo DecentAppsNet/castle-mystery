@@ -1,7 +1,53 @@
 import { describe, expect, it } from 'vitest';
-import { calcBookClaimTiming } from '../bookClaimTimingUtil';
+import { calcBookClaimShakeOffset, calcBookClaimTiming } from '../bookClaimTimingUtil';
 
 describe('bookClaimTimingUtil', () => {
+  describe('calcBookClaimShakeOffset()', () => {
+    it('is exactly neutral before start and at or beyond completion for both result paths', () => {
+      expect(calcBookClaimShakeOffset(-100, 3, false, 500)).toBe(0);
+      expect(calcBookClaimShakeOffset(0, 3, true, 500)).toBe(0);
+      expect(calcBookClaimShakeOffset(5000, 3, true, 500)).toBe(0);
+      expect(calcBookClaimShakeOffset(6000, 3, false, 500)).toBe(0);
+      expect(calcBookClaimShakeOffset(1000000, 3, false, 500)).toBe(0);
+    });
+
+    it('is deterministic across repeated and out-of-order elapsed samples', () => {
+      const offset = calcBookClaimShakeOffset(1234, 3, false, 500);
+      expect(offset).not.toBe(0);
+      calcBookClaimShakeOffset(9000, 3, false, 500);
+      calcBookClaimShakeOffset(100, 3, false, 500);
+      expect(calcBookClaimShakeOffset(1234, 3, false, 500)).toBe(offset);
+    });
+
+    it('scales displacement with current book height without changing timing', () => {
+      const offset = calcBookClaimShakeOffset(1234, 3, false, 500);
+      expect(calcBookClaimShakeOffset(1234, 3, false, 1000)).toBeCloseTo(offset * 2);
+      expect(calcBookClaimShakeOffset(1234, 3, false, 0)).toBeCloseTo(0);
+    });
+
+    it('stays within two percent of book height weighted by the fade and recovery envelope', () => {
+      // Sample both capped and uncapped schedules through every stage without prescribing oscillation tuning.
+      for (const slotCount of [1, 3, 10]) {
+        for (const correct of [false, true]) {
+          for (let elapsed = 0; elapsed <= 9000; elapsed += 17) {
+            const timing = calcBookClaimTiming(elapsed, slotCount, correct);
+            const offset = calcBookClaimShakeOffset(elapsed, slotCount, correct, 500);
+            expect(Number.isFinite(offset)).toBe(true);
+            expect(Math.abs(offset)).toBeLessThanOrEqual(500 * .02 * timing.envelope);
+          }
+        }
+      }
+    });
+
+    it('shares shake between outcomes until their recovery schedules diverge', () => {
+      expect(calcBookClaimShakeOffset(1234, 3, true, 500))
+        .toBe(calcBookClaimShakeOffset(1234, 3, false, 500));
+      const failure = calcBookClaimShakeOffset(4750, 3, false, 500);
+      expect(Math.abs(failure)).toBeGreaterThan(0);
+      expect(calcBookClaimShakeOffset(4750, 3, true, 500)).toBeCloseTo(failure * .5);
+    });
+  });
+
   describe('calcBookClaimTiming()', () => {
     it('starts with neutral presentation and no owed results, including pre-start samples', () => {
       expect(calcBookClaimTiming(0, 1, true)).toMatchObject({ stage:'fade', progress:0, envelope:0,

@@ -11,6 +11,8 @@ const SUCCESS_MS = 500;
 const FAILURE_SLOT_MS = 500;
 const FAILURE_MAX_MS = 2500;
 const RECOVERY_MS = 500;
+const SHAKE_PERIOD_MS = 180;
+const SHAKE_HEIGHT_RATIO = .003;
 
 function _intervalIndex(elapsed:number, start:number, interval:number):number {
   const index = Math.floor((elapsed - start) / interval);
@@ -39,4 +41,10 @@ export function calcBookClaimTiming(elapsed:number, slotCount:number, correct:bo
     envelope:stage === 'fade' ? progress : stage === 'recovery' ? 1 - progress : stage === 'done' ? 0 : 1,
     dueEjectionCount:!correct && elapsed >= resultStart ? Math.min(slotCount, _intervalIndex(elapsed, resultStart, failureInterval) + 1) : 0,
     shouldComplete:correct && elapsed >= recoveryStart, isDone:elapsed >= totalDuration } as const;
+}
+
+export function calcBookClaimShakeOffset(elapsed:number, slotCount:number, correct:boolean, bookHeight:number):number {
+  const { envelope } = calcBookClaimTiming(elapsed, slotCount, correct);
+  if (envelope === 0) return 0;
+  return Math.sin(elapsed / SHAKE_PERIOD_MS * FULL_REVOLUTION_RADIANS) * bookHeight * SHAKE_HEIGHT_RATIO * envelope;
 }
