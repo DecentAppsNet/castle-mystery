@@ -18,11 +18,16 @@ import PieceSlotLayout from "./types/PieceSlotLayout";
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
 import { getConclusionPageInstructionText } from '../bookClaimControlUtil';
 import BookClaimGlint from '../types/BookClaimGlint';
+import ClozePart from "@/game/conclusions/types/ClozePart";
 
 const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
 const PAGE_TOP_MARGIN = .04;
 const PAGE_BOTTOM_MARGIN = .07;
+
+function _isClozeImageUrlResolved(part:ClozePart) {
+  return typeof (part as ClozeImage).imageUrl === 'string'; // If it's an array, then there was no resolution of candidate URLs to a single URL performed.
+}
 
 // Use percentage-based margins to return an inner page rect representing the part of the page that will look
 // visually correct to draw text over. In other words, we want to draw text over the flat paper part of the image -
@@ -107,7 +112,8 @@ function _drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, 
       break;
 
       case ClozePartType.image:
-        pw.addImage((part as ClozeImage).imageUrl as string, 2); // TODO figure out how to handle candidate URLs
+        assert(_isClozeImageUrlResolved(part));
+        pw.addImage((part as ClozeImage).imageUrl as string, 2);
       break;
 
       default:
