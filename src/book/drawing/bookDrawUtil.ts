@@ -16,6 +16,7 @@ import PieceSlotLayout from "./types/PieceSlotLayout";
 import { prepareBookPieceSlotPresentations } from "../pieceSlotPresentationUtil";
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
 import { updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
+import { calcBookClaimTiming } from '../bookClaimTimingUtil';
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -34,6 +35,21 @@ function _drawTranslucentBackground(bookState:BookState, metaTime:number, contex
   context.fillStyle = 'black';
   context.globalAlpha = BACKGROUND_ALPHA * alphaFadeAmount;
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+  context.restore();
+}
+
+function _drawBookImage(bookImage:ImageBitmap, rect:Rect, bookState:Readonly<BookState>, metaTime:number,
+  context:CanvasRenderingContext2D):void {
+  // Scope brightness to the image so its transparent pixels and all other layers remain unchanged.
+  context.save();
+  const claim = bookState.claimState;
+  if (claim !== null) {
+    const { envelope } = calcBookClaimTiming(metaTime - claim.startedAt, claim.blanks.length, claim.correct);
+    context.filter = `brightness(${1 - envelope})`;
+  }
+
+  // Restore canvas state before PageWriter, loose pieces, and controls draw.
+  context.drawImage(bookImage, rect.x, rect.y, rect.width, rect.height);
   context.restore();
 }
 
@@ -167,11 +183,10 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
   updateBookLayoutAsNeeded(context.canvas.width, context.canvas.height, bookImage, bookState);
   assertNonNullable(bookState.layout);
   const drawRect = calcBookDrawRect(bookState, metaTime);
-  const { x, y, width, height } = drawRect;
   if (!bookState.isVisible) return; // Animations have hidden the book.
   const presentations = prepareBookPieceSlotPresentations(bookState, metaTime);
   _drawTranslucentBackground(bookState, metaTime, context);
-  context.drawImage(bookImage, x, y, width, height);
+  _drawBookImage(bookImage, drawRect, bookState, metaTime, context);
   _drawPageContent(bookState, metaTime, drawRect, imageSet, context, presentations);
   updateBookClaim(bookState, metaTime);
   _drawPieces(bookState, drawRect, context);
