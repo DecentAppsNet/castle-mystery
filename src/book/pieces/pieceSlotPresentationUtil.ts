@@ -3,9 +3,9 @@
 
 import { clamp, interpolateNumber } from '@/common/numberUtil';
 import { isCurrentEmptyPieceSlot, updateBookPieceSlotTarget } from './pieceSlotTargetUtil';
-import BookState from './types/BookState';
-import PieceSlotPresentation from './types/PieceSlotPresentation';
-import PieceSlotTransition from './types/PieceSlotTransition';
+import BookState from '../types/BookState';
+import PieceSlotPresentation from '../types/PieceSlotPresentation';
+import PieceSlotTransition from '../types/PieceSlotTransition';
 
 const SHAKE_PERIOD_MS = 180;
 const SHAKE_HEIGHT_RATIO = .04;

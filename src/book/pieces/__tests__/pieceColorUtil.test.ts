@@ -3,9 +3,9 @@ import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { getBookPieceBackgroundColor } from '../pieceColorUtil';
 import { getPieceFlairProfile } from '../pieceFlairUtil';
-import BookPage from '../types/BookPage';
-import { createDefaultBookState } from '../types/BookState';
-import Piece from '../types/Piece';
+import BookPage from '@/book/types/BookPage';
+import { createDefaultBookState } from '@/book/types/BookState';
+import Piece from '@/book/types/Piece';
 
 function _createFixture() {
   const answerSet = createAnswerSet(['First', 'Second'], 'people');

@@ -4,10 +4,10 @@ import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import AnswerSet from '@/game/conclusions/types/AnswerSet';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import Conclusion from '@/game/conclusions/types/Conclusion';
-import { generateAnswerSetIdToPieceStyleNoMap } from '../answerSetPieceStyleUtil';
+import { generateAnswerSetIdToPieceStyleNoMap } from '@/book/answerSetPieceStyleUtil';
 import { generatePieceStack } from '../pieceGenerationUtil';
-import BookPage from '../types/BookPage';
-import BookState, { createDefaultBookState } from '../types/BookState';
+import BookPage from '@/book/types/BookPage';
+import BookState, { createDefaultBookState } from '@/book/types/BookState';
 
 function _createConclusionPage(conclusionId:string, answerSets:readonly AnswerSet[]):Extract<BookPage, { kind:'conclusion' }> {
   const conclusion:Conclusion = {

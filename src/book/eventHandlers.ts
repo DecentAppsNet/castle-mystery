@@ -11,7 +11,7 @@ import { findControlAtPoint } from "@/canvasControls";
 import { goNextPage, goPrevPage } from "./navigationUtil";
 import BookControlId from "./drawing/types/BookControlId";
 import { beginBookPieceDrag, bringBookPieceToFront, releaseBookPieceDrag, findBookPieceAtPoint,
-  moveBookPieceDrag } from "./pieceInteractionUtil";
+  moveBookPieceDrag } from "./pieces";
 import { claimBookConclusion } from './bookClaimControlUtil';
 
 function _findControlAtPoint(bookState:BookState, canvasX:number, canvasY:number):BookControlId|null {

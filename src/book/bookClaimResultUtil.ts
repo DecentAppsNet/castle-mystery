@@ -3,7 +3,7 @@
 import { assertNonNullable } from 'decent-portal';
 import { rand } from '@/common/randUtil';
 import { calcBookClaimTiming, FULL_REVOLUTION_RADIANS } from './bookClaimTimingUtil';
-import { detachBookPiece } from './pieceInteractionUtil';
+import { detachBookPiece } from './pieces';
 import PieceSlotLayout from './drawing/types/PieceSlotLayout';
 import BookClaimState from './types/BookClaimState';
 import BookState from './types/BookState';

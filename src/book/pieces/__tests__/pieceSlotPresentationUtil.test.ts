@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { createLayout } from '@/canvasControls';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import { hideBook, showBook } from '../drawing/bookAnimationUtil';
-import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '../drawing/bookLayoutUtil';
-import BookLayout from '../drawing/types/BookLayout';
-import { onBookMouseUp } from '../eventHandlers';
-import { goNextPage } from '../navigationUtil';
+import { hideBook, showBook } from '@/book/drawing/bookAnimationUtil';
+import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '@/book/drawing/bookLayoutUtil';
+import BookLayout from '@/book/drawing/types/BookLayout';
+import { onBookMouseUp } from '@/book/eventHandlers';
+import { goNextPage } from '@/book/navigationUtil';
 import { beginBookPieceDrag, endBookPieceDrag, moveBookPieceDrag } from '../pieceInteractionUtil';
 import { prepareBookPieceSlotPresentations } from '../pieceSlotPresentationUtil';
-import BookPage from '../types/BookPage';
-import { createDefaultBookState } from '../types/BookState';
+import BookPage from '@/book/types/BookPage';
+import { createDefaultBookState } from '@/book/types/BookState';
 
 function _createPreparedBook() {
   // Use independent mutable blanks sharing one immutable answer set.

@@ -3,7 +3,7 @@
 
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import BookState, { createDefaultBookState } from "./types/BookState";
-import { generatePieceStack } from "./pieceGenerationUtil";
+import { generatePieceStack } from "./pieces";
 import { createAnswerSet } from "@/game/conclusions/answerSetUtil";
 import { generateAnswerSetIdToPieceStyleNoMap } from './answerSetPieceStyleUtil';
 

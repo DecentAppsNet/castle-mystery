@@ -9,7 +9,7 @@ import { calcBookOffsetsForAnimationAndUpdate } from "./bookAnimationUtil";
 import { createLayout, updateControlRect } from "@/canvasControls";
 import { setPageNavigationButtonVisibility } from "../navigationUtil";
 import BookControlId from "./types/BookControlId";
-import { endBookPieceDrag } from "../pieceInteractionUtil";
+import { endBookPieceDrag } from "../pieces";
 import { updateBookClaimControls } from '../bookClaimControlUtil';
 
 const CANVAS_HEIGHT_TO_OUTER_MARGIN_RATIO = .05;

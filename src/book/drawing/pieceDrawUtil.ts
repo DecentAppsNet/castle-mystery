@@ -8,10 +8,9 @@ import Rect from "@/game/types/Rect";
 import Piece from "../types/Piece";
 import PieceLayout from "./types/PieceLayout";
 import { drawBorderedBookText, measureBookTextBox } from "./bookTextDrawUtil";
-import { getPieceFlairProfile } from "../pieceFlairUtil";
+import { getPieceFlairProfile, getBookPieceBackgroundColor } from "../pieces";
 import PieceDragState from '../types/PieceDragState';
 import BookState from '../types/BookState';
-import { getBookPieceBackgroundColor } from '../pieceColorUtil';
 
 export function getPieceSlotColor(styleNo:number):string {
 	return getPieceFlairProfile(styleNo).pieceSlotColor;

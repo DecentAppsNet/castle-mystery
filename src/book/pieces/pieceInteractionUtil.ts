@@ -3,13 +3,13 @@
 
 import { calcClampedDragCenter, calcDragGrabOffset, findTopmostControlAtPoint } from "@/canvasControls";
 import { assert, assertNonNullable } from "decent-portal";
-import { calcPageViewOffsetX, isLeftPageNo } from "./drawing/bookLayoutUtil";
-import BookState from "./types/BookState";
-import Piece from "./types/Piece";
+import { calcPageViewOffsetX, isLeftPageNo } from "../drawing/bookLayoutUtil";
+import BookState from "../types/BookState";
+import Piece from "../types/Piece";
 import { findPieceSlotAnswerIndex, isCurrentPieceSlot, updateBookPieceSlotTarget } from "./pieceSlotTargetUtil";
 import { isPositionInRect } from '@/game/rectUtil';
-import PieceLayout from './drawing/types/PieceLayout';
-import PieceSlotLayout from './drawing/types/PieceSlotLayout';
+import PieceLayout from '../drawing/types/PieceLayout';
+import PieceSlotLayout from '../drawing/types/PieceSlotLayout';
 
 export function getVisibleBookPieces(bookState:Readonly<BookState>):Piece[] {
   const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;

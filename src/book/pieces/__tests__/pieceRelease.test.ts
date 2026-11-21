@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { createLayout } from '@/canvasControls';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '..';
-import { invalidatePieceLayouts } from '../drawing/bookLayoutUtil';
-import BookLayout from '../drawing/types/BookLayout';
+import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '@/book';
+import { invalidatePieceLayouts } from '@/book/drawing/bookLayoutUtil';
+import BookLayout from '@/book/drawing/types/BookLayout';
 import { endBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces, releaseBookPieceDrag } from '../pieceInteractionUtil';
 import { prepareBookPieceSlotPresentations } from '../pieceSlotPresentationUtil';
-import BookPage from '../types/BookPage';
-import { createDefaultBookState } from '../types/BookState';
+import BookPage from '@/book/types/BookPage';
+import { createDefaultBookState } from '@/book/types/BookState';
 
 function _createPreparedBook() {
   // Share immutable options while retaining distinct answer state and correct indexes.

@@ -8,7 +8,7 @@ import { claimBookConclusion, updateBookClaim, updateBookClaimControls } from '.
 import { calcBookClaimMessageAlpha } from '../bookClaimPresentationUtil';
 import { onBookMouseDown, onBookMouseOver, onBookMouseUp, onBookMouseWheel } from '../eventHandlers';
 import { goNextPage, goPrevPage, setPageNavigationButtonVisibility } from '../navigationUtil';
-import { generatePieceStack } from '../pieceGenerationUtil';
+import { generatePieceStack } from '../pieces';
 import { hideBook, shiftBookLeft, shiftBookRight, showBook } from '../drawing/bookAnimationUtil';
 import { updateBookLayoutAsNeeded, updateControlLayout } from '../drawing/bookLayoutUtil';
 import { startPageFlip } from '../drawing/pageFlipAnimationUtil';

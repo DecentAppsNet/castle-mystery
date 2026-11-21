@@ -10,7 +10,7 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { applyBookClaimResults } from './bookClaimResultUtil';
 import { calcBookClaimTiming } from './bookClaimTimingUtil';
 import { setPageNavigationButtonVisibility } from './navigationUtil';
-import { isCurrentPieceSlot } from './pieceSlotTargetUtil';
+import { isCurrentPieceSlot } from './pieces';
 import Rect from '@/game/types/Rect';
 import BookState from './types/BookState';
 import BookPage from './types/BookPage';

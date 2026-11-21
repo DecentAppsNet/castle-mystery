@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createLayout, updateControlRect } from '@/canvasControls';
-import { createBookState } from '../bookContentUtil';
-import BookLayout from '../drawing/types/BookLayout';
-import { hideBook } from '../drawing/bookAnimationUtil';
-import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '../drawing/bookLayoutUtil';
-import { startPageFlip } from '../drawing/pageFlipAnimationUtil';
-import { goNextPage, goPrevPage } from '../navigationUtil';
-import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '..';
+import { createBookState } from '@/book/bookContentUtil';
+import BookLayout from '@/book/drawing/types/BookLayout';
+import { hideBook } from '@/book/drawing/bookAnimationUtil';
+import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '@/book/drawing/bookLayoutUtil';
+import { startPageFlip } from '@/book/drawing/pageFlipAnimationUtil';
+import { goNextPage, goPrevPage } from '@/book/navigationUtil';
+import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '@/book';
 import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPieceAtPoint,
   getVisibleBookPieces, moveBookPieceDrag } from '../pieceInteractionUtil';
 

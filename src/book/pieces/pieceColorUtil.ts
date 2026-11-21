@@ -4,9 +4,9 @@
 import { assertNonNullable } from 'decent-portal';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { getPieceFlairProfile } from './pieceFlairUtil';
-import BookState from './types/BookState';
-import BookPage from './types/BookPage';
-import Piece from './types/Piece';
+import BookState from '../types/BookState';
+import BookPage from '../types/BookPage';
+import Piece from '../types/Piece';
 
 export function getBookPieceBackgroundColor(bookState:Readonly<BookState>, piece:Readonly<Piece>):string {
   // Resolve styles within their owning conclusion, independently of visible layout records.

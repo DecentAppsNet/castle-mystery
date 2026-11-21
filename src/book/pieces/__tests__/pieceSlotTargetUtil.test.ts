@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createLayout } from '@/canvasControls';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import BookPage from '../types/BookPage';
-import { createDefaultBookState } from '../types/BookState';
-import BookLayout from '../drawing/types/BookLayout';
-import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '..';
-import { invalidatePieceLayouts } from '../drawing/bookLayoutUtil';
+import BookPage from '@/book/types/BookPage';
+import { createDefaultBookState } from '@/book/types/BookState';
+import BookLayout from '@/book/drawing/types/BookLayout';
+import { onBookMouseDown, onBookMouseOver, onBookMouseUp } from '@/book';
+import { invalidatePieceLayouts } from '@/book/drawing/bookLayoutUtil';
 import { beginBookPieceDrag, endBookPieceDrag, moveBookPieceDrag } from '../pieceInteractionUtil';
 import { updateBookPieceSlotTarget } from '../pieceSlotTargetUtil';
 

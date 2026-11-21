@@ -7,7 +7,7 @@ import { calcPieceBorderPolygon, getPieceSlotColor } from "./pieceDrawUtil";
 import { bookCanvasFont, drawBorderedBookText } from "./bookTextDrawUtil";
 import DividerStyle from "./types/DividerStyle";
 import Point from '@/game/types/Point';
-import { calcPieceSlotGlintPoint } from '../pieceSlotGlintUtil';
+import { calcPieceSlotGlintPoint } from '../pieces';
 
 const GLINT_COLOR_RGB = '255, 255, 210';
 const GLINT_RADIUS_IN_LINE_HEIGHTS = .25;

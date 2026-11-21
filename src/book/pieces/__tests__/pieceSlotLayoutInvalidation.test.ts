@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { createLayout } from '@/canvasControls';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import BookPage from '../types/BookPage';
-import { createDefaultBookState } from '../types/BookState';
-import BookLayout from '../drawing/types/BookLayout';
-import { hideBook, showBook } from '../drawing/bookAnimationUtil';
-import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '../drawing/bookLayoutUtil';
-import { startPageFlip } from '../drawing/pageFlipAnimationUtil';
-import { goNextPage } from '../navigationUtil';
+import BookPage from '@/book/types/BookPage';
+import { createDefaultBookState } from '@/book/types/BookState';
+import BookLayout from '@/book/drawing/types/BookLayout';
+import { hideBook, showBook } from '@/book/drawing/bookAnimationUtil';
+import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '@/book/drawing/bookLayoutUtil';
+import { startPageFlip } from '@/book/drawing/pageFlipAnimationUtil';
+import { goNextPage } from '@/book/navigationUtil';
 import { beginBookPieceDrag } from '../pieceInteractionUtil';
 
 function _createPreparedBook() {

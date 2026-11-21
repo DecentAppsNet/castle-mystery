@@ -3,11 +3,11 @@
 
 import { normalizeCategoryPhrase } from '@/game/conclusions/conclusionUtil';
 import { doRectsOverlap } from '@/game/rectUtil';
-import { isLeftPageNo } from './drawing/bookLayoutUtil';
-import PieceSlotLayout from './drawing/types/PieceSlotLayout';
+import { isLeftPageNo } from '../drawing/bookLayoutUtil';
+import PieceSlotLayout from '../drawing/types/PieceSlotLayout';
 import { endBookPieceDrag, getVisibleBookPieces } from './pieceInteractionUtil';
-import BookState from './types/BookState';
-import Piece from './types/Piece';
+import BookState from '../types/BookState';
+import Piece from '../types/Piece';
 
 export function isCurrentPieceSlot(bookState:Readonly<BookState>, slot:PieceSlotLayout, isSinglePageView:boolean):boolean {
   // Reject hidden pages and obsolete page/part references before checking their mutable state.

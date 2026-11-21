@@ -3,8 +3,8 @@
 
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { assert, assertNonNullable } from 'decent-portal';
-import BookState from './types/BookState';
-import Piece from './types/Piece';
+import BookState from '../types/BookState';
+import Piece from '../types/Piece';
 
 // Piece centers leave room for half a piece above/below, clear of the heading and page number.
 const FIRST_ROW_Y_PERCENT = 14;
