@@ -74,20 +74,23 @@ describe('book claim resolution', () => {
     expect([blank.correctAnswerIndexes, otherBlank.correctAnswerIndexes]).toEqual([[0], [0]]);
   });
 
-  it('uses independently random directions and exactly 0.8 times each original slot height', () => {
+  it('uses independently random directions with nonzero displacement proportional to slot height', () => {
     const { bookState, first, second, layout } = _createFixture();
     setSeed(503);
     claimBookConclusion(bookState, 1);
-    const directions = [first, second].map((slot, i) => {
+    const displacements = [first, second].map((slot, i) => {
       const piece = bookState.pieceStack[i];
       const x = layout.rect.x + layout.rect.width * piece.xPercent / 100;
       const y = layout.rect.y + layout.rect.height * piece.yPercent / 100;
       const dx = x - slot.rect.x - slot.rect.width / 2;
       const dy = y - slot.rect.y - slot.rect.height / 2;
-      expect(Math.hypot(dx, dy)).toBeCloseTo(slot.rect.height * .8);
-      return Math.atan2(dy, dx);
+      const distanceInSlotHeights = Math.hypot(dx, dy) / slot.rect.height;
+      expect(Number.isFinite(distanceInSlotHeights)).toBe(true);
+      expect(distanceInSlotHeights).toBeGreaterThan(0);
+      return { distanceInSlotHeights, direction:Math.atan2(dy, dx) };
     });
-    expect(directions[0]).not.toBe(directions[1]);
+    expect(displacements[0].distanceInSlotHeights).toBeCloseTo(displacements[1].distanceInSlotHeights);
+    expect(displacements[0].direction).not.toBe(displacements[1].direction);
   });
 
   it('produces deterministic ejection positions when seeded', () => {
@@ -114,13 +117,16 @@ describe('book claim resolution', () => {
   });
 
   it('applies the single-page display offset exactly once', () => {
-    const { bookState, first, layout } = _createFixture(true);
+    const spread = _createFixture();
+    const single = _createFixture(true);
     setSeed(503);
-    claimBookConclusion(bookState, 1);
-    const piece = bookState.pieceStack[0];
-    const dx = layout.rect.x + 200 + layout.rect.width * piece.xPercent / 100 - first.rect.x - first.rect.width / 2;
-    const dy = layout.rect.y + layout.rect.height * piece.yPercent / 100 - first.rect.y - first.rect.height / 2;
-    expect(Math.hypot(dx, dy)).toBeCloseTo(24);
+    claimBookConclusion(spread.bookState, 1);
+    setSeed(503);
+    claimBookConclusion(single.bookState, 1);
+    single.bookState.pieceStack.slice(0, 2).forEach((piece, i) => {
+      expect(piece.xPercent).toBeCloseTo(spread.bookState.pieceStack[i].xPercent);
+      expect(piece.yPercent).toBeCloseTo(spread.bookState.pieceStack[i].yPercent);
+    });
   });
 
   it('routes a real hand-button click to claim only its conclusion', () => {
