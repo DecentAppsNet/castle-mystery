@@ -22,7 +22,7 @@ const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
 const PAGE_TOP_MARGIN = .04;
 const PAGE_BOTTOM_MARGIN = .07;
-const GLINT_PREVIEW_ROTATION_PERIOD_MSECS = 2000;
+const GLINT_PREVIEW_ROTATION_PERIOD_MSECS = 5000;
 
 // Use percentage-based margins to return an inner page rect representing the part of the page that will look
 // visually correct to draw text over. In other words, we want to draw text over the flat paper part of the image -
