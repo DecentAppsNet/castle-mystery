@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createImageSetFromLevel } from '../imageSetUtil';
+import { createImageSet, createImageSetFromLevel } from '../imageSetUtil';
 import { ImageSet } from '@/imageLoading';
 import { createDefaultMutableLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
@@ -9,6 +9,12 @@ import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
 import { createGameState } from '../gameUtil';
 import Conclusion from '../conclusions/types/Conclusion';
 import ClozePartType from '../conclusions/types/ClozePartType';
+import { CHARACTER_SELECTION_NIMBUS_IMAGE_URL } from '../effects/characterSelectionEffectUtil';
+import { KEY_IMAGE_URL } from '../effects/lockEffectUtil';
+import { getGroundImageAssetUrl } from '../imageUrlUtil';
+import { UNKNOWN_ITEM_ICON_URL } from '../discoveryIconUrlUtil';
+import { BOOK_ICON_IMAGE_URL } from '../drawing/overlay';
+import { BOOK_IMAGE_URL, BOOK_PAGE_TILE_IMAGE_URL, ILLUMINATIONS_IMAGE_URL } from '@/book';
 
 function _createImageConclusion(imageUrl:string|string[]):Conclusion {
   return {
@@ -44,7 +50,73 @@ describe('imageSetUtil', () => {
     });
   });
 
+  describe('createImageSet()', () => {
+    it('loads exactly the permanent images under canonical keys with optional masks', async () => {
+      const permanentUrls = [CHARACTER_SELECTION_NIMBUS_IMAGE_URL, KEY_IMAGE_URL,
+        getGroundImageAssetUrl(), UNKNOWN_ITEM_ICON_URL, BOOK_ICON_IMAGE_URL,
+        BOOK_IMAGE_URL, BOOK_PAGE_TILE_IMAGE_URL, ILLUMINATIONS_IMAGE_URL];
+
+      const imageSet = await createImageSet();
+
+      expect(imageSet).toBeInstanceOf(ImageSet);
+      expect(imageSet.size).toBe(new Set(permanentUrls).size);
+      for (const imageUrl of permanentUrls) {
+        const asset = imageSet.findImage(imageUrl);
+        expect(asset).not.toBeNull();
+        expect(asset?.punchMaskImage).not.toBeNull();
+        expect(fetch).toHaveBeenCalledWith(`/castle-mystery${imageUrl}`);
+        expect(imageSet.findImage(`/castle-mystery${imageUrl}`)).toBeNull();
+      }
+      expect(fetch).toHaveBeenCalledTimes(imageSet.size * 2);
+    });
+
+    it('waits for optional mask preparation before returning the permanent store', async () => {
+      const maskResponse = Promise.withResolvers<Response>();
+      const maskRequested = Promise.withResolvers<void>();
+      vi.mocked(fetch).mockImplementation(async url => {
+        if (url === '/castle-mystery/assets/ui/bookPageTile.punch.png') {
+          maskRequested.resolve();
+          return maskResponse.promise;
+        }
+        return new Response(new Blob(), { headers:{ 'content-type':'image/png' } });
+      });
+      const completed = vi.fn();
+      const loading = createImageSet().then(imageSet => {
+        completed(imageSet);
+        return imageSet;
+      });
+      await maskRequested.promise;
+
+      expect(completed).not.toHaveBeenCalled();
+      maskResponse.resolve(new Response(null, { status:404 }));
+      const imageSet = await loading;
+      expect(completed).toHaveBeenCalledExactlyOnceWith(imageSet);
+      expect(imageSet.findImage(BOOK_PAGE_TILE_IMAGE_URL)?.punchMaskImage).toBeNull();
+    });
+
+    it('rejects a required permanent image failure with its canonical URL', async () => {
+      vi.mocked(fetch).mockImplementation(async url => new Response(new Blob(), {
+        status:url === `/castle-mystery${BOOK_IMAGE_URL}` ? 404 : 200
+      }));
+
+      await expect(createImageSet()).rejects.toThrow(BOOK_IMAGE_URL);
+    });
+  });
+
   describe('createImageSetFromLevel()', () => {
+    it('loads permanent and level assets without reloading a shared permanent reference', async () => {
+      const level = createDefaultMutableLevel();
+      level.backgroundImageUrl = BOOK_IMAGE_URL;
+      level.conclusions = [_createImageConclusion('/assets/conclusions/test.png')];
+
+      const imageSet = await createImageSetFromLevel(level);
+
+      expect(imageSet.findImage(BOOK_IMAGE_URL)).not.toBeNull();
+      expect(imageSet.findImage(ILLUMINATIONS_IMAGE_URL)).not.toBeNull();
+      expect(imageSet.findImage('/assets/conclusions/test.png')).not.toBeNull();
+      expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === `/castle-mystery${BOOK_IMAGE_URL}`)).toHaveLength(1);
+    });
+
     it('chooses the first successful candidate and does not request later alternatives', async () => {
       const level = createDefaultMutableLevel();
       level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];

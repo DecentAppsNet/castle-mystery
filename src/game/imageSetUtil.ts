@@ -42,8 +42,8 @@ function _findCharacterImageUrls(level:Level):string[] {
   return [...imageUrls];
 }
 
-function _findImageUrls(level:Level):string[] {
-  const imageUrls = new Set<string>([
+function _createPermanentImageUrls():ReadonlySet<string> {
+  return new Set([
     CHARACTER_SELECTION_NIMBUS_IMAGE_URL,
     KEY_IMAGE_URL,
     getGroundImageAssetUrl(),
@@ -53,6 +53,10 @@ function _findImageUrls(level:Level):string[] {
     BOOK_PAGE_TILE_IMAGE_URL,
     ILLUMINATIONS_IMAGE_URL
   ]);
+}
+
+function _findLevelImageUrls(level:Level):string[] {
+  const imageUrls = new Set<string>();
   if (level.backgroundImageUrl) imageUrls.add(level.backgroundImageUrl);
   level.rooms.forEach(room => {
     room.backWallTexture && findTextureImageUrls(room.backWallTexture).forEach(imageUrl => imageUrls.add(imageUrl));
@@ -83,7 +87,7 @@ function _findResolvedCandidateUrl(candidateUrls:string[], imageSet:ImageSet):st
 }
 
 async function _loadDirectReferencedImages(level:Level, imageSet:ImageSet):Promise<void> {
-  const imageUrls = _findImageUrls(level);
+  const imageUrls = _findLevelImageUrls(level).filter(imageUrl => !imageSet.findImage(imageUrl));
   await Promise.all(imageUrls.map(imageUrl => imageSet.loadImage(imageUrl, true)));
 }
 
@@ -121,8 +125,16 @@ async function _resolveLevelConclusionImageUrls(level:Level, imageSet:ImageSet) 
   }
 }
 
-export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
+export async function createImageSet():Promise<ImageSet> {
   const imageSet = new ImageSet();
+  const imageUrls = [..._createPermanentImageUrls()];
+  const loadingImages = imageUrls.map(imageUrl => imageSet.loadImage(imageUrl, true));
+  await Promise.all(loadingImages);
+  return imageSet;
+}
+
+export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
+  const imageSet = await createImageSet();
   await _loadDirectReferencedImages(level, imageSet);
   await _resolveLevelConclusionImageUrls(level, imageSet);
   return imageSet;
