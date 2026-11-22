@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createImageSet, createImageSetFromLevel } from '../imageSetUtil';
+import { createImageSet, createImageSetFromLevel, updateImageSetForLevel } from '../imageSetUtil';
 import { ImageSet } from '@/imageLoading';
 import { createDefaultMutableLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
@@ -100,6 +100,118 @@ describe('imageSetUtil', () => {
       }));
 
       await expect(createImageSet()).rejects.toThrow(BOOK_IMAGE_URL);
+    });
+  });
+
+  describe('updateImageSetForLevel()', () => {
+    it('preserves registered asset identity without repeating image or mask I/O', async () => {
+      const imageSet = await createImageSet();
+      const permanentAsset = imageSet.findImage(BOOK_IMAGE_URL);
+      const level = createDefaultMutableLevel();
+      level.backgroundImageUrl = '/assets/backgrounds/shared.png';
+      level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
+      await updateImageSetForLevel(level, imageSet);
+      const backgroundAsset = imageSet.findImage(level.backgroundImageUrl);
+      const conclusionAsset = imageSet.findImage('/assets/conclusions/test.png');
+      expect(backgroundAsset).not.toBeNull();
+      expect(conclusionAsset).not.toBeNull();
+      const size = imageSet.size;
+      vi.mocked(fetch).mockClear();
+      vi.mocked(createImageBitmap).mockClear();
+
+      await updateImageSetForLevel(level, imageSet);
+
+      expect(imageSet.findImage(BOOK_IMAGE_URL)).toBe(permanentAsset);
+      expect(imageSet.findImage(level.backgroundImageUrl)).toBe(backgroundAsset);
+      expect(imageSet.findImage('/assets/conclusions/test.png')).toBe(conclusionAsset);
+      expect(imageSet.size).toBe(size);
+      expect(fetch).not.toHaveBeenCalled();
+      expect(createImageBitmap).not.toHaveBeenCalled();
+    });
+
+    it('loads new direct and candidate images and reuses a URL shared by both', async () => {
+      const imageSet = new ImageSet();
+      const level = createDefaultMutableLevel();
+      level.backgroundImageUrl = '/assets/bodies/shared.png';
+      level.conclusions = [
+        _createImageConclusion(['/assets/conclusions/shared.png', '/assets/bodies/shared.png']),
+        { ..._createImageConclusion(['/assets/conclusions/new.png', '/assets/bodies/new.png']), id:'new' }
+      ];
+
+      await updateImageSetForLevel(level, imageSet);
+
+      expect(imageSet.size).toBe(2);
+      expect(imageSet.findImage('/assets/bodies/shared.png')).not.toBeNull();
+      expect(imageSet.findImage('/assets/conclusions/new.png')).not.toBeNull();
+      expect(level.conclusions.map(conclusion => conclusion.parts[0])).toEqual([
+        { type:ClozePartType.image, imageUrl:'/assets/bodies/shared.png' },
+        { type:ClozePartType.image, imageUrl:'/assets/conclusions/new.png' }
+      ]);
+      expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/conclusions/shared.png');
+      expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/bodies/new.png');
+      expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === '/castle-mystery/assets/bodies/shared.png')).toHaveLength(1);
+      expect(fetch).toHaveBeenCalledWith('/castle-mystery/assets/conclusions/new.punch.png');
+    });
+
+    it('adds assets across sequential levels without removing outgoing or reloading shared assets', async () => {
+      const imageSet = await createImageSet();
+      const firstLevel = createDefaultMutableLevel();
+      firstLevel.backgroundImageUrl = '/assets/backgrounds/first.png';
+      firstLevel.conclusions = [_createImageConclusion('/assets/bodies/shared.png')];
+      await updateImageSetForLevel(firstLevel, imageSet);
+      const outgoingAsset = imageSet.findImage(firstLevel.backgroundImageUrl);
+      const sharedAsset = imageSet.findImage('/assets/bodies/shared.png');
+      const size = imageSet.size;
+      const secondLevel = createDefaultMutableLevel();
+      secondLevel.backgroundImageUrl = '/assets/backgrounds/second.png';
+      secondLevel.conclusions = [_createImageConclusion(['/assets/conclusions/shared.png', '/assets/bodies/shared.png'])];
+      vi.mocked(fetch).mockClear();
+
+      await updateImageSetForLevel(secondLevel, imageSet);
+
+      expect(imageSet.findImage(firstLevel.backgroundImageUrl)).toBe(outgoingAsset);
+      expect(imageSet.findImage('/assets/bodies/shared.png')).toBe(sharedAsset);
+      expect(imageSet.findImage(secondLevel.backgroundImageUrl)).not.toBeNull();
+      expect(imageSet.size).toBe(size + 1);
+      expect(secondLevel.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:'/assets/bodies/shared.png' });
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/second.png');
+      expect(fetch).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/second.punch.png');
+    });
+
+    it('rejects required direct-image failure without removing preexisting assets or probing candidates', async () => {
+      const imageSet = await createImageSet();
+      const outgoingAsset = await imageSet.loadImage('/assets/backgrounds/outgoing.png');
+      const permanentAsset = imageSet.findImage(BOOK_IMAGE_URL);
+      const size = imageSet.size;
+      const level = createDefaultMutableLevel();
+      level.backgroundImageUrl = '/assets/backgrounds/missing.png';
+      level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status:404 }));
+      vi.mocked(fetch).mockClear();
+
+      await expect(updateImageSetForLevel(level, imageSet)).rejects.toThrow('/assets/backgrounds/missing.png');
+
+      expect(imageSet.findImage('/assets/backgrounds/outgoing.png')).toBe(outgoingAsset);
+      expect(imageSet.findImage(BOOK_IMAGE_URL)).toBe(permanentAsset);
+      expect(imageSet.size).toBe(size);
+      expect(fetch).toHaveBeenCalledExactlyOnceWith('/castle-mystery/assets/backgrounds/missing.png');
+    });
+
+    it('preserves preexisting assets and unresolved references when all candidates fail', async () => {
+      const imageSet = new ImageSet();
+      const outgoingAsset = await imageSet.loadImage('/assets/backgrounds/outgoing.png');
+      const level = createDefaultMutableLevel();
+      const candidateUrls = ['/assets/conclusions/missing.png', '/assets/bodies/missing.png'];
+      level.conclusions = [_createImageConclusion(candidateUrls)];
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status:404 }));
+
+      await expect(updateImageSetForLevel(level, imageSet)).rejects.toThrow(
+        'Could not load conclusion image candidates: /assets/conclusions/missing.png, /assets/bodies/missing.png');
+
+      expect(imageSet.findImage('/assets/backgrounds/outgoing.png')).toBe(outgoingAsset);
+      expect(imageSet.size).toBe(1);
+      expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:candidateUrls });
     });
   });
 

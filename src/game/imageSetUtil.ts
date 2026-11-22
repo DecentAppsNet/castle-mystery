@@ -133,9 +133,13 @@ export async function createImageSet():Promise<ImageSet> {
   return imageSet;
 }
 
-export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
-  const imageSet = await createImageSet();
+export async function updateImageSetForLevel(level:Level, imageSet:ImageSet):Promise<void> {
   await _loadDirectReferencedImages(level, imageSet);
   await _resolveLevelConclusionImageUrls(level, imageSet);
+}
+
+export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
+  const imageSet = await createImageSet();
+  await updateImageSetForLevel(level, imageSet);
   return imageSet;
 }
