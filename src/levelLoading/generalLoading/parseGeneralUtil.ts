@@ -14,6 +14,7 @@ import LevelLoadingContext from "../types/LevelLoadingContext";
 import { createNormalizedSectionEntryMap, getSectionIdsFromSectionText, isSectionRequired } from "../levelFileSectionUtil";
 import { findActiveCharacterFromItinerary } from "../activityLoading";
 import { validateSkinName } from "./skinIdUtil";
+import { convertStraightQuotesToDirectional } from '@/common/quoteUtil';
 
 const DEFAULT_WIN_SYNOPSIS = 'You won the level!';
 
@@ -105,7 +106,7 @@ function _parseGeneralSection(generalSectionText:string, level:MutableLevel, err
     generalNameValues.discoverableRoomCount, 'discoverableRoomCount', generalSectionText, errors);
 
   level.title = generalNameValues.title ?? '';
-  level.description = generalNameValues.description ?? '';
+  level.description = convertStraightQuotesToDirectional(generalNameValues.description ?? '');
   level.winSynopsis = generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS;
   level.backgroundImageUrl = generalNameValues.background ? getBackgroundImageAssetUrl(generalNameValues.background) : null;
   
