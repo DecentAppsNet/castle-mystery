@@ -120,7 +120,10 @@ export function createBookState():BookState { // TODO this will change later to 
     { kind:'conclusion', headingText:'Chain of Custody', conclusion:conclusion3,
       answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion3) , chapterNo:1},
     { kind:'blank', headingText:'Chain of Custody', chapterNo:1 },
-    { kind:'tally', headingText:'Tally', conclusions:[conclusion1,conclusion2, conclusion3], chapterNo:1 }
+    { kind:'tally', headingText:'Tally', conclusions:[conclusion1,conclusion2, conclusion3], chapterNo:1 },
+    { kind:'blank', headingText:'', chapterNo:1 },
+    { kind:'blank', headingText:'', chapterNo:1 },
+    { kind:'chapterStart', headingText:'', title:'Penance', chapterNo:99, description:'When one accrues Marks of Shame, they may be expunged through the acts of satisfaction herein prescribed.' }
   ];
   bookState.pieceStack = generatePieceStack(bookState);
 
