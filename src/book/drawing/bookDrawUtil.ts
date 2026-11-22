@@ -161,7 +161,7 @@ function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rec
   if (rightPageNo <= bookState.pages.length) {
     drawPage(bookState.pages[rightPageNo-1], metaTime, rightPageNo, rightPageRect, imageSet, context,
       canCollect && (!layout.isSinglePageView || !isOnLeftPage) ? slots : null, presentations, glints,
-      calcBookClaimMessageAlpha(bookState, bookState.pages[rightPageNo-1], metaTime));
+      calcBookClaimMessageAlpha(bookState, bookState.pages[rightPageNo-1], metaTime), bookState.pages[leftPageNo-1]);
   }
 
   // Replace rather than retain records from earlier page/content draws.

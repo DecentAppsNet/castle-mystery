@@ -89,7 +89,7 @@ function _createLockedPageClipPath(rect:Rect, isLeftPage:boolean):Path2D {
   return path;
 }
 
-export function drawLockedConclusionPage(metaTime:number, innerPageRect:Rect, isLeftPage:boolean, pw:PageWriter,
+export function drawLockedConclusionPolygon(metaTime:number, innerPageRect:Rect, isLeftPage:boolean, pw:PageWriter,
     context:CanvasRenderingContext2D) {
   const topPercent = pw.getCursorYPercent();
   const bottomPercent = 100 - 2 * pw.getLineHeight('s');
@@ -106,7 +106,11 @@ export function drawLockedConclusionPage(metaTime:number, innerPageRect:Rect, is
     [right, bottom],
     [left, bottom]
   ], context, metaTime, clipPath);
+}
 
+export function drawLockedConclusionPage(metaTime:number, innerPageRect:Rect, isLeftPage:boolean, pw:PageWriter,
+    context:CanvasRenderingContext2D) {
+  drawLockedConclusionPolygon(metaTime, innerPageRect, isLeftPage, pw, context);
   const middleTextHeight = pw.getLineHeight('m') * 3;
   pw.jump(0, 50 - (middleTextHeight / 2));
   pw.setFontSize('m');

@@ -14,7 +14,7 @@ import PieceSlotPresentation from "@/book/types/PieceSlotPresentation";
 import BookClaimGlint from '@/book/types/BookClaimGlint';
 import { drawBookStartPage } from "./bookStartPageDrawUtil";
 import { drawChapterStartPage } from "./chapterStartPageDrawUtil";
-import { drawConclusionPage, drawLockedConclusionPage } from "./conclusionPageDrawUtil";
+import { drawConclusionPage, drawLockedConclusionPage, drawLockedConclusionPolygon } from "./conclusionPageDrawUtil";
 import { drawTallyPage } from "./tallyPageDrawUtil";
 import { drawChapterEndPage } from "./chapterEndPageDrawUtil";
 
@@ -53,7 +53,8 @@ function _concatPageHeadingText(page:BookPage) {
 
 export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRect:Rect, imageSet:ImageSet,
   context:CanvasRenderingContext2D, slotLayouts:PieceSlotLayout[]|null = null,
-  presentations:readonly PieceSlotPresentation[] = [], glints:readonly BookClaimGlint[] = [], messageAlpha:number = 1) {
+  presentations:readonly PieceSlotPresentation[] = [], glints:readonly BookClaimGlint[] = [], messageAlpha:number = 1,
+  previousPage:BookPage|null = null) {
   // Create disposable placement state for this draw only.
   const innerPageRect = _calcInnerPageRect(targetRect, pageNo);
   const pageWriter = new PageWriter(innerPageRect, imageSet, context);
@@ -88,6 +89,10 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
     
     default:
       assert(page.kind === 'blank');
+      if (previousPage && _isLockedConclusionPage(previousPage)) {
+        assert(!isLeftPageNo(pageNo));
+        drawLockedConclusionPolygon(metaTime, innerPageRect, false, pageWriter, context);
+      }
     break;
   }
 
