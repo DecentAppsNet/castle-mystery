@@ -25,6 +25,9 @@ import { findNextTimelineBeat, findPreviousTimelineBeat } from '@/game/timeline/
 import LevelSaveCoordinator from './levelSaveCoordinator';
 import PreparedLevelState from './types/PreparedLevelState';
 import { createBookState } from '@/book';
+import { ImageSet } from '@/imageLoading';
+import { createImageSet } from '@/game/imageSetUtil';
+import InitResults from './types/InitResults';
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -44,6 +47,8 @@ function HomeScreen() {
   const applicationRootRef = useRef<HTMLDivElement|null>(null);
   const levelViewRef = useRef<LevelViewHandle|null>(null);
   const loadRequestRef = useRef<LevelLoadRequest>({ pending:null, isMounted:true });
+  const imageSetRef = useRef<ImageSet|null>(null);
+  const initPromiseRef = useRef<Promise<InitResults>|null>(null);
   const saveCoordinatorRef = useRef<LevelSaveCoordinator|null>(null);
   const saveGameStateRef = useRef<GameState|null>(null);
   const previousConclusionsRef = useRef<readonly Conclusion[]>([]);
@@ -129,12 +134,24 @@ function HomeScreen() {
   function _handleLoadingFailed(error:unknown) {
     setInitErrorMessage(error instanceof Error ? error.message : 'Failed to load level.');
   }
+
+  async function _initializeSession():Promise<InitResults> {
+    if (!imageSetRef.current) imageSetRef.current = await createImageSet();
+    return init(imageSetRef.current);
+  }
   
   useEffect(() => {
     if (!isInitialClosedFramePainted || gameState) return;
     let isCancelled = false;
-    init().then((initResults) => {
-      if (!initResults || isCancelled) return;
+    if (!initPromiseRef.current) {
+      initPromiseRef.current = Promise.resolve().then(_initializeSession).catch((error:unknown) => {
+        initPromiseRef.current = null;
+        console.error(error);
+        throw error;
+      });
+    }
+    initPromiseRef.current.then((initResults) => {
+      if (isCancelled || !loadRequestRef.current.isMounted) return;
       setMinutes(initResults.minutes);
       _publishPreparedLevelState(initResults);
       setLevelManifest(initResults.levelManifest);
@@ -143,7 +160,7 @@ function HomeScreen() {
       setDiscoveries(createDiscoveries(initResults.gameState));
       setActiveCharacterId(initResults.gameState.activeCharacterId);
     }).catch((error:unknown) => {
-      if (isCancelled) return;
+      if (isCancelled || !loadRequestRef.current.isMounted) return;
       setInitErrorMessage(error instanceof Error ? error.message : 'Failed to initialize the app.');
     });
 
