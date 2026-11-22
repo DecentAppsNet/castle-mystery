@@ -5,7 +5,8 @@ import type { Dispatch, SetStateAction } from "react";
 
 import { createDiscoveries } from "@/game/discoveriesUtil";
 import { prepareLevelState } from '../levelPreparation';
-import { createImageSetFromLevel } from "@/game/imageSetUtil";
+import { updateImageSetForLevel } from "@/game/imageSetUtil";
+import { ImageSet } from '@/imageLoading';
 import Discoveries from "@/game/types/Discoveries";
 import PreparedLevelState from '../types/PreparedLevelState';
 import Conclusion from "@/game/conclusions/types/Conclusion";
@@ -18,6 +19,7 @@ import LevelSaveCoordinator from '../levelSaveCoordinator';
 import { assertNonNullable } from 'decent-portal';
 
 type ChangeLevelParams = {
+  imageSet:ImageSet,
   loadRequest:LevelLoadRequest,
   saveCoordinator:LevelSaveCoordinator|null,
   closeCurtain:() => Promise<boolean>,
@@ -53,14 +55,14 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
   setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>, setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
-  setModalDialogName:Dispatch<SetStateAction<string|null>>, loadRequest:LevelLoadRequest):Promise<void> {
+  setModalDialogName:Dispatch<SetStateAction<string|null>>, loadRequest:LevelLoadRequest, imageSet:ImageSet):Promise<void> {
   
   const { level, errors } = await loadLevelFromUrl(levelUrl);
   if (!level) {
     console.error(errors.describeErrors());
     throw new Error('Failed to load level. See console for details.');
   }
-  const imageSet = await createImageSetFromLevel(level);
+  await updateImageSetForLevel(level, imageSet);
   if (!loadRequest.isMounted) return;
   const prepared = await prepareLevelState(level, imageSet, levelUrl);
   if (!loadRequest.isMounted) return;
@@ -112,6 +114,7 @@ function _requestLevelLoad(loadRequest:LevelLoadRequest, closeCurtain:() => Prom
 
 /** Runs selection and Reset through the same protected close/save/load lifecycle. */
 function _changeLevel({
+  imageSet,
   loadRequest,
   saveCoordinator,
   closeCurtain,
@@ -131,7 +134,7 @@ function _changeLevel({
 }:ChangeLevelParams, resetSave:boolean):Promise<void> {
   return _requestLevelLoad(loadRequest, closeCurtain, () => _loadAndApplyLevel(levelUrl, levelManifest, onLevelPrepared, setLevelManifest, setIsPlaying, setMinutes,
     setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
-    setModalDialogName, loadRequest), onLoadingFailed, saveCoordinator, resetSave);
+    setModalDialogName, loadRequest, imageSet), onLoadingFailed, saveCoordinator, resetSave);
 }
 
 type ContinueToNextLevelParams = Omit<ChangeLevelParams, 'levelUrl'>;

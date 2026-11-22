@@ -137,9 +137,3 @@ export async function updateImageSetForLevel(level:Level, imageSet:ImageSet):Pro
   await _loadDirectReferencedImages(level, imageSet);
   await _resolveLevelConclusionImageUrls(level, imageSet);
 }
-
-export async function createImageSetFromLevel(level:Level):Promise<ImageSet> {
-  const imageSet = await createImageSet();
-  await updateImageSetForLevel(level, imageSet);
-  return imageSet;
-}

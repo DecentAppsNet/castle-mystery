@@ -190,7 +190,8 @@ function HomeScreen() {
 
   function _handleResetLevel() {
     if (_isGameDisabled() || !levelManifest) return;
-    void resetLevel({ levelManifest, loadRequest:loadRequestRef.current,
+    assertNonNullable(imageSetRef.current);
+    void resetLevel({ imageSet:imageSetRef.current, levelManifest, loadRequest:loadRequestRef.current,
       saveCoordinator:saveCoordinatorRef.current, closeCurtain:_closeCurtain,
       onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
       setLevelManifest, setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
@@ -247,7 +248,9 @@ function HomeScreen() {
         {levelManifest && <LevelSelector
           levelManifest={levelManifest}
           onSelect={(levelUrl) => {
+            assertNonNullable(imageSetRef.current);
             void changeLevel({
+              imageSet:imageSetRef.current,
               loadRequest:loadRequestRef.current,
               saveCoordinator:saveCoordinatorRef.current,
               closeCurtain:_closeCurtain,
@@ -315,7 +318,9 @@ function HomeScreen() {
       {gameState && levelManifest && <WinLevelDialog 
         synopsis={winSynopsis} 
         isOpen={modalDialogName === WinLevelDialog.name} 
-        onContinue={() => { void continueToNextLevel({levelManifest, onLevelPrepared:_publishPreparedLevelState, setLevelManifest, setIsPlaying,
+        onContinue={() => {
+          assertNonNullable(imageSetRef.current);
+          void continueToNextLevel({imageSet:imageSetRef.current, levelManifest, onLevelPrepared:_publishPreparedLevelState, setLevelManifest, setIsPlaying,
             setMinutes, setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
             setModalDialogName, loadRequest:loadRequestRef.current, closeCurtain:_closeCurtain,
             saveCoordinator:saveCoordinatorRef.current,

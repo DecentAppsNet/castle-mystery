@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createImageSet, createImageSetFromLevel, updateImageSetForLevel } from '../imageSetUtil';
+import { createImageSet, updateImageSetForLevel } from '../imageSetUtil';
 import { ImageSet } from '@/imageLoading';
 import { createDefaultMutableLevel } from '../types/Level';
 import { createDefaultCharacter } from '../types/Character';
@@ -213,15 +213,14 @@ describe('imageSetUtil', () => {
       expect(imageSet.size).toBe(1);
       expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:candidateUrls });
     });
-  });
 
-  describe('createImageSetFromLevel()', () => {
     it('loads permanent and level assets without reloading a shared permanent reference', async () => {
       const level = createDefaultMutableLevel();
       level.backgroundImageUrl = BOOK_IMAGE_URL;
       level.conclusions = [_createImageConclusion('/assets/conclusions/test.png')];
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(imageSet.findImage(BOOK_IMAGE_URL)).not.toBeNull();
       expect(imageSet.findImage(ILLUMINATIONS_IMAGE_URL)).not.toBeNull();
@@ -233,7 +232,8 @@ describe('imageSetUtil', () => {
       const level = createDefaultMutableLevel();
       level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:'/assets/conclusions/test.png' });
       expect(imageSet.findImage('/assets/conclusions/test.png')).not.toBeNull();
@@ -252,12 +252,13 @@ describe('imageSetUtil', () => {
         }
         return new Response(new Blob());
       });
-      const loading = createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      const loading = updateImageSetForLevel(level, imageSet);
       await firstRequested.promise;
 
       expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/bodies/test.png');
       firstResponse.resolve(new Response(null, { status:404 }));
-      const imageSet = await loading;
+      await loading;
       expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:'/assets/bodies/test.png' });
       expect(imageSet.findImage('/assets/conclusions/test.png')).toBeNull();
       expect(imageSet.findImage('/assets/bodies/test.png')).not.toBeNull();
@@ -275,7 +276,8 @@ describe('imageSetUtil', () => {
         return { width:1, height:1 } as ImageBitmap;
       });
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(imageSet.findImage('/assets/conclusions/test.png')).toBeNull();
       expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:'/assets/bodies/test.png' });
@@ -286,7 +288,8 @@ describe('imageSetUtil', () => {
       level.backgroundImageUrl = '/assets/bodies/test.png';
       level.conclusions = [_createImageConclusion(['/assets/conclusions/test.png', '/assets/bodies/test.png'])];
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(level.conclusions[0].parts[0]).toEqual({ type:ClozePartType.image, imageUrl:'/assets/bodies/test.png' });
       expect(imageSet.findImage('/assets/bodies/test.png')).not.toBeNull();
@@ -304,7 +307,8 @@ describe('imageSetUtil', () => {
         status:url === '/castle-mystery/assets/conclusions/first.png' ? 404 : 200
       }));
 
-      await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(level.conclusions.map(conclusion => conclusion.parts[0])).toEqual([
         { type:ClozePartType.image, imageUrl:'/assets/bodies/shared.png' },
@@ -321,7 +325,8 @@ describe('imageSetUtil', () => {
         status:String(url).endsWith('/test.png') ? 404 : 200
       }));
 
-      await expect(createImageSetFromLevel(level)).rejects.toThrow(
+      const imageSet = await createImageSet();
+      await expect(updateImageSetForLevel(level, imageSet)).rejects.toThrow(
         'Could not load conclusion image candidates: /assets/conclusions/test.png, /assets/bodies/test.png');
       expect(level.conclusions[0].parts[0]).toEqual({
         type:ClozePartType.image, imageUrl:['/assets/conclusions/test.png', '/assets/bodies/test.png']
@@ -336,7 +341,8 @@ describe('imageSetUtil', () => {
         status:url === '/castle-mystery/assets/backgrounds/missing.png' ? 404 : 200
       }));
 
-      await expect(createImageSetFromLevel(level)).rejects.toThrow('/assets/backgrounds/missing.png');
+      const imageSet = await createImageSet();
+      await expect(updateImageSetForLevel(level, imageSet)).rejects.toThrow('/assets/backgrounds/missing.png');
       expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/conclusions/test.png');
       expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/bodies/test.png');
     });
@@ -349,7 +355,8 @@ describe('imageSetUtil', () => {
         status:url === '/castle-mystery/assets/bodies/missing.png' ? 404 : 200
       }));
 
-      await expect(createImageSetFromLevel(level)).rejects.toThrow(
+      const imageSet = await createImageSet();
+      await expect(updateImageSetForLevel(level, imageSet)).rejects.toThrow(
         'Could not load image /assets/bodies/missing.png: Image fetch failed (404)');
     });
 
@@ -365,7 +372,8 @@ describe('imageSetUtil', () => {
         return { width:1, height:1 } as ImageBitmap;
       });
 
-      await expect(createImageSetFromLevel(level)).rejects.toThrow('/assets/bodies/broken.png');
+      const imageSet = await createImageSet();
+      await expect(updateImageSetForLevel(level, imageSet)).rejects.toThrow('/assets/bodies/broken.png');
     });
 
     it('rejects a network failure for a configured non-head body part', async () => {
@@ -380,7 +388,8 @@ describe('imageSetUtil', () => {
         return new Response(new Blob());
       });
 
-      await expect(createImageSetFromLevel(level)).rejects.toThrow('/assets/bodies/torso.png');
+      const imageSet = await createImageSet();
+      await expect(updateImageSetForLevel(level, imageSet)).rejects.toThrow('/assets/bodies/torso.png');
     });
 
     it('keeps a loaded character image when its optional punch mask is absent', async () => {
@@ -391,7 +400,8 @@ describe('imageSetUtil', () => {
         status:String(url).endsWith('.punch.png') ? 404 : 200
       }));
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(imageSet.findImage('/assets/bodies/head.png')?.punchMaskImage).toBeNull();
       expect(imageSet.findImage('/assets/bodies/head.png')?.image).toEqual({ width:1, height:1 });
@@ -404,14 +414,16 @@ describe('imageSetUtil', () => {
         status:url === '/castle-mystery/assets/backgrounds/missing.png' ? 404 : 200
       }));
 
-      await expect(createImageSetFromLevel(level)).rejects.toThrow('/assets/backgrounds/missing.png');
+      const imageSet = await createImageSet();
+      await expect(updateImageSetForLevel(level, imageSet)).rejects.toThrow('/assets/backgrounds/missing.png');
     });
 
     it('keeps omitted character artwork headless while loading built-in assets', async () => {
       const level = createDefaultMutableLevel();
       level.characters = [createDefaultCharacter()];
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(imageSet.size).toBeGreaterThan(0);
       expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('/assets/bodies/'));
@@ -431,7 +443,8 @@ describe('imageSetUtil', () => {
         return { width:1, height:1 } as ImageBitmap;
       });
       const publish = vi.fn();
-      const loading = createImageSetFromLevel(level).then(imageSet => {
+      const loading = createImageSet().then(async imageSet => {
+        await updateImageSetForLevel(level, imageSet);
         const gameState = createGameState(level, imageSet);
         publish(gameState);
         return gameState;
@@ -452,7 +465,8 @@ describe('imageSetUtil', () => {
         status:String(url).endsWith('.punch.png') ? 404 : 200
       }));
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(imageSet.findImage('/assets/backgrounds/sky.png')?.punchMaskImage).toBeNull();
       expect(fetch).toHaveBeenCalledWith('/castle-mystery/assets/backgrounds/sky.punch.png');
@@ -475,7 +489,8 @@ describe('imageSetUtil', () => {
         skins:[{ id:'character-alternate', description:null, headImageUrl:'/assets/bodies/alternate.png' }]
       }];
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       for (const kind of ['torso', 'head', 'farArm', 'nearArm', 'leftLeg', 'rightLeg', 'alternate']) {
         expect(imageSet.findImage(`/assets/bodies/${kind}.png`)).not.toBeNull();
@@ -493,7 +508,8 @@ describe('imageSetUtil', () => {
       level.characters = [character, { ...character, id:'other' }];
       level.backgroundImageUrl = '/assets/bodies/shared.png';
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(imageSet.findImage('/assets/bodies/shared.png')).not.toBeNull();
       expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === '/castle-mystery/assets/bodies/shared.png')).toHaveLength(1);
@@ -511,7 +527,8 @@ describe('imageSetUtil', () => {
         }] }
       }] } }];
 
-      const imageSet = await createImageSetFromLevel(level);
+      const imageSet = await createImageSet();
+      await updateImageSetForLevel(level, imageSet);
 
       expect(imageSet.findImage('/assets/bodies/nested.png')).not.toBeNull();
       expect(fetch).not.toHaveBeenCalledWith('/castle-mystery/assets/bodies/head.png');
