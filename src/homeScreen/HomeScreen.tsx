@@ -24,10 +24,11 @@ import { clearPlayerEvents } from '@/game/playerEventUtil';
 import { findNextTimelineBeat, findPreviousTimelineBeat } from '@/game/timeline/beatUtil';
 import LevelSaveCoordinator from './levelSaveCoordinator';
 import PreparedLevelState from './types/PreparedLevelState';
-import { createBookState } from '@/book';
+import { createBookState, findBookImageUrls } from '@/book';
 import { ImageSet } from '@/imageLoading';
 import { createImageSet } from '@/game/imageSetUtil';
 import InitResults from './types/InitResults';
+import { acceptPreparedLevelState } from './levelPreparation';
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -81,6 +82,7 @@ function HomeScreen() {
   }, []);
 
   function _publishPreparedLevelState(prepared:PreparedLevelState) {
+    acceptPreparedLevelState(prepared, findBookImageUrls(bookState));
     saveGameStateRef.current = prepared.gameState;
     saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
     previousConclusionsRef.current = prepared.gameState.conclusions;

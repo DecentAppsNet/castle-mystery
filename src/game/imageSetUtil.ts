@@ -137,3 +137,9 @@ export async function updateImageSetForLevel(level:Level, imageSet:ImageSet):Pro
   await _loadDirectReferencedImages(level, imageSet);
   await _resolveLevelConclusionImageUrls(level, imageSet);
 }
+
+export function removeUnrequiredImagesForLevel(level:Level, imageSet:ImageSet,
+  bookImageUrls:ReadonlySet<string>):void {
+  const requiredUrls = new Set([..._createPermanentImageUrls(), ..._findLevelImageUrls(level), ...bookImageUrls]);
+  imageSet.removeUnrequiredImages(requiredUrls);
+}
