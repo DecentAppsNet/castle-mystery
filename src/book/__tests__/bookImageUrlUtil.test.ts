@@ -43,7 +43,7 @@ describe('bookImageUrlUtil', () => {
       bookState.pages = [
         { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:{} },
         { kind:'conclusion', headingText:'', chapterNo:2, conclusion, answerSetIdToPieceStyleNoMap:{} },
-        { kind:'tally', headingText:'', chapterNo:2, conclusions:[conclusion], winSynopsis:'' }
+        { kind:'tally', headingText:'', chapterNo:2, conclusions:[conclusion] }
       ];
 
       expect(findBookImageUrls(bookState)).toEqual(new Set(['/assets/bodies/shared.png']));

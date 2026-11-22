@@ -45,8 +45,9 @@ function _addConclusionPages(conclusion:Conclusion, chapterNo:number, pages:Book
 }
 
 function _addChapterEndPages(level:Level, chapterNo:number, pages:BookPage[]) {
-  pages.push({ kind:'tally', chapterNo, headingText:'Tally', conclusions:level.conclusions, winSynopsis:level.winSynopsis });
-  pages.push({ kind:'chapterEnd', headingText:'', chapterNo, winSynopsis:level.winSynopsis });
+  const { conclusions } = level;
+  pages.push({ kind:'tally', chapterNo, headingText:'Tally', conclusions });
+  pages.push({ kind:'chapterEnd', headingText:'End', chapterNo, winSynopsis:level.winSynopsis, conclusions });
 }
 
 function _doesBookHaveLevelChapter(bookState:BookState, level:Level):boolean {

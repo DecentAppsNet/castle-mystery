@@ -5,7 +5,7 @@
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md | roomStyles.md
-* description=Pietro's House of Rocks was known for being neither the best nor worst masonry shop in Palermo. Yet a place of mediocrity instills a flickering dream. It whispers, "You have something now. Why not a little more?"
+* description=Pietro's masonry shop was neither the best nor worst in Palermo. A place of mediocrity instills a flickering dream. It whispers, "You have something now. Why not a little more?"
 * winSynopsis=Heinrich and the young King Frederick enjoyed an afternoon of friendship and falconing. Master Mason Pietro tolerated the apprentice leaving work, hoping for a future royal construction project. The seed of conspiracy was planted in a corner of the workshop yard.
 
 # Map

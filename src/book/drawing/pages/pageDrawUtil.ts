@@ -14,7 +14,8 @@ import PieceSlotPresentation from "@/book/types/PieceSlotPresentation";
 import BookClaimGlint from '@/book/types/BookClaimGlint';
 import { drawBookStartPage } from "./bookStartPageDrawUtil";
 import { drawChapterStartPage } from "./chapterStartPageDrawUtil";
-import { drawConclusionPage, drawLockedConclusionPage, drawLockedConclusionPolygon } from "./conclusionPageDrawUtil";
+import { drawConclusionPage, drawLockedConclusionPage } from "./conclusionPageDrawUtil";
+import { drawObscuredPage } from './obscuredPageDrawUtil';
 import { drawTallyPage } from "./tallyPageDrawUtil";
 import { drawChapterEndPage } from "./chapterEndPageDrawUtil";
 
@@ -84,14 +85,14 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
       drawTallyPage(page, pageWriter);
     break;
     case 'chapterEnd':
-      drawChapterEndPage(page, pageWriter);
+      drawChapterEndPage(page, pageWriter, metaTime, innerPageRect, context);
     break;
     
     default:
       assert(page.kind === 'blank');
       if (previousPage && _isLockedConclusionPage(previousPage)) {
         assert(!isLeftPageNo(pageNo));
-        drawLockedConclusionPolygon(metaTime, innerPageRect, false, pageWriter, context);
+        drawObscuredPage(metaTime, innerPageRect, false, pageWriter, context);
       }
     break;
   }
