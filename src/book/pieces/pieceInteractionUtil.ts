@@ -13,9 +13,12 @@ import PieceSlotLayout from '../drawing/types/PieceSlotLayout';
 
 export function getVisibleBookPieces(bookState:Readonly<BookState>):Piece[] {
   const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
-  return bookState.pieceStack.filter(piece => piece.placement === null
-    && (piece.conclusionPageI === leftPageNo - 1 || piece.conclusionPageI === leftPageNo)
-    && bookState.pages[piece.conclusionPageI]?.kind === 'conclusion');
+  return bookState.pieceStack.filter(piece => {
+    const page = bookState.pages[piece.conclusionPageI];
+    return piece.placement === null
+      && (piece.conclusionPageI === leftPageNo - 1 || piece.conclusionPageI === leftPageNo)
+      && page?.kind === 'conclusion' && !page.conclusion.isLocked;
+  });
 }
 
 export function bringBookPieceToFront(bookState:BookState, piece:Piece):void {

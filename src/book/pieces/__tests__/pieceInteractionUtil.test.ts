@@ -316,6 +316,24 @@ describe('pieceInteractionUtil', () => {
   });
 
   describe('getVisibleBookPieces()', () => {
+    it('hides locked conclusion pieces and restores them unchanged on unlock', () => {
+      const { bookState, lower, upper } = _createBookState();
+      const page = bookState.pages[upper.conclusionPageI] as ConclusionPage;
+      const stack = bookState.pieceStack;
+      const original = structuredClone(stack);
+      page.conclusion.isLocked = true;
+
+      expect(getVisibleBookPieces(bookState)).toEqual([lower]);
+      expect(findBookPieceAtPoint(bookState, 125, 60)).toBeNull();
+      expect(bookState.pieceStack).toBe(stack);
+      expect(stack).toEqual(original);
+
+      page.conclusion.isLocked = false;
+      expect(getVisibleBookPieces(bookState)).toEqual([lower, upper]);
+      expect(findBookPieceAtPoint(bookState, 125, 60)).toBe(upper);
+      expect(stack).toEqual(original);
+    });
+
     it('preserves stack order for distinct pieces with identical text and style', () => {
       const { bookState, lower, upper } = _createBookState();
       const third = { ...lower };
