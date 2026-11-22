@@ -104,6 +104,8 @@ function _parseGeneralSection(generalSectionText:string, level:MutableLevel, err
   const discoverableRoomCount = _parseOptionalDiscoverableCount(
     generalNameValues.discoverableRoomCount, 'discoverableRoomCount', generalSectionText, errors);
 
+  level.title = generalNameValues.title ?? '';
+  level.description = generalNameValues.description ?? '';
   level.winSynopsis = generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS;
   level.backgroundImageUrl = generalNameValues.background ? getBackgroundImageAssetUrl(generalNameValues.background) : null;
   

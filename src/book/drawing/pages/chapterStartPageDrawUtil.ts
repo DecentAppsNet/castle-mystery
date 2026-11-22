@@ -2,11 +2,10 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 /* v8 ignore file -- Canvas page layout and text rendering are verified visually. @preserve */
 
-import BookPage from "@/book/types/BookPage";
+import ChapterStartPage from "@/book/types/ChapterStartPage";
 import PageWriter from "./PageWriter";
 import { toNumeral } from "@/common/romanNumeralUtil";
 
-type ChapterStartPage = Extract<BookPage, { kind:'chapterStart' }>;
 export function drawChapterStartPage(page:ChapterStartPage, pw:PageWriter) {
   const aboveDividerTextHeight = pw.getLineHeight('l') + pw.getTextLineHeight(page.title, 'l');
   const dividerHeight = pw.getLineHeight('m');

@@ -5,6 +5,7 @@
 * time:22:59:30
 * background=nightSky.png
 * groundFloorRoom=Forest
+* description=In a church at night, the conspirators gathered.
 * imports=items.md | characters.md | roomStyles.md
 
 # Map

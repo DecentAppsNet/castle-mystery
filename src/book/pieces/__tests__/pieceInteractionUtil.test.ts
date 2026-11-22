@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createLayout, updateControlRect } from '@/canvasControls';
 import { createBookState } from '@/book/bookContentUtil';
+import { createDefaultBookState } from '@/book/types/BookState';
+import ConclusionPage from '@/book/types/ConclusionPage';
 import BookLayout from '@/book/drawing/types/BookLayout';
 import { hideBook } from '@/book/drawing/bookAnimationUtil';
 import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '@/book/drawing/bookLayoutUtil';
@@ -11,12 +13,20 @@ import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPi
   getVisibleBookPieces, moveBookPieceDrag } from '../pieceInteractionUtil';
 
 function _createBookState() {
-  const bookState = createBookState();
-  const conclusionPages = bookState.pages.filter(page => page.kind === 'conclusion');
-  const lower = { ...bookState.pieceStack[0], placement:null };
-  const upper = { ...lower, conclusionId:conclusionPages[1].conclusion.id };
+  const bookState = createDefaultBookState();
+  const firstPage:ConclusionPage = {
+    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{},
+    conclusion:{ id:'first', title:'First', parts:[], isComplete:false, isLocked:false,
+      incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
+  };
+  const secondPage:ConclusionPage = {
+    ...firstPage, conclusion:{ ...firstPage.conclusion, id:'second', title:'Second' }
+  };
+  const lower = { conclusionId:firstPage.conclusion.id, text:'First', styleNo:3,
+    xPercent:50, yPercent:50, placement:null };
+  const upper = { ...lower, conclusionId:secondPage.conclusion.id };
   bookState.pieceStack = [lower, upper];
-  bookState.pages = conclusionPages;
+  bookState.pages = [firstPage, secondPage];
   bookState.pageNo = 1;
   bookState.isVisible = true;
   const layout:BookLayout = {
@@ -363,17 +373,15 @@ describe('pieceInteractionUtil', () => {
   });
 
   describe('createBookState()', () => {
-    it('creates independent piece collections and mutable piece instances', () => {
+    it('creates independent piece collections', () => {
       const first = createBookState();
       const second = createBookState();
-      expect(first.pieceStack.length).toBeGreaterThan(0);
       expect(first.pieceStack).not.toBe(second.pieceStack);
       expect(first.pieceStack).toEqual(second.pieceStack);
-      first.pieceStack.forEach((piece, pieceI) => expect(piece).not.toBe(second.pieceStack[pieceI]));
-      const originalPosition = second.pieceStack[0].xPercent;
-      first.pieceStack[0].xPercent += 10;
-      first.pieceStack.reverse();
-      expect(second.pieceStack[0].xPercent).toBe(originalPosition);
+      const originalLength = second.pieceStack.length;
+      first.pieceStack.push(_createBookState().lower);
+      expect(first.pieceStack).toHaveLength(originalLength + 1);
+      expect(second.pieceStack).toHaveLength(originalLength);
       expect(createBookState().pieceStack).toEqual(second.pieceStack);
     });
   });

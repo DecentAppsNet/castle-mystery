@@ -5,7 +5,8 @@
 * time=8:00:00
 * background=daySky.png
 * imports=items.md | characters.md | roomStyles.md
-* winSynopsis=The King's decisions planted seeds of discontent among two petitioners. Toro's luck changed for the better with a new job. King Frederick resolved to reform administrative procedures to isolate him from his subjects. The Pope became an untrustworthy figure in his eyes.
+* description=The King was no servant to his subjects. But neither did he neglect their requests. Any person of the kingdom, no matter how low or high, could stand before him, speak, and be heard. To be truthful, no king accepted petitioners out of love or generosity. It was an act to preserve their power.
+* winSynopsis=The King's decisions stirred discontent among two petitioners. Toro's luck changed for the better with a new job. King Frederick resolved to reform administrative procedures to isolate him from his subjects. The Pope became an untrustworthy figure in his eyes.
 
 # Map
 

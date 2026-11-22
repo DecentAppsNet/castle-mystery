@@ -16,6 +16,7 @@ import { drawBookStartPage } from "./bookStartPageDrawUtil";
 import { drawChapterStartPage } from "./chapterStartPageDrawUtil";
 import { drawConclusionPage, drawLockedConclusionPage } from "./conclusionPageDrawUtil";
 import { drawTallyPage } from "./tallyPageDrawUtil";
+import { drawChapterEndPage } from "./chapterEndPageDrawUtil";
 
 const PAGE_OUTER_MARGIN = .16;
 const PAGE_GUTTER_MARGIN = .05;
@@ -81,7 +82,10 @@ export function drawPage(page:BookPage, metaTime:number, pageNo:number, targetRe
     case 'tally':
       drawTallyPage(page, pageWriter);
     break;
-
+    case 'chapterEnd':
+      drawChapterEndPage(page, pageWriter);
+    break;
+    
     default:
       assert(page.kind === 'blank');
     break;

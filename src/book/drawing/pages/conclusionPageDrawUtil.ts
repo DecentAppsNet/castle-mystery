@@ -3,7 +3,7 @@
 /* v8 ignore file -- Canvas page layout and text rendering are verified visually. @preserve */
 
 import Rect from "@/game/types/Rect";
-import BookPage from "@/book/types/BookPage";
+import ConclusionPage from "@/book/types/ConclusionPage";
 import { assert, assertNonNullable, botch } from "decent-portal";
 import PageWriter from "./PageWriter";
 import ClozePartType from "@/game/conclusions/types/ClozePartType";
@@ -21,7 +21,6 @@ function _isClozeImageUrlResolved(part:ClozePart) {
   return typeof (part as ClozeImage).imageUrl === 'string'; // If it's an array, then there was no resolution of candidate URLs to a single URL performed.
 }
 
-type ConclusionPage = Extract<BookPage, { kind:'conclusion' }>;
 export function drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:number, slotLayouts:PieceSlotLayout[]|null,
   presentations:readonly PieceSlotPresentation[], glints:readonly BookClaimGlint[], messageAlpha:number) {
   // Draw parts in file order, retaining the actual mutable blank identity.

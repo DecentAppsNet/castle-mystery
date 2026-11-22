@@ -5,6 +5,7 @@
 * time=9:00
 * background=countryside.png
 * imports=items.md | characters.md | roomStyles.md
+* description=Frederick is introduced to the World by a different name, and the earliest seeds of trouble are planted.
 * winSynopsis=Queen Constance birthed Constantine publicly to avoid disputes of lineage. The Pope, seeking to gain the earliest possible favor with the future king, bestowed a holy relic to the newborn. But in the end, Sticky Agatha kept the Holy Binky for her own child.
 
 # Map

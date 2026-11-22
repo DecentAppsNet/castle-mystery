@@ -2,18 +2,18 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 /* v8 ignore file -- Canvas page layout and text rendering are verified visually. @preserve */
 
-import BookPage from "@/book/types/BookPage";
+import TallyPage from "@/book/types/TallyPage";
 import PageWriter from "./PageWriter";
 import { toEnglishNumber } from "@/common/numberTextUtil";
 import Conclusion from "@/game/conclusions/types/Conclusion";
 
-function _countCompletedConclusions(conclusions:Conclusion[]):number {
+function _countCompletedConclusions(conclusions:readonly Readonly<Conclusion>[]):number {
   let count = 0;
   conclusions.forEach(c => { if (c.isComplete) ++count });
   return count;
 }
 
-function _countShameMarks(conclusions:Conclusion[]):number {
+function _countShameMarks(conclusions:readonly Readonly<Conclusion>[]):number {
   let count = 0;
   conclusions.forEach(c => { 
     if (c.incorrectGuessCount > 1) count += c.incorrectGuessCount - 1; 
@@ -21,7 +21,6 @@ function _countShameMarks(conclusions:Conclusion[]):number {
   return count;
 }
 
-type TallyPage = Extract<BookPage, { kind:'tally' }>;
 export function drawTallyPage(page:TallyPage, pw:PageWriter) {
   pw.setFontSize('l');
   pw.addDivider();

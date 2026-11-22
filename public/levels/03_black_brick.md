@@ -6,6 +6,7 @@
 * background=daySky.png
 * imports=items.md | characters.md | roomStyles.md
 * groundFloorRoom=Lawn
+* description=King Frederick visited the Lateran Palace at the Pope's request. For Frederick's entire, short life he had never met Pope Innocent III, despite the Pope being deeply involved in the young King's affairs.
 * winSynopsis=The Pope's convoluted caper was executed flawlessly. He aimed to scare young King Frederick. But who knows what effect the collapsed tower had on the boy?
 
 # Map
