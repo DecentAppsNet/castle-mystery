@@ -2,13 +2,13 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import BookState, { createDefaultBookState } from "./types/BookState";
-import { generatePieceStack } from "./pieces";
 import { generateAnswerSetIdToPieceStyleNoMap } from './answerSetPieceStyleUtil';
 import Level from "@/game/types/Level";
 import ConclusionPage from "./types/ConclusionPage";
 import BookPage from "./types/BookPage";
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import ChapterStartPage from "./types/ChapterStartPage";
+import { updatePieceStackForConclusionPages } from './pieces';
 
 export function createBookState():BookState { // TODO this will change later to take some data, similar to createGameState().
   // Establish all pages before generating their loose-piece inventory.
@@ -17,7 +17,7 @@ export function createBookState():BookState { // TODO this will change later to 
     { kind:'blank', headingText:'', chapterNo:0 },
     { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', subtitle:null, author:'Erik Hermansen', chapterNo:0 },
   ];
-  bookState.pieceStack = generatePieceStack(bookState);
+  bookState.pieceStack = [];
 
   // Start with the book closed at its first page.
   bookState.pageNo = 1;
@@ -60,7 +60,9 @@ export function addLevelChapterToBook(bookState:BookState, level:Level) {
   if (_doesBookHaveLevelChapter(bookState, level)) return;
   const chapterNo = _findNextChapterNo(bookState);
   const { pages } = bookState;
+  const newPagesStartIndex = pages.length;
   _addChapterStartPages(level, chapterNo, pages);
   level.conclusions.forEach(c => _addConclusionPages(c, chapterNo, pages));
   _addChapterEndPages(level, chapterNo, pages);
+  updatePieceStackForConclusionPages(bookState, newPagesStartIndex);
 }

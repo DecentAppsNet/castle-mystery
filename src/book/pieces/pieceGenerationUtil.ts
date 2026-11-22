@@ -37,13 +37,15 @@ function _placeAnswerGroupsOnRightPage(answerGroups:readonly Piece[][]):void {
   }
 }
 
-export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
+function _generatePieceStack(bookState:Readonly<BookState>, newPagesStartIndex:number):Piece[] {
+  assert(Number.isInteger(newPagesStartIndex) && newPagesStartIndex >= 0 && newPagesStartIndex <= bookState.pages.length);
   // Keep inventory grouping local while consuming each page's shared style lookup.
   const pieces:Piece[] = [];
 
   // Validate each conclusion spread and collect its new groups before positioning them.
-  bookState.pages.forEach((page, pageI) => {
-    if (page.kind !== 'conclusion') return;
+  for (let pageI = newPagesStartIndex; pageI < bookState.pages.length; ++pageI) {
+    const page = bookState.pages[pageI];
+    if (page.kind !== 'conclusion') continue;
     assert(pageI % 2 === 0, 'Conclusion pages must be on the left.');
     assert(bookState.pages[pageI + 1]?.kind === 'blank', 'Conclusion pages must have a blank right page.');
     const conclusionId = page.conclusion.id;
@@ -75,6 +77,14 @@ export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
       assert(matches.length === 1 && matches[0].placement === null, 'Initial piece placement must be unambiguous.');
       matches[0].placement = { page, blank };
     }
-  });
+  }
   return pieces;
+}
+
+export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
+  return _generatePieceStack(bookState, 0);
+}
+
+export function updatePieceStackForConclusionPages(bookState:BookState, newPagesStartIndex:number):void {
+  bookState.pieceStack.push(..._generatePieceStack(bookState, newPagesStartIndex));
 }
