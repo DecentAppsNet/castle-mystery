@@ -16,7 +16,7 @@ function _createFixture() {
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const piece:Piece = { conclusionId:'synthetic', text:'Second', styleNo:3, xPercent:50, yPercent:50, placement:null };
+  const piece:Piece = { conclusionPageI:0, text:'Second', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();
   bookState.pages = [page];
   return { bookState, page, piece, blank, otherBlank };
@@ -52,12 +52,14 @@ describe('pieceColorUtil', () => {
       expect(getBookPieceBackgroundColor(bookState, piece)).toBe('#808080');
     });
 
-    it('ignores empty slots of the same style in a different conclusion', () => {
+    it('ignores empty slots of the same style on a page with a duplicate exact conclusion ID', () => {
       const { bookState, piece, page, blank, otherBlank } = _createFixture();
       otherBlank.playerAnswerIndex = 1;
-      bookState.pages.push({ ...page, conclusion:{ ...page.conclusion, id:'other',
+      bookState.pages.push({ kind:'blank', headingText:'', chapterNo:1 }, { ...page, conclusion:{ ...page.conclusion,
         parts:[{ ...blank, playerAnswerIndex:-1 }] } });
       expect(getBookPieceBackgroundColor(bookState, piece)).toBe('#808080');
+      expect(getBookPieceBackgroundColor(bookState, { ...piece, conclusionPageI:2 }))
+        .toBe(getPieceFlairProfile(3).pieceColor);
     });
 
     it('checks all answer sets assigned the same style', () => {

@@ -6,7 +6,8 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
 import { claimBookConclusion, getConclusionPageInstructionText, updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 import { onBookMouseDown } from '../eventHandlers';
-import { beginBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces, generatePieceStack } from '../pieces';
+import { beginBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces, generatePieceStack,
+  updatePieceStackForConclusionPages } from '../pieces';
 import { applyBookClaimResults } from '../bookClaimResultUtil';
 import PieceLayout from '../drawing/types/PieceLayout';
 import BookClaimState from '../types/BookClaimState';
@@ -44,7 +45,7 @@ function _createFixture(single:boolean = false) {
 
 function _createClaimFixture(correct:boolean = false) {
   const fixture = _createFixture();
-  const claim:BookClaimState = { page:fixture.page, blanks:[fixture.blank, fixture.otherBlank],
+  const claim:BookClaimState = { page:fixture.page, conclusionPageI:0, blanks:[fixture.blank, fixture.otherBlank],
     correct, startedAt:123, resultApplied:false, ejectedCount:0 };
   return { ...fixture, claim };
 }
@@ -66,6 +67,29 @@ describe('book claim resolution', () => {
     stack.forEach((piece, i) => expect(piece.placement).toBe(placements[i]));
     expect(getVisibleBookPieces(bookState)).toEqual([]);
     expect(layout.controlLayout.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+  });
+
+  it('captures an appended duplicate-ID page index and cleans up only its unused inventory', () => {
+    const { bookState, page, layout } = _createFixture();
+    const appended = _createFixture();
+    appended.otherBlank.correctAnswerIndexes.push(1);
+    expect(appended.page.conclusion.id).toBe(page.conclusion.id);
+    const earlierPieces = [...bookState.pieceStack];
+    const before = structuredClone(earlierPieces);
+    bookState.pages.push(appended.page, { kind:'blank', headingText:'', chapterNo:1 });
+    updatePieceStackForConclusionPages(bookState, 2);
+    const assigned = bookState.pieceStack.slice(3, 5);
+    bookState.pageNo = layout.pieceLayoutsPageNo = 3;
+    layout.pieceSlotLayouts = [{ ...appended.first, pageNo:3 }, { ...appended.second, pageNo:3 }];
+    claimBookConclusion(bookState, 3, 123);
+    expect(bookState.claimState).toMatchObject({ conclusionPageI:2, page:appended.page, correct:true });
+    updateBookClaim(bookState, 5623);
+    expect(appended.page.conclusion.isComplete).toBe(true);
+    expect(page.conclusion.isComplete).toBe(false);
+    expect(bookState.pieceStack).toEqual([...earlierPieces, ...assigned]);
+    expect(earlierPieces).toEqual(before);
+    expect(bookState.pieceStack[0]).toBe(earlierPieces[0]);
+    expect(bookState.pieceStack[3]).toBe(assigned[0]);
   });
 
   it('increments once and ejects every assigned answer, including correct ones, preserving inventory order', () => {
@@ -153,7 +177,7 @@ describe('book claim resolution', () => {
     updateBookClaimControls(bookState);
     const rect = findControlRect(layout.controlLayout, 'claimLeft');
     expect(onBookMouseDown(rect.x + rect.width / 2, rect.y + rect.height / 2, 123, bookState, true)).toBe(false);
-    expect(bookState.claimState).toMatchObject({ page, startedAt:123, correct:true, resultApplied:false });
+    expect(bookState.claimState).toMatchObject({ page, conclusionPageI:0, startedAt:123, correct:true, resultApplied:false });
     expect(page.conclusion.isComplete).toBe(false);
     updateBookClaim(bookState, 5622);
     expect(page.conclusion.isComplete).toBe(false);

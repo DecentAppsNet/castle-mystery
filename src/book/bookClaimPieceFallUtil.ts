@@ -14,7 +14,7 @@ export function prepareBookClaimPieceFalls(layouts:readonly PieceLayout[], claim
   if (claim === null) return layouts;
   const timing = calcBookClaimTiming(metaTime - claim.startedAt, claim.blanks.length, claim.correct);
   if (timing.stage !== 'success') return layouts;
-  const falling = layouts.filter(({ piece }) => piece.placement === null && piece.conclusionId === claim.page.conclusion.id);
+  const falling = layouts.filter(({ piece }) => piece.placement === null && piece.conclusionPageI === claim.conclusionPageI);
 
   // Every path ends below the current canvas by success exit, with exponentially increasing velocity.
   return layouts.map(layout => {

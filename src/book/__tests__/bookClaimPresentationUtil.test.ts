@@ -21,7 +21,7 @@ function _createClaim(count:number = 2, correct:boolean = true):BookClaimState {
       { type:'text' as const, text:' then ' }, blank
     ]), isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  return { page, blanks, startedAt:STARTED_AT, correct, resultApplied:false, ejectedCount:0 };
+  return { page, conclusionPageI:0, blanks, startedAt:STARTED_AT, correct, resultApplied:false, ejectedCount:0 };
 }
 
 describe('bookClaimPresentationUtil', () => {

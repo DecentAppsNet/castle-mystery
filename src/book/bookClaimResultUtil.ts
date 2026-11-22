@@ -23,7 +23,7 @@ export function applyBookClaimResults(bookState:BookState, claim:BookClaimState,
     if (claim.correct) {
       claim.page.conclusion.isComplete = true;
       bookState.pieceStack = bookState.pieceStack.filter(piece =>
-        piece.placement !== null || piece.conclusionId !== claim.page.conclusion.id);
+        piece.placement !== null || piece.conclusionPageI !== claim.conclusionPageI);
       if (bookState.layout) bookState.layout.pieceLayouts = bookState.layout.pieceLayouts.filter(({ piece }) =>
         bookState.pieceStack.includes(piece));
     }

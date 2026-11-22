@@ -2,6 +2,7 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import BookPage from './BookPage';
 
 type BookClaimState = {
+  readonly conclusionPageI:number;
   readonly page:Extract<BookPage, { kind:'conclusion' }>;
   readonly blanks:readonly ClozeBlank[];
   readonly startedAt:number;

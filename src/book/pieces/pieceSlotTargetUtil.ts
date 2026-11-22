@@ -30,9 +30,9 @@ export function findPieceSlotAnswerIndex(slot:PieceSlotLayout, piece:Piece):numb
 }
 
 function _isEligible(bookState:Readonly<BookState>, slot:PieceSlotLayout, piece:Piece, isSinglePageView:boolean):boolean {
-  const { page, styleNo } = slot;
+  const { pageNo, styleNo } = slot;
   return isCurrentEmptyPieceSlot(bookState, slot, isSinglePageView)
-    && page.conclusion.id === piece.conclusionId && styleNo === piece.styleNo
+    && pageNo - 1 === piece.conclusionPageI && styleNo === piece.styleNo
     && findPieceSlotAnswerIndex(slot, piece) !== -1;
 }
 

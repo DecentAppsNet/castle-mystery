@@ -32,8 +32,8 @@ function _createFixture(correct:boolean = false, pageNo:number = 1, conclusionId
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
   bookState.pageNo = pageNo;
-  bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 }, { kind:'blank', headingText:'', chapterNo:1 }, { kind:'blank', headingText:'', chapterNo:1 }];
-  if (pageNo === 3) bookState.pages = [bookState.pages[1], bookState.pages[2], page, bookState.pages[3]];
+  bookState.pages = Array.from({ length:4 }, () => ({ kind:'blank', headingText:'', chapterNo:1 }));
+  bookState.pages[pageNo - 1] = page;
   bookState.pieceStack = generatePieceStack(bookState);
 
   // These are normal displayed slot records, not animation geometry.
@@ -120,7 +120,7 @@ describe('book claim runtime', () => {
       const before = structuredClone(stack);
       claimBookConclusion(bookState, 1, STARTED_AT);
       const claim = bookState.claimState!;
-      expect(claim).toMatchObject({ correct:false, startedAt:STARTED_AT, resultApplied:false, ejectedCount:0 });
+      expect(claim).toMatchObject({ conclusionPageI:0, correct:false, startedAt:STARTED_AT, resultApplied:false, ejectedCount:0 });
       expect(claim.page).toBe(page);
       expect(claim.blanks[0]).toBe(blank);
       expect(claim.blanks[1]).toBe(otherBlank);
@@ -244,6 +244,7 @@ describe('book claim runtime', () => {
       bookState.pieceSlotTransitions = [{ layout, slot:first, fromScale:1, toScale:1.2, startedAt:STARTED_AT - 100 }];
       layout.controlLayout.hoveredControlId = 'claimLeft';
       claimBookConclusion(bookState, 3, STARTED_AT);
+      expect(bookState.claimState?.conclusionPageI).toBe(2);
       expect(bookState.hungryPieceSlot).toBeNull();
       expect(bookState.pieceSlotTransitions).toEqual([]);
       _expectHiddenControls(layout);
@@ -268,21 +269,22 @@ describe('book claim runtime', () => {
       expect(layout.controlLayout.controls.find(control => control.id === 'closeBook')?.isVisible).toBe(true);
     });
 
-    it('claims only the clicked right conclusion, leaving the other spread conclusion and its pieces unchanged', () => {
+    it('claims only the clicked right page despite duplicate exact IDs, leaving the other conclusion and its pieces unchanged', () => {
       const { bookState, page, layout } = _createFixture();
-      const neighbor = _createFixture(false, 1, 'neighbor');
-      // Generate inventories in valid left-page spreads before relocating this synthetic neighbor.
+      const neighbor = _createFixture(false, 1, page.conclusion.id);
+      // Generate inventory in a valid spread, then copy it with this manual right-page fixture's ownership.
       bookState.pages[1] = neighbor.page;
-      bookState.pieceStack.push(...neighbor.bookState.pieceStack);
+      bookState.pieceStack.push(...neighbor.bookState.pieceStack.map(piece => ({ ...piece, conclusionPageI:1 })));
       layout.pieceSlotLayouts = [...layout.pieceSlotLayouts,
         { ...neighbor.first, pageNo:2 }, { ...neighbor.second, pageNo:2 }];
       updateBookClaimControls(bookState);
-      const untouchedPieces = bookState.pieceStack.filter(piece => piece.conclusionId === page.conclusion.id);
+      const untouchedPieces = bookState.pieceStack.filter(piece => piece.conclusionPageI === 0);
       const beforePieces = structuredClone(untouchedPieces);
       const beforeConclusion = structuredClone(page.conclusion);
       const rect = findControlRect(layout.controlLayout, 'claimRight');
       onBookMouseDown(rect.x + rect.width / 2, rect.y + rect.height / 2, STARTED_AT, bookState, true);
       expect(bookState.claimState?.page).toBe(neighbor.page);
+      expect(bookState.claimState?.conclusionPageI).toBe(1);
       claimBookConclusion(bookState, 1, STARTED_AT + 1);
       expect(bookState.claimState?.page).toBe(neighbor.page);
       setSeed(503);

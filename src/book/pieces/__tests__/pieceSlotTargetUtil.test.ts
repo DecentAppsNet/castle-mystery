@@ -10,7 +10,7 @@ import { invalidatePieceLayouts } from '@/book/drawing/bookLayoutUtil';
 import { beginBookPieceDrag, endBookPieceDrag, moveBookPieceDrag } from '../pieceInteractionUtil';
 import { updateBookPieceSlotTarget } from '../pieceSlotTargetUtil';
 
-function _createPreparedBook() {
+function _createPreparedBook(conclusionPageI:number = 0) {
   // Keep mutable blanks independent while sharing immutable answer metadata.
   const answerSet = createAnswerSet(['First', 'Second'], 'people');
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[1], playerAnswerIndex:-1 };
@@ -21,7 +21,7 @@ function _createPreparedBook() {
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
+  const piece = { conclusionPageI, text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
   bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 }];
@@ -131,10 +131,9 @@ describe('pieceSlotTargetUtil', () => {
       expect(updateBookPieceSlotTarget(bookState)).toEqual([]);
     });
 
-    it('rejects matching styles and answers owned by another visible conclusion', () => {
-      const { bookState, page, piece } = _createPreparedBook();
-      piece.conclusionId = 'other';
-      bookState.pages[1] = { ...page, conclusion:{ ...page.conclusion, id:'other' } };
+    it('rejects matching styles and answers on another visible page with a duplicate exact conclusion ID', () => {
+      const { bookState, page } = _createPreparedBook(1);
+      bookState.pages[1] = { ...page, conclusion:{ ...page.conclusion } };
       beginBookPieceDrag(bookState, 500, 270);
       expect(bookState.pieceDragState).not.toBeNull();
       expect(updateBookPieceSlotTarget(bookState)).toEqual([]);
@@ -190,13 +189,14 @@ describe('pieceSlotTargetUtil', () => {
       expect(bookState.hungryPieceSlot).toBeNull();
     });
 
-    it('considers both displayed pages in a two-page view', () => {
+    it('considers only owned slots across both displayed pages with duplicate exact IDs', () => {
       const fixture = _createPreparedBook();
       const rightSlot = _putSecondSlotOnRightPage(fixture);
       beginBookPieceDrag(fixture.bookState, 500, 270);
       moveBookPieceDrag(fixture.bookState, 520, 270);
-      expect(updateBookPieceSlotTarget(fixture.bookState)).toEqual([fixture.first, rightSlot]);
-      expect(fixture.bookState.hungryPieceSlot).toBe(rightSlot);
+      expect(updateBookPieceSlotTarget(fixture.bookState)).toEqual([fixture.first]);
+      expect(fixture.bookState.hungryPieceSlot).toBe(fixture.first);
+      expect(updateBookPieceSlotTarget(fixture.bookState)).not.toContain(rightSlot);
     });
 
     it('also includes the left page when the selected page of a spread is right', () => {
@@ -216,7 +216,7 @@ describe('pieceSlotTargetUtil', () => {
     });
 
     it('excludes the hidden left neighbor without reapplying the single-page offset', () => {
-      const fixture = _createPreparedBook();
+      const fixture = _createPreparedBook(1);
       const rightSlot = _putSecondSlotOnRightPage(fixture);
       fixture.layout.isSinglePageView = true;
       fixture.bookState.pageNo = fixture.layout.pieceLayoutsPageNo = 2;

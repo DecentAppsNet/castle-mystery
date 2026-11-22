@@ -48,7 +48,6 @@ function _generatePieceStack(bookState:Readonly<BookState>, newPagesStartIndex:n
     if (page.kind !== 'conclusion') continue;
     assert(pageI % 2 === 0, 'Conclusion pages must be on the left.');
     assert(bookState.pages[pageI + 1]?.kind === 'blank', 'Conclusion pages must have a blank right page.');
-    const conclusionId = page.conclusion.id;
     const answerGroups:Piece[][] = [];
     const emittedCategoryIds = new Set<string>();
     for (const part of page.conclusion.parts) {
@@ -61,7 +60,7 @@ function _generatePieceStack(bookState:Readonly<BookState>, newPagesStartIndex:n
 
       // Emit each category's ordered answers once; category validation guarantees disjoint membership.
       emittedCategoryIds.add(answerSet.id);
-      const groupPieces:Piece[] = answers.map(text => ({ conclusionId, styleNo, text, xPercent:0, yPercent:0, placement:null }));
+      const groupPieces:Piece[] = answers.map(text => ({ conclusionPageI:pageI, styleNo, text, xPercent:0, yPercent:0, placement:null }));
       if (groupPieces.length > 0) answerGroups.push(groupPieces);
       pieces.push(...groupPieces);
     }

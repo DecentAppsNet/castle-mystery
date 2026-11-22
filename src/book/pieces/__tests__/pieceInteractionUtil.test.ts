@@ -22,9 +22,9 @@ function _createBookState() {
   const secondPage:ConclusionPage = {
     ...firstPage, conclusion:{ ...firstPage.conclusion, id:'second', title:'Second' }
   };
-  const lower = { conclusionId:firstPage.conclusion.id, text:'First', styleNo:3,
+  const lower = { conclusionPageI:0, text:'First', styleNo:3,
     xPercent:50, yPercent:50, placement:null };
-  const upper = { ...lower, conclusionId:secondPage.conclusion.id };
+  const upper = { ...lower, conclusionPageI:1 };
   bookState.pieceStack = [lower, upper];
   bookState.pages = [firstPage, secondPage];
   bookState.pageNo = 1;
@@ -362,13 +362,17 @@ describe('pieceInteractionUtil', () => {
       expect(getVisibleBookPieces(bookState)[1]).toBe(lower);
     });
 
-    it('retains piece ownership when pages are reordered', () => {
+    it('retains navigation ownership when a page with a duplicate exact ID is appended', () => {
       const { bookState, lower, upper } = _createBookState();
-      const [leftPage, rightPage] = bookState.pages;
-      bookState.pages = [rightPage, { kind:'blank', headingText:'', chapterNo:1 }, leftPage];
-      expect(getVisibleBookPieces(bookState)).toEqual([upper]);
+      const page = bookState.pages[0];
+      bookState.pages.push({ ...page }, { kind:'blank', headingText:'', chapterNo:1 });
+      const appended = { ...lower, conclusionPageI:2 };
+      bookState.pieceStack.push(appended);
+      expect(getVisibleBookPieces(bookState)).toEqual([lower, upper]);
       bookState.pageNo = 3;
-      expect(getVisibleBookPieces(bookState)).toEqual([lower]);
+      expect(getVisibleBookPieces(bookState)).toEqual([appended]);
+      bookState.pageNo = 1;
+      expect(getVisibleBookPieces(bookState)).toEqual([lower, upper]);
     });
   });
 
@@ -399,7 +403,7 @@ describe('pieceInteractionUtil', () => {
 
     it('promotes repeatedly without duplicating references or changing conclusion ownership', () => {
       const { bookState, layout, lower, upper } = _createBookState();
-      const conclusionIds = [lower.conclusionId, upper.conclusionId];
+      const conclusionPageIndexes = [lower.conclusionPageI, upper.conclusionPageI];
       const pages = [...bookState.pages];
       bringBookPieceToFront(bookState, lower);
       bringBookPieceToFront(bookState, upper);
@@ -408,7 +412,7 @@ describe('pieceInteractionUtil', () => {
       expect(bookState.pieceStack[0]).toBe(lower);
       expect(bookState.pieceStack[1]).toBe(upper);
       expect(layout.pieceLayouts).toHaveLength(2);
-      expect([lower.conclusionId, upper.conclusionId]).toEqual(conclusionIds);
+      expect([lower.conclusionPageI, upper.conclusionPageI]).toEqual(conclusionPageIndexes);
       expect(bookState.pages).toEqual(pages);
     });
   });

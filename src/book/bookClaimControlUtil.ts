@@ -90,7 +90,7 @@ export function claimBookConclusion(bookState:BookState, pageNo:number, metaTime
   const slots = layout.pieceSlotLayouts.filter(slot => slot.page === page && slot.pageNo === pageNo
     && isCurrentPieceSlot(bookState, slot, layout.isSinglePageView));
   if (slots.length !== blanks.length || !blanks.every(blank => slots.some(slot => slot.blank === blank))) return;
-  bookState.claimState = { page, blanks, correct:countConclusionMistakes(page.conclusion) === 0,
+  bookState.claimState = { conclusionPageI:pageNo - 1, page, blanks, correct:countConclusionMistakes(page.conclusion) === 0,
     startedAt:metaTime, resultApplied:false, ejectedCount:0 };
   bookState.hungryPieceSlot = null;
   bookState.pieceSlotTransitions = [];
@@ -101,10 +101,10 @@ export function updateBookClaim(bookState:BookState, metaTime:number):void {
   // Discard obsolete ownership without rolling back results already applied.
   const claim = bookState.claimState;
   if (claim === null) return;
-  const pageNo = bookState.pages.indexOf(claim.page) + 1;
+  const pageNo = claim.conclusionPageI + 1;
   const leftPageNo = bookState.pageNo % 2 === 1 ? bookState.pageNo : bookState.pageNo - 1;
   const blanks = claim.page.conclusion.parts.filter(part => part.type === 'blank');
-  if (!bookState.isVisible || pageNo === 0 || (bookState.layout?.isSinglePageView
+  if (!bookState.isVisible || bookState.pages[claim.conclusionPageI] !== claim.page || (bookState.layout?.isSinglePageView
     ? pageNo !== bookState.pageNo : pageNo !== leftPageNo && pageNo !== leftPageNo + 1)
     || blanks.length !== claim.blanks.length || blanks.some((blank, i) => blank !== claim.blanks[i])) {
     bookState.claimState = null;

@@ -10,7 +10,7 @@ import { prepareBookPieceSlotPresentations } from '../pieceSlotPresentationUtil'
 import BookPage from '@/book/types/BookPage';
 import { createDefaultBookState } from '@/book/types/BookState';
 
-function _createPreparedBook() {
+function _createPreparedBook(conclusionPageI:number = 0) {
   // Share immutable options while retaining distinct answer state and correct indexes.
   const answerSet = createAnswerSet(['First', 'Second'], 'people');
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:-1 };
@@ -20,7 +20,7 @@ function _createPreparedBook() {
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const piece = { conclusionId:'synthetic', text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
+  const piece = { conclusionPageI, text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const parkedPiece = { ...piece, text:'Second', xPercent:75, yPercent:75 };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
@@ -129,10 +129,9 @@ describe('loose-piece release placement', () => {
     expect([fixture.blank.playerAnswerIndex, fixture.otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
   });
 
-  it('rejects another conclusion owner even if the answer and style match', () => {
-    const fixture = _createPreparedBook();
-    fixture.bookState.pages[1] = { ...fixture.page, conclusion:{ ...fixture.page.conclusion, id:'other' } };
-    fixture.piece.conclusionId = 'other';
+  it('rejects another page owner with a duplicate exact conclusion ID even if the answer and style match', () => {
+    const fixture = _createPreparedBook(1);
+    fixture.bookState.pages[1] = { ...fixture.page, conclusion:{ ...fixture.page.conclusion } };
     _drop(fixture);
     expect([fixture.blank.playerAnswerIndex, fixture.otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
   });

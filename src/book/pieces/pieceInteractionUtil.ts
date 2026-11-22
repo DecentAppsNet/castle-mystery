@@ -13,9 +13,9 @@ import PieceSlotLayout from '../drawing/types/PieceSlotLayout';
 
 export function getVisibleBookPieces(bookState:Readonly<BookState>):Piece[] {
   const leftPageNo = isLeftPageNo(bookState.pageNo) ? bookState.pageNo : bookState.pageNo - 1;
-  const visibleConclusionIds = new Set(bookState.pages.slice(leftPageNo - 1, leftPageNo + 1)
-    .flatMap(page => page.kind === 'conclusion' ? [page.conclusion.id] : []));
-  return bookState.pieceStack.filter(piece => piece.placement === null && visibleConclusionIds.has(piece.conclusionId));
+  return bookState.pieceStack.filter(piece => piece.placement === null
+    && (piece.conclusionPageI === leftPageNo - 1 || piece.conclusionPageI === leftPageNo)
+    && bookState.pages[piece.conclusionPageI]?.kind === 'conclusion');
 }
 
 export function bringBookPieceToFront(bookState:BookState, piece:Piece):void {

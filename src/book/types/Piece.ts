@@ -2,7 +2,7 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import BookPage from './BookPage';
 
 type Piece = {
-  readonly conclusionId:string,
+  readonly conclusionPageI:number,
   placement:{ readonly page:Extract<BookPage, { kind:'conclusion' }>; readonly blank:ClozeBlank }|null,
   styleNo:number,
   text:string,

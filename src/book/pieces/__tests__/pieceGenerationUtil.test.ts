@@ -109,25 +109,25 @@ describe('pieceGenerationUtil', () => {
       ]);
     });
 
-    it('keeps same-category inventories independent across pages with shared or fresh answer sets', () => {
+    it('keeps same-category inventories independent across pages with duplicate exact IDs and shared or fresh answer sets', () => {
       const shared = createAnswerSet(['B', 'A'], 'people');
       const fresh = createAnswerSet(['C', 'D'], 'people');
       const state = _createBookState([
-        _createConclusionPage('one', [shared]), _createConclusionPage('two', [shared]),
-        _createConclusionPage('three', [fresh])
+        _createConclusionPage('one', [shared]), _createConclusionPage('one', [shared]),
+        _createConclusionPage('one', [fresh])
       ]);
       const pieces = generatePieceStack(state);
-      expect(pieces.map(({ conclusionId, text, styleNo }) => [conclusionId, text, styleNo])).toEqual([
-        ['one', 'B', 3], ['one', 'A', 3], ['two', 'B', 3], ['two', 'A', 3],
-        ['three', 'C', 3], ['three', 'D', 3]
+      expect(pieces.map(({ conclusionPageI, text, styleNo }) => [conclusionPageI, text, styleNo])).toEqual([
+        [0, 'B', 3], [0, 'A', 3], [2, 'B', 3], [2, 'A', 3],
+        [4, 'C', 3], [4, 'D', 3]
       ]);
       expect(pieces[0]).not.toBe(pieces[2]);
       expect(pieces[0].xPercent).toBe(pieces[2].xPercent);
       expect(pieces[0].yPercent).toBe(pieces[2].yPercent);
       pieces[0].text = 'changed';
       pieces[0].xPercent = 99;
-      expect(pieces[2]).toMatchObject({ conclusionId:'two', text:'B', xPercent:75 });
-      expect(generatePieceStack(state)[0]).toMatchObject({ conclusionId:'one', text:'B', xPercent:75 });
+      expect(pieces[2]).toMatchObject({ conclusionPageI:2, text:'B', xPercent:75 });
+      expect(generatePieceStack(state)[0]).toMatchObject({ conclusionPageI:0, text:'B', xPercent:75 });
     });
 
     it('assigns custom styles beyond eight without wrapping and restarts for each conclusion', () => {
@@ -240,7 +240,7 @@ describe('pieceGenerationUtil', () => {
       first[0].yPercent = 98;
       first.reverse();
       expect(generatePieceStack(state)).toEqual(second);
-      expect(second[0]).toMatchObject({ conclusionId:'one', text:'A', styleNo:3 });
+      expect(second[0]).toMatchObject({ conclusionPageI:0, text:'A', styleNo:3 });
     });
 
     it('leaves frozen source data, existing stack, and layout untouched', () => {
@@ -263,7 +263,7 @@ describe('pieceGenerationUtil', () => {
 
       // Preserve an already-positioned piece and an existing layout.
       const state = _createBookState([page]);
-      const existingPiece = { conclusionId:'one', text:'old', styleNo:12, xPercent:91, yPercent:82, placement:null };
+      const existingPiece = { conclusionPageI:0, text:'old', styleNo:12, xPercent:91, yPercent:82, placement:null };
       state.pieceStack = [existingPiece];
       state.layout = {
         canvasWidth:1000, canvasHeight:600, rect:{ x:0, y:0, width:800, height:500 },

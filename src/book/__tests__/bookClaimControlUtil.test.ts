@@ -68,7 +68,7 @@ describe('bookClaimControlUtil', () => {
 
   it('supports the selected right conclusion in single-page view without double-applying the view offset', () => {
     const { bookState, page, controls } = _createFixture(true, 2);
-    bookState.pages = [{ kind:'blank', headingText:'', chapterNo:1 }, page];
+    bookState.pages[1] = { ...page };
     updateBookClaimControls(bookState);
     const claim = findControlRect(controls, 'claimRight');
     expect(claim.x).toBeCloseTo(500 + 380 / 3);
@@ -159,7 +159,7 @@ describe('bookClaimControlUtil', () => {
 
   it('keeps an active drag and prepared geometry intact during control refresh', () => {
     const { bookState } = _createFixture();
-    const piece = { conclusionId:'synthetic', styleNo:3, text:'First', xPercent:50, yPercent:50, placement:null };
+    const piece = { conclusionPageI:0, styleNo:3, text:'First', xPercent:50, yPercent:50, placement:null };
     bookState.pieceDragState = { piece, grabOffset:[0, 0], extractedAppearance:null };
     const drag = bookState.pieceDragState;
     const slots = bookState.layout?.pieceSlotLayouts;

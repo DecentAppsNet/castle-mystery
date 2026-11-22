@@ -17,16 +17,20 @@ function _fixture(correct:boolean = true) {
     conclusion:{ id:'fall', title:'Fall', parts:[blank], isComplete:false, isLocked:false,
       incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
-  const claim:BookClaimState = { page, blanks:[blank], correct, startedAt:100,
+  const claim:BookClaimState = { page, conclusionPageI:0, blanks:[blank], correct, startedAt:100,
     resultApplied:false, ejectedCount:0 };
   const layouts:PieceLayout[] = Array.from({ length:3 }, (_, index) => ({
-    piece:{ conclusionId:'fall', placement:null, styleNo:3, text:'Unused', xPercent:20 + index * 20, yPercent:50 },
+    piece:{ conclusionPageI:0, placement:null, styleNo:3, text:'Unused', xPercent:20 + index * 20, yPercent:50 },
     rect:{ x:100 + index * 100, y:200, width:40, height:30 },
     metrics:{ width:40, padding:2, fontSizePixels:12 }, isVisible:true
   }));
   const assigned:PieceLayout = { ...layouts[0], piece:{ ...layouts[0].piece, placement:{ page, blank } } };
-  const neighbor:PieceLayout = { ...layouts[0], piece:{ ...layouts[0].piece, conclusionId:'neighbor' } };
-  return { claim, layouts, assigned, neighbor };
+  const neighborPage = { ...page, conclusion:{ ...page.conclusion,
+    parts:[{ ...blank, playerAnswerIndex:-1 }] } };
+  const neighbor:PieceLayout = { ...layouts[0], piece:{ ...layouts[0].piece, conclusionPageI:2 } };
+  const pages:BookPage[] = [page, { kind:'blank', headingText:'', chapterNo:1 },
+    neighborPage, { kind:'blank', headingText:'', chapterNo:1 }];
+  return { claim, layouts, assigned, neighbor, pages, neighborPage };
 }
 
 describe('bookClaimPieceFallUtil', () => {
@@ -67,9 +71,12 @@ describe('bookClaimPieceFallUtil', () => {
       prepareBookClaimPieceFalls(layouts, claim, 4599, 600).forEach(layout => expect(layout.rect.y).toBeGreaterThan(600));
     });
 
-    it('leaves assigned pieces and another conclusion untouched', () => {
-      const { claim, layouts, assigned, neighbor } = _fixture();
+    it('leaves assigned pieces and a page with a duplicate exact conclusion ID untouched', () => {
+      const { claim, layouts, assigned, neighbor, neighborPage } = _fixture();
+      expect(neighborPage.conclusion.id).toBe(claim.page.conclusion.id);
       const result = prepareBookClaimPieceFalls([...layouts, assigned, neighbor], claim, 4100, 600);
+      expect(result[0]).not.toBe(layouts[0]);
+      expect(result[0].piece).toBe(layouts[0].piece);
       expect(result[3]).toBe(assigned);
       expect(result[4]).toBe(neighbor);
     });
@@ -91,14 +98,16 @@ describe('bookClaimPieceFallUtil', () => {
   });
 
   describe('success removal', () => {
-    it('removes unused pieces only at success completion and never restores them on reopening', () => {
-      const { claim, layouts, assigned, neighbor } = _fixture();
+    it('removes only owned unused pieces at success completion despite duplicate exact IDs and never restores them on reopening', () => {
+      const { claim, layouts, assigned, neighbor, pages, neighborPage } = _fixture();
       const state = createDefaultBookState();
+      state.pages = pages;
       state.pieceStack = [assigned.piece, ...layouts.map(layout => layout.piece), neighbor.piece];
       applyBookClaimResults(state, claim, 4499);
       expect(state.pieceStack).toHaveLength(5);
       applyBookClaimResults(state, claim, 4500);
       expect(state.pieceStack).toEqual([assigned.piece, neighbor.piece]);
+      expect(neighborPage.conclusion.isComplete).toBe(false);
       const remaining = state.pieceStack;
       applyBookClaimResults(state, claim, 100000);
       expect(state.pieceStack).toBe(remaining);
@@ -108,8 +117,9 @@ describe('bookClaimPieceFallUtil', () => {
     });
 
     it('catches up removal when all success frames are skipped', () => {
-      const { claim, layouts, assigned, neighbor } = _fixture();
+      const { claim, layouts, assigned, neighbor, pages } = _fixture();
       const state = createDefaultBookState();
+      state.pages = pages;
       state.pieceStack = [...layouts.map(layout => layout.piece), neighbor.piece, assigned.piece];
       applyBookClaimResults(state, claim, 100000);
       expect(state.pieceStack).toEqual([neighbor.piece, assigned.piece]);
