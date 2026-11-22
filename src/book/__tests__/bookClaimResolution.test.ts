@@ -303,12 +303,12 @@ describe('getConclusionPageInstructionText()', () => {
   it('instructs a new unfinished conclusion to fill its blanks', () => {
     const { page, blank } = _createFixture();
     blank.playerAnswerIndex = -1;
-    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Fill the blanks with your knowledge.');
+    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Fill the blanks with knowledge.');
   });
 
   it('invites the first claim once all answers are filled', () => {
     const { page } = _createFixture();
-    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Claim this conclusion when you are confident.');
+    expect(getConclusionPageInstructionText(page.conclusion)).toBe('Claim this conclusion when you know truth.');
   });
 
   it('explains a failed claim while blanks are empty', () => {

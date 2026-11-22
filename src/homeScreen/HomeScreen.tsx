@@ -24,7 +24,7 @@ import { clearPlayerEvents } from '@/game/playerEventUtil';
 import { findNextTimelineBeat, findPreviousTimelineBeat } from '@/game/timeline/beatUtil';
 import LevelSaveCoordinator from './levelSaveCoordinator';
 import PreparedLevelState from './types/PreparedLevelState';
-import { createBookState, findBookImageUrls } from '@/book';
+import { addLevelChapterToBook, createBookState, findBookImageUrls } from '@/book';
 import { ImageSet } from '@/imageLoading';
 import { createImageSet } from '@/game/imageSetUtil';
 import InitResults from './types/InitResults';
@@ -82,6 +82,7 @@ function HomeScreen() {
   }, []);
 
   function _publishPreparedLevelState(prepared:PreparedLevelState) {
+    addLevelChapterToBook(bookState, prepared.level);
     acceptPreparedLevelState(prepared, findBookImageUrls(bookState));
     saveGameStateRef.current = prepared.gameState;
     saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);

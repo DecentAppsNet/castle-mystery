@@ -29,12 +29,12 @@ export function getConclusionPageInstructionText(conclusion:Conclusion):string {
   if (!isConclusionMissingAnswers(conclusion)) {
     return conclusion.incorrectGuessCount > 0
       ? 'Claim correctly or take a mark of shame.'
-      : 'Claim this conclusion when you are confident.';
+      : 'Claim this conclusion when you know truth.';
   }
   switch(conclusion.incorrectGuessCount) {
-    case 0: return 'Fill the blanks with your knowledge.';
+    case 0: return 'Fill the blanks with knowledge.';
     case 1: return 'Your claim was false. Try again.';
-    default: return 'Your false claim earned a mark of shame.';
+    default: return 'Your falsehood earned a mark of shame.';
   }
 }
 

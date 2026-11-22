@@ -8,6 +8,7 @@ import Level from "@/game/types/Level";
 import ConclusionPage from "./types/ConclusionPage";
 import BookPage from "./types/BookPage";
 import Conclusion from "@/game/conclusions/types/Conclusion";
+import ChapterStartPage from "./types/ChapterStartPage";
 
 export function createBookState():BookState { // TODO this will change later to take some data, similar to createGameState().
   // Establish all pages before generating their loose-piece inventory.
@@ -48,7 +49,15 @@ function _addChapterEndPages(level:Level, chapterNo:number, pages:BookPage[]) {
   pages.push({ kind:'chapterEnd', headingText:'', chapterNo, winSynopsis:level.winSynopsis });
 }
 
+function _doesBookHaveLevelChapter(bookState:BookState, level:Level):boolean {
+  // Level title doesn't have uniqueness constraints, so in theory, two level files could have the same title and cause unexpected 
+  // behavior. But in practice, this mistake is super-easy to spot by the author, and there isn't a real use case for an 
+  // author wanting to represent the same title twice in levels. So it works fine as an ID.
+  return bookState.pages.some(p => p.kind === 'chapterStart' && (p as ChapterStartPage).title === level.title);
+}
+
 export function addLevelChapterToBook(bookState:BookState, level:Level) {
+  if (_doesBookHaveLevelChapter(bookState, level)) return;
   const chapterNo = _findNextChapterNo(bookState);
   const { pages } = bookState;
   _addChapterStartPages(level, chapterNo, pages);
