@@ -45,5 +45,5 @@ export function drawObscuredPage(metaTime:number, innerPageRect:Rect, isLeftPage
     [right, top],
     [right, bottom],
     [left, bottom]
-  ], context, metaTime, clipPath);
+  ], context, metaTime + (isLeftPage ? 0 : 2000), clipPath);
 }

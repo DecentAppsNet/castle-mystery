@@ -5,8 +5,8 @@
 * time=7:30
 * background=countryside.png
 * imports=items.md | characters.md | roomStyles.md
-* description=Pietro's masonry shop was neither the best nor worst in Palermo. A place of mediocrity instills a flickering dream. It whispers, "You have something now. Why not a little more?"
-* winSynopsis=Heinrich and the young King Frederick enjoyed an afternoon of friendship and falconing. Master Mason Pietro tolerated the apprentice leaving work, hoping for a future royal construction project. The seed of conspiracy was planted in a corner of the workshop yard.
+* description=Pietro's masonry shop was neither the best nor worst in Palermo. A place of mediocrity instills some flickering dream. It whispers, "You have something now. Why not a little more?"
+* winSynopsis=Heinrich and the young King Frederick enjoyed an afternoon of friendship and falconing. Master Mason Pietro tolerated the apprentice leaving work, hoping for a future royal construction project. In a corner of the workshop yard, one man's angst began to form into a plan.
 
 # Map
 
@@ -668,3 +668,4 @@ SSMM/HH\YYYYTT
 ## Labor Costs
 
 * conclusion=We don't know how much [Pietro di Ruggero di Palermo ] pays himself.---And it's unclear what [Anna di Pietro] is paid, though possibly 5 denari.---But of those whose wages we know, two are paid the most - [Salomone ben David di Palermo] who faces left at 7:32, and [Yusuf ibn Khalaf al-Balarmi] who faces right.
+* isOptional=true

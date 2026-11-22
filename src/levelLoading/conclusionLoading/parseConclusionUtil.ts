@@ -5,7 +5,7 @@ import Conclusion from "@/game/conclusions/types/Conclusion";
 import { normalizeId } from "@/game/idUtil";
 import Room from "@/game/types/Room";
 import ClozeCategory from "./types/ClozeCategory";
-import { createNormalizedSectionEntryMap, createSectionVariables } from "../levelFileSectionUtil";
+import { createNormalizedSectionEntryMap, createSectionVariables, parseBoolean } from "../levelFileSectionUtil";
 import { ErrorCollector } from "../errorCollection";
 import { assertNonNullable } from "decent-portal";
 import ClozePartType from "@/game/conclusions/types/ClozePartType";
@@ -145,8 +145,10 @@ function _parseConclusion(conclusionName:string, sectionText:string, rooms:Reado
   const unlockConclusionIds = resolveUnlockConclusionIds(conclusionName, variables.unlockconclusions?.value ?? '', conclusionIds, errors);
   const isComplete = false;
   const isLocked = false;
+  const isOptional = parseBoolean(variables.isoptional?.value ?? 'false', errors,
+    ['conclusions', conclusionName], 'isOptional');
   return errors.count > originalErrorCount ? 
-    null : { id, title, parts, isComplete, isLocked, incorrectGuessCount:0, unlockConclusionIds, revealRoomIds }
+    null : { id, title, parts, isComplete, isLocked, isOptional, incorrectGuessCount:0, unlockConclusionIds, revealRoomIds }
 }
 
 /** Locks conclusions that another conclusion is configured to unlock. */

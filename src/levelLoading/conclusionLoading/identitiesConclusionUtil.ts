@@ -10,7 +10,7 @@ import ClozeCategory from "./types/ClozeCategory";
 import { ErrorCollector } from "../errorCollection";
 import { UNKNOWN_CHARACTER_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { createClozeBlankFromTemplateText } from "./parseConclusionUtil";
-import { createNormalizedSectionEntryMap, createSectionVariables, getSectionIdsFromSectionText } from "../levelFileSectionUtil";
+import { createNormalizedSectionEntryMap, createSectionVariables, getSectionIdsFromSectionText, parseBoolean } from "../levelFileSectionUtil";
 import { resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
 import Room from "@/game/types/Room";
 import { randIntInRange } from "@/common/randUtil";
@@ -44,11 +44,13 @@ function _getCharacterHeadImageUrl(character:Character):string {
 function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Room[],
   initiallyObscuredRoomIds:ReadonlySet<string>, errors:ErrorCollector):{
   title:string|null,
+  isOptional:boolean,
   unlockConclusionIds:string[]|null,
   revealRoomIds:string[]|null
 } {
   let title = null, unlockConclusionIds = null, revealRoomIds = null;
-  if (conclusionsSectionText.trim() === '') return {title, unlockConclusionIds, revealRoomIds};
+  let isOptional = false;
+  if (conclusionsSectionText.trim() === '') return {title, isOptional, unlockConclusionIds, revealRoomIds};
 
   const conclusionIds = getSectionIdsFromSectionText(conclusionsSectionText, 2, 'conclusions', errors);
   const normalizedSections = createNormalizedSectionEntryMap(conclusionsSectionText, 2, 'conclusions', errors);
@@ -56,6 +58,8 @@ function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Ro
   if (identitiesSectionText) {
     const identitiesVariables = createSectionVariables(identitiesSectionText, ['conclusions', 'identities'], errors);
     title = identitiesVariables.title?.value ?? null;
+    isOptional = parseBoolean(identitiesVariables.isoptional?.value ?? 'false', errors,
+      ['conclusions', 'identities'], 'isOptional');
     const unlockConclusionsText = identitiesVariables.unlockconclusions?.value;
     if (unlockConclusionsText) {
       unlockConclusionIds = resolveUnlockConclusionIds('identities', unlockConclusionsText, conclusionIds, errors)
@@ -65,7 +69,7 @@ function _findAuthoredOverrides(conclusionsSectionText:string, rooms:readonly Ro
       revealRoomIds = resolveRevealRoomIds('identities', revealRoomsText, rooms, initiallyObscuredRoomIds, errors);
     }
   }
-  return { title, unlockConclusionIds, revealRoomIds };
+  return { title, isOptional, unlockConclusionIds, revealRoomIds };
 }
 
 /** Generates an identities conclusion unless all character titles are initially known. */
@@ -102,6 +106,7 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
     unlockConclusionIds:overrides.unlockConclusionIds ?? [],
     revealRoomIds:overrides.revealRoomIds ?? [],
     isComplete:false,
+    isOptional:overrides.isOptional,
     isLocked:false
   }
   return conclusion;

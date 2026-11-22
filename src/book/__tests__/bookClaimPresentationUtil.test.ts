@@ -19,7 +19,7 @@ function _createClaim(count:number = 2, correct:boolean = true):BookClaimState {
     kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:'presentation', title:'Presentation', parts:blanks.flatMap(blank => [
       { type:'text' as const, text:' then ' }, blank
-    ]), isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
+    ]), isComplete:false, isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   return { page, conclusionPageI:0, blanks, startedAt:STARTED_AT, correct, resultApplied:false, ejectedCount:0 };
 }

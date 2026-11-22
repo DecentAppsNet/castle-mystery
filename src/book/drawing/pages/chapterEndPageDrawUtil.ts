@@ -9,18 +9,19 @@ import { drawObscuredPage } from './obscuredPageDrawUtil';
 
 export function drawChapterEndPage(page:ChapterEndPage, pw:PageWriter, metaTime:number, innerPageRect:Rect,
     context:CanvasRenderingContext2D) {
-  const isChapterComplete = page.conclusions.every(c => c.isComplete);
-  if (!isChapterComplete) {
-    drawObscuredPage(metaTime, innerPageRect, false, pw, context);
-
-     const middleTextHeight = pw.getLineHeight('m') * 3;
-    pw.jump(0, 50 - (middleTextHeight / 2));
+  const isChapterComplete = page.conclusions.every(c => c.isComplete || c.isOptional);
+  if (isChapterComplete) {
     pw.setFontSize('m');
-    pw.addTextLine('The chapter end is locked.', 'center', 'red');
-    pw.addDivider('tripleDot');
-    pw.addTextLine('Claim all required conclusions\nfrom this chapter to unlock it.', 'center', 'red');
+    pw.addText(page.winSynopsis);
+
     return;
   }
+
+  drawObscuredPage(metaTime, innerPageRect, false, pw, context);
+  const middleTextHeight = pw.getLineHeight('m') * 3;
+  pw.jump(0, 50 - (middleTextHeight / 2));
   pw.setFontSize('m');
-  pw.addText(page.winSynopsis);
+  pw.addTextLine('The chapter end is locked.', 'center', 'red');
+  pw.addDivider('tripleDot');
+  pw.addTextLine('Claim all required conclusions\nfrom this chapter to unlock it.', 'center', 'red');
 }

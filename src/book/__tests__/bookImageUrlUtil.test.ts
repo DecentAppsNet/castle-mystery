@@ -5,7 +5,7 @@ import Conclusion from '@/game/conclusions/types/Conclusion';
 import ClozePartType from '@/game/conclusions/types/ClozePartType';
 
 const emptyConclusion:Conclusion = {
-  id:'test', title:'Test', parts:[], isComplete:false, isLocked:false,
+  id:'test', title:'Test', parts:[], isComplete:false, isLocked:false, isOptional:false,
   incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
 };
 

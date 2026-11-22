@@ -36,12 +36,13 @@ function _addChapterStartPages(level:Level, chapterNo:number, pages:BookPage[]) 
 }
 
 function _addConclusionPages(conclusion:Conclusion, chapterNo:number, pages:BookPage[]) {
+  const headingText = conclusion.isOptional ? `${conclusion.title} (optional)` : conclusion.title;
   const conclusionPage:ConclusionPage = {
-    kind:'conclusion', chapterNo, headingText:conclusion.title, conclusion, 
+    kind:'conclusion', chapterNo, headingText, conclusion, 
     answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion)
   }
   pages.push(conclusionPage);
-  pages.push({ kind:'blank', headingText:conclusion.title, chapterNo });
+  pages.push({ kind:'blank', headingText, chapterNo });
 }
 
 function _addChapterEndPages(level:Level, chapterNo:number, pages:BookPage[]) {

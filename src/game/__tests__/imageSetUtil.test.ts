@@ -13,7 +13,7 @@ import ClozePartType from '../conclusions/types/ClozePartType';
 function _createImageConclusion(imageUrl:string|string[]):Conclusion {
   return {
     id:'test', title:'Test', parts:[{ type:ClozePartType.image, imageUrl }],
-    isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
+    isComplete:false, isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
   };
 }
 

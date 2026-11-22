@@ -27,7 +27,7 @@ function _createFixture(correct:boolean = false, pageNo:number = 1, conclusionId
   const page:Extract<BookPage, { kind:'conclusion' }> = {
     kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:conclusionId, title:'Runtime', parts:[blank, { type:'text', text:' then ' }, otherBlank],
-      isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
+      isComplete:false, isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;

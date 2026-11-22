@@ -6,6 +6,7 @@ type Conclusion = {
   parts: ClozePart[];
   isComplete:boolean;
   isLocked:boolean;
+  isOptional:boolean;
   incorrectGuessCount:number;
   readonly unlockConclusionIds:readonly string[];
   readonly revealRoomIds:readonly string[];
@@ -18,6 +19,7 @@ export function duplicateConclusion(from:Conclusion):Conclusion {
     parts:from.parts.map(duplicateClozePart),
     isComplete:from.isComplete,
     isLocked:from.isLocked,
+    isOptional:from.isOptional,
     incorrectGuessCount:from.incorrectGuessCount,
     unlockConclusionIds:[...from.unlockConclusionIds],
     revealRoomIds:[...from.revealRoomIds]

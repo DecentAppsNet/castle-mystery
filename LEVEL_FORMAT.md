@@ -727,6 +727,7 @@ Useful lines inside a conclusion subsection:
 * `* title=...` - optional display title; default is the subsection name
 * `* revealRooms=Room A|Room B` - optional; completing this conclusion reveals the named rooms
 * `* unlockConclusions=Conclusion A|Conclusion B` - optional; completing this conclusion unlocks the named conclusions
+* `* isOptional=true` - optional boolean metadata; defaults to `false`. Currently this does not change completion or unlocking behavior.
 
 `revealRooms` can match room ids or room titles. `unlockConclusions` can match conclusion ids or conclusion titles.
 
@@ -762,7 +763,7 @@ The engine automatically generates an `Identities` conclusion for placed, intera
 
 If you replace `characters=`, include every displayed title needed by those identity blanks. Two generated identity blanks cannot require the same title.
 
-If you want to customize only the metadata for that generated conclusion, add an `## identities` subsection without a `conclusion=` line. In that special case, the generated identity blanks are kept, while authored metadata such as `title`, `revealRooms`, and `unlockConclusions` is applied.
+If you want to customize only the metadata for that generated conclusion, add an `## identities` subsection without a `conclusion=` line. In that special case, the generated identity blanks are kept, while authored metadata such as `title`, `revealRooms`, `unlockConclusions`, and `isOptional` is applied.
 
 If you do author a `conclusion=` line inside `## identities`, that authored conclusion replaces the generated one.
 

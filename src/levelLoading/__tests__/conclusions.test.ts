@@ -3,6 +3,7 @@ import defaultLevelText from './fixtures/conclusions-base.md?raw';
 import initialAppearanceText from './fixtures/initial-appearance.md?raw';
 import { loadLevelForTest, loadValidLevelForTest, replaceSection } from './testLevelUtil';
 import { UNKNOWN_CHARACTER_ICON_URL } from '@/game/discoveryIconUrlUtil';
+import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
 
 function _expectFailure(text:string, filename:string, expectedMessage:string) {
   const { level, errors } = loadLevelForTest(text, filename);
@@ -12,6 +13,42 @@ function _expectFailure(text:string, filename:string, expectedMessage:string) {
 }
 
 describe('loading levels - conclusions', () => {
+  it('defaults authored and generated conclusions to non-optional', () => {
+    const text = defaultLevelText.replace('# conclusions', '# conclusions\n## Evidence\n* conclusion=[Hall]');
+    const level = loadValidLevelForTest(text);
+    expect(level.conclusions.map(conclusion => conclusion.isOptional)).toEqual([false, false]);
+  });
+
+  it('loads and preserves an authored optional conclusion when duplicated', () => {
+    const text = defaultLevelText.replace('# conclusions', '# conclusions\n## Evidence\n* conclusion=[Hall]\n* isOptional=true');
+    const level = loadValidLevelForTest(text);
+    const conclusion = level.conclusions.find(conclusion => conclusion.id === 'evidence')!;
+    expect(conclusion.isOptional).toBe(true);
+    expect(duplicateConclusion(conclusion).isOptional).toBe(true);
+  });
+
+  it('loads explicitly non-optional conclusions', () => {
+    const text = defaultLevelText.replace('# conclusions', '# conclusions\n## Evidence\n* conclusion=[Hall]\n* isOptional=false');
+    const level = loadValidLevelForTest(text);
+    expect(level.conclusions.find(conclusion => conclusion.id === 'evidence')?.isOptional).toBe(false);
+  });
+
+  it('applies optional metadata to generated identities', () => {
+    const text = defaultLevelText.replace('# conclusions', '# conclusions\n## identities\n* isOptional=true');
+    const level = loadValidLevelForTest(text);
+    expect(level.conclusions.find(conclusion => conclusion.id === 'identities')?.isOptional).toBe(true);
+  });
+
+  it('rejects invalid optional metadata on authored conclusions', () => {
+    const text = defaultLevelText.replace('# conclusions', '# conclusions\n## Evidence\n* conclusion=[Hall]\n* isOptional=maybe');
+    _expectFailure(text, 'optional-invalid.md', 'Expected "maybe" to be "true" or "false"');
+  });
+
+  it('rejects invalid optional metadata on generated identities', () => {
+    const text = defaultLevelText.replace('# conclusions', '# conclusions\n## identities\n* isOptional=maybe');
+    _expectFailure(text, 'identities-optional-invalid.md', 'Expected "maybe" to be "true" or "false"');
+  });
+
   it('uses the initial skin portrait for a placed character without authored identity options', () => {
     const text = initialAppearanceText.replace('* characters=Sam|Visitor', '');
     const level = loadValidLevelForTest(text);

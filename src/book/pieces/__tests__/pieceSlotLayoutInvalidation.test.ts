@@ -19,7 +19,7 @@ function _createPreparedBook() {
   const page:Extract<BookPage, { kind:'conclusion' }> = {
     kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
-      isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
+      isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const piece = { conclusionPageI:0, text:'First', styleNo:3, xPercent:50, yPercent:50, placement:null };
   const bookState = createDefaultBookState();

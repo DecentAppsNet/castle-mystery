@@ -14,7 +14,7 @@ function _fixture(correct:boolean = true) {
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:0 };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
     kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
-    conclusion:{ id:'fall', title:'Fall', parts:[blank], isComplete:false, isLocked:false,
+    conclusion:{ id:'fall', title:'Fall', parts:[blank], isComplete:false, isLocked:false, isOptional:false,
       incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const claim:BookClaimState = { page, conclusionPageI:0, blanks:[blank], correct, startedAt:100,

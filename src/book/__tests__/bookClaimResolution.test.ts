@@ -22,7 +22,7 @@ function _createFixture(single:boolean = false) {
   const page:Extract<BookPage, { kind:'conclusion' }> = {
     kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 },
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
-      isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
+      isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const bookState = createDefaultBookState();
   bookState.isVisible = true;

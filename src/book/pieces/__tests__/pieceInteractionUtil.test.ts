@@ -16,7 +16,7 @@ function _createBookState() {
   const bookState = createDefaultBookState();
   const firstPage:ConclusionPage = {
     kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{},
-    conclusion:{ id:'first', title:'First', parts:[], isComplete:false, isLocked:false,
+    conclusion:{ id:'first', title:'First', parts:[], isComplete:false, isLocked:false, isOptional:false,
       incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
   const secondPage:ConclusionPage = {

@@ -17,7 +17,7 @@ vi.mock('@/persistence/pathStore', async () => {
 
 const imageConclusion:Conclusion = {
   id:'test', title:'Test', parts:[{ type:ClozePartType.image, imageUrl:'/assets/conclusions/first.png' }],
-  isComplete:false, isLocked:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
+  isComplete:false, isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
 };
 
 describe('level image retention', () => {
