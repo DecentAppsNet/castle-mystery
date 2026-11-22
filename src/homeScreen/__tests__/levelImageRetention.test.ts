@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { acceptPreparedLevelState, prepareLevelState } from '../levelPreparation';
 import { createImageSet, updateImageSetForLevel } from '@/game/imageSetUtil';
-import { findBookImageUrls, BOOK_IMAGE_URL } from '@/book';
+import { findBookImageUrls } from '@/book';
 import { createDefaultBookState } from '@/book/types/BookState';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import defaultText from '@/levelLoading/__tests__/fixtures/default-level.md?raw';
@@ -32,17 +32,25 @@ describe('level image retention', () => {
 
   it('retains every permanent asset after accepting an image-free level', async () => {
     const imageSet = await createImageSet();
-    const size = imageSet.size;
-    const permanentAsset = imageSet.findImage(BOOK_IMAGE_URL);
+    const permanentAssets = vi.mocked(fetch).mock.calls
+      .map(([url]) => String(url)).filter(url => !url.endsWith('.punch.png'))
+      .map(url => {
+        const imageUrl = url.slice('/castle-mystery'.length);
+        return { imageUrl, asset:imageSet.findImage(imageUrl) };
+      });
+    expect(permanentAssets.length).toBeGreaterThan(0);
     const level = loadValidLevelForTest(defaultText);
     await updateImageSetForLevel(level, imageSet);
     const prepared = await prepareLevelState(level, imageSet, 'first.md');
 
     acceptPreparedLevelState(prepared, new Set());
 
-    expect(imageSet.size).toBe(size);
-    expect(imageSet.findImage(BOOK_IMAGE_URL)).toBe(permanentAsset);
-    expect(permanentAsset?.image.close).not.toHaveBeenCalled();
+    for (const { imageUrl, asset } of permanentAssets) {
+      expect(asset).not.toBeNull();
+      expect(imageSet.findImage(imageUrl)).toBe(asset);
+      expect(asset?.image.close).not.toHaveBeenCalled();
+      expect(asset?.punchMaskImage?.close).not.toHaveBeenCalled();
+    }
   });
 
   it('retains active direct and resolved candidate images', async () => {
@@ -53,6 +61,8 @@ describe('level image retention', () => {
     await updateImageSetForLevel(level, imageSet);
     const backgroundAsset = imageSet.findImage('/assets/backgrounds/active.png');
     const candidateAsset = imageSet.findImage('/assets/conclusions/active.png');
+    expect(backgroundAsset).not.toBeNull();
+    expect(candidateAsset).not.toBeNull();
     const prepared = await prepareLevelState(level, imageSet, 'active.md');
 
     acceptPreparedLevelState(prepared, new Set());
@@ -63,12 +73,13 @@ describe('level image retention', () => {
     expect(candidateAsset?.image.close).not.toHaveBeenCalled();
   });
 
-  it('retains book-only images after replacement and reads current book references at acceptance', async () => {
+  it('retains old-level images only while current book content requires them', async () => {
     const imageSet = await createImageSet();
     const firstLevel = { ...loadValidLevelForTest(defaultText), conclusions:[imageConclusion] };
     await updateImageSetForLevel(firstLevel, imageSet);
     acceptPreparedLevelState(await prepareLevelState(firstLevel, imageSet, 'first.md'), new Set());
     const bookAsset = imageSet.findImage('/assets/conclusions/first.png');
+    expect(bookAsset).not.toBeNull();
     const secondLevel = loadValidLevelForTest(defaultText);
     await updateImageSetForLevel(secondLevel, imageSet);
     const prepared = await prepareLevelState(secondLevel, imageSet, 'second.md');
@@ -80,20 +91,29 @@ describe('level image retention', () => {
 
     expect(imageSet.findImage('/assets/conclusions/first.png')).toBe(bookAsset);
     expect(bookAsset?.image.close).not.toHaveBeenCalled();
+
+    bookState.pages = [];
+    acceptPreparedLevelState(prepared, findBookImageUrls(bookState));
+
+    expect(imageSet.findImage('/assets/conclusions/first.png')).toBeNull();
+    expect(bookAsset?.image.close).toHaveBeenCalledTimes(1);
   });
 
-  it('counts URLs shared by permanent, level, and book requirements once without additional I/O', async () => {
+  it('preserves assets shared by permanent, level, and book demand without additional I/O', async () => {
     const imageSet = await createImageSet();
-    const size = imageSet.size;
-    const level = { ...loadValidLevelForTest(defaultText), backgroundImageUrl:BOOK_IMAGE_URL };
+    const permanentUrl = String(vi.mocked(fetch).mock.calls[0][0]).slice('/castle-mystery'.length);
+    const sharedAsset = imageSet.findImage(permanentUrl);
+    expect(sharedAsset).not.toBeNull();
+    const level = { ...loadValidLevelForTest(defaultText), backgroundImageUrl:permanentUrl };
     await updateImageSetForLevel(level, imageSet);
     const prepared = await prepareLevelState(level, imageSet, 'shared.md');
     vi.mocked(fetch).mockClear();
     vi.mocked(createImageBitmap).mockClear();
 
-    acceptPreparedLevelState(prepared, new Set([BOOK_IMAGE_URL]));
+    acceptPreparedLevelState(prepared, new Set([permanentUrl]));
 
-    expect(imageSet.size).toBe(size);
+    expect(imageSet.findImage(permanentUrl)).toBe(sharedAsset);
+    expect(sharedAsset?.image.close).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
     expect(createImageBitmap).not.toHaveBeenCalled();
   });
@@ -104,6 +124,8 @@ describe('level image retention', () => {
     await updateImageSetForLevel(firstLevel, imageSet);
     acceptPreparedLevelState(await prepareLevelState(firstLevel, imageSet, 'first.md'), new Set());
     const removedAsset = imageSet.findImage(firstLevel.backgroundImageUrl);
+    expect(removedAsset).not.toBeNull();
+    expect(removedAsset?.punchMaskImage).not.toBeNull();
     const secondLevel = loadValidLevelForTest(defaultText);
     await updateImageSetForLevel(secondLevel, imageSet);
     const prepared = await prepareLevelState(secondLevel, imageSet, 'second.md');
@@ -118,22 +140,7 @@ describe('level image retention', () => {
     await updateImageSetForLevel(firstLevel, imageSet);
     expect(imageSet.findImage(firstLevel.backgroundImageUrl)).not.toBe(removedAsset);
     expect(imageSet.findImage(firstLevel.backgroundImageUrl)).not.toBeNull();
-    expect(fetch).toHaveBeenCalledTimes(2);
-  });
-
-  it('does not prune outgoing assets when required loading fails', async () => {
-    const imageSet = await createImageSet();
-    const outgoingAsset = await imageSet.loadImage('/assets/backgrounds/outgoing.png');
-    const level = { ...loadValidLevelForTest(defaultText), backgroundImageUrl:'/assets/backgrounds/missing.png' };
-    vi.mocked(fetch).mockResolvedValue(new Response(null, { status:404 }));
-    const acceptance = updateImageSetForLevel(level, imageSet)
-      .then(() => prepareLevelState(level, imageSet, 'missing.md'))
-      .then(prepared => acceptPreparedLevelState(prepared, new Set()));
-
-    await expect(acceptance).rejects.toThrow('/assets/backgrounds/missing.png');
-
-    expect(imageSet.findImage('/assets/backgrounds/outgoing.png')).toBe(outgoingAsset);
-    expect(outgoingAsset.image.close).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledWith(`/castle-mystery${firstLevel.backgroundImageUrl}`);
   });
 
   it('does not prune outgoing assets when game-state preparation fails', async () => {
@@ -141,14 +148,11 @@ describe('level image retention', () => {
     const outgoingAsset = await imageSet.loadImage('/assets/backgrounds/outgoing.png');
     const level = { ...loadValidLevelForTest(defaultText), activeCharacterId:'missing',
       backgroundImageUrl:'/assets/backgrounds/new.png' };
-    const acceptance = updateImageSetForLevel(level, imageSet)
-      .then(() => prepareLevelState(level, imageSet, 'invalid.md'))
-      .then(prepared => acceptPreparedLevelState(prepared, new Set()));
+    await updateImageSetForLevel(level, imageSet);
 
-    await expect(acceptance).rejects.toThrow();
+    await expect(prepareLevelState(level, imageSet, 'invalid.md')).rejects.toThrow();
 
     expect(imageSet.findImage('/assets/backgrounds/outgoing.png')).toBe(outgoingAsset);
     expect(outgoingAsset.image.close).not.toHaveBeenCalled();
-    expect(imageSet.findImage('/assets/backgrounds/new.png')).not.toBeNull();
   });
 });

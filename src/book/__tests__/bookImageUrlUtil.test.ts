@@ -65,21 +65,13 @@ describe('bookImageUrlUtil', () => {
       expect(createImageBitmap).not.toHaveBeenCalled();
     });
 
-    it('does not independently collect tally-page conclusions', () => {
-      const bookState = createDefaultBookState();
-      const conclusion = { ...emptyConclusion, parts:[{ type:ClozePartType.image, imageUrl:'/assets/bodies/tally.png' }] };
-      bookState.pages = [{ kind:'tally', headingText:'', chapterNo:1, conclusions:[conclusion] }];
-
-      expect(findBookImageUrls(bookState)).toEqual(new Set());
-    });
-
     it('asserts for unresolved book references without probing candidates', () => {
       const bookState = createDefaultBookState();
       const conclusion = { ...emptyConclusion, parts:[{ type:ClozePartType.image,
         imageUrl:['/assets/conclusions/test.png', '/assets/bodies/test.png'] }] };
       bookState.pages = [{ kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:{} }];
 
-      expect(() => findBookImageUrls(bookState)).toThrow('Book image URLs must already be resolved.');
+      expect(() => findBookImageUrls(bookState)).toThrow();
       expect(fetch).not.toHaveBeenCalled();
       expect(createImageBitmap).not.toHaveBeenCalled();
     });

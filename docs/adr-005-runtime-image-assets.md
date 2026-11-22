@@ -6,13 +6,25 @@ Accepted
 
 Character-field names, canonical URL identity, and character-image failure/fallback rules below are historical and superseded by [ADR 010](adr-010-level-asset-filename-normalization.md) and [ADR 021](adr-021-raster-character-assets.md). The synchronous parsing/state-construction and explicit runtime asset-loading boundaries remain accepted.
 
-The update below additionally supersedes the Map representation, blanket resilience policy, and related implementation notes and consequences. The original decision is retained as historical rationale.
+The update below additionally supersedes the Map representation, blanket resilience policy, per-level GameState ownership, and related implementation notes and consequences. The original decision is retained as historical rationale.
 
 ## Revised Asset Boundary
 
 - ImageSet owns asset loading, preparation, and lookup behind an encapsulated boundary. Rendering consumes prepared assets synchronously; it does not initiate loading or repeat visible-content analysis.
 - Visible-content bounds are presentation metadata, not a replacement for original source geometry. Decorative padding may be excluded from presentation, but authored joins, tiling, and sprite coordinates must retain their source alignment.
 - All directly referenced images must be ready before a level is published to rendering. Any required asset failure rejects preparation rather than publishing a partial set. Optional masks remain optional; omitted artwork remains distinct from failed configured artwork.
+
+### Session Ownership And Retention
+
+Image lifetimes follow the user session rather than an individual level. Shared interface artwork and book content can outlive the level that first required them; a session-owned store allows those consumers to reuse prepared assets without repeated loading.
+
+- The session owns the image store. Level states and renderers hold non-owning references to it; replacing or resetting a level does not replace the store or transfer disposal responsibility. Parsing and state construction remain synchronous and independent of asset I/O, including for headless callers.
+- Retention reflects combined demand from explicitly designated session-wide assets, the accepted active level, and current book content. Session-wide lifetime is a semantic designation, not an inference from filenames or directories. The particular assets in each category belong in implementation, not this decision.
+- Each domain reports its own canonical image references through its boundary. The image store operates on asset identities and does not understand levels or books. Identity and candidate resolution follow ADR 010; deployment-specific URL expansion remains a network-boundary concern.
+- Loading is explicitly coordinated by session orchestration rather than initiated by rendering or hidden behind lookup. Already prepared assets are reused. Development assertions may detect caller mistakes, but orchestration must remain correct without them; the store is not responsible for scheduling concurrent requests.
+- Book references establish retention demand, not a separate loading mechanism. They must already be resolved, and book demand collection neither probes alternatives nor loads assets. Book content depends on assets acquired through session-wide or level loading.
+- A replacement is accepted only after its required assets and runtime state are ready. Any accompanying book-content changes precede retention calculation, which uses current demand at acceptance rather than a snapshot from before loading. Pruning occurs before replacement rendering, and only after outgoing rendering and cache preparation have stopped using assets that may be released.
+- Failed or abandoned preparation leaves outgoing requirements intact. Extra assets acquired by a failed attempt may remain until a later successful acceptance; transactional rollback is not required. Explicit removal releases the decoded resources owned by each removed entry, including optional masks, without initiating loading. Derived caches must not outlive their source resources unless they are independent of them.
 
 ## Context
 
