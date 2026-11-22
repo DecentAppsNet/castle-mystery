@@ -34,6 +34,15 @@ class ImageSet {
     return this._imagesByUrl.get(url) ?? null;
   }
 
+  removeUnrequiredImages(requiredUrls:ReadonlySet<string>):void {
+    for (const [url, imageAsset] of this._imagesByUrl) {
+      if (requiredUrls.has(url)) continue;
+      this._imagesByUrl.delete(url);
+      imageAsset.image.close();
+      imageAsset.punchMaskImage?.close();
+    }
+  }
+
   /**
    * Fetch and decode the image, calculate visible bounds, then register and return it.
    * Reject on image loading or analysis failure; never register a partial asset.

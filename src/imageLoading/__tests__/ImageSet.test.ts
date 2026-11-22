@@ -9,7 +9,7 @@ describe('ImageSet', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(new Blob(), {
       headers:{ 'content-type':'image/png' }
     })));
-    vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width:2, height:1 })));
+    vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width:2, height:1, close:vi.fn() })));
   });
 
   afterEach(() => {
@@ -24,6 +24,91 @@ describe('ImageSet', () => {
       expect(imageSet.size).toBe(0);
       expect(fetch).not.toHaveBeenCalled();
       expect(createImageBitmap).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('removeUnrequiredImages()', () => {
+    it('preserves retained asset identity and leaves its bitmaps open', async () => {
+      const imageSet = new ImageSet();
+      const asset = await imageSet.loadImage('/assets/items/retained.png', true);
+
+      imageSet.removeUnrequiredImages(new Set(['/assets/items/retained.png']));
+
+      expect(imageSet.findImage('/assets/items/retained.png')).toBe(asset);
+      expect(imageSet.size).toBe(1);
+      expect(asset.image.close).not.toHaveBeenCalled();
+      expect(asset.punchMaskImage?.close).not.toHaveBeenCalled();
+    });
+
+    it('removes only unrequired entries and closes their primary bitmaps without masks', async () => {
+      const imageSet = new ImageSet();
+      const retained = await imageSet.loadImage('/assets/items/retained.png');
+      const removed = await imageSet.loadImage('/assets/items/removed.png');
+      const alsoRemoved = await imageSet.loadImage('/assets/items/alsoRemoved.png');
+
+      imageSet.removeUnrequiredImages(new Set(['/assets/items/retained.png']));
+
+      expect(imageSet.findImage('/assets/items/retained.png')).toBe(retained);
+      expect(imageSet.findImage('/assets/items/removed.png')).toBeNull();
+      expect(imageSet.findImage('/assets/items/alsoRemoved.png')).toBeNull();
+      expect(imageSet.size).toBe(1);
+      expect(retained.image.close).not.toHaveBeenCalled();
+      expect(removed.punchMaskImage).toBeNull();
+      expect(removed.image.close).toHaveBeenCalledTimes(1);
+      expect(alsoRemoved.image.close).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes both the primary bitmap and optional punch mask on removal', async () => {
+      const imageSet = new ImageSet();
+      const asset = await imageSet.loadImage('/assets/items/removed.png', true);
+      expect(asset.punchMaskImage).not.toBeNull();
+
+      imageSet.removeUnrequiredImages(new Set());
+
+      expect(imageSet.findImage('/assets/items/removed.png')).toBeNull();
+      expect(imageSet.size).toBe(0);
+      expect(asset.image.close).toHaveBeenCalledTimes(1);
+      expect(asset.punchMaskImage?.close).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not close removed bitmaps again on repeated pruning', async () => {
+      const imageSet = new ImageSet();
+      const asset = await imageSet.loadImage('/assets/items/removed.png', true);
+
+      imageSet.removeUnrequiredImages(new Set());
+      imageSet.removeUnrequiredImages(new Set());
+
+      expect(imageSet.size).toBe(0);
+      expect(asset.image.close).toHaveBeenCalledTimes(1);
+      expect(asset.punchMaskImage?.close).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not load missing required URLs', () => {
+      const imageSet = new ImageSet();
+
+      imageSet.removeUnrequiredImages(new Set(['/assets/items/missing.png']));
+
+      expect(imageSet.findImage('/assets/items/missing.png')).toBeNull();
+      expect(imageSet.size).toBe(0);
+      expect(fetch).not.toHaveBeenCalled();
+      expect(createImageBitmap).not.toHaveBeenCalled();
+    });
+
+    it('allows a removed URL to load again with a new asset', async () => {
+      const imageSet = new ImageSet();
+      const removed = await imageSet.loadImage('/assets/items/test.png');
+      imageSet.removeUnrequiredImages(new Set());
+      vi.mocked(fetch).mockClear();
+
+      const reloaded = await imageSet.loadImage('/assets/items/test.png');
+
+      expect(reloaded).not.toBe(removed);
+      expect(reloaded.image).not.toBe(removed.image);
+      expect(imageSet.findImage('/assets/items/test.png')).toBe(reloaded);
+      expect(imageSet.size).toBe(1);
+      expect(removed.image.close).toHaveBeenCalledTimes(1);
+      expect(reloaded.image.close).not.toHaveBeenCalled();
+      expect(fetch).toHaveBeenCalledExactlyOnceWith('/castle-mystery/assets/items/test.png');
     });
   });
 
