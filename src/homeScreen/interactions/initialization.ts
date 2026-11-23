@@ -7,9 +7,11 @@ import { updateImageSetForLevel } from "@/game/imageSetUtil";
 import { loadLevelFromUrl, loadLevelManifestFromUrl } from "@/levelLoading";
 import { ImageSet } from '@/imageLoading';
 import InitResults from '../types/InitResults';
+import { loadBookFromUrl } from '@/book';
 
 /** Loads the initial level and prepares runtime state with the supplied session image store. */
 export async function init(imageSet:ImageSet):Promise<InitResults> {
+  const bookState = await loadBookFromUrl('/levels/book.md');
   const levelManifest = await loadLevelManifestFromUrl('/levels/levels.md');
   const initialLevelUrl = levelManifest.levelUrls[levelManifest.lastLevelI] ?? levelManifest.levelUrls[0];
   const { level, errors } = await loadLevelFromUrl(initialLevelUrl);
@@ -23,6 +25,7 @@ export async function init(imageSet:ImageSet):Promise<InitResults> {
   const minutes = msecsToMinutes(gameState.time);
   return {
     ...prepared,
+    bookState,
     minutes,
     levelManifest
   };

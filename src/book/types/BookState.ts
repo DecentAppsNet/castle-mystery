@@ -20,7 +20,8 @@ type BookState = {
   pieceDragState:PieceDragState|null,
   hungryPieceSlot:PieceSlotLayout|null,
   pieceSlotTransitions:PieceSlotTransition[],
-  pages:BookPage[]
+  pages:BookPage[],
+  levelUrls:string[]
 }
 
 export function createDefaultBookState():BookState {
@@ -37,7 +38,8 @@ export function createDefaultBookState():BookState {
     pieceDragState:null,
     hungryPieceSlot:null,
     pieceSlotTransitions:[],
-    pages:[]
+    pages:[],
+    levelUrls:[]
   }
 }
 

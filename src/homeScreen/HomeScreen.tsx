@@ -24,11 +24,12 @@ import { clearPlayerEvents } from '@/game/playerEventUtil';
 import { findNextTimelineBeat, findPreviousTimelineBeat } from '@/game/timeline/beatUtil';
 import LevelSaveCoordinator from './levelSaveCoordinator';
 import PreparedLevelState from './types/PreparedLevelState';
-import { addLevelChapterToBook, createBookState, findBookImageUrls } from '@/book';
+import { addLevelChapterToBook, findBookImageUrls } from '@/book';
 import { ImageSet } from '@/imageLoading';
 import { createImageSet } from '@/game/imageSetUtil';
 import InitResults from './types/InitResults';
 import { acceptPreparedLevelState } from './levelPreparation';
+import BookState from "@/book/types/BookState";
 
 function _isEditableTarget(target:EventTarget|null):boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -56,7 +57,7 @@ function HomeScreen() {
   const isGameDisabledRef = useRef(true);
   const [isGameDisabled, setIsGameDisabled] = useState(true);
   const [gameState, setGameState] = useState<GameState|null>(null);
-  const [bookState] = useState(createBookState);
+  const [bookState, setBookState] = useState<BookState|null>(null);
   const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
   const [initErrorMessage, setInitErrorMessage] = useState<string|null>(null);
   const [isInitialClosedFramePainted, setIsInitialClosedFramePainted] = useState(false);
@@ -70,7 +71,6 @@ function HomeScreen() {
   const [modalDialogName, setModalDialogName] = useState<string|null>(null);
   const fromMinutes = gameState?.labels[0]?.minutes ?? 0;
   const toMinutes = gameState?.labels[gameState.labels.length - 1]?.minutes ?? fromMinutes;
-  // const isPlayPauseDisabled = !gameState || minutes >= toMinutes;
 
   useEffect(() => {
     const request = loadRequestRef.current;
@@ -81,9 +81,10 @@ function HomeScreen() {
     };
   }, []);
 
-  function _publishPreparedLevelState(prepared:PreparedLevelState) {
-    addLevelChapterToBook(bookState, prepared.level);
-    acceptPreparedLevelState(prepared, findBookImageUrls(bookState));
+  function _publishPreparedLevelState(prepared:PreparedLevelState, sessionBookState:BookState|null = bookState) {
+    assertNonNullable(sessionBookState);
+    addLevelChapterToBook(sessionBookState, prepared.level);
+    acceptPreparedLevelState(prepared, findBookImageUrls(sessionBookState));
     saveGameStateRef.current = prepared.gameState;
     saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
     previousConclusionsRef.current = prepared.gameState.conclusions;
@@ -156,7 +157,8 @@ function HomeScreen() {
     initPromiseRef.current.then((initResults) => {
       if (isCancelled || !loadRequestRef.current.isMounted) return;
       setMinutes(initResults.minutes);
-      _publishPreparedLevelState(initResults);
+      setBookState(initResults.bookState);
+      _publishPreparedLevelState(initResults, initResults.bookState);
       setLevelManifest(initResults.levelManifest);
       setWinSynopsis(initResults.gameState.winSynopsis);
       setConclusions(initResults.gameState.conclusions);

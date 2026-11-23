@@ -1,4 +1,4 @@
-/* This file creates temporary book pages and their generated loose-piece inventory.
+/* This file loads book metadata and creates chapter pages and their generated loose-piece inventory.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import BookState, { createDefaultBookState } from "./types/BookState";
@@ -9,21 +9,9 @@ import BookPage from "./types/BookPage";
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import ChapterStartPage from "./types/ChapterStartPage";
 import { updatePieceStackForConclusionPages } from './pieces';
-
-export function createBookState():BookState { // TODO this will change later to take some data, similar to createGameState().
-  // Establish all pages before generating their loose-piece inventory.
-  const bookState = createDefaultBookState();
-  bookState.pages = [
-    { kind:'blank', headingText:'', chapterNo:0 },
-    { kind:'bookStart', headingText:'', title:'Frederick\nand the\nFreemasons', subtitle:null, author:'Erik Hermansen', chapterNo:0 },
-  ];
-  bookState.pieceStack = [];
-
-  // Start with the book closed at its first page.
-  bookState.pageNo = 1;
-  bookState.isVisible = false;
-  return bookState;
-}
+import { parseSections, parseUniqueNameValueLines } from '@/common/markdownUtil';
+import { baseUrl } from '@/common/urlUtil';
+import { convertStraightQuotesToDirectional } from '@/common/quoteUtil';
 
 function _findNextChapterNo(bookState:BookState):number {
   if (!bookState.pages.length) return 1;
@@ -58,6 +46,11 @@ function _doesBookHaveLevelChapter(bookState:BookState, level:Level):boolean {
   return bookState.pages.some(p => p.kind === 'chapterStart' && (p as ChapterStartPage).title === level.title);
 }
 
+function _addBookStartPages(title:string, subtitle:string|null, author:string, pages:BookPage[]) {
+  pages.push({ kind:'blank', headingText:'', chapterNo:0 });
+  pages.push({ kind:'bookStart', headingText:'', title, subtitle, author, chapterNo:0 });
+}
+
 export function addLevelChapterToBook(bookState:BookState, level:Level) {
   if (_doesBookHaveLevelChapter(bookState, level)) return;
   const chapterNo = _findNextChapterNo(bookState);
@@ -67,4 +60,33 @@ export function addLevelChapterToBook(bookState:BookState, level:Level) {
   level.conclusions.forEach(c => _addConclusionPages(c, chapterNo, pages));
   _addChapterEndPages(level, chapterNo, pages);
   updatePieceStackForConclusionPages(bookState, newPagesStartIndex);
+}
+
+function _parseLevelUrls(levelsSection:string):string[] {
+  return levelsSection.split('\n').map(line => line.trim())
+    .filter(line => line.startsWith('*')).map(line => line.slice(1).trim()).filter(Boolean);
+}
+
+// This function is one of the rare exceptions where it is allowed to be exported for testing purposes.
+export function loadBookFromText(text:string):BookState {
+  const sections = parseSections(text, 1, true);
+  const general = parseUniqueNameValueLines(sections.general ?? '', 'book general', true);
+  const title = general.title?.trim();
+  if (!title) throw new Error('Book is missing general title.');
+  const bookState = createDefaultBookState();
+  bookState.levelUrls = _parseLevelUrls(sections.levels ?? '');
+  if (!bookState.levelUrls.length) throw new Error('Book has no level URLs.');
+  const subtitle = general.subtitle ? convertStraightQuotesToDirectional(general.subtitle) : null;
+  const author = convertStraightQuotesToDirectional(general.author || 'Unknown Author');
+  _addBookStartPages(convertStraightQuotesToDirectional(title), subtitle, author, bookState.pages);
+  return bookState;
+}
+
+export async function loadBookFromUrl(bookFileUrl:string):Promise<BookState> {
+  const response = await fetch(baseUrl(bookFileUrl));
+  if (!response.ok) throw new Error(`Unable to load book '${bookFileUrl}': HTTP ${response.status}.`);
+  const bookState = loadBookFromText(await response.text());
+  const directory = bookFileUrl.slice(0, bookFileUrl.lastIndexOf('/') + 1);
+  bookState.levelUrls = bookState.levelUrls.map(levelUrl => levelUrl.startsWith('/') ? levelUrl : directory + levelUrl);
+  return bookState;
 }

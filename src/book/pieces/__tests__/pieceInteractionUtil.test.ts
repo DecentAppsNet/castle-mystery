@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+
 import { createLayout, updateControlRect } from '@/canvasControls';
-import { createBookState } from '@/book/bookContentUtil';
 import { createDefaultBookState } from '@/book/types/BookState';
 import ConclusionPage from '@/book/types/ConclusionPage';
 import BookLayout from '@/book/drawing/types/BookLayout';
@@ -391,20 +391,6 @@ describe('pieceInteractionUtil', () => {
       expect(getVisibleBookPieces(bookState)).toEqual([appended]);
       bookState.pageNo = 1;
       expect(getVisibleBookPieces(bookState)).toEqual([lower, upper]);
-    });
-  });
-
-  describe('createBookState()', () => {
-    it('creates independent piece collections', () => {
-      const first = createBookState();
-      const second = createBookState();
-      expect(first.pieceStack).not.toBe(second.pieceStack);
-      expect(first.pieceStack).toEqual(second.pieceStack);
-      const originalLength = second.pieceStack.length;
-      first.pieceStack.push(_createBookState().lower);
-      expect(first.pieceStack).toHaveLength(originalLength + 1);
-      expect(second.pieceStack).toHaveLength(originalLength);
-      expect(createBookState().pieceStack).toEqual(second.pieceStack);
     });
   });
 
