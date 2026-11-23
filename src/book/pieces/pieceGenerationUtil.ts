@@ -66,8 +66,8 @@ function _generatePieceStack(bookState:Readonly<BookState>, newPagesStartIndex:n
       if (groupPieces.length > 0) answerGroups.push(groupPieces);
       pieces.push(...groupPieces);
     }
-    const answerCount = answerGroups.reduce((count, group) => count + group.length, 0);
-    const xOffsetPercent = page.conclusion.id === 'identities' && answerCount > IDENTITIES_PER_PAGE
+    const identityCount = page.conclusion.parts.filter(part => part.type === 'image').length;
+    const xOffsetPercent = page.conclusion.id === 'identities' && identityCount > IDENTITIES_PER_PAGE
       ? SECOND_COLUMN_INITIAL_PIECE_X_OFFSET_PERCENT : 0;
     _placeAnswerGroupsOnRightPage(answerGroups, xOffsetPercent);
 
