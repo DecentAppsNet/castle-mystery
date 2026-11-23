@@ -3,10 +3,10 @@
 import { assertNonNullable } from 'decent-portal';
 import { rand } from '@/common/randUtil';
 import { calcBookClaimTiming, FULL_REVOLUTION_RADIANS } from './bookClaimTimingUtil';
-import { detachBookPiece } from './pieces';
-import PieceSlotLayout from './drawing/types/PieceSlotLayout';
+import { detachBookPiece } from '../pieces';
+import PieceSlotLayout from '../drawing/types/PieceSlotLayout';
 import BookClaimState from './types/BookClaimState';
-import BookState from './types/BookState';
+import BookState from '../types/BookState';
 
 const EJECTION_DISTANCE_IN_LINE_HEIGHTS = .1;
 

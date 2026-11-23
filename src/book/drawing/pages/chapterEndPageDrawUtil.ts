@@ -6,10 +6,11 @@ import ChapterEndPage from "@/book/types/ChapterEndPage";
 import PageWriter from "./PageWriter";
 import Rect from '@/game/types/Rect';
 import { drawObscuredPage } from './obscuredPageDrawUtil';
+import { areAllRequiredConclusionsComplete } from '@/book/claiming';
 
 export function drawChapterEndPage(page:ChapterEndPage, pw:PageWriter, metaTime:number, innerPageRect:Rect,
     context:CanvasRenderingContext2D) {
-  const isChapterComplete = page.conclusions.every(c => c.isComplete || c.isOptional);
+  const isChapterComplete = areAllRequiredConclusionsComplete(page.conclusions);
   if (isChapterComplete) {
     pw.setFontSize('m');
     pw.addText(page.winSynopsis);

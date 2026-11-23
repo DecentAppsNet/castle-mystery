@@ -5,14 +5,14 @@ import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
 import { claimBookConclusion, getConclusionPageInstructionText, updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
-import { onBookMouseDown } from '../eventHandlers';
+import { onBookMouseDown } from '@/book/eventHandlers';
 import { beginBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces, generatePieceStack,
-  updatePieceStackForConclusionPages } from '../pieces';
+  updatePieceStackForConclusionPages } from '@/book/pieces';
 import { applyBookClaimResults } from '../bookClaimResultUtil';
-import PieceLayout from '../drawing/types/PieceLayout';
+import PieceLayout from '@/book/drawing/types/PieceLayout';
 import BookClaimState from '../types/BookClaimState';
-import BookPage from '../types/BookPage';
-import { createDefaultBookState } from '../types/BookState';
+import BookPage from '@/book/types/BookPage';
+import { createDefaultBookState } from '@/book/types/BookState';
 
 function _createFixture(single:boolean = false) {
   // Distinct selected answers allow exact inventory associations; the second selection is initially wrong.

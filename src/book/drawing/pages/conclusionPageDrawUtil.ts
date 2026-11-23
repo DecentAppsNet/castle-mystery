@@ -13,8 +13,8 @@ import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
 import ClozeImage from "@/game/conclusions/types/ClozeImage";
 import PieceSlotLayout from "../types/PieceSlotLayout";
 import PieceSlotPresentation from "@/book/types/PieceSlotPresentation";
-import { getConclusionPageInstructionText } from '@/book/bookClaimControlUtil';
-import BookClaimGlint from '@/book/types/BookClaimGlint';
+import { getConclusionPageInstructionText } from '@/book/claiming';
+import BookClaimGlint from '@/book/claiming/types/BookClaimGlint';
 import ClozePart from "@/game/conclusions/types/ClozePart";
 
 function _isClozeImageUrlResolved(part:ClozePart) {

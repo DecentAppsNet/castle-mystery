@@ -12,7 +12,7 @@ import { goNextPage, goPrevPage } from "./navigationUtil";
 import BookControlId from "./drawing/types/BookControlId";
 import { beginBookPieceDrag, bringBookPieceToFront, releaseBookPieceDrag, findBookPieceAtPoint,
   moveBookPieceDrag } from "./pieces";
-import { claimBookConclusion } from './bookClaimControlUtil';
+import { claimBookConclusion } from './claiming';
 
 function _findControlAtPoint(bookState:BookState, canvasX:number, canvasY:number):BookControlId|null {
   if (!bookState.layout) return null;

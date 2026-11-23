@@ -3,9 +3,9 @@ import { createLayout, findControlAtPoint, findControlRect, updateControlRect } 
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { updateBookClaimControls } from '../bookClaimControlUtil';
-import { onBookMouseDown, onBookMouseOver } from '../eventHandlers';
-import BookPage from '../types/BookPage';
-import { createDefaultBookState } from '../types/BookState';
+import { onBookMouseDown, onBookMouseOver } from '@/book/eventHandlers';
+import BookPage from '@/book/types/BookPage';
+import { createDefaultBookState } from '@/book/types/BookState';
 
 function _createFixture(single:boolean = false, pageNo:number = 1) {
   // Use filled but incorrect answers: claim readiness must not check correctness.
@@ -40,6 +40,46 @@ function _center(rect:{ x:number; width:number }):number {
 }
 
 describe('bookClaimControlUtil', () => {
+  it('shows nextChapter for a displayed final chapter end with no remaining required conclusions and clicking does nothing', () => {
+    const { bookState, page, controls } = _createFixture(true, 2);
+    page.conclusion.isOptional = true;
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
+    updateBookClaimControls(bookState);
+    expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(true);
+    const before = structuredClone(bookState);
+    const nextChapter = findControlRect(controls, 'nextChapter');
+    onBookMouseDown(nextChapter.x + nextChapter.width / 2 - 200, nextChapter.y + nextChapter.height / 2, 0, bookState);
+    expect(bookState).toEqual(before);
+    page.conclusion.isOptional = false;
+    updateBookClaimControls(bookState);
+    expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(false);
+  });
+
+  it('shows nextChapter on a final two-page chapter-end spread but not when that page is hidden in single-page view', () => {
+    const { bookState, page, controls } = _createFixture();
+    page.conclusion.isComplete = true;
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
+    updateBookClaimControls(bookState);
+    expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(true);
+    bookState.layout!.isSinglePageView = true;
+    updateBookClaimControls(bookState);
+    expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(false);
+  });
+
+  it('hides nextChapter when pages are appended after an otherwise eligible chapter end', () => {
+    const { bookState, page, controls } = _createFixture(true, 2);
+    page.conclusion.isComplete = true;
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
+    updateBookClaimControls(bookState);
+    expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(true);
+    bookState.pages.push({ kind:'blank', chapterNo:2, headingText:'' });
+    updateBookClaimControls(bookState);
+    expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(false);
+    bookState.layout!.isSinglePageView = false;
+    updateBookClaimControls(bookState);
+    expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(false);
+  });
+
   it('centers claim below a full conclusion in a two-page view, keeping close centered on the book', () => {
     const { bookState, controls } = _createFixture();
     updateBookClaimControls(bookState);

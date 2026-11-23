@@ -1,5 +1,5 @@
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import BookPage from './BookPage';
+import BookPage from '@/book/types/BookPage';
 
 type BookClaimGlint = {
   readonly page:Extract<BookPage, { kind:'conclusion' }>;

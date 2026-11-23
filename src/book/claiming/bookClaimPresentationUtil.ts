@@ -3,8 +3,8 @@
 import { calcBookClaimTiming, FULL_REVOLUTION_RADIANS, SUCCESS_REVOLUTION_COUNT } from './bookClaimTimingUtil';
 import BookClaimState from './types/BookClaimState';
 import BookClaimGlint from './types/BookClaimGlint';
-import BookState from './types/BookState';
-import BookPage from './types/BookPage';
+import BookState from '../types/BookState';
+import BookPage from '../types/BookPage';
 
 const GLINT_START_ANGLE_RADIANS = Math.PI / 2;
 

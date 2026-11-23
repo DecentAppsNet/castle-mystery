@@ -6,16 +6,16 @@ import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { claimBookConclusion, updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 import { calcBookClaimMessageAlpha } from '../bookClaimPresentationUtil';
-import { onBookMouseDown, onBookMouseOver, onBookMouseUp, onBookMouseWheel } from '../eventHandlers';
-import { goNextPage, goPrevPage, setPageNavigationButtonVisibility } from '../navigationUtil';
-import { generatePieceStack } from '../pieces';
-import { hideBook, shiftBookLeft, shiftBookRight, showBook } from '../drawing/bookAnimationUtil';
-import { updateBookLayoutAsNeeded, updateControlLayout } from '../drawing/bookLayoutUtil';
-import { startPageFlip } from '../drawing/pages';
-import BookLayout from '../drawing/types/BookLayout';
-import PieceSlotLayout from '../drawing/types/PieceSlotLayout';
-import BookPage from '../types/BookPage';
-import { createDefaultBookState } from '../types/BookState';
+import { onBookMouseDown, onBookMouseOver, onBookMouseUp, onBookMouseWheel } from '@/book/eventHandlers';
+import { goNextPage, goPrevPage, setPageNavigationButtonVisibility } from '@/book/navigationUtil';
+import { generatePieceStack } from '@/book/pieces';
+import { hideBook, shiftBookLeft, shiftBookRight, showBook } from '@/book/drawing/bookAnimationUtil';
+import { updateBookLayoutAsNeeded, updateControlLayout } from '@/book/drawing/bookLayoutUtil';
+import { startPageFlip } from '@/book/drawing/pages';
+import BookLayout from '@/book/drawing/types/BookLayout';
+import PieceSlotLayout from '@/book/drawing/types/PieceSlotLayout';
+import BookPage from '@/book/types/BookPage';
+import { createDefaultBookState } from '@/book/types/BookState';
 
 const STARTED_AT = 12000;
 

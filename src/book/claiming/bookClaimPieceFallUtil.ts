@@ -2,7 +2,7 @@
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 import { clamp } from '@/common/numberUtil';
 import { calcBookClaimTiming } from './bookClaimTimingUtil';
-import PieceLayout from './drawing/types/PieceLayout';
+import PieceLayout from '../drawing/types/PieceLayout';
 import BookClaimState from './types/BookClaimState';
 
 const FALL_STAGGER_RATIO = .6;

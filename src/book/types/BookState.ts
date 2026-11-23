@@ -5,7 +5,7 @@ import Piece from "./Piece"
 import PieceDragState from "./PieceDragState"
 import PieceSlotLayout from "../drawing/types/PieceSlotLayout"
 import PieceSlotTransition from "./PieceSlotTransition"
-import BookClaimState from "./BookClaimState"
+import BookClaimState from "../claiming/types/BookClaimState"
 
 type BookState = {
   layout:BookLayout|null,

@@ -8,7 +8,7 @@ import { hideControl, showControl } from "@/canvasControls";
 import ControlLayout from "@/canvasControls/types/ControlLayout";
 import BookControlId from "./drawing/types/BookControlId";
 import { startPageFlip } from "./drawing/pages";
-import { updateBookClaimControls } from './bookClaimControlUtil';
+import { updateBookClaimControls } from './claiming';
 
 function _setControlVisibility(controlId:BookControlId, isVisible:boolean, controlLayout:ControlLayout) {
   if (isVisible) {

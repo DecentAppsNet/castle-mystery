@@ -9,16 +9,16 @@ import Conclusion from '@/game/conclusions/types/Conclusion';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { applyBookClaimResults } from './bookClaimResultUtil';
 import { calcBookClaimTiming } from './bookClaimTimingUtil';
-import { setPageNavigationButtonVisibility } from './navigationUtil';
-import { isCurrentPieceSlot } from './pieces';
+import { canClaimConclusion, countRemainingRequiredConclusions } from './conclusionUtil';
+import { setPageNavigationButtonVisibility } from '../navigationUtil';
+import { isCurrentPieceSlot } from '../pieces';
 import Rect from '@/game/types/Rect';
-import BookState from './types/BookState';
-import BookPage from './types/BookPage';
-import BookControlId from './drawing/types/BookControlId';
+import BookState from '../types/BookState';
+import BookPage from '../types/BookPage';
+import BookControlId from '../drawing/types/BookControlId';
 
 function _canClaim(page:BookPage|undefined):boolean {
-  return page?.kind === 'conclusion' && !page.conclusion.isLocked && !page.conclusion.isComplete
-    && page.conclusion.parts.some(part => part.type === 'blank') && !isConclusionMissingAnswers(page.conclusion);
+  return page?.kind === 'conclusion' && canClaimConclusion(page.conclusion);
 }
 
 export function getConclusionPageInstructionText(conclusion:Conclusion):string {
@@ -64,6 +64,10 @@ export function updateBookClaimControls(bookState:Readonly<BookState>):void {
   const isInteractive = bookState.isVisible && bookState.animationKind === null;
   const left = isInteractive && (!isSinglePageView || pageNo === leftPageNo) && _canClaim(pages[leftPageNo - 1]);
   const right = isInteractive && (!isSinglePageView || pageNo !== leftPageNo) && _canClaim(pages[leftPageNo]);
+  const chapterEndPageI = isSinglePageView ? pageNo - 1 : leftPageNo;
+  const chapterEndPage = pages[chapterEndPageI];
+  const nextChapter = isInteractive && chapterEndPageI === pages.length - 1 && chapterEndPage?.kind === 'chapterEnd'
+    && countRemainingRequiredConclusions(chapterEndPage.conclusions) === 0;
 
   // Keep the existing arrow endpoints and button dimensions; divide their center span into thirds when claiming.
   const areaWidth = rect.width / (isSinglePageView ? 2 : 1);
@@ -76,6 +80,9 @@ export function updateBookClaimControls(bookState:Readonly<BookState>):void {
   _placeControl('closeBook', { x:closeX, y, width, height }, true, controlLayout);
   _placeControl('claimLeft', { x:claimX, y, width, height }, left, controlLayout);
   _placeControl('claimRight', { x:isSinglePageView ? claimX : claimX + rect.width / 2, y, width, height }, right, controlLayout);
+  if (nextChapter || controlLayout.controls.some(control => control.id === 'nextChapter')) {
+    _placeControl('nextChapter', { x:areaX + areaWidth - width, y, width, height }, nextChapter, controlLayout);
+  }
 }
 
 export function claimBookConclusion(bookState:BookState, pageNo:number, metaTime:number):void {

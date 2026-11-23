@@ -11,7 +11,7 @@ import { ImageSet } from "@/imageLoading";
 import { toNumeral } from "@/common/romanNumeralUtil";
 import PieceSlotLayout from "../types/PieceSlotLayout";
 import PieceSlotPresentation from "@/book/types/PieceSlotPresentation";
-import BookClaimGlint from '@/book/types/BookClaimGlint';
+import BookClaimGlint from '@/book/claiming/types/BookClaimGlint';
 import { drawBookStartPage } from "./bookStartPageDrawUtil";
 import { drawChapterStartPage } from "./chapterStartPageDrawUtil";
 import { drawConclusionPage, drawLockedConclusionPage } from "./conclusionPageDrawUtil";

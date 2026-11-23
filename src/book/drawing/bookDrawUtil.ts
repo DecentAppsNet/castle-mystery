@@ -13,10 +13,8 @@ import { drawBookPieces, preparePieceLayouts } from "./pieceDrawUtil";
 import { getVisibleBookPieces, prepareBookPieceSlotPresentations } from "../pieces";
 import PieceSlotLayout from "./types/PieceSlotLayout";
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
-import { updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
-import { calcBookClaimShakeOffset, calcBookClaimTiming } from '../bookClaimTimingUtil';
-import { calcBookClaimMessageAlpha, prepareBookClaimGlints } from '../bookClaimPresentationUtil';
-import { prepareBookClaimPieceFalls } from '../bookClaimPieceFallUtil';
+import { updateBookClaim, updateBookClaimControls, calcBookClaimShakeOffset, calcBookClaimTiming,
+  calcBookClaimMessageAlpha, prepareBookClaimGlints, prepareBookClaimPieceFalls } from '../claiming';
 
 export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
@@ -107,6 +105,25 @@ function _drawClaimHand(context:CanvasRenderingContext2D) {
   context.lineTo(.69, .94);
 }
 
+function _drawNextChapterIcon(context:CanvasRenderingContext2D) {
+  context.moveTo(.45, .9);
+  context.lineTo(.45, .3);
+  context.bezierCurveTo(.45, -.02, .95, -.02, .95, .3);
+  context.lineTo(.95, .9);
+  context.lineTo(.83, .9);
+  context.lineTo(.83, .3);
+  context.bezierCurveTo(.83, .14, .57, .14, .57, .3);
+  context.lineTo(.57, .9);
+  context.closePath();
+  context.moveTo(.05, .44);
+  context.lineTo(.32, .44);
+  context.lineTo(.32, .3);
+  context.lineTo(.66, .52);
+  context.lineTo(.32, .74);
+  context.lineTo(.32, .6);
+  context.lineTo(.05, .6);
+}
+
 function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D) {
   const { layout } = bookState;
   assertNonNullable(layout);
@@ -128,6 +145,7 @@ function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D
       case 'closeBook': _drawCloseIcon(context); break;
       case 'nextPage': _drawRightArrow(context); break;
       case 'prevPage': _drawLeftArrow(context); break;
+      case 'nextChapter': _drawNextChapterIcon(context); break;
       case 'claimLeft':
       case 'claimRight': _drawClaimHand(context); break;
       default: botch();

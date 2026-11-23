@@ -10,7 +10,7 @@ import { createLayout, updateControlRect } from "@/canvasControls";
 import { setPageNavigationButtonVisibility } from "../navigationUtil";
 import BookControlId from "./types/BookControlId";
 import { endBookPieceDrag } from "../pieces";
-import { updateBookClaimControls } from '../bookClaimControlUtil';
+import { updateBookClaimControls } from '../claiming';
 
 const CANVAS_HEIGHT_TO_OUTER_MARGIN_RATIO = .05;
 

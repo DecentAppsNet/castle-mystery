@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import { prepareBookClaimPieceFalls } from '../bookClaimPieceFallUtil';
 import { applyBookClaimResults } from '../bookClaimResultUtil';
-import { createDefaultBookState } from '../types/BookState';
+import { createDefaultBookState } from '@/book/types/BookState';
 import BookClaimState from '../types/BookClaimState';
-import BookPage from '../types/BookPage';
+import BookPage from '@/book/types/BookPage';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import PieceLayout from '../drawing/types/PieceLayout';
-import { showBook } from '../drawing/bookAnimationUtil';
+import PieceLayout from '@/book/drawing/types/PieceLayout';
+import { showBook } from '@/book/drawing/bookAnimationUtil';
 
 function _fixture(correct:boolean = true) {
   const answerSet = createAnswerSet(['Answer'], 'people');

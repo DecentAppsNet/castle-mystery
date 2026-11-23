@@ -4,8 +4,8 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { calcBookClaimMessageAlpha, prepareBookClaimGlints } from '../bookClaimPresentationUtil';
 import { FULL_REVOLUTION_RADIANS } from '../bookClaimTimingUtil';
 import BookClaimState from '../types/BookClaimState';
-import BookPage from '../types/BookPage';
-import { createDefaultBookState } from '../types/BookState';
+import BookPage from '@/book/types/BookPage';
+import { createDefaultBookState } from '@/book/types/BookState';
 
 const STARTED_AT = 12000;
 const TWELVE_OCLOCK_RADIANS = Math.PI / 2;
