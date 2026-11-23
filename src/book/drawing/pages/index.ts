@@ -4,3 +4,4 @@
 export { drawPage } from './pageDrawUtil';
 export { BOOK_PAGE_TILE_IMAGE_URL, drawPageFlip, startPageFlip } from './pageFlipAnimationUtil';
 export { ILLUMINATIONS_IMAGE_URL } from './illuminationDrawUtil';
+export { getLineHeightForFontSize } from './pageWriterUtil';

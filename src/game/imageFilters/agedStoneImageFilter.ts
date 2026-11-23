@@ -73,9 +73,7 @@ function _sampleSmoothNoise(grid:number[][], x:number, y:number, width:number, h
 function _applyStoneOverlayImageFilter({ context, width, height, seed }:ImageFilterArgs, spec:StoneOverlaySpec) {
   const { width:overlayWidth, height:overlayHeight } = calcTextureOverlaySize(width, height);
   const overlayCanvas = createScratchCanvas(overlayWidth, overlayHeight);
-  if (!overlayCanvas) return;
   const overlayContext = getScratchCanvasContext2d(overlayCanvas);
-  if (!overlayContext) return;
 
   const imageData = overlayContext.createImageData(overlayWidth, overlayHeight);
   const pixels = imageData.data;

@@ -19,7 +19,7 @@ function _createConclusionPage(conclusionId:string, answerSets:readonly AnswerSe
   };
   return {
     kind:'conclusion', headingText:'', chapterNo:1, conclusion,
-    answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion)
+    answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion), layoutTweaks:[]
   };
 }
 
@@ -153,7 +153,7 @@ describe('pieceGenerationUtil', () => {
       };
       const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
       const pieces = generatePieceStack(_createBookState([
-        { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:styles }
+        { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:styles, layoutTweaks:[] }
       ]));
       expect(pieces.map(piece => piece.styleNo)).toEqual([2, 0, 0, 1, 1, 3]);
       sets.forEach(set => expect(pieces.filter(piece => set.answers.includes(piece.text))

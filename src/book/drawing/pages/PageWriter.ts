@@ -7,14 +7,14 @@ import Rect from "@/game/types/Rect";
 import { assert } from "decent-portal";
 import { drawIllumination } from "./illuminationDrawUtil";
 import { ImageSet } from "@/imageLoading";
-import { drawPageDivider, drawPagePieceSlot, drawPageTextLine, getIlluminatedTextSections,
+import { drawPageDivider, drawPagePieceSlot, drawPageTextLine, getIlluminatedTextSections, getLineHeightForFontSize,
   splitTextToLines } from "./pageWriterUtil";
 import { measureBookTextBox } from "../bookTextDrawUtil";
 import DividerStyle from "../types/DividerStyle";
 import PageTextBoxMetrics from '../types/PageTextBoxMetrics';
 import PieceSlotAnimationState from '../types/PieceSlotAnimationState';
+import FontSize from '../types/FontSize';
 
-type FontSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 type ColorName = 'black' | 'red' | 'grey';
 type TextJustification = 'left' | 'right' | 'center';
 
@@ -23,15 +23,6 @@ const TEXT_PAD_Y = .006;
 const TAB_COLUMN_WIDTH_PERCENT = 25;
 const ILLUMINATION_WIDTH_PERCENT_OF_PAGE_HEIGHT = 20;
 const ILLUMINATION_HEIGHT_PERCENT_OF_PAGE_HEIGHT = 20;
-
-// Font sizes expressed as fractions of page height.
-const fontSizeToLineHeight = {
-  'xs': .03,
-  's': .04,
-  'm': .05,
-  'l': .06,
-  'xl': .1
-};
 
 const colorNameToHex:Record<ColorName, string> = {
   'black': '#392b20',
@@ -92,7 +83,7 @@ class PageWriter {
     this._context.restore();
   }
 
-  private _writeChunk(text:string, isUnderlined:boolean = false) {
+  private _writeChunk(text:string, isUnderlined:boolean = false, advanceCursor:boolean = true) {
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
     const y = this._getTextY();
     const width = this._context.measureText(text).width;
@@ -101,8 +92,10 @@ class PageWriter {
       const fontSizePixels = this._getTextFontSizePixels();
       this._context.fillRect(x, y + fontSizePixels * .98, width, fontSizePixels * .035);
     }
-    this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100,
-      this._cursorPoint[1]];
+    if (advanceCursor) {
+      this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100,
+        this._cursorPoint[1]];
+    }
   }
 
   private _getLineStartXPercent():number {
@@ -139,6 +132,7 @@ class PageWriter {
   }
 
   private _placeTextFlowObstacle(width:number, height:number):Rect {
+    if (this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
     const yPercent = this._textFlowObstacleEnd
       ? Math.max(this._cursorPoint[1], this._textFlowObstacleEnd[1]) : this._cursorPoint[1];
     this._textFlowObstacleEnd = [
@@ -156,24 +150,26 @@ class PageWriter {
     drawIllumination(letter, destination.x, destination.y, width, height, this._imageSet, this._context);
   }
 
-  // Draws an image on left side of page at cursor Y. Text will flow around it. The lineCount param is used to determine 
-  // the destination height of the image. Destination width is scaled to maintain the aspect ratio of visible content.
-  addImage(url:string, lineCount:number = 3) {
+  // Inline images start a line on the left and create a text-flow obstacle. Detached images draw at the cursor without
+  // changing layout. lineCount determines height; width preserves the aspect ratio of visible content.
+  addImage(url:string, lineCount:number = 3, inline:boolean = true) {
     assert(Number.isFinite(lineCount) && lineCount > 0);
     const imageAsset = this._imageSet.findImage(url);
     const height = this._pageRect.height * this.getLineHeight() * lineCount / 100;
+    const sourceRect = imageAsset?.visibleSourceRect;
+    if (imageAsset && !sourceRect) return;
+
+    const width = sourceRect ? height * sourceRect.width / sourceRect.height : height;
+    const destination = inline ? this._placeTextFlowObstacle(width, height) : {
+      x:this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100,
+      y:this._pageRect.y + this._pageRect.height * this._cursorPoint[1] / 100
+    };
     if (!imageAsset) {
-      const destination = this._placeTextFlowObstacle(height, height);
       drawPageTextLine('?', destination.x + height / 2, destination.y + height * .1,
         height, height * .8, 'center', colorNameToHex.black, this._context);
       return;
     }
 
-    const sourceRect = imageAsset.visibleSourceRect;
-    if (!sourceRect) return;
-
-    const width = height * sourceRect.width / sourceRect.height;
-    const destination = this._placeTextFlowObstacle(width, height);
     this._imageSet.drawImage(imageAsset, destination.x, destination.y, width, height, this._context);
   }
 
@@ -184,12 +180,19 @@ class PageWriter {
 
   // Draws text at current X,Y position of cursor with word-wrapping. One or more calls can be made to append portions of text.
   // Advances cursor to next position for outputting more text continuing from the last character of this text.
-  addText(text:string, colorName:ColorName = 'black', isUnderlined:boolean = false) {
+  // Detached text draws without wrapping, line breaks, or cursor advancement.
+  addText(text:string, colorName:ColorName = 'black', isUnderlined:boolean = false, inline:boolean = true) {
     this._context.save();
     this._context.fillStyle = colorNameToHex[colorName];
     this._context.font = `${this._getTextFontSizePixels()}px im-fell-english, serif`;
     this._context.textAlign = 'left';
     this._context.textBaseline = 'top';
+
+    if (!inline) {
+      this._writeChunk(text, isUnderlined, false);
+      this._context.restore();
+      return;
+    }
 
     // Measure complete words before placing them, keeping whitespace and explicit line breaks.
     let word = '';
@@ -218,14 +221,17 @@ class PageWriter {
   }
 
   addPieceSlot(text:string, styleNo:number = -1,
-    animation:PieceSlotAnimationState = { offsetX:0, scale:1, glintAngle:null }):Rect & { readonly metrics:PageTextBoxMetrics } {
+    animation:PieceSlotAnimationState = { offsetX:0, scale:1, glintAngle:null },
+    inline:boolean = true):Rect & { readonly metrics:PageTextBoxMetrics } {
     // Measure and wrap using the normal slot dimensions.
     const lineHeight = this._pageRect.height * this.getLineHeight() / 100;
     const metrics = measureBookTextBox(text, this._pageRect.width,
       lineHeight, this._context, this._getTextFontSizePixels());
     const { width, padding, fontSizePixels } = metrics;
-    if (width > this._getRemainingWidth() && this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
-    while (this._textFlowObstacleEnd && width > this._getRemainingWidth()) this.addLineBreak();
+    if (inline) {
+      if (width > this._getRemainingWidth() && this._cursorPoint[0] > this._getLineStartXPercent()) this.addLineBreak();
+      while (this._textFlowObstacleEnd && width > this._getRemainingWidth()) this.addLineBreak();
+    }
 
     // Offset only drawing, leaving cursor advancement and returned geometry normal.
     const x = this._pageRect.x + this._pageRect.width * this._cursorPoint[0] / 100;
@@ -237,7 +243,7 @@ class PageWriter {
     drawPagePieceSlot(text, x, y, width, lineHeight, padding, fontSizePixels,
       colorNameToHex.black, styleNo, this._context, null, animation.glintAngle);
     this._context.restore();
-    this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100, this._cursorPoint[1]];
+    if (inline) this._cursorPoint = [this._cursorPoint[0] + width / this._pageRect.width * 100, this._cursorPoint[1]];
     return { x, y, width, height:lineHeight, metrics };
   }
 
@@ -297,9 +303,7 @@ class PageWriter {
   }
 
   getLineHeight(fontSize:FontSize = this._fontSize):number {
-    const percent = fontSizeToLineHeight[fontSize];
-    assert(Number.isFinite(percent));
-    return percent * 100;
+    return getLineHeightForFontSize(fontSize);
   }
 
   getTextLineHeight(text:string, fontSize:FontSize = this._fontSize):number {

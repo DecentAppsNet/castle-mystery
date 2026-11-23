@@ -1,9 +1,9 @@
 /* This module groups scratch-canvas creation helpers used by cached drawing surfaces and other offscreen rendering.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { assert } from "decent-portal";
+import { assert, assertNonNullable } from "decent-portal";
 
-export function createScratchCanvas(width:number, height:number):HTMLCanvasElement|OffscreenCanvas|null {
+export function createScratchCanvas(width:number, height:number):HTMLCanvasElement|OffscreenCanvas {
   assert(Number.isFinite(width) && width > 0);
   assert(Number.isFinite(height) && height > 0);
   const resolvedWidth = Math.round(width);
@@ -12,12 +12,15 @@ export function createScratchCanvas(width:number, height:number):HTMLCanvasEleme
   const canvas = document.createElement('canvas');
   canvas.width = resolvedWidth;
   canvas.height = resolvedHeight;
+  assertNonNullable(canvas); // Anomalous fatal condition or debug error.
   return canvas;
 }
 
 export function getScratchCanvasContext2d(canvas:HTMLCanvasElement|OffscreenCanvas,
-  willReadFrequently:boolean = false):CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D|null {
+    willReadFrequently:boolean = false):CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D {
   // The literal context ID guarantees a 2D result despite the combined canvas overloads.
-  return canvas.getContext('2d', willReadFrequently ? { willReadFrequently:true } : undefined) as
-    CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D|null;
+  const options = willReadFrequently ? { willReadFrequently:true } : undefined;
+  const context = canvas.getContext('2d', options) as CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D|null;
+  assertNonNullable(context); // Anomalous fatal condition or debug error.
+  return context;
 }

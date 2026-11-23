@@ -8,12 +8,28 @@ import { bookCanvasFont, drawBorderedBookText } from "../bookTextDrawUtil";
 import DividerStyle from "../types/DividerStyle";
 import Point from '@/game/types/Point';
 import { calcPieceSlotGlintPoint } from '@/book/pieces';
+import FontSize from '../types/FontSize';
+
+// Font sizes expressed as fractions of page height.
+const fontSizeToLineHeight = {
+  'xs': .03,
+  's': .04,
+  'm': .05,
+  'l': .06,
+  'xl': .1
+};
 
 const GLINT_COLOR_RGB = '255, 255, 210';
 const GLINT_RADIUS_IN_LINE_HEIGHTS = .25;
 const GLINT_TRAIL_COUNT = 15;
 const GLINT_TRAIL_RADIUS_REDUCTION = .7;
 const GLINT_TRAIL_ANGLE_SPACING = Math.PI / 20; // Two degrees, expressed in radians.
+
+export function getLineHeightForFontSize(fontSize:FontSize):number {
+  const percent = fontSizeToLineHeight[fontSize];
+  assert(Number.isFinite(percent));
+  return percent * 100;
+}
 
 export function splitTextToLines(text:string):string[] {
   return text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');

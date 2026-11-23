@@ -85,7 +85,7 @@ describe('level image retention', () => {
     const prepared = await prepareLevelState(secondLevel, imageSet, 'second.md');
     const bookState = createDefaultBookState();
     bookState.pages.push({ kind:'conclusion', headingText:'', chapterNo:1, conclusion:imageConclusion,
-      answerSetIdToPieceStyleNoMap:{} });
+      answerSetIdToPieceStyleNoMap:{}, layoutTweaks:[] });
 
     acceptPreparedLevelState(prepared, findBookImageUrls(bookState));
 

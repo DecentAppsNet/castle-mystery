@@ -28,7 +28,7 @@ describe('bookImageUrlUtil', () => {
         { kind:'blank', headingText:'', chapterNo:0 },
         { kind:'bookStart', headingText:'', chapterNo:0, title:'Book', subtitle:null, author:'Author' },
         { kind:'chapterStart', headingText:'', chapterNo:1, title:'Chapter', description:'' },
-        { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:{} }
+        { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:{}, layoutTweaks:[] }
       ];
 
       expect(findBookImageUrls(bookState)).toEqual(new Set());
@@ -41,8 +41,8 @@ describe('bookImageUrlUtil', () => {
         { type:ClozePartType.image, imageUrl:'/assets/bodies/shared.png' }
       ] };
       bookState.pages = [
-        { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:{} },
-        { kind:'conclusion', headingText:'', chapterNo:2, conclusion, answerSetIdToPieceStyleNoMap:{} },
+        { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:{}, layoutTweaks:[] },
+        { kind:'conclusion', headingText:'', chapterNo:2, conclusion, answerSetIdToPieceStyleNoMap:{}, layoutTweaks:[] },
         { kind:'tally', headingText:'', chapterNo:2, conclusions:[conclusion] }
       ];
 
@@ -54,8 +54,8 @@ describe('bookImageUrlUtil', () => {
       const firstConclusion = { ...emptyConclusion, parts:[{ type:ClozePartType.image, imageUrl:'/assets/bodies/first.png' }] };
       const secondConclusion = { ...emptyConclusion, id:'second', parts:[{ type:ClozePartType.image, imageUrl:'/assets/conclusions/second.png' }] };
       bookState.pages = [
-        { kind:'conclusion', headingText:'', chapterNo:1, conclusion:firstConclusion, answerSetIdToPieceStyleNoMap:{} },
-        { kind:'conclusion', headingText:'', chapterNo:2, conclusion:secondConclusion, answerSetIdToPieceStyleNoMap:{} }
+        { kind:'conclusion', headingText:'', chapterNo:1, conclusion:firstConclusion, answerSetIdToPieceStyleNoMap:{}, layoutTweaks:[] },
+        { kind:'conclusion', headingText:'', chapterNo:2, conclusion:secondConclusion, answerSetIdToPieceStyleNoMap:{}, layoutTweaks:[] }
       ];
       const pagesBefore = structuredClone(bookState.pages);
 
@@ -69,7 +69,7 @@ describe('bookImageUrlUtil', () => {
       const bookState = createDefaultBookState();
       const conclusion = { ...emptyConclusion, parts:[{ type:ClozePartType.image,
         imageUrl:['/assets/conclusions/test.png', '/assets/bodies/test.png'] }] };
-      bookState.pages = [{ kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:{} }];
+      bookState.pages = [{ kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:{}, layoutTweaks:[] }];
 
       expect(() => findBookImageUrls(bookState)).toThrow();
       expect(fetch).not.toHaveBeenCalled();

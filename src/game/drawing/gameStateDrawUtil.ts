@@ -145,9 +145,7 @@ function _createRoomVisualCanvas(room:Room, gameState:GameState, destWidth:numbe
   const canvasWidth = Math.max(1, Math.ceil(visualBounds.width) + padding * 2);
   const canvasHeight = Math.max(1, Math.ceil(visualBounds.height) + padding * 2);
   const visualCanvas = createScratchCanvas(canvasWidth, canvasHeight);
-  if (!visualCanvas) return { image:null, width:0, height:0, padding:0 };
   const visualContext = getScratchCanvasContext2d(visualCanvas);
-  if (!visualContext) return { image:null, width:0, height:0, padding:0 };
 
   const localScalingFactors = {
     ...visualScalingFactors,

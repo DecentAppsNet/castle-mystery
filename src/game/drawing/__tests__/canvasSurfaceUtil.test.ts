@@ -29,11 +29,11 @@ describe('canvasSurfaceUtil', () => {
     it('rounds fractional dimensions before constructing OffscreenCanvas', () => {
       vi.stubGlobal('OffscreenCanvas', FakeOffscreenCanvas);
 
-      const canvas = createScratchCanvas(12.4, 9.6) as FakeOffscreenCanvas | null;
+      const canvas = createScratchCanvas(12.4, 9.6) as FakeOffscreenCanvas;
 
       expect(canvas).toBeInstanceOf(FakeOffscreenCanvas);
-      expect(canvas?.width).toBe(12);
-      expect(canvas?.height).toBe(10);
+      expect(canvas.width).toBe(12);
+      expect(canvas.height).toBe(10);
     });
   });
 });

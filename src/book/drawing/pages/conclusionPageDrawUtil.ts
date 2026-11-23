@@ -27,20 +27,25 @@ export function drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:nu
   pw.setFontSize('m');
   for(let partI = 0; partI < page.conclusion.parts.length; ++partI) {
     const part = page.conclusion.parts[partI];
+    const tweak = page.layoutTweaks[partI];
+    let drawInline = true;
+    if (tweak?.isHidden) continue;
+    if (tweak?.cursorPoint) { pw.jump(tweak.cursorPoint[0], tweak.cursorPoint[1]); drawInline = false; }
     switch(part.type) {
       case ClozePartType.blank:
         const blankPart = part as ClozeBlank;
         const playerGuess = blankPart.answerSet.answers[blankPart.playerAnswerIndex] ?? '';
-        if (page.conclusion.isComplete) pw.addText(playerGuess, 'black', true);
+        if (page.conclusion.isComplete) pw.addText(playerGuess, 'black', true, drawInline);
         else {
           const pieceStyleNo = page.answerSetIdToPieceStyleNoMap[blankPart.answerSet.id];
           assertNonNullable(pieceStyleNo);
           const presentation = presentations.find(({ slot }) =>
             slot.page === page && slot.blank === blankPart && slot.partIndex === partI && slot.pageNo === pageNo);
-          const { metrics, ...rect } = pw.addPieceSlot(playerGuess, pieceStyleNo, {
+          const animationStyle = {
             offsetX:presentation?.offsetX ?? 0, scale:presentation?.scale ?? 1,
             glintAngle:glints.find(glint => glint.page === page && glint.blank === blankPart)?.angle ?? null
-          });
+          }
+          const { metrics, ...rect } = pw.addPieceSlot(playerGuess, pieceStyleNo, animationStyle, drawInline);
           slotLayouts?.push({ page, pageNo, partIndex:partI, blank:blankPart, styleNo:pieceStyleNo, rect, metrics });
         }
       break;
@@ -55,7 +60,8 @@ export function drawConclusionPage(page:ConclusionPage, pw:PageWriter, pageNo:nu
 
       case ClozePartType.image:
         assert(_isClozeImageUrlResolved(part));
-        pw.addImage((part as ClozeImage).imageUrl as string, 2);
+        if (tweak?.cursorPoint) pw.jump(tweak.cursorPoint[0], tweak.cursorPoint[1]);
+        pw.addImage((part as ClozeImage).imageUrl as string, 2, drawInline);
       break;
 
       default:

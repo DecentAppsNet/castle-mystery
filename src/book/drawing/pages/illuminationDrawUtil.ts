@@ -15,9 +15,7 @@ let theLetterSourceRects:(Rect|null)[]|null = null;
 
 function _createLetterSourceRects(image:ImageBitmap):(Rect|null)[] {
   const canvas = createScratchCanvas(image.width, image.height);
-  assertNonNullable(canvas);
   const context = getScratchCanvasContext2d(canvas, true);
-  assertNonNullable(context);
   context.drawImage(image, 0, 0);
   const { data } = context.getImageData(0, 0, image.width, image.height);
   const width = image.width / COLUMN_COUNT;

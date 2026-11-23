@@ -101,9 +101,7 @@ function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWi
 
   if (punchMaskImage) {
     const punchMaskCanvas = createScratchCanvas(faceWidth, faceHeight);
-    if (!punchMaskCanvas) return;
     const punchMaskContext = getScratchCanvasContext2d(punchMaskCanvas, true);
-    if (!punchMaskContext) return;
 
     _drawRepeatedImage(punchMaskContext, punchMaskImage, faceWidth, faceHeight, tileWidth, tileHeight);
     _punchFaceUnderlay(faceContext, faceWidth, faceHeight, punchMaskContext);
@@ -118,9 +116,7 @@ function _drawTextureImageOperation(faceContext:CanvasRenderingContext2D, faceWi
   }
 
   const operationCanvas = createScratchCanvas(faceWidth, faceHeight);
-  if (!operationCanvas) return;
   const operationContext = getScratchCanvasContext2d(operationCanvas, true);
-  if (!operationContext) return;
 
   operationContext.save();
   operationContext.filter = _createTextureLightnessFilter(textureLightness);
@@ -160,7 +156,6 @@ export function createTiledTextureFaceCanvas(imageSet:ImageSet, texture:Texture,
     textureImageOperation.verticalCount
   );
   const faceCanvas = createScratchCanvas(faceWidth, faceHeight);
-  if (!faceCanvas) return null;
   const faceContext = getScratchCanvasContext2d(faceCanvas, _textureNeedsFrequentPixelReads(imageSet, texture));
   if (!faceContext) return null;
 

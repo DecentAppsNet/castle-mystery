@@ -62,7 +62,6 @@ function _findObscuredActiveHeadSilhouetteCanvas(headImage:ImageBitmap, widthPix
   if (cachedCanvas) return cachedCanvas;
 
   const silhouetteCanvas = createScratchCanvas(Math.max(1, Math.round(widthPixels)), Math.max(1, Math.round(heightPixels)));
-  if (!silhouetteCanvas) return null;
 
   _renderObscuredActiveHeadSilhouetteCanvas(headImage, silhouetteCanvas);
   cachedCanvasesBySize.set(cacheKey, silhouetteCanvas);

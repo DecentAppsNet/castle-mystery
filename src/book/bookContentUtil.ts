@@ -12,6 +12,7 @@ import { updatePieceStackForConclusionPages } from './pieces';
 import { parseSections, parseUniqueNameValueLines } from '@/common/markdownUtil';
 import { baseUrl } from '@/common/urlUtil';
 import { convertStraightQuotesToDirectional } from '@/common/quoteUtil';
+import { createClozePartLayoutTweaksForConclusion } from "./drawing/clozePartLayoutTweaks";
 
 function _findNextChapterNo(bookState:BookState):number {
   if (!bookState.pages.length) return 1;
@@ -25,9 +26,11 @@ function _addChapterStartPages(level:Level, chapterNo:number, pages:BookPage[]) 
 
 function _addConclusionPages(conclusion:Conclusion, chapterNo:number, pages:BookPage[]) {
   const headingText = conclusion.isOptional ? `${conclusion.title} (optional)` : conclusion.title;
+  const layoutTweaks = createClozePartLayoutTweaksForConclusion(conclusion);
   const conclusionPage:ConclusionPage = {
     kind:'conclusion', chapterNo, headingText, conclusion, 
-    answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion)
+    answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion),
+    layoutTweaks
   }
   pages.push(conclusionPage);
   pages.push({ kind:'blank', headingText, chapterNo });

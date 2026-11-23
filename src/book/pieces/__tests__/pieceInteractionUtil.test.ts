@@ -15,7 +15,7 @@ import { beginBookPieceDrag, bringBookPieceToFront, endBookPieceDrag, findBookPi
 function _createBookState() {
   const bookState = createDefaultBookState();
   const firstPage:ConclusionPage = {
-    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{},
+    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{}, layoutTweaks:[],
     conclusion:{ id:'first', title:'First', parts:[], isComplete:false, isLocked:false, isOptional:false,
       incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
