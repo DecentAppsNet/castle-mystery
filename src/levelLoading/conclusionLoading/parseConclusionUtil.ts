@@ -17,12 +17,27 @@ import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
 import { createAnswerSet } from "@/game/conclusions/answerSetUtil";
 import { resolveBlankCategory } from "./blankCategoryUtil";
+import { convertStraightQuotesToDirectional } from "@/common/quoteUtil";
+import ClozeText from "@/game/conclusions/types/ClozeText";
+
+function _convertClozeProse(parts:ClozePart[]):ClozePart[] {
+  const prose = parts.flatMap(part => part.type === ClozePartType.text ? [(part as ClozeText).text] : []).join('');
+  const convertedProse = convertStraightQuotesToDirectional(prose);
+  let offset = 0;
+  return parts.map(part => {
+    if (part.type !== ClozePartType.text) return part;
+    const textPart = part as ClozeText;
+    const text = convertedProse.slice(offset, offset + textPart.text.length);
+    offset += textPart.text.length;
+    return { ...textPart, text };
+  });
+}
 
 /** Parses one cloze blank into its answer and available category values. */
 export function createClozeBlankFromTemplateText(blankText:string, clozeCategories:Record<string, ClozeCategory>,
   reportError:(message:string) => void):ClozeBlank|null {
   // Use the resolved category's complete ordered membership without adding authored alternatives.
-  const correctAnswers = parseOptions(blankText);
+  const correctAnswers = parseOptions(blankText).map(convertStraightQuotesToDirectional);
   const category = resolveBlankCategory(correctAnswers, clozeCategories, reportError);
   if (!category) return null;
   const answerSet = createAnswerSet(category.allowedValues, category.id);
@@ -122,7 +137,7 @@ function _parseClozeTemplateToParts(clozeTemplate:string, clozeCategories:Record
     currentIndex = nextToken.endIndex;
   }
 
-  return parts;
+  return _convertClozeProse(parts);
 }
 
 function _parseConclusion(conclusionName:string, sectionText:string, rooms:ReadonlyArray<Room>, conclusionIds:string[], 
@@ -138,7 +153,7 @@ function _parseConclusion(conclusionName:string, sectionText:string, rooms:Reado
     return null;
   }
   const id = normalizeId(conclusionName);
-  const title = conclusionName.trim();
+  const title = convertStraightQuotesToDirectional(conclusionName.trim());
   const parts = _parseClozeTemplateToParts(clozeTemplate, clozeCategories, conclusionName, errors);
   const revealRoomIds = resolveRevealRoomIds(conclusionName, variables.revealrooms?.value ?? '', rooms,
     initiallyObscuredRoomIds, errors);

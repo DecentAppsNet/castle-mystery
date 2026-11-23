@@ -30,6 +30,12 @@ function _expectInvalidText(text:string, message:string) {
 
 describe('speechTextPreparationUtil', () => {
   describe('prepareSpeechText()', () => {
+    it('converts quotes before preparing span text, graphemes and UTF-16 offsets', () => {
+      _expectPreparedText('\u{1F600}"[tense]a"[/]', { plainText:'\u{1F600}\u201Ca\u201D', spans:[{
+        name:'tense', startUtf16Offset:3, endUtf16Offset:5, text:'a\u201D', graphemes:['a', '\u201D']
+      }] });
+    });
+
     it('prepares asterisk emphasis exactly like either bracketed form', () => {
       const shorthand = _createContext('We *need* your help.');
       const anonymous = _createContext('We [emphasis]need[/] your help.');

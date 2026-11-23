@@ -11,6 +11,7 @@ import Character from "@/game/types/Character";
 import Item from "@/game/types/Item";
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 import { normalizeCategoryPhrase } from "./commonUtil";
+import { convertStraightQuotesToDirectional } from "@/common/quoteUtil";
 
 function _uniqueGeneratedValues(values:string[]):string[] {
   const seen = new Set<string>();
@@ -66,7 +67,7 @@ function _parseAuthoredClozeCategories(conclusionsSectionText:string, errors:Err
   const categoryIds:string[] = Object.keys(variables);
   categoryIds.forEach(id => {
     const { value, authoredName } = variables[id];
-    const allowedValues = parseOptions(value);
+    const allowedValues = parseOptions(value).map(convertStraightQuotesToDirectional);
     assert(clozeCategories[id] === undefined);
     clozeCategories[id] = { id, authoredName, allowedValues };
   });

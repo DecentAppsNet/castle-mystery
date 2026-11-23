@@ -13,6 +13,7 @@ import { isPositionInRect } from "./rectUtil";
 import CharacterWithEffects from "./types/CharacterWithEffects";
 import ExitStatus from "./types/ExitStatus";
 import RoomExit from "./types/RoomExit";
+import { convertStraightQuotesToDirectional } from "@/common/quoteUtil";
 
 export function findRoom(rooms:readonly Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
@@ -22,7 +23,8 @@ export function findRoom(rooms:readonly Room[], roomRef:string):Room|null {
 
 export function findRoomByIdOrTitle(rooms:readonly Room[], roomRef:string):Room|null {
   const roomId = normalizeId(roomRef);
-  return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === roomId) ?? null;
+  const titleRef = normalizeOptionalId(convertStraightQuotesToDirectional(roomRef));
+  return rooms.find(room => room.id === roomId || normalizeOptionalId(room.title) === titleRef) ?? null;
 }
 
 export function findRoomAtPosition(rooms:readonly Room[], x:number, y:number):Room|null {

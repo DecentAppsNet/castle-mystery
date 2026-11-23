@@ -16,6 +16,7 @@ import Room from "@/game/types/Room";
 import { randIntInRange } from "@/common/randUtil";
 import { assertNonNullable } from "decent-portal";
 import { getHeadImageUrl } from '@/game/characterBody';
+import { convertStraightQuotesToDirectional } from "@/common/quoteUtil";
 
 function _randomizeIdentityRows(characters:readonly Character[]):Character[] {
   const shuffled = [...characters];
@@ -101,7 +102,7 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
   const conclusion:Conclusion = {
     incorrectGuessCount:0,
     id:'identities',
-    title:overrides.title ?? 'Identities',
+    title:convertStraightQuotesToDirectional(overrides.title ?? 'Identities'),
     parts,
     unlockConclusionIds:overrides.unlockConclusionIds ?? [],
     revealRoomIds:overrides.revealRoomIds ?? [],

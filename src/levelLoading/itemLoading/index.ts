@@ -15,6 +15,7 @@ import { MutableLevel } from "@/game/types/Level";
 import Room from "@/game/types/Room";
 import Activity from "../activityLoading/types/Activity";
 import { getNumberedItemBaseId } from "../numberedItemIdUtil";
+import { convertStraightQuotesToDirectional } from "@/common/quoteUtil";
 
 /** Resolves exact definitions first, registering numbered copies once in this load's item collection. */
 export function resolveItemDefinition(items:MutableItem[], itemId:string):MutableItem|null {
@@ -56,8 +57,8 @@ function _parseItem(itemId:string, itemSectionEntry:SectionEntryWithLine, errors
   const itemSection = itemSectionEntry.value;
   const nameValues = parseUniqueNameValueLines(itemSection, `item ${itemId}`, false, itemSectionEntry.lineNo);
 
-  const title = nameValues.title ?? authoredItemName;
-  const description = nameValues.description ?? '';
+  const title = convertStraightQuotesToDirectional(nameValues.title ?? authoredItemName);
+  const description = convertStraightQuotesToDirectional(nameValues.description ?? '');
   const imageUrl = nameValues.image ? getItemImageAssetUrl(nameValues.image.trim()) : null;
   const isVisible = parseBoolean(nameValues.visible ?? 'true', errors, ['items', itemId], 'visible');
   const drawOffset = {

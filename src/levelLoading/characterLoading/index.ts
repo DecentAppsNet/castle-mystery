@@ -21,6 +21,7 @@ import { MutableLevel } from "@/game/types/Level";
 import CharacterSkin from "@/game/types/CharacterSkin";
 import { createDefaultSkinId, createSkinId } from "../generalLoading";
 import { NO_SKIN_DEFAULT } from "../activityLoading/activitySchedulers/appearsScheduler";
+import { convertStraightQuotesToDirectional } from "@/common/quoteUtil";
 
 type PartiallyLoadedCharacters = {
   allCharacters:MutableCharacter[],
@@ -54,7 +55,7 @@ function _parseCharacterSkins(characterSectionEntry:SectionEntryWithLine, charac
       errors.addAt(`"${NO_SKIN_DEFAULT}" can't be used as name of a character skin because it is a reserved word.`, ['characters', characterId, 'default']);
     } // Okay to fall through and return something. An upstream caller can check for added errors.
     const id = createSkinId(characterId, skinName);
-    const description = nameValues.description ?? null;
+    const description = nameValues.description === undefined ? null : convertStraightQuotesToDirectional(nameValues.description);
     const headImageUrl = nameValues.headImage ? getBodyImageAssetUrl(nameValues.headImage.trim()) : null;
     return { id, description, headImageUrl };
   });
@@ -77,8 +78,8 @@ function _parseCharacter(characterId:string, position:Position|null, characterSe
   const skins = _parseCharacterSkins(characterSectionEntry, characterId, errors);
   const nameValues = parseUniqueNameValueLines(characterSectionEntry.value, `character ${characterId}`, false, characterSectionEntry.lineNo);
   const authoredCharacterName = characterSectionEntry.name.trim();
-  const title = nameValues.title ?? authoredCharacterName;
-  const description = nameValues.description ?? '';
+  const title = convertStraightQuotesToDirectional(nameValues.title ?? authoredCharacterName);
+  const description = convertStraightQuotesToDirectional(nameValues.description ?? '');
   const isVisible = parseBoolean(nameValues.visible ?? 'true', errors, ['characters', characterId], 'visible');
   const facingDirection = _parseFacingDirection(nameValues.facing ?? DEFAULT_FACING_DIRECTION, errors, characterId);
   const bodyOrientation = _parseBodyOrientation(nameValues.orientation ?? 'standing', errors, characterId);

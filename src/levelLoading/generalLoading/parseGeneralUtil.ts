@@ -105,9 +105,9 @@ function _parseGeneralSection(generalSectionText:string, level:MutableLevel, err
   const discoverableRoomCount = _parseOptionalDiscoverableCount(
     generalNameValues.discoverableRoomCount, 'discoverableRoomCount', generalSectionText, errors);
 
-  level.title = generalNameValues.title ?? '';
+  level.title = convertStraightQuotesToDirectional(generalNameValues.title ?? '');
   level.description = convertStraightQuotesToDirectional(generalNameValues.description ?? '');
-  level.winSynopsis = generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS;
+  level.winSynopsis = convertStraightQuotesToDirectional(generalNameValues.winSynopsis || DEFAULT_WIN_SYNOPSIS);
   level.backgroundImageUrl = generalNameValues.background ? getBackgroundImageAssetUrl(generalNameValues.background) : null;
   
   if (initialTime !== null) level.initialTime = initialTime;

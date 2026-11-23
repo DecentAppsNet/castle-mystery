@@ -16,6 +16,7 @@ import LegendGrid from "./types/LegendGrid";
 import { MutableItem } from "@/game/types/Item";
 import { createItemsForRoom } from "./roomItemUtil";
 import ItemPlacementById from "./types/ItemPlacementById";
+import { convertStraightQuotesToDirectional } from "@/common/quoteUtil";
 
 type RoomStyle = Readonly<{
   backWallTexture:string|undefined,
@@ -79,7 +80,7 @@ export function applyRoomMetaDataFromSections(roomsSectionText:string, roomStyle
     const inheritedRoomStyle = roomNameValues.style
       ? _findRoomStyle(roomNameValues.style, roomStyleMetadataById)
       : null;
-    const title = Object.hasOwn(roomNameValues, 'title') ? roomNameValues.title : roomSectionEntry.name.trim();
+    const title = convertStraightQuotesToDirectional(Object.hasOwn(roomNameValues, 'title') ? roomNameValues.title : roomSectionEntry.name.trim());
     const items = createItemsForRoom(room, availableItems, availableCharacterIds, roomSectionEntry.value,
       itemPlacements, roomSectionEntry.name.trim(), errors);
     if ((roomNameValues.obscured || '').toLowerCase() === 'true') initiallyObscuredRoomIds.add(room.id);
@@ -130,7 +131,7 @@ export function createRoomsFromMapSection(mapLegendGrid:LegendGrid, errors:Error
     return {
       ...createDefaultRoom(),
       id: roomId,
-      title: bounds.authoredName.trim(),
+      title: convertStraightQuotesToDirectional(bounds.authoredName.trim()),
       rect: {
         x: bounds.minCol * MAP_TILE_SIZE,
         y: bounds.minRow * MAP_TILE_SIZE,

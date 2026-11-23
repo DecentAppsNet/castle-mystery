@@ -7,6 +7,7 @@ import { TextAnimationName } from '@/game/textAnimations/types/TextAnimationName
 import { TextAnimationSpan } from '@/game/textAnimations/types/TextAnimationSpan';
 import Activity from '@/levelLoading/activityLoading/types/Activity';
 import { ErrorCollector } from '@/levelLoading/errorCollection';
+import { convertStraightQuotesToDirectional } from '@/common/quoteUtil';
 
 type TextAnimationParseResult =
   | Readonly<{ success:true, preparedText:PreparedAnimationText }>
@@ -68,7 +69,7 @@ function _parseTextAnimations(text:string):TextAnimationParseResult {
 }
 
 export function prepareSpeechText(text:string, activity:Activity, errors:ErrorCollector):PreparedAnimationText|null {
-  const result = _parseTextAnimations(text);
+  const result = _parseTextAnimations(convertStraightQuotesToDirectional(text));
   if (result.success) return result.preparedText;
   errors.addAtLine(result.message, activity.lineI);
   return null;

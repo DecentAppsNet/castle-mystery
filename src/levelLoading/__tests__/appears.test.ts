@@ -13,6 +13,15 @@ describe('level loading - appears activities', () => {
         level.activeCharacterId, time, obscuredRoomIds).activeCharacter;
   }
 
+  it('preserves converted base and skin descriptions through appearance scheduling', () => {
+    const text = initialAppearanceText.replace('Base description.', 'Base "description".')
+      .replace('Detective description.', 'Detective "description".');
+    const level = loadValidLevelForTest(text);
+    expect(level.characters[0].description).toBe('Base \u201Cdescription\u201D.');
+    expect(snapshotAt(level, 0).description).toBe('Detective \u201Cdescription\u201D.');
+    expect(snapshotAt(level, 5_000).description).toBe('Base \u201Cdescription\u201D.');
+  });
+
   it('applies an initial skin and lets later default and named appearances override it', () => {
     const level = loadValidLevelForTest(initialAppearanceText);
     expect(snapshotAt(level, 0)).toMatchObject({

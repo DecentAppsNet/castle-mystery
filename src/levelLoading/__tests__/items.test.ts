@@ -11,6 +11,18 @@ import { createKeyframeAtTime } from '@/game/timeline';
 
 describe('loading levels - items', () => {
   describe('numbered character and activity items', () => {
+    it('retains converted item metadata through stub backfills and activity replacements', () => {
+      const text = numberedActivitiesText.replace('* title=Copper Token', '* title=Copper "Token"')
+        .replace('A small copper token.', 'A "small" copper token.').replace('* title=Broken Token', '* title=Broken "Token"');
+      const level = loadValidLevelForTest(text);
+      const sam = level.characters[0];
+      expect(sam.items[0]).toMatchObject({ title:'Copper \u201CToken\u201D', description:'A \u201Csmall\u201D copper token.' });
+      expect(sam.leftHandItem?.title).toBe('Copper \u201CToken\u201D');
+      expect(sam.rightHandItem?.title).toBe('Copper \u201CToken\u201D');
+      expect(createKeyframeAtTime(level.timeline.keyframes, level.timeline.endTime).characters[0].leftHandItem?.title).toBe('Broken \u201CToken\u201D');
+      expect(level.itemsById.get('broken token #1')?.title).toBe('Broken \u201CToken\u201D');
+    });
+
     it('resolves numbered inventory and both hands without indexing unused inventory or bases', () => {
       const text = replaceSection(numberedActivitiesText, 'itinerary', []);
       const level = loadValidLevelForTest(text);
@@ -99,6 +111,12 @@ describe('loading levels - items', () => {
   });
 
   describe('numbered room items', () => {
+    it('converts default titles inherited by numbered room items without changing IDs', () => {
+      const level = loadValidLevelForTest(numberedItemsText.replaceAll('Chair', 'Chair "seat"'));
+      expect(level.itemsById.get('chair "seat" #1')?.title).toBe('Chair \u201Cseat\u201D');
+      expect(level.rooms.find(room => room.id === 'hall')?.items[0].title).toBe('Chair \u201Cseat\u201D');
+    });
+
     it('places distinct numbered items in different rooms', () => {
       const level = loadValidLevelForTest(numberedItemsText);
       const hallChair = level.itemsById.get('chair #1');

@@ -13,6 +13,38 @@ function _expectFailure(text:string, filename:string, expectedMessage:string) {
 }
 
 describe('loading levels - conclusions', () => {
+  it('matches converted authored answers and room titles while preserving raw entity and conclusion IDs', () => {
+    const text = defaultLevelText.replace('* title=Detective Sam', '').replaceAll('Sam', '"Sam"').replaceAll('Hall', '"Hall"')
+      .replace('## Study', '## Study\n* title="Study"')
+      .replace('# conclusions', '# conclusions\n* characters="Sam"\n## "Evidence"\n* conclusion=["Study"]\n* revealRooms="Study"|Study\n## identities\n* title="Identities"\n* unlockConclusions="Evidence"');
+    const level = loadValidLevelForTest(text);
+    expect(level.activeCharacterId).toBe('"sam"');
+    expect(level.characters[0]).toMatchObject({ id:'"sam"', title:'\u201CSam\u201D' });
+    expect(level.rooms.find(room => room.id === '"hall"')?.title).toBe('\u201CHall\u201D');
+    expect(level.conclusions[0]).toMatchObject({ title:'\u201CIdentities\u201D', unlockConclusionIds:['"evidence"'] });
+    expect(level.conclusions[0].parts.at(-1)).toMatchObject({ answerSet:{ answers:['\u201CSam\u201D'] }, correctAnswerIndexes:[0] });
+    expect(level.conclusions[1]).toMatchObject({ id:'"evidence"', title:'\u201CEvidence\u201D', revealRoomIds:['study', 'study'], isLocked:true });
+    expect(level.conclusions[1].parts[0]).toMatchObject({ answerSet:{ answers:['\u201CHall\u201D', '\u201CStudy\u201D'] }, correctAnswerIndexes:[1] });
+  });
+
+  it('uses converted display titles in generated identity answer categories', () => {
+    const text = defaultLevelText.replace('* title=Detective Sam', '* title=Detective "Sam"');
+    const level = loadValidLevelForTest(text);
+    expect(level.conclusions[0].parts.at(-1)).toMatchObject({
+      answerSet:{ answers:['Detective \u201CSam\u201D'] }, correctAnswerIndexes:[0]
+    });
+  });
+
+  it('converts prose across parsed blanks, images and separators without converting image filenames', () => {
+    const text = defaultLevelText.replace('# conclusions', '# conclusions\n## Evidence\n* conclusion="\u{1F600}before[Hall](clue"raw".png)---after"');
+    const parts = loadValidLevelForTest(text).conclusions[1].parts;
+    expect(parts).toMatchObject([
+      { type:'text', text:'\u201C\u{1F600}before' }, { type:'blank', correctAnswerIndexes:[0] },
+      { type:'image', imageUrl:['/assets/conclusions/clue"raw".png', '/assets/bodies/clue"raw".png'] },
+      { type:'separator' }, { type:'text', text:'after\u201D' }
+    ]);
+  });
+
   it('defaults authored and generated conclusions to non-optional', () => {
     const text = defaultLevelText.replace('# conclusions', '# conclusions\n## Evidence\n* conclusion=[Hall]');
     const level = loadValidLevelForTest(text);
