@@ -53,6 +53,42 @@ function _createClaimFixture(correct:boolean = false) {
 afterEach(clearSeed);
 
 describe('book claim resolution', () => {
+  it('unlocks matching conclusions only in the successfully claimed chapter', () => {
+    const { bookState, page, otherBlank } = _createFixture();
+    otherBlank.correctAnswerIndexes.push(1);
+    page.conclusion = { ...page.conclusion, unlockConclusionIds:['next', 'another'] };
+    const next = { ...page, conclusion:{ ...duplicateConclusion(page.conclusion), id:'next', isLocked:true } };
+    const another = { ...next, conclusion:{ ...duplicateConclusion(next.conclusion), id:'another' } };
+    const unrelated = { ...next, conclusion:{ ...duplicateConclusion(next.conclusion), id:'unrelated' } };
+    const otherChapter = { ...next, chapterNo:2, conclusion:duplicateConclusion(next.conclusion) };
+    bookState.pages.push(next, another, unrelated, otherChapter);
+
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 4623);
+    expect(next.conclusion.isLocked).toBe(true);
+    updateBookClaim(bookState, 5623);
+
+    expect(page.conclusion.isComplete).toBe(true);
+    expect(next.conclusion.isLocked).toBe(false);
+    expect(another.conclusion.isLocked).toBe(false);
+    expect(unrelated.conclusion.isLocked).toBe(true);
+    expect(otherChapter.conclusion.isLocked).toBe(true);
+    expect(bookState.pages[2]).toBe(next);
+  });
+
+  it('does not unlock conclusions after an unsuccessful claim', () => {
+    const { bookState, page } = _createFixture();
+    page.conclusion = { ...page.conclusion, unlockConclusionIds:['next'] };
+    const next = { ...page, conclusion:{ ...duplicateConclusion(page.conclusion), id:'next', isLocked:true } };
+    bookState.pages.push(next);
+
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 5623);
+
+    expect(page.conclusion.isComplete).toBe(false);
+    expect(next.conclusion.isLocked).toBe(true);
+  });
+
   it('marks a correct conclusion complete, retaining assigned pieces and removing unused pieces', () => {
     const { bookState, page, blank, otherBlank, layout } = _createFixture();
     otherBlank.correctAnswerIndexes.push(1);

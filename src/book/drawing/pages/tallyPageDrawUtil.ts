@@ -27,8 +27,7 @@ export function drawTallyPage(page:TallyPage, pw:PageWriter) {
   pw.addTextLine('Conclusions');
   pw.addDivider();
   pw.setFontSize('m');
-  const completedCount = _countRemainingConclusions(page.conclusions);
-  const remainingCount = page.conclusions.length - completedCount;
+  const remainingCount = _countRemainingConclusions(page.conclusions);
   if (remainingCount === 0) {
     pw.addTextLine('All conclusions for this chapter have been claimed.\nYou may visit the next chapter now.');
   } else {

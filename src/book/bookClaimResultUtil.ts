@@ -22,6 +22,11 @@ export function applyBookClaimResults(bookState:BookState, claim:BookClaimState,
   if (!claim.resultApplied && (timing.shouldComplete || timing.dueEjectionCount > 0)) {
     if (claim.correct) {
       claim.page.conclusion.isComplete = true;
+      const unlockConclusionIds = new Set(claim.page.conclusion.unlockConclusionIds);
+      for (const page of bookState.pages) {
+        if (page.kind === 'conclusion' && page.chapterNo === claim.page.chapterNo
+          && unlockConclusionIds.has(page.conclusion.id)) page.conclusion.isLocked = false;
+      }
       bookState.pieceStack = bookState.pieceStack.filter(piece =>
         piece.placement !== null || piece.conclusionPageI !== claim.conclusionPageI);
       if (bookState.layout) bookState.layout.pieceLayouts = bookState.layout.pieceLayouts.filter(({ piece }) =>
