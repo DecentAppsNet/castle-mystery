@@ -7,6 +7,31 @@ import { createClozeCategories } from '../clozeCategoryUtil';
 
 describe('clozeCategoryUtil', () => {
   describe('createClozeCategories()', () => {
+    it('excludes empty and whitespace-only titles from generated categories', () => {
+      const rooms = [
+        { ...createDefaultRoom(), title:'' },
+        { ...createDefaultRoom(), title:' \t ' },
+        { ...createDefaultRoom(), title:'Hall' }
+      ];
+      const characters = [
+        { ...createDefaultCharacter(), title:'', description:'Interactive.' },
+        { ...createDefaultCharacter(), title:' \t ', description:'Interactive.' },
+        { ...createDefaultCharacter(), title:'Sam', description:'Interactive.' }
+      ];
+      const items = [
+        { ...createDefaultItem(), title:'', description:'Interactive.' },
+        { ...createDefaultItem(), title:' \t ', description:'Interactive.' },
+        { ...createDefaultItem(), title:'Key', description:'Interactive.' }
+      ];
+      const errors = new ErrorCollector('', []);
+      const categories = createClozeCategories('', rooms, characters, items, errors);
+
+      expect(categories.rooms.allowedValues).toEqual(['Hall']);
+      expect(categories.characters.allowedValues).toEqual(['Sam']);
+      expect(categories.items.allowedValues).toEqual(['Key']);
+      expect(errors.count).toBe(0);
+    });
+
     it('deduplicates normalized room titles with a deterministic sorted representative', () => {
       const rooms = [
         { ...createDefaultRoom(), id:'one', title:'Hall' },

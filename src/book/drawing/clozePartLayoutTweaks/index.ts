@@ -4,6 +4,7 @@ import Conclusion from "@/game/conclusions/types/Conclusion";
 import ClozePartLayoutTweak from "@/book/types/ClozePartLayoutTweak";
 import Point from "@/game/types/Point";
 import { getLineHeightForFontSize } from '../pages';
+import { IDENTITIES_PER_PAGE } from '@/book/identityLayoutConstants';
 
 function _createEmptyTweaks(conclusion:Conclusion):Array<ClozePartLayoutTweak|null> {
   const tweaks = new Array<ClozePartLayoutTweak|null>();
@@ -11,7 +12,6 @@ function _createEmptyTweaks(conclusion:Conclusion):Array<ClozePartLayoutTweak|nu
   return tweaks;
 }
 
-const IDENTITIES_PER_PAGE = 8;
 const ROW_HEIGHT = 2 * getLineHeightForFontSize('m');
 const TOP_MARGIN = 2 * getLineHeightForFontSize('s');
 

@@ -17,7 +17,7 @@ function _uniqueGeneratedValues(values:string[]):string[] {
   const seen = new Set<string>();
   return values.filter(value => {
     const normalized = normalizeCategoryPhrase(value);
-    if (seen.has(normalized)) return false;
+    if (normalized === '' || seen.has(normalized)) return false;
     seen.add(normalized);
     return true;
   });

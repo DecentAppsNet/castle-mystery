@@ -5,13 +5,15 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { assert, assertNonNullable } from 'decent-portal';
 import BookState from '../types/BookState';
 import Piece from '../types/Piece';
+import { IDENTITIES_PER_PAGE } from '../identityLayoutConstants';
 
 // Piece centers leave room for half a piece above/below, clear of the heading and page number.
 const FIRST_ROW_Y_PERCENT = 14;
 const LAST_ROW_Y_PERCENT = 86;
 const PREFERRED_ROW_SPACING_PERCENT = 5;
+const SECOND_COLUMN_INITIAL_PIECE_X_OFFSET_PERCENT = 15;
 
-function _placeAnswerGroupsOnRightPage(answerGroups:readonly Piece[][]):void {
+function _placeAnswerGroupsOnRightPage(answerGroups:readonly Piece[][], xOffsetPercent:number):void {
   if (answerGroups.length === 0) return;
 
   // Count group separators as placement slots and choose up to three fixed columns.
@@ -30,7 +32,7 @@ function _placeAnswerGroupsOnRightPage(answerGroups:readonly Piece[][]):void {
     if (placementIndex % rowsPerColumn !== 0) placementIndex++;
     for (const piece of group) {
       const columnIndex = Math.floor(placementIndex / rowsPerColumn);
-      piece.xPercent = 50 + (columnIndex + .5) * 50 / columnCount;
+      piece.xPercent = 50 + (columnIndex + .5) * 50 / columnCount + xOffsetPercent;
       piece.yPercent = FIRST_ROW_Y_PERCENT + (placementIndex % rowsPerColumn) * rowSpacingPercent;
       placementIndex++;
     }
@@ -64,7 +66,10 @@ function _generatePieceStack(bookState:Readonly<BookState>, newPagesStartIndex:n
       if (groupPieces.length > 0) answerGroups.push(groupPieces);
       pieces.push(...groupPieces);
     }
-    _placeAnswerGroupsOnRightPage(answerGroups);
+    const answerCount = answerGroups.reduce((count, group) => count + group.length, 0);
+    const xOffsetPercent = page.conclusion.id === 'identities' && answerCount > IDENTITIES_PER_PAGE
+      ? SECOND_COLUMN_INITIAL_PIECE_X_OFFSET_PERCENT : 0;
+    _placeAnswerGroupsOnRightPage(answerGroups, xOffsetPercent);
 
     // Associate prefilled blanks without changing their answers or the generated inventory order.
     for (const part of page.conclusion.parts) {
