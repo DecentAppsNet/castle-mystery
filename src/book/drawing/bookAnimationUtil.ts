@@ -108,7 +108,7 @@ export function showBook(metaTime:number, bookState:BookState) {
   bookState.onAnimationEnd = (_metaTime, _isAborted, bookState2) => setPageNavigationButtonVisibility(bookState2); // Need book to be drawn once before this can be called.
 }
 
-export function hideBook(metaTime:number, bookState:BookState) {
+export function hideBook(metaTime:number, bookState:BookState, onAnimationEnd:AnimationEndCallback|null = null) {
   bookState.claimState = null;
   assertNonNullable(bookState.layout);
   _endCurrentAnimationAsNeeded(metaTime, bookState);
@@ -118,7 +118,10 @@ export function hideBook(metaTime:number, bookState:BookState) {
   bookState.animationStartMetaTime = metaTime;
   bookState.isVisible === true;
   bookState.layout.controlLayout.hoveredControlId = null;
-  bookState.onAnimationEnd = (_metaTime, _isAborted, bookState2) => bookState2.isVisible = false;
+  bookState.onAnimationEnd = (metaTime2, isAborted, bookState2) => {
+    bookState2.isVisible = false;
+    onAnimationEnd?.(metaTime2, isAborted, bookState2);
+  };
 }
 
 export function shiftBookLeft(metaTime:number, bookState:BookState, onAnimationEnd:AnimationEndCallback|null = null) {

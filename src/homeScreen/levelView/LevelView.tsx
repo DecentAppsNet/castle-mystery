@@ -1,4 +1,5 @@
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef, type Ref } from 'react';
+import { assertNonNullable } from 'decent-portal';
 
 import Canvas from '@/components/canvas/Canvas';
 import { mouseDown, mouseMove, mouseWheel, playPause } from '@/game/playerEventUtil';
@@ -14,7 +15,7 @@ import type LevelViewFrameState from './types/LevelViewFrameState';
 import type InitialClosedFrameHandoff from './types/InitialClosedFrameHandoff';
 import type LevelViewHandle from './types/LevelViewHandle';
 import { announceCurtainClosed, cancelCurtainClose, requestCurtainClose } from './levelViewCloseUtil';
-import { drawBook, showBook, onBookMouseDown, onBookMouseUp, onBookMouseOver, onBookMouseWheel, endBookPieceDrag } from '@/book';
+import { drawBook, showBook, hideBook, onBookMouseDown, onBookMouseUp, onBookMouseOver, onBookMouseWheel, endBookPieceDrag } from '@/book';
 import BookState from '@/book/types/BookState';
 import { findMetaTimeNow } from '@/game/metaTimeUtil';
 import { DRAW_FPS_COUNTER } from '@/developer/config';
@@ -25,6 +26,7 @@ type Props = {
   gameState:GameState|null, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
   bookState:BookState|null,
   isGameDisabled:() => boolean,
+  onNextChapter:(levelUrl:string) => void,
   onMinutesChanged:(minutes:number) => void,
   onIsPlayingChanged:(isPlaying:boolean) => void,
   onActiveCharacterChanged:(characterId:string) => void,
@@ -56,7 +58,7 @@ type Props = {
  * Failure keeps curtains closed; unmount cancels a pending close without starting loading.
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
-function LevelView({ref, gameState, bookState, isGameDisabled, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
+function LevelView({ref, gameState, bookState, isGameDisabled, onNextChapter, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
     onDiscoveriesChanged, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
@@ -65,6 +67,12 @@ function LevelView({ref, gameState, bookState, isGameDisabled, onMinutesChanged,
   const pointerClientPositionRef = useRef<readonly [number, number]|null>(null);
   const cancelBookDragRef = useRef<(() => void)|null>(null);
   const draggedBookRef = useRef<BookState|null>(null);
+  const finishBookHideRef = useRef<((completed:boolean) => void)|null>(null);
+
+  function _isInputDisabled():boolean {
+    return isGameDisabled() || !acceptedGameStateRef.current
+      || (bookState?.isVisible === true && (bookState.animationKind !== null || bookState.claimState !== null));
+  }
 
   function _cancelInvalidBookDrag() {
     const draggedBookState = draggedBookRef.current;
@@ -77,11 +85,27 @@ function LevelView({ref, gameState, bookState, isGameDisabled, onMinutesChanged,
   useLayoutEffect(_cancelInvalidBookDrag);
   useLayoutEffect(() => () => cancelBookDragRef.current?.(), []);
 
-  useImperativeHandle(ref, () => ({ close:() => requestCurtainClose(frameStateRef.current, performance.now()) }), []);
+  useImperativeHandle(ref, () => ({ close:async (hideBookFirst = false) => {
+    if (hideBookFirst && bookState?.isVisible) {
+      const completed = await new Promise<boolean>(resolve => {
+        finishBookHideRef.current = resolve;
+        hideBook(findMetaTimeNow(), bookState, (_metaTime, isAborted) => {
+          finishBookHideRef.current = null;
+          resolve(!isAborted);
+        });
+      });
+      if (!completed) return false;
+    }
+    return requestCurtainClose(frameStateRef.current, performance.now());
+  } }), [bookState]);
 
   useEffect(() => {
     const state = frameStateRef.current;
-    return () => cancelCurtainClose(state);
+    return () => {
+      finishBookHideRef.current?.(false);
+      finishBookHideRef.current = null;
+      cancelCurtainClose(state);
+    };
   }, []);
   
   useEffect(() => { 
@@ -139,7 +163,7 @@ function LevelView({ref, gameState, bookState, isGameDisabled, onMinutesChanged,
 
   function _updateOverlayCursor(context:CanvasRenderingContext2D) {
     const pointer = pointerClientPositionRef.current;
-    if (!pointer || isGameDisabled()) return;
+    if (!pointer || _isInputDisabled()) return;
     const rect = context.canvas.getBoundingClientRect();
     const canvasX = (pointer[0] - rect.left) * context.canvas.width / rect.width;
     const canvasY = (pointer[1] - rect.top) * context.canvas.height / rect.height;
@@ -203,13 +227,12 @@ function LevelView({ref, gameState, bookState, isGameDisabled, onMinutesChanged,
       }}
       onMouseDown={(e) => {
         if (cancelBookDragRef.current) return;
-        if (isGameDisabled()) return;
-        if (!acceptedGameStateRef.current) return;
+        if (_isInputDisabled()) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
         const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
         const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
         if (bookState?.isVisible) {
-          if (onBookMouseDown(canvasX, canvasY, findMetaTimeNow(), bookState, e.button === 0)) {
+          if (onBookMouseDown(canvasX, canvasY, findMetaTimeNow(), bookState, e.button === 0, onNextChapter)) {
             e.preventDefault();
             _startBookDragTracking(e.currentTarget, bookState);
           }
@@ -221,12 +244,13 @@ function LevelView({ref, gameState, bookState, isGameDisabled, onMinutesChanged,
         }
         const x = Math.round(e.clientX - rect.left);
         const y = Math.round(e.clientY - rect.top);
+        assertNonNullable(acceptedGameStateRef.current);
         const [gameX, gameY] = canvasToGamePosition(x, y, acceptedGameStateRef.current.scalingFactors);
         mouseDown(gameX, gameY);
       }}
       onMouseUp={(e) => {
         if (cancelBookDragRef.current) return;
-        if (isGameDisabled()) return;
+        if (_isInputDisabled()) return;
         const currentGameState = acceptedGameStateRef.current;
         if (!currentGameState || !bookState?.isVisible) return;
         const rect = e.currentTarget.getBoundingClientRect();
@@ -237,8 +261,7 @@ function LevelView({ref, gameState, bookState, isGameDisabled, onMinutesChanged,
       onMouseMove={(e) => {
         pointerClientPositionRef.current = [e.clientX, e.clientY];
         if (cancelBookDragRef.current) return;
-        if (isGameDisabled()) return;
-        if (!acceptedGameStateRef.current) return;
+        if (_isInputDisabled()) return;
         const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect();
         if (bookState?.isVisible) {
           const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
@@ -248,11 +271,12 @@ function LevelView({ref, gameState, bookState, isGameDisabled, onMinutesChanged,
         }
         const x = Math.round(e.clientX - rect.left);
         const y = Math.round(e.clientY - rect.top);
+        assertNonNullable(acceptedGameStateRef.current);
         const [gameX, gameY] = canvasToGamePosition(x, y, acceptedGameStateRef.current.scalingFactors);
         mouseMove(gameX, gameY);
       }}
       onWheel={(e) => {
-        if (isGameDisabled()) return;
+        if (_isInputDisabled()) return;
         e.preventDefault();
         if (acceptedGameStateRef.current && bookState?.isVisible) {
           onBookMouseWheel(e.deltaY, findMetaTimeNow(), bookState);

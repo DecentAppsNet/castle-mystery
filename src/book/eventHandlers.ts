@@ -29,7 +29,7 @@ function _isPointInsideBook(bookState:BookState, canvasX:number, canvasY:number)
 }
 
 export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number, bookState:BookState,
-  canStartPieceDrag:boolean = false):boolean {
+  canStartPieceDrag:boolean = false, onNextChapter:((levelUrl:string) => void)|null = null):boolean {
   if (bookState.claimState !== null) return false;
   assert(bookState.isVisible); // Caller should check.
   if (!bookState.layout || bookState.animationKind || bookState.pieceDragState !== null) return false;
@@ -42,6 +42,14 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
     return false;
   }
   if (id === null && canStartPieceDrag && beginBookPieceDrag(bookState, canvasX, canvasY)) return true;
+  if (id === 'nextChapter') {
+    const lastPage = bookState.pages[bookState.pages.length - 1];
+    assert(lastPage?.kind === 'chapterEnd');
+    const levelUrl = bookState.levelUrls[lastPage.chapterNo];
+    if (levelUrl && onNextChapter) onNextChapter(levelUrl);
+    else hideBook(metaTime, bookState);
+    return false;
+  }
   if (id === 'closeBook' || (id === null && piece === null && !_isPointInsideBook(bookState, canvasX, canvasY))) {
     hideBook(metaTime, bookState);
     return false;

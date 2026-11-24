@@ -127,12 +127,12 @@ function HomeScreen() {
     _setGameDisabled(false);
   }
 
-  function _closeCurtain():Promise<boolean> {
+  function _closeCurtain(hideBookFirst:boolean = false):Promise<boolean> {
     assertNonNullable(levelViewRef.current);
     _setGameDisabled(true);
     clearPlayerEvents();
     setInitErrorMessage(null);
-    return levelViewRef.current.close();
+    return levelViewRef.current.close(hideBookFirst);
   }
 
   function _handleLoadingFailed(error:unknown) {
@@ -203,6 +203,18 @@ function HomeScreen() {
       setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setModalDialogName });
   }
 
+  function _handleLevelSelect(levelUrl:string, hideBookFirst:boolean = false) {
+    if (_isGameDisabled() || !levelManifest) return;
+    assertNonNullable(imageSetRef.current);
+    _setGameDisabled(true);
+    clearPlayerEvents();
+    void changeLevel({ imageSet:imageSetRef.current, levelManifest, levelUrl, loadRequest:loadRequestRef.current,
+      saveCoordinator:saveCoordinatorRef.current, closeCurtain:() => _closeCurtain(hideBookFirst),
+      onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
+      setLevelManifest, setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
+      setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setModalDialogName });
+  }
+
   const isSliderAtRightmostPosition = minutes >= toMinutes;
   useEffect(() => {
     if (!gameState) return;
@@ -252,34 +264,14 @@ function HomeScreen() {
       <div className={styles.content}>
         {levelManifest && <LevelSelector
           levelManifest={levelManifest}
-          onSelect={(levelUrl) => {
-            assertNonNullable(imageSetRef.current);
-            void changeLevel({
-              imageSet:imageSetRef.current,
-              loadRequest:loadRequestRef.current,
-              saveCoordinator:saveCoordinatorRef.current,
-              closeCurtain:_closeCurtain,
-              onLoadingFailed:_handleLoadingFailed,
-              levelUrl,
-              levelManifest,
-              onLevelPrepared:_publishPreparedLevelState,
-              setLevelManifest,
-              setIsPlaying,
-              setMinutes,
-              setWinSynopsis,
-              setConclusions,
-              setDiscoveries,
-              setConclusionClaimCooldowns,
-              setActiveCharacterId,
-              setModalDialogName
-            });
-          }}
+          onSelect={_handleLevelSelect}
         />}
         <LevelView 
           ref={levelViewRef}
           gameState={gameState} 
           bookState={bookState}
           isGameDisabled={_isGameDisabled}
+          onNextChapter={levelUrl => _handleLevelSelect(levelUrl, true)}
           onMinutesChanged={setMinutes} 
           onIsPlayingChanged={setIsPlaying} 
           onActiveCharacterChanged={setActiveCharacterId} 

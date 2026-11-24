@@ -40,19 +40,36 @@ function _center(rect:{ x:number; width:number }):number {
 }
 
 describe('bookClaimControlUtil', () => {
-  it('shows nextChapter for a displayed final chapter end with no remaining required conclusions and clicking does nothing', () => {
+  it('shows nextChapter with no remaining required conclusions and hides the book when there is no next level', () => {
     const { bookState, page, controls } = _createFixture(true, 2);
     page.conclusion.isOptional = true;
     bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
     updateBookClaimControls(bookState);
     expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(true);
-    const before = structuredClone(bookState);
     const nextChapter = findControlRect(controls, 'nextChapter');
-    onBookMouseDown(nextChapter.x + nextChapter.width / 2 - 200, nextChapter.y + nextChapter.height / 2, 0, bookState);
-    expect(bookState).toEqual(before);
+    const requestedUrls:string[] = [];
+    onBookMouseDown(nextChapter.x + nextChapter.width / 2 - 200, nextChapter.y + nextChapter.height / 2, 0, bookState,
+      false, levelUrl => requestedUrls.push(levelUrl));
+    expect(requestedUrls).toEqual([]);
+    expect(bookState.animationKind).toBe('disappear');
+    expect(bookState.isVisible).toBe(true);
+    bookState.animationKind = null;
     page.conclusion.isOptional = false;
     updateBookClaimControls(bookState);
     expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(false);
+  });
+
+  it('requests the level indexed by the last chapter number rather than the displayed page chapter', () => {
+    const { bookState, page, controls } = _createFixture();
+    page.conclusion.isComplete = true;
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:2, headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
+    bookState.levelUrls = ['first.md', 'second.md', 'third.md'];
+    updateBookClaimControls(bookState);
+    const nextChapter = findControlRect(controls, 'nextChapter');
+    const requestedUrls:string[] = [];
+    onBookMouseDown(nextChapter.x + nextChapter.width / 2, nextChapter.y + nextChapter.height / 2, 0, bookState,
+      false, levelUrl => requestedUrls.push(levelUrl));
+    expect(requestedUrls).toEqual(['third.md']);
   });
 
   it('shows nextChapter on a final two-page chapter-end spread but not when that page is hidden in single-page view', () => {

@@ -63,6 +63,7 @@ export function addLevelChapterToBook(bookState:BookState, level:Level) {
   level.conclusions.forEach(c => _addConclusionPages(c, chapterNo, pages));
   _addChapterEndPages(level, chapterNo, pages);
   updatePieceStackForConclusionPages(bookState, newPagesStartIndex);
+  bookState.pageNo = newPagesStartIndex + 1;
 }
 
 function _parseLevelUrls(levelsSection:string):string[] {
