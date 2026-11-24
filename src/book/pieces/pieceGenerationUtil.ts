@@ -85,10 +85,6 @@ function _generatePieceStack(bookState:Readonly<BookState>, newPagesStartIndex:n
   return pieces;
 }
 
-export function generatePieceStack(bookState:Readonly<BookState>):Piece[] {
-  return _generatePieceStack(bookState, 0);
-}
-
 export function updatePieceStackForConclusionPages(bookState:BookState, newPagesStartIndex:number):void {
   bookState.pieceStack.push(..._generatePieceStack(bookState, newPagesStartIndex));
 }

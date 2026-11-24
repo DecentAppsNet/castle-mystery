@@ -6,7 +6,7 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
 import { claimBookConclusion, getConclusionPageInstructionText, updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 import { onBookMouseDown } from '@/book/eventHandlers';
-import { beginBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces, generatePieceStack,
+import { beginBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces,
   updatePieceStackForConclusionPages } from '@/book/pieces';
 import { applyBookClaimResults } from '../bookClaimResultUtil';
 import PieceLayout from '@/book/drawing/types/PieceLayout';
@@ -27,7 +27,7 @@ function _createFixture(single:boolean = false) {
   const bookState = createDefaultBookState();
   bookState.isVisible = true;
   bookState.pages = [page, { kind:'blank', headingText:'', chapterNo:1 }];
-  bookState.pieceStack = generatePieceStack(bookState);
+  updatePieceStackForConclusionPages(bookState, 0);
 
   // Prepared geometry is already in displayed coordinates, including the single-page shift once.
   const offset = single ? 200 : 0;

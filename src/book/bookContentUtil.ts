@@ -71,6 +71,7 @@ function _parseLevelUrls(levelsSection:string):string[] {
 }
 
 // This function is one of the rare exceptions where it is allowed to be exported for testing purposes.
+/** @internal Exported for book-loading tests; production enters through loadBookFromUrl. */
 export function loadBookFromText(text:string):BookState {
   const sections = parseSections(text, 1, true);
   const general = parseUniqueNameValueLines(sections.general ?? '', 'book general', true);

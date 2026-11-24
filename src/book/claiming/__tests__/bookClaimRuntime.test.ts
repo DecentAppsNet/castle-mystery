@@ -8,7 +8,7 @@ import { claimBookConclusion, updateBookClaim, updateBookClaimControls } from '.
 import { calcBookClaimMessageAlpha } from '../bookClaimPresentationUtil';
 import { onBookMouseDown, onBookMouseOver, onBookMouseUp, onBookMouseWheel } from '@/book/eventHandlers';
 import { goNextPage, goPrevPage, setPageNavigationButtonVisibility } from '@/book/navigationUtil';
-import { generatePieceStack } from '@/book/pieces';
+import { updatePieceStackForConclusionPages } from '@/book/pieces';
 import { hideBook, shiftBookLeft, shiftBookRight, showBook } from '@/book/drawing/bookAnimationUtil';
 import { updateBookLayoutAsNeeded, updateControlLayout } from '@/book/drawing/bookLayoutUtil';
 import { startPageFlip } from '@/book/drawing/pages';
@@ -34,7 +34,7 @@ function _createFixture(correct:boolean = false, pageNo:number = 1, conclusionId
   bookState.pageNo = pageNo;
   bookState.pages = Array.from({ length:4 }, () => ({ kind:'blank', headingText:'', chapterNo:1 }));
   bookState.pages[pageNo - 1] = page;
-  bookState.pieceStack = generatePieceStack(bookState);
+  updatePieceStackForConclusionPages(bookState, 0);
 
   // These are normal displayed slot records, not animation geometry.
   const first:PieceSlotLayout = { page, pageNo, partIndex:0, blank, styleNo:3,

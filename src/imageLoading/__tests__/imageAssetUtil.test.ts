@@ -62,7 +62,7 @@ describe('imageAssetUtil', () => {
       _stubImageReadback(null);
 
       expect(() => createImageAsset({ width:1, height:1 } as ImageBitmap))
-        .toThrow('Could not create image analysis context');
+        .toThrow('Could not create scratch canvas 2D context');
     });
 
     it('propagates readback failure rather than treating the image as transparent', () => {

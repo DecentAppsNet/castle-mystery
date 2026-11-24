@@ -21,6 +21,6 @@ export function getScratchCanvasContext2d(canvas:HTMLCanvasElement|OffscreenCanv
   // The literal context ID guarantees a 2D result despite the combined canvas overloads.
   const options = willReadFrequently ? { willReadFrequently:true } : undefined;
   const context = canvas.getContext('2d', options) as CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D|null;
-  assertNonNullable(context); // Anomalous fatal condition or debug error.
+  if (context === null) throw new Error('Could not create scratch canvas 2D context');
   return context;
 }

@@ -5,7 +5,7 @@ import AnswerSet from '@/game/conclusions/types/AnswerSet';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import Conclusion from '@/game/conclusions/types/Conclusion';
 import { generateAnswerSetIdToPieceStyleNoMap } from '@/book/answerSetPieceStyleUtil';
-import { generatePieceStack } from '../pieceGenerationUtil';
+import { updatePieceStackForConclusionPages } from '../pieceGenerationUtil';
 import BookPage from '@/book/types/BookPage';
 import BookState, { createDefaultBookState } from '@/book/types/BookState';
 
@@ -31,11 +31,11 @@ function _createBookState(pages:BookPage[]):BookState {
 }
 
 describe('pieceGenerationUtil', () => {
-  describe('generatePieceStack()', () => {
-    it('returns an empty inventory for an empty book', () => {
+  describe('updatePieceStackForConclusionPages()', () => {
+    it('leaves inventory empty for an empty book', () => {
       const state = createDefaultBookState();
-      expect(generatePieceStack(state)).toEqual([]);
-      expect(generatePieceStack(state)).not.toBe(generatePieceStack(state));
+      updatePieceStackForConclusionPages(state, 0);
+      expect(state.pieceStack).toEqual([]);
     });
 
     it('ignores non-conclusion pages and conclusion parts without blanks', () => {
@@ -49,7 +49,8 @@ describe('pieceGenerationUtil', () => {
         { kind:'chapterStart', headingText:'', title:'Chapter', chapterNo:1, description:'' },
         { kind:'blank', headingText:'', chapterNo:1 }, page
       ]);
-      expect(generatePieceStack(state)).toEqual([]);
+      updatePieceStackForConclusionPages(state, 0);
+      expect(state.pieceStack).toEqual([]);
     });
 
     it('emits full ordered inventory once for three shared blanks without changing their independent state', () => {
@@ -67,15 +68,16 @@ describe('pieceGenerationUtil', () => {
       };
       page.conclusion.parts = [first, second, third];
       const state = _createBookState([page]);
-      const original = structuredClone(state);
+      const original = structuredClone(state.pages);
 
       // Repeated blanks must not affect order, distractors, or placement.
-      const pieces = generatePieceStack(state);
+      updatePieceStackForConclusionPages(state, 0);
+      const pieces = state.pieceStack;
       expect(pieces.map(({ text, styleNo }) => [text, styleNo])).toEqual([
         ['B', 3], ['A', 3], ['C', 3], ['Unused', 3]
       ]);
       expect(pieces.map(piece => piece.placement?.blank ?? null)).toEqual([second, null, first, null]);
-      expect(state).toEqual(original);
+      expect(state.pages).toEqual(original);
       expect([first.answerSet, second.answerSet, third.answerSet].every(set => set === answers)).toBe(true);
       expect(first).not.toBe(second);
       expect(second).not.toBe(third);
@@ -87,14 +89,14 @@ describe('pieceGenerationUtil', () => {
       expect([first.playerAnswerIndex, second.playerAnswerIndex, third.playerAnswerIndex]).toEqual([2, 1, -1]);
       expect([first.correctAnswerIndexes, second.correctAnswerIndexes, third.correctAnswerIndexes])
         .toEqual([[0, 1, 2], [2, 1, 0], [1, 0, 2]]);
-      expect(generatePieceStack(state).map(piece => piece.placement?.blank ?? null)).toEqual([null, second, first, null]);
     });
 
     it('keeps disjoint categories ordered with distinct styles despite interleaved shared blanks', () => {
       const verbs = createAnswerSet(['lost', 'found'], 'verbs');
       const times = createAnswerSet(['yesterday', 'today'], 'times');
       const state = _createBookState([_createConclusionPage('one', [verbs, times, verbs, times])]);
-      expect(generatePieceStack(state).map(({ text, styleNo }) => [text, styleNo])).toEqual([
+      updatePieceStackForConclusionPages(state, 0);
+      expect(state.pieceStack.map(({ text, styleNo }) => [text, styleNo])).toEqual([
         ['lost', 3], ['found', 3], ['yesterday', 4], ['today', 4]
       ]);
     });
@@ -104,7 +106,8 @@ describe('pieceGenerationUtil', () => {
       const first = createAnswerSet(['B', 'A'], 'first-category');
       const second = createAnswerSet(['A', 'B'], 'second-category');
       const state = _createBookState([_createConclusionPage('one', [first, second])]);
-      expect(generatePieceStack(state).map(({ text, styleNo }) => [text, styleNo])).toEqual([
+      updatePieceStackForConclusionPages(state, 0);
+      expect(state.pieceStack.map(({ text, styleNo }) => [text, styleNo])).toEqual([
         ['B', 3], ['A', 3], ['A', 4], ['B', 4]
       ]);
     });
@@ -116,7 +119,8 @@ describe('pieceGenerationUtil', () => {
         _createConclusionPage('one', [shared]), _createConclusionPage('one', [shared]),
         _createConclusionPage('one', [fresh])
       ]);
-      const pieces = generatePieceStack(state);
+      updatePieceStackForConclusionPages(state, 0);
+      const pieces = state.pieceStack;
       expect(pieces.map(({ conclusionPageI, text, styleNo }) => [conclusionPageI, text, styleNo])).toEqual([
         [0, 'B', 3], [0, 'A', 3], [2, 'B', 3], [2, 'A', 3],
         [4, 'C', 3], [4, 'D', 3]
@@ -127,7 +131,6 @@ describe('pieceGenerationUtil', () => {
       pieces[0].text = 'changed';
       pieces[0].xPercent = 99;
       expect(pieces[2]).toMatchObject({ conclusionPageI:2, text:'B', xPercent:75 });
-      expect(generatePieceStack(state)[0]).toMatchObject({ conclusionPageI:0, text:'B', xPercent:75 });
     });
 
     it('assigns custom styles beyond eight without wrapping and restarts for each conclusion', () => {
@@ -136,7 +139,8 @@ describe('pieceGenerationUtil', () => {
           createAnswerSet([String(index)], `category-${index}`))),
         _createConclusionPage('two', [createAnswerSet(['other'], 'other-options')])
       ]);
-      expect(generatePieceStack(state).map(piece => piece.styleNo)).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3]);
+      updatePieceStackForConclusionPages(state, 0);
+      expect(state.pieceStack.map(piece => piece.styleNo)).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3]);
     });
 
     it('uses the page lookup for reserved, extended, and custom groups', () => {
@@ -152,9 +156,11 @@ describe('pieceGenerationUtil', () => {
         isComplete:false, isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
       };
       const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
-      const pieces = generatePieceStack(_createBookState([
+      const state = _createBookState([
         { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:styles, layoutTweaks:[] }
-      ]));
+      ]);
+      updatePieceStackForConclusionPages(state, 0);
+      const pieces = state.pieceStack;
       expect(pieces.map(piece => piece.styleNo)).toEqual([2, 0, 0, 1, 1, 3]);
       sets.forEach(set => expect(pieces.filter(piece => set.answers.includes(piece.text))
         .every(piece => piece.styleNo === styles[set.id])).toBe(true));
@@ -165,7 +171,9 @@ describe('pieceGenerationUtil', () => {
       const items = createAnswerSet(['Key', 'Nothing'], 'items');
       const rooms = createAnswerSet(['Hall', 'Nowhere'], 'rooms');
       const page = _createConclusionPage('one', [characters, items, characters, rooms, items, rooms, characters]);
-      expect(generatePieceStack(_createBookState([page])).map(({ text, styleNo }) => [text, styleNo])).toEqual([
+      const state = _createBookState([page]);
+      updatePieceStackForConclusionPages(state, 0);
+      expect(state.pieceStack.map(({ text, styleNo }) => [text, styleNo])).toEqual([
         ['Sam', 0], ['Nobody', 0], ['Jo', 0], ['Key', 1], ['Nothing', 1], ['Hall', 2], ['Nowhere', 2]
       ]);
     });
@@ -178,32 +186,34 @@ describe('pieceGenerationUtil', () => {
       Object.defineProperty(page.answerSetIdToPieceStyleNoMap, answers.id, {
         get:() => ++styleReads === 1 ? 3 : undefined
       });
-      expect(() => generatePieceStack(_createBookState([page]))).toThrow();
+      expect(() => updatePieceStackForConclusionPages(_createBookState([page]), 0)).toThrow();
       expect(styleReads).toBe(2);
     });
 
     it('rejects a conclusion on the right even when it has no pieces', () => {
       const state = _createBookState([{ kind:'blank', headingText:'', chapterNo:1 }, _createConclusionPage('one', [])]);
-      expect(() => generatePieceStack(state)).toThrow();
+      expect(() => updatePieceStackForConclusionPages(state, 0)).toThrow();
     });
 
     it('rejects a conclusion without a following page', () => {
       const state = _createBookState([_createConclusionPage('one', [])]);
       state.pages.pop();
-      expect(() => generatePieceStack(state)).toThrow();
+      expect(() => updatePieceStackForConclusionPages(state, 0)).toThrow();
     });
 
     it('rejects a conclusion followed by a non-blank page', () => {
       const state = _createBookState([_createConclusionPage('one', [])]);
       state.pages[1] = _createConclusionPage('two', []);
-      expect(() => generatePieceStack(state)).toThrow();
+      expect(() => updatePieceStackForConclusionPages(state, 0)).toThrow();
     });
 
     it('retains crowded inventories on the right page', () => {
       const answers = Array.from({ length:90 }, (_, index) => String(index));
-      const pieces = generatePieceStack(_createBookState([
+      const state = _createBookState([
         _createConclusionPage('one', [createAnswerSet(answers, 'numbers')])
-      ]));
+      ]);
+      updatePieceStackForConclusionPages(state, 0);
+      const pieces = state.pieceStack;
       expect(pieces.map(piece => piece.text)).toEqual(answers);
       expect(pieces.every(piece => piece.xPercent > 50 && piece.xPercent < 100
         && piece.yPercent > 0 && piece.yPercent < 100)).toBe(true);
@@ -215,10 +225,9 @@ describe('pieceGenerationUtil', () => {
         _createConclusionPage('two', [createAnswerSet(['B'], 'people')])
       ]);
       expect(state.layout).toBeNull();
-      const first = generatePieceStack(state);
       state.pageNo = 2;
-      expect(generatePieceStack(state)).toEqual(first);
-      expect(first.map(piece => piece.text)).toEqual(['A', 'B']);
+      updatePieceStackForConclusionPages(state, 0);
+      expect(state.pieceStack.map(piece => piece.text)).toEqual(['A', 'B']);
     });
 
     it('retains selected answers even when a conclusion is complete and locked', () => {
@@ -226,24 +235,12 @@ describe('pieceGenerationUtil', () => {
       (page.conclusion.parts[0] as ClozeBlank).playerAnswerIndex = 0;
       page.conclusion.isComplete = true;
       page.conclusion.isLocked = true;
-      expect(generatePieceStack(_createBookState([page])).map(piece => piece.text)).toEqual(['A', 'B']);
+      const state = _createBookState([page]);
+      updatePieceStackForConclusionPages(state, 0);
+      expect(state.pieceStack.map(piece => piece.text)).toEqual(['A', 'B']);
     });
 
-    it('returns independent mutable pieces and retains mapped styles on every call', () => {
-      const state = _createBookState([_createConclusionPage('one', [createAnswerSet(['A', 'B'], 'people')])]);
-      const first = generatePieceStack(state);
-      const second = generatePieceStack(state);
-      expect(first).not.toBe(second);
-      expect(first).toEqual(second);
-      first.forEach((piece, index) => expect(piece).not.toBe(second[index]));
-      first[0].xPercent = 99;
-      first[0].yPercent = 98;
-      first.reverse();
-      expect(generatePieceStack(state)).toEqual(second);
-      expect(second[0]).toMatchObject({ conclusionPageI:0, text:'A', styleNo:3 });
-    });
-
-    it('leaves frozen source data, existing stack, and layout untouched', () => {
+    it('appends without modifying frozen source data, existing pieces, or layout', () => {
       // Protect each source layer from writes, including the answer index arrays.
       const answers = ['B', 'A'];
       const answerSet = createAnswerSet(answers, 'people');
@@ -270,22 +267,25 @@ describe('pieceGenerationUtil', () => {
         isSinglePageView:false,
         pieceLayouts:[], pieceSlotLayouts:[], pieceLayoutsPageNo:null, controlLayout:createLayout()
       };
-      const original = structuredClone(state);
+      const originalPages = structuredClone(state.pages);
+      const originalLayout = structuredClone(state.layout);
+      const stack = state.pieceStack;
       Object.freeze(existingPiece);
-      Object.freeze(state.pieceStack);
       Object.freeze(state.pages);
       Object.freeze(state.layout.pieceLayouts);
       Object.freeze(state.layout);
       Object.freeze(state);
 
-      // Generation must return new inventory without replacing any input references.
-      const pieces = generatePieceStack(state);
-      expect(state).toEqual(original);
+      // Appending may grow the stack without replacing it or changing source data.
+      updatePieceStackForConclusionPages(state, 0);
+      const pieces = state.pieceStack.slice(1);
+      expect(state.pages).toEqual(originalPages);
+      expect(state.layout).toEqual(originalLayout);
       expect(state.pieceStack[0]).toBe(existingPiece);
-      expect(pieces).not.toBe(state.pieceStack);
+      expect(state.pieceStack).toBe(stack);
+      expect(state.pieceStack).toHaveLength(3);
       expect(pieces.map(piece => piece.text)).toEqual(['B', 'A']);
       expect(pieces.every(piece => piece.styleNo === page.answerSetIdToPieceStyleNoMap[blank.answerSet.id])).toBe(true);
-      expect(generatePieceStack(state)).toEqual(pieces);
     });
   });
 });
