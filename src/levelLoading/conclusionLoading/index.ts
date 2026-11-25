@@ -8,7 +8,7 @@ import Item from "@/game/types/Item";
 import Room from "@/game/types/Room";
 import { createClozeCategories } from "./clozeCategoryUtil";
 import { lockConclusionsAsNeeded, parseAuthoredConclusions } from "./parseConclusionUtil";
-import { createGeneratedIdentityConclusion, hasIdentitiesConclusion } from "./identitiesConclusionUtil";
+import { createGeneratedIdentityConclusion, getIdentityCharacterCategory, hasIdentitiesConclusion } from "./identitiesConclusionUtil";
 import { validateBlankGroupsAndShareAnswerSets } from './finalizeConclusionsUtil';
 
 /** Loads authored conclusions, adds identities when needed, and applies dependency locks. */
@@ -18,10 +18,12 @@ export function loadConclusions(conclusionsSectionText:string, placedCharacters:
   const originalErrorCount = errors.count;
   const categories = createClozeCategories(conclusionsSectionText, rooms, placedCharacters, items, errors);
   if (errors.count > originalErrorCount) return [];
-  const conclusions = parseAuthoredConclusions(conclusionsSectionText, rooms, categories, initiallyObscuredRoomIds, errors) ?? [];
+  const identityCharacterCategory = getIdentityCharacterCategory(categories.characters, placedCharacters, initiallyKnownTitleCharacterIds);
+  const conclusions = parseAuthoredConclusions(conclusionsSectionText, rooms, categories, identityCharacterCategory,
+    initiallyObscuredRoomIds, errors) ?? [];
   if (!hasIdentitiesConclusion(conclusions)) {
     const identitiesConclusion = createGeneratedIdentityConclusion(conclusionsSectionText, placedCharacters, 
-      categories.characters, rooms, initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
+      identityCharacterCategory, rooms, initiallyKnownTitleCharacterIds, initiallyObscuredRoomIds, errors);
     if (identitiesConclusion) conclusions.unshift(identitiesConclusion);
   }
   if (errors.count > originalErrorCount) return [];

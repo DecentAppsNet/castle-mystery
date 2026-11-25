@@ -43,7 +43,7 @@ describe('identitiesConclusionUtil', () => {
   });
 
   describe('effective character category', () => {
-    it('includes known-title distractors in the same options used by authored conclusions', () => {
+    it('excludes known titles from generated identities but not other conclusions', () => {
       setSeed(1);
       const level = loadValidLevelForTest(effectiveCharactersText);
       const identities = level.conclusions.find(conclusion => conclusion.id === 'identities')!;
@@ -53,10 +53,10 @@ describe('identitiesConclusionUtil', () => {
 
       expect(authoredBlank.answerSet.answers).toEqual(['Detective Sam', 'Doctor Pat', 'Witness Quinn']);
       expect(identityBlanks).toHaveLength(2);
-      identityBlanks.forEach(blank => expect(blank.answerSet.answers).toEqual(authoredBlank.answerSet.answers));
+      identityBlanks.forEach(blank => expect(blank.answerSet.answers).toEqual(['Detective Sam', 'Witness Quinn']));
     });
 
-    it('shares replacement membership including non-entity extras without reordering it', () => {
+    it('keeps authored character options including known titles and non-entity extras in their original order', () => {
       setSeed(1);
       const text = effectiveCharactersText.replace('# conclusions',
         '# conclusions\n* characters=Nobody|Witness Quinn|Doctor Pat|Detective Sam');
@@ -90,8 +90,8 @@ describe('identitiesConclusionUtil', () => {
       expect(second).toEqual(first);
       const blanks = first.parts.filter(part => part.type === 'blank') as ClozeBlank[];
       expect(blanks.map(blank => blank.answerSet.answers)).toEqual([
-        ['Detective Sam', 'Doctor Pat', 'Witness Quinn'],
-        ['Detective Sam', 'Doctor Pat', 'Witness Quinn']
+        ['Detective Sam', 'Witness Quinn'],
+        ['Detective Sam', 'Witness Quinn']
       ]);
     });
 
@@ -104,13 +104,24 @@ describe('identitiesConclusionUtil', () => {
     });
 
     it('preserves explicit authored identities instead of adding generated rows', () => {
-      const level = loadValidLevelForTest(effectiveCharactersText.replace('## Mystery', '## Identities'));
+      const text = effectiveCharactersText.replace('## Mystery', '## Identities').replace('[Doctor Pat]', '[Witness Quinn]');
+      const level = loadValidLevelForTest(text);
 
       expect(level.conclusions).toHaveLength(1);
       expect(level.conclusions[0].id).toBe('identities');
       expect(level.conclusions[0].parts).toHaveLength(1);
       expect(level.conclusions[0].parts[0]).toMatchObject({
-        type:'blank', answerSet:{ answers:['Detective Sam', 'Doctor Pat', 'Witness Quinn'] }, correctAnswerIndexes:[1]
+        type:'blank', answerSet:{ answers:['Detective Sam', 'Witness Quinn'] }, correctAnswerIndexes:[1]
+      });
+    });
+
+    it('allows a known title as a correct answer in authored identities with a character override', () => {
+      const text = effectiveCharactersText.replace('## Mystery', '## Identities')
+        .replace('# conclusions', '# conclusions\n* characters=Doctor Pat|Witness Quinn');
+      const level = loadValidLevelForTest(text);
+
+      expect(level.conclusions[0].parts[0]).toMatchObject({
+        type:'blank', answerSet:{ answers:['Doctor Pat', 'Witness Quinn'] }, correctAnswerIndexes:[0]
       });
     });
   });

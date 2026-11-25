@@ -2,7 +2,8 @@
 type ClozeCategory = {
   id:string,
   authoredName:string,
-  allowedValues:string[]
+  allowedValues:string[],
+  isAuthored?:true
 }
 
 export default ClozeCategory;

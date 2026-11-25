@@ -181,7 +181,7 @@ export function lockConclusionsAsNeeded(conclusions:Conclusion[]) {
 
 /** Parses authored conclusion sections and resolves reveal and unlock references. */
 export function parseAuthoredConclusions(conclusionsSectionText:string, rooms:ReadonlyArray<Room>, 
-  clozeCategories:Record<string, ClozeCategory>, initiallyObscuredRoomIds:ReadonlySet<string>,
+  clozeCategories:Record<string, ClozeCategory>, identityCharacterCategory:ClozeCategory, initiallyObscuredRoomIds:ReadonlySet<string>,
   errors:ErrorCollector):Conclusion[]|null {
   if (!conclusionsSectionText.trim()) return [];
   const originalErrorCount = errors.count;
@@ -195,7 +195,8 @@ export function parseAuthoredConclusions(conclusionsSectionText:string, rooms:Re
     const conclusionName = conclusionNames[i];
     const entry = conclusionSections.get(conclusionName);
     assertNonNullable(entry);
-    const conclusion = _parseConclusion(entry.name, entry.value, rooms, conclusionIds, clozeCategories,
+    const categories = conclusionIds[i] === 'identities' ? { ...clozeCategories, characters:identityCharacterCategory } : clozeCategories;
+    const conclusion = _parseConclusion(entry.name, entry.value, rooms, conclusionIds, categories,
       initiallyObscuredRoomIds, errors);
     if (conclusion) conclusions.push(conclusion);
   }

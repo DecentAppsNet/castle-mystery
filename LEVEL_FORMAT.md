@@ -759,9 +759,9 @@ This is most useful for identity-style conclusions.
 
 ## Secret Identities
 
-The engine automatically generates an `Identities` conclusion for placed, interactive characters whose identities are not already known. Its options also include interactive characters whose identities are known.
+The engine automatically generates an `Identities` conclusion for placed, interactive characters whose titles are not already known. By default, character options on the `Identities` conclusion exclude titles marked `isTitleKnown=true`. Other conclusions use the full character category.
 
-If you replace `characters=`, include every displayed title needed by those identity blanks. Two generated identity blanks cannot require the same title.
+An authored `characters=` list replaces the default options and is used as written, even if it includes known titles. Include every displayed title needed by the identity blanks. Two generated identity blanks cannot require the same title.
 
 If you want to customize only the metadata for that generated conclusion, add an `## identities` subsection without a `conclusion=` line. In that special case, the generated identity blanks are kept, while authored metadata such as `title`, `revealRooms`, `unlockConclusions`, and `isOptional` is applied.
 

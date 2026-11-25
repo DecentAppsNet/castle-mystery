@@ -83,6 +83,14 @@ describe('loading levels - blank validation', () => {
     expect(errors.describeErrors()).toContain('found 0');
   });
 
+  it('rejects a known title required by authored identities without a character override', () => {
+    const text = effectiveCharactersText.replace('## Mystery', '## Identities');
+    const { level, errors } = loadLevelForTest(text);
+
+    expect(level).toBeNull();
+    expect(errors.describeErrors()).toContain('Conclusion "Identities", blank 1: Answer "Doctor Pat"');
+  });
+
   it('collects missing answers from every generated identity row without suppressing invalid rows', () => {
     const text = effectiveCharactersText.replace('# conclusions', '# conclusions\n* characters=Doctor Pat|Nobody');
     const { level, errors } = loadLevelForTest(text);

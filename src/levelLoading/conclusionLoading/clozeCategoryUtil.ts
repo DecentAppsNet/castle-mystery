@@ -23,12 +23,11 @@ function _uniqueGeneratedValues(values:string[]):string[] {
   });
 }
 
-function _describeCategory(category:ClozeCategory, authoredCategoryIds:ReadonlySet<string>):string {
-  return `${authoredCategoryIds.has(category.id) ? 'authored' : 'generated'} "${category.authoredName}" category`;
+function _describeCategory(category:ClozeCategory):string {
+  return `${category.isAuthored ? 'authored' : 'generated'} "${category.authoredName}" category`;
 }
 
-function _validateCategories(categories:Record<string, ClozeCategory>, authoredCategoryIds:ReadonlySet<string>,
-    errors:ErrorCollector):void {
+function _validateCategories(categories:Record<string, ClozeCategory>, errors:ErrorCollector):void {
   // Retain the first owner of each normalized phrase across all effective categories.
   const owners:{ [phrase:string]:ClozeCategory | undefined } = Object.create(null);
   for (const category of Object.values(categories)) {
@@ -41,16 +40,16 @@ function _validateCategories(categories:Record<string, ClozeCategory>, authoredC
       }
 
       // Diagnose replacements as authored, and locate conflicts at an authored entry when possible.
-      const description = _describeCategory(category, authoredCategoryIds);
-      const generatedCount = Number(!authoredCategoryIds.has(previous.id)) + Number(!authoredCategoryIds.has(category.id));
+      const description = _describeCategory(category);
+      const generatedCount = Number(!previous.isAuthored) + Number(!category.isAuthored);
       const correction = generatedCount === 0 ? 'Remove or rename the overlap.'
         : `Remove or rename the overlap, or replace ${generatedCount === 1 ? 'the' : 'either'} generated category with the intended complete authored list.`;
       const message = previous === category
         ? `The ${description} repeats the answer "${answer}". Remove or rename the duplicate entry.`
-        : `Answer "${answer}" overlaps between the ${_describeCategory(previous, authoredCategoryIds)} and the ${description}. ` +
+        : `Answer "${answer}" overlaps between the ${_describeCategory(previous)} and the ${description}. ` +
           correction;
-      const source = authoredCategoryIds.has(category.id) ? category : previous;
-      if (authoredCategoryIds.has(source.id)) {
+      const source = category.isAuthored ? category : previous;
+      if (source.isAuthored) {
         errors.addAt(message, 'conclusions', `* ${source.authoredName}=`, answer);
       } else {
         errors.addAt(message, category.id, answer, answer);
@@ -69,7 +68,7 @@ function _parseAuthoredClozeCategories(conclusionsSectionText:string, errors:Err
     const { value, authoredName } = variables[id];
     const allowedValues = parseOptions(value).map(convertStraightQuotesToDirectional);
     assert(clozeCategories[id] === undefined);
-    clozeCategories[id] = { id, authoredName, allowedValues };
+    clozeCategories[id] = { id, authoredName, allowedValues, isAuthored:true };
   });
   return clozeCategories;
 }
@@ -96,12 +95,10 @@ export function createClozeCategories(conclusionsSectionText:string, rooms:Room[
     const originalErrorCount = errors.count;
     const categories = _parseAuthoredClozeCategories(conclusionsSectionText, errors);
     if (errors.count > originalErrorCount) return {};
-    const authoredCategoryIds = new Set(Object.keys(categories));
-
     // Apply replacements before deduplicating generated memberships and checking all effective categories.
     if (!categories.characters) categories.characters = _charactersToCategory(characters);
     if (!categories.rooms) categories.rooms = _roomsToCategory(rooms);
     if (!categories.items) categories.items = _itemsToCategory(items);
-    _validateCategories(categories, authoredCategoryIds, errors);
+    _validateCategories(categories, errors);
     return categories;
 }

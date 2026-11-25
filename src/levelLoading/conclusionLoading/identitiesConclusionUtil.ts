@@ -11,7 +11,7 @@ import { ErrorCollector } from "../errorCollection";
 import { UNKNOWN_CHARACTER_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { createClozeBlankFromTemplateText } from "./parseConclusionUtil";
 import { createNormalizedSectionEntryMap, createSectionVariables, getSectionIdsFromSectionText, parseBoolean } from "../levelFileSectionUtil";
-import { resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
+import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
 import Room from "@/game/types/Room";
 import { randIntInRange } from "@/common/randUtil";
 import { assertNonNullable } from "decent-portal";
@@ -35,6 +35,15 @@ function _findIdentityRowCharacters(placedCharacters:readonly Character[],
     initiallyKnownTitleCharacterIds:ReadonlySet<string>):Character[] {
   const characters = placedCharacters.filter(character => isCharacterInteractive(character) && !initiallyKnownTitleCharacterIds.has(character.id));
   return _randomizeIdentityRows(characters);
+}
+
+export function getIdentityCharacterCategory(characterCategory:ClozeCategory, placedCharacters:readonly Character[],
+    initiallyKnownTitleCharacterIds:ReadonlySet<string>):ClozeCategory {
+  if (characterCategory.isAuthored) return characterCategory;
+  const knownTitles = new Set(placedCharacters.filter(character => initiallyKnownTitleCharacterIds.has(character.id))
+    .map(character => normalizeCategoryPhrase(character.title)));
+  const allowedValues = characterCategory.allowedValues.filter(title => !knownTitles.has(normalizeCategoryPhrase(title)));
+  return { ...characterCategory, allowedValues };
 }
 
 function _getCharacterHeadImageUrl(character:Character):string {
@@ -84,7 +93,6 @@ export function createGeneratedIdentityConclusion(conclusionsSectionText:string,
   const identityRowCharacters = _findIdentityRowCharacters(placedCharacters, initiallyKnownTitleCharacterIds);
   if (errors.count > originalErrorCount) return null;
 
-  // Use the effective category without rebuilding options from the filtered identity rows.
   const clozeCategories = { characters:characterCategory };
   const parts:ClozePart[] = [];
   identityRowCharacters.forEach((character, characterI) => {
