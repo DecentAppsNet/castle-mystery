@@ -14,11 +14,13 @@ const appLinks = [
 const contributorText = 'Erik Hermansen, Peter Turner';
 
 type Props = {
+  levelUrls:readonly string[],
+  onLoadLevel:(levelUrl:string) => void,
   onRevealLevel:() => void,
   onResetLevel:() => void
 }
 
-function TopBar({onRevealLevel, onResetLevel}:Props) {
+function TopBar({levelUrls, onLoadLevel, onRevealLevel, onResetLevel}:Props) {
   const links = isServingLocally() 
     ? [...appLinks]
     : [...appLinks].filter(link => link.description !== 'DevTools');
@@ -35,12 +37,13 @@ function TopBar({onRevealLevel, onResetLevel}:Props) {
 
   return <>
     <DecentBar appLinks={links} contributorText={contributorText} onClickLink={_onClickLink}/>
-    <DeveloperDialog 
+    {modalDialogName === DeveloperDialog.name && <DeveloperDialog
+      levelUrls={levelUrls}
+      onLoadLevel={levelUrl => { setModalDialogName(null); onLoadLevel(levelUrl); }}
       onReturn={() => setModalDialogName(null)} 
       onRevealLevel={() => { setModalDialogName(null); onRevealLevel(); }} 
       onResetLevel={() => { setModalDialogName(null); onResetLevel(); }}
-      isOpen={modalDialogName === DeveloperDialog.name} 
-    />
+    />}
   </>;
 }
 

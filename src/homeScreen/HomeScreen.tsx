@@ -261,7 +261,12 @@ function HomeScreen() {
 
   return (
     <div ref={applicationRootRef} className={styles.container} inert={isGameDisabled}>
-      <TopBar onRevealLevel={_handleRevealLevel} onResetLevel={_handleResetLevel} />
+      <TopBar
+        levelUrls={bookState?.levelUrls ?? []}
+        onLoadLevel={_handleLevelSelect}
+        onRevealLevel={_handleRevealLevel}
+        onResetLevel={_handleResetLevel}
+      />
       <div className={styles.content}>
         {levelManifest && <LevelSelector
           levelManifest={levelManifest}
