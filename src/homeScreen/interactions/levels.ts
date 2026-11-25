@@ -11,7 +11,6 @@ import Discoveries from "@/game/types/Discoveries";
 import PreparedLevelState from '../types/PreparedLevelState';
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import { loadLevelFromUrl } from "@/levelLoading";
-import LevelManifest from "@/levelLoading/types/LevelManifest";
 import { setLastLevelUrl } from "@/persistence/lastLevel";
 import { msecsToMinutes } from '@/common/timeUtil';
 import type LevelLoadRequest from '../types/LevelLoadRequest';
@@ -25,9 +24,7 @@ type ChangeLevelParams = {
   closeCurtain:() => Promise<boolean>,
   onLoadingFailed:(error:unknown) => void,
   levelUrl:string,
-  levelManifest:LevelManifest,
   onLevelPrepared:(prepared:PreparedLevelState) => void,
-  setLevelManifest:Dispatch<SetStateAction<LevelManifest|null>>,
   setIsPlaying:Dispatch<SetStateAction<boolean>>,
   setMinutes:Dispatch<SetStateAction<number>>,
   setWinSynopsis:Dispatch<SetStateAction<string>>,
@@ -38,20 +35,7 @@ type ChangeLevelParams = {
   setModalDialogName:Dispatch<SetStateAction<string|null>>
 };
 
-function _findLevelIndex(levelManifest:LevelManifest, levelUrl:string):number {
-  const levelIndex = levelManifest.levelUrls.indexOf(levelUrl);
-  return levelIndex === -1 ? 0 : levelIndex;
-}
-
-function _createLevelManifestWithSelectedLevel(levelManifest:LevelManifest, levelUrl:string):LevelManifest {
-  return {
-    ...levelManifest,
-    lastLevelI:_findLevelIndex(levelManifest, levelUrl)
-  };
-}
-
-async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
-  onLevelPrepared:(prepared:PreparedLevelState) => void, setLevelManifest:Dispatch<SetStateAction<LevelManifest|null>>,
+async function _loadAndApplyLevel(levelUrl:string, onLevelPrepared:(prepared:PreparedLevelState) => void,
   setIsPlaying:Dispatch<SetStateAction<boolean>>, setMinutes:Dispatch<SetStateAction<number>>,
   setWinSynopsis:Dispatch<SetStateAction<string>>, setConclusions:Dispatch<SetStateAction<Conclusion[]>>, setDiscoveries:Dispatch<SetStateAction<Discoveries>>,
   setConclusionClaimCooldowns:Dispatch<SetStateAction<Record<string, number>>>, setActiveCharacterId:Dispatch<SetStateAction<string>>,
@@ -69,7 +53,6 @@ async function _loadAndApplyLevel(levelUrl:string, levelManifest:LevelManifest,
 
   const { gameState } = prepared;
   onLevelPrepared(prepared);
-  setLevelManifest(_createLevelManifestWithSelectedLevel(levelManifest, levelUrl));
   setIsPlaying(false);
   setMinutes(msecsToMinutes(gameState.time));
   setWinSynopsis(gameState.winSynopsis);
@@ -120,9 +103,7 @@ function _changeLevel({
   closeCurtain,
   onLoadingFailed,
   levelUrl,
-  levelManifest,
   onLevelPrepared,
-  setLevelManifest,
   setIsPlaying,
   setMinutes,
   setWinSynopsis,
@@ -132,32 +113,32 @@ function _changeLevel({
   setActiveCharacterId,
   setModalDialogName
 }:ChangeLevelParams, resetSave:boolean):Promise<void> {
-  return _requestLevelLoad(loadRequest, closeCurtain, () => _loadAndApplyLevel(levelUrl, levelManifest, onLevelPrepared, setLevelManifest, setIsPlaying, setMinutes,
+  return _requestLevelLoad(loadRequest, closeCurtain, () => _loadAndApplyLevel(levelUrl, onLevelPrepared, setIsPlaying, setMinutes,
     setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
     setModalDialogName, loadRequest, imageSet), onLoadingFailed, saveCoordinator, resetSave);
 }
 
-type ContinueToNextLevelParams = Omit<ChangeLevelParams, 'levelUrl'>;
+type ContinueToNextLevelParams = ChangeLevelParams & { levelUrls:readonly string[] };
 
 /** Handles level selection, flushing outgoing paused time before loading the target. */
 export function changeLevel(params:ChangeLevelParams):Promise<void> {
   return _changeLevel(params, false);
 }
 
-/** Handles Reset by clearing current progress before reloading the same manifest level. */
-export function resetLevel(params:ContinueToNextLevelParams):Promise<void> {
-  const levelUrl = params.levelManifest.levelUrls[params.levelManifest.lastLevelI];
-  return _changeLevel({ ...params, levelUrl }, true);
+/** Handles Reset by clearing current progress before reloading the same level. */
+export function resetLevel(params:ChangeLevelParams):Promise<void> {
+  return _changeLevel(params, true);
 }
 
 /** Handles Continue from the victory dialog; no next level only dismisses the dialog. */
 export function continueToNextLevel(params:ContinueToNextLevelParams):Promise<void> {
-  const { levelManifest, setModalDialogName } = params;
-  const nextLevelUrl = levelManifest.levelUrls[levelManifest.lastLevelI + 1] || null;
+  const { levelUrl, levelUrls, ...changeParams } = params;
+  const levelI = levelUrls.indexOf(levelUrl);
+  const nextLevelUrl = levelI === -1 ? undefined : levelUrls[levelI + 1];
   if (!nextLevelUrl) {
-    setModalDialogName(null);
+    changeParams.setModalDialogName(null);
     return Promise.resolve();
   }
 
-  return changeLevel({ ...params, levelUrl:nextLevelUrl });
+  return changeLevel({ ...changeParams, levelUrl:nextLevelUrl });
 }

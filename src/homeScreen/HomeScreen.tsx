@@ -11,8 +11,6 @@ import ConclusionsView from "./conclusionsView/ConclusionsView";
 import DiscoveriesView from "./discoveriesView/DiscoveriesView";
 import Conclusion from "@/game/conclusions/types/Conclusion";
 import WinLevelDialog from "./dialogs/WinLevelDialog";
-import LevelManifest from "@/levelLoading/types/LevelManifest";
-import LevelSelector from "./levelSelector/LevelSelector";
 import { changeLevel, continueToNextLevel, resetLevel } from "./interactions/levels";
 import Discoveries, { createEmptyDiscoveries } from "@/game/types/Discoveries";
 import { createDiscoveries } from "@/game/discoveriesUtil";
@@ -59,7 +57,6 @@ function HomeScreen() {
   const [loadedLevel, setLoadedLevel] = useState<{ gameState:GameState, levelUrl:string }|null>(null);
   const gameState = loadedLevel?.gameState ?? null;
   const [bookState, setBookState] = useState<BookState|null>(null);
-  const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
   const [initErrorMessage, setInitErrorMessage] = useState<string|null>(null);
   const [isInitialClosedFramePainted, setIsInitialClosedFramePainted] = useState(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -160,7 +157,6 @@ function HomeScreen() {
       setMinutes(initResults.minutes);
       setBookState(initResults.bookState);
       _publishPreparedLevelState(initResults, initResults.bookState);
-      setLevelManifest(initResults.levelManifest);
       setWinSynopsis(initResults.gameState.winSynopsis);
       setConclusions(initResults.gameState.conclusions);
       setDiscoveries(createDiscoveries(initResults.gameState));
@@ -195,24 +191,25 @@ function HomeScreen() {
   }
 
   function _handleResetLevel() {
-    if (_isGameDisabled() || !levelManifest) return;
+    if (_isGameDisabled()) return;
     assertNonNullable(imageSetRef.current);
-    void resetLevel({ imageSet:imageSetRef.current, levelManifest, loadRequest:loadRequestRef.current,
+    assertNonNullable(loadedLevel);
+    void resetLevel({ imageSet:imageSetRef.current, levelUrl:loadedLevel.levelUrl, loadRequest:loadRequestRef.current,
       saveCoordinator:saveCoordinatorRef.current, closeCurtain:_closeCurtain,
       onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
-      setLevelManifest, setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
+      setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
       setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setModalDialogName });
   }
 
   function _handleLevelSelect(levelUrl:string, hideBookFirst:boolean = false) {
-    if (_isGameDisabled() || !levelManifest) return;
+    if (_isGameDisabled()) return;
     assertNonNullable(imageSetRef.current);
     _setGameDisabled(true);
     clearPlayerEvents();
-    void changeLevel({ imageSet:imageSetRef.current, levelManifest, levelUrl, loadRequest:loadRequestRef.current,
+    void changeLevel({ imageSet:imageSetRef.current, levelUrl, loadRequest:loadRequestRef.current,
       saveCoordinator:saveCoordinatorRef.current, closeCurtain:() => _closeCurtain(hideBookFirst),
       onLoadingFailed:_handleLoadingFailed, onLevelPrepared:_publishPreparedLevelState,
-      setLevelManifest, setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
+      setIsPlaying, setMinutes, setWinSynopsis, setConclusions,
       setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId, setModalDialogName });
   }
 
@@ -268,10 +265,6 @@ function HomeScreen() {
         onResetLevel={_handleResetLevel}
       />
       <div className={styles.content}>
-        {levelManifest && <LevelSelector
-          levelManifest={levelManifest}
-          onSelect={_handleLevelSelect}
-        />}
         <LevelView 
           ref={levelViewRef}
           gameState={gameState} 
@@ -319,12 +312,13 @@ function HomeScreen() {
           <DiscoveriesView discoveries={discoveries} />
         </div>
       </div>}
-      {gameState && levelManifest && <WinLevelDialog 
+      {loadedLevel && bookState && <WinLevelDialog 
         synopsis={winSynopsis} 
         isOpen={modalDialogName === WinLevelDialog.name} 
         onContinue={() => {
           assertNonNullable(imageSetRef.current);
-          void continueToNextLevel({imageSet:imageSetRef.current, levelManifest, onLevelPrepared:_publishPreparedLevelState, setLevelManifest, setIsPlaying,
+          void continueToNextLevel({imageSet:imageSetRef.current, levelUrl:loadedLevel.levelUrl, levelUrls:bookState.levelUrls,
+            onLevelPrepared:_publishPreparedLevelState, setIsPlaying,
             setMinutes, setWinSynopsis, setConclusions, setDiscoveries, setConclusionClaimCooldowns, setActiveCharacterId,
             setModalDialogName, loadRequest:loadRequestRef.current, closeCurtain:_closeCurtain,
             saveCoordinator:saveCoordinatorRef.current,

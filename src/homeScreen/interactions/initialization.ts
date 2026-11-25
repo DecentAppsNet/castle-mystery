@@ -6,7 +6,7 @@ import { assert } from 'decent-portal';
 import { msecsToMinutes } from '@/common/timeUtil';
 import { prepareLevelState } from '../levelPreparation';
 import { updateImageSetForLevel } from "@/game/imageSetUtil";
-import { loadLevelFromUrl, loadLevelManifestFromUrl } from "@/levelLoading";
+import { loadLevelFromUrl } from "@/levelLoading";
 import { ImageSet } from '@/imageLoading';
 import InitResults from '../types/InitResults';
 import { loadBookFromUrl } from '@/book';
@@ -22,7 +22,6 @@ async function _chooseInitialLevelUrl(bookState:BookState):Promise<string> {
 /** Loads the initial level and prepares runtime state with the supplied session image store. */
 export async function init(imageSet:ImageSet):Promise<InitResults> {
   const bookState = await loadBookFromUrl('/levels/book.md');
-  const levelManifest = await loadLevelManifestFromUrl('/levels/levels.md'); // This is used to populate the dev navigation menu.
   const initialLevelUrl = await _chooseInitialLevelUrl(bookState);
   const { level, errors } = await loadLevelFromUrl(initialLevelUrl);
   if (!level) {
@@ -36,7 +35,6 @@ export async function init(imageSet:ImageSet):Promise<InitResults> {
   return {
     ...prepared,
     bookState,
-    minutes,
-    levelManifest
+    minutes
   };
 }
