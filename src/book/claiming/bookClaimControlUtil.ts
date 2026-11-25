@@ -64,9 +64,7 @@ export function updateBookClaimControls(bookState:Readonly<BookState>, loadedLev
   const leftPageNo = pageNo % 2 === 1 ? pageNo : pageNo - 1;
   const isInteractive = bookState.isVisible && bookState.animationKind === null;
   const leftPage = isInteractive && (!isSinglePageView || pageNo === leftPageNo) ? pages[leftPageNo - 1] : undefined;
-  const rightPage = isInteractive && (!isSinglePageView || pageNo !== leftPageNo) ? pages[leftPageNo] : undefined;
-  const left = _canClaim(leftPage);
-  const right = _canClaim(rightPage);
+  const canClaim = _canClaim(leftPage);
   const chapterEndPageI = isSinglePageView ? pageNo - 1 : leftPageNo;
   const chapterEndPage = pages[chapterEndPageI];
   const nextChapter = isInteractive && chapterEndPageI === pages.length - 1 && chapterEndPage?.kind === 'chapterEnd'
@@ -81,7 +79,7 @@ export function updateBookClaimControls(bookState:Readonly<BookState>, loadedLev
   const y = rect.y + rect.height * .99;
   const height = rect.height * .05;
   const claimX = isSinglePageView ? areaX + (areaWidth - width) / 3 : rect.x + rect.width / 4 - width / 2;
-  let closeX = areaX + (areaWidth - width) * (isSinglePageView && (left || right) ? 2 / 3 : .5);
+  let closeX = areaX + (areaWidth - width) * (isSinglePageView && canClaim ? 2 / 3 : .5);
   let visitX = visitTarget?.isLeftPage ? claimX : claimX + rect.width / 2;
   if (isSinglePageView && visitChapter) {
     const visitSlot = pageNo > 1 ? 1 : 0;
@@ -91,8 +89,7 @@ export function updateBookClaimControls(bookState:Readonly<BookState>, loadedLev
     closeX = visitX + spacing;
   }
   _placeControl('closeBook', { x:closeX, y, width, height }, true, controlLayout);
-  _placeControl('claimLeft', { x:claimX, y, width, height }, left, controlLayout);
-  _placeControl('claimRight', { x:isSinglePageView ? claimX : claimX + rect.width / 2, y, width, height }, right, controlLayout);
+  _placeControl('claim', { x:claimX, y, width, height }, canClaim, controlLayout);
   if (visitChapter || controlLayout.controls.some(control => control.id === 'visitChapter')) {
     _placeControl('visitChapter', { x:visitX, y, width, height }, visitChapter, controlLayout);
   }

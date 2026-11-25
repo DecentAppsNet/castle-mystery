@@ -586,13 +586,18 @@ describe('pieceInteractionUtil', () => {
   });
 
   describe('onBookMouseOver()', () => {
-    it('updates ordinary control hover while no drag is active', () => {
+    it('keeps the hover start time until the pointer leaves the control', () => {
       const { bookState, layout } = _createDraggableBookState();
       updateControlRect('closeBook', { x:590, y:345, width:40, height:30 }, layout.controlLayout);
       onBookMouseOver(600, 350, 0, bookState);
       expect(layout.controlLayout.hoveredControlId).toBe('closeBook');
-      onBookMouseOver(0, 0, 0, bookState);
+      onBookMouseOver(601, 350, 500, bookState);
+      expect(layout.controlHoverStartedAt).toBe(0);
+      onBookMouseOver(0, 0, 750, bookState);
       expect(layout.controlLayout.hoveredControlId).toBeNull();
+      expect(layout.controlHoverStartedAt).toBeUndefined();
+      onBookMouseOver(600, 350, 900, bookState);
+      expect(layout.controlHoverStartedAt).toBe(900);
     });
 
     it('moves the active piece without updating control hover', () => {

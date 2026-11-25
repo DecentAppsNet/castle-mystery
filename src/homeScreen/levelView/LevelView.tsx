@@ -15,7 +15,7 @@ import type LevelViewFrameState from './types/LevelViewFrameState';
 import type InitialClosedFrameHandoff from './types/InitialClosedFrameHandoff';
 import type LevelViewHandle from './types/LevelViewHandle';
 import { announceCurtainClosed, cancelCurtainClose, requestCurtainClose } from './levelViewCloseUtil';
-import { drawBook, showBook, hideBook, onBookMouseDown, onBookMouseUp, onBookMouseOver, onBookMouseWheel, endBookPieceDrag } from '@/book';
+import { drawBook, showBook, hideBook, onBookMouseDown, onBookMouseUp, onBookMouseOver, onBookMouseLeave, onBookMouseWheel, endBookPieceDrag } from '@/book';
 import BookState from '@/book/types/BookState';
 import { findMetaTimeNow } from '@/game/metaTimeUtil';
 import { DRAW_FPS_COUNTER } from '@/developer/config';
@@ -197,6 +197,7 @@ function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, o
       clearLevelView(context);
     }
     if (isCurtainVisible(frame)) drawCurtainOverlay(context, frame, hasLoadingFailed);
+    if (bookState && (!frame.canRenderScene || !bookState.isVisible || _isInputDisabled())) onBookMouseLeave(bookState);
     if (frame.canRenderScene && currentGameState && bookState?.isVisible) {
       drawBook(bookState, findMetaTimeNow(), currentGameState.imageSet, context, loadedLevelUrl);
     }
@@ -211,7 +212,10 @@ function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, o
     }
   }
 
-  return <div className={styles.container} onMouseLeave={() => { pointerClientPositionRef.current = null; }}>
+  return <div className={styles.container} onMouseLeave={() => {
+    pointerClientPositionRef.current = null;
+    if (bookState) onBookMouseLeave(bookState);
+  }}>
     <Canvas 
       isAnimated={true} 
       onDraw={_onDraw}
@@ -219,7 +223,10 @@ function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, o
         prepareLevelViewCache(frameStateRef.current, gameState, destWidth, destHeight);
       }}
       onPageViewingChange={(isViewingPage) => {
-        if (!isViewingPage) cancelBookDragRef.current?.();
+        if (!isViewingPage) {
+          cancelBookDragRef.current?.();
+          if (bookState) onBookMouseLeave(bookState);
+        }
         const currentGameState = acceptedGameStateRef.current;
         if (isViewingPage || !currentGameState) return;
         pauseGameState(currentGameState, onStateChanged);

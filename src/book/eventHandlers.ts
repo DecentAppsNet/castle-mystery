@@ -37,6 +37,7 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
   if (!bookState.layout || bookState.animationKind || bookState.pieceDragState !== null) return false;
 
   const id = _findControlAtPoint(bookState, canvasX, canvasY);
+  if (id === null) onBookMouseLeave(bookState);
   const piece = id === null ? findBookPieceAtPoint(bookState, canvasX, canvasY) : null;
   if (piece !== null) {
     if (canStartPieceDrag) return beginBookPieceDrag(bookState, canvasX, canvasY);
@@ -64,9 +65,9 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
 
   if (id === 'prevPage') goPrevPage(metaTime, bookState);
   if (id === 'nextPage') goNextPage(metaTime, bookState);
-  if (id === 'claimLeft' || id === 'claimRight') {
+  if (id === 'claim') {
     const leftPageNo = bookState.pageNo % 2 === 1 ? bookState.pageNo : bookState.pageNo - 1;
-    claimBookConclusion(bookState, leftPageNo + (id === 'claimRight' ? 1 : 0), metaTime);
+    claimBookConclusion(bookState, leftPageNo, metaTime);
   }
   return false;
 }
@@ -84,7 +85,7 @@ export function onBookMouseUp(canvasX:number, canvasY:number, _metaTime:number, 
   if (id !== null) console.log('mouse up on ' + id);
 }
 
-export function onBookMouseOver(canvasX:number, canvasY:number, _metaTime:number, bookState:BookState) {
+export function onBookMouseOver(canvasX:number, canvasY:number, metaTime:number, bookState:BookState) {
   if (bookState.claimState !== null) return;
   if (bookState.pieceDragState !== null) {
     moveBookPieceDrag(bookState, canvasX, canvasY);
@@ -93,7 +94,18 @@ export function onBookMouseOver(canvasX:number, canvasY:number, _metaTime:number
   assert(bookState.isVisible); // Caller should check.
   if (!bookState.layout || bookState.animationKind) return;
   
-  bookState.layout.controlLayout.hoveredControlId = _findControlAtPoint(bookState, canvasX, canvasY);
+  const { layout } = bookState;
+  const id = _findControlAtPoint(bookState, canvasX, canvasY);
+  if (layout.controlLayout.hoveredControlId === id) return;
+  layout.controlLayout.hoveredControlId = id;
+  layout.controlHoverStartedAt = id === null ? undefined : metaTime;
+}
+
+export function onBookMouseLeave(bookState:BookState):void {
+  const { layout } = bookState;
+  if (!layout) return;
+  layout.controlLayout.hoveredControlId = null;
+  delete layout.controlHoverStartedAt;
 }
 
 export function onBookMouseWheel(_deltaY:number, _metaTime:number, bookState:BookState) {

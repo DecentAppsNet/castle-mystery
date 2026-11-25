@@ -102,7 +102,7 @@ describe('book claim resolution', () => {
     expect(bookState.pieceStack).toEqual(stack.slice(0, 2));
     stack.forEach((piece, i) => expect(piece.placement).toBe(placements[i]));
     expect(getVisibleBookPieces(bookState)).toEqual([]);
-    expect(layout.controlLayout.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+    expect(layout.controlLayout.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
   });
 
   it('captures an appended duplicate-ID page index and cleans up only its unused inventory', () => {
@@ -211,7 +211,7 @@ describe('book claim resolution', () => {
     const { bookState, page, otherBlank, layout } = _createFixture();
     otherBlank.correctAnswerIndexes.push(1);
     updateBookClaimControls(bookState);
-    const rect = findControlRect(layout.controlLayout, 'claimLeft');
+    const rect = findControlRect(layout.controlLayout, 'claim');
     expect(onBookMouseDown(rect.x + rect.width / 2, rect.y + rect.height / 2, 123, bookState, true)).toBe(false);
     expect(bookState.claimState).toMatchObject({ page, conclusionPageI:0, startedAt:123, correct:true, resultApplied:false });
     expect(page.conclusion.isComplete).toBe(false);

@@ -11,6 +11,7 @@ type BookLayout = {
   pieceLayouts:ReadonlyArray<PieceLayout>, // Prepared piece references, displayed canvas rectangles, and text metrics; empty while invalid or animating.
   pieceSlotLayouts:ReadonlyArray<PieceSlotLayout>, // Normal slot rectangles and actual page/blank ownership for the interactive view.
   pieceLayoutsPageNo:number|null, // Selected page number for both prepared record collections, or null while invalid or animating.
+  controlHoverStartedAt?:number,
   controlLayout:ControlLayout // Navigation control rectangles before the page-view offset, plus visibility and hover state.
 }
 

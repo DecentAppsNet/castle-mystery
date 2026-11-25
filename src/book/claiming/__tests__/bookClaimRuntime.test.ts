@@ -171,7 +171,7 @@ describe('book claim runtime', () => {
       updateBookClaim(bookState, STARTED_AT + 7000);
       expect(bookState.claimState).toBeNull();
       expect(page.conclusion.incorrectGuessCount).toBe(0);
-      expect(layout.controlLayout.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+      expect(layout.controlLayout.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
       expect(layout.controlLayout.controls.find(control => control.id === 'nextPage')?.isVisible).toBe(true);
       expect(layout.controlLayout.controls.find(control => control.id === 'prevPage')?.isVisible).toBe(false);
       expect(layout.controlLayout.controls.find(control => control.id === 'closeBook')?.isVisible).toBe(true);
@@ -232,7 +232,7 @@ describe('book claim runtime', () => {
       expect(layout.controlLayout.controls.find(control => control.id === 'prevPage')?.isVisible).toBe(false);
       expect(layout.controlLayout.controls.find(control => control.id === 'nextPage')?.isVisible).toBe(true);
       expect(layout.controlLayout.controls.find(control => control.id === 'closeBook')?.isVisible).toBe(true);
-      expect(layout.controlLayout.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+      expect(layout.controlLayout.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
       const after = structuredClone(bookState);
       updateBookClaim(bookState, STARTED_AT + 1000000);
       expect(bookState).toEqual(after);
@@ -242,7 +242,7 @@ describe('book claim runtime', () => {
       const { bookState, page, first, layout } = _createFixture(false, 3);
       bookState.hungryPieceSlot = first;
       bookState.pieceSlotTransitions = [{ layout, slot:first, fromScale:1, toScale:1.2, startedAt:STARTED_AT - 100 }];
-      layout.controlLayout.hoveredControlId = 'claimLeft';
+      layout.controlLayout.hoveredControlId = 'claim';
       claimBookConclusion(bookState, 3, STARTED_AT);
       expect(bookState.claimState?.conclusionPageI).toBe(2);
       expect(bookState.hungryPieceSlot).toBeNull();
@@ -269,29 +269,25 @@ describe('book claim runtime', () => {
       expect(layout.controlLayout.controls.find(control => control.id === 'closeBook')?.isVisible).toBe(true);
     });
 
-    it('claims only the clicked right page despite duplicate exact IDs, leaving the other conclusion and its pieces unchanged', () => {
-      const { bookState, page, layout } = _createFixture();
-      const neighbor = _createFixture(false, 1, page.conclusion.id);
-      // Generate inventory in a valid spread, then copy it with this manual right-page fixture's ownership.
-      bookState.pages[1] = neighbor.page;
-      bookState.pieceStack.push(...neighbor.bookState.pieceStack.map(piece => ({ ...piece, conclusionPageI:1 })));
-      layout.pieceSlotLayouts = [...layout.pieceSlotLayouts,
-        { ...neighbor.first, pageNo:2 }, { ...neighbor.second, pageNo:2 }];
-      updateBookClaimControls(bookState);
+    it('claims only the displayed conclusion when another spread has the same ID', () => {
+      const { bookState, page, blank, otherBlank, layout } = _createFixture(false, 3);
+      const otherSpread = _createFixture(false, 1, page.conclusion.id);
+      bookState.pages[0] = otherSpread.page;
+      bookState.pieceStack.push(...otherSpread.bookState.pieceStack);
       const untouchedPieces = bookState.pieceStack.filter(piece => piece.conclusionPageI === 0);
       const beforePieces = structuredClone(untouchedPieces);
-      const beforeConclusion = structuredClone(page.conclusion);
-      const rect = findControlRect(layout.controlLayout, 'claimRight');
+      const beforeConclusion = structuredClone(otherSpread.page.conclusion);
+      const rect = findControlRect(layout.controlLayout, 'claim');
       onBookMouseDown(rect.x + rect.width / 2, rect.y + rect.height / 2, STARTED_AT, bookState, true);
-      expect(bookState.claimState?.page).toBe(neighbor.page);
-      expect(bookState.claimState?.conclusionPageI).toBe(1);
+      expect(bookState.claimState?.page).toBe(page);
+      expect(bookState.claimState?.conclusionPageI).toBe(2);
       claimBookConclusion(bookState, 1, STARTED_AT + 1);
-      expect(bookState.claimState?.page).toBe(neighbor.page);
+      expect(bookState.claimState?.page).toBe(page);
       setSeed(503);
       updateBookClaim(bookState, STARTED_AT + 4500);
-      expect(neighbor.page.conclusion.incorrectGuessCount).toBe(1);
-      expect([neighbor.blank.playerAnswerIndex, neighbor.otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
-      expect(page.conclusion).toEqual(beforeConclusion);
+      expect(page.conclusion.incorrectGuessCount).toBe(1);
+      expect([blank.playerAnswerIndex, otherBlank.playerAnswerIndex]).toEqual([-1, -1]);
+      expect(otherSpread.page.conclusion).toEqual(beforeConclusion);
       expect(untouchedPieces).toEqual(beforePieces);
     });
   });

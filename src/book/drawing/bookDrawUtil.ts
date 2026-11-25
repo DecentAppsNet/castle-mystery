@@ -12,6 +12,7 @@ import Rect from "@/game/types/Rect";
 import { drawBookPieces, preparePieceLayouts } from "./pieceDrawUtil";
 import { getVisibleBookPieces, prepareBookPieceSlotPresentations } from "../pieces";
 import PieceSlotLayout from "./types/PieceSlotLayout";
+import BookControlId from "./types/BookControlId";
 import PieceSlotPresentation from "../types/PieceSlotPresentation";
 import { updateBookClaim, updateBookClaimControls, calcBookClaimShakeOffset, calcBookClaimTiming,
   calcBookClaimMessageAlpha, prepareBookClaimGlints, prepareBookClaimPieceFalls } from '../claiming';
@@ -20,6 +21,18 @@ export const BOOK_IMAGE_URL = '/assets/ui/book.png';
 
 const BACKGROUND_ALPHA = .7;
 const BOOK_CONTROL_ALPHA = .8;
+const BOOK_CONTROL_POPOVER_DELAY_MS = 500;
+const BOOK_CONTROL_POPOVER_FILL = '#fff6bf';
+const BOOK_CONTROL_POPOVER_BORDER = '#000';
+const BOOK_CONTROL_POPOVER_TEXT = '#000';
+const BOOK_CONTROL_LABELS:Record<BookControlId, string> = {
+  prevPage:'Previous Page',
+  closeBook:'Hide Book',
+  claim:'Claim this Conclusion',
+  nextPage:'Next Page',
+  nextChapter:'Visit Next Chapter',
+  visitChapter:'Visit this Chapter'
+};
 
 function _drawTranslucentBackground(bookState:BookState, metaTime:number, context:CanvasRenderingContext2D) {
   let alphaFadeAmount = 1;
@@ -128,7 +141,30 @@ function _drawNextChapterIcon(context:CanvasRenderingContext2D) {
   context.lineTo(.05, .6);
 }
 
-function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D, loadedLevelUrl:string|null) {
+function _drawControlPopover(label:string, rect:Rect, drawOffsetX:number, context:CanvasRenderingContext2D) {
+  const padding = 8;
+  const height = 24;
+  const gap = 6;
+  if (context.canvas.width <= 2 * padding + 2 || context.canvas.height < height + 2) return;
+  context.save();
+  context.font = '14px sans-serif';
+  const width = Math.min(context.canvas.width - 2, Math.ceil(context.measureText(label).width) + 2 * padding);
+  const centerX = rect.x + drawOffsetX + rect.width / 2;
+  const left = Math.max(1, Math.min(centerX - width / 2, context.canvas.width - width - 1));
+  const top = Math.max(1, rect.y - height - gap);
+  context.fillStyle = BOOK_CONTROL_POPOVER_FILL;
+  context.fillRect(left, top, width, height);
+  context.strokeStyle = BOOK_CONTROL_POPOVER_BORDER;
+  context.lineWidth = 1;
+  context.strokeRect(left, top, width, height);
+  context.fillStyle = BOOK_CONTROL_POPOVER_TEXT;
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(label, left + width / 2, top + height / 2, width - 2 * padding);
+  context.restore();
+}
+
+function _drawBookControls(bookState:BookState, metaTime:number, context:CanvasRenderingContext2D, loadedLevelUrl:string|null) {
   const { layout } = bookState;
   assertNonNullable(layout);
   updateBookClaimControls(bookState, loadedLevelUrl);
@@ -151,8 +187,7 @@ function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D
       case 'prevPage': _drawLeftArrow(context); break;
       case 'nextChapter': _drawNextChapterIcon(context); break;
       case 'visitChapter': _drawChapterArch(context, 0); break;
-      case 'claimLeft':
-      case 'claimRight': _drawClaimHand(context); break;
+      case 'claim': _drawClaimHand(context); break;
       default: botch();
     }
     context.closePath();
@@ -160,6 +195,12 @@ function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D
     context.restore();
   }
   context.restore();
+
+  const { controlHoverStartedAt, controlLayout } = layout;
+  if (bookState.pieceDragState !== null || controlHoverStartedAt === undefined
+    || metaTime - controlHoverStartedAt < BOOK_CONTROL_POPOVER_DELAY_MS) return;
+  const hovered = controlLayout.controls.find(control => control.isVisible && control.id === controlLayout.hoveredControlId);
+  if (hovered) _drawControlPopover(BOOK_CONTROL_LABELS[hovered.id as BookControlId], hovered.rect, drawOffsetX, context);
 }
 
 function _drawPageContent(bookState:BookState, metaTime:number, bookDrawRect:Rect, imageSet:ImageSet,
@@ -230,5 +271,5 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
 
   // Navigation and overlays remain outside the claim transform, including the resumed recovery-end frame.
   drawPageFlip(bookState, metaTime, drawRect, bookImage, imageSet, context);
-  if (bookState.animationKind === null) _drawBookControls(bookState, context, loadedLevelUrl);
+  if (bookState.animationKind === null) _drawBookControls(bookState, metaTime, context, loadedLevelUrl);
 }

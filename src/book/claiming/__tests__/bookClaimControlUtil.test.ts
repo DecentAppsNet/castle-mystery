@@ -3,7 +3,7 @@ import { createLayout, findControlAtPoint, findControlRect, updateControlRect } 
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { updateBookClaimControls } from '../bookClaimControlUtil';
-import { onBookMouseDown, onBookMouseOver } from '@/book/eventHandlers';
+import { onBookMouseDown } from '@/book/eventHandlers';
 import BookPage from '@/book/types/BookPage';
 import { setPageNavigationButtonVisibility } from '@/book/navigationUtil';
 import { createDefaultBookState } from '@/book/types/BookState';
@@ -152,43 +152,24 @@ describe('bookClaimControlUtil', () => {
   it('centers claim below a full conclusion in a two-page view, keeping close centered on the book', () => {
     const { bookState, controls } = _createFixture();
     updateBookClaimControls(bookState);
-    expect(_center(findControlRect(controls, 'claimLeft'))).toBe(300);
+    expect(_center(findControlRect(controls, 'claim'))).toBe(300);
     expect(_center(findControlRect(controls, 'closeBook'))).toBe(500);
-    expect(findControlRect(controls, 'claimLeft')).toMatchObject({ y:515, width:40, height:25 });
-    expect(controls.controls.find(control => control.id === 'claimRight')?.isVisible).toBe(false);
-  });
-
-  it('supports independent eligible conclusions on both displayed pages', () => {
-    const { bookState, page, controls } = _createFixture();
-    bookState.pages[1] = { ...page, conclusion:{ ...page.conclusion, id:'other' } };
-    updateBookClaimControls(bookState);
-    expect(_center(findControlRect(controls, 'claimLeft'))).toBe(300);
-    expect(_center(findControlRect(controls, 'claimRight'))).toBe(700);
+    expect(findControlRect(controls, 'claim')).toMatchObject({ y:515, width:40, height:25 });
   });
 
   it('spaces previous, claim, close, and next equally beneath a single page', () => {
     const { bookState, controls } = _createFixture(true);
     updateBookClaimControls(bookState);
-    const centers = ['prevPage', 'claimLeft', 'closeBook', 'nextPage'].map(id => _center(findControlRect(controls, id)));
+    const centers = ['prevPage', 'claim', 'closeBook', 'nextPage'].map(id => _center(findControlRect(controls, id)));
     expect(centers[1] - centers[0]).toBeCloseTo(centers[2] - centers[1]);
     expect(centers[2] - centers[1]).toBeCloseTo(centers[3] - centers[2]);
     expect((centers[0] + centers[3]) / 2).toBe(300);
   });
 
-  it('supports the selected right conclusion in single-page view without double-applying the view offset', () => {
-    const { bookState, page, controls } = _createFixture(true, 2);
-    bookState.pages[1] = { ...page };
-    updateBookClaimControls(bookState);
-    const claim = findControlRect(controls, 'claimRight');
-    expect(claim.x).toBeCloseTo(500 + 380 / 3);
-    onBookMouseOver(claim.x + claim.width / 2 - 200, 525, 0, bookState);
-    expect(controls.hoveredControlId).toBe('claimRight');
-  });
-
   it('never shows the hidden neighboring conclusion claim in single-page view', () => {
     const { bookState, controls } = _createFixture(true, 2);
     updateBookClaimControls(bookState);
-    expect(controls.controls.filter(control => control.id.startsWith('claim')).every(control => !control.isVisible)).toBe(true);
+    expect(controls.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
     expect(_center(findControlRect(controls, 'closeBook'))).toBe(700);
   });
 
@@ -198,32 +179,32 @@ describe('bookClaimControlUtil', () => {
     blank.playerAnswerIndex = -1;
     updateBookClaimControls(bookState);
     expect(_center(findControlRect(controls, 'closeBook'))).toBe(300);
-    expect(controls.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+    expect(controls.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
     blank.playerAnswerIndex = 0;
     updateBookClaimControls(bookState);
     expect(_center(findControlRect(controls, 'closeBook'))).toBeCloseTo(100 + 380 * 2 / 3 + 10);
-    expect(controls.controls).toHaveLength(5);
+    expect(controls.controls).toHaveLength(4);
   });
 
   it('does not show claim for locked conclusions', () => {
     const { bookState, page, controls } = _createFixture();
     page.conclusion.isLocked = true;
     updateBookClaimControls(bookState);
-    expect(controls.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+    expect(controls.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
   });
 
   it('does not show claim for completed conclusions', () => {
     const { bookState, page, controls } = _createFixture();
     page.conclusion.isComplete = true;
     updateBookClaimControls(bookState);
-    expect(controls.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+    expect(controls.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
   });
 
   it('does not show claim for conclusions with no blanks', () => {
     const { bookState, page, controls } = _createFixture();
     page.conclusion.parts = [{ type:'text', text:'No blanks.' }];
     updateBookClaimControls(bookState);
-    expect(controls.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+    expect(controls.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
   });
 
   it('drops stale claims when page content is replaced', () => {
@@ -231,26 +212,26 @@ describe('bookClaimControlUtil', () => {
     updateBookClaimControls(bookState);
     bookState.pages[0] = { kind:'blank', headingText:'', chapterNo:1 };
     updateBookClaimControls(bookState);
-    expect(controls.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+    expect(controls.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
   });
 
   it('suppresses claims while animating or hidden', () => {
     const { bookState, controls } = _createFixture();
     bookState.animationKind = 'flipNext';
     updateBookClaimControls(bookState);
-    expect(controls.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+    expect(controls.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
     bookState.animationKind = null;
     bookState.isVisible = false;
     updateBookClaimControls(bookState);
-    expect(controls.controls.find(control => control.id === 'claimLeft')?.isVisible).toBe(false);
+    expect(controls.controls.find(control => control.id === 'claim')?.isVisible).toBe(false);
   });
 
   it('preserves hover on stable frames and clears it when a claim disappears', () => {
     const { bookState, controls, blank } = _createFixture();
     updateBookClaimControls(bookState);
-    controls.hoveredControlId = 'claimLeft';
+    controls.hoveredControlId = 'claim';
     updateBookClaimControls(bookState);
-    expect(controls.hoveredControlId).toBe('claimLeft');
+    expect(controls.hoveredControlId).toBe('claim');
     blank.playerAnswerIndex = -1;
     updateBookClaimControls(bookState);
     expect(controls.hoveredControlId).toBeNull();
@@ -259,7 +240,7 @@ describe('bookClaimControlUtil', () => {
   it('registers claim hit testing but ignores a click until normal slot geometry is prepared', () => {
     const { bookState, controls, page } = _createFixture();
     updateBookClaimControls(bookState);
-    expect(findControlAtPoint(controls, 300, 525)).toBe('claimLeft');
+    expect(findControlAtPoint(controls, 300, 525)).toBe('claim');
     const before = structuredClone(bookState);
     expect(onBookMouseDown(300, 525, 0, bookState, true)).toBe(false);
     expect(bookState).toEqual(before);
