@@ -273,7 +273,7 @@ function HomeScreen() {
           bookState={bookState}
           loadedLevelUrl={loadedLevel?.levelUrl ?? null}
           isGameDisabled={_isGameDisabled}
-          onNextChapter={levelUrl => _handleLevelSelect(levelUrl, true)}
+          onChapterLevelSelected={levelUrl => _handleLevelSelect(levelUrl, true)}
           onMinutesChanged={setMinutes} 
           onIsPlayingChanged={setIsPlaying} 
           onActiveCharacterChanged={setActiveCharacterId} 

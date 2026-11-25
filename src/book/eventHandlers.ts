@@ -13,6 +13,7 @@ import BookControlId from "./drawing/types/BookControlId";
 import { beginBookPieceDrag, bringBookPieceToFront, releaseBookPieceDrag, findBookPieceAtPoint,
   moveBookPieceDrag } from "./pieces";
 import { claimBookConclusion } from './claiming';
+import { findVisitChapterTarget } from './bookContentUtil';
 
 function _findControlAtPoint(bookState:BookState, canvasX:number, canvasY:number):BookControlId|null {
   if (!bookState.layout) return null;
@@ -29,7 +30,8 @@ function _isPointInsideBook(bookState:BookState, canvasX:number, canvasY:number)
 }
 
 export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number, bookState:BookState,
-  canStartPieceDrag:boolean = false, onNextChapter:((levelUrl:string) => void)|null = null):boolean {
+  canStartPieceDrag:boolean = false, onChapterLevelSelected:((levelUrl:string) => void)|null = null,
+  loadedLevelUrl:string|null = null):boolean {
   if (bookState.claimState !== null) return false;
   assert(bookState.isVisible); // Caller should check.
   if (!bookState.layout || bookState.animationKind || bookState.pieceDragState !== null) return false;
@@ -46,8 +48,13 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
     const lastPage = bookState.pages[bookState.pages.length - 1];
     assert(lastPage?.kind === 'chapterEnd');
     const levelUrl = bookState.levelUrls[lastPage.chapterNo];
-    if (levelUrl && onNextChapter) onNextChapter(levelUrl);
+    if (levelUrl && onChapterLevelSelected) onChapterLevelSelected(levelUrl);
     else hideBook(metaTime, bookState);
+    return false;
+  }
+  if (id === 'visitChapter') {
+    const target = findVisitChapterTarget(bookState, loadedLevelUrl);
+    if (target) onChapterLevelSelected?.(target.levelUrl);
     return false;
   }
   if (id === 'closeBook' || (id === null && piece === null && !_isPointInsideBook(bookState, canvasX, canvasY))) {

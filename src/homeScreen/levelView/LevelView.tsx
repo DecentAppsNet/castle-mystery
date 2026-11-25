@@ -27,7 +27,7 @@ type Props = {
   bookState:BookState|null,
   loadedLevelUrl:string|null,
   isGameDisabled:() => boolean,
-  onNextChapter:(levelUrl:string) => void,
+  onChapterLevelSelected:(levelUrl:string) => void,
   onMinutesChanged:(minutes:number) => void,
   onIsPlayingChanged:(isPlaying:boolean) => void,
   onActiveCharacterChanged:(characterId:string) => void,
@@ -59,7 +59,7 @@ type Props = {
  * Failure keeps curtains closed; unmount cancels a pending close without starting loading.
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
-function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, onNextChapter, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
+function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
     onDiscoveriesChanged, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
@@ -233,7 +233,7 @@ function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, o
         const canvasX = (e.clientX - rect.left) * e.currentTarget.width / rect.width;
         const canvasY = (e.clientY - rect.top) * e.currentTarget.height / rect.height;
         if (bookState?.isVisible) {
-          if (onBookMouseDown(canvasX, canvasY, findMetaTimeNow(), bookState, e.button === 0, onNextChapter)) {
+          if (onBookMouseDown(canvasX, canvasY, findMetaTimeNow(), bookState, e.button === 0, onChapterLevelSelected, loadedLevelUrl)) {
             e.preventDefault();
             _startBookDragTracking(e.currentTarget, bookState);
           }

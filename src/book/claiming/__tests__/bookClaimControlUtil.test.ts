@@ -50,7 +50,10 @@ describe('bookClaimControlUtil', () => {
 
     const visit = findControlRect(controls, 'visitChapter');
     const before = structuredClone(bookState);
-    expect(onBookMouseDown(_center(visit), visit.y + visit.height / 2, 0, bookState, true)).toBe(false);
+    const requestedUrls:string[] = [];
+    expect(onBookMouseDown(_center(visit), visit.y + visit.height / 2, 0, bookState, true,
+      levelUrl => requestedUrls.push(levelUrl), 'first.md')).toBe(false);
+    expect(requestedUrls).toEqual(['second.md']);
     expect(bookState).toEqual(before);
 
     updateBookClaimControls(bookState, 'second.md');
@@ -71,6 +74,22 @@ describe('bookClaimControlUtil', () => {
     updateBookClaimControls(bookState, 'first.md');
     expect(controls.controls.filter(control => control.isVisible).map(control => control.id).sort())
       .toEqual(['closeBook', 'nextChapter', 'prevPage', 'visitChapter']);
+  });
+
+  it('requests distinct levels from visitChapter and nextChapter on the same single page', () => {
+    const { bookState, controls } = _createFixture(true, 2);
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:2, headingText:'', winSynopsis:'', conclusions:[] };
+    bookState.levelUrls = ['first.md', 'second.md', 'third.md'];
+    setPageNavigationButtonVisibility(bookState);
+    updateBookClaimControls(bookState, 'first.md');
+
+    const visit = findControlRect(controls, 'visitChapter');
+    const next = findControlRect(controls, 'nextChapter');
+    const requestedUrls:string[] = [];
+    const onChapterLevelSelected = (levelUrl:string) => requestedUrls.push(levelUrl);
+    onBookMouseDown(_center(visit) - 200, visit.y + visit.height / 2, 0, bookState, true, onChapterLevelSelected, 'first.md');
+    onBookMouseDown(_center(next) - 200, next.y + next.height / 2, 0, bookState, true, onChapterLevelSelected, 'first.md');
+    expect(requestedUrls).toEqual(['second.md', 'third.md']);
   });
 
   it('shows nextChapter with no remaining required conclusions and hides the book when there is no next level', () => {

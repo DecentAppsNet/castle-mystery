@@ -16,6 +16,7 @@ import Rect from '@/game/types/Rect';
 import BookState from '../types/BookState';
 import BookPage from '../types/BookPage';
 import BookControlId from '../drawing/types/BookControlId';
+import { findVisitChapterTarget } from '../bookContentUtil';
 
 function _canClaim(page:BookPage|undefined):boolean {
   return page?.kind === 'conclusion' && canClaimConclusion(page.conclusion);
@@ -50,12 +51,6 @@ function _placeControl(id:BookControlId, rect:Rect, visible:boolean, controls:Co
   else hideControl(id, controls);
 }
 
-function _canVisitChapter(page:BookPage|undefined, levelUrls:readonly string[], loadedLevelUrl:string|null):boolean {
-  if (!loadedLevelUrl || (page?.kind !== 'chapterStart' && page?.kind !== 'chapterEnd')) return false;
-  const chapterUrl = levelUrls[page.chapterNo - 1];
-  return !!chapterUrl && chapterUrl !== loadedLevelUrl;
-}
-
 export function updateBookClaimControls(bookState:Readonly<BookState>, loadedLevelUrl:string|null = null):void {
   // Work in unshifted book coordinates, just like the existing navigation controls.
   const { layout, pageNo, pages } = bookState;
@@ -76,8 +71,8 @@ export function updateBookClaimControls(bookState:Readonly<BookState>, loadedLev
   const chapterEndPage = pages[chapterEndPageI];
   const nextChapter = isInteractive && chapterEndPageI === pages.length - 1 && chapterEndPage?.kind === 'chapterEnd'
     && countRemainingRequiredConclusions(chapterEndPage.conclusions) === 0;
-  const visitLeft = _canVisitChapter(leftPage, bookState.levelUrls, loadedLevelUrl);
-  const visitChapter = visitLeft || _canVisitChapter(rightPage, bookState.levelUrls, loadedLevelUrl);
+  const visitTarget = isInteractive ? findVisitChapterTarget(bookState, loadedLevelUrl) : null;
+  const visitChapter = visitTarget !== null;
 
   // Keep the existing arrow endpoints and button dimensions; divide their center span into thirds when claiming.
   const areaWidth = rect.width / (isSinglePageView ? 2 : 1);
@@ -87,7 +82,7 @@ export function updateBookClaimControls(bookState:Readonly<BookState>, loadedLev
   const height = rect.height * .05;
   const claimX = isSinglePageView ? areaX + (areaWidth - width) / 3 : rect.x + rect.width / 4 - width / 2;
   let closeX = areaX + (areaWidth - width) * (isSinglePageView && (left || right) ? 2 / 3 : .5);
-  let visitX = visitLeft ? claimX : claimX + rect.width / 2;
+  let visitX = visitTarget?.isLeftPage ? claimX : claimX + rect.width / 2;
   if (isSinglePageView && visitChapter) {
     const visitSlot = pageNo > 1 ? 1 : 0;
     const lastSlot = visitSlot + 1 + (pageNo < pages.length || nextChapter ? 1 : 0);
