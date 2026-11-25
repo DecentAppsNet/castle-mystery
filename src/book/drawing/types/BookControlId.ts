@@ -1,3 +1,3 @@
-type BookControlId = 'prevPage' | 'nextPage' | 'closeBook' | 'claimLeft' | 'claimRight' | 'nextChapter';
+type BookControlId = 'prevPage' | 'nextPage' | 'closeBook' | 'claimLeft' | 'claimRight' | 'nextChapter' | 'visitChapter';
 
 export default BookControlId;

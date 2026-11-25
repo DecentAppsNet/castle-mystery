@@ -25,6 +25,7 @@ type Props = {
   ref?:Ref<LevelViewHandle>, // Enables imperative calls.
   gameState:GameState|null, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
   bookState:BookState|null,
+  loadedLevelUrl:string|null,
   isGameDisabled:() => boolean,
   onNextChapter:(levelUrl:string) => void,
   onMinutesChanged:(minutes:number) => void,
@@ -58,7 +59,7 @@ type Props = {
  * Failure keeps curtains closed; unmount cancels a pending close without starting loading.
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
-function LevelView({ref, gameState, bookState, isGameDisabled, onNextChapter, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
+function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, onNextChapter, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
     onDiscoveriesChanged, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
@@ -197,7 +198,7 @@ function LevelView({ref, gameState, bookState, isGameDisabled, onNextChapter, on
     }
     if (isCurtainVisible(frame)) drawCurtainOverlay(context, frame, hasLoadingFailed);
     if (frame.canRenderScene && currentGameState && bookState?.isVisible) {
-      drawBook(bookState, findMetaTimeNow(), currentGameState.imageSet, context);
+      drawBook(bookState, findMetaTimeNow(), currentGameState.imageSet, context, loadedLevelUrl);
     }
     _cancelInvalidBookDrag();
     if (frame.canRenderScene && currentGameState && DRAW_FPS_COUNTER) {

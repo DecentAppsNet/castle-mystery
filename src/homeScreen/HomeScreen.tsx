@@ -56,7 +56,8 @@ function HomeScreen() {
   const previousConclusionsRef = useRef<readonly Conclusion[]>([]);
   const isGameDisabledRef = useRef(true);
   const [isGameDisabled, setIsGameDisabled] = useState(true);
-  const [gameState, setGameState] = useState<GameState|null>(null);
+  const [loadedLevel, setLoadedLevel] = useState<{ gameState:GameState, levelUrl:string }|null>(null);
+  const gameState = loadedLevel?.gameState ?? null;
   const [bookState, setBookState] = useState<BookState|null>(null);
   const [levelManifest, setLevelManifest] = useState<LevelManifest|null>(null);
   const [initErrorMessage, setInitErrorMessage] = useState<string|null>(null);
@@ -88,7 +89,7 @@ function HomeScreen() {
     saveGameStateRef.current = prepared.gameState;
     saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
     previousConclusionsRef.current = prepared.gameState.conclusions;
-    setGameState(prepared.gameState);
+    setLoadedLevel({ gameState:prepared.gameState, levelUrl:prepared.levelUrl });
   }
 
   function _handleStateChanged(updatedGameState:GameState) {
@@ -270,6 +271,7 @@ function HomeScreen() {
           ref={levelViewRef}
           gameState={gameState} 
           bookState={bookState}
+          loadedLevelUrl={loadedLevel?.levelUrl ?? null}
           isGameDisabled={_isGameDisabled}
           onNextChapter={levelUrl => _handleLevelSelect(levelUrl, true)}
           onMinutesChanged={setMinutes} 

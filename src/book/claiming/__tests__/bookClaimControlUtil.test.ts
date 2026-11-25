@@ -5,6 +5,7 @@ import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { updateBookClaimControls } from '../bookClaimControlUtil';
 import { onBookMouseDown, onBookMouseOver } from '@/book/eventHandlers';
 import BookPage from '@/book/types/BookPage';
+import { setPageNavigationButtonVisibility } from '@/book/navigationUtil';
 import { createDefaultBookState } from '@/book/types/BookState';
 
 function _createFixture(single:boolean = false, pageNo:number = 1) {
@@ -40,6 +41,38 @@ function _center(rect:{ x:number; width:number }):number {
 }
 
 describe('bookClaimControlUtil', () => {
+  it('only shows visitChapter for a visible chapter boundary whose level differs from the loaded level', () => {
+    const { bookState, controls } = _createFixture();
+    bookState.pages[1] = { kind:'chapterStart', chapterNo:2, headingText:'', title:'Second', description:'' };
+    bookState.levelUrls = ['first.md', 'second.md'];
+    updateBookClaimControls(bookState, 'first.md');
+    expect(controls.controls.find(control => control.id === 'visitChapter')?.isVisible).toBe(true);
+
+    const visit = findControlRect(controls, 'visitChapter');
+    const before = structuredClone(bookState);
+    expect(onBookMouseDown(_center(visit), visit.y + visit.height / 2, 0, bookState, true)).toBe(false);
+    expect(bookState).toEqual(before);
+
+    updateBookClaimControls(bookState, 'second.md');
+    expect(controls.controls.find(control => control.id === 'visitChapter')?.isVisible).toBe(false);
+    updateBookClaimControls(bookState, 'first.md');
+    updateBookClaimControls(bookState, null);
+    expect(controls.controls.find(control => control.id === 'visitChapter')?.isVisible).toBe(false);
+    bookState.layout!.isSinglePageView = true;
+    updateBookClaimControls(bookState, 'first.md');
+    expect(controls.controls.find(control => control.id === 'visitChapter')?.isVisible).toBe(false);
+  });
+
+  it('shows exactly four controls when visitChapter and nextChapter are both available in single-page view', () => {
+    const { bookState, controls } = _createFixture(true, 2);
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:2, headingText:'', winSynopsis:'', conclusions:[] };
+    bookState.levelUrls = ['first.md', 'second.md', 'third.md'];
+    setPageNavigationButtonVisibility(bookState);
+    updateBookClaimControls(bookState, 'first.md');
+    expect(controls.controls.filter(control => control.isVisible).map(control => control.id).sort())
+      .toEqual(['closeBook', 'nextChapter', 'prevPage', 'visitChapter']);
+  });
+
   it('shows nextChapter with no remaining required conclusions and hides the book when there is no next level', () => {
     const { bookState, page, controls } = _createFixture(true, 2);
     page.conclusion.isOptional = true;

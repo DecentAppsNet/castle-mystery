@@ -105,16 +105,20 @@ function _drawClaimHand(context:CanvasRenderingContext2D) {
   context.lineTo(.69, .94);
 }
 
-function _drawNextChapterIcon(context:CanvasRenderingContext2D) {
-  context.moveTo(.45, .9);
-  context.lineTo(.45, .3);
-  context.bezierCurveTo(.45, -.02, .95, -.02, .95, .3);
-  context.lineTo(.95, .9);
-  context.lineTo(.83, .9);
-  context.lineTo(.83, .3);
-  context.bezierCurveTo(.83, .14, .57, .14, .57, .3);
-  context.lineTo(.57, .9);
+function _drawChapterArch(context:CanvasRenderingContext2D, offsetX:number) {
+  context.moveTo(.25 + offsetX, .9);
+  context.lineTo(.25 + offsetX, .3);
+  context.bezierCurveTo(.25 + offsetX, -.02, .75 + offsetX, -.02, .75 + offsetX, .3);
+  context.lineTo(.75 + offsetX, .9);
+  context.lineTo(.63 + offsetX, .9);
+  context.lineTo(.63 + offsetX, .3);
+  context.bezierCurveTo(.63 + offsetX, .14, .37 + offsetX, .14, .37 + offsetX, .3);
+  context.lineTo(.37 + offsetX, .9);
   context.closePath();
+}
+
+function _drawNextChapterIcon(context:CanvasRenderingContext2D) {
+  _drawChapterArch(context, .2);
   context.moveTo(.05, .44);
   context.lineTo(.32, .44);
   context.lineTo(.32, .3);
@@ -124,10 +128,10 @@ function _drawNextChapterIcon(context:CanvasRenderingContext2D) {
   context.lineTo(.05, .6);
 }
 
-function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D) {
+function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D, loadedLevelUrl:string|null) {
   const { layout } = bookState;
   assertNonNullable(layout);
-  updateBookClaimControls(bookState);
+  updateBookClaimControls(bookState, loadedLevelUrl);
   const drawOffsetX = calcPageViewOffsetX(bookState);
   context.save();
   context.fillStyle = 'white';
@@ -146,6 +150,7 @@ function _drawBookControls(bookState:BookState, context:CanvasRenderingContext2D
       case 'nextPage': _drawRightArrow(context); break;
       case 'prevPage': _drawLeftArrow(context); break;
       case 'nextChapter': _drawNextChapterIcon(context); break;
+      case 'visitChapter': _drawChapterArch(context, 0); break;
       case 'claimLeft':
       case 'claimRight': _drawClaimHand(context); break;
       default: botch();
@@ -198,7 +203,8 @@ function _drawPieces(bookState:BookState, bookRect:Rect, metaTime:number, contex
     context.canvas.height), context, bookState);
 }
 
-export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D) {
+export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet, context:CanvasRenderingContext2D,
+  loadedLevelUrl:string|null = null) {
   assert(bookState.isVisible); // Prefer caller to check for readability.
   const bookImage = imageSet.findImage(BOOK_IMAGE_URL)?.image ?? null;
   assertNonNullable(bookImage);
@@ -224,5 +230,5 @@ export function drawBook(bookState:BookState, metaTime:number, imageSet:ImageSet
 
   // Navigation and overlays remain outside the claim transform, including the resumed recovery-end frame.
   drawPageFlip(bookState, metaTime, drawRect, bookImage, imageSet, context);
-  if (bookState.animationKind === null) _drawBookControls(bookState, context);
+  if (bookState.animationKind === null) _drawBookControls(bookState, context, loadedLevelUrl);
 }

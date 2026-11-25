@@ -50,7 +50,13 @@ function _placeControl(id:BookControlId, rect:Rect, visible:boolean, controls:Co
   else hideControl(id, controls);
 }
 
-export function updateBookClaimControls(bookState:Readonly<BookState>):void {
+function _canVisitChapter(page:BookPage|undefined, levelUrls:readonly string[], loadedLevelUrl:string|null):boolean {
+  if (!loadedLevelUrl || (page?.kind !== 'chapterStart' && page?.kind !== 'chapterEnd')) return false;
+  const chapterUrl = levelUrls[page.chapterNo - 1];
+  return !!chapterUrl && chapterUrl !== loadedLevelUrl;
+}
+
+export function updateBookClaimControls(bookState:Readonly<BookState>, loadedLevelUrl:string|null = null):void {
   // Work in unshifted book coordinates, just like the existing navigation controls.
   const { layout, pageNo, pages } = bookState;
   assertNonNullable(layout);
@@ -62,12 +68,16 @@ export function updateBookClaimControls(bookState:Readonly<BookState>):void {
   }
   const leftPageNo = pageNo % 2 === 1 ? pageNo : pageNo - 1;
   const isInteractive = bookState.isVisible && bookState.animationKind === null;
-  const left = isInteractive && (!isSinglePageView || pageNo === leftPageNo) && _canClaim(pages[leftPageNo - 1]);
-  const right = isInteractive && (!isSinglePageView || pageNo !== leftPageNo) && _canClaim(pages[leftPageNo]);
+  const leftPage = isInteractive && (!isSinglePageView || pageNo === leftPageNo) ? pages[leftPageNo - 1] : undefined;
+  const rightPage = isInteractive && (!isSinglePageView || pageNo !== leftPageNo) ? pages[leftPageNo] : undefined;
+  const left = _canClaim(leftPage);
+  const right = _canClaim(rightPage);
   const chapterEndPageI = isSinglePageView ? pageNo - 1 : leftPageNo;
   const chapterEndPage = pages[chapterEndPageI];
   const nextChapter = isInteractive && chapterEndPageI === pages.length - 1 && chapterEndPage?.kind === 'chapterEnd'
     && countRemainingRequiredConclusions(chapterEndPage.conclusions) === 0;
+  const visitLeft = _canVisitChapter(leftPage, bookState.levelUrls, loadedLevelUrl);
+  const visitChapter = visitLeft || _canVisitChapter(rightPage, bookState.levelUrls, loadedLevelUrl);
 
   // Keep the existing arrow endpoints and button dimensions; divide their center span into thirds when claiming.
   const areaWidth = rect.width / (isSinglePageView ? 2 : 1);
@@ -76,10 +86,21 @@ export function updateBookClaimControls(bookState:Readonly<BookState>):void {
   const y = rect.y + rect.height * .99;
   const height = rect.height * .05;
   const claimX = isSinglePageView ? areaX + (areaWidth - width) / 3 : rect.x + rect.width / 4 - width / 2;
-  const closeX = areaX + (areaWidth - width) * (isSinglePageView && (left || right) ? 2 / 3 : .5);
+  let closeX = areaX + (areaWidth - width) * (isSinglePageView && (left || right) ? 2 / 3 : .5);
+  let visitX = visitLeft ? claimX : claimX + rect.width / 2;
+  if (isSinglePageView && visitChapter) {
+    const visitSlot = pageNo > 1 ? 1 : 0;
+    const lastSlot = visitSlot + 1 + (pageNo < pages.length || nextChapter ? 1 : 0);
+    const spacing = (areaWidth - width) / lastSlot;
+    visitX = areaX + spacing * visitSlot;
+    closeX = visitX + spacing;
+  }
   _placeControl('closeBook', { x:closeX, y, width, height }, true, controlLayout);
   _placeControl('claimLeft', { x:claimX, y, width, height }, left, controlLayout);
   _placeControl('claimRight', { x:isSinglePageView ? claimX : claimX + rect.width / 2, y, width, height }, right, controlLayout);
+  if (visitChapter || controlLayout.controls.some(control => control.id === 'visitChapter')) {
+    _placeControl('visitChapter', { x:visitX, y, width, height }, visitChapter, controlLayout);
+  }
   if (nextChapter || controlLayout.controls.some(control => control.id === 'nextChapter')) {
     _placeControl('nextChapter', { x:areaX + areaWidth - width, y, width, height }, nextChapter, controlLayout);
   }
