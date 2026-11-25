@@ -16,7 +16,7 @@ import Rect from '@/game/types/Rect';
 import BookState from '../types/BookState';
 import BookPage from '../types/BookPage';
 import BookControlId from '../drawing/types/BookControlId';
-import { findVisitChapterTarget } from '../bookContentUtil';
+import { findVisitChapterTarget } from '../chapterNavigationUtil';
 
 function _canClaim(page:BookPage|undefined):boolean {
   return page?.kind === 'conclusion' && canClaimConclusion(page.conclusion);

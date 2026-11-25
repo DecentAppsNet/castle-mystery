@@ -19,27 +19,6 @@ function _findNextChapterNo(bookState:BookState):number {
   return bookState.pages[bookState.pages.length-1].chapterNo + 1;
 }
 
-function _findDifferentChapterUrl(page:BookPage|undefined, levelUrls:readonly string[], loadedLevelUrl:string):string|null {
-  if (page?.kind !== 'chapterStart' && page?.kind !== 'chapterEnd') return null;
-  const levelUrl = levelUrls[page.chapterNo - 1];
-  return levelUrl && levelUrl !== loadedLevelUrl ? levelUrl : null;
-}
-
-export function findVisitChapterTarget(bookState:Readonly<BookState>, loadedLevelUrl:string|null) {
-  const { layout, pageNo, pages, levelUrls } = bookState;
-  if (!layout || !loadedLevelUrl) return null;
-  const leftPageNo = pageNo % 2 === 1 ? pageNo : pageNo - 1;
-  if (!layout.isSinglePageView || pageNo === leftPageNo) {
-    const levelUrl = _findDifferentChapterUrl(pages[leftPageNo - 1], levelUrls, loadedLevelUrl);
-    if (levelUrl) return { levelUrl, isLeftPage:true };
-  }
-  if (!layout.isSinglePageView || pageNo !== leftPageNo) {
-    const levelUrl = _findDifferentChapterUrl(pages[leftPageNo], levelUrls, loadedLevelUrl);
-    if (levelUrl) return { levelUrl, isLeftPage:false };
-  }
-  return null;
-}
-
 function _addChapterStartPages(level:Level, chapterNo:number, pages:BookPage[]) {
   pages.push({ kind:'blank', headingText:'', chapterNo:chapterNo-1 });
   pages.push({ kind:'chapterStart', chapterNo, headingText:'', title:level.title, description:level.description });

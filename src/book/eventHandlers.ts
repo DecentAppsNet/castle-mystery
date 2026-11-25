@@ -13,7 +13,7 @@ import BookControlId from "./drawing/types/BookControlId";
 import { beginBookPieceDrag, bringBookPieceToFront, releaseBookPieceDrag, findBookPieceAtPoint,
   moveBookPieceDrag } from "./pieces";
 import { claimBookConclusion } from './claiming';
-import { findVisitChapterTarget } from './bookContentUtil';
+import { findVisitChapterTarget } from './chapterNavigationUtil';
 
 function _findControlAtPoint(bookState:BookState, canvasX:number, canvasY:number):BookControlId|null {
   if (!bookState.layout) return null;
