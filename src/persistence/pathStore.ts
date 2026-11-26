@@ -162,6 +162,7 @@ async function _delete(db:IDBDatabase, storeName:string, key:string):Promise<voi
   const objectStore = transaction.objectStore(storeName);
   objectStore.delete(key);
   return new Promise((resolve, reject) => {
+    transaction.onabort = () => reject(transaction.error ?? new Error(`Delete of "${key}" was aborted.`));
     transaction.onerror = (event:any) => reject(`Failed to delete record at "${key}" in "${storeName} with error code ${event.target.errorCode}.`);
     transaction.oncomplete = () => resolve();
   });

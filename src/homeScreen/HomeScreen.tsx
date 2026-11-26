@@ -58,6 +58,7 @@ function HomeScreen() {
   const gameState = loadedLevel?.gameState ?? null;
   const [bookState, setBookState] = useState<BookState|null>(null);
   const [initErrorMessage, setInitErrorMessage] = useState<string|null>(null);
+  const [storageErrorMessage, setStorageErrorMessage] = useState<string|null>(null);
   const [isInitialClosedFramePainted, setIsInitialClosedFramePainted] = useState(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<number>(0);
@@ -84,7 +85,8 @@ function HomeScreen() {
     addLevelChapterToBook(sessionBookState, prepared.level, prepared.levelUrl);
     acceptPreparedLevelState(prepared, findBookImageUrls(sessionBookState));
     saveGameStateRef.current = prepared.gameState;
-    saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);
+    saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave,
+      message => { if (loadRequestRef.current.isMounted) setStorageErrorMessage(message); });
     previousConclusionsRef.current = prepared.gameState.conclusions;
     setLoadedLevel({ gameState:prepared.gameState, levelUrl:prepared.levelUrl });
   }
@@ -278,6 +280,7 @@ function HomeScreen() {
           onConclusionsChanged={_handleConclusionsChanged} 
           onDiscoveriesChanged={setDiscoveries} 
           onStateChanged={_handleStateChanged}
+          beforeWorldFrame={state => { if (state === saveGameStateRef.current) saveCoordinatorRef.current?.beforeFrame(); }}
           onInitialClosedFrame={() => setIsInitialClosedFramePainted(true)}
           onOpeningStarted={_handleOpeningStarted}
           hasLoadingFailed={initErrorMessage !== null}
@@ -312,6 +315,7 @@ function HomeScreen() {
           <DiscoveriesView discoveries={discoveries} />
         </div>
       </div>}
+      {storageErrorMessage && <p className={styles.storageError} role="alert">{storageErrorMessage}</p>}
       {loadedLevel && bookState && <WinLevelDialog 
         synopsis={winSynopsis} 
         isOpen={modalDialogName === WinLevelDialog.name} 

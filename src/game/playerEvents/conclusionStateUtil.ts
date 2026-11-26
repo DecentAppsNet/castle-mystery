@@ -12,9 +12,8 @@ function _isLevelComplete(conclusions:ReadonlyArray<Conclusion>):boolean {
 
 export function syncLevelCompleteState(gameState:GameState):boolean {
   const nextIsLevelComplete = _isLevelComplete(gameState.conclusions);
-  if (nextIsLevelComplete === gameState.isLevelComplete) return false;
-  if (nextIsLevelComplete) completeLevel(gameState);
-  else gameState.isLevelComplete = false;
+  if (!nextIsLevelComplete || gameState.isLevelComplete) return false;
+  completeLevel(gameState);
   return true;
 }
 

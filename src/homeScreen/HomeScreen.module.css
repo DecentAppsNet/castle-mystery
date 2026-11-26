@@ -12,6 +12,14 @@
           "avoid-overflow avoid-overflow avoid-overflow";
 }
 
+.storageError {
+  grid-area: footer;
+  justify-self: center;
+  align-self: start;
+  color: #842323;
+  padding: 0 .75rem;
+}
+
 .initErrorContainer {
   min-height: 100vh;
   display: flex;

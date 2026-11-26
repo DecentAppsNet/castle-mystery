@@ -13,6 +13,7 @@ import levelText from '@/game/__tests__/fixtures/save-state.md?raw';
 import discoveryText from '@/game/__tests__/fixtures/discovery-state.md?raw';
 import cyclingText from '@/game/__tests__/fixtures/character-cycling.md?raw';
 import { getLevelSaveState, setLevelSaveState } from '@/persistence/levelSaveState';
+import { initLevelChanges, popLevelChanges, pushLevelChanges } from '@/persistence/levelChangeQueue';
 import { pathStoreMock } from '@/persistence/__tests__/pathStoreMock';
 import LevelSaveCoordinator from '../levelSaveCoordinator';
 import { prepareLevelState } from '../levelPreparation';
@@ -69,6 +70,126 @@ describe('LevelSaveCoordinator', () => {
     expect(pathStoreMock.setText).toHaveBeenCalledOnce();
     expect(pathStoreMock.deleteByKey).toHaveBeenCalledOnce();
     await expect(getLevelSaveState('castle.md')).resolves.toBeNull();
+  });
+
+  it('stages one matching pop before the next snapshot and committed-time save', async () => {
+    await initLevelChanges();
+    await pushLevelChanges('world.md', [{ kind:'revealRoom', roomIds:['study'] }, { kind:'revealCharacterTitles' }]);
+    await pushLevelChanges('inactive.md', { kind:'setLevelComplete' });
+    const state = createGameState(loadValidLevelForTest(discoveryText));
+    const committedTime = state.time;
+    const coordinator = new LevelSaveCoordinator('/levels/world.md', state);
+    const deletion = Promise.withResolvers<void>();
+    pathStoreMock.deleteByKey.mockReturnValueOnce(deletion.promise);
+    pathStoreMock.getText.mockClear();
+    coordinator.beforeFrame();
+    await vi.advanceTimersByTimeAsync(0);
+    coordinator.beforeFrame();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(pathStoreMock.getText).toHaveBeenCalledExactlyOnceWith('/levelChanges/world.md.json');
+
+    delete pathStoreMock.values['/levelChanges/world.md.json'];
+    deletion.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.discoveryState.obscuredRoomIds).toContain('study');
+    coordinator.beforeFrame();
+    expect(state.discoveryState.obscuredRoomIds).not.toContain('study');
+    state.time += 100;
+    updateGameState(state, [], 0, 1, () => coordinator.observe());
+    expect(state.discoveryState.discoveredRoomIds).not.toContain('study');
+    await vi.advanceTimersByTimeAsync(0);
+    await expect(getLevelSaveState('world.md')).resolves.toMatchObject({
+      time:committedTime, revealedRoomIds:['study'], titleKnownCharacterIds:['sam', 'pat']
+    });
+    await coordinator.stopAndSettle();
+    await expect(popLevelChanges('inactive.md')).resolves.toEqual([{ kind:'setLevelComplete' }]);
+  });
+
+  it('keeps queued world completion through the legacy frame scan', async () => {
+    await initLevelChanges();
+    await pushLevelChanges('completion.md', { kind:'setLevelComplete' });
+    const state = createGameState(loadValidLevelForTest(discoveryText));
+    const coordinator = new LevelSaveCoordinator('completion.md', state);
+    coordinator.beforeFrame();
+    await vi.advanceTimersByTimeAsync(0);
+    coordinator.beforeFrame();
+    updateGameState(state, [], 0, 1, () => coordinator.observe());
+    await coordinator.stopAndSettle();
+
+    expect(state.isLevelComplete).toBe(true);
+    expect(state.conclusions.every(conclusion => !conclusion.isComplete)).toBe(true);
+    await expect(getLevelSaveState('completion.md')).resolves.toMatchObject({ isLevelComplete:true });
+  });
+
+  it('settles an outgoing pop and its save before replacement without another frame', async () => {
+    await initLevelChanges();
+    await pushLevelChanges('outgoing.md', { kind:'revealRoom', roomIds:['study'] });
+    const state = createGameState(loadValidLevelForTest(discoveryText));
+    const coordinator = new LevelSaveCoordinator('outgoing.md', state);
+    const deletion = Promise.withResolvers<void>();
+    const write = Promise.withResolvers<void>();
+    pathStoreMock.deleteByKey.mockReturnValueOnce(deletion.promise);
+    pathStoreMock.setText.mockClear().mockReturnValueOnce(write.promise);
+    coordinator.beforeFrame();
+    const replace = vi.fn();
+    const settled = coordinator.stopAndSettle(true).then(replace);
+    coordinator.beforeFrame();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(replace).not.toHaveBeenCalled();
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+
+    deletion.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.discoveryState.obscuredRoomIds).not.toContain('study');
+    expect(pathStoreMock.setText).toHaveBeenCalledExactlyOnceWith('/levelSaves/$outgoing.md.json',
+      expect.stringContaining('"revealedRoomIds":["study"]'));
+    expect(replace).not.toHaveBeenCalled();
+    write.resolve();
+    await settled;
+    expect(replace).toHaveBeenCalledOnce();
+  });
+
+  it('reports a failed pop once without applying or acknowledging the batch', async () => {
+    await initLevelChanges();
+    await pushLevelChanges('failed-pop.md', { kind:'revealRoom', roomIds:['study'] });
+    const state = createGameState(loadValidLevelForTest(discoveryText));
+    const onStorageError = vi.fn();
+    const coordinator = new LevelSaveCoordinator('failed-pop.md', state, false, onStorageError);
+    pathStoreMock.deleteByKey.mockRejectedValueOnce(new Error('Delete failed'));
+    pathStoreMock.setText.mockClear();
+    coordinator.beforeFrame();
+    await vi.advanceTimersByTimeAsync(0);
+    coordinator.beforeFrame();
+    coordinator.observe();
+    await coordinator.stopAndSettle();
+
+    expect(onStorageError).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('failed-pop.md'));
+    expect(pathStoreMock.deleteByKey).toHaveBeenCalledOnce();
+    expect(pathStoreMock.values['/levelChanges/failed-pop.md.json']).toBeDefined();
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
+    expect(state.discoveryState.obscuredRoomIds).toContain('study');
+  });
+
+  it('reports a failed world save without replaying the popped batch or retrying the same save', async () => {
+    await initLevelChanges();
+    await pushLevelChanges('failed-save.md', { kind:'revealRoom', roomIds:['study'] });
+    const state = createGameState(loadValidLevelForTest(discoveryText));
+    const onStorageError = vi.fn();
+    const coordinator = new LevelSaveCoordinator('failed-save.md', state, false, onStorageError);
+    pathStoreMock.setText.mockClear().mockRejectedValueOnce(new Error('Save failed'));
+    coordinator.beforeFrame();
+    await vi.advanceTimersByTimeAsync(0);
+    coordinator.beforeFrame();
+    coordinator.observe();
+    await vi.advanceTimersByTimeAsync(0);
+    coordinator.beforeFrame();
+    coordinator.observe();
+    await coordinator.stopAndSettle();
+
+    expect(onStorageError).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('failed-save.md'));
+    expect(pathStoreMock.setText).toHaveBeenCalledOnce();
+    await expect(getLevelSaveState('failed-save.md')).resolves.toBeNull();
+    await expect(popLevelChanges('failed-save.md')).resolves.toEqual([]);
   });
 
   it('submits fresh initial progress exactly once when requested', async () => {

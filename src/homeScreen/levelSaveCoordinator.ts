@@ -1,10 +1,13 @@
-/* This file coordinates immutable, ordered progress saves for one active level.
+/* This file coordinates persistent world changes and progress saves for one active level.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { urlToFilename } from '@/common/urlUtil';
 import { createLevelSaveState } from '@/game/levelSaveStateUtil';
 import GameState from '@/game/types/GameState';
+import { completeLevel, revealAllCharacterTitles, revealRooms } from '@/game/worldProgressUtil';
+import { popLevelChanges } from '@/persistence/levelChangeQueue';
 import { clearLevelSaveState, setLevelSaveState } from '@/persistence/levelSaveState';
+import LevelChange from '@/persistence/types/LevelChange';
 import LevelSaveState from '@/persistence/types/LevelSaveState';
 
 class LevelSaveCoordinator {
@@ -18,9 +21,14 @@ class LevelSaveCoordinator {
   private _lastSubmittedKey:string;
   private _pending:Promise<void> = Promise.resolve();
   private _isStopped = false;
+  private _pendingPop:Promise<void>|null = null;
+  private _stagedChanges:LevelChange[] = [];
+  private _popFailed = false;
+  private _settling:Promise<void>|null = null;
 
   /** Establishes the restored baseline, optionally submitting fresh initial progress once. */
-  constructor(levelUrl:string, gameState:GameState, needsInitialSave:boolean = false) {
+  constructor(levelUrl:string, gameState:GameState, needsInitialSave:boolean = false,
+    private readonly _onStorageError?:(message:string) => void) {
     this._levelUrl = levelUrl;
     this._levelFilename = urlToFilename(levelUrl);
     this._gameState = gameState;
@@ -33,10 +41,39 @@ class LevelSaveCoordinator {
   }
 
   private _submit(save:LevelSaveState):void {
-    const levelUrl = this._levelUrl;
     this._pending = this._pending.then(() => setLevelSaveState(this._levelFilename, save)).catch(error => {
-      console.error(`Unable to save progress for "${levelUrl}".`, error);
+      this._reportStorageError(`Unable to save progress for "${this._levelUrl}".`, error);
     });
+  }
+
+  private _reportStorageError(message:string, error:unknown):void {
+    console.error(message, error);
+    this._onStorageError?.(message);
+  }
+
+  private _applyStagedChanges():boolean {
+    const changes = this._stagedChanges;
+    this._stagedChanges = [];
+    for (const change of changes) {
+      switch (change.kind) {
+        case 'revealRoom': revealRooms(this._gameState, change.roomIds); break;
+        case 'revealCharacterTitles': revealAllCharacterTitles(this._gameState); break;
+        case 'setLevelComplete': completeLevel(this._gameState); break;
+      }
+    }
+    return changes.length > 0;
+  }
+
+  beforeFrame():void {
+    if (this._isStopped) return;
+    this._applyStagedChanges();
+    if (this._pendingPop || this._popFailed) return;
+    this._pendingPop = popLevelChanges(this._levelFilename).then(changes => {
+      this._stagedChanges = changes;
+    }, error => {
+      this._popFailed = true;
+      this._reportStorageError(`Unable to read pending changes for "${this._levelUrl}".`, error);
+    }).finally(() => { this._pendingPop = null; });
   }
 
   private _cancelPausedTime():void {
@@ -80,10 +117,18 @@ class LevelSaveCoordinator {
 
   /** Stops submissions and settles writes; transitions flush pending paused time, Reset cancels it. */
   stopAndSettle(flushPausedTime:boolean = false):Promise<void> {
-    if (!this._isStopped && flushPausedTime && this._pausedTimeTimer !== null) this._commitPausedTime();
+    if (this._settling) return this._settling;
+    const shouldFlush = flushPausedTime && this._pausedTimeTimer !== null;
     this._cancelPausedTime();
     this._isStopped = true;
-    return this._pending;
+    const finish = () => {
+      const appliedChanges = this._applyStagedChanges();
+      if (shouldFlush && !this._gameState.isPlaying) this._commitPausedTime();
+      else if (appliedChanges) this._saveProgress();
+      return this._pending;
+    };
+    this._settling = this._pendingPop ? this._pendingPop.then(finish) : finish();
+    return this._settling;
   }
 
   /** Cancels delayed saves and clears this level only after earlier writes have settled. */

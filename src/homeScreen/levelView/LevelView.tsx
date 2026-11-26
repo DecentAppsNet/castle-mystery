@@ -33,6 +33,7 @@ type Props = {
   onActiveCharacterChanged:(characterId:string) => void,
   onConclusionsChanged:(conclusions:GameState['conclusions']) => void,
   onDiscoveriesChanged:(discoveries:Discoveries) => void,
+  beforeWorldFrame:(gameState:GameState) => void,
   onStateChanged:(gameState:GameState) => void,
   onInitialClosedFrame:() => void,
   onOpeningStarted:(preparedGameState:GameState) => void, // preparedGameState is expected to have its room shell cache populated.
@@ -60,7 +61,7 @@ type Props = {
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
 function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
-    onDiscoveriesChanged, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
+    onDiscoveriesChanged, beforeWorldFrame, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
     closeRequest:null, awaitingReplacement:false });
@@ -172,6 +173,7 @@ function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, o
   }
 
   function _updateAndDrawScene(currentGameState:GameState, context:CanvasRenderingContext2D) {
+    if (!isGameDisabled()) beforeWorldFrame(currentGameState);
     updateAndDraw(currentGameState, context, _handleMinutesChanged, _handleIsPlayingChanged, onActiveCharacterChanged,
         onConclusionsChanged, onDiscoveriesChanged, onStateChanged);
     _updateOverlayCursor(context);
