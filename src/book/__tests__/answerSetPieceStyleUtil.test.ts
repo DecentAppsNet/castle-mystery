@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
-import AnswerSet from '@/game/conclusions/types/AnswerSet';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import Conclusion from '@/game/conclusions/types/Conclusion';
+import { createAnswerSet } from '@/conclusions';
+import AnswerSet from '@/conclusions/types/AnswerSet';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
+import Conclusion from '@/conclusions/types/Conclusion';
 import { generateAnswerSetIdToPieceStyleNoMap } from '../answerSetPieceStyleUtil';
 
 function _createConclusion(answerSets:readonly AnswerSet[], id:string = 'one'):Conclusion {

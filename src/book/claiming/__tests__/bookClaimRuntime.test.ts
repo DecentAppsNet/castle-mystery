@@ -2,8 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createLayout, findControlRect } from '@/canvasControls';
 import { clearSeed, setSeed } from '@/common/randUtil';
-import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import { createAnswerSet } from '@/conclusions';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import { claimBookConclusion, updateBookClaim as advanceClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 import { calcBookClaimMessageAlpha } from '../bookClaimPresentationUtil';
 import { onBookMouseDown, onBookMouseOver, onBookMouseUp, onBookMouseWheel } from '@/book/eventHandlers';

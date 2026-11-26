@@ -1,24 +1,24 @@
 /* This file parses authored cloze conclusions and resolves their dependencies and reveal effects.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import Conclusion from "@/game/conclusions/types/Conclusion";
+import Conclusion from "@/conclusions/types/Conclusion";
 import { normalizeId } from "@/game/idUtil";
 import Room from "@/game/types/Room";
 import ClozeCategory from "./types/ClozeCategory";
 import { createNormalizedSectionEntryMap, createSectionVariables, parseBoolean } from "../levelFileSectionUtil";
 import { ErrorCollector } from "../errorCollection";
 import { assertNonNullable } from "decent-portal";
-import ClozePartType from "@/game/conclusions/types/ClozePartType";
-import ClozePart from "@/game/conclusions/types/ClozePart";
+import ClozePartType from "@/conclusions/types/ClozePartType";
+import ClozePart from "@/conclusions/types/ClozePart";
 import { getClozeImageCandidateUrls } from "@/game/imageUrlUtil";
 import { parseOptions } from "@/common/markdownUtil";
-import ClozeBlank, { UNSPECIFIED_ANSWER } from "@/game/conclusions/types/ClozeBlank";
+import ClozeBlank, { UNSPECIFIED_ANSWER } from "@/conclusions/types/ClozeBlank";
 import { findSquareBracketEnclosedTextSegments } from "@/common/regExUtil";
 import { normalizeCategoryPhrase, resolveRevealRoomIds, resolveUnlockConclusionIds } from "./commonUtil";
-import { createAnswerSet } from "@/game/conclusions/answerSetUtil";
+import { createAnswerSet } from "@/conclusions";
 import { resolveBlankCategory } from "./blankCategoryUtil";
 import { convertStraightQuotesToDirectional } from "@/common/quoteUtil";
-import ClozeText from "@/game/conclusions/types/ClozeText";
+import ClozeText from "@/conclusions/types/ClozeText";
 
 function _convertClozeProse(parts:ClozePart[]):ClozePart[] {
   const prose = parts.flatMap(part => part.type === ClozePartType.text ? [(part as ClozeText).text] : []).join('');

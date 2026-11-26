@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { createAnswerSet } from '../answerSetUtil';
 import { countConclusionMistakes, isConclusionMissingAnswers } from '../conclusionUtil';
-import Conclusion from '../types/Conclusion.ts';
+import Conclusion from '../types/Conclusion';
 import { UNSPECIFIED_ANSWER } from '../types/ClozeBlank';
 import ClozePartType from '../types/ClozePartType';
 

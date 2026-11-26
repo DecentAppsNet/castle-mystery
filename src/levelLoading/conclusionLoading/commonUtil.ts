@@ -8,7 +8,7 @@ import Room from "@/game/types/Room";
 import { ErrorCollector } from "../errorCollection";
 
 
-export { normalizeCategoryPhrase } from '@/game/conclusions/conclusionUtil';
+export { normalizeCategoryPhrase } from '@/conclusions';
 
 /** Resolves reveal-room references and reports rooms that are unknown or initially visible. */
 export function resolveRevealRoomIds(conclusionName:string, revealRoomsText:string|undefined, 

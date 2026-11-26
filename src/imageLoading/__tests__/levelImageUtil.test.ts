@@ -7,8 +7,8 @@ import { createDefaultCharacterBody, replaceHeadImage } from '@/game/characterBo
 import BodyPart from '@/game/characterBody/types/BodyPart';
 import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
 import { createGameState } from '@/game/gameUtil';
-import Conclusion from '@/game/conclusions/types/Conclusion';
-import ClozePartType from '@/game/conclusions/types/ClozePartType';
+import Conclusion from '@/conclusions/types/Conclusion';
+import ClozePartType from '@/conclusions/types/ClozePartType';
 
 function _createImageConclusion(imageUrl:string|string[]):Conclusion {
   return {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import Conclusion from '@/game/conclusions/types/Conclusion';
+import Conclusion from '@/conclusions/types/Conclusion';
 import { areAllRequiredConclusionsComplete, countRemainingRequiredConclusions, countShameMarks } from '../conclusionUtil';
 
 function _createConclusion(isComplete:boolean = false, isOptional:boolean = false, incorrectGuessCount:number = 0):Conclusion {

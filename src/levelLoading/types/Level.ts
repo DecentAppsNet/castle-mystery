@@ -2,7 +2,7 @@ import TimeLabel from "@/game/types/TimeLabel";
 import Character from "@/game/types/Character";
 import Item from "@/game/types/Item";
 import Room from "@/game/types/Room";
-import Conclusion from "@/game/conclusions/types/Conclusion";
+import Conclusion from "@/conclusions/types/Conclusion";
 import Timeline, { createDefaultTimeline } from "@/game/types/Timeline";
 import DiscoveryConfig from "@/game/types/DiscoveryConfig";
 

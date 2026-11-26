@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import { createAnswerSet } from '@/conclusions';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import { getBookPieceBackgroundColor } from '../pieceColorUtil';
 import { getPieceFlairProfile } from '../pieceFlairUtil';
 import BookPage from '@/book/types/BookPage';

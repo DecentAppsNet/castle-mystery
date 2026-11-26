@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import { createAnswerSet } from '@/conclusions';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import { calcBookClaimMessageAlpha, prepareBookClaimGlints } from '../bookClaimPresentationUtil';
 import { FULL_REVOLUTION_RADIANS } from '../bookClaimTimingUtil';
 import BookClaimState from '../types/BookClaimState';

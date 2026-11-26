@@ -1,7 +1,7 @@
 /* This file coordinates authored and generated conclusion loading and initial lock state.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import Conclusion from "@/game/conclusions/types/Conclusion";
+import Conclusion from "@/conclusions/types/Conclusion";
 import { ErrorCollector } from "../errorCollection";
 import Character from "@/game/types/Character";
 import Item from "@/game/types/Item";

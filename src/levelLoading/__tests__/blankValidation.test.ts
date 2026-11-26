@@ -3,7 +3,7 @@ import baseText from './fixtures/conclusions-base.md?raw';
 import effectiveCharactersText from './fixtures/conclusions-effective-characters.md?raw';
 import blankText from './fixtures/conclusions-blank-validation.md?raw';
 import { loadLevelForTest, loadValidLevelForTest } from './testLevelUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 
 describe('loading levels - blank validation', () => {
   it('reports an unknown alternative with conclusion, blank position, and source location', () => {

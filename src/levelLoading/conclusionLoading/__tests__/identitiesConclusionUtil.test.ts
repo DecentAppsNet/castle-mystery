@@ -3,7 +3,7 @@ import literalCharactersText from '@/levelLoading/__tests__/fixtures/conclusions
 import effectiveCharactersText from '@/levelLoading/__tests__/fixtures/conclusions-effective-characters.md?raw';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import { clearSeed, setSeed } from '@/common/randUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 
 describe('identitiesConclusionUtil', () => {
   afterEach(clearSeed);

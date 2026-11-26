@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createLayout, findControlAtPoint, findControlRect, updateControlRect } from '@/canvasControls';
-import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import { createAnswerSet } from '@/conclusions';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import { updateBookClaimControls } from '../bookClaimControlUtil';
 import { onBookMouseDown } from '@/book/eventHandlers';
 import BookPage from '@/book/types/BookPage';

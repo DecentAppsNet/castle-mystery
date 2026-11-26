@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { findBookImageUrls } from '@/book';
 import { createDefaultBookState } from '../types/BookState';
-import Conclusion from '@/game/conclusions/types/Conclusion';
-import ClozePartType from '@/game/conclusions/types/ClozePartType';
+import Conclusion from '@/conclusions/types/Conclusion';
+import ClozePartType from '@/conclusions/types/ClozePartType';
 
 const emptyConclusion:Conclusion = {
   id:'test', title:'Test', parts:[], isComplete:false, isLocked:false, isOptional:false,

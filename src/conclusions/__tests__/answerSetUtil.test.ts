@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { createAnswerSet } from '../answerSetUtil';
-import ClozeBlank, { duplicateClozeBlank } from '../types/ClozeBlank';
-import { duplicateConclusion } from '../types/Conclusion';
 
 describe('answerSetUtil', () => {
   describe('createAnswerSet()', () => {
@@ -62,51 +60,4 @@ describe('answerSetUtil', () => {
     });
   });
 
-  describe('duplicateClozeBlank()', () => {
-    it('shares the authoritative frozen answer set without adding legacy options', () => {
-      const answers = Object.freeze(['B', 'A']);
-      const answerSet = Object.freeze(createAnswerSet(answers, 'characters'));
-      const blank = { type:'blank' as const, answerSet,
-        correctAnswerIndexes:[1], playerAnswerIndex:0 };
-      const copy = duplicateClozeBlank(blank);
-      expect(copy).toEqual(blank);
-      expect(copy).not.toBe(blank);
-      expect(copy.answerSet).toBe(answerSet);
-      expect(copy.answerSet.answers).toBe(answers);
-      expect(copy).not.toHaveProperty('availableAnswers');
-    });
-
-    it('keeps selection and mutable correct-answer indexes independent', () => {
-      const blank = { type:'blank' as const, answerSet:createAnswerSet(['B', 'A'], 'characters'),
-        correctAnswerIndexes:[1], playerAnswerIndex:-1 };
-      const copy = duplicateClozeBlank(blank);
-      expect(copy.correctAnswerIndexes).not.toBe(blank.correctAnswerIndexes);
-      copy.correctAnswerIndexes[0] = 0;
-      copy.playerAnswerIndex = 1;
-      expect(blank.correctAnswerIndexes).toEqual([1]);
-      expect(blank.playerAnswerIndex).toBe(-1);
-      blank.correctAnswerIndexes.push(0);
-      blank.playerAnswerIndex = 0;
-      expect(copy.correctAnswerIndexes).toEqual([0]);
-      expect(copy.playerAnswerIndex).toBe(1);
-    });
-  });
-
-  describe('duplicateConclusion()', () => {
-    it('shares frozen answer sets while keeping blank indexes and selections independent', () => {
-      const answerSet = Object.freeze(createAnswerSet(Object.freeze(['Pat', 'Sam']), 'characters'));
-      const blank = { type:'blank' as const, answerSet, correctAnswerIndexes:[1], playerAnswerIndex:-1 };
-      const copy = duplicateConclusion({ id:'mystery', title:'Mystery', parts:[blank],
-        isComplete:false, isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] });
-      const copiedBlank = copy.parts[0] as ClozeBlank;
-      expect(copiedBlank.type).toBe('blank');
-      expect(copiedBlank).not.toBe(blank);
-      expect(copiedBlank.answerSet).toBe(answerSet);
-      expect(copiedBlank.correctAnswerIndexes).not.toBe(blank.correctAnswerIndexes);
-      copiedBlank.correctAnswerIndexes[0] = 0;
-      copiedBlank.playerAnswerIndex = 0;
-      expect(blank.correctAnswerIndexes).toEqual([1]);
-      expect(blank.playerAnswerIndex).toBe(-1);
-    });
-  });
 });

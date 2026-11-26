@@ -1,9 +1,9 @@
 /* This file detects, configures, and generates the character-identities conclusion.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import ClozePart from "@/game/conclusions/types/ClozePart";
-import ClozePartType from "@/game/conclusions/types/ClozePartType";
-import Conclusion from "@/game/conclusions/types/Conclusion";
+import ClozePart from "@/conclusions/types/ClozePart";
+import ClozePartType from "@/conclusions/types/ClozePartType";
+import Conclusion from "@/conclusions/types/Conclusion";
 import { isCharacterInteractive } from "@/game/interactivityUtil";
 import Character from "@/game/types/Character";
 import ClozeCategory from "./types/ClozeCategory";

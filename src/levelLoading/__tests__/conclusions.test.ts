@@ -3,7 +3,6 @@ import defaultLevelText from './fixtures/conclusions-base.md?raw';
 import initialAppearanceText from './fixtures/initial-appearance.md?raw';
 import { loadLevelForTest, loadValidLevelForTest, replaceSection } from './testLevelUtil';
 import { UNKNOWN_CHARACTER_ICON_URL } from '@/game/discoveryIconUrlUtil';
-import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
 
 function _expectFailure(text:string, filename:string, expectedMessage:string) {
   const { level, errors } = loadLevelForTest(text, filename);
@@ -51,12 +50,11 @@ describe('loading levels - conclusions', () => {
     expect(level.conclusions.map(conclusion => conclusion.isOptional)).toEqual([false, false]);
   });
 
-  it('loads and preserves an authored optional conclusion when duplicated', () => {
+  it('loads an authored optional conclusion', () => {
     const text = defaultLevelText.replace('# conclusions', '# conclusions\n## Evidence\n* conclusion=[Hall]\n* isOptional=true');
     const level = loadValidLevelForTest(text);
     const conclusion = level.conclusions.find(conclusion => conclusion.id === 'evidence')!;
     expect(conclusion.isOptional).toBe(true);
-    expect(duplicateConclusion(conclusion).isOptional).toBe(true);
   });
 
   it('loads explicitly non-optional conclusions', () => {

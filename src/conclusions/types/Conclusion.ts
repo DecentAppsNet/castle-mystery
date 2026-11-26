@@ -1,4 +1,4 @@
-import ClozePart, { duplicateClozePart } from './ClozePart';
+import ClozePart from './ClozePart';
 
 type Conclusion = {
   readonly id: string;
@@ -11,19 +11,5 @@ type Conclusion = {
   readonly unlockConclusionIds:readonly string[];
   readonly revealRoomIds:readonly string[];
 };
-
-export function duplicateConclusion(from:Conclusion):Conclusion {
-  return {
-    id:from.id,
-    title:from.title,
-    parts:from.parts.map(duplicateClozePart),
-    isComplete:from.isComplete,
-    isLocked:from.isLocked,
-    isOptional:from.isOptional,
-    incorrectGuessCount:from.incorrectGuessCount,
-    unlockConclusionIds:[...from.unlockConclusionIds],
-    revealRoomIds:[...from.revealRoomIds]
-  };
-}
 
 export default Conclusion;

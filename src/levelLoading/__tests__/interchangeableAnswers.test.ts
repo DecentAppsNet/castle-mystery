@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { clearSeed, setSeed } from '@/common/randUtil';
-import { countConclusionMistakes } from '@/game/conclusions/conclusionUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
+import { countConclusionMistakes } from '@/conclusions';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import { loadLevelForTest, loadValidLevelForTest } from './testLevelUtil';
 import text from './fixtures/interchangeable-answers.md?raw';
 import charactersText from './fixtures/conclusions-effective-characters.md?raw';
@@ -39,18 +38,14 @@ describe('loading and validating interchangeable answers', () => {
   });
 
   it('shares immutable same-category sets but preserves indexes and independent selection state', () => {
-    const { conclusion, blanks, level } = _loadMystery();
+    const { blanks, level } = _loadMystery();
     Object.freeze(blanks[0].answerSet.answers);
     Object.freeze(blanks[0].answerSet);
     expect(blanks[1].answerSet).toBe(blanks[0].answerSet);
     expect(blanks.map(blank => blank.correctAnswerIndexes)).toEqual([[0, 1], [1, 0]]);
     expect(blanks.map(blank => blank.playerAnswerIndex)).toEqual([-1, -1]);
-    const copy = duplicateConclusion(conclusion);
-    const copies = copy.parts.filter(part => part.type === 'blank') as ClozeBlank[];
-    copies[0].playerAnswerIndex = 1;
-    expect(copies[1].answerSet).toBe(blanks[0].answerSet);
-    expect(blanks[0].playerAnswerIndex).toBe(-1);
-    expect(copies[1].playerAnswerIndex).toBe(-1);
+    blanks[0].playerAnswerIndex = 1;
+    expect(blanks[1].playerAnswerIndex).toBe(-1);
     const other = level.conclusions.find(candidate => candidate.id === 'other')!.parts[0] as ClozeBlank;
     expect(other.answerSet).not.toBe(blanks[0].answerSet);
   });

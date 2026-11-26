@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createLayout } from '@/canvasControls';
-import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import { createAnswerSet } from '@/conclusions';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import { hideBook, showBook } from '@/book/drawing/bookAnimationUtil';
 import { invalidatePieceLayouts, updateBookLayoutAsNeeded } from '@/book/drawing/bookLayoutUtil';
 import BookLayout from '@/book/drawing/types/BookLayout';

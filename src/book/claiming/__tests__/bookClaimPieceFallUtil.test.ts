@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
+import { createAnswerSet } from '@/conclusions';
 import { prepareBookClaimPieceFalls } from '../bookClaimPieceFallUtil';
 import { applyBookClaimResults } from '../bookClaimResultUtil';
 import { createDefaultBookState } from '@/book/types/BookState';
 import BookClaimState from '../types/BookClaimState';
 import BookPage from '@/book/types/BookPage';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import PieceLayout from '@/book/drawing/types/PieceLayout';
 import { showBook } from '@/book/drawing/bookAnimationUtil';
 

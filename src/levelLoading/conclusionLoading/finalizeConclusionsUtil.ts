@@ -1,10 +1,10 @@
 /* This file validates interchangeable blank groups and shares category answer sets within each conclusion.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import Conclusion from '@/game/conclusions/types/Conclusion';
-import AnswerSet from '@/game/conclusions/types/AnswerSet';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import { normalizeCategoryPhrase } from '@/game/conclusions/conclusionUtil';
+import Conclusion from '@/conclusions/types/Conclusion';
+import AnswerSet from '@/conclusions/types/AnswerSet';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
+import { normalizeCategoryPhrase } from '@/conclusions';
 import { ErrorCollector } from '../errorCollection';
 
 export function validateBlankGroupsAndShareAnswerSets(conclusions:readonly Conclusion[], errors:ErrorCollector):void {

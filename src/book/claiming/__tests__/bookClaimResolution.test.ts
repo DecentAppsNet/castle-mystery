@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createLayout, findControlRect } from '@/canvasControls';
 import { clearSeed, setSeed } from '@/common/randUtil';
-import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
+import { createAnswerSet } from '@/conclusions';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import { claimBookConclusion, getConclusionPageInstructionText, updateBookClaim as advanceClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 import { onBookMouseDown } from '@/book/eventHandlers';
 import { beginBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces,
@@ -76,8 +75,8 @@ describe('book claim resolution', () => {
     otherBlank.correctAnswerIndexes.push(1);
     const claimPage = { ...page, levelUrl:'/chapters/inactive.md?version=1' };
     claimPage.conclusion = { ...page.conclusion, id:'identities', revealRoomIds:['study'], unlockConclusionIds:['optional'] };
-    const optionalPage = { ...claimPage, conclusion:{ ...duplicateConclusion(claimPage.conclusion), id:'optional',
-      isOptional:true, isLocked:true } };
+    const optionalPage = { ...claimPage, conclusion:{ ...claimPage.conclusion, id:'optional',
+      parts:[], isOptional:true, isLocked:true } };
     bookState.pages[0] = claimPage;
     bookState.layout!.pieceSlotLayouts = bookState.layout!.pieceSlotLayouts.map(slot => ({ ...slot, page:claimPage }));
     bookState.pages.push(optionalPage, { kind:'chapterEnd', chapterNo:1, levelUrl:claimPage.levelUrl,
@@ -144,10 +143,10 @@ describe('book claim resolution', () => {
     const { bookState, page, otherBlank } = _createFixture();
     otherBlank.correctAnswerIndexes.push(1);
     page.conclusion = { ...page.conclusion, unlockConclusionIds:['next', 'another'] };
-    const next = { ...page, conclusion:{ ...duplicateConclusion(page.conclusion), id:'next', isLocked:true } };
-    const another = { ...next, conclusion:{ ...duplicateConclusion(next.conclusion), id:'another' } };
-    const unrelated = { ...next, conclusion:{ ...duplicateConclusion(next.conclusion), id:'unrelated' } };
-    const otherChapter = { ...next, levelUrl:'second.md', conclusion:duplicateConclusion(next.conclusion) };
+    const next = { ...page, conclusion:{ ...page.conclusion, parts:[], id:'next', isLocked:true } };
+    const another = { ...next, conclusion:{ ...next.conclusion, id:'another' } };
+    const unrelated = { ...next, conclusion:{ ...next.conclusion, id:'unrelated' } };
+    const otherChapter = { ...next, levelUrl:'second.md', conclusion:{ ...next.conclusion } };
     bookState.pages.push(next, another, unrelated, otherChapter);
 
     claimBookConclusion(bookState, 1, 123);
@@ -166,7 +165,7 @@ describe('book claim resolution', () => {
   it('does not unlock conclusions after an unsuccessful claim', () => {
     const { bookState, page } = _createFixture();
     page.conclusion = { ...page.conclusion, unlockConclusionIds:['next'] };
-    const next = { ...page, conclusion:{ ...duplicateConclusion(page.conclusion), id:'next', isLocked:true } };
+    const next = { ...page, conclusion:{ ...page.conclusion, parts:[], id:'next', isLocked:true } };
     bookState.pages.push(next);
     claimBookConclusion(bookState, 1, 123);
     updateBookClaim(bookState, 5623);
@@ -320,15 +319,6 @@ describe('book claim resolution', () => {
     claimBookConclusion(bookState, 1, 5000);
     expect(page.conclusion.incorrectGuessCount).toBe(1);
     expect(bookState.pieceStack.map(piece => [piece.xPercent, piece.yPercent])).toEqual(positions);
-  });
-
-  it('preserves the counter when duplicating a conclusion', () => {
-    const { page } = _createFixture();
-    page.conclusion.incorrectGuessCount = 3;
-    const copy = duplicateConclusion(page.conclusion);
-    expect(copy.incorrectGuessCount).toBe(3);
-    copy.incorrectGuessCount++;
-    expect(page.conclusion.incorrectGuessCount).toBe(3);
   });
 
   it('ignores invalidated geometry without partially ejecting answers', () => {

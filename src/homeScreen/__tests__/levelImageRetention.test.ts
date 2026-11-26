@@ -7,8 +7,8 @@ import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import defaultText from '@/levelLoading/__tests__/fixtures/default-level.md?raw';
 import { pathStoreMock } from '@/persistence/__tests__/pathStoreMock';
 import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
-import Conclusion from '@/game/conclusions/types/Conclusion';
-import ClozePartType from '@/game/conclusions/types/ClozePartType';
+import Conclusion from '@/conclusions/types/Conclusion';
+import ClozePartType from '@/conclusions/types/ClozePartType';
 
 vi.mock('@/persistence/pathStore', async () => {
   const { pathStoreMock } = await import('@/persistence/__tests__/pathStoreMock');
