@@ -25,7 +25,7 @@ function _createFixture(correct:boolean = false, pageNo:number = 1, conclusionId
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:0 };
   const otherBlank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[correct ? 1 : 0], playerAnswerIndex:1 };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
+    kind:'conclusion', headingText:'', chapterNo:1, levelUrl:'first.md', answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
     conclusion:{ id:conclusionId, title:'Runtime', parts:[blank, { type:'text', text:' then ' }, otherBlank],
       isComplete:false, isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };

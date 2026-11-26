@@ -18,7 +18,7 @@ function _createConclusionPage(conclusionId:string, answerSets:readonly AnswerSe
       isComplete:false, isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[]
   };
   return {
-    kind:'conclusion', headingText:'', chapterNo:1, conclusion,
+    kind:'conclusion', headingText:'', chapterNo:1, levelUrl:'first.md', conclusion,
     answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion), layoutTweaks:[]
   };
 }
@@ -46,7 +46,7 @@ describe('pieceGenerationUtil', () => {
       const state = _createBookState([
         { kind:'blank', headingText:'', chapterNo:0 },
         { kind:'bookStart', headingText:'', chapterNo:0, title:'Book', subtitle:null, author:'Author' },
-        { kind:'chapterStart', headingText:'', title:'Chapter', chapterNo:1, description:'' },
+        { kind:'chapterStart', headingText:'', title:'Chapter', chapterNo:1, levelUrl:'first.md', description:'' },
         { kind:'blank', headingText:'', chapterNo:1 }, page
       ]);
       updatePieceStackForConclusionPages(state, 0);
@@ -157,7 +157,7 @@ describe('pieceGenerationUtil', () => {
       };
       const styles = generateAnswerSetIdToPieceStyleNoMap(conclusion);
       const state = _createBookState([
-        { kind:'conclusion', headingText:'', chapterNo:1, conclusion, answerSetIdToPieceStyleNoMap:styles, layoutTweaks:[] }
+        { kind:'conclusion', headingText:'', chapterNo:1, levelUrl:'first.md', conclusion, answerSetIdToPieceStyleNoMap:styles, layoutTweaks:[] }
       ]);
       updatePieceStackForConclusionPages(state, 0);
       const pieces = state.pieceStack;

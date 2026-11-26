@@ -7,7 +7,6 @@ import Level from "@/game/types/Level";
 import ConclusionPage from "./types/ConclusionPage";
 import BookPage from "./types/BookPage";
 import Conclusion from "@/game/conclusions/types/Conclusion";
-import ChapterStartPage from "./types/ChapterStartPage";
 import { updatePieceStackForConclusionPages } from './pieces';
 import { parseSections, parseUniqueNameValueLines } from '@/common/markdownUtil';
 import { baseUrl } from '@/common/urlUtil';
@@ -19,16 +18,16 @@ function _findNextChapterNo(bookState:BookState):number {
   return bookState.pages[bookState.pages.length-1].chapterNo + 1;
 }
 
-function _addChapterStartPages(level:Level, chapterNo:number, pages:BookPage[]) {
+function _addChapterStartPages(level:Level, levelUrl:string, chapterNo:number, pages:BookPage[]) {
   pages.push({ kind:'blank', headingText:'', chapterNo:chapterNo-1 });
-  pages.push({ kind:'chapterStart', chapterNo, headingText:'', title:level.title, description:level.description });
+  pages.push({ kind:'chapterStart', chapterNo, levelUrl, headingText:'', title:level.title, description:level.description });
 }
 
-function _addConclusionPages(conclusion:Conclusion, chapterNo:number, pages:BookPage[]) {
+function _addConclusionPages(conclusion:Conclusion, levelUrl:string, chapterNo:number, pages:BookPage[]) {
   const headingText = conclusion.isOptional ? `${conclusion.title} (optional)` : conclusion.title;
   const layoutTweaks = createClozePartLayoutTweaksForConclusion(conclusion);
   const conclusionPage:ConclusionPage = {
-    kind:'conclusion', chapterNo, headingText, conclusion, 
+    kind:'conclusion', chapterNo, levelUrl, headingText, conclusion,
     answerSetIdToPieceStyleNoMap:generateAnswerSetIdToPieceStyleNoMap(conclusion),
     layoutTweaks
   }
@@ -36,17 +35,10 @@ function _addConclusionPages(conclusion:Conclusion, chapterNo:number, pages:Book
   pages.push({ kind:'blank', headingText, chapterNo });
 }
 
-function _addChapterEndPages(level:Level, chapterNo:number, pages:BookPage[]) {
+function _addChapterEndPages(level:Level, levelUrl:string, chapterNo:number, pages:BookPage[]) {
   const { conclusions } = level;
   pages.push({ kind:'tally', chapterNo, headingText:'Tally', conclusions });
-  pages.push({ kind:'chapterEnd', headingText:'End', chapterNo, winSynopsis:level.winSynopsis, conclusions });
-}
-
-function _doesBookHaveLevelChapter(bookState:BookState, level:Level):boolean {
-  // Level title doesn't have uniqueness constraints, so in theory, two level files could have the same title and cause unexpected 
-  // behavior. But in practice, this mistake is super-easy to spot by the author, and there isn't a real use case for an 
-  // author wanting to represent the same title twice in levels. So it works fine as an ID.
-  return bookState.pages.some(p => p.kind === 'chapterStart' && (p as ChapterStartPage).title === level.title);
+  pages.push({ kind:'chapterEnd', headingText:'End', chapterNo, levelUrl, winSynopsis:level.winSynopsis, conclusions });
 }
 
 function _addBookStartPages(title:string, subtitle:string|null, author:string, pages:BookPage[]) {
@@ -54,14 +46,14 @@ function _addBookStartPages(title:string, subtitle:string|null, author:string, p
   pages.push({ kind:'bookStart', headingText:'', title, subtitle, author, chapterNo:0 });
 }
 
-export function addLevelChapterToBook(bookState:BookState, level:Level) {
-  if (_doesBookHaveLevelChapter(bookState, level)) return;
+export function addLevelChapterToBook(bookState:BookState, level:Level, levelUrl:string) {
+  if (bookState.pages.some(page => page.kind === 'chapterStart' && page.levelUrl === levelUrl)) return;
   const chapterNo = _findNextChapterNo(bookState);
   const { pages } = bookState;
   const newPagesStartIndex = pages.length;
-  _addChapterStartPages(level, chapterNo, pages);
-  level.conclusions.forEach(c => _addConclusionPages(c, chapterNo, pages));
-  _addChapterEndPages(level, chapterNo, pages);
+  _addChapterStartPages(level, levelUrl, chapterNo, pages);
+  level.conclusions.forEach(conclusion => _addConclusionPages(conclusion, levelUrl, chapterNo, pages));
+  _addChapterEndPages(level, levelUrl, chapterNo, pages);
   updatePieceStackForConclusionPages(bookState, newPagesStartIndex);
   bookState.pageNo = newPagesStartIndex + 1;
 }

@@ -1,10 +1,33 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import bookText from './fixtures/book.md?raw';
-import { loadBookFromText, loadBookFromUrl } from '../bookContentUtil';
+import { addLevelChapterToBook, loadBookFromText, loadBookFromUrl } from '../bookContentUtil';
+import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
+import levelText from '@/game/__tests__/fixtures/save-state.md?raw';
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('bookContentUtil', () => {
+  it('creates out-of-order chapters with identical titles and deduplicates revisits by URL', () => {
+    const book = loadBookFromText(bookText);
+    const level = loadValidLevelForTest(levelText);
+    const [firstUrl, secondUrl] = book.levelUrls;
+    addLevelChapterToBook(book, level, secondUrl);
+    addLevelChapterToBook(book, level, firstUrl);
+    const pageNo = book.pageNo;
+    const pageCount = book.pages.length;
+    const pieceCount = book.pieceStack.length;
+    addLevelChapterToBook(book, { ...level, title:'Changed title' }, secondUrl);
+
+    expect(book.pages.filter(page => page.kind === 'chapterStart')).toMatchObject([
+      { chapterNo:1, title:level.title, levelUrl:secondUrl },
+      { chapterNo:2, title:level.title, levelUrl:firstUrl }
+    ]);
+    expect(book.pages).toHaveLength(pageCount);
+    expect(book.pieceStack).toHaveLength(pieceCount);
+    expect(book.pageNo).toBe(pageNo);
+    expect(book.pages.find(page => page.kind === 'conclusion')).toMatchObject({ levelUrl:secondUrl });
+    expect(book.pages.at(-1)).toMatchObject({ kind:'chapterEnd', levelUrl:firstUrl });
+  });
   it('loads authored metadata and preserves level order without creating chapters', () => {
     const book = loadBookFromText(bookText);
     expect(book.pages).toHaveLength(2);

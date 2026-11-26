@@ -16,7 +16,7 @@ function _createPreparedBook(conclusionPageI:number = 0) {
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:-1 };
   const otherBlank:ClozeBlank = { ...blank, correctAnswerIndexes:[1] };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
+    kind:'conclusion', headingText:'', chapterNo:1, levelUrl:'first.md', answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };

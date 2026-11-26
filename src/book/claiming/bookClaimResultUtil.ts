@@ -24,7 +24,7 @@ export function applyBookClaimResults(bookState:BookState, claim:BookClaimState,
       claim.page.conclusion.isComplete = true;
       const unlockConclusionIds = new Set(claim.page.conclusion.unlockConclusionIds);
       for (const page of bookState.pages) {
-        if (page.kind === 'conclusion' && page.chapterNo === claim.page.chapterNo
+        if (page.kind === 'conclusion' && page.levelUrl === claim.page.levelUrl
           && unlockConclusionIds.has(page.conclusion.id)) page.conclusion.isLocked = false;
       }
       bookState.pieceStack = bookState.pieceStack.filter(piece =>

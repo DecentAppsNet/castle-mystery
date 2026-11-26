@@ -20,7 +20,7 @@ function _createFixture(single:boolean = false) {
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:0 };
   const otherBlank:ClozeBlank = { ...blank, playerAnswerIndex:1 };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
+    kind:'conclusion', headingText:'', chapterNo:1, levelUrl:'first.md', answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
@@ -60,7 +60,7 @@ describe('book claim resolution', () => {
     const next = { ...page, conclusion:{ ...duplicateConclusion(page.conclusion), id:'next', isLocked:true } };
     const another = { ...next, conclusion:{ ...duplicateConclusion(next.conclusion), id:'another' } };
     const unrelated = { ...next, conclusion:{ ...duplicateConclusion(next.conclusion), id:'unrelated' } };
-    const otherChapter = { ...next, chapterNo:2, conclusion:duplicateConclusion(next.conclusion) };
+    const otherChapter = { ...next, levelUrl:'second.md', conclusion:duplicateConclusion(next.conclusion) };
     bookState.pages.push(next, another, unrelated, otherChapter);
 
     claimBookConclusion(bookState, 1, 123);

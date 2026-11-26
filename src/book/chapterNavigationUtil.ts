@@ -4,22 +4,21 @@
 import type BookPage from './types/BookPage';
 import type BookState from './types/BookState';
 
-function _findDifferentChapterUrl(page:BookPage|undefined, levelUrls:readonly string[], loadedLevelUrl:string):string|null {
+function _findDifferentChapterUrl(page:BookPage|undefined, loadedLevelUrl:string):string|null {
   if (page?.kind !== 'chapterStart' && page?.kind !== 'chapterEnd') return null;
-  const levelUrl = levelUrls[page.chapterNo - 1];
-  return levelUrl && levelUrl !== loadedLevelUrl ? levelUrl : null;
+  return page.levelUrl !== loadedLevelUrl ? page.levelUrl : null;
 }
 
 export function findVisitChapterTarget(bookState:Readonly<BookState>, loadedLevelUrl:string|null) {
-  const { layout, pageNo, pages, levelUrls } = bookState;
+  const { layout, pageNo, pages } = bookState;
   if (!layout || !loadedLevelUrl) return null;
   const leftPageNo = pageNo % 2 === 1 ? pageNo : pageNo - 1;
   if (!layout.isSinglePageView || pageNo === leftPageNo) {
-    const levelUrl = _findDifferentChapterUrl(pages[leftPageNo - 1], levelUrls, loadedLevelUrl);
+    const levelUrl = _findDifferentChapterUrl(pages[leftPageNo - 1], loadedLevelUrl);
     if (levelUrl) return { levelUrl, isLeftPage:true };
   }
   if (!layout.isSinglePageView || pageNo !== leftPageNo) {
-    const levelUrl = _findDifferentChapterUrl(pages[leftPageNo], levelUrls, loadedLevelUrl);
+    const levelUrl = _findDifferentChapterUrl(pages[leftPageNo], loadedLevelUrl);
     if (levelUrl) return { levelUrl, isLeftPage:false };
   }
   return null;

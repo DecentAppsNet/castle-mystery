@@ -14,7 +14,7 @@ function _createFixture(single:boolean = false, pageNo:number = 1) {
     correctAnswerIndexes:[1], playerAnswerIndex:0 };
   const otherBlank = { ...blank };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
+    kind:'conclusion', headingText:'', chapterNo:1, levelUrl:'first.md', answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
@@ -43,7 +43,7 @@ function _center(rect:{ x:number; width:number }):number {
 describe('bookClaimControlUtil', () => {
   it('only shows visitChapter for a visible chapter boundary whose level differs from the loaded level', () => {
     const { bookState, controls } = _createFixture();
-    bookState.pages[1] = { kind:'chapterStart', chapterNo:2, headingText:'', title:'Second', description:'' };
+    bookState.pages[1] = { kind:'chapterStart', chapterNo:1, levelUrl:'second.md', headingText:'', title:'Second', description:'' };
     bookState.levelUrls = ['first.md', 'second.md'];
     updateBookClaimControls(bookState, 'first.md');
     expect(controls.controls.find(control => control.id === 'visitChapter')?.isVisible).toBe(true);
@@ -68,7 +68,7 @@ describe('bookClaimControlUtil', () => {
 
   it('shows exactly four controls when visitChapter and nextChapter are both available in single-page view', () => {
     const { bookState, controls } = _createFixture(true, 2);
-    bookState.pages[1] = { kind:'chapterEnd', chapterNo:2, headingText:'', winSynopsis:'', conclusions:[] };
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:2, levelUrl:'second.md', headingText:'', winSynopsis:'', conclusions:[] };
     bookState.levelUrls = ['first.md', 'second.md', 'third.md'];
     setPageNavigationButtonVisibility(bookState);
     updateBookClaimControls(bookState, 'first.md');
@@ -78,7 +78,7 @@ describe('bookClaimControlUtil', () => {
 
   it('requests distinct levels from visitChapter and nextChapter on the same single page', () => {
     const { bookState, controls } = _createFixture(true, 2);
-    bookState.pages[1] = { kind:'chapterEnd', chapterNo:2, headingText:'', winSynopsis:'', conclusions:[] };
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, levelUrl:'second.md', headingText:'', winSynopsis:'', conclusions:[] };
     bookState.levelUrls = ['first.md', 'second.md', 'third.md'];
     setPageNavigationButtonVisibility(bookState);
     updateBookClaimControls(bookState, 'first.md');
@@ -95,7 +95,8 @@ describe('bookClaimControlUtil', () => {
   it('shows nextChapter with no remaining required conclusions and hides the book when there is no next level', () => {
     const { bookState, page, controls } = _createFixture(true, 2);
     page.conclusion.isOptional = true;
-    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, levelUrl:'second.md', headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
+    bookState.levelUrls = ['first.md', 'second.md'];
     updateBookClaimControls(bookState);
     expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(true);
     const nextChapter = findControlRect(controls, 'nextChapter');
@@ -111,23 +112,23 @@ describe('bookClaimControlUtil', () => {
     expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(false);
   });
 
-  it('requests the level indexed by the last chapter number rather than the displayed page chapter', () => {
+  it('requests the authored successor of the chapter URL regardless of chapter creation order', () => {
     const { bookState, page, controls } = _createFixture();
     page.conclusion.isComplete = true;
-    bookState.pages[1] = { kind:'chapterEnd', chapterNo:2, headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:2, levelUrl:'first.md', headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
     bookState.levelUrls = ['first.md', 'second.md', 'third.md'];
     updateBookClaimControls(bookState);
     const nextChapter = findControlRect(controls, 'nextChapter');
     const requestedUrls:string[] = [];
     onBookMouseDown(nextChapter.x + nextChapter.width / 2, nextChapter.y + nextChapter.height / 2, 0, bookState,
       false, levelUrl => requestedUrls.push(levelUrl));
-    expect(requestedUrls).toEqual(['third.md']);
+    expect(requestedUrls).toEqual(['second.md']);
   });
 
   it('shows nextChapter on a final two-page chapter-end spread but not when that page is hidden in single-page view', () => {
     const { bookState, page, controls } = _createFixture();
     page.conclusion.isComplete = true;
-    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, levelUrl:'first.md', headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
     updateBookClaimControls(bookState);
     expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(true);
     bookState.layout!.isSinglePageView = true;
@@ -138,7 +139,7 @@ describe('bookClaimControlUtil', () => {
   it('hides nextChapter when pages are appended after an otherwise eligible chapter end', () => {
     const { bookState, page, controls } = _createFixture(true, 2);
     page.conclusion.isComplete = true;
-    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
+    bookState.pages[1] = { kind:'chapterEnd', chapterNo:1, levelUrl:'first.md', headingText:'', winSynopsis:'', conclusions:[page.conclusion] };
     updateBookClaimControls(bookState);
     expect(controls.controls.find(control => control.id === 'nextChapter')?.isVisible).toBe(true);
     bookState.pages.push({ kind:'blank', chapterNo:2, headingText:'' });

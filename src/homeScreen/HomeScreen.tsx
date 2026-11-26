@@ -81,7 +81,7 @@ function HomeScreen() {
 
   function _publishPreparedLevelState(prepared:PreparedLevelState, sessionBookState:BookState|null = bookState) {
     assertNonNullable(sessionBookState);
-    addLevelChapterToBook(sessionBookState, prepared.level);
+    addLevelChapterToBook(sessionBookState, prepared.level, prepared.levelUrl);
     acceptPreparedLevelState(prepared, findBookImageUrls(sessionBookState));
     saveGameStateRef.current = prepared.gameState;
     saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave);

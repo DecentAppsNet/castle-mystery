@@ -48,7 +48,8 @@ export function onBookMouseDown(canvasX:number, canvasY:number, metaTime:number,
   if (id === 'nextChapter') {
     const lastPage = bookState.pages[bookState.pages.length - 1];
     assert(lastPage?.kind === 'chapterEnd');
-    const levelUrl = bookState.levelUrls[lastPage.chapterNo];
+    const levelI = bookState.levelUrls.indexOf(lastPage.levelUrl);
+    const levelUrl = levelI < 0 ? undefined : bookState.levelUrls[levelI + 1];
     if (levelUrl && onChapterLevelSelected) onChapterLevelSelected(levelUrl);
     else hideBook(metaTime, bookState);
     return false;

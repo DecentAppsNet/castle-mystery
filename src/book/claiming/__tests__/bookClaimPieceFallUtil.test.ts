@@ -13,7 +13,7 @@ function _fixture(correct:boolean = true) {
   const answerSet = createAnswerSet(['Answer'], 'people');
   const blank:ClozeBlank = { type:'blank', answerSet, correctAnswerIndexes:[0], playerAnswerIndex:0 };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
+    kind:'conclusion', headingText:'', chapterNo:1, levelUrl:'first.md', answerSetIdToPieceStyleNoMap:{ people:3 }, layoutTweaks:[],
     conclusion:{ id:'fall', title:'Fall', parts:[blank], isComplete:false, isLocked:false, isOptional:false,
       incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };

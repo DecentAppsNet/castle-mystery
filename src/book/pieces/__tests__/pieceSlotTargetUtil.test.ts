@@ -17,7 +17,7 @@ function _createPreparedBook(conclusionPageI:number = 0) {
   const otherBlank:ClozeBlank = { ...blank, correctAnswerIndexes:[0] };
   const styles = { people:3 };
   const page:Extract<BookPage, { kind:'conclusion' }> = {
-    kind:'conclusion', headingText:'', chapterNo:1, answerSetIdToPieceStyleNoMap:styles, layoutTweaks:[],
+    kind:'conclusion', headingText:'', chapterNo:1, levelUrl:'first.md', answerSetIdToPieceStyleNoMap:styles, layoutTweaks:[],
     conclusion:{ id:'synthetic', title:'Synthetic', parts:[blank, otherBlank], isComplete:false,
       isLocked:false, isOptional:false, incorrectGuessCount:0, unlockConclusionIds:[], revealRoomIds:[] }
   };
