@@ -322,7 +322,7 @@ describe('LevelSaveCoordinator', () => {
     await coordinator.stopAndSettle();
   });
 
-  it('saves unfinished answers applied through authoritative player events', async () => {
+  it('does not save when only unfinished conclusion answers change', async () => {
     const state = _createState();
     const coordinator = new LevelSaveCoordinator('castle.md', state);
     const conclusions = state.conclusions.map(duplicateConclusion);
@@ -332,25 +332,7 @@ describe('LevelSaveCoordinator', () => {
     updateGameState(state, [{ type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions }], 100, 1,
       () => coordinator.observe());
     await coordinator.stopAndSettle();
-    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({
-      incompleteConclusionAnswerIndexesById:{ mystery:[1, -1] }
-    });
-  });
-
-  it('observes conclusion unlocks before saving authoritative completion', async () => {
-    const state = _createState();
-    state.conclusions = state.conclusions.map(conclusion => conclusion.id === 'mystery'
-      ? { ...conclusion, unlockConclusionIds:['finding'] }
-      : conclusion.id === 'finding' ? { ...conclusion, isLocked:true } : conclusion);
-    const coordinator = new LevelSaveCoordinator('castle.md', state);
-    const conclusions = state.conclusions.map(duplicateConclusion);
-    conclusions.find(conclusion => conclusion.id === 'mystery')!.isComplete = true;
-    updateGameState(state, [{ type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions }], 100, 1, updated => {
-      expect(updated.conclusions.find(conclusion => conclusion.id === 'finding')!.isLocked).toBe(false);
-      coordinator.observe();
-    });
-    await coordinator.stopAndSettle();
-    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ completedConclusionIds:['mystery'] });
+    expect(pathStoreMock.setText).not.toHaveBeenCalled();
   });
 
   it('saves completion-derived skin and item discoveries in the same authoritative snapshot', async () => {
@@ -463,21 +445,14 @@ describe('LevelSaveCoordinator', () => {
     expect(pathStoreMock.setText).toHaveBeenCalledOnce();
   });
 
-  it('captures answers and discoveries before later mutations', async () => {
+  it('captures discoveries before later mutations', async () => {
     const state = _createState();
     const coordinator = new LevelSaveCoordinator('castle.md', state);
-    const conclusion = state.conclusions.find(conclusion => conclusion.id === 'mystery')!;
-    const blank = conclusion.parts.find(part => part.type === ClozePartType.blank) as ClozeBlank;
-    blank.playerAnswerIndex = 1;
     state.discoveryState.discoveredItemIds.add('key');
     coordinator.observe();
-    blank.playerAnswerIndex = 0;
     state.discoveryState.discoveredItemIds.clear();
-    conclusion.isComplete = true;
     await coordinator.stopAndSettle();
-    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({
-      discoveredItemIds:['key'], completedConclusionIds:[], incompleteConclusionAnswerIndexesById:{ mystery:[1, -1] }
-    });
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ discoveredItemIds:['key'] });
   });
 
   it('serializes deferred writes so later progress cannot be overwritten by an earlier save', async () => {

@@ -132,12 +132,11 @@ describe('prepareLevelState()', () => {
   it('does not mutate authored data when restoring completion and position', async () => {
     const level = loadValidLevelForTest(saveText);
     const original = JSON.stringify(level);
-    const save = { ...createLevelSaveState(createGameState(level), level.timeline.endTime),
-      completedConclusionIds:level.conclusions.map(conclusion => conclusion.id),
-      incompleteConclusionAnswerIndexesById:{} };
+    const save = { ...createLevelSaveState(createGameState(level), level.timeline.endTime), isLevelComplete:true };
     await setLevelSaveState(levelFilename, save);
     const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(gameState.isLevelComplete).toBe(true);
+    expect(gameState.time).toBe(level.timeline.endTime);
     expect(JSON.stringify(level)).toBe(original);
     expect(gameState.timeline).toBe(level.timeline);
   });

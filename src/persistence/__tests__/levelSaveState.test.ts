@@ -18,9 +18,7 @@ const saveState:LevelSaveState = {
   discoveredItemIds:['key'],
   discoveredSkinIds:['duchess-disguise'],
   titleKnownCharacterIds:['duchess'],
-  isLevelComplete:true,
-  completedConclusionIds:['identity'],
-  incompleteConclusionAnswerIndexesById:{ mystery:[-1, 0, 2] }
+  isLevelComplete:true
 };
 
 async function _expectDiscarded(value:unknown) {
@@ -40,7 +38,7 @@ describe('levelSaveState', () => {
       expect(pathStoreMock.deleteByKey).not.toHaveBeenCalled();
     });
 
-    it('round-trips every field, including extended-hour time and unspecified answers', async () => {
+    it('round-trips every world field, including extended-hour time', async () => {
       await setLevelSaveState(levelFilename, saveState);
       const restored = await getLevelSaveState(levelFilename);
       expect(restored).toEqual(saveState);
@@ -48,11 +46,10 @@ describe('levelSaveState', () => {
       expect(pathStoreMock.deleteByKey).not.toHaveBeenCalled();
     });
 
-    it('accepts empty discovery arrays and unfinished-answer lookups', async () => {
+    it('accepts empty discovery arrays', async () => {
       const emptySave = { ...saveState, discoveredRoomIds:[], revealedRoomIds:[], discoveredItemIds:[],
         isLevelComplete:false,
-        discoveredSkinIds:[], titleKnownCharacterIds:[], completedConclusionIds:[],
-        incompleteConclusionAnswerIndexesById:{} };
+        discoveredSkinIds:[], titleKnownCharacterIds:[] };
       await setLevelSaveState(levelFilename, emptySave);
       await expect(getLevelSaveState(levelFilename)).resolves.toEqual(emptySave);
     });
@@ -83,11 +80,12 @@ describe('levelSaveState', () => {
     });
 
     it('rejects missing members', async () => {
-      await _expectDiscarded({ ...saveState, completedConclusionIds:undefined });
+      await _expectDiscarded({ ...saveState, titleKnownCharacterIds:undefined });
     });
 
     it('deletes an old save without explicit world progress', async () => {
-      await _expectDiscarded({ ...saveState, revealedRoomIds:undefined, isLevelComplete:undefined });
+      await _expectDiscarded({ ...saveState, revealedRoomIds:undefined, isLevelComplete:undefined,
+        completedConclusionIds:['identity'], incompleteConclusionAnswerIndexesById:{} });
     });
 
     it('requires revealed room IDs even when the completion flag is present', async () => {
@@ -122,10 +120,6 @@ describe('levelSaveState', () => {
       await _expectDiscarded({ ...saveState, titleKnownCharacterIds:[false] });
     });
 
-    it('rejects non-string completed-conclusion IDs', async () => {
-      await _expectDiscarded({ ...saveState, completedConclusionIds:[{}] });
-    });
-
     it('rejects string time', async () => {
       await _expectDiscarded({ ...saveState, time:'90000000' });
     });
@@ -140,35 +134,11 @@ describe('levelSaveState', () => {
       expect(pathStoreMock.deleteByKey).toHaveBeenCalledExactlyOnceWith(saveKey);
     });
 
-    it('rejects a null unfinished-answer lookup', async () => {
-      await _expectDiscarded({ ...saveState, incompleteConclusionAnswerIndexesById:null });
-    });
-
-    it('rejects an array unfinished-answer lookup', async () => {
-      await _expectDiscarded({ ...saveState, incompleteConclusionAnswerIndexesById:[] });
-    });
-
-    it('rejects a non-array answer entry', async () => {
-      await _expectDiscarded({ ...saveState, incompleteConclusionAnswerIndexesById:{ mystery:0 } });
-    });
-
-    it('rejects string answer indexes', async () => {
-      await _expectDiscarded({ ...saveState, incompleteConclusionAnswerIndexesById:{ mystery:['0'] } });
-    });
-
-    it('rejects fractional answer indexes', async () => {
-      await _expectDiscarded({ ...saveState, incompleteConclusionAnswerIndexesById:{ mystery:[0.5] } });
-    });
-
-    it('leaves integer answer-range validation to the caller', async () => {
-      const save = { ...saveState, incompleteConclusionAnswerIndexesById:{ mystery:[-2] } };
-      await setLevelSaveState(levelFilename, save);
-      await expect(getLevelSaveState(levelFilename)).resolves.toEqual(save);
+    it('accepts a current save without validating extra members', async () => {
+      pathStoreMock.values[saveKey] = JSON.stringify({ ...saveState, completedConclusionIds:null,
+        incompleteConclusionAnswerIndexesById:'unused', extra:42 });
+      await expect(getLevelSaveState(levelFilename)).resolves.toMatchObject(saveState);
       expect(pathStoreMock.deleteByKey).not.toHaveBeenCalled();
-    });
-
-    it('rejects nonfinite answers serialized as null', async () => {
-      await _expectDiscarded({ ...saveState, incompleteConclusionAnswerIndexesById:{ mystery:[NaN] } });
     });
 
     it('propagates storage read failures without treating them as corruption', async () => {

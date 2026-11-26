@@ -7,10 +7,6 @@ type LevelSaveState = {
   readonly discoveredSkinIds:readonly string[];
   readonly titleKnownCharacterIds:readonly string[];
   readonly isLevelComplete:boolean;
-  readonly completedConclusionIds:readonly string[];
-  readonly incompleteConclusionAnswerIndexesById:{
-    readonly [conclusionId:string]:readonly number[]|undefined;
-  };
 }
 
 function _isStringArray(value:unknown):value is readonly string[] {
@@ -22,13 +18,8 @@ export function isValidLevelSaveState(value:unknown):value is LevelSaveState {
   const save = value as Partial<LevelSaveState>;
   if (typeof save.time !== 'number' || !Number.isFinite(save.time)
     || typeof save.activeCharacterId !== 'string' || typeof save.isLevelComplete !== 'boolean') return false;
-  if (![save.discoveredRoomIds, save.revealedRoomIds, save.discoveredItemIds, save.discoveredSkinIds,
-    save.titleKnownCharacterIds, save.completedConclusionIds].every(_isStringArray)) return false;
-
-  const answers = save.incompleteConclusionAnswerIndexesById;
-  return typeof answers === 'object' && answers !== null && !Array.isArray(answers)
-    && Object.values(answers).every(indexes => Array.isArray(indexes)
-      && indexes.every(index => Number.isInteger(index)));
+  return [save.discoveredRoomIds, save.revealedRoomIds, save.discoveredItemIds, save.discoveredSkinIds,
+    save.titleKnownCharacterIds].every(_isStringArray);
 }
 
 export default LevelSaveState;
