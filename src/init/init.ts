@@ -6,6 +6,10 @@ import { initCastleDebug } from "@/developer/debugUtil";
 import { isServingLocally } from "@/developer/devEnvUtil";
 import { initAppMetaData } from "decent-portal";
 
+function _showFatalErrorMessage(message:string) {
+  document.body.textContent = `<h1>Fatal Error</h1><p>${message}</p>`;
+}
+
 function _initLocalDeveloperTools():void {
   setSeed(0); // Repeatable p-random #s while developing helps with troubleshooting.
   initCastleDebug();
@@ -26,7 +30,7 @@ function _areRequiredBrowserApisSupported():boolean {
 // Avoid any work that could instead be done in the loading screen or someplace else.
 export async function initApp():Promise<boolean> {
   if (!_areRequiredBrowserApisSupported()) {
-    document.body.textContent = "Castle Mystery can't run on your browser.";
+    _showFatalErrorMessage("Castle Mystery can't run on your browser because required APIs are unavailable. You could try a different browser or updating the one you are using.");
     return false;
   }
   await Promise.all([
