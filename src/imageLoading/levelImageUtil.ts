@@ -1,19 +1,17 @@
 /* This module groups image-set creation and loading helpers for built-in and authored runtime image assets.
   If this module grows beyond 500 lines of code, read the "Refactoring Large Modules" section in CONTRIBUTING.md before making changes. */
 
-import { getGroundImageAssetUrl, isCandidateUrls } from "./imageUrlUtil";
-import { UNKNOWN_ITEM_ICON_URL } from "./discoveryIconUrlUtil";
-import { findTextureImageUrls } from "./textureUtil";
-import ClozeImage from "./conclusions/types/ClozeImage";
-import ClozePartType from "./conclusions/types/ClozePartType";
-import Level from "./types/Level";
-import { ImageSet } from "@/imageLoading";
+import { getGroundImageAssetUrl, isCandidateUrls } from "@/game/imageUrlUtil";
+import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
+import { findTextureImageUrls } from "@/game/textureUtil";
+import ClozeImage from "@/game/conclusions/types/ClozeImage";
+import ClozePartType from "@/game/conclusions/types/ClozePartType";
+import Level from "@/levelLoading/types/Level";
+import ImageSet from "./ImageSet";
 import { assertNonNullable } from "decent-portal";
-import { KEY_IMAGE_URL } from "./effects/lockEffectUtil";
-import { CHARACTER_SELECTION_NIMBUS_IMAGE_URL } from "./effects/characterSelectionEffectUtil";
-import BodyPart from './characterBody/types/BodyPart';
-import { BOOK_ICON_IMAGE_URL } from "./drawing/overlay";
-import { BOOK_IMAGE_URL, BOOK_PAGE_TILE_IMAGE_URL, ILLUMINATIONS_IMAGE_URL } from "@/book";
+import BodyPart from '@/game/characterBody/types/BodyPart';
+import { BOOK_ICON_IMAGE_URL, BOOK_IMAGE_URL, BOOK_PAGE_TILE_IMAGE_URL, CHARACTER_SELECTION_NIMBUS_IMAGE_URL,
+  ILLUMINATIONS_IMAGE_URL, KEY_IMAGE_URL } from '@/common/builtInImageUrls';
 
 function _findItemImageUrls(level:Level):string[] {
   const imageUrls = new Set<string>();

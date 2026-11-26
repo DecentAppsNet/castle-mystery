@@ -1,7 +1,7 @@
 /* This file orchestrates loading complete levels from authored text or a level URL.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import Level from "@/game/types/Level";
+import Level from "./types/Level";
 import Timeline from "@/game/types/Timeline";
 import { ErrorCollector } from "./errorCollection";
 import { loadLevelSections } from "./levelFileSectionUtil";

@@ -1,7 +1,7 @@
 /* This file parses and schedules item-taking activities between rooms, inventory, and hands.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import Level from "@/game/types/Level";
+import Level from "@/levelLoading/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteralOptions, makeSequence, makeVariableLiteralOptions, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";

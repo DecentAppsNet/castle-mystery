@@ -2,7 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assertNonNullable } from 'decent-portal';
-import Level from '@/game/types/Level';
+import Level from '@/levelLoading/types/Level';
 import PointTarget from '@/game/effects/types/PointTarget';
 import { createPointEffect, getPointDuration } from '@/game/effects/pointEffectUtil';
 import EditableTimeline from '@/levelLoading/timelineLoading/types/EditableTimeline';

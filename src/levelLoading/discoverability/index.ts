@@ -3,7 +3,7 @@
 
 import { isCharacterInteractive, isItemInteractive } from "@/game/interactivityUtil";
 import Character from "@/game/types/Character";
-import Level from "@/game/types/Level";
+import Level from "../types/Level";
 import Room from "@/game/types/Room";
 import Activity from "../activityLoading/types/Activity";
 import { createDefaultSkinId, createSkinId } from "../generalLoading";

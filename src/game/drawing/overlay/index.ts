@@ -5,8 +5,6 @@ import { drawOverlayIcons, updateOverlayIconsLayout } from "./iconUtil";
 import { assert, assertNonNullable } from "decent-portal";
 import OverlayControlId from "./types/OverlayControlId";
 
-export { BOOK_ICON_IMAGE_URL } from "./iconUtil";
-
 // The singleton is fine as long as the game isn't rendered with multiple instances.
 let theLayout:ControlLayout|null = null;
 

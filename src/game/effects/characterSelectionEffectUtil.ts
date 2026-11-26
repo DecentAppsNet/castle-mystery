@@ -6,7 +6,8 @@ import ScalingFactors from "../types/ScalingFactors";
 import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
 
-export const CHARACTER_SELECTION_NIMBUS_IMAGE_URL = '/assets/sprites/nimbus.png';
+import { CHARACTER_SELECTION_NIMBUS_IMAGE_URL } from '@/common/builtInImageUrls';
+
 const EFFECT_DURATION = 850;
 const FADE_IN_DURATION = 200;
 const HOLD_DURATION = 300;

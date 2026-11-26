@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createKeyframeAtTime, createCharacterKeyframeAtTime } from '@/game/timeline';
 import { findRoomAtPosition } from '@/game/roomUtil';
 import { findCharacterOwnedItem } from '@/game/itemOwnershipUtil';
-import Level from '@/game/types/Level';
+import Level from '../types/Level';
 import givesBaseText from './fixtures/gives/gives-base.md?raw';
 import givesConcurrentlyText from './fixtures/gives/gives-concurrently.md?raw';
 import givesCrowdedText from './fixtures/gives/gives-crowded.md?raw';

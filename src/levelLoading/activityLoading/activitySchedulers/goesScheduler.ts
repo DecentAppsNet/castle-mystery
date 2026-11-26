@@ -1,7 +1,7 @@
 /* This file parses and schedules start-time room-directed character movement activities.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import Level from "@/game/types/Level";
+import Level from "@/levelLoading/types/Level";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationContext";

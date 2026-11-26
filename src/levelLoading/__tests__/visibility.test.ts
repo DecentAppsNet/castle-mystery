@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createKeyframeAtTime } from '@/game/timeline';
 import Item from '@/game/types/Item';
-import Level from '@/game/types/Level';
+import Level from '../types/Level';
 
 import itemPlacementText from './fixtures/items/items-placement.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';

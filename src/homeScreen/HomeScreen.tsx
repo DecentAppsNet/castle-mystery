@@ -22,8 +22,7 @@ import { findNextTimelineBeat, findPreviousTimelineBeat } from '@/game/timeline/
 import LevelSaveCoordinator from './levelSaveCoordinator';
 import PreparedLevelState from './types/PreparedLevelState';
 import { addLevelChapterToBook, findBookImageUrls } from '@/book';
-import { ImageSet } from '@/imageLoading';
-import { createImageSet } from '@/game/imageSetUtil';
+import { createImageSet, ImageSet } from '@/imageLoading';
 import InitResults from './types/InitResults';
 import { acceptPreparedLevelState } from './levelPreparation';
 import BookState from "@/book/types/BookState";

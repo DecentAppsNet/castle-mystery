@@ -4,7 +4,7 @@
 import Room, { MutableRoom } from '@/game/types/Room';
 import { ErrorCollector } from '../errorCollection';
 import { MutableItem } from '@/game/types/Item';
-import { MutableLevel } from '@/game/types/Level';
+import { MutableLevel } from '../types/Level';
 import { applyRoomMetaDataFromSections, createRoomsFromMapSection } from './roomLayoutUtil';
 import { addExitsToRooms } from './roomExitUtil';
 import { generateStairFlights } from './stairFlightUtil';

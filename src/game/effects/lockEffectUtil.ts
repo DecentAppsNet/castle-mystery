@@ -9,7 +9,8 @@ import Effect from "./types/Effect";
 import EffectDrawCall from "./types/EffectDrawCall";
 import EffectHandler from "./types/EffectHandler";
 
-export const KEY_IMAGE_URL = '/assets/sprites/key.png';
+import { KEY_IMAGE_URL } from '@/common/builtInImageUrls';
+
 const LOCK_UNLOCK_DURATION = 500;
 
 type AfterCharacterDrawCall = Extract<EffectDrawCall, { stage:'afterCharacter' }>;

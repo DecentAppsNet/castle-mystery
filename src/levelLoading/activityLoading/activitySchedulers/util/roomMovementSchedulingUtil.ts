@@ -12,7 +12,7 @@ import WaypointGenerationContext from "@/levelLoading/types/WaypointGenerationCo
 import Waypoint from "@/levelLoading/types/Waypoint";
 import Activity from "@/levelLoading/activityLoading/types/Activity";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
-import Level from "@/game/types/Level";
+import Level from "@/levelLoading/types/Level";
 import EditableTimeline from "@/levelLoading/timelineLoading/types/EditableTimeline";
 import { findRoom, findRoomAtPosition } from "@/game/roomUtil";
 import { scheduleCharacterMovementToRoom } from "@/levelLoading/activityLoading/movementPlanningUtil";

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { findRoomAtPosition } from '@/game/roomUtil';
-import Level from '@/game/types/Level';
+import Level from '../types/Level';
 import { createCharacterKeyframeAtTime, createKeyframeAtTime } from '@/game/timeline';
 import takesAfterRoomMutationText from './fixtures/takes/takes-after-room-mutation.md?raw';
 import takesConcurrentlyText from './fixtures/takes/takes-concurrently.md?raw';

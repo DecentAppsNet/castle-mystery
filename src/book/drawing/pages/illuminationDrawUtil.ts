@@ -7,7 +7,8 @@ import Rect from "@/game/types/Rect";
 import { createScratchCanvas, getScratchCanvasContext2d } from "@/game/drawing/canvasSurfaceUtil";
 import { assertNonNullable } from "decent-portal";
 
-export const ILLUMINATIONS_IMAGE_URL = '/assets/ui/illuminations.png'; // Only contains English alphabet (26 letters).
+import { ILLUMINATIONS_IMAGE_URL } from '@/common/builtInImageUrls';
+
 const COLUMN_COUNT = 13; // Number of columns in the source image.
 const ROW_COUNT = 2; // Number of rows in the source image.
 

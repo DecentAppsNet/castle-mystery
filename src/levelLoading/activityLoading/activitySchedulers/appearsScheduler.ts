@@ -3,7 +3,7 @@
 
 import { assertNonNullable } from "decent-portal";
 
-import Level from "@/game/types/Level";
+import Level from "@/levelLoading/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteral, makeOptions, makeSequence, makeVariableLiteral, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";

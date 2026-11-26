@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createKeyframeAtTime } from '@/game/timeline';
 import Effect from '@/game/effects/types/Effect';
 import ExitStatus from '@/game/types/ExitStatus';
-import Level from '@/game/types/Level';
+import Level from '../types/Level';
 import RoomExit from '@/game/types/RoomExit';
 
 import lockabilityBaseText from './fixtures/lockability-base.md?raw';

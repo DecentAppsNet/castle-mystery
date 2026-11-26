@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createDefaultCharacter } from '@/game/types/Character';
 import { createDefaultRoom } from '@/game/types/Room';
 import { createDefaultItem } from '@/game/types/Item';
-import { createDefaultMutableLevel } from '@/game/types/Level';
+import { createDefaultMutableLevel } from '@/levelLoading/types/Level';
 import ErrorCollector from '@/levelLoading/errorCollection/ErrorCollector';
 import { addCharacterKeyChanges, addRoomKeyChanges, createEditableTimeline } from '@/levelLoading/timelineLoading/editingUtil';
 import { resolvePointTarget } from '../pointTargetUtil';

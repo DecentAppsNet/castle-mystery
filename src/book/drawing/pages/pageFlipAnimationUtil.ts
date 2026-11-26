@@ -11,7 +11,7 @@ import { assertNonNullable } from "decent-portal";
 import AnimationEndCallback from "@/book/types/AnimationEndCallback";
 import { invalidatePieceLayouts } from "../bookLayoutUtil";
 
-export const BOOK_PAGE_TILE_IMAGE_URL = '/assets/ui/bookPageTile.png';
+import { BOOK_PAGE_TILE_IMAGE_URL } from '@/common/builtInImageUrls';
 
 const PAGE_FLIP_ANIMATION_DURATION = 100;
 const PAPER_HORIZONTAL_INSET = .055;

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { acceptPreparedLevelState, prepareLevelState } from '../levelPreparation';
-import { createImageSet, updateImageSetForLevel } from '@/game/imageSetUtil';
+import { createImageSet, updateImageSetForLevel } from '@/imageLoading';
 import { findBookImageUrls } from '@/book';
 import { createDefaultBookState } from '@/book/types/BookState';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';

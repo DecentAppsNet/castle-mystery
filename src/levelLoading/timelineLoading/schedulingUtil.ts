@@ -3,7 +3,7 @@
 
 import { assert, assertNonNullable } from "decent-portal";
 
-import Level from "@/game/types/Level";
+import Level from "../types/Level";
 import Timeline from "@/game/types/Timeline";
 import { isActivityRelativeTimestamp, sortActivitiesAfterStartTimeAssignment } from "../activityLoading";
 import { scheduleAppearsActivity } from "../activityLoading/activitySchedulers/appearsScheduler";

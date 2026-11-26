@@ -17,7 +17,7 @@ import Position, { createDefaultPosition } from "@/game/types/Position";
 import { findAllCharacterPositions } from "../roomLoading";
 import { mergeCharacterItems } from "./characterItemUtil";
 import Item from "@/game/types/Item";
-import { MutableLevel } from "@/game/types/Level";
+import { MutableLevel } from "../types/Level";
 import CharacterSkin from "@/game/types/CharacterSkin";
 import { createDefaultSkinId, createSkinId } from "../generalLoading";
 import { NO_SKIN_DEFAULT } from "../activityLoading/activitySchedulers/appearsScheduler";

@@ -1,5 +1,5 @@
 import GameState from '@/game/types/GameState';
-import Level from '@/game/types/Level';
+import Level from '@/levelLoading/types/Level';
 
 type PreparedLevelState = {
   readonly level:Level;

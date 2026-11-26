@@ -4,7 +4,7 @@
 import BookState, { createDefaultBookState } from "./types/BookState";
 import { pushLevelChanges } from '@/persistence/levelChangeQueue';
 import { generateAnswerSetIdToPieceStyleNoMap } from './answerSetPieceStyleUtil';
-import Level from "@/game/types/Level";
+import Level from "@/levelLoading/types/Level";
 import ConclusionPage from "./types/ConclusionPage";
 import BookPage from "./types/BookPage";
 import Conclusion from "@/game/conclusions/types/Conclusion";

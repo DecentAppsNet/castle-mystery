@@ -5,7 +5,7 @@ import Effect from '@/game/effects/types/Effect';
 import PointStartSnapshot from '@/game/effects/types/PointStartSnapshot';
 import characterAnatomyContext from '@/game/effects/__tests__/fixtures/characterAnatomyContext';
 import { createKeyframeAtTime } from '@/game/timeline';
-import Level from '@/game/types/Level';
+import Level from '../types/Level';
 import sameTimeText from './fixtures/points-same-time.md?raw';
 import movingText from './fixtures/points-moving-target.md?raw';
 import ownershipText from './fixtures/points-ownership-boundary.md?raw';

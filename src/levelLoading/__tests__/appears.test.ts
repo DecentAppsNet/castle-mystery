@@ -3,7 +3,7 @@ import { createInitialTimelineSnapshot } from '@/game/timeline/snapshotUtil';
 import appearsBaseText from './fixtures/appears/appears-base.md?raw';
 import initialAppearanceText from './fixtures/initial-appearance.md?raw';
 import { loadLevelForTest, loadValidLevelForTest, replaceSection } from './testLevelUtil';
-import Level from '@/game/types/Level';
+import Level from '../types/Level';
 import { getHeadImageUrl } from '@/game/characterBody';
 
 describe('level loading - appears activities', () => {

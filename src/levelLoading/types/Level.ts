@@ -1,10 +1,10 @@
-import TimeLabel from "./TimeLabel";
-import Character from "./Character";
-import Item from "./Item";
-import Room from "./Room"
-import Conclusion from "../conclusions/types/Conclusion";
-import Timeline, { createDefaultTimeline } from "./Timeline";
-import DiscoveryConfig from "./DiscoveryConfig";
+import TimeLabel from "@/game/types/TimeLabel";
+import Character from "@/game/types/Character";
+import Item from "@/game/types/Item";
+import Room from "@/game/types/Room";
+import Conclusion from "@/game/conclusions/types/Conclusion";
+import Timeline, { createDefaultTimeline } from "@/game/types/Timeline";
+import DiscoveryConfig from "@/game/types/DiscoveryConfig";
 
 export type MutableLevel = {
   title:string,

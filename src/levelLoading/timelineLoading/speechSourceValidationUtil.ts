@@ -5,7 +5,7 @@ import { assertNonNullable } from "decent-portal";
 
 import { findKeyframeForTime } from "@/game/timeline";
 import { findRoomIAtPosition } from "@/game/roomUtil";
-import Level from "@/game/types/Level";
+import Level from "../types/Level";
 import Activity from "../activityLoading/types/Activity";
 import { findItemKeyframeLocation } from "../activityLoading/activitySchedulers/util/itemKeyframeLocationUtil";
 import { verbToPlainForm } from "../activityLoading/parseFormatUtil";

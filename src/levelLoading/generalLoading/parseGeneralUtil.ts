@@ -1,7 +1,7 @@
 /* This file parses general level metadata and initializes deferred loading context.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { createDefaultMutableLevel, MutableLevel } from "@/game/types/Level";
+import { createDefaultMutableLevel, MutableLevel } from "../types/Level";
 import LevelFileSections from "../types/LevelFileSections";
 import { ErrorCollector } from "../errorCollection";
 import { findNameValueLineNo, MarkdownLineError, parseSections, parseUniqueNameValueLines, Sections } from "@/common/markdownUtil";

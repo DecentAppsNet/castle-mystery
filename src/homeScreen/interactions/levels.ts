@@ -5,8 +5,7 @@ import type { Dispatch, SetStateAction } from "react";
 
 import { createDiscoveries } from "@/game/discoveriesUtil";
 import { prepareLevelState } from '../levelPreparation';
-import { updateImageSetForLevel } from "@/game/imageSetUtil";
-import { ImageSet } from '@/imageLoading';
+import { ImageSet, updateImageSetForLevel } from '@/imageLoading';
 import Discoveries from "@/game/types/Discoveries";
 import PreparedLevelState from '../types/PreparedLevelState';
 import { loadLevelFromUrl } from "@/levelLoading";

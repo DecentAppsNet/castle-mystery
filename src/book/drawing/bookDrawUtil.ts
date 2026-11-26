@@ -17,7 +17,7 @@ import PieceSlotPresentation from "../types/PieceSlotPresentation";
 import { updateBookClaim, updateBookClaimControls, calcBookClaimShakeOffset, calcBookClaimTiming,
   calcBookClaimMessageAlpha, prepareBookClaimGlints, prepareBookClaimPieceFalls } from '../claiming';
 
-export const BOOK_IMAGE_URL = '/assets/ui/book.png';
+import { BOOK_IMAGE_URL } from '@/common/builtInImageUrls';
 
 const BACKGROUND_ALPHA = .7;
 const BOOK_CONTROL_ALPHA = .8;

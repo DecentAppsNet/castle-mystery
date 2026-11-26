@@ -1,7 +1,7 @@
 /* This file parses and schedules item-drop activities, including room placement and stacking.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import Level from "@/game/types/Level";
+import Level from "@/levelLoading/types/Level";
 import { createParseFormat, makeIdentifier, makeLiteral, makeOptions, makeSequence, makeVerb } from "../parseFormatUtil";
 import ParseFormat from "../types/ParseFormat";
 import Activity from "../types/Activity";

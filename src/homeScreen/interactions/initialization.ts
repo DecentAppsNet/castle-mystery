@@ -5,9 +5,8 @@ import { assert } from 'decent-portal';
 
 import { msecsToMinutes } from '@/common/timeUtil';
 import { prepareLevelState } from '../levelPreparation';
-import { updateImageSetForLevel } from "@/game/imageSetUtil";
 import { loadLevelFromUrl } from "@/levelLoading";
-import { ImageSet } from '@/imageLoading';
+import { ImageSet, updateImageSetForLevel } from '@/imageLoading';
 import InitResults from '../types/InitResults';
 import { loadBookFromUrl } from '@/book';
 import BookState from '@/book/types/BookState';

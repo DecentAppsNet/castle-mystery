@@ -3,3 +3,4 @@
 
 export { default as ImageSet } from './ImageSet';
 export { findVisibleImageSourceRect } from './imageBoundsUtil';
+export { createImageSet, updateImageSetForLevel, removeUnrequiredImagesForLevel } from './levelImageUtil';

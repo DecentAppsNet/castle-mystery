@@ -8,7 +8,7 @@ import { ROOM_MIDDLE_ROW_CENTER_Z } from '@/game/roomSpaceConstants';
 import CharacterKeyframe from '@/game/types/CharacterKeyframe';
 import ExitStatus from '@/game/types/ExitStatus';
 import ExitType from '@/game/types/ExitType';
-import Level from '@/game/types/Level';
+import Level from '@/levelLoading/types/Level';
 import Position from '@/game/types/Position';
 import Room from '@/game/types/Room';
 import RoomExit, { duplicateRoomExit, LOCKABLE_WITHOUT_INV_CHECK } from '@/game/types/RoomExit';

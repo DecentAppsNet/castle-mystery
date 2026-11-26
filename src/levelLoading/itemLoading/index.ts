@@ -11,7 +11,7 @@ import { getItemImageAssetUrl } from "@/game/imageUrlUtil";
 import { rand } from "@/common/randUtil";
 import { normalizeId } from "@/game/idUtil";
 import { createDefaultPosition } from "@/game/types/Position";
-import { MutableLevel } from "@/game/types/Level";
+import { MutableLevel } from "../types/Level";
 import Room from "@/game/types/Room";
 import Activity from "../activityLoading/types/Activity";
 import { getNumberedItemBaseId } from "../numberedItemIdUtil";

@@ -5,7 +5,7 @@ import GameState from "./types/GameState";
 import Room from "./types/Room";
 import PlayerEvent from "./playerEvents/types/PlayerEvent";
 import { popPlayerEvents } from "./playerEventUtil";
-import Level from "./types/Level";
+import Level from "@/levelLoading/types/Level";
 import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera } from "./cameraUtil";
 import { COLOR_BLACK } from "./drawing/drawColorConstants";
@@ -28,6 +28,9 @@ import { findCharacterKeyframeForTime } from "./timeline/retrievalUtil";
 import Effect from "./effects/types/Effect";
 import { updateGameState } from "./gameStateUpdateUtil";
 export { pauseGameState } from "./gameStateUpdateUtil";
+
+type GameStateLevelInputs = Pick<Level, 'activeCharacterId' | 'backgroundImageUrl' | 'characters' |
+  'discoveryConfig' | 'groundFloorY' | 'initialTime' | 'itemsById' | 'labels' | 'rooms' | 'timeline'>;
 
 function _setActiveRoomDiscovered(gameState:GameState) {
   gameState.discoveryState.discoveredRoomIds.add(gameState.timelineSnapshot.activeRoom.id);
@@ -112,7 +115,7 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
   drawGameState(gameState, context, metaTime);
 }
 
-export function createGameState(level:Level, imageSet:ImageSet = new ImageSet()):GameState {
+export function createGameState(level:GameStateLevelInputs, imageSet:ImageSet = new ImageSet()):GameState {
   const baseItemsById = createItemsById(level.rooms, level.characters, duplicateItemsById(level.itemsById));
   const baseCharacters = level.characters.map(character => duplicateCharacterUsingItemIndex(character, baseItemsById));
   const baseRooms = level.rooms.map(room => duplicateRoomUsingItemIndex(room, baseItemsById));

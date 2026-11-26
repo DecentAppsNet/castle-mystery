@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createImageSet, updateImageSetForLevel } from '../imageSetUtil';
-import { ImageSet } from '@/imageLoading';
-import { createDefaultMutableLevel } from '../types/Level';
-import { createDefaultCharacter } from '../types/Character';
-import { createDefaultCharacterBody, replaceHeadImage } from '../characterBody';
-import BodyPart from '../characterBody/types/BodyPart';
-import { stubOffscreenCanvas } from '../test/stubOffscreenCanvas';
-import { createGameState } from '../gameUtil';
-import Conclusion from '../conclusions/types/Conclusion';
-import ClozePartType from '../conclusions/types/ClozePartType';
+import { createImageSet, updateImageSetForLevel } from '../levelImageUtil';
+import ImageSet from '../ImageSet';
+import { createDefaultMutableLevel } from '@/levelLoading/types/Level';
+import { createDefaultCharacter } from '@/game/types/Character';
+import { createDefaultCharacterBody, replaceHeadImage } from '@/game/characterBody';
+import BodyPart from '@/game/characterBody/types/BodyPart';
+import { stubOffscreenCanvas } from '@/game/test/stubOffscreenCanvas';
+import { createGameState } from '@/game/gameUtil';
+import Conclusion from '@/game/conclusions/types/Conclusion';
+import ClozePartType from '@/game/conclusions/types/ClozePartType';
 
 function _createImageConclusion(imageUrl:string|string[]):Conclusion {
   return {
@@ -19,7 +19,7 @@ function _createImageConclusion(imageUrl:string|string[]):Conclusion {
 
 type PhysicalBodyPart = Exclude<BodyPart, { kind:'nearHand'|'farHand' }>;
 
-describe('imageSetUtil', () => {
+describe('levelImageUtil', () => {
   beforeEach(() => {
     stubOffscreenCanvas();
     vi.stubGlobal('window', { location:{ pathname:'/castle-mystery/' } });

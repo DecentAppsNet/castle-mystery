@@ -4,11 +4,10 @@
 import { urlToFilename } from '@/common/urlUtil';
 import { createGameState } from '@/game/gameUtil';
 import { isLevelSaveStateCompatible, restoreGameStateFromSave } from '@/game/levelSaveStateUtil';
-import { ImageSet } from '@/imageLoading';
-import Level from '@/game/types/Level';
+import { ImageSet, removeUnrequiredImagesForLevel } from '@/imageLoading';
+import Level from '@/levelLoading/types/Level';
 import { clearLevelSaveState, getLevelSaveState } from '@/persistence/levelSaveState';
 import PreparedLevelState from './types/PreparedLevelState';
-import { removeUnrequiredImagesForLevel } from '@/game/imageSetUtil';
 
 /** Call only after preparation succeeds and the closed curtain has stopped outgoing rendering. */
 export function acceptPreparedLevelState(prepared:PreparedLevelState, bookImageUrls:ReadonlySet<string>):void {

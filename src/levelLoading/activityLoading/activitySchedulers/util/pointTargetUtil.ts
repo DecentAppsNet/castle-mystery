@@ -5,7 +5,7 @@ import { assertNonNullable } from 'decent-portal';
 import { createKeyframeAtTimeWithSourceIndex } from '@/game/timeline';
 import { findRoomAtPosition } from '@/game/roomUtil';
 import { arePositionsEqual } from '@/game/types/Position';
-import Level from '@/game/types/Level';
+import Level from '@/levelLoading/types/Level';
 import PointTarget from '@/game/effects/types/PointTarget';
 import PointStartSnapshot from '@/game/effects/types/PointStartSnapshot';
 import EditableTimeline from '@/levelLoading/timelineLoading/types/EditableTimeline';

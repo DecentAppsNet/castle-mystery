@@ -6,7 +6,7 @@ import { assertNonNullable } from "decent-portal";
 import { findRoomAtPosition } from "@/game/roomUtil";
 import { createKeyframeAtTime } from "@/game/timeline";
 import { BodyOrientation } from "@/game/types/Character";
-import Level from "@/game/types/Level";
+import Level from "@/levelLoading/types/Level";
 import { ErrorCollector } from "@/levelLoading/errorCollection";
 import { addCharacterKeyChanges } from "@/levelLoading/timelineLoading";
 import { scheduleCharacterMovementWithinRoom } from "@/levelLoading/activityLoading/movementPlanningUtil";

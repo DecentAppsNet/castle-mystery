@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { findCharacterOwnedItem } from '@/game/itemOwnershipUtil';
 import { createCharacterKeyframeAtTime, createKeyframeAtTime } from '@/game/timeline';
-import Level from '@/game/types/Level';
+import Level from '../types/Level';
 
 import defaultLevelText from './fixtures/stands-base.md?raw';
 import { loadLevelForTest, replaceSection } from './testLevelUtil';
