@@ -57,12 +57,15 @@ function _createScaledBubbleBox(left:number, top:number, width:number, height:nu
 }
 
 function _findBubbleBoxNearTarget(target:BubbleTarget, width:number, height:number, gap:number,
-    context:CanvasRenderingContext2D):{ left:number, top:number } {
+    context:CanvasRenderingContext2D) {
   const directionX = target.interiorCanvasPoint[0] < target.targetCanvasPoint[0] ? -1 : 1;
   const centerX = target.targetCanvasPoint[0] + directionX * (width / 2 + gap);
+  const unclampedLeft = centerX - width / 2;
+  const unclampedTop = target.targetCanvasPoint[1] - height / 2;
+  const left = Math.round(clamp(unclampedLeft, 0, context.canvas.width - width));
+  const top = Math.round(clamp(unclampedTop, 0, context.canvas.height - height));
   return {
-    left:Math.round(clamp(centerX - width / 2, 0, context.canvas.width - width)),
-    top:Math.round(clamp(target.targetCanvasPoint[1] - height / 2, 0, context.canvas.height - height))
+    left, top, offsetX:left - unclampedLeft, offsetY:top - unclampedTop
   };
 }
 
@@ -70,7 +73,6 @@ function _drawSpeechBubbleOutline(left:number, top:number, width:number, height:
   tailTipX:number, tailTipY:number, hasHorizontalTail:boolean,
   scalingFactors:ScalingFactors, context:CanvasRenderingContext2D) {
   const tailBaseWidth = Math.max(4, scalingFactors.roomLineWidth * 2);
-  const centerX = left + width / 2;
   const baseCenterX = clamp(tailTipX, left + tailBaseWidth, left + width - tailBaseWidth);
   const baseCenterY = clamp(tailTipY, top + tailBaseWidth, top + height - tailBaseWidth);
   const halfBaseWidth = tailBaseWidth / 2;
@@ -80,7 +82,7 @@ function _drawSpeechBubbleOutline(left:number, top:number, width:number, height:
   context.beginPath();
   context.moveTo(left, top);
   context.lineTo(rightX, top);
-  if (hasHorizontalTail && tailTipX > centerX) {
+  if (hasHorizontalTail && tailTipX > rightX) {
     context.lineTo(rightX, baseCenterY - halfBaseWidth);
     context.lineTo(tailTipX, tailTipY);
     context.lineTo(rightX, baseCenterY + halfBaseWidth);
@@ -92,7 +94,7 @@ function _drawSpeechBubbleOutline(left:number, top:number, width:number, height:
     context.lineTo(baseCenterX - halfBaseWidth, bottomY);
   }
   context.lineTo(left, bottomY);
-  if (hasHorizontalTail && tailTipX <= centerX) {
+  if (hasHorizontalTail && tailTipX < left) {
     context.lineTo(left, baseCenterY + halfBaseWidth);
     context.lineTo(tailTipX, tailTipY);
     context.lineTo(left, baseCenterY - halfBaseWidth);
@@ -194,8 +196,10 @@ function _drawSpeechBubble(speech:PreparedAnimationText, anchorX:number, anchorT
     ?? Math.round(clamp(anchorTopY - boxHeight - tailHeight - scalingFactors.roomLineWidth * 2,
       0, context.canvas.height - boxHeight - tailHeight));
   const bubbleBox = _createScaledBubbleBox(left, top, boxWidth, boxHeight, startTime, time);
-  const tailTipX = target?.targetCanvasPoint[0] ?? Math.round(clamp(anchorX, 0, context.canvas.width));
-  const tailTipY = target?.targetCanvasPoint[1] ?? bubbleBox.top + bubbleBox.height + tailHeight;
+  const tailTipX = target && targetedBox ? target.targetCanvasPoint[0] + targetedBox.offsetX
+    : Math.round(clamp(anchorX, 0, context.canvas.width));
+  const tailTipY = target && targetedBox ? target.targetCanvasPoint[1] + targetedBox.offsetY
+    : bubbleBox.top + bubbleBox.height + tailHeight;
 
   context.fillStyle = COLOR_SPEECH_BUBBLE_FILL;
   context.strokeStyle = COLOR_DARK_GRAY;
