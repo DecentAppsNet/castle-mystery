@@ -43,9 +43,7 @@ describe('levelSaveStateUtil', () => {
     });
 
     it('omits conclusion fields from the save', () => {
-      const state = _createState();
-      state.conclusions.find(conclusion => conclusion.id === 'finding')!.isComplete = true;
-      const save = createLevelSaveState(state);
+      const save = createLevelSaveState(_createState());
       expect(save).not.toHaveProperty('completedConclusionIds');
       expect(save).not.toHaveProperty('incompleteConclusionAnswerIndexesById');
     });

@@ -10,17 +10,14 @@ import { ZERO_SCALING_FACTORS } from "./drawing/drawUtil";
 import { calcCanvasAspectRatio, createCamera } from "./cameraUtil";
 import { COLOR_BLACK } from "./drawing/drawColorConstants";
 import { drawGameState, updateScalingFactorsAsNeeded } from "./drawing/gameStateDrawUtil";
-import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import { ImageSet } from "@/imageLoading";
 import { createItemsById, duplicateCharacterUsingItemIndex, duplicateItemsById, duplicateRoomUsingItemIndex } from "./itemUtil";
 import {
   callOnActiveCharacterChangedAsNeeded,
   callOnDiscoveriesChangedAsNeeded,
-  callOnMinutesChangedAsNeeded,
-  callOnConclusionsChangedAsNeeded
+  callOnMinutesChangedAsNeeded
 } from "./gameStateNotificationUtil";
 import { calcRenderedRoomsBoundingRect } from "./roomRoofUtil";
-import { syncConclusionUnlocks } from './playerEvents';
 import Discoveries, { createEmptyDiscoveries } from "./types/Discoveries";
 import { createEmptyRoomShellCache } from "./types/RoomShellCache";
 import { createInitialTimelineSnapshot } from "./timeline";
@@ -88,7 +85,7 @@ function _findCharacterSkinIdAtTime(timeline:Timeline, time:number, characterId:
 
 export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingContext2D,
     onMinutesChanged:(minutes:number) => void, onIsPlayingChanged?:(isPlaying:boolean) => void,
-    onActiveCharacterChanged?:(characterId:string) => void, onConclusionsChanged?:(conclusions:Conclusion[]) => void,
+    onActiveCharacterChanged?:(characterId:string) => void,
     onDiscoveriesChanged?:(discoveries:Discoveries) => void, onStateChanged?:(gameState:GameState) => void) {
   
   if (!gameState) {
@@ -111,7 +108,6 @@ export function updateAndDraw(gameState:GameState|null, context:CanvasRenderingC
     : gameState.hoveredRoomId ? "pointer" : "default";
 
   updateScalingFactorsAsNeeded(gameState, context);
-  if (onConclusionsChanged) callOnConclusionsChangedAsNeeded(gameState, onConclusionsChanged);
   if (onDiscoveriesChanged) callOnDiscoveriesChangedAsNeeded(gameState, onDiscoveriesChanged);
   drawGameState(gameState, context, metaTime);
 }
@@ -131,8 +127,6 @@ export function createGameState(level:Level, imageSet:ImageSet = new ImageSet())
     baseRooms,
     camera:createCamera(calcRenderedRoomsBoundingRect(level.rooms, level.groundFloorY)),
     characterMetaTimeEffectsByCharacterId:new Map<string, Effect[]>(),
-    conclusions:level.conclusions.map(duplicateConclusion),
-    conclusionsRevision:0,
     discoveryState:{
       discoveredSkinIds:new Set<string>(),
       discoveredItemIds:new Set<string>(),
@@ -157,7 +151,6 @@ export function createGameState(level:Level, imageSet:ImageSet = new ImageSet())
     lastActiveCharacterChangedValue:"",
     lastMinutesChangedCallMetaTime:Number.NEGATIVE_INFINITY,
     lastMinutesChangedValue:NaN,
-    lastNotifiedConclusionsRevision:0,
     lastNotifiedDiscoveriesKey:JSON.stringify(createEmptyDiscoveries()),
     metaTimeEffects:[],
     metaTimeToGameTimeOffset:0,
@@ -171,9 +164,7 @@ export function createGameState(level:Level, imageSet:ImageSet = new ImageSet())
     timelineSnapshot:createInitialTimelineSnapshot(baseCharacters, baseRooms, level.timeline,
       level.activeCharacterId, level.initialTime, obscuredRoomIds),
     viewedItemIds:new Set<string>(),
-    winSynopsis:level.winSynopsis,
   }
   _setActiveRoomDiscovered(gameState);
-  syncConclusionUnlocks(gameState);
   return gameState;
 }

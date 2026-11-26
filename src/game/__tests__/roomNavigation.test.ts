@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createGameState } from '@/game/gameUtil';
 import { updateGameState } from '@/game/gameStateUpdateUtil';
+import { completeLevel } from '@/game/worldProgressUtil';
 import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
 import GameState from '@/game/types/GameState';
 import { getCharacterHoverRect } from '@/game/drawing/characterDrawUtil';
@@ -137,6 +138,7 @@ describe('room navigation events', () => {
 
   it('shows an eligible unreachable room pointer but preserves playback and selection on click', () => {
     const initialState = _createGameState();
+    completeLevel(initialState);
     const gameState:GameState = { ...initialState,
       timeline:{ ...initialState.timeline, keyframes:[initialState.timeline.keyframes[0]] } };
     gameState.isPlaying = true;

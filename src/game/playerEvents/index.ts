@@ -4,8 +4,6 @@
 export { updateGameStateForChangeTime } from './changeTimeHandler';
 export { updateGameStateForPlayPause } from './playPauseHandler';
 export { updateGameStateForMouseWheel } from './mouseWheelHandler';
-export { updateGameStateForChangeConclusions } from './changeConclusionsHandler';
-export { syncConclusionUnlocks } from './conclusionStateUtil';
 export { updateGameStateForMouseDown } from './mouseDownHandler';
 export { updateGameStateForMouseMove } from './mouseMoveHandler';
 export { updateGameStateForNextCharacter } from './nextCharacterHandler';

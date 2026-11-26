@@ -4,7 +4,6 @@
 import { botch } from "decent-portal";
 import GameState from "./types/GameState";
 import ChangeTimeEvent from "./playerEvents/types/ChangeTimeEvent";
-import ChangeConclusionsEvent from "./playerEvents/types/ChangeConclusionsEvent";
 import PlayerEvent from "./playerEvents/types/PlayerEvent";
 import PlayerEventType from "./playerEvents/types/PlayerEventType";
 import PlayPauseEvent from "./playerEvents/types/PlayPauseEvent";
@@ -14,13 +13,11 @@ import MouseWheelEvent from "./playerEvents/types/MouseWheelEvent";
 import { syncCameraTargetToActiveRoom, updateCamera } from "./cameraUtil";
 import {
   updateGameStateForChangeTime,
-  updateGameStateForChangeConclusions,
   updateGameStateForPlayPause,
   updateGameStateForMouseWheel,
   updateGameStateForMouseDown,
   updateGameStateForMouseMove,
-  updateGameStateForNextCharacter,
-  syncConclusionUnlocks
+  updateGameStateForNextCharacter
 } from './playerEvents';
 import { createTimelineSnapshot } from "./timeline";
 import { findMetaTimeNow } from "./metaTimeUtil";
@@ -57,7 +54,6 @@ export function updateGameState(gameState:GameState, events:PlayerEvent[], metaT
   events.forEach(event => {
     switch(event.type) {
       case PlayerEventType.CHANGE_TIME: updateGameStateForChangeTime(gameState, event as ChangeTimeEvent, metaTime); break;
-      case PlayerEventType.CHANGE_CONCLUSIONS: updateGameStateForChangeConclusions(gameState, event as ChangeConclusionsEvent); break;
       case PlayerEventType.NEXT_CHARACTER: updateGameStateForNextCharacter(gameState, snapshotCharacters, metaTime); break;
       case PlayerEventType.PLAY_PAUSE: updateGameStateForPlayPause(gameState, event as PlayPauseEvent, metaTime); break;
       case PlayerEventType.MOUSEDOWN: updateGameStateForMouseDown(gameState, snapshotCharacters, event as MouseDownEvent, metaTime); break;
@@ -82,7 +78,5 @@ export function updateGameState(gameState:GameState, events:PlayerEvent[], metaT
   updateCamera(gameState.camera, metaTime);
   gameState.discoveryState.discoveredRoomIds.add(gameState.timelineSnapshot.activeRoom.id);
 
-  // Observe only after conclusion unlocks and completion discoveries are synchronized.
-  syncConclusionUnlocks(gameState);
   onStateChanged?.(gameState);
 }

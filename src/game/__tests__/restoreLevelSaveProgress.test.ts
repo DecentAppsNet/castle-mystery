@@ -41,13 +41,13 @@ describe('restoreGameStateFromSave()', () => {
     const save = createLevelSaveState(played);
     const originalSave = JSON.stringify(save);
     const restored = createGameState(level);
-    const originalConclusions = JSON.stringify(restored.conclusions);
+    const originalConclusions = JSON.stringify(level.conclusions);
 
     restoreGameStateFromSave(restored, save);
     restoreGameStateFromSave(restored, save);
     expect(restored.isLevelComplete).toBe(true);
     expect(createLevelSaveState(restored)).toEqual(save);
-    expect(JSON.stringify(restored.conclusions)).toBe(originalConclusions);
+    expect(JSON.stringify(level.conclusions)).toBe(originalConclusions);
     expect(JSON.stringify(save)).toBe(originalSave);
     expect(restored.metaTimeEffects).toEqual([]);
     expect(restored.characterMetaTimeEffectsByCharacterId.size).toBe(0);

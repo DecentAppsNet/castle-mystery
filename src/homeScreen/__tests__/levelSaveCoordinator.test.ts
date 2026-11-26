@@ -2,12 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGameState } from '@/game/gameUtil';
 import { pauseGameState, updateGameState } from '@/game/gameStateUpdateUtil';
 import { createDiscoveries } from '@/game/discoveriesUtil';
-import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
 import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
 import { ImageSet } from '@/imageLoading';
 import { createLevelSaveState } from '@/game/levelSaveStateUtil';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import ClozePartType from '@/game/conclusions/types/ClozePartType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import levelText from '@/game/__tests__/fixtures/save-state.md?raw';
 import discoveryText from '@/game/__tests__/fixtures/discovery-state.md?raw';
@@ -105,9 +102,9 @@ describe('LevelSaveCoordinator', () => {
     await expect(popLevelChanges('inactive.md')).resolves.toEqual([{ kind:'setLevelComplete' }]);
   });
 
-  it('keeps queued world completion through the legacy frame scan', async () => {
+  it('saves queued world completion and its discoveries in one snapshot', async () => {
     await initLevelChanges();
-    await pushLevelChanges('completion.md', { kind:'setLevelComplete' });
+    await pushLevelChanges('completion.md', [{ kind:'revealCharacterTitles' }, { kind:'setLevelComplete' }]);
     const state = createGameState(loadValidLevelForTest(discoveryText));
     const coordinator = new LevelSaveCoordinator('completion.md', state);
     coordinator.beforeFrame();
@@ -117,8 +114,11 @@ describe('LevelSaveCoordinator', () => {
     await coordinator.stopAndSettle();
 
     expect(state.isLevelComplete).toBe(true);
-    expect(state.conclusions.every(conclusion => !conclusion.isComplete)).toBe(true);
-    await expect(getLevelSaveState('completion.md')).resolves.toMatchObject({ isLevelComplete:true });
+    await expect(getLevelSaveState('completion.md')).resolves.toMatchObject({
+      isLevelComplete:true, revealedRoomIds:['study'], discoveredRoomIds:['hall', 'study'],
+      discoveredItemIds:['brass key'], discoveredSkinIds:expect.arrayContaining(['sam-default', 'pat-default']),
+      titleKnownCharacterIds:['sam', 'pat']
+    });
   });
 
   it('settles an outgoing pop and its save before replacement without another frame', async () => {
@@ -320,33 +320,6 @@ describe('LevelSaveCoordinator', () => {
     expect(pathStoreMock.setText).toHaveBeenCalledOnce();
     finishWrite();
     await coordinator.stopAndSettle();
-  });
-
-  it('does not save when only unfinished conclusion answers change', async () => {
-    const state = _createState();
-    const coordinator = new LevelSaveCoordinator('castle.md', state);
-    const conclusions = state.conclusions.map(duplicateConclusion);
-    const mystery = conclusions.find(conclusion => conclusion.id === 'mystery')!;
-    const blank = mystery.parts.find(part => part.type === ClozePartType.blank) as ClozeBlank;
-    blank.playerAnswerIndex = 1;
-    updateGameState(state, [{ type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions }], 100, 1,
-      () => coordinator.observe());
-    await coordinator.stopAndSettle();
-    expect(pathStoreMock.setText).not.toHaveBeenCalled();
-  });
-
-  it('saves completion-derived skin and item discoveries in the same authoritative snapshot', async () => {
-    const state = createGameState(loadValidLevelForTest(discoveryText));
-    const coordinator = new LevelSaveCoordinator('castle.md', state);
-    const conclusions = state.conclusions.map(conclusion => ({ ...duplicateConclusion(conclusion), isComplete:true }));
-    updateGameState(state, [{ type:PlayerEventType.CHANGE_CONCLUSIONS, conclusions }], 100, 1,
-      () => coordinator.observe());
-    await coordinator.stopAndSettle();
-    expect(pathStoreMock.setText).toHaveBeenCalledOnce();
-    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({
-      discoveredItemIds:['brass key'], discoveredSkinIds:expect.arrayContaining(['sam-default', 'pat-default']),
-      titleKnownCharacterIds:expect.arrayContaining(['sam', 'pat'])
-    });
   });
 
   it('observes raw title changes even when the discoveries summary is unchanged', async () => {

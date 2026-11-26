@@ -5,7 +5,6 @@ import { ImageSet } from "@/imageLoading";
 import Item from "./Item";
 import Room from "./Room";
 import ScalingFactors from "./ScalingFactors";
-import Conclusion from "../conclusions/types/Conclusion";
 import RoomShellCache from "./RoomShellCache";
 import Timeline from "./Timeline";
 import TimelineSnapshot from "./TimelineSnapshot";
@@ -18,8 +17,6 @@ type GameState = {
   activeSkinIdAtSelection:string,
   camera:Camera,
   readonly characterMetaTimeEffectsByCharacterId:Map<string, Effect[]>, // Keys target characters; contained effect times use meta-time.
-  conclusions:Conclusion[],
-  conclusionsRevision:number,
   readonly discoveryState:DiscoveryState,
   hoveredCharacterId:string|null,
   hoveredExitKey:string|null,
@@ -31,7 +28,6 @@ type GameState = {
   lastActiveCharacterChangedValue:string,
   lastMinutesChangedCallMetaTime:number,
   lastMinutesChangedValue:number,
-  lastNotifiedConclusionsRevision:number,
   lastNotifiedDiscoveriesKey:string
   readonly backgroundImageUrl:string|null,
   readonly baseCharacters:Character[],
@@ -41,7 +37,6 @@ type GameState = {
   readonly imageSet:ImageSet,
   readonly initiallyObscuredRoomIds:ReadonlySet<string>,
   readonly timeline:Timeline;
-  readonly winSynopsis:string,
   metaTimeEffects:Effect[], // Effects in this collection interpret startTime and endTime as meta-time.
   metaTimeToGameTimeOffset:number,
   roomShellCacheByRoomId:RoomShellCache,

@@ -34,8 +34,6 @@ function _isEditableTarget(target:EventTarget|null):boolean {
   return target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || tagName === "BUTTON";
 }
 
-function _ignoreLegacyConclusionUpdate():void {}
-
 function HomeScreen() {
   const applicationRootRef = useRef<HTMLDivElement|null>(null);
   const levelViewRef = useRef<LevelViewHandle|null>(null);
@@ -254,7 +252,6 @@ function HomeScreen() {
           onMinutesChanged={setMinutes} 
           onIsPlayingChanged={setIsPlaying} 
           onActiveCharacterChanged={setActiveCharacterId} 
-          onConclusionsChanged={_ignoreLegacyConclusionUpdate}
           onDiscoveriesChanged={setDiscoveries} 
           onStateChanged={_handleStateChanged}
           beforeWorldFrame={state => { if (state === saveGameStateRef.current) saveCoordinatorRef.current?.beforeFrame(); }}

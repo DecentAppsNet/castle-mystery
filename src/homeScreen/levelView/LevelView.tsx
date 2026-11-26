@@ -32,7 +32,6 @@ type Props = {
   onMinutesChanged:(minutes:number) => void,
   onIsPlayingChanged:(isPlaying:boolean) => void,
   onActiveCharacterChanged:(characterId:string) => void,
-  onConclusionsChanged:(conclusions:GameState['conclusions']) => void,
   onDiscoveriesChanged:(discoveries:Discoveries) => void,
   beforeWorldFrame:(gameState:GameState) => void,
   onStateChanged:(gameState:GameState) => void,
@@ -61,7 +60,7 @@ type Props = {
  * Failure keeps curtains closed; unmount cancels a pending close without starting loading.
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
-function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
+function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged,
     onDiscoveriesChanged, beforeWorldFrame, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
@@ -176,7 +175,7 @@ function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, i
   function _updateAndDrawScene(currentGameState:GameState, context:CanvasRenderingContext2D) {
     if (!isGameDisabled()) beforeWorldFrame(currentGameState);
     updateAndDraw(currentGameState, context, _handleMinutesChanged, _handleIsPlayingChanged, onActiveCharacterChanged,
-        onConclusionsChanged, onDiscoveriesChanged, onStateChanged);
+        onDiscoveriesChanged, onStateChanged);
     _updateOverlayCursor(context);
   }
 

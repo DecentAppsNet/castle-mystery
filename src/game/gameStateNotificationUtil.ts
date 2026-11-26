@@ -4,7 +4,6 @@
 import { msecsToMinutes } from "@/common/timeUtil";
 
 import { createDiscoveries } from "./discoveriesUtil";
-import Conclusion, { duplicateConclusion } from "./conclusions/types/Conclusion";
 import Discoveries from "./types/Discoveries";
 import GameState from "./types/GameState";
 
@@ -25,12 +24,6 @@ export function callOnActiveCharacterChangedAsNeeded(gameState:GameState, onActi
   if (gameState.activeCharacterId === gameState.lastActiveCharacterChangedValue) return;
   gameState.lastActiveCharacterChangedValue = gameState.activeCharacterId;
   onActiveCharacterChanged(gameState.activeCharacterId);
-}
-
-export function callOnConclusionsChangedAsNeeded(gameState:GameState, onConclusionsChanged:(conclusions:Conclusion[]) => void) {
-  if (gameState.conclusionsRevision === gameState.lastNotifiedConclusionsRevision) return;
-  gameState.lastNotifiedConclusionsRevision = gameState.conclusionsRevision;
-  onConclusionsChanged(gameState.conclusions.map(duplicateConclusion));
 }
 
 export function callOnDiscoveriesChangedAsNeeded(gameState:GameState, onDiscoveriesChanged:(discoveries:Discoveries) => void) {

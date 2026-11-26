@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { updateGameStateForChangeConclusions } from '@/game/playerEvents';
 import { createDiscoveries, markCharacterDiscovered, markItemDiscovered } from '@/game/discoveriesUtil';
 import { createGameState } from '@/game/gameUtil';
 import { callOnMinutesChangedAsNeeded } from '@/game/gameStateNotificationUtil';
 import { createKeyframeAtTime, createTimelineSnapshot, updateTimelineSnapshotActiveContext } from '@/game/timeline';
-import PlayerEventType from '@/game/playerEvents/types/PlayerEventType';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import discoveryStateLevelText from './fixtures/discovery-state.md?raw';
 import initialAppearanceText from '@/levelLoading/__tests__/fixtures/initial-appearance.md?raw';
@@ -177,37 +175,13 @@ describe('discovery state', () => {
     expect(gameState.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam']));
   });
 
-  it('applies conclusion room reveals, identity title reveals, and level-complete discovery only to discovery state', () => {
+  it('applies world progress without storing discovery flags on base rooms or characters', () => {
     const gameState = _createGameState();
-    const discoveryConclusion = gameState.conclusions.find(conclusion => conclusion.id === 'discovery')!;
-    const identitiesConclusion = gameState.conclusions.find(conclusion => conclusion.id === 'identities')!;
-
-    updateGameStateForChangeConclusions(gameState, {
-      type:PlayerEventType.CHANGE_CONCLUSIONS,
-      conclusions:gameState.conclusions.map(conclusion => ({
-        ...conclusion,
-        isComplete:conclusion.id === discoveryConclusion.id
-      }))
-    });
-
-    expect(gameState.discoveryState.obscuredRoomIds).not.toContain('study');
-    expect(gameState.discoveryState.discoveredRoomIds).not.toContain('study');
+    revealRooms(gameState, ['study']);
     expect(gameState.baseRooms.find(room => room.id === 'study')).not.toHaveProperty('isObscured');
-    expect(gameState.isLevelComplete).toBe(false);
 
-    updateGameStateForChangeConclusions(gameState, {
-      type:PlayerEventType.CHANGE_CONCLUSIONS,
-      conclusions:gameState.conclusions.map(conclusion => ({
-        ...conclusion,
-        isComplete:conclusion.id === identitiesConclusion.id || conclusion.id === discoveryConclusion.id
-      }))
-    });
-
-    expect(gameState.discoveryState.titleKnownCharacterIds).toEqual(new Set(['sam', 'pat']));
-    expect(gameState.discoveryState.discoveredSkinIds).toEqual(new Set(['sam-default', 'pat-default']));
-    expect(gameState.discoveryState.discoveredItemIds).toEqual(new Set(['brass key']));
-    expect(gameState.discoveryState.discoveredRoomIds).toEqual(new Set(['hall', 'study']));
-    expect(gameState.isLevelComplete).toBe(true);
+    revealAllCharacterTitles(gameState);
+    completeLevel(gameState);
     expect(gameState.baseCharacters.find(character => character.id === 'pat')).not.toHaveProperty('isTitleKnown');
     expect(gameState.baseRooms.every(room => !Object.hasOwn(room, 'isDiscovered'))).toBe(true);
   });
