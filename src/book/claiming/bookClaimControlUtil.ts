@@ -117,7 +117,7 @@ export function claimBookConclusion(bookState:BookState, pageNo:number, metaTime
   updateBookClaimControls(bookState);
 }
 
-export function updateBookClaim(bookState:BookState, metaTime:number):void {
+export function updateBookClaim(bookState:BookState, metaTime:number, reportStorageError:(error:unknown) => void):void {
   // Discard obsolete ownership without rolling back results already applied.
   const claim = bookState.claimState;
   if (claim === null) return;
@@ -133,9 +133,9 @@ export function updateBookClaim(bookState:BookState, metaTime:number):void {
     assert(bookState.animationKind === null);
     if (!bookState.layout || bookState.layout.pieceLayoutsPageNo !== bookState.pageNo) return;
     const elapsed = metaTime - claim.startedAt;
-    applyBookClaimResults(bookState, claim, elapsed);
+    applyBookClaimResults(bookState, claim, elapsed, reportStorageError);
     const timing = calcBookClaimTiming(elapsed, claim.blanks.length, claim.correct);
-    if (timing.isDone) bookState.claimState = null;
+    if (timing.isDone && claim.publication !== 'pending') bookState.claimState = null;
   }
 
   // Restore ordinary controls after the message fade or external ownership cancellation.

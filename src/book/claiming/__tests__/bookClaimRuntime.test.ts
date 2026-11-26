@@ -1,10 +1,10 @@
 // Nonvisual timed-claim contracts through real exported updater, input, navigation, and layout APIs.
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createLayout, findControlRect } from '@/canvasControls';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import { claimBookConclusion, updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
+import { claimBookConclusion, updateBookClaim as advanceClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 import { calcBookClaimMessageAlpha } from '../bookClaimPresentationUtil';
 import { onBookMouseDown, onBookMouseOver, onBookMouseUp, onBookMouseWheel } from '@/book/eventHandlers';
 import { goNextPage, goPrevPage, setPageNavigationButtonVisibility } from '@/book/navigationUtil';
@@ -15,9 +15,14 @@ import { startPageFlip } from '@/book/drawing/pages';
 import BookLayout from '@/book/drawing/types/BookLayout';
 import PieceSlotLayout from '@/book/drawing/types/PieceSlotLayout';
 import BookPage from '@/book/types/BookPage';
-import { createDefaultBookState } from '@/book/types/BookState';
+import BookState, { createDefaultBookState } from '@/book/types/BookState';
 
 const STARTED_AT = 12000;
+const reportStorageError = vi.fn();
+
+function updateBookClaim(state:BookState, time:number) {
+  advanceClaim(state, time, reportStorageError);
+}
 
 function _createFixture(correct:boolean = false, pageNo:number = 1, conclusionId:string = 'runtime') {
   // Distinct selections make ownership and ordered ejection observable without drawing.

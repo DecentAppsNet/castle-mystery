@@ -25,6 +25,7 @@ type Props = {
   ref?:Ref<LevelViewHandle>, // Enables imperative calls.
   gameState:GameState|null, // Pass to initialize game state, e.g. load a new level. It will be updated in game loop after that.
   bookState:BookState|null,
+  onStorageError:(error:unknown) => void,
   loadedLevelUrl:string|null,
   isGameDisabled:() => boolean,
   onChapterLevelSelected:(levelUrl:string) => void,
@@ -60,7 +61,7 @@ type Props = {
  * Failure keeps curtains closed; unmount cancels a pending close without starting loading.
  * Canvas owns scheduling; elapsed-time progression resumes on drawing after a hidden tab.
  */
-function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
+function LevelView({ref, gameState, bookState, onStorageError, loadedLevelUrl, isGameDisabled, onChapterLevelSelected, onMinutesChanged, onIsPlayingChanged, onActiveCharacterChanged, onConclusionsChanged,
     onDiscoveriesChanged, beforeWorldFrame, onStateChanged, onInitialClosedFrame, onOpeningStarted, hasLoadingFailed}:Props) {
   const acceptedGameStateRef = useRef<GameState|null>(gameState); // Game state instance that is ready for drawing use.
   const frameStateRef = useRef<LevelViewFrameState>({ transition:null, preparedCache:null,
@@ -201,7 +202,7 @@ function LevelView({ref, gameState, bookState, loadedLevelUrl, isGameDisabled, o
     if (isCurtainVisible(frame)) drawCurtainOverlay(context, frame, hasLoadingFailed);
     if (bookState && (!frame.canRenderScene || !bookState.isVisible || _isInputDisabled())) onBookMouseLeave(bookState);
     if (frame.canRenderScene && currentGameState && bookState?.isVisible) {
-      drawBook(bookState, findMetaTimeNow(), currentGameState.imageSet, context, loadedLevelUrl);
+      drawBook(bookState, findMetaTimeNow(), currentGameState.imageSet, context, onStorageError, loadedLevelUrl);
     }
     _cancelInvalidBookDrag();
     if (frame.canRenderScene && currentGameState && DRAW_FPS_COUNTER) {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import { prepareBookClaimPieceFalls } from '../bookClaimPieceFallUtil';
 import { applyBookClaimResults } from '../bookClaimResultUtil';
@@ -8,6 +8,8 @@ import BookPage from '@/book/types/BookPage';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import PieceLayout from '@/book/drawing/types/PieceLayout';
 import { showBook } from '@/book/drawing/bookAnimationUtil';
+
+const reportStorageError = vi.fn();
 
 function _fixture(correct:boolean = true) {
   const answerSet = createAnswerSet(['Answer'], 'people');
@@ -103,13 +105,13 @@ describe('bookClaimPieceFallUtil', () => {
       const state = createDefaultBookState();
       state.pages = pages;
       state.pieceStack = [assigned.piece, ...layouts.map(layout => layout.piece), neighbor.piece];
-      applyBookClaimResults(state, claim, 4499);
+      applyBookClaimResults(state, claim, 4499, reportStorageError);
       expect(state.pieceStack).toHaveLength(5);
-      applyBookClaimResults(state, claim, 4500);
+      applyBookClaimResults(state, claim, 4500, reportStorageError);
       expect(state.pieceStack).toEqual([assigned.piece, neighbor.piece]);
       expect(neighborPage.conclusion.isComplete).toBe(false);
       const remaining = state.pieceStack;
-      applyBookClaimResults(state, claim, 100000);
+      applyBookClaimResults(state, claim, 100000, reportStorageError);
       expect(state.pieceStack).toBe(remaining);
       showBook(100000, state);
       expect(state.pieceStack).toBe(remaining);
@@ -121,7 +123,7 @@ describe('bookClaimPieceFallUtil', () => {
       const state = createDefaultBookState();
       state.pages = pages;
       state.pieceStack = [...layouts.map(layout => layout.piece), neighbor.piece, assigned.piece];
-      applyBookClaimResults(state, claim, 100000);
+      applyBookClaimResults(state, claim, 100000, reportStorageError);
       expect(state.pieceStack).toEqual([neighbor.piece, assigned.piece]);
     });
   });

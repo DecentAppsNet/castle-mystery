@@ -3,20 +3,30 @@ import bookText from './fixtures/book.md?raw';
 import { addLevelChapterToBook, loadBookFromText, loadBookFromUrl } from '../bookContentUtil';
 import { loadValidLevelForTest } from '@/levelLoading/__tests__/testLevelUtil';
 import levelText from '@/game/__tests__/fixtures/save-state.md?raw';
+import { pushLevelChanges } from '@/persistence/levelChangeQueue';
 
-afterEach(() => vi.unstubAllGlobals());
+vi.mock('@/persistence/levelChangeQueue', () => ({ pushLevelChanges:vi.fn() }));
+
+const enqueue = vi.mocked(pushLevelChanges);
+const reportStorageError = vi.fn();
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  enqueue.mockReset();
+  reportStorageError.mockClear();
+});
 
 describe('bookContentUtil', () => {
   it('creates out-of-order chapters with identical titles and deduplicates revisits by URL', () => {
     const book = loadBookFromText(bookText);
     const level = loadValidLevelForTest(levelText);
     const [firstUrl, secondUrl] = book.levelUrls;
-    addLevelChapterToBook(book, level, secondUrl);
-    addLevelChapterToBook(book, level, firstUrl);
+    addLevelChapterToBook(book, level, secondUrl, reportStorageError);
+    addLevelChapterToBook(book, level, firstUrl, reportStorageError);
     const pageNo = book.pageNo;
     const pageCount = book.pages.length;
     const pieceCount = book.pieceStack.length;
-    addLevelChapterToBook(book, { ...level, title:'Changed title' }, secondUrl);
+    addLevelChapterToBook(book, { ...level, title:'Changed title' }, secondUrl, reportStorageError);
 
     expect(book.pages.filter(page => page.kind === 'chapterStart')).toMatchObject([
       { chapterNo:1, title:level.title, levelUrl:secondUrl },
@@ -27,6 +37,22 @@ describe('bookContentUtil', () => {
     expect(book.pageNo).toBe(pageNo);
     expect(book.pages.find(page => page.kind === 'conclusion')).toMatchObject({ levelUrl:secondUrl });
     expect(book.pages.at(-1)).toMatchObject({ kind:'chapterEnd', levelUrl:firstUrl });
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it('publishes world completion once per chapter with no required conclusions', () => {
+    const book = loadBookFromText(bookText);
+    const level = loadValidLevelForTest(levelText);
+    const optionalOnly = { ...level, conclusions:level.conclusions.map(conclusion => ({ ...conclusion, isOptional:true })) };
+    enqueue.mockResolvedValue(undefined);
+    addLevelChapterToBook(book, optionalOnly, '/levels/optional.md', reportStorageError);
+    addLevelChapterToBook(book, optionalOnly, '/levels/optional.md', reportStorageError);
+    addLevelChapterToBook(book, { ...level, conclusions:[] }, '/levels/empty.md', reportStorageError);
+
+    expect(enqueue.mock.calls).toEqual([
+      ['optional.md', [{ kind:'setLevelComplete' }]], ['empty.md', [{ kind:'setLevelComplete' }]]
+    ]);
+    expect(optionalOnly.conclusions.every(conclusion => !conclusion.isComplete)).toBe(true);
   });
   it('loads authored metadata and preserves level order without creating chapters', () => {
     const book = loadBookFromText(bookText);

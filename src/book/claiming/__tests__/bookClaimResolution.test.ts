@@ -1,18 +1,32 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createLayout, findControlRect } from '@/canvasControls';
 import { clearSeed, setSeed } from '@/common/randUtil';
 import { createAnswerSet } from '@/game/conclusions/answerSetUtil';
 import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
 import { duplicateConclusion } from '@/game/conclusions/types/Conclusion';
-import { claimBookConclusion, getConclusionPageInstructionText, updateBookClaim, updateBookClaimControls } from '../bookClaimControlUtil';
+import { claimBookConclusion, getConclusionPageInstructionText, updateBookClaim as advanceClaim, updateBookClaimControls } from '../bookClaimControlUtil';
 import { onBookMouseDown } from '@/book/eventHandlers';
 import { beginBookPieceDrag, findBookPieceAtPoint, getVisibleBookPieces,
   updatePieceStackForConclusionPages } from '@/book/pieces';
-import { applyBookClaimResults } from '../bookClaimResultUtil';
+import { applyBookClaimResults as applyResults } from '../bookClaimResultUtil';
 import PieceLayout from '@/book/drawing/types/PieceLayout';
 import BookClaimState from '../types/BookClaimState';
 import BookPage from '@/book/types/BookPage';
-import { createDefaultBookState } from '@/book/types/BookState';
+import BookState, { createDefaultBookState } from '@/book/types/BookState';
+import { pushLevelChanges } from '@/persistence/levelChangeQueue';
+
+vi.mock('@/persistence/levelChangeQueue', () => ({ pushLevelChanges:vi.fn() }));
+
+const enqueue = vi.mocked(pushLevelChanges);
+const reportStorageError = vi.fn();
+
+function updateBookClaim(state:BookState, time:number) {
+  advanceClaim(state, time, reportStorageError);
+}
+
+function applyBookClaimResults(state:BookState, claim:BookClaimState, elapsed:number) {
+  applyResults(state, claim, elapsed, reportStorageError);
+}
 
 function _createFixture(single:boolean = false) {
   // Distinct selected answers allow exact inventory associations; the second selection is initially wrong.
@@ -50,9 +64,82 @@ function _createClaimFixture(correct:boolean = false) {
   return { ...fixture, claim };
 }
 
-afterEach(clearSeed);
+afterEach(() => {
+  clearSeed();
+  enqueue.mockReset();
+  reportStorageError.mockClear();
+});
 
 describe('book claim resolution', () => {
+  it('publishes the chapter filename and all effects once, before completing or unlocking the claim', async () => {
+    const { bookState, page, otherBlank } = _createFixture();
+    otherBlank.correctAnswerIndexes.push(1);
+    const claimPage = { ...page, levelUrl:'/chapters/inactive.md?version=1' };
+    claimPage.conclusion = { ...page.conclusion, id:'identities', revealRoomIds:['study'], unlockConclusionIds:['optional'] };
+    const optionalPage = { ...claimPage, conclusion:{ ...duplicateConclusion(claimPage.conclusion), id:'optional',
+      isOptional:true, isLocked:true } };
+    bookState.pages[0] = claimPage;
+    bookState.layout!.pieceSlotLayouts = bookState.layout!.pieceSlotLayouts.map(slot => ({ ...slot, page:claimPage }));
+    bookState.pages.push(optionalPage, { kind:'chapterEnd', chapterNo:1, levelUrl:claimPage.levelUrl,
+      headingText:'', winSynopsis:'', conclusions:[claimPage.conclusion, optionalPage.conclusion] });
+    const stored = Promise.withResolvers<void>();
+    enqueue.mockReturnValue(stored.promise);
+
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 100000);
+    updateBookClaim(bookState, 100001);
+    expect(enqueue).toHaveBeenCalledExactlyOnceWith('inactive.md', [
+      { kind:'revealRoom', roomIds:['study'] }, { kind:'revealCharacterTitles' }, { kind:'setLevelComplete' }
+    ]);
+    expect(claimPage.conclusion.isComplete).toBe(false);
+    expect(optionalPage.conclusion.isLocked).toBe(true);
+    expect(bookState.claimState).not.toBeNull();
+
+    stored.resolve();
+    await stored.promise;
+    updateBookClaim(bookState, 100002);
+    expect(claimPage.conclusion.isComplete).toBe(true);
+    expect(optionalPage.conclusion).toMatchObject({ isLocked:false, isComplete:false });
+    expect(bookState.claimState).toBeNull();
+    expect(enqueue).toHaveBeenCalledOnce();
+  });
+
+  it('reports an enqueue rejection without counting a guess, and allows a new claim', async () => {
+    const { bookState, page, otherBlank } = _createFixture();
+    otherBlank.correctAnswerIndexes.push(1);
+    page.conclusion = { ...page.conclusion, revealRoomIds:['study'] };
+    const error = new Error('Storage unavailable');
+    enqueue.mockRejectedValueOnce(error).mockResolvedValueOnce(undefined);
+
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 100000);
+    await Promise.resolve();
+    updateBookClaim(bookState, 100001);
+    expect(reportStorageError).toHaveBeenCalledExactlyOnceWith(error);
+    expect(enqueue).toHaveBeenCalledOnce();
+    expect(bookState.claimState).toBeNull();
+    expect(page.conclusion).toMatchObject({ isComplete:false, incorrectGuessCount:0 });
+    expect(otherBlank.playerAnswerIndex).toBe(1);
+
+    claimBookConclusion(bookState, 1, 100001);
+    updateBookClaim(bookState, 200000);
+    await Promise.resolve();
+    expect(page.conclusion.isComplete).toBe(true);
+    expect(enqueue).toHaveBeenCalledTimes(2);
+  });
+
+  it('applies an optional claim without a world write when it has no world effects', () => {
+    const { bookState, page, otherBlank } = _createFixture();
+    otherBlank.correctAnswerIndexes.push(1);
+    page.conclusion.isOptional = true;
+    bookState.pages.push({ kind:'chapterEnd', chapterNo:1, levelUrl:page.levelUrl,
+      headingText:'', winSynopsis:'', conclusions:[page.conclusion] });
+    claimBookConclusion(bookState, 1, 123);
+    updateBookClaim(bookState, 100000);
+    expect(page.conclusion.isComplete).toBe(true);
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
   it('unlocks matching conclusions only in the successfully claimed chapter', () => {
     const { bookState, page, otherBlank } = _createFixture();
     otherBlank.correctAnswerIndexes.push(1);
@@ -81,12 +168,12 @@ describe('book claim resolution', () => {
     page.conclusion = { ...page.conclusion, unlockConclusionIds:['next'] };
     const next = { ...page, conclusion:{ ...duplicateConclusion(page.conclusion), id:'next', isLocked:true } };
     bookState.pages.push(next);
-
     claimBookConclusion(bookState, 1, 123);
     updateBookClaim(bookState, 5623);
 
     expect(page.conclusion.isComplete).toBe(false);
     expect(next.conclusion.isLocked).toBe(true);
+    expect(enqueue).not.toHaveBeenCalled();
   });
 
   it('marks a correct conclusion complete, retaining assigned pieces and removing unused pieces', () => {

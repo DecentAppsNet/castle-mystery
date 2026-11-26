@@ -80,9 +80,15 @@ function HomeScreen() {
     };
   }, []);
 
+  function _reportBookStorageError(error:unknown):void {
+    const message = 'Unable to save pending world changes.';
+    console.error(message, error);
+    if (loadRequestRef.current.isMounted) setStorageErrorMessage(message);
+  }
+
   function _publishPreparedLevelState(prepared:PreparedLevelState, sessionBookState:BookState|null = bookState) {
     assertNonNullable(sessionBookState);
-    addLevelChapterToBook(sessionBookState, prepared.level, prepared.levelUrl);
+    addLevelChapterToBook(sessionBookState, prepared.level, prepared.levelUrl, _reportBookStorageError);
     acceptPreparedLevelState(prepared, findBookImageUrls(sessionBookState));
     saveGameStateRef.current = prepared.gameState;
     saveCoordinatorRef.current = new LevelSaveCoordinator(prepared.levelUrl, prepared.gameState, prepared.needsInitialSave,
@@ -271,6 +277,7 @@ function HomeScreen() {
           ref={levelViewRef}
           gameState={gameState} 
           bookState={bookState}
+          onStorageError={_reportBookStorageError}
           loadedLevelUrl={loadedLevel?.levelUrl ?? null}
           isGameDisabled={_isGameDisabled}
           onChapterLevelSelected={levelUrl => _handleLevelSelect(levelUrl, true)}

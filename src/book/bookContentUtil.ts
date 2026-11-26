@@ -2,6 +2,7 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import BookState, { createDefaultBookState } from "./types/BookState";
+import { pushLevelChanges } from '@/persistence/levelChangeQueue';
 import { generateAnswerSetIdToPieceStyleNoMap } from './answerSetPieceStyleUtil';
 import Level from "@/game/types/Level";
 import ConclusionPage from "./types/ConclusionPage";
@@ -46,7 +47,7 @@ function _addBookStartPages(title:string, subtitle:string|null, author:string, p
   pages.push({ kind:'bookStart', headingText:'', title, subtitle, author, chapterNo:0 });
 }
 
-export function addLevelChapterToBook(bookState:BookState, level:Level, levelUrl:string) {
+export function addLevelChapterToBook(bookState:BookState, level:Level, levelUrl:string, reportStorageError:(error:unknown) => void) {
   if (bookState.pages.some(page => page.kind === 'chapterStart' && page.levelUrl === levelUrl)) return;
   const chapterNo = _findNextChapterNo(bookState);
   const { pages } = bookState;
@@ -56,6 +57,9 @@ export function addLevelChapterToBook(bookState:BookState, level:Level, levelUrl
   _addChapterEndPages(level, levelUrl, chapterNo, pages);
   updatePieceStackForConclusionPages(bookState, newPagesStartIndex);
   bookState.pageNo = newPagesStartIndex + 1;
+  if (level.conclusions.every(conclusion => conclusion.isOptional)) {
+    void pushLevelChanges(urlToFilename(levelUrl), [{ kind:'setLevelComplete' }]).catch(reportStorageError);
+  }
 }
 
 function _parseLevelUrls(levelsSection:string):string[] {

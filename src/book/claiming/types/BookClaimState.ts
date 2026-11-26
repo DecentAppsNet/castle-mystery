@@ -8,6 +8,7 @@ type BookClaimState = {
   readonly startedAt:number;
   readonly correct:boolean;
   resultApplied:boolean;
+  publication?:'pending'|'failed';
   ejectedCount:number;
 };
 
