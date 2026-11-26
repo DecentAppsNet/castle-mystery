@@ -6,6 +6,8 @@ import ClozeBlank from '../conclusions/types/ClozeBlank';
 import ClozePartType from '../conclusions/types/ClozePartType';
 import { createGameState } from '../gameUtil';
 import { createLevelSaveState, isLevelSaveStateCompatible } from '../levelSaveStateUtil';
+import { completeLevel, revealRooms } from '../worldProgressUtil';
+import discoveryStateLevelText from './fixtures/discovery-state.md?raw';
 import levelText from './fixtures/save-state.md?raw';
 
 function _createState() {
@@ -14,6 +16,22 @@ function _createState() {
 
 describe('levelSaveStateUtil', () => {
   describe('createLevelSaveState()', () => {
+    it('captures only rooms revealed relative to authored obscuration, even without a visit', () => {
+      const state = createGameState(loadValidLevelForTest(discoveryStateLevelText));
+      expect(createLevelSaveState(state).revealedRoomIds).toEqual([]);
+
+      revealRooms(state, ['study', 'hall']);
+
+      expect(createLevelSaveState(state)).toMatchObject({
+        revealedRoomIds:['study'], discoveredRoomIds:['hall'], isLevelComplete:false
+      });
+    });
+
+    it('captures completed-level mode and the rooms revealed by its sweep', () => {
+      const state = createGameState(loadValidLevelForTest(discoveryStateLevelText));
+      completeLevel(state);
+      expect(createLevelSaveState(state)).toMatchObject({ revealedRoomIds:['study'], isLevelComplete:true });
+    });
     it('captures the authoritative discovery sets and active character', () => {
       const state = _createState();
       state.discoveryState.discoveredRoomIds.add('hall');
@@ -128,6 +146,12 @@ describe('levelSaveStateUtil', () => {
       const state = _createState();
       expect(isLevelSaveStateCompatible({ ...createLevelSaveState(state), discoveredItemIds:['missing'] }, state)).toBe(false);
       expect(console.error).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('discoveredItemIds references unknown ID "missing"'));
+    });
+
+    it('rejects an unknown revealed room', () => {
+      const state = _createState();
+      expect(isLevelSaveStateCompatible({ ...createLevelSaveState(state), revealedRoomIds:['missing'] }, state)).toBe(false);
+      expect(console.error).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('revealedRoomIds references unknown ID "missing"'));
     });
 
     it('rejects an unknown skin', () => {

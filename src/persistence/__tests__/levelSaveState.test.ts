@@ -8,15 +8,17 @@ vi.mock('../pathStore', async () => {
   return pathStoreMock;
 });
 
-const levelFilename = 'castle/first.md';
-const saveKey = '/levelSaves/$castle/first.md.json';
+const levelFilename = 'first.md';
+const saveKey = '/levelSaves/$first.md.json';
 const saveState:LevelSaveState = {
   time:90000000,
   activeCharacterId:'duchess',
   discoveredRoomIds:['hall'],
+  revealedRoomIds:['study'],
   discoveredItemIds:['key'],
   discoveredSkinIds:['duchess-disguise'],
   titleKnownCharacterIds:['duchess'],
+  isLevelComplete:true,
   completedConclusionIds:['identity'],
   incompleteConclusionAnswerIndexesById:{ mystery:[-1, 0, 2] }
 };
@@ -47,7 +49,8 @@ describe('levelSaveState', () => {
     });
 
     it('accepts empty discovery arrays and unfinished-answer lookups', async () => {
-      const emptySave = { ...saveState, discoveredRoomIds:[], discoveredItemIds:[],
+      const emptySave = { ...saveState, discoveredRoomIds:[], revealedRoomIds:[], discoveredItemIds:[],
+        isLevelComplete:false,
         discoveredSkinIds:[], titleKnownCharacterIds:[], completedConclusionIds:[],
         incompleteConclusionAnswerIndexesById:{} };
       await setLevelSaveState(levelFilename, emptySave);
@@ -81,6 +84,22 @@ describe('levelSaveState', () => {
 
     it('rejects missing members', async () => {
       await _expectDiscarded({ ...saveState, completedConclusionIds:undefined });
+    });
+
+    it('deletes an old save without explicit world progress', async () => {
+      await _expectDiscarded({ ...saveState, revealedRoomIds:undefined, isLevelComplete:undefined });
+    });
+
+    it('requires revealed room IDs even when the completion flag is present', async () => {
+      await _expectDiscarded({ ...saveState, revealedRoomIds:undefined });
+    });
+
+    it('rejects non-string revealed room IDs', async () => {
+      await _expectDiscarded({ ...saveState, revealedRoomIds:[1] });
+    });
+
+    it('requires a boolean completion flag', async () => {
+      await _expectDiscarded({ ...saveState, isLevelComplete:'true' });
     });
 
     it('rejects a non-string active character', async () => {
@@ -167,12 +186,12 @@ describe('levelSaveState', () => {
   });
 
   describe('setLevelSaveState()', () => {
-    it('keeps same-named levels in different directories independent', async () => {
+    it('keeps distinct level filenames independent', async () => {
       const otherSave = { ...saveState, time:90000001 };
       await setLevelSaveState(levelFilename, saveState);
-      await setLevelSaveState('tower/first.md', otherSave);
+      await setLevelSaveState('second.md', otherSave);
       await expect(getLevelSaveState(levelFilename)).resolves.toEqual(saveState);
-      await expect(getLevelSaveState('tower/first.md')).resolves.toEqual(otherSave);
+      await expect(getLevelSaveState('second.md')).resolves.toEqual(otherSave);
     });
 
     it('propagates write failures', async () => {
@@ -184,10 +203,10 @@ describe('levelSaveState', () => {
   describe('clearLevelSaveState()', () => {
     it('clears only the requested level', async () => {
       await setLevelSaveState(levelFilename, saveState);
-      await setLevelSaveState('tower/first.md', saveState);
+      await setLevelSaveState('second.md', saveState);
       await clearLevelSaveState(levelFilename);
       await expect(getLevelSaveState(levelFilename)).resolves.toBeNull();
-      await expect(getLevelSaveState('tower/first.md')).resolves.toEqual(saveState);
+      await expect(getLevelSaveState('second.md')).resolves.toEqual(saveState);
     });
 
     it('allows clearing a missing record', async () => {

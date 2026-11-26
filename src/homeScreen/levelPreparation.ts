@@ -1,6 +1,7 @@
 /* This file prepares freshly loaded game state with persistent progress and commits image retention at acceptance.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
+import { urlToFilename } from '@/common/urlUtil';
 import { createGameState } from '@/game/gameUtil';
 import { isLevelSaveStateCompatible, restoreGameStateFromSave } from '@/game/levelSaveStateUtil';
 import { ImageSet } from '@/imageLoading';
@@ -18,14 +19,15 @@ export function acceptPreparedLevelState(prepared:PreparedLevelState, bookImageU
 export async function prepareLevelState(level:Level, imageSet:ImageSet, levelUrl:string):Promise<PreparedLevelState> {
   // Construct outside storage error handling so game construction failures remain visible.
   const gameState = createGameState(level, imageSet);
-  const save = await getLevelSaveState(levelUrl).catch(error => {
+  const levelFilename = urlToFilename(levelUrl);
+  const save = await getLevelSaveState(levelFilename).catch(error => {
     console.error(`Unable to read level save for "${levelUrl}". Using fresh progress.`, error);
     return null;
   });
 
   // Clear incompatible records without letting unavailable storage fail the level load.
   if (save && !isLevelSaveStateCompatible(save, gameState)) {
-    await clearLevelSaveState(levelUrl).catch(error => {
+    await clearLevelSaveState(levelFilename).catch(error => {
       console.error(`Unable to clear incompatible level save for "${levelUrl}".`, error);
     });
     return { level, gameState, levelUrl, needsInitialSave:true };

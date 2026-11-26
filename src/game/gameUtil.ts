@@ -150,6 +150,7 @@ export function createGameState(level:Level, imageSet:ImageSet = new ImageSet())
     hoveredItemId:null,
     hoveredRoomId:null,
     imageSet,
+    initiallyObscuredRoomIds:level.discoveryConfig.initiallyObscuredRoomIds,
     isLevelComplete:false,
     isPlaying:false,
     labels:level.labels.map(label => ({...label})),

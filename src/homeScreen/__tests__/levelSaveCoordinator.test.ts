@@ -78,7 +78,7 @@ describe('LevelSaveCoordinator', () => {
     coordinator.observe();
     await coordinator.stopAndSettle();
     expect(pathStoreMock.setText).toHaveBeenCalledOnce();
-    await expect(getLevelSaveState('/levels/castle.md')).resolves.toMatchObject({ time:state.time });
+    await expect(getLevelSaveState('castle.md')).resolves.toMatchObject({ time:state.time });
   });
 
   it('waits for a deferred outgoing flush before same-level preparation reads progress', async () => {
@@ -181,11 +181,11 @@ describe('LevelSaveCoordinator', () => {
 
   it('clears only the outgoing coordinator key, leaving other levels intact', async () => {
     const first = new LevelSaveCoordinator('/levels/castle/first.md', _createState(), true);
-    const second = new LevelSaveCoordinator('/levels/tower/first.md', _createState(), true);
+    const second = new LevelSaveCoordinator('/levels/tower/second.md', _createState(), true);
     await second.stopAndSettle();
     await first.clearSaveAfterSettling();
-    await expect(getLevelSaveState('/levels/castle/first.md')).resolves.toBeNull();
-    await expect(getLevelSaveState('/levels/tower/first.md')).resolves.not.toBeNull();
+    await expect(getLevelSaveState('first.md')).resolves.toBeNull();
+    await expect(getLevelSaveState('second.md')).resolves.not.toBeNull();
   });
 
   it('observes progress without returning a storage promise', async () => {
@@ -527,13 +527,13 @@ describe('LevelSaveCoordinator', () => {
     const firstState = _createState();
     const secondState = _createState();
     const first = new LevelSaveCoordinator('/levels/castle/first.md', firstState);
-    const second = new LevelSaveCoordinator('/levels/tower/first.md', secondState);
+    const second = new LevelSaveCoordinator('/levels/tower/second.md', secondState);
     firstState.discoveryState.discoveredItemIds.add('key');
     secondState.discoveryState.discoveredSkinIds.add('sam-default');
     first.observe();
     second.observe();
     await Promise.all([first.stopAndSettle(), second.stopAndSettle()]);
-    await expect(getLevelSaveState('/levels/castle/first.md')).resolves.toMatchObject({ discoveredItemIds:['key'], discoveredSkinIds:[] });
-    await expect(getLevelSaveState('/levels/tower/first.md')).resolves.toMatchObject({ discoveredItemIds:[], discoveredSkinIds:['sam-default'] });
+    await expect(getLevelSaveState('first.md')).resolves.toMatchObject({ discoveredItemIds:['key'], discoveredSkinIds:[] });
+    await expect(getLevelSaveState('second.md')).resolves.toMatchObject({ discoveredItemIds:[], discoveredSkinIds:['sam-default'] });
   });
 });

@@ -39,6 +39,7 @@ type GameState = {
   readonly baseRooms:Room[],
   readonly groundFloorY:number,
   readonly imageSet:ImageSet,
+  readonly initiallyObscuredRoomIds:ReadonlySet<string>,
   readonly timeline:Timeline;
   readonly winSynopsis:string,
   metaTimeEffects:Effect[], // Effects in this collection interpret startTime and endTime as meta-time.

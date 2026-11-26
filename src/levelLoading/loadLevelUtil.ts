@@ -17,11 +17,7 @@ import { loadLevelWithImportsAndSourceLineMap } from "./importing";
 import { createTimeLabels } from "./timeLabels";
 import { assert } from "decent-portal";
 import { clamp } from "@/common/numberUtil";
-
-function _levelUrlToFilename(levelUrl:string):string {
-  const urlSegments = levelUrl.split('/').filter(segment => segment.length > 0);
-  return urlSegments[urlSegments.length - 1] || levelUrl;
-}
+import { urlToFilename } from "@/common/urlUtil";
 
 function _getInitialTimeValue(authoredInitialTime:number|null, levelStartTime:number, levelEndTime:number):number {
   assert(levelStartTime <= levelEndTime);
@@ -110,7 +106,7 @@ export function loadLevelFromText(text:string, errors:ErrorCollector):Level|null
 
 /** Loads imported level text from a URL and returns the parsed level with collected authoring errors. */
 export async function loadLevelFromUrl(levelFileUrl:string):Promise<{level:Level|null, errors:ErrorCollector}> {
-  const filename = _levelUrlToFilename(levelFileUrl); // For security, any extra path information is stripped. Level files will be retrieved from a fixed location later.
+  const filename = urlToFilename(levelFileUrl); // For security, any extra path information is stripped. Level files will be retrieved from a fixed location later.
   const sourceMappedText = await loadLevelWithImportsAndSourceLineMap(filename);
   const errors = new ErrorCollector(sourceMappedText.text, sourceMappedText.sourceLineMap);
   const level = loadLevelFromText(sourceMappedText.text, errors);

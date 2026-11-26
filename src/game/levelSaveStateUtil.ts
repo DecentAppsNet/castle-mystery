@@ -80,9 +80,11 @@ export function createLevelSaveState(gameState:GameState, committedTime:number =
     time:committedTime,
     activeCharacterId:gameState.activeCharacterId,
     discoveredRoomIds:[...discoveryState.discoveredRoomIds],
+    revealedRoomIds:[...gameState.initiallyObscuredRoomIds].filter(roomId => !discoveryState.obscuredRoomIds.has(roomId)),
     discoveredItemIds:[...discoveryState.discoveredItemIds],
     discoveredSkinIds:[...discoveryState.discoveredSkinIds],
     titleKnownCharacterIds:[...discoveryState.titleKnownCharacterIds],
+    isLevelComplete:gameState.isLevelComplete,
     completedConclusionIds:conclusions.filter(conclusion => conclusion.isComplete).map(conclusion => conclusion.id),
     incompleteConclusionAnswerIndexesById
   };
@@ -108,6 +110,7 @@ export function isLevelSaveStateCompatible(save:LevelSaveState, gameState:GameSt
   if (!_areIdsKnown([save.activeCharacterId], characterIds, 'activeCharacterId')
     || !_areIdsKnown(save.titleKnownCharacterIds, characterIds, 'titleKnownCharacterIds')
     || !_areIdsKnown(save.discoveredRoomIds, roomIds, 'discoveredRoomIds')
+    || !_areIdsKnown(save.revealedRoomIds, roomIds, 'revealedRoomIds')
     || !_areIdsKnown(save.discoveredItemIds, new Set(gameState.baseItemsById.keys()), 'discoveredItemIds')
     || !_areIdsKnown(save.discoveredSkinIds, skinIds, 'discoveredSkinIds')) return false;
 

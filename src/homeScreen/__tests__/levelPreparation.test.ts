@@ -16,7 +16,8 @@ vi.mock('@/persistence/pathStore', async () => {
   return pathStoreMock;
 });
 
-const levelUrl = 'castles/first.md';
+const levelUrl = 'castles/first.md?revision=2#section';
+const levelFilename = 'first.md';
 
 describe('prepareLevelState()', () => {
   beforeEach(() => {
@@ -41,7 +42,7 @@ describe('prepareLevelState()', () => {
   it('aligns selected character, room and snapshot at a noninitial coordinate', async () => {
     const level = loadValidLevelForTest(defaultText);
     const save = createLevelSaveState(createGameState(level), level.timeline.endTime);
-    await setLevelSaveState(levelUrl, save);
+    await setLevelSaveState(levelFilename, save);
     const { gameState, needsInitialSave } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(needsInitialSave).toBe(false);
     expect(gameState.time).toBe(level.timeline.endTime);
@@ -54,7 +55,7 @@ describe('prepareLevelState()', () => {
   it('restores a different active character and its selection-dependent context', async () => {
     const level = loadValidLevelForTest(discoveryText);
     const save = { ...createLevelSaveState(createGameState(level)), activeCharacterId:'pat' };
-    await setLevelSaveState(levelUrl, save);
+    await setLevelSaveState(levelFilename, save);
     const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(level.activeCharacterId).toBe('sam');
     expect(gameState.activeCharacterId).toBe('pat');
@@ -65,7 +66,7 @@ describe('prepareLevelState()', () => {
 
   it('replaces the initial selected skin with the appearance at saved time', async () => {
     const level = loadValidLevelForTest(appearanceText);
-    await setLevelSaveState(levelUrl, createLevelSaveState(createGameState(level), 5000));
+    await setLevelSaveState(levelFilename, createLevelSaveState(createGameState(level), 5000));
     const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(level.initialTime).toBe(10000);
     expect(gameState.time).toBe(5000);
@@ -82,21 +83,21 @@ describe('prepareLevelState()', () => {
   it('preserves extended-hour timeline coordinates', async () => {
     const level = loadValidLevelForTest(saveText);
     const time = level.timeline.startTime + 25000;
-    await setLevelSaveState(levelUrl, createLevelSaveState(createGameState(level), time));
+    await setLevelSaveState(levelFilename, createLevelSaveState(createGameState(level), time));
     const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(gameState.time).toBe(25 * 3600000 + 25000);
   });
 
   it('clears an incompatible record and uses fresh state without partial restoration', async () => {
     const level = loadValidLevelForTest(saveText);
-    const save = { ...createLevelSaveState(createGameState(level)), activeCharacterId:'missing',
+    const save = { ...createLevelSaveState(createGameState(level)), revealedRoomIds:['missing'],
       discoveredItemIds:['key'] };
-    await setLevelSaveState(levelUrl, save);
+    await setLevelSaveState(levelFilename, save);
     const prepared = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(prepared.needsInitialSave).toBe(true);
     expect(prepared.gameState.discoveryState.discoveredItemIds.size).toBe(0);
     expect(prepared.gameState.activeCharacterId).toBe(level.activeCharacterId);
-    await expect(getLevelSaveState(levelUrl)).resolves.toBeNull();
+    await expect(getLevelSaveState(levelFilename)).resolves.toBeNull();
     expect(pathStoreMock.deleteByKey).toHaveBeenCalledOnce();
   });
 
@@ -111,7 +112,7 @@ describe('prepareLevelState()', () => {
 
   it('falls back to fresh state after incompatible-record deletion rejection', async () => {
     const level = loadValidLevelForTest(defaultText);
-    await setLevelSaveState(levelUrl, { ...createLevelSaveState(createGameState(level)), time:-1 });
+    await setLevelSaveState(levelFilename, { ...createLevelSaveState(createGameState(level)), time:-1 });
     pathStoreMock.deleteByKey.mockRejectedValueOnce(new Error('Delete unavailable'));
     const prepared = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(prepared.needsInitialSave).toBe(true);
@@ -134,17 +135,18 @@ describe('prepareLevelState()', () => {
     const save = { ...createLevelSaveState(createGameState(level), level.timeline.endTime),
       completedConclusionIds:level.conclusions.map(conclusion => conclusion.id),
       incompleteConclusionAnswerIndexesById:{} };
-    await setLevelSaveState(levelUrl, save);
+    await setLevelSaveState(levelFilename, save);
     const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(gameState.isLevelComplete).toBe(true);
     expect(JSON.stringify(level)).toBe(original);
     expect(gameState.timeline).toBe(level.timeline);
   });
 
-  it('keeps same-named levels in different manifest directories isolated', async () => {
+  it('does not recover progress stored under the old URL key', async () => {
     const level = loadValidLevelForTest(defaultText);
-    await setLevelSaveState('tower/first.md', createLevelSaveState(createGameState(level), level.timeline.endTime));
-    const prepared = await prepareLevelState(level, new ImageSet(), levelUrl);
+    pathStoreMock.values['/levelSaves/$castles/first.md.json'] =
+      JSON.stringify(createLevelSaveState(createGameState(level), level.timeline.endTime));
+    const prepared = await prepareLevelState(level, new ImageSet(), 'castles/first.md');
     expect(prepared.needsInitialSave).toBe(true);
     expect(prepared.gameState.time).toBe(level.initialTime);
   });
@@ -170,7 +172,7 @@ describe('prepareLevelState()', () => {
     const level = loadValidLevelForTest(discoveryText);
     const save = { ...createLevelSaveState(createGameState(level)), activeCharacterId:'pat',
       discoveredItemIds:['brass key'], discoveredSkinIds:['pat-default'] };
-    await setLevelSaveState(levelUrl, save);
+    await setLevelSaveState(levelFilename, save);
     const { gameState } = await prepareLevelState(level, new ImageSet(), levelUrl);
     expect(gameState.activeCharacterId).toBe('pat');
     expect(gameState.discoveryState.discoveredItemIds).toContain('brass key');

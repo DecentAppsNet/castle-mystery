@@ -1,6 +1,7 @@
 /* This file coordinates immutable, ordered progress saves for one active level.
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
+import { urlToFilename } from '@/common/urlUtil';
 import { createLevelSaveState } from '@/game/levelSaveStateUtil';
 import GameState from '@/game/types/GameState';
 import { clearLevelSaveState, setLevelSaveState } from '@/persistence/levelSaveState';
@@ -8,6 +9,7 @@ import LevelSaveState from '@/persistence/types/LevelSaveState';
 
 class LevelSaveCoordinator {
   private readonly _levelUrl:string;
+  private readonly _levelFilename:string;
   private readonly _gameState:GameState;
   private _committedTime:number;
   private _lastObservedTime:number;
@@ -20,6 +22,7 @@ class LevelSaveCoordinator {
   /** Establishes the restored baseline, optionally submitting fresh initial progress once. */
   constructor(levelUrl:string, gameState:GameState, needsInitialSave:boolean = false) {
     this._levelUrl = levelUrl;
+    this._levelFilename = urlToFilename(levelUrl);
     this._gameState = gameState;
     this._committedTime = gameState.time;
     this._lastObservedTime = gameState.time;
@@ -31,7 +34,7 @@ class LevelSaveCoordinator {
 
   private _submit(save:LevelSaveState):void {
     const levelUrl = this._levelUrl;
-    this._pending = this._pending.then(() => setLevelSaveState(levelUrl, save)).catch(error => {
+    this._pending = this._pending.then(() => setLevelSaveState(this._levelFilename, save)).catch(error => {
       console.error(`Unable to save progress for "${levelUrl}".`, error);
     });
   }
@@ -86,7 +89,7 @@ class LevelSaveCoordinator {
   /** Cancels delayed saves and clears this level only after earlier writes have settled. */
   async clearSaveAfterSettling():Promise<void> {
     await this.stopAndSettle();
-    await clearLevelSaveState(this._levelUrl);
+    await clearLevelSaveState(this._levelFilename);
   }
 }
 
