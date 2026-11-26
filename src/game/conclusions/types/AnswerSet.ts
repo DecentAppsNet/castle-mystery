@@ -1,7 +1,1 @@
-type AnswerSet = {
-  readonly id:string;
-  readonly sourceCategoryId:string;
-  readonly answers:readonly string[];
-};
-
-export default AnswerSet;
+export type { default } from '@/conclusions/types/AnswerSet';

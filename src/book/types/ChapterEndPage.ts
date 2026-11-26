@@ -1,4 +1,4 @@
-import Conclusion from '@/game/conclusions/types/Conclusion';
+import Conclusion from '@/conclusions/types/Conclusion';
 import BookPageBase from './BookPageBase';
 
 type ChapterEndPage = BookPageBase<'chapterEnd'> & {

@@ -1,8 +1,8 @@
 /* This file groups logical checks and counts for chapter conclusions.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import Conclusion from '@/game/conclusions/types/Conclusion';
-import { isConclusionMissingAnswers } from '@/game/conclusions/conclusionUtil';
+import Conclusion from '@/conclusions/types/Conclusion';
+import { isConclusionMissingAnswers } from '@/conclusions';
 
 export function canClaimConclusion(conclusion:Readonly<Conclusion>):boolean {
   return !conclusion.isLocked && !conclusion.isComplete

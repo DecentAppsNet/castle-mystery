@@ -4,9 +4,9 @@
 import { assert, assertNonNullable } from 'decent-portal';
 import { hideControl, showControl, updateControlRect } from '@/canvasControls';
 import ControlLayout from '@/canvasControls/types/ControlLayout';
-import { countConclusionMistakes, isConclusionMissingAnswers } from '@/game/conclusions/conclusionUtil';
-import Conclusion from '@/game/conclusions/types/Conclusion';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import { countConclusionMistakes, isConclusionMissingAnswers } from '@/conclusions';
+import Conclusion from '@/conclusions/types/Conclusion';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import { applyBookClaimResults } from './bookClaimResultUtil';
 import { calcBookClaimTiming } from './bookClaimTimingUtil';
 import { canClaimConclusion, countRemainingRequiredConclusions } from './conclusionUtil';

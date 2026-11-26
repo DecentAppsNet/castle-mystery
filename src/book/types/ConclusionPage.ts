@@ -1,4 +1,4 @@
-import Conclusion from '@/game/conclusions/types/Conclusion';
+import Conclusion from '@/conclusions/types/Conclusion';
 import AnswerSetIdToPieceStyleNoMap from './AnswerSetIdToPieceStyleNoMap';
 import BookPageBase from './BookPageBase';
 import ClozePartLayoutTweak from './ClozePartLayoutTweak';

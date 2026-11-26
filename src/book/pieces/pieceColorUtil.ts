@@ -2,7 +2,7 @@
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert, assertNonNullable } from 'decent-portal';
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import { getPieceFlairProfile } from './pieceFlairUtil';
 import BookState from '../types/BookState';
 import Piece from '../types/Piece';

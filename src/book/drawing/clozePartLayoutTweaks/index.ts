@@ -1,6 +1,6 @@
 import { assert } from "decent-portal";
 
-import Conclusion from "@/game/conclusions/types/Conclusion";
+import Conclusion from "@/conclusions/types/Conclusion";
 import ClozePartLayoutTweak from "@/book/types/ClozePartLayoutTweak";
 import Point from "@/game/types/Point";
 import { getLineHeightForFontSize } from '../pages';

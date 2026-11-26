@@ -1,4 +1,4 @@
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import Rect from '@/game/types/Rect';
 import BookPage from '@/book/types/BookPage';
 import PageTextBoxMetrics from './PageTextBoxMetrics';

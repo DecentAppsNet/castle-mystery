@@ -1,8 +1,8 @@
 /* This file assigns conclusion-scoped piece styles by category, reserving built-in category styles.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
-import Conclusion from '@/game/conclusions/types/Conclusion';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
+import Conclusion from '@/conclusions/types/Conclusion';
 import AnswerSetIdToPieceStyleNoMap from './types/AnswerSetIdToPieceStyleNoMap';
 
 function _findReservedStyleNoForCategory(categoryId:string):number {

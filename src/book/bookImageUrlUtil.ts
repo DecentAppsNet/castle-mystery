@@ -2,8 +2,8 @@
   If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
 import { assert } from 'decent-portal';
-import ClozeImage from '@/game/conclusions/types/ClozeImage';
-import ClozePartType from '@/game/conclusions/types/ClozePartType';
+import ClozeImage from '@/conclusions/types/ClozeImage';
+import ClozePartType from '@/conclusions/types/ClozePartType';
 import BookState from './types/BookState';
 
 export function findBookImageUrls(bookState:BookState):ReadonlySet<string> {

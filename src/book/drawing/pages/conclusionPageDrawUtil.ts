@@ -6,16 +6,16 @@ import Rect from "@/game/types/Rect";
 import ConclusionPage from "@/book/types/ConclusionPage";
 import { assert, assertNonNullable, botch } from "decent-portal";
 import PageWriter from "./PageWriter";
-import ClozePartType from "@/game/conclusions/types/ClozePartType";
-import ClozeText from "@/game/conclusions/types/ClozeText";
+import ClozePartType from "@/conclusions/types/ClozePartType";
+import ClozeText from "@/conclusions/types/ClozeText";
 import { drawObscuredPage } from './obscuredPageDrawUtil';
-import ClozeBlank from "@/game/conclusions/types/ClozeBlank";
-import ClozeImage from "@/game/conclusions/types/ClozeImage";
+import ClozeBlank from "@/conclusions/types/ClozeBlank";
+import ClozeImage from "@/conclusions/types/ClozeImage";
 import PieceSlotLayout from "../types/PieceSlotLayout";
 import PieceSlotPresentation from "@/book/types/PieceSlotPresentation";
 import { getConclusionPageInstructionText } from '@/book/claiming';
 import BookClaimGlint from '@/book/claiming/types/BookClaimGlint';
-import ClozePart from "@/game/conclusions/types/ClozePart";
+import ClozePart from "@/conclusions/types/ClozePart";
 
 function _isClozeImageUrlResolved(part:ClozePart) {
   return typeof (part as ClozeImage).imageUrl === 'string'; // If it's an array, then there was no resolution of candidate URLs to a single URL performed.

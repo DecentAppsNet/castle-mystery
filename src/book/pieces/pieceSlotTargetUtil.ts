@@ -1,7 +1,7 @@
 /* This file derives eligible book blanks and selects the nearest overlapping slot for an active piece drag.
    If this file grows beyond 500 lines of code, read the "Refactoring Large Files" section in CONTRIBUTING.md before making changes. */
 
-import { normalizeCategoryPhrase } from '@/game/conclusions/conclusionUtil';
+import { normalizeCategoryPhrase } from '@/conclusions';
 import { doRectsOverlap } from '@/game/rectUtil';
 import { isLeftPageNo } from '../drawing/bookLayoutUtil';
 import PieceSlotLayout from '../drawing/types/PieceSlotLayout';

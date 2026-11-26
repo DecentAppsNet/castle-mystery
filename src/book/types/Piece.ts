@@ -1,4 +1,4 @@
-import ClozeBlank from '@/game/conclusions/types/ClozeBlank';
+import ClozeBlank from '@/conclusions/types/ClozeBlank';
 import BookPage from './BookPage';
 
 type Piece = {

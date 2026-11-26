@@ -4,8 +4,8 @@
 import { getGroundImageAssetUrl, isCandidateUrls } from "@/game/imageUrlUtil";
 import { UNKNOWN_ITEM_ICON_URL } from "@/game/discoveryIconUrlUtil";
 import { findTextureImageUrls } from "@/game/textureUtil";
-import ClozeImage from "@/game/conclusions/types/ClozeImage";
-import ClozePartType from "@/game/conclusions/types/ClozePartType";
+import ClozeImage from "@/conclusions/types/ClozeImage";
+import ClozePartType from "@/conclusions/types/ClozePartType";
 import Level from "@/levelLoading/types/Level";
 import ImageSet from "./ImageSet";
 import { assertNonNullable } from "decent-portal";

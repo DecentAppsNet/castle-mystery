@@ -7,7 +7,7 @@ import { generateAnswerSetIdToPieceStyleNoMap } from './answerSetPieceStyleUtil'
 import Level from "@/levelLoading/types/Level";
 import ConclusionPage from "./types/ConclusionPage";
 import BookPage from "./types/BookPage";
-import Conclusion from "@/game/conclusions/types/Conclusion";
+import Conclusion from "@/conclusions/types/Conclusion";
 import { updatePieceStackForConclusionPages } from './pieces';
 import { parseSections, parseUniqueNameValueLines } from '@/common/markdownUtil';
 import { baseUrl, urlToFilename } from '@/common/urlUtil';
